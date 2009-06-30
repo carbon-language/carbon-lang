@@ -199,8 +199,8 @@ public:
     // Copy initializer elements. Skip padding fields.
     unsigned EltNo = 0;  // Element no in ILE
     bool RewriteType = false;
-    for (RecordDecl::field_iterator Field = RD->field_begin(CGM.getContext()),
-                                 FieldEnd = RD->field_end(CGM.getContext());
+    for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                 FieldEnd = RD->field_end();
          EltNo < ILE->getNumInits() && Field != FieldEnd; ++Field) {
       if (Field->isBitField()) {
         if (!Field->getIdentifier())
@@ -263,8 +263,8 @@ public:
       // Make sure that it's really an empty and not a failure of
       // semantic analysis.
       RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
-      for (RecordDecl::field_iterator Field = RD->field_begin(CGM.getContext()),
-                                   FieldEnd = RD->field_end(CGM.getContext());
+      for (RecordDecl::field_iterator Field = RD->field_begin(),
+                                   FieldEnd = RD->field_end();
            Field != FieldEnd; ++Field)
         assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
 #endif

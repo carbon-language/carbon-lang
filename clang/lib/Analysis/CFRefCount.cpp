@@ -156,13 +156,13 @@ static bool followsFundamentalRule(Selector S) {
 }
 
 static const ObjCMethodDecl*
-ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD, ASTContext &Context) {  
+ResolveToInterfaceMethodDecl(const ObjCMethodDecl *MD) {  
   ObjCInterfaceDecl *ID =
     const_cast<ObjCInterfaceDecl*>(MD->getClassInterface());
   
   return MD->isInstanceMethod()
-         ? ID->lookupInstanceMethod(Context, MD->getSelector())
-         : ID->lookupClassMethod(Context, MD->getSelector());
+         ? ID->lookupInstanceMethod(MD->getSelector())
+         : ID->lookupClassMethod(MD->getSelector());
 }
 
 namespace {
@@ -827,8 +827,7 @@ public:
     QualType ResultTy = MD->getResultType();
     
     // Resolve the method decl last.    
-    if (const ObjCMethodDecl *InterfaceMD =
-        ResolveToInterfaceMethodDecl(MD, Ctx))
+    if (const ObjCMethodDecl *InterfaceMD = ResolveToInterfaceMethodDecl(MD))
       MD = InterfaceMD;
     
     if (MD->isInstanceMethod())
@@ -2857,8 +2856,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                 state->getStateManager().getRegionManager();
               
               // Iterate through the fields and construct new symbols.
-              for (RecordDecl::field_iterator FI=RD->field_begin(Ctx),
-                   FE=RD->field_end(Ctx); FI!=FE; ++FI) {
+              for (RecordDecl::field_iterator FI=RD->field_begin(),
+                   FE=RD->field_end(); FI!=FE; ++FI) {
                 
                 // For now just handle scalar fields.
                 FieldDecl *FD = *FI;

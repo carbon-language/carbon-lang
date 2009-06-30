@@ -86,8 +86,8 @@ void clang::CheckObjCInstMethSignature(ObjCImplementationDecl* ID,
   MapTy IMeths;
   unsigned NumMethods = 0;
   
-  for (ObjCImplementationDecl::instmeth_iterator I=ID->instmeth_begin(Ctx),
-       E=ID->instmeth_end(Ctx); I!=E; ++I) {    
+  for (ObjCImplementationDecl::instmeth_iterator I=ID->instmeth_begin(),
+       E=ID->instmeth_end(); I!=E; ++I) {    
     
     ObjCMethodDecl* M = *I;
     IMeths[M->getSelector()] = M;
@@ -97,8 +97,8 @@ void clang::CheckObjCInstMethSignature(ObjCImplementationDecl* ID,
   // Now recurse the class hierarchy chain looking for methods with the
   // same signatures.
   while (C && NumMethods) {
-    for (ObjCInterfaceDecl::instmeth_iterator I=C->instmeth_begin(Ctx),
-         E=C->instmeth_end(Ctx); I!=E; ++I) {
+    for (ObjCInterfaceDecl::instmeth_iterator I=C->instmeth_begin(),
+         E=C->instmeth_end(); I!=E; ++I) {
 
       ObjCMethodDecl* M = *I;
       Selector S = M->getSelector();

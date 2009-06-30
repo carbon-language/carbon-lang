@@ -1018,8 +1018,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState *state,
 
   // FIXME: We shouldn't use a std::vector.  If RecordDecl doesn't have a
   // reverse iterator, we should implement one.
-  std::vector<FieldDecl *> Fields(RD->field_begin(getContext()), 
-                                  RD->field_end(getContext()));
+  std::vector<FieldDecl *> Fields(RD->field_begin(), RD->field_end());
 
   for (std::vector<FieldDecl *>::reverse_iterator Field = Fields.rbegin(),
                                                FieldEnd = Fields.rend();
@@ -1207,8 +1206,7 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
 
   RecordDecl::field_iterator FI, FE;
 
-  for (FI = RD->field_begin(getContext()), FE = RD->field_end(getContext());
-       FI != FE; ++FI, ++VI) {
+  for (FI = RD->field_begin(), FE = RD->field_end(); FI != FE; ++FI, ++VI) {
 
     if (VI == VE)
       break;

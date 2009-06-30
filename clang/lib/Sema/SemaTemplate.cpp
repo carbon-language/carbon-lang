@@ -2498,7 +2498,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
   // Add the specialization into its lexical context, so that it can
   // be seen when iterating through the list of declarations in that
   // context. However, specializations are not found by name lookup.
-  CurContext->addDecl(Context, Specialization);
+  CurContext->addDecl(Specialization);
   return DeclPtrTy::make(Specialization);
 }
 
@@ -2654,7 +2654,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                                   ClassTemplate,
                                                   Converted, 0);
       Specialization->setLexicalDeclContext(CurContext);
-      CurContext->addDecl(Context, Specialization);
+      CurContext->addDecl(Specialization);
       return DeclPtrTy::make(Specialization);
     }
 
@@ -2703,7 +2703,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   // since explicit instantiations are never found by name lookup, we
   // just put it into the declaration context directly.
   Specialization->setLexicalDeclContext(CurContext);
-  CurContext->addDecl(Context, Specialization);
+  CurContext->addDecl(Specialization);
 
   // C++ [temp.explicit]p3:
   //   A definition of a class template or class member template

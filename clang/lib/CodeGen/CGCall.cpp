@@ -142,8 +142,8 @@ void CodeGenTypes::GetExpandedTypes(QualType Ty,
   assert(!RD->hasFlexibleArrayMember() && 
          "Cannot expand structure with flexible array.");
   
-  for (RecordDecl::field_iterator i = RD->field_begin(Context), 
-         e = RD->field_end(Context); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
     const FieldDecl *FD = *i;
     assert(!FD->isBitField() && 
            "Cannot expand structure with bit-field members.");
@@ -167,8 +167,8 @@ CodeGenFunction::ExpandTypeFromArgs(QualType Ty, LValue LV,
   assert(LV.isSimple() && 
          "Unexpected non-simple lvalue during struct expansion.");  
   llvm::Value *Addr = LV.getAddress();
-  for (RecordDecl::field_iterator i = RD->field_begin(getContext()), 
-         e = RD->field_end(getContext()); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
     FieldDecl *FD = *i;    
     QualType FT = FD->getType();
 
@@ -194,8 +194,8 @@ CodeGenFunction::ExpandTypeToArgs(QualType Ty, RValue RV,
   RecordDecl *RD = RT->getDecl();
   assert(RV.isAggregate() && "Unexpected rvalue during struct expansion");
   llvm::Value *Addr = RV.getAggregateAddr();
-  for (RecordDecl::field_iterator i = RD->field_begin(getContext()), 
-         e = RD->field_end(getContext()); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
     FieldDecl *FD = *i;    
     QualType FT = FD->getType();
     

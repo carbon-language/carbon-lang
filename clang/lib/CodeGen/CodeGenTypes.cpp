@@ -449,7 +449,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   const RecordDecl *RD = cast<const RecordDecl>(TD);
 
   // There isn't any extra information for empty structures/unions.
-  if (RD->field_empty(getContext())) {
+  if (RD->field_empty()) {
     ResultType = llvm::StructType::get(std::vector<const llvm::Type*>());
   } else {
     // Layout fields.
@@ -532,8 +532,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   std::vector<const llvm::Type*> LLVMFields;
 
   unsigned curField = 0;
-  for (RecordDecl::field_iterator Field = RD.field_begin(CGT.getContext()),
-                               FieldEnd = RD.field_end(CGT.getContext());
+  for (RecordDecl::field_iterator Field = RD.field_begin(),
+                               FieldEnd = RD.field_end();
        Field != FieldEnd; ++Field) {
     uint64_t offset = RL.getFieldOffset(curField);
     const llvm::Type *Ty = CGT.ConvertTypeForMemRecursive(Field->getType());
@@ -578,8 +578,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
 /// all fields are added.
 void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
   unsigned curField = 0;
-  for (RecordDecl::field_iterator Field = RD.field_begin(CGT.getContext()),
-                               FieldEnd = RD.field_end(CGT.getContext());
+  for (RecordDecl::field_iterator Field = RD.field_begin(),
+                               FieldEnd = RD.field_end();
        Field != FieldEnd; ++Field) {
     // The offset should usually be zero, but bitfields could be strange
     uint64_t offset = RL.getFieldOffset(curField);

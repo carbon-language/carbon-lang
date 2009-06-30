@@ -525,8 +525,7 @@ TemplateExprInstantiator::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   const IdentifierInfo &Name 
     = SemaRef.Context.Idents.get("__builtin_shufflevector");
   TranslationUnitDecl *TUDecl = SemaRef.Context.getTranslationUnitDecl();
-  DeclContext::lookup_result Lookup 
-    = TUDecl->lookup(SemaRef.Context, DeclarationName(&Name));
+  DeclContext::lookup_result Lookup = TUDecl->lookup(DeclarationName(&Name));
   assert(Lookup.first != Lookup.second && "No __builtin_shufflevector?");
   
   // Build a reference to the __builtin_shufflevector builtin

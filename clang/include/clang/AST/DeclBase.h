@@ -601,9 +601,9 @@ public:
 
   /// decls_begin/decls_end - Iterate over the declarations stored in
   /// this context. 
-  decl_iterator decls_begin(ASTContext &Context) const;
-  decl_iterator decls_end(ASTContext &Context) const;
-  bool decls_empty(ASTContext &Context) const;
+  decl_iterator decls_begin() const;
+  decl_iterator decls_end() const;
+  bool decls_empty() const;
 
   /// specific_decl_iterator - Iterates over a subrange of
   /// declarations stored in a DeclContext, providing only those that
@@ -759,7 +759,7 @@ public:
   ///
   /// If D is also a NamedDecl, it will be made visible within its
   /// semantic context via makeDeclVisibleInContext.
-  void addDecl(ASTContext &Context, Decl *D);
+  void addDecl(Decl *D);
 
   /// lookup_iterator - An iterator that provides access to the results
   /// of looking up a name within this context.
@@ -778,8 +778,8 @@ public:
   /// the declarations with this name, with object, function, member,
   /// and enumerator names preceding any tag name. Note that this
   /// routine will not look into parent contexts.
-  lookup_result lookup(ASTContext &Context, DeclarationName Name);
-  lookup_const_result lookup(ASTContext &Context, DeclarationName Name) const;
+  lookup_result lookup(DeclarationName Name);
+  lookup_const_result lookup(DeclarationName Name) const;
 
   /// @brief Makes a declaration visible within this context.
   ///
@@ -795,7 +795,7 @@ public:
   /// visible from this context, as determined by
   /// NamedDecl::declarationReplaces, the previous declaration will be
   /// replaced with D.
-  void makeDeclVisibleInContext(ASTContext &Context, NamedDecl *D);
+  void makeDeclVisibleInContext(NamedDecl *D);
 
   /// udir_iterator - Iterates through the using-directives stored
   /// within this context.
@@ -803,14 +803,14 @@ public:
   
   typedef std::pair<udir_iterator, udir_iterator> udir_iterator_range;
 
-  udir_iterator_range getUsingDirectives(ASTContext &Context) const;
+  udir_iterator_range getUsingDirectives() const;
 
-  udir_iterator using_directives_begin(ASTContext &Context) const {
-    return getUsingDirectives(Context).first;
+  udir_iterator using_directives_begin() const {
+    return getUsingDirectives().first;
   }
 
-  udir_iterator using_directives_end(ASTContext &Context) const {
-    return getUsingDirectives(Context).second;
+  udir_iterator using_directives_end() const {
+    return getUsingDirectives().second;
   }
 
   // Low-level accessors
@@ -845,11 +845,11 @@ public:
 #include "clang/AST/DeclNodes.def"
 
 private:
-  void LoadLexicalDeclsFromExternalStorage(ASTContext &Context) const;
-  void LoadVisibleDeclsFromExternalStorage(ASTContext &Context) const;
+  void LoadLexicalDeclsFromExternalStorage() const;
+  void LoadVisibleDeclsFromExternalStorage() const;
 
-  void buildLookup(ASTContext &Context, DeclContext *DCtx);
-  void makeDeclVisibleInContextImpl(ASTContext &Context, NamedDecl *D);
+  void buildLookup(DeclContext *DCtx);
+  void makeDeclVisibleInContextImpl(NamedDecl *D);
 };
 
 inline bool Decl::isTemplateParameter() const {

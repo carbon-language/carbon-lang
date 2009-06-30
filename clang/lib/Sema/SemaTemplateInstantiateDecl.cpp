@@ -98,7 +98,7 @@ Decl *TemplateDeclInstantiator::VisitTypedefDecl(TypedefDecl *D) {
   if (Invalid)
     Typedef->setInvalidDecl();
 
-  Owner->addDecl(SemaRef.Context, Typedef);
+  Owner->addDecl(Typedef);
     
   return Typedef;
 }
@@ -124,7 +124,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   // are not static data members.
   bool Redeclaration = false;
   SemaRef.CheckVariableDeclaration(Var, 0, Redeclaration);
-  Owner->addDecl(SemaRef.Context, Var);
+  Owner->addDecl(Var);
 
   if (D->getInit()) {
     OwningExprResult Init 
@@ -188,7 +188,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
     if (Invalid)
       Field->setInvalidDecl();
     
-    Owner->addDecl(SemaRef.Context, Field);
+    Owner->addDecl(Field);
   }
 
   return Field;
@@ -219,14 +219,14 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
                                     /*PrevDecl=*/0);
   Enum->setInstantiationOfMemberEnum(D);
   Enum->setAccess(D->getAccess());
-  Owner->addDecl(SemaRef.Context, Enum);
+  Owner->addDecl(Enum);
   Enum->startDefinition();
 
   llvm::SmallVector<Sema::DeclPtrTy, 4> Enumerators;
 
   EnumConstantDecl *LastEnumConst = 0;
-  for (EnumDecl::enumerator_iterator EC = D->enumerator_begin(SemaRef.Context),
-         ECEnd = D->enumerator_end(SemaRef.Context);
+  for (EnumDecl::enumerator_iterator EC = D->enumerator_begin(),
+         ECEnd = D->enumerator_end();
        EC != ECEnd; ++EC) {
     // The specified value for the enumerator.
     OwningExprResult Value = SemaRef.Owned((Expr *)0);
@@ -257,7 +257,7 @@ Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
     }
 
     if (EnumConst) {
-      Enum->addDecl(SemaRef.Context, EnumConst);
+      Enum->addDecl(EnumConst);
       Enumerators.push_back(Sema::DeclPtrTy::make(EnumConst));
       LastEnumConst = EnumConst;
     }
@@ -289,7 +289,7 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
   if (!D->isInjectedClassName())
     Record->setInstantiationOfMemberClass(D);
 
-  Owner->addDecl(SemaRef.Context, Record);
+  Owner->addDecl(Record);
   return Record;
 }
 
@@ -394,7 +394,7 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
                                    /*FIXME:*/OverloadableAttrRequired);
 
   if (!Method->isInvalidDecl() || !PrevDecl)
-    Owner->addDecl(SemaRef.Context, Method);
+    Owner->addDecl(Method);
   return Method;
 }
 
@@ -442,7 +442,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConstructorDecl(CXXConstructorDecl *D) {
                                    /*FIXME:*/OverloadableAttrRequired);
 
   Record->addedConstructor(SemaRef.Context, Constructor);
-  Owner->addDecl(SemaRef.Context, Constructor);
+  Owner->addDecl(Constructor);
   return Constructor;
 }
 
@@ -474,7 +474,7 @@ Decl *TemplateDeclInstantiator::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
   NamedDecl *PrevDecl = 0;
   SemaRef.CheckFunctionDeclaration(Destructor, PrevDecl, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
-  Owner->addDecl(SemaRef.Context, Destructor);
+  Owner->addDecl(Destructor);
   return Destructor;
 }
 
@@ -507,7 +507,7 @@ Decl *TemplateDeclInstantiator::VisitCXXConversionDecl(CXXConversionDecl *D) {
   NamedDecl *PrevDecl = 0;
   SemaRef.CheckFunctionDeclaration(Conversion, PrevDecl, Redeclaration,
                                    /*FIXME:*/OverloadableAttrRequired);
-  Owner->addDecl(SemaRef.Context, Conversion);
+  Owner->addDecl(Conversion);
   return Conversion;  
 }
 
@@ -809,8 +809,7 @@ NamedDecl * Sema::InstantiateCurrentDeclRef(NamedDecl *D) {
     // find the instantiation of the declaration D.
     NamedDecl *Result = 0;
     if (D->getDeclName()) {
-      DeclContext::lookup_result Found
-        = ParentDC->lookup(Context, D->getDeclName());
+      DeclContext::lookup_result Found = ParentDC->lookup(D->getDeclName());
       Result = findInstantiationOf(Context, D, Found.first, Found.second);
     } else {
       // Since we don't have a name for the entity we're looking for,
@@ -822,8 +821,8 @@ NamedDecl * Sema::InstantiateCurrentDeclRef(NamedDecl *D) {
       //
       // FIXME: Find a better way to find these instantiations!
       Result = findInstantiationOf(Context, D, 
-                                   ParentDC->decls_begin(Context),
-                                   ParentDC->decls_end(Context));
+                                   ParentDC->decls_begin(),
+                                   ParentDC->decls_end());
     }
     assert(Result && "Unable to find instantiation of declaration!");
     D = Result;

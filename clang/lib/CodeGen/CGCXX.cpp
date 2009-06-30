@@ -323,8 +323,8 @@ static bool canGenerateCXXstructor(const CXXRecordDecl *RD,
   if (RD->getNumBases() > 0)
     return false;
   
-  for (CXXRecordDecl::field_iterator I = RD->field_begin(Context), 
-       E = RD->field_end(Context); I != E; ++I) {
+  for (CXXRecordDecl::field_iterator I = RD->field_begin(), E = RD->field_end();
+         I != E; ++I) {
     // We don't support ctors for fields that aren't POD.
     if (!I->getType()->isPODType())
       return false;

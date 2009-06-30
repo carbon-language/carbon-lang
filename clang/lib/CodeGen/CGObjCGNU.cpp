@@ -739,8 +739,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
     Protocols.push_back((*PI)->getNameAsString());
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodNames;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
-  for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(Context),
-       E = PD->instmeth_end(Context); iter != E; iter++) {
+  for (ObjCProtocolDecl::instmeth_iterator iter = PD->instmeth_begin(),
+       E = PD->instmeth_end(); iter != E; iter++) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl(*iter, TypeStr);
     InstanceMethodNames.push_back(
@@ -751,8 +751,8 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodNames;
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
   for (ObjCProtocolDecl::classmeth_iterator 
-         iter = PD->classmeth_begin(Context),
-         endIter = PD->classmeth_end(Context) ; iter != endIter ; iter++) {
+         iter = PD->classmeth_begin(), endIter = PD->classmeth_end();
+       iter != endIter ; iter++) {
     std::string TypeStr;
     Context.getObjCEncodingForMethodDecl((*iter),TypeStr);
     ClassMethodNames.push_back(
@@ -794,8 +794,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   llvm::SmallVector<Selector, 16> InstanceMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
   for (ObjCCategoryImplDecl::instmeth_iterator
-         iter = OCD->instmeth_begin(CGM.getContext()),
-         endIter = OCD->instmeth_end(CGM.getContext());
+         iter = OCD->instmeth_begin(), endIter = OCD->instmeth_end();
        iter != endIter ; iter++) {
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
@@ -807,8 +806,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   llvm::SmallVector<Selector, 16> ClassMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
   for (ObjCCategoryImplDecl::classmeth_iterator 
-         iter = OCD->classmeth_begin(CGM.getContext()),
-         endIter = OCD->classmeth_end(CGM.getContext());
+         iter = OCD->classmeth_begin(), endIter = OCD->classmeth_end();
        iter != endIter ; iter++) {
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
@@ -906,8 +904,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   llvm::SmallVector<Selector, 16> InstanceMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> InstanceMethodTypes;
   for (ObjCImplementationDecl::instmeth_iterator 
-         iter = OID->instmeth_begin(CGM.getContext()),
-         endIter = OID->instmeth_end(CGM.getContext());
+         iter = OID->instmeth_begin(), endIter = OID->instmeth_end();
        iter != endIter ; iter++) {
     InstanceMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;
@@ -915,8 +912,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
     InstanceMethodTypes.push_back(CGM.GetAddrOfConstantCString(TypeStr));
   }
   for (ObjCImplDecl::propimpl_iterator 
-         iter = OID->propimpl_begin(CGM.getContext()),
-         endIter = OID->propimpl_end(CGM.getContext());
+         iter = OID->propimpl_begin(), endIter = OID->propimpl_end();
        iter != endIter ; iter++) {
     ObjCPropertyDecl *property = (*iter)->getPropertyDecl();
     if (ObjCMethodDecl *getter = property->getGetterMethodDecl()) {
@@ -937,8 +933,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   llvm::SmallVector<Selector, 16> ClassMethodSels;
   llvm::SmallVector<llvm::Constant*, 16> ClassMethodTypes;
   for (ObjCImplementationDecl::classmeth_iterator
-         iter = OID->classmeth_begin(CGM.getContext()),
-         endIter = OID->classmeth_end(CGM.getContext());
+         iter = OID->classmeth_begin(), endIter = OID->classmeth_end();
        iter != endIter ; iter++) {
     ClassMethodSels.push_back((*iter)->getSelector());
     std::string TypeStr;

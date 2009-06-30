@@ -436,8 +436,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 #ifndef NDEBUG
       // Make sure that it's really an empty and not a failure of
       // semantic analysis.
-      for (RecordDecl::field_iterator Field = SD->field_begin(CGF.getContext()),
-                                   FieldEnd = SD->field_end(CGF.getContext());
+      for (RecordDecl::field_iterator Field = SD->field_begin(),
+                                   FieldEnd = SD->field_end();
            Field != FieldEnd; ++Field)
         assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
 #endif
@@ -461,8 +461,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   
   // Here we iterate over the fields; this makes it simpler to both
   // default-initialize fields and skip over unnamed fields.
-  for (RecordDecl::field_iterator Field = SD->field_begin(CGF.getContext()),
-                               FieldEnd = SD->field_end(CGF.getContext());
+  for (RecordDecl::field_iterator Field = SD->field_begin(),
+                               FieldEnd = SD->field_end();
        Field != FieldEnd; ++Field) {
     // We're done once we hit the flexible array member
     if (Field->getType()->isIncompleteArrayType())

@@ -187,7 +187,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
         = (Context.getCanonicalType(BaseSpec->getType()) == Criteria.Base);
       break;
     case MemberLookupCriteria::LK_NamedMember:
-      Paths.ScratchPath.Decls = BaseRecord->lookup(Context, Criteria.Name);
+      Paths.ScratchPath.Decls = BaseRecord->lookup(Criteria.Name);
       while (Paths.ScratchPath.Decls.first != Paths.ScratchPath.Decls.second) {
         if (isAcceptableLookupResult(*Paths.ScratchPath.Decls.first,
                                      Criteria.NameKind, Criteria.IDNS)) {
@@ -199,7 +199,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
       break;
     case MemberLookupCriteria::LK_OverriddenMember:
       Paths.ScratchPath.Decls = 
-        BaseRecord->lookup(Context, Criteria.Method->getDeclName());
+        BaseRecord->lookup(Criteria.Method->getDeclName());
       while (Paths.ScratchPath.Decls.first != Paths.ScratchPath.Decls.second) {
         if (CXXMethodDecl *MD = 
               dyn_cast<CXXMethodDecl>(*Paths.ScratchPath.Decls.first)) {

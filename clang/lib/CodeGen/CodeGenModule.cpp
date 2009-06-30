@@ -1262,7 +1262,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
     cast<llvm::StructType>(getTypes().ConvertType(CFTy));
 
   std::vector<llvm::Constant*> Fields;
-  RecordDecl::field_iterator Field = CFRD->field_begin(getContext());
+  RecordDecl::field_iterator Field = CFRD->field_begin();
 
   // Class pointer.
   FieldDecl *CurField = *Field++;
@@ -1432,8 +1432,7 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantCString(const std::string &str,
 void CodeGenModule::EmitObjCPropertyImplementations(const 
                                                     ObjCImplementationDecl *D) {
   for (ObjCImplementationDecl::propimpl_iterator 
-         i = D->propimpl_begin(getContext()),
-         e = D->propimpl_end(getContext()); i != e; ++i) {
+         i = D->propimpl_begin(), e = D->propimpl_end(); i != e; ++i) {
     ObjCPropertyImplDecl *PID = *i;
     
     // Dynamic is just for type-checking.
@@ -1445,11 +1444,11 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
       // we want, that just indicates if the decl came from a
       // property. What we want to know is if the method is defined in
       // this implementation.
-      if (!D->getInstanceMethod(getContext(), PD->getGetterName()))
+      if (!D->getInstanceMethod(PD->getGetterName()))
         CodeGenFunction(*this).GenerateObjCGetter(
                                  const_cast<ObjCImplementationDecl *>(D), PID);
       if (!PD->isReadOnly() &&
-          !D->getInstanceMethod(getContext(), PD->getSetterName()))
+          !D->getInstanceMethod(PD->getSetterName()))
         CodeGenFunction(*this).GenerateObjCSetter(
                                  const_cast<ObjCImplementationDecl *>(D), PID);
     }
@@ -1458,8 +1457,7 @@ void CodeGenModule::EmitObjCPropertyImplementations(const
 
 /// EmitNamespace - Emit all declarations in a namespace.
 void CodeGenModule::EmitNamespace(const NamespaceDecl *ND) {
-  for (RecordDecl::decl_iterator I = ND->decls_begin(getContext()),
-         E = ND->decls_end(getContext());
+  for (RecordDecl::decl_iterator I = ND->decls_begin(), E = ND->decls_end();
        I != E; ++I)
     EmitTopLevelDecl(*I);
 }
@@ -1471,8 +1469,7 @@ void CodeGenModule::EmitLinkageSpec(const LinkageSpecDecl *LSD) {
     return;
   }
 
-  for (RecordDecl::decl_iterator I = LSD->decls_begin(getContext()),
-         E = LSD->decls_end(getContext());
+  for (RecordDecl::decl_iterator I = LSD->decls_begin(), E = LSD->decls_end();
        I != E; ++I)
     EmitTopLevelDecl(*I);
 }

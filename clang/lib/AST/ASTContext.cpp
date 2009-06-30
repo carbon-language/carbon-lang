@@ -630,8 +630,8 @@ void ASTContext::ShallowCollectObjCIvars(const ObjCInterfaceDecl *OI,
 
 void ASTContext::CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
-  for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(*this),
-       E = PD->prop_end(*this); I != E; ++I)
+  for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(),
+       E = PD->prop_end(); I != E; ++I)
     if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
       Ivars.push_back(Ivar);
   
@@ -646,8 +646,8 @@ void ASTContext::CollectProtocolSynthesizedIvars(const ObjCProtocolDecl *PD,
 ///
 void ASTContext::CollectSynthesizedIvars(const ObjCInterfaceDecl *OI,
                                 llvm::SmallVectorImpl<ObjCIvarDecl*> &Ivars) {
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*this),
-       E = OI->prop_end(*this); I != E; ++I) {
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
+       E = OI->prop_end(); I != E; ++I) {
     if (ObjCIvarDecl *Ivar = (*I)->getPropertyIvarDecl())
       Ivars.push_back(Ivar);
   }
@@ -662,8 +662,8 @@ void ASTContext::CollectSynthesizedIvars(const ObjCInterfaceDecl *OI,
 
 unsigned ASTContext::CountProtocolSynthesizedIvars(const ObjCProtocolDecl *PD) {
   unsigned count = 0;
-  for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(*this),
-       E = PD->prop_end(*this); I != E; ++I)
+  for (ObjCContainerDecl::prop_iterator I = PD->prop_begin(),
+       E = PD->prop_end(); I != E; ++I)
     if ((*I)->getPropertyIvarDecl())
       ++count;
 
@@ -677,8 +677,8 @@ unsigned ASTContext::CountProtocolSynthesizedIvars(const ObjCProtocolDecl *PD) {
 unsigned ASTContext::CountSynthesizedIvars(const ObjCInterfaceDecl *OI)
 {
   unsigned count = 0;
-  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(*this),
-       E = OI->prop_end(*this); I != E; ++I) {
+  for (ObjCInterfaceDecl::prop_iterator I = OI->prop_begin(),
+       E = OI->prop_end(); I != E; ++I) {
     if ((*I)->getPropertyIvarDecl())
       ++count;
   }
@@ -785,8 +785,7 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   Entry = NewEntry;
 
   // FIXME: Avoid linear walk through the fields, if possible.
-  NewEntry->InitializeLayout(std::distance(D->field_begin(*this), 
-                                           D->field_end(*this)));
+  NewEntry->InitializeLayout(std::distance(D->field_begin(), D->field_end()));
   bool IsUnion = D->isUnion();
 
   unsigned StructPacking = 0;
@@ -800,8 +799,8 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   // Layout each field, for now, just sequentially, respecting alignment.  In
   // the future, this will need to be tweakable by targets.
   unsigned FieldIdx = 0;
-  for (RecordDecl::field_iterator Field = D->field_begin(*this),
-                               FieldEnd = D->field_end(*this);
+  for (RecordDecl::field_iterator Field = D->field_begin(),
+                               FieldEnd = D->field_end();
        Field != FieldEnd; (void)++Field, ++FieldIdx)
     NewEntry->LayoutField(*Field, FieldIdx, IsUnion, StructPacking, *this);
 
@@ -2141,7 +2140,7 @@ QualType ASTContext::getCFConstantStringType() {
                                            SourceLocation(), 0,
                                            FieldTypes[i], /*BitWidth=*/0, 
                                            /*Mutable=*/false);
-      CFConstantStringTypeDecl->addDecl(*this, Field);
+      CFConstantStringTypeDecl->addDecl(Field);
     }
 
     CFConstantStringTypeDecl->completeDefinition(*this);
@@ -2177,7 +2176,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
                                            SourceLocation(), 0, 
                                            FieldTypes[i], /*BitWidth=*/0, 
                                            /*Mutable=*/false);
-      ObjCFastEnumerationStateTypeDecl->addDecl(*this, Field);
+      ObjCFastEnumerationStateTypeDecl->addDecl(Field);
     }
     
     ObjCFastEnumerationStateTypeDecl->completeDefinition(*this);
@@ -2304,7 +2303,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
     if (const ObjCCategoryImplDecl *CID = 
         dyn_cast<ObjCCategoryImplDecl>(Container)) {
       for (ObjCCategoryImplDecl::propimpl_iterator
-             i = CID->propimpl_begin(*this), e = CID->propimpl_end(*this);
+             i = CID->propimpl_begin(), e = CID->propimpl_end();
            i != e; ++i) {
         ObjCPropertyImplDecl *PID = *i;
         if (PID->getPropertyDecl() == PD) {
@@ -2318,7 +2317,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
     } else {
       const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
       for (ObjCCategoryImplDecl::propimpl_iterator
-             i = OID->propimpl_begin(*this), e = OID->propimpl_end(*this);
+             i = OID->propimpl_begin(), e = OID->propimpl_end();
            i != e; ++i) {
         ObjCPropertyImplDecl *PID = *i;
         if (PID->getPropertyDecl() == PD) {
@@ -2609,8 +2608,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     if (ExpandStructures) {
       S += '=';
-      for (RecordDecl::field_iterator Field = RDecl->field_begin(*this),
-                                   FieldEnd = RDecl->field_end(*this);
+      for (RecordDecl::field_iterator Field = RDecl->field_begin(),
+                                   FieldEnd = RDecl->field_end();
            Field != FieldEnd; ++Field) {
         if (FD) {
           S += '"';
@@ -3576,7 +3575,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
   case 'P': {
     IdentifierInfo *II = &Context.Idents.get("FILE");
     DeclContext::lookup_result Lookup 
-      = Context.getTranslationUnitDecl()->lookup(Context, II);
+      = Context.getTranslationUnitDecl()->lookup(II);
     if (Lookup.first != Lookup.second && isa<TypeDecl>(*Lookup.first)) {
       Type = Context.getTypeDeclType(cast<TypeDecl>(*Lookup.first));
       break;

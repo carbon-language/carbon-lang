@@ -74,8 +74,8 @@ static bool isEmptyRecord(ASTContext &Context, QualType T) {
   const RecordDecl *RD = RT->getDecl();
   if (RD->hasFlexibleArrayMember())
     return false;
-  for (RecordDecl::field_iterator i = RD->field_begin(Context),
-         e = RD->field_end(Context); i != e; ++i)
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i)
     if (!isEmptyField(Context, *i))
       return false;
   return true;
@@ -99,8 +99,8 @@ static const Type *isSingleElementStruct(QualType T, ASTContext &Context) {
     return 0;
 
   const Type *Found = 0;
-  for (RecordDecl::field_iterator i = RD->field_begin(Context),
-         e = RD->field_end(Context); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
     const FieldDecl *FD = *i;
     QualType FT = FD->getType();
 
@@ -142,8 +142,8 @@ static bool is32Or64BitBasicType(QualType Ty, ASTContext &Context) {
 
 static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
                                            ASTContext &Context) {
-  for (RecordDecl::field_iterator i = RD->field_begin(Context),
-         e = RD->field_end(Context); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
     const FieldDecl *FD = *i;
 
     if (!is32Or64BitBasicType(FD->getType(), Context))
@@ -160,8 +160,8 @@ static bool areAllFields32Or64BitBasicType(const RecordDecl *RD,
 }
 
 static bool typeContainsSSEVector(const RecordDecl *RD, ASTContext &Context) {
-  for (RecordDecl::field_iterator i = RD->field_begin(Context),
-         e = RD->field_end(Context); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+         i != e; ++i) {
     const FieldDecl *FD = *i;
 
     if (FD->getType()->isVectorType() &&
@@ -269,8 +269,8 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
 
   // Structure types are passed in register if all fields would be
   // passed in a register.
-  for (RecordDecl::field_iterator i = RT->getDecl()->field_begin(Context),
-         e = RT->getDecl()->field_end(Context); i != e; ++i) {
+  for (RecordDecl::field_iterator i = RT->getDecl()->field_begin(),
+         e = RT->getDecl()->field_end(); i != e; ++i) {
     const FieldDecl *FD = *i;
 
     // Empty fields are ignored.
@@ -707,8 +707,8 @@ void X86_64ABIInfo::classify(QualType Ty,
     // Reset Lo class, this will be recomputed.
     Current = NoClass;
     unsigned idx = 0;
-    for (RecordDecl::field_iterator i = RD->field_begin(Context),
-           e = RD->field_end(Context); i != e; ++i, ++idx) {
+    for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
+           i != e; ++i, ++idx) {
       uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
       bool BitField = i->isBitField();
 

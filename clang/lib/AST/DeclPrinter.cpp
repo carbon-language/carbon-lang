@@ -171,8 +171,7 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     Indentation += Policy.Indentation;
 
   llvm::SmallVector<Decl*, 2> Decls;
-  for (DeclContext::decl_iterator D = DC->decls_begin(Context),
-         DEnd = DC->decls_end(Context);
+  for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
        D != DEnd; ++D) {
     if (!Policy.Dump) {
       // Skip over implicit declarations in pretty-printing mode.
@@ -501,7 +500,7 @@ void DeclPrinter::VisitLinkageSpecDecl(LinkageSpecDecl *D) {
     VisitDeclContext(D);
     Indent() << "}";
   } else
-    Visit(*D->decls_begin(Context));
+    Visit(*D->decls_begin());
 }
 
 void DeclPrinter::VisitTemplateDecl(TemplateDecl *D) {

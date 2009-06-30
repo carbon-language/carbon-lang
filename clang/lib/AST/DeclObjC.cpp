@@ -45,10 +45,9 @@ void ObjCListBase::set(void *const* InList, unsigned Elts, ASTContext &Ctx) {
 /// getIvarDecl - This method looks up an ivar in this ContextDecl.
 ///
 ObjCIvarDecl *
-ObjCContainerDecl::getIvarDecl(ASTContext &Context, IdentifierInfo *Id) const {
+ObjCContainerDecl::getIvarDecl(IdentifierInfo *Id) const {
   lookup_const_iterator Ivar, IvarEnd;
-  for (llvm::tie(Ivar, IvarEnd) = lookup(Context, Id);
-       Ivar != IvarEnd; ++Ivar) {
+  for (llvm::tie(Ivar, IvarEnd) = lookup(Id); Ivar != IvarEnd; ++Ivar) {
     if (ObjCIvarDecl *ivar = dyn_cast<ObjCIvarDecl>(*Ivar))
       return ivar;
   }
@@ -57,7 +56,7 @@ ObjCContainerDecl::getIvarDecl(ASTContext &Context, IdentifierInfo *Id) const {
 
 // Get the local instance method declared in this interface.
 ObjCMethodDecl *
-ObjCContainerDecl::getInstanceMethod(ASTContext &Context, Selector Sel) const {
+ObjCContainerDecl::getInstanceMethod(Selector Sel) const {
   // Since instance & class methods can have the same name, the loop below
   // ensures we get the correct method.
   //
@@ -67,8 +66,7 @@ ObjCContainerDecl::getInstanceMethod(ASTContext &Context, Selector Sel) const {
   // @end
   //
   lookup_const_iterator Meth, MethEnd;
-  for (llvm::tie(Meth, MethEnd) = lookup(Context, Sel);
-       Meth != MethEnd; ++Meth) {
+  for (llvm::tie(Meth, MethEnd) = lookup(Sel); Meth != MethEnd; ++Meth) {
     ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
     if (MD && MD->isInstanceMethod())
       return MD;
@@ -78,7 +76,7 @@ ObjCContainerDecl::getInstanceMethod(ASTContext &Context, Selector Sel) const {
 
 // Get the local class method declared in this interface.
 ObjCMethodDecl *
-ObjCContainerDecl::getClassMethod(ASTContext &Context, Selector Sel) const {
+ObjCContainerDecl::getClassMethod(Selector Sel) const {
   // Since instance & class methods can have the same name, the loop below
   // ensures we get the correct method.
   //
@@ -88,8 +86,7 @@ ObjCContainerDecl::getClassMethod(ASTContext &Context, Selector Sel) const {
   // @end
   //
   lookup_const_iterator Meth, MethEnd;
-  for (llvm::tie(Meth, MethEnd) = lookup(Context, Sel);
-       Meth != MethEnd; ++Meth) {
+  for (llvm::tie(Meth, MethEnd) = lookup(Sel); Meth != MethEnd; ++Meth) {
     ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
     if (MD && MD->isClassMethod())
       return MD;
@@ -102,10 +99,8 @@ ObjCContainerDecl::getClassMethod(ASTContext &Context, Selector Sel) const {
 /// FIXME: Convert to DeclContext lookup...
 ///
 ObjCPropertyDecl *
-ObjCContainerDecl::FindPropertyDeclaration(ASTContext &Context, 
-                                           IdentifierInfo *PropertyId) const {
-  for (prop_iterator I = prop_begin(Context), E = prop_end(Context); 
-       I != E; ++I)
+ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
+  for (prop_iterator I = prop_begin(), E = prop_end(); I != E; ++I)
     if ((*I)->getIdentifier() == PropertyId)
       return *I;
   
@@ -113,8 +108,7 @@ ObjCContainerDecl::FindPropertyDeclaration(ASTContext &Context,
   if (PID) {
     for (ObjCProtocolDecl::protocol_iterator I = PID->protocol_begin(), 
          E = PID->protocol_end(); I != E; ++I)
-      if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(Context, 
-                                                              PropertyId))
+      if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
         return P;
   }
   
@@ -122,37 +116,33 @@ ObjCContainerDecl::FindPropertyDeclaration(ASTContext &Context,
     // Look through categories.
     for (ObjCCategoryDecl *Category = OID->getCategoryList();
          Category; Category = Category->getNextClassCategory()) {
-      if (ObjCPropertyDecl *P = Category->FindPropertyDeclaration(Context,
-                                                                  PropertyId))
+      if (ObjCPropertyDecl *P = Category->FindPropertyDeclaration(PropertyId))
         return P;
     }
     // Look through protocols.
     for (ObjCInterfaceDecl::protocol_iterator I = OID->protocol_begin(),
          E = OID->protocol_end(); I != E; ++I) {
-      if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(Context,
-                                                              PropertyId))
+      if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
         return P;
     }
     if (OID->getSuperClass())
-      return OID->getSuperClass()->FindPropertyDeclaration(Context, 
-                                                           PropertyId);
+      return OID->getSuperClass()->FindPropertyDeclaration(PropertyId);
   } else if (const ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(this)) {
     // Look through protocols.
     for (ObjCInterfaceDecl::protocol_iterator I = OCD->protocol_begin(),
          E = OCD->protocol_end(); I != E; ++I) {
-      if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(Context, 
-                                                              PropertyId))
+      if (ObjCPropertyDecl *P = (*I)->FindPropertyDeclaration(PropertyId))
         return P;
     }
   }
   return 0;
 }
 
-ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(
-  ASTContext &Context, IdentifierInfo *ID, ObjCInterfaceDecl *&clsDeclared) {
+ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
+                                              ObjCInterfaceDecl *&clsDeclared) {
   ObjCInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
-    if (ObjCIvarDecl *I = ClassDecl->getIvarDecl(Context, ID)) {
+    if (ObjCIvarDecl *I = ClassDecl->getIvarDecl(ID)) {
       clsDeclared = ClassDecl;
       return I;
     }
@@ -177,13 +167,12 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::lookupInheritedClass(
 
 /// lookupInstanceMethod - This method returns an instance method by looking in
 /// the class, its categories, and its super classes (using a linear search).
-ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(ASTContext &Context,
-                                                        Selector Sel) {
+ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(Selector Sel) {
   ObjCInterfaceDecl* ClassDecl = this;
   ObjCMethodDecl *MethodDecl = 0;
   
   while (ClassDecl != NULL) {
-    if ((MethodDecl = ClassDecl->getInstanceMethod(Context, Sel)))
+    if ((MethodDecl = ClassDecl->getInstanceMethod(Sel)))
       return MethodDecl;
       
     // Didn't find one yet - look through protocols.
@@ -191,13 +180,13 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(ASTContext &Context,
       ClassDecl->getReferencedProtocols();
     for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
          E = Protocols.end(); I != E; ++I)
-      if ((MethodDecl = (*I)->lookupInstanceMethod(Context, Sel)))
+      if ((MethodDecl = (*I)->lookupInstanceMethod(Sel)))
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
     ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
-      if ((MethodDecl = CatDecl->getInstanceMethod(Context, Sel)))
+      if ((MethodDecl = CatDecl->getInstanceMethod(Sel)))
         return MethodDecl;
         
       // Didn't find one yet - look through protocols.
@@ -205,7 +194,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(ASTContext &Context,
         CatDecl->getReferencedProtocols();
       for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
            E = Protocols.end(); I != E; ++I)
-        if ((MethodDecl = (*I)->lookupInstanceMethod(Context, Sel)))
+        if ((MethodDecl = (*I)->lookupInstanceMethod(Sel)))
           return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
@@ -216,25 +205,24 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(ASTContext &Context,
 
 // lookupClassMethod - This method returns a class method by looking in the
 // class, its categories, and its super classes (using a linear search).
-ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(ASTContext &Context, 
-                                                     Selector Sel) {
+ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(Selector Sel) {
   ObjCInterfaceDecl* ClassDecl = this;
   ObjCMethodDecl *MethodDecl = 0;
 
   while (ClassDecl != NULL) {
-    if ((MethodDecl = ClassDecl->getClassMethod(Context, Sel)))
+    if ((MethodDecl = ClassDecl->getClassMethod(Sel)))
       return MethodDecl;
 
     // Didn't find one yet - look through protocols.
     for (ObjCInterfaceDecl::protocol_iterator I = ClassDecl->protocol_begin(),
          E = ClassDecl->protocol_end(); I != E; ++I)
-      if ((MethodDecl = (*I)->lookupClassMethod(Context, Sel)))
+      if ((MethodDecl = (*I)->lookupClassMethod(Sel)))
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
     ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
-      if ((MethodDecl = CatDecl->getClassMethod(Context, Sel)))
+      if ((MethodDecl = CatDecl->getClassMethod(Sel)))
         return MethodDecl;
         
       // Didn't find one yet - look through protocols.
@@ -242,7 +230,7 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(ASTContext &Context,
         CatDecl->getReferencedProtocols();
       for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
            E = Protocols.end(); I != E; ++I)
-        if ((MethodDecl = (*I)->lookupClassMethod(Context, Sel)))
+        if ((MethodDecl = (*I)->lookupClassMethod(Sel)))
           return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
@@ -446,30 +434,28 @@ ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
 
 // lookupInstanceMethod - Lookup a instance method in the protocol and protocols
 // it inherited.
-ObjCMethodDecl *ObjCProtocolDecl::lookupInstanceMethod(ASTContext &Context, 
-                                                       Selector Sel) {
+ObjCMethodDecl *ObjCProtocolDecl::lookupInstanceMethod(Selector Sel) {
   ObjCMethodDecl *MethodDecl = NULL;
   
-  if ((MethodDecl = getInstanceMethod(Context, Sel)))
+  if ((MethodDecl = getInstanceMethod(Sel)))
     return MethodDecl;
   
   for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
-    if ((MethodDecl = (*I)->lookupInstanceMethod(Context, Sel)))
+    if ((MethodDecl = (*I)->lookupInstanceMethod(Sel)))
       return MethodDecl;
   return NULL;
 }
 
 // lookupInstanceMethod - Lookup a class method in the protocol and protocols
 // it inherited.
-ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(ASTContext &Context, 
-                                                    Selector Sel) {
+ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(Selector Sel) {
   ObjCMethodDecl *MethodDecl = NULL;
   
-  if ((MethodDecl = getClassMethod(Context, Sel)))
+  if ((MethodDecl = getClassMethod(Sel)))
     return MethodDecl;
   
   for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
-    if ((MethodDecl = (*I)->lookupClassMethod(Context, Sel)))
+    if ((MethodDecl = (*I)->lookupClassMethod(Sel)))
       return MethodDecl;
   return NULL;
 }
@@ -555,11 +541,10 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 
-void ObjCImplDecl::addPropertyImplementation(ASTContext &Context, 
-                                             ObjCPropertyImplDecl *property) {
+void ObjCImplDecl::addPropertyImplementation(ObjCPropertyImplDecl *property) {
   // FIXME: The context should be correct before we get here.
   property->setLexicalDeclContext(this);
-  addDecl(Context, property);
+  addDecl(property);
 }
 
 /// FindPropertyImplIvarDecl - This method lookup the ivar in the list of
@@ -567,9 +552,8 @@ void ObjCImplDecl::addPropertyImplementation(ASTContext &Context,
 /// the implemented property that uses it.
 ///
 ObjCPropertyImplDecl *ObjCImplDecl::
-FindPropertyImplIvarDecl(ASTContext &Context, IdentifierInfo *ivarId) const {
-  for (propimpl_iterator i = propimpl_begin(Context), e = propimpl_end(Context);
-       i != e; ++i){
+FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const {
+  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
     ObjCPropertyImplDecl *PID = *i;
     if (PID->getPropertyIvarDecl() &&
         PID->getPropertyIvarDecl()->getIdentifier() == ivarId)
@@ -583,9 +567,8 @@ FindPropertyImplIvarDecl(ASTContext &Context, IdentifierInfo *ivarId) const {
 /// category @implementation block.
 ///
 ObjCPropertyImplDecl *ObjCImplDecl::
-FindPropertyImplDecl(ASTContext &Context, IdentifierInfo *Id) const {
-  for (propimpl_iterator i = propimpl_begin(Context), e = propimpl_end(Context);
-       i != e; ++i){
+FindPropertyImplDecl(IdentifierInfo *Id) const {
+  for (propimpl_iterator i = propimpl_begin(), e = propimpl_end(); i != e; ++i){
     ObjCPropertyImplDecl *PID = *i;
     if (PID->getPropertyDecl()->getIdentifier() == Id)
       return PID;
@@ -596,8 +579,7 @@ FindPropertyImplDecl(ASTContext &Context, IdentifierInfo *Id) const {
 // getInstanceMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjCMethodDecl *ObjCImplDecl::getInstanceMethod(ASTContext &Context,
-                                                Selector Sel) const {
+ObjCMethodDecl *ObjCImplDecl::getInstanceMethod(Selector Sel) const {
   // Since instance & class methods can have the same name, the loop below
   // ensures we get the correct method.
   //
@@ -607,7 +589,7 @@ ObjCMethodDecl *ObjCImplDecl::getInstanceMethod(ASTContext &Context,
   // @end
   //
   lookup_const_iterator Meth, MethEnd;
-  for (llvm::tie(Meth, MethEnd) = lookup(Context, Sel);
+  for (llvm::tie(Meth, MethEnd) = lookup(Sel);
        Meth != MethEnd; ++Meth) {
     ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
     if (MD && MD->isInstanceMethod())
@@ -619,8 +601,7 @@ ObjCMethodDecl *ObjCImplDecl::getInstanceMethod(ASTContext &Context,
 // getClassMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjCMethodDecl *ObjCImplDecl::getClassMethod(ASTContext &Context, 
-                                             Selector Sel) const {
+ObjCMethodDecl *ObjCImplDecl::getClassMethod(Selector Sel) const {
   // Since instance & class methods can have the same name, the loop below
   // ensures we get the correct method.
   //
@@ -630,7 +611,7 @@ ObjCMethodDecl *ObjCImplDecl::getClassMethod(ASTContext &Context,
   // @end
   //
   lookup_const_iterator Meth, MethEnd;
-  for (llvm::tie(Meth, MethEnd) = lookup(Context, Sel);
+  for (llvm::tie(Meth, MethEnd) = lookup(Sel);
        Meth != MethEnd; ++Meth) {
     ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
     if (MD && MD->isClassMethod())

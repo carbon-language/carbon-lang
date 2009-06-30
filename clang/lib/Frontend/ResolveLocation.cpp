@@ -163,7 +163,7 @@ void StmtLocResolver::VisitStmt(Stmt *Node) {
 void DeclLocResolver::VisitDeclContext(DeclContext *DC) {
   DeclLocResolver DLR(Ctx, Loc);
   for (DeclContext::decl_iterator
-         I = DC->decls_begin(Ctx), E = DC->decls_end(Ctx); I != E; ++I) {
+         I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
     DLR.Visit(*I);
     if (DLR.Finished()) {
       if (DLR.FoundIt())

@@ -291,55 +291,52 @@ public:
 
   // Iterator access to properties.
   typedef specific_decl_iterator<ObjCPropertyDecl> prop_iterator;
-  prop_iterator prop_begin(ASTContext &Context) const { 
-    return prop_iterator(decls_begin(Context));
+  prop_iterator prop_begin() const { 
+    return prop_iterator(decls_begin());
   }
-  prop_iterator prop_end(ASTContext &Context) const { 
-    return prop_iterator(decls_end(Context));
+  prop_iterator prop_end() const { 
+    return prop_iterator(decls_end());
   }
   
   // Iterator access to instance/class methods.
   typedef specific_decl_iterator<ObjCMethodDecl> method_iterator;
-  method_iterator meth_begin(ASTContext &Context) const { 
-    return method_iterator(decls_begin(Context));
+  method_iterator meth_begin() const { 
+    return method_iterator(decls_begin());
   }
-  method_iterator meth_end(ASTContext &Context) const { 
-    return method_iterator(decls_end(Context));
+  method_iterator meth_end() const { 
+    return method_iterator(decls_end());
   }
 
   typedef filtered_decl_iterator<ObjCMethodDecl, 
                                  &ObjCMethodDecl::isInstanceMethod> 
     instmeth_iterator;
-  instmeth_iterator instmeth_begin(ASTContext &Context) const {
-    return instmeth_iterator(decls_begin(Context));
+  instmeth_iterator instmeth_begin() const {
+    return instmeth_iterator(decls_begin());
   }
-  instmeth_iterator instmeth_end(ASTContext &Context) const {
-    return instmeth_iterator(decls_end(Context));
+  instmeth_iterator instmeth_end() const {
+    return instmeth_iterator(decls_end());
   }
 
   typedef filtered_decl_iterator<ObjCMethodDecl, 
                                  &ObjCMethodDecl::isClassMethod> 
     classmeth_iterator;
-  classmeth_iterator classmeth_begin(ASTContext &Context) const {
-    return classmeth_iterator(decls_begin(Context));
+  classmeth_iterator classmeth_begin() const {
+    return classmeth_iterator(decls_begin());
   }
-  classmeth_iterator classmeth_end(ASTContext &Context) const {
-    return classmeth_iterator(decls_end(Context));
+  classmeth_iterator classmeth_end() const {
+    return classmeth_iterator(decls_end());
   }
 
   // Get the local instance/class method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(ASTContext &Context, Selector Sel) const;
-  ObjCMethodDecl *getClassMethod(ASTContext &Context, Selector Sel) const;
-  ObjCIvarDecl *getIvarDecl(ASTContext &Context, IdentifierInfo *Id) const;
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
+  ObjCMethodDecl *getClassMethod(Selector Sel) const;
+  ObjCIvarDecl *getIvarDecl(IdentifierInfo *Id) const;
 
-  ObjCMethodDecl *
-  getMethod(ASTContext &Context, Selector Sel, bool isInstance) const {
-    return isInstance ? getInstanceMethod(Context, Sel) 
-                      : getClassMethod(Context, Sel);
+  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
+    return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
   }
     
-  ObjCPropertyDecl *FindPropertyDeclaration(ASTContext &Context, 
-                                            IdentifierInfo *PropertyId) const;
+  ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
 
   // Marks the end of the container.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
@@ -474,19 +471,17 @@ public:
     return false;
   }
   
-  ObjCIvarDecl *lookupInstanceVariable(ASTContext &Context, 
-                                       IdentifierInfo *IVarName,
+  ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName,
                                        ObjCInterfaceDecl *&ClassDeclared);
-  ObjCIvarDecl *lookupInstanceVariable(ASTContext &Context, 
-                                       IdentifierInfo *IVarName) {
+  ObjCIvarDecl *lookupInstanceVariable(IdentifierInfo *IVarName) {
     ObjCInterfaceDecl *ClassDeclared;
-    return lookupInstanceVariable(Context, IVarName, ClassDeclared);
+    return lookupInstanceVariable(IVarName, ClassDeclared);
   }
 
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
-  ObjCMethodDecl *lookupInstanceMethod(ASTContext &Context, Selector Sel);
-  ObjCMethodDecl *lookupClassMethod(ASTContext &Context, Selector Sel);
+  ObjCMethodDecl *lookupInstanceMethod(Selector Sel);
+  ObjCMethodDecl *lookupClassMethod(Selector Sel);
   ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
 
   // Location information, modeled after the Stmt API. 
@@ -648,8 +643,8 @@ public:
   
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
-  ObjCMethodDecl *lookupInstanceMethod(ASTContext &Context, Selector Sel);
-  ObjCMethodDecl *lookupClassMethod(ASTContext &Context, Selector Sel);
+  ObjCMethodDecl *lookupInstanceMethod(Selector Sel);
+  ObjCMethodDecl *lookupClassMethod(Selector Sel);
 
   bool isForwardDecl() const { return isForwardProtoDecl; }
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
@@ -831,61 +826,57 @@ public:
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IFace) { ClassInterface = IFace; }
 
-  void addInstanceMethod(ASTContext &Context, ObjCMethodDecl *method) { 
+  void addInstanceMethod(ObjCMethodDecl *method) { 
     // FIXME: Context should be set correctly before we get here.
     method->setLexicalDeclContext(this);
-    addDecl(Context, method); 
+    addDecl(method); 
   }
-  void addClassMethod(ASTContext &Context, ObjCMethodDecl *method) { 
+  void addClassMethod(ObjCMethodDecl *method) { 
     // FIXME: Context should be set correctly before we get here.
     method->setLexicalDeclContext(this);
-    addDecl(Context, method); 
+    addDecl(method); 
   }
   
   // Get the local instance/class method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(ASTContext &Context, Selector Sel) const;
-  ObjCMethodDecl *getClassMethod(ASTContext &Context, Selector Sel) const;
-  ObjCMethodDecl *getMethod(ASTContext &Context, Selector Sel, 
-                            bool isInstance) const {
-    return isInstance ? getInstanceMethod(Context, Sel) 
-                      : getClassMethod(Context, Sel);
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
+  ObjCMethodDecl *getClassMethod(Selector Sel) const;
+  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
+    return isInstance ? getInstanceMethod(Sel) 
+                      : getClassMethod(Sel);
   }
   
-  void addPropertyImplementation(ASTContext &Context, 
-                                 ObjCPropertyImplDecl *property);
+  void addPropertyImplementation(ObjCPropertyImplDecl *property);
   
-  ObjCPropertyImplDecl *FindPropertyImplDecl(ASTContext &Context, 
-                                             IdentifierInfo *propertyId) const;
-  ObjCPropertyImplDecl *FindPropertyImplIvarDecl(ASTContext &Context, 
-                                                 IdentifierInfo *ivarId) const;
+  ObjCPropertyImplDecl *FindPropertyImplDecl(IdentifierInfo *propertyId) const;
+  ObjCPropertyImplDecl *FindPropertyImplIvarDecl(IdentifierInfo *ivarId) const;
 
   // Iterator access to properties.
   typedef specific_decl_iterator<ObjCPropertyImplDecl> propimpl_iterator;
-  propimpl_iterator propimpl_begin(ASTContext &Context) const { 
-    return propimpl_iterator(decls_begin(Context));
+  propimpl_iterator propimpl_begin() const { 
+    return propimpl_iterator(decls_begin());
   }
-  propimpl_iterator propimpl_end(ASTContext &Context) const { 
-    return propimpl_iterator(decls_end(Context));
+  propimpl_iterator propimpl_end() const { 
+    return propimpl_iterator(decls_end());
   }
 
   typedef filtered_decl_iterator<ObjCMethodDecl, 
                                  &ObjCMethodDecl::isInstanceMethod> 
     instmeth_iterator;
-  instmeth_iterator instmeth_begin(ASTContext &Context) const {
-    return instmeth_iterator(decls_begin(Context));
+  instmeth_iterator instmeth_begin() const {
+    return instmeth_iterator(decls_begin());
   }
-  instmeth_iterator instmeth_end(ASTContext &Context) const {
-    return instmeth_iterator(decls_end(Context));
+  instmeth_iterator instmeth_end() const {
+    return instmeth_iterator(decls_end());
   }
 
   typedef filtered_decl_iterator<ObjCMethodDecl, 
                                  &ObjCMethodDecl::isClassMethod> 
     classmeth_iterator;
-  classmeth_iterator classmeth_begin(ASTContext &Context) const {
-    return classmeth_iterator(decls_begin(Context));
+  classmeth_iterator classmeth_begin() const {
+    return classmeth_iterator(decls_begin());
   }
-  classmeth_iterator classmeth_end(ASTContext &Context) const {
-    return classmeth_iterator(decls_end(Context));
+  classmeth_iterator classmeth_end() const {
+    return classmeth_iterator(decls_end());
   }
 
   // Location information, modeled after the Stmt API. 
@@ -1002,17 +993,17 @@ public:
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
     
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
-  ivar_iterator ivar_begin(ASTContext &Context) const { 
-    return ivar_iterator(decls_begin(Context)); 
+  ivar_iterator ivar_begin() const { 
+    return ivar_iterator(decls_begin()); 
   }
-  ivar_iterator ivar_end(ASTContext &Context) const { 
-    return ivar_iterator(decls_end(Context));
+  ivar_iterator ivar_end() const { 
+    return ivar_iterator(decls_end());
   }
-  unsigned ivar_size(ASTContext &Context) const { 
-    return std::distance(ivar_begin(Context), ivar_end(Context));
+  unsigned ivar_size() const { 
+    return std::distance(ivar_begin(), ivar_end());
   }
-  bool ivar_empty(ASTContext &Context) const { 
-    return ivar_begin(Context) == ivar_end(Context);
+  bool ivar_empty() const { 
+    return ivar_begin() == ivar_end();
   }
   
   static bool classof(const Decl *D) {

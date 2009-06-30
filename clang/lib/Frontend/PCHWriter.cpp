@@ -1064,14 +1064,13 @@ void PCHWriter::WriteTypesBlock(ASTContext &Context) {
 /// bistream, or 0 if no block was written.
 uint64_t PCHWriter::WriteDeclContextLexicalBlock(ASTContext &Context, 
                                                  DeclContext *DC) {
-  if (DC->decls_empty(Context))
+  if (DC->decls_empty())
     return 0;
 
   uint64_t Offset = Stream.GetCurrentBitNo();
   RecordData Record;
-  for (DeclContext::decl_iterator D = DC->decls_begin(Context),
-                               DEnd = DC->decls_end(Context);
-       D != DEnd; ++D)
+  for (DeclContext::decl_iterator D = DC->decls_begin(), DEnd = DC->decls_end();
+         D != DEnd; ++D)
     AddDeclRef(*D, Record);
 
   ++NumLexicalDeclContexts;
@@ -1097,7 +1096,7 @@ uint64_t PCHWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
     return 0;
 
   // Force the DeclContext to build a its name-lookup table.
-  DC->lookup(Context, DeclarationName());
+  DC->lookup(DeclarationName());
 
   // Serialize the contents of the mapping used for lookup. Note that,
   // although we have two very different code paths, the serialized

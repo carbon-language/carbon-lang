@@ -1585,8 +1585,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   std::vector<llvm::Constant*> OptInstanceMethods, OptClassMethods;
   for (ObjCProtocolDecl::instmeth_iterator 
-         i = PD->instmeth_begin(CGM.getContext()),
-         e = PD->instmeth_end(CGM.getContext()); i != e; ++i) {
+         i = PD->instmeth_begin(), e = PD->instmeth_end(); i != e; ++i) {
     ObjCMethodDecl *MD = *i;
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
@@ -1597,8 +1596,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
   }
 
   for (ObjCProtocolDecl::classmeth_iterator 
-         i = PD->classmeth_begin(CGM.getContext()),
-         e = PD->classmeth_end(CGM.getContext()); i != e; ++i) {
+         i = PD->classmeth_begin(), e = PD->classmeth_end(); i != e; ++i) {
     ObjCMethodDecl *MD = *i;
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
@@ -1772,8 +1770,8 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
                                       const ObjCContainerDecl *OCD,
                                       const ObjCCommonTypesHelper &ObjCTypes) {
   std::vector<llvm::Constant*> Properties, Prop(2);
-  for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(CGM.getContext()), 
-       E = OCD->prop_end(CGM.getContext()); I != E; ++I) {
+  for (ObjCContainerDecl::prop_iterator I = OCD->prop_begin(), 
+       E = OCD->prop_end(); I != E; ++I) {
     const ObjCPropertyDecl *PD = *I;
     Prop[0] = GetPropertyName(PD->getIdentifier());
     Prop[1] = GetPropertyTypeString(PD, Container);
@@ -1865,14 +1863,12 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
 
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   for (ObjCCategoryImplDecl::instmeth_iterator 
-         i = OCD->instmeth_begin(CGM.getContext()),
-         e = OCD->instmeth_end(CGM.getContext()); i != e; ++i) {
+         i = OCD->instmeth_begin(), e = OCD->instmeth_end(); i != e; ++i) {
     // Instance methods should always be defined.
     InstanceMethods.push_back(GetMethodConstant(*i));
   }
   for (ObjCCategoryImplDecl::classmeth_iterator 
-         i = OCD->classmeth_begin(CGM.getContext()),
-         e = OCD->classmeth_end(CGM.getContext()); i != e; ++i) {
+         i = OCD->classmeth_begin(), e = OCD->classmeth_end(); i != e; ++i) {
     // Class methods should always be defined.
     ClassMethods.push_back(GetMethodConstant(*i));
   }
@@ -1969,21 +1965,18 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
 
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   for (ObjCImplementationDecl::instmeth_iterator 
-         i = ID->instmeth_begin(CGM.getContext()),
-         e = ID->instmeth_end(CGM.getContext()); i != e; ++i) {
+         i = ID->instmeth_begin(), e = ID->instmeth_end(); i != e; ++i) {
     // Instance methods should always be defined.
     InstanceMethods.push_back(GetMethodConstant(*i));
   }
   for (ObjCImplementationDecl::classmeth_iterator 
-         i = ID->classmeth_begin(CGM.getContext()),
-         e = ID->classmeth_end(CGM.getContext()); i != e; ++i) {
+         i = ID->classmeth_begin(), e = ID->classmeth_end(); i != e; ++i) {
     // Class methods should always be defined.
     ClassMethods.push_back(GetMethodConstant(*i));
   }
 
   for (ObjCImplementationDecl::propimpl_iterator 
-         i = ID->propimpl_begin(CGM.getContext()),
-         e = ID->propimpl_end(CGM.getContext()); i != e; ++i) {
+         i = ID->propimpl_begin(), e = ID->propimpl_end(); i != e; ++i) {
     ObjCPropertyImplDecl *PID = *i;
 
     if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize) {
@@ -2983,8 +2976,7 @@ void CGObjCCommonMac::BuildAggrIvarRecordLayout(const RecordType *RT,
                                                 bool &HasUnion) {
   const RecordDecl *RD = RT->getDecl();
   // FIXME - Use iterator.
-  llvm::SmallVector<FieldDecl*, 16> Fields(RD->field_begin(CGM.getContext()),
-                                           RD->field_end(CGM.getContext()));
+  llvm::SmallVector<FieldDecl*, 16> Fields(RD->field_begin(), RD->field_end());
   const llvm::Type *Ty = CGM.getTypes().ConvertType(QualType(RT, 0));
   const llvm::StructLayout *RecLayout = 
     CGM.getTargetData().getStructLayout(cast<llvm::StructType>(Ty));
@@ -3528,9 +3520,9 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
                                       SourceLocation(),
                                       &Ctx.Idents.get("_objc_super"));  
-  RD->addDecl(Ctx, FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0, 
                                      Ctx.getObjCIdType(), 0, false));
-  RD->addDecl(Ctx, FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
                                      Ctx.getObjCClassType(), 0, false));
   RD->completeDefinition(Ctx);
   
@@ -3987,9 +3979,9 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   RecordDecl *RD = RecordDecl::Create(Ctx, TagDecl::TK_struct, 0,
                                       SourceLocation(),
                                       &Ctx.Idents.get("_message_ref_t"));
-  RD->addDecl(Ctx, FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
                                      Ctx.VoidPtrTy, 0, false));
-  RD->addDecl(Ctx, FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
+  RD->addDecl(FieldDecl::Create(Ctx, RD, SourceLocation(), 0,
                                      Ctx.getObjCSelType(), 0, false));
   RD->completeDefinition(Ctx);
   
@@ -4190,22 +4182,19 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   if (flags & CLS_META) {
     MethodListName += "CLASS_METHODS_" + ID->getNameAsString();
     for (ObjCImplementationDecl::classmeth_iterator 
-           i = ID->classmeth_begin(CGM.getContext()),
-           e = ID->classmeth_end(CGM.getContext()); i != e; ++i) {
+           i = ID->classmeth_begin(), e = ID->classmeth_end(); i != e; ++i) {
       // Class methods should always be defined.
       Methods.push_back(GetMethodConstant(*i));
     }
   } else {
     MethodListName += "INSTANCE_METHODS_" + ID->getNameAsString();
     for (ObjCImplementationDecl::instmeth_iterator 
-           i = ID->instmeth_begin(CGM.getContext()),
-           e = ID->instmeth_end(CGM.getContext()); i != e; ++i) {
+           i = ID->instmeth_begin(), e = ID->instmeth_end(); i != e; ++i) {
       // Instance methods should always be defined.
       Methods.push_back(GetMethodConstant(*i));
     }
     for (ObjCImplementationDecl::propimpl_iterator 
-           i = ID->propimpl_begin(CGM.getContext()),
-           e = ID->propimpl_end(CGM.getContext()); i != e; ++i) {
+           i = ID->propimpl_begin(), e = ID->propimpl_end(); i != e; ++i) {
       ObjCPropertyImplDecl *PID = *i;
       
       if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Synthesize){
@@ -4298,7 +4287,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
 
 bool 
 CGObjCNonFragileABIMac::ImplementationIsNonLazy(const ObjCImplDecl *OD) const {
-  return OD->getClassMethod(CGM.getContext(), GetNullarySelector("load")) != 0;
+  return OD->getClassMethod(GetNullarySelector("load")) != 0;
 }
 
 void CGObjCNonFragileABIMac::GetClassSizeInfo(const ObjCImplementationDecl *OID,
@@ -4478,8 +4467,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     "_$_" + OCD->getNameAsString();
    
   for (ObjCCategoryImplDecl::instmeth_iterator 
-         i = OCD->instmeth_begin(CGM.getContext()),
-         e = OCD->instmeth_end(CGM.getContext()); i != e; ++i) {
+         i = OCD->instmeth_begin(), e = OCD->instmeth_end(); i != e; ++i) {
     // Instance methods should always be defined.
     Methods.push_back(GetMethodConstant(*i));
   }
@@ -4493,8 +4481,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     OCD->getNameAsString();
   Methods.clear();
   for (ObjCCategoryImplDecl::classmeth_iterator 
-         i = OCD->classmeth_begin(CGM.getContext()),
-         e = OCD->classmeth_end(CGM.getContext()); i != e; ++i) {
+         i = OCD->classmeth_begin(), e = OCD->classmeth_end(); i != e; ++i) {
     // Class methods should always be defined.
     Methods.push_back(GetMethodConstant(*i));
   }
@@ -4782,9 +4769,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   std::vector<llvm::Constant*> InstanceMethods, ClassMethods;
   std::vector<llvm::Constant*> OptInstanceMethods, OptClassMethods;
   for (ObjCProtocolDecl::instmeth_iterator 
-         i = PD->instmeth_begin(CGM.getContext()),
-         e = PD->instmeth_end(CGM.getContext()); 
-       i != e; ++i) {
+         i = PD->instmeth_begin(), e = PD->instmeth_end(); i != e; ++i) {
     ObjCMethodDecl *MD = *i;
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
@@ -4795,9 +4780,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   }
   
   for (ObjCProtocolDecl::classmeth_iterator 
-         i = PD->classmeth_begin(CGM.getContext()),
-         e = PD->classmeth_end(CGM.getContext());
-       i != e; ++i) {
+         i = PD->classmeth_begin(), e = PD->classmeth_end(); i != e; ++i) {
     ObjCMethodDecl *MD = *i;
     llvm::Constant *C = GetMethodDescriptionConstant(MD);
     if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {

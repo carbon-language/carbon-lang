@@ -70,8 +70,8 @@ namespace {
     virtual void HandleTranslationUnit(ASTContext &Ctx) {
       Doc.addSubNode("TranslationUnit");
       for (DeclContext::decl_iterator 
-             D = Ctx.getTranslationUnitDecl()->decls_begin(Ctx),
-             DEnd = Ctx.getTranslationUnitDecl()->decls_end(Ctx);
+             D = Ctx.getTranslationUnitDecl()->decls_begin(),
+             DEnd = Ctx.getTranslationUnitDecl()->decls_end();
            D != DEnd; 
            ++D)
       {
@@ -342,8 +342,7 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
   // Print decls in the DeclContext.
   // FIXME: Should not use a NULL DeclContext!
   ASTContext *Context = 0;
-  for (DeclContext::decl_iterator I = DC->decls_begin(*Context), 
-         E = DC->decls_end(*Context);
+  for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
        I != E; ++I) {
     for (unsigned i = 0; i < Indentation; ++i)
       Out << "  ";

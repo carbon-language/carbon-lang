@@ -78,7 +78,7 @@ CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(ASTContext &Context,
                                           Context.getCanonicalType(ClassType));
   unsigned FoundTQs;
   DeclContext::lookup_const_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = this->lookup(Context, ConstructorName);
+  for (llvm::tie(Con, ConEnd) = this->lookup(ConstructorName);
        Con != ConEnd; ++Con) {
     if (cast<CXXConstructorDecl>(*Con)->isCopyConstructor(Context, 
                                                           FoundTQs)) {
@@ -97,7 +97,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
   DeclarationName OpName =Context.DeclarationNames.getCXXOperatorName(OO_Equal);
 
   DeclContext::lookup_const_iterator Op, OpEnd;
-  for (llvm::tie(Op, OpEnd) = this->lookup(Context, OpName);
+  for (llvm::tie(Op, OpEnd) = this->lookup(OpName);
        Op != OpEnd; ++Op) {
     // C++ [class.copy]p9:
     //   A user-declared copy assignment operator is a non-static non-template
@@ -201,7 +201,7 @@ CXXRecordDecl::getDefaultConstructor(ASTContext &Context) {
                       Context.getCanonicalType(ClassType.getUnqualifiedType()));
   
   DeclContext::lookup_const_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = lookup(Context, ConstructorName);
+  for (llvm::tie(Con, ConEnd) = lookup(ConstructorName);
        Con != ConEnd; ++Con) {
     CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
     if (Constructor->isDefaultConstructor())
@@ -218,7 +218,7 @@ CXXRecordDecl::getDestructor(ASTContext &Context) {
     = Context.DeclarationNames.getCXXDestructorName(ClassType);
 
   DeclContext::lookup_iterator I, E;
-  llvm::tie(I, E) = lookup(Context, Name); 
+  llvm::tie(I, E) = lookup(Name); 
   assert(I != E && "Did not find a destructor!");
   
   const CXXDestructorDecl *Dtor = cast<CXXDestructorDecl>(*I);

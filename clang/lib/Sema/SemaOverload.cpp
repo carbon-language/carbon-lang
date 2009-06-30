@@ -1375,7 +1375,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
                           Context.getCanonicalType(ToType).getUnqualifiedType());
       DeclContext::lookup_iterator Con, ConEnd;
       for (llvm::tie(Con, ConEnd) 
-             = ToRecordDecl->lookup(Context, ConstructorName);
+             = ToRecordDecl->lookup(ConstructorName);
            Con != ConEnd; ++Con) {
         CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
         if (Constructor->isConvertingConstructor())
@@ -2516,7 +2516,7 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
   // FIXME: Lookup in base classes, too!
   if (const RecordType *T1Rec = T1->getAsRecordType()) {
     DeclContext::lookup_const_iterator Oper, OperEnd;
-    for (llvm::tie(Oper, OperEnd) = T1Rec->getDecl()->lookup(Context, OpName);
+    for (llvm::tie(Oper, OperEnd) = T1Rec->getDecl()->lookup(OpName);
          Oper != OperEnd; ++Oper)
       AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Args[0], 
                          Args+1, NumArgs - 1, CandidateSet,
@@ -4290,7 +4290,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
   OverloadCandidateSet CandidateSet;
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
   DeclContext::lookup_const_iterator Oper, OperEnd;
-  for (llvm::tie(Oper, OperEnd) = Record->getDecl()->lookup(Context, OpName);
+  for (llvm::tie(Oper, OperEnd) = Record->getDecl()->lookup(OpName);
        Oper != OperEnd; ++Oper)
     AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Object, Args, NumArgs, 
                        CandidateSet, /*SuppressUserConversions=*/false);
@@ -4494,8 +4494,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   
   DeclContext::lookup_const_iterator Oper, OperEnd;
   for (llvm::tie(Oper, OperEnd) 
-         = BaseRecord->getDecl()->lookup(Context, OpName);
-       Oper != OperEnd; ++Oper)
+         = BaseRecord->getDecl()->lookup(OpName); Oper != OperEnd; ++Oper)
     AddMethodCandidate(cast<CXXMethodDecl>(*Oper), Base, 0, 0, CandidateSet,
                        /*SuppressUserConversions=*/false);
 

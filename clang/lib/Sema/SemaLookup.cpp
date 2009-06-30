@@ -65,7 +65,7 @@ void AddNamespaceUsingDirectives(ASTContext &Context,
                                  NamespaceSet &Visited) {
   DeclContext::udir_iterator I, End;
 
-  for (llvm::tie(I, End) = NS->getUsingDirectives(Context); I !=End; ++I) {
+  for (llvm::tie(I, End) = NS->getUsingDirectives(); I !=End; ++I) {
     UDirs.push_back(*I);
     std::push_heap(UDirs.begin(), UDirs.end(), UsingDirAncestorCompare());
     NamespaceDecl *Nominated = (*I)->getNominatedNamespace();
@@ -609,7 +609,7 @@ CppNamespaceLookup(ASTContext &Context, DeclContext *NS,
 
   // Perform qualified name lookup into the LookupCtx.
   DeclContext::lookup_iterator I, E;
-  for (llvm::tie(I, E) = NS->lookup(Context, Name); I != E; ++I)
+  for (llvm::tie(I, E) = NS->lookup(Name); I != E; ++I)
     if (Sema::isAcceptableLookupResult(*I, NameKind, IDNS)) {
       Results.push_back(Sema::LookupResult::CreateLookupResult(Context, I, E));
       break;
@@ -1005,7 +1005,7 @@ Sema::LookupQualifiedName(DeclContext *LookupCtx, DeclarationName Name,
 
   // Perform qualified name lookup into the LookupCtx.
   DeclContext::lookup_iterator I, E;
-  for (llvm::tie(I, E) = LookupCtx->lookup(Context, Name); I != E; ++I)
+  for (llvm::tie(I, E) = LookupCtx->lookup(Name); I != E; ++I)
     if (isAcceptableLookupResult(*I, NameKind, IDNS))
       return LookupResult::CreateLookupResult(Context, I, E);
 
@@ -1148,7 +1148,7 @@ Sema::LookupParsedName(Scope *S, const CXXScopeSpec *SS,
       // (C++0x [temp.dep.type]).
       unsigned IDNS = getIdentifierNamespacesFromLookupNameKind(NameKind, true);
       DeclContext::lookup_iterator I, E;
-      for (llvm::tie(I, E) = Current->lookup(Context, Name); I != E; ++I)
+      for (llvm::tie(I, E) = Current->lookup(Name); I != E; ++I)
         if (isAcceptableLookupResult(*I, NameKind, IDNS))
           return LookupResult::CreateLookupResult(Context, I, E);
     }
@@ -1656,7 +1656,7 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
     //        namespaces even if they are not visible during an ordinary
     //        lookup (11.4).
     DeclContext::lookup_iterator I, E;
-    for (llvm::tie(I, E) = (*NS)->lookup(Context, Name); I != E; ++I) {
+    for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
       if (FunctionDecl *Func = dyn_cast<FunctionDecl>(*I))
         Functions.insert(Func);
       else if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(*I))
@@ -1667,7 +1667,7 @@ void Sema::ArgumentDependentLookup(DeclarationName Name,
   if (GlobalScope) {
     DeclContext::lookup_iterator I, E;
     for (llvm::tie(I, E) 
-           = Context.getTranslationUnitDecl()->lookup(Context, Name); 
+           = Context.getTranslationUnitDecl()->lookup(Name); 
          I != E; ++I) {
       if (FunctionDecl *Func = dyn_cast<FunctionDecl>(*I))
         Functions.insert(Func);

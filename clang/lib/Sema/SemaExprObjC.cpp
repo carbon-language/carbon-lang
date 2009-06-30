@@ -243,13 +243,13 @@ ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
   while (ClassDecl && !Method) {
     if (ObjCImplementationDecl *ImpDecl 
           = LookupObjCImplementation(ClassDecl->getIdentifier()))
-      Method = ImpDecl->getClassMethod(Context, Sel);
+      Method = ImpDecl->getClassMethod(Sel);
     
     // Look through local category implementations associated with the class.
     if (!Method) {
       for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
         if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-          Method = ObjCCategoryImpls[i]->getClassMethod(Context, Sel);
+          Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
       }
     }
     
@@ -257,7 +257,7 @@ ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
     // But only in the root. This matches gcc's behaviour and what the
     // runtime expects.
     if (!Method && !ClassDecl->getSuperClass()) {
-      Method = ClassDecl->lookupInstanceMethod(Context, Sel);
+      Method = ClassDecl->lookupInstanceMethod(Sel);
       // Look through local category implementations associated 
       // with the root class.
       if (!Method) 
@@ -276,13 +276,13 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
     // If we have implementations in scope, check "private" methods.
     if (ObjCImplementationDecl *ImpDecl
           = LookupObjCImplementation(ClassDecl->getIdentifier()))
-      Method = ImpDecl->getInstanceMethod(Context, Sel);
+      Method = ImpDecl->getInstanceMethod(Sel);
     
     // Look through local category implementations associated with the class.
     if (!Method) {
       for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
         if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-          Method = ObjCCategoryImpls[i]->getInstanceMethod(Context, Sel);
+          Method = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
       }
     }
     ClassDecl = ClassDecl->getSuperClass();
@@ -301,7 +301,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
   // Search for a declared property first.
   
   Selector Sel = PP.getSelectorTable().getNullarySelector(&propertyName);
-  ObjCMethodDecl *Getter = IFace->lookupClassMethod(Context, Sel);
+  ObjCMethodDecl *Getter = IFace->lookupClassMethod(Sel);
 
   // If this reference is in an @implementation, check for 'private' methods.
   if (!Getter)
@@ -309,7 +309,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
         if (ObjCImplementationDecl *ImpDecl
               = LookupObjCImplementation(ClassDecl->getIdentifier()))
-          Getter = ImpDecl->getClassMethod(Context, Sel);
+          Getter = ImpDecl->getClassMethod(Sel);
 
   if (Getter) {
     // FIXME: refactor/share with ActOnMemberReference().
@@ -323,7 +323,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
     SelectorTable::constructSetterName(PP.getIdentifierTable(), 
                                        PP.getSelectorTable(), &propertyName);
     
-  ObjCMethodDecl *Setter = IFace->lookupClassMethod(Context, SetterSel);
+  ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
   if (!Setter) {
     // If this reference is in an @implementation, also check for 'private'
     // methods.
@@ -331,13 +331,13 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
         if (ObjCImplementationDecl *ImpDecl 
               = LookupObjCImplementation(ClassDecl->getIdentifier()))
-          Setter = ImpDecl->getClassMethod(Context, SetterSel);
+          Setter = ImpDecl->getClassMethod(SetterSel);
   }
   // Look through local category implementations associated with the class.
   if (!Setter) {
     for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
       if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-        Setter = ObjCCategoryImpls[i]->getClassMethod(Context, SetterSel);
+        Setter = ObjCCategoryImpls[i]->getClassMethod(SetterSel);
     }
   }
 
@@ -450,7 +450,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
         << Method->getDeclName();
   }
   if (!Method)
-    Method = ClassDecl->lookupClassMethod(Context, Sel);
+    Method = ClassDecl->lookupClassMethod(Sel);
   
   // If we have an implementation in scope, check "private" methods.
   if (!Method)
@@ -507,7 +507,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       // If we have an interface in scope, check 'super' methods.
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
         if (ObjCInterfaceDecl *SuperDecl = ClassDecl->getSuperClass()) {
-          Method = SuperDecl->lookupInstanceMethod(Context, Sel);
+          Method = SuperDecl->lookupInstanceMethod(Sel);
           
           if (!Method) 
             // If we have implementations in scope, check "private" methods.
@@ -550,7 +550,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface()) {
         // First check the public methods in the class interface.
-        Method = ClassDecl->lookupClassMethod(Context, Sel);
+        Method = ClassDecl->lookupClassMethod(Sel);
         
         if (!Method)
           Method = LookupPrivateClassMethod(Sel, ClassDecl);
@@ -596,10 +596,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     for (ObjCObjectPointerType::qual_iterator I = QIdTy->qual_begin(),
          E = QIdTy->qual_end(); I != E; ++I) {
       ObjCProtocolDecl *PDecl = *I;
-      if (PDecl && (Method = PDecl->lookupInstanceMethod(Context, Sel)))
+      if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
         break;
       // Since we aren't supporting "Class<foo>", look for a class method.
-      if (PDecl && (Method = PDecl->lookupClassMethod(Context, Sel)))
+      if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
         break;
     }
   } else if (const ObjCInterfaceType *OCIType = 
@@ -610,13 +610,13 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
     // faster than the following method (which can do *many* linear searches).
     // The idea is to add class info to InstanceMethodPool.
-    Method = ClassDecl->lookupInstanceMethod(Context, Sel);
+    Method = ClassDecl->lookupInstanceMethod(Sel);
     
     if (!Method) {
       // Search protocol qualifiers.
       for (ObjCQualifiedInterfaceType::qual_iterator QI = OCIType->qual_begin(),
            E = OCIType->qual_end(); QI != E; ++QI) {
-        if ((Method = (*QI)->lookupInstanceMethod(Context, Sel)))
+        if ((Method = (*QI)->lookupInstanceMethod(Sel)))
           break;
       }
     }

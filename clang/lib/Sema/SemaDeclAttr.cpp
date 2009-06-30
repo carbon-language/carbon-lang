@@ -1326,8 +1326,8 @@ static void HandleTransparentUnionAttr(Decl *d, const AttributeList &Attr,
     return;
   }
 
-  RecordDecl::field_iterator Field = RD->field_begin(S.Context),
-                          FieldEnd = RD->field_end(S.Context);
+  RecordDecl::field_iterator Field = RD->field_begin(),
+                          FieldEnd = RD->field_end();
   if (Field == FieldEnd) {
     S.Diag(Attr.getLoc(), diag::warn_transparent_union_attribute_zero_fields);
     return;
