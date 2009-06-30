@@ -459,7 +459,11 @@ public:
   const DeclContext *getLexicalParent() const {
     return const_cast<DeclContext*>(this)->getLexicalParent();
   }    
-  
+
+  ASTContext &getParentASTContext() const {
+    return cast<Decl>(this)->getASTContext();
+  }
+
   bool isFunctionOrMethod() const {
     switch (DeclKind) {
     case Decl::Block:
