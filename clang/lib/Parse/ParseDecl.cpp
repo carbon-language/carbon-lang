@@ -802,7 +802,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       SourceLocation EndProtoLoc;
       llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
       ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
-      DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
+      DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
       
       DS.SetRangeEnd(EndProtoLoc);
       continue;
@@ -859,7 +859,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       SourceLocation EndProtoLoc;
       llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
       ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
-      DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
+      DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
       
       DS.SetRangeEnd(EndProtoLoc);
 
@@ -1066,7 +1066,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         SourceLocation EndProtoLoc;
         llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
         ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
-        DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
+        DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
         DS.SetRangeEnd(EndProtoLoc);
 
         Diag(Loc, diag::warn_objc_protocol_qualifier_missing_id)
@@ -1179,7 +1179,7 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
     SourceLocation EndProtoLoc;
     llvm::SmallVector<DeclPtrTy, 8> ProtocolDecl;
     ParseObjCProtocolReferences(ProtocolDecl, false, EndProtoLoc);
-    DS.setProtocolQualifiers(&ProtocolDecl[0], ProtocolDecl.size());
+    DS.setProtocolQualifiers(ProtocolDecl.data(), ProtocolDecl.size());
     
     DS.SetRangeEnd(EndProtoLoc);
     return true;
