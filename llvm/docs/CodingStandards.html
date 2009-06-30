@@ -50,6 +50,8 @@
           <li><a href="#ll_ns_std">Do not use 'using namespace std'</a></li>
           <li><a href="#ll_virtual_anch">Provide a virtual method anchor for
               classes in headers</a></li>
+          <li><a href="#ll_end">Don't evaluate end() every time through a
+              loop</a></li>
           <li><a href="#ll_preincrement">Prefer Preincrement</a></li>
           <li><a href="#ll_avoidendl">Avoid <tt>std::endl</tt></a></li>
         </ol></li>
@@ -658,6 +660,67 @@ always have at least one out-of-line virtual method in the class.  Without
 this, the compiler will copy the vtable and RTTI into every <tt>.o</tt> file
 that <tt>#include</tt>s the header, bloating <tt>.o</tt> file sizes and
 increasing link times.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ll_end">Don't evaluate end() every time through a loop</a>
+</div>
+
+<div class="doc_text">
+
+<p>Because C++ doesn't have a standard "foreach" loop (though it can be emulated
+with macros and may be coming in C++'0x) we end up writing a lot of loops that
+manually iterate from begin to end on a variety of containers or through other
+data structures.  One common mistake is to write a loop in this style:</p>
+
+<div class="doc_code">
+<pre>
+  BasicBlock *BB = ...
+  for (BasicBlock::iterator I = BB->begin(); I != <b>BB->end()</b>; ++I)
+     ... use I ...
+</pre>
+</div>
+
+<p>The problem with this construct is that it evaluates "<tt>BB->end()</tt>"
+every time through the loop.  Instead of writing the loop like this, we strongly
+prefer loops to be written so that they evaluate it once before the loop starts.
+A convenient way to do this is like so:</p>
+
+<div class="doc_code">
+<pre>
+  BasicBlock *BB = ...
+  for (BasicBlock::iterator I = BB->begin(), E = <b>BB->end()</b>; I != E; ++I)
+     ... use I ...
+</pre>
+</div>
+
+<p>The observant may quickly point out that these two loops may have different
+semantics: if the container (a basic block in this case) is being mutated, then
+"<tt>BB->end()</tt>" may change its value every time through the loop and the
+second loop may not in fact be correct.  If you actually do depend on this
+behavior, please write the loop in the second form and add a comment indicating
+that you did it intentionally.</p>
+
+<p>Why do we prefer the second form (when correct)?  Writing the loop in the
+first form has two problems: First it may be less efficient than evaluating it
+at the start of the loop.  In this case, the cost is probably minor: a few extra
+loads every time through the loop.  However, if the base expression is more
+complex, then the cost can rise quickly.  I've seen loops where the end
+expression was actually something like: "<tt>SomeMap[x]->end()</tt>" and map
+lookups really aren't cheap.  By writing it in the first form consistently, you
+eliminate the issue entirely and don't even have to think about it.</p>
+
+<p>The second (even bigger) issue is that writing the loop in the second form
+hints to the reader that the loop is mutating the container (a fact that a
+comment would handily confirm!).  If you write the loop in the second form, it
+is immediately obvious without even looking at the body of the loop that the
+container isn't being modified, which makes it easier to read the code and
+understand what it does.</p>
+
+<p>While the second form of the loop is a few extra keystrokes, we do strongly
+prefer it.</p>
 
 </div>
 
