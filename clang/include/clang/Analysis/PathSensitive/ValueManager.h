@@ -67,6 +67,9 @@ public:
                                           const void* SymbolTag = 0) {    
     return SymMgr.getConjuredSymbol(E, VisitCount, SymbolTag);
   }
+
+  SVal makeUnknownVal() { return UnknownVal(); }
+  SVal makeUndefinedVal() { return UndefinedVal(); }
   
   /// makeZeroVal - Construct an SVal representing '0' for the specified type.
   SVal makeZeroVal(QualType T);
