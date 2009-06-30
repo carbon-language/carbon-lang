@@ -198,7 +198,7 @@ SVal BasicStoreManager::getLValueElement(const GRState *state,
     return Base;
   
   Loc BaseL = cast<Loc>(Base);  
-  const TypedRegion* BaseR = 0;
+  const MemRegion* BaseR = 0;
   
   switch(BaseL.getSubKind()) {
     case loc::GotoLabelKind:
@@ -223,8 +223,7 @@ SVal BasicStoreManager::getLValueElement(const GRState *state,
       }
       
       if (const SymbolicRegion* SR = dyn_cast<SymbolicRegion>(R)) {
-        SymbolRef Sym = SR->getSymbol();
-        BaseR = MRMgr.getTypedViewRegion(Sym->getType(getContext()), SR);
+        BaseR = SR;
       }
       
       break;
