@@ -43,7 +43,7 @@ const void* ThreadLocalImpl::getInstance() {
 void ThreadLocalImpl::setInstance(const void* d){
   DWORD* tls = static_cast<DWORD*>(data);
   int errorcode = TlsSetValue(*tls, const_cast<void*>(d));
-  assert(errorcode == 0);
+  assert(errorcode != 0);
 }
 
 }
