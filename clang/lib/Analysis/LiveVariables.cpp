@@ -138,7 +138,6 @@ void TransferFuncs::Visit(Stmt *S) {
   else {
     // For block-level expressions, mark that they are live.
     LiveState(S,AD) = Alive;
-    StmtVisitor<TransferFuncs,void>::Visit(S);
   }
 }
   
