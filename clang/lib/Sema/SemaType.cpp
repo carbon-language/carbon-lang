@@ -697,7 +697,7 @@ QualType Sema::BuildMemberPointerType(QualType T, QualType Class,
   // C++ 8.3.3p3: A pointer to member shall not pointer to ... a member
   //   with reference type, or "cv void."
   if (T->isReferenceType()) {
-    Diag(Loc, diag::err_illegal_decl_pointer_to_reference)
+    Diag(Loc, diag::err_illegal_decl_mempointer_to_reference)
       << (Entity? Entity.getAsString() : "type name");
     return QualType();
   }

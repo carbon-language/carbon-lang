@@ -1074,6 +1074,8 @@ def err_array_star_outside_prototype : Error<
   "star modifier used outside of function prototype">;
 def err_illegal_decl_pointer_to_reference : Error<
   "'%0' declared as a pointer to a reference">;
+def err_illegal_decl_mempointer_to_reference : Error<
+  "'%0' declared as a member pointer to a reference">;
 def err_illegal_decl_mempointer_to_void : Error<
   "'%0' declared as a member pointer to void">;
 def err_illegal_decl_mempointer_in_nonclass : Error<
