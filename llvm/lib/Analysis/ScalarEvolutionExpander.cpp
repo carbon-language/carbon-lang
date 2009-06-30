@@ -185,8 +185,9 @@ static bool FactorOutConstant(const SCEV* &S,
   if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(S))
     if (const SCEVConstant *C = dyn_cast<SCEVConstant>(M->getOperand(0)))
       if (!C->getValue()->getValue().srem(Factor)) {
-        const SmallVectorImpl<const SCEV*> &MOperands = M->getOperands();
-        SmallVector<const SCEV*, 4> NewMulOps(MOperands.begin(), MOperands.end());
+        const SmallVectorImpl<const SCEV *> &MOperands = M->getOperands();
+        SmallVector<const SCEV *, 4> NewMulOps(MOperands.begin(),
+                                               MOperands.end());
         NewMulOps[0] =
           SE.getConstant(C->getValue()->getValue().sdiv(Factor));
         S = SE.getMulExpr(NewMulOps);
@@ -368,8 +369,7 @@ Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   if (SE.TD)
     if (const PointerType *PTy = dyn_cast<PointerType>(V->getType())) {
       const SmallVectorImpl<const SCEV*> &Ops = S->getOperands();
-      return expandAddToGEP(&Ops[0], &Ops[Ops.size() - 1],
-                            PTy, Ty, V);
+      return expandAddToGEP(&Ops[0], &Ops[Ops.size() - 1], PTy, Ty, V);
     }
 
   V = InsertNoopCastOfTo(V, Ty);
@@ -457,10 +457,10 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
   if (CanonicalIV &&
       SE.getTypeSizeInBits(CanonicalIV->getType()) >
       SE.getTypeSizeInBits(Ty)) {
-    const SCEV* Start = SE.getAnyExtendExpr(S->getStart(),
+    const SCEV *Start = SE.getAnyExtendExpr(S->getStart(),
+                                            CanonicalIV->getType());
+    const SCEV *Step = SE.getAnyExtendExpr(S->getStepRecurrence(SE),
                                            CanonicalIV->getType());
-    const SCEV* Step = SE.getAnyExtendExpr(S->getStepRecurrence(SE),
-                                          CanonicalIV->getType());
     Value *V = expand(SE.getAddRecExpr(Start, Step, S->getLoop()));
     BasicBlock *SaveInsertBB = Builder.GetInsertBlock();
     BasicBlock::iterator SaveInsertPt = Builder.GetInsertPoint();
