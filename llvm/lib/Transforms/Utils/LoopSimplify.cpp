@@ -282,10 +282,9 @@ ReprocessLoop:
       // Attempt to hoist out all instructions except for the
       // comparison and the branch.
       bool AllInvariant = true;
-      for (BasicBlock::iterator I = ExitingBlock->begin(),
-           E = ExitingBlock->end(); I != E; ) {
+      for (BasicBlock::iterator I = ExitingBlock->begin(); &*I != BI; ) {
         Instruction *Inst = I++;
-        if (Inst == BI || Inst == CI)
+        if (Inst == CI)
           continue;
         if (Inst->isTrapping()) {
           AllInvariant = false;
