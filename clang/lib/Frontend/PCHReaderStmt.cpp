@@ -1133,6 +1133,5 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
     StmtStack.push_back(S);
   }
   assert(StmtStack.size() == 1 && "Extra expressions on stack!");
-  SwitchCaseStmts.clear();
   return StmtStack.back();
 }

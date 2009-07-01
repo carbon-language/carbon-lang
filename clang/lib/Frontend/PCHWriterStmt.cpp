@@ -826,5 +826,4 @@ void PCHWriter::FlushStmts() {
   }
   
   StmtsToEmit.clear();
-  SwitchCaseIDs.clear();
 }
