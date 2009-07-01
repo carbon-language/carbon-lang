@@ -67,6 +67,9 @@ check_symbol_exists(malloc_zone_statistics malloc/malloc.h
                     HAVE_MALLOC_ZONE_STATISTICS)
 check_symbol_exists(pthread_mutex_lock pthread.h HAVE_PTHREAD_MUTEX_LOCK)
 check_symbol_exists(strtoll stdlib.h HAVE_STRTOLL)
+check_symbol_exists(strerror string.h HAVE_STRERROR)
+check_symbol_exists(strerror_r string.h HAVE_STRERROR_R)
+check_symbol_exists(strerror_s string.h HAVE_STRERROR_S)
 
 check_symbol_exists(__GLIBC__ stdio.h LLVM_USING_GLIBC)
 if( LLVM_USING_GLIBC )

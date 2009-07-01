@@ -364,10 +364,13 @@
 #undef HAVE_STRDUP
 
 /* Define to 1 if you have the `strerror' function. */
-#undef HAVE_STRERROR
+#cmakedefine HAVE_STRERROR
 
 /* Define to 1 if you have the `strerror_r' function. */
-#undef HAVE_STRERROR_R
+#cmakedefine HAVE_STRERROR_R
+
+/* Define to 1 if you have the `strerror_s' function. */
+#cmakedefine HAVE_STRERROR_S
 
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H

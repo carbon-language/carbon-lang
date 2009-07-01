@@ -3,6 +3,7 @@ add_llvm_library(LLVMSystem
   Atomic.cpp
   Disassembler.cpp
   DynamicLibrary.cpp
+  Errno.cpp
   Host.cpp
   IncludeFile.cpp
   Memory.cpp
