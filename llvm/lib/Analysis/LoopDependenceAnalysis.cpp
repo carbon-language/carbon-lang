@@ -18,11 +18,13 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "lda"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopDependenceAnalysis.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetData.h"
 using namespace llvm;
 
 LoopPass *llvm::createLoopDependenceAnalysisPass() {
@@ -91,24 +93,19 @@ bool LoopDependenceAnalysis::depends(Value *src, Value *dst) {
   Value *dstPtr = GetPointerOperand(dst);
   const Value *srcObj = srcPtr->getUnderlyingObject();
   const Value *dstObj = dstPtr->getUnderlyingObject();
-  const Type *srcTy = srcObj->getType();
-  const Type *dstTy = dstObj->getType();
+  AliasAnalysis::AliasResult alias = AA->alias(
+      srcObj, AA->getTargetData().getTypeStoreSize(srcObj->getType()),
+      dstObj, AA->getTargetData().getTypeStoreSize(dstObj->getType()));
 
-  // For now, we only work on (pointers to) global or stack-allocated array
-  // values, as we know that their underlying memory areas will not overlap.
-  // MAYBE: relax this and test for aliasing?
-  if (!((isa<GlobalVariable>(srcObj) || isa<AllocaInst>(srcObj)) &&
-        (isa<GlobalVariable>(dstObj) || isa<AllocaInst>(dstObj)) &&
-        isa<PointerType>(srcTy) &&
-        isa<PointerType>(dstTy) &&
-        isa<ArrayType>(cast<PointerType>(srcTy)->getElementType()) &&
-        isa<ArrayType>(cast<PointerType>(dstTy)->getElementType())))
+  // If we don't know whether or not the two objects alias, assume dependence.
+  if (alias == AliasAnalysis::MayAlias)
     return true;
 
-  // If the arrays are different, the underlying memory areas do not overlap
-  // and the memory accesses are therefore independent.
-  if (srcObj != dstObj)
+  // If the objects noalias, they are distinct, accesses are independent.
+  if (alias == AliasAnalysis::NoAlias)
     return false;
+
+  // TODO: the underlying objects MustAlias, test for dependence
 
   // We couldn't establish a more precise result, so we have to conservatively
   // assume full dependence.
@@ -121,12 +118,14 @@ bool LoopDependenceAnalysis::depends(Value *src, Value *dst) {
 
 bool LoopDependenceAnalysis::runOnLoop(Loop *L, LPPassManager &) {
   this->L = L;
+  AA = &getAnalysis<AliasAnalysis>();
   SE = &getAnalysis<ScalarEvolution>();
   return false;
 }
 
 void LoopDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
+  AU.addRequiredTransitive<AliasAnalysis>();
   AU.addRequiredTransitive<ScalarEvolution>();
 }
 

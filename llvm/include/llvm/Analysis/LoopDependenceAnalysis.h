@@ -26,12 +26,14 @@
 
 namespace llvm {
 
+  class AliasAnalysis;
   class AnalysisUsage;
   class ScalarEvolution;
   class Value;
 
   class LoopDependenceAnalysis : public LoopPass {
     Loop *L;
+    AliasAnalysis *AA;
     ScalarEvolution *SE;
 
   public:
