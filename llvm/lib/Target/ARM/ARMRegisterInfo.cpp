@@ -934,7 +934,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     }
 
     // Estimate if we might need to scavenge a register at some point in order
-    // to materialize a stack offset. If so, either spill one additiona
+    // to materialize a stack offset. If so, either spill one additional
     // callee-saved register or reserve a special spill slot to facilitate
     // register scavenging.
     if (RS && !ExtraCSSpill && !AFI->isThumbFunction()) {
