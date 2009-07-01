@@ -236,7 +236,7 @@ int main() {
   LLVMContext Context;
 
   // Create some module to put our function into it.
-  Module *M = new Module("test", &Context);
+  Module *M = new Module("test", Context);
 
   Function* add1F = createAdd1( M );
   Function* fibF = CreateFibFunction( M );

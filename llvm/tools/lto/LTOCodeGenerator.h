@@ -31,7 +31,7 @@ class LTOCodeGenerator {
 public:
     static const char*        getVersionString();
     
-                            LTOCodeGenerator();
+                            LTOCodeGenerator(const llvm::LLVMContext& Context);
                             ~LTOCodeGenerator();
                             
     bool                addModule(class LTOModule*, std::string& errMsg);
@@ -54,7 +54,7 @@ private:
     
     typedef llvm::StringMap<uint8_t> StringSet;
 
-    llvm::LLVMContext*          _context;
+    const llvm::LLVMContext&          _context;
     llvm::Linker                _linker;
     llvm::TargetMachine*        _target;
     bool                        _emitDwarfDebugInfo;

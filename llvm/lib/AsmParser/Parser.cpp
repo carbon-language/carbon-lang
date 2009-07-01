@@ -21,7 +21,7 @@
 using namespace llvm;
 
 Module *llvm::ParseAssemblyFile(const std::string &Filename, ParseError &Err,
-                                LLVMContext* Context) {
+                                const LLVMContext& Context) {
   Err.setFilename(Filename);
 
   std::string ErrorStr;
@@ -39,7 +39,7 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename, ParseError &Err,
 }
 
 Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,
-                                  ParseError &Err, LLVMContext* Context) {
+                                  ParseError &Err, const LLVMContext& Context) {
   Err.setFilename("<string>");
 
   OwningPtr<MemoryBuffer>

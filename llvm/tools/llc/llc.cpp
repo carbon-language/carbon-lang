@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
   std::auto_ptr<MemoryBuffer> Buffer(
                    MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage));
   if (Buffer.get())
-    M.reset(ParseBitcodeFile(Buffer.get(), &Context, &ErrorMessage));
+    M.reset(ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage));
   if (M.get() == 0) {
     std::cerr << argv[0] << ": bitcode didn't read correctly.\n";
     std::cerr << "Reason: " << ErrorMessage << "\n";

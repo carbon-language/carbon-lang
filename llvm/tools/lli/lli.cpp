@@ -107,7 +107,7 @@ int main(int argc, char **argv, char * const *envp) {
   std::string ErrorMsg;
   ModuleProvider *MP = NULL;
   if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
-    MP = getBitcodeModuleProvider(Buffer, &Context, &ErrorMsg);
+    MP = getBitcodeModuleProvider(Buffer, Context, &ErrorMsg);
     if (!MP) delete Buffer;
   }
   

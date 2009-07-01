@@ -64,7 +64,7 @@ static inline unsigned numVbrBytes(unsigned num) {
 }
 
 // Create an empty archive.
-Archive* Archive::CreateEmpty(const sys::Path& FilePath, LLVMContext* C) {
+Archive* Archive::CreateEmpty(const sys::Path& FilePath, const LLVMContext& C) {
   Archive* result = new Archive(FilePath, C);
   return result;
 }

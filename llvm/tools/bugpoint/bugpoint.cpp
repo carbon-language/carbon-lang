@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
   sys::SetInterruptFunction(BugpointInterruptFunction);
 
   LLVMContext Context;
-  BugDriver D(argv[0], AsChild, FindBugs, TimeoutValue, MemoryLimit, &Context);
+  BugDriver D(argv[0], AsChild, FindBugs, TimeoutValue, MemoryLimit, Context);
   if (D.addSources(InputFilenames)) return 1;
   D.addPasses(PassList.begin(), PassList.end());
 

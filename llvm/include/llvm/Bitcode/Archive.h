@@ -280,7 +280,7 @@ class Archive {
     /// @brief Create an empty Archive.
     static Archive* CreateEmpty(
       const sys::Path& Filename,///< Name of the archive to (eventually) create.
-      LLVMContext* C            ///< Context to use for global information
+      const LLVMContext& C            ///< Context to use for global information
     );
 
     /// Open an existing archive and load its contents in preparation for
@@ -291,7 +291,7 @@ class Archive {
     /// @brief Open and load an archive file
     static Archive* OpenAndLoad(
       const sys::Path& filePath,  ///< The file path to open and load
-      LLVMContext* C,             ///< The context to use for global information
+      const LLVMContext& C,       ///< The context to use for global information
       std::string* ErrorMessage   ///< An optional error string
     );
 
@@ -313,7 +313,7 @@ class Archive {
     /// @brief Open an existing archive and load its symbols.
     static Archive* OpenAndLoadSymbols(
       const sys::Path& Filename,   ///< Name of the archive file to open
-      LLVMContext* C,              ///< The context to use for global info
+      const LLVMContext& C,              ///< The context to use for global info
       std::string* ErrorMessage=0  ///< An optional error string
     );
 
@@ -453,7 +453,7 @@ class Archive {
   protected:
     /// @brief Construct an Archive for \p filename and optionally  map it
     /// into memory.
-    explicit Archive(const sys::Path& filename, LLVMContext* C);
+    explicit Archive(const sys::Path& filename, const LLVMContext& C);
 
     /// @param data The symbol table data to be parsed
     /// @param len  The length of the symbol table data
@@ -534,7 +534,7 @@ class Archive {
     unsigned firstFileOffset; ///< Offset to first normal file.
     ModuleMap modules;        ///< The modules loaded via symbol lookup.
     ArchiveMember* foreignST; ///< This holds the foreign symbol table.
-    LLVMContext* Context;     ///< This holds global data.
+    const LLVMContext& Context;     ///< This holds global data.
   /// @}
   /// @name Hidden
   /// @{

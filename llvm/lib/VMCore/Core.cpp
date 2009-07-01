@@ -53,7 +53,7 @@ void LLVMContextDispose(LLVMContextRef C) {
 /*===-- Operations on modules ---------------------------------------------===*/
 
 LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID, LLVMContextRef C) {
-  return wrap(new Module(ModuleID, unwrap(C)));
+  return wrap(new Module(ModuleID, *unwrap(C)));
 }
 
 void LLVMDisposeModule(LLVMModuleRef M) {

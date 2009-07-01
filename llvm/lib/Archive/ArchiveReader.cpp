@@ -327,7 +327,7 @@ Archive::loadArchive(std::string* error) {
 
 // Open and completely load the archive file.
 Archive*
-Archive::OpenAndLoad(const sys::Path& file, LLVMContext* C, 
+Archive::OpenAndLoad(const sys::Path& file, const LLVMContext& C, 
                      std::string* ErrorMessage) {
   std::auto_ptr<Archive> result ( new Archive(file, C));
   if (result->mapToMemory(ErrorMessage))
@@ -441,7 +441,8 @@ Archive::loadSymbolTable(std::string* ErrorMsg) {
 }
 
 // Open the archive and load just the symbol tables
-Archive* Archive::OpenAndLoadSymbols(const sys::Path& file, LLVMContext* C,
+Archive* Archive::OpenAndLoadSymbols(const sys::Path& file,
+                                     const LLVMContext& C,
                                      std::string* ErrorMessage) {
   std::auto_ptr<Archive> result ( new Archive(file, C) );
   if (result->mapToMemory(ErrorMessage))

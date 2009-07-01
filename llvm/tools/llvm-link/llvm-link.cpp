@@ -49,7 +49,7 @@ DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 // searches the link path for the specified file to try to find it...
 //
 static inline std::auto_ptr<Module> LoadFile(const std::string &FN, 
-                                             LLVMContext* Context) {
+                                             const LLVMContext& Context) {
   sys::Path Filename;
   if (!Filename.set(FN)) {
     cerr << "Invalid file name: '" << FN << "'\n";
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
   unsigned BaseArg = 0;
   std::string ErrorMessage;
 
-  std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg], &Context));
+  std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg], Context));
   if (Composite.get() == 0) {
     cerr << argv[0] << ": error loading file '"
          << InputFilenames[BaseArg] << "'\n";
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
   }
 
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
-    std::auto_ptr<Module> M(LoadFile(InputFilenames[i], &Context));
+    std::auto_ptr<Module> M(LoadFile(InputFilenames[i], Context));
     if (M.get() == 0) {
       cerr << argv[0] << ": error loading file '" <<InputFilenames[i]<< "'\n";
       return 1;

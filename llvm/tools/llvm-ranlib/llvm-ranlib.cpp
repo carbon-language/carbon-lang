@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
     std::string err_msg;
     std::auto_ptr<Archive>
-      AutoArchive(Archive::OpenAndLoad(ArchivePath, &Context, &err_msg));
+      AutoArchive(Archive::OpenAndLoad(ArchivePath, Context, &err_msg));
     Archive* TheArchive = AutoArchive.get();
     if (!TheArchive)
       throw err_msg;

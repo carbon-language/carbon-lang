@@ -272,7 +272,7 @@ namespace llvm {
     char OnTheFlyTest::ID=0;
 
     TEST(PassManager, RunOnce) {
-      Module M("test-once", new LLVMContext());
+      Module M("test-once", *new LLVMContext());
       struct ModuleNDNM *mNDNM = new ModuleNDNM();
       struct ModuleDNM *mDNM = new ModuleDNM();
       struct ModuleNDM *mNDM = new ModuleNDM();
@@ -296,7 +296,7 @@ namespace llvm {
     }
 
     TEST(PassManager, ReRun) {
-      Module M("test-rerun", new LLVMContext());
+      Module M("test-rerun", *new LLVMContext());
       struct ModuleNDNM *mNDNM = new ModuleNDNM();
       struct ModuleDNM *mDNM = new ModuleDNM();
       struct ModuleNDM *mNDM = new ModuleNDM();
@@ -387,7 +387,7 @@ namespace llvm {
 
     Module* makeLLVMModule() {
       // Module Construction
-      Module* mod = new Module("test-mem", new LLVMContext());
+      Module* mod = new Module("test-mem", *new LLVMContext());
       mod->setDataLayout("e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                          "i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-"
                          "a0:0:64-s0:64:64-f80:128:128");

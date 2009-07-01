@@ -719,11 +719,11 @@ int main(int argc, char **argv) {
       // Produce a warning if we should and we're creating the archive
       if (!Create)
         std::cerr << argv[0] << ": creating " << ArchivePath.toString() << "\n";
-      TheArchive = Archive::CreateEmpty(ArchivePath, &Context);
+      TheArchive = Archive::CreateEmpty(ArchivePath, Context);
       TheArchive->writeToDisk();
     } else {
       std::string Error;
-      TheArchive = Archive::OpenAndLoad(ArchivePath, &Context, &Error);
+      TheArchive = Archive::OpenAndLoad(ArchivePath, Context, &Error);
       if (TheArchive == 0) {
         std::cerr << argv[0] << ": error loading '" << ArchivePath << "': "
                   << Error << "!\n";

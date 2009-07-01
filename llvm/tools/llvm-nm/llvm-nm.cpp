@@ -142,7 +142,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
                    MemoryBuffer::getFileOrSTDIN(Filename, &ErrorMessage));
     Module *Result = 0;
     if (Buffer.get())
-      Result = ParseBitcodeFile(Buffer.get(), &Context, &ErrorMessage);
+      Result = ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage);
     
     if (Result)
       DumpSymbolNamesFromModule(Result);
@@ -153,7 +153,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
     
   } else if (aPath.isArchive()) {
     std::string ErrMsg;
-    Archive* archive = Archive::OpenAndLoad(sys::Path(Filename), &Context,
+    Archive* archive = Archive::OpenAndLoad(sys::Path(Filename), Context,
                                             &ErrorMessage);
     if (!archive)
       std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";

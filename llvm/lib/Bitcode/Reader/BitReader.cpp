@@ -22,7 +22,7 @@ int LLVMParseBitcode(LLVMMemoryBufferRef MemBuf, LLVMContextRef ContextRef,
                      LLVMModuleRef *OutModule, char **OutMessage) {
   std::string Message;
   
-  *OutModule = wrap(ParseBitcodeFile(unwrap(MemBuf), unwrap(ContextRef),  
+  *OutModule = wrap(ParseBitcodeFile(unwrap(MemBuf), *unwrap(ContextRef),  
                                      &Message));
   if (!*OutModule) {
     if (OutMessage)
@@ -42,7 +42,7 @@ int LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
                                  char **OutMessage) {
   std::string Message;
   
-  *OutMP = wrap(getBitcodeModuleProvider(unwrap(MemBuf), unwrap(ContextRef), 
+  *OutMP = wrap(getBitcodeModuleProvider(unwrap(MemBuf), *unwrap(ContextRef), 
                                          &Message));
   if (!*OutMP) {
     if (OutMessage)

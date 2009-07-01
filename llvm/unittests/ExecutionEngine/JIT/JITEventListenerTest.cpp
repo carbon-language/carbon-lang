@@ -65,7 +65,7 @@ struct RecordingJITEventListener : public JITEventListener {
 class JITEventListenerTest : public testing::Test {
  protected:
   JITEventListenerTest()
-      : M(new Module("module", new LLVMContext())),
+      : M(new Module("module", *new LLVMContext())),
         EE(ExecutionEngine::createJIT(new ExistingModuleProvider(M))) {
   }
 

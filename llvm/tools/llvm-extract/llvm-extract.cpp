@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
     cerr << argv[0] << ": Error reading file '" + InputFilename + "'\n";
     return 1;
   } else {
-    M.reset(ParseBitcodeFile(Buffer, &Context));
+    M.reset(ParseBitcodeFile(Buffer, Context));
   }
   delete Buffer;
   

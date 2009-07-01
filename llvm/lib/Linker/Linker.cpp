@@ -20,7 +20,7 @@
 using namespace llvm;
 
 Linker::Linker(const std::string& progname, const std::string& modname,
-               LLVMContext* C, unsigned flags): 
+               const LLVMContext& C, unsigned flags): 
   Context(C),
   Composite(new Module(modname, C)),
   LibPaths(),

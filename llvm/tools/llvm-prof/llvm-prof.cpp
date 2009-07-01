@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
     Module *M = 0;
     if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BitcodeFile,
                                                             &ErrorMessage)) {
-      M = ParseBitcodeFile(Buffer, &Context, &ErrorMessage);
+      M = ParseBitcodeFile(Buffer, Context, &ErrorMessage);
       delete Buffer;
     }
     if (M == 0) {

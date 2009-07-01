@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
    
     if (MemoryBuffer *Buffer
            = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-      M.reset(ParseBitcodeFile(Buffer, &Context, &ErrorMessage));
+      M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
       delete Buffer;
     }
 

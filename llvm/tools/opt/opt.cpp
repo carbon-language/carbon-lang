@@ -327,7 +327,7 @@ int main(int argc, char **argv) {
     std::auto_ptr<Module> M;
     if (MemoryBuffer *Buffer
           = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-      M.reset(ParseBitcodeFile(Buffer, &Context, &ErrorMessage));
+      M.reset(ParseBitcodeFile(Buffer, Context, &ErrorMessage));
       delete Buffer;
     }
     

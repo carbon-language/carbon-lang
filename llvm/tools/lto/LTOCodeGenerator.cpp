@@ -69,8 +69,8 @@ const char* LTOCodeGenerator::getVersionString()
 }
 
 
-LTOCodeGenerator::LTOCodeGenerator() 
-    : _context(new LLVMContext()),
+LTOCodeGenerator::LTOCodeGenerator(const LLVMContext& Context) 
+    : _context(Context),
       _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
       _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),

@@ -86,7 +86,7 @@ public:
 };
 
 class BitcodeReader : public ModuleProvider {
-  LLVMContext* Context;
+  const LLVMContext& Context;
   MemoryBuffer *Buffer;
   BitstreamReader StreamFile;
   BitstreamCursor Stream;
@@ -125,7 +125,7 @@ class BitcodeReader : public ModuleProvider {
   /// stream) and what linkage the original function had.
   DenseMap<Function*, std::pair<uint64_t, unsigned> > DeferredFunctionInfo;
 public:
-  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext* C)
+  explicit BitcodeReader(MemoryBuffer *buffer, const LLVMContext& C)
       : Context(C), Buffer(buffer), ErrorString(0) {
     HasReversedFunctionsWithBodies = false;
   }

@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
 
   //Read the BrainF program
   BrainF bf;
-  Module *mod = bf.parse(in, 65536, cf, &Context); //64 KiB
+  Module *mod = bf.parse(in, 65536, cf, Context); //64 KiB
   if (in != &std::cin) {delete in;}
   addMainFunction(mod);
 

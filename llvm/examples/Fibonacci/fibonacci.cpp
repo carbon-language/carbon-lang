@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
   LLVMContext Context;
   
   // Create some module to put our function into it.
-  Module *M = new Module("test", &Context);
+  Module *M = new Module("test", Context);
 
   // We are about to create the "fib" function:
   Function *FibF = CreateFibFunction(M);

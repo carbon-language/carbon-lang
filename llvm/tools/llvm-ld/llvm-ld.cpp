@@ -517,7 +517,7 @@ int main(int argc, char **argv, char **envp) {
     cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
     // Construct a Linker (now that Verbose is set)
-    Linker TheLinker(progname, OutputFilename, &Context, Verbose);
+    Linker TheLinker(progname, OutputFilename, Context, Verbose);
 
     // Keep track of the native link items (versus the bitcode items)
     Linker::ItemList NativeLinkItems;

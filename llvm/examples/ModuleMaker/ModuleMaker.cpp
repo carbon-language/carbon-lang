@@ -27,7 +27,7 @@ int main() {
 
   // Create the "module" or "program" or "translation unit" to hold the
   // function
-  Module *M = new Module("test", &Context);
+  Module *M = new Module("test", Context);
 
   // Create the main function: first create the type 'int ()'
   FunctionType *FT = FunctionType::get(Type::Int32Ty, /*not vararg*/false);

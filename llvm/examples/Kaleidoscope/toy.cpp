@@ -1099,7 +1099,7 @@ int main() {
   getNextToken();
 
   // Make the module, which holds all the code.
-  TheModule = new Module("my cool jit", &Context);
+  TheModule = new Module("my cool jit", Context);
   
   // Create the JIT.
   TheExecutionEngine = ExecutionEngine::create(TheModule);

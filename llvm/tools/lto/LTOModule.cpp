@@ -69,7 +69,7 @@ bool LTOModule::isBitcodeFileForTarget(const char* path,
 bool LTOModule::isTargetMatch(MemoryBuffer* buffer, const char* triplePrefix)
 {
     OwningPtr<ModuleProvider> mp(getBitcodeModuleProvider(buffer,
-                                                          new LLVMContext()));
+                                                          *new LLVMContext()));
     // on success, mp owns buffer and both are deleted at end of this method
     if ( !mp ) {
         delete buffer;
@@ -86,7 +86,8 @@ LTOModule::LTOModule(Module* m, TargetMachine* t)
 {
 }
 
-LTOModule* LTOModule::makeLTOModule(const char* path, LLVMContext* Context,
+LTOModule* LTOModule::makeLTOModule(const char* path,
+                                    const LLVMContext& Context,
                                     std::string& errMsg)
 {
     OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(path, &errMsg));
@@ -112,7 +113,7 @@ MemoryBuffer* LTOModule::makeBuffer(const void* mem, size_t length)
 
 
 LTOModule* LTOModule::makeLTOModule(const void* mem, size_t length, 
-                                    LLVMContext* Context,
+                                    const LLVMContext& Context,
                                     std::string& errMsg)
 {
     OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length));
@@ -140,7 +141,8 @@ std::string getFeatureString(const char *TargetTriple) {
   return Features.getString();
 }
 
-LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer, LLVMContext* Context,
+LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
+                                    const LLVMContext& Context,
                                     std::string& errMsg)
 {
     // parse bitcode buffer

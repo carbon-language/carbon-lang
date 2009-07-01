@@ -39,7 +39,8 @@ class BrainF {
     /// containing the resulting code.
     /// On error, it calls abort.
     /// The caller must delete the returned module.
-    Module *parse(std::istream *in1, int mem, CompileFlags cf, LLVMContext* C);
+    Module *parse(std::istream *in1, int mem, CompileFlags cf,
+                  const LLVMContext& C);
 
   protected:
     /// The different symbols in the BrainF language
@@ -65,7 +66,7 @@ class BrainF {
     static const char *testreg;
 
     /// Put the brainf function preamble and other fixed pieces of code
-    void header(LLVMContext* C);
+    void header(const LLVMContext& C);
 
     /// The main loop for parsing.  It calls itself recursively
     /// to handle the depth of nesting of "[]".

@@ -55,7 +55,7 @@ int main() {
   LLVMContext Context;
   
   // Create some module to put our function into it.
-  Module *M = new Module("test", &Context);
+  Module *M = new Module("test", Context);
 
   // Create the add1 function entry and insert this entry into module M.  The
   // function will have a return type of "int" and take an argument of "int".

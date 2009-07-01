@@ -88,7 +88,7 @@ bool lto_module_is_object_file_in_memory_for_target(const void* mem,
 //
 lto_module_t lto_module_create(const char* path, LLVMContextRef Ctxt)
 {
-     return LTOModule::makeLTOModule(path, llvm::unwrap(Ctxt), 
+     return LTOModule::makeLTOModule(path, *llvm::unwrap(Ctxt), 
                                      sLastErrorString);
 }
 
@@ -100,7 +100,7 @@ lto_module_t lto_module_create(const char* path, LLVMContextRef Ctxt)
 lto_module_t lto_module_create_from_memory(const void* mem, size_t length,
                                            LLVMContextRef Ctxt)
 {
-     return LTOModule::makeLTOModule(mem, length, llvm::unwrap(Ctxt),
+     return LTOModule::makeLTOModule(mem, length, *llvm::unwrap(Ctxt),
                                      sLastErrorString);
 }
 
@@ -158,9 +158,9 @@ lto_symbol_attributes lto_module_get_symbol_attribute(lto_module_t mod,
 // instantiates a code generator
 // returns NULL if there is an error
 //
-lto_code_gen_t lto_codegen_create()
+lto_code_gen_t lto_codegen_create(LLVMContextRef ContextRef)
 {
-     return new LTOCodeGenerator();
+     return new LTOCodeGenerator(*llvm::unwrap(ContextRef));
 }
 
 

@@ -110,7 +110,7 @@ public:
 /// @name Member Variables
 /// @{
 private:
-  LLVMContext* Context;          ///< The LLVMContext from which types and
+  const LLVMContext& Context;    ///< The LLVMContext from which types and
                                  ///< constants are allocated.
   GlobalListType GlobalList;     ///< The Global Variables in the module
   FunctionListType FunctionList; ///< The Functions in the module
@@ -131,7 +131,7 @@ private:
 public:
   /// The Module constructor. Note that there is no default constructor. You
   /// must provide a name for the module upon construction.
-  explicit Module(const std::string &ModuleID, LLVMContext* C);
+  explicit Module(const std::string &ModuleID, const LLVMContext& C);
   /// The module destructor. This will dropAllReferences.
   ~Module();
 
@@ -162,7 +162,7 @@ public:
 
   /// Get the global data context.
   /// @returns LLVMContext - a container for LLVM's global information
-  LLVMContext* getContext() const { return Context; }
+  const LLVMContext& getContext() const { return Context; }
 
   /// Get any module-scope inline assembly blocks.
   /// @returns a string containing the module-scope inline assembly blocks.

@@ -70,7 +70,7 @@ int main(int argc, char **argv, char * const *envp) {
       InputArgs.push_back(InputFile);
 
     // Create the CLI debugger...
-    CLIDebugger D(&Context);
+    CLIDebugger D(Context);
 
     // Initialize the debugger with the command line options we read...
     Debugger &Dbg = D.getDebugger();

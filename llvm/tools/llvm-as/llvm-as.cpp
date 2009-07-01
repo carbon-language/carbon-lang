@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
   try {
     // Parse the file now...
     ParseError Err;
-    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, &Context));
+    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, Context));
     if (M.get() == 0) {
       Err.PrintError(argv[0], errs());
       return 1;

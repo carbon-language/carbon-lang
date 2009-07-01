@@ -22,8 +22,8 @@ using namespace llvm;
 
 static ManagedStatic<LLVMContext> GlobalContext;
 
-LLVMContext* getGlobalContext() {
-  return &*GlobalContext;
+const LLVMContext& llvm::getGlobalContext() {
+  return *GlobalContext;
 }
 
 LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl()) { }
