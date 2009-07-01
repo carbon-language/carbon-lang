@@ -19,7 +19,7 @@ AsmExpr::~AsmExpr() {
 bool AsmExpr::EvaluateAsAbsolute(MCContext &Ctx, int64_t &Res) const {
   MCValue Value;
   
-  if (!EvaluateAsRelocatable(Ctx, Value) || !Value.isConstant())
+  if (!EvaluateAsRelocatable(Ctx, Value) || !Value.isAbsolute())
     return false;
 
   Res = Value.getConstant();
@@ -75,7 +75,7 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
 
     switch (AUE->getOpcode()) {
     case AsmUnaryExpr::LNot:
-      if (!Value.isConstant())
+      if (!Value.isAbsolute())
         return false;
       Res = MCValue::get(!Value.getConstant());
       break;
@@ -87,7 +87,7 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
                          -Value.getConstant()); 
       break;
     case AsmUnaryExpr::Not:
-      if (!Value.isConstant())
+      if (!Value.isAbsolute())
         return false;
       Res = MCValue::get(~Value.getConstant()); 
       break;
@@ -109,7 +109,7 @@ bool AsmExpr::EvaluateAsRelocatable(MCContext &Ctx, MCValue &Res) const {
 
     // We only support a few operations on non-constant expressions, handle
     // those first.
-    if (!LHSValue.isConstant() || !RHSValue.isConstant()) {
+    if (!LHSValue.isAbsolute() || !RHSValue.isAbsolute()) {
       switch (ABE->getOpcode()) {
       default:
         return false;

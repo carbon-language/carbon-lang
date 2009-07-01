@@ -40,7 +40,8 @@ public:
   MCSymbol *getSymA() const { return SymA; }
   MCSymbol *getSymB() const { return SymB; }
 
-  bool isConstant() const { return !SymA && !SymB; }
+  /// isAbsolute - Is this an absolute (as opposed to relocatable) value.
+  bool isAbsolute() const { return !SymA && !SymB; }
 
   /// getAssociatedSection - For relocatable values, return the section the
   /// value is associated with.
