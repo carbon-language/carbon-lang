@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/MDNode.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
@@ -1653,11 +1654,11 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.Kind = ValID::t_APFloat;
     break;
   case lltok::kw_true:
-    ID.ConstantVal = ConstantInt::getTrue();
+    ID.ConstantVal = Context.getConstantIntTrue();
     ID.Kind = ValID::t_Constant;
     break;
   case lltok::kw_false:
-    ID.ConstantVal = ConstantInt::getFalse();
+    ID.ConstantVal = Context.getConstantIntFalse();
     ID.Kind = ValID::t_Constant;
     break;
   case lltok::kw_null: ID.Kind = ValID::t_Null; break;
@@ -2037,7 +2038,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     if (!isa<IntegerType>(Ty))
       return Error(ID.Loc, "integer constant must have integer type");
     ID.APSIntVal.extOrTrunc(Ty->getPrimitiveSizeInBits());
-    V = ConstantInt::get(ID.APSIntVal);
+    V = Context.getConstantInt(ID.APSIntVal);
     return false;
   case ValID::t_APFloat:
     if (!Ty->isFloatingPoint() ||

@@ -15,6 +15,7 @@
 #define LLVM_ASMPARSER_LLPARSER_H
 
 #include "LLLexer.h"
+#include "llvm/Module.h"
 #include "llvm/Type.h"
 #include <map>
 
@@ -29,13 +30,14 @@ namespace llvm {
   class GlobalValue;
   class MDString;
   class MDNode;
+  class LLVMContext;
   struct ValID;
 
   class LLParser {
   public:
     typedef LLLexer::LocTy LocTy;
   private:
-
+    const LLVMContext& Context;
     LLLexer Lex;
     Module *M;
 
@@ -72,7 +74,8 @@ namespace llvm {
     std::map<unsigned, std::pair<GlobalValue*, LocTy> > ForwardRefValIDs;
     std::vector<GlobalValue*> NumberedVals;
   public:
-    LLParser(MemoryBuffer *F, ParseError &Err, Module *m) : Lex(F, Err), M(m) {}
+    LLParser(MemoryBuffer *F, ParseError &Err, Module *m) : 
+      Context(M->getContext()), Lex(F, Err), M(m) {}
     bool Run();
 
   private:
