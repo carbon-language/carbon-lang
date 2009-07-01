@@ -82,10 +82,10 @@ namespace {
    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
      AU.addRequired<DominatorTree>();
      AU.addRequired<ScalarEvolution>();
-     AU.addRequiredID(LCSSAID);
      AU.addRequiredID(LoopSimplifyID);
      AU.addRequired<LoopInfo>();
      AU.addRequired<IVUsers>();
+     AU.addRequiredID(LCSSAID);
      AU.addPreserved<ScalarEvolution>();
      AU.addPreservedID(LoopSimplifyID);
      AU.addPreserved<IVUsers>();
