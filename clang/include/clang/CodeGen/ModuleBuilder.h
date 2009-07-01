@@ -36,7 +36,7 @@ namespace clang {
   CodeGenerator *CreateLLVMCodeGen(Diagnostic &Diags,
                                    const std::string &ModuleName,
                                    const CompileOptions &CO,
-                                   const llvm::LLVMContext& C);
+                                   llvm::LLVMContext& C);
 }
 
 #endif

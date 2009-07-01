@@ -81,7 +81,7 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    const CompileOptions &CompileOpts,
                                    const std::string &ModuleID,
                                    llvm::raw_ostream *OS,
-                                   const llvm::LLVMContext& C);
+                                   llvm::LLVMContext& C);
 
 // HTML printer: uses the rewriter to convert source code to HTML with
 // syntax highlighting suitable for viewing in a web-browser.
