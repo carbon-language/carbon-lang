@@ -22,6 +22,7 @@
 
 #include "llvm/LinkAllVMCore.h"
 #include "llvm/Linker.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/System/Program.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -505,7 +506,8 @@ int main(int argc, char **argv, char **envp) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
-  
+
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   try {
     // Initial global variable above for convenience printing of program name.
@@ -515,7 +517,7 @@ int main(int argc, char **argv, char **envp) {
     cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
     // Construct a Linker (now that Verbose is set)
-    Linker TheLinker(progname, OutputFilename, Verbose);
+    Linker TheLinker(progname, OutputFilename, &Context, Verbose);
 
     // Keep track of the native link items (versus the bitcode items)
     Linker::ItemList NativeLinkItems;

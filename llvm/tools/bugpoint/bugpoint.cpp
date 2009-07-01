@@ -16,6 +16,7 @@
 #include "BugDriver.h"
 #include "ToolRunner.h"
 #include "llvm/LinkAllPasses.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -73,8 +74,9 @@ int main(int argc, char **argv) {
                               "llvm.org/cmds/bugpoint.html"
                               " for more information.\n");
   sys::SetInterruptFunction(BugpointInterruptFunction);
-  
-  BugDriver D(argv[0], AsChild, FindBugs, TimeoutValue, MemoryLimit);
+
+  LLVMContext Context;
+  BugDriver D(argv[0], AsChild, FindBugs, TimeoutValue, MemoryLimit, &Context);
   if (D.addSources(InputFilenames)) return 1;
   D.addPasses(PassList.begin(), PassList.end());
 

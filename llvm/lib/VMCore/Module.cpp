@@ -15,6 +15,7 @@
 #include "llvm/InstrTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/LeakDetector.h"
@@ -54,8 +55,8 @@ template class SymbolTableListTraits<GlobalAlias, Module>;
 // Primitive Module methods.
 //
 
-Module::Module(const std::string &MID)
-  : ModuleID(MID), DataLayout("") {
+Module::Module(const std::string &MID, LLVMContext* C)
+  : Context(C), ModuleID(MID), DataLayout("")  {
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();
 }

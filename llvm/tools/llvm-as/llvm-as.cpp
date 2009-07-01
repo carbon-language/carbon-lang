@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Analysis/Verifier.h"
@@ -55,6 +56,7 @@ int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm .ll -> .bc assembler\n");
 
@@ -63,7 +65,7 @@ int main(int argc, char **argv) {
   try {
     // Parse the file now...
     ParseError Err;
-    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err));
+    std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, &Context));
     if (M.get() == 0) {
       Err.PrintError(argv[0], errs());
       return 1;

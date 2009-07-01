@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/lto.h"
+#include "llvm-c/Core.h"
 
 #include "LTOModule.h"
 #include "LTOCodeGenerator.h"
@@ -85,9 +86,10 @@ bool lto_module_is_object_file_in_memory_for_target(const void* mem,
 // loads an object file from disk  
 // returns NULL on error (check lto_get_error_message() for details)
 //
-lto_module_t lto_module_create(const char* path)
+lto_module_t lto_module_create(const char* path, LLVMContextRef Ctxt)
 {
-     return LTOModule::makeLTOModule(path, sLastErrorString);
+     return LTOModule::makeLTOModule(path, llvm::unwrap(Ctxt), 
+                                     sLastErrorString);
 }
 
 
@@ -95,9 +97,11 @@ lto_module_t lto_module_create(const char* path)
 // loads an object file from memory 
 // returns NULL on error (check lto_get_error_message() for details)
 //
-lto_module_t lto_module_create_from_memory(const void* mem, size_t length)
+lto_module_t lto_module_create_from_memory(const void* mem, size_t length,
+                                           LLVMContextRef Ctxt)
 {
-     return LTOModule::makeLTOModule(mem, length, sLastErrorString);
+     return LTOModule::makeLTOModule(mem, length, llvm::unwrap(Ctxt),
+                                     sLastErrorString);
 }
 
 

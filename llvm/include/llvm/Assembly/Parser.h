@@ -21,6 +21,7 @@ namespace llvm {
 class Module;
 class ParseError;
 class raw_ostream;
+class LLVMContext;
 
 /// This function is the main interface to the LLVM Assembly Parser. It parses
 /// an ASCII file that (presumably) contains LLVM Assembly code. It returns a
@@ -30,7 +31,8 @@ class raw_ostream;
 /// @brief Parse LLVM Assembly from a file
 Module *ParseAssemblyFile(
   const std::string &Filename, ///< The name of the file to parse
-  ParseError &Error            ///< If not null, an object to return errors in.
+  ParseError &Error,           ///< If not null, an object to return errors in.
+  LLVMContext* Context         ///< Context in which to allocate globals info.
 );
 
 /// The function is a secondary interface to the LLVM Assembly Parser. It parses
@@ -42,7 +44,8 @@ Module *ParseAssemblyFile(
 Module *ParseAssemblyString(
   const char *AsmString, ///< The string containing assembly
   Module *M,             ///< A module to add the assembly too.
-  ParseError &Error      ///< If not null, an object to return errors in.
+  ParseError &Error,     ///< If not null, an object to return errors in.
+  LLVMContext* Context
 );
 
 //===------------------------------------------------------------------------===

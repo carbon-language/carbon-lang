@@ -112,7 +112,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // Ok, so now we know that the prefix passes work, try running the suffix
   // passes on the result of the prefix passes.
   //
-  Module *PrefixOutput = ParseInputFile(BitcodeResult);
+  Module *PrefixOutput = ParseInputFile(BitcodeResult, BD.getContext());
   if (PrefixOutput == 0) {
     std::cerr << BD.getToolName() << ": Error reading bitcode file '"
               << BitcodeResult << "'!\n";

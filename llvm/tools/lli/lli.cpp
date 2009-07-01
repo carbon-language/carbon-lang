@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Type.h"
@@ -93,6 +94,7 @@ int main(int argc, char **argv, char * const *envp) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   
+  LLVMContext Context;
   atexit(do_shutdown);  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv,
                               "llvm interpreter & dynamic compiler\n");
@@ -104,8 +106,8 @@ int main(int argc, char **argv, char * const *envp) {
   // Load the bitcode...
   std::string ErrorMsg;
   ModuleProvider *MP = NULL;
-  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)) {
-    MP = getBitcodeModuleProvider(Buffer, &ErrorMsg);
+  if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFile,&ErrorMsg)){
+    MP = getBitcodeModuleProvider(Buffer, &Context, &ErrorMsg);
     if (!MP) delete Buffer;
   }
   

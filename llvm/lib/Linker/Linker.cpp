@@ -20,24 +20,21 @@
 using namespace llvm;
 
 Linker::Linker(const std::string& progname, const std::string& modname,
-               unsigned flags)
-  : Composite(0)
-  , LibPaths()
-  , Flags(flags)
-  , Error()
-  , ProgramName(progname)
-{
-  Composite = new Module(modname);
-}
+               LLVMContext* C, unsigned flags): 
+  Context(C),
+  Composite(new Module(modname, C)),
+  LibPaths(),
+  Flags(flags),
+  Error(),
+  ProgramName(progname) { }
 
-Linker::Linker(const std::string& progname, Module* aModule, unsigned flags)
-  : Composite(aModule)
-  , LibPaths()
-  , Flags(flags)
-  , Error()
-  , ProgramName(progname)
-{
-}
+Linker::Linker(const std::string& progname, Module* aModule, unsigned flags) : 
+  Context(aModule->getContext()),
+  Composite(aModule),
+  LibPaths(),
+  Flags(flags),
+  Error(),
+  ProgramName(progname) { }
 
 Linker::~Linker() {
   delete Composite;
@@ -106,7 +103,7 @@ Linker::LoadObject(const sys::Path &FN) {
   const std::string &FNS = FN.toString();
   std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(FNS.c_str()));
   if (Buffer.get())
-    Result = ParseBitcodeFile(Buffer.get(), &ParseErrorMessage);
+    Result = ParseBitcodeFile(Buffer.get(), Context, &ParseErrorMessage);
   else
     ParseErrorMessage = "Error reading file '" + FNS + "'";
     

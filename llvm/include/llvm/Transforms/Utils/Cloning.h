@@ -37,6 +37,7 @@ class Trace;
 class CallGraph;
 class TargetData;
 class LoopInfo;
+class LLVMContext;
 template<class N> class LoopBase;
 typedef LoopBase<BasicBlock> Loop;
 

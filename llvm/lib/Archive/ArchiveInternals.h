@@ -31,6 +31,8 @@
 
 namespace llvm {
 
+  class LLVMContext;
+
   /// The ArchiveMemberHeader structure is used internally for bitcode
   /// archives.
   /// The header precedes each file member in the archive. This structure is
@@ -71,11 +73,13 @@ namespace llvm {
   
   // Get just the externally visible defined symbols from the bitcode
   bool GetBitcodeSymbols(const sys::Path& fName,
+                          LLVMContext* Context,
                           std::vector<std::string>& symbols,
                           std::string* ErrMsg);
   
   ModuleProvider* GetBitcodeSymbols(const unsigned char*Buffer,unsigned Length,
                                     const std::string& ModuleID,
+                                    LLVMContext* Context,
                                     std::vector<std::string>& symbols,
                                     std::string* ErrMsg);
 }

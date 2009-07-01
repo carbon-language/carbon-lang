@@ -64,24 +64,24 @@ std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
 }
 
 BugDriver::BugDriver(const char *toolname, bool as_child, bool find_bugs,
-                     unsigned timeout, unsigned memlimit)
-  : ToolName(toolname), ReferenceOutputFile(OutputFile),
+                     unsigned timeout, unsigned memlimit, LLVMContext* ctxt)
+  : Context(ctxt), ToolName(toolname), ReferenceOutputFile(OutputFile),
     Program(0), Interpreter(0), SafeInterpreter(0), gcc(0),
-    run_as_child(as_child),
-    run_find_bugs(find_bugs), Timeout(timeout), MemoryLimit(memlimit) {}
+    run_as_child(as_child), run_find_bugs(find_bugs), Timeout(timeout), 
+    MemoryLimit(memlimit)  {}
 
 
 /// ParseInputFile - Given a bitcode or assembly input filename, parse and
 /// return it, or return null if not possible.
 ///
-Module *llvm::ParseInputFile(const std::string &Filename) {
+Module *llvm::ParseInputFile(const std::string &Filename, LLVMContext* Ctxt) {
   std::auto_ptr<MemoryBuffer> Buffer(MemoryBuffer::getFileOrSTDIN(Filename));
   Module *Result = 0;
   if (Buffer.get())
-    Result = ParseBitcodeFile(Buffer.get());
+    Result = ParseBitcodeFile(Buffer.get(), Ctxt);
   
   ParseError Err;
-  if (!Result && !(Result = ParseAssemblyFile(Filename, Err))) {
+  if (!Result && !(Result = ParseAssemblyFile(Filename, Err, Ctxt))) {
     Err.PrintError("bugpoint", errs()); 
     Result = 0;
   }
@@ -100,14 +100,14 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
 
   try {
     // Load the first input file.
-    Program = ParseInputFile(Filenames[0]);
+    Program = ParseInputFile(Filenames[0], Context);
     if (Program == 0) return true;
     
     if (!run_as_child)
       std::cout << "Read input file      : '" << Filenames[0] << "'\n";
 
     for (unsigned i = 1, e = Filenames.size(); i != e; ++i) {
-      std::auto_ptr<Module> M(ParseInputFile(Filenames[i]));
+      std::auto_ptr<Module> M(ParseInputFile(Filenames[i], Context));
       if (M.get() == 0) return true;
 
       if (!run_as_child)

@@ -46,11 +46,11 @@ std::string Debugger::getProgramPath() const {
 }
 
 static Module *
-getMaterializedModuleProvider(const std::string &Filename) {
+getMaterializedModuleProvider(const std::string &Filename, LLVMContext* C) {
   std::auto_ptr<MemoryBuffer> Buffer;
   Buffer.reset(MemoryBuffer::getFileOrSTDIN(Filename.c_str()));
   if (Buffer.get())
-    return ParseBitcodeFile(Buffer.get());
+    return ParseBitcodeFile(Buffer.get(), C);
   return 0;
 }
 
@@ -58,9 +58,9 @@ getMaterializedModuleProvider(const std::string &Filename) {
 /// the PATH for the specified program, loading it when found.  If the
 /// specified program cannot be found, an exception is thrown to indicate the
 /// error.
-void Debugger::loadProgram(const std::string &Filename) {
-  if ((Program = getMaterializedModuleProvider(Filename)) ||
-      (Program = getMaterializedModuleProvider(Filename+".bc")))
+void Debugger::loadProgram(const std::string &Filename, LLVMContext* C) {
+  if ((Program = getMaterializedModuleProvider(Filename, C)) ||
+      (Program = getMaterializedModuleProvider(Filename+".bc", C)))
     return;   // Successfully loaded the program.
 
   // Search the program path for the file...
@@ -69,9 +69,9 @@ void Debugger::loadProgram(const std::string &Filename) {
 
     std::string Directory = getToken(Path, ":");
     while (!Directory.empty()) {
-      if ((Program = getMaterializedModuleProvider(Directory +"/"+ Filename)) ||
-          (Program = getMaterializedModuleProvider(Directory +"/"+ Filename
-                                                                      + ".bc")))
+      if ((Program = getMaterializedModuleProvider(Directory +"/"+ Filename, C))
+       || (Program = getMaterializedModuleProvider(Directory +"/"+ Filename
+                                                                   + ".bc", C)))
         return;   // Successfully loaded the program.
 
       Directory = getToken(Path, ":");

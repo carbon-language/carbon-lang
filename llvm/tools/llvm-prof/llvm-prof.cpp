@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/InstrTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/AsmAnnotationWriter.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
@@ -115,7 +116,8 @@ int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
-  
+
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv, "llvm profile dump decoder\n");
@@ -125,7 +127,7 @@ int main(int argc, char **argv) {
     Module *M = 0;
     if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(BitcodeFile,
                                                             &ErrorMessage)) {
-      M = ParseBitcodeFile(Buffer, &ErrorMessage);
+      M = ParseBitcodeFile(Buffer, &Context, &ErrorMessage);
       delete Buffer;
     }
     if (M == 0) {

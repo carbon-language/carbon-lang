@@ -24,10 +24,13 @@ namespace llvm {
   class SourceLanguage;
   class ProgramInfo;
   class RuntimeInfo;
+  class LLVMContext;
 
   /// CLIDebugger - This class implements the command line interface for the
   /// LLVM debugger.
   class CLIDebugger {
+    LLVMContext* Context;
+    
     /// Dbg - The low-level LLVM debugger object that we use to do our dirty
     /// work.
     Debugger Dbg;
@@ -79,7 +82,7 @@ namespace llvm {
     const SourceLanguage *CurrentLanguage;
 
   public:
-    CLIDebugger();
+    CLIDebugger(LLVMContext* ctxt);
 
     /// getDebugger - Return the current LLVM debugger implementation being
     /// used.

@@ -1,5 +1,6 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -1083,6 +1084,7 @@ double printd(double X) {
 
 int main() {
   InitializeNativeTarget();
+  LLVMContext Context;
   
   // Install standard binary operators.
   // 1 is lowest precedence.
@@ -1097,7 +1099,7 @@ int main() {
   getNextToken();
 
   // Make the module, which holds all the code.
-  TheModule = new Module("my cool jit");
+  TheModule = new Module("my cool jit", &Context);
   
   // Create the JIT.
   TheExecutionEngine = ExecutionEngine::create(TheModule);

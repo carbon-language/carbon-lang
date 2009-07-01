@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Bitcode/Archive.h"
 #include "llvm/Support/CommandLine.h"
@@ -690,6 +691,7 @@ int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   // Have the command line options parsed and handle things
@@ -717,11 +719,11 @@ int main(int argc, char **argv) {
       // Produce a warning if we should and we're creating the archive
       if (!Create)
         std::cerr << argv[0] << ": creating " << ArchivePath.toString() << "\n";
-      TheArchive = Archive::CreateEmpty(ArchivePath);
+      TheArchive = Archive::CreateEmpty(ArchivePath, &Context);
       TheArchive->writeToDisk();
     } else {
       std::string Error;
-      TheArchive = Archive::OpenAndLoad(ArchivePath, &Error);
+      TheArchive = Archive::OpenAndLoad(ArchivePath, &Context, &Error);
       if (TheArchive == 0) {
         std::cerr << argv[0] << ": error loading '" << ArchivePath << "': "
                   << Error << "!\n";

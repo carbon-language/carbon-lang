@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -60,7 +61,8 @@ int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
-  
+
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm extractor\n");
 
@@ -71,7 +73,7 @@ int main(int argc, char **argv) {
     cerr << argv[0] << ": Error reading file '" + InputFilename + "'\n";
     return 1;
   } else {
-    M.reset(ParseBitcodeFile(Buffer));
+    M.reset(ParseBitcodeFile(Buffer, &Context));
   }
   delete Buffer;
   

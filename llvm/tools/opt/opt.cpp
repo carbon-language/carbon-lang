@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -310,6 +311,7 @@ void AddStandardCompilePasses(PassManager &PM) {
 //
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
+  LLVMContext Context;
   try {
     cl::ParseCommandLineOptions(argc, argv,
       "llvm .bc -> .bc modular optimizer and analysis printer\n");
@@ -325,7 +327,7 @@ int main(int argc, char **argv) {
     std::auto_ptr<Module> M;
     if (MemoryBuffer *Buffer
           = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-      M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
+      M.reset(ParseBitcodeFile(Buffer, &Context, &ErrorMessage));
       delete Buffer;
     }
     

@@ -23,6 +23,7 @@ namespace llvm {
   class MemoryBuffer;
   class ModulePass;
   class BitstreamWriter;
+  class LLVMContext;
   class raw_ostream;
   
   /// getBitcodeModuleProvider - Read the header of the specified bitcode buffer
@@ -31,12 +32,14 @@ namespace llvm {
   /// error, this returns null, *does not* take ownership of Buffer, and fills
   /// in *ErrMsg with an error description if ErrMsg is non-null.
   ModuleProvider *getBitcodeModuleProvider(MemoryBuffer *Buffer,
+                                           LLVMContext* Context,
                                            std::string *ErrMsg = 0);
 
   /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
   /// If an error occurs, this returns null and fills in *ErrMsg if it is
   /// non-null.  This method *never* takes ownership of Buffer.
-  Module *ParseBitcodeFile(MemoryBuffer *Buffer, std::string *ErrMsg = 0);
+  Module *ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext* Context,
+                           std::string *ErrMsg = 0);
 
   /// WriteBitcodeToFile - Write the specified module to the specified output
   /// stream.

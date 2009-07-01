@@ -20,7 +20,8 @@
 #include <cstring>
 using namespace llvm;
 
-Module *llvm::ParseAssemblyFile(const std::string &Filename, ParseError &Err) {
+Module *llvm::ParseAssemblyFile(const std::string &Filename, ParseError &Err,
+                                LLVMContext* Context) {
   Err.setFilename(Filename);
 
   std::string ErrorStr;
@@ -31,14 +32,14 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename, ParseError &Err) {
     return 0;
   }
 
-  OwningPtr<Module> M(new Module(Filename));
+  OwningPtr<Module> M(new Module(Filename, Context));
   if (LLParser(F.get(), Err, M.get()).Run())
     return 0;
   return M.take();
 }
 
 Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,
-                                  ParseError &Err) {
+                                  ParseError &Err, LLVMContext* Context) {
   Err.setFilename("<string>");
 
   OwningPtr<MemoryBuffer>
@@ -50,7 +51,7 @@ Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,
     return LLParser(F.get(), Err, M).Run() ? 0 : M;
 
   // Otherwise create a new module.
-  OwningPtr<Module> M2(new Module("<string>"));
+  OwningPtr<Module> M2(new Module("<string>", Context));
   if (LLParser(F.get(), Err, M2.get()).Run())
     return 0;
   return M2.take();

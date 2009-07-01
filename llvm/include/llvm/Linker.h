@@ -21,6 +21,7 @@
 namespace llvm {
 
 class Module;
+class LLVMContext;
 
 /// This class provides the core functionality of linking in LLVM. It retains a
 /// Module object which is the composite of the modules and libraries linked
@@ -66,6 +67,7 @@ class Linker {
     Linker(
         const std::string& progname, ///< name of tool running linker
         const std::string& modulename, ///< name of linker's end-result module
+        LLVMContext* C, ///< Context for global info
         unsigned Flags = 0  ///< ControlFlags (one or more |'d together)
     );
 
@@ -283,6 +285,7 @@ class Linker {
   /// @name Data
   /// @{
   private:
+    LLVMContext* Context; ///< The context for global information
     Module* Composite; ///< The composite module linked together
     std::vector<sys::Path> LibPaths; ///< The library search paths
     unsigned Flags;    ///< Flags to control optional behavior.

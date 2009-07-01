@@ -64,7 +64,7 @@ void CLIDebugger::startProgramRunning() {
     TheProgramInfo = 0;
     CurrentFile = 0;
 
-    Dbg.loadProgram(Program.toString());
+    Dbg.loadProgram(Program.toString(), Context);
     TheProgramInfo = new ProgramInfo(Dbg.getProgram());
   }
 
@@ -244,7 +244,7 @@ void CLIDebugger::fileCommand(std::string &Options) {
     std::cout << "Unloaded program.\n";
   } else {
     std::cout << "Loading program... " << std::flush;
-    Dbg.loadProgram(Prog);
+    Dbg.loadProgram(Prog, Context);
     assert(Dbg.isProgramLoaded() &&
            "loadProgram succeeded, but not program loaded!");
     TheProgramInfo = new ProgramInfo(Dbg.getProgram());

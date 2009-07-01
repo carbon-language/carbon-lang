@@ -138,9 +138,9 @@ bool ArchiveMember::replaceWith(const sys::Path& newFile, std::string* ErrMsg) {
 // Archive constructor - this is the only constructor that gets used for the
 // Archive class. Everything else (default,copy) is deprecated. This just
 // initializes and maps the file into memory, if requested.
-Archive::Archive(const sys::Path& filename)
+Archive::Archive(const sys::Path& filename, LLVMContext* C)
   : archPath(filename), members(), mapfile(0), base(0), symTab(), strtab(),
-    symTabSize(0), firstFileOffset(0), modules(), foreignST(0) {
+    symTabSize(0), firstFileOffset(0), modules(), foreignST(0), Context(C) {
 }
 
 bool
@@ -208,6 +208,7 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
 
 // Get just the externally visible defined symbols from the bitcode
 bool llvm::GetBitcodeSymbols(const sys::Path& fName,
+                             LLVMContext* Context,
                              std::vector<std::string>& symbols,
                              std::string* ErrMsg) {
   std::auto_ptr<MemoryBuffer> Buffer(
@@ -217,7 +218,7 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
     return true;
   }
   
-  ModuleProvider *MP = getBitcodeModuleProvider(Buffer.get(), ErrMsg);
+  ModuleProvider *MP = getBitcodeModuleProvider(Buffer.get(), Context, ErrMsg);
   if (!MP)
     return true;
   
@@ -239,13 +240,14 @@ bool llvm::GetBitcodeSymbols(const sys::Path& fName,
 ModuleProvider*
 llvm::GetBitcodeSymbols(const unsigned char *BufPtr, unsigned Length,
                         const std::string& ModuleID,
+                        LLVMContext* Context,
                         std::vector<std::string>& symbols,
                         std::string* ErrMsg) {
   // Get the module provider
   MemoryBuffer *Buffer =MemoryBuffer::getNewMemBuffer(Length, ModuleID.c_str());
   memcpy((char*)Buffer->getBufferStart(), BufPtr, Length);
   
-  ModuleProvider *MP = getBitcodeModuleProvider(Buffer, ErrMsg);
+  ModuleProvider *MP = getBitcodeModuleProvider(Buffer, Context, ErrMsg);
   if (!MP)
     return 0;
   

@@ -47,6 +47,11 @@ extern "C" {
 /* Opaque types. */
 
 /**
+ * The top-level container for all LLVM global data.  See the LLVMContext class.
+ */
+typedef struct LLVMCtxt *LLVMContextRef;
+
+/**
  * The top-level container for all other LLVM Intermediate Representation (IR)
  * objects. See the llvm::Module class.
  */
@@ -187,6 +192,10 @@ void LLVMDisposeMessage(char *Message);
 
 
 /*===-- Modules -----------------------------------------------------------===*/
+
+/* Create and destroy contexts. */
+LLVMContextRef LLVMContextCreate();
+void LLVMContextDispose(LLVMContextRef C);
 
 /* Create and destroy modules. */ 
 /** See llvm::Module::Module. */
@@ -815,6 +824,7 @@ namespace llvm {
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(PATypeHolder,       LLVMTypeHandleRef    )
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ModuleProvider,     LLVMModuleProviderRef)
   DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,       LLVMMemoryBufferRef  )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMContext,        LLVMContextRef       )
   DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassManagerBase,    LLVMPassManagerRef   )
   
   #undef DEFINE_STDCXX_CONVERSION_FUNCTIONS

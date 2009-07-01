@@ -1087,7 +1087,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
     return Error("Malformed block record");
 
   // Otherwise, create the module.
-  TheModule = new Module(ModuleID);
+  TheModule = new Module(ModuleID, Context);
   
   SmallVector<uint64_t, 64> Record;
   std::vector<std::string> SectionTable;
@@ -2090,8 +2090,9 @@ Module *BitcodeReader::releaseModule(std::string *ErrInfo) {
 /// getBitcodeModuleProvider - lazy function-at-a-time loading from a file.
 ///
 ModuleProvider *llvm::getBitcodeModuleProvider(MemoryBuffer *Buffer,
+                                               LLVMContext* Context,
                                                std::string *ErrMsg) {
-  BitcodeReader *R = new BitcodeReader(Buffer);
+  BitcodeReader *R = new BitcodeReader(Buffer, Context);
   if (R->ParseBitcode()) {
     if (ErrMsg)
       *ErrMsg = R->getErrorString();
@@ -2106,9 +2107,11 @@ ModuleProvider *llvm::getBitcodeModuleProvider(MemoryBuffer *Buffer,
 
 /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
 /// If an error occurs, return null and fill in *ErrMsg if non-null.
-Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, std::string *ErrMsg){
+Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext* Context, 
+                               std::string *ErrMsg){
   BitcodeReader *R;
-  R = static_cast<BitcodeReader*>(getBitcodeModuleProvider(Buffer, ErrMsg));
+  R = static_cast<BitcodeReader*>(getBitcodeModuleProvider(Buffer, Context, 
+                                                           ErrMsg));
   if (!R) return 0;
   
   // Read in the entire module.

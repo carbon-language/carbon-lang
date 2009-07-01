@@ -73,7 +73,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
     PrefixOutput.set(PfxOutput);
     OrigProgram = BD.Program;
 
-    BD.Program = ParseInputFile(PrefixOutput.toString());
+    BD.Program = ParseInputFile(PrefixOutput.toString(), BD.getContext());
     if (BD.Program == 0) {
       std::cerr << BD.getToolName() << ": Error reading bitcode file '"
                 << PrefixOutput << "'!\n";

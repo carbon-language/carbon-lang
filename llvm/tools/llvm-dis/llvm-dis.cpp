@@ -16,6 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -50,6 +51,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
@@ -61,7 +63,7 @@ int main(int argc, char **argv) {
    
     if (MemoryBuffer *Buffer
            = MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage)) {
-      M.reset(ParseBitcodeFile(Buffer, &ErrorMessage));
+      M.reset(ParseBitcodeFile(Buffer, &Context, &ErrorMessage));
       delete Buffer;
     }
 

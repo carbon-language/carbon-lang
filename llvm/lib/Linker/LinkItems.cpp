@@ -160,7 +160,7 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
   if (File.toString() == "-") {
     std::auto_ptr<Module> M;
     if (MemoryBuffer *Buffer = MemoryBuffer::getSTDIN()) {
-      M.reset(ParseBitcodeFile(Buffer, &Error));
+      M.reset(ParseBitcodeFile(Buffer, Context, &Error));
       delete Buffer;
       if (M.get())
         if (!LinkInModule(M.get(), &Error))

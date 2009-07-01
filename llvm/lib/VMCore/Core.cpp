@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/GlobalAlias.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/InlineAsm.h"
@@ -38,10 +39,21 @@ void LLVMDisposeMessage(char *Message) {
 }
 
 
+/*===-- Operations on contexts --------------------------------------------===*/
+
+LLVMContextRef LLVMContextCreate() {
+  return wrap(new LLVMContext());
+}
+
+void LLVMContextDispose(LLVMContextRef C) {
+  delete unwrap(C);
+}
+
+
 /*===-- Operations on modules ---------------------------------------------===*/
 
-LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID) {
-  return wrap(new Module(ModuleID));
+LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID, LLVMContextRef C) {
+  return wrap(new Module(ModuleID, unwrap(C)));
 }
 
 void LLVMDisposeModule(LLVMModuleRef M) {

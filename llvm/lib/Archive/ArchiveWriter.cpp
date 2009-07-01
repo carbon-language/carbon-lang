@@ -64,9 +64,8 @@ static inline unsigned numVbrBytes(unsigned num) {
 }
 
 // Create an empty archive.
-Archive*
-Archive::CreateEmpty(const sys::Path& FilePath ) {
-  Archive* result = new Archive(FilePath);
+Archive* Archive::CreateEmpty(const sys::Path& FilePath, LLVMContext* C) {
+  Archive* result = new Archive(FilePath, C);
   return result;
 }
 
@@ -229,7 +228,7 @@ Archive::writeMember(
       + ")";
     ModuleProvider* MP = 
       GetBitcodeSymbols((const unsigned char*)data,fSize,
-                        FullMemberName, symbols, ErrMsg);
+                        FullMemberName, Context, symbols, ErrMsg);
 
     // If the bitcode parsed successfully
     if ( MP ) {

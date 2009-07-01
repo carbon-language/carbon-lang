@@ -255,7 +255,7 @@ Module *BugDriver::runPassesOn(Module *M,
   // Restore the current program.
   swapProgramIn(OldProgram);
 
-  Module *Ret = ParseInputFile(BitcodeResult);
+  Module *Ret = ParseInputFile(BitcodeResult, Context);
   if (Ret == 0) {
     cerr << getToolName() << ": Error reading bitcode file '"
          << BitcodeResult << "'!\n";

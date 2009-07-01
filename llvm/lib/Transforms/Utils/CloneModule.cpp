@@ -35,7 +35,7 @@ Module *llvm::CloneModule(const Module *M) {
 Module *llvm::CloneModule(const Module *M,
                           DenseMap<const Value*, Value*> &ValueMap) {
   // First off, we need to create the new module...
-  Module *New = new Module(M->getModuleIdentifier());
+  Module *New = new Module(M->getModuleIdentifier(), M->getContext());
   New->setDataLayout(M->getDataLayout());
   New->setTargetTriple(M->getTargetTriple());
   New->setModuleInlineAsm(M->getModuleInlineAsm());

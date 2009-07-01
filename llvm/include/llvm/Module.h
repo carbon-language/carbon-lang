@@ -25,6 +25,7 @@ namespace llvm {
 
 class GlobalValueRefMap;   // Used by ConstantVals.cpp
 class FunctionType;
+class LLVMContext;
 
 template<> struct ilist_traits<Function>
   : public SymbolTableListTraits<Function, Module> {
@@ -109,6 +110,8 @@ public:
 /// @name Member Variables
 /// @{
 private:
+  LLVMContext* Context;          ///< The LLVMContext from which types and
+                                 ///< constants are allocated.
   GlobalListType GlobalList;     ///< The Global Variables in the module
   FunctionListType FunctionList; ///< The Functions in the module
   AliasListType AliasList;       ///< The Aliases in the module
@@ -128,7 +131,7 @@ private:
 public:
   /// The Module constructor. Note that there is no default constructor. You
   /// must provide a name for the module upon construction.
-  explicit Module(const std::string &ModuleID);
+  explicit Module(const std::string &ModuleID, LLVMContext* C);
   /// The module destructor. This will dropAllReferences.
   ~Module();
 
@@ -156,6 +159,10 @@ public:
   /// Get the target pointer size.
   /// @returns PointerSize - an enumeration for the size of the target's pointer
   PointerSize getPointerSize() const;
+
+  /// Get the global data context.
+  /// @returns LLVMContext - a container for LLVM's global information
+  LLVMContext* getContext() const { return Context; }
 
   /// Get any module-scope inline assembly blocks.
   /// @returns a string containing the module-scope inline assembly blocks.

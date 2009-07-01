@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -212,6 +213,7 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
 
@@ -225,7 +227,7 @@ int main(int argc, char **argv) {
   std::auto_ptr<MemoryBuffer> Buffer(
                    MemoryBuffer::getFileOrSTDIN(InputFilename, &ErrorMessage));
   if (Buffer.get())
-    M.reset(ParseBitcodeFile(Buffer.get(), &ErrorMessage));
+    M.reset(ParseBitcodeFile(Buffer.get(), &Context, &ErrorMessage));
   if (M.get() == 0) {
     std::cerr << argv[0] << ": bitcode didn't read correctly.\n";
     std::cerr << "Reason: " << ErrorMessage << "\n";

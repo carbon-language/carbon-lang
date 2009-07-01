@@ -26,6 +26,7 @@
 
 namespace llvm {
   class MemoryBuffer;
+  class LLVMContext;
   
 //===----------------------------------------------------------------------===//
 //                          BitcodeReaderValueList Class
@@ -85,6 +86,7 @@ public:
 };
 
 class BitcodeReader : public ModuleProvider {
+  LLVMContext* Context;
   MemoryBuffer *Buffer;
   BitstreamReader StreamFile;
   BitstreamCursor Stream;
@@ -123,8 +125,8 @@ class BitcodeReader : public ModuleProvider {
   /// stream) and what linkage the original function had.
   DenseMap<Function*, std::pair<uint64_t, unsigned> > DeferredFunctionInfo;
 public:
-  explicit BitcodeReader(MemoryBuffer *buffer)
-      : Buffer(buffer), ErrorString(0) {
+  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext* C)
+      : Context(C), Buffer(buffer), ErrorString(0) {
     HasReversedFunctionsWithBodies = false;
   }
   ~BitcodeReader() {

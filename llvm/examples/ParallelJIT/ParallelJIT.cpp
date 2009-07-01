@@ -18,6 +18,7 @@
 // same time). This test had assertion errors until I got the locking right.
 
 #include <pthread.h>
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -232,9 +233,10 @@ void* callFunc( void* param )
 
 int main() {
   InitializeNativeTarget();
+  LLVMContext Context;
 
   // Create some module to put our function into it.
-  Module *M = new Module("test");
+  Module *M = new Module("test", &Context);
 
   Function* add1F = createAdd1( M );
   Function* fibF = CreateFibFunction( M );

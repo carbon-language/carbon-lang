@@ -36,19 +36,20 @@ const char *BrainF::headreg = "head";
 const char *BrainF::label   = "brainf";
 const char *BrainF::testreg = "test";
 
-Module *BrainF::parse(std::istream *in1, int mem, CompileFlags cf) {
+Module *BrainF::parse(std::istream *in1, int mem, CompileFlags cf,
+                      LLVMContext* Context) {
   in       = in1;
   memtotal = mem;
   comflag  = cf;
 
-  header();
+  header(Context);
   readloop(0, 0, 0);
   delete builder;
   return module;
 }
 
-void BrainF::header() {
-  module = new Module("BrainF");
+void BrainF::header(LLVMContext* C) {
+  module = new Module("BrainF", C);
 
   //Function prototypes
 

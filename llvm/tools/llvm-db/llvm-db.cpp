@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "CLIDebugger.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -54,6 +55,7 @@ int main(int argc, char **argv, char * const *envp) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   std::cout << "NOTE: llvm-db is known useless right now.\n";
   try {
@@ -68,7 +70,7 @@ int main(int argc, char **argv, char * const *envp) {
       InputArgs.push_back(InputFile);
 
     // Create the CLI debugger...
-    CLIDebugger D;
+    CLIDebugger D(&Context);
 
     // Initialize the debugger with the command line options we read...
     Debugger &Dbg = D.getDebugger();

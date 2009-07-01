@@ -23,6 +23,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
@@ -90,8 +91,10 @@ static Function *CreateFibFunction(Module *M) {
 int main(int argc, char **argv) {
   int n = argc > 1 ? atol(argv[1]) : 24;
 
+  LLVMContext Context;
+  
   // Create some module to put our function into it.
-  Module *M = new Module("test");
+  Module *M = new Module("test", &Context);
 
   // We are about to create the "fib" function:
   Function *FibF = CreateFibFunction(M);

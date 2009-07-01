@@ -34,6 +34,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -50,9 +51,11 @@ using namespace llvm;
 int main() {
   
   InitializeNativeTarget();
+
+  LLVMContext Context;
   
   // Create some module to put our function into it.
-  Module *M = new Module("test");
+  Module *M = new Module("test", &Context);
 
   // Create the add1 function entry and insert this entry into module M.  The
   // function will have a return type of "int" and take an argument of "int".

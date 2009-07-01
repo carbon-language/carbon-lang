@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Linker.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -47,7 +48,8 @@ DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 // LoadFile - Read the specified bitcode file in and return it.  This routine
 // searches the link path for the specified file to try to find it...
 //
-static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
+static inline std::auto_ptr<Module> LoadFile(const std::string &FN, 
+                                             LLVMContext* Context) {
   sys::Path Filename;
   if (!Filename.set(FN)) {
     cerr << "Invalid file name: '" << FN << "'\n";
@@ -62,7 +64,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
     const std::string &FNStr = Filename.toString();
     if (MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(FNStr,
                                                             &ErrorMessage)) {
-      Result = ParseBitcodeFile(Buffer, &ErrorMessage);
+      Result = ParseBitcodeFile(Buffer, Context, &ErrorMessage);
       delete Buffer;
     }
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
@@ -84,13 +86,14 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   
+  LLVMContext Context;
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
 
   unsigned BaseArg = 0;
   std::string ErrorMessage;
 
-  std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg]));
+  std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg], &Context));
   if (Composite.get() == 0) {
     cerr << argv[0] << ": error loading file '"
          << InputFilenames[BaseArg] << "'\n";
@@ -98,7 +101,7 @@ int main(int argc, char **argv) {
   }
 
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
-    std::auto_ptr<Module> M(LoadFile(InputFilenames[i]));
+    std::auto_ptr<Module> M(LoadFile(InputFilenames[i], &Context));
     if (M.get() == 0) {
       cerr << argv[0] << ": error loading file '" <<InputFilenames[i]<< "'\n";
       return 1;

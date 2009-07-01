@@ -16,6 +16,7 @@
 #define LTO_CODE_GENERATOR_H
 
 #include "llvm/Linker.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -53,6 +54,7 @@ private:
     
     typedef llvm::StringMap<uint8_t> StringSet;
 
+    llvm::LLVMContext*          _context;
     llvm::Linker                _linker;
     llvm::TargetMachine*        _target;
     bool                        _emitDwarfDebugInfo;

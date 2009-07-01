@@ -20,6 +20,7 @@
 namespace llvm {
   class Module;
   class InferiorProcess;
+  class LLVMContext;
 
   /// Debugger class - This class implements the LLVM source-level debugger.
   /// This allows clients to handle the user IO processing without having to
@@ -95,7 +96,7 @@ namespace llvm {
     /// the PATH for the specified program, loading it when found.  If the
     /// specified program cannot be found, an exception is thrown to indicate
     /// the error.
-    void loadProgram(const std::string &Path);
+    void loadProgram(const std::string &Path, LLVMContext* Context);
 
     /// unloadProgram - If a program is running, kill it, then unload all traces
     /// of the current program.  If no program is loaded, this method silently
