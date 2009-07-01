@@ -782,7 +782,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     return;
   }
   llvm::DenseMap<void*, CXXBaseOrMemberInitializer *>Members;
-  
+  bool err = false;
   for (unsigned i = 0; i < NumMemInits; i++) {
     CXXBaseOrMemberInitializer *Member = 
       static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
@@ -811,7 +811,12 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     }
     Diag(PrevMember->getSourceLocation(), diag::note_previous_initializer)
       << 0;
+    err = true;
   }
+  if (!err)
+    Constructor->setBaseOrMemberInitializers(Context, 
+                    reinterpret_cast<CXXBaseOrMemberInitializer **>(MemInits), 
+                    NumMemInits);
 }
 
 namespace {

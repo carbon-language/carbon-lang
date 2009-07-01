@@ -710,8 +710,7 @@ class CXXConstructorDecl : public CXXMethodDecl {
       BaseOrMemberInitializers(0), NumBaseOrMemberInitializers(0) { 
     setImplicit(isImplicitlyDeclared);
   }
-  
-  ~CXXConstructorDecl() { delete [] BaseOrMemberInitializers; }
+  virtual void Destroy(ASTContext& C);
   
 public:
   static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
@@ -742,23 +741,23 @@ public:
     ImplicitlyDefined = ID; 
   }
   
-  /// arg_iterator - Iterates through the member/base initializer list.
-  typedef CXXBaseOrMemberInitializer **arg_iterator;
+  /// init_iterator - Iterates through the member/base initializer list.
+  typedef CXXBaseOrMemberInitializer **init_iterator;
   
-  /// arg_const_iterator - Iterates through the memberbase initializer list.
-  typedef CXXBaseOrMemberInitializer * const * arg_const_iterator;
+  /// init_const_iterator - Iterates through the memberbase initializer list.
+  typedef CXXBaseOrMemberInitializer * const * init_const_iterator;
   
   /// begin() - Retrieve an iterator to the first initializer.
-  arg_iterator       begin()       { return BaseOrMemberInitializers; }
+  init_iterator       begin()       { return BaseOrMemberInitializers; }
   /// begin() - Retrieve an iterator to the first initializer.
-  arg_const_iterator begin() const { return BaseOrMemberInitializers; }
+  init_const_iterator begin() const { return BaseOrMemberInitializers; }
   
   /// end() - Retrieve an iterator past the last initializer.
-  arg_iterator       end()       { 
+  init_iterator       end()       { 
     return BaseOrMemberInitializers + NumBaseOrMemberInitializers; 
   }
   /// end() - Retrieve an iterator past the last initializer.
-  arg_const_iterator end() const { 
+  init_const_iterator end() const { 
     return BaseOrMemberInitializers + NumBaseOrMemberInitializers; 
   }
   
@@ -768,7 +767,8 @@ public:
       return NumBaseOrMemberInitializers; 
   }
   
-  void setBaseOrMemberInitializers(CXXBaseOrMemberInitializer **Initializers,
+  void setBaseOrMemberInitializers(ASTContext &C,
+                                   CXXBaseOrMemberInitializer **Initializers,
                                    unsigned NumInitializers);
   
   /// isDefaultConstructor - Whether this constructor is a default
