@@ -648,6 +648,7 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
                           Scope *S,
                           const CXXScopeSpec &SS,
                           IdentifierInfo *MemberOrBase,
+                          TypeTy *TemplateTypeTy,
                           SourceLocation IdLoc,
                           SourceLocation LParenLoc,
                           ExprTy **Args, unsigned NumArgs,
@@ -678,7 +679,7 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
   //   composed of a single identifier refers to the class member. A
   //   mem-initializer-id for the hidden base class may be specified
   //   using a qualified name. ]
-  if (!SS.getScopeRep()) {
+  if (!SS.getScopeRep() && !TemplateTypeTy) {
     // Look for a member, first.
     FieldDecl *Member = 0;
     DeclContext::lookup_result Result 
@@ -695,13 +696,14 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     }
   }
   // It didn't name a member, so see if it names a class.
-  TypeTy *BaseTy = getTypeName(*MemberOrBase, IdLoc, S, &SS);
+  TypeTy *BaseTy = TemplateTypeTy ? TemplateTypeTy 
+                     : getTypeName(*MemberOrBase, IdLoc, S, &SS);
   if (!BaseTy)
     return Diag(IdLoc, diag::err_mem_init_not_member_or_class)
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);
   
   QualType BaseType = QualType::getFromOpaquePtr(BaseTy);
-  if (!BaseType->isRecordType())
+  if (!BaseType->isRecordType() && !BaseType->isDependentType())
     return Diag(IdLoc, diag::err_base_init_does_not_name_class)
       << BaseType << SourceRange(IdLoc, RParenLoc);
 

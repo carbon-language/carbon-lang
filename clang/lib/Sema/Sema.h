@@ -1899,6 +1899,7 @@ public:
                                             Scope *S,
                                             const CXXScopeSpec &SS,
                                             IdentifierInfo *MemberOrBase,
+                                            TypeTy *TemplateTypeTy,
                                             SourceLocation IdLoc,
                                             SourceLocation LParenLoc,
                                             ExprTy **Args, unsigned NumArgs,
