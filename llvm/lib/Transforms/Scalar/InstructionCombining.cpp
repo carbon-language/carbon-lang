@@ -1085,8 +1085,22 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     break;
   }
   case Instruction::BitCast:
-    if (!I->getOperand(0)->getType()->isInteger())
+    if (!I->getOperand(0)->getType()->isIntOrIntVector())
       return false;  // vector->int or fp->int?
+
+    if (const VectorType *DstVTy = dyn_cast<VectorType>(I->getType())) {
+      if (const VectorType *SrcVTy =
+            dyn_cast<VectorType>(I->getOperand(0)->getType())) {
+        if (DstVTy->getNumElements() != SrcVTy->getNumElements())
+          // Don't touch a bitcast between vectors of different element counts.
+          return false;
+      } else
+        // Don't touch a scalar-to-vector bitcast.
+        return false;
+    } else if (isa<VectorType>(I->getOperand(0)->getType()))
+      // Don't touch a vector-to-scalar bitcast.
+      return false;
+
     if (SimplifyDemandedBits(I->getOperandUse(0), DemandedMask,
                              RHSKnownZero, RHSKnownOne, Depth+1))
       return I;
