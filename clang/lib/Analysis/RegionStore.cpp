@@ -918,12 +918,13 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
                                          const ElementRegion* R) {
   // Check if the region has a binding.
   RegionBindingsTy B = GetRegionBindings(state->getStore());
-  const SVal* V = B.lookup(R);
-  if (V)
+  if (const SVal* V = B.lookup(R))
     return *V;
 
+  const MemRegion* superR = R->getSuperRegion();
+
   // Check if the region is an element region of a string literal.
-  if (const StringRegion *StrR=dyn_cast<StringRegion>(R->getSuperRegion())) {
+  if (const StringRegion *StrR=dyn_cast<StringRegion>(superR)) {
     const StringLiteral *Str = StrR->getStringLiteral();
     SVal Idx = R->getIndex();
     if (nonloc::ConcreteInt *CI = dyn_cast<nonloc::ConcreteInt>(&Idx)) {
@@ -937,12 +938,8 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
     }
   }
 
-  const MemRegion* SuperR = R->getSuperRegion();
-
   // Check if the super region has a default value.
-  const SVal* D = state->get<RegionDefaultValue>(SuperR);
-
-  if (D) {
+  if (const SVal *D = state->get<RegionDefaultValue>(superR)) {
     if (D->hasConjuredSymbol())
       return ValMgr.getRegionValueSymbolVal(R);
     else
@@ -950,14 +947,29 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   }
 
   // Check if the super region has a binding.
-  D = B.lookup(SuperR);
-  if (D) {
+  if (B.lookup(superR)) {
     // We do not extract the bit value from super region for now.
     return ValMgr.makeUnknownVal();
   }
-
-  if (R->hasHeapOrStackStorage())
+  
+  if (R->hasHeapStorage()) {
+    // FIXME: If the region has heap storage and we know nothing special
+    // about its bindings, should we instead return UnknownVal?  Seems like
+    // we should only return UndefinedVal in the cases where we know the value
+    // will be undefined.
     return UndefinedVal();
+  }
+
+  if (R->hasStackStorage()) {
+    // Currently we don't reason specially about Clang-style vectors.  Check
+    // if superR is a vector and if so return Unknown.
+    if (const TypedRegion *typedSuperR = dyn_cast<TypedRegion>(superR)) {
+      if (typedSuperR->getValueType(getContext())->isVectorType())
+        return UnknownVal();
+    }
+
+    return UndefinedVal();
+  }
 
   QualType Ty = R->getValueType(getContext());
 
