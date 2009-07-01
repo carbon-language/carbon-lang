@@ -43,9 +43,10 @@ bool llvm::CheckBitcodeOutputToConsole(std::ostream* stream_to_check,
 #undef FindExecutable   // needed on windows :(
 sys::Path llvm::FindExecutable(const std::string &ExeName,
                                const std::string &ProgramPath) {
-  // First check if the given name is a fully qualified path to an executable
+  // First check if the given name is already a valid path to an executable.
   sys::Path Result(ExeName);
-  if (Result.isAbsolute() && Result.canExecute())
+  Result.makeAbsolute();
+  if (Result.canExecute())
     return Result;
 
   // Otherwise check the directory that the calling program is in.  We can do
