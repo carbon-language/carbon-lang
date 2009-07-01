@@ -1748,7 +1748,7 @@ static llvm::raw_ostream* ComputeOutFile(const std::string& InFile,
 static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                              const std::string &InFile, ProgActions PA,
                              const llvm::StringMap<bool> &Features,
-                             llvm::LLVMContext* Context) {
+                             const llvm::LLVMContext& Context) {
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
@@ -2284,7 +2284,7 @@ int main(int argc, char **argv) {
       ((PathDiagnosticClient*)DiagClient.get())->SetPreprocessor(PP.get());
 
     // Process the source file.
-    ProcessInputFile(*PP, PPFactory, InFile, ProgAction, Features, &Context);
+    ProcessInputFile(*PP, PPFactory, InFile, ProgAction, Features, Context);
     
     HeaderInfo.ClearFileInfo();
     DiagClient->setLangOptions(0);

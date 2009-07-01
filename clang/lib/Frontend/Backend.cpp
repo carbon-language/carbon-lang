@@ -76,7 +76,7 @@ namespace {
     BackendConsumer(BackendAction action, Diagnostic &Diags, 
                     const LangOptions &langopts, const CompileOptions &compopts,
                     const std::string &infile, llvm::raw_ostream* OS,
-                    LLVMContext* C) :
+                    const LLVMContext& C) :
       Action(action), 
       CompileOpts(compopts),
       AsmOutStream(OS), 
@@ -361,7 +361,7 @@ ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           const CompileOptions &CompileOpts,
                                           const std::string& InFile,
                                           llvm::raw_ostream* OS,
-                                          LLVMContext* C) {
+                                          const LLVMContext& C) {
   return new BackendConsumer(Action, Diags, LangOpts, CompileOpts,
                              InFile, OS, C);
 }

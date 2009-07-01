@@ -38,7 +38,7 @@ namespace {
     llvm::OwningPtr<CodeGen::CodeGenModule> Builder;
   public:
     CodeGeneratorImpl(Diagnostic &diags, const std::string& ModuleName,
-                      const CompileOptions &CO, llvm::LLVMContext* C)
+                      const CompileOptions &CO, const llvm::LLVMContext& C)
       : Diags(diags), CompileOpts(CO), M(new llvm::Module(ModuleName, C)) {}
     
     virtual ~CodeGeneratorImpl() {}
@@ -97,6 +97,6 @@ namespace {
 CodeGenerator *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
                                         const std::string& ModuleName,
                                         const CompileOptions &CO,
-                                        llvm::LLVMContext* C) {
+                                        const llvm::LLVMContext& C) {
   return new CodeGeneratorImpl(Diags, ModuleName, CO, C);
 }
