@@ -271,8 +271,7 @@ ProgramInfo::getSourceFiles(bool RequiresCompleteMap) {
   // should be on the use list of the llvm.dbg.translation_units global.
   //
   GlobalVariable *Units =
-    M->getGlobalVariable("llvm.dbg.translation_units",
-                         StructType::get(std::vector<const Type*>()));
+    M->getGlobalVariable("llvm.dbg.translation_units", StructType::get());
   if (Units == 0)
     throw "Program contains no debugging information!";
 
@@ -354,8 +353,7 @@ ProgramInfo::getSourceFunctions(bool RequiresCompleteMap) {
   // should be on the use list of the llvm.dbg.translation_units global.
   //
   GlobalVariable *Units =
-    M->getGlobalVariable("llvm.dbg.globals",
-                         StructType::get(std::vector<const Type*>()));
+    M->getGlobalVariable("llvm.dbg.globals", StructType::get());
   if (Units == 0)
     throw "Program contains no debugging information!";
 

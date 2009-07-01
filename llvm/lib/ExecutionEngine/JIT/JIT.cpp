@@ -453,7 +453,7 @@ GenericValue JIT::runFunction(Function *F,
   // arguments.  Make this function and return.
 
   // First, create the function.
-  FunctionType *STy=FunctionType::get(RetTy, std::vector<const Type*>(), false);
+  FunctionType *STy=FunctionType::get(RetTy, false);
   Function *Stub = Function::Create(STy, Function::InternalLinkage, "",
                                     F->getParent());
 

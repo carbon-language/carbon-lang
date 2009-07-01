@@ -253,8 +253,7 @@ public:
 
 private:
   static const FunctionType *create() {
-    std::vector<const Type*> params;
-    return FunctionType::get(TypeBuilder<R, cross>::get(), params, false);
+    return FunctionType::get(TypeBuilder<R, cross>::get(), false);
   }
 };
 template<typename R, typename A1, bool cross> class TypeBuilder<R(A1), cross> {
@@ -360,8 +359,7 @@ public:
 
 private:
   static const FunctionType *create() {
-    std::vector<const Type*> params;
-    return FunctionType::get(TypeBuilder<R, cross>::get(), params, true);
+    return FunctionType::get(TypeBuilder<R, cross>::get(), true);
   }
 };
 template<typename R, typename A1, bool cross>

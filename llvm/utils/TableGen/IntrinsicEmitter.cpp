@@ -146,7 +146,7 @@ static void EmitTypeForValueType(std::ostream &OS, MVT::SimpleValueType VT) {
     OS << "IntegerType::get(" << BitWidth << ")";
   } else if (VT == MVT::Other) {
     // MVT::OtherVT is used to mean the empty struct type here.
-    OS << "StructType::get(std::vector<const Type *>())";
+    OS << "StructType::get()";
   } else if (VT == MVT::f32) {
     OS << "Type::FloatTy";
   } else if (VT == MVT::f64) {

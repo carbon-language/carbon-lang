@@ -89,7 +89,7 @@ bool LowerAllocations::doInitialization(Module &M) {
   const Type *BPTy = PointerType::getUnqual(Type::Int8Ty);
   // Prototype malloc as "char* malloc(...)", because we don't know in
   // doInitialization whether size_t is int or long.
-  FunctionType *FT = FunctionType::get(BPTy, std::vector<const Type*>(), true);
+  FunctionType *FT = FunctionType::get(BPTy, true);
   MallocFunc = M.getOrInsertFunction("malloc", FT);
   FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, BPTy, (Type *)0);
   return true;

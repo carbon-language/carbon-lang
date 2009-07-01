@@ -327,7 +327,7 @@ bool DISubprogram::describes(const Function *F) {
 DIFactory::DIFactory(Module &m)
   : M(m), StopPointFn(0), FuncStartFn(0), RegionStartFn(0), RegionEndFn(0),
     DeclareFn(0) {
-  EmptyStructPtr = PointerType::getUnqual(StructType::get(NULL, NULL));
+  EmptyStructPtr = PointerType::getUnqual(StructType::get());
 }
 
 /// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.

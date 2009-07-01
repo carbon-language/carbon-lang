@@ -92,8 +92,7 @@ void RaiseAllocations::doInitialization(Module &M) {
         // i8*(...) * malloc
         // This handles the common declaration of: 'void *malloc();'
         const FunctionType *Malloc3Type = 
-          FunctionType::get(PointerType::getUnqual(Type::Int8Ty),
-                            std::vector<const Type*>(), true);
+          FunctionType::get(PointerType::getUnqual(Type::Int8Ty), true);
         if (TyWeHave != Malloc3Type)
           // Give up
           MallocFunc = 0;
@@ -113,14 +112,12 @@ void RaiseAllocations::doInitialization(Module &M) {
       // Check to see if the prototype was forgotten, giving us 
       // void (...) * free
       // This handles the common forward declaration of: 'void free();'
-      const FunctionType* Free2Type = FunctionType::get(Type::VoidTy, 
-        std::vector<const Type*>(),true);
+      const FunctionType* Free2Type = FunctionType::get(Type::VoidTy, true);
 
       if (TyWeHave != Free2Type) {
         // One last try, check to see if we can find free as 
         // int (...)* free.  This handles the case where NOTHING was declared.
-        const FunctionType* Free3Type = FunctionType::get(Type::Int32Ty, 
-          std::vector<const Type*>(),true);
+        const FunctionType* Free3Type = FunctionType::get(Type::Int32Ty, true);
         
         if (TyWeHave != Free3Type) {
           // Give up.

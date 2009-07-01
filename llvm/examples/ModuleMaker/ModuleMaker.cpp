@@ -27,8 +27,7 @@ int main() {
   Module *M = new Module("test");
 
   // Create the main function: first create the type 'int ()'
-  FunctionType *FT = FunctionType::get(Type::Int32Ty, std::vector<const Type*>(),
-                                       /*not vararg*/false);
+  FunctionType *FT = FunctionType::get(Type::Int32Ty, /*not vararg*/false);
 
   // By passing a module as the last parameter to the Function constructor,
   // it automatically gets appended to the Module.

@@ -1928,8 +1928,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
     if (Ctors[i]) {
       CSVals[1] = Ctors[i];
     } else {
-      const Type *FTy = FunctionType::get(Type::VoidTy,
-                                          std::vector<const Type*>(), false);
+      const Type *FTy = FunctionType::get(Type::VoidTy, false);
       const PointerType *PFTy = PointerType::getUnqual(FTy);
       CSVals[1] = Constant::getNullValue(PFTy);
       CSVals[0] = ConstantInt::get(Type::Int32Ty, 2147483647);

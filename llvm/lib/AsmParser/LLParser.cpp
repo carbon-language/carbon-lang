@@ -1244,7 +1244,7 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   Lex.Lex(); // Consume the '{'
   
   if (EatIfPresent(lltok::rbrace)) {
-    Result = StructType::get(std::vector<const Type*>(), Packed);
+    Result = StructType::get(Packed);
     return false;
   }
 

@@ -159,6 +159,15 @@ public:
     bool isVarArg  ///< Whether this is a variable argument length function
   );
 
+  /// FunctionType::get - Create a FunctionType taking no parameters.
+  ///
+  static FunctionType *get(
+    const Type *Result, ///< The result type
+    bool isVarArg  ///< Whether this is a variable argument length function
+  ) {
+    return get(Result, std::vector<const Type *>(), isVarArg);
+  }
+
   /// isValidReturnType - Return true if the specified type is valid as a return
   /// type.
   static bool isValidReturnType(const Type *RetTy);
@@ -233,6 +242,12 @@ public:
   ///
   static StructType *get(const std::vector<const Type*> &Params,
                          bool isPacked=false);
+
+  /// StructType::get - Create an empty structure type.
+  ///
+  static StructType *get(bool isPacked=false) {
+    return get(std::vector<const Type*>(), isPacked);
+  }
 
   /// StructType::get - This static method is a convenience method for
   /// creating structure types by specifying the elements as arguments.
