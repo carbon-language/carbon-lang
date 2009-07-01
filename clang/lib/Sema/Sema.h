@@ -2359,7 +2359,7 @@ public:
   /// \brief A template instantiation that is currently in progress.
   struct ActiveTemplateInstantiation {
     /// \brief The kind of template instantiation we are performing
-    enum {
+    enum InstantiationKind {
       /// We are instantiating a template declaration. The entity is
       /// the declaration we're instantiating (e.g., a CXXRecordDecl).
       TemplateInstantiation,
@@ -2371,13 +2371,16 @@ public:
       /// FIXME: Use a TemplateArgumentList
       DefaultTemplateArgumentInstantiation,
 
-      /// We are performing template argument deduction for a class
-      /// template partial specialization. The Entity is the class
-      /// template partial specialization, and
-      /// TemplateArgs/NumTemplateArgs provides the deduced template
-      /// arguments.
-      /// FIXME: Use a TemplateArgumentList
-      PartialSpecDeductionInstantiation
+      /// We are substituting explicit template arguments provided for 
+      /// a function template. The entity is a FunctionTemplateDecl.
+      ExplicitTemplateArgumentSubstitution,
+      
+      /// We are substituting template argument determined as part of
+      /// template argument deduction for either a class template
+      /// partial specialization or a function template. The
+      /// Entity is either a ClassTemplatePartialSpecializationDecl or
+      /// a FunctionTemplateDecl.
+      DeducedTemplateArgumentSubstitution
     } Kind;
 
     /// \brief The point of instantiation within the source code.
@@ -2411,7 +2414,8 @@ public:
         return true;
 
       case DefaultTemplateArgumentInstantiation:
-      case PartialSpecDeductionInstantiation:
+      case ExplicitTemplateArgumentSubstitution:
+      case DeducedTemplateArgumentSubstitution:
         return X.TemplateArgs == Y.TemplateArgs;
       }
 
@@ -2468,6 +2472,15 @@ public:
                           unsigned NumTemplateArgs,
                           SourceRange InstantiationRange = SourceRange());
 
+    /// \brief Note that we are instantiating a default argument in a
+    /// template-id.
+    InstantiatingTemplate(Sema &SemaRef, SourceLocation PointOfInstantiation,
+                          FunctionTemplateDecl *FunctionTemplate,
+                          const TemplateArgument *TemplateArgs,
+                          unsigned NumTemplateArgs,
+                          ActiveTemplateInstantiation::InstantiationKind Kind,
+                          SourceRange InstantiationRange = SourceRange());
+    
     /// \brief Note that we are instantiating as part of template
     /// argument deduction for a class template partial
     /// specialization.

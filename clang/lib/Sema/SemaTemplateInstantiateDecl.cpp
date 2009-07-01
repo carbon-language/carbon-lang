@@ -628,6 +628,28 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                     FunctionDecl *Tmpl) {
   if (Tmpl->isDeleted())
     New->setDeleted();
+  
+  // If we are performing substituting explicitly-specified template arguments
+  // or deduced template arguments into a function template and we reach this
+  // point, we are now past the point where SFINAE applies and have committed
+  // to keeping the new function template specialization. We therefore 
+  // convert the active template instantiation for the function template 
+  // into a template instantiation for this specific function template
+  // specialization, which is not a SFINAE context, so that we diagnose any
+  // further errors in the declaration itself.
+  typedef Sema::ActiveTemplateInstantiation ActiveInstType;
+  ActiveInstType &ActiveInst = SemaRef.ActiveTemplateInstantiations.back();
+  if (ActiveInst.Kind == ActiveInstType::ExplicitTemplateArgumentSubstitution ||
+      ActiveInst.Kind == ActiveInstType::DeducedTemplateArgumentSubstitution) {
+    if (FunctionTemplateDecl *FunTmpl 
+          = dyn_cast<FunctionTemplateDecl>((Decl *)ActiveInst.Entity)) {
+      assert(FunTmpl->getTemplatedDecl() == Tmpl && 
+             "Deduction from the wrong function template?");
+      ActiveInst.Kind = ActiveInstType::TemplateInstantiation;
+      ActiveInst.Entity = reinterpret_cast<uintptr_t>(New);
+    }
+  }
+    
   return false;
 }
 

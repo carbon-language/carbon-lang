@@ -939,7 +939,8 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     // explicitly-specified template arguments against this function template,
     // and then substitute them into the function parameter types.
     InstantiatingTemplate Inst(*this, FunctionTemplate->getLocation(), 
-                               FunctionTemplate, Deduced.data(), Deduced.size());
+                               FunctionTemplate, Deduced.data(), Deduced.size(),
+             ActiveTemplateInstantiation::ExplicitTemplateArgumentSubstitution);
     if (Inst)
       return TDK_InstantiationDepth;
     
@@ -1106,7 +1107,8 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   // Enter a new template instantiation context while we instantiate the
   // actual function declaration.
   InstantiatingTemplate Inst(*this, FunctionTemplate->getLocation(), 
-                             FunctionTemplate, Deduced.data(), Deduced.size());
+                             FunctionTemplate, Deduced.data(), Deduced.size(),
+              ActiveTemplateInstantiation::DeducedTemplateArgumentSubstitution);
   if (Inst)
     return TDK_InstantiationDepth; 
                                   

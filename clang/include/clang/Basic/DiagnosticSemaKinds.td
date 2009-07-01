@@ -839,6 +839,12 @@ def note_function_template_spec_here : Note<
   
 def note_default_arg_instantiation_here : Note<
   "in instantiation of default argument for '%0' required here">;
+def note_explicit_template_arg_substitution_here : Note<
+  "while substituting explicitly-specified template arguments into function "
+  "template %f, here">;
+def note_function_template_deduction_instantiation_here : Note<
+  "while substituting deduced template arguments into function template %0, "
+  "here">;
 def note_partial_spec_deduct_instantiation_here : Note<
   "during template argument deduction for class template partial "
   "specialization %0, here">;
