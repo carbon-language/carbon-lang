@@ -62,17 +62,17 @@ static void DefineStd(std::vector<char> &Buf, const char *MacroName,
 // Defines specific to certain operating systems.
 //===----------------------------------------------------------------------===//
 namespace {
-template<typename TargetInfo>
-class OSTargetInfo : public TargetInfo {
+template<typename TgtInfo>
+class OSTargetInfo : public TgtInfo {
 protected:
   virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
                             std::vector<char> &Defines) const=0;
 public:
-  OSTargetInfo(const std::string& triple) : TargetInfo(triple) {}
+  OSTargetInfo(const std::string& triple) : TgtInfo(triple) {}
   virtual void getTargetDefines(const LangOptions &Opts,
                                 std::vector<char> &Defines) const {
-    TargetInfo::getTargetDefines(Opts, Defines);
-    getOSDefines(Opts, TargetInfo::getTargetTriple(), Defines);
+    TgtInfo::getTargetDefines(Opts, Defines);
+    getOSDefines(Opts, TgtInfo::getTargetTriple(), Defines);
   }
 
 };

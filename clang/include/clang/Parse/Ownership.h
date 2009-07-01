@@ -574,6 +574,19 @@ namespace clang {
 #if !defined(DISABLE_SMART_POINTERS)
     friend class moving::ASTMultiMover<Destroyer>;
 
+#if defined(_MSC_VER)
+    //  Last tested with Visual Studio 2008.
+    //  Visual C++ appears to have a bug where it does not recognise
+    //  the return value from ASTMultiMover<Destroyer>::opeator-> as
+    //  being a pointer to ASTMultiPtr.  However, the diagnostics
+    //  suggest it has the right name, simply that the pointer type
+    //  is not convertible to itself.
+    //  Either way, a classic C-style hard cast resolves any issue.
+     static ASTMultiPtr* hack(moving::ASTMultiMover<Destroyer> & source) {
+       return (ASTMultiPtr*)source.operator->();
+	}
+#endif
+
     ASTMultiPtr(ASTMultiPtr&); // DO NOT IMPLEMENT
     // Reference member prevents copy assignment.
 
@@ -594,7 +607,13 @@ namespace clang {
       : Actions(actions), Nodes(nodes), Count(count) {}
     /// Move constructor
     ASTMultiPtr(moving::ASTMultiMover<Destroyer> mover)
+#if defined(_MSC_VER)
+    //  Apply the visual C++ hack supplied above.  
+    //  Last tested with Visual Studio 2008.
+      : Actions(hack(mover)->Actions), Nodes(hack(mover)->Nodes), Count(hack(mover)->Count) {
+#else
       : Actions(mover->Actions), Nodes(mover->Nodes), Count(mover->Count) {
+#endif
       mover.release();
     }
 #else
