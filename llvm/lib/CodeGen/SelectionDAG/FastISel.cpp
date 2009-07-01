@@ -442,10 +442,7 @@ bool FastISel::SelectCall(User *I) {
       MachineInstr *DeclareMI 
         = BuildMI(MBB, DL, II).addFrameIndex(FI).addGlobalAddress(GV);
       DIVariable DV(cast<GlobalVariable>(GV));
-      if (!DV.isNull()) {
-        // This is a local variable
-        DW->RecordVariableScope(DV, DeclareMI);
-      }
+      DW->RecordVariableScope(DV, DeclareMI);
     }
     return true;
   }
