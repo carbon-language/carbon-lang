@@ -54,151 +54,147 @@ public:
   ~LLVMContext();
   
   // ConstantInt accessors
-  ConstantInt* getConstantIntTrue() const;
-  ConstantInt* getConstantIntFalse() const;
+  ConstantInt* getConstantIntTrue();
+  ConstantInt* getConstantIntFalse();
   ConstantInt* getConstantInt(const IntegerType* Ty, uint64_t V,
-                              bool isSigned = false) const;
-  ConstantInt* getConstantIntSigned(const IntegerType* Ty, int64_t V) const;
-  ConstantInt* getConstantInt(const APInt& V) const;
-  Constant* getConstantInt(const Type* Ty, const APInt& V) const;
-  ConstantInt* getAllOnesConstantInt(const Type* Ty) const;
+                              bool isSigned = false);
+  ConstantInt* getConstantIntSigned(const IntegerType* Ty, int64_t V);
+  ConstantInt* getConstantInt(const APInt& V);
+  Constant* getConstantInt(const Type* Ty, const APInt& V);
+  ConstantInt* getAllOnesConstantInt(const Type* Ty);
   
   // ConstantPointerNull accessors
-  ConstantPointerNull* getConstantPointerNull(const PointerType* T) const;
+  ConstantPointerNull* getConstantPointerNull(const PointerType* T);
   
   // ConstantStruct accessors
   Constant* getConstantStruct(const StructType* T,
-                              const std::vector<Constant*>& V) const;
+                              const std::vector<Constant*>& V);
   Constant* getConstantStruct(const std::vector<Constant*>& V,
-                              bool Packed = false) const;
+                              bool Packed = false);
   Constant* getConstantStruct(Constant* const *Vals, unsigned NumVals,
-                              bool Packed = false) const;
+                              bool Packed = false);
                               
   // ConstantAggregateZero accessors
-  ConstantAggregateZero* getConstantAggregateZero(const Type* Ty) const;
+  ConstantAggregateZero* getConstantAggregateZero(const Type* Ty);
   
   // ConstantArray accessors
   Constant* getConstantArray(const ArrayType* T,
-                             const std::vector<Constant*>& V) const;
+                             const std::vector<Constant*>& V);
   Constant* getConstantArray(const ArrayType* T, Constant* const* Vals,
-                             unsigned NumVals) const;
+                             unsigned NumVals);
   Constant* getConstantArray(const std::string& Initializer,
-                             bool AddNull = false) const;
+                             bool AddNull = false);
                              
   // ConstantExpr accessors
-  Constant* getConstantExpr(unsigned Opcode, Constant* C1, Constant* C2) const;
-  Constant* getConstantExprTrunc(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprSExt(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprZExt(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprFPTrunc(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprFPExtend(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprUIToFP(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprSIToFP(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprFPToUI(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprFPToSI(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprPtrToInt(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprIntToPtr(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprBitCast(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprCast(unsigned ops, Constant* C,
-                                const Type* Ty) const;
-  Constant* getConstantExprZExtOrBitCast(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprSExtOrBitCast(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprTruncOrBitCast(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprPointerCast(Constant* C, const Type* Ty) const;
+  Constant* getConstantExpr(unsigned Opcode, Constant* C1, Constant* C2);
+  Constant* getConstantExprTrunc(Constant* C, const Type* Ty);
+  Constant* getConstantExprSExt(Constant* C, const Type* Ty);
+  Constant* getConstantExprZExt(Constant* C, const Type* Ty);
+  Constant* getConstantExprFPTrunc(Constant* C, const Type* Ty);
+  Constant* getConstantExprFPExtend(Constant* C, const Type* Ty);
+  Constant* getConstantExprUIToFP(Constant* C, const Type* Ty);
+  Constant* getConstantExprSIToFP(Constant* C, const Type* Ty);
+  Constant* getConstantExprFPToUI(Constant* C, const Type* Ty);
+  Constant* getConstantExprFPToSI(Constant* C, const Type* Ty);
+  Constant* getConstantExprPtrToInt(Constant* C, const Type* Ty);
+  Constant* getConstantExprIntToPtr(Constant* C, const Type* Ty);
+  Constant* getConstantExprBitCast(Constant* C, const Type* Ty);
+  Constant* getConstantExprCast(unsigned ops, Constant* C, const Type* Ty);
+  Constant* getConstantExprZExtOrBitCast(Constant* C, const Type* Ty);
+  Constant* getConstantExprSExtOrBitCast(Constant* C, const Type* Ty);
+  Constant* getConstantExprTruncOrBitCast(Constant* C, const Type* Ty);
+  Constant* getConstantExprPointerCast(Constant* C, const Type* Ty);
   Constant* getConstantExprIntegerCast(Constant* C, const Type* Ty,
-                                       bool isSigned) const;
-  Constant* getConstantExprFPCast(Constant* C, const Type* Ty) const;
-  Constant* getConstantExprSelect(Constant* C, Constant* V1,
-                                  Constant* V2) const;
-  Constant* getConstantExprAlignOf(const Type* Ty) const;
+                                       bool isSigned);
+  Constant* getConstantExprFPCast(Constant* C, const Type* Ty);
+  Constant* getConstantExprSelect(Constant* C, Constant* V1, Constant* V2);
+  Constant* getConstantExprAlignOf(const Type* Ty);
   Constant* getConstantExprCompare(unsigned short pred,
-                                   Constant* C1, Constant* C2) const;
-  Constant* getConstantExprNeg(Constant* C) const;
-  Constant* getConstantExprFNeg(Constant* C) const;
-  Constant* getConstantExprNot(Constant* C) const;
-  Constant* getConstantExprAdd(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprFAdd(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprSub(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprFSub(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprMul(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprFMul(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprUDiv(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprSDiv(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprFDiv(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprURem(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprSRem(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprFRem(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprAnd(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprOr(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprXor(Constant* C1, Constant* C2) const;
+                                   Constant* C1, Constant* C2);
+  Constant* getConstantExprNeg(Constant* C);
+  Constant* getConstantExprFNeg(Constant* C);
+  Constant* getConstantExprNot(Constant* C);
+  Constant* getConstantExprAdd(Constant* C1, Constant* C2);
+  Constant* getConstantExprFAdd(Constant* C1, Constant* C2);
+  Constant* getConstantExprSub(Constant* C1, Constant* C2);
+  Constant* getConstantExprFSub(Constant* C1, Constant* C2);
+  Constant* getConstantExprMul(Constant* C1, Constant* C2);
+  Constant* getConstantExprFMul(Constant* C1, Constant* C2);
+  Constant* getConstantExprUDiv(Constant* C1, Constant* C2);
+  Constant* getConstantExprSDiv(Constant* C1, Constant* C2);
+  Constant* getConstantExprFDiv(Constant* C1, Constant* C2);
+  Constant* getConstantExprURem(Constant* C1, Constant* C2);
+  Constant* getConstantExprSRem(Constant* C1, Constant* C2);
+  Constant* getConstantExprFRem(Constant* C1, Constant* C2);
+  Constant* getConstantExprAnd(Constant* C1, Constant* C2);
+  Constant* getConstantExprOr(Constant* C1, Constant* C2);
+  Constant* getConstantExprXor(Constant* C1, Constant* C2);
   Constant* getConstantExprICmp(unsigned short pred, Constant* LHS,
-                                Constant* RHS) const;
+                                Constant* RHS);
   Constant* getConstantExprFCmp(unsigned short pred, Constant* LHS,
-                                Constant* RHS) const;
+                                Constant* RHS);
   Constant* getConstantExprVICmp(unsigned short pred, Constant* LHS,
-                                 Constant* RHS) const;
+                                 Constant* RHS);
   Constant* getConstantExprVFCmp(unsigned short pred, Constant* LHS,
-                                 Constant* RHS) const;
-  Constant* getConstantExprShl(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprLShr(Constant* C1, Constant* C2) const;
-  Constant* getConstantExprAShr(Constant* C1, Constant* C2) const;
+                                 Constant* RHS);
+  Constant* getConstantExprShl(Constant* C1, Constant* C2);
+  Constant* getConstantExprLShr(Constant* C1, Constant* C2);
+  Constant* getConstantExprAShr(Constant* C1, Constant* C2);
   Constant* getConstantExprGetElementPtr(Constant* C, Constant* const* IdxList, 
-                                         unsigned NumIdx) const;
+                                         unsigned NumIdx);
   Constant* getConstantExprGetElementPtr(Constant* C, Value* const* IdxList, 
-                                          unsigned NumIdx) const;
-  Constant* getConstantExprExtractElement(Constant* Vec, Constant* Idx) const;
+                                          unsigned NumIdx);
+  Constant* getConstantExprExtractElement(Constant* Vec, Constant* Idx);
   Constant* getConstantExprInsertElement(Constant* Vec, Constant* Elt,
-                                         Constant* Idx) const;
+                                         Constant* Idx);
   Constant* getConstantExprShuffleVector(Constant* V1, Constant* V2,
-                                         Constant* Mask) const;
+                                         Constant* Mask);
   Constant* getConstantExprExtractValue(Constant* Agg, const unsigned* IdxList, 
-                                        unsigned NumIdx) const;
+                                        unsigned NumIdx);
   Constant* getConstantExprInsertValue(Constant* Agg, Constant* Val,
                                        const unsigned* IdxList,
-                                       unsigned NumIdx) const;
-  Constant* getZeroValueForNegation(const Type* Ty) const;
+                                       unsigned NumIdx);
+  Constant* getZeroValueForNegation(const Type* Ty);
   
   // ConstantFP accessors
-  ConstantFP* getConstantFP(const APFloat& V) const;
-  Constant* getConstantFP(const Type* Ty, double V) const;
-  ConstantFP* getConstantFPNegativeZero(const Type* Ty) const;
+  ConstantFP* getConstantFP(const APFloat& V);
+  Constant* getConstantFP(const Type* Ty, double V);
+  ConstantFP* getConstantFPNegativeZero(const Type* Ty);
   
   // ConstantVector accessors
   Constant* getConstantVector(const VectorType* T,
-                              const std::vector<Constant*>& V) const;
-  Constant* getConstantVector(const std::vector<Constant*>& V) const;
-  Constant* getConstantVector(Constant* const* Vals, unsigned NumVals) const;
-  ConstantVector* getConstantVectorAllOnes(const VectorType* Ty) const;
+                              const std::vector<Constant*>& V);
+  Constant* getConstantVector(const std::vector<Constant*>& V);
+  Constant* getConstantVector(Constant* const* Vals, unsigned NumVals);
+  ConstantVector* getConstantVectorAllOnes(const VectorType* Ty);
   
   // FunctionType accessors
   FunctionType* getFunctionType(const Type* Result,
                                 const std::vector<const Type*>& Params,
-                                bool isVarArg) const;
+                                bool isVarArg);
                                 
   // IntegerType accessors
-  const IntegerType* getIntegerType(unsigned NumBits) const;
+  const IntegerType* getIntegerType(unsigned NumBits);
   
   // OpaqueType accessors
-  OpaqueType* getOpaqueType() const;
+  OpaqueType* getOpaqueType();
   
   // StructType accessors
   StructType* getStructType(const std::vector<const Type*>& Params,
-                            bool isPacked = false) const;
+                            bool isPacked = false);
   
   // ArrayType accessors
-  ArrayType* getArrayType(const Type* ElementType, uint64_t NumElements) const;
+  ArrayType* getArrayType(const Type* ElementType, uint64_t NumElements);
   
   // PointerType accessors
-  PointerType* getPointerType(const Type* ElementType,
-                              unsigned AddressSpace) const;
-  PointerType* getPointerTypeUnqualified(const Type* ElementType) const;
+  PointerType* getPointerType(const Type* ElementType, unsigned AddressSpace);
+  PointerType* getPointerTypeUnqualified(const Type* ElementType);
   
   // VectorType accessors
-  VectorType* getVectorType(const Type* ElementType,
-                            unsigned NumElements) const;
-  VectorType* getVectorTypeInteger(const VectorType* VTy) const;
-  VectorType* getVectorTypeExtendedElement(const VectorType* VTy) const;
-  VectorType* getVectorTypeTruncatedElement(const VectorType* VTy) const;
+  VectorType* getVectorType(const Type* ElementType, unsigned NumElements);
+  VectorType* getVectorTypeInteger(const VectorType* VTy);
+  VectorType* getVectorTypeExtendedElement(const VectorType* VTy);
+  VectorType* getVectorTypeTruncatedElement(const VectorType* VTy);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.
