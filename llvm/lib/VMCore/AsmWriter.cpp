@@ -1313,7 +1313,8 @@ void AssemblyWriter::printMDNode(const MDNode *Node,
   // If this node is already printed then just refer it using its Metadata
   // id number.
   if (MI != MDNodes.end()) {
-    Out << "metadata !" << MI->second;
+    if (!StandAlone)
+      Out << "metadata !" << MI->second;
     return;
   }
   
