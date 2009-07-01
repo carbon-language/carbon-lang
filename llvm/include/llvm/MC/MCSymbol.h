@@ -46,6 +46,9 @@ namespace llvm {
     friend class MCContext;
     MCSymbol(const char *_Name, bool _IsTemporary) 
       : Name(_Name), Section(0), IsTemporary(_IsTemporary), IsExternal(false) {}
+    
+    MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT
+    void operator=(const MCSymbol&); // DO NOT IMPLEMENT
   public:
     
     MCSection *getSection() const { return Section; }
