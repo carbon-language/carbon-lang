@@ -2669,19 +2669,28 @@ SimpleRegisterCoalescing::TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
   CopyMI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
   for (int i = CopyMI->getNumOperands() - 1, e = 0; i > e; --i)
     CopyMI->RemoveOperand(i);
+  CopyMI->getOperand(0).setIsUndef();
   bool NoUse = mri_->use_empty(SrcReg);
   if (NoUse) {
-    for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(SrcReg),
-           E = mri_->reg_end(); I != E; ) {
-      assert(I.getOperand().isDef());
-      MachineInstr *DefMI = &*I;
-      ++I;
+    for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(SrcReg),
+           RE = mri_->reg_end(); RI != RE; ) {
+      assert(RI.getOperand().isDef());
+      MachineInstr *DefMI = &*RI;
+      ++RI;
       // The implicit_def source has no other uses, delete it.
       assert(DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF);
       li_->RemoveMachineInstrFromMaps(DefMI);
       DefMI->eraseFromParent();
     }
   }
+
+  // Mark uses of implicit_def isUndef.
+  for (MachineRegisterInfo::use_iterator RI = mri_->use_begin(DstReg),
+         RE = mri_->use_end(); RI != RE; ++RI) {
+    assert((*RI).getParent() == MBB);
+    RI.getOperand().setIsUndef();
+  }
+
   ++I;
   return true;
 }

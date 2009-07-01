@@ -124,7 +124,9 @@ void LiveIntervals::processImplicitDefs() {
         ImpDefMIs.push_back(MI);
         continue;
       }
-      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+
+      bool ChangedToImpDef = false;
+      for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand& MO = MI->getOperand(i);
         if (!MO.isReg() || !MO.isUse())
           continue;
@@ -133,16 +135,35 @@ void LiveIntervals::processImplicitDefs() {
           continue;
         if (!ImpDefRegs.count(Reg))
           continue;
+        // Use is a copy, just turn it into an implicit_def.
+        unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+        if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
+            Reg == SrcReg) {
+          bool isKill = MO.isKill();
+          MI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
+          for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
+            MI->RemoveOperand(j);
+          if (isKill)
+            ImpDefRegs.erase(Reg);
+          ChangedToImpDef = true;
+          break;
+        }
+
         MO.setIsUndef();
         if (MO.isKill() || MI->isRegTiedToDefOperand(i))
           ImpDefRegs.erase(Reg);
       }
 
-      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
-        MachineOperand& MO = MI->getOperand(i);
-        if (!MO.isReg() || !MO.isDef())
-          continue;
-        ImpDefRegs.erase(MO.getReg());
+      if (ChangedToImpDef) {
+        // Backtrack to process this new implicit_def.
+        --I;
+      } else {
+        for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+          MachineOperand& MO = MI->getOperand(i);
+          if (!MO.isReg() || !MO.isDef())
+            continue;
+          ImpDefRegs.erase(MO.getReg());
+        }
       }
     }
 
@@ -155,33 +176,39 @@ void LiveIntervals::processImplicitDefs() {
         continue;
       if (!ImpDefRegs.count(Reg))
         continue;
-      bool HasLocalUse = false;
-      for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(Reg),
-             RE = mri_->reg_end(); RI != RE; ) {
-        MachineOperand &RMO = RI.getOperand();
-        MachineInstr *RMI = &*RI;
-        ++RI;
-        if (RMO.isDef()) {
-          // Don't expect another def of the same register.
-          assert(RMI == MI &&
-                 "Register with multiple defs including an implicit_def?");
-          continue;
+
+      // If there are multiple defs of the same register and at least one
+      // is not an implicit_def, do not insert implicit_def's before the
+      // uses.
+      bool Skip = false;
+      for (MachineRegisterInfo::def_iterator DI = mri_->def_begin(Reg),
+             DE = mri_->def_end(); DI != DE; ++DI) {
+        if (DI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF) {
+          Skip = true;
+          break;
         }
+      }
+      if (Skip)
+        continue;
+
+      for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(Reg),
+             UE = mri_->use_end(); UI != UE; ) {
+        MachineOperand &RMO = UI.getOperand();
+        MachineInstr *RMI = &*UI;
+        ++UI;
         MachineBasicBlock *RMBB = RMI->getParent();
-        if (RMBB == MBB) {
-          HasLocalUse = true;
+        if (RMBB == MBB)
           continue;
-        }
         const TargetRegisterClass* RC = mri_->getRegClass(Reg);
         unsigned NewVReg = mri_->createVirtualRegister(RC);
-        BuildMI(*RMBB, RMI, RMI->getDebugLoc(),
-                tii_->get(TargetInstrInfo::IMPLICIT_DEF), NewVReg);
+        MachineInstrBuilder MIB =
+          BuildMI(*RMBB, RMI, RMI->getDebugLoc(),
+                  tii_->get(TargetInstrInfo::IMPLICIT_DEF), NewVReg);
+        (*MIB).getOperand(0).setIsUndef();
         RMO.setReg(NewVReg);
         RMO.setIsUndef();
         RMO.setIsKill();
       }
-      if (!HasLocalUse)
-        MI->eraseFromParent();
     }
     ImpDefRegs.clear();
     ImpDefMIs.clear();
