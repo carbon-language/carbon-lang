@@ -376,6 +376,7 @@ public:
   bool isFunctionProtoType() const { return getAsFunctionProtoType() != 0; }
   bool isPointerType() const;
   bool isBlockPointerType() const;
+  bool isVoidPointerType() const;
   bool isReferenceType() const;
   bool isLValueReferenceType() const;
   bool isRValueReferenceType() const;

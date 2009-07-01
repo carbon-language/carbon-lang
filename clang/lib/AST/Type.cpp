@@ -185,6 +185,12 @@ bool Type::isStructureType() const {
     return RT->getDecl()->isStruct();
   return false;
 }
+bool Type::isVoidPointerType() const {
+  if (const PointerType *PT = getAsPointerType())
+    return PT->getPointeeType()->isVoidType();
+  return false;
+}
+
 bool Type::isUnionType() const {
   if (const RecordType *RT = getAsRecordType())
     return RT->getDecl()->isUnion();
