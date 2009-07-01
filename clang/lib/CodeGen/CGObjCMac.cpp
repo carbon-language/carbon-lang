@@ -690,7 +690,6 @@ public:
   llvm::Value *getEHPersonalityPtr() {
     llvm::Constant *Personality = 
       CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
-                                              std::vector<const llvm::Type*>(),
                                                         true),
                               "__objc_personality_v0");
     return llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
@@ -705,9 +704,8 @@ public:
   }
   
   llvm::Constant *getObjCEndCatchFn() {
-    std::vector<const llvm::Type*> Params;
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
-                                                             Params, false),
+                                                             false),
                                      "objc_end_catch");
     
   }

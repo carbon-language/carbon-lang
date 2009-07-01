@@ -1158,9 +1158,8 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
 
   // Create the load function calling the runtime entry point with the module
   // structure
-  std::vector<const llvm::Type*> VoidArgs;
   llvm::Function * LoadFunction = llvm::Function::Create(
-      llvm::FunctionType::get(llvm::Type::VoidTy, VoidArgs, false),
+      llvm::FunctionType::get(llvm::Type::VoidTy, false),
       llvm::GlobalValue::InternalLinkage, ".objc_load_function",
       &TheModule);
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", LoadFunction);
@@ -1245,7 +1244,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   // Pointer to the personality function
   llvm::Constant *Personality =
     CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
-          std::vector<const llvm::Type*>(), true),
+          true),
         "__gnu_objc_personality_v0");
   Personality = llvm::ConstantExpr::getBitCast(Personality, PtrTy);
   std::vector<const llvm::Type*> Params;
