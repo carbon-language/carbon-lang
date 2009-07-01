@@ -516,8 +516,7 @@ bool AsmParser::ParseStatement() {
   Lexer.Lex();
   
   // Instruction is good, process it.
-  outs() << "Found instruction: " << IDVal << " with " << Inst.getNumOperands()
-         << " operands.\n";
+  Out.EmitInstruction(Inst);
   
   // Skip to end of line for now.
   return false;
