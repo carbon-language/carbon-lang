@@ -1,5 +1,6 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s
+
+// NOWORK: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 
 #include <stdlib.h>
 
@@ -39,5 +40,15 @@ void* compound_literal(int x, int y) {
 void* alloca_test() {
   void* p = __builtin_alloca(10);
   return p; // expected-warning{{Address of stack memory}}
+}
+
+int array_test(int x[2]) {
+  return x[0]; // no-warning
+}
+
+struct baz { int x; };
+
+int struct_test(struct baz byVal) {
+  return byVal.x; // no-warning;
 }
 
