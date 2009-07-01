@@ -72,15 +72,16 @@ def AddrMode2     : AddrMode<2>;
 def AddrMode3     : AddrMode<3>;
 def AddrMode4     : AddrMode<4>;
 def AddrMode5     : AddrMode<5>;
-def AddrModeT1_1  : AddrMode<6>;
-def AddrModeT1_2  : AddrMode<7>;
-def AddrModeT1_4  : AddrMode<8>;
-def AddrModeT1_s  : AddrMode<9>;
-def AddrModeT2_i12: AddrMode<10>;
-def AddrModeT2_i8 : AddrMode<11>;
-def AddrModeT2_so : AddrMode<12>;
-def AddrModeT2_pc : AddrMode<13>;
-def AddrModeT2_i8s4 : AddrMode<14>;
+def AddrMode6     : AddrMode<6>;
+def AddrModeT1_1  : AddrMode<7>;
+def AddrModeT1_2  : AddrMode<8>;
+def AddrModeT1_4  : AddrMode<9>;
+def AddrModeT1_s  : AddrMode<10>;
+def AddrModeT2_i12: AddrMode<12>;
+def AddrModeT2_i8 : AddrMode<12>;
+def AddrModeT2_so : AddrMode<13>;
+def AddrModeT2_pc : AddrMode<14>;
+def AddrModeT2_i8s4 : AddrMode<15>;
 
 // Instruction size.
 class SizeFlagVal<bits<3> val> {

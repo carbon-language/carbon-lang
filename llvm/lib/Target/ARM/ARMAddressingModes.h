@@ -496,7 +496,29 @@ namespace ARM_AM {
   static inline bool getAM5WBFlag(unsigned AM5Opc) {
     return ((AM5Opc >> 8) & 1);
   }
-  
+
+  //===--------------------------------------------------------------------===//
+  // Addressing Mode #6
+  //===--------------------------------------------------------------------===//
+  //
+  // This is used for NEON load / store instructions.
+  //
+  // addrmode6 := reg with optional writeback
+  //
+  // This is stored in three operands [regaddr, regupdate, opc].  The first is
+  // the address register.  The second register holds the value of a post-access
+  // increment for writeback or reg0 if no writeback or if the writeback
+  // increment is the size of the memory access.  The third operand encodes
+  // whether there is writeback to the address register.
+
+  static inline unsigned getAM6Opc(bool WB = false) {
+    return (int)WB;
+  }
+
+  static inline bool getAM6WBFlag(unsigned Mode) {
+    return Mode & 1;
+  }
+
 } // end namespace ARM_AM
 } // end namespace llvm
 

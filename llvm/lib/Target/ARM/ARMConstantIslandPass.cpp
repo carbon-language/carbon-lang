@@ -462,6 +462,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
             Bits = 8;
             Scale = 4;  // +-(offset_8*4)
             break;
+            // addrmode6 has no immediate offset.
           case ARMII::AddrModeT1_1:
             Bits = 5;  // +offset_5
             break;

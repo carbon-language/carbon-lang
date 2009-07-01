@@ -287,6 +287,14 @@ def addrmode5 : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
+// addrmode6 := reg with optional writeback
+//
+def addrmode6 : Operand<i32>,
+                ComplexPattern<i32, 3, "SelectAddrMode6", []> {
+  let PrintMethod = "printAddrMode6Operand";
+  let MIOperandInfo = (ops GPR:$addr, GPR:$upd, i32imm);
+}
+
 // addrmodepc := pc + reg
 //
 def addrmodepc : Operand<i32>,

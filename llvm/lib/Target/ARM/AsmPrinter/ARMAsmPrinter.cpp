@@ -105,6 +105,7 @@ namespace {
                                const char *Modifier = 0);
     void printAddrMode5Operand(const MachineInstr *MI, int OpNum,
                                const char *Modifier = 0);
+    void printAddrMode6Operand(const MachineInstr *MI, int OpNum);
     void printAddrModePCOperand(const MachineInstr *MI, int OpNum,
                                 const char *Modifier = 0);
     void printBitfieldInvMaskImmOperand (const MachineInstr *MI, int OpNum);
@@ -585,6 +586,22 @@ void ARMAsmPrinter::printAddrMode5Operand(const MachineInstr *MI, int Op,
       << ImmOffs*4;
   }
   O << "]";
+}
+
+void ARMAsmPrinter::printAddrMode6Operand(const MachineInstr *MI, int Op) {
+  const MachineOperand &MO1 = MI->getOperand(Op);
+  const MachineOperand &MO2 = MI->getOperand(Op+1);
+  const MachineOperand &MO3 = MI->getOperand(Op+2);
+
+  // FIXME: No support yet for specifying alignment.
+  O << "[" << TM.getRegisterInfo()->get(MO1.getReg()).AsmName << "]";
+
+  if (ARM_AM::getAM6WBFlag(MO3.getImm())) {
+    if (MO2.getReg() == 0)
+      O << "!";
+    else
+      O << ", " << TM.getRegisterInfo()->get(MO2.getReg()).AsmName;
+  }
 }
 
 void ARMAsmPrinter::printAddrModePCOperand(const MachineInstr *MI, int Op,
