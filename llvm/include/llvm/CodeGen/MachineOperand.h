@@ -300,6 +300,10 @@ public:
     return Contents.OffsetedInfo.Val.GV;
   }
   
+  MDNode *getMDNode() const {
+    return Contents.OffsetedInfo.Val.Node;
+  }
+  
   int64_t getOffset() const {
     assert((isGlobal() || isSymbol() || isCPI()) &&
            "Wrong MachineOperand accessor");
