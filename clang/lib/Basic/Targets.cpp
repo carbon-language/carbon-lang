@@ -549,6 +549,9 @@ class PPC64TargetInfo : public PPCTargetInfo {
 public:
   PPC64TargetInfo(const std::string& triple) : PPCTargetInfo(triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+    IntMaxType = SignedLong;
+    UIntMaxType = UnsignedLong;
+    Int64Type = SignedLong;
     DescriptionString = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
                         "i64:64:64-f32:32:32-f64:64:64-v128:128:128";
   }
@@ -940,11 +943,11 @@ class X86_64TargetInfo : public X86TargetInfo {
 public:
   X86_64TargetInfo(const std::string &triple) : X86TargetInfo(triple) {
     LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
-    DoubleAlign = LongLongAlign = 64;
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
     IntMaxType = SignedLong;
     UIntMaxType = UnsignedLong;
+    Int64Type = SignedLong;
     RegParmMax = 6;
 
     DescriptionString = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-"
@@ -958,6 +961,16 @@ public:
            "  void* overflow_arg_area;"
            "  void* reg_save_area;"
            "} __builtin_va_list[1];";
+  }
+};
+} // end anonymous namespace
+
+namespace {
+class DarwinX86_64TargetInfo : public DarwinTargetInfo<X86_64TargetInfo> {
+public:
+  DarwinX86_64TargetInfo(const std::string& triple) 
+      : DarwinTargetInfo<X86_64TargetInfo>(triple) {
+    Int64Type = SignedLongLong;
   }
 };
 } // end anonymous namespace
@@ -1363,7 +1376,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
 
   if (T.find("x86_64-") == 0 || T.find("amd64-") == 0) {
     if (isDarwin)
-      return new DarwinTargetInfo<X86_64TargetInfo>(T);
+      return new DarwinX86_64TargetInfo(T);
     if (isLinux)
       return new LinuxTargetInfo<X86_64TargetInfo>(T);
     if (isOpenBSD)

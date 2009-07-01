@@ -41,6 +41,7 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   UIntMaxType = UnsignedLongLong;
   IntPtrType = SignedLong;
   WCharType = SignedInt;
+  Int64Type = SignedLongLong;
   FloatFormat = &llvm::APFloat::IEEEsingle;
   DoubleFormat = &llvm::APFloat::IEEEdouble;
   LongDoubleFormat = &llvm::APFloat::IEEEdouble;

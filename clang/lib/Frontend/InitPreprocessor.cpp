@@ -383,7 +383,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   
   // 16-bit targets doesn't necessarily have a 64-bit type.
   if (TI.getLongLongWidth() == 64)
-    DefineBuiltinMacro(Buf, "__INT64_TYPE__=long long");
+    DefineType("__INT64_TYPE__", TI.getInt64Type(), Buf);
   
   // Add __builtin_va_list typedef.
   {

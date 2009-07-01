@@ -76,7 +76,8 @@ public:
     UnsignedLongLong
   };
 protected:
-  IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType;
+  IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
+          Int64Type;
 public:
   IntType getSizeType() const { return SizeType; }
   IntType getIntMaxType() const { return IntMaxType; }
@@ -86,6 +87,7 @@ public:
   }
   IntType getIntPtrType() const { return IntPtrType; }
   IntType getWCharType() const { return WCharType; }
+  IntType getInt64Type() const { return Int64Type; }
 
   /// getPointerWidth - Return the width of pointers on this target, for the
   /// specified address space.
