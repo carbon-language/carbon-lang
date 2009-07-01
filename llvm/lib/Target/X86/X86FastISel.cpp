@@ -457,20 +457,30 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         AM.GV = 0;
         return true;
       }
-      // Issue load from stub if necessary.
+      
+      // Issue load from stub.
       unsigned Opc = 0;
       const TargetRegisterClass *RC = NULL;
-      if (TLI.getPointerTy() == MVT::i32) {
-        Opc = X86::MOV32rm;
-        RC  = X86::GR32RegisterClass;
-      } else {
-        Opc = X86::MOV64rm;
-        RC  = X86::GR64RegisterClass;
-      }
-
       X86AddressMode StubAM;
       StubAM.Base.Reg = AM.Base.Reg;
       StubAM.GV = AM.GV;
+      
+      if (TLI.getPointerTy() == MVT::i32) {
+        Opc = X86::MOV32rm;
+        RC  = X86::GR32RegisterClass;
+        
+        if (Subtarget->isPICStyleGOT() &&
+            TM.getRelocationModel() == Reloc::PIC_)
+          StubAM.GVOpFlags = X86II::MO_GOT;
+        
+      } else {
+        Opc = X86::MOV64rm;
+        RC  = X86::GR64RegisterClass;
+        
+        if (TM.getRelocationModel() != Reloc::Static)
+          StubAM.GVOpFlags = X86II::MO_GOTPCREL;
+      }
+
       unsigned ResultReg = createResultReg(RC);
       addFullAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), StubAM);
 

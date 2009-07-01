@@ -49,8 +49,10 @@ struct X86AddressMode {
   unsigned IndexReg;
   unsigned Disp;
   GlobalValue *GV;
+  unsigned GVOpFlags;
 
-  X86AddressMode() : BaseType(RegBase), Scale(1), IndexReg(0), Disp(0), GV(0) {
+  X86AddressMode()
+    : BaseType(RegBase), Scale(1), IndexReg(0), Disp(0), GV(0), GVOpFlags(0) {
     Base.Reg = 0;
   }
 };
@@ -113,7 +115,7 @@ inline const MachineInstrBuilder &addLeaAddress(const MachineInstrBuilder &MIB,
     assert (0);
   MIB.addImm(AM.Scale).addReg(AM.IndexReg);
   if (AM.GV)
-    return MIB.addGlobalAddress(AM.GV, AM.Disp);
+    return MIB.addGlobalAddress(AM.GV, AM.Disp, AM.GVOpFlags);
   else
     return MIB.addImm(AM.Disp);
 }
