@@ -459,13 +459,13 @@ namespace ARM_AM {
   //
   // addrmode5 := reg +/- imm8*4
   //
-  // The first operand is always a Reg.  The third field encodes the operation
-  // in bit 8, the immediate in bits 0-7.
+  // The first operand is always a Reg.  The second operand encodes the
+  // operation in bit 8 and the immediate in bits 0-7.
   //
-  // This can also be used for FP load/store multiple ops. The third field encodes
-  // writeback mode in bit 8, the number of registers (or 2 times the number of
-  // registers for DPR ops) in bits 0-7. In addition, bit 9-11 encodes one of the
-  // following two sub-modes:
+  // This is also used for FP load/store multiple ops. The second operand
+  // encodes the writeback mode in bit 8 and the number of registers (or 2
+  // times the number of registers for DPR ops) in bits 0-7. In addition,
+  // bits 9-11 encode one of the following two sub-modes:
   //
   //    IA - Increment after
   //    DB - Decrement before
