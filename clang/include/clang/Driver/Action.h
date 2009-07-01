@@ -75,6 +75,8 @@ protected:
 public:
   virtual ~Action();
 
+  const char *getClassName() const { return Action::getClassName(getKind()); }
+
   ActionClass getKind() const { return Kind; }
   types::ID getType() const { return Type; }
 

@@ -103,22 +103,26 @@ private:
 
   /// PrintJob - Print one job in -### format.
   ///
-  /// OS - The stream to print on.
-  /// J - The job to print.
-  /// Terminator - A string to print at the end of the line.
-  /// Quote - Should separate arguments be quoted.
+  /// \param OS - The stream to print on.
+  /// \param J - The job to print.
+  /// \param Terminator - A string to print at the end of the line.
+  /// \param Quote - Should separate arguments be quoted.
   void PrintJob(llvm::raw_ostream &OS, const Job &J, 
                 const char *Terminator, bool Quote) const;
 
   /// ExecuteCommand - Execute an actual command.
   ///
+  /// \param FailingCommand - For non-zero results, this will be set to the
+  /// Command which failed, if any.
   /// \return The result code of the subprocess.
-  int ExecuteCommand(const Command &C) const;
+  int ExecuteCommand(const Command &C, const Command *&FailingCommand) const;
 
   /// ExecuteJob - Execute a single job.
   ///
+  /// \param FailingCommand - For non-zero results, this will be set to the
+  /// Command which failed, if any.
   /// \return The accumulated result code of the job.
-  int ExecuteJob(const Job &J) const;
+  int ExecuteJob(const Job &J, const Command *&FailingCommand) const;
 };
 
 } // end namespace driver

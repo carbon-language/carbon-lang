@@ -45,6 +45,10 @@ def err_drv_no_linker_llvm_support : Error<
   "'%0': unable to pass LLVM bit-code files to linker">;
 def err_drv_clang_unsupported : Error<
   "the clang compiler does not support '%0'">;
+def err_drv_command_failed : Error<
+  "%0 command failed with exit code %1 (use -v to see invocation)">;
+def err_drv_command_signalled : Error<
+  "%0 command failed due to signal %1 (use -v to see invocation)">;
 
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;

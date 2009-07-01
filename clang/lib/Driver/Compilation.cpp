@@ -105,7 +105,8 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
   return Success;
 }
 
-int Compilation::ExecuteCommand(const Command &C) const {
+int Compilation::ExecuteCommand(const Command &C,
+                                const Command *&FailingCommand) const {
   llvm::sys::Path Prog(C.getExecutable());
   const char **Argv = new const char*[C.getArguments().size() + 2];
   Argv[0] = C.getExecutable();
@@ -126,25 +127,30 @@ int Compilation::ExecuteCommand(const Command &C) const {
     getDriver().Diag(clang::diag::err_drv_command_failure) << Error;
   }
   
+  if (Res)
+    FailingCommand = &C;
+
   delete[] Argv;
   return Res;
 }
 
-int Compilation::ExecuteJob(const Job &J) const {
+int Compilation::ExecuteJob(const Job &J, 
+                            const Command *&FailingCommand) const {
   if (const Command *C = dyn_cast<Command>(&J)) {
-    return ExecuteCommand(*C);
+    return ExecuteCommand(*C, FailingCommand);
   } else if (const PipedJob *PJ = dyn_cast<PipedJob>(&J)) {
     // Piped commands with a single job are easy.
     if (PJ->size() == 1)
-      return ExecuteCommand(**PJ->begin());
+      return ExecuteCommand(**PJ->begin(), FailingCommand);
       
+    FailingCommand = *PJ->begin();
     getDriver().Diag(clang::diag::err_drv_unsupported_opt) << "-pipe";
     return 1;
   } else {
     const JobList *Jobs = cast<JobList>(&J);
     for (JobList::const_iterator 
            it = Jobs->begin(), ie = Jobs->end(); it != ie; ++it)
-      if (int Res = ExecuteJob(**it))
+      if (int Res = ExecuteJob(**it, FailingCommand))
         return Res;
     return 0;
   }
@@ -161,7 +167,8 @@ int Compilation::Execute() const {
   if (getDriver().getDiags().getNumErrors())
     return 1;
 
-  int Res = ExecuteJob(Jobs);
+  const Command *FailingCommand = 0;
+  int Res = ExecuteJob(Jobs, FailingCommand);
   
   // Remove temp files.
   CleanupFileList(TempFiles);
@@ -169,6 +176,30 @@ int Compilation::Execute() const {
   // If the compilation failed, remove result files as well.
   if (Res != 0 && !getArgs().hasArg(options::OPT_save_temps))
     CleanupFileList(ResultFiles, true);
+
+  // Print extra information about abnormal failures, if possible.
+  if (Res) {
+    // This is ad-hoc, but we don't want to be excessively noisy. If the result
+    // status was 1, assume the command failed normally. In particular, if it
+    // was the compiler then assume it gave a reasonable error code. Failures in
+    // other tools are less common, and they generally have worse diagnostics,
+    // so always print the diagnostic there.
+    const Action &Source = FailingCommand->getSource();
+    bool IsFriendlyTool = (isa<PreprocessJobAction>(Source) ||
+                           isa<PrecompileJobAction>(Source) ||
+                           isa<AnalyzeJobAction>(Source) ||
+                           isa<CompileJobAction>(Source));
+
+    if (!IsFriendlyTool || Res != 1) {
+      // FIXME: See FIXME above regarding result code interpretation.
+      if (Res < 0)
+        getDriver().Diag(clang::diag::err_drv_command_signalled) 
+          << Source.getClassName() << -Res;
+      else
+        getDriver().Diag(clang::diag::err_drv_command_failed) 
+          << Source.getClassName() << Res;
+    }
+  }
 
   return Res;
 }
