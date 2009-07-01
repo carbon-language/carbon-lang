@@ -23,6 +23,7 @@ namespace llvm {
 class ConstantFP;
 class MachineBasicBlock;
 class GlobalValue;
+class MDNode;
 class MachineInstr;
 class TargetMachine;
 class MachineRegisterInfo;
@@ -41,7 +42,8 @@ public:
     MO_ConstantPoolIndex,      ///< Address of indexed Constant in Constant Pool
     MO_JumpTableIndex,         ///< Address of indexed Jump Table for switch
     MO_ExternalSymbol,         ///< Name of external global symbol
-    MO_GlobalAddress           ///< Address of a global value
+    MO_GlobalAddress,          ///< Address of a global value
+    MO_Metadata                ///< Metadata info
   };
 
 private:
@@ -107,6 +109,7 @@ private:
         int Index;                // For MO_*Index - The index itself.
         const char *SymbolName;   // For MO_ExternalSymbol.
         GlobalValue *GV;          // For MO_GlobalAddress.
+	MDNode *Node;             // For MO_Metadata.
       } Val;
       int64_t Offset;   // An offset from the object.
     } OffsetedInfo;
@@ -419,6 +422,14 @@ public:
                                  unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_GlobalAddress);
     Op.Contents.OffsetedInfo.Val.GV = GV;
+    Op.setOffset(Offset);
+    Op.setTargetFlags(TargetFlags);
+    return Op;
+  }
+  static MachineOperand CreateMDNode(MDNode *N, int64_t Offset,
+				     unsigned char TargetFlags = 0) {
+    MachineOperand Op(MachineOperand::MO_Metadata);
+    Op.Contents.OffsetedInfo.Val.Node = N;
     Op.setOffset(Offset);
     Op.setTargetFlags(TargetFlags);
     return Op;
