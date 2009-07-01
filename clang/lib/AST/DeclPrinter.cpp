@@ -96,6 +96,8 @@ static QualType GetBaseType(QualType T) {
       BaseType = ATy->getElementType();
     else if (const FunctionType* FTy = BaseType->getAsFunctionType())
       BaseType = FTy->getResultType();
+    else if (const VectorType *VTy = BaseType->getAsVectorType())
+      BaseType = VTy->getElementType();
     else
       assert(0 && "Unknown declarator!");
   }
