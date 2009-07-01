@@ -6,6 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains the declaration of the MCSymbol class.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_MC_MCSYMBOL_H
 #define LLVM_MC_MCSYMBOL_H
@@ -14,17 +18,36 @@
 
 namespace llvm {
   class MCSection;
+  class MCContext;
 
+  /// MCSymbol - Instances of this class represent a symbol name in the MC file,
+  /// and MCSymbols are created and unique'd by the MCContext class.
+  ///
+  /// If the symbol is defined/emitted into the current translation unit, the
+  /// Section member is set to indicate what section it lives in.  Otherwise, if
+  /// it is a reference to an external entity, it has a null section.  
+  /// 
   class MCSymbol {
-    MCSection *Section;
+    /// Name - The name of the symbol.
     std::string Name;
+    /// Section - The section the symbol is defined in, or null if not defined
+    /// in this translation unit.
+    MCSection *Section;
+    
+    /// IsTemporary - True if this is an assembler temporary label, which
+    /// typically does not survive in the .o file's symbol table.  Usually
+    /// "Lfoo" or ".foo".
     unsigned IsTemporary : 1;
+    
+    /// IsExternal - ?
     unsigned IsExternal : 1;
 
-  public:
+  private:  // MCContext creates and uniques these.
+    friend class MCContext;
     MCSymbol(const char *_Name, bool _IsTemporary) 
-      : Section(0), Name(_Name), IsTemporary(_IsTemporary), IsExternal(false) {}
-
+      : Name(_Name), Section(0), IsTemporary(_IsTemporary), IsExternal(false) {}
+  public:
+    
     MCSection *getSection() const { return Section; }
     void setSection(MCSection *Value) { Section = Value; }
 
