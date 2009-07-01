@@ -419,6 +419,18 @@ multiclass T2I_st<string opc, PatFrag opnode> {
                    [(opnode GPR:$src, t2addrmode_so_reg:$addr)]>;
 }
 
+/// T2I_picld - Defines the PIC load pattern.
+class T2I_picld<string opc, PatFrag opnode> :
+      T2I<(outs GPR:$dst), (ins addrmodepc:$addr),
+          !strconcat("${addr:label}:\n\t", opc), " $dst, $addr",
+          [(set GPR:$dst, (opnode addrmodepc:$addr))]>;
+
+/// T2I_picst - Defines the PIC store pattern.
+class T2I_picst<string opc, PatFrag opnode> :
+      T2I<(outs), (ins GPR:$src, addrmodepc:$addr),
+          !strconcat("${addr:label}:\n\t", opc), " $src, $addr",
+          [(opnode GPR:$src, addrmodepc:$addr)]>;
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -538,6 +550,22 @@ defm t2STRH   : T2I_st<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 let mayLoad = 1 in
 def t2STRDi8 : T2Ii8s4<(outs), (ins GPR:$src, t2addrmode_imm8s4:$addr),
                         "strd", " $src, $addr", []>;
+
+
+// Address computation and loads and stores in PIC mode.
+let isNotDuplicable = 1, AddedComplexity = 10 in {
+let canFoldAsLoad = 1 in
+def t2PICLDR   : T2I_picld<"ldr",  UnOpFrag<(load node:$Src)>>;
+
+def t2PICLDRH  : T2I_picld<"ldrh", UnOpFrag<(zextloadi16 node:$Src)>>;
+def t2PICLDRB  : T2I_picld<"ldrb", UnOpFrag<(zextloadi8 node:$Src)>>;
+def t2PICLDRSH : T2I_picld<"ldrsh", UnOpFrag<(sextloadi16 node:$Src)>>;
+def t2PICLDRSB : T2I_picld<"ldrsb", UnOpFrag<(sextloadi8 node:$Src)>>;
+
+def t2PICSTR   : T2I_picst<"str", BinOpFrag<(store node:$LHS, node:$RHS)>>;
+def t2PICSTRH  : T2I_picst<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
+def t2PICSTRB  : T2I_picst<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
+} // isNotDuplicable = 1, AddedComplexity = 10
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.

@@ -1,5 +1,15 @@
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin
-; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin -relocation-model=pic | grep add | grep pc
+; RUN: llvm-as < %s | \
+; RUN:   llc -mtriple=thumbv7-apple-darwin -relocation-model=static | \
+; RUN:   not grep {L_G\$non_lazy_ptr}
+; RUN: llvm-as < %s | \
+; RUN:   llc -mtriple=thumbv7-apple-darwin -relocation-model=dynamic-no-pic | \
+; RUN:   grep {L_G\$non_lazy_ptr} | count 2
+; RUN: llvm-as < %s | \
+; RUN:   llc -mtriple=thumbv7-apple-darwin -relocation-model=pic | \
+; RUN:   grep {ldr.*pc} | count 1
+; RUN: llvm-as < %s | \
+; RUN:   llc -mtriple=thumbv7-linux-gnueabi -relocation-model=pic | \
+; RUN:   grep {GOT} | count 1
 
 @G = external global i32
 
