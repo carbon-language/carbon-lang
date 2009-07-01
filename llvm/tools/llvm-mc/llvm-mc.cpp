@@ -99,16 +99,23 @@ static int AsLexInput(const char *ProgName) {
       outs() << "int: " << Lexer.getCurIntVal() << '\n';
       break;
     case asmtok::EndOfStatement: outs() << "EndOfStatement\n"; break;
-    case asmtok::Colon:  outs() << "Colon\n"; break;
-    case asmtok::Plus:   outs() << "Plus\n"; break;
-    case asmtok::Minus:  outs() << "Minus\n"; break;
-    case asmtok::Tilde:  outs() << "Tilde\n"; break;
-    case asmtok::Slash:  outs() << "Slash\n"; break;
-    case asmtok::LParen: outs() << "LParen\n"; break;
-    case asmtok::RParen: outs() << "RParen\n"; break;
-    case asmtok::Star:   outs() << "Star\n"; break;
-    case asmtok::Comma:  outs() << "Comma\n"; break;
-    case asmtok::Dollar: outs() << "Dollar\n"; break;
+    case asmtok::Colon:          outs() << "Colon\n"; break;
+    case asmtok::Plus:           outs() << "Plus\n"; break;
+    case asmtok::Minus:          outs() << "Minus\n"; break;
+    case asmtok::Tilde:          outs() << "Tilde\n"; break;
+    case asmtok::Slash:          outs() << "Slash\n"; break;
+    case asmtok::LParen:         outs() << "LParen\n"; break;
+    case asmtok::RParen:         outs() << "RParen\n"; break;
+    case asmtok::Star:           outs() << "Star\n"; break;
+    case asmtok::Comma:          outs() << "Comma\n"; break;
+    case asmtok::Dollar:         outs() << "Dollar\n"; break;
+    case asmtok::Equal:          outs() << "Equal\n"; break;
+    case asmtok::EqualEqual:     outs() << "EqualEqual\n"; break;
+    case asmtok::Pipe:           outs() << "Pipe\n"; break;
+    case asmtok::PipePipe:       outs() << "PipePipe\n"; break;
+    case asmtok::Caret:          outs() << "Caret\n"; break;
+    case asmtok::Amp:            outs() << "Amp\n"; break;
+    case asmtok::AmpAmp:         outs() << "AmpAmp\n"; break;
     }
     
     Tok = Lexer.Lex();
