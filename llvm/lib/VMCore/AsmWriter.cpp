@@ -35,6 +35,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
+#include <map>
 using namespace llvm;
 
 // Make virtual table appear in this compilation unit.
@@ -945,25 +946,6 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     return;
   }
 
-  if (const MDNode *N = dyn_cast<MDNode>(CV)) {
-    Out << "!{";
-    for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
-         I != E;) {
-      if (!*I) {
-        Out << "null";
-      } else {
-        TypePrinter.print((*I)->getType(), Out);
-        Out << ' ';
-        WriteAsOperandInternal(Out, *I, TypePrinter, Machine);
-      }
-
-      if (++I != E)
-        Out << ", ";
-    }
-    Out << "}";
-    return;
-  }
-  
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName();
     if (CE->isCompare())
@@ -1092,10 +1074,14 @@ class AssemblyWriter {
   TypePrinting TypePrinter;
   AssemblyAnnotationWriter *AnnotationWriter;
   std::vector<const Type*> NumberedTypes;
+
+  // Each MDNode is assigned unique MetadataIDNo.
+  std::map<const MDNode *, unsigned> MDNodes;
+  unsigned MetadataIDNo;
 public:
   inline AssemblyWriter(raw_ostream &o, SlotTracker &Mac, const Module *M,
                         AssemblyAnnotationWriter *AAW)
-    : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW) {
+    : Out(o), Machine(Mac), TheModule(M), AnnotationWriter(AAW), MetadataIDNo(0) {
     AddModuleTypesToPrinter(TypePrinter, NumberedTypes, M);
   }
 
@@ -1124,6 +1110,7 @@ private:
   void printModule(const Module *M);
   void printTypeSymbolTable(const TypeSymbolTable &ST);
   void printGlobal(const GlobalVariable *GV);
+  void printMDNode(const MDNode *Node, bool StandAlone);
   void printAlias(const GlobalAlias *GV);
   void printFunction(const Function *F);
   void printArgument(const Argument *FA, Attributes Attrs);
@@ -1264,6 +1251,28 @@ static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
+  if (GV->hasInitializer())
+    // If GV is initialized using Metadata then separate out metadata
+    // operands used by the initializer. Note, MDNodes are not cyclic.
+    if (MDNode *N = dyn_cast<MDNode>(GV->getInitializer())) {
+      SmallVector<const MDNode *, 4> WorkList;
+      // Collect MDNodes used by the initializer.
+      for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
+	   I != E; ++I) {
+	const Value *TV = *I;
+	if (TV)
+	  if (const MDNode *NN = dyn_cast<MDNode>(TV))
+	    WorkList.push_back(NN);
+      }
+
+      // Print MDNodes used by the initializer.
+      while (!WorkList.empty()) {
+	const MDNode *N = WorkList.back(); WorkList.pop_back();
+	printMDNode(N, true);
+	Out << '\n';
+      }
+    }
+
   if (GV->hasName()) {
     PrintLLVMName(Out, GV);
     Out << " = ";
@@ -1283,7 +1292,10 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 
   if (GV->hasInitializer()) {
     Out << ' ';
-    writeOperand(GV->getInitializer(), false);
+    if (MDNode *N = dyn_cast<MDNode>(GV->getInitializer()))
+      printMDNode(N, false);
+    else
+      writeOperand(GV->getInitializer(), false);
   }
     
   if (GV->hasSection())
@@ -1293,6 +1305,42 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 
   printInfoComment(*GV);
   Out << '\n';
+}
+
+void AssemblyWriter::printMDNode(const MDNode *Node,
+				 bool StandAlone) {
+  std::map<const MDNode *, unsigned>::iterator MI = MDNodes.find(Node);
+  // If this node is already printed then just refer it using its Metadata
+  // id number.
+  if (MI != MDNodes.end()) {
+    Out << "metadata !" << MI->second;
+    return;
+  }
+  
+  if (StandAlone) {
+    // Print standalone MDNode.
+    // !42 = !{ ... }
+    Out << "!" << MetadataIDNo << " = ";
+    Out << "constant metadata ";
+  }
+  Out << "!{";
+  for (MDNode::const_elem_iterator I = Node->elem_begin(), E = Node->elem_end();
+       I != E;) {
+    const Value *TV = *I;
+    if (!TV)
+      Out << "null";
+    else if (const MDNode *N = dyn_cast<MDNode>(TV)) 
+      printMDNode(N, StandAlone);
+    else if (!*I)
+      Out << "null";
+    else 
+      writeOperand(*I, true);
+    if (++I != E)
+      Out << ", ";
+  }
+  Out << "}";
+
+  MDNodes[Node] = MetadataIDNo++;
 }
 
 void AssemblyWriter::printAlias(const GlobalAlias *GA) {

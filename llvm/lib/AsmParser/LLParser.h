@@ -43,7 +43,8 @@ namespace llvm {
     std::map<std::string, std::pair<PATypeHolder, LocTy> > ForwardRefTypes;
     std::map<unsigned, std::pair<PATypeHolder, LocTy> > ForwardRefTypeIDs;
     std::vector<PATypeHolder> NumberedTypes;
-
+    /// MetadataCache - This map keeps track of parsed metadata constants.
+    std::map<unsigned, Constant *> MetadataCache;
     struct UpRefRecord {
       /// Loc - This is the location of the upref.
       LocTy Loc;
@@ -139,6 +140,7 @@ namespace llvm {
     bool ParseGlobal(const std::string &Name, LocTy Loc, unsigned Linkage,
                      bool HasLinkage, unsigned Visibility);
     bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility);
+    bool ParseStandaloneMetadata();
 
     // Type Parsing.
     bool ParseType(PATypeHolder &Result, bool AllowVoid = false);

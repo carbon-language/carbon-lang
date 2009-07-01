@@ -109,6 +109,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::StringConstant: // FIXME: REMOVE IN LLVM 3.0
     case lltok::LocalVar:   if (ParseNamedType()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
+    case lltok::Metadata:   if (ParseStandaloneMetadata()) return true; break;
 
     // The Global variable production with no name can have many different
     // optional leading prefixes, the production is:
@@ -353,6 +354,34 @@ bool LLParser::ParseNamedGlobal() {
   if (HasLinkage || Lex.getKind() != lltok::kw_alias)
     return ParseGlobal(Name, NameLoc, Linkage, HasLinkage, Visibility);
   return ParseAlias(Name, NameLoc, Visibility);
+}
+
+/// ParseStandaloneMetadata:
+///   !42 = !{...} 
+bool LLParser::ParseStandaloneMetadata() {
+  assert(Lex.getKind() == lltok::Metadata);
+  Lex.Lex();
+  unsigned MetadataID = 0;
+  if (ParseUInt32(MetadataID))
+    return true;
+  if (MetadataCache.find(MetadataID) != MetadataCache.end())
+    return TokError("Metadata id is already used");
+  if (ParseToken(lltok::equal, "expected '=' here"))
+    return true;
+
+  LocTy TyLoc;
+  bool IsConstant;    
+  PATypeHolder Ty(Type::VoidTy);
+  if (ParseGlobalType(IsConstant) ||
+      ParseType(Ty, TyLoc))
+    return true;
+  
+  Constant *Init = 0;
+  if (ParseGlobalValue(Ty, Init))
+      return true;
+
+  MetadataCache[MetadataID] = Init;
+  return false;
 }
 
 /// ParseAlias:
@@ -1596,6 +1625,17 @@ bool LLParser::ParseValID(ValID &ID) {
       return false;
     }
 
+    // Standalone metadata reference
+    // !{ ..., !42, ... }
+    unsigned MID = 0;
+    if (!ParseUInt32(MID)) {
+      std::map<unsigned, Constant *>::iterator I = MetadataCache.find(MID);
+      if (I == MetadataCache.end())
+	return TokError("Unknown metadata reference");
+      ID.ConstantVal = I->second;
+      return false;
+    }
+    
     // MDString:
     //   ::= '!' STRINGCONSTANT
     std::string Str;
