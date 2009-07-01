@@ -10,6 +10,7 @@
 #include "llvm/MC/MCStreamer.h"
 
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
@@ -195,10 +196,30 @@ void MCAsmStreamer::EmitValueToOffset(const MCValue &Offset,
   OS << ".org " << Offset << ", " << (unsigned) Value << '\n';
 }
 
+static raw_ostream &operator<<(raw_ostream &OS, const MCOperand &Op) {
+  if (Op.isReg())
+    return OS << "reg:" << Op.getReg();
+  if (Op.isImm())
+    return OS << "imm:" << Op.getImm();
+  if (Op.isMBBLabel())
+    return OS << "mbblabel:(" 
+              << Op.getMBBLabelFunction() << ", " << Op.getMBBLabelBlock();
+  assert(Op.isMCValue() && "Invalid operand!");
+  return OS << "val:" << Op.getMCValue();
+}
+
 void MCAsmStreamer::EmitInstruction(const MCInst &Inst) {
   assert(CurSection && "Cannot emit contents before setting section!");
-  // FIXME: Implement.
-  OS << "# FIXME: Implement instruction printing!\n";
+  // FIXME: Implement proper printing.
+  OS << "MCInst("
+     << "opcode=" << Inst.getOpcode() << ", "
+     << "operands=[";
+  for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i) {
+    if (i)
+      OS << ", ";
+    OS << Inst.getOperand(i);
+  }
+  OS << "])\n";
 }
 
 void MCAsmStreamer::Finish() {
