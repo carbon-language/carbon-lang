@@ -49,7 +49,7 @@ DumpAsm("d", cl::desc("Print assembly as linked"), cl::Hidden);
 // searches the link path for the specified file to try to find it...
 //
 static inline std::auto_ptr<Module> LoadFile(const std::string &FN, 
-                                             const LLVMContext& Context) {
+                                             LLVMContext& Context) {
   sys::Path Filename;
   if (!Filename.set(FN)) {
     cerr << "Invalid file name: '" << FN << "'\n";

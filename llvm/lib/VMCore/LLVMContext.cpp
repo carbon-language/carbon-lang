@@ -22,7 +22,7 @@ using namespace llvm;
 
 static ManagedStatic<LLVMContext> GlobalContext;
 
-const LLVMContext& llvm::getGlobalContext() {
+LLVMContext& llvm::getGlobalContext() {
   return *GlobalContext;
 }
 

@@ -43,7 +43,7 @@ extern bool DisableSimplifyCFG;
 extern bool BugpointIsInterrupted;
 
 class BugDriver {
-  const LLVMContext& Context;
+  LLVMContext& Context;
   const std::string ToolName;  // Name of bugpoint
   std::string ReferenceOutputFile; // Name of `good' output file
   Module *Program;             // The raw program, linked together
@@ -62,11 +62,11 @@ class BugDriver {
 
 public:
   BugDriver(const char *toolname, bool as_child, bool find_bugs,
-            unsigned timeout, unsigned memlimit, const LLVMContext& ctxt);
+            unsigned timeout, unsigned memlimit, LLVMContext& ctxt);
 
   const std::string &getToolName() const { return ToolName; }
 
-  const LLVMContext& getContext() { return Context; }
+  LLVMContext& getContext() { return Context; }
 
   // Set up methods... these methods are used to copy information about the
   // command line arguments into instance variables of BugDriver.
@@ -295,7 +295,7 @@ private:
 /// return it, or return null if not possible.
 ///
 Module *ParseInputFile(const std::string &InputFilename,
-                       const LLVMContext& ctxt);
+                       LLVMContext& ctxt);
 
 
 /// getPassesString - Turn a list of passes into a string which indicates the

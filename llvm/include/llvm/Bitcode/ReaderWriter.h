@@ -32,13 +32,13 @@ namespace llvm {
   /// error, this returns null, *does not* take ownership of Buffer, and fills
   /// in *ErrMsg with an error description if ErrMsg is non-null.
   ModuleProvider *getBitcodeModuleProvider(MemoryBuffer *Buffer,
-                                           const LLVMContext& Context,
+                                           LLVMContext& Context,
                                            std::string *ErrMsg = 0);
 
   /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
   /// If an error occurs, this returns null and fills in *ErrMsg if it is
   /// non-null.  This method *never* takes ownership of Buffer.
-  Module *ParseBitcodeFile(MemoryBuffer *Buffer, const LLVMContext& Context,
+  Module *ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context,
                            std::string *ErrMsg = 0);
 
   /// WriteBitcodeToFile - Write the specified module to the specified output

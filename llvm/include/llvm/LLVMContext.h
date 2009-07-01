@@ -198,7 +198,7 @@ public:
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.
-extern const LLVMContext& getGlobalContext();
+extern LLVMContext& getGlobalContext();
 
 }
 

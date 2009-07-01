@@ -52,10 +52,10 @@ public:
                                                     const char* triplePrefix);
 
     static LTOModule*        makeLTOModule(const char* path,
-                                          const llvm::LLVMContext& Context,
+                                          llvm::LLVMContext& Context,
                                           std::string& errMsg);
     static LTOModule*        makeLTOModule(const void* mem, size_t length,
-                                           const llvm::LLVMContext& Context,
+                                           llvm::LLVMContext& Context,
                                            std::string& errMsg);
 
     const char*              getTargetTriple();
@@ -91,7 +91,7 @@ private:
                                                     const char* triplePrefix);
 
     static LTOModule*       makeLTOModule(llvm::MemoryBuffer* buffer,
-                                          const llvm::LLVMContext& Context,
+                                          llvm::LLVMContext& Context,
                                                         std::string& errMsg);
     static llvm::MemoryBuffer* makeBuffer(const void* mem, size_t length);
 

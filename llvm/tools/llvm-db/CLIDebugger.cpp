@@ -22,7 +22,7 @@ using namespace llvm;
 /// CLIDebugger constructor - This initializes the debugger to its default
 /// state, and initializes the command table.
 ///
-CLIDebugger::CLIDebugger(const LLVMContext& ctxt)
+CLIDebugger::CLIDebugger(LLVMContext& ctxt)
   : Context(ctxt), TheProgramInfo(0), TheRuntimeInfo(0),
     Prompt("(llvm-db) "), ListSize(10) {
   // Initialize instance variables

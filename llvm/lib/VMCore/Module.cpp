@@ -55,7 +55,7 @@ template class SymbolTableListTraits<GlobalAlias, Module>;
 // Primitive Module methods.
 //
 
-Module::Module(const std::string &MID, const LLVMContext& C)
+Module::Module(const std::string &MID, LLVMContext& C)
   : Context(C), ModuleID(MID), DataLayout("")  {
   ValSymTab = new ValueSymbolTable();
   TypeSymTab = new TypeSymbolTable();

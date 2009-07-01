@@ -87,7 +87,7 @@ LTOModule::LTOModule(Module* m, TargetMachine* t)
 }
 
 LTOModule* LTOModule::makeLTOModule(const char* path,
-                                    const LLVMContext& Context,
+                                    LLVMContext& Context,
                                     std::string& errMsg)
 {
     OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(path, &errMsg));
@@ -113,7 +113,7 @@ MemoryBuffer* LTOModule::makeBuffer(const void* mem, size_t length)
 
 
 LTOModule* LTOModule::makeLTOModule(const void* mem, size_t length, 
-                                    const LLVMContext& Context,
+                                    LLVMContext& Context,
                                     std::string& errMsg)
 {
     OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length));
@@ -142,7 +142,7 @@ std::string getFeatureString(const char *TargetTriple) {
 }
 
 LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
-                                    const LLVMContext& Context,
+                                    LLVMContext& Context,
                                     std::string& errMsg)
 {
     // parse bitcode buffer

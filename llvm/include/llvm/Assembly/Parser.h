@@ -32,7 +32,7 @@ class LLVMContext;
 Module *ParseAssemblyFile(
   const std::string &Filename, ///< The name of the file to parse
   ParseError &Error,           ///< If not null, an object to return errors in.
-  const LLVMContext& Context         ///< Context in which to allocate globals info.
+  LLVMContext& Context         ///< Context in which to allocate globals info.
 );
 
 /// The function is a secondary interface to the LLVM Assembly Parser. It parses
@@ -45,7 +45,7 @@ Module *ParseAssemblyString(
   const char *AsmString, ///< The string containing assembly
   Module *M,             ///< A module to add the assembly too.
   ParseError &Error,     ///< If not null, an object to return errors in.
-  const LLVMContext& Context
+  LLVMContext& Context
 );
 
 //===------------------------------------------------------------------------===

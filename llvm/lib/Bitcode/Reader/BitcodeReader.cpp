@@ -2090,7 +2090,7 @@ Module *BitcodeReader::releaseModule(std::string *ErrInfo) {
 /// getBitcodeModuleProvider - lazy function-at-a-time loading from a file.
 ///
 ModuleProvider *llvm::getBitcodeModuleProvider(MemoryBuffer *Buffer,
-                                               const LLVMContext& Context,
+                                               LLVMContext& Context,
                                                std::string *ErrMsg) {
   BitcodeReader *R = new BitcodeReader(Buffer, Context);
   if (R->ParseBitcode()) {
@@ -2107,7 +2107,7 @@ ModuleProvider *llvm::getBitcodeModuleProvider(MemoryBuffer *Buffer,
 
 /// ParseBitcodeFile - Read the specified bitcode file, returning the module.
 /// If an error occurs, return null and fill in *ErrMsg if non-null.
-Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, const LLVMContext& Context, 
+Module *llvm::ParseBitcodeFile(MemoryBuffer *Buffer, LLVMContext& Context, 
                                std::string *ErrMsg){
   BitcodeReader *R;
   R = static_cast<BitcodeReader*>(getBitcodeModuleProvider(Buffer, Context, 

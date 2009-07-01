@@ -69,7 +69,7 @@ const char* LTOCodeGenerator::getVersionString()
 }
 
 
-LTOCodeGenerator::LTOCodeGenerator(const LLVMContext& Context) 
+LTOCodeGenerator::LTOCodeGenerator(LLVMContext& Context) 
     : _context(Context),
       _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),

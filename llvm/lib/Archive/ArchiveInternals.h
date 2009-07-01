@@ -73,13 +73,13 @@ namespace llvm {
   
   // Get just the externally visible defined symbols from the bitcode
   bool GetBitcodeSymbols(const sys::Path& fName,
-                          const LLVMContext& Context,
+                          LLVMContext& Context,
                           std::vector<std::string>& symbols,
                           std::string* ErrMsg);
   
   ModuleProvider* GetBitcodeSymbols(const unsigned char*Buffer,unsigned Length,
                                     const std::string& ModuleID,
-                                    const LLVMContext& Context,
+                                    LLVMContext& Context,
                                     std::vector<std::string>& symbols,
                                     std::string* ErrMsg);
 }

@@ -96,7 +96,7 @@ namespace llvm {
     /// the PATH for the specified program, loading it when found.  If the
     /// specified program cannot be found, an exception is thrown to indicate
     /// the error.
-    void loadProgram(const std::string &Path, const LLVMContext& Context);
+    void loadProgram(const std::string &Path, LLVMContext& Context);
 
     /// unloadProgram - If a program is running, kill it, then unload all traces
     /// of the current program.  If no program is loaded, this method silently

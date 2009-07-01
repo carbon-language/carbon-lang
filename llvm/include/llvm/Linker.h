@@ -67,7 +67,7 @@ class Linker {
     Linker(
         const std::string& progname, ///< name of tool running linker
         const std::string& modulename, ///< name of linker's end-result module
-        const LLVMContext& C, ///< Context for global info
+        LLVMContext& C, ///< Context for global info
         unsigned Flags = 0  ///< ControlFlags (one or more |'d together)
     );
 
@@ -285,7 +285,7 @@ class Linker {
   /// @name Data
   /// @{
   private:
-    const LLVMContext& Context; ///< The context for global information
+    LLVMContext& Context; ///< The context for global information
     Module* Composite; ///< The composite module linked together
     std::vector<sys::Path> LibPaths; ///< The library search paths
     unsigned Flags;    ///< Flags to control optional behavior.
