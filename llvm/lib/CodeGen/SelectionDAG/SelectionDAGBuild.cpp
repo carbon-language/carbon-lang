@@ -3955,13 +3955,15 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     if (!DIDescriptor::ValidDebugInfo(SP, OptLevel))
       return 0;
 
+    DISubprogram Subprogram(cast<GlobalVariable>(SP));
+    DICompileUnit CompileUnit = Subprogram.getCompileUnit();
+    unsigned Line = Subprogram.getLineNumber();
+
     MachineFunction &MF = DAG.getMachineFunction();
     if (OptLevel == CodeGenOpt::None) {
       // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
       // (most?) gdb expects.
       DebugLoc PrevLoc = CurDebugLoc;
-      DISubprogram Subprogram(cast<GlobalVariable>(SP));
-      DICompileUnit CompileUnit = Subprogram.getCompileUnit();
 
       if (!Subprogram.describes(MF.getFunction())) {
         // This is a beginning of an inlined function.
@@ -3973,7 +3975,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
           return 0;
 
         // Record the source line.
-        unsigned Line = Subprogram.getLineNumber();
         setCurDebugLoc(DebugLoc::get(
                      MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
 
@@ -3997,8 +3998,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         }
       }
     } else {
-      DISubprogram Subprogram(cast<GlobalVariable>(SP));
-
       std::string SPName;
       Subprogram.getLinkageName(SPName);
       if (!SPName.empty()
@@ -4008,14 +4007,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
         return 0;
       }
 
-      // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is
-      // what (most?) gdb expects.
-      DICompileUnit CompileUnit = Subprogram.getCompileUnit();
-
       // Record the source line but does not create a label for the normal
       // function start. It will be emitted at asm emission time. However,
       // create a label if this is a beginning of inlined function.
-      unsigned Line = Subprogram.getLineNumber();
       setCurDebugLoc(DebugLoc::get(
                      MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0)));
       // FIXME -  Start new region because llvm.dbg.func_start also defines
