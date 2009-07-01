@@ -1428,6 +1428,7 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
         // e.g.: int x; char *y = (char*) &x; if (*y) ... 
         // 'y' => element region. 'x' is its super region.
         // We only add one level super region for now.
+        // FIXME: maybe multiple level of super regions should be added.
         if (const SubRegion *SR = dyn_cast<SubRegion>(RX)) {
           RegionRoots.push_back(SR->getSuperRegion());
         }

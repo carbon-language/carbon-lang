@@ -150,6 +150,8 @@ EnvironmentManager::RemoveDeadBindings(Environment Env, Stmt* Loc,
         // e.g.: int x; char *y = (char*) &x; if (*y) ... 
         // 'y' => element region. 'x' is its super region.
         // We only add one level super region for now.
+
+        // FIXME: maybe multiple level of super regions should be added.
         if (const SubRegion *SR = dyn_cast<SubRegion>(R)) {
           DRoots.push_back(SR->getSuperRegion());
         }
