@@ -4,7 +4,7 @@
 <html>
 <head>
   <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-  <title>"compiler_rt" Runtime Library</title>
+  <title>"compiler-rt" Runtime Library</title>
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
 </head>
@@ -12,34 +12,34 @@
 <!--#include virtual="menu.html.incl"-->
 <div id="content">
   <!--*********************************************************************-->
-  <h1>"compiler_rt" Runtime Library</h1>
+  <h1>"compiler-rt" Runtime Library</h1>
   <!--*********************************************************************-->
   
-  <p>The compiler_rt project is a simple library that provides an implementation
+  <p>The compiler-rt project is a simple library that provides an implementation
      of the low-level target-specific hooks required by code generation and
      other runtime components.  For example, when compiling for a 32-bit target,
     converting a double to a 64-bit unsigned integer is compiling into a runtime
-    call to the "__fixunsdfdi" function.  The compiler_rt library provides
+    call to the "__fixunsdfdi" function.  The compiler-rt library provides
     optimized implementations of this and other low-level routines.</p>
   
   <!--=====================================================================-->
   <h2 id="goals">Goals</h2>
   <!--=====================================================================-->
   
-  <p>Different targets require different routines.  The compiler_rt project aims
+  <p>Different targets require different routines.  The compiler-rt project aims
      to implement these routines in both target-independent C form as well as
      providing heavily optimized assembly versions of the routines in some
-     cases.  It should be very easy to bring compiler_rt to support a new
+     cases.  It should be very easy to bring compiler-rt to support a new
      target by adding the new routines needed by that target.</p>
      
-  <p>Where it make sense, the compiler_rt project aims to implement interfaces
+  <p>Where it make sense, the compiler-rt project aims to implement interfaces
      that are drop-in compatible with the libgcc interfaces.</p>
 
   <!--=====================================================================-->
   <h2 id="features">Features</h2>
   <!--=====================================================================-->
 
-   <p>The current feature set of compiler_rt is:</p>
+   <p>The current feature set of compiler-rt is:</p>
 
    <ul>
     <li>Full support for the libgcc interfaces required by these targets:
@@ -61,7 +61,24 @@
   <h2>Get it and get involved!</h2>
   <!--=====================================================================-->
   
-  <p>TODO.</p>
+  <p>To check out the code, use:</p>
+  
+  <ul>
+  <li>svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk compiler-rt</li>
+  <li>cd compiler-rt</li>
+  <li>make</li>
+  </ul>
+  
+  <p>Note that the library will probably only build out of the box on Darwin,
+     but patches to improve portability are definitely welcome.</p>
+  
+  <p>compiler-rt doesn't have its own mailing list, if you have questions please
+     email the <a
+    href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvmdev</a> mailing
+    list.  Commits to the compiler-rt SVN module are automatically sent to the
+    <a 
+  href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">llvm-commits</a>
+    mailing list.</p>
 </div>
 </body>
 </html>
