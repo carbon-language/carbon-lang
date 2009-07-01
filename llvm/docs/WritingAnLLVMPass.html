@@ -491,10 +491,15 @@ class is the most general of all superclasses that you can use.  Deriving from
 <tt>ModulePass</tt> indicates that your pass uses the entire program as a unit,
 refering to function bodies in no predictable order, or adding and removing
 functions.  Because nothing is known about the behavior of <tt>ModulePass</tt>
-subclasses, no optimization can be done for their execution. A module pass
-can use function level passes (e.g. dominators) using getAnalysis interface
-<tt> getAnalysis&lt;DominatorTree&gt;(Function)</tt>, if the function pass
-does not require any module passes. </p> 
+subclasses, no optimization can be done for their execution.</p>
+
+<p>A module pass can use function level passes (e.g. dominators) using
+the getAnalysis interface
+<tt>getAnalysis&lt;DominatorTree&gt;(llvm::Function *)</tt> to provide the
+function to retrieve analysis result for, if the function pass does not require
+any module passes. Note that this can only be done for functions for which the
+analysis ran, e.g. in the case of dominators you should only ask for the
+DominatorTree for function definitions, not declarations.</p>
 
 <p>To write a correct <tt>ModulePass</tt> subclass, derive from
 <tt>ModulePass</tt> and overload the <tt>runOnModule</tt> method with the
