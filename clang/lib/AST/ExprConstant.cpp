@@ -499,15 +499,15 @@ APValue VectorExprEvaluator::VisitCastExpr(const CastExpr* E) {
     return this->Visit(const_cast<Expr*>(SE));
   } else if (SETy->isIntegerType()) {
     APSInt IntResult;
-    if (EvaluateInteger(SE, IntResult, Info))
-      Result = APValue(IntResult);
+    if (!EvaluateInteger(SE, IntResult, Info))
+      return APValue();
+    Result = APValue(IntResult);
   } else if (SETy->isRealFloatingType()) {
     APFloat F(0.0);
-    if (EvaluateFloat(SE, F, Info))
-      Result = APValue(F);
-  }
-  
-  if (!Result.isInt() && Result.isFloat())
+    if (!EvaluateFloat(SE, F, Info))
+      return APValue();
+    Result = APValue(F);
+  } else
     return APValue();
 
   // For casts of a scalar to ExtVector, convert the scalar to the element type
