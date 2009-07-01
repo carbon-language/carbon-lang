@@ -10,7 +10,7 @@ include "llvm/CompilerDriver/Common.td"
 
 def OptionList : OptionList<[
  (switch_option "g",
-    (help "Disable optimizations")),
+    (help "Enable Debugging")),
  (switch_option "S",
     (help "Stop after compilation, do not assemble")),
  (parameter_option "I",
@@ -33,7 +33,7 @@ def clang_cc : Tool<[
  (in_language "c"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "clang-cc $INFILE -o $OUTFILE"),
+ (cmd_line "$CALL(GetBinDir)clang-cc -I $CALL(GetStdHeadersDir) -triple=pic16- -emit-llvm-bc $INFILE -o $OUTFILE"),
  (actions (case
           (not_empty "I"), (forward "I"))),
  (sink)
@@ -43,7 +43,7 @@ def llvm_ld : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "llvm-ld $INFILE -o $OUTFILE"),
+ (cmd_line "llvm-ld -f -link-as-library $INFILE -o $OUTFILE"),
  (actions (case
           (switch_on "g"), (append_cmd "-disable-opt"),
           (not_empty "Wo,"), (unpack_values "Wo,")))
@@ -53,7 +53,7 @@ def llvm_ld_lto : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "llvm-ld $INFILE -o $OUTFILE"),
+ (cmd_line "llvm-ld -link-as-library $INFILE -o $OUTFILE"),
  (actions (case
           (switch_on "g"), (append_cmd "-disable-opt"),
           (not_empty "Wo,"), (unpack_values "Wo,"))),
@@ -64,27 +64,27 @@ def llc : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "assembler"),
  (output_suffix "s"),
- (cmd_line "llc -f $INFILE -o $OUTFILE"),
+ (cmd_line "llc -march=pic16 -f $INFILE -o $OUTFILE"),
  (actions (case
           (switch_on "S"), (stop_compilation),
           (not_empty "Wllc,"), (unpack_values "Wllc,"),
           (not_empty "pre-RA-sched"), (forward "pre-RA-sched")))
 ]>;
 
-def native_as : Tool<[
+def gpasm : Tool<[
  (in_language "assembler"),
  (out_language "object-code"),
  (output_suffix "o"),
- (cmd_line "native-as $INFILE -o $OUTFILE"),
+ (cmd_line "gpasm -I $CALL(GetStdAsmHeadersDir) $INFILE -o $OUTFILE"),
  (actions (case
           (not_empty "Wa,"), (unpack_values "Wa,")))
 ]>;
 
-def native_ld : Tool<[
+def mplink : Tool<[
  (in_language "object-code"),
  (out_language "executable"),
  (output_suffix "out"),
- (cmd_line "native-ld $INFILE -o $OUTFILE"),
+ (cmd_line "mplink /k $CALL(GetStdLinkerScriptsDir) /l $CALL(GetStdLibsDir) $INFILE -o $OUTFILE"),
  (actions (case
           (not_empty "Wl,"), (unpack_values "Wl,"))),
  (join)
@@ -111,6 +111,6 @@ def CompilationGraph : CompilationGraph<[
     Edge<"llvm_ld_lto", "llc">,
     OptionalEdge<"clang_cc", "llvm_ld", (case (switch_on "S"), (inc_weight))>,
     Edge<"llvm_ld", "llc">,
-    Edge<"llc", "native_as">,
-    Edge<"native_as", "native_ld">
+    Edge<"llc", "gpasm">,
+    Edge<"gpasm", "mplink">
 ]>;
