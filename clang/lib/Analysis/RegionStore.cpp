@@ -990,13 +990,11 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
 
   // Check if the region has a binding.
   RegionBindingsTy B = GetRegionBindings(state->getStore());
-  const SVal* V = B.lookup(R);
-  if (V)
+  if (const SVal* V = B.lookup(R))
     return *V;
 
-  const MemRegion* SuperR = R->getSuperRegion();
-  const SVal* D = state->get<RegionDefaultValue>(SuperR);
-  if (D) {
+  const MemRegion* superR = R->getSuperRegion();
+  if (const SVal* D = state->get<RegionDefaultValue>(superR)) {
     if (D->hasConjuredSymbol())
       return ValMgr.getRegionValueSymbolVal(R);
 
@@ -1389,19 +1387,19 @@ Store RegionStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
     }
     else {
       // Get the super region for R.
-      const MemRegion* SuperR = cast<SubRegion>(R)->getSuperRegion();
+      const MemRegion* superR = cast<SubRegion>(R)->getSuperRegion();
       
       // Get the current set of subregions for SuperR.
-      const SubRegionsTy* SRptr = SubRegMap.lookup(SuperR);
+      const SubRegionsTy* SRptr = SubRegMap.lookup(superR);
       SubRegionsTy SRs = SRptr ? *SRptr : SubRegF.GetEmptySet();
       
       // Add R to the subregions of SuperR.
-      SubRegMap = SubRegMapF.Add(SubRegMap, SuperR, SubRegF.Add(SRs, R));
+      SubRegMap = SubRegMapF.Add(SubRegMap, superR, SubRegF.Add(SRs, R));
       
       // Super region may be VarRegion or subregion of another VarRegion. Add it
       // to the work list.
-      if (isa<SubRegion>(SuperR))
-        IntermediateRoots.push_back(SuperR);
+      if (isa<SubRegion>(superR))
+        IntermediateRoots.push_back(superR);
     }
   }
   
