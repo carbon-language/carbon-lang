@@ -491,19 +491,22 @@ SPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
+      bool isUndef = MI->getOperand(1).isUndef();
       if (FrameIndex < SPUFrameInfo::maxFrameOffset()) {
         MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(),
                                           get(SPU::STQDr32));
 
-        MIB.addReg(InReg, getKillRegState(isKill));
+        MIB.addReg(InReg, getKillRegState(isKill) | getUndefRegState(isUndef));
         NewMI = addFrameReference(MIB, FrameIndex);
       }
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
+      bool isUndef = MI->getOperand(0).isUndef();
       MachineInstrBuilder MIB = BuildMI(MF, MI->getDebugLoc(), get(Opc));
 
-      MIB.addReg(OutReg, RegState::Define | getDeadRegState(isDead));
+      MIB.addReg(OutReg, RegState::Define | getDeadRegState(isDead) |
+                 getUndefRegState(isUndef));
       Opc = (FrameIndex < SPUFrameInfo::maxFrameOffset())
         ? SPU::STQDr32 : SPU::STQXr32;
       NewMI = addFrameReference(MIB, FrameIndex);

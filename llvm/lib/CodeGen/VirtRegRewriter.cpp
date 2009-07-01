@@ -2029,8 +2029,12 @@ private:
         if (!TargetRegisterInfo::isVirtualRegister(VirtReg)) {
           // Check to see if this is a noop copy.  If so, eliminate the
           // instruction before considering the dest reg to be changed.
+          // Also check if it's copying from an "undef", if so, we can't
+          // eliminate this or else the undef marker is lost and it will
+          // confuses the scavenger. This is extremely rare.
           unsigned Src, Dst, SrcSR, DstSR;
-          if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst) {
+          if (TII->isMoveInstr(MI, Src, Dst, SrcSR, DstSR) && Src == Dst &&
+              !MI.findRegisterUseOperand(Src)->isUndef()) {
             ++NumDCE;
             DOUT << "Removing now-noop copy: " << MI;
             SmallVector<unsigned, 2> KillRegs;
@@ -2049,7 +2053,7 @@ private:
             Spills.disallowClobberPhysReg(VirtReg);
             goto ProcessNextInst;
           }
-            
+
           // If it's not a no-op copy, it clobbers the value in the destreg.
           Spills.ClobberPhysReg(VirtReg);
           ReusedOperands.markClobbered(VirtReg);

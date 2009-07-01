@@ -390,6 +390,10 @@ namespace llvm {
     unsigned getNumConflictsWithPhysReg(const LiveInterval &li,
                                         unsigned PhysReg) const;
 
+    /// processImplicitDefs - Process IMPLICIT_DEF instructions. Add isUndef
+    /// marker to implicit_def defs and their uses.
+    void processImplicitDefs();
+
     /// computeNumbering - Compute the index numbering.
     void computeNumbering();
 

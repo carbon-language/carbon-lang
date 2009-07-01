@@ -619,14 +619,19 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
+      bool isUndef = MI->getOperand(1).isUndef();
       NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::STR))
-        .addReg(SrcReg, getKillRegState(isKill))
+        .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
         .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
+      bool isUndef = MI->getOperand(0).isUndef();
       NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::LDR))
-        .addReg(DstReg, RegState::Define | getDeadRegState(isDead))
+        .addReg(DstReg,
+                RegState::Define |
+                getDeadRegState(isDead) |
+                getUndefRegState(isUndef))
         .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
     }
     break;
@@ -636,14 +641,22 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
     unsigned PredReg = MI->getOperand(3).getReg();
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
+      bool isKill = MI->getOperand(1).isKill();
+      bool isUndef = MI->getOperand(1).isUndef();
       NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::FSTS))
-        .addReg(SrcReg).addFrameIndex(FI)
+        .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
+        .addFrameIndex(FI)
         .addImm(0).addImm(Pred).addReg(PredReg);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
-      NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::FLDS), DstReg)
-        .addFrameIndex(FI)
-        .addImm(0).addImm(Pred).addReg(PredReg);
+      bool isDead = MI->getOperand(0).isDead();
+      bool isUndef = MI->getOperand(0).isUndef();
+      NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::FLDS))
+        .addReg(DstReg,
+                RegState::Define |
+                getDeadRegState(isDead) |
+                getUndefRegState(isUndef))
+        .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
     }
     break;
   }
@@ -653,14 +666,19 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
+      bool isUndef = MI->getOperand(1).isUndef();
       NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::FSTD))
-        .addReg(SrcReg, getKillRegState(isKill))
+        .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
         .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
+      bool isUndef = MI->getOperand(0).isUndef();
       NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::FLDD))
-        .addReg(DstReg, RegState::Define | getDeadRegState(isDead))
+        .addReg(DstReg,
+                RegState::Define |
+                getDeadRegState(isDead) |
+                getUndefRegState(isUndef))
         .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
     }
     break;

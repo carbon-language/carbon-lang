@@ -256,17 +256,20 @@ MachineInstr *SparcInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     if (OpNum == 0) { // COPY -> STORE
       unsigned SrcReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();
+      bool isUndef = MI->getOperand(1).isUndef();
       NewMI = BuildMI(MF, MI->getDebugLoc(),
                       get(isFloat ? SP::STFri : SP::STDFri))
         .addFrameIndex(FI)
         .addImm(0)
-        .addReg(SrcReg, getKillRegState(isKill));
+        .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef));
     } else {             // COPY -> LOAD
       unsigned DstReg = MI->getOperand(0).getReg();
       bool isDead = MI->getOperand(0).isDead();
+      bool isUndef = MI->getOperand(0).isUndef();
       NewMI = BuildMI(MF, MI->getDebugLoc(),
                       get(isFloat ? SP::LDFri : SP::LDDFri))
-        .addReg(DstReg, RegState::Define | getDeadRegState(isDead))
+        .addReg(DstReg, RegState::Define |
+                getDeadRegState(isDead) | getUndefRegState(isUndef))
         .addFrameIndex(FI)
         .addImm(0);
     }

@@ -254,6 +254,8 @@ void RegScavenger::forward() {
     unsigned Idx = (i < NumECs)
       ? EarlyClobberMOs[i].second : DefMOs[i-NumECs].second;
     unsigned Reg = MO.getReg();
+    if (MO.isUndef())
+      continue;
 
     // If it's dead upon def, then it is now free.
     if (MO.isDead()) {
@@ -262,7 +264,9 @@ void RegScavenger::forward() {
     }
 
     // Skip two-address destination operand.
-    if (MI->isRegTiedToUseOperand(Idx)) {
+    unsigned UseIdx;
+    if (MI->isRegTiedToUseOperand(Idx, &UseIdx) &&
+        !MI->getOperand(UseIdx).isUndef()) {
       assert(isUsed(Reg) && "Using an undefined register!");
       continue;
     }
@@ -316,6 +320,8 @@ void RegScavenger::backward() {
       ? *DefMOs[i].first : *EarlyClobberMOs[i-NumDefs].first;
     unsigned Idx = (i < NumECs)
       ? DefMOs[i].second : EarlyClobberMOs[i-NumDefs].second;
+    if (MO.isUndef())
+      continue;
 
     // Skip two-address destination operand.
     if (MI->isRegTiedToUseOperand(Idx))

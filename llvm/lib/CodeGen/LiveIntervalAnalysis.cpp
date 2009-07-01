@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
@@ -33,6 +34,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -95,6 +98,93 @@ void LiveIntervals::releaseMemory() {
     MachineInstr *MI = ClonedMIs.back();
     ClonedMIs.pop_back();
     mf_->DeleteMachineInstr(MI);
+  }
+}
+
+/// processImplicitDefs - Process IMPLICIT_DEF instructions and make sure
+/// there is one implicit_def for each use. Add isUndef marker to
+/// implicit_def defs and their uses.
+void LiveIntervals::processImplicitDefs() {
+  SmallSet<unsigned, 8> ImpDefRegs;
+  SmallVector<MachineInstr*, 8> ImpDefMIs;
+  MachineBasicBlock *Entry = mf_->begin();
+  SmallPtrSet<MachineBasicBlock*,16> Visited;
+  for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*,16> >
+         DFI = df_ext_begin(Entry, Visited), E = df_ext_end(Entry, Visited);
+       DFI != E; ++DFI) {
+    MachineBasicBlock *MBB = *DFI;
+    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+         I != E; ) {
+      MachineInstr *MI = &*I;
+      ++I;
+      if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
+        unsigned Reg = MI->getOperand(0).getReg();
+        MI->getOperand(0).setIsUndef();
+        ImpDefRegs.insert(Reg);
+        ImpDefMIs.push_back(MI);
+        continue;
+      }
+      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+        MachineOperand& MO = MI->getOperand(i);
+        if (!MO.isReg() || !MO.isUse())
+          continue;
+        unsigned Reg = MO.getReg();
+        if (!Reg)
+          continue;
+        if (!ImpDefRegs.count(Reg))
+          continue;
+        MO.setIsUndef();
+        if (MO.isKill() || MI->isRegTiedToDefOperand(i))
+          ImpDefRegs.erase(Reg);
+      }
+
+      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+        MachineOperand& MO = MI->getOperand(i);
+        if (!MO.isReg() || !MO.isDef())
+          continue;
+        ImpDefRegs.erase(MO.getReg());
+      }
+    }
+
+    // Any outstanding liveout implicit_def's?
+    for (unsigned i = 0, e = ImpDefMIs.size(); i != e; ++i) {
+      MachineInstr *MI = ImpDefMIs[i];
+      unsigned Reg = MI->getOperand(0).getReg();
+      if (TargetRegisterInfo::isPhysicalRegister(Reg))
+        // Physical registers are not liveout (yet).
+        continue;
+      if (!ImpDefRegs.count(Reg))
+        continue;
+      bool HasLocalUse = false;
+      for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(Reg),
+             RE = mri_->reg_end(); RI != RE; ) {
+        MachineOperand &RMO = RI.getOperand();
+        MachineInstr *RMI = &*RI;
+        ++RI;
+        if (RMO.isDef()) {
+          // Don't expect another def of the same register.
+          assert(RMI == MI &&
+                 "Register with multiple defs including an implicit_def?");
+          continue;
+        }
+        MachineBasicBlock *RMBB = RMI->getParent();
+        if (RMBB == MBB) {
+          HasLocalUse = true;
+          continue;
+        }
+        const TargetRegisterClass* RC = mri_->getRegClass(Reg);
+        unsigned NewVReg = mri_->createVirtualRegister(RC);
+        BuildMI(*RMBB, RMI, RMI->getDebugLoc(),
+                tii_->get(TargetInstrInfo::IMPLICIT_DEF), NewVReg);
+        RMO.setReg(NewVReg);
+        RMO.setIsUndef();
+        RMO.setIsKill();
+      }
+      if (!HasLocalUse)
+        MI->eraseFromParent();
+    }
+    ImpDefRegs.clear();
+    ImpDefMIs.clear();
   }
 }
 
@@ -299,6 +389,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   lv_ = &getAnalysis<LiveVariables>();
   allocatableRegs_ = tri_->getAllocatableSet(fn);
 
+  processImplicitDefs();
   computeNumbering();
   computeIntervals();
 
@@ -1785,8 +1876,6 @@ LiveIntervals::handleSpilledImpDefs(const LiveInterval &li, VirtRegMap &vrm,
         if (MO.isReg() && MO.getReg() == li.reg) {
           MO.setReg(NewVReg);
           MO.setIsUndef();
-          if (MO.isKill())
-            MO.setIsKill(false);
         }
       }
     }

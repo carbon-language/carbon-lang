@@ -545,26 +545,6 @@ void RALinScan::linearScan()
     if (!isPhys && vrm_->getPreSplitReg(cur.reg))
       continue;
 
-    // A register defined by an implicit_def can be liveout the def BB and livein
-    // to a use BB. Add it to the livein set of the use BB's.
-    if (!isPhys && cur.empty()) {
-      if (MachineInstr *DefMI = mri_->getVRegDef(cur.reg)) {
-        assert(DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF);
-        MachineBasicBlock *DefMBB = DefMI->getParent();
-        SmallPtrSet<MachineBasicBlock*, 4> Seen;
-        Seen.insert(DefMBB);
-        for (MachineRegisterInfo::reg_iterator ri = mri_->reg_begin(cur.reg),
-               re = mri_->reg_end(); ri != re; ++ri) {
-          MachineInstr *UseMI = &*ri;
-          MachineBasicBlock *UseMBB = UseMI->getParent();
-          if (Seen.insert(UseMBB)) {
-            assert(TargetRegisterInfo::isPhysicalRegister(Reg) &&
-                   "Adding a virtual register to livein set?");
-            UseMBB->addLiveIn(Reg);
-          }
-        }
-      }
-    }
     for (LiveInterval::Ranges::const_iterator I = cur.begin(), E = cur.end();
          I != E; ++I) {
       const LiveRange &LR = *I;
@@ -905,17 +885,6 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     DOUT <<  tri_->getName(physReg) << '\n';
     // Note the register is not really in use.
     vrm_->assignVirt2Phys(cur->reg, physReg);
-    // Since the register allocator is allowed to assign this virtual register
-    // physical register that overlaps other live intervals. Mark these
-    // operands as "Undef" which means later passes, e.g. register scavenger
-    // can ignore them.
-    for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(cur->reg),
-           RE = mri_->reg_end(); RI != RE; ++RI) {
-      MachineOperand &MO = RI.getOperand();
-      MO.setIsUndef();
-      if (MO.isKill())
-        MO.setIsKill(false);
-    }
     return;
   }
 
