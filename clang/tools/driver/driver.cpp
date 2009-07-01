@@ -219,7 +219,7 @@ int main(int argc, const char **argv) {
 
   int Res = 0;
   if (C.get())
-    Res = C->Execute();
+    Res = TheDriver.ExecuteCompilation(*C);
 
   llvm::llvm_shutdown();
 

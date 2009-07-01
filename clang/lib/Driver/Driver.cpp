@@ -217,6 +217,54 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
   return C;
 }
 
+int Driver::ExecuteCompilation(const Compilation &C) const {
+  // Just print if -### was present.
+  if (C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
+    C.PrintJob(llvm::errs(), C.getJobs(), "\n", true);
+    return 0;
+  }
+
+  // If there were errors building the compilation, quit now.
+  if (getDiags().getNumErrors())
+    return 1;
+
+  const Command *FailingCommand = 0;
+  int Res = C.ExecuteJob(C.getJobs(), FailingCommand);
+  
+  // Remove temp files.
+  C.CleanupFileList(C.getTempFiles());
+
+  // If the compilation failed, remove result files as well.
+  if (Res != 0 && !C.getArgs().hasArg(options::OPT_save_temps))
+    C.CleanupFileList(C.getResultFiles(), true);
+
+  // Print extra information about abnormal failures, if possible.
+  if (Res) {
+    // This is ad-hoc, but we don't want to be excessively noisy. If the result
+    // status was 1, assume the command failed normally. In particular, if it
+    // was the compiler then assume it gave a reasonable error code. Failures in
+    // other tools are less common, and they generally have worse diagnostics,
+    // so always print the diagnostic there.
+    const Action &Source = FailingCommand->getSource();
+    bool IsFriendlyTool = (isa<PreprocessJobAction>(Source) ||
+                           isa<PrecompileJobAction>(Source) ||
+                           isa<AnalyzeJobAction>(Source) ||
+                           isa<CompileJobAction>(Source));
+
+    if (!IsFriendlyTool || Res != 1) {
+      // FIXME: See FIXME above regarding result code interpretation.
+      if (Res < 0)
+        Diag(clang::diag::err_drv_command_signalled) 
+          << Source.getClassName() << -Res;
+      else
+        Diag(clang::diag::err_drv_command_failed) 
+          << Source.getClassName() << Res;
+    }
+  }
+
+  return Res;
+}
+
 void Driver::PrintOptions(const ArgList &Args) const {
   unsigned i = 0;
   for (ArgList::const_iterator it = Args.begin(), ie = Args.end(); 

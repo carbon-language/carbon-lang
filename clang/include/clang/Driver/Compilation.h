@@ -69,6 +69,11 @@ public:
   const ActionList &getActions() const { return Actions; }
 
   JobList &getJobs() { return Jobs; }
+  const JobList &getJobs() const { return Jobs; }
+
+  const ArgStringList &getTempFiles() const { return TempFiles; }
+
+  const ArgStringList &getResultFiles() const { return ResultFiles; }
 
   /// getArgsForToolChain - Return the derived argument list for the
   /// tool chain \arg TC (or the default tool chain, if TC is not
@@ -89,11 +94,6 @@ public:
     return Name;
   }
 
-  /// Execute - Execute the compilation jobs and return an
-  /// appropriate exit code.
-  int Execute() const;
-
-private:
   /// CleanupFileList - Remove the files in the given list.
   ///
   /// \param IssueErrors - Report failures as errors.
@@ -120,7 +120,7 @@ private:
   /// ExecuteJob - Execute a single job.
   ///
   /// \param FailingCommand - For non-zero results, this will be set to the
-  /// Command which failed, if any.
+  /// Command which failed.
   /// \return The accumulated result code of the job.
   int ExecuteJob(const Job &J, const Command *&FailingCommand) const;
 };

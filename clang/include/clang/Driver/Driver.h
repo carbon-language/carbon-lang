@@ -161,6 +161,14 @@ public:
   /// \arg C - The compilation that is being built.
   void BuildJobs(Compilation &C) const;
 
+  /// ExecuteCompilation - Execute the compilation according to the command line
+  /// arguments and return an appropriate exit code.
+  ///
+  /// This routine handles additional processing that must be done in addition
+  /// to just running the subprocesses, for example reporting errors, removing
+  /// temporary files, etc.
+  int ExecuteCompilation(const Compilation &C) const;
+
   /// @}
   /// @name Helper Methods
   /// @{
