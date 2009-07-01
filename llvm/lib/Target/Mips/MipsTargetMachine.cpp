@@ -134,6 +134,6 @@ addAssemblyEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                    bool Verbose, raw_ostream &Out)  {
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-  PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
+  PM.add(AsmPrinterCtor(Out, *this, Verbose));
   return false;
 }

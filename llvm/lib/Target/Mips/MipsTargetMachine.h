@@ -39,7 +39,6 @@ namespace llvm {
     // linked in.
     typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
                                               MipsTargetMachine &tm,
-                                              CodeGenOpt::Level OptLevel,
                                               bool verbose);
     static AsmPrinterCtorFn AsmPrinterCtor;
     

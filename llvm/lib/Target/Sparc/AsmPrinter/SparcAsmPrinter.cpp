@@ -50,9 +50,8 @@ namespace {
     unsigned BBNumber;
   public:
     explicit SparcAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
-                             bool V)
-      : AsmPrinter(O, TM, T, OL, V), BBNumber(0) {}
+                             const TargetAsmInfo *T, bool V)
+      : AsmPrinter(O, TM, T, V), BBNumber(0) {}
 
     virtual const char *getPassName() const {
       return "Sparc Assembly Printer";
@@ -84,9 +83,8 @@ namespace {
 ///
 FunctionPass *llvm::createSparcCodePrinterPass(raw_ostream &o,
                                                TargetMachine &tm,
-                                               CodeGenOpt::Level OptLevel,
                                                bool verbose) {
-  return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+  return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
 

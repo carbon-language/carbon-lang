@@ -26,9 +26,8 @@ namespace llvm {
 
 struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
   explicit X86IntelAsmPrinter(raw_ostream &O, X86TargetMachine &TM,
-                              const TargetAsmInfo *T, CodeGenOpt::Level OL,
-                              bool V)
-    : AsmPrinter(O, TM, T, OL, V) {}
+                              const TargetAsmInfo *T, bool V)
+    : AsmPrinter(O, TM, T, V) {}
 
   virtual const char *getPassName() const {
     return "X86 Intel-Style Assembly Printer";

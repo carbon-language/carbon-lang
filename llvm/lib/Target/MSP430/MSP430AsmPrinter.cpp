@@ -40,9 +40,8 @@ namespace {
   class VISIBILITY_HIDDEN MSP430AsmPrinter : public AsmPrinter {
   public:
     MSP430AsmPrinter(raw_ostream &O, MSP430TargetMachine &TM,
-                     const TargetAsmInfo *TAI,
-                     CodeGenOpt::Level OL, bool V)
-      : AsmPrinter(O, TM, TAI, OL, V) {}
+                     const TargetAsmInfo *TAI, bool V)
+      : AsmPrinter(O, TM, TAI, V) {}
 
     virtual const char *getPassName() const {
       return "MSP430 Assembly Printer";
@@ -77,9 +76,8 @@ namespace {
 ///
 FunctionPass *llvm::createMSP430CodePrinterPass(raw_ostream &o,
                                                 MSP430TargetMachine &tm,
-                                                CodeGenOpt::Level OptLevel,
                                                 bool verbose) {
-  return new MSP430AsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+  return new MSP430AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
 bool MSP430AsmPrinter::doInitialization(Module &M) {

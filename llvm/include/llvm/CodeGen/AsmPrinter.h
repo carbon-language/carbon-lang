@@ -65,8 +65,6 @@ namespace llvm {
     /// DW - If available, this is a pointer to the current dwarf writer.
     DwarfWriter *DW;
     
-    /// OptLevel - Generating code at a specific optimization level.
-    CodeGenOpt::Level OptLevel;
   public:
     /// Output stream on which we're printing assembly code.
     ///
@@ -120,7 +118,7 @@ namespace llvm {
 
   protected:
     explicit AsmPrinter(raw_ostream &o, TargetMachine &TM,
-                        const TargetAsmInfo *T, CodeGenOpt::Level OL, bool V);
+                        const TargetAsmInfo *T, bool V);
     
   public:
     virtual ~AsmPrinter();
@@ -139,7 +137,8 @@ namespace llvm {
     ///
     /// This method is used when about to emit executable code.
     ///
-    void SwitchToTextSection(const char *NewSection, const GlobalValue *GV = NULL);
+    void SwitchToTextSection(const char *NewSection, 
+                             const GlobalValue *GV = NULL);
 
     /// SwitchToDataSection - Switch to the specified section of the executable
     /// if we are not already in it!  If GV is non-null and if the global has an
@@ -153,7 +152,8 @@ namespace llvm {
     /// is the same as the SwitchToTextSection method, but not all assemblers
     /// are the same.
     ///
-    void SwitchToDataSection(const char *NewSection, const GlobalValue *GV = NULL);
+    void SwitchToDataSection(const char *NewSection, 
+                             const GlobalValue *GV = NULL);
 
     /// SwitchToSection - Switch to the specified section of the executable if
     /// we are not already in it!

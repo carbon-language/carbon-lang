@@ -30,9 +30,8 @@
 namespace llvm {
   struct VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
     explicit PIC16AsmPrinter(raw_ostream &O, PIC16TargetMachine &TM,
-                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
-                             bool V)
-      : AsmPrinter(O, TM, T, OL, V), DbgInfo(O, T) {
+                             const TargetAsmInfo *T, bool V)
+      : AsmPrinter(O, TM, T, V), DbgInfo(O, T) {
       PTLI = TM.getTargetLowering();
       PTAI = static_cast<const PIC16TargetAsmInfo *> (T);
     }

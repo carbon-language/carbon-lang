@@ -28,9 +28,8 @@ namespace llvm {
   
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
-FunctionPass *createPPCAsmPrinterPass(raw_ostream &OS,
-                                      PPCTargetMachine &TM,
-                                      CodeGenOpt::Level OptLevel, bool Verbose);
+FunctionPass *createPPCAsmPrinterPass(raw_ostream &OS, PPCTargetMachine &TM,
+                                      bool Verbose);
 FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,

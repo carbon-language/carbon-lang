@@ -38,9 +38,8 @@ namespace {
     std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
   public:
     explicit IA64AsmPrinter(raw_ostream &O, TargetMachine &TM,
-                            const TargetAsmInfo *T, CodeGenOpt::Level OL,
-                            bool V)
-      : AsmPrinter(O, TM, T, OL, V) {}
+                            const TargetAsmInfo *T, bool V)
+      : AsmPrinter(O, TM, T, V) {}
 
     virtual const char *getPassName() const {
       return "IA64 Assembly Printer";
@@ -373,9 +372,8 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createIA64CodePrinterPass(raw_ostream &o,
                                               IA64TargetMachine &tm,
-                                              CodeGenOpt::Level OptLevel,
                                               bool verbose) {
-  return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+  return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
 namespace {

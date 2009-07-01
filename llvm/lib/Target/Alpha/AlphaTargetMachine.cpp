@@ -94,7 +94,7 @@ bool AlphaTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
+    PM.add(AsmPrinterCtor(Out, *this, Verbose));
   return false;
 }
 bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
@@ -104,7 +104,7 @@ bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, true));
   }
   return false;
 }
@@ -115,7 +115,7 @@ bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, true));
   }
   return false;
 }

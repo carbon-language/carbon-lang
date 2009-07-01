@@ -73,7 +73,7 @@ IA64TargetMachine::IA64TargetMachine(const Module &M, const std::string &FS)
 //===----------------------------------------------------------------------===//
 
 bool IA64TargetMachine::addInstSelector(PassManagerBase &PM,
-                                        CodeGenOpt::Level OptLevel){
+                                        CodeGenOpt::Level OptLevel) {
   PM.add(createIA64DAGToDAGInstructionSelector(*this));
   return false;
 }
@@ -91,7 +91,7 @@ bool IA64TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
+    PM.add(AsmPrinterCtor(Out, *this, Verbose));
   return false;
 }
 

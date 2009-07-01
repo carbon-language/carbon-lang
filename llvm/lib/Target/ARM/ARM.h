@@ -93,7 +93,6 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM);
 FunctionPass *createARMCodePrinterPass(raw_ostream &O,
                                        ARMBaseTargetMachine &TM,
-                                       CodeGenOpt::Level OptLevel,
                                        bool Verbose);
 FunctionPass *createARMCodeEmitterPass(ARMBaseTargetMachine &TM,
                                        MachineCodeEmitter &MCE);

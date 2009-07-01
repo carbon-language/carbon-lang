@@ -82,9 +82,8 @@ namespace {
     bool InCPMode;
   public:
     explicit ARMAsmPrinter(raw_ostream &O, TargetMachine &TM,
-                           const TargetAsmInfo *T, CodeGenOpt::Level OL,
-                           bool V)
-      : AsmPrinter(O, TM, T, OL, V), DW(0), AFI(NULL), MCP(NULL),
+                           const TargetAsmInfo *T, bool V)
+      : AsmPrinter(O, TM, T, V), DW(0), AFI(NULL), MCP(NULL),
         InCPMode(false) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
     }
@@ -1198,9 +1197,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 ///
 FunctionPass *llvm::createARMCodePrinterPass(raw_ostream &o,
                                              ARMBaseTargetMachine &tm,
-                                             CodeGenOpt::Level OptLevel,
                                              bool verbose) {
-  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
 namespace {

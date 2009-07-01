@@ -25,7 +25,6 @@ namespace llvm {
 
   FunctionPass *createSparcISelDag(SparcTargetMachine &TM);
   FunctionPass *createSparcCodePrinterPass(raw_ostream &OS, TargetMachine &TM,
-                                           CodeGenOpt::Level OptLevel,
                                            bool Verbose);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createSparcFPMoverPass(TargetMachine &TM);

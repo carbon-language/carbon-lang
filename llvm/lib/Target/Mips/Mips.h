@@ -27,7 +27,6 @@ namespace llvm {
   FunctionPass *createMipsDelaySlotFillerPass(MipsTargetMachine &TM);
   FunctionPass *createMipsCodePrinterPass(raw_ostream &OS, 
                                           MipsTargetMachine &TM,
-                                          CodeGenOpt::Level OptLevel,
                                           bool Verbose);
 } // end namespace llvm;
 

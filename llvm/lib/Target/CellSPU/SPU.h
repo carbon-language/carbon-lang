@@ -26,7 +26,6 @@ namespace llvm {
   FunctionPass *createSPUISelDag(SPUTargetMachine &TM);
   FunctionPass *createSPUAsmPrinterPass(raw_ostream &o,
                                         SPUTargetMachine &tm,
-                                        CodeGenOpt::Level OptLevel,
                                         bool verbose);
 
   /*--== Utility functions/predicates/etc used all over the place: --==*/

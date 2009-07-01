@@ -69,6 +69,6 @@ bool XCoreTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                             bool Verbose,
                                             raw_ostream &Out) {
   // Output assembly language.
-  PM.add(createXCoreCodePrinterPass(Out, *this, OptLevel, Verbose));
+  PM.add(createXCoreCodePrinterPass(Out, *this, Verbose));
   return false;
 }

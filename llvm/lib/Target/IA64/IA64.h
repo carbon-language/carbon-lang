@@ -39,7 +39,6 @@ FunctionPass *createIA64BundlingPass(IA64TargetMachine &TM);
 ///
 FunctionPass *createIA64CodePrinterPass(raw_ostream &o,
                                         IA64TargetMachine &tm,
-                                        CodeGenOpt::Level OptLevel,
                                         bool verbose);
 
 } // End llvm namespace

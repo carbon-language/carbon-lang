@@ -62,7 +62,7 @@ bool MSP430TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                              bool Verbose,
                                              raw_ostream &Out) {
   // Output assembly language.
-  PM.add(createMSP430CodePrinterPass(Out, *this, OptLevel, Verbose));
+  PM.add(createMSP430CodePrinterPass(Out, *this, Verbose));
   return false;
 }
 

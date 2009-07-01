@@ -179,7 +179,7 @@ bool ARMBaseTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
+    PM.add(AsmPrinterCtor(Out, *this, Verbose));
 
   return false;
 }
@@ -198,7 +198,7 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, true));
   }
 
   return false;
@@ -217,7 +217,7 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, true));
   }
 
   return false;
@@ -232,7 +232,7 @@ bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, true));
   }
 
   return false;
@@ -247,7 +247,7 @@ bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, OptLevel, true));
+      PM.add(AsmPrinterCtor(errs(), *this, true));
   }
 
   return false;

@@ -90,6 +90,6 @@ bool SparcTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, OptLevel, Verbose));
+    PM.add(AsmPrinterCtor(Out, *this, Verbose));
   return false;
 }

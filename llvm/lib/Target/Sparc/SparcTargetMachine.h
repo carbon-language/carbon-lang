@@ -39,7 +39,6 @@ protected:
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
                                             TargetMachine &tm,
-                                            CodeGenOpt::Level OptLevel,
                                             bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
   

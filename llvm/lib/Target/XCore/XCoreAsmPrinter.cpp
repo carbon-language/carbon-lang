@@ -58,9 +58,8 @@ namespace {
     const XCoreSubtarget &Subtarget;
   public:
     explicit XCoreAsmPrinter(raw_ostream &O, XCoreTargetMachine &TM,
-                             const TargetAsmInfo *T, CodeGenOpt::Level OL,
-                             bool V)
-      : AsmPrinter(O, TM, T, OL, V), DW(0),
+                             const TargetAsmInfo *T, bool V)
+      : AsmPrinter(O, TM, T, V), DW(0),
         Subtarget(*TM.getSubtargetImpl()) {}
 
     virtual const char *getPassName() const {
@@ -106,9 +105,8 @@ namespace {
 ///
 FunctionPass *llvm::createXCoreCodePrinterPass(raw_ostream &o,
                                                XCoreTargetMachine &tm,
-                                               CodeGenOpt::Level OptLevel,
                                                bool verbose) {
-  return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+  return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
 // PrintEscapedString - Print each character of the specified string, escaping

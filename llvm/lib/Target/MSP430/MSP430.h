@@ -26,7 +26,6 @@ namespace llvm {
                                     CodeGenOpt::Level OptLevel);
   FunctionPass *createMSP430CodePrinterPass(raw_ostream &o,
                                             MSP430TargetMachine &tm,
-                                            CodeGenOpt::Level OptLevel,
                                             bool verbose);
 } // end namespace llvm;
 
