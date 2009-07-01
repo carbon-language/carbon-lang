@@ -52,6 +52,9 @@ public:
   /// Command - An executable path/name and argument vector to
   /// execute.
 class Command : public Job {
+  /// Source - The action which caused the creation of this job.
+  const Action &Source;
+
   /// The executable to run.
   const char *Executable;
 
@@ -60,9 +63,14 @@ class Command : public Job {
   ArgStringList Arguments;
 
 public:
-  Command(const char *_Executable, const ArgStringList &_Arguments);
+  Command(const Action &_Source, const char *_Executable, 
+          const ArgStringList &_Arguments);
+
+  /// getSource - Return the Action which caused the creation of this job.
+  const Action &getSource() const { return Source; }
 
   const char *getExecutable() const { return Executable; }
+
   const ArgStringList &getArguments() const { return Arguments; }
 
   static bool classof(const Job *J) { 
