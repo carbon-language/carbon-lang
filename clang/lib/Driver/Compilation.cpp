@@ -21,8 +21,8 @@
 #include <errno.h>
 using namespace clang::driver;
 
-Compilation::Compilation(Driver &D,
-                         ToolChain &_DefaultToolChain,
+Compilation::Compilation(const Driver &D,
+                         const ToolChain &_DefaultToolChain,
                          InputArgList *_Args) 
   : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args) {
 }

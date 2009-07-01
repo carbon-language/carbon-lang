@@ -32,10 +32,10 @@ namespace driver {
 /// invocation.
 class Compilation {
   /// The driver we were created by.
-  Driver &TheDriver;
+  const Driver &TheDriver;
 
   /// The default tool chain.
-  ToolChain &DefaultToolChain;
+  const ToolChain &DefaultToolChain;
 
   /// The original (untranslated) input argument list.
   InputArgList *Args;
@@ -56,7 +56,8 @@ class Compilation {
   ArgStringList ResultFiles;
 
 public:
-  Compilation(Driver &D, ToolChain &DefaultToolChain, InputArgList *Args);
+  Compilation(const Driver &D, const ToolChain &DefaultToolChain, 
+              InputArgList *Args);
   ~Compilation();
 
   const Driver &getDriver() const { return TheDriver; }
