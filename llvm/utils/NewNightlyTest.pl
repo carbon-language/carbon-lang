@@ -122,9 +122,7 @@ $LLVMTestDir    = "$BuildDir/llvm/projects/llvm-test" unless $LLVMTestDir;
 #
 ##############################################################
 @TIME = localtime;
-my $DATE = sprintf "%4d-%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3];
-my $DateString = strftime "%B %d, %Y", localtime;
-my $TestStartTime = gmtime() . "GMT<br>" . localtime() . " (local)";
+my $DATE = sprintf "%4d-%02d-%02d_%02d-%02d", $TIME[5]+1900, $TIME[4]+1, $TIME[3], $TIME[1], $TIME[0];
 
 ##############################################################
 #
