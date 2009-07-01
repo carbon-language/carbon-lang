@@ -321,6 +321,133 @@ bool DISubprogram::describes(const Function *F) {
 }
 
 //===----------------------------------------------------------------------===//
+// DIDescriptor: dump routines for all descriptors.
+//===----------------------------------------------------------------------===//
+
+
+/// dump - Print descriptor.
+void DIDescriptor::dump() const {
+  cerr << "[" << dwarf::TagString(getTag()) << "] ";
+  cerr << std::hex << "[GV:" << DbgGV << "]" << std::dec;
+}
+
+/// dump - Print compile unit.
+void DICompileUnit::dump() const {
+  if (getLanguage())
+    cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
+
+  std::string Res1, Res2;
+  cerr << " [" << getDirectory(Res1) << "/" << getFilename(Res2) << " ]";
+}
+
+/// dump - Print type.
+void DIType::dump() const {
+  if (isNull()) return;
+
+  std::string Res;
+  if (!getName(Res).empty())
+    cerr << " [" << Res << "] ";
+
+  unsigned Tag = getTag();
+  cerr << " [" << dwarf::TagString(Tag) << "] ";
+
+  // TODO : Print context
+  getCompileUnit().dump();
+  cerr << " [" 
+       << getLineNumber() << ", " 
+       << getSizeInBits() << ", "
+       << getAlignInBits() << ", "
+       << getOffsetInBits() 
+       << "] ";
+
+  if (isPrivate()) 
+    cerr << " [private] ";
+  else if (isProtected())
+    cerr << " [protected] ";
+
+  if (isForwardDecl())
+    cerr << " [fwd] ";
+
+  if (isBasicType(Tag))
+    DIBasicType(DbgGV).dump();
+  else if (isDerivedType(Tag))
+    DIDerivedType(DbgGV).dump();
+  else if (isCompositeType(Tag))
+    DICompositeType(DbgGV).dump();
+  else {
+    cerr << "Invalid DIType\n";
+    return;
+  }
+
+  cerr << "\n";
+}
+
+/// dump - Print basic type.
+void DIBasicType::dump() const {
+  cerr << " [" << dwarf::AttributeEncodingString(getEncoding()) << "] ";
+}
+
+/// dump - Print derived type.
+void DIDerivedType::dump() const {
+  cerr << "\n\t Derived From: "; getTypeDerivedFrom().dump();
+}
+
+/// dump - Print composite type.
+void DICompositeType::dump() const {
+  DIArray A = getTypeArray();
+  if (A.isNull())
+    return;
+  cerr << " [" << A.getNumElements() << " elements]";
+}
+
+/// dump - Print global.
+void DIGlobal::dump() const {
+  std::string Res;
+  if (!getName(Res).empty())
+    cerr << " [" << Res << "] ";
+
+  unsigned Tag = getTag();
+  cerr << " [" << dwarf::TagString(Tag) << "] ";
+
+  // TODO : Print context
+  getCompileUnit().dump();
+  cerr << " [" << getLineNumber() << "] ";
+
+  if (isLocalToUnit())
+    cerr << " [local] ";
+
+  if (isDefinition())
+    cerr << " [def] ";
+
+  if (isGlobalVariable(Tag))
+    DIGlobalVariable(DbgGV).dump();
+
+  cerr << "\n";
+}
+
+/// dump - Print subprogram.
+void DISubprogram::dump() const {
+  DIGlobal::dump();
+}
+
+/// dump - Print global variable.
+void DIGlobalVariable::dump() const {
+  cerr << " ["; getGlobal()->dump(); cerr << "] ";
+}
+
+/// dump - Print variable.
+void DIVariable::dump() const {
+  std::string Res;
+  if (!getName(Res).empty())
+    cerr << " [" << Res << "] ";
+
+  getCompileUnit().dump();
+  cerr << " [" << getLineNumber() << "] ";
+  getType().dump();
+  cerr << "\n";
+}
+
+//===----------------------------------------------------------------------===//
 // DIFactory: Basic Helpers
 //===----------------------------------------------------------------------===//
 
@@ -924,126 +1051,3 @@ namespace llvm {
     }
   }
 }
-
-/// dump - Print descriptor.
-void DIDescriptor::dump() const {
-  cerr << "[" << dwarf::TagString(getTag()) << "] ";
-  cerr << std::hex << "[GV:" << DbgGV << "]" << std::dec;
-}
-
-/// dump - Print compile unit.
-void DICompileUnit::dump() const {
-  if (getLanguage())
-    cerr << " [" << dwarf::LanguageString(getLanguage()) << "] ";
-
-  std::string Res1, Res2;
-  cerr << " [" << getDirectory(Res1) << "/" << getFilename(Res2) << " ]";
-}
-
-/// dump - Print type.
-void DIType::dump() const {
-  if (isNull()) return;
-
-  std::string Res;
-  if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
-
-  unsigned Tag = getTag();
-  cerr << " [" << dwarf::TagString(Tag) << "] ";
-
-  // TODO : Print context
-  getCompileUnit().dump();
-  cerr << " [" 
-       << getLineNumber() << ", " 
-       << getSizeInBits() << ", "
-       << getAlignInBits() << ", "
-       << getOffsetInBits() 
-       << "] ";
-
-  if (isPrivate()) 
-    cerr << " [private] ";
-  else if (isProtected())
-    cerr << " [protected] ";
-
-  if (isForwardDecl())
-    cerr << " [fwd] ";
-
-  if (isBasicType(Tag))
-    DIBasicType(DbgGV).dump();
-  else if (isDerivedType(Tag))
-    DIDerivedType(DbgGV).dump();
-  else if (isCompositeType(Tag))
-    DICompositeType(DbgGV).dump();
-  else {
-    cerr << "Invalid DIType\n";
-    return;
-  }
-
-  cerr << "\n";
-}
-
-/// dump - Print basic type.
-void DIBasicType::dump() const {
-  cerr << " [" << dwarf::AttributeEncodingString(getEncoding()) << "] ";
-}
-
-/// dump - Print derived type.
-void DIDerivedType::dump() const {
-  cerr << "\n\t Derived From: "; getTypeDerivedFrom().dump();
-}
-
-/// dump - Print composite type.
-void DICompositeType::dump() const {
-  DIArray A = getTypeArray();
-  if (A.isNull())
-    return;
-  cerr << " [" << A.getNumElements() << " elements]";
-}
-
-/// dump - Print global.
-void DIGlobal::dump() const {
-  std::string Res;
-  if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
-
-  unsigned Tag = getTag();
-  cerr << " [" << dwarf::TagString(Tag) << "] ";
-
-  // TODO : Print context
-  getCompileUnit().dump();
-  cerr << " [" << getLineNumber() << "] ";
-
-  if (isLocalToUnit())
-    cerr << " [local] ";
-
-  if (isDefinition())
-    cerr << " [def] ";
-
-  if (isGlobalVariable(Tag))
-    DIGlobalVariable(DbgGV).dump();
-
-  cerr << "\n";
-}
-
-/// dump - Print subprogram.
-void DISubprogram::dump() const {
-  DIGlobal::dump();
-}
-
-/// dump - Print global variable.
-void DIGlobalVariable::dump() const {
-  cerr << " ["; getGlobal()->dump(); cerr << "] ";
-}
-
-/// dump - Print variable.
-void DIVariable::dump() const {
-  std::string Res;
-  if (!getName(Res).empty())
-    cerr << " [" << Res << "] ";
-
-  getCompileUnit().dump();
-  cerr << " [" << getLineNumber() << "] ";
-  getType().dump();
-  cerr << "\n";
-}
-
