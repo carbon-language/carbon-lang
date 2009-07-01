@@ -30,8 +30,8 @@ namespace llvm {
   class MCSymbol {
     /// Name - The name of the symbol.
     std::string Name;
-    /// Section - The section the symbol is defined in, or null if not defined
-    /// in this translation unit.
+    /// Section - The section the symbol is defined in, or null if the symbol
+    /// has not been defined in the associated translation unit.
     MCSection *Section;
     
     /// IsTemporary - True if this is an assembler temporary label, which
@@ -39,7 +39,9 @@ namespace llvm {
     /// "Lfoo" or ".foo".
     unsigned IsTemporary : 1;
     
-    /// IsExternal - ?
+    /// IsExternal - True if this symbol has been implicitly defined as an
+    /// external, for example by using it in an expression without ever emitting
+    /// it as a label. The @var Section for an external symbol is always null.
     unsigned IsExternal : 1;
 
   private:  // MCContext creates and uniques these.
