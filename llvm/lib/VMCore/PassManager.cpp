@@ -278,8 +278,10 @@ public:
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
       MP->dumpPassStructure(Offset + 1);
-      if (FunctionPassManagerImpl *FPP = OnTheFlyManagers[MP])
-        FPP->dumpPassStructure(Offset + 2);
+      std::map<Pass *, FunctionPassManagerImpl *>::const_iterator I =
+        OnTheFlyManagers.find(MP);
+      if (I != OnTheFlyManagers.end())
+        I->second->dumpPassStructure(Offset + 2);
       dumpLastUses(MP, Offset+1);
     }
   }
