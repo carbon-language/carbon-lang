@@ -934,20 +934,23 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //   there are corresponding template-parameters. 
     TemplateArgumentListBuilder Builder(TemplateParams, 
                                         NumExplicitTemplateArgs);
+    
+    // Enter a new template instantiation context where we check the 
+    // explicitly-specified template arguments against this function template,
+    // and then substitute them into the function parameter types.
+    InstantiatingTemplate Inst(*this, FunctionTemplate->getLocation(), 
+                               FunctionTemplate, Deduced.data(), Deduced.size());
+    if (Inst)
+      return TDK_InstantiationDepth;
+    
     if (CheckTemplateArgumentList(FunctionTemplate,
                                   SourceLocation(), SourceLocation(),
                                   ExplicitTemplateArgs,
                                   NumExplicitTemplateArgs,
                                   SourceLocation(),
+                                  true,
                                   Builder) || Trap.hasErrorOccurred())
       return TDK_InvalidExplicitArguments;
-
-    // Enter a new template instantiation context for the substitution of the
-    // explicitly-specified template arguments into the 
-    InstantiatingTemplate Inst(*this, FunctionTemplate->getLocation(), 
-                               FunctionTemplate, Deduced.data(), Deduced.size());
-    if (Inst)
-      return TDK_InstantiationDepth;
 
     // Form the template argument list from the explicitly-specified
     // template arguments.

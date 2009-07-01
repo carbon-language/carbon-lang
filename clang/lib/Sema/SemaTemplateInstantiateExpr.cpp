@@ -139,8 +139,17 @@ TemplateExprInstantiator::VisitDeclRefExpr(DeclRefExpr *E) {
   NamedDecl *D = E->getDecl();
   if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
     assert(NTTP->getDepth() == 0 && "No nested templates yet");
-    const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
 
+    // If the corresponding template argument is NULL or non-existent, it's 
+    // because we are performing instantiation from explicitly-specified 
+    // template arguments in a function template, but there were some
+    // arguments left unspecified.
+    if (NTTP->getPosition() >= TemplateArgs.size() ||
+        TemplateArgs[NTTP->getPosition()].isNull())
+      return SemaRef.Owned(E); // FIXME: Clone the expression!
+    
+    const TemplateArgument &Arg = TemplateArgs[NTTP->getPosition()]; 
+    
     // The template argument itself might be an expression, in which
     // case we just return that expression.
     if (Arg.getKind() == TemplateArgument::Expression)

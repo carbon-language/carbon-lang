@@ -2162,6 +2162,7 @@ public:
                                  const TemplateArgument *TemplateArgs,
                                  unsigned NumTemplateArgs,
                                  SourceLocation RAngleLoc,
+                                 bool PartialTemplateArgs,
                                  TemplateArgumentListBuilder &Converted);
 
   bool CheckTemplateTypeArgument(TemplateTypeParmDecl *Param, 

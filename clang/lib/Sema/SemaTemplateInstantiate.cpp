@@ -584,6 +584,15 @@ InstantiateTemplateTypeParmType(const TemplateTypeParmType *T) const {
   if (T->getDepth() == 0) {
     // Replace the template type parameter with its corresponding
     // template argument.
+    
+    // If the corresponding template argument is NULL or doesn't exist, it's 
+    // because we are performing instantiation from explicitly-specified 
+    // template arguments in a function template class, but there were some 
+    // arguments left unspecified.
+    if (T->getIndex() >= TemplateArgs.size() ||
+        TemplateArgs[T->getIndex()].isNull())
+      return QualType(T, 0); // Would be nice to keep the original type here
+        
     assert(TemplateArgs[T->getIndex()].getKind() == TemplateArgument::Type &&
            "Template argument kind mismatch");
     return TemplateArgs[T->getIndex()].getAsType();

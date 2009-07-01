@@ -852,7 +852,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
                                         NumTemplateArgs);
   if (CheckTemplateArgumentList(Template, TemplateLoc, LAngleLoc, 
                                 TemplateArgs, NumTemplateArgs, RAngleLoc,
-                                Converted))
+                                false, Converted))
     return QualType();
 
   assert((Converted.structuredSize() == 
@@ -1055,6 +1055,7 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
                                      const TemplateArgument *TemplateArgs,
                                      unsigned NumTemplateArgs,
                                      SourceLocation RAngleLoc,
+                                     bool PartialTemplateArgs,
                                      TemplateArgumentListBuilder &Converted) {
   TemplateParameterList *Params = Template->getTemplateParameters();
   unsigned NumParams = Params->size();
@@ -1065,7 +1066,8 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
     NumParams > 0 && Params->getParam(NumParams - 1)->isTemplateParameterPack();
   
   if ((NumArgs > NumParams && !HasParameterPack) ||
-      NumArgs < Params->getMinRequiredArguments()) {
+      (NumArgs < Params->getMinRequiredArguments() &&
+       !PartialTemplateArgs)) {
     // FIXME: point at either the first arg beyond what we can handle,
     // or the '>', depending on whether we have too many or too few
     // arguments.
@@ -1092,6 +1094,9 @@ bool Sema::CheckTemplateArgumentList(TemplateDecl *Template,
   for (TemplateParameterList::iterator Param = Params->begin(),
                                        ParamEnd = Params->end();
        Param != ParamEnd; ++Param, ++ArgIdx) {
+    if (ArgIdx > NumArgs && PartialTemplateArgs)
+      break;
+    
     // Decode the template argument
     TemplateArgument Arg;
     if (ArgIdx >= NumArgs) {
@@ -2338,7 +2343,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                         TemplateArgs.size());
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
                                 TemplateArgs.data(), TemplateArgs.size(),
-                                RAngleLoc, Converted))
+                                RAngleLoc, false, Converted))
     return true;
 
   assert((Converted.structuredSize() == 
@@ -2633,7 +2638,7 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
                                         TemplateArgs.size());
   if (CheckTemplateArgumentList(ClassTemplate, TemplateNameLoc, LAngleLoc, 
                                 TemplateArgs.data(), TemplateArgs.size(),
-                                RAngleLoc, Converted))
+                                RAngleLoc, false, Converted))
     return true;
 
   assert((Converted.structuredSize() == 
