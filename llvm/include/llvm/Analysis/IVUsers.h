@@ -17,7 +17,7 @@
 
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include <llvm/ADT/SmallVector.h>
+#include "llvm/ADT/SmallVector.h"
 #include <map>
 
 namespace llvm {
