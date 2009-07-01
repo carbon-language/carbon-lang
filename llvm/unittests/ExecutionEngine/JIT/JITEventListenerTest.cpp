@@ -9,6 +9,7 @@
 
 #include "llvm/ExecutionEngine/JITEventListener.h"
 
+#include "llvm/LLVMContext.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
@@ -64,7 +65,7 @@ struct RecordingJITEventListener : public JITEventListener {
 class JITEventListenerTest : public testing::Test {
  protected:
   JITEventListenerTest()
-      : M(new Module("module")),
+      : M(new Module("module", new LLVMContext())),
         EE(ExecutionEngine::createJIT(new ExistingModuleProvider(M))) {
   }
 
