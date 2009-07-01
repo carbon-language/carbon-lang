@@ -6,6 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file declares the MCStreamer class.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_MC_MCSTREAMER_H
 #define LLVM_MC_MCSTREAMER_H
@@ -20,7 +24,15 @@ namespace llvm {
   class MCSymbol;
   class raw_ostream;
 
-  /// MCStreamer - Streaming machine code generation interface.
+  /// MCStreamer - Streaming machine code generation interface.  This interface
+  /// is intended to provide a programatic interface that is very similar to the
+  /// level that an assembler .s file provides.  It has callbacks to emit bytes,
+  /// "emit directives", etc.  The implementation of this interface retains
+  /// state to know what the current section is etc.
+  ///
+  /// There are multiple implementations of this interface: one for writing out
+  /// a .s file, and implementations that write out .o files of various formats.
+  ///
   class MCStreamer {
   public:
     enum SymbolAttr {
