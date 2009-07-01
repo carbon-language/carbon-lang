@@ -432,7 +432,7 @@ MVT PPCTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i32;
 }
 
-/// getFunctionAlignment - Return the function alignment.
+/// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned PPCTargetLowering::getFunctionAlignment(const Function *F) const {
   if (getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin())
     return F->hasFnAttr(Attribute::OptimizeForSize) ? 2 : 4;

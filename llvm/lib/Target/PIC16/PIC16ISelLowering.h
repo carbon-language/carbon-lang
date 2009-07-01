@@ -145,7 +145,7 @@ namespace llvm {
     unsigned GetTmpSize() { return TmpSize; }
     void SetTmpSize(unsigned Size) { TmpSize = Size; }
 
-    /// getFunctionAlignment - Return the function alignment.
+    /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *) const {
       // FIXME: The function never seems to be aligned.
       return 1;

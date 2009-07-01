@@ -187,7 +187,7 @@ void XCoreTargetLowering::ReplaceNodeResults(SDNode *N,
   }
 }
 
-/// getFunctionAlignment - Return the alignment of this function.
+/// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned XCoreTargetLowering::
 getFunctionAlignment(const Function *) const {
   return 1;

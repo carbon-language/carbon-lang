@@ -181,7 +181,7 @@ const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-/// getFunctionAlignment - Return the function alignment.
+/// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned AlphaTargetLowering::getFunctionAlignment(const Function *F) const {
   return 4;
 }

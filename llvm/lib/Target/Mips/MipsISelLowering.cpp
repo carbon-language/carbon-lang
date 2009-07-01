@@ -158,7 +158,7 @@ MVT MipsTargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i32;
 }
 
-/// getFunctionAlignment - Return the function alignment.
+/// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned MipsTargetLowering::getFunctionAlignment(const Function *) const {
   return 2;
 }

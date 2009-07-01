@@ -481,7 +481,7 @@ SPUTargetLowering::getTargetNodeName(unsigned Opcode) const
   return ((i != node_names.end()) ? i->second : 0);
 }
 
-/// getFunctionAlignment - Return the function alignment.
+/// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned SPUTargetLowering::getFunctionAlignment(const Function *) const {
   return 3;
 }

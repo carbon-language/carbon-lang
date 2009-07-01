@@ -1048,7 +1048,7 @@ SparcTargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
   return false;
 }
 
-/// getFunctionAlignment - Return the function alignment.
+/// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned SparcTargetLowering::getFunctionAlignment(const Function *) const {
   return 4;
 }

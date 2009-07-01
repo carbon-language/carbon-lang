@@ -84,7 +84,7 @@ namespace llvm {
     virtual bool isLegalAddressingMode(const AddrMode &AM,
                                        const Type *Ty) const;
 
-    /// getFunctionAlignment - Return the alignment of this function.
+    /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
   private:

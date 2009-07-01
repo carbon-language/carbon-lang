@@ -337,7 +337,7 @@ namespace llvm {
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 
-    /// getFunctionAlignment - Return the function alignment.
+    /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
   private:

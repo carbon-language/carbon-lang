@@ -151,11 +151,11 @@ public:
   MachineConstantPool *getConstantPool() { return ConstantPool; }
   const MachineConstantPool *getConstantPool() const { return ConstantPool; }
 
-  /// getAlignment - Return the alignment of the function.
+  /// getAlignment - Return the alignment (log2, not bytes) of the function.
   ///
   unsigned getAlignment() const { return Alignment; }
 
-  /// setAlignment - Set the alignment of the function.
+  /// setAlignment - Set the alignment (log2, not bytes) of the function.
   ///
   void setAlignment(unsigned A) { Alignment = A; }
 

@@ -74,7 +74,7 @@ namespace llvm {
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
-    /// getFunctionAlignment - Return the alignment of this function.
+    /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);

@@ -148,7 +148,7 @@ MVT IA64TargetLowering::getSetCCResultType(MVT VT) const {
   return MVT::i1;
 }
 
-/// getFunctionAlignment - Return the function alignment.
+/// getFunctionAlignment - Return the Log2 alignment of this function.
 unsigned IA64TargetLowering::getFunctionAlignment(const Function *) const {
   return 5;
 }

@@ -197,7 +197,7 @@ namespace llvm {
       return Subtarget;
     }
 
-    /// getFunctionAlignment - Return the alignment of this function.
+    /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
 
   private:
