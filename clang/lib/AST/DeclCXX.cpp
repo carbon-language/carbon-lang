@@ -407,6 +407,19 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    isImplicitlyDeclared);
 }
 
+void
+CXXConstructorDecl::setBaseOrMemberInitializers(
+                                    CXXBaseOrMemberInitializer **Initializers,
+                                    unsigned NumInitializers) {
+  if (NumInitializers > 0) {
+    NumBaseOrMemberInitializers = NumInitializers;
+    BaseOrMemberInitializers = 
+    new CXXBaseOrMemberInitializer*[NumInitializers];
+    for (unsigned Idx = 0; Idx < NumInitializers; ++Idx)
+      BaseOrMemberInitializers[Idx] = Initializers[Idx];
+  }
+}
+
 CXXConversionDecl *
 CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                           SourceLocation L, DeclarationName N,

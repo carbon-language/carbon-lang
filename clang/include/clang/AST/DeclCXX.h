@@ -696,16 +696,23 @@ class CXXConstructorDecl : public CXXMethodDecl {
   /// @c !Implicit && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
   
-  /// FIXME: Add support for base and member initializers.
-
+  /// Support for base and member initializers.
+  /// BaseOrMemberInitializers - The arguments used to initialize the base 
+  /// or member.
+  CXXBaseOrMemberInitializer **BaseOrMemberInitializers;
+  unsigned NumBaseOrMemberInitializers;
+  
   CXXConstructorDecl(CXXRecordDecl *RD, SourceLocation L,
                      DeclarationName N, QualType T,
                      bool isExplicit, bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXConstructor, RD, L, N, T, false, isInline),
-      Explicit(isExplicit), ImplicitlyDefined(false) { 
+      Explicit(isExplicit), ImplicitlyDefined(false),
+      BaseOrMemberInitializers(0), NumBaseOrMemberInitializers(0) { 
     setImplicit(isImplicitlyDeclared);
   }
-
+  
+  ~CXXConstructorDecl() { delete [] BaseOrMemberInitializers; }
+  
 public:
   static CXXConstructorDecl *Create(ASTContext &C, CXXRecordDecl *RD,
                                     SourceLocation L, DeclarationName N,
@@ -721,7 +728,8 @@ public:
   /// already been defined.
   bool isImplicitlyDefined(ASTContext &C) const { 
     assert(isThisDeclarationADefinition() && 
-           "Can only get the implicit-definition flag once the constructor has been defined");
+           "Can only get the implicit-definition flag once the "
+           "constructor has been defined");
     return ImplicitlyDefined; 
   }
 
@@ -729,9 +737,39 @@ public:
   /// implicitly defined or not.
   void setImplicitlyDefined(bool ID) { 
     assert(isThisDeclarationADefinition() && 
-           "Can only set the implicit-definition flag once the constructor has been defined");
+           "Can only set the implicit-definition flag once the constructor "
+           "has been defined");
     ImplicitlyDefined = ID; 
   }
+  
+  /// arg_iterator - Iterates through the member/base initializer list.
+  typedef CXXBaseOrMemberInitializer **arg_iterator;
+  
+  /// arg_const_iterator - Iterates through the memberbase initializer list.
+  typedef CXXBaseOrMemberInitializer * const * arg_const_iterator;
+  
+  /// begin() - Retrieve an iterator to the first initializer.
+  arg_iterator       begin()       { return BaseOrMemberInitializers; }
+  /// begin() - Retrieve an iterator to the first initializer.
+  arg_const_iterator begin() const { return BaseOrMemberInitializers; }
+  
+  /// end() - Retrieve an iterator past the last initializer.
+  arg_iterator       end()       { 
+    return BaseOrMemberInitializers + NumBaseOrMemberInitializers; 
+  }
+  /// end() - Retrieve an iterator past the last initializer.
+  arg_const_iterator end() const { 
+    return BaseOrMemberInitializers + NumBaseOrMemberInitializers; 
+  }
+  
+  /// getNumArgs - Determine the number of arguments used to
+  /// initialize the member or base.
+  unsigned getNumBaseOrMemberInitializers() const { 
+      return NumBaseOrMemberInitializers; 
+  }
+  
+  void setBaseOrMemberInitializers(CXXBaseOrMemberInitializer **Initializers,
+                                   unsigned NumInitializers);
   
   /// isDefaultConstructor - Whether this constructor is a default
   /// constructor (C++ [class.ctor]p5), which can be used to
