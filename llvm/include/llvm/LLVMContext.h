@@ -53,6 +53,10 @@ public:
   LLVMContext();
   ~LLVMContext();
   
+  // Constant accessors
+  Constant* getNullValue(const Type* Ty);
+  Constant* getAllOnesValue(const Type* Ty);
+  
   // ConstantInt accessors
   ConstantInt* getConstantIntTrue();
   ConstantInt* getConstantIntFalse();
@@ -180,6 +184,7 @@ public:
   OpaqueType* getOpaqueType();
   
   // StructType accessors
+  StructType* getStructType(bool isPacked=false);
   StructType* getStructType(const std::vector<const Type*>& Params,
                             bool isPacked = false);
   
@@ -188,7 +193,7 @@ public:
   
   // PointerType accessors
   PointerType* getPointerType(const Type* ElementType, unsigned AddressSpace);
-  PointerType* getPointerTypeUnqualified(const Type* ElementType);
+  PointerType* getPointerTypeUnqual(const Type* ElementType);
   
   // VectorType accessors
   VectorType* getVectorType(const Type* ElementType, unsigned NumElements);

@@ -29,6 +29,15 @@ LLVMContext& llvm::getGlobalContext() {
 LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl()) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
+// Constant accessors
+Constant* LLVMContext::getNullValue(const Type* Ty) {
+  return Constant::getNullValue(Ty);
+}
+
+Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
+  return Constant::getAllOnesValue(Ty);
+}
+
 // ConstantInt accessors.
 ConstantInt* LLVMContext::getConstantIntTrue() {
   return ConstantInt::getTrue();
@@ -409,6 +418,10 @@ OpaqueType* LLVMContext::getOpaqueType() {
 }
 
 // StructType accessors
+StructType* LLVMContext::getStructType(bool isPacked) {
+  return StructType::get(isPacked);
+}
+
 StructType* LLVMContext::getStructType(const std::vector<const Type*>& Params,
                                        bool isPacked) {
   return StructType::get(Params, isPacked);
@@ -426,7 +439,7 @@ PointerType* LLVMContext::getPointerType(const Type* ElementType,
   return PointerType::get(ElementType, AddressSpace);
 }
 
-PointerType* LLVMContext::getPointerTypeUnqualified(const Type* ElementType) {
+PointerType* LLVMContext::getPointerTypeUnqual(const Type* ElementType) {
   return PointerType::getUnqual(ElementType);
 }
   
