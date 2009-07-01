@@ -38,15 +38,20 @@ bool llvm::CheckBitcodeOutputToConsole(std::ostream* stream_to_check,
 /// being executed. This allows us to find another LLVM tool if it is built
 /// into the same directory, but that directory is neither the current
 /// directory, nor in the PATH.  If the executable cannot be found, return an
-/// empty string.
+/// empty string. Return the input string if given a full path to an executable.
 ///
 #undef FindExecutable   // needed on windows :(
 sys::Path llvm::FindExecutable(const std::string &ExeName,
                                const std::string &ProgramPath) {
-  // First check the directory that the calling program is in.  We can do this
-  // if ProgramPath contains at least one / character, indicating that it is a
-  // relative path to bugpoint itself.
-  sys::Path Result ( ProgramPath );
+  // First check if the given name is a fully qualified path to an executable
+  sys::Path Result(ExeName);
+  if (Result.isAbsolute() && Result.canExecute())
+    return Result;
+
+  // Otherwise check the directory that the calling program is in.  We can do
+  // this if ProgramPath contains at least one / character, indicating that it
+  // is a relative path to bugpoint itself.
+  Result = ProgramPath;
   Result.eraseComponent();
   if (!Result.isEmpty()) {
     Result.appendComponent(ExeName);
