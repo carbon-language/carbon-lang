@@ -24,14 +24,19 @@ using namespace llvm;
 // operand 1 and 2.
 MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
                                                       bool NewMI) const {
-  assert(MI->getOperand(1).isReg() && MI->getOperand(2).isReg() &&
+  const TargetInstrDesc &TID = MI->getDesc();
+  bool HasDef = TID.getNumDefs();
+  unsigned Idx1 = HasDef ? 1 : 0;
+  unsigned Idx2 = HasDef ? 2 : 1;
+
+  assert(MI->getOperand(Idx1).isReg() && MI->getOperand(Idx2).isReg() &&
          "This only knows how to commute register operands so far");
-  unsigned Reg1 = MI->getOperand(1).getReg();
-  unsigned Reg2 = MI->getOperand(2).getReg();
-  bool Reg1IsKill = MI->getOperand(1).isKill();
-  bool Reg2IsKill = MI->getOperand(2).isKill();
+  unsigned Reg1 = MI->getOperand(Idx1).getReg();
+  unsigned Reg2 = MI->getOperand(Idx2).getReg();
+  bool Reg1IsKill = MI->getOperand(Idx1).isKill();
+  bool Reg2IsKill = MI->getOperand(Idx2).isKill();
   bool ChangeReg0 = false;
-  if (MI->getOperand(0).getReg() == Reg1) {
+  if (HasDef && MI->getOperand(0).getReg() == Reg1) {
     // Must be two address instruction!
     assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
            "Expecting a two-address instruction!");
@@ -41,21 +46,27 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
 
   if (NewMI) {
     // Create a new instruction.
-    unsigned Reg0 = ChangeReg0 ? Reg2 : MI->getOperand(0).getReg();
-    bool Reg0IsDead = MI->getOperand(0).isDead();
+    unsigned Reg0 = HasDef
+      ? (ChangeReg0 ? Reg2 : MI->getOperand(0).getReg()) : 0;
+    bool Reg0IsDead = HasDef ? MI->getOperand(0).isDead() : false;
     MachineFunction &MF = *MI->getParent()->getParent();
-    return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
-      .addReg(Reg0, RegState::Define | getDeadRegState(Reg0IsDead))
-      .addReg(Reg2, getKillRegState(Reg2IsKill))
-      .addReg(Reg1, getKillRegState(Reg2IsKill));
+    if (HasDef)
+      return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
+        .addReg(Reg0, RegState::Define | getDeadRegState(Reg0IsDead))
+        .addReg(Reg2, getKillRegState(Reg2IsKill))
+        .addReg(Reg1, getKillRegState(Reg2IsKill));
+    else
+      return BuildMI(MF, MI->getDebugLoc(), MI->getDesc())
+        .addReg(Reg2, getKillRegState(Reg2IsKill))
+        .addReg(Reg1, getKillRegState(Reg2IsKill));
   }
 
   if (ChangeReg0)
     MI->getOperand(0).setReg(Reg2);
-  MI->getOperand(2).setReg(Reg1);
-  MI->getOperand(1).setReg(Reg2);
-  MI->getOperand(2).setIsKill(Reg1IsKill);
-  MI->getOperand(1).setIsKill(Reg2IsKill);
+  MI->getOperand(Idx2).setReg(Reg1);
+  MI->getOperand(Idx1).setReg(Reg2);
+  MI->getOperand(Idx2).setIsKill(Reg1IsKill);
+  MI->getOperand(Idx1).setIsKill(Reg2IsKill);
   return MI;
 }
 
@@ -66,6 +77,9 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
 /// two-address instruction.
 bool TargetInstrInfoImpl::CommuteChangesDestination(MachineInstr *MI,
                                                     unsigned &OpIdx) const{
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.getNumDefs())
+    return false;
   assert(MI->getOperand(1).isReg() && MI->getOperand(2).isReg() &&
          "This only knows how to commute register operands so far");
   if (MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
