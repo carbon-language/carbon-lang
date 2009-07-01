@@ -19,6 +19,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/Compiler.h"
@@ -37,8 +38,8 @@ namespace {
     llvm::OwningPtr<CodeGen::CodeGenModule> Builder;
   public:
     CodeGeneratorImpl(Diagnostic &diags, const std::string& ModuleName,
-                      const CompileOptions &CO)
-      : Diags(diags), CompileOpts(CO), M(new llvm::Module(ModuleName)) {}
+                      const CompileOptions &CO, llvm::LLVMContext* C)
+      : Diags(diags), CompileOpts(CO), M(new llvm::Module(ModuleName, C)) {}
     
     virtual ~CodeGeneratorImpl() {}
     
@@ -95,6 +96,7 @@ namespace {
 
 CodeGenerator *clang::CreateLLVMCodeGen(Diagnostic &Diags, 
                                         const std::string& ModuleName,
-                                        const CompileOptions &CO) {
-  return new CodeGeneratorImpl(Diags, ModuleName, CO);
+                                        const CompileOptions &CO,
+                                        llvm::LLVMContext* C) {
+  return new CodeGeneratorImpl(Diags, ModuleName, CO, C);
 }

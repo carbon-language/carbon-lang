@@ -75,13 +75,14 @@ namespace {
   public:  
     BackendConsumer(BackendAction action, Diagnostic &Diags, 
                     const LangOptions &langopts, const CompileOptions &compopts,
-                    const std::string &infile, llvm::raw_ostream* OS) :
+                    const std::string &infile, llvm::raw_ostream* OS,
+                    LLVMContext* C) :
       Action(action), 
       CompileOpts(compopts),
       AsmOutStream(OS), 
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
-      Gen(CreateLLVMCodeGen(Diags, infile, compopts)),
+      Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
       TheModule(0), TheTargetData(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
       
@@ -359,6 +360,8 @@ ASTConsumer *clang::CreateBackendConsumer(BackendAction Action,
                                           const LangOptions &LangOpts,
                                           const CompileOptions &CompileOpts,
                                           const std::string& InFile,
-                                          llvm::raw_ostream* OS) {
-  return new BackendConsumer(Action, Diags, LangOpts, CompileOpts, InFile, OS);
+                                          llvm::raw_ostream* OS,
+                                          LLVMContext* C) {
+  return new BackendConsumer(Action, Diags, LangOpts, CompileOpts,
+                             InFile, OS, C);
 }

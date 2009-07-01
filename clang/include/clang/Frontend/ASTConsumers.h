@@ -20,6 +20,7 @@
 
 namespace llvm {
   class Module;
+  class LLVMContext;
   namespace sys { class Path; }
 }
 namespace clang {
@@ -79,7 +80,8 @@ ASTConsumer *CreateBackendConsumer(BackendAction Action,
                                    const LangOptions &Features,
                                    const CompileOptions &CompileOpts,
                                    const std::string &ModuleID,
-                                   llvm::raw_ostream *OS);
+                                   llvm::raw_ostream *OS,
+                                   llvm::LLVMContext* C);
 
 // HTML printer: uses the rewriter to convert source code to HTML with
 // syntax highlighting suitable for viewing in a web-browser.

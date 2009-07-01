@@ -50,6 +50,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -1746,7 +1747,8 @@ static llvm::raw_ostream* ComputeOutFile(const std::string& InFile,
 ///
 static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
                              const std::string &InFile, ProgActions PA,
-                             const llvm::StringMap<bool> &Features) {
+                             const llvm::StringMap<bool> &Features,
+                             llvm::LLVMContext* Context) {
   llvm::OwningPtr<llvm::raw_ostream> OS;
   llvm::OwningPtr<ASTConsumer> Consumer;
   bool ClearSourceMgr = false;
@@ -1813,7 +1815,7 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
     InitializeCompileOptions(Opts, PP.getLangOptions(), Features);
     Consumer.reset(CreateBackendConsumer(Act, PP.getDiagnostics(),
                                          PP.getLangOptions(), Opts, InFile,
-                                         OS.get()));
+                                         OS.get(), Context));
     break;
   }
 
@@ -2105,9 +2107,10 @@ InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
+  llvm::LLVMContext Context;
   llvm::cl::ParseCommandLineOptions(argc, argv,
                               "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
-
+  
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
   
@@ -2281,7 +2284,7 @@ int main(int argc, char **argv) {
       ((PathDiagnosticClient*)DiagClient.get())->SetPreprocessor(PP.get());
 
     // Process the source file.
-    ProcessInputFile(*PP, PPFactory, InFile, ProgAction, Features);
+    ProcessInputFile(*PP, PPFactory, InFile, ProgAction, Features, &Context);
     
     HeaderInfo.ClearFileInfo();
     DiagClient->setLangOptions(0);
