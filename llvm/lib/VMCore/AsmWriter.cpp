@@ -1103,6 +1103,7 @@ public:
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, Attributes Attrs);
+  void printMDNode(const MDNode *Node, bool StandAlone);
 
   const Module* getModule() { return TheModule; }
 
@@ -1110,7 +1111,6 @@ private:
   void printModule(const Module *M);
   void printTypeSymbolTable(const TypeSymbolTable &ST);
   void printGlobal(const GlobalVariable *GV);
-  void printMDNode(const MDNode *Node, bool StandAlone);
   void printAlias(const GlobalAlias *GV);
   void printFunction(const Function *F);
   void printArgument(const Argument *FA, Attributes Attrs);
@@ -1314,7 +1314,7 @@ void AssemblyWriter::printMDNode(const MDNode *Node,
   // id number.
   if (MI != MDNodes.end()) {
     if (!StandAlone)
-      Out << "metadata !" << MI->second;
+      Out << "!" << MI->second;
     return;
   }
   
@@ -1324,14 +1324,18 @@ void AssemblyWriter::printMDNode(const MDNode *Node,
     Out << "!" << MetadataIDNo << " = ";
     Out << "constant metadata ";
   }
+
   Out << "!{";
   for (MDNode::const_elem_iterator I = Node->elem_begin(), E = Node->elem_end();
        I != E;) {
     const Value *TV = *I;
     if (!TV)
       Out << "null";
-    else if (const MDNode *N = dyn_cast<MDNode>(TV)) 
+    else if (const MDNode *N = dyn_cast<MDNode>(TV)) {
+      TypePrinter.print(N->getType(), Out);
+      Out << ' ';
       printMDNode(N, StandAlone);
+    }
     else if (!*I)
       Out << "null";
     else 
@@ -1901,6 +1905,14 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     SlotTracker SlotTable(GV->getParent());
     AssemblyWriter W(OS, SlotTable, GV->getParent(), AAW);
     W.write(GV);
+  } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
+    TypePrinting TypePrinter;
+    TypePrinter.print(N->getType(), OS);
+    OS << ' ';
+    // FIXME: Do we need a slot tracker for metadata ?
+    SlotTracker SlotTable((const Function *)NULL);
+    AssemblyWriter W(OS, SlotTable, NULL, AAW);
+    W.printMDNode(N, false);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);
