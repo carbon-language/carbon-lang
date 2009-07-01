@@ -44,7 +44,7 @@ ThreadLocalImpl::ThreadLocalImpl() : data(0) {
   int errorcode = pthread_key_create(key, NULL);
   assert(errorcode == 0);
   (void) errorcode;
-  data = static_cast<void*>(key);
+  data = (void*)key;
 }
 
 ThreadLocalImpl::~ThreadLocalImpl() {
