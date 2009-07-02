@@ -882,8 +882,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     if (VD == SelfDecl)
       return loc::MemRegionVal(getSelfRegion(0));
     
-    if (isa<ParmVarDecl>(VD) || isa<ImplicitParamDecl>(VD) ||
-        VD->hasGlobalStorage()) {
+    if (VR->hasGlobalsOrParametersStorage()) {
       QualType VTy = VD->getType();
       if (Loc::IsLocType(VTy) || VTy->isIntegerType())
         return ValMgr.getRegionValueSymbolVal(VR);

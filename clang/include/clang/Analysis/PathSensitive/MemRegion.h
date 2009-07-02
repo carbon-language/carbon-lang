@@ -72,6 +72,12 @@ public:
     
   bool hasStackStorage() const;
   
+  bool hasParametersStorage() const;
+  
+  bool hasGlobalsStorage() const;
+  
+  bool hasGlobalsOrParametersStorage() const;
+  
   bool hasHeapStorage() const;
   
   bool hasHeapOrStackStorage() const;

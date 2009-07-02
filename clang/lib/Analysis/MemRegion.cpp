@@ -359,7 +359,23 @@ bool MemRegion::hasHeapOrStackStorage() const {
       || MS == Mgr->getStackArgumentsRegion();
   }
   return false;
-}  
+}
+
+bool MemRegion::hasGlobalsStorage() const {
+  if (const MemSpaceRegion *MS = getMemorySpace())
+    return MS == getMemRegionManager()->getGlobalsRegion();
+
+  return false;
+}
+
+bool MemRegion::hasGlobalsOrParametersStorage() const {
+  if (const MemSpaceRegion *MS = getMemorySpace()) {
+    MemRegionManager *Mgr = getMemRegionManager();
+    return MS == Mgr->getGlobalsRegion()
+    || MS == Mgr->getStackArgumentsRegion();
+  }
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // View handling.
