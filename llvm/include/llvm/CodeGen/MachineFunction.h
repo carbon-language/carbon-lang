@@ -356,6 +356,9 @@ public:
   /// setDefaultDebugLoc - Get the default debug location for the machine
   /// function.
   void setDefaultDebugLoc(DebugLoc DL) { DefaultDebugLoc = DL; }
+
+  /// getDebugLocInfo - Get the debug info location tracker.
+  DebugLocTracker &getDebugLocInfo() { return DebugLocInfo; }
 };
 
 //===--------------------------------------------------------------------===//

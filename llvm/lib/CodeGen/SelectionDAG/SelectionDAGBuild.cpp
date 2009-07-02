@@ -332,30 +332,14 @@ void FunctionLoweringInfo::set(Function &fn, MachineFunction &mf,
           default: break;
           case Intrinsic::dbg_stoppoint: {
             DbgStopPointInst *SPI = cast<DbgStopPointInst>(I);
-
-            if (DIDescriptor::ValidDebugInfo(SPI->getContext(),
-                                             CodeGenOpt::Default)) {
-              DICompileUnit CU(cast<GlobalVariable>(SPI->getContext()));
-              unsigned idx = MF->getOrCreateDebugLocID(CU.getGV(),
-                                                       SPI->getLine(),
-                                                       SPI->getColumn());
-              DL = DebugLoc::get(idx);
-            }
-
+            if (isValidDebugInfoIntrinsic(*SPI, CodeGenOpt::Default)) 
+              DL = ExtractDebugLocation(*SPI, MF->getDebugLocInfo());
             break;
           }
           case Intrinsic::dbg_func_start: {
             DbgFuncStartInst *FSI = cast<DbgFuncStartInst>(I);
-            Value *SP = FSI->getSubprogram();
-
-            if (DIDescriptor::ValidDebugInfo(SP, CodeGenOpt::Default)) {
-              DISubprogram Subprogram(cast<GlobalVariable>(SP));
-              DICompileUnit CU(Subprogram.getCompileUnit());
-              unsigned Line = Subprogram.getLineNumber();
-              DL = DebugLoc::get(MF->getOrCreateDebugLocID(CU.getGV(),
-                                                           Line, 0));
-            }
-
+            if (isValidDebugInfoIntrinsic(*FSI, CodeGenOpt::Default)) 
+              DL = ExtractDebugLocation(*FSI, MF->getDebugLocInfo());
             break;
           }
           }
@@ -3887,13 +3871,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::dbg_stoppoint: {
     DbgStopPointInst &SPI = cast<DbgStopPointInst>(I);
-    if (DIDescriptor::ValidDebugInfo(SPI.getContext(), OptLevel)) {
+    if (isValidDebugInfoIntrinsic(SPI, CodeGenOpt::Default)) {
       MachineFunction &MF = DAG.getMachineFunction();
-      DICompileUnit CU(cast<GlobalVariable>(SPI.getContext()));
-      DebugLoc Loc = DebugLoc::get(MF.getOrCreateDebugLocID(CU.getGV(),
-                                              SPI.getLine(), SPI.getColumn()));
+      DebugLoc Loc = ExtractDebugLocation(SPI, MF.getDebugLocInfo());
       setCurDebugLoc(Loc);
-      
+
       if (OptLevel == CodeGenOpt::None)
         DAG.setRoot(DAG.getDbgStopPoint(Loc, getRoot(),
                                         SPI.getLine(),
@@ -3905,115 +3887,103 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_region_start: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionStartInst &RSI = cast<DbgRegionStartInst>(I);
-
-    if (DIDescriptor::ValidDebugInfo(RSI.getContext(), OptLevel) &&
-        DW && DW->ShouldEmitDwarfDebug()) {
+    if (isValidDebugInfoIntrinsic(RSI, OptLevel) && DW
+        && DW->ShouldEmitDwarfDebug()) {
       unsigned LabelID =
         DW->RecordRegionStart(cast<GlobalVariable>(RSI.getContext()));
       DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
                                getRoot(), LabelID));
     }
-
     return 0;
   }
   case Intrinsic::dbg_region_end: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgRegionEndInst &REI = cast<DbgRegionEndInst>(I);
 
-    if (DIDescriptor::ValidDebugInfo(REI.getContext(), OptLevel) &&
-        DW && DW->ShouldEmitDwarfDebug()) {
-      MachineFunction &MF = DAG.getMachineFunction();
-      DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
+    if (!isValidDebugInfoIntrinsic(REI, OptLevel) || !DW
+        || !DW->ShouldEmitDwarfDebug()) 
+      return 0;
 
-      if (Subprogram.isNull() || Subprogram.describes(MF.getFunction())) {
-        unsigned LabelID =
-          DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
-        DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                                 getRoot(), LabelID));
-      } else {
-        // This is end of inlined function. Debugging information for inlined
-        // function is not handled yet (only supported by FastISel).
-        if (OptLevel == CodeGenOpt::None) {
-          unsigned ID = DW->RecordInlinedFnEnd(Subprogram);
-          if (ID != 0)
-            // Returned ID is 0 if this is unbalanced "end of inlined
-            // scope". This could happen if optimizer eats dbg intrinsics or
-            // "beginning of inlined scope" is not recoginized due to missing
-            // location info. In such cases, do ignore this region.end.
-            DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(), 
-                                     getRoot(), ID));
-        }
+    MachineFunction &MF = DAG.getMachineFunction();
+    DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
+    
+    if (isInlinedFnEnd(REI, MF.getFunction())) {
+      // This is end of inlined function. Debugging information for inlined
+      // function is not handled yet (only supported by FastISel).
+      if (OptLevel == CodeGenOpt::None) {
+        unsigned ID = DW->RecordInlinedFnEnd(Subprogram);
+        if (ID != 0)
+          // Returned ID is 0 if this is unbalanced "end of inlined
+          // scope". This could happen if optimizer eats dbg intrinsics or
+          // "beginning of inlined scope" is not recoginized due to missing
+          // location info. In such cases, do ignore this region.end.
+          DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(), 
+                                   getRoot(), ID));
       }
-    }
+      return 0;
+    } 
 
+    unsigned LabelID =
+      DW->RecordRegionEnd(cast<GlobalVariable>(REI.getContext()));
+    DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                             getRoot(), LabelID));
     return 0;
   }
   case Intrinsic::dbg_func_start: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
-    Value *SP = FSI.getSubprogram();
-    if (!DIDescriptor::ValidDebugInfo(SP, OptLevel))
+    if (!isValidDebugInfoIntrinsic(FSI, CodeGenOpt::None) || !DW
+        || !DW->ShouldEmitDwarfDebug()) 
       return 0;
-
-    DISubprogram Subprogram(cast<GlobalVariable>(SP));
-    DICompileUnit CompileUnit = Subprogram.getCompileUnit();
-    unsigned Line = Subprogram.getLineNumber();
 
     MachineFunction &MF = DAG.getMachineFunction();
-    // If this subprogram does not describe current function then this is
-    // beginning of a inlined function.
-    bool isInlinedFnStart = !Subprogram.describes(MF.getFunction());
-    if (isInlinedFnStart && OptLevel != CodeGenOpt::None)
-      // FIXME: Debugging informaation for inlined function is only
-      // supported at CodeGenOpt::Node.
-      return 0;
-
-    if (isInlinedFnStart && OptLevel == CodeGenOpt::None) {
-      // This is a beginning of an inlined function.
+    // This is a beginning of an inlined function.
+    if (isInlinedFnStart(FSI, MF.getFunction())) {
+      if (OptLevel != CodeGenOpt::None)
+        // FIXME: Debugging informaation for inlined function is only
+        // supported at CodeGenOpt::Node.
+        return 0;
+      
       DebugLoc PrevLoc = CurDebugLoc;
       // If llvm.dbg.func.start is seen in a new block before any
       // llvm.dbg.stoppoint intrinsic then the location info is unknown.
       // FIXME : Why DebugLoc is reset at the beginning of each block ?
       if (PrevLoc.isUnknown())
         return 0;
-
-      // Record the source line.
-      unsigned LocID = MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0);
-      setCurDebugLoc(DebugLoc::get(LocID));
       
-      if (DW && DW->ShouldEmitDwarfDebug()) {
-        DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
-        unsigned LabelID = DW->RecordInlinedFnStart(Subprogram,
-                                                    DICompileUnit(PrevLocTpl.CompileUnit),
-                                                    PrevLocTpl.Line,
-                                                    PrevLocTpl.Col);
-          DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
-                                   getRoot(), LabelID));
-      }
+      // Record the source line.
+      setCurDebugLoc(ExtractDebugLocation(FSI, MF.getDebugLocInfo()));
+      
+      DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
+      DISubprogram SP(cast<GlobalVariable>(FSI.getSubprogram()));
+      DICompileUnit CU(PrevLocTpl.CompileUnit);
+      unsigned LabelID = DW->RecordInlinedFnStart(SP, CU,
+                                                  PrevLocTpl.Line,
+                                                  PrevLocTpl.Col);
+      DAG.setRoot(DAG.getLabel(ISD::DBG_LABEL, getCurDebugLoc(),
+                               getRoot(), LabelID));
       return 0;
     }
 
     // This is a beginning of a new function.
-    // Record the source line.
-    unsigned LocID =  MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0);
-    MF.setDefaultDebugLoc(DebugLoc::get(LocID));
+    MF.setDefaultDebugLoc(ExtractDebugLocation(FSI, MF.getDebugLocInfo()));
                     
-    if (DW && DW->ShouldEmitDwarfDebug()) 
-      // llvm.dbg.func_start also defines beginning of function scope.
-      DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
-
+    // llvm.dbg.func_start also defines beginning of function scope.
+    DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
     return 0;
   }
   case Intrinsic::dbg_declare: {
-    if (OptLevel == CodeGenOpt::None) {
-      DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
-      Value *Variable = DI.getVariable();
-      if (DIDescriptor::ValidDebugInfo(Variable, OptLevel))
-        DAG.setRoot(DAG.getNode(ISD::DECLARE, dl, MVT::Other, getRoot(),
-                                getValue(DI.getAddress()), getValue(Variable)));
-    } else {
-      // FIXME: Do something sensible here when we support debug declare.
-    }
+    if (OptLevel != CodeGenOpt::None) 
+      // FIXME: Variable debug info is not supported here.
+      return 0;
+
+    DbgDeclareInst &DI = cast<DbgDeclareInst>(I);
+    if (!isValidDebugInfoIntrinsic(DI, CodeGenOpt::None))
+      return 0;
+
+    Value *Variable = DI.getVariable();
+    DAG.setRoot(DAG.getNode(ISD::DECLARE, dl, MVT::Other, getRoot(),
+                            getValue(DI.getAddress()), getValue(Variable)));
     return 0;
   }
   case Intrinsic::eh_exception: {

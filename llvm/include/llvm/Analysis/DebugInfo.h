@@ -581,13 +581,11 @@ namespace llvm {
   /// ExtractDebugLocation - Extract debug location information 
   /// from llvm.dbg.stoppoint intrinsic.
   DebugLoc ExtractDebugLocation(DbgStopPointInst &SPI,
-                                CodeGenOpt::Level OptLev,
                                 DebugLocTracker &DebugLocInfo);
 
   /// ExtractDebugLocation - Extract debug location information 
   /// from llvm.dbg.func_start intrinsic.
   DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
-                                CodeGenOpt::Level OptLev,
                                 DebugLocTracker &DebugLocInfo);
 
   /// isInlinedFnStart - Return true if FSI is starting an inlined function.

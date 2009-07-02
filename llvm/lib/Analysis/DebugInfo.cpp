@@ -1091,12 +1091,9 @@ namespace llvm {
   /// ExtractDebugLocation - Extract debug location information 
   /// from llvm.dbg.stoppoint intrinsic.
   DebugLoc ExtractDebugLocation(DbgStopPointInst &SPI,
-                                CodeGenOpt::Level OptLev,
                                 DebugLocTracker &DebugLocInfo) {
     DebugLoc DL;
     Value *Context = SPI.getContext();
-    if (DIDescriptor::ValidDebugInfo(Context, OptLev) == false)
-      return DL;
 
     // If this location is already tracked then use it.
     DebugLocTuple Tuple(cast<GlobalVariable>(Context), SPI.getLine(), 
@@ -1117,12 +1114,9 @@ namespace llvm {
   /// ExtractDebugLocation - Extract debug location information 
   /// from llvm.dbg.func_start intrinsic.
   DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
-                                CodeGenOpt::Level OptLev,
                                 DebugLocTracker &DebugLocInfo) {
     DebugLoc DL;
     Value *SP = FSI.getSubprogram();
-    if (DIDescriptor::ValidDebugInfo(SP, OptLev) == false)
-      return DL;
 
     DISubprogram Subprogram(cast<GlobalVariable>(SP));
     unsigned Line = Subprogram.getLineNumber();
