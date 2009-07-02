@@ -1514,7 +1514,9 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
     } else if (Subtarget->isPICStyleGOT()) {
       OpFlag = X86II::MO_GOTOFF;
       PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
-    }
+    } else if (Subtarget->isPICStyleRIPRel() &&
+               TM.getCodeModel() == CodeModel::Small)
+      PICBase = X86::RIP;
   }
 
   // Create the load from the constant pool.
