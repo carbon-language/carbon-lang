@@ -452,8 +452,9 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     if (Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
       // Check to see if we've already materialized this
       // value in a register in this block.
-      if (unsigned Reg = LocalValueMap[V]) {
-        AM.Base.Reg = Reg;
+      DenseMap<const Value *, unsigned>::iterator I = LocalValueMap.find(V);
+      if (I != LocalValueMap.end() && I->second != 0) {
+        AM.Base.Reg = I->second;
         AM.GV = 0;
         return true;
       }

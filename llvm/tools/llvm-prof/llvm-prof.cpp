@@ -81,8 +81,10 @@ namespace {
     virtual void emitBasicBlockStartAnnot(const BasicBlock *BB,
                                           raw_ostream &OS) {
       if (BlockFreqs.empty()) return;
-      if (unsigned Count = BlockFreqs[BB])
-        OS << "\t;;; Basic block executed " << Count << " times.\n";
+      std::map<const BasicBlock *, unsigned>::const_iterator I =
+        BlockFreqs.find(BB);
+      if (I != BlockFreqs.end())
+        OS << "\t;;; Basic block executed " << I->second << " times.\n";
       else
         OS << "\t;;; Never executed!\n";
     }

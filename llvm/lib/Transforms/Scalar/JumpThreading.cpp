@@ -935,9 +935,11 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
    
     // Remap operands to patch up intra-block references.
     for (unsigned i = 0, e = New->getNumOperands(); i != e; ++i)
-      if (Instruction *Inst = dyn_cast<Instruction>(New->getOperand(i)))
-        if (Value *Remapped = ValueMapping[Inst])
-          New->setOperand(i, Remapped);
+      if (Instruction *Inst = dyn_cast<Instruction>(New->getOperand(i))) {
+        DenseMap<Instruction*, Value*>::iterator I = ValueMapping.find(Inst);
+        if (I != ValueMapping.end())
+          New->setOperand(i, I->second);
+      }
   }
   
   // We didn't copy the terminator from BB over to NewBB, because there is now
@@ -953,9 +955,11 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
     Value *IV = PN->getIncomingValueForBlock(BB);
     
     // Remap the value if necessary.
-    if (Instruction *Inst = dyn_cast<Instruction>(IV))
-      if (Value *MappedIV = ValueMapping[Inst])
-        IV = MappedIV;
+    if (Instruction *Inst = dyn_cast<Instruction>(IV)) {
+      DenseMap<Instruction*, Value*>::iterator I = ValueMapping.find(Inst);
+      if (I != ValueMapping.end())
+        IV = I->second;
+    }
     PN->addIncoming(IV, NewBB);
   }
   

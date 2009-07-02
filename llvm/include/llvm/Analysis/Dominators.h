@@ -618,8 +618,9 @@ protected:
   }
   
   DomTreeNodeBase<NodeT> *getNodeForBlock(NodeT *BB) {
-    if (DomTreeNodeBase<NodeT> *BBNode = this->DomTreeNodes[BB])
-      return BBNode;
+    typename DomTreeNodeMapType::iterator I = this->DomTreeNodes.find(BB);
+    if (I != this->DomTreeNodes.end() && I->second)
+      return I->second;
 
     // Haven't calculated this node yet?  Get or calculate the node for the
     // immediate dominator.
