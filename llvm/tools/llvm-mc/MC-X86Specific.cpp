@@ -37,8 +37,8 @@ struct AsmParser::X86Operand {
       unsigned SegReg;
       MCValue Disp;
       unsigned BaseReg;
+      unsigned IndexReg;
       unsigned Scale;
-      unsigned ScaleReg;
     } Mem;
   };
   
@@ -55,14 +55,14 @@ struct AsmParser::X86Operand {
     return Res;
   }
   static X86Operand CreateMem(unsigned SegReg, MCValue Disp, unsigned BaseReg,
-                              unsigned Scale, unsigned ScaleReg) {
+                              unsigned IndexReg, unsigned Scale) {
     X86Operand Res;
     Res.Kind = Memory;
     Res.Mem.SegReg   = SegReg;
     Res.Mem.Disp     = Disp;
     Res.Mem.BaseReg  = BaseReg;
+    Res.Mem.IndexReg = IndexReg;
     Res.Mem.Scale    = Scale;
-    Res.Mem.ScaleReg = ScaleReg;
     return Res;
   }
 };
@@ -152,7 +152,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   
   // If we reached here, then we just ate the ( of the memory operand.  Process
   // the rest of the memory operand.
-  unsigned BaseReg = 0, ScaleReg = 0, Scale = 0;
+  unsigned BaseReg = 0, IndexReg = 0, Scale = 0;
   
   if (Lexer.is(asmtok::Register)) {
     BaseReg = 123; // FIXME: decode reg #
@@ -163,7 +163,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
     Lexer.Lex(); // eat the comma.
     
     if (Lexer.is(asmtok::Register)) {
-      ScaleReg = 123; // FIXME: decode reg #
+      IndexReg = 123; // FIXME: decode reg #
       Lexer.Lex();  // eat the register.
       Scale = 1;      // If not specified, the scale defaults to 1.
     }
@@ -187,7 +187,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
     return TokError("unexpected token in memory operand");
   Lexer.Lex(); // Eat the ')'.
   
-  Op = X86Operand::CreateMem(SegReg, Disp, BaseReg, Scale, ScaleReg);
+  Op = X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale);
   return false;
 }
 
