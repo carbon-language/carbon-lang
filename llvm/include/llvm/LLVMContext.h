@@ -32,6 +32,7 @@ class ConstantFP;
 class ConstantVector;
 class UndefValue;
 class MDNode;
+class MDString;
 class IntegerType;
 class PointerType;
 class StructType;
@@ -179,6 +180,10 @@ public:
   
   // MDNode accessors
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
+  
+  // MDString accessors
+  MDString* getMDString(const char *StrBegin, const char *StrEnd);
+  MDString* getMDString(const std::string &Str);
   
   // FunctionType accessors
   FunctionType* getFunctionType(const Type* Result,

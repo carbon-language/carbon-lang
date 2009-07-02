@@ -411,6 +411,15 @@ MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
   return MDNode::get(Vals, NumVals);
 }
 
+// MDString accessors
+MDString* LLVMContext::getMDString(const char *StrBegin, const char *StrEnd) {
+  return MDString::get(StrBegin, StrEnd);
+}
+
+MDString* LLVMContext::getMDString(const std::string &Str) {
+  return MDString::get(Str);
+}
+
 // FunctionType accessors
 FunctionType* LLVMContext::getFunctionType(const Type* Result,
                                          const std::vector<const Type*>& Params,
