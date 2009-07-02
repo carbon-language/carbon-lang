@@ -20,14 +20,12 @@
 #ifndef CODEGEN_ELF_H
 #define CODEGEN_ELF_H
 
-#include "llvm/GlobalVariable.h"
 #include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Support/DataTypes.h"
-#include <cstring>
 
 namespace llvm {
-  class BinaryObject;
+  class GlobalValue;
 
   // Identification Indexes
   enum {
@@ -172,40 +170,24 @@ namespace llvm {
                                     IsConstant(false), NameIdx(0), Value(0),
                                     Size(0), Info(0), Other(STV_DEFAULT),
                                     SectionIdx(ELFSection::SHN_UNDEF),
-                                    SymTabIdx(0) {
-      if (!GV)
-        return;
+                                    SymTabIdx(0) {}
 
-      switch (GV->getVisibility()) {
-      default:
-        assert(0 && "unknown visibility type");
-      case GlobalValue::DefaultVisibility:
-        Other = STV_DEFAULT;
-        break;
-      case GlobalValue::HiddenVisibility:
-        Other = STV_HIDDEN;
-        break;
-      case GlobalValue::ProtectedVisibility:
-        Other = STV_PROTECTED;
-        break;
-      }
-    }
-
-    unsigned getBind() {
-      return (Info >> 4) & 0xf;
-    }
-
-    unsigned getType() {
-      return Info & 0xf;
-    }
+    unsigned getBind() { return (Info >> 4) & 0xf; }
+    unsigned getType() { return Info & 0xf; }
 
     void setBind(unsigned X) {
       assert(X == (X & 0xF) && "Bind value out of range!");
       Info = (Info & 0x0F) | (X << 4);
     }
+
     void setType(unsigned X) {
       assert(X == (X & 0xF) && "Type value out of range!");
       Info = (Info & 0xF0) | X;
+    }
+
+    void setVisibility(unsigned V) {
+      assert(V == (V & 0x3) && "Type value out of range!");
+      Other = V;
     }
   };
 

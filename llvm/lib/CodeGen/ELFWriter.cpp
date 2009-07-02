@@ -30,9 +30,9 @@
 
 #define DEBUG_TYPE "elfwriter"
 
+#include "ELF.h"
 #include "ELFWriter.h"
 #include "ELFCodeEmitter.h"
-#include "ELF.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -41,14 +41,14 @@
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetELFWriterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
-#include <list>
 using namespace llvm;
 
 char ELFWriter::ID = 0;
@@ -141,7 +141,22 @@ bool ELFWriter::doInitialization(Module &M) {
   return false;
 }
 
-unsigned ELFWriter::getGlobalELFLinkage(const GlobalVariable *GV) {
+unsigned ELFWriter::getGlobalELFVisibility(const GlobalValue *GV) {
+  switch (GV->getVisibility()) {
+  default:
+    assert(0 && "unknown visibility type");
+  case GlobalValue::DefaultVisibility:
+    return ELFSym::STV_DEFAULT;
+  case GlobalValue::HiddenVisibility:
+    return ELFSym::STV_HIDDEN;
+  case GlobalValue::ProtectedVisibility:
+    return ELFSym::STV_PROTECTED;
+  }
+
+  return 0;
+}
+
+unsigned ELFWriter::getGlobalELFLinkage(const GlobalValue *GV) {
   if (GV->hasInternalLinkage())
     return ELFSym::STB_LOCAL;
 
@@ -213,6 +228,7 @@ void ELFWriter::EmitFunctionDeclaration(const Function *F) {
   ELFSym GblSym(F);
   GblSym.setBind(ELFSym::STB_GLOBAL);
   GblSym.setType(ELFSym::STT_NOTYPE);
+  GblSym.setVisibility(ELFSym::STV_DEFAULT);
   GblSym.SectionIdx = ELFSection::SHN_UNDEF;
   SymbolList.push_back(GblSym);
 }
@@ -222,6 +238,7 @@ void ELFWriter::EmitGlobalVar(const GlobalVariable *GV) {
   unsigned Align=0, Size=0;
   ELFSym GblSym(GV);
   GblSym.setBind(SymBind);
+  GblSym.setVisibility(getGlobalELFVisibility(GV));
 
   if (GV->hasInitializer()) {
     GblSym.setType(ELFSym::STT_OBJECT);
@@ -402,6 +419,7 @@ bool ELFWriter::doFinalization(Module &M) {
     SectionSym.Size = 0;
     SectionSym.setBind(ELFSym::STB_LOCAL);
     SectionSym.setType(ELFSym::STT_SECTION);
+    SectionSym.setVisibility(ELFSym::STV_DEFAULT);
 
     // Local symbols go in the list front
     SymbolList.push_front(SectionSym);
@@ -443,7 +461,8 @@ void ELFWriter::EmitRelocations() {
 
     // Get the relocation section for section 'I'
     bool HasRelA = TEW->hasRelocationAddend();
-    ELFSection &RelSec = getRelocSection(I->getName(), HasRelA);
+    ELFSection &RelSec = getRelocSection(I->getName(), HasRelA,
+                                         TEW->getPrefELFAlignment());
 
     // 'Link' - Section hdr idx of the associated symbol table
     // 'Info' - Section hdr idx of the section to which the relocation applies

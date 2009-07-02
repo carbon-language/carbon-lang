@@ -9,6 +9,8 @@
 
 #define DEBUG_TYPE "elfce"
 
+#include "ELF.h"
+#include "ELFWriter.h"
 #include "ELFCodeEmitter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -16,8 +18,10 @@
 #include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/Debug.h"
 
 //===----------------------------------------------------------------------===//
@@ -67,42 +71,27 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
 /// finishFunction - This callback is invoked after the function is completely
 /// finished.
 bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
-  // Add a symbol to represent the function.
-  ELFSym FnSym(MF.getFunction());
-
   // Update Section Size
   ES->Size = CurBufferPtr - BufferBegin;
 
-  // Set the symbol type as a function
+  // Add a symbol to represent the function.
+  const Function *F = MF.getFunction();
+  ELFSym FnSym(F);
   FnSym.setType(ELFSym::STT_FUNC);
+  FnSym.setBind(EW.getGlobalELFLinkage(F));
+  FnSym.setVisibility(EW.getGlobalELFVisibility(F));
   FnSym.SectionIdx = ES->SectionIdx;
   FnSym.Size = CurBufferPtr-FnStartPtr;
 
   // Offset from start of Section
   FnSym.Value = FnStartPtr-BufferBegin;
 
-  // Figure out the binding (linkage) of the symbol.
-  switch (MF.getFunction()->getLinkage()) {
-  default:
-    // appending linkage is illegal for functions.
-    assert(0 && "Unknown linkage type!");
-  case GlobalValue::ExternalLinkage:
-    FnSym.setBind(ELFSym::STB_GLOBAL);
-    EW.SymbolList.push_back(FnSym);
-    break;
-  case GlobalValue::LinkOnceAnyLinkage:
-  case GlobalValue::LinkOnceODRLinkage:
-  case GlobalValue::WeakAnyLinkage:
-  case GlobalValue::WeakODRLinkage:
-    FnSym.setBind(ELFSym::STB_WEAK);
-    EW.SymbolList.push_back(FnSym);
-    break;
-  case GlobalValue::PrivateLinkage:
-    assert (0 && "PrivateLinkage should not be in the symbol table.");
-  case GlobalValue::InternalLinkage:
-    FnSym.setBind(ELFSym::STB_LOCAL);
-    EW.SymbolList.push_front(FnSym);
-    break;
+  // Locals should go on the symbol list front
+  if (!F->hasPrivateLinkage()) {
+    if (FnSym.getBind() == ELFSym::STB_LOCAL)
+      EW.SymbolList.push_front(FnSym);
+    else
+      EW.SymbolList.push_back(FnSym);
   }
 
   // Emit constant pool to appropriate section(s)

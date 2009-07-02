@@ -16,21 +16,23 @@
 
 #include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetELFWriterInfo.h"
-#include "ELF.h"
 #include <list>
 #include <map>
 
 namespace llvm {
   class BinaryObject;
+  class Constant;
   class ConstantStruct;
   class ELFCodeEmitter;
   class GlobalVariable;
   class Mangler;
   class MachineCodeEmitter;
+  class TargetAsmInfo;
+  class TargetELFWriterInfo;
   class raw_ostream;
+  class ELFSection;
+  class ELFSym;
+  class ELFRelocation;
 
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
@@ -155,14 +157,14 @@ namespace llvm {
 
     /// Return the relocation section of section 'S'. 'RelA' is true
     /// if the relocation section contains entries with addends.
-    ELFSection &getRelocSection(std::string SName, bool RelA) {
+    ELFSection &getRelocSection(std::string SName, bool RelA, unsigned Align) {
       std::string RelSName(".rel");
       unsigned SHdrTy = RelA ? ELFSection::SHT_RELA : ELFSection::SHT_REL;
 
       if (RelA) RelSName.append("a");
       RelSName.append(SName);
 
-      return getSection(RelSName, SHdrTy, 0, TEW->getPrefELFAlignment());
+      return getSection(RelSName, SHdrTy, 0, Align);
     }
 
     ELFSection &getNonExecStackSection() {
@@ -195,6 +197,10 @@ namespace llvm {
       return getSection("", ELFSection::SHT_NULL, 0);
     }
 
+    // Helpers for obtaining ELF specific Linkage and Visibility info.
+    unsigned getGlobalELFLinkage(const GlobalValue *GV);
+    unsigned getGlobalELFVisibility(const GlobalValue *GV);
+
     // As we complete the ELF file, we need to update fields in the ELF header
     // (e.g. the location of the section table).  These members keep track of
     // the offset in ELFHeader of these various pieces to update and other
@@ -209,7 +215,6 @@ namespace llvm {
     void EmitGlobalConstant(const Constant *C, ELFSection &GblS);
     void EmitGlobalConstantStruct(const ConstantStruct *CVS,
                                   ELFSection &GblS);
-    unsigned getGlobalELFLinkage(const GlobalVariable *GV);
     ELFSection &getGlobalSymELFSection(const GlobalVariable *GV, ELFSym &Sym);
     void EmitRelocations();
     void EmitRelocation(BinaryObject &RelSec, ELFRelocation &Rel, bool HasRelA);

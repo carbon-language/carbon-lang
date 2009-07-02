@@ -10,11 +10,12 @@
 #ifndef ELFCODEEMITTER_H
 #define ELFCODEEMITTER_H
 
-#include "ELFWriter.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include <vector>
 
 namespace llvm {
+  class ELFWriter;
+  class ELFSection;
 
   /// ELFCodeEmitter - This class is used by the ELFWriter to 
   /// emit the code for functions to the ELF file.
