@@ -376,24 +376,24 @@ bool FastISel::SelectCall(User *I) {
     if (!DIDescriptor::ValidDebugInfo(SP, CodeGenOpt::None))
       return true;
 
-    // llvm.dbg.func.start implicitly defines a dbg_stoppoint which is what
-    // (most?) gdb expects.
-    DebugLoc PrevLoc = DL;
     DISubprogram Subprogram(cast<GlobalVariable>(SP));
     DICompileUnit CompileUnit = Subprogram.getCompileUnit();
+    unsigned Line = Subprogram.getLineNumber();
 
+    // If this subprogram does not describe current function then this is
+    // beginning of a inlined function.
     if (!Subprogram.describes(MF.getFunction())) {
       // This is a beginning of an inlined function.
 
       // If llvm.dbg.func.start is seen in a new block before any
       // llvm.dbg.stoppoint intrinsic then the location info is unknown.
       // FIXME : Why DebugLoc is reset at the beginning of each block ?
+      DebugLoc PrevLoc = DL;
       if (PrevLoc.isUnknown())
         return true;
       // Record the source line.
-      unsigned Line = Subprogram.getLineNumber();
-      setCurDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(
-                                              CompileUnit.getGV(), Line, 0)));
+      unsigned LocID = MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0);
+      setCurDebugLoc(DebugLoc::get(LocID));
 
       if (DW && DW->ShouldEmitDwarfDebug()) {
         DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
@@ -404,17 +404,18 @@ bool FastISel::SelectCall(User *I) {
         const TargetInstrDesc &II = TII.get(TargetInstrInfo::DBG_LABEL);
         BuildMI(MBB, DL, II).addImm(LabelID);
       }
-    } else {
-      // Record the source line.
-      unsigned Line = Subprogram.getLineNumber();
-      MF.setDefaultDebugLoc(DebugLoc::get(MF.getOrCreateDebugLocID(
-                                              CompileUnit.getGV(), Line, 0)));
-      if (DW && DW->ShouldEmitDwarfDebug()) {
-        // llvm.dbg.func_start also defines beginning of function scope.
-        DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
-      }
+      return true;
     }
+     
+    // This is a beginning of a new function.
+    // Record the source line.
+    unsigned LocID = MF.getOrCreateDebugLocID(CompileUnit.getGV(), Line, 0);
+    MF.setDefaultDebugLoc(DebugLoc::get(LocID));
 
+    if (DW && DW->ShouldEmitDwarfDebug())
+      // llvm.dbg.func_start also defines beginning of function scope.
+      DW->RecordRegionStart(cast<GlobalVariable>(FSI->getSubprogram()));
+    
     return true;
   }
   case Intrinsic::dbg_declare: {

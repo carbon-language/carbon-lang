@@ -3962,7 +3962,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     MachineFunction &MF = DAG.getMachineFunction();
     // If this subprogram does not describe current function then this is
     // beginning of a inlined function.
-
     bool isInlinedFnStart = !Subprogram.describes(MF.getFunction());
     if (isInlinedFnStart && OptLevel != CodeGenOpt::None)
       // FIXME: Debugging informaation for inlined function is only
