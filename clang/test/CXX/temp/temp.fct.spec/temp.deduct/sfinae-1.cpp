@@ -1,4 +1,4 @@
-// RUN: clang-cc
+// RUN: clang-cc %s
 
 typedef char one_byte;
 struct two_bytes { char data[2]; };
