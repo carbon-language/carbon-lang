@@ -30,6 +30,7 @@ class ConstantAggregateZero;
 class ConstantArray;
 class ConstantFP;
 class ConstantVector;
+class UndefValue;
 class IntegerType;
 class PointerType;
 class StructType;
@@ -56,6 +57,9 @@ public:
   // Constant accessors
   Constant* getNullValue(const Type* Ty);
   Constant* getAllOnesValue(const Type* Ty);
+  
+  // UndefValue accessors
+  UndefValue* getUndef(const Type* Ty);
   
   // ConstantInt accessors
   ConstantInt* getConstantIntTrue();

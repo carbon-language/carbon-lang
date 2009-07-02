@@ -38,6 +38,11 @@ Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
   return Constant::getAllOnesValue(Ty);
 }
 
+// UndefValue accessors.
+UndefValue* LLVMContext::getUndef(const Type* Ty) {
+  return UndefValue::get(Ty);
+}
+
 // ConstantInt accessors.
 ConstantInt* LLVMContext::getConstantIntTrue() {
   return ConstantInt::getTrue();
