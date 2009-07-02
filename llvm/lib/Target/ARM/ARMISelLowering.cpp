@@ -3004,8 +3004,8 @@ ARMTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
     return false;
 
   bool isInc;
-  bool isLegal = getIndexedAddressParts(Ptr.getNode(), VT, isSEXTLoad, Base, Offset,
-                                        isInc, DAG);
+  bool isLegal = getIndexedAddressParts(Ptr.getNode(), VT, isSEXTLoad, Base,
+                                        Offset, isInc, DAG);
   if (isLegal) {
     AM = isInc ? ISD::PRE_INC : ISD::PRE_DEC;
     return true;
