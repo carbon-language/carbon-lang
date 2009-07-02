@@ -223,6 +223,10 @@ MemSpaceRegion* MemRegionManager::getStackRegion() {
   return LazyAllocate(stack);
 }
 
+MemSpaceRegion* MemRegionManager::getStackArgumentsRegion() {
+  return LazyAllocate(stackArguments);
+}
+
 MemSpaceRegion* MemRegionManager::getGlobalsRegion() {
   return LazyAllocate(globals);
 }
@@ -332,8 +336,10 @@ const MemSpaceRegion *MemRegion::getMemorySpace() const {
 }
 
 bool MemRegion::hasStackStorage() const {
-  if (const MemSpaceRegion *MS = getMemorySpace())
-    return MS == getMemRegionManager()->getStackRegion();
+  if (const MemSpaceRegion *MS = getMemorySpace()) {
+    MemRegionManager *Mgr = getMemRegionManager();
+    return MS == Mgr->getStackRegion() || MS == Mgr->getStackArgumentsRegion();
+  }
 
   return false;
 }
@@ -348,7 +354,9 @@ bool MemRegion::hasHeapStorage() const {
 bool MemRegion::hasHeapOrStackStorage() const {
   if (const MemSpaceRegion *MS = getMemorySpace()) {
     MemRegionManager *Mgr = getMemRegionManager();
-    return MS == Mgr->getHeapRegion() || MS == Mgr->getStackRegion();
+    return MS == Mgr->getHeapRegion()
+      || MS == Mgr->getStackRegion()
+      || MS == Mgr->getStackArgumentsRegion();
   }
   return false;
 }  
