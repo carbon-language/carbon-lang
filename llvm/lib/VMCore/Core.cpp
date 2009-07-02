@@ -45,6 +45,10 @@ LLVMContextRef LLVMContextCreate() {
   return wrap(new LLVMContext());
 }
 
+LLVMContextRef LLVMGetGlobalContext() {
+  return wrap(&getGlobalContext());
+}
+
 void LLVMContextDispose(LLVMContextRef C) {
   delete unwrap(C);
 }

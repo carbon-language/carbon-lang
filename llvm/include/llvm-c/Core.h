@@ -195,6 +195,7 @@ void LLVMDisposeMessage(char *Message);
 
 /* Create and destroy contexts. */
 LLVMContextRef LLVMContextCreate();
+LLVMContextRef LLVMGetGlobalContext();
 void LLVMContextDispose(LLVMContextRef C);
 
 /* Create and destroy modules. */ 
