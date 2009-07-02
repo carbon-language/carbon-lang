@@ -41,10 +41,6 @@ namespace llvm {
     X86ELFWriterInfo(TargetMachine &TM);
     virtual ~X86ELFWriterInfo();
 
-    /// getFunctionAlignment - Returns the alignment for function 'F', targets
-    /// with different alignment constraints should overload this method
-    virtual unsigned getFunctionAlignment(const Function *F) const;
-
     /// getRelocationType - Returns the target specific ELF Relocation type.
     /// 'MachineRelTy' contains the object code independent relocation type
     virtual unsigned getRelocationType(unsigned MachineRelTy) const;

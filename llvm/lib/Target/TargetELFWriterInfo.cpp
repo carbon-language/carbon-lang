@@ -24,13 +24,3 @@ TargetELFWriterInfo::TargetELFWriterInfo(TargetMachine &tm) : TM(tm) {
 
 TargetELFWriterInfo::~TargetELFWriterInfo() {}
 
-/// getFunctionAlignment - Returns the alignment for function 'F', targets
-/// with different alignment constraints should overload this method
-unsigned TargetELFWriterInfo::getFunctionAlignment(const Function *F) const {
-  const TargetData *TD = TM.getTargetData();
-  unsigned FnAlign = F->getAlignment();
-  unsigned TDAlign = TD->getPointerABIAlignment();
-  unsigned Align = std::max(FnAlign, TDAlign);
-  assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
-  return Align;
-}

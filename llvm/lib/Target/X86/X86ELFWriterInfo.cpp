@@ -59,18 +59,6 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
   return 0;
 }
 
-unsigned X86ELFWriterInfo::getFunctionAlignment(const Function *F) const {
-  unsigned FnAlign = 4;
-
-  if (F->hasFnAttr(Attribute::OptimizeForSize))
-    FnAlign = 1;
-
-  if (F->getAlignment())
-    FnAlign = Log2_32(F->getAlignment());
-
-  return (1 << FnAlign);
-}
-
 long int X86ELFWriterInfo::getAddendForRelTy(unsigned RelTy) const {
   if (is64Bit) {
     switch(RelTy) {

@@ -40,10 +40,11 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
   BufferBegin = &BD[0];
   BufferEnd = BufferBegin + BD.capacity();
 
-  // Align the output buffer with function alignment, and
-  // upgrade the section alignment if required
-  unsigned Align =
-    TM.getELFWriterInfo()->getFunctionAlignment(MF.getFunction());
+  // Get the function alignment in bytes
+  unsigned Align = (1 << MF.getAlignment());
+
+  // Align the section size with the function alignment, so the function can
+  // start in a aligned offset, also update the section alignment if needed.
   if (ES->Align < Align) ES->Align = Align;
   ES->Size = (ES->Size + (Align-1)) & (-Align);
 
