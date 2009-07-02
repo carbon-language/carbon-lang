@@ -109,7 +109,7 @@ private:
         int Index;                // For MO_*Index - The index itself.
         const char *SymbolName;   // For MO_ExternalSymbol.
         GlobalValue *GV;          // For MO_GlobalAddress.
-	MDNode *Node;             // For MO_Metadata.
+        MDNode *Node;             // For MO_Metadata.
       } Val;
       int64_t Offset;   // An offset from the object.
     } OffsetedInfo;
@@ -431,7 +431,7 @@ public:
     return Op;
   }
   static MachineOperand CreateMDNode(MDNode *N, int64_t Offset,
-				     unsigned char TargetFlags = 0) {
+                                     unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_Metadata);
     Op.Contents.OffsetedInfo.Val.Node = N;
     Op.setOffset(Offset);
