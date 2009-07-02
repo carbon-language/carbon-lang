@@ -77,6 +77,8 @@ namespace llvm {
       Context(m->getContext()), Lex(F, Err), M(m) {}
     bool Run();
 
+    LLVMContext& getContext() { return Context; }
+
   private:
 
     bool Error(LocTy L, const std::string &Msg) const {
