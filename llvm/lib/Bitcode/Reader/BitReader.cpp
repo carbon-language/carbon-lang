@@ -54,7 +54,6 @@ int LLVMParseBitcodeInContext(LLVMMemoryBufferRef MemBuf,
    a module provider which performs lazy deserialization. Returns 0 on success.
    Optionally returns a human-readable error message via OutMessage. */ 
 int LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
-                                 LLVMContextRef ContextRef,
                                  LLVMModuleProviderRef *OutMP,
                                   char **OutMessage) {
   std::string Message;
