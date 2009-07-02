@@ -751,7 +751,7 @@ def LDRSB_PRE : AI3ldsbpr<(outs GPR:$dst, GPR:$base_wb),
 
 def LDRSB_POST: AI3ldsbpo<(outs GPR:$dst, GPR:$base_wb),
                       (ins GPR:$base,am3offset:$offset), LdMiscFrm,
-                      "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
+                    "ldr", "sb $dst, [$base], $offset", "$base = $base_wb", []>;
 }
 
 // Store
