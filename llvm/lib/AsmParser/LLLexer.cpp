@@ -16,6 +16,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Assembly/Parser.h"
 #include <cstdlib>
@@ -38,8 +39,9 @@ bool LLLexer::Error(LocTy ErrorLoc, const std::string &Msg) const {
   for (const char *FP = CurBuf->getBufferStart(); FP != ErrorLoc; ++FP)
     if (*FP == '\n') ++LineNo;
 
-  std::string LineContents(LineStart, LineEnd);
-  ErrorInfo.setError(Msg, LineNo, ErrorLoc-LineStart, LineContents);
+  ErrorInfo = SMDiagnostic(CurBuf->getBufferIdentifier(),
+                           LineNo, ErrorLoc-LineStart, Msg,
+                           std::string(LineStart, LineEnd));
   return true;
 }
 
@@ -195,7 +197,7 @@ static const char *isLabelTail(const char *CurPtr) {
 // Lexer definition.
 //===----------------------------------------------------------------------===//
 
-LLLexer::LLLexer(MemoryBuffer *StartBuf, ParseError &Err)
+LLLexer::LLLexer(MemoryBuffer *StartBuf, SMDiagnostic &Err)
   : CurBuf(StartBuf), ErrorInfo(Err), APFloatVal(0.0) {
   CurPtr = CurBuf->getBufferStart();
 }

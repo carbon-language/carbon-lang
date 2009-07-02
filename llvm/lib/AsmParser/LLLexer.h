@@ -22,12 +22,12 @@
 namespace llvm {
   class MemoryBuffer;
   class Type;
-  class ParseError;
+  class SMDiagnostic;
 
   class LLLexer {
     const char *CurPtr;
     MemoryBuffer *CurBuf;
-    ParseError &ErrorInfo;
+    SMDiagnostic &ErrorInfo;
 
     // Information about the current token.
     const char *TokStart;
@@ -40,7 +40,7 @@ namespace llvm {
 
     std::string TheError;
   public:
-    explicit LLLexer(MemoryBuffer *StartBuf, ParseError &);
+    explicit LLLexer(MemoryBuffer *StartBuf, SMDiagnostic &);
     ~LLLexer() {}
 
     lltok::Kind Lex() {

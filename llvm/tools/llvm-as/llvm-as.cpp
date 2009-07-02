@@ -23,6 +23,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
@@ -64,10 +65,10 @@ int main(int argc, char **argv) {
   std::ostream *Out = 0;
   try {
     // Parse the file now...
-    ParseError Err;
+    SMDiagnostic Err;
     std::auto_ptr<Module> M(ParseAssemblyFile(InputFilename, Err, Context));
     if (M.get() == 0) {
-      Err.PrintError(argv[0], errs());
+      Err.Print(argv[0], errs());
       return 1;
     }
 
