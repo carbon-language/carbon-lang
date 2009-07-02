@@ -1053,28 +1053,28 @@ namespace llvm {
   }
 
   /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug 
-  /// info intrisic.
+  /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, 
                                  CodeGenOpt::Level OptLev) {
     return DIDescriptor::ValidDebugInfo(SPI.getContext(), OptLev);
   }
 
   /// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug 
-  /// info intrisic.
+  /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI,
                                  CodeGenOpt::Level OptLev) {
     return DIDescriptor::ValidDebugInfo(FSI.getSubprogram(), OptLev);
   }
 
   /// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug 
-  /// info intrisic.
+  /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI,
                                  CodeGenOpt::Level OptLev) {
     return DIDescriptor::ValidDebugInfo(RSI.getContext(), OptLev);
   }
 
   /// isValidDebugInfoIntrinsic - Return true if REI is a valid debug 
-  /// info intrisic.
+  /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI,
                                  CodeGenOpt::Level OptLev) {
     return DIDescriptor::ValidDebugInfo(REI.getContext(), OptLev);
@@ -1082,7 +1082,7 @@ namespace llvm {
 
 
   /// isValidDebugInfoIntrinsic - Return true if DI is a valid debug 
-  /// info intrisic.
+  /// info intrinsic.
   bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI,
                                  CodeGenOpt::Level OptLev) {
     return DIDescriptor::ValidDebugInfo(DI.getVariable(), OptLev);
