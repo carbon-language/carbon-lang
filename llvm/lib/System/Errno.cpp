@@ -47,10 +47,10 @@ std::string StrError(int errnum) {
 # else
     strerror_r(errnum,buffer,MaxErrStrLen-1);
 # endif
-#elif HAVE_STRERROR_S  // Windows.
+#elif defined(HAVE_STRERROR_S)  // Windows.
     if (errnum)
       strerror_s(buffer, errnum);
-#elif HAVE_STRERROR
+#elif defined(HAVE_STRERROR)
   // Copy the thread un-safe result of strerror into
   // the buffer as fast as possible to minimize impact
   // of collision of strerror in multiple threads.
