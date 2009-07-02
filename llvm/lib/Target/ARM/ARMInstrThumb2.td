@@ -89,7 +89,6 @@ def imm0_65535 : PatLeaf<(i32 imm), [{
   return (uint32_t)N->getZExtValue() < 65536;
 }]>;
 
-
 /// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
 /// e.g., 0xf000ffff
 def bf_inv_mask_imm : Operand<i32>,
@@ -136,11 +135,15 @@ def t2addrmode_imm12 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
-// t2addrmode_imm8  := reg - imm8 (also reg + imm8 for some instructions)
+// t2addrmode_imm8  := reg - imm8
 def t2addrmode_imm8 : Operand<i32>,
                       ComplexPattern<i32, 2, "SelectT2AddrModeImm8", []> {
   let PrintMethod = "printT2AddrModeImm8Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
+}
+
+def t2am_imm8_offset : Operand<i32> {
+  let PrintMethod = "printT2AddrModeImm8OffsetOperand";
 }
 
 // t2addrmode_imm8s4  := reg + (imm8 << 2)
@@ -541,10 +544,45 @@ def : T2Pat<(extloadi16 t2addrmode_so_reg:$addr),
 def : T2Pat<(extloadi16 (ARMWrapper tconstpool:$addr)),
             (t2LDRHpci  tconstpool:$addr)>;
 
+// Indexed loads
+def t2LDR_PRE  : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins t2addrmode_imm8:$addr),
+                            AddrModeT2_i8, IndexModePre,
+                            "ldr", " $dst, $addr!", "$addr.base = $base_wb",
+                            []>;
+
+def t2LDR_POST : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePost,
+                           "ldr", " $dst, [$base], $offset", "$base = $base_wb",
+                            []>;
+
+def t2LDRB_PRE : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins t2addrmode_imm8:$addr),
+                            AddrModeT2_i8, IndexModePre,
+                            "ldrb", " $dst, $addr!", "$addr.base = $base_wb",
+                            []>;
+def t2LDRB_POST : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePost,
+                          "ldrb", " $dst, [$base], $offset", "$base = $base_wb",
+                            []>;
+
+def t2LDRH_PRE : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins t2addrmode_imm8:$addr),
+                            AddrModeT2_i8, IndexModePre,
+                            "ldrh", " $dst, $addr!", "$addr.base = $base_wb",
+                            []>;
+def t2LDRH_POST : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePost,
+                          "ldrh", " $dst, [$base], $offset", "$base = $base_wb",
+                            []>;
+
 // Store
-defm t2STR   : T2I_st<"str", BinOpFrag<(store node:$LHS, node:$RHS)>>;
-defm t2STRB   : T2I_st<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
-defm t2STRH   : T2I_st<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
+defm t2STR   : T2I_st<"str",  BinOpFrag<(store node:$LHS, node:$RHS)>>;
+defm t2STRB  : T2I_st<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
+defm t2STRH  : T2I_st<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 
 // Store doubleword
 let mayLoad = 1 in

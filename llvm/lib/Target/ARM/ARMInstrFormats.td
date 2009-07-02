@@ -873,6 +873,18 @@ class T2XI<dag oops, dag iops, string asm, list<dag> pattern>
 class T2JTI<dag oops, dag iops, string asm, list<dag> pattern>
   : Thumb2XI<oops, iops, AddrModeNone, SizeSpecial, asm, "", pattern>;
 
+// T2Iidxldst - Thumb2 indexed load / store instructions.
+class T2Iidxldst<dag oops, dag iops, AddrMode am, IndexMode im,
+                 string opc, string asm, string cstr, list<dag> pattern>
+  : InstARM<am, Size4Bytes, im, ThumbFrm, cstr> {
+  let OutOperandList = oops;
+  let InOperandList = !con(iops, (ops pred:$p));
+  let AsmString = !strconcat(opc, !strconcat("${p}", asm));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb2];
+}
+
+
 // T2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.
 class T2Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb2];

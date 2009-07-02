@@ -122,6 +122,7 @@ namespace {
     void printT2SOOperand(const MachineInstr *MI, int OpNum);
     void printT2AddrModeImm12Operand(const MachineInstr *MI, int OpNum);
     void printT2AddrModeImm8Operand(const MachineInstr *MI, int OpNum);
+    void printT2AddrModeImm8OffsetOperand(const MachineInstr *MI, int OpNum);
     void printT2AddrModeSoRegOperand(const MachineInstr *MI, int OpNum);
 
     void printPredicateOperand(const MachineInstr *MI, int OpNum);
@@ -745,6 +746,17 @@ void ARMAsmPrinter::printT2AddrModeImm8Operand(const MachineInstr *MI,
   else if (OffImm > 0)
     O << ", #+" << OffImm;
   O << "]";
+}
+
+void ARMAsmPrinter::printT2AddrModeImm8OffsetOperand(const MachineInstr *MI,
+                                                     int OpNum) {
+  const MachineOperand &MO1 = MI->getOperand(OpNum);
+  int32_t OffImm = (int32_t)MO1.getImm();
+  // Don't print +0.
+  if (OffImm < 0)
+    O << "#-" << -OffImm;
+  else if (OffImm > 0)
+    O << "#+" << OffImm;
 }
 
 void ARMAsmPrinter::printT2AddrModeSoRegOperand(const MachineInstr *MI,
