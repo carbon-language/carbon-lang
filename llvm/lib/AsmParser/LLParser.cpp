@@ -1623,7 +1623,7 @@ bool LLParser::ParseValID(ValID &ID) {
           ParseToken(lltok::rbrace, "expected end of metadata node"))
         return true;
 
-      ID.ConstantVal = MDNode::get(Elts.data(), Elts.size());
+      ID.ConstantVal = Context.getMDNode(Elts.data(), Elts.size());
       return false;
     }
 
