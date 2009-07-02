@@ -249,7 +249,10 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   }
   case Instruction::BitCast: {
     const Type *SrcTy = I->getOperand(0)->getType();
-    if (SrcTy->isInteger() || isa<PointerType>(SrcTy)) {
+    if ((SrcTy->isInteger() || isa<PointerType>(SrcTy)) &&
+        // TODO: For now, not handling conversions like:
+        // (bitcast i64 %x to <2 x i32>)
+        !isa<VectorType>(I->getType())) {
       ComputeMaskedBits(I->getOperand(0), Mask, KnownZero, KnownOne, TD,
                         Depth+1);
       return;
