@@ -882,13 +882,8 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     if (VD == SelfDecl)
       return loc::MemRegionVal(getSelfRegion(0));
     
-    if (VR->hasGlobalsOrParametersStorage()) {
-      QualType VTy = VD->getType();
-      if (Loc::IsLocType(VTy) || VTy->isIntegerType())
-        return ValMgr.getRegionValueSymbolVal(VR);
-      else
-        return UnknownVal();
-    }
+    if (VR->hasGlobalsOrParametersStorage())
+      return ValMgr.getRegionValueSymbolValOrUnknown(VR, VD->getType());
   }  
 
   if (R->hasHeapOrStackStorage()) {
@@ -906,11 +901,8 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     RTy = T->getAsPointerType()->getPointeeType();
   }
 
-  // All other integer values are symbolic.
-  if (Loc::IsLocType(RTy) || RTy->isIntegerType())
-    return ValMgr.getRegionValueSymbolVal(R, RTy);
-  else
-    return UnknownVal();
+  // All other values are symbolic.
+  return ValMgr.getRegionValueSymbolValOrUnknown(R, RTy);
 }
 
 SVal RegionStoreManager::RetrieveElement(const GRState* state,
@@ -977,10 +969,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   if (const QualType *p = state->get<RegionCasts>(R))
     Ty = (*p)->getAsPointerType()->getPointeeType();
 
-  if (Loc::IsLocType(Ty) || Ty->isIntegerType())
-    return ValMgr.getRegionValueSymbolVal(R, Ty);
-  else
-    return UnknownVal();
+  return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
 }
 
 SVal RegionStoreManager::RetrieveField(const GRState* state, 
@@ -1020,11 +1009,8 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
     Ty = tmp->getAsPointerType()->getPointeeType();
   }
 
-  // All other integer values are symbolic.
-  if (Loc::IsLocType(Ty) || Ty->isIntegerType())
-    return ValMgr.getRegionValueSymbolVal(R, Ty);
-  else
-    return UnknownVal();
+  // All other values are symbolic.
+  return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
 }
 
 SVal RegionStoreManager::RetrieveStruct(const GRState *state, 
