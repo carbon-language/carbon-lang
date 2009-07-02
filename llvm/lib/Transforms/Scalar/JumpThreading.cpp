@@ -207,7 +207,7 @@ static unsigned getJumpThreadDuplicationCost(const BasicBlock *BB) {
     if (const CallInst *CI = dyn_cast<CallInst>(I)) {
       if (!isa<IntrinsicInst>(CI))
         Size += 3;
-      else if (isa<VectorType>(CI->getType()))
+      else if (!isa<VectorType>(CI->getType()))
         Size += 1;
     }
   }
