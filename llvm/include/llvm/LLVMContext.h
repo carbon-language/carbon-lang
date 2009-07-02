@@ -66,12 +66,14 @@ public:
   // ConstantInt accessors
   ConstantInt* getConstantIntTrue();
   ConstantInt* getConstantIntFalse();
+  Constant* getConstantInt(const Type* Ty, uint64_t V,
+                              bool isSigned = false);
   ConstantInt* getConstantInt(const IntegerType* Ty, uint64_t V,
                               bool isSigned = false);
   ConstantInt* getConstantIntSigned(const IntegerType* Ty, int64_t V);
   ConstantInt* getConstantInt(const APInt& V);
   Constant* getConstantInt(const Type* Ty, const APInt& V);
-  ConstantInt* getAllOnesConstantInt(const Type* Ty);
+  ConstantInt* getConstantIntAllOnesValue(const Type* Ty);
   
   // ConstantPointerNull accessors
   ConstantPointerNull* getConstantPointerNull(const PointerType* T);

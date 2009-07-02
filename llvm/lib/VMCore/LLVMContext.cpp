@@ -53,6 +53,12 @@ ConstantInt* LLVMContext::getConstantIntFalse() {
   return ConstantInt::getFalse();
 }
 
+Constant* LLVMContext::getConstantInt(const Type* Ty, uint64_t V,
+                                         bool isSigned) {
+  return ConstantInt::get(Ty, V, isSigned);
+}
+
+
 ConstantInt* LLVMContext::getConstantInt(const IntegerType* Ty, uint64_t V,
                                          bool isSigned) {
   return ConstantInt::get(Ty, V, isSigned);
@@ -71,7 +77,7 @@ Constant* LLVMContext::getConstantInt(const Type* Ty, const APInt& V) {
   return ConstantInt::get(Ty, V);
 }
 
-ConstantInt* LLVMContext::getAllOnesConstantInt(const Type* Ty) {
+ConstantInt* LLVMContext::getConstantIntAllOnesValue(const Type* Ty) {
   return ConstantInt::getAllOnesValue(Ty);
 }
 
