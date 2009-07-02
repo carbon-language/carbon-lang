@@ -21,3 +21,5 @@ add_llvm_target(SparcCodeGen
   SparcTargetAsmInfo.cpp
   SparcTargetMachine.cpp
   )
+
+target_link_libraries (LLVMSparcCodeGen LLVMSelectionDAG)

@@ -23,3 +23,5 @@ add_llvm_target(AlphaCodeGen
   AlphaTargetAsmInfo.cpp
   AlphaTargetMachine.cpp
   )
+
+target_link_libraries (LLVMAlphaCodeGen LLVMSelectionDAG)

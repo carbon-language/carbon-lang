@@ -27,3 +27,5 @@ add_llvm_target(X86CodeGen
   X86TargetMachine.cpp
   X86FastISel.cpp
   )
+
+target_link_libraries (LLVMX86CodeGen LLVMSelectionDAG)

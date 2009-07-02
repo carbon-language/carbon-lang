@@ -18,3 +18,5 @@ add_llvm_target(IA64CodeGen
   IA64TargetAsmInfo.cpp
   IA64TargetMachine.cpp
   )
+
+target_link_libraries (LLVMIA64CodeGen LLVMSelectionDAG)

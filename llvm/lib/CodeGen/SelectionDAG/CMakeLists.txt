@@ -20,3 +20,5 @@ add_llvm_library(LLVMSelectionDAG
   SelectionDAGPrinter.cpp
   TargetLowering.cpp
   )
+
+target_link_libraries (LLVMSelectionDAG LLVMAnalysis LLVMAsmPrinter LLVMCodeGen)
