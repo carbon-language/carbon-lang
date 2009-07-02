@@ -27,6 +27,7 @@
 namespace llvm {
 
 class FunctionType;
+class LLVMContext;
 
 // Traits for intrusive list of basic blocks...
 template<> struct ilist_traits<BasicBlock>
@@ -125,6 +126,10 @@ public:
 
   const Type *getReturnType() const;           // Return the type of the ret val
   const FunctionType *getFunctionType() const; // Return the FunctionType for me
+
+  /// getContext - Return a pointer to the LLVMContext associated with this 
+  /// function, or NULL if this function is not bound to a context yet.
+  LLVMContext* getContext();
 
   /// isVarArg - Return true if this function takes a variable number of
   /// arguments.
