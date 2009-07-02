@@ -1,4 +1,4 @@
-//===- ThumbRegisterInfo.cpp - Thumb Register Information -------*- C++ -*-===//
+//===- Thumb2RegisterInfo.cpp - Thumb-2 Register Information -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the ARM implementation of the TargetRegisterInfo class.
+// This file contains the Thumb-2 implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -15,8 +15,8 @@
 #include "ARMAddressingModes.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMSubtarget.h"
-#include "ThumbInstrInfo.h"
-#include "ThumbRegisterInfo.h"
+#include "Thumb2InstrInfo.h"
+#include "Thumb2RegisterInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -33,22 +33,22 @@
 using namespace llvm;
 
 static cl::opt<bool>
-ThumbRegScavenging("enable-thumb-reg-scavenging",
-                   cl::Hidden,
-                   cl::desc("Enable register scavenging on Thumb"));
+Thumb2RegScavenging("enable-thumb2-reg-scavenging",
+                    cl::Hidden,
+                    cl::desc("Enable register scavenging on Thumb-2"));
 
-ThumbRegisterInfo::ThumbRegisterInfo(const TargetInstrInfo &tii,
-                                     const ARMSubtarget &sti)
+Thumb2RegisterInfo::Thumb2RegisterInfo(const TargetInstrInfo &tii,
+                                       const ARMSubtarget &sti)
   : ARMBaseRegisterInfo(tii, sti) {
 }
 
 /// emitLoadConstPool - Emits a load from constpool to materialize the
 /// specified immediate.
-void ThumbRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator &MBBI,
-                                          unsigned DestReg, int Val,
-                                          const TargetInstrInfo *TII,
-                                          DebugLoc dl) const {
+void Thumb2RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator &MBBI,
+                                           unsigned DestReg, int Val,
+                                           const TargetInstrInfo *TII,
+                                           DebugLoc dl) const {
   MachineFunction &MF = *MBB.getParent();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   Constant *C = ConstantInt::get(Type::Int32Ty, Val);
@@ -59,7 +59,7 @@ void ThumbRegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
 }
 
 const TargetRegisterClass*
-ThumbRegisterInfo::getPhysicalRegisterRegClass(unsigned Reg, MVT VT) const {
+Thumb2RegisterInfo::getPhysicalRegisterRegClass(unsigned Reg, MVT VT) const {
   if (isARMLowRegister(Reg))
     return ARM::tGPRRegisterClass;
   switch (Reg) {
@@ -74,11 +74,11 @@ ThumbRegisterInfo::getPhysicalRegisterRegClass(unsigned Reg, MVT VT) const {
 }
 
 bool
-ThumbRegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
-  return ThumbRegScavenging;
+Thumb2RegisterInfo::requiresRegisterScavenging(const MachineFunction &MF) const {
+  return Thumb2RegScavenging;
 }
 
-bool ThumbRegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
+bool Thumb2RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   unsigned CFSize = FFI->getMaxCallFrameSize();
   // It's not always a good idea to include the call frame as part of the
@@ -101,7 +101,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
                               unsigned DestReg, unsigned BaseReg,
                               int NumBytes, bool CanChangeCC,
                               const TargetInstrInfo &TII,
-                              const ThumbRegisterInfo& MRI,
+                              const Thumb2RegisterInfo& MRI,
                               DebugLoc dl) {
     bool isHigh = !isARMLowRegister(DestReg) ||
                   (BaseReg != 0 && !isARMLowRegister(BaseReg));
@@ -175,7 +175,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
                                MachineBasicBlock::iterator &MBBI,
                                unsigned DestReg, unsigned BaseReg,
                                int NumBytes, const TargetInstrInfo &TII,
-                               const ThumbRegisterInfo& MRI,
+                               const Thumb2RegisterInfo& MRI,
                                DebugLoc dl) {
   bool isSub = NumBytes < 0;
   unsigned Bytes = (unsigned)NumBytes;
@@ -279,13 +279,13 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
 static void emitSPUpdate(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator &MBBI,
                          const TargetInstrInfo &TII, DebugLoc dl,
-                         const ThumbRegisterInfo &MRI,
+                         const Thumb2RegisterInfo &MRI,
                          int NumBytes) {
   emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, ARM::SP, NumBytes, TII,
                             MRI, dl);
 }
 
-void ThumbRegisterInfo::
+void Thumb2RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   if (!hasReservedCallFrame(MF)) {
@@ -321,7 +321,7 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator &MBBI,
                               unsigned DestReg, int Imm,
                               const TargetInstrInfo &TII,
-                              const ThumbRegisterInfo& MRI,
+                              const Thumb2RegisterInfo& MRI,
                               DebugLoc dl) {
   bool isSub = Imm < 0;
   if (isSub) Imm = -Imm;
@@ -337,8 +337,8 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
       .addReg(DestReg, RegState::Kill);
 }
 
-void ThumbRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-                                            int SPAdj, RegScavenger *RS) const{
+void Thumb2RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                             int SPAdj, RegScavenger *RS) const{
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
@@ -566,7 +566,7 @@ void ThumbRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(false && "Unexpected opcode!");
 }
 
-void ThumbRegisterInfo::emitPrologue(MachineFunction &MF) const {
+void Thumb2RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
@@ -690,8 +690,8 @@ static bool isCSRestore(MachineInstr *MI, const unsigned *CSRegs) {
           isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs));
 }
 
-void ThumbRegisterInfo::emitEpilogue(MachineFunction &MF,
-                                   MachineBasicBlock &MBB) const {
+void Thumb2RegisterInfo::emitEpilogue(MachineFunction &MF,
+                                      MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert((MBBI->getOpcode() == ARM::tBX_RET ||
           MBBI->getOpcode() == ARM::tPOP_RET) &&

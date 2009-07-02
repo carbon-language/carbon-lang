@@ -24,8 +24,10 @@ add_llvm_target(ARMCodeGen
   ARMSubtarget.cpp
   ARMTargetAsmInfo.cpp
   ARMTargetMachine.cpp
-  ThumbInstrInfo.cpp
-  ThumbRegisterInfo.cpp
+  Thumb1InstrInfo.cpp
+  Thumb1RegisterInfo.cpp
+  Thumb2InstrInfo.cpp
+  Thumb2RegisterInfo.cpp
   )
 
 target_link_libraries (LLVMARMCodeGen LLVMSelectionDAG)

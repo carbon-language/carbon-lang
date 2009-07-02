@@ -1,4 +1,4 @@
-//===- ThumbInstrInfo.cpp - Thumb Instruction Information --------*- C++ -*-===//
+//===- Thumb2InstrInfo.cpp - Thumb-2 Instruction Information --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the Thumb implementation of the TargetInstrInfo class.
+// This file contains the Thumb-2 implementation of the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,17 +18,17 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/ADT/SmallVector.h"
-#include "ThumbInstrInfo.h"
+#include "Thumb2InstrInfo.h"
 
 using namespace llvm;
 
-ThumbInstrInfo::ThumbInstrInfo(const ARMSubtarget &STI)
+Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
 
-bool ThumbInstrInfo::isMoveInstr(const MachineInstr &MI,
-                                 unsigned &SrcReg, unsigned &DstReg,
-                                 unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
+bool Thumb2InstrInfo::isMoveInstr(const MachineInstr &MI,
+                                  unsigned &SrcReg, unsigned &DstReg,
+                                  unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
   SrcSubIdx = DstSubIdx = 0; // No sub-registers.
 
   unsigned oc = MI.getOpcode();
@@ -50,8 +50,8 @@ bool ThumbInstrInfo::isMoveInstr(const MachineInstr &MI,
   }
 }
 
-unsigned ThumbInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
-                                             int &FrameIndex) const {
+unsigned Thumb2InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
+                                              int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
   // FIXME: Thumb2
@@ -67,8 +67,8 @@ unsigned ThumbInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-unsigned ThumbInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
-                                            int &FrameIndex) const {
+unsigned Thumb2InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
+                                             int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
   // FIXME: Thumb2
@@ -84,11 +84,11 @@ unsigned ThumbInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-bool ThumbInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                  MachineBasicBlock::iterator I,
-                                  unsigned DestReg, unsigned SrcReg,
-                                  const TargetRegisterClass *DestRC,
-                                  const TargetRegisterClass *SrcRC) const {
+bool Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator I,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   const TargetRegisterClass *DestRC,
+                                   const TargetRegisterClass *SrcRC) const {
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
@@ -114,7 +114,7 @@ bool ThumbInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   return false;
 }
 
-bool ThumbInstrInfo::
+bool Thumb2InstrInfo::
 canFoldMemoryOperand(const MachineInstr *MI,
                      const SmallVectorImpl<unsigned> &Ops) const {
   if (Ops.size() != 1) return false;
@@ -145,7 +145,7 @@ canFoldMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-void ThumbInstrInfo::
+void Thumb2InstrInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC) const {
@@ -162,11 +162,11 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
 }
 
-void ThumbInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                    bool isKill,
-                                    SmallVectorImpl<MachineOperand> &Addr,
-                                    const TargetRegisterClass *RC,
-                                   SmallVectorImpl<MachineInstr*> &NewMIs) const{
+void Thumb2InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                     bool isKill,
+                                     SmallVectorImpl<MachineOperand> &Addr,
+                                     const TargetRegisterClass *RC,
+                                     SmallVectorImpl<MachineInstr*> &NewMIs) const{
   DebugLoc DL = DebugLoc::getUnknownLoc();
   unsigned Opc = 0;
 
@@ -184,7 +184,7 @@ void ThumbInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   return;
 }
 
-void ThumbInstrInfo::
+void Thumb2InstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
                      const TargetRegisterClass *RC) const {
@@ -200,7 +200,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
 }
 
-void ThumbInstrInfo::
+void Thumb2InstrInfo::
 loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                 SmallVectorImpl<MachineOperand> &Addr,
                 const TargetRegisterClass *RC,
@@ -220,7 +220,7 @@ loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   return;
 }
 
-bool ThumbInstrInfo::
+bool Thumb2InstrInfo::
 spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MI,
                           const std::vector<CalleeSavedInfo> &CSI) const {
@@ -240,7 +240,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-bool ThumbInstrInfo::
+bool Thumb2InstrInfo::
 restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             const std::vector<CalleeSavedInfo> &CSI) const {
@@ -271,7 +271,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-MachineInstr *ThumbInstrInfo::
+MachineInstr *Thumb2InstrInfo::
 foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                       const SmallVectorImpl<unsigned> &Ops, int FI) const {
   if (Ops.size() != 1) return NULL;

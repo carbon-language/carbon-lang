@@ -95,13 +95,18 @@ ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
 }
 
 ThumbTargetMachine::ThumbTargetMachine(const Module &M, const std::string &FS)
-  : ARMBaseTargetMachine(M, FS, true), InstrInfo(Subtarget),
+  : ARMBaseTargetMachine(M, FS, true),
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:32-i64:32:32-"
                            "i16:16:32-i8:8:32-i1:8:32-a:0:32") :
                std::string("e-p:32:32-f64:64:64-i64:64:64-"
                            "i16:16:32-i8:8:32-i1:8:32-a:0:32")),
     TLInfo(*this) {
+  // Create the approriate type of Thumb InstrInfo
+  if (Subtarget.hasThumb2())
+    InstrInfo = new Thumb2InstrInfo(Subtarget);
+  else
+    InstrInfo = new Thumb1InstrInfo(Subtarget);
 }
 
 unsigned ARMTargetMachine::getJITMatchQuality() {

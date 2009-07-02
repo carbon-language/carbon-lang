@@ -1,4 +1,4 @@
-//===- ThumbRegisterInfo.h - Thumb Register Information Impl ----*- C++ -*-===//
+//===- Thumb1RegisterInfo.h - Thumb-1 Register Information Impl ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the ARM implementation of the TargetRegisterInfo class.
+// This file contains the Thumb-1 implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef THUMBREGISTERINFO_H
-#define THUMBREGISTERINFO_H
+#ifndef THUMB1REGISTERINFO_H
+#define THUMB1REGISTERINFO_H
 
 #include "ARM.h"
 #include "ARMRegisterInfo.h"
@@ -23,9 +23,9 @@ namespace llvm {
   class TargetInstrInfo;
   class Type;
 
-struct ThumbRegisterInfo : public ARMBaseRegisterInfo {
+struct Thumb1RegisterInfo : public ARMBaseRegisterInfo {
 public:
-  ThumbRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
+  Thumb1RegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
 
   /// emitLoadConstPool - Emits a load from constpool to materialize the
   /// specified immediate.
@@ -57,4 +57,4 @@ public:
 };
 }
 
-#endif // THUMBREGISTERINFO_H
+#endif // THUMB1REGISTERINFO_H

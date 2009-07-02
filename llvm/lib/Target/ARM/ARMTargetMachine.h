@@ -22,7 +22,8 @@
 #include "ARMJITInfo.h"
 #include "ARMSubtarget.h"
 #include "ARMISelLowering.h"
-#include "ThumbInstrInfo.h"
+#include "Thumb1InstrInfo.h"
+#include "Thumb2InstrInfo.h"
 
 namespace llvm {
 
@@ -111,23 +112,27 @@ public:
 };
 
 /// ThumbTargetMachine - Thumb target machine.
+/// Due to the way architectures are handled, this represents both
+///   Thumb-1 and Thumb-2.
 ///
 class ThumbTargetMachine : public ARMBaseTargetMachine {
-  ThumbInstrInfo      InstrInfo;
-  const TargetData    DataLayout;       // Calculates type size & alignment
+  ARMBaseInstrInfo    *InstrInfo;   // either Thumb1InstrInfo or Thumb2InstrInfo
+  const TargetData    DataLayout;   // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
 public:
   ThumbTargetMachine(const Module &M, const std::string &FS);
 
-  virtual const ThumbRegisterInfo  *getRegisterInfo() const {
-    return &InstrInfo.getRegisterInfo();
+  /// returns either Thumb1RegisterInfo of Thumb2RegisterInfo
+  virtual const ARMBaseRegisterInfo *getRegisterInfo() const {
+    return &InstrInfo->getRegisterInfo();
   }
 
-  virtual       ARMTargetLowering *getTargetLowering() const {
+  virtual ARMTargetLowering *getTargetLowering() const {
     return const_cast<ARMTargetLowering*>(&TLInfo);
   }
 
-  virtual const ThumbInstrInfo   *getInstrInfo() const { return &InstrInfo; }
+  /// returns either Thumb1InstrInfo or Thumb2InstrInfo
+  virtual const ARMBaseInstrInfo *getInstrInfo() const { return InstrInfo; }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
 
   static unsigned getJITMatchQuality();
