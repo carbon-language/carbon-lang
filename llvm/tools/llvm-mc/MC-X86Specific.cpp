@@ -152,7 +152,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
       // memory operand consumed.
     } else {
       // It must be an parenthesized expression, parse it now.
-      if (ParseRelocatableExpression(Disp))
+      if (ParseParenRelocatableExpression(Disp))
         return true;
       
       // After parsing the base expression we could either have a parenthesized

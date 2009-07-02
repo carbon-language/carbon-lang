@@ -73,6 +73,16 @@ private:
   /// @result - False on success.
   bool ParseRelocatableExpression(MCValue &Res);
 
+  /// ParseParenRelocatableExpression - Parse an expression which must be
+  /// relocatable, assuming that an initial '(' has already been consumed.
+  ///
+  /// @param Res - The relocatable expression value. The result is undefined on
+  /// error.  
+  /// @result - False on success.
+  ///
+  /// @see ParseRelocatableExpression, ParseParenExpr.
+  bool ParseParenRelocatableExpression(MCValue &Res);
+
   bool ParsePrimaryExpr(AsmExpr *&Res);
   bool ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res);
   bool ParseParenExpr(AsmExpr *&Res);

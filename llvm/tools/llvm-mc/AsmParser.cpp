@@ -167,6 +167,19 @@ bool AsmParser::ParseRelocatableExpression(MCValue &Res) {
   return false;
 }
 
+bool AsmParser::ParseParenRelocatableExpression(MCValue &Res) {
+  AsmExpr *Expr;
+  
+  SMLoc StartLoc = Lexer.getLoc();
+  if (ParseParenExpr(Expr))
+    return true;
+
+  if (!Expr->EvaluateAsRelocatable(Ctx, Res))
+    return Error(StartLoc, "expected relocatable expression");
+
+  return false;
+}
+
 static unsigned getBinOpPrecedence(asmtok::TokKind K, 
                                    AsmBinaryExpr::Opcode &Kind) {
   switch (K) {
