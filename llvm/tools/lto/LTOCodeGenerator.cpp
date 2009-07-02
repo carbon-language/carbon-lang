@@ -19,6 +19,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Linker.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -69,8 +70,8 @@ const char* LTOCodeGenerator::getVersionString()
 }
 
 
-LTOCodeGenerator::LTOCodeGenerator(LLVMContext& Context) 
-    : _context(Context),
+LTOCodeGenerator::LTOCodeGenerator() 
+    : _context(getGlobalContext()),
       _linker("LinkTimeOptimizer", "ld-temp.o", _context), _target(NULL),
       _emitDwarfDebugInfo(false), _scopeRestrictionsDone(false),
       _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),

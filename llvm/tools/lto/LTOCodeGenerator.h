@@ -31,7 +31,7 @@ class LTOCodeGenerator {
 public:
     static const char*        getVersionString();
     
-                            LTOCodeGenerator(llvm::LLVMContext& Context);
+                            LTOCodeGenerator();
                             ~LTOCodeGenerator();
                             
     bool                addModule(class LTOModule*, std::string& errMsg);

@@ -32,7 +32,6 @@ namespace llvm {
     class GlobalValue;
     class Value;
     class Function;
-    class LLVMContext;
 }
 
 
@@ -52,10 +51,8 @@ public:
                                                     const char* triplePrefix);
 
     static LTOModule*        makeLTOModule(const char* path,
-                                          llvm::LLVMContext& Context,
                                           std::string& errMsg);
     static LTOModule*        makeLTOModule(const void* mem, size_t length,
-                                           llvm::LLVMContext& Context,
                                            std::string& errMsg);
 
     const char*              getTargetTriple();
@@ -91,7 +88,6 @@ private:
                                                     const char* triplePrefix);
 
     static LTOModule*       makeLTOModule(llvm::MemoryBuffer* buffer,
-                                          llvm::LLVMContext& Context,
                                                         std::string& errMsg);
     static llvm::MemoryBuffer* makeBuffer(const void* mem, size_t length);
 

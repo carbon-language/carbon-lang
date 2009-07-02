@@ -59,8 +59,6 @@ typedef struct LTOModule*         lto_module_t;
 /** opaque reference to a code generator */
 typedef struct LTOCodeGenerator*  lto_code_gen_t;
 
-typedef struct LTOContext*        lto_context_t;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -113,7 +111,7 @@ lto_module_is_object_file_in_memory_for_target(const void* mem, size_t length,
  * Returns NULL on error (check lto_get_error_message() for details).
  */
 extern lto_module_t
-lto_module_create(const char* path, LLVMContextRef Ctxt);
+lto_module_create(const char* path);
 
 
 /**
@@ -121,8 +119,7 @@ lto_module_create(const char* path, LLVMContextRef Ctxt);
  * Returns NULL on error (check lto_get_error_message() for details).
  */
 extern lto_module_t
-lto_module_create_from_memory(const void* mem, size_t length,
-                              LLVMContextRef Ctxt);
+lto_module_create_from_memory(const void* mem, size_t length);
 
 
 /**
@@ -166,7 +163,7 @@ lto_module_get_symbol_attribute(lto_module_t mod, unsigned int index);
  * Returns NULL on error (check lto_get_error_message() for details).
  */
 extern lto_code_gen_t
-lto_codegen_create(LLVMContextRef Ctxt);
+lto_codegen_create(void);
 
 
 /**

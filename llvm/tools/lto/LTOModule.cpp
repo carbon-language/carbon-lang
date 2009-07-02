@@ -69,7 +69,7 @@ bool LTOModule::isBitcodeFileForTarget(const char* path,
 bool LTOModule::isTargetMatch(MemoryBuffer* buffer, const char* triplePrefix)
 {
     OwningPtr<ModuleProvider> mp(getBitcodeModuleProvider(buffer,
-                                                          *new LLVMContext()));
+                                                          getGlobalContext()));
     // on success, mp owns buffer and both are deleted at end of this method
     if ( !mp ) {
         delete buffer;
@@ -87,13 +87,12 @@ LTOModule::LTOModule(Module* m, TargetMachine* t)
 }
 
 LTOModule* LTOModule::makeLTOModule(const char* path,
-                                    LLVMContext& Context,
                                     std::string& errMsg)
 {
     OwningPtr<MemoryBuffer> buffer(MemoryBuffer::getFile(path, &errMsg));
     if ( !buffer )
         return NULL;
-    return makeLTOModule(buffer.get(), Context, errMsg);
+    return makeLTOModule(buffer.get(), errMsg);
 }
 
 /// makeBuffer - create a MemoryBuffer from a memory range.
@@ -113,13 +112,12 @@ MemoryBuffer* LTOModule::makeBuffer(const void* mem, size_t length)
 
 
 LTOModule* LTOModule::makeLTOModule(const void* mem, size_t length, 
-                                    LLVMContext& Context,
                                     std::string& errMsg)
 {
     OwningPtr<MemoryBuffer> buffer(makeBuffer(mem, length));
     if ( !buffer )
         return NULL;
-    return makeLTOModule(buffer.get(), Context, errMsg);
+    return makeLTOModule(buffer.get(), errMsg);
 }
 
 /// getFeatureString - Return a string listing the features associated with the
@@ -142,11 +140,10 @@ std::string getFeatureString(const char *TargetTriple) {
 }
 
 LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
-                                    LLVMContext& Context,
                                     std::string& errMsg)
 {
     // parse bitcode buffer
-    OwningPtr<Module> m(ParseBitcodeFile(buffer, Context, &errMsg));
+    OwningPtr<Module> m(ParseBitcodeFile(buffer, getGlobalContext(), &errMsg));
     if ( !m )
         return NULL;
     // find machine architecture for this module
