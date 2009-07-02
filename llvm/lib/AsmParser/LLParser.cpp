@@ -131,7 +131,7 @@ bool LLParser::ParseTopLevelEntities() {
       unsigned Linkage, Visibility;
       if (ParseOptionalLinkage(Linkage) ||
           ParseOptionalVisibility(Visibility) ||
-          ParseGlobal("", 0, Linkage, true, Visibility))
+          ParseGlobal("", SMLoc(), Linkage, true, Visibility))
         return true;
       break;
     }
@@ -140,7 +140,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_protected: {   // OptionalVisibility
       unsigned Visibility;
       if (ParseOptionalVisibility(Visibility) ||
-          ParseGlobal("", 0, 0, false, Visibility))
+          ParseGlobal("", SMLoc(), 0, false, Visibility))
         return true;
       break;
     }
@@ -149,7 +149,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::kw_addrspace:     // OptionalAddrSpace
     case lltok::kw_constant:      // GlobalType
     case lltok::kw_global:        // GlobalType
-      if (ParseGlobal("", 0, 0, false, 0)) return true;
+      if (ParseGlobal("", SMLoc(), 0, false, 0)) return true;
       break;
     }
   }
@@ -3162,7 +3162,7 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
                           unsigned Opc) {
   PATypeHolder Ty(Type::VoidTy);
   Value *Size = 0;
-  LocTy SizeLoc = 0;
+  LocTy SizeLoc;
   unsigned Alignment = 0;
   if (ParseType(Ty)) return true;
 

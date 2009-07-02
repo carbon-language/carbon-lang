@@ -118,6 +118,16 @@ public:
   /// prefixed to the message.
   void PrintMessage(SMLoc Loc, const std::string &Msg, const char *Type) const;
   
+  
+  /// GetMessage - Return an SMDiagnostic at the specified location with the
+  /// specified string.
+  ///
+  /// @param Type - If non-null, the kind of message (e.g., "error") which is
+  /// prefixed to the message.
+  SMDiagnostic GetMessage(SMLoc Loc,
+                          const std::string &Msg, const char *Type) const;
+  
+  
 private:
   void PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const;
 };

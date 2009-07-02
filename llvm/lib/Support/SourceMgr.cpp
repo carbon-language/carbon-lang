@@ -90,16 +90,18 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
 }
 
 
-void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg, 
-                             const char *Type) const {
-  raw_ostream &OS = errs();
+/// GetMessage - Return an SMDiagnostic at the specified location with the
+/// specified string.
+///
+/// @param Type - If non-null, the kind of message (e.g., "error") which is
+/// prefixed to the message.
+SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, const std::string &Msg,
+                                   const char *Type) const {
   
   // First thing to do: find the current buffer containing the specified
   // location.
   int CurBuf = FindBufferContainingLoc(Loc);
   assert(CurBuf != -1 && "Invalid or unspecified location!");
-  
-  PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
   
   MemoryBuffer *CurMB = getBufferInfo(CurBuf).Buffer;
   
@@ -122,12 +124,21 @@ void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg,
   }
   PrintedMsg += Msg;
   
-  
   // Print out the line.
-  SMDiagnostic(CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
-               Loc.getPointer()-LineStart, PrintedMsg,
-               std::string(LineStart, LineEnd)).Print(0, OS);
-  
+  return SMDiagnostic(CurMB->getBufferIdentifier(), FindLineNumber(Loc, CurBuf),
+                      Loc.getPointer()-LineStart, PrintedMsg,
+                      std::string(LineStart, LineEnd));
+}
+
+void SourceMgr::PrintMessage(SMLoc Loc, const std::string &Msg, 
+                             const char *Type) const {
+  raw_ostream &OS = errs();
+
+  int CurBuf = FindBufferContainingLoc(Loc);
+  assert(CurBuf != -1 && "Invalid or unspecified location!");
+  PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
+
+  GetMessage(Loc, Msg, Type).Print(0, OS);
 }
 
 //===----------------------------------------------------------------------===//

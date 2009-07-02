@@ -73,8 +73,8 @@ namespace llvm {
     std::map<unsigned, std::pair<GlobalValue*, LocTy> > ForwardRefValIDs;
     std::vector<GlobalValue*> NumberedVals;
   public:
-    LLParser(MemoryBuffer *F, SMDiagnostic &Err, Module *m) : 
-      Context(m->getContext()), Lex(F, Err), M(m) {}
+    LLParser(MemoryBuffer *F, SourceMgr &SM, SMDiagnostic &Err, Module *m) : 
+      Context(m->getContext()), Lex(F, SM, Err), M(m) {}
     bool Run();
 
     LLVMContext& getContext() { return Context; }
