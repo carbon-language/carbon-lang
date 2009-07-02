@@ -478,8 +478,10 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         Opc = X86::MOV64rm;
         RC  = X86::GR64RegisterClass;
         
-        if (TM.getRelocationModel() != Reloc::Static)
+        if (TM.getRelocationModel() != Reloc::Static) {
           StubAM.GVOpFlags = X86II::MO_GOTPCREL;
+          StubAM.Base.Reg = X86::RIP;
+        }
       }
 
       unsigned ResultReg = createResultReg(RC);
