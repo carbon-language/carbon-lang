@@ -481,7 +481,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
   }
 
   // Attach the remaining base class specifiers to the derived class.
-  Class->setBases(Bases, NumGoodBases);
+  Class->setBases(Context, Bases, NumGoodBases);
 
   // Delete the remaining (good) base class specifiers, since their
   // data has been copied into the CXXRecordDecl.

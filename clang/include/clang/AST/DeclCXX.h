@@ -297,8 +297,11 @@ public:
                                CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
   
+  virtual void Destroy(ASTContext& C);
+  
   /// setBases - Sets the base classes of this struct or class.
-  void setBases(CXXBaseSpecifier const * const *Bases, unsigned NumBases);
+  void setBases(ASTContext &C,
+                CXXBaseSpecifier const * const *Bases, unsigned NumBases);
 
   /// getNumBases - Retrieves the number of base classes of this
   /// class.

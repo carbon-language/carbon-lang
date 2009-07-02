@@ -44,11 +44,16 @@ CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
 }
 
 CXXRecordDecl::~CXXRecordDecl() {
-  delete [] Bases;
+}
+
+void CXXRecordDecl::Destroy(ASTContext &C) {
+  C.Deallocate(Bases);
+  this->RecordDecl::Destroy(C);
 }
 
 void 
-CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases, 
+CXXRecordDecl::setBases(ASTContext &C,
+                        CXXBaseSpecifier const * const *Bases, 
                         unsigned NumBases) {
   // C++ [dcl.init.aggr]p1: 
   //   An aggregate is an array or a class (clause 9) with [...]
@@ -56,10 +61,9 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
   Aggregate = false;
 
   if (this->Bases)
-    delete [] this->Bases;
+    C.Deallocate(this->Bases);
 
-  // FIXME: allocate using the ASTContext
-  this->Bases = new CXXBaseSpecifier[NumBases];
+  this->Bases = new(C) CXXBaseSpecifier [NumBases];
   this->NumBases = NumBases;
   for (unsigned i = 0; i < NumBases; ++i)
     this->Bases[i] = *Bases[i];
