@@ -579,6 +579,28 @@ def t2LDRH_POST : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
                           "ldrh", " $dst, [$base], $offset", "$base = $base_wb",
                             []>;
 
+def t2LDRSB_PRE : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins t2addrmode_imm8:$addr),
+                            AddrModeT2_i8, IndexModePre,
+                            "ldrsb", " $dst, $addr!", "$addr.base = $base_wb",
+                            []>;
+def t2LDRSB_POST : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePost,
+                         "ldrsb", " $dst, [$base], $offset", "$base = $base_wb",
+                            []>;
+
+def t2LDRSH_PRE : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins t2addrmode_imm8:$addr),
+                            AddrModeT2_i8, IndexModePre,
+                            "ldrsh", " $dst, $addr!", "$addr.base = $base_wb",
+                            []>;
+def t2LDRSH_POST : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
+                            (ins GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePost,
+                         "ldrsh", " $dst, [$base], $offset", "$base = $base_wb",
+                            []>;
+
 // Store
 defm t2STR   : T2I_st<"str",  BinOpFrag<(store node:$LHS, node:$RHS)>>;
 defm t2STRB  : T2I_st<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;

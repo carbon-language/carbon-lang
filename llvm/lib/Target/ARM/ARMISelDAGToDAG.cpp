@@ -794,6 +794,7 @@ SDNode *ARMDAGToDAGISel::SelectT2IndexedLoad(SDValue Op) {
     return NULL;
 
   MVT LoadedVT = LD->getMemoryVT();
+  bool isSExtLd = LD->getExtensionType() == ISD::SEXTLOAD;
   SDValue Offset;
   bool isPre = (AM == ISD::PRE_INC) || (AM == ISD::PRE_DEC);
   unsigned Opcode = 0;
@@ -804,10 +805,17 @@ SDNode *ARMDAGToDAGISel::SelectT2IndexedLoad(SDValue Op) {
       Opcode = isPre ? ARM::t2LDR_PRE : ARM::t2LDR_POST;
       break;
     case MVT::i16:
-      Opcode = isPre ? ARM::t2LDRH_PRE : ARM::t2LDRH_POST;
+      if (isSExtLd)
+        Opcode = isPre ? ARM::t2LDRSH_PRE : ARM::t2LDRSH_POST;
+      else
+        Opcode = isPre ? ARM::t2LDRH_PRE : ARM::t2LDRH_POST;
       break;
     case MVT::i8:
-      Opcode = isPre ? ARM::t2LDRB_PRE : ARM::t2LDRB_POST;
+    case MVT::i1:
+      if (isSExtLd)
+        Opcode = isPre ? ARM::t2LDRSB_PRE : ARM::t2LDRSB_POST;
+      else
+        Opcode = isPre ? ARM::t2LDRB_PRE : ARM::t2LDRB_POST;
       break;
     default:
       return NULL;
