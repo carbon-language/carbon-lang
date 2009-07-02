@@ -81,6 +81,7 @@ private:
   bool ParseX86InstOperands(const char *InstName, MCInst &Inst);
   bool ParseX86Operand(X86Operand &Op);
   bool ParseX86MemOperand(X86Operand &Op);
+  bool ParseX86Register(X86Operand &Op);
   
   // Directive Parsing.
   bool ParseDirectiveDarwinSection(); // Darwin specific ".section".
