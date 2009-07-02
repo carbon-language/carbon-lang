@@ -9,6 +9,7 @@
 
 #include "llvm-c/BitReader.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <string>
 #include <cstring>
@@ -18,8 +19,24 @@ using namespace llvm;
 /* Builds a module from the bitcode in the specified memory buffer, returning a
    reference to the module via the OutModule parameter. Returns 0 on success.
    Optionally returns a human-readable error message via OutMessage. */ 
-int LLVMParseBitcode(LLVMMemoryBufferRef MemBuf, LLVMContextRef ContextRef,
+int LLVMParseBitcode(LLVMMemoryBufferRef MemBuf,
                      LLVMModuleRef *OutModule, char **OutMessage) {
+  std::string Message;
+  
+  *OutModule = wrap(ParseBitcodeFile(unwrap(MemBuf), getGlobalContext(),  
+                                     &Message));
+  if (!*OutModule) {
+    if (OutMessage)
+      *OutMessage = strdup(Message.c_str());
+    return 1;
+  }
+  
+  return 0;
+}
+
+int LLVMParseBitcodeInContext(LLVMMemoryBufferRef MemBuf,
+                              LLVMContextRef ContextRef,
+                              LLVMModuleRef *OutModule, char **OutMessage) {
   std::string Message;
   
   *OutModule = wrap(ParseBitcodeFile(unwrap(MemBuf), *unwrap(ContextRef),  
@@ -39,7 +56,25 @@ int LLVMParseBitcode(LLVMMemoryBufferRef MemBuf, LLVMContextRef ContextRef,
 int LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
                                  LLVMContextRef ContextRef,
                                  LLVMModuleProviderRef *OutMP,
-                                 char **OutMessage) {
+                                  char **OutMessage) {
+  std::string Message;
+
+  *OutMP = wrap(getBitcodeModuleProvider(unwrap(MemBuf), getGlobalContext(), 
+                                         &Message));
+                                         
+  if (!*OutMP) {
+    if (OutMessage)
+      *OutMessage = strdup(Message.c_str());
+      return 1;
+  }
+
+  return 0;
+}
+
+int LLVMGetBitcodeModuleProviderInContext(LLVMMemoryBufferRef MemBuf,
+                                          LLVMContextRef ContextRef,
+                                          LLVMModuleProviderRef *OutMP,
+                                          char **OutMessage) {
   std::string Message;
   
   *OutMP = wrap(getBitcodeModuleProvider(unwrap(MemBuf), *unwrap(ContextRef), 

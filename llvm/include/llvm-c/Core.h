@@ -201,6 +201,8 @@ void LLVMContextDispose(LLVMContextRef C);
 /* Create and destroy modules. */ 
 /** See llvm::Module::Module. */
 LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID);
+LLVMModuleRef LLVMModuleCreateWithNameInContext(const char *ModuleID,
+                                                LLVMContextRef C);
 
 /** See llvm::Module::~Module. */
 void LLVMDisposeModule(LLVMModuleRef M);
