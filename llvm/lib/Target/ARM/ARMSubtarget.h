@@ -108,7 +108,8 @@ protected:
 
   bool isThumb() const { return IsThumb; }
   bool isThumb1Only() const { return IsThumb && (ThumbMode == Thumb1); }
-  bool hasThumb2() const { return IsThumb && (ThumbMode >= Thumb2); }
+  bool isThumb2() const { return IsThumb && (ThumbMode >= Thumb2); }
+  bool hasThumb2() const { return ThumbMode >= Thumb2; }
 
   bool isR9Reserved() const { return IsR9Reserved; }
 

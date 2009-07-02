@@ -823,7 +823,7 @@ class Thumb2I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = !con(iops, (ops pred:$p));
   let AsmString = !strconcat(opc, !strconcat("${p}", asm));
   let Pattern = pattern;
-  list<Predicate> Predicates = [IsThumb, HasThumb2];
+  list<Predicate> Predicates = [IsThumb2];
 }
 
 // Same as Thumb2I except it can optionally modify CPSR. Note it's modeled as
@@ -838,7 +838,7 @@ class Thumb2sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = !con(iops, (ops pred:$p, cc_out:$s));
   let AsmString   = !strconcat(opc, !strconcat("${s}${p}", asm));
   let Pattern = pattern;
-  list<Predicate> Predicates = [IsThumb, HasThumb2];
+  list<Predicate> Predicates = [IsThumb2];
 }
 
 // Special cases
@@ -849,7 +849,7 @@ class Thumb2XI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
   let InOperandList = iops;
   let AsmString   = asm;
   let Pattern = pattern;
-  list<Predicate> Predicates = [IsThumb, HasThumb2];
+  list<Predicate> Predicates = [IsThumb2];
 }
 
 class T2I<dag oops, dag iops, string opc, string asm, list<dag> pattern>
@@ -875,7 +875,7 @@ class T2JTI<dag oops, dag iops, string asm, list<dag> pattern>
 
 // T2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.
 class T2Pat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb, HasThumb2];
+  list<Predicate> Predicates = [IsThumb2];
 }
 
 //===----------------------------------------------------------------------===//

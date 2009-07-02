@@ -99,7 +99,7 @@ def HasVFP3   : Predicate<"Subtarget->hasVFP3()">;
 def HasNEON   : Predicate<"Subtarget->hasNEON()">;
 def IsThumb   : Predicate<"Subtarget->isThumb()">;
 def IsThumb1Only : Predicate<"Subtarget->isThumb1Only()">;
-def HasThumb2 : Predicate<"Subtarget->hasThumb2()">;
+def IsThumb2  : Predicate<"Subtarget->isThumb2()">;
 def IsARM     : Predicate<"!Subtarget->isThumb()">;
 def IsDarwin    : Predicate<"Subtarget->isTargetDarwin()">;
 def IsNotDarwin : Predicate<"!Subtarget->isTargetDarwin()">;
