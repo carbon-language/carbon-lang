@@ -1643,7 +1643,7 @@ bool LLParser::ParseValID(ValID &ID) {
     std::string Str;
     if (ParseStringConstant(Str)) return true;
 
-    ID.ConstantVal = MDString::get(Str.data(), Str.data() + Str.size());
+    ID.ConstantVal = Context.getMDString(Str.data(), Str.data() + Str.size());
     return false;
   }
   case lltok::APSInt:
