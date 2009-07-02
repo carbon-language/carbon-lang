@@ -62,7 +62,6 @@ protected:
   ASTContext &getContext() const;
 
 public:
-  // virtual MemExtent getExtent(MemRegionManager& mrm) const = 0;
   virtual void Profile(llvm::FoldingSetNodeID& ID) const = 0;
 
   virtual MemRegionManager* getMemRegionManager() const = 0;
@@ -77,7 +76,9 @@ public:
   
   bool hasHeapOrStackStorage() const;
 
-  virtual void print(llvm::raw_ostream& os) const;  
+  virtual void print(llvm::raw_ostream& os) const;
+
+  void printStdErr() const;
   
   Kind getKind() const { return kind; }  
   
@@ -104,8 +105,6 @@ protected:
   }
 
 public:
-  //RegionExtent getExtent() const { return UndefinedExtent(); }
-
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   bool isBoundable() const { return false; }

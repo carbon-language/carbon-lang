@@ -143,6 +143,10 @@ void CodeTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 // Region pretty-printing.
 //===----------------------------------------------------------------------===//
 
+void MemRegion::printStdErr() const {
+  print(llvm::errs());
+}
+
 std::string MemRegion::getString() const {
   std::string s;
   llvm::raw_string_ostream os(s);
