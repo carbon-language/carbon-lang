@@ -15,6 +15,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/MDNode.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "LLVMContextImpl.h"
 
@@ -403,6 +404,11 @@ Constant* LLVMContext::getConstantVector(Constant* const* Vals,
 
 ConstantVector* LLVMContext::getConstantVectorAllOnes(const VectorType* Ty) {
   return ConstantVector::getAllOnesValue(Ty);
+}
+
+// MDNode accessors
+MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
+  return MDNode::get(Vals, NumVals);
 }
 
 // FunctionType accessors

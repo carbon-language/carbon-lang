@@ -31,6 +31,7 @@ class ConstantArray;
 class ConstantFP;
 class ConstantVector;
 class UndefValue;
+class MDNode;
 class IntegerType;
 class PointerType;
 class StructType;
@@ -175,6 +176,9 @@ public:
   Constant* getConstantVector(const std::vector<Constant*>& V);
   Constant* getConstantVector(Constant* const* Vals, unsigned NumVals);
   ConstantVector* getConstantVectorAllOnes(const VectorType* Ty);
+  
+  // MDNode accessors
+  MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
   
   // FunctionType accessors
   FunctionType* getFunctionType(const Type* Result,
