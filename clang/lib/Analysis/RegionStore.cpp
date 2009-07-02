@@ -959,7 +959,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
     return UndefinedVal();
   }
 
-  if (R->hasStackStorage()) {
+  if (R->hasStackStorage() && !R->hasParametersStorage()) {
     // Currently we don't reason specially about Clang-style vectors.  Check
     // if superR is a vector and if so return Unknown.
     if (const TypedRegion *typedSuperR = dyn_cast<TypedRegion>(superR)) {
@@ -1006,7 +1006,11 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
     assert(0 && "Unknown default value");
   }
 
-  if (R->hasHeapOrStackStorage())
+  // FIXME: Is this correct?  Should it be UnknownVal?
+  if (R->hasHeapStorage())
+    return UndefinedVal();
+  
+  if (R->hasStackStorage() && !R->hasParametersStorage())
     return UndefinedVal();
 
   // If the region is already cast to another type, use that type to create the

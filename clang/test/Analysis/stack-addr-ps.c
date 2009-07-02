@@ -1,6 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s
-
-// NOWORK: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 
 #include <stdlib.h>
 
@@ -46,9 +45,15 @@ int array_test(int x[2]) {
   return x[0]; // no-warning
 }
 
-struct baz { int x; };
+struct baz {
+  int x;
+  int y[2];
+};
 
-int struct_test(struct baz byVal) {
-  return byVal.x; // no-warning;
+int struct_test(struct baz byVal, int flag) {
+  if (flag)  
+    return byVal.x; // no-warning
+  else {
+    return byVal.y[0]; // no-warning
+  }
 }
-

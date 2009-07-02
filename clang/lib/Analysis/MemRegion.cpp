@@ -368,6 +368,13 @@ bool MemRegion::hasGlobalsStorage() const {
   return false;
 }
 
+bool MemRegion::hasParametersStorage() const {
+  if (const MemSpaceRegion *MS = getMemorySpace())
+    return MS == getMemRegionManager()->getStackArgumentsRegion();
+  
+  return false;
+}
+
 bool MemRegion::hasGlobalsOrParametersStorage() const {
   if (const MemSpaceRegion *MS = getMemorySpace()) {
     MemRegionManager *Mgr = getMemRegionManager();
