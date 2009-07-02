@@ -40,11 +40,18 @@ bool AsmParser::Run() {
   // Prime the lexer.
   Lexer.Lex();
   
-  while (Lexer.isNot(asmtok::Eof))
-    if (ParseStatement())
-      return true;
+  bool HadError = false;
   
-  return false;
+  // While we have input, parse each statement.
+  while (Lexer.isNot(asmtok::Eof)) {
+    if (!ParseStatement()) continue;
+  
+    // If we had an error, remember it and recover by skipping to the next line.
+    HadError = true;
+    EatToEndOfStatement();
+  }
+  
+  return HadError;
 }
 
 /// EatToEndOfStatement - Throw away the rest of the line for testing purposes.
