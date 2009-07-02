@@ -374,7 +374,8 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(STAT_CACHE);
   RECORD(EXT_VECTOR_DECLS);
   RECORD(OBJC_CATEGORY_IMPLEMENTATIONS);
-
+  RECORD(COMMENT_RANGES);
+  
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
   RECORD(SM_SLOC_FILE_ENTRY);
@@ -987,6 +988,24 @@ void PCHWriter::WritePreprocessor(const Preprocessor &PP) {
     ++NumMacros;
   }
   Stream.ExitBlock();
+}
+
+void PCHWriter::WriteComments(ASTContext &Context) {
+  using namespace llvm;
+  
+  if (Context.Comments.empty())
+    return;
+  
+  BitCodeAbbrev *CommentAbbrev = new BitCodeAbbrev();
+  CommentAbbrev->Add(BitCodeAbbrevOp(pch::COMMENT_RANGES));
+  CommentAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned CommentCode = Stream.EmitAbbrev(CommentAbbrev);
+  
+  RecordData Record;
+  Record.push_back(pch::COMMENT_RANGES);
+  Stream.EmitRecordWithBlob(CommentCode, Record, 
+                            (const char*)&Context.Comments[0],
+                            Context.Comments.size() * sizeof(SourceRange));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1746,7 +1765,8 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls) {
     WriteStatCache(*StatCalls);
   WriteSourceManagerBlock(Context.getSourceManager(), PP);
   WritePreprocessor(PP);
-
+  WriteComments(Context);  
+  
   // Keep writing types and declarations until all types and
   // declarations have been written.
   do {

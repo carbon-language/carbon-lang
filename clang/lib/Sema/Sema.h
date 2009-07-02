@@ -362,6 +362,8 @@ public:
     return CurBlock ? CurBlock->SwitchStack : FunctionSwitchStack;
   }
   
+  virtual void ActOnComment(SourceRange Comment);
+
   //===--------------------------------------------------------------------===//
   // Type Analysis / Processing: SemaType.cpp.
   //

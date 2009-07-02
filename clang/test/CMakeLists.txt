@@ -8,6 +8,7 @@ set(CLANG_TEST_DIRECTORIES
   "Driver"
   "FixIt"
   "Frontend"
+  "Index"
   "Lexer"
   "Misc"
   "PCH"
@@ -54,6 +55,6 @@ if(PYTHONINTERP_FOUND)
     --clang-cc=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang-cc
     ${all_testdirs}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DEPENDS clang clang-cc
+    DEPENDS clang clang-cc index-test
     COMMENT "Running Clang regression tests")
 endif()  

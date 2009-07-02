@@ -26,6 +26,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Allocator.h"
+#include <vector>
 
 namespace clang {
   
@@ -35,6 +36,7 @@ class FileEntry;
 class HeaderSearch;
 class PragmaNamespace;
 class PragmaHandler;
+class CommentHandler;
 class ScratchBuffer;
 class TargetInfo;
 class PPCallbacks;
@@ -108,6 +110,10 @@ class Preprocessor {
   /// PragmaHandlers - This tracks all of the pragmas that the client registered
   /// with this preprocessor.
   PragmaNamespace *PragmaHandlers;
+  
+  /// \brief Tracks all of the comment handlers that the client registered 
+  /// with this preprocessor.
+  std::vector<CommentHandler *> CommentHandlers;
   
   /// CurLexer - This is the current top of the stack that we're lexing from if
   /// not expanding a macro and we are lexing directly from source code.
@@ -301,6 +307,14 @@ public:
   /// to remove a handler that has not been registered.
   void RemovePragmaHandler(const char *Namespace, PragmaHandler *Handler);
 
+  /// \brief Add the specified comment handler to the preprocessor.
+  void AddCommentHandler(CommentHandler *Handler);
+  
+  /// \brief Remove the specified comment handler.
+  ///
+  /// It is an error to remove a handler that has not been registered.
+  void RemoveCommentHandler(CommentHandler *Handler);
+  
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
   /// which implicitly adds the builtin defines etc.
   void EnterMainSourceFile();  
@@ -791,6 +805,7 @@ public:
   void HandlePragmaSystemHeader(Token &SysHeaderTok);
   void HandlePragmaDependency(Token &DependencyTok);
   void HandlePragmaComment(Token &CommentTok);
+  void HandleComment(SourceRange Comment);
 };
 
 /// PreprocessorFactory - A generic factory interface for lazily creating
@@ -799,6 +814,15 @@ class PreprocessorFactory {
 public:
   virtual ~PreprocessorFactory();
   virtual Preprocessor* CreatePreprocessor() = 0;  
+};
+  
+/// \brief Abstract base class that describes a handler that will receive 
+/// source ranges for each of the comments encountered in the source file.
+class CommentHandler {
+public:
+  virtual ~CommentHandler();
+  
+  virtual void HandleComment(Preprocessor &PP, SourceRange Comment) = 0;
 };
   
 }  // end namespace clang

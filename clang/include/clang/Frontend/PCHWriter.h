@@ -166,6 +166,7 @@ private:
   void WriteSourceManagerBlock(SourceManager &SourceMgr, 
                                const Preprocessor &PP);
   void WritePreprocessor(const Preprocessor &PP);
+  void WriteComments(ASTContext &Context);
   void WriteType(const Type *T);
   void WriteTypesBlock(ASTContext &Context);
   uint64_t WriteDeclContextLexicalBlock(ASTContext &Context, DeclContext *DC);

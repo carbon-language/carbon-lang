@@ -903,7 +903,10 @@ bool Lexer::SkipBCPLComment(Token &Result, const char *CurPtr) {
   } while (C != '\n' && C != '\r');
 
   // Found but did not consume the newline.
-    
+  if (PP)
+    PP->HandleComment(SourceRange(getSourceLocation(BufferPtr), 
+                                  getSourceLocation(CurPtr)));
+                   
   // If we are returning comments as tokens, return this comment as a token.
   if (inKeepCommentMode())
     return SaveBCPLComment(Result, CurPtr);
@@ -1146,6 +1149,10 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr) {
     C = *CurPtr++;
   }
   
+  if (PP) 
+    PP->HandleComment(SourceRange(getSourceLocation(BufferPtr), 
+                                  getSourceLocation(CurPtr)));
+
   // If we are returning comments as tokens, return this comment as a token.
   if (inKeepCommentMode()) {
     FormTokenWithChars(Result, CurPtr, tok::comment);

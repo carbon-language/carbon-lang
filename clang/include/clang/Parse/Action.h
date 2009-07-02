@@ -152,6 +152,10 @@ public:
   /// an empty string if not.  This is used for pretty crash reporting. 
   virtual std::string getDeclName(DeclPtrTy D) { return ""; }
   
+  /// \brief Invoked for each comment in the source code, providing the source
+  /// range that contains the comment.
+  virtual void ActOnComment(SourceRange Comment) { }
+  
   //===--------------------------------------------------------------------===//
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//

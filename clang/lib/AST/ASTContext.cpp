@@ -37,7 +37,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        bool FreeMem, unsigned size_reserve) : 
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
   ObjCFastEnumerationStateTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), 
-  FreeMemory(FreeMem), Target(t), Idents(idents), Selectors(sels),
+  LoadedExternalComments(false), FreeMemory(FreeMem), Target(t), 
+  Idents(idents), Selectors(sels),
   BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts) {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
   InitBuiltinTypes();
@@ -200,6 +201,207 @@ void ASTContext::InitBuiltinTypes() {
 
   // nullptr type (C++0x 2.14.7)
   InitBuiltinType(NullPtrTy,           BuiltinType::NullPtr);
+}
+
+namespace {
+  class BeforeInTranslationUnit 
+    : std::binary_function<SourceRange, SourceRange, bool> {
+    SourceManager *SourceMgr;
+    
+  public:
+    explicit BeforeInTranslationUnit(SourceManager *SM) : SourceMgr(SM) { }
+      
+    bool operator()(SourceRange X, SourceRange Y) {
+      return SourceMgr->isBeforeInTranslationUnit(X.getBegin(), Y.getBegin());
+    }
+  };
+}
+
+/// \brief Determine whether the given comment is a Doxygen-style comment.
+///
+/// \param Start the start of the comment text.
+///
+/// \param End the end of the comment text.
+///
+/// \param Member whether we want to check whether this is a member comment
+/// (which requires a < after the Doxygen-comment delimiter). Otherwise,
+/// we only return true when we find a non-member comment.
+static bool 
+isDoxygenComment(SourceManager &SourceMgr, SourceRange Comment, 
+                 bool Member = false) {
+  const char *BufferStart 
+    = SourceMgr.getBufferData(SourceMgr.getFileID(Comment.getBegin())).first;
+  const char *Start = BufferStart + SourceMgr.getFileOffset(Comment.getBegin());
+  const char* End = BufferStart + SourceMgr.getFileOffset(Comment.getEnd());
+  
+  if (End - Start < 4)
+    return false;
+
+  assert(Start[0] == '/' && "Not a comment?");
+  if (Start[1] == '*' && !(Start[2] == '!' || Start[2] == '*'))
+    return false;
+  if (Start[1] == '/' && !(Start[2] == '!' || Start[2] == '/'))
+    return false;
+
+  return (Start[3] == '<') == Member;
+}
+
+/// \brief Retrieve the comment associated with the given declaration, if
+/// it has one. 
+const char *ASTContext::getCommentForDecl(const Decl *D) {
+  if (!D)
+    return 0;
+  
+  // Check whether we have cached a comment string for this declaration
+  // already.
+  llvm::DenseMap<const Decl *, std::string>::iterator Pos 
+    = DeclComments.find(D);
+  if (Pos != DeclComments.end())
+    return Pos->second.c_str();
+
+  // If we have an external AST source and have not yet loaded comments from 
+  // that source, do so now.
+  if (ExternalSource && !LoadedExternalComments) {
+    std::vector<SourceRange> LoadedComments;
+    ExternalSource->ReadComments(LoadedComments);
+    
+    if (!LoadedComments.empty())
+      Comments.insert(Comments.begin(), LoadedComments.begin(),
+                      LoadedComments.end());
+    
+    LoadedExternalComments = true;
+  }
+  
+  // If there are no comments anywhere, we won't find anything.  
+  if (Comments.empty())
+    return 0;
+
+  // If the declaration doesn't map directly to a location in a file, we
+  // can't find the comment.
+  SourceLocation DeclStartLoc = D->getLocStart();
+  if (DeclStartLoc.isInvalid() || !DeclStartLoc.isFileID())
+    return 0;
+
+  // Find the comment that occurs just before this declaration.
+  std::vector<SourceRange>::iterator LastComment
+    = std::lower_bound(Comments.begin(), Comments.end(), 
+                       SourceRange(DeclStartLoc),
+                       BeforeInTranslationUnit(&SourceMgr));
+  
+  // Decompose the location for the start of the declaration and find the
+  // beginning of the file buffer.
+  std::pair<FileID, unsigned> DeclStartDecomp 
+    = SourceMgr.getDecomposedLoc(DeclStartLoc);
+  const char *FileBufferStart 
+    = SourceMgr.getBufferData(DeclStartDecomp.first).first;
+  
+  // First check whether we have a comment for a member.
+  if (LastComment != Comments.end() &&
+      !isa<TagDecl>(D) && !isa<NamespaceDecl>(D) &&
+      isDoxygenComment(SourceMgr, *LastComment, true)) {
+    std::pair<FileID, unsigned> LastCommentEndDecomp
+      = SourceMgr.getDecomposedLoc(LastComment->getEnd());
+    if (DeclStartDecomp.first == LastCommentEndDecomp.first &&
+        SourceMgr.getLineNumber(DeclStartDecomp.first, DeclStartDecomp.second)
+          == SourceMgr.getLineNumber(LastCommentEndDecomp.first, 
+                                     LastCommentEndDecomp.second)) {
+      // The Doxygen member comment comes after the declaration starts and
+      // is on the same line and in the same file as the declaration. This
+      // is the comment we want.
+      std::string &Result = DeclComments[D];
+      Result.append(FileBufferStart + 
+                      SourceMgr.getFileOffset(LastComment->getBegin()), 
+                    FileBufferStart + LastCommentEndDecomp.second + 1);
+      return Result.c_str();
+    }
+  }
+  
+  if (LastComment == Comments.begin())
+    return 0;
+  --LastComment;
+
+  // Decompose the end of the comment.
+  std::pair<FileID, unsigned> LastCommentEndDecomp
+    = SourceMgr.getDecomposedLoc(LastComment->getEnd());
+  
+  // If the comment and the declaration aren't in the same file, then they
+  // aren't related.
+  if (DeclStartDecomp.first != LastCommentEndDecomp.first)
+    return 0;
+  
+  // Check that we actually have a Doxygen comment.
+  if (!isDoxygenComment(SourceMgr, *LastComment))
+    return 0;
+      
+  // Compute the starting line for the declaration and for the end of the
+  // comment (this is expensive).
+  unsigned DeclStartLine 
+    = SourceMgr.getLineNumber(DeclStartDecomp.first, DeclStartDecomp.second);
+  unsigned CommentEndLine
+    = SourceMgr.getLineNumber(LastCommentEndDecomp.first, 
+                              LastCommentEndDecomp.second);
+  
+  // If the comment does not end on the line prior to the declaration, then
+  // the comment is not associated with the declaration at all.
+  if (CommentEndLine + 1 != DeclStartLine)
+    return 0;
+  
+  // We have a comment, but there may be more comments on the previous lines.
+  // Keep looking so long as the comments are still Doxygen comments and are
+  // still adjacent.
+  unsigned ExpectedLine 
+    = SourceMgr.getSpellingLineNumber(LastComment->getBegin()) - 1;
+  std::vector<SourceRange>::iterator FirstComment = LastComment;
+  while (FirstComment != Comments.begin()) {
+    // Look at the previous comment
+    --FirstComment;
+    std::pair<FileID, unsigned> Decomp
+      = SourceMgr.getDecomposedLoc(FirstComment->getEnd());
+    
+    // If this previous comment is in a different file, we're done.
+    if (Decomp.first != DeclStartDecomp.first) {
+      ++FirstComment;
+      break;
+    }
+    
+    // If this comment is not a Doxygen comment, we're done.
+    if (!isDoxygenComment(SourceMgr, *FirstComment)) {
+      ++FirstComment;
+      break;
+    }
+    
+    // If the line number is not what we expected, we're done.
+    unsigned Line = SourceMgr.getLineNumber(Decomp.first, Decomp.second);
+    if (Line != ExpectedLine) {
+      ++FirstComment;
+      break;
+    }
+    
+    // Set the next expected line number.
+    ExpectedLine 
+      = SourceMgr.getSpellingLineNumber(FirstComment->getBegin()) - 1;
+  }
+  
+  // The iterator range [FirstComment, LastComment] contains all of the
+  // BCPL comments that, together, are associated with this declaration.
+  // Form a single comment block string for this declaration that concatenates
+  // all of these comments.
+  std::string &Result = DeclComments[D];
+  while (FirstComment != LastComment) {
+    std::pair<FileID, unsigned> DecompStart
+      = SourceMgr.getDecomposedLoc(FirstComment->getBegin());
+    std::pair<FileID, unsigned> DecompEnd
+      = SourceMgr.getDecomposedLoc(FirstComment->getEnd());
+    Result.append(FileBufferStart + DecompStart.second,
+                  FileBufferStart + DecompEnd.second + 1);
+    ++FirstComment;
+  }
+  
+  // Append the last comment line.
+  Result.append(FileBufferStart + 
+                  SourceMgr.getFileOffset(LastComment->getBegin()), 
+                FileBufferStart + LastCommentEndDecomp.second + 1);
+  return Result.c_str();
 }
 
 //===----------------------------------------------------------------------===//

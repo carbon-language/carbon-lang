@@ -20,6 +20,19 @@
 #include "ParsePragma.h"
 using namespace clang;
 
+/// \brief A comment handler that passes comments found by the preprocessor
+/// to the parser action.
+class ActionCommentHandler : public CommentHandler {
+  Action &Actions;
+  
+public:
+  explicit ActionCommentHandler(Action &Actions) : Actions(Actions) { }
+  
+  virtual void HandleComment(Preprocessor &PP, SourceRange Comment) {
+    Actions.ActOnComment(Comment);
+  }
+};
+
 Parser::Parser(Preprocessor &pp, Action &actions)
   : CrashInfo(*this), PP(pp), Actions(actions), Diags(PP.getDiagnostics()), 
     GreaterThanIsOperator(true) {
@@ -43,6 +56,9 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   WeakHandler.reset(new
           PragmaWeakHandler(&PP.getIdentifierTable().get("weak"), actions));
   PP.AddPragmaHandler(0, WeakHandler.get());
+      
+  CommentHandler.reset(new ActionCommentHandler(actions));
+  PP.AddCommentHandler(CommentHandler.get());    
 }
 
 /// If a crash happens while the parser is active, print out a line indicating
@@ -294,6 +310,7 @@ Parser::~Parser() {
   UnusedHandler.reset();
   PP.RemovePragmaHandler(0, WeakHandler.get());
   WeakHandler.reset();
+  PP.RemoveCommentHandler(CommentHandler.get());
 }
 
 /// Initialize - Warm up the parser.

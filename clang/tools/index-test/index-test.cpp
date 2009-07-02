@@ -130,6 +130,9 @@ int main(int argc, char **argv) {
       OS << ND->getNameAsString();
     OS << "\n";
     
+    if (const char *Comment = AST->getASTContext().getCommentForDecl(Point.D))
+      OS << "Comment associated with this declaration:\n" << Comment << "\n";
+        
     if (Point.Node) {
       OS << "Statement node at point: " << Point.Node->getStmtClassName()
          << " ";

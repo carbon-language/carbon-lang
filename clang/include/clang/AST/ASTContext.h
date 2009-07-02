@@ -141,10 +141,19 @@ class ASTContext {
   ///  this ASTContext object.
   LangOptions LangOpts;
 
+  /// \brief Whether we have already loaded comment source ranges from an
+  /// external source.
+  bool LoadedExternalComments;
+  
   /// MallocAlloc/BumpAlloc - The allocator objects used to create AST objects.
   bool FreeMemory;
   llvm::MallocAllocator MallocAlloc;
   llvm::BumpPtrAllocator BumpAlloc;
+  
+  /// \brief Mapping from declarations to their comments, once we have
+  /// already looked up the comment associated with a given declaration.
+  llvm::DenseMap<const Decl *, std::string> DeclComments;
+  
 public:  
   TargetInfo &Target;
   IdentifierTable &Idents;
@@ -154,6 +163,10 @@ public:
   llvm::OwningPtr<ExternalASTSource> ExternalSource;
   clang::PrintingPolicy PrintingPolicy;
 
+  /// \brief Source ranges for all of the comments in the source file,
+  /// sorted in order of appearance in the translation unit.
+  std::vector<SourceRange> Comments;
+  
   SourceManager& getSourceManager() { return SourceMgr; }
   const SourceManager& getSourceManager() const { return SourceMgr; }
   void *Allocate(unsigned Size, unsigned Align = 8) {
@@ -178,7 +191,8 @@ public:
   
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
-
+  const char *getCommentForDecl(const Decl *D);
+  
   // Builtin Types.
   QualType VoidTy;
   QualType BoolTy;

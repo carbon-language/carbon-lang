@@ -476,3 +476,26 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   if (II.isExtensionToken() && !DisableMacroExpansion)
     Diag(Identifier, diag::ext_token_used);
 }
+
+void Preprocessor::AddCommentHandler(CommentHandler *Handler) {
+  assert(Handler && "NULL comment handler");
+  assert(std::find(CommentHandlers.begin(), CommentHandlers.end(), Handler) ==
+         CommentHandlers.end() && "Comment handler already registered");
+  CommentHandlers.push_back(Handler);
+}
+
+void Preprocessor::RemoveCommentHandler(CommentHandler *Handler) {
+  std::vector<CommentHandler *>::iterator Pos
+  = std::find(CommentHandlers.begin(), CommentHandlers.end(), Handler);
+  assert(Pos != CommentHandlers.end() && "Comment handler not registered");
+  CommentHandlers.erase(Pos);
+}
+
+void Preprocessor::HandleComment(SourceRange Comment) {
+  for (std::vector<CommentHandler *>::iterator H = CommentHandlers.begin(),
+       HEnd = CommentHandlers.end();
+       H != HEnd; ++H)
+    (*H)->HandleComment(*this, Comment);
+}
+
+CommentHandler::~CommentHandler() { }

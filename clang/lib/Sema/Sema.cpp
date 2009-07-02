@@ -345,3 +345,7 @@ Sema::SemaDiagnosticBuilder::~SemaDiagnosticBuilder() {
       = SemaRef.ActiveTemplateInstantiations.back();
   }
 }
+
+void Sema::ActOnComment(SourceRange Comment) {
+  Context.Comments.push_back(Comment);
+}

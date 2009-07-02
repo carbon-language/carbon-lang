@@ -19,6 +19,7 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
+#include <algorithm>
 using namespace clang;
 
 // Out-of-line destructor to provide a home for the class.

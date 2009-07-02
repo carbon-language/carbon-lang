@@ -344,7 +344,8 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context)
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), NumStatHits(0), NumStatMisses(0), 
+    TotalNumSelectors(0), Comments(0), NumComments(0), 
+    NumStatHits(0), NumStatMisses(0), 
     NumSLocEntriesRead(0), NumStatementsRead(0), 
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
     NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
@@ -1350,6 +1351,11 @@ PCHReader::ReadPCHBlock() {
     case pch::ORIGINAL_FILE_NAME:
       OriginalFileName.assign(BlobStart, BlobLen);
       break;
+        
+    case pch::COMMENT_RANGES:
+      Comments = (SourceRange *)BlobStart;
+      NumComments = BlobLen / sizeof(SourceRange);
+      break;
     }
   }
   Error("premature end of bitstream in PCH file");
@@ -1662,6 +1668,12 @@ bool PCHReader::ParseLanguageOptions(
   }
 
   return false;
+}
+
+void PCHReader::ReadComments(std::vector<SourceRange> &Comments) {
+  Comments.resize(NumComments);
+  std::copy(this->Comments, this->Comments + NumComments,
+            Comments.begin());
 }
 
 /// \brief Read and return the type at the given offset.

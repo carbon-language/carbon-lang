@@ -82,7 +82,8 @@ class Parser {
   llvm::OwningPtr<PragmaHandler> PackHandler;
   llvm::OwningPtr<PragmaHandler> UnusedHandler;
   llvm::OwningPtr<PragmaHandler> WeakHandler;
-
+  llvm::OwningPtr<clang::CommentHandler> CommentHandler;
+  
   /// Whether the '>' token acts as an operator or not. This will be
   /// true except when we are parsing an expression within a C++
   /// template argument list, where the '>' closes the template
