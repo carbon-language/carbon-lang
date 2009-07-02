@@ -14,6 +14,7 @@
 
 #include "AsmParser.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/Support/SourceMgr.h"
 using namespace llvm;
 
 /// X86Operand - Instances of this class represent one X86 machine instruction.
@@ -178,26 +179,48 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   }
   
   if (Lexer.is(asmtok::Comma)) {
-    Lexer.Lex(); // eat the comma.
-    
+    Lexer.Lex(); // Eat the comma.
+
+    // Following the comma we should have either an index register, or a scale
+    // value. We don't support the later form, but we want to parse it
+    // correctly.
+    //
+    // Not that even though it would be completely consistent to support syntax
+    // like "1(%eax,,1)", the assembler doesn't.
     if (Lexer.is(asmtok::Register)) {
       if (ParseX86Register(Op))
         return true;
       IndexReg = Op.getReg();
       Scale = 1;      // If not specified, the scale defaults to 1.
-    }
     
-    if (Lexer.is(asmtok::Comma)) {
-      Lexer.Lex(); // Eat the comma.
+      if (Lexer.isNot(asmtok::RParen)) {
+        // Parse the scale amount:
+        //  ::= ',' [scale-expression]
+        if (Lexer.isNot(asmtok::Comma))
+          return true;
+        Lexer.Lex(); // Eat the comma.
 
-      // If present, get and validate scale amount.
-      if (Lexer.is(asmtok::IntVal)) {
-        int64_t ScaleVal = Lexer.getCurIntVal();
-        if (ScaleVal != 1 && ScaleVal != 2 && ScaleVal != 4 && ScaleVal != 8)
-          return TokError("scale factor in address must be 1, 2, 4 or 8");
-        Lexer.Lex();  // eat the scale.
-        Scale = (unsigned)ScaleVal;
+        if (Lexer.isNot(asmtok::RParen)) {
+          int64_t ScaleVal;
+          if (ParseAbsoluteExpression(ScaleVal))
+            return true;
+          
+          // Validate the scale amount.
+          if (ScaleVal != 1 && ScaleVal != 2 && ScaleVal != 4 && ScaleVal != 8)
+            return TokError("scale factor in address must be 1, 2, 4 or 8");
+          Scale = (unsigned)ScaleVal;
+        }
       }
+    } else if (Lexer.isNot(asmtok::RParen)) {
+      // Otherwise we have the unsupported form of a scale amount without an
+      // index.
+      SMLoc Loc = Lexer.getLoc();
+
+      int64_t Value;
+      if (ParseAbsoluteExpression(Value))
+        return true;
+      
+      return Error(Loc, "cannot have scale factor without index register");
     }
   }
   
