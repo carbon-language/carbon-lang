@@ -33,6 +33,11 @@ namespace llvm {
   class Value;
   struct DbgStopPointInst;
   struct DbgDeclareInst;
+  struct DbgFuncStartInst;
+  struct DbgRegionStartInst;
+  struct DbgRegionEndInst;
+  class DebugLoc;
+  class DebugLocTracker;
   class Instruction;
 
   class DIDescriptor {
@@ -547,6 +552,49 @@ namespace llvm {
                                SmallVector<GlobalVariable *, 2> &CompileUnits,
                                SmallVector<GlobalVariable *, 4> &GlobalVars,
                                SmallVector<GlobalVariable *, 4> &Subprograms);
+
+  /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, 
+                                 CodeGenOpt::Level OptLev);
+
+  /// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI,
+                                 CodeGenOpt::Level OptLev);
+
+  /// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI,
+                                 CodeGenOpt::Level OptLev);
+
+  /// isValidDebugInfoIntrinsic - Return true if REI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI,
+                                 CodeGenOpt::Level OptLev);
+
+  /// isValidDebugInfoIntrinsic - Return true if DI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI,
+                                 CodeGenOpt::Level OptLev);
+
+  /// ExtractDebugLocation - Extract debug location information 
+  /// from llvm.dbg.stoppoint intrinsic.
+  DebugLoc ExtractDebugLocation(DbgStopPointInst &SPI,
+                                CodeGenOpt::Level OptLev,
+                                DebugLocTracker &DebugLocInfo);
+
+  /// ExtractDebugLocation - Extract debug location information 
+  /// from llvm.dbg.func_start intrinsic.
+  DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
+                                CodeGenOpt::Level OptLev,
+                                DebugLocTracker &DebugLocInfo);
+
+  /// isInlinedFnStart - Return true if FSI is starting an inlined function.
+  bool isInlinedFnStart(DbgFuncStartInst &FSI, const Function *CurrentFn);
+
+  /// isInlinedFnEnd - Return true if REI is ending an inlined function.
+  bool isInlinedFnEnd(DbgRegionEndInst &REI, const Function *CurrentFn);
 
 } // end namespace llvm
 

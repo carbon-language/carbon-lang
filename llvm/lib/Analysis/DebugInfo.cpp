@@ -21,6 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/Streams.h"
 
 using namespace llvm;
@@ -1050,4 +1051,114 @@ namespace llvm {
       }
     }
   }
+
+  /// isValidDebugInfoIntrinsic - Return true if SPI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgStopPointInst &SPI, 
+                                 CodeGenOpt::Level OptLev) {
+    return DIDescriptor::ValidDebugInfo(SPI.getContext(), OptLev);
+  }
+
+  /// isValidDebugInfoIntrinsic - Return true if FSI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgFuncStartInst &FSI,
+                                 CodeGenOpt::Level OptLev) {
+    return DIDescriptor::ValidDebugInfo(FSI.getSubprogram(), OptLev);
+  }
+
+  /// isValidDebugInfoIntrinsic - Return true if RSI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgRegionStartInst &RSI,
+                                 CodeGenOpt::Level OptLev) {
+    return DIDescriptor::ValidDebugInfo(RSI.getContext(), OptLev);
+  }
+
+  /// isValidDebugInfoIntrinsic - Return true if REI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgRegionEndInst &REI,
+                                 CodeGenOpt::Level OptLev) {
+    return DIDescriptor::ValidDebugInfo(REI.getContext(), OptLev);
+  }
+
+
+  /// isValidDebugInfoIntrinsic - Return true if DI is a valid debug 
+  /// info intrisic.
+  bool isValidDebugInfoIntrinsic(DbgDeclareInst &DI,
+                                 CodeGenOpt::Level OptLev) {
+    return DIDescriptor::ValidDebugInfo(DI.getVariable(), OptLev);
+  }
+
+  /// ExtractDebugLocation - Extract debug location information 
+  /// from llvm.dbg.stoppoint intrinsic.
+  DebugLoc ExtractDebugLocation(DbgStopPointInst &SPI,
+                                CodeGenOpt::Level OptLev,
+                                DebugLocTracker &DebugLocInfo) {
+    DebugLoc DL;
+    Value *Context = SPI.getContext();
+    if (DIDescriptor::ValidDebugInfo(Context, OptLev) == false)
+      return DL;
+
+    // If this location is already tracked then use it.
+    DebugLocTuple Tuple(cast<GlobalVariable>(Context), SPI.getLine(), 
+                        SPI.getColumn());
+    DenseMap<DebugLocTuple, unsigned>::iterator II
+      = DebugLocInfo.DebugIdMap.find(Tuple);
+    if (II != DebugLocInfo.DebugIdMap.end())
+      return DebugLoc::get(II->second);
+
+    // Add a new location entry.
+    unsigned Id = DebugLocInfo.DebugLocations.size();
+    DebugLocInfo.DebugLocations.push_back(Tuple);
+    DebugLocInfo.DebugIdMap[Tuple] = Id;
+    
+    return DebugLoc::get(Id);
+  }
+
+  /// ExtractDebugLocation - Extract debug location information 
+  /// from llvm.dbg.func_start intrinsic.
+  DebugLoc ExtractDebugLocation(DbgFuncStartInst &FSI,
+                                CodeGenOpt::Level OptLev,
+                                DebugLocTracker &DebugLocInfo) {
+    DebugLoc DL;
+    Value *SP = FSI.getSubprogram();
+    if (DIDescriptor::ValidDebugInfo(SP, OptLev) == false)
+      return DL;
+
+    DISubprogram Subprogram(cast<GlobalVariable>(SP));
+    unsigned Line = Subprogram.getLineNumber();
+    DICompileUnit CU(Subprogram.getCompileUnit());
+
+    // If this location is already tracked then use it.
+    DebugLocTuple Tuple(CU.getGV(), Line, /* Column */ 0);
+    DenseMap<DebugLocTuple, unsigned>::iterator II
+      = DebugLocInfo.DebugIdMap.find(Tuple);
+    if (II != DebugLocInfo.DebugIdMap.end())
+      return DebugLoc::get(II->second);
+
+    // Add a new location entry.
+    unsigned Id = DebugLocInfo.DebugLocations.size();
+    DebugLocInfo.DebugLocations.push_back(Tuple);
+    DebugLocInfo.DebugIdMap[Tuple] = Id;
+    
+    return DebugLoc::get(Id);
+  }
+
+  /// isInlinedFnStart - Return true if FSI is starting an inlined function.
+  bool isInlinedFnStart(DbgFuncStartInst &FSI, const Function *CurrentFn) {
+    DISubprogram Subprogram(cast<GlobalVariable>(FSI.getSubprogram()));
+    if (Subprogram.describes(CurrentFn))
+      return false;
+
+    return true;
+  }
+
+  /// isInlinedFnEnd - Return true if REI is ending an inlined function.
+  bool isInlinedFnEnd(DbgRegionEndInst &REI, const Function *CurrentFn) {
+    DISubprogram Subprogram(cast<GlobalVariable>(REI.getContext()));
+    if (Subprogram.isNull() || Subprogram.describes(CurrentFn))
+      return false;
+
+    return true;
+  }
+
 }
