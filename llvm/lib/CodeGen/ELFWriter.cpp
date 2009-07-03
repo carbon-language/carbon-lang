@@ -166,43 +166,51 @@ unsigned ELFWriter::getGlobalELFLinkage(const GlobalValue *GV) {
   return ELFSym::STB_GLOBAL;
 }
 
+// getElfSectionFlags - Get the ELF Section Header based on the
+// flags defined in ELFTargetAsmInfo.
+unsigned ELFWriter::getElfSectionFlags(unsigned Flags) {
+  unsigned ElfSectionFlags = ELFSection::SHF_ALLOC;
+
+  if (Flags & SectionFlags::Code)
+    ElfSectionFlags |= ELFSection::SHF_EXECINSTR;
+  if (Flags & SectionFlags::Writeable)
+    ElfSectionFlags |= ELFSection::SHF_WRITE;
+  if (Flags & SectionFlags::Mergeable)
+    ElfSectionFlags |= ELFSection::SHF_MERGE;
+  if (Flags & SectionFlags::TLS)
+    ElfSectionFlags |= ELFSection::SHF_TLS;
+  if (Flags & SectionFlags::Strings)
+    ElfSectionFlags |= ELFSection::SHF_STRINGS;
+
+  return ElfSectionFlags;
+}
+
 // For global symbols without a section, return the Null section as a
 // placeholder
 ELFSection &ELFWriter::getGlobalSymELFSection(const GlobalVariable *GV,
                                               ELFSym &Sym) {
-  const Section *S = TAI->SectionForGlobal(GV);
-  unsigned Flags = S->getFlags();
-  unsigned SectionType = ELFSection::SHT_PROGBITS;
-  unsigned SHdrFlags = ELFSection::SHF_ALLOC;
-  DOUT << "Section " << S->getName() << " for global " << GV->getName() << "\n";
-
-  // If this is an external global, the symbol does not have a section.
+  // If this is a declaration, the symbol does not have a section.
   if (!GV->hasInitializer()) {
     Sym.SectionIdx = ELFSection::SHN_UNDEF;
     return getNullSection();
   }
 
+  // Get the name and flags of the section for the global
+  const Section *S = TAI->SectionForGlobal(GV);
+  unsigned SectionType = ELFSection::SHT_PROGBITS;
+  unsigned SectionFlags = getElfSectionFlags(S->getFlags());
+  DOUT << "Section " << S->getName() << " for global " << GV->getName() << "\n";
+
   const TargetData *TD = TM.getTargetData();
   unsigned Align = TD->getPreferredAlignment(GV);
   Constant *CV = GV->getInitializer();
-
-  if (Flags & SectionFlags::Code)
-    SHdrFlags |= ELFSection::SHF_EXECINSTR;
-  if (Flags & SectionFlags::Writeable)
-    SHdrFlags |= ELFSection::SHF_WRITE;
-  if (Flags & SectionFlags::Mergeable)
-    SHdrFlags |= ELFSection::SHF_MERGE;
-  if (Flags & SectionFlags::TLS)
-    SHdrFlags |= ELFSection::SHF_TLS;
-  if (Flags & SectionFlags::Strings)
-    SHdrFlags |= ELFSection::SHF_STRINGS;
 
   // If this global has a zero initializer, go to .bss or common section.
   // Variables are part of the common block if they are zero initialized
   // and allowed to be merged with other symbols.
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
     SectionType = ELFSection::SHT_NOBITS;
-    ELFSection &ElfS = getSection(S->getName(), SectionType, SHdrFlags);
+    ELFSection &ElfS = getSection(S->getName(), SectionType, SectionFlags);
     if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage() ||
         GV->hasCommonLinkage()) {
       Sym.SectionIdx = ELFSection::SHN_COMMON;
@@ -218,7 +226,7 @@ ELFSection &ELFWriter::getGlobalSymELFSection(const GlobalVariable *GV,
   }
 
   Sym.IsConstant = true;
-  ELFSection &ElfS = getSection(S->getName(), SectionType, SHdrFlags);
+  ELFSection &ElfS = getSection(S->getName(), SectionType, SectionFlags);
   Sym.SectionIdx = ElfS.SectionIdx;
   ElfS.Align = std::max(ElfS.Align, Align);
   return ElfS;

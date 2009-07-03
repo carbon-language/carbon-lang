@@ -97,6 +97,9 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   // Emit constant pool to appropriate section(s)
   emitConstantPool(MF.getConstantPool());
 
+  // Emit jump tables to appropriate section
+  emitJumpTables(MF.getJumpTableInfo());
+
   // Relocations
   // -----------
   // If we have emitted any relocations to function-specific objects such as
@@ -116,13 +119,22 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
       Addr = getConstantPoolEntryAddress(MR.getConstantPoolIndex());
       MR.setConstantVal(CPSections[MR.getConstantPoolIndex()]);
       MR.setResultPointer((void*)Addr);
+    } else if (MR.isJumpTableIndex()) {
+      Addr = getJumpTableEntryAddress(MR.getJumpTableIndex());
+      MR.setResultPointer((void*)Addr);
+      MR.setConstantVal(JumpTableSectionIdx);
     } else {
       assert(0 && "Unhandled relocation type");
     }
     ES->addRelocation(MR);
   }
-  Relocations.clear();
 
+  // Clear per-function data structures.
+  Relocations.clear();
+  CPLocations.clear();
+  CPSections.clear();
+  JTLocations.clear();
+  MBBLocations.clear();
   return false;
 }
 
@@ -155,6 +167,58 @@ void ELFCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
 
     // Emit the constant to constant pool section
     EW.EmitGlobalConstant(CPE.Val.ConstVal, CstPoolSection);
+  }
+}
+
+/// emitJumpTables - Emit all the jump tables for a given jump table info
+/// record to the appropriate section.
+void ELFCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  if (JT.empty()) return;
+
+  // FIXME: handle PIC codegen
+  assert(TM.getRelocationModel() != Reloc::PIC_ &&
+         "PIC codegen not yet handled for elf jump tables!");
+
+  const TargetAsmInfo *TAI = TM.getTargetAsmInfo();
+
+  // Get the ELF Section to emit the jump table
+  unsigned Align = TM.getTargetData()->getPointerABIAlignment();
+  std::string JTName(TAI->getJumpTableDataSection());
+  ELFSection &JTSection = EW.getJumpTableSection(JTName, Align);
+  JumpTableSectionIdx = JTSection.SectionIdx;
+
+  // Entries in the JT Section are relocated against the text section
+  ELFSection &TextSection = EW.getTextSection();
+
+  // For each JT, record its offset from the start of the section
+  for (unsigned i = 0, e = JT.size(); i != e; ++i) {
+    const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
+
+    DOUT << "JTSection.size(): " << JTSection.size() << "\n";
+    DOUT << "JTLocations.size: " << JTLocations.size() << "\n";
+
+    // Record JT 'i' offset in the JT section
+    JTLocations.push_back(JTSection.size());
+
+    // Each MBB entry in the Jump table section has a relocation entry
+    // against the current text section.
+    for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
+      MachineRelocation MR =
+        MachineRelocation::getBB(JTSection.size(),
+                                 MachineRelocation::VANILLA,
+                                 MBBs[mi]);
+
+      // Offset of JT 'i' in JT section
+      MR.setResultPointer((void*)getMachineBasicBlockAddress(MBBs[mi]));
+      MR.setConstantVal(TextSection.SectionIdx);
+
+      // Add the relocation to the Jump Table section
+      JTSection.addRelocation(MR);
+
+      // Output placeholder for MBB in the JT section
+      JTSection.emitWord(0);
+    }
   }
 }
 

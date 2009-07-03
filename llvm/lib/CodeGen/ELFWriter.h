@@ -118,19 +118,33 @@ namespace llvm {
     /// is seen, the symbol will move from this list to the SymbolList.
     SetVector<GlobalValue*> PendingGlobals;
 
+    // Remove tab from section name prefix. This is necessary becase TAI 
+    // sometimes return a section name prefixed with a "\t" char. This is
+    // a little bit dirty. FIXME: find a better approach, maybe add more
+    // methods to TAI to get the clean name?
+    void fixNameForSection(std::string &Name) {
+      size_t Pos = Name.find("\t");
+      if (Pos != std::string::npos)
+        Name.erase(Pos, 1);
+
+      Pos = Name.find(".section ");
+      if (Pos != std::string::npos)
+        Name.erase(Pos, 9);
+
+      Pos = Name.find("\n");
+      if (Pos != std::string::npos)
+        Name.erase(Pos, 1);
+    }
+
     /// getSection - Return the section with the specified name, creating a new
     /// section if one does not already exist.
     ELFSection &getSection(const std::string &Name, unsigned Type,
                            unsigned Flags = 0, unsigned Align = 0) {
-      ELFSection *&SN = SectionLookup[Name];
-      if (SN) return *SN;
-
-      // Remove tab from section name prefix. This is necessary becase TAI 
-      // sometimes return a section name prefixed with a "\t" char.
       std::string SectionName(Name);
-      size_t Pos = SectionName.find("\t");
-      if (Pos != std::string::npos)
-        SectionName.erase(Pos, 1);
+      fixNameForSection(SectionName);
+
+      ELFSection *&SN = SectionLookup[SectionName];
+      if (SN) return *SN;
 
       SectionList.push_back(ELFSection(SectionName, isLittleEndian, is64Bit));
       SN = &SectionList.back();
@@ -147,6 +161,12 @@ namespace llvm {
     ELFSection &getTextSection() {
       return getSection(".text", ELFSection::SHT_PROGBITS,
                         ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC);
+    }
+
+    /// Get jump table section on the section name returned by TAI
+    ELFSection &getJumpTableSection(std::string SName, unsigned Align) {
+      return getSection(SName, ELFSection::SHT_PROGBITS,
+                        ELFSection::SHF_ALLOC, Align);
     }
 
     /// Get a constant pool section based on the section name returned by TAI
@@ -197,9 +217,10 @@ namespace llvm {
       return getSection("", ELFSection::SHT_NULL, 0);
     }
 
-    // Helpers for obtaining ELF specific Linkage and Visibility info.
+    // Helpers for obtaining ELF specific info.
     unsigned getGlobalELFLinkage(const GlobalValue *GV);
     unsigned getGlobalELFVisibility(const GlobalValue *GV);
+    unsigned getElfSectionFlags(unsigned Flags);
 
     // As we complete the ELF file, we need to update fields in the ELF header
     // (e.g. the location of the section table).  These members keep track of

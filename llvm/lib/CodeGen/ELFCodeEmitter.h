@@ -40,6 +40,10 @@ namespace llvm {
     /// containing the constant pool entry for that index.
     std::vector<unsigned> CPSections;
 
+    /// JTLocations - This is a map of jump table indices to offsets from the
+    /// start of the section for that jump table index.
+    std::vector<uintptr_t> JTLocations;
+
     /// MBBLocations - This vector is a mapping from MBB ID's to their address.
     /// It is filled in by the StartMachineBasicBlock callback and queried by
     /// the getMachineBasicBlockAddress callback.
@@ -48,8 +52,12 @@ namespace llvm {
     /// FnStartPtr - Pointer to the start location of the current function
     /// in the buffer
     uint8_t *FnStartPtr;
+
+    /// JumpTableSectionIdx - Holds the index of the Jump Table Section 
+    unsigned JumpTableSectionIdx;
   public:
-    explicit ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM) {}
+    explicit ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM),
+                                             JumpTableSectionIdx(0) {}
 
     void startFunction(MachineFunction &F);
     bool finishFunction(MachineFunction &F);
@@ -64,25 +72,20 @@ namespace llvm {
       MBBLocations[MBB->getNumber()] = getCurrentPCOffset();
     }
 
-    virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) {
-      assert(MBBLocations.size() > (unsigned)MBB->getNumber() && 
-             MBBLocations[MBB->getNumber()] && "MBB not emitted!");
-      return MBBLocations[MBB->getNumber()];
-    }
-
     virtual uintptr_t getConstantPoolEntryAddress(unsigned Index) const {
       assert(CPLocations.size() > Index && "CP not emitted!");
       return CPLocations[Index];
     }
 
     virtual uintptr_t getJumpTableEntryAddress(unsigned Index) const {
-      assert(0 && "JT not implementated yet!");
-      return 0;
+      assert(JTLocations.size() > Index && "JT not emitted!");
+      return JTLocations[Index];
     }
 
     virtual uintptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
-      assert(0 && "JT not implementated yet!");
-      return 0;
+      assert(MBBLocations.size() > (unsigned)MBB->getNumber() && 
+             MBBLocations[MBB->getNumber()] && "MBB not emitted!");
+      return MBBLocations[MBB->getNumber()];
     }
 
     virtual uintptr_t getLabelAddress(uint64_t Label) const {
@@ -100,7 +103,11 @@ namespace llvm {
     /// the constant should live in and emit the constant.
     void emitConstantPool(MachineConstantPool *MCP);
 
-    virtual void setModuleInfo(llvm::MachineModuleInfo* MMI) { }
+    /// emitJumpTables - Emit all the jump tables for a given jump table info
+    /// record to the appropriate section.
+    void emitJumpTables(MachineJumpTableInfo *MJTI);
+
+    virtual void setModuleInfo(llvm::MachineModuleInfo* MMI) {}
 
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
     void startGVStub(const GlobalValue* F, unsigned StubSize,
