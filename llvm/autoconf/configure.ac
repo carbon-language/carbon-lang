@@ -240,7 +240,7 @@ case "$llvm_cv_target_arch" in
     x86_64)  LLVM_NATIVE_ARCH="X86" ;;
     *)       LLVM_NATIVE_ARCH="$llvm_cv_target_arch" ;;
 esac
-  
+
 dnl Define a substitution, ARCH, for the target architecture
 AC_SUBST(ARCH,$llvm_cv_target_arch)
 
@@ -453,7 +453,7 @@ for a_target in $TARGETS_TO_BUILD; do
   fi
 done
 
-# Build the LLVM_TARGET and LLVM_ASM_PRINTER macro uses for 
+# Build the LLVM_TARGET and LLVM_ASM_PRINTER macro uses for
 # Targets.def and AsmPrinters.def.
 LLVM_ENUM_TARGETS=""
 LLVM_ENUM_ASM_PRINTERS=""
@@ -952,7 +952,7 @@ dnl atomic builtins are required for threading support.
 AC_MSG_CHECKING(for GCC atomic builtins)
 AC_LINK_IFELSE(
   AC_LANG_SOURCE(
-    [[int main() { 
+    [[int main() {
         volatile unsigned long val = 1;
         __sync_synchronize();
         __sync_val_compare_and_swap(&val, 1, 0);
