@@ -151,6 +151,7 @@ namespace PIC16CC {
         return STATIC_LOCAL;
  
       assert (0 && "Could not determine Symbol's tag");
+      return PREFIX_SYMBOL; // Silence warning when assertions are turned off.
     }
 
     // addPrefix - add prefix symbol to a name if there isn't one already.
