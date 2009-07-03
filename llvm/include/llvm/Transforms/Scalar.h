@@ -337,6 +337,12 @@ FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
 FunctionPass *createInstructionNamerPass();
 extern const PassInfo *const InstructionNamerID;
   
+//===----------------------------------------------------------------------===//
+//
+// SSI - This pass converts to Static Single Information form.
+//
+FunctionPass *createSSIPass();
+
 } // End llvm namespace
 
 #endif
