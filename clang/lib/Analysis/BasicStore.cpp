@@ -584,7 +584,7 @@ Store BasicStoreManager::BindDeclInternal(Store store, const VarDecl* VD,
   } else {
     // Process local scalar variables.
     QualType T = VD->getType();
-    if (Loc::IsLocType(T) || T->isIntegerType()) {
+    if (ValMgr.getSymbolManager().canSymbolicate(T)) {
       SVal V = InitVal ? *InitVal : UndefinedVal();
       store = BindInternal(store, getLoc(VD), V);
     }
