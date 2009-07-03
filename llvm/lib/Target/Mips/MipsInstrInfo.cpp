@@ -651,6 +651,7 @@ unsigned MipsInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
                               Mips::CPURegsRegisterClass,
                               Mips::CPURegsRegisterClass);
   assert(Ok && "Couldn't assign to global base register!");
+  Ok = Ok; // Silence warning when assertions are turned off.
   RegInfo.addLiveIn(Mips::GP);
 
   MipsFI->setGlobalBaseReg(GlobalBaseReg);
