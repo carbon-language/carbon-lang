@@ -61,7 +61,7 @@ let Defs = [LR8] in
   def MovePCtoLR8 : Pseudo<(outs), (ins piclabel:$label), "bl $label", []>,
                     PPC970_Unit_BRU;
 
-// Macho ABI Calls.
+// Darwin ABI Calls.
 let isCall = 1, PPC970_Unit = 7, 
   // All calls clobber the PPC64 non-callee saved registers.
   Defs = [X0,X2,X3,X4,X5,X6,X7,X8,X9,X10,X11,X12,
@@ -71,22 +71,22 @@ let isCall = 1, PPC970_Unit = 7,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
-    def BL8_Macho  : IForm<18, 0, 1,
-                           (outs), (ins calltarget:$func, variable_ops), 
-                           "bl $func", BrB, []>;  // See Pat patterns below.
-    def BLA8_Macho : IForm<18, 1, 1,
-                           (outs), (ins aaddr:$func, variable_ops),
-                           "bla $func", BrB, [(PPCcall_Macho (i64 imm:$func))]>;
+    def BL8_Darwin  : IForm<18, 0, 1,
+                            (outs), (ins calltarget:$func, variable_ops), 
+                            "bl $func", BrB, []>;  // See Pat patterns below.
+    def BLA8_Darwin : IForm<18, 1, 1,
+                          (outs), (ins aaddr:$func, variable_ops),
+                          "bla $func", BrB, [(PPCcall_Darwin (i64 imm:$func))]>;
   }
   let Uses = [CTR8, RM] in {
-    def BCTRL8_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
-                                 (outs), (ins variable_ops),
-                                 "bctrl", BrB,
-                                 [(PPCbctrl_Macho)]>, Requires<[In64BitMode]>;
+    def BCTRL8_Darwin : XLForm_2_ext<19, 528, 20, 0, 1, 
+                                  (outs), (ins variable_ops),
+                                  "bctrl", BrB,
+                                  [(PPCbctrl_Darwin)]>, Requires<[In64BitMode]>;
   }
 }
 
-// ELF 64 ABI Calls = Macho ABI Calls
+// ELF 64 ABI Calls = Darwin ABI Calls
 // Used to define BL8_ELF and BLA8_ELF
 let isCall = 1, PPC970_Unit = 7, 
   // All calls clobber the PPC64 non-callee saved registers.
@@ -102,26 +102,26 @@ let isCall = 1, PPC970_Unit = 7,
                          "bl $func", BrB, []>;  // See Pat patterns below.                            
     def BLA8_ELF : IForm<18, 1, 1,
                          (outs), (ins aaddr:$func, variable_ops),
-                         "bla $func", BrB, [(PPCcall_ELF (i64 imm:$func))]>;
+                         "bla $func", BrB, [(PPCcall_SVR4 (i64 imm:$func))]>;
   }
   let Uses = [CTR8, RM] in {
     def BCTRL8_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
                                (outs), (ins variable_ops),
                                "bctrl", BrB,
-                               [(PPCbctrl_ELF)]>, Requires<[In64BitMode]>;
+                               [(PPCbctrl_SVR4)]>, Requires<[In64BitMode]>;
   }
 }
 
 
 // Calls
-def : Pat<(PPCcall_Macho (i64 tglobaladdr:$dst)),
-          (BL8_Macho tglobaladdr:$dst)>;
-def : Pat<(PPCcall_Macho (i64 texternalsym:$dst)),
-          (BL8_Macho texternalsym:$dst)>;
+def : Pat<(PPCcall_Darwin (i64 tglobaladdr:$dst)),
+          (BL8_Darwin tglobaladdr:$dst)>;
+def : Pat<(PPCcall_Darwin (i64 texternalsym:$dst)),
+          (BL8_Darwin texternalsym:$dst)>;
 
-def : Pat<(PPCcall_ELF (i64 tglobaladdr:$dst)),
+def : Pat<(PPCcall_SVR4 (i64 tglobaladdr:$dst)),
           (BL8_ELF tglobaladdr:$dst)>;
-def : Pat<(PPCcall_ELF (i64 texternalsym:$dst)),
+def : Pat<(PPCcall_SVR4 (i64 texternalsym:$dst)),
           (BL8_ELF texternalsym:$dst)>;
 
 // Atomic operations

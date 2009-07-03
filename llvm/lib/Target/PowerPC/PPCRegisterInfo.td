@@ -295,7 +295,7 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
       const PPCSubtarget &Subtarget
         = MF.getTarget().getSubtarget<PPCSubtarget>();
          
-      if (Subtarget.isPPC64() || Subtarget.isELF32_ABI())
+      if (Subtarget.isPPC64() || Subtarget.isSVR4ABI())
         return end()-5;  // don't allocate R13, R31, R0, R1, LR
         
       if (needsFP(MF))

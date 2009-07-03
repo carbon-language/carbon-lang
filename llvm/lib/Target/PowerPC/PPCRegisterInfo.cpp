@@ -149,7 +149,7 @@ const TargetRegisterClass *PPCRegisterInfo::getPointerRegClass() const {
 const unsigned*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   // 32-bit Darwin calling convention. 
-  static const unsigned Macho32_CalleeSavedRegs[] = {
+  static const unsigned Darwin32_CalleeSavedRegs[] = {
               PPC::R13, PPC::R14, PPC::R15,
     PPC::R16, PPC::R17, PPC::R18, PPC::R19,
     PPC::R20, PPC::R21, PPC::R22, PPC::R23,
@@ -174,7 +174,7 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     PPC::LR,  0
   };
   
-  static const unsigned ELF32_CalleeSavedRegs[] = {
+  static const unsigned SVR4_CalleeSavedRegs[] = {
                         PPC::R14, PPC::R15,
     PPC::R16, PPC::R17, PPC::R18, PPC::R19,
     PPC::R20, PPC::R21, PPC::R22, PPC::R23,
@@ -202,7 +202,7 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     PPC::LR,  0
   };
   // 64-bit Darwin calling convention. 
-  static const unsigned Macho64_CalleeSavedRegs[] = {
+  static const unsigned Darwin64_CalleeSavedRegs[] = {
     PPC::X14, PPC::X15,
     PPC::X16, PPC::X17, PPC::X18, PPC::X19,
     PPC::X20, PPC::X21, PPC::X22, PPC::X23,
@@ -227,18 +227,17 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     PPC::LR8,  0
   };
   
-  if (Subtarget.isMachoABI())
-    return Subtarget.isPPC64() ? Macho64_CalleeSavedRegs :
-                                 Macho32_CalleeSavedRegs;
+  if (Subtarget.isDarwinABI())
+    return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegs :
+                                 Darwin32_CalleeSavedRegs;
   
-  // ELF 32.
-  return ELF32_CalleeSavedRegs;
+  return SVR4_CalleeSavedRegs;
 }
 
 const TargetRegisterClass* const*
 PPCRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  // 32-bit Macho calling convention. 
-  static const TargetRegisterClass * const Macho32_CalleeSavedRegClasses[] = {
+  // 32-bit Darwin calling convention.
+  static const TargetRegisterClass * const Darwin32_CalleeSavedRegClasses[] = {
                        &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
@@ -267,7 +266,7 @@ PPCRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &PPC::GPRCRegClass, 0
   };
   
-  static const TargetRegisterClass * const ELF32_CalleeSavedRegClasses[] = {
+  static const TargetRegisterClass * const SVR4_CalleeSavedRegClasses[] = {
                                           &PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
     &PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,&PPC::GPRCRegClass,
@@ -298,8 +297,8 @@ PPCRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &PPC::GPRCRegClass, 0
   };
   
-  // 64-bit Macho calling convention. 
-  static const TargetRegisterClass * const Macho64_CalleeSavedRegClasses[] = {
+  // 64-bit Darwin calling convention.
+  static const TargetRegisterClass * const Darwin64_CalleeSavedRegClasses[] = {
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
     &PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,&PPC::G8RCRegClass,
@@ -328,12 +327,11 @@ PPCRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &PPC::G8RCRegClass, 0
   };
   
-  if (Subtarget.isMachoABI())
-    return Subtarget.isPPC64() ? Macho64_CalleeSavedRegClasses :
-                                 Macho32_CalleeSavedRegClasses;
+  if (Subtarget.isDarwinABI())
+    return Subtarget.isPPC64() ? Darwin64_CalleeSavedRegClasses :
+                                 Darwin32_CalleeSavedRegClasses;
   
-  // ELF 32.
-  return ELF32_CalleeSavedRegClasses;
+  return SVR4_CalleeSavedRegClasses;
 }
 
 // needsFP - Return true if the specified function should have a dedicated frame
@@ -360,7 +358,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(PPC::RM);
 
   // The SVR4 ABI reserves r2 and r13
-  if (Subtarget.isELF32_ABI()) {
+  if (Subtarget.isSVR4ABI()) {
     Reserved.set(PPC::R2);  // System-reserved register
     Reserved.set(PPC::R13); // Small Data Area pointer register
   }
@@ -929,7 +927,7 @@ void PPCRegisterInfo::determineFrameLayout(MachineFunction &MF) const {
   // Maximum call frame needs to be at least big enough for linkage and 8 args.
   unsigned minCallFrameSize =
     PPCFrameInfo::getMinCallFrameSize(Subtarget.isPPC64(), 
-                                      Subtarget.isMachoABI());
+                                      Subtarget.isDarwinABI());
   maxCallFrameSize = std::max(maxCallFrameSize, minCallFrameSize);
 
   // If we have dynamic alloca then maxCallFrameSize needs to be aligned so
@@ -962,15 +960,15 @@ PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //  Save R31 if necessary
   int FPSI = FI->getFramePointerSaveIndex();
   bool IsPPC64 = Subtarget.isPPC64();
-  bool IsELF32_ABI = Subtarget.isELF32_ABI();
-  bool IsMachoABI  = Subtarget.isMachoABI();
+  bool IsSVR4ABI = Subtarget.isSVR4ABI();
+  bool isDarwinABI  = Subtarget.isDarwinABI();
   MachineFrameInfo *MFI = MF.getFrameInfo();
  
   // If the frame pointer save index hasn't been defined yet.
-  if (!FPSI && needsFP(MF) && IsELF32_ABI) {
+  if (!FPSI && needsFP(MF) && IsSVR4ABI) {
     // Find out what the fix offset of the frame pointer save area.
     int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64,
-                                                           IsMachoABI);
+                                                           isDarwinABI);
     // Allocate the frame index for frame pointer save area.
     FPSI = MF.getFrameInfo()->CreateFixedObject(IsPPC64? 8 : 4, FPOffset);
     // Save the result.
@@ -1004,7 +1002,7 @@ void
 PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
                                                      const {
   // Early exit if not using the SVR4 ABI.
-  if (!Subtarget.isELF32_ABI()) {
+  if (!Subtarget.isSVR4ABI()) {
     return;
   }
   
@@ -1198,24 +1196,24 @@ PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get processor type.
   bool IsPPC64 = Subtarget.isPPC64();
   // Get operating system
-  bool IsMachoABI = Subtarget.isMachoABI();
+  bool isDarwinABI = Subtarget.isDarwinABI();
   // Check if the link register (LR) must be saved.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF) && FrameSize;
   
-  int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, IsMachoABI);
+  int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, isDarwinABI);
 
   int FPOffset = 0;
   if (HasFP) {
-    if (Subtarget.isELF32_ABI()) {
+    if (Subtarget.isSVR4ABI()) {
       MachineFrameInfo *FFI = MF.getFrameInfo();
       int FPIndex = FI->getFramePointerSaveIndex();
       assert(FPIndex && "No Frame Pointer Save Slot!");
       FPOffset = FFI->getObjectOffset(FPIndex);
     } else {
-      FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, IsMachoABI);
+      FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, isDarwinABI);
     }
   }
 
@@ -1418,24 +1416,24 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get processor type.
   bool IsPPC64 = Subtarget.isPPC64();
   // Get operating system
-  bool IsMachoABI = Subtarget.isMachoABI();
+  bool isDarwinABI = Subtarget.isDarwinABI();
   // Check if the link register (LR) has been saved.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   bool MustSaveLR = FI->mustSaveLR();
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF) && FrameSize;
   
-  int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, IsMachoABI);
+  int LROffset = PPCFrameInfo::getReturnSaveOffset(IsPPC64, isDarwinABI);
 
   int FPOffset = 0;
   if (HasFP) {
-    if (Subtarget.isELF32_ABI()) {
+    if (Subtarget.isSVR4ABI()) {
       MachineFrameInfo *FFI = MF.getFrameInfo();
       int FPIndex = FI->getFramePointerSaveIndex();
       assert(FPIndex && "No Frame Pointer Save Slot!");
       FPOffset = FFI->getObjectOffset(FPIndex);
     } else {
-      FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, IsMachoABI);
+      FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64, isDarwinABI);
     }
   }
   

@@ -31,68 +31,68 @@ public:
 
   /// getReturnSaveOffset - Return the previous frame offset to save the
   /// return address.
-  static unsigned getReturnSaveOffset(bool LP64, bool isMacho) {
-    if (isMacho)
+  static unsigned getReturnSaveOffset(bool LP64, bool isDarwinABI) {
+    if (isDarwinABI)
       return LP64 ? 16 : 8;
-    // For ELF 32 ABI:
+    // SVR4 ABI:
     return 4;
   }
 
   /// getFramePointerSaveOffset - Return the previous frame offset to save the
   /// frame pointer.
-  static unsigned getFramePointerSaveOffset(bool LP64, bool isMacho) {
-    // For MachO ABI:
+  static unsigned getFramePointerSaveOffset(bool LP64, bool isDarwinABI) {
+    // For the Darwin ABI:
     // Use the TOC save slot in the PowerPC linkage area for saving the frame
     // pointer (if needed.)  LLVM does not generate code that uses the TOC (R2
     // is treated as a caller saved register.)
-    if (isMacho)
+    if (isDarwinABI)
       return LP64 ? 40 : 20;
     
-    // For ELF 32 ABI:
+    // SVR4 ABI:
     // Save it right before the link register
     return -4U;
   }
   
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
   ///
-  static unsigned getLinkageSize(bool LP64, bool isMacho) {
-    if (isMacho)
+  static unsigned getLinkageSize(bool LP64, bool isDarwinABI) {
+    if (isDarwinABI)
       return 6 * (LP64 ? 8 : 4);
     
-    // For ELF 32 ABI:
+    // SVR4 ABI:
     return 8;
   }
 
   /// getMinCallArgumentsSize - Return the size of the minium PowerPC ABI
   /// argument area.
-  static unsigned getMinCallArgumentsSize(bool LP64, bool isMacho) {
-    // For Macho ABI:
+  static unsigned getMinCallArgumentsSize(bool LP64, bool isDarwinABI) {
+    // For the Darwin ABI:
     // The prolog code of the callee may store up to 8 GPR argument registers to
     // the stack, allowing va_start to index over them in memory if its varargs.
     // Because we cannot tell if this is needed on the caller side, we have to
     // conservatively assume that it is needed.  As such, make sure we have at
     // least enough stack space for the caller to store the 8 GPRs.
-    if (isMacho)
+    if (isDarwinABI)
       return 8 * (LP64 ? 8 : 4);
     
-    // For ELF 32 ABI:
+    // SVR4 ABI:
     // There is no default stack allocated for the 8 first GPR arguments.
     return 0;
   }
 
   /// getMinCallFrameSize - Return the minimum size a call frame can be using
   /// the PowerPC ABI.
-  static unsigned getMinCallFrameSize(bool LP64, bool isMacho) {
+  static unsigned getMinCallFrameSize(bool LP64, bool isDarwinABI) {
     // The call frame needs to be at least big enough for linkage and 8 args.
-    return getLinkageSize(LP64, isMacho) +
-           getMinCallArgumentsSize(LP64, isMacho);
+    return getLinkageSize(LP64, isDarwinABI) +
+           getMinCallArgumentsSize(LP64, isDarwinABI);
   }
 
   // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
   const std::pair<unsigned, int> *
   getCalleeSavedSpillSlots(unsigned &NumEntries) const {
     // Early exit if not using the SVR4 ABI.
-    if (!TM.getSubtarget<PPCSubtarget>().isELF32_ABI()) {
+    if (!TM.getSubtarget<PPCSubtarget>().isSVR4ABI()) {
       NumEntries = 0;
       return 0;
     }

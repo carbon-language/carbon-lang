@@ -163,8 +163,8 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   } else if (MO.isGlobal() || MO.isSymbol() ||
              MO.isCPI() || MO.isJTI()) {
     unsigned Reloc = 0;
-    if (MI.getOpcode() == PPC::BL_Macho || MI.getOpcode() == PPC::BL8_Macho ||
-        MI.getOpcode() == PPC::BL_ELF || MI.getOpcode() == PPC::BL8_ELF ||
+    if (MI.getOpcode() == PPC::BL_Darwin || MI.getOpcode() == PPC::BL8_Darwin ||
+        MI.getOpcode() == PPC::BL_SVR4 || MI.getOpcode() == PPC::BL8_ELF ||
         MI.getOpcode() == PPC::TAILB || MI.getOpcode() == PPC::TAILB8)
       Reloc = PPC::reloc_pcrel_bx;
     else {
@@ -246,9 +246,9 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   } else if (MO.isMBB()) {
     unsigned Reloc = 0;
     unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::B || Opcode == PPC::BL_Macho ||
-        Opcode == PPC::BLA_Macho || Opcode == PPC::BL_ELF || 
-        Opcode == PPC::BLA_ELF)
+    if (Opcode == PPC::B || Opcode == PPC::BL_Darwin ||
+        Opcode == PPC::BLA_Darwin|| Opcode == PPC::BL_SVR4 ||
+        Opcode == PPC::BLA_SVR4)
       Reloc = PPC::reloc_pcrel_bx;
     else // BCC instruction
       Reloc = PPC::reloc_pcrel_bcx;

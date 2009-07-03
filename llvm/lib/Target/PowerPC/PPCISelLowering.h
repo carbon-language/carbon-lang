@@ -82,7 +82,7 @@ namespace llvm {
       STD_32,
       
       /// CALL - A direct function call.
-      CALL_Macho, CALL_ELF,
+      CALL_Darwin, CALL_SVR4,
       
       /// CHAIN,FLAG = MTCTR(VAL, CHAIN[, INFLAG]) - Directly corresponds to a
       /// MTCTR instruction.
@@ -90,7 +90,7 @@ namespace llvm {
       
       /// CHAIN,FLAG = BCTRL(CHAIN, INFLAG) - Directly corresponds to a
       /// BCTRL instruction.
-      BCTRL_Macho, BCTRL_ELF,
+      BCTRL_Darwin, BCTRL_SVR4,
       
       /// Return with a flag operand, matched by 'blr'
       RET_FLAG,
@@ -352,7 +352,7 @@ namespace llvm {
                                          SDValue Chain,
                                          SDValue &LROpOut,
                                          SDValue &FPOpOut,
-                                         bool isMachoABI,
+                                         bool isDarwinABI,
                                          DebugLoc dl);
 
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG);
@@ -376,14 +376,11 @@ namespace llvm {
                                        unsigned &VarArgsNumGPR,
                                        unsigned &VarArgsNumFPR,
                                        const PPCSubtarget &Subtarget);
-    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
-                                    int &VarArgsFrameIndex, 
-                                    int &VarArgsStackOffset,
-                                    unsigned &VarArgsNumGPR,
-                                    unsigned &VarArgsNumFPR,
-                                    const PPCSubtarget &Subtarget);
-    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG,
-                        const PPCSubtarget &Subtarget, TargetMachine &TM);
+    SDValue LowerFORMAL_ARGUMENTS_Darwin(SDValue Op, SelectionDAG &DAG,
+                                         int &VarArgsFrameIndex, 
+                                         const PPCSubtarget &Subtarget);
+    SDValue LowerCALL_Darwin(SDValue Op, SelectionDAG &DAG,
+                             const PPCSubtarget &Subtarget, TargetMachine &TM);
     SDValue LowerCALL_SVR4(SDValue Op, SelectionDAG &DAG,
                            const PPCSubtarget &Subtarget, TargetMachine &TM);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG, TargetMachine &TM);

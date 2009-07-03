@@ -107,17 +107,17 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeqEnd,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
-def PPCcall_Macho : SDNode<"PPCISD::CALL_Macho", SDT_PPCCall,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
-def PPCcall_ELF   : SDNode<"PPCISD::CALL_ELF", SDT_PPCCall,
+def PPCcall_Darwin : SDNode<"PPCISD::CALL_Darwin", SDT_PPCCall,
+                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def PPCcall_SVR4  : SDNode<"PPCISD::CALL_SVR4", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 def PPCmtctr      : SDNode<"PPCISD::MTCTR", SDT_PPCCall,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
-def PPCbctrl_Macho  : SDNode<"PPCISD::BCTRL_Macho", SDTNone,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def PPCbctrl_Darwin  : SDNode<"PPCISD::BCTRL_Darwin", SDTNone,
+                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
-def PPCbctrl_ELF  : SDNode<"PPCISD::BCTRL_ELF", SDTNone,
-                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def PPCbctrl_SVR4  : SDNode<"PPCISD::BCTRL_SVR4", SDTNone,
+                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDTNone,
                            [SDNPHasChain, SDNPOptInFlag]>;
@@ -412,7 +412,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
                   /*[(PPCcondbranch CRRC:$crS, imm:$opc, bb:$dst)]*/>;
 }
 
-// Macho ABI Calls.
+// Darwin ABI Calls.
 let isCall = 1, PPC970_Unit = 7, 
   // All calls clobber the non-callee saved registers...
   Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
@@ -424,22 +424,22 @@ let isCall = 1, PPC970_Unit = 7,
           CR5UN,CR6LT,CR6GT,CR6EQ,CR6UN,CR7LT,CR7GT,CR7EQ,CR7UN] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
-    def BL_Macho  : IForm<18, 0, 1,
-                          (outs), (ins calltarget:$func, variable_ops), 
-                          "bl $func", BrB, []>;  // See Pat patterns below.
-    def BLA_Macho : IForm<18, 1, 1, 
+    def BL_Darwin  : IForm<18, 0, 1,
+                           (outs), (ins calltarget:$func, variable_ops), 
+                           "bl $func", BrB, []>;  // See Pat patterns below.
+    def BLA_Darwin : IForm<18, 1, 1, 
                           (outs), (ins aaddr:$func, variable_ops),
-                          "bla $func", BrB, [(PPCcall_Macho (i32 imm:$func))]>;
+                          "bla $func", BrB, [(PPCcall_Darwin (i32 imm:$func))]>;
   }
   let Uses = [CTR, RM] in {
-    def BCTRL_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
-                                 (outs), (ins variable_ops),
-                                 "bctrl", BrB,
-                                 [(PPCbctrl_Macho)]>, Requires<[In32BitMode]>;
+    def BCTRL_Darwin : XLForm_2_ext<19, 528, 20, 0, 1, 
+                                  (outs), (ins variable_ops),
+                                  "bctrl", BrB,
+                                  [(PPCbctrl_Darwin)]>, Requires<[In32BitMode]>;
   }
 }
 
-// ELF ABI Calls.
+// SVR4 ABI Calls.
 let isCall = 1, PPC970_Unit = 7, 
   // All calls clobber the non-callee saved registers...
   Defs = [R0,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
@@ -451,19 +451,19 @@ let isCall = 1, PPC970_Unit = 7,
           CR5UN,CR6LT,CR6GT,CR6EQ,CR6UN,CR7LT,CR7GT,CR7EQ,CR7UN] in {
   // Convenient aliases for call instructions
   let Uses = [RM] in {
-    def BL_ELF  : IForm<18, 0, 1,
+    def BL_SVR4  : IForm<18, 0, 1,
                         (outs), (ins calltarget:$func, variable_ops), 
                         "bl $func", BrB, []>;  // See Pat patterns below.
-    def BLA_ELF : IForm<18, 1, 1,
+    def BLA_SVR4 : IForm<18, 1, 1,
                         (outs), (ins aaddr:$func, variable_ops),
                         "bla $func", BrB,
-                        [(PPCcall_ELF (i32 imm:$func))]>;
+                        [(PPCcall_SVR4 (i32 imm:$func))]>;
   }
   let Uses = [CTR, RM] in {
-    def BCTRL_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
-                               (outs), (ins variable_ops),
-                               "bctrl", BrB,
-                               [(PPCbctrl_ELF)]>, Requires<[In32BitMode]>;
+    def BCTRL_SVR4 : XLForm_2_ext<19, 528, 20, 0, 1,
+                                (outs), (ins variable_ops),
+                                "bctrl", BrB,
+                                [(PPCbctrl_SVR4)]>, Requires<[In32BitMode]>;
   }
 }
 
@@ -1389,14 +1389,14 @@ def : Pat<(and (rotl GPRC:$in, GPRC:$sh), maskimm32:$imm),
           (RLWNM GPRC:$in, GPRC:$sh, (MB maskimm32:$imm), (ME maskimm32:$imm))>;
 
 // Calls
-def : Pat<(PPCcall_Macho (i32 tglobaladdr:$dst)),
-          (BL_Macho tglobaladdr:$dst)>;
-def : Pat<(PPCcall_Macho (i32 texternalsym:$dst)),
-          (BL_Macho texternalsym:$dst)>;
-def : Pat<(PPCcall_ELF (i32 tglobaladdr:$dst)),
-          (BL_ELF tglobaladdr:$dst)>;
-def : Pat<(PPCcall_ELF (i32 texternalsym:$dst)),
-          (BL_ELF texternalsym:$dst)>;
+def : Pat<(PPCcall_Darwin (i32 tglobaladdr:$dst)),
+          (BL_Darwin tglobaladdr:$dst)>;
+def : Pat<(PPCcall_Darwin (i32 texternalsym:$dst)),
+          (BL_Darwin texternalsym:$dst)>;
+def : Pat<(PPCcall_SVR4 (i32 tglobaladdr:$dst)),
+          (BL_SVR4 tglobaladdr:$dst)>;
+def : Pat<(PPCcall_SVR4 (i32 texternalsym:$dst)),
+          (BL_SVR4 texternalsym:$dst)>;
 
 
 def : Pat<(PPCtc_return (i32 tglobaladdr:$dst),  imm:$imm),
