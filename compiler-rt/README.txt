@@ -9,7 +9,7 @@ terms of the license agreement found in LICENSE.txt.
 
 ================================
 
-This is a replacment library for libgcc.  Each function is contained
+This is a replacement library for libgcc.  Each function is contained
 in its own file.  Each function has a corresponding unit test under
 test/Unit.
 
@@ -34,10 +34,10 @@ di_int __ashldi3(di_int a, si_int b);      // a << b
 di_int __ashrdi3(di_int a, si_int b);      // a >> b  arithmetic (sign fill)
 di_int __lshrdi3(di_int a, si_int b);      // a >> b  logical    (zero fill)
 
-si_int __clzsi2(si_int a);  // count leading zeroes
-si_int __clzdi2(di_int a);  // count leading zeroes
-si_int __ctzsi2(si_int a);  // count trailing zeroes
-si_int __ctzdi2(di_int a);  // count trailing zeroes
+si_int __clzsi2(si_int a);  // count leading zeros
+si_int __clzdi2(di_int a);  // count leading zeros
+si_int __ctzsi2(si_int a);  // count trailing zeros
+si_int __ctzdi2(di_int a);  // count trailing zeros
 
 si_int __ffsdi2(di_int a);  // find least significant 1 bit
 
