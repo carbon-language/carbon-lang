@@ -350,6 +350,7 @@ unsigned MSP430RegisterInfo::getFrameRegister(MachineFunction &MF) const {
 
 int MSP430RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   assert(0 && "Not implemented yet!");
+  return 0;
 }
 
 #include "MSP430GenRegisterInfo.inc"
