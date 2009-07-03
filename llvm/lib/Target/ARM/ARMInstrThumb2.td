@@ -142,7 +142,8 @@ def t2addrmode_imm8 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
-def t2am_imm8_offset : Operand<i32> {
+def t2am_imm8_offset : Operand<i32>,
+                       ComplexPattern<i32, 1, "SelectT2AddrModeImm8Offset", []>{
   let PrintMethod = "printT2AddrModeImm8OffsetOperand";
 }
 
@@ -610,6 +611,49 @@ defm t2STRH  : T2I_st<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
 let mayLoad = 1 in
 def t2STRDi8 : T2Ii8s4<(outs), (ins GPR:$src, t2addrmode_imm8s4:$addr),
                         "strd", " $src, $addr", []>;
+
+// Indexed stores
+def t2STR_PRE  : T2Iidxldst<(outs GPR:$base_wb),
+                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePre,
+                          "str", " $src, [$base, $offset]!", "$base = $base_wb",
+             [(set GPR:$base_wb,
+                   (pre_store GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+
+def t2STR_POST : T2Iidxldst<(outs GPR:$base_wb),
+                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePost,
+                           "str", " $src, [$base], $offset", "$base = $base_wb",
+             [(set GPR:$base_wb,
+                   (post_store GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+
+def t2STRH_PRE  : T2Iidxldst<(outs GPR:$base_wb),
+                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePre,
+                         "strh", " $src, [$base, $offset]!", "$base = $base_wb",
+        [(set GPR:$base_wb,
+              (pre_truncsti16 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+
+def t2STRH_POST : T2Iidxldst<(outs GPR:$base_wb),
+                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePost,
+                          "strh", " $src, [$base], $offset", "$base = $base_wb",
+       [(set GPR:$base_wb,
+             (post_truncsti16 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+
+def t2STRB_PRE  : T2Iidxldst<(outs GPR:$base_wb),
+                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePre,
+                         "strb", " $src, [$base, $offset]!", "$base = $base_wb",
+         [(set GPR:$base_wb,
+               (pre_truncsti8 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
+
+def t2STRB_POST : T2Iidxldst<(outs GPR:$base_wb),
+                            (ins GPR:$src, GPR:$base, t2am_imm8_offset:$offset),
+                            AddrModeT2_i8, IndexModePost,
+                          "strb", " $src, [$base], $offset", "$base = $base_wb",
+        [(set GPR:$base_wb,
+              (post_truncsti8 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
 
 
 // Address computation and loads and stores in PIC mode.
