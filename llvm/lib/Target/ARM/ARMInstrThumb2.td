@@ -673,6 +673,21 @@ def t2PICSTRH  : T2I_picst<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS
 def t2PICSTRB  : T2I_picst<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
 } // isNotDuplicable = 1, AddedComplexity = 10
 
+
+//===----------------------------------------------------------------------===//
+//  Load / store multiple Instructions.
+//
+
+let mayLoad = 1 in
+def t2LDM : T2XI<(outs),
+                 (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
+                 "ldm${p}${addr:submode} $addr, $dst1", []>;
+
+let mayStore = 1 in
+def t2STM : T2XI<(outs),
+                 (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
+                 "stm${p}${addr:submode} $addr, $src1", []>;
+
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
 //
