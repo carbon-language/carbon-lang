@@ -180,7 +180,7 @@ void CGObjCGNU::EmitClassRef(const std::string &className){
   std::string symbolName = "__objc_class_name_" + className;
   llvm::GlobalVariable *ClassSymbol = TheModule.getGlobalVariable(symbolName);
   if (!ClassSymbol) {
-	ClassSymbol = new llvm::GlobalVariable(LongTy, false,
+    ClassSymbol = new llvm::GlobalVariable(LongTy, false,
         llvm::GlobalValue::ExternalLinkage, 0, symbolName, &TheModule);
   }
   new llvm::GlobalVariable(ClassSymbol->getType(), true,
@@ -859,9 +859,14 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   std::string ClassName = ClassDecl->getNameAsString();
   // Emit the symbol that is used to generate linker errors if this class is
   // referenced in other modules but not declared.
-  new llvm::GlobalVariable(LongTy, false, llvm::GlobalValue::ExternalLinkage,
-    llvm::ConstantInt::get(LongTy, 0), "__objc_class_name_" + ClassName,
-    &TheModule);
+  std::string classSymbolName = "__objc_class_name_" + ClassName;
+  if (llvm::GlobalVariable *symbol = 
+      TheModule.getGlobalVariable(classSymbolName)) {
+    symbol->setInitializer(llvm::ConstantInt::get(LongTy, 0));
+  } else {
+    new llvm::GlobalVariable(LongTy, false, llvm::GlobalValue::ExternalLinkage,
+    llvm::ConstantInt::get(LongTy, 0), classSymbolName, &TheModule);
+  }
   
   // Get the size of instances.
   int instanceSize = Context.getASTObjCImplementationLayout(OID).getSize() / 8;
