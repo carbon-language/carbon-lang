@@ -937,7 +937,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   // Check if the super region has a binding.
   if (B.lookup(superR)) {
     // We do not extract the bit value from super region for now.
-    return ValMgr.makeUnknownVal();
+    return UnknownVal();
   }
   
   if (R->hasHeapStorage()) {
