@@ -9,7 +9,7 @@
 //
 // This utility provides a simple wrapper around the LLVM Execution Engines,
 // which allow the direct execution of LLVM programs through a Just-In-Time
-// compiler, or through an intepreter if no JIT is available for this platform.
+// compiler, or through an interpreter if no JIT is available for this platform.
 //
 //===----------------------------------------------------------------------===//
 
