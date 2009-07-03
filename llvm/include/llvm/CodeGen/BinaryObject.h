@@ -15,6 +15,8 @@
 #ifndef LLVM_CODEGEN_BINARYOBJECT_H
 #define LLVM_CODEGEN_BINARYOBJECT_H
 
+#include "llvm/Support/DataTypes.h"
+
 #include <string>
 #include <vector>
 
