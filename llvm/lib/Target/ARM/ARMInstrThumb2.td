@@ -546,6 +546,7 @@ def : T2Pat<(extloadi16 (ARMWrapper tconstpool:$addr)),
             (t2LDRHpci  tconstpool:$addr)>;
 
 // Indexed loads
+let mayLoad = 1 in {
 def t2LDR_PRE  : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
                             (ins t2addrmode_imm8:$addr),
                             AddrModeT2_i8, IndexModePre,
@@ -601,6 +602,7 @@ def t2LDRSH_POST : T2Iidxldst<(outs GPR:$dst, GPR:$base_wb),
                             AddrModeT2_i8, IndexModePost,
                          "ldrsh", " $dst, [$base], $offset", "$base = $base_wb",
                             []>;
+}
 
 // Store
 defm t2STR   : T2I_st<"str",  BinOpFrag<(store node:$LHS, node:$RHS)>>;
