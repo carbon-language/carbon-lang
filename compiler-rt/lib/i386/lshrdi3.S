@@ -42,21 +42,13 @@ ___lshrdi3:
 	movl	   4(%esp),		%eax	// Load low
 	
 	testl		$0x20,		%ecx	// If count >= 32
-	jnz			2f					//    goto 2
-	testl		$0x1f,		%ecx	// If count == 0
-	jz			1f					//    goto 1
-	
-	pushl		%ebx
-	movl		%edx,		%ebx	// copy high
-	shrl		%cl,		%eax	// right shift low by count
+	jnz			1f					//    goto 1
+
+	shrdl		%cl, %edx,	%eax	// right shift low by count
 	shrl		%cl,		%edx	// right shift high by count
-	neg			%cl
-	shll		%cl,		%ebx	// left shift high by 32 - count
-	orl			%ebx,		%eax	// or the result into the low word
-	popl		%ebx
-1:	ret
+	ret
 	
-2:	movl		%edx,		%eax	// Move high to low
+1:	movl		%edx,		%eax	// Move high to low
 	xorl		%edx,		%edx	// clear high
 	shrl		%cl,		%eax	// shift low by count - 32
 	ret

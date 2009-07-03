@@ -15,8 +15,10 @@
 
 // Returns: a % b
 
+su_int __udivsi3(su_int a, su_int b);
+
 su_int
 __umodsi3(su_int a, su_int b)
 {
-    return a - (a / b) * b;
+    return a - __udivsi3(a, b) * b;
 }

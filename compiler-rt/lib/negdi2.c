@@ -18,5 +18,7 @@
 di_int
 __negdi2(di_int a)
 {
-    return ~a + 1;
+    // Note: this routine is here for API compatibility; any sane compiler
+    // should expand it inline.
+    return -a;
 }

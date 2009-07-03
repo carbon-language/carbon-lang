@@ -40,23 +40,14 @@ ___ashldi3:
 	movl	  12(%esp),		%ecx	// Load count
 	movl	   8(%esp),		%edx	// Load high
 	movl	   4(%esp),		%eax	// Load low
-	
+
 	testl		$0x20,		%ecx	// If count >= 32
-	jnz			2f					//    goto 2
-	testl		$0x1f,		%ecx	// If count == 0
-	jz			1f					//    goto 1
-	
-	pushl		%ebx
-	movl		%eax,		%ebx	// copy low
+	jnz		1f			//    goto 1
+	shldl		%cl, %eax,	%edx	// left shift high by count
 	shll		%cl,		%eax	// left shift low by count
-	shll		%cl,		%edx	// left shift high by count
-	neg			%cl
-	shrl		%cl,		%ebx	// right shift low by 32 - count
-	orl			%ebx,		%edx	// or the result into the high word
-	popl		%ebx
-1:	ret
-	
-2:	movl		%eax,		%edx	// Move low to high
+	ret
+
+1:	movl		%eax,		%edx	// Move low to high
 	xorl		%eax,		%eax	// clear low
 	shll		%cl,		%edx	// shift high by count - 32
 	ret
