@@ -20,6 +20,7 @@ add_llvm_library(LLVMTransformUtils
   Mem2Reg.cpp
   PromoteMemoryToRegister.cpp
   SimplifyCFG.cpp
+  SSI.cpp
   UnifyFunctionExitNodes.cpp
   UnrollLoop.cpp
   ValueMapper.cpp
