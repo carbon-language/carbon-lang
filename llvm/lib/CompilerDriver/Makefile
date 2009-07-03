@@ -12,18 +12,26 @@ LEVEL = ../..
 # We don't want this library to appear in `llvm-config --libs` output, so its
 # name doesn't start with "LLVM".
 
-LIBRARYNAME = libCompilerDriver
-LLVMLIBS = LLVMSupport.a LLVMSystem.a
-LOADABLE_MODULE := 1
+ifeq ($(ENABLE_LLVMC_DYNAMIC),1)
+  LIBRARYNAME = libCompilerDriver
+  LLVMLIBS = LLVMSupport.a LLVMSystem.a
+  LOADABLE_MODULE := 1
+else
+  LIBRARYNAME = CompilerDriver
+  LINK_COMPONENTS = support system
+endif
+
 REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
+
+# Copy libCompilerDriver to the bin dir so that llvmc can find it.
+ifeq ($(ENABLE_LLVMC_DYNAMIC),1)
 
 FullLibName = $(LIBRARYNAME)$(SHLIBEXT)
 
 all-local:: $(ToolDir)/$(FullLibName)
 
-# Copy the library to the bin dir so that llvmc can find it.
 $(ToolDir)/$(FullLibName): $(LibDir)/$(FullLibName) $(ToolDir)/.dir
 	$(Echo) Copying $(BuildMode) Shared Library $(FullLibName) to $@
 	-$(Verb) $(CP) $< $@
@@ -32,3 +40,4 @@ clean-local::
 	$(Echo) Removing $(BuildMode) Shared Library $(FullLibName) \
 	from $(ToolDir)
 	-$(Verb) $(RM) -f $(ToolDir)/$(FullLibName)
+endif

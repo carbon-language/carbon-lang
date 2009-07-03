@@ -297,3 +297,9 @@ endif
 
 # Location of the plugin header file for gold.
 BINUTILS_INCDIR := @BINUTILS_INCDIR@
+
+# When ENABLE_LLVMC_DYNAMIC is enabled, LLVMC will link libCompilerDriver
+# dynamically. This is needed to make dynamic plugins work on some targets
+# (Windows).
+ENABLE_LLVMC_DYNAMIC = 0
+#@ENABLE_LLVMC_DYNAMIC@

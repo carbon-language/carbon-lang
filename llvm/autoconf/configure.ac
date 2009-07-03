@@ -593,6 +593,24 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-libffi. Use "yes" or "no"]) ;;
 esac
 
+dnl Only Windows needs dynamic libCompilerDriver to support plugins.
+if test "$llvm_cv_os_type" = "Win32" ; then
+   llvmc_dynamic="yes"
+else
+   llvmc_dynamic="no"
+fi
+
+dnl --enable-llvmc-dynamic : should LLVMC link libCompilerDriver dynamically?
+AC_ARG_ENABLE(llvmc-dynamic,AS_HELP_STRING(
+--enable-llvmc-dynamic,
+[Link LLVMC dynamically (default is NO, unless on Win32)]),,
+enableval=$llvmc_dynamic)
+if test ${enableval} = "no"; then
+   AC_SUBST(ENABLE_LLVMC_DYNAMIC,[[]])
+else
+   AC_SUBST(ENABLE_LLVMC_DYNAMIC,[[ENABLE_LLVMC_DYNAMIC=1]])
+fi
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
