@@ -21,6 +21,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -615,8 +616,8 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
         V = new SExtInst(V, IntPtrTy, "sunkaddr", InsertPt);
       }
       if (AddrMode.Scale != 1)
-        V = BinaryOperator::CreateMul(V, ConstantInt::get(IntPtrTy,
-                                                          AddrMode.Scale),
+        V = BinaryOperator::CreateMul(V, Context->getConstantInt(IntPtrTy,
+                                                                AddrMode.Scale),
                                       "sunkaddr", InsertPt);
       Result = V;
     }
@@ -647,7 +648,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
     // Add in the Base Offset if present.
     if (AddrMode.BaseOffs) {
-      Value *V = ConstantInt::get(IntPtrTy, AddrMode.BaseOffs);
+      Value *V = Context->getConstantInt(IntPtrTy, AddrMode.BaseOffs);
       if (Result)
         Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
       else
@@ -655,7 +656,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     }
 
     if (Result == 0)
-      SunkAddr = Constant::getNullValue(Addr->getType());
+      SunkAddr = Context->getNullValue(Addr->getType());
     else
       SunkAddr = new IntToPtrInst(Result, Addr->getType(), "sunkaddr",InsertPt);
   }

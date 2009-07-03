@@ -22,6 +22,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -795,7 +796,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction* orig,
   // If the block is unreachable, just return undef, since this path
   // can't actually occur at runtime.
   if (!DT->isReachableFromEntry(BB))
-    return Phis[BB] = UndefValue::get(orig->getType());
+    return Phis[BB] = Context->getUndef(orig->getType());
   
   if (BasicBlock *Pred = BB->getSinglePredecessor()) {
     Value *ret = GetValueForBlock(Pred, orig, Phis);
@@ -983,7 +984,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     // Loading the allocation -> undef.
     if (isa<AllocationInst>(DepInst)) {
       ValuesPerBlock.push_back(std::make_pair(DepBB, 
-                                              UndefValue::get(LI->getType())));
+                                            Context->getUndef(LI->getType())));
       continue;
     }
   
@@ -1270,7 +1271,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   // undef value.  This can happen when loading for a fresh allocation with no
   // intervening stores, for example.
   if (isa<AllocationInst>(DepInst)) {
-    L->replaceAllUsesWith(UndefValue::get(L->getType()));
+    L->replaceAllUsesWith(Context->getUndef(L->getType()));
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
@@ -1382,9 +1383,9 @@ bool GVN::processInstruction(Instruction *I,
     BasicBlock* falseSucc = BI->getSuccessor(1);
     
     if (trueSucc->getSinglePredecessor())
-      localAvail[trueSucc]->table[condVN] = ConstantInt::getTrue();
+      localAvail[trueSucc]->table[condVN] = Context->getConstantIntTrue();
     if (falseSucc->getSinglePredecessor())
-      localAvail[falseSucc]->table[condVN] = ConstantInt::getFalse();
+      localAvail[falseSucc]->table[condVN] = Context->getConstantIntFalse();
 
     return false;
     
