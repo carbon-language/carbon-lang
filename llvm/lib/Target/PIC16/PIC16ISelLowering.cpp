@@ -399,7 +399,7 @@ PIC16TargetLowering::MakePIC16Libcall(PIC16ISD::PIC16Libcall Call,
    const Type *RetTy = RetVT.getTypeForMVT();
    std::pair<SDValue,SDValue> CallInfo = 
      LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                 false, CallingConv::C, false, Callee, Args, DAG, dl);
+                 false, 0, CallingConv::C, false, Callee, Args, DAG, dl);
 
   return CallInfo.first;
 }
@@ -1302,7 +1302,8 @@ SDValue PIC16TargetLowering::LegalizeCALL(SDValue Op, SelectionDAG &DAG) {
    // Generate new call with all the operands legal
    return DAG.getCall(TheCall->getCallingConv(), dl,
                       TheCall->isVarArg(), TheCall->isTailCall(),
-                      TheCall->isInreg(), VTs, &Ops[0], Ops.size());
+                      TheCall->isInreg(), VTs, &Ops[0], Ops.size(),
+                      TheCall->getNumFixedArgs());
 }
 
 void PIC16TargetLowering::

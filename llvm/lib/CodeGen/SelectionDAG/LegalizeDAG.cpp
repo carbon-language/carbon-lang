@@ -1900,7 +1900,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   const Type *RetTy = Node->getValueType(0).getTypeForMVT();
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
-                    CallingConv::C, false, Callee, Args, DAG,
+                    0, CallingConv::C, false, Callee, Args, DAG,
                     Node->getDebugLoc());
 
   // Legalize the call sequence, starting with the chain.  This will advance
@@ -2305,7 +2305,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     TargetLowering::ArgListTy Args;
     std::pair<SDValue, SDValue> CallResult =
       TLI.LowerCallTo(Node->getOperand(0), Type::VoidTy,
-                      false, false, false, false, CallingConv::C, false,
+                      false, false, false, false, 0, CallingConv::C, false,
                       DAG.getExternalSymbol("abort", TLI.getPointerTy()),
                       Args, DAG, dl);
     Results.push_back(CallResult.second);

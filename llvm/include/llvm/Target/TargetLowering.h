@@ -1122,9 +1122,9 @@ public:
   typedef std::vector<ArgListEntry> ArgListTy;
   virtual std::pair<SDValue, SDValue>
   LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
-              bool isVarArg, bool isInreg, unsigned CallingConv, 
-              bool isTailCall, SDValue Callee, ArgListTy &Args, 
-              SelectionDAG &DAG, DebugLoc dl);
+              bool isVarArg, bool isInreg, unsigned NumFixedArgs,
+              unsigned CallingConv, bool isTailCall, SDValue Callee,
+              ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl);
 
   /// EmitTargetCodeForMemcpy - Emit target-specific code that performs a
   /// memcpy. This can be used by targets to provide code sequences for cases

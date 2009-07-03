@@ -4416,7 +4416,7 @@ void SelectionDAGLowering::LowerCallTo(CallSite CS, SDValue Callee,
     TLI.LowerCallTo(getRoot(), CS.getType(),
                     CS.paramHasAttr(0, Attribute::SExt),
                     CS.paramHasAttr(0, Attribute::ZExt), FTy->isVarArg(),
-                    CS.paramHasAttr(0, Attribute::InReg),
+                    CS.paramHasAttr(0, Attribute::InReg), FTy->getNumParams(),
                     CS.getCallingConv(),
                     IsTailCall && PerformTailCallOpt,
                     Callee, Args, DAG, getCurDebugLoc());
@@ -5468,7 +5468,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
 
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), false, false, false, false,
-                    CallingConv::C, PerformTailCallOpt,
+                    0, CallingConv::C, PerformTailCallOpt,
                     DAG.getExternalSymbol("malloc", IntPtr),
                     Args, DAG, getCurDebugLoc());
   setValue(&I, Result.first);  // Pointers always fit in registers
@@ -5484,7 +5484,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   MVT IntPtr = TLI.getPointerTy();
   std::pair<SDValue,SDValue> Result =
     TLI.LowerCallTo(getRoot(), Type::VoidTy, false, false, false, false,
-                    CallingConv::C, PerformTailCallOpt,
+                    0, CallingConv::C, PerformTailCallOpt,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG,
                     getCurDebugLoc());
   DAG.setRoot(Result.second);
@@ -5657,7 +5657,7 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 std::pair<SDValue, SDValue>
 TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             bool RetSExt, bool RetZExt, bool isVarArg,
-                            bool isInreg,
+                            bool isInreg, unsigned NumFixedArgs,
                             unsigned CallingConv, bool isTailCall,
                             SDValue Callee,
                             ArgListTy &Args, SelectionDAG &DAG, DebugLoc dl) {
@@ -5755,7 +5755,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
                             isVarArg, isTailCall, isInreg,
                             DAG.getVTList(&LoweredRetTys[0],
                                           LoweredRetTys.size()),
-                            &Ops[0], Ops.size()
+                            &Ops[0], Ops.size(), NumFixedArgs
                             );
   Chain = Res.getValue(LoweredRetTys.size() - 1);
 

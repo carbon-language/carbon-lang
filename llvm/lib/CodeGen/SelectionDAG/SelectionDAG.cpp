@@ -3375,7 +3375,7 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   // FIXME: pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
-                    false, false, false, false, CallingConv::C, false,
+                    false, false, false, false, 0, CallingConv::C, false,
                     getExternalSymbol("memcpy", TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
@@ -3421,7 +3421,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   // FIXME:  pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
-                    false, false, false, false, CallingConv::C, false,
+                    false, false, false, false, 0, CallingConv::C, false,
                     getExternalSymbol("memmove", TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
@@ -3473,7 +3473,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
   // FIXME: pass in DebugLoc
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
-                    false, false, false, false, CallingConv::C, false,
+                    false, false, false, false, 0, CallingConv::C, false,
                     getExternalSymbol("memset", TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
@@ -3605,7 +3605,8 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, DebugLoc dl, SDVTList VTList,
 SDValue
 SelectionDAG::getCall(unsigned CallingConv, DebugLoc dl, bool IsVarArgs,
                       bool IsTailCall, bool IsInreg, SDVTList VTs,
-                      const SDValue *Operands, unsigned NumOperands) {
+                      const SDValue *Operands, unsigned NumOperands,
+                      unsigned NumFixedArgs) {
   // Do not include isTailCall in the folding set profile.
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::CALL, VTs, Operands, NumOperands);
@@ -3621,7 +3622,7 @@ SelectionDAG::getCall(unsigned CallingConv, DebugLoc dl, bool IsVarArgs,
   }
   SDNode *N = NodeAllocator.Allocate<CallSDNode>();
   new (N) CallSDNode(CallingConv, dl, IsVarArgs, IsTailCall, IsInreg,
-                     VTs, Operands, NumOperands);
+                     VTs, Operands, NumOperands, NumFixedArgs);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);

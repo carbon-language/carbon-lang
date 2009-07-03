@@ -1006,7 +1006,7 @@ SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, MVT RetVT,
   const Type *RetTy = RetVT.getTypeForMVT();
   std::pair<SDValue,SDValue> CallInfo =
     TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                    false, CallingConv::C, false, Callee, Args, DAG, dl);
+                    false, 0, CallingConv::C, false, Callee, Args, DAG, dl);
   return CallInfo.first;
 }
 

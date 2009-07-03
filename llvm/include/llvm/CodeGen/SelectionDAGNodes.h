@@ -2257,6 +2257,7 @@ class CallSDNode : public SDNode {
   unsigned CallingConv;
   bool IsVarArg;
   bool IsTailCall;
+  unsigned NumFixedArgs;
   // We might eventually want a full-blown Attributes for the result; that
   // will expand the size of the representation.  At the moment we only
   // need Inreg.
@@ -2264,10 +2265,10 @@ class CallSDNode : public SDNode {
   friend class SelectionDAG;
   CallSDNode(unsigned cc, DebugLoc dl, bool isvararg, bool istailcall,
              bool isinreg, SDVTList VTs, const SDValue *Operands,
-             unsigned numOperands)
+             unsigned numOperands, unsigned numFixedArgs)
     : SDNode(ISD::CALL, dl, VTs, Operands, numOperands),
       CallingConv(cc), IsVarArg(isvararg), IsTailCall(istailcall),
-      Inreg(isinreg) {}
+      NumFixedArgs(numFixedArgs), Inreg(isinreg) {}
 public:
   unsigned getCallingConv() const { return CallingConv; }
   unsigned isVarArg() const { return IsVarArg; }
@@ -2284,6 +2285,12 @@ public:
   SDValue getCallee() const { return getOperand(1); }
 
   unsigned getNumArgs() const { return (getNumOperands() - 2) / 2; }
+  unsigned getNumFixedArgs() const {
+    if (isVarArg())
+      return NumFixedArgs;
+    else
+      return getNumArgs();
+  }
   SDValue getArg(unsigned i) const { return getOperand(2+2*i); }
   SDValue getArgFlagsVal(unsigned i) const {
     return getOperand(3+2*i);

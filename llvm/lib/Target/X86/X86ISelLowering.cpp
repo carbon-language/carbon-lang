@@ -5813,7 +5813,7 @@ X86TargetLowering::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
       Args.push_back(Entry);
       std::pair<SDValue,SDValue> CallResult =
         LowerCallTo(Chain, Type::VoidTy, false, false, false, false,
-                    CallingConv::C, false,
+                    0, CallingConv::C, false,
                     DAG.getExternalSymbol(bzeroEntry, IntPtr), Args, DAG, dl);
       return CallResult.second;
     }

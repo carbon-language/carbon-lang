@@ -1159,7 +1159,7 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
   // FIXME: is there useful debug info available here?
   std::pair<SDValue, SDValue> CallResult =
     LowerCallTo(Chain, (const Type *) Type::Int32Ty, false, false, false, false,
-                CallingConv::C, false,
+                0, CallingConv::C, false,
                 DAG.getExternalSymbol("__tls_get_addr", PtrVT), Args, DAG, dl);
   return CallResult.first;
 }

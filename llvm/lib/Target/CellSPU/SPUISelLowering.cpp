@@ -113,7 +113,7 @@ namespace {
     const Type *RetTy = Op.getNode()->getValueType(0).getTypeForMVT();
     std::pair<SDValue, SDValue> CallInfo =
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
-                            CallingConv::C, false, Callee, Args, DAG,
+                            0, CallingConv::C, false, Callee, Args, DAG,
                             Op.getDebugLoc());
 
     return CallInfo.first;
