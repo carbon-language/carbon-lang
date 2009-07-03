@@ -444,21 +444,29 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
     // not cause any bug. If we need other uses of CR bits, the following
     // code may be invalid.
     unsigned Reg = 0;
-    if (SrcReg >= PPC::CR0LT || SrcReg <= PPC::CR0UN) 
+    if (SrcReg == PPC::CR0LT || SrcReg == PPC::CR0GT ||
+        SrcReg == PPC::CR0EQ || SrcReg == PPC::CR0UN)
       Reg = PPC::CR0;
-    else if (SrcReg >= PPC::CR1LT || SrcReg <= PPC::CR1UN) 
+    else if (SrcReg == PPC::CR1LT || SrcReg == PPC::CR1GT ||
+             SrcReg == PPC::CR1EQ || SrcReg == PPC::CR1UN)
       Reg = PPC::CR1;
-    else if (SrcReg >= PPC::CR2LT || SrcReg <= PPC::CR2UN) 
+    else if (SrcReg == PPC::CR2LT || SrcReg == PPC::CR2GT ||
+             SrcReg == PPC::CR2EQ || SrcReg == PPC::CR2UN)
       Reg = PPC::CR2;
-    else if (SrcReg >= PPC::CR3LT || SrcReg <= PPC::CR3UN) 
+    else if (SrcReg == PPC::CR3LT || SrcReg == PPC::CR3GT ||
+             SrcReg == PPC::CR3EQ || SrcReg == PPC::CR3UN)
       Reg = PPC::CR3;
-    else if (SrcReg >= PPC::CR4LT || SrcReg <= PPC::CR4UN) 
+    else if (SrcReg == PPC::CR4LT || SrcReg == PPC::CR4GT ||
+             SrcReg == PPC::CR4EQ || SrcReg == PPC::CR4UN)
       Reg = PPC::CR4;
-    else if (SrcReg >= PPC::CR5LT || SrcReg <= PPC::CR5UN) 
+    else if (SrcReg == PPC::CR5LT || SrcReg == PPC::CR5GT ||
+             SrcReg == PPC::CR5EQ || SrcReg == PPC::CR5UN)
       Reg = PPC::CR5;
-    else if (SrcReg >= PPC::CR6LT || SrcReg <= PPC::CR6UN) 
+    else if (SrcReg == PPC::CR6LT || SrcReg == PPC::CR6GT ||
+             SrcReg == PPC::CR6EQ || SrcReg == PPC::CR6UN)
       Reg = PPC::CR6;
-    else if (SrcReg >= PPC::CR7LT || SrcReg <= PPC::CR7UN) 
+    else if (SrcReg == PPC::CR7LT || SrcReg == PPC::CR7GT ||
+             SrcReg == PPC::CR7EQ || SrcReg == PPC::CR7UN)
       Reg = PPC::CR7;
 
     return StoreRegToStackSlot(MF, Reg, isKill, FrameIdx, 
@@ -587,21 +595,29 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
   } else if (RC == PPC::CRBITRCRegisterClass) {
    
     unsigned Reg = 0;
-    if (DestReg >= PPC::CR0LT || DestReg <= PPC::CR0UN) 
+    if (DestReg == PPC::CR0LT || DestReg == PPC::CR0GT ||
+        DestReg == PPC::CR0EQ || DestReg == PPC::CR0UN)
       Reg = PPC::CR0;
-    else if (DestReg >= PPC::CR1LT || DestReg <= PPC::CR1UN) 
+    else if (DestReg == PPC::CR1LT || DestReg == PPC::CR1GT ||
+             DestReg == PPC::CR1EQ || DestReg == PPC::CR1UN)
       Reg = PPC::CR1;
-    else if (DestReg >= PPC::CR2LT || DestReg <= PPC::CR2UN) 
+    else if (DestReg == PPC::CR2LT || DestReg == PPC::CR2GT ||
+             DestReg == PPC::CR2EQ || DestReg == PPC::CR2UN)
       Reg = PPC::CR2;
-    else if (DestReg >= PPC::CR3LT || DestReg <= PPC::CR3UN) 
+    else if (DestReg == PPC::CR3LT || DestReg == PPC::CR3GT ||
+             DestReg == PPC::CR3EQ || DestReg == PPC::CR3UN)
       Reg = PPC::CR3;
-    else if (DestReg >= PPC::CR4LT || DestReg <= PPC::CR4UN) 
+    else if (DestReg == PPC::CR4LT || DestReg == PPC::CR4GT ||
+             DestReg == PPC::CR4EQ || DestReg == PPC::CR4UN)
       Reg = PPC::CR4;
-    else if (DestReg >= PPC::CR5LT || DestReg <= PPC::CR5UN) 
+    else if (DestReg == PPC::CR5LT || DestReg == PPC::CR5GT ||
+             DestReg == PPC::CR5EQ || DestReg == PPC::CR5UN)
       Reg = PPC::CR5;
-    else if (DestReg >= PPC::CR6LT || DestReg <= PPC::CR6UN) 
+    else if (DestReg == PPC::CR6LT || DestReg == PPC::CR6GT ||
+             DestReg == PPC::CR6EQ || DestReg == PPC::CR6UN)
       Reg = PPC::CR6;
-    else if (DestReg >= PPC::CR7LT || DestReg <= PPC::CR7UN) 
+    else if (DestReg == PPC::CR7LT || DestReg == PPC::CR7GT ||
+             DestReg == PPC::CR7EQ || DestReg == PPC::CR7UN)
       Reg = PPC::CR7;
 
     return LoadRegFromStackSlot(MF, DL, Reg, FrameIdx, 

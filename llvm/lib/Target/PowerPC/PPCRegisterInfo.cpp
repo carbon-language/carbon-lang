@@ -1049,9 +1049,10 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
       if (Reg < MinFPR) {
         MinFPR = Reg;
       }
-    } else if (   RC == PPC::CRBITRCRegisterClass 
+// FIXME SVR4: Disable CR save area for now.
+    } else if (   RC == PPC::CRBITRCRegisterClass
                || RC == PPC::CRRCRegisterClass) {
-      HasCRSaveArea = true;
+//      HasCRSaveArea = true;
     } else if (RC == PPC::VRSAVERCRegisterClass) {
       HasVRSAVESaveArea = true;
     } else if (RC == PPC::VRRCRegisterClass) {
