@@ -68,8 +68,6 @@ namespace llvm {
   //===--------------------------------------------------------------------===//
   class MipsTargetLowering : public TargetLowering 
   {
-    // FrameIndex for return slot.
-    int ReturnAddrIndex;
   public:
 
     explicit MipsTargetLowering(MipsTargetMachine &TM);

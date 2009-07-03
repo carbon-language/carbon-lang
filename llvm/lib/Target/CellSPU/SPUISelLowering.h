@@ -89,7 +89,6 @@ namespace llvm {
     public TargetLowering
   {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
-    int ReturnAddrIndex;              // FrameIndex for return slot.
     SPUTargetMachine &SPUTM;
 
   public:

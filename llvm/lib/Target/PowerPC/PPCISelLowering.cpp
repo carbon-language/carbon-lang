@@ -1387,9 +1387,9 @@ static const unsigned *GetFPR(const PPCSubtarget &Subtarget) {
 /// CalculateStackSlotSize - Calculates the size reserved for this argument on
 /// the stack.
 static unsigned CalculateStackSlotSize(SDValue Arg, ISD::ArgFlagsTy Flags,
-                                       bool isVarArg, unsigned PtrByteSize) {
+                                       unsigned PtrByteSize) {
   MVT ArgVT = Arg.getValueType();
-  unsigned ArgSize =ArgVT.getSizeInBits()/8;
+  unsigned ArgSize = ArgVT.getSizeInBits()/8;
   if (Flags.isByVal())
     ArgSize = Flags.getByValSize();
   ArgSize = ((ArgSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
@@ -1409,7 +1409,6 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   //
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineRegisterInfo &RegInfo = MF.getRegInfo();
   SmallVector<SDValue, 8> ArgValues;
   SDValue Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
@@ -1534,14 +1533,12 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
         MinReservedArea = ((MinReservedArea+15)/16)*16;
         MinReservedArea += CalculateStackSlotSize(Op.getValue(ArgNo),
                                                   Flags,
-                                                  isVarArg,
                                                   PtrByteSize);
       } else  nAltivecParamsAtEnd++;
     } else
       // Calculate min reserved area.
       MinReservedArea += CalculateStackSlotSize(Op.getValue(ArgNo),
                                                 Flags,
-                                                isVarArg,
                                                 PtrByteSize);
 
     // FIXME alignment for ELF may not be right
@@ -1564,8 +1561,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       ArgValues.push_back(FIN);
       if (ObjSize==1 || ObjSize==2) {
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
-          RegInfo.addLiveIn(GPR[GPR_idx], VReg);
+          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, PtrVT);
           SDValue Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
                                NULL, 0, ObjSize==1 ? MVT::i8 : MVT::i16 );
@@ -1582,8 +1578,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
         // to memory.  ArgVal will be address of the beginning of
         // the object.
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
-          RegInfo.addLiveIn(GPR[GPR_idx], VReg);
+          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset);
           SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
           SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, PtrVT);
@@ -1607,8 +1602,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
         if (Align && isELF32_ABI) GPR_idx += (GPR_idx % 2);
 
         if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
-          RegInfo.addLiveIn(GPR[GPR_idx], VReg);
+          unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
           ArgVal = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
           ++GPR_idx;
         } else {
@@ -1625,8 +1619,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       // FALLTHROUGH
     case MVT::i64:  // PPC64
       if (GPR_idx != Num_GPR_Regs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&PPC::G8RCRegClass);
-        RegInfo.addLiveIn(GPR[GPR_idx], VReg);
+        unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
         ArgVal = DAG.getCopyFromReg(Root, dl, VReg, MVT::i64);
 
         if (ObjectVT == MVT::i32) {
@@ -1662,11 +1655,12 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       }
       if (FPR_idx != Num_FPR_Regs) {
         unsigned VReg;
+
         if (ObjectVT == MVT::f32)
-          VReg = RegInfo.createVirtualRegister(&PPC::F4RCRegClass);
+          VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F4RCRegClass);
         else
-          VReg = RegInfo.createVirtualRegister(&PPC::F8RCRegClass);
-        RegInfo.addLiveIn(FPR[FPR_idx], VReg);
+          VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F8RCRegClass);
+
         ArgVal = DAG.getCopyFromReg(Root, dl, VReg, ObjectVT);
         ++FPR_idx;
       } else {
@@ -1686,8 +1680,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       // Note that vector arguments in registers don't reserve stack space,
       // except in varargs functions.
       if (VR_idx != Num_VR_Regs) {
-        unsigned VReg = RegInfo.createVirtualRegister(&PPC::VRRCRegClass);
-        RegInfo.addLiveIn(VR[VR_idx], VReg);
+        unsigned VReg = MF.addLiveIn(VR[VR_idx], &PPC::VRRCRegClass);
         ArgVal = DAG.getCopyFromReg(Root, dl, VReg, ObjectVT);
         if (isVarArg) {
           while ((ArgOffset % 16) != 0) {
@@ -1791,12 +1784,12 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
     // result of va_next.
     for (; GPR_idx != Num_GPR_Regs; ++GPR_idx) {
       unsigned VReg;
+      
       if (isPPC64)
-        VReg = RegInfo.createVirtualRegister(&PPC::G8RCRegClass);
+        VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
       else
-        VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
+        VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::GPRCRegClass);
 
-      RegInfo.addLiveIn(GPR[GPR_idx], VReg);
       SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, PtrVT);
       SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
       MemOps.push_back(Store);
@@ -1819,10 +1812,8 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
       }
 
       for (; FPR_idx != Num_FPR_Regs; ++FPR_idx) {
-        unsigned VReg;
-        VReg = RegInfo.createVirtualRegister(&PPC::F8RCRegClass);
+        unsigned VReg = MF.addLiveIn(FPR[FPR_idx], &PPC::F8RCRegClass);
 
-        RegInfo.addLiveIn(FPR[FPR_idx], VReg);
         SDValue Val = DAG.getCopyFromReg(Root, dl, VReg, MVT::f64);
         SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, NULL, 0);
         MemOps.push_back(Store);
@@ -1885,7 +1876,7 @@ CalculateParameterAndLinkageAreaSize(SelectionDAG &DAG,
       // Varargs and 64-bit Altivec parameters are padded to 16 byte boundary.
       NumBytes = ((NumBytes+15)/16)*16;
     }
-    NumBytes += CalculateStackSlotSize(Arg, Flags, isVarArg, PtrByteSize);
+    NumBytes += CalculateStackSlotSize(Arg, Flags, PtrByteSize);
   }
 
    // Allow for Altivec parameters at the end, if needed.
@@ -2096,8 +2087,8 @@ SDValue PPCTargetLowering::EmitTailCallLoadFPAndRetAddr(SelectionDAG & DAG,
 static SDValue
 CreateCopyOfByValArgument(SDValue Src, SDValue Dst, SDValue Chain,
                           ISD::ArgFlagsTy Flags, SelectionDAG &DAG,
-                          unsigned Size, DebugLoc dl) {
-  SDValue SizeNode = DAG.getConstant(Size, MVT::i32);
+                          DebugLoc dl) {
+  SDValue SizeNode = DAG.getConstant(Flags.getByValSize(), MVT::i32);
   return DAG.getMemcpy(Chain, dl, Dst, Src, SizeNode, Flags.getByValAlign(),
                        false, NULL, 0, NULL, 0);
 }
@@ -2149,10 +2140,6 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
   MachineFunction &MF = DAG.getMachineFunction();
-
-  // args_to_use will accumulate outgoing args for the PPCISD::CALL case in
-  // SelectExpr to use to put the arguments in the appropriate registers.
-  std::vector<SDValue> args_to_use;
 
   // Mark this function as potentially containing a function that contains a
   // tail call. As a consequence the frame pointer will be used for dynamicalloc
@@ -2217,7 +2204,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
   };
   const unsigned NumGPRs = array_lengthof(GPR_32);
   const unsigned NumFPRs = isMachoABI ? 13 : 8;
-  const unsigned NumVRs  = array_lengthof( VR);
+  const unsigned NumVRs  = array_lengthof(VR);
 
   const unsigned *GPR = isPPC64 ? GPR_64 : GPR_32;
 
@@ -2273,7 +2260,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
           SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, Const);
           SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, AddPtr,
                                 CallSeqStart.getNode()->getOperand(0),
-                                Flags, DAG, Size, dl);
+                                Flags, DAG, dl);
           // This must go outside the CALLSEQ_START..END.
           SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
                                CallSeqStart.getNode()->getOperand(1));
@@ -2289,7 +2276,7 @@ SDValue PPCTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG,
       // registers.  (This is not what the doc says.)
       SDValue MemcpyCall = CreateCopyOfByValArgument(Arg, PtrOff,
                             CallSeqStart.getNode()->getOperand(0),
-                            Flags, DAG, Size, dl);
+                            Flags, DAG, dl);
       // This must go outside the CALLSEQ_START..END.
       SDValue NewCallSeqStart = DAG.getCALLSEQ_START(MemcpyCall,
                            CallSeqStart.getNode()->getOperand(1));

@@ -223,7 +223,6 @@ namespace llvm {
                                       // register for parameter passing.
     unsigned VarArgsNumFPR;           // Index of the first unused double
                                       // register for parameter passing.
-    int ReturnAddrIndex;              // FrameIndex for return slot.
     const PPCSubtarget &PPCSubTarget;
   public:
     explicit PPCTargetLowering(PPCTargetMachine &TM);
