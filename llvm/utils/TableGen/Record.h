@@ -17,10 +17,11 @@
 
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/raw_ostream.h"
 #include <map>
-#include <ostream>
 
 namespace llvm {
+class raw_ostream;
   
 // RecTy subclasses.
 class BitRecTy;
@@ -65,7 +66,7 @@ struct RecTy {
   virtual ~RecTy() {}
 
   virtual std::string getAsString() const = 0;
-  void print(std::ostream &OS) const { OS << getAsString(); }
+  void print(raw_ostream &OS) const { OS << getAsString(); }
   void dump() const;
 
   /// typeIsConvertibleTo - Return true if all values of 'this' type can be
@@ -113,7 +114,7 @@ public:   // These methods should only be called by subclasses of RecTy.
   virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
-inline std::ostream &operator<<(std::ostream &OS, const RecTy &Ty) {
+inline raw_ostream &operator<<(raw_ostream &OS, const RecTy &Ty) {
   Ty.print(OS);
   return OS;
 }
@@ -459,13 +460,13 @@ struct Init {
   virtual bool isComplete() const { return true; }
 
   /// print - Print out this value.
-  void print(std::ostream &OS) const { OS << getAsString(); }
+  void print(raw_ostream &OS) const { OS << getAsString(); }
 
   /// getAsString - Convert this value to a string form.
   virtual std::string getAsString() const = 0;
 
   /// dump - Debugging method that may be called through a debugger, just
-  /// invokes print on cerr.
+  /// invokes print on stderr.
   void dump() const;
 
   /// convertInitializerTo - This virtual function is a simple call-back
@@ -516,7 +517,7 @@ struct Init {
   }
 };
 
-inline std::ostream &operator<<(std::ostream &OS, const Init &I) {
+inline raw_ostream &operator<<(raw_ostream &OS, const Init &I) {
   I.print(OS); return OS;
 }
 
@@ -613,9 +614,9 @@ public:
 
   // printXX - Print this bitstream with the specified format, returning true if
   // it is not possible.
-  bool printInHex(std::ostream &OS) const;
-  bool printAsVariable(std::ostream &OS) const;
-  bool printAsUnset(std::ostream &OS) const;
+  bool printInHex(raw_ostream &OS) const;
+  bool printAsVariable(raw_ostream &OS) const;
+  bool printAsUnset(raw_ostream &OS) const;
 };
 
 
@@ -1210,10 +1211,10 @@ public:
   }
 
   void dump() const;
-  void print(std::ostream &OS, bool PrintSem = true) const;
+  void print(raw_ostream &OS, bool PrintSem = true) const;
 };
 
-inline std::ostream &operator<<(std::ostream &OS, const RecordVal &RV) {
+inline raw_ostream &operator<<(raw_ostream &OS, const RecordVal &RV) {
   RV.print(OS << "  ");
   return OS;
 }
@@ -1378,7 +1379,7 @@ public:
   std::string getValueAsCode(const std::string &FieldName) const;
 };
 
-std::ostream &operator<<(std::ostream &OS, const Record &R);
+raw_ostream &operator<<(raw_ostream &OS, const Record &R);
 
 struct MultiClass {
   Record Rec;  // Placeholder for template args and Name.
@@ -1477,7 +1478,7 @@ public:
 };
   
   
-std::ostream &operator<<(std::ostream &OS, const RecordKeeper &RK);
+raw_ostream &operator<<(raw_ostream &OS, const RecordKeeper &RK);
 
 extern RecordKeeper Records;
 

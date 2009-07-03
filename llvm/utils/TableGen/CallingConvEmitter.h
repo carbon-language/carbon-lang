@@ -27,11 +27,11 @@ namespace llvm {
     explicit CallingConvEmitter(RecordKeeper &R) : Records(R) {}
 
     // run - Output the asmwriter, returning true on failure.
-    void run(std::ostream &o);
+    void run(raw_ostream &o);
     
   private:
-    void EmitCallingConv(Record *CC, std::ostream &O);
-    void EmitAction(Record *Action, unsigned Indent, std::ostream &O);
+    void EmitCallingConv(Record *CC, raw_ostream &O);
+    void EmitAction(Record *Action, unsigned Indent, raw_ostream &O);
     unsigned Counter;
   };
 }

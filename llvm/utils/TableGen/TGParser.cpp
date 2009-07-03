@@ -11,13 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <algorithm>
-#include <sstream>
-
 #include "TGParser.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Streams.h"
+#include <algorithm>
+#include <sstream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -45,11 +43,11 @@ struct SubMultiClassReference {
 };
 
 void SubMultiClassReference::dump() const {
-  cerr << "Multiclass:\n";
+  errs() << "Multiclass:\n";
  
   MC->dump();
  
-  cerr << "Template args:\n";
+  errs() << "Template args:\n";
   for (std::vector<Init *>::const_iterator i = TemplateArgs.begin(),
          iend = TemplateArgs.end();
        i != iend;

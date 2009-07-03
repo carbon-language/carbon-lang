@@ -20,7 +20,6 @@
 #include "FastISelEmitter.h"
 #include "Record.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
@@ -119,7 +118,7 @@ struct OperandsSignature {
     return true;
   }
 
-  void PrintParameters(std::ostream &OS) const {
+  void PrintParameters(raw_ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (Operands[i] == "r") {
         OS << "unsigned Op" << i;
@@ -136,7 +135,7 @@ struct OperandsSignature {
     }
   }
 
-  void PrintArguments(std::ostream &OS,
+  void PrintArguments(raw_ostream &OS,
                       const std::vector<std::string>& PR) const {
     assert(PR.size() == Operands.size());
     bool PrintedArg = false;
@@ -163,7 +162,7 @@ struct OperandsSignature {
     }
   }
 
-  void PrintArguments(std::ostream &OS) const {
+  void PrintArguments(raw_ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (Operands[i] == "r") {
         OS << "Op" << i;
@@ -181,7 +180,7 @@ struct OperandsSignature {
   }
 
 
-  void PrintManglingSuffix(std::ostream &OS,
+  void PrintManglingSuffix(raw_ostream &OS,
                            const std::vector<std::string>& PR) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       if (PR[i] != "")
@@ -195,7 +194,7 @@ struct OperandsSignature {
     }
   }
 
-  void PrintManglingSuffix(std::ostream &OS) const {
+  void PrintManglingSuffix(raw_ostream &OS) const {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
       OS << Operands[i];
     }
@@ -217,8 +216,8 @@ public:
   explicit FastISelMap(std::string InstNS);
 
   void CollectPatterns(CodeGenDAGPatterns &CGP);
-  void PrintClass(std::ostream &OS);
-  void PrintFunctionDefinitions(std::ostream &OS);
+  void PrintClass(raw_ostream &OS);
+  void PrintFunctionDefinitions(raw_ostream &OS);
 };
 
 }
@@ -368,7 +367,7 @@ void FastISelMap::CollectPatterns(CodeGenDAGPatterns &CGP) {
   }
 }
 
-void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
+void FastISelMap::PrintFunctionDefinitions(raw_ostream &OS) {
   // Now emit code for all the patterns that we collected.
   for (OperandsOpcodeTypeRetPredMap::const_iterator OI = SimplePatterns.begin(),
        OE = SimplePatterns.end(); OI != OE; ++OI) {
@@ -614,7 +613,7 @@ void FastISelMap::PrintFunctionDefinitions(std::ostream &OS) {
   }
 }
 
-void FastISelEmitter::run(std::ostream &OS) {
+void FastISelEmitter::run(raw_ostream &OS) {
   const CodeGenTarget &Target = CGP.getTargetInfo();
 
   // Determine the target's namespace name.

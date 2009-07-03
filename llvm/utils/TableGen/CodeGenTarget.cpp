@@ -19,7 +19,6 @@
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Streams.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -423,8 +422,8 @@ ComplexPattern::ComplexPattern(Record *R) {
     } else if (PropList[i]->getName() == "SDNPMemOperand") {
       Properties |= 1 << SDNPMemOperand;
     } else {
-      cerr << "Unsupported SD Node property '" << PropList[i]->getName()
-           << "' on ComplexPattern '" << R->getName() << "'!\n";
+      errs() << "Unsupported SD Node property '" << PropList[i]->getName()
+             << "' on ComplexPattern '" << R->getName() << "'!\n";
       exit(1);
     }
   
@@ -435,8 +434,8 @@ ComplexPattern::ComplexPattern(Record *R) {
     if (PropList[i]->getName() == "CPAttrParentAsRoot") {
       Attributes |= 1 << CPAttrParentAsRoot;
     } else {
-      cerr << "Unsupported pattern attribute '" << PropList[i]->getName()
-           << "' on ComplexPattern '" << R->getName() << "'!\n";
+      errs() << "Unsupported pattern attribute '" << PropList[i]->getName()
+             << "' on ComplexPattern '" << R->getName() << "'!\n";
       exit(1);
     }
 }

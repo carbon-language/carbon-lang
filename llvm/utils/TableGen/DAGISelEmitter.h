@@ -30,12 +30,12 @@ public:
   explicit DAGISelEmitter(RecordKeeper &R) : Records(R), CGP(R) {}
 
   // run - Output the isel, returning true on failure.
-  void run(std::ostream &OS);
+  void run(raw_ostream &OS);
   
   
 private:
-  void EmitNodeTransforms(std::ostream &OS);
-  void EmitPredicateFunctions(std::ostream &OS);
+  void EmitNodeTransforms(raw_ostream &OS);
+  void EmitPredicateFunctions(raw_ostream &OS);
   
   void GenerateCodeForPattern(const PatternToMatch &Pattern,
                   std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
@@ -46,9 +46,9 @@ private:
                               unsigned &NumInputRootOps);
   void EmitPatterns(std::vector<std::pair<const PatternToMatch*, 
                   std::vector<std::pair<unsigned, std::string> > > > &Patterns, 
-                    unsigned Indent, std::ostream &OS);
+                    unsigned Indent, raw_ostream &OS);
   
-  void EmitInstructionSelector(std::ostream &OS);
+  void EmitInstructionSelector(raw_ostream &OS);
 };
 
 } // End llvm namespace

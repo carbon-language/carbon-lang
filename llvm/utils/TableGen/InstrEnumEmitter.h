@@ -25,7 +25,7 @@ public:
   InstrEnumEmitter(RecordKeeper &R) : Records(R) {}
 
   // run - Output the instruction set description, returning true on failure.
-  void run(std::ostream &OS);
+  void run(raw_ostream &OS);
 };
 
 } // End llvm namespace

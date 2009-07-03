@@ -29,27 +29,27 @@ class SubtargetEmitter : public TableGenBackend {
   std::string Target;
   bool HasItineraries;
   
-  void Enumeration(std::ostream &OS, const char *ClassName, bool isBits);
-  void FeatureKeyValues(std::ostream &OS);
-  void CPUKeyValues(std::ostream &OS);
-  unsigned CollectAllItinClasses(std::ostream &OS,
+  void Enumeration(raw_ostream &OS, const char *ClassName, bool isBits);
+  void FeatureKeyValues(raw_ostream &OS);
+  void CPUKeyValues(raw_ostream &OS);
+  unsigned CollectAllItinClasses(raw_ostream &OS,
                                std::map<std::string, unsigned> &ItinClassesMap);
   void FormItineraryString(Record *ItinData, std::string &ItinString,
                            unsigned &NStages);
-  void EmitStageData(std::ostream &OS, unsigned NItinClasses,
+  void EmitStageData(raw_ostream &OS, unsigned NItinClasses,
                      std::map<std::string, unsigned> &ItinClassesMap,
                      std::vector<std::vector<InstrItinerary> > &ProcList);
-  void EmitProcessorData(std::ostream &OS,
+  void EmitProcessorData(raw_ostream &OS,
                        std::vector<std::vector<InstrItinerary> > &ProcList);
-  void EmitProcessorLookup(std::ostream &OS);
-  void EmitData(std::ostream &OS);
-  void ParseFeaturesFunction(std::ostream &OS);
+  void EmitProcessorLookup(raw_ostream &OS);
+  void EmitData(raw_ostream &OS);
+  void ParseFeaturesFunction(raw_ostream &OS);
   
 public:
   SubtargetEmitter(RecordKeeper &R) : Records(R), HasItineraries(false) {}
 
   // run - Output the subtarget enumerations, returning true on failure.
-  void run(std::ostream &o);
+  void run(raw_ostream &o);
 
 };
 

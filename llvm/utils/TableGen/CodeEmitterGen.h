@@ -30,10 +30,10 @@ public:
   CodeEmitterGen(RecordKeeper &R) : Records(R) {}
 
   // run - Output the code emitter
-  void run(std::ostream &o);
+  void run(raw_ostream &o);
 private:
-  void emitMachineOpEmitter(std::ostream &o, const std::string &Namespace);
-  void emitGetValueBit(std::ostream &o, const std::string &Namespace);
+  void emitMachineOpEmitter(raw_ostream &o, const std::string &Namespace);
+  void emitGetValueBit(raw_ostream &o, const std::string &Namespace);
   void reverseBits(std::vector<Record*> &Insts);
   int getVariableBit(const std::string &VarName, BitsInit *BI, int bit);
 };

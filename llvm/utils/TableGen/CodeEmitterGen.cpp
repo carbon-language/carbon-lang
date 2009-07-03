@@ -75,7 +75,7 @@ int CodeEmitterGen::getVariableBit(const std::string &VarName,
 } 
 
 
-void CodeEmitterGen::run(std::ostream &o) {
+void CodeEmitterGen::run(raw_ostream &o) {
   CodeGenTarget Target;
   std::vector<Record*> Insts = Records.getAllDerivedDefinitions("Instruction");
   

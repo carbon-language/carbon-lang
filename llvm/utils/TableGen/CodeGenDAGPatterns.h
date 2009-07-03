@@ -236,7 +236,7 @@ public:
   /// marked isCommutative.
   bool isCommutativeIntrinsic(const CodeGenDAGPatterns &CDP) const;
   
-  void print(std::ostream &OS) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
   
 public:   // Higher level manipulation routines.
@@ -370,7 +370,7 @@ public:
   /// pattern.
   void error(const std::string &Msg) const;
   
-  void print(std::ostream &OS) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
   
 private:

@@ -15,8 +15,8 @@
 #ifndef TABLEGENBACKEND_H
 #define TABLEGENBACKEND_H
 
+#include "llvm/Support/raw_ostream.h"
 #include <string>
-#include <iosfwd>
 
 namespace llvm {
 
@@ -28,13 +28,13 @@ struct TableGenBackend {
 
   // run - All TableGen backends should implement the run method, which should
   // be the main entry point.
-  virtual void run(std::ostream &OS) = 0;
+  virtual void run(raw_ostream &OS) = 0;
 
 
 public:   // Useful helper routines...
   /// EmitSourceFileHeader - Output a LLVM style file header to the specified
   /// ostream.
-  void EmitSourceFileHeader(const std::string &Desc, std::ostream &OS) const;
+  void EmitSourceFileHeader(const std::string &Desc, raw_ostream &OS) const;
 
 };
 

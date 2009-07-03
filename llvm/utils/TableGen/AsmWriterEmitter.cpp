@@ -19,6 +19,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 static bool isIdentChar(char C) {
@@ -282,7 +283,7 @@ unsigned AsmWriterInst::MatchesAllButOneOp(const AsmWriterInst &Other)const{
 }
 
 static void PrintCases(std::vector<std::pair<std::string,
-                       AsmWriterOperand> > &OpsToPrint, std::ostream &O) {
+                       AsmWriterOperand> > &OpsToPrint, raw_ostream &O) {
   O << "    case " << OpsToPrint.back().first << ": ";
   AsmWriterOperand TheOp = OpsToPrint.back().second;
   OpsToPrint.pop_back();
@@ -304,7 +305,7 @@ static void PrintCases(std::vector<std::pair<std::string,
 /// EmitInstructions - Emit the last instruction in the vector and any other
 /// instructions that are suitably similar to it.
 static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
-                             std::ostream &O) {
+                             raw_ostream &O) {
   AsmWriterInst FirstInst = Insts.back();
   Insts.pop_back();
 
@@ -475,7 +476,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
 
 
 
-void AsmWriterEmitter::run(std::ostream &O) {
+void AsmWriterEmitter::run(raw_ostream &O) {
   EmitSourceFileHeader("Assembly Writer Source Fragment", O);
 
   CodeGenTarget Target;

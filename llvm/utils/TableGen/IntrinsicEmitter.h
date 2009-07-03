@@ -27,29 +27,29 @@ namespace llvm {
     IntrinsicEmitter(RecordKeeper &R, bool T = false) 
       : Records(R), TargetOnly(T) {}
 
-    void run(std::ostream &OS);
+    void run(raw_ostream &OS);
     
     void EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints, 
-                      std::ostream &OS);
+                      raw_ostream &OS);
 
     void EmitFnNameRecognizer(const std::vector<CodeGenIntrinsic> &Ints, 
-                              std::ostream &OS);
+                              raw_ostream &OS);
     void EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints, 
-                                  std::ostream &OS);
+                                  raw_ostream &OS);
     void EmitIntrinsicToOverloadTable(const std::vector<CodeGenIntrinsic> &Ints, 
-                                      std::ostream &OS);
+                                      raw_ostream &OS);
     void EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints, 
-                      std::ostream &OS);
+                      raw_ostream &OS);
     void EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints, 
-                       std::ostream &OS);
+                       raw_ostream &OS);
     void EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints,
-                        std::ostream &OS);
+                        raw_ostream &OS);
     void EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints,
-                            std::ostream &OS);
+                            raw_ostream &OS);
     void EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, 
-                            std::ostream &OS);
+                            raw_ostream &OS);
     void EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints, 
-                                      std::ostream &OS);
+                                      raw_ostream &OS);
   };
 
 } // End llvm namespace

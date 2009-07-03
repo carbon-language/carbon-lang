@@ -19,8 +19,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/Support/Streams.h"
-
 #include <algorithm>
 #include <cassert>
 #include <functional>
@@ -241,7 +239,7 @@ void OptionDescription::Merge (const OptionDescription& other)
   if (Help == other.Help || Help == DefaultHelpString)
     Help = other.Help;
   else if (other.Help != DefaultHelpString) {
-    llvm::cerr << "Warning: several different help strings"
+    llvm::errs() << "Warning: several different help strings"
       " defined for option " + Name + "\n";
   }
 
@@ -489,7 +487,7 @@ private:
       throw std::string("Only one of (required), (zero_or_one) or "
                         "(one_or_more) properties is allowed!");
     if (!OptionType::IsList(optDesc_.Type))
-      llvm::cerr << "Warning: specifying the 'one_or_more' property "
+      llvm::errs() << "Warning: specifying the 'one_or_more' property "
         "on a non-list option will have no effect.\n";
     optDesc_.setOneOrMore();
   }
@@ -500,7 +498,7 @@ private:
       throw std::string("Only one of (required), (zero_or_one) or "
                         "(one_or_more) properties is allowed!");
     if (!OptionType::IsList(optDesc_.Type))
-      llvm::cerr << "Warning: specifying the 'zero_or_one' property"
+      llvm::errs() << "Warning: specifying the 'zero_or_one' property"
         "on a non-list option will have no effect.\n";
     optDesc_.setZeroOrOne();
   }
@@ -947,7 +945,7 @@ void CheckForSuperfluousOptions (const RecordVector& Edges,
     const OptionDescription& Val = B->second;
     if (!nonSuperfluousOptions.count(Val.Name)
         && Val.Type != OptionType::Alias)
-      llvm::cerr << "Warning: option '-" << Val.Name << "' has no effect! "
+      llvm::errs() << "Warning: option '-" << Val.Name << "' has no effect! "
         "Probable cause: this option is specified only in the OptionList.\n";
   }
 }
@@ -957,7 +955,7 @@ void CheckForSuperfluousOptions (const RecordVector& Edges,
 bool EmitCaseTest1Arg(const std::string& TestName,
                       const DagInit& d,
                       const OptionDescriptions& OptDescs,
-                      std::ostream& O) {
+                      raw_ostream& O) {
   checkNumberOfArguments(&d, 1);
   const std::string& OptName = InitPtrToString(d.getArg(0));
 
@@ -1003,7 +1001,7 @@ bool EmitCaseTest2Args(const std::string& TestName,
                        const DagInit& d,
                        const char* IndentLevel,
                        const OptionDescriptions& OptDescs,
-                       std::ostream& O) {
+                       raw_ostream& O) {
   checkNumberOfArguments(&d, 2);
   const std::string& OptName = InitPtrToString(d.getArg(0));
   const std::string& OptArg = InitPtrToString(d.getArg(1));
@@ -1032,14 +1030,14 @@ bool EmitCaseTest2Args(const std::string& TestName,
 // EmitLogicalOperationTest and EmitCaseTest are mutually recursive.
 void EmitCaseTest(const DagInit& d, const char* IndentLevel,
                   const OptionDescriptions& OptDescs,
-                  std::ostream& O);
+                  raw_ostream& O);
 
 /// EmitLogicalOperationTest - Helper function used by
 /// EmitCaseConstructHandler.
 void EmitLogicalOperationTest(const DagInit& d, const char* LogicOp,
                               const char* IndentLevel,
                               const OptionDescriptions& OptDescs,
-                              std::ostream& O) {
+                              raw_ostream& O) {
   O << '(';
   for (unsigned j = 0, NumArgs = d.getNumArgs(); j < NumArgs; ++j) {
     const DagInit& InnerTest = InitPtrToDag(d.getArg(j));
@@ -1054,7 +1052,7 @@ void EmitLogicalOperationTest(const DagInit& d, const char* LogicOp,
 /// EmitCaseTest - Helper function used by EmitCaseConstructHandler.
 void EmitCaseTest(const DagInit& d, const char* IndentLevel,
                   const OptionDescriptions& OptDescs,
-                  std::ostream& O) {
+                  raw_ostream& O) {
   const std::string& TestName = d.getOperator()->getAsString();
 
   if (TestName == "and")
@@ -1072,12 +1070,12 @@ void EmitCaseTest(const DagInit& d, const char* IndentLevel,
 // Emit code that handles the 'case' construct.
 // Takes a function object that should emit code for every case clause.
 // Callback's type is
-// void F(Init* Statement, const char* IndentLevel, std::ostream& O).
+// void F(Init* Statement, const char* IndentLevel, raw_ostream& O).
 template <typename F>
 void EmitCaseConstructHandler(const Init* Dag, const char* IndentLevel,
                               F Callback, bool EmitElseIf,
                               const OptionDescriptions& OptDescs,
-                              std::ostream& O) {
+                              raw_ostream& O) {
   const DagInit* d = &InitPtrToDag(Dag);
   if (d->getOperator()->getAsString() != "case")
     throw std::string("EmitCaseConstructHandler should be invoked"
@@ -1210,7 +1208,7 @@ void TokenizeCmdline(const std::string& CmdLine, StrVector& Out) {
 /// SubstituteSpecialCommands - Perform string substitution for $CALL
 /// and $ENV. Helper function used by EmitCmdLineVecFill().
 StrVector::const_iterator SubstituteSpecialCommands
-(StrVector::const_iterator Pos, StrVector::const_iterator End, std::ostream& O)
+(StrVector::const_iterator Pos, StrVector::const_iterator End, raw_ostream& O)
 {
 
   const std::string& cmd = *Pos;
@@ -1275,7 +1273,7 @@ StrVector::const_iterator SubstituteSpecialCommands
 /// vector. Helper function used by EmitGenerateActionMethod().
 void EmitCmdLineVecFill(const Init* CmdLine, const std::string& ToolName,
                         bool IsJoin, const char* IndentLevel,
-                        std::ostream& O) {
+                        raw_ostream& O) {
   StrVector StrVec;
   TokenizeCmdline(InitPtrToString(CmdLine), StrVec);
 
@@ -1344,7 +1342,7 @@ class EmitCmdLineVecFillCallback {
     : IsJoin(J), ToolName(TN) {}
 
   void operator()(const Init* Statement, const char* IndentLevel,
-                  std::ostream& O) const
+                  raw_ostream& O) const
   {
     EmitCmdLineVecFill(Statement, ToolName, IsJoin,
                        IndentLevel, O);
@@ -1357,7 +1355,7 @@ class EmitCmdLineVecFillCallback {
 void EmitForwardOptionPropertyHandlingCode (const OptionDescription& D,
                                             const char* Indent,
                                             const std::string& NewName,
-                                            std::ostream& O) {
+                                            raw_ostream& O) {
   const std::string& Name = NewName.empty()
     ? ("-" + D.Name)
     : NewName;
@@ -1416,7 +1414,7 @@ class EmitActionHandler {
   const OptionDescriptions& OptDescs;
 
   void processActionDag(const Init* Statement, const char* IndentLevel,
-                        std::ostream& O) const
+                        raw_ostream& O) const
   {
     const DagInit& Dag = InitPtrToDag(Statement);
     const std::string& ActionName = Dag.getOperator()->getAsString();
@@ -1491,7 +1489,7 @@ class EmitActionHandler {
     : OptDescs(OD) {}
 
   void operator()(const Init* Statement, const char* IndentLevel,
-                  std::ostream& O) const
+                  raw_ostream& O) const
   {
     if (typeid(*Statement) == typeid(ListInit)) {
       const ListInit& DagList = *static_cast<const ListInit*>(Statement);
@@ -1509,7 +1507,7 @@ class EmitActionHandler {
 // Tool::GenerateAction() method.
 void EmitGenerateActionMethod (const ToolDescription& D,
                                const OptionDescriptions& OptDescs,
-                               bool IsJoin, std::ostream& O) {
+                               bool IsJoin, raw_ostream& O) {
   if (IsJoin)
     O << Indent1 << "Action GenerateAction(const PathVector& inFiles,\n";
   else
@@ -1561,7 +1559,7 @@ void EmitGenerateActionMethod (const ToolDescription& D,
 /// a given Tool class.
 void EmitGenerateActionMethods (const ToolDescription& ToolDesc,
                                 const OptionDescriptions& OptDescs,
-                                std::ostream& O) {
+                                raw_ostream& O) {
   if (!ToolDesc.isJoin())
     O << Indent1 << "Action GenerateAction(const PathVector& inFiles,\n"
       << Indent2 << "bool HasChildren,\n"
@@ -1580,7 +1578,7 @@ void EmitGenerateActionMethods (const ToolDescription& ToolDesc,
 
 /// EmitInOutLanguageMethods - Emit the [Input,Output]Language()
 /// methods for a given Tool class.
-void EmitInOutLanguageMethods (const ToolDescription& D, std::ostream& O) {
+void EmitInOutLanguageMethods (const ToolDescription& D, raw_ostream& O) {
   O << Indent1 << "const char** InputLanguages() const {\n"
     << Indent2 << "return InputLanguages_;\n"
     << Indent1 << "}\n\n";
@@ -1594,7 +1592,7 @@ void EmitInOutLanguageMethods (const ToolDescription& D, std::ostream& O) {
 }
 
 /// EmitNameMethod - Emit the Name() method for a given Tool class.
-void EmitNameMethod (const ToolDescription& D, std::ostream& O) {
+void EmitNameMethod (const ToolDescription& D, raw_ostream& O) {
   O << Indent1 << "const char* Name() const {\n"
     << Indent2 << "return \"" << D.Name << "\";\n"
     << Indent1 << "}\n\n";
@@ -1602,7 +1600,7 @@ void EmitNameMethod (const ToolDescription& D, std::ostream& O) {
 
 /// EmitIsJoinMethod - Emit the IsJoin() method for a given Tool
 /// class.
-void EmitIsJoinMethod (const ToolDescription& D, std::ostream& O) {
+void EmitIsJoinMethod (const ToolDescription& D, raw_ostream& O) {
   O << Indent1 << "bool IsJoin() const {\n";
   if (D.isJoin())
     O << Indent2 << "return true;\n";
@@ -1613,7 +1611,7 @@ void EmitIsJoinMethod (const ToolDescription& D, std::ostream& O) {
 
 /// EmitStaticMemberDefinitions - Emit static member definitions for a
 /// given Tool class.
-void EmitStaticMemberDefinitions(const ToolDescription& D, std::ostream& O) {
+void EmitStaticMemberDefinitions(const ToolDescription& D, raw_ostream& O) {
   if (D.InLanguage.empty())
     throw "Tool " + D.Name + " has no 'in_language' property!";
 
@@ -1627,7 +1625,7 @@ void EmitStaticMemberDefinitions(const ToolDescription& D, std::ostream& O) {
 /// EmitToolClassDefinition - Emit a Tool class definition.
 void EmitToolClassDefinition (const ToolDescription& D,
                               const OptionDescriptions& OptDescs,
-                              std::ostream& O) {
+                              raw_ostream& O) {
   if (D.Name == "root")
     return;
 
@@ -1658,7 +1656,7 @@ void EmitToolClassDefinition (const ToolDescription& D,
 /// and emit registration code.
 void EmitOptionDefinitions (const OptionDescriptions& descs,
                             bool HasSink, bool HasExterns,
-                            std::ostream& O)
+                            raw_ostream& O)
 {
   std::vector<OptionDescription> Aliases;
 
@@ -1742,7 +1740,7 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
 }
 
 /// EmitPopulateLanguageMap - Emit the PopulateLanguageMap() function.
-void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
+void EmitPopulateLanguageMap (const RecordKeeper& Records, raw_ostream& O)
 {
   // Generate code
   O << "void PopulateLanguageMapLocal(LanguageMap& langMap) {\n";
@@ -1776,7 +1774,7 @@ void EmitPopulateLanguageMap (const RecordKeeper& Records, std::ostream& O)
 /// IncDecWeight - Helper function passed to EmitCaseConstructHandler()
 /// by EmitEdgeClass().
 void IncDecWeight (const Init* i, const char* IndentLevel,
-                   std::ostream& O) {
+                   raw_ostream& O) {
   const DagInit& d = InitPtrToDag(i);
   const std::string& OpName = d.getOperator()->getAsString();
 
@@ -1808,7 +1806,7 @@ void IncDecWeight (const Init* i, const char* IndentLevel,
 /// EmitEdgeClass - Emit a single Edge# class.
 void EmitEdgeClass (unsigned N, const std::string& Target,
                     DagInit* Case, const OptionDescriptions& OptDescs,
-                    std::ostream& O) {
+                    raw_ostream& O) {
 
   // Class constructor.
   O << "class Edge" << N << ": public Edge {\n"
@@ -1830,7 +1828,7 @@ void EmitEdgeClass (unsigned N, const std::string& Target,
 /// EmitEdgeClasses - Emit Edge* classes that represent graph edges.
 void EmitEdgeClasses (const RecordVector& EdgeVector,
                       const OptionDescriptions& OptDescs,
-                      std::ostream& O) {
+                      raw_ostream& O) {
   int i = 0;
   for (RecordVector::const_iterator B = EdgeVector.begin(),
          E = EdgeVector.end(); B != E; ++B) {
@@ -1848,7 +1846,7 @@ void EmitEdgeClasses (const RecordVector& EdgeVector,
 /// function.
 void EmitPopulateCompilationGraph (const RecordVector& EdgeVector,
                                    const ToolDescriptions& ToolDescs,
-                                   std::ostream& O)
+                                   raw_ostream& O)
 {
   O << "void PopulateCompilationGraphLocal(CompilationGraph& G) {\n";
 
@@ -1947,7 +1945,7 @@ void FillInHookNames(const ToolDescriptions& ToolDescs,
 /// EmitHookDeclarations - Parse CmdLine fields of all the tool
 /// property records and emit hook function declaration for each
 /// instance of $CALL(HookName).
-void EmitHookDeclarations(const ToolDescriptions& ToolDescs, std::ostream& O) {
+void EmitHookDeclarations(const ToolDescriptions& ToolDescs, raw_ostream& O) {
   llvm::StringMap<unsigned> HookNames;
 
   FillInHookNames(ToolDescs, HookNames);
@@ -1969,7 +1967,7 @@ void EmitHookDeclarations(const ToolDescriptions& ToolDescs, std::ostream& O) {
 }
 
 /// EmitRegisterPlugin - Emit code to register this plugin.
-void EmitRegisterPlugin(int Priority, std::ostream& O) {
+void EmitRegisterPlugin(int Priority, raw_ostream& O) {
   O << "struct Plugin : public llvmc::BasePlugin {\n\n"
     << Indent1 << "int Priority() const { return " << Priority << "; }\n\n"
     << Indent1 << "void PopulateLanguageMap(LanguageMap& langMap) const\n"
@@ -1984,7 +1982,7 @@ void EmitRegisterPlugin(int Priority, std::ostream& O) {
 
 /// EmitIncludes - Emit necessary #include directives and some
 /// additional declarations.
-void EmitIncludes(std::ostream& O) {
+void EmitIncludes(raw_ostream& O) {
   O << "#include \"llvm/CompilerDriver/CompilationGraph.h\"\n"
     << "#include \"llvm/CompilerDriver/ForceLinkageMacros.h\"\n"
     << "#include \"llvm/CompilerDriver/Plugin.h\"\n"
@@ -2079,7 +2077,7 @@ void CheckPluginData(PluginData& Data) {
 
 }
 
-void EmitPluginCode(const PluginData& Data, std::ostream& O) {
+void EmitPluginCode(const PluginData& Data, raw_ostream& O) {
   // Emit file header.
   EmitIncludes(O);
 
@@ -2124,7 +2122,7 @@ void EmitPluginCode(const PluginData& Data, std::ostream& O) {
 }
 
 /// run - The back-end entry point.
-void LLVMCConfigurationEmitter::run (std::ostream &O) {
+void LLVMCConfigurationEmitter::run (raw_ostream &O) {
   try {
   PluginData Data;
 

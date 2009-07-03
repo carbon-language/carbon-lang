@@ -17,7 +17,7 @@
 #include "CodeGenTarget.h"
 using namespace llvm;
 
-void CallingConvEmitter::run(std::ostream &O) {
+void CallingConvEmitter::run(raw_ostream &O) {
   EmitSourceFileHeader("Calling Convention Implementation Fragment", O);
 
   std::vector<Record*> CCs = Records.getAllDerivedDefinitions("CallingConv");
@@ -39,7 +39,7 @@ void CallingConvEmitter::run(std::ostream &O) {
 }
 
 
-void CallingConvEmitter::EmitCallingConv(Record *CC, std::ostream &O) {
+void CallingConvEmitter::EmitCallingConv(Record *CC, raw_ostream &O) {
   ListInit *CCActions = CC->getValueAsListInit("Actions");
   Counter = 0;
 
@@ -60,7 +60,7 @@ void CallingConvEmitter::EmitCallingConv(Record *CC, std::ostream &O) {
 }
 
 void CallingConvEmitter::EmitAction(Record *Action,
-                                    unsigned Indent, std::ostream &O) {
+                                    unsigned Indent, raw_ostream &O) {
   std::string IndentStr = std::string(Indent, ' ');
   
   if (Action->isSubClassOf("CCPredicateAction")) {

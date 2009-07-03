@@ -16,7 +16,7 @@
 using namespace llvm;
 
 void TableGenBackend::EmitSourceFileHeader(const std::string &Desc,
-                                           std::ostream &OS) const {
+                                           raw_ostream &OS) const {
   OS << "//===- TableGen'erated file -------------------------------------*-"
        " C++ -*-===//\n//\n// " << Desc << "\n//\n// Automatically generate"
        "d file, do not edit!\n//\n//===------------------------------------"

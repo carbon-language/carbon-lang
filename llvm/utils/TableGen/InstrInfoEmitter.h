@@ -36,7 +36,7 @@ public:
   InstrInfoEmitter(RecordKeeper &R) : Records(R), CDP(R) { }
 
   // run - Output the instruction set description, returning true on failure.
-  void run(std::ostream &OS);
+  void run(raw_ostream &OS);
 
 private:
   typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;
@@ -46,16 +46,16 @@ private:
                   std::map<std::vector<Record*>, unsigned> &EL,
                   std::map<Record*, unsigned> &BM,
                   const OperandInfoMapTy &OpInfo,
-                  std::ostream &OS);
+                  raw_ostream &OS);
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
-                        std::ostream &OS);
+                        raw_ostream &OS);
 
   // Itinerary information.
   void GatherItinClasses();
   unsigned getItinClassNumber(const Record *InstRec);
   
   // Operand information.
-  void EmitOperandInfo(std::ostream &OS, OperandInfoMapTy &OperandInfoIDs);
+  void EmitOperandInfo(raw_ostream &OS, OperandInfoMapTy &OperandInfoIDs);
   std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
 
   void DetectRegisterClassBarriers(std::vector<Record*> &Defs,

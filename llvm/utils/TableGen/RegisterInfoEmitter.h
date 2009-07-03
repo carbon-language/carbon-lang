@@ -26,13 +26,13 @@ public:
   RegisterInfoEmitter(RecordKeeper &R) : Records(R) {}
 
   // run - Output the register file description, returning true on failure.
-  void run(std::ostream &o);
+  void run(raw_ostream &o);
 
   // runHeader - Emit a header fragment for the register info emitter.
-  void runHeader(std::ostream &o);
+  void runHeader(raw_ostream &o);
 
   // runEnums - Print out enum values for all of the registers.
-  void runEnums(std::ostream &o);
+  void runEnums(raw_ostream &o);
 };
 
 } // End llvm namespace

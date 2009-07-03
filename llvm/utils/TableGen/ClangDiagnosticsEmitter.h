@@ -29,7 +29,7 @@ public:
     : Records(R), Component(component) {}
 
   // run - Output the .def file contents
-  void run(std::ostream &OS);
+  void run(raw_ostream &OS);
 };
 
 class ClangDiagGroupsEmitter : public TableGenBackend {
@@ -37,7 +37,7 @@ class ClangDiagGroupsEmitter : public TableGenBackend {
 public:
   explicit ClangDiagGroupsEmitter(RecordKeeper &R) : Records(R) {}
     
-  void run(std::ostream &OS);
+  void run(raw_ostream &OS);
 };
 
   

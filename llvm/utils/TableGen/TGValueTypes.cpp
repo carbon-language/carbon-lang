@@ -15,7 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/Support/Streams.h"
 #include <map>
 #include <vector>
 using namespace llvm;

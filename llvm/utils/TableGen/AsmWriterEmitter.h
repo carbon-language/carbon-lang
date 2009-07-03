@@ -32,7 +32,7 @@ namespace llvm {
     AsmWriterEmitter(RecordKeeper &R) : Records(R) {}
 
     // run - Output the asmwriter, returning true on failure.
-    void run(std::ostream &o);
+    void run(raw_ostream &o);
 
 private:
     AsmWriterInst *getAsmWriterInstByID(unsigned ID) const {

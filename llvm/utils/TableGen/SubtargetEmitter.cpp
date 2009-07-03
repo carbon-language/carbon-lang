@@ -22,7 +22,7 @@ using namespace llvm;
 //
 // Enumeration - Emit the specified class as an enumeration.
 //
-void SubtargetEmitter::Enumeration(std::ostream &OS,
+void SubtargetEmitter::Enumeration(raw_ostream &OS,
                                    const char *ClassName,
                                    bool isBits) {
   // Get all records of class and sort
@@ -57,7 +57,7 @@ void SubtargetEmitter::Enumeration(std::ostream &OS,
 // FeatureKeyValues - Emit data of all the subtarget features.  Used by the
 // command line.
 //
-void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
+void SubtargetEmitter::FeatureKeyValues(raw_ostream &OS) {
   // Gather and sort all the features
   std::vector<Record*> FeatureList =
                            Records.getAllDerivedDefinitions("SubtargetFeature");
@@ -117,7 +117,7 @@ void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
 // CPUKeyValues - Emit data of all the subtarget processors.  Used by command
 // line.
 //
-void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
+void SubtargetEmitter::CPUKeyValues(raw_ostream &OS) {
   // Gather and sort processor information
   std::vector<Record*> ProcessorList =
                           Records.getAllDerivedDefinitions("Processor");
@@ -172,7 +172,7 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
 // CollectAllItinClasses - Gathers and enumerates all the itinerary classes.
 // Returns itinerary class count.
 //
-unsigned SubtargetEmitter::CollectAllItinClasses(std::ostream &OS,
+unsigned SubtargetEmitter::CollectAllItinClasses(raw_ostream &OS,
                               std::map<std::string, unsigned> &ItinClassesMap) {
   // Gather and sort all itinerary classes
   std::vector<Record*> ItinClassList =
@@ -239,7 +239,7 @@ void SubtargetEmitter::FormItineraryString(Record *ItinData,
 // EmitStageData - Generate unique itinerary stages.  Record itineraries for 
 // processors.
 //
-void SubtargetEmitter::EmitStageData(std::ostream &OS,
+void SubtargetEmitter::EmitStageData(raw_ostream &OS,
        unsigned NItinClasses,
        std::map<std::string, unsigned> &ItinClassesMap, 
        std::vector<std::vector<InstrItinerary> > &ProcList) {
@@ -326,7 +326,7 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
 //
 // EmitProcessorData - Generate data for processor itineraries.
 //
-void SubtargetEmitter::EmitProcessorData(std::ostream &OS,
+void SubtargetEmitter::EmitProcessorData(raw_ostream &OS,
       std::vector<std::vector<InstrItinerary> > &ProcList) {
   // Get an iterator for processor itinerary stages
   std::vector<std::vector<InstrItinerary> >::iterator
@@ -375,7 +375,7 @@ void SubtargetEmitter::EmitProcessorData(std::ostream &OS,
 //
 // EmitProcessorLookup - generate cpu name to itinerary lookup table.
 //
-void SubtargetEmitter::EmitProcessorLookup(std::ostream &OS) {
+void SubtargetEmitter::EmitProcessorLookup(raw_ostream &OS) {
   // Gather and sort processor information
   std::vector<Record*> ProcessorList =
                           Records.getAllDerivedDefinitions("Processor");
@@ -421,7 +421,7 @@ void SubtargetEmitter::EmitProcessorLookup(std::ostream &OS) {
 //
 // EmitData - Emits all stages and itineries, folding common patterns.
 //
-void SubtargetEmitter::EmitData(std::ostream &OS) {
+void SubtargetEmitter::EmitData(raw_ostream &OS) {
   std::map<std::string, unsigned> ItinClassesMap;
   std::vector<std::vector<InstrItinerary> > ProcList;
   
@@ -444,7 +444,7 @@ void SubtargetEmitter::EmitData(std::ostream &OS) {
 // ParseFeaturesFunction - Produces a subtarget specific function for parsing
 // the subtarget features string.
 //
-void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
+void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS) {
   std::vector<Record*> Features =
                        Records.getAllDerivedDefinitions("SubtargetFeature");
   std::sort(Features.begin(), Features.end(), LessRecord());
@@ -489,7 +489,7 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
 //
 // SubtargetEmitter::run - Main subtarget enumeration emitter.
 //
-void SubtargetEmitter::run(std::ostream &OS) {
+void SubtargetEmitter::run(raw_ostream &OS) {
   Target = CodeGenTarget().getName();
 
   EmitSourceFileHeader("Subtarget Enumeration Source Fragment", OS);

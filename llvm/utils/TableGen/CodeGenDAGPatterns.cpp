@@ -16,9 +16,9 @@
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Streams.h"
 #include <set>
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -199,7 +199,7 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
     x.SDTCisEltOfVec_Info.OtherOperandNum =
       R->getValueAsInt("OtherOpNum");
   } else {
-    cerr << "Unrecognized SDTypeConstraint '" << R->getName() << "'!\n";
+    errs() << "Unrecognized SDTypeConstraint '" << R->getName() << "'!\n";
     exit(1);
   }
 }
@@ -213,9 +213,9 @@ TreePatternNode *SDTypeConstraint::getOperandNum(unsigned OpNo,
          "We only work with nodes with zero or one result so far!");
   
   if (OpNo >= (NumResults + N->getNumChildren())) {
-    cerr << "Invalid operand number " << OpNo << " ";
+    errs() << "Invalid operand number " << OpNo << " ";
     N->dump();
-    cerr << '\n';
+    errs() << '\n';
     exit(1);
   }
 
@@ -413,8 +413,8 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
     } else if (PropList[i]->getName() == "SDNPMemOperand") {
       Properties |= 1 << SDNPMemOperand;
     } else {
-      cerr << "Unknown SD Node property '" << PropList[i]->getName()
-           << "' on node '" << R->getName() << "'!\n";
+      errs() << "Unknown SD Node property '" << PropList[i]->getName()
+             << "' on node '" << R->getName() << "'!\n";
       exit(1);
     }
   }
@@ -516,7 +516,7 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
 
   if (isLeaf()) {
     dump();
-    cerr << " ";
+    errs() << " ";
     TP.error("Type inference contradiction found in node!");
   } else {
     TP.error("Type inference contradiction found in node " + 
@@ -526,7 +526,7 @@ bool TreePatternNode::UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
 }
 
 
-void TreePatternNode::print(std::ostream &OS) const {
+void TreePatternNode::print(raw_ostream &OS) const {
   if (isLeaf()) {
     OS << *getLeafValue();
   } else {
@@ -573,7 +573,7 @@ void TreePatternNode::print(std::ostream &OS) const {
 
 }
 void TreePatternNode::dump() const {
-  print(*cerr.stream());
+  print(errs());
 }
 
 /// isIsomorphicTo - Return true if this node is recursively
@@ -1194,9 +1194,9 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
         error("Constant int argument should not have a name!");
       Children.push_back(Node);
     } else {
-      cerr << '"';
+      errs() << '"';
       Arg->dump();
-      cerr << "\": ";
+      errs() << "\": ";
       error("Unknown leaf value for tree pattern!");
     }
   }
@@ -1246,7 +1246,7 @@ bool TreePattern::InferAllTypes() {
   return !HasUnresolvedTypes;
 }
 
-void TreePattern::print(std::ostream &OS) const {
+void TreePattern::print(raw_ostream &OS) const {
   OS << getRecord()->getName();
   if (!Args.empty()) {
     OS << "(" << Args[0];
@@ -1268,7 +1268,7 @@ void TreePattern::print(std::ostream &OS) const {
     OS << "]\n";
 }
 
-void TreePattern::dump() const { print(*cerr.stream()); }
+void TreePattern::dump() const { print(errs()); }
 
 //===----------------------------------------------------------------------===//
 // CodeGenDAGPatterns implementation
@@ -1306,7 +1306,7 @@ CodeGenDAGPatterns::~CodeGenDAGPatterns() {
 Record *CodeGenDAGPatterns::getSDNodeNamed(const std::string &Name) const {
   Record *N = Records.getDef(Name);
   if (!N || !N->isSubClassOf("SDNode")) {
-    cerr << "Error getting SDNode '" << Name << "'!\n";
+    errs() << "Error getting SDNode '" << Name << "'!\n";
     exit(1);
   }
   return N;
@@ -2012,15 +2012,15 @@ void CodeGenDAGPatterns::ParsePatterns() {
         Values.push_back(Tree->getArg(j));
         TypedInit *TArg = dynamic_cast<TypedInit*>(Tree->getArg(j));
         if (TArg == 0) {
-          cerr << "In dag: " << Tree->getAsString();
-          cerr << " --  Untyped argument in pattern\n";
+          errs() << "In dag: " << Tree->getAsString();
+          errs() << " --  Untyped argument in pattern\n";
           assert(0 && "Untyped argument in pattern");
         }
         if (ListTy != 0) {
           ListTy = resolveTypes(ListTy, TArg->getType());
           if (ListTy == 0) {
-            cerr << "In dag: " << Tree->getAsString();
-            cerr << " --  Incompatible types in pattern arguments\n";
+            errs() << "In dag: " << Tree->getAsString();
+            errs() << " --  Incompatible types in pattern arguments\n";
             assert(0 && "Incompatible types in pattern arguments");
           }
         }
@@ -2138,11 +2138,11 @@ static void CombineChildVariants(TreePatternNode *Orig,
   do {
 #ifndef NDEBUG
     if (DebugFlag && !Idxs.empty()) {
-      cerr << Orig->getOperator()->getName() << ": Idxs = [ ";
+      errs() << Orig->getOperator()->getName() << ": Idxs = [ ";
         for (unsigned i = 0; i < Idxs.size(); ++i) {
-          cerr << Idxs[i] << " ";
+          errs() << Idxs[i] << " ";
       }
-      cerr << "]\n";
+      errs() << "]\n";
     }
 #endif
     // Create the variant and add it to the output list.
