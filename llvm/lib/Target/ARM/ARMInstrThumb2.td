@@ -435,6 +435,30 @@ class T2I_picst<string opc, PatFrag opnode> :
           !strconcat("${addr:label}:\n\t", opc), " $src, $addr",
           [(opnode GPR:$src, addrmodepc:$addr)]>;
 
+
+/// T2I_unary_rrot - A unary operation with two forms: one whose operand is a
+/// register and one whose operand is a register rotated by 8/16/24.
+multiclass T2I_unary_rrot<string opc, PatFrag opnode> {
+  def r     : T2I<(outs GPR:$dst), (ins GPR:$Src),
+                  opc, " $dst, $Src",
+                 [(set GPR:$dst, (opnode GPR:$Src))]>;
+  def r_rot : T2I<(outs GPR:$dst), (ins GPR:$Src, i32imm:$rot),
+                  opc, " $dst, $Src, ror $rot",
+                 [(set GPR:$dst, (opnode (rotr GPR:$Src, rot_imm:$rot)))]>;
+}
+
+/// T2I_bin_rrot - A binary operation with two forms: one whose operand is a
+/// register and one whose operand is a register rotated by 8/16/24.
+multiclass T2I_bin_rrot<string opc, PatFrag opnode> {
+  def rr     : T2I<(outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS),
+                  opc, " $dst, $LHS, $RHS",
+                  [(set GPR:$dst, (opnode GPR:$LHS, GPR:$RHS))]>;
+  def rr_rot : T2I<(outs GPR:$dst), (ins GPR:$LHS, GPR:$RHS, i32imm:$rot),
+                  opc, " $dst, $LHS, $RHS, ror $rot",
+                  [(set GPR:$dst, (opnode GPR:$LHS,
+                                          (rotr GPR:$RHS, rot_imm:$rot)))]>;
+}
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -712,6 +736,40 @@ def t2MOVTi16 : T2sI<(outs GPR:$dst), (ins GPR:$src, i32imm:$imm),
                      "movt", " $dst, $imm",
                      [(set GPR:$dst,
                            (or (and GPR:$src, 0xffff), t2_lo16AllZero:$imm))]>;
+
+//===----------------------------------------------------------------------===//
+//  Extend Instructions.
+//
+
+// Sign extenders
+
+defm t2SXTB  : T2I_unary_rrot<"sxtb", UnOpFrag<(sext_inreg node:$Src, i8)>>;
+defm t2SXTH  : T2I_unary_rrot<"sxth", UnOpFrag<(sext_inreg node:$Src, i16)>>;
+
+defm t2SXTAB : T2I_bin_rrot<"sxtab",
+                        BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS, i8))>>;
+defm t2SXTAH : T2I_bin_rrot<"sxtah",
+                        BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS,i16))>>;
+
+// TODO: SXT(A){B|H}16
+
+// Zero extenders
+
+let AddedComplexity = 16 in {
+defm t2UXTB   : T2I_unary_rrot<"uxtb"  , UnOpFrag<(and node:$Src, 0x000000FF)>>;
+defm t2UXTH   : T2I_unary_rrot<"uxth"  , UnOpFrag<(and node:$Src, 0x0000FFFF)>>;
+defm t2UXTB16 : T2I_unary_rrot<"uxtb16", UnOpFrag<(and node:$Src, 0x00FF00FF)>>;
+
+def : T2Pat<(and (shl GPR:$Src, (i32 8)), 0xFF00FF),
+            (t2UXTB16r_rot GPR:$Src, 24)>;
+def : T2Pat<(and (srl GPR:$Src, (i32 8)), 0xFF00FF),
+            (t2UXTB16r_rot GPR:$Src, 8)>;
+
+defm t2UXTAB : T2I_bin_rrot<"uxtab",
+                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0x00FF))>>;
+defm t2UXTAH : T2I_bin_rrot<"uxtah",
+                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0xFFFF))>>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions.

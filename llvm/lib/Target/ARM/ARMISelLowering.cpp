@@ -303,7 +303,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32,   Expand);
   setOperationAction(ISD::MEMBARRIER,         MVT::Other, Expand);
 
-  if (!Subtarget->hasV6Ops()) {
+  if (!Subtarget->hasV6Ops() && !Subtarget->isThumb2()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,  Expand);
   }
