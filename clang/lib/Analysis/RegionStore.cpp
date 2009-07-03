@@ -347,9 +347,6 @@ public:
   
   // FIXME: Remove.
   ASTContext& getContext() { return StateMgr.getContext(); }
-
-  // FIXME: Use ValueManager?
-  SymbolManager& getSymbolManager() { return StateMgr.getSymbolManager(); }  
 };
 
 } // end anonymous namespace
