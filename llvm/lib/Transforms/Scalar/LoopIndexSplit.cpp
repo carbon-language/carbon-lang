@@ -54,6 +54,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/Dominators.h"
@@ -292,14 +293,16 @@ static bool isUsedOutsideLoop(Value *V, Loop *L) {
 }
 
 // Return V+1
-static Value *getPlusOne(Value *V, bool Sign, Instruction *InsertPt) {
-  Constant *One = ConstantInt::get(V->getType(), 1, Sign);
+static Value *getPlusOne(Value *V, bool Sign, Instruction *InsertPt, 
+                         LLVMContext* Context) {
+  Constant *One = Context->getConstantInt(V->getType(), 1, Sign);
   return BinaryOperator::CreateAdd(V, One, "lsp", InsertPt);
 }
 
 // Return V-1
-static Value *getMinusOne(Value *V, bool Sign, Instruction *InsertPt) {
-  Constant *One = ConstantInt::get(V->getType(), 1, Sign);
+static Value *getMinusOne(Value *V, bool Sign, Instruction *InsertPt,
+                          LLVMContext* Context) {
+  Constant *One = Context->getConstantInt(V->getType(), 1, Sign);
   return BinaryOperator::CreateSub(V, One, "lsp", InsertPt);
 }
 
@@ -494,16 +497,16 @@ bool LoopIndexSplit::restrictLoopBound(ICmpInst &Op) {
   if (Value *V = IVisLT(Op)) {
     // Restrict upper bound.
     if (IVisLE(*ExitCondition)) 
-      V = getMinusOne(V, Sign, PHTerm);
+      V = getMinusOne(V, Sign, PHTerm, Context);
     NUB = getMin(V, IVExitValue, Sign, PHTerm);
   } else if (Value *V = IVisLE(Op)) {
     // Restrict upper bound.
     if (IVisLT(*ExitCondition)) 
-      V = getPlusOne(V, Sign, PHTerm);
+      V = getPlusOne(V, Sign, PHTerm, Context);
     NUB = getMin(V, IVExitValue, Sign, PHTerm);
   } else if (Value *V = IVisGT(Op)) {
     // Restrict lower bound.
-    V = getPlusOne(V, Sign, PHTerm);
+    V = getPlusOne(V, Sign, PHTerm, Context);
     NLB = getMax(V, IVStartValue, Sign, PHTerm);
   } else if (Value *V = IVisGE(Op))
     // Restrict lower bound.
@@ -964,18 +967,18 @@ bool LoopIndexSplit::splitLoop() {
       /* Do nothing */
     }
     else if (IVisLE(*SplitCondition)) {
-      AEV = getPlusOne(SplitValue, Sign, PHTerm);
-      BSV = getPlusOne(SplitValue, Sign, PHTerm);
+      AEV = getPlusOne(SplitValue, Sign, PHTerm, Context);
+      BSV = getPlusOne(SplitValue, Sign, PHTerm, Context);
     } else {
       assert (0 && "Unexpected split condition!");
     }
   }
   else if (IVisLE(*ExitCondition)) {
     if (IVisLT(*SplitCondition)) {
-      AEV = getMinusOne(SplitValue, Sign, PHTerm);
+      AEV = getMinusOne(SplitValue, Sign, PHTerm, Context);
     }
     else if (IVisLE(*SplitCondition)) {
-      BSV = getPlusOne(SplitValue, Sign, PHTerm);
+      BSV = getPlusOne(SplitValue, Sign, PHTerm, Context);
     } else {
       assert (0 && "Unexpected split condition!");
     }

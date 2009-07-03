@@ -24,6 +24,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Analysis/Dominators.h"
@@ -1575,7 +1576,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEV* const &Stride,
   BasicBlock *LatchBlock = L->getLoopLatch();
   Instruction *IVIncInsertPt = LatchBlock->getTerminator();
 
-  Value *CommonBaseV = Constant::getNullValue(ReplacedTy);
+  Value *CommonBaseV = Context->getNullValue(ReplacedTy);
 
   const SCEV* RewriteFactor = SE->getIntegerSCEV(0, ReplacedTy);
   IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
@@ -1941,7 +1942,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       NewCmpTy = NewCmpLHS->getType();
       NewTyBits = SE->getTypeSizeInBits(NewCmpTy);
-      const Type *NewCmpIntTy = IntegerType::get(NewTyBits);
+      const Type *NewCmpIntTy = Context->getIntegerType(NewTyBits);
       if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
         // Check if it is possible to rewrite it using
         // an iv / stride of a smaller integer type.
@@ -1986,10 +1987,10 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       NewStride = &IU->StrideOrder[i];
       if (!isa<PointerType>(NewCmpTy))
-        NewCmpRHS = ConstantInt::get(NewCmpTy, NewCmpVal);
+        NewCmpRHS = Context->getConstantInt(NewCmpTy, NewCmpVal);
       else {
-        Constant *CI = ConstantInt::get(NewCmpIntTy, NewCmpVal);
-        NewCmpRHS = ConstantExpr::getIntToPtr(CI, NewCmpTy);
+        Constant *CI = Context->getConstantInt(NewCmpIntTy, NewCmpVal);
+        NewCmpRHS = Context->getConstantExprIntToPtr(CI, NewCmpTy);
       }
       NewOffset = TyBits == NewTyBits
         ? SE->getMulExpr(CondUse->getOffset(),
@@ -2233,7 +2234,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
         
       ConstantInt *Init = dyn_cast<ConstantInt>(PH->getIncomingValue(Entry));
       if (!Init) continue;
-      Constant *NewInit = ConstantFP::get(DestTy, Init->getZExtValue());
+      Constant *NewInit = Context->getConstantFP(DestTy, Init->getZExtValue());
 
       BinaryOperator *Incr = 
         dyn_cast<BinaryOperator>(PH->getIncomingValue(Latch));
@@ -2257,7 +2258,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
 
       /* create new increment. '++d' in above example. */
-      Constant *CFP = ConstantFP::get(DestTy, C->getZExtValue());
+      Constant *CFP = Context->getConstantFP(DestTy, C->getZExtValue());
       BinaryOperator *NewIncr = 
         BinaryOperator::Create(Incr->getOpcode() == Instruction::Add ?
                                  Instruction::FAdd : Instruction::FSub,
@@ -2496,7 +2497,7 @@ void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
   Value *startVal = phi->getIncomingValue(inBlock);
   Value *endVal = Cond->getOperand(1);
   // FIXME check for case where both are constant
-  Constant* Zero = ConstantInt::get(Cond->getOperand(1)->getType(), 0);
+  Constant* Zero = Context->getConstantInt(Cond->getOperand(1)->getType(), 0);
   BinaryOperator *NewStartVal = 
     BinaryOperator::Create(Instruction::Sub, endVal, startVal,
                            "tmp", PreInsertPt);

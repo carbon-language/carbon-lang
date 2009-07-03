@@ -14,6 +14,7 @@
 #define DEBUG_TYPE "jump-threading"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -434,7 +435,7 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
          << "' folding condition to '" << BranchDir << "': "
          << *BB->getTerminator();
     ++NumFolds;
-    DestBI->setCondition(ConstantInt::get(Type::Int1Ty, BranchDir));
+    DestBI->setCondition(Context->getConstantInt(Type::Int1Ty, BranchDir));
     ConstantFoldTerminator(BB);
     return true;
   }
@@ -563,7 +564,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     
     // If the returned value is the load itself, replace with an undef. This can
     // only happen in dead loops.
-    if (AvailableVal == LI) AvailableVal = UndefValue::get(LI->getType());
+    if (AvailableVal == LI) AvailableVal = Context->getUndef(LI->getType());
     LI->replaceAllUsesWith(AvailableVal);
     LI->eraseFromParent();
     return true;
@@ -717,7 +718,7 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   // Next, figure out which successor we are threading to.
   BasicBlock *SuccBB;
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
-    SuccBB = BI->getSuccessor(PredCst == ConstantInt::getFalse());
+    SuccBB = BI->getSuccessor(PredCst == Context->getConstantIntFalse());
   else {
     SwitchInst *SI = cast<SwitchInst>(BB->getTerminator());
     SuccBB = SI->getSuccessor(SI->findCaseValue(PredCst));
@@ -755,7 +756,7 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   // We can only do the simplification for phi nodes of 'false' with AND or
   // 'true' with OR.  See if we have any entries in the phi for this.
   unsigned PredNo = ~0U;
-  ConstantInt *PredCst = ConstantInt::get(Type::Int1Ty, !isAnd);
+  ConstantInt *PredCst = Context->getConstantInt(Type::Int1Ty, !isAnd);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == PredCst) {
       PredNo = i;
@@ -793,15 +794,16 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
 /// hand sides of the compare instruction, try to determine the result. If the
 /// result can not be determined, a null pointer is returned.
 static Constant *GetResultOfComparison(CmpInst::Predicate pred,
-                                       Value *LHS, Value *RHS) {
+                                       Value *LHS, Value *RHS,
+                                       LLVMContext* Context) {
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
-      return ConstantExpr::getCompare(pred, CLHS, CRHS);
+      return Context->getConstantExprCompare(pred, CLHS, CRHS);
 
   if (LHS == RHS)
     if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType()))
       return ICmpInst::isTrueWhenEqual(pred) ? 
-                 ConstantInt::getTrue() : ConstantInt::getFalse();
+                 Context->getConstantIntTrue() : Context->getConstantIntFalse();
 
   return 0;
 }
@@ -826,7 +828,8 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     PredVal = PN->getIncomingValue(i);
     
-    Constant *Res = GetResultOfComparison(Cmp->getPredicate(), PredVal, RHS);
+    Constant *Res = GetResultOfComparison(Cmp->getPredicate(), PredVal,
+                                          RHS, Context);
     if (!Res) {
       PredVal = 0;
       continue;

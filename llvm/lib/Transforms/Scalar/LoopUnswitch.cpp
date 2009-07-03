@@ -32,6 +32,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -230,7 +231,7 @@ bool LoopUnswitch::processCurrentLoop() {
         Value *LoopCond = FindLIVLoopCondition(BI->getCondition(), 
                                                currentLoop, Changed);
         if (LoopCond && UnswitchIfProfitable(LoopCond, 
-                                             ConstantInt::getTrue())) {
+                                             Context->getConstantIntTrue())) {
           ++NumBranches;
           return true;
         }
@@ -260,7 +261,7 @@ bool LoopUnswitch::processCurrentLoop() {
         Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), 
                                                currentLoop, Changed);
         if (LoopCond && UnswitchIfProfitable(LoopCond, 
-                                             ConstantInt::getTrue())) {
+                                             Context->getConstantIntTrue())) {
           ++NumSelects;
           return true;
         }
@@ -348,10 +349,10 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
     // this.
     if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop, 
                                              BI->getSuccessor(0)))) {
-      if (Val) *Val = ConstantInt::getTrue();
+      if (Val) *Val = Context->getConstantIntTrue();
     } else if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop, 
                                                     BI->getSuccessor(1)))) {
-      if (Val) *Val = ConstantInt::getFalse();
+      if (Val) *Val = Context->getConstantIntFalse();
     }
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(HeaderTerm)) {
     // If this isn't a switch on Cond, we can't handle it.
@@ -507,7 +508,7 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   Value *BranchVal = LIC;
   if (!isa<ConstantInt>(Val) || Val->getType() != Type::Int1Ty)
     BranchVal = new ICmpInst(ICmpInst::ICMP_EQ, LIC, Val, "tmp", InsertPt);
-  else if (Val != ConstantInt::getTrue())
+  else if (Val != Context->getConstantIntTrue())
     // We want to enter the new loop when the condition is true.
     std::swap(TrueDest, FalseDest);
 
@@ -815,7 +816,7 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
     // Anything that uses the instructions in this basic block should have their
     // uses replaced with undefs.
     if (!I->use_empty())
-      I->replaceAllUsesWith(UndefValue::get(I->getType()));
+      I->replaceAllUsesWith(Context->getUndef(I->getType()));
   }
   
   // If this is the edge to the header block for a loop, remove the loop and
@@ -904,7 +905,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     if (IsEqual)
       Replacement = Val;
     else
-      Replacement = ConstantInt::get(Type::Int1Ty, 
+      Replacement = Context->getConstantInt(Type::Int1Ty, 
                                      !cast<ConstantInt>(Val)->getZExtValue());
     
     for (unsigned i = 0, e = Users.size(); i != e; ++i)
@@ -944,7 +945,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               
               Instruction* OldTerm = Old->getTerminator();
               BranchInst::Create(Split, SISucc,
-                                 ConstantInt::getTrue(), OldTerm);
+                                 Context->getConstantIntTrue(), OldTerm);
 
               LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);
               Old->getTerminator()->eraseFromParent();
