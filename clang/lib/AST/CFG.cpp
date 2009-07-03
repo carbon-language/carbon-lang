@@ -556,7 +556,7 @@ CFGBlock* CFGBuilder::VisitNullStmt(NullStmt* Statement) {
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
   
-  CFGBlock* LastBlock = NULL;
+  CFGBlock* LastBlock = Block;
 
   for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
                                                                I != E; ++I ) {
