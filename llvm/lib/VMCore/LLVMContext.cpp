@@ -408,7 +408,8 @@ Constant* LLVMContext::getConstantVector(Constant* const* Vals,
   return ConstantVector::get(Vals, NumVals);
 }
 
-ConstantVector* LLVMContext::getConstantVectorAllOnes(const VectorType* Ty) {
+ConstantVector* LLVMContext::getConstantVectorAllOnesValue(
+                                                         const VectorType* Ty) {
   return ConstantVector::getAllOnesValue(Ty);
 }
 

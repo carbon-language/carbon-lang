@@ -21,6 +21,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
@@ -68,7 +69,7 @@ namespace {
 
         CastInst *AllocaInsertionPoint =
           CastInst::Create(Instruction::BitCast,
-                           Constant::getNullValue(Type::Int32Ty), Type::Int32Ty,
+                           Context->getNullValue(Type::Int32Ty), Type::Int32Ty,
                            "reg2mem alloca point", I);
 
         // Find the escaped instructions. But don't create stack slots for

@@ -27,6 +27,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -138,6 +139,7 @@ public:
 /// Constant Propagation.
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
+  LLVMContext* Context;
   DenseSet<BasicBlock*> BBExecutable;// The basic blocks that are executable
   std::map<Value*, LatticeVal> ValueState;  // The state each value is in.
 
@@ -177,6 +179,7 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   typedef std::pair<BasicBlock*, BasicBlock*> Edge;
   DenseSet<Edge> KnownFeasibleEdges;
 public:
+  void setContext(LLVMContext* C) { Context = C; }
 
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
@@ -437,7 +440,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
         Succs[0] = Succs[1] = true;
       } else if (BCValue.isConstant()) {
         // Constant condition variables mean the branch can only go a single way
-        Succs[BCValue.getConstant() == ConstantInt::getFalse()] = true;
+        Succs[BCValue.getConstant() == Context->getConstantIntFalse()] = true;
       }
     }
   } else if (isa<InvokeInst>(&TI)) {
@@ -482,7 +485,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 
         // Constant condition variables mean the branch can only go a single way
         return BI->getSuccessor(BCValue.getConstant() ==
-                                       ConstantInt::getFalse()) == To;
+                                       Context->getConstantIntFalse()) == To;
       }
       return false;
     }
@@ -663,7 +666,7 @@ void SCCPSolver::visitCastInst(CastInst &I) {
   if (VState.isOverdefined())          // Inherit overdefinedness of operand
     markOverdefined(&I);
   else if (VState.isConstant())        // Propagate constant value
-    markConstant(&I, ConstantExpr::getCast(I.getOpcode(), 
+    markConstant(&I, Context->getConstantExprCast(I.getOpcode(), 
                                            VState.getConstant(), I.getType()));
 }
 
@@ -806,11 +809,12 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
         if (NonOverdefVal->isUndefined()) {
           // Could annihilate value.
           if (I.getOpcode() == Instruction::And)
-            markConstant(IV, &I, Constant::getNullValue(I.getType()));
+            markConstant(IV, &I, Context->getNullValue(I.getType()));
           else if (const VectorType *PT = dyn_cast<VectorType>(I.getType()))
-            markConstant(IV, &I, ConstantVector::getAllOnesValue(PT));
+            markConstant(IV, &I, Context->getConstantVectorAllOnesValue(PT));
           else
-            markConstant(IV, &I, ConstantInt::getAllOnesValue(I.getType()));
+            markConstant(IV, &I,
+                         Context->getConstantIntAllOnesValue(I.getType()));
           return;
         } else {
           if (I.getOpcode() == Instruction::And) {
@@ -854,7 +858,8 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
               Result.markOverdefined();
               break;  // Cannot fold this operation over the PHI nodes!
             } else if (In1.isConstant() && In2.isConstant()) {
-              Constant *V = ConstantExpr::get(I.getOpcode(), In1.getConstant(),
+              Constant *V =
+                     Context->getConstantExpr(I.getOpcode(), In1.getConstant(),
                                               In2.getConstant());
               if (Result.isUndefined())
                 Result.markConstant(V);
@@ -902,7 +907,8 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
 
     markOverdefined(IV, &I);
   } else if (V1State.isConstant() && V2State.isConstant()) {
-    markConstant(IV, &I, ConstantExpr::get(I.getOpcode(), V1State.getConstant(),
+    markConstant(IV, &I,
+                Context->getConstantExpr(I.getOpcode(), V1State.getConstant(),
                                            V2State.getConstant()));
   }
 }
@@ -939,7 +945,7 @@ void SCCPSolver::visitCmpInst(CmpInst &I) {
               Result.markOverdefined();
               break;  // Cannot fold this operation over the PHI nodes!
             } else if (In1.isConstant() && In2.isConstant()) {
-              Constant *V = ConstantExpr::getCompare(I.getPredicate(), 
+              Constant *V = Context->getConstantExprCompare(I.getPredicate(), 
                                                      In1.getConstant(), 
                                                      In2.getConstant());
               if (Result.isUndefined())
@@ -988,7 +994,7 @@ void SCCPSolver::visitCmpInst(CmpInst &I) {
 
     markOverdefined(IV, &I);
   } else if (V1State.isConstant() && V2State.isConstant()) {
-    markConstant(IV, &I, ConstantExpr::getCompare(I.getPredicate(), 
+    markConstant(IV, &I, Context->getConstantExprCompare(I.getPredicate(), 
                                                   V1State.getConstant(), 
                                                   V2State.getConstant()));
   }
@@ -1090,7 +1096,7 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   Constant *Ptr = Operands[0];
   Operands.erase(Operands.begin());  // Erase the pointer from idx list...
 
-  markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, &Operands[0],
+  markConstant(IV, &I, Context->getConstantExprGetElementPtr(Ptr, &Operands[0],
                                                       Operands.size()));
 }
 
@@ -1124,7 +1130,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     if (isa<ConstantPointerNull>(Ptr) && 
         cast<PointerType>(Ptr->getType())->getAddressSpace() == 0) {
       // load null -> null
-      markConstant(IV, &I, Constant::getNullValue(I.getType()));
+      markConstant(IV, &I, Context->getNullValue(I.getType()));
       return;
     }
 
@@ -1365,21 +1371,22 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         // to be handled here, because we don't know whether the top part is 1's
         // or 0's.
         assert(Op0LV.isUndefined());
-        markForcedConstant(LV, I, Constant::getNullValue(ITy));
+        markForcedConstant(LV, I, Context->getNullValue(ITy));
         return true;
       case Instruction::Mul:
       case Instruction::And:
         // undef * X -> 0.   X could be zero.
         // undef & X -> 0.   X could be zero.
-        markForcedConstant(LV, I, Constant::getNullValue(ITy));
+        markForcedConstant(LV, I, Context->getNullValue(ITy));
         return true;
 
       case Instruction::Or:
         // undef | X -> -1.   X could be -1.
         if (const VectorType *PTy = dyn_cast<VectorType>(ITy))
-          markForcedConstant(LV, I, ConstantVector::getAllOnesValue(PTy));
+          markForcedConstant(LV, I,
+                             Context->getConstantVectorAllOnesValue(PTy));
         else          
-          markForcedConstant(LV, I, ConstantInt::getAllOnesValue(ITy));
+          markForcedConstant(LV, I, Context->getConstantIntAllOnesValue(ITy));
         return true;
 
       case Instruction::SDiv:
@@ -1392,7 +1399,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         
         // undef / X -> 0.   X could be maxint.
         // undef % X -> 0.   X could be 1.
-        markForcedConstant(LV, I, Constant::getNullValue(ITy));
+        markForcedConstant(LV, I, Context->getNullValue(ITy));
         return true;
         
       case Instruction::AShr:
@@ -1413,7 +1420,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         
         // X >> undef -> 0.  X could be 0.
         // X << undef -> 0.  X could be 0.
-        markForcedConstant(LV, I, Constant::getNullValue(ITy));
+        markForcedConstant(LV, I, Context->getNullValue(ITy));
         return true;
       case Instruction::Select:
         // undef ? X : Y  -> X or Y.  There could be commonality between X/Y.
@@ -1476,7 +1483,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
     // as undef, then further analysis could think the undef went another way
     // leading to an inconsistent set of conclusions.
     if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
-      BI->setCondition(ConstantInt::getFalse());
+      BI->setCondition(Context->getConstantIntFalse());
     } else {
       SwitchInst *SI = cast<SwitchInst>(TI);
       SI->setCondition(SI->getCaseValue(1));
@@ -1526,6 +1533,7 @@ FunctionPass *llvm::createSCCPPass() {
 bool SCCP::runOnFunction(Function &F) {
   DOUT << "SCCP on function '" << F.getNameStart() << "'\n";
   SCCPSolver Solver;
+  Solver.setContext(Context);
 
   // Mark the first block of the function as being executable.
   Solver.MarkBlockExecutable(F.begin());
@@ -1565,7 +1573,7 @@ bool SCCP::runOnFunction(Function &F) {
         Instruction *I = Insts.back();
         Insts.pop_back();
         if (!I->use_empty())
-          I->replaceAllUsesWith(UndefValue::get(I->getType()));
+          I->replaceAllUsesWith(Context->getUndef(I->getType()));
         BB->getInstList().erase(I);
         MadeChanges = true;
         ++NumInstRemoved;
@@ -1585,7 +1593,7 @@ bool SCCP::runOnFunction(Function &F) {
           continue;
         
         Constant *Const = IV.isConstant()
-          ? IV.getConstant() : UndefValue::get(Inst->getType());
+          ? IV.getConstant() : Context->getUndef(Inst->getType());
         DOUT << "  Constant: " << *Const << " = " << *Inst;
 
         // Replaces all of the uses of a variable with uses of the constant.
@@ -1701,7 +1709,7 @@ bool IPSCCP::runOnModule(Module &M) {
         LatticeVal &IV = Values[AI];
         if (IV.isConstant() || IV.isUndefined()) {
           Constant *CST = IV.isConstant() ?
-            IV.getConstant() : UndefValue::get(AI->getType());
+            IV.getConstant() : Context->getUndef(AI->getType());
           DOUT << "***  Arg " << *AI << " = " << *CST <<"\n";
 
           // Replaces all of the uses of a variable with uses of the
@@ -1726,7 +1734,7 @@ bool IPSCCP::runOnModule(Module &M) {
           Instruction *I = Insts.back();
           Insts.pop_back();
           if (!I->use_empty())
-            I->replaceAllUsesWith(UndefValue::get(I->getType()));
+            I->replaceAllUsesWith(Context->getUndef(I->getType()));
           BB->getInstList().erase(I);
           MadeChanges = true;
           ++IPNumInstRemoved;
@@ -1738,7 +1746,7 @@ bool IPSCCP::runOnModule(Module &M) {
             TI->getSuccessor(i)->removePredecessor(BB);
         }
         if (!TI->use_empty())
-          TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
+          TI->replaceAllUsesWith(Context->getUndef(TI->getType()));
         BB->getInstList().erase(TI);
 
         if (&*BB != &F->front())
@@ -1757,7 +1765,7 @@ bool IPSCCP::runOnModule(Module &M) {
             continue;
           
           Constant *Const = IV.isConstant()
-            ? IV.getConstant() : UndefValue::get(Inst->getType());
+            ? IV.getConstant() : Context->getUndef(Inst->getType());
           DOUT << "  Constant: " << *Const << " = " << *Inst;
 
           // Replaces all of the uses of a variable with uses of the
@@ -1831,7 +1839,7 @@ bool IPSCCP::runOnModule(Module &M) {
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
         if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
           if (!isa<UndefValue>(RI->getOperand(0)))
-            RI->setOperand(0, UndefValue::get(F->getReturnType()));
+            RI->setOperand(0, Context->getUndef(F->getReturnType()));
     }
 
   // If we infered constant or undef values for globals variables, we can delete

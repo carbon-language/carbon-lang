@@ -26,6 +26,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Attributes.h"
 #include "llvm/Support/CFG.h"
@@ -57,7 +58,7 @@ FunctionPass *llvm::createCFGSimplificationPass() {
 
 /// ChangeToUnreachable - Insert an unreachable instruction before the specified
 /// instruction, making it and the rest of the code in the block dead.
-static void ChangeToUnreachable(Instruction *I) {
+static void ChangeToUnreachable(Instruction *I, LLVMContext* Context) {
   BasicBlock *BB = I->getParent();
   // Loop over all of the successors, removing BB's entry from any PHI
   // nodes.
@@ -70,7 +71,7 @@ static void ChangeToUnreachable(Instruction *I) {
   BasicBlock::iterator BBI = I, BBE = BB->end();
   while (BBI != BBE) {
     if (!BBI->use_empty())
-      BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
+      BBI->replaceAllUsesWith(Context->getUndef(BBI->getType()));
     BB->getInstList().erase(BBI++);
   }
 }
@@ -95,7 +96,8 @@ static void ChangeToCall(InvokeInst *II) {
 }
 
 static bool MarkAliveBlocks(BasicBlock *BB,
-                            SmallPtrSet<BasicBlock*, 128> &Reachable) {
+                            SmallPtrSet<BasicBlock*, 128> &Reachable,
+                            LLVMContext* Context) {
   
   SmallVector<BasicBlock*, 128> Worklist;
   Worklist.push_back(BB);
@@ -118,7 +120,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
           // though.
           ++BBI;
           if (!isa<UnreachableInst>(BBI)) {
-            ChangeToUnreachable(BBI);
+            ChangeToUnreachable(BBI, Context);
             Changed = true;
           }
           break;
@@ -131,7 +133,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
         if (isa<UndefValue>(Ptr) ||
             (isa<ConstantPointerNull>(Ptr) &&
              cast<PointerType>(Ptr->getType())->getAddressSpace() == 0)) {
-          ChangeToUnreachable(SI);
+          ChangeToUnreachable(SI, Context);
           Changed = true;
           break;
         }
@@ -157,7 +159,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
 /// otherwise.
 static bool RemoveUnreachableBlocksFromFn(Function &F) {
   SmallPtrSet<BasicBlock*, 128> Reachable;
-  bool Changed = MarkAliveBlocks(F.begin(), Reachable);
+  bool Changed = MarkAliveBlocks(F.begin(), Reachable, F.getContext());
   
   // If there are unreachable blocks in the CFG...
   if (Reachable.size() == F.size())

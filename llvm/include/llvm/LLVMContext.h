@@ -178,7 +178,7 @@ public:
                               const std::vector<Constant*>& V);
   Constant* getConstantVector(const std::vector<Constant*>& V);
   Constant* getConstantVector(Constant* const* Vals, unsigned NumVals);
-  ConstantVector* getConstantVectorAllOnes(const VectorType* Ty);
+  ConstantVector* getConstantVectorAllOnesValue(const VectorType* Ty);
   
   // MDNode accessors
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);

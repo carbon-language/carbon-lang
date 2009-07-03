@@ -27,6 +27,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
@@ -198,8 +199,9 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 /// LowerNegateToMultiply - Replace 0-X with X*-1.
 ///
 static Instruction *LowerNegateToMultiply(Instruction *Neg,
-                              std::map<AssertingVH<>, unsigned> &ValueRankMap) {
-  Constant *Cst = ConstantInt::getAllOnesValue(Neg->getType());
+                              std::map<AssertingVH<>, unsigned> &ValueRankMap,
+                              LLVMContext* Context) {
+  Constant *Cst = Context->getConstantIntAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
   ValueRankMap.erase(Neg);
@@ -263,11 +265,13 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
   // transform them into multiplies by -1 so they can be reassociated.
   if (I->getOpcode() == Instruction::Mul) {
     if (!LHSBO && LHS->hasOneUse() && BinaryOperator::isNeg(LHS)) {
-      LHS = LowerNegateToMultiply(cast<Instruction>(LHS), ValueRankMap);
+      LHS = LowerNegateToMultiply(cast<Instruction>(LHS),
+                                  ValueRankMap, Context);
       LHSBO = isReassociableOp(LHS, Opcode);
     }
     if (!RHSBO && RHS->hasOneUse() && BinaryOperator::isNeg(RHS)) {
-      RHS = LowerNegateToMultiply(cast<Instruction>(RHS), ValueRankMap);
+      RHS = LowerNegateToMultiply(cast<Instruction>(RHS),
+                                  ValueRankMap, Context);
       RHSBO = isReassociableOp(RHS, Opcode);
     }
   }
@@ -280,8 +284,8 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
       Ops.push_back(ValueEntry(getRank(RHS), RHS));
       
       // Clear the leaves out.
-      I->setOperand(0, UndefValue::get(I->getType()));
-      I->setOperand(1, UndefValue::get(I->getType()));
+      I->setOperand(0, Context->getUndef(I->getType()));
+      I->setOperand(1, Context->getUndef(I->getType()));
       return;
     } else {
       // Turn X+(Y+Z) -> (Y+Z)+X
@@ -316,7 +320,7 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
   Ops.push_back(ValueEntry(getRank(RHS), RHS));
   
   // Clear the RHS leaf out.
-  I->setOperand(1, UndefValue::get(I->getType()));
+  I->setOperand(1, Context->getUndef(I->getType()));
 }
 
 // RewriteExprTree - Now that the operands for this expression tree are
@@ -453,15 +457,17 @@ static Instruction *BreakUpSubtract(Instruction *Sub,
 /// by one, change this into a multiply by a constant to assist with further
 /// reassociation.
 static Instruction *ConvertShiftToMul(Instruction *Shl, 
-                              std::map<AssertingVH<>, unsigned> &ValueRankMap) {
+                              std::map<AssertingVH<>, unsigned> &ValueRankMap,
+                              LLVMContext* Context) {
   // If an operand of this shift is a reassociable multiply, or if the shift
   // is used by a reassociable multiply or add, turn into a multiply.
   if (isReassociableOp(Shl->getOperand(0), Instruction::Mul) ||
       (Shl->hasOneUse() && 
        (isReassociableOp(Shl->use_back(), Instruction::Mul) ||
         isReassociableOp(Shl->use_back(), Instruction::Add)))) {
-    Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
-    MulCst = ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
+    Constant *MulCst = Context->getConstantInt(Shl->getType(), 1);
+    MulCst =
+        Context->getConstantExprShl(MulCst, cast<Constant>(Shl->getOperand(1)));
     
     Instruction *Mul = BinaryOperator::CreateMul(Shl->getOperand(0), MulCst,
                                                  "", Shl);
@@ -561,7 +567,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
   if (Constant *V1 = dyn_cast<Constant>(Ops[Ops.size()-2].Op))
     if (Constant *V2 = dyn_cast<Constant>(Ops.back().Op)) {
       Ops.pop_back();
-      Ops.back().Op = ConstantExpr::get(Opcode, V1, V2);
+      Ops.back().Op = Context->getConstantExpr(Opcode, V1, V2);
       return OptimizeExpression(I, Ops);
     }
 
@@ -617,10 +623,10 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
         if (FoundX != i) {
           if (Opcode == Instruction::And) {   // ...&X&~X = 0
             ++NumAnnihil;
-            return Constant::getNullValue(X->getType());
+            return Context->getNullValue(X->getType());
           } else if (Opcode == Instruction::Or) {   // ...|X|~X = -1
             ++NumAnnihil;
-            return ConstantInt::getAllOnesValue(X->getType());
+            return Context->getConstantIntAllOnesValue(X->getType());
           }
         }
       }
@@ -639,7 +645,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
           assert(Opcode == Instruction::Xor);
           if (e == 2) {
             ++NumAnnihil;
-            return Constant::getNullValue(Ops[0].Op->getType());
+            return Context->getNullValue(Ops[0].Op->getType());
           }
           // ... X^X -> ...
           Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
@@ -664,7 +670,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
           // Remove X and -X from the operand list.
           if (Ops.size() == 2) {
             ++NumAnnihil;
-            return Constant::getNullValue(X->getType());
+            return Context->getNullValue(X->getType());
           } else {
             Ops.erase(Ops.begin()+i);
             if (i < FoundX)
@@ -779,7 +785,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     Instruction *BI = BBI++;
     if (BI->getOpcode() == Instruction::Shl &&
         isa<ConstantInt>(BI->getOperand(1)))
-      if (Instruction *NI = ConvertShiftToMul(BI, ValueRankMap)) {
+      if (Instruction *NI = ConvertShiftToMul(BI, ValueRankMap, Context)) {
         MadeChange = true;
         BI = NI;
       }
@@ -801,7 +807,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
         if (isReassociableOp(BI->getOperand(1), Instruction::Mul) &&
             (!BI->hasOneUse() ||
              !isReassociableOp(BI->use_back(), Instruction::Mul))) {
-          BI = LowerNegateToMultiply(BI, ValueRankMap);
+          BI = LowerNegateToMultiply(BI, ValueRankMap, Context);
           MadeChange = true;
         }
       }
