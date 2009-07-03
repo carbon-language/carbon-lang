@@ -841,12 +841,16 @@ SDValue PIC16TargetLowering::ExpandLoad(SDNode *N, SelectionDAG &DAG) {
     // i.e. without any extension
     MVT MemVT = LD->getMemoryVT();
     unsigned MemBytes = MemVT.getSizeInBits() / 8;
+    // if MVT::i1 is extended to MVT::i8 then MemBytes will be zero
+    // So set it to one
+    if (MemBytes == 0) MemBytes = 1;
+    
     unsigned ExtdBytes = VT.getSizeInBits() / 8;
     Offset = DAG.getConstant(LoadOffset, MVT::i8);
 
     Tys = DAG.getVTList(MVT::i8, MVT::Other); 
     // For MemBytes generate PIC16Load with proper offset
-    for (iter=0; iter<MemBytes; ++iter) {
+    for (iter=0; iter < MemBytes; ++iter) {
       // Add the pointer offset if any
       Offset = DAG.getConstant(iter + LoadOffset, MVT::i8);
       Load = DAG.getNode(PIC16ISD::PIC16Load, dl, Tys, Chain, PtrLo, PtrHi,

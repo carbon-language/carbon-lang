@@ -299,7 +299,7 @@ def store_indirect :
 // Direct load.
 // Input Operands are: ptrlo = GA, offset = offset, ptrhi = banksel.
 // Output: dst = W
-let mayLoad = 1 in
+let Defs = [STATUS], mayLoad = 1 in
 class MOVF_INSN<bits<6> OpCode, SDNode OpNodeSrc, SDNode Op>:
   ByteFormat<0, (outs GPR:$dst), 
              (ins i8imm:$offset, i8mem:$ptrlo, i8imm:$ptrhi),
