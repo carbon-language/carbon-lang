@@ -133,13 +133,18 @@ static void PrintLoopInfo(
     raw_ostream &OS, LoopDependenceAnalysis *LDA, const Loop *L) {
   if (!L->empty()) return; // ignore non-innermost loops
 
+  SmallVector<Instruction*, 8> memrefs;
+  GetMemRefInstrs(L, memrefs);
+
   OS << "Loop at depth " << L->getLoopDepth() << ", header block: ";
   WriteAsOperand(OS, L->getHeader(), false);
   OS << "\n";
 
-  SmallVector<Instruction*, 8> memrefs;
-  GetMemRefInstrs(L, memrefs);
   OS << "  Load/store instructions: " << memrefs.size() << "\n";
+  for (SmallVector<Instruction*, 8>::const_iterator x = memrefs.begin(),
+      end = memrefs.end(); x != end; ++x)
+    OS << "\t" << (x - memrefs.begin()) << ": " << **x;
+
   OS << "  Pairwise dependence results:\n";
   for (SmallVector<Instruction*, 8>::const_iterator x = memrefs.begin(),
       end = memrefs.end(); x != end; ++x)
