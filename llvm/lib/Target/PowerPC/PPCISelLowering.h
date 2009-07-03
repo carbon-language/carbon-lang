@@ -335,6 +335,10 @@ namespace llvm {
                                                    SelectionDAG &DAG) const;
 
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+    
+    virtual MVT getOptimalMemOpType(uint64_t Size, unsigned Align,
+                                    bool isSrcConst, bool isSrcStr,
+                                    SelectionDAG &DAG) const;
 
     /// getFunctionAlignment - Return the Log2 alignment of this function.
     virtual unsigned getFunctionAlignment(const Function *F) const;
@@ -348,6 +352,7 @@ namespace llvm {
                                          SDValue Chain,
                                          SDValue &LROpOut,
                                          SDValue &FPOpOut,
+                                         bool isMachoABI,
                                          DebugLoc dl);
 
     SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG);
@@ -365,6 +370,12 @@ namespace llvm {
     SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG, int VarArgsFrameIndex,
                          int VarArgsStackOffset, unsigned VarArgsNumGPR,
                          unsigned VarArgsNumFPR, const PPCSubtarget &Subtarget);
+    SDValue LowerFORMAL_ARGUMENTS_SVR4(SDValue Op, SelectionDAG &DAG,
+                                       int &VarArgsFrameIndex, 
+                                       int &VarArgsStackOffset,
+                                       unsigned &VarArgsNumGPR,
+                                       unsigned &VarArgsNumFPR,
+                                       const PPCSubtarget &Subtarget);
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
                                     int &VarArgsFrameIndex, 
                                     int &VarArgsStackOffset,
@@ -373,6 +384,8 @@ namespace llvm {
                                     const PPCSubtarget &Subtarget);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG,
                         const PPCSubtarget &Subtarget, TargetMachine &TM);
+    SDValue LowerCALL_SVR4(SDValue Op, SelectionDAG &DAG,
+                           const PPCSubtarget &Subtarget, TargetMachine &TM);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG, TargetMachine &TM);
     SDValue LowerSTACKRESTORE(SDValue Op, SelectionDAG &DAG,
                                 const PPCSubtarget &Subtarget);

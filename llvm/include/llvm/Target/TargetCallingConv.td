@@ -54,6 +54,10 @@ class CCIfInReg<CCAction A> : CCIf<"ArgFlags.isInReg()", A> {}
 /// the specified action.
 class CCIfNest<CCAction A> : CCIf<"ArgFlags.isNest()", A> {}
 
+/// CCIfSplit - If this argument is marked with the 'split' attribute, apply
+/// the specified action.
+class CCIfSplit<CCAction A> : CCIf<"ArgFlags.isSplit()", A> {}
+
 /// CCIfNotVarArg - If the current function is not vararg - apply the action
 class CCIfNotVarArg<CCAction A> : CCIf<"!State.isVarArg()", A> {}
 

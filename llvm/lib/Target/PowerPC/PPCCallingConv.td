@@ -64,3 +64,86 @@ def CC_PPC : CallingConv<[
 
 */
 
+//===----------------------------------------------------------------------===//
+// PowerPC System V Release 4 ABI
+//===----------------------------------------------------------------------===//
+
+// _Complex arguments are never split, thus their two scalars are either
+// passed both in argument registers or both on the stack. Also _Complex
+// arguments are always passed in general purpose registers, never in
+// Floating-point registers or vector registers. Arguments which should go
+// on the stack are marked with the inreg parameter attribute.
+// Giving inreg this target-dependent (and counter-intuitive) meaning
+// simplifies things, because functions calls are not always coming from the
+// frontend but are also created implicitly e.g. for libcalls. If inreg would
+// actually mean that the argument is passed in a register, then all places
+// which create function calls/function definitions implicitly would need to
+// be aware of this fact and would need to mark arguments accordingly. With
+// inreg meaning that the argument is passed on the stack, this is not an
+// issue, except for calls which involve _Complex types.
+
+def CC_PPC_SVR4_Common : CallingConv<[
+  // The ABI requires i64 to be passed in two adjacent registers with the first
+  // register having an odd register number.
+  CCIfType<[i32], CCIfSplit<CCCustom<"CC_PPC_SVR4_Custom_AlignArgRegs">>>,
+
+  // The first 8 integer arguments are passed in integer registers.
+  CCIfType<[i32], CCIf<"!ArgFlags.isInReg()",
+    CCAssignToReg<[R3, R4, R5, R6, R7, R8, R9, R10]>>>,
+
+  // Make sure the i64 words from a long double are either both passed in
+  // registers or both passed on the stack.
+  CCIfType<[f64], CCIfSplit<CCCustom<"CC_PPC_SVR4_Custom_AlignFPArgRegs">>>,
+  
+  // FP values are passed in F1 - F8.
+  CCIfType<[f32, f64], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
+
+  // Split arguments have an alignment of 8 bytes on the stack.
+  CCIfType<[i32], CCIfSplit<CCAssignToStack<4, 8>>>,
+  
+  CCIfType<[i32], CCAssignToStack<4, 4>>,
+  
+  // Floats are stored in double precision format, thus they have the same
+  // alignment and size as doubles.
+  CCIfType<[f32,f64], CCAssignToStack<8, 8>>,  
+
+  // Vectors get 16-byte stack slots that are 16-byte aligned.
+  CCIfType<[v16i8, v8i16, v4i32, v4f32], CCAssignToStack<16, 16>>
+]>;
+
+// This calling convention puts vector arguments always on the stack. It is used
+// to assign vector arguments which belong to the variable portion of the
+// parameter list of a variable argument function.
+def CC_PPC_SVR4_VarArg : CallingConv<[
+  CCDelegateTo<CC_PPC_SVR4_Common>
+]>;
+
+// In contrast to CC_PPC_SVR4_VarArg, this calling convention first tries to put
+// vector arguments in vector registers before putting them on the stack.
+def CC_PPC_SVR4 : CallingConv<[
+  // The first 12 Vector arguments are passed in AltiVec registers.
+  CCIfType<[v16i8, v8i16, v4i32, v4f32],
+           CCAssignToReg<[V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13]>>,
+           
+  CCDelegateTo<CC_PPC_SVR4_Common>
+]>;  
+
+// Helper "calling convention" to handle aggregate by value arguments.
+// Aggregate by value arguments are always placed in the local variable space
+// of the caller. This calling convention is only used to assign those stack
+// offsets in the callers stack frame.
+//
+// Still, the address of the aggregate copy in the callers stack frame is passed
+// in a GPR (or in the parameter list area if all GPRs are allocated) from the
+// caller to the callee. The location for the address argument is assigned by
+// the CC_PPC_SVR4 calling convention.
+//
+// The only purpose of CC_PPC_SVR4_Custom_Dummy is to skip arguments which are
+// not passed by value.
+ 
+def CC_PPC_SVR4_ByVal : CallingConv<[
+  CCIfByVal<CCPassByVal<4, 4>>,
+  
+  CCCustom<"CC_PPC_SVR4_Custom_Dummy">
+]>;
+

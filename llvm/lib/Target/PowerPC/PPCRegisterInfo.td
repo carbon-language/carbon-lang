@@ -290,7 +290,12 @@ def GPRC : RegisterClass<"PPC", [i32], 32,
       // On PPC64, r13 is the thread pointer.  Never allocate this register.
       // Note that this is overconservative, as it also prevents allocation of
       // R31 when the FP is not needed.
-      if (MF.getTarget().getSubtarget<PPCSubtarget>().isPPC64())
+      // When using the SVR4 ABI, r13 is reserved for the Small Data Area
+      // pointer.
+      const PPCSubtarget &Subtarget
+        = MF.getTarget().getSubtarget<PPCSubtarget>();
+         
+      if (Subtarget.isPPC64() || Subtarget.isELF32_ABI())
         return end()-5;  // don't allocate R13, R31, R0, R1, LR
         
       if (needsFP(MF))
@@ -324,19 +329,24 @@ def G8RC : RegisterClass<"PPC", [i64], 64,
   }];
 }
 
-
-
+// Allocate volatiles first, then non-volatiles in reverse order. With the SVR4
+// ABI the size of the Floating-point register save area is determined by the
+// allocated non-volatile register with the lowest register number, as FP
+// register N is spilled to offset 8 * (32 - N) below the back chain word of the
+// previous stack frame. By allocating non-volatiles in reverse order we make
+// sure that the Floating-point register save area is always as small as
+// possible because there aren't any unused spill slots.
 def F8RC : RegisterClass<"PPC", [f64], 64, [F0, F1, F2, F3, F4, F5, F6, F7,
-  F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21,
-  F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
+  F8, F9, F10, F11, F12, F13, F31, F30, F29, F28, F27, F26, F25, F24, F23,
+  F22, F21, F20, F19, F18, F17, F16, F15, F14]>;
 def F4RC : RegisterClass<"PPC", [f32], 32, [F0, F1, F2, F3, F4, F5, F6, F7,
-  F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21,
-  F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
+  F8, F9, F10, F11, F12, F13, F31, F30, F29, F28, F27, F26, F25, F24, F23,
+  F22, F21, F20, F19, F18, F17, F16, F15, F14]>;
 
 def VRRC : RegisterClass<"PPC", [v16i8,v8i16,v4i32,v4f32], 128,
  [V2, V3, V4, V5, V0, V1, 
-  V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21,
-  V22, V23, V24, V25, V26, V27, V28, V29, V30, V31]>;
+  V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V31, V30,
+  V29, V28, V27, V26, V25, V24, V23, V22, V21, V20]>;
 
 def CRRC : RegisterClass<"PPC", [i32], 32, [CR0, CR1, CR5, CR6, CR7, CR2, 
   CR3, CR4]>;
@@ -358,3 +368,5 @@ def CRBITRC : RegisterClass<"PPC", [i32], 32,
 
 def CTRRC : RegisterClass<"PPC", [i32], 32, [CTR]>;
 def CTRRC8 : RegisterClass<"PPC", [i64], 64, [CTR8]>;
+def VRSAVERC : RegisterClass<"PPC", [i32], 32, [VRSAVE]>;
+
