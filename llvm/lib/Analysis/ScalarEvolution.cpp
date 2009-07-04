@@ -495,6 +495,8 @@ namespace {
       // Compare constant values.
       if (const SCEVConstant *LC = dyn_cast<SCEVConstant>(LHS)) {
         const SCEVConstant *RC = cast<SCEVConstant>(RHS);
+        if (LC->getValue()->getBitWidth() != RC->getValue()->getBitWidth())
+          return LC->getValue()->getBitWidth() < RC->getValue()->getBitWidth();
         return LC->getValue()->getValue().ult(RC->getValue()->getValue());
       }
 
