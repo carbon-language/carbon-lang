@@ -605,10 +605,10 @@ AC_ARG_ENABLE(llvmc-dynamic,AS_HELP_STRING(
 --enable-llvmc-dynamic,
 [Link LLVMC dynamically (default is NO, unless on Win32)]),,
 enableval=$llvmc_dynamic)
-if test ${enableval} = "no"; then
-   AC_SUBST(ENABLE_LLVMC_DYNAMIC,[[]])
-else
+if test ${enableval} = "yes" && test "$ENABLE_PIC" -eq 1; then
    AC_SUBST(ENABLE_LLVMC_DYNAMIC,[[ENABLE_LLVMC_DYNAMIC=1]])
+else
+   AC_SUBST(ENABLE_LLVMC_DYNAMIC,[[]])
 fi
 
 dnl===-----------------------------------------------------------------------===
