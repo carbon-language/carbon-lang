@@ -17,6 +17,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/Parse/DeclSpec.h"
+#include "llvm/ADT/SmallPtrSet.h"
 using namespace clang;
 
 /// \brief Perform adjustment on the parameter type of a function.
@@ -1063,6 +1064,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
       break;
     }
     case DeclaratorChunk::MemberPointer:
+      // Verify that we're not building a pointer to pointer to function with
+      // exception specification.
+      if (getLangOptions().CPlusPlus && CheckDistantExceptionSpec(T)) {
+        Diag(D.getIdentifierLoc(), diag::err_distant_exception_spec);
+        D.setInvalidType(true);
+        // Build the type anyway.
+      }
       // The scope spec must refer to a class, or be dependent.
       QualType ClsType;
       if (isDependentScopeSpecifier(DeclType.Mem.Scope())) {
@@ -1185,6 +1193,45 @@ bool Sema::CheckDistantExceptionSpec(QualType T) {
     return false;
 
   return FnT->hasExceptionSpec();
+}
+
+/// CheckEquivalentExceptionSpec - Check if the two types have equivalent
+/// exception specifications. Exception specifications are equivalent if
+/// they allow exactly the same set of exception types. It does not matter how
+/// that is achieved. See C++ [except.spec]p2.
+bool Sema::CheckEquivalentExceptionSpec(
+    const FunctionProtoType *Old, SourceLocation OldLoc,
+    const FunctionProtoType *New, SourceLocation NewLoc) {
+  bool OldAny = !Old->hasExceptionSpec() || Old->hasAnyExceptionSpec();
+  bool NewAny = !New->hasExceptionSpec() || New->hasAnyExceptionSpec();
+  if (OldAny && NewAny)
+    return false;
+  if (OldAny || NewAny) {
+    Diag(NewLoc, diag::err_mismatched_exception_spec);
+    Diag(OldLoc, diag::note_previous_declaration);
+    return true;
+  }
+
+  bool Success = true;
+  // Both have a definite exception spec. Collect the first set, then compare
+  // to the second.
+  llvm::SmallPtrSet<const Type*, 8> Types;
+  for (FunctionProtoType::exception_iterator I = Old->exception_begin(),
+       E = Old->exception_end(); I != E; ++I)
+    Types.insert(Context.getCanonicalType(*I).getTypePtr());
+
+  for (FunctionProtoType::exception_iterator I = New->exception_begin(),
+       E = New->exception_end(); I != E && Success; ++I)
+    Success = Types.erase(Context.getCanonicalType(*I).getTypePtr());
+
+  Success = Success && Types.empty();
+
+  if (Success) {
+    return false;
+  }
+  Diag(NewLoc, diag::err_mismatched_exception_spec);
+  Diag(OldLoc, diag::note_previous_declaration);
+  return true;
 }
 
 /// ObjCGetTypeForMethodDefinition - Builds the type for a method definition

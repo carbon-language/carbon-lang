@@ -86,6 +86,7 @@ namespace clang {
   class ObjCMethodDecl;
   class ObjCPropertyDecl;
   class ObjCContainerDecl;
+  class FunctionProtoType;
   class BasePaths;
   struct MemberLookupCriteria;
   class CXXTemporary;
@@ -394,6 +395,9 @@ public:
   DeclarationName GetNameForDeclarator(Declarator &D);
   bool CheckSpecifiedExceptionType(QualType T, const SourceRange &Range);
   bool CheckDistantExceptionSpec(QualType T);
+  bool CheckEquivalentExceptionSpec(
+      const FunctionProtoType *Old, SourceLocation OldLoc,
+      const FunctionProtoType *New, SourceLocation NewLoc);
 
   QualType ObjCGetTypeForMethodDefinition(DeclPtrTy D);
 

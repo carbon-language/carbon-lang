@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify -fms-extensions %s
 
 // Straight from the standard:
 // Plain function with spec
@@ -33,3 +33,31 @@ void ic2() throw(Incomplete); // expected-error {{incomplete type 'struct Incomp
 void ic3() throw(void*);
 void ic4() throw(Incomplete*); // expected-error {{pointer to incomplete type 'struct Incomplete' is not allowed in exception specification}}
 void ic5() throw(Incomplete&); // expected-error {{reference to incomplete type 'struct Incomplete' is not allowed in exception specification}}
+
+// Redeclarations
+typedef int INT;
+void r1() throw(int);
+void r1() throw(int);
+
+void r2() throw(int);
+void r2() throw(INT);
+
+// throw-any spec and no spec at all are semantically equivalent
+void r3();
+void r3() throw(...);
+
+void r4() throw(int, float);
+void r4() throw(float, int);
+
+void r5() throw(int); // expected-note {{previous declaration}}
+void r5(); // expected-error {{exception specification in declaration does not match}}
+
+void r6() throw(...); // expected-note {{previous declaration}}
+void r6() throw(int); // expected-error {{exception specification in declaration does not match}}
+
+void r7() throw(int); // expected-note {{previous declaration}}
+void r7() throw(float); // expected-error {{exception specification in declaration does not match}}
+
+// Top-level const doesn't matter.
+void r8() throw(int);
+void r8() throw(const int);

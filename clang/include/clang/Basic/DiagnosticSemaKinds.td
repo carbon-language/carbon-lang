@@ -287,6 +287,8 @@ def err_distant_exception_spec : Error<
 def err_incomplete_in_exception_spec : Error<
   "%select{|pointer to |reference to }1incomplete type %0 is not allowed "
   "in exception specification">;
+def err_mismatched_exception_spec : Error<
+  "exception specification in declaration does not match previous declaration">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
