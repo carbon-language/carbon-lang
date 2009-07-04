@@ -320,6 +320,8 @@ public:
     return Str->getType();
   }
 
+  bool isBoundable() const { return false; }
+
   void Profile(llvm::FoldingSetNodeID& ID) const {
     ProfileRegion(ID, Str, superRegion);
   }
@@ -389,7 +391,7 @@ public:
   QualType getValueType(ASTContext& C) const {
     return C.getCanonicalType(CL->getType());
   }
-  
+
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
   void print(llvm::raw_ostream& os) const;
