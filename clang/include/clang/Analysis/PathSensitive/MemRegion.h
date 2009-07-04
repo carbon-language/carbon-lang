@@ -392,6 +392,8 @@ public:
     return C.getCanonicalType(CL->getType());
   }
 
+  bool isBoundable() const { return !CL->isFileScope(); }
+
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
   void print(llvm::raw_ostream& os) const;
