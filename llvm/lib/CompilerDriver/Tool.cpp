@@ -56,7 +56,7 @@ sys::Path Tool::OutFilename(const sys::Path& In,
   sys::Path Out;
 
   if (StopCompilation) {
-    if (!OutputFilename.empty() && SaveTemps != SaveTempsEnum::Obj ) {
+    if (!OutputFilename.empty()) {
       Out.set(OutputFilename);
     }
     else if (IsJoin()) {

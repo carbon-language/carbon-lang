@@ -37,6 +37,7 @@ namespace {
     }
     else if (SaveTemps == SaveTempsEnum::Obj && !OutputFilename.empty()) {
       tempDir = OutputFilename;
+      tempDir = tempDir.getDirname();
 
       if (!tempDir.exists()) {
         std::string ErrMsg;
