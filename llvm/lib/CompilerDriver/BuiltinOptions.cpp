@@ -12,7 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CompilerDriver/BuiltinOptions.h"
+
+#ifdef ENABLE_LLVMC_DYNAMIC_PLUGINS
 #include "llvm/Support/PluginLoader.h"
+#endif
 
 namespace cl = llvm::cl;
 

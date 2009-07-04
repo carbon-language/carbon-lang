@@ -25,6 +25,10 @@ REQUIRES_EH := 1
 
 include $(LEVEL)/Makefile.common
 
+ifeq ($(ENABLE_LLVMC_DYNAMIC_PLUGINS), 1)
+    CPP.Flags += -DENABLE_LLVMC_DYNAMIC_PLUGINS
+endif
+
 # Copy libCompilerDriver to the bin dir so that llvmc can find it.
 ifeq ($(ENABLE_LLVMC_DYNAMIC),1)
 

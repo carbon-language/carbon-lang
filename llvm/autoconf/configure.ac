@@ -605,10 +605,21 @@ AC_ARG_ENABLE(llvmc-dynamic,AS_HELP_STRING(
 --enable-llvmc-dynamic,
 [Link LLVMC dynamically (default is NO, unless on Win32)]),,
 enableval=$llvmc_dynamic)
-if test ${enableval} = "yes" && test "$ENABLE_PIC" -eq 1; then
+if test ${enableval} = "yes" && test "$ENABLE_PIC" -eq 1 ; then
    AC_SUBST(ENABLE_LLVMC_DYNAMIC,[[ENABLE_LLVMC_DYNAMIC=1]])
 else
    AC_SUBST(ENABLE_LLVMC_DYNAMIC,[[]])
+fi
+
+dnl --enable-llvmc-dynamic-plugins : should LLVMC support dynamic plugins?
+AC_ARG_ENABLE(llvmc-dynamic-plugins,AS_HELP_STRING(
+--enable-llvmc-dynamic-plugins,
+[Enable dynamic LLVMC plugins (default is YES)]),,
+enableval=yes)
+if test ${enableval} = "yes" ; then
+   AC_SUBST(ENABLE_LLVMC_DYNAMIC_PLUGINS,[[ENABLE_LLVMC_DYNAMIC_PLUGINS=1]])
+else
+   AC_SUBST(ENABLE_LLVMC_DYNAMIC_PLUGINS,[[]])
 fi
 
 dnl===-----------------------------------------------------------------------===
