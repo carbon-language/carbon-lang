@@ -197,6 +197,9 @@ void DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
   
   // We didn't found the location in the parameters and we didn't get passed it.
   
+  if (!D->isThisDeclarationADefinition())
+    return;
+
   // Second, search through the declarations that are part of the function.
   // If we find he location there, we won't have to search through its body.
   DeclLocResolver DLR(Ctx, Loc);
@@ -209,16 +212,15 @@ void DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
   // We didn't find a declaration that corresponds to the source location.
   
   // Finally, search through the body of the function.
-  if (D->isThisDeclarationADefinition()) {
-    StmtLocResolver SLR(Ctx, Loc);
-    SLR.Visit(D->getBody());
-    if (SLR.FoundIt()) {
-      llvm::tie(Dcl, Stm) = SLR.getResult();
-      // If we didn't find a more immediate 'parent' declaration for the
-      // statement, set the function as the parent.
-      if (Dcl == 0)
-        Dcl = D;
-    }
+  assert(D->getBody() && "Expected definition");
+  StmtLocResolver SLR(Ctx, Loc);
+  SLR.Visit(D->getBody());
+  if (SLR.FoundIt()) {
+    llvm::tie(Dcl, Stm) = SLR.getResult();
+    // If we didn't find a more immediate 'parent' declaration for the
+    // statement, set the function as the parent.
+    if (Dcl == 0)
+      Dcl = D;
   }
 }
 
