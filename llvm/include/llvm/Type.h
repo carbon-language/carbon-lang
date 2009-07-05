@@ -191,7 +191,7 @@ public:
   ///
   bool isIntOrIntVector() const;
   
-  /// isFloatingPoint - Return true if this is one of the two floating point
+  /// isFloatingPoint - Return true if this is one of the three floating point
   /// types
   bool isFloatingPoint() const { return ID == FloatTyID || ID == DoubleTyID ||
       ID == X86_FP80TyID || ID == FP128TyID || ID == PPC_FP128TyID; }
