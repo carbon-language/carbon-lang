@@ -889,6 +889,17 @@ public:
 } // end anonymous namespace
 
 namespace {
+class OpenBSDI386TargetInfo : public OpenBSDTargetInfo<X86_32TargetInfo> {
+public:
+  OpenBSDI386TargetInfo(const std::string& triple) :
+    OpenBSDTargetInfo<X86_32TargetInfo>(triple) {
+    SizeType = UnsignedLong;
+    IntPtrType = SignedLong;
+  }
+};
+} // end anonymous namespace
+
+namespace {
 class DarwinI386TargetInfo : public DarwinTargetInfo<X86_32TargetInfo> {
 public:
   DarwinI386TargetInfo(const std::string& triple) :
@@ -1403,7 +1414,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     if (isDragonFly)
       return new DragonFlyBSDTargetInfo<X86_32TargetInfo>(T);
     if (isOpenBSD)
-      return new OpenBSDTargetInfo<X86_32TargetInfo>(T);
+      return new OpenBSDI386TargetInfo(T);
     if (isFreeBSD)
       return new FreeBSDTargetInfo<X86_32TargetInfo>(T);
     if (isSolaris)
