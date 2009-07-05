@@ -895,6 +895,7 @@ public:
     OpenBSDTargetInfo<X86_32TargetInfo>(triple) {
     SizeType = UnsignedLong;
     IntPtrType = SignedLong;
+    PtrDiffType = SignedLong;
   }
 };
 } // end anonymous namespace
@@ -982,6 +983,18 @@ class DarwinX86_64TargetInfo : public DarwinTargetInfo<X86_64TargetInfo> {
 public:
   DarwinX86_64TargetInfo(const std::string& triple) 
       : DarwinTargetInfo<X86_64TargetInfo>(triple) {
+    Int64Type = SignedLongLong;
+  }
+};
+} // end anonymous namespace
+
+namespace {
+class OpenBSDX86_64TargetInfo : public OpenBSDTargetInfo<X86_64TargetInfo> {
+public:
+  OpenBSDX86_64TargetInfo(const std::string& triple) 
+      : OpenBSDTargetInfo<X86_64TargetInfo>(triple) {
+    IntMaxType = SignedLongLong;
+    UIntMaxType = UnsignedLongLong;
     Int64Type = SignedLongLong;
   }
 };
@@ -1392,7 +1405,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
     if (isLinux)
       return new LinuxTargetInfo<X86_64TargetInfo>(T);
     if (isOpenBSD)
-      return new OpenBSDTargetInfo<X86_64TargetInfo>(T);
+      return new OpenBSDX86_64TargetInfo(T);
     if (isFreeBSD)
       return new FreeBSDTargetInfo<X86_64TargetInfo>(T);
     if (isSolaris)
