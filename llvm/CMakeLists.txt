@@ -65,7 +65,10 @@ else()
 endif()
 
 if( LLVM_ENABLE_ASSERTIONS )
-  add_definitions( -D_DEBUG )
+  # MSVC doesn't like _DEBUG on release builds. See PR 4379.
+  if( NOT MSVC OR NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
+    add_definitions( -D_DEBUG )
+  endif()
   # On Release builds cmake automatically defines NDEBUG, so we
   # explicitly undefine it:
   if( uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE" )
