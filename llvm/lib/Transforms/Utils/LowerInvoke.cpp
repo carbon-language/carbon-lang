@@ -40,6 +40,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -114,33 +115,33 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
-  const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type *VoidPtrTy = Context->getPointerTypeUnqual(Type::Int8Ty);
   AbortMessage = 0;
   if (ExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
     unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
     JBSize = JBSize ? JBSize : 200;
-    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
+    const Type *JmpBufTy = Context->getArrayType(VoidPtrTy, JBSize);
 
     { // The type is recursive, so use a type holder.
       std::vector<const Type*> Elements;
       Elements.push_back(JmpBufTy);
-      OpaqueType *OT = OpaqueType::get();
-      Elements.push_back(PointerType::getUnqual(OT));
-      PATypeHolder JBLType(StructType::get(Elements));
+      OpaqueType *OT = Context->getOpaqueType();
+      Elements.push_back(Context->getPointerTypeUnqual(OT));
+      PATypeHolder JBLType(Context->getStructType(Elements));
       OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.
       JBLinkTy = JBLType.get();
       M.addTypeName("llvm.sjljeh.jmpbufty", JBLinkTy);
     }
 
-    const Type *PtrJBList = PointerType::getUnqual(JBLinkTy);
+    const Type *PtrJBList = Context->getPointerTypeUnqual(JBLinkTy);
 
     // Now that we've done that, insert the jmpbuf list head global, unless it
     // already exists.
     if (!(JBListHead = M.getGlobalVariable("llvm.sjljeh.jblist", PtrJBList))) {
       JBListHead = new GlobalVariable(PtrJBList, false,
                                       GlobalValue::LinkOnceAnyLinkage,
-                                      Constant::getNullValue(PtrJBList),
+                                      Context->getNullValue(PtrJBList),
                                       "llvm.sjljeh.jblist", &M);
     }
 
@@ -178,26 +179,26 @@ void LowerInvoke::createAbortMessage(Module *M) {
     // The abort message for expensive EH support tells the user that the
     // program 'unwound' without an 'invoke' instruction.
     Constant *Msg =
-      ConstantArray::get("ERROR: Exception thrown, but not caught!\n");
+      Context->getConstantArray("ERROR: Exception thrown, but not caught!\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
 
     GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg", M);
-    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::Int32Ty));
-    AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
+    std::vector<Constant*> GEPIdx(2, Context->getNullValue(Type::Int32Ty));
+    AbortMessage = Context->getConstantExprGetElementPtr(MsgGV, &GEPIdx[0], 2);
   } else {
     // The abort message for cheap EH support tells the user that EH is not
     // enabled.
     Constant *Msg =
-      ConstantArray::get("Exception handler needed, but not enabled.  Recompile"
-                         " program with -enable-correct-eh-support.\n");
+      Context->getConstantArray("Exception handler needed, but not enabled."      
+                        "Recompile program with -enable-correct-eh-support.\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
 
     GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg", M);
-    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::Int32Ty));
+    std::vector<Constant*> GEPIdx(2, Context->getNullValue(Type::Int32Ty));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   }
 }

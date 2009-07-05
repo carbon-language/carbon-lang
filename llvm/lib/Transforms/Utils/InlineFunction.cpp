@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
@@ -238,6 +239,7 @@ static const DbgRegionEndInst *findFnRegionEndMarker(const Function *F) {
 //
 bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   Instruction *TheCall = CS.getInstruction();
+  LLVMContext *Context = TheCall->getParent()->getContext();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
          "Instruction not in function!");
 
@@ -302,7 +304,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       if (CalledFunc->paramHasAttr(ArgNo+1, Attribute::ByVal) &&
           !CalledFunc->onlyReadsMemory()) {
         const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
-        const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
+        const Type *VoidPtrTy = Context->getPointerTypeUnqual(Type::Int8Ty);
 
         // Create the alloca.  If we have TargetData, use nice alignment.
         unsigned Align = 1;
@@ -319,15 +321,16 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
         Value *Size;
         if (TD == 0)
-          Size = ConstantExpr::getSizeOf(AggTy);
+          Size = Context->getConstantExprSizeOf(AggTy);
         else
-          Size = ConstantInt::get(Type::Int64Ty, TD->getTypeStoreSize(AggTy));
+          Size = Context->getConstantInt(Type::Int64Ty,
+                                         TD->getTypeStoreSize(AggTy));
 
         // Always generate a memcpy of alignment 1 here because we don't know
         // the alignment of the src pointer.  Other optimizations can infer
         // better alignment.
         Value *CallArgs[] = {
-          DestCast, SrcCast, Size, ConstantInt::get(Type::Int32Ty, 1)
+          DestCast, SrcCast, Size, Context->getConstantInt(Type::Int32Ty, 1)
         };
         CallInst *TheMemCpy =
           CallInst::Create(MemCpyFn, CallArgs, CallArgs+4, "", TheCall);
@@ -517,7 +520,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     if (!TheCall->use_empty()) {
       ReturnInst *R = Returns[0];
       if (TheCall == R->getReturnValue())
-        TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
+        TheCall->replaceAllUsesWith(Context->getUndef(TheCall->getType()));
       else
         TheCall->replaceAllUsesWith(R->getReturnValue());
     }
@@ -610,7 +613,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // using the return value of the call with the computed value.
     if (!TheCall->use_empty()) {
       if (TheCall == Returns[0]->getReturnValue())
-        TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
+        TheCall->replaceAllUsesWith(Context->getUndef(TheCall->getType()));
       else
         TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
     }
@@ -630,7 +633,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   } else if (!TheCall->use_empty()) {
     // No returns, but something is using the return value of the call.  Just
     // nuke the result.
-    TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
+    TheCall->replaceAllUsesWith(Context->getUndef(TheCall->getType()));
   }
 
   // Since we are now done with the Call/Invoke, we can delete it.

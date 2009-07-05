@@ -13,14 +13,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Instruction.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/MDNode.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
+Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext* Context) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
   
@@ -40,7 +42,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
     else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
       for (User::op_iterator b = CA->op_begin(), i = b, e = CA->op_end();
            i != e; ++i) {
-        Value *MV = MapValue(*i, VM);
+        Value *MV = MapValue(*i, VM, Context);
         if (MV != *i) {
           // This array must contain a reference to a global, make a new array
           // and return it.
@@ -51,8 +53,8 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
             Values.push_back(cast<Constant>(*j));
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(*i, VM)));
-          return VM[V] = ConstantArray::get(CA->getType(), Values);
+            Values.push_back(cast<Constant>(MapValue(*i, VM, Context)));
+          return VM[V] = Context->getConstantArray(CA->getType(), Values);
         }
       }
       return VM[V] = C;
@@ -60,7 +62,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
     } else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
       for (User::op_iterator b = CS->op_begin(), i = b, e = CS->op_end();
            i != e; ++i) {
-        Value *MV = MapValue(*i, VM);
+        Value *MV = MapValue(*i, VM, Context);
         if (MV != *i) {
           // This struct must contain a reference to a global, make a new struct
           // and return it.
@@ -71,8 +73,8 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
             Values.push_back(cast<Constant>(*j));
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(*i, VM)));
-          return VM[V] = ConstantStruct::get(CS->getType(), Values);
+            Values.push_back(cast<Constant>(MapValue(*i, VM, Context)));
+          return VM[V] = Context->getConstantStruct(CS->getType(), Values);
         }
       }
       return VM[V] = C;
@@ -80,12 +82,12 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
       std::vector<Constant*> Ops;
       for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i)
-        Ops.push_back(cast<Constant>(MapValue(*i, VM)));
+        Ops.push_back(cast<Constant>(MapValue(*i, VM, Context)));
       return VM[V] = CE->getWithOperands(Ops);
     } else if (ConstantVector *CP = dyn_cast<ConstantVector>(C)) {
       for (User::op_iterator b = CP->op_begin(), i = b, e = CP->op_end();
            i != e; ++i) {
-        Value *MV = MapValue(*i, VM);
+        Value *MV = MapValue(*i, VM, Context);
         if (MV != *i) {
           // This vector value must contain a reference to a global, make a new
           // vector constant and return it.
@@ -96,8 +98,8 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
             Values.push_back(cast<Constant>(*j));
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
-            Values.push_back(cast<Constant>(MapValue(*i, VM)));
-          return VM[V] = ConstantVector::get(Values);
+            Values.push_back(cast<Constant>(MapValue(*i, VM, Context)));
+          return VM[V] = Context->getConstantVector(Values);
         }
       }
       return VM[V] = C;
@@ -107,7 +109,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
              e = N->elem_end(); i != e; ++i) {
         if (!*i) continue;
 
-        Value *MV = MapValue(*i, VM);
+        Value *MV = MapValue(*i, VM, Context);
         if (MV != *i) {
           // This MDNode must contain a reference to a global, make a new MDNode
           // and return it.
@@ -117,8 +119,8 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
             Values.push_back(*j);
           Values.push_back(MV);
           for (++i; i != e; ++i)
-            Values.push_back(MapValue(*i, VM));
-          return VM[V] = MDNode::get(Values.data(), Values.size());
+            Values.push_back(MapValue(*i, VM, Context));
+          return VM[V] = Context->getMDNode(Values.data(), Values.size());
         }
       }
       return VM[V] = C;
@@ -136,7 +138,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM) {
 ///
 void llvm::RemapInstruction(Instruction *I, ValueMapTy &ValueMap) {
   for (User::op_iterator op = I->op_begin(), E = I->op_end(); op != E; ++op) {
-    Value *V = MapValue(*op, ValueMap);
+    Value *V = MapValue(*op, ValueMap, I->getParent()->getContext());
     assert(V && "Referenced value not in value map!");
     *op = V;
   }

@@ -33,6 +33,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
@@ -242,7 +243,7 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
                                DenseMap<DomTreeNode*, Value*> &Phis) {
   // If there is no dominator info for this BB, it is unreachable.
   if (BB == 0)
-    return UndefValue::get(OrigInst->getType());
+    return Context->getUndef(OrigInst->getType());
                                  
   // If we have already computed this value, return the previously computed val.
   if (Phis.count(BB)) return Phis[BB];

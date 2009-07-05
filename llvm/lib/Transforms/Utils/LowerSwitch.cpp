@@ -18,6 +18,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
@@ -200,11 +201,11 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                           "SwitchLeaf", NewLeaf);      
     } else {
       // Emit V-Lo <=u Hi-Lo
-      Constant* NegLo = ConstantExpr::getNeg(Leaf.Low);
+      Constant* NegLo = Context->getConstantExprNeg(Leaf.Low);
       Instruction* Add = BinaryOperator::CreateAdd(Val, NegLo,
                                                    Val->getName()+".off",
                                                    NewLeaf);
-      Constant *UpperBound = ConstantExpr::getAdd(NegLo, Leaf.High);
+      Constant *UpperBound = Context->getConstantExprAdd(NegLo, Leaf.High);
       Comp = new ICmpInst(ICmpInst::ICMP_ULE, Add, UpperBound,
                           "SwitchLeaf", NewLeaf);
     }

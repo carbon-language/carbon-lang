@@ -37,6 +37,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
@@ -165,7 +166,7 @@ bool LoopSimplify::runOnFunction(Function &F) {
     // Delete the dead terminator.
     if (AA) AA->deleteValue(TI);
     if (!TI->use_empty())
-      TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
+      TI->replaceAllUsesWith(Context->getUndef(TI->getType()));
     TI->eraseFromParent();
     Changed |= true;
   }

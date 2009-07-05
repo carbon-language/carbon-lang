@@ -29,6 +29,10 @@ ValueSymbolTable *BasicBlock::getValueSymbolTable() {
   return 0;
 }
 
+LLVMContext* BasicBlock::getContext() const {
+  return Parent ? Parent->getContext() : 0;
+}
+
 // Explicit instantiation of SymbolTableListTraits since some of the methods
 // are not in the public header file...
 template class SymbolTableListTraits<Instruction, BasicBlock>;

@@ -20,6 +20,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
@@ -150,7 +151,8 @@ Function *llvm::CloneFunction(const Function *F,
       ArgTypes.push_back(I->getType());
 
   // Create a new function type...
-  FunctionType *FTy = FunctionType::get(F->getFunctionType()->getReturnType(),
+  FunctionType *FTy =
+     F->getContext()->getFunctionType(F->getFunctionType()->getReturnType(),
                                     ArgTypes, F->getFunctionType()->isVarArg());
 
   // Create the new function...
@@ -323,10 +325,13 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
 /// mapping its operands through ValueMap if they are available.
 Constant *PruningFunctionCloner::
 ConstantFoldMappedInstruction(const Instruction *I) {
+  LLVMContext* Context = I->getParent()->getContext();
+  
   SmallVector<Constant*, 8> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
     if (Constant *Op = dyn_cast_or_null<Constant>(MapValue(I->getOperand(i),
-                                                           ValueMap)))
+                                                           ValueMap,
+                                                           Context)))
       Ops.push_back(Op);
     else
       return 0;  // All operands not constant!
@@ -361,6 +366,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      ClonedCodeInfo *CodeInfo,
                                      const TargetData *TD) {
   assert(NameSuffix && "NameSuffix cannot be null!");
+  LLVMContext* Context = OldFunc->getContext();
   
 #ifndef NDEBUG
   for (Function::const_arg_iterator II = OldFunc->arg_begin(), 
@@ -430,7 +436,8 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       for (unsigned pred = 0, e = NumPreds; pred != e; ++pred) {
         if (BasicBlock *MappedBlock = 
             cast_or_null<BasicBlock>(ValueMap[PN->getIncomingBlock(pred)])) {
-          Value *InVal = MapValue(PN->getIncomingValue(pred), ValueMap);
+          Value *InVal = MapValue(PN->getIncomingValue(pred),
+                                  ValueMap, Context);
           assert(InVal && "Unknown input value?");
           PN->setIncomingValue(pred, InVal);
           PN->setIncomingBlock(pred, MappedBlock);
@@ -482,7 +489,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       BasicBlock::iterator I = NewBB->begin();
       BasicBlock::const_iterator OldI = OldBB->begin();
       while ((PN = dyn_cast<PHINode>(I++))) {
-        Value *NV = UndefValue::get(PN->getType());
+        Value *NV = OldFunc->getContext()->getUndef(PN->getType());
         PN->replaceAllUsesWith(NV);
         assert(ValueMap[OldI] == PN && "ValueMap mismatch");
         ValueMap[OldI] = NV;

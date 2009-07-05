@@ -22,6 +22,7 @@
 namespace llvm {
 
 class TerminatorInst;
+class LLVMContext;
 
 template<> struct ilist_traits<Instruction>
   : public SymbolTableListTraits<Instruction, BasicBlock> {
@@ -85,6 +86,10 @@ private:
   explicit BasicBlock(const std::string &Name = "", Function *Parent = 0,
                       BasicBlock *InsertBefore = 0);
 public:
+  /// getContext - Get the context in which this basic block lives,
+  /// or null if it is not currently attached to a function.
+  LLVMContext* getContext() const;
+  
   /// Instruction iterators...
   typedef InstListType::iterator                              iterator;
   typedef InstListType::const_iterator                  const_iterator;

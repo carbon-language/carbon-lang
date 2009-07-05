@@ -374,6 +374,10 @@ Constant* LLVMContext::getConstantExprInsertValue(Constant* Agg, Constant* Val,
   return ConstantExpr::getInsertValue(Agg, Val, IdxList, NumIdx);
 }
 
+Constant* LLVMContext::getConstantExprSizeOf(const Type* Ty) {
+  return ConstantExpr::getSizeOf(Ty);
+}
+
 Constant* LLVMContext::getZeroValueForNegation(const Type* Ty) {
   return ConstantExpr::getZeroValueForNegationExpr(Ty);
 }
@@ -428,6 +432,10 @@ MDString* LLVMContext::getMDString(const std::string &Str) {
 }
 
 // FunctionType accessors
+FunctionType* LLVMContext::getFunctionType(const Type* Result, bool isVarArg) {
+  return FunctionType::get(Result, isVarArg);
+}
+
 FunctionType* LLVMContext::getFunctionType(const Type* Result,
                                          const std::vector<const Type*>& Params,
                                          bool isVarArg) {

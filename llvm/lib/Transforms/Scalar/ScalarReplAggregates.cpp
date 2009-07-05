@@ -186,7 +186,7 @@ bool SROA::performPromotion(Function &F) {
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, DT, DF);
+    PromoteMemToReg(Allocas, DT, DF, Context);
     NumPromoted += Allocas.size();
     Changed = true;
   }

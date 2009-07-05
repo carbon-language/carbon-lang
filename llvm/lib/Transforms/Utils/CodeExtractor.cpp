@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
@@ -237,6 +238,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   DOUT << "inputs: " << inputs.size() << "\n";
   DOUT << "outputs: " << outputs.size() << "\n";
 
+  LLVMContext* Context = header->getContext();
+
   // This function returns unsigned, outputs will go back by reference.
   switch (NumExitBlocks) {
   case 0:
@@ -262,7 +265,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     if (AggregateArgs)
       paramTy.push_back((*I)->getType());
     else
-      paramTy.push_back(PointerType::getUnqual((*I)->getType()));
+      paramTy.push_back(
+         header->getContext()->getPointerTypeUnqual((*I)->getType()));
   }
 
   DOUT << "Function type: " << *RetTy << " f(";
@@ -272,11 +276,13 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   DOUT << ")\n";
 
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
-    PointerType *StructPtr = PointerType::getUnqual(StructType::get(paramTy));
+    PointerType *StructPtr =
+           Context->getPointerTypeUnqual(Context->getStructType(paramTy));
     paramTy.clear();
     paramTy.push_back(StructPtr);
   }
-  const FunctionType *funcType = FunctionType::get(RetTy, paramTy, false);
+  const FunctionType *funcType =
+                  Context->getFunctionType(RetTy, paramTy, false);
 
   // Create the new function
   Function *newFunction = Function::Create(funcType,
@@ -298,8 +304,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     Value *RewriteVal;
     if (AggregateArgs) {
       Value *Idx[2];
-      Idx[0] = Constant::getNullValue(Type::Int32Ty);
-      Idx[1] = ConstantInt::get(Type::Int32Ty, i);
+      Idx[0] = Context->getNullValue(Type::Int32Ty);
+      Idx[1] = Context->getConstantInt(Type::Int32Ty, i);
       std::string GEPname = "gep_" + inputs[i]->getName();
       TerminatorInst *TI = newFunction->begin()->getTerminator();
       GetElementPtrInst *GEP = GetElementPtrInst::Create(AI, Idx, Idx+2, 
@@ -346,6 +352,8 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
 void CodeExtractor::
 emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                            Values &inputs, Values &outputs) {
+  LLVMContext* Context = codeReplacer->getContext();
+  
   // Emit a call to the new function, passing in: *pointer to struct (if
   // aggregating parameters), or plan inputs and allocated memory for outputs
   std::vector<Value*> params, StructValues, ReloadOutputs;
@@ -378,7 +386,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       ArgTypes.push_back((*v)->getType());
 
     // Allocate a struct at the beginning of this function
-    Type *StructArgTy = StructType::get(ArgTypes);
+    Type *StructArgTy = Context->getStructType(ArgTypes);
     Struct =
       new AllocaInst(StructArgTy, 0, "structArg",
                      codeReplacer->getParent()->begin()->begin());
@@ -386,8 +394,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
     for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
       Value *Idx[2];
-      Idx[0] = Constant::getNullValue(Type::Int32Ty);
-      Idx[1] = ConstantInt::get(Type::Int32Ty, i);
+      Idx[0] = Context->getNullValue(Type::Int32Ty);
+      Idx[1] = Context->getConstantInt(Type::Int32Ty, i);
       GetElementPtrInst *GEP =
         GetElementPtrInst::Create(Struct, Idx, Idx + 2,
                                   "gep_" + StructValues[i]->getName());
@@ -412,8 +420,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     Value *Output = 0;
     if (AggregateArgs) {
       Value *Idx[2];
-      Idx[0] = Constant::getNullValue(Type::Int32Ty);
-      Idx[1] = ConstantInt::get(Type::Int32Ty, FirstOut + i);
+      Idx[0] = Context->getNullValue(Type::Int32Ty);
+      Idx[1] = Context->getConstantInt(Type::Int32Ty, FirstOut + i);
       GetElementPtrInst *GEP
         = GetElementPtrInst::Create(Struct, Idx, Idx + 2,
                                     "gep_reload_" + outputs[i]->getName());
@@ -434,7 +442,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
   // Now we can emit a switch statement using the call as a value.
   SwitchInst *TheSwitch =
-      SwitchInst::Create(ConstantInt::getNullValue(Type::Int16Ty),
+      SwitchInst::Create(Context->getNullValue(Type::Int16Ty),
                          codeReplacer, 0, codeReplacer);
 
   // Since there may be multiple exits from the original region, make the new
@@ -465,17 +473,17 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
           case 0:
           case 1: break;  // No value needed.
           case 2:         // Conditional branch, return a bool
-            brVal = ConstantInt::get(Type::Int1Ty, !SuccNum);
+            brVal = Context->getConstantInt(Type::Int1Ty, !SuccNum);
             break;
           default:
-            brVal = ConstantInt::get(Type::Int16Ty, SuccNum);
+            brVal = Context->getConstantInt(Type::Int16Ty, SuccNum);
             break;
           }
 
           ReturnInst *NTRet = ReturnInst::Create(brVal, NewTarget);
 
           // Update the switch instruction.
-          TheSwitch->addCase(ConstantInt::get(Type::Int16Ty, SuccNum),
+          TheSwitch->addCase(Context->getConstantInt(Type::Int16Ty, SuccNum),
                              OldTarget);
 
           // Restore values just before we exit
@@ -513,8 +521,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
             if (DominatesDef) {
               if (AggregateArgs) {
                 Value *Idx[2];
-                Idx[0] = Constant::getNullValue(Type::Int32Ty);
-                Idx[1] = ConstantInt::get(Type::Int32Ty,FirstOut+out);
+                Idx[0] = Context->getNullValue(Type::Int32Ty);
+                Idx[1] = Context->getConstantInt(Type::Int32Ty,FirstOut+out);
                 GetElementPtrInst *GEP =
                   GetElementPtrInst::Create(OAI, Idx, Idx + 2,
                                             "gep_" + outputs[out]->getName(),
@@ -551,7 +559,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     } else {
       // Otherwise we must have code extracted an unwind or something, just
       // return whatever we want.
-      ReturnInst::Create(Constant::getNullValue(OldFnRetTy), TheSwitch);
+      ReturnInst::Create(Context->getNullValue(OldFnRetTy), TheSwitch);
     }
 
     TheSwitch->eraseFromParent();

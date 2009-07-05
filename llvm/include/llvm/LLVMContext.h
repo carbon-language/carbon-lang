@@ -166,6 +166,7 @@ public:
   Constant* getConstantExprInsertValue(Constant* Agg, Constant* Val,
                                        const unsigned* IdxList,
                                        unsigned NumIdx);
+  Constant* getConstantExprSizeOf(const Type* Ty);
   Constant* getZeroValueForNegation(const Type* Ty);
   
   // ConstantFP accessors
@@ -188,6 +189,7 @@ public:
   MDString* getMDString(const std::string &Str);
   
   // FunctionType accessors
+  FunctionType* getFunctionType(const Type* Result, bool isVarArg);
   FunctionType* getFunctionType(const Type* Result,
                                 const std::vector<const Type*>& Params,
                                 bool isVarArg);

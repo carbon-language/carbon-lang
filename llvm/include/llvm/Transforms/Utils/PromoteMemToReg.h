@@ -23,6 +23,7 @@ class AllocaInst;
 class DominatorTree;
 class DominanceFrontier;
 class AliasSetTracker;
+class LLVMContext;
 
 /// isAllocaPromotable - Return true if this alloca is legal for promotion.
 /// This is true if there are only loads and stores to the alloca...
@@ -39,6 +40,7 @@ bool isAllocaPromotable(const AllocaInst *AI);
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                      DominatorTree &DT, DominanceFrontier &DF,
+                     LLVMContext* Context,
                      AliasSetTracker *AST = 0);
 
 } // End llvm namespace

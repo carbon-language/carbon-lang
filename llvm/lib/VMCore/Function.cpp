@@ -114,8 +114,8 @@ void Argument::removeAttr(Attributes attr) {
 // Helper Methods in Function
 //===----------------------------------------------------------------------===//
 
-LLVMContext* Function::getContext() {
-  Module* M = getParent();
+LLVMContext* Function::getContext() const {
+  const Module* M = getParent();
   if (M) return &M->getContext();
   return 0;
 }
