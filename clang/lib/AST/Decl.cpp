@@ -358,6 +358,14 @@ const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
   return Def? Def->getInit() : 0;
 }
 
+Decl *VarDecl::getPrimaryDecl() const {
+  const VarDecl *Prim = this;
+  while (Prim->getPreviousDeclaration())
+    Prim = Prim->getPreviousDeclaration();
+
+  return const_cast<VarDecl *>(Prim);
+}
+
 //===----------------------------------------------------------------------===//
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
@@ -567,6 +575,14 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
     assert((!PrevDecl || PrevFunTmpl) && "Function/function template mismatch");
     FunTmpl->setPreviousDeclaration(PrevFunTmpl);
   }
+}
+
+Decl *FunctionDecl::getPrimaryDecl() const {
+  const FunctionDecl *Prim = this;
+  while (Prim->getPreviousDeclaration())
+    Prim = Prim->getPreviousDeclaration();
+
+  return const_cast<FunctionDecl *>(Prim);
 }
 
 /// getOverloadedOperator - Which C++ overloaded operator this

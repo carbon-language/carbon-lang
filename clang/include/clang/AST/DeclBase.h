@@ -311,6 +311,13 @@ public:
   // be defined inside or outside a function etc).
   bool isDefinedOutsideFunctionOrMethod() const;
 
+  /// \brief When there are multiple re-declarations (e.g. for functions),
+  /// this will return the primary one which all of them point to.
+  virtual Decl *getPrimaryDecl() const { return const_cast<Decl*>(this); }
+
+  /// \brief Whether this particular Decl is a primary one.
+  bool isPrimaryDecl() const { return getPrimaryDecl() == this; }
+
   /// getBody - If this Decl represents a declaration for a body of code,
   ///  such as a function or method definition, this method returns the
   ///  top-level Stmt* of that body.  Otherwise this method returns null.

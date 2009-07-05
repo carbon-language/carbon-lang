@@ -413,6 +413,8 @@ public:
     PreviousDeclaration = PrevDecl;
   }
 
+  virtual Decl *getPrimaryDecl() const;
+
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
   bool hasLocalStorage() const {
@@ -810,6 +812,8 @@ public:
   }
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
+
+  virtual Decl *getPrimaryDecl() const;
 
   unsigned getBuiltinID(ASTContext &Context) const;
 
