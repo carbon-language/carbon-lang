@@ -2245,6 +2245,9 @@ unsigned ASTContext::getIntegerRank(Type *T) {
   if (EnumType* ET = dyn_cast<EnumType>(T))
     T = ET->getDecl()->getIntegerType().getTypePtr();
 
+  if (T->isSpecificBuiltinType(BuiltinType::WChar))
+    T = getFromTargetType(Target.getWCharType()).getTypePtr();
+
   // There are two things which impact the integer rank: the width, and
   // the ordering of builtins.  The builtin ordering is encoded in the
   // bottom three bits; the width is encoded in the bits above that.

@@ -7,3 +7,7 @@ void f(wchar_t p) {
   signed wchar_t z; // expected-warning {{'wchar_t' cannot be signed or unsigned}}
   ++x;
 }
+
+// PR4502
+wchar_t const c = L'c';
+int a[c == L'c' ? 1 : -1];
