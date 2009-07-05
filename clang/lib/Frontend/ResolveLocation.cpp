@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/Utils.h"
+#include "clang/AST/ASTNode.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Lexer.h"
@@ -313,12 +314,11 @@ void LocResolverBase::print(Stmt *Node) {
 
 /// \brief Returns the AST node that a source location points to.
 ///
-std::pair<Decl *, Stmt *>
-clang::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc) {
+ASTNode clang::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc) {
   if (Loc.isInvalid())
-    return std::make_pair((Decl*)0, (Stmt*)0);
+    return ASTNode();
   
   DeclLocResolver DLR(Ctx, Loc);
   DLR.Visit(Ctx.getTranslationUnitDecl());
-  return DLR.getResult();
+  return ASTNode(DLR.getDecl(), DLR.getStmt());
 }

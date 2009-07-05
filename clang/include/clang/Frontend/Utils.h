@@ -36,6 +36,7 @@ class Decl;
 class Stmt;
 class ASTContext;
 class SourceLocation;
+class ASTNode;
 
 /// ProcessWarningOptions - Initialize the diagnostic client and process the
 /// warning options specified on the command line.
@@ -102,8 +103,7 @@ void CacheTokens(Preprocessor& PP, llvm::raw_fd_ostream* OS);
 /// Pointing at '100' will return a <VarDecl 'foo', IntegerLiteral '100'> pair.
 /// Pointing at '++foo' will return a <FunctionDecl 'f', UnaryOperator> pair.
 ///
-std::pair<Decl *, Stmt *> ResolveLocationInAST(ASTContext &Ctx,
-                                               SourceLocation Loc);
+ASTNode ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc);
 
 }  // end namespace clang
 

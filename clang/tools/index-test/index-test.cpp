@@ -28,6 +28,7 @@
 #include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
+#include "clang/AST/ASTNode.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/STLExtras.h"
@@ -77,13 +78,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  struct ASTPoint {
-    Decl *D;
-    Stmt *Node;
-    ASTPoint() : D(0), Node(0) {}
-  };
-  
-  ASTPoint Point;
+  ASTNode Node;
 
   if (!PointAtLocation.empty()) {
     const std::string &Filename = PointAtLocation[0].FileName;
@@ -114,30 +109,31 @@ int main(int argc, char **argv) {
       return 1;
     }
     
-    llvm::tie(Point.D, Point.Node) =
-      ResolveLocationInAST(AST->getASTContext(), Loc);
-    if (Point.D == 0) {
+    Node = ResolveLocationInAST(AST->getASTContext(), Loc);
+    if (Node.isInvalid()) {
       llvm::errs() << "[" << InFile << "] Error: " <<
         "Couldn't resolve source location (no declaration found)\n";
       return 1;
     }
   }
   
-  if (Point.D) {
+  if (Node.isValid()) {
     llvm::raw_ostream &OS = llvm::outs();
-    OS << "Declaration node at point: " << Point.D->getDeclKindName() << " ";
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(Point.D))
+    OS << "Declaration node at point: " << Node.getDecl()->getDeclKindName()
+       << " ";
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(Node.getDecl()))
       OS << ND->getNameAsString();
     OS << "\n";
     
-    if (const char *Comment = AST->getASTContext().getCommentForDecl(Point.D))
+    if (const char *Comment =
+          AST->getASTContext().getCommentForDecl(Node.getDecl()))
       OS << "Comment associated with this declaration:\n" << Comment << "\n";
         
-    if (Point.Node) {
-      OS << "Statement node at point: " << Point.Node->getStmtClassName()
+    if (Node.getStmt()) {
+      OS << "Statement node at point: " << Node.getStmt()->getStmtClassName()
          << " ";
-      Point.Node->printPretty(OS, AST->getASTContext(), 0,
-                        PrintingPolicy(AST->getASTContext().getLangOptions()));
+      Node.getStmt()->printPretty(OS, AST->getASTContext(), 0,
+                         PrintingPolicy(AST->getASTContext().getLangOptions()));
       OS << "\n";
     }
   }
