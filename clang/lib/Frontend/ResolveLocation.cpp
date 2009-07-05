@@ -203,13 +203,20 @@ void DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
 
   // Second, search through the declarations that are part of the function.
   // If we find he location there, we won't have to search through its body.
+
   DeclLocResolver DLR(Ctx, Loc);
-  DLR.VisitDeclContext(D);
-  if (DLR.FoundIt()) {
-    llvm::tie(Dcl, Stm) = DLR.getResult();
-    return;
+  for (DeclContext::decl_iterator
+         I = D->decls_begin(), E = D->decls_end(); I != E; ++I) {
+    if (isa<ParmVarDecl>(*I))
+      continue; // We already searched through the parameters.
+    
+    DLR.Visit(*I);
+    if (DLR.FoundIt()) {
+      llvm::tie(Dcl, Stm) = DLR.getResult();
+      return;
+    }
   }
-  
+
   // We didn't find a declaration that corresponds to the source location.
   
   // Finally, search through the body of the function.
