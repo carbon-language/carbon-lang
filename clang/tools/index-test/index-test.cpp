@@ -21,34 +21,161 @@
 //       Point at a declaration/statement/expression. If no other operation is
 //       specified, prints some info about it.
 //
+//   -print-refs
+//       Print ASTNodes that reference the -point-at node
+//
+//   -print-defs
+//       Print ASTNodes that define the -point-at node
+//
+//   -print-decls
+//       Print ASTNodes that declare the -point-at node
+//
 //===----------------------------------------------------------------------===//
 
+#include "clang/Index/Program.h"
+#include "clang/Index/IndexProvider.h"
+#include "clang/Index/Entity.h"
+#include "clang/Index/TranslationUnit.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/Stmt.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/ASTNode.h"
+#include "clang/AST/DeclReferenceMap.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 using namespace clang;
+using namespace idx;
 
+class TUnit : public TranslationUnit {
+public:
+  TUnit(ASTUnit *ast, const std::string &filename)
+    : AST(ast), Filename(filename) { }
+  
+  virtual ASTContext &getASTContext() { return AST->getASTContext(); }
+  
+  llvm::OwningPtr<ASTUnit> AST;
+  std::string Filename;
+};
 
 static llvm::cl::list<ParsedSourceLocation>
 PointAtLocation("point-at", llvm::cl::Optional,
                  llvm::cl::value_desc("source-location"),
    llvm::cl::desc("Point at the given source location of the first AST file"));
 
+enum ProgActions {
+  PrintPoint,     // Just print the point-at node
+  PrintRefs,      // Print references of the point-at node
+  PrintDefs,      // Print definitions of the point-at node
+  PrintDecls      // Print declarations of the point-at node
+};
+
+static llvm::cl::opt<ProgActions> 
+ProgAction(
+        llvm::cl::desc("Choose action to perform on the pointed-at AST node:"),
+        llvm::cl::ZeroOrMore,
+           llvm::cl::init(PrintPoint),
+           llvm::cl::values(
+             clEnumValN(PrintRefs, "print-refs",
+                        "Print references"),
+             clEnumValN(PrintDefs, "print-defs",
+                        "Print definitions"),
+             clEnumValN(PrintDecls, "print-decls",
+                        "Print declarations"),
+             clEnumValEnd));
+
 static llvm::cl::opt<bool>
 DisableFree("disable-free",
            llvm::cl::desc("Disable freeing of memory on exit"),
            llvm::cl::init(false));
+
+static void ProcessDecl(Decl *D) {
+  assert(D);
+  llvm::raw_ostream &OS = llvm::outs();
+  
+  switch (ProgAction) {
+  default: assert(0);
+  case PrintRefs: {
+    NamedDecl *ND = dyn_cast<NamedDecl>(D);
+    if (!ND)
+      return;
+
+    DeclReferenceMap RefMap(ND->getASTContext());
+    for (DeclReferenceMap::astnode_iterator
+           I = RefMap.refs_begin(ND), E = RefMap.refs_end(ND); I != E; ++I)
+      I->print(OS);
+    break;
+  }
+  
+  case PrintDefs: {
+    const Decl *DefD = 0;
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      const FunctionDecl *DFD = 0;
+      FD->getBody(DFD);
+      DefD = DFD;
+    } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+      const VarDecl *DVD = 0;
+      VD->getDefinition(DVD);
+      DefD = DVD;
+    } 
+
+    if (DefD)
+      ASTNode(DefD).print(OS);
+    break;    
+  }
+  
+  case PrintDecls :
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      while (FD) {
+        ASTNode(FD).print(OS);
+        FD = FD->getPreviousDeclaration();
+      }
+    } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+      while (VD) {
+        ASTNode(VD).print(OS);
+        VD = VD->getPreviousDeclaration();
+      }
+    } else
+      ASTNode(D).print(OS);
+    break;
+    
+  }
+}
+
+static void ProcessNode(ASTNode Node, IndexProvider &IdxProvider) {
+  assert(Node.isValid());
+
+  Decl *D = 0;
+  if (Node.hasStmt()) {
+    if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(Node.getStmt()))
+      D = RefExpr->getDecl();
+  } else {
+    D = Node.getDecl();
+  }
+  assert(D);
+
+  Entity *Ent = Entity::get(D, IdxProvider.getProgram());
+  // If there is no Entity associated with this Decl, it means that it's not
+  // visible to other translation units.
+  if (!Ent)
+    return ProcessDecl(D);
+
+  // Find the "same" Decl in other translation units and print information.
+  for (IndexProvider::translation_unit_iterator
+         I = IdxProvider.translation_units_begin(Ent),
+         E = IdxProvider.translation_units_end(Ent); I != E; ++I) {
+    TUnit *TU = static_cast<TUnit*>(*I);
+    Decl *OtherD = Ent->getDecl(TU->getASTContext());
+    assert(OtherD && "Couldn't resolve Entity");
+    ProcessDecl(OtherD);
+  }
+}
 
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input AST files>"));
@@ -60,25 +187,36 @@ int main(int argc, char **argv) {
                      "LLVM 'Clang' Indexing Test Bed: http://clang.llvm.org\n");
   
   FileManager FileMgr;
+
+  Program Prog;
+  IndexProvider IdxProvider(Prog);
+  llvm::SmallVector<TUnit*, 4> TUnits;
   
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
 
-  // FIXME: Only the first AST file is used for now.
+  for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
+    const std::string &InFile = InputFilenames[i];
+    
+    std::string ErrMsg;
+    llvm::OwningPtr<ASTUnit> AST;
 
-  const std::string &InFile = InputFilenames[0];
-  
-  std::string ErrMsg;
-  llvm::OwningPtr<ASTUnit> AST;
+    AST.reset(ASTUnit::LoadFromPCHFile(InFile, FileMgr, &ErrMsg));
+    if (!AST) {
+      llvm::errs() << "[" << InFile << "] Error: " << ErrMsg << '\n';
+      return 1;
+    }
 
-  AST.reset(ASTUnit::LoadFromPCHFile(InFile, FileMgr, &ErrMsg));
-  if (!AST) {
-    llvm::errs() << "[" << InFile << "] Error: " << ErrMsg << '\n';
-    return 1;
+    TUnit *TU = new TUnit(AST.take(), InFile);
+    TUnits.push_back(TU);
+    
+    IdxProvider.IndexAST(TU);
   }
 
   ASTNode Node;
+  const std::string &FirstFile = TUnits[0]->Filename;
+  ASTUnit *FirstAST = TUnits[0]->AST.get();
 
   if (!PointAtLocation.empty()) {
     const std::string &Filename = PointAtLocation[0].FileName;
@@ -87,9 +225,9 @@ int main(int argc, char **argv) {
     // Safety check. Using an out-of-date AST file will only lead to crashes
     // or incorrect results.
     // FIXME: Check all the source files that make up the AST file.
-    const FileEntry *ASTFile = FileMgr.getFile(InFile);
+    const FileEntry *ASTFile = FileMgr.getFile(FirstFile);
     if (File->getModificationTime() > ASTFile->getModificationTime()) {
-      llvm::errs() << "[" << InFile << "] Error: " <<
+      llvm::errs() << "[" << FirstFile << "] Error: " <<
         "Pointing at a source file which was modified after creating "
         "the AST file\n";
       return 1;
@@ -102,44 +240,38 @@ int main(int argc, char **argv) {
     unsigned Line = PointAtLocation[0].Line;
     unsigned Col = PointAtLocation[0].Column;
 
-    SourceLocation Loc = AST->getSourceManager().getLocation(File, Line, Col);
+    SourceLocation Loc =
+      FirstAST->getSourceManager().getLocation(File, Line, Col);
     if (Loc.isInvalid()) {
-      llvm::errs() << "[" << InFile << "] Error: " <<
+      llvm::errs() << "[" << FirstFile << "] Error: " <<
         "Couldn't resolve source location (invalid location)\n";
       return 1;
     }
     
-    Node = ResolveLocationInAST(AST->getASTContext(), Loc);
+    Node = ResolveLocationInAST(FirstAST->getASTContext(), Loc);
     if (Node.isInvalid()) {
-      llvm::errs() << "[" << InFile << "] Error: " <<
+      llvm::errs() << "[" << FirstFile << "] Error: " <<
         "Couldn't resolve source location (no declaration found)\n";
       return 1;
     }
   }
   
   if (Node.isValid()) {
-    llvm::raw_ostream &OS = llvm::outs();
-    OS << "Declaration node at point: " << Node.getDecl()->getDeclKindName()
-       << " ";
-    if (NamedDecl *ND = dyn_cast<NamedDecl>(Node.getDecl()))
-      OS << ND->getNameAsString();
-    OS << "\n";
-    
-    if (const char *Comment =
-          AST->getASTContext().getCommentForDecl(Node.getDecl()))
-      OS << "Comment associated with this declaration:\n" << Comment << "\n";
-        
-    if (Node.getStmt()) {
-      OS << "Statement node at point: " << Node.getStmt()->getStmtClassName()
-         << " ";
-      Node.getStmt()->printPretty(OS, AST->getASTContext(), 0,
-                         PrintingPolicy(AST->getASTContext().getLangOptions()));
-      OS << "\n";
+    if (ProgAction == PrintPoint) {
+      llvm::raw_ostream &OS = llvm::outs();
+      Node.print(OS);
+      if (const char *Comment =
+            FirstAST->getASTContext().getCommentForDecl(Node.getDecl()))
+        OS << "Comment associated with this declaration:\n" << Comment << "\n";
+    } else {
+      ProcessNode(Node, IdxProvider);
     }
   }
 
-  if (DisableFree)
-    AST.take();
+  if (!DisableFree) {
+    for (int i=0, e=TUnits.size(); i != e; ++i)
+      delete TUnits[i];
+  }
 
   // Managed static deconstruction. Useful for making things like
   // -time-passes usable.

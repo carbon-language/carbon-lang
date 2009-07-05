@@ -13,6 +13,7 @@
 #     %llvmgxx - llvm-g++ command
 #     %prcontext - prcontext.tcl script
 #     %t - temporary file name (derived from testcase name)
+#     %T - directory of temporary file name
 #
 
 import errno
@@ -116,6 +117,7 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
                      ('%llvmgxx','llvm-g++ -emit-llvm -w'),
                      ('%prcontext','prcontext.tcl'),
                      ('%t',TEMPOUTPUT),
+                     ('%T',os.path.dirname(TEMPOUTPUT)),
                      (' clang ', ' ' + CLANG + ' '),
                      (' clang-cc ', ' ' + CLANGCC + ' ')]
     scriptLines = []
