@@ -14,8 +14,8 @@
 #include "llvm/System/Threading.h"
 #include "llvm/System/Atomic.h"
 #include "llvm/System/Mutex.h"
+#include "llvm/Config/config.h"
 #include <cassert>
-
 using namespace llvm;
 
 static bool multithreaded_mode = false;
