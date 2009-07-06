@@ -28,6 +28,12 @@ namespace idx {
 
 /// \brief Represents a Decl or a Stmt and its immediate Decl parent. It's
 /// immutable.
+///
+/// ASTLocation is intended to be used as a "pointer" into the AST. It is either
+/// just a Decl, or a Stmt and its Decl parent. Since a single Stmt is devoid
+/// of context, its parent Decl provides all the additional missing information
+/// like the declaration context, ASTContext, etc.
+///
 class ASTLocation {
   Decl *D;
   Stmt *Stm;
