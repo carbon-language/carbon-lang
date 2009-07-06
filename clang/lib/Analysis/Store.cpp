@@ -43,71 +43,82 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
   
   // We need to know the real type of CastToTy.
   QualType ToTy = Ctx.getCanonicalType(CastToTy);
-    
-  // CodeTextRegion should be cast to only function pointer type.
-  if (isa<CodeTextRegion>(R)) {
-    assert(CastToTy->isFunctionPointerType() || CastToTy->isBlockPointerType()
-           || (CastToTy->isPointerType() &&
-               CastToTy->getAsPointerType()->getPointeeType()->isVoidType()));
-    return CastResult(state, R);
-  }
 
   // Handle casts to Objective-C objects.
-  if (Ctx.isObjCObjectPointerType(ToTy)) {
-    state = setCastType(state, R, ToTy);
+  if (Ctx.isObjCObjectPointerType(CastToTy)) {
+    state = setCastType(state, R, CastToTy);
     return CastResult(state, R);
   }
 
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
-  QualType PointeeTy = cast<PointerType>(ToTy.getTypePtr())->getPointeeType();
+  QualType PointeeTy = CastToTy->getAsPointerType()->getPointeeType();
 
   // Process region cast according to the kind of the region being cast.
-  
-  // Handle casts of string literals.
-  if (isa<StringRegion>(R))
-    return MakeElementRegion(state, R, PointeeTy, ToTy);
-  
-  // FIXME: Need to handle arbitrary downcasts.
-  if (isa<SymbolicRegion>(R) || isa<AllocaRegion>(R)) {
-    state = setCastType(state, R, ToTy);
-    return CastResult(state, R);
-  }
-  
-  // VarRegion, ElementRegion, and FieldRegion has an inherent type. Normally
-  // they should not be cast. We only layer an ElementRegion when the cast-to
-  // pointee type is of smaller size. In other cases, we return the original
-  // VarRegion.
-  if (isa<VarRegion>(R) || isa<ElementRegion>(R) || isa<FieldRegion>(R)
-      || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
-    // If the pointee type is incomplete, do not compute its size, and return
-    // the original region.
-    if (const RecordType *RT = PointeeTy->getAsRecordType()) {
-      const RecordDecl *D = RT->getDecl();
-      if (!D->getDefinition(Ctx))
-        return CastResult(state, R);
+  switch (R->getKind()) {
+    case MemRegion::BEG_TYPED_REGIONS:
+    case MemRegion::MemSpaceRegionKind:
+    case MemRegion::BEG_DECL_REGIONS:
+    case MemRegion::END_DECL_REGIONS:
+    case MemRegion::END_TYPED_REGIONS:
+    case MemRegion::TypedViewRegionKind: {
+      assert(0 && "Invalid region cast");
+      break;
     }
-    
-    QualType ObjTy = cast<TypedRegion>(R)->getValueType(Ctx);
-    uint64_t PointeeTySize = Ctx.getTypeSize(PointeeTy);
-    uint64_t ObjTySize = Ctx.getTypeSize(ObjTy);
-    
-    if ((PointeeTySize > 0 && PointeeTySize < ObjTySize) ||
-        (ObjTy->isAggregateType() && PointeeTy->isScalarType()) ||
-        ObjTySize == 0 /* R has 'void*' type. */) {      
-      return MakeElementRegion(state, R, PointeeTy, ToTy);
-    } else {
+      
+    case MemRegion::CodeTextRegionKind: {
+      // CodeTextRegion should be cast to only function pointer type.
+      assert(CastToTy->isFunctionPointerType() || CastToTy->isBlockPointerType()
+             || (CastToTy->isPointerType() &&
+                 CastToTy->getAsPointerType()->getPointeeType()->isVoidType()));
+      break;
+    }
+      
+    case MemRegion::StringRegionKind:
+      // Handle casts of string literals.
+      return MakeElementRegion(state, R, PointeeTy, CastToTy);
+
+    case MemRegion::ObjCObjectRegionKind:
+    case MemRegion::SymbolicRegionKind:
+      // FIXME: Need to handle arbitrary downcasts.
+    case MemRegion::AllocaRegionKind: {  
+      state = setCastType(state, R, CastToTy);
+      break;
+    }
+
+    case MemRegion::CompoundLiteralRegionKind:
+    case MemRegion::ElementRegionKind:
+    case MemRegion::FieldRegionKind:
+    case MemRegion::ObjCIvarRegionKind:
+    case MemRegion::VarRegionKind: {
+      // VarRegion, ElementRegion, and FieldRegion has an inherent type. Normally
+      // they should not be cast. We only layer an ElementRegion when the cast-to
+      // pointee type is of smaller size. In other cases, we return the original
+      // VarRegion.
+      
+      // If the pointee type is incomplete, do not compute its size, and return
+      // the original region.
+      if (const RecordType *RT = PointeeTy->getAsRecordType()) {
+        const RecordDecl *D = RT->getDecl();
+        if (!D->getDefinition(Ctx))
+          return CastResult(state, R);
+      }
+      
+      QualType ObjTy = cast<TypedRegion>(R)->getValueType(Ctx);
+      uint64_t PointeeTySize = Ctx.getTypeSize(PointeeTy);
+      uint64_t ObjTySize = Ctx.getTypeSize(ObjTy);
+      
+      if ((PointeeTySize > 0 && PointeeTySize < ObjTySize) ||
+          (ObjTy->isAggregateType() && PointeeTy->isScalarType()) ||
+          ObjTySize == 0 /* R has 'void*' type. */)
+        return MakeElementRegion(state, R, PointeeTy, ToTy);
+        
       state = setCastType(state, R, ToTy);
-      return CastResult(state, R);
+      break;
     }
   }
   
-  if (isa<ObjCObjectRegion>(R)) {
-    return CastResult(state, R);
-  }
-  
-  assert(0 && "Unprocessed region.");
-  return 0;
+  return CastResult(state, R);
 }
 
 
