@@ -31,6 +31,7 @@ add_llvm_library(LLVMCodeGen
   MachineRegisterInfo.cpp
   MachineSink.cpp
   MachineVerifier.cpp
+  ObjectCodeEmitter.cpp
   OcamlGC.cpp
   PBQP.cpp
   PHIElimination.cpp
