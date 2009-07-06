@@ -16,13 +16,91 @@
 
 using namespace clang;
 
-StoreManager::StoreManager(GRStateManager &stateMgr)
+StoreManager::StoreManager(GRStateManager &stateMgr, bool useNewCastRegion)
   : ValMgr(stateMgr.getValueManager()),
     StateMgr(stateMgr),
+    UseNewCastRegion(useNewCastRegion),
     MRMgr(ValMgr.getRegionManager()) {}
 
 StoreManager::CastResult
-StoreManager::CastRegion(const GRState* state, const MemRegion* R,
+StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
+                            QualType CastToTy) {
+  
+  ASTContext& Ctx = StateMgr.getContext();
+  
+  // We need to know the real type of CastToTy.
+  QualType ToTy = Ctx.getCanonicalType(CastToTy);
+  
+  // Check cast to ObjCQualifiedID type.
+  if (ToTy->isObjCQualifiedIdType()) {
+    // FIXME: Record the type information aside.
+    return CastResult(state, R);
+  }
+  
+  // CodeTextRegion should be cast to only function pointer type.
+  if (isa<CodeTextRegion>(R)) {
+    assert(CastToTy->isFunctionPointerType() || CastToTy->isBlockPointerType()
+           || (CastToTy->isPointerType() 
+               && CastToTy->getAsPointerType()->getPointeeType()->isVoidType()));
+    return CastResult(state, R);
+  }
+  
+  // Now assume we are casting from pointer to pointer. Other cases should
+  // already be handled.
+  QualType PointeeTy = cast<PointerType>(ToTy.getTypePtr())->getPointeeType();
+  
+  // Process region cast according to the kind of the region being cast.
+  
+  // FIXME: Need to handle arbitrary downcasts.
+  if (isa<SymbolicRegion>(R) || isa<AllocaRegion>(R)) {
+    state = setCastType(state, R, ToTy);
+    return CastResult(state, R);
+  }
+  
+  // VarRegion, ElementRegion, and FieldRegion has an inherent type. Normally
+  // they should not be cast. We only layer an ElementRegion when the cast-to
+  // pointee type is of smaller size. In other cases, we return the original
+  // VarRegion.
+  if (isa<VarRegion>(R) || isa<ElementRegion>(R) || isa<FieldRegion>(R)
+      || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
+    // If the pointee type is incomplete, do not compute its size, and return
+    // the original region.
+    if (const RecordType *RT = dyn_cast<RecordType>(PointeeTy.getTypePtr())) {
+      const RecordDecl *D = RT->getDecl();
+      if (!D->getDefinition(Ctx))
+        return CastResult(state, R);
+    }
+    
+    QualType ObjTy = cast<TypedRegion>(R)->getValueType(Ctx);
+    uint64_t PointeeTySize = Ctx.getTypeSize(PointeeTy);
+    uint64_t ObjTySize = Ctx.getTypeSize(ObjTy);
+    
+    if ((PointeeTySize > 0 && PointeeTySize < ObjTySize) ||
+        (ObjTy->isAggregateType() && PointeeTy->isScalarType()) ||
+        ObjTySize == 0 /* R has 'void*' type. */) {
+      // Record the cast type of the region.
+      state = setCastType(state, R, ToTy);
+      
+      SVal Idx = ValMgr.makeZeroArrayIndex();
+      ElementRegion* ER = MRMgr.getElementRegion(PointeeTy, Idx,R, Ctx);
+      return CastResult(state, ER);
+    } else {
+      state = setCastType(state, R, ToTy);
+      return CastResult(state, R);
+    }
+  }
+  
+  if (isa<ObjCObjectRegion>(R)) {
+    return CastResult(state, R);
+  }
+  
+  assert(0 && "Unprocessed region.");
+  return 0;
+}
+
+
+StoreManager::CastResult
+StoreManager::OldCastRegion(const GRState* state, const MemRegion* R,
                          QualType CastToTy) {
   
   ASTContext& Ctx = StateMgr.getContext();

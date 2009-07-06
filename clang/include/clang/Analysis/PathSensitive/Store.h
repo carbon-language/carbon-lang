@@ -37,11 +37,12 @@ class StoreManager {
 protected:
   ValueManager &ValMgr;
   GRStateManager &StateMgr;
+  const bool UseNewCastRegion;
 
   /// MRMgr - Manages region objects associated with this StoreManager.
   MemRegionManager &MRMgr;
 
-  StoreManager(GRStateManager &stateMgr);
+  StoreManager(GRStateManager &stateMgr, bool useNewCastRegion = false);
 
 protected:
   virtual const GRState *AddRegionView(const GRState *state,
@@ -133,8 +134,22 @@ public:
   /// CastRegion - Used by GRExprEngine::VisitCast to handle casts from
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
-  virtual CastResult CastRegion(const GRState *state, const MemRegion *region,
-                                QualType CastToTy);
+  CastResult CastRegion(const GRState *state, const MemRegion *region,
+                                QualType CastToTy) {
+    return UseNewCastRegion ? NewCastRegion(state, region, CastToTy)
+                            : OldCastRegion(state, region, CastToTy);
+  }
+
+  CastResult NewCastRegion(const GRState *state, const MemRegion *region,
+                           QualType CastToTy);
+
+  CastResult OldCastRegion(const GRState *state, const MemRegion *region,
+                           QualType CastToTy);
+  
+  virtual const GRState *setCastType(const GRState *state, const MemRegion* R,
+                                     QualType T) {
+    return state;
+  }
 
   /// EvalBinOp - Perform pointer arithmetic.
   virtual SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,
