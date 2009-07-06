@@ -348,6 +348,8 @@ void PIC16AsmPrinter::EmitIData (Module &M) {
   std::vector <PIC16Section *>IDATASections = PTAI->IDATASections;
   for (unsigned i = 0; i < IDATASections.size(); i++) {
     O << "\n";
+    if (IDATASections[i]->S_->getName().find("llvm.") != std::string::npos)
+      continue;
     SwitchToSection(IDATASections[i]->S_);
     std::vector<const GlobalVariable*> Items = IDATASections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
