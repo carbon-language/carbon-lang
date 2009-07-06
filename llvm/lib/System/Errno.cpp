@@ -17,6 +17,10 @@
 #if HAVE_STRING_H
 #include <string.h>
 
+#if HAVE_ERRNO_H
+#include <errno.h>
+#endif
+
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
 //===          independent code.
@@ -26,7 +30,6 @@ namespace llvm {
 namespace sys {
 
 #if HAVE_ERRNO_H
-#include <errno.h>
 std::string StrError() {
   return StrError(errno);
 }
