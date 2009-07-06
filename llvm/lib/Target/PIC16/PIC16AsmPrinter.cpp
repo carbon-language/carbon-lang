@@ -272,18 +272,19 @@ void PIC16AsmPrinter::EmitDefinedVars (Module &M)
 // Emit initialized data placed in ROM.
 void PIC16AsmPrinter::EmitRomData (Module &M)
 {
-
-  std::vector<const GlobalVariable*> Items = PTAI->ROSection->Items;
-  if (! Items.size()) return;
-
-  // Print ROData ection.
-  O << "\n";
-  SwitchToSection(PTAI->ROSection->S_);
-  for (unsigned j = 0; j < Items.size(); j++) {
-    O << Mang->getValueName(Items[j]);
-    Constant *C = Items[j]->getInitializer();
-    int AddrSpace = Items[j]->getType()->getAddressSpace();
-    EmitGlobalConstant(C, AddrSpace);
+  // Print ROM Data section.
+  std::vector <PIC16Section *>ROSections = PTAI->ROSections;
+  for (unsigned i = 0; i < ROSections.size(); i++) {
+    std::vector<const GlobalVariable*> Items = ROSections[i]->Items;
+    if (! Items.size()) continue;
+    O << "\n";
+    SwitchToSection(PTAI->ROSections[i]->S_);
+    for (unsigned j = 0; j < Items.size(); j++) {
+      O << Mang->getValueName(Items[j]);
+      Constant *C = Items[j]->getInitializer();
+      int AddrSpace = Items[j]->getType()->getAddressSpace();
+      EmitGlobalConstant(C, AddrSpace);
+    }
   }
 }
 

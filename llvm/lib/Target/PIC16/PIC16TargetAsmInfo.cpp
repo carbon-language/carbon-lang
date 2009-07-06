@@ -44,7 +44,8 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   // Need because otherwise a .text symbol is emitted by DwarfWriter
   // in BeginModule, and gpasm cribbs for that .text symbol.
   TextSection = getUnnamedSection("", SectionFlags::Code);
-  ROSection = new PIC16Section(getReadOnlySection());
+  PIC16Section *ROSection = new PIC16Section(getReadOnlySection());
+  ROSections.push_back(ROSection);
   ExternalVarDecls = new PIC16Section(getNamedSection("ExternalVarDecls"));
   ExternalVarDefs = new PIC16Section(getNamedSection("ExternalVarDefs"));
   // Set it to false because we weed to generate c file name and not bc file
@@ -235,10 +236,8 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
     return getIDATASectionForGlobal(GV);
 
   // This is initialized data in rom, put it in the readonly section.
-  if (GV->getType()->getAddressSpace() == PIC16ISD::ROM_SPACE) {
-    ROSection->Items.push_back(GV);
-    return ROSection->S_;
-  }
+  if (GV->getType()->getAddressSpace() == PIC16ISD::ROM_SPACE) 
+    return getROSectionForGlobal(GV);
 
   // Else let the default implementation take care of it.
   return TargetAsmInfo::SelectSectionForGlobal(GV);
@@ -258,7 +257,191 @@ PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
       delete AutosSections[i]; 
   }
 
-  delete ROSection;
+  for (unsigned i = 0; i < ROSections.size(); i++) {
+      delete ROSections[i];
+  }
+
   delete ExternalVarDecls;
   delete ExternalVarDefs;
 }
+
+// Override the default implementation. Create PIC16sections for variables 
+// which have a section name or address.
+const Section* 
+PIC16TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
+  const Section* S;
+  // If GV has a sectin name or section address create that section now.
+  if (GV->hasSection()) {
+    std::string SectName = GV->getSection();
+    // If address for a variable is specified, get the address and create
+    // section.
+    std::string AddrStr = "Address=";
+    if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
+      std::string SectAddr = SectName.substr(AddrStr.length());
+      S = CreateSectionForGlobal(GV, SectAddr);
+    }
+    else {
+      S = CreateSectionForGlobal(GV);
+    } 
+  } else {
+    // Use section depending on the 'type' of variable
+    S = SelectSectionForGlobal(GV);
+  }
+  return S;
+}
+
+// Create a new section for global variable. If Addr is given then create
+// section at that address else create by name.
+const Section *
+PIC16TargetAsmInfo::CreateSectionForGlobal(const GlobalValue *GV1,
+                                           std::string Addr) const {
+  const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1);
+
+  if (!GV)
+    return TargetAsmInfo::SectionForGlobal(GV1);
+
+  // See if this is an uninitialized global.
+  const Constant *C = GV->getInitializer();
+  if (C->isNullValue())
+    return CreateBSSSectionForGlobal(GV, Addr);
+
+  // If this is initialized data in RAM. Put it in the correct IDATA section.
+  if (GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE)
+    return CreateIDATASectionForGlobal(GV, Addr);
+
+  // This is initialized data in rom, put it in the readonly section.
+  if (GV->getType()->getAddressSpace() == PIC16ISD::ROM_SPACE) 
+    return CreateROSectionForGlobal(GV, Addr);
+
+  // Else let the default implementation take care of it.
+  return TargetAsmInfo::SectionForGlobal(GV);
+}
+
+// Create uninitialized section for a variable.
+const Section *
+PIC16TargetAsmInfo::CreateBSSSectionForGlobal(const GlobalVariable *GV,
+                                              std::string Addr) const {
+  assert (GV->hasInitializer() && "This global doesn't need space");
+  Constant *C = GV->getInitializer();
+  assert (C->isNullValue() && "Unitialized globals has non-zero initializer");
+  std::string Name;
+  // If address is given then create a section at that address else create a
+  // section by section name specified in GV.
+  PIC16Section *FoundBSS = NULL;
+  if (Addr.empty()) { 
+    Name = GV->getSection() + " UDATA";
+    for (unsigned i = 0; i < BSSSections.size(); i++) {
+      if (BSSSections[i]->S_->getName() == Name) {
+        FoundBSS = BSSSections[i];
+        break;
+      }
+    }
+  }
+  else {
+    std::string Prefix = GV->getName() + "." + Addr + ".";
+    Name = PAN::getUdataSectionName(BSSSections.size(), Prefix) + " " + Addr;
+  }
+  
+  PIC16Section *NewBSS = FoundBSS;
+  if (NewBSS == NULL) {
+    const Section *NewSection = getNamedSection (Name.c_str());
+    NewBSS = new PIC16Section(NewSection);
+    BSSSections.push_back(NewBSS);
+  }
+
+  // Insert the GV into this BSS.
+  NewBSS->Items.push_back(GV);
+
+  // We do not want to put any  GV without explicit section into this section
+  // so set its size to DatabankSize.
+  NewBSS->Size = DataBankSize;
+  return NewBSS->S_;
+}
+
+// Get rom section for a variable. Currently there can be only one rom section
+// unless a variable explicitly requests a section.
+const Section *
+PIC16TargetAsmInfo::getROSectionForGlobal(const GlobalVariable *GV) const {
+  ROSections[0]->Items.push_back(GV);
+  return ROSections[0]->S_;
+}
+
+// Create initialized data section for a variable.
+const Section *
+PIC16TargetAsmInfo::CreateIDATASectionForGlobal(const GlobalVariable *GV,
+                                                std::string Addr) const {
+  assert (GV->hasInitializer() && "This global doesn't need space");
+  Constant *C = GV->getInitializer();
+  assert (!C->isNullValue() && "initialized globals has zero initializer");
+  assert (GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE &&
+          "can be used for initialized RAM data only");
+
+  std::string Name;
+  // If address is given then create a section at that address else create a
+  // section by section name specified in GV.
+  PIC16Section *FoundIDATASec = NULL;
+  if (Addr.empty()) {
+    Name = GV->getSection() + " IDATA";
+    for (unsigned i = 0; i < IDATASections.size(); i++) {
+      if (IDATASections[i]->S_->getName() == Name) {
+        FoundIDATASec = IDATASections[i];
+        break;
+      }
+    }
+  }
+  else {
+    std::string Prefix = GV->getName() + "." + Addr + ".";
+    Name = PAN::getIdataSectionName(IDATASections.size(), Prefix) + " " + Addr;
+  }
+
+  PIC16Section *NewIDATASec = FoundIDATASec;
+  if (NewIDATASec == NULL) {
+    const Section *NewSection = getNamedSection (Name.c_str());
+    NewIDATASec = new PIC16Section(NewSection);
+    IDATASections.push_back(NewIDATASec);
+  }
+  // Insert the GV into this IDATA Section.
+  NewIDATASec->Items.push_back(GV);
+  // We do not want to put any  GV without explicit section into this section 
+  // so set its size to DatabankSize.
+  NewIDATASec->Size = DataBankSize;
+  return NewIDATASec->S_;
+}
+
+// Create a section in rom for a variable.
+const Section *
+PIC16TargetAsmInfo::CreateROSectionForGlobal(const GlobalVariable *GV,
+                                             std::string Addr) const {
+  assert (GV->getType()->getAddressSpace() == PIC16ISD::ROM_SPACE &&
+          "can be used for ROM data only");
+
+  std::string Name;
+  // If address is given then create a section at that address else create a
+  // section by section name specified in GV.
+  PIC16Section *FoundROSec = NULL;
+  if (Addr.empty()) {
+    Name = GV->getSection() + " ROMDATA";
+    for (unsigned i = 1; i < ROSections.size(); i++) {
+      if (ROSections[i]->S_->getName() == Name) {
+        FoundROSec = ROSections[i];
+        break;
+      }
+    }
+  }
+  else {
+    std::string Prefix = GV->getName() + "." + Addr + ".";
+    Name = PAN::getRomdataSectionName(ROSections.size(), Prefix) + " " + Addr;
+  }
+
+  PIC16Section *NewRomSec = FoundROSec;
+  if (NewRomSec == NULL) {
+    const Section *NewSection = getNamedSection (Name.c_str());
+    NewRomSec = new PIC16Section(NewSection);
+    ROSections.push_back(NewRomSec);
+  }
+
+  // Insert the GV into this ROM Section.
+  NewRomSec->Items.push_back(GV);
+  return NewRomSec->S_;
+}
+

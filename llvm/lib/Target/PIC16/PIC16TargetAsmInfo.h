@@ -48,7 +48,7 @@ namespace llvm {
     mutable std::vector<PIC16Section *> BSSSections;
     mutable std::vector<PIC16Section *> IDATASections;
     mutable std::vector<PIC16Section *> AutosSections;
-    mutable PIC16Section *ROSection;
+    mutable std::vector<PIC16Section *> ROSections;
     mutable PIC16Section *ExternalVarDecls;
     mutable PIC16Section *ExternalVarDefs;
     virtual ~PIC16TargetAsmInfo();
@@ -62,9 +62,16 @@ namespace llvm {
     const Section *getBSSSectionForGlobal(const GlobalVariable *GV) const;
     const Section *getIDATASectionForGlobal(const GlobalVariable *GV) const;
     const Section *getSectionForAuto(const GlobalVariable *GV) const;
+    const Section *CreateBSSSectionForGlobal(const GlobalVariable *GV,
+                                             std::string Addr = "") const;
+    const Section *CreateIDATASectionForGlobal(const GlobalVariable *GV,
+                                               std::string Addr = "") const;
+    const Section *getROSectionForGlobal(const GlobalVariable *GV) const;
+    const Section *CreateROSectionForGlobal(const GlobalVariable *GV,
+                                            std::string Addr = "") const;
     virtual const Section *SelectSectionForGlobal(const GlobalValue *GV) const;
-
-
+    const Section * CreateSectionForGlobal(const GlobalValue *GV,
+                                           std::string Addr = "") const;
     public:
     void SetSectionForGVs(Module &M);
     std::vector<PIC16Section *> getBSSSections() const {
@@ -76,6 +83,10 @@ namespace llvm {
     std::vector<PIC16Section *> getAutosSections()  const {
       return AutosSections;
     }
+    std::vector<PIC16Section *> getROSections() const {
+      return ROSections;
+    }
+    virtual const Section* SectionForGlobal(const GlobalValue *GV) const;
   };
 
 } // namespace llvm
