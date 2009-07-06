@@ -1,4 +1,4 @@
-//===--- ASTNode.h - A <Decl, Stmt> pair ------------------------*- C++ -*-===//
+//===--- ASTLocation.h - A <Decl, Stmt> pair --------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  ASTNode is Decl or a Stmt and its immediate Decl parent.
+//  ASTLocation is Decl or a Stmt and its immediate Decl parent.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_ASTNODE_H
-#define LLVM_CLANG_AST_ASTNODE_H
+#ifndef LLVM_CLANG_AST_ASTLOCATION_H
+#define LLVM_CLANG_AST_ASTLOCATION_H
 
 #include <cassert>
 
@@ -26,14 +26,14 @@ namespace clang {
 
 /// \brief Represents a Decl or a Stmt and its immediate Decl parent. It's
 /// immutable.
-class ASTNode {
+class ASTLocation {
   Decl *D;
   Stmt *Stm;
 
 public:
-  ASTNode() : D(0), Stm(0) {}
+  ASTLocation() : D(0), Stm(0) {}
 
-  explicit ASTNode(const Decl *d, const Stmt *stm = 0)
+  explicit ASTLocation(const Decl *d, const Stmt *stm = 0)
     : D(const_cast<Decl*>(d)), Stm(const_cast<Stmt*>(stm)) {
     assert((Stm == 0 || isImmediateParent(D, Stm)) &&
            "The Decl is not the immediate parent of the Stmt.");
@@ -51,10 +51,10 @@ public:
   /// \brief Checks that D is the immediate Decl parent of Node.
   static bool isImmediateParent(Decl *D, Stmt *Node);
 
-  friend bool operator==(const ASTNode &L, const ASTNode &R) { 
+  friend bool operator==(const ASTLocation &L, const ASTLocation &R) { 
     return L.D == R.D && L.Stm == R.Stm;
   }
-  friend bool operator!=(const ASTNode &L, const ASTNode &R) { 
+  friend bool operator!=(const ASTLocation &L, const ASTLocation &R) { 
     return !(L == R);
   }
   

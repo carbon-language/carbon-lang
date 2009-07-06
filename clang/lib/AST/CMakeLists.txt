@@ -4,7 +4,7 @@ add_clang_library(clangAST
   APValue.cpp
   ASTConsumer.cpp
   ASTContext.cpp
-  ASTNode.cpp
+  ASTLocation.cpp
   CFG.cpp
   DeclarationName.cpp
   DeclBase.cpp

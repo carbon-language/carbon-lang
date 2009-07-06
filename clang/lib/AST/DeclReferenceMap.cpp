@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  DeclReferenceMap creates a mapping from Decls to the ASTNodes that
-//  references them.
+//  DeclReferenceMap creates a mapping from Decls to the ASTLocations that
+//  reference them.
 //
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/DeclReferenceMap.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
-#include "clang/AST/ASTNode.h"
+#include "clang/AST/ASTLocation.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Support/Compiler.h"
@@ -65,7 +65,7 @@ void StmtMapper::VisitDeclStmt(DeclStmt *Node) {
 
 void StmtMapper::VisitDeclRefExpr(DeclRefExpr *Node) {
   NamedDecl *PrimD = cast<NamedDecl>(Node->getDecl()->getPrimaryDecl());
-  Map.insert(std::make_pair(PrimD, ASTNode(Parent, Node)));
+  Map.insert(std::make_pair(PrimD, ASTLocation(Parent, Node)));
 }
 
 void StmtMapper::VisitStmt(Stmt *Node) {
@@ -113,16 +113,16 @@ DeclReferenceMap::DeclReferenceMap(ASTContext &Ctx) {
   DeclMapper(Map).Visit(Ctx.getTranslationUnitDecl());
 }
 
-DeclReferenceMap::astnode_iterator
+DeclReferenceMap::astlocation_iterator
 DeclReferenceMap::refs_begin(NamedDecl *D) const {
   NamedDecl *Prim = cast<NamedDecl>(D->getPrimaryDecl());
-  return astnode_iterator(Map.lower_bound(Prim));  
+  return astlocation_iterator(Map.lower_bound(Prim));  
 }
 
-DeclReferenceMap::astnode_iterator
+DeclReferenceMap::astlocation_iterator
 DeclReferenceMap::refs_end(NamedDecl *D) const {
   NamedDecl *Prim = cast<NamedDecl>(D->getPrimaryDecl());
-  return astnode_iterator(Map.upper_bound(Prim));  
+  return astlocation_iterator(Map.upper_bound(Prim));  
 }
 
 bool DeclReferenceMap::refs_empty(NamedDecl *D) const {

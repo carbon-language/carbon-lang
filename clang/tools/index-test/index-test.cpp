@@ -22,13 +22,13 @@
 //       specified, prints some info about it.
 //
 //   -print-refs
-//       Print ASTNodes that reference the -point-at node
+//       Print ASTLocations that reference the -point-at node
 //
 //   -print-defs
-//       Print ASTNodes that define the -point-at node
+//       Print ASTLocations that define the -point-at node
 //
 //   -print-decls
-//       Print ASTNodes that declare the -point-at node
+//       Print ASTLocations that declare the -point-at node
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,7 +41,7 @@
 #include "clang/Frontend/CommandLineSourceLoc.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/ASTNode.h"
+#include "clang/AST/ASTLocation.h"
 #include "clang/AST/DeclReferenceMap.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -107,7 +107,7 @@ static void ProcessDecl(Decl *D) {
       return;
 
     DeclReferenceMap RefMap(ND->getASTContext());
-    for (DeclReferenceMap::astnode_iterator
+    for (DeclReferenceMap::astlocation_iterator
            I = RefMap.refs_begin(ND), E = RefMap.refs_end(ND); I != E; ++I)
       I->print(OS);
     break;
@@ -126,29 +126,29 @@ static void ProcessDecl(Decl *D) {
     } 
 
     if (DefD)
-      ASTNode(DefD).print(OS);
+      ASTLocation(DefD).print(OS);
     break;    
   }
   
   case PrintDecls :
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       while (FD) {
-        ASTNode(FD).print(OS);
+        ASTLocation(FD).print(OS);
         FD = FD->getPreviousDeclaration();
       }
     } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       while (VD) {
-        ASTNode(VD).print(OS);
+        ASTLocation(VD).print(OS);
         VD = VD->getPreviousDeclaration();
       }
     } else
-      ASTNode(D).print(OS);
+      ASTLocation(D).print(OS);
     break;
     
   }
 }
 
-static void ProcessNode(ASTNode Node, IndexProvider &IdxProvider) {
+static void ProcessNode(ASTLocation Node, IndexProvider &IdxProvider) {
   assert(Node.isValid());
 
   Decl *D = 0;
@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
     IdxProvider.IndexAST(TU);
   }
 
-  ASTNode Node;
+  ASTLocation Node;
   const std::string &FirstFile = TUnits[0]->Filename;
   ASTUnit *FirstAST = TUnits[0]->AST.get();
 

@@ -1,4 +1,4 @@
-//===--- ASTNode.h - A <Decl, Stmt> pair ------------------------*- C++ -*-===//
+//===--- ASTLocation.h - A <Decl, Stmt> pair --------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  ASTNode is Decl or a Stmt and its immediate Decl parent.
+//  ASTLocation is Decl or a Stmt and its immediate Decl parent.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/ASTNode.h"
+#include "clang/AST/ASTLocation.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
@@ -60,13 +60,13 @@ static Decl *FindImmediateParent(Decl *D, Stmt *Node) {
   return 0;
 }
 
-bool ASTNode::isImmediateParent(Decl *D, Stmt *Node) {
+bool ASTLocation::isImmediateParent(Decl *D, Stmt *Node) {
   assert(D && Node && "Passed null Decl or null Stmt");
   return D == FindImmediateParent(D, Node);
 }
 
-void ASTNode::print(llvm::raw_ostream &OS) {
-  assert(isValid() && "ASTNode is not valid");
+void ASTLocation::print(llvm::raw_ostream &OS) {
+  assert(isValid() && "ASTLocation is not valid");
 
   OS << "[Decl: " << getDecl()->getDeclKindName() << " ";
   if (NamedDecl *ND = dyn_cast<NamedDecl>(getDecl()))

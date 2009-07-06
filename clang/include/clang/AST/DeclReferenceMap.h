@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  DeclReferenceMap creates a mapping from Decls to the ASTNodes that
+//  DeclReferenceMap creates a mapping from Decls to the ASTLocations that
 //  reference them.
 //
 //===----------------------------------------------------------------------===//
@@ -15,14 +15,14 @@
 #ifndef LLVM_CLANG_AST_DECLREFERENCEMAP_H
 #define LLVM_CLANG_AST_DECLREFERENCEMAP_H
 
-#include "clang/AST/ASTNode.h"
+#include "clang/AST/ASTLocation.h"
 #include <map>
 
 namespace clang {
   class ASTContext;
   class NamedDecl;
   
-/// \brief Maps NamedDecls with the ASTNodes that reference them.
+/// \brief Maps NamedDecls with the ASTLocations that reference them.
 ///
 /// References are mapped and retrieved using the primary decls
 /// (see Decl::getPrimaryDecl()).
@@ -30,47 +30,47 @@ class DeclReferenceMap {
 public:
   explicit DeclReferenceMap(ASTContext &Ctx);
   
-  typedef std::multimap<NamedDecl*, ASTNode> MapTy;
+  typedef std::multimap<NamedDecl*, ASTLocation> MapTy;
 
-  class astnode_iterator {
+  class astlocation_iterator {
     MapTy::iterator I;
 
-    astnode_iterator(MapTy::iterator i) : I(i) { }
+    astlocation_iterator(MapTy::iterator i) : I(i) { }
     friend class DeclReferenceMap;
 
   public:
-    typedef ASTNode  value_type;
-    typedef ASTNode& reference;
-    typedef ASTNode* pointer;
+    typedef ASTLocation  value_type;
+    typedef ASTLocation& reference;
+    typedef ASTLocation* pointer;
     typedef MapTy::iterator::iterator_category iterator_category;
     typedef MapTy::iterator::difference_type   difference_type;
 
-    astnode_iterator() { }
+    astlocation_iterator() { }
 
     reference operator*() const { return I->second; }
     pointer operator->() const { return &I->second; }
 
-    astnode_iterator& operator++() {
+    astlocation_iterator& operator++() {
       ++I;
       return *this;
     }
 
-    astnode_iterator operator++(int) {
-      astnode_iterator tmp(*this);
+    astlocation_iterator operator++(int) {
+      astlocation_iterator tmp(*this);
       ++(*this);
       return tmp;
     }
 
-    friend bool operator==(astnode_iterator L, astnode_iterator R) { 
+    friend bool operator==(astlocation_iterator L, astlocation_iterator R) { 
       return L.I == R.I;
     }
-    friend bool operator!=(astnode_iterator L, astnode_iterator R) { 
+    friend bool operator!=(astlocation_iterator L, astlocation_iterator R) { 
       return L.I != R.I;
     }
   };
 
-  astnode_iterator refs_begin(NamedDecl *D) const;
-  astnode_iterator refs_end(NamedDecl *D) const;
+  astlocation_iterator refs_begin(NamedDecl *D) const;
+  astlocation_iterator refs_end(NamedDecl *D) const;
   bool refs_empty(NamedDecl *D) const;
   
 private:
