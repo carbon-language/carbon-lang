@@ -54,7 +54,7 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
 
   // Check cast to ObjCQualifiedID type.
   if (ToTy->isObjCQualifiedIdType()) {
-    // FIXME: Record the type information aside.
+    state = setCastType(state, R, ToTy);
     return CastResult(state, R);
   }
 
