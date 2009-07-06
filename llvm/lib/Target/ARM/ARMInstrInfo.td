@@ -93,6 +93,7 @@ def ARMeh_sjlj_setjmp: SDNode<"ARMISD::EH_SJLJ_SETJMP", SDT_ARMEH_SJLJ_Setjmp>;
 def HasV5T    : Predicate<"Subtarget->hasV5TOps()">;
 def HasV5TE   : Predicate<"Subtarget->hasV5TEOps()">;
 def HasV6     : Predicate<"Subtarget->hasV6Ops()">;
+def HasV6T2   : Predicate<"Subtarget->hasV6T2Ops()">;
 def HasV7     : Predicate<"Subtarget->hasV7Ops()">;
 def HasVFP2   : Predicate<"Subtarget->hasVFP2()">;
 def HasVFP3   : Predicate<"Subtarget->hasVFP3()">;
@@ -1018,6 +1019,11 @@ def MUL   : AsMul1I<0b0000000, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
 def MLA   : AsMul1I<0b0000001, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
                     "mla", " $dst, $a, $b, $c",
                    [(set GPR:$dst, (add (mul GPR:$a, GPR:$b), GPR:$c))]>;
+
+def MLS   : AMul1I <0b0000011, (outs GPR:$dst), (ins GPR:$a, GPR:$b, GPR:$c),
+                    "mls", " $dst, $a, $b, $c",
+                   [(set GPR:$dst, (sub GPR:$c, (mul GPR:$a, GPR:$b)))]>,
+                   Requires<[IsARM, HasV6T2]>;
 
 // Extra precision multiplies with low / high results
 let neverHasSideEffects = 1 in {
