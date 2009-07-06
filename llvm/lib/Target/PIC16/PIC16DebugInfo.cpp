@@ -200,6 +200,7 @@ short PIC16DbgInfo::getStorageClass(DIGlobalVariable DIGV) {
 /// required initializations.
 void PIC16DbgInfo::BeginModule(Module &M) {
   // Emit file directive for module.
+  // FIXME : What if more then one CUs are present in a module ?
   GlobalVariable *CU = M.getNamedGlobal("llvm.dbg.compile_unit");
   if (CU) {
     EmitDebugDirectives = true;
@@ -321,6 +322,7 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
       E = M.getGlobalList().end(); I != E; I++) {
     // Structures and union declaration's debug info has llvm.dbg.composite
     // in its name.
+    // FIXME: Checking and relying on llvm.dbg.composite name is not a good idea.
     if(I->getName().find("llvm.dbg.composite") != std::string::npos) {
       GlobalVariable *GV = cast<GlobalVariable >(I);
       DICompositeType CTy(GV);
@@ -425,6 +427,7 @@ void PIC16DbgInfo::EmitSymbol(std::string Name, short Class, unsigned short
 /// EmitVarDebugInfo - Emit debug information for all variables.
 ///
 void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
+  // FIXME : This anchor has been removed.
   GlobalVariable *Root = M.getGlobalVariable("llvm.dbg.global_variables");
   if (!Root)
     return;
