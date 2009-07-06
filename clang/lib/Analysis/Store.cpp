@@ -23,6 +23,19 @@ StoreManager::StoreManager(GRStateManager &stateMgr, bool useNewCastRegion)
     MRMgr(ValMgr.getRegionManager()) {}
 
 StoreManager::CastResult
+StoreManager::MakeElementRegion(const GRState *state, const MemRegion *region,
+                                QualType pointeeTy, QualType castToTy) {
+  
+  // Record the cast type of the region.
+  state = setCastType(state, region, castToTy);
+  
+  // Create a new ElementRegion at offset 0.
+  SVal idx = ValMgr.makeZeroArrayIndex();
+  return CastResult(state, MRMgr.getElementRegion(pointeeTy, idx, region,
+                                                  ValMgr.getContext()));  
+}
+
+StoreManager::CastResult
 StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
                             QualType CastToTy) {
   
@@ -38,18 +51,22 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
                && CastToTy->getAsPointerType()->getPointeeType()->isVoidType()));
     return CastResult(state, R);
   }
-  
+
   // Check cast to ObjCQualifiedID type.
   if (ToTy->isObjCQualifiedIdType()) {
     // FIXME: Record the type information aside.
     return CastResult(state, R);
   }
-  
+
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
   QualType PointeeTy = cast<PointerType>(ToTy.getTypePtr())->getPointeeType();
-  
+
   // Process region cast according to the kind of the region being cast.
+  
+  // Handle casts of string literals.
+  if (isa<StringRegion>(R))
+    return MakeElementRegion(state, R, PointeeTy, ToTy);
   
   // FIXME: Need to handle arbitrary downcasts.
   if (isa<SymbolicRegion>(R) || isa<AllocaRegion>(R)) {
@@ -77,13 +94,8 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
     
     if ((PointeeTySize > 0 && PointeeTySize < ObjTySize) ||
         (ObjTy->isAggregateType() && PointeeTy->isScalarType()) ||
-        ObjTySize == 0 /* R has 'void*' type. */) {
-      // Record the cast type of the region.
-      state = setCastType(state, R, ToTy);
-      
-      SVal Idx = ValMgr.makeZeroArrayIndex();
-      ElementRegion* ER = MRMgr.getElementRegion(PointeeTy, Idx,R, Ctx);
-      return CastResult(state, ER);
+        ObjTySize == 0 /* R has 'void*' type. */) {      
+      return MakeElementRegion(state, R, PointeeTy, ToTy);
     } else {
       state = setCastType(state, R, ToTy);
       return CastResult(state, R);

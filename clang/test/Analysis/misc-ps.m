@@ -297,4 +297,13 @@ void rdar_7027684(int x, int y) {
   (rdar_7027684_aux() ? rdar_7027684_aux_2() : (void) 0);
 }
 
+// Test that we handle casts of string literals to arbitrary types.
+unsigned const char *string_literal_test1() {
+  return (const unsigned char*) "hello";
+}
+
+const float *string_literal_test2() {
+  return (const float*) "hello";
+}
+
 
