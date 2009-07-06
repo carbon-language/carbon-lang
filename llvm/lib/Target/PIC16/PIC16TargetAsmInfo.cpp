@@ -30,6 +30,7 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   Data8bitsDirective = " db ";
   Data16bitsDirective = " dw ";
   Data32bitsDirective = " dl ";
+  Data64bitsDirective = NULL;
   RomData8bitsDirective = " dw ";
   RomData16bitsDirective = " rom_di ";
   RomData32bitsDirective = " rom_dl ";
