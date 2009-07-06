@@ -39,6 +39,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
@@ -200,8 +201,8 @@ bool LowerSetJmp::runOnModule(Module& M) {
 // This function is always successful, unless it isn't.
 bool LowerSetJmp::doInitialization(Module& M)
 {
-  const Type *SBPTy = PointerType::getUnqual(Type::Int8Ty);
-  const Type *SBPPTy = PointerType::getUnqual(SBPTy);
+  const Type *SBPTy = Context->getPointerTypeUnqual(Type::Int8Ty);
+  const Type *SBPPTy = Context->getPointerTypeUnqual(SBPTy);
 
   // N.B. See llvm/runtime/GCCLibraries/libexception/SJLJ-Exception.h for
   // a description of the following library functions.
@@ -257,7 +258,7 @@ bool LowerSetJmp::IsTransformableFunction(const std::string& Name) {
 // throwing the exception for us.
 void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
 {
-  const Type* SBPTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type* SBPTy = Context->getPointerTypeUnqual(Type::Int8Ty);
 
   // Create the call to "__llvm_sjljeh_throw_longjmp". This takes the
   // same parameters as "longjmp", except that the buffer is cast to a
@@ -288,7 +289,7 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
     Removed = &BB->back();
     // If the removed instructions have any users, replace them now.
     if (!Removed->use_empty())
-      Removed->replaceAllUsesWith(UndefValue::get(Removed->getType()));
+      Removed->replaceAllUsesWith(Context->getUndef(Removed->getType()));
     Removed->eraseFromParent();
   } while (Removed != Inst);
 
@@ -309,7 +310,7 @@ AllocaInst* LowerSetJmp::GetSetJmpMap(Function* Func)
   assert(Inst && "Couldn't find even ONE instruction in entry block!");
 
   // Fill in the alloca and call to initialize the SJ map.
-  const Type *SBPTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type *SBPTy = Context->getPointerTypeUnqual(Type::Int8Ty);
   AllocaInst* Map = new AllocaInst(SBPTy, 0, "SJMap", Inst);
   CallInst::Create(InitSJMap, Map, "", Inst);
   return SJMap[Func] = Map;
@@ -375,12 +376,12 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   Function* Func = ABlock->getParent();
 
   // Add this setjmp to the setjmp map.
-  const Type* SBPTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type* SBPTy = Context->getPointerTypeUnqual(Type::Int8Ty);
   CastInst* BufPtr = 
     new BitCastInst(Inst->getOperand(1), SBPTy, "SBJmpBuf", Inst);
   std::vector<Value*> Args = 
     make_vector<Value*>(GetSetJmpMap(Func), BufPtr,
-                        ConstantInt::get(Type::Int32Ty,
+                        Context->getConstantInt(Type::Int32Ty,
                                          SetJmpIDMap[Func]++), 0);
   CallInst::Create(AddSJToMap, Args.begin(), Args.end(), "", Inst);
 
@@ -427,12 +428,13 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   PHINode* PHI = PHINode::Create(Type::Int32Ty, "SetJmpReturn", Inst);
 
   // Coming from a call to setjmp, the return is 0.
-  PHI->addIncoming(ConstantInt::getNullValue(Type::Int32Ty), ABlock);
+  PHI->addIncoming(Context->getNullValue(Type::Int32Ty), ABlock);
 
   // Add the case for this setjmp's number...
   SwitchValuePair SVP = GetSJSwitch(Func, GetRethrowBB(Func));
-  SVP.first->addCase(ConstantInt::get(Type::Int32Ty, SetJmpIDMap[Func] - 1),
-                     SetJmpContBlock);
+  SVP.first->addCase(Context->getConstantInt(Type::Int32Ty,
+                                             SetJmpIDMap[Func] - 1),
+                                             SetJmpContBlock);
 
   // Value coming from the handling of the exception.
   PHI->addIncoming(SVP.second, SVP.second->getParent());

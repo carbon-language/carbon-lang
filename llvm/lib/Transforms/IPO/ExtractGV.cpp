@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Constants.h"
@@ -99,14 +100,14 @@ namespace {
       // by putting them in the used array
       {
         std::vector<Constant *> AUGs;
-        const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
+        const Type *SBP= Context->getPointerTypeUnqual(Type::Int8Ty);
         for (std::vector<GlobalValue*>::iterator GI = Named.begin(), 
                GE = Named.end(); GI != GE; ++GI) {
           (*GI)->setLinkage(GlobalValue::ExternalLinkage);
-          AUGs.push_back(ConstantExpr::getBitCast(*GI, SBP));
+          AUGs.push_back(Context->getConstantExprBitCast(*GI, SBP));
         }
-        ArrayType *AT = ArrayType::get(SBP, AUGs.size());
-        Constant *Init = ConstantArray::get(AT, AUGs);
+        ArrayType *AT = Context->getArrayType(SBP, AUGs.size());
+        Constant *Init = Context->getConstantArray(AT, AUGs);
         GlobalValue *gv = new GlobalVariable(AT, false, 
                                              GlobalValue::AppendingLinkage, 
                                              Init, "llvm.used", &M);

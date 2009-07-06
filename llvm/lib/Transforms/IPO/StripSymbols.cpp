@@ -24,6 +24,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/DebugInfo.h"
@@ -236,7 +237,7 @@ bool StripDebugInfo(Module &M) {
     if (!GV) continue;
     if (!GV->use_empty() && llvmUsedValues.count(I) == 0) {
       if (strncmp(GV->getNameStart(), "llvm.dbg", 8) == 0) {
-        GV->replaceAllUsesWith(UndefValue::get(GV->getType()));
+        GV->replaceAllUsesWith(M.getContext().getUndef(GV->getType()));
       }
     }
   }

@@ -23,6 +23,7 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Instructions.h"
@@ -229,7 +230,7 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
     AttributesVec.push_back(AttributeWithIndex::get(~0, attrs));
 
 
-  FunctionType *NFTy = FunctionType::get(STy, Params, FTy->isVarArg());
+  FunctionType *NFTy = Context->getFunctionType(STy, Params, FTy->isVarArg());
   Function *NF = Function::Create(NFTy, F->getLinkage());
   NF->takeName(F);
   NF->copyAttributesFrom(F);

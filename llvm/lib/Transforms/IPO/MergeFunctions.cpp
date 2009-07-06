@@ -47,6 +47,7 @@
 #include "llvm/Constants.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
@@ -517,7 +518,7 @@ static void AliasGToF(Function *F, Function *G) {
 
   GlobalAlias *GA = new GlobalAlias(
     G->getType(), G->getLinkage(), "",
-    ConstantExpr::getBitCast(F, G->getType()), G->getParent());
+    F->getContext()->getConstantExprBitCast(F, G->getType()), G->getParent());
   F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
   GA->takeName(G);
   GA->setVisibility(G->getVisibility());

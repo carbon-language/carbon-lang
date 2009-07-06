@@ -36,6 +36,7 @@
 #include "llvm/Module.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
@@ -585,7 +586,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   }
 
   // Construct the new function type using the new arguments.
-  FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
+  FunctionType *NFTy = Context->getFunctionType(RetTy, Params, FTy->isVarArg());
 
   // Create the new function body and insert it into the module...
   Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());
@@ -636,9 +637,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
         // Emit a GEP and load for each element of the struct.
         const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
         const StructType *STy = cast<StructType>(AgTy);
-        Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), 0 };
+        Value *Idxs[2] = { Context->getConstantInt(Type::Int32Ty, 0), 0 };
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-          Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
+          Idxs[1] = Context->getConstantInt(Type::Int32Ty, i);
           Value *Idx = GetElementPtrInst::Create(*AI, Idxs, Idxs+2,
                                                  (*AI)->getName()+"."+utostr(i),
                                                  Call);
@@ -663,7 +664,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
               // Use i32 to index structs, and i64 for others (pointers/arrays).
               // This satisfies GEP constraints.
               const Type *IdxTy = (isa<StructType>(ElTy) ? Type::Int32Ty : Type::Int64Ty);
-              Ops.push_back(ConstantInt::get(IdxTy, *II));
+              Ops.push_back(Context->getConstantInt(IdxTy, *II));
               // Keep track of the type we're currently indexing
               ElTy = cast<CompositeType>(ElTy)->getTypeAtIndex(*II);
             }
@@ -679,7 +680,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       }
 
     if (ExtraArgHack)
-      Args.push_back(Constant::getNullValue(Type::Int32Ty));
+      Args.push_back(Context->getNullValue(Type::Int32Ty));
 
     // Push any varargs arguments on the list
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
@@ -756,10 +757,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
       const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
       Value *TheAlloca = new AllocaInst(AgTy, 0, "", InsertPt);
       const StructType *STy = cast<StructType>(AgTy);
-      Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), 0 };
+      Value *Idxs[2] = { Context->getConstantInt(Type::Int32Ty, 0), 0 };
 
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-        Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
+        Idxs[1] = Context->getConstantInt(Type::Int32Ty, i);
         std::string Name = TheAlloca->getName()+"."+utostr(i);
         Value *Idx = GetElementPtrInst::Create(TheAlloca, Idxs, Idxs+2,
                                                Name, InsertPt);
@@ -842,7 +843,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   // Notify the alias analysis implementation that we inserted a new argument.
   if (ExtraArgHack)
-    AA.copyValue(Constant::getNullValue(Type::Int32Ty), NF->arg_begin());
+    AA.copyValue(Context->getNullValue(Type::Int32Ty), NF->arg_begin());
 
 
   // Tell the alias analysis that the old function is about to disappear.
