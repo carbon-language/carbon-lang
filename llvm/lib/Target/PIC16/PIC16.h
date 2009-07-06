@@ -83,7 +83,7 @@ namespace PIC16CC {
     // initialized globals - @idata.<num>.#
     // Function frame - @<func>.frame_section.
     // Function autos - @<func>.autos_section.
-    // Declarations - @section.0
+    // Declarations - Enclosed in comments. No section for them.
     //----------------------------------------------------------
     
     // Tags used to mangle different names. 
