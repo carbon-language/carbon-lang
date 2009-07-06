@@ -986,7 +986,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
     Worklist.pop_back();
     
     // Simple constant folding.
-    if (Constant *C = ConstantFoldInstruction(I)) {
+    if (Constant *C = ConstantFoldInstruction(I, Context)) {
       ReplaceUsesOfWith(I, C, Worklist, L, LPM);
       continue;
     }

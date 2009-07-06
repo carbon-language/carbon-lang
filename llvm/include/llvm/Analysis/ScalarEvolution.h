@@ -36,6 +36,7 @@ namespace llvm {
   class Type;
   class ScalarEvolution;
   class TargetData;
+  class LLVMContext;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
   /// are opaque objects that the client is not allowed to do much with
@@ -353,6 +354,8 @@ namespace llvm {
   public:
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution();
+
+    LLVMContext* getContext() const { return Context; }
 
     /// isSCEVable - Test if values of the given type are analyzable within
     /// the SCEV framework. This primarily includes integer types, and it

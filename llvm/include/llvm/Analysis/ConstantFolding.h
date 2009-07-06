@@ -22,18 +22,20 @@ namespace llvm {
   class TargetData;
   class Function;
   class Type;
+  class LLVMContext;
 
 /// ConstantFoldInstruction - Attempt to constant fold the specified
 /// instruction.  If successful, the constant result is returned, if not, null
 /// is returned.  Note that this function can only fail when attempting to fold
 /// instructions like loads and stores, which have no constant expression form.
 ///
-Constant *ConstantFoldInstruction(Instruction *I, const TargetData *TD = 0);
+Constant *ConstantFoldInstruction(Instruction *I, LLVMContext* Context,
+                                  const TargetData *TD = 0);
 
 /// ConstantFoldConstantExpression - Attempt to fold the constant expression
 /// using the specified TargetData.  If successful, the constant result is
 /// result is returned, if not, null is returned.
-Constant *ConstantFoldConstantExpression(ConstantExpr *CE,
+Constant *ConstantFoldConstantExpression(ConstantExpr *CE, LLVMContext* Context,
                                          const TargetData *TD = 0);
 
 /// ConstantFoldInstOperands - Attempt to constant fold an instruction with the
@@ -44,6 +46,7 @@ Constant *ConstantFoldConstantExpression(ConstantExpr *CE,
 ///
 Constant *ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                                    Constant*const * Ops, unsigned NumOps,
+                                   LLVMContext* Context,
                                    const TargetData *TD = 0);
 
 /// ConstantFoldCompareInstOperands - Attempt to constant fold a compare
@@ -52,13 +55,15 @@ Constant *ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
 ///
 Constant *ConstantFoldCompareInstOperands(unsigned Predicate,
                                           Constant*const * Ops, unsigned NumOps,
+                                          LLVMContext* Context,
                                           const TargetData *TD = 0);
 
 
 /// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
 /// getelementptr constantexpr, return the constant value being addressed by the
 /// constant expression, or null if something is funny and we can't decide.
-Constant *ConstantFoldLoadThroughGEPConstantExpr(Constant *C, ConstantExpr *CE);
+Constant *ConstantFoldLoadThroughGEPConstantExpr(Constant *C, ConstantExpr *CE,
+                                                 LLVMContext* Context);
   
 /// canConstantFoldCallTo - Return true if its even possible to fold a call to
 /// the specified function.

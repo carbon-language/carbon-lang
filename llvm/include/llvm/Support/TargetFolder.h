@@ -25,21 +25,24 @@
 namespace llvm {
 
 class TargetData;
+class LLVMContext;
 
 /// TargetFolder - Create constants with target dependent folding.
 class TargetFolder {
   const TargetData *TD;
+  LLVMContext* Context;
 
   /// Fold - Fold the constant using target specific information.
   Constant *Fold(Constant *C) const {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-      if (Constant *CF = ConstantFoldConstantExpression(CE, TD))
+      if (Constant *CF = ConstantFoldConstantExpression(CE, Context, TD))
         return CF;
     return C;
   }
 
 public:
-  explicit TargetFolder(const TargetData *TheTD) : TD(TheTD) {}
+  explicit TargetFolder(const TargetData *TheTD, LLVMContext* C) :
+    TD(TheTD), Context(C) {}
 
   //===--------------------------------------------------------------------===//
   // Binary Operators

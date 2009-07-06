@@ -282,7 +282,8 @@ static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx,
 /// users of the global, cleaning up the obvious ones.  This is largely just a
 /// quick scan over the use list to clean up the easy and obvious cruft.  This
 /// returns true if it made a change.
-static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
+static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
+                                       LLVMContext* Context) {
   bool Changed = false;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;) {
     User *U = *UI++;
@@ -302,12 +303,12 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         Constant *SubInit = 0;
         if (Init)
-          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
-        Changed |= CleanupConstantGlobalUsers(CE, SubInit);
+          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE, Context);
+        Changed |= CleanupConstantGlobalUsers(CE, SubInit, Context);
       } else if (CE->getOpcode() == Instruction::BitCast && 
                  isa<PointerType>(CE->getType())) {
         // Pointer cast, delete any stores and memsets to the global.
-        Changed |= CleanupConstantGlobalUsers(CE, 0);
+        Changed |= CleanupConstantGlobalUsers(CE, 0, Context);
       }
 
       if (CE->use_empty()) {
@@ -321,11 +322,11 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       Constant *SubInit = 0;
       if (!isa<ConstantExpr>(GEP->getOperand(0))) {
         ConstantExpr *CE = 
-          dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP));
+          dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP, Context));
         if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
-          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
+          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE, Context);
       }
-      Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
+      Changed |= CleanupConstantGlobalUsers(GEP, SubInit, Context);
 
       if (GEP->use_empty()) {
         GEP->eraseFromParent();
@@ -343,7 +344,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       if (SafeToDestroyConstant(C)) {
         C->destroyConstant();
         // This could have invalidated UI, start over from scratch.
-        CleanupConstantGlobalUsers(V, Init);
+        CleanupConstantGlobalUsers(V, Init, Context);
         return true;
       }
     }
@@ -783,7 +784,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
   // nor is the global.
   if (AllNonStoreUsesGone) {
     DOUT << "  *** GLOBAL NOW DEAD!\n";
-    CleanupConstantGlobalUsers(GV, 0);
+    CleanupConstantGlobalUsers(GV, 0, Context);
     if (GV->use_empty()) {
       GV->eraseFromParent();
       ++NumDeleted;
@@ -795,10 +796,10 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
 
 /// ConstantPropUsersOf - Walk the use list of V, constant folding all of the
 /// instructions that are foldable.
-static void ConstantPropUsersOf(Value *V) {
+static void ConstantPropUsersOf(Value *V, LLVMContext* Context) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; )
     if (Instruction *I = dyn_cast<Instruction>(*UI++))
-      if (Constant *NewC = ConstantFoldInstruction(I)) {
+      if (Constant *NewC = ConstantFoldInstruction(I, Context)) {
         I->replaceAllUsesWith(NewC);
 
         // Advance UI to the next non-I use to avoid invalidating it!
@@ -925,9 +926,9 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // To further other optimizations, loop over all users of NewGV and try to
   // constant prop them.  This will promote GEP instructions with constant
   // indices into GEP constant-exprs, which will allow global-opt to hack on it.
-  ConstantPropUsersOf(NewGV);
+  ConstantPropUsersOf(NewGV, Context);
   if (RepValue != NewGV)
-    ConstantPropUsersOf(RepValue);
+    ConstantPropUsersOf(RepValue, Context);
 
   return NewGV;
 }
@@ -1717,7 +1718,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
       // Delete any stores we can find to the global.  We may not be able to
       // make it completely dead though.
-      bool Changed = CleanupConstantGlobalUsers(GV, GV->getInitializer());
+      bool Changed = CleanupConstantGlobalUsers(GV, GV->getInitializer(), 
+                                                Context);
 
       // If the global is dead now, delete it.
       if (GV->use_empty()) {
@@ -1732,7 +1734,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       GV->setConstant(true);
 
       // Clean up any obviously simplifiable users now.
-      CleanupConstantGlobalUsers(GV, GV->getInitializer());
+      CleanupConstantGlobalUsers(GV, GV->getInitializer(), Context);
 
       // If the global is dead now, just nuke it.
       if (GV->use_empty()) {
@@ -1762,7 +1764,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
           GV->setInitializer(SOVConstant);
 
           // Clean up any obviously simplifiable users now.
-          CleanupConstantGlobalUsers(GV, GV->getInitializer());
+          CleanupConstantGlobalUsers(GV, GV->getInitializer(), Context);
 
           if (GV->use_empty()) {
             DOUT << "   *** Substituting initializer allowed us to "
@@ -2007,7 +2009,7 @@ static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues,
 /// enough for us to understand.  In particular, if it is a cast of something,
 /// we punt.  We basically just support direct accesses to globals and GEP's of
 /// globals.  This should be kept up to date with CommitValueTo.
-static bool isSimpleEnoughPointerToCommit(Constant *C) {
+static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext* Context) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (!GV->hasExternalLinkage() && !GV->hasLocalLinkage())
       return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
@@ -2021,7 +2023,8 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
       if (!GV->hasExternalLinkage() && !GV->hasLocalLinkage())
         return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
       return GV->hasInitializer() &&
-             ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
+             ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
+                                                    Context);
     }
   return false;
 }
@@ -2113,7 +2116,8 @@ static void CommitValueTo(Constant *Val, Constant *Addr,
 /// P after the stores reflected by 'memory' have been performed.  If we can't
 /// decide, return null.
 static Constant *ComputeLoadResult(Constant *P,
-                                const DenseMap<Constant*, Constant*> &Memory) {
+                                const DenseMap<Constant*, Constant*> &Memory,
+                                LLVMContext* Context) {
   // If this memory location has been recently stored, use the stored value: it
   // is the most up-to-date.
   DenseMap<Constant*, Constant*>::const_iterator I = Memory.find(P);
@@ -2132,7 +2136,8 @@ static Constant *ComputeLoadResult(Constant *P,
         isa<GlobalVariable>(CE->getOperand(0))) {
       GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
       if (GV->hasInitializer())
-        return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
+        return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
+                                                      Context);
     }
 
   return 0;  // don't know how to evaluate.
@@ -2179,7 +2184,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
     if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
       if (SI->isVolatile()) return false;  // no volatile accesses.
       Constant *Ptr = getVal(Values, SI->getOperand(1));
-      if (!isSimpleEnoughPointerToCommit(Ptr))
+      if (!isSimpleEnoughPointerToCommit(Ptr, Context))
         // If this is too complex for us to commit, reject it.
         return false;
       Constant *Val = getVal(Values, SI->getOperand(0));
@@ -2212,7 +2217,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
       if (LI->isVolatile()) return false;  // no volatile accesses.
       InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),
-                                     MutatedMemory);
+                                     MutatedMemory, Context);
       if (InstResult == 0) return false; // Could not evaluate load.
     } else if (AllocaInst *AI = dyn_cast<AllocaInst>(CurInst)) {
       if (AI->isArrayAllocation()) return false;  // Cannot handle array allocs.

@@ -338,7 +338,8 @@ ConstantFoldMappedInstruction(const Instruction *I) {
 
   if (const CmpInst *CI = dyn_cast<CmpInst>(I))
     return ConstantFoldCompareInstOperands(CI->getPredicate(),
-                                           &Ops[0], Ops.size(), TD);
+                                           &Ops[0], Ops.size(), 
+                                           Context, TD);
 
   if (const LoadInst *LI = dyn_cast<LoadInst>(I))
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ops[0]))
@@ -346,10 +347,10 @@ ConstantFoldMappedInstruction(const Instruction *I) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
           if (GV->isConstant() && GV->hasDefinitiveInitializer())
             return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(),
-                                                          CE);
+                                                          CE, Context);
 
   return ConstantFoldInstOperands(I->getOpcode(), I->getType(), &Ops[0],
-                                  Ops.size(), TD);
+                                  Ops.size(), Context, TD);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,

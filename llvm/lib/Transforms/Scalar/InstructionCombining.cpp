@@ -11598,7 +11598,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
           if (GV->isConstant() && GV->hasDefinitiveInitializer())
             if (Constant *V = 
-               ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
+               ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE, 
+                                                      Context))
               return ReplaceInstUsesWith(LI, V);
         if (CE->getOperand(0)->isNullValue()) {
           // Insert a new store to null instruction before the load to indicate
@@ -12876,7 +12877,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
       }
       
       // ConstantProp instruction if trivially constant.
-      if (Constant *C = ConstantFoldInstruction(Inst, TD)) {
+      if (Constant *C = ConstantFoldInstruction(Inst, BB->getContext(), TD)) {
         DOUT << "IC: ConstFold to: " << *C << " from: " << *Inst;
         Inst->replaceAllUsesWith(C);
         ++NumConstProp;
@@ -12991,7 +12992,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
     }
 
     // Instruction isn't dead, see if we can constant propagate it.
-    if (Constant *C = ConstantFoldInstruction(I, TD)) {
+    if (Constant *C = ConstantFoldInstruction(I, F.getContext(), TD)) {
       DOUT << "IC: ConstFold to: " << *C << " from: " << *I;
 
       // Add operands to the worklist.
@@ -13011,7 +13012,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       // See if we can constant fold its operands.
       for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
         if (ConstantExpr *CE = dyn_cast<ConstantExpr>(i))
-          if (Constant *NewC = ConstantFoldConstantExpression(CE, TD))
+          if (Constant *NewC = ConstantFoldConstantExpression(CE,   
+                                  F.getContext(), TD))
             if (NewC != CE) {
               i->set(NewC);
               Changed = true;

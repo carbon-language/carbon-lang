@@ -20,6 +20,7 @@
 #include "ProfilingUtils.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
@@ -63,10 +64,10 @@ bool EdgeProfiler::runOnModule(Module &M) {
       NumEdges += BB->getTerminator()->getNumSuccessors();
     }
 
-  const Type *ATy = ArrayType::get(Type::Int32Ty, NumEdges);
+  const Type *ATy = Context->getArrayType(Type::Int32Ty, NumEdges);
   GlobalVariable *Counters =
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
-                       Constant::getNullValue(ATy), "EdgeProfCounters", &M);
+                       Context->getNullValue(ATy), "EdgeProfCounters", &M);
 
   // Instrument all of the edges...
   unsigned i = 0;

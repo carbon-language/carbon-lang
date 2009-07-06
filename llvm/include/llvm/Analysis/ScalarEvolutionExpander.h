@@ -37,7 +37,7 @@ namespace llvm {
     friend struct SCEVVisitor<SCEVExpander, Value*>;
   public:
     explicit SCEVExpander(ScalarEvolution &se)
-      : SE(se), Builder(TargetFolder(se.TD)) {}
+      : SE(se), Builder(TargetFolder(se.TD, se.getContext())) {}
 
     /// clear - Erase the contents of the InsertedExpressions map so that users
     /// trying to expand the same expression into multiple BasicBlocks or

@@ -21,6 +21,7 @@
 
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
@@ -62,10 +63,10 @@ bool FunctionProfiler::runOnModule(Module &M) {
     if (!I->isDeclaration())
       ++NumFunctions;
 
-  const Type *ATy = ArrayType::get(Type::Int32Ty, NumFunctions);
+  const Type *ATy = Context->getArrayType(Type::Int32Ty, NumFunctions);
   GlobalVariable *Counters =
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
-                       Constant::getNullValue(ATy), "FuncProfCounters", &M);
+                       Context->getNullValue(ATy), "FuncProfCounters", &M);
 
   // Instrument all of the functions...
   unsigned i = 0;
@@ -107,10 +108,10 @@ bool BlockProfiler::runOnModule(Module &M) {
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     NumBlocks += I->size();
 
-  const Type *ATy = ArrayType::get(Type::Int32Ty, NumBlocks);
+  const Type *ATy = Context->getArrayType(Type::Int32Ty, NumBlocks);
   GlobalVariable *Counters =
     new GlobalVariable(ATy, false, GlobalValue::InternalLinkage,
-                       Constant::getNullValue(ATy), "BlockProfCounters", &M);
+                       Context->getNullValue(ATy), "BlockProfCounters", &M);
 
   // Instrument all of the blocks...
   unsigned i = 0;
