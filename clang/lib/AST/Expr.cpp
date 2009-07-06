@@ -1458,7 +1458,7 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const
 }
 
 FieldDecl *Expr::getBitField() {
-  Expr *E = this->IgnoreParenCasts();
+  Expr *E = this->IgnoreParens();
 
   if (MemberExpr *MemRef = dyn_cast<MemberExpr>(E))
     if (FieldDecl *Field = dyn_cast<FieldDecl>(MemRef->getMemberDecl()))
