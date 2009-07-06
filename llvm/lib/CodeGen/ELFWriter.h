@@ -24,15 +24,16 @@ namespace llvm {
   class Constant;
   class ConstantStruct;
   class ELFCodeEmitter;
+  class ELFRelocation;
+  class ELFSection;
+  class ELFSym;
   class GlobalVariable;
   class Mangler;
   class MachineCodeEmitter;
+  class ObjectCodeEmitter;
   class TargetAsmInfo;
   class TargetELFWriterInfo;
   class raw_ostream;
-  class ELFSection;
-  class ELFSym;
-  class ELFRelocation;
 
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
@@ -43,14 +44,13 @@ namespace llvm {
   public:
     static char ID;
 
-    MachineCodeEmitter &getMachineCodeEmitter() const {
-      return *(MachineCodeEmitter*)MCE;
+    /// Return the ELFCodeEmitter as an instance of ObjectCodeEmitter
+    ObjectCodeEmitter *getObjectCodeEmitter() {
+      return reinterpret_cast<ObjectCodeEmitter*>(ElfCE);
     }
 
     ELFWriter(raw_ostream &O, TargetMachine &TM);
     ~ELFWriter();
-
-    typedef std::vector<unsigned char> DataBuffer;
 
   protected:
     /// Output stream to send the resultant object file to.
@@ -67,7 +67,7 @@ namespace llvm {
 
     /// MCE - The MachineCodeEmitter object that we are exposing to emit machine
     /// code for functions to the .o file.
-    ELFCodeEmitter *MCE;
+    ELFCodeEmitter *ElfCE;
 
     /// TAI - Target Asm Info, provide information about section names for
     /// globals and other target specific stuff.

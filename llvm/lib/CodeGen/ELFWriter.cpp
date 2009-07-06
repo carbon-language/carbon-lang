@@ -51,17 +51,18 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
+
 using namespace llvm;
 
 char ELFWriter::ID = 0;
-/// AddELFWriter - Concrete function to add the ELF writer to the function pass
-/// manager.
+
+/// AddELFWriter - Add the ELF writer to the function pass manager
 ObjectCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
-                                       raw_ostream &O,
-                                       TargetMachine &TM) {
+                                      raw_ostream &O,
+                                      TargetMachine &TM) {
   ELFWriter *EW = new ELFWriter(O, TM);
   PM.add(EW);
-  return (ObjectCodeEmitter*) &EW->getMachineCodeEmitter();
+  return EW->getObjectCodeEmitter();
 }
 
 //===----------------------------------------------------------------------===//
@@ -77,15 +78,15 @@ ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
   TAI = TM.getTargetAsmInfo();
   TEW = TM.getELFWriterInfo();
 
-  // Create the machine code emitter object for this target.
-  MCE = new ELFCodeEmitter(*this);
+  // Create the object code emitter object for this target.
+  ElfCE = new ELFCodeEmitter(*this);
 
   // Inital number of sections
   NumSections = 0;
 }
 
 ELFWriter::~ELFWriter() {
-  delete MCE;
+  delete ElfCE;
 }
 
 // doInitialization - Emit the file header and all of the global variables for
@@ -361,23 +362,13 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
 
 
 bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {
-  // Nothing to do here, this is all done through the MCE object above.
+  // Nothing to do here, this is all done through the ElfCE object above.
   return false;
 }
 
 /// doFinalization - Now that the module has been completely processed, emit
 /// the ELF file to 'O'.
 bool ELFWriter::doFinalization(Module &M) {
-  /// FIXME: This should be removed when moving to ObjectCodeEmiter. Since the
-  /// current ELFCodeEmiter uses CurrBuff, ... it doesn't update S.Data
-  /// vector size for .text sections, so this is a quick dirty fix
-  ELFSection &TS = getTextSection();
-  if (TS.Size) {
-    BinaryData &BD = TS.getData();
-    for (unsigned e=0; e<TS.Size; ++e)
-      BD.push_back(BD[e]);
-  }
-
   // Emit .data section placeholder
   getDataSection();
 

@@ -33,47 +33,30 @@ namespace llvm {
 /// startFunction - This callback is invoked when a new machine function is
 /// about to be emitted.
 void ELFCodeEmitter::startFunction(MachineFunction &MF) {
+  DOUT << "processing function: " << MF.getFunction()->getName() << "\n";
+
   // Get the ELF Section that this function belongs in.
   ES = &EW.getTextSection();
 
-  DOUT << "processing function: " << MF.getFunction()->getName() << "\n";
-
-  // FIXME: better memory management, this will be replaced by BinaryObjects
-  BinaryData &BD = ES->getData();
-  BD.reserve(4096);
-  BufferBegin = &BD[0];
-  BufferEnd = BufferBegin + BD.capacity();
+  // Set the desired binary object to be used by the code emitters
+  setBinaryObject(ES);
 
   // Get the function alignment in bytes
   unsigned Align = (1 << MF.getAlignment());
 
-  // Align the section size with the function alignment, so the function can
-  // start in a aligned offset, also update the section alignment if needed.
+  // The function must start on its required alignment
+  ES->emitAlignment(Align);
+
+  // Update the section alignment if needed.
   if (ES->Align < Align) ES->Align = Align;
-  ES->Size = (ES->Size + (Align-1)) & (-Align);
 
-  // Snaity check on allocated space for text section
-  assert( ES->Size < 4096 && "no more space in TextSection" );
-
-  // FIXME: Using ES->Size directly here instead of calculating it from the
-  // output buffer size (impossible because the code emitter deals only in raw
-  // bytes) forces us to manually synchronize size and write padding zero bytes
-  // to the output buffer for all non-text sections.  For text sections, we do
-  // not synchonize the output buffer, and we just blow up if anyone tries to
-  // write non-code to it.  An assert should probably be added to
-  // AddSymbolToSection to prevent calling it on the text section.
-  CurBufferPtr = BufferBegin + ES->Size;
-
-  // Record function start address relative to BufferBegin
-  FnStartPtr = CurBufferPtr;
+  // Record the function start offset
+  FnStartOff = ES->getCurrentPCOffset();
 }
 
 /// finishFunction - This callback is invoked after the function is completely
 /// finished.
 bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
-  // Update Section Size
-  ES->Size = CurBufferPtr - BufferBegin;
-
   // Add a symbol to represent the function.
   const Function *F = MF.getFunction();
   ELFSym FnSym(F);
@@ -81,10 +64,10 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   FnSym.setBind(EW.getGlobalELFLinkage(F));
   FnSym.setVisibility(EW.getGlobalELFVisibility(F));
   FnSym.SectionIdx = ES->SectionIdx;
-  FnSym.Size = CurBufferPtr-FnStartPtr;
+  FnSym.Size = ES->getCurrentPCOffset()-FnStartOff;
 
   // Offset from start of Section
-  FnSym.Value = FnStartPtr-BufferBegin;
+  FnSym.Value = FnStartOff;
 
   // Locals should go on the symbol list front
   if (!F->hasPrivateLinkage()) {
