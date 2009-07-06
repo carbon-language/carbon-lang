@@ -11,7 +11,6 @@
 #     %S - Replaced with the directory where the input file resides
 #     %prcontext - prcontext.tcl script
 #     %t - temporary file name (derived from testcase name)
-#     %T - directory of temporary file name
 #
 
 FILENAME=$1
@@ -20,7 +19,6 @@ SUBST=$1
 FILEDIR=`dirname $TESTNAME`
 
 OUTPUT=Output/$1.out
-OUTPUTDIR=`dirname $OUTPUT`
 
 # create the output directory if it does not already exist
 mkdir -p `dirname $OUTPUT` > /dev/null 2>&1
@@ -88,7 +86,6 @@ grep 'RUN:' $FILENAME | \
       -e "s|%s|$SUBST|g" \
       -e "s|%S|$FILEDIR|g" \
       -e "s|%prcontext|prcontext.tcl|g" \
-      -e "s|%T|$OUTPUTDIR|g" \
       -e "s|%t|$TEMPOUTPUT|g" > $SCRIPT
 
 IS_XFAIL=0
