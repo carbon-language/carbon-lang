@@ -164,6 +164,8 @@ public:
   bool isGlobal() const { return OpKind == MO_GlobalAddress; }
   /// isSymbol - Tests if this is a MO_ExternalSymbol operand.
   bool isSymbol() const { return OpKind == MO_ExternalSymbol; }
+  /// isMetadata - Tests if this is a MO_Metadata operand.
+  bool isMetadata() const { return OpKind == MO_Metadata; }
 
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
@@ -325,7 +327,7 @@ public:
   }
 
   void setOffset(int64_t Offset) {
-    assert((isGlobal() || isSymbol() || isCPI()) &&
+    assert((isGlobal() || isSymbol() || isCPI() || isMetadata()) &&
         "Wrong MachineOperand accessor");
     Contents.OffsetedInfo.Offset = Offset;
   }
