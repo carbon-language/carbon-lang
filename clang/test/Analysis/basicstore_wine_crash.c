@@ -1,4 +1,5 @@
-// RUN: clang-cc -checker-cfref -analyze -analyzer-store=basic %s
+// RUN: clang-cc -checker-cfref -analyze -analyzer-store=basic %s &&
+// RUN: clang-cc -checker-cfref -analyze -analyzer-store=basic-new-cast %s
 
 // Once xfail_regionstore_wine_crash.c passes, move this test case
 // into misc-ps.m.

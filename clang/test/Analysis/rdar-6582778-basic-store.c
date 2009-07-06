@@ -1,4 +1,5 @@
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-new-cast -verify %s
 
 typedef const void * CFTypeRef;
 typedef double CFTimeInterval;

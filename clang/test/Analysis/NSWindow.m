@@ -1,5 +1,7 @@
 // RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=basic-new-cast -analyzer-constraints=basic -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=basic -analyzer-constraints=range -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=basic-new-cast -analyzer-constraints=range -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=region -analyzer-constraints=basic -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -warn-dead-stores -analyzer-store=region -analyzer-constraints=range -verify %s
 
