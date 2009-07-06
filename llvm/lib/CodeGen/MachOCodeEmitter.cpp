@@ -7,13 +7,18 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MachO.h"
+#include "MachOWriter.h"
 #include "MachOCodeEmitter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/OutputBuffer.h"
 #include <vector>
@@ -23,7 +28,14 @@
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
-    
+
+MachOCodeEmitter::MachOCodeEmitter(MachOWriter &mow, MachOSection &mos) :
+      ObjectCodeEmitter(&mos), MOW(mow), TM(MOW.TM) {
+  is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
+  isLittleEndian = TM.getTargetData()->isLittleEndian();
+  TAI = TM.getTargetAsmInfo();
+}
+
 /// startFunction - This callback is invoked when a new machine function is
 /// about to be emitted.
 
@@ -141,7 +153,8 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
     for (unsigned j = 0; j < Size; ++j)
       SecDataOut.outbyte(0);
 
-    MachOWriter::InitMem(CP[i].Val.ConstVal, CPLocations[i], TM.getTargetData(), Sec);
+    MachOWriter::InitMem(CP[i].Val.ConstVal, CPLocations[i],
+                         TM.getTargetData(), Sec);
   }
 }
 

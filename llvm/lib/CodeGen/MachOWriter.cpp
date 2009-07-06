@@ -22,25 +22,20 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MachO.h"
 #include "MachOWriter.h"
 #include "MachOCodeEmitter.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/CodeGen/FileWriters.h"
-#include "llvm/CodeGen/MachineCodeEmitter.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
-#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetJITInfo.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetMachOWriterInfo.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/OutputBuffer.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <cstring>
 
 namespace llvm {
 
@@ -60,16 +55,14 @@ ObjectCodeEmitter *AddMachOWriter(PassManagerBase &PM,
 
 char MachOWriter::ID = 0;
 
-MachOWriter::MachOWriter(raw_ostream &o, TargetMachine &tm) 
-  : MachineFunctionPass(&ID), O(o), TM(tm)
-  {
+MachOWriter::MachOWriter(raw_ostream &o, TargetMachine &tm)
+  : MachineFunctionPass(&ID), O(o), TM(tm) {
   is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
   isLittleEndian = TM.getTargetData()->isLittleEndian();
 
   TAI = TM.getTargetAsmInfo();
 
   // Create the machine code emitter object for this target.
-
   MachOCE = new MachOCodeEmitter(*this, *getTextSection(true));
 }
 
@@ -98,13 +91,13 @@ bool MachOWriter::runOnMachineFunction(MachineFunction &MF) {
 /// the Mach-O file to 'O'.
 bool MachOWriter::doFinalization(Module &M) {
   // FIXME: we don't handle debug info yet, we should probably do that.
-  // Okay, the.text section has been completed, build the .data, .bss, and 
+  // Okay, the.text section has been completed, build the .data, .bss, and
   // "common" sections next.
 
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     EmitGlobal(I);
-  
+
   // Emit the header and load commands.
   EmitHeaderAndLoadCommands();
 
@@ -124,6 +117,89 @@ bool MachOWriter::doFinalization(Module &M) {
   // Release the name mangler object.
   delete Mang; Mang = 0;
   return false;
+}
+
+// getConstSection - Get constant section for Constant 'C'
+MachOSection *MachOWriter::getConstSection(Constant *C) {
+  const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
+  if (CVA && CVA->isCString())
+    return getSection("__TEXT", "__cstring", 
+                      MachOSection::S_CSTRING_LITERALS);
+
+  const Type *Ty = C->getType();
+  if (Ty->isPrimitiveType() || Ty->isInteger()) {
+    unsigned Size = TM.getTargetData()->getTypeAllocSize(Ty);
+    switch(Size) {
+    default: break; // Fall through to __TEXT,__const
+    case 4:
+      return getSection("__TEXT", "__literal4",
+                        MachOSection::S_4BYTE_LITERALS);
+    case 8:
+      return getSection("__TEXT", "__literal8",
+                        MachOSection::S_8BYTE_LITERALS);
+    case 16:
+      return getSection("__TEXT", "__literal16",
+                        MachOSection::S_16BYTE_LITERALS);
+    }
+  }
+  return getSection("__TEXT", "__const");
+}
+
+// getJumpTableSection - Select the Jump Table section
+MachOSection *MachOWriter::getJumpTableSection() {
+  if (TM.getRelocationModel() == Reloc::PIC_)
+    return getTextSection(false);
+  else
+    return getSection("__TEXT", "__const");
+}
+
+// getSection - Return the section with the specified name, creating a new
+// section if one does not already exist.
+MachOSection *MachOWriter::getSection(const std::string &seg,
+                                      const std::string &sect,
+                                      unsigned Flags /* = 0 */ ) {
+  MachOSection *MOS = SectionLookup[seg+sect];
+  if (MOS) return MOS;
+
+  MOS = new MachOSection(seg, sect);
+  SectionList.push_back(MOS);
+  MOS->Index = SectionList.size();
+  MOS->flags = MachOSection::S_REGULAR | Flags;
+  SectionLookup[seg+sect] = MOS;
+  return MOS;
+}
+
+// getTextSection - Return text section with different flags for code/data
+MachOSection *MachOWriter::getTextSection(bool isCode /* = true */ ) {
+  if (isCode)
+    return getSection("__TEXT", "__text",
+                      MachOSection::S_ATTR_PURE_INSTRUCTIONS |
+                      MachOSection::S_ATTR_SOME_INSTRUCTIONS);
+  else
+    return getSection("__TEXT", "__text");
+}
+
+MachOSection *MachOWriter::getBSSSection() {
+  return getSection("__DATA", "__bss", MachOSection::S_ZEROFILL);
+}
+
+// GetJTRelocation - Get a relocation a new BB relocation based
+// on target information.
+MachineRelocation MachOWriter::GetJTRelocation(unsigned Offset,
+                                               MachineBasicBlock *MBB) const {
+  return TM.getMachOWriterInfo()->GetJTRelocation(Offset, MBB);
+}
+
+// GetTargetRelocation - Returns the number of relocations.
+unsigned MachOWriter::GetTargetRelocation(MachineRelocation &MR,
+                             unsigned FromIdx, unsigned ToAddr,
+                             unsigned ToIndex, OutputBuffer &RelocOut,
+                             OutputBuffer &SecOut, bool Scattered,
+                             bool Extern) {
+  return TM.getMachOWriterInfo()->GetTargetRelocation(MR, FromIdx, ToAddr,
+                                                      ToIndex, RelocOut,
+                                                      SecOut, Scattered,
+                                                      Extern);
 }
 
 void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
@@ -151,15 +227,15 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
 
   // Record the offset of the symbol, and then allocate space for it.
   // FIXME: remove when we have unified size + output buffer
-  
-  // Now that we know what section the GlovalVariable is going to be emitted 
+
+  // Now that we know what section the GlovalVariable is going to be emitted
   // into, update our mappings.
   // FIXME: We may also need to update this when outputting non-GlobalVariable
   // GlobalValues such as functions.
 
   GVSection[GV] = Sec;
   GVOffset[GV] = Sec->size();
-  
+
   // Allocate space in the section for the global.
   for (unsigned i = 0; i < Size; ++i)
     SecDataOut.outbyte(0);
@@ -169,7 +245,7 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
   const Type *Ty = GV->getType()->getElementType();
   unsigned Size = TM.getTargetData()->getTypeAllocSize(Ty);
   bool NoInit = !GV->hasInitializer();
-  
+
   // If this global has a zero initializer, it is part of the .bss or common
   // section.
   if (NoInit || GV->getInitializer()->isNullValue()) {
@@ -178,7 +254,8 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
     // merged with other symbols.
     if (NoInit || GV->hasLinkOnceLinkage() || GV->hasWeakLinkage() ||
         GV->hasCommonLinkage()) {
-      MachOSym ExtOrCommonSym(GV, Mang->getValueName(GV), MachOSym::NO_SECT, TAI);
+      MachOSym ExtOrCommonSym(GV, Mang->getValueName(GV),
+                              MachOSym::NO_SECT, TAI);
       // For undefined (N_UNDF) external (N_EXT) types, n_value is the size in
       // bytes of the symbol.
       ExtOrCommonSym.n_value = Size;
@@ -192,11 +269,11 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
     AddSymbolToSection(BSS, GV);
     return;
   }
-  
+
   // Scalar read-only data goes in a literal section if the scalar is 4, 8, or
   // 16 bytes, or a cstring.  Other read only data goes into a regular const
   // section.  Read-write data goes in the data section.
-  MachOSection *Sec = GV->isConstant() ? getConstSection(GV->getInitializer()) : 
+  MachOSection *Sec = GV->isConstant() ? getConstSection(GV->getInitializer()) :
                                          getDataSection();
   AddSymbolToSection(Sec, GV);
   InitMem(GV->getInitializer(), GVOffset[GV], TM.getTargetData(), Sec);
@@ -210,22 +287,22 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
 
   MachOSegment SEG("", is64Bit);
   SEG.nsects  = SectionList.size();
-  SEG.cmdsize = SEG.cmdSize(is64Bit) + 
+  SEG.cmdsize = SEG.cmdSize(is64Bit) +
                 SEG.nsects * SectionList[0]->cmdSize(is64Bit);
-  
+
   // Step #1: calculate the number of load commands.  We always have at least
   //          one, for the LC_SEGMENT load command, plus two for the normal
   //          and dynamic symbol tables, if there are any symbols.
   Header.ncmds = SymbolTable.empty() ? 1 : 3;
-  
+
   // Step #2: calculate the size of the load commands
   Header.sizeofcmds = SEG.cmdsize;
   if (!SymbolTable.empty())
     Header.sizeofcmds += SymTab.cmdsize + DySymTab.cmdsize;
-    
+
   // Step #3: write the header to the file
   // Local alias to shortenify coming code.
-  DataBuffer &FH = Header.HeaderData;
+  std::vector<unsigned char> &FH = Header.HeaderData;
   OutputBuffer FHOut(FH, is64Bit, isLittleEndian);
 
   FHOut.outword(Header.magic);
@@ -237,7 +314,7 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   FHOut.outword(Header.flags);
   if (is64Bit)
     FHOut.outword(Header.reserved);
-  
+
   // Step #4: Finish filling in the segment load command and write it out
   for (std::vector<MachOSection*>::iterator I = SectionList.begin(),
          E = SectionList.end(); I != E; ++I)
@@ -245,7 +322,7 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
 
   SEG.vmsize = SEG.filesize;
   SEG.fileoff = Header.cmdSize(is64Bit) + Header.sizeofcmds;
-  
+
   FHOut.outword(SEG.cmd);
   FHOut.outword(SEG.cmdsize);
   FHOut.outstring(SEG.segname, 16);
@@ -257,8 +334,8 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   FHOut.outword(SEG.initprot);
   FHOut.outword(SEG.nsects);
   FHOut.outword(SEG.flags);
-  
-  // Step #5: Finish filling in the fields of the MachOSections 
+
+  // Step #5: Finish filling in the fields of the MachOSections
   uint64_t currentAddr = 0;
   for (std::vector<MachOSection*>::iterator I = SectionList.begin(),
          E = SectionList.end(); I != E; ++I) {
@@ -268,13 +345,13 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
     // FIXME: do we need to do something with alignment here?
     currentAddr += MOS->size();
   }
-  
+
   // Step #6: Emit the symbol table to temporary buffers, so that we know the
   // size of the string table when we write the next load command.  This also
   // sorts and assigns indices to each of the symbols, which is necessary for
   // emitting relocations to externally-defined objects.
   BufferSymbolAndStringTable();
-  
+
   // Step #7: Calculate the number of relocations for each section and write out
   // the section commands for each section
   currentAddr += SEG.fileoff;
@@ -287,7 +364,7 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
     CalculateRelocations(*MOS);
     MOS->reloff = MOS->nreloc ? currentAddr : 0;
     currentAddr += MOS->nreloc * 8;
-    
+
     // write the finalized section command to the output buffer
     FHOut.outstring(MOS->sectname, 16);
     FHOut.outstring(MOS->segname, 16);
@@ -303,7 +380,7 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
     if (is64Bit)
       FHOut.outword(MOS->reserved3);
   }
-  
+
   // Step #8: Emit LC_SYMTAB/LC_DYSYMTAB load commands
   SymTab.symoff  = currentAddr;
   SymTab.nsyms   = SymbolTable.size();
@@ -339,7 +416,7 @@ void MachOWriter::EmitHeaderAndLoadCommands() {
   FHOut.outword(DySymTab.nextrel);
   FHOut.outword(DySymTab.locreloff);
   FHOut.outword(DySymTab.nlocrel);
-  
+
   O.write((char*)&FH[0], FH.size());
 }
 
@@ -370,7 +447,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
   // 1. local symbols
   // 2. defined external symbols (sorted by name)
   // 3. undefined external symbols (sorted by name)
-  
+
   // Before sorting the symbols, check the PendingGlobals for any undefined
   // globals that need to be put in the symbol table.
   for (std::vector<GlobalValue*>::iterator I = PendingGlobals.begin(),
@@ -386,10 +463,11 @@ void MachOWriter::BufferSymbolAndStringTable() {
   // of definition, we won't have to sort by name within each partition.
   std::sort(SymbolTable.begin(), SymbolTable.end(), MachOSym::SymCmp());
 
-  // Parition the symbol table entries so that all local symbols come before 
+  // Parition the symbol table entries so that all local symbols come before
   // all symbols with external linkage. { 1 | 2 3 }
-  std::partition(SymbolTable.begin(), SymbolTable.end(), MachOSym::PartitionByLocal);
-  
+  std::partition(SymbolTable.begin(), SymbolTable.end(),
+                 MachOSym::PartitionByLocal);
+
   // Advance iterator to beginning of external symbols and partition so that
   // all external symbols defined in this module come before all external
   // symbols defined elsewhere. { 1 | 2 | 3 }
@@ -401,7 +479,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
     }
   }
 
-  // Calculate the starting index for each of the local, extern defined, and 
+  // Calculate the starting index for each of the local, extern defined, and
   // undefined symbols, as well as the number of each to put in the LC_DYSYMTAB
   // load command.
   for (std::vector<MachOSym>::iterator I = SymbolTable.begin(),
@@ -417,7 +495,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
       ++DySymTab.nundefsym;
     }
   }
-  
+
   // Write out a leading zero byte when emitting string table, for n_strx == 0
   // which means an empty string.
   OutputBuffer StrTOut(StrT, is64Bit, isLittleEndian);
@@ -451,7 +529,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
       I->n_value += GVSection[GV]->addr;
     if (GV && (GVOffset[GV] == -1))
       GVOffset[GV] = index;
-         
+
     // Emit nlist to buffer
     SymTOut.outword(I->n_strx);
     SymTOut.outbyte(I->n_type);
@@ -486,7 +564,7 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
       GlobalValue *GV = MR.getGlobalValue();
       MachOSection *MOSPtr = GVSection[GV];
       intptr_t Offset = GVOffset[GV];
-      
+
       // If we have never seen the global before, it must be to a symbol
       // defined in another module (N_UNDF).
       if (!MOSPtr) {
@@ -500,7 +578,7 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
       }
       MR.setResultPointer((void*)Offset);
     }
-    
+
     // If the symbol is locally defined, pass in the address of the section and
     // the section index to the code which will generate the target relocation.
     if (!Extern) {
@@ -519,21 +597,21 @@ void MachOWriter::CalculateRelocations(MachOSection &MOS) {
 
 // InitMem - Write the value of a Constant to the specified memory location,
 // converting it into bytes and relocations.
-void MachOWriter::InitMem(const Constant *C, uintptr_t Offset, 
+void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
                           const TargetData *TD, MachOSection* mos) {
   typedef std::pair<const Constant*, intptr_t> CPair;
   std::vector<CPair> WorkList;
   uint8_t *Addr = &mos->getData()[0];
-  
+
   WorkList.push_back(CPair(C,(intptr_t)Addr + Offset));
-  
+
   intptr_t ScatteredOffset = 0;
-  
+
   while (!WorkList.empty()) {
     const Constant *PC = WorkList.back().first;
     intptr_t PA = WorkList.back().second;
     WorkList.pop_back();
-    
+
     if (isa<UndefValue>(PC)) {
       continue;
     } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(PC)) {
@@ -626,7 +704,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
           memset(ptr, 0, TD->getPointerSize());
         else if (const GlobalValue* GV = dyn_cast<GlobalValue>(PC)) {
           // FIXME: what about function stubs?
-          mos->addRelocation(MachineRelocation::getGV(PA-(intptr_t)Addr, 
+          mos->addRelocation(MachineRelocation::getGV(PA-(intptr_t)Addr,
                                                  MachineRelocation::VANILLA,
                                                  const_cast<GlobalValue*>(GV),
                                                  ScatteredOffset));

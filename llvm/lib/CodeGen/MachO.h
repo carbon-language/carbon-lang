@@ -14,18 +14,15 @@
 #ifndef MACHO_H
 #define MACHO_H
 
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/CodeGen/BinaryObject.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include <string>
 #include <vector>
 
 namespace llvm {
 
-typedef std::vector<unsigned char> DataBuffer;
-  
+class GlobalValue;
+class TargetAsmInfo;
+
 /// MachOSym - This struct contains information about each symbol that is
 /// added to logical symbol table for the module.  This is eventually
 /// turned into a real symbol table in the file.
@@ -111,7 +108,7 @@ struct MachOHeader {
   
   /// HeaderData - The actual data for the header which we are building
   /// up for emission to the file.
-  DataBuffer HeaderData;
+  std::vector<unsigned char> HeaderData;
 
   // Constants for the filetype field
   // see <mach-o/loader.h> for additional info on the various types
@@ -181,8 +178,8 @@ struct MachOHeader {
   };
 
   MachOHeader() : magic(0), filetype(0), ncmds(0), sizeofcmds(0), flags(0),
-                  reserved(0) { }
-  
+                  reserved(0) {}
+
   /// cmdSize - This routine returns the size of the MachOSection as written
   /// to disk, depending on whether the destination is a 64 bit Mach-O file.
   unsigned cmdSize(bool is64Bit) const {
@@ -204,7 +201,7 @@ struct MachOHeader {
   }
 
 }; // end struct MachOHeader
-    
+
 /// MachOSegment - This struct contains the necessary information to
 /// emit the load commands for each section in the file.
 struct MachOSegment {
@@ -246,13 +243,13 @@ struct MachOSegment {
          SEG_VM_PROT_EXECUTE  = VM_PROT_EXECUTE,
          SEG_VM_PROT_ALL      = VM_PROT_ALL
   };
-  
+
   // Constants for the cmd field
   // see <mach-o/loader.h>
   enum { LC_SEGMENT    = 0x01,  // segment of this file to be mapped
          LC_SEGMENT_64 = 0x19   // 64-bit segment of this file to be mapped
   };
-  
+
   /// cmdSize - This routine returns the size of the MachOSection as written
   /// to disk, depending on whether the destination is a 64 bit Mach-O file.
   unsigned cmdSize(bool is64Bit) const {
@@ -285,15 +282,15 @@ struct MachOSection : public BinaryObject {
   uint32_t  reserved1;   // reserved (for offset or index)
   uint32_t  reserved2;   // reserved (for count or sizeof)
   uint32_t  reserved3;   // reserved (64 bit only)
-  
+
   /// A unique number for this section, which will be used to match symbols
   /// to the correct section.
   uint32_t Index;
-  
+
   /// RelocBuffer - A buffer to hold the mach-o relocations before we write
   /// them out at the appropriate location in the file.
-  DataBuffer RelocBuffer;
-  
+  std::vector<unsigned char> RelocBuffer;
+
   // Constants for the section types (low 8 bits of flags field)
   // see <mach-o/loader.h>
   enum { S_REGULAR = 0,
@@ -405,7 +402,7 @@ struct MachODySymTab {
     ilocalsym(0), nlocalsym(0), iextdefsym(0), nextdefsym(0),
     iundefsym(0), nundefsym(0), tocoff(0), ntoc(0), modtaboff(0),
     nmodtab(0), extrefsymoff(0), nextrefsyms(0), indirectsymoff(0),
-    nindirectsyms(0), extreloff(0), nextrel(0), locreloff(0), nlocrel(0) { }
+    nindirectsyms(0), extreloff(0), nextrel(0), locreloff(0), nlocrel(0) {}
 
 }; // end struct MachODySymTab
 

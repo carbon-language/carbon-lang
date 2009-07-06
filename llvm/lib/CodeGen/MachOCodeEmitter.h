@@ -10,9 +10,12 @@
 #ifndef MACHOCODEEMITTER_H
 #define MACHOCODEEMITTER_H
 
-#include "MachOWriter.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
+#include <map>
 
 namespace llvm {
+
+class MachOWriter;
 
 /// MachOCodeEmitter - This class is used by the MachOWriter to emit the code 
 /// for functions to the Mach-O file.
@@ -36,12 +39,7 @@ class MachOCodeEmitter : public ObjectCodeEmitter {
   std::map<uint64_t, uintptr_t> Labels;
 
 public:
-  MachOCodeEmitter(MachOWriter &mow, MachOSection &mos) : 
-        ObjectCodeEmitter(&mos), MOW(mow), TM(MOW.TM) {
-    is64Bit = TM.getTargetData()->getPointerSizeInBits() == 64;
-    isLittleEndian = TM.getTargetData()->isLittleEndian();
-    TAI = TM.getTargetAsmInfo();  
-  }
+  MachOCodeEmitter(MachOWriter &mow, MachOSection &mos);
 
   virtual void startFunction(MachineFunction &MF);
   virtual bool finishFunction(MachineFunction &MF);
@@ -49,7 +47,7 @@ public:
   virtual void addRelocation(const MachineRelocation &MR) {
     Relocations.push_back(MR);
   }
-  
+
   void emitConstantPool(MachineConstantPool *MCP);
   void emitJumpTables(MachineJumpTableInfo *MJTI);
 
