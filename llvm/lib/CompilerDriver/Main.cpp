@@ -31,17 +31,6 @@ namespace {
   sys::Path getTempDir() {
     sys::Path tempDir;
 
-/////////////////////////////////////////////
-    std::string p = "tmp-objs";
-    tempDir = sys::Path(p);
-      if (!tempDir.exists()) {
-        std::string ErrMsg;
-        if (tempDir.createDirectoryOnDisk(true, &ErrMsg))
-          throw std::runtime_error(ErrMsg);
-      }
-    return tempDir;
-/////////////////////////////////////////////
-
     // GCC 4.5-style -save-temps handling.
     if (SaveTemps == SaveTempsEnum::Unset) {
       tempDir = sys::Path::GetTemporaryDirectory();

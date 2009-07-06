@@ -52,5 +52,4 @@ cl::opt<SaveTempsEnum::Values> SaveTemps
                        "Use current working directory"),
             clEnumValN(SaveTempsEnum::Obj, "", "Same as 'cwd'"),
             clEnumValEnd),
- //cl::ValueOptional);
- cl::Hidden);
+ cl::ValueOptional);
