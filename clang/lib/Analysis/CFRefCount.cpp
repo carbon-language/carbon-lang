@@ -2757,10 +2757,7 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                              ExplodedNode<GRState>* Pred) {
   
   // Get the state.
-  GRStateManager& StateMgr = Eng.getStateManager();
   const GRState *state = Builder.GetState(Pred);
-  ASTContext& Ctx = StateMgr.getContext();
-  ValueManager &ValMgr = Eng.getValueManager();
 
   // Evaluate the effect of the arguments.
   RefVal::Kind hasErr = (RefVal::Kind) 0;
@@ -2796,59 +2793,54 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         //  expression (the context) and the expression itself.  This should
         //  disambiguate conjured symbols. 
         unsigned Count = Builder.getCurrentBlockCount();
-        const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
-        StoreManager& StoreMgr = 
-          Eng.getStateManager().getStoreManager();
-        if (R) {
-          // Are we dealing with an ElementRegion?  If the element type is
-          // a basic integer type (e.g., char, int) and the underying region
-          // is a variable region then strip off the ElementRegion.
-          // FIXME: We really need to think about this for the general case
-          //   as sometimes we are reasoning about arrays and other times
-          //   about (char*), etc., is just a form of passing raw bytes.
-          //   e.g., void *p = alloca(); foo((char*)p);
-          if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
-            // Checking for 'integral type' is probably too promiscuous, but
-            // we'll leave it in for now until we have a systematic way of
-            // handling all of these cases.  Eventually we need to come up
-            // with an interface to StoreManager so that this logic can be
-            // approriately delegated to the respective StoreManagers while
-            // still allowing us to do checker-specific logic (e.g.,
-            // invalidating reference counts), probably via callbacks.
-            if (ER->getElementType()->isIntegralType()) {
-              const MemRegion *superReg = ER->getSuperRegion();
-              if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
-                  isa<ObjCIvarRegion>(superReg))
-                R = cast<TypedRegion>(superReg);
-            }
+        StoreManager& StoreMgr = Eng.getStateManager().getStoreManager();
 
-            // FIXME: What about layers of ElementRegions?
+        const MemRegion *R = MR->getRegion();
+        // Are we dealing with an ElementRegion?  If the element type is
+        // a basic integer type (e.g., char, int) and the underying region
+        // is a variable region then strip off the ElementRegion.
+        // FIXME: We really need to think about this for the general case
+        //   as sometimes we are reasoning about arrays and other times
+        //   about (char*), etc., is just a form of passing raw bytes.
+        //   e.g., void *p = alloca(); foo((char*)p);
+        if (const ElementRegion *ER = dyn_cast<ElementRegion>(R)) {
+          // Checking for 'integral type' is probably too promiscuous, but
+          // we'll leave it in for now until we have a systematic way of
+          // handling all of these cases.  Eventually we need to come up
+          // with an interface to StoreManager so that this logic can be
+          // approriately delegated to the respective StoreManagers while
+          // still allowing us to do checker-specific logic (e.g.,
+          // invalidating reference counts), probably via callbacks.
+          if (ER->getElementType()->isIntegralType()) {
+            const MemRegion *superReg = ER->getSuperRegion();
+            if (isa<VarRegion>(superReg) || isa<FieldRegion>(superReg) ||
+                isa<ObjCIvarRegion>(superReg))
+              R = cast<TypedRegion>(superReg);
           }
-          
-          // Is the invalidated variable something that we were tracking?
-          SymbolRef Sym = state->getSValAsScalarOrLoc(R).getAsLocSymbol();
-          
-          // Remove any existing reference-count binding.
-          if (Sym) state = state->remove<RefBindings>(Sym);
+          // FIXME: What about layers of ElementRegions?
+        }
 
-          state = StoreMgr.InvalidateRegion(state, R, *I, Count);
-        }
-        else if (isa<AllocaRegion>(MR->getRegion())) {
-          // Invalidate the alloca region by setting its default value to 
-          // conjured symbol. The type of the symbol is irrelavant.
-          SVal V = ValMgr.getConjuredSymbolVal(*I, Eng.getContext().IntTy, 
-                                               Count);
-          state = StoreMgr.setDefaultValue(state, MR->getRegion(), V);
-        }
-        else
-          state = state->bindLoc(*MR, UnknownVal());
+        // Is the invalidated variable something that we were tracking?
+        SymbolRef Sym = state->getSValAsScalarOrLoc(R).getAsLocSymbol();
+        
+        // Remove any existing reference-count binding.
+        if (Sym) 
+          state = state->remove<RefBindings>(Sym);
+
+        state = StoreMgr.InvalidateRegion(state, R, *I, Count);
       }
       else {
         // Nuke all other arguments passed by reference.
+        // FIXME: is this necessary or correct? unbind only removes the binding.
+        // We should bind it to UnknownVal explicitly. Otherwise default value
+        // may be loaded.
         state = state->unbindLoc(cast<Loc>(V));
       }
     }
     else if (isa<nonloc::LocAsInteger>(V))
+      // FIXME: is this necessary or correct? unbind only removes the binding.
+      // We should bind it to UnknownVal explicitly. Otherwise default value
+      // may be loaded.
       state = state->unbindLoc(cast<nonloc::LocAsInteger>(V).getLoc());
   } 
   

@@ -111,17 +111,28 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
 }
 
 const GRState *StoreManager::InvalidateRegion(const GRState *state,
-                                              const TypedRegion *R,
+                                              const MemRegion *R,
                                               const Expr *E, unsigned Count) {
+  ASTContext& Ctx = StateMgr.getContext();
+
   if (!R->isBoundable())
     return state;
 
-  ASTContext& Ctx = StateMgr.getContext();
-  QualType T = R->getValueType(Ctx);
+  if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R)) {
+    // Invalidate the alloca region by setting its default value to 
+    // conjured symbol. The type of the symbol is irrelavant.
+    SVal V = ValMgr.getConjuredSymbolVal(E, Ctx.IntTy, Count);
+    state = setDefaultValue(state, R, V);
+    return state;
+  }
+
+  const TypedRegion *TR = cast<TypedRegion>(R);
+
+  QualType T = TR->getValueType(Ctx);
 
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
     SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);
-    return Bind(state, ValMgr.makeLoc(R), V);
+    return Bind(state, ValMgr.makeLoc(TR), V);
   }
   else if (const RecordType *RT = T->getAsStructureType()) {
     // FIXME: handle structs with default region value.
@@ -138,7 +149,7 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
       // For now just handle scalar fields.
       FieldDecl *FD = *FI;
       QualType FT = FD->getType();
-      const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
+      const FieldRegion* FR = MRMgr.getFieldRegion(FD, TR);
       
       if (Loc::IsLocType(FT) || 
           (FT->isIntegerType() && FT->isScalarType())) {
@@ -158,10 +169,10 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
     // Set the default value of the array to conjured symbol.
     SVal V = ValMgr.getConjuredSymbolVal(E, AT->getElementType(),
                                          Count);
-    state = setDefaultValue(state, R, V);
+    state = setDefaultValue(state, TR, V);
   } else {
     // Just blast away other values.
-    state = Bind(state, ValMgr.makeLoc(R), UnknownVal());
+    state = Bind(state, ValMgr.makeLoc(TR), UnknownVal());
   }
   
   return state;
