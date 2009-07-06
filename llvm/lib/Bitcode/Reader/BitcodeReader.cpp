@@ -1010,7 +1010,6 @@ bool BitcodeReader::ParseConstants() {
       break;
     }
     case bitc::CST_CODE_MDSTRING: {
-      if (Record.size() < 2) return Error("Invalid MDSTRING record");
       unsigned MDStringLength = Record.size();
       SmallString<8> String;
       String.resize(MDStringLength);
