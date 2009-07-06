@@ -218,6 +218,7 @@ void LLVMSetTarget(LLVMModuleRef M, const char *Triple);
 /** See Module::addTypeName. */
 int LLVMAddTypeName(LLVMModuleRef M, const char *Name, LLVMTypeRef Ty);
 void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name);
+LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name);
 
 /** See Module::dump. */
 void LLVMDumpModule(LLVMModuleRef M);
@@ -398,6 +399,7 @@ LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty);
 int LLVMIsConstant(LLVMValueRef Val);
 int LLVMIsNull(LLVMValueRef Val);
 int LLVMIsUndef(LLVMValueRef Val);
+LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty);
 
 /* Operations on scalar constants */
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,

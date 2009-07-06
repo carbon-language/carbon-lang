@@ -101,6 +101,11 @@ void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name) {
       TST.remove(I);
 }
 
+LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name) {
+  std::string N(Name);
+  return wrap(unwrap(M)->getTypeByName(N));
+}
+
 void LLVMDumpModule(LLVMModuleRef M) {
   unwrap(M)->dump();
 }
@@ -311,6 +316,10 @@ int LLVMIsNull(LLVMValueRef Val) {
 
 int LLVMIsUndef(LLVMValueRef Val) {
   return isa<UndefValue>(unwrap(Val));
+}
+
+LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty) {
+  return wrap(ConstantPointerNull::get(unwrap<PointerType>(Ty)));
 }
 
 /*--.. Operations on scalar constants ......................................--*/
