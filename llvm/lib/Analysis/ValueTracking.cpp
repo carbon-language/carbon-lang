@@ -17,6 +17,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
@@ -834,6 +835,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
                                  SmallVector<unsigned, 10> &Idxs,
                                  unsigned IdxSkip,
+                                 LLVMContext* Context,
                                  Instruction *InsertBefore) {
   const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
   if (STy) {
@@ -845,7 +847,7 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
       Idxs.push_back(i);
       Value *PrevTo = To;
       To = BuildSubAggregate(From, To, STy->getElementType(i), Idxs, IdxSkip,
-                             InsertBefore);
+                             Context, InsertBefore);
       Idxs.pop_back();
       if (!To) {
         // Couldn't find any inserted value for this index? Cleanup
@@ -868,7 +870,7 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
   // we might be able to find the complete struct somewhere.
   
   // Find the value that is at that particular spot
-  Value *V = FindInsertedValue(From, Idxs.begin(), Idxs.end());
+  Value *V = FindInsertedValue(From, Idxs.begin(), Idxs.end(), Context);
 
   if (!V)
     return NULL;
@@ -891,16 +893,18 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 //
 // All inserted insertvalue instructions are inserted before InsertBefore
 Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
-                         const unsigned *idx_end, Instruction *InsertBefore) {
+                         const unsigned *idx_end, LLVMContext *Context,
+                         Instruction *InsertBefore) {
   assert(InsertBefore && "Must have someplace to insert!");
   const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
                                                              idx_begin,
                                                              idx_end);
-  Value *To = UndefValue::get(IndexedType);
+  Value *To = Context->getUndef(IndexedType);
   SmallVector<unsigned, 10> Idxs(idx_begin, idx_end);
   unsigned IdxSkip = Idxs.size();
 
-  return BuildSubAggregate(From, To, IndexedType, Idxs, IdxSkip, InsertBefore);
+  return BuildSubAggregate(From, To, IndexedType, Idxs, IdxSkip,
+                           Context, InsertBefore);
 }
 
 /// FindInsertedValue - Given an aggregrate and an sequence of indices, see if
@@ -910,7 +914,8 @@ Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
 /// If InsertBefore is not null, this function will duplicate (modified)
 /// insertvalues when a part of a nested struct is extracted.
 Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
-                         const unsigned *idx_end, Instruction *InsertBefore) {
+                         const unsigned *idx_end, LLVMContext* Context,
+                         Instruction *InsertBefore) {
   // Nothing to index? Just return V then (this is useful at the end of our
   // recursion)
   if (idx_begin == idx_end)
@@ -921,20 +926,20 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
   assert(ExtractValueInst::getIndexedType(V->getType(), idx_begin, idx_end)
          && "Invalid indices for type?");
   const CompositeType *PTy = cast<CompositeType>(V->getType());
-  
+
   if (isa<UndefValue>(V))
-    return UndefValue::get(ExtractValueInst::getIndexedType(PTy,
+    return Context->getUndef(ExtractValueInst::getIndexedType(PTy,
                                                               idx_begin,
                                                               idx_end));
   else if (isa<ConstantAggregateZero>(V))
-    return Constant::getNullValue(ExtractValueInst::getIndexedType(PTy, 
-                                                                     idx_begin,
-                                                                     idx_end));
+    return Context->getNullValue(ExtractValueInst::getIndexedType(PTy, 
+                                                                  idx_begin,
+                                                                  idx_end));
   else if (Constant *C = dyn_cast<Constant>(V)) {
     if (isa<ConstantArray>(C) || isa<ConstantStruct>(C))
       // Recursively process this constant
-      return FindInsertedValue(C->getOperand(*idx_begin), idx_begin + 1, idx_end,
-                               InsertBefore);
+      return FindInsertedValue(C->getOperand(*idx_begin), idx_begin + 1,
+                               idx_end, Context, InsertBefore);
   } else if (InsertValueInst *I = dyn_cast<InsertValueInst>(V)) {
     // Loop the indices for the insertvalue instruction in parallel with the
     // requested indices
@@ -953,7 +958,8 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
           // %C = insertvalue {i32, i32 } %A, i32 11, 1
           // which allows the unused 0,0 element from the nested struct to be
           // removed.
-          return BuildSubAggregate(V, idx_begin, req_idx, InsertBefore);
+          return BuildSubAggregate(V, idx_begin, req_idx,
+                                   Context, InsertBefore);
         else
           // We can't handle this without inserting insertvalues
           return 0;
@@ -964,13 +970,13 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
       // looking for, then.
       if (*req_idx != *i)
         return FindInsertedValue(I->getAggregateOperand(), idx_begin, idx_end,
-                                 InsertBefore);
+                                 Context, InsertBefore);
     }
     // If we end up here, the indices of the insertvalue match with those
     // requested (though possibly only partially). Now we recursively look at
     // the inserted value, passing any remaining indices.
     return FindInsertedValue(I->getInsertedValueOperand(), req_idx, idx_end,
-                             InsertBefore);
+                             Context, InsertBefore);
   } else if (ExtractValueInst *I = dyn_cast<ExtractValueInst>(V)) {
     // If we're extracting a value from an aggregrate that was extracted from
     // something else, we can extract from that something else directly instead.
@@ -994,7 +1000,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
            && "Number of indices added not correct?");
     
     return FindInsertedValue(I->getAggregateOperand(), Idxs.begin(), Idxs.end(),
-                             InsertBefore);
+                             Context, InsertBefore);
   }
   // Otherwise, we don't know (such as, extracting from a function return value
   // or load instruction)

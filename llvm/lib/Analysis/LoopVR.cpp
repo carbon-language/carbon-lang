@@ -15,6 +15,7 @@
 #include "llvm/Analysis/LoopVR.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
@@ -71,8 +72,8 @@ ConstantRange LoopVR::getRange(const SCEV* S, const SCEV* T, ScalarEvolution &SE
     ConstantRange X = getRange(Mul->getOperand(0), T, SE);
     if (X.isFullSet()) return FullSet;
 
-    const IntegerType *Ty = IntegerType::get(X.getBitWidth());
-    const IntegerType *ExTy = IntegerType::get(X.getBitWidth() *
+    const IntegerType *Ty = Context->getIntegerType(X.getBitWidth());
+    const IntegerType *ExTy = Context->getIntegerType(X.getBitWidth() *
                                                Mul->getNumOperands());
     ConstantRange XExt = X.zeroExtend(ExTy->getBitWidth());
 

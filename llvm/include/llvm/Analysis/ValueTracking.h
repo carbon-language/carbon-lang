@@ -23,6 +23,7 @@ namespace llvm {
   class Instruction;
   class APInt;
   class TargetData;
+  class LLVMContext;
   
   /// ComputeMaskedBits - Determine which of the bits specified in Mask are
   /// known to be either zero or one and return them in the KnownZero/KnownOne
@@ -64,14 +65,16 @@ namespace llvm {
   Value *FindInsertedValue(Value *V,
                            const unsigned *idx_begin,
                            const unsigned *idx_end,
+                           LLVMContext *Context,
                            Instruction *InsertBefore = 0);
 
   /// This is a convenience wrapper for finding values indexed by a single index
   /// only.
   inline Value *FindInsertedValue(Value *V, const unsigned Idx,
+                                  LLVMContext *Context,
                                   Instruction *InsertBefore = 0) {
     const unsigned Idxs[1] = { Idx };
-    return FindInsertedValue(V, &Idxs[0], &Idxs[1], InsertBefore);
+    return FindInsertedValue(V, &Idxs[0], &Idxs[1], Context, InsertBefore);
   }
   
   /// GetConstantStringInfo - This function computes the length of a

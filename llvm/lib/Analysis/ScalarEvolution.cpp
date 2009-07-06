@@ -65,6 +65,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -3839,8 +3840,12 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
       return std::make_pair(CNC, CNC);
     }
 
-    ConstantInt *Solution1 = ConstantInt::get((NegB + SqrtVal).sdiv(TwoA));
-    ConstantInt *Solution2 = ConstantInt::get((NegB - SqrtVal).sdiv(TwoA));
+    LLVMContext *Context = SE.getContext();
+
+    ConstantInt *Solution1 =
+      Context->getConstantInt((NegB + SqrtVal).sdiv(TwoA));
+    ConstantInt *Solution2 =
+      Context->getConstantInt((NegB - SqrtVal).sdiv(TwoA));
 
     return std::make_pair(SE.getConstant(Solution1),
                           SE.getConstant(Solution2));
@@ -3908,7 +3913,7 @@ const SCEV* ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 #endif
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT,
+          dyn_cast<ConstantInt>(Context->getConstantExprICmp(ICmpInst::ICMP_ULT,
                                    R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
@@ -4157,7 +4162,7 @@ const SCEV* ScalarEvolution::getBECount(const SCEV* Start,
 
   // Check Add for unsigned overflow.
   // TODO: More sophisticated things could be done here.
-  const Type *WideTy = IntegerType::get(getTypeSizeInBits(Ty) + 1);
+  const Type *WideTy = Context->getIntegerType(getTypeSizeInBits(Ty) + 1);
   const SCEV* OperandExtendedAdd =
     getAddExpr(getZeroExtendExpr(Diff, WideTy),
                getZeroExtendExpr(RoundUp, WideTy));
@@ -4313,7 +4318,7 @@ const SCEV* SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
     // The exit value should be (End+A)/A.
     APInt ExitVal = (End + A).udiv(A);
-    ConstantInt *ExitValue = ConstantInt::get(ExitVal);
+    ConstantInt *ExitValue = SE.getContext()->getConstantInt(ExitVal);
 
     // Evaluate at the exit value.  If we really did fall out of the valid
     // range, then we computed our trip count, otherwise wrap around or other
@@ -4325,7 +4330,7 @@ const SCEV* SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // Ensure that the previous value is in the range.  This is a sanity check.
     assert(Range.contains(
            EvaluateConstantChrecAtConstant(this,
-           ConstantInt::get(ExitVal - One), SE)->getValue()) &&
+           SE.getContext()->getConstantInt(ExitVal - One), SE)->getValue()) &&
            "Linear scev computation is off in a bad way!");
     return SE.getConstant(ExitValue);
   } else if (isQuadratic()) {
@@ -4345,8 +4350,9 @@ const SCEV* SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     if (R1) {
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT,
-                                   R1->getValue(), R2->getValue()))) {
+          dyn_cast<ConstantInt>(
+                       SE.getContext()->getConstantExprICmp(ICmpInst::ICMP_ULT,
+                         R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
 
@@ -4358,7 +4364,8 @@ const SCEV* SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
                                                              SE);
         if (Range.contains(R1Val->getValue())) {
           // The next iteration must be out of the range...
-          ConstantInt *NextVal = ConstantInt::get(R1->getValue()->getValue()+1);
+          ConstantInt *NextVal =
+                 SE.getContext()->getConstantInt(R1->getValue()->getValue()+1);
 
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal, SE);
           if (!Range.contains(R1Val->getValue()))
@@ -4368,7 +4375,8 @@ const SCEV* SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
         // If R1 was not in the range, then it is a good return value.  Make
         // sure that R1-1 WAS in the range though, just in case.
-        ConstantInt *NextVal = ConstantInt::get(R1->getValue()->getValue()-1);
+        ConstantInt *NextVal =
+                 SE.getContext()->getConstantInt(R1->getValue()->getValue()-1);
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal, SE);
         if (Range.contains(R1Val->getValue()))
           return R1;

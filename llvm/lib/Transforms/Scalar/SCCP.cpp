@@ -642,7 +642,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
       DenseMap<std::pair<Function*, unsigned>, LatticeVal>::iterator
         It = TrackedMultipleRetVals.find(std::make_pair(F, i));
       if (It == TrackedMultipleRetVals.end()) break;
-      if (Value *Val = FindInsertedValue(I.getOperand(0), i))
+      if (Value *Val = FindInsertedValue(I.getOperand(0), i, Context))
         mergeInValue(It->second, F, getValueState(Val));
     }
   }

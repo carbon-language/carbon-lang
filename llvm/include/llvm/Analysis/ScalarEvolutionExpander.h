@@ -59,6 +59,8 @@ namespace llvm {
     }
 
   private:
+    LLVMContext *getContext() const { return SE.getContext(); }
+    
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.
     Value *InsertBinop(Instruction::BinaryOps Opcode, Value *LHS, Value *RHS);

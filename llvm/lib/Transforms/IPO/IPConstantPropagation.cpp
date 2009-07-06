@@ -183,7 +183,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
         if (!STy)
           V = RI->getOperand(i);
         else
-          V = FindInsertedValue(RI->getOperand(0), i);
+          V = FindInsertedValue(RI->getOperand(0), i, Context);
 
         if (V) {
           // Ignore undefs, we can change them into anything
