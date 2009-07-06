@@ -155,7 +155,9 @@ protected:
 public:
   
   const Expr* getExpr() const { return Ex; }
-  
+
+  bool isBoundable() const { return true; }
+
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Expr* Ex,
@@ -285,6 +287,8 @@ public:
   SymbolRef getSymbol() const {
     return sym;
   }
+
+  bool isBoundable() const { return true; }
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
