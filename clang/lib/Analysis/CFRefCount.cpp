@@ -2797,7 +2797,8 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
         //  disambiguate conjured symbols. 
         unsigned Count = Builder.getCurrentBlockCount();
         const TypedRegion* R = dyn_cast<TypedRegion>(MR->getRegion());
-
+        StoreManager& StoreMgr = 
+          Eng.getStateManager().getStoreManager();
         if (R) {
           // Are we dealing with an ElementRegion?  If the element type is
           // a basic integer type (e.g., char, int) and the underying region
@@ -2829,78 +2830,14 @@ void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
           
           // Remove any existing reference-count binding.
           if (Sym) state = state->remove<RefBindings>(Sym);
-          
-          if (R->isBoundable()) {
-            // Set the value of the variable to be a conjured symbol.
 
-            QualType T = R->getValueType(Ctx);
-          
-            if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())){
-              ValueManager &ValMgr = Eng.getValueManager();
-              SVal V = ValMgr.getConjuredSymbolVal(*I, T, Count);
-              state = state->bindLoc(ValMgr.makeLoc(R), V);
-            }
-            else if (const RecordType *RT = T->getAsStructureType()) {
-              // Handle structs in a not so awesome way.  Here we just
-              // eagerly bind new symbols to the fields.  In reality we
-              // should have the store manager handle this.  The idea is just
-              // to prototype some basic functionality here.  All of this logic
-              // should one day soon just go away.
-              const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);
-              
-              // No record definition.  There is nothing we can do.
-              if (!RD)
-                continue;
-              
-              MemRegionManager &MRMgr =
-                state->getStateManager().getRegionManager();
-              
-              // Iterate through the fields and construct new symbols.
-              for (RecordDecl::field_iterator FI=RD->field_begin(),
-                   FE=RD->field_end(); FI!=FE; ++FI) {
-                
-                // For now just handle scalar fields.
-                FieldDecl *FD = *FI;
-                QualType FT = FD->getType();
-                const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
-
-                if (Loc::IsLocType(FT) || 
-                    (FT->isIntegerType() && FT->isScalarType())) {
-                  SVal V = ValMgr.getConjuredSymbolVal(*I, FT, Count);
-                  state = state->bindLoc(ValMgr.makeLoc(FR), V);
-                }
-                else if (FT->isStructureType()) {
-                  // set the default value of the struct field to conjured
-                  // symbol. Note that the type of the symbol is irrelavant.
-                  // We cannot use the type of the struct otherwise ValMgr won't
-                  // give us the conjured symbol.
-                  StoreManager& StoreMgr = 
-                    Eng.getStateManager().getStoreManager();
-                  SVal V = ValMgr.getConjuredSymbolVal(*I, 
-                                                       Eng.getContext().IntTy,
-                                                       Count);
-                  state = StoreMgr.setDefaultValue(state, FR, V);
-                }
-              }
-            } else if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
-              // Set the default value of the array to conjured symbol.
-              StoreManager& StoreMgr = Eng.getStateManager().getStoreManager();
-              SVal V = ValMgr.getConjuredSymbolVal(*I, AT->getElementType(),
-                                                   Count);
-              state = StoreMgr.setDefaultValue(state, R, V);
-            } else {
-              // Just blast away other values.
-              state = state->bindLoc(*MR, UnknownVal());
-            }
-          }
+          state = StoreMgr.InvalidateRegion(state, R, *I, Count);
         }
         else if (isa<AllocaRegion>(MR->getRegion())) {
           // Invalidate the alloca region by setting its default value to 
           // conjured symbol. The type of the symbol is irrelavant.
           SVal V = ValMgr.getConjuredSymbolVal(*I, Eng.getContext().IntTy, 
                                                Count);
-          StoreManager& StoreMgr = 
-                    Eng.getStateManager().getStoreManager();
           state = StoreMgr.setDefaultValue(state, MR->getRegion(), V);
         }
         else

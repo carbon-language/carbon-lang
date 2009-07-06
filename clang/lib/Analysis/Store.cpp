@@ -109,3 +109,60 @@ StoreManager::CastRegion(const GRState* state, const MemRegion* R,
   
   return CastResult(state, R);
 }
+
+const GRState *StoreManager::InvalidateRegion(const GRState *state,
+                                              const TypedRegion *R,
+                                              const Expr *E, unsigned Count) {
+  if (!R->isBoundable())
+    return state;
+
+  ASTContext& Ctx = StateMgr.getContext();
+  QualType T = R->getValueType(Ctx);
+
+  if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
+    SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);
+    return Bind(state, ValMgr.makeLoc(R), V);
+  }
+  else if (const RecordType *RT = T->getAsStructureType()) {
+    // FIXME: handle structs with default region value.
+    const RecordDecl *RD = RT->getDecl()->getDefinition(Ctx);
+
+    // No record definition.  There is nothing we can do.
+    if (!RD)
+      return state;
+
+    // Iterate through the fields and construct new symbols.
+    for (RecordDecl::field_iterator FI=RD->field_begin(),
+           FE=RD->field_end(); FI!=FE; ++FI) {
+      
+      // For now just handle scalar fields.
+      FieldDecl *FD = *FI;
+      QualType FT = FD->getType();
+      const FieldRegion* FR = MRMgr.getFieldRegion(FD, R);
+      
+      if (Loc::IsLocType(FT) || 
+          (FT->isIntegerType() && FT->isScalarType())) {
+        SVal V = ValMgr.getConjuredSymbolVal(E, FT, Count);
+        state = state->bindLoc(ValMgr.makeLoc(FR), V);
+      }
+      else if (FT->isStructureType()) {
+        // set the default value of the struct field to conjured
+        // symbol. Note that the type of the symbol is irrelavant.
+        // We cannot use the type of the struct otherwise ValMgr won't
+        // give us the conjured symbol.
+        SVal V = ValMgr.getConjuredSymbolVal(E, Ctx.IntTy, Count);
+        state = setDefaultValue(state, FR, V);
+      }
+    }
+  } else if (const ArrayType *AT = Ctx.getAsArrayType(T)) {
+    // Set the default value of the array to conjured symbol.
+    SVal V = ValMgr.getConjuredSymbolVal(E, AT->getElementType(),
+                                         Count);
+    state = setDefaultValue(state, R, V);
+  } else {
+    // Just blast away other values.
+    state = Bind(state, ValMgr.makeLoc(R), UnknownVal());
+  }
+  
+  return state;
+}

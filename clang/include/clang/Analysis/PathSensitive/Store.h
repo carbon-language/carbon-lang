@@ -157,6 +157,8 @@ public:
   virtual const GRState *BindDeclWithNoInit(const GRState *state,
                                              const VarDecl *vd) = 0;
 
+  const GRState *InvalidateRegion(const GRState *state, const TypedRegion *R,
+                                  const Expr *E, unsigned Count);
   // FIXME: Make out-of-line.
   virtual const GRState *setExtent(const GRState *state,
                                     const MemRegion *region, SVal extent) {
