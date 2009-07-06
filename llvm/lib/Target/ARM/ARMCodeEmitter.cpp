@@ -741,6 +741,11 @@ void Emitter<CodeEmitter>::emitDataProcessingInstruction(
                                                    unsigned ImplicitRn) {
   const TargetInstrDesc &TID = MI.getDesc();
 
+  if (TID.Opcode == ARM::BFC) {
+    cerr << "ERROR: ARMv6t2 JIT is not yet supported.\n";
+    abort();
+  }
+
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);
 

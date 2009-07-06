@@ -170,6 +170,27 @@ def sext_16_node : PatLeaf<(i32 GPR:$a), [{
   return CurDAG->ComputeNumSignBits(SDValue(N,0)) >= 17;
 }]>;
 
+/// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
+/// e.g., 0xf000ffff
+def bf_inv_mask_imm : Operand<i32>,
+                      PatLeaf<(imm), [{ 
+  uint32_t v = (uint32_t)N->getZExtValue();
+  if (v == 0xffffffff)
+    return 0;
+  // naive checker. should do better, but simple is best for now since it's
+  // more likely to be correct.
+  while (v & 1) v >>= 1;    // shift off the leading 1's
+  if (v)
+    {
+      while (!(v & 1)) v >>=1;  // shift off the mask
+      while (v & 1) v >>= 1;    // shift off the trailing 1's
+    }
+  // if this is a mask for clearing a bitfield, what's left should be zero.
+  return (v == 0);
+}] > {
+  let PrintMethod = "printBitfieldInvMaskImmOperand";
+}
+
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
 class UnOpFrag <dag res> : PatFrag<(ops node:$Src), res>;
 
@@ -992,6 +1013,15 @@ defm EOR   : AsI1_bin_irs<0b0001, "eor",
                           BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
 defm BIC   : AsI1_bin_irs<0b1110, "bic",
                           BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
+
+def BFC    : I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
+               AddrMode1, Size4Bytes, IndexModeNone, DPFrm,
+               "bfc", " $dst, $imm", "$src = $dst",
+               [(set GPR:$dst, (and GPR:$src, bf_inv_mask_imm:$imm))]>,
+               Requires<[IsARM, HasV6T2]> {
+  let Inst{27-21} = 0b0111110;
+  let Inst{6-0}   = 0b0011111;
+}
 
 def  MVNr  : AsI1<0b1111, (outs GPR:$dst), (ins GPR:$src), DPFrm,
                   "mvn", " $dst, $src",

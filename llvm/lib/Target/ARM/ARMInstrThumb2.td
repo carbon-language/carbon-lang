@@ -89,27 +89,6 @@ def imm0_65535 : PatLeaf<(i32 imm), [{
   return (uint32_t)N->getZExtValue() < 65536;
 }]>;
 
-/// bf_inv_mask_imm predicate - An AND mask to clear an arbitrary width bitfield
-/// e.g., 0xf000ffff
-def bf_inv_mask_imm : Operand<i32>,
-                      PatLeaf<(imm), [{ 
-  uint32_t v = (uint32_t)N->getZExtValue();
-  if (v == 0xffffffff)
-    return 0;
-  // naive checker. should do better, but simple is best for now since it's
-  // more likely to be correct.
-  while (v & 1) v >>= 1;    // shift off the leading 1's
-  if (v)
-    {
-      while (!(v & 1)) v >>=1;  // shift off the mask
-      while (v & 1) v >>= 1;    // shift off the trailing 1's
-    }
-  // if this is a mask for clearing a bitfield, what's left should be zero.
-  return (v == 0);
-}] > {
-  let PrintMethod = "printBitfieldInvMaskImmOperand";
-}
-
 /// Split a 32-bit immediate into two 16 bit parts.
 def t2_lo16 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant((uint32_t)N->getZExtValue() & 0xffff,
@@ -820,29 +799,28 @@ defm t2EOR  : T2I_bin_irs<"eor", BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
 
 defm t2BIC  : T2I_bin_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
-def : T2Pat<(and     GPR:$src, t2_so_imm_not:$imm),
-            (t2BICri GPR:$src, t2_so_imm_not:$imm)>;
-
-defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;
-
-def : T2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
-            (t2ORNri GPR:$src, t2_so_imm_not:$imm)>;
-
-// Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
-let AddedComplexity = 1 in
-defm t2MVN  : T2I_un_irs  <"mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
-
-def : T2Pat<(t2_so_imm_not:$src),
-            (t2MVNi t2_so_imm_not:$src)>;
-
-// A8.6.17  BFC - Bitfield clear
-// FIXME: Also available in ARM mode.
 let Constraints = "$src = $dst" in
 def t2BFC : T2I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
                 "bfc", " $dst, $imm",
                 [(set GPR:$dst, (and GPR:$src, bf_inv_mask_imm:$imm))]>;
 
 // FIXME: A8.6.18  BFI - Bitfield insert (Encoding T1)
+
+defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;
+
+// Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
+let AddedComplexity = 1 in
+defm t2MVN  : T2I_un_irs  <"mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
+
+
+def : T2Pat<(and     GPR:$src, t2_so_imm_not:$imm),
+            (t2BICri GPR:$src, t2_so_imm_not:$imm)>;
+
+def : T2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
+            (t2ORNri GPR:$src, t2_so_imm_not:$imm)>;
+
+def : T2Pat<(t2_so_imm_not:$src),
+            (t2MVNi t2_so_imm_not:$src)>;
 
 //===----------------------------------------------------------------------===//
 //  Multiply Instructions.
