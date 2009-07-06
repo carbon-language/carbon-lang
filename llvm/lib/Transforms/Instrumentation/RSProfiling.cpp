@@ -208,7 +208,7 @@ void GlobalRandomCounter::PrepFunction(Function* F) {}
 
 void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
   BranchInst* t = cast<BranchInst>(bb->getTerminator());
-  LLVMContext* Context = bb->getContext();
+  LLVMContext *Context = bb->getContext();
   
   //decrement counter
   LoadInst* l = new LoadInst(Counter, "counter", t);
@@ -282,7 +282,7 @@ void GlobalRandomCounterOpt::PrepFunction(Function* F) {
 
 void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
   BranchInst* t = cast<BranchInst>(bb->getTerminator());
-  LLVMContext* Context = bb->getContext();
+  LLVMContext *Context = bb->getContext();
   
   //decrement counter
   LoadInst* l = new LoadInst(AI, "counter", t);
@@ -317,7 +317,7 @@ void CycleCounter::PrepFunction(Function* F) {}
 
 void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
   BranchInst* t = cast<BranchInst>(bb->getTerminator());
-  LLVMContext* Context = bb->getContext();
+  LLVMContext *Context = bb->getContext();
   
   CallInst* c = CallInst::Create(F, "rdcc", t);
   BinaryOperator* b = 

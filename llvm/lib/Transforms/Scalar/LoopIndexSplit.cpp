@@ -294,14 +294,14 @@ static bool isUsedOutsideLoop(Value *V, Loop *L) {
 
 // Return V+1
 static Value *getPlusOne(Value *V, bool Sign, Instruction *InsertPt, 
-                         LLVMContext* Context) {
+                         LLVMContext *Context) {
   Constant *One = Context->getConstantInt(V->getType(), 1, Sign);
   return BinaryOperator::CreateAdd(V, One, "lsp", InsertPt);
 }
 
 // Return V-1
 static Value *getMinusOne(Value *V, bool Sign, Instruction *InsertPt,
-                          LLVMContext* Context) {
+                          LLVMContext *Context) {
   Constant *One = Context->getConstantInt(V->getType(), 1, Sign);
   return BinaryOperator::CreateSub(V, One, "lsp", InsertPt);
 }

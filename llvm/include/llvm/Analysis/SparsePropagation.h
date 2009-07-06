@@ -131,7 +131,7 @@ class SparseSolver {
   SparseSolver(const SparseSolver&);    // DO NOT IMPLEMENT
   void operator=(const SparseSolver&);  // DO NOT IMPLEMENT
 public:
-  explicit SparseSolver(AbstractLatticeFunction *Lattice, LLVMContext* C)
+  explicit SparseSolver(AbstractLatticeFunction *Lattice, LLVMContext *C)
     : LatticeFunc(Lattice), Context(C) {}
   ~SparseSolver() {
     delete LatticeFunc;

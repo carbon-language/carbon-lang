@@ -23,7 +23,7 @@
 
 void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
                                    GlobalValue *Array) {
-  LLVMContext* Context = MainFn->getContext();
+  LLVMContext *Context = MainFn->getContext();
   const Type *ArgVTy = 
     Context->getPointerTypeUnqual(Context->getPointerTypeUnqual(Type::Int8Ty));
   const PointerType *UIntPtr = Context->getPointerTypeUnqual(Type::Int32Ty);
@@ -101,7 +101,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
 
 void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                    GlobalValue *CounterArray) {
-  LLVMContext* Context = BB->getContext();
+  LLVMContext *Context = BB->getContext();
 
   // Insert the increment after any alloca or PHI instructions...
   BasicBlock::iterator InsertPos = BB->getFirstNonPHI();

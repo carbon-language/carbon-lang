@@ -1261,7 +1261,7 @@ void SROA::CleanupAllocaUsers(AllocationInst *AI) {
 ///      and stores would mutate the memory.
 static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
                         unsigned AllocaSize, const TargetData &TD,
-                        LLVMContext* Context) {
+                        LLVMContext *Context) {
   // If this could be contributing to a vector, analyze it.
   if (VecTy != Type::VoidTy) { // either null or a vector type.
 

@@ -3421,7 +3421,7 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
   if (Constant *C = dyn_cast<Constant>(V)) return C;
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
   Instruction *I = cast<Instruction>(V);
-  LLVMContext* Context = I->getParent()->getContext();
+  LLVMContext *Context = I->getParent()->getContext();
 
   std::vector<Constant*> Operands;
   Operands.resize(I->getNumOperands());

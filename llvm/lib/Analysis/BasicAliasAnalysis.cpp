@@ -499,7 +499,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
 
 // This function is used to determine if the indices of two GEP instructions are
 // equal. V1 and V2 are the indices.
-static bool IndexOperandsEqual(Value *V1, Value *V2, LLVMContext* Context) {
+static bool IndexOperandsEqual(Value *V1, Value *V2, LLVMContext *Context) {
   if (V1->getType() == V2->getType())
     return V1 == V2;
   if (Constant *C1 = dyn_cast<Constant>(V1))

@@ -795,7 +795,7 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
 /// result can not be determined, a null pointer is returned.
 static Constant *GetResultOfComparison(CmpInst::Predicate pred,
                                        Value *LHS, Value *RHS,
-                                       LLVMContext* Context) {
+                                       LLVMContext *Context) {
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
       return Context->getConstantExprCompare(pred, CLHS, CRHS);

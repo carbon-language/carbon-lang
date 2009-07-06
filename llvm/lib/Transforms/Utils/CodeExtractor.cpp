@@ -238,7 +238,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   DOUT << "inputs: " << inputs.size() << "\n";
   DOUT << "outputs: " << outputs.size() << "\n";
 
-  LLVMContext* Context = header->getContext();
+  LLVMContext *Context = header->getContext();
 
   // This function returns unsigned, outputs will go back by reference.
   switch (NumExitBlocks) {
@@ -352,7 +352,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
 void CodeExtractor::
 emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                            Values &inputs, Values &outputs) {
-  LLVMContext* Context = codeReplacer->getContext();
+  LLVMContext *Context = codeReplacer->getContext();
   
   // Emit a call to the new function, passing in: *pointer to struct (if
   // aggregating parameters), or plan inputs and allocated memory for outputs

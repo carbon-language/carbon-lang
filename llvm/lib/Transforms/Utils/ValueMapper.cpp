@@ -22,7 +22,7 @@
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext* Context) {
+Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
   

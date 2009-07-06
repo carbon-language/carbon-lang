@@ -58,7 +58,7 @@ FunctionPass *llvm::createCFGSimplificationPass() {
 
 /// ChangeToUnreachable - Insert an unreachable instruction before the specified
 /// instruction, making it and the rest of the code in the block dead.
-static void ChangeToUnreachable(Instruction *I, LLVMContext* Context) {
+static void ChangeToUnreachable(Instruction *I, LLVMContext *Context) {
   BasicBlock *BB = I->getParent();
   // Loop over all of the successors, removing BB's entry from any PHI
   // nodes.
@@ -97,7 +97,7 @@ static void ChangeToCall(InvokeInst *II) {
 
 static bool MarkAliveBlocks(BasicBlock *BB,
                             SmallPtrSet<BasicBlock*, 128> &Reachable,
-                            LLVMContext* Context) {
+                            LLVMContext *Context) {
   
   SmallVector<BasicBlock*, 128> Worklist;
   Worklist.push_back(BB);

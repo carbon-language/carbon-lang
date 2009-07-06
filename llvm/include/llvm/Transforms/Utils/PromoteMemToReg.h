@@ -40,7 +40,7 @@ bool isAllocaPromotable(const AllocaInst *AI);
 ///
 void PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                      DominatorTree &DT, DominanceFrontier &DF,
-                     LLVMContext* Context,
+                     LLVMContext *Context,
                      AliasSetTracker *AST = 0);
 
 } // End llvm namespace

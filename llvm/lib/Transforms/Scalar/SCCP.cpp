@@ -139,7 +139,7 @@ public:
 /// Constant Propagation.
 ///
 class SCCPSolver : public InstVisitor<SCCPSolver> {
-  LLVMContext* Context;
+  LLVMContext *Context;
   DenseSet<BasicBlock*> BBExecutable;// The basic blocks that are executable
   std::map<Value*, LatticeVal> ValueState;  // The state each value is in.
 
@@ -179,7 +179,7 @@ class SCCPSolver : public InstVisitor<SCCPSolver> {
   typedef std::pair<BasicBlock*, BasicBlock*> Edge;
   DenseSet<Edge> KnownFeasibleEdges;
 public:
-  void setContext(LLVMContext* C) { Context = C; }
+  void setContext(LLVMContext *C) { Context = C; }
 
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.

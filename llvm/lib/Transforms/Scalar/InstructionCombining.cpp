@@ -83,7 +83,7 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     InstCombiner() : FunctionPass(&ID) {}
 
-    LLVMContext* getContext() { return Context; }
+    LLVMContext *getContext() { return Context; }
 
     /// AddToWorkList - Add the specified instruction to the worklist if it
     /// isn't already in it.
@@ -568,7 +568,7 @@ bool InstCombiner::SimplifyCompare(CmpInst &I) {
 // dyn_castNegVal - Given a 'sub' instruction, return the RHS of the instruction
 // if the LHS is a constant zero (which is the 'negate' form).
 //
-static inline Value *dyn_castNegVal(Value *V, LLVMContext* Context) {
+static inline Value *dyn_castNegVal(Value *V, LLVMContext *Context) {
   if (BinaryOperator::isNeg(V))
     return BinaryOperator::getNegArgument(V);
 
@@ -587,7 +587,7 @@ static inline Value *dyn_castNegVal(Value *V, LLVMContext* Context) {
 // instruction if the LHS is a constant negative zero (which is the 'negate'
 // form).
 //
-static inline Value *dyn_castFNegVal(Value *V, LLVMContext* Context) {
+static inline Value *dyn_castFNegVal(Value *V, LLVMContext *Context) {
   if (BinaryOperator::isFNeg(V))
     return BinaryOperator::getFNegArgument(V);
 
@@ -602,7 +602,7 @@ static inline Value *dyn_castFNegVal(Value *V, LLVMContext* Context) {
   return 0;
 }
 
-static inline Value *dyn_castNotVal(Value *V, LLVMContext* Context) {
+static inline Value *dyn_castNotVal(Value *V, LLVMContext *Context) {
   if (BinaryOperator::isNot(V))
     return BinaryOperator::getNotArgument(V);
 
@@ -618,7 +618,7 @@ static inline Value *dyn_castNotVal(Value *V, LLVMContext* Context) {
 // Otherwise, return null.
 //
 static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST,
-                                         LLVMContext* Context) {
+                                         LLVMContext *Context) {
   if (V->hasOneUse() && V->getType()->isInteger())
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       if (I->getOpcode() == Instruction::Mul)
@@ -658,19 +658,19 @@ static unsigned getOpcode(const Value *V) {
 }
 
 /// AddOne - Add one to a ConstantInt
-static Constant *AddOne(Constant *C, LLVMContext* Context) {
+static Constant *AddOne(Constant *C, LLVMContext *Context) {
   return Context->getConstantExprAdd(C, 
     Context->getConstantInt(C->getType(), 1));
 }
 /// SubOne - Subtract one from a ConstantInt
-static Constant *SubOne(ConstantInt *C, LLVMContext* Context) {
+static Constant *SubOne(ConstantInt *C, LLVMContext *Context) {
   return Context->getConstantExprSub(C, 
     Context->getConstantInt(C->getType(), 1));
 }
 /// MultiplyOverflows - True if the multiply can not be expressed in an int
 /// this size.
 static bool MultiplyOverflows(ConstantInt *C1, ConstantInt *C2, bool sign,
-                              LLVMContext* Context) {
+                              LLVMContext *Context) {
   uint32_t W = C1->getBitWidth();
   APInt LHSExt = C1->getValue(), RHSExt = C2->getValue();
   if (sign) {
@@ -697,7 +697,7 @@ static bool MultiplyOverflows(ConstantInt *C1, ConstantInt *C2, bool sign,
 /// are any bits set in the constant that are not demanded.  If so, shrink the
 /// constant and return true.
 static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo, 
-                                   APInt Demanded, LLVMContext* Context) {
+                                   APInt Demanded, LLVMContext *Context) {
   assert(I && "No instruction?");
   assert(OpNo < I->getNumOperands() && "Operand index too large");
 
@@ -1800,7 +1800,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
 ///
 template<typename Functor>
 static Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F,
-                                   LLVMContext* Context) {
+                                   LLVMContext *Context) {
   unsigned Opcode = Root.getOpcode();
   Value *LHS = Root.getOperand(0);
 
@@ -1872,8 +1872,8 @@ namespace {
 // AddRHS - Implements: X + X --> X << 1
 struct AddRHS {
   Value *RHS;
-  LLVMContext* Context;
-  AddRHS(Value *rhs, LLVMContext* C) : RHS(rhs), Context(C) {}
+  LLVMContext *Context;
+  AddRHS(Value *rhs, LLVMContext *C) : RHS(rhs), Context(C) {}
   bool shouldApply(Value *LHS) const { return LHS == RHS; }
   Instruction *apply(BinaryOperator &Add) const {
     return BinaryOperator::CreateShl(Add.getOperand(0),
@@ -1885,8 +1885,8 @@ struct AddRHS {
 //                 iff C1&C2 == 0
 struct AddMaskingAnd {
   Constant *C2;
-  LLVMContext* Context;
-  AddMaskingAnd(Constant *c, LLVMContext* C) : C2(c), Context(C) {}
+  LLVMContext *Context;
+  AddMaskingAnd(Constant *c, LLVMContext *C) : C2(c), Context(C) {}
   bool shouldApply(Value *LHS) const {
     ConstantInt *C1;
     return match(LHS, m_And(m_Value(), m_ConstantInt(C1))) &&
@@ -1901,7 +1901,7 @@ struct AddMaskingAnd {
 
 static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
                                              InstCombiner *IC) {
-  LLVMContext* Context = IC->getContext();
+  LLVMContext *Context = IC->getContext();
   
   if (CastInst *CI = dyn_cast<CastInst>(&I)) {
     return IC->InsertCastBefore(CI->getOpcode(), SO, I.getType(), I);
@@ -3389,7 +3389,7 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
 /// new ICmp instruction. The sign is passed in to determine which kind
 /// of predicate to use in the new icmp instruction.
 static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS,
-                           LLVMContext* Context) {
+                           LLVMContext *Context) {
   switch (code) {
   default: assert(0 && "Illegal ICmp code!");
   case  0: return Context->getConstantIntFalse();
@@ -3423,7 +3423,7 @@ static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS,
 /// opcode and two operands into either a FCmp instruction. isordered is passed
 /// in to determine which kind of predicate to use in the new fcmp instruction.
 static Value *getFCmpValue(bool isordered, unsigned code,
-                           Value *LHS, Value *RHS, LLVMContext* Context) {
+                           Value *LHS, Value *RHS, LLVMContext *Context) {
   switch (code) {
   default: assert(0 && "Illegal FCmp code!");
   case  0:
@@ -5271,7 +5271,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 }
 
 static ConstantInt *ExtractElement(Constant *V, Constant *Idx,
-                                   LLVMContext* Context) {
+                                   LLVMContext *Context) {
   return cast<ConstantInt>(Context->getConstantExprExtractElement(V, Idx));
 }
 
@@ -5290,7 +5290,7 @@ static bool HasAddOverflow(ConstantInt *Result,
 /// AddWithOverflow - Compute Result = In1+In2, returning true if the result
 /// overflowed for this type.
 static bool AddWithOverflow(Constant *&Result, Constant *In1,
-                            Constant *In2, LLVMContext* Context,
+                            Constant *In2, LLVMContext *Context,
                             bool IsSigned = false) {
   Result = Context->getConstantExprAdd(In1, In2);
 
@@ -5326,7 +5326,7 @@ static bool HasSubOverflow(ConstantInt *Result,
 /// SubWithOverflow - Compute Result = In1-In2, returning true if the result
 /// overflowed for this type.
 static bool SubWithOverflow(Constant *&Result, Constant *In1,
-                            Constant *In2, LLVMContext* Context,
+                            Constant *In2, LLVMContext *Context,
                             bool IsSigned = false) {
   Result = Context->getConstantExprSub(In1, In2);
 
@@ -5354,7 +5354,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
   TargetData &TD = IC.getTargetData();
   gep_type_iterator GTI = gep_type_begin(GEP);
   const Type *IntPtrTy = TD.getIntPtrType();
-  LLVMContext* Context = IC.getContext();
+  LLVMContext *Context = IC.getContext();
   Value *Result = Context->getNullValue(IntPtrTy);
 
   // Build a mask for high order bits.
@@ -7718,7 +7718,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
 /// X*Scale+Offset.
 ///
 static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
-                                        int &Offset, LLVMContext* Context) {
+                                        int &Offset, LLVMContext *Context) {
   assert(Val->getType() == Type::Int32Ty && "Unexpected allocation size type!");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     Offset = CI->getZExtValue();
@@ -8089,7 +8089,7 @@ Instruction *InstCombiner::commonCastTransforms(CastInst &CI) {
 static const Type *FindElementAtOffset(const Type *Ty, int64_t Offset, 
                                        SmallVectorImpl<Value*> &NewIndices,
                                        const TargetData *TD,
-                                       LLVMContext* Context) {
+                                       LLVMContext *Context) {
   if (!Ty->isSized()) return 0;
   
   // Start with the index over the outer type.  Note that the type size
@@ -8742,7 +8742,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
 /// FitsInFPType - Return a Constant* for the specified FP constant if it fits
 /// in the specified FP type without changing its value.
 static Constant *FitsInFPType(ConstantFP *CFP, const fltSemantics &Sem,
-                              LLVMContext* Context) {
+                              LLVMContext *Context) {
   bool losesInfo;
   APFloat F = CFP->getValueAPF();
   (void)F.convert(Sem, APFloat::rmNearestTiesToEven, &losesInfo);
@@ -8753,7 +8753,7 @@ static Constant *FitsInFPType(ConstantFP *CFP, const fltSemantics &Sem,
 
 /// LookThroughFPExtensions - If this is an fp extension instruction, look
 /// through it until we get the source value.
-static Value *LookThroughFPExtensions(Value *V, LLVMContext* Context) {
+static Value *LookThroughFPExtensions(Value *V, LLVMContext *Context) {
   if (Instruction *I = dyn_cast<Instruction>(V))
     if (I->getOpcode() == Instruction::FPExt)
       return LookThroughFPExtensions(I->getOperand(0), Context);
@@ -9076,7 +9076,7 @@ static unsigned GetSelectFoldableOperands(Instruction *I) {
 /// GetSelectFoldableConstant - For the same transformation as the previous
 /// function, return the identity constant that goes into the select.
 static Constant *GetSelectFoldableConstant(Instruction *I,
-                                           LLVMContext* Context) {
+                                           LLVMContext *Context) {
   switch (I->getOpcode()) {
   default: assert(0 && "This cannot happen!"); abort();
   case Instruction::Add:
@@ -11450,7 +11450,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
                                         const TargetData *TD) {
   User *CI = cast<User>(LI.getOperand(0));
   Value *CastOp = CI->getOperand(0);
-  LLVMContext* Context = IC.getContext();
+  LLVMContext *Context = IC.getContext();
 
   if (TD) {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(CI)) {
@@ -11675,7 +11675,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   User *CI = cast<User>(SI.getOperand(1));
   Value *CastOp = CI->getOperand(0);
-  LLVMContext* Context = IC.getContext();
+  LLVMContext *Context = IC.getContext();
 
   const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
   const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType());
@@ -12304,7 +12304,7 @@ static std::vector<unsigned> getShuffleMask(const ShuffleVectorInst *SVI) {
 /// value is already around as a register, for example if it were inserted then
 /// extracted from the vector.
 static Value *FindScalarElement(Value *V, unsigned EltNo,
-                                LLVMContext* Context) {
+                                LLVMContext *Context) {
   assert(isa<VectorType>(V->getType()) && "Not looking at a vector?");
   const VectorType *PTy = cast<VectorType>(V->getType());
   unsigned Width = PTy->getNumElements();
@@ -12480,7 +12480,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
 /// Otherwise, return false.
 static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
                                          std::vector<Constant*> &Mask,
-                                         LLVMContext* Context) {
+                                         LLVMContext *Context) {
   assert(V->getType() == LHS->getType() && V->getType() == RHS->getType() &&
          "Invalid CollectSingleShuffleElements");
   unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
@@ -12550,7 +12550,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
 /// RHS of the shuffle instruction, if it is not null.  Return a shuffle mask
 /// that computes V and the LHS value of the shuffle.
 static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
-                                     Value *&RHS, LLVMContext* Context) {
+                                     Value *&RHS, LLVMContext *Context) {
   assert(isa<VectorType>(V->getType()) && 
          (RHS == 0 || V->getType() == RHS->getType()) &&
          "Invalid shuffle!");

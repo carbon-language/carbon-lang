@@ -30,7 +30,7 @@ class LLVMContext;
 /// TargetFolder - Create constants with target dependent folding.
 class TargetFolder {
   const TargetData *TD;
-  LLVMContext* Context;
+  LLVMContext *Context;
 
   /// Fold - Fold the constant using target specific information.
   Constant *Fold(Constant *C) const {
@@ -41,7 +41,7 @@ class TargetFolder {
   }
 
 public:
-  explicit TargetFolder(const TargetData *TheTD, LLVMContext* C) :
+  explicit TargetFolder(const TargetData *TheTD, LLVMContext *C) :
     TD(TheTD), Context(C) {}
 
   //===--------------------------------------------------------------------===//

@@ -263,7 +263,7 @@ void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
 /// too, recursively.
 void
 llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
-  LLVMContext* Context = PN->getParent()->getContext();
+  LLVMContext *Context = PN->getParent()->getContext();
   
   // We can remove a PHI if it is on a cycle in the def-use graph
   // where each node in the cycle has degree one, i.e. only one use,

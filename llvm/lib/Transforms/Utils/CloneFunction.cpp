@@ -325,7 +325,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
 /// mapping its operands through ValueMap if they are available.
 Constant *PruningFunctionCloner::
 ConstantFoldMappedInstruction(const Instruction *I) {
-  LLVMContext* Context = I->getParent()->getContext();
+  LLVMContext *Context = I->getParent()->getContext();
   
   SmallVector<Constant*, 8> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -367,7 +367,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      ClonedCodeInfo *CodeInfo,
                                      const TargetData *TD) {
   assert(NameSuffix && "NameSuffix cannot be null!");
-  LLVMContext* Context = OldFunc->getContext();
+  LLVMContext *Context = OldFunc->getContext();
   
 #ifndef NDEBUG
   for (Function::const_arg_iterator II = OldFunc->arg_begin(), 

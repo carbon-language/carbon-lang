@@ -200,7 +200,7 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 ///
 static Instruction *LowerNegateToMultiply(Instruction *Neg,
                               std::map<AssertingVH<>, unsigned> &ValueRankMap,
-                              LLVMContext* Context) {
+                              LLVMContext *Context) {
   Constant *Cst = Context->getConstantIntAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
@@ -458,7 +458,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub,
 /// reassociation.
 static Instruction *ConvertShiftToMul(Instruction *Shl, 
                               std::map<AssertingVH<>, unsigned> &ValueRankMap,
-                              LLVMContext* Context) {
+                              LLVMContext *Context) {
   // If an operand of this shift is a reassociable multiply, or if the shift
   // is used by a reassociable multiply or add, turn into a multiply.
   if (isReassociableOp(Shl->getOperand(0), Instruction::Mul) ||

@@ -835,7 +835,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
                                  SmallVector<unsigned, 10> &Idxs,
                                  unsigned IdxSkip,
-                                 LLVMContext* Context,
+                                 LLVMContext *Context,
                                  Instruction *InsertBefore) {
   const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
   if (STy) {
@@ -914,7 +914,7 @@ Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
 /// If InsertBefore is not null, this function will duplicate (modified)
 /// insertvalues when a part of a nested struct is extracted.
 Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
-                         const unsigned *idx_end, LLVMContext* Context,
+                         const unsigned *idx_end, LLVMContext *Context,
                          Instruction *InsertBefore) {
   // Nothing to index? Just return V then (this is useful at the end of our
   // recursion)

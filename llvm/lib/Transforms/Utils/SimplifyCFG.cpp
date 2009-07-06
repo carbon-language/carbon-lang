@@ -1178,7 +1178,7 @@ static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
 /// ultimate destination.
 static bool FoldCondBranchOnPHI(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
-  LLVMContext* Context = BB->getContext();
+  LLVMContext *Context = BB->getContext();
   PHINode *PN = dyn_cast<PHINode>(BI->getCondition());
   // NOTE: we currently cannot transform this case if the PHI node is used
   // outside of the block.
@@ -1276,7 +1276,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
 /// FoldTwoEntryPHINode - Given a BB that starts with the specified two-entry
 /// PHI node, see if we can eliminate it.
 static bool FoldTwoEntryPHINode(PHINode *PN) {
-  LLVMContext* Context = PN->getParent()->getContext();
+  LLVMContext *Context = PN->getParent()->getContext();
   
   // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
   // statement", which has a very simple dominance structure.  Basically, we
@@ -1609,7 +1609,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
 static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   assert(PBI->isConditional() && BI->isConditional());
   BasicBlock *BB = BI->getParent();
-  LLVMContext* Context = BB->getContext();
+  LLVMContext *Context = BB->getContext();
   
   // If this block ends with a branch instruction, and if there is a
   // predecessor that ends on a branch of the same condition, make 

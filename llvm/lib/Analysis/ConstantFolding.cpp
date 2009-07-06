@@ -94,7 +94,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
 /// otherwise TD is null.
 static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
                                            Constant *Op1, const TargetData *TD,
-                                           LLVMContext* Context){
+                                           LLVMContext *Context){
   // SROA
   
   // Fold (and 0xffffffff00000000, (shl x, 32)) -> shl.
@@ -123,7 +123,7 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
 /// constant expression, do so.
 static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
                                          const Type *ResultTy,
-                                         LLVMContext* Context,
+                                         LLVMContext *Context,
                                          const TargetData *TD) {
   Constant *Ptr = Ops[0];
   if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized())
@@ -157,7 +157,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
 /// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
 /// targetdata.  Return 0 if unfoldable.
 static Constant *FoldBitCast(Constant *C, const Type *DestTy,
-                             const TargetData &TD, LLVMContext* Context) {
+                             const TargetData &TD, LLVMContext *Context) {
   // If this is a bitcast from constant vector -> vector, fold it.
   if (ConstantVector *CV = dyn_cast<ConstantVector>(C)) {
     if (const VectorType *DestVTy = dyn_cast<VectorType>(DestTy)) {
@@ -281,7 +281,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
 /// is returned.  Note that this function can only fail when attempting to fold
 /// instructions like loads and stores, which have no constant expression form.
 ///
-Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext* Context,
+Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext *Context,
                                         const TargetData *TD) {
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (PN->getNumIncomingValues() == 0)
@@ -321,7 +321,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext* Context,
 /// using the specified TargetData.  If successful, the constant result is
 /// result is returned, if not, null is returned.
 Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
-                                               LLVMContext* Context,
+                                               LLVMContext *Context,
                                                const TargetData *TD) {
   SmallVector<Constant*, 8> Ops;
   for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i)
@@ -344,7 +344,7 @@ Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
 ///
 Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy, 
                                          Constant* const* Ops, unsigned NumOps,
-                                         LLVMContext* Context,
+                                         LLVMContext *Context,
                                          const TargetData *TD) {
   // Handle easy binops first.
   if (Instruction::isBinaryOp(Opcode)) {
@@ -470,7 +470,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
 Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
                                                 Constant*const * Ops, 
                                                 unsigned NumOps,
-                                                LLVMContext* Context,
+                                                LLVMContext *Context,
                                                 const TargetData *TD) {
   // fold: icmp (inttoptr x), null         -> icmp x, 0
   // fold: icmp (ptrtoint x), 0            -> icmp x, null
@@ -543,7 +543,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
 /// constant expression, or null if something is funny and we can't decide.
 Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C, 
                                                        ConstantExpr *CE,
-                                                       LLVMContext* Context) {
+                                                       LLVMContext *Context) {
   if (CE->getOperand(1) != Context->getNullValue(CE->getOperand(1)->getType()))
     return 0;  // Do not allow stepping over the value!
   
@@ -680,7 +680,7 @@ llvm::canConstantFoldCallTo(const Function *F) {
 }
 
 static Constant *ConstantFoldFP(double (*NativeFP)(double), double V, 
-                                const Type *Ty, LLVMContext* Context) {
+                                const Type *Ty, LLVMContext *Context) {
   errno = 0;
   V = NativeFP(V);
   if (errno != 0) {
@@ -699,7 +699,7 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
 static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
                                       double V, double W,
                                       const Type *Ty,
-                                      LLVMContext* Context) {
+                                      LLVMContext *Context) {
   errno = 0;
   V = NativeFP(V, W);
   if (errno != 0) {
@@ -722,7 +722,7 @@ Constant *
 llvm::ConstantFoldCall(Function *F, 
                        Constant* const* Operands, unsigned NumOperands) {
   if (!F->hasName()) return 0;
-  LLVMContext* Context = F->getContext();
+  LLVMContext *Context = F->getContext();
   const char *Str = F->getNameStart();
   unsigned Len = F->getNameLen();
   

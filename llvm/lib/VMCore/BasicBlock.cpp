@@ -29,7 +29,7 @@ ValueSymbolTable *BasicBlock::getValueSymbolTable() {
   return 0;
 }
 
-LLVMContext* BasicBlock::getContext() const {
+LLVMContext *BasicBlock::getContext() const {
   return Parent ? Parent->getContext() : 0;
 }
 

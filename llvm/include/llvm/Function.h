@@ -129,7 +129,7 @@ public:
 
   /// getContext - Return a pointer to the LLVMContext associated with this 
   /// function, or NULL if this function is not bound to a context yet.
-  LLVMContext* getContext() const;
+  LLVMContext *getContext() const;
 
   /// isVarArg - Return true if this function takes a variable number of
   /// arguments.

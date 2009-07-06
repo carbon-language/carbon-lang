@@ -183,7 +183,7 @@ namespace {
     ///
     AliasSetTracker *AST;
     
-    LLVMContext* Context;
+    LLVMContext *Context;
 
     /// AllocaLookup - Reverse mapping of Allocas.
     ///
@@ -216,7 +216,7 @@ namespace {
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
                    DominanceFrontier &df, AliasSetTracker *ast,
-                   LLVMContext* C)
+                   LLVMContext *C)
       : Allocas(A), DT(dt), DF(df), AST(ast), Context(C) {}
 
     void run();
@@ -999,7 +999,7 @@ NextIteration:
 ///
 void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                            DominatorTree &DT, DominanceFrontier &DF,
-                           LLVMContext* Context, AliasSetTracker *AST) {
+                           LLVMContext *Context, AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
 

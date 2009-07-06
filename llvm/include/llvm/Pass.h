@@ -79,7 +79,7 @@ class Pass {
   Pass(const Pass &);           // DO NOT IMPLEMENT
   
 protected:
-  LLVMContext* Context;
+  LLVMContext *Context;
   
 public:
   explicit Pass(intptr_t pid) : Resolver(0), PassID(pid) {

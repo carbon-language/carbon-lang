@@ -246,7 +246,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
 }
 
 static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx,
-                                             LLVMContext* Context) {
+                                             LLVMContext *Context) {
   ConstantInt *CI = dyn_cast<ConstantInt>(Idx);
   if (!CI) return 0;
   unsigned IdxV = CI->getZExtValue();
@@ -283,7 +283,7 @@ static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx,
 /// quick scan over the use list to clean up the easy and obvious cruft.  This
 /// returns true if it made a change.
 static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
-                                       LLVMContext* Context) {
+                                       LLVMContext *Context) {
   bool Changed = false;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;) {
     User *U = *UI++;
@@ -465,7 +465,7 @@ static bool GlobalUsersSafeToSRA(GlobalValue *GV) {
 /// this transformation is safe already.  We return the first global variable we
 /// insert so that the caller can reprocess it.
 static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
-                                 LLVMContext* Context) {
+                                 LLVMContext *Context) {
   // Make sure this global only has simple uses that we can SRA.
   if (!GlobalUsersSafeToSRA(GV))
     return 0;
@@ -674,7 +674,7 @@ static bool AllUsesOfLoadedValueWillTrapIfNull(GlobalVariable *GV) {
 }
 
 static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV,
-                                           LLVMContext* Context) {
+                                           LLVMContext *Context) {
   bool Changed = false;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ) {
     Instruction *I = cast<Instruction>(*UI++);
@@ -742,7 +742,7 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV,
 /// if the loaded value is dynamically null, then we know that they cannot be
 /// reachable with a null optimize away the load.
 static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
-                                            LLVMContext* Context) {
+                                            LLVMContext *Context) {
   bool Changed = false;
 
   // Keep track of whether we are able to remove all the uses of the global
@@ -796,7 +796,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
 
 /// ConstantPropUsersOf - Walk the use list of V, constant folding all of the
 /// instructions that are foldable.
-static void ConstantPropUsersOf(Value *V, LLVMContext* Context) {
+static void ConstantPropUsersOf(Value *V, LLVMContext *Context) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; )
     if (Instruction *I = dyn_cast<Instruction>(*UI++))
       if (Constant *NewC = ConstantFoldInstruction(I, Context)) {
@@ -817,7 +817,7 @@ static void ConstantPropUsersOf(Value *V, LLVMContext* Context) {
 /// malloc into a global, and any loads of GV as uses of the new global.
 static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      MallocInst *MI,
-                                                     LLVMContext* Context) {
+                                                     LLVMContext *Context) {
   DOUT << "PROMOTING MALLOC GLOBAL: " << *GV << "  MALLOC = " << *MI;
   ConstantInt *NElements = cast<ConstantInt>(MI->getArraySize());
 
@@ -1131,7 +1131,7 @@ static bool AllGlobalLoadUsesSimpleEnoughForHeapSRA(GlobalVariable *GV,
 static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
                DenseMap<Value*, std::vector<Value*> > &InsertedScalarizedValues,
                    std::vector<std::pair<PHINode*, unsigned> > &PHIsToRewrite,
-                   LLVMContext* Context) {
+                   LLVMContext *Context) {
   std::vector<Value*> &FieldVals = InsertedScalarizedValues[V];
   
   if (FieldNo >= FieldVals.size())
@@ -1174,7 +1174,7 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
 static void RewriteHeapSROALoadUser(Instruction *LoadUser, 
              DenseMap<Value*, std::vector<Value*> > &InsertedScalarizedValues,
                    std::vector<std::pair<PHINode*, unsigned> > &PHIsToRewrite,
-                   LLVMContext* Context) {
+                   LLVMContext *Context) {
   // If this is a comparison against null, handle it.
   if (ICmpInst *SCI = dyn_cast<ICmpInst>(LoadUser)) {
     assert(isa<ConstantPointerNull>(SCI->getOperand(1)));
@@ -1245,7 +1245,7 @@ static void RewriteHeapSROALoadUser(Instruction *LoadUser,
 static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load, 
                DenseMap<Value*, std::vector<Value*> > &InsertedScalarizedValues,
                    std::vector<std::pair<PHINode*, unsigned> > &PHIsToRewrite,
-                   LLVMContext* Context) {
+                   LLVMContext *Context) {
   for (Value::use_iterator UI = Load->use_begin(), E = Load->use_end();
        UI != E; ) {
     Instruction *User = cast<Instruction>(*UI++);
@@ -1262,7 +1262,7 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load,
 /// PerformHeapAllocSRoA - MI is an allocation of an array of structures.  Break
 /// it up into multiple allocations of arrays of the fields.
 static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
-                                            LLVMContext* Context){
+                                            LLVMContext *Context){
   DOUT << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *MI;
   const StructType *STy = cast<StructType>(MI->getAllocatedType());
 
@@ -1442,7 +1442,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
                                                MallocInst *MI,
                                                Module::global_iterator &GVI,
                                                TargetData &TD,
-                                               LLVMContext* Context) {
+                                               LLVMContext *Context) {
   // If this is a malloc of an abstract type, don't touch it.
   if (!MI->getAllocatedType()->isSized())
     return false;
@@ -1526,7 +1526,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
 // that only one value (besides its initializer) is ever stored to the global.
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
                                      Module::global_iterator &GVI,
-                                     TargetData &TD, LLVMContext* Context) {
+                                     TargetData &TD, LLVMContext *Context) {
   // Ignore no-op GEPs and bitcasts.
   StoredOnceVal = StoredOnceVal->stripPointerCasts();
 
@@ -1558,7 +1558,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
 /// can shrink the global into a boolean and select between the two values
 /// whenever it is used.  This exposes the values to other scalar optimizations.
 static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal,
-                                       LLVMContext* Context) {
+                                       LLVMContext *Context) {
   const Type *GVElType = GV->getType()->getElementType();
   
   // If GVElType is already i1, it is already shrunk.  If the type of the GV is
@@ -1941,7 +1941,7 @@ static std::vector<Function*> ParseGlobalCtors(GlobalVariable *GV) {
 /// specified array, returning the new global to use.
 static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL, 
                                           const std::vector<Function*> &Ctors,
-                                          LLVMContext* Context) {
+                                          LLVMContext *Context) {
   // If we made a change, reassemble the initializer list.
   std::vector<Constant*> CSVals;
   CSVals.push_back(Context->getConstantInt(Type::Int32Ty, 65535));
@@ -2009,7 +2009,7 @@ static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues,
 /// enough for us to understand.  In particular, if it is a cast of something,
 /// we punt.  We basically just support direct accesses to globals and GEP's of
 /// globals.  This should be kept up to date with CommitValueTo.
-static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext* Context) {
+static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext *Context) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C)) {
     if (!GV->hasExternalLinkage() && !GV->hasLocalLinkage())
       return false;  // do not allow weak/linkonce/dllimport/dllexport linkage.
@@ -2034,7 +2034,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C, LLVMContext* Context) {
 /// At this point, the GEP operands of Addr [0, OpNo) have been stepped into.
 static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
                                    ConstantExpr *Addr, unsigned OpNo,
-                                   LLVMContext* Context) {
+                                   LLVMContext *Context) {
   // Base case of the recursion.
   if (OpNo == Addr->getNumOperands()) {
     assert(Val->getType() == Init->getType() && "Type mismatch!");
@@ -2097,7 +2097,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
 /// CommitValueTo - We have decided that Addr (which satisfies the predicate
 /// isSimpleEnoughPointerToCommit) should get Val as its value.  Make it happen.
 static void CommitValueTo(Constant *Val, Constant *Addr,
-                          LLVMContext* Context) {
+                          LLVMContext *Context) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Addr)) {
     assert(GV->hasInitializer());
     GV->setInitializer(Val);
@@ -2117,7 +2117,7 @@ static void CommitValueTo(Constant *Val, Constant *Addr,
 /// decide, return null.
 static Constant *ComputeLoadResult(Constant *P,
                                 const DenseMap<Constant*, Constant*> &Memory,
-                                LLVMContext* Context) {
+                                LLVMContext *Context) {
   // If this memory location has been recently stored, use the stored value: it
   // is the most up-to-date.
   DenseMap<Constant*, Constant*>::const_iterator I = Memory.find(P);
@@ -2156,7 +2156,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
   if (std::find(CallStack.begin(), CallStack.end(), F) != CallStack.end())
     return false;
   
-  LLVMContext* Context = F->getContext();
+  LLVMContext *Context = F->getContext();
   
   CallStack.push_back(F);
   
