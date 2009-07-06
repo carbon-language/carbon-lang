@@ -200,9 +200,13 @@ short PIC16DbgInfo::getStorageClass(DIGlobalVariable DIGV) {
 /// required initializations.
 void PIC16DbgInfo::BeginModule(Module &M) {
   // Emit file directive for module.
-  // FIXME : What if more then one CUs are present in a module ?
-  GlobalVariable *CU = M.getNamedGlobal("llvm.dbg.compile_unit");
-  if (CU) {
+  SmallVector<GlobalVariable *, 2> CUs;
+  SmallVector<GlobalVariable *, 4> GVs;
+  SmallVector<GlobalVariable *, 4> SPs;
+  CollectDebugInfoAnchors(M, CUs, GVs, SPs);
+  if (!CUs.empty()) {
+    // FIXME : What if more then one CUs are present in a module ?
+    GlobalVariable *CU = CUs[0];
     EmitDebugDirectives = true;
     SwitchToCU(CU);
   }
@@ -427,32 +431,30 @@ void PIC16DbgInfo::EmitSymbol(std::string Name, short Class, unsigned short
 /// EmitVarDebugInfo - Emit debug information for all variables.
 ///
 void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
-  // FIXME : This anchor has been removed.
-  GlobalVariable *Root = M.getGlobalVariable("llvm.dbg.global_variables");
-  if (!Root)
+  SmallVector<GlobalVariable *, 2> CUs;
+  SmallVector<GlobalVariable *, 4> GVs;
+  SmallVector<GlobalVariable *, 4> SPs;
+  CollectDebugInfoAnchors(M, CUs, GVs, SPs);
+  if (GVs.empty())
     return;
 
-  Constant *RootC = cast<Constant>(*Root->use_begin());
-  for (Value::use_iterator UI = RootC->use_begin(), UE = Root->use_end();
-       UI != UE; ++UI) {
-    for (Value::use_iterator UUI = UI->use_begin(), UUE = UI->use_end();
-         UUI != UUE; ++UUI) {
-      DIGlobalVariable DIGV(cast<GlobalVariable>(*UUI));
-      DIType Ty = DIGV.getType();
-      unsigned short TypeNo = 0;
-      bool HasAux = false;
-      int Aux[PIC16Dbg::AuxSize] = { 0 };
-      std::string TagName = "";
-      std::string VarName = TAI->getGlobalPrefix()+DIGV.getGlobal()->getName();
-      PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TagName);
-      // Emit debug info only if type information is availaible.
-      if (TypeNo != PIC16Dbg::T_NULL) {
-        O << "\n\t.type " << VarName << ", " << TypeNo;
-        short ClassNo = getStorageClass(DIGV);
-        O << "\n\t.class " << VarName << ", " << ClassNo;
-        if (HasAux) 
-          EmitAuxEntry(VarName, Aux, PIC16Dbg::AuxSize, TagName);
-      }
+  for (SmallVector<GlobalVariable *, 4>::iterator I = GVs.begin(),
+         E = GVs.end(); I != E; ++I)  {
+    DIGlobalVariable DIGV(*I);
+    DIType Ty = DIGV.getType();
+    unsigned short TypeNo = 0;
+    bool HasAux = false;
+    int Aux[PIC16Dbg::AuxSize] = { 0 };
+    std::string TagName = "";
+    std::string VarName = TAI->getGlobalPrefix()+DIGV.getGlobal()->getName();
+    PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TagName);
+    // Emit debug info only if type information is availaible.
+    if (TypeNo != PIC16Dbg::T_NULL) {
+      O << "\n\t.type " << VarName << ", " << TypeNo;
+      short ClassNo = getStorageClass(DIGV);
+      O << "\n\t.class " << VarName << ", " << ClassNo;
+      if (HasAux) 
+        EmitAuxEntry(VarName, Aux, PIC16Dbg::AuxSize, TagName);
     }
   }
   O << "\n";
