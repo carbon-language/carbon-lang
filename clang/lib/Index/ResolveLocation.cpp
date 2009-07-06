@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 //
 //  This defines the ResolveLocationInAST function, which resolves a
-//  source location into a <Decl *, Stmt *> pair.
+//  source location into a ASTLocation.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/Utils.h"
+#include "clang/Index/Utils.h"
 #include "clang/Index/ASTLocation.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
@@ -322,7 +322,7 @@ void LocResolverBase::print(Stmt *Node) {
 
 /// \brief Returns the AST node that a source location points to.
 ///
-ASTLocation clang::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc) {
+ASTLocation idx::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc) {
   if (Loc.isInvalid())
     return ASTLocation();
   

@@ -34,12 +34,6 @@ class PreprocessorFactory;
 class LangOptions;
 class Decl;
 class Stmt;
-class ASTContext;
-class SourceLocation;
-
-namespace idx {
-class ASTLocation;
-}
 
 /// ProcessWarningOptions - Initialize the diagnostic client and process the
 /// warning options specified on the command line.
@@ -81,32 +75,6 @@ void AttachDependencyFileGen(Preprocessor *PP, llvm::raw_ostream *OS,
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.
 void CacheTokens(Preprocessor& PP, llvm::raw_fd_ostream* OS);
-
-/// \brief Returns the AST node that a source location points to.
-///
-/// Returns a pair of Decl* and Stmt*. If no AST node is found for the source
-/// location, the pair will contain null pointers.
-///
-/// If the source location points to just a declaration, the statement part of
-/// the pair will be null, e.g.,
-/// @code
-///   int foo;
-/// @endcode
-/// If the source location points at 'foo', the pair will contain the VarDecl
-/// of foo and a null Stmt.
-///
-/// If the source location points to a statement node, the returned declaration
-/// will be the immediate 'parent' declaration of the statement node, e.g.,
-/// @code
-///   void f() {
-///     int foo = 100;
-///     ++foo;
-///   }
-/// @endcode
-/// Pointing at '100' will return a <VarDecl 'foo', IntegerLiteral '100'> pair.
-/// Pointing at '++foo' will return a <FunctionDecl 'f', UnaryOperator> pair.
-///
-idx::ASTLocation ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc);
 
 }  // end namespace clang
 
