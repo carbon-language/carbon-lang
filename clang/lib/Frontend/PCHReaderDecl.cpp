@@ -581,6 +581,9 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
   // after reading this declaration.
   SavedStreamPosition SavedPosition(DeclsCursor);
 
+  // Note that we are loading a declaration record.
+  LoadingTypeOrDecl Loading(*this);
+  
   DeclsCursor.JumpToBit(Offset);
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();

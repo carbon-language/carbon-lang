@@ -18,3 +18,11 @@ void y(void) {
   extern char z;
   fprintf (0, "a");
 }
+
+struct y0 { int i; } y0[1] = {};
+
+void x0(void)
+{
+  extern char z0;
+  fprintf (0, "a");
+}

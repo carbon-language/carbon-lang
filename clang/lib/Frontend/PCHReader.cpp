@@ -361,7 +361,8 @@ PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
     TotalNumSelectors(0), NumStatHits(0), NumStatMisses(0), 
     NumSLocEntriesRead(0), NumStatementsRead(0), 
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
-    NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
+    NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0),
+    CurrentlyLoadingTypeOrDecl(0) { }
 
 PCHReader::~PCHReader() {}
 
@@ -594,26 +595,14 @@ public:
 
     // Read all of the declarations visible at global scope with this
     // name.
-    Sema *SemaObj = Reader.getSema();
     if (Reader.getContext() == 0) return II;
-    
-    while (DataLen > 0) {
-      NamedDecl *D = cast<NamedDecl>(Reader.GetDecl(ReadUnalignedLE32(d)));
-      if (SemaObj) {
-        // Introduce this declaration into the translation-unit scope
-        // and add it to the declaration chain for this identifier, so
-        // that (unqualified) name lookup will find it.
-        SemaObj->TUScope->AddDecl(Action::DeclPtrTy::make(D));
-        SemaObj->IdResolver.AddDeclToIdentifierChain(II, D);
-      } else {
-        // Queue this declaration so that it will be added to the
-        // translation unit scope and identifier's declaration chain
-        // once a Sema object is known.
-        Reader.PreloadedDecls.push_back(D);
-      }
-
-      DataLen -= 4;
+    if (DataLen > 0) {
+      llvm::SmallVector<uint32_t, 4> DeclIDs;
+      for (; DataLen > 0; DataLen -= 4)
+        DeclIDs.push_back(ReadUnalignedLE32(d));
+      Reader.SetGloballyVisibleDecls(II, DeclIDs);
     }
+    
     return II;
   }
 };
@@ -625,7 +614,6 @@ public:
 typedef OnDiskChainedHashTable<PCHIdentifierLookupTrait> 
   PCHIdentifierLookupTable;
 
-// FIXME: use the diagnostics machinery
 bool PCHReader::Error(const char *Msg) {
   unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Fatal, Msg);
   Diag(DiagID);
@@ -1686,6 +1674,9 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
   // after reading this type.
   SavedStreamPosition SavedPosition(Stream);
 
+  // Note that we are loading a type record.
+  LoadingTypeOrDecl Loading(*this);
+  
   Stream.JumpToBit(Offset);
   RecordData Record;
   unsigned Code = Stream.ReadCode();
@@ -2220,6 +2211,52 @@ void PCHReader::SetIdentifierInfo(unsigned ID, IdentifierInfo *II) {
   IdentifiersLoaded[ID - 1] = II;
 }
 
+/// \brief Set the globally-visible declarations associated with the given
+/// identifier.
+///
+/// If the PCH reader is currently in a state where the given declaration IDs
+/// cannot safely be resolved, they are queued until it is safe to resolve 
+/// them.
+///
+/// \param II an IdentifierInfo that refers to one or more globally-visible
+/// declarations.
+///
+/// \param DeclIDs the set of declaration IDs with the name @p II that are
+/// visible at global scope.
+///
+/// \param Nonrecursive should be true to indicate that the caller knows that
+/// this call is non-recursive, and therefore the globally-visible declarations
+/// will not be placed onto the pending queue.
+void 
+PCHReader::SetGloballyVisibleDecls(IdentifierInfo *II, 
+                              const llvm::SmallVectorImpl<uint32_t> &DeclIDs,
+                                   bool Nonrecursive) {
+  if (CurrentlyLoadingTypeOrDecl && !Nonrecursive) {
+    PendingIdentifierInfos.push_back(PendingIdentifierInfo());
+    PendingIdentifierInfo &PII = PendingIdentifierInfos.back();
+    PII.II = II;
+    for (unsigned I = 0, N = DeclIDs.size(); I != N; ++I)
+      PII.DeclIDs.push_back(DeclIDs[I]);
+    return;
+  }
+      
+  for (unsigned I = 0, N = DeclIDs.size(); I != N; ++I) {
+    NamedDecl *D = cast<NamedDecl>(GetDecl(DeclIDs[I]));
+    if (SemaObj) {
+      // Introduce this declaration into the translation-unit scope
+      // and add it to the declaration chain for this identifier, so
+      // that (unqualified) name lookup will find it.
+      SemaObj->TUScope->AddDecl(Action::DeclPtrTy::make(D));
+      SemaObj->IdResolver.AddDeclToIdentifierChain(II, D);
+    } else {
+      // Queue this declaration so that it will be added to the
+      // translation unit scope and identifier's declaration chain
+      // once a Sema object is known.
+      PreloadedDecls.push_back(D);
+    }
+  }
+}
+
 IdentifierInfo *PCHReader::DecodeIdentifierInfo(unsigned ID) {
   if (ID == 0)
     return 0;
@@ -2431,4 +2468,25 @@ void PCHReader::SetLabelOf(AddrLabelExpr *S, unsigned ID) {
     // expression to the set of unresolved label-address expressions.
     UnresolvedAddrLabelExprs.insert(std::make_pair(ID, S));
   }
+}
+
+
+PCHReader::LoadingTypeOrDecl::LoadingTypeOrDecl(PCHReader &Reader) 
+  : Reader(Reader), Parent(Reader.CurrentlyLoadingTypeOrDecl) {
+  Reader.CurrentlyLoadingTypeOrDecl = this;
+}
+
+PCHReader::LoadingTypeOrDecl::~LoadingTypeOrDecl() {
+  if (!Parent) {
+    // If any identifiers with corresponding top-level declarations have
+    // been loaded, load those declarations now.
+    while (!Reader.PendingIdentifierInfos.empty()) {
+      Reader.SetGloballyVisibleDecls(Reader.PendingIdentifierInfos.front().II,
+                                 Reader.PendingIdentifierInfos.front().DeclIDs,
+                                     true);
+      Reader.PendingIdentifierInfos.pop_front();
+    }
+  }
+
+  Reader.CurrentlyLoadingTypeOrDecl = Parent;  
 }

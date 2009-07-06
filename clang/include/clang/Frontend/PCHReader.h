@@ -30,6 +30,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/DataTypes.h"
+#include <deque>
 #include <map>
 #include <string>
 #include <utility>
@@ -361,7 +362,41 @@ private:
 
   /// Number of visible decl contexts read/total.
   unsigned NumVisibleDeclContextsRead, TotalVisibleDeclContexts;
-
+      
+  /// \brief When a type or declaration is being loaded from the PCH file, an 
+  /// instantance of this RAII object will be available on the stack to 
+  /// indicate when we are in a recursive-loading situation.
+  class LoadingTypeOrDecl {
+    PCHReader &Reader;
+    LoadingTypeOrDecl *Parent;
+    
+    LoadingTypeOrDecl(const LoadingTypeOrDecl&); // do not implement
+    LoadingTypeOrDecl &operator=(const LoadingTypeOrDecl&); // do not implement
+    
+  public:
+    explicit LoadingTypeOrDecl(PCHReader &Reader);
+    ~LoadingTypeOrDecl();
+  };
+  friend class LoadingTypeOrDecl;
+  
+  /// \brief If we are currently loading a type or declaration, points to the
+  /// most recent LoadingTypeOrDecl object on the stack.
+  LoadingTypeOrDecl *CurrentlyLoadingTypeOrDecl;
+  
+  /// \brief An IdentifierInfo that has been loaded but whose top-level 
+  /// declarations of the same name have not (yet) been loaded.
+  struct PendingIdentifierInfo {
+    IdentifierInfo *II;
+    llvm::SmallVector<uint32_t, 4> DeclIDs;
+  };
+      
+  /// \brief The set of identifiers that were read while the PCH reader was
+  /// (recursively) loading declarations. 
+  /// 
+  /// The declarations on the identifier chain for these identifiers will be
+  /// loaded once the recursive loading has completed.
+  std::deque<PendingIdentifierInfo> PendingIdentifierInfos;
+      
   /// \brief FIXME: document!
   llvm::SmallVector<uint64_t, 4> SpecialTypes;
 
@@ -555,7 +590,10 @@ public:
     ReadMethodPool(Selector Sel);
 
   void SetIdentifierInfo(unsigned ID, IdentifierInfo *II);
-
+  void SetGloballyVisibleDecls(IdentifierInfo *II, 
+                               const llvm::SmallVectorImpl<uint32_t> &DeclIDs,
+                               bool Nonrecursive = false);
+      
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(unsigned DiagID);
 
