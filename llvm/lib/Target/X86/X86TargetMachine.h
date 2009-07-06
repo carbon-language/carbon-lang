@@ -84,12 +84,17 @@ public:
                               bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                               bool DumpAsm, JITCodeEmitter &JCE);
+  virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
+                              bool DumpAsm, ObjectCodeEmitter &OCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm, JITCodeEmitter &JCE);
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
+                                    CodeGenOpt::Level OptLevel,
+                                    bool DumpAsm, ObjectCodeEmitter &OCE);
 };
 
 /// X86_32TargetMachine - X86 32-bit target machine.

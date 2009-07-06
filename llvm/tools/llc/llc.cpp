@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/LinkAllCodegenComponents.h"
 #include "llvm/CodeGen/LinkAllAsmWriterComponents.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -312,7 +313,7 @@ int main(int argc, char **argv) {
 #endif
 
     // Ask the target to add backend passes as necessary.
-    MachineCodeEmitter *MCE = 0;
+    ObjectCodeEmitter *OCE = 0;
 
     // Override default to generate verbose assembly.
     Target.setAsmVerbosityDefault(true);
@@ -331,14 +332,14 @@ int main(int argc, char **argv) {
     case FileModel::AsmFile:
       break;
     case FileModel::MachOFile:
-      MCE = AddMachOWriter(Passes, *Out, Target);
+      OCE = AddMachOWriter(Passes, *Out, Target);
       break;
     case FileModel::ElfFile:
-      MCE = AddELFWriter(Passes, *Out, Target);
+      OCE = AddELFWriter(Passes, *Out, Target);
       break;
     }
 
-    if (Target.addPassesToEmitFileFinish(Passes, MCE, OLvl)) {
+    if (Target.addPassesToEmitFileFinish(Passes, OCE, OLvl)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
       if (Out != &outs()) delete Out;

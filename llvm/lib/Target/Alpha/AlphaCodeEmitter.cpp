@@ -19,6 +19,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
@@ -90,6 +91,10 @@ FunctionPass *llvm::createAlphaCodeEmitterPass(AlphaTargetMachine &TM,
 FunctionPass *llvm::createAlphaJITCodeEmitterPass(AlphaTargetMachine &TM,
                                                   JITCodeEmitter &JCE) {
   return new Emitter<JITCodeEmitter>(TM, JCE);
+}
+FunctionPass *llvm::createAlphaObjectCodeEmitterPass(AlphaTargetMachine &TM,
+                                                     ObjectCodeEmitter &OCE) {
+  return new Emitter<ObjectCodeEmitter>(TM, OCE);
 }
 
 template <class CodeEmitter>

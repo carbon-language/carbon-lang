@@ -56,6 +56,8 @@ FunctionPass *createX86CodeEmitterPass(X86TargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
                                           JITCodeEmitter &JCE);
+FunctionPass *createX86ObjectCodeEmitterPass(X86TargetMachine &TM,
+                                             ObjectCodeEmitter &OCE);
 
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically

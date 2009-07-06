@@ -24,6 +24,7 @@ namespace llvm {
   class PPCTargetMachine;
   class FunctionPass;
   class MachineCodeEmitter;
+  class ObjectCodeEmitter;
   class raw_ostream;
   
 FunctionPass *createPPCBranchSelectionPass();
@@ -33,7 +34,9 @@ FunctionPass *createPPCAsmPrinterPass(raw_ostream &OS, PPCTargetMachine &TM,
 FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
-                                       JITCodeEmitter &MCE);
+                                          JITCodeEmitter &MCE);
+FunctionPass *createPPCObjectCodeEmitterPass(PPCTargetMachine &TM,
+                                             ObjectCodeEmitter &OCE);
 } // end namespace llvm;
 
 // Defines symbolic names for PowerPC registers.  This defines a mapping from

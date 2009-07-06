@@ -146,27 +146,27 @@ public:
   /// emitDWordLE - This callback is invoked when a 64-bit word needs to be
   /// written to the data stream in little-endian format.
   inline void emitDWordLE(uint64_t W) {
-    Data.push_back(unsigned(W >>  0) & 255);
-    Data.push_back(unsigned(W >>  8) & 255);
-    Data.push_back(unsigned(W >> 16) & 255);
-    Data.push_back(unsigned(W >> 24) & 255);
-    Data.push_back(unsigned(W >> 32) & 255);
-    Data.push_back(unsigned(W >> 40) & 255);
-    Data.push_back(unsigned(W >> 48) & 255);
-    Data.push_back(unsigned(W >> 56) & 255);
+    Data.push_back((W >>  0) & 255);
+    Data.push_back((W >>  8) & 255);
+    Data.push_back((W >> 16) & 255);
+    Data.push_back((W >> 24) & 255);
+    Data.push_back((W >> 32) & 255);
+    Data.push_back((W >> 40) & 255);
+    Data.push_back((W >> 48) & 255);
+    Data.push_back((W >> 56) & 255);
   }
 
   /// emitDWordBE - This callback is invoked when a 64-bit word needs to be
   /// written to the data stream in big-endian format.
   inline void emitDWordBE(uint64_t W) {
-    Data.push_back(unsigned(W >> 56) & 255);
-    Data.push_back(unsigned(W >> 48) & 255);
-    Data.push_back(unsigned(W >> 40) & 255);
-    Data.push_back(unsigned(W >> 32) & 255);
-    Data.push_back(unsigned(W >> 24) & 255);
-    Data.push_back(unsigned(W >> 16) & 255);
-    Data.push_back(unsigned(W >>  8) & 255);
-    Data.push_back(unsigned(W >>  0) & 255);
+    Data.push_back((W >> 56) & 255);
+    Data.push_back((W >> 48) & 255);
+    Data.push_back((W >> 40) & 255);
+    Data.push_back((W >> 32) & 255);
+    Data.push_back((W >> 24) & 255);
+    Data.push_back((W >> 16) & 255);
+    Data.push_back((W >>  8) & 255);
+    Data.push_back((W >>  0) & 255);
   }
 
   /// fixByte - This callback is invoked when a byte needs to be
@@ -270,11 +270,11 @@ public:
   }
 
   /// emitAlignment - Pad the data to the specified alignment.
-  void emitAlignment(unsigned Alignment) {
+  void emitAlignment(unsigned Alignment, uint8_t fill = 0) {
     if (Alignment <= 1) return;
     unsigned PadSize = -Data.size() & (Alignment-1);
     for (unsigned i = 0; i<PadSize; ++i)
-      Data.push_back(0);
+      Data.push_back(fill);
   }
 
   /// emitULEB128Bytes - This callback is invoked when a ULEB128 needs to be

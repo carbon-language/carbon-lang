@@ -126,6 +126,23 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
   return false; // success!
 }
 
+/// addPassesToEmitFileFinish - If the passes to emit the specified file had to
+/// be split up (e.g., to add an object writer pass), this method can be used to
+/// finish up adding passes to emit the file, if necessary.
+bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
+                                                  ObjectCodeEmitter *OCE,
+                                                  CodeGenOpt::Level OptLevel) {
+  if (OCE)
+    addSimpleCodeEmitter(PM, OptLevel, PrintEmittedAsm, *OCE);
+
+  PM.add(createGCInfoDeleter());
+
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
+
+  return false; // success!
+}
+
 /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
 /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
 /// actually outputting the machine code and resolving things like the address

@@ -228,6 +228,25 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
   return false;
 }
 
+bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                          CodeGenOpt::Level OptLevel,
+                                          bool DumpAsm,
+                                          ObjectCodeEmitter &OCE) {
+  // FIXME: Move this to TargetJITInfo!
+  if (DefRelocModel == Reloc::Default)
+    setRelocationModel(Reloc::Static);
+
+  // Machine code emitter pass for ARM.
+  PM.add(createARMObjectCodeEmitterPass(*this, OCE));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(errs(), *this, true));
+  }
+
+  return false;
+}
+
 bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                                 CodeGenOpt::Level OptLevel,
                                                 bool DumpAsm,
@@ -258,4 +277,18 @@ bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
   return false;
 }
 
+bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
+                                            CodeGenOpt::Level OptLevel,
+                                            bool DumpAsm,
+                                            ObjectCodeEmitter &OCE) {
+  // Machine code emitter pass for ARM.
+  PM.add(createARMObjectCodeEmitterPass(*this, OCE));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(errs(), *this, true));
+  }
+
+  return false;
+}
 

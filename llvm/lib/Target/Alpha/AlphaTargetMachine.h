@@ -74,6 +74,8 @@ public:
                               bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                               bool DumpAsm, JITCodeEmitter &JCE);
+  virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
+                              bool DumpAsm, ObjectCodeEmitter &JCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm,
@@ -82,6 +84,10 @@ public:
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm,
                                     JITCodeEmitter &JCE);
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
+                                    CodeGenOpt::Level OptLevel,
+                                    bool DumpAsm,
+                                    ObjectCodeEmitter &OCE);
 
   static void registerAsmPrinter(AsmPrinterCtorFn F) {
     AsmPrinterCtor = F;

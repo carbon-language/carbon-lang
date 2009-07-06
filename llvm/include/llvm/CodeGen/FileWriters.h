@@ -17,14 +17,14 @@
 namespace llvm {
 
   class PassManagerBase;
-  class MachineCodeEmitter;
+  class ObjectCodeEmitter;
   class TargetMachine;
   class raw_ostream;
 
-  MachineCodeEmitter *AddELFWriter(PassManagerBase &FPM, raw_ostream &O,
-                                   TargetMachine &TM);
-  MachineCodeEmitter *AddMachOWriter(PassManagerBase &FPM, raw_ostream &O,
-                                     TargetMachine &TM);
+  ObjectCodeEmitter *AddELFWriter(PassManagerBase &FPM, raw_ostream &O,
+                                  TargetMachine &TM);
+  ObjectCodeEmitter *AddMachOWriter(PassManagerBase &FPM, raw_ostream &O,
+                                    TargetMachine &TM);
 
 } // end llvm namespace
 

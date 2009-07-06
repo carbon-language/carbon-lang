@@ -22,6 +22,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -106,18 +107,18 @@ template<class CodeEmitter>
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified templated MachineCodeEmitter object.
 
-namespace llvm {
-	
-FunctionPass *createX86CodeEmitterPass(X86TargetMachine &TM,
-                                       MachineCodeEmitter &MCE) {
+FunctionPass *llvm::createX86CodeEmitterPass(X86TargetMachine &TM,
+                                             MachineCodeEmitter &MCE) {
   return new Emitter<MachineCodeEmitter>(TM, MCE);
 }
-FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
-                                          JITCodeEmitter &JCE) {
+FunctionPass *llvm::createX86JITCodeEmitterPass(X86TargetMachine &TM,
+                                                JITCodeEmitter &JCE) {
   return new Emitter<JITCodeEmitter>(TM, JCE);
 }
-
-} // end namespace llvm
+FunctionPass *llvm::createX86ObjectCodeEmitterPass(X86TargetMachine &TM,
+                                                   ObjectCodeEmitter &OCE) {
+  return new Emitter<ObjectCodeEmitter>(TM, OCE);
+}
 
 template<class CodeEmitter>
 bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {

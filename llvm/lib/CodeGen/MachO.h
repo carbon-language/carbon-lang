@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineRelocation.h"
+#include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include <string>
 #include <vector>
@@ -272,11 +273,10 @@ struct MachOSegment {
 /// turned into the SectionCommand in the load command for a particlar
 /// segment.
 
-struct MachOSection { 
+struct MachOSection : public BinaryObject { 
   std::string  sectname; // name of this section, 
   std::string  segname;  // segment this section goes in
   uint64_t  addr;        // memory address of this section
-  uint64_t  size;        // size in bytes of this section
   uint32_t  offset;      // file offset of this section
   uint32_t  align;       // section alignment (power of 2)
   uint32_t  reloff;      // file offset of relocation entries
@@ -290,18 +290,9 @@ struct MachOSection {
   /// to the correct section.
   uint32_t Index;
   
-  /// SectionData - The actual data for this section which we are building
-  /// up for emission to the file.
-  DataBuffer SectionData;
-
   /// RelocBuffer - A buffer to hold the mach-o relocations before we write
   /// them out at the appropriate location in the file.
   DataBuffer RelocBuffer;
-  
-  /// Relocations - The relocations that we have encountered so far in this 
-  /// section that we will need to convert to MachORelocation entries when
-  /// the file is written.
-  std::vector<MachineRelocation> Relocations;
   
   // Constants for the section types (low 8 bits of flags field)
   // see <mach-o/loader.h>
@@ -374,48 +365,49 @@ struct MachOSection {
   }
 
   MachOSection(const std::string &seg, const std::string &sect)
-    : sectname(sect), segname(seg), addr(0), size(0), offset(0), align(2),
-      reloff(0), nreloc(0), flags(0), reserved1(0), reserved2(0),
+    : BinaryObject(), sectname(sect), segname(seg), addr(0), offset(0),
+      align(2), reloff(0), nreloc(0), flags(0), reserved1(0), reserved2(0),
       reserved3(0) { }
 
 }; // end struct MachOSection
 
-    /// MachOSymTab - This struct contains information about the offsets and 
-    /// size of symbol table information.
-    /// segment.
-    struct MachODySymTab {
-      uint32_t cmd;             // LC_DYSYMTAB
-      uint32_t cmdsize;         // sizeof( MachODySymTab )
-      uint32_t ilocalsym;       // index to local symbols
-      uint32_t nlocalsym;       // number of local symbols
-      uint32_t iextdefsym;      // index to externally defined symbols
-      uint32_t nextdefsym;      // number of externally defined symbols
-      uint32_t iundefsym;       // index to undefined symbols
-      uint32_t nundefsym;       // number of undefined symbols
-      uint32_t tocoff;          // file offset to table of contents
-      uint32_t ntoc;            // number of entries in table of contents
-      uint32_t modtaboff;       // file offset to module table
-      uint32_t nmodtab;         // number of module table entries
-      uint32_t extrefsymoff;    // offset to referenced symbol table
-      uint32_t nextrefsyms;     // number of referenced symbol table entries
-      uint32_t indirectsymoff;  // file offset to the indirect symbol table
-      uint32_t nindirectsyms;   // number of indirect symbol table entries
-      uint32_t extreloff;       // offset to external relocation entries
-      uint32_t nextrel;         // number of external relocation entries
-      uint32_t locreloff;       // offset to local relocation entries
-      uint32_t nlocrel;         // number of local relocation entries
+/// MachOSymTab - This struct contains information about the offsets and 
+/// size of symbol table information.
+/// segment.
+struct MachODySymTab {
+  uint32_t cmd;             // LC_DYSYMTAB
+  uint32_t cmdsize;         // sizeof(MachODySymTab)
+  uint32_t ilocalsym;       // index to local symbols
+  uint32_t nlocalsym;       // number of local symbols
+  uint32_t iextdefsym;      // index to externally defined symbols
+  uint32_t nextdefsym;      // number of externally defined symbols
+  uint32_t iundefsym;       // index to undefined symbols
+  uint32_t nundefsym;       // number of undefined symbols
+  uint32_t tocoff;          // file offset to table of contents
+  uint32_t ntoc;            // number of entries in table of contents
+  uint32_t modtaboff;       // file offset to module table
+  uint32_t nmodtab;         // number of module table entries
+  uint32_t extrefsymoff;    // offset to referenced symbol table
+  uint32_t nextrefsyms;     // number of referenced symbol table entries
+  uint32_t indirectsymoff;  // file offset to the indirect symbol table
+  uint32_t nindirectsyms;   // number of indirect symbol table entries
+  uint32_t extreloff;       // offset to external relocation entries
+  uint32_t nextrel;         // number of external relocation entries
+  uint32_t locreloff;       // offset to local relocation entries
+  uint32_t nlocrel;         // number of local relocation entries
 
-      // Constants for the cmd field
-      // see <mach-o/loader.h>
-      enum { LC_DYSYMTAB = 0x0B  // dynamic link-edit symbol table info
-      };
-      
-      MachODySymTab() : cmd(LC_DYSYMTAB), cmdsize(20 * sizeof(uint32_t)),
-        ilocalsym(0), nlocalsym(0), iextdefsym(0), nextdefsym(0),
-        iundefsym(0), nundefsym(0), tocoff(0), ntoc(0), modtaboff(0),
-        nmodtab(0), extrefsymoff(0), nextrefsyms(0), indirectsymoff(0),
-        nindirectsyms(0), extreloff(0), nextrel(0), locreloff(0), nlocrel(0) { }
-    };
+  // Constants for the cmd field
+  // see <mach-o/loader.h>
+  enum { LC_DYSYMTAB = 0x0B  // dynamic link-edit symbol table info
+  };
+  
+  MachODySymTab() : cmd(LC_DYSYMTAB), cmdsize(20 * sizeof(uint32_t)),
+    ilocalsym(0), nlocalsym(0), iextdefsym(0), nextdefsym(0),
+    iundefsym(0), nundefsym(0), tocoff(0), ntoc(0), modtaboff(0),
+    nmodtab(0), extrefsymoff(0), nextrefsyms(0), indirectsymoff(0),
+    nindirectsyms(0), extreloff(0), nextrel(0), locreloff(0), nlocrel(0) { }
+
+}; // end struct MachODySymTab
 
 } // end namespace llvm
 

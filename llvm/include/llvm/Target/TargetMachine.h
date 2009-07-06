@@ -29,6 +29,7 @@ class TargetLowering;
 class TargetFrameInfo;
 class MachineCodeEmitter;
 class JITCodeEmitter;
+class ObjectCodeEmitter;
 class TargetRegisterInfo;
 class Module;
 class PassManagerBase;
@@ -257,6 +258,16 @@ public:
     return true;
   }
  
+  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
+  /// to be split up (e.g., to add an object writer pass), this method can be
+  /// used to finish up adding passes to emit the file, if necessary.
+  ///
+  virtual bool addPassesToEmitFileFinish(PassManagerBase &,
+                                         ObjectCodeEmitter *,
+                                         CodeGenOpt::Level) {
+    return true;
+  }
+ 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
   /// actually outputting the machine code and resolving things like the address
@@ -335,7 +346,15 @@ public:
   /// used to finish up adding passes to emit the file, if necessary.
   ///
   virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
-                                         JITCodeEmitter *MCE,
+                                         JITCodeEmitter *JCE,
+                                         CodeGenOpt::Level);
+ 
+  /// addPassesToEmitFileFinish - If the passes to emit the specified file had
+  /// to be split up (e.g., to add an object writer pass), this method can be
+  /// used to finish up adding passes to emit the file, if necessary.
+  ///
+  virtual bool addPassesToEmitFileFinish(PassManagerBase &PM,
+                                         ObjectCodeEmitter *OCE,
                                          CodeGenOpt::Level);
  
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
@@ -429,6 +448,15 @@ public:
   /// assembly is printed to cerr.
   virtual bool addSimpleCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
                                     bool /*DumpAsm*/, JITCodeEmitter &) {
+    return true;
+  }
+
+  /// addSimpleCodeEmitter - This pass should be overridden by the target to add
+  /// a code emitter (without setting flags), if supported.  If this is not
+  /// supported, 'true' should be returned.  If DumpAsm is true, the generated
+  /// assembly is printed to cerr.
+  virtual bool addSimpleCodeEmitter(PassManagerBase &, CodeGenOpt::Level,
+                                    bool /*DumpAsm*/, ObjectCodeEmitter &) {
     return true;
   }
 

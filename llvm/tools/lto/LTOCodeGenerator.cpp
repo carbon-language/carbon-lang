@@ -430,16 +430,16 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
 
     codeGenPasses->add(new TargetData(*_target->getTargetData()));
 
-    MachineCodeEmitter* mce = NULL;
+    ObjectCodeEmitter* oce = NULL;
 
     switch (_target->addPassesToEmitFile(*codeGenPasses, out,
                                          TargetMachine::AssemblyFile,
                                          CodeGenOpt::Aggressive)) {
         case FileModel::MachOFile:
-            mce = AddMachOWriter(*codeGenPasses, out, *_target);
+            oce = AddMachOWriter(*codeGenPasses, out, *_target);
             break;
         case FileModel::ElfFile:
-            mce = AddELFWriter(*codeGenPasses, out, *_target);
+            oce = AddELFWriter(*codeGenPasses, out, *_target);
             break;
         case FileModel::AsmFile:
             break;
@@ -449,7 +449,7 @@ bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
             return true;
     }
 
-    if (_target->addPassesToEmitFileFinish(*codeGenPasses, mce,
+    if (_target->addPassesToEmitFileFinish(*codeGenPasses, oce,
                                            CodeGenOpt::Aggressive)) {
         errMsg = "target does not support generation of this file type";
         return true;

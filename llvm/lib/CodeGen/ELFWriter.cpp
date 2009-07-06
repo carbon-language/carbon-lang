@@ -40,6 +40,8 @@
 #include "llvm/CodeGen/BinaryObject.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
+#include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -54,12 +56,12 @@ using namespace llvm;
 char ELFWriter::ID = 0;
 /// AddELFWriter - Concrete function to add the ELF writer to the function pass
 /// manager.
-MachineCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
+ObjectCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
                                        raw_ostream &O,
                                        TargetMachine &TM) {
   ELFWriter *EW = new ELFWriter(O, TM);
   PM.add(EW);
-  return &EW->getMachineCodeEmitter();
+  return (ObjectCodeEmitter*) &EW->getMachineCodeEmitter();
 }
 
 //===----------------------------------------------------------------------===//

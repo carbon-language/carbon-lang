@@ -16,6 +16,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/OutputBuffer.h"
+#include <vector>
 
 //===----------------------------------------------------------------------===//
 //                       MachOCodeEmitter Implementation
@@ -39,28 +40,18 @@ void MachOCodeEmitter::startFunction(MachineFunction &MF) {
   // Get the Mach-O Section that this function belongs in.
   MachOSection *MOS = MOW.getTextSection();
   
-  // FIXME: better memory management
-  MOS->SectionData.reserve(4096);
-  BufferBegin = &MOS->SectionData[0];
-  BufferEnd = BufferBegin + MOS->SectionData.capacity();
-
   // Upgrade the section alignment if required.
   if (MOS->align < Align) MOS->align = Align;
 
-  // Round the size up to the correct alignment for starting the new function.
-  if ((MOS->size & ((1 << Align) - 1)) != 0) {
-    MOS->size += (1 << Align);
-    MOS->size &= ~((1 << Align) - 1);
-  }
+  MOS->emitAlignment(Align);
 
-  // FIXME: Using MOS->size directly here instead of calculating it from the
-  // output buffer size (impossible because the code emitter deals only in raw
-  // bytes) forces us to manually synchronize size and write padding zero bytes
-  // to the output buffer for all non-text sections.  For text sections, we do
-  // not synchonize the output buffer, and we just blow up if anyone tries to
-  // write non-code to it.  An assert should probably be added to
-  // AddSymbolToSection to prevent calling it on the text section.
-  CurBufferPtr = BufferBegin + MOS->size;
+  // Create symbol for function entry
+  const GlobalValue *FuncV = MF.getFunction();
+  MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index, TAI);
+  FnSym.n_value = getCurrentPCOffset();
+
+  // add it to the symtab.
+  MOW.SymbolTable.push_back(FnSym);
 }
 
 /// finishFunction - This callback is invoked after the function is completely
@@ -71,15 +62,6 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &MF) {
   // Get the Mach-O Section that this function belongs in.
   MachOSection *MOS = MOW.getTextSection();
 
-  // Get a symbol for the function to add to the symbol table
-  // FIXME: it seems like we should call something like AddSymbolToSection
-  // in startFunction rather than changing the section size and symbol n_value
-  // here.
-  const GlobalValue *FuncV = MF.getFunction();
-  MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index, TAI);
-  FnSym.n_value = MOS->size;
-  MOS->size = CurBufferPtr - BufferBegin;
-  
   // Emit constant pool to appropriate section(s)
   emitConstantPool(MF.getConstantPool());
 
@@ -112,12 +94,9 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &MF) {
     } else {
       assert(0 && "Unhandled relocation type");
     }
-    MOS->Relocations.push_back(MR);
+    MOS->addRelocation(MR);
   }
   Relocations.clear();
-  
-  // Finally, add it to the symtab.
-  MOW.SymbolTable.push_back(FnSym);
 
   // Clear per-function data structures.
   CPLocations.clear();
@@ -151,13 +130,10 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
     unsigned Size = TM.getTargetData()->getTypeAllocSize(Ty);
 
     MachOSection *Sec = MOW.getConstSection(CP[i].Val.ConstVal);
-    OutputBuffer SecDataOut(Sec->SectionData, is64Bit, isLittleEndian);
+    OutputBuffer SecDataOut(Sec->getData(), is64Bit, isLittleEndian);
 
-    CPLocations.push_back(Sec->SectionData.size());
+    CPLocations.push_back(Sec->size());
     CPSections.push_back(Sec->Index);
-    
-    // FIXME: remove when we have unified size + output buffer
-    Sec->size += Size;
 
     // Allocate space in the section for the global.
     // FIXME: need alignment?
@@ -165,14 +141,12 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
     for (unsigned j = 0; j < Size; ++j)
       SecDataOut.outbyte(0);
 
-    MOW.InitMem(CP[i].Val.ConstVal, &Sec->SectionData[0], CPLocations[i],
-                TM.getTargetData(), Sec->Relocations);
+    MachOWriter::InitMem(CP[i].Val.ConstVal, CPLocations[i], TM.getTargetData(), Sec);
   }
 }
 
 /// emitJumpTables - Emit all the jump tables for a given jump table info
 /// record to the appropriate section.
-
 void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
@@ -183,24 +157,21 @@ void MachOCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
 
   MachOSection *Sec = MOW.getJumpTableSection();
   unsigned TextSecIndex = MOW.getTextSection()->Index;
-  OutputBuffer SecDataOut(Sec->SectionData, is64Bit, isLittleEndian);
+  OutputBuffer SecDataOut(Sec->getData(), is64Bit, isLittleEndian);
 
   for (unsigned i = 0, e = JT.size(); i != e; ++i) {
     // For each jump table, record its offset from the start of the section,
     // reserve space for the relocations to the MBBs, and add the relocations.
     const std::vector<MachineBasicBlock*> &MBBs = JT[i].MBBs;
-    JTLocations.push_back(Sec->SectionData.size());
+    JTLocations.push_back(Sec->size());
     for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
-      MachineRelocation MR(MOW.GetJTRelocation(Sec->SectionData.size(),
-                                               MBBs[mi]));
+      MachineRelocation MR(MOW.GetJTRelocation(Sec->size(), MBBs[mi]));
       MR.setResultPointer((void *)JTLocations[i]);
       MR.setConstantVal(TextSecIndex);
-      Sec->Relocations.push_back(MR);
+      Sec->addRelocation(MR);
       SecDataOut.outaddr(0);
     }
   }
-  // FIXME: remove when we have unified size + output buffer
-  Sec->size = Sec->SectionData.size();
 }
 
 } // end namespace llvm

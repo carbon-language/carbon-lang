@@ -24,6 +24,7 @@ class ARMBaseTargetMachine;
 class FunctionPass;
 class MachineCodeEmitter;
 class JITCodeEmitter;
+class ObjectCodeEmitter;
 class raw_ostream;
 
 // Enums corresponding to ARM condition codes
@@ -101,6 +102,8 @@ FunctionPass *createARMCodeEmitterPass(ARMBaseTargetMachine &TM,
                                        MachineCodeEmitter &MCE);
 FunctionPass *createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
                                           JITCodeEmitter &JCE);
+FunctionPass *createARMObjectCodeEmitterPass(ARMBaseTargetMachine &TM, 
+                                             ObjectCodeEmitter &OCE);
 
 FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMConstantIslandPass();

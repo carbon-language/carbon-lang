@@ -19,6 +19,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -91,6 +92,7 @@ namespace {
 	
 /// createPPCCodeEmitterPass - Return a pass that emits the collected PPC code
 /// to the specified MCE object.
+
 FunctionPass *llvm::createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                              MachineCodeEmitter &MCE) {
   return new Emitter<MachineCodeEmitter>(TM, MCE);
@@ -99,6 +101,11 @@ FunctionPass *llvm::createPPCCodeEmitterPass(PPCTargetMachine &TM,
 FunctionPass *llvm::createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                                 JITCodeEmitter &JCE) {
   return new Emitter<JITCodeEmitter>(TM, JCE);
+}
+
+FunctionPass *llvm::createPPCObjectCodeEmitterPass(PPCTargetMachine &TM,
+                                                   ObjectCodeEmitter &OCE) {
+  return new Emitter<ObjectCodeEmitter>(TM, OCE);
 }
 
 template <class CodeEmitter>
@@ -252,6 +259,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       Reloc = PPC::reloc_pcrel_bx;
     else // BCC instruction
       Reloc = PPC::reloc_pcrel_bcx;
+
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                                Reloc, MO.getMBB()));
   } else {

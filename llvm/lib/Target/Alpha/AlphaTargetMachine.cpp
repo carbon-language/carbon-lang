@@ -119,6 +119,17 @@ bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
   }
   return false;
 }
+bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                        CodeGenOpt::Level OptLevel,
+                                        bool DumpAsm, ObjectCodeEmitter &OCE) {
+  PM.add(createAlphaObjectCodeEmitterPass(*this, OCE));
+  if (DumpAsm) {
+    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
+    if (AsmPrinterCtor)
+      PM.add(AsmPrinterCtor(errs(), *this, true));
+  }
+  return false;
+}
 bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                               CodeGenOpt::Level OptLevel,
                                               bool DumpAsm,
@@ -130,5 +141,11 @@ bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                               bool DumpAsm,
                                               JITCodeEmitter &JCE) {
   return addCodeEmitter(PM, OptLevel, DumpAsm, JCE);
+}
+bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
+                                              CodeGenOpt::Level OptLevel,
+                                              bool DumpAsm,
+                                              ObjectCodeEmitter &OCE) {
+  return addCodeEmitter(PM, OptLevel, DumpAsm, OCE);
 }
 

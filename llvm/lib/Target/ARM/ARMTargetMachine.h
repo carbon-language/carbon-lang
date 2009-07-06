@@ -77,6 +77,8 @@ public:
                               bool DumpAsm, MachineCodeEmitter &MCE);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                               bool DumpAsm, JITCodeEmitter &MCE);
+  virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
+                              bool DumpAsm, ObjectCodeEmitter &OCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm,
@@ -85,6 +87,10 @@ public:
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm,
                                     JITCodeEmitter &MCE);
+  virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
+                                    CodeGenOpt::Level OptLevel,
+                                    bool DumpAsm,
+                                    ObjectCodeEmitter &OCE);
 };
 
 /// ARMTargetMachine - ARM target machine.

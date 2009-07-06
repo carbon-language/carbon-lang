@@ -15,17 +15,24 @@
 #define MACHOWRITER_H
 
 #include "MachO.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachOWriterInfo.h"
+#include <vector>
 #include <map>
 
 namespace llvm {
   class GlobalVariable;
   class Mangler;
-  class MachineCodeEmitter;
+  class MachineRelocation;
+  class ObjectCodeEmitter;
   class MachOCodeEmitter;
+  class TargetData;
+  class TargetMachine;
   class OutputBuffer;
   class raw_ostream;
 
@@ -38,8 +45,9 @@ namespace llvm {
     friend class MachOCodeEmitter;
   public:
     static char ID;
-    MachineCodeEmitter &getMachineCodeEmitter() const {
-      return *(MachineCodeEmitter*)MCE;
+
+    ObjectCodeEmitter *getObjectCodeEmitter() {
+      return reinterpret_cast<ObjectCodeEmitter*>(MachOCE);
     }
 
     MachOWriter(raw_ostream &O, TargetMachine &TM);
@@ -62,10 +70,10 @@ namespace llvm {
     ///
     Mangler *Mang;
     
-    /// MCE - The MachineCodeEmitter object that we are exposing to emit machine
+    /// MachOCE - The MachineCodeEmitter object that we are exposing to emit machine
     /// code for functions to the .o file.
 
-    MachOCodeEmitter *MCE;
+    MachOCodeEmitter *MachOCE;
 
     /// is64Bit/isLittleEndian - This information is inferred from the target
     /// machine directly, indicating what header values and flags to set.
@@ -225,9 +233,10 @@ namespace llvm {
     /// SymbolTable to aid in emitting the DYSYMTAB load command.
     std::vector<unsigned> DynamicSymbolTable;
     
-    static void InitMem(const Constant *C, void *Addr, intptr_t Offset,
+    static void InitMem(const Constant *C,
+                        uintptr_t Offset,
                         const TargetData *TD, 
-                        std::vector<MachineRelocation> &MRs);
+                        MachOSection* mos);
 
   private:
     void AddSymbolToSection(MachOSection *MOS, GlobalVariable *GV);

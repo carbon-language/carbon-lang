@@ -26,6 +26,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
+#include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -174,18 +175,18 @@ namespace {
 /// createARMCodeEmitterPass - Return a pass that emits the collected ARM code
 /// to the specified MCE object.
 
-namespace llvm {
-
-FunctionPass *createARMCodeEmitterPass(ARMBaseTargetMachine &TM,
-                                       MachineCodeEmitter &MCE) {
+FunctionPass *llvm::createARMCodeEmitterPass(ARMBaseTargetMachine &TM,
+                                             MachineCodeEmitter &MCE) {
   return new Emitter<MachineCodeEmitter>(TM, MCE);
 }
-FunctionPass *createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
-                                          JITCodeEmitter &JCE) {
+FunctionPass *llvm::createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
+                                                JITCodeEmitter &JCE) {
   return new Emitter<JITCodeEmitter>(TM, JCE);
 }
-
-} // end namespace llvm
+FunctionPass *llvm::createARMObjectCodeEmitterPass(ARMBaseTargetMachine &TM,
+                                                   ObjectCodeEmitter &OCE) {
+  return new Emitter<ObjectCodeEmitter>(TM, OCE);
+}
 
 template<class CodeEmitter>
 bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
