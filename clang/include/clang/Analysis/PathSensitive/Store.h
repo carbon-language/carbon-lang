@@ -139,12 +139,6 @@ public:
     return UseNewCastRegion ? NewCastRegion(state, region, CastToTy)
                             : OldCastRegion(state, region, CastToTy);
   }
-
-  CastResult NewCastRegion(const GRState *state, const MemRegion *region,
-                           QualType CastToTy);
-
-  CastResult OldCastRegion(const GRState *state, const MemRegion *region,
-                           QualType CastToTy);
   
   virtual const GRState *setCastType(const GRState *state, const MemRegion* R,
                                      QualType T) {
@@ -198,7 +192,17 @@ public:
   };
   
   /// iterBindings - Iterate over the bindings in the Store.
-  virtual void iterBindings(Store store, BindingsHandler& f) = 0;  
+  virtual void iterBindings(Store store, BindingsHandler& f) = 0;
+
+private:
+  CastResult MakeElementRegion(const GRState *state, const MemRegion *region,
+                               QualType pointeeTy, QualType castToTy);
+  
+  CastResult NewCastRegion(const GRState *state, const MemRegion *region,
+                           QualType CastToTy);
+  
+  CastResult OldCastRegion(const GRState *state, const MemRegion *region,
+                           QualType CastToTy);  
 };
 
 // FIXME: Do we still need this?
