@@ -83,6 +83,9 @@ namespace llvm {
       // This value must be a multiple of 32.
       MAX_ALLOWED_VALUETYPE = 64,
 
+      // Metadata - This is MDNode or MDString. 
+      Metadata       = 251,
+
       // iPTRAny - An int value the size of the pointer of the current
       // target to any address space. This must only be used internal to
       // tblgen. Other than for overloading, we treat iPTRAny the same as iPTR.

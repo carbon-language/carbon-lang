@@ -57,7 +57,9 @@ def v4f32  : ValueType<128, 32>;   //  4 x f32 vector value
 def v8f32  : ValueType<256, 33>;   //  8 x f32 vector value
 def v2f64  : ValueType<128, 34>;   //  2 x f64 vector value
 def v4f64  : ValueType<256, 35>;   //  4 x f64 vector value
-  
+
+def MetadataVT: ValueType<0, 251>; // Metadata
+
 // Pseudo valuetype mapped to the current pointer size to any address space.
 // Should only be used in TableGen.
 def iPTRAny   : ValueType<0, 252>;

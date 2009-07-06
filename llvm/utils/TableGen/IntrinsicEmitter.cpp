@@ -159,6 +159,8 @@ static void EmitTypeForValueType(raw_ostream &OS, MVT::SimpleValueType VT) {
     OS << "Type::PPC_FP128Ty";
   } else if (VT == MVT::isVoid) {
     OS << "Type::VoidTy";
+  } else if (VT == MVT::Metadata) {
+    OS << "Type::MetadataTy";
   } else {
     assert(false && "Unsupported ValueType!");
   }
