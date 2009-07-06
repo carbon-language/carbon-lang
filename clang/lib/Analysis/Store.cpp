@@ -122,7 +122,7 @@ StoreManager::OldCastRegion(const GRState* state, const MemRegion* R,
     QualType Pointee = PTy->getPointeeType();
     if (Pointee->isVoidType()) {
 
-      do {
+      while (true) {
         if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
           // Casts to void* removes TypedViewRegion. This happens when:
           //
@@ -152,7 +152,6 @@ StoreManager::OldCastRegion(const GRState* state, const MemRegion* R,
         else
           break;
       }
-      while (0);
       
       return CastResult(state, R);
     }
