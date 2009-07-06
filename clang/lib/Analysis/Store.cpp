@@ -30,18 +30,18 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
   
   // We need to know the real type of CastToTy.
   QualType ToTy = Ctx.getCanonicalType(CastToTy);
-  
-  // Check cast to ObjCQualifiedID type.
-  if (ToTy->isObjCQualifiedIdType()) {
-    // FIXME: Record the type information aside.
-    return CastResult(state, R);
-  }
-  
+    
   // CodeTextRegion should be cast to only function pointer type.
   if (isa<CodeTextRegion>(R)) {
     assert(CastToTy->isFunctionPointerType() || CastToTy->isBlockPointerType()
            || (CastToTy->isPointerType() 
                && CastToTy->getAsPointerType()->getPointeeType()->isVoidType()));
+    return CastResult(state, R);
+  }
+  
+  // Check cast to ObjCQualifiedID type.
+  if (ToTy->isObjCQualifiedIdType()) {
+    // FIXME: Record the type information aside.
     return CastResult(state, R);
   }
   
@@ -65,7 +65,7 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
       || isa<ObjCIvarRegion>(R) || isa<CompoundLiteralRegion>(R)) {
     // If the pointee type is incomplete, do not compute its size, and return
     // the original region.
-    if (const RecordType *RT = dyn_cast<RecordType>(PointeeTy.getTypePtr())) {
+    if (const RecordType *RT = PointeeTy->getAsRecordType()) {
       const RecordDecl *D = RT->getDecl();
       if (!D->getDefinition(Ctx))
         return CastResult(state, R);
@@ -121,7 +121,6 @@ StoreManager::OldCastRegion(const GRState* state, const MemRegion* R,
     // FIXME: Handle arbitrary upcasts.
     QualType Pointee = PTy->getPointeeType();
     if (Pointee->isVoidType()) {
-
       while (true) {
         if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
           // Casts to void* removes TypedViewRegion. This happens when:
@@ -149,8 +148,8 @@ StoreManager::OldCastRegion(const GRState* state, const MemRegion* R,
           R = ER->getSuperRegion();
           continue;
         }
-        else
-          break;
+
+        break;
       }
       
       return CastResult(state, R);
@@ -178,7 +177,6 @@ StoreManager::OldCastRegion(const GRState* state, const MemRegion* R,
   // FIXME: Handle the case where a TypedViewRegion (layering a SymbolicRegion
   //         or an AllocaRegion is cast to another view, thus causing the memory
   //         to be re-used for a different purpose.
-
   if (isa<SymbolicRegion>(R) || isa<AllocaRegion>(R)) {
     const MemRegion* ViewR = MRMgr.getTypedViewRegion(CastToTy, R);  
     return CastResult(AddRegionView(state, ViewR, R), ViewR);
