@@ -369,8 +369,17 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
     for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
          unsigned SubReg = *SubRegs; ++SubRegs) {
       if (PartUses.count(SubReg)) {
-        PhysRegDef[Reg]->addOperand(MachineOperand::CreateReg(SubReg,
-                                                              true, true));
+        bool NeedDef = true;
+        if (PhysRegDef[Reg] == PhysRegDef[SubReg]) {
+          MachineOperand *MO = PhysRegDef[Reg]->findRegisterDefOperand(SubReg);
+          if (MO) {
+            NeedDef = false;
+            assert(!MO->isDead());
+          }
+        }
+        if (NeedDef)
+          PhysRegDef[Reg]->addOperand(MachineOperand::CreateReg(SubReg,
+                                                                true, true));
         LastRefOrPartRef->addRegisterKilled(SubReg, TRI, true);
         for (const unsigned *SS = TRI->getSubRegisters(SubReg); *SS; ++SS)
           PartUses.erase(*SS);
