@@ -483,7 +483,8 @@ QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
 /// returns a NULL type.
 QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                               Expr *ArraySize, unsigned Quals,
-                              SourceLocation Loc, DeclarationName Entity) {
+                              SourceRange Brackets, DeclarationName Entity) {
+  SourceLocation Loc = Brackets.getBegin();
   // C99 6.7.5.2p1: If the element type is an incomplete or function type, 
   // reject it (e.g. void ary[7], struct foo ary[7], void ary[7]())
   if (RequireCompleteType(Loc, T, 
@@ -530,16 +531,16 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   llvm::APSInt ConstVal(32);
   if (!ArraySize) {
     if (ASM == ArrayType::Star)
-      T = Context.getVariableArrayType(T, 0, ASM, Quals);
+      T = Context.getVariableArrayType(T, 0, ASM, Quals, Brackets);
     else
       T = Context.getIncompleteArrayType(T, ASM, Quals);
   } else if (ArraySize->isValueDependent()) {
-    T = Context.getDependentSizedArrayType(T, ArraySize, ASM, Quals);
+    T = Context.getDependentSizedArrayType(T, ArraySize, ASM, Quals, Brackets);
   } else if (!ArraySize->isIntegerConstantExpr(ConstVal, Context) ||
              (!T->isDependentType() && !T->isConstantSizeType())) {
     // Per C99, a variable array is an array with either a non-constant
     // size or an element type that has a non-constant-size
-    T = Context.getVariableArrayType(T, ArraySize, ASM, Quals);
+    T = Context.getVariableArrayType(T, ArraySize, ASM, Quals, Brackets);
   } else {
     // C99 6.7.5.2p1: If the expression is a constant expression, it shall
     // have a value greater than zero.
@@ -555,7 +556,8 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
           << ArraySize->getSourceRange();
       }
     } 
-    T = Context.getConstantArrayType(T, ConstVal, ASM, Quals);
+    T = Context.getConstantArrayWithExprType(T, ConstVal, ArraySize,
+                                             ASM, Quals, Brackets);
   }
   // If this is not C99, extwarn about VLA's and C99 array size modifiers.
   if (!getLangOptions().C99) {
@@ -923,7 +925,8 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
         ASM = ArrayType::Normal;
         D.setInvalidType(true);
       }
-      T = BuildArrayType(T, ASM, ArraySize, ATI.TypeQuals, DeclType.Loc, Name);
+      T = BuildArrayType(T, ASM, ArraySize, ATI.TypeQuals,
+                         SourceRange(DeclType.Loc, DeclType.EndLoc), Name);
       break;
     }
     case DeclaratorChunk::Function: {

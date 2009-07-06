@@ -780,6 +780,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
     return Slot = CreateType(cast<FunctionType>(Ty), Unit);
     
   case Type::ConstantArray:
+  case Type::ConstantArrayWithExpr:
+  case Type::ConstantArrayWithoutExpr:
   case Type::VariableArray:
   case Type::IncompleteArray:
     return Slot = CreateType(cast<ArrayType>(Ty), Unit);

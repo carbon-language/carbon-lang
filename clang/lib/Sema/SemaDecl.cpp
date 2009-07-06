@@ -1568,9 +1568,18 @@ static QualType TryToFixInvalidVariablyModifiedType(QualType T,
     return QualType();
 
   llvm::APSInt &Res = EvalResult.Val.getInt();
-  if (Res >= llvm::APSInt(Res.getBitWidth(), Res.isUnsigned()))
-    return Context.getConstantArrayType(VLATy->getElementType(),
-                                        Res, ArrayType::Normal, 0);
+  if (Res >= llvm::APSInt(Res.getBitWidth(), Res.isUnsigned())) {
+    Expr* ArySizeExpr = VLATy->getSizeExpr();
+    // FIXME: here we could "steal" (how?) ArySizeExpr from the VLA,
+    // so as to transfer ownership to the ConstantArrayWithExpr.
+    // Alternatively, we could "clone" it (how?).
+    // Since we don't know how to do things above, we just use the
+    // very same Expr*.
+    return Context.getConstantArrayWithExprType(VLATy->getElementType(),
+                                                Res, ArySizeExpr,
+                                                ArrayType::Normal, 0,
+                                                VLATy->getBracketsRange());
+  }
 
   SizeIsNegative = true;
   return QualType();

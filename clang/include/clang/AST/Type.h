@@ -291,7 +291,7 @@ private:
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
-  unsigned TC : 5;
+  unsigned TC : 6;
 
   Type(const Type&);           // DO NOT IMPLEMENT.
   void operator=(const Type&); // DO NOT IMPLEMENT.
@@ -839,6 +839,8 @@ public:
   
   static bool classof(const Type *T) {
     return T->getTypeClass() == ConstantArray ||
+           T->getTypeClass() == ConstantArrayWithExpr ||
+           T->getTypeClass() == ConstantArrayWithoutExpr ||
            T->getTypeClass() == VariableArray ||
            T->getTypeClass() == IncompleteArray ||
            T->getTypeClass() == DependentSizedArray;
@@ -846,15 +848,21 @@ public:
   static bool classof(const ArrayType *) { return true; }
 };
 
-/// ConstantArrayType - This class represents C arrays with a specified constant
-/// size.  For example 'int A[100]' has ConstantArrayType where the element type
-/// is 'int' and the size is 100.
+/// ConstantArrayType - This class represents the canonical version of
+/// C arrays with a specified constant size.  For example, the canonical
+/// type for 'int A[4 + 4*100]' is a ConstantArrayType where the element
+/// type is 'int' and the size is 404.
 class ConstantArrayType : public ArrayType {
   llvm::APInt Size; // Allows us to unique the type.
   
   ConstantArrayType(QualType et, QualType can, const llvm::APInt &size,
                     ArraySizeModifier sm, unsigned tq)
-    : ArrayType(ConstantArray, et, can, sm, tq), Size(size) {}
+    : ArrayType(ConstantArray, et, can, sm, tq),
+      Size(size) {}
+protected:
+  ConstantArrayType(TypeClass tc, QualType et, QualType can,
+                    const llvm::APInt &size, ArraySizeModifier sm, unsigned tq)
+    : ArrayType(tc, et, can, sm, tq), Size(size) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   const llvm::APInt &getSize() const { return Size; }
@@ -872,22 +880,91 @@ public:
     ID.AddInteger(SizeMod);
     ID.AddInteger(TypeQuals);
   }
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == ConstantArray; 
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ConstantArray ||
+           T->getTypeClass() == ConstantArrayWithExpr ||
+           T->getTypeClass() == ConstantArrayWithoutExpr;
   }
   static bool classof(const ConstantArrayType *) { return true; }
+};
+
+/// ConstantArrayWithExprType - This class represents C arrays with a
+/// constant size specified by means of an integer constant expression.
+/// For example 'int A[sizeof(int)]' has ConstantArrayWithExprType where
+/// the element type is 'int' and the size expression is 'sizeof(int)'.
+/// These types are non-canonical.
+class ConstantArrayWithExprType : public ConstantArrayType {
+  /// SizeExpr - The ICE occurring in the concrete syntax.
+  Expr *SizeExpr;
+  /// Brackets - The left and right array brackets.
+  SourceRange Brackets;
+
+  ConstantArrayWithExprType(QualType et, QualType can,
+                            const llvm::APInt &size, Expr *e,
+                            ArraySizeModifier sm, unsigned tq,
+                            SourceRange brackets)
+    : ConstantArrayType(ConstantArrayWithExpr, et, can, size, sm, tq),
+      SizeExpr(e), Brackets(brackets) {}
+  friend class ASTContext;  // ASTContext creates these.
+  virtual void Destroy(ASTContext& C);
+
+public:
+  Expr *getSizeExpr() const { return SizeExpr; }
+  SourceRange getBracketsRange() const { return Brackets; }
+  SourceLocation getLBracketLoc() const { return Brackets.getBegin(); }
+  SourceLocation getRBracketLoc() const { return Brackets.getEnd(); }
+
+  virtual void getAsStringInternal(std::string &InnerString,
+                                   const PrintingPolicy &Policy) const;
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ConstantArrayWithExpr;
+  }
+  static bool classof(const ConstantArrayWithExprType *) { return true; }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    assert(0 && "Cannot unique ConstantArrayWithExprTypes.");
+  }
+};
+
+/// ConstantArrayWithoutExprType - This class represents C arrays with a
+/// constant size that was not specified by an integer constant expression,
+/// but inferred by static semantics.
+/// For example 'int A[] = { 0, 1, 2 }' has ConstantArrayWithoutExprType.
+/// These types are non-canonical: the corresponding canonical type,
+/// having the size specified in an APInt object, is a ConstantArrayType.
+class ConstantArrayWithoutExprType : public ConstantArrayType {
+
+  ConstantArrayWithoutExprType(QualType et, QualType can,
+                               const llvm::APInt &size,
+                               ArraySizeModifier sm, unsigned tq)
+    : ConstantArrayType(ConstantArrayWithoutExpr, et, can, size, sm, tq) {}
+  friend class ASTContext;  // ASTContext creates these.
+
+public:
+  virtual void getAsStringInternal(std::string &InnerString,
+                                   const PrintingPolicy &Policy) const;
+
+  static bool classof(const Type *T) {
+    return T->getTypeClass() == ConstantArrayWithoutExpr;
+  }
+  static bool classof(const ConstantArrayWithoutExprType *) { return true; }
+
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    assert(0 && "Cannot unique ConstantArrayWithoutExprTypes.");
+  }
 };
 
 /// IncompleteArrayType - This class represents C arrays with an unspecified
 /// size.  For example 'int A[]' has an IncompleteArrayType where the element
 /// type is 'int' and the size is unspecified.
 class IncompleteArrayType : public ArrayType {
+
   IncompleteArrayType(QualType et, QualType can,
-                    ArraySizeModifier sm, unsigned tq)
+                      ArraySizeModifier sm, unsigned tq)
     : ArrayType(IncompleteArray, et, can, sm, tq) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-
   virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
 
   static bool classof(const Type *T) { 
@@ -928,10 +1005,14 @@ class VariableArrayType : public ArrayType {
   /// SizeExpr - An assignment expression. VLA's are only permitted within 
   /// a function block. 
   Stmt *SizeExpr;
-  
+  /// Brackets - The left and right array brackets.
+  SourceRange Brackets;
+
   VariableArrayType(QualType et, QualType can, Expr *e,
-                    ArraySizeModifier sm, unsigned tq)
-    : ArrayType(VariableArray, et, can, sm, tq), SizeExpr((Stmt*) e) {}
+                    ArraySizeModifier sm, unsigned tq,
+                    SourceRange brackets)
+    : ArrayType(VariableArray, et, can, sm, tq),
+      SizeExpr((Stmt*) e), Brackets(brackets) {}
   friend class ASTContext;  // ASTContext creates these.
   virtual void Destroy(ASTContext& C);
 
@@ -941,6 +1022,9 @@ public:
     // to have a dependency of Type.h on Stmt.h/Expr.h.
     return (Expr*) SizeExpr;
   }
+  SourceRange getBracketsRange() const { return Brackets; }
+  SourceLocation getLBracketLoc() const { return Brackets.getBegin(); }
+  SourceLocation getRBracketLoc() const { return Brackets.getEnd(); }
   
   virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   
@@ -971,10 +1055,14 @@ class DependentSizedArrayType : public ArrayType {
   /// SizeExpr - An assignment expression that will instantiate to the
   /// size of the array.
   Stmt *SizeExpr;
+  /// Brackets - The left and right array brackets.
+  SourceRange Brackets;
   
   DependentSizedArrayType(QualType et, QualType can, Expr *e,
-			  ArraySizeModifier sm, unsigned tq)
-    : ArrayType(DependentSizedArray, et, can, sm, tq), SizeExpr((Stmt*) e) {}
+			  ArraySizeModifier sm, unsigned tq,
+                          SourceRange brackets)
+    : ArrayType(DependentSizedArray, et, can, sm, tq),
+      SizeExpr((Stmt*) e), Brackets(brackets) {}
   friend class ASTContext;  // ASTContext creates these.
   virtual void Destroy(ASTContext& C);
 
@@ -984,6 +1072,9 @@ public:
     // to have a dependency of Type.h on Stmt.h/Expr.h.
     return (Expr*) SizeExpr;
   }
+  SourceRange getBracketsRange() const { return Brackets; }
+  SourceLocation getLBracketLoc() const { return Brackets.getBegin(); }
+  SourceLocation getRBracketLoc() const { return Brackets.getEnd(); }
   
   virtual void getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const;
   

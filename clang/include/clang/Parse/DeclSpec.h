@@ -457,6 +457,8 @@ struct DeclaratorChunk {
 
   /// Loc - The place where this type was defined.
   SourceLocation Loc;
+  /// EndLoc - If valid, the place where this chunck ends.
+  SourceLocation EndLoc;
   
   struct PointerTypeInfo {
     /// The type qualifiers: const/volatile/restrict.
@@ -696,10 +698,11 @@ struct DeclaratorChunk {
   ///
   static DeclaratorChunk getArray(unsigned TypeQuals, bool isStatic,
                                   bool isStar, void *NumElts,
-                                  SourceLocation Loc) {
+                                  SourceLocation LBLoc, SourceLocation RBLoc) {
     DeclaratorChunk I;
     I.Kind          = Array;
-    I.Loc           = Loc;
+    I.Loc           = LBLoc;
+    I.EndLoc        = RBLoc;
     I.Arr.TypeQuals = TypeQuals;
     I.Arr.hasStatic = isStatic;
     I.Arr.isStar    = isStar;

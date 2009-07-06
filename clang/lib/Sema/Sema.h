@@ -378,7 +378,7 @@ public:
                               SourceLocation Loc, DeclarationName Entity);
   QualType BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                           Expr *ArraySize, unsigned Quals,
-                          SourceLocation Loc, DeclarationName Entity);
+                          SourceRange Brackets, DeclarationName Entity);
   QualType BuildExtVectorType(QualType T, ExprArg ArraySize, 
                               SourceLocation AttrLoc);
   QualType BuildFunctionType(QualType T,

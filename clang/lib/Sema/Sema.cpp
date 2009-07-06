@@ -282,8 +282,8 @@ void Sema::ActOnEndOfTranslationUnit() {
         llvm::APInt One(Context.getTypeSize(Context.getSizeType()), 
                         true);
         QualType T 
-          = Context.getConstantArrayType(ArrayT->getElementType(),
-                                         One, ArrayType::Normal, 0);
+          = Context.getConstantArrayWithoutExprType(ArrayT->getElementType(),
+                                                    One, ArrayType::Normal, 0);
         VD->setType(T);
       }
     } else if (RequireCompleteType(VD->getLocation(), VD->getType(), 

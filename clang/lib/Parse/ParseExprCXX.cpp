@@ -966,7 +966,7 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
 
     SourceLocation RLoc = MatchRHSPunctuation(tok::r_square, LLoc);
     D.AddTypeInfo(DeclaratorChunk::getArray(0, /*static=*/false, /*star=*/false,
-                                            Size.release(), LLoc),
+                                            Size.release(), LLoc, RLoc),
                   RLoc);
 
     if (RLoc.isInvalid())

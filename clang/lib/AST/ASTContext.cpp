@@ -475,6 +475,8 @@ ASTContext::getTypeInfo(const Type *T) {
     Align = getTypeAlign(cast<ArrayType>(T)->getElementType());
     break;
 
+  case Type::ConstantArrayWithExpr:
+  case Type::ConstantArrayWithoutExpr:
   case Type::ConstantArray: {
     const ConstantArrayType *CAT = cast<ConstantArrayType>(T);
     
@@ -1344,16 +1346,68 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   return QualType(New, 0);
 }
 
+/// getConstantArrayWithExprType - Return a reference to the type for
+/// an array of the specified element type.
+QualType
+ASTContext::getConstantArrayWithExprType(QualType EltTy,
+                                         const llvm::APInt &ArySizeIn,
+                                         Expr *ArySizeExpr,
+                                         ArrayType::ArraySizeModifier ASM,
+                                         unsigned EltTypeQuals,
+                                         SourceRange Brackets) {
+  // Convert the array size into a canonical width matching the pointer
+  // size for the target.
+  llvm::APInt ArySize(ArySizeIn);
+  ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
+
+  // Compute the canonical ConstantArrayType.
+  QualType Canonical = getConstantArrayType(getCanonicalType(EltTy),
+                                            ArySize, ASM, EltTypeQuals);
+  // Since we don't unique expressions, it isn't possible to unique VLA's
+  // that have an expression provided for their size.
+  ConstantArrayWithExprType *New =
+    new(*this,8)ConstantArrayWithExprType(EltTy, Canonical,
+                                          ArySize, ArySizeExpr,
+                                          ASM, EltTypeQuals, Brackets);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
+
+/// getConstantArrayWithoutExprType - Return a reference to the type for
+/// an array of the specified element type.
+QualType
+ASTContext::getConstantArrayWithoutExprType(QualType EltTy,
+                                            const llvm::APInt &ArySizeIn,
+                                            ArrayType::ArraySizeModifier ASM,
+                                            unsigned EltTypeQuals) {
+  // Convert the array size into a canonical width matching the pointer
+  // size for the target.
+  llvm::APInt ArySize(ArySizeIn);
+  ArySize.zextOrTrunc(Target.getPointerWidth(EltTy.getAddressSpace()));
+
+  // Compute the canonical ConstantArrayType.
+  QualType Canonical = getConstantArrayType(getCanonicalType(EltTy),
+                                            ArySize, ASM, EltTypeQuals);
+  ConstantArrayWithoutExprType *New =
+    new(*this,8)ConstantArrayWithoutExprType(EltTy, Canonical,
+                                             ArySize, ASM, EltTypeQuals);
+  Types.push_back(New);
+  return QualType(New, 0);
+}
+
 /// getVariableArrayType - Returns a non-unique reference to the type for a
 /// variable array of the specified element type.
-QualType ASTContext::getVariableArrayType(QualType EltTy, Expr *NumElts,
+QualType ASTContext::getVariableArrayType(QualType EltTy,
+                                          Expr *NumElts,
                                           ArrayType::ArraySizeModifier ASM,
-                                          unsigned EltTypeQuals) {
+                                          unsigned EltTypeQuals,
+                                          SourceRange Brackets) {
   // Since we don't unique expressions, it isn't possible to unique VLA's
   // that have an expression provided for their size.
 
   VariableArrayType *New =
-    new(*this,8)VariableArrayType(EltTy,QualType(), NumElts, ASM, EltTypeQuals);
+    new(*this,8)VariableArrayType(EltTy, QualType(),
+                                  NumElts, ASM, EltTypeQuals, Brackets);
 
   VariableArrayTypes.push_back(New);
   Types.push_back(New);
@@ -1364,9 +1418,11 @@ QualType ASTContext::getVariableArrayType(QualType EltTy, Expr *NumElts,
 /// the type for a dependently-sized array of the specified element
 /// type. FIXME: We will need these to be uniqued, or at least
 /// comparable, at some point.
-QualType ASTContext::getDependentSizedArrayType(QualType EltTy, Expr *NumElts,
+QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
+                                                Expr *NumElts,
                                                 ArrayType::ArraySizeModifier ASM,
-                                                unsigned EltTypeQuals) {
+                                                unsigned EltTypeQuals,
+                                                SourceRange Brackets) {
   assert((NumElts->isTypeDependent() || NumElts->isValueDependent()) && 
          "Size must be type- or value-dependent!");
 
@@ -1374,8 +1430,9 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy, Expr *NumElts,
   // dependently-sized array types.
 
   DependentSizedArrayType *New =
-      new (*this,8) DependentSizedArrayType(EltTy, QualType(), NumElts, 
-                                            ASM, EltTypeQuals);
+    new (*this,8) DependentSizedArrayType(EltTy, QualType(),
+                                          NumElts, ASM, EltTypeQuals,
+                                          Brackets);
 
   DependentSizedArrayTypes.push_back(New);
   Types.push_back(New);
@@ -1407,8 +1464,9 @@ QualType ASTContext::getIncompleteArrayType(QualType EltTy,
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
 
-  IncompleteArrayType *New = new (*this,8) IncompleteArrayType(EltTy, Canonical,
-                                                           ASM, EltTypeQuals);
+  IncompleteArrayType *New
+    = new (*this,8) IncompleteArrayType(EltTy, Canonical,
+                                        ASM, EltTypeQuals);
 
   IncompleteArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
@@ -1974,14 +2032,18 @@ QualType ASTContext::getCanonicalType(QualType T) {
                                   IAT->getIndexTypeQualifier());
   
   if (DependentSizedArrayType *DSAT = dyn_cast<DependentSizedArrayType>(AT))
-    return getDependentSizedArrayType(NewEltTy, DSAT->getSizeExpr(),
+    return getDependentSizedArrayType(NewEltTy,
+                                      DSAT->getSizeExpr(),
                                       DSAT->getSizeModifier(),
-                                      DSAT->getIndexTypeQualifier());    
+                                      DSAT->getIndexTypeQualifier(),
+                                      DSAT->getBracketsRange());
 
   VariableArrayType *VAT = cast<VariableArrayType>(AT);
-  return getVariableArrayType(NewEltTy, VAT->getSizeExpr(),
+  return getVariableArrayType(NewEltTy,
+                              VAT->getSizeExpr(),
                               VAT->getSizeModifier(),
-                              VAT->getIndexTypeQualifier());
+                              VAT->getIndexTypeQualifier(),
+                              VAT->getBracketsRange());
 }
 
 Decl *ASTContext::getCanonicalDecl(Decl *D) {
@@ -2136,7 +2198,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
   if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(ATy))
     return cast<ArrayType>(getIncompleteArrayType(NewEltTy,
                                                   IAT->getSizeModifier(),
-                                                 IAT->getIndexTypeQualifier()));
+                                                  IAT->getIndexTypeQualifier()));
 
   if (const DependentSizedArrayType *DSAT 
         = dyn_cast<DependentSizedArrayType>(ATy))
@@ -2144,12 +2206,15 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) {
                      getDependentSizedArrayType(NewEltTy, 
                                                 DSAT->getSizeExpr(),
                                                 DSAT->getSizeModifier(),
-                                                DSAT->getIndexTypeQualifier()));
+                                                DSAT->getIndexTypeQualifier(),
+                                                DSAT->getBracketsRange()));
   
   const VariableArrayType *VAT = cast<VariableArrayType>(ATy);
-  return cast<ArrayType>(getVariableArrayType(NewEltTy, VAT->getSizeExpr(),
+  return cast<ArrayType>(getVariableArrayType(NewEltTy,
+                                              VAT->getSizeExpr(),
                                               VAT->getSizeModifier(),
-                                              VAT->getIndexTypeQualifier()));
+                                              VAT->getIndexTypeQualifier(),
+                                              VAT->getBracketsRange()));
 }
 
 
@@ -3528,7 +3593,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     }
     if (getCanonicalType(LHSElem) == getCanonicalType(ResultType)) return LHS;
     if (getCanonicalType(RHSElem) == getCanonicalType(ResultType)) return RHS;
-    return getIncompleteArrayType(ResultType, ArrayType::ArraySizeModifier(),0);
+    return getIncompleteArrayType(ResultType,
+                                  ArrayType::ArraySizeModifier(), 0);
   }
   case Type::FunctionNoProto:
     return mergeFunctionTypes(LHS, RHS);

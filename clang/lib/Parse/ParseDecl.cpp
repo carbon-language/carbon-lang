@@ -2690,7 +2690,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     SourceLocation EndLoc = MatchRHSPunctuation(tok::r_square, StartLoc);
     // Remember that we parsed the empty array type.
     OwningExprResult NumElements(Actions);
-    D.AddTypeInfo(DeclaratorChunk::getArray(0, false, false, 0, StartLoc),
+    D.AddTypeInfo(DeclaratorChunk::getArray(0, false, false, 0,
+                                            StartLoc, EndLoc),
                   EndLoc);
     return;
   } else if (Tok.getKind() == tok::numeric_constant &&
@@ -2706,8 +2707,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
       ExprRes.release();  // Deallocate expr, just use [].
     
     // Remember that we parsed a array type, and remember its features.
-    D.AddTypeInfo(DeclaratorChunk::getArray(0, false, 0,
-                                            ExprRes.release(), StartLoc),
+    D.AddTypeInfo(DeclaratorChunk::getArray(0, false, 0, ExprRes.release(),
+                                            StartLoc, EndLoc),
                   EndLoc);
     return;
   }
@@ -2770,7 +2771,8 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
   // Remember that we parsed a array type, and remember its features.
   D.AddTypeInfo(DeclaratorChunk::getArray(DS.getTypeQualifiers(),
                                           StaticLoc.isValid(), isStar,
-                                          NumElements.release(), StartLoc),
+                                          NumElements.release(),
+                                          StartLoc, EndLoc),
                 EndLoc);
 }
 

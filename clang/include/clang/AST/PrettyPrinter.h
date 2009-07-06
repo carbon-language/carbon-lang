@@ -79,6 +79,24 @@ struct PrintingPolicy {
   /// and pretty-printing involves printing something similar to
   /// source code.
   bool Dump : 1;
+
+  /// \brief Whether we should print the sizes of constant array expressions
+  /// as written in the sources.
+  ///
+  /// This flag is determines whether arrays types declared as
+  ///
+  /// \code
+  /// int a[4+10*10];
+  /// char a[] = "A string";
+  /// \endcode
+  ///
+  /// will be printed as written or as follows:
+  ///
+  /// \code
+  /// int a[104];
+  /// char a[9] = "A string";
+  /// \endcode
+  bool ConstantArraySizeAsWritten : 1;
 };
 
 } // end namespace clang

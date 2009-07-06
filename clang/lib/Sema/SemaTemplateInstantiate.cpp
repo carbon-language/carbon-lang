@@ -421,7 +421,20 @@ InstantiateConstantArrayType(const ConstantArrayType *T) const {
   IntegerLiteral ArraySize(Size, SizeType, Loc);
   return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(), 
                                 &ArraySize, T->getIndexTypeQualifier(), 
-                                Loc, Entity);
+                                SourceRange(), // FIXME: provide proper range?
+                                Entity);
+}
+
+QualType
+TemplateTypeInstantiator::InstantiateConstantArrayWithExprType
+(const ConstantArrayWithExprType *T) const {
+  return InstantiateConstantArrayType(T);
+}
+
+QualType
+TemplateTypeInstantiator::InstantiateConstantArrayWithoutExprType
+(const ConstantArrayWithoutExprType *T) const {
+  return InstantiateConstantArrayType(T);
 }
 
 QualType 
@@ -432,8 +445,9 @@ InstantiateIncompleteArrayType(const IncompleteArrayType *T) const {
     return ElementType;
   
   return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(), 
-                                0, T->getIndexTypeQualifier(), 
-                                Loc, Entity);
+                                0, T->getIndexTypeQualifier(),
+                                SourceRange(), // FIXME: provide proper range?
+                                Entity);
 }
 
 QualType
@@ -468,7 +482,9 @@ InstantiateDependentSizedArrayType(const DependentSizedArrayType *T) const {
   
   return SemaRef.BuildArrayType(ElementType, T->getSizeModifier(),
                                 InstantiatedArraySize.takeAs<Expr>(),
-                                T->getIndexTypeQualifier(), Loc, Entity);
+                                T->getIndexTypeQualifier(),
+                                SourceRange(), // FIXME: provide proper range?
+                                Entity);
 }
 
 QualType 
