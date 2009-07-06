@@ -66,6 +66,10 @@ bool ASTLocation::isImmediateParent(Decl *D, Stmt *Node) {
   return D == FindImmediateParent(D, Node);
 }
 
+SourceRange ASTLocation::getSourceRange() const {
+  return isDecl() ? getDecl()->getSourceRange() : getStmt()->getSourceRange();
+}
+
 void ASTLocation::print(llvm::raw_ostream &OS) {
   assert(isValid() && "ASTLocation is not valid");
 
@@ -81,8 +85,7 @@ void ASTLocation::print(llvm::raw_ostream &OS) {
 
   OS << "] <";
   
-  SourceRange Range = hasStmt() ? getStmt()->getSourceRange()
-                                : getDecl()->getSourceRange();
+  SourceRange Range = getSourceRange();
   SourceManager &SourceMgr = getDecl()->getASTContext().getSourceManager();
   Range.getBegin().print(OS, SourceMgr);
   OS << ", ";

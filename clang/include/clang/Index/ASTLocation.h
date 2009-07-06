@@ -23,6 +23,7 @@ namespace llvm {
 namespace clang {
   class Decl;
   class Stmt;
+  class SourceRange;
 
 namespace idx {
 
@@ -54,7 +55,10 @@ public:
 
   bool isValid() const { return D != 0; }
   bool isInvalid() const { return !isValid(); }
-  bool hasStmt() const { return Stm != 0; }
+  bool isDecl() const { return isValid() && Stm == 0; }
+  bool isStmt() const { return isValid() && Stm != 0; }
+
+  SourceRange getSourceRange() const;
 
   /// \brief Checks that D is the immediate Decl parent of Node.
   static bool isImmediateParent(Decl *D, Stmt *Node);

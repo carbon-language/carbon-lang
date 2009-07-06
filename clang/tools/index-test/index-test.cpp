@@ -152,7 +152,7 @@ static void ProcessNode(ASTLocation Node, IndexProvider &IdxProvider) {
   assert(Node.isValid());
 
   Decl *D = 0;
-  if (Node.hasStmt()) {
+  if (Node.isStmt()) {
     if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(Node.getStmt()))
       D = RefExpr->getDecl();
   } else {
