@@ -4110,17 +4110,23 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     QualType RCanPointeeTy =
       Context.getCanonicalType(rType->getAsPointerType()->getPointeeType());
 
-    if (rType->isFunctionPointerType() || lType->isFunctionPointerType()) {
-      if (isRelational) {
+    if (isRelational) {
+      if (lType->isFunctionPointerType() || rType->isFunctionPointerType()) {
         Diag(Loc, diag::ext_typecheck_ordered_comparison_of_function_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
       }
+      if (LCanPointeeTy->isVoidType() != RCanPointeeTy->isVoidType()) {
+        Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+      }
+    } else {
+      if (lType->isFunctionPointerType() != rType->isFunctionPointerType()) {
+        if (!LHSIsNull && !RHSIsNull)
+          Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
+            << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+      }
     }
-    if (((!LHSIsNull || isRelational) && LCanPointeeTy->isVoidType()) !=
-        ((!RHSIsNull || isRelational) && RCanPointeeTy->isVoidType())) {
-      Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
-        << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-    }
+
     // Simple check: if the pointee types are identical, we're done.
     if (LCanPointeeTy == RCanPointeeTy)
       return ResultTy;

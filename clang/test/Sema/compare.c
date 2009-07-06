@@ -1,5 +1,7 @@
 // RUN: clang-cc -fsyntax-only -pedantic -verify %s
 
+#include <stddef.h>
+
 int test(char *C) { // nothing here should warn.
   return C != ((void*)0);
   return C != (void*)0;
@@ -28,4 +30,9 @@ int function_pointers(int (*a)(int), int (*b)(int))
   return function_pointers > function_pointers; // expected-warning {{ordered comparison of function pointers}}
   return a == (void *) 0;
   return a == (void *) 1; // expected-warning {{comparison of distinct pointer types}}
+}
+
+int void_pointers(void *foo)
+{
+  return foo == NULL;
 }
