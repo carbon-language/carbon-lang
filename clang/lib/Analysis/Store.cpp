@@ -91,10 +91,10 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
     case MemRegion::FieldRegionKind:
     case MemRegion::ObjCIvarRegionKind:
     case MemRegion::VarRegionKind: {
-      // VarRegion, ElementRegion, and FieldRegion has an inherent type. Normally
-      // they should not be cast. We only layer an ElementRegion when the cast-to
-      // pointee type is of smaller size. In other cases, we return the original
-      // VarRegion.
+      // VarRegion, ElementRegion, and FieldRegion has an inherent type.
+      // Normally they should not be cast. We only layer an ElementRegion when
+      // the cast-to pointee type is of smaller size. In other cases, we return
+      // the original VarRegion.
       
       // If the pointee type is incomplete, do not compute its size, and return
       // the original region.
