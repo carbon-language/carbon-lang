@@ -14,7 +14,7 @@ endif
 
 all::
 	@ echo '--- Running clang tests for $(TARGET_TRIPLE) ---'
-	@ PATH=$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$$PATH VG=$(VG) ../utils/test/MultiTestRunner.py $(TESTARGS) $(TESTDIRS)
+	@ PATH=$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$$PATH VG=$(VG) $(PROJ_SRC_DIR)/../utils/test/MultiTestRunner.py $(TESTARGS) $(TESTDIRS)
 
 clean::
 	@ rm -rf Output/
