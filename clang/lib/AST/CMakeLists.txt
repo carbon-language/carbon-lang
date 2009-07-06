@@ -4,7 +4,6 @@ add_clang_library(clangAST
   APValue.cpp
   ASTConsumer.cpp
   ASTContext.cpp
-  ASTLocation.cpp
   CFG.cpp
   DeclarationName.cpp
   DeclBase.cpp
@@ -13,7 +12,6 @@ add_clang_library(clangAST
   DeclGroup.cpp
   DeclObjC.cpp
   DeclPrinter.cpp
-  DeclReferenceMap.cpp
   DeclTemplate.cpp
   ExprConstant.cpp
   Expr.cpp
