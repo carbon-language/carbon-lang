@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_ASTLOCATION_H
-#define LLVM_CLANG_AST_ASTLOCATION_H
+#ifndef LLVM_CLANG_INDEX_ASTLOCATION_H
+#define LLVM_CLANG_INDEX_ASTLOCATION_H
 
 #include <cassert>
 
@@ -23,6 +23,8 @@ namespace llvm {
 namespace clang {
   class Decl;
   class Stmt;
+
+namespace idx {
 
 /// \brief Represents a Decl or a Stmt and its immediate Decl parent. It's
 /// immutable.
@@ -60,6 +62,8 @@ public:
   
   void print(llvm::raw_ostream &OS);
 };
+
+} // namespace idx
 
 } // namespace clang
 

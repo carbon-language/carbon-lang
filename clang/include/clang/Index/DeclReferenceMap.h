@@ -12,15 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_DECLREFERENCEMAP_H
-#define LLVM_CLANG_AST_DECLREFERENCEMAP_H
+#ifndef LLVM_CLANG_INDEX_DECLREFERENCEMAP_H
+#define LLVM_CLANG_INDEX_DECLREFERENCEMAP_H
 
-#include "clang/AST/ASTLocation.h"
+#include "clang/Index/ASTLocation.h"
 #include <map>
 
 namespace clang {
   class ASTContext;
   class NamedDecl;
+
+namespace idx {
   
 /// \brief Maps NamedDecls with the ASTLocations that reference them.
 ///
@@ -76,6 +78,8 @@ public:
 private:
   mutable MapTy Map;
 };
+
+} // end idx namespace
   
 } // end clang namespace
 

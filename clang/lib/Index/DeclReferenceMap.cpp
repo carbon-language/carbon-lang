@@ -1,4 +1,4 @@
-//===--- DeclReferenceMap.h - Map Decls to their references -----*- C++ -*-===//
+//===--- DeclReferenceMap.cpp - Map Decls to their references ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,14 +12,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/DeclReferenceMap.h"
+#include "clang/Index/DeclReferenceMap.h"
+#include "clang/Index/ASTLocation.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
-#include "clang/AST/ASTLocation.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Support/Compiler.h"
 using namespace clang;
+using namespace idx;
 
 namespace {
 

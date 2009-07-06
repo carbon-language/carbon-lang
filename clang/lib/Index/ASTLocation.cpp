@@ -1,4 +1,4 @@
-//===--- ASTLocation.h - A <Decl, Stmt> pair --------------------*- C++ -*-===//
+//===--- ASTLocation.cpp - A <Decl, Stmt> pair ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,11 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/ASTLocation.h"
+#include "clang/Index/ASTLocation.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
 using namespace clang;
+using namespace idx;
 
 static bool isContainedInStatement(Stmt *Node, Stmt *Parent) {
   assert(Node && Parent && "Passed null Node or Parent");

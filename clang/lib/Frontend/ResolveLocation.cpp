@@ -13,13 +13,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/Utils.h"
-#include "clang/AST/ASTLocation.h"
+#include "clang/Index/ASTLocation.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 using namespace clang;
+using namespace idx;
 
 namespace {
 
