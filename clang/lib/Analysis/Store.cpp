@@ -47,8 +47,8 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
   // CodeTextRegion should be cast to only function pointer type.
   if (isa<CodeTextRegion>(R)) {
     assert(CastToTy->isFunctionPointerType() || CastToTy->isBlockPointerType()
-           || (CastToTy->isPointerType() 
-               && CastToTy->getAsPointerType()->getPointeeType()->isVoidType()));
+           || (CastToTy->isPointerType() &&
+               CastToTy->getAsPointerType()->getPointeeType()->isVoidType()));
     return CastResult(state, R);
   }
 
