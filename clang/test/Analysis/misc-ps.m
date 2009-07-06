@@ -306,4 +306,10 @@ const float *string_literal_test2() {
   return (const float*) "hello";
 }
 
+// Test that we handle casts *from* incomplete struct types.
+extern const struct _FooAssertStruct _cmd;
+void test_cast_from_incomplete_struct_aux(volatile const void *x);
+void test_cast_from_incomplete_struct() {
+  test_cast_from_incomplete_struct_aux(&_cmd);
+}
 

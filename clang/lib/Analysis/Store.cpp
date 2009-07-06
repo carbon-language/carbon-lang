@@ -35,6 +35,16 @@ StoreManager::MakeElementRegion(const GRState *state, const MemRegion *region,
                                                   ValMgr.getContext()));  
 }
 
+static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
+  if (const RecordType *RT = Ty->getAsRecordType()) {
+    const RecordDecl *D = RT->getDecl();
+    if (!D->getDefinition(Ctx))
+      return false;
+  }
+  
+  return true;
+}
+
 StoreManager::CastResult
 StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
                             QualType CastToTy) {
@@ -53,7 +63,7 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
   QualType PointeeTy = CastToTy->getAsPointerType()->getPointeeType();
-
+  
   // Process region cast according to the kind of the region being cast.
   switch (R->getKind()) {
     case MemRegion::BEG_TYPED_REGIONS:
@@ -96,15 +106,15 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
       // the cast-to pointee type is of smaller size. In other cases, we return
       // the original VarRegion.
       
-      // If the pointee type is incomplete, do not compute its size, and return
-      // the original region.
-      if (const RecordType *RT = PointeeTy->getAsRecordType()) {
-        const RecordDecl *D = RT->getDecl();
-        if (!D->getDefinition(Ctx))
-          return CastResult(state, R);
-      }
-      
+      // If the pointee or object type is incomplete, do compute their sizes, 
+      // and return the original region.
       QualType ObjTy = cast<TypedRegion>(R)->getValueType(Ctx);
+      
+      if (!IsCompleteType(Ctx, PointeeTy) || !IsCompleteType(Ctx, ObjTy)) {
+        state = setCastType(state, R, ToTy);
+        break;
+      }
+
       uint64_t PointeeTySize = Ctx.getTypeSize(PointeeTy);
       uint64_t ObjTySize = Ctx.getTypeSize(ObjTy);
       
