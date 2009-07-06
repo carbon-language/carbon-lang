@@ -2125,8 +2125,9 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
         // constructor name. 
         if (!D.getDeclSpec().hasTypeSpecifier() &&
             Actions.isCurrentClassName(*Tok.getIdentifierInfo(),CurScope)) {
+          CXXScopeSpec *SS = afterCXXScope? &D.getCXXScopeSpec() : 0;
           D.setConstructor(Actions.getTypeName(*Tok.getIdentifierInfo(),
-                                               Tok.getLocation(), CurScope),
+                                               Tok.getLocation(), CurScope, SS),
                            Tok.getLocation());
         // This is a normal identifier.
         } else
@@ -2171,7 +2172,8 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
           // FIXME: Inaccurate.
           SourceLocation NameLoc = Tok.getLocation();
           SourceLocation EndLoc;
-          TypeResult Type = ParseClassName(EndLoc);
+          CXXScopeSpec *SS = afterCXXScope? &D.getCXXScopeSpec() : 0;
+          TypeResult Type = ParseClassName(EndLoc, SS);
           if (Type.isInvalid())
             D.SetIdentifier(0, TildeLoc);
           else

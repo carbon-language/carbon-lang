@@ -58,3 +58,28 @@ void y() {
   a z; z.b(x);
 }
 }
+
+namespace A {
+  struct S {
+    S();
+    S(int);
+    void f1();
+    void f2();
+    operator int ();
+    ~S();
+  };
+}
+
+A::S::S() {}
+
+void A::S::f1() {}
+
+struct S {};
+
+A::S::S(int) {}
+
+void A::S::f2() {}
+
+A::S::operator int() { return 1; }
+
+A::S::~S() {}
