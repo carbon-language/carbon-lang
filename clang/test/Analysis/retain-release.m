@@ -815,7 +815,9 @@ void test_attr_1b(TestOwnershipAttr *X) {
 
 @interface MyClassTestCFAttr : NSObject {}
 - (NSDate*) returnsCFRetained __attribute__((cf_returns_retained));
+- (CFDateRef) returnsCFRetainedAsCF __attribute__((cf_returns_retained));
 - (NSDate*) alsoReturnsRetained;
+- (CFDateRef) alsoReturnsRetainedAsCF;
 - (NSDate*) returnsNSRetained __attribute__((ns_returns_retained));
 @end
 
@@ -829,9 +831,19 @@ CFDateRef returnsRetainedCFDate()  {
   return (NSDate*) returnsRetainedCFDate(); // No leak.
 }
 
+- (CFDateRef) returnsCFRetainedAsCF {
+  return returnsRetainedCFDate(); // No leak.
+}
+
+
 - (NSDate*) alsoReturnsRetained {
   return (NSDate*) returnsRetainedCFDate(); // expected-warning{{leak}}
 }
+
+- (CFDateRef) alsoReturnsRetainedAsCF {
+  return returnsRetainedCFDate(); // expected-warning{{leak}}
+}
+
 
 - (NSDate*) returnsNSRetained {
   return (NSDate*) returnsRetainedCFDate(); // no-warning

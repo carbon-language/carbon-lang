@@ -1267,15 +1267,23 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   if (!MD)
     return;
 
+  bool isTrackedLoc = false;
+  
   // Determine if there is a special return effect for this method.
   if (isTrackedObjCObjectType(MD->getResultType())) {
     if (MD->getAttr<NSReturnsRetainedAttr>()) {
       Summ.setRetEffect(ObjCAllocRetE);
+      return;
     }
-    else if (MD->getAttr<CFReturnsRetainedAttr>()) {
-      Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
-    }
+    
+    isTrackedLoc = true;
   }
+  
+  if (!isTrackedLoc)
+    isTrackedLoc = MD->getResultType()->getAsPointerType() != NULL;
+    
+  if (isTrackedLoc && MD->getAttr<CFReturnsRetainedAttr>())
+    Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
 }
 
 RetainSummary*
