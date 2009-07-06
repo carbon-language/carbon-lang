@@ -148,15 +148,15 @@ static void ProcessDecl(Decl *D) {
   }
 }
 
-static void ProcessNode(ASTLocation Node, IndexProvider &IdxProvider) {
-  assert(Node.isValid());
+static void ProcessASTLocation(ASTLocation ASTLoc, IndexProvider &IdxProvider) {
+  assert(ASTLoc.isValid());
 
   Decl *D = 0;
-  if (Node.isStmt()) {
-    if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(Node.getStmt()))
+  if (ASTLoc.isStmt()) {
+    if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(ASTLoc.getStmt()))
       D = RefExpr->getDecl();
   } else {
-    D = Node.getDecl();
+    D = ASTLoc.getDecl();
   }
   assert(D);
 
@@ -214,7 +214,7 @@ int main(int argc, char **argv) {
     IdxProvider.IndexAST(TU);
   }
 
-  ASTLocation Node;
+  ASTLocation ASTLoc;
   const std::string &FirstFile = TUnits[0]->Filename;
   ASTUnit *FirstAST = TUnits[0]->AST.get();
 
@@ -248,23 +248,23 @@ int main(int argc, char **argv) {
       return 1;
     }
     
-    Node = ResolveLocationInAST(FirstAST->getASTContext(), Loc);
-    if (Node.isInvalid()) {
+    ASTLoc = ResolveLocationInAST(FirstAST->getASTContext(), Loc);
+    if (ASTLoc.isInvalid()) {
       llvm::errs() << "[" << FirstFile << "] Error: " <<
         "Couldn't resolve source location (no declaration found)\n";
       return 1;
     }
   }
   
-  if (Node.isValid()) {
+  if (ASTLoc.isValid()) {
     if (ProgAction == PrintPoint) {
       llvm::raw_ostream &OS = llvm::outs();
-      Node.print(OS);
+      ASTLoc.print(OS);
       if (const char *Comment =
-            FirstAST->getASTContext().getCommentForDecl(Node.getDecl()))
+            FirstAST->getASTContext().getCommentForDecl(ASTLoc.getDecl()))
         OS << "Comment associated with this declaration:\n" << Comment << "\n";
     } else {
-      ProcessNode(Node, IdxProvider);
+      ProcessASTLocation(ASTLoc, IdxProvider);
     }
   }
 
