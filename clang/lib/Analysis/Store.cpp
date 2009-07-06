@@ -52,8 +52,8 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
     return CastResult(state, R);
   }
 
-  // Check cast to ObjCQualifiedID type.
-  if (ToTy->isObjCQualifiedIdType()) {
+  // Handle casts to Objective-C objects.
+  if (Ctx.isObjCObjectPointerType(ToTy)) {
     state = setCastType(state, R, ToTy);
     return CastResult(state, R);
   }
