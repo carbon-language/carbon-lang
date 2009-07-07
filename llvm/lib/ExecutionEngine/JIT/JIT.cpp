@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetJITInfo.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Config/config.h"
@@ -671,9 +672,8 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
 #endif
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName().c_str());
     if (Ptr == 0 && !areDlsymStubsEnabled()) {
-      cerr << "Could not resolve external global address: "
-           << GV->getName() << "\n";
-      abort();
+      llvm_report_error("Could not resolve external global address: "
+                        +GV->getName());
     }
     addGlobalMapping(GV, Ptr);
   } else {

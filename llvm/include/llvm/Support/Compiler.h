@@ -56,4 +56,10 @@
 #define DISABLE_INLINE
 #endif
 
+#ifdef __GNUC__
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
+#endif
+
 #endif

@@ -22,6 +22,7 @@
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/System/Host.h"
@@ -640,7 +641,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       case Type::FP128TyID: {
         APFloat apfLHS = APFloat(LHS.IntVal);
         switch (CE->getOpcode()) {
-          default: assert(0 && "Invalid long double opcode"); abort();
+          default: assert(0 && "Invalid long double opcode");llvm_unreachable();
           case Instruction::FAdd:
             apfLHS.add(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
             GV.IntVal = apfLHS.bitcastToAPInt();
@@ -953,9 +954,8 @@ void ExecutionEngine::emitGlobals() {
             sys::DynamicLibrary::SearchForAddressOfSymbol(I->getName().c_str()))
           addGlobalMapping(I, SymAddr);
         else {
-          cerr << "Could not resolve external global address: "
-               << I->getName() << "\n";
-          abort();
+          llvm_report_error("Could not resolve external global address: "
+                            +I->getName());
         }
       }
     }
