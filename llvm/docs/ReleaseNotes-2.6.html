@@ -441,6 +441,14 @@ API changes are:</p>
     context which can be passed in any and all cases where a context is 
     required.
 <li>The <tt>getABITypeSize</tt> methods are now called <tt>getAllocSize</tt>.</li>
+<li>The <tt>Add</tt>, <tt>Sub</tt>, and <tt>Mul</tt> operators are no longer
+    overloaded for floating-point types. Floating-point addition, subtraction,
+    and multiplication are now represented with new operators <tt>FAdd</tt>,
+    <tt>FSub</tt>, and <tt>FMul</tt>. In the <tt>IRBuilder</tt> API,
+    <tt>CreateAdd</tt>, <tt>CreateSub</tt>, <tt>CreateMul</tt>, and
+    <tt>CreateNeg</tt> should only be used for integer arithmetic now;
+    <tt>CreateFAdd</tt>, <tt>CreateFSub</tt>, <tt>CreateFMul</tt>, and
+    <tt>CreateFNeg</tt> should now be used for floating-point arithmetic.</li>
 </ul>
 
 </div>
