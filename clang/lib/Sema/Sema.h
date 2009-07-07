@@ -398,6 +398,9 @@ public:
   bool CheckEquivalentExceptionSpec(
       const FunctionProtoType *Old, SourceLocation OldLoc,
       const FunctionProtoType *New, SourceLocation NewLoc);
+  bool CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
+      const FunctionProtoType *Superset, SourceLocation SuperLoc,
+      const FunctionProtoType *Subset, SourceLocation SubLoc);
 
   QualType ObjCGetTypeForMethodDefinition(DeclPtrTy D);
 
@@ -1981,11 +1984,15 @@ public:
   
   std::string getAmbiguousPathsDisplayString(BasePaths &Paths);
   
-  /// CheckReturnTypeCovariance - Checks whether two types are covariant, 
-  /// according to C++ [class.virtual]p5.
-  bool CheckOverridingFunctionReturnType(const CXXMethodDecl *New, 
+  /// CheckOverridingFunctionReturnType - Checks whether the return types are
+  /// covariant, according to C++ [class.virtual]p5.
+  bool CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
                                          const CXXMethodDecl *Old);
-  
+
+  /// CheckOverridingFunctionExceptionSpec - Checks whether the exception
+  /// spec is a subset of base spec.
+  bool CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
+                                            const CXXMethodDecl *Old);
 
   //===--------------------------------------------------------------------===//
   // C++ Access Control

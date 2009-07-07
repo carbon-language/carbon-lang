@@ -61,3 +61,54 @@ void r7() throw(float); // expected-error {{exception specification in declarati
 // Top-level const doesn't matter.
 void r8() throw(int);
 void r8() throw(const int);
+
+struct A
+{
+};
+
+struct B1 : A
+{
+};
+
+struct B2 : A
+{
+};
+
+struct D : B1, B2
+{
+};
+
+struct Base
+{
+  virtual void f1() throw();
+  virtual void f2();
+  virtual void f3() throw(...);
+  virtual void f4() throw(int, float);
+
+  virtual void f5() throw(int, float);
+  virtual void f6() throw(A);
+  virtual void f7() throw(A, int, float);
+  virtual void f8();
+
+  virtual void g1() throw(); // expected-note {{overridden virtual function is here}}
+  virtual void g2() throw(int); // expected-note {{overridden virtual function is here}}
+  virtual void g3() throw(A); // expected-note {{overridden virtual function is here}}
+  virtual void g4() throw(B1); // expected-note {{overridden virtual function is here}}
+};
+struct Derived : Base
+{
+  virtual void f1() throw();
+  virtual void f2() throw(...);
+  virtual void f3();
+  virtual void f4() throw(float, int);
+
+  virtual void f5() throw(float);
+  virtual void f6() throw(B1);
+  virtual void f7() throw(B1, B2, int);
+  virtual void f8() throw(B2, B2, int, float, char, double, bool);
+
+  virtual void g1() throw(int); // expected-error {{exception specification of overriding function is more lax}}
+  virtual void g2(); // expected-error {{exception specification of overriding function is more lax}}
+  virtual void g3() throw(D); // expected-error {{exception specification of overriding function is more lax}}
+  virtual void g4() throw(A); // expected-error {{exception specification of overriding function is more lax}}
+};

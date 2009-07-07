@@ -2244,7 +2244,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       for (BasePaths::decl_iterator I = Paths.found_decls_begin(), 
            E = Paths.found_decls_end(); I != E; ++I) {
         if (CXXMethodDecl *OldMD = dyn_cast<CXXMethodDecl>(*I)) {
-          if (!CheckOverridingFunctionReturnType(NewMD, OldMD))
+          if (!CheckOverridingFunctionReturnType(NewMD, OldMD) &&
+              !CheckOverridingFunctionExceptionSpec(NewMD, OldMD))
             NewMD->addOverriddenMethod(OldMD);
         }
       }

@@ -289,6 +289,9 @@ def err_incomplete_in_exception_spec : Error<
   "in exception specification">;
 def err_mismatched_exception_spec : Error<
   "exception specification in declaration does not match previous declaration">;
+def err_override_exception_spec : Error<
+  "exception specification of overriding function is more lax than "
+  "base version">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<

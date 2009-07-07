@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaInherit.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
@@ -1235,6 +1236,95 @@ bool Sema::CheckEquivalentExceptionSpec(
   Diag(NewLoc, diag::err_mismatched_exception_spec);
   Diag(OldLoc, diag::note_previous_declaration);
   return true;
+}
+
+/// CheckExceptionSpecSubset - Check whether the second function type's
+/// exception specification is a subset (or equivalent) of the first function
+/// type. This is used by override and pointer assignment checks.
+bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
+    const FunctionProtoType *Superset, SourceLocation SuperLoc,
+    const FunctionProtoType *Subset, SourceLocation SubLoc)
+{
+  // FIXME: As usual, we could be more specific in our error messages, but
+  // that better waits until we've got types with source locations.
+
+  // If superset contains everything, we're done.
+  if (!Superset->hasExceptionSpec() || Superset->hasAnyExceptionSpec())
+    return false;
+
+  // It does not. If the subset contains everything, we've failed.
+  if (!Subset->hasExceptionSpec() || Subset->hasAnyExceptionSpec()) {
+    Diag(SubLoc, DiagID);
+    Diag(SuperLoc, NoteID);
+    return true;
+  }
+
+  // Neither contains everything. Do a proper comparison.
+  for (FunctionProtoType::exception_iterator SubI = Subset->exception_begin(),
+       SubE = Subset->exception_end(); SubI != SubE; ++SubI) {
+    // Take one type from the subset.
+    QualType CanonicalSubT = Context.getCanonicalType(*SubI);
+    bool SubIsPointer = false;
+    if (const ReferenceType *RefTy = CanonicalSubT->getAsReferenceType())
+      CanonicalSubT = RefTy->getPointeeType();
+    if (const PointerType *PtrTy = CanonicalSubT->getAsPointerType()) {
+      CanonicalSubT = PtrTy->getPointeeType();
+      SubIsPointer = true;
+    }
+    bool SubIsClass = CanonicalSubT->isRecordType();
+    CanonicalSubT.setCVRQualifiers(0);
+
+    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+                    /*DetectVirtual=*/false);
+
+    bool Contained = false;
+    // Make sure it's in the superset.
+    for (FunctionProtoType::exception_iterator SuperI =
+           Superset->exception_begin(), SuperE = Superset->exception_end();
+         SuperI != SuperE; ++SuperI) {
+      QualType CanonicalSuperT = Context.getCanonicalType(*SuperI);
+      // SubT must be SuperT or derived from it, or pointer or reference to
+      // such types.
+      if (const ReferenceType *RefTy = CanonicalSuperT->getAsReferenceType())
+        CanonicalSuperT = RefTy->getPointeeType();
+      if (SubIsPointer) {
+        if (const PointerType *PtrTy = CanonicalSuperT->getAsPointerType())
+          CanonicalSuperT = PtrTy->getPointeeType();
+        else {
+          continue;
+        }
+      }
+      CanonicalSuperT.setCVRQualifiers(0);
+      // If the types are the same, move on to the next type in the subset.
+      if (CanonicalSubT == CanonicalSuperT) {
+        Contained = true;
+        break;
+      }
+
+      // Otherwise we need to check the inheritance.
+      if (!SubIsClass || !CanonicalSuperT->isRecordType())
+        continue;
+
+      Paths.clear();
+      if (!IsDerivedFrom(CanonicalSubT, CanonicalSuperT, Paths))
+        continue;
+
+      if (Paths.isAmbiguous(CanonicalSuperT))
+        continue;
+
+      // FIXME: Check base access. Don't forget to enable path recording.
+
+      Contained = true;
+      break;
+    }
+    if (!Contained) {
+      Diag(SubLoc, DiagID);
+      Diag(SuperLoc, NoteID);
+      return true;
+    }
+  }
+  // We've run the gauntlet.
+  return false;
 }
 
 /// ObjCGetTypeForMethodDefinition - Builds the type for a method definition

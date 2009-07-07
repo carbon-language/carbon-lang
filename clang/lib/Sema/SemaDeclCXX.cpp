@@ -882,7 +882,7 @@ namespace {
          i != e; ++i) {
       // Traverse the record, looking for methods.
       if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(*i)) {
-        // If the method is pre virtual, add it to the methods vector.
+        // If the method is pure virtual, add it to the methods vector.
         if (MD->isPure()) {
           Methods.push_back(MD);
           continue;
@@ -3221,6 +3221,17 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   };
   
   return false;
+}
+
+bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
+                                                const CXXMethodDecl *Old)
+{
+  return CheckExceptionSpecSubset(diag::err_override_exception_spec,
+                                  diag::note_overridden_virtual_function,
+                                  Old->getType()->getAsFunctionProtoType(),
+                                  Old->getLocation(),
+                                  New->getType()->getAsFunctionProtoType(),
+                                  New->getLocation());
 }
 
 /// ActOnCXXEnterDeclInitializer - Invoked when we are about to parse an
