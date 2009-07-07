@@ -554,6 +554,10 @@ void InitListChecker::CheckExplicitInitList(InitListExpr *IList, QualType &T,
         DK = diag::err_excess_initializers;
         hadError = true;
       }
+      if (SemaRef.getLangOptions().OpenCL && initKind == 1) {
+        DK = diag::err_excess_initializers;
+        hadError = true;
+      }
 
       SemaRef.Diag(IList->getInit(Index)->getLocStart(), DK)
         << initKind << IList->getInit(Index)->getSourceRange();
