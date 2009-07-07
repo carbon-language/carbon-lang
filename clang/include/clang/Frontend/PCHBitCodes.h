@@ -419,7 +419,9 @@ namespace clang {
       /// \brief CFConstantString type
       SPECIAL_TYPE_CF_CONSTANT_STRING          = 5,
       /// \brief Objective-C fast enumeration state type
-      SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE = 6
+      SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE = 6,
+      /// \brief C FILE typedef type
+      SPECIAL_TYPE_FILE                        = 7
     };
 
     /// \brief Record codes for each kind of declaration.

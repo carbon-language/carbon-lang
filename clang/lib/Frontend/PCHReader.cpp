@@ -1536,6 +1536,17 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
   if (unsigned FastEnum 
         = SpecialTypes[pch::SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE])
     Context->setObjCFastEnumerationStateType(GetType(FastEnum));
+  if (unsigned File = SpecialTypes[pch::SPECIAL_TYPE_FILE]) {
+    QualType FileType = GetType(File);
+    assert(!FileType.isNull() && "FILE type is NULL");
+    if (const TypedefType *Typedef = FileType->getAsTypedefType())
+      Context->setFILEDecl(Typedef->getDecl());
+    else {
+      const TagType *Tag = FileType->getAsTagType();
+      assert(Tag && "Invalid FILE type in PCH file");
+      Context->setFILEDecl(Tag->getDecl());
+    }
+  }
 }
 
 /// \brief Retrieve the name of the original source file name

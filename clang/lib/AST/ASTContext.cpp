@@ -36,7 +36,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        Builtin::Context &builtins,
                        bool FreeMem, unsigned size_reserve) : 
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
-  ObjCFastEnumerationStateTypeDecl(0), SourceMgr(SM), LangOpts(LOpts), 
+  ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0),
+  SourceMgr(SM), LangOpts(LOpts), 
   LoadedExternalComments(false), FreeMemory(FreeMem), Target(t), 
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts) {  
@@ -3844,16 +3845,12 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     break;
   }
   case 'P': {
-    IdentifierInfo *II = &Context.Idents.get("FILE");
-    DeclContext::lookup_result Lookup 
-      = Context.getTranslationUnitDecl()->lookup(II);
-    if (Lookup.first != Lookup.second && isa<TypeDecl>(*Lookup.first)) {
-      Type = Context.getTypeDeclType(cast<TypeDecl>(*Lookup.first));
-      break;
-    }
-    else {
+    Type = Context.getFILEType();
+    if (Type.isNull()) {
       Error = ASTContext::GE_Missing_FILE;
       return QualType();
+    } else {
+      break;
     }
   }
   }

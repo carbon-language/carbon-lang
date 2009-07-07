@@ -1,7 +1,8 @@
 // RUN: clang -x c-header -o %t.pch %s &&
 // RUN: clang -include %t -x c /dev/null -emit-llvm -S -o -
 // PR 4489: Crash with PCH
-
+// PR 4492: Crash with PCH (round two)
+// PR 4509: Crash with PCH (round three)
 typedef struct _IO_FILE FILE;
 extern int fprintf (struct _IO_FILE *__restrict __stream,
                     __const char *__restrict __format, ...);
@@ -25,4 +26,15 @@ void x0(void)
 {
   extern char z0;
   fprintf (0, "a");
+}
+
+void x1(void)
+{
+  fprintf (0, "asdf");
+}
+
+void y1(void)
+{
+  extern char e;
+  fprintf (0, "asdf");
 }

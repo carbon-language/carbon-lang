@@ -1892,6 +1892,7 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getObjCClassType(), Record);
   AddTypeRef(Context.getRawCFConstantStringType(), Record);
   AddTypeRef(Context.getRawObjCFastEnumerationStateType(), Record);
+  AddTypeRef(Context.getFILEType(), Record);
   Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
 
   // Write the record containing external, unnamed definitions.

@@ -1691,6 +1691,14 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       }
     }
   }
+
+  // If this is the C FILE type, notify the AST context.
+  if (IdentifierInfo *II = NewTD->getIdentifier())
+    if (!NewTD->isInvalidDecl() &&
+        NewTD->getDeclContext()->getLookupContext()->isTranslationUnit() &&        
+        II->isStr("FILE"))
+      Context.setFILEDecl(NewTD);
+  
   return NewTD;
 }
 
@@ -3768,6 +3776,13 @@ CreateNewDecl:
     CurContext->addDecl(New);
   }
 
+  // If this is the C FILE type, notify the AST context.
+  if (IdentifierInfo *II = New->getIdentifier())
+    if (!New->isInvalidDecl() &&
+        New->getDeclContext()->getLookupContext()->isTranslationUnit() &&        
+        II->isStr("FILE"))
+      Context.setFILEDecl(New);
+  
   OwnedDecl = true;
   return DeclPtrTy::make(New);
 }

@@ -126,6 +126,9 @@ class ASTContext {
 
   RecordDecl *ObjCFastEnumerationStateTypeDecl;
   
+  /// \brief The type for the C FILE type.
+  TypeDecl *FILEDecl;
+  
   /// \brief Keeps track of all declaration attributes. 
   ///
   /// Since so few decls have attrs, we keep them in a hash map instead of
@@ -447,6 +450,16 @@ public:
 
   void setObjCFastEnumerationStateType(QualType T);
 
+  /// \brief Set the type for the C FILE type.
+  void setFILEDecl(TypeDecl *FILEDecl) { this->FILEDecl = FILEDecl; }
+  
+  /// \brief Retrieve the C FILE type.
+  QualType getFILEType() { 
+    if (FILEDecl) 
+      return getTypeDeclType(FILEDecl);
+    return QualType();
+  }
+                       
   /// getObjCEncodingForType - Emit the ObjC type encoding for the
   /// given type into \arg S. If \arg NameFields is specified then
   /// record field names are also encoded.
