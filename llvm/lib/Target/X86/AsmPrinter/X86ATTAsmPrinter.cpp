@@ -434,19 +434,22 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
   case MachineOperand::MO_Immediate:
     if (!Modifier || (strcmp(Modifier, "debug") &&
-                      strcmp(Modifier, "mem")))
+                      strcmp(Modifier, "mem") && 
+                      strcmp(Modifier, "asmcall")))
       O << '$';
     O << MO.getImm();
     return;
   case MachineOperand::MO_JumpTableIndex: {
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    bool isMemOp  = Modifier && 
+                    (!strcmp(Modifier, "mem") || !strcmp(Modifier, "asmcall"));
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
       << MO.getIndex();
     break;
   }
   case MachineOperand::MO_ConstantPoolIndex: {
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    bool isMemOp  = Modifier && 
+                    (!strcmp(Modifier, "mem") || !strcmp(Modifier, "asmcall"));
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
       << MO.getIndex();
@@ -455,7 +458,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     break;
   }
   case MachineOperand::MO_GlobalAddress: {
-    bool isMemOp = Modifier && !strcmp(Modifier, "mem");
+    bool isMemOp = Modifier &&
+                   (!strcmp(Modifier, "mem") || !strcmp(Modifier, "asmcall"));
+    bool isAsmCallOp = Modifier && !strcmp(Modifier, "asmcall");
 
     const GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
@@ -478,7 +483,15 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       // non-lazily-resolved stubs
       if (GV->isDeclaration() || GV->isWeakForLinker()) {
         // Dynamically-resolved functions need a stub for the function.
-        if (GV->hasHiddenVisibility()) {
+        if (isa<Function>(GV) && isAsmCallOp) {
+          // Function stubs are no longer needed for Mac OS X 10.5 and up.
+          if (Subtarget->isTargetDarwin() && Subtarget->getDarwinVers() >= 9) {
+            O << Name;
+          } else {
+            FnStubs.insert(Name);
+            printSuffixedName(Name, "$stub");
+          }
+        } else if (GV->hasHiddenVisibility()) {
           if (!GV->isDeclaration() && !GV->hasCommonLinkage())
             // Definition is not definitely in the current translation unit.
             O << Name;
@@ -496,7 +509,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         O << Name;
       }
 
-      if (TM.getRelocationModel() == Reloc::PIC_) {
+      if (TM.getRelocationModel() == Reloc::PIC_ && !isAsmCallOp) {
         O << '-';
         PrintPICBaseSymbol();
       }        
@@ -519,7 +532,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     /// are pcrel_imm's.
     assert(!Subtarget->is64Bit() && !Subtarget->isPICStyleRIPRel());
     // These are never used as memory operands.
-    assert(!(Modifier && !strcmp(Modifier, "mem")));
+    assert(!(Modifier && 
+             (!strcmp(Modifier, "mem") || !strcmp(Modifier, "asmcall"))));
     
     O << '$';
     O << TAI->getGlobalPrefix();
@@ -725,11 +739,11 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       printOperand(MI, OpNo);
       return false;
 
-    case 'P': // Don't print @PLT, but do print as memory.
-      printOperand(MI, OpNo, "mem");
+    case 'P': // This is the operand of a call, treat specially.
+      printOperand(MI, OpNo, "asmcall");
       return false;
 
-      case 'n': { // Negate the immediate or print a '-' before the operand.
+    case 'n': { // Negate the immediate or print a '-' before the operand.
       // Note: this is a temporary solution. It should be handled target
       // independently as part of the 'MC' work.
       const MachineOperand &MO = MI->getOperand(OpNo);
