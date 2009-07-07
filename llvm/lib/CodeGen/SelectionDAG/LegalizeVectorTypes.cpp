@@ -72,9 +72,14 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FCEIL:
   case ISD::FRINT:
   case ISD::FNEARBYINT:
+  case ISD::UINT_TO_FP:
   case ISD::SINT_TO_FP:
   case ISD::TRUNCATE:
-  case ISD::UINT_TO_FP: R = ScalarizeVecRes_UnaryOp(N); break;
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+  case ISD::ANY_EXTEND:
+    R = ScalarizeVecRes_UnaryOp(N);
+    break;
 
   case ISD::ADD:
   case ISD::AND:
@@ -91,11 +96,15 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SUB:
   case ISD::UDIV:
   case ISD::UREM:
-  case ISD::XOR:  R = ScalarizeVecRes_BinOp(N); break;
+  case ISD::XOR:
+    R = ScalarizeVecRes_BinOp(N);
+    break;
 
   case ISD::SHL:
   case ISD::SRA:
-  case ISD::SRL: R = ScalarizeVecRes_ShiftOp(N); break;
+  case ISD::SRL:
+    R = ScalarizeVecRes_ShiftOp(N);
+    break;
   }
 
   // If R is null, the sub-method took care of registering the result.
@@ -403,8 +412,13 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
   case ISD::TRUNCATE:
-  case ISD::UINT_TO_FP: SplitVecRes_UnaryOp(N, Lo, Hi); break;
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+  case ISD::ANY_EXTEND:
+    SplitVecRes_UnaryOp(N, Lo, Hi);
+    break;
 
   case ISD::ADD:
   case ISD::SUB:
@@ -424,7 +438,9 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SRL:
   case ISD::UREM:
   case ISD::SREM:
-  case ISD::FREM: SplitVecRes_BinOp(N, Lo, Hi); break;
+  case ISD::FREM:
+    SplitVecRes_BinOp(N, Lo, Hi);
+    break;
   }
 
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -908,8 +924,9 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::BIT_CONVERT:       Res = SplitVecOp_BIT_CONVERT(N); break;
     case ISD::EXTRACT_SUBVECTOR: Res = SplitVecOp_EXTRACT_SUBVECTOR(N); break;
     case ISD::EXTRACT_VECTOR_ELT:Res = SplitVecOp_EXTRACT_VECTOR_ELT(N); break;
-    case ISD::STORE:             Res = SplitVecOp_STORE(cast<StoreSDNode>(N),
-                                                        OpNo); break;
+    case ISD::STORE:
+      Res = SplitVecOp_STORE(cast<StoreSDNode>(N), OpNo);
+      break;
 
     case ISD::CTTZ:
     case ISD::CTLZ:
@@ -917,8 +934,13 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::FP_TO_SINT:
     case ISD::FP_TO_UINT:
     case ISD::SINT_TO_FP:
+    case ISD::UINT_TO_FP:
     case ISD::TRUNCATE:
-    case ISD::UINT_TO_FP: Res = SplitVecOp_UnaryOp(N); break;
+    case ISD::SIGN_EXTEND:
+    case ISD::ZERO_EXTEND:
+    case ISD::ANY_EXTEND:
+      Res = SplitVecOp_UnaryOp(N);
+      break;
     }
   }
 
@@ -1126,21 +1148,27 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::UDIV:
   case ISD::UREM:
   case ISD::SUB:
-  case ISD::XOR:               Res = WidenVecRes_Binary(N); break;
+  case ISD::XOR:
+    Res = WidenVecRes_Binary(N);
+    break;
 
   case ISD::SHL:
   case ISD::SRA:
-  case ISD::SRL:               Res = WidenVecRes_Shift(N); break;
+  case ISD::SRL:
+    Res = WidenVecRes_Shift(N);
+    break;
 
-  case ISD::ANY_EXTEND:
   case ISD::FP_ROUND:
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
-  case ISD::SIGN_EXTEND:
   case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
   case ISD::TRUNCATE:
+  case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
-  case ISD::UINT_TO_FP:        Res = WidenVecRes_Convert(N); break;
+  case ISD::ANY_EXTEND:
+    Res = WidenVecRes_Convert(N);
+    break;
 
   case ISD::CTLZ:
   case ISD::CTPOP:
@@ -1149,7 +1177,9 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FCOS:
   case ISD::FNEG:
   case ISD::FSIN:
-  case ISD::FSQRT:             Res = WidenVecRes_Unary(N); break;
+  case ISD::FSQRT:
+    Res = WidenVecRes_Unary(N);
+    break;
   }
 
   // If Res is null, the sub-method took care of registering the result.
@@ -1757,8 +1787,13 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
   case ISD::TRUNCATE:
-  case ISD::UINT_TO_FP:         Res = WidenVecOp_Convert(N); break;
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+  case ISD::ANY_EXTEND:
+    Res = WidenVecOp_Convert(N);
+    break;
   }
 
   // If Res is null, the sub-method took care of registering the result.
