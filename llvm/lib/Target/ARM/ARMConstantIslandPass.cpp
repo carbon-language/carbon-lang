@@ -590,8 +590,8 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
   // Note the new unconditional branch is not being recorded.
   // There doesn't seem to be meaningful DebugInfo available; this doesn't
   // correspond to anything in the source.
-  BuildMI(OrigBB, DebugLoc::getUnknownLoc(),
-          TII->get(isThumb ? ((isThumb2) ? ARM::t2B : ARM::tB) : ARM::B)).addMBB(NewBB);
+  unsigned Opc = isThumb ? (isThumb2 ? ARM::t2B : ARM::tB) : ARM::B;
+  BuildMI(OrigBB, DebugLoc::getUnknownLoc(), TII->get(Opc)).addMBB(NewBB);
   NumSplit++;
 
   // Update the CFG.  All succs of OrigBB are now succs of NewBB.
