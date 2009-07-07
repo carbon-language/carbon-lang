@@ -44,8 +44,9 @@ class BitcodeReaderValueList {
   /// number that holds the resolved value.
   typedef std::vector<std::pair<Constant*, unsigned> > ResolveConstantsTy;
   ResolveConstantsTy ResolveConstants;
+  LLVMContext& Context;
 public:
-  BitcodeReaderValueList() {}
+  BitcodeReaderValueList(LLVMContext& C) : Context(C) {}
   ~BitcodeReaderValueList() {
     assert(ResolveConstants.empty() && "Constants not resolved?");
   }
@@ -126,7 +127,7 @@ class BitcodeReader : public ModuleProvider {
   DenseMap<Function*, std::pair<uint64_t, unsigned> > DeferredFunctionInfo;
 public:
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext& C)
-      : Context(C), Buffer(buffer), ErrorString(0) {
+      : Context(C), Buffer(buffer), ErrorString(0), ValueList(C) {
     HasReversedFunctionsWithBodies = false;
   }
   ~BitcodeReader() {
