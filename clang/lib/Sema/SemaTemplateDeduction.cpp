@@ -1169,7 +1169,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                                     TDF))
       return Result;
     
-    // FIXME: C++ [temp.deduct.call] paragraphs 6-9 deal with function
+    // FIXME: C++0x [temp.deduct.call] paragraphs 6-9 deal with function
     // pointer parameters. 
   }
   
