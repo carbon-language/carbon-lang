@@ -750,17 +750,17 @@ public:
   /// init_const_iterator - Iterates through the memberbase initializer list.
   typedef CXXBaseOrMemberInitializer * const * init_const_iterator;
   
+  /// init_begin() - Retrieve an iterator to the first initializer.
+  init_iterator       init_begin()       { return BaseOrMemberInitializers; }
   /// begin() - Retrieve an iterator to the first initializer.
-  init_iterator       begin()       { return BaseOrMemberInitializers; }
-  /// begin() - Retrieve an iterator to the first initializer.
-  init_const_iterator begin() const { return BaseOrMemberInitializers; }
+  init_const_iterator init_begin() const { return BaseOrMemberInitializers; }
   
-  /// end() - Retrieve an iterator past the last initializer.
-  init_iterator       end()       { 
+  /// init_end() - Retrieve an iterator past the last initializer.
+  init_iterator       init_end()       { 
     return BaseOrMemberInitializers + NumBaseOrMemberInitializers; 
   }
   /// end() - Retrieve an iterator past the last initializer.
-  init_const_iterator end() const { 
+  init_const_iterator init_end() const { 
     return BaseOrMemberInitializers + NumBaseOrMemberInitializers; 
   }
   

@@ -419,7 +419,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   if (NumInitializers > 0) {
     NumBaseOrMemberInitializers = NumInitializers;
     BaseOrMemberInitializers = 
-      new (C, 8) CXXBaseOrMemberInitializer*[NumInitializers]; 
+      new (C) CXXBaseOrMemberInitializer*[NumInitializers]; 
     for (unsigned Idx = 0; Idx < NumInitializers; ++Idx)
       BaseOrMemberInitializers[Idx] = Initializers[Idx];
   }
@@ -428,8 +428,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
 void
 CXXConstructorDecl::Destroy(ASTContext& C) {
   C.Deallocate(BaseOrMemberInitializers);
-  this->~CXXMethodDecl();
-  C.Deallocate((void *)this);
+  CXXMethodDecl::Destroy(C);
 }
 
 CXXConversionDecl *
