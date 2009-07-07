@@ -81,12 +81,15 @@ $ABS_OBJ_ROOT = `cd $ABS_OBJ_ROOT; $PWD` if (-d $ABS_OBJ_ROOT);
 chomp($ABS_OBJ_ROOT);
 
 my $INCLUDEDIR = "$ABS_RUN_DIR/include";
+my $INCLUDEOPTION = "-I$INCLUDEDIR";
 my $LIBDIR     = "$ABS_RUN_DIR/lib";
 my $BINDIR     = "$ABS_RUN_DIR/bin";
 if ($ABS_RUN_DIR eq $ABS_OBJ_ROOT) {
   # If we are running out of the build directory, the include dir is in the
   # srcdir.
   $INCLUDEDIR = "$LLVM_SRC_ROOT/include";
+  # We need include files from both the srcdir and objdir.
+  $INCLUDEOPTION = "-I$INCLUDEDIR -I$LLVM_OBJ_ROOT/include"
 } else {
   # If installed, ignore the prefix the tree was configured with, use the
   # current prefix.
@@ -120,11 +123,11 @@ foreach my $arg (@ARGV) {
         } elsif ($arg eq "--libdir") {
             $has_opt = 1; print "$LIBDIR\n";
         } elsif ($arg eq "--cppflags") {
-            $has_opt = 1; print "-I$INCLUDEDIR $CPPFLAGS\n";
+            $has_opt = 1; print "$INCLUDEOPTION $CPPFLAGS\n";
         } elsif ($arg eq "--cflags") {
-            $has_opt = 1; print "-I$INCLUDEDIR $CFLAGS\n";
+            $has_opt = 1; print "$INCLUDEOPTION $CFLAGS\n";
         } elsif ($arg eq "--cxxflags") {
-            $has_opt = 1; print "-I$INCLUDEDIR $CXXFLAGS\n";
+            $has_opt = 1; print "$INCLUDEOPTION $CXXFLAGS\n";
         } elsif ($arg eq "--ldflags") {
             $has_opt = 1; print "-L$LIBDIR $LDFLAGS $SYSTEM_LIBS\n";
         } elsif ($arg eq "--libs") {
