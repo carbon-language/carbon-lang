@@ -1618,6 +1618,7 @@ void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
     if (SI != InlinedVariableScopes.end()) {
       // or GV is an inlined local variable.
       Scope = SI->second;
+      InlinedFnVar = true;
     } else {
       DIVariable DV(GV);
       GlobalVariable *V = DV.getContext().getGV();
