@@ -115,6 +115,15 @@ namespace llvm {
     virtual void EmitSymbolAttribute(MCSymbol *Symbol,
                                      SymbolAttr Attribute) = 0;
 
+    /// EmitCommonSymbol - Emit a common symbol of @param Size with the @param
+    /// Pow2Alignment if non-zero.
+    ///
+    /// @param Symbol - The common symbol to emit.
+    /// @param Size - The size of the common symbol.
+    /// @param Pow2Alignment - The alignment of the common symbol if non-zero.
+    virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
+                                  unsigned Pow2Alignment) = 0;
+
     /// @}
     /// @name Generating Data
     /// @{

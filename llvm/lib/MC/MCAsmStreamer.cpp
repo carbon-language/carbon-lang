@@ -41,6 +41,9 @@ namespace {
 
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
 
+    virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
+                                  unsigned Pow2Alignment);
+
     virtual void EmitBytes(const char *Data, unsigned Length);
 
     virtual void EmitValue(const MCValue &Value, unsigned Size);
@@ -140,6 +143,15 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   }
 
   OS << ' ' << Symbol->getName() << '\n';
+}
+
+void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
+                                     unsigned Pow2Alignment) {
+  OS << ".comm";
+  OS << ' ' << Symbol->getName() << ',' << Size;
+  if (Pow2Alignment != 0)
+    OS << ',' << Pow2Alignment;
+  OS << '\n';
 }
 
 void MCAsmStreamer::EmitBytes(const char *Data, unsigned Length) {
