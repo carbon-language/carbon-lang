@@ -23,18 +23,11 @@
 static std::map<std::string, void*> symbols;
 static llvm::sys::SmartRWMutex<true> SymbolsLock;
 
-
 void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName,
                                           void *symbolValue) {
   llvm::sys::SmartScopedWriter<true> Writer(&SymbolsLock);
   symbols[symbolName] = symbolValue;
 }
-
-// It is not possible to use ltdl.c on VC++ builds as the terms of its LGPL
-// license and special exception would cause all of LLVM to be placed under
-// the LGPL.  This is because the exception applies only when libtool is
-// used, and obviously libtool is not used with Visual Studio.  An entirely
-// separate implementation is provided in win32/DynamicLibrary.cpp.
 
 #ifdef LLVM_ON_WIN32
 
@@ -42,7 +35,6 @@ void llvm::sys::DynamicLibrary::AddSymbol(const char* symbolName,
 
 #else
 
-//#include "ltdl.h"
 #include <dlfcn.h>
 #include <cassert>
 using namespace llvm;
@@ -53,7 +45,6 @@ using namespace llvm::sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-//static std::vector<lt_dlhandle> OpenedHandles;
 static std::vector<void *> OpenedHandles;
 
 DynamicLibrary::DynamicLibrary() {}
@@ -61,7 +52,8 @@ DynamicLibrary::DynamicLibrary() {}
 DynamicLibrary::~DynamicLibrary() {
   SmartScopedWriter<true> Writer(&SymbolsLock);
   while(!OpenedHandles.empty()) {
-    void *H = OpenedHandles.back();   OpenedHandles.pop_back(); 
+    void *H = OpenedHandles.back();
+    OpenedHandles.pop_back(); 
     dlclose(H);
   }
 }
@@ -80,8 +72,6 @@ bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
 }
 
 void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
-  //  check_ltdl_initialization();
-  
   // First check symbols added via AddSymbol().
   SymbolsLock.reader_acquire();
   std::map<std::string, void *>::iterator I = symbols.find(symbolName);
