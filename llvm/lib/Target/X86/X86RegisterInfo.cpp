@@ -644,16 +644,15 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
   return Offset;
 }
 
-void X86RegisterInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
-                                                unsigned LabelId) const {
+void X86RegisterInfo::emitFrameMoves(MachineFunction &MF,
+                                     unsigned FrameLabelId,
+                                     unsigned ReadyLabelId) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
-  if (!MMI) return;
+  if (!MMI)
+    return;
 
-  // Add callee saved registers to move list.
-  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
-  if (CSI.empty()) return;
-
+  uint64_t StackSize = MFI->getStackSize();
   std::vector<MachineMove> &Moves = MMI->getFrameMoves();
   const TargetData *TD = MF.getTarget().getTargetData();
 
@@ -663,29 +662,61 @@ void X86RegisterInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
      TargetFrameInfo::StackGrowsUp ?
      TD->getPointerSize() : -TD->getPointerSize());
 
+  MachineLocation FPDst(hasFP(MF) ? FramePtr : StackPtr);
+  MachineLocation FPSrc(MachineLocation::VirtualFP);
+  Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
+
+  if (StackSize) {
+    // Show update of SP.
+    if (hasFP(MF)) {
+      // Adjust SP
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP, 2*stackGrowth);
+      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+    } else {
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP,
+                            -StackSize+stackGrowth);
+      Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+    }
+  } else {
+    // FIXME: Verify & implement for FP
+    MachineLocation SPDst(StackPtr);
+    MachineLocation SPSrc(StackPtr, stackGrowth);
+    Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
+  }
+
+  // Add callee saved registers to move list.
+  const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
+
   // FIXME: This is dirty hack. The code itself is pretty mess right now.
   // It should be rewritten from scratch and generalized sometimes.
 
   // Determine maximum offset (minumum due to stack growth)
   int64_t MaxOffset = 0;
-  for (std::vector<CalleeSavedInfo>::const_iterator
-         I = CSI.begin(), E = CSI.end(); I != E; ++I)
+  for (unsigned I = 0, E = CSI.size(); I!=E; ++I)
     MaxOffset = std::min(MaxOffset,
-                         MFI->getObjectOffset(I->getFrameIdx()));
+                         MFI->getObjectOffset(CSI[I].getFrameIdx()));
 
-  // Calculate offsets.
-  int64_t saveAreaOffset = (hasFP(MF) ? 3 : 2) * stackGrowth;
-  for (std::vector<CalleeSavedInfo>::const_iterator
-         I = CSI.begin(), E = CSI.end(); I != E; ++I) {
-    int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
-    unsigned Reg = I->getReg();
-    Offset = MaxOffset - Offset + saveAreaOffset;
-
+  // Calculate offsets
+  int64_t saveAreaOffset = (hasFP(MF) ? 3 : 2)*stackGrowth;
+  for (unsigned I = 0, E = CSI.size(); I!=E; ++I) {
+    int64_t Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
+    unsigned Reg = CSI[I].getReg();
+    Offset = (MaxOffset-Offset+saveAreaOffset);
     MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
     MachineLocation CSSrc(Reg);
-    Moves.push_back(MachineMove(LabelId, CSDst, CSSrc));
+    Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
+  }
+
+  if (hasFP(MF)) {
+    // Save FP
+    MachineLocation FPDst(MachineLocation::VirtualFP, 2*stackGrowth);
+    MachineLocation FPSrc(FramePtr);
+    Moves.push_back(MachineMove(ReadyLabelId, FPDst, FPSrc));
   }
 }
+
 
 void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
@@ -698,8 +729,10 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   bool needsFrameMoves = (MMI && MMI->hasDebugInfo()) ||
                           !Fn->doesNotThrow() ||
                           UnwindTablesMandatory;
-  bool HasFP = hasFP(MF);
   DebugLoc DL;
+
+  // Prepare for frame info.
+  unsigned FrameLabelId = 0;
 
   // Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI->getStackSize();
@@ -724,7 +757,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
       !MFI->hasCalls() &&                          // No calls.
       !Subtarget->isTargetWin64()) {               // Win64 has no Red Zone
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
-    if (HasFP) MinSize += SlotSize;
+    if (hasFP(MF)) MinSize += SlotSize;
     StackSize = std::max(MinSize,
                          StackSize > 128 ? StackSize - 128 : 0);
     MFI->setStackSize(StackSize);
@@ -741,16 +774,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MI->getOperand(3).setIsDead();
   }
 
-  //  uint64_t StackSize = MFI->getStackSize();
-  std::vector<MachineMove> &Moves = MMI->getFrameMoves();
-  const TargetData *TD = MF.getTarget().getTargetData();
-  int stackGrowth =
-    (MF.getTarget().getFrameInfo()->getStackGrowthDirection() ==
-     TargetFrameInfo::StackGrowsUp ?
-     TD->getPointerSize() : -TD->getPointerSize());
-
   uint64_t NumBytes = 0;
-  if (HasFP) {
+  if (hasFP(MF)) {
     // Calculate required stack adjustment
     uint64_t FrameSize = StackSize - SlotSize;
     if (needsStackRealignment(MF))
@@ -758,54 +783,25 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     NumBytes = FrameSize - X86FI->getCalleeSavedFrameSize();
 
-    // Get the offset of the stack slot for the EBP register, which is
+    // Get the offset of the stack slot for the EBP register... which is
     // guaranteed to be the last slot by processFunctionBeforeFrameFinalized.
     // Update the frame offset adjustment.
     MFI->setOffsetAdjustment(-NumBytes);
 
-    // Save EBP/RBP into the appropriate stack slot...
+    // Save EBP into the appropriate stack slot...
     BuildMI(MBB, MBBI, DL, TII.get(Is64Bit ? X86::PUSH64r : X86::PUSH32r))
       .addReg(FramePtr, RegState::Kill);
 
     if (needsFrameMoves) {
       // Mark effective beginning of when frame pointer becomes valid.
-      unsigned FrameLabelId = MMI->NextLabelID();
+      FrameLabelId = MMI->NextLabelID();
       BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(FrameLabelId);
-
-      // Define the current CFA rule to use the provided offset.
-      if (StackSize) {
-        MachineLocation SPDst(MachineLocation::VirtualFP);
-        MachineLocation SPSrc(MachineLocation::VirtualFP,
-                              HasFP ? 2 * stackGrowth : 
-                                      -StackSize + stackGrowth);
-        Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
-      } else {
-        // FIXME: Verify & implement for FP
-        MachineLocation SPDst(StackPtr);
-        MachineLocation SPSrc(StackPtr, stackGrowth);
-        Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
-      }
-
-      // Change the rule for the FramePtr to be an "offset" rule.
-      MachineLocation FPDst(MachineLocation::VirtualFP, 2 * stackGrowth);
-      MachineLocation FPSrc(FramePtr);
-      Moves.push_back(MachineMove(FrameLabelId, FPDst, FPSrc));
     }
 
     // Update EBP with the new base value...
     BuildMI(MBB, MBBI, DL,
             TII.get(Is64Bit ? X86::MOV64rr : X86::MOV32rr), FramePtr)
         .addReg(StackPtr);
-
-    if (needsFrameMoves) {
-      unsigned FrameLabelId = MMI->NextLabelID();
-      BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(FrameLabelId);
-
-      // Define the current CFA to use the EBP/RBP register.
-      MachineLocation FPDst(FramePtr);
-      MachineLocation FPSrc(MachineLocation::VirtualFP);
-      Moves.push_back(MachineMove(FrameLabelId, FPDst, FPSrc));
-    }
 
     // Mark the FramePtr as live-in in every block except the entry.
     for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
@@ -826,22 +822,10 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
 
   // Skip the callee-saved push instructions.
-  bool RegsSaved = false;
   while (MBBI != MBB.end() &&
          (MBBI->getOpcode() == X86::PUSH32r ||
-          MBBI->getOpcode() == X86::PUSH64r)) {
-    RegsSaved = true;
+          MBBI->getOpcode() == X86::PUSH64r))
     ++MBBI;
-  }
-
-  if (RegsSaved && needsFrameMoves) {
-    // Mark end of callee-saved push instructions.
-    unsigned LabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(LabelId);
-
-    // Emit DWARF info specifying the offsets of the callee-saved registers.
-    emitCalleeSavedFrameMoves(MF, LabelId);
-  }
 
   if (MBBI != MBB.end())
     DL = MBBI->getDebugLoc();
@@ -897,6 +881,14 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes)
       emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
+  }
+
+  if (needsFrameMoves) {
+    unsigned ReadyLabelId = 0;
+    // Mark effective beginning of when frame pointer is ready.
+    ReadyLabelId = MMI->NextLabelID();
+    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(ReadyLabelId);
+    emitFrameMoves(MF, FrameLabelId, ReadyLabelId);
   }
 }
 
