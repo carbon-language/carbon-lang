@@ -35,8 +35,7 @@ void llvm_remove_error_handler(void) {
   ErrorHandler = 0;
 }
 
-void llvm_report_error(const std::string &reason)
-{
+void llvm_report_error(const std::string &reason) {
   if (!ErrorHandler) {
     errs() << "LLVM ERROR: " << reason << "\n";
   } else {
@@ -45,8 +44,7 @@ void llvm_report_error(const std::string &reason)
   exit(1);
 }
 
-void llvm_unreachable(void)
-{
+void llvm_unreachable(void) {
   abort();
 }
 }
