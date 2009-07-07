@@ -368,7 +368,8 @@ for. Example::
      (switch_option "E", (extern))
      ...
 
-See also the section on plugin `priorities`__.
+If an external option has additional attributes besides 'extern', they are
+ignored. See also the section on plugin `priorities`__.
 
 __ priorities_
 
