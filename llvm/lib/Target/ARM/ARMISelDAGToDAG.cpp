@@ -923,7 +923,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     break;
   }
   case ISD::MUL:
-    if (Subtarget->isThumb())
+    if (Subtarget->isThumb1Only())
       break;
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       unsigned RHSV = C->getZExtValue();
@@ -953,20 +953,37 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                                  Op.getOperand(0), getAL(CurDAG),
                                  CurDAG->getRegister(0, MVT::i32));
   case ISD::UMUL_LOHI: {
-    SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
+    if (Subtarget->isThumb1Only())
+      break;
+    if (Subtarget->isThumb()) {
+      SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
-    return CurDAG->getTargetNode(ARM::UMULL, dl, MVT::i32, MVT::i32, Ops, 5);
+      return CurDAG->getTargetNode(ARM::t2UMULL, dl, MVT::i32, MVT::i32, Ops,4);
+    } else {
+      SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
+                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
+                        CurDAG->getRegister(0, MVT::i32) };
+      return CurDAG->getTargetNode(ARM::UMULL, dl, MVT::i32, MVT::i32, Ops, 5);
+    }
   }
   case ISD::SMUL_LOHI: {
-    SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
+    if (Subtarget->isThumb1Only())
+      break;
+    if (Subtarget->isThumb()) {
+      SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
+                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
+      return CurDAG->getTargetNode(ARM::t2SMULL, dl, MVT::i32, MVT::i32, Ops,4);
+    } else {
+      SDValue Ops[] = { Op.getOperand(0), Op.getOperand(1),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
-    return CurDAG->getTargetNode(ARM::SMULL, dl, MVT::i32, MVT::i32, Ops, 5);
+      return CurDAG->getTargetNode(ARM::SMULL, dl, MVT::i32, MVT::i32, Ops, 5);
+    }
   }
   case ISD::LOAD: {
     SDNode *ResNode = 0;
-    if (Subtarget->isThumb2())
+    if (Subtarget->isThumb() && Subtarget->hasThumb2())
       ResNode = SelectT2IndexedLoad(Op);
     else
       ResNode = SelectARMIndexedLoad(Op);

@@ -246,7 +246,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
 
   // i64 operation support.
-  if (Subtarget->isThumb()) {
+  if (Subtarget->isThumb1Only()) {
     setOperationAction(ISD::MUL,     MVT::i64, Expand);
     setOperationAction(ISD::MULHU,   MVT::i32, Expand);
     setOperationAction(ISD::MULHS,   MVT::i32, Expand);
@@ -255,7 +255,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   } else {
     setOperationAction(ISD::MUL,     MVT::i64, Expand);
     setOperationAction(ISD::MULHU,   MVT::i32, Expand);
-    if (!Subtarget->hasV6Ops())
+    if (!Subtarget->isThumb() && !Subtarget->hasV6Ops())
       setOperationAction(ISD::MULHS, MVT::i32, Expand);
   }
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
@@ -3034,7 +3034,7 @@ ARMTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
 
   bool isInc;
   bool isLegal = false;
-  if (Subtarget->isThumb2())
+  if (Subtarget->isThumb() && Subtarget->hasThumb2())
     isLegal = getT2IndexedAddressParts(Ptr.getNode(), VT, isSEXTLoad, Base,
                                        Offset, isInc, DAG);
   else 
@@ -3071,7 +3071,7 @@ bool ARMTargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
 
   bool isInc;
   bool isLegal = false;
-  if (Subtarget->isThumb2())
+  if (Subtarget->isThumb() && Subtarget->hasThumb2())
     isLegal = getT2IndexedAddressParts(Op, VT, isSEXTLoad, Base, Offset,
                                         isInc, DAG);
   else 
