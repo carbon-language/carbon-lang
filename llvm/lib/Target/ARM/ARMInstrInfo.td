@@ -697,7 +697,7 @@ let isBranch = 1, isTerminator = 1, Itinerary = IIC_Br in {
                     [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]> {
     let Inst{20}    = 0; // S Bit
     let Inst{24-21} = 0b1101;
-    let Inst{27-26} = {0,0};
+    let Inst{27-25} = 0b000;
   }
   def BR_JTm : JTI<(outs),
                    (ins addrmode2:$target, jtblock_operand:$jt, i32imm:$id),
@@ -708,7 +708,7 @@ let isBranch = 1, isTerminator = 1, Itinerary = IIC_Br in {
     let Inst{21}    = 0; // W bit
     let Inst{22}    = 0; // B bit
     let Inst{24}    = 1; // P bit
-    let Inst{27-26} = {0,1};
+    let Inst{27-25} = 0b011;
   }
   def BR_JTadd : JTI<(outs),
                    (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
@@ -717,7 +717,7 @@ let isBranch = 1, isTerminator = 1, Itinerary = IIC_Br in {
                       imm:$id)]> {
     let Inst{20}    = 0; // S bit
     let Inst{24-21} = 0b0100;
-    let Inst{27-26} = {0,0};
+    let Inst{27-25} = 0b000;
   }
   } // isNotDuplicable = 1, isIndirectBranch = 1
   } // isBarrier = 1
