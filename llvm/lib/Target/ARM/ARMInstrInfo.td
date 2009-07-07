@@ -352,15 +352,20 @@ multiclass AsI1_bin_irs<bits<4> opcod, string opc, PatFrag opnode,
                         bit Commutable = 0> {
   def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, " $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
+               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]> {
+    let Inst{25} = 1;
+  }
   def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
                opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
+    let Inst{25} = 0;
     let isCommutable = Commutable;
   }
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, " $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
+               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
+    let Inst{25} = 0;
+  }
 }
 
 /// AI1_bin_s_irs - Similar to AsI1_bin_irs except it sets the 's' bit so the
@@ -370,15 +375,20 @@ multiclass AI1_bin_s_irs<bits<4> opcod, string opc, PatFrag opnode,
                          bit Commutable = 0> {
   def ri : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, "s $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>;
+               [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]> {
+    let Inst{25} = 1;
+  }
   def rr : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b), DPFrm,
                opc, "s $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]> {
     let isCommutable = Commutable;
+	let Inst{25} = 0;
   }
   def rs : AI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, "s $dst, $a, $b",
-               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>;
+               [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]> {
+    let Inst{25} = 0;
+  }
 }
 }
 
@@ -390,15 +400,20 @@ multiclass AI1_cmp_irs<bits<4> opcod, string opc, PatFrag opnode,
                        bit Commutable = 0> {
   def ri : AI1<opcod, (outs), (ins GPR:$a, so_imm:$b), DPFrm,
                opc, " $a, $b",
-               [(opnode GPR:$a, so_imm:$b)]>;
+               [(opnode GPR:$a, so_imm:$b)]> {
+    let Inst{25} = 1;
+  }
   def rr : AI1<opcod, (outs), (ins GPR:$a, GPR:$b), DPFrm,
                opc, " $a, $b",
                [(opnode GPR:$a, GPR:$b)]> {
+    let Inst{25} = 0;
     let isCommutable = Commutable;
   }
   def rs : AI1<opcod, (outs), (ins GPR:$a, so_reg:$b), DPSoRegFrm,
                opc, " $a, $b",
-               [(opnode GPR:$a, so_reg:$b)]>;
+               [(opnode GPR:$a, so_reg:$b)]> {
+    let Inst{25} = 0;
+  }
 }
 }
 
@@ -441,35 +456,43 @@ multiclass AI1_adde_sube_irs<bits<4> opcod, string opc, PatFrag opnode,
   def ri : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                 DPFrm, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
-               Requires<[IsARM, CarryDefIsUnused]>;
+               Requires<[IsARM, CarryDefIsUnused]> {
+    let Inst{25} = 1;
+  }
   def rr : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                 DPFrm, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
                Requires<[IsARM, CarryDefIsUnused]> {
     let isCommutable = Commutable;
+    let Inst{25} = 0;
   }
   def rs : AsI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                 DPSoRegFrm, opc, " $dst, $a, $b",
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
-               Requires<[IsARM, CarryDefIsUnused]>;
+               Requires<[IsARM, CarryDefIsUnused]> {
+    let Inst{25} = 0;
+  }
   // Carry setting variants
   def Sri : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_imm:$b),
                 DPFrm, !strconcat(opc, "s $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_imm:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
-                 let Defs = [CPSR];
+    let Defs = [CPSR];
+    let Inst{25} = 1;
   }
   def Srr : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, GPR:$b),
                 DPFrm, !strconcat(opc, "s $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, GPR:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
-                 let Defs = [CPSR];
+    let Defs = [CPSR];
+    let Inst{25} = 0;
   }
   def Srs : AXI1<opcod, (outs GPR:$dst), (ins GPR:$a, so_reg:$b),
                 DPSoRegFrm, !strconcat(opc, "s $dst, $a, $b"),
                [(set GPR:$dst, (opnode GPR:$a, so_reg:$b))]>,
                Requires<[IsARM, CarryDefIsUsed]> {
-                 let Defs = [CPSR];
+    let Defs = [CPSR];
+    let Inst{25} = 0;
   }
 }
 }
@@ -570,7 +593,9 @@ def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
                                          "${:private}PCRELL${:uid}+8))\n"),
                               !strconcat("${:private}PCRELL${:uid}:\n\t",
                                          "add$p $dst, pc, #PCRELV${:uid}")),
-                   []>;
+                   []> {
+    let Inst{25} = 1;
+}
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions.

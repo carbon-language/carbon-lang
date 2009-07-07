@@ -528,7 +528,6 @@ void Emitter<CodeEmitter>::emitLEApcrelJTInstruction(const MachineInstr &MI) {
   Binary |= ARMRegisterInfo::getRegisterNumbering(ARM::PC) << ARMII::RegRnShift;
 
   // Encode the displacement.
-  // Set bit I(25) to identify this is the immediate form of <shifter_op>.
   Binary |= 1 << ARMII::I_BitShift;
   emitJumpTableAddress(MI.getOperand(1).getIndex(), ARM::reloc_arm_jt_base);
 
@@ -797,7 +796,6 @@ void Emitter<CodeEmitter>::emitDataProcessingInstruction(
   }
 
   // Encode so_imm.
-  // Set bit I(25) to identify this is the immediate form of <shifter_op>.
   Binary |= 1 << ARMII::I_BitShift;
   Binary |= getMachineSoImmOpValue(MO.getImm());
 
