@@ -98,7 +98,7 @@ namespace {
 
     void RewriteNonIntegerIVs(Loop *L);
 
-    ICmpInst *LinearFunctionTestReplace(Loop *L, const SCEV* BackedgeTakenCount,
+    ICmpInst *LinearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
                                    Value *IndVar,
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
@@ -129,7 +129,7 @@ Pass *llvm::createIndVarSimplifyPass() {
 /// SCEV analysis can determine a loop-invariant trip count of the loop, which
 /// is actually a much broader range than just linear tests.
 ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
-                                   const SCEV* BackedgeTakenCount,
+                                   const SCEV *BackedgeTakenCount,
                                    Value *IndVar,
                                    BasicBlock *ExitingBlock,
                                    BranchInst *BI,
@@ -138,13 +138,13 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
   // against the preincremented value, otherwise we prefer to compare against
   // the post-incremented value.
   Value *CmpIndVar;
-  const SCEV* RHS = BackedgeTakenCount;
+  const SCEV *RHS = BackedgeTakenCount;
   if (ExitingBlock == L->getLoopLatch()) {
     // Add one to the "backedge-taken" count to get the trip count.
     // If this addition may overflow, we have to be more pessimistic and
     // cast the induction variable before doing the add.
-    const SCEV* Zero = SE->getIntegerSCEV(0, BackedgeTakenCount->getType());
-    const SCEV* N =
+    const SCEV *Zero = SE->getIntegerSCEV(0, BackedgeTakenCount->getType());
+    const SCEV *N =
       SE->getAddExpr(BackedgeTakenCount,
                      SE->getIntegerSCEV(1, BackedgeTakenCount->getType()));
     if ((isa<SCEVConstant>(N) && !N->isZero()) ||
@@ -264,7 +264,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         // Okay, this instruction has a user outside of the current loop
         // and varies predictably *inside* the loop.  Evaluate the value it
         // contains when the loop exits, if possible.
-        const SCEV* ExitValue = SE->getSCEVAtScope(Inst, L->getParentLoop());
+        const SCEV *ExitValue = SE->getSCEVAtScope(Inst, L->getParentLoop());
         if (!ExitValue->isLoopInvariant(L))
           continue;
 
@@ -339,7 +339,7 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   RewriteNonIntegerIVs(L);
 
   BasicBlock *ExitingBlock = L->getExitingBlock(); // may be null
-  const SCEV* BackedgeTakenCount = SE->getBackedgeTakenCount(L);
+  const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
 
   // Create a rewriter object which we'll use to transform the code with.
   SCEVExpander Rewriter(*SE);
@@ -367,14 +367,14 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       NeedCannIV = true;
   }
   for (unsigned i = 0, e = IU->StrideOrder.size(); i != e; ++i) {
-    const SCEV* Stride = IU->StrideOrder[i];
+    const SCEV *Stride = IU->StrideOrder[i];
     const Type *Ty = SE->getEffectiveSCEVType(Stride->getType());
     if (!LargestType ||
         SE->getTypeSizeInBits(Ty) >
           SE->getTypeSizeInBits(LargestType))
       LargestType = Ty;
 
-    std::map<const SCEV*, IVUsersOfOneStride *>::iterator SI =
+    std::map<const SCEV *, IVUsersOfOneStride *>::iterator SI =
       IU->IVUsesByStride.find(IU->StrideOrder[i]);
     assert(SI != IU->IVUsesByStride.end() && "Stride doesn't exist!");
 
@@ -458,9 +458,9 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
   // the need for the code evaluation methods to insert induction variables
   // of different sizes.
   for (unsigned i = 0, e = IU->StrideOrder.size(); i != e; ++i) {
-    const SCEV* Stride = IU->StrideOrder[i];
+    const SCEV *Stride = IU->StrideOrder[i];
 
-    std::map<const SCEV*, IVUsersOfOneStride *>::iterator SI =
+    std::map<const SCEV *, IVUsersOfOneStride *>::iterator SI =
       IU->IVUsesByStride.find(IU->StrideOrder[i]);
     assert(SI != IU->IVUsesByStride.end() && "Stride doesn't exist!");
     ilist<IVStrideUse> &List = SI->second->Users;
@@ -471,7 +471,7 @@ void IndVarSimplify::RewriteIVExpressions(Loop *L, const Type *LargestType,
       Instruction *User = UI->getUser();
 
       // Compute the final addrec to expand into code.
-      const SCEV* AR = IU->getReplacementExpr(*UI);
+      const SCEV *AR = IU->getReplacementExpr(*UI);
 
       // FIXME: It is an extremely bad idea to indvar substitute anything more
       // complex than affine induction variables.  Doing so will put expensive

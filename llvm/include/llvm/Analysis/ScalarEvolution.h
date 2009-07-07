@@ -89,9 +89,9 @@ namespace llvm {
     /// the same value, but which uses the concrete value Conc instead of the
     /// symbolic value.  If this SCEV does not use the symbolic value, it
     /// returns itself.
-    virtual const SCEV*
-    replaceSymbolicValuesWithConcrete(const SCEV* Sym,
-                                      const SCEV* Conc,
+    virtual const SCEV *
+    replaceSymbolicValuesWithConcrete(const SCEV *Sym,
+                                      const SCEV *Conc,
                                       ScalarEvolution &SE) const = 0;
 
     /// dominates - Return true if elements that makes up this SCEV dominates
@@ -134,9 +134,9 @@ namespace llvm {
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;
     virtual void print(raw_ostream &OS) const;
-    virtual const SCEV*
-    replaceSymbolicValuesWithConcrete(const SCEV* Sym,
-                                      const SCEV* Conc,
+    virtual const SCEV *
+    replaceSymbolicValuesWithConcrete(const SCEV *Sym,
+                                      const SCEV *Conc,
                                       ScalarEvolution &SE) const;
 
     virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const {
@@ -184,7 +184,7 @@ namespace llvm {
 
     /// Scalars - This is a cache of the scalars we have analyzed so far.
     ///
-    std::map<SCEVCallbackVH, const SCEV*> Scalars;
+    std::map<SCEVCallbackVH, const SCEV *> Scalars;
 
     /// BackedgeTakenInfo - Information about the backedge-taken count
     /// of a loop. This currently inclues an exact count and a maximum count.
@@ -192,16 +192,16 @@ namespace llvm {
     struct BackedgeTakenInfo {
       /// Exact - An expression indicating the exact backedge-taken count of
       /// the loop if it is known, or a SCEVCouldNotCompute otherwise.
-      const SCEV* Exact;
+      const SCEV *Exact;
 
       /// Exact - An expression indicating the least maximum backedge-taken
       /// count of the loop that is known, or a SCEVCouldNotCompute.
-      const SCEV* Max;
+      const SCEV *Max;
 
-      /*implicit*/ BackedgeTakenInfo(const SCEV* exact) :
+      /*implicit*/ BackedgeTakenInfo(const SCEV *exact) :
         Exact(exact), Max(exact) {}
 
-      BackedgeTakenInfo(const SCEV* exact, const SCEV* max) :
+      BackedgeTakenInfo(const SCEV *exact, const SCEV *max) :
         Exact(exact), Max(max) {}
 
       /// hasAnyInfo - Test whether this BackedgeTakenInfo contains any
@@ -231,30 +231,30 @@ namespace llvm {
 
     /// createSCEV - We know that there is no SCEV for the specified value.
     /// Analyze the expression.
-    const SCEV* createSCEV(Value *V);
+    const SCEV *createSCEV(Value *V);
 
     /// createNodeForPHI - Provide the special handling we need to analyze PHI
     /// SCEVs.
-    const SCEV* createNodeForPHI(PHINode *PN);
+    const SCEV *createNodeForPHI(PHINode *PN);
 
     /// createNodeForGEP - Provide the special handling we need to analyze GEP
     /// SCEVs.
-    const SCEV* createNodeForGEP(User *GEP);
+    const SCEV *createNodeForGEP(User *GEP);
 
     /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value
     /// for the specified instruction and replaces any references to the
     /// symbolic value SymName with the specified value.  This is used during
     /// PHI resolution.
     void ReplaceSymbolicValueWithConcrete(Instruction *I,
-                                          const SCEV* SymName,
-                                          const SCEV* NewVal);
+                                          const SCEV *SymName,
+                                          const SCEV *NewVal);
 
     /// getBECount - Subtract the end and start values and divide by the step,
     /// rounding up, to get the number of times the backedge is executed. Return
     /// CouldNotCompute if an intermediate computation overflows.
-    const SCEV* getBECount(const SCEV* Start,
-                          const SCEV* End,
-                          const SCEV* Step);
+    const SCEV *getBECount(const SCEV *Start,
+                          const SCEV *End,
+                          const SCEV *Step);
 
     /// getBackedgeTakenInfo - Return the BackedgeTakenInfo for the given
     /// loop, lazily computing new values if the loop hasn't been analyzed
@@ -292,7 +292,7 @@ namespace llvm {
 
     /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition
     /// of 'icmp op load X, cst', try to see if we can compute the trip count.
-    const SCEV*
+    const SCEV *
       ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI,
                                                    Constant *RHS,
                                                    const Loop *L,
@@ -303,19 +303,19 @@ namespace llvm {
     /// try to evaluate a few iterations of the loop until we get the exit
     /// condition gets a value of ExitWhen (true or false).  If we cannot
     /// evaluate the trip count of the loop, return CouldNotCompute.
-    const SCEV* ComputeBackedgeTakenCountExhaustively(const Loop *L,
+    const SCEV *ComputeBackedgeTakenCountExhaustively(const Loop *L,
                                                       Value *Cond,
                                                       bool ExitWhen);
 
     /// HowFarToZero - Return the number of times a backedge comparing the
     /// specified value to zero will execute.  If not computable, return
     /// CouldNotCompute.
-    const SCEV* HowFarToZero(const SCEV *V, const Loop *L);
+    const SCEV *HowFarToZero(const SCEV *V, const Loop *L);
 
     /// HowFarToNonZero - Return the number of times a backedge checking the
     /// specified value for nonzero will execute.  If not computable, return
     /// CouldNotCompute.
-    const SCEV* HowFarToNonZero(const SCEV *V, const Loop *L);
+    const SCEV *HowFarToNonZero(const SCEV *V, const Loop *L);
 
     /// HowManyLessThans - Return the number of times a backedge containing the
     /// specified less-than comparison will execute.  If not computable, return
@@ -375,115 +375,115 @@ namespace llvm {
 
     /// getSCEV - Return a SCEV expression handle for the full generality of the
     /// specified expression.
-    const SCEV* getSCEV(Value *V);
+    const SCEV *getSCEV(Value *V);
 
-    const SCEV* getConstant(ConstantInt *V);
-    const SCEV* getConstant(const APInt& Val);
-    const SCEV* getConstant(const Type *Ty, uint64_t V, bool isSigned = false);
-    const SCEV* getTruncateExpr(const SCEV* Op, const Type *Ty);
-    const SCEV* getZeroExtendExpr(const SCEV* Op, const Type *Ty);
-    const SCEV* getSignExtendExpr(const SCEV* Op, const Type *Ty);
-    const SCEV* getAnyExtendExpr(const SCEV* Op, const Type *Ty);
-    const SCEV* getAddExpr(SmallVectorImpl<const SCEV*> &Ops);
-    const SCEV* getAddExpr(const SCEV* LHS, const SCEV* RHS) {
-      SmallVector<const SCEV*, 2> Ops;
+    const SCEV *getConstant(ConstantInt *V);
+    const SCEV *getConstant(const APInt& Val);
+    const SCEV *getConstant(const Type *Ty, uint64_t V, bool isSigned = false);
+    const SCEV *getTruncateExpr(const SCEV *Op, const Type *Ty);
+    const SCEV *getZeroExtendExpr(const SCEV *Op, const Type *Ty);
+    const SCEV *getSignExtendExpr(const SCEV *Op, const Type *Ty);
+    const SCEV *getAnyExtendExpr(const SCEV *Op, const Type *Ty);
+    const SCEV *getAddExpr(SmallVectorImpl<const SCEV *> &Ops);
+    const SCEV *getAddExpr(const SCEV *LHS, const SCEV *RHS) {
+      SmallVector<const SCEV *, 2> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
       return getAddExpr(Ops);
     }
-    const SCEV* getAddExpr(const SCEV* Op0, const SCEV* Op1,
-                          const SCEV* Op2) {
-      SmallVector<const SCEV*, 3> Ops;
+    const SCEV *getAddExpr(const SCEV *Op0, const SCEV *Op1,
+                          const SCEV *Op2) {
+      SmallVector<const SCEV *, 3> Ops;
       Ops.push_back(Op0);
       Ops.push_back(Op1);
       Ops.push_back(Op2);
       return getAddExpr(Ops);
     }
-    const SCEV* getMulExpr(SmallVectorImpl<const SCEV*> &Ops);
-    const SCEV* getMulExpr(const SCEV* LHS, const SCEV* RHS) {
-      SmallVector<const SCEV*, 2> Ops;
+    const SCEV *getMulExpr(SmallVectorImpl<const SCEV *> &Ops);
+    const SCEV *getMulExpr(const SCEV *LHS, const SCEV *RHS) {
+      SmallVector<const SCEV *, 2> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
       return getMulExpr(Ops);
     }
-    const SCEV* getUDivExpr(const SCEV* LHS, const SCEV* RHS);
-    const SCEV* getAddRecExpr(const SCEV* Start, const SCEV* Step,
+    const SCEV *getUDivExpr(const SCEV *LHS, const SCEV *RHS);
+    const SCEV *getAddRecExpr(const SCEV *Start, const SCEV *Step,
                              const Loop *L);
-    const SCEV* getAddRecExpr(SmallVectorImpl<const SCEV*> &Operands,
+    const SCEV *getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
                              const Loop *L);
-    const SCEV* getAddRecExpr(const SmallVectorImpl<const SCEV*> &Operands,
+    const SCEV *getAddRecExpr(const SmallVectorImpl<const SCEV *> &Operands,
                              const Loop *L) {
-      SmallVector<const SCEV*, 4> NewOp(Operands.begin(), Operands.end());
+      SmallVector<const SCEV *, 4> NewOp(Operands.begin(), Operands.end());
       return getAddRecExpr(NewOp, L);
     }
-    const SCEV* getSMaxExpr(const SCEV* LHS, const SCEV* RHS);
-    const SCEV* getSMaxExpr(SmallVectorImpl<const SCEV*> &Operands);
-    const SCEV* getUMaxExpr(const SCEV* LHS, const SCEV* RHS);
-    const SCEV* getUMaxExpr(SmallVectorImpl<const SCEV*> &Operands);
-    const SCEV* getSMinExpr(const SCEV* LHS, const SCEV* RHS);
-    const SCEV* getUMinExpr(const SCEV* LHS, const SCEV* RHS);
-    const SCEV* getUnknown(Value *V);
-    const SCEV* getCouldNotCompute();
+    const SCEV *getSMaxExpr(const SCEV *LHS, const SCEV *RHS);
+    const SCEV *getSMaxExpr(SmallVectorImpl<const SCEV *> &Operands);
+    const SCEV *getUMaxExpr(const SCEV *LHS, const SCEV *RHS);
+    const SCEV *getUMaxExpr(SmallVectorImpl<const SCEV *> &Operands);
+    const SCEV *getSMinExpr(const SCEV *LHS, const SCEV *RHS);
+    const SCEV *getUMinExpr(const SCEV *LHS, const SCEV *RHS);
+    const SCEV *getUnknown(Value *V);
+    const SCEV *getCouldNotCompute();
 
     /// getNegativeSCEV - Return the SCEV object corresponding to -V.
     ///
-    const SCEV* getNegativeSCEV(const SCEV* V);
+    const SCEV *getNegativeSCEV(const SCEV *V);
 
     /// getNotSCEV - Return the SCEV object corresponding to ~V.
     ///
-    const SCEV* getNotSCEV(const SCEV* V);
+    const SCEV *getNotSCEV(const SCEV *V);
 
     /// getMinusSCEV - Return LHS-RHS.
     ///
-    const SCEV* getMinusSCEV(const SCEV* LHS,
-                            const SCEV* RHS);
+    const SCEV *getMinusSCEV(const SCEV *LHS,
+                            const SCEV *RHS);
 
     /// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion
     /// of the input value to the specified type.  If the type must be
     /// extended, it is zero extended.
-    const SCEV* getTruncateOrZeroExtend(const SCEV* V, const Type *Ty);
+    const SCEV *getTruncateOrZeroExtend(const SCEV *V, const Type *Ty);
 
     /// getTruncateOrSignExtend - Return a SCEV corresponding to a conversion
     /// of the input value to the specified type.  If the type must be
     /// extended, it is sign extended.
-    const SCEV* getTruncateOrSignExtend(const SCEV* V, const Type *Ty);
+    const SCEV *getTruncateOrSignExtend(const SCEV *V, const Type *Ty);
 
     /// getNoopOrZeroExtend - Return a SCEV corresponding to a conversion of
     /// the input value to the specified type.  If the type must be extended,
     /// it is zero extended.  The conversion must not be narrowing.
-    const SCEV* getNoopOrZeroExtend(const SCEV* V, const Type *Ty);
+    const SCEV *getNoopOrZeroExtend(const SCEV *V, const Type *Ty);
 
     /// getNoopOrSignExtend - Return a SCEV corresponding to a conversion of
     /// the input value to the specified type.  If the type must be extended,
     /// it is sign extended.  The conversion must not be narrowing.
-    const SCEV* getNoopOrSignExtend(const SCEV* V, const Type *Ty);
+    const SCEV *getNoopOrSignExtend(const SCEV *V, const Type *Ty);
 
     /// getNoopOrAnyExtend - Return a SCEV corresponding to a conversion of
     /// the input value to the specified type. If the type must be extended,
     /// it is extended with unspecified bits. The conversion must not be
     /// narrowing.
-    const SCEV* getNoopOrAnyExtend(const SCEV* V, const Type *Ty);
+    const SCEV *getNoopOrAnyExtend(const SCEV *V, const Type *Ty);
 
     /// getTruncateOrNoop - Return a SCEV corresponding to a conversion of the
     /// input value to the specified type.  The conversion must not be
     /// widening.
-    const SCEV* getTruncateOrNoop(const SCEV* V, const Type *Ty);
+    const SCEV *getTruncateOrNoop(const SCEV *V, const Type *Ty);
 
     /// getIntegerSCEV - Given a SCEVable type, create a constant for the
     /// specified signed integer value and return a SCEV for the constant.
-    const SCEV* getIntegerSCEV(int Val, const Type *Ty);
+    const SCEV *getIntegerSCEV(int Val, const Type *Ty);
 
     /// getUMaxFromMismatchedTypes - Promote the operands to the wider of
     /// the types using zero-extension, and then perform a umax operation
     /// with them.
-    const SCEV* getUMaxFromMismatchedTypes(const SCEV* LHS,
-                                          const SCEV* RHS);
+    const SCEV *getUMaxFromMismatchedTypes(const SCEV *LHS,
+                                          const SCEV *RHS);
 
     /// getUMinFromMismatchedTypes - Promote the operands to the wider of
     /// the types using zero-extension, and then perform a umin operation
     /// with them.
-    const SCEV* getUMinFromMismatchedTypes(const SCEV* LHS,
-                                           const SCEV* RHS);
+    const SCEV *getUMinFromMismatchedTypes(const SCEV *LHS,
+                                           const SCEV *RHS);
 
     /// hasSCEV - Return true if the SCEV for this value has already been
     /// computed.
@@ -491,7 +491,7 @@ namespace llvm {
 
     /// setSCEV - Insert the specified SCEV into the map of current SCEVs for
     /// the specified value.
-    void setSCEV(Value *V, const SCEV* H);
+    void setSCEV(Value *V, const SCEV *H);
 
     /// getSCEVAtScope - Return a SCEV expression handle for the specified value
     /// at the specified scope in the program.  The L value specifies a loop
@@ -503,11 +503,11 @@ namespace llvm {
     ///
     /// In the case that a relevant loop exit value cannot be computed, the
     /// original value V is returned.
-    const SCEV* getSCEVAtScope(const SCEV *S, const Loop *L);
+    const SCEV *getSCEVAtScope(const SCEV *S, const Loop *L);
 
     /// getSCEVAtScope - This is a convenience function which does
     /// getSCEVAtScope(getSCEV(V), L).
-    const SCEV* getSCEVAtScope(Value *V, const Loop *L);
+    const SCEV *getSCEVAtScope(Value *V, const Loop *L);
 
     /// isLoopGuardedByCond - Test whether entry to the loop is protected by
     /// a conditional between LHS and RHS.  This is used to help avoid max
@@ -526,12 +526,12 @@ namespace llvm {
     /// loop-invariant backedge-taken count (see
     /// hasLoopInvariantBackedgeTakenCount).
     ///
-    const SCEV* getBackedgeTakenCount(const Loop *L);
+    const SCEV *getBackedgeTakenCount(const Loop *L);
 
     /// getMaxBackedgeTakenCount - Similar to getBackedgeTakenCount, except
     /// return the least SCEV value that is known never to be less than the
     /// actual backedge taken count.
-    const SCEV* getMaxBackedgeTakenCount(const Loop *L);
+    const SCEV *getMaxBackedgeTakenCount(const Loop *L);
 
     /// hasLoopInvariantBackedgeTakenCount - Return true if the specified loop
     /// has an analyzable loop-invariant backedge-taken count.
@@ -548,15 +548,15 @@ namespace llvm {
     /// time, the minimum number of times S is divisible by 2.  For example,
     /// given {4,+,8} it returns 2.  If S is guaranteed to be 0, it returns the
     /// bitwidth of S.
-    uint32_t GetMinTrailingZeros(const SCEV* S);
+    uint32_t GetMinTrailingZeros(const SCEV *S);
 
     /// GetMinLeadingZeros - Determine the minimum number of zero bits that S is
     /// guaranteed to begin with (at every loop iteration).
-    uint32_t GetMinLeadingZeros(const SCEV* S);
+    uint32_t GetMinLeadingZeros(const SCEV *S);
 
     /// GetMinSignBits - Determine the minimum number of sign bits that S is
     /// guaranteed to begin with.
-    uint32_t GetMinSignBits(const SCEV* S);
+    uint32_t GetMinSignBits(const SCEV *S);
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();

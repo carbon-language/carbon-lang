@@ -53,7 +53,7 @@ namespace llvm {
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
     /// specified block.
-    Value *expandCodeFor(const SCEV* SH, const Type *Ty, Instruction *IP) {
+    Value *expandCodeFor(const SCEV *SH, const Type *Ty, Instruction *IP) {
       Builder.SetInsertPoint(IP->getParent(), IP);
       return expandCodeFor(SH, Ty);
     }
@@ -72,8 +72,8 @@ namespace llvm {
 
     /// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
     /// instead of using ptrtoint+arithmetic+inttoptr.
-    Value *expandAddToGEP(const SCEV* const *op_begin,
-                          const SCEV* const *op_end,
+    Value *expandAddToGEP(const SCEV *const *op_begin,
+                          const SCEV *const *op_end,
                           const PointerType *PTy, const Type *Ty, Value *V);
 
     Value *expand(const SCEV *S);
@@ -82,7 +82,7 @@ namespace llvm {
     /// expression into the program.  The inserted code is inserted into the
     /// SCEVExpander's current insertion point. If a type is specified, the
     /// result will be expanded to have that type, with a cast if necessary.
-    Value *expandCodeFor(const SCEV* SH, const Type *Ty = 0);
+    Value *expandCodeFor(const SCEV *SH, const Type *Ty = 0);
 
     /// isInsertedInstruction - Return true if the specified instruction was
     /// inserted by the code rewriter.  If so, the client should not modify the
