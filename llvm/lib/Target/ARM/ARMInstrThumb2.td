@@ -966,9 +966,6 @@ def t2REV16 : T2I<(outs GPR:$dst), (ins GPR:$src),
                             (or (and (srl GPR:$src, (i32 8)), 0xFF0000),
                                 (and (shl GPR:$src, (i32 8)), 0xFF000000)))))]>;
 
-/////
-/// A8.6.137  REVSH
-/////
 def t2REVSH : T2I<(outs GPR:$dst), (ins GPR:$src),
                  "revsh", " $dst, $src",
                  [(set GPR:$dst,
@@ -976,7 +973,31 @@ def t2REVSH : T2I<(outs GPR:$dst), (ins GPR:$src),
                       (or (srl (and GPR:$src, 0xFFFF), (i32 8)),
                           (shl GPR:$src, (i32 8))), i16))]>;
 
-// FIXME: PKHxx etc.
+def t2PKHBT : T2I<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
+                  "pkhbt", " $dst, $src1, $src2, LSL $shamt",
+                  [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF),
+                                      (and (shl GPR:$src2, (i32 imm:$shamt)),
+                                           0xFFFF0000)))]>;
+
+// Alternate cases for PKHBT where identities eliminate some nodes.
+def : T2Pat<(or (and GPR:$src1, 0xFFFF), (and GPR:$src2, 0xFFFF0000)),
+            (t2PKHBT GPR:$src1, GPR:$src2, 0)>;
+def : T2Pat<(or (and GPR:$src1, 0xFFFF), (shl GPR:$src2, imm16_31:$shamt)),
+            (t2PKHBT GPR:$src1, GPR:$src2, imm16_31:$shamt)>;
+
+def t2PKHTB : T2I<(outs GPR:$dst), (ins GPR:$src1, GPR:$src2, i32imm:$shamt),
+                  "pkhtb", " $dst, $src1, $src2, ASR $shamt",
+                  [(set GPR:$dst, (or (and GPR:$src1, 0xFFFF0000),
+                                      (and (sra GPR:$src2, imm16_31:$shamt),
+                                           0xFFFF)))]>;
+
+// Alternate cases for PKHTB where identities eliminate some nodes.  Note that
+// a shift amount of 0 is *not legal* here, it is PKHBT instead.
+def : T2Pat<(or (and GPR:$src1, 0xFFFF0000), (srl GPR:$src2, (i32 16))),
+            (t2PKHTB GPR:$src1, GPR:$src2, 16)>;
+def : T2Pat<(or (and GPR:$src1, 0xFFFF0000),
+                     (and (srl GPR:$src2, imm1_15:$shamt), 0xFFFF)),
+            (t2PKHTB GPR:$src1, GPR:$src2, imm1_15:$shamt)>;
 
 //===----------------------------------------------------------------------===//
 //  Comparison Instructions...
