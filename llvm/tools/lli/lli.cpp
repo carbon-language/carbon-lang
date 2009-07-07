@@ -147,8 +147,11 @@ int main(int argc, char **argv, char * const *envp) {
   InitializeNativeTarget();
 
   EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg, OLvl);
-  if (!EE && !ErrorMsg.empty()) {
-    std::cerr << argv[0] << ":error creating EE: " << ErrorMsg << "\n";
+  if (!EE) {
+    if (!ErrorMsg.empty())
+      std::cerr << argv[0] << ": error creating EE: " << ErrorMsg << "\n";
+    else
+      std::cerr << argv[0] << ": unknown error creating EE!\n";
     exit(1);
   }
 
