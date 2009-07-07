@@ -169,9 +169,15 @@ MachineBasicBlock::iterator PNE::FindCopyInsertPoint(MachineBasicBlock &MBB,
     return MBB.begin();
 
   // If this basic block does not contain an invoke, then control flow always
-  // reaches the end of it, so place the copy there.  The logic below works in
-  // this case too, but is more expensive.
-  if (!isa<InvokeInst>(MBB.getBasicBlock()->getTerminator()))
+  // reaches the end of it, so place the copy there.
+  // If the terminator is a branch depending upon the side effects of a 
+  // previous cmp; a copy can not be inserted here if the copy insn also
+  // side effects. We don't have access to the attributes of copy insn here;
+  // so just play safe by finding a safe locations for branch terminators. 
+  //
+  // The logic below works in this case too, but is more expensive.
+  const TerminatorInst *TermInst = MBB.getBasicBlock()->getTerminator();
+  if (!(isa<InvokeInst>(TermInst) || isa<BranchInst>(TermInst)))
     return MBB.getFirstTerminator();
 
   // Discover any definition/uses in this basic block.
