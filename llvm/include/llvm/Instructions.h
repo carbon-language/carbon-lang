@@ -51,7 +51,7 @@ public:
   ///
   bool isArrayAllocation() const;
 
-  /// getArraySize - Get the number of element allocated, for a simple
+  /// getArraySize - Get the number of elements allocated. For a simple
   /// allocation of a single element, this will return a constant 1 value.
   ///
   const Value *getArraySize() const { return getOperand(0); }
