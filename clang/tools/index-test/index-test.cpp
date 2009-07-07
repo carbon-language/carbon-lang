@@ -17,7 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//   -point-at  [file:column:line]
+//   -point-at  [file:line:column]
 //       Point at a declaration/statement/expression. If no other operation is
 //       specified, prints some info about it.
 //
