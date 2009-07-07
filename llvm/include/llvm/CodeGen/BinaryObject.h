@@ -86,15 +86,15 @@ public:
   /// emitWord16LE - This callback is invoked when a 16-bit word needs to be
   /// written to the data stream in correct endian format and correct size.
   inline void emitWord16LE(uint16_t W) {
-    Data.push_back((W >> 0) & 255);
-    Data.push_back((W >> 8) & 255);
+    Data.push_back((uint8_t)(W >> 0));
+    Data.push_back((uint8_t)(W >> 8));
   }
 
   /// emitWord16BE - This callback is invoked when a 16-bit word needs to be
   /// written to the data stream in correct endian format and correct size.
   inline void emitWord16BE(uint16_t W) {
-    Data.push_back((W >> 8) & 255);
-    Data.push_back((W >> 0) & 255);
+    Data.push_back((uint8_t)(W >> 8));
+    Data.push_back((uint8_t)(W >> 0));
   }
 
   /// emitWord - This callback is invoked when a word needs to be
@@ -127,46 +127,46 @@ public:
   /// emitWordLE - This callback is invoked when a 32-bit word needs to be
   /// written to the data stream in little-endian format.
   inline void emitWordLE(uint32_t W) {
-    Data.push_back((W >>  0) & 255);
-    Data.push_back((W >>  8) & 255);
-    Data.push_back((W >> 16) & 255);
-    Data.push_back((W >> 24) & 255);
+    Data.push_back((uint8_t)(W >>  0));
+    Data.push_back((uint8_t)(W >>  8));
+    Data.push_back((uint8_t)(W >> 16));
+    Data.push_back((uint8_t)(W >> 24));
   }
 
   /// emitWordBE - This callback is invoked when a 32-bit word needs to be
   /// written to the data stream in big-endian format.
   ///
   inline void emitWordBE(uint32_t W) {
-    Data.push_back((W >> 24) & 255);
-    Data.push_back((W >> 16) & 255);
-    Data.push_back((W >>  8) & 255);
-    Data.push_back((W >>  0) & 255);
+    Data.push_back((uint8_t)(W >> 24));
+    Data.push_back((uint8_t)(W >> 16));
+    Data.push_back((uint8_t)(W >>  8));
+    Data.push_back((uint8_t)(W >>  0));
   }
 
   /// emitDWordLE - This callback is invoked when a 64-bit word needs to be
   /// written to the data stream in little-endian format.
   inline void emitDWordLE(uint64_t W) {
-    Data.push_back((W >>  0) & 255);
-    Data.push_back((W >>  8) & 255);
-    Data.push_back((W >> 16) & 255);
-    Data.push_back((W >> 24) & 255);
-    Data.push_back((W >> 32) & 255);
-    Data.push_back((W >> 40) & 255);
-    Data.push_back((W >> 48) & 255);
-    Data.push_back((W >> 56) & 255);
+    Data.push_back((uint8_t)(W >>  0));
+    Data.push_back((uint8_t)(W >>  8));
+    Data.push_back((uint8_t)(W >> 16));
+    Data.push_back((uint8_t)(W >> 24));
+    Data.push_back((uint8_t)(W >> 32));
+    Data.push_back((uint8_t)(W >> 40));
+    Data.push_back((uint8_t)(W >> 48));
+    Data.push_back((uint8_t)(W >> 56));
   }
 
   /// emitDWordBE - This callback is invoked when a 64-bit word needs to be
   /// written to the data stream in big-endian format.
   inline void emitDWordBE(uint64_t W) {
-    Data.push_back((W >> 56) & 255);
-    Data.push_back((W >> 48) & 255);
-    Data.push_back((W >> 40) & 255);
-    Data.push_back((W >> 32) & 255);
-    Data.push_back((W >> 24) & 255);
-    Data.push_back((W >> 16) & 255);
-    Data.push_back((W >>  8) & 255);
-    Data.push_back((W >>  0) & 255);
+    Data.push_back((uint8_t)(W >> 56));
+    Data.push_back((uint8_t)(W >> 48));
+    Data.push_back((uint8_t)(W >> 40));
+    Data.push_back((uint8_t)(W >> 32));
+    Data.push_back((uint8_t)(W >> 24));
+    Data.push_back((uint8_t)(W >> 16));
+    Data.push_back((uint8_t)(W >>  8));
+    Data.push_back((uint8_t)(W >>  0));
   }
 
   /// fixByte - This callback is invoked when a byte needs to be
@@ -187,15 +187,15 @@ public:
   /// emitWord16LE - This callback is invoked when a 16-bit word needs to
   /// fixup the data stream in little endian format.
   inline void fixWord16LE(uint16_t W, uint32_t offset) {
-    Data[offset++] = W & 255;
-    Data[offset] = (W >> 8) & 255;
+    Data[offset]   = (uint8_t)(W >> 0);
+    Data[++offset] = (uint8_t)(W >> 8);
   }
 
   /// fixWord16BE - This callback is invoked when a 16-bit word needs to
   /// fixup data stream in big endian format.
   inline void fixWord16BE(uint16_t W, uint32_t offset) {
-    Data[offset++] = (W >> 8) & 255;
-    Data[offset] = W & 255;
+    Data[offset]   = (uint8_t)(W >> 8);
+    Data[++offset] = (uint8_t)(W >> 0);
   }
 
   /// emitWord - This callback is invoked when a word needs to
@@ -219,19 +219,19 @@ public:
   /// fixWord32LE - This callback is invoked when a 32-bit word needs to
   /// fixup the data in little endian format.
   inline void fixWord32LE(uint32_t W, uint32_t offset) {
-    Data[offset++] = W & 255;
-    Data[offset++] = (W >> 8) & 255;
-    Data[offset++] = (W >> 16) & 255;
-    Data[offset] = (W >> 24) & 255;
+    Data[offset]   = (uint8_t)(W >>  0);
+    Data[++offset] = (uint8_t)(W >>  8);
+    Data[++offset] = (uint8_t)(W >> 16);
+    Data[++offset] = (uint8_t)(W >> 24);
   }
 
   /// fixWord32BE - This callback is invoked when a 32-bit word needs to
   /// fixup the data in big endian format.
   inline void fixWord32BE(uint32_t W, uint32_t offset) {
-    Data[offset++] = (W >> 24) & 255;
-    Data[offset++] = (W >> 16) & 255;
-    Data[offset++] = (W >> 8) & 255;
-    Data[offset] = W & 255;
+    Data[offset]   = (uint8_t)(W >> 24);
+    Data[++offset] = (uint8_t)(W >> 16);
+    Data[++offset] = (uint8_t)(W >>  8);
+    Data[++offset] = (uint8_t)(W >>  0);
   }
 
   /// fixWord64 - This callback is invoked when a 64-bit word needs to
@@ -246,27 +246,27 @@ public:
   /// fixWord64BE - This callback is invoked when a 64-bit word needs to
   /// fixup the data in little endian format.
   inline void fixWord64LE(uint64_t W, uint32_t offset) {
-    Data[offset++] = W & 255;
-    Data[offset++] = (W >> 8) & 255;
-    Data[offset++] = (W >> 16) & 255;
-    Data[offset++] = (W >> 24) & 255;
-    Data[offset++] = (W >> 32) & 255;
-    Data[offset++] = (W >> 40) & 255;
-    Data[offset++] = (W >> 48) & 255;
-    Data[offset] = (W >> 56) & 255;
+    Data[offset]   = (uint8_t)(W >>  0);
+    Data[++offset] = (uint8_t)(W >>  8);
+    Data[++offset] = (uint8_t)(W >> 16);
+    Data[++offset] = (uint8_t)(W >> 24);
+    Data[++offset] = (uint8_t)(W >> 32);
+    Data[++offset] = (uint8_t)(W >> 40);
+    Data[++offset] = (uint8_t)(W >> 48);
+    Data[++offset] = (uint8_t)(W >> 56);
   }
 
   /// fixWord64BE - This callback is invoked when a 64-bit word needs to
   /// fixup the data in big endian format.
   inline void fixWord64BE(uint64_t W, uint32_t offset) {
-    Data[offset++] = (W >> 56) & 255;
-    Data[offset++] = (W >> 48) & 255;
-    Data[offset++] = (W >> 40) & 255;
-    Data[offset++] = (W >> 32) & 255;
-    Data[offset++] = (W >> 24) & 255;
-    Data[offset++] = (W >> 16) & 255;
-    Data[offset++] = (W >> 8) & 255;
-    Data[offset] = W & 255;
+    Data[offset]   = (uint8_t)(W >> 56);
+    Data[++offset] = (uint8_t)(W >> 48);
+    Data[++offset] = (uint8_t)(W >> 40);
+    Data[++offset] = (uint8_t)(W >> 32);
+    Data[++offset] = (uint8_t)(W >> 24);
+    Data[++offset] = (uint8_t)(W >> 16);
+    Data[++offset] = (uint8_t)(W >>  8);
+    Data[++offset] = (uint8_t)(W >>  0);
   }
 
   /// emitAlignment - Pad the data to the specified alignment.
@@ -281,7 +281,7 @@ public:
   /// written to the data stream.
   void emitULEB128Bytes(uint64_t Value) {
     do {
-      unsigned char Byte = Value & 0x7f;
+      uint8_t Byte = (uint8_t)(Value & 0x7f);
       Value >>= 7;
       if (Value) Byte |= 0x80;
       emitByte(Byte);
@@ -295,7 +295,7 @@ public:
     bool IsMore;
 
     do {
-      unsigned char Byte = Value & 0x7f;
+      uint8_t Byte = (uint8_t)(Value & 0x7f);
       Value >>= 7;
       IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
       if (IsMore) Byte |= 0x80;
