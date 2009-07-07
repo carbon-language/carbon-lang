@@ -3472,10 +3472,10 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
   if (Cand1.IgnoreObjectArgument || Cand2.IgnoreObjectArgument)
     StartArg = 1;
 
-  // (C++ 13.3.3p1): a viable function F1 is defined to be a better
-  // function than another viable function F2 if for all arguments i,
-  // ICSi(F1) is not a worse conversion sequence than ICSi(F2), and
-  // then...
+  // C++ [over.match.best]p1:
+  //   A viable function F1 is defined to be a better function than another 
+  //   viable function F2 if for all arguments i, ICSi(F1) is not a worse 
+  //   conversion sequence than ICSi(F2), and then...
   unsigned NumArgs = Cand1.Conversions.size();
   assert(Cand2.Conversions.size() == NumArgs && "Overload candidate mismatch");
   bool HasBetterConversion = false;
@@ -3497,14 +3497,24 @@ Sema::isBetterOverloadCandidate(const OverloadCandidate& Cand1,
     }
   }
 
+  //    -- for some argument j, ICSj(F1) is a better conversion sequence than 
+  //       ICSj(F2), or, if not that,
   if (HasBetterConversion)
     return true;
 
-  // FIXME: Several other bullets in (C++ 13.3.3p1) need to be
-  // implemented, but they require template support.
+  //     - F1 is a non-template function and F2 is a function template 
+  //       specialization, or, if not that,
+  if (Cand1.Function && !Cand1.Function->getPrimaryTemplate() &&
+      Cand2.Function && Cand2.Function->getPrimaryTemplate())
+    return true;
+  
+  //   -- F1 and F2 are function template specializations, and the function 
+  //      template for F1 is more specialized than the template for F2 
+  //      according to the partial ordering rules described in 14.5.5.2, or, 
+  //      if not that,
+  
+  // FIXME: Implement partial ordering of function templates.
 
-  // C++ [over.match.best]p1b4:
-  //
   //   -- the context is an initialization by user-defined conversion
   //      (see 8.5, 13.3.1.5) and the standard conversion sequence
   //      from the return type of F1 to the destination type (i.e.,
