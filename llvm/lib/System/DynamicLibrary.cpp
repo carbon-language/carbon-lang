@@ -18,6 +18,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <vector>
 
 // Collection of symbol name/value pairs to be searched prior to any libraries.
 static std::map<std::string, void*> symbols;
@@ -47,16 +48,6 @@ using namespace llvm::sys;
 
 static std::vector<void *> OpenedHandles;
 
-DynamicLibrary::DynamicLibrary() {}
-
-DynamicLibrary::~DynamicLibrary() {
-  SmartScopedWriter<true> Writer(&SymbolsLock);
-  while(!OpenedHandles.empty()) {
-    void *H = OpenedHandles.back();
-    OpenedHandles.pop_back(); 
-    dlclose(H);
-  }
-}
 
 bool DynamicLibrary::LoadLibraryPermanently(const char *Filename,
                                             std::string *ErrMsg) {
