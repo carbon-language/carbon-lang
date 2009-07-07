@@ -39,6 +39,7 @@ namespace llvm {
   class DebugLoc;
   class DebugLocTracker;
   class Instruction;
+  class LLVMContext;
 
   class DIDescriptor {
   protected:    
@@ -407,6 +408,8 @@ namespace llvm {
   /// descriptors.
   class DIFactory {
     Module &M;
+    LLVMContext& VMContext;
+    
     // Cached values for uniquing and faster lookups.
     const Type *EmptyStructPtr; // "{}*".
     Function *StopPointFn;   // llvm.dbg.stoppoint

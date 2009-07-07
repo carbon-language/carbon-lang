@@ -18,6 +18,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Support/Dwarf.h"
@@ -453,22 +454,23 @@ void DIVariable::dump() const {
 //===----------------------------------------------------------------------===//
 
 DIFactory::DIFactory(Module &m)
-  : M(m), StopPointFn(0), FuncStartFn(0), RegionStartFn(0), RegionEndFn(0),
+  : M(m), VMContext(M.getContext()), StopPointFn(0), FuncStartFn(0), 
+    RegionStartFn(0), RegionEndFn(0),
     DeclareFn(0) {
-  EmptyStructPtr = PointerType::getUnqual(StructType::get());
+  EmptyStructPtr = VMContext.getPointerTypeUnqual(VMContext.getStructType());
 }
 
 /// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.
 /// This is only valid when the descriptor is non-null.
 Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
   if (D.isNull()) return Constant::getNullValue(EmptyStructPtr);
-  return ConstantExpr::getBitCast(D.getGV(), EmptyStructPtr);
+  return VMContext.getConstantExprBitCast(D.getGV(), EmptyStructPtr);
 }
 
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
   assert((TAG & LLVMDebugVersionMask) == 0 &&
          "Tag too large for debug encoding!");
-  return ConstantInt::get(Type::Int32Ty, TAG | LLVMDebugVersion);
+  return VMContext.getConstantInt(Type::Int32Ty, TAG | LLVMDebugVersion);
 }
 
 Constant *DIFactory::GetStringConstant(const std::string &String) {
@@ -478,21 +480,21 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
   // Return Constant if previously defined.
   if (Slot) return Slot;
   
-  const PointerType *DestTy = PointerType::getUnqual(Type::Int8Ty);
+  const PointerType *DestTy = VMContext.getPointerTypeUnqual(Type::Int8Ty);
   
   // If empty string then use a i8* null instead.
   if (String.empty())
-    return Slot = ConstantPointerNull::get(DestTy);
+    return Slot = VMContext.getConstantPointerNull(DestTy);
 
   // Construct string as an llvm constant.
-  Constant *ConstStr = ConstantArray::get(String);
+  Constant *ConstStr = VMContext.getConstantArray(String);
     
   // Otherwise create and return a new string global.
   GlobalVariable *StrGV = new GlobalVariable(ConstStr->getType(), true,
                                              GlobalVariable::InternalLinkage,
                                              ConstStr, ".str", &M);
   StrGV->setSection("llvm.metadata");
-  return Slot = ConstantExpr::getBitCast(StrGV, DestTy);
+  return Slot = VMContext.getConstantExprBitCast(StrGV, DestTy);
 }
 
 //===----------------------------------------------------------------------===//
@@ -507,7 +509,7 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
   for (unsigned i = 0; i != NumTys; ++i)
     Elts.push_back(getCastToEmpty(Tys[i]));
   
-  Constant *Init = ConstantArray::get(ArrayType::get(EmptyStructPtr,
+  Constant *Init = VMContext.getConstantArray(VMContext.getArrayType(EmptyStructPtr,
                                                      Elts.size()),
                                       Elts.data(), Elts.size());
   // If we already have this array, just return the uniqued version.
@@ -527,11 +529,12 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
 DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subrange_type),
-    ConstantInt::get(Type::Int64Ty, Lo),
-    ConstantInt::get(Type::Int64Ty, Hi)
+    VMContext.getConstantInt(Type::Int64Ty, Lo),
+    VMContext.getConstantInt(Type::Int64Ty, Hi)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts, 
+                                             sizeof(Elts)/sizeof(Elts[0]));
 
   // If we already have this range, just return the uniqued version.
   DIDescriptor &Entry = SimpleConstantCache[Init];
@@ -561,18 +564,19 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
                                            unsigned RunTimeVer) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_compile_unit),
-    Constant::getNullValue(EmptyStructPtr),
-    ConstantInt::get(Type::Int32Ty, LangID),
+    VMContext.getNullValue(EmptyStructPtr),
+    VMContext.getConstantInt(Type::Int32Ty, LangID),
     GetStringConstant(Filename),
     GetStringConstant(Directory),
     GetStringConstant(Producer),
-    ConstantInt::get(Type::Int1Ty, isMain),
-    ConstantInt::get(Type::Int1Ty, isOptimized),
+    VMContext.getConstantInt(Type::Int1Ty, isMain),
+    VMContext.getConstantInt(Type::Int1Ty, isOptimized),
     GetStringConstant(Flags),
-    ConstantInt::get(Type::Int32Ty, RunTimeVer)
+    VMContext.getConstantInt(Type::Int32Ty, RunTimeVer)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.compile_unit.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -587,10 +591,11 @@ DIEnumerator DIFactory::CreateEnumerator(const std::string &Name, uint64_t Val){
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_enumerator),
     GetStringConstant(Name),
-    ConstantInt::get(Type::Int64Ty, Val)
+    VMContext.getConstantInt(Type::Int64Ty, Val)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.enumerator.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -615,15 +620,16 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
     getCastToEmpty(Context),
     GetStringConstant(Name),
     getCastToEmpty(CompileUnit),
-    ConstantInt::get(Type::Int32Ty, LineNumber),
-    ConstantInt::get(Type::Int64Ty, SizeInBits),
-    ConstantInt::get(Type::Int64Ty, AlignInBits),
-    ConstantInt::get(Type::Int64Ty, OffsetInBits),
-    ConstantInt::get(Type::Int32Ty, Flags),
-    ConstantInt::get(Type::Int32Ty, Encoding)
+    VMContext.getConstantInt(Type::Int32Ty, LineNumber),
+    VMContext.getConstantInt(Type::Int64Ty, SizeInBits),
+    VMContext.getConstantInt(Type::Int64Ty, AlignInBits),
+    VMContext.getConstantInt(Type::Int64Ty, OffsetInBits),
+    VMContext.getConstantInt(Type::Int32Ty, Flags),
+    VMContext.getConstantInt(Type::Int32Ty, Encoding)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.basictype.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -650,15 +656,16 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
     getCastToEmpty(Context),
     GetStringConstant(Name),
     getCastToEmpty(CompileUnit),
-    ConstantInt::get(Type::Int32Ty, LineNumber),
-    ConstantInt::get(Type::Int64Ty, SizeInBits),
-    ConstantInt::get(Type::Int64Ty, AlignInBits),
-    ConstantInt::get(Type::Int64Ty, OffsetInBits),
-    ConstantInt::get(Type::Int32Ty, Flags),
+    VMContext.getConstantInt(Type::Int32Ty, LineNumber),
+    VMContext.getConstantInt(Type::Int64Ty, SizeInBits),
+    VMContext.getConstantInt(Type::Int64Ty, AlignInBits),
+    VMContext.getConstantInt(Type::Int64Ty, OffsetInBits),
+    VMContext.getConstantInt(Type::Int32Ty, Flags),
     getCastToEmpty(DerivedFrom)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.derivedtype.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -687,17 +694,18 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
     getCastToEmpty(Context),
     GetStringConstant(Name),
     getCastToEmpty(CompileUnit),
-    ConstantInt::get(Type::Int32Ty, LineNumber),
-    ConstantInt::get(Type::Int64Ty, SizeInBits),
-    ConstantInt::get(Type::Int64Ty, AlignInBits),
-    ConstantInt::get(Type::Int64Ty, OffsetInBits),
-    ConstantInt::get(Type::Int32Ty, Flags),
+    VMContext.getConstantInt(Type::Int32Ty, LineNumber),
+    VMContext.getConstantInt(Type::Int64Ty, SizeInBits),
+    VMContext.getConstantInt(Type::Int64Ty, AlignInBits),
+    VMContext.getConstantInt(Type::Int64Ty, OffsetInBits),
+    VMContext.getConstantInt(Type::Int32Ty, Flags),
     getCastToEmpty(DerivedFrom),
     getCastToEmpty(Elements),
-    ConstantInt::get(Type::Int32Ty, RuntimeLang)
+    VMContext.getConstantInt(Type::Int32Ty, RuntimeLang)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.composite.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -722,19 +730,20 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
 
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subprogram),
-    Constant::getNullValue(EmptyStructPtr),
+    VMContext.getNullValue(EmptyStructPtr),
     getCastToEmpty(Context),
     GetStringConstant(Name),
     GetStringConstant(DisplayName),
     GetStringConstant(LinkageName),
     getCastToEmpty(CompileUnit),
-    ConstantInt::get(Type::Int32Ty, LineNo),
+    VMContext.getConstantInt(Type::Int32Ty, LineNo),
     getCastToEmpty(Type),
-    ConstantInt::get(Type::Int1Ty, isLocalToUnit),
-    ConstantInt::get(Type::Int1Ty, isDefinition)
+    VMContext.getConstantInt(Type::Int1Ty, isLocalToUnit),
+    VMContext.getConstantInt(Type::Int1Ty, isDefinition)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.subprogram.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -754,20 +763,21 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
                                 bool isDefinition, llvm::GlobalVariable *Val) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_variable),
-    Constant::getNullValue(EmptyStructPtr),
+    VMContext.getNullValue(EmptyStructPtr),
     getCastToEmpty(Context),
     GetStringConstant(Name),
     GetStringConstant(DisplayName),
     GetStringConstant(LinkageName),
     getCastToEmpty(CompileUnit),
-    ConstantInt::get(Type::Int32Ty, LineNo),
+    VMContext.getConstantInt(Type::Int32Ty, LineNo),
     getCastToEmpty(Type),
-    ConstantInt::get(Type::Int1Ty, isLocalToUnit),
-    ConstantInt::get(Type::Int1Ty, isDefinition),
-    ConstantExpr::getBitCast(Val, EmptyStructPtr)
+    VMContext.getConstantInt(Type::Int1Ty, isLocalToUnit),
+    VMContext.getConstantInt(Type::Int1Ty, isDefinition),
+    VMContext.getConstantExprBitCast(Val, EmptyStructPtr)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.global_variable.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -788,11 +798,12 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     getCastToEmpty(Context),
     GetStringConstant(Name),
     getCastToEmpty(CompileUnit),
-    ConstantInt::get(Type::Int32Ty, LineNo),
+    VMContext.getConstantInt(Type::Int32Ty, LineNo),
     getCastToEmpty(Type)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.variable.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -804,14 +815,15 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
 
 
 /// CreateBlock - This creates a descriptor for a lexical block with the
-/// specified parent context.
+/// specified parent VMContext.
 DIBlock DIFactory::CreateBlock(DIDescriptor Context) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_lexical_block),
     getCastToEmpty(Context)
   };
   
-  Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));
+  Constant *Init = VMContext.getConstantStruct(Elts,
+                                             sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.block.type", Init->getType());
   GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
@@ -838,8 +850,8 @@ void DIFactory::InsertStopPoint(DICompileUnit CU, unsigned LineNo,
   
   // Invoke llvm.dbg.stoppoint
   Value *Args[] = {
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, LineNo),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, ColNo),
+    VMContext.getConstantInt(llvm::Type::Int32Ty, LineNo),
+    VMContext.getConstantInt(llvm::Type::Int32Ty, ColNo),
     getCastToEmpty(CU)
   };
   CallInst::Create(StopPointFn, Args, Args+3, "", BB);
@@ -939,10 +951,12 @@ namespace llvm {
 
   Value *findDbgGlobalDeclare(GlobalVariable *V) {
     const Module *M = V->getParent();
+    LLVMContext& Context = M->getContext();
+    
     const Type *Ty = M->getTypeByName("llvm.dbg.global_variable.type");
     if (!Ty) return 0;
 
-    Ty = PointerType::get(Ty, 0);
+    Ty = Context.getPointerType(Ty, 0);
 
     Value *Val = V->stripPointerCasts();
     for (Value::use_iterator I = Val->use_begin(), E = Val->use_end();
