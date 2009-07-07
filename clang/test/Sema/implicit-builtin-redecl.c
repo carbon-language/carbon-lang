@@ -12,3 +12,15 @@ void *calloc(int, int, int); // expected-warning{{incompatible redeclaration of 
 void f1(void) { 
   calloc(0, 0, 0);
 }
+
+void f2() {
+  int index = 1;
+}
+
+static int index;
+
+int f3() {
+  return index << 2;
+}
+
+typedef int rindex;

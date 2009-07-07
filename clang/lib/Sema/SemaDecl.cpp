@@ -1431,15 +1431,18 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
     if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef)
       /* Do nothing*/;
     else if (R->isFunctionType()) {
-      if (CurContext->isFunctionOrMethod())
+      if (CurContext->isFunctionOrMethod() ||
+          D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static)
         NameKind = LookupRedeclarationWithLinkage;
     } else if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_extern)
+      NameKind = LookupRedeclarationWithLinkage;
+    else if (CurContext->getLookupContext()->isTranslationUnit() &&
+             D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static)
       NameKind = LookupRedeclarationWithLinkage;
 
     DC = CurContext;
     PrevDecl = LookupName(S, Name, NameKind, true, 
-                          D.getDeclSpec().getStorageClassSpec() != 
-                            DeclSpec::SCS_static,
+                          NameKind == LookupRedeclarationWithLinkage,
                           D.getIdentifierLoc());
   } else { // Something like "int foo::x;"
     DC = computeDeclContext(D.getCXXScopeSpec());
