@@ -163,11 +163,6 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
   /// attribute.
   DenseMap<const GlobalVariable *, DbgScope *> AbstractInstanceRootMap;
 
-  /// InlinedParamMap - A map keeping track of which parameters are assigned to
-  /// which abstract instance.
-  DenseMap<const GlobalVariable *,
-    SmallSet<const GlobalVariable *, 32> > InlinedParamMap;
-
   /// AbstractInstanceRootList - List of abstract instance roots of inlined
   /// functions. These are subroutine entries that contain a DW_AT_inline
   /// attribute.

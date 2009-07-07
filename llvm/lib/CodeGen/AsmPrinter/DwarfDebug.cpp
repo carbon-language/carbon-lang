@@ -1622,33 +1622,8 @@ void DwarfDebug::RecordVariable(GlobalVariable *GV, unsigned FrameIndex,
       DIVariable DV(GV);
       GlobalVariable *V = DV.getContext().getGV();
 
-      // FIXME: The code that checks for the inlined local variable is a hack!
-      DenseMap<const GlobalVariable *, DbgScope *>::iterator
-        AI = AbstractInstanceRootMap.find(V);
-
-      if (AI != AbstractInstanceRootMap.end()) {
-        // This method is called each time a DECLARE node is encountered. For an
-        // inlined function, this could be many, many times. We don't want to
-        // re-add variables to that DIE for each time. We just want to add them
-        // once. Check to make sure that we haven't added them already.
-        DenseMap<const GlobalVariable *,
-          SmallSet<const GlobalVariable *, 32> >::iterator
-          IP = InlinedParamMap.find(V);
-
-        if (IP != InlinedParamMap.end() && IP->second.count(GV) > 0) {
-          if (TimePassesIsEnabled)
-            DebugTimer->stopTimer();
-          return;
-        }
-
-        // or GV is an inlined local variable.
-        Scope = AI->second;
-        InlinedParamMap[V].insert(GV);
-        InlinedFnVar = true;
-      } else {
-        // or GV is a local variable.
-        Scope = getOrCreateScope(V);
-      }
+      // or GV is a local variable.
+      Scope = getOrCreateScope(V);
     }
   }
 
