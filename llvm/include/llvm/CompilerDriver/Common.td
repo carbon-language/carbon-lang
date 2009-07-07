@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains common definitions used in llvmc2 tool description files.
+// This file contains common definitions used in llvmc tool description files.
 //
 //===----------------------------------------------------------------------===//
 
