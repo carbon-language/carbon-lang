@@ -1028,7 +1028,24 @@ defm t2TEQ  : T2I_cmp_is<"teq",
 // Short range conditional branch. Looks awesome for loops. Need to figure
 // out how to use this one.
 
-// FIXME: Conditional moves
+
+// Conditional moves
+// FIXME: should be able to write a pattern for ARMcmov, but can't use
+// a two-value operand where a dag node expects two operands. :( 
+def t2MOVCCr : T2I<(outs GPR:$dst), (ins GPR:$false, GPR:$true),
+                   "mov", " $dst, $true",
+      [/*(set GPR:$dst, (ARMcmov GPR:$false, GPR:$true, imm:$cc, CCR:$ccr))*/]>,
+                RegConstraint<"$false = $dst">;
+
+def t2MOVCCs : T2I<(outs GPR:$dst), (ins GPR:$false, t2_so_reg:$true),
+                   "mov", " $dst, $true",
+[/*(set GPR:$dst, (ARMcmov GPR:$false, t2_so_reg:$true, imm:$cc, CCR:$ccr))*/]>,
+                   RegConstraint<"$false = $dst">;
+
+def t2MOVCCi : T2I<(outs GPR:$dst), (ins GPR:$false, t2_so_imm:$true),
+                   "mov", " $dst, $true",
+[/*(set GPR:$dst, (ARMcmov GPR:$false, t2_so_imm:$true, imm:$cc, CCR:$ccr))*/]>,
+                   RegConstraint<"$false = $dst">;
 
 //===----------------------------------------------------------------------===//
 // Control-Flow Instructions

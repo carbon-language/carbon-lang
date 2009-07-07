@@ -1031,7 +1031,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     return NULL;
   }
   case ARMISD::CMOV: {
-    bool isThumb = Subtarget->isThumb();
     MVT VT = Op.getValueType();
     SDValue N0 = Op.getOperand(0);
     SDValue N1 = Op.getOperand(1);
@@ -1041,39 +1040,68 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     assert(N2.getOpcode() == ISD::Constant);
     assert(N3.getOpcode() == ISD::Register);
 
-    // Pattern: (ARMcmov:i32 GPR:i32:$false, so_reg:i32:$true, (imm:i32):$cc)
-    // Emits: (MOVCCs:i32 GPR:i32:$false, so_reg:i32:$true, (imm:i32):$cc)
-    // Pattern complexity = 18  cost = 1  size = 0
-    SDValue CPTmp0;
-    SDValue CPTmp1;
-    SDValue CPTmp2;
-    if (!isThumb && VT == MVT::i32 &&
-        SelectShifterOperandReg(Op, N1, CPTmp0, CPTmp1, CPTmp2)) {
-      SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N2)->getZExtValue()),
-                               MVT::i32);
-      SDValue Ops[] = { N0, CPTmp0, CPTmp1, CPTmp2, Tmp2, N3, InFlag };
-      return CurDAG->SelectNodeTo(Op.getNode(), ARM::MOVCCs, MVT::i32, Ops, 7);
-    }
+    if (!Subtarget->isThumb1Only() && VT == MVT::i32) {
+      // Pattern: (ARMcmov:i32 GPR:i32:$false, so_reg:i32:$true, (imm:i32):$cc)
+      // Emits: (MOVCCs:i32 GPR:i32:$false, so_reg:i32:$true, (imm:i32):$cc)
+      // Pattern complexity = 18  cost = 1  size = 0
+      SDValue CPTmp0;
+      SDValue CPTmp1;
+      SDValue CPTmp2;
+      if (Subtarget->isThumb()) {
+        if (SelectT2ShifterOperandReg(Op, N1, CPTmp0, CPTmp1)) {
+          SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                                   cast<ConstantSDNode>(N2)->getZExtValue()),
+                                   MVT::i32);
+          SDValue Ops[] = { N0, CPTmp0, CPTmp1, Tmp2, N3, InFlag };
+          return CurDAG->SelectNodeTo(Op.getNode(),
+                                      ARM::t2MOVCCs, MVT::i32,Ops, 6);
+        }
+      } else {
+        if (SelectShifterOperandReg(Op, N1, CPTmp0, CPTmp1, CPTmp2)) {
+          SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                                   cast<ConstantSDNode>(N2)->getZExtValue()),
+                                   MVT::i32);
+          SDValue Ops[] = { N0, CPTmp0, CPTmp1, CPTmp2, Tmp2, N3, InFlag };
+          return CurDAG->SelectNodeTo(Op.getNode(),
+                                      ARM::MOVCCs, MVT::i32, Ops, 7);
+        }
+      }
 
-    // Pattern: (ARMcmov:i32 GPR:i32:$false,
-    //             (imm:i32)<<P:Predicate_so_imm>><<X:so_imm_XFORM>>:$true,
-    //             (imm:i32):$cc)
-    // Emits: (MOVCCi:i32 GPR:i32:$false,
-    //           (so_imm_XFORM:i32 (imm:i32):$true), (imm:i32):$cc)
-    // Pattern complexity = 10  cost = 1  size = 0
-    if (VT == MVT::i32 &&
-        N3.getOpcode() == ISD::Constant &&
-        Predicate_so_imm(N3.getNode())) {
-      SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N1)->getZExtValue()),
-                               MVT::i32);
-      Tmp1 = Transform_so_imm_XFORM(Tmp1.getNode());
-      SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
-                               cast<ConstantSDNode>(N2)->getZExtValue()),
-                               MVT::i32);
-      SDValue Ops[] = { N0, Tmp1, Tmp2, N3, InFlag };
-      return CurDAG->SelectNodeTo(Op.getNode(), ARM::MOVCCi, MVT::i32, Ops, 5);
+      // Pattern: (ARMcmov:i32 GPR:i32:$false,
+      //             (imm:i32)<<P:Predicate_so_imm>><<X:so_imm_XFORM>>:$true,
+      //             (imm:i32):$cc)
+      // Emits: (MOVCCi:i32 GPR:i32:$false,
+      //           (so_imm_XFORM:i32 (imm:i32):$true), (imm:i32):$cc)
+      // Pattern complexity = 10  cost = 1  size = 0
+      if (N3.getOpcode() == ISD::Constant) {
+        if (Subtarget->isThumb()) {
+          if (Predicate_t2_so_imm(N3.getNode())) {
+            SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
+                                     cast<ConstantSDNode>(N1)->getZExtValue()),
+                                     MVT::i32);
+            Tmp1 = Transform_t2_so_imm_XFORM(Tmp1.getNode());
+            SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                                     cast<ConstantSDNode>(N2)->getZExtValue()),
+                                     MVT::i32);
+            SDValue Ops[] = { N0, Tmp1, Tmp2, N3, InFlag };
+            return CurDAG->SelectNodeTo(Op.getNode(),
+                                        ARM::t2MOVCCi, MVT::i32, Ops, 5);
+          }
+        } else {
+          if (Predicate_so_imm(N3.getNode())) {
+            SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
+                                     cast<ConstantSDNode>(N1)->getZExtValue()),
+                                     MVT::i32);
+            Tmp1 = Transform_so_imm_XFORM(Tmp1.getNode());
+            SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
+                                     cast<ConstantSDNode>(N2)->getZExtValue()),
+                                     MVT::i32);
+            SDValue Ops[] = { N0, Tmp1, Tmp2, N3, InFlag };
+            return CurDAG->SelectNodeTo(Op.getNode(),
+                                        ARM::MOVCCi, MVT::i32, Ops, 5);
+          }
+        }
+      }
     }
 
     // Pattern: (ARMcmov:i32 GPR:i32:$false, GPR:i32:$true, (imm:i32):$cc)
@@ -1094,7 +1122,9 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     default: assert(false && "Illegal conditional move type!");
       break;
     case MVT::i32:
-      Opc = isThumb ? ARM::tMOVCCr : ARM::MOVCCr;
+      Opc = Subtarget->isThumb()
+        ? (Subtarget->hasThumb2() ? ARM::t2MOVCCr : ARM::tMOVCCr)
+        : ARM::MOVCCr;
       break;
     case MVT::f32:
       Opc = ARM::FCPYScc;
