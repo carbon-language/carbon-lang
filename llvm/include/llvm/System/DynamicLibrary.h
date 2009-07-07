@@ -36,6 +36,9 @@ namespace sys {
     /// and will only be unloaded when the program terminates.  This returns
     /// false on success or returns true and fills in *ErrMsg on failure.
     /// @brief Open a dynamic library permanently.
+    ///
+    /// NOTE: This function is not thread safe.
+    ///
     static bool LoadLibraryPermanently(const char *filename,
                                        std::string *ErrMsg = 0);
 
@@ -46,9 +49,15 @@ namespace sys {
     /// as ephemerally loaded libraries (constructors).
     /// @throws std::string on error.
     /// @brief Search through libraries for address of a symbol
+    ///
+    /// NOTE: This function is not thread safe.
+    ///
     static void *SearchForAddressOfSymbol(const char *symbolName);
 
     /// @brief Convenience function for C++ophiles.
+    ///
+    /// NOTE: This function is not thread safe.
+    ///
     static void *SearchForAddressOfSymbol(const std::string &symbolName) {
       return SearchForAddressOfSymbol(symbolName.c_str());
     }
@@ -57,9 +66,15 @@ namespace sys {
     /// value \p symbolValue.  These symbols are searched before any
     /// libraries.
     /// @brief Add searchable symbol/value pair.
+    ///
+    /// NOTE: This function is not thread safe.
+    ///
     static void AddSymbol(const char *symbolName, void *symbolValue);
 
     /// @brief Convenience function for C++ophiles.
+    ///
+    /// NOTE: This function is not thread safe.
+    ///
     static void AddSymbol(const std::string &symbolName, void *symbolValue) {
       AddSymbol(symbolName.c_str(), symbolValue);
     }
