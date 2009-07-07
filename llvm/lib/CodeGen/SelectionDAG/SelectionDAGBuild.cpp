@@ -2209,7 +2209,9 @@ void SelectionDAGLowering::visitICmp(User &I) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
   ISD::CondCode Opcode = getICmpCondCode(predicate);
-  setValue(&I, DAG.getSetCC(getCurDebugLoc(),MVT::i1, Op1, Op2, Opcode));
+  
+  MVT DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Opcode));
 }
 
 void SelectionDAGLowering::visitFCmp(User &I) {
@@ -2221,7 +2223,8 @@ void SelectionDAGLowering::visitFCmp(User &I) {
   SDValue Op1 = getValue(I.getOperand(0));
   SDValue Op2 = getValue(I.getOperand(1));
   ISD::CondCode Condition = getFCmpCondCode(predicate);
-  setValue(&I, DAG.getSetCC(getCurDebugLoc(), MVT::i1, Op1, Op2, Condition));
+  MVT DestVT = TLI.getValueType(I.getType());
+  setValue(&I, DAG.getSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Condition));
 }
 
 void SelectionDAGLowering::visitVICmp(User &I) {
