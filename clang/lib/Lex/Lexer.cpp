@@ -1304,11 +1304,9 @@ unsigned Lexer::isNextPPTokenLParen() {
 
 /// LexTokenInternal - This implements a simple C family lexer.  It is an
 /// extremely performance critical piece of code.  This assumes that the buffer
-/// has a null character at the end of the file.  Return true if an error
-/// occurred and compilation should terminate, false if normal.  This returns a
-/// preprocessing token, not a normal token, as such, it is an internal
-/// interface.  It assumes that the Flags of result have been cleared before
-/// calling this.
+/// has a null character at the end of the file.  This returns a preprocessing
+/// token, not a normal token, as such, it is an internal interface.  It assumes
+/// that the Flags of result have been cleared before calling this.
 void Lexer::LexTokenInternal(Token &Result) {
 LexNextToken:
   // New token, can't need cleaning yet.
