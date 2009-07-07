@@ -891,15 +891,38 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N,
 
 void DAGTypeLegalizer::SplitVecRes_SETCC(SDNode *N, SDValue &Lo, SDValue &Hi) {
   MVT LoVT, HiVT;
-  DebugLoc dl = N->getDebugLoc();
+  DebugLoc DL = N->getDebugLoc();
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
-
+  
+  // Split the input.
+  MVT InVT = N->getOperand(0).getValueType();
   SDValue LL, LH, RL, RH;
-  GetSplitVector(N->getOperand(0), LL, LH);
-  GetSplitVector(N->getOperand(1), RL, RH);
-
-  Lo = DAG.getNode(N->getOpcode(), dl, LoVT, LL, RL, N->getOperand(2));
-  Hi = DAG.getNode(N->getOpcode(), dl, HiVT, LH, RH, N->getOperand(2));
+  switch (getTypeAction(InVT)) {
+  default: assert(0 && "Unexpected type action!");
+  case WidenVector: assert(0 && "Unimp");
+  case Legal: {
+    assert(LoVT == HiVT && "Legal non-power-of-two vector type?");
+    MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
+                                 LoVT.getVectorNumElements());
+    LL = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, InNVT, N->getOperand(0),
+                     DAG.getIntPtrConstant(0));
+    LH = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, InNVT, N->getOperand(0),
+                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+    
+    RL = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, InNVT, N->getOperand(1),
+                     DAG.getIntPtrConstant(0));
+    RH = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, InNVT, N->getOperand(1),
+                     DAG.getIntPtrConstant(InNVT.getVectorNumElements()));
+    break;
+  }
+  case SplitVector:
+    GetSplitVector(N->getOperand(0), LL, LH);
+    GetSplitVector(N->getOperand(1), RL, RH);
+    break;
+  }
+  
+  Lo = DAG.getNode(N->getOpcode(), DL, LoVT, LL, RL, N->getOperand(2));
+  Hi = DAG.getNode(N->getOpcode(), DL, HiVT, LH, RH, N->getOperand(2));
 }
 
 //===----------------------------------------------------------------------===//
