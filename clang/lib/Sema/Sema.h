@@ -2266,7 +2266,7 @@ public:
     /// \brief When performing template argument deduction for a function 
     /// template, there were too many call arguments.
     TDK_TooManyArguments,
-    /// \brief When performing template argument deduction for a class 
+    /// \brief When performing template argument deduction for a function 
     /// template, there were too few call arguments.
     TDK_TooFewArguments,
     /// \brief The explicitly-specified template arguments were not valid

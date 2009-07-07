@@ -1,4 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 template<typename T> struct A { };
 
@@ -57,4 +57,30 @@ void test_f3(int ***ip, volatile int ***vip) {
   A<volatile int> a1 = f3(vip);
 }
                              
-// FIXME: the next bullet requires a lot of effort.
+//   - If P is a class, and P has the form template-id, then A can be a 
+//     derived class of the deduced A. Likewise, if P is a pointer to a class
+//     of the form template-id, A can be a pointer to a derived class pointed 
+//     to by the deduced A.
+template<typename T, int I> struct C { };
+
+struct D : public C<int, 1> { };
+struct E : public D { };
+struct F : A<float> { };
+
+template<typename T, int I>
+  C<T, I> *f4a(const C<T, I>&);
+template<typename T, int I>
+  C<T, I> *f4b(C<T, I>);
+template<typename T, int I>
+  C<T, I> *f4c(C<T, I>*);
+int *f4c(...);
+
+void test_f4(D d, E e, F f) {
+  C<int, 1> *ci1a = f4a(d);
+  C<int, 1> *ci2a = f4a(e);
+  C<int, 1> *ci1b = f4b(d);
+  C<int, 1> *ci2b = f4b(e);
+  C<int, 1> *ci1c = f4c(&d);
+  C<int, 1> *ci2c = f4c(&e);
+  int       *ip1 = f4c(&f);
+}
