@@ -23,6 +23,7 @@ namespace llvm {
 class Type;
 class FunctionType;
 class Function;
+class LLVMContext;
 class Module;
 class AttrListPtr;
 
@@ -47,7 +48,8 @@ namespace Intrinsic {
   
   /// Intrinsic::getType(ID) - Return the function type for an intrinsic.
   ///
-  const FunctionType *getType(ID id, const Type **Tys = 0, unsigned numTys = 0);
+  const FunctionType *getType(LLVMContext &Context, ID id,
+                              const Type **Tys = 0, unsigned numTys = 0);
 
   /// Intrinsic::isOverloaded(ID) - Returns true if the intrinsic can be
   /// overloaded.

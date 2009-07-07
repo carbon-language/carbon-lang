@@ -14,6 +14,7 @@
 #include "llvm/BasicBlock.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
@@ -202,7 +203,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
           PN->replaceAllUsesWith(PN->getOperand(0));
         else
           // We are left with an infinite loop with no entries: kill the PHI.
-          PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+          PN->replaceAllUsesWith(getContext()->getUndef(PN->getType()));
         getInstList().pop_front();    // Remove the PHI node
       }
 

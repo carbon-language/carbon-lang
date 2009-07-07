@@ -14,6 +14,7 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -336,7 +337,8 @@ std::string Intrinsic::getName(ID id, const Type **Tys, unsigned numTys) {
   return Result;
 }
 
-const FunctionType *Intrinsic::getType(ID id, const Type **Tys, 
+const FunctionType *Intrinsic::getType(LLVMContext &Context,
+                                       ID id, const Type **Tys, 
                                        unsigned numTys) {
   const Type *ResultTy = NULL;
   std::vector<const Type*> ArgTys;
@@ -346,7 +348,7 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_GENERATOR
 
-  return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
+  return Context.getFunctionType(ResultTy, ArgTys, IsVarArg); 
 }
 
 bool Intrinsic::isOverloaded(ID id) {
@@ -370,7 +372,8 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys,
   // because intrinsics must be a specific type.
   return
     cast<Function>(M->getOrInsertFunction(getName(id, Tys, numTys),
-                                          getType(id, Tys, numTys)));
+                                          getType(M->getContext(),
+                                                  id, Tys, numTys)));
 }
 
 // This defines the "Intrinsic::getIntrinsicForGCCBuiltin()" method.
