@@ -291,28 +291,20 @@ def int_arm_neon_vmovlu : Neon_1Arg_Long_Intrinsic;
 let TargetPrefix = "arm" in {
 
   // De-interleaving vector loads from N-element structures.
-  def int_arm_neon_vld3i : Intrinsic<[llvm_anyint_ty],
-                                     [llvm_ptr_ty], [IntrReadArgMem]>;
-  def int_arm_neon_vld3f : Intrinsic<[llvm_anyfloat_ty],
-                                     [llvm_ptr_ty], [IntrReadArgMem]>;
-  def int_arm_neon_vld4i : Intrinsic<[llvm_anyint_ty],
-                                     [llvm_ptr_ty], [IntrReadArgMem]>;
-  def int_arm_neon_vld4f : Intrinsic<[llvm_anyfloat_ty],
-                                     [llvm_ptr_ty], [IntrReadArgMem]>;
+  def int_arm_neon_vldi : Intrinsic<[llvm_anyint_ty],
+                                    [llvm_ptr_ty, llvm_i32_ty],
+                                    [IntrReadArgMem]>;
+  def int_arm_neon_vldf : Intrinsic<[llvm_anyfloat_ty],
+                                    [llvm_ptr_ty, llvm_i32_ty],
+                                    [IntrReadArgMem]>;
 
   // Interleaving vector stores from N-element structures.
-  def int_arm_neon_vst3i : Intrinsic<[llvm_void_ty],
-                                     [llvm_ptr_ty, llvm_anyint_ty],
-                                     [IntrWriteArgMem]>;
-  def int_arm_neon_vst3f : Intrinsic<[llvm_void_ty],
-                                     [llvm_ptr_ty, llvm_anyfloat_ty],
-                                     [IntrWriteArgMem]>;
-  def int_arm_neon_vst4i : Intrinsic<[llvm_void_ty],
-                                     [llvm_ptr_ty, llvm_anyint_ty],
-                                     [IntrWriteArgMem]>;
-  def int_arm_neon_vst4f : Intrinsic<[llvm_void_ty],
-                                     [llvm_ptr_ty, llvm_anyfloat_ty],
-                                     [IntrWriteArgMem]>;
+  def int_arm_neon_vsti : Intrinsic<[llvm_void_ty],
+                                    [llvm_ptr_ty, llvm_anyint_ty, llvm_i32_ty],
+                                    [IntrWriteArgMem]>;
+  def int_arm_neon_vstf : Intrinsic<[llvm_void_ty],
+                                    [llvm_ptr_ty, llvm_anyfloat_ty,llvm_i32_ty],
+                                    [IntrWriteArgMem]>;
 
   // Vector Table Lookup
   def int_arm_neon_vtbl : Intrinsic<[llvm_v8i8_ty],
