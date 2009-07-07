@@ -1260,6 +1260,11 @@ namespace {
     virtual void getTargetDefines(const LangOptions &Opts,
                                   std::vector<char> &Defines) const {
       Define(Defines, "__pic16");
+      Define(Defines, "rom", "__attribute__((address_space(1)))");
+      Define(Defines, "ram", "__attribute__((address_space(0)))");
+      Define(Defines, "_section(SectName)", "__attribute__((section(SectName)))");
+      Define(Defines, "_address(Addr)","__attribute__((section(\"Address=\"#Addr)))");
+      Define(Defines, "_CONFIG(conf)", "asm(\"CONFIG \"#conf)");
     }
     virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                    unsigned &NumRecords) const {}
