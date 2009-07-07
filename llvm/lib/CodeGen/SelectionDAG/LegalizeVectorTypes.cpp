@@ -97,13 +97,10 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::UDIV:
   case ISD::UREM:
   case ISD::XOR:
-    R = ScalarizeVecRes_BinOp(N);
-    break;
-
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:
-    R = ScalarizeVecRes_ShiftOp(N);
+    R = ScalarizeVecRes_BinOp(N);
     break;
   }
 
@@ -117,13 +114,6 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_BinOp(SDNode *N) {
   SDValue RHS = GetScalarizedVector(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), N->getDebugLoc(),
                      LHS.getValueType(), LHS, RHS);
-}
-
-SDValue DAGTypeLegalizer::ScalarizeVecRes_ShiftOp(SDNode *N) {
-  SDValue LHS = GetScalarizedVector(N->getOperand(0));
-  SDValue ShiftAmt = GetScalarizedVector(N->getOperand(1));
-  return DAG.getNode(N->getOpcode(), N->getDebugLoc(),
-                     LHS.getValueType(), LHS, ShiftAmt);
 }
 
 SDValue DAGTypeLegalizer::ScalarizeVecRes_BIT_CONVERT(SDNode *N) {

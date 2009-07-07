@@ -506,7 +506,6 @@ private:
   // Vector Result Scalarization: <1 x ty> -> ty.
   void ScalarizeVectorResult(SDNode *N, unsigned OpNo);
   SDValue ScalarizeVecRes_BinOp(SDNode *N);
-  SDValue ScalarizeVecRes_ShiftOp(SDNode *N);
   SDValue ScalarizeVecRes_UnaryOp(SDNode *N);
 
   SDValue ScalarizeVecRes_BIT_CONVERT(SDNode *N);
