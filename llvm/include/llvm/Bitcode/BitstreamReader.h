@@ -260,6 +260,7 @@ public:
   
   
   uint32_t Read(unsigned NumBits) {
+    assert(NumBits <= 32 && "Cannot return more than 32 bits!");
     // If the field is fully contained by CurWord, return it quickly.
     if (BitsInCurWord >= NumBits) {
       uint32_t R = CurWord & ((1U << NumBits)-1);
@@ -322,17 +323,19 @@ public:
     }
   }
 
+  // ReadVBR64 - Read a VBR that may have a value up to 64-bits in size.  The
+  // chunk size of the VBR must still be <= 32 bits though.
   uint64_t ReadVBR64(unsigned NumBits) {
-    uint64_t Piece = Read(NumBits);
-    if ((Piece & (uint64_t(1) << (NumBits-1))) == 0)
-      return Piece;
+    uint32_t Piece = Read(NumBits);
+    if ((Piece & (1U << (NumBits-1))) == 0)
+      return uint64_t(Piece);
 
     uint64_t Result = 0;
     unsigned NextBit = 0;
     while (1) {
-      Result |= (Piece & ((1U << (NumBits-1))-1)) << NextBit;
+      Result |= uint64_t(Piece & ((1U << (NumBits-1))-1)) << NextBit;
 
-      if ((Piece & (uint64_t(1) << (NumBits-1))) == 0)
+      if ((Piece & (1U << (NumBits-1))) == 0)
         return Result;
 
       NextBit += NumBits-1;
