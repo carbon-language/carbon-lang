@@ -225,10 +225,10 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
   SDValue RHS = GetScalarizedVector(N->getOperand(1));
   MVT NVT = N->getValueType(0).getVectorElementType();
   MVT SVT = TLI.getSetCCResultType(LHS.getValueType());
-  DebugLoc dl = N->getDebugLoc();
+  DebugLoc DL = N->getDebugLoc();
 
   // Turn it into a scalar SETCC.
-  SDValue Res = DAG.getNode(ISD::SETCC, dl, SVT, LHS, RHS, N->getOperand(2));
+  SDValue Res = DAG.getNode(ISD::SETCC, DL, SVT, LHS, RHS, N->getOperand(2));
 
   // VSETCC always returns a sign-extended value, while SETCC may not.  The
   // SETCC result type may not match the vector element type.  Correct these.
@@ -237,19 +237,19 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
     // Ensure the SETCC result is sign-extended.
     if (TLI.getBooleanContents() !=
         TargetLowering::ZeroOrNegativeOneBooleanContent)
-      Res = DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, SVT, Res,
+      Res = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, SVT, Res,
                         DAG.getValueType(MVT::i1));
     // Truncate to the final type.
-    return DAG.getNode(ISD::TRUNCATE, dl, NVT, Res);
-  } else {
-    // The SETCC result type is smaller than the vector element type.
-    // If the SetCC result is not sign-extended, chop it down to MVT::i1.
-    if (TLI.getBooleanContents() !=
-        TargetLowering::ZeroOrNegativeOneBooleanContent)
-      Res = DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, Res);
-    // Sign extend to the final type.
-    return DAG.getNode(ISD::SIGN_EXTEND, dl, NVT, Res);
+    return DAG.getNode(ISD::TRUNCATE, DL, NVT, Res);
   }
+  
+  // The SETCC result type is smaller than the vector element type.
+  // If the SetCC result is not sign-extended, chop it down to MVT::i1.
+  if (TLI.getBooleanContents() !=
+        TargetLowering::ZeroOrNegativeOneBooleanContent)
+    Res = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, Res);
+  // Sign extend to the final type.
+  return DAG.getNode(ISD::SIGN_EXTEND, DL, NVT, Res);
 }
 SDValue DAGTypeLegalizer::ScalarizeVecRes_SETCC(SDNode *N) {
   SDValue LHS = GetScalarizedVector(N->getOperand(0));
@@ -278,19 +278,18 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
       N->dump(&DAG); cerr << "\n";
 #endif
       assert(0 && "Do not know how to scalarize this operator's operand!");
-      abort();
-
     case ISD::BIT_CONVERT:
-      Res = ScalarizeVecOp_BIT_CONVERT(N); break;
-
+      Res = ScalarizeVecOp_BIT_CONVERT(N);
+      break;
     case ISD::CONCAT_VECTORS:
-      Res = ScalarizeVecOp_CONCAT_VECTORS(N); break;
-
+      Res = ScalarizeVecOp_CONCAT_VECTORS(N);
+      break;
     case ISD::EXTRACT_VECTOR_ELT:
-      Res = ScalarizeVecOp_EXTRACT_VECTOR_ELT(N); break;
-
+      Res = ScalarizeVecOp_EXTRACT_VECTOR_ELT(N);
+      break;
     case ISD::STORE:
-      Res = ScalarizeVecOp_STORE(cast<StoreSDNode>(N), OpNo); break;
+      Res = ScalarizeVecOp_STORE(cast<StoreSDNode>(N), OpNo);
+      break;
     }
   }
 
@@ -1036,10 +1035,9 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
 
     if (IdxVal < LoElts)
       return DAG.UpdateNodeOperands(SDValue(N, 0), Lo, Idx);
-    else
-      return DAG.UpdateNodeOperands(SDValue(N, 0), Hi,
-                                    DAG.getConstant(IdxVal - LoElts,
-                                                    Idx.getValueType()));
+    return DAG.UpdateNodeOperands(SDValue(N, 0), Hi,
+                                  DAG.getConstant(IdxVal - LoElts,
+                                                  Idx.getValueType()));
   }
 
   // Store the vector to the stack.
@@ -1129,8 +1127,11 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::SELECT_CC:         Res = WidenVecRes_SELECT_CC(N); break;
   case ISD::UNDEF:             Res = WidenVecRes_UNDEF(N); break;
   case ISD::VECTOR_SHUFFLE:    
-      Res = WidenVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N)); break;
-  case ISD::VSETCC:            Res = WidenVecRes_VSETCC(N); break;
+    Res = WidenVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N));
+    break;
+  case ISD::VSETCC:
+    Res = WidenVecRes_VSETCC(N);
+    break;
 
   case ISD::ADD:
   case ISD::AND:
