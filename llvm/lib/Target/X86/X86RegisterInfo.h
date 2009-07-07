@@ -136,11 +136,9 @@ public:
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS = NULL) const;
 
+  void emitCalleeSavedFrameMoves(MachineFunction &MF, unsigned LabelId) const;
   void emitPrologue(MachineFunction &MF) const;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
-  void emitFrameMoves(MachineFunction &MF,
-                      unsigned FrameLabelId, unsigned ReadyLabelId) const;
 
   // Debug information queries.
   unsigned getRARegister() const;
