@@ -1516,6 +1516,10 @@ SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
 /// SignBitIsZero - Return true if the sign bit of Op is known to be zero.  We
 /// use this predicate to simplify operations downstream.
 bool SelectionDAG::SignBitIsZero(SDValue Op, unsigned Depth) const {
+  // This predicate is not safe for vector operations.
+  if (Op.getValueType().isVector())
+    return false;
+  
   unsigned BitWidth = Op.getValueSizeInBits();
   return MaskedValueIsZero(Op, APInt::getSignBit(BitWidth), Depth);
 }
