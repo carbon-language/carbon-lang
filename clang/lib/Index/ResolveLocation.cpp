@@ -29,270 +29,202 @@ class VISIBILITY_HIDDEN LocResolverBase {
 protected:
   ASTContext &Ctx;
   SourceLocation Loc;
-  
-  Decl *Dcl;
-  Stmt *Stm;
-  bool PassedLoc;
 
-  /// \brief Checks whether Loc is in the source range of 'D'.
-  ///
-  /// If it is, updates Dcl. If Loc is passed the source range, it sets
-  /// PassedLoc, otherwise it does nothing.
-  void CheckRange(Decl *D);
+  enum RangePos {
+    BeforeLoc,
+    ContainsLoc,
+    AfterLoc
+  };
 
-  /// \brief Checks whether Loc is in the source range of 'Node'.
-  ///
-  /// If it is, updates Stm. If Loc is passed the source range, it sets
-  /// PassedLoc, otherwise it does nothing.
-  void CheckRange(Stmt *Node);
-  
-  /// \brief Updates the end source range to cover the full length of the token
-  /// positioned at the end of the source range.
-  ///
-  /// e.g.,
-  /// @code
-  ///   int foo
-  ///   ^   ^
-  /// @endcode
-  /// will be updated to
-  /// @code
-  ///   int foo
-  ///   ^     ^ 
-  /// @endcode
-  void FixRange(SourceRange &Range);
+  RangePos CheckRange(SourceRange Range);
+  RangePos CheckRange(Decl *D) { return CheckRange(D->getSourceRange()); }
+  RangePos CheckRange(Stmt *Node) { return CheckRange(Node->getSourceRange()); }
 
 public:
   LocResolverBase(ASTContext &ctx, SourceLocation loc)
-    : Ctx(ctx), Loc(loc), Dcl(0), Stm(0), PassedLoc(0) {}
-  
-  /// \brief We found a AST node that corresponds to the source location.
-  bool FoundIt() const { return Dcl != 0 || Stm != 0; }
+    : Ctx(ctx), Loc(loc) {}
 
-  /// \brief We either found a AST node or we passed the source location while
-  /// searching.
-  bool Finished() const { return FoundIt() || PassedLoc; }
-  
-  Decl *getDecl() const { return Dcl; }
-  Stmt *getStmt() const { return Stm; }
-  
-  std::pair<Decl *, Stmt *> getResult() const {
-    return std::make_pair(getDecl(), getStmt());
-  }
-  
   /// \brief Debugging output.
   void print(Decl *D);
   /// \brief Debugging output.
   void print(Stmt *Node);
 };
 
-/// \brief Searches a statement for the AST node that corresponds to a source
+/// \brief Searches a statement for the ASTLocation that corresponds to a source
 /// location.
 class VISIBILITY_HIDDEN StmtLocResolver : public LocResolverBase,
-                                          public StmtVisitor<StmtLocResolver> {
-public:
-  StmtLocResolver(ASTContext &ctx, SourceLocation loc)
-    : LocResolverBase(ctx, loc) {}
+                                          public StmtVisitor<StmtLocResolver,
+                                                             ASTLocation     > {
+  Decl *Parent;
 
-  void VisitDeclStmt(DeclStmt *Node);
-  void VisitStmt(Stmt *Node);
+public:
+  StmtLocResolver(ASTContext &ctx, SourceLocation loc, Decl *parent)
+    : LocResolverBase(ctx, loc), Parent(parent) {}
+
+  ASTLocation VisitDeclStmt(DeclStmt *Node);
+  ASTLocation VisitStmt(Stmt *Node);
 };
 
-/// \brief Searches a declaration for the AST node that corresponds to a source
-/// location.
+/// \brief Searches a declaration for the ASTLocation that corresponds to a
+/// source location.
 class VISIBILITY_HIDDEN DeclLocResolver : public LocResolverBase,
-                                          public DeclVisitor<DeclLocResolver> {
+                                          public DeclVisitor<DeclLocResolver,
+                                                             ASTLocation     > {
 public:
   DeclLocResolver(ASTContext &ctx, SourceLocation loc)
     : LocResolverBase(ctx, loc) {}
 
-  void VisitDeclContext(DeclContext *DC);
-  void VisitTranslationUnitDecl(TranslationUnitDecl *TU);
-  void VisitVarDecl(VarDecl *D);
-  void VisitFunctionDecl(FunctionDecl *D);
-  void VisitDecl(Decl *D);
+  ASTLocation VisitTranslationUnitDecl(TranslationUnitDecl *TU);
+  ASTLocation VisitVarDecl(VarDecl *D);
+  ASTLocation VisitFunctionDecl(FunctionDecl *D);
+  ASTLocation VisitDecl(Decl *D);
 };
 
 } // anonymous namespace
 
-void StmtLocResolver::VisitDeclStmt(DeclStmt *Node) {
-  CheckRange(Node);
-  if (!FoundIt())
-    return;
-  assert(Stm == Node && "Result not updated ?");
+ASTLocation StmtLocResolver::VisitDeclStmt(DeclStmt *Node) {
+  assert(CheckRange(Node) == ContainsLoc
+         && "Should visit only after verifying that loc is in range");
 
-  // Search all declarations of this DeclStmt. If we found the one corresponding
-  // to the source location, update this StmtLocResolver's result.
-  DeclLocResolver DLR(Ctx, Loc);
+  // Search all declarations of this DeclStmt.
   for (DeclStmt::decl_iterator
          I = Node->decl_begin(), E = Node->decl_end(); I != E; ++I) {
-    DLR.Visit(*I);
-    if (DLR.Finished()) {
-      if (DLR.FoundIt())
-        llvm::tie(Dcl, Stm) = DLR.getResult();
-      return;
-    }
+    RangePos RP = CheckRange(*I);
+    if (RP == AfterLoc)
+      break;
+    if (RP == ContainsLoc)
+      return DeclLocResolver(Ctx, Loc).Visit(*I);
   }
+
+  return ASTLocation(Parent, Node);
 }
 
-void StmtLocResolver::VisitStmt(Stmt *Node) {
-  CheckRange(Node);
-  if (!FoundIt())
-    return;
-  assert(Stm == Node && "Result not updated ?");
-  
+ASTLocation StmtLocResolver::VisitStmt(Stmt *Node) {
+  assert(CheckRange(Node) == ContainsLoc
+         && "Should visit only after verifying that loc is in range");
+
   // Search the child statements.
-  StmtLocResolver SLR(Ctx, Loc);
   for (Stmt::child_iterator
          I = Node->child_begin(), E = Node->child_end(); I != E; ++I) {
-    SLR.Visit(*I);
-    if (!SLR.Finished())
-      continue;
-
-    // We either found it or we passed the source location.
-    
-    if (SLR.FoundIt()) {
-      // Only update Dcl if we found another more immediate 'parent' Decl for
-      // the statement.
-      if (SLR.getDecl())
-        Dcl = SLR.getDecl();
-      Stm = SLR.getStmt();
-    }
-    
-    return;
+    RangePos RP = CheckRange(*I);
+    if (RP == AfterLoc)
+      break;
+    if (RP == ContainsLoc)
+      return Visit(*I);
   }
+
+  return ASTLocation(Parent, Node);
 }
 
-void DeclLocResolver::VisitDeclContext(DeclContext *DC) {
-  DeclLocResolver DLR(Ctx, Loc);
+ASTLocation DeclLocResolver::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
+  DeclContext *DC = TU;
+
   for (DeclContext::decl_iterator
          I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
-    DLR.Visit(*I);
-    if (DLR.Finished()) {
-      if (DLR.FoundIt())
-        llvm::tie(Dcl, Stm) = DLR.getResult();
-      return;
-    }
+    RangePos RP = CheckRange(*I);
+    if (RP == AfterLoc)
+      break;
+    if (RP == ContainsLoc)
+      return Visit(*I);
   }
+
+  return ASTLocation();
 }
 
-void DeclLocResolver::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
-  VisitDeclContext(TU);
-}
-
-void DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
-  CheckRange(D);
-  if (!FoundIt())
-    return;
-  assert(Dcl == D && "Result not updated ?");
+ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
+  assert(CheckRange(D) == ContainsLoc
+         && "Should visit only after verifying that loc is in range");
 
   // First, search through the parameters of the function.
-  DeclLocResolver ParmRes(Ctx, Loc);
   for (FunctionDecl::param_iterator
          I = D->param_begin(), E = D->param_end(); I != E; ++I) {
-    ParmRes.Visit(*I);
-    if (ParmRes.Finished()) {
-      if (ParmRes.FoundIt())
-        llvm::tie(Dcl, Stm) = ParmRes.getResult();
-      return;
-    }
+    RangePos RP = CheckRange(*I);
+    if (RP == AfterLoc)
+      return ASTLocation(D);
+    if (RP == ContainsLoc)
+      return Visit(*I);
   }
   
-  // We didn't found the location in the parameters and we didn't get passed it.
+  // We didn't find the location in the parameters and we didn't get passed it.
   
   if (!D->isThisDeclarationADefinition())
-    return;
+    return ASTLocation(D);
 
   // Second, search through the declarations that are part of the function.
   // If we find he location there, we won't have to search through its body.
 
-  DeclLocResolver DLR(Ctx, Loc);
   for (DeclContext::decl_iterator
          I = D->decls_begin(), E = D->decls_end(); I != E; ++I) {
     if (isa<ParmVarDecl>(*I))
       continue; // We already searched through the parameters.
     
-    DLR.Visit(*I);
-    if (DLR.FoundIt()) {
-      llvm::tie(Dcl, Stm) = DLR.getResult();
-      return;
-    }
+    RangePos RP = CheckRange(*I);
+    if (RP == AfterLoc)
+      break;
+    if (RP == ContainsLoc)
+      return Visit(*I);
   }
 
   // We didn't find a declaration that corresponds to the source location.
   
   // Finally, search through the body of the function.
-  assert(D->getBody() && "Expected definition");
-  StmtLocResolver SLR(Ctx, Loc);
-  SLR.Visit(D->getBody());
-  if (SLR.FoundIt()) {
-    llvm::tie(Dcl, Stm) = SLR.getResult();
-    // If we didn't find a more immediate 'parent' declaration for the
-    // statement, set the function as the parent.
-    if (Dcl == 0)
-      Dcl = D;
-  }
+  Stmt *Body = D->getBody();
+  assert(Body && "Expected definition");
+  assert(CheckRange(Body) != BeforeLoc
+         && "This function is supposed to contain the loc");
+  if (CheckRange(Body) == AfterLoc)
+    return ASTLocation(D);
+
+  // The body contains the location.
+  assert(CheckRange(Body) == ContainsLoc);
+  return StmtLocResolver(Ctx, Loc, D).Visit(Body);
 }
 
-void DeclLocResolver::VisitVarDecl(VarDecl *D) {
-  CheckRange(D);
-  if (!FoundIt())
-    return;
-  assert(Dcl == D && "Result not updated ?");
-  
+ASTLocation DeclLocResolver::VisitVarDecl(VarDecl *D) {
+  assert(CheckRange(D) == ContainsLoc
+         && "Should visit only after verifying that loc is in range");
+
   // Check whether the location points to the init expression.
-  if (D->getInit()) {
-    StmtLocResolver SLR(Ctx, Loc);
-    SLR.Visit(D->getInit());
-    Stm = SLR.getStmt();
-  }
+  Expr *Init = D->getInit();
+  if (Init && CheckRange(Init) == ContainsLoc)
+    return StmtLocResolver(Ctx, Loc, D).Visit(Init);
+
+  return ASTLocation(D);
 }
 
-void DeclLocResolver::VisitDecl(Decl *D) {
-  CheckRange(D);
+ASTLocation DeclLocResolver::VisitDecl(Decl *D) {
+  assert(CheckRange(D) == ContainsLoc
+         && "Should visit only after verifying that loc is in range");
+  return ASTLocation(D);
 }
 
-void LocResolverBase::CheckRange(Decl *D) {
-  SourceRange Range = D->getSourceRange();
+LocResolverBase::RangePos LocResolverBase::CheckRange(SourceRange Range) {
   if (!Range.isValid())
-    return;
+    return BeforeLoc; // Keep looking.
 
-  FixRange(Range);
-
-  SourceManager &SourceMgr = Ctx.getSourceManager(); 
-  if (SourceMgr.isBeforeInTranslationUnit(Range.getEnd(), Loc))
-    return;
-  
-  if (SourceMgr.isBeforeInTranslationUnit(Loc, Range.getBegin()))
-    PassedLoc = true;
-  else
-    Dcl = D;
-}
-
-void LocResolverBase::CheckRange(Stmt *Node) {
-  SourceRange Range = Node->getSourceRange();
-  if (!Range.isValid())
-    return;
-
-  FixRange(Range);
-
-  SourceManager &SourceMgr = Ctx.getSourceManager(); 
-  if (SourceMgr.isBeforeInTranslationUnit(Range.getEnd(), Loc))
-    return;
-  
-  if (SourceMgr.isBeforeInTranslationUnit(Loc, Range.getBegin()))
-    PassedLoc = true;
-  else
-    Stm = Node;
-}
-
-void LocResolverBase::FixRange(SourceRange &Range) {
-  if (!Range.isValid())
-    return;
-  
+  // Update the end source range to cover the full length of the token
+  // positioned at the end of the source range.
+  //
+  // e.g.,
+  //   int foo
+  //   ^   ^
+  //
+  // will be updated to
+  //   int foo
+  //   ^     ^
   unsigned TokSize = Lexer::MeasureTokenLength(Range.getEnd(),
                                                Ctx.getSourceManager(),
                                                Ctx.getLangOptions());
   Range.setEnd(Range.getEnd().getFileLocWithOffset(TokSize-1));
+
+  SourceManager &SourceMgr = Ctx.getSourceManager(); 
+  if (SourceMgr.isBeforeInTranslationUnit(Range.getEnd(), Loc))
+    return BeforeLoc;
+  
+  if (SourceMgr.isBeforeInTranslationUnit(Loc, Range.getBegin()))
+    return AfterLoc;
+
+  return ContainsLoc;
 }
 
 void LocResolverBase::print(Decl *D) {
@@ -326,7 +258,5 @@ ASTLocation idx::ResolveLocationInAST(ASTContext &Ctx, SourceLocation Loc) {
   if (Loc.isInvalid())
     return ASTLocation();
   
-  DeclLocResolver DLR(Ctx, Loc);
-  DLR.Visit(Ctx.getTranslationUnitDecl());
-  return ASTLocation(DLR.getDecl(), DLR.getStmt());
+  return DeclLocResolver(Ctx, Loc).Visit(Ctx.getTranslationUnitDecl());
 }
