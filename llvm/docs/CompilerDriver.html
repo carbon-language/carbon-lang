@@ -341,6 +341,11 @@ output.</li>
 special cases). Usage example: <tt class="docutils literal"><span class="pre">(parameter_list_option</span> <span class="pre">&quot;foo&quot;,</span> <span class="pre">(multi_val</span>
 <span class="pre">3))</span></tt>. Only list options can have this attribute; you can, however, use
 the <tt class="docutils literal"><span class="pre">one_or_more</span></tt> and <tt class="docutils literal"><span class="pre">zero_or_one</span></tt> properties.</li>
+<li><tt class="docutils literal"><span class="pre">init</span></tt> - this option has a default value, either a string (if it is a
+parameter), or a boolean (if it is a switch; boolean constants are called
+<tt class="docutils literal"><span class="pre">true</span></tt> and <tt class="docutils literal"><span class="pre">false</span></tt>). List options can't have this attribute. Usage
+examples: <tt class="docutils literal"><span class="pre">(switch_option</span> <span class="pre">&quot;foo&quot;,</span> <span class="pre">(init</span> <span class="pre">true))</span></tt>; <tt class="docutils literal"><span class="pre">(prefix_option</span> <span class="pre">&quot;bar&quot;,</span>
+<span class="pre">(init</span> <span class="pre">&quot;baz&quot;))</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">extern</span></tt> - this option is defined in some other plugin, see below.</li>
 </ul>
 </blockquote>
