@@ -95,7 +95,7 @@ public:
   Constant* getConstantArray(const ArrayType* T, Constant* const* Vals,
                              unsigned NumVals);
   Constant* getConstantArray(const std::string& Initializer,
-                             bool AddNull = false);
+                             bool AddNull = true);
                              
   // ConstantExpr accessors
   Constant* getConstantExpr(unsigned Opcode, Constant* C1, Constant* C2);
