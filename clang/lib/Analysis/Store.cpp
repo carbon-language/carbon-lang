@@ -106,8 +106,8 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
       // the cast-to pointee type is of smaller size. In other cases, we return
       // the original VarRegion.
       
-      // If the pointee or object type is incomplete, do compute their sizes, 
-      // and return the original region.
+      // If the pointee or object type is incomplete, do not compute their
+      // sizes, and return the original region.
       QualType ObjTy = cast<TypedRegion>(R)->getValueType(Ctx);
       
       if (!IsCompleteType(Ctx, PointeeTy) || !IsCompleteType(Ctx, ObjTy)) {
