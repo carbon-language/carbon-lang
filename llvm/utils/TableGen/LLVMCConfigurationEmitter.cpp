@@ -138,20 +138,21 @@ void checkedIncrement(I& P, I E, S ErrorString) {
 /// OptionType - One of six different option types. See the
 /// documentation for detailed description of differences.
 namespace OptionType {
+
   enum OptionType { Alias, Switch, Parameter, ParameterList,
                     Prefix, PrefixList};
 
-bool IsList (OptionType t) {
-  return (t == ParameterList || t == PrefixList);
-}
+  bool IsList (OptionType t) {
+    return (t == ParameterList || t == PrefixList);
+  }
 
-bool IsSwitch (OptionType t) {
-  return (t == Switch);
-}
+  bool IsSwitch (OptionType t) {
+    return (t == Switch);
+  }
 
-bool IsParameter (OptionType t) {
-  return (t == Parameter || t == Prefix);
-}
+  bool IsParameter (OptionType t) {
+    return (t == Parameter || t == Prefix);
+  }
 
 }
 
@@ -227,6 +228,15 @@ struct OptionDescription {
 
   bool isReallyHidden() const;
   void setReallyHidden();
+
+  bool isParameter() const
+  { return OptionType::IsParameter(this->Type); }
+
+  bool isSwitch() const
+  { return OptionType::IsSwitch(this->Type); }
+
+  bool isList() const
+  { return OptionType::IsList(this->Type); }
 
 };
 
@@ -960,7 +970,7 @@ bool EmitCaseTest1Arg(const std::string& TestName,
 
   if (TestName == "switch_on") {
     const OptionDescription& OptDesc = OptDescs.FindOption(OptName);
-    if (!OptionType::IsSwitch(OptDesc.Type))
+    if (!OptDesc.isSwitch())
       throw OptName + ": incorrect option type - should be a switch!";
     O << OptDesc.GenVariableName();
     return true;
@@ -983,7 +993,7 @@ bool EmitCaseTest1Arg(const std::string& TestName,
     }
     else {
       const OptionDescription& OptDesc = OptDescs.FindOption(OptName);
-      if (OptionType::IsSwitch(OptDesc.Type))
+      if (OptDesc.isSwitch())
         throw OptName
           + ": incorrect option type - should be a list or parameter!";
       O << Test << OptDesc.GenVariableName() << ".empty()";
@@ -1007,13 +1017,13 @@ bool EmitCaseTest2Args(const std::string& TestName,
   const OptionDescription& OptDesc = OptDescs.FindOption(OptName);
 
   if (TestName == "parameter_equals") {
-    if (!OptionType::IsParameter(OptDesc.Type))
+    if (!OptDesc.isParameter())
       throw OptName + ": incorrect option type - should be a parameter!";
     O << OptDesc.GenVariableName() << " == \"" << OptArg << "\"";
     return true;
   }
   else if (TestName == "element_in_list") {
-    if (!OptionType::IsList(OptDesc.Type))
+    if (!OptDesc.isList())
       throw OptName + ": incorrect option type - should be a list!";
     const std::string& VarName = OptDesc.GenVariableName();
     O << "std::find(" << VarName << ".begin(),\n"
@@ -1463,14 +1473,14 @@ class EmitActionHandler {
       if (D.isMultiVal())
         throw std::string("Can't use unpack_values with multi-valued options!");
 
-      if (OptionType::IsList(D.Type)) {
+      if (D.isList()) {
         O << IndentLevel << "for (" << D.GenTypeDeclaration()
           << "::iterator B = " << D.GenVariableName() << ".begin(),\n"
           << IndentLevel << "E = " << D.GenVariableName()
           << ".end(); B != E; ++B)\n"
           << IndentLevel << Indent1 << "llvm::SplitString(*B, vec, \",\");\n";
       }
-      else if (OptionType::IsParameter(D.Type)){
+      else if (D.isParameter()){
         O << Indent3 << "llvm::SplitString("
           << D.GenVariableName() << ", vec, \",\");\n";
       }
@@ -1686,15 +1696,15 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
       O << ", cl::Prefix";
 
     if (val.isRequired()) {
-      if (OptionType::IsList(val.Type) && !val.isMultiVal())
+      if (val.isList() && !val.isMultiVal())
         O << ", cl::OneOrMore";
       else
         O << ", cl::Required";
     }
-    else if (val.isOneOrMore() && OptionType::IsList(val.Type)) {
+    else if (val.isOneOrMore() && val.isList()) {
         O << ", cl::OneOrMore";
     }
-    else if (val.isZeroOrOne() && OptionType::IsList(val.Type)) {
+    else if (val.isZeroOrOne() && val.isList()) {
         O << ", cl::ZeroOrOne";
     }
 
