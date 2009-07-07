@@ -8,6 +8,7 @@ add_llvm_library(LLVMSupport
   ConstantRange.cpp
   Debug.cpp
   Dwarf.cpp
+  ErrorHandling.cpp
   FileUtilities.cpp
   FoldingSet.cpp
   GraphWriter.cpp
