@@ -7,8 +7,25 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  Just include CompilerDriver/Main.inc.
+//  Usually this file just includes CompilerDriver/Main.inc, but here we apply
+//  some trickery to make the built-in '-save-temps' option hidden and enabled
+//  by default.
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/CompilerDriver/Main.inc"
+#include "llvm/CompilerDriver/BuiltinOptions.h"
+#include "llvm/CompilerDriver/ForceLinkage.h"
+
+namespace llvmc {
+  int Main(int argc, char** argv);
+}
+
+int main(int argc, char** argv) {
+
+  // HACK
+  SaveTemps = SaveTempsEnum::Obj;
+  SaveTemps.setHiddenFlag(llvm::cl::Hidden);
+
+  llvmc::ForceLinkage();
+  return llvmc::Main(argc, argv);
+}
