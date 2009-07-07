@@ -282,8 +282,8 @@ public:
   /// the JIT.  See JITEventListener.h for more details.  Does not
   /// take ownership of the argument.  The argument may be NULL, in
   /// which case these functions do nothing.
-  virtual void RegisterJITEventListener(JITEventListener *L) {}
-  virtual void UnregisterJITEventListener(JITEventListener *L) {}
+  virtual void RegisterJITEventListener(JITEventListener *) {}
+  virtual void UnregisterJITEventListener(JITEventListener *) {}
 
   /// DisableLazyCompilation - If called, the JIT will abort if lazy compilation
   /// is ever attempted.
