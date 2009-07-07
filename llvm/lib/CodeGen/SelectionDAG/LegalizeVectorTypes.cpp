@@ -56,6 +56,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::UNDEF:             R = ScalarizeVecRes_UNDEF(N); break;
   case ISD::VECTOR_SHUFFLE:    R = ScalarizeVecRes_VECTOR_SHUFFLE(N); break;
   case ISD::VSETCC:            R = ScalarizeVecRes_VSETCC(N); break;
+  case ISD::SETCC:             R = ScalarizeVecRes_SETCC(N); break;
 
   case ISD::CTLZ:
   case ISD::CTPOP:
@@ -250,6 +251,14 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
     return DAG.getNode(ISD::SIGN_EXTEND, dl, NVT, Res);
   }
 }
+SDValue DAGTypeLegalizer::ScalarizeVecRes_SETCC(SDNode *N) {
+  SDValue LHS = GetScalarizedVector(N->getOperand(0));
+  SDValue RHS = GetScalarizedVector(N->getOperand(1));
+  DebugLoc DL = N->getDebugLoc();
+  
+  // Turn it into a scalar SETCC.
+  return DAG.getNode(ISD::SETCC, DL, MVT::i1, LHS, RHS, N->getOperand(2));
+}
 
 
 //===----------------------------------------------------------------------===//
@@ -381,10 +390,17 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
   case ISD::FPOWI:             SplitVecRes_FPOWI(N, Lo, Hi); break;
   case ISD::INSERT_VECTOR_ELT: SplitVecRes_INSERT_VECTOR_ELT(N, Lo, Hi); break;
   case ISD::SCALAR_TO_VECTOR:  SplitVecRes_SCALAR_TO_VECTOR(N, Lo, Hi); break;
-  case ISD::LOAD:              SplitVecRes_LOAD(cast<LoadSDNode>(N), Lo, Hi);break;
+  case ISD::LOAD:
+    SplitVecRes_LOAD(cast<LoadSDNode>(N), Lo, Hi);
+    break;
   case ISD::VECTOR_SHUFFLE:
-      SplitVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N), Lo, Hi); break;
-  case ISD::VSETCC:            SplitVecRes_VSETCC(N, Lo, Hi); break;
+    SplitVecRes_VECTOR_SHUFFLE(cast<ShuffleVectorSDNode>(N), Lo, Hi);
+    break;
+      
+  case ISD::VSETCC:
+  case ISD::SETCC:
+    SplitVecRes_SETCC(N, Lo, Hi);
+    break;
 
   case ISD::CTTZ:
   case ISD::CTLZ:
@@ -874,8 +890,7 @@ void DAGTypeLegalizer::SplitVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N,
   }
 }
 
-void DAGTypeLegalizer::SplitVecRes_VSETCC(SDNode *N, SDValue &Lo,
-                                          SDValue &Hi) {
+void DAGTypeLegalizer::SplitVecRes_SETCC(SDNode *N, SDValue &Lo, SDValue &Hi) {
   MVT LoVT, HiVT;
   DebugLoc dl = N->getDebugLoc();
   GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
@@ -884,10 +899,9 @@ void DAGTypeLegalizer::SplitVecRes_VSETCC(SDNode *N, SDValue &Lo,
   GetSplitVector(N->getOperand(0), LL, LH);
   GetSplitVector(N->getOperand(1), RL, RH);
 
-  Lo = DAG.getNode(ISD::VSETCC, dl, LoVT, LL, RL, N->getOperand(2));
-  Hi = DAG.getNode(ISD::VSETCC, dl, HiVT, LH, RH, N->getOperand(2));
+  Lo = DAG.getNode(N->getOpcode(), dl, LoVT, LL, RL, N->getOperand(2));
+  Hi = DAG.getNode(N->getOpcode(), dl, HiVT, LH, RH, N->getOperand(2));
 }
-
 
 //===----------------------------------------------------------------------===//
 //  Operand Vector Splitting
