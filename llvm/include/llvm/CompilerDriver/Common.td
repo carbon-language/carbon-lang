@@ -39,6 +39,7 @@ def prefix_list_option;
 def extern;
 def help;
 def hidden;
+def init;
 def multi_val;
 def one_or_more;
 def really_hidden;
@@ -50,6 +51,10 @@ def empty;
 
 // The 'case' construct.
 def case;
+
+// Boolean constants.
+def true;
+def false;
 
 // Boolean operators.
 def and;

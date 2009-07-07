@@ -187,11 +187,12 @@ struct OptionDescription {
   unsigned Flags;
   std::string Help;
   unsigned MultiVal;
+  Init* InitVal;
 
   OptionDescription(OptionType::OptionType t = OptionType::Switch,
                     const std::string& n = "",
                     const std::string& h = DefaultHelpString)
-    : Type(t), Name(n), Flags(0x0), Help(h), MultiVal(1)
+    : Type(t), Name(n), Flags(0x0), Help(h), MultiVal(1), InitVal(0)
   {}
 
   /// GenTypeDeclaration - Returns the C++ variable type of this
@@ -447,6 +448,7 @@ public:
       AddHandler("extern", &CollectOptionProperties::onExtern);
       AddHandler("help", &CollectOptionProperties::onHelp);
       AddHandler("hidden", &CollectOptionProperties::onHidden);
+      AddHandler("init", &CollectOptionProperties::onInit);
       AddHandler("multi_val", &CollectOptionProperties::onMultiVal);
       AddHandler("one_or_more", &CollectOptionProperties::onOneOrMore);
       AddHandler("really_hidden", &CollectOptionProperties::onReallyHidden);
@@ -488,6 +490,20 @@ private:
       throw std::string("An option can't have both (required) "
                         "and (one_or_more) properties!");
     optDesc_.setRequired();
+  }
+
+  void onInit (const DagInit* d) {
+    checkNumberOfArguments(d, 1);
+    Init* i = d->getArg(0);
+    const std::string& str = i->getAsString();
+
+    bool correct = optDesc_.isParameter() && dynamic_cast<StringInit*>(i);
+    correct |= (optDesc_.isSwitch() && (str == "true" || str == "false"));
+
+    if (!correct)
+      throw std::string("Incorrect usage of the 'init' option property!");
+
+    optDesc_.InitVal = i;
   }
 
   void onOneOrMore (const DagInit* d) {
@@ -1716,7 +1732,12 @@ void EmitOptionDefinitions (const OptionDescriptions& descs,
     }
 
     if (val.MultiVal > 1)
-      O << ", cl::multi_val(" << val.MultiVal << ")";
+      O << ", cl::multi_val(" << val.MultiVal << ')';
+
+    if (val.InitVal) {
+      const std::string& str = val.InitVal->getAsString();
+      O << ", cl::init(" << str << ')';
+    }
 
     if (!val.Help.empty())
       O << ", cl::desc(\"" << val.Help << "\")";
