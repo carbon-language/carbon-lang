@@ -4678,6 +4678,11 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     Diag(OpLoc, diag::err_typecheck_address_of)
       << "vector element" << op->getSourceRange();
     return QualType();
+  } else if (isa<ObjCPropertyRefExpr>(op)) {
+    // cannot take address of a property expression.
+    Diag(OpLoc, diag::err_typecheck_address_of)
+      << "property expression" << op->getSourceRange();
+    return QualType();
   } else if (dcl) { // C99 6.5.3.2p1
     // We have an lvalue with a decl. Make sure the decl is not declared
     // with the register storage-class specifier.
