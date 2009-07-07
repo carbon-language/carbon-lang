@@ -1023,17 +1023,23 @@ Sema::OwningExprResult Sema::ActOnUnaryTypeTrait(UnaryTypeTrait OTT,
                                                  SourceLocation LParen,
                                                  TypeTy *Ty,
                                                  SourceLocation RParen) {
-  // FIXME: Some of the type traits have requirements. Interestingly, only the
-  // __is_base_of requirement is explicitly stated to be diagnosed. Indeed, G++
-  // accepts __is_pod(Incomplete) without complaints, and claims that the type
-  // is indeed a POD.
+  QualType T = QualType::getFromOpaquePtr(Ty);
+  
+  // According to http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html
+  // all traits except __is_class, __is_enum and __is_union require a the type
+  // to be complete.
+  if (OTT != UTT_IsClass && OTT != UTT_IsEnum && OTT != UTT_IsUnion) {
+    if (RequireCompleteType(KWLoc, T, 
+                            diag::err_incomplete_type_used_in_type_trait_expr,
+                            SourceRange(), SourceRange(), T))
+      return ExprError();
+  }
 
   // There is no point in eagerly computing the value. The traits are designed
   // to be used from type trait templates, so Ty will be a template parameter
   // 99% of the time.
-  return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, OTT,
-                                      QualType::getFromOpaquePtr(Ty),
-                                      RParen, Context.BoolTy));
+  return Owned(new (Context) UnaryTypeTraitExpr(KWLoc, OTT, T,
+                                                RParen, Context.BoolTy));
 }
 
 QualType Sema::CheckPointerToMemberOperands(

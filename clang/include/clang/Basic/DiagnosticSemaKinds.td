@@ -1549,6 +1549,9 @@ def ext_typecheck_expression_not_constant_but_accepted : Extension<
 def warn_unused_expr : Warning<"expression result unused">,
   InGroup<UnusedValue>;
 
+def err_incomplete_type_used_in_type_trait_expr : Error<
+  "incomplete type %0 used in type trait expression">;
+  
 // inline asm.
 def err_asm_wide_character : Error<"wide string is invalid in 'asm'">;
 def err_asm_invalid_lvalue_in_output : Error<"invalid lvalue in asm output">;
