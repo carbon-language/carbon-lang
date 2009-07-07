@@ -336,7 +336,8 @@ void PCHValidator::ReadCounter(unsigned Value) {
 // PCH reader implementation
 //===----------------------------------------------------------------------===//
 
-PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context) 
+PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context, 
+                     const char *isysroot) 
   : Listener(new PCHValidator(PP, *this)), SourceMgr(PP.getSourceManager()),
     FileMgr(PP.getFileManager()), Diags(PP.getDiagnostics()),
     SemaObj(0), PP(&PP), Context(Context), Consumer(0),
@@ -344,25 +345,31 @@ PCHReader::PCHReader(Preprocessor &PP, ASTContext *Context)
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), Comments(0), NumComments(0), 
+    TotalNumSelectors(0), Comments(0), NumComments(0), isysroot(isysroot),
     NumStatHits(0), NumStatMisses(0), 
     NumSLocEntriesRead(0), NumStatementsRead(0), 
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
-    NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0) { }
+    NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0),
+    CurrentlyLoadingTypeOrDecl(0) { 
+  RelocatablePCH = false;
+}
 
 PCHReader::PCHReader(SourceManager &SourceMgr, FileManager &FileMgr,
-                     Diagnostic &Diags) 
+                     Diagnostic &Diags, const char *isysroot) 
   : SourceMgr(SourceMgr), FileMgr(FileMgr), Diags(Diags),
     SemaObj(0), PP(0), Context(0), Consumer(0),
     IdentifierTableData(0), IdentifierLookupTable(0),
     IdentifierOffsets(0),
     MethodPoolLookupTable(0), MethodPoolLookupTableData(0),
     TotalSelectorsInMethodPool(0), SelectorOffsets(0),
-    TotalNumSelectors(0), NumStatHits(0), NumStatMisses(0), 
+    TotalNumSelectors(0), Comments(0), NumComments(0), isysroot(isysroot),
+    NumStatHits(0), NumStatMisses(0), 
     NumSLocEntriesRead(0), NumStatementsRead(0), 
     NumMacrosRead(0), NumMethodPoolSelectorsRead(0), NumMethodPoolMisses(0),
     NumLexicalDeclContextsRead(0), NumVisibleDeclContextsRead(0),
-    CurrentlyLoadingTypeOrDecl(0) { }
+    CurrentlyLoadingTypeOrDecl(0) { 
+  RelocatablePCH = false;
+}
 
 PCHReader::~PCHReader() {}
 
@@ -652,8 +659,7 @@ bool PCHReader::CheckPredefinesBuffer(const char *PCHPredef,
 
 /// \brief Read the line table in the source manager block.
 /// \returns true if ther was an error.
-static bool ParseLineTable(SourceManager &SourceMgr, 
-                           llvm::SmallVectorImpl<uint64_t> &Record) {
+bool PCHReader::ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record) {
   unsigned Idx = 0;
   LineTableInfo &LineTable = SourceMgr.getLineTable();
 
@@ -664,6 +670,7 @@ static bool ParseLineTable(SourceManager &SourceMgr,
     unsigned FilenameLen = Record[Idx++];
     std::string Filename(&Record[Idx], &Record[Idx] + FilenameLen);
     Idx += FilenameLen;
+    MaybeAddSystemRootToFilename(Filename);
     FileIDs[I] = LineTable.getLineTableFilenameID(Filename.c_str(), 
                                                   Filename.size());
   }
@@ -859,7 +866,7 @@ PCHReader::PCHReadResult PCHReader::ReadSourceManagerBlock() {
       break;
 
     case pch::SM_LINE_TABLE:
-      if (ParseLineTable(SourceMgr, Record))
+      if (ParseLineTable(Record))
         return Failure;
       break;
 
@@ -912,10 +919,12 @@ PCHReader::PCHReadResult PCHReader::ReadSLocEntryRecord(unsigned ID) {
     return Failure;
 
   case pch::SM_SLOC_FILE_ENTRY: {
-    const FileEntry *File = FileMgr.getFile(BlobStart, BlobStart + BlobLen);
+    std::string Filename(BlobStart, BlobStart + BlobLen);
+    MaybeAddSystemRootToFilename(Filename);
+    const FileEntry *File = FileMgr.getFile(Filename);
     if (File == 0) {
       std::string ErrorStr = "could not find file '";
-      ErrorStr.append(BlobStart, BlobLen);
+      ErrorStr += Filename;
       ErrorStr += "' referenced by PCH file";
       Error(ErrorStr.c_str());
       return Failure;
@@ -1096,6 +1105,32 @@ void PCHReader::ReadMacroRecord(uint64_t Offset) {
   }
 }
 
+/// \brief If we are loading a relocatable PCH file, and the filename is
+/// not an absolute path, add the system root to the beginning of the file
+/// name.
+void PCHReader::MaybeAddSystemRootToFilename(std::string &Filename) {
+  // If this is not a relocatable PCH file, there's nothing to do.
+  if (!RelocatablePCH)
+    return;
+  
+  if (Filename.empty() || Filename[0] == '/' || Filename[0] == '<')
+    return;
+
+  std::string FIXME = Filename;
+  
+  if (isysroot == 0) {
+    // If no system root was given, default to '/'
+    Filename.insert(Filename.begin(), '/');
+    return;
+  }
+  
+  unsigned Length = strlen(isysroot);
+  if (isysroot[Length - 1] != '/')
+    Filename.insert(Filename.begin(), '/');
+    
+  Filename.insert(Filename.begin(), isysroot, isysroot + Length);
+}
+
 PCHReader::PCHReadResult 
 PCHReader::ReadPCHBlock() {
   if (Stream.EnterSubBlock(pch::PCH_BLOCK_ID)) {
@@ -1208,6 +1243,7 @@ PCHReader::ReadPCHBlock() {
         return IgnorePCH;
       }
 
+      RelocatablePCH = Record[4];
       if (Listener) {
         std::string TargetTriple(BlobStart, BlobLen);
         if (Listener->ReadTargetTriple(TargetTriple))
@@ -1338,6 +1374,7 @@ PCHReader::ReadPCHBlock() {
 
     case pch::ORIGINAL_FILE_NAME:
       OriginalFileName.assign(BlobStart, BlobLen);
+      MaybeAddSystemRootToFilename(OriginalFileName);
       break;
         
     case pch::COMMENT_RANGES:

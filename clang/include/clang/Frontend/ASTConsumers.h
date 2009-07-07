@@ -92,7 +92,8 @@ ASTConsumer* CreateHTMLPrinter(llvm::raw_ostream *OS, Diagnostic &D,
 // used later with the PCHReader (clang-cc option -include-pch)
 // to speed up compile times.
 ASTConsumer *CreatePCHGenerator(const Preprocessor &PP,
-                                llvm::raw_ostream *OS);
+                                llvm::raw_ostream *OS,
+                                const char *isysroot = 0);
 
 // Block rewriter: rewrites code using the Apple blocks extension to pure
 // C code.  Output is always sent to stdout.

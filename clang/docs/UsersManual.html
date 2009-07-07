@@ -465,6 +465,50 @@ for headers that are directly included within a source file. For example:</p>
 <tt>test.h</tt> since <tt>test.h</tt> was included directly in the source file
 and not specified on the command line using <tt>-include</tt>.</p>
 
+<h4>Relocatable PCH Files</h4>
+<p>It is sometimes necessary to build a precompiled header from headers that
+are not yet in their final, installed locations. For example, one might build a
+precompiled header within the build tree that is then meant to be installed
+alongside the headers. Clang permits the creation of "relocatable" precompiled
+headers, which are built with a given path (into the build directory) and can 
+later be used from an installed location.</p>
+
+<p>To build a relocatable precompiled header, place your headers into a
+subdirectory whose structure mimics the installed location. For example, if you
+want to build a precompiled header for the header <code>mylib.h</code> that
+will be installed into <code>/usr/include</code>, create a subdirectory 
+<code>build/usr/include</code> and place the header <code>mylib.h</code> into
+that subdirectory. If <code>mylib.h</code> depends on other headers, then 
+they can be stored within <code>build/usr/include</code> in a way that mimics
+the installed location.</p>
+
+<p>Building a relocatable precompiled header requires two additional arguments.
+First, pass the <code>--relocatable-pch</code> flag to indicate that the
+resulting PCH file should be relocatable. Second, pass 
+<code>-isysroot /path/to/build</code>, which makes all includes for your
+library relative to the build directory. For example:</p>
+
+<pre>
+  # clang -x c-header --relocatable-pch -isysroot /path/to/build /path/to/build/mylib.h mylib.h.pch
+</pre>
+
+<p>When loading the relocatable PCH file, the various headers used in the PCH
+file are found from the system header root. For example, <code>mylib.h</code>
+can be found in <code>/usr/include/mylib.h</code>. If the headers are installed
+in some other system root, the <code>-isysroot</code> option can be used provide
+a different system root from which the headers will be based. For example,
+<code>-isysroot /Developer/SDKs/MacOSX10.4u.sdk</code> will look for 
+<code>mylib.h</code> in 
+<code>/Developer/SDKs/MacOSX10.4u.sdk/usr/include/mylib.h</code>.</p>
+
+<p>Relocatable precompiled headers are intended to be used in a limited number
+of cases where the compilation environment is tightly controlled and the
+precompiled header cannot be generated after headers have been installed. 
+Relocatable precompiled headers also have some performance impact, because
+the difference in location between the header locations at PCH build time vs. 
+at the time of PCH use requires one of the PCH optimizations,
+<code>stat()</code> caching, to be disabled. However, this change is only 
+likely to affect PCH files that reference a large number of headers.</p>
 
 <!-- ======================================================================= -->
 <h2 id="c">C Language Features</h2>

@@ -24,6 +24,9 @@ def warn_fixit_no_changes : Note<
     "FIX-IT detected errors it could not fix; no output will be generated">;
 
 // PCH reader
+def err_relocatable_without_without_isysroot : Error<
+    "must specify system root with -isysroot when building a relocatable "
+    "PCH file">;
 def warn_pch_target_triple : Error<
     "PCH file was compiled for the target '%0' but the current translation "
     "unit is being compiled for target '%1'">;

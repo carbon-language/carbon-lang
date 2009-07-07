@@ -474,6 +474,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
+  if (Args.hasArg(options::OPT__relocatable_pch, true))
+    CmdArgs.push_back("--relocatable-pch");
+                      
   // Forward -f options which we can pass directly.
   Args.AddLastArg(CmdArgs, options::OPT_femit_all_decls);
   Args.AddLastArg(CmdArgs, options::OPT_fexceptions);

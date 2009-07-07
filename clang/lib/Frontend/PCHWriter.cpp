@@ -476,11 +476,68 @@ void PCHWriter::WriteBlockInfoBlock() {
   Stream.ExitBlock();
 }
 
+/// \brief Adjusts the given filename to only write out the portion of the
+/// filename that is not part of the system root directory.
+/// 
+/// \param Filename the file name to adjust.
+///
+/// \param isysroot When non-NULL, the PCH file is a relocatable PCH file and
+/// the returned filename will be adjusted by this system root.
+///
+/// \returns either the original filename (if it needs no adjustment) or the
+/// adjusted filename (which points into the @p Filename parameter).
+static const char * 
+adjustFilenameForRelocatablePCH(const char *Filename, const char *isysroot) {
+  assert(Filename && "No file name to adjust?");
+  
+  if (!isysroot)
+    return Filename;
+  
+  // Verify that the filename and the system root have the same prefix.
+  unsigned Pos = 0;
+  for (; Filename[Pos] && isysroot[Pos]; ++Pos)
+    if (Filename[Pos] != isysroot[Pos])
+      return Filename; // Prefixes don't match.
+  
+  // We hit the end of the filename before we hit the end of the system root.
+  if (!Filename[Pos])
+    return Filename;
+  
+  // If the file name has a '/' at the current position, skip over the '/'.
+  // We distinguish sysroot-based includes from absolute includes by the
+  // absence of '/' at the beginning of sysroot-based includes.
+  if (Filename[Pos] == '/')
+    ++Pos;
+  
+  return Filename + Pos;
+}
 
 /// \brief Write the PCH metadata (e.g., i686-apple-darwin9).
-void PCHWriter::WriteMetadata(ASTContext &Context) {
+void PCHWriter::WriteMetadata(ASTContext &Context, const char *isysroot) {
   using namespace llvm;
 
+  // Metadata
+  const TargetInfo &Target = Context.Target;
+  BitCodeAbbrev *MetaAbbrev = new BitCodeAbbrev();
+  MetaAbbrev->Add(BitCodeAbbrevOp(pch::METADATA));
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH major
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH minor
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang minor
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // Relocatable
+  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Target triple
+  unsigned MetaAbbrevCode = Stream.EmitAbbrev(MetaAbbrev);
+  
+  RecordData Record;
+  Record.push_back(pch::METADATA);
+  Record.push_back(pch::VERSION_MAJOR);
+  Record.push_back(pch::VERSION_MINOR);
+  Record.push_back(CLANG_VERSION_MAJOR);
+  Record.push_back(CLANG_VERSION_MINOR);
+  Record.push_back(isysroot != 0);
+  const char *Triple = Target.getTargetTriple();
+  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, Triple, strlen(Triple));
+  
   // Original file name
   SourceManager &SM = Context.getSourceManager();
   if (const FileEntry *MainFile = SM.getFileEntryForID(SM.getMainFileID())) {
@@ -500,31 +557,14 @@ void PCHWriter::WriteMetadata(ASTContext &Context) {
       MainFileName = MainFilePath.toString();
     }
 
+    const char *MainFileNameStr = MainFileName.c_str();
+    MainFileNameStr = adjustFilenameForRelocatablePCH(MainFileNameStr, 
+                                                      isysroot);
     RecordData Record;
     Record.push_back(pch::ORIGINAL_FILE_NAME);
-    Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileName.c_str(),
-                              MainFileName.size());
+    Stream.EmitRecordWithBlob(FileAbbrevCode, Record, MainFileNameStr,
+                              strlen(MainFileNameStr));
   }
-
-  // Metadata
-  const TargetInfo &Target = Context.Target;
-  BitCodeAbbrev *MetaAbbrev = new BitCodeAbbrev();
-  MetaAbbrev->Add(BitCodeAbbrevOp(pch::METADATA));
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH major
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // PCH minor
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang major
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 16)); // Clang minor
-  MetaAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Target triple
-  unsigned MetaAbbrevCode = Stream.EmitAbbrev(MetaAbbrev);
-
-  RecordData Record;
-  Record.push_back(pch::METADATA);
-  Record.push_back(pch::VERSION_MAJOR);
-  Record.push_back(pch::VERSION_MINOR);
-  Record.push_back(CLANG_VERSION_MAJOR);
-  Record.push_back(CLANG_VERSION_MINOR);
-  const char *Triple = Target.getTargetTriple();
-  Stream.EmitRecordWithBlob(MetaAbbrevCode, Record, Triple, strlen(Triple));
 }
 
 /// \brief Write the LangOptions structure.
@@ -649,15 +689,19 @@ public:
 } // end anonymous namespace
 
 /// \brief Write the stat() system call cache to the PCH file.
-void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
+void PCHWriter::WriteStatCache(MemorizeStatCalls &StatCalls,
+                               const char *isysroot) {
   // Build the on-disk hash table containing information about every
   // stat() call.
   OnDiskChainedHashTableGenerator<PCHStatCacheTrait> Generator;
   unsigned NumStatEntries = 0;
   for (MemorizeStatCalls::iterator Stat = StatCalls.begin(), 
                                 StatEnd = StatCalls.end();
-       Stat != StatEnd; ++Stat, ++NumStatEntries)
-    Generator.insert(Stat->first(), Stat->second);
+       Stat != StatEnd; ++Stat, ++NumStatEntries) {
+    const char *Filename = Stat->first();
+    Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
+    Generator.insert(Filename, Stat->second);
+  }
   
   // Create the on-disk hash table in a buffer.
   llvm::SmallVector<char, 4096> StatCacheData; 
@@ -753,7 +797,8 @@ static unsigned CreateSLocInstantiationAbbrev(llvm::BitstreamWriter &Stream) {
 /// errors), we probably won't have to create file entries for any of
 /// the files in the AST.
 void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
-                                        const Preprocessor &PP) {
+                                        const Preprocessor &PP,
+                                        const char *isysroot) {
   RecordData Record;
 
   // Enter the source manager block.
@@ -774,6 +819,7 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
     for (unsigned I = 0, N = LineTable.getNumFilenames(); I != N; ++I) {
       // Emit the file name
       const char *Filename = LineTable.getFilename(I);
+      Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
       unsigned FilenameLen = Filename? strlen(Filename) : 0;
       Record.push_back(FilenameLen);
       if (FilenameLen)
@@ -850,9 +896,21 @@ void PCHWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
       if (Content->Entry) {
         // The source location entry is a file. The blob associated
         // with this entry is the file name.
-        Stream.EmitRecordWithBlob(SLocFileAbbrv, Record,
-                             Content->Entry->getName(),
-                             strlen(Content->Entry->getName()));
+        
+        // Turn the file name into an absolute path, if it isn't already.
+        const char *Filename = Content->Entry->getName();
+        llvm::sys::Path FilePath(Filename, strlen(Filename));
+        std::string FilenameStr;
+        if (!FilePath.isAbsolute()) {
+          llvm::sys::Path P = llvm::sys::Path::GetCurrentDirectory();
+          P.appendComponent(FilePath.toString());
+          FilenameStr = P.toString();
+          Filename = FilenameStr.c_str();
+        }
+        
+        Filename = adjustFilenameForRelocatablePCH(Filename, isysroot);
+        Stream.EmitRecordWithBlob(SLocFileAbbrv, Record, Filename, 
+                                  strlen(Filename));
 
         // FIXME: For now, preload all file source locations, so that
         // we get the appropriate File entries in the reader. This is
@@ -1716,7 +1774,8 @@ PCHWriter::PCHWriter(llvm::BitstreamWriter &Stream)
     NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
     NumVisibleDeclContexts(0) { }
 
-void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls) {
+void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
+                         const char *isysroot) {
   using namespace llvm;
 
   ASTContext &Context = SemaRef.Context;
@@ -1778,11 +1837,11 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls) {
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 4);
-  WriteMetadata(Context);
+  WriteMetadata(Context, isysroot);
   WriteLanguageOptions(Context.getLangOptions());
-  if (StatCalls)
-    WriteStatCache(*StatCalls);
-  WriteSourceManagerBlock(Context.getSourceManager(), PP);
+  if (StatCalls && !isysroot)
+    WriteStatCache(*StatCalls, isysroot);
+  WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
   WritePreprocessor(PP);
   WriteComments(Context);  
   

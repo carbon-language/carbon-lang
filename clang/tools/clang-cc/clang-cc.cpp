@@ -1057,6 +1057,10 @@ static llvm::cl::opt<std::string>
 ImplicitIncludePTH("include-pth", llvm::cl::value_desc("file"),
                    llvm::cl::desc("Include file before parsing"));
 
+static llvm::cl::opt<bool>
+RelocatablePCH("relocatable-pch", 
+               llvm::cl::desc("Whether to build a relocatable precompiled "
+                              "header"));
 
 //===----------------------------------------------------------------------===//
 // Preprocessor include path information.
@@ -1820,8 +1824,16 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   }
 
   case GeneratePCH:
+    if (RelocatablePCH.getValue() && !isysroot.getNumOccurrences()) {
+      PP.Diag(SourceLocation(), diag::err_relocatable_without_without_isysroot);
+      RelocatablePCH.setValue(false);
+    }
+      
     OS.reset(ComputeOutFile(InFile, 0, true, OutPath));
-    Consumer.reset(CreatePCHGenerator(PP, OS.get()));
+    if (RelocatablePCH.getValue())
+      Consumer.reset(CreatePCHGenerator(PP, OS.get(), isysroot.c_str()));
+    else
+      Consumer.reset(CreatePCHGenerator(PP, OS.get()));
     CompleteTranslationUnit = false;
     break;
 
@@ -1978,7 +1990,13 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   llvm::OwningPtr<ExternalASTSource> Source;
     
   if (!ImplicitIncludePCH.empty()) {
-    Reader.reset(new PCHReader(PP, ContextOwner.get()));
+    // If the user specified -isysroot, it will be used for relocatable PCH
+    // files.
+    const char *isysrootPCH = 0;
+    if (isysroot.getNumOccurrences() != 0)
+      isysrootPCH = isysroot.c_str();
+    
+    Reader.reset(new PCHReader(PP, ContextOwner.get(), isysrootPCH));
     
     // The user has asked us to include a precompiled header. Load
     // the precompiled header into the AST context.

@@ -310,6 +310,13 @@ private:
   /// file.
   std::string OriginalFileName;
 
+  /// \brief Whether this precompiled header is a relocatable PCH file.
+  bool RelocatablePCH;
+  
+  /// \brief The system include root to be used when loading the 
+  /// precompiled header.
+  const char *isysroot;
+      
   /// \brief Mapping from switch-case IDs in the PCH file to
   /// switch-case statements.
   std::map<unsigned, SwitchCase *> SwitchCaseStmts;
@@ -428,10 +435,13 @@ private:
   /// predefines buffer may contain additional definitions.
   std::string SuggestedPredefines;
   
+  void MaybeAddSystemRootToFilename(std::string &Filename);
+      
   PCHReadResult ReadPCHBlock();
   bool CheckPredefinesBuffer(const char *PCHPredef, 
                              unsigned PCHPredefLen,
                              FileID PCHBufferID);
+  bool ParseLineTable(llvm::SmallVectorImpl<uint64_t> &Record);
   PCHReadResult ReadSourceManagerBlock();
   PCHReadResult ReadSLocEntryRecord(unsigned ID);
   
@@ -448,19 +458,42 @@ private:
 
   PCHReader(const PCHReader&); // do not implement
   PCHReader &operator=(const PCHReader &); // do not implement
-
 public:
   typedef llvm::SmallVector<uint64_t, 64> RecordData;
 
   /// \brief Load the PCH file and validate its contents against the given
   /// Preprocessor.
-  PCHReader(Preprocessor &PP, ASTContext *Context);
+  ///
+  /// \param PP the preprocessor associated with the context in which this
+  /// precompiled header will be loaded.
+  ///
+  /// \param Context the AST context that this precompiled header will be
+  /// loaded into.
+  ///
+  /// \param isysroot If non-NULL, the system include path specified by the
+  /// user. This is only used with relocatable PCH files. If non-NULL,
+  /// a relocatable PCH file will use the default path "/".
+  PCHReader(Preprocessor &PP, ASTContext *Context, const char *isysroot = 0);
   
   /// \brief Load the PCH file without using any pre-initialized Preprocessor.
   ///
   /// The necessary information to initialize a Preprocessor later can be
   /// obtained by setting a PCHReaderListener.
-  PCHReader(SourceManager &SourceMgr, FileManager &FileMgr, Diagnostic &Diags);
+  ///
+  /// \param SourceMgr the source manager into which the precompiled header
+  /// will be loaded.
+  ///
+  /// \param FileMgr the file manager into which the precompiled header will
+  /// be loaded.
+  ///
+  /// \param Diags the diagnostics system to use for reporting errors and
+  /// warnings relevant to loading the precompiled header.
+  ///
+  /// \param isysroot If non-NULL, the system include path specified by the
+  /// user. This is only used with relocatable PCH files. If non-NULL,
+  /// a relocatable PCH file will use the default path "/".
+      PCHReader(SourceManager &SourceMgr, FileManager &FileMgr, 
+                Diagnostic &Diags, const char *isysroot = 0);
   ~PCHReader();
 
   /// \brief Load the precompiled header designated by the given file

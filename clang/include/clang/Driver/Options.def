@@ -223,6 +223,8 @@ OPTION("--print-prog-name", _print_prog_name, Separate, INVALID, print_prog_name
 OPTION("--print-search-dirs", _print_search_dirs, Flag, INVALID, print_search_dirs, "", 0, 0, 0)
 OPTION("--profile-blocks", _profile_blocks, Flag, INVALID, a, "", 0, 0, 0)
 OPTION("--profile", _profile, Flag, INVALID, p, "", 0, 0, 0)
+OPTION("--relocatable-pch", _relocatable_pch, Flag, INVALID, INVALID, "", 0, 
+       "Build a relocatable precompiled header", 0)
 OPTION("--resource=", _resource_EQ, Joined, INVALID, fcompile_resource_EQ, "", 0, 0, 0)
 OPTION("--resource", _resource, Separate, INVALID, fcompile_resource_EQ, "J", 0, 0, 0)
 OPTION("--save-temps", _save_temps, Flag, INVALID, save_temps, "", 0, 0, 0)

@@ -160,11 +160,12 @@ private:
   unsigned NumVisibleDeclContexts;
 
   void WriteBlockInfoBlock();
-  void WriteMetadata(ASTContext &Context);
+  void WriteMetadata(ASTContext &Context, const char *isysroot);
   void WriteLanguageOptions(const LangOptions &LangOpts);
-  void WriteStatCache(MemorizeStatCalls &StatCalls);
+  void WriteStatCache(MemorizeStatCalls &StatCalls, const char* isysroot);
   void WriteSourceManagerBlock(SourceManager &SourceMgr, 
-                               const Preprocessor &PP);
+                               const Preprocessor &PP,
+                               const char* isysroot);
   void WritePreprocessor(const Preprocessor &PP);
   void WriteComments(ASTContext &Context);
   void WriteType(const Type *T);
@@ -186,7 +187,17 @@ public:
   PCHWriter(llvm::BitstreamWriter &Stream);
   
   /// \brief Write a precompiled header for the given semantic analysis.
-  void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls);
+  ///
+  /// \param SemaRef a reference to the semantic analysis object that processed
+  /// the AST to be written into the precompiled header.
+  ///
+  /// \param StatCalls the object that cached all of the stat() calls made while
+  /// searching for source files and headers.
+  ///
+  /// \param isysroot if non-NULL, write a relocatable PCH file whose headers 
+  /// are relative to the given system root.
+  void WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls, 
+                const char* isysroot);
 
   /// \brief Emit a source location.
   void AddSourceLocation(SourceLocation Loc, RecordData &Record);
