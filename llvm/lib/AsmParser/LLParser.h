@@ -74,7 +74,7 @@ namespace llvm {
     std::vector<GlobalValue*> NumberedVals;
   public:
     LLParser(MemoryBuffer *F, SourceMgr &SM, SMDiagnostic &Err, Module *m) : 
-      Context(m->getContext()), Lex(F, SM, Err), M(m) {}
+      Context(m->getContext()), Lex(F, SM, Err, m->getContext()), M(m) {}
     bool Run();
 
     LLVMContext& getContext() { return Context; }

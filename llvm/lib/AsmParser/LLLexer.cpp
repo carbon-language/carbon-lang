@@ -14,6 +14,7 @@
 #include "LLLexer.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/SourceMgr.h"
@@ -180,8 +181,9 @@ static const char *isLabelTail(const char *CurPtr) {
 // Lexer definition.
 //===----------------------------------------------------------------------===//
 
-LLLexer::LLLexer(MemoryBuffer *StartBuf, SourceMgr &sm, SMDiagnostic &Err)
-  : CurBuf(StartBuf), ErrorInfo(Err), SM(sm), APFloatVal(0.0) {
+LLLexer::LLLexer(MemoryBuffer *StartBuf, SourceMgr &sm, SMDiagnostic &Err,
+                 LLVMContext &C)
+  : CurBuf(StartBuf), ErrorInfo(Err), SM(sm), Context(C), APFloatVal(0.0) {
   CurPtr = CurBuf->getBufferStart();
 }
 
@@ -452,7 +454,7 @@ lltok::Kind LLLexer::LexIdentifier() {
       Error("bitwidth for integer type out of range!");
       return lltok::Error;
     }
-    TyVal = IntegerType::get(NumBits);
+    TyVal = Context.getIntegerType(NumBits);
     return lltok::Type;
   }
 

@@ -24,12 +24,14 @@ namespace llvm {
   class MemoryBuffer;
   class Type;
   class SMDiagnostic;
+  class LLVMContext;
 
   class LLLexer {
     const char *CurPtr;
     MemoryBuffer *CurBuf;
     SMDiagnostic &ErrorInfo;
     SourceMgr &SM;
+    LLVMContext &Context;
 
     // Information about the current token.
     const char *TokStart;
@@ -42,7 +44,8 @@ namespace llvm {
 
     std::string TheError;
   public:
-    explicit LLLexer(MemoryBuffer *StartBuf, SourceMgr &SM, SMDiagnostic &);
+    explicit LLLexer(MemoryBuffer *StartBuf, SourceMgr &SM, SMDiagnostic &,
+                     LLVMContext &C);
     ~LLLexer() {}
 
     lltok::Kind Lex() {
