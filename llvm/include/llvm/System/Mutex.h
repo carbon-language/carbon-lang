@@ -131,15 +131,15 @@ namespace llvm
     
     template<bool mt_only>
     class SmartScopedLock  {
-      SmartMutex<mt_only>* mtx;
+      SmartMutex<mt_only>& mtx;
       
     public:
-      SmartScopedLock(SmartMutex<mt_only>* m) : mtx(m) {
-        mtx->acquire();
+      SmartScopedLock(SmartMutex<mt_only>& m) : mtx(m) {
+        mtx.acquire();
       }
       
       ~SmartScopedLock() {
-        mtx->release();
+        mtx.release();
       }
     };
     

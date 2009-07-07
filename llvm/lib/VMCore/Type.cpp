@@ -1006,7 +1006,7 @@ const IntegerType *IntegerType::get(unsigned NumBits) {
   
   // First, see if the type is already in the table, for which
   // a reader lock suffices.
-  sys::SmartScopedLock<true> L(&*TypeMapLock);
+  sys::SmartScopedLock<true> L(*TypeMapLock);
   ITy = IntegerTypes->get(IVT);
     
   if (!ITy) {
@@ -1079,7 +1079,7 @@ FunctionType *FunctionType::get(const Type *ReturnType,
   FunctionValType VT(ReturnType, Params, isVarArg);
   FunctionType *FT = 0;
   
-  sys::SmartScopedLock<true> L(&*TypeMapLock);
+  sys::SmartScopedLock<true> L(*TypeMapLock);
   FT = FunctionTypes->get(VT);
   
   if (!FT) {
@@ -1129,7 +1129,7 @@ ArrayType *ArrayType::get(const Type *ElementType, uint64_t NumElements) {
   ArrayValType AVT(ElementType, NumElements);
   ArrayType *AT = 0;
   
-  sys::SmartScopedLock<true> L(&*TypeMapLock);
+  sys::SmartScopedLock<true> L(*TypeMapLock);
   AT = ArrayTypes->get(AVT);
       
   if (!AT) {
@@ -1188,7 +1188,7 @@ VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
   VectorValType PVT(ElementType, NumElements);
   VectorType *PT = 0;
   
-  sys::SmartScopedLock<true> L(&*TypeMapLock);
+  sys::SmartScopedLock<true> L(*TypeMapLock);
   PT = VectorTypes->get(PVT);
     
   if (!PT) {
@@ -1250,7 +1250,7 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes,
   StructValType STV(ETypes, isPacked);
   StructType *ST = 0;
   
-  sys::SmartScopedLock<true> L(&*TypeMapLock);
+  sys::SmartScopedLock<true> L(*TypeMapLock);
   ST = StructTypes->get(STV);
     
   if (!ST) {
@@ -1329,7 +1329,7 @@ PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
 
   PointerType *PT = 0;
   
-  sys::SmartScopedLock<true> L(&*TypeMapLock);
+  sys::SmartScopedLock<true> L(*TypeMapLock);
   PT = PointerTypes->get(PVT);
   
   if (!PT) {
@@ -1488,7 +1488,7 @@ void DerivedType::unlockedRefineAbstractTypeTo(const Type *NewType) {
 void DerivedType::refineAbstractTypeTo(const Type *NewType) {
   // All recursive calls will go through unlockedRefineAbstractTypeTo,
   // to avoid deadlock problems.
-  sys::SmartScopedLock<true> L(&*TypeMapLock);
+  sys::SmartScopedLock<true> L(*TypeMapLock);
   unlockedRefineAbstractTypeTo(NewType);
 }
 

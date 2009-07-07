@@ -42,7 +42,7 @@ namespace {
 namespace llvmc {
 
   PluginLoader::PluginLoader() {
-    llvm::sys::SmartScopedLock<true> Lock(&*PluginMutex);
+    llvm::sys::SmartScopedLock<true> Lock(*PluginMutex);
     if (!pluginListInitialized) {
       for (PluginRegistry::iterator B = PluginRegistry::begin(),
              E = PluginRegistry::end(); B != E; ++B)
@@ -53,7 +53,7 @@ namespace llvmc {
   }
 
   PluginLoader::~PluginLoader() {
-    llvm::sys::SmartScopedLock<true> Lock(&*PluginMutex);
+    llvm::sys::SmartScopedLock<true> Lock(*PluginMutex);
     if (pluginListInitialized) {
       for (PluginList::iterator B = Plugins.begin(), E = Plugins.end();
            B != E; ++B)
@@ -63,14 +63,14 @@ namespace llvmc {
   }
 
   void PluginLoader::PopulateLanguageMap(LanguageMap& langMap) {
-    llvm::sys::SmartScopedLock<true> Lock(&*PluginMutex);
+    llvm::sys::SmartScopedLock<true> Lock(*PluginMutex);
     for (PluginList::iterator B = Plugins.begin(), E = Plugins.end();
          B != E; ++B)
       (*B)->PopulateLanguageMap(langMap);
   }
 
   void PluginLoader::PopulateCompilationGraph(CompilationGraph& graph) {
-    llvm::sys::SmartScopedLock<true> Lock(&*PluginMutex);
+    llvm::sys::SmartScopedLock<true> Lock(*PluginMutex);
     for (PluginList::iterator B = Plugins.begin(), E = Plugins.end();
          B != E; ++B)
       (*B)->PopulateCompilationGraph(graph);

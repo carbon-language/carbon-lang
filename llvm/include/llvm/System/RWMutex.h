@@ -141,15 +141,14 @@ namespace llvm
     /// ScopedReader - RAII acquisition of a reader lock
     template<bool mt_only>
     struct SmartScopedReader {
-      SmartRWMutex<mt_only>* mutex;
+      SmartRWMutex<mt_only>& mutex;
       
-      explicit SmartScopedReader(SmartRWMutex<mt_only>* m) {
-        mutex = m;
-        mutex->reader_acquire();
+      explicit SmartScopedReader(SmartRWMutex<mt_only>& m) : mutex(m) {
+        mutex.reader_acquire();
       }
       
       ~SmartScopedReader() {
-        mutex->reader_release();
+        mutex.reader_release();
       }
     };
     typedef SmartScopedReader<false> ScopedReader;
@@ -157,15 +156,14 @@ namespace llvm
     /// ScopedWriter - RAII acquisition of a writer lock
     template<bool mt_only>
     struct SmartScopedWriter {
-      SmartRWMutex<mt_only>* mutex;
+      SmartRWMutex<mt_only>& mutex;
       
-      explicit SmartScopedWriter(SmartRWMutex<mt_only>* m) {
-        mutex = m;
-        mutex->writer_acquire();
+      explicit SmartScopedWriter(SmartRWMutex<mt_only>& m) : mutex(m) {
+        mutex.writer_acquire();
       }
       
       ~SmartScopedWriter() {
-        mutex->writer_release();
+        mutex.writer_release();
       }
     };
     typedef SmartScopedWriter<false> ScopedWriter;

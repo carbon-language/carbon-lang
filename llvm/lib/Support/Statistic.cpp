@@ -65,7 +65,7 @@ static ManagedStatic<sys::Mutex> StatLock;
 void Statistic::RegisterStatistic() {
   // If stats are enabled, inform StatInfo that this statistic should be
   // printed.
-  sys::ScopedLock Writer(&*StatLock);
+  sys::ScopedLock Writer(*StatLock);
   if (!Initialized) {
     if (Enabled)
       StatInfo->addStatistic(this);

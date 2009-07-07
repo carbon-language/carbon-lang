@@ -37,7 +37,7 @@ TypeSymbolTable::~TypeSymbolTable() {
 std::string TypeSymbolTable::getUniqueName(const std::string &BaseName) const {
   std::string TryName = BaseName;
   
-  sys::SmartScopedReader<true> Reader(&*TypeSymbolTableLock);
+  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   
   const_iterator End = tmap.end();
 
@@ -49,7 +49,7 @@ std::string TypeSymbolTable::getUniqueName(const std::string &BaseName) const {
 
 // lookup a type by name - returns null on failure
 Type* TypeSymbolTable::lookup(const std::string& Name) const {
-  sys::SmartScopedReader<true> Reader(&*TypeSymbolTableLock);
+  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   
   const_iterator TI = tmap.find(Name);
   Type* result = 0;
@@ -134,7 +134,7 @@ void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
 // This function is called when one of the types in the type plane are refined
 void TypeSymbolTable::refineAbstractType(const DerivedType *OldType,
                                          const Type *NewType) {
-  sys::SmartScopedReader<true> Reader(&*TypeSymbolTableLock);
+  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   
   // Loop over all of the types in the symbol table, replacing any references
   // to OldType with references to NewType.  Note that there may be multiple
@@ -165,7 +165,7 @@ void TypeSymbolTable::typeBecameConcrete(const DerivedType *AbsTy) {
   // Loop over all of the types in the symbol table, dropping any abstract
   // type user entries for AbsTy which occur because there are names for the
   // type.
-  sys::SmartScopedReader<true> Reader(&*TypeSymbolTableLock);
+  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   for (iterator TI = begin(), TE = end(); TI != TE; ++TI)
     if (TI->second == const_cast<Type*>(static_cast<const Type*>(AbsTy)))
       AbsTy->removeAbstractTypeUser(this);
@@ -179,7 +179,7 @@ static void DumpTypes(const std::pair<const std::string, const Type*>& T ) {
 
 void TypeSymbolTable::dump() const {
   cerr << "TypeSymbolPlane: ";
-  sys::SmartScopedReader<true> Reader(&*TypeSymbolTableLock);
+  sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   for_each(tmap.begin(), tmap.end(), DumpTypes);
 }
 

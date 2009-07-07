@@ -5010,7 +5010,7 @@ static ManagedStatic<sys::SmartMutex<true> > VTMutex;
 /// getValueTypeList - Return a pointer to the specified value type.
 ///
 const MVT *SDNode::getValueTypeList(MVT VT) {
-  sys::SmartScopedLock<true> Lock(&*VTMutex);
+  sys::SmartScopedLock<true> Lock(*VTMutex);
   if (VT.isExtended()) {
     return &(*EVTs->insert(VT).first);
   } else {

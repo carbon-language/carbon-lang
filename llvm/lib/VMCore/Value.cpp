@@ -430,7 +430,7 @@ void ValueHandleBase::AddToUseList() {
   if (VP->HasValueHandle) {
     // If this value already has a ValueHandle, then it must be in the
     // ValueHandles map already.
-    sys::SmartScopedReader<true> Reader(&*ValueHandlesLock);
+    sys::SmartScopedReader<true> Reader(*ValueHandlesLock);
     ValueHandleBase *&Entry = (*ValueHandles)[VP];
     assert(Entry != 0 && "Value doesn't have any handles?");
     AddToExistingUseList(&Entry);
@@ -442,7 +442,7 @@ void ValueHandleBase::AddToUseList() {
   // reallocate itself, which would invalidate all of the PrevP pointers that
   // point into the old table.  Handle this by checking for reallocation and
   // updating the stale pointers only if needed.
-  sys::SmartScopedWriter<true> Writer(&*ValueHandlesLock);
+  sys::SmartScopedWriter<true> Writer(*ValueHandlesLock);
   ValueHandlesTy &Handles = *ValueHandles;
   const void *OldBucketPtr = Handles.getPointerIntoBucketsArray();
   
@@ -484,7 +484,7 @@ void ValueHandleBase::RemoveFromUseList() {
   // If the Next pointer was null, then it is possible that this was the last
   // ValueHandle watching VP.  If so, delete its entry from the ValueHandles
   // map.
-  sys::SmartScopedWriter<true> Writer(&*ValueHandlesLock);
+  sys::SmartScopedWriter<true> Writer(*ValueHandlesLock);
   ValueHandlesTy &Handles = *ValueHandles;
   if (Handles.isPointerIntoBucketsArray(PrevPtr)) {
     Handles.erase(VP);

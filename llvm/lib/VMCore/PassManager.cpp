@@ -392,7 +392,7 @@ public:
     if (dynamic_cast<PMDataManager *>(P)) 
       return;
 
-    sys::SmartScopedLock<true> Lock(&*TimingInfoMutex);
+    sys::SmartScopedLock<true> Lock(*TimingInfoMutex);
     std::map<Pass*, Timer>::iterator I = TimingData.find(P);
     if (I == TimingData.end())
       I=TimingData.insert(std::make_pair(P, Timer(P->getPassName(), TG))).first;
@@ -403,7 +403,7 @@ public:
     if (dynamic_cast<PMDataManager *>(P)) 
       return;
 
-    sys::SmartScopedLock<true> Lock(&*TimingInfoMutex);
+    sys::SmartScopedLock<true> Lock(*TimingInfoMutex);
     std::map<Pass*, Timer>::iterator I = TimingData.find(P);
     assert(I != TimingData.end() && "passStarted/passEnded not nested right!");
     I->second.stopTimer();

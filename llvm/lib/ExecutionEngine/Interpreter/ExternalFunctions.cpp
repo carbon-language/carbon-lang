@@ -97,7 +97,7 @@ static ExFunc lookupFunction(const Function *F) {
     ExtName += getTypeID(FT->getContainedType(i));
   ExtName += "_" + F->getName();
 
-  sys::ScopedLock Writer(&*FunctionsLock);
+  sys::ScopedLock Writer(*FunctionsLock);
   ExFunc FnPtr = FuncNames[ExtName];
   if (FnPtr == 0)
     FnPtr = FuncNames["lle_X_"+F->getName()];
@@ -539,7 +539,7 @@ GenericValue lle_X_fprintf(const FunctionType *FT,
 
 
 void Interpreter::initializeExternalFunctions() {
-  sys::ScopedLock Writer(&*FunctionsLock);
+  sys::ScopedLock Writer(*FunctionsLock);
   FuncNames["lle_X_atexit"]       = lle_X_atexit;
   FuncNames["lle_X_exit"]         = lle_X_exit;
   FuncNames["lle_X_abort"]        = lle_X_abort;

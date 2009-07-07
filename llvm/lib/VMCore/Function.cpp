@@ -242,18 +242,18 @@ static StringPool *GCNamePool;
 static ManagedStatic<sys::SmartRWMutex<true> > GCLock;
 
 bool Function::hasGC() const {
-  sys::SmartScopedReader<true> Reader(&*GCLock);
+  sys::SmartScopedReader<true> Reader(*GCLock);
   return GCNames && GCNames->count(this);
 }
 
 const char *Function::getGC() const {
   assert(hasGC() && "Function has no collector");
-  sys::SmartScopedReader<true> Reader(&*GCLock);
+  sys::SmartScopedReader<true> Reader(*GCLock);
   return *(*GCNames)[this];
 }
 
 void Function::setGC(const char *Str) {
-  sys::SmartScopedWriter<true> Writer(&*GCLock);
+  sys::SmartScopedWriter<true> Writer(*GCLock);
   if (!GCNamePool)
     GCNamePool = new StringPool();
   if (!GCNames)
@@ -262,7 +262,7 @@ void Function::setGC(const char *Str) {
 }
 
 void Function::clearGC() {
-  sys::SmartScopedWriter<true> Writer(&*GCLock);
+  sys::SmartScopedWriter<true> Writer(*GCLock);
   if (GCNames) {
     GCNames->erase(this);
     if (GCNames->empty()) {

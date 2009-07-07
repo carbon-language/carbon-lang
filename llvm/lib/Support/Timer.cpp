@@ -145,7 +145,7 @@ static TimeRecord getTimeRecord(bool Start) {
 static ManagedStatic<std::vector<Timer*> > ActiveTimers;
 
 void Timer::startTimer() {
-  sys::SmartScopedLock<true> L(&Lock);
+  sys::SmartScopedLock<true> L(Lock);
   Started = true;
   ActiveTimers->push_back(this);
   TimeRecord TR = getTimeRecord(true);
@@ -157,7 +157,7 @@ void Timer::startTimer() {
 }
 
 void Timer::stopTimer() {
-  sys::SmartScopedLock<true> L(&Lock);
+  sys::SmartScopedLock<true> L(Lock);
   TimeRecord TR = getTimeRecord(false);
   Elapsed    += TR.Elapsed;
   UserTime   += TR.UserTime;
@@ -229,7 +229,7 @@ static ManagedStatic<Name2Timer> NamedTimers;
 static ManagedStatic<Name2Pair> NamedGroupedTimers;
 
 static Timer &getNamedRegionTimer(const std::string &Name) {
-  sys::SmartScopedLock<true> L(&*TimerLock);
+  sys::SmartScopedLock<true> L(*TimerLock);
   Name2Timer::iterator I = NamedTimers->find(Name);
   if (I != NamedTimers->end())
     return I->second;
@@ -239,7 +239,7 @@ static Timer &getNamedRegionTimer(const std::string &Name) {
 
 static Timer &getNamedRegionTimer(const std::string &Name,
                                   const std::string &GroupName) {
-  sys::SmartScopedLock<true> L(&*TimerLock);
+  sys::SmartScopedLock<true> L(*TimerLock);
 
   Name2Pair::iterator I = NamedGroupedTimers->find(GroupName);
   if (I == NamedGroupedTimers->end()) {
@@ -365,7 +365,7 @@ llvm::GetLibSupportInfoOutputFile() {
 
 
 void TimerGroup::removeTimer() {
-  sys::SmartScopedLock<true> L(&*TimerLock);
+  sys::SmartScopedLock<true> L(*TimerLock);
   if (--NumTimers == 0 && !TimersToPrint.empty()) { // Print timing report...
     // Sort the timers in descending order by amount of time taken...
     std::sort(TimersToPrint.begin(), TimersToPrint.end(),
@@ -434,12 +434,12 @@ void TimerGroup::removeTimer() {
 }
 
 void TimerGroup::addTimer() {
-  sys::SmartScopedLock<true> L(&*TimerLock);
+  sys::SmartScopedLock<true> L(*TimerLock);
   ++NumTimers;
 }
 
 void TimerGroup::addTimerToPrint(const Timer &T) {
-  sys::SmartScopedLock<true> L(&*TimerLock);
+  sys::SmartScopedLock<true> L(*TimerLock);
   TimersToPrint.push_back(Timer(true, T));
 }
 

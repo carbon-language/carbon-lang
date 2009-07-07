@@ -55,7 +55,7 @@ static FactMapType &getFactMap() {
 }
 
 static void eraseFromFactMap(unsigned ID) {
-  sys::SmartScopedWriter<true> Writer(&*AnnotationsLock);
+  sys::SmartScopedWriter<true> Writer(*AnnotationsLock);
   TheFactMap->erase(ID);
 }
 
@@ -66,7 +66,7 @@ AnnotationID AnnotationManager::getID(const char *Name) {  // Name -> ID
   AnnotationsLock->reader_release();
   
   if (I == E) {
-    sys::SmartScopedWriter<true> Writer(&*AnnotationsLock);
+    sys::SmartScopedWriter<true> Writer(*AnnotationsLock);
     I = IDMap->find(Name);
     if (I == IDMap->end()) {
       unsigned newCount = sys::AtomicIncrement(&IDCounter);
@@ -91,7 +91,7 @@ AnnotationID AnnotationManager::getID(const char *Name, Factory Fact,
 // only be used for debugging.
 //
 const char *AnnotationManager::getName(AnnotationID ID) {  // ID -> Name
-  sys::SmartScopedReader<true> Reader(&*AnnotationsLock);
+  sys::SmartScopedReader<true> Reader(*AnnotationsLock);
   IDMapType &TheMap = *IDMap;
   for (IDMapType::iterator I = TheMap.begin(); ; ++I) {
     assert(I != TheMap.end() && "Annotation ID is unknown!");
@@ -106,7 +106,7 @@ const char *AnnotationManager::getName(AnnotationID ID) {  // ID -> Name
 void AnnotationManager::registerAnnotationFactory(AnnotationID ID, AnnFactory F,
                                                   void *ExtraData) {
   if (F) {
-    sys::SmartScopedWriter<true> Writer(&*AnnotationsLock);
+    sys::SmartScopedWriter<true> Writer(*AnnotationsLock);
     getFactMap()[ID.ID] = std::make_pair(F, ExtraData);
   } else {
     eraseFromFactMap(ID.ID);

@@ -54,7 +54,7 @@ namespace {
     // immediately, it is added to the CachedValue Value.  If it is
     // immediately removed, no set search need be performed.
     void addGarbage(const T* o) {
-      sys::SmartScopedWriter<true> Writer(&*LeakDetectorLock);
+      sys::SmartScopedWriter<true> Writer(*LeakDetectorLock);
       if (Cache) {
         assert(Ts.count(Cache) == 0 && "Object already in set!");
         Ts.insert(Cache);
@@ -63,7 +63,7 @@ namespace {
     }
 
     void removeGarbage(const T* o) {
-      sys::SmartScopedWriter<true> Writer(&*LeakDetectorLock);
+      sys::SmartScopedWriter<true> Writer(*LeakDetectorLock);
       if (o == Cache)
         Cache = 0; // Cache hit
       else
@@ -73,7 +73,7 @@ namespace {
     bool hasGarbage(const std::string& Message) {
       addGarbage(0); // Flush the Cache
 
-      sys::SmartScopedReader<true> Reader(&*LeakDetectorLock);
+      sys::SmartScopedReader<true> Reader(*LeakDetectorLock);
       assert(Cache == 0 && "No value should be cached anymore!");
 
       if (!Ts.empty()) {

@@ -307,7 +307,7 @@ ConstantInt *ConstantInt::get(const APInt& V) {
   ConstantsLock->reader_release();
     
   if (!Slot) {
-    sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+    sys::SmartScopedWriter<true> Writer(*ConstantsLock);
     ConstantInt *&NewSlot = (*IntConstants)[Key]; 
     if (!Slot) {
       NewSlot = new ConstantInt(ITy, V);
@@ -414,7 +414,7 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
   ConstantsLock->reader_release();
     
   if (!Slot) {
-    sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+    sys::SmartScopedWriter<true> Writer(*ConstantsLock);
     ConstantFP *&NewSlot = (*FPConstants)[Key];
     if (!NewSlot) {
       const Type *Ty;
@@ -1231,7 +1231,7 @@ public:
     /// getOrCreate - Return the specified constant from the map, creating it if
     /// necessary.
     ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
-      sys::SmartScopedLock<true> Lock(&ValueMapLock);
+      sys::SmartScopedLock<true> Lock(ValueMapLock);
       MapKey Lookup(Ty, V);
       ConstantClass* Result = 0;
       
@@ -1249,7 +1249,7 @@ public:
     }
 
     void remove(ConstantClass *CP) {
-      sys::SmartScopedLock<true> Lock(&ValueMapLock);
+      sys::SmartScopedLock<true> Lock(ValueMapLock);
       typename MapTy::iterator I = FindExistingElement(CP);
       assert(I != Map.end() && "Constant not found in constant table!");
       assert(I->second == CP && "Didn't find correct element?");
@@ -1334,7 +1334,7 @@ public:
     }
     
     void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-      sys::SmartScopedLock<true> Lock(&ValueMapLock);
+      sys::SmartScopedLock<true> Lock(ValueMapLock);
       typename AbstractTypeMapTy::iterator I =
         AbstractTypeMap.find(cast<Type>(OldTy));
 
@@ -1793,7 +1793,7 @@ MDString::MDString(const char *begin, const char *end)
 static ManagedStatic<StringMap<MDString*> > MDStringCache;
 
 MDString *MDString::get(const char *StrBegin, const char *StrEnd) {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+  sys::SmartScopedWriter<true> Writer(*ConstantsLock);
   StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(
                                         StrBegin, StrEnd);
   MDString *&S = Entry.getValue();
@@ -1804,7 +1804,7 @@ MDString *MDString::get(const char *StrBegin, const char *StrEnd) {
 }
 
 MDString *MDString::get(const std::string &Str) {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+  sys::SmartScopedWriter<true> Writer(*ConstantsLock);
   StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(
                                         Str.data(), Str.data() + Str.size());
   MDString *&S = Entry.getValue();
@@ -1815,7 +1815,7 @@ MDString *MDString::get(const std::string &Str) {
 }
 
 void MDString::destroyConstant() {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+  sys::SmartScopedWriter<true> Writer(*ConstantsLock);
   MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));
   destroyConstantImpl();
 }
@@ -1847,7 +1847,7 @@ MDNode *MDNode::get(Value*const* Vals, unsigned NumVals) {
   ConstantsLock->reader_release();
   
   if (!N) {
-    sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+    sys::SmartScopedWriter<true> Writer(*ConstantsLock);
     N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
     if (!N) {
       // InsertPoint will have been set by the FindNodeOrInsertPos call.
@@ -1859,7 +1859,7 @@ MDNode *MDNode::get(Value*const* Vals, unsigned NumVals) {
 }
 
 void MDNode::destroyConstant() {
-  sys::SmartScopedWriter<true> Writer(&*ConstantsLock); 
+  sys::SmartScopedWriter<true> Writer(*ConstantsLock); 
   MDNodeSet->RemoveNode(this);
   
   destroyConstantImpl();
@@ -2790,7 +2790,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
-    sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+    sys::SmartScopedWriter<true> Writer(*ConstantsLock);
     bool Exists;
     ArrayConstantsTy::MapTy::iterator I =
       ArrayConstants->InsertOrGetItem(Lookup, Exists);
@@ -2866,7 +2866,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
-    sys::SmartScopedWriter<true> Writer(&*ConstantsLock);
+    sys::SmartScopedWriter<true> Writer(*ConstantsLock);
     bool Exists;
     StructConstantsTy::MapTy::iterator I =
       StructConstants->InsertOrGetItem(Lookup, Exists);
