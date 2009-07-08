@@ -303,6 +303,171 @@ Program::ExecuteAndWait(const Path& path,
   return status;
 }
 
+void
+Program::ExecuteNoWait(const Path& path,
+                       const char** args,
+                       const char** envp,
+                       const Path** redirects,
+                       unsigned memoryLimit,
+                       std::string* ErrMsg) {
+  if (!path.canExecute()) {
+    if (ErrMsg)
+      *ErrMsg = "program not executable";
+    return;
+  }
+
+  // Windows wants a command line, not an array of args, to pass to the new
+  // process.  We have to concatenate them all, while quoting the args that
+  // have embedded spaces.
+
+  // First, determine the length of the command line.
+  unsigned len = 0;
+  for (unsigned i = 0; args[i]; i++) {
+    len += strlen(args[i]) + 1;
+    if (strchr(args[i], ' '))
+      len += 2;
+  }
+
+  // Now build the command line.
+  char *command = reinterpret_cast<char *>(_alloca(len+1));
+  char *p = command;
+
+  for (unsigned i = 0; args[i]; i++) {
+    const char *arg = args[i];
+    size_t len = strlen(arg);
+    bool needsQuoting = strchr(arg, ' ') != 0;
+    if (needsQuoting)
+      *p++ = '"';
+    memcpy(p, arg, len);
+    p += len;
+    if (needsQuoting)
+      *p++ = '"';
+    *p++ = ' ';
+  }
+
+  *p = 0;
+
+  // The pointer to the environment block for the new process.
+  char *envblock = 0;
+
+  if (envp) {
+    // An environment block consists of a null-terminated block of
+    // null-terminated strings. Convert the array of environment variables to
+    // an environment block by concatenating them.
+
+    // First, determine the length of the environment block.
+    len = 0;
+    for (unsigned i = 0; envp[i]; i++)
+      len += strlen(envp[i]) + 1;
+
+    // Now build the environment block.
+    envblock = reinterpret_cast<char *>(_alloca(len+1));
+    p = envblock;
+
+    for (unsigned i = 0; envp[i]; i++) {
+      const char *ev = envp[i];
+      size_t len = strlen(ev) + 1;
+      memcpy(p, ev, len);
+      p += len;
+    }
+
+    *p = 0;
+  }
+
+  // Create a child process.
+  STARTUPINFO si;
+  memset(&si, 0, sizeof(si));
+  si.cb = sizeof(si);
+  si.hStdInput = INVALID_HANDLE_VALUE;
+  si.hStdOutput = INVALID_HANDLE_VALUE;
+  si.hStdError = INVALID_HANDLE_VALUE;
+
+  if (redirects) {
+    si.dwFlags = STARTF_USESTDHANDLES;
+
+    si.hStdInput = RedirectIO(redirects[0], 0, ErrMsg);
+    if (si.hStdInput == INVALID_HANDLE_VALUE) {
+      MakeErrMsg(ErrMsg, "can't redirect stdin");
+      return;
+    }
+    si.hStdOutput = RedirectIO(redirects[1], 1, ErrMsg);
+    if (si.hStdOutput == INVALID_HANDLE_VALUE) {
+      CloseHandle(si.hStdInput);
+      MakeErrMsg(ErrMsg, "can't redirect stdout");
+      return;
+    }
+    if (redirects[1] && redirects[2] && *(redirects[1]) == *(redirects[2])) {
+      // If stdout and stderr should go to the same place, redirect stderr
+      // to the handle already open for stdout.
+      DuplicateHandle(GetCurrentProcess(), si.hStdOutput,
+                      GetCurrentProcess(), &si.hStdError,
+                      0, TRUE, DUPLICATE_SAME_ACCESS);
+    } else {
+      // Just redirect stderr
+      si.hStdError = RedirectIO(redirects[2], 2, ErrMsg);
+      if (si.hStdError == INVALID_HANDLE_VALUE) {
+        CloseHandle(si.hStdInput);
+        CloseHandle(si.hStdOutput);
+        MakeErrMsg(ErrMsg, "can't redirect stderr");
+        return;
+      }
+    }
+  }
+
+  PROCESS_INFORMATION pi;
+  memset(&pi, 0, sizeof(pi));
+
+  fflush(stdout);
+  fflush(stderr);
+  BOOL rc = CreateProcess(path.c_str(), command, NULL, NULL, TRUE, 0,
+                          envblock, NULL, &si, &pi);
+  DWORD err = GetLastError();
+
+  // Regardless of whether the process got created or not, we are done with
+  // the handles we created for it to inherit.
+  CloseHandle(si.hStdInput);
+  CloseHandle(si.hStdOutput);
+  CloseHandle(si.hStdError);
+
+  // Now return an error if the process didn't get created.
+  if (!rc)
+  {
+    SetLastError(err);
+    MakeErrMsg(ErrMsg, std::string("Couldn't execute program '") +
+               path.toString() + "'");
+    return;
+  }
+
+  // Make sure these get closed no matter what.
+  AutoHandle hProcess(pi.hProcess);
+  AutoHandle hThread(pi.hThread);
+
+  // Assign the process to a job if a memory limit is defined.
+  AutoHandle hJob(0);
+  if (memoryLimit != 0) {
+    hJob = CreateJobObject(0, 0);
+    bool success = false;
+    if (hJob != 0) {
+      JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli;
+      memset(&jeli, 0, sizeof(jeli));
+      jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_PROCESS_MEMORY;
+      jeli.ProcessMemoryLimit = uintptr_t(memoryLimit) * 1048576;
+      if (SetInformationJobObject(hJob, JobObjectExtendedLimitInformation,
+                                  &jeli, sizeof(jeli))) {
+        if (AssignProcessToJobObject(hJob, pi.hProcess))
+          success = true;
+      }
+    }
+    if (!success) {
+      SetLastError(GetLastError());
+      MakeErrMsg(ErrMsg, std::string("Unable to set memory limit"));
+      TerminateProcess(pi.hProcess, 1);
+      WaitForSingleObject(pi.hProcess, INFINITE);
+      return;
+    }
+  }
+}
+
 bool Program::ChangeStdinToBinary(){
   int result = _setmode( _fileno(stdin), _O_BINARY );
   return result == -1;

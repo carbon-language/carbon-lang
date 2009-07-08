@@ -274,6 +274,78 @@ Program::ExecuteAndWait(const Path& path,
     
 }
 
+void
+Program::ExecuteNoWait(const Path& path, 
+                       const char** args,
+                       const char** envp,
+                       const Path** redirects,
+                       unsigned memoryLimit,
+                       std::string* ErrMsg) 
+{
+  if (!path.canExecute()) {
+    if (ErrMsg)
+      *ErrMsg = path.toString() + " is not executable";
+    return;
+  }
+
+  // Create a child process.
+  int child = fork();
+  switch (child) {
+    // An error occured:  Return to the caller.
+    case -1:
+      MakeErrMsg(ErrMsg, "Couldn't fork");
+      return;
+
+    // Child process: Execute the program.
+    case 0: {
+      // Redirect file descriptors...
+      if (redirects) {
+        // Redirect stdin
+        if (RedirectIO(redirects[0], 0, ErrMsg)) { return; }
+        // Redirect stdout
+        if (RedirectIO(redirects[1], 1, ErrMsg)) { return; }
+        if (redirects[1] && redirects[2] && 
+            *(redirects[1]) == *(redirects[2])) {
+          // If stdout and stderr should go to the same place, redirect stderr
+          // to the FD already open for stdout.
+          if (-1 == dup2(1,2)) {
+            MakeErrMsg(ErrMsg, "Can't redirect stderr to stdout");
+            return;
+          }
+        } else {
+          // Just redirect stderr
+          if (RedirectIO(redirects[2], 2, ErrMsg)) { return; }
+        }
+      }
+
+      // Set memory limits
+      if (memoryLimit!=0) {
+        SetMemoryLimits(memoryLimit);
+      }
+      
+      // Execute!
+      if (envp != 0)
+        execve (path.c_str(), (char**)args, (char**)envp);
+      else
+        execv (path.c_str(), (char**)args);
+      // If the execve() failed, we should exit and let the parent pick up
+      // our non-zero exit status.
+      exit (errno);
+    }
+
+    // Parent process: Break out of the switch to do our processing.
+    default:
+      break;
+  }
+
+  // Make sure stderr and stdout have been flushed
+  std::cerr << std::flush;
+  std::cout << std::flush;
+  fsync(1);
+  fsync(2);
+
+}
+
 bool Program::ChangeStdinToBinary(){
   // Do nothing, as Unix doesn't differentiate between text and binary.
   return false;
