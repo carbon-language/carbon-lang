@@ -655,14 +655,12 @@ public:
   static inline bool classof(const CmpInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ICmp ||
-           I->getOpcode() == Instruction::FCmp ||
-           I->getOpcode() == Instruction::VICmp ||
-           I->getOpcode() == Instruction::VFCmp;
+           I->getOpcode() == Instruction::FCmp;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
-  /// @brief Create a result type for fcmp/icmp (but not vicmp/vfcmp)
+  /// @brief Create a result type for fcmp/icmp
   static const Type* makeCmpResultType(const Type* opnd_type) {
     if (const VectorType* vt = dyn_cast<const VectorType>(opnd_type)) {
       return VectorType::get(Type::Int1Ty, vt->getNumElements());

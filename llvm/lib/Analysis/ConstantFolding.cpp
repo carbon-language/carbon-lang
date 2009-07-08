@@ -365,8 +365,6 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
     return 0;
   case Instruction::ICmp:
   case Instruction::FCmp:
-  case Instruction::VICmp:
-  case Instruction::VFCmp:
     assert(0 &&"This function is invalid for compares: no predicate specified");
   case Instruction::PtrToInt:
     // If the input is a inttoptr, eliminate the pair.  This requires knowing

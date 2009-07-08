@@ -683,16 +683,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         break;
       case Instruction::ICmp:
       case Instruction::FCmp:
-      case Instruction::VICmp:
-      case Instruction::VFCmp:
-        if (isa<VectorType>(C->getOperand(0)->getType())
-            && (CE->getOpcode() == Instruction::ICmp
-                || CE->getOpcode() == Instruction::FCmp)) {
-          // compare returning vector of Int1Ty
-          assert(0 && "Unsupported constant!");
-        } else {
-          Code = bitc::CST_CODE_CE_CMP;
-        }
+        Code = bitc::CST_CODE_CE_CMP;
         Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
         Record.push_back(VE.getValueID(C->getOperand(0)));
         Record.push_back(VE.getValueID(C->getOperand(1)));
@@ -835,15 +826,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     break;
   case Instruction::ICmp:
   case Instruction::FCmp:
-  case Instruction::VICmp:
-  case Instruction::VFCmp:
-    if (I.getOpcode() == Instruction::ICmp
-        || I.getOpcode() == Instruction::FCmp) {
-      // compare returning Int1Ty or vector of Int1Ty
-      Code = bitc::FUNC_CODE_INST_CMP2;
-    } else {
-      Code = bitc::FUNC_CODE_INST_CMP;
-    }
+    // compare returning Int1Ty or vector of Int1Ty
+    Code = bitc::FUNC_CODE_INST_CMP2;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     Vals.push_back(VE.getValueID(I.getOperand(1)));
     Vals.push_back(cast<CmpInst>(I).getPredicate());

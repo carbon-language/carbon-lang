@@ -1058,7 +1058,7 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
       if (R && !R->isZero())
         return pred;
-      pred = isSigned ?  ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
+      pred = isSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
       R = dyn_cast<ConstantInt>(ConstantExpr::getICmp(pred, C1, C2));
       if (R && !R->isZero())
         return pred;
@@ -1257,30 +1257,22 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
 Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred, 
                                                const Constant *C1, 
                                                const Constant *C2) {
+  const Type *ResultTy;
+  if (const VectorType *VT = dyn_cast<VectorType>(C1->getType()))
+    ResultTy = VectorType::get(Type::Int1Ty, VT->getNumElements());
+  else
+    ResultTy = Type::Int1Ty;
+
   // Fold FCMP_FALSE/FCMP_TRUE unconditionally.
-  if (pred == FCmpInst::FCMP_FALSE) {
-    if (const VectorType *VT = dyn_cast<VectorType>(C1->getType()))
-      return Constant::getNullValue(VectorType::getInteger(VT));
-    else
-      return ConstantInt::getFalse();
-  }
-  
-  if (pred == FCmpInst::FCMP_TRUE) {
-    if (const VectorType *VT = dyn_cast<VectorType>(C1->getType()))
-      return Constant::getAllOnesValue(VectorType::getInteger(VT));
-    else
-      return ConstantInt::getTrue();
-  }
-      
+  if (pred == FCmpInst::FCMP_FALSE)
+    return Constant::getNullValue(ResultTy);
+
+  if (pred == FCmpInst::FCMP_TRUE)
+    return Constant::getAllOnesValue(ResultTy);
+
   // Handle some degenerate cases first
-  if (isa<UndefValue>(C1) || isa<UndefValue>(C2)) {
-    // vicmp/vfcmp -> [vector] undef
-    if (const VectorType *VTy = dyn_cast<VectorType>(C1->getType()))
-      return UndefValue::get(VectorType::getInteger(VTy));
-    
-    // icmp/fcmp -> i1 undef
-    return UndefValue::get(Type::Int1Ty);
-  }
+  if (isa<UndefValue>(C1) || isa<UndefValue>(C2))
+    return UndefValue::get(ResultTy);
 
   // No compile-time operations on this type yet.
   if (C1->getType() == Type::PPC_FP128Ty)
@@ -1375,35 +1367,11 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     // If we can constant fold the comparison of each element, constant fold
     // the whole vector comparison.
     SmallVector<Constant*, 4> ResElts;
-    const Type *InEltTy = C1Elts[0]->getType();
-    bool isFP = InEltTy->isFloatingPoint();
-    const Type *ResEltTy = InEltTy;
-    if (isFP)
-      ResEltTy = IntegerType::get(InEltTy->getPrimitiveSizeInBits());
-    
     for (unsigned i = 0, e = C1Elts.size(); i != e; ++i) {
       // Compare the elements, producing an i1 result or constant expr.
-      Constant *C;
-      if (isFP)
-        C = ConstantExpr::getFCmp(pred, C1Elts[i], C2Elts[i]);
-      else
-        C = ConstantExpr::getICmp(pred, C1Elts[i], C2Elts[i]);
-
-      // If it is a bool or undef result, convert to the dest type.
-      if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
-        if (CI->isZero())
-          ResElts.push_back(Constant::getNullValue(ResEltTy));
-        else
-          ResElts.push_back(Constant::getAllOnesValue(ResEltTy));
-      } else if (isa<UndefValue>(C)) {
-        ResElts.push_back(UndefValue::get(ResEltTy));
-      } else {
-        break;
-      }
+      ResElts.push_back(ConstantExpr::getCompare(pred, C1Elts[i], C2Elts[i]));
     }
-    
-    if (ResElts.size() == C1Elts.size())
-      return ConstantVector::get(&ResElts[0], ResElts.size());
+    return ConstantVector::get(&ResElts[0], ResElts.size());
   }
 
   if (C1->getType()->isFloatingPoint()) {
@@ -1461,16 +1429,9 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     }
     
     // If we evaluated the result, return it now.
-    if (Result != -1) {
-      if (const VectorType *VT = dyn_cast<VectorType>(C1->getType())) {
-        if (Result == 0)
-          return Constant::getNullValue(VectorType::getInteger(VT));
-        else
-          return Constant::getAllOnesValue(VectorType::getInteger(VT));
-      }
+    if (Result != -1)
       return ConstantInt::get(Type::Int1Ty, Result);
-    }
-    
+
   } else {
     // Evaluate the relation between the two constants, per the predicate.
     int Result = -1;  // -1 = unknown, 0 = known false, 1 = known true.
@@ -1545,18 +1506,11 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     }
     
     // If we evaluated the result, return it now.
-    if (Result != -1) {
-      if (const VectorType *VT = dyn_cast<VectorType>(C1->getType())) {
-        if (Result == 0)
-          return Constant::getNullValue(VT);
-        else
-          return Constant::getAllOnesValue(VT);
-      }
+    if (Result != -1)
       return ConstantInt::get(Type::Int1Ty, Result);
-    }
     
     if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
-      // If C2 is a constant expr and C1 isn't, flop them around and fold the
+      // If C2 is a constant expr and C1 isn't, flip them around and fold the
       // other way if possible.
       switch (pred) {
       case ICmpInst::ICMP_EQ:
@@ -1582,7 +1536,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     }
   }
   return 0;
-}
+  }
 
 Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
                                           Constant* const *Idxs,

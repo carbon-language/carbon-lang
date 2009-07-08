@@ -224,7 +224,7 @@ Expression::ExpressionOpcode ValueTable::getOpcode(BinaryOperator* BO) {
 }
 
 Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
-  if (isa<ICmpInst>(C) || isa<VICmpInst>(C)) {
+  if (isa<ICmpInst>(C)) {
     switch (C->getPredicate()) {
     default:  // THIS SHOULD NEVER HAPPEN
       assert(0 && "Comparison with unknown predicate?");
@@ -239,25 +239,25 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
     case ICmpInst::ICMP_SLT: return Expression::ICMPSLT;
     case ICmpInst::ICMP_SLE: return Expression::ICMPSLE;
     }
-  }
-  assert((isa<FCmpInst>(C) || isa<VFCmpInst>(C)) && "Unknown compare");
-  switch (C->getPredicate()) {
-  default: // THIS SHOULD NEVER HAPPEN
-    assert(0 && "Comparison with unknown predicate?");
-  case FCmpInst::FCMP_OEQ: return Expression::FCMPOEQ;
-  case FCmpInst::FCMP_OGT: return Expression::FCMPOGT;
-  case FCmpInst::FCMP_OGE: return Expression::FCMPOGE;
-  case FCmpInst::FCMP_OLT: return Expression::FCMPOLT;
-  case FCmpInst::FCMP_OLE: return Expression::FCMPOLE;
-  case FCmpInst::FCMP_ONE: return Expression::FCMPONE;
-  case FCmpInst::FCMP_ORD: return Expression::FCMPORD;
-  case FCmpInst::FCMP_UNO: return Expression::FCMPUNO;
-  case FCmpInst::FCMP_UEQ: return Expression::FCMPUEQ;
-  case FCmpInst::FCMP_UGT: return Expression::FCMPUGT;
-  case FCmpInst::FCMP_UGE: return Expression::FCMPUGE;
-  case FCmpInst::FCMP_ULT: return Expression::FCMPULT;
-  case FCmpInst::FCMP_ULE: return Expression::FCMPULE;
-  case FCmpInst::FCMP_UNE: return Expression::FCMPUNE;
+  } else {
+    switch (C->getPredicate()) {
+    default: // THIS SHOULD NEVER HAPPEN
+      assert(0 && "Comparison with unknown predicate?");
+    case FCmpInst::FCMP_OEQ: return Expression::FCMPOEQ;
+    case FCmpInst::FCMP_OGT: return Expression::FCMPOGT;
+    case FCmpInst::FCMP_OGE: return Expression::FCMPOGE;
+    case FCmpInst::FCMP_OLT: return Expression::FCMPOLT;
+    case FCmpInst::FCMP_OLE: return Expression::FCMPOLE;
+    case FCmpInst::FCMP_ONE: return Expression::FCMPONE;
+    case FCmpInst::FCMP_ORD: return Expression::FCMPORD;
+    case FCmpInst::FCMP_UNO: return Expression::FCMPUNO;
+    case FCmpInst::FCMP_UEQ: return Expression::FCMPUEQ;
+    case FCmpInst::FCMP_UGT: return Expression::FCMPUGT;
+    case FCmpInst::FCMP_UGE: return Expression::FCMPUGE;
+    case FCmpInst::FCMP_ULT: return Expression::FCMPULT;
+    case FCmpInst::FCMP_ULE: return Expression::FCMPULE;
+    case FCmpInst::FCMP_UNE: return Expression::FCMPUNE;
+    }
   }
 }
 

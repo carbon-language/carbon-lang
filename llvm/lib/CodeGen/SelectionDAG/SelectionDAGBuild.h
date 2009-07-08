@@ -75,8 +75,6 @@ class TruncInst;
 class UIToFPInst;
 class UnreachableInst;
 class UnwindInst;
-class VICmpInst;
-class VFCmpInst;
 class VAArgInst;
 class ZExtInst;
 
@@ -489,8 +487,6 @@ private:
   void visitAShr(User &I) { visitShift(I, ISD::SRA); }
   void visitICmp(User &I);
   void visitFCmp(User &I);
-  void visitVICmp(User &I);
-  void visitVFCmp(User &I);
   // Visit the conversion instructions
   void visitTrunc(User &I);
   void visitZExt(User &I);

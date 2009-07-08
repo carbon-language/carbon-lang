@@ -2583,16 +2583,8 @@ CmpInst::Create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2,
     return new ICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
                         InsertBefore);
   }
-  if (Op == Instruction::FCmp) {
-    return new FCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                        InsertBefore);
-  }
-  if (Op == Instruction::VICmp) {
-    return new VICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                         InsertBefore);
-  }
-  return new VFCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                       InsertBefore);
+  return new FCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
+                      InsertBefore);
 }
 
 CmpInst *
@@ -2602,16 +2594,8 @@ CmpInst::Create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2,
     return new ICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
                         InsertAtEnd);
   }
-  if (Op == Instruction::FCmp) {
-    return new FCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                        InsertAtEnd);
-  }
-  if (Op == Instruction::VICmp) {
-    return new VICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                         InsertAtEnd);
-  }
-  return new VFCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                       InsertAtEnd);
+  return new FCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
+                      InsertAtEnd);
 }
 
 void CmpInst::swapOperands() {
@@ -2949,13 +2933,6 @@ FCmpInst* FCmpInst::clone() const {
 }
 ICmpInst* ICmpInst::clone() const {
   return new ICmpInst(getPredicate(), Op<0>(), Op<1>());
-}
-
-VFCmpInst* VFCmpInst::clone() const {
-  return new VFCmpInst(getPredicate(), Op<0>(), Op<1>());
-}
-VICmpInst* VICmpInst::clone() const {
-  return new VICmpInst(getPredicate(), Op<0>(), Op<1>());
 }
 
 ExtractValueInst *ExtractValueInst::clone() const {

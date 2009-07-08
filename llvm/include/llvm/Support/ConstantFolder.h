@@ -154,14 +154,6 @@ public:
                        Constant *RHS) const {
     return ConstantExpr::getCompare(P, LHS, RHS);
   }
-  Constant *CreateVICmp(CmpInst::Predicate P, Constant *LHS,
-                        Constant *RHS) const {
-    return ConstantExpr::getCompare(P, LHS, RHS);
-  }
-  Constant *CreateVFCmp(CmpInst::Predicate P, Constant *LHS,
-                        Constant *RHS) const {
-    return ConstantExpr::getCompare(P, LHS, RHS);
-  }
 
   //===--------------------------------------------------------------------===//
   // Other Instructions

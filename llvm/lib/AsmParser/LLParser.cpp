@@ -1847,9 +1847,7 @@ bool LLParser::ParseValID(ValID &ID) {
     return false;
   }
   case lltok::kw_icmp:
-  case lltok::kw_fcmp:
-  case lltok::kw_vicmp:
-  case lltok::kw_vfcmp: {
+  case lltok::kw_fcmp: {
     unsigned PredVal, Opc = Lex.getUIntVal();
     Constant *Val0, *Val1;
     Lex.Lex();
@@ -1870,23 +1868,12 @@ bool LLParser::ParseValID(ValID &ID) {
       if (!Val0->getType()->isFPOrFPVector())
         return Error(ID.Loc, "fcmp requires floating point operands");
       ID.ConstantVal = Context.getConstantExprFCmp(Pred, Val0, Val1);
-    } else if (Opc == Instruction::ICmp) {
+    } else {
+      assert(Opc == Instruction::ICmp && "Unexpected opcode for CmpInst!");
       if (!Val0->getType()->isIntOrIntVector() &&
           !isa<PointerType>(Val0->getType()))
         return Error(ID.Loc, "icmp requires pointer or integer operands");
       ID.ConstantVal = Context.getConstantExprICmp(Pred, Val0, Val1);
-    } else if (Opc == Instruction::VFCmp) {
-      // FIXME: REMOVE VFCMP Support
-      if (!Val0->getType()->isFPOrFPVector() ||
-          !isa<VectorType>(Val0->getType()))
-        return Error(ID.Loc, "vfcmp requires vector floating point operands");
-      ID.ConstantVal = Context.getConstantExprVFCmp(Pred, Val0, Val1);
-    } else if (Opc == Instruction::VICmp) {
-      // FIXME: REMOVE VICMP Support
-      if (!Val0->getType()->isIntOrIntVector() ||
-          !isa<VectorType>(Val0->getType()))
-        return Error(ID.Loc, "vicmp requires vector floating point operands");
-      ID.ConstantVal = Context.getConstantExprVICmp(Pred, Val0, Val1);
     }
     ID.Kind = ValID::t_Constant;
     return false;
@@ -2485,9 +2472,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_or:
   case lltok::kw_xor:    return ParseLogical(Inst, PFS, KeywordVal);
   case lltok::kw_icmp:
-  case lltok::kw_fcmp:
-  case lltok::kw_vicmp:
-  case lltok::kw_vfcmp:  return ParseCompare(Inst, PFS, KeywordVal);
+  case lltok::kw_fcmp:   return ParseCompare(Inst, PFS, KeywordVal);
   // Casts.
   case lltok::kw_trunc:
   case lltok::kw_zext:
@@ -2532,8 +2517,7 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
 
 /// ParseCmpPredicate - Parse an integer or fp predicate, based on Kind.
 bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
-  // FIXME: REMOVE vicmp/vfcmp!
-  if (Opc == Instruction::FCmp || Opc == Instruction::VFCmp) {
+  if (Opc == Instruction::FCmp) {
     switch (Lex.getKind()) {
     default: TokError("expected fcmp predicate (e.g. 'oeq')");
     case lltok::kw_oeq: P = CmpInst::FCMP_OEQ; break;
@@ -2862,8 +2846,6 @@ bool LLParser::ParseLogical(Instruction *&Inst, PerFunctionState &PFS,
 /// ParseCompare
 ///  ::= 'icmp' IPredicates TypeAndValue ',' Value
 ///  ::= 'fcmp' FPredicates TypeAndValue ',' Value
-///  ::= 'vicmp' IPredicates TypeAndValue ',' Value
-///  ::= 'vfcmp' FPredicates TypeAndValue ',' Value
 bool LLParser::ParseCompare(Instruction *&Inst, PerFunctionState &PFS,
                             unsigned Opc) {
   // Parse the integer/fp comparison predicate.
@@ -2880,19 +2862,12 @@ bool LLParser::ParseCompare(Instruction *&Inst, PerFunctionState &PFS,
     if (!LHS->getType()->isFPOrFPVector())
       return Error(Loc, "fcmp requires floating point operands");
     Inst = new FCmpInst(CmpInst::Predicate(Pred), LHS, RHS);
-  } else if (Opc == Instruction::ICmp) {
+  } else {
+    assert(Opc == Instruction::ICmp && "Unknown opcode for CmpInst!");
     if (!LHS->getType()->isIntOrIntVector() &&
         !isa<PointerType>(LHS->getType()))
       return Error(Loc, "icmp requires integer operands");
     Inst = new ICmpInst(CmpInst::Predicate(Pred), LHS, RHS);
-  } else if (Opc == Instruction::VFCmp) {
-    if (!LHS->getType()->isFPOrFPVector() || !isa<VectorType>(LHS->getType()))
-      return Error(Loc, "vfcmp requires vector floating point operands");
-    Inst = new VFCmpInst(CmpInst::Predicate(Pred), LHS, RHS);
-  } else if (Opc == Instruction::VICmp) {
-    if (!LHS->getType()->isIntOrIntVector() || !isa<VectorType>(LHS->getType()))
-      return Error(Loc, "vicmp requires vector floating point operands");
-    Inst = new VICmpInst(CmpInst::Predicate(Pred), LHS, RHS);
   }
   return false;
 }

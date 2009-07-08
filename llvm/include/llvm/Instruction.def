@@ -169,10 +169,8 @@ HANDLE_OTHER_INST(52, InsertElement, InsertElementInst)  // insert into vector
 HANDLE_OTHER_INST(53, ShuffleVector, ShuffleVectorInst)  // shuffle two vectors.
 HANDLE_OTHER_INST(54, ExtractValue, ExtractValueInst)// extract from aggregate
 HANDLE_OTHER_INST(55, InsertValue, InsertValueInst)  // insert into aggregate
-HANDLE_OTHER_INST(56, VICmp  , VICmpInst  )  // Vec Int comparison instruction.
-HANDLE_OTHER_INST(57, VFCmp  , VFCmpInst  )  // Vec FP point comparison instr.
 
-  LAST_OTHER_INST(57)
+  LAST_OTHER_INST(55)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST

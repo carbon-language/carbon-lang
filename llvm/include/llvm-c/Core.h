@@ -341,8 +341,6 @@ void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle);
       macro(CmpInst)                        \
       macro(FCmpInst)                       \
       macro(ICmpInst)                       \
-      macro(VFCmpInst)                      \
-      macro(VICmpInst)                      \
       macro(ExtractElementInst)             \
       macro(GetElementPtrInst)              \
       macro(InsertElementInst)              \

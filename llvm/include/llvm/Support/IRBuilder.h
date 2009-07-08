@@ -570,21 +570,6 @@ public:
     return Insert(new FCmpInst(P, LHS, RHS), Name);
   }
 
-  Value *CreateVICmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
-                     const char *Name = "") {
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateVICmp(P, LC, RC);
-    return Insert(new VICmpInst(P, LHS, RHS), Name);
-  }
-  Value *CreateVFCmp(CmpInst::Predicate P, Value *LHS, Value *RHS,
-                     const char *Name = "") {
-    if (Constant *LC = dyn_cast<Constant>(LHS))
-      if (Constant *RC = dyn_cast<Constant>(RHS))
-        return Folder.CreateVFCmp(P, LC, RC);
-    return Insert(new VFCmpInst(P, LHS, RHS), Name);
-  }
-
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Other Instructions
   //===--------------------------------------------------------------------===//

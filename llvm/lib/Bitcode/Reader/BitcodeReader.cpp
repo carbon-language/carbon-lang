@@ -987,12 +987,8 @@ bool BitcodeReader::ParseConstants() {
 
       if (OpTy->isFloatingPoint())
         V = Context.getConstantExprFCmp(Record[3], Op0, Op1);
-      else if (!isa<VectorType>(OpTy))
-        V = Context.getConstantExprICmp(Record[3], Op0, Op1);
-      else if (OpTy->isFPOrFPVector())
-        V = Context.getConstantExprVFCmp(Record[3], Op0, Op1);
       else
-        V = Context.getConstantExprVICmp(Record[3], Op0, Op1);
+        V = Context.getConstantExprICmp(Record[3], Op0, Op1);
       break;
     }
     case bitc::CST_CODE_INLINEASM: {
@@ -1632,9 +1628,13 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       break;
     }
 
-    case bitc::FUNC_CODE_INST_CMP: { // CMP: [opty, opval, opval, pred]
-      // VFCmp/VICmp
-      // or old form of ICmp/FCmp returning bool
+    case bitc::FUNC_CODE_INST_CMP:   // CMP: [opty, opval, opval, pred]
+      // Old form of ICmp/FCmp returning bool
+      // Existed to differentiate between icmp/fcmp and vicmp/vfcmp which were
+      // both legal on vectors but had different behaviour.
+    case bitc::FUNC_CODE_INST_CMP2: { // CMP2: [opty, opval, opval, pred]
+      // FCmp/ICmp returning bool or vector of bool
+
       unsigned OpNum = 0;
       Value *LHS, *RHS;
       if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
@@ -1642,31 +1642,13 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           OpNum+1 != Record.size())
         return Error("Invalid CMP record");
       
-      if (LHS->getType()->isFloatingPoint())
-        I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
-      else if (!isa<VectorType>(LHS->getType()))
-        I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
-      else if (LHS->getType()->isFPOrFPVector())
-        I = new VFCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
-      else
-        I = new VICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
-      break;
-    }
-    case bitc::FUNC_CODE_INST_CMP2: { // CMP2: [opty, opval, opval, pred]
-      // Fcmp/ICmp returning bool or vector of bool
-      unsigned OpNum = 0;
-      Value *LHS, *RHS;
-      if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
-          getValue(Record, OpNum, LHS->getType(), RHS) ||
-          OpNum+1 != Record.size())
-        return Error("Invalid CMP2 record");
-      
       if (LHS->getType()->isFPOrFPVector())
         I = new FCmpInst((FCmpInst::Predicate)Record[OpNum], LHS, RHS);
-      else 
+      else
         I = new ICmpInst((ICmpInst::Predicate)Record[OpNum], LHS, RHS);
       break;
     }
+
     case bitc::FUNC_CODE_INST_GETRESULT: { // GETRESULT: [ty, val, n]
       if (Record.size() != 2)
         return Error("Invalid GETRESULT record");

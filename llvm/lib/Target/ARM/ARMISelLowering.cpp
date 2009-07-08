@@ -2056,7 +2056,7 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
     case ISD::SETUGE: Opc = ARMISD::VCGEU; break;
     }
 
-    // Detect VTST (Vector Test Bits) = vicmp ne (and (op0, op1), zero).
+    // Detect VTST (Vector Test Bits) = icmp ne (and (op0, op1), zero).
     if (Opc == ARMISD::VCEQ) {
 
       SDValue AndOp;

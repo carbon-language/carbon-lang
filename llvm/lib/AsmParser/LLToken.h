@@ -96,7 +96,7 @@ namespace lltok {
     kw_add,  kw_fadd, kw_sub,  kw_fsub, kw_mul,  kw_fmul,
     kw_udiv, kw_sdiv, kw_fdiv,
     kw_urem, kw_srem, kw_frem, kw_shl,  kw_lshr, kw_ashr,
-    kw_and,  kw_or,   kw_xor,  kw_icmp, kw_fcmp, kw_vicmp, kw_vfcmp,
+    kw_and,  kw_or,   kw_xor,  kw_icmp, kw_fcmp,
 
     kw_phi, kw_call,
     kw_trunc, kw_zext, kw_sext, kw_fptrunc, kw_fpext, kw_uitofp, kw_sitofp,

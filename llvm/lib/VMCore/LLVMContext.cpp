@@ -312,16 +312,6 @@ Constant* LLVMContext::getConstantExprFCmp(unsigned short pred, Constant* LHS,
   return ConstantExpr::getFCmp(pred, LHS, RHS);
 }
 
-Constant* LLVMContext::getConstantExprVICmp(unsigned short pred, Constant* LHS,
-                               Constant* RHS) {
-  return ConstantExpr::getVICmp(pred, LHS, RHS);
-}
-
-Constant* LLVMContext::getConstantExprVFCmp(unsigned short pred, Constant* LHS,
-                               Constant* RHS) {
-  return ConstantExpr::getVFCmp(pred, LHS, RHS);
-}
-
 Constant* LLVMContext::getConstantExprShl(Constant* C1, Constant* C2) {
   return ConstantExpr::getShl(C1, C2);
 }

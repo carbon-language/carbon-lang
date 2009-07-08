@@ -238,8 +238,6 @@ ConstExpr::= CastOps "(" ^ ConstVal to Types ^ ")"
  | LogicalOps "(" ^ ConstVal ^ "," ConstVal ^ ")"
  | icmp IPredicates "(" ^ ConstVal ^ "," ConstVal ^ ")"
  | fcmp FPredicates "(" ^ ConstVal ^ "," ConstVal ^ ")"
- | vicmp IPredicates "(" ^ ConstVal ^ "," ConstVal ^ ")"
- | vfcmp FPredicates "(" ^ ConstVal ^ "," ConstVal ^ ")"
  | extractelement "(" ^ ConstVal ^ "," ConstVal ^ ")"
  | insertelement "(" ^ ConstVal ^ "," ConstVal ^ "," ConstVal ^ ")"
  | shufflevector "(" ^ ConstVal ^ "," ConstVal ^ "," ConstVal ^ ")"
@@ -382,8 +380,6 @@ InstVal ::=
  | LogicalOps Types ValueRef ^ "," ValueRef
  | icmp IPredicates Types ValueRef ^ "," ValueRef
  | fcmp FPredicates Types ValueRef ^ "," ValueRef
- | vicmp IPredicates Types ValueRef ^ "," ValueRef
- | vfcmp FPredicates Types ValueRef ^ "," ValueRef
  | CastOps ResolvedVal to Types
  | select ResolvedVal ^ "," ResolvedVal ^ "," ResolvedVal
  | "va_arg" ResolvedVal ^ "," Types

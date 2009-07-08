@@ -145,10 +145,6 @@ public:
                                 Constant* RHS);
   Constant* getConstantExprFCmp(unsigned short pred, Constant* LHS,
                                 Constant* RHS);
-  Constant* getConstantExprVICmp(unsigned short pred, Constant* LHS,
-                                 Constant* RHS);
-  Constant* getConstantExprVFCmp(unsigned short pred, Constant* LHS,
-                                 Constant* RHS);
   Constant* getConstantExprShl(Constant* C1, Constant* C2);
   Constant* getConstantExprLShr(Constant* C1, Constant* C2);
   Constant* getConstantExprAShr(Constant* C1, Constant* C2);

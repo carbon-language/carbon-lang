@@ -2227,33 +2227,6 @@ void SelectionDAGLowering::visitFCmp(User &I) {
   setValue(&I, DAG.getSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Condition));
 }
 
-void SelectionDAGLowering::visitVICmp(User &I) {
-  ICmpInst::Predicate predicate = ICmpInst::BAD_ICMP_PREDICATE;
-  if (VICmpInst *IC = dyn_cast<VICmpInst>(&I))
-    predicate = IC->getPredicate();
-  else if (ConstantExpr *IC = dyn_cast<ConstantExpr>(&I))
-    predicate = ICmpInst::Predicate(IC->getPredicate());
-  SDValue Op1 = getValue(I.getOperand(0));
-  SDValue Op2 = getValue(I.getOperand(1));
-  ISD::CondCode Opcode = getICmpCondCode(predicate);
-  setValue(&I, DAG.getVSetCC(getCurDebugLoc(), Op1.getValueType(),
-                             Op1, Op2, Opcode));
-}
-
-void SelectionDAGLowering::visitVFCmp(User &I) {
-  FCmpInst::Predicate predicate = FCmpInst::BAD_FCMP_PREDICATE;
-  if (VFCmpInst *FC = dyn_cast<VFCmpInst>(&I))
-    predicate = FC->getPredicate();
-  else if (ConstantExpr *FC = dyn_cast<ConstantExpr>(&I))
-    predicate = FCmpInst::Predicate(FC->getPredicate());
-  SDValue Op1 = getValue(I.getOperand(0));
-  SDValue Op2 = getValue(I.getOperand(1));
-  ISD::CondCode Condition = getFCmpCondCode(predicate);
-  MVT DestVT = TLI.getValueType(I.getType());
-
-  setValue(&I, DAG.getVSetCC(getCurDebugLoc(), DestVT, Op1, Op2, Condition));
-}
-
 void SelectionDAGLowering::visitSelect(User &I) {
   SmallVector<MVT, 4> ValueVTs;
   ComputeValueVTs(TLI, I.getType(), ValueVTs);

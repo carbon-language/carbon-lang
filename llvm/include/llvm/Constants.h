@@ -710,8 +710,7 @@ public:
   ///
   static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
 
-  /// @brief Return an ICmp, FCmp, VICmp, or VFCmp comparison operator constant
-  /// expression.
+  /// @brief Return an ICmp or FCmp comparison operator constant expression.
   static Constant *getCompare(unsigned short pred, Constant *C1, Constant *C2);
 
   /// ConstantExpr::get* - Return some common constants without having to
@@ -737,8 +736,6 @@ public:
   static Constant *getXor(Constant *C1, Constant *C2);
   static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
-  static Constant *getVICmp(unsigned short pred, Constant *LHS, Constant *RHS);
-  static Constant *getVFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getShl(Constant *C1, Constant *C2);
   static Constant *getLShr(Constant *C1, Constant *C2);
   static Constant *getAShr(Constant *C1, Constant *C2);

@@ -143,12 +143,6 @@ public:
   Value *CreateFCmp(CmpInst::Predicate P, Constant *LHS, Constant *RHS) const {
     return new FCmpInst(P, LHS, RHS);
   }
-  Value *CreateVICmp(CmpInst::Predicate P, Constant *LHS, Constant *RHS) const {
-    return new VICmpInst(P, LHS, RHS);
-  }
-  Value *CreateVFCmp(CmpInst::Predicate P, Constant *LHS, Constant *RHS) const {
-    return new VFCmpInst(P, LHS, RHS);
-  }
 
   //===--------------------------------------------------------------------===//
   // Other Instructions
