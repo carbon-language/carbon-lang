@@ -117,6 +117,10 @@ N: Dan Gohman
 E: gohman@apple.com
 D: Miscellaneous bug fixes
 
+N: David Goodwin
+E: david@goodwinz.net
+D: Thumb-2 code generator
+
 N: David Greene
 E: greened@obbligato.org
 D: Miscellaneous bug fixes
@@ -306,7 +310,3 @@ D: Bunches of stuff
 N: Bob Wilson
 E: bob.wilson@acm.org
 D: Advanced SIMD (NEON) support in the ARM backend
-
-N: David Goodwin
-E: david@goodwinz.net
-D: Thumb-2 code generator
