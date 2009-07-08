@@ -16,97 +16,12 @@
 
 #include "ARM.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "ARMGenRegisterInfo.h.inc"
+#include "ARMBaseRegisterInfo.h"
 
 namespace llvm {
   class ARMSubtarget;
   class TargetInstrInfo;
   class Type;
-
-/// Register allocation hints.
-namespace ARMRI {
-  enum {
-    RegPairOdd  = 1,
-    RegPairEven = 2
-  };
-}
-
-/// isARMLowRegister - Returns true if the register is low register r0-r7.
-///
-static inline bool isARMLowRegister(unsigned Reg) {
-  using namespace ARM;
-  switch (Reg) {
-  case R0:  case R1:  case R2:  case R3:
-  case R4:  case R5:  case R6:  case R7:
-    return true;
-  default:
-    return false;
-  }
-}
-
-struct ARMBaseRegisterInfo : public ARMGenRegisterInfo {
-protected:
-  const TargetInstrInfo &TII;
-  const ARMSubtarget &STI;
-
-  /// FramePtr - ARM physical register used as frame ptr.
-  unsigned FramePtr;
-public:
-  ARMBaseRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
-
-  /// getRegisterNumbering - Given the enum value for some register, e.g.
-  /// ARM::LR, return the number that it corresponds to (e.g. 14).
-  static unsigned getRegisterNumbering(unsigned RegEnum);
-
-  /// Same as previous getRegisterNumbering except it returns true in isSPVFP
-  /// if the register is a single precision VFP register.
-  static unsigned getRegisterNumbering(unsigned RegEnum, bool &isSPVFP);
-
-  /// Code Generation virtual methods...
-  const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
-
-  const TargetRegisterClass* const*
-  getCalleeSavedRegClasses(const MachineFunction *MF = 0) const;
-
-  BitVector getReservedRegs(const MachineFunction &MF) const;
-
-  bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
-
-  const TargetRegisterClass *getPointerRegClass() const;
-
-  std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
-  getAllocationOrder(const TargetRegisterClass *RC,
-                     unsigned HintType, unsigned HintReg,
-                     const MachineFunction &MF) const;
-
-  unsigned ResolveRegAllocHint(unsigned Type, unsigned Reg,
-                               const MachineFunction &MF) const;
-
-  void UpdateRegAllocHint(unsigned Reg, unsigned NewReg,
-                          MachineFunction &MF) const;
-
-  bool hasFP(const MachineFunction &MF) const;
-
-  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                            RegScavenger *RS = NULL) const;
-
-  // Debug information queries.
-  unsigned getRARegister() const;
-  unsigned getFrameRegister(MachineFunction &MF) const;
-
-  // Exception handling queries.
-  unsigned getEHExceptionRegister() const;
-  unsigned getEHHandlerRegister() const;
-
-  int getDwarfRegNum(unsigned RegNum, bool isEH) const;
-
-  bool isLowRegister(unsigned Reg) const;
-
-private:
-  unsigned getRegisterPairEven(unsigned Reg, const MachineFunction &MF) const;
-
-  unsigned getRegisterPairOdd(unsigned Reg, const MachineFunction &MF) const;
-};
 
 struct ARMRegisterInfo : public ARMBaseRegisterInfo {
 public:
