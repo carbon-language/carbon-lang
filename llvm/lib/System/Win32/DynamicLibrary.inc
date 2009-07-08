@@ -88,30 +88,6 @@ extern "C" {
   }
 }
 
-DynamicLibrary::DynamicLibrary() : handle(0) {
-  handle = GetModuleHandle(NULL);
-  OpenedHandles.push_back((HMODULE)handle);
-}
-
-DynamicLibrary::~DynamicLibrary() {
-  if (handle == 0)
-    return;
-
-  // GetModuleHandle() does not increment the ref count, so we must not free
-  // the handle to the executable.
-  if (handle != GetModuleHandle(NULL))
-    FreeLibrary((HMODULE)handle);
-  handle = 0;
-
-  for (std::vector<HMODULE>::iterator I = OpenedHandles.begin(),
-       E = OpenedHandles.end(); I != E; ++I) {
-    if (*I == handle) {
-      // Note: don't use the swap/pop_back trick here. Order is important.
-      OpenedHandles.erase(I);
-    }
-  }
-}
- 
 bool DynamicLibrary::LoadLibraryPermanently(const char *filename,
                                             std::string *ErrMsg) {                                            
   if (filename) {
