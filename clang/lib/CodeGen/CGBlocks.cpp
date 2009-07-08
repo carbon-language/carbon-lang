@@ -50,9 +50,9 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
 
   C = llvm::ConstantStruct::get(Elts);
 
-  C = new llvm::GlobalVariable(CGM.getModule().getContext(), C->getType(), true,
+  C = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
                                llvm::GlobalValue::InternalLinkage,
-                               C, "__block_descriptor_tmp", &CGM.getModule());
+                               C, "__block_descriptor_tmp");
   return C;
 }
 
@@ -165,10 +165,9 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
       char Name[32];
       sprintf(Name, "__block_holder_tmp_%d", CGM.getGlobalUniqueCount());
-      C = new llvm::GlobalVariable(CGM.getModule().getContext(),
-                                   C->getType(), true,
+      C = new llvm::GlobalVariable(CGM.getModule(), C->getType(), true,
                                    llvm::GlobalValue::InternalLinkage,
-                                   C, Name, &CGM.getModule());
+                                   C, Name);
       QualType BPT = BE->getType();
       C = llvm::ConstantExpr::getBitCast(C, ConvertType(BPT));
       return C;
@@ -514,11 +513,9 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
     llvm::ConstantStruct::get(&DescriptorFields[0], 2);
 
   llvm::GlobalVariable *Descriptor =
-    new llvm::GlobalVariable(getModule().getContext(),
-                             DescriptorStruct->getType(), true,
+    new llvm::GlobalVariable(getModule(), DescriptorStruct->getType(), true,
                              llvm::GlobalVariable::InternalLinkage,
-                             DescriptorStruct, "__block_descriptor_global",
-                             &getModule());
+                             DescriptorStruct, "__block_descriptor_global");
 
   // Generate the constants for the block literal.
   llvm::Constant *LiteralFields[5];
@@ -557,11 +554,9 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
     llvm::ConstantStruct::get(&LiteralFields[0], 5);
 
   llvm::GlobalVariable *BlockLiteral =
-    new llvm::GlobalVariable(getModule().getContext(), 
-                             BlockLiteralStruct->getType(), true,
+    new llvm::GlobalVariable(getModule(), BlockLiteralStruct->getType(), true,
                              llvm::GlobalVariable::InternalLinkage,
-                             BlockLiteralStruct, "__block_literal_global",
-                             &getModule());
+                             BlockLiteralStruct, "__block_literal_global");
 
   return BlockLiteral;
 }

@@ -104,10 +104,10 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
   }
 
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
-  return new llvm::GlobalVariable(CGM.getModule().getContext(),
-                                  LTy, Ty.isConstant(getContext()), Linkage,
+  return new llvm::GlobalVariable(CGM.getModule(), LTy,
+                                  Ty.isConstant(getContext()), Linkage,
                                   llvm::Constant::getNullValue(LTy), Name,
-                                  &CGM.getModule(), D.isThreadSpecified(),
+                                  0, D.isThreadSpecified(),
                                   Ty.getAddressSpace());
 }
 
@@ -150,10 +150,10 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
       if (GV->getType() != Init->getType()) {
         llvm::GlobalVariable *OldGV = GV;
         
-        GV = new llvm::GlobalVariable(CGM.getModule().getContext(),
-                                      Init->getType(), OldGV->isConstant(),
+        GV = new llvm::GlobalVariable(CGM.getModule(), Init->getType(),
+                                      OldGV->isConstant(),
                                       OldGV->getLinkage(), Init, "",
-                                      &CGM.getModule(), D.isThreadSpecified(),
+                                      0, D.isThreadSpecified(),
                                       D.getType().getAddressSpace());
 
         // Steal the name of the old global

@@ -184,11 +184,11 @@ void CGObjCGNU::EmitClassRef(const std::string &className){
   std::string symbolName = "__objc_class_name_" + className;
   llvm::GlobalVariable *ClassSymbol = TheModule.getGlobalVariable(symbolName);
   if (!ClassSymbol) {
-    ClassSymbol = new llvm::GlobalVariable(TheModule.getContext(), LongTy, 
-        false, llvm::GlobalValue::ExternalLinkage, 0, symbolName, &TheModule);
+    ClassSymbol = new llvm::GlobalVariable(TheModule, LongTy, false,
+        llvm::GlobalValue::ExternalLinkage, 0, symbolName);
   }
-  new llvm::GlobalVariable(TheModule.getContext(), ClassSymbol->getType(), true,
-    llvm::GlobalValue::CommonLinkage, ClassSymbol, symbolRef,  &TheModule);
+  new llvm::GlobalVariable(TheModule, ClassSymbol->getType(), true,
+    llvm::GlobalValue::CommonLinkage, ClassSymbol, symbolRef);
 }
 
 static std::string SymbolNameForClass(const std::string &ClassName) {
@@ -291,23 +291,22 @@ llvm::Value *CGObjCGNU::GetSelector(CGBuilderTy &Builder, const ObjCMethodDecl
 llvm::Constant *CGObjCGNU::MakeConstantString(const std::string &Str,
                                               const std::string &Name) {
   llvm::Constant * ConstStr = llvm::ConstantArray::get(Str);
-  ConstStr = new llvm::GlobalVariable(TheModule.getContext(),
-                               ConstStr->getType(), true, 
+  ConstStr = new llvm::GlobalVariable(TheModule, ConstStr->getType(), true, 
                                llvm::GlobalValue::InternalLinkage,
-                               ConstStr, Name, &TheModule);
+                               ConstStr, Name);
   return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros, 2);
 }
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::StructType *Ty,
     std::vector<llvm::Constant*> &V, const std::string &Name) {
   llvm::Constant *C = llvm::ConstantStruct::get(Ty, V);
-  return new llvm::GlobalVariable(TheModule.getContext(), Ty, false,
-      llvm::GlobalValue::InternalLinkage, C, Name, &TheModule);
+  return new llvm::GlobalVariable(TheModule, Ty, false,
+      llvm::GlobalValue::InternalLinkage, C, Name);
 }
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::ArrayType *Ty,
     std::vector<llvm::Constant*> &V, const std::string &Name) {
   llvm::Constant *C = llvm::ConstantArray::get(Ty, V);
-  return new llvm::GlobalVariable(TheModule.getContext(), Ty, false,
-      llvm::GlobalValue::InternalLinkage, C, Name, &TheModule);
+  return new llvm::GlobalVariable(TheModule, Ty, false,
+      llvm::GlobalValue::InternalLinkage, C, Name);
 }
 
 /// Generate an NSConstantString object.
@@ -869,9 +868,9 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
       TheModule.getGlobalVariable(classSymbolName)) {
     symbol->setInitializer(llvm::ConstantInt::get(LongTy, 0));
   } else {
-    new llvm::GlobalVariable(TheModule.getContext(), LongTy, false,
-                             llvm::GlobalValue::ExternalLinkage,
-    llvm::ConstantInt::get(LongTy, 0), classSymbolName, &TheModule);
+    new llvm::GlobalVariable(TheModule, LongTy, false,
+    llvm::GlobalValue::ExternalLinkage, llvm::ConstantInt::get(LongTy, 0),
+    classSymbolName);
   }
   
   // Get the size of instances.
@@ -1102,10 +1101,10 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
      iter != iterEnd; ++iter) {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::Int32Ty, index++), Zeros[0]};
-    llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule.getContext(),
-        SelStructPtrTy, true, llvm::GlobalValue::InternalLinkage,
+    llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
+        true, llvm::GlobalValue::InternalLinkage,
         llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-        ".objc_sel_ptr", &TheModule);
+        ".objc_sel_ptr");
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
@@ -1119,10 +1118,10 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       iter != iterEnd; iter++) {
     llvm::Constant *Idxs[] = {Zeros[0],
       llvm::ConstantInt::get(llvm::Type::Int32Ty, index++), Zeros[0]};
-    llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule.getContext(),
-        SelStructPtrTy, true, llvm::GlobalValue::InternalLinkage,
+    llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy, 
+        true, llvm::GlobalValue::InternalLinkage,
         llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
-        ".objc_sel_ptr", &TheModule);
+        ".objc_sel_ptr");
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
@@ -1568,8 +1567,8 @@ llvm::GlobalVariable *CGObjCGNU::ObjCIvarOffsetVariable(
     uint64_t Offset = ComputeIvarBaseOffset(CGM, ID, Ivar);
     llvm::ConstantInt *OffsetGuess =
       llvm::ConstantInt::get(LongTy, Offset, "ivar");
-    IvarOffsetGV = new llvm::GlobalVariable(TheModule.getContext(), LongTy, 
-        false, llvm::GlobalValue::CommonLinkage, OffsetGuess, Name, &TheModule);
+    IvarOffsetGV = new llvm::GlobalVariable(TheModule, LongTy, false,
+        llvm::GlobalValue::CommonLinkage, OffsetGuess, Name);
   }
   return IvarOffsetGV;
 }
