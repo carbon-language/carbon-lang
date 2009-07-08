@@ -81,6 +81,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -2856,6 +2857,29 @@ const SCEV *ScalarEvolution::getMaxBackedgeTakenCount(const Loop *L) {
   return getBackedgeTakenInfo(L).Max;
 }
 
+/// PushLoopPHIs - Push PHI nodes in the header of the given loop
+/// onto the given Worklist.
+static void
+PushLoopPHIs(const Loop *L, SmallVectorImpl<Instruction *> &Worklist) {
+  BasicBlock *Header = L->getHeader();
+
+  // Push all Loop-header PHIs onto the Worklist stack.
+  for (BasicBlock::iterator I = Header->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I)
+    Worklist.push_back(PN);
+}
+
+/// PushDefUseChildren - Push users of the given Instruction
+/// onto the given Worklist.
+static void
+PushDefUseChildren(Instruction *I,
+                   SmallVectorImpl<Instruction *> &Worklist) {
+  // Push the def-use children onto the Worklist stack.
+  for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+       UI != UE; ++UI)
+    Worklist.push_back(cast<Instruction>(UI));
+}
+
 const ScalarEvolution::BackedgeTakenInfo &
 ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
   // Initially insert a CouldNotCompute for this loop. If the insertion
@@ -2886,10 +2910,38 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
 
     // Now that we know more about the trip count for this loop, forget any
     // existing SCEV values for PHI nodes in this loop since they are only
-    // conservative estimates made without the benefit
-    // of trip count information.
-    if (ItCount.hasAnyInfo())
-      forgetLoopPHIs(L);
+    // conservative estimates made without the benefit of trip count
+    // information. This is similar to the code in
+    // forgetLoopBackedgeTakenCount, except that it handles SCEVUnknown PHI
+    // nodes specially.
+    if (ItCount.hasAnyInfo()) {
+      SmallVector<Instruction *, 16> Worklist;
+      PushLoopPHIs(L, Worklist);
+
+      SmallPtrSet<Instruction *, 8> Visited;
+      while (!Worklist.empty()) {
+        Instruction *I = Worklist.pop_back_val();
+        if (!Visited.insert(I)) continue;
+
+        std::map<SCEVCallbackVH, const SCEV*>::iterator It =
+          Scalars.find(static_cast<Value *>(I));
+        if (It != Scalars.end()) {
+          // SCEVUnknown for a PHI either means that it has an unrecognized
+          // structure, or it's a PHI that's in the progress of being computed
+          // by createNodeForPHI.  In the former case, additional loop trip count
+          // information isn't going to change anything. In the later case,
+          // createNodeForPHI will perform the necessary updates on its own when
+          // it gets to that point.
+          if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second))
+            Scalars.erase(It);
+          ValuesAtScopes.erase(I);
+          if (PHINode *PN = dyn_cast<PHINode>(I))
+            ConstantEvolutionLoopExitValue.erase(PN);
+        }
+
+        PushDefUseChildren(I, Worklist);
+      }
+    }
   }
   return Pair.first->second;
 }
@@ -2900,37 +2952,25 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
 /// is deleted.
 void ScalarEvolution::forgetLoopBackedgeTakenCount(const Loop *L) {
   BackedgeTakenCounts.erase(L);
-  forgetLoopPHIs(L);
-}
 
-/// forgetLoopPHIs - Delete the memoized SCEVs associated with the
-/// PHI nodes in the given loop. This is used when the trip count of
-/// the loop may have changed.
-void ScalarEvolution::forgetLoopPHIs(const Loop *L) {
-  BasicBlock *Header = L->getHeader();
-
-  // Push all Loop-header PHIs onto the Worklist stack, except those
-  // that are presently represented via a SCEVUnknown. SCEVUnknown for
-  // a PHI either means that it has an unrecognized structure, or it's
-  // a PHI that's in the progress of being computed by createNodeForPHI.
-  // In the former case, additional loop trip count information isn't
-  // going to change anything. In the later case, createNodeForPHI will
-  // perform the necessary updates on its own when it gets to that point.
   SmallVector<Instruction *, 16> Worklist;
-  for (BasicBlock::iterator I = Header->begin();
-       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-    std::map<SCEVCallbackVH, const SCEV *>::iterator It =
-      Scalars.find((Value*)I);
-    if (It != Scalars.end() && !isa<SCEVUnknown>(It->second))
-      Worklist.push_back(PN);
-  }
+  PushLoopPHIs(L, Worklist);
 
+  SmallPtrSet<Instruction *, 8> Visited;
   while (!Worklist.empty()) {
     Instruction *I = Worklist.pop_back_val();
-    if (Scalars.erase(I))
-      for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-           UI != UE; ++UI)
-        Worklist.push_back(cast<Instruction>(UI));
+    if (!Visited.insert(I)) continue;
+
+    std::map<SCEVCallbackVH, const SCEV*>::iterator It =
+      Scalars.find(static_cast<Value *>(I));
+    if (It != Scalars.end()) {
+      Scalars.erase(It);
+      ValuesAtScopes.erase(I);
+      if (PHINode *PN = dyn_cast<PHINode>(I))
+        ConstantEvolutionLoopExitValue.erase(PN);
+    }
+
+    PushDefUseChildren(I, Worklist);
   }
 }
 
