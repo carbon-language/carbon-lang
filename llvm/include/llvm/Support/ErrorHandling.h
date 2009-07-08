@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_ERRORHANDLING_H
 
 #include "llvm/Support/Compiler.h"
+#include <string>
 
 namespace llvm {
   // An error handler callback.
