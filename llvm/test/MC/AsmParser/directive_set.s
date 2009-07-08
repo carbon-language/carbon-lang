@@ -1,7 +1,7 @@
-# RUN: llvm-mc %s > %t
+# RUN: llvm-mc %s | FileCheck %s
 
-# RUN: grep -A 2 TEST0 %t > %t2
-# RUN: grep ".set a, 0" %t2
+# CHECK: TEST0:
+# CHECK: .set a, 0
 TEST0:  
         .set a, 0
         

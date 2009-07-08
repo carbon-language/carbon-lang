@@ -1,11 +1,12 @@
-# RUN: llvm-mc %s > %t
+# RUN: llvm-mc %s | FileCheck %s
 
-# RUN: grep -A 2 TEST0 %t > %t2
-# RUN: grep ".byte 0" %t2 | count 1
+# CHECK: TEST0:
+# CHECK: .byte 0
 TEST0:  
         .space 1
 
-# RUN: grep -A 3 TEST1 %t > %t2
-# RUN: grep ".byte 3" %t2 | count 2
+# CHECK: TEST1:
+# CHECK: .byte 3
+# CHECK: .byte 3
 TEST1:  
         .space 2, 3

@@ -1,7 +1,7 @@
-# RUN: llvm-mc %s > %t
+# RUN: llvm-mc %s | FileCheck %s
 
-# RUN: grep -A 3 TEST0 %t > %t2
-# RUN: grep ".globl a" %t2 | count 1
-# RUN: grep ".globl b" %t2 | count 1
+# CHECK: TEST0:
+# CHECK: .globl a
+# CHECK: .globl b
 TEST0:  
         .globl a, b

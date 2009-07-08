@@ -1,8 +1,8 @@
-# RUN: llvm-mc %s > %t
+# RUN: llvm-mc %s | FileCheck %s
 
-# RUN: grep -A 3 TEST0 %t > %t2
-# RUN: grep ".comm a,6,2" %t2 | count 1
-# RUN: grep ".comm b,8" %t2 | count 1
+# CHECK: TEST0:
+# CHECK: .comm a,6,2
+# CHECK: .comm b,8
 TEST0:  
         .comm a, 4+2, 2
         .comm b,8

@@ -1,16 +1,16 @@
-# RUN: llvm-mc %s > %t
+# RUN: llvm-mc %s | FileCheck %s
 
-# RUN: grep -A 2 TEST0 %t > %t2
-# RUN: grep ".p2align 1, 0" %t2 | count 1
+# CHECK: TEST0:
+# CHECK: .p2align 1, 0
 TEST0:  
         .align 1
 
-# RUN: grep -A 2 TEST1 %t > %t2
-# RUN: grep ".p2alignl 3, 0, 2" %t2 | count 1
+# CHECK: TEST1:
+# CHECK: .p2alignl 3, 0, 2
 TEST1:  
         .align32 3,,2
 
-# RUN: grep -A 2 TEST2 %t > %t2
-# RUN: grep ".balign 3, 10" %t2 | count 1
+# CHECK: TEST2:
+# CHECK: .balign 3, 10
 TEST2:  
         .balign 3,10
