@@ -52,7 +52,7 @@ void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
   if (Subtarget->isTargetDarwin())
     O << "\"L" << getFunctionNumber() << "$pb\"";
   else if (Subtarget->isTargetELF())
-    O << ".Lllvm$" << getFunctionNumber() << "." "$piclabel";
+    O << ".Lllvm$" << getFunctionNumber() << ".$piclabel";
   else
     assert(0 && "Don't know how to print PIC label!\n");
 }
@@ -504,8 +504,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           printSuffixedName(Name, "$non_lazy_ptr");
         }
       } else {
-        if (GV->hasDLLImportLinkage())
-          O << "__imp_";
         O << Name;
       }
 
