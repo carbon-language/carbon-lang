@@ -84,6 +84,12 @@ bool LLParser::ValidateEndOfModule() {
                  "use of undefined value '@" +
                  utostr(ForwardRefValIDs.begin()->first) + "'");
   
+  if (!ForwardRefMDNodes.empty())
+    return Error(ForwardRefMDNodes.begin()->second.second,
+                 "use of undefined metadata '!" +
+                 utostr(ForwardRefMDNodes.begin()->first) + "'");
+  
+
   // Look for intrinsic functions and CallInst that need to be upgraded
   for (Module::iterator FI = M->begin(), FE = M->end(); FI != FE; )
     UpgradeCallsToIntrinsic(FI++); // must be post-increment, as we remove
@@ -382,6 +388,14 @@ bool LLParser::ParseStandaloneMetadata() {
       return true;
 
   MetadataCache[MetadataID] = Init;
+  std::map<unsigned, std::pair<Constant *, LocTy> >::iterator
+    FI = ForwardRefMDNodes.find(MetadataID);
+  if (FI != ForwardRefMDNodes.end()) {
+    Constant *FwdNode = FI->second.first;
+    FwdNode->replaceAllUsesWith(Init);
+    ForwardRefMDNodes.erase(FI);
+  }
+
   return false;
 }
 
@@ -1632,9 +1646,24 @@ bool LLParser::ParseValID(ValID &ID) {
     unsigned MID = 0;
     if (!ParseUInt32(MID)) {
       std::map<unsigned, Constant *>::iterator I = MetadataCache.find(MID);
-      if (I == MetadataCache.end())
-	return TokError("Unknown metadata reference");
-      ID.ConstantVal = I->second;
+      if (I != MetadataCache.end()) 
+        ID.ConstantVal = I->second;
+      else {
+        std::map<unsigned, std::pair<Constant *, LocTy> >::iterator
+          FI = ForwardRefMDNodes.find(MID);
+        if (FI != ForwardRefMDNodes.end()) 
+          ID.ConstantVal = FI->second.first;
+        else {
+          // Create MDNode forward reference
+          SmallVector<Value *, 1> Elts;
+          std::string FwdRefName = "llvm.mdnode.fwdref." + MID;
+          Elts.push_back(Context.getMDString(FwdRefName));
+          MDNode *FwdNode = Context.getMDNode(Elts.data(), Elts.size());
+          ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
+          ID.ConstantVal = FwdNode;
+        }
+      }
+
       return false;
     }
     

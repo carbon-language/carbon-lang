@@ -46,6 +46,8 @@ namespace llvm {
     std::vector<PATypeHolder> NumberedTypes;
     /// MetadataCache - This map keeps track of parsed metadata constants.
     std::map<unsigned, Constant *> MetadataCache;
+    std::map<unsigned, std::pair<Constant *, LocTy> > ForwardRefMDNodes;
+
     struct UpRefRecord {
       /// Loc - This is the location of the upref.
       LocTy Loc;
