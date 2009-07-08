@@ -527,6 +527,11 @@ namespace {
     /// allocate a new one of the given size.
     virtual void *allocateSpace(uintptr_t Size, unsigned Alignment);
 
+    /// allocateGlobal - Allocate memory for a global.  Unlike allocateSpace,
+    /// this method does not allocate memory in the current output buffer,
+    /// because a global may live longer than the current function.
+    virtual void *allocateGlobal(uintptr_t Size, unsigned Alignment);
+
     virtual void addRelocation(const MachineRelocation &MR) {
       Relocations.push_back(MR);
     }
@@ -1159,6 +1164,11 @@ void* JITEmitter::allocateSpace(uintptr_t Size, unsigned Alignment) {
   BufferBegin = CurBufferPtr = MemMgr->allocateSpace(Size, Alignment);
   BufferEnd = BufferBegin+Size;
   return CurBufferPtr;
+}
+
+void* JITEmitter::allocateGlobal(uintptr_t Size, unsigned Alignment) {
+  // Delegate this call through the memory manager.
+  return MemMgr->allocateGlobal(Size, Alignment);
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {

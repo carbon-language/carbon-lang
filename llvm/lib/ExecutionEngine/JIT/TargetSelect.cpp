@@ -43,7 +43,8 @@ MAttrs("mattr",
 ///
 ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
                                 JITMemoryManager *JMM,
-                                CodeGenOpt::Level OptLevel) {
+                                CodeGenOpt::Level OptLevel,
+                                bool AllocateGVsWithCode) {
   const TargetMachineRegistry::entry *TheArch = MArch;
   if (TheArch == 0) {
     std::string Error;
@@ -75,7 +76,7 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
 
   // If the target supports JIT code generation, return a new JIT now.
   if (TargetJITInfo *TJ = Target->getJITInfo())
-    return new JIT(MP, *Target, *TJ, JMM, OptLevel);
+    return new JIT(MP, *Target, *TJ, JMM, OptLevel, AllocateGVsWithCode);
 
   if (ErrorStr)
     *ErrorStr = "target does not support JIT code generation";

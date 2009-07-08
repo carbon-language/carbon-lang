@@ -55,10 +55,16 @@ class JIT : public ExecutionEngine {
   JITCodeEmitter *JCE;     // JCE object
   std::vector<JITEventListener*> EventListeners;
 
+  /// AllocateGVsWithCode - Some applications require that global variables and
+  /// code be allocated into the same region of memory, in which case this flag
+  /// should be set to true.  Doing so breaks freeMachineCodeForFunction.
+  bool AllocateGVsWithCode;
+
   JITState *jitstate;
 
-  JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji, 
-      JITMemoryManager *JMM, CodeGenOpt::Level OptLevel);
+  JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
+      JITMemoryManager *JMM, CodeGenOpt::Level OptLevel,
+      bool AllocateGVsWithCode);
 public:
   ~JIT();
 
@@ -75,8 +81,9 @@ public:
   ///
   static ExecutionEngine *create(ModuleProvider *MP, std::string *Err,
                                  CodeGenOpt::Level OptLevel =
-                                   CodeGenOpt::Default) {
-    return createJIT(MP, Err, 0, OptLevel);
+                                   CodeGenOpt::Default,
+                                 bool AllocateGVsWithCode = true) {
+    return createJIT(MP, Err, 0, OptLevel, AllocateGVsWithCode);
   }
 
   virtual void addModuleProvider(ModuleProvider *MP);
@@ -151,9 +158,11 @@ public:
   /// getCodeEmitter - Return the code emitter this JIT is emitting into.
   JITCodeEmitter *getCodeEmitter() const { return JCE; }
   
-  static ExecutionEngine *createJIT(ModuleProvider *MP, std::string *Err,
+  static ExecutionEngine *createJIT(ModuleProvider *MP,
+                                    std::string *Err,
                                     JITMemoryManager *JMM,
-                                    CodeGenOpt::Level OptLevel);
+                                    CodeGenOpt::Level OptLevel,
+                                    bool AllocateGVsWithCode);
 
 
   // Run the JIT on F and return information about the generated code

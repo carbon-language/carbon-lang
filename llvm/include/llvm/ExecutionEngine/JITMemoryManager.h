@@ -28,6 +28,7 @@ protected:
   bool HasGOT;
   bool SizeRequired;
 public:
+
   JITMemoryManager() : HasGOT(false), SizeRequired(false) {}
   virtual ~JITMemoryManager();
   
@@ -42,6 +43,11 @@ public:
   /// setMemoryExecutable - When code generation is done and we're ready to
   /// start execution, the code pages may need permissions changed.
   virtual void setMemoryExecutable(void) = 0;
+
+  /// setPoisonMemory - Setting this flag to true makes the memory manager
+  /// garbage values over freed memory.  This is useful for testing and
+  /// debugging, and is be turned on by default in debug mode.
+  virtual void setPoisonMemory(bool poison) = 0;
 
   //===--------------------------------------------------------------------===//
   // Global Offset Table Management
@@ -114,7 +120,10 @@ public:
 
   /// allocateSpace - Allocate a memory block of the given size.
   virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) = 0;
-  
+
+  /// allocateGlobal - Allocate memory for a global.
+  virtual uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) = 0;
+
   /// deallocateMemForFunction - Free JIT memory for the specified function.
   /// This is never called when the JIT is currently emitting a function.
   virtual void deallocateMemForFunction(const Function *F) = 0;

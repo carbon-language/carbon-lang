@@ -197,8 +197,10 @@ void DarwinRegisterFrame(void* FrameBegin) {
 ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
                                             std::string *ErrorStr,
                                             JITMemoryManager *JMM,
-                                            CodeGenOpt::Level OptLevel) {
-  ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM, OptLevel);
+                                            CodeGenOpt::Level OptLevel,
+                                            bool GVsWithCode) {
+  ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM, OptLevel,
+                                       GVsWithCode);
   if (!EE) return 0;
   
   // Make sure we can resolve symbols in the program as well. The zero arg
@@ -208,8 +210,8 @@ ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
 }
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
-         JITMemoryManager *JMM, CodeGenOpt::Level OptLevel)
-  : ExecutionEngine(MP), TM(tm), TJI(tji) {
+         JITMemoryManager *JMM, CodeGenOpt::Level OptLevel, bool GVsWithCode)
+  : ExecutionEngine(MP), TM(tm), TJI(tji), AllocateGVsWithCode(GVsWithCode) {
   setTargetData(TM.getTargetData());
 
   jitstate = new JITState(MP);
@@ -677,37 +679,11 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     }
     addGlobalMapping(GV, Ptr);
   } else {
-    // GlobalVariable's which are not "constant" will cause trouble in a server
-    // situation. It's returned in the same block of memory as code which may
-    // not be writable.
-    if (isGVCompilationDisabled() && !GV->isConstant()) {
-      cerr << "Compilation of non-internal GlobalValue is disabled!\n";
-      abort();
-    }
     // If the global hasn't been emitted to memory yet, allocate space and
-    // emit it into memory.  It goes in the same array as the generated
-    // code, jump tables, etc.
-    const Type *GlobalType = GV->getType()->getElementType();
-    size_t S = getTargetData()->getTypeAllocSize(GlobalType);
-    size_t A = getTargetData()->getPreferredAlignment(GV);
-    if (GV->isThreadLocal()) {
-      MutexGuard locked(lock);
-      Ptr = TJI.allocateThreadLocalMemory(S);
-    } else if (TJI.allocateSeparateGVMemory()) {
-      if (A <= 8) {
-        Ptr = malloc(S);
-      } else {
-        // Allocate S+A bytes of memory, then use an aligned pointer within that
-        // space.
-        Ptr = malloc(S+A);
-        unsigned MisAligned = ((intptr_t)Ptr & (A-1));
-        Ptr = (char*)Ptr + (MisAligned ? (A-MisAligned) : 0);
-      }
-    } else {
-      Ptr = JCE->allocateSpace(S, A);
-    }
+    // emit it into memory.
+    Ptr = getMemoryForGV(GV);
     addGlobalMapping(GV, Ptr);
-    EmitGlobalVariable(GV);
+    EmitGlobalVariable(GV);  // Initialize the variable.
   }
   return Ptr;
 }
@@ -742,14 +718,42 @@ void *JIT::recompileAndRelinkFunction(Function *F) {
 /// on the target.
 ///
 char* JIT::getMemoryForGV(const GlobalVariable* GV) {
-  const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getTargetData()->getTypeAllocSize(ElTy);
+  char *Ptr;
+
+  // GlobalVariable's which are not "constant" will cause trouble in a server
+  // situation. It's returned in the same block of memory as code which may
+  // not be writable.
+  if (isGVCompilationDisabled() && !GV->isConstant()) {
+    cerr << "Compilation of non-internal GlobalValue is disabled!\n";
+    abort();
+  }
+
+  // Some applications require globals and code to live together, so they may
+  // be allocated into the same buffer, but in general globals are allocated
+  // through the memory manager which puts them near the code but not in the
+  // same buffer.
+  const Type *GlobalType = GV->getType()->getElementType();
+  size_t S = getTargetData()->getTypeAllocSize(GlobalType);
+  size_t A = getTargetData()->getPreferredAlignment(GV);
   if (GV->isThreadLocal()) {
     MutexGuard locked(lock);
-    return TJI.allocateThreadLocalMemory(GVSize);
+    Ptr = TJI.allocateThreadLocalMemory(S);
+  } else if (TJI.allocateSeparateGVMemory()) {
+    if (A <= 8) {
+      Ptr = (char*)malloc(S);
+    } else {
+      // Allocate S+A bytes of memory, then use an aligned pointer within that
+      // space.
+      Ptr = (char*)malloc(S+A);
+      unsigned MisAligned = ((intptr_t)Ptr & (A-1));
+      Ptr = Ptr + (MisAligned ? (A-MisAligned) : 0);
+    }
+  } else if (AllocateGVsWithCode) {
+    Ptr = (char*)JCE->allocateSpace(S, A);
   } else {
-    return new char[GVSize];
+    Ptr = (char*)JCE->allocateGlobal(S, A);
   }
+  return Ptr;
 }
 
 void JIT::addPendingFunction(Function *F) {

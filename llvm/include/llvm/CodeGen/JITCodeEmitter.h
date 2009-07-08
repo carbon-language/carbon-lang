@@ -267,6 +267,11 @@ public:
     return Result;
   }
 
+  /// allocateGlobal - Allocate memory for a global.  Unlike allocateSpace,
+  /// this method does not allocate memory in the current output buffer,
+  /// because a global may live longer than the current function.
+  virtual void *allocateGlobal(uintptr_t Size, unsigned Alignment) = 0;
+
   /// StartMachineBasicBlock - This should be called by the target when a new
   /// basic block is about to be emitted.  This way the MCE knows where the
   /// start of the block is, and can implement getMachineBasicBlockAddress.
