@@ -1165,7 +1165,8 @@ void Emitter<CodeEmitter>::emitMiscBranchInstruction(const MachineInstr &MI) {
     emitDataProcessingInstruction(MI, ARM::PC);
 
     // Then emit the inline jump table.
-    unsigned JTIndex = (TID.Opcode == ARM::BR_JTr || TID.Opcode == ARM::t2BR_JTr)
+    unsigned JTIndex =
+      (TID.Opcode == ARM::BR_JTr || TID.Opcode == ARM::t2BR_JTr)
       ? MI.getOperand(1).getIndex() : MI.getOperand(2).getIndex();
     emitInlineJumpTable(JTIndex);
     return;
