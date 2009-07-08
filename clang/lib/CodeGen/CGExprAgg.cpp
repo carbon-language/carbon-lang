@@ -102,6 +102,7 @@ public:
   void VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
+  void VisitChooseExpr(const ChooseExpr *CE);
   void VisitInitListExpr(InitListExpr *E);
   void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *DAE) {
     Visit(DAE->getExpr());
@@ -293,6 +294,10 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   CGF.EmitBranch(ContBlock);
   
   CGF.EmitBlock(ContBlock);
+}
+
+void AggExprEmitter::VisitChooseExpr(const ChooseExpr *CE) {
+  Visit(CE->getChosenSubExpr(CGF.getContext()));
 }
 
 void AggExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
