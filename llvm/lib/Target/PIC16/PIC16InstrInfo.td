@@ -375,8 +375,9 @@ def subfw_2: SUBFW<0, "subwf", subc>;
 let Uses = [STATUS] in
 def subfwb: SUBFW<0, "subwfb", sube>;  // With Borrow.
 
-def subfw_cc: SUBFW<0, "subwf", PIC16Subcc>;
 }
+let Defs = [STATUS], isTerminator = 1 in
+def subfw_cc: SUBFW<0, "subwf", PIC16Subcc>;
 
 // [F] -= W ; 
 let mayStore = 1 in
@@ -425,8 +426,9 @@ class SUBLW<bits<6> opcode, SDNode OpNode> :
 let Defs = [STATUS] in {
 def sublw_1 : SUBLW<0, sub>;
 def sublw_2 : SUBLW<0, subc>;
-def sublw_cc : SUBLW<0, PIC16Subcc>;
 }
+let Defs = [STATUS], isTerminator = 1 in 
+def sublw_cc : SUBLW<0, PIC16Subcc>;
 
 // Call instruction.
 let isCall = 1,
