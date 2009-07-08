@@ -29,7 +29,7 @@ namespace clang {
     /// incompatible with previous versions (such that a reader
     /// designed for the previous version could not support reading
     /// the new version), this number should be increased.
-    const unsigned VERSION_MAJOR = 1;
+    const unsigned VERSION_MAJOR = 2;
 
     /// \brief PCH minor version number supported by this version of
     /// Clang.
