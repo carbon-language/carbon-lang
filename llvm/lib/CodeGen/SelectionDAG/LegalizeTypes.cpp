@@ -732,6 +732,8 @@ void DAGTypeLegalizer::ReplaceValueWith(SDValue From, SDValue To) {
 }
 
 void DAGTypeLegalizer::SetPromotedInteger(SDValue Op, SDValue Result) {
+  assert(Result.getValueType() == TLI.getTypeToTransformTo(Op.getValueType()) &&
+         "Invalid type for promoted integer");
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = PromotedIntegers[Op];
@@ -740,6 +742,8 @@ void DAGTypeLegalizer::SetPromotedInteger(SDValue Op, SDValue Result) {
 }
 
 void DAGTypeLegalizer::SetSoftenedFloat(SDValue Op, SDValue Result) {
+  assert(Result.getValueType() == TLI.getTypeToTransformTo(Op.getValueType()) &&
+         "Invalid type for softened float");
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = SoftenedFloats[Op];
@@ -748,6 +752,8 @@ void DAGTypeLegalizer::SetSoftenedFloat(SDValue Op, SDValue Result) {
 }
 
 void DAGTypeLegalizer::SetScalarizedVector(SDValue Op, SDValue Result) {
+  assert(Result.getValueType() == Op.getValueType().getVectorElementType() &&
+         "Invalid type for scalarized vector");
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = ScalarizedVectors[Op];
@@ -767,6 +773,9 @@ void DAGTypeLegalizer::GetExpandedInteger(SDValue Op, SDValue &Lo,
 
 void DAGTypeLegalizer::SetExpandedInteger(SDValue Op, SDValue Lo,
                                           SDValue Hi) {
+  assert(Lo.getValueType() == TLI.getTypeToTransformTo(Op.getValueType()) &&
+         Hi.getValueType() == Lo.getValueType() &&
+         "Invalid type for expanded integer");
   // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
   AnalyzeNewValue(Lo);
   AnalyzeNewValue(Hi);
@@ -790,6 +799,9 @@ void DAGTypeLegalizer::GetExpandedFloat(SDValue Op, SDValue &Lo,
 
 void DAGTypeLegalizer::SetExpandedFloat(SDValue Op, SDValue Lo,
                                         SDValue Hi) {
+  assert(Lo.getValueType() == TLI.getTypeToTransformTo(Op.getValueType()) &&
+         Hi.getValueType() == Lo.getValueType() &&
+         "Invalid type for expanded float");
   // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
   AnalyzeNewValue(Lo);
   AnalyzeNewValue(Hi);
@@ -813,6 +825,12 @@ void DAGTypeLegalizer::GetSplitVector(SDValue Op, SDValue &Lo,
 
 void DAGTypeLegalizer::SetSplitVector(SDValue Op, SDValue Lo,
                                       SDValue Hi) {
+  assert(Lo.getValueType().getVectorElementType() ==
+         Op.getValueType().getVectorElementType() &&
+         2*Lo.getValueType().getVectorNumElements() ==
+         Op.getValueType().getVectorNumElements() &&
+         Hi.getValueType() == Lo.getValueType() &&
+         "Invalid type for split vector");
   // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
   AnalyzeNewValue(Lo);
   AnalyzeNewValue(Hi);
@@ -825,6 +843,8 @@ void DAGTypeLegalizer::SetSplitVector(SDValue Op, SDValue Lo,
 }
 
 void DAGTypeLegalizer::SetWidenedVector(SDValue Op, SDValue Result) {
+  assert(Result.getValueType() == TLI.getTypeToTransformTo(Op.getValueType()) &&
+         "Invalid type for widened vector");
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = WidenedVectors[Op];
@@ -901,20 +921,13 @@ bool DAGTypeLegalizer::CustomLowerNode(SDNode *N, MVT VT, bool LegalizeResult) {
 /// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a type
 /// which is split into two not necessarily identical pieces.
 void DAGTypeLegalizer::GetSplitDestVTs(MVT InVT, MVT &LoVT, MVT &HiVT) {
+  // Currently all types are split in half.
   if (!InVT.isVector()) {
     LoVT = HiVT = TLI.getTypeToTransformTo(InVT);
   } else {
-    MVT NewEltVT = InVT.getVectorElementType();
     unsigned NumElements = InVT.getVectorNumElements();
-    if ((NumElements & (NumElements-1)) == 0) {  // Simple power of two vector.
-      NumElements >>= 1;
-      LoVT = HiVT =  MVT::getVectorVT(NewEltVT, NumElements);
-    } else {                                     // Non-power-of-two vectors.
-      unsigned NewNumElts_Lo = 1 << Log2_32(NumElements);
-      unsigned NewNumElts_Hi = NumElements - NewNumElts_Lo;
-      LoVT = MVT::getVectorVT(NewEltVT, NewNumElts_Lo);
-      HiVT = MVT::getVectorVT(NewEltVT, NewNumElts_Hi);
-    }
+    assert(!(NumElements & 1) && "Splitting vector, but not in half!");
+    LoVT = HiVT = MVT::getVectorVT(InVT.getVectorElementType(), NumElements/2);
   }
 }
 

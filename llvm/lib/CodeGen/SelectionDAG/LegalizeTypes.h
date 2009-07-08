@@ -64,7 +64,7 @@ private:
     SoftenFloat,     // Convert this float type to a same size integer type.
     ExpandFloat,     // Split this float type into two of half the size.
     ScalarizeVector, // Replace this one-element vector with its element type.
-    SplitVector,     // This vector type should be split into smaller vectors.
+    SplitVector,     // Split this vector type into two of half the size.
     WidenVector      // This vector type should be widened into a larger vector.
   };
 
@@ -533,8 +533,8 @@ private:
   // Vector Splitting Support: LegalizeVectorTypes.cpp
   //===--------------------------------------------------------------------===//
 
-  /// GetSplitVector - Given a processed vector Op which was split into smaller
-  /// vectors, this method returns the smaller vectors.  The first elements of
+  /// GetSplitVector - Given a processed vector Op which was split into vectors
+  /// of half the size, this method returns the halves.  The first elements of
   /// Op coincide with the elements of Lo; the remaining elements of Op coincide
   /// with the elements of Hi: Op is what you would get by concatenating Lo and
   /// Hi.  For example, if Op is a v8i32 that was split into two v4i32's, then

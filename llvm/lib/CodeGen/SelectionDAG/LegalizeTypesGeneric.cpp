@@ -11,9 +11,11 @@
 // The routines here perform legalization when the details of the type (such as
 // whether it is an integer or a float) do not matter.
 // Expansion is the act of changing a computation in an illegal type to be a
-// computation in two identical registers of a smaller type.
+// computation in two identical registers of a smaller type.  The Lo/Hi part
+// is required to be stored first in memory on little/big-endian machines.
 // Splitting is the act of changing a computation in an illegal type to be a
 // computation in two not necessarily identical registers of a smaller type.
+// There are no requirements on how the type is represented in memory.
 //
 //===----------------------------------------------------------------------===//
 
@@ -59,16 +61,12 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
       Hi = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Hi);
       return;
     case SplitVector:
-      // Convert the split parts of the input if it was split in two.
       GetSplitVector(InOp, Lo, Hi);
-      if (Lo.getValueType() == Hi.getValueType()) {
-        if (TLI.isBigEndian())
-          std::swap(Lo, Hi);
-        Lo = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Lo);
-        Hi = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Hi);
-        return;
-      }
-      break;
+      if (TLI.isBigEndian())
+        std::swap(Lo, Hi);
+      Lo = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Lo);
+      Hi = DAG.getNode(ISD::BIT_CONVERT, dl, NOutVT, Hi);
+      return;
     case ScalarizeVector:
       // Convert the element instead.
       SplitInteger(BitConvertToInteger(GetScalarizedVector(InOp)), Lo, Hi);
