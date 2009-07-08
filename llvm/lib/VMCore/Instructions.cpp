@@ -16,6 +16,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/MathExtras.h"
@@ -534,12 +535,11 @@ unsigned ReturnInst::getNumSuccessorsV() const {
 /// Out-of-line ReturnInst method, put here so the C++ compiler can choose to
 /// emit the vtable for the class in this translation unit.
 void ReturnInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  assert(0 && "ReturnInst has no successors!");
+  LLVM_UNREACHABLE("ReturnInst has no successors!");
 }
 
 BasicBlock *ReturnInst::getSuccessorV(unsigned idx) const {
-  assert(0 && "ReturnInst has no successors!");
-  abort();
+  LLVM_UNREACHABLE("ReturnInst has no successors!");
   return 0;
 }
 
@@ -563,12 +563,11 @@ unsigned UnwindInst::getNumSuccessorsV() const {
 }
 
 void UnwindInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  assert(0 && "UnwindInst has no successors!");
+  LLVM_UNREACHABLE("UnwindInst has no successors!");
 }
 
 BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
-  assert(0 && "UnwindInst has no successors!");
-  abort();
+  LLVM_UNREACHABLE("UnwindInst has no successors!");
   return 0;
 }
 
@@ -588,12 +587,11 @@ unsigned UnreachableInst::getNumSuccessorsV() const {
 }
 
 void UnreachableInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  assert(0 && "UnwindInst has no successors!");
+  LLVM_UNREACHABLE("UnwindInst has no successors!");
 }
 
 BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
-  assert(0 && "UnwindInst has no successors!");
-  abort();
+  LLVM_UNREACHABLE("UnwindInst has no successors!");
   return 0;
 }
 
@@ -2295,7 +2293,7 @@ CastInst::getCastOpcode(
       PTy = NULL;
       return BitCast;                             // same size, no-op cast
     } else {
-      assert(0 && "Casting pointer or non-first class to float");
+      LLVM_UNREACHABLE("Casting pointer or non-first class to float");
     }
   } else if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
     if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {

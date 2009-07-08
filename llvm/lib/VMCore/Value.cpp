@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ValueHandle.h"
@@ -514,8 +515,8 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
       cerr << "While deleting: " << *V->getType() << " %" << V->getNameStr()
            << "\n";
 #endif
-      cerr << "An asserting value handle still pointed to this value!\n";
-      abort();
+      llvm_report_error("An asserting value handle still pointed to this"
+                        "value!");
     case Weak:
       // Weak just goes to null, which will unlink it from the list.
       ThisNode->operator=(0);

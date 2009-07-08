@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;
@@ -321,8 +322,7 @@ extern "C" {
 
 #else // Not an i386 host
   void X86CompilationCallback() {
-    assert(0 && "Cannot call X86CompilationCallback() on a non-x86 arch!\n");
-    abort();
+    LLVM_UNREACHABLE("Cannot call X86CompilationCallback() on a non-x86 arch!\n");
   }
 #endif
 }

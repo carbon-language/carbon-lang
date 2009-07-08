@@ -62,6 +62,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <sstream>
@@ -93,7 +94,7 @@ namespace {  // Anonymous namespace for class
       }
 
       if (Broken)
-        abort();
+        llvm_report_error("Broken module, no Basic Block terminator!");
 
       return false;
     }
@@ -210,8 +211,7 @@ namespace {
       default: assert(0 && "Unknown action");
       case AbortProcessAction:
         msgs << "compilation aborted!\n";
-        cerr << msgs.str();
-        abort();
+        llvm_report_error(msgs.str());
       case PrintMessageAction:
         msgs << "verification continues.\n";
         cerr << msgs.str();

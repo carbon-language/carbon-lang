@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -6054,8 +6055,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) {
   SDValue SrcPtr = Op.getOperand(1);
   SDValue SrcSV = Op.getOperand(2);
 
-  assert(0 && "VAArgInst is not yet implemented for x86-64!");
-  abort();
+  LLVM_UNREACHABLE("VAArgInst is not yet implemented for x86-64!");
   return SDValue();
 }
 
@@ -6256,7 +6256,7 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
       case Intrinsic::x86_mmx_psrai_d:
         NewIntNo = Intrinsic::x86_mmx_psra_d;
         break;
-      default: abort();  // Can't reach here.
+      default: LLVM_UNREACHABLE("Impossible intrinsic");  // Can't reach here.
       }
       break;
     }
@@ -6428,8 +6428,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
             InRegCount += (TD->getTypeSizeInBits(*I) + 31) / 32;
 
         if (InRegCount > 2) {
-          cerr << "Nest register in use - reduce number of inreg parameters!\n";
-          abort();
+          llvm_report_error("Nest register in use - reduce number of inreg parameters!");
         }
       }
       break;

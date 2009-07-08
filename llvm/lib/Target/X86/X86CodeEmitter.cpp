@@ -31,6 +31,8 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -556,8 +558,7 @@ void Emitter<CodeEmitter>::emitInstruction(
       // We allow inline assembler nodes with empty bodies - they can
       // implicitly define registers, which is ok for JIT.
       if (MI.getOperand(0).getSymbolName()[0]) {
-        assert(0 && "JIT does not support inline asm!\n");
-        abort();
+        llvm_report_error("JIT does not support inline asm!");
       }
       break;
     }
@@ -805,10 +806,10 @@ void Emitter<CodeEmitter>::emitInstruction(
   }
 
   if (!Desc->isVariadic() && CurOp != NumOps) {
-    cerr << "Cannot encode: ";
-    MI.dump();
-    cerr << '\n';
-    abort();
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "Cannot encode: " << MI;
+    llvm_report_error(Msg.str());
   }
 }
 

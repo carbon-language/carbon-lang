@@ -19,6 +19,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 
@@ -77,8 +78,7 @@ void GlobalValue::removeDeadConstantUsers() const {
 /// Override destroyConstant to make sure it doesn't get called on
 /// GlobalValue's because they shouldn't be treated like other constants.
 void GlobalValue::destroyConstant() {
-  assert(0 && "You can't GV->destroyConstant()!");
-  abort();
+  LLVM_UNREACHABLE("You can't GV->destroyConstant()!");
 }
 
 /// copyAttributesFrom - copy all additional attributes (those not needed to
@@ -247,7 +247,7 @@ const GlobalValue *GlobalAlias::getAliasedGlobal() const {
            CE->getOpcode() == Instruction::GetElementPtr))
         return dyn_cast<GlobalValue>(CE->getOperand(0));
       else
-        assert(0 && "Unsupported aliasee");
+        LLVM_UNREACHABLE("Unsupported aliasee");
     }
   }
   return 0;

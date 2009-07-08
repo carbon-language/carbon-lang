@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -69,8 +70,7 @@ unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   case S30: return 30;
   case S31: return 31;
   default:
-    assert(0 && "Unknown ARM register!");
-    abort();
+    LLVM_UNREACHABLE("Unknown ARM register!");
   }
 }
 
@@ -81,8 +81,7 @@ unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
   using namespace ARM;
   switch (RegEnum) {
   default:
-    assert(0 && "Unknown ARM register!");
-    abort();
+    LLVM_UNREACHABLE("Unknown ARM register!");
   case R0:  case D0:  return 0;
   case R1:  case D1:  return 1;
   case R2:  case D2:  return 2;

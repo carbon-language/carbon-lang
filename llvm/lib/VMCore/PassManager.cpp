@@ -17,6 +17,7 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1248,8 +1249,7 @@ void FunctionPassManager::add(Pass *P) {
 bool FunctionPassManager::run(Function &F) {
   std::string errstr;
   if (MP->materializeFunction(&F, &errstr)) {
-    cerr << "Error reading bitcode file: " << errstr << "\n";
-    abort();
+    llvm_report_error("Error reading bitcode file: " + errstr);
   }
   return FPM->run(F);
 }

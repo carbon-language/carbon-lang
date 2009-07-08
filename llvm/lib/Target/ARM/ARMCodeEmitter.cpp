@@ -35,6 +35,8 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #ifndef NDEBUG
 #include <iomanip>
 #endif
@@ -221,7 +223,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
 template<class CodeEmitter>
 unsigned Emitter<CodeEmitter>::getShiftOp(unsigned Imm) const {
   switch (ARM_AM::getAM2ShiftOpc(Imm)) {
-  default: assert(0 && "Unknown shift opc!");
+  default: LLVM_UNREACHABLE("Unknown shift opc!");
   case ARM_AM::asr: return 2;
   case ARM_AM::lsl: return 0;
   case ARM_AM::lsr: return 1;
@@ -255,8 +257,10 @@ unsigned Emitter<CodeEmitter>::getMachineOpValue(const MachineInstr &MI,
   else if (MO.isMBB())
     emitMachineBasicBlock(MO.getMBB(), ARM::reloc_arm_branch);
   else {
-    cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
-    abort();
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "ERROR: Unknown type of MachineOperand: " << MO;
+    llvm_report_error(Msg.str());
   }
   return 0;
 }
@@ -336,7 +340,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI) {
   NumEmitted++;  // Keep track of the # of mi's emitted
   switch (MI.getDesc().TSFlags & ARMII::FormMask) {
   default: {
-    assert(0 && "Unhandled instruction encoding format!");
+    LLVM_UNREACHABLE("Unhandled instruction encoding format!");
     break;
   }
   case ARMII::Pseudo:
@@ -454,12 +458,10 @@ void Emitter<CodeEmitter>::emitConstPoolInstruction(const MachineInstr &MI) {
       else if (CFP->getType() == Type::DoubleTy)
         emitDWordLE(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
       else {
-        assert(0 && "Unable to handle this constantpool entry!");
-        abort();
+        LLVM_UNREACHABLE("Unable to handle this constantpool entry!");
       }
     } else {
-      assert(0 && "Unable to handle this constantpool entry!");
-      abort();
+      LLVM_UNREACHABLE("Unable to handle this constantpool entry!");
     }
   }
 }
@@ -586,13 +588,12 @@ void Emitter<CodeEmitter>::emitPseudoInstruction(const MachineInstr &MI) {
   unsigned Opcode = MI.getDesc().Opcode;
   switch (Opcode) {
   default:
-    abort(); // FIXME:
+    llvm_report_error("ARMCodeEmitter::emitPseudoInstruction");//FIXME:
   case TargetInstrInfo::INLINEASM: {
     // We allow inline assembler nodes with empty bodies - they can
     // implicitly define registers, which is ok for JIT.
     if (MI.getOperand(0).getSymbolName()[0]) {
-      assert(0 && "JIT does not support inline asm!\n");
-      abort();
+      llvm_report_error("JIT does not support inline asm!\n");
     }
     break;
   }
@@ -674,7 +675,7 @@ unsigned Emitter<CodeEmitter>::getMachineSoRegOpValue(
     // ROR - 0111
     // RRX - 0110 and bit[11:8] clear.
     switch (SOpc) {
-    default: assert(0 && "Unknown shift opc!");
+    default: LLVM_UNREACHABLE("Unknown shift opc!");
     case ARM_AM::lsl: SBits = 0x1; break;
     case ARM_AM::lsr: SBits = 0x3; break;
     case ARM_AM::asr: SBits = 0x5; break;
@@ -688,7 +689,7 @@ unsigned Emitter<CodeEmitter>::getMachineSoRegOpValue(
     // ASR - 100
     // ROR - 110
     switch (SOpc) {
-    default: assert(0 && "Unknown shift opc!");
+    default: LLVM_UNREACHABLE("Unknown shift opc!");
     case ARM_AM::lsl: SBits = 0x0; break;
     case ARM_AM::lsr: SBits = 0x2; break;
     case ARM_AM::asr: SBits = 0x4; break;
@@ -741,8 +742,7 @@ void Emitter<CodeEmitter>::emitDataProcessingInstruction(
   const TargetInstrDesc &TID = MI.getDesc();
 
   if (TID.Opcode == ARM::BFC) {
-    cerr << "ERROR: ARMv6t2 JIT is not yet supported.\n";
-    abort();
+    llvm_report_error("ERROR: ARMv6t2 JIT is not yet supported.");
   }
 
   // Part of binary is determined by TableGn.
@@ -956,7 +956,7 @@ static unsigned getAddrModeUPBits(unsigned Mode) {
   // DA - Decrement after  - bit U = 0 and bit P = 0
   // DB - Decrement before - bit U = 0 and bit P = 1
   switch (Mode) {
-  default: assert(0 && "Unknown addressing sub-mode!");
+  default: LLVM_UNREACHABLE("Unknown addressing sub-mode!");
   case ARM_AM::da:                      break;
   case ARM_AM::db: Binary |= 0x1 << ARMII::P_BitShift; break;
   case ARM_AM::ia: Binary |= 0x1 << ARMII::U_BitShift; break;
@@ -1120,7 +1120,7 @@ void Emitter<CodeEmitter>::emitBranchInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
 
   if (TID.Opcode == ARM::TPsoft)
-    abort(); // FIXME
+    llvm_report_error("ARM::TPsoft FIXME"); // FIXME
 
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);

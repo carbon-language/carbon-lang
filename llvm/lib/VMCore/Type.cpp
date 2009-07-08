@@ -20,6 +20,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -264,10 +265,10 @@ const Type *Type::getForwardedTypeInternal() const {
 }
 
 void Type::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-  abort();
+  llvm_report_error("Attempting to refine a derived type!");
 }
 void Type::typeBecameConcrete(const DerivedType *AbsTy) {
-  abort();
+  llvm_report_error("DerivedType is already a concrete type!");
 }
 
 

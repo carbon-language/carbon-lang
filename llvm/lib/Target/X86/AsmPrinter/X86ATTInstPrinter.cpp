@@ -16,6 +16,7 @@
 #include "llvm/MC/MCInst.h"
 #include "X86ATTAsmPrinter.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -103,7 +104,7 @@ void X86ATTAsmPrinter::printLeaMemReference(const MCInst *MI, unsigned Op) {
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
       O << DispVal;
   } else {
-    abort();
+    llvm_report_error("non-immediate displacement for LEA?");
     //assert(DispSpec.isGlobal() || DispSpec.isCPI() ||
     //       DispSpec.isJTI() || DispSpec.isSymbol());
     //printOperand(MI, Op+3, "mem");

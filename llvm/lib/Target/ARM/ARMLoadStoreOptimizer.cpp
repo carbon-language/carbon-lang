@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -119,7 +120,7 @@ static int getLoadStoreMultipleOpcode(int Opcode) {
   case ARM::FSTD:
     NumFSTMGened++;
     return ARM::FSTMD;
-  default: abort();
+  default: llvm_report_error("Unhandled opcode!");
   }
   return 0;
 }
@@ -441,7 +442,7 @@ static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc) {
   case ARM::FLDD: return ARM::FLDMD;
   case ARM::FSTS: return ARM::FSTMS;
   case ARM::FSTD: return ARM::FSTMD;
-  default: abort();
+  default: llvm_report_error("Unhandled opcode!");
   }
   return 0;
 }
@@ -454,7 +455,7 @@ static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc) {
   case ARM::FLDD: return ARM::FLDMD;
   case ARM::FSTS: return ARM::FSTMS;
   case ARM::FSTD: return ARM::FSTMD;
-  default: abort();
+  default: llvm_report_error("Unhandled opcode!");
   }
   return 0;
 }

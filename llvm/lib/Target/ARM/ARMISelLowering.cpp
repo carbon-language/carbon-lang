@@ -36,6 +36,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
@@ -2258,7 +2259,7 @@ static SDValue LowerCONCAT_VECTORS(SDValue Op) {
 
 SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
-  default: assert(0 && "Don't know how to custom lower this!"); abort();
+  default: LLVM_UNREACHABLE("Don't know how to custom lower this!");
   case ISD::ConstantPool:  return LowerConstantPool(Op, DAG);
   case ISD::GlobalAddress:
     return Subtarget->isTargetDarwin() ? LowerGlobalAddressDarwin(Op, DAG) :
@@ -2593,8 +2594,7 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
     case Intrinsic::arm_neon_vshiftlu:
       if (isVShiftLImm(N->getOperand(2), VT, true, Cnt))
         break;
-      assert(0 && "invalid shift count for vshll intrinsic");
-      abort();
+      LLVM_UNREACHABLE("invalid shift count for vshll intrinsic");
 
     case Intrinsic::arm_neon_vrshifts:
     case Intrinsic::arm_neon_vrshiftu:
@@ -2611,8 +2611,7 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
     case Intrinsic::arm_neon_vqshiftsu:
       if (isVShiftLImm(N->getOperand(2), VT, false, Cnt))
         break;
-      assert(0 && "invalid shift count for vqshlu intrinsic");
-      abort();
+      LLVM_UNREACHABLE("invalid shift count for vqshlu intrinsic");
 
     case Intrinsic::arm_neon_vshiftn:
     case Intrinsic::arm_neon_vrshiftn:
@@ -2625,8 +2624,7 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
       // Narrowing shifts require an immediate right shift.
       if (isVShiftRImm(N->getOperand(2), VT, true, true, Cnt))
         break;
-      assert(0 && "invalid shift count for narrowing vector shift intrinsic");
-      abort();
+      LLVM_UNREACHABLE("invalid shift count for narrowing vector shift intrinsic");
 
     default:
       assert(0 && "unhandled vector shift");
@@ -2687,8 +2685,7 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
     else if (isVShiftRImm(N->getOperand(3), VT, false, true, Cnt))
       VShiftOpc = ARMISD::VSRI;
     else {
-      assert(0 && "invalid shift count for vsli/vsri intrinsic");
-      abort();
+      LLVM_UNREACHABLE("invalid shift count for vsli/vsri intrinsic");
     }
 
     return DAG.getNode(VShiftOpc, N->getDebugLoc(), N->getValueType(0),

@@ -21,13 +21,14 @@
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Memory.h"
 #include <cstdlib>
 using namespace llvm;
 
 void ARMJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
-  abort();
+  llvm_report_error("ARMJITInfo::replaceMachineCodeForFunction");
 }
 
 /// JITCompilerFunction - This contains the address of the JIT function used to
@@ -103,8 +104,7 @@ extern "C" {
       );
 #else  // Not an ARM host
   void ARMCompilationCallback() {
-    assert(0 && "Cannot call ARMCompilationCallback() on a non-ARM arch!\n");
-    abort();
+    LLVM_UNREACHABLE("Cannot call ARMCompilationCallback() on a non-ARM arch!\n");
   }
 #endif
 }
@@ -123,14 +123,12 @@ extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
   //   ldr pc, [pc,#-4]
   //   <addr>
   if (!sys::Memory::setRangeWritable((void*)StubAddr, 8)) {
-    cerr << "ERROR: Unable to mark stub writable\n";
-    abort();
+    llvm_report_error("ERROR: Unable to mark stub writable");
   }
   *(intptr_t *)StubAddr = 0xe51ff004;  // ldr pc, [pc, #-4]
   *(intptr_t *)(StubAddr+4) = NewVal;
   if (!sys::Memory::setRangeExecutable((void*)StubAddr, 8)) {
-    cerr << "ERROR: Unable to mark stub executable\n";
-    abort();
+    llvm_report_error("ERROR: Unable to mark stub executable");
   }
 }
 

@@ -27,6 +27,8 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetAsmInfo.h"
 using namespace llvm;
@@ -1889,8 +1891,7 @@ static unsigned getStoreRegOpcode(unsigned SrcReg,
   } else if (RC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64mr;
   } else {
-    assert(0 && "Unknown regclass");
-    abort();
+    LLVM_UNREACHABLE("Unknown regclass");
   }
 
   return Opc;
@@ -1982,8 +1983,7 @@ static unsigned getLoadRegOpcode(unsigned DestReg,
   } else if (RC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64rm;
   } else {
-    assert(0 && "Unknown regclass");
-    abort();
+    LLVM_UNREACHABLE("Unknown regclass");
   }
 
   return Opc;
@@ -3196,10 +3196,10 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   }
 
   if (!Desc->isVariadic() && CurOp != NumOps) {
-    cerr << "Cannot determine size: ";
-    MI.dump();
-    cerr << '\n';
-    abort();
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "Cannot determine size: " << MI;
+    llvm_report_error(Msg.str());
   }
   
 

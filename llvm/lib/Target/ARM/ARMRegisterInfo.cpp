@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -290,8 +291,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
     }
     default:
-      assert(0 && "Unsupported addressing mode!");
-      abort();
+      LLVM_UNREACHABLE("Unsupported addressing mode!");
       break;
     }
 

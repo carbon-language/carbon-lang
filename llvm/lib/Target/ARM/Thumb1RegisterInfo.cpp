@@ -30,6 +30,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 static cl::opt<bool>
@@ -452,8 +453,7 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
     }
     default:
-      assert(0 && "Unsupported addressing mode!");
-      abort();
+      LLVM_UNREACHABLE("Unsupported addressing mode!");
       break;
     }
 
