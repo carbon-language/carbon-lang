@@ -91,24 +91,44 @@ let mayLoad = 1 in {
 def VLDMD : NI<(outs),
                (ins addrmode_neonldstm:$addr, reglist:$dst1, variable_ops),
                "vldm${addr:submode} ${addr:base}, $dst1",
-               []>;
+               []> {
+  let Inst{27-25} = 0b110;
+  let Inst{20}    = 1;
+  let Inst{11-9}  = 0b101;
+}
 
 def VLDMS : NI<(outs),
                (ins addrmode_neonldstm:$addr, reglist:$dst1, variable_ops),
                "vldm${addr:submode} ${addr:base}, $dst1",
-               []>;
+               []> {
+  let Inst{27-25} = 0b110;
+  let Inst{20}    = 1;
+  let Inst{11-9}  = 0b101;
+}
 }
 */
 
 // Use vldmia to load a Q register as a D register pair.
 def VLDRQ : NI<(outs QPR:$dst), (ins GPR:$addr),
                "vldmia $addr, ${dst:dregpair}",
-               [(set QPR:$dst, (v2f64 (load GPR:$addr)))]>;
+               [(set QPR:$dst, (v2f64 (load GPR:$addr)))]> {
+  let Inst{27-25} = 0b110;
+  let Inst{24}    = 0; // P bit
+  let Inst{23}    = 1; // U bit
+  let Inst{20}    = 1;
+  let Inst{11-9}  = 0b101;
+}
 
 // Use vstmia to store a Q register as a D register pair.
 def VSTRQ : NI<(outs), (ins QPR:$src, GPR:$addr),
                "vstmia $addr, ${src:dregpair}",
-               [(store (v2f64 QPR:$src), GPR:$addr)]>;
+               [(store (v2f64 QPR:$src), GPR:$addr)]> {
+  let Inst{27-25} = 0b110;
+  let Inst{24}    = 0; // P bit
+  let Inst{23}    = 1; // U bit
+  let Inst{20}    = 0;
+  let Inst{11-9}  = 0b101;
+}
 
 
 //   VLD1     : Vector Load (multiple single elements)

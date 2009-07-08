@@ -451,6 +451,7 @@ class AI3ldh<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 class AXI3ldh<dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
@@ -475,6 +476,7 @@ class AI3ldsh<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 class AXI3ldsh<dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
@@ -499,6 +501,7 @@ class AI3ldsb<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 class AXI3ldsb<dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
@@ -523,6 +526,7 @@ class AI3ldd<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 
 // stores
@@ -537,6 +541,7 @@ class AI3sth<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 class AXI3sth<dag oops, dag iops, Format f, string asm,
            list<dag> pattern>
@@ -561,6 +566,7 @@ class AI3std<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 0; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 
 // Pre-indexed loads
@@ -575,6 +581,7 @@ class AI3ldhpr<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 class AI3ldshpr<dag oops, dag iops, Format f, string opc,
             string asm, string cstr, list<dag> pattern>
@@ -587,6 +594,7 @@ class AI3ldshpr<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 class AI3ldsbpr<dag oops, dag iops, Format f, string opc,
             string asm, string cstr, list<dag> pattern>
@@ -599,6 +607,7 @@ class AI3ldsbpr<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 
 // Pre-indexed stores
@@ -613,6 +622,7 @@ class AI3sthpr<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 1; // P bit
+  let Inst{27-25} = 0b000;
 }
 
 // Post-indexed loads
@@ -627,6 +637,7 @@ class AI3ldhpo<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 0; // P bit
+  let Inst{27-25} = 0b000;
 }
 class AI3ldshpo<dag oops, dag iops, Format f, string opc,
             string asm, string cstr, list<dag> pattern>
@@ -639,6 +650,7 @@ class AI3ldshpo<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 0; // P bit
+  let Inst{27-25} = 0b000;
 }
 class AI3ldsbpo<dag oops, dag iops, Format f, string opc,
             string asm, string cstr, list<dag> pattern>
@@ -651,6 +663,7 @@ class AI3ldsbpo<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 1; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 0; // P bit
+  let Inst{27-25} = 0b000;
 }
 
 // Post-indexed stores
@@ -665,6 +678,7 @@ class AI3sthpo<dag oops, dag iops, Format f, string opc,
   let Inst{20}    = 0; // L bit
   let Inst{21}    = 1; // W bit
   let Inst{24}    = 0; // P bit
+  let Inst{27-25} = 0b000;
 }
 
 
