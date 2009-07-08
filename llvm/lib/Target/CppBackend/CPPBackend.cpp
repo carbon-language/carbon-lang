@@ -28,6 +28,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Config/config.h"
@@ -220,8 +221,7 @@ namespace {
   }
 
   void CppWriter::error(const std::string& msg) {
-    cerr << msg << "\n";
-    exit(2);
+    llvm_report_error(msg);
   }
 
   // printCFP - Print a floating point constant .. very carefully :)
