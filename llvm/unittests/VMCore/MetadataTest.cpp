@@ -94,10 +94,10 @@ TEST(MDNodeTest, Simple) {
   std::ostringstream oss1, oss2;
   n1->print(oss1);
   n2->print(oss2);
-  EXPECT_STREQ("metadata !{metadata !\"abc\", i8 0, metadata !\"123\"}",
+  EXPECT_STREQ("!0 = constant metadata !{metadata !\"abc\", i8 0, metadata !\"123\"}\n",
                oss1.str().c_str());
-  EXPECT_STREQ("metadata !{metadata !{metadata !\"abc\", i8 0, "
-                                     "metadata !\"123\"}}",
+  EXPECT_STREQ("!0 = constant metadata !{metadata !1}\n"
+               "!1 = constant metadata !{metadata !\"abc\", i8 0, metadata !\"123\"}\n",
                oss2.str().c_str());
 }
 
@@ -134,6 +134,6 @@ TEST(MDNodeTest, Delete) {
 
   std::ostringstream oss;
   wvh->print(oss);
-  EXPECT_STREQ("metadata !{null}", oss.str().c_str());
+  EXPECT_STREQ("!0 = constant metadata !{null}\n", oss.str().c_str());
 }
 }

@@ -466,35 +466,44 @@ namespace {
 ///
 class SlotTracker {
 public:
-  /// ValueMap - A mapping of Values to slot numbers
+  /// ValueMap - A mapping of Values to slot numbers.
   typedef DenseMap<const Value*, unsigned> ValueMap;
   
 private:  
-  /// TheModule - The module for which we are holding slot numbers
+  /// TheModule - The module for which we are holding slot numbers.
   const Module* TheModule;
   
-  /// TheFunction - The function for which we are holding slot numbers
+  /// TheFunction - The function for which we are holding slot numbers.
   const Function* TheFunction;
   bool FunctionProcessed;
   
-  /// mMap - The TypePlanes map for the module level data
+  /// TheMDNode - The MDNode for which we are holding slot numbers.
+  const MDNode *TheMDNode;
+
+  /// mMap - The TypePlanes map for the module level data.
   ValueMap mMap;
   unsigned mNext;
   
-  /// fMap - The TypePlanes map for the function level data
+  /// fMap - The TypePlanes map for the function level data.
   ValueMap fMap;
   unsigned fNext;
   
+  /// mdnMap - Map for MDNodes.
+  ValueMap mdnMap;
+  unsigned mdnNext;
 public:
   /// Construct from a module
   explicit SlotTracker(const Module *M);
   /// Construct from a function, starting out in incorp state.
   explicit SlotTracker(const Function *F);
+  /// Construct from a mdnode.
+  explicit SlotTracker(const MDNode *N);
 
   /// Return the slot number of the specified value in it's type
   /// plane.  If something is not in the SlotTracker, return -1.
   int getLocalSlot(const Value *V);
   int getGlobalSlot(const GlobalValue *V);
+  int getMetadataSlot(const MDNode *N);
 
   /// If you'd like to deal with a function instead of just a module, use
   /// this method to get its data into the SlotTracker.
@@ -508,14 +517,22 @@ public:
   /// will reset the state of the machine back to just the module contents.
   void purgeFunction();
 
-  // Implementation Details
-private:
+  /// MDNode map iterators.
+  ValueMap::iterator mdnBegin() { return mdnMap.begin(); }
+  ValueMap::iterator mdnEnd() { return mdnMap.end(); }
+  unsigned mdnSize() { return mdnMap.size(); }
+
   /// This function does the actual initialization.
   inline void initialize();
 
+  // Implementation Details
+private:
   /// CreateModuleSlot - Insert the specified GlobalValue* into the slot table.
   void CreateModuleSlot(const GlobalValue *V);
-  
+
+  /// CreateMetadataSlot - Insert the specified MDNode* into the slot table.
+  void CreateMetadataSlot(const MDNode *N);
+
   /// CreateFunctionSlot - Insert the specified Value* into the slot table.
   void CreateFunctionSlot(const Value *V);
 
@@ -523,8 +540,11 @@ private:
   /// and function declarations, but not the contents of those functions.
   void processModule();
 
-  /// Add all of the functions arguments, basic blocks, and instructions
+  /// Add all of the functions arguments, basic blocks, and instructions.
   void processFunction();
+
+  /// Add all MDNode operands.
+  void processMDNode();
 
   SlotTracker(const SlotTracker &);  // DO NOT IMPLEMENT
   void operator=(const SlotTracker &);  // DO NOT IMPLEMENT
@@ -564,14 +584,21 @@ static SlotTracker *createSlotTracker(const Value *V) {
 // Module level constructor. Causes the contents of the Module (sans functions)
 // to be added to the slot table.
 SlotTracker::SlotTracker(const Module *M)
-  : TheModule(M), TheFunction(0), FunctionProcessed(false), mNext(0), fNext(0) {
+  : TheModule(M), TheFunction(0), FunctionProcessed(false), TheMDNode(0),
+    mNext(0), fNext(0),  mdnNext(0) {
 }
 
 // Function level constructor. Causes the contents of the Module and the one
 // function provided to be added to the slot table.
 SlotTracker::SlotTracker(const Function *F)
   : TheModule(F ? F->getParent() : 0), TheFunction(F), FunctionProcessed(false),
-    mNext(0), fNext(0) {
+    TheMDNode(0), mNext(0), fNext(0) {
+}
+
+// Constructor to handle single MDNode.
+SlotTracker::SlotTracker(const MDNode *C)
+  : TheModule(0), TheFunction(0), FunctionProcessed(false), TheMDNode(C),
+    mNext(0), fNext(0),  mdnNext(0) {
 }
 
 inline void SlotTracker::initialize() {
@@ -582,6 +609,9 @@ inline void SlotTracker::initialize() {
   
   if (TheFunction && !FunctionProcessed)
     processFunction();
+
+  if (TheMDNode)
+    processMDNode();
 }
 
 // Iterate through all the global variables, functions, and global
@@ -591,9 +621,14 @@ void SlotTracker::processModule() {
   
   // Add all of the unnamed global variables to the value table.
   for (Module::const_global_iterator I = TheModule->global_begin(),
-       E = TheModule->global_end(); I != E; ++I)
+         E = TheModule->global_end(); I != E; ++I) {
     if (!I->hasName()) 
       CreateModuleSlot(I);
+    if (I->hasInitializer()) {
+      if (MDNode *N = dyn_cast<MDNode>(I->getInitializer())) 
+        CreateMetadataSlot(N);
+    }
+  }
   
   // Add all the unnamed functions to the table.
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
@@ -603,7 +638,6 @@ void SlotTracker::processModule() {
   
   ST_DEBUG("end processModule!\n");
 }
-
 
 // Process the arguments, basic blocks, and instructions  of a function.
 void SlotTracker::processFunction() {
@@ -623,14 +657,28 @@ void SlotTracker::processFunction() {
        E = TheFunction->end(); BB != E; ++BB) {
     if (!BB->hasName())
       CreateFunctionSlot(BB);
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; 
+         ++I) {
       if (I->getType() != Type::VoidTy && !I->hasName())
         CreateFunctionSlot(I);
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) 
+        if (MDNode *N = dyn_cast<MDNode>(I->getOperand(i))) 
+          CreateMetadataSlot(N);
+    }
   }
   
   FunctionProcessed = true;
   
   ST_DEBUG("end processFunction!\n");
+}
+
+/// processMDNode - Process TheMDNode.
+void SlotTracker::processMDNode() {
+  ST_DEBUG("begin processMDNode!\n");
+  mdnNext = 0;
+  CreateMetadataSlot(TheMDNode);
+  TheMDNode = 0;
+  ST_DEBUG("end processMDNode!\n");
 }
 
 /// Clean up after incorporating a function. This is the only way to get out of
@@ -652,6 +700,16 @@ int SlotTracker::getGlobalSlot(const GlobalValue *V) {
   // Find the type plane in the module map
   ValueMap::iterator MI = mMap.find(V);
   return MI == mMap.end() ? -1 : (int)MI->second;
+}
+
+/// getGlobalSlot - Get the slot number of a MDNode.
+int SlotTracker::getMetadataSlot(const MDNode *N) {
+  // Check for uninitialized state and do lazy initialization.
+  initialize();
+  
+  // Find the type plane in the module map
+  ValueMap::iterator MI = mdnMap.find(N);
+  return MI == mdnMap.end() ? -1 : (int)MI->second;
 }
 
 
@@ -684,7 +742,6 @@ void SlotTracker::CreateModuleSlot(const GlobalValue *V) {
              (isa<GlobalAlias>(V) ? 'A' : 'o'))) << "]\n");
 }
 
-
 /// CreateSlot - Create a new slot for the specified value if it has no name.
 void SlotTracker::CreateFunctionSlot(const Value *V) {
   assert(V->getType() != Type::VoidTy && !V->hasName() &&
@@ -698,7 +755,25 @@ void SlotTracker::CreateFunctionSlot(const Value *V) {
            DestSlot << " [o]\n");
 }  
 
+/// CreateModuleSlot - Insert the specified MDNode* into the slot table.
+void SlotTracker::CreateMetadataSlot(const MDNode *N) {
+  assert(N && "Can't insert a null Value into SlotTracker!");
+  
+  ValueMap::iterator I = mdnMap.find(N);
+  if (I != mdnMap.end())
+    return;
 
+  unsigned DestSlot = mdnNext++;
+  mdnMap[N] = DestSlot;
+
+  for (MDNode::const_elem_iterator MDI = N->elem_begin(), 
+         MDE = N->elem_end(); MDI != MDE; ++MDI) {
+    const Value *TV = *MDI;
+    if (TV)
+      if (const MDNode *N2 = dyn_cast<MDNode>(TV)) 
+        CreateMetadataSlot(N2);
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // AsmWriter Implementation
@@ -741,6 +816,39 @@ static const char *getPredicateText(unsigned predicate) {
     case ICmpInst::ICMP_ULE:   pred = "ule"; break;
   }
   return pred;
+}
+
+static void WriteMDNodes(raw_ostream &Out, TypePrinting &TypePrinter,
+                         SlotTracker &Machine) {
+  SmallVector<const MDNode *, 16> Nodes;
+  Nodes.resize(Machine.mdnSize());
+  for (SlotTracker::ValueMap::iterator I = 
+         Machine.mdnBegin(), E = Machine.mdnEnd(); I != E; ++I) 
+    Nodes[I->second] = cast<MDNode>(I->first);
+
+  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
+    Out << '!' << i << " = constant metadata ";
+    const MDNode *Node = Nodes[i];
+    Out << "!{";
+    for (MDNode::const_elem_iterator NI = Node->elem_begin(), 
+           NE = Node->elem_end(); NI != NE;) {
+      const Value *V = *NI;
+      if (!V)
+        Out << "null";
+      else if (const MDNode *N = dyn_cast<MDNode>(V)) {
+        Out << "metadata ";
+        Out << '!' << Machine.getMetadataSlot(N);
+      }
+      else {
+        TypePrinter.print((*NI)->getType(), Out);
+        Out << ' ';
+        WriteAsOperandInternal(Out, *NI, TypePrinter, &Machine);
+      }
+      if (++NI != NE)
+        Out << ", ";
+    }
+    Out << "}\n";
+  }
 }
 
 static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
@@ -948,6 +1056,11 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     return;
   }
 
+  if (const MDNode *Node = dyn_cast<MDNode>(CV)) {
+    Out << "!" << Machine->getMetadataSlot(Node);
+    return;
+  }
+
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     Out << CE->getOpcodeName();
     if (CE->isCompare())
@@ -1105,7 +1218,6 @@ public:
 
   void writeOperand(const Value *Op, bool PrintType);
   void writeParamOperand(const Value *Operand, Attributes Attrs);
-  void printMDNode(const MDNode *Node, bool StandAlone);
 
   const Module* getModule() { return TheModule; }
 
@@ -1216,6 +1328,8 @@ void AssemblyWriter::printModule(const Module *M) {
   // Output all of the functions.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     printFunction(I);
+
+  WriteMDNodes(Out, TypePrinter, Machine);
 }
 
 static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
@@ -1252,28 +1366,6 @@ static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
 }
 
 void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
-  if (GV->hasInitializer())
-    // If GV is initialized using Metadata then separate out metadata
-    // operands used by the initializer. Note, MDNodes are not cyclic.
-    if (MDNode *N = dyn_cast<MDNode>(GV->getInitializer())) {
-      SmallVector<const MDNode *, 4> WorkList;
-      // Collect MDNodes used by the initializer.
-      for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
-	   I != E; ++I) {
-	const Value *TV = *I;
-	if (TV)
-	  if (const MDNode *NN = dyn_cast<MDNode>(TV))
-	    WorkList.push_back(NN);
-      }
-
-      // Print MDNodes used by the initializer.
-      while (!WorkList.empty()) {
-	const MDNode *N = WorkList.back(); WorkList.pop_back();
-	printMDNode(N, true);
-	Out << '\n';
-      }
-    }
-
   if (GV->hasName()) {
     PrintLLVMName(Out, GV);
     Out << " = ";
@@ -1293,10 +1385,7 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 
   if (GV->hasInitializer()) {
     Out << ' ';
-    if (MDNode *N = dyn_cast<MDNode>(GV->getInitializer()))
-      printMDNode(N, false);
-    else
-      writeOperand(GV->getInitializer(), false);
+    writeOperand(GV->getInitializer(), false);
   }
     
   if (GV->hasSection())
@@ -1306,47 +1395,6 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
 
   printInfoComment(*GV);
   Out << '\n';
-}
-
-void AssemblyWriter::printMDNode(const MDNode *Node,
-				 bool StandAlone) {
-  std::map<const MDNode *, unsigned>::iterator MI = MDNodes.find(Node);
-  // If this node is already printed then just refer it using its Metadata
-  // id number.
-  if (MI != MDNodes.end()) {
-    if (!StandAlone)
-      Out << "!" << MI->second;
-    return;
-  }
-  
-  if (StandAlone) {
-    // Print standalone MDNode.
-    // !42 = !{ ... }
-    Out << "!" << MetadataIDNo << " = ";
-    Out << "constant metadata ";
-  }
-
-  Out << "!{";
-  for (MDNode::const_elem_iterator I = Node->elem_begin(), E = Node->elem_end();
-       I != E;) {
-    const Value *TV = *I;
-    if (!TV)
-      Out << "null";
-    else if (const MDNode *N = dyn_cast<MDNode>(TV)) {
-      TypePrinter.print(N->getType(), Out);
-      Out << ' ';
-      printMDNode(N, StandAlone);
-    }
-    else if (!*I)
-      Out << "null";
-    else 
-      writeOperand(*I, true);
-    if (++I != E)
-      Out << ", ";
-  }
-  Out << "}";
-
-  MDNodes[Node] = MetadataIDNo++;
 }
 
 void AssemblyWriter::printAlias(const GlobalAlias *GA) {
@@ -1891,7 +1939,6 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     OS << "printing a <null> value\n";
     return;
   }
-
   if (const Instruction *I = dyn_cast<Instruction>(this)) {
     const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
     SlotTracker SlotTable(F);
@@ -1907,13 +1954,10 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     AssemblyWriter W(OS, SlotTable, GV->getParent(), AAW);
     W.write(GV);
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
+    SlotTracker SlotTable(N);
     TypePrinting TypePrinter;
-    TypePrinter.print(N->getType(), OS);
-    OS << ' ';
-    // FIXME: Do we need a slot tracker for metadata ?
-    SlotTracker SlotTable((const Function *)NULL);
-    AssemblyWriter W(OS, SlotTable, NULL, AAW);
-    W.printMDNode(N, false);
+    SlotTable.initialize();
+    WriteMDNodes(OS, TypePrinter, SlotTable);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);
