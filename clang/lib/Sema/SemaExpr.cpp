@@ -4305,14 +4305,6 @@ QualType Sema::CheckVectorCompareOperands(Expr *&lex, Expr *&rex,
     CheckFloatComparison(Loc,lex,rex);
   }
 
-  // FIXME: Vector compare support in the LLVM backend is not fully reliable,
-  // just reject all vector comparisons for now.
-  if (1) {
-    Diag(Loc, diag::err_typecheck_vector_comparison)
-      << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-    return QualType();
-  }
-
   // Return the type for the comparison, which is the same as vector type for
   // integer vectors, or an integer type of identical size and number of
   // elements for floating point vectors.

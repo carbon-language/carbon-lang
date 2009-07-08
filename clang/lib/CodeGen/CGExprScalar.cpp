@@ -49,7 +49,6 @@ class VISIBILITY_HIDDEN ScalarExprEmitter
   CodeGenFunction &CGF;
   CGBuilderTy &Builder;
   bool IgnoreResultAssign;
-
 public:
 
   ScalarExprEmitter(CodeGenFunction &cgf, bool ira=false)
@@ -61,8 +60,10 @@ public:
   //===--------------------------------------------------------------------===//
 
   bool TestAndClearIgnoreResultAssign() {
-    bool I = IgnoreResultAssign; IgnoreResultAssign = false;
-    return I; }
+    bool I = IgnoreResultAssign;
+    IgnoreResultAssign = false;
+    return I;
+  }
 
   const llvm::Type *ConvertType(QualType T) { return CGF.ConvertType(T); }
   LValue EmitLValue(const Expr *E) { return CGF.EmitLValue(E); }
@@ -1181,7 +1182,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
   TestAndClearIgnoreResultAssign();
   Value *Result;
   QualType LHSTy = E->getLHS()->getType();
-  if (!LHSTy->isAnyComplexType() && !LHSTy->isVectorType()) {
+  if (!LHSTy->isAnyComplexType()) {
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());
     
@@ -1196,22 +1197,12 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
       Result = Builder.CreateICmp((llvm::ICmpInst::Predicate)UICmpOpc,
                                   LHS, RHS, "cmp");
     }
-  } else if (LHSTy->isVectorType()) {
-    Value *LHS = Visit(E->getLHS());
-    Value *RHS = Visit(E->getRHS());
+
+    // If this is a vector comparison, sign extend the result to the appropriate
+    // vector integer type and return it (don't convert to bool).
+    if (LHSTy->isVectorType())
+      return Builder.CreateSExt(Result, ConvertType(E->getType()), "sext");
     
-    if (LHS->getType()->isFPOrFPVector()) {
-      Result = Builder.CreateVFCmp((llvm::CmpInst::Predicate)FCmpOpc,
-                                  LHS, RHS, "cmp");
-    } else if (LHSTy->isUnsignedIntegerType()) {
-      Result = Builder.CreateVICmp((llvm::CmpInst::Predicate)UICmpOpc,
-                                  LHS, RHS, "cmp");
-    } else {
-      // Signed integers and pointers.
-      Result = Builder.CreateVICmp((llvm::CmpInst::Predicate)SICmpOpc,
-                                  LHS, RHS, "cmp");
-    }
-    return Result;
   } else {
     // Complex Comparison: can only be an equality comparison.
     CodeGenFunction::ComplexPairTy LHS = CGF.EmitComplexExpr(E->getLHS());
