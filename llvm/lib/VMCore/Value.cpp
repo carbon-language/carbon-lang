@@ -517,7 +517,7 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
            << "\n";
 #endif
       LLVM_UNREACHABLE("An asserting value handle still pointed to this"
-                       "value!");
+                       " value!");
     case Weak:
       // Weak just goes to null, which will unlink it from the list.
       ThisNode->operator=(0);
@@ -592,4 +592,3 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
       setOperand(i, To); // Fix it now...
     }
 }
-
