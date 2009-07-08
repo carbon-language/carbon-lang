@@ -118,7 +118,8 @@ GlobalVariable::GlobalVariable(Module &M, const Type *Ty, bool constant,
                                const std::string &Name,
                                GlobalVariable *Before, bool ThreadLocal,
                                unsigned AddressSpace)
-  : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+  : GlobalValue(M.getContext().getPointerType(Ty, AddressSpace), 
+                Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
                 InitVal != 0, Link, Name),
     isConstantGlobal(constant), isThreadLocalSymbol(ThreadLocal) {
