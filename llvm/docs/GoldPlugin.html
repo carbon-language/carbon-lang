@@ -127,8 +127,9 @@ void foo4(void) {
 
 --- command lines ---
 $ llvm-gcc -flto a.c -c -o a.o              # &lt;-- a.o is LLVM bitcode file
+$ ar q a.a a.o                              # &lt;-- a.a is an archive with LLVM bitcode
 $ llvm-gcc b.c -c -o b.o                    # &lt;-- b.o is native object file
-$ llvm-gcc -use-gold-plugin a.o b.o -o main # &lt;-- link with LLVMgold plugin
+$ llvm-gcc -use-gold-plugin a.a b.o -o main # &lt;-- link with LLVMgold plugin
 </pre>
   <p>Gold informs the plugin that foo3 is never referenced outside the IR,
   leading LLVM to delete that function. However, unlike in the
