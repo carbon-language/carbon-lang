@@ -3702,7 +3702,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   }
 
   // We only look at pointers or references to functions.
-  if (!FunctionType->isFunctionType()) 
+  FunctionType = Context.getCanonicalType(FunctionType.getUnqualifiedType());
+  if (!FunctionType->isFunctionType())
     return 0;
 
   // Find the actual overloaded function declaration.
@@ -3722,44 +3723,69 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   }
 
   // Try to dig out the overloaded function.
-  if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(OvlExpr))
+  FunctionTemplateDecl *FunctionTemplate = 0;
+  if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(OvlExpr)) {
     Ovl = dyn_cast<OverloadedFunctionDecl>(DR->getDecl());
+    FunctionTemplate = dyn_cast<FunctionTemplateDecl>(DR->getDecl());
+  }
 
-  // If there's no overloaded function declaration, we're done.
-  if (!Ovl)
+  // If there's no overloaded function declaration or function template, 
+  // we're done.
+  if (!Ovl && !FunctionTemplate)
     return 0;
  
+  OverloadIterator Fun;
+  if (Ovl)
+    Fun = Ovl;
+  else
+    Fun = FunctionTemplate;
+  
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
-  // FIXME: When templates or using declarations come along, we'll actually
-  // have to deal with duplicates, partial ordering, etc. For now, we 
-  // can just do a simple search.
-  FunctionType = Context.getCanonicalType(FunctionType.getUnqualifiedType());
-  for (OverloadedFunctionDecl::function_iterator Fun = Ovl->function_begin();
-       Fun != Ovl->function_end(); ++Fun) {
+  // FIXME: We still need to cope with duplicates, partial ordering, etc.
+  for (OverloadIterator FunEnd; Fun != FunEnd; ++Fun) {
     // C++ [over.over]p3:
     //   Non-member functions and static member functions match
     //   targets of type "pointer-to-function" or "reference-to-function."
     //   Nonstatic member functions match targets of
     //   type "pointer-to-member-function."
     // Note that according to DR 247, the containing class does not matter.
+
+    if (FunctionTemplateDecl *FunctionTemplate 
+          = dyn_cast<FunctionTemplateDecl>(*Fun)) {
+      // C++ [temp.deduct.funcaddr]p1:
+      //   Template arguments can be deduced from the type specified when 
+      //   taking the address of an overloaded function (13.4). The function 
+      //   template’s function type and the specified type are used as the 
+      //   types of P and A, and the deduction is done as described in 
+      //   14.8.2.4.
+      FunctionDecl *Specialization = 0;
+      TemplateDeductionInfo Info(Context);
+      if (TemplateDeductionResult Result
+            = DeduceTemplateArguments(FunctionTemplate, /*FIXME*/false,
+                                      /*FIXME:*/0, /*FIXME:*/0,
+                                      FunctionType, Specialization, Info)) {
+        // FIXME: make a note of the failed deduction for diagnostics.
+        (void)Result;
+      } else {
+        assert(FunctionType 
+                 == Context.getCanonicalType(Specialization->getType()));
+        return Specialization;
+      }
+    }
+    
     if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(*Fun)) {
       // Skip non-static functions when converting to pointer, and static
       // when converting to member pointer.
       if (Method->isStatic() == IsMember)
         continue;
-    } else if (IsMember)
+    } else if (IsMember) // FIXME: member templates
       continue;
 
     if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(*Fun)) {
       if (FunctionType == Context.getCanonicalType(FunDecl->getType()))
         return FunDecl;
-    } else {
-      unsigned DiagID 
-        = PP.getDiagnostics().getCustomDiagID(Diagnostic::Warning,
-                   "Clang does not yet support templated conversion functions");
-      Diag(From->getLocStart(), DiagID);
-    }
+    } 
   }
 
   return 0;
@@ -4614,8 +4640,9 @@ void Sema::FixOverloadedFunctionReference(Expr *E, FunctionDecl *Fn) {
     FixOverloadedFunctionReference(UnOp->getSubExpr(), Fn);
     E->setType(Context.getPointerType(UnOp->getSubExpr()->getType()));
   } else if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E)) {
-    assert(isa<OverloadedFunctionDecl>(DR->getDecl()) && 
-           "Expected overloaded function");
+    assert((isa<OverloadedFunctionDecl>(DR->getDecl()) ||
+            isa<FunctionTemplateDecl>(DR->getDecl())) && 
+           "Expected overloaded function or function template");
     DR->setDecl(Fn);
     E->setType(Fn->getType());
   } else if (MemberExpr *MemExpr = dyn_cast<MemberExpr>(E)) {

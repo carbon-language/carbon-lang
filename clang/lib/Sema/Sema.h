@@ -2350,13 +2350,37 @@ public:
   DeduceTemplateArguments(ClassTemplatePartialSpecializationDecl *Partial,
                           const TemplateArgumentList &TemplateArgs,
                           TemplateDeductionInfo &Info);
-                   
+          
+  TemplateDeductionResult
+  SubstituteExplicitTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
+                                const TemplateArgument *ExplicitTemplateArgs,
+                                      unsigned NumExplicitTemplateArgs,
+                            llvm::SmallVectorImpl<TemplateArgument> &Deduced,
+                                 llvm::SmallVectorImpl<QualType> &ParamTypes,
+                                      QualType *FunctionType,
+                                      TemplateDeductionInfo &Info);
+                                      
+  TemplateDeductionResult 
+  FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
+                             llvm::SmallVectorImpl<TemplateArgument> &Deduced,
+                                  FunctionDecl *&Specialization,
+                                  TemplateDeductionInfo &Info);
+  
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                           bool HasExplicitTemplateArgs,
                           const TemplateArgument *ExplicitTemplateArgs,
                           unsigned NumExplicitTemplateArgs,
                           Expr **Args, unsigned NumArgs,
+                          FunctionDecl *&Specialization,
+                          TemplateDeductionInfo &Info);
+
+  TemplateDeductionResult
+  DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
+                          bool HasExplicitTemplateArgs,
+                          const TemplateArgument *ExplicitTemplateArgs,
+                          unsigned NumExplicitTemplateArgs,
+                          QualType ArgFunctionType,
                           FunctionDecl *&Specialization,
                           TemplateDeductionInfo &Info);
   

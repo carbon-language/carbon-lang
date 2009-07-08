@@ -635,7 +635,8 @@ static bool DeclCanBeLvalue(const NamedDecl *Decl, ASTContext &Ctx) {
   return isa<VarDecl>(Decl) || isa<FieldDecl>(Decl) ||
     // C++ 3.10p2: An lvalue refers to an object or function.
     (Ctx.getLangOptions().CPlusPlus &&
-     (isa<FunctionDecl>(Decl) || isa<OverloadedFunctionDecl>(Decl)));
+     (isa<FunctionDecl>(Decl) || isa<OverloadedFunctionDecl>(Decl) ||
+      isa<FunctionTemplateDecl>(Decl)));
 }
 
 /// isLvalue - C99 6.3.2.1: an lvalue is an expression with an object type or an
@@ -659,7 +660,7 @@ Expr::isLvalueResult Expr::isLvalue(ASTContext &Ctx) const {
 
   // first, check the type (C99 6.3.2.1). Expressions with function
   // type in C are not lvalues, but they can be lvalues in C++.
-  if (TR->isFunctionType())
+  if (TR->isFunctionType() || TR == Ctx.OverloadTy)
     return LV_NotObjectType;
 
   // Allow qualified void which is an incomplete type other than void (yuck).
