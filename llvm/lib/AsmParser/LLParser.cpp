@@ -377,10 +377,8 @@ bool LLParser::ParseStandaloneMetadata() {
     return true;
 
   LocTy TyLoc;
-  bool IsConstant;    
   PATypeHolder Ty(Type::VoidTy);
-  if (ParseGlobalType(IsConstant) ||
-      ParseType(Ty, TyLoc))
+  if (ParseType(Ty, TyLoc))
     return true;
   
   Constant *Init = 0;

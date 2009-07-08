@@ -827,7 +827,7 @@ static void WriteMDNodes(raw_ostream &Out, TypePrinting &TypePrinter,
     Nodes[I->second] = cast<MDNode>(I->first);
 
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
-    Out << '!' << i << " = constant metadata ";
+    Out << '!' << i << " = metadata ";
     const MDNode *Node = Nodes[i];
     Out << "!{";
     for (MDNode::const_elem_iterator NI = Node->elem_begin(), 
