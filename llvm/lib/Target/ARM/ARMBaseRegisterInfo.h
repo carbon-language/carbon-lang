@@ -20,7 +20,7 @@
 
 namespace llvm {
   class ARMSubtarget;
-  class TargetInstrInfo;
+  class ARMBaseInstrInfo;
   class Type;
 
 /// Register allocation hints.
@@ -46,14 +46,16 @@ static inline bool isARMLowRegister(unsigned Reg) {
 
 struct ARMBaseRegisterInfo : public ARMGenRegisterInfo {
 protected:
-  const TargetInstrInfo &TII;
+  const ARMBaseInstrInfo &TII;
   const ARMSubtarget &STI;
 
   /// FramePtr - ARM physical register used as frame ptr.
   unsigned FramePtr;
-public:
-  ARMBaseRegisterInfo(const TargetInstrInfo &tii, const ARMSubtarget &STI);
 
+  // Can be only subclassed.
+  explicit ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii, const ARMSubtarget &STI);
+
+public:
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// ARM::LR, return the number that it corresponds to (e.g. 14).
   static unsigned getRegisterNumbering(unsigned RegEnum);
@@ -69,8 +71,6 @@ public:
   getCalleeSavedRegClasses(const MachineFunction *MF = 0) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
-
-  bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
 
   const TargetRegisterClass *getPointerRegClass() const;
 
@@ -101,6 +101,33 @@ public:
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 
   bool isLowRegister(unsigned Reg) const;
+
+
+  /// emitLoadConstPool - Emits a load from constpool to materialize the
+  /// specified immediate.
+  virtual void emitLoadConstPool(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator &MBBI,
+                                 const TargetInstrInfo *TII, DebugLoc dl,
+                                 unsigned DestReg, int Val,
+                                 ARMCC::CondCodes Pred = ARMCC::AL,
+                                 unsigned PredReg = 0) const;
+
+  /// Code Generation virtual methods...
+  virtual bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
+
+  virtual bool requiresRegisterScavenging(const MachineFunction &MF) const;
+
+  virtual bool hasReservedCallFrame(MachineFunction &MF) const;
+
+  virtual void eliminateCallFramePseudoInstr(MachineFunction &MF,
+                                             MachineBasicBlock &MBB,
+                                             MachineBasicBlock::iterator I) const;
+
+  virtual void eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                   int SPAdj, RegScavenger *RS = NULL) const;
+
+  virtual void emitPrologue(MachineFunction &MF) const;
+  virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
 private:
   unsigned getRegisterPairEven(unsigned Reg, const MachineFunction &MF) const;
