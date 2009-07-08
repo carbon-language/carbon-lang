@@ -157,29 +157,29 @@ def tADDspi : T1It<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
 let isReturn = 1, isTerminator = 1 in {
   def tBX_RET : TI<(outs), (ins), "bx lr", [(ARMretflag)]>;
   // Alternative return instruction used by vararg functions.
-  def tBX_RET_vararg : TI<(outs), (ins tGPR:$target), "bx $target", []>;
+  def tBX_RET_vararg : T1I<(outs), (ins tGPR:$target), "bx $target", []>;
 }
 
 // FIXME: remove when we have a way to marking a MI with these properties.
 let isReturn = 1, isTerminator = 1 in
-def tPOP_RET : TI<(outs reglist:$dst1, variable_ops), (ins),
+def tPOP_RET : T1I<(outs reglist:$dst1, variable_ops), (ins),
                    "pop $dst1", []>;
 
 let isCall = 1,
   Defs = [R0, R1, R2, R3, LR,
           D0, D1, D2, D3, D4, D5, D6, D7] in {
-  def tBL  : TIx2<(outs), (ins i32imm:$func, variable_ops),
+  def tBL  : T1Ix2<(outs), (ins i32imm:$func, variable_ops),
                    "bl ${func:call}",
                    [(ARMtcall tglobaladdr:$func)]>;
   // ARMv5T and above
-  def tBLXi : TIx2<(outs), (ins i32imm:$func, variable_ops),
+  def tBLXi : T1Ix2<(outs), (ins i32imm:$func, variable_ops),
                     "blx ${func:call}",
                     [(ARMcall tglobaladdr:$func)]>, Requires<[HasV5T]>;
-  def tBLXr : TI<(outs), (ins tGPR:$func, variable_ops),
+  def tBLXr : T1I<(outs), (ins tGPR:$func, variable_ops),
                   "blx $func",
                   [(ARMtcall tGPR:$func)]>, Requires<[HasV5T]>;
   // ARMv4T
-  def tBX : TIx2<(outs), (ins tGPR:$func, variable_ops),
+  def tBX : T1Ix2<(outs), (ins tGPR:$func, variable_ops),
                   "cpy lr, pc\n\tbx $func",
                   [(ARMcall_nolink tGPR:$func)]>;
 }
@@ -284,11 +284,11 @@ def tSpill : T1Is<(outs), (ins tGPR:$src, t_addrmode_sp:$addr),
 // TODO: A7-44: LDMIA - load multiple
 
 let mayLoad = 1 in
-def tPOP : TI<(outs reglist:$dst1, variable_ops), (ins),
+def tPOP : T1I<(outs reglist:$dst1, variable_ops), (ins),
                "pop $dst1", []>;
 
 let mayStore = 1 in
-def tPUSH : TI<(outs), (ins reglist:$src1, variable_ops),
+def tPUSH : T1I<(outs), (ins reglist:$src1, variable_ops),
                 "push $src1", []>;
 
 //===----------------------------------------------------------------------===//
@@ -577,14 +577,14 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-def tLEApcrel : TIx2<(outs tGPR:$dst), (ins i32imm:$label),
+def tLEApcrel : T1Ix2<(outs tGPR:$dst), (ins i32imm:$label),
                     !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
                                           "${:private}PCRELL${:uid}+4))\n"),
                                !strconcat("\tmov $dst, #PCRELV${:uid}\n",
                                   "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
                     []>;
 
-def tLEApcrelJT : TIx2<(outs tGPR:$dst), (ins i32imm:$label, i32imm:$id),
+def tLEApcrelJT : T1Ix2<(outs tGPR:$dst), (ins i32imm:$label, i32imm:$id),
           !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
                                          "${:private}PCRELL${:uid}+4))\n"),
                      !strconcat("\tmov $dst, #PCRELV${:uid}\n",
@@ -598,7 +598,7 @@ def tLEApcrelJT : TIx2<(outs tGPR:$dst), (ins i32imm:$label, i32imm:$id),
 // __aeabi_read_tp preserves the registers r1-r3.
 let isCall = 1,
   Defs = [R0, LR] in {
-  def tTPsoft  : TIx2<(outs), (ins),
+  def tTPsoft  : T1Ix2<(outs), (ins),
                "bl __aeabi_read_tp",
                [(set R0, ARMthread_pointer)]>;
 }

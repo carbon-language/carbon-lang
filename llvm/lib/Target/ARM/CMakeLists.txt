@@ -12,6 +12,7 @@ tablegen(ARMGenCallingConv.inc -gen-callingconv)
 tablegen(ARMGenSubtarget.inc -gen-subtarget)
 
 add_llvm_target(ARMCodeGen
+  ARMBaseInstrInfo.cpp
   ARMCodeEmitter.cpp
   ARMConstantIslandPass.cpp
   ARMConstantPoolValue.cpp

@@ -26,6 +26,61 @@ Thumb1InstrInfo::Thumb1InstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
 
+unsigned Thumb1InstrInfo::
+getUnindexedOpcode(unsigned Opc) const {
+  return 0;
+}
+
+unsigned Thumb1InstrInfo::
+getOpcode(ARMII::Op Op) const {
+  switch (Op) {
+  case ARMII::ADDri: return ARM::tADDi8;
+  case ARMII::ADDrs: return 0;
+  case ARMII::ADDrr: return ARM::tADDrr;
+  case ARMII::B: return ARM::tB;
+  case ARMII::Bcc: return ARM::tBcc;
+  case ARMII::BR_JTr: return ARM::tBR_JTr;
+  case ARMII::BR_JTm: return 0;
+  case ARMII::BR_JTadd: return 0;
+  case ARMII::FCPYS: return 0;
+  case ARMII::FCPYD: return 0;
+  case ARMII::FLDD: return 0;
+  case ARMII::FLDS: return 0;
+  case ARMII::FSTD: return 0;
+  case ARMII::FSTS: return 0;
+  case ARMII::LDR: return ARM::tLDR;
+  case ARMII::MOVr: return ARM::tMOVr;
+  case ARMII::STR: return ARM::tSTR;
+  case ARMII::SUBri: return ARM::tSUBi8;
+  case ARMII::SUBrs: return 0;
+  case ARMII::SUBrr: return ARM::tSUBrr;
+  case ARMII::VMOVD: return 0;
+  case ARMII::VMOVQ: return 0;
+  default:
+    break;
+  }
+
+  return 0;
+}
+
+bool
+Thumb1InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
+  if (MBB.empty()) return false;
+
+  switch (MBB.back().getOpcode()) {
+  case ARM::tBX_RET:
+  case ARM::tBX_RET_vararg:
+  case ARM::tPOP_RET:
+  case ARM::tB:
+  case ARM::tBR_JTr:
+    return true;
+  default:
+    break;
+  }
+
+  return false;
+}
+
 bool Thumb1InstrInfo::isMoveInstr(const MachineInstr &MI,
                                   unsigned &SrcReg, unsigned &DstReg,
                                   unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
