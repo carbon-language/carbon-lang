@@ -10,7 +10,7 @@ typedef signed char BOOL;
 typedef int NSInteger;
 typedef unsigned int NSUInteger;
 typedef struct _NSZone NSZone;
-@class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
+@class NSInvocation, NSArray, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
 @protocol NSCopying  - (id)copyWithZone:(NSZone *)zone; @end
 @protocol NSMutableCopying  - (id)mutableCopyWithZone:(NSZone *)zone; @end
@@ -311,5 +311,16 @@ extern const struct _FooAssertStruct _cmd;
 void test_cast_from_incomplete_struct_aux(volatile const void *x);
 void test_cast_from_incomplete_struct() {
   test_cast_from_incomplete_struct_aux(&_cmd);
+}
+
+// Test for <rdar://problem/7034511> 
+//  "ValueManager::makeIntVal(uint64_t X, QualType T) should return a 'Loc' 
+//   when 'T' is a pointer"
+//
+// Previously this case would crash.
+void test_rdar_7034511(NSArray *y) {
+  NSObject *x;
+  for (x in y) {}
+  if (x == ((void*) 0)) {}
 }
 

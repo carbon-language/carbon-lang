@@ -109,7 +109,10 @@ public:
     return nonloc::ConcreteInt(BasicVals.getValue(V, isUnsigned));
   }
 
-  NonLoc makeIntVal(uint64_t X, QualType T) {
+  SVal makeIntVal(uint64_t X, QualType T) {
+    if (Loc::IsLocType(T))
+      return loc::ConcreteInt(BasicVals.getValue(X, T));
+
     return nonloc::ConcreteInt(BasicVals.getValue(X, T));
   }
 
