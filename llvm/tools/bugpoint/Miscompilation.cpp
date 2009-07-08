@@ -703,7 +703,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // 1. Add a string constant with its name to the global file
         Constant *InitArray = ConstantArray::get(F->getName());
         GlobalVariable *funcName =
-          new GlobalVariable(InitArray->getType(), true /*isConstant*/,
+          new GlobalVariable(Safe->getContext(),
+                             InitArray->getType(), true /*isConstant*/,
                              GlobalValue::InternalLinkage, InitArray,
                              F->getName() + "_name", Safe);
 
@@ -722,7 +723,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
           // Create a new global to hold the cached function pointer.
           Constant *NullPtr = ConstantPointerNull::get(F->getType());
           GlobalVariable *Cache =
-            new GlobalVariable(F->getType(), false,GlobalValue::InternalLinkage,
+            new GlobalVariable(F->getParent()->getContext(),
+                               F->getType(), false,GlobalValue::InternalLinkage,
                                NullPtr,F->getName()+".fpcache", F->getParent());
 
           // Construct a new stub function that will re-route calls to F

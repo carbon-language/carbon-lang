@@ -16,6 +16,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/LeakDetector.h"
@@ -93,11 +94,13 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
 
-GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
+GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
+                               bool constant, LinkageTypes Link,
                                Constant *InitVal, const std::string &Name,
                                Module *ParentModule, bool ThreadLocal, 
                                unsigned AddressSpace)
-  : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+  : GlobalValue(Context.getPointerType(Ty, AddressSpace), 
+                Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
                 InitVal != 0, Link, Name),
     isConstantGlobal(constant), isThreadLocalSymbol(ThreadLocal) {
@@ -113,11 +116,13 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
     ParentModule->getGlobalList().push_back(this);
 }
 
-GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
+GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
+                               bool constant, LinkageTypes Link,
                                Constant *InitVal, const std::string &Name,
                                GlobalVariable *Before, bool ThreadLocal,
                                unsigned AddressSpace)
-  : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+  : GlobalValue(Context.getPointerType(Ty, AddressSpace),
+                Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
                 InitVal != 0, Link, Name),
     isConstantGlobal(constant), isThreadLocalSymbol(ThreadLocal) {

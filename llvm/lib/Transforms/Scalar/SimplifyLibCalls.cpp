@@ -1290,7 +1290,8 @@ struct VISIBILITY_HIDDEN PrintFOpt : public LibCallOptimization {
       // pass to be run after this pass, to merge duplicate strings.
       FormatStr.erase(FormatStr.end()-1);
       Constant *C = Context->getConstantArray(FormatStr, true);
-      C = new GlobalVariable(C->getType(), true,GlobalVariable::InternalLinkage,
+      C = new GlobalVariable(*Context, C->getType(),
+                             true, GlobalVariable::InternalLinkage,
                              C, "str", Callee->getParent());
       EmitPutS(C, B);
       return CI->use_empty() ? (Value*)CI : 

@@ -128,6 +128,7 @@ void BrainF::header(LLVMContext& C) {
       get("Error: The head has left the tape.", true);
 
     GlobalVariable *aberrormsg = new GlobalVariable(
+      module->getContext(),
       msg_0->getType(),
       true,
       GlobalValue::InternalLinkage,

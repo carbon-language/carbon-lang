@@ -573,7 +573,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // symbol over in the dest module... the initializer will be filled in
       // later by LinkGlobalInits.
       GlobalVariable *NewDGV =
-        new GlobalVariable(SGV->getType()->getElementType(),
+        new GlobalVariable(Context, SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            SGV->getName(), Dest, false,
                            SGV->getType()->getAddressSpace());
@@ -606,7 +606,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // AppendingVars map.  The name is cleared out so that no linkage is
       // performed.
       GlobalVariable *NewDGV =
-        new GlobalVariable(SGV->getType()->getElementType(),
+        new GlobalVariable(Context, SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
                            "", Dest, false,
                            SGV->getType()->getAddressSpace());
@@ -634,8 +634,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // we are replacing may be a function (if a prototype, weak, etc) or a
       // global variable.
       GlobalVariable *NewDGV =
-        new GlobalVariable(SGV->getType()->getElementType(), SGV->isConstant(),
-                           NewLinkage, /*init*/0, DGV->getName(), Dest, false,
+        new GlobalVariable(Context, SGV->getType()->getElementType(), 
+                           SGV->isConstant(), NewLinkage, /*init*/0, 
+                           DGV->getName(), Dest, false,
                            SGV->getType()->getAddressSpace());
 
       // Propagate alignment, section, and visibility info.
@@ -1156,7 +1157,7 @@ static bool LinkAppendingVars(Module *M,
 
       // Create the new global variable...
       GlobalVariable *NG =
-        new GlobalVariable(NewType, G1->isConstant(), G1->getLinkage(),
+        new GlobalVariable(Context, NewType, G1->isConstant(), G1->getLinkage(),
                            /*init*/0, First->first, M, G1->isThreadLocal(),
                            G1->getType()->getAddressSpace());
 

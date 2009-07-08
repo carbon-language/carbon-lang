@@ -516,7 +516,8 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   }
 
   if (GV == 0) {
-    GV = new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage, 0, Name,
+    GV = new GlobalVariable(Context, Ty, false,
+                            GlobalValue::ExternalLinkage, 0, Name,
                             M, false, AddrSpace);
   } else {
     if (GV->getType()->getElementType() != Ty)
@@ -607,7 +608,7 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
     
     FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, Name, M);
   } else {
-    FwdVal = new GlobalVariable(PTy->getElementType(), false,
+    FwdVal = new GlobalVariable(Context, PTy->getElementType(), false,
                                 GlobalValue::ExternalWeakLinkage, 0, Name, M);
   }
   
@@ -651,7 +652,7 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
     }
     FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, "", M);
   } else {
-    FwdVal = new GlobalVariable(PTy->getElementType(), false,
+    FwdVal = new GlobalVariable(Context, PTy->getElementType(), false,
                                 GlobalValue::ExternalWeakLinkage, 0, "", M);
   }
   

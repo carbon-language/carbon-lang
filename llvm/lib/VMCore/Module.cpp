@@ -28,17 +28,20 @@ using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 // Methods to implement the globals and functions lists.
+// NOTE: It is ok to allocate the globals used for these methods from the 
+// global context, because all we ever do is use them to compare for equality.
 //
 
 GlobalVariable *ilist_traits<GlobalVariable>::createSentinel() {
-  GlobalVariable *Ret = new GlobalVariable(Type::Int32Ty, false,
+  GlobalVariable *Ret = new GlobalVariable(getGlobalContext(),
+                                           Type::Int32Ty, false,
                                            GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
   return Ret;
 }
 GlobalAlias *ilist_traits<GlobalAlias>::createSentinel() {
-  GlobalAlias *Ret = new GlobalAlias(Type::Int32Ty,
+  GlobalAlias *Ret = new GlobalAlias(Type::Int32Ty, 
                                      GlobalValue::ExternalLinkage);
   // This should not be garbage monitored.
   LeakDetector::removeGarbageObject(Ret);
@@ -270,7 +273,8 @@ Constant *Module::getOrInsertGlobal(const std::string &Name, const Type *Ty) {
   if (GV == 0) {
     // Nope, add it
     GlobalVariable *New =
-      new GlobalVariable(Ty, false, GlobalVariable::ExternalLinkage, 0, Name);
+      new GlobalVariable(getContext(), Ty, false, 
+                         GlobalVariable::ExternalLinkage, 0, Name);
     GlobalList.push_back(New);
     return New;                    // Return the new declaration.
   }

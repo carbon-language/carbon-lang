@@ -490,7 +490,7 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
   Constant *ConstStr = VMContext.getConstantArray(String);
     
   // Otherwise create and return a new string global.
-  GlobalVariable *StrGV = new GlobalVariable(ConstStr->getType(), true,
+  GlobalVariable *StrGV = new GlobalVariable(VMContext,ConstStr->getType(), true,
                                              GlobalVariable::InternalLinkage,
                                              ConstStr, ".str", &M);
   StrGV->setSection("llvm.metadata");
@@ -516,7 +516,7 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
   DIDescriptor &Entry = SimpleConstantCache[Init];
   if (!Entry.isNull()) return DIArray(Entry.getGV());
   
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.array", &M);
   GV->setSection("llvm.metadata");
@@ -542,7 +542,7 @@ DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
   
   M.addTypeName("llvm.dbg.subrange.type", Init->getType());
 
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.subrange", &M);
   GV->setSection("llvm.metadata");
@@ -579,7 +579,7 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.compile_unit.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::LinkOnceAnyLinkage,
                                           Init, "llvm.dbg.compile_unit", &M);
   GV->setSection("llvm.metadata");
@@ -598,7 +598,7 @@ DIEnumerator DIFactory::CreateEnumerator(const std::string &Name, uint64_t Val){
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.enumerator.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.enumerator", &M);
   GV->setSection("llvm.metadata");
@@ -632,7 +632,7 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.basictype.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.basictype", &M);
   GV->setSection("llvm.metadata");
@@ -668,7 +668,7 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.derivedtype.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.derivedtype", &M);
   GV->setSection("llvm.metadata");
@@ -708,7 +708,7 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.composite.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.composite", &M);
   GV->setSection("llvm.metadata");
@@ -746,7 +746,7 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.subprogram.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::LinkOnceAnyLinkage,
                                           Init, "llvm.dbg.subprogram", &M);
   GV->setSection("llvm.metadata");
@@ -780,7 +780,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.global_variable.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::LinkOnceAnyLinkage,
                                           Init, "llvm.dbg.global_variable", &M);
   GV->setSection("llvm.metadata");
@@ -806,7 +806,7 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.variable.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.variable", &M);
   GV->setSection("llvm.metadata");
@@ -826,7 +826,7 @@ DIBlock DIFactory::CreateBlock(DIDescriptor Context) {
                                              sizeof(Elts)/sizeof(Elts[0]));
   
   M.addTypeName("llvm.dbg.block.type", Init->getType());
-  GlobalVariable *GV = new GlobalVariable(Init->getType(), true,
+  GlobalVariable *GV = new GlobalVariable(VMContext, Init->getType(), true,
                                           GlobalValue::InternalLinkage,
                                           Init, "llvm.dbg.block", &M);
   GV->setSection("llvm.metadata");
