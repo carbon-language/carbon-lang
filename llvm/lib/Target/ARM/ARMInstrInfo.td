@@ -118,25 +118,16 @@ class RegConstraint<string C> {
 //  ARM specific transformation functions and pattern fragments.
 //
 
-// so_imm_XFORM - Return a so_imm value packed into the format described for
-// so_imm def below.
-def so_imm_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(N->getZExtValue()),
-                                   MVT::i32);
-}]>;
-
 // so_imm_neg_XFORM - Return a so_imm value packed into the format described for
 // so_imm_neg def below.
 def so_imm_neg_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(-(int)N->getZExtValue()),
-                                   MVT::i32);
+  return CurDAG->getTargetConstant(-(int)N->getZExtValue(), MVT::i32);
 }]>;
 
 // so_imm_not_XFORM - Return a so_imm value packed into the format described for
 // so_imm_not def below.
 def so_imm_not_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(~(int)N->getZExtValue()),
-                                   MVT::i32);
+  return CurDAG->getTargetConstant(~(int)N->getZExtValue(), MVT::i32);
 }]>;
 
 // rot_imm predicate - True if the 32-bit immediate is equal to 8, 16, or 24.
@@ -234,9 +225,9 @@ def so_reg : Operand<i32>,    // reg reg imm
 // into so_imm instructions: the 8-bit immediate is the least significant bits
 // [bits 0-7], the 4-bit shift amount is the next 4 bits [bits 8-11].
 def so_imm : Operand<i32>,
-             PatLeaf<(imm),
-                     [{ return ARM_AM::getSOImmVal(N->getZExtValue()) != -1; }],
-                     so_imm_XFORM> {
+             PatLeaf<(imm), [{
+      return ARM_AM::getSOImmVal(N->getZExtValue()) != -1;
+    }]> {
   let PrintMethod = "printSOImmOperand";
 }
 
@@ -252,12 +243,12 @@ def so_imm2part : Operand<i32>,
 
 def so_imm2part_1 : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getSOImmTwoPartFirst((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(V), MVT::i32);
+  return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
 def so_imm2part_2 : SDNodeXForm<imm, [{
   unsigned V = ARM_AM::getSOImmTwoPartSecond((unsigned)N->getZExtValue());
-  return CurDAG->getTargetConstant(ARM_AM::getSOImmVal(V), MVT::i32);
+  return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
 
@@ -1440,11 +1431,11 @@ def MOVi2pieces : AI1x2<(outs GPR:$dst), (ins so_imm2part:$src), Pseudo,
                          [(set GPR:$dst, so_imm2part:$src)]>;
 
 def : ARMPat<(or GPR:$LHS, so_imm2part:$RHS),
-              (ORRri (ORRri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
-                     (so_imm2part_2 imm:$RHS))>;
+             (ORRri (ORRri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
+                    (so_imm2part_2 imm:$RHS))>;
 def : ARMPat<(xor GPR:$LHS, so_imm2part:$RHS),
-              (EORri (EORri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
-                     (so_imm2part_2 imm:$RHS))>;
+             (EORri (EORri GPR:$LHS, (so_imm2part_1 imm:$RHS)),
+                    (so_imm2part_2 imm:$RHS))>;
 
 // TODO: add,sub,and, 3-instr forms?
 

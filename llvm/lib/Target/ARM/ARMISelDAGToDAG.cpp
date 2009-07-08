@@ -1071,10 +1071,10 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       }
 
       // Pattern: (ARMcmov:i32 GPR:i32:$false,
-      //             (imm:i32)<<P:Predicate_so_imm>><<X:so_imm_XFORM>>:$true,
+      //             (imm:i32)<<P:Predicate_so_imm>>:$true,
       //             (imm:i32):$cc)
       // Emits: (MOVCCi:i32 GPR:i32:$false,
-      //           (so_imm_XFORM:i32 (imm:i32):$true), (imm:i32):$cc)
+      //           (so_imm:i32 (imm:i32):$true), (imm:i32):$cc)
       // Pattern complexity = 10  cost = 1  size = 0
       if (N3.getOpcode() == ISD::Constant) {
         if (Subtarget->isThumb()) {
@@ -1082,7 +1082,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
             SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
                                      cast<ConstantSDNode>(N1)->getZExtValue()),
                                      MVT::i32);
-            Tmp1 = Transform_t2_so_imm_XFORM(Tmp1.getNode());
             SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                      cast<ConstantSDNode>(N2)->getZExtValue()),
                                      MVT::i32);
@@ -1095,7 +1094,6 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
             SDValue Tmp1 = CurDAG->getTargetConstant(((unsigned)
                                      cast<ConstantSDNode>(N1)->getZExtValue()),
                                      MVT::i32);
-            Tmp1 = Transform_so_imm_XFORM(Tmp1.getNode());
             SDValue Tmp2 = CurDAG->getTargetConstant(((unsigned)
                                      cast<ConstantSDNode>(N2)->getZExtValue()),
                                      MVT::i32);

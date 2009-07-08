@@ -20,23 +20,14 @@ def t2_so_reg : Operand<i32>,    // reg imm
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
-// t2_so_imm_XFORM - Return a t2_so_imm value packed into the format 
-// described for t2_so_imm def below.
-def t2_so_imm_XFORM : SDNodeXForm<imm, [{
-  return CurDAG->getTargetConstant(
-        ARM_AM::getT2SOImmVal(N->getZExtValue()), MVT::i32);
-}]>;
-
 // t2_so_imm_not_XFORM - Return the complement of a t2_so_imm value
 def t2_so_imm_not_XFORM : SDNodeXForm<imm, [{
-    return CurDAG->getTargetConstant(
-        ARM_AM::getT2SOImmVal(~((uint32_t)N->getZExtValue())), MVT::i32);
+  return CurDAG->getTargetConstant(~((uint32_t)N->getZExtValue()), MVT::i32);
 }]>;
 
 // t2_so_imm_neg_XFORM - Return the negation of a t2_so_imm value
 def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
-    return CurDAG->getTargetConstant(
-        ARM_AM::getT2SOImmVal(-((int)N->getZExtValue())), MVT::i32);
+  return CurDAG->getTargetConstant(-((int)N->getZExtValue()), MVT::i32);
 }]>;
 
 // t2_so_imm - Match a 32-bit immediate operand, which is an
@@ -47,27 +38,21 @@ def t2_so_imm_neg_XFORM : SDNodeXForm<imm, [{
 // [bits 0-7], the 4-bit shift/splat amount is the next 4 bits [bits 8-11].
 def t2_so_imm : Operand<i32>,
                 PatLeaf<(imm), [{
-       return ARM_AM::getT2SOImmVal((uint32_t)N->getZExtValue()) != -1;
-     }], t2_so_imm_XFORM> {
-  let PrintMethod = "printT2SOImmOperand";
-}
+  return ARM_AM::getT2SOImmVal((uint32_t)N->getZExtValue()) != -1; 
+}]>;
 
 // t2_so_imm_not - Match an immediate that is a complement 
 // of a t2_so_imm.
 def t2_so_imm_not : Operand<i32>,
                     PatLeaf<(imm), [{
-       return ARM_AM::getT2SOImmVal(~((uint32_t)N->getZExtValue())) != -1;
-     }], t2_so_imm_not_XFORM> {
-  let PrintMethod = "printT2SOImmOperand";
-}
+  return ARM_AM::getT2SOImmVal(~((uint32_t)N->getZExtValue())) != -1;
+}], t2_so_imm_not_XFORM>;
 
 // t2_so_imm_neg - Match an immediate that is a negation of a t2_so_imm.
 def t2_so_imm_neg : Operand<i32>,
                     PatLeaf<(imm), [{
-       return ARM_AM::getT2SOImmVal(-((int)N->getZExtValue())) != -1;
-     }], t2_so_imm_neg_XFORM> {
-  let PrintMethod = "printT2SOImmOperand";
-}
+  return ARM_AM::getT2SOImmVal(-((int)N->getZExtValue())) != -1;
+}], t2_so_imm_neg_XFORM>;
 
 /// imm1_31 predicate - True if the 32-bit immediate is in the range [1,31].
 def imm1_31 : PatLeaf<(i32 imm), [{

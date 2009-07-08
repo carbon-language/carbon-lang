@@ -942,13 +942,11 @@ void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
     // We will handle these bits from offset, clear them.
     NumBytes &= ~ThisVal;
 
-    // Get the properly encoded SOImmVal field.
-    int SOImmVal = ARM_AM::getSOImmVal(ThisVal);
-    assert(SOImmVal != -1 && "Bit extraction didn't work?");
+    assert(ARM_AM::getSOImmVal(ThisVal) != -1 && "Bit extraction didn't work?");
 
     // Build the new ADD / SUB.
     BuildMI(MBB, MBBI, dl, TII.get(TII.getOpcode(isSub ? ARMII::SUBri : ARMII::ADDri)), DestReg)
-      .addReg(BaseReg, RegState::Kill).addImm(SOImmVal)
+      .addReg(BaseReg, RegState::Kill).addImm(ThisVal)
       .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
     BaseReg = DestReg;
   }
@@ -1071,11 +1069,10 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
     }
 
     // Common case: small offset, fits into instruction.
-    int ImmedOffset = ARM_AM::getSOImmVal(Offset);
-    if (ImmedOffset != -1) {
+    if (ARM_AM::getSOImmVal(Offset) != -1) {
       // Replace the FrameIndex with sp / fp
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      MI.getOperand(i+1).ChangeToImmediate(ImmedOffset);
+      MI.getOperand(i+1).ChangeToImmediate(Offset);
       return;
     }
 
@@ -1089,9 +1086,9 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset &= ~ThisImmVal;
 
     // Get the properly encoded SOImmVal field.
-    int ThisSOImmVal = ARM_AM::getSOImmVal(ThisImmVal);
-    assert(ThisSOImmVal != -1 && "Bit extraction didn't work?");
-    MI.getOperand(i+1).ChangeToImmediate(ThisSOImmVal);
+    assert(ARM_AM::getSOImmVal(ThisImmVal) != -1 &&
+           "Bit extraction didn't work?");
+    MI.getOperand(i+1).ChangeToImmediate(ThisImmVal);
   } else {
     unsigned ImmIdx = 0;
     int InstrOffs = 0;

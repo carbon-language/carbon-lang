@@ -91,15 +91,14 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     bool isSub = ARM_AM::getAM2Op(OffImm) == ARM_AM::sub;
     unsigned Amt = ARM_AM::getAM2Offset(OffImm);
     if (OffReg == 0) {
-      int SOImmVal = ARM_AM::getSOImmVal(Amt);
-      if (SOImmVal == -1)
+      if (ARM_AM::getSOImmVal(Amt) == -1)
         // Can't encode it in a so_imm operand. This transformation will
         // add more than 1 instruction. Abandon!
         return NULL;
       UpdateMI = BuildMI(MF, MI->getDebugLoc(),
                          get(isSub ? getOpcode(ARMII::SUBri) :
                              getOpcode(ARMII::ADDri)), WBReg)
-        .addReg(BaseReg).addImm(SOImmVal)
+        .addReg(BaseReg).addImm(Amt)
         .addImm(Pred).addReg(0).addReg(0);
     } else if (Amt != 0) {
       ARM_AM::ShiftOpc ShOpc = ARM_AM::getAM2ShiftOpc(OffImm);

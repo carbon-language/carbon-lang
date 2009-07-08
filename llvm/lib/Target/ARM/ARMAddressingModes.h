@@ -273,29 +273,6 @@ namespace ARM_AM {
     return V >> getThumbImmValShift(V);
   }
 
-  /// getT2SOImmValDecode - Given a 12-bit encoded Thumb-2 modified immediate,
-  /// return the corresponding 32-bit immediate value.
-  /// See ARM Reference Manual A6.3.2.
-  static inline unsigned getT2SOImmValDecode(unsigned Imm) {
-    unsigned Base = Imm & 0xff;
-    switch ((Imm >> 8) & 0xf) {
-    case 0:
-      return Base;
-    case 1:
-      return Base | (Base << 16);
-    case 2:
-      return (Base << 8) | (Base << 24);
-    case 3:
-      return Base | (Base << 8) | (Base << 16) | (Base << 24);
-    default:
-      break;
-    }
-    
-    // shifted immediate
-    unsigned RotAmount = ((Imm >> 7) & 0x1f) - 8;
-    return (Base | 0x80) << (24 - RotAmount);
-  }
-
   /// getT2SOImmValSplat - Return the 12-bit encoded representation
   /// if the specified value can be obtained by splatting the low 8 bits
   /// into every other byte or every byte of a 32-bit value. i.e.,

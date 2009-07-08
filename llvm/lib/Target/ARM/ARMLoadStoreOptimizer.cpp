@@ -171,12 +171,11 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
       BaseOpc = ARM::SUBri;
       Offset = - Offset;
     }
-    int ImmedOffset = ARM_AM::getSOImmVal(Offset);
-    if (ImmedOffset == -1)
+    if (ARM_AM::getSOImmVal(Offset) == -1)
       return false;  // Probably not worth it then.
 
     BuildMI(MBB, MBBI, dl, TII->get(BaseOpc), NewBase)
-      .addReg(Base, getKillRegState(BaseKill)).addImm(ImmedOffset)
+      .addReg(Base, getKillRegState(BaseKill)).addImm(Offset)
       .addImm(Pred).addReg(PredReg).addReg(0);
     Base = NewBase;
     BaseKill = true;  // New base is always killed right its use.
