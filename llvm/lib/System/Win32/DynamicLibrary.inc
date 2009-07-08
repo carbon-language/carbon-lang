@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
+#include "llvm/System/RWMutex.h"
 
 #ifdef __MINGW32__
  #include <imagehlp.h>
