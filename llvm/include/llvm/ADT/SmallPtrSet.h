@@ -17,6 +17,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <iterator>
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 
@@ -170,7 +171,14 @@ protected:
 template<typename PtrTy>
 class SmallPtrSetIterator : public SmallPtrSetIteratorImpl {
   typedef PointerLikeTypeTraits<PtrTy> PtrTraits;
+  
 public:
+  typedef PtrTy                     value_type;
+  typedef PtrTy                     reference;
+  typedef PtrTy                     pointer;
+  typedef std::ptrdiff_t            difference_type;
+  typedef std::forward_iterator_tag iterator_category;
+  
   explicit SmallPtrSetIterator(const void *const *BP)
     : SmallPtrSetIteratorImpl(BP) {}
 
