@@ -301,7 +301,7 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
 /// the bits are returned in inverse order. 
 /// @brief Lowering of llvm.part.select intrinsic.
 static Instruction *LowerPartSelect(CallInst *CI) {
-  IRBuilder<> Builder;
+  IRBuilder<> Builder(*CI->getParent()->getContext());
 
   // Make sure we're dealing with a part select intrinsic here
   Function *F = CI->getCalledFunction();
@@ -472,7 +472,7 @@ static Instruction *LowerPartSelect(CallInst *CI) {
 /// greater than %High then the inverse set of bits are replaced.
 /// @brief Lowering of llvm.bit.part.set intrinsic.
 static Instruction *LowerPartSet(CallInst *CI) {
-  IRBuilder<> Builder;
+  IRBuilder<> Builder(*CI->getParent()->getContext());
 
   // Make sure we're dealing with a part select intrinsic here
   Function *F = CI->getCalledFunction();

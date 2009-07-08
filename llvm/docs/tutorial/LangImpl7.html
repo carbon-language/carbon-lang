@@ -1003,6 +1003,7 @@ variables and var/in support.  To build this example, use:
 <pre>
 #include "llvm/DerivedTypes.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/PassManager.h"
@@ -1605,7 +1606,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static IRBuilder&lt;&gt; Builder;
+static IRBuilder&lt;&gt; Builder(getGlobalContext());
 static std::map&lt;std::string, AllocaInst*&gt; NamedValues;
 static FunctionPassManager *TheFPM;
 
@@ -2099,7 +2100,7 @@ int main() {
   getNextToken();
 
   // Make the module, which holds all the code.
-  TheModule = new Module("my cool jit");
+  TheModule = new Module("my cool jit", getGlobalContext());
   
   // Create the JIT.
   TheExecutionEngine = ExecutionEngine::create(TheModule);

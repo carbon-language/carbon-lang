@@ -1639,7 +1639,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
   
   const TargetData &TD = getAnalysis<TargetData>();
   
-  IRBuilder<> Builder;
+  IRBuilder<> Builder(*Context);
 
   bool Changed = false;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {

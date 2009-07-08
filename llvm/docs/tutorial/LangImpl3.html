@@ -115,7 +115,7 @@ undeclared parameter):</p>
 Value *ErrorV(const char *Str) { Error(Str); return 0; }
 
 static Module *TheModule;
-static IRBuilder&lt;&gt; Builder;
+static IRBuilder&lt;&gt; Builder(getGlobalContext());
 static std::map&lt;std::string, Value*&gt; NamedValues;
 </pre>
 </div>
@@ -682,6 +682,7 @@ our makefile/command line about which options to use:</p>
 // See example below.
 
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/IRBuilder.h"
@@ -1216,7 +1217,7 @@ double putchard(double X) {
 //===----------------------------------------------------------------------===//
 
 int main() {
-  TheModule = new Module("my cool jit");
+  TheModule = new Module("my cool jit", getGlobalContext());
 
   // Install standard binary operators.
   // 1 is lowest precedence.

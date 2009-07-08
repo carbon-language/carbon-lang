@@ -93,7 +93,7 @@ namespace {
 
   public:
     EscapeEnumerator(Function &F, const char *N = "cleanup")
-      : F(F), CleanupBBName(N), State(0) {}
+      : F(F), CleanupBBName(N), State(0), Builder(*F.getContext()) {}
 
     IRBuilder<> *Next() {
       switch (State) {

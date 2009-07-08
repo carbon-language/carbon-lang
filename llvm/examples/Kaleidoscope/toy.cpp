@@ -604,7 +604,7 @@ static PrototypeAST *ParseExtern() {
 //===----------------------------------------------------------------------===//
 
 static Module *TheModule;
-static IRBuilder<> Builder;
+static IRBuilder<> Builder(getGlobalContext());
 static std::map<std::string, AllocaInst*> NamedValues;
 static FunctionPassManager *TheFPM;
 
