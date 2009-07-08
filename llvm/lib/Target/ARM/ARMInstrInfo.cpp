@@ -73,6 +73,7 @@ getOpcode(ARMII::Op Op) const {
   case ARMII::BR_JTr: return ARM::BR_JTr;
   case ARMII::BR_JTm: return ARM::BR_JTm;
   case ARMII::BR_JTadd: return ARM::BR_JTadd;
+  case ARMII::BX_RET: return ARM::BX_RET;
   case ARMII::FCPYS: return ARM::FCPYS;
   case ARMII::FCPYD: return ARM::FCPYD;
   case ARMII::FLDD: return ARM::FLDD;
@@ -120,7 +121,7 @@ reMaterialize(MachineBasicBlock &MBB,
               const MachineInstr *Orig) const {
   DebugLoc dl = Orig->getDebugLoc();
   if (Orig->getOpcode() == ARM::MOVi2pieces) {
-    RI.emitLoadConstPool(MBB, I, this, dl,
+    RI.emitLoadConstPool(MBB, I, dl,
                          DestReg,
                          Orig->getOperand(1).getImm(),
                          (ARMCC::CondCodes)Orig->getOperand(2).getImm(),

@@ -42,6 +42,7 @@ getOpcode(ARMII::Op Op) const {
   case ARMII::BR_JTr: return ARM::tBR_JTr;
   case ARMII::BR_JTm: return 0;
   case ARMII::BR_JTadd: return 0;
+  case ARMII::BX_RET: return ARM::tBX_RET;
   case ARMII::FCPYS: return 0;
   case ARMII::FCPYD: return 0;
   case ARMII::FLDD: return 0;

@@ -1063,34 +1063,34 @@ let isCall = 1,
 // Control-Flow Instructions
 //
 
-//let isReturn = 1, isTerminator = 1 in
-//  def t2BX_RET : T2XI<(outs), (ins), "bx lr", [(ARMretflag)]>;
-//
+let isReturn = 1, isTerminator = 1 in
+  def t2BX_RET : T2XI<(outs), (ins), "bx lr", [(ARMretflag)]>;
+
 // On non-Darwin platforms R9 is callee-saved.
-//let isCall = 1,
-//  Defs = [R0, R1, R2, R3, R12, LR,
-//          D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
-//def t2BL  : T2XI<(outs), (ins i32imm:$func, variable_ops),
-//                 "bl ${func:call}",
-//                  [(ARMcall tglobaladdr:$func)]>, Requires<[IsNotDarwin]>;
-//
-//def t2BLX : T2XI<(outs), (ins GPR:$func, variable_ops),
-//                "blx $func",
-//                [(ARMcall GPR:$func)]>, Requires<[IsNotDarwin]>;
-//}
+let isCall = 1,
+  Defs = [R0, R1, R2, R3, R12, LR,
+          D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
+def t2BL  : T2XI<(outs), (ins i32imm:$func, variable_ops),
+                 "bl ${func:call}",
+                  [(ARMcall tglobaladdr:$func)]>, Requires<[IsNotDarwin]>;
+
+def t2BLX : T2XI<(outs), (ins GPR:$func, variable_ops),
+                "blx $func",
+                [(ARMcall GPR:$func)]>, Requires<[IsNotDarwin]>;
+}
 
 // On Darwin R9 is call-clobbered.
-//let isCall = 1,
-//  Defs = [R0, R1, R2, R3, R9, R12, LR,
-//          D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
-//def t2BLr9  : T2XI<(outs), (ins i32imm:$func, variable_ops),
-//                  "bl ${func:call}",
-//                  [(ARMcall tglobaladdr:$func)]>, Requires<[IsDarwin]>;
-//
-//def t2BLXr9 : T2XI<(outs), (ins GPR:$func, variable_ops),
-//                  "blx $func",
-//                  [(ARMcall GPR:$func)]>, Requires<[IsDarwin]>;
-//}
+let isCall = 1,
+  Defs = [R0, R1, R2, R3, R9, R12, LR,
+          D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
+def t2BLr9  : T2XI<(outs), (ins i32imm:$func, variable_ops),
+                  "bl ${func:call}",
+                  [(ARMcall tglobaladdr:$func)]>, Requires<[IsDarwin]>;
+
+def t2BLXr9 : T2XI<(outs), (ins GPR:$func, variable_ops),
+                  "blx $func",
+                  [(ARMcall GPR:$func)]>, Requires<[IsDarwin]>;
+}
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 let isPredicable = 1 in

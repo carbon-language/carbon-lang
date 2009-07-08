@@ -169,6 +169,7 @@ namespace ARMII {
     BR_JTr,
     BR_JTm,
     BR_JTadd,
+    BX_RET,
     FCPYS,
     FCPYD,
     FLDD,

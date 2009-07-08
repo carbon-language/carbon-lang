@@ -31,7 +31,7 @@ public:
   /// specified immediate.
  void emitLoadConstPool(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator &MBBI,
-                        const TargetInstrInfo *TII, DebugLoc dl,
+                        DebugLoc dl,
                         unsigned DestReg, int Val,
                         ARMCC::CondCodes Pred = ARMCC::AL,
                         unsigned PredReg = 0) const;

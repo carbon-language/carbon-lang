@@ -13,6 +13,7 @@
 
 #include "ARM.h"
 #include "ARMAddressingModes.h"
+#include "ARMBaseInstrInfo.h"
 #include "ARMInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMRegisterInfo.h"
