@@ -363,12 +363,11 @@ namespace ISD {
     // them with (op #2) as a CondCodeSDNode.
     SETCC,
 
-    // Vector SetCC operator - This evaluates to a vector of integer elements
-    // with the high bit in each element set to true if the comparison is true
-    // and false if the comparison is false.  All other bits in each element
-    // are undefined.  The operands to this are the left and right operands
-    // to compare (ops #0, and #1) and the condition code to compare them with
-    // (op #2) as a CondCodeSDNode.
+    // RESULT = VSETCC(LHS, RHS, COND) operator - This evaluates to a vector of
+    // integer elements with all bits of the result elements set to true if the
+    // comparison is true or all cleared if the comparison is false.  The
+    // operands to this are the left and right operands to compare (LHS/RHS) and
+    // the condition code to compare them with (COND) as a CondCodeSDNode.
     VSETCC,
 
     // SHL_PARTS/SRA_PARTS/SRL_PARTS - These operators are used for expanded
