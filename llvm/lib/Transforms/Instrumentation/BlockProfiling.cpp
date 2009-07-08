@@ -65,8 +65,8 @@ bool FunctionProfiler::runOnModule(Module &M) {
 
   const Type *ATy = Context->getArrayType(Type::Int32Ty, NumFunctions);
   GlobalVariable *Counters =
-    new GlobalVariable(M.getContext(), ATy, false, GlobalValue::InternalLinkage,
-                       Context->getNullValue(ATy), "FuncProfCounters", &M);
+    new GlobalVariable(M, ATy, false, GlobalValue::InternalLinkage,
+                       Context->getNullValue(ATy), "FuncProfCounters");
 
   // Instrument all of the functions...
   unsigned i = 0;
@@ -110,8 +110,8 @@ bool BlockProfiler::runOnModule(Module &M) {
 
   const Type *ATy = Context->getArrayType(Type::Int32Ty, NumBlocks);
   GlobalVariable *Counters =
-    new GlobalVariable(M.getContext(), ATy, false, GlobalValue::InternalLinkage,
-                       Context->getNullValue(ATy), "BlockProfCounters", &M);
+    new GlobalVariable(M, ATy, false, GlobalValue::InternalLinkage,
+                       Context->getNullValue(ATy), "BlockProfCounters");
 
   // Instrument all of the blocks...
   unsigned i = 0;

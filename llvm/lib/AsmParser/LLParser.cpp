@@ -516,9 +516,8 @@ bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
   }
 
   if (GV == 0) {
-    GV = new GlobalVariable(Context, Ty, false,
-                            GlobalValue::ExternalLinkage, 0, Name,
-                            M, false, AddrSpace);
+    GV = new GlobalVariable(*M, Ty, false, GlobalValue::ExternalLinkage, 0, 
+                            Name, 0, false, AddrSpace);
   } else {
     if (GV->getType()->getElementType() != Ty)
       return Error(TyLoc,
@@ -608,8 +607,8 @@ GlobalValue *LLParser::GetGlobalVal(const std::string &Name, const Type *Ty,
     
     FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, Name, M);
   } else {
-    FwdVal = new GlobalVariable(Context, PTy->getElementType(), false,
-                                GlobalValue::ExternalWeakLinkage, 0, Name, M);
+    FwdVal = new GlobalVariable(*M, PTy->getElementType(), false,
+                                GlobalValue::ExternalWeakLinkage, 0, Name);
   }
   
   ForwardRefVals[Name] = std::make_pair(FwdVal, Loc);
@@ -652,8 +651,8 @@ GlobalValue *LLParser::GetGlobalVal(unsigned ID, const Type *Ty, LocTy Loc) {
     }
     FwdVal = Function::Create(FT, GlobalValue::ExternalWeakLinkage, "", M);
   } else {
-    FwdVal = new GlobalVariable(Context, PTy->getElementType(), false,
-                                GlobalValue::ExternalWeakLinkage, 0, "", M);
+    FwdVal = new GlobalVariable(*M, PTy->getElementType(), false,
+                                GlobalValue::ExternalWeakLinkage, 0, "");
   }
   
   ForwardRefValIDs[ID] = std::make_pair(FwdVal, Loc);

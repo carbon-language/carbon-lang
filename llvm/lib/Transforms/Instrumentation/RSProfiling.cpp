@@ -198,9 +198,8 @@ GlobalRandomCounter::GlobalRandomCounter(Module& M, const IntegerType* t,
                                          uint64_t resetval) : T(t) {
   ConstantInt* Init = M.getContext().getConstantInt(T, resetval); 
   ResetValue = Init;
-  Counter = new GlobalVariable(M.getContext(), T, false,
-                               GlobalValue::InternalLinkage,
-                               Init, "RandomSteeringCounter", &M);
+  Counter = new GlobalVariable(M, T, false, GlobalValue::InternalLinkage,
+                               Init, "RandomSteeringCounter");
 }
 
 GlobalRandomCounter::~GlobalRandomCounter() {}
@@ -238,9 +237,8 @@ GlobalRandomCounterOpt::GlobalRandomCounterOpt(Module& M, const IntegerType* t,
   : AI(0), T(t) {
   ConstantInt* Init = M.getContext().getConstantInt(T, resetval);
   ResetValue  = Init;
-  Counter = new GlobalVariable(M.getContext(), T, false,
-                               GlobalValue::InternalLinkage,
-                               Init, "RandomSteeringCounter", &M);
+  Counter = new GlobalVariable(M, T, false, GlobalValue::InternalLinkage,
+                               Init, "RandomSteeringCounter");
 }
 
 GlobalRandomCounterOpt::~GlobalRandomCounterOpt() {}

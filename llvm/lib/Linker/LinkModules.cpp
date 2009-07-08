@@ -573,9 +573,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // symbol over in the dest module... the initializer will be filled in
       // later by LinkGlobalInits.
       GlobalVariable *NewDGV =
-        new GlobalVariable(Context, SGV->getType()->getElementType(),
+        new GlobalVariable(*Dest, SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                           SGV->getName(), Dest, false,
+                           SGV->getName(), 0, false,
                            SGV->getType()->getAddressSpace());
       // Propagate alignment, visibility and section info.
       CopyGVAttributes(NewDGV, SGV);
@@ -606,9 +606,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // AppendingVars map.  The name is cleared out so that no linkage is
       // performed.
       GlobalVariable *NewDGV =
-        new GlobalVariable(Context, SGV->getType()->getElementType(),
+        new GlobalVariable(*Dest, SGV->getType()->getElementType(),
                            SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                           "", Dest, false,
+                           "", 0, false,
                            SGV->getType()->getAddressSpace());
 
       // Set alignment allowing CopyGVAttributes merge it with alignment of SGV.
@@ -634,9 +634,9 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
       // we are replacing may be a function (if a prototype, weak, etc) or a
       // global variable.
       GlobalVariable *NewDGV =
-        new GlobalVariable(Context, SGV->getType()->getElementType(), 
+        new GlobalVariable(*Dest, SGV->getType()->getElementType(), 
                            SGV->isConstant(), NewLinkage, /*init*/0, 
-                           DGV->getName(), Dest, false,
+                           DGV->getName(), 0, false,
                            SGV->getType()->getAddressSpace());
 
       // Propagate alignment, section, and visibility info.
@@ -1157,8 +1157,8 @@ static bool LinkAppendingVars(Module *M,
 
       // Create the new global variable...
       GlobalVariable *NG =
-        new GlobalVariable(Context, NewType, G1->isConstant(), G1->getLinkage(),
-                           /*init*/0, First->first, M, G1->isThreadLocal(),
+        new GlobalVariable(*M, NewType, G1->isConstant(), G1->getLinkage(),
+                           /*init*/0, First->first, 0, G1->isThreadLocal(),
                            G1->getType()->getAddressSpace());
 
       // Propagate alignment, visibility and section info.

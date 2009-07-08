@@ -97,8 +97,7 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
 GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
                                bool constant, LinkageTypes Link,
                                Constant *InitVal, const std::string &Name,
-                               Module *ParentModule, bool ThreadLocal, 
-                               unsigned AddressSpace)
+                               bool ThreadLocal, unsigned AddressSpace)
   : GlobalValue(Context.getPointerType(Ty, AddressSpace), 
                 Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
@@ -111,18 +110,14 @@ GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
   }
 
   LeakDetector::addGarbageObject(this);
-
-  if (ParentModule)
-    ParentModule->getGlobalList().push_back(this);
 }
 
-GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
-                               bool constant, LinkageTypes Link,
-                               Constant *InitVal, const std::string &Name,
+GlobalVariable::GlobalVariable(Module &M, const Type *Ty, bool constant,
+                               LinkageTypes Link, Constant *InitVal,
+                               const std::string &Name,
                                GlobalVariable *Before, bool ThreadLocal,
                                unsigned AddressSpace)
-  : GlobalValue(Context.getPointerType(Ty, AddressSpace),
-                Value::GlobalVariableVal,
+  : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
                 InitVal != 0, Link, Name),
     isConstantGlobal(constant), isThreadLocalSymbol(ThreadLocal) {
@@ -136,6 +131,8 @@ GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
   
   if (Before)
     Before->getParent()->getGlobalList().insert(Before, this);
+  else
+    M.getGlobalList().push_back(this);
 }
 
 void GlobalVariable::setParent(Module *parent) {

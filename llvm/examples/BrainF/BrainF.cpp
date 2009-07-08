@@ -128,13 +128,12 @@ void BrainF::header(LLVMContext& C) {
       get("Error: The head has left the tape.", true);
 
     GlobalVariable *aberrormsg = new GlobalVariable(
-      module->getContext(),
+      *module,
       msg_0->getType(),
       true,
       GlobalValue::InternalLinkage,
       msg_0,
-      "aberrormsg",
-      module);
+      "aberrormsg");
 
     //declare i32 @puts(i8 *)
     Function *puts_func = cast<Function>(module->

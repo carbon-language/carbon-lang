@@ -20,7 +20,6 @@
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Function.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/Support/ConstantFolder.h"
 
 namespace llvm {
@@ -43,16 +42,12 @@ template <bool preserveNames=true, typename T = ConstantFolder> class IRBuilder{
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
   T Folder;
-  LLVMContext& Context;
 public:
-  IRBuilder(const T& F = T(), LLVMContext &C = getGlobalContext()) :
-    Folder(F), Context(C) { ClearInsertionPoint(); }
-  explicit IRBuilder(BasicBlock *TheBB, const T& F = T(),
-                     LLVMContext &C = getGlobalContext()) :
-    Folder(F), Context(C) { SetInsertPoint(TheBB); }
-  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F = T(),
-            LLVMContext &C = getGlobalContext())
-    : Folder(F), Context(C) { SetInsertPoint(TheBB, IP); }
+  IRBuilder(const T& F = T()) : Folder(F) { ClearInsertionPoint(); }
+  explicit IRBuilder(BasicBlock *TheBB, const T& F = T())
+    : Folder(F) { SetInsertPoint(TheBB); }
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F = T())
+    : Folder(F) { SetInsertPoint(TheBB, IP); }
 
   /// getFolder - Get the constant folder being used.
   const T& getFolder() { return Folder; }
@@ -130,7 +125,7 @@ public:
   ///
   ReturnInst *CreateAggregateRet(Value * const* retVals, unsigned N) {
     const Type *RetType = BB->getParent()->getReturnType();
-    Value *V = Context.getUndef(RetType);
+    Value *V = UndefValue::get(RetType);
     for (unsigned i = 0; i != N; ++i)
       V = CreateInsertValue(V, retVals[i], i, "mrv");
     return Insert(ReturnInst::Create(V));
@@ -354,7 +349,7 @@ public:
     return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
   }
   Value *CreateConstGEP1_32(Value *Ptr, unsigned Idx0, const char *Name = "") {
-    Value *Idx = Context.getConstantInt(Type::Int32Ty, Idx0);
+    Value *Idx = ConstantInt::get(Type::Int32Ty, Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateGetElementPtr(PC, &Idx, 1);
@@ -364,8 +359,8 @@ public:
   Value *CreateConstGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1, 
                     const char *Name = "") {
     Value *Idxs[] = {
-      Context.getConstantInt(Type::Int32Ty, Idx0),
-      Context.getConstantInt(Type::Int32Ty, Idx1)
+      ConstantInt::get(Type::Int32Ty, Idx0),
+      ConstantInt::get(Type::Int32Ty, Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
@@ -374,7 +369,7 @@ public:
     return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);    
   }
   Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const char *Name = "") {
-    Value *Idx = Context.getConstantInt(Type::Int64Ty, Idx0);
+    Value *Idx = ConstantInt::get(Type::Int64Ty, Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateGetElementPtr(PC, &Idx, 1);
@@ -384,8 +379,8 @@ public:
   Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1, 
                     const char *Name = "") {
     Value *Idxs[] = {
-      Context.getConstantInt(Type::Int64Ty, Idx0),
-      Context.getConstantInt(Type::Int64Ty, Idx1)
+      ConstantInt::get(Type::Int64Ty, Idx0),
+      ConstantInt::get(Type::Int64Ty, Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
@@ -397,21 +392,21 @@ public:
     return CreateConstGEP2_32(Ptr, 0, Idx, Name);
   }
   Value *CreateGlobalString(const char *Str = "", const char *Name = "") {
-    Constant *StrConstant = Context.getConstantArray(Str, true);
-    GlobalVariable *gv = new GlobalVariable(Context,
+    Constant *StrConstant = ConstantArray::get(Str, true);
+    GlobalVariable *gv = new GlobalVariable(*BB->getParent()->getParent(),
                                             StrConstant->getType(),
                                             true,
                                             GlobalValue::InternalLinkage,
                                             StrConstant,
                                             "",
-                                            BB->getParent()->getParent(),
+                                            0,
                                             false);
     gv->setName(Name);
     return gv;
   }
   Value *CreateGlobalStringPtr(const char *Str = "", const char *Name = "") {
     Value *gv = CreateGlobalString(Str, Name);
-    Value *zero = Context.getConstantInt(Type::Int32Ty, 0);
+    Value *zero = ConstantInt::get(Type::Int32Ty, 0);
     Value *Args[] = { zero, zero };
     return CreateGEP(gv, Args, Args+2, Name);
   }
@@ -688,13 +683,13 @@ public:
 
   /// CreateIsNull - Return an i1 value testing if \arg Arg is null.
   Value *CreateIsNull(Value *Arg, const char *Name = "") {
-    return CreateICmpEQ(Arg, Context.getNullValue(Arg->getType()),
+    return CreateICmpEQ(Arg, Constant::getNullValue(Arg->getType()),
                         Name);
   }
 
   /// CreateIsNotNull - Return an i1 value testing if \arg Arg is not null.
   Value *CreateIsNotNull(Value *Arg, const char *Name = "") {
-    return CreateICmpNE(Arg, Context.getNullValue(Arg->getType()),
+    return CreateICmpNE(Arg, Constant::getNullValue(Arg->getType()),
                         Name);
   }
 
@@ -709,7 +704,7 @@ public:
     Value *RHS_int = CreatePtrToInt(RHS, Type::Int64Ty);
     Value *Difference = CreateSub(LHS_int, RHS_int);
     return CreateSDiv(Difference,
-                      Context.getConstantExprSizeOf(ArgType->getElementType()),
+                      ConstantExpr::getSizeOf(ArgType->getElementType()),
                       Name);
   }
 };

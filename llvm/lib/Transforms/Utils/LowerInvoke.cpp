@@ -139,11 +139,10 @@ bool LowerInvoke::doInitialization(Module &M) {
     // Now that we've done that, insert the jmpbuf list head global, unless it
     // already exists.
     if (!(JBListHead = M.getGlobalVariable("llvm.sjljeh.jblist", PtrJBList))) {
-      JBListHead = new GlobalVariable(M.getContext(),
-                                      PtrJBList, false,
+      JBListHead = new GlobalVariable(M, PtrJBList, false,
                                       GlobalValue::LinkOnceAnyLinkage,
                                       Context->getNullValue(PtrJBList),
-                                      "llvm.sjljeh.jblist", &M);
+                                      "llvm.sjljeh.jblist");
     }
 
 // VisualStudio defines setjmp as _setjmp via #include <csetjmp> / <setjmp.h>,
@@ -183,10 +182,9 @@ void LowerInvoke::createAbortMessage(Module *M) {
       Context->getConstantArray("ERROR: Exception thrown, but not caught!\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
 
-    GlobalVariable *MsgGV = new GlobalVariable(M->getContext(),
-                                               Msg->getType(), true,
+    GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
-                                               Msg, "abortmsg", M);
+                                               Msg, "abortmsg");
     std::vector<Constant*> GEPIdx(2, Context->getNullValue(Type::Int32Ty));
     AbortMessage = Context->getConstantExprGetElementPtr(MsgGV, &GEPIdx[0], 2);
   } else {
@@ -197,10 +195,9 @@ void LowerInvoke::createAbortMessage(Module *M) {
                         "Recompile program with -enable-correct-eh-support.\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
 
-    GlobalVariable *MsgGV = new GlobalVariable(M->getContext(),
-                                               Msg->getType(), true,
+    GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
-                                               Msg, "abortmsg", M);
+                                               Msg, "abortmsg");
     std::vector<Constant*> GEPIdx(2, Context->getNullValue(Type::Int32Ty));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, &GEPIdx[0], 2);
   }

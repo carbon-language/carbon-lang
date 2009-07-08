@@ -108,9 +108,9 @@ namespace {
         }
         ArrayType *AT = Context->getArrayType(SBP, AUGs.size());
         Constant *Init = Context->getConstantArray(AT, AUGs);
-        GlobalValue *gv = new GlobalVariable(M.getContext(), AT, false, 
+        GlobalValue *gv = new GlobalVariable(M, AT, false, 
                                              GlobalValue::AppendingLinkage, 
-                                             Init, "llvm.used", &M);
+                                             Init, "llvm.used");
         gv->setSection("llvm.metadata");
       }
 

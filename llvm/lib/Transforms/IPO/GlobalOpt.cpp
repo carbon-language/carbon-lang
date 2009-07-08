@@ -490,11 +490,10 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
                                     Context->getConstantInt(Type::Int32Ty, i),
                                     Context);
       assert(In && "Couldn't get element of initializer?");
-      GlobalVariable *NGV = new GlobalVariable(*Context, STy->getElementType(i),
-                                               false,
+      GlobalVariable *NGV = new GlobalVariable(*Context,
+                                               STy->getElementType(i), false,
                                                GlobalVariable::InternalLinkage,
                                                In, GV->getName()+"."+utostr(i),
-                                               (Module *)NULL,
                                                GV->isThreadLocal(),
                                               GV->getType()->getAddressSpace());
       Globals.insert(GV, NGV);
@@ -527,13 +526,12 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
                                     Context);
       assert(In && "Couldn't get element of initializer?");
 
-      GlobalVariable *NGV = new GlobalVariable(*Context, STy->getElementType(), 
-                                               false,
+      GlobalVariable *NGV = new GlobalVariable(*Context,
+                                               STy->getElementType(), false,
                                                GlobalVariable::InternalLinkage,
                                                In, GV->getName()+"."+utostr(i),
-                                               (Module *)NULL,
                                                GV->isThreadLocal(),
-                                               GV->getType()->getAddressSpace());
+                                              GV->getType()->getAddressSpace());
       Globals.insert(GV, NGV);
       NewGlobals.push_back(NGV);
       
@@ -842,18 +840,17 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 
   // Create the new global variable.  The contents of the malloc'd memory is
   // undefined, so initialize with an undef value.
-  Constant *Init = Context->getUndef(MI->getAllocatedType());
-  GlobalVariable *NewGV = new GlobalVariable(*Context, MI->getAllocatedType(),  
-                                             false,
-                                             GlobalValue::InternalLinkage, Init,
-                                             GV->getName()+".body",
-                                             (Module *)NULL,
-                                             GV->isThreadLocal());
   // FIXME: This new global should have the alignment returned by malloc.  Code
   // could depend on malloc returning large alignment (on the mac, 16 bytes) but
   // this would only guarantee some lower alignment.
-  GV->getParent()->getGlobalList().insert(GV, NewGV);
-
+  Constant *Init = Context->getUndef(MI->getAllocatedType());
+  GlobalVariable *NewGV = new GlobalVariable(*GV->getParent(), 
+                                             MI->getAllocatedType(), false,
+                                             GlobalValue::InternalLinkage, Init,
+                                             GV->getName()+".body",
+                                             GV,
+                                             GV->isThreadLocal());
+  
   // Anything that used the malloc now uses the global directly.
   MI->replaceAllUsesWith(NewGV);
 
@@ -868,7 +865,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     new GlobalVariable(*Context, Type::Int1Ty, false,
                        GlobalValue::InternalLinkage,
                        Context->getConstantIntFalse(), GV->getName()+".init",
-                       (Module *)NULL, GV->isThreadLocal());
+                       GV->isThreadLocal());
   bool InitBoolUsed = false;
 
   // Loop over all uses of GV, processing them in turn.
@@ -1286,8 +1283,8 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
     const Type *PFieldTy = Context->getPointerTypeUnqual(FieldTy);
     
     GlobalVariable *NGV =
-      new GlobalVariable(*Context, PFieldTy, false,
-                         GlobalValue::InternalLinkage,
+      new GlobalVariable(*GV->getParent(),
+                         PFieldTy, false, GlobalValue::InternalLinkage,
                          Context->getNullValue(PFieldTy),
                          GV->getName() + ".f" + utostr(FieldNo), GV,
                          GV->isThreadLocal());
@@ -1587,7 +1584,6 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal,
   GlobalVariable *NewGV = new GlobalVariable(*Context, Type::Int1Ty, false,
          GlobalValue::InternalLinkage, Context->getConstantIntFalse(),
                                              GV->getName()+".b",
-                                             (Module *)NULL,
                                              GV->isThreadLocal());
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
@@ -1982,7 +1978,6 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   GlobalVariable *NGV = new GlobalVariable(*Context, CA->getType(), 
                                            GCL->isConstant(),
                                            GCL->getLinkage(), CA, "",
-                                           (Module *)NULL,
                                            GCL->isThreadLocal());
   GCL->getParent()->getGlobalList().insert(GCL, NGV);
   NGV->takeName(GCL);

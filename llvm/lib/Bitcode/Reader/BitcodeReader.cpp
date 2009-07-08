@@ -1254,7 +1254,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
         isThreadLocal = Record[7];
 
       GlobalVariable *NewGV =
-        new GlobalVariable(Context, Ty, isConstant, Linkage, 0, "", TheModule, 
+        new GlobalVariable(*TheModule, Ty, isConstant, Linkage, 0, "", 0, 
                            isThreadLocal, AddressSpace);
       NewGV->setAlignment(Alignment);
       if (!Section.empty())
