@@ -29,6 +29,7 @@
 #include "llvm/System/Path.h"
 #include <fstream>
 #include <vector>
+#include <cassert>
 
 namespace llvm {
 
@@ -66,7 +67,7 @@ namespace DOT {  // Private functions...
   }
 }
 
-void DisplayGraph(const sys::Path& Filename);
+void DisplayGraph(const sys::Path& Filename, bool wait=true);
 
 template<typename GraphType>
 class GraphWriter {

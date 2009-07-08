@@ -18,7 +18,7 @@
 #include "llvm/Config/config.h"
 using namespace llvm;
 
-void llvm::DisplayGraph(const sys::Path &Filename) {
+void llvm::DisplayGraph(const sys::Path &Filename, bool wait) {
   std::string ErrMsg;
 #if HAVE_GRAPHVIZ
   sys::Path Graphviz(LLVM_PATH_GRAPHVIZ);
@@ -30,16 +30,24 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
   
   cerr << "Running 'Graphviz' program... " << std::flush;
   if (sys::Program::ExecuteAndWait(Graphviz, &args[0],0,0,0,0,&ErrMsg)) {
-    cerr << "Error viewing graph: " << ErrMsg << "\n";
+     cerr << "Error viewing graph " << Filename << ": " << ErrMsg << "\n";
   }
-#elif (HAVE_GV && HAVE_DOT)
+  else {
+     Filename.eraseFromDisk();
+  }
+  
+#elif (HAVE_GV && (HAVE_DOT || HAVE_FDP))
   sys::Path PSFilename = Filename;
   PSFilename.appendSuffix("ps");
-  
-  sys::Path dot(LLVM_PATH_DOT);
+
+#if HAVE_FDP
+  sys::Path prog(LLVM_PATH_FDP);
+#else
+  sys::Path prog(LLVM_PATH_DOT);
+#endif
 
   std::vector<const char*> args;
-  args.push_back(dot.c_str());
+  args.push_back(prog.c_str());
   args.push_back("-Tps");
   args.push_back("-Nfontname=Courier");
   args.push_back("-Gsize=7.5,10");
@@ -48,9 +56,10 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
   args.push_back(PSFilename.c_str());
   args.push_back(0);
   
-  cerr << "Running 'dot' program... " << std::flush;
-  if (sys::Program::ExecuteAndWait(dot, &args[0],0,0,0,0,&ErrMsg)) {
-    cerr << "Error viewing graph: '" << ErrMsg << "\n";
+  cerr << "Running '" << prog << "' program... " << std::flush;
+
+  if (sys::Program::ExecuteAndWait(prog, &args[0],0,0,0,0,&ErrMsg)) {
+     cerr << "Error viewing graph " << Filename << ": '" << ErrMsg << "\n";
   } else {
     cerr << " done. \n";
 
@@ -62,11 +71,18 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
     args.push_back(0);
     
     ErrMsg.clear();
-    if (sys::Program::ExecuteAndWait(gv, &args[0],0,0,0,0,&ErrMsg)) {
-      cerr << "Error viewing graph: " << ErrMsg << "\n";
+    if (wait) {
+       if (sys::Program::ExecuteAndWait(gv, &args[0],0,0,0,0,&ErrMsg)) {
+          cerr << "Error viewing graph: " << ErrMsg << "\n";
+       }
+       Filename.eraseFromDisk();
+       PSFilename.eraseFromDisk();
+    }
+    else {
+       sys::Program::ExecuteNoWait(gv, &args[0],0,0,0,&ErrMsg);
+       cerr << "Remember to erase graph files: " << Filename << " " << PSFilename << "\n";
     }
   }
-  PSFilename.eraseFromDisk();
 #elif HAVE_DOTTY
   sys::Path dotty(LLVM_PATH_DOTTY);
 
@@ -77,13 +93,12 @@ void llvm::DisplayGraph(const sys::Path &Filename) {
   
   cerr << "Running 'dotty' program... " << std::flush;
   if (sys::Program::ExecuteAndWait(dotty, &args[0],0,0,0,0,&ErrMsg)) {
-    cerr << "Error viewing graph: " << ErrMsg << "\n";
+     cerr << "Error viewing graph " << Filename << ": " << ErrMsg << "\n";
   } else {
 #ifdef __MINGW32__ // Dotty spawns another app and doesn't wait until it returns
     return;
 #endif
+    Filename.eraseFromDisk();
   }
 #endif
-  
-  Filename.eraseFromDisk();
 }
