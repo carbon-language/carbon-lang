@@ -163,25 +163,27 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   FFI->setHasCalls(HasCalls);
   FFI->setMaxCallFrameSize(MaxCallFrameSize);
 
-  for (unsigned i = 0, e = FrameSDOps.size(); i != e; ++i) {
-    MachineBasicBlock::iterator I = FrameSDOps[i];
-    // If call frames are not being included as part of the stack frame,
-    // and there is no dynamic allocation (therefore referencing frame slots
-    // off sp), leave the pseudo ops alone. We'll eliminate them later.
+  for (std::vector<MachineBasicBlock::iterator>::iterator
+         i = FrameSDOps.begin(), e = FrameSDOps.end(); i != e; ++i) {
+    MachineBasicBlock::iterator I = *i;
+
+    // If call frames are not being included as part of the stack frame, and
+    // there is no dynamic allocation (therefore referencing frame slots off
+    // sp), leave the pseudo ops alone. We'll eliminate them later.
     if (RegInfo->hasReservedCallFrame(Fn) || RegInfo->hasFP(Fn))
       RegInfo->eliminateCallFramePseudoInstr(Fn, *I->getParent(), I);
   }
 
   // Now figure out which *callee saved* registers are modified by the current
   // function, thus needing to be saved and restored in the prolog/epilog.
-  //
-  const TargetRegisterClass* const *CSRegClasses =
+  const TargetRegisterClass * const *CSRegClasses =
     RegInfo->getCalleeSavedRegClasses(&Fn);
+
   std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     if (Fn.getRegInfo().isPhysRegUsed(Reg)) {
-        // If the reg is modified, save it!
+      // If the reg is modified, save it!
       CSI.push_back(CalleeSavedInfo(Reg, CSRegClasses[i]));
     } else {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
@@ -203,9 +205,10 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
 
   // Now that we know which registers need to be saved and restored, allocate
   // stack slots for them.
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    const TargetRegisterClass *RC = CSI[i].getRegClass();
+  for (std::vector<CalleeSavedInfo>::iterator
+         I = CSI.begin(), E = CSI.end(); I != E; ++I) {
+    unsigned Reg = I->getReg();
+    const TargetRegisterClass *RC = I->getRegClass();
 
     // Check to see if this physreg must be spilled to a particular stack slot
     // on this target.
@@ -215,13 +218,14 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
       ++FixedSlot;
 
     int FrameIdx;
-    if (FixedSlot == FixedSpillSlots+NumFixedSpillSlots) {
+    if (FixedSlot == FixedSpillSlots + NumFixedSpillSlots) {
       // Nope, just spill it anywhere convenient.
       unsigned Align = RC->getAlignment();
       unsigned StackAlign = TFI->getStackAlignment();
-      // We may not be able to sastify the desired alignment specification of
-      // the TargetRegisterClass if the stack alignment is smaller.
-      // Use the min.
+
+      // We may not be able to satisfy the desired alignment specification of
+      // the TargetRegisterClass if the stack alignment is smaller. Use the
+      // min.
       Align = std::min(Align, StackAlign);
       FrameIdx = FFI->CreateStackObject(RC->getSize(), Align);
       if ((unsigned)FrameIdx < MinCSFrameIndex) MinCSFrameIndex = FrameIdx;
@@ -230,7 +234,8 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
       // Spill it to the stack where we must.
       FrameIdx = FFI->CreateFixedObject(RC->getSize(), FixedSlot->second);
     }
-    CSI[i].setFrameIdx(FrameIdx);
+
+    I->setFrameIdx(FrameIdx);
   }
 
   FFI->setCalleeSavedInfo(CSI);
