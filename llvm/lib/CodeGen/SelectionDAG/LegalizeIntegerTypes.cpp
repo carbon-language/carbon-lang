@@ -359,7 +359,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {
   // If we're promoting a UINT to a larger size and the larger FP_TO_UINT is
   // not Legal, check to see if we can use FP_TO_SINT instead.  (If both UINT
   // and SINT conversions are Custom, there is no way to tell which is preferable.
-  // We choose SINT because that's the right thing on PPC.)  
+  // We choose SINT because that's the right thing on PPC.)
   if (N->getOpcode() == ISD::FP_TO_UINT &&
       !TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
       TLI.isOperationLegalOrCustom(ISD::FP_TO_SINT, NVT))
@@ -1838,7 +1838,7 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
     else if (VT == MVT::i128)
       LC = RTLIB::SRA_I128;
   }
-  
+
   if (LC != RTLIB::UNKNOWN_LIBCALL && TLI.getLibcallName(LC)) {
     SDValue Ops[2] = { N->getOperand(0), N->getOperand(1) };
     SplitInteger(MakeLibCall(LC, VT, Ops, 2, isSigned, dl), Lo, Hi);

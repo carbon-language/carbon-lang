@@ -106,7 +106,7 @@ void DAGTypeLegalizer::ExpandRes_BIT_CONVERT(SDNode *N, SDValue &Lo,
 
       if (TLI.isBigEndian())
         std::swap(Lo, Hi);
-      
+
       return;
     }
   }
