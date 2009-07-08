@@ -297,7 +297,9 @@ protected:
   }
 public:
   FreeBSDTargetInfo(const std::string &triple) 
-    : OSTargetInfo<Target>(triple) {}
+    : OSTargetInfo<Target>(triple) {
+      this->UserLabelPrefix = "";
+    }
 };
 
 // Linux target
