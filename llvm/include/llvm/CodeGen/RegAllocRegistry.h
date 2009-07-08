@@ -34,7 +34,9 @@ public:
 
   RegisterRegAlloc(const char *N, const char *D, FunctionPassCtor C)
   : MachinePassRegistryNode(N, D, (MachinePassCtor)C)
-  { Registry.Add(this); }
+  { 
+     Registry.Add(this); 
+  }
   ~RegisterRegAlloc() { Registry.Remove(this); }
   
 
