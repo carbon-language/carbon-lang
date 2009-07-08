@@ -1654,7 +1654,7 @@ bool LLParser::ParseValID(ValID &ID) {
         else {
           // Create MDNode forward reference
           SmallVector<Value *, 1> Elts;
-          std::string FwdRefName = "llvm.mdnode.fwdref." + MID;
+          std::string FwdRefName = "llvm.mdnode.fwdref." + utostr(MID);
           Elts.push_back(Context.getMDString(FwdRefName));
           MDNode *FwdNode = Context.getMDNode(Elts.data(), Elts.size());
           ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
