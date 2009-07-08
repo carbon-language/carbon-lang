@@ -133,6 +133,28 @@ def  VLD1q32  : VLD1Q<"vld1.32", v4i32, int_arm_neon_vldi>;
 def  VLD1qf   : VLD1Q<"vld1.32", v4f32, int_arm_neon_vldf>;
 def  VLD1q64  : VLD1Q<"vld1.64", v2i64, int_arm_neon_vldi>;
 
+//   VST1     : Vector Store (multiple single elements)
+class VST1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
+  : NLdSt<(outs), (ins addrmode6:$addr, DPR:$src),
+          !strconcat(OpcodeStr, "\t${src:dregsingle}, $addr"),
+          [(IntOp addrmode6:$addr, (Ty DPR:$src), 1)]>;
+class VST1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
+  : NLdSt<(outs), (ins addrmode6:$addr, QPR:$src),
+          !strconcat(OpcodeStr, "\t${src:dregpair}, $addr"),
+          [(IntOp addrmode6:$addr, (Ty QPR:$src), 1)]>;
+
+def  VST1d8   : VST1D<"vst1.8",  v8i8,  int_arm_neon_vsti>;
+def  VST1d16  : VST1D<"vst1.16", v4i16, int_arm_neon_vsti>;
+def  VST1d32  : VST1D<"vst1.32", v2i32, int_arm_neon_vsti>;
+def  VST1df   : VST1D<"vst1.32", v2f32, int_arm_neon_vstf>;
+def  VST1d64  : VST1D<"vst1.64", v1i64, int_arm_neon_vsti>;
+
+def  VST1q8   : VST1Q<"vst1.8",  v16i8, int_arm_neon_vsti>;
+def  VST1q16  : VST1Q<"vst1.16", v8i16, int_arm_neon_vsti>;
+def  VST1q32  : VST1Q<"vst1.32", v4i32, int_arm_neon_vsti>;
+def  VST1qf   : VST1Q<"vst1.32", v4f32, int_arm_neon_vstf>;
+def  VST1q64  : VST1Q<"vst1.64", v2i64, int_arm_neon_vsti>;
+
 
 //===----------------------------------------------------------------------===//
 // NEON pattern fragments
