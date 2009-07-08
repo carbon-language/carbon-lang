@@ -265,10 +265,10 @@ const Type *Type::getForwardedTypeInternal() const {
 }
 
 void Type::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-  llvm_report_error("Attempting to refine a derived type!");
+  LLVM_UNREACHABLE("Attempting to refine a derived type!");
 }
 void Type::typeBecameConcrete(const DerivedType *AbsTy) {
-  llvm_report_error("DerivedType is already a concrete type!");
+  LLVM_UNREACHABLE("DerivedType is already a concrete type!");
 }
 
 

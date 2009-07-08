@@ -211,7 +211,9 @@ namespace {
       default: assert(0 && "Unknown action");
       case AbortProcessAction:
         msgs << "compilation aborted!\n";
-        llvm_report_error(msgs.str());
+        cerr << msgs.str();
+        // Client should choose different reaction if abort is not desired
+        abort();
       case PrintMessageAction:
         msgs << "verification continues.\n";
         cerr << msgs.str();

@@ -38,6 +38,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static cl::opt<bool>
@@ -6054,7 +6055,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) {
   SDValue SrcPtr = Op.getOperand(1);
   SDValue SrcSV = Op.getOperand(2);
 
-  LLVM_UNREACHABLE("VAArgInst is not yet implemented for x86-64!");
+  llvm_report_error("VAArgInst is not yet implemented for x86-64!");
   return SDValue();
 }
 

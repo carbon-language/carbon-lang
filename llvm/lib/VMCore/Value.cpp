@@ -23,6 +23,7 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/RWMutex.h"
 #include "llvm/System/Threading.h"
 #include "llvm/ADT/DenseMap.h"
@@ -515,8 +516,8 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
       cerr << "While deleting: " << *V->getType() << " %" << V->getNameStr()
            << "\n";
 #endif
-      llvm_report_error("An asserting value handle still pointed to this"
-                        "value!");
+      LLVM_UNREACHABLE("An asserting value handle still pointed to this"
+                       "value!");
     case Weak:
       // Weak just goes to null, which will unlink it from the list.
       ThisNode->operator=(0);

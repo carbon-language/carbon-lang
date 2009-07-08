@@ -31,6 +31,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
@@ -600,8 +602,8 @@ static PPC::Predicate getPredicateForSetCC(ISD::CondCode CC) {
   case ISD::SETONE:
   case ISD::SETOLE:
   case ISD::SETOGE:
-    assert(0 && "Should be lowered by legalize!");
-  default: assert(0 && "Unknown condition!"); abort();
+    LLVM_UNREACHABLE("Should be lowered by legalize!");
+  default: LLVM_UNREACHABLE("Unknown condition!");
   case ISD::SETOEQ:
   case ISD::SETEQ:  return PPC::PRED_EQ;
   case ISD::SETUNE:
@@ -632,7 +634,7 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
   Invert = false;
   Other = -1;
   switch (CC) {
-  default: assert(0 && "Unknown condition!"); abort();
+  default: LLVM_UNREACHABLE("Unknown condition!");
   case ISD::SETOLT:
   case ISD::SETLT:  return 0;                  // Bit #0 = SETOLT
   case ISD::SETOGT:

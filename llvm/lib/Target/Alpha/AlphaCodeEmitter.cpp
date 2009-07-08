@@ -235,10 +235,10 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                                Alpha::reloc_bsr, MO.getMBB()));
   } else {
-    std::string msg;
-    raw_string_ostream Msg(msg);
-    Msg << "ERROR: Unknown type of MachineOperand: " << MO;
-    llvm_report_error(Msg.str());
+#ifndef NDEBUG
+    cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
+#endif
+    llvm_unreachable();
   }
 
   return rv;

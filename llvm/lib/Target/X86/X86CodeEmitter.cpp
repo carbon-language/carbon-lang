@@ -32,7 +32,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -806,10 +805,10 @@ void Emitter<CodeEmitter>::emitInstruction(
   }
 
   if (!Desc->isVariadic() && CurOp != NumOps) {
-    std::string msg;
-    raw_string_ostream Msg(msg);
-    Msg << "Cannot encode: " << MI;
-    llvm_report_error(Msg.str());
+#ifndef NDEBUG
+    cerr << "Cannot encode: " << MI << "\n";
+#endif
+    llvm_unreachable();
   }
 }
 

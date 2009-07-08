@@ -101,7 +101,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_Immediate:
-    llvm_report_error("printOp() does not handle immediate values");
+    LLVM_UNREACHABLE("printOp() does not handle immediate values");
     return;
 
   case MachineOperand::MO_MachineBasicBlock:

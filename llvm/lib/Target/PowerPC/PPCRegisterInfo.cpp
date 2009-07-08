@@ -37,7 +37,9 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
@@ -111,8 +113,7 @@ unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   case R30:  case X30:  case F30:  case V30: case CR7EQ: return 30;
   case R31:  case X31:  case F31:  case V31: case CR7UN: return 31;
   default:
-    cerr << "Unhandled reg in PPCRegisterInfo::getRegisterNumbering!\n";
-    abort();
+    LLVM_UNREACHABLE("Unhandled reg in PPCRegisterInfo::getRegisterNumbering!");
   }
 }
 

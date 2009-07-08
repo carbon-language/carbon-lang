@@ -30,6 +30,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -319,8 +320,7 @@ namespace {
 void SPUAsmPrinter::printOp(const MachineOperand &MO) {
   switch (MO.getType()) {
   case MachineOperand::MO_Immediate:
-    cerr << "printOp() does not handle immediate values\n";
-    abort();
+    llvm_report_error("printOp() does not handle immediate values");
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
@@ -573,8 +573,7 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::InternalLinkage:
     break;
    default:
-    cerr << "Unknown linkage type!";
-    abort();
+    llvm_report_error("Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);

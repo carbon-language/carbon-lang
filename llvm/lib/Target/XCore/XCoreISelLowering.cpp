@@ -32,6 +32,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/VectorExtras.h"
 #include <queue>
 #include <set>
@@ -270,8 +271,11 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
   }
   const Type *Ty = cast<PointerType>(GV->getType())->getElementType();
   if (!Ty->isSized() || isZeroLengthArray(Ty)) {
-    llvm_report_error("Size of thread local object " + GVar->getName()
-                      + " is unknown");
+#ifndef NDEBUG
+    cerr << "Size of thread local object " << GVar->getName()
+        << " is unknown\n";
+#endif
+    llvm_unreachable();
   }
   SDValue base = getGlobalAddressWrapper(GA, GV, DAG);
   const TargetData *TD = TM.getTargetData();
@@ -646,11 +650,11 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
       switch (RegVT.getSimpleVT()) {
       default:
         {
-          std::string msg;
-          raw_string_ostream Msg(msg);
-          Msg << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-            << RegVT.getSimpleVT();
-          llvm_report_error(Msg.str());
+#ifndef NDEBUG
+          cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+               << RegVT.getSimpleVT() << "\n";
+#endif
+          llvm_unreachable();
         }
       case MVT::i32:
         unsigned VReg = RegInfo.createVirtualRegister(

@@ -28,7 +28,9 @@
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 
 #include <map>
@@ -70,10 +72,11 @@ namespace {
 
 #ifndef NDEBUG
     if (retval == 0) {
-      cerr << "getValueTypeMapEntry returns NULL for "
-           << VT.getMVTString()
-           << "\n";
-      abort();
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "getValueTypeMapEntry returns NULL for "
+           << VT.getMVTString();
+      llvm_report_error(Msg.str());
     }
 #endif
 
@@ -665,11 +668,15 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case ISD::POST_INC:
   case ISD::POST_DEC:
   case ISD::LAST_INDEXED_MODE:
-    cerr << "LowerLOAD: Got a LoadSDNode with an addr mode other than "
+    {
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "LowerLOAD: Got a LoadSDNode with an addr mode other than "
             "UNINDEXED\n";
-    cerr << (unsigned) LN->getAddressingMode() << "\n";
-    abort();
-    /*NOTREACHED*/
+      Msg << (unsigned) LN->getAddressingMode();
+      llvm_report_error(Msg.str());
+      /*NOTREACHED*/
+    }
   }
 
   return SDValue();
@@ -830,11 +837,15 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   case ISD::POST_INC:
   case ISD::POST_DEC:
   case ISD::LAST_INDEXED_MODE:
-    cerr << "LowerLOAD: Got a LoadSDNode with an addr mode other than "
+    {
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "LowerLOAD: Got a LoadSDNode with an addr mode other than "
             "UNINDEXED\n";
-    cerr << (unsigned) SN->getAddressingMode() << "\n";
-    abort();
-    /*NOTREACHED*/
+      Msg << (unsigned) SN->getAddressingMode();
+      llvm_report_error(Msg.str());
+      /*NOTREACHED*/
+    }
   }
 
   return SDValue();
@@ -920,9 +931,8 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       return DAG.getNode(SPUISD::IndirectAddr, dl, PtrVT, Hi, Lo);
     }
   } else {
-    cerr << "LowerGlobalAddress: Relocation model other than static not "
-         << "supported.\n";
-    abort();
+    llvm_report_error("LowerGlobalAddress: Relocation model other than static"
+                      "not supported.");
     /*NOTREACHED*/
   }
 
@@ -984,10 +994,11 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
 
       switch (ObjectVT.getSimpleVT()) {
       default: {
-        cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-             << ObjectVT.getMVTString()
-             << "\n";
-        abort();
+        std::string msg;
+        raw_string_ostream Msg(msg);
+        Msg << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+             << ObjectVT.getMVTString();
+        llvm_report_error(Msg.str());
       }
       case MVT::i8:
         ArgRegClass = &SPU::R8CRegClass;
@@ -1529,12 +1540,14 @@ LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   uint64_t SplatBits = APSplatBits.getZExtValue();
 
   switch (VT.getSimpleVT()) {
-  default:
-    cerr << "CellSPU: Unhandled VT in LowerBUILD_VECTOR, VT = "
-         << VT.getMVTString()
-         << "\n";
-    abort();
+  default: {
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "CellSPU: Unhandled VT in LowerBUILD_VECTOR, VT = "
+         << VT.getMVTString();
+    llvm_report_error(Msg.str());
     /*NOTREACHED*/
+  }
   case MVT::v4f32: {
     uint32_t Value32 = uint32_t(SplatBits);
     assert(SplatBitSize == 32
@@ -1948,8 +1961,8 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     // slot 0 across the vector
     MVT VecVT = N.getValueType();
     if (!VecVT.isSimple() || !VecVT.isVector() || !VecVT.is128BitVector()) {
-      cerr << "LowerEXTRACT_VECTOR_ELT: Must have a simple, 128-bit vector type!\n";
-      abort();
+      llvm_report_error("LowerEXTRACT_VECTOR_ELT: Must have a simple, 128-bit"
+                        "vector type!");
     }
 
     // Make life easier by making sure the index is zero-extended to i32
@@ -1976,8 +1989,8 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
 
     switch (VT.getSimpleVT()) {
     default:
-      cerr << "LowerEXTRACT_VECTOR_ELT(varable): Unhandled vector type\n";
-      abort();
+      llvm_report_error("LowerEXTRACT_VECTOR_ELT(varable): Unhandled vector"
+                        "type");
       /*NOTREACHED*/
     case MVT::i8: {
       SDValue factor = DAG.getConstant(0x00000000, MVT::i32);
@@ -2458,9 +2471,7 @@ static SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG,
   case ISD::SETONE:
     compareOp = ISD::SETNE; break;
   default:
-    cerr << "CellSPU ISel Select: unimplemented f64 condition\n";
-    abort();
-    break;
+    llvm_report_error("CellSPU ISel Select: unimplemented f64 condition");
   }
 
   SDValue result =
@@ -2568,11 +2579,13 @@ SPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 
   switch (Opc) {
   default: {
+#ifndef NDEBUG
     cerr << "SPUTargetLowering::LowerOperation(): need to lower this!\n";
     cerr << "Op.getOpcode() = " << Opc << "\n";
     cerr << "*Op.getNode():\n";
     Op.getNode()->dump();
-    abort();
+#endif
+    llvm_unreachable();
   }
   case ISD::LOAD:
   case ISD::EXTLOAD:

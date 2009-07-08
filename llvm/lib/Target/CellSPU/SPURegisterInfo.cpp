@@ -35,7 +35,9 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
@@ -176,8 +178,7 @@ unsigned SPURegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   case SPU::R126: return 126;
   case SPU::R127: return 127;
   default:
-    cerr << "Unhandled reg in SPURegisterInfo::getRegisterNumbering!\n";
-    abort();
+    llvm_report_error("Unhandled reg in SPURegisterInfo::getRegisterNumbering");
   }
 }
 
@@ -485,8 +486,10 @@ void SPURegisterInfo::emitPrologue(MachineFunction &MF) const
         .addReg(SPU::R2)
         .addReg(SPU::R1);
     } else {
-      cerr << "Unhandled frame size: " << FrameSize << "\n";
-      abort();
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "Unhandled frame size: " << FrameSize;
+      llvm_report_error(Msg.str());
     }
 
     if (hasDebugInfo) {
@@ -577,8 +580,10 @@ SPURegisterInfo::emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
         .addReg(SPU::R2)
         .addReg(SPU::R1);
     } else {
-      cerr << "Unhandled frame size: " << FrameSize << "\n";
-      abort();
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "Unhandled frame size: " << FrameSize;
+      llvm_report_error(Msg.str());
     }
    }
 }

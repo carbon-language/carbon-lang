@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -313,8 +314,7 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   } else if (RC == SPU::VECREGRegisterClass) {
     opc = (isValidFrameIdx) ? SPU::STQDv16i8 : SPU::STQXv16i8;
   } else {
-    assert(0 && "Unknown regclass!");
-    abort();
+    LLVM_UNREACHABLE("Unknown regclass!");
   }
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
@@ -328,8 +328,7 @@ void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                   SmallVectorImpl<MachineOperand> &Addr,
                                   const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  cerr << "storeRegToAddr() invoked!\n";
-  abort();
+  llvm_report_error("storeRegToAddr() invoked!");
 
   if (Addr[0].isFI()) {
     /* do what storeRegToStackSlot does here */
@@ -348,8 +347,7 @@ void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     } else if (RC == SPU::VECREGRegisterClass) {
       /* Opc = PPC::STVX; */
     } else {
-      assert(0 && "Unknown regclass!");
-      abort();
+      LLVM_UNREACHABLE("Unknown regclass!");
     }
     DebugLoc DL = DebugLoc::getUnknownLoc();
     MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
@@ -385,8 +383,7 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   } else if (RC == SPU::VECREGRegisterClass) {
     opc = (isValidFrameIdx) ? SPU::LQDv16i8 : SPU::LQXv16i8;
   } else {
-    assert(0 && "Unknown regclass in loadRegFromStackSlot!");
-    abort();
+    LLVM_UNREACHABLE("Unknown regclass in loadRegFromStackSlot!");
   }
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
@@ -402,8 +399,7 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                    const TargetRegisterClass *RC,
                                    SmallVectorImpl<MachineInstr*> &NewMIs)
     const {
-  cerr << "loadRegToAddr() invoked!\n";
-  abort();
+  llvm_report_error("loadRegToAddr() invoked!");
 
   if (Addr[0].isFI()) {
     /* do what loadRegFromStackSlot does here... */
@@ -424,8 +420,7 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     } else if (RC == SPU::GPRCRegisterClass) {
       /* Opc = something else! */
     } else {
-      assert(0 && "Unknown regclass!");
-      abort();
+      LLVM_UNREACHABLE("Unknown regclass!");
     }
     DebugLoc DL = DebugLoc::getUnknownLoc();
     MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);

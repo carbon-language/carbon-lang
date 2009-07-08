@@ -123,12 +123,12 @@ extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
   //   ldr pc, [pc,#-4]
   //   <addr>
   if (!sys::Memory::setRangeWritable((void*)StubAddr, 8)) {
-    llvm_report_error("ERROR: Unable to mark stub writable");
+    LLVM_UNREACHABLE("ERROR: Unable to mark stub writable");
   }
   *(intptr_t *)StubAddr = 0xe51ff004;  // ldr pc, [pc, #-4]
   *(intptr_t *)(StubAddr+4) = NewVal;
   if (!sys::Memory::setRangeExecutable((void*)StubAddr, 8)) {
-    llvm_report_error("ERROR: Unable to mark stub executable");
+    LLVM_UNREACHABLE("ERROR: Unable to mark stub executable");
   }
 }
 

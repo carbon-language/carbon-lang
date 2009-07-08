@@ -26,6 +26,8 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -263,8 +265,10 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                                Reloc, MO.getMBB()));
   } else {
+#ifndef NDEBUG
     cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
-    abort();
+#endif
+    llvm_unreachable();
   }
 
   return rv;

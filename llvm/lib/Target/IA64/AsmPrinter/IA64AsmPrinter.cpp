@@ -318,11 +318,11 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::PrivateLinkage:
     break;
    case GlobalValue::GhostLinkage:
-    llvm_report_error("GhostLinkage cannot appear in IA64AsmPrinter!");
+    LLVM_UNREACHABLE("GhostLinkage cannot appear in IA64AsmPrinter!");
    case GlobalValue::DLLImportLinkage:
-    llvm_report_error("DLLImport linkage is not supported by this target!");
+    LLVM_UNREACHABLE("DLLImport linkage is not supported by this target!");
    case GlobalValue::DLLExportLinkage:
-    llvm_report_error("DLLExport linkage is not supported by this target!");
+    LLVM_UNREACHABLE("DLLExport linkage is not supported by this target!");
    default:
     LLVM_UNREACHABLE("Unknown linkage type!");
   }

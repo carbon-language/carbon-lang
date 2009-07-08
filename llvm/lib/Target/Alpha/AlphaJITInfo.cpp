@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstdlib>
 using namespace llvm;
 

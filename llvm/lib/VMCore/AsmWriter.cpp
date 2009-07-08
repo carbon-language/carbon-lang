@@ -33,6 +33,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
@@ -1235,7 +1236,7 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
   case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
   case GlobalValue::ExternalLinkage: break;
   case GlobalValue::GhostLinkage:
-    llvm_report_error("GhostLinkage not allowed in AsmWriter!");
+    LLVM_UNREACHABLE("GhostLinkage not allowed in AsmWriter!");
   }
 }
 

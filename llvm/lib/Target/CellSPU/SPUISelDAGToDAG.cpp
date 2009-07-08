@@ -31,8 +31,10 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -191,10 +193,11 @@ namespace {
 
 #ifndef NDEBUG
     if (retval == 0) {
-      cerr << "SPUISelDAGToDAG.cpp: getValueTypeMapEntry returns NULL for "
-           << VT.getMVTString()
-           << "\n";
-      abort();
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "SPUISelDAGToDAG.cpp: getValueTypeMapEntry returns NULL for "
+           << VT.getMVTString();
+      llvm_report_error(Msg.str());
     }
 #endif
 
@@ -437,16 +440,14 @@ SPUDAGToDAGISel::SelectAFormAddr(SDValue Op, SDValue N, SDValue &Base,
   case ISD::Constant:
   case ISD::ConstantPool:
   case ISD::GlobalAddress:
-    cerr << "SPU SelectAFormAddr: Constant/Pool/Global not lowered.\n";
-    abort();
+    llvm_report_error("SPU SelectAFormAddr: Constant/Pool/Global not lowered.");
     /*NOTREACHED*/
 
   case ISD::TargetConstant:
   case ISD::TargetGlobalAddress:
   case ISD::TargetJumpTable:
-    cerr << "SPUSelectAFormAddr: Target Constant/Pool/Global not wrapped as "
-         << "A-form address.\n";
-    abort();
+    llvm_report_error("SPUSelectAFormAddr: Target Constant/Pool/Global "
+                      "not wrapped as A-form address.");
     /*NOTREACHED*/
 
   case SPUISD::AFormAddr:
@@ -730,10 +731,8 @@ SPUDAGToDAGISel::Select(SDValue Op) {
 
     switch (Op0VT.getSimpleVT()) {
     default:
-      cerr << "CellSPU Select: Unhandled zero/any extend MVT\n";
-      abort();
+      llvm_report_error("CellSPU Select: Unhandled zero/any extend MVT");
       /*NOTREACHED*/
-      break;
     case MVT::i32:
       shufMask = CurDAG->getNode(ISD::BUILD_VECTOR, dl, MVT::v4i32,
                                  CurDAG->getConstant(0x80808080, MVT::i32),
@@ -900,10 +899,11 @@ SPUDAGToDAGISel::Select(SDValue Op) {
     const valtype_map_s *vtm = getValueTypeMapEntry(VT);
 
     if (vtm->ldresult_ins == 0) {
-      cerr << "LDRESULT for unsupported type: "
-           << VT.getMVTString()
-           << "\n";
-      abort();
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "LDRESULT for unsupported type: "
+           << VT.getMVTString();
+      llvm_report_error(Msg.str());
     }
 
     Opc = vtm->ldresult_ins;
@@ -1231,8 +1231,8 @@ SDNode *SPUDAGToDAGISel::SelectI64Constant(uint64_t Value64, MVT OpVT,
     return CurDAG->getTargetNode(SPU::ORi64_v2i64, dl, OpVT,
                                  SDValue(emitBuildVector(i64vec), 0));
   } else {
-    cerr << "SPUDAGToDAGISel::SelectI64Constant: Unhandled i64vec condition\n";
-    abort();
+    llvm_report_error("SPUDAGToDAGISel::SelectI64Constant: Unhandled i64vec"
+                      "condition");
   }
 }
 

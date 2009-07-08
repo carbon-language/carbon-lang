@@ -13,6 +13,8 @@
 
 #define DEBUG_TYPE "pic16-isel"
 
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "PIC16ISelDAGToDAG.h"
 #include "llvm/Support/Debug.h"
 

@@ -455,8 +455,7 @@ void Thumb2RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
     }
     default:
-      llvm_report_error("Unsupported addressing mode!");
-      break;
+      LLVM_UNREACHABLE("Unsupported addressing mode!");
     }
 
     Offset += InstrOffs * Scale;

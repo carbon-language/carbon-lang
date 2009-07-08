@@ -32,6 +32,8 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/DerivedTypes.h"
 using namespace llvm;
 
@@ -2584,9 +2586,11 @@ SDValue PPCTargetLowering::LowerCALL_SVR4(SDValue Op, SelectionDAG &DAG,
       }
       
       if (Result) {
+#ifndef NDEBUG
         cerr << "Call operand #" << i << " has unhandled type "
              << ArgVT.getMVTString() << "\n";
-        abort();
+#endif
+        llvm_unreachable();
       }
     }
   } else {
@@ -4141,8 +4145,7 @@ SDValue PPCTargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) {
     }
     return DAG.getVectorShuffle(MVT::v16i8, dl, EvenParts, OddParts, Ops);
   } else {
-    assert(0 && "Unknown mul to lower!");
-    abort();
+    LLVM_UNREACHABLE("Unknown mul to lower!");
   }
 }
 

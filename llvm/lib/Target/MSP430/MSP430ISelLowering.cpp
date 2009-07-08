@@ -193,11 +193,11 @@ SDValue MSP430TargetLowering::LowerCCCArguments(SDValue Op,
       switch (RegVT.getSimpleVT()) {
       default: 
         {
-          std::string msg;
-          raw_string_ostream Msg(msg);
-          Msg << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-            << RegVT.getSimpleVT();
-          llvm_report_error(Msg.str());
+#ifndef NDEBUG
+          cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+               << RegVT.getSimpleVT() << "\n";
+#endif
+          llvm_unreachable();
         }
       case MVT::i16:
         unsigned VReg =

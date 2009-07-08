@@ -144,11 +144,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       
       if (!isU6 && !isImmU16(Amount)) {
         // FIX could emit multiple instructions in this case.
-        std::string msg;
-        raw_string_ostream Msg(msg);
-        Msg  << "eliminateCallFramePseudoInstr size too big: "
-             << Amount;
-        llvm_report_error(Msg.str());
+#ifndef NDEBUG
+        cerr << "eliminateCallFramePseudoInstr size too big: "
+             << Amount << "\n";
+#endif
+        llvm_unreachable();
       }
 
       MachineInstr *New;

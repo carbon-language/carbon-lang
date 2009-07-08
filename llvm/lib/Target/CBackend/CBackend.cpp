@@ -35,6 +35,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
@@ -321,8 +322,10 @@ namespace {
     void visitExtractValueInst(ExtractValueInst &I);
 
     void visitInstruction(Instruction &I) {
+#ifndef NDEBUG
       cerr << "C Writer does not know about " << I;
-      abort();
+#endif
+      llvm_unreachable();
     }
 
     void outputLValue(Instruction *I) {
@@ -505,8 +508,10 @@ CWriter::printSimpleType(raw_ostream &Out, const Type *Ty, bool isSigned,
   }
     
   default:
+#ifndef NDEBUG
     cerr << "Unknown primitive type: " << *Ty << "\n";
-    abort();
+#endif
+    llvm_unreachable();
   }
 }
 
@@ -550,8 +555,10 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
   }
     
   default:
+#ifndef NDEBUG
     cerr << "Unknown primitive type: " << *Ty << "\n";
-    abort();
+#endif
+    llvm_unreachable();
   }
 }
 
@@ -652,8 +659,7 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
     return Out << TyName << ' ' << NameSoFar;
   }
   default:
-    assert(0 && "Unhandled case in getTypeProps!");
-    abort();
+    LLVM_UNREACHABLE("Unhandled case in getTypeProps!");
   }
 
   return Out;
@@ -756,8 +762,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     return Out << TyName << ' ' << NameSoFar;
   }
   default:
-    assert(0 && "Unhandled case in getTypeProps!");
-    abort();
+    LLVM_UNREACHABLE("Unhandled case in getTypeProps!");
   }
 
   return Out;
@@ -1104,9 +1109,11 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       return;
     }
     default:
+#ifndef NDEBUG
       cerr << "CWriter Error: Unhandled constant expression: "
            << *CE << "\n";
-      abort();
+#endif
+      llvm_unreachable();
     }
   } else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType()) {
     Out << "((";
@@ -1312,8 +1319,10 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
     }
     // FALL THROUGH
   default:
+#ifndef NDEBUG
     cerr << "Unknown constant type: " << *CPV << "\n";
-    abort();
+#endif
+    llvm_unreachable();
   }
 }
 
@@ -1456,10 +1465,9 @@ void CWriter::writeInstComputationInline(Instruction &I) {
   const Type *Ty = I.getType();
   if (Ty->isInteger() && (Ty!=Type::Int1Ty && Ty!=Type::Int8Ty &&
         Ty!=Type::Int16Ty && Ty!=Type::Int32Ty && Ty!=Type::Int64Ty)) {
-      cerr << "The C backend does not currently support integer "
-           << "types of widths other than 1, 8, 16, 32, 64.\n";
-      cerr << "This is being tracked as PR 4158.\n";
-      abort();
+      llvm_report_error("The C backend does not currently support integer "
+                        "types of widths other than 1, 8, 16, 32, 64.\n"
+                        "This is being tracked as PR 4158.");
   }
 
   // If this is a non-trivial bool computation, make sure to truncate down to
@@ -2663,7 +2671,11 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     case Instruction::Shl : Out << " << "; break;
     case Instruction::LShr:
     case Instruction::AShr: Out << " >> "; break;
-    default: cerr << "Invalid operator type!" << I; abort();
+    default: 
+#ifndef NDEBUG
+       cerr << "Invalid operator type!" << I;
+#endif
+       llvm_unreachable();
     }
 
     writeOperandWithCast(I.getOperand(1), I.getOpcode());
@@ -2700,7 +2712,11 @@ void CWriter::visitICmpInst(ICmpInst &I) {
   case ICmpInst::ICMP_SLT: Out << " < "; break;
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_SGT: Out << " > "; break;
-  default: cerr << "Invalid icmp predicate!" << I; abort();
+  default:
+#ifndef NDEBUG
+    cerr << "Invalid icmp predicate!" << I; 
+#endif
+    llvm_unreachable();
   }
 
   writeOperandWithCast(I.getOperand(1), I);
@@ -3020,10 +3036,12 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     Out << ", ";
     // Output the last argument to the enclosing function.
     if (I.getParent()->getParent()->arg_empty()) {
-      cerr << "The C backend does not currently support zero "
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "The C backend does not currently support zero "
            << "argument varargs functions, such as '"
-           << I.getParent()->getParent()->getName() << "'!\n";
-      abort();
+           << I.getParent()->getParent()->getName() << "'!";
+      llvm_report_error(Msg.str());
     }
     writeOperand(--I.getParent()->getParent()->arg_end());
     Out << ')';

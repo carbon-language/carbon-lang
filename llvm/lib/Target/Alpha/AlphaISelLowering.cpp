@@ -25,6 +25,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 /// AddLiveIn - This helper function adds the specified physical register to the

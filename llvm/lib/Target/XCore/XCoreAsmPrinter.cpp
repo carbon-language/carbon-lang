@@ -204,13 +204,13 @@ emitGlobal(const GlobalVariable *GV)
     case GlobalValue::PrivateLinkage:
       break;
     case GlobalValue::GhostLinkage:
-      llvm_report_error("Should not have any unmaterialized functions!");
+      LLVM_UNREACHABLE("Should not have any unmaterialized functions!");
     case GlobalValue::DLLImportLinkage:
-      llvm_report_error("DLLImport linkage is not supported by this target!");
+      LLVM_UNREACHABLE("DLLImport linkage is not supported by this target!");
     case GlobalValue::DLLExportLinkage:
-      llvm_report_error("DLLExport linkage is not supported by this target!");
+      LLVM_UNREACHABLE("DLLExport linkage is not supported by this target!");
     default:
-      assert(0 && "Unknown linkage type!");
+      LLVM_UNREACHABLE("Unknown linkage type!");
     }
 
     EmitAlignment(Align, GV, 2);

@@ -257,10 +257,10 @@ unsigned Emitter<CodeEmitter>::getMachineOpValue(const MachineInstr &MI,
   else if (MO.isMBB())
     emitMachineBasicBlock(MO.getMBB(), ARM::reloc_arm_branch);
   else {
-    std::string msg;
-    raw_string_ostream Msg(msg);
-    Msg << "ERROR: Unknown type of MachineOperand: " << MO;
-    llvm_report_error(Msg.str());
+#ifndef NDEBUG
+    cerr << MO;
+#endif
+    llvm_unreachable();
   }
   return 0;
 }
@@ -588,7 +588,7 @@ void Emitter<CodeEmitter>::emitPseudoInstruction(const MachineInstr &MI) {
   unsigned Opcode = MI.getDesc().Opcode;
   switch (Opcode) {
   default:
-    llvm_report_error("ARMCodeEmitter::emitPseudoInstruction");//FIXME:
+    LLVM_UNREACHABLE("ARMCodeEmitter::emitPseudoInstruction");//FIXME:
   case TargetInstrInfo::INLINEASM: {
     // We allow inline assembler nodes with empty bodies - they can
     // implicitly define registers, which is ok for JIT.
@@ -1119,8 +1119,9 @@ template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitBranchInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
 
-  if (TID.Opcode == ARM::TPsoft)
-    llvm_report_error("ARM::TPsoft FIXME"); // FIXME
+  if (TID.Opcode == ARM::TPsoft) {
+    LLVM_UNREACHABLE("ARM::TPsoft FIXME"); // FIXME
+  }
 
   // Part of binary is determined by TableGn.
   unsigned Binary = getBinaryCodeForInstr(MI);

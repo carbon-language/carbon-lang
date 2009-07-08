@@ -18,6 +18,8 @@
 #include "llvm/Function.h"
 #include "llvm/System/Memory.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
@@ -197,8 +199,7 @@ asm(
     );
 #else
 void PPC32CompilationCallback() {
-  assert(0 && "This is not a power pc, you can't execute this!");
-  abort();
+  LLVM_UNREACHABLE("This is not a power pc, you can't execute this!");
 }
 #endif
 
@@ -264,8 +265,7 @@ asm(
     );
 #else
 void PPC64CompilationCallback() {
-  assert(0 && "This is not a power pc, you can't execute this!");
-  abort();
+  LLVM_UNREACHABLE("This is not a power pc, you can't execute this!");
 }
 #endif
 
