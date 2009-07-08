@@ -17,12 +17,6 @@
 
 #include "Record.h"
 #include "TGParser.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/System/Signals.h"
-#include "llvm/Support/FileUtilities.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/raw_ostream.h"
 #include "CallingConvEmitter.h"
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
@@ -35,6 +29,12 @@
 #include "IntrinsicEmitter.h"
 #include "LLVMCConfigurationEmitter.h"
 #include "ClangDiagnosticsEmitter.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/System/Signals.h"
 #include <algorithm>
 #include <cstdio>
 using namespace llvm;
@@ -138,7 +138,7 @@ static bool ParseFile(const std::string &Filename,
   std::string ErrorStr;
   MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(Filename.c_str(), &ErrorStr);
   if (F == 0) {
-    errs() << "Could not open input file '" + Filename + "': " 
+    errs() << "Could not open input file '" << Filename << "': " 
            << ErrorStr <<"\n";
     return true;
   }
