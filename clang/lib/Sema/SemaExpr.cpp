@@ -4687,15 +4687,23 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
     } else if (isa<OverloadedFunctionDecl>(dcl) ||
                isa<FunctionTemplateDecl>(dcl)) {
       return Context.OverloadTy;
-    } else if (isa<FieldDecl>(dcl)) {
+    } else if (FieldDecl *FD = dyn_cast<FieldDecl>(dcl)) {
       // Okay: we can take the address of a field.
       // Could be a pointer to member, though, if there is an explicit
       // scope qualifier for the class.
       if (isa<QualifiedDeclRefExpr>(op)) {
         DeclContext *Ctx = dcl->getDeclContext();
-        if (Ctx && Ctx->isRecord())
+        if (Ctx && Ctx->isRecord()) {
+          if (FD->getType()->isReferenceType()) {
+            Diag(OpLoc, 
+                 diag::err_cannot_form_pointer_to_member_of_reference_type)
+              << FD->getDeclName() << FD->getType();
+            return QualType();
+          }
+          
           return Context.getMemberPointerType(op->getType(),
                 Context.getTypeDeclType(cast<RecordDecl>(Ctx)).getTypePtr());
+        }
       }
     } else if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(dcl)) {
       // Okay: we can take the address of a function.

@@ -1432,6 +1432,9 @@ def err_invalid_declarator_in_function : Error<
 def err_not_tag_in_scope : Error<
   "%0 does not name a tag member in the specified scope">;
 
+def err_cannot_form_pointer_to_member_of_reference_type : Error<
+  "cannot form a pointer-to-member to member %0 of reference type %1">;
+  
 def warn_value_always_zero : Warning<"%0 is always zero in this context">;
 def warn_value_always_false : Warning<"%0 is always false in this context">;
 
