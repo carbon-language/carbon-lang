@@ -1,24 +1,23 @@
-# RUN: llvm-mc %s > %t
+# RUN: llvm-mc %s | FileCheck %s
 
-# RUN: grep -A 1 TEST0 %t > %t2
-# RUN: not grep ".byte" %t2
+# CHECK: TEST0:
 TEST0:  
         .ascii
 
-# RUN: grep -A 1 TEST1 %t > %t2
-# RUN: not grep "byte" %t2
+# CHECK: TEST1:
 TEST1:  
         .asciz
 
-# RUN: grep -A 2 TEST2 %t > %t2
-# RUN: grep ".byte 65" %t2 | count 1
+# CHECK: TEST2:
+# CHECK: .byte 65
 TEST2:  
         .ascii "A"
 
-# RUN: grep -A 5 TEST3 %t > %t2
-# RUN: grep ".byte 66" %t2 | count 1
-# RUN: grep ".byte 67" %t2 | count 1
-# RUN: grep ".byte 0" %t2 | count 2
+# CHECK: TEST3:
+# CHECK: .byte 66
+# CHECK: .byte 0
+# CHECK: .byte 67
+# CHECK: .byte 0
 TEST3:  
         .asciz "B", "C"
 
