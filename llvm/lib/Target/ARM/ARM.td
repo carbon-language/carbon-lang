@@ -131,13 +131,13 @@ def ARMInstrInfo : InstrInfo {
   let TSFlagsFields = ["AddrModeBits",
                        "SizeFlag",
                        "IndexModeBits",
-                       "isUnaryDataProc",
-                       "Form"];
+                       "Form",
+                       "isUnaryDataProc"];
   let TSFlagsShifts = [0,
                        4,
                        7,
                        9,
-                       10];
+                       15];
 }
 
 //===----------------------------------------------------------------------===//

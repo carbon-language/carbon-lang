@@ -66,17 +66,10 @@ namespace ARMII {
     IndexModePost  = 2,
 
     //===------------------------------------------------------------------===//
-    // Misc flags.
-
-    // UnaryDP - Indicates this is a unary data processing instruction, i.e.
-    // it doesn't have a Rn operand.
-    UnaryDP       = 1 << 9,
-
-    //===------------------------------------------------------------------===//
     // Instruction encoding formats.
     //
-    FormShift     = 10,
-    FormMask      = 0x1f << FormShift,
+    FormShift     = 9,
+    FormMask      = 0x3f << FormShift,
 
     // Pseudo instructions
     Pseudo        = 0  << FormShift,
@@ -125,6 +118,17 @@ namespace ARMII {
     NEONGetLnFrm  = 25 << FormShift,
     NEONSetLnFrm  = 26 << FormShift,
     NEONDupFrm    = 27 << FormShift,
+
+    //===------------------------------------------------------------------===//
+    // Misc flags.
+
+    // UnaryDP - Indicates this is a unary data processing instruction, i.e.
+    // it doesn't have a Rn operand.
+    UnaryDP       = 1 << 15,
+
+    // Xform16Bit - Indicates this Thumb2 instruction may be transformed into
+    // a 16-bit Thumb instruction if certain conditions are met.
+    Xform16Bit    = 1 << 16,
 
     //===------------------------------------------------------------------===//
     // Field shifts - such shifts are used to set field while generating

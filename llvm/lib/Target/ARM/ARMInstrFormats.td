@@ -54,9 +54,16 @@ def NEONGetLnFrm  : Format<25>;
 def NEONSetLnFrm  : Format<26>;
 def NEONDupFrm    : Format<27>;
 
-// Misc flag for data processing instructions that indicates whether
+// Misc flags.
+
 // the instruction has a Rn register operand.
-class UnaryDP  { bit isUnaryDataProc = 1; }
+// UnaryDP - Indicates this is a unary data processing instruction, i.e.
+// it doesn't have a Rn operand.
+class UnaryDP    { bit isUnaryDataProc = 1; }
+
+// Xform16Bit - Indicates this Thumb2 instruction may be transformed into
+// a 16-bit Thumb instruction if certain conditions are met.
+class Xform16Bit { bit canXformTo16Bit = 1; }
 
 //===----------------------------------------------------------------------===//
 // ARM Instruction flags.  These need to match ARMInstrInfo.h.
@@ -130,6 +137,7 @@ class InstARM<AddrMode am, SizeFlagVal sz, IndexMode im,
   // Attributes specific to ARM instructions...
   //
   bit isUnaryDataProc = 0;
+  bit canXformTo16Bit = 0;
   
   let Constraints = cstr;
 }
