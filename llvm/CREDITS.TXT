@@ -306,3 +306,7 @@ D: Bunches of stuff
 N: Bob Wilson
 E: bob.wilson@acm.org
 D: Advanced SIMD (NEON) support in the ARM backend
+
+N: David Goodwin
+E: david@goodwinz.net
+D: Thumb-2 code generator
