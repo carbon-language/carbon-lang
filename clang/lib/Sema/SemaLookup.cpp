@@ -1241,6 +1241,74 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result, DeclarationName Name,
   return true;
 }
 
+static void 
+addAssociatedClassesAndNamespaces(QualType T, 
+                                  ASTContext &Context,
+                          Sema::AssociatedNamespaceSet &AssociatedNamespaces,
+                                  Sema::AssociatedClassSet &AssociatedClasses,
+                                  bool &GlobalScope);
+
+// \brief Add the associated classes and namespaces for argument-dependent 
+// lookup that involves a template argument (C++ [basic.lookup.koenig]p2).
+static void 
+addAssociatedClassesAndNamespaces(const TemplateArgument &Arg, 
+                                  ASTContext &Context,
+                           Sema::AssociatedNamespaceSet &AssociatedNamespaces,
+                                  Sema::AssociatedClassSet &AssociatedClasses,
+                                  bool &GlobalScope) {
+  // C++ [basic.lookup.koenig]p2, last bullet:
+  //   -- [...] ;  
+  switch (Arg.getKind()) {
+    case TemplateArgument::Null:
+      break;
+    
+    case TemplateArgument::Type:
+      // [...] the namespaces and classes associated with the types of the
+      // template arguments provided for template type parameters (excluding
+      // template template parameters)
+      addAssociatedClassesAndNamespaces(Arg.getAsType(), Context,
+                                        AssociatedNamespaces,
+                                        AssociatedClasses,
+                                        GlobalScope);
+      break;
+      
+    case TemplateArgument::Declaration:
+      // [...] the namespaces in which any template template arguments are 
+      // defined; and the classes in which any member templates used as 
+      // template template arguments are defined.
+      if (ClassTemplateDecl *ClassTemplate 
+            = dyn_cast<ClassTemplateDecl>(Arg.getAsDecl())) {
+        DeclContext *Ctx = ClassTemplate->getDeclContext();
+        if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
+          AssociatedClasses.insert(EnclosingClass);
+        // Add the associated namespace for this class.
+        while (Ctx->isRecord())
+          Ctx = Ctx->getParent();
+        if (NamespaceDecl *EnclosingNamespace = dyn_cast<NamespaceDecl>(Ctx))
+          AssociatedNamespaces.insert(EnclosingNamespace);
+        else if (Ctx->isTranslationUnit())
+          GlobalScope = true;
+      }
+      break;
+      
+    case TemplateArgument::Integral:
+    case TemplateArgument::Expression:
+      // [Note: non-type template arguments do not contribute to the set of 
+      //  associated namespaces. ]
+      break;
+      
+    case TemplateArgument::Pack:
+      for (TemplateArgument::pack_iterator P = Arg.pack_begin(),
+                                        PEnd = Arg.pack_end();
+           P != PEnd; ++P)
+        addAssociatedClassesAndNamespaces(*P, Context,
+                                          AssociatedNamespaces,
+                                          AssociatedClasses,
+                                          GlobalScope);
+      break;
+  }
+}
+
 // \brief Add the associated classes and namespaces for
 // argument-dependent lookup with an argument of class type 
 // (C++ [basic.lookup.koenig]p2). 
@@ -1275,8 +1343,36 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
   if (!AssociatedClasses.insert(Class))
     return;
 
-  // FIXME: Handle class template specializations
-
+  // -- If T is a template-id, its associated namespaces and classes are 
+  //    the namespace in which the template is defined; for member 
+  //    templates, the member template’s class; the namespaces and classes
+  //    associated with the types of the template arguments provided for 
+  //    template type parameters (excluding template template parameters); the
+  //    namespaces in which any template template arguments are defined; and 
+  //    the classes in which any member templates used as template template 
+  //    arguments are defined. [Note: non-type template arguments do not 
+  //    contribute to the set of associated namespaces. ]
+  if (ClassTemplateSpecializationDecl *Spec 
+        = dyn_cast<ClassTemplateSpecializationDecl>(Class)) {
+    DeclContext *Ctx = Spec->getSpecializedTemplate()->getDeclContext();
+    if (CXXRecordDecl *EnclosingClass = dyn_cast<CXXRecordDecl>(Ctx))
+      AssociatedClasses.insert(EnclosingClass);
+    // Add the associated namespace for this class.
+    while (Ctx->isRecord())
+      Ctx = Ctx->getParent();
+    if (NamespaceDecl *EnclosingNamespace = dyn_cast<NamespaceDecl>(Ctx))
+      AssociatedNamespaces.insert(EnclosingNamespace);
+    else if (Ctx->isTranslationUnit())
+      GlobalScope = true;
+    
+    const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
+    for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
+      addAssociatedClassesAndNamespaces(TemplateArgs[I], Context,
+                                        AssociatedNamespaces,
+                                        AssociatedClasses,
+                                        GlobalScope);
+  }
+  
   // Add direct and indirect base classes along with their associated
   // namespaces.
   llvm::SmallVector<CXXRecordDecl *, 32> Bases;
@@ -1297,7 +1393,8 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
         DeclContext *BaseCtx = BaseDecl->getDeclContext();
         while (BaseCtx->isRecord())
           BaseCtx = BaseCtx->getParent();
-        if (NamespaceDecl *EnclosingNamespace = dyn_cast<NamespaceDecl>(BaseCtx))
+        if (NamespaceDecl *EnclosingNamespace 
+              = dyn_cast<NamespaceDecl>(BaseCtx))
           AssociatedNamespaces.insert(EnclosingNamespace);
         else if (BaseCtx->isTranslationUnit())
           GlobalScope = true;
@@ -1490,6 +1587,8 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
     if (!DRE)
       continue;
 
+    // FIXME: The declaration might be a FunctionTemplateDecl (by itself)
+    // or might be buried in a TemplateIdRefExpr.
     OverloadedFunctionDecl *Ovl 
       = dyn_cast<OverloadedFunctionDecl>(DRE->getDecl());
     if (!Ovl)
