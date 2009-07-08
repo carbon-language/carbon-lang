@@ -224,7 +224,7 @@ unsigned ARMTargetAsmInfo<BaseTAI>::getInlineAsmLength(const char *s) const {
       } else if (inTextSection) {
         // An instruction
         atInsnStart = false;
-        if (Subtarget->isThumb()) {
+        if (Subtarget->isThumb()) {  // FIXME thumb2
           // BL and BLX <non-reg> are 4 bytes, all others 2.
           if (strncmp(Str, "blx", strlen("blx"))==0) {
             const char* p = Str+3;

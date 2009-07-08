@@ -119,12 +119,12 @@ let Defs = [SP], Uses = [SP] in {
 def tADJCALLSTACKUP :
 PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2),
            "@ tADJCALLSTACKUP $amt1",
-           [(ARMcallseq_end imm:$amt1, imm:$amt2)]>, Requires<[IsThumb]>;
+           [(ARMcallseq_end imm:$amt1, imm:$amt2)]>, Requires<[IsThumb1Only]>;
 
 def tADJCALLSTACKDOWN :
 PseudoInst<(outs), (ins i32imm:$amt),
            "@ tADJCALLSTACKDOWN $amt",
-           [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb]>;
+           [(ARMcallseq_start imm:$amt)]>, Requires<[IsThumb1Only]>;
 }
 
 let isNotDuplicable = 1 in
@@ -155,7 +155,7 @@ def tADDspi : T1It<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
 //
 
 let isReturn = 1, isTerminator = 1 in {
-  def tBX_RET : TI<(outs), (ins), "bx lr", [(ARMretflag)]>;
+  def tBX_RET : T1I<(outs), (ins), "bx lr", [(ARMretflag)]>;
   // Alternative return instruction used by vararg functions.
   def tBX_RET_vararg : T1I<(outs), (ins tGPR:$target), "bx $target", []>;
 }
@@ -471,7 +471,7 @@ def tORR : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
 def tREV : T1I<(outs tGPR:$dst), (ins tGPR:$src),
               "rev $dst, $src",
               [(set tGPR:$dst, (bswap tGPR:$src))]>,
-              Requires<[IsThumb, HasV6]>;
+              Requires<[IsThumb1Only, HasV6]>;
 
 def tREV16 : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                 "rev16 $dst, $src",
@@ -480,7 +480,7 @@ def tREV16 : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                         (or (and (shl tGPR:$src, (i32 8)), 0xFF00),
                             (or (and (srl tGPR:$src, (i32 8)), 0xFF0000),
                                 (and (shl tGPR:$src, (i32 8)), 0xFF000000)))))]>,
-                Requires<[IsThumb, HasV6]>;
+                Requires<[IsThumb1Only, HasV6]>;
 
 def tREVSH : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                 "revsh $dst, $src",
@@ -488,7 +488,7 @@ def tREVSH : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                    (sext_inreg
                      (or (srl (and tGPR:$src, 0xFFFF), (i32 8)),
                          (shl tGPR:$src, (i32 8))), i16))]>,
-                Requires<[IsThumb, HasV6]>;
+                Requires<[IsThumb1Only, HasV6]>;
 
 // rotate right register
 let Defs = [CPSR] in
@@ -540,13 +540,13 @@ def tSUBspi : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
 def tSXTB  : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                 "sxtb $dst, $src",
                 [(set tGPR:$dst, (sext_inreg tGPR:$src, i8))]>,
-                Requires<[IsThumb, HasV6]>;
+                Requires<[IsThumb1Only, HasV6]>;
 
 // sign-extend short
 def tSXTH  : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                 "sxth $dst, $src",
                 [(set tGPR:$dst, (sext_inreg tGPR:$src, i16))]>,
-                Requires<[IsThumb, HasV6]>;
+                Requires<[IsThumb1Only, HasV6]>;
 
 // test
 let isCommutable = 1, Defs = [CPSR] in
@@ -558,13 +558,13 @@ def tTST  : T1I<(outs), (ins tGPR:$lhs, tGPR:$rhs),
 def tUXTB  : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                 "uxtb $dst, $src",
                 [(set tGPR:$dst, (and tGPR:$src, 0xFF))]>,
-                Requires<[IsThumb, HasV6]>;
+                Requires<[IsThumb1Only, HasV6]>;
 
 // zero-extend short
 def tUXTH  : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                 "uxth $dst, $src",
                 [(set tGPR:$dst, (and tGPR:$src, 0xFFFF))]>,
-                Requires<[IsThumb, HasV6]>;
+                Requires<[IsThumb1Only, HasV6]>;
 
 
 // Conditional move tMOVCCr - Used to implement the Thumb SELECT_CC DAG operation.

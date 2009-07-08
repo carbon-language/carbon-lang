@@ -124,6 +124,7 @@ namespace {
     const TargetInstrInfo *TII;
     ARMFunctionInfo *AFI;
     bool isThumb;
+    bool isThumb1Only;
     bool isThumb2;
   public:
     static char ID;
@@ -214,6 +215,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   TII = Fn.getTarget().getInstrInfo();
   AFI = Fn.getInfo<ARMFunctionInfo>();
   isThumb = AFI->isThumbFunction();
+  isThumb1Only = AFI->isThumb1OnlyFunction();
   isThumb2 = AFI->isThumb2Function();
 
   HasFarJump = false;

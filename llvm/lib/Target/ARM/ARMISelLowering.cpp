@@ -189,11 +189,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setLibcallName(RTLIB::SRL_I128, 0);
   setLibcallName(RTLIB::SRA_I128, 0);
 
-  if (Subtarget->isThumb())
+  if (Subtarget->isThumb1Only())
     addRegisterClass(MVT::i32, ARM::tGPRRegisterClass);
   else
     addRegisterClass(MVT::i32, ARM::GPRRegisterClass);
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb()) {
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only()) {
     addRegisterClass(MVT::f32, ARM::SPRRegisterClass);
     addRegisterClass(MVT::f64, ARM::DPRRegisterClass);
 
@@ -256,7 +256,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   } else {
     setOperationAction(ISD::MUL,     MVT::i64, Expand);
     setOperationAction(ISD::MULHU,   MVT::i32, Expand);
-    if (!Subtarget->isThumb() && !Subtarget->hasV6Ops())
+    if (!Subtarget->isThumb1Only() && !Subtarget->hasV6Ops())
       setOperationAction(ISD::MULHS, MVT::i32, Expand);
   }
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
@@ -310,7 +310,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   }
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb())
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only())
     // Turn f64->i64 into FMRRD, i64 -> f64 to FMDRR iff target supports vfp2.
     setOperationAction(ISD::BIT_CONVERT, MVT::i64, Custom);
 
@@ -340,7 +340,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FCOS,      MVT::f64, Expand);
   setOperationAction(ISD::FREM,      MVT::f64, Expand);
   setOperationAction(ISD::FREM,      MVT::f32, Expand);
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb()) {
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only()) {
     setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
     setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
   }
@@ -348,7 +348,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FPOW,      MVT::f32, Expand);
 
   // int <-> fp are custom expanded into bit_convert + ARMISD ops.
-  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb()) {
+  if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb1Only()) {
     setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
     setOperationAction(ISD::UINT_TO_FP, MVT::i32, Custom);
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
@@ -942,7 +942,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     // ARM call to a local ARM function is predicable.
     isLocalARMFunc = !Subtarget->isThumb() && !isExt;
     // tBX takes a register source operand.
-    if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps()) {
+    if (isARMFunc && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(GV, ARMPCLabelIndex,
                                                            ARMCP::CPStub, 4);
       SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
@@ -961,7 +961,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     isARMFunc = !Subtarget->isThumb() || isStub;
     // tBX takes a register source operand.
     const char *Sym = S->getSymbol();
-    if (isARMFunc && Subtarget->isThumb() && !Subtarget->hasV5TOps()) {
+    if (isARMFunc && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
       ARMConstantPoolValue *CPV = new ARMConstantPoolValue(Sym, ARMPCLabelIndex,
                                                            ARMCP::CPStub, 4);
       SDValue CPAddr = DAG.getTargetConstantPool(CPV, getPointerTy(), 4);
@@ -977,7 +977,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // FIXME: handle tail calls differently.
   unsigned CallOpc;
-  if (Subtarget->isThumb()) {
+  if (Subtarget->isThumb1Only()) {
     if (!Subtarget->hasV5TOps() && (!isDirect || isARMFunc))
       CallOpc = ARMISD::CALL_NOLINK;
     else
@@ -987,7 +987,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       ? (isLocalARMFunc ? ARMISD::CALL_PRED : ARMISD::CALL)
       : ARMISD::CALL_NOLINK;
   }
-  if (CallOpc == ARMISD::CALL_NOLINK && !Subtarget->isThumb()) {
+  if (CallOpc == ARMISD::CALL_NOLINK && !Subtarget->isThumb1Only()) {
     // implicit def LR - LR mustn't be allocated as GRP:$dst of CALL_NOLINK
     Chain = DAG.getCopyToReg(Chain, dl, ARM::LR, DAG.getUNDEF(MVT::i32),InFlag);
     InFlag = Chain.getValue(1);
@@ -1345,7 +1345,7 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
   TargetRegisterClass *RC;
-  if (AFI->isThumbFunction())
+  if (AFI->isThumb1OnlyFunction())
     RC = ARM::tGPRRegisterClass;
   else
     RC = ARM::GPRRegisterClass;
@@ -1423,7 +1423,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
           RC = ARM::SPRRegisterClass;
         else if (FloatABIType == FloatABI::Hard && RegVT == MVT::f64)
           RC = ARM::DPRRegisterClass;
-        else if (AFI->isThumbFunction())
+        else if (AFI->isThumb1OnlyFunction())
           RC = ARM::tGPRRegisterClass;
         else
           RC = ARM::GPRRegisterClass;
@@ -1501,7 +1501,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       SmallVector<SDValue, 4> MemOps;
       for (; NumGPRs < 4; ++NumGPRs) {
         TargetRegisterClass *RC;
-        if (AFI->isThumbFunction())
+        if (AFI->isThumb1OnlyFunction())
           RC = ARM::tGPRRegisterClass;
         else
           RC = ARM::GPRRegisterClass;
@@ -1544,46 +1544,46 @@ static bool isFloatingPointZero(SDValue Op) {
   return false;
 }
 
-static bool isLegalCmpImmediate(unsigned C, bool isThumb) {
-  return ( isThumb && (C & ~255U) == 0) ||
-         (!isThumb && ARM_AM::getSOImmVal(C) != -1);
+static bool isLegalCmpImmediate(unsigned C, bool isThumb1Only) {
+  return ( isThumb1Only && (C & ~255U) == 0) ||
+         (!isThumb1Only && ARM_AM::getSOImmVal(C) != -1);
 }
 
 /// Returns appropriate ARM CMP (cmp) and corresponding condition code for
 /// the given operands.
 static SDValue getARMCmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
-                         SDValue &ARMCC, SelectionDAG &DAG, bool isThumb,
+                         SDValue &ARMCC, SelectionDAG &DAG, bool isThumb1Only,
                          DebugLoc dl) {
   if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(RHS.getNode())) {
     unsigned C = RHSC->getZExtValue();
-    if (!isLegalCmpImmediate(C, isThumb)) {
+    if (!isLegalCmpImmediate(C, isThumb1Only)) {
       // Constant does not fit, try adjusting it by one?
       switch (CC) {
       default: break;
       case ISD::SETLT:
       case ISD::SETGE:
-        if (isLegalCmpImmediate(C-1, isThumb)) {
+        if (isLegalCmpImmediate(C-1, isThumb1Only)) {
           CC = (CC == ISD::SETLT) ? ISD::SETLE : ISD::SETGT;
           RHS = DAG.getConstant(C-1, MVT::i32);
         }
         break;
       case ISD::SETULT:
       case ISD::SETUGE:
-        if (C > 0 && isLegalCmpImmediate(C-1, isThumb)) {
+        if (C > 0 && isLegalCmpImmediate(C-1, isThumb1Only)) {
           CC = (CC == ISD::SETULT) ? ISD::SETULE : ISD::SETUGT;
           RHS = DAG.getConstant(C-1, MVT::i32);
         }
         break;
       case ISD::SETLE:
       case ISD::SETGT:
-        if (isLegalCmpImmediate(C+1, isThumb)) {
+        if (isLegalCmpImmediate(C+1, isThumb1Only)) {
           CC = (CC == ISD::SETLE) ? ISD::SETLT : ISD::SETGE;
           RHS = DAG.getConstant(C+1, MVT::i32);
         }
         break;
       case ISD::SETULE:
       case ISD::SETUGT:
-        if (C < 0xffffffff && isLegalCmpImmediate(C+1, isThumb)) {
+        if (C < 0xffffffff && isLegalCmpImmediate(C+1, isThumb1Only)) {
           CC = (CC == ISD::SETULE) ? ISD::SETULT : ISD::SETUGE;
           RHS = DAG.getConstant(C+1, MVT::i32);
         }
@@ -1632,7 +1632,7 @@ static SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG,
   if (LHS.getValueType() == MVT::i32) {
     SDValue ARMCC;
     SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb(), dl);
+    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb1Only(), dl);
     return DAG.getNode(ARMISD::CMOV, dl, VT, FalseVal, TrueVal, ARMCC, CCR,Cmp);
   }
 
@@ -1667,7 +1667,7 @@ static SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG,
   if (LHS.getValueType() == MVT::i32) {
     SDValue ARMCC;
     SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
-    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb(), dl);
+    SDValue Cmp = getARMCmp(LHS, RHS, CC, ARMCC, DAG, ST->isThumb1Only(), dl);
     return DAG.getNode(ARMISD::BRCOND, dl, MVT::Other,
                        Chain, Dest, ARMCC, CCR,Cmp);
   }
@@ -1970,7 +1970,7 @@ static SDValue LowerShift(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   // If we are in thumb mode, we don't have RRX.
-  if (ST->isThumb()) return SDValue();
+  if (ST->isThumb1Only()) return SDValue();
 
   // Okay, we have a 64-bit SRA or SRL of 1.  Lower this to an RRX expr.
   SDValue Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, MVT::i32, N->getOperand(0),
@@ -2810,7 +2810,7 @@ static bool isLegalAddressImmediate(int64_t V, MVT VT,
   if (!VT.isSimple())
     return false;
 
-  if (Subtarget->isThumb()) {
+  if (Subtarget->isThumb()) { // FIXME for thumb2
     if (V < 0)
       return false;
 
@@ -2876,7 +2876,7 @@ bool ARMTargetLowering::isLegalAddressingMode(const AddrMode &AM,
   case 0:  // no scale reg, must be "r+i" or "r", or "i".
     break;
   case 1:
-    if (Subtarget->isThumb())
+    if (Subtarget->isThumb())  // FIXME for thumb2
       return false;
     // FALL THROUGH.
   default:
@@ -3130,7 +3130,7 @@ ARMTargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     // GCC RS6000 Constraint Letters
     switch (Constraint[0]) {
     case 'l':
-      if (Subtarget->isThumb())
+      if (Subtarget->isThumb1Only())
         return std::make_pair(0U, ARM::tGPRRegisterClass);
       else
         return std::make_pair(0U, ARM::GPRRegisterClass);
@@ -3211,9 +3211,15 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 
     switch (Constraint) {
       case 'I':
-        if (Subtarget->isThumb()) {
-          // This must be a constant between 0 and 255, for ADD immediates.
+        if (Subtarget->isThumb1Only()) {
+          // This must be a constant between 0 and 255, for ADD
+          // immediates.
           if (CVal >= 0 && CVal <= 255)
+            break;
+        } else if (Subtarget->isThumb2()) {
+          // A constant that can be used as an immediate value in a
+          // data-processing instruction.
+          if (ARM_AM::getT2SOImmVal(CVal) != -1)
             break;
         } else {
           // A constant that can be used as an immediate value in a
@@ -3224,7 +3230,7 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         return;
 
       case 'J':
-        if (Subtarget->isThumb()) {
+        if (Subtarget->isThumb()) {  // FIXME thumb2
           // This must be a constant between -255 and -1, for negated ADD
           // immediates. This can be used in GCC with an "n" modifier that
           // prints the negated value, for use with SUB instructions. It is
@@ -3241,12 +3247,20 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         return;
 
       case 'K':
-        if (Subtarget->isThumb()) {
+        if (Subtarget->isThumb1Only()) {
           // A 32-bit value where only one byte has a nonzero value. Exclude
           // zero to match GCC. This constraint is used by GCC internally for
           // constants that can be loaded with a move/shift combination.
           // It is not useful otherwise but is implemented for compatibility.
           if (CVal != 0 && ARM_AM::isThumbImmShiftedVal(CVal))
+            break;
+        } else if (Subtarget->isThumb2()) {
+          // A constant whose bitwise inverse can be used as an immediate
+          // value in a data-processing instruction. This can be used in GCC
+          // with a "B" modifier that prints the inverted value, for use with
+          // BIC and MVN instructions. It is not useful otherwise but is
+          // implemented for compatibility.
+          if (ARM_AM::getT2SOImmVal(~CVal) != -1)
             break;
         } else {
           // A constant whose bitwise inverse can be used as an immediate
@@ -3260,10 +3274,18 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         return;
 
       case 'L':
-        if (Subtarget->isThumb()) {
+        if (Subtarget->isThumb1Only()) {
           // This must be a constant between -7 and 7,
           // for 3-operand ADD/SUB immediate instructions.
           if (CVal >= -7 && CVal < 7)
+            break;
+        } else if (Subtarget->isThumb2()) {
+          // A constant whose negation can be used as an immediate value in a
+          // data-processing instruction. This can be used in GCC with an "n"
+          // modifier that prints the negated value, for use with SUB
+          // instructions. It is not useful otherwise but is implemented for
+          // compatibility.
+          if (ARM_AM::getT2SOImmVal(-CVal) != -1)
             break;
         } else {
           // A constant whose negation can be used as an immediate value in a
@@ -3277,7 +3299,7 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         return;
 
       case 'M':
-        if (Subtarget->isThumb()) {
+        if (Subtarget->isThumb()) { // FIXME thumb2
           // This must be a multiple of 4 between 0 and 1020, for
           // ADD sp + immediate.
           if ((CVal >= 0 && CVal <= 1020) && ((CVal & 3) == 0))
@@ -3292,7 +3314,7 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         return;
 
       case 'N':
-        if (Subtarget->isThumb()) {
+        if (Subtarget->isThumb()) {  // FIXME thumb2
           // This must be a constant between 0 and 31, for shift amounts.
           if (CVal >= 0 && CVal <= 31)
             break;
@@ -3300,7 +3322,7 @@ void ARMTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         return;
 
       case 'O':
-        if (Subtarget->isThumb()) {
+        if (Subtarget->isThumb()) {  // FIXME thumb2
           // This must be a multiple of 4 between -508 and 508, for
           // ADD/SUB sp = sp + immediate.
           if ((CVal >= -508 && CVal <= 508) && ((CVal & 3) == 0))

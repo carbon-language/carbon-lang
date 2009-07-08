@@ -227,7 +227,7 @@ ARMBaseRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     0
   };
 
-  if (STI.isThumb()) {
+  if (STI.isThumb1Only()) {
     return STI.isTargetDarwin()
       ? DarwinThumbCalleeSavedRegClasses : ThumbCalleeSavedRegClasses;
   }
@@ -565,7 +565,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 
   bool ForceLRSpill = false;
-  if (!LRSpilled && AFI->isThumbFunction()) {
+  if (!LRSpilled && AFI->isThumb1OnlyFunction()) {
     unsigned FnSize = TII.GetFunctionSizeInBytes(MF);
     // Force LR to be spilled if the Thumb function size is > 2048. This enables
     // use of BL to implement far jump. If it turns out that it's not needed
@@ -607,8 +607,8 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       if (CS1Spilled && !UnspilledCS1GPRs.empty()) {
         for (unsigned i = 0, e = UnspilledCS1GPRs.size(); i != e; ++i) {
           unsigned Reg = UnspilledCS1GPRs[i];
-          // Don't spiil high register if the function is thumb
-          if (!AFI->isThumbFunction() ||
+          // Don't spill high register if the function is thumb1
+          if (!AFI->isThumb1OnlyFunction() ||
               isARMLowRegister(Reg) || Reg == ARM::LR) {
             MF.getRegInfo().setPhysRegUsed(Reg);
             AFI->setCSRegisterIsSpilled(Reg);
@@ -618,7 +618,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
           }
         }
       } else if (!UnspilledCS2GPRs.empty() &&
-                 !AFI->isThumbFunction()) {
+                 !AFI->isThumb1OnlyFunction()) {
         unsigned Reg = UnspilledCS2GPRs.front();
         MF.getRegInfo().setPhysRegUsed(Reg);
         AFI->setCSRegisterIsSpilled(Reg);
@@ -631,7 +631,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // to materialize a stack offset. If so, either spill one additional
     // callee-saved register or reserve a special spill slot to facilitate
     // register scavenging.
-    if (RS && !ExtraCSSpill && !AFI->isThumbFunction()) {
+    if (RS && !ExtraCSSpill && !AFI->isThumb1OnlyFunction()) {
       MachineFrameInfo  *MFI = MF.getFrameInfo();
       unsigned Size = estimateStackSize(MF, MFI);
       unsigned Limit = (1 << 12) - 1;
@@ -730,7 +730,7 @@ unsigned ARMBaseRegisterInfo::getRegisterPairEven(unsigned Reg,
     return ARM::R0;
   case ARM::R3:
     // FIXME!
-    return STI.isThumb() ? 0 : ARM::R2;
+    return STI.isThumb1Only() ? 0 : ARM::R2;
   case ARM::R5:
     return ARM::R4;
   case ARM::R7:
@@ -804,7 +804,7 @@ unsigned ARMBaseRegisterInfo::getRegisterPairOdd(unsigned Reg,
     return ARM::R1;
   case ARM::R2:
     // FIXME!
-    return STI.isThumb() ? 0 : ARM::R3;
+    return STI.isThumb1Only() ? 0 : ARM::R3;
   case ARM::R4:
     return ARM::R5;
   case ARM::R6:
@@ -1003,7 +1003,7 @@ static
 unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
                              ARMFunctionInfo *AFI) {
   unsigned Reg = RS ? RS->FindUnusedReg(RC, true) : (unsigned) ARM::R12;
-  assert (!AFI->isThumbFunction());
+  assert (!AFI->isThumb1OnlyFunction());
   if (Reg == 0)
     // Try a already spilled CS register.
     Reg = RS->FindUnusedReg(RC, AFI->getSpilledCSRegisters());

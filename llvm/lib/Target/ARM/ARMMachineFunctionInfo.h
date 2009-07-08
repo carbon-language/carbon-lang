@@ -119,6 +119,7 @@ public:
     JumpTableUId(0), ConstPoolEntryUId(0) {}
 
   bool isThumbFunction() const { return isThumb; }
+  bool isThumb1OnlyFunction() const { return isThumb && !hasThumb2; }
   bool isThumb2Function() const { return isThumb && hasThumb2; }
 
   unsigned getAlign() const { return Align; }

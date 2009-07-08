@@ -870,7 +870,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                                       TLI.getPointerTy());
 
       SDNode *ResNode;
-      if (Subtarget->isThumb())
+      if (Subtarget->isThumb1Only())
         ResNode = CurDAG->getTargetNode(ARM::tLDRcp, dl, MVT::i32, MVT::Other,
                                         CPIdx, CurDAG->getEntryNode());
       else {
@@ -896,18 +896,19 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     // Selects to ADDri FI, 0 which in turn will become ADDri SP, imm.
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-    if (Subtarget->isThumb()) {
+    if (Subtarget->isThumb1Only()) {
       return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, TFI,
                                   CurDAG->getTargetConstant(0, MVT::i32));
     } else {
       SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
                           getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                           CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->SelectNodeTo(N, ARM::ADDri, MVT::i32, Ops, 5);
+      return CurDAG->SelectNodeTo(N, (Subtarget->hasThumb2()) ? ARM::t2ADDri : ARM::ADDri,
+                                  MVT::i32, Ops, 5);
     }
   }
   case ISD::ADD: {
-    if (!Subtarget->isThumb())
+    if (!Subtarget->isThumb1Only())
       break;
     // Select add sp, c to tADDhirr.
     SDValue N0 = Op.getOperand(0);
@@ -938,7 +939,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
                             getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getRegister(0, MVT::i32) };
-        return CurDAG->SelectNodeTo(N, ARM::ADDrs, MVT::i32, Ops, 7);
+        return CurDAG->SelectNodeTo(N, (Subtarget->hasThumb2()) ? 
+                                    ARM::t2ADDrs : ARM::ADDrs, MVT::i32, Ops, 7);
       }
       if (isPowerOf2_32(RHSV+1)) {  // 2^n-1?
         SDValue V = Op.getOperand(0);
@@ -947,7 +949,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
                             getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getRegister(0, MVT::i32) };
-        return CurDAG->SelectNodeTo(N, ARM::RSBrs, MVT::i32, Ops, 7);
+        return CurDAG->SelectNodeTo(N, (Subtarget->hasThumb2()) ? 
+                                    ARM::t2RSBrs : ARM::RSBrs, MVT::i32, Ops, 7);
       }
     }
     break;

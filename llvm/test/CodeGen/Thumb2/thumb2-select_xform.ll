@@ -1,5 +1,3 @@
-; XFAIL: *
-; fixme
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mov | count 3
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mvn | count 1
 

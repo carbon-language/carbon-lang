@@ -432,9 +432,9 @@ multiclass T2I_bin_rrot<string opc, PatFrag opnode> {
 //
 
 let isNotDuplicable = 1 in
-def t2PICADD : T2XI<(outs tGPR:$dst), (ins tGPR:$lhs, pclabel:$cp),
+def t2PICADD : T2XI<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp),
                     "$cp:\n\tadd $dst, pc",
-                    [(set tGPR:$dst, (ARMpic_add tGPR:$lhs, imm:$cp))]>;
+                    [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;
 
 
 // LEApcrel - Load a pc-relative address into a register without offending the

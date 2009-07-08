@@ -36,23 +36,7 @@ public:
                         ARMCC::CondCodes Pred = ARMCC::AL,
                         unsigned PredReg = 0) const;
 
-  /// Code Generation virtual methods...
-  const TargetRegisterClass *
-    getPhysicalRegisterRegClass(unsigned Reg, MVT VT = MVT::Other) const;
-
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
-
-  bool hasReservedCallFrame(MachineFunction &MF) const;
-
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
-
-  void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int SPAdj, RegScavenger *RS = NULL) const;
-
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 };
 }
 

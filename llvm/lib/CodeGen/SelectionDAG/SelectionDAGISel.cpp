@@ -215,8 +215,11 @@ static void EmitLiveInCopy(MachineBasicBlock *MBB,
     --Pos;
   }
 
-  TII.copyRegToReg(*MBB, Pos, VirtReg, PhysReg, RC, RC);
-  CopyRegMap.insert(std::make_pair(prior(Pos), VirtReg));
+  bool Emitted = TII.copyRegToReg(*MBB, Pos, VirtReg, PhysReg, RC, RC);
+  assert(Emitted && "Unable to issue a live-in copy instruction!\n");
+  (void) Emitted;
+  
+CopyRegMap.insert(std::make_pair(prior(Pos), VirtReg));
   if (Coalesced) {
     if (&*InsertPos == UseMI) ++InsertPos;
     MBB->erase(UseMI);
@@ -247,8 +250,10 @@ static void EmitLiveInCopies(MachineBasicBlock *EntryMBB,
            E = MRI.livein_end(); LI != E; ++LI)
       if (LI->second) {
         const TargetRegisterClass *RC = MRI.getRegClass(LI->second);
-        TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
-                         LI->second, LI->first, RC, RC);
+        bool Emitted = TII.copyRegToReg(*EntryMBB, EntryMBB->begin(),
+                                        LI->second, LI->first, RC, RC);
+        assert(Emitted && "Unable to issue a live-in copy instruction!\n");
+        (void) Emitted;
       }
   }
 }

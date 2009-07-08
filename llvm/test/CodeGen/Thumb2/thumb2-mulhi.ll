@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep smmul | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep smull | count 1
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep umull | count 1
 
 define i32 @smulhi(i32 %x, i32 %y) {
