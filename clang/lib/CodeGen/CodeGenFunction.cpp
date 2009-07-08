@@ -27,6 +27,7 @@ using namespace CodeGen;
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
   : BlockFunction(cgm, *this, Builder), CGM(cgm),
     Target(CGM.getContext().Target),
+    Builder(cgm.getModule().getContext()),
     DebugInfo(0), SwitchInsn(0), CaseRangeBlock(0), InvokeDest(0), 
     CXXThisDecl(0) {
   LLVMIntTy = ConvertType(getContext().IntTy);

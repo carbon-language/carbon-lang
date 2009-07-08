@@ -1173,7 +1173,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       llvm::GlobalValue::InternalLinkage, ".objc_load_function",
       &TheModule);
   llvm::BasicBlock *EntryBB = llvm::BasicBlock::Create("entry", LoadFunction);
-  CGBuilderTy Builder;
+  CGBuilderTy Builder(TheModule.getContext());
   Builder.SetInsertPoint(EntryBB);
 
   std::vector<const llvm::Type*> Params(1,
