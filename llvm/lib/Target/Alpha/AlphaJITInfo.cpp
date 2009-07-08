@@ -184,8 +184,7 @@ extern "C" {
       );
 #else
   void AlphaCompilationCallback() {
-    cerr << "Cannot call AlphaCompilationCallback() on a non-Alpha arch!\n";
-    abort();
+    LLVM_UNREACHABLE("Cannot call AlphaCompilationCallback() on a non-Alpha arch!");
   }
 #endif
 }

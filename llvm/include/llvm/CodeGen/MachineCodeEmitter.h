@@ -18,6 +18,8 @@
 #define LLVM_CODEGEN_MACHINECODEEMITTER_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 

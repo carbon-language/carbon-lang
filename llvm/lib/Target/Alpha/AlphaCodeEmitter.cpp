@@ -26,6 +26,8 @@
 #include "llvm/Function.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
@@ -164,8 +166,7 @@ static unsigned getAlphaRegNumber(unsigned Reg) {
   case Alpha::R30 : case Alpha::F30 : return 30;
   case Alpha::R31 : case Alpha::F31 : return 31;
   default:
-    assert(0 && "Unhandled reg");
-    abort();
+    LLVM_UNREACHABLE("Unhandled reg");
   }
 }
 
@@ -216,8 +217,7 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       Offset = MI.getOperand(3).getImm();
       break;
     default:
-      assert(0 && "unknown relocatable instruction");
-      abort();
+      LLVM_UNREACHABLE("unknown relocatable instruction");
     }
     if (MO.isGlobal())
       MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
@@ -234,9 +234,11 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
   } else if (MO.isMBB()) {
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
                                                Alpha::reloc_bsr, MO.getMBB()));
-  }else {
-    cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
-    abort();
+  } else {
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "ERROR: Unknown type of MachineOperand: " << MO;
+    llvm_report_error(Msg.str());
   }
 
   return rv;

@@ -32,6 +32,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
@@ -190,11 +191,14 @@ SDValue MSP430TargetLowering::LowerCCCArguments(SDValue Op,
       // Arguments passed in registers
       MVT RegVT = VA.getLocVT();
       switch (RegVT.getSimpleVT()) {
-      default:
-        cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-             << RegVT.getSimpleVT()
-             << "\n";
-        abort();
+      default: 
+        {
+          std::string msg;
+          raw_string_ostream Msg(msg);
+          Msg << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+            << RegVT.getSimpleVT();
+          llvm_report_error(Msg.str());
+        }
       case MVT::i16:
         unsigned VReg =
           RegInfo.createVirtualRegister(MSP430::GR16RegisterClass);

@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
@@ -184,7 +185,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       << MO.getIndex();
     break;
   default:
-    O << "<unknown operand type>"; abort (); break;
+    llvm_report_error("<unknown operand type>"); break;
   }
   if (CloseParen) O << ")";
 }
@@ -298,16 +299,13 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::InternalLinkage:
     break;
    case GlobalValue::GhostLinkage:
-    cerr << "Should not have any unmaterialized functions!\n";
-    abort();
+    llvm_report_error("Should not have any unmaterialized functions!");
    case GlobalValue::DLLImportLinkage:
-    cerr << "DLLImport linkage is not supported by this target!\n";
-    abort();
+    llvm_report_error("DLLImport linkage is not supported by this target!");
    case GlobalValue::DLLExportLinkage:
-    cerr << "DLLExport linkage is not supported by this target!\n";
-    abort();
+    llvm_report_error("DLLExport linkage is not supported by this target!");
    default:
-    assert(0 && "Unknown linkage type!");
+    LLVM_UNREACHABLE("Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);

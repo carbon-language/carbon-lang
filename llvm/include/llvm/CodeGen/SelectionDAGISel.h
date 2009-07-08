@@ -19,6 +19,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Constant.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
   class FastISel;

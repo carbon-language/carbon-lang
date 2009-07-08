@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
@@ -100,8 +101,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_Immediate:
-    cerr << "printOp() does not handle immediate values\n";
-    abort();
+    llvm_report_error("printOp() does not handle immediate values");
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
@@ -188,8 +188,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // Print the assembly for the instruction.
       ++EmittedInsts;
       if (!printInstruction(II)) {
-        assert(0 && "Unhandled instruction in asm writer!");
-        abort();
+        LLVM_UNREACHABLE("Unhandled instruction in asm writer!");
       }
     }
   }
@@ -249,9 +248,7 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     case GlobalValue::PrivateLinkage:
       break;
     default:
-      assert(0 && "Unknown linkage type!");
-      cerr << "Unknown linkage type!\n";
-      abort();
+      LLVM_UNREACHABLE("Unknown linkage type!");
     }
 
   // 3: Type, Size, Align

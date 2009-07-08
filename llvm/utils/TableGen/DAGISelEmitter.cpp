@@ -2083,20 +2083,19 @@ void DAGISelEmitter::EmitInstructionSelector(raw_ostream &OS) {
      << "}\n\n";
 
   OS << "void CannotYetSelect(SDValue N) DISABLE_INLINE {\n"
-     << "  cerr << \"Cannot yet select: \";\n"
-     << "  N.getNode()->dump(CurDAG);\n"
-     << "  cerr << '\\n';\n"
-     << "  abort();\n"
+     << "  std::string msg;\n"
+     << "  raw_string_ostream Msg(msg);\n"
+     << "  Msg << \"Cannot yet select: \";\n"
+     << "  N.getNode()->print(Msg, CurDAG);\n"
+     << "  llvm_report_error(Msg.str());\n"
      << "}\n\n";
 
   OS << "void CannotYetSelectIntrinsic(SDValue N) DISABLE_INLINE {\n"
      << "  cerr << \"Cannot yet select: \";\n"
      << "  unsigned iid = cast<ConstantSDNode>(N.getOperand("
      << "N.getOperand(0).getValueType() == MVT::Other))->getZExtValue();\n"
-     << "  cerr << \"intrinsic %\"<< "
-     << "Intrinsic::getName((Intrinsic::ID)iid);\n"
-     << "  cerr << '\\n';\n"
-     << "  abort();\n"
+     << " llvm_report_error(\"Cannot yet select: intrinsic %\" +\n"
+     << "Intrinsic::getName((Intrinsic::ID)iid));\n"
      << "}\n\n";
 }
 

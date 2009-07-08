@@ -49,7 +49,7 @@ namespace llvm {
   void llvm_unreachable(void) NORETURN;
 }
 
-#define LLVM_UNREACHABLE(msg) do { assert(0 && msg); llvm_unreachable(); } while(0);
+#define LLVM_UNREACHABLE(msg) do { assert(0 && msg); llvm_unreachable(); } while(0)
 
 #endif
 

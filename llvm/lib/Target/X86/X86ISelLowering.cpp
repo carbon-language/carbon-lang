@@ -1186,8 +1186,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
     // If this is x86-64, and we disabled SSE, we can't return FP values
     if ((CopyVT == MVT::f32 || CopyVT == MVT::f64) &&
         ((Is64Bit || TheCall->isInreg()) && !Subtarget->hasSSE1())) {
-      cerr << "SSE register return with SSE disabled\n";
-      exit(1);
+      llvm_report_error("SSE register return with SSE disabled");
     }
 
     // If this is a call to a function that returns an fp value on the floating

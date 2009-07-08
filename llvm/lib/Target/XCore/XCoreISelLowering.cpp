@@ -270,9 +270,8 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
   }
   const Type *Ty = cast<PointerType>(GV->getType())->getElementType();
   if (!Ty->isSized() || isZeroLengthArray(Ty)) {
-    cerr << "Size of thread local object " << GVar->getName()
-         << " is unknown\n";
-    abort();
+    llvm_report_error("Size of thread local object " + GVar->getName()
+                      + " is unknown");
   }
   SDValue base = getGlobalAddressWrapper(GA, GV, DAG);
   const TargetData *TD = TM.getTargetData();
@@ -646,10 +645,13 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
       MVT RegVT = VA.getLocVT();
       switch (RegVT.getSimpleVT()) {
       default:
-        cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-             << RegVT.getSimpleVT()
-             << "\n";
-        abort();
+        {
+          std::string msg;
+          raw_string_ostream Msg(msg);
+          Msg << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+            << RegVT.getSimpleVT();
+          llvm_report_error(Msg.str());
+        }
       case MVT::i32:
         unsigned VReg = RegInfo.createVirtualRegister(
                           XCore::GRRegsRegisterClass);

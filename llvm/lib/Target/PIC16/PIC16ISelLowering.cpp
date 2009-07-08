@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 
 
 using namespace llvm;
@@ -1227,8 +1228,7 @@ SDValue PIC16TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
 
   // return should have odd number of operands
   if ((Op.getNumOperands() % 2) == 0 ) {
-    assert(0 && "Do not know how to return this many arguments!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to return this many arguments!");
   }
   
   // Number of values to return 

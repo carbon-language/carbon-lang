@@ -24,6 +24,7 @@
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 /// AddLiveIn - This helper function adds the specified physical register to the
@@ -312,8 +313,7 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
                                     SDValue());
   switch (Op.getNumOperands()) {
   default:
-    assert(0 && "Do not know how to return this many arguments!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to return this many arguments!");
   case 1: 
     break;
     //return SDValue(); // ret void is legal

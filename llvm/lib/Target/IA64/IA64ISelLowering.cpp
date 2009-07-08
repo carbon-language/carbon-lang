@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 using namespace llvm;
@@ -579,8 +580,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
     
     switch(Op.getNumOperands()) {
      default:
-      assert(0 && "Do not know how to return this many arguments!");
-      abort();
+      LLVM_UNREACHABLE("Do not know how to return this many arguments!");
     case 1: 
       AR_PFSVal = DAG.getCopyFromReg(Op.getOperand(0), dl, VirtGPR, MVT::i64);
       AR_PFSVal = DAG.getCopyToReg(AR_PFSVal.getValue(1), dl, IA64::AR_PFS, 

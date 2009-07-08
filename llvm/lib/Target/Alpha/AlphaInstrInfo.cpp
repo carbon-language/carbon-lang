@@ -19,6 +19,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 AlphaInstrInfo::AlphaInstrInfo()
@@ -200,7 +201,7 @@ AlphaInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addReg(SrcReg, getKillRegState(isKill))
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
-    abort();
+    llvm_report_error("Unhandled register class");
 }
 
 void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
@@ -216,7 +217,7 @@ void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   else if (RC == Alpha::GPRCRegisterClass)
     Opc = Alpha::STQ;
   else
-    abort();
+    llvm_report_error("Unhandled register class");
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = 
     BuildMI(MF, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill));
@@ -245,7 +246,7 @@ AlphaInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, DL, get(Alpha::LDQ), DestReg)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
-    abort();
+    llvm_report_error("Unhandled register class");
 }
 
 void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
@@ -260,7 +261,7 @@ void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   else if (RC == Alpha::GPRCRegisterClass)
     Opc = Alpha::LDQ;
   else
-    abort();
+    llvm_report_error("Unhandled register class");
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = 
     BuildMI(MF, DL, get(Opc), DestReg);

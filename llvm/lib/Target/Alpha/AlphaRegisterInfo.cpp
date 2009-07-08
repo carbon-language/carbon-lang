@@ -28,6 +28,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
@@ -244,8 +246,10 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, dl, TII.get(Alpha::LDA), Alpha::R30)
       .addImm(getLower16(NumBytes)).addReg(Alpha::R30);
   } else {
-    cerr << "Too big a stack frame at " << NumBytes << "\n";
-    abort();
+    std::string msg;
+    raw_string_ostream Msg(msg); 
+    Msg << "Too big a stack frame at " + NumBytes;
+    llvm_report_error(Msg.str());
   }
 
   //now if we need to, save the old FP and set the new
@@ -294,8 +298,10 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
       BuildMI(MBB, MBBI, dl, TII.get(Alpha::LDA), Alpha::R30)
         .addImm(getLower16(NumBytes)).addReg(Alpha::R30);
     } else {
-      cerr << "Too big a stack frame at " << NumBytes << "\n";
-      abort();
+      std::string msg;
+      raw_string_ostream Msg(msg); 
+      Msg << "Too big a stack frame at " + NumBytes;
+      llvm_report_error(Msg.str());
     }
   }
 }

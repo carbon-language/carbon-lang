@@ -32,6 +32,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -186,8 +187,7 @@ emitGlobal(const GlobalVariable *GV)
 
     switch (GV->getLinkage()) {
     case GlobalValue::AppendingLinkage:
-      cerr << "AppendingLinkage is not supported by this target!\n";
-      abort();
+      llvm_report_error("AppendingLinkage is not supported by this target!");
     case GlobalValue::LinkOnceAnyLinkage:
     case GlobalValue::LinkOnceODRLinkage:
     case GlobalValue::WeakAnyLinkage:
@@ -204,14 +204,11 @@ emitGlobal(const GlobalVariable *GV)
     case GlobalValue::PrivateLinkage:
       break;
     case GlobalValue::GhostLinkage:
-      cerr << "Should not have any unmaterialized functions!\n";
-      abort();
+      llvm_report_error("Should not have any unmaterialized functions!");
     case GlobalValue::DLLImportLinkage:
-      cerr << "DLLImport linkage is not supported by this target!\n";
-      abort();
+      llvm_report_error("DLLImport linkage is not supported by this target!");
     case GlobalValue::DLLExportLinkage:
-      cerr << "DLLExport linkage is not supported by this target!\n";
-      abort();
+      llvm_report_error("DLLExport linkage is not supported by this target!");
     default:
       assert(0 && "Unknown linkage type!");
     }

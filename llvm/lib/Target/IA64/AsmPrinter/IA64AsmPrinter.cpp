@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
@@ -317,16 +318,13 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::PrivateLinkage:
     break;
    case GlobalValue::GhostLinkage:
-    cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";
-    abort();
+    llvm_report_error("GhostLinkage cannot appear in IA64AsmPrinter!");
    case GlobalValue::DLLImportLinkage:
-    cerr << "DLLImport linkage is not supported by this target!\n";
-    abort();
+    llvm_report_error("DLLImport linkage is not supported by this target!");
    case GlobalValue::DLLExportLinkage:
-    cerr << "DLLExport linkage is not supported by this target!\n";
-    abort();
+    llvm_report_error("DLLExport linkage is not supported by this target!");
    default:
-    assert(0 && "Unknown linkage type!");
+    LLVM_UNREACHABLE("Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);
