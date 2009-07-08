@@ -802,6 +802,11 @@ public:
   void EmitAggExpr(const Expr *E, llvm::Value *DestPtr, bool VolatileDest,
                    bool IgnoreResult = false);
 
+  /// EmitGCMemmoveCollectable - Emit special API for structs with object
+  /// pointers.
+  void EmitGCMemmoveCollectable(llvm::Value *DestPtr, llvm::Value *SrcPtr,
+                                unsigned long);
+
   /// EmitComplexExpr - Emit the computation of the specified expression of
   /// complex type, returning the result.
   ComplexPairTy EmitComplexExpr(const Expr *E, bool IgnoreReal = false,

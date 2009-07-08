@@ -197,6 +197,10 @@ public:
   virtual llvm::Value *EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                       const ObjCInterfaceDecl *Interface,
                                       const ObjCIvarDecl *Ivar) = 0;
+  virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Value *DestPtr, 
+                                        llvm::Value *SrcPtr,
+                                        unsigned long) = 0;
 };
 
 /// Creates an instance of an Objective-C runtime class.  

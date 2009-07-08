@@ -359,6 +359,16 @@ public:
     return CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
   }
   
+  /// GcMemmoveCollectableFn -- LLVM objc_memmove_collectable function.
+  llvm::Constant *GcMemmoveCollectableFn() {
+    // void *objc_memmove_collectable(void *dst, const void *src, size_t size)
+    std::vector<const llvm::Type*> Args(1, Int8PtrTy);
+    Args.push_back(Int8PtrTy);
+    Args.push_back(LongTy);
+    llvm::FunctionType *FTy = llvm::FunctionType::get(Int8PtrTy, Args, false);
+    return CGM.CreateRuntimeFunction(FTy, "objc_memmove_collectable");
+  }
+  
   /// GcAssignStrongCastFn -- LLVM objc_assign_strongCast function.
   llvm::Constant *getGcAssignStrongCastFn() {
     // id objc_assign_global(id, id *)
@@ -1103,6 +1113,9 @@ private:
                                   llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
+  virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Value *dest, llvm::Value *src,
+                                        unsigned long size);
   
   virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                       QualType ObjectTy,
@@ -1329,6 +1342,9 @@ public:
                                   llvm::Value *src, llvm::Value *dest);
   virtual void EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
                                         llvm::Value *src, llvm::Value *dest);
+  virtual void EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
+                                        llvm::Value *dest, llvm::Value *src,
+                                        unsigned long size);
   virtual LValue EmitObjCValueForIvar(CodeGen::CodeGenFunction &CGF,
                                       QualType ObjectTy,
                                       llvm::Value *BaseValue,
@@ -2752,6 +2768,18 @@ void CGObjCMac::EmitObjCStrongCastAssign(CodeGen::CodeGenFunction &CGF,
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.getGcAssignStrongCastFn(),
                           src, dst, "weakassign");
+  return;
+}
+
+void CGObjCMac::EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
+                                               llvm::Value *DestPtr, 
+                                               llvm::Value *SrcPtr,
+                                               unsigned long size) {
+  SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
+  DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
+  llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
+  CGF.Builder.CreateCall3(ObjCTypes.GcMemmoveCollectableFn(),
+                          DestPtr, SrcPtr, N);
   return;
 }
 
@@ -5291,6 +5319,19 @@ void CGObjCNonFragileABIMac::EmitObjCStrongCastAssign(
   dst = CGF.Builder.CreateBitCast(dst, ObjCTypes.PtrObjectPtrTy);
   CGF.Builder.CreateCall2(ObjCTypes.getGcAssignStrongCastFn(),
                           src, dst, "weakassign");
+  return;
+}
+
+void CGObjCNonFragileABIMac::EmitGCMemmoveCollectable(
+                                         CodeGen::CodeGenFunction &CGF,
+                                         llvm::Value *DestPtr, 
+                                         llvm::Value *SrcPtr,
+                                         unsigned long size) {
+  SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
+  DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
+  llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
+  CGF.Builder.CreateCall3(ObjCTypes.GcMemmoveCollectableFn(),
+                          DestPtr, SrcPtr, N);
   return;
 }
 
