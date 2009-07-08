@@ -111,6 +111,29 @@ def VSTRQ : NI<(outs), (ins QPR:$src, GPR:$addr),
                [(store (v2f64 QPR:$src), GPR:$addr)]>;
 
 
+//   VLD1     : Vector Load (multiple single elements)
+class VLD1D<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
+  : NLdSt<(outs DPR:$dst), (ins addrmode6:$addr),
+          !strconcat(OpcodeStr, "\t${dst:dregsingle}, $addr"),
+          [(set DPR:$dst, (Ty (IntOp addrmode6:$addr, 1)))]>;
+class VLD1Q<string OpcodeStr, ValueType Ty, Intrinsic IntOp>
+  : NLdSt<(outs QPR:$dst), (ins addrmode6:$addr),
+          !strconcat(OpcodeStr, "\t${dst:dregpair}, $addr"),
+          [(set QPR:$dst, (Ty (IntOp addrmode6:$addr, 1)))]>;
+
+def  VLD1d8   : VLD1D<"vld1.8",  v8i8,  int_arm_neon_vldi>;
+def  VLD1d16  : VLD1D<"vld1.16", v4i16, int_arm_neon_vldi>;
+def  VLD1d32  : VLD1D<"vld1.32", v2i32, int_arm_neon_vldi>;
+def  VLD1df   : VLD1D<"vld1.32", v2f32, int_arm_neon_vldf>;
+def  VLD1d64  : VLD1D<"vld1.64", v1i64, int_arm_neon_vldi>;
+
+def  VLD1q8   : VLD1Q<"vld1.8",  v16i8, int_arm_neon_vldi>;
+def  VLD1q16  : VLD1Q<"vld1.16", v8i16, int_arm_neon_vldi>;
+def  VLD1q32  : VLD1Q<"vld1.32", v4i32, int_arm_neon_vldi>;
+def  VLD1qf   : VLD1Q<"vld1.32", v4f32, int_arm_neon_vldf>;
+def  VLD1q64  : VLD1Q<"vld1.64", v2i64, int_arm_neon_vldi>;
+
+
 //===----------------------------------------------------------------------===//
 // NEON pattern fragments
 //===----------------------------------------------------------------------===//

@@ -298,8 +298,10 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
         unsigned DRegLo = TRI->getSubReg(Reg, 5); // arm_dsubreg_0
         unsigned DRegHi = TRI->getSubReg(Reg, 6); // arm_dsubreg_1
         O << '{'
-          << TRI->getAsmName(DRegLo) << "-" << TRI->getAsmName(DRegHi)
+          << TRI->getAsmName(DRegLo) << ',' << TRI->getAsmName(DRegHi)
           << '}';
+      } else if (Modifier && strcmp(Modifier, "dregsingle") == 0) {
+        O << '{' << TRI->getAsmName(Reg) << '}';
       } else {
         O << TRI->getAsmName(Reg);
       }

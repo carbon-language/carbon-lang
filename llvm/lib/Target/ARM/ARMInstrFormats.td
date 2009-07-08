@@ -1035,6 +1035,11 @@ class NI<dag oops, dag iops, string asm, list<dag> pattern>
   : NeonI<oops, iops, AddrModeNone, IndexModeNone, asm, "", pattern> {
 }
 
+class NLdSt<dag oops, dag iops, string asm, list<dag> pattern>
+  : NeonI<oops, iops, AddrMode6, IndexModeNone, asm, "", pattern> {
+  let Inst{31-24} = 0b11110100;
+}
+
 class NDataI<dag oops, dag iops, string asm, string cstr, list<dag> pattern>
   : NeonI<oops, iops, AddrModeNone, IndexModeNone, asm, cstr, pattern> {
   let Inst{31-25} = 0b1111001;
