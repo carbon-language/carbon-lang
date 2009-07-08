@@ -19,6 +19,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/LangOptions.h"
@@ -1579,18 +1580,24 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
     // classes and namespaces associated with its (non-dependent)
     // parameter types and return type.
     DeclRefExpr *DRE = 0;
+    TemplateIdRefExpr *TIRE = 0;
+    Arg = Arg->IgnoreParens();
     if (UnaryOperator *unaryOp = dyn_cast<UnaryOperator>(Arg)) {
-      if (unaryOp->getOpcode() == UnaryOperator::AddrOf)
+      if (unaryOp->getOpcode() == UnaryOperator::AddrOf) {
         DRE = dyn_cast<DeclRefExpr>(unaryOp->getSubExpr());
-    } else
+        TIRE = dyn_cast<TemplateIdRefExpr>(unaryOp->getSubExpr());
+      }
+    } else {
       DRE = dyn_cast<DeclRefExpr>(Arg);
-    if (!DRE)
-      continue;
-
-    // FIXME: The declaration might be a FunctionTemplateDecl (by itself)
-    // or might be buried in a TemplateIdRefExpr.
-    OverloadedFunctionDecl *Ovl 
-      = dyn_cast<OverloadedFunctionDecl>(DRE->getDecl());
+      TIRE = dyn_cast<TemplateIdRefExpr>(Arg);
+    }
+    
+    OverloadedFunctionDecl *Ovl = 0;
+    if (DRE)
+      Ovl = dyn_cast<OverloadedFunctionDecl>(DRE->getDecl());
+    else if (TIRE)
+      Ovl = dyn_cast_or_null<OverloadedFunctionDecl>(
+                                  TIRE->getTemplateName().getAsTemplateDecl());
     if (!Ovl)
       continue;
 

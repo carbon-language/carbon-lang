@@ -14,3 +14,14 @@ namespace N3 {
     int &ir = f((N2::Y<N1::X>*)0);
   }
 }
+
+int g(void *);
+long g(N1::X);
+
+namespace N1 {
+  void h(int (*)(void *));
+}
+
+void test() {
+  h((&g));
+}

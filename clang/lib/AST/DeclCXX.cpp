@@ -451,6 +451,39 @@ void OverloadedFunctionDecl::addOverload(AnyFunctionDecl F) {
   this->setLocation(F.get()->getLocation());
 }
 
+OverloadIterator::reference OverloadIterator::operator*() const {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    return FD;
+  
+  if (FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(D))
+    return FTD;
+  
+  assert(isa<OverloadedFunctionDecl>(D));
+  return *Iter;
+}
+
+OverloadIterator &OverloadIterator::operator++() {
+  if (isa<FunctionDecl>(D) || isa<FunctionTemplateDecl>(D)) {
+    D = 0;
+    return *this;
+  }
+  
+  if (++Iter == cast<OverloadedFunctionDecl>(D)->function_end())
+    D = 0;
+  
+  return *this;
+}
+
+bool OverloadIterator::Equals(const OverloadIterator &Other) const {
+  if (!D || !Other.D)
+    return D == Other.D;
+  
+  if (D != Other.D)
+    return false;
+  
+  return !isa<OverloadedFunctionDecl>(D) || Iter == Other.Iter;
+}
+
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,
                                          DeclContext *DC, 
                                          SourceLocation L,

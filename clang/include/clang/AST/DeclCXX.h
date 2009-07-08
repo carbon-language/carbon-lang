@@ -132,6 +132,56 @@ public:
   }
   static bool classof(const OverloadedFunctionDecl *D) { return true; }
 };
+  
+/// \brief Provides uniform iteration syntax for an overload set, function, 
+/// or function template.
+class OverloadIterator {
+  /// \brief An overloaded function set, function declaration, or
+  /// function template declaration.
+  NamedDecl *D;
+  
+  /// \brief If the declaration is an overloaded function set, this is the
+  /// iterator pointing to the current position within that overloaded
+  /// function set.
+  OverloadedFunctionDecl::function_iterator Iter;
+  
+public:
+  typedef AnyFunctionDecl value_type;
+  typedef value_type      reference;
+  typedef NamedDecl      *pointer;
+  typedef int             difference_type;
+  typedef std::forward_iterator_tag iterator_category;
+  
+  OverloadIterator() : D(0) { }
+  
+  OverloadIterator(FunctionDecl *FD) : D(FD) { }
+  OverloadIterator(FunctionTemplateDecl *FTD) 
+    : D(reinterpret_cast<NamedDecl*>(FTD)) { }
+  OverloadIterator(OverloadedFunctionDecl *Ovl) 
+    : D(Ovl), Iter(Ovl->function_begin()) { }
+  
+  reference operator*() const;
+  
+  pointer operator->() const { return (**this).get(); }
+  
+  OverloadIterator &operator++();
+  
+  OverloadIterator operator++(int) {
+    OverloadIterator Temp(*this);
+    ++(*this);
+    return Temp;
+  }
+  
+  bool Equals(const OverloadIterator &Other) const;
+};
+  
+inline bool operator==(const OverloadIterator &X, const OverloadIterator &Y) {
+  return X.Equals(Y);
+}
+
+inline bool operator!=(const OverloadIterator &X, const OverloadIterator &Y) {
+  return !(X == Y);
+}
 
 /// CXXBaseSpecifier - A base class of a C++ class.
 ///
