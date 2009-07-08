@@ -1432,7 +1432,7 @@ public:
 /// TypeOfExprType (GCC extension).
 class TypeOfExprType : public Type {
   Expr *TOExpr;
-  TypeOfExprType(Expr *E, QualType can);
+  TypeOfExprType(Expr *E, QualType can = QualType());
   friend class ASTContext;  // ASTContext creates these.
 public:
   Expr *getUnderlyingExpr() const { return TOExpr; }
@@ -1463,7 +1463,7 @@ public:
 /// DecltypeType (C++0x)
 class DecltypeType : public Type {
   Expr *E;
-  DecltypeType(Expr *E, QualType can);
+  DecltypeType(Expr *E, QualType can = QualType());
   friend class ASTContext;  // ASTContext creates these.
 public:
   Expr *getUnderlyingExpr() const { return E; }

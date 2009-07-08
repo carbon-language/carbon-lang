@@ -1072,14 +1072,10 @@ QualType TypedefType::LookThroughTypedefs() const {
 
 TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
   : Type(TypeOfExpr, can, E->isTypeDependent()), TOExpr(E) {
-  assert(!isa<TypedefType>(can) && "Invalid canonical type");
 }
 
 DecltypeType::DecltypeType(Expr *E, QualType can)
   : Type(Decltype, can, E->isTypeDependent()), E(E) {
-  assert(can->isDependentType() == E->isTypeDependent() &&
-         "type dependency mismatch!");
-  assert(!isa<TypedefType>(can) && "Invalid canonical type");
 }
 
 TagType::TagType(TypeClass TC, TagDecl *D, QualType can) 

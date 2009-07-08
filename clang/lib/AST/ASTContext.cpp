@@ -1901,8 +1901,13 @@ QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
 /// DeclRefExpr's. This doesn't effect the type checker, since it operates 
 /// on canonical type's (which are always unique).
 QualType ASTContext::getTypeOfExprType(Expr *tofExpr) {
-  QualType Canonical = getCanonicalType(tofExpr->getType());
-  TypeOfExprType *toe = new (*this,8) TypeOfExprType(tofExpr, Canonical);
+  TypeOfExprType *toe;
+  if (tofExpr->isTypeDependent())
+    toe = new (*this, 8) TypeOfExprType(tofExpr);
+  else {
+    QualType Canonical = getCanonicalType(tofExpr->getType());
+    toe = new (*this,8) TypeOfExprType(tofExpr, Canonical);
+  }
   Types.push_back(toe);
   return QualType(toe, 0);
 }
@@ -1957,8 +1962,13 @@ static QualType getDecltypeForExpr(const Expr *e, ASTContext &Context) {
 /// an issue. This doesn't effect the type checker, since it operates 
 /// on canonical type's (which are always unique).
 QualType ASTContext::getDecltypeType(Expr *e) {
-  QualType T = getDecltypeForExpr(e, *this);
-  DecltypeType *dt = new (*this, 8) DecltypeType(e, getCanonicalType(T));
+  DecltypeType *dt;
+  if (e->isTypeDependent()) // FIXME: canonicalize the expression
+    dt = new (*this, 8) DecltypeType(e);
+  else {
+    QualType T = getDecltypeForExpr(e, *this);
+    dt = new (*this, 8) DecltypeType(e, getCanonicalType(T));    
+  }
   Types.push_back(dt);
   return QualType(dt, 0);
 }
