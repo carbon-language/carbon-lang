@@ -666,6 +666,10 @@ def err_ovl_surrogate_cand : Note<"conversion candidate of type %0">;
 def err_member_call_without_object : Error<
   "call to non-static member function without an object argument">;
 
+// C++ Address of Overloaded Function
+def err_addr_ovl_ambiguous : Error<
+  "address of overloaded function %0 is ambiguous">;
+
 // C++ Template Declarations
 def err_template_param_shadow : Error<
   "declaration of %0 shadows template parameter">;

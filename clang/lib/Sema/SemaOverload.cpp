@@ -3742,7 +3742,9 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   
   // Look through all of the overloaded functions, searching for one
   // whose type matches exactly.
-  // FIXME: We still need to cope with duplicates, partial ordering, etc.
+  llvm::SmallPtrSet<FunctionDecl *, 4> Matches;
+  
+  bool FoundNonTemplateFunction = false;
   for (OverloadIterator FunEnd; Fun != FunEnd; ++Fun) {
     // C++ [over.over]p3:
     //   Non-member functions and static member functions match
@@ -3753,12 +3755,21 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 
     if (FunctionTemplateDecl *FunctionTemplate 
           = dyn_cast<FunctionTemplateDecl>(*Fun)) {
-      // C++ [temp.deduct.funcaddr]p1:
-      //   Template arguments can be deduced from the type specified when 
-      //   taking the address of an overloaded function (13.4). The function 
-      //   template’s function type and the specified type are used as the 
-      //   types of P and A, and the deduction is done as described in 
-      //   14.8.2.4.
+      if (CXXMethodDecl *Method 
+            = dyn_cast<CXXMethodDecl>(FunctionTemplate->getTemplatedDecl())) {
+        // Skip non-static function templates when converting to pointer, and 
+        // static when converting to member pointer.
+        if (Method->isStatic() == IsMember)
+          continue;
+      } else if (IsMember)
+        continue;
+      
+      // C++ [over.over]p2:
+      //   If the name is a function template, template argument deduction is 
+      //   done (14.8.2.2), and if the argument deduction succeeds, the 
+      //   resulting template argument list is used to generate a single 
+      //   function template specialization, which is added to the set of 
+      //   overloaded functions considered.
       FunctionDecl *Specialization = 0;
       TemplateDeductionInfo Info(Context);
       if (TemplateDeductionResult Result
@@ -3770,7 +3781,8 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       } else {
         assert(FunctionType 
                  == Context.getCanonicalType(Specialization->getType()));
-        return Specialization;
+        Matches.insert(
+                cast<FunctionDecl>(Context.getCanonicalDecl(Specialization)));
       }
     }
     
@@ -3779,15 +3791,54 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
       // when converting to member pointer.
       if (Method->isStatic() == IsMember)
         continue;
-    } else if (IsMember) // FIXME: member templates
+    } else if (IsMember)
       continue;
 
     if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(*Fun)) {
-      if (FunctionType == Context.getCanonicalType(FunDecl->getType()))
-        return FunDecl;
+      if (FunctionType == Context.getCanonicalType(FunDecl->getType())) {
+        Matches.insert(cast<FunctionDecl>(Context.getCanonicalDecl(*Fun)));
+        FoundNonTemplateFunction = true;
+      }
     } 
   }
 
+  // If there were 0 or 1 matches, we're done.
+  if (Matches.empty())
+    return 0;
+  else if (Matches.size() == 1)
+    return *Matches.begin();
+
+  // C++ [over.over]p4:
+  //   If more than one function is selected, [...]
+  llvm::SmallVector<FunctionDecl *, 4> RemainingMatches;
+  if (FoundNonTemplateFunction) {
+    // [...] any function template specializations in the set are eliminated 
+    // if the set also contains a non-template function, [...]
+    for (llvm::SmallPtrSet<FunctionDecl *, 4>::iterator M = Matches.begin(),
+                                                     MEnd = Matches.end();
+         M != MEnd; ++M)
+      if ((*M)->getPrimaryTemplate() == 0)
+        RemainingMatches.push_back(*M);
+  } else {
+    // [...] and any given function template specialization F1 is eliminated 
+    // if the set contains a second function template specialization whose 
+    // function template is more specialized than the function template of F1 
+    // according to the partial ordering rules of 14.5.5.2.
+    // FIXME: Implement this!
+    RemainingMatches.append(Matches.begin(), Matches.end());
+  }
+  
+  // [...] After such eliminations, if any, there shall remain exactly one 
+  // selected function.
+  if (RemainingMatches.size() == 1)
+    return RemainingMatches.front();
+  
+  // FIXME: We should probably return the same thing that BestViableFunction
+  // returns (even if we issue the diagnostics here).
+  Diag(From->getLocStart(), diag::err_addr_ovl_ambiguous)
+    << RemainingMatches[0]->getDeclName();
+  for (unsigned I = 0, N = RemainingMatches.size(); I != N; ++I)
+    Diag(RemainingMatches[I]->getLocation(), diag::err_ovl_candidate);
   return 0;
 }
 
