@@ -128,6 +128,7 @@ void PCHDeclReader::VisitRecordDecl(RecordDecl *RD) {
   VisitTagDecl(RD);
   RD->setHasFlexibleArrayMember(Record[Idx++]);
   RD->setAnonymousStructOrUnion(Record[Idx++]);
+  RD->setHasObjectMember(Record[Idx++]);
 }
 
 void PCHDeclReader::VisitValueDecl(ValueDecl *VD) {

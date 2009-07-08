@@ -125,6 +125,7 @@ void PCHDeclWriter::VisitRecordDecl(RecordDecl *D) {
   VisitTagDecl(D);
   Record.push_back(D->hasFlexibleArrayMember());
   Record.push_back(D->isAnonymousStructOrUnion());
+  Record.push_back(D->hasObjectMember());
   Code = pch::DECL_RECORD;
 }
 
