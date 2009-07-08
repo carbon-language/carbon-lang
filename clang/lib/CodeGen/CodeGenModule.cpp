@@ -216,7 +216,7 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
 
   if (!Ctors.empty()) {
     llvm::ArrayType *AT = llvm::ArrayType::get(CtorStructTy, Ctors.size());
-    new llvm::GlobalVariable(AT, false,
+    new llvm::GlobalVariable(TheModule.getContext(), AT, false,
                              llvm::GlobalValue::AppendingLinkage,
                              llvm::ConstantArray::get(AT, Ctors),
                              GlobalName, 
@@ -234,7 +234,7 @@ void CodeGenModule::EmitAnnotations() {
                                                 Annotations.size()),
                            Annotations);
   llvm::GlobalValue *gv = 
-  new llvm::GlobalVariable(Array->getType(), false,  
+  new llvm::GlobalVariable(TheModule.getContext(), Array->getType(), false,  
                            llvm::GlobalValue::AppendingLinkage, Array, 
                            "llvm.global.annotations", &TheModule);
   gv->setSection("llvm.metadata");
@@ -436,7 +436,7 @@ void CodeGenModule::EmitLLVMUsed() {
   llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, UsedArray.size());
   
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(ATy, false, 
+    new llvm::GlobalVariable(getModule().getContext(), ATy, false, 
                              llvm::GlobalValue::AppendingLinkage,
                              llvm::ConstantArray::get(ATy, UsedArray),
                              "llvm.used", &getModule());
@@ -494,12 +494,12 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
   // created to hold the bytes of the strings.
   const char *StringPrefix = getContext().Target.getStringSymbolPrefix(true);
   llvm::GlobalValue *annoGV = 
-  new llvm::GlobalVariable(anno->getType(), false,
+  new llvm::GlobalVariable(M->getContext(), anno->getType(), false,
                            llvm::GlobalValue::InternalLinkage, anno,
                            GV->getName() + StringPrefix, M);
   // translation unit name string, emitted into the llvm.metadata section.
   llvm::GlobalValue *unitGV =
-  new llvm::GlobalVariable(unit->getType(), false,
+  new llvm::GlobalVariable(M->getContext(), unit->getType(), false,
                            llvm::GlobalValue::InternalLinkage, unit, 
                            StringPrefix, M);
 
@@ -719,7 +719,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
   }
   
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(Ty->getElementType(), false, 
+    new llvm::GlobalVariable(getModule().getContext(), 
+                             Ty->getElementType(), false, 
                              llvm::GlobalValue::ExternalLinkage,
                              0, "", &getModule(), 
                              false, Ty->getAddressSpace());
@@ -1245,7 +1246,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
     // likely see an opaque error message. This is a general issue with relying
     // on particular names.
     llvm::GlobalVariable *GV = 
-      new llvm::GlobalVariable(Ty, false,
+      new llvm::GlobalVariable(getModule().getContext(), Ty, false,
                                llvm::GlobalVariable::ExternalLinkage, 0, 
                                "__CFConstantStringClassReference", 
                                &getModule());
@@ -1299,7 +1300,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
     isConstant = true;
   }
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(C->getType(), isConstant, 
+    new llvm::GlobalVariable(getModule().getContext(), C->getType(), isConstant, 
                              llvm::GlobalValue::InternalLinkage,
                              C, Prefix, &getModule());
   if (Sect)
@@ -1321,7 +1322,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   
   // The struct.
   C = llvm::ConstantStruct::get(STy, Fields);
-  GV = new llvm::GlobalVariable(C->getType(), true, 
+  GV = new llvm::GlobalVariable(getModule().getContext(), C->getType(), true, 
                                 llvm::GlobalVariable::InternalLinkage, C, 
                                 getContext().Target.getCFStringSymbolPrefix(), 
                                 &getModule());
@@ -1382,7 +1383,8 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
   llvm::Constant *C = llvm::ConstantArray::get(str, false);
   
   // Create a global variable for this string
-  return new llvm::GlobalVariable(C->getType(), constant, 
+  return new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                  C->getType(), constant, 
                                   llvm::GlobalValue::InternalLinkage,
                                   C, GlobalName, &CGM.getModule());
 }

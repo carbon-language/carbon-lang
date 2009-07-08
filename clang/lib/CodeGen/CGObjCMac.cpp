@@ -1646,7 +1646,8 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
     Entry->setInitializer(Init);
   } else {
     Entry = 
-      new llvm::GlobalVariable(ObjCTypes.ProtocolTy, false,
+      new llvm::GlobalVariable(CGM.getModule().getContext(),
+                               ObjCTypes.ProtocolTy, false,
                                llvm::GlobalValue::InternalLinkage,
                                Init, 
                                std::string("\01L_OBJC_PROTOCOL_")+ProtocolName,
@@ -1669,7 +1670,8 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocolRef(const ObjCProtocolDecl *PD) {
     // reference or not. At module finalization we add the empty
     // contents for protocols which were referenced but never defined.
     Entry = 
-      new llvm::GlobalVariable(ObjCTypes.ProtocolTy, false,
+      new llvm::GlobalVariable(CGM.getModule().getContext(),
+                               ObjCTypes.ProtocolTy, false,
                                llvm::GlobalValue::ExternalLinkage,
                                0,
                                "\01L_OBJC_PROTOCOL_" + PD->getNameAsString(),
@@ -2100,7 +2102,8 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
     GV->setLinkage(llvm::GlobalValue::InternalLinkage);
     GV->setInitializer(Init);
   } else {
-    GV = new llvm::GlobalVariable(ObjCTypes.ClassTy, false,
+    GV = new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                  ObjCTypes.ClassTy, false,
                                   llvm::GlobalValue::InternalLinkage,
                                   Init, Name,
                                   &CGM.getModule());
@@ -2130,7 +2133,8 @@ llvm::Constant *CGObjCMac::EmitMetaClassRef(const ObjCInterfaceDecl *ID) {
   } else {
     // Generate as an external reference to keep a consistent
     // module. This will be patched up when we emit the metaclass.
-    return new llvm::GlobalVariable(ObjCTypes.ClassTy, false,
+    return new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                    ObjCTypes.ClassTy, false,
                                     llvm::GlobalValue::ExternalLinkage,
                                     0,
                                     Name,
@@ -2311,7 +2315,7 @@ CGObjCCommonMac::CreateMetadataVar(const std::string &Name,
                                    bool AddToUsed) {
   const llvm::Type *Ty = Init->getType();
   llvm::GlobalVariable *GV = 
-    new llvm::GlobalVariable(Ty, false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(), Ty, false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
                              Name,
@@ -4071,7 +4075,8 @@ void CGObjCNonFragileABIMac::AddModuleClassList(const
                              Symbols);
   
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(Init->getType(), false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(), 
+                             Init->getType(), false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
                              SymbolName,
@@ -4117,7 +4122,8 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                                       llvm::ArrayType::get(ObjCTypes.IntTy, 2),
                                       Values);   
   llvm::GlobalVariable *IMGV =
-    new llvm::GlobalVariable(Init->getType(), false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(), 
+                             Init->getType(), false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
                              "\01L_OBJC_IMAGE_INFO",
@@ -4261,7 +4267,8 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
                                                    Values);
   llvm::GlobalVariable *CLASS_RO_GV =
-  new llvm::GlobalVariable(ObjCTypes.ClassRonfABITy, false,
+  new llvm::GlobalVariable(CGM.getModule().getContext(),
+                           ObjCTypes.ClassRonfABITy, false,
                            llvm::GlobalValue::InternalLinkage,
                            Init,
                            (flags & CLS_META) ?
@@ -4336,6 +4343,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   std::string ClassName = ID->getNameAsString();
   if (!ObjCEmptyCacheVar) {
     ObjCEmptyCacheVar = new llvm::GlobalVariable(
+                                            CGM.getModule().getContext(),
                                             ObjCTypes.CacheTy,
                                             false,
                                             llvm::GlobalValue::ExternalLinkage,
@@ -4344,6 +4352,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                                             &CGM.getModule());
     
     ObjCEmptyVtableVar = new llvm::GlobalVariable(
+                            CGM.getModule().getContext(),
                             ObjCTypes.ImpnfABITy,
                             false,
                             llvm::GlobalValue::ExternalLinkage,
@@ -4453,6 +4462,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
   if (PTGV)
     return Builder.CreateLoad(PTGV, false, "tmp");
   PTGV = new llvm::GlobalVariable(
+                                CGM.getModule().getContext(),
                                 Init->getType(), false,
                                 llvm::GlobalValue::WeakAnyLinkage,
                                 Init,
@@ -4538,7 +4548,8 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     llvm::ConstantStruct::get(ObjCTypes.CategorynfABITy, 
                               Values);
   llvm::GlobalVariable *GCATV
-    = new llvm::GlobalVariable(ObjCTypes.CategorynfABITy, 
+    = new llvm::GlobalVariable(CGM.getModule().getContext(),
+                               ObjCTypes.CategorynfABITy, 
                                false,
                                llvm::GlobalValue::InternalLinkage,
                                Init,
@@ -4601,7 +4612,8 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
   
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(Init->getType(), false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(),
+                             Init->getType(), false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
                              Name,
@@ -4630,7 +4642,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::ObjCIvarOffsetVariable(
     CGM.getModule().getGlobalVariable(Name);
   if (!IvarOffsetGV)
     IvarOffsetGV = 
-      new llvm::GlobalVariable(ObjCTypes.LongTy,
+      new llvm::GlobalVariable(CGM.getModule().getContext(), ObjCTypes.LongTy,
                                false,
                                llvm::GlobalValue::ExternalLinkage,
                                0,
@@ -4729,7 +4741,8 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
   const char *Prefix = "\01l_OBJC_$_INSTANCE_VARIABLES_";
   llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(Init->getType(), false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(),
+                             Init->getType(), false,
                              llvm::GlobalValue::InternalLinkage,
                              Init,
                              Prefix + OID->getNameAsString(),
@@ -4752,7 +4765,8 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
     // reference or not. At module finalization we add the empty
     // contents for protocols which were referenced but never defined.
     Entry = 
-    new llvm::GlobalVariable(ObjCTypes.ProtocolnfABITy, false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(),
+                             ObjCTypes.ProtocolnfABITy, false,
                              llvm::GlobalValue::ExternalLinkage,
                              0,
                              "\01l_OBJC_PROTOCOL_$_" + PD->getNameAsString(),
@@ -4856,7 +4870,8 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
     Entry->setInitializer(Init);
   } else {
     Entry = 
-    new llvm::GlobalVariable(ObjCTypes.ProtocolnfABITy, false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(),
+                             ObjCTypes.ProtocolnfABITy, false,
                              llvm::GlobalValue::WeakAnyLinkage,
                              Init, 
                              std::string("\01l_OBJC_PROTOCOL_$_")+ProtocolName,
@@ -4870,6 +4885,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
   // Use this protocol meta-data to build protocol list table in section
   // __DATA, __objc_protolist
   llvm::GlobalVariable *PTGV = new llvm::GlobalVariable(
+                                      CGM.getModule().getContext(),
                                       ObjCTypes.ProtocolnfABIPtrTy, false,
                                       llvm::GlobalValue::WeakAnyLinkage,
                                       Entry, 
@@ -4923,7 +4939,8 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
                                                   ProtocolRefs);
   
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
-  GV = new llvm::GlobalVariable(Init->getType(), false,
+  GV = new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                Init->getType(), false,
                                 llvm::GlobalValue::InternalLinkage,
                                 Init,
                                 Name,
@@ -5066,7 +5083,8 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     Values[0] = Fn;
     Values[1] = GetMethodVarName(Sel);
     llvm::Constant *Init = llvm::ConstantStruct::get(Values);
-    GV =  new llvm::GlobalVariable(Init->getType(), false,
+    GV =  new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                   Init->getType(), false,
                                    llvm::GlobalValue::WeakAnyLinkage,
                                    Init,
                                    Name,
@@ -5114,7 +5132,8 @@ CGObjCNonFragileABIMac::GetClassGlobal(const std::string &Name) {
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name);
 
   if (!GV) {
-    GV = new llvm::GlobalVariable(ObjCTypes.ClassnfABITy, false,
+    GV = new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                  ObjCTypes.ClassnfABITy, false,
                                   llvm::GlobalValue::ExternalLinkage,
                                   0, Name, &CGM.getModule());
   }
@@ -5130,7 +5149,8 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
     std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
     llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName);
     Entry = 
-      new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
+      new llvm::GlobalVariable(CGM.getModule().getContext(),
+                               ObjCTypes.ClassnfABIPtrTy, false,
                                llvm::GlobalValue::InternalLinkage,
                                ClassGV, 
                                "\01L_OBJC_CLASSLIST_REFERENCES_$_",
@@ -5154,7 +5174,8 @@ CGObjCNonFragileABIMac::EmitSuperClassRef(CGBuilderTy &Builder,
     std::string ClassName(getClassSymbolPrefix() + ID->getNameAsString());
     llvm::GlobalVariable *ClassGV = GetClassGlobal(ClassName);
     Entry = 
-      new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
+      new llvm::GlobalVariable(CGM.getModule().getContext(),
+                               ObjCTypes.ClassnfABIPtrTy, false,
                                llvm::GlobalValue::InternalLinkage,
                                ClassGV, 
                                "\01L_OBJC_CLASSLIST_SUP_REFS_$_",
@@ -5181,7 +5202,8 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
   std::string MetaClassName(getMetaclassSymbolPrefix() + ID->getNameAsString());
   llvm::GlobalVariable *MetaClassGV = GetClassGlobal(MetaClassName);
   Entry = 
-    new llvm::GlobalVariable(ObjCTypes.ClassnfABIPtrTy, false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(),
+                             ObjCTypes.ClassnfABIPtrTy, false,
                              llvm::GlobalValue::InternalLinkage,
                              MetaClassGV, 
                              "\01L_OBJC_CLASSLIST_SUP_REFS_$_",
@@ -5269,7 +5291,8 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
     llvm::ConstantExpr::getBitCast(GetMethodVarName(Sel),
                                    ObjCTypes.SelectorPtrTy);
     Entry = 
-    new llvm::GlobalVariable(ObjCTypes.SelectorPtrTy, false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(),
+                             ObjCTypes.SelectorPtrTy, false,
                              llvm::GlobalValue::InternalLinkage,
                              Casted, "\01L_OBJC_SELECTOR_REFERENCES_",
                              &CGM.getModule());
@@ -5469,7 +5492,8 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
             CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
           if (!IDEHType)
             IDEHType = 
-              new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
+              new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                       ObjCTypes.EHTypeTy, false,
                                        llvm::GlobalValue::ExternalLinkage,
                                        0, "OBJC_EHTYPE_id", &CGM.getModule());
           SelectorArgs.push_back(IDEHType);
@@ -5686,7 +5710,8 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
     // attribute, emit an external reference.
     if (hasObjCExceptionAttribute(CGM.getContext(), ID))
       return Entry = 
-        new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
+        new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                 ObjCTypes.EHTypeTy, false,
                                  llvm::GlobalValue::ExternalLinkage,
                                  0, 
                                  (std::string("OBJC_EHTYPE_$_") + 
@@ -5702,7 +5727,8 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
   llvm::GlobalVariable *VTableGV = 
     CGM.getModule().getGlobalVariable(VTableName);
   if (!VTableGV)
-    VTableGV = new llvm::GlobalVariable(ObjCTypes.Int8PtrTy, false,
+    VTableGV = new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                        ObjCTypes.Int8PtrTy, false,
                                         llvm::GlobalValue::ExternalLinkage,
                                         0, VTableName, &CGM.getModule());
 
@@ -5717,7 +5743,8 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
   if (Entry) {
     Entry->setInitializer(Init);
   } else {
-    Entry = new llvm::GlobalVariable(ObjCTypes.EHTypeTy, false,
+    Entry = new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                     ObjCTypes.EHTypeTy, false,
                                      llvm::GlobalValue::WeakAnyLinkage,
                                      Init, 
                                      (std::string("OBJC_EHTYPE_$_") + 

@@ -50,7 +50,7 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
 
   C = llvm::ConstantStruct::get(Elts);
 
-  C = new llvm::GlobalVariable(C->getType(), true,
+  C = new llvm::GlobalVariable(CGM.getModule().getContext(), C->getType(), true,
                                llvm::GlobalValue::InternalLinkage,
                                C, "__block_descriptor_tmp", &CGM.getModule());
   return C;
@@ -165,7 +165,8 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
       char Name[32];
       sprintf(Name, "__block_holder_tmp_%d", CGM.getGlobalUniqueCount());
-      C = new llvm::GlobalVariable(C->getType(), true,
+      C = new llvm::GlobalVariable(CGM.getModule().getContext(),
+                                   C->getType(), true,
                                    llvm::GlobalValue::InternalLinkage,
                                    C, Name, &CGM.getModule());
       QualType BPT = BE->getType();
@@ -513,7 +514,8 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
     llvm::ConstantStruct::get(&DescriptorFields[0], 2);
 
   llvm::GlobalVariable *Descriptor =
-    new llvm::GlobalVariable(DescriptorStruct->getType(), true,
+    new llvm::GlobalVariable(getModule().getContext(),
+                             DescriptorStruct->getType(), true,
                              llvm::GlobalVariable::InternalLinkage,
                              DescriptorStruct, "__block_descriptor_global",
                              &getModule());
@@ -555,7 +557,8 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
     llvm::ConstantStruct::get(&LiteralFields[0], 5);
 
   llvm::GlobalVariable *BlockLiteral =
-    new llvm::GlobalVariable(BlockLiteralStruct->getType(), true,
+    new llvm::GlobalVariable(getModule().getContext(), 
+                             BlockLiteralStruct->getType(), true,
                              llvm::GlobalVariable::InternalLinkage,
                              BlockLiteralStruct, "__block_literal_global",
                              &getModule());

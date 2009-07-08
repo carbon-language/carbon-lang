@@ -20,6 +20,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
+#include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 using namespace CodeGen;
@@ -38,7 +39,8 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
   
   // Create the guard variable.
   llvm::GlobalValue *GuardV = 
-    new llvm::GlobalVariable(llvm::Type::Int64Ty, false,
+    new llvm::GlobalVariable(CGM.getModule().getContext(), 
+                             llvm::Type::Int64Ty, false,
                              GV->getLinkage(),
                              llvm::Constant::getNullValue(llvm::Type::Int64Ty),
                              GuardVName.c_str(),

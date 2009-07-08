@@ -394,7 +394,7 @@ public:
       llvm::Constant* C = Visit(CLE->getInitializer());
       // FIXME: "Leaked" on failure.
       if (C)
-        C = new llvm::GlobalVariable(C->getType(),
+        C = new llvm::GlobalVariable(CGM.getModule().getContext(), C->getType(),
                                      E->getType().isConstQualified(), 
                                      llvm::GlobalValue::InternalLinkage,
                                      C, ".compoundliteral", &CGM.getModule());
