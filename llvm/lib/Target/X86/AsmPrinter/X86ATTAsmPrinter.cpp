@@ -490,6 +490,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           } else {
             FnStubs.insert(Name);
             printSuffixedName(Name, "$stub");
+            assert(MO.getTargetFlags() == 0);
           }
         } else if (GV->hasHiddenVisibility()) {
           if (!GV->isDeclaration() && !GV->hasCommonLinkage())
@@ -498,10 +499,12 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           else {
             HiddenGVStubs.insert(Name);
             printSuffixedName(Name, "$non_lazy_ptr");
+            assert(MO.getTargetFlags() == 0);
           }
         } else {
           GVStubs.insert(Name);
           printSuffixedName(Name, "$non_lazy_ptr");
+          assert(MO.getTargetFlags() == 0);
         }
       } else {
         O << Name;
@@ -512,8 +515,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         PrintPICBaseSymbol();
       }        
     } else {
-      if (GV->hasDLLImportLinkage())
+      if (GV->hasDLLImportLinkage()) {
         O << "__imp_";
+        assert(MO.getTargetFlags() == 0);
+      }
       O << Name;
     }
 
@@ -581,8 +586,8 @@ void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
 
 void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
                                             const char *Modifier) {
-  MachineOperand BaseReg  = MI->getOperand(Op);
-  MachineOperand IndexReg = MI->getOperand(Op+2);
+  const MachineOperand &BaseReg  = MI->getOperand(Op);
+  const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
   if (DispSpec.isGlobal() ||
@@ -596,27 +601,24 @@ void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
       O << DispVal;
   }
 
-  if ((IndexReg.getReg() || BaseReg.getReg()) &&
-      (Modifier == 0 || strcmp(Modifier, "no-rip"))) {
-    unsigned ScaleVal = MI->getOperand(Op+1).getImm();
-    unsigned BaseRegOperand = 0, IndexRegOperand = 2;
-
-    // There are cases where we can end up with ESP/RSP in the indexreg slot.
-    // If this happens, swap the base/index register to support assemblers that
-    // don't work when the index is *SP.
-    if (IndexReg.getReg() == X86::ESP || IndexReg.getReg() == X86::RSP) {
-      assert(ScaleVal == 1 && "Scale not supported for stack pointer!");
-      std::swap(BaseReg, IndexReg);
-      std::swap(BaseRegOperand, IndexRegOperand);
-    }
+  // If we really don't want to print out (rip), don't.
+  bool HasBaseReg = BaseReg.getReg() != 0;
+  if (HasBaseReg && Modifier && !strcmp(Modifier, "no-rip") &&
+      BaseReg.getReg() == X86::RIP)
+    HasBaseReg = false;
+    
+  if (IndexReg.getReg() || HasBaseReg) {
+    assert(IndexReg.getReg() != X86::ESP &&
+           "X86 doesn't allow scaling by ESP");
 
     O << '(';
-    if (BaseReg.getReg())
-      printOperand(MI, Op+BaseRegOperand, Modifier);
+    if (HasBaseReg)
+      printOperand(MI, Op, Modifier);
 
     if (IndexReg.getReg()) {
       O << ',';
-      printOperand(MI, Op+IndexRegOperand, Modifier);
+      printOperand(MI, Op+2, Modifier);
+      unsigned ScaleVal = MI->getOperand(Op+1).getImm();
       if (ScaleVal != 1)
         O << ',' << ScaleVal;
     }
@@ -627,11 +629,11 @@ void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
 void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
                                          const char *Modifier) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
-  MachineOperand Segment = MI->getOperand(Op+4);
+  const MachineOperand &Segment = MI->getOperand(Op+4);
   if (Segment.getReg()) {
-      printOperand(MI, Op+4, Modifier);
-      O << ':';
-    }
+    printOperand(MI, Op+4, Modifier);
+    O << ':';
+  }
   printLeaMemReference(MI, Op, Modifier);
 }
 

@@ -28,7 +28,7 @@ entry:
 ; CHECK-64: movl %gs:per_cpu__cpu_number,%eax
 
 ; CHECK-32: test2:
-; FIXME broken: movl %gs:(%eax),%eax
+; CHECK-32: movl %gs:(%eax),%eax
 
         %A = call i32 asm "movl %gs:${1:P},$0",
             "=r,*m"(i32* @per_cpu__cpu_number) nounwind
