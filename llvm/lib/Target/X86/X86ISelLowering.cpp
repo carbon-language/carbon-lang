@@ -1321,22 +1321,18 @@ X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDValue Op) {
 
 /// CallRequiresGOTInRegister - Check whether the call requires the GOT pointer
 /// in a register before calling.
-static bool CallRequiresGOTPtrInReg(const TargetMachine &TM, 
-                                    bool IsTailCall) {
+static bool CallRequiresGOTPtrInReg(const TargetMachine &TM) {
   const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
 
-  return !IsTailCall && !Subtarget.is64Bit() &&
-         TM.getRelocationModel() == Reloc::PIC_ &&
+  return TM.getRelocationModel() == Reloc::PIC_ &&
          Subtarget.isPICStyleGOT();
 }
 
 /// CallRequiresFnAddressInReg - Check whether the call requires the function
 /// address to be loaded in a register.
-static bool CallRequiresFnAddressInReg(const TargetMachine &TM, 
-                                       bool IsTailCall) {
+static bool CallRequiresFnAddressInReg(const TargetMachine &TM) {
   const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-  return !Subtarget.is64Bit() && IsTailCall &&
-         TM.getRelocationModel() == Reloc::PIC_ &&
+  return TM.getRelocationModel() == Reloc::PIC_ &&
          Subtarget.isPICStyleGOT();
 }
 
@@ -1808,7 +1804,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
   // GOT pointer.
-  if (CallRequiresGOTPtrInReg(getTargetMachine(), IsTailCall)) {
+  if (!IsTailCall && CallRequiresGOTPtrInReg(getTargetMachine())) {
     Chain = DAG.getCopyToReg(Chain, dl, X86::EBX,
                              DAG.getNode(X86ISD::GlobalBaseReg,
                                          DebugLoc::getUnknownLoc(),
@@ -1823,7 +1819,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   // calls on PIC/GOT architectures. Normally we would just put the address of
   // GOT into ebx and then call target@PLT. But for tail calls ebx would be
   // restored (since ebx is callee saved) before jumping to the target@PLT.
-  if (CallRequiresFnAddressInReg(getTargetMachine(), IsTailCall)) {
+  if (IsTailCall && CallRequiresFnAddressInReg(getTargetMachine())) {
     // Note: The actual moving to ecx is done further down.
     GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
     if (G && !G->getGlobal()->hasHiddenVisibility() &&
