@@ -4582,18 +4582,14 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
       
       // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs.
-      if (!GV->isDeclaration() && !GV->isWeakForLinker()) {
+      if (!ExtraLoadRequired) {
         // Not a stub reference.
         OpFlags = IsPIC ? X86II::MO_PIC_BASE_OFFSET : 0;
       } else if (!GV->hasHiddenVisibility()) {
         // Non-hidden $non_lazy_ptr reference.
         OpFlags = IsPIC ? X86II::MO_DARWIN_NONLAZY_PIC_BASE :
                           X86II::MO_DARWIN_NONLAZY;
-      } else if (!GV->isDeclaration() && !GV->hasCommonLinkage())
-        // Definition is definitely in the current linkage unit.
-        // Not a stub reference.
-        OpFlags = IsPIC ? X86II::MO_PIC_BASE_OFFSET : 0;
-      else {
+      } else {
         // Hidden $non_lazy_ptr reference.
         OpFlags = IsPIC ? X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE :
                           X86II::MO_DARWIN_HIDDEN_NONLAZY;
