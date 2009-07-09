@@ -590,24 +590,26 @@ void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
-  if (DispSpec.isGlobal() ||
-      DispSpec.isCPI() ||
-      DispSpec.isJTI() ||
-      DispSpec.isSymbol()) {
-    printOperand(MI, Op+3, "mem");
-  } else {
-    int DispVal = DispSpec.getImm();
-    if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
-      O << DispVal;
-  }
-
   // If we really don't want to print out (rip), don't.
   bool HasBaseReg = BaseReg.getReg() != 0;
   if (HasBaseReg && Modifier && !strcmp(Modifier, "no-rip") &&
       BaseReg.getReg() == X86::RIP)
     HasBaseReg = false;
-    
-  if (IndexReg.getReg() || HasBaseReg) {
+  
+  // HasParenPart - True if we will print out the () part of the mem ref.
+  bool HasParenPart = IndexReg.getReg() || HasBaseReg;
+  
+  if (DispSpec.isImm()) {
+    int DispVal = DispSpec.getImm();
+    if (DispVal || !HasParenPart)
+      O << DispVal;
+  } else {
+    assert(DispSpec.isGlobal() || DispSpec.isCPI() ||
+           DispSpec.isJTI() || DispSpec.isSymbol());
+    printOperand(MI, Op+3, "mem");
+  }
+
+  if (HasParenPart) {
     assert(IndexReg.getReg() != X86::ESP &&
            "X86 doesn't allow scaling by ESP");
 
