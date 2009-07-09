@@ -38,6 +38,7 @@ namespace {
         if (tempDir.createDirectoryOnDisk(true, &ErrMsg))
           throw std::runtime_error(ErrMsg);
       }
+      return tempDir;
     }
 
     // GCC 4.5-style -save-temps handling.
