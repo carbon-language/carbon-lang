@@ -332,6 +332,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
             FnStubs.insert(Name);
             printSuffixedName(Name, "$stub");
           }
+          assert(MO.getTargetFlags() == 0);
         } else if (GV->hasHiddenVisibility()) {
           if (!GV->isDeclaration() && !GV->hasCommonLinkage())
             // Definition is not definitely in the current translation unit.
@@ -339,19 +340,21 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
           else {
             HiddenGVStubs.insert(Name);
             printSuffixedName(Name, "$non_lazy_ptr");
+            assert(MO.getTargetFlags() == 0);
           }
         } else {
           GVStubs.insert(Name);
           printSuffixedName(Name, "$non_lazy_ptr");
+          assert(MO.getTargetFlags() == 0);
         }
       } else {
-        if (GV->hasDLLImportLinkage())
-          O << "__imp_";
         O << Name;
       }
     } else {
-      if (GV->hasDLLImportLinkage())
+      if (GV->hasDLLImportLinkage()) {
+        assert(MO.getTargetFlags() == 0);
         O << "__imp_";
+      }
       O << Name;
       
       if (shouldPrintPLT(TM, Subtarget)) {
