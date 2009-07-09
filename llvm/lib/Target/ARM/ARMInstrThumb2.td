@@ -118,7 +118,7 @@ def t2addrmode_imm8s4 : Operand<i32>,
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
-// t2addrmode_so_reg  := reg + reg << imm2
+// t2addrmode_so_reg  := reg + (reg << imm2)
 def t2addrmode_so_reg : Operand<i32>,
                         ComplexPattern<i32, 3, "SelectT2AddrModeSoReg", []> {
   let PrintMethod = "printT2AddrModeSoRegOperand";
