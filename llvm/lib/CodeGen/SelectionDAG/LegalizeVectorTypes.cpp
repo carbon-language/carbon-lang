@@ -664,7 +664,8 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   // so use a truncating store.
   SDValue EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
   unsigned Alignment =
-    TLI.getTargetData()->getPrefTypeAlignment(VecVT.getTypeForMVT());
+    TLI.getTargetData()->getPrefTypeAlignment(VecVT.getTypeForMVT(
+                                                            *DAG.getContext()));
   Store = DAG.getTruncStore(Store, dl, Elt, EltPtr, NULL, 0, EltVT);
 
   // Load the Lo part from the stack slot.

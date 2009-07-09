@@ -5520,7 +5520,7 @@ void TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
     for (unsigned Value = 0, NumValues = ValueVTs.size();
          Value != NumValues; ++Value) {
       MVT VT = ValueVTs[Value];
-      const Type *ArgTy = VT.getTypeForMVT();
+      const Type *ArgTy = VT.getTypeForMVT(*DAG.getContext());
       ISD::ArgFlagsTy Flags;
       unsigned OriginalAlignment =
         getTargetData()->getABITypeAlignment(ArgTy);
@@ -5651,7 +5651,7 @@ TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
     for (unsigned Value = 0, NumValues = ValueVTs.size();
          Value != NumValues; ++Value) {
       MVT VT = ValueVTs[Value];
-      const Type *ArgTy = VT.getTypeForMVT();
+      const Type *ArgTy = VT.getTypeForMVT(*DAG.getContext());
       SDValue Op = SDValue(Args[i].Node.getNode(),
                            Args[i].Node.getResNo() + Value);
       ISD::ArgFlagsTy Flags;

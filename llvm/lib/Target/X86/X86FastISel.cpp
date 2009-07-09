@@ -1242,7 +1242,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, false, TM, ArgLocs);
+  CCState CCInfo(CC, false, TM, ArgLocs, I->getParent()->getContext());
   CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC));
 
   // Get a count of how many bytes are to be pushed on the stack.
@@ -1382,7 +1382,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   // Now handle call return value (if any).
   if (RetVT.getSimpleVT() != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
-    CCState CCInfo(CC, false, TM, RVLocs);
+    CCState CCInfo(CC, false, TM, RVLocs, I->getParent()->getContext());
     CCInfo.AnalyzeCallResult(RetVT, RetCC_X86);
 
     // Copy all of the result registers out of their specified physreg.

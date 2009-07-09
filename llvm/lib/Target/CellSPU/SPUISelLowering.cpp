@@ -102,7 +102,7 @@ namespace {
     TargetLowering::ArgListEntry Entry;
     for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
       MVT ArgVT = Op.getOperand(i).getValueType();
-      const Type *ArgTy = ArgVT.getTypeForMVT();
+      const Type *ArgTy = ArgVT.getTypeForMVT(*DAG.getContext());
       Entry.Node = Op.getOperand(i);
       Entry.Ty = ArgTy;
       Entry.isSExt = isSigned;
@@ -113,7 +113,8 @@ namespace {
                                            TLI.getPointerTy());
 
     // Splice the libcall in wherever FindInputOutputChains tells us to.
-    const Type *RetTy = Op.getNode()->getValueType(0).getTypeForMVT();
+    const Type *RetTy =
+                 Op.getNode()->getValueType(0).getTypeForMVT(*DAG.getContext());
     std::pair<SDValue, SDValue> CallInfo =
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                             0, CallingConv::C, false, Callee, Args, DAG,
@@ -1336,7 +1337,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG, TargetMachine &TM) {
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
   DebugLoc dl = Op.getDebugLoc();
-  CCState CCInfo(CC, isVarArg, TM, RVLocs);
+  CCState CCInfo(CC, isVarArg, TM, RVLocs, DAG.getContext());
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_SPU);
 
   // If this is the first return lowered for this function, add the regs to the

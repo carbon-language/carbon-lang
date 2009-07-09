@@ -1283,8 +1283,8 @@ SDValue PPCTargetLowering::LowerTRAMPOLINE(SDValue Op, SelectionDAG &DAG) {
 
   // Lower to a call to __trampoline_setup(Trmp, TrampSize, FPtr, ctx_reg)
   std::pair<SDValue, SDValue> CallResult =
-    LowerCallTo(Chain, Op.getValueType().getTypeForMVT(), false, false,
-                false, false, 0, CallingConv::C, false,
+    LowerCallTo(Chain, Op.getValueType().getTypeForMVT(*DAG.getContext()), 
+                false, false, false, false, 0, CallingConv::C, false,
                 DAG.getExternalSymbol("__trampoline_setup", PtrVT),
                 Args, DAG, dl);
 
@@ -1527,7 +1527,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS_SVR4(SDValue Op,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
 
   // Reserve space for the linkage area on the stack.
   CCInfo.AllocateStack(PPCFrameInfo::getLinkageSize(false, false), PtrByteSize);
@@ -1585,7 +1585,8 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS_SVR4(SDValue Op,
   // Aggregates passed by value are stored in the local variable space of the
   // caller's stack frame, right above the parameter list area.
   SmallVector<CCValAssign, 16> ByValArgLocs;
-  CCState CCByValInfo(CC, isVarArg, getTargetMachine(), ByValArgLocs);
+  CCState CCByValInfo(CC, isVarArg, getTargetMachine(),
+                      ByValArgLocs, DAG.getContext());
 
   // Reserve stack space for the allocations in CCInfo.
   CCByValInfo.AllocateStack(CCInfo.getNextStackOffset(), PtrByteSize);
@@ -2454,7 +2455,7 @@ static SDValue LowerCallReturn(SDValue Op, SelectionDAG &DAG, TargetMachine &TM,
   SmallVector<SDValue, 16> ResultVals;
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CallerCC = DAG.getMachineFunction().getFunction()->getCallingConv();
-  CCState CCRetInfo(CallerCC, isVarArg, TM, RVLocs);
+  CCState CCRetInfo(CallerCC, isVarArg, TM, RVLocs, DAG.getContext());
   CCRetInfo.AnalyzeCallResult(TheCall, RetCC_PPC);
 
   // Copy all of the result registers out of their specified physreg.
@@ -2560,7 +2561,7 @@ SDValue PPCTargetLowering::LowerCALL_SVR4(SDValue Op, SelectionDAG &DAG,
 
   // Assign locations to all of the outgoing arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
 
   // Reserve space for the linkage area on the stack.
   CCInfo.AllocateStack(PPCFrameInfo::getLinkageSize(false, false), PtrByteSize);
@@ -2600,7 +2601,8 @@ SDValue PPCTargetLowering::LowerCALL_SVR4(SDValue Op, SelectionDAG &DAG,
   
   // Assign locations to all of the outgoing aggregate by value arguments.
   SmallVector<CCValAssign, 16> ByValArgLocs;
-  CCState CCByValInfo(CC, isVarArg, getTargetMachine(), ByValArgLocs);
+  CCState CCByValInfo(CC, isVarArg, getTargetMachine(), ByValArgLocs,
+                      DAG.getContext());
 
   // Reserve stack space for the allocations in CCInfo.
   CCByValInfo.AllocateStack(CCInfo.getNextStackOffset(), PtrByteSize);
@@ -3065,7 +3067,7 @@ SDValue PPCTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG,
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
   DebugLoc dl = Op.getDebugLoc();
-  CCState CCInfo(CC, isVarArg, TM, RVLocs);
+  CCState CCInfo(CC, isVarArg, TM, RVLocs, DAG.getContext());
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_PPC);
 
   // If this is the first return lowered for this function, add the regs to the

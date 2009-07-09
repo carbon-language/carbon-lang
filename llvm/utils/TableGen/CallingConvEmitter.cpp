@@ -163,12 +163,12 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << Size << ", ";
       else
         O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
-          "->getTypeAllocSize(LocVT.getTypeForMVT()), ";
+          "->getTypeAllocSize(LocVT.getTypeForMVT(*State.getContext())), ";
       if (Align)
         O << Align;
       else
         O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
-          "->getABITypeAlignment(LocVT.getTypeForMVT())";
+          "->getABITypeAlignment(LocVT.getTypeForMVT(*State.getContext()))";
       O << ");\n" << IndentStr
         << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";

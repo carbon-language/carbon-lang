@@ -319,7 +319,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
   MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();
-  CurDAG->init(*MF, MMI, DW);
+  CurDAG->init(*MF, MMI, DW, Context);
   FuncInfo->set(Fn, *MF, *CurDAG, EnableFastISel);
   SDL->init(GFI, *AA);
 

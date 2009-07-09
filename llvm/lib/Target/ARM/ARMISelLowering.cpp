@@ -695,7 +695,8 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   bool isVarArg = TheCall->isVarArg();
-  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
+  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(),
+                 RVLocs, DAG.getContext());
   CCInfo.AnalyzeCallResult(TheCall,
                            CCAssignFnForNode(CallingConv, /* Return*/ true));
 
@@ -831,7 +832,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
   CCInfo.AnalyzeCallOperands(TheCall, CCAssignFnForNode(CC, /* Return*/ false));
 
   // Get a count of how many bytes are to be pushed on the stack.
@@ -1032,7 +1033,7 @@ SDValue ARMTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
 
   // CCState - Info about the registers and stack slots.
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs, DAG.getContext());
 
   // Analyze return values of ISD::RET.
   CCInfo.AnalyzeReturn(Op.getNode(), CCAssignFnForNode(CC, /* Return */ true));
@@ -1384,7 +1385,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Op.getNode(),
                                 CCAssignFnForNode(CC, /* Return*/ false));
 
