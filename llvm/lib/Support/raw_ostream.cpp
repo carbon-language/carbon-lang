@@ -120,6 +120,7 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
 
 void raw_ostream::flush_nonempty() {
   assert(OutBufCur > OutBufStart && "Invalid call to flush_nonempty.");
+  AboutToFlush();
   write_impl(OutBufStart, OutBufCur - OutBufStart);
   OutBufCur = OutBufStart;    
 }

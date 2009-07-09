@@ -44,6 +44,22 @@ private:
   char *OutBufStart, *OutBufEnd, *OutBufCur;
   bool Unbuffered;
 
+protected:
+  /// CurBufPtr - Get a pointer to the current location in the buffer.
+  ///
+  char *CurBufPtr(void) { return OutBufCur; }
+  /// StartBufPtr - Get a pointer to the start of the buffer
+  ///
+  char *StartBufPtr(void) { return OutBufStart; }
+  /// EndBufPtr - Get a pointer to the end of the buffer
+  ///
+  char *EndBufPtr(void) { return OutBufEnd; }
+
+  /// AboutToFlush- Called when the buffer is about to be flushed,
+  /// allowing derived classes to take some action.
+  ///
+  virtual void AboutToFlush(void) {};
+
 public:
   // color order matches ANSI escape sequence, don't change
   enum Colors {
