@@ -125,7 +125,7 @@ QualType Type::getDesugaredType(bool ForDisplay) const {
   if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
     return TOT->getUnderlyingType().getDesugaredType();
   if (const DecltypeType *DTT = dyn_cast<DecltypeType>(this))
-    return DTT->getUnderlyingExpr()->getType().getDesugaredType();
+    return DTT->getCanonicalTypeInternal();
   if (const TemplateSpecializationType *Spec 
         = dyn_cast<TemplateSpecializationType>(this)) {
     if (ForDisplay)
