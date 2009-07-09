@@ -316,29 +316,16 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       // non-lazily-resolved stubs
       if (GV->isDeclaration() || GV->isWeakForLinker()) {
         // Dynamically-resolved functions need a stub for the function.
-        if (isa<Function>(GV)) {
-          // Function stubs are no longer needed for Mac OS X 10.5 and up.
-          if (Subtarget->isTargetDarwin() && Subtarget->getDarwinVers() >= 9) {
-            O << Name;
-          } else {
-            FnStubs.insert(Name);
-            printSuffixedName(Name, "$stub");
-          }
-          assert(MO.getTargetFlags() == 0);
-        } else if (GV->hasHiddenVisibility()) {
-          if (!GV->isDeclaration() && !GV->hasCommonLinkage())
-            // Definition is not definitely in the current translation unit.
-            O << Name;
-          else {
-            HiddenGVStubs.insert(Name);
-            printSuffixedName(Name, "$non_lazy_ptr");
-            assert(MO.getTargetFlags() == 0);
-          }
+        assert(isa<Function>(GV));
+        
+        // Function stubs are no longer needed for Mac OS X 10.5 and up.
+        if (Subtarget->isTargetDarwin() && Subtarget->getDarwinVers() >= 9) {
+          O << Name;
         } else {
-          GVStubs.insert(Name);
-          printSuffixedName(Name, "$non_lazy_ptr");
-          assert(MO.getTargetFlags() == 0);
+          FnStubs.insert(Name);
+          printSuffixedName(Name, "$stub");
         }
+        assert(MO.getTargetFlags() == 0);
       } else {
         O << Name;
       }
