@@ -661,7 +661,8 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm8s4(SDValue Op, SDValue N,
   if (N.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       int RHSC = (int)RHS->getZExtValue();
-      if (((RHSC & 0x3) == 0) && (RHSC < 0 && RHSC > -0x400)) { // 8 bits.
+      if (((RHSC & 0x3) == 0) &&
+          ((RHSC >= 0 && RHSC < 0x400) || (RHSC < 0 && RHSC > -0x400))) { // 8 bits.
         Base   = N.getOperand(0);
         OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
         return true;

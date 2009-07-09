@@ -111,10 +111,10 @@ def t2am_imm8_offset : Operand<i32>,
   let PrintMethod = "printT2AddrModeImm8OffsetOperand";
 }
 
-// t2addrmode_imm8s4  := reg + (imm8 << 2)
+// t2addrmode_imm8s4  := reg +/- (imm8 << 2)
 def t2addrmode_imm8s4 : Operand<i32>,
                         ComplexPattern<i32, 2, "SelectT2AddrModeImm8s4", []> {
-  let PrintMethod = "printT2AddrModeImm8Operand";
+  let PrintMethod = "printT2AddrModeImm8s4Operand";
   let MIOperandInfo = (ops GPR:$base, i32imm:$offsimm);
 }
 
@@ -661,6 +661,7 @@ def t2PICSTRH  : T2I_picst<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS
 def t2PICSTRB  : T2I_picst<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
 } // isNotDuplicable = 1, AddedComplexity = 10
 
+// FIXME: ldrd / strd pre / post variants
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
