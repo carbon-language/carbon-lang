@@ -80,6 +80,7 @@ public:
   }
 
   VisibilityTypes getVisibility() const { return VisibilityTypes(Visibility); }
+  bool hasDefaultVisibility() const { return Visibility == DefaultVisibility; }
   bool hasHiddenVisibility() const { return Visibility == HiddenVisibility; }
   bool hasProtectedVisibility() const {
     return Visibility == ProtectedVisibility;
