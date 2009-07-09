@@ -339,9 +339,17 @@ extern const PassInfo *const InstructionNamerID;
   
 //===----------------------------------------------------------------------===//
 //
-// SSI - This pass converts to Static Single Information form.
+// SSI - This pass converts instructions to Static Single Information form
+// on demand.
 //
 FunctionPass *createSSIPass();
+
+//===----------------------------------------------------------------------===//
+//
+// SSI - This pass converts every non-void instuction to Static Single
+// Information form.
+//
+FunctionPass *createSSIEverythingPass();
 
 } // End llvm namespace
 

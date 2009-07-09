@@ -130,6 +130,7 @@ namespace {
       (void) llvm::createDbgInfoPrinterPass();
       (void) llvm::createPartialInliningPass();
       (void) llvm::createSSIPass();
+      (void) llvm::createSSIEverythingPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
