@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 //  Usually this file just includes CompilerDriver/Main.inc, but here we apply
-//  some trickery to make the built-in '-save-temps' option hidden and enabled
-//  by default.
+//  some trickery to make the built-in '-save-temps' option hidden and enable
+//  '--temp-dir' by default.
 //
 //===----------------------------------------------------------------------===//
 
