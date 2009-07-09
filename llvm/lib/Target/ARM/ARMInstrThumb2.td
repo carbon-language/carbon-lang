@@ -670,12 +670,12 @@ def t2PICSTRB  : T2I_picst<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)
 let mayLoad = 1 in
 def t2LDM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
-                 "ldm${p}${addr:submode} $addr, $dst1", []>;
+                 "ldm${addr:submode}${p} $addr, $dst1", []>;
 
 let mayStore = 1 in
 def t2STM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
-                 "stm${p}${addr:submode} $addr, $src1", []>;
+                 "stm${addr:submode}${p} $addr, $src1", []>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
@@ -1051,6 +1051,16 @@ let isCall = 1,
 
 let isReturn = 1, isTerminator = 1 in
   def t2BX_RET : T2XI<(outs), (ins), "bx lr", [(ARMretflag)]>;
+
+// FIXME: remove when we have a way to marking a MI with these properties.
+// FIXME: $dst1 should be a def. But the extra ops must be in the end of the
+// operand list.
+// FIXME: Should pc be an implicit operand like PICADD, etc?
+let isReturn = 1, isTerminator = 1, mayLoad = 1 in
+  def t2LDM_RET : T2XI<(outs),
+                    (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
+                    "ldm${addr:submode}${p} $addr, $dst1",
+                    []>;
 
 // On non-Darwin platforms R9 is callee-saved.
 let isCall = 1,
