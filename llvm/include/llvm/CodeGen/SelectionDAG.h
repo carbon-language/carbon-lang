@@ -126,8 +126,7 @@ public:
   /// init - Prepare this SelectionDAG to process code in the given
   /// MachineFunction.
   ///
-  void init(MachineFunction &mf, MachineModuleInfo *mmi, DwarfWriter *dw,
-            LLVMContext* C);
+  void init(MachineFunction &mf, MachineModuleInfo *mmi, DwarfWriter *dw);
 
   /// clear - Clear state and free memory necessary to make this
   /// SelectionDAG ready to process a new block.

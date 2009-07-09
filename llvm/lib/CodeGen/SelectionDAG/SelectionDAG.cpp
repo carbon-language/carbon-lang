@@ -811,11 +811,11 @@ SelectionDAG::SelectionDAG(TargetLowering &tli, FunctionLoweringInfo &fli)
 }
 
 void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
-                        DwarfWriter *dw, LLVMContext* C) {
+                        DwarfWriter *dw) {
   MF = &mf;
   MMI = mmi;
   DW = dw;
-  Context = C;
+  Context = mf.getFunction()->getContext();  
 }
 
 SelectionDAG::~SelectionDAG() {
