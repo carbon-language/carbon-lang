@@ -71,6 +71,11 @@ write files into the directory specified with the I<-o> option. The
 I<--save-temps=cwd> and I<--save-temps> switches are both synonyms for the
 default behaviour.
 
+=item B<--temp-dir> I<directory>
+
+Write temporary files to the specified directory. This option overrides
+I<--save-temps>.
+
 =item B<--help>
 
 Print a summary of command-line options and exit.

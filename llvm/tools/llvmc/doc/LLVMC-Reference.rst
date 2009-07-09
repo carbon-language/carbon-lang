@@ -97,6 +97,9 @@ configuration libraries:
   the ``-o`` option. The ``--save-temps=cwd`` and ``--save-temps`` switches are
   both synonyms for the default behaviour.
 
+* ``--temp-dir`` - Write temporary files to the specified directory. This option
+  overrides ``--save-temps``.
+
 * ``--check-graph`` - Check the compilation for common errors like mismatched
   output/input language names, multiple default edges and cycles. Because of
   plugins, these checks can't be performed at compile-time. Exit with code zero
