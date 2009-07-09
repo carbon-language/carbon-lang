@@ -1021,7 +1021,7 @@ SDValue X86TargetLowering::getPICJumpTableRelocBase(SDValue Table,
                                                       SelectionDAG &DAG) const {
   if (usesGlobalOffsetTable())
     return DAG.getGLOBAL_OFFSET_TABLE(getPointerTy());
-  if (!Subtarget->isPICStyleRIPRel())
+  if (!Subtarget->is64Bit())
     // This doesn't have DebugLoc associated with it, but is not really the
     // same as a Register.
     return DAG.getNode(X86ISD::GlobalBaseReg, DebugLoc::getUnknownLoc(),
@@ -4434,14 +4434,15 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   // global base reg.
   unsigned char OpFlag = 0;
   unsigned WrapperKind = X86ISD::Wrapper;
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  
+  if (Subtarget->is64Bit() &&
+      getTargetMachine().getCodeModel() == CodeModel::Small) {
+    WrapperKind = X86ISD::WrapperRIP;
+  } else if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     if (Subtarget->isPICStyleStub())
       OpFlag = X86II::MO_PIC_BASE_OFFSET;
     else if (Subtarget->isPICStyleGOT())
       OpFlag = X86II::MO_GOTOFF;
-    else if (Subtarget->isPICStyleRIPRel() &&
-             getTargetMachine().getCodeModel() == CodeModel::Small)
-      WrapperKind = X86ISD::WrapperRIP;
   }
   
   SDValue Result = DAG.getTargetConstantPool(CP->getConstVal(), getPointerTy(),
@@ -4467,13 +4468,14 @@ SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   // global base reg.
   unsigned char OpFlag = 0;
   unsigned WrapperKind = X86ISD::Wrapper;
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  
+  if (Subtarget->is64Bit()) {
+    WrapperKind = X86ISD::WrapperRIP;
+  } else if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     if (Subtarget->isPICStyleStub())
       OpFlag = X86II::MO_PIC_BASE_OFFSET;
     else if (Subtarget->isPICStyleGOT())
       OpFlag = X86II::MO_GOTOFF;
-    else if (Subtarget->isPICStyleRIPRel())
-      WrapperKind = X86ISD::WrapperRIP;
   }
   
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy(),
@@ -4500,13 +4502,13 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
   // global base reg.
   unsigned char OpFlag = 0;
   unsigned WrapperKind = X86ISD::Wrapper;
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  if (Subtarget->is64Bit()) {
+    WrapperKind = X86ISD::WrapperRIP;
+  } else if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     if (Subtarget->isPICStyleStub())
       OpFlag = X86II::MO_PIC_BASE_OFFSET;
     else if (Subtarget->isPICStyleGOT())
       OpFlag = X86II::MO_GOTOFF;
-    else if (Subtarget->isPICStyleRIPRel())
-      WrapperKind = X86ISD::WrapperRIP;
   }
   
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy(), OpFlag);
@@ -4517,7 +4519,7 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
   
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-      !Subtarget->isPICStyleRIPRel()) {
+      !Subtarget->is64Bit()) {
     Result = DAG.getNode(ISD::ADD, DL, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg,
                                      DebugLoc::getUnknownLoc(),
@@ -4563,14 +4565,14 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0, OpFlags);
   }
   
-  if (Subtarget->isPICStyleRIPRel() &&
+  if (Subtarget->is64Bit() &&
       getTargetMachine().getCodeModel() == CodeModel::Small)
     Result = DAG.getNode(X86ISD::WrapperRIP, dl, getPointerTy(), Result);
   else
     Result = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), Result);
 
   // With PIC, the address is actually $g + Offset.
-  if (IsPic && !Subtarget->isPICStyleRIPRel()) {
+  if (IsPic && !Subtarget->is64Bit()) {
     Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg, dl, getPointerTy()),
                          Result);

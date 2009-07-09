@@ -147,6 +147,9 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
       setRelocationModel(Reloc::Static);
   }
 
+  assert(getRelocationModel() != Reloc::Default &&
+         "Relocation mode not picked");
+
   // ELF doesn't have a distinct dynamic-no-PIC model. Dynamic-no-PIC
   // is defined as a model for code which may be used in static or
   // dynamic executables but not necessarily a shared library. On ELF
@@ -164,9 +167,9 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
       setCodeModel(CodeModel::Small);
   }
 
-  if (Subtarget.isTargetCygMing())
-    Subtarget.setPICStyle(PICStyles::WinPIC);
-  else if (Subtarget.isTargetDarwin()) {
+  if (Subtarget.isTargetCygMing()) {
+    Subtarget.setPICStyle(PICStyles::None);
+  } else if (Subtarget.isTargetDarwin()) {
     if (Subtarget.is64Bit())
       Subtarget.setPICStyle(PICStyles::RIPRel);
     else
@@ -177,6 +180,11 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
     else
       Subtarget.setPICStyle(PICStyles::GOT);
   }
+      
+  // Finally, unless we're in PIC or DynamicNoPIC mode, set the PIC style to
+  // None.
+  if (getRelocationModel() == Reloc::Static)
+    Subtarget.setPICStyle(PICStyles::None);
 }
 
 //===----------------------------------------------------------------------===//

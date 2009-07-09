@@ -22,9 +22,14 @@ class Module;
 class GlobalValue;
 class TargetMachine;
   
+/// PICStyles - The X86 backend supports a number of different styles of PIC.
+/// 
 namespace PICStyles {
 enum Style {
-  Stub, GOT, RIPRel, WinPIC, None
+  Stub,   // Used on i386-darwin
+  GOT,    // Used on many 32-bit unices.
+  RIPRel, // Used on X86-64 when not in -static mode.
+  None    // Set when in -static mode (not PIC or DynamicNoPIC mode).
 };
 }
 
@@ -185,7 +190,6 @@ public:
   bool isPICStyleGOT() const { return PICStyle == PICStyles::GOT; }
   bool isPICStyleStub() const { return PICStyle == PICStyles::Stub; }
   bool isPICStyleRIPRel() const { return PICStyle == PICStyles::RIPRel; }
-  bool isPICStyleWinPIC() const { return PICStyle == PICStyles::WinPIC; }
   
   /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
   unsigned getDarwinVers() const { return DarwinVers; }
