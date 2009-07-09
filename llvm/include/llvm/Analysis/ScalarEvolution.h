@@ -50,7 +50,7 @@ namespace llvm {
   protected:
     virtual ~SCEV();
   public:
-    explicit SCEV(unsigned SCEVTy) : 
+    explicit SCEV(unsigned SCEVTy) :
       SCEVType(SCEVTy) {}
 
     virtual void Profile(FoldingSetNodeID &ID) const = 0;
@@ -194,7 +194,7 @@ namespace llvm {
       /// the loop if it is known, or a SCEVCouldNotCompute otherwise.
       const SCEV *Exact;
 
-      /// Exact - An expression indicating the least maximum backedge-taken
+      /// Max - An expression indicating the least maximum backedge-taken
       /// count of the loop that is known, or a SCEVCouldNotCompute.
       const SCEV *Max;
 
