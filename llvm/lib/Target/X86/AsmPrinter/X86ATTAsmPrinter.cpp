@@ -405,8 +405,10 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       O << ']';
     }
     
-    if (shouldPrintPLT(TM, Subtarget))
+    if (shouldPrintPLT(TM, Subtarget)) {
       O << "@PLT";
+      assert(MO.getTargetFlags() == 0);
+    }
     
     if (needCloseParen)
       O << ')';
