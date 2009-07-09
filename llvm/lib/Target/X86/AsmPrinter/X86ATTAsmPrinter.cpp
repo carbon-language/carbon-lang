@@ -656,6 +656,15 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'c': // Don't print "$" before a global var name or constant.
       printOperand(MI, OpNo, "mem");
       return false;
+
+    case 'A': // Print '*' before a register (it must be a register)
+      if (MI->getOperand(OpNo).isReg()) {
+        O << '*';
+        printOperand(MI, OpNo);
+        return false;
+      }
+      return true;
+
     case 'b': // Print QImode register
     case 'h': // Print QImode high register
     case 'w': // Print HImode register
