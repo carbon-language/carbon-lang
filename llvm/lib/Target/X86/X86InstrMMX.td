@@ -164,7 +164,7 @@ def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
                              []>;
 
 let neverHasSideEffects = 1 in
-def MMX_MOVD64from64rr : MMXRI<0x7E, MRMSrcReg,
+def MMX_MOVD64from64rr : MMXRI<0x7E, MRMDestReg,
                                (outs GR64:$dst), (ins VR64:$src),
                                "movd\t{$src, $dst|$dst, $src}", []>;
 
@@ -179,21 +179,21 @@ def MMX_MOVQ64mr : MMXI<0x7F, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
                         "movq\t{$src, $dst|$dst, $src}",
                         [(store (v1i64 VR64:$src), addr:$dst)]>;
 
-def MMX_MOVDQ2Qrr : SDIi8<0xD6, MRMDestMem, (outs VR64:$dst), (ins VR128:$src),
+def MMX_MOVDQ2Qrr : SDIi8<0xD6, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
                           "movdq2q\t{$src, $dst|$dst, $src}",
                           [(set VR64:$dst,
                             (v1i64 (bitconvert
                             (i64 (vector_extract (v2i64 VR128:$src),
                                   (iPTR 0))))))]>;
 
-def MMX_MOVQ2DQrr : SSDIi8<0xD6, MRMDestMem, (outs VR128:$dst), (ins VR64:$src),
+def MMX_MOVQ2DQrr : SSDIi8<0xD6, MRMSrcReg, (outs VR128:$dst), (ins VR64:$src),
                            "movq2dq\t{$src, $dst|$dst, $src}",
           [(set VR128:$dst,
             (movl immAllZerosV,
                   (v2i64 (scalar_to_vector (i64 (bitconvert VR64:$src))))))]>;
 
 let neverHasSideEffects = 1 in
-def MMX_MOVQ2FR64rr: SSDIi8<0xD6, MRMDestMem, (outs FR64:$dst), (ins VR64:$src),
+def MMX_MOVQ2FR64rr: SSDIi8<0xD6, MRMSrcReg, (outs FR64:$dst), (ins VR64:$src),
                            "movq2dq\t{$src, $dst|$dst, $src}", []>;
 
 def MMX_MOVNTQmr  : MMXI<0xE7, MRMDestMem, (outs), (ins i64mem:$dst, VR64:$src),
