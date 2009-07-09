@@ -1185,9 +1185,9 @@ static void RewriteHeapSROALoadUser(Instruction *LoadUser,
                                    InsertedScalarizedValues, PHIsToRewrite,
                                    Context);
     
-    Value *New = new ICmpInst(SCI->getPredicate(), NPtr,
-                              Context->getNullValue(NPtr->getType()),
-                              SCI->getName(), SCI);
+    Value *New = new ICmpInst(SCI, SCI->getPredicate(), NPtr,
+                              Context->getNullValue(NPtr->getType()), 
+                              SCI->getName());
     SCI->replaceAllUsesWith(New);
     SCI->eraseFromParent();
     return;
@@ -1310,9 +1310,9 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
   //    }
   Value *RunningOr = 0;
   for (unsigned i = 0, e = FieldMallocs.size(); i != e; ++i) {
-    Value *Cond = new ICmpInst(ICmpInst::ICMP_EQ, FieldMallocs[i],
+    Value *Cond = new ICmpInst(MI, ICmpInst::ICMP_EQ, FieldMallocs[i],
                               Context->getNullValue(FieldMallocs[i]->getType()),
-                                  "isnull", MI);
+                                  "isnull");
     if (!RunningOr)
       RunningOr = Cond;   // First seteq
     else
@@ -1337,9 +1337,9 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
   // pointer, because some may be null while others are not.
   for (unsigned i = 0, e = FieldGlobals.size(); i != e; ++i) {
     Value *GVVal = new LoadInst(FieldGlobals[i], "tmp", NullPtrBlock);
-    Value *Cmp = new ICmpInst(ICmpInst::ICMP_NE, GVVal, 
+    Value *Cmp = new ICmpInst(*NullPtrBlock, ICmpInst::ICMP_NE, GVVal, 
                               Context->getNullValue(GVVal->getType()),
-                              "tmp", NullPtrBlock);
+                              "tmp");
     BasicBlock *FreeBlock = BasicBlock::Create("free_it", OrigBB->getParent());
     BasicBlock *NextBlock = BasicBlock::Create("next", OrigBB->getParent());
     BranchInst::Create(FreeBlock, NextBlock, Cmp, NullPtrBlock);

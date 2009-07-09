@@ -523,9 +523,10 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                                     EntryBB->getTerminator());
 
     // Compare the return value to zero.
-    Value *IsNormal = new ICmpInst(ICmpInst::ICMP_EQ, SJRet,
+    Value *IsNormal = new ICmpInst(EntryBB->getTerminator(),
+                                   ICmpInst::ICMP_EQ, SJRet,
                                    Constant::getNullValue(SJRet->getType()),
-      "notunwind", EntryBB->getTerminator());
+                                   "notunwind");
     // Nuke the uncond branch.
     EntryBB->getTerminator()->eraseFromParent();
 
@@ -557,9 +558,9 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   }
 
   // Load the JBList, if it's null, then there was no catch!
-  Value *NotNull = new ICmpInst(ICmpInst::ICMP_NE, BufPtr,
+  Value *NotNull = new ICmpInst(*UnwindHandler, ICmpInst::ICMP_NE, BufPtr,
                                 Constant::getNullValue(BufPtr->getType()),
-    "notnull", UnwindHandler);
+                                "notnull");
   BranchInst::Create(UnwindBlock, TermBlock, NotNull, UnwindHandler);
 
   // Create the block to do the longjmp.

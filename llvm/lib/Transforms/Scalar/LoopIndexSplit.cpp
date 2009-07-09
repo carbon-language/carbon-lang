@@ -309,16 +309,18 @@ static Value *getMinusOne(Value *V, bool Sign, Instruction *InsertPt,
 // Return min(V1, V1)
 static Value *getMin(Value *V1, Value *V2, bool Sign, Instruction *InsertPt) {
  
-  Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                          V1, V2, "lsp", InsertPt);
+  Value *C = new ICmpInst(InsertPt,
+                          Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                          V1, V2, "lsp");
   return SelectInst::Create(C, V1, V2, "lsp", InsertPt);
 }
 
 // Return max(V1, V2)
 static Value *getMax(Value *V1, Value *V2, bool Sign, Instruction *InsertPt) {
  
-  Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
-                          V1, V2, "lsp", InsertPt);
+  Value *C = new ICmpInst(InsertPt, 
+                          Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                          V1, V2, "lsp");
   return SelectInst::Create(C, V2, V1, "lsp", InsertPt);
 }
 
@@ -427,15 +429,15 @@ bool LoopIndexSplit::processOneIterationLoop() {
   //      c1 = icmp uge i32 SplitValue, StartValue
   //      c2 = icmp ult i32 SplitValue, ExitValue
   //      and i32 c1, c2 
-  Instruction *C1 = new ICmpInst(ExitCondition->isSignedPredicate() ? 
+  Instruction *C1 = new ICmpInst(BR, ExitCondition->isSignedPredicate() ? 
                                  ICmpInst::ICMP_SGE : ICmpInst::ICMP_UGE,
-                                 SplitValue, StartValue, "lisplit", BR);
+                                 SplitValue, StartValue, "lisplit");
 
   CmpInst::Predicate C2P  = ExitCondition->getPredicate();
   BranchInst *LatchBR = cast<BranchInst>(Latch->getTerminator());
   if (LatchBR->getOperand(0) != Header)
     C2P = CmpInst::getInversePredicate(C2P);
-  Instruction *C2 = new ICmpInst(C2P, SplitValue, ExitValue, "lisplit", BR);
+  Instruction *C2 = new ICmpInst(BR, C2P, SplitValue, ExitValue, "lisplit");
   Instruction *NSplitCond = BinaryOperator::CreateAnd(C1, C2, "lisplit", BR);
 
   SplitCondition->replaceAllUsesWith(NSplitCond);

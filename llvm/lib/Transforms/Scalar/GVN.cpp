@@ -1627,7 +1627,7 @@ bool GVN::performPRE(Function& F) {
       // will be available in the predecessor by the time we need them.  Any
       // that weren't original present will have been instantiated earlier
       // in this loop.
-      Instruction* PREInstr = CurInst->clone();
+      Instruction* PREInstr = CurInst->clone(*Context);
       bool success = true;
       for (unsigned i = 0, e = CurInst->getNumOperands(); i != e; ++i) {
         Value *Op = PREInstr->getOperand(i);

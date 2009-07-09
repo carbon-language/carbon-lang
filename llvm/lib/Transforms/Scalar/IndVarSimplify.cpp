@@ -188,7 +188,7 @@ ICmpInst *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
        << (Opcode == ICmpInst::ICMP_NE ? "!=" : "==") << "\n"
        << "      RHS:\t" << *RHS << "\n";
 
-  ICmpInst *Cond = new ICmpInst(Opcode, CmpIndVar, ExitCnt, "exitcond", BI);
+  ICmpInst *Cond = new ICmpInst(BI, Opcode, CmpIndVar, ExitCnt, "exitcond");
 
   Instruction *OrigCond = cast<Instruction>(BI->getCondition());
   // It's tempting to use replaceAllUsesWith here to fully replace the old
@@ -294,7 +294,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
       if (ExitBlocks.size() != 1) {
         // Clone the PHI and delete the original one. This lets IVUsers and
         // any other maps purge the original user from their records.
-        PHINode *NewPN = PN->clone();
+        PHINode *NewPN = PN->clone(*Context);
         NewPN->takeName(PN);
         NewPN->insertBefore(PN);
         PN->replaceAllUsesWith(NewPN);
@@ -726,8 +726,8 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   ConstantInt *NewEV = Context->getConstantInt(Type::Int32Ty, intEV);
   Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(1) : NewEV);
   Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(1));
-  ICmpInst *NewEC = new ICmpInst(NewPred, LHS, RHS, EC->getNameStart(),
-                                 EC->getParent()->getTerminator());
+  ICmpInst *NewEC = new ICmpInst(EC->getParent()->getTerminator(),
+                                 NewPred, LHS, RHS, EC->getNameStart());
 
   // In the following deltions, PH may become dead and may be deleted.
   // Use a WeakVH to observe whether this happens.

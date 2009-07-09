@@ -938,7 +938,7 @@ HoistTerminator:
     return true;
 
   // Okay, it is safe to hoist the terminator.
-  Instruction *NT = I1->clone();
+  Instruction *NT = I1->clone(*BB1->getContext());
   BIParent->getInstList().insert(BI, NT);
   if (NT->getType() != Type::VoidTy) {
     I1->replaceAllUsesWith(NT);
@@ -1231,7 +1231,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
           TranslateMap[PN] = PN->getIncomingValueForBlock(PredBB);
         } else {
           // Clone the instruction.
-          Instruction *N = BBI->clone();
+          Instruction *N = BBI->clone(*Context);
           if (BBI->hasName()) N->setName(BBI->getName()+".c");
           
           // Update operands due to translation.
@@ -1581,7 +1581,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     
     // Clone Cond into the predecessor basic block, and or/and the
     // two conditions together.
-    Instruction *New = Cond->clone();
+    Instruction *New = Cond->clone(*BB->getContext());
     PredBlock->getInstList().insert(PBI, New);
     New->takeName(Cond);
     Cond->setName(New->getName()+".old");
@@ -1841,7 +1841,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                << "INTO UNCOND BRANCH PRED: " << *Pred;
           Instruction *UncondBranch = Pred->getTerminator();
           // Clone the return and add it to the end of the predecessor.
-          Instruction *NewRet = RI->clone();
+          Instruction *NewRet = RI->clone(*BB->getContext());
           Pred->getInstList().push_back(NewRet);
 
           BasicBlock::iterator BBI = RI;

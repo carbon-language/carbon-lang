@@ -2576,25 +2576,35 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
 }
 
 CmpInst *
-CmpInst::Create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2, 
+CmpInst::Create(LLVMContext &Context, OtherOps Op, unsigned short predicate,
+                Value *S1, Value *S2, 
                 const std::string &Name, Instruction *InsertBefore) {
   if (Op == Instruction::ICmp) {
-    return new ICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                        InsertBefore);
+    if (InsertBefore)
+      return new ICmpInst(InsertBefore, CmpInst::Predicate(predicate),
+                          S1, S2, Name);
+    else
+      return new ICmpInst(Context, CmpInst::Predicate(predicate),
+                          S1, S2, Name);
   }
-  return new FCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                      InsertBefore);
+  
+  if (InsertBefore)
+    return new FCmpInst(InsertBefore, CmpInst::Predicate(predicate),
+                        S1, S2, Name);
+  else
+    return new FCmpInst(Context, CmpInst::Predicate(predicate),
+                        S1, S2, Name);
 }
 
 CmpInst *
 CmpInst::Create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2, 
                 const std::string &Name, BasicBlock *InsertAtEnd) {
   if (Op == Instruction::ICmp) {
-    return new ICmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                        InsertAtEnd);
+    return new ICmpInst(*InsertAtEnd, CmpInst::Predicate(predicate),
+                        S1, S2, Name);
   }
-  return new FCmpInst(CmpInst::Predicate(predicate), S1, S2, Name, 
-                      InsertAtEnd);
+  return new FCmpInst(*InsertAtEnd, CmpInst::Predicate(predicate),
+                      S1, S2, Name);
 }
 
 void CmpInst::swapOperands() {
@@ -2919,74 +2929,145 @@ void SwitchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 // Define these methods here so vtables don't get emitted into every translation
 // unit that uses these classes.
 
-GetElementPtrInst *GetElementPtrInst::clone() const {
+GetElementPtrInst *GetElementPtrInst::clone(LLVMContext&) const {
   return new(getNumOperands()) GetElementPtrInst(*this);
 }
 
-BinaryOperator *BinaryOperator::clone() const {
+BinaryOperator *BinaryOperator::clone(LLVMContext&) const {
   return Create(getOpcode(), Op<0>(), Op<1>());
 }
 
-FCmpInst* FCmpInst::clone() const {
-  return new FCmpInst(getPredicate(), Op<0>(), Op<1>());
+FCmpInst* FCmpInst::clone(LLVMContext &Context) const {
+  return new FCmpInst(Context, getPredicate(), Op<0>(), Op<1>());
 }
-ICmpInst* ICmpInst::clone() const {
-  return new ICmpInst(getPredicate(), Op<0>(), Op<1>());
+ICmpInst* ICmpInst::clone(LLVMContext &Context) const {
+  return new ICmpInst(Context, getPredicate(), Op<0>(), Op<1>());
 }
 
-ExtractValueInst *ExtractValueInst::clone() const {
+ExtractValueInst *ExtractValueInst::clone(LLVMContext&) const {
   return new ExtractValueInst(*this);
 }
-InsertValueInst *InsertValueInst::clone() const {
+InsertValueInst *InsertValueInst::clone(LLVMContext&) const {
   return new InsertValueInst(*this);
 }
 
+MallocInst *MallocInst::clone(LLVMContext&) const {
+  return new MallocInst(*this);
+}
 
-MallocInst *MallocInst::clone()   const { return new MallocInst(*this); }
-AllocaInst *AllocaInst::clone()   const { return new AllocaInst(*this); }
-FreeInst   *FreeInst::clone()     const { return new FreeInst(getOperand(0)); }
-LoadInst   *LoadInst::clone()     const { return new LoadInst(*this); }
-StoreInst  *StoreInst::clone()    const { return new StoreInst(*this); }
-CastInst   *TruncInst::clone()    const { return new TruncInst(*this); }
-CastInst   *ZExtInst::clone()     const { return new ZExtInst(*this); }
-CastInst   *SExtInst::clone()     const { return new SExtInst(*this); }
-CastInst   *FPTruncInst::clone()  const { return new FPTruncInst(*this); }
-CastInst   *FPExtInst::clone()    const { return new FPExtInst(*this); }
-CastInst   *UIToFPInst::clone()   const { return new UIToFPInst(*this); }
-CastInst   *SIToFPInst::clone()   const { return new SIToFPInst(*this); }
-CastInst   *FPToUIInst::clone()   const { return new FPToUIInst(*this); }
-CastInst   *FPToSIInst::clone()   const { return new FPToSIInst(*this); }
-CastInst   *PtrToIntInst::clone() const { return new PtrToIntInst(*this); }
-CastInst   *IntToPtrInst::clone() const { return new IntToPtrInst(*this); }
-CastInst   *BitCastInst::clone()  const { return new BitCastInst(*this); }
-CallInst   *CallInst::clone()     const {
+AllocaInst *AllocaInst::clone(LLVMContext&) const {
+  return new AllocaInst(*this);
+}
+
+FreeInst *FreeInst::clone(LLVMContext&) const {
+  return new FreeInst(getOperand(0));
+}
+
+LoadInst *LoadInst::clone(LLVMContext&) const {
+  return new LoadInst(*this);
+}
+
+StoreInst *StoreInst::clone(LLVMContext&) const {
+  return new StoreInst(*this);
+}
+
+CastInst *TruncInst::clone(LLVMContext&) const {
+  return new TruncInst(*this);
+}
+
+CastInst *ZExtInst::clone(LLVMContext&) const {
+  return new ZExtInst(*this);
+}
+
+CastInst *SExtInst::clone(LLVMContext&) const {
+  return new SExtInst(*this);
+}
+
+CastInst *FPTruncInst::clone(LLVMContext&) const {
+  return new FPTruncInst(*this);
+}
+
+CastInst *FPExtInst::clone(LLVMContext&) const {
+  return new FPExtInst(*this);
+}
+
+CastInst *UIToFPInst::clone(LLVMContext&) const {
+  return new UIToFPInst(*this);
+}
+
+CastInst *SIToFPInst::clone(LLVMContext&) const {
+  return new SIToFPInst(*this);
+}
+
+CastInst *FPToUIInst::clone(LLVMContext&) const {
+  return new FPToUIInst(*this);
+}
+
+CastInst *FPToSIInst::clone(LLVMContext&) const {
+  return new FPToSIInst(*this);
+}
+
+CastInst *PtrToIntInst::clone(LLVMContext&) const {
+  return new PtrToIntInst(*this);
+}
+
+CastInst *IntToPtrInst::clone(LLVMContext&) const {
+  return new IntToPtrInst(*this);
+}
+
+CastInst *BitCastInst::clone(LLVMContext&) const {
+  return new BitCastInst(*this);
+}
+
+CallInst *CallInst::clone(LLVMContext&) const {
   return new(getNumOperands()) CallInst(*this);
 }
-SelectInst *SelectInst::clone()   const {
+
+SelectInst *SelectInst::clone(LLVMContext&)   const {
   return new(getNumOperands()) SelectInst(*this);
 }
-VAArgInst  *VAArgInst::clone()    const { return new VAArgInst(*this); }
 
-ExtractElementInst *ExtractElementInst::clone() const {
+VAArgInst *VAArgInst::clone(LLVMContext&) const {
+  return new VAArgInst(*this);
+}
+
+ExtractElementInst *ExtractElementInst::clone(LLVMContext&) const {
   return new ExtractElementInst(*this);
 }
-InsertElementInst *InsertElementInst::clone() const {
+
+InsertElementInst *InsertElementInst::clone(LLVMContext&) const {
   return InsertElementInst::Create(*this);
 }
-ShuffleVectorInst *ShuffleVectorInst::clone() const {
+
+ShuffleVectorInst *ShuffleVectorInst::clone(LLVMContext&) const {
   return new ShuffleVectorInst(*this);
 }
-PHINode    *PHINode::clone()    const { return new PHINode(*this); }
-ReturnInst *ReturnInst::clone() const {
+
+PHINode *PHINode::clone(LLVMContext&) const {
+  return new PHINode(*this);
+}
+
+ReturnInst *ReturnInst::clone(LLVMContext&) const {
   return new(getNumOperands()) ReturnInst(*this);
 }
-BranchInst *BranchInst::clone() const {
+
+BranchInst *BranchInst::clone(LLVMContext&) const {
   unsigned Ops(getNumOperands());
   return new(Ops, Ops == 1) BranchInst(*this);
 }
-SwitchInst *SwitchInst::clone() const { return new SwitchInst(*this); }
-InvokeInst *InvokeInst::clone() const {
+
+SwitchInst *SwitchInst::clone(LLVMContext&) const {
+  return new SwitchInst(*this);
+}
+
+InvokeInst *InvokeInst::clone(LLVMContext&) const {
   return new(getNumOperands()) InvokeInst(*this);
 }
-UnwindInst *UnwindInst::clone() const { return new UnwindInst(); }
-UnreachableInst *UnreachableInst::clone() const { return new UnreachableInst();}
+
+UnwindInst *UnwindInst::clone(LLVMContext&) const {
+  return new UnwindInst();
+}
+
+UnreachableInst *UnreachableInst::clone(LLVMContext&) const {
+  return new UnreachableInst();
+}

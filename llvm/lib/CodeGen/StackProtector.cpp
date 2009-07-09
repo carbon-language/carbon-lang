@@ -201,7 +201,7 @@ bool StackProtector::InsertStackProtectors() {
     // Generate the stack protector instructions in the old basic block.
     LoadInst *LI1 = new LoadInst(StackGuardVar, "", false, BB);
     LoadInst *LI2 = new LoadInst(AI, "", true, BB);
-    ICmpInst *Cmp = new ICmpInst(CmpInst::ICMP_EQ, LI1, LI2, "", BB);
+    ICmpInst *Cmp = new ICmpInst(*BB, CmpInst::ICMP_EQ, LI1, LI2, "");
     BranchInst::Create(NewBB, FailBB, Cmp, BB);
   }
 

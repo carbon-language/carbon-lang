@@ -162,7 +162,8 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewNode);
 
-  ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_SLT, Val, Pivot.Low, "Pivot");
+  ICmpInst* Comp = new ICmpInst(*Default->getContext(), ICmpInst::ICMP_SLT,
+                                Val, Pivot.Low, "Pivot");
   NewNode->getInstList().push_back(Comp);
   BranchInst::Create(LBranch, RBranch, Comp, NewNode);
   return NewNode;
@@ -187,18 +188,18 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
   ICmpInst* Comp = NULL;
   if (Leaf.Low == Leaf.High) {
     // Make the seteq instruction...
-    Comp = new ICmpInst(ICmpInst::ICMP_EQ, Val, Leaf.Low,
-                        "SwitchLeaf", NewLeaf);
+    Comp = new ICmpInst(*NewLeaf, ICmpInst::ICMP_EQ, Val,
+                        Leaf.Low, "SwitchLeaf");
   } else {
     // Make range comparison
     if (cast<ConstantInt>(Leaf.Low)->isMinValue(true /*isSigned*/)) {
       // Val >= Min && Val <= Hi --> Val <= Hi
-      Comp = new ICmpInst(ICmpInst::ICMP_SLE, Val, Leaf.High,
-                          "SwitchLeaf", NewLeaf);
+      Comp = new ICmpInst(*NewLeaf, ICmpInst::ICMP_SLE, Val, Leaf.High,
+                          "SwitchLeaf");
     } else if (cast<ConstantInt>(Leaf.Low)->isZero()) {
       // Val >= 0 && Val <= Hi --> Val <=u Hi
-      Comp = new ICmpInst(ICmpInst::ICMP_ULE, Val, Leaf.High,
-                          "SwitchLeaf", NewLeaf);      
+      Comp = new ICmpInst(*NewLeaf, ICmpInst::ICMP_ULE, Val, Leaf.High,
+                          "SwitchLeaf");      
     } else {
       // Emit V-Lo <=u Hi-Lo
       Constant* NegLo = Context->getConstantExprNeg(Leaf.Low);
@@ -206,8 +207,8 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                                                    Val->getName()+".off",
                                                    NewLeaf);
       Constant *UpperBound = Context->getConstantExprAdd(NegLo, Leaf.High);
-      Comp = new ICmpInst(ICmpInst::ICMP_ULE, Add, UpperBound,
-                          "SwitchLeaf", NewLeaf);
+      Comp = new ICmpInst(*NewLeaf, ICmpInst::ICMP_ULE, Add, UpperBound,
+                          "SwitchLeaf");
     }
   }
 

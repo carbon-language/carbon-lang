@@ -2019,9 +2019,8 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
     // Create a new compare instruction using new stride / iv.
     ICmpInst *OldCond = Cond;
     // Insert new compare instruction.
-    Cond = new ICmpInst(Predicate, NewCmpLHS, NewCmpRHS,
-                        L->getHeader()->getName() + ".termcond",
-                        OldCond);
+    Cond = new ICmpInst(OldCond, Predicate, NewCmpLHS, NewCmpRHS,
+                        L->getHeader()->getName() + ".termcond");
 
     // Remove the old compare instruction. The old indvar is probably dead too.
     DeadInsts.push_back(CondUse->getOperandValToReplace());
@@ -2152,7 +2151,7 @@ ICmpInst *LoopStrengthReduce::OptimizeMax(Loop *L, ICmpInst *Cond,
   // Ok, everything looks ok to change the condition into an SLT or SGE and
   // delete the max calculation.
   ICmpInst *NewCond =
-    new ICmpInst(Pred, Cond->getOperand(0), NewRHS, "scmp", Cond);
+    new ICmpInst(Cond, Pred, Cond->getOperand(0), NewRHS, "scmp");
 
   // Delete the max calculation instructions.
   Cond->replaceAllUsesWith(NewCond);
@@ -2383,7 +2382,7 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
       Cond->moveBefore(TermBr);
     } else {
       // Otherwise, clone the terminating condition and insert into the loopend.
-      Cond = cast<ICmpInst>(Cond->clone());
+      Cond = cast<ICmpInst>(Cond->clone(*Context));
       Cond->setName(L->getHeader()->getName() + ".termcond");
       LatchBlock->getInstList().insert(TermBr, Cond);
       

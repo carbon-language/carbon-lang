@@ -738,8 +738,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Check to see if we already looked up the value.
           Value *CachedVal = new LoadInst(Cache, "fpcache", EntryBB);
-          Value *IsNull = new ICmpInst(ICmpInst::ICMP_EQ, CachedVal,
-                                       NullPtr, "isNull", EntryBB);
+          Value *IsNull = new ICmpInst(*EntryBB, ICmpInst::ICMP_EQ, CachedVal,
+                                       NullPtr, "isNull");
           BranchInst::Create(LookupBB, DoCallBB, IsNull, EntryBB);
 
           // Resolve the call to function F via the JIT API:

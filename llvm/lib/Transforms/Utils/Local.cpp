@@ -184,8 +184,8 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
     } else if (SI->getNumSuccessors() == 2) {
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
-      Value *Cond = new ICmpInst(ICmpInst::ICMP_EQ, SI->getCondition(),
-                                 SI->getSuccessorValue(1), "cond", SI);
+      Value *Cond = new ICmpInst(SI, ICmpInst::ICMP_EQ, SI->getCondition(),
+                                 SI->getSuccessorValue(1), "cond");
       // Insert the new branch...
       BranchInst::Create(SI->getSuccessor(1), SI->getSuccessor(0), Cond, SI);
 

@@ -20,6 +20,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Attributes.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/SmallVector.h"
 #include <iterator>
 
@@ -74,7 +75,7 @@ public:
   unsigned getAlignment() const { return (1u << SubclassData) >> 1; }
   void setAlignment(unsigned Align);
 
-  virtual Instruction *clone() const = 0;
+  virtual Instruction *clone(LLVMContext &Context) const = 0;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const AllocationInst *) { return true; }
@@ -120,7 +121,7 @@ public:
                       Instruction *InsertBefore = 0)
     : AllocationInst(Ty, ArraySize, Malloc, Align, NameStr, InsertBefore) {}
 
-  virtual MallocInst *clone() const;
+  virtual MallocInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MallocInst *) { return true; }
@@ -164,7 +165,7 @@ public:
              const std::string &NameStr, BasicBlock *InsertAtEnd)
     : AllocationInst(Ty, ArraySize, Alloca, Align, NameStr, InsertAtEnd) {}
 
-  virtual AllocaInst *clone() const;
+  virtual AllocaInst *clone(LLVMContext &Context) const;
 
   /// isStaticAlloca - Return true if this alloca is in the entry block of the
   /// function and is a constant size.  If so, the code generator will fold it
@@ -194,7 +195,7 @@ public:
   explicit FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
   FreeInst(Value *Ptr, BasicBlock *InsertAfter);
 
-  virtual FreeInst *clone() const;
+  virtual FreeInst *clone(LLVMContext &Context) const;
 
   // Accessor methods for consistency with other memory operations
   Value *getPointerOperand() { return getOperand(0); }
@@ -260,7 +261,7 @@ public:
     SubclassData = (SubclassData & ~1) | (V ? 1 : 0);
   }
 
-  virtual LoadInst *clone() const;
+  virtual LoadInst *clone(LLVMContext &Context) const;
 
   /// getAlignment - Return the alignment of the access that is being performed
   ///
@@ -344,7 +345,7 @@ public:
 
   void setAlignment(unsigned Align);
 
-  virtual StoreInst *clone() const;
+  virtual StoreInst *clone(LLVMContext &Context) const;
 
   Value *getPointerOperand() { return getOperand(1); }
   const Value *getPointerOperand() const { return getOperand(1); }
@@ -485,7 +486,7 @@ public:
     return new(2) GetElementPtrInst(Ptr, Idx, NameStr, InsertAtEnd);
   }
 
-  virtual GetElementPtrInst *clone() const;
+  virtual GetElementPtrInst *clone(LLVMContext &Context) const;
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -626,12 +627,13 @@ class ICmpInst: public CmpInst {
 public:
   /// @brief Constructor with insert-before-instruction semantics.
   ICmpInst(
+    Instruction *InsertBefore,  ///< Where to insert
     Predicate pred,  ///< The predicate to use for the comparison
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
-    const std::string &NameStr = "",  ///< Name of the instruction
-    Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(makeCmpResultType(LHS->getType()),
+    const std::string &NameStr = ""  ///< Name of the instruction
+  ) : CmpInst(InsertBefore->getParent()->getContext()->
+                makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
@@ -645,16 +647,36 @@ public:
            "Invalid operand types for ICmp instruction");
   }
 
-  /// @brief Constructor with insert-at-block-end semantics.
+  /// @brief Constructor with insert-at-end semantics.
   ICmpInst(
+    BasicBlock &InsertAtEnd, ///< Block to insert into.
+    Predicate pred,  ///< The predicate to use for the comparison
+    Value *LHS,      ///< The left-hand-side of the expression
+    Value *RHS,      ///< The right-hand-side of the expression
+    const std::string &NameStr = ""  ///< Name of the instruction
+  ) : CmpInst(InsertAtEnd.getContext()->makeCmpResultType(LHS->getType()),
+              Instruction::ICmp, pred, LHS, RHS, NameStr,
+              &InsertAtEnd) {
+    assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
+          pred <= CmpInst::LAST_ICMP_PREDICATE &&
+          "Invalid ICmp predicate value");
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
+          "Both operands to ICmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert((getOperand(0)->getType()->isIntOrIntVector() ||
+            isa<PointerType>(getOperand(0)->getType())) &&
+           "Invalid operand types for ICmp instruction");
+  }
+
+  /// @brief Constructor with no-insertion semantics
+  ICmpInst(
+    LLVMContext &Context, ///< Context to construct within
     Predicate pred, ///< The predicate to use for the comparison
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
-    const std::string &NameStr,  ///< Name of the instruction
-    BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(makeCmpResultType(LHS->getType()),
-              Instruction::ICmp, pred, LHS, RHS, NameStr,
-              InsertAtEnd) {
+    const std::string &NameStr = "" ///< Name of the instruction
+  ) : CmpInst(Context.makeCmpResultType(LHS->getType()),
+              Instruction::ICmp, pred, LHS, RHS, NameStr) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
            "Invalid ICmp predicate value");
@@ -756,7 +778,7 @@ public:
     Op<0>().swap(Op<1>());
   }
 
-  virtual ICmpInst *clone() const;
+  virtual ICmpInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ICmpInst *) { return true; }
@@ -781,12 +803,13 @@ class FCmpInst: public CmpInst {
 public:
   /// @brief Constructor with insert-before-instruction semantics.
   FCmpInst(
+    Instruction *InsertBefore, ///< Where to insert
     Predicate pred,  ///< The predicate to use for the comparison
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
-    const std::string &NameStr = "",  ///< Name of the instruction
-    Instruction *InsertBefore = 0  ///< Where to insert
-  ) : CmpInst(makeCmpResultType(LHS->getType()),
+    const std::string &NameStr = ""  ///< Name of the instruction
+  ) : CmpInst(InsertBefore->getParent()->getContext()->
+                makeCmpResultType(LHS->getType()),
               Instruction::FCmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
@@ -797,17 +820,35 @@ public:
     assert(getOperand(0)->getType()->isFPOrFPVector() &&
            "Invalid operand types for FCmp instruction");
   }
-
-  /// @brief Constructor with insert-at-block-end semantics.
+  
+  /// @brief Constructor with insert-at-end semantics.
   FCmpInst(
+    BasicBlock &InsertAtEnd, ///< Block to insert into.
+    Predicate pred,  ///< The predicate to use for the comparison
+    Value *LHS,      ///< The left-hand-side of the expression
+    Value *RHS,      ///< The right-hand-side of the expression
+    const std::string &NameStr = ""  ///< Name of the instruction
+  ) : CmpInst(InsertAtEnd.getContext()->makeCmpResultType(LHS->getType()),
+              Instruction::FCmp, pred, LHS, RHS, NameStr,
+              &InsertAtEnd) {
+    assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
+           "Invalid FCmp predicate value");
+    assert(getOperand(0)->getType() == getOperand(1)->getType() &&
+           "Both operands to FCmp instruction are not of the same type!");
+    // Check that the operands are the right type
+    assert(getOperand(0)->getType()->isFPOrFPVector() &&
+           "Invalid operand types for FCmp instruction");
+  }
+
+  /// @brief Constructor with no-insertion semantics
+  FCmpInst(
+    LLVMContext &Context, ///< Context to build in
     Predicate pred, ///< The predicate to use for the comparison
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
-    const std::string &NameStr,  ///< Name of the instruction
-    BasicBlock *InsertAtEnd   ///< Block to insert into.
-  ) : CmpInst(makeCmpResultType(LHS->getType()),
-              Instruction::FCmp, pred, LHS, RHS, NameStr,
-              InsertAtEnd) {
+    const std::string &NameStr = "" ///< Name of the instruction
+  ) : CmpInst(Context.makeCmpResultType(LHS->getType()),
+              Instruction::FCmp, pred, LHS, RHS, NameStr) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
            "Invalid FCmp predicate value");
     assert(getOperand(0)->getType() == getOperand(1)->getType() &&
@@ -848,7 +889,7 @@ public:
     Op<0>().swap(Op<1>());
   }
 
-  virtual FCmpInst *clone() const;
+  virtual FCmpInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FCmpInst *) { return true; }
@@ -959,7 +1000,7 @@ public:
     SubclassData = (SubclassData & ~1) | unsigned(isTC);
   }
 
-  virtual CallInst *clone() const;
+  virtual CallInst *clone(LLVMContext &Context) const;
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -1152,7 +1193,7 @@ public:
     return static_cast<OtherOps>(Instruction::getOpcode());
   }
 
-  virtual SelectInst *clone() const;
+  virtual SelectInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SelectInst *) { return true; }
@@ -1192,7 +1233,7 @@ public:
     setName(NameStr);
   }
 
-  virtual VAArgInst *clone() const;
+  virtual VAArgInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const VAArgInst *) { return true; }
@@ -1236,7 +1277,7 @@ public:
   /// formed with the specified operands.
   static bool isValidOperands(const Value *Vec, const Value *Idx);
 
-  virtual ExtractElementInst *clone() const;
+  virtual ExtractElementInst *clone(LLVMContext &Context) const;
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -1306,7 +1347,7 @@ public:
   static bool isValidOperands(const Value *Vec, const Value *NewElt,
                               const Value *Idx);
 
-  virtual InsertElementInst *clone() const;
+  virtual InsertElementInst *clone(LLVMContext &Context) const;
 
   /// getType - Overload to return most specific vector type.
   ///
@@ -1358,7 +1399,7 @@ public:
   static bool isValidOperands(const Value *V1, const Value *V2,
                               const Value *Mask);
 
-  virtual ShuffleVectorInst *clone() const;
+  virtual ShuffleVectorInst *clone(LLVMContext &Context) const;
 
   /// getType - Overload to return most specific vector type.
   ///
@@ -1502,7 +1543,7 @@ public:
     return new ExtractValueInst(Agg, Idxs, Idxs + 1, NameStr, InsertAtEnd);
   }
 
-  virtual ExtractValueInst *clone() const;
+  virtual ExtractValueInst *clone(LLVMContext &Context) const;
 
   /// getIndexedType - Returns the type of the element that would be extracted
   /// with an extractvalue instruction with the specified parameters.
@@ -1672,7 +1713,7 @@ public:
     return new InsertValueInst(Agg, Val, Idx, NameStr, InsertAtEnd);
   }
 
-  virtual InsertValueInst *clone() const;
+  virtual InsertValueInst *clone(LLVMContext &Context) const;
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -1801,7 +1842,7 @@ public:
     resizeOperands(NumValues*2);
   }
 
-  virtual PHINode *clone() const;
+  virtual PHINode *clone(LLVMContext &Context) const;
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -1960,7 +2001,7 @@ public:
   }
   virtual ~ReturnInst();
 
-  virtual ReturnInst *clone() const;
+  virtual ReturnInst *clone(LLVMContext &Context) const;
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -2042,7 +2083,7 @@ public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
-  virtual BranchInst *clone() const;
+  virtual BranchInst *clone(LLVMContext &Context) const;
 
   bool isUnconditional() const { return getNumOperands() == 1; }
   bool isConditional()   const { return getNumOperands() == 3; }
@@ -2212,7 +2253,7 @@ public:
   ///
   void removeCase(unsigned idx);
 
-  virtual SwitchInst *clone() const;
+  virtual SwitchInst *clone(LLVMContext &Context) const;
 
   unsigned getNumSuccessors() const { return getNumOperands()/2; }
   BasicBlock *getSuccessor(unsigned idx) const {
@@ -2326,7 +2367,7 @@ public:
                                   Values, NameStr, InsertAtEnd);
   }
 
-  virtual InvokeInst *clone() const;
+  virtual InvokeInst *clone(LLVMContext &Context) const;
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
@@ -2514,7 +2555,7 @@ public:
   explicit UnwindInst(Instruction *InsertBefore = 0);
   explicit UnwindInst(BasicBlock *InsertAtEnd);
 
-  virtual UnwindInst *clone() const;
+  virtual UnwindInst *clone(LLVMContext &Context) const;
 
   unsigned getNumSuccessors() const { return 0; }
 
@@ -2551,7 +2592,7 @@ public:
   explicit UnreachableInst(Instruction *InsertBefore = 0);
   explicit UnreachableInst(BasicBlock *InsertAtEnd);
 
-  virtual UnreachableInst *clone() const;
+  virtual UnreachableInst *clone(LLVMContext &Context) const;
 
   unsigned getNumSuccessors() const { return 0; }
 
@@ -2597,7 +2638,7 @@ public:
   );
 
   /// @brief Clone an identical TruncInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const TruncInst *) { return true; }
@@ -2637,7 +2678,7 @@ public:
   );
 
   /// @brief Clone an identical ZExtInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ZExtInst *) { return true; }
@@ -2677,7 +2718,7 @@ public:
   );
 
   /// @brief Clone an identical SExtInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SExtInst *) { return true; }
@@ -2716,7 +2757,7 @@ public:
   );
 
   /// @brief Clone an identical FPTruncInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FPTruncInst *) { return true; }
@@ -2755,7 +2796,7 @@ public:
   );
 
   /// @brief Clone an identical FPExtInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FPExtInst *) { return true; }
@@ -2794,7 +2835,7 @@ public:
   );
 
   /// @brief Clone an identical UIToFPInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const UIToFPInst *) { return true; }
@@ -2833,7 +2874,7 @@ public:
   );
 
   /// @brief Clone an identical SIToFPInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const SIToFPInst *) { return true; }
@@ -2872,7 +2913,7 @@ public:
   );
 
   /// @brief Clone an identical FPToUIInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FPToUIInst *) { return true; }
@@ -2911,7 +2952,7 @@ public:
   );
 
   /// @brief Clone an identical FPToSIInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FPToSIInst *) { return true; }
@@ -2950,7 +2991,7 @@ public:
   );
 
   /// @brief Clone an identical IntToPtrInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const IntToPtrInst *) { return true; }
@@ -2989,7 +3030,7 @@ public:
   );
 
   /// @brief Clone an identical PtrToIntInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PtrToIntInst *) { return true; }
@@ -3028,7 +3069,7 @@ public:
   );
 
   /// @brief Clone an identical BitCastInst
-  virtual CastInst *clone() const;
+  virtual CastInst *clone(LLVMContext &Context) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const BitCastInst *) { return true; }

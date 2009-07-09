@@ -1193,9 +1193,9 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
   assert(NumElements == 2 && "Unhandled case!");
   // All users of the GEP must be loads.  At each use of the GEP, insert
   // two loads of the appropriate indexed GEP and select between them.
-  Value *IsOne = new ICmpInst(ICmpInst::ICMP_NE, I.getOperand(), 
+  Value *IsOne = new ICmpInst(GEPI, ICmpInst::ICMP_NE, I.getOperand(), 
                               Context->getNullValue(I.getOperand()->getType()),
-                              "isone", GEPI);
+                              "isone");
   // Insert the new GEP instructions, which are properly indexed.
   SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
   Indices[1] = Context->getNullValue(Type::Int32Ty);

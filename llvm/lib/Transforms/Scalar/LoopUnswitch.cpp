@@ -507,7 +507,7 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   // code is the true version and the new code is the false version.
   Value *BranchVal = LIC;
   if (!isa<ConstantInt>(Val) || Val->getType() != Type::Int1Ty)
-    BranchVal = new ICmpInst(ICmpInst::ICMP_EQ, LIC, Val, "tmp", InsertPt);
+    BranchVal = new ICmpInst(InsertPt, ICmpInst::ICMP_EQ, LIC, Val, "tmp");
   else if (Val != Context->getConstantIntTrue())
     // We want to enter the new loop when the condition is true.
     std::swap(TrueDest, FalseDest);

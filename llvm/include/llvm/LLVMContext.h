@@ -213,6 +213,10 @@ public:
   VectorType* getVectorTypeInteger(const VectorType* VTy);
   VectorType* getVectorTypeExtendedElement(const VectorType* VTy);
   VectorType* getVectorTypeTruncatedElement(const VectorType* VTy);
+  
+  // Other helpers
+  /// @brief Create a result type for fcmp/icmp
+  const Type* makeCmpResultType(const Type* opnd_type);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

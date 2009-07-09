@@ -2693,8 +2693,8 @@ namespace {
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &IC);
         if (VRP.isRelatedBy(IC.getOperand(0), NextVal,
                             ICmpInst::getInversePredicate(Pred))) {
-          ICmpInst *NewIC = new ICmpInst(ICmpInst::ICMP_EQ, IC.getOperand(0),
-                                         NextVal, "", &IC);
+          ICmpInst *NewIC = new ICmpInst(&IC, ICmpInst::ICMP_EQ, 
+                                         IC.getOperand(0), NextVal, "");
           NewIC->takeName(&IC);
           IC.replaceAllUsesWith(NewIC);
 

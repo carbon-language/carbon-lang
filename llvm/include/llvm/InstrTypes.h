@@ -22,6 +22,8 @@
 
 namespace llvm {
 
+class LLVMContext;
+
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
@@ -50,7 +52,7 @@ protected:
   virtual void setSuccessorV(unsigned idx, BasicBlock *B) = 0;
 public:
 
-  virtual Instruction *clone() const = 0;
+  virtual Instruction *clone(LLVMContext &Context) const = 0;
 
   /// getNumSuccessors - Return the number of successors that this terminator
   /// has.
@@ -235,7 +237,7 @@ public:
     return static_cast<BinaryOps>(Instruction::getOpcode());
   }
 
-  virtual BinaryOperator *clone() const;
+  virtual BinaryOperator *clone(LLVMContext &Context) const;
 
   /// swapOperands - Exchange the two operands to this instruction.
   /// This instruction is safe to use on any binary instruction and
@@ -569,7 +571,8 @@ public:
   /// instruction into a BasicBlock right before the specified instruction.
   /// The specified Instruction is allowed to be a dereferenced end iterator.
   /// @brief Create a CmpInst
-  static CmpInst *Create(OtherOps Op, unsigned short predicate, Value *S1,
+  static CmpInst *Create(LLVMContext &Context, OtherOps Op,
+                         unsigned short predicate, Value *S1,
                          Value *S2, const std::string &Name = "",
                          Instruction *InsertBefore = 0);
 
@@ -659,13 +662,6 @@ public:
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-  /// @brief Create a result type for fcmp/icmp
-  static const Type* makeCmpResultType(const Type* opnd_type) {
-    if (const VectorType* vt = dyn_cast<const VectorType>(opnd_type)) {
-      return VectorType::get(Type::Int1Ty, vt->getNumElements());
-    }
-    return Type::Int1Ty;
   }
 };
 

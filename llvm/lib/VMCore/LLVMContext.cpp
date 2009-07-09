@@ -485,3 +485,10 @@ VectorType* LLVMContext::getVectorTypeExtendedElement(const VectorType* VTy) {
 VectorType* LLVMContext::getVectorTypeTruncatedElement(const VectorType* VTy) {
   return VectorType::getTruncatedElementVectorType(VTy);
 }
+
+const Type* LLVMContext::makeCmpResultType(const Type* opnd_type) {
+  if (const VectorType* vt = dyn_cast<const VectorType>(opnd_type)) {
+    return getVectorType(Type::Int1Ty, vt->getNumElements());
+  }
+  return Type::Int1Ty;
+}

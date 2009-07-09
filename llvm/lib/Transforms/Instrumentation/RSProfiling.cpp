@@ -213,9 +213,9 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
   //decrement counter
   LoadInst* l = new LoadInst(Counter, "counter", t);
   
-  ICmpInst* s = new ICmpInst(ICmpInst::ICMP_EQ, l,
+  ICmpInst* s = new ICmpInst(t, ICmpInst::ICMP_EQ, l,
                              Context->getConstantInt(T, 0), 
-                             "countercc", t);
+                             "countercc");
 
   Value* nv = BinaryOperator::CreateSub(l, Context->getConstantInt(T, 1),
                                         "counternew", t);
@@ -287,9 +287,9 @@ void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
   //decrement counter
   LoadInst* l = new LoadInst(AI, "counter", t);
   
-  ICmpInst* s = new ICmpInst(ICmpInst::ICMP_EQ, l,
+  ICmpInst* s = new ICmpInst(t, ICmpInst::ICMP_EQ, l,
                              Context->getConstantInt(T, 0), 
-                             "countercc", t);
+                             "countercc");
 
   Value* nv = BinaryOperator::CreateSub(l, Context->getConstantInt(T, 1),
                                         "counternew", t);
@@ -324,9 +324,9 @@ void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
     BinaryOperator::CreateAnd(c, Context->getConstantInt(Type::Int64Ty, rm),
                               "mrdcc", t);
   
-  ICmpInst *s = new ICmpInst(ICmpInst::ICMP_EQ, b,
+  ICmpInst *s = new ICmpInst(t, ICmpInst::ICMP_EQ, b,
                              Context->getConstantInt(Type::Int64Ty, 0), 
-                             "mrdccc", t);
+                             "mrdccc");
 
   t->setCondition(s);
 }
@@ -394,7 +394,7 @@ Value* ProfilerRS::Translate(Value* v) {
       return i;
     } else {
       //translate this
-      Instruction* i2 = i->clone();
+      Instruction* i2 = i->clone(*Context);
       if (i->hasName())
         i2->setName("dup_" + i->getName());
       TransCache[i] = i2;

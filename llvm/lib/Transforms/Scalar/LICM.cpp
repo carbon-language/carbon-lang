@@ -570,7 +570,7 @@ void LICM::sink(Instruction &I) {
             ExitBlock->getInstList().insert(InsertPt, &I);
             New = &I;
           } else {
-            New = I.clone();
+            New = I.clone(*Context);
             CurAST->copyValue(&I, New);
             if (!I.getName().empty())
               New->setName(I.getName()+".le");

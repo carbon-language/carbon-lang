@@ -361,7 +361,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
              BE = TheCall->getParent()->end(); BI != BE; ++BI) {
         if (DbgStopPointInst *DSPI = dyn_cast<DbgStopPointInst>(BI)) {
           if (DbgRegionEndInst *NewDREI = 
-              dyn_cast<DbgRegionEndInst>(DREI->clone()))
+              dyn_cast<DbgRegionEndInst>(DREI->clone(*Context)))
             NewDREI->insertAfter(DSPI);
           break;
         }
