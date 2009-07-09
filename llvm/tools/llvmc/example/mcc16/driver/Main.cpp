@@ -23,7 +23,6 @@ namespace llvmc {
 int main(int argc, char** argv) {
 
   // HACK
-  SaveTemps = SaveTempsEnum::Unset;
   SaveTemps.setHiddenFlag(llvm::cl::Hidden);
   TempDirname = "tmp-objs";
 
