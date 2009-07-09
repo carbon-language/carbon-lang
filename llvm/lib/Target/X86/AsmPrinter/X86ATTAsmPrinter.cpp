@@ -351,11 +351,10 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       // Assemble call via PLT for externally visible symbols.
       if (MO.getTargetFlags() == X86II::MO_PLT)
         O << "@PLT";
-        
       
       if (Subtarget->isTargetCygMing() && GV->isDeclaration())
         // Save function name for later type emission
-        FnStubs.insert(Name);
+        CygMingStubs.insert(Name);
     }
     
     printOffset(MO.getOffset());
@@ -1050,7 +1049,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     O << "\t.subsections_via_symbols\n";
   } else if (Subtarget->isTargetCygMing()) {
     // Emit type information for external functions
-    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
+    for (StringSet<>::iterator i = CygMingStubs.begin(), e = CygMingStubs.end();
          i != e; ++i) {
       O << "\t.def\t " << i->getKeyData()
         << ";\t.scl\t" << COFF::C_EXT
