@@ -66,6 +66,11 @@ def thumb_immshifted_shamt : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(V, MVT::i32);
 }]>;
 
+// IT block condition mask
+def it_mask : Operand<i32> {
+  let PrintMethod = "printThumbITMask";
+}
+
 // Define Thumb specific addressing modes.
 
 // t_addrmode_rr := reg + reg
@@ -206,6 +211,10 @@ let isBranch = 1, isTerminator = 1 in {
 let isBranch = 1, isTerminator = 1 in
   def tBcc : T1I<(outs), (ins brtarget:$target, pred:$cc), "b$cc $target",
                  [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
+
+// IT block
+def tIT : TI<(outs), (ins pred:$cc, it_mask:$mask),
+             "it$mask $cc", []>;
 
 //===----------------------------------------------------------------------===//
 //  Load Store Instructions.

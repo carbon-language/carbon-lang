@@ -111,6 +111,7 @@ namespace {
                                 const char *Modifier = 0);
     void printBitfieldInvMaskImmOperand (const MachineInstr *MI, int OpNum);
 
+    void printThumbITMask(const MachineInstr *MI, int OpNum);
     void printThumbAddrModeRROperand(const MachineInstr *MI, int OpNum);
     void printThumbAddrModeRI5Operand(const MachineInstr *MI, int OpNum,
                                       unsigned Scale);
@@ -634,6 +635,21 @@ ARMAsmPrinter::printBitfieldInvMaskImmOperand(const MachineInstr *MI, int Op) {
 }
 
 //===--------------------------------------------------------------------===//
+
+void
+ARMAsmPrinter::printThumbITMask(const MachineInstr *MI, int Op) {
+  // (3 - the number of trailing zeros) is the number of then / else.
+  unsigned Mask = MI->getOperand(Op).getImm();
+  unsigned NumTZ = CountTrailingZeros_32(Mask);
+  assert(NumTZ <= 3 && "Invalid IT mask!");
+  for (unsigned Pos = 3, e = NumTZ; Pos >= e; --Pos) {
+    bool T = (Mask & (1 << Pos)) != 0;
+    if (T)
+      O << 't';
+    else
+      O << 'e';
+  }
+}
 
 void
 ARMAsmPrinter::printThumbAddrModeRROperand(const MachineInstr *MI, int Op) {
