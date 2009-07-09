@@ -360,8 +360,10 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       if (shouldPrintPLT(TM, Subtarget)) {
         // Assemble call via PLT for externally visible symbols
         if (!GV->hasHiddenVisibility() && !GV->hasProtectedVisibility() &&
-            !GV->hasLocalLinkage())
+            !GV->hasLocalLinkage()) {
           O << "@PLT";
+          assert(MO.getTargetFlags() == 0);
+        }
       }
       if (Subtarget->isTargetCygMing() && GV->isDeclaration())
         // Save function name for later type emission
