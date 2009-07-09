@@ -429,28 +429,16 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     }
 
     // Handle dllimport linkage.
-    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-      O << "__imp_";
-    
-    if (Subtarget->isPICStyleStub()) {
-      // DARWIN/X86-32 in != static mode.
-
-      // Link-once, declaration, or Weakly-linked global variables need
-      // non-lazily-resolved stubs
-      if (!GV->isDeclaration() && !GV->isWeakForLinker()) {
-        O << Name;
-      } else if (!GV->hasHiddenVisibility()) {
-        GVStubs.insert(Name);
-        printSuffixedName(Name, "$non_lazy_ptr");
-        //assert(MO.getTargetFlags() == 0 || MO_PIC_BASE_OFFSET);
-      } else if (!GV->isDeclaration() && !GV->hasCommonLinkage())
-        // Definition is not definitely in the current translation unit.
-        O << Name;
-      else {
-        HiddenGVStubs.insert(Name);
-        printSuffixedName(Name, "$non_lazy_ptr");
-        //assert(MO.getTargetFlags() == 0 || MO_PIC_BASE_OFFSET);
-      }
+    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT) {
+      O << "__imp_" << Name;
+    } else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
+               MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
+      GVStubs.insert(Name);
+      printSuffixedName(Name, "$non_lazy_ptr");
+    } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
+               MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
+      HiddenGVStubs.insert(Name);
+      printSuffixedName(Name, "$non_lazy_ptr");
     } else {
       O << Name;
     }
@@ -478,7 +466,11 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   default:
     assert(0 && "Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:    // No flag.
-  case X86II::MO_DLLIMPORT:  // Prefix, not a suffix.
+    break;
+  case X86II::MO_DARWIN_NONLAZY:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY:
+  case X86II::MO_DLLIMPORT:
+    // These affect the name of the symbol, not any suffix.
     break;
   case X86II::MO_GOT_ABSOLUTE_ADDRESS:
     O << " + [.-";
@@ -486,6 +478,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << ']';
     break;      
   case X86II::MO_PIC_BASE_OFFSET:
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
     O << '-';
     PrintPICBaseSymbol();
     break;

@@ -445,8 +445,10 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     
     if (!isCall &&
         TM.getRelocationModel() == Reloc::PIC_ &&
-        !Subtarget->is64Bit())
+        !Subtarget->is64Bit()) {
+      // FIXME: How do we know Base.Reg is free??
       AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(&MF);
+    }
 
     // If the ABI doesn't require an extra load, return a direct reference to
     // the global.
@@ -456,6 +458,11 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         // base and index registers are unused.
         assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
         AM.Base.Reg = X86::RIP;
+      } else if (Subtarget->isPICStyleStub() &&
+                 TM.getRelocationModel() == Reloc::PIC_) {
+        AM.GVOpFlags = X86II::MO_PIC_BASE_OFFSET;
+      } else if (Subtarget->isPICStyleGOT()) {
+        AM.GVOpFlags = X86II::MO_GOTOFF;
       }
       
       return true;
@@ -473,22 +480,39 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
       const TargetRegisterClass *RC = NULL;
       X86AddressMode StubAM;
       StubAM.Base.Reg = AM.Base.Reg;
-      StubAM.GV = AM.GV;
+      StubAM.GV = GV;
       
-      if (TLI.getPointerTy() == MVT::i32) {
+      if (TLI.getPointerTy() == MVT::i64) {
+        Opc = X86::MOV64rm;
+        RC  = X86::GR64RegisterClass;
+        
+        if (Subtarget->isPICStyleRIPRel()) {
+          StubAM.GVOpFlags = X86II::MO_GOTPCREL;
+          StubAM.Base.Reg = X86::RIP;
+        }
+        
+      } else {
         Opc = X86::MOV32rm;
         RC  = X86::GR32RegisterClass;
         
         if (Subtarget->isPICStyleGOT())
           StubAM.GVOpFlags = X86II::MO_GOT;
-        
-      } else {
-        Opc = X86::MOV64rm;
-        RC  = X86::GR64RegisterClass;
-        
-        if (TM.getRelocationModel() != Reloc::Static) {
-          StubAM.GVOpFlags = X86II::MO_GOTPCREL;
-          StubAM.Base.Reg = X86::RIP;
+        else if (Subtarget->isPICStyleStub()) {
+          // In darwin, we have multiple different stub types, and we have both
+          // PIC and -mdynamic-no-pic.  Determine whether we have a stub
+          // reference and/or whether the reference is relative to the PIC base
+          // or not.
+          bool IsPIC = TM.getRelocationModel() == Reloc::PIC_;
+          
+          if (!GV->hasHiddenVisibility()) {
+            // Non-hidden $non_lazy_ptr reference.
+            StubAM.GVOpFlags = IsPIC ? X86II::MO_DARWIN_NONLAZY_PIC_BASE :
+                                       X86II::MO_DARWIN_NONLAZY;
+          } else {
+            // Hidden $non_lazy_ptr reference.
+            StubAM.GVOpFlags = IsPIC ? X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+                                       X86II::MO_DARWIN_HIDDEN_NONLAZY;
+          }
         }
       }
       

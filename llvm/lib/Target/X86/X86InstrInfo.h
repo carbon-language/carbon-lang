@@ -159,6 +159,26 @@ namespace X86II {
     /// and jumps to external functions on Tiger and before.
     MO_DARWIN_STUB = 13,
     
+    /// MO_DARWIN_NONLAZY - On a symbol operand "FOO", this indicates that the
+    /// reference is actually to the "FOO$non_lazy_ptr" symbol, which is a
+    /// non-PIC-base-relative reference to a non-hidden dyld lazy pointer stub.
+    MO_DARWIN_NONLAZY = 14,
+
+    /// MO_DARWIN_NONLAZY_PIC_BASE - On a symbol operand "FOO", this indicates
+    /// that the reference is actually to "FOO$non_lazy_ptr - PICBASE", which is
+    /// a PIC-base-relative reference to a non-hidden dyld lazy pointer stub.
+    MO_DARWIN_NONLAZY_PIC_BASE = 15,
+    
+    /// MO_DARWIN_HIDDEN_NONLAZY - On a symbol operand "FOO", this indicates
+    /// that the reference is actually to the "FOO$non_lazy_ptr" symbol, which
+    /// is a non-PIC-base-relative reference to a hidden dyld lazy pointer stub.
+    MO_DARWIN_HIDDEN_NONLAZY = 16,
+    
+    /// MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE - On a symbol operand "FOO", this
+    /// indicates that the reference is actually to "FOO$non_lazy_ptr -PICBASE",
+    /// which is a PIC-base-relative reference to a hidden dyld lazy pointer
+    /// stub.
+    MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE = 17,
     
     //===------------------------------------------------------------------===//
     // Instruction encodings.  These are the standard/most common forms for X86
