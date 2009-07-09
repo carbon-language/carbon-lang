@@ -16,7 +16,6 @@
 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetFrameInfo.h"
 #include "ARMInstrInfo.h"
 #include "ARMFrameInfo.h"
 #include "ARMJITInfo.h"

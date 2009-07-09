@@ -15,8 +15,8 @@
 #define ARM_FRAMEINFO_H
 
 #include "ARM.h"
-#include "llvm/Target/TargetFrameInfo.h"
 #include "ARMSubtarget.h"
+#include "llvm/Target/TargetFrameInfo.h"
 
 namespace llvm {
 
