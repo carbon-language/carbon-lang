@@ -51,10 +51,8 @@ public:
 
   /// getLeft - Returns a pointer to the left subtree.  This value
   ///  is NULL if there is no left subtree.
-  ImutAVLTree* getLeft() const {
-    assert (!isMutable() && "Node is incorrectly marked mutable.");
-
-    return reinterpret_cast<ImutAVLTree*>(Left);
+  ImutAVLTree *getLeft() const {
+    return reinterpret_cast<ImutAVLTree*>(Left & ~LeftFlags);
   }
 
   /// getRight - Returns a pointer to the right subtree.  This value is
@@ -227,7 +225,7 @@ private:
   ImutAVLTree*     Right;
   unsigned         Height;
   value_type       Value;
-  unsigned         Digest;
+  uint32_t         Digest;
 
   //===----------------------------------------------------===//
   // Internal methods (node manipulation; used by Factory).
@@ -235,12 +233,12 @@ private:
 
 private:
 
-  enum { Mutable = 0x1 };
+  enum { Mutable = 0x1, NoCachedDigest = 0x2, LeftFlags = 0x3 };
 
   /// ImutAVLTree - Internal constructor that is only called by
   ///   ImutAVLFactory.
   ImutAVLTree(ImutAVLTree* l, ImutAVLTree* r, value_type_ref v, unsigned height)
-  : Left(reinterpret_cast<uintptr_t>(l) | Mutable),
+  : Left(reinterpret_cast<uintptr_t>(l) | (Mutable | NoCachedDigest)),
     Right(r), Height(height), Value(v), Digest(0) {}
 
 
@@ -251,13 +249,10 @@ private:
   ///  method returns false for an instance of ImutAVLTree, all subtrees
   ///  will also have this method return false.  The converse is not true.
   bool isMutable() const { return Left & Mutable; }
-
-  /// getSafeLeft - Returns the pointer to the left tree by always masking
-  ///  out the mutable bit.  This is used internally by ImutAVLFactory,
-  ///  as no trees returned to the client should have the mutable flag set.
-  ImutAVLTree* getSafeLeft() const {
-    return reinterpret_cast<ImutAVLTree*>(Left & ~Mutable);
-  }
+  
+  /// hasCachedDigest - Returns true if the digest for this tree is cached.
+  ///  This can only be true if the tree is immutable.
+  bool hasCachedDigest() const { return !(Left & NoCachedDigest); }
 
   //===----------------------------------------------------===//
   // Mutating operations.  A tree root can be manipulated as
@@ -270,22 +265,28 @@ private:
   // immutable.
   //===----------------------------------------------------===//
 
-
   /// MarkImmutable - Clears the mutable flag for a tree.  After this happens,
-  ///   it is an error to call setLeft(), setRight(), and setHeight().  It
-  ///   is also then safe to call getLeft() instead of getSafeLeft().
+  ///   it is an error to call setLeft(), setRight(), and setHeight().
   void MarkImmutable() {
-    assert (isMutable() && "Mutable flag already removed.");
+    assert(isMutable() && "Mutable flag already removed.");
     Left &= ~Mutable;
+  }
+  
+  /// MarkedCachedDigest - Clears the NoCachedDigest flag for a tree.
+  void MarkedCachedDigest() {
+    assert(!hasCachedDigest() && "NoCachedDigest flag already removed.");
+    Left &= ~NoCachedDigest;
   }
 
   /// setLeft - Changes the reference of the left subtree.  Used internally
   ///   by ImutAVLFactory.
   void setLeft(ImutAVLTree* NewLeft) {
-    assert (isMutable() &&
-            "Only a mutable tree can have its left subtree changed.");
+    assert(isMutable() &&
+           "Only a mutable tree can have its left subtree changed.");
+    assert(!hasCachedDigest() &&
+           "A mutable tree cannot have a cached digest.");
 
-    Left = reinterpret_cast<uintptr_t>(NewLeft) | Mutable;
+    Left = reinterpret_cast<uintptr_t>(NewLeft) | LeftFlags;
   }
 
   /// setRight - Changes the reference of the right subtree.  Used internally
@@ -304,29 +305,36 @@ private:
     Height = h;
   }
 
-
   static inline
-  unsigned ComputeDigest(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
-    unsigned digest = 0;
+  uint32_t ComputeDigest(ImutAVLTree* L, ImutAVLTree* R, value_type_ref V) {
+    uint32_t digest = 0;
 
-    if (L) digest += L->ComputeDigest();
+    if (L)
+      digest += L->ComputeDigest();
 
-    { // Compute digest of stored data.
-      FoldingSetNodeID ID;
-      ImutInfo::Profile(ID,V);
-      digest += ID.ComputeHash();
-    }
+    // Compute digest of stored data.
+    FoldingSetNodeID ID;
+    ImutInfo::Profile(ID,V);
+    digest += ID.ComputeHash();
 
-    if (R) digest += R->ComputeDigest();
+    if (R)
+      digest += R->ComputeDigest();
 
     return digest;
   }
 
-  inline unsigned ComputeDigest() {
-    if (Digest) return Digest;
+  inline uint32_t ComputeDigest() {
+    // Check the lowest bit to determine if digest has actually been
+    // pre-computed.
+    if (hasCachedDigest())
+      return Digest;
 
-    unsigned X = ComputeDigest(getSafeLeft(), getRight(), getValue());
-    if (!isMutable()) Digest = X;
+    uint32_t X = ComputeDigest(getLeft(), getRight(), getValue());
+
+    if (!isMutable()) {
+      Digest = X;
+      MarkedCachedDigest();
+    }
 
     return X;
   }
@@ -394,7 +402,7 @@ private:
 
   bool           isEmpty(TreeTy* T) const { return !T; }
   unsigned        Height(TreeTy* T) const { return T ? T->getHeight() : 0; }
-  TreeTy*           Left(TreeTy* T) const { return T->getSafeLeft(); }
+  TreeTy*           Left(TreeTy* T) const { return T->getLeft(); }
   TreeTy*          Right(TreeTy* T) const { return T->getRight(); }
   value_type_ref   Value(TreeTy* T) const { return T->Value; }
 
@@ -701,7 +709,7 @@ public:
 
     switch (getVisitState()) {
       case VisitedNone:
-        if (TreeTy* L = Current->getSafeLeft())
+        if (TreeTy* L = Current->getLeft())
           stack.push_back(reinterpret_cast<uintptr_t>(L));
         else
           stack.back() |= VisitedLeft;
