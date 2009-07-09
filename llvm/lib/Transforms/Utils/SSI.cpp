@@ -23,6 +23,7 @@
 
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/SSI.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 
 using namespace llvm;
@@ -31,6 +32,9 @@ static const std::string SSI_PHI = "SSI_phi";
 static const std::string SSI_SIG = "SSI_sigma";
 
 static const unsigned UNSIGNED_INFINITE = ~0U;
+
+STATISTIC(NumSigmaInserted, "Number of sigma functions inserted");
+STATISTIC(NumPhiInserted, "Number of phi functions inserted");
 
 void SSI::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominanceFrontier>();
@@ -100,6 +104,7 @@ void SSI::insertSigmaFunctions(SmallVectorImpl<Instruction *> &value) {
             created.insert(PN);
             need = true;
             defsites[i].push_back(BB_next);
+            ++NumSigmaInserted;
           }
         }
       }
@@ -143,6 +148,7 @@ void SSI::insertPhiFunctions(SmallVectorImpl<Instruction *> &value) {
             created.insert(PN);
 
             defsites[i].push_back(BB_dominated);
+            ++NumPhiInserted;
           }
         }
       }
@@ -388,3 +394,40 @@ FunctionPass *llvm::createSSIPass() { return new SSI(); }
 char SSI::ID = 0;
 static RegisterPass<SSI> X("ssi", "Static Single Information Construction");
 
+/// SSIEverything - A pass that runs createSSI on every non-void variable,
+/// intended for debugging.
+namespace {
+  struct VISIBILITY_HIDDEN SSIEverything : public FunctionPass {
+    static char ID; // Pass identification, replacement for typeid
+    SSIEverything() : FunctionPass((intptr_t)&ID) {}
+
+    bool runOnFunction(Function &F);
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<SSI>();
+    }
+  };
+}
+
+bool SSIEverything::runOnFunction(Function &F) {
+  SmallVector<Instruction *, 16> Insts;
+  SSI &ssi = getAnalysis<SSI>();
+
+  if (F.isDeclaration() || F.isIntrinsic()) return false;
+
+  for (Function::iterator B = F.begin(), BE = F.end(); B != BE; ++B)
+    for (BasicBlock::iterator I = B->begin(), E = B->end(); I != E; ++I)
+      if (I->getType() != Type::VoidTy)
+        Insts.push_back(I);
+
+  ssi.createSSI(Insts);
+  return true;
+}
+
+/// createSSIEverythingPass - The public interface to this file...
+///
+FunctionPass *llvm::createSSIEverythingPass() { return new SSIEverything(); }
+
+char SSIEverything::ID = 0;
+static RegisterPass<SSIEverything>
+Y("ssi-everything", "Static Single Information Construction");
