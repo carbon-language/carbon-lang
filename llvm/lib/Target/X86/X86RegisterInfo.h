@@ -125,6 +125,9 @@ public:
 
   bool hasReservedCallFrame(MachineFunction &MF) const;
 
+  bool hasReservedSpillSlot(MachineFunction &MF, unsigned Reg,
+                            int &FrameIdx) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI) const;
@@ -132,7 +135,6 @@ public:
   void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                            int SPAdj, RegScavenger *RS = NULL) const;
 
-  void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS = NULL) const;
 

@@ -1,4 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep {(%esp}
+; RUN: llvm-as < %s | llc -march=x86 | grep {pushl	%ebp} | count 1
+; RUN: llvm-as < %s | llc -march=x86 | grep {popl	%ebp} | count 1
 
 declare i8* @llvm.returnaddress(i32)
 

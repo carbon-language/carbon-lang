@@ -2029,6 +2029,7 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   unsigned SlotSize = is64Bit ? 8 : 4;
 
   MachineFunction &MF = *MBB.getParent();
+  unsigned FPReg = RI.getFrameRegister(MF);
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   unsigned CalleeFrameSize = 0;
   
@@ -2038,10 +2039,12 @@ bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     const TargetRegisterClass *RegClass = CSI[i-1].getRegClass();
     // Add the callee-saved register as live-in. It's killed at the spill.
     MBB.addLiveIn(Reg);
+    if (Reg == FPReg)
+      // X86RegisterInfo::emitPrologue will handle spilling of frame register.
+      continue;
     if (RegClass != &X86::VR128RegClass) {
       CalleeFrameSize += SlotSize;
-      BuildMI(MBB, MI, DL, get(Opc))
-        .addReg(Reg, RegState::Kill);
+      BuildMI(MBB, MI, DL, get(Opc)).addReg(Reg, RegState::Kill);
     } else {
       storeRegToStackSlot(MBB, MI, Reg, true, CSI[i-1].getFrameIdx(), RegClass);
     }
@@ -2060,11 +2063,15 @@ bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
+  MachineFunction &MF = *MBB.getParent();
+  unsigned FPReg = RI.getFrameRegister(MF);
   bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
-
   unsigned Opc = is64Bit ? X86::POP64r : X86::POP32r;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
+    if (Reg == FPReg)
+      // X86RegisterInfo::emitEpilogue will handle restoring of frame register.
+      continue;
     const TargetRegisterClass *RegClass = CSI[i].getRegClass();
     if (RegClass != &X86::VR128RegClass) {
       BuildMI(MBB, MI, DL, get(Opc), Reg);

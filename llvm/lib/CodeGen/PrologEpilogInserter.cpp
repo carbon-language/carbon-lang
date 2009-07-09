@@ -210,6 +210,12 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     unsigned Reg = I->getReg();
     const TargetRegisterClass *RC = I->getRegClass();
 
+    int FrameIdx;
+    if (RegInfo->hasReservedSpillSlot(Fn, Reg, FrameIdx)) {
+      I->setFrameIdx(FrameIdx);
+      continue;
+    }
+
     // Check to see if this physreg must be spilled to a particular stack slot
     // on this target.
     const std::pair<unsigned,int> *FixedSlot = FixedSpillSlots;
@@ -217,7 +223,6 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
            FixedSlot->first != Reg)
       ++FixedSlot;
 
-    int FrameIdx;
     if (FixedSlot == FixedSpillSlots + NumFixedSpillSlots) {
       // Nope, just spill it anywhere convenient.
       unsigned Align = RC->getAlignment();

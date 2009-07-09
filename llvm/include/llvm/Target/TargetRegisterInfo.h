@@ -567,18 +567,29 @@ public:
   /// has variable sized allocas or if frame pointer elimination is disabled.
   virtual bool hasFP(const MachineFunction &MF) const = 0;
 
-  // hasReservedCallFrame - Under normal circumstances, when a frame pointer is
-  // not required, we reserve argument space for call sites in the function
-  // immediately on entry to the current function. This eliminates the need for
-  // add/sub sp brackets around call sites. Returns true if the call frame is
-  // included as part of the stack frame.
+  /// hasReservedCallFrame - Under normal circumstances, when a frame pointer is
+  /// not required, we reserve argument space for call sites in the function
+  /// immediately on entry to the current function. This eliminates the need for
+  /// add/sub sp brackets around call sites. Returns true if the call frame is
+  /// included as part of the stack frame.
   virtual bool hasReservedCallFrame(MachineFunction &MF) const {
     return !hasFP(MF);
   }
 
-  // needsStackRealignment - true if storage within the function requires the
-  // stack pointer to be aligned more than the normal calling convention calls
-  // for.
+  /// hasReservedSpillSlot - Return true if target has reserved a spill slot in
+  /// the stack frame of the given function for the specified register. e.g. On
+  /// x86, if the frame register is required, the first fixed stack object is
+  /// reserved as its spill slot. This tells PEI not to create a new stack frame
+  /// object for the given register. It should be called only after
+  /// processFunctionBeforeCalleeSavedScan().
+  virtual bool hasReservedSpillSlot(MachineFunction &MF, unsigned Reg,
+                                    int &FrameIdx) const {
+    return false;
+  }
+
+  /// needsStackRealignment - true if storage within the function requires the
+  /// stack pointer to be aligned more than the normal calling convention calls
+  /// for.
   virtual bool needsStackRealignment(const MachineFunction &MF) const {
     return false;
   }

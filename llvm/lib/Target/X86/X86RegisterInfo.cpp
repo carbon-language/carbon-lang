@@ -345,6 +345,16 @@ bool X86RegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
+bool X86RegisterInfo::hasReservedSpillSlot(MachineFunction &MF, unsigned Reg,
+                                           int &FrameIdx) const {
+  if (Reg == FramePtr && hasFP(MF)) {
+    FrameIdx = MF.getFrameInfo()->getObjectIndexBegin();
+    return true;
+  }
+  return false;
+}
+
+
 int
 X86RegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
   int Offset = MF.getFrameInfo()->getObjectOffset(FI) + SlotSize;
@@ -493,10 +503,7 @@ X86RegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                calculateMaxStackAlignment(FFI));
 
   FFI->setMaxAlignment(MaxAlign);
-}
 
-void
-X86RegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF) const{
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
   int32_t TailCallReturnAddrDelta = X86FI->getTCReturnAddrDelta();
   if (TailCallReturnAddrDelta < 0) {
