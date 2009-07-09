@@ -39,6 +39,7 @@ namespace RegState {
 class MachineInstrBuilder {
   MachineInstr *MI;
 public:
+  MachineInstrBuilder() : MI(0) {}
   explicit MachineInstrBuilder(MachineInstr *mi) : MI(mi) {}
 
   /// Allow automatic conversion to the machine instruction we are working on.
