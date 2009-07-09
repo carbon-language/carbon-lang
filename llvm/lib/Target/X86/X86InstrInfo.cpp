@@ -3245,8 +3245,7 @@ unsigned X86InstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   
   // If we're using vanilla 'GOT' PIC style, we should use relative addressing
   // not to pc, but to _GLOBAL_OFFSET_TABLE_ external.
-  if (TM.getRelocationModel() == Reloc::PIC_ &&
-      TM.getSubtarget<X86Subtarget>().isPICStyleGOT()) {
+  if (TM.getSubtarget<X86Subtarget>().isPICStyleGOT()) {
     GlobalBaseReg = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
     // Generate addl $__GLOBAL_OFFSET_TABLE_ + [.-piclabel], %some_register
     BuildMI(FirstMBB, MBBI, DL, TII->get(X86::ADD32ri), GlobalBaseReg)

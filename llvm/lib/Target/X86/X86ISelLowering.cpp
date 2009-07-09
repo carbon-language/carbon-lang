@@ -1811,7 +1811,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
           !G->getGlobal()->hasProtectedVisibility())
         Callee = LowerGlobalAddress(Callee, DAG);
       else if (isa<ExternalSymbolSDNode>(Callee))
-        Callee = LowerExternalSymbol(Callee,DAG);
+        Callee = LowerExternalSymbol(Callee, DAG);
     }
   }
 

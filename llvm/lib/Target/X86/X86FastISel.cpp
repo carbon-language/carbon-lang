@@ -470,8 +470,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         Opc = X86::MOV32rm;
         RC  = X86::GR32RegisterClass;
         
-        if (Subtarget->isPICStyleGOT() &&
-            TM.getRelocationModel() == Reloc::PIC_)
+        if (Subtarget->isPICStyleGOT())
           StubAM.GVOpFlags = X86II::MO_GOT;
         
       } else {
@@ -1294,9 +1293,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
 
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
   // GOT pointer.  
-  if (!Subtarget->is64Bit() &&
-      TM.getRelocationModel() == Reloc::PIC_ &&
-      Subtarget->isPICStyleGOT()) {
+  if (Subtarget->isPICStyleGOT()) {
     TargetRegisterClass *RC = X86::GR32RegisterClass;
     unsigned Base = getInstrInfo()->getGlobalBaseReg(&MF);
     bool Emitted = TII.copyRegToReg(*MBB, MBB->end(), X86::EBX, Base, RC, RC);
@@ -1313,9 +1310,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     : BuildMI(MBB, DL, TII.get(CallOpc)).addGlobalAddress(GV);
 
   // Add an implicit use GOT pointer in EBX.
-  if (!Subtarget->is64Bit() &&
-      TM.getRelocationModel() == Reloc::PIC_ &&
-      Subtarget->isPICStyleGOT())
+  if (Subtarget->isPICStyleGOT())
     MIB.addReg(X86::EBX);
 
   // Add implicit physical register uses to the call.
@@ -1509,16 +1504,16 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   // x86-32 PIC requires a PIC base register for constant pools.
   unsigned PICBase = 0;
   unsigned char OpFlag = 0;
-  if (TM.getRelocationModel() == Reloc::PIC_) {
-    if (Subtarget->isPICStyleStub()) {
-      OpFlag = X86II::MO_PIC_BASE_OFFSET;
-      PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
-    } else if (Subtarget->isPICStyleGOT()) {
-      OpFlag = X86II::MO_GOTOFF;
-      PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
-    } else if (Subtarget->isPICStyleRIPRel() &&
-               TM.getCodeModel() == CodeModel::Small)
-      PICBase = X86::RIP;
+  if (Subtarget->isPICStyleStub() &&
+      TM.getRelocationModel() == Reloc::PIC_) { // Not dynamic-no-pic
+    OpFlag = X86II::MO_PIC_BASE_OFFSET;
+    PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
+  } else if (Subtarget->isPICStyleGOT()) {
+    OpFlag = X86II::MO_GOTOFF;
+    PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
+  } else if (Subtarget->isPICStyleRIPRel() &&
+             TM.getCodeModel() == CodeModel::Small) {
+    PICBase = X86::RIP;
   }
 
   // Create the load from the constant pool.

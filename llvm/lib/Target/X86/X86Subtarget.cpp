@@ -77,8 +77,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
 /// a register, but not an extra load.
 bool X86Subtarget::GVRequiresRegister(const GlobalValue *GV,
                                       const TargetMachine& TM,
-                                      bool isDirectCall) const
-{
+                                      bool isDirectCall) const {
   if (GVRequiresExtraLoad(GV, TM, isDirectCall))
     return true;
   // Code below here need only consider cases where GVRequiresExtraLoad
