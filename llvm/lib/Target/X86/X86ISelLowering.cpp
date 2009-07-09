@@ -2057,22 +2057,11 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(CallSDNode *TheCall,
     return false;
 
   if (CheckTailCallReturnConstraints(TheCall, Ret)) {
-    MachineFunction &MF = DAG.getMachineFunction();
-    unsigned CallerCC = MF.getFunction()->getCallingConv();
-    unsigned CalleeCC= TheCall->getCallingConv();
-    if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
-      // On x86/32Bit PIC/GOT tail calls are supported.
-      if (getTargetMachine().getRelocationModel() != Reloc::PIC_ ||
-          !Subtarget->isPICStyleGOT() || !Subtarget->is64Bit())
-        return true;
-      
-      SDValue Callee = TheCall->getCallee();
-      // Can only do local tail calls (in same module, hidden or protected) on
-      // x86_64 PIC/GOT at the moment.
-      if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-        return G->getGlobal()->hasHiddenVisibility()
-            || G->getGlobal()->hasProtectedVisibility();
-    }
+    unsigned CallerCC =
+      DAG.getMachineFunction().getFunction()->getCallingConv();
+    unsigned CalleeCC = TheCall->getCallingConv();
+    if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC)
+      return true;
   }
 
   return false;
