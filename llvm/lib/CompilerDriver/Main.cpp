@@ -31,7 +31,7 @@ namespace {
   sys::Path getTempDir() {
     sys::Path tempDir;
 
-    if (! TempDirname.empty() {
+    if (! TempDirname.empty()) {
       tempDir = TempDirname;
       if (!tempDir.exists()) {
         std::string ErrMsg;
