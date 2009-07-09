@@ -331,7 +331,11 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_CONCAT_VECTORS(SDNode *N) {
 /// be scalarized, it must be <1 x ty>, so just return the element, ignoring the
 /// index.
 SDValue DAGTypeLegalizer::ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
-  return GetScalarizedVector(N->getOperand(0));
+  SDValue Res = GetScalarizedVector(N->getOperand(0));
+  if (Res.getValueType() != N->getValueType(0))
+    Res = DAG.getNode(ISD::ANY_EXTEND, N->getDebugLoc(), N->getValueType(0),
+                      Res);
+  return Res;
 }
 
 /// ScalarizeVecOp_STORE - If the value to store is a vector that needs to be
@@ -1052,7 +1056,8 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
 
   // Load back the required element.
   StackPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
-  return DAG.getLoad(EltVT, dl, Store, StackPtr, SV, 0);
+  return DAG.getExtLoad(ISD::EXTLOAD, dl, N->getValueType(0), Store, StackPtr,
+                        SV, 0, EltVT);
 }
 
 SDValue DAGTypeLegalizer::SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo) {
@@ -1904,9 +1909,8 @@ SDValue DAGTypeLegalizer::WidenVecOp_CONCAT_VECTORS(SDNode *N) {
 
 SDValue DAGTypeLegalizer::WidenVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
   SDValue InOp = GetWidenedVector(N->getOperand(0));
-  MVT EltVT = InOp.getValueType().getVectorElementType();
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, N->getDebugLoc(),
-                     EltVT, InOp, N->getOperand(1));
+                     N->getValueType(0), InOp, N->getOperand(1));
 }
 
 SDValue DAGTypeLegalizer::WidenVecOp_STORE(SDNode *N) {

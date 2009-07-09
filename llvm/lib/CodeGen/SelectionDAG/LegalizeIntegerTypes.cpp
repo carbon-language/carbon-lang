@@ -303,52 +303,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CTTZ(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_VECTOR_ELT(SDNode *N) {
-  MVT OldVT = N->getValueType(0);
-  SDValue OldVec = N->getOperand(0);
-  if (getTypeAction(OldVec.getValueType()) == WidenVector)
-    OldVec = GetWidenedVector(N->getOperand(0));
-  unsigned OldElts = OldVec.getValueType().getVectorNumElements();
   DebugLoc dl = N->getDebugLoc();
-
-  if (OldElts == 1) {
-    assert(!isTypeLegal(OldVec.getValueType()) &&
-           "Legal one-element vector of a type needing promotion!");
-    // It is tempting to follow GetScalarizedVector by a call to
-    // GetPromotedInteger, but this would be wrong because the
-    // scalarized value may not yet have been processed.
-    return DAG.getNode(ISD::ANY_EXTEND, dl, TLI.getTypeToTransformTo(OldVT),
-                       GetScalarizedVector(OldVec));
-  }
-
-  // Convert to a vector half as long with an element type of twice the width,
-  // for example <4 x i16> -> <2 x i32>.
-  assert(!(OldElts & 1) && "Odd length vectors not supported!");
-  MVT NewVT = MVT::getIntegerVT(2 * OldVT.getSizeInBits());
-  assert(OldVT.isSimple() && NewVT.isSimple());
-
-  SDValue NewVec = DAG.getNode(ISD::BIT_CONVERT, dl,
-                                 MVT::getVectorVT(NewVT, OldElts / 2),
-                                 OldVec);
-
-  // Extract the element at OldIdx / 2 from the new vector.
-  SDValue OldIdx = N->getOperand(1);
-  SDValue NewIdx = DAG.getNode(ISD::SRL, dl, OldIdx.getValueType(), OldIdx,
-                               DAG.getConstant(1, TLI.getPointerTy()));
-  SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NewVT, NewVec, NewIdx);
-
-  // Select the appropriate half of the element: Lo if OldIdx was even,
-  // Hi if it was odd.
-  SDValue Lo = Elt;
-  SDValue Hi = DAG.getNode(ISD::SRL, dl, NewVT, Elt,
-                           DAG.getConstant(OldVT.getSizeInBits(),
-                                           TLI.getPointerTy()));
-  if (TLI.isBigEndian())
-    std::swap(Lo, Hi);
-
-  // Extend to the promoted type.
-  SDValue Odd = DAG.getNode(ISD::TRUNCATE, dl, MVT::i1, OldIdx);
-  SDValue Res = DAG.getNode(ISD::SELECT, dl, NewVT, Odd, Hi, Lo);
-  return DAG.getNode(ISD::ANY_EXTEND, dl, TLI.getTypeToTransformTo(OldVT), Res);
+  MVT NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NVT, N->getOperand(0),
+                     N->getOperand(1));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_FP_TO_XINT(SDNode *N) {

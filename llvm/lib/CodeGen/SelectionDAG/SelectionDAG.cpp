@@ -2693,13 +2693,16 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
     // expanding large vector constants.
     if (N2C && N1.getOpcode() == ISD::BUILD_VECTOR) {
       SDValue Elt = N1.getOperand(N2C->getZExtValue());
-      if (Elt.getValueType() != VT) {
+      MVT VEltTy = N1.getValueType().getVectorElementType();
+      if (Elt.getValueType() != VEltTy) {
         // If the vector element type is not legal, the BUILD_VECTOR operands
         // are promoted and implicitly truncated.  Make that explicit here.
-        assert(VT.isInteger() && Elt.getValueType().isInteger() &&
-               VT.bitsLE(Elt.getValueType()) &&
-               "Bad type for BUILD_VECTOR operand");
-        Elt = getNode(ISD::TRUNCATE, DL, VT, Elt);
+        Elt = getNode(ISD::TRUNCATE, DL, VEltTy, Elt);
+      }
+      if (VT != VEltTy) {
+        // If the vector element type is not legal, the EXTRACT_VECTOR_ELT
+        // result is implicitly extended.
+        Elt = getNode(ISD::ANY_EXTEND, DL, VT, Elt);
       }
       return Elt;
     }

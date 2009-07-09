@@ -1526,7 +1526,11 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
 
   StackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, StackPtr);
 
-  return DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr, NULL, 0);
+  if (Op.getValueType().isVector())
+    return DAG.getLoad(Op.getValueType(), dl, Ch, StackPtr, NULL, 0);
+  else
+    return DAG.getExtLoad(ISD::EXTLOAD, dl, Op.getValueType(), Ch, StackPtr,
+                          NULL, 0, Vec.getValueType().getVectorElementType());
 }
 
 SDValue SelectionDAGLegalize::ExpandVectorBuildThroughStack(SDNode* Node) {
