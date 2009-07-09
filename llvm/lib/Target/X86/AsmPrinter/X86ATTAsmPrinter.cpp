@@ -286,10 +286,6 @@ static inline bool shouldPrintPLT(TargetMachine &TM, const X86Subtarget* ST) {
   return ST->isTargetELF() && TM.getRelocationModel() == Reloc::PIC_;
 }
 
-static inline bool shouldPrintStub(TargetMachine &TM, const X86Subtarget* ST) {
-  return ST->isPICStyleStub() && TM.getRelocationModel() != Reloc::Static;
-}
-
 /// print_pcrel_imm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
 /// example, a $ is not emitted.
@@ -317,7 +313,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       needCloseParen = true;
     }
     
-    if (shouldPrintStub(TM, Subtarget)) {
+    if (Subtarget->isPICStyleStub()) {
       // DARWIN/X86-32 in != static mode.
       
       // Link-once, declaration, or Weakly-linked global variables need
@@ -381,10 +377,9 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
     // Print function stub suffix unless it's Mac OS X 10.5 and up.
-    if (shouldPrintStub(TM, Subtarget) && 
+    if (Subtarget->isPICStyleStub() && 
         // DARWIN/X86-32 in != static mode.
-        !(Subtarget->isTargetDarwin() && Subtarget->getDarwinVers() >= 9)) {
-      
+        Subtarget->getDarwinVers() < 9) {
       FnStubs.insert(Name);
       printSuffixedName(Name, "$stub");
       return;
@@ -475,7 +470,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       needCloseParen = true;
     }
 
-    if (shouldPrintStub(TM, Subtarget)) {
+    if (Subtarget->isPICStyleStub()) {
       // DARWIN/X86-32 in != static mode.
 
       // Link-once, declaration, or Weakly-linked global variables need
