@@ -1187,7 +1187,7 @@ SDValue SelectionDAG::getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1,
 
   // Canonicalize shuffle undef, undef -> undef
   if (N1.getOpcode() == ISD::UNDEF && N2.getOpcode() == ISD::UNDEF)
-    return N1;
+    return getUNDEF(VT);
 
   // Validate that all indices in Mask are within the range of the elements 
   // input to the shuffle.
@@ -1239,7 +1239,7 @@ SDValue SelectionDAG::getVectorShuffle(MVT VT, DebugLoc dl, SDValue N1,
     if (MaskVec[i] >= 0 && MaskVec[i] != (int)i) Identity = false;
     if (MaskVec[i] >= 0) AllUndef = false;
   }
-  if (Identity)
+  if (Identity && NElts == N1.getValueType().getVectorNumElements())
     return N1;
   if (AllUndef)
     return getUNDEF(VT);
