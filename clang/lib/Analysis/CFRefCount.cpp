@@ -553,7 +553,6 @@ public:
     if (!PT) return 0;
     
     ObjCInterfaceType* OI = dyn_cast<ObjCInterfaceType>(PT->getPointeeType());
-    if (!OI) return 0;
     
     return OI ? OI->getDecl() : 0;
   }
