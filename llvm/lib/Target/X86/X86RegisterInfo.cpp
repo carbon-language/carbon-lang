@@ -873,7 +873,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(LabelId);
 
     // Emit DWARF info specifying the offsets of the callee-saved registers.
-    emitCalleeSavedFrameMoves(MF, LabelId, FramePtr);
+    emitCalleeSavedFrameMoves(MF, LabelId, HasFP ? FramePtr : StackPtr);
   }
 
   if (MBBI != MBB.end())
@@ -930,6 +930,25 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     if (NumBytes)
       emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
+  }
+
+  if (!HasFP && needsFrameMoves && NumBytes) {
+    // Mark end of stack pointer adjustment.
+    unsigned LabelId = MMI->NextLabelID();
+    BuildMI(MBB, MBBI, DL, TII.get(X86::DBG_LABEL)).addImm(LabelId);
+
+    // Define the current CFA rule to use the provided offset.
+    if (StackSize) {
+      MachineLocation SPDst(MachineLocation::VirtualFP);
+      MachineLocation SPSrc(MachineLocation::VirtualFP,
+                            -StackSize + stackGrowth);
+      Moves.push_back(MachineMove(LabelId, SPDst, SPSrc));
+    } else {
+      // FIXME: Verify & implement for FP
+      MachineLocation SPDst(StackPtr);
+      MachineLocation SPSrc(StackPtr, stackGrowth);
+      Moves.push_back(MachineMove(LabelId, SPDst, SPSrc));
+    }
   }
 }
 
