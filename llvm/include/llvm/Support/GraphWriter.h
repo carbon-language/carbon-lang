@@ -67,7 +67,17 @@ namespace DOT {  // Private functions...
   }
 }
 
-void DisplayGraph(const sys::Path& Filename, bool wait=true);
+namespace GraphProgram {
+   enum Name {
+      DOT,
+      FDP,
+      NEATO,
+      TWOPI,
+      CIRCO
+   };
+}
+   
+void DisplayGraph(const sys::Path& Filename, bool wait=true, GraphProgram::Name program = GraphProgram::DOT);
 
 template<typename GraphType>
 class GraphWriter {
@@ -314,14 +324,15 @@ template<typename GraphType>
 void ViewGraph(const GraphType& G,
                const std::string& Name,
                bool ShortNames = false,
-               const std::string& Title = "") {
+               const std::string& Title = "",
+               GraphProgram::Name Program = GraphProgram::DOT) {
   sys::Path Filename =  WriteGraph(G, Name, ShortNames, Title);
 
   if (Filename.isEmpty()) {
     return;
   }
 
-  DisplayGraph(Filename);
+  DisplayGraph(Filename, true, Program);
 }
 
 } // End llvm namespace

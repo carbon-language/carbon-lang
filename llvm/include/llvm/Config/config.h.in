@@ -60,6 +60,9 @@
 /* Define to 1 if you have the `ceilf' function. */
 #undef HAVE_CEILF
 
+/* Define if the neat program is available */
+#undef HAVE_CIRCO
+
 /* Define to 1 if you have the `closedir' function. */
 #undef HAVE_CLOSEDIR
 
@@ -108,6 +111,9 @@
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define if the neat program is available */
+#undef HAVE_FDP
 
 /* Define if libffi is available on this platform. */
 #undef HAVE_FFI_CALL
@@ -266,6 +272,9 @@
 
 /* Define to 1 if you have the `nearbyintf' function. */
 #undef HAVE_NEARBYINTF
+
+/* Define if the neat program is available */
+#undef HAVE_NEATO
 
 /* Define to 1 if you have the `opendir' function. */
 #undef HAVE_OPENDIR
@@ -431,6 +440,9 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
+/* Define if the neat program is available */
+#undef HAVE_TWOPI
+
 /* Define to 1 if the system has the type `uint64_t'. */
 #undef HAVE_UINT64_T
 
@@ -491,17 +503,29 @@
 /* Define if this is Win32ish platform */
 #undef LLVM_ON_WIN32
 
+/* Define to path to circo program if found or 'echo circo' otherwise */
+#undef LLVM_PATH_CIRCO
+
 /* Define to path to dot program if found or 'echo dot' otherwise */
 #undef LLVM_PATH_DOT
 
 /* Define to path to dotty program if found or 'echo dotty' otherwise */
 #undef LLVM_PATH_DOTTY
 
+/* Define to path to fdp program if found or 'echo fdp' otherwise */
+#undef LLVM_PATH_FDP
+
 /* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
 #undef LLVM_PATH_GRAPHVIZ
 
 /* Define to path to gv program if found or 'echo gv' otherwise */
 #undef LLVM_PATH_GV
+
+/* Define to path to neato program if found or 'echo neato' otherwise */
+#undef LLVM_PATH_NEATO
+
+/* Define to path to twopi program if found or 'echo twopi' otherwise */
+#undef LLVM_PATH_TWOPI
 
 /* Installation prefix directory */
 #undef LLVM_PREFIX

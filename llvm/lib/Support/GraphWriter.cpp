@@ -18,7 +18,8 @@
 #include "llvm/Config/config.h"
 using namespace llvm;
 
-void llvm::DisplayGraph(const sys::Path &Filename, bool wait) {
+void llvm::DisplayGraph(const sys::Path &Filename, bool wait,
+                        GraphProgram::Name program) {
   std::string ErrMsg;
 #if HAVE_GRAPHVIZ
   sys::Path Graphviz(LLVM_PATH_GRAPHVIZ);
@@ -35,15 +36,56 @@ void llvm::DisplayGraph(const sys::Path &Filename, bool wait) {
   else {
      Filename.eraseFromDisk();
   }
-  
-#elif (HAVE_GV && (HAVE_DOT || HAVE_FDP))
+
+#elif (HAVE_GV && (HAVE_DOT || HAVE_FDP || HAVE_NEATO || \
+                   HAVE_TWOPI || HAVE_CIRCO))
   sys::Path PSFilename = Filename;
   PSFilename.appendSuffix("ps");
 
+  sys::Path prog;
+
+  // Set default grapher
+#if HAVE_CIRCO
+  prog = sys::Path(LLVM_PATH_CIRCO);
+#endif
+#if HAVE_TWOPI
+  prog = sys::Path(LLVM_PATH_TWOPI);
+#endif
+#if HAVE_NEATO
+  prog = sys::Path(LLVM_PATH_NEATO);
+#endif
 #if HAVE_FDP
-  sys::Path prog(LLVM_PATH_FDP);
-#else
-  sys::Path prog(LLVM_PATH_DOT);
+  prog = sys::Path(LLVM_PATH_FDP);
+#endif
+#if HAVE_DOT
+  prog = sys::Path(LLVM_PATH_DOT);
+#endif
+
+  // Find which program the user wants
+#if HAVE_DOT
+  if (program == GraphProgram::DOT) {
+    prog = sys::Path(LLVM_PATH_DOT);
+  }
+#endif
+#if (HAVE_FDP)
+  if (program == GraphProgram::FDP) {
+    prog = sys::Path(LLVM_PATH_FDP);
+  }
+#endif
+#if (HAVE_NEATO)
+  if (program == GraphProgram::NEATO) {
+    prog = sys::Path(LLVM_PATH_NEATO);
+    }
+#endif
+#if (HAVE_TWOPI)
+  if (program == GraphProgram::TWOPI) {
+    prog = sys::Path(LLVM_PATH_TWOPI);
+  }
+#endif
+#if (HAVE_CIRCO)
+  if (program == GraphProgram::CIRCO) {
+    prog = sys::Path(LLVM_PATH_CIRCO);
+  }
 #endif
 
   std::vector<const char*> args;

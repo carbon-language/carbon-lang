@@ -673,6 +673,46 @@ if test "$DOT" != "echo dot" ; then
   AC_DEFINE_UNQUOTED([LLVM_PATH_DOT],"$DOT${EXEEXT}",
    [Define to path to dot program if found or 'echo dot' otherwise])
 fi
+AC_PATH_PROG(FDP, [fdp], [echo fdp])
+if test "$FDP" != "echo fdp" ; then
+  AC_DEFINE([HAVE_FDP],[1],[Define if the neat program is available])
+  dnl If we're targeting for mingw we should emit windows paths, not msys
+  if test "$llvm_cv_os_type" = "MingW" ; then
+    FDP=`echo $FDP | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+  fi
+  AC_DEFINE_UNQUOTED([LLVM_PATH_FDP],"$FDP${EXEEXT}",
+   [Define to path to fdp program if found or 'echo fdp' otherwise])
+fi
+AC_PATH_PROG(NEATO, [neato], [echo neato])
+if test "$NEATO" != "echo neato" ; then
+  AC_DEFINE([HAVE_NEATO],[1],[Define if the neat program is available])
+  dnl If we're targeting for mingw we should emit windows paths, not msys
+  if test "$llvm_cv_os_type" = "MingW" ; then
+    NEATO=`echo $NEATO | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+  fi
+  AC_DEFINE_UNQUOTED([LLVM_PATH_NEATO],"$NEATO${EXEEXT}",
+   [Define to path to neato program if found or 'echo neato' otherwise])
+fi
+AC_PATH_PROG(TWOPI, [twopi], [echo twopi])
+if test "$TWOPI" != "echo twopi" ; then
+  AC_DEFINE([HAVE_TWOPI],[1],[Define if the neat program is available])
+  dnl If we're targeting for mingw we should emit windows paths, not msys
+  if test "$llvm_cv_os_type" = "MingW" ; then
+    TWOPI=`echo $TWOPI | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+  fi
+  AC_DEFINE_UNQUOTED([LLVM_PATH_TWOPI],"$TWOPI${EXEEXT}",
+   [Define to path to twopi program if found or 'echo twopi' otherwise])
+fi
+AC_PATH_PROG(CIRCO, [circo], [echo circo])
+if test "$CIRCO" != "echo circo" ; then
+  AC_DEFINE([HAVE_CIRCO],[1],[Define if the neat program is available])
+  dnl If we're targeting for mingw we should emit windows paths, not msys
+  if test "$llvm_cv_os_type" = "MingW" ; then
+    CIRCO=`echo $CIRCO | sed 's/^\/\([[A-Za-z]]\)\//\1:\//' `
+  fi
+  AC_DEFINE_UNQUOTED([LLVM_PATH_CIRCO],"$CIRCO${EXEEXT}",
+   [Define to path to circo program if found or 'echo circo' otherwise])
+fi
 AC_PATH_PROGS(GV, [gv gsview32], [echo gv])
 if test "$GV" != "echo gv" ; then
   AC_DEFINE([HAVE_GV],[1],[Define if the gv program is available])
