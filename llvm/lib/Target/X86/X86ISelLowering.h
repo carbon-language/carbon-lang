@@ -568,8 +568,6 @@ namespace llvm {
 
     // Call lowering helpers.
     bool IsCalleePop(bool isVarArg, unsigned CallingConv);
-    bool CallRequiresGOTPtrInReg(bool Is64Bit, bool IsTailCall);
-    bool CallRequiresFnAddressInReg(bool Is64Bit, bool IsTailCall);
     SDValue EmitTailCallLoadRetAddr(SelectionDAG &DAG, SDValue &OutRetAddr,
                                 SDValue Chain, bool IsTailCall, bool Is64Bit,
                                 int FPDiff, DebugLoc dl);

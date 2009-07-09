@@ -1321,19 +1321,23 @@ X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDValue Op) {
 
 /// CallRequiresGOTInRegister - Check whether the call requires the GOT pointer
 /// in a register before calling.
-bool X86TargetLowering::CallRequiresGOTPtrInReg(bool Is64Bit, bool IsTailCall) {
-  return !IsTailCall && !Is64Bit &&
-    getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-    Subtarget->isPICStyleGOT();
+static bool CallRequiresGOTPtrInReg(const TargetMachine &TM, 
+                                    bool IsTailCall) {
+  const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
+
+  return !IsTailCall && !Subtarget.is64Bit() &&
+         TM.getRelocationModel() == Reloc::PIC_ &&
+         Subtarget.isPICStyleGOT();
 }
 
 /// CallRequiresFnAddressInReg - Check whether the call requires the function
 /// address to be loaded in a register.
-bool
-X86TargetLowering::CallRequiresFnAddressInReg(bool Is64Bit, bool IsTailCall) {
-  return !Is64Bit && IsTailCall &&
-    getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-    Subtarget->isPICStyleGOT();
+static bool CallRequiresFnAddressInReg(const TargetMachine &TM, 
+                                       bool IsTailCall) {
+  const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
+  return !Subtarget.is64Bit() && IsTailCall &&
+         TM.getRelocationModel() == Reloc::PIC_ &&
+         Subtarget.isPICStyleGOT();
 }
 
 /// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
@@ -1804,7 +1808,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
   // GOT pointer.
-  if (CallRequiresGOTPtrInReg(Is64Bit, IsTailCall)) {
+  if (CallRequiresGOTPtrInReg(getTargetMachine(), IsTailCall)) {
     Chain = DAG.getCopyToReg(Chain, dl, X86::EBX,
                              DAG.getNode(X86ISD::GlobalBaseReg,
                                          DebugLoc::getUnknownLoc(),
@@ -1812,13 +1816,14 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
                              InFlag);
     InFlag = Chain.getValue(1);
   }
+  
   // If we are tail calling and generating PIC/GOT style code load the address
   // of the callee into ecx. The value in ecx is used as target of the tail
   // jump. This is done to circumvent the ebx/callee-saved problem for tail
   // calls on PIC/GOT architectures. Normally we would just put the address of
-  // GOT into ebx and then call target@PLT. But for tail callss ebx would be
+  // GOT into ebx and then call target@PLT. But for tail calls ebx would be
   // restored (since ebx is callee saved) before jumping to the target@PLT.
-  if (CallRequiresFnAddressInReg(Is64Bit, IsTailCall)) {
+  if (CallRequiresFnAddressInReg(getTargetMachine(), IsTailCall)) {
     // Note: The actual moving to ecx is done further down.
     GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
     if (G && !G->getGlobal()->hasHiddenVisibility() &&
