@@ -11,7 +11,11 @@ namespace llvmc {
 
 // Returns the platform specific directory separator via #ifdefs.
 static std::string GetDirSeparator(void) {
+#ifdef __linux__
   return "/";
+#else
+  return "\\";
+#endif
 }
 
 namespace hooks {
