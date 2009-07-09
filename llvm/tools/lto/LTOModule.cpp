@@ -325,7 +325,7 @@ void LTOModule::addDefinedDataSymbol(GlobalValue* v, Mangler& mangler)
 
 
 void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler, 
-                                bool isFunction)
+                                 bool isFunction)
 {    
     // ignore all llvm.* symbols
     if ( strncmp(def->getNameStart(), "llvm.", 5) == 0 )
@@ -399,6 +399,10 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
 {   
     // ignore all llvm.* symbols
     if ( strncmp(decl->getNameStart(), "llvm.", 5) == 0 )
+        return;
+
+    // ignore all aliases
+    if (isa<GlobalAlias>(decl))
         return;
 
     const char* name = mangler.getValueName(decl).c_str();
@@ -539,4 +543,3 @@ const char* LTOModule::getSymbolName(uint32_t index)
     else
         return NULL;
 }
-
