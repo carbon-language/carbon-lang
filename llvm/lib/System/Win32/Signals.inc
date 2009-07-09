@@ -136,10 +136,7 @@ static void Cleanup() {
 
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
-      try {
-        FilesToRemove->back().eraseFromDisk();
-      } catch (...) {
-      }
+      FilesToRemove->back().eraseFromDisk();
       FilesToRemove->pop_back();
     }
 
