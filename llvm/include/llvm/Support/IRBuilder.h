@@ -402,7 +402,8 @@ public:
   }
   Value *CreateGlobalString(const char *Str = "", const char *Name = "") {
     Constant *StrConstant = Context.getConstantArray(Str, true);
-    GlobalVariable *gv = new GlobalVariable(*BB->getParent()->getParent(),
+    Module &M = *BB->getParent()->getParent();
+    GlobalVariable *gv = new GlobalVariable(M,
                                             StrConstant->getType(),
                                             true,
                                             GlobalValue::InternalLinkage,
