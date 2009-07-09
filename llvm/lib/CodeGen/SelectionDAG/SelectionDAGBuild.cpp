@@ -5321,7 +5321,7 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 
       // Copy the input into the appropriate registers.
       if (OpInfo.AssignedRegs.Regs.empty()) {
-        cerr << "llvm: error: Couldn't allocate output reg for constraint '"
+        cerr << "llvm: error: Couldn't allocate input reg for constraint '"
              << OpInfo.ConstraintCode << "'!\n";
         exit(1);
       }
