@@ -114,6 +114,8 @@ delete them on exit. This option can also take an argument: the
 <tt class="docutils literal"><span class="pre">--save-temps=obj</span></tt> switch will write files into the directory specified with
 the <tt class="docutils literal"><span class="pre">-o</span></tt> option. The <tt class="docutils literal"><span class="pre">--save-temps=cwd</span></tt> and <tt class="docutils literal"><span class="pre">--save-temps</span></tt> switches are
 both synonyms for the default behaviour.</li>
+<li><tt class="docutils literal"><span class="pre">--temp-dir</span></tt> - Write temporary files to the specified directory. This option
+overrides <tt class="docutils literal"><span class="pre">--save-temps</span></tt>.</li>
 <li><tt class="docutils literal"><span class="pre">--check-graph</span></tt> - Check the compilation for common errors like mismatched
 output/input language names, multiple default edges and cycles. Because of
 plugins, these checks can't be performed at compile-time. Exit with code zero
