@@ -1300,14 +1300,43 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
     assert(Emitted && "Failed to emit a copy instruction!"); Emitted=Emitted;
     Emitted = true;
   }
-
+  
   // Issue the call.
-  unsigned CallOpc = CalleeOp
-    ? (Subtarget->is64Bit() ? X86::CALL64r       : X86::CALL32r)
-    : (Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32);
-  MachineInstrBuilder MIB = CalleeOp
-    ? BuildMI(MBB, DL, TII.get(CallOpc)).addReg(CalleeOp)
-    : BuildMI(MBB, DL, TII.get(CallOpc)).addGlobalAddress(GV);
+  MachineInstrBuilder MIB;
+  if (CalleeOp) {
+    // Register-indirect call.
+    unsigned CallOpc = Subtarget->is64Bit() ? X86::CALL64r : X86::CALL32r;
+    MIB = BuildMI(MBB, DL, TII.get(CallOpc)).addReg(CalleeOp);
+    
+  } else {
+    // Direct call.
+    assert(GV && "Not a direct call");
+    unsigned CallOpc =
+      Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32;
+    
+    // See if we need any target-specific flags on the GV operand.
+    unsigned char OpFlags = 0;
+    
+    // On ELF targets, in both X86-64 and X86-32 mode, direct calls to
+    // external symbols most go through the PLT in PIC mode.  If the symbol
+    // has hidden or protected visibility, or if it is static or local, then
+    // we don't need to use the PLT - we can directly call it.
+    if (Subtarget->isTargetELF() &&
+        TM.getRelocationModel() == Reloc::PIC_ &&
+        GV->hasDefaultVisibility() && !GV->hasLocalLinkage()) {
+      OpFlags = X86II::MO_PLT;
+    } else if (Subtarget->isPICStyleStub() &&
+               (GV->isDeclaration() || GV->isWeakForLinker()) &&
+               Subtarget->getDarwinVers() < 9) {
+      // PC-relative references to external symbols should go through $stub,
+      // unless we're building with the leopard linker or later, which
+      // automatically synthesizes these stubs.
+      OpFlags = X86II::MO_DARWIN_STUB;
+    }
+    
+    
+    MIB = BuildMI(MBB, DL, TII.get(CallOpc)).addGlobalAddress(GV, 0, OpFlags);
+  }
 
   // Add an implicit use GOT pointer in EBX.
   if (Subtarget->isPICStyleGOT())
