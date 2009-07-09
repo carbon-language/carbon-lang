@@ -3702,7 +3702,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   }
 
   // We only look at pointers or references to functions.
-  FunctionType = Context.getCanonicalType(FunctionType.getUnqualifiedType());
+  FunctionType = Context.getCanonicalType(FunctionType).getUnqualifiedType();
   if (!FunctionType->isFunctionType())
     return 0;
 
