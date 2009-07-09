@@ -168,6 +168,7 @@ int main(int argc, char **argv) {
                     "error");
     SM.PrintMessage(SMLoc::getFromPointer(CurPtr), "scanning from here",
                     "note");
+    return 1;
   }
   
   return 0;
