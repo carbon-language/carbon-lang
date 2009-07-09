@@ -202,9 +202,13 @@ namespace llvm {
              "setLength called with value of wrong type!");
       setOperand(3, L);
     }
-    void setAlignment(unsigned A) {
-      const Type *Int32Ty = getOperand(4)->getType();
-      setOperand(4, ConstantInt::get(Int32Ty, A));
+    
+    void setAlignment(Constant* A) {
+      setOperand(4, A);
+    }
+    
+    const Type *getAlignmentType() const {
+      return getOperand(4)->getType();
     }
     
     // Methods for support type inquiry through isa, cast, and dyn_cast:

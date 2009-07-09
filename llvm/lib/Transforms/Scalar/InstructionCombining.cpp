@@ -9694,7 +9694,8 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   unsigned CopyAlign = MI->getAlignment();
 
   if (CopyAlign < MinAlign) {
-    MI->setAlignment(MinAlign);
+    MI->setAlignment(Context->getConstantInt(MI->getAlignmentType(), 
+                                             MinAlign, false));
     return MI;
   }
   
@@ -9768,7 +9769,8 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
 Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   unsigned Alignment = GetOrEnforceKnownAlignment(MI->getDest());
   if (MI->getAlignment() < Alignment) {
-    MI->setAlignment(Alignment);
+    MI->setAlignment(Context->getConstantInt(MI->getAlignmentType(),
+                                             Alignment, false));
     return MI;
   }
   
