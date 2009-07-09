@@ -2093,15 +2093,15 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
     }
     else if (FieldType->isReferenceType()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign) 
-      << Context.getTagDeclType(ClassDecl) << 0 << (*Field)->getNameAsCString();
-      Diag((*Field)->getLocation(), diag::note_declared_at);
+      << Context.getTagDeclType(ClassDecl) << 0 << Field->getDeclName();
+      Diag(Field->getLocation(), diag::note_declared_at);
       Diag(CurrentLocation, diag::note_first_required_here);
       err = true;
     }
     else if (FieldType.isConstQualified()) {
       Diag(ClassDecl->getLocation(), diag::err_uninitialized_member_for_assign) 
-      << Context.getTagDeclType(ClassDecl) << 1 << (*Field)->getNameAsCString();
-      Diag((*Field)->getLocation(), diag::note_declared_at);
+      << Context.getTagDeclType(ClassDecl) << 1 << Field->getDeclName();
+      Diag(Field->getLocation(), diag::note_declared_at);
       Diag(CurrentLocation, diag::note_first_required_here);
       err = true;
     }

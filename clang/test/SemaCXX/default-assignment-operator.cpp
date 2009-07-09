@@ -72,3 +72,19 @@ void i()
 	d1 = d2;
 }
 
+// Test5
+
+class E1 { // expected-error{{cannot define the implicit default assignment operator for 'class E1', because non-static const member 'a' can't use default assignment operator}}
+public:
+  const int a; // expected-note{{declared at}}
+  E1() : a(0) {}  
+
+};
+
+E1 e1, e2;
+
+void j()
+{
+  e1 = e2; // expected-note{{synthesized method is first required here}}
+}
+
