@@ -37,15 +37,6 @@ static cl::opt<bool> PrintVolatile("interpreter-print-volatile", cl::Hidden,
 //                     Various Helper Functions
 //===----------------------------------------------------------------------===//
 
-static inline uint64_t doSignExtension(uint64_t Val, const IntegerType* ITy) {
-  // Determine if the value is signed or not
-  bool isSigned = (Val & (1 << (ITy->getBitWidth()-1))) != 0;
-  // If its signed, extend the sign bits
-  if (isSigned)
-    Val |= ~ITy->getBitMask();
-  return Val;
-}
-
 static void SetValue(Value *V, GenericValue Val, ExecutionContext &SF) {
   SF.Values[V] = Val;
 }
