@@ -154,6 +154,11 @@ namespace X86II {
     /// dllimport linkage on windows.
     MO_DLLIMPORT = 12,
     
+    /// MO_DARWIN_STUB - On a symbol operand "FOO", this indicates that the
+    /// reference is actually to the "FOO$stub" symbol.  This is used for calls
+    /// and jumps to external functions on Tiger and before.
+    MO_DARWIN_STUB = 13,
+    
     
     //===------------------------------------------------------------------===//
     // Instruction encodings.  These are the standard/most common forms for X86

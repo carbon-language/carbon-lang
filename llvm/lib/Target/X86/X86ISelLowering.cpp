@@ -1900,8 +1900,8 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
-    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
-                                        getTargetMachine(), true)) {
+    GlobalValue *GV = G->getGlobal();
+    if (!Subtarget->GVRequiresExtraLoad(GV, getTargetMachine(), true)) {
       unsigned char OpFlags = 0;
     
       // On ELF targets, in both X86-64 and X86-32 mode, direct calls to
@@ -1910,11 +1910,18 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       // we don't need to use the PLT - we can directly call it.
       if (Subtarget->isTargetELF() &&
           getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-          G->getGlobal()->hasDefaultVisibility() &&
-          !G->getGlobal()->hasLocalLinkage())
+          GV->hasDefaultVisibility() && !GV->hasLocalLinkage()) {
         OpFlags = X86II::MO_PLT;
+      } else if (Subtarget->isPICStyleStub() &&
+               (GV->isDeclaration() || GV->isWeakForLinker()) &&
+               Subtarget->getDarwinVers() < 9) {
+        // PC-relative references to external symbols should go through $stub,
+        // unless we're building with the leopard linker or later, which
+        // automatically synthesizes these stubs.
+        OpFlags = X86II::MO_DARWIN_STUB;
+      }
 
-      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy(),
+      Callee = DAG.getTargetGlobalAddress(GV, getPointerTy(),
                                           G->getOffset(), OpFlags);
     }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
@@ -1923,9 +1930,16 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     // On ELF targets, in either X86-64 or X86-32 mode, direct calls to external
     // symbols should go through the PLT.
     if (Subtarget->isTargetELF() &&
-        getTargetMachine().getRelocationModel() == Reloc::PIC_)
+        getTargetMachine().getRelocationModel() == Reloc::PIC_) {
       OpFlags = X86II::MO_PLT;
-    
+    } else if (Subtarget->isPICStyleStub() &&
+             Subtarget->getDarwinVers() < 9) {
+      // PC-relative references to external symbols should go through $stub,
+      // unless we're building with the leopard linker or later, which
+      // automatically synthesizes these stubs.
+      OpFlags = X86II::MO_DARWIN_STUB;
+    }
+      
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),
                                          OpFlags);
   } else if (IsTailCall) {

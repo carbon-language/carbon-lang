@@ -309,40 +309,24 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       needCloseParen = true;
     }
     
-    if (Subtarget->isPICStyleStub()) {
-      // DARWIN/X86-32 in != static mode.
-      
-      // Link-once, declaration, or Weakly-linked global variables need
-      // non-lazily-resolved stubs
-      if (GV->isDeclaration() || GV->isWeakForLinker()) {
-        // Dynamically-resolved functions need a stub for the function.
-        assert(isa<Function>(GV));
-        
-        // Function stubs are no longer needed for Mac OS X 10.5 and up.
-        if (Subtarget->isTargetDarwin() && Subtarget->getDarwinVers() >= 9) {
-          O << Name;
-        } else {
-          FnStubs.insert(Name);
-          printSuffixedName(Name, "$stub");
-        }
-        assert(MO.getTargetFlags() == 0);
-      } else {
-        O << Name;
-      }
+    // Handle dllimport linkage.
+    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
+      O << "__imp_";
+    
+    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      FnStubs.insert(Name);
+      printSuffixedName(Name, "$stub");
     } else {
-      // Handle dllimport linkage.
-      if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-        O << "__imp_";
       O << Name;
-      
-      // Assemble call via PLT for externally visible symbols.
-      if (MO.getTargetFlags() == X86II::MO_PLT)
-        O << "@PLT";
-      
-      if (Subtarget->isTargetCygMing() && GV->isDeclaration())
-        // Save function name for later type emission
-        CygMingStubs.insert(Name);
     }
+    
+    // Assemble call via PLT for externally visible symbols.
+    if (MO.getTargetFlags() == X86II::MO_PLT)
+      O << "@PLT";
+    
+    if (Subtarget->isTargetCygMing() && GV->isDeclaration())
+      // Save function name for later type emission
+      CygMingStubs.insert(Name);
     
     printOffset(MO.getOffset());
     
@@ -355,15 +339,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     bool needCloseParen = false;
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
-    // Print function stub suffix unless it's Mac OS X 10.5 and up.
-    if (Subtarget->isPICStyleStub() && 
-        // DARWIN/X86-32 in != static mode.
-        Subtarget->getDarwinVers() < 9) {
-      FnStubs.insert(Name);
-      printSuffixedName(Name, "$stub");
-      return;
-    }
-    
+     
     if (Name[0] == '$') {
       // The name begins with a dollar-sign. In order to avoid having it look
       // like an integer immediate to the assembler, enclose it in parens.
@@ -371,7 +347,12 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       needCloseParen = true;
     }
     
-    O << Name;
+    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      FnStubs.insert(Name);
+      printSuffixedName(Name, "$stub");
+    } else {
+      O << Name;
+    }
     
     if (MO.getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS) {
       O << " + [.-";
