@@ -158,11 +158,14 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
       
   // ELF and X86-64 don't have a distinct DynamicNoPIC model.  DynamicNoPIC
   // is defined as a model for code which may be used in static or dynamic
-  // executables but not necessarily a shared library. On these systems we just
-  // compile in -static mode.
-  if (getRelocationModel() == Reloc::DynamicNoPIC &&
-      !Subtarget.isTargetDarwin())
-    setRelocationModel(Reloc::Static);
+  // executables but not necessarily a shared library. On X86-32 we just
+  // compile in -static mode, in x86-64 we use PIC.
+  if (getRelocationModel() == Reloc::DynamicNoPIC) {
+    if (is64Bit)
+      setRelocationModel(Reloc::PIC_);
+    else if (!Subtarget.isTargetDarwin())
+      setRelocationModel(Reloc::Static);
+  }
 
   // If we are on Darwin, disallow static relocation model in X86-64 mode, since
   // the Mach-O file format doesn't support it.

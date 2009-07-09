@@ -1319,14 +1319,6 @@ X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDValue Op) {
 }
 
 
-/// isUsingGOT - Return true if the target uses a GOT for PIC, and if we're in
-/// PIC mode.
-static bool isUsingGOT(const TargetMachine &TM) {
-  const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-  return TM.getRelocationModel() == Reloc::PIC_ &&
-         Subtarget.isPICStyleGOT();
-}
-
 /// CreateCopyOfByValArgument - Make a copy of an aggregate at address specified
 /// by "Src" to address "Dst" with size and alignment information specified by
 /// the specific parameter attribute. The copy will be passed as a byval
@@ -1794,7 +1786,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     }
 
   
-  if (isUsingGOT(getTargetMachine())) {
+  if (Subtarget->isPICStyleGOT()) {
     // ELF / PIC requires GOT in the EBX register before function calls via PLT
     // GOT pointer.
     if (!IsTailCall) {
@@ -1952,7 +1944,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
                                   RegsToPass[i].second.getValueType()));
 
   // Add an implicit use GOT pointer in EBX.
-  if (!IsTailCall && isUsingGOT(getTargetMachine()))
+  if (!IsTailCall && Subtarget->isPICStyleGOT())
     Ops.push_back(DAG.getRegister(X86::EBX, getPointerTy()));
 
   // Add an implicit use of AL for x86 vararg functions.
@@ -2069,12 +2061,12 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(CallSDNode *TheCall,
     unsigned CallerCC = MF.getFunction()->getCallingConv();
     unsigned CalleeCC= TheCall->getCallingConv();
     if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
-      SDValue Callee = TheCall->getCallee();
       // On x86/32Bit PIC/GOT tail calls are supported.
       if (getTargetMachine().getRelocationModel() != Reloc::PIC_ ||
           !Subtarget->isPICStyleGOT() || !Subtarget->is64Bit())
         return true;
-
+      
+      SDValue Callee = TheCall->getCallee();
       // Can only do local tail calls (in same module, hidden or protected) on
       // x86_64 PIC/GOT at the moment.
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
@@ -4438,11 +4430,11 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   if (Subtarget->is64Bit() &&
       getTargetMachine().getCodeModel() == CodeModel::Small) {
     WrapperKind = X86ISD::WrapperRIP;
-  } else if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
-    if (Subtarget->isPICStyleStub())
-      OpFlag = X86II::MO_PIC_BASE_OFFSET;
-    else if (Subtarget->isPICStyleGOT())
-      OpFlag = X86II::MO_GOTOFF;
+  } else if (Subtarget->isPICStyleGOT()) {
+    OpFlag = X86II::MO_GOTOFF;
+  } else if (Subtarget->isPICStyleStub() &&
+             getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    OpFlag = X86II::MO_PIC_BASE_OFFSET;
   }
   
   SDValue Result = DAG.getTargetConstantPool(CP->getConstVal(), getPointerTy(),
@@ -4471,11 +4463,11 @@ SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   
   if (Subtarget->is64Bit()) {
     WrapperKind = X86ISD::WrapperRIP;
-  } else if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
-    if (Subtarget->isPICStyleStub())
-      OpFlag = X86II::MO_PIC_BASE_OFFSET;
-    else if (Subtarget->isPICStyleGOT())
-      OpFlag = X86II::MO_GOTOFF;
+  } else if (Subtarget->isPICStyleGOT()) {
+    OpFlag = X86II::MO_GOTOFF;
+  } else if (Subtarget->isPICStyleStub() &&
+             getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    OpFlag = X86II::MO_PIC_BASE_OFFSET;
   }
   
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy(),
@@ -4504,11 +4496,11 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
   unsigned WrapperKind = X86ISD::Wrapper;
   if (Subtarget->is64Bit()) {
     WrapperKind = X86ISD::WrapperRIP;
-  } else if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
-    if (Subtarget->isPICStyleStub())
-      OpFlag = X86II::MO_PIC_BASE_OFFSET;
-    else if (Subtarget->isPICStyleGOT())
-      OpFlag = X86II::MO_GOTOFF;
+  } else if (Subtarget->isPICStyleGOT()) {
+    OpFlag = X86II::MO_GOTOFF;
+  } else if (Subtarget->isPICStyleStub() &&
+             getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    OpFlag = X86II::MO_PIC_BASE_OFFSET;
   }
   
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy(), OpFlag);
@@ -4550,12 +4542,10 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
     
     if (GV->hasDLLImportLinkage())
       OpFlags = X86II::MO_DLLIMPORT;
-    else if (Subtarget->isPICStyleRIPRel() &&
-             getTargetMachine().getRelocationModel() != Reloc::Static) {
+    else if (Subtarget->isPICStyleRIPRel()) {
       if (ExtraLoadRequired)
         OpFlags = X86II::MO_GOTPCREL;
-    } else if (Subtarget->isPICStyleGOT() &&
-               getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    } else if (Subtarget->isPICStyleGOT()) {
       if (ExtraLoadRequired)
         OpFlags = X86II::MO_GOT;
       else
