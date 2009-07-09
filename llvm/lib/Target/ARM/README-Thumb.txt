@@ -232,3 +232,8 @@ Add ldmia, stmia support.
 Thumb load / store address mode offsets are scaled. The values kept in the
 instruction operands are pre-scale values. This probably ought to be changed
 to avoid extra work when we convert Thumb2 instructions to Thumb1 instructions.
+
+//===---------------------------------------------------------------------===//
+
+We need to make (some of the) Thumb1 instructions predicable. That will allow
+shrinking of predicated Thumb2 instructions.
