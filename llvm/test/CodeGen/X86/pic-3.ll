@@ -1,10 +1,13 @@
-; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic \
-; RUN:   -o %t -f
-; RUN: grep _GLOBAL_OFFSET_TABLE_ %t
-; RUN: grep piclabel %t | count 3
-; RUN: grep PLT %t | count 1
+; RUN: llvm-as < %s | llc -mtriple=i686-pc-linux-gnu -relocation-model=pic | FileCheck %s
 
-define void @bar() {
+; CHECK: bar:
+; CHECK: call	.Lllvm$1.$piclabel
+; CHECK: popl	%ebx
+; CHECK: addl	$_GLOBAL_OFFSET_TABLE_ + [.-.Lllvm$1.$piclabel], %ebx
+; CHECK: call	foo@PLT
+
+
+define void @bar() nounwind {
 entry:
     call void(...)* @foo()
     br label %return
