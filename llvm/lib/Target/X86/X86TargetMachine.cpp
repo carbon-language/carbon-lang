@@ -128,7 +128,7 @@ X86_64TargetMachine::X86_64TargetMachine(const Module &M, const std::string &FS)
   : X86TargetMachine(M, FS, true) {
 }
 
-/// X86TargetMachine ctor - Create an ILP32 architecture model
+/// X86TargetMachine ctor - Create an X86 target.
 ///
 X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
                                    bool is64Bit)
@@ -138,36 +138,37 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this), ELFWriterInfo(*this) {
   DefRelocModel = getRelocationModel();
-  // FIXME: Correctly select PIC model for Win64 stuff
+      
+  // If no relocation model was picked, default as appropriate for the target.
   if (getRelocationModel() == Reloc::Default) {
-    if (Subtarget.isTargetDarwin() ||
-        (Subtarget.isTargetCygMing() && !Subtarget.isTargetWin64()))
-      setRelocationModel(Reloc::DynamicNoPIC);
-    else
+    if (!Subtarget.isTargetDarwin())
       setRelocationModel(Reloc::Static);
+    else if (Subtarget.is64Bit())
+      setRelocationModel(Reloc::PIC_);
+    else
+      setRelocationModel(Reloc::DynamicNoPIC);
   }
 
   assert(getRelocationModel() != Reloc::Default &&
          "Relocation mode not picked");
 
-  // ELF doesn't have a distinct dynamic-no-PIC model. Dynamic-no-PIC
-  // is defined as a model for code which may be used in static or
-  // dynamic executables but not necessarily a shared library. On ELF
-  // implement this by using the Static model.
-  if (Subtarget.isTargetELF() &&
-      getRelocationModel() == Reloc::DynamicNoPIC)
+  // If no code model is picked, default to small.
+  if (getCodeModel() == CodeModel::Default)
+    setCodeModel(CodeModel::Small);
+      
+  // ELF and X86-64 don't have a distinct dynamic-no-PIC model.  Dynamic-no-PIC
+  // is defined as a model for code which may be used in static or dynamic
+  // executables but not necessarily a shared library. On these systems we just
+  // compile in -static mode.
+  if (getRelocationModel() == Reloc::DynamicNoPIC &&
+      !Subtarget.isTargetDarwin())
     setRelocationModel(Reloc::Static);
 
-  if (Subtarget.is64Bit()) {
-    // No DynamicNoPIC support under X86-64.
-    if (getRelocationModel() == Reloc::DynamicNoPIC)
-      setRelocationModel(Reloc::PIC_);
-    // Default X86-64 code model is small.
-    if (getCodeModel() == CodeModel::Default)
-      setCodeModel(CodeModel::Small);
-  }
-
-  if (Subtarget.isTargetCygMing()) {
+  // Determine the PICStyle based on the target selected.
+  if (getRelocationModel() == Reloc::Static) {
+    // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.
+    Subtarget.setPICStyle(PICStyles::None);
+  } else if (Subtarget.isTargetCygMing()) {
     Subtarget.setPICStyle(PICStyles::None);
   } else if (Subtarget.isTargetDarwin()) {
     if (Subtarget.is64Bit())
@@ -181,10 +182,9 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
       Subtarget.setPICStyle(PICStyles::GOT);
   }
       
-  // Finally, unless we're in PIC or DynamicNoPIC mode, set the PIC style to
-  // None.
-  if (getRelocationModel() == Reloc::Static)
-    Subtarget.setPICStyle(PICStyles::None);
+  // Finally, if we have "none" as our PIC style, force to static mode.
+  if (Subtarget.getPICStyle() == PICStyles::None)
+    setRelocationModel(Reloc::Static);
 }
 
 //===----------------------------------------------------------------------===//
