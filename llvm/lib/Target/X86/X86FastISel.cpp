@@ -440,7 +440,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
       if (GVar->isThreadLocal())
         return false;
 
-    // Set up the basic address.
+    // Okay, we've committed to selecting this global. Set up the basic address.
     AM.GV = GV;
     
     if (!isCall &&
@@ -448,17 +448,26 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
         !Subtarget->is64Bit())
       AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(&MF);
 
-    // Emit an extra load if the ABI requires it.
-    if (Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
-      // Check to see if we've already materialized this
-      // value in a register in this block.
-      DenseMap<const Value *, unsigned>::iterator I = LocalValueMap.find(V);
-      if (I != LocalValueMap.end() && I->second != 0) {
-        AM.Base.Reg = I->second;
-        AM.GV = 0;
-        return true;
+    // If the ABI doesn't require an extra load, return a direct reference to
+    // the global.
+    if (!Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
+      if (Subtarget->isPICStyleRIPRel()) {
+        // Use rip-relative addressing if we can.  Above we verified that the
+        // base and index registers are unused.
+        assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
+        AM.Base.Reg = X86::RIP;
       }
       
+      return true;
+    }
+    
+    // Check to see if we've already materialized this stub loaded value into a
+    // register in this block.  If so, just reuse it.
+    DenseMap<const Value*, unsigned>::iterator I = LocalValueMap.find(V);
+    unsigned LoadReg;
+    if (I != LocalValueMap.end() && I->second != 0) {
+      LoadReg = I->second;
+    } else {
       // Issue load from stub.
       unsigned Opc = 0;
       const TargetRegisterClass *RC = NULL;
@@ -482,22 +491,18 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
           StubAM.Base.Reg = X86::RIP;
         }
       }
-
-      unsigned ResultReg = createResultReg(RC);
-      addFullAddress(BuildMI(MBB, DL, TII.get(Opc), ResultReg), StubAM);
-
-      // Now construct the final address. Note that the Disp, Scale,
-      // and Index values may already be set here.
-      AM.Base.Reg = ResultReg;
-      AM.GV = 0;
-
+      
+      LoadReg = createResultReg(RC);
+      addFullAddress(BuildMI(MBB, DL, TII.get(Opc), LoadReg), StubAM);
+      
       // Prevent loading GV stub multiple times in same MBB.
-      LocalValueMap[V] = AM.Base.Reg;
-    } else if (Subtarget->isPICStyleRIPRel()) {
-      // Use rip-relative addressing if we can.
-      AM.Base.Reg = X86::RIP;
+      LocalValueMap[V] = LoadReg;
     }
     
+    // Now construct the final address. Note that the Disp, Scale,
+    // and Index values may already be set here.
+    AM.Base.Reg = LoadReg;
+    AM.GV = 0;
     return true;
   }
 
