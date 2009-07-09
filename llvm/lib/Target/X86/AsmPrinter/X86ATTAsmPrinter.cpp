@@ -282,10 +282,6 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-static inline bool shouldPrintPLT(TargetMachine &TM, const X86Subtarget* ST) {
-  return ST->isTargetELF() && TM.getRelocationModel() == Reloc::PIC_;
-}
-
 /// print_pcrel_imm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
 /// example, a $ is not emitted.
@@ -352,14 +348,11 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
         O << "__imp_";
       O << Name;
       
-      if (shouldPrintPLT(TM, Subtarget)) {
-        // Assemble call via PLT for externally visible symbols
-        if (!GV->hasHiddenVisibility() && !GV->hasProtectedVisibility() &&
-            !GV->hasLocalLinkage()) {
-          O << "@PLT";
-          assert(MO.getTargetFlags() == 0);
-        }
-      }
+      // Assemble call via PLT for externally visible symbols.
+      if (MO.getTargetFlags() == X86II::MO_PLT)
+        O << "@PLT";
+        
+      
       if (Subtarget->isTargetCygMing() && GV->isDeclaration())
         // Save function name for later type emission
         FnStubs.insert(Name);
@@ -400,10 +393,8 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       O << ']';
     }
     
-    if (shouldPrintPLT(TM, Subtarget)) {
+    if (MO.getTargetFlags() == X86II::MO_PLT)
       O << "@PLT";
-      assert(MO.getTargetFlags() == 0);
-    }
     
     if (needCloseParen)
       O << ')';

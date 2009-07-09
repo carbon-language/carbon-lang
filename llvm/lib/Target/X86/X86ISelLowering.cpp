@@ -1901,11 +1901,33 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
     if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
-                                        getTargetMachine(), true))
+                                        getTargetMachine(), true)) {
+      unsigned char OpFlags = 0;
+    
+      // On ELF targets, in both X86-64 and X86-32 mode, direct calls to
+      // external symbols most go through the PLT in PIC mode.  If the symbol
+      // has hidden or protected visibility, or if it is static or local, then
+      // we don't need to use the PLT - we can directly call it.
+      if (Subtarget->isTargetELF() &&
+          getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+          G->getGlobal()->hasDefaultVisibility() &&
+          !G->getGlobal()->hasLocalLinkage())
+        OpFlags = X86II::MO_PLT;
+
       Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy(),
-                                          G->getOffset());
+                                          G->getOffset(), OpFlags);
+    }
   } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
-    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
+    unsigned char OpFlags = 0;
+
+    // On ELF targets, in either X86-64 or X86-32 mode, direct calls to external
+    // symbols should go through the PLT.
+    if (Subtarget->isTargetELF() &&
+        getTargetMachine().getRelocationModel() == Reloc::PIC_)
+      OpFlags = X86II::MO_PLT;
+    
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy(),
+                                         OpFlags);
   } else if (IsTailCall) {
     unsigned Opc = Is64Bit ? X86::R11 : X86::EAX;
 
