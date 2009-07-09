@@ -25,8 +25,8 @@ cl::list<std::string> InputFilenames(cl::Positional, cl::desc("<input file>"),
                                      cl::ZeroOrMore);
 cl::opt<std::string> OutputFilename("o", cl::desc("Output file name"),
                                     cl::value_desc("file"), cl::Prefix);
-cl::opt<std::string> TempDirname("t", cl::desc("Temp dir name"),
-                                    cl::value_desc("dir"), cl::Prefix);
+cl::opt<std::string> TempDirname("temp-dir", cl::desc("Temp dir name"),
+                                 cl::value_desc("<directory>"), cl::Prefix);
 cl::list<std::string> Languages("x",
           cl::desc("Specify the language of the following input files"),
           cl::ZeroOrMore);
