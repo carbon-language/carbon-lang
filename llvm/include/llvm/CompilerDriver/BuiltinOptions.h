@@ -22,6 +22,7 @@ namespace SaveTempsEnum { enum Values { Cwd, Obj, Unset }; }
 
 extern llvm::cl::list<std::string> InputFilenames;
 extern llvm::cl::opt<std::string> OutputFilename;
+extern llvm::cl::opt<std::string> TempDirname;
 extern llvm::cl::list<std::string> Languages;
 extern llvm::cl::opt<bool> DryRun;
 extern llvm::cl::opt<bool> VerboseMode;
