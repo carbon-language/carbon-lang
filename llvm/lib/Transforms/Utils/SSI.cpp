@@ -282,12 +282,16 @@ void SSI::substituteUse(Instruction *I) {
 }
 
 /// Test if the BasicBlock BB dominates any use or definition of value.
+/// If it dominates a phi instruction that is on the same BasicBlock,
+/// that does not count.
 ///
 bool SSI::dominateAny(BasicBlock *BB, Instruction *value) {
   for (Value::use_iterator begin = value->use_begin(),
        end = value->use_end(); begin != end; ++begin) {
     Instruction *I = cast<Instruction>(*begin);
     BasicBlock *BB_father = I->getParent();
+    if (BB == BB_father && isa<PHINode>(I))
+      continue;
     if (DT_->dominates(BB, BB_father)) {
       return true;
     }
