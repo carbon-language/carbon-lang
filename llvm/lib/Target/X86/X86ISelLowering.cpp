@@ -4547,13 +4547,16 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
   // offset if it is legal.
   SDValue Result;
   if (!IsPic && !ExtraLoadRequired && isInt32(Offset)) {
+    // A direct static reference to a global.
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
     Offset = 0;
   } else {
     unsigned char OpFlags = 0;
     
-    if (Subtarget->isPICStyleRIPRel() &&
-        getTargetMachine().getRelocationModel() != Reloc::Static) {
+    if (GV->hasDLLImportLinkage())
+      OpFlags = X86II::MO_DLLIMPORT;
+    else if (Subtarget->isPICStyleRIPRel() &&
+             getTargetMachine().getRelocationModel() != Reloc::Static) {
       if (ExtraLoadRequired)
         OpFlags = X86II::MO_GOTPCREL;
     } else if (Subtarget->isPICStyleGOT() &&

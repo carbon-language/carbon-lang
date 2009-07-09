@@ -149,6 +149,12 @@ namespace X86II {
     ///    SYMBOL_LABEL @NTPOFF
     MO_NTPOFF = 11,
     
+    /// MO_DLLIMPORT - On a symbol operand "FOO", this indicates that the
+    /// reference is actually to the "__imp_FOO" symbol.  This is used for
+    /// dllimport linkage on windows.
+    MO_DLLIMPORT = 12,
+    
+    
     //===------------------------------------------------------------------===//
     // Instruction encodings.  These are the standard/most common forms for X86
     // instructions.

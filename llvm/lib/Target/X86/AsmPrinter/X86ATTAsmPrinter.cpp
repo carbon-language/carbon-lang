@@ -351,10 +351,9 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
         O << Name;
       }
     } else {
-      if (GV->hasDLLImportLinkage()) {
-        assert(MO.getTargetFlags() == 0);
+      // Handle dllimport linkage.
+      if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
         O << "__imp_";
-      }
       O << Name;
       
       if (shouldPrintPLT(TM, Subtarget)) {
@@ -503,10 +502,9 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         PrintPICBaseSymbol();
       }        
     } else {
-      if (GV->hasDLLImportLinkage()) {
+      // Handle dllimport linkage.
+      if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
         O << "__imp_";
-        assert(MO.getTargetFlags() == 0);
-      }
       O << Name;
     }
 
@@ -533,7 +531,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   switch (MO.getTargetFlags()) {
   default:
     assert(0 && "Unknown target flag on GV operand");
-  case X86II::MO_NO_FLAG:
+  case X86II::MO_NO_FLAG:    // No flag.
+  case X86II::MO_DLLIMPORT:  // Prefix, not a suffix.
     break;
   case X86II::MO_GOT_ABSOLUTE_ADDRESS:
     O << " + [.-";

@@ -244,11 +244,13 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     decorateName(Name, GV);
 
     if (!isMemOp) O << "OFFSET ";
-    if (GV->hasDLLImportLinkage()) {
-      // FIXME: This should be fixed with full support of stdcall & fastcall
-      // CC's
+    
+    // Handle dllimport linkage.
+    // FIXME: This should be fixed with full support of stdcall & fastcall
+    // CC's
+    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
       O << "__imp_";
-    }
+    
     O << Name;
     printOffset(MO.getOffset());
     return;
@@ -278,11 +280,11 @@ void X86IntelAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo){
     std::string Name = Mang->getValueName(GV);
     decorateName(Name, GV);
     
-    if (GV->hasDLLImportLinkage()) {
-      // FIXME: This should be fixed with full support of stdcall & fastcall
-      // CC's
+    // Handle dllimport linkage.
+    // FIXME: This should be fixed with full support of stdcall & fastcall
+    // CC's
+    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
       O << "__imp_";
-    }
     O << Name;
     printOffset(MO.getOffset());
     return;
