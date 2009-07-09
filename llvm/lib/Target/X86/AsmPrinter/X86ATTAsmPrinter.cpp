@@ -428,6 +428,10 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       needCloseParen = true;
     }
 
+    // Handle dllimport linkage.
+    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
+      O << "__imp_";
+    
     if (Subtarget->isPICStyleStub()) {
       // DARWIN/X86-32 in != static mode.
 
@@ -457,24 +461,20 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         PrintPICBaseSymbol();
       }        
     } else {
-      // Handle dllimport linkage.
-      if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-        O << "__imp_";
       O << Name;
     }
-
-    printOffset(MO.getOffset());
 
     if (needCloseParen)
       O << ')';
     
+    printOffset(MO.getOffset());
     break;
   }
   case MachineOperand::MO_ExternalSymbol:
     /// NOTE: MO_ExternalSymbol in a non-pcrel_imm context is *only* generated
     /// by _GLOBAL_OFFSET_TABLE_ on X86-32.  All others are call operands, which
     /// are pcrel_imm's.
-    assert(!Subtarget->is64Bit() && !Subtarget->isPICStyleRIPRel());
+    assert(!Subtarget->is64Bit());
     // These are never used as memory operands.
     assert(Modifier == 0 || strcmp(Modifier, "mem"));
     O << '$';
