@@ -798,7 +798,7 @@ TemplateExprInstantiator::VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *E) {
                                           E->getDeclName(), 
                                           /*HasTrailingLParen=*/false,
                                           &SS,
-                                          /*FIXME:isAddressOfOperand=*/false);
+                                          E->isAddressOfOperand());
 }
 
 Sema::OwningExprResult 

@@ -985,11 +985,16 @@ class UnresolvedDeclRefExpr : public Expr {
   /// declaration name.
   NestedNameSpecifier *NNS;
 
+  /// \brief Whether this expr is an address of (&) operand.
+  bool IsAddressOfOperand;
+  
 public:
   UnresolvedDeclRefExpr(DeclarationName N, QualType T, SourceLocation L,
-                        SourceRange R, NestedNameSpecifier *NNS)
+                        SourceRange R, NestedNameSpecifier *NNS, 
+                        bool IsAddressOfOperand)
     : Expr(UnresolvedDeclRefExprClass, T, true, true), 
-      Name(N), Loc(L), QualifierRange(R), NNS(NNS) { }
+      Name(N), Loc(L), QualifierRange(R), NNS(NNS), 
+      IsAddressOfOperand(IsAddressOfOperand) { }
 
   /// \brief Retrieve the name that this expression refers to.
   DeclarationName getDeclName() const { return Name; }
@@ -1004,6 +1009,9 @@ public:
   /// declaration.
   NestedNameSpecifier *getQualifier() const { return NNS; }
 
+  /// \brief Retrieve whether this is an address of (&) operand.
+  
+  bool isAddressOfOperand() const { return IsAddressOfOperand; }
   virtual SourceRange getSourceRange() const { 
     return SourceRange(QualifierRange.getBegin(), getLocation()); 
   }

@@ -849,7 +849,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   if (SS && isDependentScopeSpecifier(*SS)) {
     return Owned(new (Context) UnresolvedDeclRefExpr(Name, Context.DependentTy,
                                                      Loc, SS->getRange(), 
-                static_cast<NestedNameSpecifier *>(SS->getScopeRep())));
+                static_cast<NestedNameSpecifier *>(SS->getScopeRep()),
+                                                     isAddressOfOperand));
   }
 
   LookupResult Lookup = LookupParsedName(S, SS, Name, LookupOrdinaryName,
