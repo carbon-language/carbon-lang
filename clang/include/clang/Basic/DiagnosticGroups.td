@@ -94,6 +94,7 @@ def UnusedParameter : DiagGroup<"unused-parameter">;
 def UnusedValue    : DiagGroup<"unused-value">;
 def UnusedVariable : DiagGroup<"unused-variable">;
 def ReadOnlySetterAttrs : DiagGroup<"readonly-setter-attrs">;
+def Reorder : DiagGroup<"reorder">;
 def UndeclaredSelector : DiagGroup<"undeclared-selector">;
 def : DiagGroup<"variadic-macros">;
 def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
@@ -135,6 +136,7 @@ def Most : DiagGroup<"most", [
     VectorConversions,
     VolatileRegisterVar,
     ReadOnlySetterAttrs,
+    Reorder,
     UndeclaredSelector
  ]>;
 

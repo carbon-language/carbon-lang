@@ -819,10 +819,77 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
       << 0;
     err = true;
   }
-  if (!err)
+  if (!err) {
     Constructor->setBaseOrMemberInitializers(Context, 
                     reinterpret_cast<CXXBaseOrMemberInitializer **>(MemInits), 
                     NumMemInits);
+    // Also issue warning if order of ctor-initializer list does not match order
+    // of 1) base class declarations and 2) order of non-static data members.
+    // FIXME. proper handling in the presense of virtual base class.
+    llvm::SmallVector<const void*, 32> AllBaseOrMembers;
+    
+    CXXRecordDecl *ClassDecl
+      = cast<CXXRecordDecl>(Constructor->getDeclContext());
+    for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
+         E = ClassDecl->bases_end(); Base != E; ++Base)
+      AllBaseOrMembers.push_back(Base->getType()->getAsRecordType());
+    
+    for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+         E = ClassDecl->field_end(); Field != E; ++Field)
+      AllBaseOrMembers.push_back(*Field);
+    
+    int Last = AllBaseOrMembers.size();
+    int curIndex = 0;
+    CXXBaseOrMemberInitializer *PrevMember = 0;
+    for (unsigned i = 0; i < NumMemInits; i++) {
+      CXXBaseOrMemberInitializer *Member = 
+        static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
+      void *MemberInCtorList;
+      if (Member->isBaseInitializer())
+        MemberInCtorList = Member->getBaseClass();
+      else
+        MemberInCtorList = Member->getMember();
+      
+      int j;
+      for (j = curIndex; j < Last; j++)
+        if (MemberInCtorList == AllBaseOrMembers[j])
+          break;
+      if (j == Last) {
+        if (!PrevMember)
+          continue;
+        // Initializer as specified in ctor-initializer list is out of order.
+        // Issue a warning diagnostic.
+        if (PrevMember->isBaseInitializer()) {
+          // Diagnostics is for an initialized base class.
+          Type *BaseClass = PrevMember->getBaseClass();
+          Diag(PrevMember->getSourceLocation(),
+               diag::warn_base_initialized) 
+                << BaseClass->getDesugaredType(true);
+        }
+        else {
+          FieldDecl *Field = PrevMember->getMember();
+          Diag(PrevMember->getSourceLocation(),
+               diag::warn_field_initialized) 
+            << Field->getNameAsString();
+        }
+        // Also the note!
+        if (FieldDecl *Field = Member->getMember())
+          Diag(Member->getSourceLocation(), 
+               diag::note_fieldorbase_initialized_here) << 0
+            << Field->getNameAsString();
+        else {
+          Type *BaseClass = Member->getBaseClass();
+          Diag(Member->getSourceLocation(),  
+               diag::note_fieldorbase_initialized_here) << 1
+            << BaseClass->getDesugaredType(true);
+        }
+      }
+      PrevMember = Member;
+      for (curIndex=0; curIndex < Last; curIndex++)
+        if (MemberInCtorList == AllBaseOrMembers[curIndex]) 
+          break;
+    }
+  }
 }
 
 namespace {
