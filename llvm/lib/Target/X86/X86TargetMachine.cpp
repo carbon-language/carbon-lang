@@ -156,7 +156,7 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
   if (getCodeModel() == CodeModel::Default)
     setCodeModel(CodeModel::Small);
       
-  // ELF and X86-64 don't have a distinct dynamic-no-PIC model.  Dynamic-no-PIC
+  // ELF and X86-64 don't have a distinct DynamicNoPIC model.  DynamicNoPIC
   // is defined as a model for code which may be used in static or dynamic
   // executables but not necessarily a shared library. On these systems we just
   // compile in -static mode.
@@ -164,6 +164,13 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
       !Subtarget.isTargetDarwin())
     setRelocationModel(Reloc::Static);
 
+  // If we are on Darwin, disallow static relocation model in X86-64 mode, since
+  // the Mach-O file format doesn't support it.
+  if (getRelocationModel() == Reloc::Static &&
+      Subtarget.isTargetDarwin() &&
+      is64Bit)
+    setRelocationModel(Reloc::PIC_);
+      
   // Determine the PICStyle based on the target selected.
   if (getRelocationModel() == Reloc::Static) {
     // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.
@@ -224,14 +231,6 @@ bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           raw_ostream &Out) {
-  // FIXME: Move this somewhere else!
-  // On Darwin, override 64-bit static relocation to pic_ since the
-  // assembler doesn't support it.
-  if (DefRelocModel == Reloc::Static &&
-      Subtarget.isTargetDarwin() && Subtarget.is64Bit() &&
-      getCodeModel() == CodeModel::Small)
-    setRelocationModel(Reloc::PIC_);
-
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
     PM.add(AsmPrinterCtor(Out, *this, Verbose));
@@ -245,8 +244,10 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
   if (DefRelocModel == Reloc::Default && 
-        (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit()))
+      (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit())) {
     setRelocationModel(Reloc::Static);
+    Subtarget.setPICStyle(PICStyles::None);
+  }
   
   // 64-bit JIT places everything in the same buffer except external functions.
   // On Darwin, use small code model but hack the call instruction for 
@@ -275,8 +276,10 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
   if (DefRelocModel == Reloc::Default && 
-        (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit()))
+      (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit())) {
     setRelocationModel(Reloc::Static);
+    Subtarget.setPICStyle(PICStyles::None);
+  }
   
   // 64-bit JIT places everything in the same buffer except external functions.
   // On Darwin, use small code model but hack the call instruction for 
@@ -305,8 +308,10 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
   if (DefRelocModel == Reloc::Default && 
-        (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit()))
+      (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit())) {
     setRelocationModel(Reloc::Static);
+    Subtarget.setPICStyle(PICStyles::None);
+  }
   
   // 64-bit JIT places everything in the same buffer except external functions.
   // On Darwin, use small code model but hack the call instruction for 
