@@ -1120,6 +1120,19 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
       Scale = 4;
       break;
     }
+    case ARMII::AddrModeT2_i12: {
+      ImmIdx = i+2;
+      InstrOffs = MI.getOperand(ImmIdx).getImm();
+      NumBits = 12;
+      break;
+    }
+    case ARMII::AddrModeT2_so:
+    case ARMII::AddrModeT2_i8: {
+      ImmIdx = i+2;
+      InstrOffs = MI.getOperand(ImmIdx).getImm();
+      NumBits = 8;
+      break;
+    }
     default:
       LLVM_UNREACHABLE("Unsupported addressing mode!");
       break;
