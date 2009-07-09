@@ -4575,6 +4575,9 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
         OpFlags = X86II::MO_GOT;
       else
         OpFlags = X86II::MO_GOTOFF;
+    } else if (Subtarget->isPICStyleStub() &&
+               getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+      OpFlags = X86II::MO_PIC_BASE_OFFSET;
     }
     
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0, OpFlags);

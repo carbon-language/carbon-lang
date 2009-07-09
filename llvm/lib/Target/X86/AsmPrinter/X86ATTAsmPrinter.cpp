@@ -445,21 +445,17 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           else {
             HiddenGVStubs.insert(Name);
             printSuffixedName(Name, "$non_lazy_ptr");
-            assert(MO.getTargetFlags() == 0);
+            //assert(MO.getTargetFlags() == 0 || MO_PIC_BASE_OFFSET);
           }
         } else {
           GVStubs.insert(Name);
           printSuffixedName(Name, "$non_lazy_ptr");
-          assert(MO.getTargetFlags() == 0);
+          //assert(MO.getTargetFlags() == 0 || MO_PIC_BASE_OFFSET);
         }
       } else {
         O << Name;
       }
 
-      if (TM.getRelocationModel() == Reloc::PIC_) {
-        O << '-';
-        PrintPICBaseSymbol();
-      }        
     } else {
       O << Name;
     }
