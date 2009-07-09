@@ -305,24 +305,6 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
                                       bool DumpAsm,
                                       ObjectCodeEmitter &OCE) {
-  // FIXME: Move this to TargetJITInfo!
-  // On Darwin, do not override 64-bit setting made in X86TargetMachine().
-  if (DefRelocModel == Reloc::Default && 
-      (!Subtarget.isTargetDarwin() || !Subtarget.is64Bit())) {
-    setRelocationModel(Reloc::Static);
-    Subtarget.setPICStyle(PICStyles::None);
-  }
-  
-  // 64-bit JIT places everything in the same buffer except external functions.
-  // On Darwin, use small code model but hack the call instruction for 
-  // externals.  Elsewhere, do not assume globals are in the lower 4G.
-  if (Subtarget.is64Bit()) {
-    if (Subtarget.isTargetDarwin())
-      setCodeModel(CodeModel::Small);
-    else
-      setCodeModel(CodeModel::Large);
-  }
-
   PM.add(createX86ObjectCodeEmitterPass(*this, OCE));
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
