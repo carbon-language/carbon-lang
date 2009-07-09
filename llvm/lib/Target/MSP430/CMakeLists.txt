@@ -12,12 +12,13 @@ tablegen(MSP430GenSubtarget.inc -gen-subtarget)
 
 add_llvm_target(MSP430
   MSP430AsmPrinter.cpp
-  MSP430FrameInfo.cpp
-  MSP430InstrInfo.cpp
   MSP430ISelDAGToDAG.cpp
-  MSP430ISelLowering.cpp
   MSP430RegisterInfo.cpp
-  MSP430Subtarget.cpp
   MSP430TargetAsmInfo.cpp
+  MSP430InstrInfo.cpp
+  MSP430ISelLowering.cpp
+  MSP430Subtarget.cpp
   MSP430TargetMachine.cpp
   )
+
+target_link_libraries (LLVMMSP430 LLVMSelectionDAG)

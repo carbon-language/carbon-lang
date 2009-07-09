@@ -37,6 +37,7 @@ set(LLVM_ALL_TARGETS
   IA64
   Mips
   MSIL
+  MSP430
   PIC16
   PowerPC
   Sparc
