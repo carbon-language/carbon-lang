@@ -31,31 +31,29 @@ namespace {
   sys::Path getTempDir() {
     sys::Path tempDir;
 
-    if (! TempDirname.empty()) {
+    // The --temp-dir option.
+    if (!TempDirname.empty()) {
       tempDir = TempDirname;
-      if (!tempDir.exists()) {
-        std::string ErrMsg;
-        if (tempDir.createDirectoryOnDisk(true, &ErrMsg))
-          throw std::runtime_error(ErrMsg);
-      }
-      return tempDir;
     }
-
     // GCC 4.5-style -save-temps handling.
-    if (SaveTemps == SaveTempsEnum::Unset) {
+    else if (SaveTemps == SaveTempsEnum::Unset) {
       tempDir = sys::Path::GetTemporaryDirectory();
+      return tempDir;
     }
     else if (SaveTemps == SaveTempsEnum::Obj && !OutputFilename.empty()) {
       tempDir = OutputFilename;
       tempDir = tempDir.getDirname();
-
-      if (!tempDir.exists()) {
-        std::string ErrMsg;
-        if (tempDir.createDirectoryOnDisk(true, &ErrMsg))
-          throw std::runtime_error(ErrMsg);
-      }
     }
-    // else if (SaveTemps == Cwd) -> use current dir (leave tempDir empty)
+    else {
+      // SaveTemps == Cwd --> use current dir (leave tempDir empty).
+      return tempDir;
+    }
+
+    if (!tempDir.exists()) {
+      std::string ErrMsg;
+      if (tempDir.createDirectoryOnDisk(true, &ErrMsg))
+        throw std::runtime_error(ErrMsg);
+    }
 
     return tempDir;
   }
@@ -64,17 +62,19 @@ namespace {
   int BuildTargets(CompilationGraph& graph, const LanguageMap& langMap) {
     int ret;
     const sys::Path& tempDir = getTempDir();
+    bool toDelete =
+      (SaveTemps == SaveTempsEnum::Unset && TempDirname.empty());
 
     try {
       ret = graph.Build(tempDir, langMap);
     }
     catch(...) {
-      if (SaveTemps == SaveTempsEnum::Unset)
+      if (toDelete)
         tempDir.eraseFromDisk(true);
       throw;
     }
 
-    if (SaveTemps == SaveTempsEnum::Unset)
+    if (toDelete)
       tempDir.eraseFromDisk(true);
     return ret;
   }
