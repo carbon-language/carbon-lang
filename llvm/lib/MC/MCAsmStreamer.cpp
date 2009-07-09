@@ -42,7 +42,7 @@ namespace {
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
 
     virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                  unsigned Pow2Alignment);
+                                  unsigned Pow2Alignment, bool IsLocal);
 
     virtual void EmitBytes(const char *Data, unsigned Length);
 
@@ -146,8 +146,11 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 }
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
-                                     unsigned Pow2Alignment) {
-  OS << ".comm";
+                                     unsigned Pow2Alignment, bool IsLocal) {
+  if (IsLocal)
+    OS << ".lcomm";
+  else
+    OS << ".comm";
   OS << ' ' << Symbol->getName() << ',' << Size;
   if (Pow2Alignment != 0)
     OS << ',' << Pow2Alignment;

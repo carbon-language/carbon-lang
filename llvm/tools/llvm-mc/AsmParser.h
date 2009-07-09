@@ -110,7 +110,7 @@ private:
   /// accepts a single symbol (which should be a label or an external).
   bool ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr);
 
-  bool ParseDirectiveComm(); // ".comm"
+  bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
   
 };
 

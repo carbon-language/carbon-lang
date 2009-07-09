@@ -521,7 +521,9 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveSymbolAttribute(MCStreamer::WeakReference);
 
     if (!strcmp(IDVal, ".comm"))
-      return ParseDirectiveComm();
+      return ParseDirectiveComm(/*IsLocal=*/false);
+    if (!strcmp(IDVal, ".lcomm"))
+      return ParseDirectiveComm(/*IsLocal=*/true);
 
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
@@ -901,8 +903,8 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
 }
 
 /// ParseDirectiveComm
-///  ::= .comm identifier , size_expression [ , align_expression ]
-bool AsmParser::ParseDirectiveComm() {
+///  ::= ( .comm | .lcomm ) identifier , size_expression [ , align_expression ]
+bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   if (Lexer.isNot(asmtok::Identifier))
     return TokError("expected identifier in directive");
   
@@ -930,28 +932,29 @@ bool AsmParser::ParseDirectiveComm() {
   }
   
   if (Lexer.isNot(asmtok::EndOfStatement))
-    return TokError("unexpected token in '.comm' directive");
+    return TokError("unexpected token in '.comm' or '.lcomm' directive");
   
   Lexer.Lex();
 
-  // NOTE: a size of zero should create a undefined symbol
+  // NOTE: a size of zero for a .comm should create a undefined symbol
+  // but a size of .lcomm creates a bss symbol of size zero.
   if (Size < 0)
-    return Error(SizeLoc, "invalid '.comm' size, can't be less than zero");
+    return Error(SizeLoc, "invalid '.comm' or '.lcomm' directive size, can't "
+                 "be less than zero");
 
   // NOTE: The alignment in the directive is a power of 2 value, the assember
   // may internally end up wanting an alignment in bytes.
   // FIXME: Diagnose overflow.
   if (Pow2Alignment < 0)
-    return Error(Pow2AlignmentLoc, "invalid '.comm' alignment, can't be less "
-                 "than zero");
+    return Error(Pow2AlignmentLoc, "invalid '.comm' or '.lcomm' directive "
+                 "alignment, can't be less than zero");
 
   // TODO: Symbol must be undefined or it is a error to re-defined the symbol
   if (Sym->getSection() || Ctx.GetSymbolValue(Sym))
     return Error(IDLoc, "invalid symbol redefinition");
 
-  // TODO: Symbol to be made into a common with this Size and Pow2Alignment
-
-  Out.EmitCommonSymbol(Sym, Size, Pow2Alignment);
+  // Create the Symbol as a common or local common with Size and Pow2Alignment
+  Out.EmitCommonSymbol(Sym, Size, Pow2Alignment, IsLocal);
 
   return false;
 }
