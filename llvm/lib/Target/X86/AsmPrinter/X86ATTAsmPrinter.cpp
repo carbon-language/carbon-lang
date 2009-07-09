@@ -437,25 +437,20 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
       // Link-once, declaration, or Weakly-linked global variables need
       // non-lazily-resolved stubs
-      if (GV->isDeclaration() || GV->isWeakForLinker()) {
-        if (GV->hasHiddenVisibility()) {
-          if (!GV->isDeclaration() && !GV->hasCommonLinkage())
-            // Definition is not definitely in the current translation unit.
-            O << Name;
-          else {
-            HiddenGVStubs.insert(Name);
-            printSuffixedName(Name, "$non_lazy_ptr");
-            //assert(MO.getTargetFlags() == 0 || MO_PIC_BASE_OFFSET);
-          }
-        } else {
-          GVStubs.insert(Name);
-          printSuffixedName(Name, "$non_lazy_ptr");
-          //assert(MO.getTargetFlags() == 0 || MO_PIC_BASE_OFFSET);
-        }
-      } else {
+      if (!GV->isDeclaration() && !GV->isWeakForLinker()) {
         O << Name;
+      } else if (!GV->hasHiddenVisibility()) {
+        GVStubs.insert(Name);
+        printSuffixedName(Name, "$non_lazy_ptr");
+        //assert(MO.getTargetFlags() == 0 || MO_PIC_BASE_OFFSET);
+      } else if (!GV->isDeclaration() && !GV->hasCommonLinkage())
+        // Definition is not definitely in the current translation unit.
+        O << Name;
+      else {
+        HiddenGVStubs.insert(Name);
+        printSuffixedName(Name, "$non_lazy_ptr");
+        //assert(MO.getTargetFlags() == 0 || MO_PIC_BASE_OFFSET);
       }
-
     } else {
       O << Name;
     }
