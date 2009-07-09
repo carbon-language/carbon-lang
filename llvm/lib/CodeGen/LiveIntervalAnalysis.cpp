@@ -92,6 +92,8 @@ void LiveIntervals::releaseMemory() {
   mi2iMap_.clear();
   i2miMap_.clear();
   r2iMap_.clear();
+  terminatorGaps.clear();
+
   // Release VNInfo memroy regions after all VNInfo objects are dtor'd.
   VNInfoAllocator.Reset();
   while (!ClonedMIs.empty()) {
@@ -223,6 +225,7 @@ void LiveIntervals::computeNumbering() {
   MBB2IdxMap.clear();
   mi2iMap_.clear();
   i2miMap_.clear();
+  terminatorGaps.clear();
   
   FunctionSize = 0;
   
@@ -241,6 +244,19 @@ void LiveIntervals::computeNumbering() {
 
     for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
          I != E; ++I) {
+      
+      if (I == MBB->getFirstTerminator()) {
+        // Leave a gap for before terminators, this is where we will point
+        // PHI kills.
+        bool inserted =
+          terminatorGaps.insert(std::make_pair(&*MBB, MIIndex)).second;
+        assert(inserted && 
+               "Multiple 'first' terminators encountered during numbering.");
+        i2miMap_.push_back(0);
+
+        MIIndex += InstrSlots::NUM;
+      }
+
       bool inserted = mi2iMap_.insert(std::make_pair(I, MIIndex)).second;
       assert(inserted && "multiple MachineInstr -> index mappings");
       inserted = true;
@@ -256,11 +272,24 @@ void LiveIntervals::computeNumbering() {
       while (Slots--)
         i2miMap_.push_back(0);
     }
+  
+    if (MBB->getFirstTerminator() == MBB->end()) {
+      // Leave a gap for before terminators, this is where we will point
+      // PHI kills.
+      bool inserted =
+        terminatorGaps.insert(std::make_pair(&*MBB, MIIndex)).second;
+      assert(inserted && 
+             "Multiple 'first' terminators encountered during numbering.");
+      i2miMap_.push_back(0);
+ 
+      MIIndex += InstrSlots::NUM;
+    }
     
     // Set the MBB2IdxMap entry for this MBB.
     MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, MIIndex - 1);
     Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
   }
+
   std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
   
   if (!OldI2MI.empty())
@@ -335,18 +364,31 @@ void LiveIntervals::computeNumbering() {
         // Remap the VNInfo kill indices, which works the same as
         // the end indices above.
         for (size_t i = 0; i < vni->kills.size(); ++i) {
-          // PHI kills don't need to be remapped.
-          if (!vni->kills[i]) continue;
-          
-          unsigned index = (vni->kills[i]-1) / InstrSlots::NUM;
-          unsigned offset = vni->kills[i] % InstrSlots::NUM;
+          unsigned killIdx = vni->kills[i].killIdx;
+
+          unsigned index = (killIdx - 1) / InstrSlots::NUM;
+          unsigned offset = killIdx % InstrSlots::NUM;
+
           if (offset == InstrSlots::LOAD) {
-            std::vector<IdxMBBPair>::const_iterator I =
+            assert("Value killed at a load slot.");
+            /*std::vector<IdxMBBPair>::const_iterator I =
              std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), vni->kills[i]);
             --I;
 
-            vni->kills[i] = getMBBEndIdx(I->second);
+            vni->kills[i] = getMBBEndIdx(I->second);*/
           } else {
+            if (vni->kills[i].isPHIKill) {
+              std::vector<IdxMBBPair>::const_iterator I =
+                std::lower_bound(OldI2MBB.begin(), OldI2MBB.end(), index);
+              --I;
+              vni->kills[i].killIdx = terminatorGaps[I->second];  
+            } else {
+              assert(OldI2MI[index] != 0 &&
+                     "Kill refers to instruction not present in index maps.");
+              vni->kills[i].killIdx = mi2iMap_[OldI2MI[index]] + offset;
+            }
+           
+            /*
             unsigned idx = index;
             while (index < OldI2MI.size() && !OldI2MI[index]) ++index;
             
@@ -355,6 +397,7 @@ void LiveIntervals::computeNumbering() {
                               (idx == index ? offset : 0);
             else
               vni->kills[i] = InstrSlots::NUM * i2miMap_.size();
+            */
           }
         }
       }
@@ -378,6 +421,13 @@ void LiveIntervals::scaleNumbering(int factor) {
     Idx2MBBMap.push_back(std::make_pair(mbbIndices.first, MBB)); 
   }
   std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
+
+  // Scale terminator gaps.
+  for (DenseMap<MachineBasicBlock*, unsigned>::iterator
+       TGI = terminatorGaps.begin(), TGE = terminatorGaps.end();
+       TGI != TGE; ++TGI) {
+    terminatorGaps[TGI->first] = InstrSlots::scale(TGI->second, factor);
+  }
 
   // Scale the intervals.
   for (iterator LI = begin(), LE = end(); LI != LE; ++LI) {
@@ -589,7 +639,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         LiveRange LR(defIndex, killIdx, ValNo);
         interval.addRange(LR);
         DOUT << " +" << LR << "\n";
-        interval.addKill(ValNo, killIdx);
+        interval.addKill(ValNo, killIdx, false);
         return;
       }
     }
@@ -622,7 +672,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       LiveRange LR(getMBBStartIdx(Kill->getParent()),
                    killIdx, ValNo);
       interval.addRange(LR);
-      interval.addKill(ValNo, killIdx);
+      interval.addKill(ValNo, killIdx, false);
       DOUT << " +" << LR;
     }
 
@@ -671,7 +721,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       LiveRange LR(DefIndex, RedefIndex, ValNo);
       DOUT << " replace range with " << LR;
       interval.addRange(LR);
-      interval.addKill(ValNo, RedefIndex);
+      interval.addKill(ValNo, RedefIndex, false);
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
@@ -696,7 +746,11 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         unsigned End = getUseIndex(getInstructionIndex(Killer))+1;
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, tri_); DOUT << "\n";
-        interval.removeRange(Start, End);
+        interval.removeRange(Start, End);        
+        assert(interval.ranges.size() == 1 &&
+               "newly discovered PHI interval has >1 ranges.");
+        MachineBasicBlock *killMBB = getMBBFromIndex(interval.endNumber());
+        interval.addKill(VNI, terminatorGaps[killMBB], true);        
         VNI->setHasPHIKill(true);
         DOUT << " RESULT: "; interval.print(DOUT, tri_);
 
@@ -707,7 +761,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         LR.valno->setIsPHIDef(true);
         DOUT << " replace range with " << LR;
         interval.addRange(LR);
-        interval.addKill(LR.valno, End);
+        interval.addKill(LR.valno, End, false);
         DOUT << " RESULT: "; interval.print(DOUT, tri_);
       }
 
@@ -731,7 +785,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned killIndex = getMBBEndIdx(mbb) + 1;
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
-      interval.addKill(ValNo, killIndex);
+      interval.addKill(ValNo, terminatorGaps[mbb], true);
       ValNo->setHasPHIKill(true);
       DOUT << " +" << LR;
     }
@@ -819,7 +873,7 @@ exit:
     ValNo->setHasRedefByEC(true);
   LiveRange LR(start, end, ValNo);
   interval.addRange(LR);
-  interval.addKill(LR.valno, end);
+  interval.addKill(LR.valno, end, false);
   DOUT << " +" << LR << '\n';
 }
 
@@ -910,7 +964,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   LiveRange LR(start, end, vni);
   
   interval.addRange(LR);
-  interval.addKill(LR.valno, end);
+  interval.addKill(LR.valno, end, false);
   DOUT << " +" << LR << '\n';
 }
 
@@ -1608,7 +1662,10 @@ bool LiveIntervals::anyKillInMBBAfterIdx(const LiveInterval &li,
                                    MachineBasicBlock *MBB, unsigned Idx) const {
   unsigned End = getMBBEndIdx(MBB);
   for (unsigned j = 0, ee = VNI->kills.size(); j != ee; ++j) {
-    unsigned KillIdx = VNI->kills[j];
+    if (VNI->kills[j].isPHIKill)
+      continue;
+
+    unsigned KillIdx = VNI->kills[j].killIdx;
     if (KillIdx > Idx && KillIdx < End)
       return true;
   }
@@ -2412,13 +2469,14 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
 }
 
 LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
-                                                   MachineInstr* startInst) {
+                                                  MachineInstr* startInst) {
   LiveInterval& Interval = getOrCreateInterval(reg);
   VNInfo* VN = Interval.getNextValue(
             getInstructionIndex(startInst) + InstrSlots::DEF,
             startInst, true, getVNInfoAllocator());
   VN->setHasPHIKill(true);
-  VN->kills.push_back(getMBBEndIdx(startInst->getParent()));
+  VN->kills.push_back(
+    VNInfo::KillInfo(terminatorGaps[startInst->getParent()], true));
   LiveRange LR(getInstructionIndex(startInst) + InstrSlots::DEF,
                getMBBEndIdx(startInst->getParent()) + 1, VN);
   Interval.addRange(LR);

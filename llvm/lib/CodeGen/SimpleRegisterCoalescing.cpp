@@ -356,7 +356,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
 
   bool BHasPHIKill = BValNo->hasPHIKill();
   SmallVector<VNInfo*, 4> BDeadValNos;
-  SmallVector<unsigned, 4> BKills;
+  VNInfo::KillSet BKills;
   std::map<unsigned, unsigned> BExtend;
 
   // If ALR and BLR overlaps and end of BLR extends beyond end of ALR, e.g.
@@ -395,7 +395,7 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
       if (Extended)
         UseMO.setIsKill(false);
       else
-        BKills.push_back(li_->getUseIndex(UseIdx)+1);
+        BKills.push_back(VNInfo::KillInfo(false, li_->getUseIndex(UseIdx)+1));
     }
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx))
@@ -441,9 +441,9 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
   ValNo->def = AValNo->def;
   ValNo->copy = NULL;
   for (unsigned j = 0, ee = ValNo->kills.size(); j != ee; ++j) {
-    unsigned Kill = ValNo->kills[j];
+    unsigned Kill = ValNo->kills[j].killIdx;
     if (Kill != BLR->end)
-      BKills.push_back(Kill);
+      BKills.push_back(VNInfo::KillInfo(ValNo->kills[j].isPHIKill, Kill));
   }
   ValNo->kills.clear();
   for (LiveInterval::iterator AI = IntA.begin(), AE = IntA.end();
@@ -547,7 +547,7 @@ SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(unsigned CopyIdx,
     // of last use.
     LastUse->setIsKill();
     removeRange(li, li_->getDefIndex(LastUseIdx), LR->end, li_, tri_);
-    li.addKill(LR->valno, LastUseIdx+1);
+    li.addKill(LR->valno, LastUseIdx+1, false);
     unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
     if (tii_->isMoveInstr(*LastUseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
         DstReg == li.reg) {
@@ -674,9 +674,7 @@ bool SimpleRegisterCoalescing::isBackEdgeCopy(MachineInstr *CopyMI,
     LI.FindLiveRangeContaining(li_->getDefIndex(DefIdx));
   if (DstLR == LI.end())
     return false;
-  unsigned KillIdx = li_->getMBBEndIdx(MBB) + 1;
-  if (DstLR->valno->kills.size() == 1 &&
-      DstLR->valno->kills[0] == KillIdx && DstLR->valno->hasPHIKill())
+  if (DstLR->valno->kills.size() == 1 && DstLR->valno->kills[0].isPHIKill)
     return true;
   return false;
 }
@@ -1019,7 +1017,7 @@ void SimpleRegisterCoalescing::TurnCopiesFromValNoToImpDefs(LiveInterval &li,
   }
   if (LastUse) {
     LastUse->setIsKill();
-    li.addKill(VNI, LastUseIdx+1);
+    li.addKill(VNI, LastUseIdx+1, false);
   } else {
     // Remove dead implicit_def's.
     while (!ImpDefs.empty()) {

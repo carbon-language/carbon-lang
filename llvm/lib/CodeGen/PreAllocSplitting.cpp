@@ -543,7 +543,7 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     // FIXME: Need to set kills properly for inter-block stuff.
     if (LI->isKill(RetVNI, UseIndex)) LI->removeKill(RetVNI, UseIndex);
     if (IsIntraBlock)
-      LI->addKill(RetVNI, EndIndex);
+      LI->addKill(RetVNI, EndIndex, false);
   } else if (ContainsDefs && ContainsUses) {
     SmallPtrSet<MachineInstr*, 2>& BlockDefs = Defs[MBB];
     SmallPtrSet<MachineInstr*, 2>& BlockUses = Uses[MBB];
@@ -605,7 +605,7 @@ PreAllocSplitting::PerformPHIConstruction(MachineBasicBlock::iterator UseI,
     if (foundUse && LI->isKill(RetVNI, StartIndex))
       LI->removeKill(RetVNI, StartIndex);
     if (IsIntraBlock) {
-      LI->addKill(RetVNI, EndIndex);
+      LI->addKill(RetVNI, EndIndex, false);
     }
   }
   
@@ -682,7 +682,7 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
       I->second->setHasPHIKill(true);
       unsigned KillIndex = LIs->getMBBEndIdx(I->first);
       if (!LiveInterval::isKill(I->second, KillIndex))
-        LI->addKill(I->second, KillIndex);
+        LI->addKill(I->second, KillIndex, false);
     }
   }
       
@@ -694,7 +694,7 @@ PreAllocSplitting::PerformPHIConstructionFallBack(MachineBasicBlock::iterator Us
     EndIndex = LIs->getMBBEndIdx(MBB);
   LI->addRange(LiveRange(StartIndex, EndIndex+1, RetVNI));
   if (IsIntraBlock)
-    LI->addKill(RetVNI, EndIndex);
+    LI->addKill(RetVNI, EndIndex, false);
 
   // Memoize results so we don't have to recompute them.
   if (!IsIntraBlock)
@@ -771,7 +771,7 @@ void PreAllocSplitting::ReconstructLiveInterval(LiveInterval* LI) {
     
     VNInfo* DeadVN = NewVNs[&*DI];
     LI->addRange(LiveRange(DefIdx, DefIdx+1, DeadVN));
-    LI->addKill(DeadVN, DefIdx);
+    LI->addKill(DeadVN, DefIdx, false);
   }
 }
 
@@ -801,14 +801,15 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
     VNsToCopy.push_back(OldVN);
     
     // Locate two-address redefinitions
-    for (SmallVector<unsigned, 4>::iterator KI = OldVN->kills.begin(),
+    for (VNInfo::KillSet::iterator KI = OldVN->kills.begin(),
          KE = OldVN->kills.end(); KI != KE; ++KI) {
-      MachineInstr* MI = LIs->getInstructionFromIndex(*KI);
+      assert(!KI->isPHIKill && "VN previously reported having no PHI kills.");
+      MachineInstr* MI = LIs->getInstructionFromIndex(KI->killIdx);
       unsigned DefIdx = MI->findRegisterDefOperandIdx(CurrLI->reg);
       if (DefIdx == ~0U) continue;
       if (MI->isRegTiedToUseOperand(DefIdx)) {
         VNInfo* NextVN =
-                     CurrLI->findDefinedVNInfo(LiveIntervals::getDefIndex(*KI));
+          CurrLI->findDefinedVNInfo(LiveIntervals::getDefIndex(KI->killIdx));
         if (NextVN == OldVN) continue;
         Stack.push_back(NextVN);
       }

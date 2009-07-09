@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -stats |& grep {39.*Number of machine instrs printed}
+; RUN: llvm-as < %s | llc -stats |& grep {40.*Number of machine instrs printed}
 ; RUN: llvm-as < %s | llc -stats |& grep {.*Number of re-materialization}
 ; This test really wants to check that the resultant "cond_true" block only 
 ; has a single store in it, and that cond_true55 only has code to materialize 

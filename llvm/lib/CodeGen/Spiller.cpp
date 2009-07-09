@@ -136,7 +136,7 @@ protected:
 
     VNInfo *vni =
       li->getNextValue(storeInstIdx, 0, true, lis->getVNInfoAllocator());
-    vni->kills.push_back(storeInstIdx);
+    li->addKill(vni, storeInstIdx, false);
     DOUT << "    Inserting store range: [" << start << ", " << end << ")\n";
     LiveRange lr(start, end, vni);
       
@@ -201,7 +201,7 @@ protected:
 
     VNInfo *vni =
       li->getNextValue(loadInstIdx, 0, true, lis->getVNInfoAllocator());
-    vni->kills.push_back(lis->getInstructionIndex(mi));
+    li->addKill(vni, lis->getInstructionIndex(mi), false);
     DOUT << "    Intserting load range: [" << start << ", " << end << ")\n";
     LiveRange lr(start, end, vni);
 

@@ -88,6 +88,8 @@ namespace llvm {
     typedef DenseMap<unsigned, LiveInterval*> Reg2IntervalMap;
     Reg2IntervalMap r2iMap_;
 
+    DenseMap<MachineBasicBlock*, unsigned> terminatorGaps;
+
     BitVector allocatableRegs_;
 
     std::vector<MachineInstr*> ClonedMIs;

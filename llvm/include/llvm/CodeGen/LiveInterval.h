@@ -62,13 +62,28 @@ namespace llvm {
     unsigned char flags;
 
   public:
+    /// Holds information about individual kills.
+    struct KillInfo {
+      bool isPHIKill : 1;
+      unsigned killIdx : 31;
+
+      KillInfo(bool isPHIKill, unsigned killIdx)
+        : isPHIKill(isPHIKill), killIdx(killIdx) {
+
+        assert(killIdx != 0 && "Zero kill indices are no longer permitted.");
+      }
+
+    };
+
+    typedef SmallVector<KillInfo, 4> KillSet;
+
     /// The ID number of this value.
     unsigned id;
     
     /// The index of the defining instruction (if isDefAccurate() returns true).
     unsigned def;
     MachineInstr *copy;
-    SmallVector<unsigned, 4> kills;
+    KillSet kills;
 
     VNInfo()
       : flags(IS_UNUSED), id(~1U), def(0), copy(0) {}
@@ -136,6 +151,18 @@ namespace llvm {
     }
 
   };
+
+  inline bool operator<(const VNInfo::KillInfo &k1, const VNInfo::KillInfo &k2) {
+    return k1.killIdx < k2.killIdx;
+  }
+  
+  inline bool operator<(const VNInfo::KillInfo &k, unsigned idx) {
+    return k.killIdx < idx;
+  }
+
+  inline bool operator<(unsigned idx, const VNInfo::KillInfo &k) {
+    return idx < k.killIdx;
+  }
 
   /// LiveRange structure - This represents a simple register range in the
   /// program, with an inclusive start point and an exclusive end point.
@@ -339,27 +366,28 @@ namespace llvm {
 
     /// addKill - Add a kill instruction index to the specified value
     /// number.
-    static void addKill(VNInfo *VNI, unsigned KillIdx) {
-      SmallVector<unsigned, 4> &kills = VNI->kills;
+    static void addKill(VNInfo *VNI, unsigned KillIdx, bool phiKill) {
+      VNInfo::KillSet &kills = VNI->kills;
+      VNInfo::KillInfo newKill(phiKill, KillIdx);
       if (kills.empty()) {
-        kills.push_back(KillIdx);
+        kills.push_back(newKill);
       } else {
-        SmallVector<unsigned, 4>::iterator
-          I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
-        kills.insert(I, KillIdx);
+        VNInfo::KillSet::iterator
+          I = std::lower_bound(kills.begin(), kills.end(), newKill);
+        kills.insert(I, newKill);
       }
     }
 
     /// addKills - Add a number of kills into the VNInfo kill vector. If this
     /// interval is live at a kill point, then the kill is not added.
-    void addKills(VNInfo *VNI, const SmallVector<unsigned, 4> &kills) {
+    void addKills(VNInfo *VNI, const VNInfo::KillSet &kills) {
       for (unsigned i = 0, e = static_cast<unsigned>(kills.size());
            i != e; ++i) {
-        unsigned KillIdx = kills[i];
-        if (!liveBeforeAndAt(KillIdx)) {
-          SmallVector<unsigned, 4>::iterator
-            I = std::lower_bound(VNI->kills.begin(), VNI->kills.end(), KillIdx);
-          VNI->kills.insert(I, KillIdx);
+        const VNInfo::KillInfo &Kill = kills[i];
+        if (!liveBeforeAndAt(Kill.killIdx)) {
+          VNInfo::KillSet::iterator
+            I = std::lower_bound(VNI->kills.begin(), VNI->kills.end(), Kill);
+          VNI->kills.insert(I, Kill);
         }
       }
     }
@@ -367,10 +395,10 @@ namespace llvm {
     /// removeKill - Remove the specified kill from the list of kills of
     /// the specified val#.
     static bool removeKill(VNInfo *VNI, unsigned KillIdx) {
-      SmallVector<unsigned, 4> &kills = VNI->kills;
-      SmallVector<unsigned, 4>::iterator
+      VNInfo::KillSet &kills = VNI->kills;
+      VNInfo::KillSet::iterator
         I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
-      if (I != kills.end() && *I == KillIdx) {
+      if (I != kills.end() && I->killIdx == KillIdx) {
         kills.erase(I);
         return true;
       }
@@ -380,10 +408,11 @@ namespace llvm {
     /// removeKills - Remove all the kills in specified range
     /// [Start, End] of the specified val#.
     static void removeKills(VNInfo *VNI, unsigned Start, unsigned End) {
-      SmallVector<unsigned, 4> &kills = VNI->kills;
-      SmallVector<unsigned, 4>::iterator
+      VNInfo::KillSet &kills = VNI->kills;
+
+      VNInfo::KillSet::iterator
         I = std::lower_bound(kills.begin(), kills.end(), Start);
-      SmallVector<unsigned, 4>::iterator
+      VNInfo::KillSet::iterator
         E = std::upper_bound(kills.begin(), kills.end(), End);
       kills.erase(I, E);
     }
@@ -391,15 +420,15 @@ namespace llvm {
     /// isKill - Return true if the specified index is a kill of the
     /// specified val#.
     static bool isKill(const VNInfo *VNI, unsigned KillIdx) {
-      const SmallVector<unsigned, 4> &kills = VNI->kills;
-      SmallVector<unsigned, 4>::const_iterator
+      const VNInfo::KillSet &kills = VNI->kills;
+      VNInfo::KillSet::const_iterator
         I = std::lower_bound(kills.begin(), kills.end(), KillIdx);
-      return I != kills.end() && *I == KillIdx;
+      return I != kills.end() && I->killIdx == KillIdx;
     }
 
     /// isOnlyLROfValNo - Return true if the specified live range is the only
     /// one defined by the its val#.
-    bool isOnlyLROfValNo( const LiveRange *LR) {
+    bool isOnlyLROfValNo(const LiveRange *LR) {
       for (const_iterator I = begin(), E = end(); I != E; ++I) {
         const LiveRange *Tmp = I;
         if (Tmp != LR && Tmp->valno == LR->valno)
@@ -478,6 +507,13 @@ namespace llvm {
     /// specified index, or null if there is none.
     const LiveRange *getLiveRangeContaining(unsigned Idx) const {
       const_iterator I = FindLiveRangeContaining(Idx);
+      return I == end() ? 0 : &*I;
+    }
+
+    /// getLiveRangeContaining - Return the live range that contains the
+    /// specified index, or null if there is none.
+    LiveRange *getLiveRangeContaining(unsigned Idx) {
+      iterator I = FindLiveRangeContaining(Idx);
       return I == end() ? 0 : &*I;
     }
 

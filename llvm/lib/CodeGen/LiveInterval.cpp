@@ -377,8 +377,9 @@ void LiveInterval::scaleNumbering(unsigned factor) {
       vni->def = InstrSlots::scale(vni->def, factor);
 
     for (unsigned i = 0; i < vni->kills.size(); ++i) {
-      if (vni->kills[i] != 0)
-        vni->kills[i] = InstrSlots::scale(vni->kills[i], factor);
+      if (!vni->kills[i].isPHIKill)
+        vni->kills[i].killIdx =
+          InstrSlots::scale(vni->kills[i].killIdx, factor);
     }
   }
 }
@@ -840,7 +841,9 @@ void LiveInterval::print(std::ostream &OS,
         if (ee || vni->hasPHIKill()) {
           OS << "-(";
           for (unsigned j = 0; j != ee; ++j) {
-            OS << vni->kills[j];
+            OS << vni->kills[j].killIdx;
+            if (vni->kills[j].isPHIKill)
+              OS << "*";
             if (j != ee-1)
               OS << " ";
           }
