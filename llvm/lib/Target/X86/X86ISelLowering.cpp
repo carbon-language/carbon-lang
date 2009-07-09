@@ -1319,18 +1319,9 @@ X86TargetLowering::NameDecorationForFORMAL_ARGUMENTS(SDValue Op) {
 }
 
 
-/// CallRequiresGOTInRegister - Check whether the call requires the GOT pointer
-/// in a register before calling.
-static bool CallRequiresGOTPtrInReg(const TargetMachine &TM) {
-  const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
-
-  return TM.getRelocationModel() == Reloc::PIC_ &&
-         Subtarget.isPICStyleGOT();
-}
-
-/// CallRequiresFnAddressInReg - Check whether the call requires the function
-/// address to be loaded in a register.
-static bool CallRequiresFnAddressInReg(const TargetMachine &TM) {
+/// isUsingGOT - Return true if the target uses a GOT for PIC, and if we're in
+/// PIC mode.
+static bool isUsingGOT(const TargetMachine &TM) {
   const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
   return TM.getRelocationModel() == Reloc::PIC_ &&
          Subtarget.isPICStyleGOT();
@@ -1802,31 +1793,34 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
       InFlag = Chain.getValue(1);
     }
 
-  // ELF / PIC requires GOT in the EBX register before function calls via PLT
-  // GOT pointer.
-  if (!IsTailCall && CallRequiresGOTPtrInReg(getTargetMachine())) {
-    Chain = DAG.getCopyToReg(Chain, dl, X86::EBX,
-                             DAG.getNode(X86ISD::GlobalBaseReg,
-                                         DebugLoc::getUnknownLoc(),
-                                         getPointerTy()),
-                             InFlag);
-    InFlag = Chain.getValue(1);
-  }
   
-  // If we are tail calling and generating PIC/GOT style code load the address
-  // of the callee into ecx. The value in ecx is used as target of the tail
-  // jump. This is done to circumvent the ebx/callee-saved problem for tail
-  // calls on PIC/GOT architectures. Normally we would just put the address of
-  // GOT into ebx and then call target@PLT. But for tail calls ebx would be
-  // restored (since ebx is callee saved) before jumping to the target@PLT.
-  if (IsTailCall && CallRequiresFnAddressInReg(getTargetMachine())) {
-    // Note: The actual moving to ecx is done further down.
-    GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
-    if (G && !G->getGlobal()->hasHiddenVisibility() &&
-        !G->getGlobal()->hasProtectedVisibility())
-      Callee =  LowerGlobalAddress(Callee, DAG);
-    else if (isa<ExternalSymbolSDNode>(Callee))
-      Callee = LowerExternalSymbol(Callee,DAG);
+  if (isUsingGOT(getTargetMachine())) {
+    // ELF / PIC requires GOT in the EBX register before function calls via PLT
+    // GOT pointer.
+    if (!IsTailCall) {
+      Chain = DAG.getCopyToReg(Chain, dl, X86::EBX,
+                               DAG.getNode(X86ISD::GlobalBaseReg,
+                                           DebugLoc::getUnknownLoc(),
+                                           getPointerTy()),
+                               InFlag);
+      InFlag = Chain.getValue(1);
+    } else {
+      // If we are tail calling and generating PIC/GOT style code load the
+      // address of the callee into ECX. The value in ecx is used as target of
+      // the tail jump. This is done to circumvent the ebx/callee-saved problem
+      // for tail calls on PIC/GOT architectures. Normally we would just put the
+      // address of GOT into ebx and then call target@PLT. But for tail calls
+      // ebx would be restored (since ebx is callee saved) before jumping to the
+      // target@PLT.
+
+      // Note: The actual moving to ECX is done further down.
+      GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
+      if (G && !G->getGlobal()->hasHiddenVisibility() &&
+          !G->getGlobal()->hasProtectedVisibility())
+        Callee = LowerGlobalAddress(Callee, DAG);
+      else if (isa<ExternalSymbolSDNode>(Callee))
+        Callee = LowerExternalSymbol(Callee,DAG);
+    }
   }
 
   if (Is64Bit && isVarArg) {
@@ -1958,9 +1952,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
                                   RegsToPass[i].second.getValueType()));
 
   // Add an implicit use GOT pointer in EBX.
-  if (!IsTailCall && !Is64Bit &&
-      getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-      Subtarget->isPICStyleGOT())
+  if (!IsTailCall && isUsingGOT(getTargetMachine()))
     Ops.push_back(DAG.getRegister(X86::EBX, getPointerTy()));
 
   // Add an implicit use of AL for x86 vararg functions.
@@ -2078,9 +2070,9 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(CallSDNode *TheCall,
     unsigned CalleeCC= TheCall->getCallingConv();
     if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
       SDValue Callee = TheCall->getCallee();
-      // On x86/32Bit PIC/GOT  tail calls are supported.
+      // On x86/32Bit PIC/GOT tail calls are supported.
       if (getTargetMachine().getRelocationModel() != Reloc::PIC_ ||
-          !Subtarget->isPICStyleGOT()|| !Subtarget->is64Bit())
+          !Subtarget->isPICStyleGOT() || !Subtarget->is64Bit())
         return true;
 
       // Can only do local tail calls (in same module, hidden or protected) on
