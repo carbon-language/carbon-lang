@@ -20,7 +20,7 @@ struct X4 {
 };
 
 X4 x4; // expected-error {{cannot define the implicit default constructor for 'struct X4', because base class 'struct X2' does not have any default constructor}} \
-       // expected-error {{cannot define the implicit default constructor for 'struct X4', because reference member rx2 cannot be default-initialized}}
+       // expected-error {{cannot define the implicit default constructor for 'struct X4', because reference member 'rx2' cannot be default-initialized}}
 
 
 struct Y1 { // has no implicit default constructor
@@ -51,6 +51,6 @@ struct Z1 {
   	volatile int v1;
 };
 
-Z1 z1;  // expected-error {{cannot define the implicit default constructor for 'struct Z1', because reference member z cannot be default-initialized}} \
-        // expected-error {{cannot define the implicit default constructor for 'struct Z1', because const member c1 cannot be default-initialized}}
+Z1 z1;  // expected-error {{cannot define the implicit default constructor for 'struct Z1', because reference member 'z' cannot be default-initialized}} \
+        // expected-error {{cannot define the implicit default constructor for 'struct Z1', because const member 'c1' cannot be default-initialized}}
 

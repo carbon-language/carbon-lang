@@ -1989,13 +1989,13 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     }
     else if (FieldType->isReferenceType()) {
       Diag(CurrentLocation, diag::err_unintialized_member) 
-        << Context.getTagDeclType(ClassDecl) << 0 << (*Field)->getNameAsCString();
+        << Context.getTagDeclType(ClassDecl) << 0 << Field->getDeclName();
       Diag((*Field)->getLocation(), diag::note_declared_at);
       err = true;
     }
     else if (FieldType.isConstQualified()) {
       Diag(CurrentLocation, diag::err_unintialized_member) 
-        << Context.getTagDeclType(ClassDecl) << 1 << (*Field)->getNameAsCString();
+        << Context.getTagDeclType(ClassDecl) << 1 << Field->getDeclName();
        Diag((*Field)->getLocation(), diag::note_declared_at);
       err = true;
     }
