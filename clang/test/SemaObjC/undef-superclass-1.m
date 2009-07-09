@@ -24,3 +24,10 @@
     [super dealloc]; // expected-error {{no super class declared in @interface for 'SUPER'}}
 }
 @end
+
+@interface RecursiveClass : RecursiveClass // expected-error {{trying to recursively use 'RecursiveClass' as superclass of 'RecursiveClass'}}
+@end
+
+@implementation RecursiveClass
+@end
+
