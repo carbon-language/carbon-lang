@@ -4458,7 +4458,7 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
     WrapperKind = X86ISD::WrapperRIP;
   else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
-  else if (Subtarget->isPICStyleStubPIC(getTargetMachine()))
+  else if (Subtarget->isPICStyleStubPIC())
     OpFlag = X86II::MO_PIC_BASE_OFFSET;
   
   SDValue Result = DAG.getTargetConstantPool(CP->getConstVal(), getPointerTy(),
@@ -4490,7 +4490,7 @@ SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
     WrapperKind = X86ISD::WrapperRIP;
   else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
-  else if (Subtarget->isPICStyleStubPIC(getTargetMachine()))
+  else if (Subtarget->isPICStyleStubPIC())
     OpFlag = X86II::MO_PIC_BASE_OFFSET;
   
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy(),
@@ -4522,7 +4522,7 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
     WrapperKind = X86ISD::WrapperRIP;
   else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
-  else if (Subtarget->isPICStyleStubPIC(getTargetMachine()))
+  else if (Subtarget->isPICStyleStubPIC())
     OpFlag = X86II::MO_PIC_BASE_OFFSET;
   
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy(), OpFlag);

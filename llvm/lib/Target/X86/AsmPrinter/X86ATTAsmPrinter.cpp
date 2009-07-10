@@ -603,7 +603,7 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
 
   O << JTEntryDirective << ' ';
 
-  if (Subtarget->isPICStyleRIPRel() || Subtarget->isPICStyleStubPIC(TM)) {
+  if (Subtarget->isPICStyleRIPRel() || Subtarget->isPICStyleStubPIC()) {
     O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
       << '_' << uid << "_set_" << MBB->getNumber();
   } else if (Subtarget->isPICStyleGOT()) {

@@ -187,11 +187,11 @@ public:
   bool isPICStyleGOT() const { return PICStyle == PICStyles::GOT; }
   bool isPICStyleRIPRel() const { return PICStyle == PICStyles::RIPRel; }
 
-  bool isPICStyleStubPIC(const TargetMachine &TM) const {
+  bool isPICStyleStubPIC() const {
     return PICStyle == PICStyles::StubPIC;
   }
 
-  bool isPICStyleStubNoDynamic(const TargetMachine &TM) const {
+  bool isPICStyleStubNoDynamic() const {
     return PICStyle == PICStyles::StubDynamicNoPIC;
   }
   bool isPICStyleStubAny() const {

@@ -75,7 +75,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     return X86II::MO_GOT;
   }
   
-  if (isPICStyleStubPIC(TM)) {  // Darwin/32 in PIC mode.
+  if (isPICStyleStubPIC()) {  // Darwin/32 in PIC mode.
     // Determine whether we have a stub reference and/or whether the reference
     // is relative to the PIC base or not.
     
@@ -100,7 +100,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     return X86II::MO_PIC_BASE_OFFSET;
   }
   
-  if (isPICStyleStubNoDynamic(TM)) {  // Darwin/32 in -mdynamic-no-pic mode.
+  if (isPICStyleStubNoDynamic()) {  // Darwin/32 in -mdynamic-no-pic mode.
     // Determine whether we have a stub reference.
     
     // If this is a strong reference to a definition, it is definitely not
