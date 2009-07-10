@@ -204,12 +204,6 @@ public:
   bool GVRequiresExtraLoad(const GlobalValue* GV, const TargetMachine &TM,
                            bool isDirectCall) const;
 
-  /// PCRelGVRequiresExtraLoad - True if accessing the GV from a PC-relative
-  /// operand like a call target requires an extra load.
-  bool PCRelGVRequiresExtraLoad(const GlobalValue *GV,
-                                const TargetMachine &TM) const;
-  
-  
   /// True if accessing the GV requires a register.  This is a superset of the
   /// cases where GVRequiresExtraLoad is true.  Some variations of PIC require
   /// a register, but not an extra load.

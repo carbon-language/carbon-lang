@@ -587,7 +587,7 @@ bool X86FastISel::X86SelectCallAddress(Value *V, X86AddressMode &AM) {
         (AM.Base.Reg != 0 || AM.IndexReg != 0))
       return false;
 
-    // Can't handle TLS yet.
+    // Can't handle TLS or DLLImport.
     if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
       if (GVar->isThreadLocal() || GVar->hasDLLImportLinkage())
         return false;
@@ -597,7 +597,6 @@ bool X86FastISel::X86SelectCallAddress(Value *V, X86AddressMode &AM) {
     
     // No ABI requires an extra load for anything other than DLLImport, which
     // we rejected above. Return a direct reference to the global.
-    assert(!Subtarget->PCRelGVRequiresExtraLoad(GV, TM));
     if (Subtarget->isPICStyleRIPRel()) {
       // Use rip-relative addressing if we can.  Above we verified that the
       // base and index registers are unused.

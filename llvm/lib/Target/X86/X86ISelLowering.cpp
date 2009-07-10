@@ -1902,7 +1902,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     // We should use extra load for direct calls to dllimported functions in
     // non-JIT mode.
     GlobalValue *GV = G->getGlobal();
-    if (!Subtarget->PCRelGVRequiresExtraLoad(GV, getTargetMachine())) {
+    if (!GV->hasDLLImportLinkage()) {
       unsigned char OpFlags = 0;
     
       // On ELF targets, in both X86-64 and X86-32 mode, direct calls to
