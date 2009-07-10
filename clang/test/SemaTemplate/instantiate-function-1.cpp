@@ -140,7 +140,7 @@ template<typename T> struct Member0 {
     tp->f;
 
     this->f;
-    this.f; // expected-error{{member reference base type 'Member0<T> *const' is not a structure or union}}
+    this.f; // expected-error{{member reference base type 'Member0<T> *' is not a structure or union}}
   }
 };
 

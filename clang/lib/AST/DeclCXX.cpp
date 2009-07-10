@@ -360,7 +360,7 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
   else
     ClassTy = C.getTagDeclType(const_cast<CXXRecordDecl*>(getParent()));
   ClassTy = ClassTy.getWithAdditionalQualifiers(getTypeQualifiers());
-  return C.getPointerType(ClassTy).withConst();
+  return C.getPointerType(ClassTy);
 }
 
 CXXBaseOrMemberInitializer::
