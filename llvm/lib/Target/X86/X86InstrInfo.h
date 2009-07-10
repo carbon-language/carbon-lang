@@ -178,8 +178,34 @@ namespace X86II {
     /// indicates that the reference is actually to "FOO$non_lazy_ptr -PICBASE",
     /// which is a PIC-base-relative reference to a hidden dyld lazy pointer
     /// stub.
-    MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE = 17,
+    MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE = 17
     
+  };
+}
+
+/// isGlobalStubReference - Return true if the specified GlobalValue operand is
+/// a reference to a stub for a global, not the global itself.
+inline static bool isGlobalStubReference(const MachineOperand &MO) {
+  assert(MO.isGlobal() && "Predicate only works on globalvalue operands");
+  switch (MO.getTargetFlags()) {
+  case X86II::MO_DLLIMPORT: // dllimport stub.
+  case X86II::MO_GOTPCREL:  // rip-relative GOT reference.
+  case X86II::MO_GOT:       // normal GOT reference.
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:        // Normal $non_lazy_ptr ref.
+  case X86II::MO_DARWIN_NONLAZY:                 // Normal $non_lazy_ptr ref.
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: // Hidden $non_lazy_ptr ref.
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY:          // Hidden $non_lazy_ptr ref.
+    return true;
+  default:
+    return false;
+  }
+}
+ 
+/// X86II - This namespace holds all of the target specific flags that
+/// instruction info tracks.
+///
+namespace X86II {
+  enum {
     //===------------------------------------------------------------------===//
     // Instruction encodings.  These are the standard/most common forms for X86
     // instructions.
