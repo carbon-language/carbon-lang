@@ -199,12 +199,6 @@ public:
   /// context.
   unsigned char ClassifyGlobalReference(const GlobalValue *GV,
                                         const TargetMachine &TM)const;
-  
-  /// True if accessing the GV requires an extra load. For Windows, dllimported
-  /// symbols are indirect, loading the value at address GV rather then the
-  /// value of GV itself. This means that the GlobalAddress must be in the base
-  /// or index register of the address, not the GV offset field.
-  bool GVRequiresExtraLoad(const GlobalValue *GV, const TargetMachine &TM)const;
 
   /// IsLegalToCallImmediateAddr - Return true if the subtarget allows calls
   /// to immediate address.

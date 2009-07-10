@@ -111,15 +111,6 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
   return X86II::MO_NO_FLAG;
 }
 
-/// True if accessing the GV requires an extra load. For Windows, dllimported
-/// symbols are indirect, loading the value at address GV rather then the
-/// value of GV itself. This means that the GlobalAddress must be in the base
-/// or index register of the address, not the GV offset field.
-bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue *GV,
-                                       const TargetMachine &TM) const {
-  return isGlobalStubReference(ClassifyGlobalReference(GV, TM));
-}
-
 
 /// getBZeroEntry - This function returns the name of a function which has an
 /// interface like the non-standard bzero function, if such a function exists on

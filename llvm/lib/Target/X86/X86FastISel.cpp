@@ -441,32 +441,30 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
     // Okay, we've committed to selecting this global. Set up the basic address.
     AM.GV = GV;
     
-    if (TM.getRelocationModel() == Reloc::PIC_ &&
-        !Subtarget->is64Bit()) {
+    // Allow the subtarget to classify the global.
+    unsigned char GVFlags = Subtarget->ClassifyGlobalReference(GV, TM);
+
+    // If this reference is relative to the pic base, set it now.
+    if (isGlobalRelativeToPICBase(GVFlags)) {
       // FIXME: How do we know Base.Reg is free??
       AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(&MF);
     }
-
-    // If the ABI doesn't require an extra load, return a direct reference to
+    
+    // Unless the ABI requires an extra load, return a direct reference to
     // the global.
-    if (!Subtarget->GVRequiresExtraLoad(GV, TM)) {
+    if (!isGlobalStubReference(GVFlags)) {
       if (Subtarget->isPICStyleRIPRel()) {
         // Use rip-relative addressing if we can.  Above we verified that the
         // base and index registers are unused.
         assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
         AM.Base.Reg = X86::RIP;
-      } else if (Subtarget->isPICStyleStub() &&
-                 TM.getRelocationModel() == Reloc::PIC_) {
-        AM.GVOpFlags = X86II::MO_PIC_BASE_OFFSET;
-      } else if (Subtarget->isPICStyleGOT()) {
-        AM.GVOpFlags = X86II::MO_GOTOFF;
       }
-      
+      AM.GVOpFlags = GVFlags;
       return true;
     }
     
-    // Check to see if we've already materialized this stub loaded value into a
-    // register in this block.  If so, just reuse it.
+    // Ok, we need to do a load from a stub.  If we've already loaded from this
+    // stub, reuse the loaded pointer, otherwise emit the load now.
     DenseMap<const Value*, unsigned>::iterator I = LocalValueMap.find(V);
     unsigned LoadReg;
     if (I != LocalValueMap.end() && I->second != 0) {
@@ -478,39 +476,17 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
       X86AddressMode StubAM;
       StubAM.Base.Reg = AM.Base.Reg;
       StubAM.GV = GV;
-      
+      StubAM.GVOpFlags = GVFlags;
+
       if (TLI.getPointerTy() == MVT::i64) {
         Opc = X86::MOV64rm;
         RC  = X86::GR64RegisterClass;
         
-        if (Subtarget->isPICStyleRIPRel()) {
-          StubAM.GVOpFlags = X86II::MO_GOTPCREL;
+        if (Subtarget->isPICStyleRIPRel())
           StubAM.Base.Reg = X86::RIP;
-        }
-        
       } else {
         Opc = X86::MOV32rm;
         RC  = X86::GR32RegisterClass;
-        
-        if (Subtarget->isPICStyleGOT())
-          StubAM.GVOpFlags = X86II::MO_GOT;
-        else if (Subtarget->isPICStyleStub()) {
-          // In darwin, we have multiple different stub types, and we have both
-          // PIC and -mdynamic-no-pic.  Determine whether we have a stub
-          // reference and/or whether the reference is relative to the PIC base
-          // or not.
-          bool IsPIC = TM.getRelocationModel() == Reloc::PIC_;
-          
-          if (!GV->hasHiddenVisibility()) {
-            // Non-hidden $non_lazy_ptr reference.
-            StubAM.GVOpFlags = IsPIC ? X86II::MO_DARWIN_NONLAZY_PIC_BASE :
-                                       X86II::MO_DARWIN_NONLAZY;
-          } else {
-            // Hidden $non_lazy_ptr reference.
-            StubAM.GVOpFlags = IsPIC ? X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-                                       X86II::MO_DARWIN_HIDDEN_NONLAZY;
-          }
-        }
       }
       
       LoadReg = createResultReg(RC);
