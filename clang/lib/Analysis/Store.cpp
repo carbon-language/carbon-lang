@@ -45,24 +45,6 @@ static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
   return true;
 }
 
-static bool isVoidOrHigherOrderVoidPtr(ASTContext &Ctx, QualType Ty) {
-  while (true) {
-    Ty = Ctx.getCanonicalType(Ty);
-    
-    if (Ty->isVoidType())
-      return true;    
-
-    if (const PointerType *PT = Ty->getAsPointerType()) {
-      Ty = PT->getPointeeType();
-      continue;
-    }
-    
-    break;
-  }
-  
-  return false;
-}
-
 StoreManager::CastResult
 StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
                             QualType CastToTy) {
@@ -82,10 +64,6 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
   // already be handled.
   QualType PointeeTy = CastToTy->getAsPointerType()->getPointeeType();
   
-  // Casts to 'void*', 'void**', 'void***', etc., should just pass through.
-  if (isVoidOrHigherOrderVoidPtr(Ctx, PointeeTy))
-    return CastResult(state, R);
-  
   // Process region cast according to the kind of the region being cast.
   switch (R->getKind()) {
     case MemRegion::BEG_TYPED_REGIONS:
@@ -99,9 +77,9 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
     }
       
     case MemRegion::CodeTextRegionKind: {
-      // CodeTextRegion should be cast to only function pointer type.
-      assert(CastToTy->isFunctionPointerType() || 
-             CastToTy->isBlockPointerType());
+      // CodeTextRegion should be cast to only function pointer type, although
+      // they can in practice be casted to anything, e.g, void*, char*, etc.
+      // Just pass the region through.
       break;
     }
       

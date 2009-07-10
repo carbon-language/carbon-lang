@@ -324,17 +324,20 @@ void test_rdar_7034511(NSArray *y) {
   if (x == ((void*) 0)) {}
 }
 
-// Handle arbitrary void*^n -> void*^m casts.  This was previously causing
-// a crash in CastRegion.
-void handle_higher_order_voidptr_casts() {
+// Handle casts of function pointers (CodeTextRegions) to arbitrary pointer
+// types. This was previously causing a crash in CastRegion.
+void handle_funcptr_voidptr_casts() {
   void **ptr;
   typedef void *PVOID;
+  typedef void *PCHAR;  
   typedef long INT_PTR, *PINT_PTR;
   typedef INT_PTR (*FARPROC)();
-  FARPROC handle_higher_order_voidptr_casts_aux();
-  PVOID handle_higher_order_voidptr_casts_aux_2(PVOID volatile *x);
+  FARPROC handle_funcptr_voidptr_casts_aux();
+  PVOID handle_funcptr_voidptr_casts_aux_2(PVOID volatile *x);
+  PVOID handle_funcptr_voidptr_casts_aux_3(PCHAR volatile *x);  
   
-  ptr = (void**) handle_higher_order_voidptr_casts_aux();
-  handle_higher_order_voidptr_casts_aux_2(ptr);
+  ptr = (void**) handle_funcptr_voidptr_casts_aux();
+  handle_funcptr_voidptr_casts_aux_2(ptr);
+  handle_funcptr_voidptr_casts_aux_3(ptr);
 }
 
