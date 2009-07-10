@@ -183,9 +183,9 @@ def FCVTDS : ASuI<0b11101011, 0b0111, 0b1100, (outs DPR:$dst), (ins SPR:$a),
                  [(set DPR:$dst, (fextend SPR:$a))]>;
 
 // Special case encoding: bits 11-8 is 0b1011.
-def FCVTSD : AI<(outs SPR:$dst), (ins DPR:$a), VFPUnaryFrm,
-                 "fcvtsd", " $dst, $a",
-                 [(set SPR:$dst, (fround DPR:$a))]> {
+def FCVTSD : VFPAI<(outs SPR:$dst), (ins DPR:$a), VFPUnaryFrm,
+                   "fcvtsd", " $dst, $a",
+                   [(set SPR:$dst, (fround DPR:$a))]> {
   let Inst{27-23} = 0b11101;
   let Inst{21-16} = 0b110111;
   let Inst{11-8}  = 0b1011;
@@ -390,7 +390,7 @@ def FNEGScc  : ASuI<0b11101011, 0b0001, 0b0100,
 //
 
 let Defs = [CPSR] in
-def FMSTAT : AI<(outs), (ins), VFPMiscFrm, "fmstat", "", [(arm_fmstat)]> {
+def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, "fmstat", "", [(arm_fmstat)]> {
   let Inst{27-20} = 0b11101111;
   let Inst{19-16} = 0b0001;
   let Inst{15-12} = 0b1111;

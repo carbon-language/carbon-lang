@@ -918,10 +918,38 @@ class T2Pat<dag pattern, dag result> : Pat<pattern, result> {
 // ARM VFP Instruction templates.
 //
 
+// Almost all VFP instructions are predicable.
+class VFPI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+           IndexMode im, Format f, string opc, string asm, string cstr,
+           list<dag> pattern>
+  : InstARM<am, sz, im, f, cstr> {
+  let OutOperandList = oops;
+  let InOperandList = !con(iops, (ops pred:$p));
+  let AsmString   = !strconcat(opc, !strconcat("${p}", asm));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [HasVFP2];
+}
+
+// Special cases
+class VFPXI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+            IndexMode im, Format f, string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, im, f, cstr> {
+  let OutOperandList = oops;
+  let InOperandList = iops;
+  let AsmString   = asm;
+  let Pattern = pattern;
+  list<Predicate> Predicates = [HasVFP2];
+}
+
+class VFPAI<dag oops, dag iops, Format f, string opc,
+            string asm, list<dag> pattern>
+  : VFPI<oops, iops, AddrModeNone, Size4Bytes, IndexModeNone, f, opc,
+      asm, "", pattern>;
+
 // ARM VFP addrmode5 loads and stores
 class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
            string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+  : VFPI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
       VFPLdStFrm, opc, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-24} = opcod1;
@@ -931,7 +959,7 @@ class ADI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
 
 class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
            string opc, string asm, list<dag> pattern>
-  : I<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+  : VFPI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
       VFPLdStFrm, opc, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-24} = opcod1;
@@ -941,7 +969,7 @@ class ASI5<bits<4> opcod1, bits<2> opcod2, dag oops, dag iops,
 
 // Load / store multiple
 class AXSI5<dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+  : VFPXI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
        VFPLdStMulFrm, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
@@ -949,7 +977,7 @@ class AXSI5<dag oops, dag iops, string asm, list<dag> pattern>
 }
 
 class AXDI5<dag oops, dag iops, string asm, list<dag> pattern>
-  : XI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
+  : VFPXI<oops, iops, AddrMode5, Size4Bytes, IndexModeNone,
        VFPLdStMulFrm, asm, "", pattern> {
   // TODO: Mark the instructions with the appropriate subtarget info.
   let Inst{27-25} = 0b110;
@@ -960,7 +988,7 @@ class AXDI5<dag oops, dag iops, string asm, list<dag> pattern>
 // Double precision, unary
 class ADuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
            string opc, string asm, list<dag> pattern>
-  : AI<oops, iops, VFPUnaryFrm, opc, asm, pattern> {
+  : VFPAI<oops, iops, VFPUnaryFrm, opc, asm, pattern> {
   let Inst{27-20} = opcod1;
   let Inst{19-16} = opcod2;
   let Inst{11-8}  = 0b1011;
@@ -970,7 +998,7 @@ class ADuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
 // Double precision, binary
 class ADbI<bits<8> opcod, dag oops, dag iops, string opc,
            string asm, list<dag> pattern>
-  : AI<oops, iops, VFPBinaryFrm, opc, asm, pattern> {
+  : VFPAI<oops, iops, VFPBinaryFrm, opc, asm, pattern> {
   let Inst{27-20} = opcod;
   let Inst{11-8}  = 0b1011;
 }
@@ -978,7 +1006,7 @@ class ADbI<bits<8> opcod, dag oops, dag iops, string opc,
 // Single precision, unary
 class ASuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
            string opc, string asm, list<dag> pattern>
-  : AI<oops, iops, VFPUnaryFrm, opc, asm, pattern> {
+  : VFPAI<oops, iops, VFPUnaryFrm, opc, asm, pattern> {
   // Bits 22 (D bit) and 5 (M bit) will be changed during instruction encoding.
   let Inst{27-20} = opcod1;
   let Inst{19-16} = opcod2;
@@ -989,7 +1017,7 @@ class ASuI<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3, dag oops, dag iops,
 // Single precision, binary
 class ASbI<bits<8> opcod, dag oops, dag iops, string opc,
            string asm, list<dag> pattern>
-  : AI<oops, iops, VFPBinaryFrm, opc, asm, pattern> {
+  : VFPAI<oops, iops, VFPBinaryFrm, opc, asm, pattern> {
   // Bit 22 (D bit) can be changed during instruction encoding.
   let Inst{27-20} = opcod;
   let Inst{11-8}  = 0b1010;
@@ -998,7 +1026,7 @@ class ASbI<bits<8> opcod, dag oops, dag iops, string opc,
 // VFP conversion instructions
 class AVConv1I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
                dag oops, dag iops, string opc, string asm, list<dag> pattern>
-  : AI<oops, iops, VFPConv1Frm, opc, asm, pattern> {
+  : VFPAI<oops, iops, VFPConv1Frm, opc, asm, pattern> {
   let Inst{27-20} = opcod1;
   let Inst{19-16} = opcod2;
   let Inst{11-8}  = opcod3;
@@ -1007,7 +1035,7 @@ class AVConv1I<bits<8> opcod1, bits<4> opcod2, bits<4> opcod3,
 
 class AVConvXI<bits<8> opcod1, bits<4> opcod2, dag oops, dag iops, Format f,
              string opc, string asm, list<dag> pattern>
-  : AI<oops, iops, f, opc, asm, pattern> {
+  : VFPAI<oops, iops, f, opc, asm, pattern> {
   let Inst{27-20} = opcod1;
   let Inst{11-8}  = opcod2;
   let Inst{4}     = 1;
