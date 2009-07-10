@@ -449,7 +449,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
 
     // If the ABI doesn't require an extra load, return a direct reference to
     // the global.
-    if (!Subtarget->GVRequiresExtraLoad(GV, TM, false)) {
+    if (!Subtarget->GVRequiresExtraLoad(GV, TM)) {
       if (Subtarget->isPICStyleRIPRel()) {
         // Use rip-relative addressing if we can.  Above we verified that the
         // base and index registers are unused.

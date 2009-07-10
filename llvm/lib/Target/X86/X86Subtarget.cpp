@@ -39,8 +39,7 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
 /// value of GV itself. This means that the GlobalAddress must be in the base
 /// or index register of the address, not the GV offset field.
 bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue *GV,
-                                       const TargetMachine &TM,
-                                       bool isDirectCall) const {
+                                       const TargetMachine &TM) const {
   // Windows targets only require an extra load for DLLImport linkage values,
   // and they need these regardless of whether we're in PIC mode or not.
   if (isTargetCygMing() || isTargetWindows())
@@ -51,8 +50,6 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue *GV,
     return false;
     
   if (isTargetDarwin()) {
-    if (isDirectCall)
-      return false;
     bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
     if (GV->hasHiddenVisibility() &&
         (Is64Bit || (!isDecl && !GV->hasCommonLinkage())))
@@ -60,11 +57,9 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue *GV,
       // target is x86-64 or the symbol is definitely defined in the current
       // translation unit.
       return false;
-    return !isDirectCall && (isDecl || GV->isWeakForLinker());
+    return isDecl || GV->isWeakForLinker();
   } else if (isTargetELF()) {
     // Extra load is needed for all externally visible.
-    if (isDirectCall)
-      return false;
     if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
       return false;
     return true;
@@ -77,7 +72,7 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue *GV,
 /// a register, but not an extra load.
 bool X86Subtarget::GVRequiresRegister(const GlobalValue *GV,
                                       const TargetMachine &TM) const {
-  if (GVRequiresExtraLoad(GV, TM, false))
+  if (GVRequiresExtraLoad(GV, TM))
     return true;
   
   // Code below here need only consider cases where GVRequiresExtraLoad

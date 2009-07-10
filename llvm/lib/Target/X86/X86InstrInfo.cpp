@@ -781,7 +781,7 @@ static bool regIsPICBase(unsigned BaseReg, const MachineRegisterInfo &MRI) {
 /// isGVStub - Return true if the GV requires an extra load to get the
 /// real address.
 static inline bool isGVStub(GlobalValue *GV, X86TargetMachine &TM) {
-  return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
+  return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM);
 }
 
 /// CanRematLoadWithDispOperand - Return true if a load with the specified

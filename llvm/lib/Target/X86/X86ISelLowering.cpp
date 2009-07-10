@@ -4554,7 +4554,7 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
                                       SelectionDAG &DAG) const {
   bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
   bool ExtraLoadRequired =
-    Subtarget->GVRequiresExtraLoad(GV, getTargetMachine(), false);
+    Subtarget->GVRequiresExtraLoad(GV, getTargetMachine());
 
   // Create the TargetGlobalAddress node, folding in the constant
   // offset if it is legal.
@@ -7075,7 +7075,7 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
 
   if (AM.BaseGV) {
     // We can only fold this if we don't need an extra load.
-    if (Subtarget->GVRequiresExtraLoad(AM.BaseGV, getTargetMachine(), false))
+    if (Subtarget->GVRequiresExtraLoad(AM.BaseGV, getTargetMachine()))
       return false;
     // If BaseGV requires a register, we cannot also have a BaseReg.
     if (Subtarget->GVRequiresRegister(AM.BaseGV, getTargetMachine()) &&
@@ -8841,8 +8841,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     }
     // If we require an extra load to get this address, as in PIC mode, we
     // can't accept it.
-    if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(), getTargetMachine(),
-                                       false))
+    if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(), getTargetMachine()))
       return;
 
     if (hasMemory)

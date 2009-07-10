@@ -301,7 +301,7 @@ static bool gvNeedsNonLazyPtr(const MachineOperand &GVOp,
       !TM.getSubtarget<X86Subtarget>().isTargetDarwin())
     return false;
   
-  return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
+  return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM);
 }
 
 template<class CodeEmitter>
