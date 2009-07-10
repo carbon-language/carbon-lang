@@ -825,14 +825,24 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                     NumMemInits);
     // Also issue warning if order of ctor-initializer list does not match order
     // of 1) base class declarations and 2) order of non-static data members.
-    // FIXME. proper handling in the presense of virtual base class.
     llvm::SmallVector<const void*, 32> AllBaseOrMembers;
     
     CXXRecordDecl *ClassDecl
       = cast<CXXRecordDecl>(Constructor->getDeclContext());
+    // Push virtual bases before others.
+    for (CXXRecordDecl::base_class_iterator VBase =
+         ClassDecl->vbases_begin(),
+         E = ClassDecl->vbases_end(); VBase != E; ++VBase)
+      AllBaseOrMembers.push_back(VBase->getType()->getAsRecordType());
+      
     for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
-         E = ClassDecl->bases_end(); Base != E; ++Base)
+         E = ClassDecl->bases_end(); Base != E; ++Base) {
+      // Virtuals are alread in the virtual base list and are constructed
+      // first.
+      if (Base->isVirtual())
+        continue;
       AllBaseOrMembers.push_back(Base->getType()->getAsRecordType());
+    }
     
     for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
          E = ClassDecl->field_end(); Field != E; ++Field)

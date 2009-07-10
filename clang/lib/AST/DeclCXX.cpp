@@ -30,7 +30,8 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Polymorphic(false), Abstract(false),
     HasTrivialConstructor(true), HasTrivialDestructor(true),
-    Bases(0), NumBases(0), Conversions(DC, DeclarationName()),
+    Bases(0), NumBases(0), VBases(0), NumVBases(0),
+    Conversions(DC, DeclarationName()),
     TemplateOrInstantiation() { }
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
@@ -62,11 +63,76 @@ CXXRecordDecl::setBases(ASTContext &C,
 
   if (this->Bases)
     C.Deallocate(this->Bases);
-
+  
+  int vbaseCount = 0;
+  llvm::SmallVector<const CXXBaseSpecifier*, 8> UniqueVbases;
+  bool hasDirectVirtualBase = false;
+  
   this->Bases = new(C) CXXBaseSpecifier [NumBases];
   this->NumBases = NumBases;
-  for (unsigned i = 0; i < NumBases; ++i)
+  for (unsigned i = 0; i < NumBases; ++i) {
     this->Bases[i] = *Bases[i];
+    // Keep track of inherited vbases for this base class.
+    const CXXBaseSpecifier *Base = Bases[i];
+    QualType BaseType = Base->getType();
+    // Skip template types. 
+    // FIXME. This means that this list must be rebuilt during template
+    // instantiation.
+    if (BaseType->isDependentType())
+      continue;
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(BaseType->getAsRecordType()->getDecl());
+    if (Base->isVirtual())
+      hasDirectVirtualBase = true;
+    for (CXXRecordDecl::base_class_iterator VBase = 
+          BaseClassDecl->vbases_begin(),
+         E = BaseClassDecl->vbases_end(); VBase != E; ++VBase) {
+      // Add this vbase to the array of vbases for current class if it is 
+      // not already in the list.
+      // FIXME. Note that we do a linear search as number of such classes are
+      // very few.
+      int i;
+      for (i = 0; i < vbaseCount; ++i)
+        if (UniqueVbases[i]->getType() == VBase->getType())
+          break;
+      if (i == vbaseCount) {
+        UniqueVbases.push_back(VBase);
+        ++vbaseCount;
+      }
+    }
+  }
+  if (hasDirectVirtualBase) {
+    // Iterate one more time through the direct bases and add the virtual
+    // base to the list of vritual bases for current class.
+    for (unsigned i = 0; i < NumBases; ++i) {
+      const CXXBaseSpecifier *VBase = Bases[i];
+      if (!VBase->isVirtual())
+        continue;
+      int i;
+      for (i = 0; i < vbaseCount; ++i)
+        if (UniqueVbases[i]->getType() == VBase->getType())
+          break;
+      if (i == vbaseCount) {
+        UniqueVbases.push_back(VBase);
+        ++vbaseCount;
+      }
+    }
+  }
+  if (vbaseCount > 0) {
+    // build AST for inhireted, direct or indirect, virtual bases.
+    this->VBases = new(C) CXXBaseSpecifier [vbaseCount];
+    this->NumVBases = vbaseCount;
+    for (int i = 0; i < vbaseCount; i++) {
+      QualType QT = UniqueVbases[i]->getType();
+      CXXRecordDecl *VBaseClassDecl
+        = cast<CXXRecordDecl>(QT->getAsRecordType()->getDecl());
+      this->VBases[i] = 
+        *new CXXBaseSpecifier(
+                          VBaseClassDecl->getSourceRange(), true,
+                          VBaseClassDecl->getTagKind() == RecordDecl::TK_class,
+                          UniqueVbases[i]->getAccessSpecifier(), QT);
+    }
+  }
 }
 
 bool CXXRecordDecl::hasConstCopyConstructor(ASTContext &Context) const {

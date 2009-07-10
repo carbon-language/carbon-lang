@@ -310,6 +310,12 @@ class CXXRecordDecl : public RecordDecl {
   /// NumBases - The number of base class specifiers in Bases.
   unsigned NumBases;
 
+  /// VBases - direct and indirect virtual base classes of this class.
+  CXXBaseSpecifier *VBases;
+  
+  /// NumVBases - The number of virtual base class specifiers in VBases.
+  unsigned NumVBases;
+  
   /// Conversions - Overload set containing the conversion functions
   /// of this C++ class (but not its inherited conversion
   /// functions). Each of the entries in this overload set is a
@@ -361,6 +367,15 @@ public:
   base_class_const_iterator bases_begin() const { return Bases; }
   base_class_iterator       bases_end()         { return Bases + NumBases; }
   base_class_const_iterator bases_end()   const { return Bases + NumBases; }
+  
+  /// getNumVBases - Retrieves the number of virtual base classes of this
+  /// class.
+  unsigned getNumVBases() const { return NumVBases; }
+  
+  base_class_iterator       vbases_begin()       { return VBases; }
+  base_class_const_iterator vbases_begin() const { return VBases; }
+  base_class_iterator       vbases_end()         { return VBases + NumVBases; }
+  base_class_const_iterator vbases_end()   const { return VBases + NumVBases; }
 
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.
