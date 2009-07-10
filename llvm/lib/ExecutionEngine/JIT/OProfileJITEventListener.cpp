@@ -25,7 +25,7 @@
 #include <stddef.h>
 using namespace llvm;
 
-#if defined(USE_OPROFILE)
+#if USE_OPROFILE
 
 #include <opagent.h>
 
@@ -96,7 +96,7 @@ JITEventListener *createOProfileJITEventListener() {
 }
 }
 
-#else  // !defined(USE_OPROFILE)
+#else  // USE_OPROFILE
 
 namespace llvm {
 // By defining this to return NULL, we can let clients call it unconditionally,
@@ -106,4 +106,4 @@ JITEventListener *createOProfileJITEventListener() {
 }
 }  // namespace llvm
 
-#endif  // defined(USE_OPROFILE)
+#endif  // USE_OPROFILE
