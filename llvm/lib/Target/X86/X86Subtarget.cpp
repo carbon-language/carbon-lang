@@ -87,35 +87,53 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     return X86II::MO_GOT;
   }
   
-  if (isPICStyleStubAny()) {
-    // In Darwin/32, we have multiple different stub types, and we have both PIC
-    // and -mdynamic-no-pic.  Determine whether we have a stub reference
-    // and/or whether the reference is relative to the PIC base or not.
-    bool IsPIC = TM.getRelocationModel() == Reloc::PIC_;
+  if (isPICStyleStubPIC(TM)) {  // Darwin/32 in PIC mode.
+    // Determine whether we have a stub reference and/or whether the reference
+    // is relative to the PIC base or not.
     
     // If this is a strong reference to a definition, it is definitely not
     // through a stub.
     if (!GV->isDeclaration() && !GV->isWeakForLinker())
-      return IsPIC ? X86II::MO_PIC_BASE_OFFSET : 0;
+      return X86II::MO_PIC_BASE_OFFSET;
 
     // Unless we have a symbol with hidden visibility, we have to go through a
     // normal $non_lazy_ptr stub because this symbol might be resolved late.
-    if (!GV->hasHiddenVisibility()) {
-      // Non-hidden $non_lazy_ptr reference.
-      return IsPIC ? X86II::MO_DARWIN_NONLAZY_PIC_BASE :
-                     X86II::MO_DARWIN_NONLAZY;
-    }
+    if (!GV->hasHiddenVisibility())  // Non-hidden $non_lazy_ptr reference.
+      return X86II::MO_DARWIN_NONLAZY_PIC_BASE;
     
     // If symbol visibility is hidden, we have a stub for common symbol
     // references and external declarations.
     if (GV->isDeclaration() || GV->hasCommonLinkage()) {
       // Hidden $non_lazy_ptr reference.
-      return IsPIC ? X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE :
-                     X86II::MO_DARWIN_HIDDEN_NONLAZY;
+      return X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE;
     }
     
     // Otherwise, no stub.
-    return IsPIC ? X86II::MO_PIC_BASE_OFFSET : 0;
+    return X86II::MO_PIC_BASE_OFFSET;
+  }
+  
+  if (isPICStyleStubNoDynamic(TM)) {  // Darwin/32 in -mdynamic-no-pic mode.
+    // Determine whether we have a stub reference.
+    
+    // If this is a strong reference to a definition, it is definitely not
+    // through a stub.
+    if (!GV->isDeclaration() && !GV->isWeakForLinker())
+      return X86II::MO_NO_FLAG;
+    
+    // Unless we have a symbol with hidden visibility, we have to go through a
+    // normal $non_lazy_ptr stub because this symbol might be resolved late.
+    if (!GV->hasHiddenVisibility())  // Non-hidden $non_lazy_ptr reference.
+      return X86II::MO_DARWIN_NONLAZY;
+    
+    // If symbol visibility is hidden, we have a stub for common symbol
+    // references and external declarations.
+    if (GV->isDeclaration() || GV->hasCommonLinkage()) {
+      // Hidden $non_lazy_ptr reference.
+      return X86II::MO_DARWIN_HIDDEN_NONLAZY;
+    }
+    
+    // Otherwise, no stub.
+    return X86II::MO_NO_FLAG;
   }
   
   // Direct static reference to global.
