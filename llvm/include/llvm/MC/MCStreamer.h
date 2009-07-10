@@ -125,6 +125,17 @@ namespace llvm {
     virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                   unsigned Pow2Alignment, bool IsLocal) = 0;
 
+    /// EmitZerofill - Emit a the zerofill section and possiblity a symbol, if
+    /// @param Symbol is non-NULL, for @param Size and with the @param
+    /// Pow2Alignment if non-zero.
+    ///
+    /// @param Section - The zerofill section to create and or to put the symbol
+    /// @param Symbol - The zerofill symbol to emit, if non-NULL.
+    /// @param Size - The size of the zerofill symbol.
+    /// @param Pow2Alignment - The alignment of the zerofill symbol if non-zero.
+    virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = 0,
+                              unsigned Size = 0,unsigned Pow2Alignment = 0) = 0;
+
     /// @}
     /// @name Generating Data
     /// @{

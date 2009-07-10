@@ -524,6 +524,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveComm(/*IsLocal=*/false);
     if (!strcmp(IDVal, ".lcomm"))
       return ParseDirectiveComm(/*IsLocal=*/true);
+    if (!strcmp(IDVal, ".zerofill"))
+      return ParseDirectiveDarwinZerofill();
 
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
@@ -955,6 +957,98 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
 
   // Create the Symbol as a common or local common with Size and Pow2Alignment
   Out.EmitCommonSymbol(Sym, Size, Pow2Alignment, IsLocal);
+
+  return false;
+}
+
+/// ParseDirectiveDarwinZerofill
+///  ::= .zerofill segname , sectname [, identifier , size_expression [
+///      , align_expression ]]
+bool AsmParser::ParseDirectiveDarwinZerofill() {
+  if (Lexer.isNot(asmtok::Identifier))
+    return TokError("expected segment name after '.zerofill' directive");
+  std::string Section = Lexer.getCurStrVal();
+  Lexer.Lex();
+
+  if (Lexer.isNot(asmtok::Comma))
+    return TokError("unexpected token in directive");
+  Section += ',';
+  Lexer.Lex();
+ 
+  if (Lexer.isNot(asmtok::Identifier))
+    return TokError("expected section name after comma in '.zerofill' "
+                    "directive");
+  Section += Lexer.getCurStrVal();
+  Lexer.Lex();
+
+  // FIXME: we will need to tell GetSection() that this is to be created with or
+  // must have the Mach-O section type of S_ZEROFILL.  Something like the code
+  // below could be done but for now it is not as EmitZerofill() does not know
+  // how to deal with a section type in the section name like
+  // ParseDirectiveDarwinSection() allows.
+  // Section += ',';
+  // Section += "zerofill";
+
+  // If this is the end of the line all that was wanted was to create the
+  // the section but with no symbol.
+  if (Lexer.is(asmtok::EndOfStatement)) {
+    // Create the zerofill section but no symbol
+    Out.EmitZerofill(Ctx.GetSection(Section.c_str()));
+    return false;
+  }
+
+  if (Lexer.isNot(asmtok::Comma))
+    return TokError("unexpected token in directive");
+  Lexer.Lex();
+
+  if (Lexer.isNot(asmtok::Identifier))
+    return TokError("expected identifier in directive");
+  
+  // handle the identifier as the key symbol.
+  SMLoc IDLoc = Lexer.getLoc();
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+  Lexer.Lex();
+
+  if (Lexer.isNot(asmtok::Comma))
+    return TokError("unexpected token in directive");
+  Lexer.Lex();
+
+  int64_t Size;
+  SMLoc SizeLoc = Lexer.getLoc();
+  if (ParseAbsoluteExpression(Size))
+    return true;
+
+  int64_t Pow2Alignment = 0;
+  SMLoc Pow2AlignmentLoc;
+  if (Lexer.is(asmtok::Comma)) {
+    Lexer.Lex();
+    Pow2AlignmentLoc = Lexer.getLoc();
+    if (ParseAbsoluteExpression(Pow2Alignment))
+      return true;
+  }
+  
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.zerofill' directive");
+  
+  Lexer.Lex();
+
+  if (Size < 0)
+    return Error(SizeLoc, "invalid '.zerofill' directive size, can't be less "
+                 "than zero");
+
+  // NOTE: The alignment in the directive is a power of 2 value, the assember
+  // may internally end up wanting an alignment in bytes.
+  // FIXME: Diagnose overflow.
+  if (Pow2Alignment < 0)
+    return Error(Pow2AlignmentLoc, "invalid '.zerofill' directive alignment, "
+                 "can't be less than zero");
+
+  // TODO: Symbol must be undefined or it is a error to re-defined the symbol
+  if (Sym->getSection() || Ctx.GetSymbolValue(Sym))
+    return Error(IDLoc, "invalid symbol redefinition");
+
+  // Create the zerofill Symbol with Size and Pow2Alignment
+  Out.EmitZerofill(Ctx.GetSection(Section.c_str()), Sym, Size, Pow2Alignment);
 
   return false;
 }

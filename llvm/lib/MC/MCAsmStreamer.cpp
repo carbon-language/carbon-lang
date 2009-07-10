@@ -44,6 +44,9 @@ namespace {
     virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                   unsigned Pow2Alignment, bool IsLocal);
 
+    virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = NULL,
+                              unsigned Size = 0, unsigned Pow2Alignment = 0);
+
     virtual void EmitBytes(const char *Data, unsigned Length);
 
     virtual void EmitValue(const MCValue &Value, unsigned Size);
@@ -154,6 +157,21 @@ void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
   OS << ' ' << Symbol->getName() << ',' << Size;
   if (Pow2Alignment != 0)
     OS << ',' << Pow2Alignment;
+  OS << '\n';
+}
+
+void MCAsmStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
+                                 unsigned Size, unsigned Pow2Alignment) {
+  // Note: a .zerofill directive does not switch sections
+  // FIXME: Really we would like the segment and section names as well as the
+  // section type to be separate values instead of embedded in the name. Not
+  // all assemblers understand all this stuff though.
+  OS << ".zerofill " << Section->getName();
+  if (Symbol != NULL) {
+    OS << ',' << Symbol->getName() << ',' << Size;
+    if (Pow2Alignment != 0)
+      OS << ',' << Pow2Alignment;
+  }
   OS << '\n';
 }
 

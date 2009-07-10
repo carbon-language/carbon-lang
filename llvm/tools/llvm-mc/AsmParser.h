@@ -111,7 +111,7 @@ private:
   bool ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr);
 
   bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
-  
+  bool ParseDirectiveDarwinZerofill(); // Darwin specific ".zerofill"
 };
 
 } // end namespace llvm
