@@ -1430,67 +1430,6 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
   }
 }
 
-/// findCommutedOpIndices - If specified MI is commutable, return the two
-/// operand indices that would swap value. Return true if the instruction
-/// is not in a form which this routine understands.
-bool X86InstrInfo::findCommutedOpIndices(MachineInstr *MI,
-                                         unsigned &SrcOpIdx1,
-                                         unsigned &SrcOpIdx2) const {
-  switch (MI->getOpcode()) {
-  case X86::CMOVB16rr:
-  case X86::CMOVB32rr:
-  case X86::CMOVB64rr:
-  case X86::CMOVAE16rr:
-  case X86::CMOVAE32rr:
-  case X86::CMOVAE64rr:
-  case X86::CMOVE16rr:
-  case X86::CMOVE32rr:
-  case X86::CMOVE64rr:
-  case X86::CMOVNE16rr:
-  case X86::CMOVNE32rr:
-  case X86::CMOVNE64rr:
-  case X86::CMOVBE16rr:
-  case X86::CMOVBE32rr:
-  case X86::CMOVBE64rr:
-  case X86::CMOVA16rr:
-  case X86::CMOVA32rr:
-  case X86::CMOVA64rr:
-  case X86::CMOVL16rr:
-  case X86::CMOVL32rr:
-  case X86::CMOVL64rr:
-  case X86::CMOVGE16rr:
-  case X86::CMOVGE32rr:
-  case X86::CMOVGE64rr:
-  case X86::CMOVLE16rr:
-  case X86::CMOVLE32rr:
-  case X86::CMOVLE64rr:
-  case X86::CMOVG16rr:
-  case X86::CMOVG32rr:
-  case X86::CMOVG64rr:
-  case X86::CMOVS16rr:
-  case X86::CMOVS32rr:
-  case X86::CMOVS64rr:
-  case X86::CMOVNS16rr:
-  case X86::CMOVNS32rr:
-  case X86::CMOVNS64rr:
-  case X86::CMOVP16rr:
-  case X86::CMOVP32rr:
-  case X86::CMOVP64rr:
-  case X86::CMOVNP16rr:
-  case X86::CMOVNP32rr:
-  case X86::CMOVNP64rr:
-  case X86::CMOVO16rr:
-  case X86::CMOVO32rr:
-  case X86::CMOVO64rr:
-  case X86::CMOVNO16rr:
-  case X86::CMOVNO32rr:
-  case X86::CMOVNO64rr:
-    return false;
-  default:
-    return TargetInstrInfoImpl::findCommutedOpIndices(MI, SrcOpIdx1, SrcOpIdx2);
-  }
-}
-
 static X86::CondCode GetCondFromBranchOpc(unsigned BrOpc) {
   switch (BrOpc) {
   default: return X86::COND_INVALID;
