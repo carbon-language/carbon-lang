@@ -1001,7 +1001,7 @@ namespace {
       nl(Out) << "if (!" << getCppName(GV) << ") {";
       in(); nl(Out) << getCppName(GV);
     }
-    Out << " = new GlobalVariable(";
+    Out << " = new GlobalVariable(/*Module=*/*mod";
     nl(Out) << "/*Type=*/";
     printCppName(GV->getType()->getElementType());
     Out << ",";
@@ -1016,8 +1016,7 @@ namespace {
     }
     nl(Out) << "/*Name=*/\"";
     printEscapedString(GV->getName());
-    Out << "\",";
-    nl(Out) << "mod);";
+    Out << "\");";
     nl(Out);
 
     if (GV->hasSection()) {
