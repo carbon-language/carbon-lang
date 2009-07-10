@@ -30,7 +30,10 @@ namespace llvm {
 
 /// NoFolder - Create "constants" (actually, values) with no folding.
 class NoFolder {
+  LLVMContext &Context;
 public:
+  
+  NoFolder(LLVMContext &C) : Context(C) { }
 
   //===--------------------------------------------------------------------===//
   // Binary Operators
@@ -113,7 +116,7 @@ public:
 
   Constant *CreateGetElementPtr(Constant *C, Constant* const *IdxList,
                                 unsigned NumIdx) const {
-    return ConstantExpr::getGetElementPtr(C, IdxList, NumIdx);
+    return Context.getConstantExprGetElementPtr(C, IdxList, NumIdx);
   }
   Value *CreateGetElementPtr(Constant *C, Value* const *IdxList,
                              unsigned NumIdx) const {

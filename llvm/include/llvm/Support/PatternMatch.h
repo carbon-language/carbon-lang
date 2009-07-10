@@ -31,19 +31,20 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
 
 namespace llvm {
 namespace PatternMatch {
 
 template<typename Val, typename Pattern>
-bool match(Val *V, const Pattern &P) {
-  return const_cast<Pattern&>(P).match(V);
+bool match(Val *V, const Pattern &P, LLVMContext &Context) {
+  return const_cast<Pattern&>(P).match(V, Context);
 }
 
 template<typename Class>
 struct leaf_ty {
   template<typename ITy>
-  bool match(ITy *V) { return isa<Class>(V); }
+  bool match(ITy *V, LLVMContext&) { return isa<Class>(V); }
 };
 
 /// m_Value() - Match an arbitrary value and ignore it.
@@ -54,7 +55,7 @@ inline leaf_ty<ConstantInt> m_ConstantInt() { return leaf_ty<ConstantInt>(); }
 template<int64_t Val>
 struct constantint_ty {
   template<typename ITy>
-  bool match(ITy *V) {
+  bool match(ITy *V, LLVMContext&) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       const APInt &CIV = CI->getValue();
       if (Val >= 0)
@@ -77,7 +78,7 @@ inline constantint_ty<Val> m_ConstantInt() {
 
 struct zero_ty {
   template<typename ITy>
-  bool match(ITy *V) {
+  bool match(ITy *V, LLVMContext&) {
     if (const Constant *C = dyn_cast<Constant>(V))
       return C->isNullValue();
     return false;
@@ -94,7 +95,7 @@ struct bind_ty {
   bind_ty(Class *&V) : VR(V) {}
 
   template<typename ITy>
-  bool match(ITy *V) {
+  bool match(ITy *V, LLVMContext&) {
     if (Class *CV = dyn_cast<Class>(V)) {
       VR = CV;
       return true;
@@ -115,7 +116,7 @@ struct specificval_ty {
   specificval_ty(const Value *V) : Val(V) {}
 
   template<typename ITy>
-  bool match(ITy *V) {
+  bool match(ITy *V, LLVMContext&) {
     return V == Val;
   }
 };
@@ -137,15 +138,15 @@ struct BinaryOp_match {
   BinaryOp_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (V->getValueID() == Value::InstructionVal + Opcode) {
       ConcreteTy *I = cast<ConcreteTy>(V);
-      return I->getOpcode() == Opcode && L.match(I->getOperand(0)) &&
-             R.match(I->getOperand(1));
+      return I->getOpcode() == Opcode && L.match(I->getOperand(0), Context) &&
+             R.match(I->getOperand(1), Context);
     }
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-      return CE->getOpcode() == Opcode && L.match(CE->getOperand(0)) &&
-             R.match(CE->getOperand(1));
+      return CE->getOpcode() == Opcode && L.match(CE->getOperand(0), Context) &&
+             R.match(CE->getOperand(1), Context);
     return false;
   }
 };
@@ -269,20 +270,20 @@ struct Shr_match {
   Shr_match(const LHS_t &LHS, const RHS_t &RHS) : L(LHS), R(RHS) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (V->getValueID() == Value::InstructionVal + Instruction::LShr ||
         V->getValueID() == Value::InstructionVal + Instruction::AShr) {
       ConcreteTy *I = cast<ConcreteTy>(V);
       return (I->getOpcode() == Instruction::AShr ||
               I->getOpcode() == Instruction::LShr) &&
-             L.match(I->getOperand(0)) &&
-             R.match(I->getOperand(1));
+             L.match(I->getOperand(0), Context) &&
+             R.match(I->getOperand(1), Context);
     }
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       return (CE->getOpcode() == Instruction::LShr ||
               CE->getOpcode() == Instruction::AShr) &&
-             L.match(CE->getOperand(0)) &&
-             R.match(CE->getOperand(1));
+             L.match(CE->getOperand(0), Context) &&
+             R.match(CE->getOperand(1), Context);
     return false;
   }
 };
@@ -309,9 +310,10 @@ struct BinaryOpClass_match {
     : Opcode(0), L(LHS), R(RHS) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (Class *I = dyn_cast<Class>(V))
-      if (L.match(I->getOperand(0)) && R.match(I->getOperand(1))) {
+      if (L.match(I->getOperand(0), Context) &&
+          R.match(I->getOperand(1), Context)) {
         if (Opcode)
           *Opcode = I->getOpcode();
         return true;
@@ -354,9 +356,10 @@ struct CmpClass_match {
     : Predicate(Pred), L(LHS), R(RHS) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (Class *I = dyn_cast<Class>(V))
-      if (L.match(I->getOperand(0)) && R.match(I->getOperand(1))) {
+      if (L.match(I->getOperand(0), Context) &&
+          R.match(I->getOperand(1), Context)) {
         Predicate = I->getPredicate();
         return true;
       }
@@ -393,11 +396,11 @@ struct SelectClass_match {
     : C(Cond), L(LHS), R(RHS) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (SelectInst *I = dyn_cast<SelectInst>(V))
-      return C.match(I->getOperand(0)) &&
-             L.match(I->getOperand(1)) &&
-             R.match(I->getOperand(2));
+      return C.match(I->getOperand(0), Context) &&
+             L.match(I->getOperand(1), Context) &&
+             R.match(I->getOperand(2), Context);
     return false;
   }
 };
@@ -430,9 +433,9 @@ struct CastClass_match {
   CastClass_match(const Op_t &OpMatch) : Op(OpMatch) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (Class *I = dyn_cast<Class>(V))
-      return Op.match(I->getOperand(0));
+      return Op.match(I->getOperand(0), Context);
     return false;
   }
 };
@@ -454,27 +457,27 @@ struct not_match {
   not_match(const LHS_t &LHS) : L(LHS) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (Instruction *I = dyn_cast<Instruction>(V))
       if (I->getOpcode() == Instruction::Xor)
-        return matchIfNot(I->getOperand(0), I->getOperand(1));
+        return matchIfNot(I->getOperand(0), I->getOperand(1), Context);
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::Xor)
-        return matchIfNot(CE->getOperand(0), CE->getOperand(1));
+        return matchIfNot(CE->getOperand(0), CE->getOperand(1), Context);
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return L.match(ConstantExpr::getNot(CI));
+      return L.match(Context.getConstantExprNot(CI), Context);
     return false;
   }
 private:
-  bool matchIfNot(Value *LHS, Value *RHS) {
+  bool matchIfNot(Value *LHS, Value *RHS, LLVMContext &Context) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
-      return CI->isAllOnesValue() && L.match(LHS);
+      return CI->isAllOnesValue() && L.match(LHS, Context);
     if (ConstantInt *CI = dyn_cast<ConstantInt>(LHS))
-      return CI->isAllOnesValue() && L.match(RHS);
+      return CI->isAllOnesValue() && L.match(RHS, Context);
     if (ConstantVector *CV = dyn_cast<ConstantVector>(RHS))
-      return CV->isAllOnesValue() && L.match(LHS);
+      return CV->isAllOnesValue() && L.match(LHS, Context);
     if (ConstantVector *CV = dyn_cast<ConstantVector>(LHS))
-      return CV->isAllOnesValue() && L.match(RHS);
+      return CV->isAllOnesValue() && L.match(RHS, Context);
     return false;
   }
 };
@@ -490,21 +493,21 @@ struct neg_match {
   neg_match(const LHS_t &LHS) : L(LHS) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (Instruction *I = dyn_cast<Instruction>(V))
       if (I->getOpcode() == Instruction::Sub)
-        return matchIfNeg(I->getOperand(0), I->getOperand(1));
+        return matchIfNeg(I->getOperand(0), I->getOperand(1), Context);
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::Sub)
-        return matchIfNeg(CE->getOperand(0), CE->getOperand(1));
+        return matchIfNeg(CE->getOperand(0), CE->getOperand(1), Context);
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return L.match(ConstantExpr::getNeg(CI));
+      return L.match(Context.getConstantExprNeg(CI), Context);
     return false;
   }
 private:
-  bool matchIfNeg(Value *LHS, Value *RHS) {
-    return LHS == ConstantExpr::getZeroValueForNegationExpr(LHS->getType()) &&
-           L.match(RHS);
+  bool matchIfNeg(Value *LHS, Value *RHS, LLVMContext &Context) {
+    return LHS == Context.getZeroValueForNegation(LHS->getType()) &&
+           L.match(RHS, Context);
   }
 };
 
@@ -519,21 +522,21 @@ struct fneg_match {
   fneg_match(const LHS_t &LHS) : L(LHS) {}
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (Instruction *I = dyn_cast<Instruction>(V))
       if (I->getOpcode() == Instruction::FSub)
-        return matchIfFNeg(I->getOperand(0), I->getOperand(1));
+        return matchIfFNeg(I->getOperand(0), I->getOperand(1), Context);
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::FSub)
-        return matchIfFNeg(CE->getOperand(0), CE->getOperand(1));
+        return matchIfFNeg(CE->getOperand(0), CE->getOperand(1), Context);
     if (ConstantFP *CF = dyn_cast<ConstantFP>(V))
-      return L.match(ConstantExpr::getFNeg(CF));
+      return L.match(Context.getConstantExprFNeg(CF), Context);
     return false;
   }
 private:
-  bool matchIfFNeg(Value *LHS, Value *RHS) {
-    return LHS == ConstantExpr::getZeroValueForNegationExpr(LHS->getType()) &&
-           L.match(RHS);
+  bool matchIfFNeg(Value *LHS, Value *RHS, LLVMContext &Context) {
+    return LHS == Context.getZeroValueForNegation(LHS->getType()) &&
+           L.match(RHS, Context);
   }
 };
 
@@ -554,10 +557,10 @@ struct brc_match {
   }
 
   template<typename OpTy>
-  bool match(OpTy *V) {
+  bool match(OpTy *V, LLVMContext &Context) {
     if (BranchInst *BI = dyn_cast<BranchInst>(V))
       if (BI->isConditional()) {
-        if (Cond.match(BI->getCondition())) {
+        if (Cond.match(BI->getCondition(), Context)) {
           T = BI->getSuccessor(0);
           F = BI->getSuccessor(1);
           return true;
