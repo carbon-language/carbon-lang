@@ -205,7 +205,7 @@ bool BugDriver::run() {
   std::cout << "*** Checking the code generator...\n";
   try {
     if (!diffProgram()) {
-      std::cout << "\n*** Debugging miscompilation!\n";
+      std::cout << "\n*** Output matches: Debugging miscompilation!\n";
       return debugMiscompilation();
     }
   } catch (ToolExecutionError &TEE) {

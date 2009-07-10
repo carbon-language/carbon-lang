@@ -57,7 +57,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // First, run the program with just the Suffix passes.  If it is still broken
   // with JUST the kept passes, discard the prefix passes.
   std::cout << "Checking to see if '" << getPassesString(Suffix)
-            << "' compile correctly: ";
+            << "' compiles correctly: ";
 
   std::string BitcodeResult;
   if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
@@ -85,7 +85,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // Next, see if the program is broken if we run the "prefix" passes first,
   // then separately run the "kept" passes.
   std::cout << "Checking to see if '" << getPassesString(Prefix)
-            << "' compile correctly: ";
+            << "' compiles correctly: ";
 
   // If it is not broken with the kept passes, it's possible that the prefix
   // passes must be run before the kept passes to break it.  If the program

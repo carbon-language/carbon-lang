@@ -33,6 +33,10 @@ namespace {
              cl::desc("Remote execution (rsh/ssh) host"));
 
   cl::opt<std::string>
+  RemotePort("remote-port",
+             cl::desc("Remote execution (rsh/ssh) port"));
+
+  cl::opt<std::string>
   RemoteUser("remote-user",
              cl::desc("Remote execution (rsh/ssh) user id"));
 
@@ -538,6 +542,23 @@ CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
 //===---------------------------------------------------------------------===//
 // GCC abstraction
 //
+
+static bool
+IsARMArchitecture(std::vector<std::string> Args)
+{
+  for (std::vector<std::string>::const_iterator
+         I = Args.begin(), E = Args.end(); I != E; ++I) {
+    if (!strcasecmp(I->c_str(), "-arch")) {
+      ++I;
+      if ((I != E) && !strncasecmp(I->c_str(), "arm", strlen("arm"))) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 int GCC::ExecuteProgram(const std::string &ProgramFile,
                         const std::vector<std::string> &Args,
                         FileType fileType,
@@ -562,7 +583,11 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   } else {
     GCCArgs.push_back("assembler");
 #ifdef __APPLE__
-    GCCArgs.push_back("-force_cpusubtype_ALL");
+    // For ARM architectures we don't want this flag. bugpoint isn't
+    // explicitly told what architecture it is working on, so we get
+    // it from gcc flags
+    if (!IsARMArchitecture(ArgsForGCC))
+      GCCArgs.push_back("-force_cpusubtype_ALL");
 #endif
   }
   GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
@@ -615,6 +640,10 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     ProgramArgs.push_back(RemoteHost.c_str());
     ProgramArgs.push_back("-l");
     ProgramArgs.push_back(RemoteUser.c_str());
+    if (!RemotePort.empty()) {
+      ProgramArgs.push_back("-p");
+      ProgramArgs.push_back(RemotePort.c_str());
+    }
     if (!RemoteExtra.empty()) {
       ProgramArgs.push_back(RemoteExtra.c_str());
     }

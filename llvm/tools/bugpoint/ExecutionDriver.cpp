@@ -457,9 +457,10 @@ bool BugDriver::diffProgram(const std::string &BitcodeFile,
     }
     FilesDifferent = true;
   }
-
-  // Remove the generated output.
-  Output.eraseFromDisk();
+  else {
+    // Remove the generated output if there are no differences.
+    Output.eraseFromDisk();
+  }
 
   // Remove the bitcode file if we are supposed to.
   if (RemoveBitcode)
