@@ -2120,12 +2120,6 @@ const SCEV *ScalarEvolution::getCouldNotCompute() {
   return &CouldNotCompute;
 }
 
-/// hasSCEV - Return true if the SCEV for this value has already been
-/// computed.
-bool ScalarEvolution::hasSCEV(Value *V) const {
-  return Scalars.count(V);
-}
-
 /// getSCEV - Return an existing SCEV if it exists, otherwise analyze the
 /// expression and create a new one.
 const SCEV *ScalarEvolution::getSCEV(Value *V) {
@@ -4966,8 +4960,8 @@ void ScalarEvolution::print(raw_ostream &OS, const Module* ) const {
   // out SCEV values of all instructions that are interesting. Doing
   // this potentially causes it to create new SCEV objects though,
   // which technically conflicts with the const qualifier. This isn't
-  // observable from outside the class though (the hasSCEV function
-  // notwithstanding), so casting away the const isn't dangerous.
+  // observable from outside the class though, so casting away the
+  // const isn't dangerous.
   ScalarEvolution &SE = *const_cast<ScalarEvolution*>(this);
 
   OS << "Classifying expressions for: " << F->getName() << "\n";
