@@ -16,6 +16,7 @@
 #define LLVM_SUPPORT_TYPEBUILDER_H
 
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include <limits.h>
 
 namespace llvm {
@@ -234,7 +235,7 @@ public:
 
 template<bool cross> class TypeBuilder<void, cross> {
 public:
-  static const Type *get(LLVMContxt&) {
+  static const Type *get(LLVMContext&) {
     return Type::VoidTy;
   }
 };

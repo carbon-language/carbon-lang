@@ -65,7 +65,7 @@ struct RecordingJITEventListener : public JITEventListener {
 class JITEventListenerTest : public testing::Test {
  protected:
   JITEventListenerTest()
-      : M(new Module("module", *new LLVMContext())),
+      : M(new Module("module", getGlobalContext())),
         EE(ExecutionEngine::createJIT(new ExistingModuleProvider(M))) {
   }
 
@@ -75,7 +75,7 @@ class JITEventListenerTest : public testing::Test {
 
 Function *buildFunction(Module *M) {
   Function *Result = Function::Create(
-      TypeBuilder<int32_t(int32_t), false>::get(),
+      TypeBuilder<int32_t(int32_t), false>::get(getGlobalContext()),
       GlobalValue::ExternalLinkage, "id", M);
   Value *Arg = Result->arg_begin();
   BasicBlock *BB = BasicBlock::Create("entry", Result);
