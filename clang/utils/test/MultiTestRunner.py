@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """
 MultiTestRunner - Harness for running multiple tests in the simple clang style.

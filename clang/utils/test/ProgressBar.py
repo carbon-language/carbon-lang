@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Source: http://code.activestate.com/recipes/475116/, with
 # modifications by Daniel Dunbar.

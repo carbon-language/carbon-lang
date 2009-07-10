@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 #  TestRunner.py - This script is used to run arbitrary unit tests.  Unit
 #  tests must contain the command used to run them in the input file, starting
