@@ -252,6 +252,7 @@ void LiveIntervals::computeNumbering() {
           terminatorGaps.insert(std::make_pair(&*MBB, MIIndex)).second;
         assert(inserted && 
                "Multiple 'first' terminators encountered during numbering.");
+        inserted = inserted; // Avoid compiler warning if assertions turned off.
         i2miMap_.push_back(0);
 
         MIIndex += InstrSlots::NUM;
@@ -280,6 +281,7 @@ void LiveIntervals::computeNumbering() {
         terminatorGaps.insert(std::make_pair(&*MBB, MIIndex)).second;
       assert(inserted && 
              "Multiple 'first' terminators encountered during numbering.");
+      inserted = inserted; // Avoid compiler warning if assertions turned off.
       i2miMap_.push_back(0);
  
       MIIndex += InstrSlots::NUM;
