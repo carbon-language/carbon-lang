@@ -687,8 +687,6 @@ void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps) {
 }
 
 static int getMemoryOpOffset(const MachineInstr *MI) {
-  assert(isMemoryOp(MI));
-
   int Opcode = MI->getOpcode();
   bool isAM2 = Opcode == ARM::LDR || Opcode == ARM::STR;
   bool isAM3 = Opcode == ARM::LDRD || Opcode == ARM::STRD;
