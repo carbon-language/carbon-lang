@@ -97,8 +97,6 @@ template<class CodeEmitter>
                           intptr_t PCAdj = 0);
 
     unsigned getX86RegNum(unsigned RegNo) const;
-
-    bool gvNeedsNonLazyPtr(const GlobalValue *GV);
   };
 
 template<class CodeEmitter>
@@ -293,12 +291,17 @@ static bool isDisp8(int Value) {
   return Value == (signed char)Value;
 }
 
-template<class CodeEmitter>
-bool Emitter<CodeEmitter>::gvNeedsNonLazyPtr(const GlobalValue *GV) {
-  // For Darwin, simulate the linktime GOT by using the same non-lazy-pointer
+static bool gvNeedsNonLazyPtr(const MachineOperand &GVOp,
+                              const TargetMachine &TM) {
+  const GlobalValue *GV = GVOp.getGlobal();
+  
+  // For Darwin-64, simulate the linktime GOT by using the same non-lazy-pointer
   // mechanism as 32-bit mode.
-  return (!Is64BitMode || TM.getSubtarget<X86Subtarget>().isTargetDarwin()) &&
-    TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
+  if (TM.getSubtarget<X86Subtarget>().is64Bit() && 
+      !TM.getSubtarget<X86Subtarget>().isTargetDarwin())
+    return false;
+  
+  return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM, false);
 }
 
 template<class CodeEmitter>
@@ -321,7 +324,7 @@ void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word
       : (IsPIC ? X86::reloc_picrel_word : X86::reloc_absolute_word);
     bool NeedStub = isa<Function>(RelocOp->getGlobal());
-    bool Indirect = gvNeedsNonLazyPtr(RelocOp->getGlobal());
+    bool Indirect = gvNeedsNonLazyPtr(*RelocOp, TM);
     emitGlobalAddress(RelocOp->getGlobal(), rt, RelocOp->getOffset(),
                       PCAdj, NeedStub, Indirect);
   } else if (RelocOp->isCPI()) {
@@ -638,7 +641,7 @@ void Emitter<CodeEmitter>::emitInstruction(
           rt = X86::reloc_absolute_dword;  // FIXME: add X86II flag?
         if (MO1.isGlobal()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
-          bool Indirect = gvNeedsNonLazyPtr(MO1.getGlobal());
+          bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
           emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
                             NeedStub, Indirect);
         } else if (MO1.isSymbol())
@@ -742,7 +745,7 @@ void Emitter<CodeEmitter>::emitInstruction(
           rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO1.isGlobal()) {
           bool NeedStub = isa<Function>(MO1.getGlobal());
-          bool Indirect = gvNeedsNonLazyPtr(MO1.getGlobal());
+          bool Indirect = gvNeedsNonLazyPtr(MO1, TM);
           emitGlobalAddress(MO1.getGlobal(), rt, MO1.getOffset(), 0,
                             NeedStub, Indirect);
         } else if (MO1.isSymbol())
@@ -781,7 +784,7 @@ void Emitter<CodeEmitter>::emitInstruction(
           rt = X86::reloc_absolute_word;  // FIXME: add X86II flag?
         if (MO.isGlobal()) {
           bool NeedStub = isa<Function>(MO.getGlobal());
-          bool Indirect = gvNeedsNonLazyPtr(MO.getGlobal());
+          bool Indirect = gvNeedsNonLazyPtr(MO, TM);
           emitGlobalAddress(MO.getGlobal(), rt, MO.getOffset(), 0,
                             NeedStub, Indirect);
         } else if (MO.isSymbol())
