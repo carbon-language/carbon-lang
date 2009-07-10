@@ -324,3 +324,17 @@ void test_rdar_7034511(NSArray *y) {
   if (x == ((void*) 0)) {}
 }
 
+// Handle arbitrary void*^n -> void*^m casts.  This was previously causing
+// a crash in CastRegion.
+void handle_higher_order_voidptr_casts() {
+  void **ptr;
+  typedef void *PVOID;
+  typedef long INT_PTR, *PINT_PTR;
+  typedef INT_PTR (*FARPROC)();
+  FARPROC handle_higher_order_voidptr_casts_aux();
+  PVOID handle_higher_order_voidptr_casts_aux_2(PVOID volatile *x);
+  
+  ptr = (void**) handle_higher_order_voidptr_casts_aux();
+  handle_higher_order_voidptr_casts_aux_2(ptr);
+}
+
