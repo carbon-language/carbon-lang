@@ -183,8 +183,12 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
   } else if (Subtarget.isTargetDarwin()) {
     if (Subtarget.is64Bit())
       Subtarget.setPICStyle(PICStyles::RIPRel);
-    else
-      Subtarget.setPICStyle(PICStyles::Stub);
+    else if (getRelocationModel() == Reloc::PIC_)
+      Subtarget.setPICStyle(PICStyles::StubPIC);
+    else {
+      assert(getRelocationModel() == Reloc::DynamicNoPIC);
+      Subtarget.setPICStyle(PICStyles::StubDynamicNoPIC);
+    }
   } else if (Subtarget.isTargetELF()) {
     if (Subtarget.is64Bit())
       Subtarget.setPICStyle(PICStyles::RIPRel);

@@ -34,18 +34,6 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
     clEnumValN(X86Subtarget::Intel, "intel", "Emit Intel-style assembly"),
     clEnumValEnd));
 
-bool X86Subtarget::isPICStyleStubPIC(const TargetMachine &TM) const {
-  return PICStyle == PICStyles::Stub &&
-         TM.getRelocationModel() == Reloc::PIC_;
-}
-
-bool X86Subtarget::isPICStyleStubNoDynamic(const TargetMachine &TM) const {
-  return PICStyle == PICStyles::Stub &&
-         TM.getRelocationModel() == Reloc::DynamicNoPIC;
-}
-
-
-
 /// ClassifyGlobalReference - Classify a global variable reference for the
 /// current subtarget according to how we should reference it in a non-pcrel
 /// context.

@@ -26,10 +26,11 @@ class TargetMachine;
 /// 
 namespace PICStyles {
 enum Style {
-  Stub,   // Used on i386-darwin
-  GOT,    // Used on many 32-bit unices.
-  RIPRel, // Used on X86-64 when not in -static mode.
-  None    // Set when in -static mode (not PIC or DynamicNoPIC mode).
+  StubPIC,          // Used on i386-darwin in -fPIC mode.
+  StubDynamicNoPIC, // Used on i386-darwin in -mdynamic-no-pic mode.
+  GOT,              // Used on many 32-bit unices in -fPIC mode.
+  RIPRel,           // Used on X86-64 when not in -static mode.
+  None              // Set when in -static mode (not PIC or DynamicNoPIC mode).
 };
 }
 
@@ -186,9 +187,16 @@ public:
   bool isPICStyleGOT() const { return PICStyle == PICStyles::GOT; }
   bool isPICStyleRIPRel() const { return PICStyle == PICStyles::RIPRel; }
 
-  bool isPICStyleStubPIC(const TargetMachine &TM) const;
-  bool isPICStyleStubNoDynamic(const TargetMachine &TM) const;
-  bool isPICStyleStubAny() const { return PICStyle == PICStyles::Stub; }
+  bool isPICStyleStubPIC(const TargetMachine &TM) const {
+    return PICStyle == PICStyles::StubPIC;
+  }
+
+  bool isPICStyleStubNoDynamic(const TargetMachine &TM) const {
+    return PICStyle == PICStyles::StubDynamicNoPIC;
+  }
+  bool isPICStyleStubAny() const {
+    return PICStyle == PICStyles::StubDynamicNoPIC ||
+           PICStyle == PICStyles::StubPIC; }
   
   /// getDarwinVers - Return the darwin version number, 8 = Tiger, 9 = Leopard,
   /// 10 = Snow Leopard, etc.
