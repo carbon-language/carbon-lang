@@ -18,16 +18,26 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 // commuteInstruction - The default implementation of this method just exchanges
-// operand 1 and 2.
+// the two operands returned by findCommutedOpIndices.
 MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
                                                       bool NewMI) const {
   const TargetInstrDesc &TID = MI->getDesc();
   bool HasDef = TID.getNumDefs();
-  unsigned Idx1 = HasDef ? 1 : 0;
-  unsigned Idx2 = HasDef ? 2 : 1;
+  if (HasDef && !MI->getOperand(0).isReg())
+    // No idea how to commute this instruction. Target should implement its own.
+    return 0;
+  unsigned Idx1, Idx2;
+  if (!findCommutedOpIndices(MI, Idx1, Idx2)) {
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "Don't know how to commute: " << *MI;
+    llvm_report_error(Msg.str());
+  }
 
   assert(MI->getOperand(Idx1).isReg() && MI->getOperand(Idx2).isReg() &&
          "This only knows how to commute register operands so far");
