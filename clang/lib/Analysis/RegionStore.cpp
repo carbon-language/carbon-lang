@@ -538,64 +538,79 @@ SVal RegionStoreManager::getLValueElement(const GRState *St,
 //===----------------------------------------------------------------------===//
 
 SVal RegionStoreManager::getSizeInElements(const GRState *state,
-                                           const MemRegion* R) {
-  if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
-    // Get the type of the variable.
-    QualType T = VR->getDesugaredValueType(getContext());
-
-    // FIXME: Handle variable-length arrays.
-    if (isa<VariableArrayType>(T))
+                                           const MemRegion *R) {
+  
+  switch (R->getKind()) {
+    case MemRegion::MemSpaceRegionKind:
+      assert(0 && "Cannot index into a MemSpace");
+      return UnknownVal();      
+      
+    case MemRegion::CodeTextRegionKind:
+      // Technically this can happen if people do funny things with casts.
       return UnknownVal();
-    
-    if (const ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(T)) {
-      // return the size as signed integer.
-      return ValMgr.makeIntVal(CAT->getSize(), false);
+
+      // Not yet handled.
+    case MemRegion::AllocaRegionKind:
+    case MemRegion::CompoundLiteralRegionKind:
+    case MemRegion::ElementRegionKind:
+    case MemRegion::FieldRegionKind:
+    case MemRegion::ObjCIvarRegionKind:
+    case MemRegion::ObjCObjectRegionKind:
+    case MemRegion::SymbolicRegionKind:
+      return UnknownVal();
+      
+    case MemRegion::StringRegionKind: {
+      const StringLiteral* Str = cast<StringRegion>(R)->getStringLiteral();
+      // We intentionally made the size value signed because it participates in 
+      // operations with signed indices.
+      return ValMgr.makeIntVal(Str->getByteLength()+1, false);
     }
+      
+      // TypedViewRegion will soon be removed.
+    case MemRegion::TypedViewRegionKind:
+      return UnknownVal();
 
-    const QualType* CastTy = state->get<RegionCasts>(VR);
-
-    // If the VarRegion is cast to other type, compute the size with respect to
-    // that type.
-    if (CastTy) {
-      QualType EleTy =cast<PointerType>(CastTy->getTypePtr())->getPointeeType();
-      QualType VarTy = VR->getValueType(getContext());
-      uint64_t EleSize = getContext().getTypeSize(EleTy);
-      uint64_t VarSize = getContext().getTypeSize(VarTy);
-      assert(VarSize != 0);
-      return ValMgr.makeIntVal(VarSize/EleSize, false);
+    case MemRegion::VarRegionKind: {
+      const VarRegion* VR = cast<VarRegion>(R);
+      // Get the type of the variable.
+      QualType T = VR->getDesugaredValueType(getContext());
+      
+      // FIXME: Handle variable-length arrays.
+      if (isa<VariableArrayType>(T))
+        return UnknownVal();
+      
+      if (const ConstantArrayType* CAT = dyn_cast<ConstantArrayType>(T)) {
+        // return the size as signed integer.
+        return ValMgr.makeIntVal(CAT->getSize(), false);
+      }
+      
+      const QualType* CastTy = state->get<RegionCasts>(VR);
+      
+      // If the VarRegion is cast to other type, compute the size with respect to
+      // that type.
+      if (CastTy) {
+        QualType EleTy =cast<PointerType>(CastTy->getTypePtr())->getPointeeType();
+        QualType VarTy = VR->getValueType(getContext());
+        uint64_t EleSize = getContext().getTypeSize(EleTy);
+        uint64_t VarSize = getContext().getTypeSize(VarTy);
+        assert(VarSize != 0);
+        return ValMgr.makeIntVal(VarSize/EleSize, false);
+      }
+      
+      // Clients can use ordinary variables as if they were arrays.  These
+      // essentially are arrays of size 1.
+      return ValMgr.makeIntVal(1, false);
     }
-
-    // Clients can use ordinary variables as if they were arrays.  These
-    // essentially are arrays of size 1.
-    return ValMgr.makeIntVal(1, false);
+          
+    case MemRegion::BEG_DECL_REGIONS:
+    case MemRegion::END_DECL_REGIONS:
+    case MemRegion::BEG_TYPED_REGIONS:
+    case MemRegion::END_TYPED_REGIONS:
+      assert(0 && "Infeasible region");
+      return UnknownVal();
   }
-
-  if (const StringRegion* SR = dyn_cast<StringRegion>(R)) {
-    const StringLiteral* Str = SR->getStringLiteral();
-    // We intentionally made the size value signed because it participates in 
-    // operations with signed indices.
-    return ValMgr.makeIntVal(Str->getByteLength()+1, false);
-  }
-
-  if (const FieldRegion* FR = dyn_cast<FieldRegion>(R)) {
-    // FIXME: Unsupported yet.
-    FR = 0;
-    return UnknownVal();
-  }
-
-  if (isa<SymbolicRegion>(R)) {
-    return UnknownVal();
-  }
-
-  if (isa<AllocaRegion>(R)) {
-    return UnknownVal();
-  }
-
-  if (isa<ElementRegion>(R)) {
-    return UnknownVal();
-  }
-
-  assert(0 && "Other regions are not supported yet.");
+      
+  assert(0 && "Unreachable");
   return UnknownVal();
 }
 
