@@ -90,7 +90,8 @@ private:
   bool X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT, unsigned Src, MVT SrcVT,
                          unsigned &ResultReg);
   
-  bool X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall);
+  bool X86SelectAddress(Value *V, X86AddressMode &AM);
+  bool X86SelectCallAddress(Value *V, X86AddressMode &AM);
 
   bool X86SelectLoad(Instruction *I);
   
@@ -318,7 +319,7 @@ bool X86FastISel::X86FastEmitExtend(ISD::NodeType Opc, MVT DstVT,
 
 /// X86SelectAddress - Attempt to fill in an address from the given value.
 ///
-bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
+bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
   User *U = NULL;
   unsigned Opcode = Instruction::UserOp1;
   if (Instruction *I = dyn_cast<Instruction>(V)) {
@@ -333,22 +334,21 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
   default: break;
   case Instruction::BitCast:
     // Look past bitcasts.
-    return X86SelectAddress(U->getOperand(0), AM, isCall);
+    return X86SelectAddress(U->getOperand(0), AM);
 
   case Instruction::IntToPtr:
     // Look past no-op inttoptrs.
     if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
-      return X86SelectAddress(U->getOperand(0), AM, isCall);
+      return X86SelectAddress(U->getOperand(0), AM);
     break;
 
   case Instruction::PtrToInt:
     // Look past no-op ptrtoints.
     if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
-      return X86SelectAddress(U->getOperand(0), AM, isCall);
+      return X86SelectAddress(U->getOperand(0), AM);
     break;
 
   case Instruction::Alloca: {
-    if (isCall) break;
     // Do static allocas.
     const AllocaInst *A = cast<AllocaInst>(V);
     DenseMap<const AllocaInst*, int>::iterator SI = StaticAllocaMap.find(A);
@@ -361,21 +361,19 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
   }
 
   case Instruction::Add: {
-    if (isCall) break;
     // Adds of constants are common and easy enough.
     if (ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
       uint64_t Disp = (int32_t)AM.Disp + (uint64_t)CI->getSExtValue();
       // They have to fit in the 32-bit signed displacement field though.
       if (isInt32(Disp)) {
         AM.Disp = (uint32_t)Disp;
-        return X86SelectAddress(U->getOperand(0), AM, isCall);
+        return X86SelectAddress(U->getOperand(0), AM);
       }
     }
     break;
   }
 
   case Instruction::GetElementPtr: {
-    if (isCall) break;
     // Pattern-match simple GEPs.
     uint64_t Disp = (int32_t)AM.Disp;
     unsigned IndexReg = AM.IndexReg;
@@ -416,7 +414,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     AM.IndexReg = IndexReg;
     AM.Scale = Scale;
     AM.Disp = (uint32_t)Disp;
-    return X86SelectAddress(U->getOperand(0), AM, isCall);
+    return X86SelectAddress(U->getOperand(0), AM);
   unsupported_gep:
     // Ok, the GEP indices weren't all covered.
     break;
@@ -443,8 +441,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
     // Okay, we've committed to selecting this global. Set up the basic address.
     AM.GV = GV;
     
-    if (!isCall &&
-        TM.getRelocationModel() == Reloc::PIC_ &&
+    if (TM.getRelocationModel() == Reloc::PIC_ &&
         !Subtarget->is64Bit()) {
       // FIXME: How do we know Base.Reg is free??
       AM.Base.Reg = getInstrInfo()->getGlobalBaseReg(&MF);
@@ -452,7 +449,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
 
     // If the ABI doesn't require an extra load, return a direct reference to
     // the global.
-    if (!Subtarget->GVRequiresExtraLoad(GV, TM, isCall)) {
+    if (!Subtarget->GVRequiresExtraLoad(GV, TM, false)) {
       if (Subtarget->isPICStyleRIPRel()) {
         // Use rip-relative addressing if we can.  Above we verified that the
         // base and index registers are unused.
@@ -546,6 +543,155 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM, bool isCall) {
   return false;
 }
 
+/// X86SelectCallAddress - Attempt to fill in an address from the given value.
+///
+bool X86FastISel::X86SelectCallAddress(Value *V, X86AddressMode &AM) {
+  User *U = NULL;
+  unsigned Opcode = Instruction::UserOp1;
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    Opcode = I->getOpcode();
+    U = I;
+  } else if (ConstantExpr *C = dyn_cast<ConstantExpr>(V)) {
+    Opcode = C->getOpcode();
+    U = C;
+  }
+
+  switch (Opcode) {
+  default: break;
+  case Instruction::BitCast:
+    // Look past bitcasts.
+    return X86SelectCallAddress(U->getOperand(0), AM);
+
+  case Instruction::IntToPtr:
+    // Look past no-op inttoptrs.
+    if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+      return X86SelectCallAddress(U->getOperand(0), AM);
+    break;
+
+  case Instruction::PtrToInt:
+    // Look past no-op ptrtoints.
+    if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
+      return X86SelectCallAddress(U->getOperand(0), AM);
+    break;
+  }
+
+  // Handle constant address.
+  if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    // Can't handle alternate code models yet.
+    if (TM.getCodeModel() != CodeModel::Default &&
+        TM.getCodeModel() != CodeModel::Small)
+      return false;
+
+    // RIP-relative addresses can't have additional register operands.
+    if (Subtarget->isPICStyleRIPRel() &&
+        (AM.Base.Reg != 0 || AM.IndexReg != 0))
+      return false;
+
+    // Can't handle TLS yet.
+    if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
+      if (GVar->isThreadLocal())
+        return false;
+
+    // Okay, we've committed to selecting this global. Set up the basic address.
+    AM.GV = GV;
+    
+    // If the ABI doesn't require an extra load, return a direct reference to
+    // the global.
+    if (!Subtarget->GVRequiresExtraLoad(GV, TM, true)) {
+      if (Subtarget->isPICStyleRIPRel()) {
+        // Use rip-relative addressing if we can.  Above we verified that the
+        // base and index registers are unused.
+        assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
+        AM.Base.Reg = X86::RIP;
+      } else if (Subtarget->isPICStyleStub() &&
+                 TM.getRelocationModel() == Reloc::PIC_) {
+        AM.GVOpFlags = X86II::MO_PIC_BASE_OFFSET;
+      } else if (Subtarget->isPICStyleGOT()) {
+        AM.GVOpFlags = X86II::MO_GOTOFF;
+      }
+      
+      return true;
+    }
+    
+    // Check to see if we've already materialized this stub loaded value into a
+    // register in this block.  If so, just reuse it.
+    DenseMap<const Value*, unsigned>::iterator I = LocalValueMap.find(V);
+    unsigned LoadReg;
+    if (I != LocalValueMap.end() && I->second != 0) {
+      LoadReg = I->second;
+    } else {
+      // Issue load from stub.
+      unsigned Opc = 0;
+      const TargetRegisterClass *RC = NULL;
+      X86AddressMode StubAM;
+      StubAM.Base.Reg = AM.Base.Reg;
+      StubAM.GV = GV;
+      
+      if (TLI.getPointerTy() == MVT::i64) {
+        Opc = X86::MOV64rm;
+        RC  = X86::GR64RegisterClass;
+        
+        if (Subtarget->isPICStyleRIPRel()) {
+          StubAM.GVOpFlags = X86II::MO_GOTPCREL;
+          StubAM.Base.Reg = X86::RIP;
+        }
+        
+      } else {
+        Opc = X86::MOV32rm;
+        RC  = X86::GR32RegisterClass;
+        
+        if (Subtarget->isPICStyleGOT())
+          StubAM.GVOpFlags = X86II::MO_GOT;
+        else if (Subtarget->isPICStyleStub()) {
+          // In darwin, we have multiple different stub types, and we have both
+          // PIC and -mdynamic-no-pic.  Determine whether we have a stub
+          // reference and/or whether the reference is relative to the PIC base
+          // or not.
+          bool IsPIC = TM.getRelocationModel() == Reloc::PIC_;
+          
+          if (!GV->hasHiddenVisibility()) {
+            // Non-hidden $non_lazy_ptr reference.
+            StubAM.GVOpFlags = IsPIC ? X86II::MO_DARWIN_NONLAZY_PIC_BASE :
+                                       X86II::MO_DARWIN_NONLAZY;
+          } else {
+            // Hidden $non_lazy_ptr reference.
+            StubAM.GVOpFlags = IsPIC ? X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
+                                       X86II::MO_DARWIN_HIDDEN_NONLAZY;
+          }
+        }
+      }
+      
+      LoadReg = createResultReg(RC);
+      addFullAddress(BuildMI(MBB, DL, TII.get(Opc), LoadReg), StubAM);
+      
+      // Prevent loading GV stub multiple times in same MBB.
+      LocalValueMap[V] = LoadReg;
+    }
+    
+    // Now construct the final address. Note that the Disp, Scale,
+    // and Index values may already be set here.
+    AM.Base.Reg = LoadReg;
+    AM.GV = 0;
+    return true;
+  }
+
+  // If all else fails, try to materialize the value in a register.
+  if (!AM.GV || !Subtarget->isPICStyleRIPRel()) {
+    if (AM.Base.Reg == 0) {
+      AM.Base.Reg = getRegForValue(V);
+      return AM.Base.Reg != 0;
+    }
+    if (AM.IndexReg == 0) {
+      assert(AM.Scale == 1 && "Scale with no index!");
+      AM.IndexReg = getRegForValue(V);
+      return AM.IndexReg != 0;
+    }
+  }
+
+  return false;
+}
+
+
 /// X86SelectStore - Select and emit code to implement store instructions.
 bool X86FastISel::X86SelectStore(Instruction* I) {
   MVT VT;
@@ -553,7 +699,7 @@ bool X86FastISel::X86SelectStore(Instruction* I) {
     return false;
 
   X86AddressMode AM;
-  if (!X86SelectAddress(I->getOperand(1), AM, false))
+  if (!X86SelectAddress(I->getOperand(1), AM))
     return false;
 
   return X86FastEmitStore(VT, I->getOperand(0), AM);
@@ -567,7 +713,7 @@ bool X86FastISel::X86SelectLoad(Instruction *I)  {
     return false;
 
   X86AddressMode AM;
-  if (!X86SelectAddress(I->getOperand(0), AM, false))
+  if (!X86SelectAddress(I->getOperand(0), AM))
     return false;
 
   unsigned ResultReg = 0;
@@ -1181,7 +1327,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   // Materialize callee address in a register. FIXME: GV address can be
   // handled with a CALLpcrel32 instead.
   X86AddressMode CalleeAM;
-  if (!X86SelectAddress(Callee, CalleeAM, true))
+  if (!X86SelectCallAddress(Callee, CalleeAM))
     return false;
   unsigned CalleeOp = 0;
   GlobalValue *GV = 0;
@@ -1540,7 +1686,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   // Materialize addresses with LEA instructions.
   if (isa<GlobalValue>(C)) {
     X86AddressMode AM;
-    if (X86SelectAddress(C, AM, false)) {
+    if (X86SelectAddress(C, AM)) {
       if (TLI.getPointerTy() == MVT::i32)
         Opc = X86::LEA32r;
       else
@@ -1595,7 +1741,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(AllocaInst *C) {
     return 0;
 
   X86AddressMode AM;
-  if (!X86SelectAddress(C, AM, false))
+  if (!X86SelectAddress(C, AM))
     return 0;
   unsigned Opc = Subtarget->is64Bit() ? X86::LEA64r : X86::LEA32r;
   TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
