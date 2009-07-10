@@ -298,37 +298,25 @@ def tPUSH : T1I<(outs), (ins reglist:$src1, variable_ops),
 // Add with carry register
 let isCommutable = 1, Defs = [CPSR], Uses = [CPSR] in
 def tADCS : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
-                "adc $dst, $rhs",
-                [(set tGPR:$dst, (adde tGPR:$lhs, tGPR:$rhs))]>;
+                 "adc $dst, $rhs",
+                 [(set tGPR:$dst, (adde tGPR:$lhs, tGPR:$rhs))]>;
 
 // Add immediate
-let Defs = [CPSR] in {
+let Defs = [CPSR] in
 def tADDi3 : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
-                "add $dst, $lhs, $rhs",
-                [(set tGPR:$dst, (add tGPR:$lhs, imm0_7:$rhs))]>;
-def tADDSi3 : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
                  "add $dst, $lhs, $rhs",
-                 [(set tGPR:$dst, (addc tGPR:$lhs, imm0_7:$rhs))]>;
-}
+                 [(set tGPR:$dst, (add tGPR:$lhs, imm0_7:$rhs))]>;
 
-let Defs = [CPSR] in {
+let Defs = [CPSR] in
 def tADDi8 : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
-                 "add $dst, $rhs",
-                 [(set tGPR:$dst, (add tGPR:$lhs, imm8_255:$rhs))]>;
-def tADDSi8 : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
                   "add $dst, $rhs",
-                  [(set tGPR:$dst, (addc tGPR:$lhs, imm8_255:$rhs))]>;
-}
+                  [(set tGPR:$dst, (add tGPR:$lhs, imm8_255:$rhs))]>;
 
 // Add register
-let isCommutable = 1, Defs = [CPSR] in {
+let isCommutable = 1, Defs = [CPSR] in
 def tADDrr : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
-                "add $dst, $lhs, $rhs",
-                [(set tGPR:$dst, (add tGPR:$lhs, tGPR:$rhs))]>;
-def tADDSrr : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                  "add $dst, $lhs, $rhs",
-                 [(set tGPR:$dst, (addc tGPR:$lhs, tGPR:$rhs))]>;
-}
+                 [(set tGPR:$dst, (add tGPR:$lhs, tGPR:$rhs))]>;
 
 let neverHasSideEffects = 1 in
 def tADDhirr : T1It<(outs tGPR:$dst), (ins GPR:$lhs, GPR:$rhs),
@@ -503,33 +491,21 @@ def tSBCS : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                 [(set tGPR:$dst, (sube tGPR:$lhs, tGPR:$rhs))]>;
 
 // Subtract immediate
-let Defs = [CPSR] in {
+let Defs = [CPSR] in
 def tSUBi3 : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
-                "sub $dst, $lhs, $rhs",
-                [(set tGPR:$dst, (add tGPR:$lhs, imm0_7_neg:$rhs))]>;
-def tSUBSi3 : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
                  "sub $dst, $lhs, $rhs",
-                 [(set tGPR:$dst, (addc tGPR:$lhs, imm0_7_neg:$rhs))]>;
-}
+                 [(set tGPR:$dst, (add tGPR:$lhs, imm0_7_neg:$rhs))]>;
 
-let Defs = [CPSR] in {
+let Defs = [CPSR] in
 def tSUBi8 : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
                   "sub $dst, $rhs",
                   [(set tGPR:$dst, (add tGPR:$lhs, imm8_255_neg:$rhs))]>;
-def tSUBSi8 : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
-                   "sub $dst, $rhs",
-                   [(set tGPR:$dst, (addc tGPR:$lhs, imm8_255_neg:$rhs))]>;
-}
 
 // subtract register
-let Defs = [CPSR] in {
+let Defs = [CPSR] in
 def tSUBrr : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
                 "sub $dst, $lhs, $rhs",
                 [(set tGPR:$dst, (sub tGPR:$lhs, tGPR:$rhs))]>;
-def tSUBSrr : T1I<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
-                "sub $dst, $lhs, $rhs",
-                [(set tGPR:$dst, (subc tGPR:$lhs, tGPR:$rhs))]>;
-}
 
 // TODO: A7-96: STMIA - store multiple.
 
@@ -606,6 +582,22 @@ let isCall = 1,
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //
+
+// Add with carry
+def : TPat<(addc   tGPR:$lhs, imm0_7:$rhs),
+           (tADDi3 tGPR:$lhs, imm0_7:$rhs)>;
+def : TPat<(addc   tGPR:$lhs, imm8_255:$rhs),
+           (tADDi3 tGPR:$lhs, imm8_255:$rhs)>;
+def : TPat<(addc   tGPR:$lhs, tGPR:$rhs),
+           (tADDrr tGPR:$lhs, tGPR:$rhs)>;
+
+// Subtract with carry
+def : TPat<(addc   tGPR:$lhs, imm0_7_neg:$rhs),
+           (tSUBi3 tGPR:$lhs, imm0_7_neg:$rhs)>;
+def : TPat<(addc   tGPR:$lhs, imm8_255_neg:$rhs),
+           (tSUBi8 tGPR:$lhs, imm8_255_neg:$rhs)>;
+def : TPat<(subc   tGPR:$lhs, tGPR:$rhs),
+           (tSUBrr tGPR:$lhs, tGPR:$rhs)>;
 
 // ConstantPool, GlobalAddress
 def : TPat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
