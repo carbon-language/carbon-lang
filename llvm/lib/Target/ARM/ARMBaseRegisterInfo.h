@@ -53,7 +53,8 @@ protected:
   unsigned FramePtr;
 
   // Can be only subclassed.
-  explicit ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii, const ARMSubtarget &STI);
+  explicit ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
+                               const ARMSubtarget &STI);
 
   // Return the opcode that implements 'Op', or 0 if no opcode
   unsigned getOpcode(int Op) const;
