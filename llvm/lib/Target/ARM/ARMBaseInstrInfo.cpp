@@ -338,11 +338,6 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   return false;
 }
 
-bool ARMBaseInstrInfo::isPredicated(const MachineInstr *MI) const {
-  int PIdx = MI->findFirstPredOperandIdx();
-  return PIdx != -1 && MI->getOperand(PIdx).getImm() != ARMCC::AL;
-}
-
 bool ARMBaseInstrInfo::
 PredicateInstruction(MachineInstr *MI,
                      const SmallVectorImpl<MachineOperand> &Pred) const {

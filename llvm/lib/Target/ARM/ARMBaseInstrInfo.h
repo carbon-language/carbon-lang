@@ -222,7 +222,10 @@ public:
   bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
 
   // Predication support.
-  virtual bool isPredicated(const MachineInstr *MI) const;
+  bool isPredicated(const MachineInstr *MI) const {
+    int PIdx = MI->findFirstPredOperandIdx();
+    return PIdx != -1 && MI->getOperand(PIdx).getImm() != ARMCC::AL;
+  }
 
   ARMCC::CondCodes getPredicate(const MachineInstr *MI) const {
     int PIdx = MI->findFirstPredOperandIdx();
