@@ -11,6 +11,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+// IT block predicate field
+def it_pred : Operand<i32> {
+  let PrintMethod = "printPredicateOperand";
+}
+
+// IT block condition mask
+def it_mask : Operand<i32> {
+  let PrintMethod = "printThumbITMask";
+}
+
 // Shifted operands. No register controlled shifts for Thumb2.
 // Note: We do not support rrx shifted operands yet.
 def t2_so_reg : Operand<i32>,    // reg imm
@@ -1120,6 +1130,12 @@ let isBranch = 1, isTerminator = 1 in
 def t2Bcc : T2I<(outs), (ins brtarget:$target), 
                 "b", " $target",
                 [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
+
+
+// IT block
+def t2IT : Thumb2XI<(outs), (ins it_pred:$cc, it_mask:$mask),
+                    AddrModeNone, Size2Bytes,
+                    "it$mask $cc", "", []>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns

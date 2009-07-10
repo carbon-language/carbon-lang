@@ -4,6 +4,7 @@
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep movle | count 1
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep movls | count 1
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep movhi | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep it    | count 6
 
 define i32 @f1(i32 %a.s) {
 entry:

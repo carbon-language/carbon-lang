@@ -108,6 +108,8 @@ FunctionPass *createARMObjectCodeEmitterPass(ARMBaseTargetMachine &TM,
 FunctionPass *createARMLoadStoreOptimizationPass(bool PreAlloc = false);
 FunctionPass *createARMConstantIslandPass();
 
+FunctionPass *createThumb2ITBlockPass();
+
 } // end namespace llvm;
 
 // Defines symbolic names for ARM registers.  This defines a mapping from

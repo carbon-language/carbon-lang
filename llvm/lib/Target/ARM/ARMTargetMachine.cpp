@@ -173,6 +173,9 @@ bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
       !DisableIfConversion && !Subtarget.isThumb())
     PM.add(createIfConverterPass());
 
+  if (Subtarget.isThumb2())
+    PM.add(createThumb2ITBlockPass());
+
   PM.add(createARMConstantIslandPass());
   return true;
 }
