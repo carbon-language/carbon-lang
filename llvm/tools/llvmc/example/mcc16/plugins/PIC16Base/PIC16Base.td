@@ -55,7 +55,7 @@ def llvm_ld_lto : Tool<[
  (in_language "llvm-bitcode"),
  (out_language "llvm-bitcode"),
  (output_suffix "bc"),
- (cmd_line "$CALL(GetBinDir)llvm-ld -link-as-library $INFILE -o $OUTFILE"),
+ (cmd_line "$CALL(GetBinDir)llvm-ld -link-as-library std.lib $INFILE -o $OUTFILE"),
  (actions (case
           (switch_on "g"), (append_cmd "-disable-opt"),
           (not_empty "Wo,"), (unpack_values "Wo,"))),
@@ -87,7 +87,7 @@ def mplink : Tool<[
  (in_language "object-code"),
  (out_language "executable"),
  (output_suffix "out"),
- (cmd_line "$CALL(GetBinDir)mplink.exe -k $CALL(GetStdLinkerScriptsDir) -l $CALL(GetStdLibsDir) 16f1937_g.lkr intrinsics.lib $INFILE -o $OUTFILE"),
+ (cmd_line "$CALL(GetBinDir)mplink.exe -k $CALL(GetStdLinkerScriptsDir) -l $CALL(GetStdLibsDir) 16f1937_g.lkr intrinsics.lib devices.lib $INFILE -o $OUTFILE"),
  (actions (case
           (not_empty "Wl,"), (unpack_values "Wl,"))),
  (join)
