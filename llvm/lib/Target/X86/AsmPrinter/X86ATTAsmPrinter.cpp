@@ -107,6 +107,10 @@ void X86ATTAsmPrinter::decorateName(std::string &Name,
   const Function *F = dyn_cast<Function>(GV);
   if (!F) return;
 
+  // Save function name for later type emission.
+  if (Subtarget->isTargetCygMing() && F->isDeclaration())
+    CygMingStubs.insert(Name);
+  
   // We don't want to decorate non-stdcall or non-fastcall functions right now
   unsigned CC = F->getCallingConv();
   if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
@@ -319,18 +323,15 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
       O << Name;
     }
     
+    if (needCloseParen)
+      O << ')';
+
     // Assemble call via PLT for externally visible symbols.
     if (MO.getTargetFlags() == X86II::MO_PLT)
       O << "@PLT";
     
-    if (Subtarget->isTargetCygMing() && GV->isDeclaration())
-      // Save function name for later type emission
-      CygMingStubs.insert(Name);
-    
     printOffset(MO.getOffset());
     
-    if (needCloseParen)
-      O << ')';
     return;
   }
       
@@ -413,14 +414,15 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   }
   case MachineOperand::MO_GlobalAddress: {
     bool isMemOp = Modifier && !strcmp(Modifier, "mem");
+    if (!isMemOp)
+      O << '$';
+    
     const GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
     decorateName(Name, GV);
 
     bool needCloseParen = false;
-    if (!isMemOp)
-      O << '$';
-    else if (Name[0] == '$') {
+    if (Name[0] == '$') {
       // The name begins with a dollar-sign. In order to avoid having it look
       // like an integer immediate to the assembler, enclose it in parens.
       O << '(';
@@ -438,12 +440,19 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
       HiddenGVStubs.insert(Name);
       printSuffixedName(Name, "$non_lazy_ptr");
+    } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      FnStubs.insert(Name);
+      printSuffixedName(Name, "$stub");
     } else {
       O << Name;
     }
 
     if (needCloseParen)
       O << ')';
+    
+    // Assemble call via PLT for externally visible symbols.
+    if (MO.getTargetFlags() == X86II::MO_PLT)
+      O << "@PLT";
     
     printOffset(MO.getOffset());
     break;
@@ -596,8 +605,7 @@ void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
 
 void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                               const MachineBasicBlock *MBB,
-                                              unsigned uid) const
-{
+                                              unsigned uid) const {
   const char *JTEntryDirective = MJTI->getEntrySize() == 4 ?
     TAI->getData32bitsDirective() : TAI->getData64bitsDirective();
 
