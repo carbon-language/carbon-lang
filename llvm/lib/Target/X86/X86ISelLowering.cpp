@@ -4552,17 +4552,12 @@ SDValue
 X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
                                       int64_t Offset,
                                       SelectionDAG &DAG) const {
-  bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
-
   // Create the TargetGlobalAddress node, folding in the constant
   // offset if it is legal.
   unsigned char OpFlags =
     Subtarget->ClassifyGlobalReference(GV, getTargetMachine());
-  bool ExtraLoadRequired = isGlobalStubReference(OpFlags);
-  
-  
   SDValue Result;
-  if (!IsPIC && !ExtraLoadRequired && isInt32(Offset)) {
+  if (OpFlags == X86II::MO_NO_FLAG && isInt32(Offset)) {
     // A direct static reference to a global.
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
     Offset = 0;
@@ -4577,18 +4572,15 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
     Result = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), Result);
 
   // With PIC, the address is actually $g + Offset.
-  if (IsPIC && !Subtarget->is64Bit()) {
+  if (isGlobalRelativeToPICBase(OpFlags)) {
     Result = DAG.getNode(ISD::ADD, dl, getPointerTy(),
                          DAG.getNode(X86ISD::GlobalBaseReg, dl, getPointerTy()),
                          Result);
   }
 
-  // For Darwin & Mingw32, external and weak symbols are indirect, so we want to
-  // load the value at address GV, not the value of GV itself. This means that
-  // the GlobalAddress must be in the base or index register of the address, not
-  // the GV offset field. Platform check is inside GVRequiresExtraLoad() call
-  // The same applies for external symbols during PIC codegen
-  if (ExtraLoadRequired)
+  // For globals that require a load from a stub to get the address, emit the
+  // load.
+  if (isGlobalStubReference(OpFlags))
     Result = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), Result,
                          PseudoSourceValue::getGOT(), 0);
 
@@ -8810,16 +8802,17 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       return;
     }
     
+    GlobalValue *GV = GA->getGlobal();
     // If we require an extra load to get this address, as in PIC mode, we
     // can't accept it.
-    if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(), getTargetMachine()))
+    if (isGlobalStubReference(Subtarget->ClassifyGlobalReference(GV,
+                                                        getTargetMachine())))
       return;
 
     if (hasMemory)
-      Op = LowerGlobalAddress(GA->getGlobal(), Op.getDebugLoc(), Offset, DAG);
+      Op = LowerGlobalAddress(GV, Op.getDebugLoc(), Offset, DAG);
     else
-      Op = DAG.getTargetGlobalAddress(GA->getGlobal(), GA->getValueType(0),
-                                      Offset);
+      Op = DAG.getTargetGlobalAddress(GV, GA->getValueType(0), Offset);
     Result = Op;
     break;
   }
