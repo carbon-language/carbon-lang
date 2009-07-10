@@ -323,8 +323,8 @@ const Section *
 PIC16TargetAsmInfo::CreateBSSSectionForGlobal(const GlobalVariable *GV,
                                               std::string Addr) const {
   assert (GV->hasInitializer() && "This global doesn't need space");
-  Constant *C = GV->getInitializer();
-  assert (C->isNullValue() && "Unitialized globals has non-zero initializer");
+  assert (GV->getInitializer()->isNullValue() &&
+          "Unitialized global has non-zero initializer");
   std::string Name;
   // If address is given then create a section at that address else create a
   // section by section name specified in GV.
@@ -372,8 +372,8 @@ const Section *
 PIC16TargetAsmInfo::CreateIDATASectionForGlobal(const GlobalVariable *GV,
                                                 std::string Addr) const {
   assert (GV->hasInitializer() && "This global doesn't need space");
-  Constant *C = GV->getInitializer();
-  assert (!C->isNullValue() && "initialized globals has zero initializer");
+  assert (!GV->getInitializer()->isNullValue() &&
+          "initialized global has zero initializer");
   assert (GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE &&
           "can be used for initialized RAM data only");
 
