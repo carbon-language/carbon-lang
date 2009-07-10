@@ -78,14 +78,14 @@ def D14 : ARMReg<14, "d14", [S28, S29]>;
 def D15 : ARMReg<15, "d15", [S30, S31]>;
 
 // VFP3 defines 16 additional double registers
-def D16 : ARMFReg<16, "d16">; def D17 : ARMFReg<17, "d16">;
-def D18 : ARMFReg<18, "d16">; def D19 : ARMFReg<19, "d16">;
-def D20 : ARMFReg<20, "d16">; def D21 : ARMFReg<21, "d16">;
-def D22 : ARMFReg<22, "d16">; def D23 : ARMFReg<23, "d16">;
-def D24 : ARMFReg<24, "d16">; def D25 : ARMFReg<25, "d16">;
-def D26 : ARMFReg<26, "d16">; def D27 : ARMFReg<27, "d16">;
-def D28 : ARMFReg<28, "d16">; def D29 : ARMFReg<29, "d16">;
-def D30 : ARMFReg<30, "d16">; def D31 : ARMFReg<31, "d16">;
+def D16 : ARMFReg<16, "d16">; def D17 : ARMFReg<17, "d17">;
+def D18 : ARMFReg<18, "d18">; def D19 : ARMFReg<19, "d19">;
+def D20 : ARMFReg<20, "d20">; def D21 : ARMFReg<21, "d21">;
+def D22 : ARMFReg<22, "d22">; def D23 : ARMFReg<23, "d23">;
+def D24 : ARMFReg<24, "d24">; def D25 : ARMFReg<25, "d25">;
+def D26 : ARMFReg<26, "d26">; def D27 : ARMFReg<27, "d27">;
+def D28 : ARMFReg<28, "d28">; def D29 : ARMFReg<29, "d29">;
+def D30 : ARMFReg<30, "d30">; def D31 : ARMFReg<31, "d31">;
 
 // Advanced SIMD (NEON) defines 16 quad-word aliases
 def Q0  : ARMReg< 0,  "q0", [D0,   D1]>;
@@ -104,6 +104,21 @@ def Q12 : ARMReg<12, "q12", [D24, D25]>;
 def Q13 : ARMReg<13, "q13", [D26, D27]>;
 def Q14 : ARMReg<14, "q14", [D28, D29]>;
 def Q15 : ARMReg<15, "q15", [D30, D31]>;
+
+// Aliases for superclasses of NEON quad registers.
+def Q2_0: ARMReg<0, "q2_0", [Q0,   Q1]>;
+def Q2_1: ARMReg<1, "q2_1", [Q2,   Q3]>;
+def Q2_2: ARMReg<2, "q2_2", [Q4,   Q5]>;
+def Q2_3: ARMReg<3, "q2_3", [Q6,   Q7]>;
+def Q2_4: ARMReg<4, "q2_4", [Q8,   Q9]>;
+def Q2_5: ARMReg<5, "q2_5", [Q10, Q11]>;
+def Q2_6: ARMReg<6, "q2_6", [Q12, Q13]>;
+def Q2_7: ARMReg<7, "q2_7", [Q14, Q15]>;
+
+def Q4_0: ARMReg<0, "q4_0", [Q2_0, Q2_1]>;
+def Q4_1: ARMReg<1, "q4_1", [Q2_2, Q2_3]>;
+def Q4_2: ARMReg<2, "q4_2", [Q2_4, Q2_5]>;
+def Q4_3: ARMReg<3, "q4_3", [Q2_6, Q2_7]>;
 
 // Current Program Status Register.
 def CPSR : ARMReg<0, "cpsr">;
@@ -297,6 +312,26 @@ def QPR : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
   let SubRegClassList = [SPR, SPR, SPR, SPR, DPR, DPR];
 }
 
+// Vector register class for NEON vector structures occupying either 3 or 4
+// DPR registers.
+def Q2PR: RegisterClass<"ARM", [v24i8, v12i16, v6i32, v3i64, v6f32,
+                                v32i8, v16i16, v8i32, v4i64, v8f32], 256,
+                        [Q2_0, Q2_1, Q2_2, Q2_3, Q2_4, Q2_5, Q2_6, Q2_7]> {
+  let SubRegClassList = [SPR, SPR, SPR, SPR, SPR, SPR, SPR, SPR,
+                         DPR, DPR, DPR, DPR, QPR, QPR];
+}
+
+// Vector register class for NEON vector structures occupying either 6 or 8
+// DPR registers.
+def Q4PR: RegisterClass<"ARM", [v48i8, v24i16, v12i32, v6i64, v12f32,
+                                v64i8, v32i16, v16i32, v8i64, v16f32], 512,
+                        [Q4_0, Q4_1, Q4_2, Q4_3]> {
+  let SubRegClassList = [SPR, SPR, SPR, SPR, SPR, SPR, SPR, SPR,
+                         SPR, SPR, SPR, SPR, SPR, SPR, SPR, SPR,
+                         DPR, DPR, DPR, DPR, DPR, DPR, DPR, DPR,
+                         QPR, QPR, QPR, QPR, Q2PR, Q2PR];
+}
+
 // Condition code registers.
 def CCR : RegisterClass<"ARM", [i32], 32, [CPSR]>;
 
@@ -342,3 +377,66 @@ def : SubRegSet<6, [Q0,  Q1,  Q2,  Q3,  Q4,  Q5,  Q6,  Q7,
                    [D1,  D3,  D5,  D7,  D9,  D11, D13, D15,
                     D17, D19, D21, D23, D25, D27, D29, D31]>;
 
+// S sub-registers of Q2 registers.
+def : SubRegSet<1,  [Q2_0, Q2_1, Q2_2, Q2_3], [S0,  S8, S16, S24]>;
+def : SubRegSet<2,  [Q2_0, Q2_1, Q2_2, Q2_3], [S1,  S9, S17, S25]>;
+def : SubRegSet<3,  [Q2_0, Q2_1, Q2_2, Q2_3], [S2, S10, S18, S26]>;
+def : SubRegSet<4,  [Q2_0, Q2_1, Q2_2, Q2_3], [S3, S11, S19, S27]>;
+def : SubRegSet<5,  [Q2_0, Q2_1, Q2_2, Q2_3], [S4, S12, S20, S28]>;
+def : SubRegSet<6,  [Q2_0, Q2_1, Q2_2, Q2_3], [S5, S13, S21, S29]>;
+def : SubRegSet<7,  [Q2_0, Q2_1, Q2_2, Q2_3], [S6, S14, S22, S30]>;
+def : SubRegSet<8,  [Q2_0, Q2_1, Q2_2, Q2_3], [S7, S15, S23, S31]>;
+
+// D sub-registers of Q2 registers.
+def : SubRegSet<9,  [Q2_0, Q2_1, Q2_2, Q2_3, Q2_4, Q2_5, Q2_6, Q2_7],
+                    [D0,   D4,   D8,   D12,  D16,  D20,  D24,  D28]>;
+def : SubRegSet<10, [Q2_0, Q2_1, Q2_2, Q2_3, Q2_4, Q2_5, Q2_6, Q2_7],
+                    [D1,   D5,   D9,   D13,  D17,  D21,  D25,  D29]>;
+def : SubRegSet<11, [Q2_0, Q2_1, Q2_2, Q2_3, Q2_4, Q2_5, Q2_6, Q2_7],
+                    [D2,   D6,   D10,  D14,  D18,  D22,  D26,  D30]>;
+def : SubRegSet<12, [Q2_0, Q2_1, Q2_2, Q2_3, Q2_4, Q2_5, Q2_6, Q2_7],
+                    [D3,   D7,   D11,  D15,  D19,  D23,  D27,  D31]>;
+
+// Q sub-registers of Q2 registers.
+def : SubRegSet<13, [Q2_0, Q2_1, Q2_2, Q2_3, Q2_4, Q2_5, Q2_6, Q2_7],
+                    [Q0,   Q2,   Q4,   Q6,   Q8,   Q10,  Q12,  Q14]>;
+def : SubRegSet<14, [Q2_0, Q2_1, Q2_2, Q2_3, Q2_4, Q2_5, Q2_6, Q2_7],
+                    [Q1,   Q3,   Q5,   Q7,   Q9,   Q11,  Q13,  Q15]>;
+
+// S sub-registers of Q4 registers.
+def : SubRegSet<1,  [Q4_0, Q4_1], [S0,  S16]>;
+def : SubRegSet<2,  [Q4_0, Q4_1], [S1,  S17]>;
+def : SubRegSet<3,  [Q4_0, Q4_1], [S2,  S18]>;
+def : SubRegSet<4,  [Q4_0, Q4_1], [S3,  S19]>;
+def : SubRegSet<5,  [Q4_0, Q4_1], [S4,  S20]>;
+def : SubRegSet<6,  [Q4_0, Q4_1], [S5,  S21]>;
+def : SubRegSet<7,  [Q4_0, Q4_1], [S6,  S22]>;
+def : SubRegSet<8,  [Q4_0, Q4_1], [S7,  S23]>;
+def : SubRegSet<9,  [Q4_0, Q4_1], [S8,  S24]>;
+def : SubRegSet<10, [Q4_0, Q4_1], [S9,  S25]>;
+def : SubRegSet<11, [Q4_0, Q4_1], [S10, S26]>;
+def : SubRegSet<12, [Q4_0, Q4_1], [S11, S27]>;
+def : SubRegSet<13, [Q4_0, Q4_1], [S12, S28]>;
+def : SubRegSet<14, [Q4_0, Q4_1], [S13, S29]>;
+def : SubRegSet<15, [Q4_0, Q4_1], [S14, S30]>;
+def : SubRegSet<16, [Q4_0, Q4_1], [S15, S31]>;
+
+// D sub-registers of Q4 registers.
+def : SubRegSet<17, [Q4_0, Q4_1, Q4_2, Q4_3], [D0,  D8,  D16, D24]>;
+def : SubRegSet<18, [Q4_0, Q4_1, Q4_2, Q4_3], [D1,  D9,  D17, D25]>;
+def : SubRegSet<19, [Q4_0, Q4_1, Q4_2, Q4_3], [D2,  D10, D18, D26]>;
+def : SubRegSet<20, [Q4_0, Q4_1, Q4_2, Q4_3], [D3,  D11, D19, D27]>;
+def : SubRegSet<21, [Q4_0, Q4_1, Q4_2, Q4_3], [D4,  D12, D20, D28]>;
+def : SubRegSet<22, [Q4_0, Q4_1, Q4_2, Q4_3], [D5,  D13, D21, D29]>;
+def : SubRegSet<23, [Q4_0, Q4_1, Q4_2, Q4_3], [D6,  D14, D22, D30]>;
+def : SubRegSet<24, [Q4_0, Q4_1, Q4_2, Q4_3], [D7,  D15, D23, D31]>;
+
+// Q sub-registers of Q4 registers.
+def : SubRegSet<25, [Q4_0, Q4_1, Q4_2, Q4_3], [Q0,  Q4,  Q8,  Q12]>;
+def : SubRegSet<26, [Q4_0, Q4_1, Q4_2, Q4_3], [Q1,  Q5,  Q9,  Q13]>;
+def : SubRegSet<27, [Q4_0, Q4_1, Q4_2, Q4_3], [Q2,  Q6,  Q10, Q14]>;
+def : SubRegSet<28, [Q4_0, Q4_1, Q4_2, Q4_3], [Q3,  Q7,  Q11, Q15]>;
+
+// Q2 sub-registers of Q4 registers.
+def : SubRegSet<29, [Q4_0, Q4_1, Q4_2, Q4_3], [Q2_0, Q2_2, Q2_4, Q2_6]>;
+def : SubRegSet<30, [Q4_0, Q4_1, Q4_2, Q4_3], [Q2_1, Q2_3, Q2_5, Q2_7]>;
