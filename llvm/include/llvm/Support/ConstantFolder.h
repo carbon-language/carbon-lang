@@ -18,75 +18,79 @@
 #define LLVM_SUPPORT_CONSTANTFOLDER_H
 
 #include "llvm/Constants.h"
+#include "llvm/LLVMContext.h"
 
 namespace llvm {
-
+  
 /// ConstantFolder - Create constants with minimum, target independent, folding.
 class ConstantFolder {
+  LLVMContext &Context;
+  
 public:
+  ConstantFolder(LLVMContext &C) : Context(C) { }
 
   //===--------------------------------------------------------------------===//
   // Binary Operators
   //===--------------------------------------------------------------------===//
 
   Constant *CreateAdd(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getAdd(LHS, RHS);
+    return Context.getConstantExprAdd(LHS, RHS);
   }
   Constant *CreateFAdd(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getFAdd(LHS, RHS);
+    return Context.getConstantExprFAdd(LHS, RHS);
   }
   Constant *CreateSub(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getSub(LHS, RHS);
+    return Context.getConstantExprSub(LHS, RHS);
   }
   Constant *CreateFSub(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getFSub(LHS, RHS);
+    return Context.getConstantExprFSub(LHS, RHS);
   }
   Constant *CreateMul(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getMul(LHS, RHS);
+    return Context.getConstantExprMul(LHS, RHS);
   }
   Constant *CreateFMul(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getFMul(LHS, RHS);
+    return Context.getConstantExprFMul(LHS, RHS);
   }
   Constant *CreateUDiv(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getUDiv(LHS, RHS);
+    return Context.getConstantExprUDiv(LHS, RHS);
   }
   Constant *CreateSDiv(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getSDiv(LHS, RHS);
+    return Context.getConstantExprSDiv(LHS, RHS);
   }
   Constant *CreateFDiv(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getFDiv(LHS, RHS);
+    return Context.getConstantExprFDiv(LHS, RHS);
   }
   Constant *CreateURem(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getURem(LHS, RHS);
+    return Context.getConstantExprURem(LHS, RHS);
   }
   Constant *CreateSRem(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getSRem(LHS, RHS);
+    return Context.getConstantExprSRem(LHS, RHS);
   }
   Constant *CreateFRem(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getFRem(LHS, RHS);
+    return Context.getConstantExprFRem(LHS, RHS);
   }
   Constant *CreateShl(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getShl(LHS, RHS);
+    return Context.getConstantExprShl(LHS, RHS);
   }
   Constant *CreateLShr(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getLShr(LHS, RHS);
+    return Context.getConstantExprLShr(LHS, RHS);
   }
   Constant *CreateAShr(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getAShr(LHS, RHS);
+    return Context.getConstantExprAShr(LHS, RHS);
   }
   Constant *CreateAnd(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getAnd(LHS, RHS);
+    return Context.getConstantExprAnd(LHS, RHS);
   }
   Constant *CreateOr(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getOr(LHS, RHS);
+    return Context.getConstantExprOr(LHS, RHS);
   }
   Constant *CreateXor(Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::getXor(LHS, RHS);
+    return Context.getConstantExprXor(LHS, RHS);
   }
 
   Constant *CreateBinOp(Instruction::BinaryOps Opc,
                         Constant *LHS, Constant *RHS) const {
-    return ConstantExpr::get(Opc, LHS, RHS);
+    return Context.getConstantExpr(Opc, LHS, RHS);
   }
 
   //===--------------------------------------------------------------------===//
@@ -94,13 +98,13 @@ public:
   //===--------------------------------------------------------------------===//
 
   Constant *CreateNeg(Constant *C) const {
-    return ConstantExpr::getNeg(C);
+    return Context.getConstantExprNeg(C);
   }
   Constant *CreateFNeg(Constant *C) const {
-    return ConstantExpr::getFNeg(C);
+    return Context.getConstantExprFNeg(C);
   }
   Constant *CreateNot(Constant *C) const {
-    return ConstantExpr::getNot(C);
+    return Context.getConstantExprNot(C);
   }
 
   //===--------------------------------------------------------------------===//
@@ -109,11 +113,11 @@ public:
 
   Constant *CreateGetElementPtr(Constant *C, Constant* const *IdxList,
                                 unsigned NumIdx) const {
-    return ConstantExpr::getGetElementPtr(C, IdxList, NumIdx);
+    return Context.getConstantExprGetElementPtr(C, IdxList, NumIdx);
   }
   Constant *CreateGetElementPtr(Constant *C, Value* const *IdxList,
                                 unsigned NumIdx) const {
-    return ConstantExpr::getGetElementPtr(C, IdxList, NumIdx);
+    return Context.getConstantExprGetElementPtr(C, IdxList, NumIdx);
   }
 
   //===--------------------------------------------------------------------===//
@@ -122,11 +126,11 @@ public:
 
   Constant *CreateCast(Instruction::CastOps Op, Constant *C,
                        const Type *DestTy) const {
-    return ConstantExpr::getCast(Op, C, DestTy);
+    return Context.getConstantExprCast(Op, C, DestTy);
   }
   Constant *CreateIntCast(Constant *C, const Type *DestTy,
                           bool isSigned) const {
-    return ConstantExpr::getIntegerCast(C, DestTy, isSigned);
+    return Context.getConstantExprIntegerCast(C, DestTy, isSigned);
   }
 
   Constant *CreateBitCast(Constant *C, const Type *DestTy) const {
@@ -139,7 +143,7 @@ public:
     return CreateCast(Instruction::PtrToInt, C, DestTy);
   }
   Constant *CreateTruncOrBitCast(Constant *C, const Type *DestTy) const {
-    return ConstantExpr::getTruncOrBitCast(C, DestTy);
+    return Context.getConstantExprTruncOrBitCast(C, DestTy);
   }
 
   //===--------------------------------------------------------------------===//
@@ -148,11 +152,11 @@ public:
 
   Constant *CreateICmp(CmpInst::Predicate P, Constant *LHS,
                        Constant *RHS) const {
-    return ConstantExpr::getCompare(P, LHS, RHS);
+    return Context.getConstantExprCompare(P, LHS, RHS);
   }
   Constant *CreateFCmp(CmpInst::Predicate P, Constant *LHS,
                        Constant *RHS) const {
-    return ConstantExpr::getCompare(P, LHS, RHS);
+    return Context.getConstantExprCompare(P, LHS, RHS);
   }
 
   //===--------------------------------------------------------------------===//
@@ -160,31 +164,31 @@ public:
   //===--------------------------------------------------------------------===//
 
   Constant *CreateSelect(Constant *C, Constant *True, Constant *False) const {
-    return ConstantExpr::getSelect(C, True, False);
+    return Context.getConstantExprSelect(C, True, False);
   }
 
   Constant *CreateExtractElement(Constant *Vec, Constant *Idx) const {
-    return ConstantExpr::getExtractElement(Vec, Idx);
+    return Context.getConstantExprExtractElement(Vec, Idx);
   }
 
   Constant *CreateInsertElement(Constant *Vec, Constant *NewElt,
                                 Constant *Idx) const {
-    return ConstantExpr::getInsertElement(Vec, NewElt, Idx);
+    return Context.getConstantExprInsertElement(Vec, NewElt, Idx);
   }
 
   Constant *CreateShuffleVector(Constant *V1, Constant *V2,
                                 Constant *Mask) const {
-    return ConstantExpr::getShuffleVector(V1, V2, Mask);
+    return Context.getConstantExprShuffleVector(V1, V2, Mask);
   }
 
   Constant *CreateExtractValue(Constant *Agg, const unsigned *IdxList,
                                unsigned NumIdx) const {
-    return ConstantExpr::getExtractValue(Agg, IdxList, NumIdx);
+    return Context.getConstantExprExtractValue(Agg, IdxList, NumIdx);
   }
 
   Constant *CreateInsertValue(Constant *Agg, Constant *Val,
                               const unsigned *IdxList, unsigned NumIdx) const {
-    return ConstantExpr::getInsertValue(Agg, Val, IdxList, NumIdx);
+    return Context.getConstantExprInsertValue(Agg, Val, IdxList, NumIdx);
   }
 };
 

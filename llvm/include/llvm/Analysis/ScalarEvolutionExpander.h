@@ -38,7 +38,7 @@ namespace llvm {
   public:
     explicit SCEVExpander(ScalarEvolution &se)
       : SE(se), Builder(*se.getContext(),
-                        TargetFolder(se.TD, se.getContext())) {}
+                        TargetFolder(se.TD, *se.getContext())) {}
 
     /// clear - Erase the contents of the InsertedExpressions map so that users
     /// trying to expand the same expression into multiple BasicBlocks or

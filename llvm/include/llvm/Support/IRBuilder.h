@@ -42,19 +42,31 @@ namespace llvm {
 template <bool preserveNames=true, typename T = ConstantFolder> class IRBuilder{
   BasicBlock *BB;
   BasicBlock::iterator InsertPt;
-  T Folder;
   LLVMContext &Context;
+  T Folder;
 public:
-  IRBuilder(LLVMContext &C, const T& F = T()) :
-    Folder(F), Context(C) { ClearInsertionPoint(); }
+  IRBuilder(LLVMContext &C, const T& F) :
+    Context(C), Folder(F) { ClearInsertionPoint(); }
   
-  explicit IRBuilder(BasicBlock *TheBB, const T& F = T())
-      : Folder(F), Context(*TheBB->getParent()->getContext()) {
+  IRBuilder(LLVMContext &C) : Context(C), Folder(C) { ClearInsertionPoint(); }
+  
+  explicit IRBuilder(BasicBlock *TheBB, const T& F)
+      : Context(*TheBB->getParent()->getContext()), Folder(F) {
     SetInsertPoint(TheBB);
   }
   
-  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F = T())
-      : Folder(F), Context(*TheBB->getParent()->getContext()) {
+  explicit IRBuilder(BasicBlock *TheBB)
+      : Context(*TheBB->getParent()->getContext()), Folder(Context) {
+    SetInsertPoint(TheBB);
+  }
+  
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
+      : Context(*TheBB->getParent()->getContext()), Folder(F) {
+    SetInsertPoint(TheBB, IP);
+  }
+  
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP)
+      : Context(*TheBB->getParent()->getContext()), Folder(Context) {
     SetInsertPoint(TheBB, IP);
   }
 
