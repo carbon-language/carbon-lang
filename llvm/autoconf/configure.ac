@@ -922,6 +922,43 @@ AC_ARG_WITH(udis86,
 AC_DEFINE_UNQUOTED([USE_UDIS86],$USE_UDIS86,
                    [Define if use udis86 library])
 
+dnl Allow OProfile support for JIT output.
+AC_ARG_WITH(oprofile,
+  AS_HELP_STRING([--with-oprofile=<prefix>],
+    [Tell OProfile >= 0.9.4 how to symbolize JIT output]),
+    [
+      AC_SUBST(USE_OPROFILE, [1])
+      case "$withval" in
+        /usr|yes) llvm_cv_oppath=/usr/lib/oprofile ;;
+        *) llvm_cv_oppath="${withval}/lib/oprofile"
+           CPPFLAGS="-I${withval}/include";;
+      esac
+      LIBS="$LIBS -L${llvm_cv_oppath} -Wl,-rpath,${llvm_cv_oppath}"
+      AC_SEARCH_LIBS(op_open_agent, opagent, [], [
+        echo "Error! You need to have libopagent around."
+        exit -1
+      ])
+      AC_CHECK_HEADER([opagent.h], [], [
+        echo "Error! You need to have opagent.h around."
+        exit -1
+      ])
+    ],
+    [
+      llvm_cv_old_LIBS="$LIBS"
+      LIBS="$LIBS -L/usr/lib/oprofile -Wl,-rpath,/usr/lib/oprofile"
+      dnl If either the library or header aren't present, omit oprofile support.
+      AC_SEARCH_LIBS(op_open_agent, opagent,
+                     [AC_SUBST(USE_OPROFILE, [1])],
+                     [LIBS="$llvm_cv_old_LIBS"
+                      AC_SUBST(USE_OPROFILE, [0])])
+      AC_CHECK_HEADER([opagent.h], [], [
+        LIBS="$llvm_cv_old_LIBS"
+        AC_SUBST(USE_OPROFILE, [0])
+      ])
+    ])
+AC_DEFINE_UNQUOTED([USE_OPROFILE],$USE_OPROFILE,
+                   [Define if we have the oprofile JIT-support library])
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 6: Check for header files

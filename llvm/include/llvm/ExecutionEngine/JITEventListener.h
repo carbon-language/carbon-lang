@@ -52,7 +52,9 @@ public:
   virtual void NotifyFreeingMachineCode(const Function &F, void *OldPtr) {}
 };
 
+// These return NULL if support isn't available.
 JITEventListener *createMacOSJITEventListener();
+JITEventListener *createOProfileJITEventListener();
 
 } // end namespace llvm.
 
