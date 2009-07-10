@@ -424,8 +424,7 @@ bool X86FastISel::X86SelectAddress(Value *V, X86AddressMode &AM) {
   // Handle constant address.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // Can't handle alternate code models yet.
-    if (TM.getCodeModel() != CodeModel::Default &&
-        TM.getCodeModel() != CodeModel::Small)
+    if (TM.getCodeModel() != CodeModel::Small)
       return false;
 
     // RIP-relative addresses can't have additional register operands.
@@ -554,8 +553,7 @@ bool X86FastISel::X86SelectCallAddress(Value *V, X86AddressMode &AM) {
   // Handle constant address.
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     // Can't handle alternate code models yet.
-    if (TM.getCodeModel() != CodeModel::Default &&
-        TM.getCodeModel() != CodeModel::Small)
+    if (TM.getCodeModel() != CodeModel::Small)
       return false;
 
     // RIP-relative addresses can't have additional register operands.
