@@ -194,13 +194,11 @@ public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI,
                                            bool NewMI = false) const = 0;
 
-  /// CommuteChangesDestination - Return true if commuting the specified
-  /// instruction will also changes the destination operand. Also return the
-  /// current operand index of the would be new destination register by
-  /// reference. This can happen when the commutable instruction is also a
-  /// two-address instruction.
-  virtual bool CommuteChangesDestination(MachineInstr *MI,
-                                         unsigned &OpIdx) const = 0;
+  /// findCommutedOpIndices - If specified MI is commutable, return the two
+  /// operand indices that would swap value. Return true if the instruction
+  /// is not in a form which this routine understands.
+  virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+                                     unsigned &SrcOpIdx2) const = 0;
 
   /// AnalyzeBranch - Analyze the branching code at the end of MBB, returning
   /// true if it cannot be understood (e.g. it's a switch dispatch or isn't
@@ -495,8 +493,8 @@ protected:
 public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI,
                                            bool NewMI = false) const;
-  virtual bool CommuteChangesDestination(MachineInstr *MI,
-                                         unsigned &OpIdx) const;
+  virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+                                     unsigned &SrcOpIdx2) const;
   virtual bool PredicateInstruction(MachineInstr *MI,
                             const SmallVectorImpl<MachineOperand> &Pred) const;
   virtual void reMaterialize(MachineBasicBlock &MBB,

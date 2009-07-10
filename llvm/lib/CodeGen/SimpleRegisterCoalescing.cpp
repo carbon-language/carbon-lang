@@ -312,9 +312,23 @@ bool SimpleRegisterCoalescing::RemoveCopyByCommutingDef(LiveInterval &IntA,
     return false;
   MachineInstr *DefMI = li_->getInstructionFromIndex(AValNo->def);
   const TargetInstrDesc &TID = DefMI->getDesc();
-  unsigned NewDstIdx;
-  if (!TID.isCommutable() ||
-      !tii_->CommuteChangesDestination(DefMI, NewDstIdx))
+  if (!TID.isCommutable())
+    return false;
+  // If DefMI is a two-address instruction then commuting it will change the
+  // destination register.
+  int DefIdx = DefMI->findRegisterDefOperandIdx(IntA.reg);
+  assert(DefIdx != -1);
+  unsigned UseOpIdx;
+  if (!DefMI->isRegTiedToUseOperand(DefIdx, &UseOpIdx))
+    return false;
+  unsigned Op1, Op2, NewDstIdx;
+  if (!tii_->findCommutedOpIndices(DefMI, Op1, Op2))
+    return false;
+  if (Op1 == UseOpIdx)
+    NewDstIdx = Op2;
+  else if (Op2 == UseOpIdx)
+    NewDstIdx = Op1;
+  else
     return false;
 
   MachineOperand &NewDstMO = DefMI->getOperand(NewDstIdx);

@@ -70,26 +70,24 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI,
   return MI;
 }
 
-/// CommuteChangesDestination - Return true if commuting the specified
-/// instruction will also changes the destination operand. Also return the
-/// current operand index of the would be new destination register by
-/// reference. This can happen when the commutable instruction is also a
-/// two-address instruction.
-bool TargetInstrInfoImpl::CommuteChangesDestination(MachineInstr *MI,
-                                                    unsigned &OpIdx) const{
+/// findCommutedOpIndices - If specified MI is commutable, return the two
+/// operand indices that would swap value. Return true if the instruction
+/// is not in a form which this routine understands.
+bool TargetInstrInfoImpl::findCommutedOpIndices(MachineInstr *MI,
+                                                unsigned &SrcOpIdx1,
+                                                unsigned &SrcOpIdx2) const {
   const TargetInstrDesc &TID = MI->getDesc();
-  if (!TID.getNumDefs())
+  if (!TID.isCommutable())
     return false;
-  assert(MI->getOperand(1).isReg() && MI->getOperand(2).isReg() &&
-         "This only knows how to commute register operands so far");
-  if (MI->getOperand(0).getReg() == MI->getOperand(1).getReg()) {
-    // Must be two address instruction!
-    assert(MI->getDesc().getOperandConstraint(0, TOI::TIED_TO) &&
-           "Expecting a two-address instruction!");
-    OpIdx = 2;
-    return true;
-  }
-  return false;
+  // This assumes v0 = op v1, v2 and commuting would swap v1 and v2. If this
+  // is not true, then the target must implement this.
+  SrcOpIdx1 = TID.getNumDefs();
+  SrcOpIdx2 = SrcOpIdx1 + 1;
+  if (!MI->getOperand(SrcOpIdx1).isReg() ||
+      !MI->getOperand(SrcOpIdx2).isReg())
+    // No idea.
+    return false;
+  return true;
 }
 
 
