@@ -1913,7 +1913,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
           getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
           GV->hasDefaultVisibility() && !GV->hasLocalLinkage()) {
         OpFlags = X86II::MO_PLT;
-      } else if (Subtarget->isPICStyleStub() &&
+      } else if (Subtarget->isPICStyleStubAny() &&
                (GV->isDeclaration() || GV->isWeakForLinker()) &&
                Subtarget->getDarwinVers() < 9) {
         // PC-relative references to external symbols should go through $stub,
@@ -1933,7 +1933,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
     if (Subtarget->isTargetELF() &&
         getTargetMachine().getRelocationModel() == Reloc::PIC_) {
       OpFlags = X86II::MO_PLT;
-    } else if (Subtarget->isPICStyleStub() &&
+    } else if (Subtarget->isPICStyleStubAny() &&
              Subtarget->getDarwinVers() < 9) {
       // PC-relative references to external symbols should go through $stub,
       // unless we're building with the leopard linker or later, which
@@ -4454,14 +4454,12 @@ X86TargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) {
   unsigned WrapperKind = X86ISD::Wrapper;
   
   if (Subtarget->is64Bit() &&
-      getTargetMachine().getCodeModel() == CodeModel::Small) {
+      getTargetMachine().getCodeModel() == CodeModel::Small)
     WrapperKind = X86ISD::WrapperRIP;
-  } else if (Subtarget->isPICStyleGOT()) {
+  else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
-  } else if (Subtarget->isPICStyleStub() &&
-             getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  else if (Subtarget->isPICStyleStubPIC(getTargetMachine()))
     OpFlag = X86II::MO_PIC_BASE_OFFSET;
-  }
   
   SDValue Result = DAG.getTargetConstantPool(CP->getConstVal(), getPointerTy(),
                                              CP->getAlignment(),
@@ -4487,14 +4485,13 @@ SDValue X86TargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
   unsigned char OpFlag = 0;
   unsigned WrapperKind = X86ISD::Wrapper;
   
-  if (Subtarget->is64Bit()) {
+  if (Subtarget->is64Bit() &&
+      getTargetMachine().getCodeModel() == CodeModel::Small)
     WrapperKind = X86ISD::WrapperRIP;
-  } else if (Subtarget->isPICStyleGOT()) {
+  else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
-  } else if (Subtarget->isPICStyleStub() &&
-             getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  else if (Subtarget->isPICStyleStubPIC(getTargetMachine()))
     OpFlag = X86II::MO_PIC_BASE_OFFSET;
-  }
   
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy(),
                                           OpFlag);
@@ -4520,14 +4517,13 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) {
   // global base reg.
   unsigned char OpFlag = 0;
   unsigned WrapperKind = X86ISD::Wrapper;
-  if (Subtarget->is64Bit()) {
+  if (Subtarget->is64Bit() &&
+      getTargetMachine().getCodeModel() == CodeModel::Small)
     WrapperKind = X86ISD::WrapperRIP;
-  } else if (Subtarget->isPICStyleGOT()) {
+  else if (Subtarget->isPICStyleGOT())
     OpFlag = X86II::MO_GOTOFF;
-  } else if (Subtarget->isPICStyleStub() &&
-             getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+  else if (Subtarget->isPICStyleStubPIC(getTargetMachine()))
     OpFlag = X86II::MO_PIC_BASE_OFFSET;
-  }
   
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy(), OpFlag);
   

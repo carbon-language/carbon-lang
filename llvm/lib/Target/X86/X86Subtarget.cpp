@@ -34,6 +34,17 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
     clEnumValN(X86Subtarget::Intel, "intel", "Emit Intel-style assembly"),
     clEnumValEnd));
 
+bool X86Subtarget::isPICStyleStubPIC(const TargetMachine &TM) const {
+  return PICStyle == PICStyles::Stub &&
+         TM.getRelocationModel() == Reloc::PIC_;
+}
+
+bool X86Subtarget::isPICStyleStubNoDynamic(const TargetMachine &TM) const {
+  return PICStyle == PICStyles::Stub &&
+         TM.getRelocationModel() == Reloc::DynamicNoPIC;
+}
+
+
 
 /// ClassifyGlobalReference - Classify a global variable reference for the
 /// current subtarget according to how we should reference it in a non-pcrel
@@ -76,7 +87,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     return X86II::MO_GOT;
   }
   
-  if (isPICStyleStub()) {
+  if (isPICStyleStubAny()) {
     // In Darwin/32, we have multiple different stub types, and we have both PIC
     // and -mdynamic-no-pic.  Determine whether we have a stub reference
     // and/or whether the reference is relative to the PIC base or not.

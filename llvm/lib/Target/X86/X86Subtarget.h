@@ -184,10 +184,14 @@ public:
 
   bool isPICStyleSet() const { return PICStyle != PICStyles::None; }
   bool isPICStyleGOT() const { return PICStyle == PICStyles::GOT; }
-  bool isPICStyleStub() const { return PICStyle == PICStyles::Stub; }
   bool isPICStyleRIPRel() const { return PICStyle == PICStyles::RIPRel; }
+
+  bool isPICStyleStubPIC(const TargetMachine &TM) const;
+  bool isPICStyleStubNoDynamic(const TargetMachine &TM) const;
+  bool isPICStyleStubAny() const { return PICStyle == PICStyles::Stub; }
   
-  /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
+  /// getDarwinVers - Return the darwin version number, 8 = Tiger, 9 = Leopard,
+  /// 10 = Snow Leopard, etc.
   unsigned getDarwinVers() const { return DarwinVers; }
   
   /// isLinux - Return true if the target is "Linux".

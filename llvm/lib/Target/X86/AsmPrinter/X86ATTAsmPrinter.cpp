@@ -603,15 +603,12 @@ void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
 
   O << JTEntryDirective << ' ';
 
-  if (TM.getRelocationModel() == Reloc::PIC_) {
-    if (Subtarget->isPICStyleRIPRel() || Subtarget->isPICStyleStub()) {
-      O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-        << '_' << uid << "_set_" << MBB->getNumber();
-    } else if (Subtarget->isPICStyleGOT()) {
-      printBasicBlockLabel(MBB, false, false, false);
-      O << "@GOTOFF";
-    } else
-      assert(0 && "Don't know how to print MBB label for this PIC mode");
+  if (Subtarget->isPICStyleRIPRel() || Subtarget->isPICStyleStubPIC(TM)) {
+    O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
+      << '_' << uid << "_set_" << MBB->getNumber();
+  } else if (Subtarget->isPICStyleGOT()) {
+    printBasicBlockLabel(MBB, false, false, false);
+    O << "@GOTOFF";
   } else
     printBasicBlockLabel(MBB, false, false, false);
 }

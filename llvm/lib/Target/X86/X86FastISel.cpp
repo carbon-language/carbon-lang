@@ -578,8 +578,7 @@ bool X86FastISel::X86SelectCallAddress(Value *V, X86AddressMode &AM) {
       // base and index registers are unused.
       assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
       AM.Base.Reg = X86::RIP;
-    } else if (Subtarget->isPICStyleStub() &&
-               TM.getRelocationModel() == Reloc::PIC_) {
+    } else if (Subtarget->isPICStyleStubPIC(TM)) {
       AM.GVOpFlags = X86II::MO_PIC_BASE_OFFSET;
     } else if (Subtarget->isPICStyleGOT()) {
       AM.GVOpFlags = X86II::MO_GOTOFF;
@@ -1413,7 +1412,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
         TM.getRelocationModel() == Reloc::PIC_ &&
         GV->hasDefaultVisibility() && !GV->hasLocalLinkage()) {
       OpFlags = X86II::MO_PLT;
-    } else if (Subtarget->isPICStyleStub() &&
+    } else if (Subtarget->isPICStyleStubAny() &&
                (GV->isDeclaration() || GV->isWeakForLinker()) &&
                Subtarget->getDarwinVers() < 9) {
       // PC-relative references to external symbols should go through $stub,
@@ -1621,8 +1620,7 @@ unsigned X86FastISel::TargetMaterializeConstant(Constant *C) {
   // x86-32 PIC requires a PIC base register for constant pools.
   unsigned PICBase = 0;
   unsigned char OpFlag = 0;
-  if (Subtarget->isPICStyleStub() &&
-      TM.getRelocationModel() == Reloc::PIC_) { // Not dynamic-no-pic
+  if (Subtarget->isPICStyleStubPIC(TM)) { // Not dynamic-no-pic
     OpFlag = X86II::MO_PIC_BASE_OFFSET;
     PICBase = getInstrInfo()->getGlobalBaseReg(&MF);
   } else if (Subtarget->isPICStyleGOT()) {
