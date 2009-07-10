@@ -120,20 +120,6 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue *GV,
   return isGlobalStubReference(ClassifyGlobalReference(GV, TM));
 }
 
-/// True if accessing the GV requires a register.  This is a superset of the
-/// cases where GVRequiresExtraLoad is true.  Some variations of PIC require
-/// a register, but not an extra load.
-bool X86Subtarget::GVRequiresRegister(const GlobalValue *GV,
-                                      const TargetMachine &TM) const {
-  if (GVRequiresExtraLoad(GV, TM))
-    return true;
-  
-  // Code below here need only consider cases where GVRequiresExtraLoad
-  // returns false.
-  if (TM.getRelocationModel() == Reloc::PIC_)
-    return GV->hasLocalLinkage() || GV->hasExternalLinkage();
-  return false;
-}
 
 /// getBZeroEntry - This function returns the name of a function which has an
 /// interface like the non-standard bzero function, if such a function exists on

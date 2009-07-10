@@ -206,11 +206,6 @@ public:
   /// or index register of the address, not the GV offset field.
   bool GVRequiresExtraLoad(const GlobalValue *GV, const TargetMachine &TM)const;
 
-  /// True if accessing the GV requires a register.  This is a superset of the
-  /// cases where GVRequiresExtraLoad is true.  Some variations of PIC require
-  /// a register, but not an extra load.
-  bool GVRequiresRegister(const GlobalValue *GV, const TargetMachine &TM) const;
-
   /// IsLegalToCallImmediateAddr - Return true if the subtarget allows calls
   /// to immediate address.
   bool IsLegalToCallImmediateAddr(const TargetMachine &TM) const;

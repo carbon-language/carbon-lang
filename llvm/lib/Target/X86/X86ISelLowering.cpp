@@ -7036,12 +7036,16 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
     return false;
 
   if (AM.BaseGV) {
-    // We can only fold this if we don't need an extra load.
-    if (Subtarget->GVRequiresExtraLoad(AM.BaseGV, getTargetMachine()))
+    unsigned GVFlags =
+      Subtarget->ClassifyGlobalReference(AM.BaseGV, getTargetMachine());
+    
+    // If a reference to this global requires an extra load, we can't fold it.
+    if (isGlobalStubReference(GVFlags))
       return false;
-    // If BaseGV requires a register, we cannot also have a BaseReg.
-    if (Subtarget->GVRequiresRegister(AM.BaseGV, getTargetMachine()) &&
-        AM.HasBaseReg)
+    
+    // If BaseGV requires a register for the PIC base, we cannot also have a
+    // BaseReg specified.
+    if (AM.HasBaseReg && isGlobalRelativeToPICBase(GVFlags))
       return false;
 
     // X86-64 only supports addr of globals in small code model.
