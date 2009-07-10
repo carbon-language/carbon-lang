@@ -1463,11 +1463,18 @@ public:
 /// DecltypeType (C++0x)
 class DecltypeType : public Type {
   Expr *E;
-  DecltypeType(Expr *E, QualType can = QualType());
+  
+  // FIXME: We could get rid of UnderlyingType if we wanted to: We would have to
+  // Move getDesugaredType to ASTContext so that it can call getDecltypeForExpr
+  // from it.
+  QualType UnderlyingType;
+  
+  DecltypeType(Expr *E, QualType underlyingType, QualType can = QualType());
   friend class ASTContext;  // ASTContext creates these.
 public:
   Expr *getUnderlyingExpr() const { return E; }
-  
+  QualType getUnderlyingType() const { return UnderlyingType; }
+
   virtual void getAsStringInternal(std::string &InnerString, 
                                    const PrintingPolicy &Policy) const;
   

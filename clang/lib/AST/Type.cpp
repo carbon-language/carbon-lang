@@ -124,8 +124,10 @@ QualType Type::getDesugaredType(bool ForDisplay) const {
     return TOE->getUnderlyingExpr()->getType().getDesugaredType();
   if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
     return TOT->getUnderlyingType().getDesugaredType();
-  if (const DecltypeType *DTT = dyn_cast<DecltypeType>(this))
-    return DTT->getCanonicalTypeInternal();
+  if (const DecltypeType *DTT = dyn_cast<DecltypeType>(this)) {
+    if (!DTT->getUnderlyingType()->isDependentType())
+      return DTT->getUnderlyingType().getDesugaredType();
+  }
   if (const TemplateSpecializationType *Spec 
         = dyn_cast<TemplateSpecializationType>(this)) {
     if (ForDisplay)
@@ -1074,8 +1076,9 @@ TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
   : Type(TypeOfExpr, can, E->isTypeDependent()), TOExpr(E) {
 }
 
-DecltypeType::DecltypeType(Expr *E, QualType can)
-  : Type(Decltype, can, E->isTypeDependent()), E(E) {
+DecltypeType::DecltypeType(Expr *E, QualType underlyingType, QualType can)
+  : Type(Decltype, can, E->isTypeDependent()), E(E), 
+  UnderlyingType(underlyingType) {
 }
 
 TagType::TagType(TypeClass TC, TagDecl *D, QualType can) 

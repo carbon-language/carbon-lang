@@ -792,8 +792,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
     return Slot = getOrCreateType(cast<TypeOfType>(Ty)->getUnderlyingType(),
                                   Unit);
   case Type::Decltype:
-    return Slot = getOrCreateType(cast<DecltypeType>(Ty)->getUnderlyingExpr()
-                                  ->getType(), Unit);
+    return Slot = getOrCreateType(cast<DecltypeType>(Ty)->getUnderlyingType(),
+                                  Unit);
   }
   
   return Slot;

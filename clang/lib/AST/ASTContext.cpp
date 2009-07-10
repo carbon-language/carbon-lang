@@ -1964,10 +1964,10 @@ static QualType getDecltypeForExpr(const Expr *e, ASTContext &Context) {
 QualType ASTContext::getDecltypeType(Expr *e) {
   DecltypeType *dt;
   if (e->isTypeDependent()) // FIXME: canonicalize the expression
-    dt = new (*this, 8) DecltypeType(e);
+    dt = new (*this, 8) DecltypeType(e, DependentTy);
   else {
     QualType T = getDecltypeForExpr(e, *this);
-    dt = new (*this, 8) DecltypeType(e, getCanonicalType(T));    
+    dt = new (*this, 8) DecltypeType(e, T, getCanonicalType(T));    
   }
   Types.push_back(dt);
   return QualType(dt, 0);
