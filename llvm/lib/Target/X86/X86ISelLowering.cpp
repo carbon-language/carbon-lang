@@ -7078,7 +7078,7 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
     if (Subtarget->GVRequiresExtraLoad(AM.BaseGV, getTargetMachine(), false))
       return false;
     // If BaseGV requires a register, we cannot also have a BaseReg.
-    if (Subtarget->GVRequiresRegister(AM.BaseGV, getTargetMachine(), false) &&
+    if (Subtarget->GVRequiresRegister(AM.BaseGV, getTargetMachine()) &&
         AM.HasBaseReg)
       return false;
 
@@ -8841,8 +8841,8 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     }
     // If we require an extra load to get this address, as in PIC mode, we
     // can't accept it.
-    if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(),
-                                       getTargetMachine(), false))
+    if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(), getTargetMachine(),
+                                       false))
       return;
 
     if (hasMemory)
