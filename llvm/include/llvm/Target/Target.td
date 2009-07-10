@@ -302,8 +302,8 @@ class PredicateOperand<ValueType ty, dag OpTypes, dag AlwaysVal>
 }
 
 /// OptionalDefOperand - This is used to define a optional definition operand
-/// for an instruction. DefaultOps is the register the operand represents if none
-/// is supplied, e.g. zero_reg.
+/// for an instruction. DefaultOps is the register the operand represents if
+/// none is supplied, e.g. zero_reg.
 class OptionalDefOperand<ValueType ty, dag OpTypes, dag defaultops>
   : Operand<ty> {
   let MIOperandInfo = OpTypes;
