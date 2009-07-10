@@ -762,7 +762,6 @@ unsigned X86InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   return 0;
 }
 
-
 /// regIsPICBase - Return true if register is PIC base (i.e.g defined by
 /// X86::MOVPC32r.
 static bool regIsPICBase(unsigned BaseReg, const MachineRegisterInfo &MRI) {
@@ -778,12 +777,6 @@ static bool regIsPICBase(unsigned BaseReg, const MachineRegisterInfo &MRI) {
   return isPICBase;
 }
 
-/// isGVStub - Return true if the GV requires an extra load to get the
-/// real address.
-static inline bool isGVStub(GlobalValue *GV, X86TargetMachine &TM) {
-  return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM);
-}
-
 /// CanRematLoadWithDispOperand - Return true if a load with the specified
 /// operand is a candidate for remat: for this to be true we need to know that
 /// the load will always return the same value, even if moved.
@@ -796,7 +789,7 @@ static bool CanRematLoadWithDispOperand(const MachineOperand &MO,
   if (MO.isGlobal()) {
     // If this is a load of a stub, not of the global, we can remat it.  This
     // access will always return the address of the global.
-    if (isGVStub(MO.getGlobal(), TM))
+    if (isGlobalStubReference(MO))
       return true;
     
     // If the global itself is constant, we can remat the load.
@@ -987,7 +980,7 @@ bool X86InstrInfo::isInvariantLoad(const MachineInstr *MI) const {
       return true;
 
     if (MO.isGlobal())
-      return isGVStub(MO.getGlobal(), TM);
+      return isGlobalStubReference(MO);
 
     // If this is a load from an invariant stack slot, the load is a constant.
     if (MO.isFI()) {

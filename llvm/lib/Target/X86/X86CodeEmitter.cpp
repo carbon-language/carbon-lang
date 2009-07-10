@@ -293,15 +293,15 @@ static bool isDisp8(int Value) {
 
 static bool gvNeedsNonLazyPtr(const MachineOperand &GVOp,
                               const TargetMachine &TM) {
-  const GlobalValue *GV = GVOp.getGlobal();
-  
   // For Darwin-64, simulate the linktime GOT by using the same non-lazy-pointer
   // mechanism as 32-bit mode.
   if (TM.getSubtarget<X86Subtarget>().is64Bit() && 
       !TM.getSubtarget<X86Subtarget>().isTargetDarwin())
     return false;
   
-  return TM.getSubtarget<X86Subtarget>().GVRequiresExtraLoad(GV, TM);
+  // Return true if this is a reference to a stub containing the address of the
+  // global, not the global itself.
+  return isGlobalStubReference(GVOp);
 }
 
 template<class CodeEmitter>
