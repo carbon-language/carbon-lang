@@ -50,20 +50,20 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     if (TM.getCodeModel() == CodeModel::Large)
       return X86II::MO_NO_FLAG;
       
-      if (isTargetDarwin()) {
-        // If symbol visibility is hidden, the extra load is not needed if
-        // target is x86-64 or the symbol is definitely defined in the current
-        // translation unit.
-        if (GV->hasDefaultVisibility() &&
-            (GV->isDeclaration() || GV->isWeakForLinker()))
-          return X86II::MO_GOTPCREL;
-      } else {
-        assert(isTargetELF() && "Unknown rip-relative target");
+    if (isTargetDarwin()) {
+      // If symbol visibility is hidden, the extra load is not needed if
+      // target is x86-64 or the symbol is definitely defined in the current
+      // translation unit.
+      if (GV->hasDefaultVisibility() &&
+          (GV->isDeclaration() || GV->isWeakForLinker()))
+        return X86II::MO_GOTPCREL;
+    } else {
+      assert(isTargetELF() && "Unknown rip-relative target");
 
-        // Extra load is needed for all externally visible.
-        if (!GV->hasLocalLinkage() && GV->hasDefaultVisibility())
-          return X86II::MO_GOTPCREL;
-      }
+      // Extra load is needed for all externally visible.
+      if (!GV->hasLocalLinkage() && GV->hasDefaultVisibility())
+        return X86II::MO_GOTPCREL;
+    }
 
     return X86II::MO_NO_FLAG;
   }
