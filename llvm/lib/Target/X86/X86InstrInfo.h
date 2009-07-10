@@ -199,6 +199,22 @@ inline static bool isGlobalStubReference(unsigned char TargetFlag) {
     return false;
   }
 }
+
+/// isGlobalRelativeToPICBase - Return true if the specified global value
+/// reference is relative to a 32-bit PIC base (X86ISD::GlobalBaseReg).  If this
+/// is true, the addressing mode has the PIC base register added in (e.g. EBX).
+inline static bool isGlobalRelativeToPICBase(unsigned char TargetFlag) {
+  switch (TargetFlag) {
+  case X86II::MO_GOTOFF:                         // isPICStyleGOT: local global.
+  case X86II::MO_GOT:                            // isPICStyleGOT: other global.
+  case X86II::MO_PIC_BASE_OFFSET:                // Darwin local global.
+  case X86II::MO_DARWIN_NONLAZY_PIC_BASE:        // Darwin/32 external global.
+  case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE: // Darwin/32 hidden global.
+    return true;
+  default:
+    return false;
+  }
+}
  
 /// X86II - This namespace holds all of the target specific flags that
 /// instruction info tracks.
