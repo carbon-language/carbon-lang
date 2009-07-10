@@ -40,6 +40,21 @@ protected:
   RangePos CheckRange(Decl *D) { return CheckRange(D->getSourceRange()); }
   RangePos CheckRange(Stmt *Node) { return CheckRange(Node->getSourceRange()); }
 
+  template <typename T>
+  bool isBeforeLocation(T *Node) {
+    return CheckRange(Node) == BeforeLoc;
+  }
+
+  template <typename T>
+  bool ContainsLocation(T *Node) {
+    return CheckRange(Node) == ContainsLoc;
+  }
+
+  template <typename T>
+  bool isAfterLocation(T *Node) {
+    return CheckRange(Node) == AfterLoc;
+  }
+
 public:
   LocResolverBase(ASTContext &ctx, SourceLocation loc)
     : Ctx(ctx), Loc(loc) {}
@@ -83,8 +98,8 @@ public:
 } // anonymous namespace
 
 ASTLocation StmtLocResolver::VisitDeclStmt(DeclStmt *Node) {
-  assert(CheckRange(Node) == ContainsLoc
-         && "Should visit only after verifying that loc is in range");
+  assert(ContainsLocation(Node) &&
+         "Should visit only after verifying that loc is in range");
 
   // Search all declarations of this DeclStmt.
   for (DeclStmt::decl_iterator
@@ -100,8 +115,8 @@ ASTLocation StmtLocResolver::VisitDeclStmt(DeclStmt *Node) {
 }
 
 ASTLocation StmtLocResolver::VisitStmt(Stmt *Node) {
-  assert(CheckRange(Node) == ContainsLoc
-         && "Should visit only after verifying that loc is in range");
+  assert(ContainsLocation(Node) &&
+         "Should visit only after verifying that loc is in range");
 
   // Search the child statements.
   for (Stmt::child_iterator
@@ -132,8 +147,8 @@ ASTLocation DeclLocResolver::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
 }
 
 ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
-  assert(CheckRange(D) == ContainsLoc
-         && "Should visit only after verifying that loc is in range");
+  assert(ContainsLocation(D) &&
+         "Should visit only after verifying that loc is in range");
 
   // First, search through the parameters of the function.
   for (FunctionDecl::param_iterator
@@ -170,31 +185,31 @@ ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
   // Finally, search through the body of the function.
   Stmt *Body = D->getBody();
   assert(Body && "Expected definition");
-  assert(CheckRange(Body) != BeforeLoc
-         && "This function is supposed to contain the loc");
-  if (CheckRange(Body) == AfterLoc)
+  assert(!isBeforeLocation(Body) &&
+         "This function is supposed to contain the loc");
+  if (isAfterLocation(Body))
     return ASTLocation(D);
 
   // The body contains the location.
-  assert(CheckRange(Body) == ContainsLoc);
+  assert(ContainsLocation(Body));
   return StmtLocResolver(Ctx, Loc, D).Visit(Body);
 }
 
 ASTLocation DeclLocResolver::VisitVarDecl(VarDecl *D) {
-  assert(CheckRange(D) == ContainsLoc
-         && "Should visit only after verifying that loc is in range");
+  assert(ContainsLocation(D) &&
+         "Should visit only after verifying that loc is in range");
 
   // Check whether the location points to the init expression.
   Expr *Init = D->getInit();
-  if (Init && CheckRange(Init) == ContainsLoc)
+  if (Init && ContainsLocation(Init))
     return StmtLocResolver(Ctx, Loc, D).Visit(Init);
 
   return ASTLocation(D);
 }
 
 ASTLocation DeclLocResolver::VisitDecl(Decl *D) {
-  assert(CheckRange(D) == ContainsLoc
-         && "Should visit only after verifying that loc is in range");
+  assert(ContainsLocation(D) &&
+         "Should visit only after verifying that loc is in range");
   return ASTLocation(D);
 }
 
