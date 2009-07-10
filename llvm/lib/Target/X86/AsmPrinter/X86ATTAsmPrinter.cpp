@@ -311,9 +311,8 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     
     // Handle dllimport linkage.
     if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-      O << "__imp_";
-    
-    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      O << "__imp_" << Name;
+    else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       FnStubs.insert(Name);
       printSuffixedName(Name, "$stub");
     } else {
