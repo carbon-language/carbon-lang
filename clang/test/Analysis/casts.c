@@ -3,8 +3,8 @@
 // Test if the 'storage' region gets properly initialized after it is cast to
 // 'struct sockaddr *'. 
 
-#include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 
 void f(int sock) {
   struct sockaddr_storage storage;
