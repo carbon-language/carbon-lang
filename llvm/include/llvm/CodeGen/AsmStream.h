@@ -16,7 +16,7 @@
 #define LLVM_CODEGEN_ASMSTREAM_H
 
 #include "llvm/Target/TargetAsmInfo.h"
-#include <llvm/Support/raw_ostream.h>
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm 
 {
