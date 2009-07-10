@@ -589,89 +589,27 @@ bool X86FastISel::X86SelectCallAddress(Value *V, X86AddressMode &AM) {
 
     // Can't handle TLS yet.
     if (GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
-      if (GVar->isThreadLocal())
+      if (GVar->isThreadLocal() || GVar->hasDLLImportLinkage())
         return false;
 
     // Okay, we've committed to selecting this global. Set up the basic address.
     AM.GV = GV;
     
-    // If the ABI doesn't require an extra load, return a direct reference to
-    // the global.
-    if (!Subtarget->GVRequiresExtraLoad(GV, TM, true)) {
-      if (Subtarget->isPICStyleRIPRel()) {
-        // Use rip-relative addressing if we can.  Above we verified that the
-        // base and index registers are unused.
-        assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
-        AM.Base.Reg = X86::RIP;
-      } else if (Subtarget->isPICStyleStub() &&
-                 TM.getRelocationModel() == Reloc::PIC_) {
-        AM.GVOpFlags = X86II::MO_PIC_BASE_OFFSET;
-      } else if (Subtarget->isPICStyleGOT()) {
-        AM.GVOpFlags = X86II::MO_GOTOFF;
-      }
-      
-      return true;
+    // No ABI requires an extra load for anything other than DLLImport, which
+    // we rejected above. Return a direct reference to the global.
+    assert(!Subtarget->PCRelGVRequiresExtraLoad(GV, TM));
+    if (Subtarget->isPICStyleRIPRel()) {
+      // Use rip-relative addressing if we can.  Above we verified that the
+      // base and index registers are unused.
+      assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
+      AM.Base.Reg = X86::RIP;
+    } else if (Subtarget->isPICStyleStub() &&
+               TM.getRelocationModel() == Reloc::PIC_) {
+      AM.GVOpFlags = X86II::MO_PIC_BASE_OFFSET;
+    } else if (Subtarget->isPICStyleGOT()) {
+      AM.GVOpFlags = X86II::MO_GOTOFF;
     }
     
-    // Check to see if we've already materialized this stub loaded value into a
-    // register in this block.  If so, just reuse it.
-    DenseMap<const Value*, unsigned>::iterator I = LocalValueMap.find(V);
-    unsigned LoadReg;
-    if (I != LocalValueMap.end() && I->second != 0) {
-      LoadReg = I->second;
-    } else {
-      // Issue load from stub.
-      unsigned Opc = 0;
-      const TargetRegisterClass *RC = NULL;
-      X86AddressMode StubAM;
-      StubAM.Base.Reg = AM.Base.Reg;
-      StubAM.GV = GV;
-      
-      if (TLI.getPointerTy() == MVT::i64) {
-        Opc = X86::MOV64rm;
-        RC  = X86::GR64RegisterClass;
-        
-        if (Subtarget->isPICStyleRIPRel()) {
-          StubAM.GVOpFlags = X86II::MO_GOTPCREL;
-          StubAM.Base.Reg = X86::RIP;
-        }
-        
-      } else {
-        Opc = X86::MOV32rm;
-        RC  = X86::GR32RegisterClass;
-        
-        if (Subtarget->isPICStyleGOT())
-          StubAM.GVOpFlags = X86II::MO_GOT;
-        else if (Subtarget->isPICStyleStub()) {
-          // In darwin, we have multiple different stub types, and we have both
-          // PIC and -mdynamic-no-pic.  Determine whether we have a stub
-          // reference and/or whether the reference is relative to the PIC base
-          // or not.
-          bool IsPIC = TM.getRelocationModel() == Reloc::PIC_;
-          
-          if (!GV->hasHiddenVisibility()) {
-            // Non-hidden $non_lazy_ptr reference.
-            StubAM.GVOpFlags = IsPIC ? X86II::MO_DARWIN_NONLAZY_PIC_BASE :
-                                       X86II::MO_DARWIN_NONLAZY;
-          } else {
-            // Hidden $non_lazy_ptr reference.
-            StubAM.GVOpFlags = IsPIC ? X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-                                       X86II::MO_DARWIN_HIDDEN_NONLAZY;
-          }
-        }
-      }
-      
-      LoadReg = createResultReg(RC);
-      addFullAddress(BuildMI(MBB, DL, TII.get(Opc), LoadReg), StubAM);
-      
-      // Prevent loading GV stub multiple times in same MBB.
-      LocalValueMap[V] = LoadReg;
-    }
-    
-    // Now construct the final address. Note that the Disp, Scale,
-    // and Index values may already be set here.
-    AM.Base.Reg = LoadReg;
-    AM.GV = 0;
     return true;
   }
 

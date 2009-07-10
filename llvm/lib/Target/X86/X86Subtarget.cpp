@@ -38,8 +38,8 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
 /// symbols are indirect, loading the value at address GV rather then the
 /// value of GV itself. This means that the GlobalAddress must be in the base
 /// or index register of the address, not the GV offset field.
-bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
-                                       const TargetMachine& TM,
+bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue *GV,
+                                       const TargetMachine &TM,
                                        bool isDirectCall) const {
   // Windows targets only require an extra load for DLLImport linkage values,
   // and they need these regardless of whether we're in PIC mode or not.
@@ -71,6 +71,19 @@ bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue* GV,
   }
   return false;
 }
+
+/// PCRelGVRequiresExtraLoad - True if accessing the GV from a PC-relative
+/// operand like a call target requires an extra load.
+bool X86Subtarget::PCRelGVRequiresExtraLoad(const GlobalValue *GV,
+                                            const TargetMachine &TM) const {
+  // Windows targets only require an extra load for DLLImport linkage values,
+  // and they need these regardless of whether we're in PIC mode or not.
+  if (isTargetCygMing() || isTargetWindows())
+    return GV->hasDLLImportLinkage();
+
+  return false;
+}
+
 
 /// True if accessing the GV requires a register.  This is a superset of the
 /// cases where GVRequiresExtraLoad is true.  Some variations of PIC require
