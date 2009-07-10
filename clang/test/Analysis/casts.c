@@ -4,6 +4,8 @@
 // 'struct sockaddr *'. 
 
 #include <sys/socket.h>
+#include <sys/types.h>
+
 void f(int sock) {
   struct sockaddr_storage storage;
   struct sockaddr* sockaddr = (struct sockaddr*)&storage;
