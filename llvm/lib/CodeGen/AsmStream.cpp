@@ -13,8 +13,6 @@
 
 #include "llvm/CodeGen/AsmStream.h"
 
-#include <unistd.h>
-
 namespace llvm {
   raw_asm_fd_ostream asmouts(STDOUT_FILENO, false);
   raw_asm_fd_ostream asmerrs(STDERR_FILENO, false);
