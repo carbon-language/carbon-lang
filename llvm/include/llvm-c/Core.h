@@ -853,7 +853,7 @@ namespace llvm {
   template<typename T>
   inline T **unwrap(LLVMValueRef *Vals, unsigned Length) {
     #if DEBUG
-    for (LLVMValueRef *I = Vals, E = Vals + Length; I != E; ++I)
+    for (LLVMValueRef *I = Vals, *E = Vals + Length; I != E; ++I)
       cast<T>(*I);
     #endif
     return reinterpret_cast<T**>(Vals);
