@@ -49,7 +49,7 @@ ANALYSIS(CheckerCFRef, "checker-cfref",
 #endif
 
 ANALYSIS_STORE(BasicStore, "basic", "Use basic analyzer store", CreateBasicStoreManager)
-ANALYSIS_STORE(BasicStoreNewCast, "basic-new-cast", "Use basic analyzer store with new CastRegion", CreateBasicStoreNewCastManager)
+ANALYSIS_STORE(BasicStoreOldCast, "basic-old-cast", "Use basic analyzer store with the old CastRegion", CreateBasicStoreOldCastManager)
 ANALYSIS_STORE(RegionStore, "region", "Use region-based analyzer store", CreateRegionStoreManager)
 
 #ifndef ANALYSIS_CONSTRAINTS

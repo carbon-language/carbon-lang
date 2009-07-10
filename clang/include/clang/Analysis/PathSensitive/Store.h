@@ -223,7 +223,7 @@ public:
 
 // FIXME: Do we need to pass GRStateManager anymore?
 StoreManager *CreateBasicStoreManager(GRStateManager& StMgr);
-StoreManager *CreateBasicStoreNewCastManager(GRStateManager& StMgr);
+StoreManager *CreateBasicStoreOldCastManager(GRStateManager& StMgr);
 StoreManager *CreateRegionStoreManager(GRStateManager& StMgr);
 StoreManager *CreateFieldsOnlyRegionStoreManager(GRStateManager& StMgr);
 

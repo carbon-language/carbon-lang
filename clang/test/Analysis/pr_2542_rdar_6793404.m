@@ -1,5 +1,5 @@
 // RUN: clang-cc -analyze -checker-cfref -pedantic -analyzer-store=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -pedantic -analyzer-store=basic-new-cast -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -pedantic -analyzer-store=basic-old-cast -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -pedantic -analyzer-store=region -verify %s
 
 // BEGIN delta-debugging reduced header stuff

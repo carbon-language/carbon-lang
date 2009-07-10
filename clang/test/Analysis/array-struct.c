@@ -1,7 +1,7 @@
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-new-cast -analyzer-constraints=basic -verify %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-old-cast -analyzer-constraints=basic -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -analyzer-constraints=range -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-new-cast -analyzer-constraints=range -verify %s
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-old-cast -analyzer-constraints=range -verify %s
 
 // RegionStore now has an infinite recursion with this test case.
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -analyzer-constraints=basic -verify %s &&

@@ -1,5 +1,5 @@
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify -fobjc-gc-only %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-new-cast -verify -fobjc-gc-only %s &&
+// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-old-cast -verify -fobjc-gc-only %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -fobjc-gc-only -verify %s
 
 //===----------------------------------------------------------------------===//

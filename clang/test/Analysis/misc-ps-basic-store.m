@@ -1,5 +1,5 @@
 // RUN: clang-cc -analyze -checker-cfref --analyzer-store=basic --verify -fblocks %s &&
-// RUN: clang-cc -analyze -checker-cfref --analyzer-store=basic-new-cast --verify -fblocks %s
+// RUN: clang-cc -analyze -checker-cfref --analyzer-store=basic-old-cast --verify -fblocks %s
 
 //---------------------------------------------------------------------------
 // Test case 'checkaccess_union' differs for region store and basic store.
