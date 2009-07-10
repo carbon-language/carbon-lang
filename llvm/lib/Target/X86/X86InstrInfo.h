@@ -479,6 +479,12 @@ public:
   ///
   virtual MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const;
 
+  /// findCommutedOpIndices - If specified MI is commutable, return the two
+  /// operand indices that would swap value. Return true if the instruction
+  /// is not in a form which this routine understands.
+  virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+                                     unsigned &SrcOpIdx2) const;
+
   // Branch analysis.
   virtual bool isUnpredicatedTerminator(const MachineInstr* MI) const;
   virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
