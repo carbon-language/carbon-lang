@@ -8839,6 +8839,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
       // Otherwise, this isn't something we can handle, reject it.
       return;
     }
+    
     // If we require an extra load to get this address, as in PIC mode, we
     // can't accept it.
     if (Subtarget->GVRequiresExtraLoad(GA->getGlobal(), getTargetMachine()))

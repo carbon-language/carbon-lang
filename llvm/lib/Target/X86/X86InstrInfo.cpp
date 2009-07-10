@@ -789,7 +789,7 @@ static bool CanRematLoadWithDispOperand(const MachineOperand &MO,
   if (MO.isGlobal()) {
     // If this is a load of a stub, not of the global, we can remat it.  This
     // access will always return the address of the global.
-    if (isGlobalStubReference(MO))
+    if (isGlobalStubReference(MO.getTargetFlags()))
       return true;
     
     // If the global itself is constant, we can remat the load.
@@ -980,7 +980,7 @@ bool X86InstrInfo::isInvariantLoad(const MachineInstr *MI) const {
       return true;
 
     if (MO.isGlobal())
-      return isGlobalStubReference(MO);
+      return isGlobalStubReference(MO.getTargetFlags());
 
     // If this is a load from an invariant stack slot, the load is a constant.
     if (MO.isFI()) {

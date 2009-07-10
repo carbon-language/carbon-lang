@@ -69,7 +69,8 @@ namespace X86 {
 /// instruction info tracks.
 ///
 namespace X86II {
-  enum {
+  /// Target Operand Flag enum.
+  enum TOF {
     //===------------------------------------------------------------------===//
     // X86 Specific MachineOperand flags.
     
@@ -179,15 +180,13 @@ namespace X86II {
     /// which is a PIC-base-relative reference to a hidden dyld lazy pointer
     /// stub.
     MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE = 17
-    
   };
 }
 
-/// isGlobalStubReference - Return true if the specified GlobalValue operand is
+/// isGlobalStubReference - Return true if the specified TargetFlag operand is
 /// a reference to a stub for a global, not the global itself.
-inline static bool isGlobalStubReference(const MachineOperand &MO) {
-  assert(MO.isGlobal() && "Predicate only works on globalvalue operands");
-  switch (MO.getTargetFlags()) {
+inline static bool isGlobalStubReference(unsigned char TargetFlag) {
+  switch (TargetFlag) {
   case X86II::MO_DLLIMPORT: // dllimport stub.
   case X86II::MO_GOTPCREL:  // rip-relative GOT reference.
   case X86II::MO_GOT:       // normal GOT reference.

@@ -301,7 +301,7 @@ static bool gvNeedsNonLazyPtr(const MachineOperand &GVOp,
   
   // Return true if this is a reference to a stub containing the address of the
   // global, not the global itself.
-  return isGlobalStubReference(GVOp);
+  return isGlobalStubReference(GVOp.getTargetFlags());
 }
 
 template<class CodeEmitter>
