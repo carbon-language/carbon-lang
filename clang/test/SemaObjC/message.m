@@ -95,6 +95,6 @@ int test5(int X) {
 void foo4() {
   struct objc_object X[10];
   
-  [X rect];
+  [(id)X rect];
 }
 

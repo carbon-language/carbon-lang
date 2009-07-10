@@ -925,8 +925,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
       QualType T;
       
       if (getCurMethodDecl()->isInstanceMethod())
-        T = Context.getPointerType(Context.getObjCInterfaceType(
-                                   getCurMethodDecl()->getClassInterface()));
+        T = Context.getObjCObjectPointerType(Context.getObjCInterfaceType(
+                                      getCurMethodDecl()->getClassInterface()));
       else
         T = Context.getObjCClassType();
       return Owned(new (Context) ObjCSuperExpr(Loc, T));
@@ -1844,6 +1844,17 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
     BaseExpr = RHSExp;
     IndexExpr = LHSExp;
     ResultType = PTy->getPointeeType();
+  } else if (const ObjCObjectPointerType *PTy = 
+               LHSTy->getAsObjCObjectPointerType()) {
+    BaseExpr = LHSExp;
+    IndexExpr = RHSExp;
+    ResultType = PTy->getPointeeType();
+  } else if (const ObjCObjectPointerType *PTy = 
+               RHSTy->getAsObjCObjectPointerType()) {
+     // Handle the uncommon case of "123[Ptr]".
+    BaseExpr = RHSExp;
+    IndexExpr = LHSExp;
+    ResultType = PTy->getPointeeType();
   } else if (const VectorType *VTy = LHSTy->getAsVectorType()) {
     BaseExpr = LHSExp;    // vectors: V[123]
     IndexExpr = RHSExp;
@@ -2089,6 +2100,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                          MemberLoc));
     else if (const PointerType *PT = BaseType->getAsPointerType())
       BaseType = PT->getPointeeType();
+    else if (BaseType->isObjCObjectPointerType())
+      ;
     else if (getLangOptions().CPlusPlus && BaseType->isRecordType())
       return Owned(BuildOverloadedArrowExpr(S, BaseExpr, OpLoc,
                                             MemberLoc, Member));
@@ -2212,12 +2225,71 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       << DeclarationName(&Member) << int(OpKind == tok::arrow));
   }
 
+  // Handle properties on ObjC 'Class' types.
+  if (OpKind == tok::period && (BaseType->isObjCClassType())) {
+    // Also must look for a getter name which uses property syntax.
+    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    if (ObjCMethodDecl *MD = getCurMethodDecl()) {
+      ObjCInterfaceDecl *IFace = MD->getClassInterface();
+      ObjCMethodDecl *Getter;
+      // FIXME: need to also look locally in the implementation.
+      if ((Getter = IFace->lookupClassMethod(Sel))) {
+        // Check the use of this method.
+        if (DiagnoseUseOfDecl(Getter, MemberLoc))
+          return ExprError();
+      }
+      // If we found a getter then this may be a valid dot-reference, we
+      // will look for the matching setter, in case it is needed.
+      Selector SetterSel = 
+        SelectorTable::constructSetterName(PP.getIdentifierTable(), 
+                                           PP.getSelectorTable(), &Member);
+      ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
+      if (!Setter) {
+        // If this reference is in an @implementation, also check for 'private'
+        // methods.
+        Setter = FindMethodInNestedImplementations(IFace, SetterSel);
+      }
+      // Look through local category implementations associated with the class.
+      if (!Setter) {
+        for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
+          if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
+            Setter = ObjCCategoryImpls[i]->getClassMethod(SetterSel);
+        }
+      }
+
+      if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
+        return ExprError();
+
+      if (Getter || Setter) {
+        QualType PType;
+
+        if (Getter)
+          PType = Getter->getResultType();
+        else {
+          for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
+               E = Setter->param_end(); PI != E; ++PI)
+            PType = (*PI)->getType();
+        }
+        // FIXME: we must check that the setter has property type.
+        return Owned(new (Context) ObjCKVCRefExpr(Getter, PType,
+                                        Setter, MemberLoc, BaseExpr));
+      }
+      return ExprError(Diag(MemberLoc, diag::err_property_not_found)
+        << &Member << BaseType);
+    }
+  }
   // Handle access to Objective-C instance variables, such as "Obj->ivar" and
   // (*Obj).ivar.
-  if (const ObjCInterfaceType *IFTy = BaseType->getAsObjCInterfaceType()) {
+  if ((OpKind == tok::arrow && BaseType->isObjCObjectPointerType()) ||
+      (OpKind == tok::period && BaseType->isObjCInterfaceType())) {
+    const ObjCObjectPointerType *OPT = BaseType->getAsObjCObjectPointerType();
+    const ObjCInterfaceType *IFaceT = 
+      OPT ? OPT->getInterfaceType() : BaseType->getAsObjCInterfaceType();
+    ObjCInterfaceDecl *IDecl = IFaceT->getDecl();
     ObjCInterfaceDecl *ClassDeclared;
-    if (ObjCIvarDecl *IV = IFTy->getDecl()->lookupInstanceVariable(&Member, 
-                                                             ClassDeclared)) {
+    
+    if (ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(&Member, 
+                                                         ClassDeclared)) {
       // If the decl being referenced had an error, return an error for this
       // sub-expr without emitting another error, in order to avoid cascading
       // error cases.
@@ -2249,12 +2321,12 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         }
         
         if (IV->getAccessControl() == ObjCIvarDecl::Private) { 
-          if (ClassDeclared != IFTy->getDecl() || 
+          if (ClassDeclared != IDecl || 
               ClassOfMethodDecl != ClassDeclared)
             Diag(MemberLoc, diag::error_private_ivar_access) << IV->getDeclName();
         }
         // @protected
-        else if (!IFTy->getDecl()->isSuperClassOf(ClassOfMethodDecl))
+        else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
           Diag(MemberLoc, diag::error_protected_ivar_access) << IV->getDeclName();
       }
 
@@ -2263,18 +2335,46 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                  OpKind == tok::arrow));
     }
     return ExprError(Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
-                       << IFTy->getDecl()->getDeclName() << &Member
+                       << IDecl->getDeclName() << &Member
                        << BaseExpr->getSourceRange());
   }
+  // Handle properties on qualified "id" protocols.
+  const ObjCObjectPointerType *QIdTy;
+  if (OpKind == tok::period && (QIdTy = BaseType->getAsObjCQualifiedIdType())) {
+    // Check protocols on qualified interfaces.
+    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
+    if (Decl *PMDecl = FindGetterNameDecl(QIdTy, Member, Sel, Context)) {
+      if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
+        // Check the use of this declaration
+        if (DiagnoseUseOfDecl(PD, MemberLoc))
+          return ExprError();
+        
+        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
+                                                       MemberLoc, BaseExpr));
+      }
+      if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(PMDecl)) {
+        // Check the use of this method.
+        if (DiagnoseUseOfDecl(OMD, MemberLoc))
+          return ExprError();
+        
+        return Owned(new (Context) ObjCMessageExpr(BaseExpr, Sel,
+                                                   OMD->getResultType(), 
+                                                   OMD, OpLoc, MemberLoc, 
+                                                   NULL, 0));
+      }
+    }
 
+    return ExprError(Diag(MemberLoc, diag::err_property_not_found)
+                       << &Member << BaseType);
+  }
   // Handle Objective-C property access, which is "Obj.property" where Obj is a
   // pointer to a (potentially qualified) interface type.
-  const PointerType *PTy;
-  const ObjCInterfaceType *IFTy;
-  if (OpKind == tok::period && (PTy = BaseType->getAsPointerType()) &&
-      (IFTy = PTy->getPointeeType()->getAsObjCInterfaceType())) {
-    ObjCInterfaceDecl *IFace = IFTy->getDecl();
-
+  const ObjCObjectPointerType *OPT;
+  if (OpKind == tok::period && 
+      (OPT = BaseType->getAsObjCInterfacePointerType())) {
+    const ObjCInterfaceType *IFaceT = OPT->getInterfaceType();
+    ObjCInterfaceDecl *IFace = IFaceT->getDecl();
+    
     // Search for a declared property first.
     if (ObjCPropertyDecl *PD = IFace->FindPropertyDeclaration(&Member)) {
       // Check whether we can reference this property.
@@ -2288,10 +2388,9 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       return Owned(new (Context) ObjCPropertyRefExpr(PD, ResTy,
                                                      MemberLoc, BaseExpr));
     }
-
     // Check protocols on qualified interfaces.
-    for (ObjCInterfaceType::qual_iterator I = IFTy->qual_begin(),
-         E = IFTy->qual_end(); I != E; ++I)
+    for (ObjCObjectPointerType::qual_iterator I = IFaceT->qual_begin(),
+         E = IFaceT->qual_end(); I != E; ++I)
       if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
         // Check whether we can reference this property.
         if (DiagnoseUseOfDecl(PD, MemberLoc))
@@ -2300,7 +2399,16 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
                                                        MemberLoc, BaseExpr));
       }
+    for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
+         E = OPT->qual_end(); I != E; ++I)
+      if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
+        // Check whether we can reference this property.
+        if (DiagnoseUseOfDecl(PD, MemberLoc))
+          return ExprError();
 
+        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
+                                                       MemberLoc, BaseExpr));
+      }
     // If that failed, look for an "implicit" property by seeing if the nullary
     // selector is implemented.
 
@@ -2364,88 +2472,6 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     }
     return ExprError(Diag(MemberLoc, diag::err_property_not_found)
       << &Member << BaseType);
-  }
-  // Handle properties on qualified "id" protocols.
-  const ObjCObjectPointerType *QIdTy;
-  if (OpKind == tok::period && (QIdTy = BaseType->getAsObjCQualifiedIdType())) {
-    // Check protocols on qualified interfaces.
-    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
-    if (Decl *PMDecl = FindGetterNameDecl(QIdTy, Member, Sel, Context)) {
-      if (ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(PMDecl)) {
-        // Check the use of this declaration
-        if (DiagnoseUseOfDecl(PD, MemberLoc))
-          return ExprError();
-        
-        return Owned(new (Context) ObjCPropertyRefExpr(PD, PD->getType(),
-                                                       MemberLoc, BaseExpr));
-      }
-      if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(PMDecl)) {
-        // Check the use of this method.
-        if (DiagnoseUseOfDecl(OMD, MemberLoc))
-          return ExprError();
-        
-        return Owned(new (Context) ObjCMessageExpr(BaseExpr, Sel,
-                                                   OMD->getResultType(), 
-                                                   OMD, OpLoc, MemberLoc, 
-                                                   NULL, 0));
-      }
-    }
-
-    return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-                       << &Member << BaseType);
-  }
-  // Handle properties on ObjC 'Class' types.
-  if (OpKind == tok::period && (BaseType == Context.getObjCClassType())) {
-    // Also must look for a getter name which uses property syntax.
-    Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
-    if (ObjCMethodDecl *MD = getCurMethodDecl()) {
-      ObjCInterfaceDecl *IFace = MD->getClassInterface();
-      ObjCMethodDecl *Getter;
-      // FIXME: need to also look locally in the implementation.
-      if ((Getter = IFace->lookupClassMethod(Sel))) {
-        // Check the use of this method.
-        if (DiagnoseUseOfDecl(Getter, MemberLoc))
-          return ExprError();
-      }
-      // If we found a getter then this may be a valid dot-reference, we
-      // will look for the matching setter, in case it is needed.
-      Selector SetterSel = 
-        SelectorTable::constructSetterName(PP.getIdentifierTable(), 
-                                           PP.getSelectorTable(), &Member);
-      ObjCMethodDecl *Setter = IFace->lookupClassMethod(SetterSel);
-      if (!Setter) {
-        // If this reference is in an @implementation, also check for 'private'
-        // methods.
-        Setter = FindMethodInNestedImplementations(IFace, SetterSel);
-      }
-      // Look through local category implementations associated with the class.
-      if (!Setter) {
-        for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
-          if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-            Setter = ObjCCategoryImpls[i]->getClassMethod(SetterSel);
-        }
-      }
-
-      if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
-        return ExprError();
-
-      if (Getter || Setter) {
-        QualType PType;
-
-        if (Getter)
-          PType = Getter->getResultType();
-        else {
-          for (ObjCMethodDecl::param_iterator PI = Setter->param_begin(),
-               E = Setter->param_end(); PI != E; ++PI)
-            PType = (*PI)->getType();
-        }
-        // FIXME: we must check that the setter has property type.
-        return Owned(new (Context) ObjCKVCRefExpr(Getter, PType,
-                                        Setter, MemberLoc, BaseExpr));
-      }
-      return ExprError(Diag(MemberLoc, diag::err_property_not_found)
-        << &Member << BaseType);
-    }
   }
   
   // Handle 'field access' to vectors, such as 'V.xx'.
@@ -3069,13 +3095,13 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
   // the type of the other operand."
   if ((LHSTy->isPointerType() || LHSTy->isBlockPointerType() ||
-       Context.isObjCObjectPointerType(LHSTy)) &&
+       LHSTy->isObjCObjectPointerType()) &&
       RHS->isNullPointerConstant(Context)) {
     ImpCastExprToType(RHS, LHSTy); // promote the null to a pointer.
     return LHSTy;
   }
   if ((RHSTy->isPointerType() || RHSTy->isBlockPointerType() ||
-       Context.isObjCObjectPointerType(RHSTy)) &&
+       RHSTy->isObjCObjectPointerType()) &&
       LHS->isNullPointerConstant(Context)) {
     ImpCastExprToType(LHS, RHSTy); // promote the null to a pointer.
     return RHSTy;
@@ -3119,46 +3145,15 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     ImpCastExprToType(RHS, LHSTy);
     return LHSTy;
   }
-  // Need to handle "id<xx>" explicitly. Unlike "id", whose canonical type
-  // evaluates to "struct objc_object *" (and is handled above when comparing
-  // id with statically typed objects).
-  if (LHSTy->isObjCQualifiedIdType() || RHSTy->isObjCQualifiedIdType()) {
-    // GCC allows qualified id and any Objective-C type to devolve to
-    // id. Currently localizing to here until clear this should be
-    // part of ObjCQualifiedIdTypesAreCompatible.
-    if (ObjCQualifiedIdTypesAreCompatible(LHSTy, RHSTy, true) ||
-        (LHSTy->isObjCQualifiedIdType() &&
-         Context.isObjCObjectPointerType(RHSTy)) ||
-        (RHSTy->isObjCQualifiedIdType() &&
-         Context.isObjCObjectPointerType(LHSTy))) {
-      // FIXME: This is not the correct composite type. This only happens to
-      // work because id can more or less be used anywhere, however this may
-      // change the type of method sends.
-
-      // FIXME: gcc adds some type-checking of the arguments and emits
-      // (confusing) incompatible comparison warnings in some
-      // cases. Investigate.
-      QualType compositeType = Context.getObjCIdType();
-      ImpCastExprToType(LHS, compositeType);
-      ImpCastExprToType(RHS, compositeType);
-      return compositeType;
-    }
-  }
   // Check constraints for Objective-C object pointers types.
-  if (Context.isObjCObjectPointerType(LHSTy) &&
-      Context.isObjCObjectPointerType(RHSTy)) {
+  if (LHSTy->isObjCObjectPointerType() && RHSTy->isObjCObjectPointerType()) {
     
     if (Context.getCanonicalType(LHSTy) == Context.getCanonicalType(RHSTy)) {
       // Two identical object pointer types are always compatible.
       return LHSTy;
     }
-    // No need to check for block pointer types or qualified id types (they
-    // were handled above).
-    assert((LHSTy->isPointerType() && RHSTy->isPointerType()) &&
-           "Sema::CheckConditionalOperands(): Unexpected type");
-    QualType lhptee = LHSTy->getAsPointerType()->getPointeeType();
-    QualType rhptee = RHSTy->getAsPointerType()->getPointeeType();
-    
+    const ObjCObjectPointerType *LHSOPT = LHSTy->getAsObjCObjectPointerType();
+    const ObjCObjectPointerType *RHSOPT = RHSTy->getAsObjCObjectPointerType();
     QualType compositeType = LHSTy;
     
     // If both operands are interfaces and either operand can be
@@ -3174,16 +3169,19 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 
     // FIXME: Consider unifying with 'areComparableObjCPointerTypes'.
     // It could return the composite type.
-    const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
-    const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
-    if (LHSIface && RHSIface &&
-        Context.canAssignObjCInterfaces(LHSIface, RHSIface)) {
+    if (Context.canAssignObjCInterfaces(LHSOPT, RHSOPT)) {
       compositeType = LHSTy;
-    } else if (LHSIface && RHSIface &&
-               Context.canAssignObjCInterfaces(RHSIface, LHSIface)) {
+    } else if (Context.canAssignObjCInterfaces(RHSOPT, LHSOPT)) {
       compositeType = RHSTy;
-    } else if (Context.isObjCIdStructType(lhptee) ||
-               Context.isObjCIdStructType(rhptee)) {
+    } else if ((LHSTy->isObjCQualifiedIdType() || 
+                RHSTy->isObjCQualifiedIdType()) &&
+                ObjCQualifiedIdTypesAreCompatible(LHSTy, RHSTy, true)) {
+      // Need to handle "id<xx>" explicitly. 
+      // GCC allows qualified id and any Objective-C type to devolve to
+      // id. Currently localizing to here until clear this should be
+      // part of ObjCQualifiedIdTypesAreCompatible.
+      compositeType = Context.getObjCIdType();
+    } else if (LHSTy->isObjCIdType() || RHSTy->isObjCIdType()) {
       compositeType = Context.getObjCIdType();
     } else {
       Diag(QuestionLoc, diag::ext_typecheck_cond_incompatible_operands)
@@ -3312,6 +3310,11 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   lhptee = lhsType->getAsPointerType()->getPointeeType();
   rhptee = rhsType->getAsPointerType()->getPointeeType();
 
+  return CheckPointeeTypesForAssignment(lhptee, rhptee);
+}
+
+Sema::AssignConvertType
+Sema::CheckPointeeTypesForAssignment(QualType lhptee, QualType rhptee) {
   // make sure we operate on the canonical type
   lhptee = Context.getCanonicalType(lhptee);
   rhptee = Context.getCanonicalType(rhptee);
@@ -3443,7 +3446,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return Compatible;
     return Incompatible;
   }
-
+  // FIXME: Look into removing. With ObjCObjectPointerType, I don't see a need.
   if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType()) {
     if (ObjCQualifiedIdTypesAreCompatible(lhsType, rhsType, false))
       return Compatible;
@@ -3454,7 +3457,6 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return PointerToInt;
     return IncompatibleObjCQualifiedId;
   }
-
   // Allow scalar to ExtVector assignments, and assignments of an ExtVector type
   // to the same ExtVector type.
   if (lhsType->isExtVectorType()) {
@@ -3486,13 +3488,18 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (isa<PointerType>(rhsType))
       return CheckPointerTypesForAssignment(lhsType, rhsType);
 
+    if (isa<ObjCObjectPointerType>(rhsType)) {
+      QualType rhptee = rhsType->getAsObjCObjectPointerType()->getPointeeType();
+      QualType lhptee = lhsType->getAsPointerType()->getPointeeType();
+      return CheckPointeeTypesForAssignment(lhptee, rhptee);
+    }
+
     if (rhsType->getAsBlockPointerType()) {
       if (lhsType->getAsPointerType()->getPointeeType()->isVoidType())
         return Compatible;
 
       // Treat block pointers as objects.
-      if (getLangOptions().ObjC1 &&
-          lhsType == Context.getCanonicalType(Context.getObjCIdType()))
+      if (getLangOptions().ObjC1 && lhsType->isObjCIdType())
         return Compatible;
     }
     return Incompatible;
@@ -3503,8 +3510,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return IntToBlockPointer;
 
     // Treat block pointers as objects.
-    if (getLangOptions().ObjC1 &&
-        rhsType == Context.getCanonicalType(Context.getObjCIdType()))
+    if (getLangOptions().ObjC1 && rhsType->isObjCIdType())
       return Compatible;
 
     if (rhsType->isBlockPointerType())
@@ -3517,6 +3523,29 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Incompatible;
   }
 
+  if (isa<ObjCObjectPointerType>(lhsType)) {
+    if (rhsType->isIntegerType())
+      return IntToPointer;
+
+    if (isa<PointerType>(rhsType)) {
+      QualType lhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
+      QualType rhptee = rhsType->getAsPointerType()->getPointeeType();
+      return CheckPointeeTypesForAssignment(lhptee, rhptee);
+    }
+    if (rhsType->isObjCObjectPointerType()) {
+      QualType lhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
+      QualType rhptee = rhsType->getAsObjCObjectPointerType()->getPointeeType();
+      return CheckPointeeTypesForAssignment(lhptee, rhptee);
+    }
+    if (const PointerType *RHSPT = rhsType->getAsPointerType()) {
+      if (RHSPT->getPointeeType()->isVoidType())
+        return Compatible;
+    }
+    // Treat block pointers as objects.
+    if (rhsType->isBlockPointerType())
+      return Compatible;
+    return Incompatible;
+  }
   if (isa<PointerType>(rhsType)) {
     // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
     if (lhsType == Context.BoolTy)
@@ -3528,6 +3557,24 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (isa<PointerType>(lhsType))
       return CheckPointerTypesForAssignment(lhsType, rhsType);
 
+    if (isa<BlockPointerType>(lhsType) &&
+        rhsType->getAsPointerType()->getPointeeType()->isVoidType())
+      return Compatible;
+    return Incompatible;
+  }
+  if (isa<ObjCObjectPointerType>(rhsType)) {
+    // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
+    if (lhsType == Context.BoolTy)
+      return Compatible;
+
+    if (lhsType->isIntegerType())
+      return PointerToInt;
+
+    if (isa<PointerType>(lhsType)) {
+      QualType rhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
+      QualType lhptee = rhsType->getAsPointerType()->getPointeeType();
+      return CheckPointeeTypesForAssignment(lhptee, rhptee);
+    }
     if (isa<BlockPointerType>(lhsType) &&
         rhsType->getAsPointerType()->getPointeeType()->isVoidType())
       return Compatible;
@@ -3628,7 +3675,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // C99 6.5.16.1p1: the left operand is a pointer and the right is
   // a null pointer constant.
   if ((lhsType->isPointerType() || 
-       lhsType->isObjCQualifiedIdType() || 
+       lhsType->isObjCObjectPointerType() || 
        lhsType->isBlockPointerType())
       && rExpr->isNullPointerConstant(Context)) {
     ImpCastExprToType(rExpr, lhsType);
@@ -3776,12 +3823,23 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
 
   // Put any potential pointer into PExp
   Expr* PExp = lex, *IExp = rex;
-  if (IExp->getType()->isPointerType())
+  if (IExp->getType()->isPointerType() || 
+      IExp->getType()->isObjCObjectPointerType())
     std::swap(PExp, IExp);
 
-  if (const PointerType *PTy = PExp->getType()->getAsPointerType()) {
+  if (PExp->getType()->isPointerType() || 
+      PExp->getType()->isObjCObjectPointerType()) {
+    
     if (IExp->getType()->isIntegerType()) {
-      QualType PointeeTy = PTy->getPointeeType();
+      QualType PointeeTy;
+      const PointerType *PTy;
+      const ObjCObjectPointerType *OPT;
+      
+      if ((PTy = PExp->getType()->getAsPointerType()))
+        PointeeTy = PTy->getPointeeType();
+      else if ((OPT = PExp->getType()->getAsObjCObjectPointerType()))
+        PointeeTy = OPT->getPointeeType();
+                 
       // Check for arithmetic on pointers to incomplete types.
       if (PointeeTy->isVoidType()) {
         if (getLangOptions().CPlusPlus) {
@@ -3803,7 +3861,7 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
         // GNU extension: arithmetic on pointer to function
         Diag(Loc, diag::ext_gnu_ptr_func_arith)
           << lex->getType() << lex->getSourceRange();
-      } else if (!PTy->isDependentType() &&
+      } else if (((PTy && !PTy->isDependentType()) || OPT) &&
                  RequireCompleteType(Loc, PointeeTy,
                                 diag::err_typecheck_arithmetic_incomplete_type,
                                      PExp->getSourceRange(), SourceRange(),
@@ -3855,10 +3913,16 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
     if (CompLHSTy) *CompLHSTy = compType;
     return compType;
   }
-
+    
   // Either ptr - int   or   ptr - ptr.
-  if (const PointerType *LHSPTy = lex->getType()->getAsPointerType()) {
-    QualType lpointee = LHSPTy->getPointeeType();
+  if (lex->getType()->isPointerType() || 
+      lex->getType()->isObjCObjectPointerType()) {
+    QualType lpointee;
+    if (const PointerType *LHSPTy = lex->getType()->getAsPointerType())
+      lpointee = LHSPTy->getPointeeType();
+    else if (const ObjCObjectPointerType *OPT = 
+              lex->getType()->getAsObjCObjectPointerType())
+      lpointee = OPT->getPointeeType();
 
     // The LHS must be an completely-defined object type.
 
@@ -4156,8 +4220,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
         !LCanPointeeTy->isVoidType() && !RCanPointeeTy->isVoidType() &&
         !Context.typesAreCompatible(LCanPointeeTy.getUnqualifiedType(),
-                                    RCanPointeeTy.getUnqualifiedType()) &&
-        !Context.areComparableObjCPointerTypes(lType, rType)) {
+                                    RCanPointeeTy.getUnqualifiedType())) {
       Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
     }
@@ -4207,7 +4270,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     return ResultTy;
   }
 
-  if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())) {
+  if ((lType->isObjCObjectPointerType() || rType->isObjCObjectPointerType())) {
     if (lType->isPointerType() || rType->isPointerType()) {
       const PointerType *LPT = lType->getAsPointerType();
       const PointerType *RPT = rType->getAsPointerType();
@@ -4226,19 +4289,27 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       ImpCastExprToType(rex, lType);
       return ResultTy;
     }
-    if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
+    if (lType->isObjCObjectPointerType() && rType->isObjCObjectPointerType()) {
+      if (!Context.areComparableObjCPointerTypes(lType, rType)) {
+        Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
+          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+      }
+      if (lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType()) {
+        if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
+          ImpCastExprToType(rex, lType);
+          return ResultTy;
+        } else {
+          Diag(Loc, diag::warn_incompatible_qualified_id_operands)
+            << lType << rType << lex->getSourceRange() << rex->getSourceRange();
+          ImpCastExprToType(rex, lType);
+          return ResultTy;
+        }
+      }
       ImpCastExprToType(rex, lType);
       return ResultTy;
-    } else {
-      if ((lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType())) {
-        Diag(Loc, diag::warn_incompatible_qualified_id_operands)
-          << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-        ImpCastExprToType(rex, lType);
-        return ResultTy;
-      }
     }
   }
-  if ((lType->isPointerType() || lType->isObjCQualifiedIdType()) &&
+  if ((lType->isPointerType() || lType->isObjCObjectPointerType()) &&
        rType->isIntegerType()) {
     if (isRelational)
       Diag(Loc, diag::ext_typecheck_ordered_comparison_of_pointer_integer)
@@ -4250,7 +4321,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     return ResultTy;
   }
   if (lType->isIntegerType() &&
-      (rType->isPointerType() || rType->isObjCQualifiedIdType())) {
+      (rType->isPointerType() || rType->isObjCObjectPointerType())) {
     if (isRelational)
       Diag(Loc, diag::ext_typecheck_ordered_comparison_of_pointer_integer)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
@@ -4358,12 +4429,11 @@ static bool IsReadonlyProperty(Expr *E, Sema &S)
     const ObjCPropertyRefExpr* PropExpr = cast<ObjCPropertyRefExpr>(E);
     if (ObjCPropertyDecl *PDecl = PropExpr->getProperty()) {
       QualType BaseType = PropExpr->getBase()->getType();
-      if (const PointerType *PTy = BaseType->getAsPointerType())
-        if (const ObjCInterfaceType *IFTy =
-            PTy->getPointeeType()->getAsObjCInterfaceType())
-          if (ObjCInterfaceDecl *IFace = IFTy->getDecl())
-            if (S.isPropertyReadonly(PDecl, IFace))
-              return true;
+      if (const ObjCObjectPointerType *OPT = 
+            BaseType->getAsObjCInterfacePointerType())
+        if (ObjCInterfaceDecl *IFace = OPT->getInterfaceDecl())
+          if (S.isPropertyReadonly(PDecl, IFace))
+            return true;
     }
   }
   return false;
@@ -4524,9 +4594,17 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
     Diag(OpLoc, diag::warn_increment_bool) << Op->getSourceRange();
   } else if (ResType->isRealType()) {
     // OK!
-  } else if (const PointerType *PT = ResType->getAsPointerType()) {
+  } else if (ResType->getAsPointerType() ||ResType->isObjCObjectPointerType()) {
+    QualType PointeeTy;
+    
+    if (const PointerType *PTy = ResType->getAsPointerType())
+      PointeeTy = PTy->getPointeeType();
+    else if (const ObjCObjectPointerType *OPT = 
+               ResType->getAsObjCObjectPointerType())
+      PointeeTy = OPT->getPointeeType();
+      
     // C99 6.5.2.4p2, 6.5.6p2
-    if (PT->getPointeeType()->isVoidType()) {
+    if (PointeeTy->isVoidType()) {
       if (getLangOptions().CPlusPlus) {
         Diag(OpLoc, diag::err_typecheck_pointer_arith_void_type)
           << Op->getSourceRange();
@@ -4535,7 +4613,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
 
       // Pointer to void is a GNU extension in C.
       Diag(OpLoc, diag::ext_gnu_void_ptr) << Op->getSourceRange();
-    } else if (PT->getPointeeType()->isFunctionType()) {
+    } else if (PointeeTy->isFunctionType()) {
       if (getLangOptions().CPlusPlus) {
         Diag(OpLoc, diag::err_typecheck_pointer_arith_function_type)
           << Op->getType() << Op->getSourceRange();
@@ -4544,7 +4622,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
 
       Diag(OpLoc, diag::ext_gnu_ptr_func_arith)
         << ResType << Op->getSourceRange();
-    } else if (RequireCompleteType(OpLoc, PT->getPointeeType(),
+    } else if (RequireCompleteType(OpLoc, PointeeTy,
                                diag::err_typecheck_arithmetic_incomplete_type,
                                    Op->getSourceRange(), SourceRange(),
                                    ResType))
@@ -4740,6 +4818,9 @@ QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
   // unlikely to catch any mistakes.
   if (const PointerType *PT = Ty->getAsPointerType())
     return PT->getPointeeType();
+
+  if (const ObjCObjectPointerType *OPT = Ty->getAsObjCObjectPointerType())
+    return OPT->getPointeeType();
 
   Diag(OpLoc, diag::err_typecheck_indirection_requires_pointer)
     << Ty << Op->getSourceRange();

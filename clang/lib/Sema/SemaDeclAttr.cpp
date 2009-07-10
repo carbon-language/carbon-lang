@@ -117,7 +117,7 @@ static bool isFunctionOrMethodVariadic(Decl *d) {
 }
 
 static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
-  const PointerType *PT = T->getAsPointerType();
+  const ObjCObjectPointerType *PT = T->getAsObjCObjectPointerType();
   if (!PT)
     return false;
   
@@ -1690,7 +1690,8 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
     return;
   }
   
-  if (!(S.Context.isObjCNSObjectType(RetTy) || RetTy->getAsPointerType())) {
+  if (!(S.Context.isObjCNSObjectType(RetTy) || RetTy->getAsPointerType()
+        || RetTy->getAsObjCObjectPointerType())) {
     S.Diag(Attr.getLoc(), diag::warn_ns_attribute_wrong_return_type)
       << Attr.getName();
     return;    

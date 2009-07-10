@@ -257,7 +257,6 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
       Addr = Builder.CreateBitCast(Addr, MemTy, "storetmp");
     }
   }
-  
   Builder.CreateStore(Value, Addr, Volatile);  
 }
 
@@ -758,11 +757,11 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   default: assert(0 && "Unknown unary operator lvalue!");
   case UnaryOperator::Deref:
     {
-      QualType T =
-        E->getSubExpr()->getType()->getAsPointerType()->getPointeeType();
+      QualType T = E->getSubExpr()->getType()->getPointeeType();
+      assert(!T.isNull() && "CodeGenFunction::EmitUnaryOpLValue: Illegal type");
+        
       LValue LV = LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
-                                   ExprTy->getAsPointerType()->getPointeeType()
-                                      .getCVRQualifiers(), 
+                                   T.getCVRQualifiers(), 
                                    getContext().getObjCGCAttrKind(T));
      // We should not generate __weak write barrier on indirect reference
      // of a pointer to object; as in void foo (__weak id *param); *param = 0;
@@ -900,7 +899,10 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     Address = Builder.CreateGEP(Base, Idx, "arrayidx");
   }
   
-  QualType T = E->getBase()->getType()->getAsPointerType()->getPointeeType();
+  QualType T = E->getBase()->getType()->getPointeeType();
+  assert(!T.isNull() && 
+         "CodeGenFunction::EmitArraySubscriptExpr(): Illegal base type");
+    
   LValue LV = LValue::MakeAddr(Address,
                                T.getCVRQualifiers(),
                                getContext().getObjCGCAttrKind(T));
@@ -1261,8 +1263,7 @@ LValue CodeGenFunction::EmitObjCIvarRefLValue(const ObjCIvarRefExpr *E) {
   QualType ObjectTy;
   if (E->isArrow()) {
     BaseValue = EmitScalarExpr(BaseExpr);
-    const PointerType *PTy = BaseExpr->getType()->getAsPointerType();
-    ObjectTy = PTy->getPointeeType();
+    ObjectTy = BaseExpr->getType()->getPointeeType();
     CVRQualifiers = ObjectTy.getCVRQualifiers();
   } else {
     LValue BaseLV = EmitLValue(BaseExpr);

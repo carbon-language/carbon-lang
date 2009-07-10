@@ -215,6 +215,7 @@ static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
 const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   const clang::Type &Ty = *Context.getCanonicalType(T);
   
+  //T->dump();
   switch (Ty.getTypeClass()) {
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
@@ -353,10 +354,14 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return T;
   }
       
-  case Type::ObjCObjectPointer:
-    // Protocols don't influence the LLVM type.
-    return ConvertTypeRecursive(Context.getObjCIdType());
-
+  case Type::ObjCObjectPointer: {
+   // Qualified id types don't influence the LLVM type, here we always return
+   // an opaque type for 'id'.
+   const llvm::Type *&T = InterfaceTypes[0];
+   if (!T)
+       T = llvm::OpaqueType::get();
+   return llvm::PointerType::getUnqual(T);
+  }
   case Type::Record:
   case Type::Enum: {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();

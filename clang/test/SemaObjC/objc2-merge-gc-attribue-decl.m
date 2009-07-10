@@ -25,6 +25,5 @@ extern __strong id p5;
 extern char* __strong p6; // expected-note {{previous definition is here}}
 extern char* p6; // expected-error {{redefinition of 'p6' with a different type}}
 
-// FIXME. We do not issue error here because we don't put the attribute on the pointer type.
-extern __strong char* p7; 
-extern char* p7; 
+extern __strong char* p7; // expected-note {{previous definition is here}}
+extern char* p7; // expected-error {{redefinition of 'p7' with a different type}}

@@ -305,8 +305,8 @@ llvm::Value *CodeGenFunction::LoadObjCSelf() {
 QualType CodeGenFunction::TypeOfSelfObject() {
   const ObjCMethodDecl *OMD = cast<ObjCMethodDecl>(CurFuncDecl);
   ImplicitParamDecl *selfDecl = OMD->getSelfDecl();
-  const PointerType *PTy = 
-    cast<PointerType>(getContext().getCanonicalType(selfDecl->getType()));
+  const ObjCObjectPointerType *PTy = cast<ObjCObjectPointerType>(
+    getContext().getCanonicalType(selfDecl->getType()));
   return PTy->getPointeeType();
 }
 

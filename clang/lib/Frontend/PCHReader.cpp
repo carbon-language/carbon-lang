@@ -1531,6 +1531,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
     Context->setObjCProtoType(GetType(Proto));
   if (unsigned Class = SpecialTypes[pch::SPECIAL_TYPE_OBJC_CLASS])
     Context->setObjCClassType(GetType(Class));
+
   if (unsigned String = SpecialTypes[pch::SPECIAL_TYPE_CF_CONSTANT_STRING])
     Context->setCFConstantStringType(GetType(String));
   if (unsigned FastEnum 
@@ -1934,13 +1935,12 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
 
   case pch::TYPE_OBJC_OBJECT_POINTER: {
     unsigned Idx = 0;
-    ObjCInterfaceDecl *ItfD = 
-      cast_or_null<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));
+    QualType OIT = GetType(Record[Idx++]);
     unsigned NumProtos = Record[Idx++];
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCObjectPointerType(ItfD, Protos.data(), NumProtos);
+    return Context->getObjCObjectPointerType(OIT, Protos.data(), NumProtos);
   }
   }
   // Suppress a GCC warning

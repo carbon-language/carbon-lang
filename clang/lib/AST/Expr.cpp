@@ -1095,6 +1095,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
   switch (getStmtClass()) {
   default: break;
   case StringLiteralClass:
+  case ObjCStringLiteralClass:
   case ObjCEncodeExprClass:
     return true;
   case CompoundLiteralExprClass: {
@@ -1136,7 +1137,6 @@ bool Expr::isConstantInitializer(ASTContext &Ctx) const {
       return cast<CastExpr>(this)->getSubExpr()->isConstantInitializer(Ctx);
     break;
   }
-
   return isEvaluatable(Ctx);
 }
 

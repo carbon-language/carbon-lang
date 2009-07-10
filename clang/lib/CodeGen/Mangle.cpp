@@ -480,6 +480,11 @@ void CXXNameMangler::mangleType(QualType T) {
     Out << 'P';
     mangleType(PT->getPointeeType());
   }
+  else if (const ObjCObjectPointerType *PT = 
+           dyn_cast<ObjCObjectPointerType>(T.getTypePtr())) {
+    Out << 'P';
+    mangleType(PT->getPointeeType());
+  }
   //         ::= R <type>   # reference-to
   else if (const LValueReferenceType *RT =
            dyn_cast<LValueReferenceType>(T.getTypePtr())) {

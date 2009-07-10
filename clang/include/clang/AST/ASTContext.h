@@ -107,7 +107,6 @@ class ASTContext {
 
   /// ObjCIdType - a pseudo built-in typedef type (set by Sema).
   QualType ObjCIdType;
-  const RecordType *IdStructType;
   
   /// ObjCSelType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCSelType;
@@ -119,7 +118,6 @@ class ASTContext {
 
   /// ObjCClassType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCClassType;
-  const RecordType *ClassStructType;
   
   QualType ObjCConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
@@ -375,7 +373,7 @@ public:
 
   /// getObjCObjectPointerType - Return a ObjCObjectPointerType type for the
   /// given interface decl and the conforming protocol list.
-  QualType getObjCObjectPointerType(ObjCInterfaceDecl *Decl,
+  QualType getObjCObjectPointerType(QualType OIT = QualType(),
                                     ObjCProtocolDecl **ProtocolList = 0,
                                     unsigned NumProtocols = 0);
   
@@ -770,18 +768,8 @@ public:
   bool isObjCIdType(QualType T) const {
     return T == ObjCIdType;
   }
-  bool isObjCIdStructType(QualType T) const {
-    if (!IdStructType) // ObjC isn't enabled
-      return false;
-    return T->getAsStructureType() == IdStructType;
-  }
   bool isObjCClassType(QualType T) const {
     return T == ObjCClassType;
-  }
-  bool isObjCClassStructType(QualType T) const {
-    if (!ClassStructType) // ObjC isn't enabled
-      return false;
-    return T->getAsStructureType() == ClassStructType;
   }
   bool isObjCSelType(QualType T) const {
     assert(SelStructType && "isObjCSelType used before 'SEL' type is built");
@@ -789,7 +777,9 @@ public:
   }
 
   // Check the safety of assignment from LHS to RHS
-  bool canAssignObjCInterfaces(const ObjCInterfaceType *LHS, 
+  bool canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
+                               const ObjCObjectPointerType *RHSOPT);
+  bool canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
                                const ObjCInterfaceType *RHS);
   bool areComparableObjCPointerTypes(QualType LHS, QualType RHS);
 

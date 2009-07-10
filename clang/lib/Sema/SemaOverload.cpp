@@ -1005,76 +1005,63 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
   if (!getLangOptions().ObjC1)
     return false;
 
-  // Conversions with Objective-C's id<...>.
-  if ((FromType->isObjCQualifiedIdType() || ToType->isObjCQualifiedIdType()) &&
-      ObjCQualifiedIdTypesAreCompatible(ToType, FromType, /*compare=*/false)) {
-    ConvertedType = ToType;
-    return true;
-  }
+  // First, we handle all conversions on ObjC object pointer types.
+  const ObjCObjectPointerType* ToObjCPtr = ToType->getAsObjCObjectPointerType();
+  const ObjCObjectPointerType *FromObjCPtr = 
+    FromType->getAsObjCObjectPointerType();
 
-  // Beyond this point, both types need to be pointers or block pointers.
+  if (ToObjCPtr && FromObjCPtr) {
+    // Objective C++: We're able to convert between "id" and a pointer
+    // to any interface (in both directions).
+    if (ToObjCPtr->isObjCIdType() && FromObjCPtr->isObjCIdType()) {
+      ConvertedType = ToType;
+      return true;
+    }
+    // Objective C++: Allow conversions between the Objective-C "Class" and a
+    // pointer to any interface (in both directions).
+    if (ToObjCPtr->isObjCClassType() || FromObjCPtr->isObjCClassType()) {
+      ConvertedType = ToType;
+      return true;
+    }
+    // Conversions with Objective-C's id<...>.
+    if ((FromObjCPtr->isObjCQualifiedIdType() || 
+         ToObjCPtr->isObjCQualifiedIdType()) &&
+        ObjCQualifiedIdTypesAreCompatible(ToType, FromType, /*compare=*/false)) {
+      ConvertedType = ToType;
+      return true;
+    }
+    // Objective C++: We're able to convert from a pointer to an
+    // interface to a pointer to a different interface.
+    if (Context.canAssignObjCInterfaces(ToObjCPtr, FromObjCPtr)) {
+      ConvertedType = ToType;
+      return true;
+    }
+
+    if (Context.canAssignObjCInterfaces(FromObjCPtr, ToObjCPtr)) {
+      // Okay: this is some kind of implicit downcast of Objective-C
+      // interfaces, which is permitted. However, we're going to
+      // complain about it.
+      IncompatibleObjC = true;
+      ConvertedType = FromType;
+      return true;
+    }
+  } 
+  // Beyond this point, both types need to be C pointers or block pointers.
   QualType ToPointeeType;
-  const PointerType* ToTypePtr = ToType->getAsPointerType();
-  if (ToTypePtr)
-    ToPointeeType = ToTypePtr->getPointeeType();
+  if (const PointerType *ToCPtr = ToType->getAsPointerType())
+    ToPointeeType = ToCPtr->getPointeeType();
   else if (const BlockPointerType *ToBlockPtr = ToType->getAsBlockPointerType())
     ToPointeeType = ToBlockPtr->getPointeeType();
   else
     return false;
 
   QualType FromPointeeType;
-  const PointerType *FromTypePtr = FromType->getAsPointerType();
-  if (FromTypePtr)
-    FromPointeeType = FromTypePtr->getPointeeType();
-  else if (const BlockPointerType *FromBlockPtr 
-             = FromType->getAsBlockPointerType())
+  if (const PointerType *FromCPtr = FromType->getAsPointerType())
+    FromPointeeType = FromCPtr->getPointeeType();
+  else if (const BlockPointerType *FromBlockPtr = FromType->getAsBlockPointerType())
     FromPointeeType = FromBlockPtr->getPointeeType();
   else
     return false;
-
-  // Objective C++: We're able to convert from a pointer to an
-  // interface to a pointer to a different interface.
-  const ObjCInterfaceType* FromIface = FromPointeeType->getAsObjCInterfaceType();
-  const ObjCInterfaceType* ToIface = ToPointeeType->getAsObjCInterfaceType();
-  if (FromIface && ToIface && 
-      Context.canAssignObjCInterfaces(ToIface, FromIface)) {
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
-                                                       ToPointeeType,
-                                                       ToType, Context);
-    return true;
-  }
-
-  if (FromIface && ToIface && 
-      Context.canAssignObjCInterfaces(FromIface, ToIface)) {
-    // Okay: this is some kind of implicit downcast of Objective-C
-    // interfaces, which is permitted. However, we're going to
-    // complain about it.
-    IncompatibleObjC = true;
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr,
-                                                       ToPointeeType,
-                                                       ToType, Context);
-    return true;
-  }
-
-  // Objective C++: We're able to convert between "id" and a pointer
-  // to any interface (in both directions).
-  if ((FromIface && Context.isObjCIdStructType(ToPointeeType))
-      || (ToIface && Context.isObjCIdStructType(FromPointeeType))) {
-    ConvertedType = BuildSimilarlyQualifiedPointerType(FromTypePtr, 
-                                                       ToPointeeType,
-                                                       ToType, Context);
-    return true;
-  } 
-
-  // Objective C++: Allow conversions between the Objective-C "id" and
-  // "Class", in either direction.
-  if ((Context.isObjCIdStructType(FromPointeeType) && 
-       Context.isObjCClassStructType(ToPointeeType)) ||
-      (Context.isObjCClassStructType(FromPointeeType) &&
-       Context.isObjCIdStructType(ToPointeeType))) {
-    ConvertedType = ToType;
-    return true;
-  }
 
   // If we have pointers to pointers, recursively check whether this
   // is an Objective-C conversion.
@@ -1086,7 +1073,6 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     ConvertedType = ToType;
     return true;
   }
-
   // If we have pointers to functions or blocks, check whether the only
   // differences in the argument and result types are in Objective-C
   // pointer conversions. If so, we permit the conversion (but
@@ -1167,15 +1153,6 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
       QualType FromPointeeType = FromPtrType->getPointeeType(),
                ToPointeeType   = ToPtrType->getPointeeType();
 
-      // Objective-C++ conversions are always okay.
-      // FIXME: We should have a different class of conversions for the
-      // Objective-C++ implicit conversions.
-      if (Context.isObjCIdStructType(FromPointeeType) || 
-          Context.isObjCIdStructType(ToPointeeType) ||
-          Context.isObjCClassStructType(FromPointeeType) ||
-          Context.isObjCClassStructType(ToPointeeType))
-        return false;
-
       if (FromPointeeType->isRecordType() &&
           ToPointeeType->isRecordType()) {
         // We must have a derived-to-base conversion. Check an
@@ -1185,7 +1162,18 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
                                             From->getSourceRange());
       }
     }
+  if (const ObjCObjectPointerType *FromPtrType = 
+        FromType->getAsObjCObjectPointerType())
+    if (const ObjCObjectPointerType *ToPtrType = 
+          ToType->getAsObjCObjectPointerType()) {
+      // Objective-C++ conversions are always okay.
+      // FIXME: We should have a different class of conversions for the
+      // Objective-C++ implicit conversions.
+      if (FromPtrType->isObjCIdType() || ToPtrType->isObjCIdType() ||
+          FromPtrType->isObjCClassType() || ToPtrType->isObjCClassType())
+        return false;
 
+  }
   return false;
 }
 

@@ -26,8 +26,8 @@ int main()
   MyOtherClass<MyProtocol> *obj_c_super_p_q = nil;
   MyClass<MyProtocol> *obj_c_cat_p_q = nil;
 
-  obj_c_cat_p = obj_id_p;   // expected-warning {{incompatible type assigning 'id<MyProtocol>', expected 'MyClass *'}}
-  obj_c_super_p = obj_id_p;  // expected-warning {{incompatible type assigning 'id<MyProtocol>', expected 'MyOtherClass *'}}
+  obj_c_cat_p = obj_id_p;   
+  obj_c_super_p = obj_id_p;  
   obj_id_p = obj_c_cat_p;  /* Ok */
   obj_id_p = obj_c_super_p; /* Ok */
 

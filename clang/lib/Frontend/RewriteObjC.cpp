@@ -2163,9 +2163,10 @@ ObjCInterfaceDecl *RewriteObjC::isSuperReceiver(Expr *recExpr) {
   if (!CurMethodDef || !CurMethodDef->isInstanceMethod()) return 0;
   
   if (ObjCSuperExpr *Super = dyn_cast<ObjCSuperExpr>(recExpr)) {
-      const PointerType *PT = Super->getType()->getAsPointerType();
-      assert(PT);
-      ObjCInterfaceType *IT = cast<ObjCInterfaceType>(PT->getPointeeType());
+      const ObjCObjectPointerType *OPT = 
+        Super->getType()->getAsObjCObjectPointerType();
+      assert(OPT);
+      const ObjCInterfaceType *IT = OPT->getInterfaceType();
       return IT->getDecl();
     }
   return 0;

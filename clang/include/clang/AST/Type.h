@@ -396,9 +396,13 @@ public:
   bool isVectorType() const;                    // GCC vector type.
   bool isExtVectorType() const;                 // Extended vector type.
   bool isObjCObjectPointerType() const;         // Pointer to *any* ObjC object.
+  // FIXME: change this to 'raw' interface type, so we can used 'interface' type
+  // for the common case.
   bool isObjCInterfaceType() const;             // NSString or NSString<foo>
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
+  bool isObjCIdType() const;                    // id
+  bool isObjCClassType() const;                 // Class
   bool isTemplateTypeParmType() const;          // C++ template type parameter
   bool isNullPtrType() const;                   // C++0x nullptr_t
 
@@ -443,9 +447,12 @@ public:
   const ComplexType *getAsComplexIntegerType() const; // GCC complex int type.
   const ExtVectorType *getAsExtVectorType() const; // Extended vector type.
   const ObjCObjectPointerType *getAsObjCObjectPointerType() const;
+  // The following is a convenience method that returns an ObjCObjectPointerType
+  // for object declared using an interface.
+  const ObjCObjectPointerType *getAsObjCInterfacePointerType() const;
+  const ObjCObjectPointerType *getAsObjCQualifiedIdType() const;
   const ObjCInterfaceType *getAsObjCInterfaceType() const;
   const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
-  const ObjCObjectPointerType *getAsObjCQualifiedIdType() const;
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
 
   const TemplateSpecializationType *
@@ -459,6 +466,10 @@ public:
   /// element type of the array, potentially with type qualifiers missing.
   /// This method should never be used when type qualifiers are meaningful.
   const Type *getArrayElementTypeNoTypeQual() const;
+  
+  /// getPointeeType - If this is a pointer or ObjC object pointer, this
+  /// returns the respective pointee.
+  QualType getPointeeType() const;
   
   /// getDesugaredType - Return the specified type with any "sugar" removed from
   /// the type.  This takes off typedefs, typeof's etc.  If the outer level of
@@ -1809,53 +1820,6 @@ public:
   static bool classof(const TypenameType *T) { return true; }
 };
 
-/// ObjCObjectPointerType - Used to represent 'id', 'Interface *', 'id <p>',
-/// and 'Interface <p> *'.
-///
-/// Duplicate protocols are removed and protocol list is canonicalized to be in
-/// alphabetical order.
-class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
-  ObjCInterfaceDecl *Decl;
-  // List of protocols for this protocol conforming object type
-  // List is sorted on protocol name. No protocol is entered more than once.
-  llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
-
-  ObjCObjectPointerType(ObjCInterfaceDecl *D,
-                        ObjCProtocolDecl **Protos, unsigned NumP) :
-    Type(ObjCObjectPointer, QualType(), /*Dependent=*/false),
-    Decl(D), Protocols(Protos, Protos+NumP) { }
-  friend class ASTContext;  // ASTContext creates these.
-
-public:
-  ObjCInterfaceDecl *getDecl() const { return Decl; }
-  
-  /// isObjCQualifiedIdType - true for "id <p>".
-  bool isObjCQualifiedIdType() const { return Decl == 0 && Protocols.size(); }
-  
-  /// qual_iterator and friends: this provides access to the (potentially empty)
-  /// list of protocols qualifying this interface.
-  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
-
-  qual_iterator qual_begin() const { return Protocols.begin(); }
-  qual_iterator qual_end() const   { return Protocols.end(); }
-  bool qual_empty() const { return Protocols.size() == 0; }
-
-  /// getNumProtocols - Return the number of qualifying protocols in this
-  /// interface type, or 0 if there are none.
-  unsigned getNumProtocols() const { return Protocols.size(); }
-
-  void Profile(llvm::FoldingSetNodeID &ID);
-  static void Profile(llvm::FoldingSetNodeID &ID,
-                      const ObjCInterfaceDecl *Decl,
-                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
-  virtual void getAsStringInternal(std::string &InnerString, 
-                                   const PrintingPolicy &Policy) const;
-  static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjCObjectPointer; 
-  }
-  static bool classof(const ObjCObjectPointerType *) { return true; }
-};
-  
 /// ObjCInterfaceType - Interfaces are the core concept in Objective-C for
 /// object oriented design.  They basically correspond to C++ classes.  There
 /// are two kinds of interface types, normal interfaces like "NSString" and
@@ -1868,10 +1832,15 @@ protected:
   ObjCInterfaceType(TypeClass tc, ObjCInterfaceDecl *D) : 
     Type(tc, QualType(), /*Dependent=*/false), Decl(D) { }
   friend class ASTContext;  // ASTContext creates these.
+  
+  // FIXME: These can go away when we move ASTContext::canAssignObjCInterfaces
+  // to this class (as a static helper).
+  bool isObjCIdInterface() const;
+  bool isObjCClassInterface() const;
 public:
   
   ObjCInterfaceDecl *getDecl() const { return Decl; }
-  
+
   /// qual_iterator and friends: this provides access to the (potentially empty)
   /// list of protocols qualifying this interface.  If this is an instance of
   /// ObjCQualifiedInterfaceType it returns the list, otherwise it returns an
@@ -1893,11 +1862,85 @@ public:
   static bool classof(const ObjCInterfaceType *) { return true; }
 };
 
+/// ObjCObjectPointerType - Used to represent 'id', 'Interface *', 'id <p>',
+/// and 'Interface <p> *'.
+///
+/// Duplicate protocols are removed and protocol list is canonicalized to be in
+/// alphabetical order.
+class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
+  QualType PointeeType; // will always point to an interface type.
+  
+  // List of protocols for this protocol conforming object type
+  // List is sorted on protocol name. No protocol is entered more than once.
+  llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
+
+  ObjCObjectPointerType(QualType T, ObjCProtocolDecl **Protos, unsigned NumP) :
+    Type(ObjCObjectPointer, QualType(), /*Dependent=*/false),
+    PointeeType(T), Protocols(Protos, Protos+NumP) { }
+  friend class ASTContext;  // ASTContext creates these.
+  friend class ObjCInterfaceType; // To enable 'id' and 'Class' predicates.
+  
+  static ObjCInterfaceType *IdInterfaceT;
+  static ObjCInterfaceType *ClassInterfaceT;
+  static void setIdInterface(QualType T) { 
+    IdInterfaceT =  dyn_cast<ObjCInterfaceType>(T.getTypePtr()); 
+  }
+  static void setClassInterface(QualType T) { 
+    ClassInterfaceT =  dyn_cast<ObjCInterfaceType>(T.getTypePtr()); 
+  }
+  static ObjCInterfaceType *getIdInterface() { return IdInterfaceT; }
+  static ObjCInterfaceType *getClassInterface() { return ClassInterfaceT; }
+public:
+  // Get the pointee type. Pointee is required to always be an interface type.
+  // Note: Pointee can be a TypedefType whose canonical type is an interface. 
+  // Example: typedef NSObject T; T *var;
+  QualType getPointeeType() const { return PointeeType; }
+
+  const ObjCInterfaceType *getInterfaceType() const { 
+    return PointeeType->getAsObjCInterfaceType(); 
+  }
+  ObjCInterfaceDecl *getInterfaceDecl() const {
+    return getInterfaceType()->getDecl();
+  }
+  /// isObjCQualifiedIdType - true for "id <p>".
+  bool isObjCQualifiedIdType() const { 
+    return getInterfaceType() == IdInterfaceT && Protocols.size(); 
+  }
+  bool isObjCIdType() const {
+    return getInterfaceType() == IdInterfaceT && !Protocols.size();
+  }
+  bool isObjCClassType() const {
+    return getInterfaceType() == ClassInterfaceT && !Protocols.size();
+  }
+  /// qual_iterator and friends: this provides access to the (potentially empty)
+  /// list of protocols qualifying this interface.
+  typedef llvm::SmallVector<ObjCProtocolDecl*, 8>::const_iterator qual_iterator;
+
+  qual_iterator qual_begin() const { return Protocols.begin(); }
+  qual_iterator qual_end() const   { return Protocols.end(); }
+  bool qual_empty() const { return Protocols.size() == 0; }
+
+  /// getNumProtocols - Return the number of qualifying protocols in this
+  /// interface type, or 0 if there are none.
+  unsigned getNumProtocols() const { return Protocols.size(); }
+
+  void Profile(llvm::FoldingSetNodeID &ID);
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType T,
+                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
+  virtual void getAsStringInternal(std::string &InnerString, 
+                                   const PrintingPolicy &Policy) const;
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == ObjCObjectPointer; 
+  }
+  static bool classof(const ObjCObjectPointerType *) { return true; }
+};
+  
 /// ObjCQualifiedInterfaceType - This class represents interface types 
 /// conforming to a list of protocols, such as INTF<Proto1, Proto2, Proto1>.
 ///
 /// Duplicate protocols are removed and protocol list is canonicalized to be in
 /// alphabetical order.
+/// FIXME: Remove this class (converting uses to ObjCObjectPointerType).
 class ObjCQualifiedInterfaceType : public ObjCInterfaceType, 
                                    public llvm::FoldingSetNode {
                                      
@@ -1983,7 +2026,7 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
       return AT->getElementType().getObjCGCAttr();
   if (const ExtQualType *EXTQT = dyn_cast<ExtQualType>(CT))
     return EXTQT->getObjCGCAttr();
-  if (const PointerType *PT = CT->getAsPointerType())
+  if (const ObjCObjectPointerType *PT = CT->getAsObjCObjectPointerType())
     return PT->getPointeeType().getObjCGCAttr(); 
   return GCNone;
 }
@@ -2115,6 +2158,18 @@ inline bool Type::isObjCQualifiedIdType() const {
   }
   return false;
 }
+inline bool Type::isObjCIdType() const {
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+    return OPT->isObjCIdType();
+  }
+  return false;
+}
+inline bool Type::isObjCClassType() const {
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+    return OPT->isObjCClassType();
+  }
+  return false;
+}
 inline bool Type::isTemplateTypeParmType() const {
   return isa<TemplateTypeParmType>(CanonicalType.getUnqualifiedType());
 }
@@ -2134,12 +2189,12 @@ inline bool Type::isOverloadableType() const {
 
 inline bool Type::hasPointerRepresentation() const {
   return (isPointerType() || isReferenceType() || isBlockPointerType() ||
-          isObjCInterfaceType() || isObjCQualifiedIdType() || 
+          isObjCInterfaceType() || isObjCObjectPointerType() || 
           isObjCQualifiedInterfaceType() || isNullPtrType());
 }
 
 inline bool Type::hasObjCPointerRepresentation() const {
-  return (isObjCInterfaceType() || isObjCQualifiedIdType() || 
+  return (isObjCInterfaceType() || isObjCObjectPointerType() || 
           isObjCQualifiedInterfaceType());
 }
 

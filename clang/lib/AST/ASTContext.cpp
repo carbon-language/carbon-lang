@@ -42,8 +42,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts) {  
   if (size_reserve > 0) Types.reserve(size_reserve);    
-  InitBuiltinTypes();
   TUDecl = TranslationUnitDecl::Create(*this);
+  InitBuiltinTypes();
 }
 
 ASTContext::~ASTContext() {
@@ -190,11 +190,10 @@ void ASTContext::InitBuiltinTypes() {
   LongDoubleComplexTy = getComplexType(LongDoubleTy);
 
   BuiltinVaListType = QualType();
-  ObjCIdType = QualType();
-  IdStructType = 0;
-  ObjCClassType = QualType();
-  ClassStructType = 0;
   
+  ObjCIdType = QualType();
+  ObjCClassType = QualType();
+
   ObjCConstantStringType = QualType();
   
   // void * type
@@ -1071,7 +1070,7 @@ QualType ASTContext::getObjCGCQualType(QualType T,
   
   if (T->isPointerType()) {
     QualType Pointee = T->getAsPointerType()->getPointeeType();
-    if (Pointee->isPointerType()) {
+    if (Pointee->isPointerType() || Pointee->isObjCObjectPointerType()) {
       QualType ResultType = getObjCGCQualType(Pointee, GCAttr);
       return getPointerType(ResultType);
     }
@@ -1847,15 +1846,18 @@ static void SortAndUniqueProtocols(ObjCProtocolDecl **&Protocols,
 
 /// getObjCObjectPointerType - Return a ObjCObjectPointerType type for
 /// the given interface decl and the conforming protocol list.
-QualType ASTContext::getObjCObjectPointerType(ObjCInterfaceDecl *Decl,
+QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
                                               ObjCProtocolDecl **Protocols, 
                                               unsigned NumProtocols) {
+  if (InterfaceT.isNull()) 
+    InterfaceT = QualType(ObjCObjectPointerType::getIdInterface(), 0);
+    
   // Sort the protocol list alphabetically to canonicalize it.
   if (NumProtocols)
     SortAndUniqueProtocols(Protocols, NumProtocols);
 
   llvm::FoldingSetNodeID ID;
-  ObjCObjectPointerType::Profile(ID, Decl, Protocols, NumProtocols);
+  ObjCObjectPointerType::Profile(ID, InterfaceT, Protocols, NumProtocols);
 
   void *InsertPos = 0;
   if (ObjCObjectPointerType *QT =
@@ -1864,7 +1866,7 @@ QualType ASTContext::getObjCObjectPointerType(ObjCInterfaceDecl *Decl,
 
   // No Match;
   ObjCObjectPointerType *QType =
-    new (*this,8) ObjCObjectPointerType(Decl, Protocols, NumProtocols);
+    new (*this,8) ObjCObjectPointerType(InterfaceT, Protocols, NumProtocols);
   
   Types.push_back(QType);
   ObjCObjectPointerTypes.InsertNode(QType, InsertPos);
@@ -2745,25 +2747,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     S += 'j';
     getObjCEncodingForTypeImpl(CT->getElementType(), S, false, false, 0, false, 
                                false);
-  } else if (T->isObjCQualifiedIdType()) {
-    getObjCEncodingForTypeImpl(getObjCIdType(), S, 
-                               ExpandPointedToStructures,
-                               ExpandStructures, FD);
-    if (FD || EncodingProperty) {
-      // Note that we do extended encoding of protocol qualifer list
-      // Only when doing ivar or property encoding.
-      const ObjCObjectPointerType *QIDT = T->getAsObjCQualifiedIdType();
-      S += '"';
-      for (ObjCObjectPointerType::qual_iterator I = QIDT->qual_begin(),
-           E = QIDT->qual_end(); I != E; ++I) {
-        S += '<';
-        S += (*I)->getNameAsString();
-        S += '>';
-      }
-      S += '"';
-    }
-    return;
-  }
+  } 
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
     bool isReadOnly = false;
@@ -2797,42 +2781,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         S.replace(S.end()-2, S.end(), replace);
       }
     }
-    if (isObjCIdStructType(PointeeTy)) {
-      S += '@';
-      return;
-    }
-    else if (PointeeTy->isObjCInterfaceType()) {
-      if (!EncodingProperty &&
-          isa<TypedefType>(PointeeTy.getTypePtr())) {
-        // Another historical/compatibility reason.
-        // We encode the underlying type which comes out as 
-        // {...};
-        S += '^';
-        getObjCEncodingForTypeImpl(PointeeTy, S, 
-                                   false, ExpandPointedToStructures, 
-                                   NULL);
-        return;
-      }
-      S += '@';
-      if (FD || EncodingProperty) {
-        const ObjCInterfaceType *OIT = 
-                PointeeTy.getUnqualifiedType()->getAsObjCInterfaceType();
-        ObjCInterfaceDecl *OI = OIT->getDecl();
-        S += '"';
-        S += OI->getNameAsCString();
-        for (ObjCInterfaceType::qual_iterator I = OIT->qual_begin(),
-             E = OIT->qual_end(); I != E; ++I) {
-          S += '<';
-          S += (*I)->getNameAsString();
-          S += '>';
-        } 
-        S += '"';
-      }
-      return;
-    } else if (isObjCClassStructType(PointeeTy)) {
-      S += '#';
-      return;
-    } else if (isObjCSelType(PointeeTy)) {
+    if (isObjCSelType(PointeeTy)) {
       S += ':';
       return;
     }
@@ -2937,7 +2886,61 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     S += '}';
   }
-  else
+  else if (const ObjCObjectPointerType *OPT = T->getAsObjCObjectPointerType()) {
+    if (OPT->isObjCIdType()) {
+      S += '@';
+      return;
+    } else if (OPT->isObjCClassType()) {
+      S += '#';
+      return;
+    } else if (OPT->isObjCQualifiedIdType()) {
+      getObjCEncodingForTypeImpl(getObjCIdType(), S, 
+                                 ExpandPointedToStructures,
+                                 ExpandStructures, FD);
+      if (FD || EncodingProperty) {
+        // Note that we do extended encoding of protocol qualifer list
+        // Only when doing ivar or property encoding.
+        const ObjCObjectPointerType *QIDT = T->getAsObjCQualifiedIdType();
+        S += '"';
+        for (ObjCObjectPointerType::qual_iterator I = QIDT->qual_begin(),
+             E = QIDT->qual_end(); I != E; ++I) {
+          S += '<';
+          S += (*I)->getNameAsString();
+          S += '>';
+        }
+        S += '"';
+      }
+      return;
+    } else {
+      QualType PointeeTy = OPT->getPointeeType();
+      if (!EncodingProperty &&
+          isa<TypedefType>(PointeeTy.getTypePtr())) {
+        // Another historical/compatibility reason.
+        // We encode the underlying type which comes out as 
+        // {...};
+        S += '^';
+        getObjCEncodingForTypeImpl(PointeeTy, S, 
+                                   false, ExpandPointedToStructures, 
+                                   NULL);
+        return;
+      }
+      S += '@';
+      if (FD || EncodingProperty) {
+        const ObjCInterfaceType *OIT = OPT->getInterfaceType();
+        ObjCInterfaceDecl *OI = OIT->getDecl();
+        S += '"';
+        S += OI->getNameAsCString();
+        for (ObjCInterfaceType::qual_iterator I = OIT->qual_begin(),
+             E = OIT->qual_end(); I != E; ++I) {
+          S += '<';
+          S += (*I)->getNameAsString();
+          S += '>';
+        } 
+        S += '"';
+      }
+      return;
+    }
+  } else
     assert(0 && "@encode for type not implemented!");
 }
 
@@ -2967,23 +2970,12 @@ void ASTContext::setBuiltinVaListType(QualType T)
 void ASTContext::setObjCIdType(QualType T)
 {
   ObjCIdType = T;
-
   const TypedefType *TT = T->getAsTypedefType();
-  if (!TT)
-    return;
-
-  TypedefDecl *TD = TT->getDecl();
-
-  // typedef struct objc_object *id;
-  const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
-  // User error - caller will issue diagnostics.
-  if (!ptr)
-    return;
-  const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
-  // User error - caller will issue diagnostics.
-  if (!rec)
-    return;
-  IdStructType = rec;
+  assert(TT && "missing 'id' typedef");
+  const ObjCObjectPointerType *OPT = 
+    TT->getDecl()->getUnderlyingType()->getAsObjCObjectPointerType();
+  assert(OPT && "missing 'id' type");
+  ObjCObjectPointerType::setIdInterface(OPT->getPointeeType());
 }
 
 void ASTContext::setObjCSelType(QualType T)
@@ -3013,18 +3005,12 @@ void ASTContext::setObjCProtoType(QualType QT)
 void ASTContext::setObjCClassType(QualType T)
 {
   ObjCClassType = T;
-
   const TypedefType *TT = T->getAsTypedefType();
-  if (!TT)
-    return;
-  TypedefDecl *TD = TT->getDecl();
-
-  // typedef struct objc_class *Class;
-  const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
-  assert(ptr && "'Class' incorrectly typed");
-  const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
-  assert(rec && "'Class' incorrectly typed");
-  ClassStructType = rec;
+  assert(TT && "missing 'Class' typedef");
+  const ObjCObjectPointerType *OPT = 
+    TT->getDecl()->getUnderlyingType()->getAsObjCObjectPointerType();
+  assert(OPT && "missing 'Class' type");
+  ObjCObjectPointerType::setClassInterface(OPT->getPointeeType());
 }
 
 void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
@@ -3123,6 +3109,8 @@ bool ASTContext::isObjCNSObjectType(QualType Ty) const {
 /// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
 /// ID type).
 bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
+  if (Ty->isObjCObjectPointerType())
+    return true;
   if (Ty->isObjCQualifiedIdType())
     return true;
   
@@ -3198,8 +3186,30 @@ static bool areCompatVectorTypes(const VectorType *LHS,
 /// compatible for assignment from RHS to LHS.  This handles validation of any
 /// protocol qualifiers on the LHS or RHS.
 ///
+/// FIXME: Move the following to ObjCObjectPointerType/ObjCInterfaceType.
+bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
+                                         const ObjCObjectPointerType *RHSOPT) {
+  // If either interface represents the built-in 'id' or 'Class' types, 
+  // then return true (no need to call canAssignObjCInterfaces()).
+  if (LHSOPT->isObjCIdType() || RHSOPT->isObjCIdType() ||
+      LHSOPT->isObjCClassType() || RHSOPT->isObjCClassType())
+    return true;
+
+  const ObjCInterfaceType* LHS = LHSOPT->getInterfaceType();
+  const ObjCInterfaceType* RHS = RHSOPT->getInterfaceType();
+  if (!LHS || !RHS)
+    return false;
+  return canAssignObjCInterfaces(LHS, RHS);
+}
+
 bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
                                          const ObjCInterfaceType *RHS) {
+  // If either interface represents the built-in 'id' or 'Class' types, 
+  // then return true.
+  if (LHS->isObjCIdInterface() || RHS->isObjCIdInterface() ||
+      LHS->isObjCClassInterface() || RHS->isObjCClassInterface())
+    return true;
+
   // Verify that the base decls are compatible: the RHS must be a subclass of
   // the LHS.
   if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
@@ -3245,25 +3255,14 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
 
 bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {
   // get the "pointed to" types
-  const PointerType *LHSPT = LHS->getAsPointerType();
-  const PointerType *RHSPT = RHS->getAsPointerType();
+  const ObjCObjectPointerType *LHSOPT = LHS->getAsObjCObjectPointerType();
+  const ObjCObjectPointerType *RHSOPT = RHS->getAsObjCObjectPointerType();
   
-  if (!LHSPT || !RHSPT)
+  if (!LHSOPT || !RHSOPT)
     return false;
-    
-  QualType lhptee = LHSPT->getPointeeType();
-  QualType rhptee = RHSPT->getPointeeType();
-  const ObjCInterfaceType* LHSIface = lhptee->getAsObjCInterfaceType();
-  const ObjCInterfaceType* RHSIface = rhptee->getAsObjCInterfaceType();
-  // ID acts sort of like void* for ObjC interfaces
-  if (LHSIface && isObjCIdStructType(rhptee))
-    return true;
-  if (RHSIface && isObjCIdStructType(lhptee))
-    return true;
-  if (!LHSIface || !RHSIface)
-    return false;
-  return canAssignObjCInterfaces(LHSIface, RHSIface) ||
-         canAssignObjCInterfaces(RHSIface, LHSIface);
+
+  return canAssignObjCInterfaces(LHSOPT, RHSOPT) ||
+         canAssignObjCInterfaces(RHSOPT, LHSOPT);
 }
 
 /// typesAreCompatible - C99 6.7.3p9: For two qualified types to be compatible, 
@@ -3406,8 +3405,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
       // issue error.
       if ((GCAttr == QualType::Weak && GCLHSAttr != GCAttr) ||
           (GCAttr == QualType::Strong && GCLHSAttr != GCAttr &&
-           LHSCan->isPointerType() && !isObjCObjectPointerType(LHSCan) &&
-           !isObjCIdStructType(LHSCan->getAsPointerType()->getPointeeType())))
+           !LHSCan->isObjCObjectPointerType()))
         return QualType();
           
       RHS = QualType(cast<ExtQualType>(RHS.getDesugaredType())->getBaseType(),
@@ -3432,8 +3430,7 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
       // issue error.
       if ((GCAttr == QualType::Weak && GCRHSAttr != GCAttr) ||
           (GCAttr == QualType::Strong && GCRHSAttr != GCAttr &&
-           RHSCan->isPointerType() && !isObjCObjectPointerType(RHSCan) &&
-           !isObjCIdStructType(RHSCan->getAsPointerType()->getPointeeType())))
+           !RHSCan->isObjCObjectPointerType()))
         return QualType();
       
       LHS = QualType(cast<ExtQualType>(LHS.getDesugaredType())->getBaseType(),
@@ -3460,47 +3457,12 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   if (RHSClass == Type::ExtVector) RHSClass = Type::Vector;
   
   // Consider qualified interfaces and interfaces the same.
+  // FIXME: Remove (ObjCObjectPointerType should obsolete this funny business).
   if (LHSClass == Type::ObjCQualifiedInterface) LHSClass = Type::ObjCInterface;
   if (RHSClass == Type::ObjCQualifiedInterface) RHSClass = Type::ObjCInterface;
 
   // If the canonical type classes don't match.
   if (LHSClass != RHSClass) {
-    const ObjCInterfaceType* LHSIface = LHS->getAsObjCInterfaceType();
-    const ObjCInterfaceType* RHSIface = RHS->getAsObjCInterfaceType();
-    
-    // 'id' and 'Class' act sort of like void* for ObjC interfaces
-    if (LHSIface && (isObjCIdStructType(RHS) || isObjCClassStructType(RHS)))
-      return LHS;
-    if (RHSIface && (isObjCIdStructType(LHS) || isObjCClassStructType(LHS)))
-      return RHS;
-    
-    // ID is compatible with all qualified id types.
-    if (LHS->isObjCQualifiedIdType()) {
-      if (const PointerType *PT = RHS->getAsPointerType()) {
-        QualType pType = PT->getPointeeType();
-        if (isObjCIdStructType(pType) || isObjCClassStructType(pType))
-          return LHS;
-        // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
-        // Unfortunately, this API is part of Sema (which we don't have access
-        // to. Need to refactor. The following check is insufficient, since we 
-        // need to make sure the class implements the protocol.
-        if (pType->isObjCInterfaceType())
-          return LHS;
-      }
-    }
-    if (RHS->isObjCQualifiedIdType()) {
-      if (const PointerType *PT = LHS->getAsPointerType()) {
-        QualType pType = PT->getPointeeType();
-        if (isObjCIdStructType(pType) || isObjCClassStructType(pType))
-          return RHS;
-        // FIXME: need to use ObjCQualifiedIdTypesAreCompatible(LHS, RHS, true).
-        // Unfortunately, this API is part of Sema (which we don't have access
-        // to. Need to refactor. The following check is insufficient, since we 
-        // need to make sure the class implements the protocol.
-        if (pType->isObjCInterfaceType())
-          return RHS;
-      }
-    }
     // C99 6.7.2.2p4: Each enumerated type shall be compatible with char,
     // a signed integer type, or an unsigned integer type. 
     if (const EnumType* ETy = LHS->getAsEnumType()) {
@@ -3611,9 +3573,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return mergeFunctionTypes(LHS, RHS);
   case Type::Record:
   case Type::Enum:
-    // FIXME: Why are these compatible?
-    if (isObjCIdStructType(LHS) && isObjCClassStructType(RHS)) return LHS;
-    if (isObjCClassStructType(LHS) && isObjCIdStructType(RHS)) return LHS;
     return QualType();
   case Type::Builtin:
     // Only exactly equal builtin types are compatible, which is tested above.
@@ -3638,10 +3597,17 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
 
     return QualType();
   }
-  case Type::ObjCObjectPointer:
-    // FIXME: finish
-    // Distinct qualified id's are not compatible.
+  case Type::ObjCObjectPointer: {
+    // FIXME: Incorporate tests from Sema::ObjCQualifiedIdTypesAreCompatible().
+    if (LHS->isObjCQualifiedIdType() && RHS->isObjCQualifiedIdType())
+      return QualType();
+
+    if (canAssignObjCInterfaces(LHS->getAsObjCObjectPointerType(), 
+                                RHS->getAsObjCObjectPointerType()))
+      return LHS;
+
     return QualType();
+  }
   case Type::FixedWidthInt:
     // Distinct fixed-width integers are not compatible.
     return QualType();

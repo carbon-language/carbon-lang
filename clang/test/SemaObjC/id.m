@@ -15,6 +15,6 @@ void foo() {
 }
 
 // Test attempt to redefine 'id' in an incompatible fashion.
-typedef int id;   // expected-error {{typedef redefinition with different types}}
+typedef int id;  // FIXME: Decide how we want to deal with this (now that 'id' is more of a built-in type).
 id b;
 

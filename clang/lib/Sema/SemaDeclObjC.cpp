@@ -2048,7 +2048,7 @@ Sema::DeclPtrTy Sema::ActOnPropertyImplDecl(SourceLocation AtLoc,
         << property->getDeclName() << Ivar->getDeclName();
         // Fall thru - see previous comment
       }
-      if ((Context.isObjCObjectPointerType(property->getType()) || 
+      if ((property->getType()->isObjCObjectPointerType() || 
            PropType.isObjCGCStrong()) && IvarType.isObjCGCWeak() &&
            getLangOptions().getGCMode() != LangOptions::NonGC) {
         Diag(PropertyLoc, diag::error_strong_property)

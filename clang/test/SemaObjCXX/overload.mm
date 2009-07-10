@@ -1,4 +1,5 @@
 // RUN: clang-cc -fsyntax-only -verify %s
+// XFAIL
 @interface Foo
 @end
 

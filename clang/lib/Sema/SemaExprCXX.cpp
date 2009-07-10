@@ -1482,7 +1482,8 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   assert(getLangOptions().CPlusPlus && "This function assumes C++");
   QualType T1 = E1->getType(), T2 = E2->getType();
-  if(!T1->isPointerType() && !T2->isPointerType())
+  if(!T1->isPointerType() && !T2->isPointerType() &&
+     !T1->isObjCObjectPointerType() && !T2->isObjCObjectPointerType())
     return QualType();
 
   // C++0x 5.9p2

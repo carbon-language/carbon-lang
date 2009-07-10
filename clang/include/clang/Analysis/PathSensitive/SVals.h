@@ -196,7 +196,7 @@ public:
   }
   
   static inline bool IsLocType(QualType T) {
-    return T->isPointerType() || T->isObjCQualifiedIdType() 
+    return T->isPointerType() || T->isObjCObjectPointerType() 
       || T->isBlockPointerType();
   }
 };

@@ -987,7 +987,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 }
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
-  if (!Ops.Ty->isPointerType()) {
+  if (!Ops.Ty->isPointerType() && !Ops.Ty->isObjCObjectPointerType()) {
     if (CGF.getContext().getLangOptions().OverflowChecking &&
         Ops.Ty->isSignedIntegerType())
       return EmitOverflowCheckedBinOp(Ops);
@@ -998,20 +998,24 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
   }
 
-  if (Ops.Ty->getAsPointerType()->isVariableArrayType()) {
+  if (Ops.Ty->isPointerType() &&
+      Ops.Ty->getAsPointerType()->isVariableArrayType()) {
     // The amount of the addition needs to account for the VLA size
     CGF.ErrorUnsupported(Ops.E, "VLA pointer addition");
   }
   Value *Ptr, *Idx;
   Expr *IdxExp;
-  const PointerType *PT;
-  if ((PT = Ops.E->getLHS()->getType()->getAsPointerType())) {
+  const PointerType *PT = Ops.E->getLHS()->getType()->getAsPointerType();
+  const ObjCObjectPointerType *OPT = 
+    Ops.E->getLHS()->getType()->getAsObjCObjectPointerType();
+  if (PT || OPT) {
     Ptr = Ops.LHS;
     Idx = Ops.RHS;
     IdxExp = Ops.E->getRHS();
-  } else {                                           // int + pointer
+  } else {  // int + pointer
     PT = Ops.E->getRHS()->getType()->getAsPointerType();
-    assert(PT && "Invalid add expr");
+    OPT = Ops.E->getRHS()->getType()->getAsObjCObjectPointerType();
+    assert((PT || OPT) && "Invalid add expr");
     Ptr = Ops.RHS;
     Idx = Ops.LHS;
     IdxExp = Ops.E->getLHS();
@@ -1027,8 +1031,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     else
       Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
   }
-
-  const QualType ElementType = PT->getPointeeType();
+  const QualType ElementType = PT ? PT->getPointeeType() : OPT->getPointeeType();
   // Handle interface types, which are not represented with a concrete
   // type.
   if (const ObjCInterfaceType *OIT = dyn_cast<ObjCInterfaceType>(ElementType)) {
@@ -1066,7 +1069,8 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     return Builder.CreateSub(Ops.LHS, Ops.RHS, "sub");
   }
 
-  if (Ops.E->getLHS()->getType()->getAsPointerType()->isVariableArrayType()) {
+  if (Ops.E->getLHS()->getType()->isPointerType() &&
+      Ops.E->getLHS()->getType()->getAsPointerType()->isVariableArrayType()) {
     // The amount of the addition needs to account for the VLA size for
     // ptr-int
     // The amount of the division needs to account for the VLA size for
@@ -1075,7 +1079,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   }
 
   const QualType LHSType = Ops.E->getLHS()->getType();
-  const QualType LHSElementType = LHSType->getAsPointerType()->getPointeeType();
+  const QualType LHSElementType = LHSType->getPointeeType();
   if (!isa<llvm::PointerType>(Ops.RHS->getType())) {
     // pointer - int
     Value *Idx = Ops.RHS;

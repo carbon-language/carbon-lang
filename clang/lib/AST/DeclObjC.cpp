@@ -280,7 +280,7 @@ void ObjCMethodDecl::createImplicitParams(ASTContext &Context,
     // of the interface (which has been reported). Recover gracefully.
     if (OID) {
       selfTy = Context.getObjCInterfaceType(OID);
-      selfTy = Context.getPointerType(selfTy);
+      selfTy = Context.getObjCObjectPointerType(selfTy);
     } else {
       selfTy = Context.getObjCIdType();
     }

@@ -74,14 +74,14 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   // interface private (even though it appears in the header files).
   QualType Ty = Context.getObjCConstantStringInterface();
   if (!Ty.isNull()) {
-    Ty = Context.getPointerType(Ty);
+    Ty = Context.getObjCObjectPointerType(Ty);
   } else {
     IdentifierInfo *NSIdent = &Context.Idents.get("NSString");
     NamedDecl *IF = LookupName(TUScope, NSIdent, LookupOrdinaryName);
     if (ObjCInterfaceDecl *StrIF = dyn_cast_or_null<ObjCInterfaceDecl>(IF)) {
       Context.setObjCConstantStringInterface(StrIF);
       Ty = Context.getObjCConstantStringInterface();
-      Ty = Context.getPointerType(Ty);
+      Ty = Context.getObjCObjectPointerType(Ty);
     } else {
       // If there is no NSString interface defined then treat constant
       // strings as untyped objects and let the runtime figure it out later.
@@ -156,7 +156,7 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
   QualType Ty = Context.getObjCProtoType();
   if (Ty.isNull())
     return true;
-  Ty = Context.getPointerType(Ty);
+  Ty = Context.getObjCObjectPointerType(Ty);
   return new (Context) ObjCProtocolExpr(Ty, PDecl, AtLoc, RParenLoc);
 }
 
@@ -390,7 +390,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return Diag(lbrac, diag::error_no_super_class) << OID->getDeclName();
       if (getCurMethodDecl()->isInstanceMethod()) {
         QualType superTy = Context.getObjCInterfaceType(ClassDecl);
-        superTy = Context.getPointerType(superTy);
+        superTy = Context.getObjCObjectPointerType(superTy);
         ExprResult ReceiverExpr = new (Context) ObjCSuperExpr(SourceLocation(),
                                                               superTy);
         // We are really in an instance method, redirect.
@@ -527,7 +527,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
                                          rbrac, ArgExprs, NumArgs);
   }
 
-  // Handle messages to id.
+  // Handle messages to id.  
   if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType()) ||
       ReceiverCType->isBlockPointerType() ||
       Context.isObjCNSObjectType(RExpr->getType())) {
@@ -602,11 +602,11 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
       if (PDecl && (Method = PDecl->lookupClassMethod(Sel)))
         break;
     }
-  } else if (const ObjCInterfaceType *OCIType = 
-                ReceiverCType->getAsPointerToObjCInterfaceType()) {
+  } else if (const ObjCObjectPointerType *OCIType = 
+                ReceiverCType->getAsObjCInterfacePointerType()) {
     // We allow sending a message to a pointer to an interface (an object).
     
-    ClassDecl = OCIType->getDecl();
+    ClassDecl = OCIType->getInterfaceDecl();
     // FIXME: consider using LookupInstanceMethodInGlobalPool, since it will be
     // faster than the following method (which can do *many* linear searches).
     // The idea is to add class info to InstanceMethodPool.
@@ -614,7 +614,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
     
     if (!Method) {
       // Search protocol qualifiers.
-      for (ObjCQualifiedInterfaceType::qual_iterator QI = OCIType->qual_begin(),
+      for (ObjCObjectPointerType::qual_iterator QI = OCIType->qual_begin(),
            E = OCIType->qual_end(); QI != E; ++QI) {
         if ((Method = (*QI)->lookupInstanceMethod(Sel)))
           break;
@@ -631,9 +631,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         if (OCIType->qual_empty()) {
           Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
-          if (Method && !OCIType->getDecl()->isForwardDecl())
+          if (Method && !OCIType->getInterfaceDecl()->isForwardDecl())
             Diag(lbrac, diag::warn_maynot_respond) 
-              << OCIType->getDecl()->getIdentifier()->getName() << Sel;
+              << OCIType->getInterfaceDecl()->getIdentifier()->getName() << Sel;
         }
       }
     }
@@ -741,60 +741,36 @@ bool Sema::QualifiedIdConformsQualifiedId(QualType lhs, QualType rhs) {
 bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
                                              bool compare) {
   // Allow id<P..> and an 'id' or void* type in all cases.
-  if (const PointerType *PT = lhs->getAsPointerType()) {
-    QualType PointeeTy = PT->getPointeeType();
-    if (PointeeTy->isVoidType() ||
-        Context.isObjCIdStructType(PointeeTy) || 
-        Context.isObjCClassStructType(PointeeTy))
-      return true;
-  } else if (const PointerType *PT = rhs->getAsPointerType()) {
-    QualType PointeeTy = PT->getPointeeType();
-    if (PointeeTy->isVoidType() ||
-        Context.isObjCIdStructType(PointeeTy) || 
-        Context.isObjCClassStructType(PointeeTy))
-      return true;
-  }
-  
+  if (lhs->isVoidPointerType() || 
+      lhs->isObjCIdType() || lhs->isObjCClassType())
+    return true;
+  else if (rhs->isVoidPointerType() || 
+           rhs->isObjCIdType() || rhs->isObjCClassType())
+    return true;
+
   if (const ObjCObjectPointerType *lhsQID = lhs->getAsObjCQualifiedIdType()) {
-    const ObjCObjectPointerType *rhsQID = rhs->getAsObjCQualifiedIdType();
-    const ObjCQualifiedInterfaceType *rhsQI = 0;
-    QualType rtype;
+    const ObjCObjectPointerType *rhsOPT = rhs->getAsObjCObjectPointerType();
     
-    if (!rhsQID) {
-      // Not comparing two ObjCQualifiedIdType's?
-      if (!rhs->isPointerType()) return false;
-      
-      rtype = rhs->getAsPointerType()->getPointeeType();
-      rhsQI = rtype->getAsObjCQualifiedInterfaceType();
-      if (rhsQI == 0) {
-        // If the RHS is a unqualified interface pointer "NSString*", 
-        // make sure we check the class hierarchy.
-        if (const ObjCInterfaceType *IT = rtype->getAsObjCInterfaceType()) {
-          ObjCInterfaceDecl *rhsID = IT->getDecl();
-          for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
-               E = lhsQID->qual_end(); I != E; ++I) {
-            // when comparing an id<P> on lhs with a static type on rhs,
-            // see if static class implements all of id's protocols, directly or
-            // through its super class and categories.
-            if (!ClassImplementsProtocol(*I, rhsID, true))
-              return false;
-          }
-          return true;
+    if (!rhsOPT) return false;
+    
+    if (rhsOPT->qual_empty()) {
+      // If the RHS is a unqualified interface pointer "NSString*", 
+      // make sure we check the class hierarchy.
+      if (ObjCInterfaceDecl *rhsID = rhsOPT->getInterfaceDecl()) {
+        for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
+             E = lhsQID->qual_end(); I != E; ++I) {
+          // when comparing an id<P> on lhs with a static type on rhs,
+          // see if static class implements all of id's protocols, directly or
+          // through its super class and categories.
+          if (!ClassImplementsProtocol(*I, rhsID, true))
+            return false;
         }
-      }      
+        return true;
+      }
+      // If there are no qualifiers and no interface, we have an 'id'.
+      return true;
     }
-    
-    ObjCObjectPointerType::qual_iterator RHSProtoI, RHSProtoE;
-    if (rhsQI) { // We have a qualified interface (e.g. "NSObject<Proto> *").
-      RHSProtoI = rhsQI->qual_begin();
-      RHSProtoE = rhsQI->qual_end();
-    } else if (rhsQID) { // We have a qualified id (e.g. "id<Proto> *").
-      RHSProtoI = rhsQID->qual_begin();
-      RHSProtoE = rhsQID->qual_end();
-    } else {
-      return false;
-    }
-    
+    // Both the right and left sides have qualifiers.    
     for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
          E = lhsQID->qual_end(); I != E; ++I) {
       ObjCProtocolDecl *lhsProto = *I;
@@ -803,28 +779,26 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
       // when comparing an id<P> on lhs with a static type on rhs,
       // see if static class implements all of id's protocols, directly or
       // through its super class and categories.
-      for (; RHSProtoI != RHSProtoE; ++RHSProtoI) {
-        ObjCProtocolDecl *rhsProto = *RHSProtoI;
+      for (ObjCObjectPointerType::qual_iterator J = rhsOPT->qual_begin(),
+           E = rhsOPT->qual_end(); J != E; ++J) {
+        ObjCProtocolDecl *rhsProto = *J;
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
             (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
           match = true;
           break;
         }
       }
-      if (rhsQI) {
-        // If the RHS is a qualified interface pointer "NSString<P>*", 
-        // make sure we check the class hierarchy.
-        if (const ObjCInterfaceType *IT = rtype->getAsObjCInterfaceType()) {
-          ObjCInterfaceDecl *rhsID = IT->getDecl();
-          for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
-               E = lhsQID->qual_end(); I != E; ++I) {
-            // when comparing an id<P> on lhs with a static type on rhs,
-            // see if static class implements all of id's protocols, directly or
-            // through its super class and categories.
-            if (ClassImplementsProtocol(*I, rhsID, true)) {
-              match = true;
-              break;
-            }
+      // If the RHS is a qualified interface pointer "NSString<P>*", 
+      // make sure we check the class hierarchy.
+      if (ObjCInterfaceDecl *rhsID = rhsOPT->getInterfaceDecl()) {
+        for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
+             E = lhsQID->qual_end(); I != E; ++I) {
+          // when comparing an id<P> on lhs with a static type on rhs,
+          // see if static class implements all of id's protocols, directly or
+          // through its super class and categories.
+          if (ClassImplementsProtocol(*I, rhsID, true)) {
+            match = true;
+            break;
           }
         }
       }
@@ -837,7 +811,52 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
   
   const ObjCObjectPointerType *rhsQID = rhs->getAsObjCQualifiedIdType();
   assert(rhsQID && "One of the LHS/RHS should be id<x>");
-    
+
+  if (const ObjCObjectPointerType *lhsOPT = 
+        lhs->getAsObjCInterfacePointerType()) {
+    if (lhsOPT->qual_empty()) {
+      bool match = false;
+      if (ObjCInterfaceDecl *lhsID = lhsOPT->getInterfaceDecl()) {
+        for (ObjCObjectPointerType::qual_iterator I = rhsQID->qual_begin(),
+             E = rhsQID->qual_end(); I != E; ++I) {
+          // when comparing an id<P> on lhs with a static type on rhs,
+          // see if static class implements all of id's protocols, directly or
+          // through its super class and categories.
+          if (ClassImplementsProtocol(*I, lhsID, true)) {
+            match = true;
+            break;
+          }
+        }
+        if (!match)
+          return false;
+      }
+      return true;
+    }
+    // Both the right and left sides have qualifiers.    
+    for (ObjCObjectPointerType::qual_iterator I = lhsOPT->qual_begin(),
+         E = lhsOPT->qual_end(); I != E; ++I) {
+      ObjCProtocolDecl *lhsProto = *I;
+      bool match = false;
+
+      // when comparing an id<P> on lhs with a static type on rhs,
+      // see if static class implements all of id's protocols, directly or
+      // through its super class and categories.
+      for (ObjCObjectPointerType::qual_iterator J = rhsQID->qual_begin(),
+           E = rhsQID->qual_end(); J != E; ++J) {
+        ObjCProtocolDecl *rhsProto = *J;
+        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+            (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
+          match = true;
+          break;
+        }
+      }
+      if (!match)
+        return false;
+    }
+    return true;
+  }
+  // FIXME: The code below will be removed when ObjCQualifiedInterfaceType is
+  // removed.
   if (!lhs->isPointerType())
     return false;
   
@@ -864,17 +883,6 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
     return true;
   }
   
-  if (const ObjCInterfaceType *IT = ltype->getAsObjCInterfaceType()) {
-    // for static type vs. qualified 'id' type, check that class implements
-    // all of 'id's protocols.
-    ObjCInterfaceDecl *lhsID = IT->getDecl();
-    for (ObjCObjectPointerType::qual_iterator I = rhsQID->qual_begin(),
-         E = rhsQID->qual_end(); I != E; ++I) {
-      if (!ClassImplementsProtocol(*I, lhsID, compare, true))
-        return false;
-    }
-    return true;
-  }
   return false;
 }
 

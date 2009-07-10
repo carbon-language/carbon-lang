@@ -91,7 +91,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
   case DeclSpec::TST_unspecified:
     // "<proto1,proto2>" is an objc qualified ID with a missing id.
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
-      Result = Context.getObjCObjectPointerType(0, (ObjCProtocolDecl**)PQ,
+      Result = Context.getObjCObjectPointerType(QualType(), 
+                                                (ObjCProtocolDecl**)PQ,
                                                 DS.getNumProtocolQualifiers());
       break;
     }
@@ -197,14 +198,16 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
       // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so we have
       // this "hack" for now...
       if (const ObjCInterfaceType *Interface = Result->getAsObjCInterfaceType())
+        // FIXME: Remove ObjCQualifiedInterfaceType (by moving the list of
+        // protocols 'up' to ObjCInterfaceType).
         Result = Context.getObjCQualifiedInterfaceType(Interface->getDecl(),
                                                        (ObjCProtocolDecl**)PQ,
                                                DS.getNumProtocolQualifiers());
-      else if (Result == Context.getObjCIdType())
+      else if (Result->isObjCIdType())
         // id<protocol-list>
-        Result = Context.getObjCObjectPointerType(0, (ObjCProtocolDecl**)PQ,
-                                                 DS.getNumProtocolQualifiers());
-      else if (Result == Context.getObjCClassType()) {
+        Result = Context.getObjCObjectPointerType(QualType(), 
+                        (ObjCProtocolDecl**)PQ, DS.getNumProtocolQualifiers());
+      else if (Result->isObjCClassType()) {
         if (DeclLoc.isInvalid())
           DeclLoc = DS.getSourceRange().getBegin();
         // Class<protocol-list>
@@ -885,6 +888,13 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
         Diag(D.getIdentifierLoc(), diag::err_distant_exception_spec);
         D.setInvalidType(true);
         // Build the type anyway.
+      }
+      if (getLangOptions().ObjC1 && T->isObjCInterfaceType()) {
+        const ObjCInterfaceType *OIT = T->getAsObjCInterfaceType();
+        T = Context.getObjCObjectPointerType(T,
+                                       (ObjCProtocolDecl **)OIT->qual_begin(),
+                                       OIT->getNumProtocols());
+        break;
       }
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);
       break;

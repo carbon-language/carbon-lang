@@ -516,8 +516,6 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
   if (New->isInvalidDecl() || OldD->isInvalidDecl())
     return New->setInvalidDecl();
   
-  bool objc_types = false;
-  
   // Allow multiple definitions for ObjC built-in typedefs.
   // FIXME: Verify the underlying types are equivalent!
   if (getLangOptions().ObjC1) {
@@ -527,13 +525,15 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     case 2: 
       if (!TypeID->isStr("id"))
         break;
-      Context.setObjCIdType(Context.getTypeDeclType(New));
-      objc_types = true;
+      // Install the built-in type for 'id', ignoring the current definition.
+      New->setTypeForDecl(Context.getObjCIdType().getTypePtr());
+      return;
       break;
     case 5:
       if (!TypeID->isStr("Class"))
         break;
-      Context.setObjCClassType(Context.getTypeDeclType(New));
+      // Install the built-in type for 'Class', ignoring the current definition.
+      New->setTypeForDecl(Context.getObjCClassType().getTypePtr());
       return;
     case 3:
       if (!TypeID->isStr("SEL"))
@@ -578,7 +578,7 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
     return New->setInvalidDecl();
   }
   
-  if (objc_types || getLangOptions().Microsoft)
+  if (getLangOptions().Microsoft)
     return;
 
   // C++ [dcl.typedef]p2:

@@ -1338,7 +1338,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         Handlers.push_back(std::make_pair(CatchDecl, CatchStmt->getCatchBody()));
 
         // @catch() and @catch(id) both catch any ObjC exception
-        if (!CatchDecl || CGF.getContext().isObjCIdType(CatchDecl->getType())
+        if (!CatchDecl || CatchDecl->getType()->isObjCIdType()
             || CatchDecl->getType()->isObjCQualifiedIdType()) {
           // Use i8* null here to signal this is a catch all, not a cleanup.
           ESelArgs.push_back(NULLPtr);
@@ -1348,10 +1348,11 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         } 
 
         // All other types should be Objective-C interface pointer types.
-        const PointerType *PT = CatchDecl->getType()->getAsPointerType();
-        assert(PT && "Invalid @catch type.");
+        const ObjCObjectPointerType *OPT = 
+          CatchDecl->getType()->getAsObjCObjectPointerType();
+        assert(OPT && "Invalid @catch type.");
         const ObjCInterfaceType *IT = 
-          PT->getPointeeType()->getAsObjCInterfaceType();
+          OPT->getPointeeType()->getAsObjCInterfaceType();
         assert(IT && "Invalid @catch type.");
         llvm::Value *EHType =
           MakeConstantString(IT->getDecl()->getNameAsString());

@@ -547,14 +547,12 @@ public:
     return I == M.end() ? M.find(ObjCSummaryKey(S)) : I;
   }
   
-  ObjCInterfaceDecl* getReceiverDecl(Expr* E) {
-    
-    const PointerType* PT = E->getType()->getAsPointerType();
-    if (!PT) return 0;
-    
-    ObjCInterfaceType* OI = dyn_cast<ObjCInterfaceType>(PT->getPointeeType());
-    
-    return OI ? OI->getDecl() : 0;
+  const ObjCInterfaceDecl* getReceiverDecl(Expr* E) {    
+    if (const ObjCObjectPointerType* PT =
+        E->getType()->getAsObjCObjectPointerType())
+      return PT->getInterfaceDecl();
+
+    return NULL;
   }
   
   iterator end() { return M.end(); }
@@ -564,7 +562,7 @@ public:
     Selector S = ME->getSelector();
     
     if (Expr* Receiver = ME->getReceiver()) {
-      ObjCInterfaceDecl* OD = getReceiverDecl(Receiver);
+      const ObjCInterfaceDecl* OD = getReceiverDecl(Receiver);
       return OD ? M[ObjCSummaryKey(OD->getIdentifier(), S)] : M[S];
     }
     
@@ -886,20 +884,20 @@ bool RetainSummaryManager::isTrackedObjCObjectType(QualType Ty) {
   if (!Ctx.isObjCObjectPointerType(Ty))
     return false;
 
-  // We assume that id<..>, id, and "Class" all represent tracked objects.
-  const PointerType *PT = Ty->getAsPointerType();
-  if (PT == 0)
+  const ObjCObjectPointerType *PT = Ty->getAsObjCObjectPointerType();
+  
+  // Can be true for objects with the 'NSObject' attribute.
+  if (!PT)
     return true;
-    
-  const ObjCInterfaceType *OT = PT->getPointeeType()->getAsObjCInterfaceType();
+  
+  // We assume that id<..>, id, and "Class" all represent tracked objects.
+  if (PT->isObjCIdType() || PT->isObjCQualifiedIdType() ||
+      PT->isObjCClassType())
+    return true;
 
-  // We assume that id<..>, id, and "Class" all represent tracked objects.
-  if (!OT)
-    return true;
-    
   // Does the interface subclass NSObject?    
   // FIXME: We can memoize here if this gets too expensive.    
-  ObjCInterfaceDecl* ID = OT->getDecl();  
+  const ObjCInterfaceDecl *ID = PT->getInterfaceDecl();  
 
   // Assume that anything declared with a forward declaration and no
   // @interface subclasses NSObject.
@@ -907,7 +905,6 @@ bool RetainSummaryManager::isTrackedObjCObjectType(QualType Ty) {
     return true;
   
   IdentifierInfo* NSObjectII = &Ctx.Idents.get("NSObject");
-
 
   for ( ; ID ; ID = ID->getSuperClass())
     if (ID->getIdentifier() == NSObjectII)
@@ -977,7 +974,7 @@ RetainSummary* RetainSummaryManager::getSummary(FunctionDecl* FD) {
       case 17:
         // Handle: id NSMakeCollectable(CFTypeRef)
         if (!memcmp(FName, "NSMakeCollectable", 17)) {
-          S = (RetTy == Ctx.getObjCIdType())
+          S = (RetTy->isObjCIdType())
               ? getUnarySummary(FT, cfmakecollectable)
               : getPersistentStopSummary();
         }
@@ -2726,33 +2723,25 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug& D, const CFRefCount &tf,
 ///  While the the return type can be queried directly from RetEx, when
 ///  invoking class methods we augment to the return type to be that of
 ///  a pointer to the class (as opposed it just being id).
-static QualType GetReturnType(Expr* RetE, ASTContext& Ctx) {
-
+static QualType GetReturnType(const Expr* RetE, ASTContext& Ctx) {
   QualType RetTy = RetE->getType();
-
-  // FIXME: We aren't handling id<...>.
-  const PointerType* PT = RetTy->getAsPointerType();
-  if (!PT)
-    return RetTy;
-    
-  // If RetEx is not a message expression just return its type.
-  // If RetEx is a message expression, return its types if it is something
+  // If RetE is not a message expression just return its type.
+  // If RetE is a message expression, return its types if it is something
   /// more specific than id.
+  if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(RetE))
+    if (const ObjCObjectPointerType *PT = RetTy->getAsObjCObjectPointerType())
+      if (PT->isObjCQualifiedIdType() || PT->isObjCIdType() || 
+          PT->isObjCClassType()) {
+        // At this point we know the return type of the message expression is
+        // id, id<...>, or Class. If we have an ObjCInterfaceDecl, we know this
+        // is a call to a class method whose type we can resolve.  In such
+        // cases, promote the return type to XXX* (where XXX is the class).
+        const ObjCInterfaceDecl *D = ME->getClassInfo().first;  
+        return !D ? RetTy : Ctx.getPointerType(Ctx.getObjCInterfaceType(D));
+      }
   
-  ObjCMessageExpr* ME = dyn_cast<ObjCMessageExpr>(RetE);
-  
-  if (!ME || !Ctx.isObjCIdStructType(PT->getPointeeType()))
-    return RetTy;
-  
-  ObjCInterfaceDecl* D = ME->getClassInfo().first;  
-
-  // At this point we know the return type of the message expression is id.
-  // If we have an ObjCInterceDecl, we know this is a call to a class method
-  // whose type we can resolve.  In such cases, promote the return type to
-  // Class*.  
-  return !D ? RetTy : Ctx.getPointerType(Ctx.getObjCInterfaceType(D));
+  return RetTy;
 }
-
 
 void CFRefCount::EvalSummary(ExplodedNodeSet<GRState>& Dst,
                              GRExprEngine& Eng,
@@ -3009,26 +2998,21 @@ void CFRefCount::EvalObjCMessageExpr(ExplodedNodeSet<GRState>& Dst,
     SVal V = St->getSValAsScalarOrLoc(Receiver);
 
     SymbolRef Sym = V.getAsLocSymbol();
+    
     if (Sym) {
       if (const RefVal* T  = St->get<RefBindings>(Sym)) {
-        QualType Ty = T->getType();
-        
-        if (const PointerType* PT = Ty->getAsPointerType()) {
-          QualType PointeeTy = PT->getPointeeType();
-          
-          if (ObjCInterfaceType* IT = dyn_cast<ObjCInterfaceType>(PointeeTy))
-            ID = IT->getDecl();
-        }
+        if (const ObjCObjectPointerType* PT =
+            T->getType()->getAsObjCObjectPointerType())
+          ID = PT->getInterfaceDecl();
       }
     }
 
     // FIXME: this is a hack.  This may or may not be the actual method
     //  that is called.
     if (!ID) {
-      if (const PointerType *PT = Receiver->getType()->getAsPointerType())
-        if (const ObjCInterfaceType *p =
-            PT->getPointeeType()->getAsObjCInterfaceType())
-          ID = p->getDecl();
+      if (const ObjCObjectPointerType *PT =
+          Receiver->getType()->getAsObjCObjectPointerType())
+        ID = PT->getInterfaceDecl();
     }
 
     // FIXME: The receiver could be a reference to a class, meaning that

@@ -162,16 +162,22 @@ NSErrorCheck::CheckSignature(FunctionDecl& F, QualType& ResultTy,
 bool NSErrorCheck::CheckNSErrorArgument(QualType ArgTy) {
   
   const PointerType* PPT = ArgTy->getAsPointerType();
-  if (!PPT) return false;
+  if (!PPT)
+    return false;
   
-  const PointerType* PT = PPT->getPointeeType()->getAsPointerType();
-  if (!PT) return false;
+  const ObjCObjectPointerType* PT =
+    PPT->getPointeeType()->getAsObjCObjectPointerType();
+
+  if (!PT)
+    return false;
   
-  const ObjCInterfaceType *IT =
-  PT->getPointeeType()->getAsObjCInterfaceType();
+  const ObjCInterfaceDecl *ID = PT->getInterfaceDecl();
   
-  if (!IT) return false;
-  return IT->getDecl()->getIdentifier() == II;
+  // FIXME: Can ID ever be NULL?
+  if (ID)
+    return II == ID->getIdentifier();
+  
+  return false;
 }
 
 bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy) {

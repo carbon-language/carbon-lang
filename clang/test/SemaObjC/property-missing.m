@@ -17,6 +17,6 @@ void f2(id<NSCopying> o)
 
 void f3(id o)
 {
-  o.foo; // expected-error{{member reference base type 'id' is not a structure or union}}
+  o.foo; // expected-error{{property 'foo' not found on object of type 'id'}}
 }
 

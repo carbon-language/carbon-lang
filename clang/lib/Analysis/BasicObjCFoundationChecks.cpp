@@ -31,26 +31,21 @@
 
 using namespace clang;
 
-static ObjCInterfaceType* GetReceiverType(ObjCMessageExpr* ME) {
-  Expr* Receiver = ME->getReceiver();
+static const ObjCInterfaceType* GetReceiverType(const ObjCMessageExpr* ME) {
+  const Expr* Receiver = ME->getReceiver();
   
   if (!Receiver)
     return NULL;
   
-  QualType X = Receiver->getType();
-  
-  if (X->isPointerType()) {
-    Type* TP = X.getTypePtr();
-    const PointerType* T = TP->getAsPointerType();    
-    return dyn_cast<ObjCInterfaceType>(T->getPointeeType().getTypePtr());
-  }
+  if (const ObjCObjectPointerType *PT =
+      Receiver->getType()->getAsObjCObjectPointerType())
+    return PT->getInterfaceType();
 
-  // FIXME: Support ObjCQualifiedIdType?
   return NULL;
 }
 
-static const char* GetReceiverNameType(ObjCMessageExpr* ME) {
-  ObjCInterfaceType* ReceiverType = GetReceiverType(ME);
+static const char* GetReceiverNameType(const ObjCMessageExpr* ME) {
+  const ObjCInterfaceType *ReceiverType = GetReceiverType(ME);
   return ReceiverType ? ReceiverType->getDecl()->getIdentifier()->getName()
                       : NULL;
 }
@@ -67,7 +62,7 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   BugReporter& BR;
   ASTContext &Ctx;
       
-  bool isNSString(ObjCInterfaceType* T, const char* suffix);
+  bool isNSString(const ObjCInterfaceType *T, const char* suffix);
   bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
       
   void Warn(NodeTy* N, Expr* E, const std::string& s);  
@@ -114,7 +109,7 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode<GRState>* N,
   ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
 
-  ObjCInterfaceType* ReceiverType = GetReceiverType(ME);
+  const ObjCInterfaceType *ReceiverType = GetReceiverType(ME);
   
   if (!ReceiverType)
     return false;
@@ -129,8 +124,7 @@ bool BasicObjCFoundationChecks::Audit(ExplodedNode<GRState>* N,
       
   name += 2;
   
-  // FIXME: Make all of this faster.
-  
+  // FIXME: Make all of this faster.  
   if (isNSString(ReceiverType, name))
     return AuditNSString(N, ME);
 
@@ -163,9 +157,8 @@ bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
 // NSString checking.
 //===----------------------------------------------------------------------===//
 
-bool BasicObjCFoundationChecks::isNSString(ObjCInterfaceType* T,
-                                           const char* suffix) {
-  
+bool BasicObjCFoundationChecks::isNSString(const ObjCInterfaceType *T,
+                                           const char* suffix) {  
   return !strcmp("String", suffix) || !strcmp("MutableString", suffix);
 }
 

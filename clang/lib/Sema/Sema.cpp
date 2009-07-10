@@ -53,9 +53,9 @@ static void ConvertArgToStringFn(Diagnostic::ArgumentKind Kind, intptr_t Val,
       
         // Don't desugar magic Objective-C types.
         Ty.getUnqualifiedType() != Context.getObjCIdType() &&
+        Ty.getUnqualifiedType() != Context.getObjCClassType() &&
         Ty.getUnqualifiedType() != Context.getObjCSelType() &&
         Ty.getUnqualifiedType() != Context.getObjCProtoType() &&
-        Ty.getUnqualifiedType() != Context.getObjCClassType() &&
         
         // Not va_list.
         Ty.getUnqualifiedType() != Context.getBuiltinVaListType()) {
@@ -140,17 +140,6 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     Context.setObjCSelType(Context.getTypeDeclType(SelTypedef));
   }
 
-  if (Context.getObjCClassType().isNull()) {
-    RecordDecl *ClassTag = CreateStructDecl(Context, "objc_class");
-    QualType ClassT = Context.getPointerType(Context.getTagDeclType(ClassTag));
-    TypedefDecl *ClassTypedef = 
-      TypedefDecl::Create(Context, CurContext, SourceLocation(),
-                          &Context.Idents.get("Class"), ClassT);
-    PushOnScopeChains(ClassTag, TUScope);
-    PushOnScopeChains(ClassTypedef, TUScope);
-    Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
-  }
-
   // Synthesize "@class Protocol;
   if (Context.getObjCProtoType().isNull()) {
     ObjCInterfaceDecl *ProtocolDecl =
@@ -160,19 +149,37 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
     PushOnScopeChains(ProtocolDecl, TUScope);
   }
-
-  // Synthesize "typedef struct objc_object { Class isa; } *id;"
+  // Create the built-in decls/typedefs for 'id' and 'Class'.
   if (Context.getObjCIdType().isNull()) {
-    RecordDecl *ObjectTag = CreateStructDecl(Context, "objc_object");
+    ObjCInterfaceDecl *IdIDecl =
+      ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
+                                &Context.Idents.get("id"), 
+                                SourceLocation(), true);
+    QualType IdIType = Context.getObjCInterfaceType(IdIDecl);
+    QualType ObjCIdType = Context.getObjCObjectPointerType(IdIType);
 
-    QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
-    PushOnScopeChains(ObjectTag, TUScope);
     TypedefDecl *IdTypedef = TypedefDecl::Create(Context, CurContext,
                                                  SourceLocation(),
                                                  &Context.Idents.get("id"),
-                                                 ObjT);
+                                                 ObjCIdType);
     PushOnScopeChains(IdTypedef, TUScope);
     Context.setObjCIdType(Context.getTypeDeclType(IdTypedef));
+  }
+  // Create the built-in decls/typedefs and type for "Class".
+  if (Context.getObjCClassType().isNull()) {
+    ObjCInterfaceDecl *ClassIDecl =
+      ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
+                                &Context.Idents.get("Class"), 
+                                SourceLocation(), true);
+    QualType ClassIType = Context.getObjCInterfaceType(ClassIDecl);
+    QualType ObjCClassType = Context.getObjCObjectPointerType(ClassIType);
+    
+    TypedefDecl *ClassTypedef = TypedefDecl::Create(Context, CurContext,
+                                                    SourceLocation(),
+                                                    &Context.Idents.get("Class"),
+                                                    ObjCClassType);
+    PushOnScopeChains(ClassTypedef, TUScope);
+    Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
   }
 }
 

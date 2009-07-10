@@ -2523,19 +2523,18 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       llvm::BasicBlock *NextCatchBlock = CGF.createBasicBlock("catch");
 
       const ParmVarDecl *CatchParam = CatchStmt->getCatchParamDecl();
-      const PointerType *PT = 0;
+      const ObjCObjectPointerType *OPT = 0;
 
       // catch(...) always matches.
       if (!CatchParam) {
         AllMatched = true;
       } else {
-        PT = CatchParam->getType()->getAsPointerType();
+        OPT = CatchParam->getType()->getAsObjCObjectPointerType();
         
         // catch(id e) always matches. 
         // FIXME: For the time being we also match id<X>; this should
         // be rejected by Sema instead.
-        if ((PT && CGF.getContext().isObjCIdStructType(PT->getPointeeType())) ||
-            CatchParam->getType()->isObjCQualifiedIdType())
+        if (OPT && (OPT->isObjCIdType()) || OPT->isObjCQualifiedIdType())
           AllMatched = true;
       }
       
@@ -2551,8 +2550,8 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         break;
       }
       
-      assert(PT && "Unexpected non-pointer type in @catch");
-      QualType T = PT->getPointeeType();
+      assert(OPT && "Unexpected non-object pointer type in @catch");
+      QualType T = OPT->getPointeeType();
       const ObjCInterfaceType *ObjCType = T->getAsObjCInterfaceType();
       assert(ObjCType && "Catch parameter must have Objective-C type!");
 
@@ -5443,7 +5442,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
           break;
         }
 
-        if (CGF.getContext().isObjCIdType(CatchDecl->getType()) ||
+        if (CatchDecl->getType()->isObjCIdType() ||
             CatchDecl->getType()->isObjCQualifiedIdType()) {
           llvm::Value *IDEHType = 
             CGM.getModule().getGlobalVariable("OBJC_EHTYPE_id");
@@ -5459,10 +5458,10 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
         } 
 
         // All other types should be Objective-C interface pointer types.
-        const PointerType *PT = CatchDecl->getType()->getAsPointerType();
+        const ObjCObjectPointerType *PT = 
+          CatchDecl->getType()->getAsObjCObjectPointerType();
         assert(PT && "Invalid @catch type.");
-        const ObjCInterfaceType *IT = 
-          PT->getPointeeType()->getAsObjCInterfaceType();
+        const ObjCInterfaceType *IT = PT->getInterfaceType();
         assert(IT && "Invalid @catch type.");
         llvm::Value *EHType = GetInterfaceEHType(IT->getDecl(), false);
         SelectorArgs.push_back(EHType);

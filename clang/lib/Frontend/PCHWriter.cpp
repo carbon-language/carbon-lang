@@ -255,7 +255,7 @@ PCHTypeWriter::VisitObjCQualifiedInterfaceType(
 
 void
 PCHTypeWriter::VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
-  Writer.AddDeclRef(T->getDecl(), Record);
+  Writer.AddTypeRef(T->getPointeeType(), Record);  
   Record.push_back(T->getNumProtocols());
   for (ObjCInterfaceType::qual_iterator I = T->qual_begin(),
        E = T->qual_end(); I != E; ++I)

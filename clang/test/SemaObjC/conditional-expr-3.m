@@ -59,7 +59,7 @@ void f9(int cond, id<P0,P1> x0, id<P0,P2> x1) {
 }
 
 void f10(int cond, id<P0,P1> x0, id<P0,P2> x1) {
-  barP2(cond ? x0 : x1);
+  barP2(cond ? x0 : x1); // expected-warning {{incompatible type passing 'id<P0,P1>', expected 'id<P2>'}}
 }
 
 int f11(int cond, A* a, B* b) {

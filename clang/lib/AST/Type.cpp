@@ -22,6 +22,9 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
+ObjCInterfaceType *ObjCObjectPointerType::IdInterfaceT;
+ObjCInterfaceType *ObjCObjectPointerType::ClassInterfaceT;
+
 bool QualType::isConstant(ASTContext &Ctx) const {
   if (isConstQualified())
     return true;
@@ -295,6 +298,15 @@ const FunctionProtoType *Type::getAsFunctionProtoType() const {
   return dyn_cast_or_null<FunctionProtoType>(getAsFunctionType());
 }
 
+QualType Type::getPointeeType() const {
+  if (const PointerType *PT = getAsPointerType())
+    return PT->getPointeeType();
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
+    return OPT->getPointeeType();
+  if (const BlockPointerType *BPT = getAsBlockPointerType())
+    return BPT->getPointeeType();
+  return QualType();
+}
 
 const PointerType *Type::getAsPointerType() const {
   // If this is directly a pointer type, return it.
@@ -604,6 +616,14 @@ const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
   // type pointer if it is the right class.
   if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
     if (OPT->isObjCQualifiedIdType())
+      return OPT;
+  }
+  return 0;
+}
+
+const ObjCObjectPointerType *Type::getAsObjCInterfacePointerType() const {
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+    if (OPT->getInterfaceType())
       return OPT;
   }
   return 0;
@@ -1016,16 +1036,18 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
 }
 
 void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID,
-                                    const ObjCInterfaceDecl *Decl,
-                                    ObjCProtocolDecl **protocols,
+                                    QualType OIT, ObjCProtocolDecl **protocols,
                                     unsigned NumProtocols) {
-  ID.AddPointer(Decl);
+  ID.AddPointer(OIT.getAsOpaquePtr());
   for (unsigned i = 0; i != NumProtocols; i++)
     ID.AddPointer(protocols[i]);
 }
 
 void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getDecl(), &Protocols[0], getNumProtocols());
+  if (getNumProtocols())
+    Profile(ID, getPointeeType(), &Protocols[0], getNumProtocols());
+  else
+    Profile(ID, getPointeeType(), 0, 0);
 }
 
 void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
@@ -1663,6 +1685,14 @@ void TypenameType::getAsStringInternal(std::string &InnerString, const PrintingP
     InnerString = MyString + ' ' + InnerString;
 }
 
+bool ObjCInterfaceType::isObjCIdInterface() const {
+  return this == ObjCObjectPointerType::getIdInterface();
+}
+
+bool ObjCInterfaceType::isObjCClassInterface() const {
+  return this == ObjCObjectPointerType::getClassInterface();
+}  
+
 void ObjCInterfaceType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
@@ -1671,15 +1701,7 @@ void ObjCInterfaceType::getAsStringInternal(std::string &InnerString, const Prin
 
 void ObjCObjectPointerType::getAsStringInternal(std::string &InnerString, 
                                                 const PrintingPolicy &Policy) const {
-  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
-    InnerString = ' ' + InnerString;
-
-  std::string ObjCQIString;
-  
-  if (getDecl())
-    ObjCQIString = getDecl()->getNameAsString();
-  else
-    ObjCQIString = "id";
+  std::string ObjCQIString = getInterfaceType()->getDecl()->getNameAsString();
 
   if (!qual_empty()) {
     ObjCQIString += '<';
@@ -1690,6 +1712,11 @@ void ObjCObjectPointerType::getAsStringInternal(std::string &InnerString,
     }
     ObjCQIString += '>';
   }
+  if (!isObjCIdType() && !isObjCQualifiedIdType())
+    ObjCQIString += " *"; // Don't forget the implicit pointer.
+  else if (!InnerString.empty()) // Prefix the basic type, e.g. 'typedefname X'.
+    InnerString = ' ' + InnerString;
+
   InnerString = ObjCQIString + InnerString;
 }
 
