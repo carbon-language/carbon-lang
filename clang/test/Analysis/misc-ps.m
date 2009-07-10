@@ -341,3 +341,12 @@ void handle_funcptr_voidptr_casts() {
   handle_funcptr_voidptr_casts_aux_3(ptr);
 }
 
+// RegionStore::Retrieve previously crashed on this example.  This example
+// was previously in the test file 'xfail_regionstore_wine_crash.c'.
+void testA() {
+  long x = 0;
+  char *y = (char *) &x;
+  if (!*y)
+    return;
+}
+
