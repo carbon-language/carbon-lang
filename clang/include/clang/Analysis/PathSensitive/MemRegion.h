@@ -686,7 +686,7 @@ public:
   RegionTy* getRegion(const A1 a1);
   
   template <typename RegionTy, typename A1>
-  RegionTy* getRegion(const A1 a1, const MemRegion* superRegion);
+  RegionTy* getSubRegion(const A1 a1, const MemRegion* superRegion);
   
   template <typename RegionTy, typename A1, typename A2>
   RegionTy* getRegion(const A1 a1, const A2 a2);
@@ -732,8 +732,8 @@ RegionTy* MemRegionManager::getRegion(const A1 a1) {
 }
 
 template <typename RegionTy, typename A1>
-RegionTy* MemRegionManager::getRegion(const A1 a1, const MemRegion *superRegion)
-{  
+RegionTy* MemRegionManager::getSubRegion(const A1 a1,
+                                         const MemRegion *superRegion) {
   llvm::FoldingSetNodeID ID;  
   RegionTy::ProfileRegion(ID, a1, superRegion);  
   void* InsertPos;

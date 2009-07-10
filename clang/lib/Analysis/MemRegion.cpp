@@ -298,24 +298,24 @@ SymbolicRegion* MemRegionManager::getSymbolicRegion(SymbolRef sym) {
 
 FieldRegion* MemRegionManager::getFieldRegion(const FieldDecl* d,
                                               const MemRegion* superRegion) {
-  return getRegion<FieldRegion>(d, superRegion);
+  return getSubRegion<FieldRegion>(d, superRegion);
 }
 
 ObjCIvarRegion*
 MemRegionManager::getObjCIvarRegion(const ObjCIvarDecl* d,
                                     const MemRegion* superRegion) {
-  return getRegion<ObjCIvarRegion>(d, superRegion);
+  return getSubRegion<ObjCIvarRegion>(d, superRegion);
 }
 
 ObjCObjectRegion*
 MemRegionManager::getObjCObjectRegion(const ObjCInterfaceDecl* d,
                                       const MemRegion* superRegion) {
-  return getRegion<ObjCObjectRegion>(d, superRegion);
+  return getSubRegion<ObjCObjectRegion>(d, superRegion);
 }
 
 TypedViewRegion* 
 MemRegionManager::getTypedViewRegion(QualType t, const MemRegion* superRegion) {
-  return getRegion<TypedViewRegion>(t, superRegion);
+  return getSubRegion<TypedViewRegion>(t, superRegion);
 }
 
 AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
