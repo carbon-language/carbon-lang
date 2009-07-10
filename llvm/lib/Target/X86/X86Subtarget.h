@@ -150,7 +150,6 @@ public:
   bool hasAVX() const { return HasAVX; }
   bool hasFMA3() const { return HasFMA3; }
   bool hasFMA4() const { return HasFMA4; }
-
   bool isBTMemSlow() const { return IsBTMemSlow; }
 
   unsigned getAsmFlavor() const {
@@ -161,28 +160,25 @@ public:
   bool isFlavorIntel() const { return AsmFlavor == Intel; }
 
   bool isTargetDarwin() const { return TargetType == isDarwin; }
-  bool isTargetELF() const {
-    return TargetType == isELF;
-  }
+  bool isTargetELF() const { return TargetType == isELF; }
   bool isTargetWindows() const { return TargetType == isWindows; }
   bool isTargetMingw() const { return TargetType == isMingw; }
-  bool isTargetCygMing() const { return (TargetType == isMingw ||
-                                         TargetType == isCygwin); }
+  bool isTargetCygMing() const {
+    return TargetType == isMingw || TargetType == isCygwin;
+  }
   bool isTargetCygwin() const { return TargetType == isCygwin; }
   bool isTargetWin64() const {
-    return (Is64Bit && (TargetType == isMingw || TargetType == isWindows));
+    return Is64Bit && (TargetType == isMingw || TargetType == isWindows);
   }
 
   std::string getDataLayout() const {
     const char *p;
     if (is64Bit())
       p = "e-p:64:64-s:64-f64:64:64-i64:64:64-f80:128:128";
-    else {
-      if (isTargetDarwin())
-        p = "e-p:32:32-f64:32:64-i64:32:64-f80:128:128";
-      else
-        p = "e-p:32:32-f64:32:64-i64:32:64-f80:32:32";
-    }
+    else if (isTargetDarwin())
+      p = "e-p:32:32-f64:32:64-i64:32:64-f80:128:128";
+    else
+      p = "e-p:32:32-f64:32:64-i64:32:64-f80:32:32";
     return std::string(p);
   }
 
@@ -197,11 +193,18 @@ public:
   /// isLinux - Return true if the target is "Linux".
   bool isLinux() const { return IsLinux; }
 
+  
+  /// ClassifyGlobalReference - Classify a global variable reference for the
+  /// current subtarget according to how we should reference it in a non-pcrel
+  /// context.
+  unsigned char ClassifyGlobalReference(const GlobalValue *GV,
+                                        const TargetMachine &TM)const;
+  
   /// True if accessing the GV requires an extra load. For Windows, dllimported
   /// symbols are indirect, loading the value at address GV rather then the
   /// value of GV itself. This means that the GlobalAddress must be in the base
   /// or index register of the address, not the GV offset field.
-  bool GVRequiresExtraLoad(const GlobalValue* GV, const TargetMachine &TM)const;
+  bool GVRequiresExtraLoad(const GlobalValue *GV, const TargetMachine &TM)const;
 
   /// True if accessing the GV requires a register.  This is a superset of the
   /// cases where GVRequiresExtraLoad is true.  Some variations of PIC require

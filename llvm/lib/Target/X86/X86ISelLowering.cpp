@@ -4553,50 +4553,20 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
                                       int64_t Offset,
                                       SelectionDAG &DAG) const {
   bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
-  bool ExtraLoadRequired =
-    Subtarget->GVRequiresExtraLoad(GV, getTargetMachine());
 
   // Create the TargetGlobalAddress node, folding in the constant
   // offset if it is legal.
+  unsigned char OpFlags =
+    Subtarget->ClassifyGlobalReference(GV, getTargetMachine());
+  bool ExtraLoadRequired = isGlobalStubReference(OpFlags);
+  
+  
   SDValue Result;
   if (!IsPIC && !ExtraLoadRequired && isInt32(Offset)) {
     // A direct static reference to a global.
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
     Offset = 0;
   } else {
-    unsigned char OpFlags = 0;
-    
-    if (GV->hasDLLImportLinkage())
-      OpFlags = X86II::MO_DLLIMPORT;
-    else if (Subtarget->isPICStyleRIPRel()) {
-      if (ExtraLoadRequired)
-        OpFlags = X86II::MO_GOTPCREL;
-    } else if (Subtarget->isPICStyleGOT()) {
-      if (ExtraLoadRequired)
-        OpFlags = X86II::MO_GOT;
-      else
-        OpFlags = X86II::MO_GOTOFF;
-    } else if (Subtarget->isPICStyleStub()) {
-      // In darwin, we have multiple different stub types, and we have both PIC
-      // and -mdynamic-no-pic.  Determine whether we have a stub reference
-      // and/or whether the reference is relative to the PIC base or not.
-      
-      // Link-once, declaration, or Weakly-linked global variables need
-      // non-lazily-resolved stubs.
-      if (!ExtraLoadRequired) {
-        // Not a stub reference.
-        OpFlags = IsPIC ? X86II::MO_PIC_BASE_OFFSET : 0;
-      } else if (!GV->hasHiddenVisibility()) {
-        // Non-hidden $non_lazy_ptr reference.
-        OpFlags = IsPIC ? X86II::MO_DARWIN_NONLAZY_PIC_BASE :
-                          X86II::MO_DARWIN_NONLAZY;
-      } else {
-        // Hidden $non_lazy_ptr reference.
-        OpFlags = IsPIC ? X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE :
-                          X86II::MO_DARWIN_HIDDEN_NONLAZY;
-      }
-    }
-    
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0, OpFlags);
   }
   

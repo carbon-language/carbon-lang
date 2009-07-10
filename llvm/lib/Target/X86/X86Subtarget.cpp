@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "subtarget"
 #include "X86Subtarget.h"
+#include "X86InstrInfo.h"
 #include "X86GenSubtarget.inc"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
@@ -34,37 +35,89 @@ AsmWriterFlavor("x86-asm-syntax", cl::init(X86Subtarget::Unset),
     clEnumValEnd));
 
 
+/// ClassifyGlobalReference - Classify a global variable reference for the
+/// current subtarget according to how we should reference it in a non-pcrel
+/// context.
+unsigned char X86Subtarget::
+ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
+  // DLLImport only exists on windows, it is implemented as a load from a
+  // DLLIMPORT stub.
+  if (GV->hasDLLImportLinkage())
+    return X86II::MO_DLLIMPORT;
+
+  // X86-64 in PIC mode.
+  if (isPICStyleRIPRel()) {
+    // Large model never uses stubs.
+    if (TM.getCodeModel() == CodeModel::Large)
+      return X86II::MO_NO_FLAG;
+      
+      if (isTargetDarwin()) {
+        // If symbol visibility is hidden, the extra load is not needed if
+        // target is x86-64 or the symbol is definitely defined in the current
+        // translation unit.
+        if (GV->hasDefaultVisibility() &&
+            (GV->isDeclaration() || GV->isWeakForLinker()))
+          return X86II::MO_GOTPCREL;
+      } else {
+        assert(isTargetELF() && "Unknown rip-relative target");
+
+        // Extra load is needed for all externally visible.
+        if (!GV->hasLocalLinkage() && GV->hasDefaultVisibility())
+          return X86II::MO_GOTPCREL;
+      }
+
+    return X86II::MO_NO_FLAG;
+  }
+  
+  if (isPICStyleGOT()) {   // 32-bit ELF targets.
+    // Extra load is needed for all externally visible.
+    if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
+      return X86II::MO_GOTOFF;
+    return X86II::MO_GOT;
+  }
+  
+  if (isPICStyleStub()) {
+    // In Darwin/32, we have multiple different stub types, and we have both PIC
+    // and -mdynamic-no-pic.  Determine whether we have a stub reference
+    // and/or whether the reference is relative to the PIC base or not.
+    bool IsPIC = TM.getRelocationModel() == Reloc::PIC_;
+    
+    // If this is a strong reference to a definition, it is definitely not
+    // through a stub.
+    if (!GV->isDeclaration() && !GV->isWeakForLinker())
+      return IsPIC ? X86II::MO_PIC_BASE_OFFSET : 0;
+
+    // Unless we have a symbol with hidden visibility, we have to go through a
+    // normal $non_lazy_ptr stub because this symbol might be resolved late.
+    if (!GV->hasHiddenVisibility()) {
+      // Non-hidden $non_lazy_ptr reference.
+      return IsPIC ? X86II::MO_DARWIN_NONLAZY_PIC_BASE :
+                     X86II::MO_DARWIN_NONLAZY;
+    }
+    
+    // If symbol visibility is hidden, we have a stub for common symbol
+    // references and external declarations.
+    if (GV->isDeclaration() || GV->hasCommonLinkage()) {
+      // Hidden $non_lazy_ptr reference.
+      return IsPIC ? X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE :
+                     X86II::MO_DARWIN_HIDDEN_NONLAZY;
+    }
+    
+    // Otherwise, no stub.
+    return IsPIC ? X86II::MO_PIC_BASE_OFFSET : 0;
+  }
+  
+  // Direct static reference to global.
+  return X86II::MO_NO_FLAG;
+}
+
 /// True if accessing the GV requires an extra load. For Windows, dllimported
 /// symbols are indirect, loading the value at address GV rather then the
 /// value of GV itself. This means that the GlobalAddress must be in the base
 /// or index register of the address, not the GV offset field.
 bool X86Subtarget::GVRequiresExtraLoad(const GlobalValue *GV,
                                        const TargetMachine &TM) const {
-  // Windows targets only require an extra load for DLLImport linkage values,
-  // and they need these regardless of whether we're in PIC mode or not.
-  if (isTargetCygMing() || isTargetWindows())
-    return GV->hasDLLImportLinkage();
-
-  if (TM.getRelocationModel() == Reloc::Static ||
-      TM.getCodeModel() == CodeModel::Large)
-    return false;
-    
-  if (isTargetDarwin()) {
-    bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
-    if (GV->hasHiddenVisibility() &&
-        (Is64Bit || (!isDecl && !GV->hasCommonLinkage())))
-      // If symbol visibility is hidden, the extra load is not needed if
-      // target is x86-64 or the symbol is definitely defined in the current
-      // translation unit.
-      return false;
-    return isDecl || GV->isWeakForLinker();
-  } else if (isTargetELF()) {
-    // Extra load is needed for all externally visible.
-    if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
-      return false;
-    return true;
-  }
-  return false;
+  return isGlobalStubReference(ClassifyGlobalReference(GV, TM));
 }
 
 /// True if accessing the GV requires a register.  This is a superset of the
