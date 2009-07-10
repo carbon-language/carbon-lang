@@ -283,25 +283,25 @@ private:
   void setLeft(ImutAVLTree* NewLeft) {
     assert(isMutable() &&
            "Only a mutable tree can have its left subtree changed.");
-    assert(!hasCachedDigest() &&
-           "A mutable tree cannot have a cached digest.");
-
     Left = reinterpret_cast<uintptr_t>(NewLeft) | LeftFlags;
   }
 
   /// setRight - Changes the reference of the right subtree.  Used internally
   ///  by ImutAVLFactory.
   void setRight(ImutAVLTree* NewRight) {
-    assert (isMutable() &&
-            "Only a mutable tree can have its right subtree changed.");
+    assert(isMutable() &&
+           "Only a mutable tree can have its right subtree changed.");
 
     Right = NewRight;
+    // Set the NoCachedDigest flag.
+    Left = Left | NoCachedDigest;
+
   }
 
   /// setHeight - Changes the height of the tree.  Used internally by
   ///  ImutAVLFactory.
   void setHeight(unsigned h) {
-    assert (isMutable() && "Only a mutable tree can have its height changed.");
+    assert(isMutable() && "Only a mutable tree can have its height changed.");
     Height = h;
   }
 
@@ -330,12 +330,7 @@ private:
       return Digest;
 
     uint32_t X = ComputeDigest(getLeft(), getRight(), getValue());
-
-    if (!isMutable()) {
-      Digest = X;
-      MarkedCachedDigest();
-    }
-
+    Digest = X;
     return X;
   }
 };
@@ -412,7 +407,6 @@ private:
     return ( hl > hr ? hl : hr ) + 1;
   }
 
-
   static bool CompareTreeWithSection(TreeTy* T,
                                      typename TreeTy::iterator& TI,
                                      typename TreeTy::iterator& TE) {
@@ -454,7 +448,6 @@ private:
 
       // We found a collision.  Perform a comparison of Contents('T')
       // with Contents('L')+'V'+Contents('R').
-
       typename TreeTy::iterator TI = T->begin(), TE = T->end();
 
       // First compare Contents('L') with the (initial) contents of T.
@@ -471,17 +464,15 @@ private:
       if (!CompareTreeWithSection(R, TI, TE))
         continue;
 
-      if (TI != TE) // Contents('R') did not match suffix of 'T'.
-        continue;
+      if (TI != TE)
+        continue; // Contents('R') did not match suffix of 'T'.
 
       // Trees did match!  Return 'T'.
       return T;
     }
 
     // No tree with the contents: Contents('L')+'V'+Contents('R').
-    // Create it.
-
-    // Allocate the new tree node and insert it into the cache.
+    // Create it.  Allocate the new tree node and insert it into the cache.
     BumpPtrAllocator& A = getAllocator();
     TreeTy* T = (TreeTy*) A.Allocate<TreeTy>();
     new (T) TreeTy(L,R,V,IncrementHeight(L,R));
@@ -491,7 +482,6 @@ private:
     // Because our digest is associative and based on the contents of
     // the set, this should hopefully not cause any strange bugs.
     // 'T' is inserted by 'MarkImmutable'.
-
     return T;
   }
 
@@ -504,7 +494,8 @@ private:
       OldTree->setHeight(IncrementHeight(L,R));
       return OldTree;
     }
-    else return CreateNode(L, Value(OldTree), R);
+    else
+      return CreateNode(L, Value(OldTree), R);
   }
 
   /// Balance - Used by Add_internal and Remove_internal to
