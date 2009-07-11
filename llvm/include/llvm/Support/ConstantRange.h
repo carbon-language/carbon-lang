@@ -58,6 +58,12 @@ public:
   /// assert out if the two APInt's are not the same bit width.
   ConstantRange(const APInt& Lower, const APInt& Upper);
 
+  /// makeICmpRegion - Return the range of values that a value must be within
+  /// in order for the comparison specified by the predicate against range
+  /// Other to be true.
+  static ConstantRange makeICmpRegion(unsigned Pred,
+                                      const ConstantRange &Other);
+
   /// getLower - Return the lower value for this range...
   ///
   const APInt &getLower() const { return Lower; }
@@ -87,6 +93,10 @@ public:
   /// contains - Return true if the specified value is in the set.
   ///
   bool contains(const APInt &Val) const;
+
+  /// contains - Return true if the other range is a subset of this one.
+  ///
+  bool contains(const ConstantRange &CR) const;
 
   /// getSingleElement - If this set contains a single element, return it,
   /// otherwise return null.

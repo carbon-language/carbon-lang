@@ -990,7 +990,7 @@ namespace {
       assert(!CR.isEmptySet() && "Can't deal with empty set.");
 
       if (LV == NE)
-        return makeConstantRange(ICmpInst::ICMP_NE, CR);
+        return ConstantRange::makeICmpRegion(ICmpInst::ICMP_NE, CR);
 
       unsigned LV_s = LV & (SGT_BIT|SLT_BIT);
       unsigned LV_u = LV & (UGT_BIT|ULT_BIT);
@@ -999,71 +999,22 @@ namespace {
       ConstantRange Range(CR.getBitWidth());
 
       if (LV_s == SGT_BIT) {
-        Range = Range.maximalIntersectWith(makeConstantRange(
+        Range = Range.maximalIntersectWith(ConstantRange::makeICmpRegion(
                     hasEQ ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_SGT, CR));
       } else if (LV_s == SLT_BIT) {
-        Range = Range.maximalIntersectWith(makeConstantRange(
+        Range = Range.maximalIntersectWith(ConstantRange::makeICmpRegion(
                     hasEQ ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_SLT, CR));
       }
 
       if (LV_u == UGT_BIT) {
-        Range = Range.maximalIntersectWith(makeConstantRange(
+        Range = Range.maximalIntersectWith(ConstantRange::makeICmpRegion(
                     hasEQ ? ICmpInst::ICMP_UGE : ICmpInst::ICMP_UGT, CR));
       } else if (LV_u == ULT_BIT) {
-        Range = Range.maximalIntersectWith(makeConstantRange(
+        Range = Range.maximalIntersectWith(ConstantRange::makeICmpRegion(
                     hasEQ ? ICmpInst::ICMP_ULE : ICmpInst::ICMP_ULT, CR));
       }
 
       return Range;
-    }
-
-    /// makeConstantRange - Creates a ConstantRange representing the set of all
-    /// value that match the ICmpInst::Predicate with any of the values in CR.
-    ConstantRange makeConstantRange(ICmpInst::Predicate ICmpOpcode,
-                                    const ConstantRange &CR) {
-      uint32_t W = CR.getBitWidth();
-      switch (ICmpOpcode) {
-        default: assert(!"Invalid ICmp opcode to makeConstantRange()");
-        case ICmpInst::ICMP_EQ:
-          return ConstantRange(CR.getLower(), CR.getUpper());
-        case ICmpInst::ICMP_NE:
-          if (CR.isSingleElement())
-            return ConstantRange(CR.getUpper(), CR.getLower());
-          return ConstantRange(W);
-        case ICmpInst::ICMP_ULT:
-          return ConstantRange(APInt::getMinValue(W), CR.getUnsignedMax());
-        case ICmpInst::ICMP_SLT:
-          return ConstantRange(APInt::getSignedMinValue(W), CR.getSignedMax());
-        case ICmpInst::ICMP_ULE: {
-          APInt UMax(CR.getUnsignedMax());
-          if (UMax.isMaxValue())
-            return ConstantRange(W);
-          return ConstantRange(APInt::getMinValue(W), UMax + 1);
-        }
-        case ICmpInst::ICMP_SLE: {
-          APInt SMax(CR.getSignedMax());
-          if (SMax.isMaxSignedValue() || (SMax+1).isMaxSignedValue())
-            return ConstantRange(W);
-          return ConstantRange(APInt::getSignedMinValue(W), SMax + 1);
-        }
-        case ICmpInst::ICMP_UGT:
-          return ConstantRange(CR.getUnsignedMin() + 1, APInt::getNullValue(W));
-        case ICmpInst::ICMP_SGT:
-          return ConstantRange(CR.getSignedMin() + 1,
-                               APInt::getSignedMinValue(W));
-        case ICmpInst::ICMP_UGE: {
-          APInt UMin(CR.getUnsignedMin());
-          if (UMin.isMinValue())
-            return ConstantRange(W);
-          return ConstantRange(UMin, APInt::getNullValue(W));
-        }
-        case ICmpInst::ICMP_SGE: {
-          APInt SMin(CR.getSignedMin());
-          if (SMin.isMinSignedValue())
-            return ConstantRange(W);
-          return ConstantRange(SMin, APInt::getSignedMinValue(W));
-        }
-      }
     }
 
 #ifndef NDEBUG

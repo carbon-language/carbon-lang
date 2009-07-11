@@ -23,6 +23,7 @@
 
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Instructions.h"
 using namespace llvm;
 
 /// Initialize a full (the default) or empty set for the specified type.
@@ -44,6 +45,53 @@ ConstantRange::ConstantRange(const APInt &L, const APInt &U) :
          "ConstantRange with unequal bit widths");
   assert((L != U || (L.isMaxValue() || L.isMinValue())) &&
          "Lower == Upper, but they aren't min or max value!");
+}
+
+ConstantRange ConstantRange::makeICmpRegion(unsigned Pred,
+                                            const ConstantRange &CR) {
+  uint32_t W = CR.getBitWidth();
+  switch (Pred) {
+    default: assert(!"Invalid ICmp predicate to makeICmpRegion()");
+    case ICmpInst::ICMP_EQ:
+      return ConstantRange(CR.getLower(), CR.getUpper());
+    case ICmpInst::ICMP_NE:
+      if (CR.isSingleElement())
+        return ConstantRange(CR.getUpper(), CR.getLower());
+      return ConstantRange(W);
+    case ICmpInst::ICMP_ULT:
+      return ConstantRange(APInt::getMinValue(W), CR.getUnsignedMax());
+    case ICmpInst::ICMP_SLT:
+      return ConstantRange(APInt::getSignedMinValue(W), CR.getSignedMax());
+    case ICmpInst::ICMP_ULE: {
+      APInt UMax(CR.getUnsignedMax());
+      if (UMax.isMaxValue())
+        return ConstantRange(W);
+      return ConstantRange(APInt::getMinValue(W), UMax + 1);
+    }
+    case ICmpInst::ICMP_SLE: {
+      APInt SMax(CR.getSignedMax());
+      if (SMax.isMaxSignedValue() || (SMax+1).isMaxSignedValue())
+        return ConstantRange(W);
+      return ConstantRange(APInt::getSignedMinValue(W), SMax + 1);
+    }
+    case ICmpInst::ICMP_UGT:
+      return ConstantRange(CR.getUnsignedMin() + 1, APInt::getNullValue(W));
+    case ICmpInst::ICMP_SGT:
+      return ConstantRange(CR.getSignedMin() + 1,
+                           APInt::getSignedMinValue(W));
+    case ICmpInst::ICMP_UGE: {
+      APInt UMin(CR.getUnsignedMin());
+      if (UMin.isMinValue())
+        return ConstantRange(W);
+      return ConstantRange(UMin, APInt::getNullValue(W));
+    }
+    case ICmpInst::ICMP_SGE: {
+      APInt SMin(CR.getSignedMin());
+      if (SMin.isMinSignedValue())
+        return ConstantRange(W);
+      return ConstantRange(SMin, APInt::getSignedMinValue(W));
+    }
+  }
 }
 
 /// isFullSet - Return true if this set contains all of the elements possible
@@ -154,6 +202,30 @@ bool ConstantRange::contains(const APInt &V) const {
     return Lower.ule(V) && V.ult(Upper);
   else
     return Lower.ule(V) || V.ult(Upper);
+}
+
+/// contains - Return true if the argument is a subset of this range.
+/// Two equal set contain each other. The empty set is considered to be
+/// contained by all other sets.
+///
+bool ConstantRange::contains(const ConstantRange &Other) const {
+  if (isFullSet()) return true;
+  if (Other.isFullSet()) return false;
+  if (Other.isEmptySet()) return true;
+  if (isEmptySet()) return false;
+
+  if (!isWrappedSet()) {
+    if (Other.isWrappedSet())
+      return false;
+
+    return Lower.ule(Other.getLower()) && Other.getUpper().ule(Upper);
+  }
+
+  if (!Other.isWrappedSet())
+    return Other.getUpper().ule(Upper) ||
+           Lower.ule(Other.getLower());
+
+  return Other.getUpper().ule(Upper) && Lower.ule(Other.getLower());
 }
 
 /// subtract - Subtract the specified constant from the endpoints of this
