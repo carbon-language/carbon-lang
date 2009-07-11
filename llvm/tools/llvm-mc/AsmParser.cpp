@@ -850,7 +850,7 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
   // Compute alignment in bytes.
   if (IsPow2) {
     // FIXME: Diagnose overflow.
-    Alignment = 1 << Alignment;
+    Alignment = 1LL << Alignment;
   }
 
   // Diagnose non-sensical max bytes to fill.
