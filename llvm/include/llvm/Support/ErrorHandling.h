@@ -41,11 +41,12 @@ namespace llvm {
 
   /// Reports a serious error, calling any installed error handler.
   /// If no error handler is installed the default is to print the message to
+  /// standard error, followed by a newline.
   void llvm_report_error(const std::string &reason) NORETURN;
 
-  /// This function calls abort().
-  /// Call this after assert(0), so that compiler knows the path is not
-  /// reachable.
+  /// This function calls abort(), and prints the optional message to stderr.
+  /// Call this instead of assert(0), so that compiler knows the path is not
+  /// reachable even for NDEBUG builds.
   void llvm_unreachable(const char *msg=0) NORETURN;
 }
 
