@@ -1331,12 +1331,13 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
   if (AM.Disp && (AM.Base.Reg.getNode() || AM.IndexReg.getNode()))
     Complexity++;
 
-  if (Complexity > 2) {
-    SDValue Segment;
-    getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
-    return true;
-  }
-  return false;
+  // If it isn't worth using an LEA, reject it.
+  if (Complexity < 2)
+    return false;
+  
+  SDValue Segment;
+  getAddressOperands(AM, Base, Scale, Index, Disp, Segment);
+  return true;
 }
 
 /// SelectTLSADDRAddr - This is only run on TargetGlobalTLSAddress nodes.

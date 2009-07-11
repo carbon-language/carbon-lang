@@ -1409,7 +1409,9 @@ def ATOMUMAX64: I<0, Pseudo, (outs GR64:$dst),(ins i64mem:$ptr, GR64:$val),
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
 
-// ConstantPool GlobalAddress, ExternalSymbol, and JumpTable
+// ConstantPool GlobalAddress, ExternalSymbol, and JumpTable when not in small
+// code model mode, should use 'movabs'.  FIXME: This is really a hack, the
+//  'movabs' predicate should handle this sort of thing.
 def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
           (MOV64ri tconstpool  :$dst)>, Requires<[NotSmallCode]>;
 def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
@@ -1421,7 +1423,7 @@ def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
 
 // If we have small model and -static mode, it is safe to store global addresses
 // directly as immediates.  FIXME: This is really a hack, the 'imm' predicate
-// should handle this sort of thing.
+// for MOV64mi32 should handle this sort of thing.
 def : Pat<(store (i64 (X86Wrapper tconstpool:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, tconstpool:$src)>,
           Requires<[SmallCode, IsStatic]>;
