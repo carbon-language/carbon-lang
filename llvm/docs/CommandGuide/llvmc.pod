@@ -73,8 +73,9 @@ default behaviour.
 
 =item B<--temp-dir> I<directory>
 
-Write temporary files to the specified directory. This option overrides
-I<--save-temps>.
+Store temporary files in the given directory. This directory is deleted on exit
+unless I<--save-temps> is specified. If I<--save-temps=obj> is also specified,
+I<--temp-dir> is given the precedence.
 
 =item B<--help>
 

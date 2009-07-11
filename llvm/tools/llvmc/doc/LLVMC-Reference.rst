@@ -97,8 +97,10 @@ configuration libraries:
   the ``-o`` option. The ``--save-temps=cwd`` and ``--save-temps`` switches are
   both synonyms for the default behaviour.
 
-* ``--temp-dir`` - Write temporary files to the specified directory. This option
-  overrides ``--save-temps``.
+* ``--temp-dir DIRECTORY`` - Store temporary files in the given directory. This
+  directory is deleted on exit unless ``--save-temps`` is specified. If
+  ``--save-temps=obj`` is also specified, ``--temp-dir`` is given the
+  precedence.
 
 * ``--check-graph`` - Check the compilation for common errors like mismatched
   output/input language names, multiple default edges and cycles. Because of
