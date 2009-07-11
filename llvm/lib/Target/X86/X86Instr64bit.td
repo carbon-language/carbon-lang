@@ -45,9 +45,8 @@ def lea64_32mem : Operand<i32> {
 // Complex Pattern Definitions.
 //
 def lea64addr : ComplexPattern<i64, 4, "SelectLEAAddr",
-                        [add, mul, X86mul_imm, shl, or, frameindex, X86Wrapper,
-                         X86WrapperRIP],
-                        []>;
+                        [add, mul, X86mul_imm, shl, or, frameindex,
+                         X86WrapperRIP], []>;
 
 def tls64addr : ComplexPattern<i64, 4, "SelectTLSADDRAddr",
                                [tglobaltlsaddr], []>;
@@ -1420,6 +1419,19 @@ def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
           (MOV64ri tglobaladdr :$dst)>, Requires<[NotSmallCode]>;
 def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
           (MOV64ri texternalsym:$dst)>, Requires<[NotSmallCode]>;
+
+// In static codegen with small code model, we can get the address of a label
+// into a register with 'movl'.  FIXME: This is a hack, the 'imm' predicate of
+// the MOV64ri64i32 should accept these.
+def : Pat<(i64 (X86Wrapper tconstpool  :$dst)),
+          (MOV64ri64i32 tconstpool  :$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper tjumptable  :$dst)),
+          (MOV64ri64i32 tjumptable  :$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper tglobaladdr :$dst)),
+          (MOV64ri64i32 tglobaladdr :$dst)>, Requires<[SmallCode]>;
+def : Pat<(i64 (X86Wrapper texternalsym:$dst)),
+          (MOV64ri64i32 texternalsym:$dst)>, Requires<[SmallCode]>;
+
 
 // If we have small model and -static mode, it is safe to store global addresses
 // directly as immediates.  FIXME: This is really a hack, the 'imm' predicate

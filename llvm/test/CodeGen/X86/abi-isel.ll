@@ -1010,7 +1010,7 @@ define i8* @bar00() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @src to i8*)
 ; LINUX-64-STATIC: bar00:
-; LINUX-64-STATIC: leaq    src, %rax
+; LINUX-64-STATIC: movl    $src, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1018,7 +1018,7 @@ define i8* @bxr00() nounwind {
 entry:
 	ret i8* bitcast ([32 x i32]* @xsrc to i8*)
 ; LINUX-64-STATIC: bxr00:
-; LINUX-64-STATIC: leaq    xsrc, %rax
+; LINUX-64-STATIC: movl    $xsrc, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1026,7 +1026,7 @@ define i8* @bar01() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @dst to i8*)
 ; LINUX-64-STATIC: bar01:
-; LINUX-64-STATIC: leaq    dst, %rax
+; LINUX-64-STATIC: movl    $dst, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1034,7 +1034,7 @@ define i8* @bxr01() nounwind {
 entry:
 	ret i8* bitcast ([32 x i32]* @xdst to i8*)
 ; LINUX-64-STATIC: bxr01:
-; LINUX-64-STATIC: leaq    xdst, %rax
+; LINUX-64-STATIC: movl    $xdst, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1042,7 +1042,7 @@ define i8* @bar02() nounwind {
 entry:
 	ret i8* bitcast (i32** @ptr to i8*)
 ; LINUX-64-STATIC: bar02:
-; LINUX-64-STATIC: leaq    ptr, %rax
+; LINUX-64-STATIC: movl    $ptr, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1050,7 +1050,7 @@ define i8* @bar03() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @dsrc to i8*)
 ; LINUX-64-STATIC: bar03:
-; LINUX-64-STATIC: leaq    dsrc, %rax
+; LINUX-64-STATIC: movl    $dsrc, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1058,7 +1058,7 @@ define i8* @bar04() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @ddst to i8*)
 ; LINUX-64-STATIC: bar04:
-; LINUX-64-STATIC: leaq    ddst, %rax
+; LINUX-64-STATIC: movl    $ddst, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1066,7 +1066,7 @@ define i8* @bar05() nounwind {
 entry:
 	ret i8* bitcast (i32** @dptr to i8*)
 ; LINUX-64-STATIC: bar05:
-; LINUX-64-STATIC: leaq    dptr, %rax
+; LINUX-64-STATIC: movl    $dptr, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1074,7 +1074,7 @@ define i8* @bar06() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @lsrc to i8*)
 ; LINUX-64-STATIC: bar06:
-; LINUX-64-STATIC: leaq    lsrc, %rax
+; LINUX-64-STATIC: movl    $lsrc, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1082,7 +1082,7 @@ define i8* @bar07() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @ldst to i8*)
 ; LINUX-64-STATIC: bar07:
-; LINUX-64-STATIC: leaq    ldst, %rax
+; LINUX-64-STATIC: movl    $ldst, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1090,7 +1090,7 @@ define i8* @bar08() nounwind {
 entry:
 	ret i8* bitcast (i32** @lptr to i8*)
 ; LINUX-64-STATIC: bar08:
-; LINUX-64-STATIC: leaq    lptr, %rax
+; LINUX-64-STATIC: movl    $lptr, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1098,7 +1098,7 @@ define i8* @har00() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @src to i8*)
 ; LINUX-64-STATIC: har00:
-; LINUX-64-STATIC: leaq    src, %rax
+; LINUX-64-STATIC: movl    $src, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1106,7 +1106,7 @@ define i8* @hxr00() nounwind {
 entry:
 	ret i8* bitcast ([32 x i32]* @xsrc to i8*)
 ; LINUX-64-STATIC: hxr00:
-; LINUX-64-STATIC: leaq    xsrc, %rax
+; LINUX-64-STATIC: movl    $xsrc, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1114,7 +1114,7 @@ define i8* @har01() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @dst to i8*)
 ; LINUX-64-STATIC: har01:
-; LINUX-64-STATIC: leaq    dst, %rax
+; LINUX-64-STATIC: movl    $dst, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1122,7 +1122,7 @@ define i8* @hxr01() nounwind {
 entry:
 	ret i8* bitcast ([32 x i32]* @xdst to i8*)
 ; LINUX-64-STATIC: hxr01:
-; LINUX-64-STATIC: leaq    xdst, %rax
+; LINUX-64-STATIC: movl    $xdst, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1140,7 +1140,7 @@ define i8* @har03() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @dsrc to i8*)
 ; LINUX-64-STATIC: har03:
-; LINUX-64-STATIC: leaq    dsrc, %rax
+; LINUX-64-STATIC: movl    $dsrc, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1148,7 +1148,7 @@ define i8* @har04() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @ddst to i8*)
 ; LINUX-64-STATIC: har04:
-; LINUX-64-STATIC: leaq    ddst, %rax
+; LINUX-64-STATIC: movl    $ddst, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1166,7 +1166,7 @@ define i8* @har06() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @lsrc to i8*)
 ; LINUX-64-STATIC: har06:
-; LINUX-64-STATIC: leaq    lsrc, %rax
+; LINUX-64-STATIC: movl    $lsrc, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1174,7 +1174,7 @@ define i8* @har07() nounwind {
 entry:
 	ret i8* bitcast ([131072 x i32]* @ldst to i8*)
 ; LINUX-64-STATIC: har07:
-; LINUX-64-STATIC: leaq    ldst, %rax
+; LINUX-64-STATIC: movl    $ldst, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1192,7 +1192,7 @@ define i8* @bat00() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @src, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC: bat00:
-; LINUX-64-STATIC: leaq    src+64, %rax
+; LINUX-64-STATIC: movl    $src+64, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1200,7 +1200,7 @@ define i8* @bxt00() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([32 x i32]* @xsrc, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC: bxt00:
-; LINUX-64-STATIC: leaq    xsrc+64, %rax
+; LINUX-64-STATIC: movl    $xsrc+64, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1208,7 +1208,7 @@ define i8* @bat01() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC: bat01:
-; LINUX-64-STATIC: leaq    dst+64, %rax
+; LINUX-64-STATIC: movl    $dst+64, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1216,7 +1216,7 @@ define i8* @bxt01() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC: bxt01:
-; LINUX-64-STATIC: leaq    xdst+64, %rax
+; LINUX-64-STATIC: movl    $xdst+64, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1236,7 +1236,7 @@ define i8* @bat03() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC: bat03:
-; LINUX-64-STATIC: leaq    dsrc+64, %rax
+; LINUX-64-STATIC: movl    $dsrc+64, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1244,7 +1244,7 @@ define i8* @bat04() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC: bat04:
-; LINUX-64-STATIC: leaq    ddst+64, %rax
+; LINUX-64-STATIC: movl    $ddst+64, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1264,7 +1264,7 @@ define i8* @bat06() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC: bat06:
-; LINUX-64-STATIC: leaq    lsrc+64, %rax
+; LINUX-64-STATIC: movl    $lsrc+64, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1272,7 +1272,7 @@ define i8* @bat07() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC: bat07:
-; LINUX-64-STATIC: leaq    ldst+64, %rax
+; LINUX-64-STATIC: movl    $ldst+64, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1292,7 +1292,7 @@ define i8* @bam00() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @src, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC: bam00:
-; LINUX-64-STATIC: leaq    src+262144, %rax
+; LINUX-64-STATIC: movl    $src+262144, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1300,7 +1300,7 @@ define i8* @bam01() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @dst, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC: bam01:
-; LINUX-64-STATIC: leaq    dst+262144, %rax
+; LINUX-64-STATIC: movl    $dst+262144, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1308,7 +1308,7 @@ define i8* @bxm01() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([32 x i32]* @xdst, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC: bxm01:
-; LINUX-64-STATIC: leaq    xdst+262144, %rax
+; LINUX-64-STATIC: movl    $xdst+262144, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1328,7 +1328,7 @@ define i8* @bam03() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @dsrc, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC: bam03:
-; LINUX-64-STATIC: leaq    dsrc+262144, %rax
+; LINUX-64-STATIC: movl    $dsrc+262144, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1336,7 +1336,7 @@ define i8* @bam04() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @ddst, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC: bam04:
-; LINUX-64-STATIC: leaq    ddst+262144, %rax
+; LINUX-64-STATIC: movl    $ddst+262144, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1356,7 +1356,7 @@ define i8* @bam06() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @lsrc, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC: bam06:
-; LINUX-64-STATIC: leaq    lsrc+262144, %rax
+; LINUX-64-STATIC: movl    $lsrc+262144, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1364,7 +1364,7 @@ define i8* @bam07() nounwind {
 entry:
 	ret i8* bitcast (i32* getelementptr ([131072 x i32]* @ldst, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC: bam07:
-; LINUX-64-STATIC: leaq    ldst+262144, %rax
+; LINUX-64-STATIC: movl    $ldst+262144, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1684,7 +1684,7 @@ define void ()* @address() nounwind {
 entry:
 	ret void ()* @callee
 ; LINUX-64-STATIC: address:
-; LINUX-64-STATIC: leaq    callee, %rax
+; LINUX-64-STATIC: movl    $callee, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1694,7 +1694,7 @@ define void ()* @laddress() nounwind {
 entry:
 	ret void ()* @lcallee
 ; LINUX-64-STATIC: laddress:
-; LINUX-64-STATIC: leaq    lcallee, %rax
+; LINUX-64-STATIC: movl    $lcallee, %eax
 ; LINUX-64-STATIC: ret
 }
 
@@ -1702,7 +1702,7 @@ define void ()* @daddress() nounwind {
 entry:
 	ret void ()* @dcallee
 ; LINUX-64-STATIC: daddress:
-; LINUX-64-STATIC: leaq    dcallee, %rax
+; LINUX-64-STATIC: movl    $dcallee, %eax
 ; LINUX-64-STATIC: ret
 }
 
