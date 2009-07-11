@@ -232,6 +232,17 @@ int main(int argc, char **argv) {
     // Otherwise, we have an error, emit an error message.
     SM.PrintMessage(CheckStr.second, "expected string not found in input",
                     "error");
+    
+    // Print the scanning from here line.  If the current position is at the end
+    // of a line, advance to the start of the next line.
+    const char *Scan = CurPtr;
+    while (Scan != BufferEnd &&
+           (*Scan == ' ' || *Scan == '\t'))
+      ++Scan;
+    if (*Scan == '\n' || *Scan == '\r')
+      CurPtr = Scan+1;
+    
+    
     SM.PrintMessage(SMLoc::getFromPointer(CurPtr), "scanning from here",
                     "note");
     return 1;
