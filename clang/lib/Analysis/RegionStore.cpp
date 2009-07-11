@@ -665,43 +665,69 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
   const MemRegion* MR = cast<loc::MemRegionVal>(L).getRegion();
   const ElementRegion *ER = 0;
 
-  // If the operand is a symbolic or alloca region, create the first element
-  // region on it.
-  if (const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(MR)) {
-    QualType T;
-    // If the SymbolicRegion was cast to another type, use that type.
-    if (const QualType *t = state->get<RegionCasts>(SR)) {
-      T = *t;
-    } else {
-      // Otherwise use the symbol's type.
-      SymbolRef Sym = SR->getSymbol();
-      T = Sym->getType(getContext());
+  switch (MR->getKind()) {
+    case MemRegion::SymbolicRegionKind: {
+      const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
+      QualType T;
+      // If the SymbolicRegion was cast to another type, use that type.
+      if (const QualType *t = state->get<RegionCasts>(SR))
+        T = *t;
+      else {
+        // Otherwise use the symbol's type.
+        SymbolRef Sym = SR->getSymbol();
+        T = Sym->getType(getContext());
+      }
+      
+      QualType EleTy = T->getAsPointerType()->getPointeeType();        
+      SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+      ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());
+      break;        
     }
-    QualType EleTy = T->getAsPointerType()->getPointeeType();
+    case MemRegion::AllocaRegionKind: {
+      // Get the alloca region's current cast type.
+      const AllocaRegion *AR = cast<AllocaRegion>(MR);
+      QualType T = *(state->get<RegionCasts>(AR));
+      QualType EleTy = T->getAsPointerType()->getPointeeType();
+      SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+      ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
+      break;      
+    }
 
-    SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-    ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());
-  } 
-  else if (const AllocaRegion *AR = dyn_cast<AllocaRegion>(MR)) {
-    // Get the alloca region's current cast type.
-
-
-    GRStateTrait<RegionCasts>::lookup_type T = state->get<RegionCasts>(AR);
-    assert(T && "alloca region has no type.");
-    QualType EleTy = cast<PointerType>(T->getTypePtr())->getPointeeType();
-    SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
-    ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
-  } 
-  else if (isa<FieldRegion>(MR)) {
-    // Not track pointer arithmetic on struct fields.
-    return UnknownVal();
-  }
-  else {
-    ER = cast<ElementRegion>(MR);
+    case MemRegion::ElementRegionKind: {
+      ER = cast<ElementRegion>(MR);
+      break;
+    }
+      
+    // Not yet handled.
+    case MemRegion::VarRegionKind:
+    case MemRegion::StringRegionKind:
+    case MemRegion::CompoundLiteralRegionKind:
+    case MemRegion::FieldRegionKind:
+    case MemRegion::ObjCObjectRegionKind:
+    case MemRegion::ObjCIvarRegionKind:
+      return UnknownVal();
+            
+    // TypedViewRegion will soon be removed.
+    case MemRegion::TypedViewRegionKind:
+      return UnknownVal();
+    
+    case MemRegion::CodeTextRegionKind:
+      // Technically this can happen if people do funny things with casts.
+      return UnknownVal();
+      
+    case MemRegion::MemSpaceRegionKind:
+      assert(0 && "Cannot perform pointer arithmetic on a MemSpace");
+      return UnknownVal();
+      
+    case MemRegion::BEG_DECL_REGIONS:
+    case MemRegion::END_DECL_REGIONS:
+    case MemRegion::BEG_TYPED_REGIONS:
+    case MemRegion::END_TYPED_REGIONS:
+      assert(0 && "Infeasible region");
+      return UnknownVal();
   }
 
   SVal Idx = ER->getIndex();
-
   nonloc::ConcreteInt* Base = dyn_cast<nonloc::ConcreteInt>(&Idx);
   nonloc::ConcreteInt* Offset = dyn_cast<nonloc::ConcreteInt>(&R);
 
