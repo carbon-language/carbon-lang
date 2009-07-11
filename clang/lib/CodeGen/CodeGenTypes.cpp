@@ -355,13 +355,14 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
       
   case Type::ObjCObjectPointer: {
-   // Qualified id types don't influence the LLVM type, here we always return
-   // an opaque type for 'id'.
-   const llvm::Type *&T = InterfaceTypes[0];
-   if (!T)
-       T = llvm::OpaqueType::get();
-   return llvm::PointerType::getUnqual(T);
+    // Protocol qualifications do not influence the LLVM type, we just return a
+    // pointer to the underlying interface type. We don't need to worry about
+    // recursive conversion.
+    const llvm::Type *T = 
+      ConvertTypeRecursive(cast<ObjCObjectPointerType>(Ty).getPointeeType());
+    return llvm::PointerType::getUnqual(T);
   }
+
   case Type::Record:
   case Type::Enum: {
     const TagDecl *TD = cast<TagType>(Ty).getDecl();
