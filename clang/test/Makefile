@@ -1,8 +1,9 @@
 LEVEL = ../../..
 include $(LEVEL)/Makefile.common
 
-# Test in all immediate subdirectories if unset.
-TESTDIRS ?= $(shell echo $(PROJ_SRC_DIR)/*/)
+# Test in all immediate subdirectories if unset (except for the .svn and Output
+# directories).
+TESTDIRS ?= $(shell find $(PROJ_SRC_DIR) -depth 1 -type d -not -name .svn -prune -and -not -name Output -prune)
 
 ifndef TESTARGS
 ifdef VERBOSE
