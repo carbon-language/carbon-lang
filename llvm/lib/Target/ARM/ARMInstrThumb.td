@@ -224,10 +224,12 @@ def tLDRH : T1pI2<(outs tGPR:$dst), (ins t_addrmode_s2:$addr),
                 "ldrh", " $dst, $addr",
                 [(set tGPR:$dst, (zextloadi16 t_addrmode_s2:$addr))]>;
 
+let AddedComplexity = 10 in
 def tLDRSB : T1pI1<(outs tGPR:$dst), (ins t_addrmode_rr:$addr),
                  "ldrsb", " $dst, $addr",
                  [(set tGPR:$dst, (sextloadi8 t_addrmode_rr:$addr))]>;
 
+let AddedComplexity = 10 in
 def tLDRSH : T1pI2<(outs tGPR:$dst), (ins t_addrmode_rr:$addr),
                  "ldrsh", " $dst, $addr",
                  [(set tGPR:$dst, (sextloadi16 t_addrmode_rr:$addr))]>;
@@ -619,6 +621,14 @@ def : T1Pat<(zextloadi1 t_addrmode_s1:$addr),
 def : T1Pat<(extloadi1  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
 def : T1Pat<(extloadi8  t_addrmode_s1:$addr),  (tLDRB t_addrmode_s1:$addr)>;
 def : T1Pat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
+
+// If it's possible to use [r,r] address mode for sextload, select to
+// ldr{b|h} + sxt{b|h} instead.
+def : TPat<(sextloadi8 t_addrmode_s1:$addr),
+           (tSXTB (tLDRB t_addrmode_s1:$addr))>;
+def : TPat<(sextloadi16 t_addrmode_s2:$addr),
+           (tSXTH (tLDRH t_addrmode_s2:$addr))>;
+
 
 // Large immediate handling.
 

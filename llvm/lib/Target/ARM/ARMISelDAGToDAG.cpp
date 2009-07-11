@@ -454,16 +454,11 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDValue Op, SDValue N,
   // FIXME dl should come from the parent load or store, not the address
   DebugLoc dl = Op.getDebugLoc();
   if (N.getOpcode() != ISD::ADD) {
-    Base = N;
-    // We must materialize a zero in a reg! Returning a constant here
-    // wouldn't work without additional code to position the node within
-    // ISel's topological ordering in a place where ISel will process it
-    // normally.  Instead, just explicitly issue a tMOVri8 node!
-    SDValue CC = CurDAG->getRegister(ARM::CPSR, MVT::i32);
-    SDValue Pred = CurDAG->getTargetConstant(0xEULL, MVT::i32);
-    SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
-    SDValue Ops[] = { CC, CurDAG->getTargetConstant(0, MVT::i32), Pred, PredReg };
-    Offset = SDValue(CurDAG->getTargetNode(ARM::tMOVi8, dl, MVT::i32, Ops,4),0);
+    ConstantSDNode *NC = dyn_cast<ConstantSDNode>(N);
+    if (!NC || NC->getZExtValue() != 0)
+      return false;
+
+    Base = Offset = N;
     return true;
   }
 
