@@ -184,7 +184,6 @@ TEST_F(ConstantRangeTest, SExt) {
                                  APInt(Some.getUpper()).sext(20)));
   EXPECT_EQ(SWrap, ConstantRange(APInt(Wrap.getLower()).sext(20),
                                  APInt(Wrap.getUpper()).sext(20)));
-
 }
 
 TEST_F(ConstantRangeTest, IntersectWith) {
@@ -285,9 +284,9 @@ TEST_F(ConstantRangeTest, Multiply) {
 TEST_F(ConstantRangeTest, UMax) {
   EXPECT_TRUE(Full.umax(Full).isFullSet());
   EXPECT_TRUE(Full.umax(Empty).isEmptySet());
-  EXPECT_TRUE(Full.umax(Some).isFullSet());
+  EXPECT_EQ(Full.umax(Some), ConstantRange(APInt(16, 0xa), APInt(16, 0)));
   EXPECT_TRUE(Full.umax(Wrap).isFullSet());
-  EXPECT_TRUE(Full.umax(One).isFullSet());
+  EXPECT_EQ(Full.umax(Some), ConstantRange(APInt(16, 0xa), APInt(16, 0)));
   EXPECT_EQ(Empty.umax(Empty), Empty);
   EXPECT_EQ(Empty.umax(Some), Empty);
   EXPECT_EQ(Empty.umax(Wrap), Empty);
@@ -304,19 +303,21 @@ TEST_F(ConstantRangeTest, UMax) {
 TEST_F(ConstantRangeTest, SMax) {
   EXPECT_TRUE(Full.smax(Full).isFullSet());
   EXPECT_TRUE(Full.smax(Empty).isEmptySet());
-  EXPECT_TRUE(Full.smax(Some).isFullSet());
+  EXPECT_EQ(Full.smax(Some), ConstantRange(APInt(16, 0xa),
+                             APInt::getSignedMinValue(16)));
   EXPECT_TRUE(Full.smax(Wrap).isFullSet());
-  EXPECT_TRUE(Full.smax(One).isFullSet());
+  EXPECT_EQ(Full.smax(One), ConstantRange(APInt(16, 0xa),
+                            APInt::getSignedMinValue(16)));
   EXPECT_EQ(Empty.smax(Empty), Empty);
   EXPECT_EQ(Empty.smax(Some), Empty);
   EXPECT_EQ(Empty.smax(Wrap), Empty);
   EXPECT_EQ(Empty.smax(One), Empty);
   EXPECT_EQ(Some.smax(Some), Some);
   EXPECT_EQ(Some.smax(Wrap), ConstantRange(APInt(16, 0xa),
-                                                 APInt(16, INT16_MIN)));
+                                           APInt(16, INT16_MIN)));
   EXPECT_EQ(Some.smax(One), Some);
   EXPECT_EQ(Wrap.smax(One), ConstantRange(APInt(16, 0xa),
-                                                APInt(16, INT16_MIN)));
+                                          APInt(16, INT16_MIN)));
   EXPECT_EQ(One.smax(One), One);
 }
 

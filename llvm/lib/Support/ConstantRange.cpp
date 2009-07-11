@@ -561,8 +561,6 @@ ConstantRange::smax(const ConstantRange &Other) const {
   //                    smax(X_smax, Y_smax))
   if (isEmptySet() || Other.isEmptySet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/false);
-  if (isFullSet() || Other.isFullSet())
-    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
   APInt NewL = APIntOps::smax(getSignedMin(), Other.getSignedMin());
   APInt NewU = APIntOps::smax(getSignedMax(), Other.getSignedMax()) + 1;
   if (NewU == NewL)
@@ -576,8 +574,6 @@ ConstantRange::umax(const ConstantRange &Other) const {
   //                    umax(X_umax, Y_umax))
   if (isEmptySet() || Other.isEmptySet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/false);
-  if (isFullSet() || Other.isFullSet())
-    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
   APInt NewL = APIntOps::umax(getUnsignedMin(), Other.getUnsignedMin());
   APInt NewU = APIntOps::umax(getUnsignedMax(), Other.getUnsignedMax()) + 1;
   if (NewU == NewL)
