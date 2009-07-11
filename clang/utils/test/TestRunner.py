@@ -71,11 +71,13 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
                useDGCompat=False,
                useScript=None, 
                output=sys.stdout):
+    OUTPUT = os.path.abspath(OUTPUT)
     if useValgrind:
         VG_OUTPUT = '%s.vg'%(OUTPUT,)
-        if os.path.exists:
-            remove(VG_OUTPUT)
-        CLANG = 'valgrind --leak-check=full --quiet --log-file=%s %s'%(VG_OUTPUT, CLANG)
+        os.system('rm -f %s.*'%(VG_OUTPUT))
+        VALGRIND = 'valgrind -q --tool=memcheck --leak-check=full --trace-children=yes --log-file=%s.%%p'%(VG_OUTPUT)
+        CLANG    = '%s %s'%(VALGRIND, CLANG)
+        CLANGCC  = '%s %s'%(VALGRIND, CLANGCC)
 
     # Create the output directory if it does not already exist.
     mkdir_p(os.path.dirname(OUTPUT))
@@ -105,7 +107,6 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         output.flush()
         return TestStatus.NoRunLine
 
-    OUTPUT = os.path.abspath(OUTPUT)
     FILENAME = os.path.abspath(FILENAME)
     SCRIPT = OUTPUT + '.script'
     TEMPOUTPUT = OUTPUT + '.tmp'
@@ -168,7 +169,8 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         SCRIPT_STATUS = not SCRIPT_STATUS
 
     if useValgrind:
-        VG_STATUS = len(list(open(VG_OUTPUT)))
+        VG_OUTPUT = capture(['/bin/sh','-c','cat %s.*'%(VG_OUTPUT)])
+        VG_STATUS = len(VG_OUTPUT)
     else:
         VG_STATUS = 0
     
@@ -183,7 +185,7 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         cat(OUTPUT, output)
         if VG_STATUS:
             print >>output, "Valgrind Output:"
-            cat(VG_OUTPUT, output)
+            print >>output, VG_OUTPUT
         print >>output, "******************** TEST '%s' FAILED! ********************"%(TESTNAME,)
         output.flush()
         if xfailLines:
