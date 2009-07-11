@@ -1332,7 +1332,7 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDValue Op, SDValue N,
     Complexity++;
 
   // If it isn't worth using an LEA, reject it.
-  if (Complexity < 2)
+  if (Complexity <= 2)
     return false;
   
   SDValue Segment;
