@@ -465,7 +465,9 @@ Parser::DeclPtrTy Parser::ParseDeclarationAfterDeclarator(Declarator &D,
                                             CommaLocs.data(), RParenLoc);
     }
   } else {
-    Actions.ActOnUninitializedDecl(ThisDecl);
+    bool TypeContainsUndeducedAuto = 
+      D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto;
+    Actions.ActOnUninitializedDecl(ThisDecl, TypeContainsUndeducedAuto);
   }
 
   return ThisDecl;

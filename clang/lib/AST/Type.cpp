@@ -1006,7 +1006,7 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case NullPtr:           return "nullptr_t";
   case Overload:          return "<overloaded function type>";
   case Dependent:         return "<dependent type>";
-  case UndeducedAuto:     return "<undeduced auto type>";
+  case UndeducedAuto:     return "auto";
   }
 }
 

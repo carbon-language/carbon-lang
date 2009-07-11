@@ -302,7 +302,10 @@ public:
 
   /// ActOnUninitializedDecl - This action is called immediately after
   /// ActOnDeclarator (when an initializer is *not* present).
-  virtual void ActOnUninitializedDecl(DeclPtrTy Dcl) {
+  /// If TypeContainsUndeducedAuto is true, then the type of the declarator
+  /// has an undeduced 'auto' type somewhere.
+  virtual void ActOnUninitializedDecl(DeclPtrTy Dcl, 
+                                      bool TypeContainsUndeducedAuto) {
     return;
   }
 

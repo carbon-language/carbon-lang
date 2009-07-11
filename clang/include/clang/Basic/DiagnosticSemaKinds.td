@@ -417,6 +417,8 @@ def err_illegal_decl_array_of_auto : Error<
 def err_auto_not_allowed : Error<
   "'auto' not allowed in %select{function prototype|struct member|union member"
   "|class member|exception declaration|template parameter|block literal}0">;
+def err_auto_var_requires_init : Error<
+  "declaration of variable %0 with type %1 requires an initializer">;
   
 // Objective-C++
 def err_objc_decls_may_only_appear_in_global_scope : Error<

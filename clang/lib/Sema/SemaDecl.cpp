@@ -2756,7 +2756,8 @@ void Sema::AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit) {
   return;
 }
 
-void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
+void Sema::ActOnUninitializedDecl(DeclPtrTy dcl, 
+                                  bool TypeContainsUndeducedAuto) {
   Decl *RealDecl = dcl.getAs<Decl>();
 
   // If there is no declaration, there was an error parsing it. Just ignore it.
@@ -2784,6 +2785,14 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl) {
       return;
     }
 
+    // C++0x [dcl.spec.auto]p3
+    if (TypeContainsUndeducedAuto) {
+      Diag(Var->getLocation(), diag::err_auto_var_requires_init)
+        << Var->getDeclName() << Type;
+      Var->setInvalidDecl();
+      return;
+    }
+    
     // C++ [dcl.init]p9:
     //
     //   If no initializer is specified for an object, and the object

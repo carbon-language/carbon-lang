@@ -473,7 +473,7 @@ public:
 
   virtual void AddInitializerToDecl(DeclPtrTy dcl, FullExprArg init);
   void AddInitializerToDecl(DeclPtrTy dcl, ExprArg init, bool DirectInit);
-  void ActOnUninitializedDecl(DeclPtrTy dcl);
+  void ActOnUninitializedDecl(DeclPtrTy dcl, bool TypeContainsUndeducedAuto);
   virtual void SetDeclDeleted(DeclPtrTy dcl, SourceLocation DelLoc);
   virtual DeclGroupPtrTy FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
                                                  DeclPtrTy *Group,
