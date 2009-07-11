@@ -909,9 +909,16 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           }
 
           // If it's profitable to commute the instruction, do so.
-          if (TID.isCommutable() && mi->getNumOperands() >= 3) {
-            unsigned regC = mi->getOperand(3-si).getReg();
-            if (isProfitableToCommute(regB, regC, mi, mbbi, Dist))
+          unsigned SrcOp1, SrcOp2;
+          if (TID.isCommutable() && mi->getNumOperands() >= 3 &&
+              TII->findCommutedOpIndices(mi, SrcOp1, SrcOp2)) {
+            unsigned regC = 0;
+            if (si == SrcOp1)
+              regC = mi->getOperand(SrcOp2).getReg();
+            else if (si == SrcOp2)
+              regC = mi->getOperand(SrcOp1).getReg();
+            
+            if (regC && isProfitableToCommute(regB, regC, mi, mbbi, Dist))
               if (CommuteInstruction(mi, mbbi, regB, regC, Dist)) {
                 ++NumAggrCommuted;
                 ++NumCommuted;
