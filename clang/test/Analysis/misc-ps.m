@@ -350,3 +350,24 @@ void testA() {
     return;
 }
 
+// RegionStoreManager previously crashed on this example.  The problem is that
+// the value bound to the field of b->grue after the call to testB_aux is
+// a symbolic region.  The second '*__gruep__' involves performing a load
+// from a 'int*' that really is a 'void**'.  The loaded location must be
+// implicitly converted to an integer that wraps a location.  Previosly we would
+// get a crash here due to an assertion failure.
+typedef struct _BStruct { void *grue; } BStruct;
+void testB_aux(void *ptr);
+void testB(BStruct *b) {
+  {
+    int *__gruep__ = ((int *)&((b)->grue));
+    int __gruev__ = *__gruep__;
+    testB_aux(__gruep__);
+  }
+  {
+    int *__gruep__ = ((int *)&((b)->grue));
+    int __gruev__ = *__gruep__;
+    if (~0 != __gruev__) {}
+  }
+}
+

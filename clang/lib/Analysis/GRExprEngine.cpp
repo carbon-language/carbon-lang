@@ -1110,6 +1110,19 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   }
   else {
     SVal V = state->getSVal(cast<Loc>(location), Ex->getType());
+    
+    // Casts can create weird scenarios where a location must be implicitly
+    // converted to something else.  For example:
+    //
+    //  void *x;
+    //  int *y = (int*) &x; // void** -> int* cast.
+    //  invalidate(y);  // 'x' now binds to a symbolic region
+    //  int z = *y;
+    //    
+    if (isa<Loc>(V) && !Loc::IsLocType(Ex->getType())) {
+      V = EvalCast(V, Ex->getType());
+    }
+    
     MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V), K, tag);
   }
 }
