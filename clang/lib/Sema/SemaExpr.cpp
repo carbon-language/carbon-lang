@@ -3832,8 +3832,8 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
     
     if (IExp->getType()->isIntegerType()) {
       QualType PointeeTy;
-      const PointerType *PTy;
-      const ObjCObjectPointerType *OPT;
+      const PointerType *PTy = NULL;
+      const ObjCObjectPointerType *OPT = NULL;
       
       if ((PTy = PExp->getType()->getAsPointerType()))
         PointeeTy = PTy->getPointeeType();
