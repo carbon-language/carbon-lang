@@ -1435,23 +1435,6 @@ def : Pat<(store (i64 (X86Wrapper texternalsym:$src)), addr:$dst),
           (MOV64mi32 addr:$dst, texternalsym:$src)>,
           Requires<[SmallCode, IsStatic]>;
 
-// If we have small model and -static mode, it is safe to store global addresses
-// directly as immediates.  FIXME: This is really a hack, the 'imm' predicate
-// should handle this sort of thing.
-def : Pat<(store (i64 (X86WrapperRIP tconstpool:$src)), addr:$dst),
-          (MOV64mi32 addr:$dst, tconstpool:$src)>,
-          Requires<[SmallCode, IsStatic]>;
-def : Pat<(store (i64 (X86WrapperRIP tjumptable:$src)), addr:$dst),
-          (MOV64mi32 addr:$dst, tjumptable:$src)>,
-          Requires<[SmallCode, IsStatic]>;
-def : Pat<(store (i64 (X86WrapperRIP tglobaladdr:$src)), addr:$dst),
-          (MOV64mi32 addr:$dst, tglobaladdr:$src)>,
-          Requires<[SmallCode, IsStatic]>;
-def : Pat<(store (i64 (X86WrapperRIP texternalsym:$src)), addr:$dst),
-          (MOV64mi32 addr:$dst, texternalsym:$src)>,
-          Requires<[SmallCode, IsStatic]>;
-
-
 // Calls
 // Direct PC relative function call for small code model. 32-bit displacement
 // sign extended to 64-bit.
