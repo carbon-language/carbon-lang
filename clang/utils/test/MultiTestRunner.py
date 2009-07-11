@@ -104,10 +104,11 @@ class TestingProgressDisplay:
             TestRunner.cat(tr.testResults, sys.stdout)
 
 class TestResult:
-    def __init__(self, path, code, testResults):
+    def __init__(self, path, code, testResults, elapsed):
         self.path = path
         self.code = code
         self.testResults = testResults
+        self.elapsed = elapsed
 
     def failed(self):
         return self.code in (TestStatus.Fail,TestStatus.XPass)
@@ -163,24 +164,28 @@ class Tester(threading.Thread):
         numTests = len(self.provider.tests)
         digits = len(str(numTests))
         code = None
+        elapsed = None
         try:
             opts = self.provider.opts
             if opts.debugDoNotTest:
                 code = None
             else:
+                startTime = time.time()
                 code = TestRunner.runOneTest(path, command, output, testname, 
                                              opts.clang, opts.clangcc,
                                              useValgrind=opts.useValgrind,
                                              useDGCompat=opts.useDGCompat,
                                              useScript=opts.testScript,
                                              output=open(testresults,'w'))
+                elapsed = time.time() - startTime
         except KeyboardInterrupt:
             # This is a sad hack. Unfortunately subprocess goes
             # bonkers with ctrl-c and we start forking merrily.
             print 'Ctrl-C detected, goodbye.'
             os.kill(0,9)
 
-        self.provider.setResult(index, TestResult(path, code, testresults))
+        self.provider.setResult(index, TestResult(path, code, testresults, 
+                                                  elapsed))
 
 def detectCPUs():
     """
@@ -251,6 +256,9 @@ def main():
                       action="store_false", default=True)
     parser.add_option("", "--debug-do-not-test", dest="debugDoNotTest",
                       help="DEBUG: Skip running actual test script",
+                      action="store_true", default=False)
+    parser.add_option("", "--time-tests", dest="timeTests",
+                      help="Track elapsed wall time for each test",
                       action="store_true", default=False)
     parser.add_option("", "--path", dest="path",
                       help="Additional paths to add to testing environment",
@@ -343,5 +351,11 @@ def main():
         print '\nFailures: %d' % (numFailures,)
         sys.exit(1)
         
+    if opts.timeTests:
+        provider.results.sort(key=lambda t: t and t.elapsed)
+        for tr in provider.results:
+            if tr:
+                print '%.2fs: %s' % (tr.elapsed, tr.path)
+
 if __name__=='__main__':
     main()
