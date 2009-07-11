@@ -15,6 +15,7 @@
 
 #include "llvm/CompilerDriver/BuiltinOptions.h"
 #include "llvm/CompilerDriver/ForceLinkage.h"
+#include "llvm/System/Path.h"
 
 namespace llvmc {
   int Main(int argc, char** argv);
@@ -24,7 +25,13 @@ int main(int argc, char** argv) {
 
   // HACK
   SaveTemps.setHiddenFlag(llvm::cl::Hidden);
+  SaveTemps = SaveTempsEnum::Unset;
   TempDirname = "tmp-objs";
+
+  // Remove the temp dir if already exists.
+  llvm::sys::Path tempDir;
+  tempDir = TempDirname;
+  tempDir.eraseFromDisk(true);
 
   llvmc::ForceLinkage();
   return llvmc::Main(argc, argv);
