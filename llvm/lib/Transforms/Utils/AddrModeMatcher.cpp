@@ -206,7 +206,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     if (!RHS) return false;
     int64_t Scale = RHS->getSExtValue();
     if (Opcode == Instruction::Shl)
-      Scale = 1 << Scale;
+      Scale = 1LL << Scale;
     
     return MatchScaledValue(AddrInst->getOperand(0), Scale, Depth);
   }
