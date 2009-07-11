@@ -543,6 +543,7 @@ CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
 // GCC abstraction
 //
 
+#ifdef __APPLE__
 static bool
 IsARMArchitecture(std::vector<std::string> Args)
 {
@@ -558,6 +559,7 @@ IsARMArchitecture(std::vector<std::string> Args)
 
   return false;
 }
+#endif
 
 int GCC::ExecuteProgram(const std::string &ProgramFile,
                         const std::vector<std::string> &Args,
