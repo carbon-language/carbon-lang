@@ -35,6 +35,10 @@ static cl::opt<std::string>
 CheckPrefix("check-prefix", cl::init("CHECK"),
             cl::desc("Prefix to use from check file (defaults to 'CHECK')"));
 
+static cl::opt<bool>
+NoCanonicalizeWhiteSpace("strict-whitespace",
+              cl::desc("Do not treat all horizontal whitespace as equivalent"));
+
 
 /// FindStringInBuffer - This is basically just a strstr wrapper that differs in
 /// two ways: first it handles 'nul' characters in memory buffers, second, it
@@ -123,6 +127,59 @@ static bool ReadCheckFile(SourceMgr &SM,
   return false;
 }
 
+// CanonicalizeCheckStrings - Replace all sequences of horizontal whitespace in
+// the check strings with a single space.
+static void CanonicalizeCheckStrings(std::vector<std::pair<std::string, SMLoc> >
+                                     &CheckStrings) {
+  for (unsigned i = 0, e = CheckStrings.size(); i != e; ++i) {
+    std::string &Str = CheckStrings[i].first;
+    
+    for (unsigned C = 0; C != Str.size(); ++C) {
+      // If C is not a horizontal whitespace, skip it.
+      if (Str[C] != ' ' && Str[C] != '\t')
+        continue;
+      
+      // Replace the character with space, then remove any other space
+      // characters after it.
+      Str[C] = ' ';
+      
+      while (C+1 != Str.size() &&
+             (Str[C+1] == ' ' || Str[C+1] == '\t'))
+        Str.erase(Str.begin()+C+1);
+    }
+  }
+}
+
+/// CanonicalizeInputFile - Remove duplicate horizontal space from the specified
+/// memory buffer, free it, and return a new one.
+static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB) {
+  std::vector<char> NewFile;
+  NewFile.reserve(MB->getBufferSize());
+  
+  for (const char *Ptr = MB->getBufferStart(), *End = MB->getBufferEnd();
+       Ptr != End; ++Ptr) {
+    // If C is not a horizontal whitespace, skip it.
+    if (*Ptr != ' ' && *Ptr != '\t') {
+      NewFile.push_back(*Ptr);
+      continue;
+    }
+    
+    // Otherwise, add one space and advance over neighboring space.
+    NewFile.push_back(' ');
+    while (Ptr+1 != End &&
+           (Ptr[1] == ' ' || Ptr[1] == '\t'))
+      ++Ptr;
+  }
+  
+  // Free the old buffer and return a new one.
+  MemoryBuffer *MB2 =
+    MemoryBuffer::getMemBufferCopy(&NewFile[0], &NewFile[0]+NewFile.size(),
+                                   MB->getBufferIdentifier());
+
+  delete MB;
+  return MB2;
+}
+
 
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
@@ -136,6 +193,10 @@ int main(int argc, char **argv) {
   if (ReadCheckFile(SM, CheckStrings))
     return 2;
 
+  // Remove duplicate spaces in the check strings if requested.
+  if (!NoCanonicalizeWhiteSpace)
+    CanonicalizeCheckStrings(CheckStrings);
+
   // Open the file to check and add it to SourceMgr.
   std::string ErrorStr;
   MemoryBuffer *F =
@@ -145,6 +206,11 @@ int main(int argc, char **argv) {
            << ErrorStr << '\n';
     return true;
   }
+  
+  // Remove duplicate spaces in the input file if requested.
+  if (!NoCanonicalizeWhiteSpace)
+    F = CanonicalizeInputFile(F);
+  
   SM.AddNewSourceBuffer(F, SMLoc());
   
   // Check that we have all of the expected strings, in order, in the input
