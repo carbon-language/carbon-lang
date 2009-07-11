@@ -160,8 +160,15 @@ void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     // register instead of creating a new vreg.
     unsigned VRBase = 0;
     const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, II, i);
+    if (II.OpInfo[i].isOptionalDef()) {
+      // Optional def must be a physical register.
+      unsigned NumResults = CountResults(Node);
+      VRBase = cast<RegisterSDNode>(Node->getOperand(i-NumResults))->getReg();
+      assert(TargetRegisterInfo::isPhysicalRegister(VRBase));
+      MI->addOperand(MachineOperand::CreateReg(VRBase, true));
+    }
 
-    if (!IsClone && !IsCloned)
+    if (!VRBase && !IsClone && !IsCloned)
       for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
            UI != E; ++UI) {
         SDNode *User = *UI;
@@ -507,12 +514,17 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
-    for (unsigned i = 0; i != NodeOperands; ++i)
-      AddOperand(MI, Node->getOperand(i), i+II.getNumDefs(), &II, VRBaseMap);
+    bool HasOptPRefs = II.getNumDefs() > NumResults;
+    assert((!HasOptPRefs || !HasPhysRegOuts) &&
+           "Unable to cope with optional defs and phys regs defs!");
+    unsigned NumSkip = HasOptPRefs ? II.getNumDefs() - NumResults : 0;
+    for (unsigned i = NumSkip; i != NodeOperands; ++i)
+      AddOperand(MI, Node->getOperand(i), i-NumSkip+II.getNumDefs(), &II,
+                 VRBaseMap);
 
     // Emit all of the memory operands of this instruction
     for (unsigned i = NodeOperands; i != MemOperandsEnd; ++i)
-      AddMemOperand(MI, cast<MemOperandSDNode>(Node->getOperand(i))->MO);
+      AddMemOperand(MI,cast<MemOperandSDNode>(Node->getOperand(i+NumSkip))->MO);
 
     if (II.usesCustomDAGSchedInsertionHook()) {
       // Insert this instruction into the basic block using a target
