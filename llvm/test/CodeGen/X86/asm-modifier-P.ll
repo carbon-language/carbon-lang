@@ -1,50 +1,79 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | FileCheck %s -check-prefix=CHECK-64
-; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-apple-darwin9 -relocation-model=pic | FileCheck %s -check-prefix=CHECK-32
+; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-unknown-linux-gnu -relocation-model=pic    | FileCheck %s -check-prefix=CHECK-PIC-32
+; RUN: llvm-as < %s | llc -march=x86 -mtriple=i686-unknown-linux-gnu -relocation-model=static | FileCheck %s -check-prefix=CHECK-STATIC-32
+; RUN: llvm-as < %s | llc -march=x86-64 -relocation-model=static | FileCheck %s -check-prefix=CHECK-STATIC-64
+; RUN: llvm-as < %s | llc -march=x86-64 -relocation-model=pic    | FileCheck %s -check-prefix=CHECK-PIC-64
 ; PR3379
+; XFAIL: *
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 target triple = "x86_64-unknown-linux-gnu"
-@per_cpu__cpu_number = external global i32              ; <i32*> [#uses=1]
+@G = external global i32              ; <i32*> [#uses=1]
 
 declare void @bar(...)
 
-define i32 @test1() nounwind {
+; extern int G;
+; void test1() {
+;  asm("frob %0 x" : : "m"(G));
+;  asm("frob %P0 x" : : "m"(G));
+;}
+
+define void @test1() nounwind {
 entry:
-; Should have a rip suffix.
-; CHECK-64: test1:
-; CHECK-64: movl %gs:per_cpu__cpu_number(%rip),%eax
+; P suffix removes (rip) in -static 64-bit mode.
 
-; CHECK-32: test1:
-; CHECK-32: movl %gs:(%eax),%eax
-        %A = call i32 asm "movl %gs:$1,$0",
-            "=r,*m"(i32* @per_cpu__cpu_number) nounwind
-        ret i32 %A
-}
+; CHECK-PIC-64: test1:
+; CHECK-PIC-64: movq	G@GOTPCREL(%rip), %rax
+; CHECK-PIC-64: frob (%rax) x
+; CHECK-PIC-64: frob (%rax) x
 
-define i32 @test2() nounwind {
-entry:
-; Should not have a rip suffix because of the P modifier.
-; CHECK-64: test2:
-; CHECK-64: movl %gs:per_cpu__cpu_number,%eax
+; CHECK-STATIC-64: test1:
+; CHECK-STATIC-64: frob G(%rip) x
+; CHECK-STATIC-64: frob G x
 
-; CHECK-32: test2:
-; CHECK-32: movl %gs:(%eax),%eax
+; CHECK-PIC-32: test1:
+; CHECK-PIC-32: frob G x
+; CHECK-PIC-32: frob G x
 
-        %A = call i32 asm "movl %gs:${1:P},$0",
-            "=r,*m"(i32* @per_cpu__cpu_number) nounwind
-        ret i32 %A
+; CHECK-STATIC-32: test1:
+; CHECK-STATIC-32: frob G x
+; CHECK-STATIC-32: frob G x
+
+        call void asm "frob $0 x", "*m"(i32* @G) nounwind
+        call void asm "frob ${0:P} x", "*m"(i32* @G) nounwind
+        ret void
 }
 
 define void @test3() nounwind {
 entry:
-; CHECK-64: test3:
-; CHECK-64: call bar
-; CHECK-64: call test3
+; CHECK-STATIC-64: test3:
+; CHECK-STATIC-64: call bar
+; CHECK-STATIC-64: call test3
+; CHECK-STATIC-64: call $bar
+; CHECK-STATIC-64: call $test3
 
-; CHECK-32: test3:
-; CHECK-32: call _bar
-; CHECK-32: call _test3
+; CHECK-STATIC-32: test3:
+; CHECK-STATIC-32: call bar
+; CHECK-STATIC-32: call test3
+; CHECK-STATIC-32: call $bar
+; CHECK-STATIC-32: call $test3
+
+; CHECK-PIC-64: test3:
+; CHECK-PIC-64: call bar@PLT
+; CHECK-PIC-64: call test3@PLT
+; CHECK-PIC-64: call $bar
+; CHECK-PIC-64: call $test3
+
+; CHECK-PIC-32: test3:
+; CHECK-PIC-32: call bar@PLT
+; CHECK-PIC-32: call test3@PLT
+; CHECK-PIC-32: call $bar
+; CHECK-PIC-32: call $test3
+
+
+; asm(" blah %P0" : : "X"(bar));
   tail call void asm sideeffect "call ${0:P}", "X"(void (...)* @bar) nounwind
   tail call void asm sideeffect "call ${0:P}", "X"(void (...)* bitcast (void ()* @test3 to void (...)*)) nounwind
+  tail call void asm sideeffect "call $0", "X"(void (...)* @bar) nounwind
+  tail call void asm sideeffect "call $0", "X"(void (...)* bitcast (void ()* @test3 to void (...)*)) nounwind
   ret void
 }
