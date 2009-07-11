@@ -23,6 +23,7 @@
 #include "InstrInfoEmitter.h"
 #include "InstrEnumEmitter.h"
 #include "AsmWriterEmitter.h"
+#include "AsmMatcherEmitter.h"
 #include "DAGISelEmitter.h"
 #include "FastISelEmitter.h"
 #include "SubtargetEmitter.h"
@@ -43,7 +44,7 @@ enum ActionType {
   PrintRecords,
   GenEmitter,
   GenRegisterEnums, GenRegister, GenRegisterHeader,
-  GenInstrEnums, GenInstrs, GenAsmWriter,
+  GenInstrEnums, GenInstrs, GenAsmWriter, GenAsmMatcher,
   GenCallingConv,
   GenClangDiagsDefs,
   GenClangDiagGroups,
@@ -77,6 +78,8 @@ namespace {
                                "Generate calling convention descriptions"),
                     clEnumValN(GenAsmWriter, "gen-asm-writer",
                                "Generate assembly writer"),
+                    clEnumValN(GenAsmMatcher, "gen-asm-matcher",
+                               "Generate assembly instruction matcher"),
                     clEnumValN(GenDAGISel, "gen-dag-isel",
                                "Generate a DAG instruction selector"),
                     clEnumValN(GenFastISel, "gen-fast-isel",
@@ -209,6 +212,9 @@ int main(int argc, char **argv) {
       break;
     case GenAsmWriter:
       AsmWriterEmitter(Records).run(*Out);
+      break;
+    case GenAsmMatcher:
+      AsmMatcherEmitter(Records).run(*Out);
       break;
     case GenClangDiagsDefs:
       ClangDiagsDefsEmitter(Records, ClangComponent).run(*Out);
