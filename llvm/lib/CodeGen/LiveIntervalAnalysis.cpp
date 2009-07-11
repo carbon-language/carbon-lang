@@ -34,6 +34,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -2450,13 +2452,15 @@ bool LiveIntervals::spillPhysRegAroundRegDefsUses(const LiveInterval &li,
         pli.removeRange(StartIdx, EndIdx);
         Cut = true;
       } else {
-        cerr << "Ran out of registers during register allocation!\n";
+        std::string msg;
+        raw_string_ostream Msg(msg);
+        Msg << "Ran out of registers during register allocation!";
         if (MI->getOpcode() == TargetInstrInfo::INLINEASM) {
-          cerr << "Please check your inline asm statement for invalid "
+          Msg << "\nPlease check your inline asm statement for invalid "
                << "constraints:\n";
-          MI->print(cerr.stream(), tm_);
+          MI->print(Msg, tm_);
         }
-        exit(1);
+        llvm_report_error(Msg.str());
       }
       for (const unsigned* AS = tri_->getSubRegisters(SpillReg); *AS; ++AS) {
         if (!hasInterval(*AS))

@@ -49,6 +49,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -817,8 +818,7 @@ void SelectionDAGLowering::visit(unsigned Opcode, User &I) {
   // Note: this doesn't use InstVisitor, because it has to work with
   // ConstantExpr's in addition to instructions.
   switch (Opcode) {
-  default: assert(0 && "Unknown instruction type encountered!");
-           abort();
+  default: LLVM_UNREACHABLE("Unknown instruction type encountered!");
     // Build the switch statement using the Instruction.def file.
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
   case Instruction::OPCODE:return visit##OPCODE((CLASS&)I);
@@ -4160,13 +4160,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   }
   case Intrinsic::part_select: {
     // Currently not implemented: just abort
-    assert(0 && "part_select intrinsic not implemented");
-    abort();
+    llvm_report_error("part_select intrinsic not implemented");
   }
   case Intrinsic::part_set: {
     // Currently not implemented: just abort
-    assert(0 && "part_set intrinsic not implemented");
-    abort();
+    llvm_report_error("part_set intrinsic not implemented");
   }
   case Intrinsic::bswap:
     setValue(&I, DAG.getNode(ISD::BSWAP, dl,
@@ -5084,9 +5082,9 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
              Input.ConstraintVT.isInteger()) ||
             (OpInfo.ConstraintVT.getSizeInBits() !=
              Input.ConstraintVT.getSizeInBits())) {
-          cerr << "llvm: error: Unsupported asm: input constraint with a "
-               << "matching output constraint of incompatible type!\n";
-          exit(1);
+          llvm_report_error("llvm: error: Unsupported asm: input constraint"
+                            " with a matching output constraint of incompatible"
+                            " type!");
         }
         Input.ConstraintVT = OpInfo.ConstraintVT;
       }
@@ -5189,9 +5187,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
       // Copy the output from the appropriate register.  Find a register that
       // we can use.
       if (OpInfo.AssignedRegs.Regs.empty()) {
-        cerr << "llvm: error: Couldn't allocate output reg for constraint '"
-             << OpInfo.ConstraintCode << "'!\n";
-        exit(1);
+        llvm_report_error("llvm: error: Couldn't allocate output reg for"
+                          " constraint '" + OpInfo.ConstraintCode + "'!");
       }
 
       // If this is an indirect operand, store through the pointer after the
@@ -5244,10 +5241,9 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
             || (OpFlag & 7) == 6 /* EARLYCLOBBER REGDEF */) {
           // Add (OpFlag&0xffff)>>3 registers to MatchedRegs.
           if (OpInfo.isIndirect) {
-            cerr << "llvm: error: "
-                    "Don't know how to handle tied indirect "
-                    "register inputs yet!\n";
-            exit(1);
+            llvm_report_error("llvm: error: "
+                              "Don't know how to handle tied indirect "
+                              "register inputs yet!");
           }
           RegsForValue MatchedRegs;
           MatchedRegs.TLI = &TLI;
@@ -5289,9 +5285,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
         TLI.LowerAsmOperandForConstraint(InOperandVal, OpInfo.ConstraintCode[0],
                                          hasMemory, Ops, DAG);
         if (Ops.empty()) {
-          cerr << "llvm: error: Invalid operand for inline asm constraint '"
-               << OpInfo.ConstraintCode << "'!\n";
-          exit(1);
+          llvm_report_error("llvm: error: Invalid operand for inline asm"
+                            " constraint '" + OpInfo.ConstraintCode + "'!");
         }
 
         // Add information to the INLINEASM node to know about this input.
@@ -5321,9 +5316,8 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
 
       // Copy the input into the appropriate registers.
       if (OpInfo.AssignedRegs.Regs.empty()) {
-        cerr << "llvm: error: Couldn't allocate input reg for constraint '"
-             << OpInfo.ConstraintCode << "'!\n";
-        exit(1);
+        llvm_report_error("llvm: error: Couldn't allocate input reg for"
+                          " constraint '"+ OpInfo.ConstraintCode +"'!");
       }
 
       OpInfo.AssignedRegs.getCopyToRegs(InOperandVal, DAG, getCurDebugLoc(),
@@ -5776,8 +5770,7 @@ void TargetLowering::LowerOperationWrapper(SDNode *N,
 }
 
 SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
-  assert(0 && "LowerOperation not implemented for this target!");
-  abort();
+  LLVM_UNREACHABLE("LowerOperation not implemented for this target!");
   return SDValue();
 }
 

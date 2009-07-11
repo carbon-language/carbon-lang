@@ -34,7 +34,9 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <set>
 #include <queue>
@@ -235,7 +237,7 @@ namespace {
         }
       }
       if (Error)
-        abort();
+        llvm_unreachable();
 #endif
       regUse_.clear();
       regUseBackUp_.clear();
@@ -1102,8 +1104,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
         DowngradedRegs.clear();
         assignRegOrStackSlotAtInterval(cur);
       } else {
-        cerr << "Ran out of registers during register allocation!\n";
-        exit(1);
+        llvm_report_error("Ran out of registers during register allocation!");
       }
       return;
     }

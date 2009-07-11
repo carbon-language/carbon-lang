@@ -60,6 +60,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -1153,7 +1154,7 @@ void Andersens::visitInstruction(Instruction &I) {
   default:
     // Is this something we aren't handling yet?
     cerr << "Unknown instruction: " << I;
-    abort();
+    llvm_unreachable();
   }
 }
 

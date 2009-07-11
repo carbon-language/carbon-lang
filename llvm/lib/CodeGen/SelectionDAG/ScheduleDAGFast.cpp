@@ -24,6 +24,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 STATISTIC(NumUnfolds,    "Number of nodes unfolded");
@@ -568,8 +569,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
       }
 
       if (!CurSU) {
-        assert(false && "Unable to resolve live physical register dependencies!");
-        abort();
+        LLVM_UNREACHABLE("Unable to resolve live physical register dependencies!");
       }
     }
 

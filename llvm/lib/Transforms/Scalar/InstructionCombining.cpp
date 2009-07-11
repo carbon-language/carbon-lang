@@ -48,6 +48,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/MathExtras.h"
@@ -1927,8 +1928,7 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
     New = CmpInst::Create(*Context, CI->getOpcode(), CI->getPredicate(),
                           Op0, Op1, SO->getName()+".cmp");
   else {
-    assert(0 && "Unknown binary instruction type!");
-    abort();
+    LLVM_UNREACHABLE("Unknown binary instruction type!");
   }
   return IC->InsertNewInstBefore(New, I);
 }
@@ -9114,7 +9114,7 @@ static unsigned GetSelectFoldableOperands(Instruction *I) {
 static Constant *GetSelectFoldableConstant(Instruction *I,
                                            LLVMContext *Context) {
   switch (I->getOpcode()) {
-  default: assert(0 && "This cannot happen!"); abort();
+  default: LLVM_UNREACHABLE("This cannot happen!");
   case Instruction::Add:
   case Instruction::Sub:
   case Instruction::Or:

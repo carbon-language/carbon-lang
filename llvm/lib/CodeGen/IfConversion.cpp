@@ -21,6 +21,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1130,8 +1132,10 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
     if (TII->isPredicated(I))
       continue;
     if (!TII->PredicateInstruction(I, Cond)) {
-      cerr << "Unable to predicate " << *I << "!\n";
-      abort();
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "Unable to predicate " << *I << "!";
+      llvm_report_error(Msg.str());
     }
   }
 
@@ -1164,8 +1168,10 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 
     if (!isPredicated)
       if (!TII->PredicateInstruction(MI, Cond)) {
-        cerr << "Unable to predicate " << *MI << "!\n";
-        abort();
+        std::string msg;
+        raw_string_ostream Msg(msg);
+        Msg << "Unable to predicate " << *MI << "!";
+        llvm_report_error(Msg.str());
       }
   }
 

@@ -17,6 +17,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
 
@@ -149,7 +150,7 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
         if (Mapped & 128)
           cerr << " WidenedVectors";
         cerr << "\n";
-        abort();
+        llvm_unreachable();
       }
     }
   }
@@ -431,7 +432,7 @@ NodeDone:
 
     if (Failed) {
       I->dump(&DAG); cerr << "\n";
-      abort();
+      llvm_unreachable();
     }
   }
 #endif

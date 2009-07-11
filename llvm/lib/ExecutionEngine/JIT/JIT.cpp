@@ -227,8 +227,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
   // Turn the machine code intermediate representation into bytes in memory that
   // may be executed.
   if (TM.addPassesToEmitMachineCode(PM, *JCE, OptLevel)) {
-    cerr << "Target does not support machine code emission!\n";
-    abort();
+    llvm_report_error("Target does not support machine code emission!");
   }
   
   // Register routine for informing unwinding runtime about new EH frames
@@ -276,8 +275,7 @@ void JIT::addModuleProvider(ModuleProvider *MP) {
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
     if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
-      cerr << "Target does not support machine code emission!\n";
-      abort();
+      llvm_report_error("Target does not support machine code emission!");
     }
     
     // Initialize passes.
@@ -309,8 +307,7 @@ Module *JIT::removeModuleProvider(ModuleProvider *MP, std::string *E) {
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
     if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
-      cerr << "Target does not support machine code emission!\n";
-      abort();
+      llvm_report_error("Target does not support machine code emission!");
     }
     
     // Initialize passes.
@@ -341,8 +338,7 @@ void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
     // Turn the machine code intermediate representation into bytes in memory
     // that may be executed.
     if (TM.addPassesToEmitMachineCode(PM, *JCE, CodeGenOpt::Default)) {
-      cerr << "Target does not support machine code emission!\n";
-      abort();
+      llvm_report_error("Target does not support machine code emission!");
     }
     
     // Initialize passes.
@@ -632,9 +628,8 @@ void *JIT::getPointerToFunction(Function *F) {
     
     std::string ErrorMsg;
     if (MP->materializeFunction(F, &ErrorMsg)) {
-      cerr << "Error reading function '" << F->getName()
-           << "' from bitcode file: " << ErrorMsg << "\n";
-      abort();
+      llvm_report_error("Error reading function '" + F->getName()+
+                        "' from bitcode file: " + ErrorMsg);
     }
 
     // Now retry to get the address.
@@ -724,8 +719,7 @@ char* JIT::getMemoryForGV(const GlobalVariable* GV) {
   // situation. It's returned in the same block of memory as code which may
   // not be writable.
   if (isGVCompilationDisabled() && !GV->isConstant()) {
-    cerr << "Compilation of non-internal GlobalValue is disabled!\n";
-    abort();
+    llvm_report_error("Compilation of non-internal GlobalValue is disabled!");
   }
 
   // Some applications require globals and code to live together, so they may

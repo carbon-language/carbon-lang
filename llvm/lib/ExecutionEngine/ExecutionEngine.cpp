@@ -24,6 +24,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MutexGuard.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/System/Host.h"
 #include "llvm/Target/TargetData.h"
@@ -332,32 +333,27 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   switch (NumArgs) {
   case 3:
    if (FTy->getParamType(2) != PPInt8Ty) {
-     cerr << "Invalid type for third argument of main() supplied\n";
-     abort();
+     llvm_report_error("Invalid type for third argument of main() supplied");
    }
    // FALLS THROUGH
   case 2:
    if (FTy->getParamType(1) != PPInt8Ty) {
-     cerr << "Invalid type for second argument of main() supplied\n";
-     abort();
+     llvm_report_error("Invalid type for second argument of main() supplied");
    }
    // FALLS THROUGH
   case 1:
    if (FTy->getParamType(0) != Type::Int32Ty) {
-     cerr << "Invalid type for first argument of main() supplied\n";
-     abort();
+     llvm_report_error("Invalid type for first argument of main() supplied");
    }
    // FALLS THROUGH
   case 0:
    if (!isa<IntegerType>(FTy->getReturnType()) &&
        FTy->getReturnType() != Type::VoidTy) {
-     cerr << "Invalid return type of main() supplied\n";
-     abort();
+     llvm_report_error("Invalid return type of main() supplied");
    }
    break;
   default:
-   cerr << "Invalid number of arguments of main() supplied\n";
-   abort();
+   llvm_report_error("Invalid number of arguments of main() supplied");
   }
   
   if (NumArgs) {
@@ -591,7 +587,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       GenericValue RHS = getConstantValue(CE->getOperand(1));
       GenericValue GV;
       switch (CE->getOperand(0)->getType()->getTypeID()) {
-      default: assert(0 && "Bad add type!"); abort();
+      default: LLVM_UNREACHABLE("Bad add type!");
       case Type::IntegerTyID:
         switch (CE->getOpcode()) {
           default: assert(0 && "Invalid integer opcode");
@@ -609,7 +605,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         break;
       case Type::FloatTyID:
         switch (CE->getOpcode()) {
-          default: assert(0 && "Invalid float opcode"); abort();
+          default: LLVM_UNREACHABLE("Invalid float opcode");
           case Instruction::FAdd:
             GV.FloatVal = LHS.FloatVal + RHS.FloatVal; break;
           case Instruction::FSub:
@@ -624,7 +620,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         break;
       case Type::DoubleTyID:
         switch (CE->getOpcode()) {
-          default: assert(0 && "Invalid double opcode"); abort();
+          default: LLVM_UNREACHABLE("Invalid double opcode");
           case Instruction::FAdd:
             GV.DoubleVal = LHS.DoubleVal + RHS.DoubleVal; break;
           case Instruction::FSub:
@@ -672,8 +668,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     default:
       break;
     }
-    cerr << "ConstantExpr not handled: " << *CE << "\n";
-    abort();
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "ConstantExpr not handled: " << *CE;
+    llvm_report_error(Msg.str());
   }
 
   GenericValue Result;
@@ -703,8 +701,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       assert(0 && "Unknown constant pointer type!");
     break;
   default:
-    cerr << "ERROR: Constant unimplemented for type: " << *C->getType() << "\n";
-    abort();
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "ERROR: Constant unimplemented for type: " << *C->getType();
+    llvm_report_error(Msg.str());
   }
   return Result;
 }
@@ -838,8 +838,10 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     break;
   }
   default:
-    cerr << "Cannot load value of type " << *Ty << "!\n";
-    abort();
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "Cannot load value of type " << *Ty << "!";
+    llvm_report_error(Msg.str());
   }
 }
 

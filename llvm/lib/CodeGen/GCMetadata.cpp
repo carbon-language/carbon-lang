@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -92,9 +93,9 @@ GCStrategy *GCModuleInfo::getOrCreateStrategy(const Module *M,
       return S;
     }
   }
-  
+ 
   cerr << "unsupported GC: " << Name << "\n";
-  abort();
+  llvm_unreachable();
 }
 
 GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {

@@ -20,6 +20,7 @@
 
 #include "LegalizeTypes.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -44,8 +45,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
     cerr << "PromoteIntegerResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to promote this operator!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to promote this operator!");
   case ISD::AssertSext:  Res = PromoteIntRes_AssertSext(N); break;
   case ISD::AssertZext:  Res = PromoteIntRes_AssertZext(N); break;
   case ISD::BIT_CONVERT: Res = PromoteIntRes_BIT_CONVERT(N); break;
@@ -610,8 +610,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
     cerr << "PromoteIntegerOperand Op #" << OpNo << ": ";
     N->dump(&DAG); cerr << "\n";
   #endif
-    assert(0 && "Do not know how to promote this operator's operand!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to promote this operator's operand!");
 
   case ISD::ANY_EXTEND:   Res = PromoteIntOp_ANY_EXTEND(N); break;
   case ISD::BIT_CONVERT:  Res = PromoteIntOp_BIT_CONVERT(N); break;
@@ -924,8 +923,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
     cerr << "ExpandIntegerResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to expand the result of this operator!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to expand the result of this operator!");
 
   case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, Lo, Hi); break;
   case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
@@ -1970,8 +1968,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
     cerr << "ExpandIntegerOperand Op #" << OpNo << ": ";
     N->dump(&DAG); cerr << "\n";
   #endif
-    assert(0 && "Do not know how to expand this operator's operand!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to expand this operator's operand!");
 
   case ISD::BIT_CONVERT:       Res = ExpandOp_BIT_CONVERT(N); break;
   case ISD::BR_CC:             Res = ExpandIntOp_BR_CC(N); break;

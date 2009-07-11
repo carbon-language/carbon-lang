@@ -35,6 +35,7 @@
 #include "llvm/Target/TargetMachOWriterInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/OutputBuffer.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -634,8 +635,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
       case Instruction::Add:
       default:
         cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
-        abort();
-        break;
+        llvm_unreachable();
       }
     } else if (PC->getType()->isSingleValueType()) {
       unsigned char *ptr = (unsigned char *)PA;
@@ -710,11 +710,13 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
                                                  ScatteredOffset));
           ScatteredOffset = 0;
         } else
-          assert(0 && "Unknown constant pointer type!");
+          LLVM_UNREACHABLE("Unknown constant pointer type!");
         break;
       default:
-        cerr << "ERROR: Constant unimp for type: " << *PC->getType() << "\n";
-        abort();
+        std::string msg;
+        raw_string_ostream Msg(msg);
+        Msg << "ERROR: Constant unimp for type: " << *PC->getType();
+        llvm_report_error(Msg.str());
       }
     } else if (isa<ConstantAggregateZero>(PC)) {
       memset((void*)PA, 0, (size_t)TD->getTypeAllocSize(PC->getType()));

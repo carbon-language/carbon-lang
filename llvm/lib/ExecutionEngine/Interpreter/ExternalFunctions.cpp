@@ -23,6 +23,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Config/config.h"     // Detect libffi
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
@@ -126,8 +127,7 @@ static ffi_type *ffiTypeFor(const Type *Ty) {
     default: break;
   }
   // TODO: Support other types such as StructTyID, ArrayTyID, OpaqueTyID, etc.
-  cerr << "Type could not be mapped for use with libffi.\n";
-  abort();
+  llvm_report_error("Type could not be mapped for use with libffi.");
   return NULL;
 }
 
@@ -175,8 +175,7 @@ static void *ffiValueFor(const Type *Ty, const GenericValue &AV,
     default: break;
   }
   // TODO: Support other types such as StructTyID, ArrayTyID, OpaqueTyID, etc.
-  cerr << "Type value could not be mapped for use with libffi.\n";
-  abort();
+  llvm_report_error("Type value could not be mapped for use with libffi.");
   return NULL;
 }
 
@@ -190,9 +189,8 @@ static bool ffiInvoke(RawFunc Fn, Function *F,
   // TODO: We don't have type information about the remaining arguments, because
   // this information is never passed into ExecutionEngine::runFunction().
   if (ArgVals.size() > NumArgs && F->isVarArg()) {
-    cerr << "Calling external var arg function '" << F->getName()
-         << "' is not supported by the Interpreter.\n";
-    abort();
+    llvm_report_error("Calling external var arg function '" + F->getName()
+                      + "' is not supported by the Interpreter.");
   }
 
   unsigned ArgBytes = 0;
@@ -280,10 +278,12 @@ GenericValue Interpreter::callExternalFunction(Function *F,
     return Result;
 #endif // USE_LIBFFI
 
-  cerr << "Tried to execute an unknown external function: "
-       << F->getType()->getDescription() << " " << F->getName() << "\n";
-  if (F->getName() != "__main")
-    abort();
+  if (F->getName() == "__main")
+    cerr << "Tried to execute an unknown external function: "
+      << F->getType()->getDescription() << " __main\n";
+  else
+    llvm_report_error("Tried to execute an unknown external function: " +
+                      F->getType()->getDescription() + " " +F->getName());
   return GenericValue();
 }
 
@@ -313,6 +313,8 @@ GenericValue lle_X_exit(const FunctionType *FT,
 // void abort(void)
 GenericValue lle_X_abort(const FunctionType *FT,
                          const std::vector<GenericValue> &Args) {
+  //FIXME: should we report or raise here?
+  //llvm_report_error("Interpreted program raised SIGABRT");
   raise (SIGABRT);
   return GenericValue();
 }

@@ -16,6 +16,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/ADT/Statistic.h"
@@ -47,7 +48,7 @@ namespace {
 
     void visitInstruction(Instruction &I) {
       cerr << "Instruction Count does not know about " << I;
-      abort();
+      llvm_unreachable();
     }
   public:
     static char ID; // Pass identification, replacement for typeid

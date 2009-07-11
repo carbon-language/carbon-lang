@@ -22,6 +22,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cmath>
@@ -57,7 +58,7 @@ static void executeFAddInst(GenericValue &Dest, GenericValue Src1,
     IMPLEMENT_BINARY_OPERATOR(+, Double);
   default:
     cerr << "Unhandled type for FAdd instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
 }
 
@@ -68,7 +69,7 @@ static void executeFSubInst(GenericValue &Dest, GenericValue Src1,
     IMPLEMENT_BINARY_OPERATOR(-, Double);
   default:
     cerr << "Unhandled type for FSub instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
 }
 
@@ -79,7 +80,7 @@ static void executeFMulInst(GenericValue &Dest, GenericValue Src1,
     IMPLEMENT_BINARY_OPERATOR(*, Double);
   default:
     cerr << "Unhandled type for FMul instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
 }
 
@@ -90,7 +91,7 @@ static void executeFDivInst(GenericValue &Dest, GenericValue Src1,
     IMPLEMENT_BINARY_OPERATOR(/, Double);
   default:
     cerr << "Unhandled type for FDiv instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
 }
 
@@ -105,7 +106,7 @@ static void executeFRemInst(GenericValue &Dest, GenericValue Src1,
     break;
   default:
     cerr << "Unhandled type for Rem instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
 }
 
@@ -132,7 +133,7 @@ static GenericValue executeICMP_EQ(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(==);
   default:
     cerr << "Unhandled type for ICMP_EQ predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -145,7 +146,7 @@ static GenericValue executeICMP_NE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(!=);
   default:
     cerr << "Unhandled type for ICMP_NE predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -158,7 +159,7 @@ static GenericValue executeICMP_ULT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(<);
   default:
     cerr << "Unhandled type for ICMP_ULT predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -171,7 +172,7 @@ static GenericValue executeICMP_SLT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(<);
   default:
     cerr << "Unhandled type for ICMP_SLT predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -184,7 +185,7 @@ static GenericValue executeICMP_UGT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(>);
   default:
     cerr << "Unhandled type for ICMP_UGT predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -197,7 +198,7 @@ static GenericValue executeICMP_SGT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(>);
   default:
     cerr << "Unhandled type for ICMP_SGT predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -210,7 +211,7 @@ static GenericValue executeICMP_ULE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(<=);
   default:
     cerr << "Unhandled type for ICMP_ULE predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -223,7 +224,7 @@ static GenericValue executeICMP_SLE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(<=);
   default:
     cerr << "Unhandled type for ICMP_SLE predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -236,7 +237,7 @@ static GenericValue executeICMP_UGE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(>=);
   default:
     cerr << "Unhandled type for ICMP_UGE predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -249,7 +250,7 @@ static GenericValue executeICMP_SGE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_POINTER_ICMP(>=);
   default:
     cerr << "Unhandled type for ICMP_SGE predicate: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -274,7 +275,7 @@ void Interpreter::visitICmpInst(ICmpInst &I) {
   case ICmpInst::ICMP_SGE: R = executeICMP_SGE(Src1, Src2, Ty); break;
   default:
     cerr << "Don't know how to handle this ICmp predicate!\n-->" << I;
-    abort();
+    llvm_unreachable();
   }
  
   SetValue(&I, R, SF);
@@ -293,7 +294,7 @@ static GenericValue executeFCMP_OEQ(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(==, Double);
   default:
     cerr << "Unhandled type for FCmp EQ instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -307,7 +308,7 @@ static GenericValue executeFCMP_ONE(GenericValue Src1, GenericValue Src2,
 
   default:
     cerr << "Unhandled type for FCmp NE instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -320,7 +321,7 @@ static GenericValue executeFCMP_OLE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(<=, Double);
   default:
     cerr << "Unhandled type for FCmp LE instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -333,7 +334,7 @@ static GenericValue executeFCMP_OGE(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(>=, Double);
   default:
     cerr << "Unhandled type for FCmp GE instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -346,7 +347,7 @@ static GenericValue executeFCMP_OLT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(<, Double);
   default:
     cerr << "Unhandled type for FCmp LT instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -359,7 +360,7 @@ static GenericValue executeFCMP_OGT(GenericValue Src1, GenericValue Src2,
     IMPLEMENT_FCMP(>, Double);
   default:
     cerr << "Unhandled type for FCmp GT instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
   return Dest;
 }
@@ -468,7 +469,7 @@ void Interpreter::visitFCmpInst(FCmpInst &I) {
   case FCmpInst::FCMP_OGE:   R = executeFCMP_OGE(Src1, Src2, Ty); break;
   default:
     cerr << "Don't know how to handle this FCmp predicate!\n-->" << I;
-    abort();
+    llvm_unreachable();
   }
  
   SetValue(&I, R, SF);
@@ -514,7 +515,7 @@ static GenericValue executeCmpInst(unsigned predicate, GenericValue Src1,
   }
   default:
     cerr << "Unhandled Cmp predicate\n";
-    abort();
+    llvm_unreachable();
   }
 }
 
@@ -543,7 +544,7 @@ void Interpreter::visitBinaryOperator(BinaryOperator &I) {
   case Instruction::Xor:   R.IntVal = Src1.IntVal ^ Src2.IntVal; break;
   default:
     cerr << "Don't know how to handle this binary operator!\n-->" << I;
-    abort();
+    llvm_unreachable();
   }
 
   SetValue(&I, R, SF);
@@ -630,7 +631,7 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
   do {
     ECStack.pop_back ();
     if (ECStack.empty ())
-      abort ();
+      llvm_report_error("Empty stack during unwind!");
     Inst = ECStack.back ().Caller.getInstruction ();
   } while (!(Inst && isa<InvokeInst> (Inst)));
 
@@ -643,8 +644,7 @@ void Interpreter::visitUnwindInst(UnwindInst &I) {
 }
 
 void Interpreter::visitUnreachableInst(UnreachableInst &I) {
-  cerr << "ERROR: Program executed an 'unreachable' instruction!\n";
-  abort();
+  llvm_report_error("ERROR: Program executed an 'unreachable' instruction!");
 }
 
 void Interpreter::visitBranchInst(BranchInst &I) {
@@ -1176,7 +1176,7 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
     IMPLEMENT_VAARG(Double);
   default:
     cerr << "Unhandled dest type for vaarg instruction: " << *Ty << "\n";
-    abort();
+    llvm_unreachable();
   }
 
   // Set the Value of this Instruction.
@@ -1263,7 +1263,7 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
     break;
   default:
     cerr << "Unhandled ConstantExpr: " << *CE << "\n";
-    abort();
+    llvm_unreachable();
     return GenericValue();
   }
   return Dest;

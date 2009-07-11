@@ -20,6 +20,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "LegalizeTypes.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 /// GetFPLibCall - Return the right libcall for the given floating point type.
@@ -51,8 +53,7 @@ void DAGTypeLegalizer::SoftenFloatResult(SDNode *N, unsigned ResNo) {
     cerr << "SoftenFloatResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to soften the result of this operator!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to soften the result of this operator!");
 
     case ISD::BIT_CONVERT: R = SoftenFloatRes_BIT_CONVERT(N); break;
     case ISD::BUILD_PAIR:  R = SoftenFloatRes_BUILD_PAIR(N); break;
@@ -540,8 +541,7 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
     cerr << "SoftenFloatOperand Op #" << OpNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to soften this operator's operand!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to soften this operator's operand!");
 
   case ISD::BIT_CONVERT: Res = SoftenFloatOp_BIT_CONVERT(N); break;
   case ISD::BR_CC:       Res = SoftenFloatOp_BR_CC(N); break;
@@ -781,8 +781,7 @@ void DAGTypeLegalizer::ExpandFloatResult(SDNode *N, unsigned ResNo) {
     cerr << "ExpandFloatResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to expand the result of this operator!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to expand the result of this operator!");
 
   case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, Lo, Hi); break;
   case ISD::UNDEF:        SplitRes_UNDEF(N, Lo, Hi); break;
@@ -1181,8 +1180,7 @@ bool DAGTypeLegalizer::ExpandFloatOperand(SDNode *N, unsigned OpNo) {
       cerr << "ExpandFloatOperand Op #" << OpNo << ": ";
       N->dump(&DAG); cerr << "\n";
   #endif
-      assert(0 && "Do not know how to expand this operator's operand!");
-      abort();
+      LLVM_UNREACHABLE("Do not know how to expand this operator's operand!");
 
     case ISD::BIT_CONVERT:     Res = ExpandOp_BIT_CONVERT(N); break;
     case ISD::BUILD_VECTOR:    Res = ExpandOp_BUILD_VECTOR(N); break;

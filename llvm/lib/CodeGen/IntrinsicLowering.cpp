@@ -17,6 +17,7 @@
 #include "llvm/Type.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Support/IRBuilder.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
@@ -626,7 +627,7 @@ static void ReplaceFPIntrinsicWithCall(CallInst *CI, const char *Fname,
                                        const char *Dname,
                                        const char *LDname) {
   switch (CI->getOperand(1)->getType()->getTypeID()) {
-  default: assert(0 && "Invalid type in intrinsic"); abort();
+  default: LLVM_UNREACHABLE( "Invalid type in intrinsic");
   case Type::FloatTyID:
     ReplaceCallWith(Fname, CI, CI->op_begin() + 1, CI->op_end(),
                   Type::FloatTy);
@@ -652,13 +653,11 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   switch (Callee->getIntrinsicID()) {
   case Intrinsic::not_intrinsic:
-    cerr << "Cannot lower a call to a non-intrinsic function '"
-         << Callee->getName() << "'!\n";
-    abort();
+    llvm_report_error("Cannot lower a call to a non-intrinsic function '"+
+                      Callee->getName() + "'!");
   default:
-    cerr << "Error: Code generator does not support intrinsic function '"
-         << Callee->getName() << "'!\n";
-    abort();
+    llvm_report_error("Code generator does not support intrinsic function '"+
+                      Callee->getName()+"'!");
 
     // The setjmp/longjmp intrinsics should only exist in the code if it was
     // never optimized (ie, right out of the CFE), or if it has been hacked on

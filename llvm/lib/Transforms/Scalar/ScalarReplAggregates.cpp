@@ -34,6 +34,7 @@
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/MathExtras.h"
@@ -1510,8 +1511,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
       continue;
     }
 
-    assert(0 && "Unsupported operation!");
-    abort();
+    LLVM_UNREACHABLE("Unsupported operation!");
   }
 }
 

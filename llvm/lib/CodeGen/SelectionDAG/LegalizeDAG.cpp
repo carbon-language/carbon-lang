@@ -32,6 +32,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -948,8 +949,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
 #ifndef NDEBUG
     cerr << "NODE: "; Node->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to legalize this operator!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to legalize this operator!");
   case ISD::CALL:
     // The only option for this is to custom lower it.
     Tmp3 = TLI.LowerOperation(Result.getValue(0), DAG);
@@ -1699,7 +1699,7 @@ void SelectionDAGLegalize::LegalizeSetCCCondCode(MVT VT,
     ISD::CondCode CC1 = ISD::SETCC_INVALID, CC2 = ISD::SETCC_INVALID;
     unsigned Opc = 0;
     switch (CCCode) {
-    default: assert(0 && "Don't know how to expand this condition!"); abort();
+    default: LLVM_UNREACHABLE("Don't know how to expand this condition!");
     case ISD::SETOEQ: CC1 = ISD::SETEQ; CC2 = ISD::SETO;  Opc = ISD::AND; break;
     case ISD::SETOGT: CC1 = ISD::SETGT; CC2 = ISD::SETO;  Opc = ISD::AND; break;
     case ISD::SETOGE: CC1 = ISD::SETGE; CC2 = ISD::SETO;  Opc = ISD::AND; break;
@@ -2147,7 +2147,7 @@ SDValue SelectionDAGLegalize::ExpandBSWAP(SDValue Op, DebugLoc dl) {
   MVT SHVT = TLI.getShiftAmountTy();
   SDValue Tmp1, Tmp2, Tmp3, Tmp4, Tmp5, Tmp6, Tmp7, Tmp8;
   switch (VT.getSimpleVT()) {
-  default: assert(0 && "Unhandled Expand type in BSWAP!"); abort();
+  default: LLVM_UNREACHABLE("Unhandled Expand type in BSWAP!");
   case MVT::i16:
     Tmp2 = DAG.getNode(ISD::SHL, dl, VT, Op, DAG.getConstant(8, SHVT));
     Tmp1 = DAG.getNode(ISD::SRL, dl, VT, Op, DAG.getConstant(8, SHVT));

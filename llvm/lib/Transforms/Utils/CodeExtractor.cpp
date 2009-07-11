@@ -28,6 +28,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <set>
@@ -710,7 +711,8 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
   //  cerr << "OLD FUNCTION: " << *oldFunction;
   //  verifyFunction(*oldFunction);
 
-  DEBUG(if (verifyFunction(*newFunction)) abort());
+  DEBUG(if (verifyFunction(*newFunction)) 
+        llvm_report_error("verifyFunction failed!"));
   return newFunction;
 }
 

@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -1300,7 +1301,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
 
 void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   // Target doesn't support this yet!
-  abort();
+  LLVM_UNREACHABLE("Target does not support EmitMachineConstantPoolValue");
 }
 
 /// PrintSpecial - Print information related to the specified machine instr
@@ -1328,9 +1329,11 @@ void AsmPrinter::PrintSpecial(const MachineInstr *MI, const char *Code) const {
     }
     O << Counter;
   } else {
-    cerr << "Unknown special formatter '" << Code
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "Unknown special formatter '" << Code
          << "' for machine instr: " << *MI;
-    exit(1);
+    llvm_report_error(Msg.str());
   }    
 }
 
@@ -1413,9 +1416,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       case '(':             // $( -> same as GCC's { character.
         ++LastEmitted;      // Consume '(' character.
         if (CurVariant != -1) {
-          cerr << "Nested variants found in inline asm string: '"
-               << AsmStr << "'\n";
-          exit(1);
+          llvm_report_error("Nested variants found in inline asm string: '"
+                            + std::string(AsmStr) + "'");
         }
         CurVariant = 0;     // We're in the first variant now.
         break;
@@ -1450,9 +1452,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         const char *StrStart = LastEmitted;
         const char *StrEnd = strchr(StrStart, '}');
         if (StrEnd == 0) {
-          cerr << "Unterminated ${:foo} operand in inline asm string: '" 
-               << AsmStr << "'\n";
-          exit(1);
+          llvm_report_error("Unterminated ${:foo} operand in inline asm string: '" 
+                            + std::string(AsmStr) + "'");
         }
         
         std::string Val(StrStart, StrEnd);
@@ -1466,9 +1467,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
       errno = 0;
       long Val = strtol(IDStart, &IDEnd, 10); // We only accept numbers for IDs.
       if (!isdigit(*IDStart) || (Val == 0 && errno == EINVAL)) {
-        cerr << "Bad $ operand number in inline asm string: '" 
-             << AsmStr << "'\n";
-        exit(1);
+        llvm_report_error("Bad $ operand number in inline asm string: '" 
+                          + std::string(AsmStr) + "'");
       }
       LastEmitted = IDEnd;
       
@@ -1480,9 +1480,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         if (*LastEmitted == ':') {
           ++LastEmitted;    // Consume ':' character.
           if (*LastEmitted == 0) {
-            cerr << "Bad ${:} expression in inline asm string: '" 
-                 << AsmStr << "'\n";
-            exit(1);
+            llvm_report_error("Bad ${:} expression in inline asm string: '" 
+                              + std::string(AsmStr) + "'");
           }
           
           Modifier[0] = *LastEmitted;
@@ -1490,17 +1489,15 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         }
         
         if (*LastEmitted != '}') {
-          cerr << "Bad ${} expression in inline asm string: '" 
-               << AsmStr << "'\n";
-          exit(1);
+          llvm_report_error("Bad ${} expression in inline asm string: '" 
+                            + std::string(AsmStr) + "'");
         }
         ++LastEmitted;    // Consume '}' character.
       }
       
       if ((unsigned)Val >= NumOperands-1) {
-        cerr << "Invalid $ operand number in inline asm string: '" 
-             << AsmStr << "'\n";
-        exit(1);
+        llvm_report_error("Invalid $ operand number in inline asm string: '" 
+                          + std::string(AsmStr) + "'");
       }
       
       // Okay, we finally have a value number.  Ask the target to print this
@@ -1538,10 +1535,12 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           }
         }
         if (Error) {
-          cerr << "Invalid operand found in inline asm: '"
+          std::string msg;
+          raw_string_ostream Msg(msg);
+          Msg << "Invalid operand found in inline asm: '"
                << AsmStr << "'\n";
-          MI->dump();
-          exit(1);
+          MI->print(Msg);
+          llvm_report_error(Msg.str());
         }
       }
       break;
@@ -1747,5 +1746,5 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
     }
   
   cerr << "no GCMetadataPrinter registered for GC: " << Name << "\n";
-  abort();
+  llvm_unreachable();
 }

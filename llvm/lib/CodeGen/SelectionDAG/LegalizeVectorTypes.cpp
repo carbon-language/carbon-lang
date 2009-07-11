@@ -23,6 +23,7 @@
 #include "LegalizeTypes.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -40,8 +41,7 @@ void DAGTypeLegalizer::ScalarizeVectorResult(SDNode *N, unsigned ResNo) {
     cerr << "ScalarizeVectorResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to scalarize the result of this operator!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to scalarize the result of this operator!");
 
   case ISD::BIT_CONVERT:       R = ScalarizeVecRes_BIT_CONVERT(N); break;
   case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
@@ -378,8 +378,7 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
     cerr << "SplitVectorResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to split the result of this operator!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to split the result of this operator!");
 
   case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, Lo, Hi); break;
   case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
@@ -929,8 +928,7 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
       cerr << "SplitVectorOperand Op #" << OpNo << ": ";
       N->dump(&DAG); cerr << "\n";
 #endif
-      assert(0 && "Do not know how to split this operator's operand!");
-      abort();
+      LLVM_UNREACHABLE("Do not know how to split this operator's operand!");
 
     case ISD::BIT_CONVERT:       Res = SplitVecOp_BIT_CONVERT(N); break;
     case ISD::EXTRACT_SUBVECTOR: Res = SplitVecOp_EXTRACT_SUBVECTOR(N); break;
@@ -1119,8 +1117,7 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
     cerr << "WidenVectorResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to widen the result of this operator!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to widen the result of this operator!");
 
   case ISD::BIT_CONVERT:       Res = WidenVecRes_BIT_CONVERT(N); break;
   case ISD::BUILD_VECTOR:      Res = WidenVecRes_BUILD_VECTOR(N); break;
@@ -1776,8 +1773,7 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned ResNo) {
     cerr << "WidenVectorOperand op #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to widen this operator's operand!");
-    abort();
+    LLVM_UNREACHABLE("Do not know how to widen this operator's operand!");
 
   case ISD::BIT_CONVERT:        Res = WidenVecOp_BIT_CONVERT(N); break;
   case ISD::CONCAT_VECTORS:     Res = WidenVecOp_CONCAT_VECTORS(N); break;

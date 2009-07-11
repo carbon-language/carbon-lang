@@ -33,8 +33,10 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Disassembler.h"
 #include "llvm/System/Memory.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -373,9 +375,8 @@ void *JITResolver::JITCompilerFn(void *Stub) {
     
     // If lazy compilation is disabled, emit a useful error message and abort.
     if (TheJIT->isLazyCompilationDisabled()) {
-      cerr << "LLVM JIT requested to do lazy compilation of function '"
-      << F->getName() << "' when lazy compiles are disabled!\n";
-      abort();
+      llvm_report_error("LLVM JIT requested to do lazy compilation of function '"
+                        + F->getName() + "' when lazy compiles are disabled!");
     }
   
     // We might like to remove the stub from the StubToFunction map.
@@ -777,8 +778,10 @@ unsigned JITEmitter::addSizeOfGlobalsInConstantVal(const Constant *C,
       break;
     }
     default: {
-       cerr << "ConstantExpr not handled: " << *CE << "\n";
-      abort();
+       std::string msg;
+       raw_string_ostream Msg(msg);
+       Msg << "ConstantExpr not handled: " << *CE;
+       llvm_report_error(Msg.str());
     }
     }
   }
@@ -920,8 +923,7 @@ void JITEmitter::startFunction(MachineFunction &F) {
 bool JITEmitter::finishFunction(MachineFunction &F) {
   if (CurBufferPtr == BufferEnd) {
     // FIXME: Allocate more space, then try again.
-    cerr << "JIT: Ran out of space for generated machine code!\n";
-    abort();
+    llvm_report_error("JIT: Ran out of space for generated machine code!");
   }
   
   emitJumpTableInfo(F.getJumpTableInfo());
@@ -1017,8 +1019,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
 
   if (CurBufferPtr == BufferEnd) {
     // FIXME: Allocate more space, then try again.
-    cerr << "JIT: Ran out of space for generated machine code!\n";
-    abort();
+    llvm_report_error("JIT: Ran out of space for generated machine code!");
   }
 
   BufferBegin = CurBufferPtr = 0;
@@ -1199,9 +1200,8 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
     ConstPoolAddresses.push_back(CAddr);
     if (CPE.isMachineConstantPoolEntry()) {
       // FIXME: add support to lower machine constant pool values into bytes!
-      cerr << "Initialize memory with machine specific constant pool entry"
-           << " has not been implemented!\n";
-      abort();
+      llvm_report_error("Initialize memory with machine specific constant pool"
+                        "entry has not been implemented!");
     }
     TheJIT->InitializeMemory(CPE.Val.ConstVal, (void*)CAddr);
     DOUT << "JIT:   CP" << i << " at [0x"

@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/GCMetadataPrinter.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -115,11 +116,13 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
 
     uint64_t FrameSize = FI.getFrameSize();
     if (FrameSize >= 1<<16) {
-      cerr << "Function '" << FI.getFunction().getNameStart()
+      std::string msg;
+      raw_string_ostream Msg(msg);
+      Msg << "Function '" << FI.getFunction().getNameStart()
            << "' is too large for the ocaml GC! "
            << "Frame size " << FrameSize << " >= 65536.\n";
-      cerr << "(" << uintptr_t(&FI) << ")\n";
-      abort(); // Very rude!
+      Msg << "(" << uintptr_t(&FI) << ")";
+      llvm_report_error(Msg.str()); // Very rude!
     }
 
     OS << "\t" << TAI.getCommentString() << " live roots for "
@@ -128,10 +131,12 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
     for (GCFunctionInfo::iterator J = FI.begin(), JE = FI.end(); J != JE; ++J) {
       size_t LiveCount = FI.live_size(J);
       if (LiveCount >= 1<<16) {
-        cerr << "Function '" << FI.getFunction().getNameStart()
+        std::string msg;
+        raw_string_ostream Msg(msg);
+        Msg << "Function '" << FI.getFunction().getNameStart()
              << "' is too large for the ocaml GC! "
-             << "Live root count " << LiveCount << " >= 65536.\n";
-        abort(); // Very rude!
+             << "Live root count " << LiveCount << " >= 65536.";
+        llvm_report_error(Msg.str()); // Very rude!
       }
 
       OS << AddressDirective

@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "JIT.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Config/config.h"
@@ -140,9 +141,8 @@ void *JIT::getPointerToNamedFunction(const std::string &Name,
       return RP;
 
   if (AbortOnFailure) {
-    cerr << "ERROR: Program used external function '" << Name
-         << "' which could not be resolved!\n";
-    abort();
+    llvm_report_error("ERROR: Program used external function '"+Name+
+                      "' which could not be resolved!");
   }
   return 0;
 }

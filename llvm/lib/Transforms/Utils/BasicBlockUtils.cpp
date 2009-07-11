@@ -24,6 +24,7 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ValueHandle.h"
 #include <algorithm>
 using namespace llvm;
@@ -263,8 +264,7 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
   case Instruction::Switch:    // Should remove entry
   default:
   case Instruction::Ret:       // Cannot happen, has no successors!
-    assert(0 && "Unhandled terminator instruction type in RemoveSuccessor!");
-    abort();
+    LLVM_UNREACHABLE("Unhandled terminator instruction type in RemoveSuccessor!");
   }
 
   if (NewTI)   // If it's a different instruction, replace.

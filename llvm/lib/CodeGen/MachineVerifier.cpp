@@ -36,6 +36,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include <fstream>
 
 using namespace llvm;
@@ -219,8 +221,10 @@ MachineVerifier::runOnMachineFunction(MachineFunction &MF)
     OutFile.close();
 
   if (foundErrors) {
-    cerr << "\nStopping with " << foundErrors << " machine code errors.\n";
-    exit(1);
+    std::string msg;
+    raw_string_ostream Msg(msg);
+    Msg << "\nStopping with " << foundErrors << " machine code errors.";
+    llvm_report_error(Msg.str());
   }
 
   return false;                 // no changes

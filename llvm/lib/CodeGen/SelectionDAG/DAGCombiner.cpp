@@ -33,6 +33,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <set>
@@ -2258,8 +2259,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
     if (!LegalOperations || TLI.isCondCodeLegal(NotCC, LHS.getValueType())) {
       switch (N0.getOpcode()) {
       default:
-        assert(0 && "Unhandled SetCC Equivalent!");
-        abort();
+        LLVM_UNREACHABLE("Unhandled SetCC Equivalent!");
       case ISD::SETCC:
         return DAG.getSetCC(N->getDebugLoc(), VT, LHS, RHS, NotCC);
       case ISD::SELECT_CC:

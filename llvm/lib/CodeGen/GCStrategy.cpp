@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -108,7 +109,7 @@ bool GCStrategy::initializeCustomLowering(Module &M) { return false; }
  
 bool GCStrategy::performCustomLowering(Function &F) {
   cerr << "gc " << getName() << " must override performCustomLowering.\n";
-  abort();
+  llvm_unreachable();
   return 0;
 }
 

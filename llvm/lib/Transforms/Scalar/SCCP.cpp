@@ -35,6 +35,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -513,8 +514,10 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     }
     return false;
   } else {
+#ifndef NDEBUG
     cerr << "Unknown terminator instruction: " << *TI;
-    abort();
+#endif
+    llvm_unreachable();
   }
 }
 

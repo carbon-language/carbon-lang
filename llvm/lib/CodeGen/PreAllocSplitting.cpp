@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -1036,8 +1037,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
 
   if (ValNo->isUnused()) {
     // Defined by a dead def? How can this be?
-    assert(0 && "Val# is defined by a dead def?");
-    abort();
+    LLVM_UNREACHABLE("Val# is defined by a dead def?");
   }
 
   MachineInstr *DefMI = ValNo->isDefAccurate()

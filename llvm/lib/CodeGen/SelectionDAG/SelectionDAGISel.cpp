@@ -47,6 +47,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Timer.h"
 #include <algorithm>
@@ -151,10 +152,9 @@ namespace llvm {
 // basic blocks, and the scheduler passes ownership of it to this method.
 MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                  MachineBasicBlock *MBB) const {
-  cerr << "If a target marks an instruction with "
-       << "'usesCustomDAGSchedInserter', it must implement "
-       << "TargetLowering::EmitInstrWithCustomInserter!\n";
-  abort();
+  llvm_report_error("If a target marks an instruction with "
+                    "'usesCustomDAGSchedInserter', it must implement "
+                    "TargetLowering::EmitInstrWithCustomInserter!");
   return 0;  
 }
 
@@ -875,7 +875,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
           if (EnableFastISelAbort)
             // The "fast" selector couldn't handle something and bailed.
             // For the purpose of debugging, just abort.
-            assert(0 && "FastISel didn't select the entire block");
+            LLVM_UNREACHABLE("FastISel didn't select the entire block");
         }
         break;
       }
@@ -1215,8 +1215,8 @@ SelectInlineAsmMemoryOperands(std::vector<SDValue> &Ops) {
       // Otherwise, this is a memory operand.  Ask the target to select it.
       std::vector<SDValue> SelOps;
       if (SelectInlineAsmMemoryOperand(InOps[i+1], 'm', SelOps)) {
-        cerr << "Could not match memory address.  Inline asm failure!\n";
-        exit(1);
+        llvm_report_error("Could not match memory address.  Inline asm"
+                          " failure!");
       }
       
       // Add this to the output node.

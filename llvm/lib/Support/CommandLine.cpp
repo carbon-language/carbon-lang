@@ -19,6 +19,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
@@ -204,8 +205,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
     cerr << ProgramName
          << ": Bad ValueMask flag! CommandLine usage error:"
          << Handler->getValueExpectedFlag() << "\n";
-    abort();
-    break;
+    llvm_unreachable();
   }
 
   // If this isn't a multi-arg option, just run the handler.

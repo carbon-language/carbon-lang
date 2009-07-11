@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -459,8 +460,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   }
 
   if (ScavengedReg != 0) {
-    assert(0 && "Scavenger slot is live, unable to scavenge another register!");
-    abort();
+    LLVM_UNREACHABLE("Scavenger slot is live, unable to scavenge another register!");
   }
 
   // Spill the scavenged register before I.

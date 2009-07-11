@@ -23,6 +23,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/System/Mutex.h"
@@ -1120,8 +1121,7 @@ namespace llvm {
   template<class ConstantClass, class TypeClass>
   struct VISIBILITY_HIDDEN ConvertConstantType {
     static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
-      assert(0 && "This type cannot be converted!\n");
-      abort();
+      LLVM_UNREACHABLE("This type cannot be converted!\n");
     }
   };
 

@@ -14,6 +14,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/System/Memory.h"
 #include <map>
 #include <vector>
@@ -356,8 +357,7 @@ namespace {
       // Check for overflow.
       if (CurGlobalPtr > GlobalEnd) {
         // FIXME: Allocate more memory.
-        fprintf(stderr, "JIT ran out of memory for globals!\n");
-        abort();
+        llvm_report_error("JIT ran out of memory for globals!");
       }
 
       return Result;
@@ -555,8 +555,7 @@ uint8_t *DefaultJITMemoryManager::allocateStub(const GlobalValue* F,
                           ~(intptr_t)(Alignment-1));
   if (CurStubPtr < StubBase) {
     // FIXME: allocate a new block
-    fprintf(stderr, "JIT ran out of memory for function stubs!\n");
-    abort();
+    llvm_report_error("JIT ran out of memory for function stubs!");
   }
   return CurStubPtr;
 }
@@ -567,10 +566,8 @@ sys::MemoryBlock DefaultJITMemoryManager::getNewMemoryBlock(unsigned size) {
   std::string ErrMsg;
   sys::MemoryBlock B = sys::Memory::AllocateRWX(size, BOld, &ErrMsg);
   if (B.base() == 0) {
-    fprintf(stderr,
-            "Allocation failed when allocating new memory in the JIT\n%s\n",
-            ErrMsg.c_str());
-    abort();
+    llvm_report_error("Allocation failed when allocating new memory in the"
+                      " JIT\n" + ErrMsg);
   }
   Blocks.push_back(B);
   return B;
