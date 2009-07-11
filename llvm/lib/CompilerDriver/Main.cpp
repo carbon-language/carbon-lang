@@ -62,8 +62,7 @@ namespace {
   int BuildTargets(CompilationGraph& graph, const LanguageMap& langMap) {
     int ret;
     const sys::Path& tempDir = getTempDir();
-    bool toDelete =
-      (SaveTemps == SaveTempsEnum::Unset && TempDirname.empty());
+    bool toDelete = (SaveTemps == SaveTempsEnum::Unset);
 
     try {
       ret = graph.Build(tempDir, langMap);
