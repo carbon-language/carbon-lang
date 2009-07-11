@@ -108,11 +108,11 @@ CXXRecordDecl::setBases(ASTContext &C,
       const CXXBaseSpecifier *VBase = Bases[i];
       if (!VBase->isVirtual())
         continue;
-      int i;
-      for (i = 0; i < vbaseCount; ++i)
-        if (UniqueVbases[i]->getType() == VBase->getType())
+      int j;
+      for (j = 0; j < vbaseCount; ++j)
+        if (UniqueVbases[j]->getType() == VBase->getType())
           break;
-      if (i == vbaseCount) {
+      if (j == vbaseCount) {
         UniqueVbases.push_back(VBase);
         ++vbaseCount;
       }
