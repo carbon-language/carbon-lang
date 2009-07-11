@@ -53,7 +53,7 @@ ConstantRange ConstantRange::makeICmpRegion(unsigned Pred,
   switch (Pred) {
     default: assert(!"Invalid ICmp predicate to makeICmpRegion()");
     case ICmpInst::ICMP_EQ:
-      return ConstantRange(CR.getLower(), CR.getUpper());
+      return CR;
     case ICmpInst::ICMP_NE:
       if (CR.isSingleElement())
         return ConstantRange(CR.getUpper(), CR.getLower());

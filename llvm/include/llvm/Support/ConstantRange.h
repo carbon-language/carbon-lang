@@ -58,9 +58,9 @@ public:
   /// assert out if the two APInt's are not the same bit width.
   ConstantRange(const APInt& Lower, const APInt& Upper);
 
-  /// makeICmpRegion - Return the range of values that a value must be within
-  /// in order for the comparison specified by the predicate against range
-  /// Other to be true.
+  /// makeICmpRegion - Produce the smallest range that contains all values that
+  /// might satisfy the comparison specified by Pred when compared to any value
+  /// contained within Other.
   static ConstantRange makeICmpRegion(unsigned Pred,
                                       const ConstantRange &Other);
 
