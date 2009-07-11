@@ -1,9 +1,9 @@
-// RUN: clang-cc -fsyntax-only -ftemplate-depth=1000 -verify %s
+// RUN: clang-cc -fsyntax-only -verify %s
 
 // template<unsigned M, unsigned N>
 // struct Ackermann {
 //   enum {
-//     value = M ? (N ? Ackermann<M-1, Ackermann<M-1, N-1> >::value
+//     value = M ? (N ? Ackermann<M-1, Ackermann<M, N-1> >::value
 //                    : Ackermann<M-1, 1>::value)
 //               : N + 1
 //   };
@@ -34,4 +34,5 @@ template<> struct Ackermann<0, 0> {
  };
 };
 
-int g0[Ackermann<3, 8>::value == 2045 ? 1 : -1];
+int g0[Ackermann<3, 4>::value == 125 ? 1 : -1];
+
