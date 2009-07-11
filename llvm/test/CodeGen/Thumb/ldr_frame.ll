@@ -1,6 +1,8 @@
-; RUN: llvm-as < %s | llc -march=thumb | grep cpy | count 2
+; RUN: llvm-as < %s | llc -march=thumb | FileCheck %s
 
 define i32 @f1() {
+; CHECK: f1:
+; CHECK: ldr r0
 	%buf = alloca [32 x i32], align 4
 	%tmp = getelementptr [32 x i32]* %buf, i32 0, i32 0
 	%tmp1 = load i32* %tmp
@@ -8,6 +10,9 @@ define i32 @f1() {
 }
 
 define i32 @f2() {
+; CHECK: f2:
+; CHECK: mov r0
+; CHECK: ldrb
 	%buf = alloca [32 x i8], align 4
 	%tmp = getelementptr [32 x i8]* %buf, i32 0, i32 0
 	%tmp1 = load i8* %tmp
@@ -16,6 +21,8 @@ define i32 @f2() {
 }
 
 define i32 @f3() {
+; CHECK: f3:
+; CHECK: ldr r0
 	%buf = alloca [32 x i32], align 4
 	%tmp = getelementptr [32 x i32]* %buf, i32 0, i32 32
 	%tmp1 = load i32* %tmp
@@ -23,6 +30,9 @@ define i32 @f3() {
 }
 
 define i32 @f4() {
+; CHECK: f4:
+; CHECK: mov r0
+; CHECK: ldrb
 	%buf = alloca [32 x i8], align 4
 	%tmp = getelementptr [32 x i8]* %buf, i32 0, i32 2
 	%tmp1 = load i8* %tmp

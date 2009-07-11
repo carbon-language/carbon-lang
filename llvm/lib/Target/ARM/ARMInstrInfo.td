@@ -316,19 +316,6 @@ def addrmodepc : Operand<i32>,
   let MIOperandInfo = (ops GPR, i32imm);
 }
 
-// ARM Predicate operand. Default to 14 = always (AL). Second part is CC
-// register whose default is 0 (no register).
-def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
-                                     (ops (i32 14), (i32 zero_reg))> {
-  let PrintMethod = "printPredicateOperand";
-}
-
-// Conditional code result for instructions whose 's' bit is set, e.g. subs.
-//
-def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
-  let PrintMethod = "printSBitModifierOperand";
-}
-
 //===----------------------------------------------------------------------===//
 
 include "ARMInstrFormats.td"

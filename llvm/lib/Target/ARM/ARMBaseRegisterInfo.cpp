@@ -868,7 +868,7 @@ unsigned ARMBaseRegisterInfo::getRegisterPairOdd(unsigned Reg,
   return 0;
 }
 
-
+// FIXME: Dup in ARMBaseInstrInfo.cpp
 static inline
 const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
   return MIB.addImm((int64_t)ARMCC::AL).addReg(0);

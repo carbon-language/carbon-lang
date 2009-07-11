@@ -459,8 +459,11 @@ bool ARMDAGToDAGISel::SelectThumbAddrModeRR(SDValue Op, SDValue N,
     // wouldn't work without additional code to position the node within
     // ISel's topological ordering in a place where ISel will process it
     // normally.  Instead, just explicitly issue a tMOVri8 node!
-    Offset = SDValue(CurDAG->getTargetNode(ARM::tMOVi8, dl, MVT::i32,
-                                    CurDAG->getTargetConstant(0, MVT::i32)), 0);
+    SDValue CC = CurDAG->getRegister(ARM::CPSR, MVT::i32);
+    SDValue Pred = CurDAG->getTargetConstant(0xEULL, MVT::i32);
+    SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
+    SDValue Ops[] = { CC, CurDAG->getTargetConstant(0, MVT::i32), Pred, PredReg };
+    Offset = SDValue(CurDAG->getTargetNode(ARM::tMOVi8, dl, MVT::i32, Ops,4),0);
     return true;
   }
 
@@ -871,10 +874,13 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                                       TLI.getPointerTy());
 
       SDNode *ResNode;
-      if (Subtarget->isThumb1Only())
+      if (Subtarget->isThumb1Only()) {
+        SDValue Pred = CurDAG->getTargetConstant(0xEULL, MVT::i32);
+        SDValue PredReg = CurDAG->getRegister(0, MVT::i32);
+        SDValue Ops[] = { CPIdx, Pred, PredReg, CurDAG->getEntryNode() };
         ResNode = CurDAG->getTargetNode(ARM::tLDRcp, dl, MVT::i32, MVT::Other,
-                                        CPIdx, CurDAG->getEntryNode());
-      else {
+                                        Ops, 4);
+      } else {
         SDValue Ops[] = {
           CPIdx, 
           CurDAG->getRegister(0, MVT::i32),
@@ -901,11 +907,11 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, TFI,
                                   CurDAG->getTargetConstant(0, MVT::i32));
     } else {
+      unsigned Opc = Subtarget->hasThumb2() ? ARM::t2ADDri : ARM::ADDri;
       SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
-                          getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
-                          CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->SelectNodeTo(N, (Subtarget->hasThumb2()) ? ARM::t2ADDri : ARM::ADDri,
-                                  MVT::i32, Ops, 5);
+                        getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
+                        CurDAG->getRegister(0, MVT::i32) };
+      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
     }
   }
   case ISD::ADD: {
@@ -922,7 +928,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
     }
     if (RHSR && RHSR->getReg() == ARM::SP) {
       SDValue Val = SDValue(CurDAG->getTargetNode(ARM::tMOVlor2hir, dl,
-                                  Op.getValueType(), N0, N0), 0);
+                                                  Op.getValueType(), N0, N0),0);
       return CurDAG->SelectNodeTo(N, ARM::tADDhirr, Op.getValueType(), Val, N1);
     }
     break;

@@ -974,8 +974,8 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
 
-  // Thumb-2 instructions are supported only in unified assembler syntax mode.
-  if (Subtarget->hasThumb2())
+  // Use unified assembler syntax mode for Thumb.
+  if (Subtarget->isThumb())
     O << "\t.syntax unified\n";
 
   // Emit ARM Build Attributes

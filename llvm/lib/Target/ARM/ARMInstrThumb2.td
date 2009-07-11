@@ -1059,9 +1059,6 @@ let isCall = 1,
 // Control-Flow Instructions
 //
 
-let isReturn = 1, isTerminator = 1 in
-  def t2BX_RET : T2XI<(outs), (ins), "bx lr", [(ARMretflag)]>;
-
 // FIXME: remove when we have a way to marking a MI with these properties.
 // FIXME: $dst1 should be a def. But the extra ops must be in the end of the
 // operand list.

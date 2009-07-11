@@ -22,17 +22,20 @@
 
 using namespace llvm;
 
+static inline
+const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
+  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
+}
+
 Thumb1InstrInfo::Thumb1InstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
 
-unsigned Thumb1InstrInfo::
-getUnindexedOpcode(unsigned Opc) const {
+unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {
   return 0;
 }
 
-unsigned Thumb1InstrInfo::
-getOpcode(ARMII::Op Op) const {
+unsigned Thumb1InstrInfo::getOpcode(ARMII::Op Op) const {
   switch (Op) {
   case ARMII::ADDri: return ARM::tADDi8;
   case ARMII::ADDrs: return 0;
@@ -207,9 +210,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   assert(RC == ARM::tGPRRegisterClass && "Unknown regclass!");
 
   if (RC == ARM::tGPRRegisterClass) {
-    BuildMI(MBB, I, DL, get(ARM::tSpill))
-      .addReg(SrcReg, getKillRegState(isKill))
-      .addFrameIndex(FI).addImm(0);
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tSpill))
+                   .addReg(SrcReg, getKillRegState(isKill))
+                   .addFrameIndex(FI).addImm(0));
   }
 }
 
@@ -230,6 +233,7 @@ void Thumb1InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     BuildMI(MF, DL,  get(Opc)).addReg(SrcReg, getKillRegState(isKill));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB.addOperand(Addr[i]);
+  AddDefaultPred(MIB);
   NewMIs.push_back(MIB);
   return;
 }
@@ -244,8 +248,8 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   assert(RC == ARM::tGPRRegisterClass && "Unknown regclass!");
 
   if (RC == ARM::tGPRRegisterClass) {
-    BuildMI(MBB, I, DL, get(ARM::tRestore), DestReg)
-      .addFrameIndex(FI).addImm(0);
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tRestore), DestReg)
+                   .addFrameIndex(FI).addImm(0));
   }
 }
 
@@ -264,6 +268,7 @@ loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB.addOperand(Addr[i]);
+  AddDefaultPred(MIB);
   NewMIs.push_back(MIB);
   return;
 }
@@ -339,18 +344,19 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
       if (RI.isPhysicalRegister(SrcReg) && !isARMLowRegister(SrcReg))
         // tSpill cannot take a high register operand.
         break;
-      NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::tSpill))
-        .addReg(SrcReg, getKillRegState(isKill))
-        .addFrameIndex(FI).addImm(0);
+      NewMI = AddDefaultPred(BuildMI(MF, MI->getDebugLoc(), get(ARM::tSpill))
+                             .addReg(SrcReg, getKillRegState(isKill))
+                             .addFrameIndex(FI).addImm(0));
     } else {          // move -> load
       unsigned DstReg = MI->getOperand(0).getReg();
       if (RI.isPhysicalRegister(DstReg) && !isARMLowRegister(DstReg))
         // tRestore cannot target a high register operand.
         break;
       bool isDead = MI->getOperand(0).isDead();
-      NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::tRestore))
-        .addReg(DstReg, RegState::Define | getDeadRegState(isDead))
-        .addFrameIndex(FI).addImm(0);
+      NewMI = AddDefaultPred(BuildMI(MF, MI->getDebugLoc(), get(ARM::tRestore))
+                             .addReg(DstReg,
+                                     RegState::Define | getDeadRegState(isDead))
+                             .addFrameIndex(FI).addImm(0));
     }
     break;
   }

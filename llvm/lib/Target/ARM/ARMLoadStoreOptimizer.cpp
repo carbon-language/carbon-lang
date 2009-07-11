@@ -1006,7 +1006,7 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
 
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   if (MBBI != MBB.begin() &&
-      (MBBI->getOpcode() == ARM::BX_RET || MBBI->getOpcode() == ARM::t2BX_RET)){
+      (MBBI->getOpcode() == ARM::BX_RET || MBBI->getOpcode() == ARM::tBX_RET)) {
     MachineInstr *PrevMI = prior(MBBI);
     if (PrevMI->getOpcode() == ARM::LDM || PrevMI->getOpcode() == ARM::t2LDM) {
       MachineOperand &MO = PrevMI->getOperand(PrevMI->getNumOperands()-1);

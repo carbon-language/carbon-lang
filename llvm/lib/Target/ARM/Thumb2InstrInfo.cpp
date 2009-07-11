@@ -26,14 +26,12 @@ Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
 }
 
-unsigned Thumb2InstrInfo::
-getUnindexedOpcode(unsigned Opc) const {
+unsigned Thumb2InstrInfo::getUnindexedOpcode(unsigned Opc) const {
   // FIXME
   return 0;
 }
 
-unsigned Thumb2InstrInfo::
-getOpcode(ARMII::Op Op) const {
+unsigned Thumb2InstrInfo::getOpcode(ARMII::Op Op) const {
   switch (Op) {
   case ARMII::ADDri: return ARM::t2ADDri;
   case ARMII::ADDrs: return ARM::t2ADDrs;
@@ -43,7 +41,7 @@ getOpcode(ARMII::Op Op) const {
   case ARMII::BR_JTr: return ARM::t2BR_JTr;
   case ARMII::BR_JTm: return ARM::t2BR_JTm;
   case ARMII::BR_JTadd: return ARM::t2BR_JTadd;
-  case ARMII::BX_RET: return ARM::t2BX_RET;
+  case ARMII::BX_RET: return ARM::tBX_RET;
   case ARMII::FCPYS: return ARM::FCPYS;
   case ARMII::FCPYD: return ARM::FCPYD;
   case ARMII::FLDD: return ARM::FLDD;
@@ -71,7 +69,6 @@ Thumb2InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
 
   // FIXME
   switch (MBB.back().getOpcode()) {
-  case ARM::t2BX_RET:
   case ARM::t2LDM_RET:
   case ARM::t2B:        // Uncond branch.
   case ARM::t2BR_JTr:   // Jumptable branch.

@@ -110,6 +110,28 @@ def IndexModePost : IndexMode<2>;
 
 //===----------------------------------------------------------------------===//
 
+// ARM special operands.
+//
+
+// ARM Predicate operand. Default to 14 = always (AL). Second part is CC
+// register whose default is 0 (no register).
+def pred : PredicateOperand<OtherVT, (ops i32imm, CCR),
+                                     (ops (i32 14), (i32 zero_reg))> {
+  let PrintMethod = "printPredicateOperand";
+}
+
+// Conditional code result for instructions whose 's' bit is set, e.g. subs.
+def cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 zero_reg))> {
+  let PrintMethod = "printSBitModifierOperand";
+}
+
+// Same as cc_out except it defaults to setting CPSR.
+def s_cc_out : OptionalDefOperand<OtherVT, (ops CCR), (ops (i32 CPSR))> {
+  let PrintMethod = "printSBitModifierOperand";
+}
+
+//===----------------------------------------------------------------------===//
+
 // ARM Instruction templates.
 //
 
@@ -773,26 +795,26 @@ class ARMV6Pat<dag pattern, dag result> : Pat<pattern, result> {
 
 // TI - Thumb instruction.
 
-class ThumbI<dag outs, dag ins, AddrMode am, SizeFlagVal sz,
+class ThumbI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
              string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
-  let OutOperandList = outs;
-  let InOperandList = ins;
+  let OutOperandList = oops;
+  let InOperandList = iops;
   let AsmString   = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb];
 }
 
-class TI<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeNone, Size2Bytes, asm, "", pattern>;
+class TI<dag oops, dag iops, string asm, list<dag> pattern>
+  : ThumbI<oops, iops, AddrModeNone, Size2Bytes, asm, "", pattern>;
 
 // BL, BLX(1) are translated by assembler into two instructions
-class TIx2<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeNone, Size4Bytes, asm, "", pattern>;
+class TIx2<dag oops, dag iops, string asm, list<dag> pattern>
+  : ThumbI<oops, iops, AddrModeNone, Size4Bytes, asm, "", pattern>;
 
 // BR_JT instructions
-class TJTI<dag outs, dag ins, string asm, list<dag> pattern>
-  : ThumbI<outs, ins, AddrModeNone, SizeSpecial, asm, "", pattern>;
+class TJTI<dag oops, dag iops, string asm, list<dag> pattern>
+  : ThumbI<oops, iops, AddrModeNone, SizeSpecial, asm, "", pattern>;
 
 // TPat - Same as Pat<>, but requires that the compiler be in Thumb mode.
 class TPat<dag pattern, dag result> : Pat<pattern, result> {
@@ -804,34 +826,73 @@ class Tv5Pat<dag pattern, dag result> : Pat<pattern, result> {
 }
 
 // Thumb1 only
-class Thumb1I<dag outs, dag ins, AddrMode am, SizeFlagVal sz,
+class Thumb1I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
              string asm, string cstr, list<dag> pattern>
   : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
-  let OutOperandList = outs;
-  let InOperandList = ins;
+  let OutOperandList = oops;
+  let InOperandList = iops;
   let AsmString   = asm;
   let Pattern = pattern;
   list<Predicate> Predicates = [IsThumb1Only];
 }
 
-class T1I<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb1I<outs, ins, AddrModeNone, Size2Bytes, asm, "", pattern>;
-class T1I1<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb1I<outs, ins, AddrModeT1_1, Size2Bytes, asm, "", pattern>;
-class T1I2<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb1I<outs, ins, AddrModeT1_2, Size2Bytes, asm, "", pattern>;
-class T1I4<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb1I<outs, ins, AddrModeT1_4, Size2Bytes, asm, "", pattern>;
-class T1Is<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb1I<outs, ins, AddrModeT1_s, Size2Bytes, asm, "", pattern>;
-class T1Ix2<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb1I<outs, ins, AddrModeNone, Size4Bytes, asm, "", pattern>;
-class T1JTI<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb1I<outs, ins, AddrModeNone, SizeSpecial, asm, "", pattern>;
+class T1I<dag oops, dag iops, string asm, list<dag> pattern>
+  : Thumb1I<oops, iops, AddrModeNone, Size2Bytes, asm, "", pattern>;
+class T1Ix2<dag oops, dag iops, string asm, list<dag> pattern>
+  : Thumb1I<oops, iops, AddrModeNone, Size4Bytes, asm, "", pattern>;
+class T1JTI<dag oops, dag iops, string asm, list<dag> pattern>
+  : Thumb1I<oops, iops, AddrModeNone, SizeSpecial, asm, "", pattern>;
 
 // Two-address instructions
-class T1It<dag outs, dag ins, string asm, list<dag> pattern>
-  : Thumb1I<outs, ins, AddrModeNone, Size2Bytes, asm, "$lhs = $dst", pattern>;
+class T1It<dag oops, dag iops, string asm, list<dag> pattern>
+  : Thumb1I<oops, iops, AddrModeNone, Size2Bytes, asm, "$lhs = $dst", pattern>;
+
+// Thumb1 instruction that can either be predicated or set CPSR.
+class Thumb1sI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+               string opc, string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
+  let OutOperandList = !con(oops, (ops s_cc_out:$s));
+  let InOperandList = !con(iops, (ops pred:$p));
+  let AsmString = !strconcat(opc, !strconcat("${s}${p}", asm));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb1Only];
+}
+
+class T1sI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb1sI<oops, iops, AddrModeNone, Size2Bytes, opc, asm, "", pattern>;
+
+// Two-address instructions
+class T1sIt<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb1sI<oops, iops, AddrModeNone, Size2Bytes, opc, asm,
+            "$lhs = $dst", pattern>;
+
+// Thumb1 instruction that can be predicated.
+class Thumb1pI<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
+               string opc, string asm, string cstr, list<dag> pattern>
+  : InstARM<am, sz, IndexModeNone, ThumbFrm, cstr> {
+  let OutOperandList = oops;
+  let InOperandList = !con(iops, (ops pred:$p));
+  let AsmString = !strconcat(opc, !strconcat("${p}", asm));
+  let Pattern = pattern;
+  list<Predicate> Predicates = [IsThumb1Only];
+}
+
+class T1pI<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb1pI<oops, iops, AddrModeNone, Size2Bytes, opc, asm, "", pattern>;
+
+// Two-address instructions
+class T1pIt<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb1pI<oops, iops, AddrModeNone, Size2Bytes, opc, asm,
+            "$lhs = $dst", pattern>;
+
+class T1pI1<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb1pI<oops, iops, AddrModeT1_1, Size2Bytes, opc, asm, "", pattern>;
+class T1pI2<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb1pI<oops, iops, AddrModeT1_2, Size2Bytes, opc, asm, "", pattern>;
+class T1pI4<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb1pI<oops, iops, AddrModeT1_4, Size2Bytes, opc, asm, "", pattern>;
+class T1pIs<dag oops, dag iops, string opc, string asm, list<dag> pattern>
+  : Thumb1pI<oops, iops, AddrModeT1_s, Size2Bytes, opc, asm, "", pattern>;
 
 class T1Pat<dag pattern, dag result> : Pat<pattern, result> {
   list<Predicate> Predicates = [IsThumb1Only];

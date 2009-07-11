@@ -238,3 +238,18 @@ to avoid extra work when we convert Thumb2 instructions to Thumb1 instructions.
 We need to make (some of the) Thumb1 instructions predicable. That will allow
 shrinking of predicated Thumb2 instructions. To allow this, we need to be able
 to toggle the 's' bit since they do not set CPSR when they are inside IT blocks.
+
+//===---------------------------------------------------------------------===//
+
+Make use of hi register variants of cmp: tCMPhir / tCMPZhir.
+
+//===---------------------------------------------------------------------===//
+
+Rather than generating ldrsb, sometimes it's better to select to ldrb + sxtb.
+The problem is ldrsb addressing mode [r, r] means the zero offset requires an
+extra move. e.g. ldr_ext.ll test3:
+	movs r1, #0
+	ldrsb r0, [r0, r1]
+=>
+	ldrb	r0, [r0, #0]
+	sxtb	r0, r0
