@@ -9,8 +9,8 @@
 
 #define DEBUG_TYPE "thumb2-it"
 #include "ARM.h"
-#include "ARMInstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
+#include "Thumb2InstrInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -25,7 +25,7 @@ namespace {
     static char ID;
     Thumb2ITBlockPass() : MachineFunctionPass(&ID) {}
 
-    const ARMBaseInstrInfo *TII;
+    const Thumb2InstrInfo *TII;
     ARMFunctionInfo *AFI;
 
     virtual bool runOnMachineFunction(MachineFunction &Fn);
@@ -40,13 +40,21 @@ namespace {
   char Thumb2ITBlockPass::ID = 0;
 }
 
+ARMCC::CondCodes getPredicate(const MachineInstr *MI,
+                              const Thumb2InstrInfo *TII) {
+  unsigned Opc = MI->getOpcode();
+  if (Opc == ARM::tBcc || Opc == ARM::t2Bcc)
+    return ARMCC::AL;
+  return TII->getPredicate(MI);
+}
+
 bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
   bool Modified = false;
 
   MachineBasicBlock::iterator MBBI = MBB.begin(), E = MBB.end();
   while (MBBI != E) {
     MachineInstr *MI = &*MBBI;
-    ARMCC::CondCodes CC = TII->getPredicate(MI);
+    ARMCC::CondCodes CC = getPredicate(MI, TII);
     if (CC == ARMCC::AL) {
       ++MBBI;
       continue;
@@ -64,7 +72,7 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
     ARMCC::CondCodes OCC = ARMCC::getOppositeCondition(CC);
     unsigned Mask = 0x8;
     while (MBBI != E || (Mask & 1)) {
-      ARMCC::CondCodes NCC = TII->getPredicate(&*MBBI);
+      ARMCC::CondCodes NCC = getPredicate(&*MBBI, TII);
       if (NCC == CC) {
         Mask >>= 1;
         Mask |= 0x8;
@@ -86,7 +94,7 @@ bool Thumb2ITBlockPass::InsertITBlocks(MachineBasicBlock &MBB) {
 bool Thumb2ITBlockPass::runOnMachineFunction(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
   AFI = Fn.getInfo<ARMFunctionInfo>();
-  TII = static_cast<const ARMBaseInstrInfo*>(TM.getInstrInfo());
+  TII = static_cast<const Thumb2InstrInfo*>(TM.getInstrInfo());
 
   if (!AFI->isThumbFunction())
     return false;
