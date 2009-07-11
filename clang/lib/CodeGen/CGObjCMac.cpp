@@ -314,11 +314,14 @@ public:
   }
   
   llvm::Constant *getEnumerationMutationFn() {
+    CodeGen::CodeGenTypes &Types = CGM.getTypes();
+    ASTContext &Ctx = CGM.getContext();
     // void objc_enumerationMutation (id)
-    std::vector<const llvm::Type*> Args;
-    Args.push_back(ObjectPtrTy);
-    llvm::FunctionType *FTy = 
-      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+    llvm::SmallVector<QualType,16> Params;
+    QualType IdType = Ctx.getObjCIdType();
+    Params.push_back(IdType);
+    const llvm::FunctionType *FTy =
+      Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
     return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
   }
   
