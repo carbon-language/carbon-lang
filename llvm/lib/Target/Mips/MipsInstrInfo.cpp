@@ -17,6 +17,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "MipsGenInstrInfo.inc"
 
 using namespace llvm;
@@ -372,7 +373,7 @@ static Mips::CondCode GetCondFromBranchOpc(unsigned BrOpc)
 unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC) 
 {
   switch (CC) {
-  default: assert(0 && "Illegal condition code!");
+  default: LLVM_UNREACHABLE("Illegal condition code!");
   case Mips::COND_E   : return Mips::BEQ;
   case Mips::COND_NE  : return Mips::BNE;
   case Mips::COND_GZ  : return Mips::BGTZ;
@@ -421,7 +422,7 @@ unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC)
 Mips::CondCode Mips::GetOppositeBranchCondition(Mips::CondCode CC) 
 {
   switch (CC) {
-  default: assert(0 && "Illegal condition code!");
+  default: LLVM_UNREACHABLE("Illegal condition code!");
   case Mips::COND_E   : return Mips::COND_NE;
   case Mips::COND_NE  : return Mips::COND_E;
   case Mips::COND_GZ  : return Mips::COND_LEZ;

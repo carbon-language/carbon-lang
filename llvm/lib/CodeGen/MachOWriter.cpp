@@ -669,7 +669,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
           ptr[6] = val >> 48;
           ptr[7] = val >> 56;
         } else {
-          assert(0 && "Not implemented: bit widths > 64");
+          LLVM_UNREACHABLE("Not implemented: bit widths > 64");
         }
         break;
       }
@@ -733,7 +733,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
                                  PA+SL->getElementOffset(i)));
     } else {
       cerr << "Bad Type: " << *PC->getType() << "\n";
-      assert(0 && "Unknown constant type to initialize memory with!");
+      LLVM_UNREACHABLE("Unknown constant type to initialize memory with!");
     }
   }
 }
@@ -749,7 +749,7 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
 
   switch (GV->getLinkage()) {
   default:
-    assert(0 && "Unexpected linkage type!");
+    LLVM_UNREACHABLE("Unexpected linkage type!");
     break;
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:

@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstdio>
 
 
@@ -104,7 +105,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addImm(1); // Emit banksel for it.
   }
   else
-    assert(0 && "Can't store this register to stack slot");
+    LLVM_UNREACHABLE("Can't store this register to stack slot");
 }
 
 void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, 
@@ -144,7 +145,7 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
       .addImm(1); // Emit banksel for it.
   }
   else
-    assert(0 && "Can't load this register from stack slot");
+    LLVM_UNREACHABLE("Can't load this register from stack slot");
 }
 
 bool PIC16InstrInfo::copyRegToReg (MachineBasicBlock &MBB,

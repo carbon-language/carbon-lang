@@ -53,6 +53,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <map>
 #include <vector>
 using namespace llvm;
@@ -128,7 +129,7 @@ static bool isEquivalentType(const Type *Ty1, const Type *Ty2) {
     return false;
 
   default:
-    assert(0 && "Unknown type!");
+    LLVM_UNREACHABLE("Unknown type!");
     return false;
 
   case Type::PointerTyID: {
@@ -469,7 +470,7 @@ static LinkageCategory categorize(const Function *F) {
     return ExternalStrong;
   }
 
-  assert(0 && "Unknown LinkageType.");
+  LLVM_UNREACHABLE("Unknown LinkageType.");
   return ExternalWeak;
 }
 
@@ -575,7 +576,7 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
     case Internal:
       switch (catG) {
         case ExternalStrong:
-          assert(0);
+          llvm_unreachable();
           // fall-through
         case ExternalWeak:
 	  if (F->hasAddressTaken())

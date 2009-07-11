@@ -1156,7 +1156,7 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
 
 SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
                                                    SelectionDAG &DAG) {
-  assert(0 && "TLS not implemented for PPC.");
+  LLVM_UNREACHABLE("TLS not implemented for PPC.");
   return SDValue(); // Not reached
 }
 
@@ -1251,7 +1251,7 @@ SDValue PPCTargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG,
                               unsigned VarArgsNumFPR,
                               const PPCSubtarget &Subtarget) {
 
-  assert(0 && "VAARG not yet implemented for the SVR4 ABI!");
+  LLVM_UNREACHABLE("VAARG not yet implemented for the SVR4 ABI!");
   return SDValue(); // Not reached
 }
 
@@ -1544,7 +1544,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS_SVR4(SDValue Op,
       
       switch (ValVT.getSimpleVT()) {
         default:
-          assert(0 && "ValVT not supported by FORMAL_ARGUMENTS Lowering");
+          LLVM_UNREACHABLE("ValVT not supported by FORMAL_ARGUMENTS Lowering");
         case MVT::i32:
           RC = PPC::GPRCRegisterClass;
           break;
@@ -1785,7 +1785,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS_Darwin(SDValue Op,
       }
 
       switch(ObjectVT.getSimpleVT()) {
-      default: assert(0 && "Unhandled argument type!");
+      default: LLVM_UNREACHABLE("Unhandled argument type!");
       case MVT::i32:
       case MVT::f32:
         VecArgOffset += isPPC64 ? 8 : 4;
@@ -1892,7 +1892,7 @@ PPCTargetLowering::LowerFORMAL_ARGUMENTS_Darwin(SDValue Op,
     }
 
     switch (ObjectVT.getSimpleVT()) {
-    default: assert(0 && "Unhandled argument type!");
+    default: LLVM_UNREACHABLE("Unhandled argument type!");
     case MVT::i32:
       if (!isPPC64) {
         if (GPR_idx != Num_GPR_Regs) {
@@ -2902,7 +2902,7 @@ SDValue PPCTargetLowering::LowerCALL_Darwin(SDValue Op, SelectionDAG &DAG,
     }
 
     switch (Arg.getValueType().getSimpleVT()) {
-    default: assert(0 && "Unexpected ValueType for argument!");
+    default: LLVM_UNREACHABLE("Unexpected ValueType for argument!");
     case MVT::i32:
     case MVT::i64:
       if (GPR_idx != NumGPRs) {
@@ -3309,7 +3309,7 @@ SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
 
   SDValue Tmp;
   switch (Op.getValueType().getSimpleVT()) {
-  default: assert(0 && "Unhandled FP_TO_INT type in custom expander!");
+  default: LLVM_UNREACHABLE("Unhandled FP_TO_INT type in custom expander!");
   case MVT::i32:
     Tmp = DAG.getNode(Op.getOpcode()==ISD::FP_TO_SINT ? PPCISD::FCTIWZ :
                                                          PPCISD::FCTIDZ, 
@@ -3795,7 +3795,7 @@ static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
 
   int ShufIdxs[16];
   switch (OpNum) {
-  default: assert(0 && "Unknown i32 permute!");
+  default: LLVM_UNREACHABLE("Unknown i32 permute!");
   case OP_VMRGHW:
     ShufIdxs[ 0] =  0; ShufIdxs[ 1] =  1; ShufIdxs[ 2] =  2; ShufIdxs[ 3] =  3;
     ShufIdxs[ 4] = 16; ShufIdxs[ 5] = 17; ShufIdxs[ 6] = 18; ShufIdxs[ 7] = 19;
@@ -4155,7 +4155,7 @@ SDValue PPCTargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) {
 ///
 SDValue PPCTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
-  default: assert(0 && "Wasn't expecting to be able to lower this!");
+  default: LLVM_UNREACHABLE("Wasn't expecting to be able to lower this!");
   case ISD::ConstantPool:       return LowerConstantPool(Op, DAG);
   case ISD::GlobalAddress:      return LowerGlobalAddress(Op, DAG);
   case ISD::GlobalTLSAddress:   return LowerGlobalTLSAddress(Op, DAG);
@@ -4817,7 +4817,7 @@ PPCTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     BB = exitMBB;
     BuildMI(BB, dl, TII->get(PPC::SRW),dest).addReg(TmpReg).addReg(ShiftReg);
   } else {
-    assert(0 && "Unexpected instr type to insert");
+    LLVM_UNREACHABLE("Unexpected instr type to insert");
   }
 
   F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
@@ -5192,7 +5192,7 @@ void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op, char Letter,
     if (!CST) return; // Must be an immediate to match.
     unsigned Value = CST->getZExtValue();
     switch (Letter) {
-    default: assert(0 && "Unknown constraint letter!");
+    default: LLVM_UNREACHABLE("Unknown constraint letter!");
     case 'I':  // "I" is a signed 16-bit constant.
       if ((short)Value == (int)Value)
         Result = DAG.getTargetConstant(Value, Op.getValueType());

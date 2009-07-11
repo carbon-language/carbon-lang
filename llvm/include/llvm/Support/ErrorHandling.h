@@ -46,11 +46,11 @@ namespace llvm {
   /// This function calls abort().
   /// Call this after assert(0), so that compiler knows the path is not
   /// reachable.
-  void llvm_unreachable(void) NORETURN;
+  void llvm_unreachable(const char *msg=0) NORETURN;
 }
 
 #ifndef NDEBUG
-#define LLVM_UNREACHABLE(msg) do {cerr<<msg<<"\n";llvm_unreachable();}while(0)
+#define LLVM_UNREACHABLE(msg) llvm_unreachable(msg)
 #else
 #define LLVM_UNREACHABLE(msg) llvm_unreachable()
 #endif

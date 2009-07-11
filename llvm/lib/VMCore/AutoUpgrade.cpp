@@ -19,6 +19,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstring>
 using namespace llvm;
 
@@ -333,13 +334,13 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       //  Clean up the old call now that it has been completely upgraded.
       CI->eraseFromParent();
     } else {
-      assert(0 && "Unknown function for CallInst upgrade.");
+      LLVM_UNREACHABLE("Unknown function for CallInst upgrade.");
     }
     return;
   }
 
   switch (NewFn->getIntrinsicID()) {
-  default:  assert(0 && "Unknown function for CallInst upgrade.");
+  default:  LLVM_UNREACHABLE("Unknown function for CallInst upgrade.");
   case Intrinsic::x86_mmx_psll_d:
   case Intrinsic::x86_mmx_psll_q:
   case Intrinsic::x86_mmx_psll_w:

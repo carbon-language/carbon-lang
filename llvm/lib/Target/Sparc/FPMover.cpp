@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 STATISTIC(NumFpDs , "Number of instructions translated");
@@ -75,7 +76,7 @@ static void getDoubleRegPair(unsigned DoubleReg, unsigned &EvenReg,
       OddReg = OddHalvesOfPairs[i];
       return;
     }
-  assert(0 && "Can't find reg");
+  LLVM_UNREACHABLE("Can't find reg");
 }
 
 /// runOnMachineBasicBlock - Fixup FpMOVD instructions in this MBB.
@@ -108,7 +109,7 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       else if (MI->getOpcode() == SP::FpABSD)
         MI->setDesc(TII->get(SP::FABSS));
       else
-        assert(0 && "Unknown opcode!");
+        LLVM_UNREACHABLE("Unknown opcode!");
         
       MI->getOperand(0).setReg(EvenDestReg);
       MI->getOperand(1).setReg(EvenSrcReg);

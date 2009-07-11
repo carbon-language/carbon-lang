@@ -383,7 +383,7 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
     unsigned *RelocPos = (unsigned*)Function + MR->getMachineCodeOffset()/4;
     intptr_t ResultPtr = (intptr_t)MR->getResultPointer();
     switch ((PPC::RelocationType)MR->getRelocationType()) {
-    default: assert(0 && "Unknown relocation type!");
+    default: LLVM_UNREACHABLE("Unknown relocation type!");
     case PPC::reloc_pcrel_bx:
       // PC-relative relocation for b and bl instructions.
       ResultPtr = (ResultPtr-(intptr_t)RelocPos) >> 2;

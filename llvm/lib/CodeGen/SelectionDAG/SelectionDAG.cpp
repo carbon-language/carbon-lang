@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -53,7 +54,7 @@ static SDVTList makeVTList(const MVT *VTs, unsigned NumVTs) {
 
 static const fltSemantics *MVTToAPFloatSemantics(MVT VT) {
   switch (VT.getSimpleVT()) {
-  default: assert(0 && "Unknown FP format");
+  default: LLVM_UNREACHABLE("Unknown FP format");
   case MVT::f32:     return &APFloat::IEEEsingle;
   case MVT::f64:     return &APFloat::IEEEdouble;
   case MVT::f80:     return &APFloat::x87DoubleExtended;
@@ -243,7 +244,7 @@ ISD::CondCode ISD::getSetCCInverse(ISD::CondCode Op, bool isInteger) {
 /// if the operation does not depend on the sign of the input (setne and seteq).
 static int isSignedOp(ISD::CondCode Opcode) {
   switch (Opcode) {
-  default: assert(0 && "Illegal integer setcc operation!");
+  default: LLVM_UNREACHABLE("Illegal integer setcc operation!");
   case ISD::SETEQ:
   case ISD::SETNE: return 0;
   case ISD::SETLT:
@@ -363,7 +364,7 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   switch (N->getOpcode()) {
   case ISD::TargetExternalSymbol:
   case ISD::ExternalSymbol:
-    assert(0 && "Should only be used on nodes with operands");
+    LLVM_UNREACHABLE("Should only be used on nodes with operands");
   default: break;  // Normal nodes don't need extra info.
   case ISD::ARG_FLAGS:
     ID.AddInteger(cast<ARG_FLAGSSDNode>(N)->getArgFlags().getRawBits());
@@ -626,7 +627,7 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   bool Erased = false;
   switch (N->getOpcode()) {
   case ISD::EntryToken:
-    assert(0 && "EntryToken should not be in CSEMaps!");
+    LLVM_UNREACHABLE("EntryToken should not be in CSEMaps!");
     return false;
   case ISD::HANDLENODE: return false;  // noop.
   case ISD::CONDCODE:
@@ -668,7 +669,7 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
       !N->isMachineOpcode() && !doNotCSE(N)) {
     N->dump(this);
     cerr << "\n";
-    assert(0 && "Node is not in map!");
+    LLVM_UNREACHABLE("Node is not in map!");
   }
 #endif
   return Erased;
@@ -1442,7 +1443,7 @@ SDValue SelectionDAG::FoldSetCC(MVT VT, SDValue N1,
       const APInt &C1 = N1C->getAPIntValue();
 
       switch (Cond) {
-      default: assert(0 && "Unknown integer setcc!");
+      default: LLVM_UNREACHABLE("Unknown integer setcc!");
       case ISD::SETEQ:  return getConstant(C1 == C2, VT);
       case ISD::SETNE:  return getConstant(C1 != C2, VT);
       case ISD::SETULT: return getConstant(C1.ult(C2), VT);
@@ -2371,7 +2372,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL,
   case ISD::MERGE_VALUES:
   case ISD::CONCAT_VECTORS:
     return Operand;         // Factor, merge or concat of one node?  No need.
-  case ISD::FP_ROUND: assert(0 && "Invalid method to make FP_ROUND node");
+  case ISD::FP_ROUND: LLVM_UNREACHABLE("Invalid method to make FP_ROUND node");
   case ISD::FP_EXTEND:
     assert(VT.isFloatingPoint() &&
            Operand.getValueType().isFloatingPoint() && "Invalid FP cast!");
@@ -2946,7 +2947,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, MVT VT,
     }
     break;
   case ISD::VECTOR_SHUFFLE:
-    assert(0 && "should use getVectorShuffle constructor!");
+    LLVM_UNREACHABLE("should use getVectorShuffle constructor!");
     break;
   case ISD::BIT_CONVERT:
     // Fold bit_convert nodes from a type to themselves.
@@ -4060,7 +4061,7 @@ SDVTList SelectionDAG::getVTList(MVT VT1, MVT VT2, MVT VT3, MVT VT4) {
 
 SDVTList SelectionDAG::getVTList(const MVT *VTs, unsigned NumVTs) {
   switch (NumVTs) {
-    case 0: assert(0 && "Cannot have nodes without results!");
+    case 0: LLVM_UNREACHABLE("Cannot have nodes without results!");
     case 1: return getVTList(VTs[0]);
     case 2: return getVTList(VTs[0], VTs[1]);
     case 3: return getVTList(VTs[0], VTs[1], VTs[2]);
@@ -5341,7 +5342,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
 
   case ISD::CONVERT_RNDSAT: {
     switch (cast<CvtRndSatSDNode>(this)->getCvtCode()) {
-    default: assert(0 && "Unknown cvt code!");
+    default: LLVM_UNREACHABLE("Unknown cvt code!");
     case ISD::CVT_FF:  return "cvt_ff";
     case ISD::CVT_FS:  return "cvt_fs";
     case ISD::CVT_FU:  return "cvt_fu";
@@ -5393,7 +5394,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
 
   case ISD::CONDCODE:
     switch (cast<CondCodeSDNode>(this)->get()) {
-    default: assert(0 && "Unknown setcc condition!");
+    default: LLVM_UNREACHABLE("Unknown setcc condition!");
     case ISD::SETOEQ:  return "setoeq";
     case ISD::SETOGT:  return "setogt";
     case ISD::SETOGE:  return "setoge";

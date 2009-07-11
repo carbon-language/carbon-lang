@@ -28,6 +28,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/DenseMap.h"
@@ -882,7 +883,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
           Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", CI);
           InitBoolUsed = true;
           switch (CI->getPredicate()) {
-          default: assert(0 && "Unknown ICmp Predicate!");
+          default: LLVM_UNREACHABLE("Unknown ICmp Predicate!");
           case ICmpInst::ICMP_ULT:
           case ICmpInst::ICMP_SLT:
             LV = Context->getConstantIntFalse();   // X < null -> always false
@@ -1163,7 +1164,7 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
                             PN->getName()+".f"+utostr(FieldNo), PN);
     PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
   } else {
-    assert(0 && "Unknown usable value");
+    LLVM_UNREACHABLE("Unknown usable value");
     Result = 0;
   }
   
@@ -2056,7 +2057,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
         Elts.push_back(Context->getUndef(STy->getElementType(i)));
     } else {
-      assert(0 && "This code is out of sync with "
+      LLVM_UNREACHABLE("This code is out of sync with "
              " ConstantFoldLoadThroughGEPConstantExpr");
     }
     
@@ -2084,7 +2085,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
       Constant *Elt = Context->getUndef(ATy->getElementType());
       Elts.assign(ATy->getNumElements(), Elt);
     } else {
-      assert(0 && "This code is out of sync with "
+      LLVM_UNREACHABLE("This code is out of sync with "
              " ConstantFoldLoadThroughGEPConstantExpr");
     }
     

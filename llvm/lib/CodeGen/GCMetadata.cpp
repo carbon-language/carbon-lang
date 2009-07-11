@@ -144,7 +144,7 @@ void Printer::getAnalysisUsage(AnalysisUsage &AU) const {
 
 static const char *DescKind(GC::PointKind Kind) {
   switch (Kind) {
-    default: assert(0 && "Unknown GC point kind");
+    default: LLVM_UNREACHABLE("Unknown GC point kind");
     case GC::Loop:     return "loop";
     case GC::Return:   return "return";
     case GC::PreCall:  return "pre-call";

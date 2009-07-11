@@ -24,6 +24,7 @@
 #define LLVM_SUPPORT_PASS_NAME_PARSER_H
 
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Pass.h"
 #include <algorithm>
 #include <cstring>
@@ -67,7 +68,7 @@ public:
     if (findOption(P->getPassArgument()) != getNumOptions()) {
       cerr << "Two passes with the same argument (-"
            << P->getPassArgument() << ") attempted to be registered!\n";
-      abort();
+      llvm_unreachable();
     }
     addLiteralOption(P->getPassArgument(), P, P->getPassName());
   }

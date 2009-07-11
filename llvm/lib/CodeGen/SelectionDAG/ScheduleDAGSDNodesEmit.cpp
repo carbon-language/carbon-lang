@@ -25,6 +25,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
@@ -430,7 +431,7 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
     BB->insert(InsertPos, MI);
   } else
-    assert(0 && "Node is not insert_subreg, extract_subreg, or subreg_to_reg");
+    LLVM_UNREACHABLE("Node is not insert_subreg, extract_subreg, or subreg_to_reg");
      
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
@@ -551,10 +552,10 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
 #ifndef NDEBUG
     Node->dump(DAG);
 #endif
-    assert(0 && "This target-independent node should have been selected!");
+    LLVM_UNREACHABLE("This target-independent node should have been selected!");
     break;
   case ISD::EntryToken:
-    assert(0 && "EntryToken should have been excluded from the schedule!");
+    LLVM_UNREACHABLE("EntryToken should have been excluded from the schedule!");
     break;
   case ISD::TokenFactor: // fall thru
     break;
@@ -618,7 +619,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
       ++i;  // Skip the ID value.
         
       switch (Flags & 7) {
-      default: assert(0 && "Bad flags!");
+      default: LLVM_UNREACHABLE("Bad flags!");
       case 2:   // Def of register.
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();

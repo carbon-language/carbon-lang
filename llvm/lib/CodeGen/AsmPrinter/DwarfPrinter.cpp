@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -190,7 +191,7 @@ void Dwarf::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
         Asm->EmitULEB128Bytes(Offset);
         Asm->EOL("Offset");
       } else {
-        assert(0 && "Machine move not supported yet.");
+        LLVM_UNREACHABLE("Machine move not supported yet.");
       }
     } else if (Src.isReg() &&
                Src.getReg() == MachineLocation::VirtualFP) {
@@ -200,7 +201,7 @@ void Dwarf::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
         Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), isEH));
         Asm->EOL("Register");
       } else {
-        assert(0 && "Machine move not supported yet.");
+        LLVM_UNREACHABLE("Machine move not supported yet.");
       }
     } else {
       unsigned Reg = RI->getDwarfRegNum(Src.getReg(), isEH);

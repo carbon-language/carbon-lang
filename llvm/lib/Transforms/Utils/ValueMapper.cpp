@@ -20,6 +20,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/MDNode.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
@@ -126,7 +127,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
       return VM[V] = C;
 
     } else {
-      assert(0 && "Unknown type of constant!");
+      LLVM_UNREACHABLE("Unknown type of constant!");
     }
   }
 

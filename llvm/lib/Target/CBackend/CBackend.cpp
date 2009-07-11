@@ -287,11 +287,11 @@ namespace {
     void visitBranchInst(BranchInst &I);
     void visitSwitchInst(SwitchInst &I);
     void visitInvokeInst(InvokeInst &I) {
-      assert(0 && "Lowerinvoke pass didn't work!");
+      LLVM_UNREACHABLE("Lowerinvoke pass didn't work!");
     }
 
     void visitUnwindInst(UnwindInst &I) {
-      assert(0 && "Lowerinvoke pass didn't work!");
+      LLVM_UNREACHABLE("Lowerinvoke pass didn't work!");
     }
     void visitUnreachableInst(UnreachableInst &I);
 
@@ -921,7 +921,7 @@ void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
       Out << ')';
       break;
     default:
-      assert(0 && "Invalid cast opcode");
+      LLVM_UNREACHABLE("Invalid cast opcode");
   }
 
   // Print the source type cast
@@ -951,7 +951,7 @@ void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
     case Instruction::FPToUI:
       break; // These don't need a source cast.
     default:
-      assert(0 && "Invalid cast opcode");
+      LLVM_UNREACHABLE("Invalid cast opcode");
       break;
   }
 }
@@ -1060,10 +1060,10 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
           case ICmpInst::ICMP_UGT: Out << " > "; break;
           case ICmpInst::ICMP_SGE:
           case ICmpInst::ICMP_UGE: Out << " >= "; break;
-          default: assert(0 && "Illegal ICmp predicate");
+          default: LLVM_UNREACHABLE("Illegal ICmp predicate");
         }
         break;
-      default: assert(0 && "Illegal opcode here!");
+      default: LLVM_UNREACHABLE("Illegal opcode here!");
       }
       printConstantWithCast(CE->getOperand(1), CE->getOpcode());
       if (NeedsClosingParens)
@@ -1081,7 +1081,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       else {
         const char* op = 0;
         switch (CE->getPredicate()) {
-        default: assert(0 && "Illegal FCmp predicate");
+        default: LLVM_UNREACHABLE("Illegal FCmp predicate");
         case FCmpInst::FCMP_ORD: op = "ord"; break;
         case FCmpInst::FCMP_UNO: op = "uno"; break;
         case FCmpInst::FCMP_UEQ: op = "ueq"; break;
@@ -2123,7 +2123,7 @@ void CWriter::printFloatingPointConstants(const Constant *C) {
     << "}; /* Long double constant */\n";
     
   } else {
-    assert(0 && "Unknown float type!");
+    LLVM_UNREACHABLE("Unknown float type!");
   }
 }
 
@@ -2740,7 +2740,7 @@ void CWriter::visitFCmpInst(FCmpInst &I) {
 
   const char* op = 0;
   switch (I.getPredicate()) {
-  default: assert(0 && "Illegal FCmp predicate");
+  default: LLVM_UNREACHABLE("Illegal FCmp predicate");
   case FCmpInst::FCMP_ORD: op = "ord"; break;
   case FCmpInst::FCMP_UNO: op = "uno"; break;
   case FCmpInst::FCMP_UEQ: op = "ueq"; break;
@@ -2768,7 +2768,7 @@ void CWriter::visitFCmpInst(FCmpInst &I) {
 
 static const char * getFloatBitCastField(const Type *Ty) {
   switch (Ty->getTypeID()) {
-    default: assert(0 && "Invalid Type");
+    default: LLVM_UNREACHABLE("Invalid Type");
     case Type::FloatTyID:  return "Float";
     case Type::DoubleTyID: return "Double";
     case Type::IntegerTyID: {
@@ -3131,7 +3131,7 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     Out << ')';  
     // Multiple GCC builtins multiplex onto this intrinsic.
     switch (cast<ConstantInt>(I.getOperand(3))->getZExtValue()) {
-    default: assert(0 && "Invalid llvm.x86.sse.cmp!");
+    default: LLVM_UNREACHABLE("Invalid llvm.x86.sse.cmp!");
     case 0: Out << "__builtin_ia32_cmpeq"; break;
     case 1: Out << "__builtin_ia32_cmplt"; break;
     case 2: Out << "__builtin_ia32_cmple"; break;
@@ -3343,7 +3343,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
 }
 
 void CWriter::visitMallocInst(MallocInst &I) {
-  assert(0 && "lowerallocations pass didn't work!");
+  LLVM_UNREACHABLE("lowerallocations pass didn't work!");
 }
 
 void CWriter::visitAllocaInst(AllocaInst &I) {
@@ -3360,7 +3360,7 @@ void CWriter::visitAllocaInst(AllocaInst &I) {
 }
 
 void CWriter::visitFreeInst(FreeInst &I) {
-  assert(0 && "lowerallocations pass didn't work!");
+  LLVM_UNREACHABLE("lowerallocations pass didn't work!");
 }
 
 void CWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,

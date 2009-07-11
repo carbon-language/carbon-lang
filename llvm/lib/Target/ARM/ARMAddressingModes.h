@@ -15,6 +15,7 @@
 #define LLVM_TARGET_ARM_ARMADDRESSINGMODES_H
 
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 
@@ -37,7 +38,7 @@ namespace ARM_AM {
   
   static inline const char *getShiftOpcStr(ShiftOpc Op) {
     switch (Op) {
-    default: assert(0 && "Unknown shift opc!");
+    default: LLVM_UNREACHABLE("Unknown shift opc!");
     case ARM_AM::asr: return "asr";
     case ARM_AM::lsl: return "lsl";
     case ARM_AM::lsr: return "lsr";
@@ -70,7 +71,7 @@ namespace ARM_AM {
 
   static inline const char *getAMSubModeStr(AMSubMode Mode) {
     switch (Mode) {
-    default: assert(0 && "Unknown addressing sub-mode!");
+    default: LLVM_UNREACHABLE("Unknown addressing sub-mode!");
     case ARM_AM::ia: return "ia";
     case ARM_AM::ib: return "ib";
     case ARM_AM::da: return "da";
@@ -80,7 +81,7 @@ namespace ARM_AM {
 
   static inline const char *getAMSubModeAltStr(AMSubMode Mode, bool isLD) {
     switch (Mode) {
-    default: assert(0 && "Unknown addressing sub-mode!");
+    default: LLVM_UNREACHABLE("Unknown addressing sub-mode!");
     case ARM_AM::ia: return isLD ? "fd" : "ea";
     case ARM_AM::ib: return isLD ? "ed" : "fa";
     case ARM_AM::da: return isLD ? "fa" : "ed";

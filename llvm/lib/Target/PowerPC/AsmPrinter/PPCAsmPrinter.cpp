@@ -571,7 +571,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToSection(TAI->SectionForGlobal(F));
 
   switch (F->getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
+  default: LLVM_UNREACHABLE( "Unknown linkage type!");
   case Function::PrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
@@ -748,7 +748,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchToSection(TAI->SectionForGlobal(F));
 
   switch (F->getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
+  default: LLVM_UNREACHABLE( "Unknown linkage type!");
   case Function::PrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;

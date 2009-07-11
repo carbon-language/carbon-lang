@@ -38,6 +38,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
@@ -146,7 +147,7 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
 
   default:
     assert(isVirtualRegister(RegNo) && "Unknown physical register!");
-    assert(0 && "Register allocator hasn't allocated reg correctly yet!");
+    LLVM_UNREACHABLE("Register allocator hasn't allocated reg correctly yet!");
     return 0;
   }
 }
@@ -973,7 +974,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   case X86::TAILJMPr:
   case X86::TAILJMPm: break;  // These are ok
   default:
-    assert(0 && "Can only insert epilog into returning blocks");
+    LLVM_UNREACHABLE("Can only insert epilog into returning blocks");
   }
 
   // Get the number of bytes to allocate from the FrameInfo
@@ -1126,12 +1127,12 @@ void X86RegisterInfo::getInitialFrameState(std::vector<MachineMove> &Moves)
 }
 
 unsigned X86RegisterInfo::getEHExceptionRegister() const {
-  assert(0 && "What is the exception register");
+  LLVM_UNREACHABLE("What is the exception register");
   return 0;
 }
 
 unsigned X86RegisterInfo::getEHHandlerRegister() const {
-  assert(0 && "What is the exception handler register");
+  LLVM_UNREACHABLE("What is the exception handler register");
   return 0;
 }
 

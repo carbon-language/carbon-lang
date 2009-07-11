@@ -332,7 +332,7 @@ static unsigned AlphaRevCondCode(unsigned Opcode) {
   case Alpha::FBLE: return Alpha::FBGT;
   case Alpha::FBLT: return Alpha::FBGE;
   default:
-    assert(0 && "Unknown opcode");
+    LLVM_UNREACHABLE("Unknown opcode");
   }
   return 0; // Not reached
 }

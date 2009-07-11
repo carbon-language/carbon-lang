@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_PIC16_H
 #define LLVM_TARGET_PIC16_H
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 #include <iosfwd>
 #include <cassert>
@@ -307,7 +308,7 @@ namespace PIC16CC {
 
   inline static const char *PIC16CondCodeToString(PIC16CC::CondCodes CC) {
     switch (CC) {
-    default: assert(0 && "Unknown condition code");
+    default: LLVM_UNREACHABLE("Unknown condition code");
     case PIC16CC::NE:  return "ne";
     case PIC16CC::EQ:   return "eq";
     case PIC16CC::LT:   return "lt";
@@ -323,7 +324,7 @@ namespace PIC16CC {
 
   inline static bool isSignedComparison(PIC16CC::CondCodes CC) {
     switch (CC) {
-    default: assert(0 && "Unknown condition code");
+    default: LLVM_UNREACHABLE("Unknown condition code");
     case PIC16CC::NE:  
     case PIC16CC::EQ: 
     case PIC16CC::LT:

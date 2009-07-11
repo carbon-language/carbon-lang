@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <ostream>
 using namespace llvm;
 
@@ -206,7 +207,7 @@ void DIEInteger::EmitValue(Dwarf *D, unsigned Form) const {
   case dwarf::DW_FORM_data8: Asm->EmitInt64(Integer);        break;
   case dwarf::DW_FORM_udata: Asm->EmitULEB128Bytes(Integer); break;
   case dwarf::DW_FORM_sdata: Asm->EmitSLEB128Bytes(Integer); break;
-  default: assert(0 && "DIE Value form not supported yet");  break;
+  default: LLVM_UNREACHABLE("DIE Value form not supported yet");
   }
 }
 
@@ -225,7 +226,7 @@ unsigned DIEInteger::SizeOf(const TargetData *TD, unsigned Form) const {
   case dwarf::DW_FORM_data8: return sizeof(int64_t);
   case dwarf::DW_FORM_udata: return TargetAsmInfo::getULEB128Size(Integer);
   case dwarf::DW_FORM_sdata: return TargetAsmInfo::getSLEB128Size(Integer);
-  default: assert(0 && "DIE Value form not supported yet"); break;
+  default: LLVM_UNREACHABLE("DIE Value form not supported yet"); break;
   }
   return 0;
 }
@@ -481,7 +482,7 @@ void DIEBlock::EmitValue(Dwarf *D, unsigned Form) const {
   case dwarf::DW_FORM_block2: Asm->EmitInt16(Size);        break;
   case dwarf::DW_FORM_block4: Asm->EmitInt32(Size);        break;
   case dwarf::DW_FORM_block:  Asm->EmitULEB128Bytes(Size); break;
-  default: assert(0 && "Improper form for block");         break;
+  default: LLVM_UNREACHABLE("Improper form for block");         break;
   }
 
   const SmallVector<DIEAbbrevData, 8> &AbbrevData = Abbrev.getData();
@@ -499,7 +500,7 @@ unsigned DIEBlock::SizeOf(const TargetData *TD, unsigned Form) const {
   case dwarf::DW_FORM_block2: return Size + sizeof(int16_t);
   case dwarf::DW_FORM_block4: return Size + sizeof(int32_t);
   case dwarf::DW_FORM_block: return Size + TargetAsmInfo::getULEB128Size(Size);
-  default: assert(0 && "Improper form for block"); break;
+  default: LLVM_UNREACHABLE("Improper form for block"); break;
   }
   return 0;
 }

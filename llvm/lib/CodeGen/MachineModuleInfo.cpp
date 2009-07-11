@@ -23,6 +23,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 using namespace llvm::dwarf;
@@ -290,7 +291,7 @@ unsigned MachineModuleInfo::getPersonalityIndex() const {
   }
 
   // This should never happen
-  assert(0 && "Personality function should be set!");
+  LLVM_UNREACHABLE("Personality function should be set!");
   return 0;
 }
 

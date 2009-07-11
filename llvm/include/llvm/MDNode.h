@@ -25,6 +25,7 @@
 #include "llvm/Type.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
@@ -119,8 +120,7 @@ public:
 
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
-    assert(0 && "This should never be called because MDNodes have no ops");
-    abort();
+    LLVM_UNREACHABLE("This should never be called because MDNodes have no ops");
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:

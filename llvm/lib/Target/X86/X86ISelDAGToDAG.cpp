@@ -1461,7 +1461,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       bool isSigned = Opcode == ISD::SMUL_LOHI;
       if (!isSigned)
         switch (NVT.getSimpleVT()) {
-        default: assert(0 && "Unsupported VT!");
+        default: LLVM_UNREACHABLE("Unsupported VT!");
         case MVT::i8:  Opc = X86::MUL8r;  MOpc = X86::MUL8m;  break;
         case MVT::i16: Opc = X86::MUL16r; MOpc = X86::MUL16m; break;
         case MVT::i32: Opc = X86::MUL32r; MOpc = X86::MUL32m; break;
@@ -1469,7 +1469,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         }
       else
         switch (NVT.getSimpleVT()) {
-        default: assert(0 && "Unsupported VT!");
+        default: LLVM_UNREACHABLE("Unsupported VT!");
         case MVT::i8:  Opc = X86::IMUL8r;  MOpc = X86::IMUL8m;  break;
         case MVT::i16: Opc = X86::IMUL16r; MOpc = X86::IMUL16m; break;
         case MVT::i32: Opc = X86::IMUL32r; MOpc = X86::IMUL32m; break;
@@ -1478,7 +1478,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
 
       unsigned LoReg, HiReg;
       switch (NVT.getSimpleVT()) {
-      default: assert(0 && "Unsupported VT!");
+      default: LLVM_UNREACHABLE("Unsupported VT!");
       case MVT::i8:  LoReg = X86::AL;  HiReg = X86::AH;  break;
       case MVT::i16: LoReg = X86::AX;  HiReg = X86::DX;  break;
       case MVT::i32: LoReg = X86::EAX; HiReg = X86::EDX; break;
@@ -1567,7 +1567,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       bool isSigned = Opcode == ISD::SDIVREM;
       if (!isSigned)
         switch (NVT.getSimpleVT()) {
-        default: assert(0 && "Unsupported VT!");
+        default: LLVM_UNREACHABLE("Unsupported VT!");
         case MVT::i8:  Opc = X86::DIV8r;  MOpc = X86::DIV8m;  break;
         case MVT::i16: Opc = X86::DIV16r; MOpc = X86::DIV16m; break;
         case MVT::i32: Opc = X86::DIV32r; MOpc = X86::DIV32m; break;
@@ -1575,7 +1575,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         }
       else
         switch (NVT.getSimpleVT()) {
-        default: assert(0 && "Unsupported VT!");
+        default: LLVM_UNREACHABLE("Unsupported VT!");
         case MVT::i8:  Opc = X86::IDIV8r;  MOpc = X86::IDIV8m;  break;
         case MVT::i16: Opc = X86::IDIV16r; MOpc = X86::IDIV16m; break;
         case MVT::i32: Opc = X86::IDIV32r; MOpc = X86::IDIV32m; break;
@@ -1585,7 +1585,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       unsigned LoReg, HiReg;
       unsigned ClrOpcode, SExtOpcode;
       switch (NVT.getSimpleVT()) {
-      default: assert(0 && "Unsupported VT!");
+      default: LLVM_UNREACHABLE("Unsupported VT!");
       case MVT::i8:
         LoReg = X86::AL;  HiReg = X86::AH;
         ClrOpcode  = 0;

@@ -1679,7 +1679,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     
     UndefElts = UndefElts2;
     if (VWidth > InVWidth) {
-      assert(0 && "Unimp");
+      LLVM_UNREACHABLE("Unimp");
       // If there are more elements in the result than there are in the source,
       // then an output element is undef if the corresponding input element is
       // undef.
@@ -1687,7 +1687,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
         if (UndefElts2[OutIdx/Ratio])
           UndefElts.set(OutIdx);
     } else if (VWidth < InVWidth) {
-      assert(0 && "Unimp");
+      LLVM_UNREACHABLE("Unimp");
       // If there are more elements in the source than there are in the result,
       // then a result element is undef if all of the corresponding input
       // elements are undef.
@@ -1757,7 +1757,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           RHS = InsertNewInstBefore(new ExtractElementInst(RHS, 0U,"tmp"), *II);
           
           switch (II->getIntrinsicID()) {
-          default: assert(0 && "Case stmts out of sync!");
+          default: LLVM_UNREACHABLE("Case stmts out of sync!");
           case Intrinsic::x86_sse_sub_ss:
           case Intrinsic::x86_sse2_sub_sd:
             TmpV = InsertNewInstBefore(BinaryOperator::CreateFSub(LHS, RHS,
@@ -2019,7 +2019,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
                                 PN->getIncomingValue(i), C, "phitmp",
                                 NonConstBB->getTerminator());
         else
-          assert(0 && "Unknown binop!");
+          LLVM_UNREACHABLE("Unknown binop!");
         
         AddToWorkList(cast<Instruction>(InV));
       }
@@ -3355,7 +3355,7 @@ static unsigned getICmpCode(const ICmpInst *ICI) {
   case ICmpInst::ICMP_SLE: return 6;  // 110
     // True -> 7
   default:
-    assert(0 && "Invalid ICmp predicate!");
+    LLVM_UNREACHABLE("Invalid ICmp predicate!");
     return 0;
   }
 }
@@ -3383,7 +3383,7 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
     // True -> 7
   default:
     // Not expecting FCMP_FALSE and FCMP_TRUE;
-    assert(0 && "Unexpected FCmp predicate!");
+    LLVM_UNREACHABLE("Unexpected FCmp predicate!");
     return 0;
   }
 }
@@ -3395,7 +3395,7 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
 static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS,
                            LLVMContext *Context) {
   switch (code) {
-  default: assert(0 && "Illegal ICmp code!");
+  default: LLVM_UNREACHABLE("Illegal ICmp code!");
   case  0: return Context->getConstantIntFalse();
   case  1: 
     if (sign)
@@ -3429,7 +3429,7 @@ static Value *getICmpValue(bool sign, unsigned code, Value *LHS, Value *RHS,
 static Value *getFCmpValue(bool isordered, unsigned code,
                            Value *LHS, Value *RHS, LLVMContext *Context) {
   switch (code) {
-  default: assert(0 && "Illegal FCmp code!");
+  default: LLVM_UNREACHABLE("Illegal FCmp code!");
   case  0:
     if (isordered)
       return new FCmpInst(*Context, FCmpInst::FCMP_ORD, LHS, RHS);
@@ -3508,7 +3508,7 @@ struct FoldICmpLogical {
     case Instruction::And: Code = LHSCode & RHSCode; break;
     case Instruction::Or:  Code = LHSCode | RHSCode; break;
     case Instruction::Xor: Code = LHSCode ^ RHSCode; break;
-    default: assert(0 && "Illegal logical opcode!"); return 0;
+    default: LLVM_UNREACHABLE("Illegal logical opcode!"); return 0;
     }
 
     bool isSigned = ICmpInst::isSignedPredicate(RHSICI->getPredicate()) || 
@@ -3843,10 +3843,10 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
   assert(LHSCst != RHSCst && "Compares not folded above?");
 
   switch (LHSCC) {
-  default: assert(0 && "Unknown integer condition code!");
+  default: LLVM_UNREACHABLE("Unknown integer condition code!");
   case ICmpInst::ICMP_EQ:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X == 13 & X == 15) -> false
     case ICmpInst::ICMP_UGT:        // (X == 13 & X >  15) -> false
     case ICmpInst::ICMP_SGT:        // (X == 13 & X >  15) -> false
@@ -3858,7 +3858,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     }
   case ICmpInst::ICMP_NE:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_ULT:
       if (LHSCst == SubOne(RHSCst, Context)) // (X != 13 & X u< 14) -> X < 13
         return new ICmpInst(*Context, ICmpInst::ICMP_ULT, Val, LHSCst);
@@ -3885,7 +3885,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_ULT:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X u< 13 & X == 15) -> false
     case ICmpInst::ICMP_UGT:        // (X u< 13 & X u> 15) -> false
       return ReplaceInstUsesWith(I, Context->getConstantIntFalse());
@@ -3900,7 +3900,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_SLT:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X s< 13 & X == 15) -> false
     case ICmpInst::ICMP_SGT:        // (X s< 13 & X s> 15) -> false
       return ReplaceInstUsesWith(I, Context->getConstantIntFalse());
@@ -3915,7 +3915,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_UGT:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X u> 13 & X == 15) -> X == 15
     case ICmpInst::ICMP_UGT:        // (X u> 13 & X u> 15) -> X u> 15
       return ReplaceInstUsesWith(I, RHS);
@@ -3934,7 +3934,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_SGT:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X s> 13 & X == 15) -> X == 15
     case ICmpInst::ICMP_SGT:        // (X s> 13 & X s> 15) -> X s> 15
       return ReplaceInstUsesWith(I, RHS);
@@ -4532,10 +4532,10 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
   assert(LHSCst != RHSCst && "Compares not folded above?");
 
   switch (LHSCC) {
-  default: assert(0 && "Unknown integer condition code!");
+  default: LLVM_UNREACHABLE("Unknown integer condition code!");
   case ICmpInst::ICMP_EQ:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:
       if (LHSCst == SubOne(RHSCst, Context)) {
         // (X == 13 | X == 14) -> X-13 <u 2
@@ -4558,7 +4558,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_NE:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:          // (X != 13 | X == 15) -> X != 13
     case ICmpInst::ICMP_UGT:         // (X != 13 | X u> 15) -> X != 13
     case ICmpInst::ICMP_SGT:         // (X != 13 | X s> 15) -> X != 13
@@ -4571,7 +4571,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_ULT:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X u< 13 | X == 14) -> no change
       break;
     case ICmpInst::ICMP_UGT:        // (X u< 13 | X u> 15) -> (X-13) u> 2
@@ -4592,7 +4592,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_SLT:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X s< 13 | X == 14) -> no change
       break;
     case ICmpInst::ICMP_SGT:        // (X s< 13 | X s> 15) -> (X-13) s> 2
@@ -4613,7 +4613,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_UGT:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X u> 13 | X == 15) -> X u> 13
     case ICmpInst::ICMP_UGT:        // (X u> 13 | X u> 15) -> X u> 13
       return ReplaceInstUsesWith(I, LHS);
@@ -4628,7 +4628,7 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     break;
   case ICmpInst::ICMP_SGT:
     switch (RHSCC) {
-    default: assert(0 && "Unknown integer condition code!");
+    default: LLVM_UNREACHABLE("Unknown integer condition code!");
     case ICmpInst::ICMP_EQ:         // (X s> 13 | X == 15) -> X > 13
     case ICmpInst::ICMP_SGT:        // (X s> 13 | X s> 15) -> X > 13
       return ReplaceInstUsesWith(I, LHS);
@@ -5704,7 +5704,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   
   ICmpInst::Predicate Pred;
   switch (I.getPredicate()) {
-  default: assert(0 && "Unexpected predicate!");
+  default: LLVM_UNREACHABLE("Unexpected predicate!");
   case FCmpInst::FCMP_UEQ:
   case FCmpInst::FCMP_OEQ:
     Pred = ICmpInst::ICMP_EQ;
@@ -5798,7 +5798,7 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
       // the compare predicate and sometimes the value.  RHSC is rounded towards
       // zero at this point.
       switch (Pred) {
-      default: assert(0 && "Unexpected integer comparison!");
+      default: LLVM_UNREACHABLE("Unexpected integer comparison!");
       case ICmpInst::ICMP_NE:  // (float)int != 4.4   --> true
         return ReplaceInstUsesWith(I, Context->getConstantIntTrue());
       case ICmpInst::ICMP_EQ:  // (float)int == 4.4   --> false
@@ -5875,7 +5875,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   // Simplify 'fcmp pred X, X'
   if (Op0 == Op1) {
     switch (I.getPredicate()) {
-    default: assert(0 && "Unknown predicate!");
+    default: LLVM_UNREACHABLE("Unknown predicate!");
     case FCmpInst::FCMP_UEQ:    // True if unordered or equal
     case FCmpInst::FCMP_UGE:    // True if unordered, greater than, or equal
     case FCmpInst::FCMP_ULE:    // True if unordered, less than, or equal
@@ -5994,7 +5994,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   // icmp's with boolean values can always be turned into bitwise operations
   if (Ty == Type::Int1Ty) {
     switch (I.getPredicate()) {
-    default: assert(0 && "Invalid icmp instruction!");
+    default: LLVM_UNREACHABLE("Invalid icmp instruction!");
     case ICmpInst::ICMP_EQ: {               // icmp eq i1 A, B -> ~(A^B)
       Instruction *Xor = BinaryOperator::CreateXor(Op0, Op1, I.getName()+"tmp");
       InsertNewInstBefore(Xor, I);
@@ -6136,7 +6136,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     // Based on the range information we know about the LHS, see if we can
     // simplify this comparison.  For example, (x&4) < 8  is always true.
     switch (I.getPredicate()) {
-    default: assert(0 && "Unknown icmp opcode!");
+    default: LLVM_UNREACHABLE("Unknown icmp opcode!");
     case ICmpInst::ICMP_EQ:
       if (Op0Max.ult(Op1Min) || Op0Min.ugt(Op1Max))
         return ReplaceInstUsesWith(I, Context->getConstantIntFalse());
@@ -6645,7 +6645,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
 
   Value *X = DivI->getOperand(0);
   switch (Pred) {
-  default: assert(0 && "Unhandled icmp opcode!");
+  default: LLVM_UNREACHABLE("Unhandled icmp opcode!");
   case ICmpInst::ICMP_EQ:
     if (LoOverflow && HiOverflow)
       return ReplaceInstUsesWith(ICI, Context->getConstantIntFalse());
@@ -8081,7 +8081,7 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   }
   default: 
     // TODO: Can handle more cases here.
-    assert(0 && "Unreachable!");
+    LLVM_UNREACHABLE("Unreachable!");
     break;
   }
   
@@ -8296,7 +8296,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
     default:
       // All the others use floating point so we shouldn't actually 
       // get here because of the check above.
-      assert(0 && "Unknown cast type");
+      LLVM_UNREACHABLE("Unknown cast type");
     case Instruction::Trunc:
       DoXForm = true;
       break;
@@ -8352,7 +8352,7 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
 
       assert(Res->getType() == DestTy);
       switch (CI.getOpcode()) {
-      default: assert(0 && "Unknown cast type!");
+      default: LLVM_UNREACHABLE("Unknown cast type!");
       case Instruction::Trunc:
       case Instruction::BitCast:
         // Just replace this cast with the result.
@@ -9196,7 +9196,7 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     else
       return BinaryOperator::Create(BO->getOpcode(), NewSI, MatchOp);
   }
-  assert(0 && "Shouldn't get here");
+  LLVM_UNREACHABLE("Shouldn't get here");
   return 0;
 }
 
@@ -9238,7 +9238,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
             NewSel->takeName(TVI);
             if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TVI))
               return BinaryOperator::Create(BO->getOpcode(), FalseVal, NewSel);
-            assert(0 && "Unknown instruction!!");
+            LLVM_UNREACHABLE("Unknown instruction!!");
           }
         }
       }
@@ -9267,7 +9267,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
             NewSel->takeName(FVI);
             if (BinaryOperator *BO = dyn_cast<BinaryOperator>(FVI))
               return BinaryOperator::Create(BO->getOpcode(), TrueVal, NewSel);
-            assert(0 && "Unknown instruction!!");
+            LLVM_UNREACHABLE("Unknown instruction!!");
           }
         }
       }

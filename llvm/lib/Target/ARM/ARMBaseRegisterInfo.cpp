@@ -707,12 +707,12 @@ unsigned ARMBaseRegisterInfo::getFrameRegister(MachineFunction &MF) const {
 }
 
 unsigned ARMBaseRegisterInfo::getEHExceptionRegister() const {
-  assert(0 && "What is the exception register");
+  LLVM_UNREACHABLE("What is the exception register");
   return 0;
 }
 
 unsigned ARMBaseRegisterInfo::getEHHandlerRegister() const {
-  assert(0 && "What is the exception handler register");
+  LLVM_UNREACHABLE("What is the exception handler register");
   return 0;
 }
 

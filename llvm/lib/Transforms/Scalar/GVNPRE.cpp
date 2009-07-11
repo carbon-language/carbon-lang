@@ -39,6 +39,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <deque>
 #include <map>
@@ -240,7 +241,7 @@ Expression::ExpressionOpcode
     
     // THIS SHOULD NEVER HAPPEN
     default:
-      assert(0 && "Binary operator with unknown opcode?");
+      LLVM_UNREACHABLE("Binary operator with unknown opcode?");
       return Expression::ADD;
   }
 }
@@ -271,7 +272,7 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
       
       // THIS SHOULD NEVER HAPPEN
       default:
-        assert(0 && "Comparison with unknown predicate?");
+        LLVM_UNREACHABLE("Comparison with unknown predicate?");
         return Expression::ICMPEQ;
     }
   } else {
@@ -307,7 +308,7 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
       
       // THIS SHOULD NEVER HAPPEN
       default:
-        assert(0 && "Comparison with unknown predicate?");
+        LLVM_UNREACHABLE("Comparison with unknown predicate?");
         return Expression::FCMPOEQ;
     }
   }
@@ -343,7 +344,7 @@ Expression::ExpressionOpcode
     
     // THIS SHOULD NEVER HAPPEN
     default:
-      assert(0 && "Cast operator with unknown opcode?");
+      LLVM_UNREACHABLE("Cast operator with unknown opcode?");
       return Expression::BITCAST;
   }
 }
@@ -577,7 +578,7 @@ uint32_t ValueTable::lookup(Value* V) const {
   if (VI != valueNumbering.end())
     return VI->second;
   else
-    assert(0 && "Value not numbered?");
+    LLVM_UNREACHABLE("Value not numbered?");
   
   return 0;
 }
@@ -767,7 +768,7 @@ Value* GVNPRE::find_leader(ValueNumberedSet& vals, uint32_t v) {
     if (v == VN.lookup(*I))
       return *I;
   
-  assert(0 && "No leader found, but present bit is set?");
+  LLVM_UNREACHABLE("No leader found, but present bit is set?");
   return 0;
 }
 

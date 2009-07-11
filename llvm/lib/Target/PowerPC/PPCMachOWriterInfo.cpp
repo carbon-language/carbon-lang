@@ -16,6 +16,7 @@
 #include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachORelocation.h"
 #include "llvm/Support/OutputBuffer.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstdio>
 using namespace llvm;
 
@@ -46,9 +47,9 @@ unsigned PPCMachOWriterInfo::GetTargetRelocation(MachineRelocation &MR,
     Addr = (uintptr_t)MR.getResultPointer() + ToAddr;
 
   switch ((PPC::RelocationType)MR.getRelocationType()) {
-  default: assert(0 && "Unknown PPC relocation type!");
+  default: LLVM_UNREACHABLE("Unknown PPC relocation type!");
   case PPC::reloc_absolute_low_ix:
-    assert(0 && "Unhandled PPC relocation type!");
+    LLVM_UNREACHABLE("Unhandled PPC relocation type!");
     break;
   case PPC::reloc_vanilla:
     {

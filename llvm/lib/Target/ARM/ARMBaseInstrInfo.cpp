@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 static cl::opt<bool>
@@ -433,8 +434,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       return 0;
     switch (MI->getOpcode()) {
     default:
-      assert(0 && "Unknown or unset size field for instr!");
-      break;
+      LLVM_UNREACHABLE("Unknown or unset size field for instr!");
     case TargetInstrInfo::IMPLICIT_DEF:
     case TargetInstrInfo::DECLARE:
     case TargetInstrInfo::DBG_LABEL:

@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/Statistic.h"
 #include <climits>
@@ -113,7 +114,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, const SDep &D) {
     cerr << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     cerr << " has been released too many times!\n";
-    assert(0);
+    llvm_unreachable();
   }
 #endif
   

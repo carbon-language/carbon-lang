@@ -123,7 +123,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   case ISD::SIGN_EXTEND:      return LowerSIGN_EXTEND(Op, DAG);
   default:
-    assert(0 && "unimplemented operand");
+    LLVM_UNREACHABLE("unimplemented operand");
     return SDValue();
   }
 }
@@ -144,7 +144,7 @@ SDValue MSP430TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   switch (CC) {
   default:
-    assert(0 && "Unsupported calling convention");
+    LLVM_UNREACHABLE("Unsupported calling convention");
   case CallingConv::C:
   case CallingConv::Fast:
     return LowerCCCArguments(Op, DAG);
@@ -156,7 +156,7 @@ SDValue MSP430TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   unsigned CallingConv = TheCall->getCallingConv();
   switch (CallingConv) {
   default:
-    assert(0 && "Unsupported calling convention");
+    LLVM_UNREACHABLE("Unsupported calling convention");
   case CallingConv::Fast:
   case CallingConv::C:
     return LowerCCCCallTo(Op, DAG, CallingConv);
@@ -331,7 +331,7 @@ SDValue MSP430TargetLowering::LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-      default: assert(0 && "Unknown loc info!");
+      default: LLVM_UNREACHABLE("Unknown loc info!");
       case CCValAssign::Full: break;
       case CCValAssign::SExt:
         Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
@@ -516,7 +516,7 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, unsigned &TargetCC,
   // FIXME: Handle jump negative someday
   TargetCC = MSP430::COND_INVALID;
   switch (CC) {
-  default: assert(0 && "Invalid integer condition!");
+  default: LLVM_UNREACHABLE("Invalid integer condition!");
   case ISD::SETEQ:
     TargetCC = MSP430::COND_E;  // aka COND_Z
     break;

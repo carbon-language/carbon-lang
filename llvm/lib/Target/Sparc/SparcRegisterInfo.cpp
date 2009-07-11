@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/BitVector.h"
@@ -168,27 +169,27 @@ void SparcRegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned SparcRegisterInfo::getRARegister() const {
-  assert(0 && "What is the return address register");
+  LLVM_UNREACHABLE("What is the return address register");
   return 0;
 }
 
 unsigned SparcRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  assert(0 && "What is the frame register");
+  LLVM_UNREACHABLE("What is the frame register");
   return SP::G1;
 }
 
 unsigned SparcRegisterInfo::getEHExceptionRegister() const {
-  assert(0 && "What is the exception register");
+  LLVM_UNREACHABLE("What is the exception register");
   return 0;
 }
 
 unsigned SparcRegisterInfo::getEHHandlerRegister() const {
-  assert(0 && "What is the exception handler register");
+  LLVM_UNREACHABLE("What is the exception handler register");
   return 0;
 }
 
 int SparcRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  assert(0 && "What is the dwarf register number");
+  LLVM_UNREACHABLE("What is the dwarf register number");
   return -1;
 }
 

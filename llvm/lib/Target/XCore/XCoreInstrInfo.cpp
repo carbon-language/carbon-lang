@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "XCoreGenInstrInfo.inc"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 namespace XCore {
@@ -186,7 +187,7 @@ static XCore::CondCode GetCondFromBranchOpc(unsigned BrOpc)
 static inline unsigned GetCondBranchFromCond(XCore::CondCode CC) 
 {
   switch (CC) {
-  default: assert(0 && "Illegal condition code!");
+  default: LLVM_UNREACHABLE("Illegal condition code!");
   case XCore::COND_TRUE   : return XCore::BRFT_lru6;
   case XCore::COND_FALSE  : return XCore::BRFF_lru6;
   }
@@ -197,7 +198,7 @@ static inline unsigned GetCondBranchFromCond(XCore::CondCode CC)
 static inline XCore::CondCode GetOppositeBranchCondition(XCore::CondCode CC)
 {
   switch (CC) {
-  default: assert(0 && "Illegal condition code!");
+  default: LLVM_UNREACHABLE("Illegal condition code!");
   case XCore::COND_TRUE   : return XCore::COND_FALSE;
   case XCore::COND_FALSE  : return XCore::COND_TRUE;
   }
@@ -407,7 +408,7 @@ void XCoreInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                             const TargetRegisterClass *RC,
                             SmallVectorImpl<MachineInstr*> &NewMIs) const
 {
-  assert(0 && "unimplemented\n");
+  LLVM_UNREACHABLE("unimplemented\n");
 }
 
 void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -427,7 +428,7 @@ void XCoreInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                               const TargetRegisterClass *RC,
                               SmallVectorImpl<MachineInstr*> &NewMIs) const
 {
-  assert(0 && "unimplemented\n");
+  LLVM_UNREACHABLE("unimplemented\n");
 }
 
 bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,

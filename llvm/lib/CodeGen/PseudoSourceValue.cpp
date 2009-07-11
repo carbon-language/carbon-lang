@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
@@ -83,7 +84,7 @@ bool PseudoSourceValue::isConstant(const MachineFrameInfo *) const {
       this == getConstantPool() ||
       this == getJumpTable())
     return true;
-  assert(0 && "Unknown PseudoSourceValue!");
+  LLVM_UNREACHABLE("Unknown PseudoSourceValue!");
   return false;
 }
 

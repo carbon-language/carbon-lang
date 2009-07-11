@@ -21,6 +21,7 @@
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 using namespace llvm::dwarf;
@@ -280,7 +281,7 @@ X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    case SectionKind::RODataMergeStr:
     return ".rdata$linkonce" + GV->getName();
    default:
-    assert(0 && "Unknown section kind");
+    LLVM_UNREACHABLE("Unknown section kind");
   }
   return NULL;
 }

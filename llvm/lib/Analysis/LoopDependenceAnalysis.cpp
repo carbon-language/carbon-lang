@@ -24,6 +24,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
 
@@ -63,7 +64,7 @@ static Value *GetPointerOperand(Value *I) {
     return i->getPointerOperand();
   if (StoreInst *i = dyn_cast<StoreInst>(I))
     return i->getPointerOperand();
-  assert(0 && "Value is no load or store instruction!");
+  LLVM_UNREACHABLE("Value is no load or store instruction!");
   // Never reached.
   return 0;
 }

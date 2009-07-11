@@ -378,7 +378,7 @@ namespace {
         break;
       case 'v':   // not offsetable
 #if 1
-        assert(0 && "InlineAsmMemoryOperand 'v' constraint not handled.");
+        LLVM_UNREACHABLE("InlineAsmMemoryOperand 'v' constraint not handled.");
 #else
         SelectAddrIdxOnly(Op, Op, Op0, Op1);
 #endif

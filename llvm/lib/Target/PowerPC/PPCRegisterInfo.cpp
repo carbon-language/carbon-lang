@@ -1065,7 +1065,7 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
         MinVR = Reg;
       }
     } else {
-      assert(0 && "Unknown RegisterClass!");
+      LLVM_UNREACHABLE("Unknown RegisterClass!");
     }
   }
 

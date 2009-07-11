@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -202,7 +203,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
     cerr << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
     cerr << " has been released too many times!\n";
-    assert(0);
+    llvm_unreachable();
   }
 #endif
   
@@ -829,7 +830,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, const SDep *SuccEdge) {
     cerr << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     cerr << " has been released too many times!\n";
-    assert(0);
+    llvm_unreachable();
   }
 #endif
   

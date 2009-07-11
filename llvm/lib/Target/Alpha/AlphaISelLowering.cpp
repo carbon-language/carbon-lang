@@ -380,7 +380,7 @@ AlphaTargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
   {
     switch (getValueType(Args[i].Ty).getSimpleVT()) {
-    default: assert(0 && "Unexpected ValueType for argument!");
+    default: LLVM_UNREACHABLE("Unexpected ValueType for argument!");
     case MVT::i1:
     case MVT::i8:
     case MVT::i16:
@@ -476,7 +476,7 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
 SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   switch (Op.getOpcode()) {
-  default: assert(0 && "Wasn't expecting to be able to lower this!");
+  default: LLVM_UNREACHABLE("Wasn't expecting to be able to lower this!");
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG, 
                                                            VarArgsBase,
                                                            VarArgsOffset);
@@ -527,7 +527,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     return Lo;
   }
   case ISD::GlobalTLSAddress:
-    assert(0 && "TLS not implemented for Alpha.");
+    LLVM_UNREACHABLE("TLS not implemented for Alpha.");
   case ISD::GlobalAddress: {
     GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
     GlobalValue *GV = GSDN->getGlobal();

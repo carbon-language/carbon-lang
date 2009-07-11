@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/OutputBuffer.h"
 #include <vector>
@@ -104,7 +105,7 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &MF) {
       // FIXME: This should be a set or something that uniques
       MOW.PendingGlobals.push_back(MR.getGlobalValue());
     } else {
-      assert(0 && "Unhandled relocation type");
+      LLVM_UNREACHABLE("Unhandled relocation type");
     }
     MOS->addRelocation(MR);
   }

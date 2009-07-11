@@ -1079,7 +1079,7 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
     } else if (SrcTy->isInteger()) {
       Dest.IntVal = Src.IntVal;
     } else 
-      assert(0 && "Invalid BitCast");
+      LLVM_UNREACHABLE("Invalid BitCast");
   } else if (DstTy == Type::FloatTy) {
     if (SrcTy->isInteger())
       Dest.FloatVal = Src.IntVal.bitsToFloat();
@@ -1091,7 +1091,7 @@ GenericValue Interpreter::executeBitCastInst(Value *SrcVal, const Type *DstTy,
     else
       Dest.DoubleVal = Src.DoubleVal;
   } else
-    assert(0 && "Invalid Bitcast");
+    LLVM_UNREACHABLE("Invalid Bitcast");
 
   return Dest;
 }
@@ -1345,7 +1345,7 @@ void Interpreter::run() {
       DOUT << "  --> ";
       const GenericValue &Val = SF.Values[&I];
       switch (I.getType()->getTypeID()) {
-      default: assert(0 && "Invalid GenericValue Type");
+      default: LLVM_UNREACHABLE("Invalid GenericValue Type");
       case Type::VoidTyID:    DOUT << "void"; break;
       case Type::FloatTyID:   DOUT << "float " << Val.FloatVal; break;
       case Type::DoubleTyID:  DOUT << "double " << Val.DoubleVal; break;

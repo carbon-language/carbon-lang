@@ -140,7 +140,7 @@ void ScheduleDAGFast::ReleasePred(SUnit *SU, SDep *PredEdge) {
     cerr << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
     cerr << " has been released too many times!\n";
-    assert(0);
+    llvm_unreachable();
   }
 #endif
   

@@ -875,7 +875,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     }
   }
 
-  assert(0 &&
+  LLVM_UNREACHABLE(
          "LowerConstantPool: Relocation model other than static"
          " not supported.");
   return SDValue();
@@ -907,7 +907,7 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     }
   }
 
-  assert(0 &&
+  LLVM_UNREACHABLE(
          "LowerJumpTable: Relocation model other than static not supported.");
   return SDValue();
 }
@@ -1139,7 +1139,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr, PtrOff);
 
     switch (Arg.getValueType().getSimpleVT()) {
-    default: assert(0 && "Unexpected ValueType for argument!");
+    default: LLVM_UNREACHABLE("Unexpected ValueType for argument!");
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
@@ -1271,7 +1271,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 
   // If the call has results, copy the values out of the ret val registers.
   switch (TheCall->getValueType(0).getSimpleVT()) {
-  default: assert(0 && "Unexpected ret value!");
+  default: LLVM_UNREACHABLE("Unexpected ret value!");
   case MVT::Other: break;
   case MVT::i32:
     if (TheCall->getValueType(1) == MVT::i32) {
@@ -1739,7 +1739,7 @@ static SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) {
   } else if (EltVT == MVT::i64 || EltVT == MVT::f64) {
     V2EltIdx0 = 2;
   } else
-    assert(0 && "Unhandled vector type in LowerVECTOR_SHUFFLE");
+    LLVM_UNREACHABLE("Unhandled vector type in LowerVECTOR_SHUFFLE");
 
   for (unsigned i = 0; i != MaxElts; ++i) {
     if (SVN->getMaskElt(i) < 0)
@@ -1835,7 +1835,7 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
 
     // Create a constant vector:
     switch (Op.getValueType().getSimpleVT()) {
-    default: assert(0 && "Unexpected constant value type in "
+    default: LLVM_UNREACHABLE("Unexpected constant value type in "
                          "LowerSCALAR_TO_VECTOR");
     case MVT::v16i8: n_copies = 16; VT = MVT::i8; break;
     case MVT::v8i16: n_copies = 8; VT = MVT::i16; break;
@@ -1854,7 +1854,7 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
   } else {
     // Otherwise, copy the value from one register to another:
     switch (Op0.getValueType().getSimpleVT()) {
-    default: assert(0 && "Unexpected value type in LowerSCALAR_TO_VECTOR");
+    default: LLVM_UNREACHABLE("Unexpected value type in LowerSCALAR_TO_VECTOR");
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
@@ -1881,13 +1881,13 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
 
     // sanity checks:
     if (VT == MVT::i8 && EltNo >= 16)
-      assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i8 extraction slot > 15");
+      LLVM_UNREACHABLE("SPU LowerEXTRACT_VECTOR_ELT: i8 extraction slot > 15");
     else if (VT == MVT::i16 && EltNo >= 8)
-      assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i16 extraction slot > 7");
+      LLVM_UNREACHABLE("SPU LowerEXTRACT_VECTOR_ELT: i16 extraction slot > 7");
     else if (VT == MVT::i32 && EltNo >= 4)
-      assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i32 extraction slot > 4");
+      LLVM_UNREACHABLE("SPU LowerEXTRACT_VECTOR_ELT: i32 extraction slot > 4");
     else if (VT == MVT::i64 && EltNo >= 2)
-      assert(0 && "SPU LowerEXTRACT_VECTOR_ELT: i64 extraction slot > 2");
+      LLVM_UNREACHABLE("SPU LowerEXTRACT_VECTOR_ELT: i64 extraction slot > 2");
 
     if (EltNo == 0 && (VT == MVT::i32 || VT == MVT::i64)) {
       // i32 and i64: Element 0 is the preferred slot
@@ -2066,7 +2066,7 @@ static SDValue LowerI8Math(SDValue Op, SelectionDAG &DAG, unsigned Opc,
   assert(Op.getValueType() == MVT::i8);
   switch (Opc) {
   default:
-    assert(0 && "Unhandled i8 math operator");
+    LLVM_UNREACHABLE("Unhandled i8 math operator");
     /*NOTREACHED*/
     break;
   case ISD::ADD: {

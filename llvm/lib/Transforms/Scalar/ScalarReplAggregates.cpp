@@ -267,7 +267,7 @@ bool SROA::performScalarRepl(Function &F) {
       // Check that all of the users of the allocation are capable of being
       // transformed.
       switch (isSafeAllocaToScalarRepl(AI)) {
-      default: assert(0 && "Unexpected value!");
+      default: LLVM_UNREACHABLE("Unexpected value!");
       case 0:  // Not safe to scalar replace.
         break;
       case 1:  // Safe, but requires cleanup/canonicalizations first

@@ -278,7 +278,7 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
       cerr << "ScalarizeVectorOperand Op #" << OpNo << ": ";
       N->dump(&DAG); cerr << "\n";
 #endif
-      assert(0 && "Do not know how to scalarize this operator's operand!");
+      LLVM_UNREACHABLE("Do not know how to scalarize this operator's operand!");
     case ISD::BIT_CONVERT:
       Res = ScalarizeVecOp_BIT_CONVERT(N);
       break;
@@ -576,7 +576,7 @@ void DAGTypeLegalizer::SplitVecRes_CONVERT_RNDSAT(SDNode *N, SDValue &Lo,
   SDValue VLo, VHi;
   MVT InVT = N->getOperand(0).getValueType();
   switch (getTypeAction(InVT)) {
-  default: assert(0 && "Unexpected type action!");
+  default: LLVM_UNREACHABLE("Unexpected type action!");
   case Legal: {
     MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
                                  LoVT.getVectorNumElements());
@@ -768,7 +768,7 @@ void DAGTypeLegalizer::SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo,
   // Split the input.
   MVT InVT = N->getOperand(0).getValueType();
   switch (getTypeAction(InVT)) {
-  default: assert(0 && "Unexpected type action!");
+  default: LLVM_UNREACHABLE("Unexpected type action!");
   case Legal: {
     MVT InNVT = MVT::getVectorVT(InVT.getVectorElementType(),
                                  LoVT.getVectorNumElements());

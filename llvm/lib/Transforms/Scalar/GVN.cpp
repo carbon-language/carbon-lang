@@ -37,6 +37,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <cstdio>
@@ -201,7 +202,7 @@ template <> struct DenseMapInfo<Expression> {
 Expression::ExpressionOpcode ValueTable::getOpcode(BinaryOperator* BO) {
   switch(BO->getOpcode()) {
   default: // THIS SHOULD NEVER HAPPEN
-    assert(0 && "Binary operator with unknown opcode?");
+    LLVM_UNREACHABLE("Binary operator with unknown opcode?");
   case Instruction::Add:  return Expression::ADD;
   case Instruction::FAdd: return Expression::FADD;
   case Instruction::Sub:  return Expression::SUB;
@@ -227,7 +228,7 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
   if (isa<ICmpInst>(C)) {
     switch (C->getPredicate()) {
     default:  // THIS SHOULD NEVER HAPPEN
-      assert(0 && "Comparison with unknown predicate?");
+      LLVM_UNREACHABLE("Comparison with unknown predicate?");
     case ICmpInst::ICMP_EQ:  return Expression::ICMPEQ;
     case ICmpInst::ICMP_NE:  return Expression::ICMPNE;
     case ICmpInst::ICMP_UGT: return Expression::ICMPUGT;
@@ -242,7 +243,7 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
   } else {
     switch (C->getPredicate()) {
     default: // THIS SHOULD NEVER HAPPEN
-      assert(0 && "Comparison with unknown predicate?");
+      LLVM_UNREACHABLE("Comparison with unknown predicate?");
     case FCmpInst::FCMP_OEQ: return Expression::FCMPOEQ;
     case FCmpInst::FCMP_OGT: return Expression::FCMPOGT;
     case FCmpInst::FCMP_OGE: return Expression::FCMPOGE;
@@ -264,7 +265,7 @@ Expression::ExpressionOpcode ValueTable::getOpcode(CmpInst* C) {
 Expression::ExpressionOpcode ValueTable::getOpcode(CastInst* C) {
   switch(C->getOpcode()) {
   default: // THIS SHOULD NEVER HAPPEN
-    assert(0 && "Cast operator with unknown opcode?");
+    LLVM_UNREACHABLE("Cast operator with unknown opcode?");
   case Instruction::Trunc:    return Expression::TRUNC;
   case Instruction::ZExt:     return Expression::ZEXT;
   case Instruction::SExt:     return Expression::SEXT;

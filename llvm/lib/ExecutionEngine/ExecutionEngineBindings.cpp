@@ -15,6 +15,7 @@
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstring>
 
 using namespace llvm;
@@ -45,8 +46,7 @@ LLVMGenericValueRef LLVMCreateGenericValueOfFloat(LLVMTypeRef TyRef, double N) {
     GenVal->DoubleVal = N;
     break;
   default:
-    assert(0 && "LLVMGenericValueToFloat supports only float and double.");
-    break;
+    LLVM_UNREACHABLE("LLVMGenericValueToFloat supports only float and double.");
   }
   return wrap(GenVal);
 }
@@ -75,7 +75,7 @@ double LLVMGenericValueToFloat(LLVMTypeRef TyRef, LLVMGenericValueRef GenVal) {
   case Type::DoubleTyID:
     return unwrap(GenVal)->DoubleVal;
   default:
-    assert(0 && "LLVMGenericValueToFloat supports only float and double.");
+    LLVM_UNREACHABLE("LLVMGenericValueToFloat supports only float and double.");
     break;
   }
   return 0; // Not reached

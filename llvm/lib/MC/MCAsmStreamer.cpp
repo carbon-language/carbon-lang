@@ -14,7 +14,9 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+
 using namespace llvm;
 
 namespace {
@@ -186,7 +188,7 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
   // Need target hooks to know how to print this.
   switch (Size) {
   default:
-    assert(0 && "Invalid size for machine code value!");
+    LLVM_UNREACHABLE("Invalid size for machine code value!");
   case 1: OS << ".byte"; break;
   case 2: OS << ".short"; break;
   case 4: OS << ".long"; break;
@@ -207,9 +209,9 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
 
   switch (ValueSize) {
   default:
-    assert(0 && "Invalid size for machine code value!");
+    LLVM_UNREACHABLE("Invalid size for machine code value!");
   case 8:
-    assert(0 && "Unsupported alignment size!");
+    LLVM_UNREACHABLE("Unsupported alignment size!");
   case 1: OS << (IsPow2 ? ".p2align" : ".balign"); break;
   case 2: OS << (IsPow2 ? ".p2alignw" : ".balignw"); break;
   case 4: OS << (IsPow2 ? ".p2alignl" : ".balignl"); break;

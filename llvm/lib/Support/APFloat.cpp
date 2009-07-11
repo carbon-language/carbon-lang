@@ -14,6 +14,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
 
@@ -1068,7 +1069,7 @@ APFloat::roundAwayFromZero(roundingMode rounding_mode,
 
   switch (rounding_mode) {
   default:
-    assert(0);
+    llvm_unreachable();
 
   case rmNearestTiesToAway:
     return lost_fraction == lfExactlyHalf || lost_fraction == lfMoreThanHalf;
@@ -1207,7 +1208,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
 {
   switch (convolve(category, rhs.category)) {
   default:
-    assert(0);
+    llvm_unreachable();
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -1331,7 +1332,7 @@ APFloat::multiplySpecials(const APFloat &rhs)
 {
   switch (convolve(category, rhs.category)) {
   default:
-    assert(0);
+    llvm_unreachable();
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -1373,7 +1374,7 @@ APFloat::divideSpecials(const APFloat &rhs)
 {
   switch (convolve(category, rhs.category)) {
   default:
-    assert(0);
+    llvm_unreachable();
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -1415,7 +1416,7 @@ APFloat::modSpecials(const APFloat &rhs)
 {
   switch (convolve(category, rhs.category)) {
   default:
-    assert(0);
+    llvm_unreachable();
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -1692,7 +1693,7 @@ APFloat::compare(const APFloat &rhs) const
 
   switch (convolve(category, rhs.category)) {
   default:
-    assert(0);
+    llvm_unreachable();
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -2929,7 +2930,7 @@ APFloat::initFromAPInt(const APInt& api, bool isIEEE)
   else if (api.getBitWidth()==128 && !isIEEE)
     return initFromPPCDoubleDoubleAPInt(api);
   else
-    assert(0);
+    llvm_unreachable();
 }
 
 APFloat::APFloat(const APInt& api, bool isIEEE)

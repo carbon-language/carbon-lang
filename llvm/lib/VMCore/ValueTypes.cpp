@@ -16,6 +16,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Type.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 MVT MVT::getExtendedIntegerVT(unsigned BitWidth) {
@@ -90,7 +91,7 @@ std::string MVT::getMVTString() const {
              getVectorElementType().getMVTString();
     if (isInteger())
       return "i" + utostr(getSizeInBits());
-    assert(0 && "Invalid MVT!");
+    LLVM_UNREACHABLE("Invalid MVT!");
     return "?";
   case MVT::i1:      return "i1";
   case MVT::i8:      return "i8";
@@ -213,7 +214,7 @@ MVT MVT::getMVT(const Type *Ty, bool HandleUnknown){
   switch (Ty->getTypeID()) {
   default:
     if (HandleUnknown) return MVT::Other;
-    assert(0 && "Unknown type!");
+    LLVM_UNREACHABLE("Unknown type!");
     return MVT::isVoid;
   case Type::VoidTyID:
     return MVT::isVoid;

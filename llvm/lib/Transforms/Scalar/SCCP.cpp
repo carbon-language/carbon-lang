@@ -456,7 +456,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
     } else if (SCValue.isConstant())
       Succs[SI->findCaseValue(cast<ConstantInt>(SCValue.getConstant()))] = true;
   } else {
-    assert(0 && "SCCP: Don't know how to handle this terminator!");
+    LLVM_UNREACHABLE("SCCP: Don't know how to handle this terminator!");
   }
 }
 
@@ -1806,7 +1806,7 @@ bool IPSCCP::runOnModule(Module &M) {
           } else if (SwitchInst *SI = dyn_cast<SwitchInst>(I)) {
             assert(isa<UndefValue>(SI->getCondition()) && "Switch should fold");
           } else {
-            assert(0 && "Didn't fold away reference to block!");
+            LLVM_UNREACHABLE("Didn't fold away reference to block!");
           }
 #endif
           

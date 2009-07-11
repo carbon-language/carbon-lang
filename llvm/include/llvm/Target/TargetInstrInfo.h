@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_TARGETINSTRINFO_H
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
@@ -428,8 +429,7 @@ public:
   /// point.
   virtual void insertNoop(MachineBasicBlock &MBB, 
                           MachineBasicBlock::iterator MI) const {
-    assert(0 && "Target didn't implement insertNoop!");
-    abort();
+    LLVM_UNREACHABLE("Target didn't implement insertNoop!");
   }
 
   /// isPredicated - Returns true if the instruction is already predicated.

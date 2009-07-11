@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 
@@ -79,7 +80,7 @@ getRegisterNumbering(unsigned RegEnum)
     case Mips::SP   : case Mips::F29: return 29;
     case Mips::FP   : case Mips::F30: case Mips::D15: return 30;
     case Mips::RA   : case Mips::F31: return 31;
-    default: assert(0 && "Unknown register number!");
+    default: LLVM_UNREACHABLE("Unknown register number!");
   }    
   return 0; // Not reached
 }
@@ -515,19 +516,19 @@ getFrameRegister(MachineFunction &MF) const {
 
 unsigned MipsRegisterInfo::
 getEHExceptionRegister() const {
-  assert(0 && "What is the exception register");
+  LLVM_UNREACHABLE("What is the exception register");
   return 0;
 }
 
 unsigned MipsRegisterInfo::
 getEHHandlerRegister() const {
-  assert(0 && "What is the exception handler register");
+  LLVM_UNREACHABLE("What is the exception handler register");
   return 0;
 }
 
 int MipsRegisterInfo::
 getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  assert(0 && "What is the dwarf register number");
+  LLVM_UNREACHABLE("What is the dwarf register number");
   return -1;
 }
 

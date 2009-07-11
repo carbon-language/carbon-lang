@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -44,7 +45,7 @@ void MSP430InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addFrameIndex(FrameIdx).addImm(0)
       .addReg(SrcReg, getKillRegState(isKill));
   else
-    assert(0 && "Cannot store this register to stack slot!");
+    LLVM_UNREACHABLE("Cannot store this register to stack slot!");
 }
 
 void MSP430InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -61,7 +62,7 @@ void MSP430InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, DL, get(MSP430::MOV8rm))
       .addReg(DestReg).addFrameIndex(FrameIdx).addImm(0);
   else
-    assert(0 && "Cannot store this register to stack slot!");
+    LLVM_UNREACHABLE("Cannot store this register to stack slot!");
 }
 
 bool MSP430InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -171,7 +172,7 @@ MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
   // Conditional branch.
   unsigned Count = 0;
-  assert(0 && "Implement conditional branches!");
+  LLVM_UNREACHABLE("Implement conditional branches!");
 
   return Count;
 }

@@ -17,6 +17,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "SparcGenInstrInfo.inc"
 using namespace llvm;
 
@@ -160,7 +161,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, DL, get(SP::STDFri)).addFrameIndex(FI).addImm(0)
       .addReg(SrcReg,  getKillRegState(isKill));
   else
-    assert(0 && "Can't store this register to stack slot");
+    LLVM_UNREACHABLE("Can't store this register to stack slot");
 }
 
 void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
@@ -177,7 +178,7 @@ void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   else if (RC == SP::DFPRegsRegisterClass)
     Opc = SP::STDFri;
   else
-    assert(0 && "Can't load this register");
+    LLVM_UNREACHABLE("Can't load this register");
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB.addOperand(Addr[i]);
@@ -200,7 +201,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   else if (RC == SP::DFPRegsRegisterClass)
     BuildMI(MBB, I, DL, get(SP::LDDFri), DestReg).addFrameIndex(FI).addImm(0);
   else
-    assert(0 && "Can't load this register from stack slot");
+    LLVM_UNREACHABLE("Can't load this register from stack slot");
 }
 
 void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
@@ -215,7 +216,7 @@ void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   else if (RC == SP::DFPRegsRegisterClass)
     Opc = SP::LDDFri;
   else
-    assert(0 && "Can't load this register");
+    LLVM_UNREACHABLE("Can't load this register");
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)

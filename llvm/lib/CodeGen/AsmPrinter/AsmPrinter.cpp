@@ -237,7 +237,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       else if (I->hasWeakLinkage())
         O << TAI->getWeakRefDirective() << Name << '\n';
       else if (!I->hasLocalLinkage())
-        assert(0 && "Invalid alias linkage");
+        LLVM_UNREACHABLE("Invalid alias linkage");
 
       printVisibility(Name, I->getVisibility());
 
@@ -901,7 +901,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     case Instruction::SIToFP:
     case Instruction::FPToUI:
     case Instruction::FPToSI:
-      assert(0 && "FIXME: Don't yet support this kind of constant cast expr");
+      LLVM_UNREACHABLE("FIXME: Don't yet support this kind of constant cast expr");
       break;
     case Instruction::BitCast:
       return EmitConstantValueOnly(CE->getOperand(0));
@@ -967,10 +967,10 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       O << ')';
       break;
     default:
-      assert(0 && "Unsupported operator!");
+      LLVM_UNREACHABLE("Unsupported operator!");
     }
   } else {
-    assert(0 && "Unknown constant value!");
+    LLVM_UNREACHABLE("Unknown constant value!");
   }
 }
 
@@ -1209,7 +1209,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       O << '\n';
     }
     return;
-  } else assert(0 && "Floating point constant type not handled");
+  } else LLVM_UNREACHABLE("Floating point constant type not handled");
 }
 
 void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
@@ -1660,7 +1660,7 @@ void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
              "Target cannot handle 64-bit constant exprs!");
       O << TAI->getData64bitsDirective(AddrSpace);
     } else {
-      assert(0 && "Target cannot handle given data directive width!");
+      LLVM_UNREACHABLE("Target cannot handle given data directive width!");
     }
     break;
   }

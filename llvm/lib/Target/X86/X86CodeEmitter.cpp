@@ -335,7 +335,7 @@ void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
     emitJumpTableAddress(RelocOp->getIndex(), rt, PCAdj);
   } else {
-    assert(0 && "Unknown value to relocate!");
+    LLVM_UNREACHABLE("Unknown value to relocate!");
   }
 }
 
@@ -478,7 +478,7 @@ void Emitter<CodeEmitter>::emitInstruction(
   case X86II::GS:
     MCE.emitByte(0x65);
     break;
-  default: assert(0 && "Invalid segment!");
+  default: LLVM_UNREACHABLE("Invalid segment!");
   case 0: break;  // No segment override!
   }
 
@@ -513,7 +513,7 @@ void Emitter<CodeEmitter>::emitInstruction(
                  (((Desc->TSFlags & X86II::Op0Mask)-X86II::D8)
                                    >> X86II::Op0Shift));
     break; // Two-byte opcode prefix
-  default: assert(0 && "Invalid prefix!");
+  default: LLVM_UNREACHABLE("Invalid prefix!");
   case 0: break;  // No prefix!
   }
 
@@ -548,13 +548,13 @@ void Emitter<CodeEmitter>::emitInstruction(
 
   unsigned char BaseOpcode = II->getBaseOpcodeFor(Desc);
   switch (Desc->TSFlags & X86II::FormMask) {
-  default: assert(0 && "Unknown FormMask value in X86 MachineCodeEmitter!");
+  default: LLVM_UNREACHABLE("Unknown FormMask value in X86 MachineCodeEmitter!");
   case X86II::Pseudo:
     // Remember the current PC offset, this is the PIC relocation
     // base address.
     switch (Opcode) {
     default: 
-      assert(0 && "psuedo instructions should be removed before code emission");
+      LLVM_UNREACHABLE("psuedo instructions should be removed before code emission");
       break;
     case TargetInstrInfo::INLINEASM: {
       // We allow inline assembler nodes with empty bodies - they can
@@ -620,7 +620,7 @@ void Emitter<CodeEmitter>::emitInstruction(
         } else
           emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
       } else {
-        assert(0 && "Unknown RawFrm operand!");
+        LLVM_UNREACHABLE("Unknown RawFrm operand!");
       }
     }
     break;

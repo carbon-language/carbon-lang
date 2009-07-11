@@ -15,6 +15,7 @@
 #define LLVM_ANALYSIS_SCALAREVOLUTION_EXPRESSIONS_H
 
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
   class ConstantInt;
@@ -584,14 +585,12 @@ namespace llvm {
       case scCouldNotCompute:
         return ((SC*)this)->visitCouldNotCompute((const SCEVCouldNotCompute*)S);
       default:
-        assert(0 && "Unknown SCEV type!");
-        abort();
+        LLVM_UNREACHABLE("Unknown SCEV type!");
       }
     }
 
     RetVal visitCouldNotCompute(const SCEVCouldNotCompute *S) {
-      assert(0 && "Invalid use of SCEVCouldNotCompute!");
-      abort();
+      LLVM_UNREACHABLE("Invalid use of SCEVCouldNotCompute!");
       return RetVal();
     }
   };

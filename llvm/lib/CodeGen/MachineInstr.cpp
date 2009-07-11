@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
@@ -156,7 +157,7 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
     return false;
   
   switch (getType()) {
-  default: assert(0 && "Unrecognized operand type");
+  default: LLVM_UNREACHABLE("Unrecognized operand type");
   case MachineOperand::MO_Register:
     return getReg() == Other.getReg() && isDef() == Other.isDef() &&
            getSubReg() == Other.getSubReg();
@@ -274,7 +275,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << '>';
     break;
   default:
-    assert(0 && "Unrecognized operand type");
+    LLVM_UNREACHABLE("Unrecognized operand type");
   }
   
   if (unsigned TF = getTargetFlags())

@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1333,8 +1334,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     DstSubIdx = CopyMI->getOperand(3).getImm();
     SrcReg    = CopyMI->getOperand(2).getReg();
   } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
-    assert(0 && "Unrecognized copy instruction!");
-    return false;
+    LLVM_UNREACHABLE("Unrecognized copy instruction!");
   }
 
   // If they are already joined we continue.
@@ -2051,7 +2051,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
         *tri_->getSuperRegisters(LHS.reg))
       // Imprecise sub-register information. Can't handle it.
       return false;
-    assert(0 && "No copies from the RHS?");
+    LLVM_UNREACHABLE("No copies from the RHS?");
   } else {
     LHSValNo = EliminatedLHSVals[0];
   }

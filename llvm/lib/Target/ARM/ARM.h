@@ -15,6 +15,7 @@
 #ifndef TARGET_ARM_H
 #define TARGET_ARM_H
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cassert>
 
@@ -51,7 +52,7 @@ namespace ARMCC {
 
   inline static CondCodes getOppositeCondition(CondCodes CC){
     switch (CC) {
-    default: assert(0 && "Unknown condition code");
+    default: LLVM_UNREACHABLE("Unknown condition code");
     case EQ: return NE;
     case NE: return EQ;
     case HS: return LO;
@@ -72,7 +73,7 @@ namespace ARMCC {
 
 inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
   switch (CC) {
-  default: assert(0 && "Unknown condition code");
+  default: LLVM_UNREACHABLE("Unknown condition code");
   case ARMCC::EQ:  return "eq";
   case ARMCC::NE:  return "ne";
   case ARMCC::HS:  return "hs";

@@ -23,6 +23,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/System/Mutex.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
@@ -453,7 +454,7 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
   case Type::VectorTyID:
     return cast<VectorType>(Ty)->getBitWidth();
   default:
-    assert(0 && "TargetData::getTypeSizeInBits(): Unsupported type");
+    LLVM_UNREACHABLE("TargetData::getTypeSizeInBits(): Unsupported type");
     break;
   }
   return 0;
@@ -508,7 +509,7 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     AlignType = VECTOR_ALIGN;
     break;
   default:
-    assert(0 && "Bad type for getAlignment!!!");
+    LLVM_UNREACHABLE("Bad type for getAlignment!!!");
     break;
   }
 

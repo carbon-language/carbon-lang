@@ -16,6 +16,7 @@
 #include "IA64InstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "IA64GenInstrInfo.inc"
 using namespace llvm;
 
@@ -111,8 +112,8 @@ void IA64InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, DL, get(IA64::ST8))
       .addFrameIndex(FrameIdx)
       .addReg(IA64::r2);
-  } else assert(0 &&
-      "sorry, I don't know how to store this sort of reg in the stack\n");
+  } else 
+    LLVM_UNREACHABLE("sorry, I don't know how to store this sort of reg in the stack");
 }
 
 void IA64InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
@@ -128,7 +129,7 @@ void IA64InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   } else if (RC == IA64::PRRegisterClass) {
     Opc = IA64::ST1;
   } else {
-    assert(0 &&
+    LLVM_UNREACHABLE(
       "sorry, I don't know how to store this sort of reg\n");
   }
 
@@ -163,7 +164,7 @@ void IA64InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
       .addReg(IA64::r2)
       .addReg(IA64::r0);
   } else {
-    assert(0 &&
+    LLVM_UNREACHABLE(
            "sorry, I don't know how to load this sort of reg from the stack\n");
   }
 }
@@ -180,7 +181,7 @@ void IA64InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   } else if (RC == IA64::PRRegisterClass) {
     Opc = IA64::LD1;
   } else {
-    assert(0 &&
+    LLVM_UNREACHABLE(
       "sorry, I don't know how to load this sort of reg\n");
   }
 

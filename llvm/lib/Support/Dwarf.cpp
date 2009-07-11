@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <cassert>
 
@@ -83,7 +84,7 @@ const char *TagString(unsigned Tag) {
     case DW_TAG_lo_user:                   return "DW_TAG_lo_user";
     case DW_TAG_hi_user:                   return "DW_TAG_hi_user";
   }
-  assert(0 && "Unknown Dwarf Tag");
+  LLVM_UNREACHABLE("Unknown Dwarf Tag");
   return "";
 }
 
@@ -94,7 +95,7 @@ const char *ChildrenString(unsigned Children) {
     case DW_CHILDREN_no:                   return "CHILDREN_no";
     case DW_CHILDREN_yes:                  return "CHILDREN_yes";
   }
-  assert(0 && "Unknown Dwarf ChildrenFlag");
+  LLVM_UNREACHABLE("Unknown Dwarf ChildrenFlag");
   return "";
 }
 
@@ -205,7 +206,7 @@ const char *AttributeString(unsigned Attribute) {
     case DW_AT_APPLE_major_runtime_vers:   return "DW_AT_APPLE_major_runtime_vers";
     case DW_AT_APPLE_runtime_class:        return "DW_AT_APPLE_runtime_class";
   }
-  assert(0 && "Unknown Dwarf Attribute");
+  LLVM_UNREACHABLE("Unknown Dwarf Attribute");
   return "";
 }
 
@@ -235,7 +236,7 @@ const char *FormEncodingString(unsigned Encoding) {
     case DW_FORM_ref_udata:                return "FORM_ref_udata";
     case DW_FORM_indirect:                 return "FORM_indirect";
   }
-  assert(0 && "Unknown Dwarf Form Encoding");
+  LLVM_UNREACHABLE("Unknown Dwarf Form Encoding");
   return "";
 }
 
@@ -310,7 +311,7 @@ const char *OperationEncodingString(unsigned Encoding) {
     case DW_OP_lo_user:                    return "OP_lo_user";
     case DW_OP_hi_user:                    return "OP_hi_user";
   }
-  assert(0 && "Unknown Dwarf Operation Encoding");
+  LLVM_UNREACHABLE("Unknown Dwarf Operation Encoding");
   return "";
 }
 
@@ -336,7 +337,7 @@ const char *AttributeEncodingString(unsigned Encoding) {
     case DW_ATE_lo_user:                   return "ATE_lo_user";
     case DW_ATE_hi_user:                   return "ATE_hi_user";
   }
-  assert(0 && "Unknown Dwarf Attribute Encoding");
+  LLVM_UNREACHABLE("Unknown Dwarf Attribute Encoding");
   return "";
 }
 
@@ -350,7 +351,7 @@ const char *DecimalSignString(unsigned Sign) {
     case DW_DS_leading_separate:           return "DS_leading_separate";
     case DW_DS_trailing_separate:          return "DS_trailing_separate";
   }
-  assert(0 && "Unknown Dwarf Decimal Sign Attribute");
+  LLVM_UNREACHABLE("Unknown Dwarf Decimal Sign Attribute");
   return "";
 }
 
@@ -364,7 +365,7 @@ const char *EndianityString(unsigned Endian) {
     case DW_END_lo_user:                   return "END_lo_user";
     case DW_END_hi_user:                   return "END_hi_user";
   }
-  assert(0 && "Unknown Dwarf Endianity");
+  LLVM_UNREACHABLE("Unknown Dwarf Endianity");
   return "";
 }
 
@@ -377,7 +378,7 @@ const char *AccessibilityString(unsigned Access) {
     case DW_ACCESS_protected:              return "ACCESS_protected";
     case DW_ACCESS_private:                return "ACCESS_private";
   }
-  assert(0 && "Unknown Dwarf Accessibility");
+  LLVM_UNREACHABLE("Unknown Dwarf Accessibility");
   return "";
 }
 
@@ -389,7 +390,7 @@ const char *VisibilityString(unsigned Visibility) {
     case DW_VIS_exported:                  return "VIS_exported";
     case DW_VIS_qualified:                 return "VIS_qualified";
   }
-  assert(0 && "Unknown Dwarf Visibility");
+  LLVM_UNREACHABLE("Unknown Dwarf Visibility");
   return "";
 }
 
@@ -401,7 +402,7 @@ const char *VirtualityString(unsigned Virtuality) {
     case DW_VIRTUALITY_virtual:            return "VIRTUALITY_virtual";
     case DW_VIRTUALITY_pure_virtual:       return "VIRTUALITY_pure_virtual";
   }
-  assert(0 && "Unknown Dwarf Virtuality");
+  LLVM_UNREACHABLE("Unknown Dwarf Virtuality");
   return "";
 }
 
@@ -431,7 +432,7 @@ const char *LanguageString(unsigned Language) {
     case DW_LANG_lo_user:                  return "LANG_lo_user";
     case DW_LANG_hi_user:                  return "LANG_hi_user";
   }
-  assert(0 && "Unknown Dwarf Language");
+  LLVM_UNREACHABLE("Unknown Dwarf Language");
   return "";
 }
 
@@ -444,7 +445,7 @@ const char *CaseString(unsigned Case) {
     case DW_ID_down_case:                  return "ID_down_case";
     case DW_ID_case_insensitive:           return "ID_case_insensitive";
   }
-  assert(0 && "Unknown Dwarf Identifier Case");
+  LLVM_UNREACHABLE("Unknown Dwarf Identifier Case");
   return "";
 }
 
@@ -458,7 +459,7 @@ const char *ConventionString(unsigned Convention) {
     case DW_CC_lo_user:                    return "CC_lo_user";
     case DW_CC_hi_user:                    return "CC_hi_user";
   }
-  assert(0 && "Unknown Dwarf Calling Convention");
+  LLVM_UNREACHABLE("Unknown Dwarf Calling Convention");
   return "";
 }
 
@@ -471,7 +472,7 @@ const char *InlineCodeString(unsigned Code) {
     case DW_INL_declared_not_inlined:      return "INL_declared_not_inlined";
     case DW_INL_declared_inlined:          return "INL_declared_inlined";
   }
-  assert(0 && "Unknown Dwarf Inline Code");
+  LLVM_UNREACHABLE("Unknown Dwarf Inline Code");
   return "";
 }
 
@@ -482,7 +483,7 @@ const char *ArrayOrderString(unsigned Order) {
     case DW_ORD_row_major:                 return "ORD_row_major";
     case DW_ORD_col_major:                 return "ORD_col_major";
   }
-  assert(0 && "Unknown Dwarf Array Order");
+  LLVM_UNREACHABLE("Unknown Dwarf Array Order");
   return "";
 }
 
@@ -493,7 +494,7 @@ const char *DiscriminantString(unsigned Discriminant) {
     case DW_DSC_label:                     return "DSC_label";
     case DW_DSC_range:                     return "DSC_range";
   }
-  assert(0 && "Unknown Dwarf Discriminant Descriptor");
+  LLVM_UNREACHABLE("Unknown Dwarf Discriminant Descriptor");
   return "";
 }
 
@@ -514,7 +515,7 @@ const char *LNStandardString(unsigned Standard) {
     case DW_LNS_set_epilogue_begin:        return "LNS_set_epilogue_begin";
     case DW_LNS_set_isa:                   return "LNS_set_isa";
   }
-  assert(0 && "Unknown Dwarf Line Number Standard");
+  LLVM_UNREACHABLE("Unknown Dwarf Line Number Standard");
   return "";
 }
 
@@ -529,7 +530,7 @@ const char *LNExtendedString(unsigned Encoding) {
     case DW_LNE_lo_user:                   return "LNE_lo_user";
     case DW_LNE_hi_user:                   return "LNE_hi_user";
   }
-  assert(0 && "Unknown Dwarf Line Number Extended Opcode Encoding");
+  LLVM_UNREACHABLE("Unknown Dwarf Line Number Extended Opcode Encoding");
   return "";
 }
 
@@ -544,7 +545,7 @@ const char *MacinfoString(unsigned Encoding) {
     case DW_MACINFO_end_file:              return "MACINFO_end_file";
     case DW_MACINFO_vendor_ext:            return "MACINFO_vendor_ext";
   }
-  assert(0 && "Unknown Dwarf Macinfo Type Encodings");
+  LLVM_UNREACHABLE("Unknown Dwarf Macinfo Type Encodings");
   return "";
 }
 
@@ -580,7 +581,7 @@ const char *CallFrameString(unsigned Encoding) {
     case DW_CFA_lo_user:                   return "CFA_lo_user";
     case DW_CFA_hi_user:                   return "CFA_hi_user";
   }
-  assert(0 && "Unknown Dwarf Call Frame Instruction Encodings");
+  LLVM_UNREACHABLE("Unknown Dwarf Call Frame Instruction Encodings");
   return "";
 }
 

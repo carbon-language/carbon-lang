@@ -26,6 +26,7 @@
 #include "llvm/GlobalAlias.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MathExtras.h"
@@ -306,7 +307,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     break;
   }
 
-  assert(0 && "Failed to cast constant expression");
+  LLVM_UNREACHABLE("Failed to cast constant expression");
   return 0;
 }
 
@@ -1304,7 +1305,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     APInt V1 = cast<ConstantInt>(C1)->getValue();
     APInt V2 = cast<ConstantInt>(C2)->getValue();
     switch (pred) {
-    default: assert(0 && "Invalid ICmp Predicate"); return 0;
+    default: LLVM_UNREACHABLE("Invalid ICmp Predicate"); return 0;
     case ICmpInst::ICMP_EQ: return ConstantInt::get(Type::Int1Ty, V1 == V2);
     case ICmpInst::ICMP_NE: return ConstantInt::get(Type::Int1Ty, V1 != V2);
     case ICmpInst::ICMP_SLT:return ConstantInt::get(Type::Int1Ty, V1.slt(V2));
@@ -1321,7 +1322,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     APFloat C2V = cast<ConstantFP>(C2)->getValueAPF();
     APFloat::cmpResult R = C1V.compare(C2V);
     switch (pred) {
-    default: assert(0 && "Invalid FCmp Predicate"); return 0;
+    default: LLVM_UNREACHABLE("Invalid FCmp Predicate"); return 0;
     case FCmpInst::FCMP_FALSE: return ConstantInt::getFalse();
     case FCmpInst::FCMP_TRUE:  return ConstantInt::getTrue();
     case FCmpInst::FCMP_UNO:
@@ -1377,7 +1378,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   if (C1->getType()->isFloatingPoint()) {
     int Result = -1;  // -1 = unknown, 0 = known false, 1 = known true.
     switch (evaluateFCmpRelation(C1, C2)) {
-    default: assert(0 && "Unknown relation!");
+    default: LLVM_UNREACHABLE("Unknown relation!");
     case FCmpInst::FCMP_UNO:
     case FCmpInst::FCMP_ORD:
     case FCmpInst::FCMP_UEQ:
@@ -1436,7 +1437,7 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
     // Evaluate the relation between the two constants, per the predicate.
     int Result = -1;  // -1 = unknown, 0 = known false, 1 = known true.
     switch (evaluateICmpRelation(C1, C2, CmpInst::isSigned(pred))) {
-    default: assert(0 && "Unknown relational!");
+    default: LLVM_UNREACHABLE("Unknown relational!");
     case ICmpInst::BAD_ICMP_PREDICATE:
       break;  // Couldn't determine anything about these constants.
     case ICmpInst::ICMP_EQ:   // We know the constants are equal!

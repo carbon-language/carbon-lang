@@ -556,7 +556,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
   if (PartVT.getSizeInBits() == ValueVT.getSizeInBits())
     return DAG.getNode(ISD::BIT_CONVERT, dl, ValueVT, Val);
 
-  assert(0 && "Unknown mismatch!");
+  LLVM_UNREACHABLE("Unknown mismatch!");
   return SDValue();
 }
 
@@ -592,7 +592,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
         ValueVT = MVT::getIntegerVT(NumParts * PartBits);
         Val = DAG.getNode(ExtendKind, dl, ValueVT, Val);
       } else {
-        assert(0 && "Unknown mismatch!");
+        LLVM_UNREACHABLE("Unknown mismatch!");
       }
     } else if (PartBits == ValueVT.getSizeInBits()) {
       // Different types of the same size.
@@ -604,7 +604,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
         ValueVT = MVT::getIntegerVT(NumParts * PartBits);
         Val = DAG.getNode(ISD::TRUNCATE, dl, ValueVT, Val);
       } else {
-        assert(0 && "Unknown mismatch!");
+        LLVM_UNREACHABLE("Unknown mismatch!");
       }
     }
 
@@ -1073,7 +1073,7 @@ static ISD::CondCode getFCmpCondCode(FCmpInst::Predicate Pred) {
   case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
   case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
   default:
-    assert(0 && "Invalid FCmp predicate opcode!");
+    LLVM_UNREACHABLE("Invalid FCmp predicate opcode!");
     FOC = FPC = ISD::SETFALSE;
     break;
   }
@@ -1099,7 +1099,7 @@ static ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred) {
   case ICmpInst::ICMP_SGT: return ISD::SETGT;
   case ICmpInst::ICMP_UGT: return ISD::SETUGT;
   default:
-    assert(0 && "Invalid ICmp predicate opcode!");
+    LLVM_UNREACHABLE("Invalid ICmp predicate opcode!");
     return ISD::SETNE;
   }
 }
@@ -1131,7 +1131,7 @@ SelectionDAGLowering::EmitBranchForMergedCondition(Value *Cond,
         Condition = getFCmpCondCode(FC->getPredicate());
       } else {
         Condition = ISD::SETEQ; // silence warning.
-        assert(0 && "Unknown compare instruction");
+        LLVM_UNREACHABLE("Unknown compare instruction");
       }
 
       CaseBlock CB(Condition, BOp->getOperand(0),
@@ -4263,7 +4263,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
   case Intrinsic::gcread:
   case Intrinsic::gcwrite:
-    assert(0 && "GC failed to lower gcread/gcwrite intrinsics!");
+    LLVM_UNREACHABLE("GC failed to lower gcread/gcwrite intrinsics!");
     return 0;
 
   case Intrinsic::flt_rounds: {

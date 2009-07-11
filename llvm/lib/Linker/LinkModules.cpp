@@ -26,6 +26,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/DenseMap.h"
 #include <sstream>
@@ -392,7 +393,7 @@ static Value *RemapOperand(const Value *In,
       Result = CE->getWithOperands(Ops);
     } else {
       assert(!isa<GlobalValue>(CPV) && "Unmapped global?");
-      assert(0 && "Unknown type of derived type constant value!");
+      LLVM_UNREACHABLE("Unknown type of derived type constant value!");
     }
   } else if (isa<InlineAsm>(In)) {
     Result = const_cast<Value*>(In);
@@ -409,7 +410,7 @@ static Value *RemapOperand(const Value *In,
   PrintMap(ValueMap);
 
   cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
-  assert(0 && "Couldn't remap value!");
+  LLVM_UNREACHABLE("Couldn't remap value!");
 #endif
   return 0;
 }
@@ -899,9 +900,9 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
             // Nothing is required, mapped values will take the new global
             // automatically.
           } else if (DGVar->hasAppendingLinkage()) {
-            assert(0 && "Appending linkage unimplemented!");
+            LLVM_UNREACHABLE("Appending linkage unimplemented!");
           } else {
-            assert(0 && "Unknown linkage!");
+            LLVM_UNREACHABLE("Unknown linkage!");
           }
         } else {
           // Copy the initializer over now...

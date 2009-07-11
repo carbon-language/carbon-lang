@@ -167,7 +167,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SUB:              return ExpandADDSUB(Op.getNode(), DAG);
   case ISD::FRAMEADDR:        return LowerFRAMEADDR(Op, DAG);
   default:
-    assert(0 && "unimplemented operand");
+    LLVM_UNREACHABLE("unimplemented operand");
     return SDValue();
   }
 }
@@ -179,7 +179,7 @@ void XCoreTargetLowering::ReplaceNodeResults(SDNode *N,
                                              SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default:
-    assert(0 && "Don't know how to custom expand this!");
+    LLVM_UNREACHABLE("Don't know how to custom expand this!");
     return;
   case ISD::ADD:
   case ISD::SUB:
@@ -266,7 +266,7 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
       GVar = dyn_cast_or_null<GlobalVariable>(GA->resolveAliasedGlobal());
   }
   if (! GVar) {
-    assert(0 && "Thread local object not a GlobalVariable?");
+    LLVM_UNREACHABLE("Thread local object not a GlobalVariable?");
     return SDValue();
   }
   const Type *Ty = cast<PointerType>(GV->getType())->getElementType();
@@ -292,7 +292,7 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG)
   // FIXME there isn't really debug info here
   DebugLoc dl = CP->getDebugLoc();
   if (Subtarget.isXS1A()) {
-    assert(0 && "Lowering of constant pool unimplemented");
+    LLVM_UNREACHABLE("Lowering of constant pool unimplemented");
     return SDValue();
   } else {
     MVT PtrVT = Op.getValueType();
@@ -356,7 +356,7 @@ ExpandADDSUB(SDNode *N, SelectionDAG &DAG)
 SDValue XCoreTargetLowering::
 LowerVAARG(SDValue Op, SelectionDAG &DAG)
 {
-  assert(0 && "unimplemented");
+  LLVM_UNREACHABLE("unimplemented");
   // FIX Arguments passed by reference need a extra dereference.
   SDNode *Node = Op.getNode();
   DebugLoc dl = Node->getDebugLoc();
@@ -426,7 +426,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
   switch (CallingConv) 
   {
     default:
-      assert(0 && "Unsupported calling convention");
+      LLVM_UNREACHABLE("Unsupported calling convention");
     case CallingConv::Fast:
     case CallingConv::C:
       return LowerCCCCallTo(Op, DAG, CallingConv);
@@ -474,7 +474,7 @@ LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC)
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-      default: assert(0 && "Unknown loc info!");
+      default: LLVM_UNREACHABLE("Unknown loc info!");
       case CCValAssign::Full: break;
       case CCValAssign::SExt:
         Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
@@ -607,7 +607,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
   switch(CC) 
   {
     default:
-      assert(0 && "Unsupported calling convention");
+      LLVM_UNREACHABLE("Unsupported calling convention");
     case CallingConv::C:
     case CallingConv::Fast:
       return LowerCCCArguments(Op, DAG);

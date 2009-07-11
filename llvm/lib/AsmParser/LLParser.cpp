@@ -24,6 +24,7 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -2040,7 +2041,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     return Error(ID.Loc, "functions are not values, refer to them as pointers");
   
   switch (ID.Kind) {
-  default: assert(0 && "Unknown ValID!");
+  default: LLVM_UNREACHABLE("Unknown ValID!");
   case ValID::t_LocalID:
   case ValID::t_LocalName:
     return Error(ID.Loc, "invalid use of function-local name");
@@ -2835,7 +2836,7 @@ bool LLParser::ParseArithmetic(Instruction *&Inst, PerFunctionState &PFS,
 
   bool Valid;
   switch (OperandType) {
-  default: assert(0 && "Unknown operand type!");
+  default: LLVM_UNREACHABLE("Unknown operand type!");
   case 0: // int or FP.
     Valid = LHS->getType()->isIntOrIntVector() ||
             LHS->getType()->isFPOrFPVector();

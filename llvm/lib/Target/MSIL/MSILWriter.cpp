@@ -19,6 +19,7 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Transforms/Scalar.h"
@@ -273,7 +274,7 @@ std::string MSILWriter::getConvModopt(unsigned CallingConvID) {
     return "modopt([mscorlib]System.Runtime.CompilerServices.CallConvStdcall) ";
   default:
     cerr << "CallingConvID = " << CallingConvID << '\n';
-    assert(0 && "Unsupported calling convention");
+    LLVM_UNREACHABLE("Unsupported calling convention");
   }
   return ""; // Not reached
 }
@@ -319,7 +320,7 @@ std::string MSILWriter::getPrimitiveTypeName(const Type* Ty, bool isSigned) {
     return "float64 "; 
   default:
     cerr << "Type = " << *Ty << '\n';
-    assert(0 && "Invalid primitive type");
+    LLVM_UNREACHABLE("Invalid primitive type");
   }
   return ""; // Not reached
 }
@@ -347,7 +348,7 @@ std::string MSILWriter::getTypeName(const Type* Ty, bool isSigned,
     return "valuetype '"+getArrayTypeName(Ty->getTypeID(),Ty)+"' ";
   default:
     cerr << "Type = " << *Ty << '\n';
-    assert(0 && "Invalid type in getTypeName()");
+    LLVM_UNREACHABLE("Invalid type in getTypeName()");
   }
   return ""; // Not reached
 }
@@ -391,7 +392,7 @@ std::string MSILWriter::getTypePostfix(const Type* Ty, bool Expand,
     return "i"+utostr(TD->getTypeAllocSize(Ty));
   default:
     cerr << "TypeID = " << Ty->getTypeID() << '\n';
-    assert(0 && "Invalid type in TypeToPostfix()");
+    LLVM_UNREACHABLE("Invalid type in TypeToPostfix()");
   }
   return ""; // Not reached
 }
@@ -406,7 +407,7 @@ void MSILWriter::printConvToPtr() {
     printSimpleInstruction("conv.u8");
     break;
   default:
-    assert(0 && "Module use not supporting pointer size");
+    LLVM_UNREACHABLE("Module use not supporting pointer size");
   }
 }
 
@@ -418,14 +419,14 @@ void MSILWriter::printPtrLoad(uint64_t N) {
     // FIXME: Need overflow test?
     if (!isUInt32(N)) {
       cerr << "Value = " << utostr(N) << '\n';
-      assert(0 && "32-bit pointer overflowed");
+      LLVM_UNREACHABLE("32-bit pointer overflowed");
     }
     break;
   case Module::Pointer64:
     printSimpleInstruction("ldc.i8",utostr(N).c_str());
     break;
   default:
-    assert(0 && "Module use not supporting pointer size");
+    LLVM_UNREACHABLE("Module use not supporting pointer size");
   }
 }
 
@@ -461,7 +462,7 @@ void MSILWriter::printConstLoad(const Constant* C) {
     printPtrLoad(0);
   } else {
     cerr << "Constant = " << *C << '\n';
-    assert(0 && "Invalid constant value");
+    LLVM_UNREACHABLE("Invalid constant value");
   }
   Out << '\n';
 }
@@ -510,7 +511,7 @@ void MSILWriter::printValueLoad(const Value* V) {
     break;
   default:
     cerr << "Value = " << *V << '\n';
-    assert(0 && "Invalid value location");
+    LLVM_UNREACHABLE("Invalid value location");
   }
 }
 
@@ -525,7 +526,7 @@ void MSILWriter::printValueSave(const Value* V) {
     break;
   default:
     cerr << "Value  = " << *V << '\n';
-    assert(0 && "Invalid value location");
+    LLVM_UNREACHABLE("Invalid value location");
   }
 }
 
@@ -680,7 +681,7 @@ void MSILWriter::printCastInstruction(unsigned int Op, const Value* V,
     break;
   default:
     cerr << "Opcode = " << Op << '\n';
-    assert(0 && "Invalid conversion instruction");
+    LLVM_UNREACHABLE("Invalid conversion instruction");
   }
 }
 
@@ -771,7 +772,7 @@ void MSILWriter::printFunctionCall(const Value* FnVal,
     Name = getConvModopt(Invoke->getCallingConv());
   else {
     cerr << "Instruction = " << Inst->getName() << '\n';
-    assert(0 && "Need \"Invoke\" or \"Call\" instruction only");
+    LLVM_UNREACHABLE("Need \"Invoke\" or \"Call\" instruction only");
   }
   if (const Function* F = dyn_cast<Function>(FnVal)) {
     // Direct call.
@@ -819,7 +820,7 @@ void MSILWriter::printIntrinsicCall(const IntrinsicInst* Inst) {
     break;        
   default:
     cerr << "Intrinsic ID = " << Inst->getIntrinsicID() << '\n';
-    assert(0 && "Invalid intrinsic function");
+    LLVM_UNREACHABLE("Invalid intrinsic function");
   }
 }
 
@@ -882,7 +883,7 @@ void MSILWriter::printICmpInstruction(unsigned Predicate, const Value* Left,
     break;
   default:
     cerr << "Predicate = " << Predicate << '\n';
-    assert(0 && "Invalid icmp predicate");
+    LLVM_UNREACHABLE("Invalid icmp predicate");
   }
 }
 
@@ -976,7 +977,7 @@ void MSILWriter::printFCmpInstruction(unsigned Predicate, const Value* Left,
     printSimpleInstruction("or");
     break;
   default:
-    assert(0 && "Illegal FCmp predicate");
+    LLVM_UNREACHABLE("Illegal FCmp predicate");
   }
 }
 
@@ -1169,10 +1170,10 @@ void MSILWriter::printInstruction(const Instruction* Inst) {
     printAllocaInstruction(cast<AllocaInst>(Inst));
     break;
   case Instruction::Malloc:
-    assert(0 && "LowerAllocationsPass used");
+    LLVM_UNREACHABLE("LowerAllocationsPass used");
     break;
   case Instruction::Free:
-    assert(0 && "LowerAllocationsPass used");
+    LLVM_UNREACHABLE("LowerAllocationsPass used");
     break;
   case Instruction::Unreachable:
     printSimpleInstruction("ldstr", "\"Unreachable instruction\"");
@@ -1185,7 +1186,7 @@ void MSILWriter::printInstruction(const Instruction* Inst) {
     break;
   default:
     cerr << "Instruction = " << Inst->getName() << '\n';
-    assert(0 && "Unsupported instruction");
+    LLVM_UNREACHABLE("Unsupported instruction");
   }
 }
 
@@ -1373,7 +1374,7 @@ void MSILWriter::printConstantExpr(const ConstantExpr* CE) {
     break;
   default:
     cerr << "Expression = " << *CE << "\n";
-    assert(0 && "Invalid constant expression");
+    LLVM_UNREACHABLE("Invalid constant expression");
   }
 }
 
@@ -1407,7 +1408,7 @@ void MSILWriter::printStaticInitializerList() {
         printSimpleInstruction(postfix.c_str());
       } else {
         cerr << "Constant = " << *I->constant << '\n';
-        assert(0 && "Invalid static initializer");
+        LLVM_UNREACHABLE("Invalid static initializer");
       }
     }
   }
@@ -1471,7 +1472,7 @@ unsigned int MSILWriter::getBitWidth(const Type* Ty) {
     return N;
   default:
     cerr << "Bits = " << N << '\n';
-    assert(0 && "Unsupported integer width");
+    LLVM_UNREACHABLE("Unsupported integer width");
   }
   return 0; // Not reached
 }
@@ -1528,12 +1529,12 @@ void MSILWriter::printStaticConstant(const Constant* C, uint64_t& Offset) {
       // Null pointer initialization
       if (TySize==4) Out << "int32 (0)";
       else if (TySize==8) Out << "int64 (0)";
-      else assert(0 && "Invalid pointer size");
+      else LLVM_UNREACHABLE("Invalid pointer size");
     }
     break;
   default:
     cerr << "TypeID = " << Ty->getTypeID() << '\n';
-    assert(0 && "Invalid type in printStaticConstant()");
+    LLVM_UNREACHABLE("Invalid type in printStaticConstant()");
   }
   // Increase offset.
   Offset += TySize;
@@ -1556,7 +1557,7 @@ void MSILWriter::printStaticInitializer(const Constant* C,
     break;
   default:
     cerr << "Type = " << *C << "\n";
-    assert(0 && "Invalid constant type");
+    LLVM_UNREACHABLE("Invalid constant type");
   }
   // Print initializer
   std::string label = Name;

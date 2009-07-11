@@ -1697,7 +1697,7 @@ SDValue PIC16TargetLowering::PerformDAGCombine(SDNode *N,
 
 static PIC16CC::CondCodes IntCCToPIC16CC(ISD::CondCode CC) {
   switch (CC) {
-  default: assert(0 && "Unknown condition code!");
+  default: LLVM_UNREACHABLE("Unknown condition code!");
   case ISD::SETNE:  return PIC16CC::NE;
   case ISD::SETEQ:  return PIC16CC::EQ;
   case ISD::SETGT:  return PIC16CC::GT;

@@ -157,7 +157,7 @@ static Value *LowerBSWAP(Value *V, Instruction *IP) {
   IRBuilder<> Builder(IP->getParent(), IP);
 
   switch(BitSize) {
-  default: assert(0 && "Unhandled type size of value to byteswap!");
+  default: LLVM_UNREACHABLE("Unhandled type size of value to byteswap!");
   case 16: {
     Value *Tmp1 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 8),
                                     "bswap.2");

@@ -21,6 +21,7 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 
@@ -145,7 +146,9 @@ public:
   void visitLoadInst(LoadInst &I);
   void visitStoreInst(StoreInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
-  void visitPHINode(PHINode &PN) { assert(0 && "PHI nodes already handled!"); }
+  void visitPHINode(PHINode &PN) { 
+    LLVM_UNREACHABLE("PHI nodes already handled!"); 
+  }
   void visitTruncInst(TruncInst &I);
   void visitZExtInst(ZExtInst &I);
   void visitSExtInst(SExtInst &I);
@@ -174,7 +177,7 @@ public:
   void visitVAArgInst(VAArgInst &I);
   void visitInstruction(Instruction &I) {
     cerr << I;
-    assert(0 && "Instruction not interpretable yet!");
+    LLVM_UNREACHABLE("Instruction not interpretable yet!");
   }
 
   GenericValue callExternalFunction(Function *F,

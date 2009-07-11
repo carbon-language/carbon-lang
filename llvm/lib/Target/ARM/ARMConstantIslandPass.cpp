@@ -24,6 +24,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -448,7 +449,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
               Bits = 8;  // Taking the address of a CP entry.
               break;
             }
-            assert(0 && "Unknown addressing mode for CP reference!");
+            LLVM_UNREACHABLE("Unknown addressing mode for CP reference!");
           case ARMII::AddrMode1: // AM1: 8 bits << 2
             Bits = 8;
             Scale = 4;  // Taking the address of a CP entry.

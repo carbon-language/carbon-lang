@@ -44,7 +44,9 @@ void llvm_report_error(const std::string &reason) {
   exit(1);
 }
 
-void llvm_unreachable(void) {
+void llvm_unreachable(const char *msg) {
+  if (msg)
+    errs() << msg << "\n";
   abort();
 }
 }

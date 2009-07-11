@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <cstring>
@@ -50,7 +51,7 @@ void FoldingSetNodeID::AddInteger(unsigned long I) {
   else if (sizeof(long) == sizeof(long long)) {
     AddInteger((unsigned long long)I);
   } else {
-    assert(0 && "unexpected sizeof(long)");
+    LLVM_UNREACHABLE("unexpected sizeof(long)");
   }
 }
 void FoldingSetNodeID::AddInteger(long long I) {

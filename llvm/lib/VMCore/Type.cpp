@@ -634,7 +634,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     }
     return true;
   } else {
-    assert(0 && "Unknown derived type!");
+    LLVM_UNREACHABLE("Unknown derived type!");
     return false;
   }
 }

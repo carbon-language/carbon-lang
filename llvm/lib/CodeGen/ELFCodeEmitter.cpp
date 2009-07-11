@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 
 //===----------------------------------------------------------------------===//
 //                       ELFCodeEmitter Implementation
@@ -107,7 +108,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
       MR.setResultPointer((void*)Addr);
       MR.setConstantVal(JumpTableSectionIdx);
     } else {
-      assert(0 && "Unhandled relocation type");
+      LLVM_UNREACHABLE("Unhandled relocation type");
     }
     ES->addRelocation(MR);
   }

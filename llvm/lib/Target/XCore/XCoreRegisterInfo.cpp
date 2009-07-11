@@ -257,7 +257,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
               .addReg(ScratchReg, RegState::Kill);
         break;
       default:
-        assert(0 && "Unexpected Opcode\n");
+        LLVM_UNREACHABLE("Unexpected Opcode\n");
       }
     } else {
       switch (MI.getOpcode()) {
@@ -278,7 +278,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
               .addImm(Offset);
         break;
       default:
-        assert(0 && "Unexpected Opcode\n");
+        LLVM_UNREACHABLE("Unexpected Opcode\n");
       }
     }
   } else {
@@ -309,7 +309,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
             .addImm(Offset);
       break;
     default:
-      assert(0 && "Unexpected Opcode\n");
+      LLVM_UNREACHABLE("Unexpected Opcode\n");
     }
   }
   // Erase old instruction.

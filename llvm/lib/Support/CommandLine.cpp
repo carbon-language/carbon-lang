@@ -693,7 +693,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
           ValNo++;
           break;
         default:
-          assert(0 && "Internal error, unexpected NumOccurrences flag in "
+          LLVM_UNREACHABLE("Internal error, unexpected NumOccurrences flag in "
                  "positional argument processing!");
         }
       }

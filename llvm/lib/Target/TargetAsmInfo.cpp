@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cctype>
 #include <cstring>
 using namespace llvm;
@@ -276,7 +277,7 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Flags |= SectionFlags::Small;
       break;
      default:
-      assert(0 && "Unexpected section kind!");
+      LLVM_UNREACHABLE("Unexpected section kind!");
     }
 
     if (GV->isWeakForLinker())
@@ -386,7 +387,7 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    case SectionKind::ThreadBSS:
     return ".gnu.linkonce.tb." + GV->getName();
    default:
-    assert(0 && "Unknown section kind");
+    LLVM_UNREACHABLE("Unknown section kind");
   }
   return NULL;
 }

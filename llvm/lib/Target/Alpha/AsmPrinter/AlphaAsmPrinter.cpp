@@ -155,7 +155,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   EmitAlignment(MF.getAlignment(), F);
   switch (F->getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
+  default: LLVM_UNREACHABLE( "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
     break;

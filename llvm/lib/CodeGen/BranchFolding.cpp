@@ -27,6 +27,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -461,7 +462,7 @@ static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
       // _GLIBCXX_DEBUG checks strict weak ordering, which involves comparing
       // an object with itself.
 #ifndef _GLIBCXX_DEBUG
-      assert(0 && "Predecessor appears twice");
+      LLVM_UNREACHABLE("Predecessor appears twice");
 #endif
       return false;
     }

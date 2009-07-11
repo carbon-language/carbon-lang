@@ -470,7 +470,7 @@ unsigned ARMTargetLowering::getFunctionAlignment(const Function *F) const {
 /// IntCCToARMCC - Convert a DAG integer condition code to an ARM CC
 static ARMCC::CondCodes IntCCToARMCC(ISD::CondCode CC) {
   switch (CC) {
-  default: assert(0 && "Unknown condition code!");
+  default: LLVM_UNREACHABLE("Unknown condition code!");
   case ISD::SETNE:  return ARMCC::NE;
   case ISD::SETEQ:  return ARMCC::EQ;
   case ISD::SETGT:  return ARMCC::GT;
@@ -492,7 +492,7 @@ static bool FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
   bool Invert = false;
   CondCode2 = ARMCC::AL;
   switch (CC) {
-  default: assert(0 && "Unknown FP condition!");
+  default: LLVM_UNREACHABLE("Unknown FP condition!");
   case ISD::SETEQ:
   case ISD::SETOEQ: CondCode = ARMCC::EQ; break;
   case ISD::SETGT:
@@ -661,7 +661,7 @@ CCAssignFn *ARMTargetLowering::CCAssignFnForNode(unsigned CC,
                                                  bool Return) const {
   switch (CC) {
   default:
-   assert(0 && "Unsupported calling convention");
+   LLVM_UNREACHABLE("Unsupported calling convention");
   case CallingConv::C:
   case CallingConv::Fast:
    // Use target triple & subtarget features to do actual dispatch.
@@ -745,7 +745,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
     }
 
     switch (VA.getLocInfo()) {
-    default: assert(0 && "Unknown loc info!");
+    default: LLVM_UNREACHABLE("Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::BCvt:
       Val = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(), Val);
@@ -858,7 +858,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-    default: assert(0 && "Unknown loc info!");
+    default: LLVM_UNREACHABLE("Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::SExt:
       Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
@@ -1060,7 +1060,7 @@ SDValue ARMTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
     SDValue Arg = Op.getOperand(realRVLocIdx*2+1);
 
     switch (VA.getLocInfo()) {
-    default: assert(0 && "Unknown loc info!");
+    default: LLVM_UNREACHABLE("Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::BCvt:
       Arg = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getLocVT(), Arg);
@@ -1442,7 +1442,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
       // to 32 bits.  Insert an assert[sz]ext to capture this, then
       // truncate to the right size.
       switch (VA.getLocInfo()) {
-      default: assert(0 && "Unknown loc info!");
+      default: LLVM_UNREACHABLE("Unknown loc info!");
       case CCValAssign::Full: break;
       case CCValAssign::BCvt:
         ArgValue = DAG.getNode(ISD::BIT_CONVERT, dl, VA.getValVT(), ArgValue);
@@ -2006,7 +2006,7 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 
   if (Op.getOperand(1).getValueType().isFloatingPoint()) {
     switch (SetCCOpcode) {
-    default: assert(0 && "Illegal FP comparison"); break;
+    default: LLVM_UNREACHABLE("Illegal FP comparison"); break;
     case ISD::SETUNE:
     case ISD::SETNE:  Invert = true; // Fallthrough
     case ISD::SETOEQ:
@@ -2045,7 +2045,7 @@ static SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
   } else {
     // Integer comparisons.
     switch (SetCCOpcode) {
-    default: assert(0 && "Illegal integer comparison"); break;
+    default: LLVM_UNREACHABLE("Illegal integer comparison"); break;
     case ISD::SETNE:  Invert = true;
     case ISD::SETEQ:  Opc = ARMISD::VCEQ; break;
     case ISD::SETLT:  Swap = true;
@@ -2149,7 +2149,7 @@ static SDValue isVMOVSplat(uint64_t SplatBits, uint64_t SplatUndef,
   }
 
   default:
-    assert(0 && "unexpected size for isVMOVSplat");
+    LLVM_UNREACHABLE("unexpected size for isVMOVSplat");
     break;
   }
 
@@ -2191,7 +2191,7 @@ static SDValue BuildSplat(SDValue Val, MVT VT, SelectionDAG &DAG, DebugLoc dl) {
     case 16: CanonicalVT = MVT::v4i16; break;
     case 32: CanonicalVT = MVT::v2i32; break;
     case 64: CanonicalVT = MVT::v1i64; break;
-    default: assert(0 && "unexpected splat element type"); break;
+    default: LLVM_UNREACHABLE("unexpected splat element type"); break;
     }
   } else {
     assert(VT.is128BitVector() && "unknown splat vector size");
@@ -2200,7 +2200,7 @@ static SDValue BuildSplat(SDValue Val, MVT VT, SelectionDAG &DAG, DebugLoc dl) {
     case 16: CanonicalVT = MVT::v8i16; break;
     case 32: CanonicalVT = MVT::v4i32; break;
     case 64: CanonicalVT = MVT::v2i64; break;
-    default: assert(0 && "unexpected splat element type"); break;
+    default: LLVM_UNREACHABLE("unexpected splat element type"); break;
     }
   }
 
@@ -2303,7 +2303,7 @@ void ARMTargetLowering::ReplaceNodeResults(SDNode *N,
                                            SelectionDAG &DAG) {
   switch (N->getOpcode()) {
   default:
-    assert(0 && "Don't know how to custom expand this!");
+    LLVM_UNREACHABLE("Don't know how to custom expand this!");
     return;
   case ISD::BIT_CONVERT:
     Results.push_back(ExpandBIT_CONVERT(N, DAG));
@@ -2628,7 +2628,7 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
       LLVM_UNREACHABLE("invalid shift count for narrowing vector shift intrinsic");
 
     default:
-      assert(0 && "unhandled vector shift");
+      LLVM_UNREACHABLE("unhandled vector shift");
     }
 
     switch (IntNo) {
@@ -2720,7 +2720,7 @@ static SDValue PerformShiftCombine(SDNode *N, SelectionDAG &DAG,
   int64_t Cnt;
 
   switch (N->getOpcode()) {
-  default: assert(0 && "unexpected shift opcode");
+  default: LLVM_UNREACHABLE("unexpected shift opcode");
 
   case ISD::SHL:
     if (isVShiftLImm(N->getOperand(1), VT, false, Cnt))
@@ -2763,7 +2763,7 @@ static SDValue PerformExtendCombine(SDNode *N, SelectionDAG &DAG,
 
       unsigned Opc = 0;
       switch (N->getOpcode()) {
-      default: assert(0 && "unexpected opcode");
+      default: LLVM_UNREACHABLE("unexpected opcode");
       case ISD::SIGN_EXTEND:
         Opc = ARMISD::VGETLANEs;
         break;

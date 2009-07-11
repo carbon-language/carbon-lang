@@ -14,6 +14,7 @@
 
 #include "llvm/Linker.h"
 #include "llvm/Module.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 
@@ -80,7 +81,7 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
   std::string Magic;
   Pathname.getMagicNumber(Magic, 64);
   switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
-    default: assert(0 && "Bad file type identification");
+    default: LLVM_UNREACHABLE("Bad file type identification");
     case sys::Unknown_FileType:
       return warning("Supposed library '" + Lib + "' isn't a library.");
 
@@ -178,7 +179,7 @@ bool Linker::LinkInFile(const sys::Path &File, bool &is_native) {
   std::string Magic;
   File.getMagicNumber(Magic, 64);
   switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
-    default: assert(0 && "Bad file type identification");
+    default: LLVM_UNREACHABLE("Bad file type identification");
     case sys::Unknown_FileType:
       return warning("Ignoring file '" + File.toString() + 
                    "' because does not contain bitcode.");

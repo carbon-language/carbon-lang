@@ -25,6 +25,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
@@ -1062,7 +1063,7 @@ unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr) {
     return CI->getCallingConv();
   else if (InvokeInst *II = dyn_cast<InvokeInst>(V))
     return II->getCallingConv();
-  assert(0 && "LLVMGetInstructionCallConv applies only to call and invoke!");
+  LLVM_UNREACHABLE("LLVMGetInstructionCallConv applies only to call and invoke!");
   return 0;
 }
 
@@ -1072,7 +1073,7 @@ void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
     return CI->setCallingConv(CC);
   else if (InvokeInst *II = dyn_cast<InvokeInst>(V))
     return II->setCallingConv(CC);
-  assert(0 && "LLVMSetInstructionCallConv applies only to call and invoke!");
+  LLVM_UNREACHABLE("LLVMSetInstructionCallConv applies only to call and invoke!");
 }
 
 void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index, 

@@ -23,6 +23,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
@@ -291,7 +292,7 @@ void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
   switch (RetOpcode) {
   case MSP430::RET: break;  // These are ok
   default:
-    assert(0 && "Can only insert epilog into returning blocks");
+    LLVM_UNREACHABLE("Can only insert epilog into returning blocks");
   }
 
   // Get the number of bytes to allocate from the FrameInfo
@@ -327,7 +328,7 @@ void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
   //  mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
 
   if (MFI->hasVarSizedObjects()) {
-    assert(0 && "Not implemented yet!");
+    LLVM_UNREACHABLE("Not implemented yet!");
   } else {
     // adjust stack pointer back: SPW += numbytes
     if (NumBytes) {
@@ -349,7 +350,7 @@ unsigned MSP430RegisterInfo::getFrameRegister(MachineFunction &MF) const {
 }
 
 int MSP430RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  assert(0 && "Not implemented yet!");
+  LLVM_UNREACHABLE("Not implemented yet!");
   return 0;
 }
 

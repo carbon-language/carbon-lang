@@ -325,7 +325,7 @@ namespace {
 
   void CppWriter::printVisibilityType(GlobalValue::VisibilityTypes VisType) {
     switch (VisType) {
-    default: assert(0 && "Unknown GVar visibility");
+    default: LLVM_UNREACHABLE("Unknown GVar visibility");
     case GlobalValue::DefaultVisibility:
       Out << "GlobalValue::DefaultVisibility";
       break;
@@ -844,7 +844,7 @@ namespace {
         printConstant(CE->getOperand(0));
         Out << "Constant* " << constName << " = ConstantExpr::getCast(";
         switch (CE->getOpcode()) {
-        default: assert(0 && "Invalid cast opcode");
+        default: LLVM_UNREACHABLE("Invalid cast opcode");
         case Instruction::Trunc: Out << "Instruction::Trunc"; break;
         case Instruction::ZExt:  Out << "Instruction::ZExt"; break;
         case Instruction::SExt:  Out << "Instruction::SExt"; break;

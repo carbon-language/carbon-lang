@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 #include <vector>
 #include <set>
@@ -535,12 +536,10 @@ private:
   void visitVACopy(CallInst &I);
 
   void visitUserOp1(Instruction &I) {
-    assert(0 && "UserOp1 should not exist at instruction selection time!");
-    abort();
+    LLVM_UNREACHABLE("UserOp1 should not exist at instruction selection time!");
   }
   void visitUserOp2(Instruction &I) {
-    assert(0 && "UserOp2 should not exist at instruction selection time!");
-    abort();
+    LLVM_UNREACHABLE("UserOp2 should not exist at instruction selection time!");
   }
   
   const char *implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op);

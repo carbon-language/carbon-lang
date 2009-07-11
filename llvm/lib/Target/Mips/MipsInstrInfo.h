@@ -15,6 +15,7 @@
 #define MIPSINSTRUCTIONINFO_H
 
 #include "Mips.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "MipsRegisterInfo.h"
 
@@ -92,7 +93,7 @@ namespace Mips {
   inline static const char *MipsFCCToString(Mips::CondCode CC) 
   {
     switch (CC) {
-      default: assert(0 && "Unknown condition code");
+      default: LLVM_UNREACHABLE("Unknown condition code");
       case FCOND_F:
       case FCOND_T:   return "f";
       case FCOND_UN:

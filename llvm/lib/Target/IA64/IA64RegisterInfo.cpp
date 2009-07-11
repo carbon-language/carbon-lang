@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -292,7 +293,7 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned IA64RegisterInfo::getRARegister() const {
-  assert(0 && "What is the return address register");
+  LLVM_UNREACHABLE("What is the return address register");
   return 0;
 }
 
@@ -301,17 +302,17 @@ unsigned IA64RegisterInfo::getFrameRegister(MachineFunction &MF) const {
 }
 
 unsigned IA64RegisterInfo::getEHExceptionRegister() const {
-  assert(0 && "What is the exception register");
+  LLVM_UNREACHABLE("What is the exception register");
   return 0;
 }
 
 unsigned IA64RegisterInfo::getEHHandlerRegister() const {
-  assert(0 && "What is the exception handler register");
+  LLVM_UNREACHABLE("What is the exception handler register");
   return 0;
 }
 
 int IA64RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  assert(0 && "What is the dwarf register number");
+  LLVM_UNREACHABLE("What is the dwarf register number");
   return -1;
 }
 

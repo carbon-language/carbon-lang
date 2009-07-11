@@ -97,7 +97,7 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
                           unsigned NameLen, PrefixType Prefix) {
   assert(NameStr && "Cannot get empty name!");
   switch (Prefix) {
-  default: assert(0 && "Bad prefix!");
+  default: LLVM_UNREACHABLE("Bad prefix!");
   case NoPrefix: break;
   case GlobalPrefix: OS << '@'; break;
   case LabelPrefix:  break;
@@ -937,7 +937,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     else if (&CFP->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble)
       Out << 'M';
     else
-      assert(0 && "Unsupported floating point type");
+      LLVM_UNREACHABLE("Unsupported floating point type");
     // api needed to prevent premature destruction
     APInt api = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t* p = api.getRawData();
@@ -1210,7 +1210,7 @@ public:
     else if (const Function *F = dyn_cast<Function>(G))
       printFunction(F);
     else
-      assert(0 && "Unknown global");
+      LLVM_UNREACHABLE("Unknown global");
   }
   
   void write(const BasicBlock *BB)    { printBasicBlock(BB);  }
@@ -1358,7 +1358,7 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
 static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
                             raw_ostream &Out) {
   switch (Vis) {
-  default: assert(0 && "Invalid visibility style!");
+  default: LLVM_UNREACHABLE("Invalid visibility style!");
   case GlobalValue::DefaultVisibility: break;
   case GlobalValue::HiddenVisibility:    Out << "hidden "; break;
   case GlobalValue::ProtectedVisibility: Out << "protected "; break;
@@ -1969,7 +1969,7 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
   } else if (isa<InlineAsm>(this)) {
     WriteAsOperand(OS, this, true, 0);
   } else {
-    assert(0 && "Unknown value to print out!");
+    LLVM_UNREACHABLE("Unknown value to print out!");
   }
 }
 

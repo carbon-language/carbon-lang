@@ -17,6 +17,7 @@
 #include "PPCInstrInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -141,7 +142,7 @@ getHazardType(SUnit *SU) {
     return Hazard;
       
   switch (InstrType) {
-  default: assert(0 && "Unknown instruction type!");
+  default: LLVM_UNREACHABLE("Unknown instruction type!");
   case PPCII::PPC970_FXU:
   case PPCII::PPC970_LSU:
   case PPCII::PPC970_FPU:
@@ -167,7 +168,7 @@ getHazardType(SUnit *SU) {
   if (isLoad && NumStores) {
     unsigned LoadSize;
     switch (Opcode) {
-    default: assert(0 && "Unknown load!");
+    default: LLVM_UNREACHABLE("Unknown load!");
     case PPC::LBZ:   case PPC::LBZU:
     case PPC::LBZX:
     case PPC::LBZ8:  case PPC::LBZU8:
@@ -235,7 +236,7 @@ void PPCHazardRecognizer970::EmitInstruction(SUnit *SU) {
   if (isStore) {
     unsigned ThisStoreSize;
     switch (Opcode) {
-    default: assert(0 && "Unknown store instruction!");
+    default: LLVM_UNREACHABLE("Unknown store instruction!");
     case PPC::STB:    case PPC::STB8:
     case PPC::STBU:   case PPC::STBU8:
     case PPC::STBX:   case PPC::STBX8:

@@ -18,6 +18,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
 
@@ -131,7 +132,7 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
 
   const char *AliasString;
   switch (R) {
-  default: assert(0 && "Unknown alias type!");
+  default: LLVM_UNREACHABLE("Unknown alias type!");
   case NoAlias:   No++;   AliasString = "No alias"; break;
   case MayAlias:  May++;  AliasString = "May alias"; break;
   case MustAlias: Must++; AliasString = "Must alias"; break;
@@ -156,7 +157,7 @@ AliasAnalysisCounter::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
   const char *MRString;
   switch (R) {
-  default:       assert(0 && "Unknown mod/ref type!");
+  default:       LLVM_UNREACHABLE("Unknown mod/ref type!");
   case NoModRef: NoMR++;     MRString = "NoModRef"; break;
   case Ref:      JustRef++;  MRString = "JustRef"; break;
   case Mod:      JustMod++;  MRString = "JustMod"; break;

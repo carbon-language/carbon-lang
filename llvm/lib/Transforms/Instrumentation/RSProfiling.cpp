@@ -44,6 +44,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "RSProfiling.h"
 #include <set>
@@ -407,7 +408,7 @@ Value* ProfilerRS::Translate(Value* v) {
     TransCache[v] = v;
     return v;
   }
-  assert(0 && "Value not handled");
+  LLVM_UNREACHABLE("Value not handled");
   return 0;
 }
 

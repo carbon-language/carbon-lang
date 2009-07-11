@@ -38,6 +38,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -255,7 +256,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     case X86II::CompareFP:  handleCompareFP(I); break;
     case X86II::CondMovFP:  handleCondMovFP(I); break;
     case X86II::SpecialFP:  handleSpecialFP(I); break;
-    default: assert(0 && "Unknown FP Type!");
+    default: LLVM_UNREACHABLE("Unknown FP Type!");
     }
 
     // Check to see if any of the values defined by this instruction are dead
@@ -945,7 +946,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
   DebugLoc dl = MI->getDebugLoc();
   switch (MI->getOpcode()) {
-  default: assert(0 && "Unknown SpecialFP instruction!");
+  default: LLVM_UNREACHABLE("Unknown SpecialFP instruction!");
   case X86::FpGET_ST0_32:// Appears immediately after a call returning FP type!
   case X86::FpGET_ST0_64:// Appears immediately after a call returning FP type!
   case X86::FpGET_ST0_80:// Appears immediately after a call returning FP type!

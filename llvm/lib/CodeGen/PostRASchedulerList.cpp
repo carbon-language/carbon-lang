@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/Statistic.h"
 #include <map>
 using namespace llvm;
@@ -793,7 +794,7 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
     cerr << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     cerr << " has been released too many times!\n";
-    assert(0);
+    llvm_unreachable();
   }
 #endif
   

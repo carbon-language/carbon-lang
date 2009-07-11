@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -54,7 +55,7 @@ void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
   else if (Subtarget->isTargetELF())
     O << ".Lllvm$" << getFunctionNumber() << ".$piclabel";
   else
-    assert(0 && "Don't know how to print PIC label!\n");
+    LLVM_UNREACHABLE( "Don't know how to print PIC label!\n");
 }
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
@@ -154,7 +155,7 @@ void X86ATTAsmPrinter::decorateName(std::string &Name,
     }
     break;
   default:
-    assert(0 && "Unsupported DecorationStyle");
+    LLVM_UNREACHABLE( "Unsupported DecorationStyle");
   }
 }
 
@@ -166,7 +167,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
 
   SwitchToSection(TAI->SectionForGlobal(F));
   switch (F->getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
+  default: LLVM_UNREACHABLE( "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
     EmitAlignment(FnAlign, F);
@@ -292,7 +293,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
-  default: assert(0 && "Unknown pcrel immediate operand");
+  default: LLVM_UNREACHABLE( "Unknown pcrel immediate operand");
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
     return;
@@ -375,7 +376,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
                                     const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
-  default: assert(0 && "unknown operand type!");
+  default: LLVM_UNREACHABLE( "unknown operand type!");
   case MachineOperand::MO_Register: {
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Virtual registers should not make it this far!");
@@ -472,7 +473,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   
   switch (MO.getTargetFlags()) {
   default:
-    assert(0 && "Unknown target flag on GV operand");
+    LLVM_UNREACHABLE( "Unknown target flag on GV operand");
   case X86II::MO_NO_FLAG:    // No flag.
     break;
   case X86II::MO_DARWIN_NONLAZY:
@@ -775,7 +776,7 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       } else if (MO.isMBB()) {
         MCOp.MakeMBBLabel(getFunctionNumber(), MO.getMBB()->getNumber());
       } else {
-        assert(0 && "Unimp");
+        LLVM_UNREACHABLE( "Unimp");
       }
       
       TmpInst.addOperand(MCOp);
@@ -927,7 +928,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   case GlobalValue::InternalLinkage:
      break;
   default:
-    assert(0 && "Unknown linkage type!");
+    LLVM_UNREACHABLE( "Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);

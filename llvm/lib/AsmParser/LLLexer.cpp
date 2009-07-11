@@ -15,6 +15,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/SourceMgr.h"
@@ -699,7 +700,7 @@ lltok::Kind LLLexer::Lex0x() {
 
   uint64_t Pair[2];
   switch (Kind) {
-  default: assert(0 && "Unknown kind!");
+  default: LLVM_UNREACHABLE("Unknown kind!");
   case 'K':
     // F80HexFPConstant - x87 long double in hexadecimal format (10 bytes)
     FP80HexToIntPair(TokStart+3, CurPtr, Pair);

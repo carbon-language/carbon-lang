@@ -1939,7 +1939,7 @@ namespace llvm {
       if (V.opcode == Instruction::FCmp) 
         return new CompareConstantExpr(Ty, Instruction::FCmp, V.predicate, 
                                        V.operands[0], V.operands[1]);
-      assert(0 && "Invalid ConstantExpr!");
+      LLVM_UNREACHABLE("Invalid ConstantExpr!");
       return 0;
     }
   };
@@ -2030,7 +2030,7 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
 
   switch (opc) {
     default:
-      assert(0 && "Invalid cast opcode");
+      LLVM_UNREACHABLE("Invalid cast opcode");
       break;
     case Instruction::Trunc:    return getTrunc(C, Ty);
     case Instruction::ZExt:     return getZExt(C, Ty);
@@ -2287,7 +2287,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 Constant *ConstantExpr::getCompareTy(unsigned short predicate,
                                      Constant *C1, Constant *C2) {
   switch (predicate) {
-    default: assert(0 && "Invalid CmpInst predicate");
+    default: LLVM_UNREACHABLE("Invalid CmpInst predicate");
     case CmpInst::FCMP_FALSE: case CmpInst::FCMP_OEQ: case CmpInst::FCMP_OGT:
     case CmpInst::FCMP_OGE:   case CmpInst::FCMP_OLT: case CmpInst::FCMP_OLE:
     case CmpInst::FCMP_ONE:   case CmpInst::FCMP_ORD: case CmpInst::FCMP_UNO:
@@ -2894,7 +2894,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     if (C2 == From) C2 = To;
     Replacement = ConstantExpr::get(getOpcode(), C1, C2);
   } else {
-    assert(0 && "Unknown ConstantExpr type!");
+    LLVM_UNREACHABLE("Unknown ConstantExpr type!");
     return;
   }
   

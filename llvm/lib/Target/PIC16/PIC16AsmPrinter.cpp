@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 
@@ -127,8 +128,8 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
         O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
       else
-        assert(0 && "not implemented");
-        return;
+        LLVM_UNREACHABLE("not implemented");
+      return;
 
     case MachineOperand::MO_Immediate:
       O << (int)MO.getImm();
@@ -154,7 +155,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       return;
 
     default:
-      assert(0 && " Operand type not supported.");
+      LLVM_UNREACHABLE(" Operand type not supported.");
   }
 }
 

@@ -28,6 +28,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include <algorithm>
 using namespace llvm;
@@ -157,7 +158,7 @@ namespace {
 
     virtual void getArgumentAccesses(Function *F, CallSite CS,
                                      std::vector<PointerAccessInfo> &Info) {
-      assert(0 && "This method may not be called on this function!");
+      LLVM_UNREACHABLE("This method may not be called on this function!");
     }
 
     virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) { }

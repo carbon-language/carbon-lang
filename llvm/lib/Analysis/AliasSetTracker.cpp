@@ -20,6 +20,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/Streams.h"
 using namespace llvm;
@@ -539,7 +540,7 @@ void AliasSet::print(std::ostream &OS) const {
   case Refs    : OS << "Ref       "; break;
   case Mods    : OS << "Mod       "; break;
   case ModRef  : OS << "Mod/Ref   "; break;
-  default: assert(0 && "Bad value for AccessTy!");
+  default: LLVM_UNREACHABLE("Bad value for AccessTy!");
   }
   if (isVolatile()) OS << "[volatile] ";
   if (Forward)

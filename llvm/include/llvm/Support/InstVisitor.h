@@ -14,6 +14,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 
@@ -113,8 +114,7 @@ public:
   //
   RetTy visit(Instruction &I) {
     switch (I.getOpcode()) {
-    default: assert(0 && "Unknown instruction type encountered!");
-             abort();
+    default: LLVM_UNREACHABLE("Unknown instruction type encountered!");
       // Build the switch statement using the Instruction.def file...
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
     case Instruction::OPCODE: return \

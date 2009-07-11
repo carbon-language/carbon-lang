@@ -18,6 +18,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
@@ -74,7 +75,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
-     default: assert(0 && "Unknown linkage type!");
+     default: LLVM_UNREACHABLE("Unknown linkage type!");
      case Function::PrivateLinkage:
      case Function::InternalLinkage:
      case Function::DLLExportLinkage:
@@ -123,11 +124,11 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
        case SectionKind::ThreadBSS:
         return TLSBSSSection;
        default:
-        assert(0 && "Unsuported section kind for global");
+        LLVM_UNREACHABLE("Unsuported section kind for global");
       }
     }
   } else
-    assert(0 && "Unsupported global");
+    LLVM_UNREACHABLE("Unsupported global");
 
   return NULL;
 }

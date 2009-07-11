@@ -22,6 +22,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallVector.h"
 #include <string>
 
@@ -111,9 +112,8 @@ public:
   /// @note This has to exist, because this is a pass, but it should never be
   /// used.
   TargetData() : ImmutablePass(&ID) {
-    assert(0 && "ERROR: Bad TargetData ctor used.  "
-           "Tool did not specify a TargetData to use?");
-    abort();
+    llvm_report_error("ERROR: Bad TargetData ctor used.  "
+                      "Tool did not specify a TargetData to use?");
   }
 
   /// Constructs a TargetData from a specification string. See init().

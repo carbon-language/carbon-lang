@@ -255,7 +255,7 @@ emitFunctionStart(MachineFunction &MF)
   O << "\t.cc_top " << CurrentFnName << ".function," << CurrentFnName << "\n";
 
   switch (F->getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
+  default: LLVM_UNREACHABLE("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
     break;
@@ -358,7 +358,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
       O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
     else
-      assert(0 && "not implemented");
+      LLVM_UNREACHABLE("not implemented");
     break;
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
@@ -381,7 +381,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       << '_' << MO.getIndex();
     break;
   default:
-    assert(0 && "not implemented");
+    LLVM_UNREACHABLE("not implemented");
   }
 }
 
@@ -410,7 +410,7 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   if (printInstruction(MI)) {
     return;
   }
-  assert(0 && "Unhandled instruction in asm writer!");
+  LLVM_UNREACHABLE("Unhandled instruction in asm writer!");
 }
 
 bool XCoreAsmPrinter::doInitialization(Module &M) {

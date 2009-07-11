@@ -832,7 +832,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
               BI->dump();
             }
             if (EnableFastISelAbort)
-              assert(0 && "FastISel didn't handle a PHI in a successor");
+              LLVM_UNREACHABLE("FastISel didn't handle a PHI in a successor");
             break;
           }
 

@@ -17,6 +17,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cmath>
@@ -1386,7 +1387,7 @@ APInt APInt::sqrt() const {
     else
       return x_old + 1;
   } else
-    assert(0 && "Error in APInt::sqrt computation");
+    LLVM_UNREACHABLE("Error in APInt::sqrt computation");
   return x_old + 1;
 }
 
@@ -2032,7 +2033,7 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
     char cdigit = str[i];
     if (radix == 16) {
       if (!isxdigit(cdigit))
-        assert(0 && "Invalid hex digit in string");
+        LLVM_UNREACHABLE("Invalid hex digit in string");
       if (isdigit(cdigit))
         digit = cdigit - '0';
       else if (cdigit >= 'a')
@@ -2040,7 +2041,7 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
       else if (cdigit >= 'A')
         digit = cdigit - 'A' + 10;
       else
-        assert(0 && "huh? we shouldn't get here");
+        LLVM_UNREACHABLE("huh? we shouldn't get here");
     } else if (isdigit(cdigit)) {
       digit = cdigit - '0';
       assert((radix == 10 ||
@@ -2048,7 +2049,7 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
               (radix == 2 && (digit == 0 || digit == 1))) &&
              "Invalid digit in string for given radix");
     } else {
-      assert(0 && "Invalid character in digit string");
+      LLVM_UNREACHABLE("Invalid character in digit string");
     }
 
     // Shift or multiply the value by the radix

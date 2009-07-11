@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
@@ -1840,7 +1841,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
     if (CFP->getValueAPF().isNaN()) {
       // If an operand is known to be a nan, we can fold it.
       switch (ISD::getUnorderedFlavor(Cond)) {
-      default: assert(0 && "Unknown flavor!");
+      default: LLVM_UNREACHABLE("Unknown flavor!");
       case 0:  // Known false.
         return DAG.getConstant(0, VT);
       case 1:  // Known true.
@@ -2000,7 +2001,7 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
   SDValue Temp;
   if (N0.getValueType() == MVT::i1 && foldBooleans) {
     switch (Cond) {
-    default: assert(0 && "Unknown integer setcc!");
+    default: LLVM_UNREACHABLE("Unknown integer setcc!");
     case ISD::SETEQ:  // X == Y  -> ~(X^Y)
       Temp = DAG.getNode(ISD::XOR, dl, MVT::i1, N0, N1);
       N0 = DAG.getNOT(dl, Temp, MVT::i1);
@@ -2310,7 +2311,7 @@ unsigned TargetLowering::AsmOperandInfo::getMatchedOperand() const {
 /// is.
 static unsigned getConstraintGenerality(TargetLowering::ConstraintType CT) {
   switch (CT) {
-  default: assert(0 && "Unknown constraint type!");
+  default: LLVM_UNREACHABLE("Unknown constraint type!");
   case TargetLowering::C_Other:
   case TargetLowering::C_Unknown:
     return 0;

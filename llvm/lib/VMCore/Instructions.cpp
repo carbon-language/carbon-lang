@@ -2705,7 +2705,7 @@ ICmpInst::makeConstantRange(Predicate pred, const APInt &C) {
   APInt Upper(C);
   uint32_t BitWidth = C.getBitWidth();
   switch (pred) {
-  default: assert(0 && "Invalid ICmp opcode to ConstantRange ctor!");
+  default: LLVM_UNREACHABLE("Invalid ICmp opcode to ConstantRange ctor!");
   case ICmpInst::ICMP_EQ: Upper++; break;
   case ICmpInst::ICMP_NE: Lower++; break;
   case ICmpInst::ICMP_ULT: Lower = APInt::getMinValue(BitWidth); break;

@@ -265,7 +265,7 @@ namespace {
                && "Invalid negated immediate rotate 7-bit argument");
         O << -value;
       } else {
-        assert(0 &&"Invalid/non-immediate rotate amount in printRotateNeg7Imm");
+        LLVM_UNREACHABLE("Invalid/non-immediate rotate amount in printRotateNeg7Imm");
       }
     }
 
@@ -276,7 +276,7 @@ namespace {
                && "Invalid negated immediate rotate 7-bit argument");
         O << -value;
       } else {
-        assert(0 &&"Invalid/non-immediate rotate amount in printRotateNeg7Imm");
+        LLVM_UNREACHABLE("Invalid/non-immediate rotate amount in printRotateNeg7Imm");
       }
     }
 
@@ -434,7 +434,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   EmitAlignment(MF.getAlignment(), F);
 
   switch (F->getLinkage()) {
-  default: assert(0 && "Unknown linkage type!");
+  default: LLVM_UNREACHABLE( "Unknown linkage type!");
   case Function::PrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;

@@ -194,7 +194,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 
         switch (getValueType(I->getType()).getSimpleVT()) {
           default:
-            assert(0 && "ERROR in LowerArgs: can't lower this type of arg.\n"); 
+            LLVM_UNREACHABLE("ERROR in LowerArgs: can't lower this type of arg.\n"); 
           case MVT::f32:
             // fixme? (well, will need to for weird FP structy stuff,
             // see intel ABI docs)
@@ -298,7 +298,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
   // Finally, inform the code generator which regs we return values in.
   // (see the ISD::RET: case in the instruction selector)
   switch (getValueType(F.getReturnType()).getSimpleVT()) {
-  default: assert(0 && "i have no idea where to return this type!");
+  default: LLVM_UNREACHABLE("i have no idea where to return this type!");
   case MVT::isVoid: break;
   case MVT::i1:
   case MVT::i8:
@@ -362,7 +362,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
       SDValue ValToStore(0, 0), ValToConvert(0, 0);
       unsigned ObjSize=8;
       switch (ObjectVT.getSimpleVT()) {
-      default: assert(0 && "unexpected argument type!");
+      default: LLVM_UNREACHABLE("unexpected argument type!");
       case MVT::i1:
       case MVT::i8:
       case MVT::i16:
@@ -493,7 +493,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   if (InFlag.getNode())
     CallOperands.push_back(InFlag);
   else
-    assert(0 && "this should never happen!\n");
+    LLVM_UNREACHABLE("this should never happen!\n");
 
   // to make way for a hack:
   Chain = DAG.getNode(IA64ISD::BRCALL, dl, NodeTys,
@@ -516,7 +516,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   SDValue RetVal;
   if (RetTyVT != MVT::isVoid) {
     switch (RetTyVT.getSimpleVT()) {
-    default: assert(0 && "Unknown value type to return!");
+    default: LLVM_UNREACHABLE("Unknown value type to return!");
     case MVT::i1: { // bools are just like other integers (returned in r8)
       // we *could* fall through to the truncate below, but this saves a
       // few redundant predicate ops
@@ -573,9 +573,9 @@ SDValue IA64TargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   switch (Op.getOpcode()) {
-  default: assert(0 && "Should not custom lower this!");
+  default: LLVM_UNREACHABLE("Should not custom lower this!");
   case ISD::GlobalTLSAddress:
-    assert(0 && "TLS not implemented for IA64.");
+    LLVM_UNREACHABLE("TLS not implemented for IA64.");
   case ISD::RET: {
     SDValue AR_PFSVal, Copy;
     

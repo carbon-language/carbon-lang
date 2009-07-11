@@ -14,6 +14,7 @@
 #include "X86ELFWriterInfo.h"
 #include "X86Relocations.h"
 #include "llvm/Function.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -42,7 +43,7 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
       return R_X86_64_64;
     case X86::reloc_picrel_word:
     default:
-      assert(0 && "unknown relocation type");
+      LLVM_UNREACHABLE("unknown relocation type");
     }
   } else {
     switch(MachineRelTy) {
@@ -53,7 +54,7 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
     case X86::reloc_absolute_dword:
     case X86::reloc_picrel_word:
     default:
-      assert(0 && "unknown relocation type");
+      LLVM_UNREACHABLE("unknown relocation type");
     }
   }
   return 0;
@@ -65,7 +66,7 @@ long int X86ELFWriterInfo::getAddendForRelTy(unsigned RelTy) const {
     case R_X86_64_PC32: return -4;
       break;
     default:
-      assert(0 && "unknown x86 relocation type");
+      LLVM_UNREACHABLE("unknown x86 relocation type");
     }
   }
   return 0;

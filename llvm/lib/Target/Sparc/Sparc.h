@@ -15,6 +15,7 @@
 #ifndef TARGET_SPARC_H
 #define TARGET_SPARC_H
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
 #include <cassert>
 
@@ -83,7 +84,7 @@ namespace llvm {
   
   inline static const char *SPARCCondCodeToString(SPCC::CondCodes CC) {
     switch (CC) {
-    default: assert(0 && "Unknown condition code");
+    default: LLVM_UNREACHABLE("Unknown condition code");
     case SPCC::ICC_NE:  return "ne";
     case SPCC::ICC_E:   return "e";
     case SPCC::ICC_G:   return "g";

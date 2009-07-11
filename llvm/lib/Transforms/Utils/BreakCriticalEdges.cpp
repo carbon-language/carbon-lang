@@ -26,6 +26,7 @@
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -222,8 +223,8 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
     // If NewBBDominatesDestBB hasn't been computed yet, do so with DF.
     if (!OtherPreds.empty()) {
       // FIXME: IMPLEMENT THIS!
-      assert(0 && "Requiring domfrontiers but not idom/domtree/domset."
-             " not implemented yet!");
+      LLVM_UNREACHABLE("Requiring domfrontiers but not idom/domtree/domset."
+                       " not implemented yet!");
     }
     
     // Since the new block is dominated by its only predecessor TIBB,

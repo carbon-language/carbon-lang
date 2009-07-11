@@ -491,7 +491,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
   SDValue Res;
 
   switch (getTypeAction(N->getOperand(0).getValueType())) {
-  default: assert(0 && "Unknown type action!");
+  default: LLVM_UNREACHABLE("Unknown type action!");
   case Legal:
   case ExpandInteger:
     Res = N->getOperand(0);
@@ -666,7 +666,7 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &NewLHS,SDValue &NewRHS,
   // insert sign extends for ALL conditions, but zero extend is cheaper on
   // many machines (an AND instead of two shifts), so prefer it.
   switch (CCCode) {
-  default: assert(0 && "Unknown integer comparison!");
+  default: LLVM_UNREACHABLE("Unknown integer comparison!");
   case ISD::SETEQ:
   case ISD::SETNE:
   case ISD::SETUGE:
@@ -1104,7 +1104,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
                       DAG.getConstant(~HighBitMask, ShTy));
 
     switch (N->getOpcode()) {
-    default: assert(0 && "Unknown shift");
+    default: LLVM_UNREACHABLE("Unknown shift");
     case ISD::SHL:
       Lo = DAG.getConstant(0, NVT);              // Low part is zero.
       Hi = DAG.getNode(ISD::SHL, dl, NVT, InL, Amt); // High part from Lo part.
@@ -1132,7 +1132,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
                                  Amt);
     unsigned Op1, Op2;
     switch (N->getOpcode()) {
-    default: assert(0 && "Unknown shift");
+    default: LLVM_UNREACHABLE("Unknown shift");
     case ISD::SHL:  Op1 = ISD::SHL; Op2 = ISD::SRL; break;
     case ISD::SRL:
     case ISD::SRA:  Op1 = ISD::SRL; Op2 = ISD::SHL; break;
@@ -1172,7 +1172,7 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
 
   SDValue Lo1, Hi1, Lo2, Hi2;
   switch (N->getOpcode()) {
-  default: assert(0 && "Unknown shift");
+  default: LLVM_UNREACHABLE("Unknown shift");
   case ISD::SHL:
     // ShAmt < NVTBits
     Lo1 = DAG.getConstant(0, NVT);                  // Low part is zero.
@@ -1792,7 +1792,7 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
   }
 
   if (!ExpandShiftWithUnknownAmountBit(N, Lo, Hi))
-    assert(0 && "Unsupported shift!");
+    LLVM_UNREACHABLE("Unsupported shift!");
 }
 
 void DAGTypeLegalizer::ExpandIntRes_SIGN_EXTEND(SDNode *N,
@@ -2050,7 +2050,7 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
   // FIXME: This generated code sucks.
   ISD::CondCode LowCC;
   switch (CCCode) {
-  default: assert(0 && "Unknown integer setcc!");
+  default: LLVM_UNREACHABLE("Unknown integer setcc!");
   case ISD::SETLT:
   case ISD::SETULT: LowCC = ISD::SETULT; break;
   case ISD::SETGT:
