@@ -1,4 +1,5 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// FIXME: This should not require -disable-free.
+// RUN: clang-cc -disable-free -fsyntax-only -verify %s
 template<typename T> struct vector;
 
 // C++ [temp.class.spec]p6:
