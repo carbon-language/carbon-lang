@@ -19,7 +19,7 @@ void test_init_f0() {
   int (&f0g)(int) = f0;
   int (&f0h)(int) = (f0);
   float (&f0i)(float) = f0;
-  float (&f0j)(float) = f0;
+  float (&f0j)(float) = (f0);
   S s = { f0, f0 };
 }
 
