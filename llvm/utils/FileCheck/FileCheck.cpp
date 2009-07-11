@@ -233,8 +233,8 @@ int main(int argc, char **argv) {
     SM.PrintMessage(CheckStr.second, "expected string not found in input",
                     "error");
     
-    // Print the scanning from here line.  If the current position is at the end
-    // of a line, advance to the start of the next line.
+    // Print the "scanning from here" line.  If the current position is at the
+    // end of a line, advance to the start of the next line.
     const char *Scan = CurPtr;
     while (Scan != BufferEnd &&
            (*Scan == ' ' || *Scan == '\t'))
