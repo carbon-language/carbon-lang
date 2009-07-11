@@ -211,18 +211,8 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BIT_CONVERT(SDNode *N) {
       return DAG.getNode(ISD::BIT_CONVERT, dl, OutVT, GetWidenedVector(InOp));
   }
 
-  // Otherwise, lower the bit-convert to a store/load from the stack.
-  // Create the stack frame object.  Make sure it is aligned for both
-  // the source and destination types.
-  SDValue FIPtr = DAG.CreateStackTemporary(InVT, OutVT);
-  int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
-  const Value *SV = PseudoSourceValue::getFixedStack(FI);
-
-  // Emit a store to the stack slot.
-  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, InOp, FIPtr, SV, 0);
-
-  // Result is an extending load from the stack slot.
-  return DAG.getExtLoad(ISD::EXTLOAD, dl, NOutVT, Store, FIPtr, SV, 0, OutVT);
+  return DAG.getNode(ISD::ANY_EXTEND, dl, NOutVT,
+                     CreateStackStoreLoad(InOp, OutVT));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_BSWAP(SDNode *N) {

@@ -1374,18 +1374,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_BIT_CONVERT(SDNode *N) {
     }
   }
 
-  // This should occur rarely. Lower the bit-convert to a store/load
-  // from the stack. Create the stack frame object.  Make sure it is aligned
-  // for both the source and destination types.
-  SDValue FIPtr = DAG.CreateStackTemporary(InVT, WidenVT);
-  int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
-  const Value *SV = PseudoSourceValue::getFixedStack(FI);
-
-  // Emit a store to the stack slot.
-  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, InOp, FIPtr, SV, 0);
-
-  // Result is a load from the stack slot.
-  return DAG.getLoad(WidenVT, dl, Store, FIPtr, SV, 0);
+  return CreateStackStoreLoad(InOp, WidenVT);
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_BUILD_VECTOR(SDNode *N) {
@@ -1867,18 +1856,7 @@ SDValue DAGTypeLegalizer::WidenVecOp_BIT_CONVERT(SDNode *N) {
     }
   }
 
-  // Lower the bit-convert to a store/load from the stack. Create the stack
-  // frame object.  Make sure it is aligned for both the source and destination
-  // types.
-  SDValue FIPtr = DAG.CreateStackTemporary(InWidenVT, VT);
-  int FI = cast<FrameIndexSDNode>(FIPtr.getNode())->getIndex();
-  const Value *SV = PseudoSourceValue::getFixedStack(FI);
-
-  // Emit a store to the stack slot.
-  SDValue Store = DAG.getStore(DAG.getEntryNode(), dl, InOp, FIPtr, SV, 0);
-
-  // Result is a load from the stack slot.
-  return DAG.getLoad(VT, dl, Store, FIPtr, SV, 0);
+  return CreateStackStoreLoad(InOp, VT);
 }
 
 SDValue DAGTypeLegalizer::WidenVecOp_CONCAT_VECTORS(SDNode *N) {
