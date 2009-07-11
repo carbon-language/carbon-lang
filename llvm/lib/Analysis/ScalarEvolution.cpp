@@ -812,11 +812,6 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
   // this:  for (unsigned char X = 0; X < 100; ++X) { int Y = X; }
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Op))
     if (AR->isAffine()) {
-      const SCEV *Start = AR->getStart();
-      const SCEV *Step = AR->getStepRecurrence(*this);
-      unsigned BitWidth = getTypeSizeInBits(AR->getType());
-      const Loop *L = AR->getLoop();
-
       // Check whether the backedge-taken count is SCEVCouldNotCompute.
       // Note that this serves two purposes: It filters out loops that are
       // simply not analyzable, and it covers the case where this code is
@@ -825,10 +820,12 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
       // in infinite recursion. In the later case, the analysis code will
       // cope with a conservative value, and it will take care to purge
       // that value once it has finished.
-      const SCEV *MaxBECount = getMaxBackedgeTakenCount(L);
+      const SCEV *MaxBECount = getMaxBackedgeTakenCount(AR->getLoop());
       if (!isa<SCEVCouldNotCompute>(MaxBECount)) {
         // Manually compute the final value for AR, checking for
         // overflow.
+        const SCEV *Start = AR->getStart();
+        const SCEV *Step = AR->getStepRecurrence(*this);
 
         // Check whether the backedge-taken count can be losslessly casted to
         // the addrec's type. The count is always unsigned.
@@ -837,7 +834,8 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
         const SCEV *RecastedMaxBECount =
           getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType());
         if (MaxBECount == RecastedMaxBECount) {
-          const Type *WideTy = IntegerType::get(BitWidth * 2);
+          const Type *WideTy =
+            IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
           // Check whether Start+Step*MaxBECount has no unsigned overflow.
           const SCEV *ZMul =
             getMulExpr(CastedMaxBECount,
@@ -851,7 +849,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getZeroExtendExpr(Start, Ty),
                                  getZeroExtendExpr(Step, Ty),
-                                 L);
+                                 AR->getLoop());
 
           // Similar to above, only this time treat the step value as signed.
           // This covers loops that count down.
@@ -867,35 +865,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getZeroExtendExpr(Start, Ty),
                                  getSignExtendExpr(Step, Ty),
-                                 L);
-        }
-
-        // If the backedge is guarded by a comparison with the pre-inc value
-        // the addrec is safe. Also, if the entry is guarded by a comparison
-        // with the start value and the backedge is guarded by a comparison
-        // with the post-inc value, the addrec is safe.
-        if (isKnownPositive(Step)) {
-          const SCEV *N = getConstant(APInt::getMinValue(BitWidth) -
-                                      getUnsignedRange(Step).getUnsignedMax());
-          if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_ULT, AR, N) ||
-              (isLoopGuardedByCond(L, ICmpInst::ICMP_ULT, Start, N) &&
-               isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_ULT,
-                                           AR->getPostIncExpr(*this), N)))
-            // Return the expression with the addrec on the outside.
-            return getAddRecExpr(getZeroExtendExpr(Start, Ty),
-                                 getZeroExtendExpr(Step, Ty),
-                                 L);
-        } else if (isKnownNegative(Step)) {
-          const SCEV *N = getConstant(APInt::getMaxValue(BitWidth) -
-                                      getSignedRange(Step).getSignedMin());
-          if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_UGT, AR, N) &&
-              (isLoopGuardedByCond(L, ICmpInst::ICMP_UGT, Start, N) ||
-               isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_UGT,
-                                           AR->getPostIncExpr(*this), N)))
-            // Return the expression with the addrec on the outside.
-            return getAddRecExpr(getZeroExtendExpr(Start, Ty),
-                                 getSignExtendExpr(Step, Ty),
-                                 L);
+                                 AR->getLoop());
         }
       }
     }
@@ -938,11 +908,6 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   // this:  for (signed char X = 0; X < 100; ++X) { int Y = X; }
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Op))
     if (AR->isAffine()) {
-      const SCEV *Start = AR->getStart();
-      const SCEV *Step = AR->getStepRecurrence(*this);
-      unsigned BitWidth = getTypeSizeInBits(AR->getType());
-      const Loop *L = AR->getLoop();
-
       // Check whether the backedge-taken count is SCEVCouldNotCompute.
       // Note that this serves two purposes: It filters out loops that are
       // simply not analyzable, and it covers the case where this code is
@@ -951,10 +916,12 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
       // in infinite recursion. In the later case, the analysis code will
       // cope with a conservative value, and it will take care to purge
       // that value once it has finished.
-      const SCEV *MaxBECount = getMaxBackedgeTakenCount(L);
+      const SCEV *MaxBECount = getMaxBackedgeTakenCount(AR->getLoop());
       if (!isa<SCEVCouldNotCompute>(MaxBECount)) {
         // Manually compute the final value for AR, checking for
         // overflow.
+        const SCEV *Start = AR->getStart();
+        const SCEV *Step = AR->getStepRecurrence(*this);
 
         // Check whether the backedge-taken count can be losslessly casted to
         // the addrec's type. The count is always unsigned.
@@ -963,7 +930,8 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
         const SCEV *RecastedMaxBECount =
           getTruncateOrZeroExtend(CastedMaxBECount, MaxBECount->getType());
         if (MaxBECount == RecastedMaxBECount) {
-          const Type *WideTy = IntegerType::get(BitWidth * 2);
+          const Type *WideTy =
+            IntegerType::get(getTypeSizeInBits(Start->getType()) * 2);
           // Check whether Start+Step*MaxBECount has no signed overflow.
           const SCEV *SMul =
             getMulExpr(CastedMaxBECount,
@@ -977,35 +945,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getSignExtendExpr(Start, Ty),
                                  getSignExtendExpr(Step, Ty),
-                                 L);
-        }
-
-        // If the backedge is guarded by a comparison with the pre-inc value
-        // the addrec is safe. Also, if the entry is guarded by a comparison
-        // with the start value and the backedge is guarded by a comparison
-        // with the post-inc value, the addrec is safe.
-        if (isKnownPositive(Step)) {
-          const SCEV *N = getConstant(APInt::getSignedMinValue(BitWidth) -
-                                      getSignedRange(Step).getSignedMax());
-          if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_SLT, AR, N) ||
-              (isLoopGuardedByCond(L, ICmpInst::ICMP_SLT, Start, N) &&
-               isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_SLT,
-                                           AR->getPostIncExpr(*this), N)))
-            // Return the expression with the addrec on the outside.
-            return getAddRecExpr(getSignExtendExpr(Start, Ty),
-                                 getSignExtendExpr(Step, Ty),
-                                 L);
-        } else if (isKnownNegative(Step)) {
-          const SCEV *N = getConstant(APInt::getSignedMaxValue(BitWidth) -
-                                      getSignedRange(Step).getSignedMin());
-          if (isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_SGT, AR, N) ||
-              (isLoopGuardedByCond(L, ICmpInst::ICMP_SGT, Start, N) &&
-               isLoopBackedgeGuardedByCond(L, ICmpInst::ICMP_SGT,
-                                           AR->getPostIncExpr(*this), N)))
-            // Return the expression with the addrec on the outside.
-            return getAddRecExpr(getSignExtendExpr(Start, Ty),
-                                 getSignExtendExpr(Step, Ty),
-                                 L);
+                                 AR->getLoop());
         }
       }
     }
@@ -2446,16 +2386,19 @@ const SCEV *ScalarEvolution::createNodeForGEP(User *GEP) {
       const StructLayout &SL = *TD->getStructLayout(STy);
       unsigned FieldNo = cast<ConstantInt>(Index)->getZExtValue();
       uint64_t Offset = SL.getElementOffset(FieldNo);
-      TotalOffset = getAddExpr(TotalOffset, getIntegerSCEV(Offset, IntPtrTy));
+      TotalOffset = getAddExpr(TotalOffset,
+                                  getIntegerSCEV(Offset, IntPtrTy));
     } else {
       // For an array, add the element offset, explicitly scaled.
       const SCEV *LocalOffset = getSCEV(Index);
       if (!isa<PointerType>(LocalOffset->getType()))
         // Getelementptr indicies are signed.
-        LocalOffset = getTruncateOrSignExtend(LocalOffset, IntPtrTy);
+        LocalOffset = getTruncateOrSignExtend(LocalOffset,
+                                              IntPtrTy);
       LocalOffset =
         getMulExpr(LocalOffset,
-                   getIntegerSCEV(TD->getTypeAllocSize(*GTI), IntPtrTy));
+                   getIntegerSCEV(TD->getTypeAllocSize(*GTI),
+                                  IntPtrTy));
       TotalOffset = getAddExpr(TotalOffset, LocalOffset);
     }
   }
@@ -2543,95 +2486,18 @@ ScalarEvolution::GetMinTrailingZeros(const SCEV *S) {
   return 0;
 }
 
-/// getUnsignedRange - Determine the unsigned range for a particular SCEV.
-///
-ConstantRange
-ScalarEvolution::getUnsignedRange(const SCEV *S) {
+uint32_t
+ScalarEvolution::GetMinLeadingZeros(const SCEV *S) {
+  // TODO: Handle other SCEV expression types here.
 
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
-    return ConstantRange(C->getValue()->getValue());
+    return C->getValue()->getValue().countLeadingZeros();
 
-  if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
-    ConstantRange X = getUnsignedRange(Add->getOperand(0));
-    for (unsigned i = 1, e = Add->getNumOperands(); i != e; ++i)
-      X = X.add(getUnsignedRange(Add->getOperand(i)));
-    return X;
-  }
-
-  if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
-    ConstantRange X = getUnsignedRange(Mul->getOperand(0));
-    for (unsigned i = 1, e = Mul->getNumOperands(); i != e; ++i)
-      X = X.multiply(getUnsignedRange(Mul->getOperand(i)));
-    return X;
-  }
-
-  if (const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(S)) {
-    ConstantRange X = getUnsignedRange(SMax->getOperand(0));
-    for (unsigned i = 1, e = SMax->getNumOperands(); i != e; ++i)
-      X = X.smax(getUnsignedRange(SMax->getOperand(i)));
-    return X;
-  }
-
-  if (const SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(S)) {
-    ConstantRange X = getUnsignedRange(UMax->getOperand(0));
-    for (unsigned i = 1, e = UMax->getNumOperands(); i != e; ++i)
-      X = X.umax(getUnsignedRange(UMax->getOperand(i)));
-    return X;
-  }
-
-  if (const SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(S)) {
-    ConstantRange X = getUnsignedRange(UDiv->getLHS());
-    ConstantRange Y = getUnsignedRange(UDiv->getRHS());
-    return X.udiv(Y);
-  }
-
-  if (const SCEVZeroExtendExpr *ZExt = dyn_cast<SCEVZeroExtendExpr>(S)) {
-    ConstantRange X = getUnsignedRange(ZExt->getOperand());
-    return X.zeroExtend(cast<IntegerType>(ZExt->getType())->getBitWidth());
-  }
-
-  if (const SCEVSignExtendExpr *SExt = dyn_cast<SCEVSignExtendExpr>(S)) {
-    ConstantRange X = getUnsignedRange(SExt->getOperand());
-    return X.signExtend(cast<IntegerType>(SExt->getType())->getBitWidth());
-  }
-
-  if (const SCEVTruncateExpr *Trunc = dyn_cast<SCEVTruncateExpr>(S)) {
-    ConstantRange X = getUnsignedRange(Trunc->getOperand());
-    return X.truncate(cast<IntegerType>(Trunc->getType())->getBitWidth());
-  }
-
-  ConstantRange FullSet(getTypeSizeInBits(S->getType()), true);
-
-  if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
-    const SCEV *T = getBackedgeTakenCount(AddRec->getLoop());
-    const SCEVConstant *Trip = dyn_cast<SCEVConstant>(T);
-    if (!Trip) return FullSet;
-
-    // TODO: non-affine addrec
-    if (AddRec->isAffine()) {
-      const Type *Ty = AddRec->getType();
-      const SCEV *MaxBECount = getMaxBackedgeTakenCount(AddRec->getLoop());
-      if (getTypeSizeInBits(MaxBECount->getType()) <= getTypeSizeInBits(Ty)) {
-        MaxBECount = getNoopOrZeroExtend(MaxBECount, Ty);
-
-        const SCEV *Start = AddRec->getStart();
-        const SCEV *End = AddRec->evaluateAtIteration(MaxBECount, *this);
-
-        // Check for overflow.
-        if (!isKnownPredicate(ICmpInst::ICMP_ULE, Start, End))
-          return FullSet;
-
-        ConstantRange StartRange = getUnsignedRange(Start);
-        ConstantRange EndRange = getUnsignedRange(End);
-        APInt Min = APIntOps::umin(StartRange.getUnsignedMin(),
-                                   EndRange.getUnsignedMin());
-        APInt Max = APIntOps::umax(StartRange.getUnsignedMax(),
-                                   EndRange.getUnsignedMax());
-        if (Min.isMinValue() && Max.isMaxValue())
-          return ConstantRange(Min.getBitWidth(), /*isFullSet=*/true);
-        return ConstantRange(Min, Max+1);
-      }
-    }
+  if (const SCEVZeroExtendExpr *C = dyn_cast<SCEVZeroExtendExpr>(S)) {
+    // A zero-extension cast adds zero bits.
+    return GetMinLeadingZeros(C->getOperand()) +
+           (getTypeSizeInBits(C->getType()) -
+            getTypeSizeInBits(C->getOperand()->getType()));
   }
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
@@ -2640,119 +2506,67 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
     APInt Mask = APInt::getAllOnesValue(BitWidth);
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
     ComputeMaskedBits(U->getValue(), Mask, Zeros, Ones, TD);
-    return ConstantRange(Ones, ~Zeros);
+    return Zeros.countLeadingOnes();
   }
 
-  return FullSet;
+  return 1;
 }
 
-/// getSignedRange - Determine the signed range for a particular SCEV.
-///
-ConstantRange
-ScalarEvolution::getSignedRange(const SCEV *S) {
+uint32_t
+ScalarEvolution::GetMinSignBits(const SCEV *S) {
+  // TODO: Handle other SCEV expression types here.
 
-  if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
-    return ConstantRange(C->getValue()->getValue());
-
-  if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(S)) {
-    ConstantRange X = getSignedRange(Add->getOperand(0));
-    for (unsigned i = 1, e = Add->getNumOperands(); i != e; ++i)
-      X = X.add(getSignedRange(Add->getOperand(i)));
-    return X;
+  if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
+    const APInt &A = C->getValue()->getValue();
+    return A.isNegative() ? A.countLeadingOnes() :
+                            A.countLeadingZeros();
   }
 
-  if (const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(S)) {
-    ConstantRange X = getSignedRange(Mul->getOperand(0));
-    for (unsigned i = 1, e = Mul->getNumOperands(); i != e; ++i)
-      X = X.multiply(getSignedRange(Mul->getOperand(i)));
-    return X;
+  if (const SCEVSignExtendExpr *C = dyn_cast<SCEVSignExtendExpr>(S)) {
+    // A sign-extension cast adds sign bits.
+    return GetMinSignBits(C->getOperand()) +
+           (getTypeSizeInBits(C->getType()) -
+            getTypeSizeInBits(C->getOperand()->getType()));
   }
 
-  if (const SCEVSMaxExpr *SMax = dyn_cast<SCEVSMaxExpr>(S)) {
-    ConstantRange X = getSignedRange(SMax->getOperand(0));
-    for (unsigned i = 1, e = SMax->getNumOperands(); i != e; ++i)
-      X = X.smax(getSignedRange(SMax->getOperand(i)));
-    return X;
-  }
+  if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(S)) {
+    unsigned BitWidth = getTypeSizeInBits(A->getType());
 
-  if (const SCEVUMaxExpr *UMax = dyn_cast<SCEVUMaxExpr>(S)) {
-    ConstantRange X = getSignedRange(UMax->getOperand(0));
-    for (unsigned i = 1, e = UMax->getNumOperands(); i != e; ++i)
-      X = X.umax(getSignedRange(UMax->getOperand(i)));
-    return X;
-  }
+    // Special case decrementing a value (ADD X, -1):
+    if (const SCEVConstant *CRHS = dyn_cast<SCEVConstant>(A->getOperand(0)))
+      if (CRHS->isAllOnesValue()) {
+        SmallVector<const SCEV *, 4> OtherOps(A->op_begin() + 1, A->op_end());
+        const SCEV *OtherOpsAdd = getAddExpr(OtherOps);
+        unsigned LZ = GetMinLeadingZeros(OtherOpsAdd);
 
-  if (const SCEVUDivExpr *UDiv = dyn_cast<SCEVUDivExpr>(S)) {
-    ConstantRange X = getSignedRange(UDiv->getLHS());
-    ConstantRange Y = getSignedRange(UDiv->getRHS());
-    return X.udiv(Y);
-  }
+        // If the input is known to be 0 or 1, the output is 0/-1, which is all
+        // sign bits set.
+        if (LZ == BitWidth - 1)
+          return BitWidth;
 
-  if (const SCEVZeroExtendExpr *ZExt = dyn_cast<SCEVZeroExtendExpr>(S)) {
-    ConstantRange X = getSignedRange(ZExt->getOperand());
-    return X.zeroExtend(cast<IntegerType>(ZExt->getType())->getBitWidth());
-  }
-
-  if (const SCEVSignExtendExpr *SExt = dyn_cast<SCEVSignExtendExpr>(S)) {
-    ConstantRange X = getSignedRange(SExt->getOperand());
-    return X.signExtend(cast<IntegerType>(SExt->getType())->getBitWidth());
-  }
-
-  if (const SCEVTruncateExpr *Trunc = dyn_cast<SCEVTruncateExpr>(S)) {
-    ConstantRange X = getSignedRange(Trunc->getOperand());
-    return X.truncate(cast<IntegerType>(Trunc->getType())->getBitWidth());
-  }
-
-  ConstantRange FullSet(getTypeSizeInBits(S->getType()), true);
-
-  if (const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(S)) {
-    const SCEV *T = getBackedgeTakenCount(AddRec->getLoop());
-    const SCEVConstant *Trip = dyn_cast<SCEVConstant>(T);
-    if (!Trip) return FullSet;
-
-    // TODO: non-affine addrec
-    if (AddRec->isAffine()) {
-      const Type *Ty = AddRec->getType();
-      const SCEV *MaxBECount = getMaxBackedgeTakenCount(AddRec->getLoop());
-      if (getTypeSizeInBits(MaxBECount->getType()) <= getTypeSizeInBits(Ty)) {
-        MaxBECount = getNoopOrZeroExtend(MaxBECount, Ty);
-
-        const SCEV *Start = AddRec->getStart();
-        const SCEV *Step = AddRec->getStepRecurrence(*this);
-        const SCEV *End = AddRec->evaluateAtIteration(MaxBECount, *this);
-
-        // Check for overflow.
-        if (!(isKnownPositive(Step) &&
-              isKnownPredicate(ICmpInst::ICMP_SLT, Start, End)) &&
-            !(isKnownNegative(Step) &&
-              isKnownPredicate(ICmpInst::ICMP_SGT, Start, End)))
-          return FullSet;
-
-        ConstantRange StartRange = getSignedRange(Start);
-        ConstantRange EndRange = getSignedRange(End);
-        APInt Min = APIntOps::smin(StartRange.getSignedMin(),
-                                   EndRange.getSignedMin());
-        APInt Max = APIntOps::smax(StartRange.getSignedMax(),
-                                   EndRange.getSignedMax());
-        if (Min.isMinSignedValue() && Max.isMaxSignedValue())
-          return ConstantRange(Min.getBitWidth(), /*isFullSet=*/true);
-        return ConstantRange(Min, Max+1);
+        // If we are subtracting one from a positive number, there is no carry
+        // out of the result.
+        if (LZ > 0)
+          return GetMinSignBits(OtherOpsAdd);
       }
+
+    // Add can have at most one carry bit.  Thus we know that the output
+    // is, at worst, one more bit than the inputs.
+    unsigned Min = BitWidth;
+    for (unsigned i = 0, e = A->getNumOperands(); i != e; ++i) {
+      unsigned N = GetMinSignBits(A->getOperand(i));
+      Min = std::min(Min, N) - 1;
+      if (Min == 0) return 1;
     }
+    return 1;
   }
 
   if (const SCEVUnknown *U = dyn_cast<SCEVUnknown>(S)) {
     // For a SCEVUnknown, ask ValueTracking.
-    unsigned BitWidth = getTypeSizeInBits(U->getType());
-    unsigned NS = ComputeNumSignBits(U->getValue(), TD);
-    if (NS == 1)
-      return FullSet;
-    return
-      ConstantRange(APInt::getSignedMinValue(BitWidth).ashr(NS - 1),
-                    APInt::getSignedMaxValue(BitWidth).ashr(NS - 1)+1);
+    return ComputeNumSignBits(U->getValue(), TD);
   }
 
-  return FullSet;
+  return 1;
 }
 
 /// createSCEV - We know that there is no SCEV for the specified value.
@@ -3832,7 +3646,7 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
             if (!isSCEVable(Op->getType()))
               return V;
 
-            const SCEV* OpV = getSCEVAtScope(Op, L);
+            const SCEV *OpV = getSCEVAtScope(getSCEV(Op), L);
             if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV)) {
               Constant *C = SC->getValue();
               if (C->getType() != Op->getType())
@@ -4233,176 +4047,12 @@ static bool HasSameValue(const SCEV *A, const SCEV *B) {
   return false;
 }
 
-bool ScalarEvolution::isKnownNegative(const SCEV *S) {
-  return getSignedRange(S).getSignedMax().isNegative();
-}
-
-bool ScalarEvolution::isKnownPositive(const SCEV *S) {
-  return getSignedRange(S).getSignedMin().isStrictlyPositive();
-}
-
-bool ScalarEvolution::isKnownNonNegative(const SCEV *S) {
-  return !getSignedRange(S).getSignedMin().isNegative();
-}
-
-bool ScalarEvolution::isKnownNonPositive(const SCEV *S) {
-  return !getSignedRange(S).getSignedMax().isStrictlyPositive();
-}
-
-bool ScalarEvolution::isKnownNonZero(const SCEV *S) {
-  return isKnownNegative(S) || isKnownPositive(S);
-}
-
-bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
-                                       const SCEV *LHS, const SCEV *RHS) {
-
-  if (HasSameValue(LHS, RHS))
-    return ICmpInst::isTrueWhenEqual(Pred);
-
-  switch (Pred) {
-  default:
-    LLVM_UNREACHABLE("Unexpected ICmpInst::Predicate value!");
-    break;
-  case ICmpInst::ICMP_SGT:
-    Pred = ICmpInst::ICMP_SLT;
-    std::swap(LHS, RHS);
-  case ICmpInst::ICMP_SLT: {
-    ConstantRange LHSRange = getSignedRange(LHS);
-    ConstantRange RHSRange = getSignedRange(RHS);
-    if (LHSRange.getSignedMax().slt(RHSRange.getSignedMin()))
-      return true;
-    if (LHSRange.getSignedMin().sge(RHSRange.getSignedMax()))
-      return false;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    ConstantRange DiffRange = getUnsignedRange(Diff);
-    if (isKnownNegative(Diff)) {
-      if (DiffRange.getUnsignedMax().ult(LHSRange.getUnsignedMin()))
-        return true;
-      if (DiffRange.getUnsignedMin().uge(LHSRange.getUnsignedMax()))
-        return false;
-    } else if (isKnownPositive(Diff)) {
-      if (LHSRange.getUnsignedMax().ult(DiffRange.getUnsignedMin()))
-        return true;
-      if (LHSRange.getUnsignedMin().uge(DiffRange.getUnsignedMax()))
-        return false;
-    }
-    break;
-  }
-  case ICmpInst::ICMP_SGE:
-    Pred = ICmpInst::ICMP_SLE;
-    std::swap(LHS, RHS);
-  case ICmpInst::ICMP_SLE: {
-    ConstantRange LHSRange = getSignedRange(LHS);
-    ConstantRange RHSRange = getSignedRange(RHS);
-    if (LHSRange.getSignedMax().sle(RHSRange.getSignedMin()))
-      return true;
-    if (LHSRange.getSignedMin().sgt(RHSRange.getSignedMax()))
-      return false;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    ConstantRange DiffRange = getUnsignedRange(Diff);
-    if (isKnownNonPositive(Diff)) {
-      if (DiffRange.getUnsignedMax().ule(LHSRange.getUnsignedMin()))
-        return true;
-      if (DiffRange.getUnsignedMin().ugt(LHSRange.getUnsignedMax()))
-        return false;
-    } else if (isKnownNonNegative(Diff)) {
-      if (LHSRange.getUnsignedMax().ule(DiffRange.getUnsignedMin()))
-        return true;
-      if (LHSRange.getUnsignedMin().ugt(DiffRange.getUnsignedMax()))
-        return false;
-    }
-    break;
-  }
-  case ICmpInst::ICMP_UGT:
-    Pred = ICmpInst::ICMP_ULT;
-    std::swap(LHS, RHS);
-  case ICmpInst::ICMP_ULT: {
-    ConstantRange LHSRange = getUnsignedRange(LHS);
-    ConstantRange RHSRange = getUnsignedRange(RHS);
-    if (LHSRange.getUnsignedMax().ult(RHSRange.getUnsignedMin()))
-      return true;
-    if (LHSRange.getUnsignedMin().uge(RHSRange.getUnsignedMax()))
-      return false;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    ConstantRange DiffRange = getUnsignedRange(Diff);
-    if (LHSRange.getUnsignedMax().ult(DiffRange.getUnsignedMin()))
-      return true;
-    if (LHSRange.getUnsignedMin().uge(DiffRange.getUnsignedMax()))
-      return false;
-    break;
-  }
-  case ICmpInst::ICMP_UGE:
-    Pred = ICmpInst::ICMP_ULE;
-    std::swap(LHS, RHS);
-  case ICmpInst::ICMP_ULE: {
-    ConstantRange LHSRange = getUnsignedRange(LHS);
-    ConstantRange RHSRange = getUnsignedRange(RHS);
-    if (LHSRange.getUnsignedMax().ule(RHSRange.getUnsignedMin()))
-      return true;
-    if (LHSRange.getUnsignedMin().ugt(RHSRange.getUnsignedMax()))
-      return false;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    ConstantRange DiffRange = getUnsignedRange(Diff);
-    if (LHSRange.getUnsignedMax().ule(DiffRange.getUnsignedMin()))
-      return true;
-    if (LHSRange.getUnsignedMin().ugt(DiffRange.getUnsignedMax()))
-      return false;
-    break;
-  }
-  case ICmpInst::ICMP_NE: {
-    if (getUnsignedRange(LHS).intersectWith(getUnsignedRange(RHS)).isEmptySet())
-      return true;
-    if (getSignedRange(LHS).intersectWith(getSignedRange(RHS)).isEmptySet())
-      return true;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    if (isKnownNonZero(Diff))
-      return true;
-    break;
-  }
-  case ICmpInst::ICMP_EQ:
-    break;
-  }
-  return false;
-}
-
-/// isLoopBackedgeGuardedByCond - Test whether the backedge of the loop is
-/// protected by a conditional between LHS and RHS.  This is used to
-/// to eliminate casts.
-bool
-ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
-                                             ICmpInst::Predicate Pred,
-                                             const SCEV *LHS, const SCEV *RHS) {
-  // Interpret a null as meaning no loop, where there is obviously no guard
-  // (interprocedural conditions notwithstanding).
-  if (!L) return true;
-
-  BasicBlock *Latch = L->getLoopLatch();
-  if (!Latch)
-    return false;
-
-  BranchInst *LoopContinuePredicate =
-    dyn_cast<BranchInst>(Latch->getTerminator());
-  if (!LoopContinuePredicate ||
-      LoopContinuePredicate->isUnconditional())
-    return false;
-
-  return
-    isNecessaryCond(LoopContinuePredicate->getCondition(), Pred, LHS, RHS,
-                    LoopContinuePredicate->getSuccessor(0) != L->getHeader());
-}
-
-/// isLoopGuardedByCond - Test whether entry to the loop is protected
-/// by a conditional between LHS and RHS.  This is used to help avoid max
-/// expressions in loop trip counts, and to eliminate casts.
-bool
-ScalarEvolution::isLoopGuardedByCond(const Loop *L,
-                                     ICmpInst::Predicate Pred,
-                                     const SCEV *LHS, const SCEV *RHS) {
+/// isLoopGuardedByCond - Test whether entry to the loop is protected by
+/// a conditional between LHS and RHS.  This is used to help avoid max
+/// expressions in loop trip counts.
+bool ScalarEvolution::isLoopGuardedByCond(const Loop *L,
+                                          ICmpInst::Predicate Pred,
+                                          const SCEV *LHS, const SCEV *RHS) {
   // Interpret a null as meaning no loop, where there is obviously no guard
   // (interprocedural conditions notwithstanding).
   if (!L) return false;
@@ -4431,9 +4081,8 @@ ScalarEvolution::isLoopGuardedByCond(const Loop *L,
   return false;
 }
 
-/// isNecessaryCond - Test whether the condition described by Pred, LHS,
-/// and RHS is a necessary condition for the given Cond value to evaluate
-/// to true.
+/// isNecessaryCond - Test whether the given CondValue value is a condition
+/// which is at least as strict as the one described by Pred, LHS, and RHS.
 bool ScalarEvolution::isNecessaryCond(Value *CondValue,
                                       ICmpInst::Predicate Pred,
                                       const SCEV *LHS, const SCEV *RHS,
@@ -4458,35 +4107,30 @@ bool ScalarEvolution::isNecessaryCond(Value *CondValue,
   // see if it is the comparison we are looking for.
   Value *PreCondLHS = ICI->getOperand(0);
   Value *PreCondRHS = ICI->getOperand(1);
-  ICmpInst::Predicate FoundPred;
+  ICmpInst::Predicate Cond;
   if (Inverse)
-    FoundPred = ICI->getInversePredicate();
+    Cond = ICI->getInversePredicate();
   else
-    FoundPred = ICI->getPredicate();
+    Cond = ICI->getPredicate();
 
-  if (FoundPred == Pred)
+  if (Cond == Pred)
     ; // An exact match.
-  else if (!ICmpInst::isTrueWhenEqual(FoundPred) && Pred == ICmpInst::ICMP_NE) {
-    // The actual condition is beyond sufficient.
-    FoundPred = ICmpInst::ICMP_NE;
-    // NE is symmetric but the original comparison may not be. Swap
-    // the operands if necessary so that they match below.
-    if (isa<SCEVConstant>(LHS))
-      std::swap(PreCondLHS, PreCondRHS);
-  } else
+  else if (!ICmpInst::isTrueWhenEqual(Cond) && Pred == ICmpInst::ICMP_NE)
+    ; // The actual condition is beyond sufficient.
+  else
     // Check a few special cases.
-    switch (FoundPred) {
+    switch (Cond) {
     case ICmpInst::ICMP_UGT:
       if (Pred == ICmpInst::ICMP_ULT) {
         std::swap(PreCondLHS, PreCondRHS);
-        FoundPred = ICmpInst::ICMP_ULT;
+        Cond = ICmpInst::ICMP_ULT;
         break;
       }
       return false;
     case ICmpInst::ICMP_SGT:
       if (Pred == ICmpInst::ICMP_SLT) {
         std::swap(PreCondLHS, PreCondRHS);
-        FoundPred = ICmpInst::ICMP_SLT;
+        Cond = ICmpInst::ICMP_SLT;
         break;
       }
       return false;
@@ -4495,8 +4139,8 @@ bool ScalarEvolution::isNecessaryCond(Value *CondValue,
       // so check for this case by checking if the NE is comparing against
       // a minimum or maximum constant.
       if (!ICmpInst::isTrueWhenEqual(Pred))
-        if (const SCEVConstant *C = dyn_cast<SCEVConstant>(RHS)) {
-          const APInt &A = C->getValue()->getValue();
+        if (ConstantInt *CI = dyn_cast<ConstantInt>(PreCondRHS)) {
+          const APInt &A = CI->getValue();
           switch (Pred) {
           case ICmpInst::ICMP_SLT:
             if (A.isMaxSignedValue()) break;
@@ -4513,7 +4157,7 @@ bool ScalarEvolution::isNecessaryCond(Value *CondValue,
           default:
             return false;
           }
-          FoundPred = Pred;
+          Cond = ICmpInst::ICMP_NE;
           // NE is symmetric but the original comparison may not be. Swap
           // the operands if necessary so that they match below.
           if (isa<SCEVConstant>(LHS))
@@ -4526,70 +4170,14 @@ bool ScalarEvolution::isNecessaryCond(Value *CondValue,
       return false;
     }
 
-  assert(Pred == FoundPred && "Conditions were not reconciled!");
+  if (!PreCondLHS->getType()->isInteger()) return false;
 
-  const SCEV *FoundLHS = getSCEV(PreCondLHS);
-  const SCEV *FoundRHS = getSCEV(PreCondRHS);
-
-  // Balance the types.
-  if (getTypeSizeInBits(LHS->getType()) >
-      getTypeSizeInBits(FoundLHS->getType())) {
-    if (CmpInst::isSigned(Pred)) {
-      FoundLHS = getSignExtendExpr(FoundLHS, LHS->getType());
-      FoundRHS = getSignExtendExpr(FoundRHS, LHS->getType());
-    } else {
-      FoundLHS = getZeroExtendExpr(FoundLHS, LHS->getType());
-      FoundRHS = getZeroExtendExpr(FoundRHS, LHS->getType());
-    }
-  } else if (getTypeSizeInBits(LHS->getType()) <
-             getTypeSizeInBits(FoundLHS->getType())) {
-    // TODO: Cast LHS and RHS to FoundLHS' type. Currently this can
-    // result in infinite recursion since the code to construct
-    // cast expressions may want to know things about the loop
-    // iteration in order to do simplifications.
-    return false;
-  }
-
-  return isNecessaryCondOperands(Pred, LHS, RHS,
-                                 FoundLHS, FoundRHS) ||
-         // ~x < ~y --> x > y
-         isNecessaryCondOperands(Pred, LHS, RHS,
-                                 getNotSCEV(FoundRHS), getNotSCEV(FoundLHS));
-}
-
-/// isNecessaryCondOperands - Test whether the condition described by Pred,
-/// LHS, and RHS is a necessary condition for the condition described by
-/// Pred, FoundLHS, and FoundRHS to evaluate to true.
-bool
-ScalarEvolution::isNecessaryCondOperands(ICmpInst::Predicate Pred,
-                                         const SCEV *LHS, const SCEV *RHS,
-                                         const SCEV *FoundLHS,
-                                         const SCEV *FoundRHS) {
-  switch (Pred) {
-  default: break;
-  case ICmpInst::ICMP_SLT:
-    if (isKnownPredicate(ICmpInst::ICMP_SLE, LHS, FoundLHS) &&
-        isKnownPredicate(ICmpInst::ICMP_SGE, RHS, FoundRHS))
-      return true;
-    break;
-  case ICmpInst::ICMP_SGT:
-    if (isKnownPredicate(ICmpInst::ICMP_SGE, LHS, FoundLHS) &&
-        isKnownPredicate(ICmpInst::ICMP_SLE, RHS, FoundRHS))
-      return true;
-    break;
-  case ICmpInst::ICMP_ULT:
-    if (isKnownPredicate(ICmpInst::ICMP_ULE, LHS, FoundLHS) &&
-        isKnownPredicate(ICmpInst::ICMP_UGE, RHS, FoundRHS))
-      return true;
-    break;
-  case ICmpInst::ICMP_UGT:
-    if (isKnownPredicate(ICmpInst::ICMP_UGE, LHS, FoundLHS) &&
-        isKnownPredicate(ICmpInst::ICMP_ULE, RHS, FoundRHS))
-      return true;
-    break;
-  }
-
-  return false;
+  const SCEV *PreCondLHSSCEV = getSCEV(PreCondLHS);
+  const SCEV *PreCondRHSSCEV = getSCEV(PreCondRHS);
+  return (HasSameValue(LHS, PreCondLHSSCEV) &&
+          HasSameValue(RHS, PreCondRHSSCEV)) ||
+         (HasSameValue(LHS, getNotSCEV(PreCondRHSSCEV)) &&
+          HasSameValue(RHS, getNotSCEV(PreCondLHSSCEV)));
 }
 
 /// getBECount - Subtract the end and start values and divide by the step,
@@ -4674,9 +4262,9 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     const SCEV *Start = AddRec->getOperand(0);
 
     // Determine the minimum constant start value.
-    const SCEV *MinStart = getConstant(isSigned ?
-      getSignedRange(Start).getSignedMin() :
-      getUnsignedRange(Start).getUnsignedMin());
+    const SCEV *MinStart = isa<SCEVConstant>(Start) ? Start :
+      getConstant(isSigned ? APInt::getSignedMinValue(BitWidth) :
+                             APInt::getMinValue(BitWidth));
 
     // If we know that the condition is true in order to enter the loop,
     // then we know that it will run exactly (m-n)/s times. Otherwise, we
@@ -4684,16 +4272,18 @@ ScalarEvolution::HowManyLessThans(const SCEV *LHS, const SCEV *RHS,
     // the division must round up.
     const SCEV *End = RHS;
     if (!isLoopGuardedByCond(L,
-                             isSigned ? ICmpInst::ICMP_SLT :
-                                        ICmpInst::ICMP_ULT,
+                             isSigned ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                              getMinusSCEV(Start, Step), RHS))
       End = isSigned ? getSMaxExpr(RHS, Start)
                      : getUMaxExpr(RHS, Start);
 
     // Determine the maximum constant end value.
-    const SCEV *MaxEnd = getConstant(isSigned ?
-      getSignedRange(End).getSignedMax() :
-      getUnsignedRange(End).getUnsignedMax());
+    const SCEV *MaxEnd =
+      isa<SCEVConstant>(End) ? End :
+      getConstant(isSigned ? APInt::getSignedMaxValue(BitWidth)
+                               .ashr(GetMinSignBits(End) - 1) :
+                             APInt::getMaxValue(BitWidth)
+                               .lshr(GetMinLeadingZeros(End)));
 
     // Finally, we subtract these two values and divide, rounding up, to get
     // the number of times the backedge is executed.

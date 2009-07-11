@@ -454,12 +454,6 @@ namespace llvm {
                                                  const SCEV *Conc,
                                                  ScalarEvolution &SE) const;
 
-    /// getPostIncExpr - Return an expression representing the value of
-    /// this expression one iteration of the loop ahead.
-    const SCEV *getPostIncExpr(ScalarEvolution &SE) const {
-      return SE.getAddExpr(this, getStepRecurrence(SE));
-    }
-
     virtual void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
