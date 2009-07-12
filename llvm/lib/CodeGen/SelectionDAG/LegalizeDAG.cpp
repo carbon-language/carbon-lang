@@ -3022,16 +3022,26 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     break;
   case ISD::AND:
   case ISD::OR:
-  case ISD::XOR:
-    assert(OVT.isVector() && "Don't know how to promote scalar logic ops");
-    // Bit convert each of the values to the new type.
-    Tmp1 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Node->getOperand(0));
-    Tmp2 = DAG.getNode(ISD::BIT_CONVERT, dl, NVT, Node->getOperand(1));
+  case ISD::XOR: {
+    unsigned ExtOp, TruncOp;
+    if (OVT.isVector()) {
+      ExtOp   = ISD::BIT_CONVERT;
+      TruncOp = ISD::BIT_CONVERT;
+    } else if (OVT.isInteger()) {
+      ExtOp   = ISD::ANY_EXTEND;
+      TruncOp = ISD::TRUNCATE;
+    } else {
+      llvm_report_error("Cannot promote logic operation");
+    }
+    // Promote each of the values to the new type.
+    Tmp1 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(0));
+    Tmp2 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(1));
+    // Perform the larger operation, then convert back
     Tmp1 = DAG.getNode(Node->getOpcode(), dl, NVT, Tmp1, Tmp2);
-    // Bit convert the result back the original type.
-    Results.push_back(DAG.getNode(ISD::BIT_CONVERT, dl, OVT, Tmp1));
+    Results.push_back(DAG.getNode(TruncOp, dl, OVT, Tmp1));
     break;
-  case ISD::SELECT:
+  }
+  case ISD::SELECT: {
     unsigned ExtOp, TruncOp;
     if (Node->getValueType(0).isVector()) {
       ExtOp   = ISD::BIT_CONVERT;
@@ -3056,6 +3066,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
                          DAG.getIntPtrConstant(0));
     Results.push_back(Tmp1);
     break;
+  }
   case ISD::VECTOR_SHUFFLE: {
     SmallVector<int, 8> Mask;
     cast<ShuffleVectorSDNode>(Node)->getMask(Mask);
