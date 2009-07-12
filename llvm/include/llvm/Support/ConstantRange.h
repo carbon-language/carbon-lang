@@ -61,6 +61,10 @@ public:
   /// makeICmpRegion - Produce the smallest range that contains all values that
   /// might satisfy the comparison specified by Pred when compared to any value
   /// contained within Other.
+  ///
+  /// Solves for range X in 'for all x in X, there exists a y in Y such that
+  /// icmp op x, y is true'. Every value that might make the comparison true
+  /// is included in the resulting range.
   static ConstantRange makeICmpRegion(unsigned Pred,
                                       const ConstantRange &Other);
 
