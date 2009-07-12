@@ -37,7 +37,7 @@ namespace llvm {
   struct DbgRegionStartInst;
   struct DbgRegionEndInst;
   class DebugLoc;
-  class DebugLocTracker;
+  struct DebugLocTracker;
   class Instruction;
   class LLVMContext;
 
