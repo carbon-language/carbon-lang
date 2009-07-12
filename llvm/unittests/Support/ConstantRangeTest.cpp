@@ -267,17 +267,13 @@ TEST_F(ConstantRangeTest, Multiply) {
   EXPECT_EQ(Empty.multiply(One), Empty);
   EXPECT_EQ(Empty.multiply(Some), Empty);
   EXPECT_EQ(Empty.multiply(Wrap), Empty);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(One.multiply(One), Full);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(One.multiply(Some), Full);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(One.multiply(Wrap), Full);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(Some.multiply(Some), Full);
-  // TODO: ConstantRange is currently over-conservative here.
+  EXPECT_EQ(One.multiply(One), ConstantRange(APInt(16, 0xa*0xa),
+                                             APInt(16, 0xa*0xa + 1)));
+  EXPECT_EQ(One.multiply(Some), ConstantRange(APInt(16, 0xa*0xa),
+                                              APInt(16, 0xa*0xaa9 + 1)));
+  EXPECT_TRUE(One.multiply(Wrap).isFullSet());
+  EXPECT_TRUE(Some.multiply(Some).isFullSet());
   EXPECT_EQ(Some.multiply(Wrap), Full);
-  // TODO: ConstantRange is currently over-conservative here.
   EXPECT_EQ(Wrap.multiply(Wrap), Full);
 }
 

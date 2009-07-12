@@ -550,9 +550,19 @@ ConstantRange::add(const ConstantRange &Other) const {
 
 ConstantRange
 ConstantRange::multiply(const ConstantRange &Other) const {
-  // TODO: Implement multiply.
-  return ConstantRange(getBitWidth(),
-                       !(isEmptySet() || Other.isEmptySet()));
+  if (isEmptySet() || Other.isEmptySet())
+    return ConstantRange(getBitWidth(), /*isFullSet=*/false);
+  if (isFullSet() || Other.isFullSet())
+    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
+
+  ConstantRange this_zext = zeroExtend(getBitWidth() * 2);
+  ConstantRange Other_zext = Other.zeroExtend(getBitWidth() * 2);
+
+  ConstantRange Result_zext = ConstantRange(
+      this_zext.getLower() * Other_zext.getLower(),
+      ((this_zext.getUpper()-1) * (Other_zext.getUpper()-1)) + 1);
+
+  return Result_zext.truncate(getBitWidth());
 }
 
 ConstantRange
