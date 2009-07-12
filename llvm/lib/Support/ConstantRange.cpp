@@ -592,10 +592,32 @@ ConstantRange::umax(const ConstantRange &Other) const {
 }
 
 ConstantRange
-ConstantRange::udiv(const ConstantRange &Other) const {
-  // TODO: Implement udiv.
-  return ConstantRange(getBitWidth(),
-                       !(isEmptySet() || Other.isEmptySet()));
+ConstantRange::udiv(const ConstantRange &RHS) const {
+  if (isEmptySet() || RHS.isEmptySet() || RHS.getUnsignedMax() == 0)
+    return ConstantRange(getBitWidth(), /*isFullSet=*/false);
+  if (RHS.isFullSet())
+    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
+
+  APInt Lower = getUnsignedMin().udiv(RHS.getUnsignedMax());
+
+  APInt RHS_umin = RHS.getUnsignedMin();
+  if (RHS_umin == 0) {
+    // We want the lowest value in RHS excluding zero. Usually that would be 1
+    // except for a range in the form of [X, 1) in which case it would be X.
+    if (RHS.getUpper() == 1)
+      RHS_umin = RHS.getLower();
+    else
+      RHS_umin = APInt(getBitWidth(), 1);
+  }
+
+  APInt Upper = getUnsignedMax().udiv(RHS_umin) + 1;
+
+  // If the LHS is Full and the RHS is a wrapped interval containing 1 then
+  // this could occur.
+  if (Lower == Upper)
+    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
+
+  return ConstantRange(Lower, Upper);
 }
 
 /// print - Print out the bounds to a stream...

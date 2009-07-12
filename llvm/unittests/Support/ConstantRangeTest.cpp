@@ -319,24 +319,20 @@ TEST_F(ConstantRangeTest, SMax) {
 TEST_F(ConstantRangeTest, UDiv) {
   EXPECT_EQ(Full.udiv(Full), Full);
   EXPECT_EQ(Full.udiv(Empty), Empty);
-  EXPECT_EQ(Full.udiv(One), Full);
-  EXPECT_EQ(Full.udiv(Some), Full);
+  EXPECT_EQ(Full.udiv(One), ConstantRange(APInt(16, 0),
+                                          APInt(16, 0xffff / 0xa + 1)));
+  EXPECT_EQ(Full.udiv(Some), ConstantRange(APInt(16, 0),
+                                           APInt(16, 0xffff / 0xa + 1)));
   EXPECT_EQ(Full.udiv(Wrap), Full);
   EXPECT_EQ(Empty.udiv(Empty), Empty);
   EXPECT_EQ(Empty.udiv(One), Empty);
   EXPECT_EQ(Empty.udiv(Some), Empty);
   EXPECT_EQ(Empty.udiv(Wrap), Empty);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(One.udiv(One), Full);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(One.udiv(Some), Full);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(One.udiv(Wrap), Full);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(Some.udiv(Some), Full);
-  // TODO: ConstantRange is currently over-conservative here.
-  EXPECT_EQ(Some.udiv(Wrap), Full);
-  // TODO: ConstantRange is currently over-conservative here.
+  EXPECT_EQ(One.udiv(One), ConstantRange(APInt(16, 1)));
+  EXPECT_EQ(One.udiv(Some), ConstantRange(APInt(16, 0), APInt(16, 2)));
+  EXPECT_EQ(One.udiv(Wrap), ConstantRange(APInt(16, 0), APInt(16, 0xb)));
+  EXPECT_EQ(Some.udiv(Some), ConstantRange(APInt(16, 0), APInt(16, 0x111)));
+  EXPECT_EQ(Some.udiv(Wrap), ConstantRange(APInt(16, 0), APInt(16, 0xaaa)));
   EXPECT_EQ(Wrap.udiv(Wrap), Full);
 }
 
