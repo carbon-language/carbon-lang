@@ -408,7 +408,7 @@ void XCoreInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                             const TargetRegisterClass *RC,
                             SmallVectorImpl<MachineInstr*> &NewMIs) const
 {
-  LLVM_UNREACHABLE("unimplemented\n");
+  LLVM_UNREACHABLE("unimplemented");
 }
 
 void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -428,7 +428,7 @@ void XCoreInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                               const TargetRegisterClass *RC,
                               SmallVectorImpl<MachineInstr*> &NewMIs) const
 {
-  LLVM_UNREACHABLE("unimplemented\n");
+  LLVM_UNREACHABLE("unimplemented");
 }
 
 bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,

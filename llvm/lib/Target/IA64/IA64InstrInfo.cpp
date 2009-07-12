@@ -129,8 +129,7 @@ void IA64InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   } else if (RC == IA64::PRRegisterClass) {
     Opc = IA64::ST1;
   } else {
-    LLVM_UNREACHABLE(
-      "sorry, I don't know how to store this sort of reg\n");
+    LLVM_UNREACHABLE("sorry, I don't know how to store this sort of reg");
   }
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
@@ -165,7 +164,7 @@ void IA64InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
       .addReg(IA64::r0);
   } else {
     LLVM_UNREACHABLE(
-           "sorry, I don't know how to load this sort of reg from the stack\n");
+      "sorry, I don't know how to load this sort of reg from the stack");
   }
 }
 
@@ -182,7 +181,7 @@ void IA64InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     Opc = IA64::LD1;
   } else {
     LLVM_UNREACHABLE(
-      "sorry, I don't know how to load this sort of reg\n");
+      "sorry, I don't know how to load this sort of reg");
   }
 
   DebugLoc DL = DebugLoc::getUnknownLoc();

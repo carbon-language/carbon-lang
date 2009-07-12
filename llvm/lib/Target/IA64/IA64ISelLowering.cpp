@@ -194,7 +194,7 @@ void IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 
         switch (getValueType(I->getType()).getSimpleVT()) {
           default:
-            LLVM_UNREACHABLE("ERROR in LowerArgs: can't lower this type of arg.\n"); 
+            LLVM_UNREACHABLE("ERROR in LowerArgs: can't lower this type of arg."); 
           case MVT::f32:
             // fixme? (well, will need to for weird FP structy stuff,
             // see intel ABI docs)
@@ -493,7 +493,7 @@ IA64TargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   if (InFlag.getNode())
     CallOperands.push_back(InFlag);
   else
-    LLVM_UNREACHABLE("this should never happen!\n");
+    LLVM_UNREACHABLE("this should never happen!");
 
   // to make way for a hack:
   Chain = DAG.getNode(IA64ISD::BRCALL, dl, NodeTys,

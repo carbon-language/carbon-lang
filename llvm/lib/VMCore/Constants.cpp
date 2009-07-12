@@ -1121,7 +1121,7 @@ namespace llvm {
   template<class ConstantClass, class TypeClass>
   struct VISIBILITY_HIDDEN ConvertConstantType {
     static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
-      LLVM_UNREACHABLE("This type cannot be converted!\n");
+      LLVM_UNREACHABLE("This type cannot be converted!");
     }
   };
 

@@ -322,7 +322,7 @@ extern "C" {
 
 #else // Not an i386 host
   void X86CompilationCallback() {
-    LLVM_UNREACHABLE("Cannot call X86CompilationCallback() on a non-x86 arch!\n");
+    LLVM_UNREACHABLE("Cannot call X86CompilationCallback() on a non-x86 arch!");
   }
 #endif
 }
@@ -554,7 +554,7 @@ char* X86JITInfo::allocateThreadLocalMemory(size_t size) {
   TLSOffset -= size;
   return TLSOffset;
 #else
-  LLVM_UNREACHABLE("Cannot allocate thread local storage on this arch!\n");
+  LLVM_UNREACHABLE("Cannot allocate thread local storage on this arch!");
   return 0;
 #endif
 }

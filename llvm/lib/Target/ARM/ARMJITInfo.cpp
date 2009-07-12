@@ -104,7 +104,7 @@ extern "C" {
       );
 #else  // Not an ARM host
   void ARMCompilationCallback() {
-    LLVM_UNREACHABLE("Cannot call ARMCompilationCallback() on a non-ARM arch!\n");
+    LLVM_UNREACHABLE("Cannot call ARMCompilationCallback() on a non-ARM arch!");
   }
 #endif
 }

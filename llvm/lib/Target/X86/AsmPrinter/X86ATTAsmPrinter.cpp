@@ -55,7 +55,7 @@ void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
   else if (Subtarget->isTargetELF())
     O << ".Lllvm$" << getFunctionNumber() << ".$piclabel";
   else
-    LLVM_UNREACHABLE( "Don't know how to print PIC label!\n");
+    LLVM_UNREACHABLE( "Don't know how to print PIC label!");
 }
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.

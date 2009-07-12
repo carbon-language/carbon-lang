@@ -594,7 +594,7 @@ void Emitter<CodeEmitter>::emitPseudoInstruction(const MachineInstr &MI) {
     // We allow inline assembler nodes with empty bodies - they can
     // implicitly define registers, which is ok for JIT.
     if (MI.getOperand(0).getSymbolName()[0]) {
-      llvm_report_error("JIT does not support inline asm!\n");
+      llvm_report_error("JIT does not support inline asm!");
     }
     break;
   }
