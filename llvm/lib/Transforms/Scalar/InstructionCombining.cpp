@@ -9474,26 +9474,6 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       }
 
       if (ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition())) {
-
-        // (x <s 0) ? -1 : 0 -> ashr x, 31
-        if (TrueValC->isAllOnesValue() && FalseValC->isZero())
-          if (ConstantInt *CmpCst = dyn_cast<ConstantInt>(IC->getOperand(1))) {
-            if (IC->getPredicate() == ICmpInst::ICMP_SLT && CmpCst->isZero()) {
-              // The comparison constant and the result are not neccessarily the
-              // same width. Make an all-ones value by inserting a AShr.
-              Value *X = IC->getOperand(0);
-              uint32_t Bits = X->getType()->getScalarSizeInBits();
-              Constant *ShAmt = Context->getConstantInt(X->getType(), Bits-1);
-              Instruction *SRA = BinaryOperator::Create(Instruction::AShr, X,
-                                                        ShAmt, "ones");
-              InsertNewInstBefore(SRA, SI);
-
-              // Then cast to the appropriate width.
-              return CastInst::CreateIntegerCast(SRA, SI.getType(), true);
-            }
-          }
-
-
         // If one of the constants is zero (we know they can't both be) and we
         // have an icmp instruction with zero, and we have an 'and' with the
         // non-constant value, eliminate this whole mess.  This corresponds to
