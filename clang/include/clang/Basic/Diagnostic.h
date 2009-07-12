@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include <string>
+#include <vector>
 #include <cassert>
 
 namespace llvm {
@@ -172,8 +173,10 @@ private:
   /// when the mapping was established as a user mapping.  If the high bit is
   /// clear, then the low bits are set to the default value, and should be
   /// mapped with -pedantic, -Werror, etc.
-  mutable unsigned char DiagMappings[diag::DIAG_UPPER_LIMIT/2];
-  
+
+  typedef std::vector<unsigned char> DiagMappings;
+  mutable std::vector<DiagMappings> DiagMappingsStack;
+
   /// ErrorOccurred / FatalErrorOccurred - This is set to true when an error or
   /// fatal error is emitted, and is sticky.
   bool ErrorOccurred;
@@ -212,6 +215,17 @@ public:
   DiagnosticClient *getClient() { return Client; };
   const DiagnosticClient *getClient() const { return Client; };
     
+
+  /// pushMappings - Copies the current DiagMappings and pushes the new copy 
+  /// onto the top of the stack.
+  void pushMappings();
+
+  /// popMappings - Pops the current DiagMappings off the top of the stack
+  /// causing the new top of the stack to be the active mappings. Returns
+  /// true if the pop happens, false if there is only one DiagMapping on the
+  /// stack.
+  bool popMappings();
+
   void setClient(DiagnosticClient* client) { Client = client; }
 
   /// setIgnoreAllWarnings - When set to true, any unmapped warnings are
@@ -343,13 +357,14 @@ private:
   /// specified builtin diagnostic.  This returns the high bit encoding, or zero
   /// if the field is completely uninitialized.
   unsigned getDiagnosticMappingInfo(diag::kind Diag) const {
-    return (diag::Mapping)((DiagMappings[Diag/2] >> (Diag & 1)*4) & 15);
+    const DiagMappings &currentMappings = DiagMappingsStack.back();
+    return (diag::Mapping)((currentMappings[Diag/2] >> (Diag & 1)*4) & 15);
   }
   
   void setDiagnosticMappingInternal(unsigned DiagId, unsigned Map,
                                     bool isUser) const {
     if (isUser) Map |= 8;  // Set the high bit for user mappings.
-    unsigned char &Slot = DiagMappings[DiagId/2];
+    unsigned char &Slot = DiagMappingsStack.back()[DiagId/2];
     unsigned Shift = (DiagId & 1)*4;
     Slot &= ~(15 << Shift);
     Slot |= Map << Shift;

@@ -201,6 +201,7 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   ErrorOccurred = false;
   FatalErrorOccurred = false;
   NumDiagnostics = 0;
+
   NumErrors = 0;
   CustomDiagInfo = 0;
   CurDiagID = ~0U;
@@ -210,11 +211,25 @@ Diagnostic::Diagnostic(DiagnosticClient *client) : Client(client) {
   ArgToStringCookie = 0;
   
   // Set all mappings to 'unset'.
-  memset(DiagMappings, 0, sizeof(DiagMappings));
+  DiagMappings BlankDiags(diag::DIAG_UPPER_LIMIT/2, 0);
+  DiagMappingsStack.push_back(BlankDiags);
 }
 
 Diagnostic::~Diagnostic() {
   delete CustomDiagInfo;
+}
+
+
+void Diagnostic::pushMappings() {
+  DiagMappingsStack.push_back(DiagMappingsStack.back());
+}
+
+bool Diagnostic::popMappings() {
+  if (DiagMappingsStack.size() == 1)
+    return false;
+
+  DiagMappingsStack.pop_back();
+  return true;
 }
 
 /// getCustomDiagID - Return an ID for a diagnostic with the specified message

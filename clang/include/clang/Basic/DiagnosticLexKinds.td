@@ -226,9 +226,16 @@ def ext_stdc_pragma_syntax_eom :
 def warn_stdc_fenv_access_not_supported :
    Warning<"pragma STDC FENV_ACCESS ON is not supported, ignoring pragma">,
    InGroup<UnknownPragmas>;
-def warn_pragma_diagnostic_invalid :
+def warn_pragma_diagnostic_gcc_invalid :
    ExtWarn<"pragma diagnostic expected 'error', 'warning', 'ignored', or"
             " 'fatal'">,
+   InGroup<UnknownPragmas>;
+def warn_pragma_diagnostic_clang_invalid :
+   ExtWarn<"pragma diagnostic expected 'error', 'warning', 'ignored', 'fatal'"
+            " 'push', or 'pop'">,
+   InGroup<UnknownPragmas>;
+def warn_pragma_diagnostic_clang_cannot_ppp :
+   ExtWarn<"pragma diagnostic pop could not pop, no matching push">,
    InGroup<UnknownPragmas>;
 def warn_pragma_diagnostic_invalid_option :
    ExtWarn<"pragma diagnostic expected option name (e.g. \"-Wundef\")">,
