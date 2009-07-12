@@ -152,9 +152,12 @@ namespace llvm {
 // basic blocks, and the scheduler passes ownership of it to this method.
 MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                  MachineBasicBlock *MBB) const {
-  llvm_report_error("If a target marks an instruction with "
-                    "'usesCustomDAGSchedInserter', it must implement "
-                    "TargetLowering::EmitInstrWithCustomInserter!");
+#ifndef NDEBUG
+  cerr << "If a target marks an instruction with "
+          "'usesCustomDAGSchedInserter', it must implement "
+          "TargetLowering::EmitInstrWithCustomInserter!";
+#endif
+  llvm_unreachable();
   return 0;  
 }
 
@@ -831,8 +834,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
               cerr << "FastISel miss: ";
               BI->dump();
             }
-            if (EnableFastISelAbort)
-              LLVM_UNREACHABLE("FastISel didn't handle a PHI in a successor");
+            assert(!EnableFastISelAbort && 
+                   "FastISel didn't handle a PHI in a successor");
             break;
           }
 

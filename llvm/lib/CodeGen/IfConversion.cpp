@@ -1132,10 +1132,10 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
     if (TII->isPredicated(I))
       continue;
     if (!TII->PredicateInstruction(I, Cond)) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Unable to predicate " << *I << "!";
-      llvm_report_error(Msg.str());
+#ifndef NDEBUG
+      cerr << "Unable to predicate " << *I << "!\n";
+#endif
+      llvm_unreachable();
     }
   }
 
@@ -1168,10 +1168,10 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 
     if (!isPredicated)
       if (!TII->PredicateInstruction(MI, Cond)) {
-        std::string msg;
-        raw_string_ostream Msg(msg);
-        Msg << "Unable to predicate " << *MI << "!";
-        llvm_report_error(Msg.str());
+#ifndef NDEBUG
+        cerr << "Unable to predicate " << *I << "!\n";
+#endif
+        llvm_unreachable();
       }
   }
 

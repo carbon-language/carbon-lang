@@ -1035,10 +1035,7 @@ bool PreAllocSplitting::SplitRegLiveInterval(LiveInterval *LI) {
     CurrLI->FindLiveRangeContaining(LIs->getUseIndex(BarrierIdx));
   VNInfo *ValNo = LR->valno;
 
-  if (ValNo->isUnused()) {
-    // Defined by a dead def? How can this be?
-    LLVM_UNREACHABLE("Val# is defined by a dead def?");
-  }
+  assert(!ValNo->isUnused() && "Val# is defined by a dead def?");
 
   MachineInstr *DefMI = ValNo->isDefAccurate()
     ? LIs->getInstructionFromIndex(ValNo->def) : NULL;

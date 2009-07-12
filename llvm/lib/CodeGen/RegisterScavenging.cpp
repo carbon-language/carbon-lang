@@ -459,9 +459,8 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     Reg = Candidates.find_next(Reg);
   }
 
-  if (ScavengedReg != 0) {
-    LLVM_UNREACHABLE("Scavenger slot is live, unable to scavenge another register!");
-  }
+  assert(ScavengedReg == 0 && 
+         "Scavenger slot is live, unable to scavenge another register!");
 
   // Spill the scavenged register before I.
   TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
