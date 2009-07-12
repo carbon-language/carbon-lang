@@ -1305,12 +1305,14 @@ def Int_CVTTSS2SI64rm: RSSI<0x2C, MRMSrcMem, (outs GR64:$dst), (ins f32mem:$src)
 // Alias instructions that map movr0 to xor. Use xorl instead of xorq; it's
 // equivalent due to implicit zero-extending, and it sometimes has a smaller
 // encoding.
-// FIXME: AddedComplexity gives this a higher priority than MOV64ri32. Remove
+// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+// FIXME: AddedComplexity gives MOV64r0 a higher priority than MOV64ri32. Remove
 // when we have a better way to specify isel priority.
-let AddedComplexity = 1 in
-def : Pat<(i64 0),
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV32r0), x86_subreg_32bit)>;
-
+let Defs = [EFLAGS], AddedComplexity = 1,
+    isReMaterializable = 1, isAsCheapAsAMove = 1 in
+def MOV64r0  : I<0x31, MRMInitReg,  (outs GR64:$dst), (ins),
+                "xor{l}\t${dst:subreg32}, ${dst:subreg32}",
+                [(set GR64:$dst, 0)]>;
 
 // Materialize i64 constant where top 32-bits are zero.
 let AddedComplexity = 1, isReMaterializable = 1, isAsCheapAsAMove = 1 in
