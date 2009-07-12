@@ -1,4 +1,4 @@
-//===--- Entity.h - Cross-translation-unit "token" for decls ----*- C++ -*-===//
+//===--- Entity.cpp - Cross-translation-unit "token" for decls ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

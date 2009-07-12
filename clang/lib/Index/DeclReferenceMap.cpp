@@ -1,4 +1,4 @@
-//===--- DeclReferenceMap.cpp - Map Decls to their references ---*- C++ -*-===//
+//===--- DeclReferenceMap.cpp - Map Decls to their references -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

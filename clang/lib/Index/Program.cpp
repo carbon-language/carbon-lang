@@ -1,4 +1,4 @@
-//===--- Program.h - Entity originator and misc -----------------*- C++ -*-===//
+//===--- Program.cpp - Entity originator and misc -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

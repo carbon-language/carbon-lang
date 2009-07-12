@@ -1,4 +1,4 @@
-//===--- IndexProvider.h - Map of entities to translation units -*- C++ -*-===//
+//===--- IndexProvider.cpp - Map of entities to translation units ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
