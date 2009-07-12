@@ -26,7 +26,7 @@ namespace clang {
 class ASTContext;
 class NamespaceDecl;
 class IdentifierInfo;
-class PrintingPolicy;
+struct PrintingPolicy;
 class Type;
 class LangOptions;
 

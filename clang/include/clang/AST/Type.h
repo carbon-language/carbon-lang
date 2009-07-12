@@ -66,7 +66,7 @@ namespace clang {
   class StmtIteratorBase;
   class TemplateArgument;
   class QualifiedNameType;
-  class PrintingPolicy;
+  struct PrintingPolicy;
 
   // Provide forward declarations for all of the *Type classes
 #define TYPE(Class, Base) class Class##Type;

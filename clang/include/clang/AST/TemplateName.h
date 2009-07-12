@@ -26,7 +26,7 @@ namespace clang {
 class DependentTemplateName;
 class IdentifierInfo;
 class NestedNameSpecifier;
-class PrintingPolicy;
+struct PrintingPolicy;
 class QualifiedTemplateName;
 class TemplateDecl;
 
