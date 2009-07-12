@@ -55,7 +55,7 @@ class Preprocessor;
 class Sema;
 class SwitchCase;
 class PCHReader;
-class HeaderFileInfo;
+struct HeaderFileInfo;
 
 /// \brief Abstract interface for callback invocations by the PCHReader.
 ///

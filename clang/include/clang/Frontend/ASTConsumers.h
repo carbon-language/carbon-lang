@@ -30,7 +30,7 @@ class Diagnostic;
 class FileManager;
 class Preprocessor;
 class PreprocessorFactory;
-struct CompileOptions;
+class CompileOptions;
 class LangOptions;
 
 // AST pretty-printer: prints out the AST in a format that is close to the
