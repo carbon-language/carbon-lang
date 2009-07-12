@@ -149,7 +149,6 @@ TEST_F(ConstantRangeTest, Trunc) {
   EXPECT_TRUE(TEmpty.isEmptySet());
   EXPECT_EQ(TOne, ConstantRange(APInt(One.getLower()).trunc(10),
                                 APInt(One.getUpper()).trunc(10)));
-  // TODO: ConstantRange is currently over-conservative here.
   EXPECT_TRUE(TSome.isFullSet());
 }
 
