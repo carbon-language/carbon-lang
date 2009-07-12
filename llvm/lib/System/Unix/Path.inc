@@ -92,15 +92,7 @@ Path::isValid() const {
   // Check some obvious things
   if (path.empty())
     return false;
-  else if (path.length() >= MAXPATHLEN)
-    return false;
-
-  // Check that the characters are ascii chars
-  size_t len = path.length();
-  unsigned i = 0;
-  while (i < len && isascii(path[i]))
-    ++i;
-  return i >= len;
+  return path.length() < MAXPATHLEN;
 }
 
 bool
