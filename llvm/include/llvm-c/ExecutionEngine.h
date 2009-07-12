@@ -104,7 +104,7 @@ void *LLVMGetPointerToGlobal(LLVMExecutionEngineRef EE, LLVMValueRef Global);
 }
 
 namespace llvm {
-  class GenericValue;
+  struct GenericValue;
   class ExecutionEngine;
   
   #define DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ty, ref)   \

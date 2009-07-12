@@ -30,7 +30,7 @@ namespace llvm {
   class GlobalVariable;
   class Module;
   class SourceFile;
-  class SourceLanguage;
+  struct SourceLanguage;
   class ProgramInfo;
 
   /// SourceLanguageCache - SourceLanguage implementations are allowed to cache

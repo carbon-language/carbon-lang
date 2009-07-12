@@ -14,7 +14,7 @@
 
 namespace llvm {
 
-  class LiveInterval;
+  struct LiveInterval;
   class LiveIntervals;
   class LiveStacks;
   class MachineFunction;

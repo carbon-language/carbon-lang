@@ -21,7 +21,7 @@
 namespace llvm {
   class CLICommand;
   class SourceFile;
-  class SourceLanguage;
+  struct SourceLanguage;
   class ProgramInfo;
   class RuntimeInfo;
   class LLVMContext;

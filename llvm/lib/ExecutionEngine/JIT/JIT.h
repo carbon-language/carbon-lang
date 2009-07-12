@@ -20,7 +20,7 @@
 namespace llvm {
 
 class Function;
-class JITEvent_EmittedFunctionDetails;
+struct JITEvent_EmittedFunctionDetails;
 class MachineCodeEmitter;
 class MachineCodeInfo;
 class TargetJITInfo;

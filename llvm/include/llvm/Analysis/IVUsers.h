@@ -25,7 +25,7 @@ namespace llvm {
 class DominatorTree;
 class Instruction;
 class Value;
-class IVUsersOfOneStride;
+struct IVUsersOfOneStride;
 
 /// IVStrideUse - Keep track of one use of a strided induction variable, where
 /// the stride is stored externally.  The Offset member keeps track of the
