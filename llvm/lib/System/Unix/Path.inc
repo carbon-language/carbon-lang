@@ -109,6 +109,19 @@ Path::isAbsolute() const {
     return false;
   return path[0] == '/';
 }
+
+void Path::makeAbsolute() {
+  if (isAbsolute())
+    return;
+
+  Path CWD = Path::GetCurrentDirectory();
+  assert(CWD.isAbsolute() && "GetCurrentDirectory returned relative path!");
+
+  CWD.appendComponent(path);
+
+  path = CWD.toString();
+}
+
 Path
 Path::GetRootDirectory() {
   Path result;

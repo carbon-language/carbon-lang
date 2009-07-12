@@ -125,9 +125,30 @@ Path::isValid() const {
   return true;
 }
 
+void Path::makeAbsolute() {
+  TCHAR  FullPath[MAX_PATH + 1] = {0}; 
+  LPTSTR FilePart = NULL;
+
+  DWORD RetLength = ::GetFullPathNameA(path.c_str(),
+                        sizeof(FullPath)/sizeof(FullPath[0]),
+                        FullPath, &FilePart);
+
+  if (0 == RetLength) {
+    // FIXME: Report the error GetLastError()
+    llvm_unreachable("Unable to make absolute path!");
+  } else if (RetLength > MAX_PATH) {
+    // FIXME: Report too small buffer (needed RetLength bytes).
+    llvm_unreachable("Unable to make absolute path!");
+  } else {
+    path = FullPath;
+  }
+}
+
 bool
 Path::isAbsolute(const char *NameStart, unsigned NameLen) {
   assert(NameStart);
+  // FIXME: This does not handle correctly an absolute path starting from
+  // a drive letter or in UNC format.
   switch (NameLen) {
   case 0:
     return false;
@@ -141,6 +162,8 @@ Path::isAbsolute(const char *NameStart, unsigned NameLen) {
 
 bool 
 Path::isAbsolute() const {
+  // FIXME: This does not handle correctly an absolute path starting from
+  // a drive letter or in UNC format.
   switch (path.length()) {
     case 0:
       return false;

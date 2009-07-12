@@ -13,6 +13,7 @@
 
 #include "llvm/System/Path.h"
 #include "llvm/Config/config.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <cstring>
 #include <ostream>
@@ -205,18 +206,6 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
   if (getMagicNumber(actualMagic, static_cast<unsigned>(Magic.size())))
     return Magic == actualMagic;
   return false;
-}
-
-void Path::makeAbsolute() {
-  if (isAbsolute())
-    return;
-
-  Path CWD = Path::GetCurrentDirectory();
-  assert(CWD.isAbsolute() && "GetCurrentDirectory returned relative path!");
-
-  CWD.appendComponent(path);
-
-  path = CWD.toString();
 }
 
 static void getPathList(const char*path, std::vector<Path>& Paths) {

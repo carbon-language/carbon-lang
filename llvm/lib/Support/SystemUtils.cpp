@@ -51,7 +51,7 @@ sys::Path llvm::FindExecutable(const std::string &ExeName,
 
   // Otherwise check the directory that the calling program is in.  We can do
   // this if ProgramPath contains at least one / character, indicating that it
-  // is a relative path to bugpoint itself.
+  // is a relative path to the executable itself.
   Result = ProgramPath;
   Result.eraseComponent();
   if (!Result.isEmpty()) {
