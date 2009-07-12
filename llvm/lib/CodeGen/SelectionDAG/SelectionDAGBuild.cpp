@@ -4158,14 +4158,6 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Tmp.getValue(1));
     return 0;
   }
-  case Intrinsic::part_select: {
-    // Currently not implemented: just abort
-    llvm_report_error("part_select intrinsic not implemented");
-  }
-  case Intrinsic::part_set: {
-    // Currently not implemented: just abort
-    llvm_report_error("part_set intrinsic not implemented");
-  }
   case Intrinsic::bswap:
     setValue(&I, DAG.getNode(ISD::BSWAP, dl,
                              getValue(I.getOperand(1)).getValueType(),

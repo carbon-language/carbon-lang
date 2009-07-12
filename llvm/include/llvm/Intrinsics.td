@@ -267,11 +267,6 @@ let Properties = [IntrNoMem] in {
   def int_ctpop: Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>]>;
   def int_ctlz : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>]>;
   def int_cttz : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>]>;
-  def int_part_select : Intrinsic<[llvm_anyint_ty],
-                                  [LLVMMatchType<0>, llvm_i32_ty, llvm_i32_ty]>;
-  def int_part_set : Intrinsic<[llvm_anyint_ty],
-                               [LLVMMatchType<0>, llvm_anyint_ty,
-                                llvm_i32_ty, llvm_i32_ty]>;
 }
 
 //===------------------------ Debugger Intrinsics -------------------------===//
