@@ -599,6 +599,42 @@ GetNonLocalInfoForBlock(Value *Pointer, uint64_t PointeeSize,
   return Dep;
 }
 
+/// SortNonLocalDepInfoCache - Sort the a NonLocalDepInfo cache, given a certain
+/// number of elements in the array that are already properly ordered.  This is
+/// optimized for the case when only a few entries are added.
+static void 
+SortNonLocalDepInfoCache(MemoryDependenceAnalysis::NonLocalDepInfo &Cache,
+                         unsigned NumSortedEntries) {
+  switch (Cache.size() - NumSortedEntries) {
+  case 0:
+    // done, no new entries.
+    break;
+  case 2: {
+    // Two new entries, insert the last one into place.
+    MemoryDependenceAnalysis::NonLocalDepEntry Val = Cache.back();
+    Cache.pop_back();
+    MemoryDependenceAnalysis::NonLocalDepInfo::iterator Entry =
+      std::upper_bound(Cache.begin(), Cache.end()-1, Val);
+    Cache.insert(Entry, Val);
+    // FALL THROUGH.
+  }
+  case 1:
+    // One new entry, Just insert the new value at the appropriate position.
+    if (Cache.size() != 1) {
+      MemoryDependenceAnalysis::NonLocalDepEntry Val = Cache.back();
+      Cache.pop_back();
+      MemoryDependenceAnalysis::NonLocalDepInfo::iterator Entry =
+        std::upper_bound(Cache.begin(), Cache.end(), Val);
+      Cache.insert(Entry, Val);
+    }
+    break;
+  default:
+    // Added many values, do a full scale sort.
+    std::sort(Cache.begin(), Cache.end());
+    break;
+  }
+}
+
 
 /// getNonLocalPointerDepFromBB - Perform a dependency query based on
 /// pointer/pointeesize starting at the end of StartBB.  Add any clobber/def
@@ -738,7 +774,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
     // getNonLocalPointerDepFromBB and other routines that could reuse the cache
     // value will only see properly sorted cache arrays.
     if (Cache && NumSortedEntries != Cache->size()) {
-      std::sort(Cache->begin(), Cache->end());
+      SortNonLocalDepInfoCache(*Cache, NumSortedEntries);
       NumSortedEntries = Cache->size();
     }
     
@@ -841,33 +877,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
   }
 
   // Okay, we're done now.  If we added new values to the cache, re-sort it.
-  switch (Cache->size()-NumSortedEntries) {
-  case 0:
-    // done, no new entries.
-    break;
-  case 2: {
-    // Two new entries, insert the last one into place.
-    NonLocalDepEntry Val = Cache->back();
-    Cache->pop_back();
-    NonLocalDepInfo::iterator Entry =
-    std::upper_bound(Cache->begin(), Cache->end()-1, Val);
-    Cache->insert(Entry, Val);
-    // FALL THROUGH.
-  }
-  case 1:
-    // One new entry, Just insert the new value at the appropriate position.
-    if (Cache->size() != 1) {
-      NonLocalDepEntry Val = Cache->back();
-      Cache->pop_back();
-      NonLocalDepInfo::iterator Entry =
-        std::upper_bound(Cache->begin(), Cache->end(), Val);
-      Cache->insert(Entry, Val);
-    }
-    break;
-  default:
-    // Added many values, do a full scale sort.
-    std::sort(Cache->begin(), Cache->end());
-  }
+  SortNonLocalDepInfoCache(*Cache, NumSortedEntries);
   DEBUG(AssertSorted(*Cache));
   return false;
 }
