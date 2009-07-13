@@ -2101,13 +2101,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (SimplifyDemandedInstructionBits(I))
         return &I;
 
-      // zext(i1) - 1  ->  select i1, 0, -1
+      // zext(bool) + C -> bool ? C + 1 : C
       if (ZExtInst *ZI = dyn_cast<ZExtInst>(LHS))
-        if (CI->isAllOnesValue() &&
-            ZI->getOperand(0)->getType() == Type::Int1Ty)
-          return SelectInst::Create(ZI->getOperand(0),
-                                    Context->getNullValue(I.getType()),
-                              Context->getAllOnesValue(I.getType()));
+        if (ZI->getSrcTy() == Type::Int1Ty)
+          return SelectInst::Create(ZI->getOperand(0), AddOne(CI, Context), CI);
     }
 
     if (isa<PHINode>(LHS))
@@ -2525,6 +2522,11 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
       if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
+
+    // C - zext(bool) -> bool ? C - 1 : C
+    if (ZExtInst *ZI = dyn_cast<ZExtInst>(Op1))
+      if (ZI->getSrcTy() == Type::Int1Ty)
+        return SelectInst::Create(ZI->getOperand(0), SubOne(C, Context), C);
   }
 
   if (I.getType() == Type::Int1Ty)
