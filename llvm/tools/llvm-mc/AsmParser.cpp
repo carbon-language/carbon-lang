@@ -529,6 +529,8 @@ bool AsmParser::ParseStatement() {
 
     if (!strcmp(IDVal, ".subsections_via_symbols"))
       return ParseDirectiveDarwinSubsectionsViaSymbols();
+    if (!strcmp(IDVal, ".abort"))
+      return ParseDirectiveAbort();
 
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
@@ -1065,6 +1067,29 @@ bool AsmParser::ParseDirectiveDarwinSubsectionsViaSymbols() {
   Lexer.Lex();
 
   Out.SubsectionsViaSymbols();
+
+  return false;
+}
+
+/// ParseDirectiveAbort
+///  ::= .abort [ "abort_string" ]
+bool AsmParser::ParseDirectiveAbort() {
+  const char *Str = NULL;
+  if (Lexer.isNot(asmtok::EndOfStatement)) {
+    if (Lexer.isNot(asmtok::String))
+      return TokError("expected string in '.abort' directive");
+    
+    Str = Lexer.getCurStrVal();
+
+    Lexer.Lex();
+  }
+
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.abort' directive");
+  
+  Lexer.Lex();
+
+  Out.AbortAssembly(Str);
 
   return false;
 }

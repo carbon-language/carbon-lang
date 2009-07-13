@@ -115,6 +115,8 @@ private:
 
   // Darwin specific ".subsections_via_symbols"
   bool ParseDirectiveDarwinSubsectionsViaSymbols();
+
+  bool ParseDirectiveAbort(); // ".abort"
 };
 
 } // end namespace llvm

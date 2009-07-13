@@ -141,6 +141,13 @@ namespace llvm {
     virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = 0,
                               unsigned Size = 0,unsigned Pow2Alignment = 0) = 0;
 
+    /// AbortAssembly - Stop and don't produce output, printing @param
+    /// AbortReason if non-NULL to indicate the reason the assembly is
+    /// terminated.
+    ///
+    /// @param AbortReason - The reason assembly is terminated, if non-NULL.
+    virtual void AbortAssembly(const char *AbortReason) = 0;
+
     /// @}
     /// @name Generating Data
     /// @{
