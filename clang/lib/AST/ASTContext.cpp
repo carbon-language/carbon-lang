@@ -2707,48 +2707,50 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                             bool OutermostType,
                                             bool EncodingProperty) {
   if (const BuiltinType *BT = T->getAsBuiltinType()) {
-    if (FD && FD->isBitField()) {
-      EncodeBitField(this, S, FD);
-    }
-    else {
-      char encoding;
-      switch (BT->getKind()) {
-      default: assert(0 && "Unhandled builtin type kind");          
-      case BuiltinType::Void:       encoding = 'v'; break;
-      case BuiltinType::Bool:       encoding = 'B'; break;
-      case BuiltinType::Char_U:
-      case BuiltinType::UChar:      encoding = 'C'; break;
-      case BuiltinType::UShort:     encoding = 'S'; break;
-      case BuiltinType::UInt:       encoding = 'I'; break;
-      case BuiltinType::ULong:      
-          encoding = 
-            (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'L' : 'Q'; 
-          break;
-      case BuiltinType::UInt128:    encoding = 'T'; break;
-      case BuiltinType::ULongLong:  encoding = 'Q'; break;
-      case BuiltinType::Char_S:
-      case BuiltinType::SChar:      encoding = 'c'; break;
-      case BuiltinType::Short:      encoding = 's'; break;
-      case BuiltinType::Int:        encoding = 'i'; break;
-      case BuiltinType::Long:       
+    if (FD && FD->isBitField())
+      return EncodeBitField(this, S, FD);
+    char encoding;
+    switch (BT->getKind()) {
+    default: assert(0 && "Unhandled builtin type kind");          
+    case BuiltinType::Void:       encoding = 'v'; break;
+    case BuiltinType::Bool:       encoding = 'B'; break;
+    case BuiltinType::Char_U:
+    case BuiltinType::UChar:      encoding = 'C'; break;
+    case BuiltinType::UShort:     encoding = 'S'; break;
+    case BuiltinType::UInt:       encoding = 'I'; break;
+    case BuiltinType::ULong:      
         encoding = 
-          (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'l' : 'q'; 
+          (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'L' : 'Q'; 
         break;
-      case BuiltinType::LongLong:   encoding = 'q'; break;
-      case BuiltinType::Int128:     encoding = 't'; break;
-      case BuiltinType::Float:      encoding = 'f'; break;
-      case BuiltinType::Double:     encoding = 'd'; break;
-      case BuiltinType::LongDouble: encoding = 'd'; break;
-      }
-    
-      S += encoding;
+    case BuiltinType::UInt128:    encoding = 'T'; break;
+    case BuiltinType::ULongLong:  encoding = 'Q'; break;
+    case BuiltinType::Char_S:
+    case BuiltinType::SChar:      encoding = 'c'; break;
+    case BuiltinType::Short:      encoding = 's'; break;
+    case BuiltinType::Int:        encoding = 'i'; break;
+    case BuiltinType::Long:       
+      encoding = 
+        (const_cast<ASTContext *>(this))->getIntWidth(T) == 32 ? 'l' : 'q'; 
+      break;
+    case BuiltinType::LongLong:   encoding = 'q'; break;
+    case BuiltinType::Int128:     encoding = 't'; break;
+    case BuiltinType::Float:      encoding = 'f'; break;
+    case BuiltinType::Double:     encoding = 'd'; break;
+    case BuiltinType::LongDouble: encoding = 'd'; break;
     }
-  } else if (const ComplexType *CT = T->getAsComplexType()) {
+  
+    S += encoding;
+    return;
+  }
+  
+  if (const ComplexType *CT = T->getAsComplexType()) {
     S += 'j';
     getObjCEncodingForTypeImpl(CT->getElementType(), S, false, false, 0, false, 
                                false);
-  } 
-  else if (const PointerType *PT = T->getAsPointerType()) {
+    return;
+  }
+  
+  if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
     bool isReadOnly = false;
     // For historical/compatibility reasons, the read-only qualifier of the
@@ -2798,12 +2800,14 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     S += '^';
     getLegacyIntegralTypeEncoding(PointeeTy);
 
-    getObjCEncodingForTypeImpl(PointeeTy, S, 
-                               false, ExpandPointedToStructures, 
+    getObjCEncodingForTypeImpl(PointeeTy, S, false, ExpandPointedToStructures, 
                                NULL);
-  } else if (const ArrayType *AT =
-               // Ignore type qualifiers etc.
-               dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
+    return;
+  }
+  
+  if (const ArrayType *AT =
+      // Ignore type qualifiers etc.
+        dyn_cast<ArrayType>(T->getCanonicalTypeInternal())) {
     if (isa<IncompleteArrayType>(AT)) {
       // Incomplete arrays are encoded as a pointer to the array element.
       S += '^';
@@ -2825,9 +2829,15 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                  false, ExpandStructures, FD);
       S += ']';
     }
-  } else if (T->getAsFunctionType()) {
+    return;
+  }
+  
+  if (T->getAsFunctionType()) {
     S += '?';
-  } else if (const RecordType *RTy = T->getAsRecordType()) {
+    return;
+  }
+  
+  if (const RecordType *RTy = T->getAsRecordType()) {
     RecordDecl *RDecl = RTy->getDecl();
     S += RDecl->isUnion() ? '(' : '{';
     // Anonymous structures print as '?'
@@ -2860,14 +2870,23 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       }
     }
     S += RDecl->isUnion() ? ')' : '}';
-  } else if (T->isEnumeralType()) {
+    return;
+  }
+  
+  if (T->isEnumeralType()) {
     if (FD && FD->isBitField())
       EncodeBitField(this, S, FD);
     else
       S += 'i';
-  } else if (T->isBlockPointerType()) {
+    return;
+  }
+  
+  if (T->isBlockPointerType()) {
     S += "@?"; // Unlike a pointer-to-function, which is "^?".
-  } else if (T->isObjCInterfaceType()) {
+    return;
+  }
+  
+  if (T->isObjCInterfaceType()) {
     // @encode(class_name)
     ObjCInterfaceDecl *OI = T->getAsObjCInterfaceType()->getDecl();
     S += '{';
@@ -2885,15 +2904,21 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
                                    FD);
     }
     S += '}';
+    return;
   }
-  else if (const ObjCObjectPointerType *OPT = T->getAsObjCObjectPointerType()) {
+  
+  if (const ObjCObjectPointerType *OPT = T->getAsObjCObjectPointerType()) {
     if (OPT->isObjCIdType()) {
       S += '@';
       return;
-    } else if (OPT->isObjCClassType()) {
+    }
+    
+    if (OPT->isObjCClassType()) {
       S += '#';
       return;
-    } else if (OPT->isObjCQualifiedIdType()) {
+    }
+    
+    if (OPT->isObjCQualifiedIdType()) {
       getObjCEncodingForTypeImpl(getObjCIdType(), S, 
                                  ExpandPointedToStructures,
                                  ExpandStructures, FD);
@@ -2911,37 +2936,39 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         S += '"';
       }
       return;
-    } else {
-      QualType PointeeTy = OPT->getPointeeType();
-      if (!EncodingProperty &&
-          isa<TypedefType>(PointeeTy.getTypePtr())) {
-        // Another historical/compatibility reason.
-        // We encode the underlying type which comes out as 
-        // {...};
-        S += '^';
-        getObjCEncodingForTypeImpl(PointeeTy, S, 
-                                   false, ExpandPointedToStructures, 
-                                   NULL);
-        return;
-      }
-      S += '@';
-      if (FD || EncodingProperty) {
-        const ObjCInterfaceType *OIT = OPT->getInterfaceType();
-        ObjCInterfaceDecl *OI = OIT->getDecl();
-        S += '"';
-        S += OI->getNameAsCString();
-        for (ObjCInterfaceType::qual_iterator I = OIT->qual_begin(),
-             E = OIT->qual_end(); I != E; ++I) {
-          S += '<';
-          S += (*I)->getNameAsString();
-          S += '>';
-        } 
-        S += '"';
-      }
+    }
+    
+    QualType PointeeTy = OPT->getPointeeType();
+    if (!EncodingProperty &&
+        isa<TypedefType>(PointeeTy.getTypePtr())) {
+      // Another historical/compatibility reason.
+      // We encode the underlying type which comes out as 
+      // {...};
+      S += '^';
+      getObjCEncodingForTypeImpl(PointeeTy, S, 
+                                 false, ExpandPointedToStructures, 
+                                 NULL);
       return;
     }
-  } else
-    assert(0 && "@encode for type not implemented!");
+
+    S += '@';
+    if (FD || EncodingProperty) {
+      const ObjCInterfaceType *OIT = OPT->getInterfaceType();
+      ObjCInterfaceDecl *OI = OIT->getDecl();
+      S += '"';
+      S += OI->getNameAsCString();
+      for (ObjCInterfaceType::qual_iterator I = OIT->qual_begin(),
+           E = OIT->qual_end(); I != E; ++I) {
+        S += '<';
+        S += (*I)->getNameAsString();
+        S += '>';
+      } 
+      S += '"';
+    }
+    return;
+  }
+  
+  assert(0 && "@encode for type not implemented!");
 }
 
 void ASTContext::getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 
@@ -2960,15 +2987,13 @@ void ASTContext::getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT,
     S += 'V';
 }
 
-void ASTContext::setBuiltinVaListType(QualType T)
-{
+void ASTContext::setBuiltinVaListType(QualType T) {
   assert(BuiltinVaListType.isNull() && "__builtin_va_list type already set!");
     
   BuiltinVaListType = T;
 }
 
-void ASTContext::setObjCIdType(QualType T)
-{
+void ASTContext::setObjCIdType(QualType T) {
   ObjCIdType = T;
   const TypedefType *TT = T->getAsTypedefType();
   assert(TT && "missing 'id' typedef");
@@ -2978,8 +3003,7 @@ void ASTContext::setObjCIdType(QualType T)
   ObjCObjectPointerType::setIdInterface(OPT->getPointeeType());
 }
 
-void ASTContext::setObjCSelType(QualType T)
-{
+void ASTContext::setObjCSelType(QualType T) {
   ObjCSelType = T;
 
   const TypedefType *TT = T->getAsTypedefType();
@@ -2997,13 +3021,11 @@ void ASTContext::setObjCSelType(QualType T)
   SelStructType = rec;
 }
 
-void ASTContext::setObjCProtoType(QualType QT)
-{
+void ASTContext::setObjCProtoType(QualType QT) {
   ObjCProtoType = QT;
 }
 
-void ASTContext::setObjCClassType(QualType T)
-{
+void ASTContext::setObjCClassType(QualType T) {
   ObjCClassType = T;
   const TypedefType *TT = T->getAsTypedefType();
   assert(TT && "missing 'Class' typedef");
