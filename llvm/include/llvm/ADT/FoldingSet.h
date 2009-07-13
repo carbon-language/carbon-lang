@@ -439,6 +439,20 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+/// FastFoldingSetNode - This is a subclass of FoldingSetNode which stores
+/// a FoldingSetNodeID value rather than requiring the node to recompute it
+/// each time it is needed. This trades space for speed (which can be
+/// significant if the ID is long), and it also permits nodes to drop
+/// information that would otherwise only be required for recomputing an ID.
+class FastFoldingSetNode : public FoldingSetNode {
+  FoldingSetNodeID FastID;
+protected:
+  explicit FastFoldingSetNode(const FoldingSetNodeID &ID) : FastID(ID) {}
+public:
+  void Profile(FoldingSetNodeID& ID) { ID = FastID; }
+};
+
+//===----------------------------------------------------------------------===//
 // Partial specializations of FoldingSetTrait.
 
 template<typename T> struct FoldingSetTrait<T*> {
