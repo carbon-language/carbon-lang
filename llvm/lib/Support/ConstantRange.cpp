@@ -533,6 +533,8 @@ ConstantRange
 ConstantRange::add(const ConstantRange &Other) const {
   if (isEmptySet() || Other.isEmptySet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/false);
+  if (isFullSet() || Other.isFullSet())
+    return ConstantRange(getBitWidth(), /*isFullSet=*/true);
 
   APInt Spread_X = getSetSize(), Spread_Y = Other.getSetSize();
   APInt NewLower = getLower() + Other.getLower();

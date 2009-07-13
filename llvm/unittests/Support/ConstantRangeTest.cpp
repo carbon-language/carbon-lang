@@ -239,6 +239,7 @@ TEST_F(ConstantRangeTest, SubtractAPInt) {
 
 TEST_F(ConstantRangeTest, Add) {
   EXPECT_TRUE(Full.add(APInt(16, 4)).isFullSet());
+  EXPECT_EQ(Full.add(Full), Full);
   EXPECT_EQ(Full.add(Empty), Empty);
   EXPECT_EQ(Full.add(One), Full);
   EXPECT_EQ(Full.add(Some), Full);
