@@ -40,7 +40,7 @@ const char *const llvm::x86_asm_table[] = {
 
 X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   X86TargetAsmInfo<DarwinTargetAsmInfo>(TM) {
-  const X86Subtarget* Subtarget = &TM.getSubtarget<X86Subtarget>();
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   bool is64Bit = Subtarget->is64Bit();
 
   AlignmentIsInBytes = false;
@@ -60,10 +60,12 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     SixteenByteConstantSection = getUnnamedSection("\t.literal16\n",
                                                    SectionFlags::Mergeable);
   LCOMMDirective = "\t.lcomm\t";
+
   // Leopard and above support aligned common symbols.
   COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);
   HasDotTypeDotSizeDirective = false;
   NonLocalEHFrameLabel = true;
+
   if (is64Bit) {
     PersonalityPrefix = "";
     PersonalitySuffix = "+4@GOTPCREL";
@@ -71,6 +73,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     PersonalityPrefix = "L";
     PersonalitySuffix = "$non_lazy_ptr";
   }
+
   InlineAsmStart = "## InlineAsm Start";
   InlineAsmEnd = "## InlineAsm End";
   CommentString = "##";
@@ -80,7 +83,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   ProtectedDirective = "\t.globl\t";
 
   SupportsDebugInformation = true;
-
   DwarfDebugInlineSection = ".section __DWARF,__debug_inlined,regular,debug";
   DwarfUsesInlineInfoSection = true;
 
@@ -91,7 +93,13 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   AbsoluteEHSectionOffsets = false;
   DwarfEHFrameSection =
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
-  DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
+
+  // Leopard and earlier put exception tables in __DATA. Greater than Leopard
+  // put them in __TEXT.
+  if (Subtarget->getDarwinVers() < 10)
+    DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
+  else
+    DwarfExceptionSection = ".section __TEXT,__gcc_except_tab";
 }
 
 unsigned
