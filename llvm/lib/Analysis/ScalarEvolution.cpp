@@ -704,7 +704,7 @@ const SCEV *SCEVAddRecExpr::evaluateAtIteration(const SCEV *It,
 //===----------------------------------------------------------------------===//
 
 const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
-                                            const Type *Ty) {
+                                             const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) > getTypeSizeInBits(Ty) &&
          "This is not a truncating conversion!");
   assert(isSCEVable(Ty) &&
@@ -753,7 +753,7 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
 }
 
 const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
-                                              const Type *Ty) {
+                                               const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
   assert(isSCEVable(Ty) &&
@@ -885,7 +885,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
 }
 
 const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
-                                              const Type *Ty) {
+                                               const Type *Ty) {
   assert(getTypeSizeInBits(Op->getType()) < getTypeSizeInBits(Ty) &&
          "This is not an extending conversion!");
   assert(isSCEVable(Ty) &&
@@ -4581,8 +4581,8 @@ ScalarEvolution::isNecessaryCondOperands(ICmpInst::Predicate Pred,
 /// rounding up, to get the number of times the backedge is executed. Return
 /// CouldNotCompute if an intermediate computation overflows.
 const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
-                                       const SCEV *End,
-                                       const SCEV *Step) {
+                                        const SCEV *End,
+                                        const SCEV *Step) {
   const Type *Ty = Start->getType();
   const SCEV *NegOne = getIntegerSCEV(-1, Ty);
   const SCEV *Diff = getMinusSCEV(End, Start);
