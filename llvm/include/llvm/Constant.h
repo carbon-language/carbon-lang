@@ -64,6 +64,10 @@ public:
   /// getNullValue.
   virtual bool isNullValue() const = 0;
 
+  /// isNegativeZeroValue - Return true if the value is what would be returned 
+  /// by getZeroValueForNegation.
+  virtual bool isNegativeZeroValue() const { return isNullValue(); }
+
   /// canTrap - Return true if evaluation of this constant could trap.  This is
   /// true for things like constant expressions that could divide by zero.
   bool canTrap() const;

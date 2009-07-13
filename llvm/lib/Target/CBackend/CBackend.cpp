@@ -2621,11 +2621,11 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
   // If this is a negation operation, print it out as such.  For FP, we don't
   // want to print "-0.0 - X".
-  if (BinaryOperator::isNeg(*Context, &I)) {
+  if (BinaryOperator::isNeg(&I)) {
     Out << "-(";
     writeOperand(BinaryOperator::getNegArgument(cast<BinaryOperator>(&I)));
     Out << ")";
-  } else if (BinaryOperator::isFNeg(*Context, &I)) {
+  } else if (BinaryOperator::isFNeg(&I)) {
     Out << "-(";
     writeOperand(BinaryOperator::getFNegArgument(cast<BinaryOperator>(&I)));
     Out << ")";

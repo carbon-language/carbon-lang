@@ -270,6 +270,12 @@ public:
   /// getNullValue.  Don't depend on == for doubles to tell us it's zero, it
   /// considers -0.0 to be null as well as 0.0.  :(
   virtual bool isNullValue() const;
+  
+  /// isNegativeZeroValue - Return true if the value is what would be returned 
+  /// by getZeroValueForNegation.
+  virtual bool isNegativeZeroValue() const {
+    return Val.isZero() && Val.isNegative();
+  }
 
   /// isExactlyValue - We don't rely on operator== working on double values, as
   /// it returns true for things that are clearly not equal, like -0.0 and 0.0.

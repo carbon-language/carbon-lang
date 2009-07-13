@@ -224,8 +224,8 @@ public:
   /// isNeg, isFNeg, isNot - Check if the given Value is a
   /// NEG, FNeg, or NOT instruction.
   ///
-  static bool isNeg(LLVMContext &Context, const Value *V);
-  static bool isFNeg(LLVMContext &Context, const Value *V);
+  static bool isNeg(const Value *V);
+  static bool isFNeg(const Value *V);
   static bool isNot(const Value *V);
 
   /// getNegArgument, getNotArgument - Helper functions to extract the

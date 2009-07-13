@@ -1711,19 +1711,19 @@ static inline bool isConstantAllOnes(const Value *V) {
   return false;
 }
 
-bool BinaryOperator::isNeg(LLVMContext &Context, const Value *V) {
+bool BinaryOperator::isNeg(const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     if (Bop->getOpcode() == Instruction::Sub)
-      return Bop->getOperand(0) ==
-             Context.getZeroValueForNegation(Bop->getType());
+      if (Constant* C = dyn_cast<Constant>(Bop->getOperand(0)))
+        return C->isNegativeZeroValue();
   return false;
 }
 
-bool BinaryOperator::isFNeg(LLVMContext &Context, const Value *V) {
+bool BinaryOperator::isFNeg(const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     if (Bop->getOpcode() == Instruction::FSub)
-      return Bop->getOperand(0) ==
-             Context.getZeroValueForNegation(Bop->getType());
+      if (Constant* C = dyn_cast<Constant>(Bop->getOperand(0)))
+      return C->isNegativeZeroValue();
   return false;
 }
 

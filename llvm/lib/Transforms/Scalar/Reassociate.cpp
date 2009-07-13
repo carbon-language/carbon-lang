@@ -178,7 +178,7 @@ unsigned Reassociate::getRank(Value *V) {
   // If this is a not or neg instruction, do not count it for rank.  This
   // assures us that X and ~X will have the same rank.
   if (!I->getType()->isInteger() ||
-      (!BinaryOperator::isNot(I) && !BinaryOperator::isNeg(*Context, I)))
+      (!BinaryOperator::isNot(I) && !BinaryOperator::isNeg(I)))
     ++Rank;
 
   //DOUT << "Calculated Rank[" << V->getName() << "] = "
@@ -264,12 +264,12 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
   // If this is a multiply expression tree and it contains internal negations,
   // transform them into multiplies by -1 so they can be reassociated.
   if (I->getOpcode() == Instruction::Mul) {
-    if (!LHSBO && LHS->hasOneUse() && BinaryOperator::isNeg(*Context, LHS)) {
+    if (!LHSBO && LHS->hasOneUse() && BinaryOperator::isNeg(LHS)) {
       LHS = LowerNegateToMultiply(cast<Instruction>(LHS),
                                   ValueRankMap, Context);
       LHSBO = isReassociableOp(LHS, Opcode);
     }
-    if (!RHSBO && RHS->hasOneUse() && BinaryOperator::isNeg(*Context, RHS)) {
+    if (!RHSBO && RHS->hasOneUse() && BinaryOperator::isNeg(RHS)) {
       RHS = LowerNegateToMultiply(cast<Instruction>(RHS),
                                   ValueRankMap, Context);
       RHSBO = isReassociableOp(RHS, Opcode);
@@ -409,7 +409,7 @@ static Value *NegateValue(LLVMContext *Context, Value *V, Instruction *BI) {
 /// X-Y into (X + -Y).
 static bool ShouldBreakUpSubtract(LLVMContext *Context, Instruction *Sub) {
   // If this is a negation, we can't split it up!
-  if (BinaryOperator::isNeg(*Context, Sub))
+  if (BinaryOperator::isNeg(Sub))
     return false;
   
   // Don't bother to break this up unless either the LHS is an associable add or
@@ -663,7 +663,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       assert(i < Ops.size());
       // Check for X and -X in the operand list.
-      if (BinaryOperator::isNeg(*Context, Ops[i].Op)) {
+      if (BinaryOperator::isNeg(Ops[i].Op)) {
         Value *X = BinaryOperator::getNegArgument(Ops[i].Op);
         unsigned FoundX = FindInOperandList(Ops, i, X);
         if (FoundX != i) {
@@ -801,7 +801,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
       if (ShouldBreakUpSubtract(Context, BI)) {
         BI = BreakUpSubtract(Context, BI, ValueRankMap);
         MadeChange = true;
-      } else if (BinaryOperator::isNeg(*Context, BI)) {
+      } else if (BinaryOperator::isNeg(BI)) {
         // Otherwise, this is a negation.  See if the operand is a multiply tree
         // and if this is not an inner node of a multiply tree.
         if (isReassociableOp(BI->getOperand(1), Instruction::Mul) &&

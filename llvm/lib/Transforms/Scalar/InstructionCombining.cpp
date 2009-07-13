@@ -410,8 +410,8 @@ X("instcombine", "Combine redundant instructions");
 //   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
 static unsigned getComplexity(LLVMContext *Context, Value *V) {
   if (isa<Instruction>(V)) {
-    if (BinaryOperator::isNeg(*Context, V) ||
-        BinaryOperator::isFNeg(*Context, V) ||
+    if (BinaryOperator::isNeg(V) ||
+        BinaryOperator::isFNeg(V) ||
         BinaryOperator::isNot(V))
       return 3;
     return 4;
@@ -573,7 +573,7 @@ bool InstCombiner::SimplifyCompare(CmpInst &I) {
 // if the LHS is a constant zero (which is the 'negate' form).
 //
 static inline Value *dyn_castNegVal(Value *V, LLVMContext *Context) {
-  if (BinaryOperator::isNeg(*Context, V))
+  if (BinaryOperator::isNeg(V))
     return BinaryOperator::getNegArgument(V);
 
   // Constants can be considered to be negated values if they can be folded.
@@ -592,7 +592,7 @@ static inline Value *dyn_castNegVal(Value *V, LLVMContext *Context) {
 // form).
 //
 static inline Value *dyn_castFNegVal(Value *V, LLVMContext *Context) {
-  if (BinaryOperator::isFNeg(*Context, V))
+  if (BinaryOperator::isFNeg(V))
     return BinaryOperator::getFNegArgument(V);
 
   // Constants can be considered to be negated values if they can be folded.
