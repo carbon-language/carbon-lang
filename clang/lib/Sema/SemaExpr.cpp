@@ -3854,10 +3854,10 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
         // GNU extension: arithmetic on pointer to function
         Diag(Loc, diag::ext_gnu_ptr_func_arith)
           << lex->getType() << lex->getSourceRange();
-      } else { 
+      } else {
         // Check if we require a complete type.
         if (((PExp->getType()->isPointerType() && 
-              !PExp->getType()->getAsPointerType()->isDependentType()) ||
+              !PExp->getType()->isDependentType()) ||
               PExp->getType()->isObjCObjectPointerType()) &&
              RequireCompleteType(Loc, PointeeTy,
                                  diag::err_typecheck_arithmetic_incomplete_type,
