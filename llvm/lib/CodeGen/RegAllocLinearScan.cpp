@@ -1207,7 +1207,6 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   // mark our rollback point.
   std::vector<LiveInterval*> added;
   while (!spillIs.empty()) {
-    bool epicFail = false;
     LiveInterval *sli = spillIs.back();
     spillIs.pop_back();
     DOUT << "\t\t\tspilling(a): " << *sli << '\n';
@@ -1224,10 +1223,6 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     addStackInterval(sli, ls_, li_, mri_, *vrm_);
     std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
     spilled.insert(sli->reg);
-
-    if (epicFail) {
-      //abort();
-    }
   }
 
   unsigned earliestStart = earliestStartInterval->beginNumber();
