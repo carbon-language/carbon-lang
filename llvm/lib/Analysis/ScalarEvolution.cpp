@@ -772,6 +772,15 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
   if (const SCEVZeroExtendExpr *SZ = dyn_cast<SCEVZeroExtendExpr>(Op))
     return getZeroExtendExpr(SZ->getOperand(), Ty);
 
+  // Before doing any expensive analysis, check to see if we've already
+  // computed a SCEV for this Op and Ty.
+  FoldingSetNodeID ID;
+  ID.AddInteger(scZeroExtend);
+  ID.AddPointer(Op);
+  ID.AddPointer(Ty);
+  void *IP = 0;
+  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
+
   // If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can zero extend all of the
   // operands (often constants).  This allows analysis of something like
@@ -836,11 +845,8 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
       }
     }
 
-  FoldingSetNodeID ID;
-  ID.AddInteger(scZeroExtend);
-  ID.AddPointer(Op);
-  ID.AddPointer(Ty);
-  void *IP = 0;
+  // The cast wasn't folded; create an explicit cast node.
+  // Recompute the insert position, as it may have been invalidated.
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVZeroExtendExpr>();
   new (S) SCEVZeroExtendExpr(ID, Op, Ty);
@@ -867,6 +873,15 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   // sext(sext(x)) --> sext(x)
   if (const SCEVSignExtendExpr *SS = dyn_cast<SCEVSignExtendExpr>(Op))
     return getSignExtendExpr(SS->getOperand(), Ty);
+
+  // Before doing any expensive analysis, check to see if we've already
+  // computed a SCEV for this Op and Ty.
+  FoldingSetNodeID ID;
+  ID.AddInteger(scSignExtend);
+  ID.AddPointer(Op);
+  ID.AddPointer(Ty);
+  void *IP = 0;
+  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
 
   // If the input value is a chrec scev, and we can prove that the value
   // did not overflow the old, smaller, value, we can sign extend all of the
@@ -916,11 +931,8 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
       }
     }
 
-  FoldingSetNodeID ID;
-  ID.AddInteger(scSignExtend);
-  ID.AddPointer(Op);
-  ID.AddPointer(Ty);
-  void *IP = 0;
+  // The cast wasn't folded; create an explicit cast node.
+  // Recompute the insert position, as it may have been invalidated.
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVSignExtendExpr>();
   new (S) SCEVSignExtendExpr(ID, Op, Ty);
