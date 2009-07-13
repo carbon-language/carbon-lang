@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {zext } | count 0
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep zext
 
 define i32 @a(i1 %x) {
 entry:
@@ -27,5 +27,3 @@ entry:
         %res = sub i32 3, %y
         ret i32 %res
 }
-
-
