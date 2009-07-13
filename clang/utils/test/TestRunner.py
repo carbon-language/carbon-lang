@@ -151,6 +151,7 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
     try:
         p = subprocess.Popen(["/bin/sh",SCRIPT],
                              cwd=os.path.dirname(FILENAME),
+                             stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         out,err = p.communicate()
