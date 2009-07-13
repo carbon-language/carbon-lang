@@ -4953,7 +4953,7 @@ void ScalarEvolution::print(raw_ostream &OS, const Module* ) const {
   OS << "Classifying expressions for: " << F->getName() << "\n";
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
     if (isSCEVable(I->getType())) {
-      OS << *I;
+      OS << *I << '\n';
       OS << "  -->  ";
       const SCEV *SV = SE.getSCEV(&*I);
       SV->print(OS);
