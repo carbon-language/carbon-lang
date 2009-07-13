@@ -8263,9 +8263,8 @@ static bool isSafeIntegerType(const Type *Ty) {
   }
 }
 
-/// Only the TRUNC, ZEXT, SEXT. This function implements the common transforms
-/// for all those cases.
-/// @brief Implement the transforms common to CastInst with integer operands
+/// commonIntCastTransforms - This function implements the common transforms
+/// for trunc, zext, and sext.
 Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   if (Instruction *Result = commonCastTransforms(CI))
     return Result;
