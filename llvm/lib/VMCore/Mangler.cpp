@@ -136,20 +136,6 @@ unsigned Mangler::getTypeID(const Type *Ty) {
   return E;
 }
 
-std::string Mangler::getValueName(const Value *V) {
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    return getValueName(GV);
-  
-  std::string &Name = Memo[V];
-  if (!Name.empty())
-    return Name;       // Return the already-computed name for V.
-  
-  // Always mangle local names.
-  Name = "ltmp_" + utostr(Count++) + "_" + utostr(getTypeID(V->getType()));
-  return Name;
-}
-
-
 std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
   // Check to see whether we've already named V.
   std::string &Name = Memo[GV];
