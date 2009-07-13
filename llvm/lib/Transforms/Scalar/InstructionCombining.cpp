@@ -7974,6 +7974,23 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const Type *Ty,
            CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
                                       NumCastsRemoved);
 
+  case Instruction::UDiv:
+  case Instruction::URem: {
+    // UDiv and URem can be truncated if all the truncated bits are zero.
+    uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
+    uint32_t BitWidth = Ty->getScalarSizeInBits();
+    if (BitWidth < OrigBitWidth) {
+      APInt Mask = APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth);
+      if (MaskedValueIsZero(I->getOperand(0), Mask) &&
+          MaskedValueIsZero(I->getOperand(1), Mask)) {
+        return CanEvaluateInDifferentType(I->getOperand(0), Ty, CastOpc,
+                                          NumCastsRemoved) &&
+               CanEvaluateInDifferentType(I->getOperand(1), Ty, CastOpc,
+                                          NumCastsRemoved);
+      }
+    }
+    break;
+  }
   case Instruction::Shl:
     // If we are truncating the result of this SHL, and if it's a shift of a
     // constant amount, we can always perform a SHL in a smaller type.
@@ -8060,7 +8077,9 @@ Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty,
   case Instruction::Xor:
   case Instruction::AShr:
   case Instruction::LShr:
-  case Instruction::Shl: {
+  case Instruction::Shl:
+  case Instruction::UDiv:
+  case Instruction::URem: {
     Value *LHS = EvaluateInDifferentType(I->getOperand(0), Ty, isSigned);
     Value *RHS = EvaluateInDifferentType(I->getOperand(1), Ty, isSigned);
     Res = BinaryOperator::Create((Instruction::BinaryOps)Opc, LHS, RHS);
