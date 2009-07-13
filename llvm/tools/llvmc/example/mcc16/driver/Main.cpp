@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
 
   // HACK
   SaveTemps.setHiddenFlag(llvm::cl::Hidden);
-  SaveTemps = SaveTempsEnum::Unset;
   TempDirname = "tmp-objs";
 
   // Remove the temp dir if already exists.
