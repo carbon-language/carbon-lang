@@ -22,6 +22,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ValueHandle.h"
 #include <map>
+#include "CodeGenModule.h"
 #include "CGBlocks.h"
 #include "CGBuilder.h"
 #include "CGCall.h"
@@ -30,6 +31,7 @@
 
 namespace llvm {
   class BasicBlock;
+  class LLVMContext;
   class Module;
   class SwitchInst;
   class Value;
@@ -291,6 +293,8 @@ public:
 
   llvm::BasicBlock *getInvokeDest() { return InvokeDest; }
   void setInvokeDest(llvm::BasicBlock *B) { InvokeDest = B; }
+
+  llvm::LLVMContext &getLLVMContext() { return CGM.getLLVMContext(); }
 
   //===--------------------------------------------------------------------===//
   //                                  Objective-C

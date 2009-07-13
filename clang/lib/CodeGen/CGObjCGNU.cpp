@@ -1049,7 +1049,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       llvm::ArrayType::get(StaticsListPtrTy, 2);
     Elements.clear();
     Elements.push_back(Statics);
-    Elements.push_back(llvm::Constant::getNullValue(StaticsListPtrTy));
+    Elements.push_back(TheModule.getContext().getNullValue(StaticsListPtrTy));
     Statics = MakeGlobal(StaticsListArrayTy, Elements, ".objc_statics_ptr");
     Statics = llvm::ConstantExpr::getBitCast(Statics, PtrTy);
   }

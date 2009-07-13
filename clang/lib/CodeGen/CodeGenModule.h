@@ -21,6 +21,7 @@
 #include "CGCall.h"
 #include "CGCXX.h"
 #include "CodeGenTypes.h"
+#include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
@@ -34,6 +35,7 @@ namespace llvm {
   class GlobalValue;
   class TargetData;
   class FunctionType;
+  class LLVMContext;
 }
 
 namespace clang {
@@ -202,6 +204,7 @@ public:
   CodeGenTypes &getTypes() { return Types; }
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
+  llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
 
   /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.
   LangOptions::VisibilityMode getDeclVisibilityMode(const Decl *D) const;

@@ -103,7 +103,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     
     Value *NegOp = Builder.CreateNeg(ArgValue, "neg");
     Value *CmpResult = 
-    Builder.CreateICmpSGE(ArgValue, Constant::getNullValue(ArgValue->getType()),
+    Builder.CreateICmpSGE(ArgValue, 
+                          getLLVMContext().getNullValue(ArgValue->getType()),
                                                             "abscond");
     Value *Result = 
       Builder.CreateSelect(CmpResult, ArgValue, NegOp, "abs");
@@ -150,7 +151,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     const llvm::Type *ResultType = ConvertType(E->getType());
     Value *Tmp = Builder.CreateAdd(Builder.CreateCall(F, ArgValue, "tmp"), 
                                    ConstantInt::get(ArgType, 1), "tmp");
-    Value *Zero = llvm::Constant::getNullValue(ArgType);
+    Value *Zero = getLLVMContext().getNullValue(ArgType);
     Value *IsZero = Builder.CreateICmpEQ(ArgValue, Zero, "iszero");
     Value *Result = Builder.CreateSelect(IsZero, Zero, Tmp, "ffs");
     if (Result->getType() != ResultType)
@@ -505,7 +506,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Ptr = EmitScalarExpr(E->getArg(0));
     const llvm::Type *ElTy =
       cast<llvm::PointerType>(Ptr->getType())->getElementType();
-    Builder.CreateStore(llvm::Constant::getNullValue(ElTy), Ptr, true);
+    Builder.CreateStore(getLLVMContext().getNullValue(ElTy), Ptr, true);
     return RValue::get(0);
   }
 

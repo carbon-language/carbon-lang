@@ -106,7 +106,7 @@ public:
     // Initialize remaining array elements.
     // FIXME: This doesn't handle member pointers correctly!
     for (; i < NumElements; ++i)
-      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
+      Elts.push_back(CGM.getLLVMContext().getNullValue(ElemTy));
 
     if (RewriteType) {
       // FIXME: Try to avoid packing the array
@@ -193,7 +193,7 @@ public:
     // FIXME: This doesn't handle member pointers correctly!
     for (unsigned i = 0; i < SType->getNumElements(); ++i) {
       const llvm::Type *FieldTy = SType->getElementType(i);
-      Elts.push_back(llvm::Constant::getNullValue(FieldTy));
+      Elts.push_back(CGM.getLLVMContext().getNullValue(FieldTy));
     }
 
     // Copy initializer elements. Skip padding fields.
@@ -242,7 +242,7 @@ public:
     unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
     unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(Ty);
     while (CurSize < TotalSize) {
-      Elts.push_back(llvm::Constant::getNullValue(llvm::Type::Int8Ty));
+      Elts.push_back(CGM.getLLVMContext().getNullValue(llvm::Type::Int8Ty));
       Types.push_back(llvm::Type::Int8Ty);
       CurSize++;
     }
@@ -268,13 +268,14 @@ public:
            Field != FieldEnd; ++Field)
         assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
 #endif
-      return llvm::Constant::getNullValue(Ty);
+      return CGM.getLLVMContext().getNullValue(Ty);
     }
 
     if (curField->isBitField()) {
       // Create a dummy struct for bit-field insertion
       unsigned NumElts = CGM.getTargetData().getTypeAllocSize(Ty);
-      llvm::Constant* NV = llvm::Constant::getNullValue(llvm::Type::Int8Ty);
+      llvm::Constant* NV = 
+        CGM.getLLVMContext().getNullValue(llvm::Type::Int8Ty);
       std::vector<llvm::Constant*> Elts(NumElts, NV);
 
       InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(0));
@@ -314,7 +315,7 @@ public:
     }
 
     for (; i < NumElements; ++i)
-      Elts.push_back(llvm::Constant::getNullValue(ElemTy));
+      Elts.push_back(CGM.getLLVMContext().getNullValue(ElemTy));
 
     return llvm::ConstantVector::get(VType, Elts);    
   }
@@ -582,5 +583,5 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
 llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
   // Always return an LLVM null constant for now; this will change when we
   // get support for IRGen of member pointers.
-  return llvm::Constant::getNullValue(getTypes().ConvertType(T));
+  return getLLVMContext().getNullValue(getTypes().ConvertType(T));
 }

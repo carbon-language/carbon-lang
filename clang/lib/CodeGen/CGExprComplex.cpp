@@ -181,13 +181,15 @@ public:
   ComplexPairTy VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *E) {
     assert(E->getType()->isAnyComplexType() && "Expected complex type!");
     QualType Elem = E->getType()->getAsComplexType()->getElementType();
-    llvm::Constant *Null = llvm::Constant::getNullValue(CGF.ConvertType(Elem));
+    llvm::Constant *Null = 
+                       CGF.getLLVMContext().getNullValue(CGF.ConvertType(Elem));
     return ComplexPairTy(Null, Null);
   }
   ComplexPairTy VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
     assert(E->getType()->isAnyComplexType() && "Expected complex type!");
     QualType Elem = E->getType()->getAsComplexType()->getElementType();
-    llvm::Constant *Null = llvm::Constant::getNullValue(CGF.ConvertType(Elem));
+    llvm::Constant *Null = 
+                       CGF.getLLVMContext().getNullValue(CGF.ConvertType(Elem));
     return ComplexPairTy(Null, Null);
   }
   
@@ -312,7 +314,8 @@ ComplexPairTy ComplexExprEmitter::VisitExpr(Expr *E) {
 ComplexPairTy ComplexExprEmitter::
 VisitImaginaryLiteral(const ImaginaryLiteral *IL) {
   llvm::Value *Imag = CGF.EmitScalarExpr(IL->getSubExpr());
-  return ComplexPairTy(llvm::Constant::getNullValue(Imag->getType()), Imag);
+  return
+        ComplexPairTy(CGF.getLLVMContext().getNullValue(Imag->getType()), Imag);
 }
 
 
@@ -359,7 +362,7 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
   Elt = CGF.EmitScalarConversion(Elt, Op->getType(), DestTy);
   
   // Return (realval, 0).
-  return ComplexPairTy(Elt, llvm::Constant::getNullValue(Elt->getType()));
+  return ComplexPairTy(Elt, CGF.getLLVMContext().getNullValue(Elt->getType()));
 }
 
 ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
@@ -694,7 +697,7 @@ ComplexPairTy ComplexExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // Empty init list intializes to null
   QualType Ty = E->getType()->getAsComplexType()->getElementType();
   const llvm::Type* LTy = CGF.ConvertType(Ty);
-  llvm::Value* zeroConstant = llvm::Constant::getNullValue(LTy);
+  llvm::Value* zeroConstant = CGF.getLLVMContext().getNullValue(LTy);
   return ComplexPairTy(zeroConstant, zeroConstant);
 }
 

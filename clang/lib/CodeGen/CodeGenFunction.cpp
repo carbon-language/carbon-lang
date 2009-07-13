@@ -414,7 +414,7 @@ void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
   const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
 
   Builder.CreateCall4(CGM.getMemSetFn(), DestPtr,
-                      llvm::ConstantInt::getNullValue(llvm::Type::Int8Ty),
+                      getLLVMContext().getNullValue(llvm::Type::Int8Ty),
                       // TypeInfo.first describes size in bits.
                       llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
                       llvm::ConstantInt::get(llvm::Type::Int32Ty, 
@@ -579,7 +579,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
       
       // If we had a current basic block, we also need to emit an instruction
       // to initialize the cleanup destination.
-      Builder.CreateStore(llvm::Constant::getNullValue(llvm::Type::Int32Ty),
+      Builder.CreateStore(getLLVMContext().getNullValue(llvm::Type::Int32Ty),
                           DestCodePtr);
     } else
       Builder.ClearInsertionPoint();

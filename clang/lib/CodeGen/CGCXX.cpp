@@ -40,7 +40,7 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
   llvm::GlobalValue *GuardV = 
     new llvm::GlobalVariable(CGM.getModule(), llvm::Type::Int64Ty, false,
                              GV->getLinkage(),
-                             llvm::Constant::getNullValue(llvm::Type::Int64Ty),
+                             getLLVMContext().getNullValue(llvm::Type::Int64Ty),
                              GuardVName.c_str());
   
   // Load the first byte of the guard variable.
@@ -49,7 +49,7 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
                                       "tmp");
   
   // Compare it against 0.
-  llvm::Value *nullValue = llvm::Constant::getNullValue(llvm::Type::Int8Ty);
+  llvm::Value *nullValue = getLLVMContext().getNullValue(llvm::Type::Int8Ty);
   llvm::Value *ICmp = Builder.CreateICmpEQ(V, nullValue , "tobool");
   
   llvm::BasicBlock *InitBlock = createBasicBlock("init");
@@ -267,7 +267,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     
     llvm::Value *IsNull = 
       Builder.CreateICmpEQ(NewPtr, 
-                           llvm::Constant::getNullValue(NewPtr->getType()),
+                           getLLVMContext().getNullValue(NewPtr->getType()),
                            "isnull");
     
     Builder.CreateCondBr(IsNull, NewNull, NewNotNull);
@@ -308,7 +308,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     llvm::PHINode *PHI = Builder.CreatePHI(NewPtr->getType());
     PHI->reserveOperandSpace(2);
     PHI->addIncoming(NewPtr, NewNotNull);
-    PHI->addIncoming(llvm::Constant::getNullValue(NewPtr->getType()), NewNull);
+    PHI->addIncoming(getLLVMContext().getNullValue(NewPtr->getType()), NewNull);
     
     NewPtr = PHI;
   }
