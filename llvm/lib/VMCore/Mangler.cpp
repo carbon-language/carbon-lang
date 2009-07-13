@@ -163,7 +163,7 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
     Name = GV->getNameStart(); // Is an intrinsic function
   } else if (!GV->hasName()) {
     // Must mangle the global into a unique ID.
-    Name = "__unnamed_" + utostr(Count++);
+    Name = "__unnamed_" + utostr(Count++) + Suffix;
   } else {
     if (GV->hasPrivateLinkage())
       Name = makeNameProper(GV->getName() + Suffix, Prefix, PrivatePrefix);
