@@ -24,6 +24,7 @@
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -1747,4 +1748,16 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
   
   cerr << "no GCMetadataPrinter registered for GC: " << Name << "\n";
   llvm_unreachable();
+}
+
+/// EmitComments - Pretty-print comments for instructions
+void AsmPrinter::EmitComments(const MachineInstr &MI) const
+{
+  // No comments in MachineInstr yet
+}
+
+/// EmitComments - Pretty-print comments for instructions
+void AsmPrinter::EmitComments(const MCInst &MI) const
+{
+  // No comments in MCInst yet
 }

@@ -214,6 +214,10 @@ namespace llvm {
     /// measure inline asm instructions.
     char SeparatorChar;                   // Defaults to ';'
 
+    /// CommentColumn - This indicates the comment num (zero-based) at
+    /// which asm comments should be printed.
+    unsigned CommentColumn;               // Defaults to 60
+
     /// CommentString - This indicates the comment character used by the
     /// assembler.
     const char *CommentString;            // Defaults to "#"
@@ -692,6 +696,9 @@ namespace llvm {
     }
     char getSeparatorChar() const {
       return SeparatorChar;
+    }
+    const unsigned getCommentColumn() const {
+      return CommentColumn;
     }
     const char *getCommentString() const {
       return CommentString;

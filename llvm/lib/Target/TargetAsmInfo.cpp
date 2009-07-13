@@ -43,6 +43,7 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
   MaxInstLength = 4;
   PCSymbol = "$";
   SeparatorChar = ';';
+  CommentColumn = 60;
   CommentString = "#";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";

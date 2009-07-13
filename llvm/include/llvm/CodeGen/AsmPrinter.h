@@ -34,6 +34,7 @@ namespace llvm {
   class MachineConstantPoolEntry;
   class MachineConstantPoolValue;
   class MachineModuleInfo;
+  class MCInst;
   class DwarfWriter;
   class Mangler;
   class Section;
@@ -64,7 +65,7 @@ namespace llvm {
     
     /// DW - If available, this is a pointer to the current dwarf writer.
     DwarfWriter *DW;
-    
+
   public:
     /// Output stream on which we're printing assembly code.
     ///
@@ -332,6 +333,17 @@ namespace llvm {
     /// debug tables.
     void printDeclare(const MachineInstr *MI) const;
 
+    /// postInstructionAction - Handling printing of items after the
+    /// instruction iteself has been printed (e.g. comments)
+    void postInstructionAction(const MachineInstr &MI) const {
+      postInstructionActionImpl(MI);
+      EmitComments(MI);
+    }
+    void postInstructionAction(const MCInst &MI) const {
+      postInstructionActionImpl(MI);
+      EmitComments(MI);
+    }
+    
   protected:
     /// EmitZeros - Emit a block of zeros.
     ///
@@ -396,7 +408,7 @@ namespace llvm {
 
     /// printOffset - This is just convenient handler for printing offsets.
     void printOffset(int64_t Offset) const;
-
+ 
   private:
     const GlobalValue *findGlobalValue(const Constant* CV);
     void EmitLLVMUsedList(Constant *List);
@@ -408,6 +420,14 @@ namespace llvm {
     void EmitGlobalConstantFP(const ConstantFP* CFP, unsigned AddrSpace);
     void EmitGlobalConstantLargeInt(const ConstantInt* CI, unsigned AddrSpace);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
+
+    /// EmitComments - Pretty-print comments for instructions
+    void EmitComments(const MachineInstr &MI) const;
+    /// EmitComments - Pretty-print comments for instructions
+    void EmitComments(const MCInst &MI) const;
+
+    virtual void postInstructionActionImpl(const MachineInstr &MI) const {}
+    virtual void postInstructionActionImpl(const MCInst &MI) const {}
   };
 }
 
