@@ -8288,11 +8288,10 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
 
   // Attempt to propagate the cast into the instruction for int->int casts.
   int NumCastsRemoved = 0;
-  if (!isa<BitCastInst>(CI) &&
-      // Only do this if the dest type is a simple type, don't convert the
-      // expression tree to something weird like i93 unless the source is also
-      // strange.
-      (isSafeIntegerType(DestTy->getScalarType()) ||
+  // Only do this if the dest type is a simple type, don't convert the
+  // expression tree to something weird like i93 unless the source is also
+  // strange.
+  if ((isSafeIntegerType(DestTy->getScalarType()) ||
        !isSafeIntegerType(SrcI->getType()->getScalarType())) &&
       CanEvaluateInDifferentType(SrcI, DestTy,
                                  CI.getOpcode(), NumCastsRemoved)) {
@@ -8366,7 +8365,6 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
       switch (CI.getOpcode()) {
       default: LLVM_UNREACHABLE("Unknown cast type!");
       case Instruction::Trunc:
-      case Instruction::BitCast:
         // Just replace this cast with the result.
         return ReplaceInstUsesWith(CI, Res);
       case Instruction::ZExt: {
@@ -8409,16 +8407,12 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   case Instruction::Or:
   case Instruction::Xor:
     // If we are discarding information, rewrite.
-    if (DestBitSize <= SrcBitSize && DestBitSize != 1) {
-      // Don't insert two casts if they cannot be eliminated.  We allow 
-      // two casts to be inserted if the sizes are the same.  This could 
-      // only be converting signedness, which is a noop.
-      if (DestBitSize == SrcBitSize || 
-          !ValueRequiresCast(CI.getOpcode(), Op1, DestTy,TD) ||
+    if (DestBitSize < SrcBitSize && DestBitSize != 1) {
+      // Don't insert two casts unless at least one can be eliminated.
+      if (!ValueRequiresCast(CI.getOpcode(), Op1, DestTy, TD) ||
           !ValueRequiresCast(CI.getOpcode(), Op0, DestTy, TD)) {
-        Instruction::CastOps opcode = CI.getOpcode();
-        Value *Op0c = InsertCastBefore(opcode, Op0, DestTy, *SrcI);
-        Value *Op1c = InsertCastBefore(opcode, Op1, DestTy, *SrcI);
+        Value *Op0c = InsertCastBefore(Instruction::Trunc, Op0, DestTy, *SrcI);
+        Value *Op1c = InsertCastBefore(Instruction::Trunc, Op1, DestTy, *SrcI);
         return BinaryOperator::Create(
             cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
       }
@@ -8434,55 +8428,18 @@ Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
                                       Context->getConstantInt(CI.getType(), 1));
     }
     break;
-  case Instruction::SDiv:
-  case Instruction::UDiv:
-  case Instruction::SRem:
-  case Instruction::URem:
-    // If we are just changing the sign, rewrite.
-    if (DestBitSize == SrcBitSize) {
-      // Don't insert two casts if they cannot be eliminated.  We allow 
-      // two casts to be inserted if the sizes are the same.  This could 
-      // only be converting signedness, which is a noop.
-      if (!ValueRequiresCast(CI.getOpcode(), Op1, DestTy, TD) || 
-          !ValueRequiresCast(CI.getOpcode(), Op0, DestTy, TD)) {
-        Value *Op0c = InsertCastBefore(Instruction::BitCast, 
-                                       Op0, DestTy, *SrcI);
-        Value *Op1c = InsertCastBefore(Instruction::BitCast, 
-                                       Op1, DestTy, *SrcI);
-        return BinaryOperator::Create(
-          cast<BinaryOperator>(SrcI)->getOpcode(), Op0c, Op1c);
-      }
-    }
-    break;
 
-  case Instruction::Shl:
-    // Allow changing the sign of the source operand.  Do not allow 
-    // changing the size of the shift, UNLESS the shift amount is a 
-    // constant.  We must not change variable sized shifts to a smaller 
-    // size, because it is undefined to shift more bits out than exist 
-    // in the value.
-    if (DestBitSize == SrcBitSize ||
-        (DestBitSize < SrcBitSize && isa<Constant>(Op1))) {
-      Instruction::CastOps opcode = (DestBitSize == SrcBitSize ?
-          Instruction::BitCast : Instruction::Trunc);
-      Value *Op0c = InsertCastBefore(opcode, Op0, DestTy, *SrcI);
-      Value *Op1c = InsertCastBefore(opcode, Op1, DestTy, *SrcI);
+  case Instruction::Shl: {
+    // Canonicalize trunc inside shl, if we can.
+    ConstantInt *CI = dyn_cast<ConstantInt>(Op1);
+    if (CI && DestBitSize < SrcBitSize &&
+        CI->getLimitedValue(DestBitSize) < DestBitSize) {
+      Value *Op0c = InsertCastBefore(Instruction::Trunc, Op0, DestTy, *SrcI);
+      Value *Op1c = InsertCastBefore(Instruction::Trunc, Op1, DestTy, *SrcI);
       return BinaryOperator::CreateShl(Op0c, Op1c);
     }
     break;
-  case Instruction::AShr:
-    // If this is a signed shr, and if all bits shifted in are about to be
-    // truncated off, turn it into an unsigned shr to allow greater
-    // simplifications.
-    if (DestBitSize < SrcBitSize &&
-        isa<ConstantInt>(Op1)) {
-      uint32_t ShiftAmt = cast<ConstantInt>(Op1)->getLimitedValue(SrcBitSize);
-      if (SrcBitSize > ShiftAmt && SrcBitSize-ShiftAmt >= DestBitSize) {
-        // Insert the new logical shift right.
-        return BinaryOperator::CreateLShr(Op0, Op1);
-      }
-    }
-    break;
+  }
   }
   return 0;
 }
