@@ -35,48 +35,62 @@
 
 namespace llvm {
 
+class MachineLoop;
+
 // Provide overrides for Loop methods that don't make sense for machine loops.
 template<> inline
-PHINode *LoopBase<MachineBasicBlock>::getCanonicalInductionVariable() const {
+PHINode *
+LoopBase<MachineBasicBlock, MachineLoop>::getCanonicalInductionVariable() const {
   assert(0 && "getCanonicalInductionVariable not supported for machine loops!");
   return 0;
 }
 
 template<> inline Instruction*
-LoopBase<MachineBasicBlock>::getCanonicalInductionVariableIncrement() const {
+LoopBase<MachineBasicBlock,
+         MachineLoop>::getCanonicalInductionVariableIncrement() const {
   assert(0 &&
      "getCanonicalInductionVariableIncrement not supported for machine loops!");
   return 0;
 }
 
 template<>
-inline bool LoopBase<MachineBasicBlock>::isLoopInvariant(Value *V) const {
+inline bool
+LoopBase<MachineBasicBlock, MachineLoop>::isLoopInvariant(Value *V) const {
   assert(0 && "isLoopInvariant not supported for machine loops!");
   return false;
 }
 
 template<>
-inline Value *LoopBase<MachineBasicBlock>::getTripCount() const {
+inline Value *
+LoopBase<MachineBasicBlock, MachineLoop>::getTripCount() const {
   assert(0 && "getTripCount not supported for machine loops!");
   return 0;
 }
 
 template<>
-inline bool LoopBase<MachineBasicBlock>::isLCSSAForm() const {
+inline bool
+LoopBase<MachineBasicBlock, MachineLoop>::isLCSSAForm() const {
   assert(0 && "isLCSSAForm not supported for machine loops");
   return false;
 }
 
-typedef LoopBase<MachineBasicBlock> MachineLoop;
+class MachineLoop : public LoopBase<MachineBasicBlock, MachineLoop> {
+public:
+  MachineLoop();
+private:
+  friend class LoopInfoBase<MachineBasicBlock, MachineLoop>;
+  explicit MachineLoop(MachineBasicBlock *MBB)
+    : LoopBase<MachineBasicBlock, MachineLoop>(MBB) {}
+};
 
 class MachineLoopInfo : public MachineFunctionPass {
-  LoopInfoBase<MachineBasicBlock> LI;
-  friend class LoopBase<MachineBasicBlock>;
+  LoopInfoBase<MachineBasicBlock, MachineLoop> LI;
+  friend class LoopBase<MachineBasicBlock, MachineLoop>;
 
   void operator=(const MachineLoopInfo &);  // do not implement
   MachineLoopInfo(const MachineLoopInfo &); // do not implement
 
-  LoopInfoBase<MachineBasicBlock>& getBase() { return LI; }
+  LoopInfoBase<MachineBasicBlock, MachineLoop>& getBase() { return LI; }
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -86,7 +100,7 @@ public:
   /// iterator/begin/end - The interface to the top-level loops in the current
   /// function.
   ///
-  typedef LoopInfoBase<MachineBasicBlock>::iterator iterator;
+  typedef LoopInfoBase<MachineBasicBlock, MachineLoop>::iterator iterator;
   inline iterator begin() const { return LI.begin(); }
   inline iterator end() const { return LI.end(); }
   bool empty() const { return LI.empty(); }

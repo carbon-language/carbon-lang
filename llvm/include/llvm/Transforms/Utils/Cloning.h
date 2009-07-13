@@ -36,10 +36,9 @@ class CallSite;
 class Trace;
 class CallGraph;
 class TargetData;
+class Loop;
 class LoopInfo;
 class LLVMContext;
-template<class N> class LoopBase;
-typedef LoopBase<BasicBlock> Loop;
 
 /// CloneModule - Return an exact copy of the specified module
 ///

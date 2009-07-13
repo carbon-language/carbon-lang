@@ -19,8 +19,12 @@
 #include "llvm/CodeGen/Passes.h"
 using namespace llvm;
 
-TEMPLATE_INSTANTIATION(class LoopBase<MachineBasicBlock>);
-TEMPLATE_INSTANTIATION(class LoopInfoBase<MachineBasicBlock>);
+#define MLB class LoopBase<MachineBasicBlock, MachineLoop>
+TEMPLATE_INSTANTIATION(MLB);
+#undef MLB
+#define MLIB class LoopInfoBase<MachineBasicBlock, MachineLoop>
+TEMPLATE_INSTANTIATION(MLIB);
+#undef MLIB
 
 char MachineLoopInfo::ID = 0;
 static RegisterPass<MachineLoopInfo>

@@ -54,7 +54,7 @@ static bool containsAddRecFromDifferentLoop(const SCEV *S, Loop *L) {
       if (newLoop == L)
         return false;
       // if newLoop is an outer loop of L, this is OK.
-      if (!LoopInfoBase<BasicBlock>::isNotAlreadyContainedIn(L, newLoop))
+      if (!LoopInfo::isNotAlreadyContainedIn(L, newLoop))
         return false;
     }
     return true;
