@@ -541,7 +541,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     // Fall Through
    case GlobalValue::PrivateLinkage:
    case GlobalValue::InternalLinkage:
-    if (CVA && CVA->isCString(GVar->getParent()->getContext()))
+    if (CVA && CVA->isCString())
       printSizeAndType = false;
     break;
    case GlobalValue::GhostLinkage:

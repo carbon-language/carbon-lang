@@ -1416,19 +1416,19 @@ bool ConstantArray::isString() const {
 /// isCString - This method returns true if the array is a string (see
 /// isString) and it ends in a null byte \\0 and does not contains any other
 /// null bytes except its terminator.
-bool ConstantArray::isCString(LLVMContext &Context) const {
+bool ConstantArray::isCString() const {
   // Check the element type for i8...
   if (getType()->getElementType() != Type::Int8Ty)
     return false;
-  Constant *Zero = Context.getNullValue(getOperand(0)->getType());
+
   // Last element must be a null.
-  if (getOperand(getNumOperands()-1) != Zero)
+  if (!getOperand(getNumOperands()-1)->isNullValue())
     return false;
   // Other elements must be non-null integers.
   for (unsigned i = 0, e = getNumOperands()-1; i != e; ++i) {
     if (!isa<ConstantInt>(getOperand(i)))
       return false;
-    if (getOperand(i) == Zero)
+    if (getOperand(i)->isNullValue())
       return false;
   }
   return true;

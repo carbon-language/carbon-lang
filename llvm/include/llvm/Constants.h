@@ -375,7 +375,7 @@ public:
   /// isString) and it ends in a null byte \0 and does not contains any other
   /// @endverbatim
   /// null bytes except its terminator.
-  bool isCString(LLVMContext &Context) const;
+  bool isCString() const;
 
   /// getAsString - If this array is isString(), then this method converts the
   /// array to an std::string and returns it.  Otherwise, it asserts out.
