@@ -287,92 +287,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-/// print_pcrel_imm - This is used to print an immediate value that ends up
-/// being encoded as a pc-relative value.  These print slightly differently, for
-/// example, a $ is not emitted.
-void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
-  const MachineOperand &MO = MI->getOperand(OpNo);
-  switch (MO.getType()) {
-  default: LLVM_UNREACHABLE( "Unknown pcrel immediate operand");
-  case MachineOperand::MO_Immediate:
-    O << MO.getImm();
-    return;
-  case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
-    return;
-      
-  case MachineOperand::MO_GlobalAddress: {
-    const GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getValueName(GV);
-    decorateName(Name, GV);
-    
-    bool needCloseParen = false;
-    if (Name[0] == '$') {
-      // The name begins with a dollar-sign. In order to avoid having it look
-      // like an integer immediate to the assembler, enclose it in parens.
-      O << '(';
-      needCloseParen = true;
-    }
-    
-    // Handle dllimport linkage.
-    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-      O << "__imp_" << Name;
-    else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      FnStubs.insert(Name);
-      printSuffixedName(Name, "$stub");
-    } else {
-      O << Name;
-    }
-    
-    if (needCloseParen)
-      O << ')';
-
-    // Assemble call via PLT for externally visible symbols.
-    if (MO.getTargetFlags() == X86II::MO_PLT)
-      O << "@PLT";
-    
-    printOffset(MO.getOffset());
-    
-    return;
-  }
-      
-  case MachineOperand::MO_ExternalSymbol: {
-    bool needCloseParen = false;
-    std::string Name(TAI->getGlobalPrefix());
-    Name += MO.getSymbolName();
-     
-    if (Name[0] == '$') {
-      // The name begins with a dollar-sign. In order to avoid having it look
-      // like an integer immediate to the assembler, enclose it in parens.
-      O << '(';
-      needCloseParen = true;
-    }
-    
-    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      FnStubs.insert(Name);
-      printSuffixedName(Name, "$stub");
-    } else {
-      O << Name;
-    }
-    
-    if (MO.getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS) {
-      O << " + [.-";
-      PrintPICBaseSymbol();
-      O << ']';
-    }
-    
-    if (MO.getTargetFlags() == X86II::MO_PLT)
-      O << "@PLT";
-    
-    if (needCloseParen)
-      O << ')';
-    
-    return;
-  }
-  }
-}
-
-
+/// printSymbolOperand - Print a raw symbol reference operand.  This handles
+/// jump tables, constant pools, global address and external symbols, all of
+/// which print to a label with various suffixes for relocation types etc.
 void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   switch (MO.getType()) {
   default: LLVM_UNREACHABLE("unknown symbol type!");
@@ -469,6 +386,92 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   case X86II::MO_GOTOFF:    O << "@GOTOFF";    break;
   }
 }
+
+/// print_pcrel_imm - This is used to print an immediate value that ends up
+/// being encoded as a pc-relative value.  These print slightly differently, for
+/// example, a $ is not emitted.
+void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
+  const MachineOperand &MO = MI->getOperand(OpNo);
+  switch (MO.getType()) {
+  default: LLVM_UNREACHABLE( "Unknown pcrel immediate operand");
+  case MachineOperand::MO_Immediate:
+    O << MO.getImm();
+    return;
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
+    return;
+      
+  case MachineOperand::MO_GlobalAddress: {
+    const GlobalValue *GV = MO.getGlobal();
+    std::string Name = Mang->getValueName(GV);
+    decorateName(Name, GV);
+    
+    bool needCloseParen = false;
+    if (Name[0] == '$') {
+      // The name begins with a dollar-sign. In order to avoid having it look
+      // like an integer immediate to the assembler, enclose it in parens.
+      O << '(';
+      needCloseParen = true;
+    }
+    
+    // Handle dllimport linkage.
+    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
+      O << "__imp_" << Name;
+    else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      FnStubs.insert(Name);
+      printSuffixedName(Name, "$stub");
+    } else {
+      O << Name;
+    }
+    
+    if (needCloseParen)
+      O << ')';
+
+    // Assemble call via PLT for externally visible symbols.
+    if (MO.getTargetFlags() == X86II::MO_PLT)
+      O << "@PLT";
+    
+    printOffset(MO.getOffset());
+    
+    return;
+  }
+      
+  case MachineOperand::MO_ExternalSymbol: {
+    bool needCloseParen = false;
+    std::string Name(TAI->getGlobalPrefix());
+    Name += MO.getSymbolName();
+     
+    if (Name[0] == '$') {
+      // The name begins with a dollar-sign. In order to avoid having it look
+      // like an integer immediate to the assembler, enclose it in parens.
+      O << '(';
+      needCloseParen = true;
+    }
+    
+    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      FnStubs.insert(Name);
+      printSuffixedName(Name, "$stub");
+    } else {
+      O << Name;
+    }
+    
+    if (MO.getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS) {
+      O << " + [.-";
+      PrintPICBaseSymbol();
+      O << ']';
+    }
+    
+    if (MO.getTargetFlags() == X86II::MO_PLT)
+      O << "@PLT";
+    
+    if (needCloseParen)
+      O << ')';
+    
+    return;
+  }
+  }
+}
+
 
 
 void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
