@@ -242,7 +242,7 @@ namespace llvm {
     /// special global used by LLVM.  If so, emit it and return true, otherwise
     /// do nothing and return false.
     bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
-    
+
   public:
     //===------------------------------------------------------------------===//
     /// LEB 128 number encoding.
@@ -332,6 +332,10 @@ namespace llvm {
     /// printDeclare - This method prints a local variable declaration used by
     /// debug tables.
     void printDeclare(const MachineInstr *MI) const;
+
+    /// getMangler - Return Mangler used by the AsmPrinter. This is used by
+    /// DWARF debug info generator.
+    Mangler *getMangler() { return Mang; }
 
     /// postInstructionAction - Handling printing of items after the
     /// instruction iteself has been printed (e.g. comments)
