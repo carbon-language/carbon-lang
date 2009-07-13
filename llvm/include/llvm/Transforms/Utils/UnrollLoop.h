@@ -16,10 +16,10 @@
 #ifndef LLVM_TRANSFORMS_UTILS_UNROLLLOOP_H
 #define LLVM_TRANSFORMS_UTILS_UNROLLLOOP_H
 
-#include "llvm/Analysis/LoopInfo.h"
-
 namespace llvm {
 
+class Loop;
+class LoopInfo;
 class LPPassManager;
 
 bool UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM);

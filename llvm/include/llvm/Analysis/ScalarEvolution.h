@@ -22,7 +22,7 @@
 #define LLVM_ANALYSIS_SCALAREVOLUTION_H
 
 #include "llvm/Pass.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Instructions.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Allocator.h"
@@ -30,14 +30,19 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include <iosfwd>
+#include <map>
 
 namespace llvm {
   class APInt;
+  class Constant;
   class ConstantInt;
+  class DominatorTree;
   class Type;
   class ScalarEvolution;
   class TargetData;
   class LLVMContext;
+  class Loop;
+  class LoopInfo;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
   /// are opaque objects that the client is not allowed to do much with

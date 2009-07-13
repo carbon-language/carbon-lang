@@ -17,6 +17,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Support/TargetFolder.h"
+#include <set>
 
 namespace llvm {
   /// SCEVExpander - This class uses information about analyze scalars to

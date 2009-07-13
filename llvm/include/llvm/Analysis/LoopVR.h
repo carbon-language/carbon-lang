@@ -36,11 +36,7 @@ public:
   virtual void print(std::ostream &os, const Module *) const;
   void releaseMemory();
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.addRequiredTransitive<LoopInfo>();
-    AU.addRequiredTransitive<ScalarEvolution>();
-    AU.setPreservesAll();
-  }
+  void getAnalysisUsage(AnalysisUsage &AU) const;
 
   //===---------------------------------------------------------------------
   // Methods that are used to look up and update particular values.

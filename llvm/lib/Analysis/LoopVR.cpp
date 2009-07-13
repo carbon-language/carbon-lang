@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
@@ -218,6 +219,12 @@ ConstantRange LoopVR::getRange(const SCEV *S, const SCEV *T, ScalarEvolution &SE
   // TODO: non-affine addrec, udiv, SCEVUnknown (narrowed from elsewhere)?
 
   return FullSet;
+}
+
+void LoopVR::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequiredTransitive<LoopInfo>();
+  AU.addRequiredTransitive<ScalarEvolution>();
+  AU.setPreservesAll();
 }
 
 bool LoopVR::runOnFunction(Function &F) { Map.clear(); return false; }
