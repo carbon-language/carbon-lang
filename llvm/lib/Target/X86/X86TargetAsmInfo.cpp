@@ -96,10 +96,10 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
 
   // Leopard and earlier put exception tables in __DATA. Greater than Leopard
   // put them in __TEXT.
-  if (Subtarget->getDarwinVers() < 10)
-    DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
-  else
+  if (Subtarget->getDarwinVers() > 9)
     DwarfExceptionSection = ".section __TEXT,__gcc_except_tab";
+  else
+    DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
 }
 
 unsigned
