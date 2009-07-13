@@ -499,9 +499,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_ConstantPoolIndex:
   case MachineOperand::MO_GlobalAddress: 
   case MachineOperand::MO_ExternalSymbol: {
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    if (!isMemOp) O << '$';
-    
+    O << '$';
     printSymbolOperand(MO);
     break;
   }
@@ -545,7 +543,7 @@ void X86ATTAsmPrinter::printLeaMemReference(const MachineInstr *MI, unsigned Op,
   } else {
     assert(DispSpec.isGlobal() || DispSpec.isCPI() ||
            DispSpec.isJTI() || DispSpec.isSymbol());
-    printOperand(MI, Op+3, "mem");
+    printSymbolOperand(MI->getOperand(Op+3));
   }
 
   if (HasParenPart) {
@@ -661,17 +659,21 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   if (ExtraCode && ExtraCode[0]) {
     if (ExtraCode[1] != 0) return true; // Unknown modifier.
 
+    const MachineOperand &MO = MI->getOperand(OpNo);
+    
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'c': // Don't print "$" before a global var name or constant.
-      if (MI->getOperand(OpNo).isImm())
-        O << MI->getOperand(OpNo).getImm();
+      if (MO.isImm())
+        O << MO.getImm();
+      else if (MO.isGlobal() || MO.isCPI() || MO.isJTI() || MO.isSymbol())
+        printSymbolOperand(MO);
       else
-        printOperand(MI, OpNo, "mem");
+        printOperand(MI, OpNo);
       return false;
 
     case 'A': // Print '*' before a register (it must be a register)
-      if (MI->getOperand(OpNo).isReg()) {
+      if (MO.isReg()) {
         O << '*';
         printOperand(MI, OpNo);
         return false;
@@ -683,8 +685,8 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'w': // Print HImode register
     case 'k': // Print SImode register
     case 'q': // Print DImode register
-      if (MI->getOperand(OpNo).isReg())
-        return printAsmMRegister(MI->getOperand(OpNo), ExtraCode[0]);
+      if (MO.isReg())
+        return printAsmMRegister(MO, ExtraCode[0]);
       printOperand(MI, OpNo);
       return false;
 
@@ -692,16 +694,14 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       print_pcrel_imm(MI, OpNo);
       return false;
 
-    case 'n': { // Negate the immediate or print a '-' before the operand.
+    case 'n':  // Negate the immediate or print a '-' before the operand.
       // Note: this is a temporary solution. It should be handled target
       // independently as part of the 'MC' work.
-      const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.isImm()) {
         O << -MO.getImm();
         return false;
       }
       O << '-';
-    }
     }
   }
 
