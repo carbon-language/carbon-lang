@@ -2107,7 +2107,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
             ZI->getOperand(0)->getType() == Type::Int1Ty)
           return SelectInst::Create(ZI->getOperand(0),
                                     Context->getNullValue(I.getType()),
-                              Context->getConstantIntAllOnesValue(I.getType()));
+                              Context->getAllOnesValue(I.getType()));
     }
 
     if (isa<PHINode>(LHS))
@@ -2485,7 +2485,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {
     // Replace (-1 - A) with (~A)...
     if (C->isAllOnesValue())
-      return BinaryOperator::CreateNot(Op1);
+      return BinaryOperator::CreateNot(*Context, Op1);
 
     // C - ~X == X + (1+C)
     Value *X = 0;
@@ -2567,7 +2567,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         Value *OtherOp = Op1I->getOperand(Op1I->getOperand(0) == Op0);
 
         Value *NewNot =
-          InsertNewInstBefore(BinaryOperator::CreateNot(OtherOp, "B.not"), I);
+          InsertNewInstBefore(BinaryOperator::CreateNot(*Context, 
+                                                        OtherOp, "B.not"), I);
         return BinaryOperator::CreateAnd(Op0, NewNot);
       }
 
@@ -3219,7 +3220,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
     if (RHSI->getOpcode() == Instruction::Shl &&
         isa<ConstantInt>(RHSI->getOperand(0))) {
       if (cast<ConstantInt>(RHSI->getOperand(0))->getValue().isPowerOf2()) {
-        Constant *N1 = Context->getConstantIntAllOnesValue(I.getType());
+        Constant *N1 = Context->getAllOnesValue(I.getType());
         Value *Add = InsertNewInstBefore(BinaryOperator::CreateAdd(RHSI, N1,
                                                                    "tmp"), I);
         return BinaryOperator::CreateAnd(Op0, Add);
@@ -4128,7 +4129,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     Instruction *Or = BinaryOperator::CreateOr(Op0NotVal, Op1NotVal,
                                                I.getName()+".demorgan");
     InsertNewInstBefore(Or, I);
-    return BinaryOperator::CreateNot(Or);
+    return BinaryOperator::CreateNot(*Context, Or);
   }
   
   {
@@ -4174,7 +4175,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         std::swap(A, B);
       }
       if (A == Op0) {                                // A&(A^B) -> A & ~B
-        Instruction *NotB = BinaryOperator::CreateNot(B, "tmp");
+        Instruction *NotB = BinaryOperator::CreateNot(*Context, B, "tmp");
         InsertNewInstBefore(NotB, I);
         return BinaryOperator::CreateAnd(A, NotB);
       }
@@ -4902,7 +4903,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (A && isOnlyUse(Op0) && isOnlyUse(Op1)) {
       Value *And = InsertNewInstBefore(BinaryOperator::CreateAnd(A, B,
                                               I.getName()+".demorgan"), I);
-      return BinaryOperator::CreateNot(And);
+      return BinaryOperator::CreateNot(*Context, And);
     }
   }
 
@@ -5056,7 +5057,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         if (dyn_castNotVal(Op0I->getOperand(1), Context)) Op0I->swapOperands();
         if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0), Context)) {
           Instruction *NotY =
-            BinaryOperator::CreateNot(Op0I->getOperand(1),
+            BinaryOperator::CreateNot(*Context, Op0I->getOperand(1),
                                       Op0I->getOperand(1)->getName()+".not");
           InsertNewInstBefore(NotY, I);
           if (Op0I->getOpcode() == Instruction::And)
@@ -5202,7 +5203,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         std::swap(A, B);
       if (B == Op1) {                                // (A|B)^B == A & ~B
         Instruction *NotB =
-          InsertNewInstBefore(BinaryOperator::CreateNot(Op1, "tmp"), I);
+          InsertNewInstBefore(BinaryOperator::CreateNot(*Context, 
+                                                        Op1, "tmp"), I);
         return BinaryOperator::CreateAnd(A, NotB);
       }
     } else if (match(Op0I, m_Xor(m_Specific(Op1), m_Value(B)), *Context)) {
@@ -5216,7 +5218,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if (B == Op1 &&                                      // (B&A)^A == ~B & A
           !isa<ConstantInt>(Op1)) {  // Canonical form is (B&C)^C
         Instruction *N =
-          InsertNewInstBefore(BinaryOperator::CreateNot(A, "tmp"), I);
+          InsertNewInstBefore(BinaryOperator::CreateNot(*Context, A, "tmp"), I);
         return BinaryOperator::CreateAnd(N, Op1);
       }
     }
@@ -6006,7 +6008,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
     case ICmpInst::ICMP_EQ: {               // icmp eq i1 A, B -> ~(A^B)
       Instruction *Xor = BinaryOperator::CreateXor(Op0, Op1, I.getName()+"tmp");
       InsertNewInstBefore(Xor, I);
-      return BinaryOperator::CreateNot(Xor);
+      return BinaryOperator::CreateNot(*Context, Xor);
     }
     case ICmpInst::ICMP_NE:                  // icmp eq i1 A, B -> A^B
       return BinaryOperator::CreateXor(Op0, Op1);
@@ -6015,7 +6017,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       std::swap(Op0, Op1);                   // Change icmp ugt -> icmp ult
       // FALL THROUGH
     case ICmpInst::ICMP_ULT:{               // icmp ult i1 A, B -> ~A & B
-      Instruction *Not = BinaryOperator::CreateNot(Op0, I.getName()+"tmp");
+      Instruction *Not = BinaryOperator::CreateNot(*Context,
+                                                   Op0, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
       return BinaryOperator::CreateAnd(Not, Op1);
     }
@@ -6023,7 +6026,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       std::swap(Op0, Op1);                   // Change icmp sgt -> icmp slt
       // FALL THROUGH
     case ICmpInst::ICMP_SLT: {               // icmp slt i1 A, B -> A & ~B
-      Instruction *Not = BinaryOperator::CreateNot(Op1, I.getName()+"tmp");
+      Instruction *Not = BinaryOperator::CreateNot(*Context, 
+                                                   Op1, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
       return BinaryOperator::CreateAnd(Not, Op0);
     }
@@ -6031,7 +6035,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       std::swap(Op0, Op1);                   // Change icmp uge -> icmp ule
       // FALL THROUGH
     case ICmpInst::ICMP_ULE: {               //  icmp ule i1 A, B -> ~A | B
-      Instruction *Not = BinaryOperator::CreateNot(Op0, I.getName()+"tmp");
+      Instruction *Not = BinaryOperator::CreateNot(*Context,
+                                                   Op0, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
       return BinaryOperator::CreateOr(Not, Op1);
     }
@@ -6039,7 +6044,8 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       std::swap(Op0, Op1);                   // Change icmp sge -> icmp sle
       // FALL THROUGH
     case ICmpInst::ICMP_SLE: {               //  icmp sle i1 A, B -> A | ~B
-      Instruction *Not = BinaryOperator::CreateNot(Op1, I.getName()+"tmp");
+      Instruction *Not = BinaryOperator::CreateNot(*Context,
+                                                   Op1, I.getName()+"tmp");
       InsertNewInstBefore(Not, I);
       return BinaryOperator::CreateOr(Not, Op0);
     }
@@ -6168,7 +6174,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         // (x <u 2147483648) -> (x >s -1)  -> true if sign bit clear
         if (CI->isMinValue(true))
           return new ICmpInst(*Context, ICmpInst::ICMP_SGT, Op0,
-                           Context->getConstantIntAllOnesValue(Op0->getType()));
+                           Context->getAllOnesValue(Op0->getType()));
       }
       break;
     case ICmpInst::ICMP_UGT:
@@ -7298,7 +7304,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
     if (isSignedExt) {
       // We're performing an unsigned comp with a sign extended value.
       // This is true if the input is >= 0. [aka >s -1]
-      Constant *NegOne = Context->getConstantIntAllOnesValue(SrcTy);
+      Constant *NegOne = Context->getAllOnesValue(SrcTy);
       Result = InsertNewInstBefore(new ICmpInst(*Context, ICmpInst::ICMP_SGT, 
                                    LHSCIOp, NegOne, ICI.getName()), ICI);
     } else {
@@ -7317,7 +7323,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
          "ICmp should be folded!");
   if (Constant *CI = dyn_cast<Constant>(Result))
     return ReplaceInstUsesWith(ICI, Context->getConstantExprNot(CI));
-  return BinaryOperator::CreateNot(Result);
+  return BinaryOperator::CreateNot(*Context, Result);
 }
 
 Instruction *InstCombiner::visitShl(BinaryOperator &I) {
@@ -8718,7 +8724,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
   // Canonicalize sign-extend from i1 to a select.
   if (Src->getType() == Type::Int1Ty)
     return SelectInst::Create(Src,
-                              Context->getConstantIntAllOnesValue(CI.getType()),
+                              Context->getAllOnesValue(CI.getType()),
                               Context->getNullValue(CI.getType()));
 
   // See if the value being truncated is already sign extended.  If so, just
@@ -9373,7 +9379,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
                                              true/*SExt*/, "tmp", ICI);
     
           if (Pred == ICmpInst::ICMP_SGT)
-            In = InsertNewInstBefore(BinaryOperator::CreateNot(In,
+            In = InsertNewInstBefore(BinaryOperator::CreateNot(*Context, In,
                                        In->getName()+".not"), *ICI);
     
           return ReplaceInstUsesWith(SI, In);
@@ -9438,7 +9444,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       } else {
         // Change: A = select B, false, C --> A = and !B, C
         Value *NotCond =
-          InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
+          InsertNewInstBefore(BinaryOperator::CreateNot(*Context, CondVal,
                                              "not."+CondVal->getName()), SI);
         return BinaryOperator::CreateAnd(NotCond, FalseVal);
       }
@@ -9449,7 +9455,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       } else {
         // Change: A = select B, C, true --> A = or !B, C
         Value *NotCond =
-          InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
+          InsertNewInstBefore(BinaryOperator::CreateNot(*Context, CondVal,
                                              "not."+CondVal->getName()), SI);
         return BinaryOperator::CreateOr(NotCond, TrueVal);
       }
@@ -9472,7 +9478,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       } else if (TrueValC->isZero() && FalseValC->getValue() == 1) {
         // select C, 0, 1 -> zext !C to int
         Value *NotCond =
-          InsertNewInstBefore(BinaryOperator::CreateNot(CondVal,
+          InsertNewInstBefore(BinaryOperator::CreateNot(*Context, CondVal,
                                                "not."+CondVal->getName()), SI);
         return CastInst::Create(Instruction::ZExt, NotCond, SI.getType());
       }

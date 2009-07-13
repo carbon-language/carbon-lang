@@ -2067,17 +2067,20 @@ const SCEV *ScalarEvolution::getNegativeSCEV(const SCEV *V) {
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
-  return getMulExpr(V, getConstant(ConstantInt::getAllOnesValue(Ty)));
+  return getMulExpr(V,
+                  getConstant(cast<ConstantInt>(Context->getAllOnesValue(Ty))));
 }
 
 /// getNotSCEV - Return a SCEV corresponding to ~V = -1-V
 const SCEV *ScalarEvolution::getNotSCEV(const SCEV *V) {
   if (const SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
-    return getConstant(cast<ConstantInt>(ConstantExpr::getNot(VC->getValue())));
+    return getConstant(
+                cast<ConstantInt>(Context->getConstantExprNot(VC->getValue())));
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
-  const SCEV *AllOnes = getConstant(ConstantInt::getAllOnesValue(Ty));
+  const SCEV *AllOnes =
+                   getConstant(cast<ConstantInt>(Context->getAllOnesValue(Ty)));
   return getMinusSCEV(AllOnes, V);
 }
 

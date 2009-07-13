@@ -201,7 +201,7 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 static Instruction *LowerNegateToMultiply(Instruction *Neg,
                               std::map<AssertingVH<>, unsigned> &ValueRankMap,
                               LLVMContext *Context) {
-  Constant *Cst = Context->getConstantIntAllOnesValue(Neg->getType());
+  Constant *Cst = Context->getAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
   ValueRankMap.erase(Neg);
@@ -626,7 +626,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
             return Context->getNullValue(X->getType());
           } else if (Opcode == Instruction::Or) {   // ...|X|~X = -1
             ++NumAnnihil;
-            return Context->getConstantIntAllOnesValue(X->getType());
+            return Context->getAllOnesValue(X->getType());
           }
         }
       }

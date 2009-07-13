@@ -1669,30 +1669,32 @@ BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
                             Op->getType(), Name, InsertAtEnd);
 }
 
-BinaryOperator *BinaryOperator::CreateNot(Value *Op, const std::string &Name,
+BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
+                                          Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
   Constant *C;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
-    C = ConstantInt::getAllOnesValue(PTy->getElementType());
+    C = Context.getAllOnesValue(PTy->getElementType());
     C = ConstantVector::get(std::vector<Constant*>(PTy->getNumElements(), C));
   } else {
-    C = ConstantInt::getAllOnesValue(Op->getType());
+    C = Context.getAllOnesValue(Op->getType());
   }
   
   return new BinaryOperator(Instruction::Xor, Op, C,
                             Op->getType(), Name, InsertBefore);
 }
 
-BinaryOperator *BinaryOperator::CreateNot(Value *Op, const std::string &Name,
+BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
+                                          Value *Op, const std::string &Name,
                                           BasicBlock *InsertAtEnd) {
   Constant *AllOnes;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
     // Create a vector of all ones values.
-    Constant *Elt = ConstantInt::getAllOnesValue(PTy->getElementType());
+    Constant *Elt = Context.getAllOnesValue(PTy->getElementType());
     AllOnes = 
       ConstantVector::get(std::vector<Constant*>(PTy->getNumElements(), Elt));
   } else {
-    AllOnes = ConstantInt::getAllOnesValue(Op->getType());
+    AllOnes = Context.getAllOnesValue(Op->getType());
   }
   
   return new BinaryOperator(Instruction::Xor, Op, AllOnes,

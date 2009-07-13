@@ -814,10 +814,10 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
           if (I.getOpcode() == Instruction::And)
             markConstant(IV, &I, Context->getNullValue(I.getType()));
           else if (const VectorType *PT = dyn_cast<VectorType>(I.getType()))
-            markConstant(IV, &I, Context->getConstantVectorAllOnesValue(PT));
+            markConstant(IV, &I, Context->getAllOnesValue(PT));
           else
             markConstant(IV, &I,
-                         Context->getConstantIntAllOnesValue(I.getType()));
+                         Context->getAllOnesValue(I.getType()));
           return;
         } else {
           if (I.getOpcode() == Instruction::And) {
@@ -1388,9 +1388,9 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
         // undef | X -> -1.   X could be -1.
         if (const VectorType *PTy = dyn_cast<VectorType>(ITy))
           markForcedConstant(LV, I,
-                             Context->getConstantVectorAllOnesValue(PTy));
+                             Context->getAllOnesValue(PTy));
         else          
-          markForcedConstant(LV, I, Context->getConstantIntAllOnesValue(ITy));
+          markForcedConstant(LV, I, Context->getAllOnesValue(ITy));
         return true;
 
       case Instruction::SDiv:

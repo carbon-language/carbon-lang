@@ -1754,7 +1754,7 @@ namespace {
         switch (BO->getOpcode()) {
           case Instruction::And: {
             // "and i32 %a, %b" EQ -1 then %a EQ -1 and %b EQ -1
-            ConstantInt *CI = ConstantInt::getAllOnesValue(Ty);
+            ConstantInt *CI = cast<ConstantInt>(Context->getAllOnesValue(Ty));
             if (Canonical == CI) {
               add(CI, Op0, ICmpInst::ICMP_EQ, NewContext);
               add(CI, Op1, ICmpInst::ICMP_EQ, NewContext);
@@ -1892,7 +1892,7 @@ namespace {
 
         Constant *Zero = Context->getNullValue(Ty);
         Constant *One = ConstantInt::get(Ty, 1);
-        ConstantInt *AllOnes = ConstantInt::getAllOnesValue(Ty);
+        ConstantInt *AllOnes = cast<ConstantInt>(Context->getAllOnesValue(Ty));
 
         switch (Opcode) {
           default: break;

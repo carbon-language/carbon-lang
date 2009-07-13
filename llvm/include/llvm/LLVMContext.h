@@ -58,6 +58,10 @@ public:
   
   // Constant accessors
   Constant* getNullValue(const Type* Ty);
+  
+  /// @returns the value for an integer constant of the given type that has all
+  /// its bits set to true.
+  /// @brief Get the all ones value
   Constant* getAllOnesValue(const Type* Ty);
   
   // UndefValue accessors
@@ -73,7 +77,6 @@ public:
   ConstantInt* getConstantIntSigned(const IntegerType* Ty, int64_t V);
   ConstantInt* getConstantInt(const APInt& V);
   Constant* getConstantInt(const Type* Ty, const APInt& V);
-  ConstantInt* getConstantIntAllOnesValue(const Type* Ty);
   
   // ConstantPointerNull accessors
   ConstantPointerNull* getConstantPointerNull(const PointerType* T);
@@ -188,7 +191,6 @@ public:
                               const std::vector<Constant*>& V);
   Constant* getConstantVector(const std::vector<Constant*>& V);
   Constant* getConstantVector(Constant* const* Vals, unsigned NumVals);
-  ConstantVector* getConstantVectorAllOnesValue(const VectorType* Ty);
   
   // MDNode accessors
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);

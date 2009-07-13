@@ -227,11 +227,6 @@ public:
     return Val.getLimitedValue(Limit);
   }
 
-  /// @returns the value for an integer constant of the given type that has all
-  /// its bits set to true.
-  /// @brief Get the all ones value
-  static ConstantInt *getAllOnesValue(const Type *Ty);
-
   /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const ConstantInt *) { return true; }
   static bool classof(const Value *V) {
@@ -487,11 +482,6 @@ public:
   inline const VectorType *getType() const {
     return reinterpret_cast<const VectorType*>(Value::getType());
   }
-
-  /// @returns the value for a vector integer constant of the given type that
-  /// has all its bits set to true.
-  /// @brief Get the all ones value
-  static ConstantVector *getAllOnesValue(const VectorType *Ty);
   
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.  This always returns false because zero vectors are always
@@ -702,7 +692,6 @@ public:
   /// ConstantExpr::get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
   ///
-  static Constant *getNot(Constant *C);
   static Constant *getAdd(Constant *C1, Constant *C2);
   static Constant *getFAdd(Constant *C1, Constant *C2);
   static Constant *getSub(Constant *C1, Constant *C2);

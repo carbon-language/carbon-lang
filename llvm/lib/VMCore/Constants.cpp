@@ -128,31 +128,6 @@ bool Constant::ContainsRelocations(unsigned Kind) const {
   return false;
 }
 
-Constant *Constant::getAllOnesValue(const Type *Ty) {
-  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
-    return ConstantInt::get(APInt::getAllOnesValue(ITy->getBitWidth()));
-  return ConstantVector::getAllOnesValue(cast<VectorType>(Ty));
-}
-
-// Static constructor to create an integral constant with all bits set
-ConstantInt *ConstantInt::getAllOnesValue(const Type *Ty) {
-  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
-    return ConstantInt::get(APInt::getAllOnesValue(ITy->getBitWidth()));
-  return 0;
-}
-
-/// @returns the value for a vector integer constant of the given type that
-/// has all its bits set to true.
-/// @brief Get the all ones value
-ConstantVector *ConstantVector::getAllOnesValue(const VectorType *Ty) {
-  std::vector<Constant*> Elts;
-  Elts.resize(Ty->getNumElements(),
-              ConstantInt::getAllOnesValue(Ty->getElementType()));
-  assert(Elts[0] && "Not a vector integer type!");
-  return cast<ConstantVector>(ConstantVector::get(Elts));
-}
-
-
 /// getVectorElements - This method, which is only valid on constant of vector
 /// type, returns the elements of the vector in the specified smallvector.
 /// This handles breaking down a vector undef into undef elements, etc.  For
@@ -797,12 +772,6 @@ const SmallVector<unsigned, 4> &ConstantExpr::getIndices() const {
   return cast<InsertValueConstantExpr>(this)->Indices;
 }
 
-Constant *ConstantExpr::getNot(Constant *C) {
-  assert(C->getType()->isIntOrIntVector() &&
-         "Cannot NOT a nonintegral value!");
-  return get(Instruction::Xor, C,
-             Constant::getAllOnesValue(C->getType()));
-}
 Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
   return get(Instruction::Add, C1, C2);
 }

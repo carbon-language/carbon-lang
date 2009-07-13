@@ -214,9 +214,11 @@ public:
   static BinaryOperator *CreateFNeg(LLVMContext &Context,
                                     Value *Op, const std::string &Name,
                                     BasicBlock *InsertAtEnd);
-  static BinaryOperator *CreateNot(Value *Op, const std::string &Name = "",
+  static BinaryOperator *CreateNot(LLVMContext &Context,
+                                   Value *Op, const std::string &Name = "",
                                    Instruction *InsertBefore = 0);
-  static BinaryOperator *CreateNot(Value *Op, const std::string &Name,
+  static BinaryOperator *CreateNot(LLVMContext &Context,
+                                   Value *Op, const std::string &Name,
                                    BasicBlock *InsertAtEnd);
 
   /// isNeg, isFNeg, isNot - Check if the given Value is a

@@ -60,11 +60,6 @@ protected:
 
   void destroyConstantImpl();
 public:
-  /// Static constructor to get a '-1' constant.  This supports integers and
-  /// vectors.
-  ///
-  static Constant *getAllOnesValue(const Type *Ty);
-  
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const = 0;

@@ -2314,7 +2314,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     const VectorType *Ty = VectorType::get(Type::Int32Ty, 4);
     Constant *C = LoadMI->getOpcode() == X86::V_SET0 ?
                     MF.getFunction()->getContext()->getNullValue(Ty) :
-                    ConstantVector::getAllOnesValue(Ty);
+                    MF.getFunction()->getContext()->getAllOnesValue(Ty);
     unsigned CPI = MCP.getConstantPoolIndex(C, 16);
 
     // Create operands to load from the constant pool entry.

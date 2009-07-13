@@ -64,7 +64,14 @@ Constant* LLVMContext::getNullValue(const Type* Ty) {
 }
 
 Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
-  return Constant::getAllOnesValue(Ty);
+  if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
+    return getConstantInt(APInt::getAllOnesValue(ITy->getBitWidth()));
+  
+  std::vector<Constant*> Elts;
+  const VectorType* VTy = cast<VectorType>(Ty);
+  Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));
+  assert(Elts[0] && "Not a vector integer type!");
+  return cast<ConstantVector>(getConstantVector(Elts));
 }
 
 // UndefValue accessors.
@@ -104,11 +111,6 @@ ConstantInt* LLVMContext::getConstantInt(const APInt& V) {
 Constant* LLVMContext::getConstantInt(const Type* Ty, const APInt& V) {
   return ConstantInt::get(Ty, V);
 }
-
-ConstantInt* LLVMContext::getConstantIntAllOnesValue(const Type* Ty) {
-  return ConstantInt::getAllOnesValue(Ty);
-}
-
 
 // ConstantPointerNull accessors.
 ConstantPointerNull* LLVMContext::getConstantPointerNull(const PointerType* T) {
@@ -285,7 +287,9 @@ Constant* LLVMContext::getConstantExprFNeg(Constant* C) {
 }
 
 Constant* LLVMContext::getConstantExprNot(Constant* C) {
-  return ConstantExpr::getNot(C);
+  assert(C->getType()->isIntOrIntVector() &&
+         "Cannot NOT a nonintegral value!");
+  return getConstantExpr(Instruction::Xor, C, getAllOnesValue(C->getType()));
 }
 
 Constant* LLVMContext::getConstantExprAdd(Constant* C1, Constant* C2) {
@@ -462,11 +466,6 @@ Constant* LLVMContext::getConstantVector(const std::vector<Constant*>& V) {
 Constant* LLVMContext::getConstantVector(Constant* const* Vals,
                                          unsigned NumVals) {
   return ConstantVector::get(Vals, NumVals);
-}
-
-ConstantVector* LLVMContext::getConstantVectorAllOnesValue(
-                                                         const VectorType* Ty) {
-  return ConstantVector::getAllOnesValue(Ty);
 }
 
 // MDNode accessors

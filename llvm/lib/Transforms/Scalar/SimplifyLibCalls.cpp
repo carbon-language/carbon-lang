@@ -1225,7 +1225,7 @@ struct VISIBILITY_HIDDEN AbsOpt : public LibCallOptimization {
     // abs(x) -> x >s -1 ? x : -x
     Value *Op = CI->getOperand(1);
     Value *Pos = B.CreateICmpSGT(Op, 
-                             Context->getConstantIntAllOnesValue(Op->getType()),
+                             Context->getAllOnesValue(Op->getType()),
                                  "ispos");
     Value *Neg = B.CreateNeg(Op, "neg");
     return B.CreateSelect(Pos, Op, Neg);
