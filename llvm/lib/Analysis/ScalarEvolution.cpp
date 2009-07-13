@@ -3091,10 +3091,10 @@ ScalarEvolution::getBackedgeTakenInfo(const Loop *L) {
         if (It != Scalars.end()) {
           // SCEVUnknown for a PHI either means that it has an unrecognized
           // structure, or it's a PHI that's in the progress of being computed
-          // by createNodeForPHI.  In the former case, additional loop trip count
-          // information isn't going to change anything. In the later case,
-          // createNodeForPHI will perform the necessary updates on its own when
-          // it gets to that point.
+          // by createNodeForPHI.  In the former case, additional loop trip
+          // count information isn't going to change anything. In the later
+          // case, createNodeForPHI will perform the necessary updates on its
+          // own when it gets to that point.
           if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second))
             Scalars.erase(It);
           ValuesAtScopes.erase(I);
