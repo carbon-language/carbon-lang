@@ -137,6 +137,10 @@ TEST_F(ConstantRangeTest, GetMinsAndMaxes) {
   EXPECT_EQ(One.getSignedMin(), APInt(16, 0xa));
   EXPECT_EQ(Some.getSignedMin(), APInt(16, 0xa));
   EXPECT_EQ(Wrap.getSignedMin(), APInt(16, INT16_MIN));
+
+  // Found by Klee
+  EXPECT_EQ(ConstantRange(APInt(4, 7), APInt(4, 0)).getSignedMax(),
+            APInt(4, 7));
 }
 
 TEST_F(ConstantRangeTest, Trunc) {

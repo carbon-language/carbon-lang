@@ -159,14 +159,10 @@ APInt ConstantRange::getSignedMax() const {
     else
       return SignedMax;
   } else {
-    if ((getUpper() - 1).slt(getLower())) {
-      if (getLower() != SignedMax)
-        return SignedMax;
-      else
-        return getUpper() - 1;
-    } else {
+    if (getLower().isNegative() == getUpper().isNegative())
+      return SignedMax;
+    else
       return getUpper() - 1;
-    }
   }
 }
 
