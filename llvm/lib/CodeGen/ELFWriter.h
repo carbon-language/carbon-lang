@@ -218,7 +218,8 @@ namespace llvm {
     }
 
     // Helpers for obtaining ELF specific info.
-    unsigned getGlobalELFLinkage(const GlobalValue *GV);
+    unsigned getGlobalELFBinding(const GlobalValue *GV);
+    unsigned getGlobalELFType(const GlobalValue *GV);
     unsigned getGlobalELFVisibility(const GlobalValue *GV);
     unsigned getElfSectionFlags(unsigned Flags);
 
@@ -231,8 +232,7 @@ namespace llvm {
     unsigned ELFHdr_e_shnum_Offset;     // e_shnum    in ELF header.
 
   private:
-    void EmitFunctionDeclaration(const Function *F);
-    void EmitGlobalVar(const GlobalVariable *GV);
+    void EmitGlobal(const GlobalValue *GV);
     void EmitGlobalConstant(const Constant *C, ELFSection &GblS);
     void EmitGlobalConstantStruct(const ConstantStruct *CVS,
                                   ELFSection &GblS);

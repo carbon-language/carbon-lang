@@ -62,7 +62,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   const Function *F = MF.getFunction();
   ELFSym FnSym(F);
   FnSym.setType(ELFSym::STT_FUNC);
-  FnSym.setBind(EW.getGlobalELFLinkage(F));
+  FnSym.setBind(EW.getGlobalELFBinding(F));
   FnSym.setVisibility(EW.getGlobalELFVisibility(F));
   FnSym.SectionIdx = ES->SectionIdx;
   FnSym.Size = ES->getCurrentPCOffset()-FnStartOff;

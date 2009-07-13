@@ -145,6 +145,7 @@ bool ELFWriter::doInitialization(Module &M) {
   return false;
 }
 
+// getGlobalELFVisibility - Returns the ELF specific visibility type
 unsigned ELFWriter::getGlobalELFVisibility(const GlobalValue *GV) {
   switch (GV->getVisibility()) {
   default:
@@ -156,11 +157,11 @@ unsigned ELFWriter::getGlobalELFVisibility(const GlobalValue *GV) {
   case GlobalValue::ProtectedVisibility:
     return ELFSym::STV_PROTECTED;
   }
-
   return 0;
 }
 
-unsigned ELFWriter::getGlobalELFLinkage(const GlobalValue *GV) {
+// getGlobalELFBinding - Returns the ELF specific binding type
+unsigned ELFWriter::getGlobalELFBinding(const GlobalValue *GV) {
   if (GV->hasInternalLinkage())
     return ELFSym::STB_LOCAL;
 
@@ -170,8 +171,19 @@ unsigned ELFWriter::getGlobalELFLinkage(const GlobalValue *GV) {
   return ELFSym::STB_GLOBAL;
 }
 
-// getElfSectionFlags - Get the ELF Section Header based on the
-// flags defined in ELFTargetAsmInfo.
+// getGlobalELFType - Returns the ELF specific type for a global
+unsigned ELFWriter::getGlobalELFType(const GlobalValue *GV) {
+  if (GV->isDeclaration())
+    return ELFSym::STT_NOTYPE;
+
+  if (isa<Function>(GV))
+    return ELFSym::STT_FUNC;
+
+  return ELFSym::STT_OBJECT;
+}
+
+// getElfSectionFlags - Get the ELF Section Header flags based
+// on the flags defined in ELFTargetAsmInfo.
 unsigned ELFWriter::getElfSectionFlags(unsigned Flags) {
   unsigned ElfSectionFlags = ELFSection::SHF_ALLOC;
 
@@ -189,92 +201,99 @@ unsigned ELFWriter::getElfSectionFlags(unsigned Flags) {
   return ElfSectionFlags;
 }
 
-// For global symbols without a section, return the Null section as a
-// placeholder
-ELFSection &ELFWriter::getGlobalSymELFSection(const GlobalVariable *GV,
-                                              ELFSym &Sym) {
-  // If this is a declaration, the symbol does not have a section.
-  if (!GV->hasInitializer()) {
-    Sym.SectionIdx = ELFSection::SHN_UNDEF;
-    return getNullSection();
-  }
-
-  // Get the name and flags of the section for the global
-  const Section *S = TAI->SectionForGlobal(GV);
-  unsigned SectionType = ELFSection::SHT_PROGBITS;
-  unsigned SectionFlags = getElfSectionFlags(S->getFlags());
-  DOUT << "Section " << S->getName() << " for global " << GV->getName() << "\n";
-
-  const TargetData *TD = TM.getTargetData();
-  unsigned Align = TD->getPreferredAlignment(GV);
-  Constant *CV = GV->getInitializer();
-
-  // If this global has a zero initializer, go to .bss or common section.
-  // Variables are part of the common block if they are zero initialized
-  // and allowed to be merged with other symbols.
-  if (CV->isNullValue() || isa<UndefValue>(CV)) {
-    SectionType = ELFSection::SHT_NOBITS;
-    ELFSection &ElfS = getSection(S->getName(), SectionType, SectionFlags);
-    if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage() ||
-        GV->hasCommonLinkage()) {
-      Sym.SectionIdx = ELFSection::SHN_COMMON;
-      Sym.IsCommon = true;
-      ElfS.Align = 1;
-      return ElfS;
-    }
-    Sym.IsBss = true;
-    Sym.SectionIdx = ElfS.SectionIdx;
-    if (Align) ElfS.Size = (ElfS.Size + Align-1) & ~(Align-1);
-    ElfS.Align = std::max(ElfS.Align, Align);
-    return ElfS;
-  }
-
-  Sym.IsConstant = true;
-  ELFSection &ElfS = getSection(S->getName(), SectionType, SectionFlags);
-  Sym.SectionIdx = ElfS.SectionIdx;
-  ElfS.Align = std::max(ElfS.Align, Align);
-  return ElfS;
+// isELFUndefSym - the symbol has no section and must be placed in
+// the symbol table with a reference to the null section.
+static bool isELFUndefSym(const GlobalValue *GV) {
+  return GV->isDeclaration();
 }
 
-void ELFWriter::EmitFunctionDeclaration(const Function *F) {
-  ELFSym GblSym(F);
-  GblSym.setBind(ELFSym::STB_GLOBAL);
-  GblSym.setType(ELFSym::STT_NOTYPE);
-  GblSym.setVisibility(ELFSym::STV_DEFAULT);
-  GblSym.SectionIdx = ELFSection::SHN_UNDEF;
-  SymbolList.push_back(GblSym);
+// isELFBssSym - for an undef or null value, the symbol must go to a bss
+// section if it's not weak for linker, otherwise it's a common sym.
+static bool isELFBssSym(const GlobalValue *GV) {
+  return (!GV->isDeclaration() &&
+          (GV->isNullValue() || isa<UndefValue>(GV)) &&
+          !GV->isWeakForLinker());
 }
 
-void ELFWriter::EmitGlobalVar(const GlobalVariable *GV) {
-  unsigned SymBind = getGlobalELFLinkage(GV);
-  unsigned Align=0, Size=0;
+// isELFCommonSym - for an undef or null value, the symbol must go to a
+// common section if it's weak for linker, otherwise bss.
+static bool isELFCommonSym(const GlobalValue *GV) {
+  return (!GV->isDeclaration() &&
+          (GV->isNullValue() || isa<UndefValue>(GV))
+           && GV->isWeakForLinker());
+}
+
+// isELFDataSym - if the symbol is an initialized but no null constant
+// it must go to some kind of data section gathered from TAI
+static bool isELFDataSym(const GlobalValue *GV) {
+  return (!GV->isDeclaration() &&
+          !(GV->isNullValue() || isa<UndefValue>(GV)));
+}
+
+// EmitGlobal - Choose the right section for global and emit it
+void ELFWriter::EmitGlobal(const GlobalValue *GV) {
+
+  // Handle ELF Bind, Visibility and Type for the current symbol
+  unsigned SymBind = getGlobalELFBinding(GV);
   ELFSym GblSym(GV);
   GblSym.setBind(SymBind);
   GblSym.setVisibility(getGlobalELFVisibility(GV));
+  GblSym.setType(getGlobalELFType(GV));
 
-  if (GV->hasInitializer()) {
-    GblSym.setType(ELFSym::STT_OBJECT);
-    const TargetData *TD = TM.getTargetData();
-    Align = TD->getPreferredAlignment(GV);
-    Size = TD->getTypeAllocSize(GV->getInitializer()->getType());
-    GblSym.Size = Size;
+  if (isELFUndefSym(GV)) {
+    GblSym.SectionIdx = ELFSection::SHN_UNDEF;
   } else {
-    GblSym.setType(ELFSym::STT_NOTYPE);
-  }
+    assert(isa<GlobalVariable>(GV) && "GV not a global variable!");
+    const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
 
-  ELFSection &GblSection = getGlobalSymELFSection(GV, GblSym);
+    // Get ELF section from TAI
+    const Section *S = TAI->SectionForGlobal(GV);
+    unsigned SectionFlags = getElfSectionFlags(S->getFlags());
 
-  if (GblSym.IsCommon) {
-    GblSym.Value = Align;
-  } else if (GblSym.IsBss) {
-    GblSym.Value = GblSection.Size;
-    GblSection.Size += Size;
-  } else if (GblSym.IsConstant){
-    // GblSym.Value should contain the symbol index inside the section,
-    // and all symbols should start on their required alignment boundary
-    GblSym.Value = (GblSection.size() + (Align-1)) & (-Align);
-    GblSection.emitAlignment(Align);
-    EmitGlobalConstant(GV->getInitializer(), GblSection);
+    // The symbol align should update the section alignment if needed
+    const TargetData *TD = TM.getTargetData();
+    unsigned Align = TD->getPreferredAlignment(GVar);
+    unsigned Size = TD->getTypeAllocSize(GVar->getInitializer()->getType());
+    GblSym.Size = Size;
+
+    if (isELFCommonSym(GV)) {
+      GblSym.SectionIdx = ELFSection::SHN_COMMON;
+      getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags, 1);
+
+      // A new linkonce section is created for each global in the
+      // common section, the default alignment is 1 and the symbol
+      // value contains its alignment.
+      GblSym.Value = Align;
+
+    } else if (isELFBssSym(GV)) {
+      ELFSection &ES =
+        getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags);
+      GblSym.SectionIdx = ES.SectionIdx;
+
+      // Update the size with alignment and the next object can
+      // start in the right offset in the section
+      if (Align) ES.Size = (ES.Size + Align-1) & ~(Align-1);
+      ES.Align = std::max(ES.Align, Align);
+
+      // GblSym.Value should contain the virtual offset inside the section.
+      // Virtual because the BSS space is not allocated on ELF objects
+      GblSym.Value = ES.Size;
+      ES.Size += Size;
+
+    } else if (isELFDataSym(GV)) {
+      ELFSection &ES =
+        getSection(S->getName(), ELFSection::SHT_PROGBITS, SectionFlags);
+      GblSym.SectionIdx = ES.SectionIdx;
+
+      // GblSym.Value should contain the symbol offset inside the section,
+      // and all symbols should start on their required alignment boundary
+      ES.Align = std::max(ES.Align, Align);
+      GblSym.Value = (ES.size() + (Align-1)) & (-Align);
+      ES.emitAlignment(ES.Align);
+
+      // Emit the global to the data section 'ES'
+      EmitGlobalConstant(GVar->getInitializer(), ES);
+    }
   }
 
   // Local symbols should come first on the symbol table.
@@ -379,7 +398,7 @@ bool ELFWriter::doFinalization(Module &M) {
   // Build and emit data, bss and "common" sections.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    EmitGlobalVar(I);
+    EmitGlobal(I);
     GblSymLookup[I] = 0;
   }
 
@@ -392,15 +411,7 @@ bool ELFWriter::doFinalization(Module &M) {
     if (GblSymLookup.find(*I) != GblSymLookup.end())
       continue;
 
-    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I)) {
-      EmitGlobalVar(GV);
-    } else if (Function *F = dyn_cast<Function>(*I)) {
-      // If function is not in GblSymLookup, it doesn't have a body,
-      // so emit the symbol as a function declaration (no section associated)
-      EmitFunctionDeclaration(F);
-    } else {
-      assert("unknown howto handle pending global");
-    }
+    EmitGlobal(*I);
     GblSymLookup[*I] = 0;
   }
 
@@ -488,7 +499,7 @@ void ELFWriter::EmitRelocations() {
       // Target specific ELF relocation type
       unsigned RelType = TEW->getRelocationType(MR.getRelocationType());
 
-      // Constant addend used to compute the value to be stored 
+      // Constant addend used to compute the value to be stored
       // into the relocatable field
       int64_t Addend = 0;
 
@@ -548,7 +559,7 @@ void ELFWriter::EmitSymbol(BinaryObject &SymbolTable, ELFSym &Sym) {
 
 /// EmitSectionHeader - Write section 'Section' header in 'SHdrTab'
 /// Section Header Table
-void ELFWriter::EmitSectionHeader(BinaryObject &SHdrTab, 
+void ELFWriter::EmitSectionHeader(BinaryObject &SHdrTab,
                                   const ELFSection &SHdr) {
   SHdrTab.emitWord32(SHdr.NameIdx);
   SHdrTab.emitWord32(SHdr.Type);

@@ -126,13 +126,9 @@ namespace llvm {
   /// added to logical symbol table for the module.  This is eventually
   /// turned into a real symbol table in the file.
   struct ELFSym {
-    // The global value this corresponds to. Global symbols can be on of the 
-    // 3 types : if this symbol has a zero initializer, it is common or should
-    // be placed in bss section otherwise it's a constant.
+    // The global value this symbol matches. This should be null if the symbol
+    // is not a global value.
     const GlobalValue *GV;
-    bool IsCommon;
-    bool IsBss;
-    bool IsConstant;
 
     // ELF specific fields
     unsigned NameIdx;         // Index in .strtab of name, once emitted.
@@ -145,18 +141,18 @@ namespace llvm {
     // Symbol index into the Symbol table
     unsigned SymTabIdx;
 
-    enum { 
+    enum {
       STB_LOCAL = 0,
       STB_GLOBAL = 1,
       STB_WEAK = 2 
     };
 
-    enum { 
+    enum {
       STT_NOTYPE = 0,
       STT_OBJECT = 1,
       STT_FUNC = 2,
       STT_SECTION = 3,
-      STT_FILE = 4 
+      STT_FILE = 4
     };
 
     enum {
@@ -166,8 +162,7 @@ namespace llvm {
       STV_PROTECTED = 3 // Visible in other components but not preemptable
     };
 
-    ELFSym(const GlobalValue *gv) : GV(gv), IsCommon(false), IsBss(false),
-                                    IsConstant(false), NameIdx(0), Value(0),
+    ELFSym(const GlobalValue *gv) : GV(gv), NameIdx(0), Value(0),
                                     Size(0), Info(0), Other(STV_DEFAULT),
                                     SectionIdx(ELFSection::SHN_UNDEF),
                                     SymTabIdx(0) {}
