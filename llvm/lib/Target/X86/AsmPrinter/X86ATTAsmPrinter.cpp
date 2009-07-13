@@ -336,10 +336,6 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     if (needCloseParen)
       O << ')';
     
-    // Assemble call via PLT for externally visible symbols.
-    if (MO.getTargetFlags() == X86II::MO_PLT)
-      O << "@PLT";
-    
     printOffset(MO.getOffset());
     break;
   }
