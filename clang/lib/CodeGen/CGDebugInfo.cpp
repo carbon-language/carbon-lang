@@ -501,7 +501,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty,
   // old decl with the new one.  This will recursively update the debug info.
   FwdDecl.getGV()->replaceAllUsesWith(RealDecl.getGV());
   FwdDecl.getGV()->eraseFromParent();
-  
+
+  // Update TypeCache.
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;  
   return RealDecl;
 }
 
@@ -626,7 +628,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // old decl with the new one.  This will recursively update the debug info.
   FwdDecl.getGV()->replaceAllUsesWith(RealDecl.getGV());
   FwdDecl.getGV()->eraseFromParent();
-  
+
+  // Update TypeCache.
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;  
   return RealDecl;
 }
 
