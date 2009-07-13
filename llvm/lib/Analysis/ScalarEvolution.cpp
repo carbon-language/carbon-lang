@@ -4825,7 +4825,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 //===----------------------------------------------------------------------===//
 
 void ScalarEvolution::SCEVCallbackVH::deleted() {
-  assert(SE && "SCEVCallbackVH called with a non-null ScalarEvolution!");
+  assert(SE && "SCEVCallbackVH called with a null ScalarEvolution!");
   if (PHINode *PN = dyn_cast<PHINode>(getValPtr()))
     SE->ConstantEvolutionLoopExitValue.erase(PN);
   if (Instruction *I = dyn_cast<Instruction>(getValPtr()))
@@ -4835,7 +4835,7 @@ void ScalarEvolution::SCEVCallbackVH::deleted() {
 }
 
 void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
-  assert(SE && "SCEVCallbackVH called with a non-null ScalarEvolution!");
+  assert(SE && "SCEVCallbackVH called with a null ScalarEvolution!");
 
   // Forget all the expressions associated with users of the old value,
   // so that future queries will recompute the expressions using the new
