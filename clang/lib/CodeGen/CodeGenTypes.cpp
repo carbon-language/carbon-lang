@@ -215,7 +215,6 @@ static const llvm::Type* getTypeForFormat(const llvm::fltSemantics &format) {
 const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   const clang::Type &Ty = *Context.getCanonicalType(T);
   
-  //T->dump();
   switch (Ty.getTypeClass()) {
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)

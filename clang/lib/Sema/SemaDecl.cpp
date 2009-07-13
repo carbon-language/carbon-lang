@@ -528,7 +528,6 @@ void Sema::MergeTypeDefDecl(TypedefDecl *New, Decl *OldD) {
       // Install the built-in type for 'id', ignoring the current definition.
       New->setTypeForDecl(Context.getObjCIdType().getTypePtr());
       return;
-      break;
     case 5:
       if (!TypeID->isStr("Class"))
         break;

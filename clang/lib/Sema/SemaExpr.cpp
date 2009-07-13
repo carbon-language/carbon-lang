@@ -2226,7 +2226,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   }
 
   // Handle properties on ObjC 'Class' types.
-  if (OpKind == tok::period && (BaseType->isObjCClassType())) {
+  if (OpKind == tok::period && BaseType->isObjCClassType()) {
     // Also must look for a getter name which uses property syntax.
     Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
     if (ObjCMethodDecl *MD = getCurMethodDecl()) {
@@ -3917,12 +3917,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
   // Either ptr - int   or   ptr - ptr.
   if (lex->getType()->isPointerType() || 
       lex->getType()->isObjCObjectPointerType()) {
-    QualType lpointee;
-    if (const PointerType *LHSPTy = lex->getType()->getAsPointerType())
-      lpointee = LHSPTy->getPointeeType();
-    else if (const ObjCObjectPointerType *OPT = 
-              lex->getType()->getAsObjCObjectPointerType())
-      lpointee = OPT->getPointeeType();
+    QualType lpointee = lex->getType()->getPointeeType();
 
     // The LHS must be an completely-defined object type.
 
@@ -4295,15 +4290,11 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
       }
       if (lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType()) {
-        if (ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
-          ImpCastExprToType(rex, lType);
-          return ResultTy;
-        } else {
+        if (!ObjCQualifiedIdTypesAreCompatible(lType, rType, true))
           Diag(Loc, diag::warn_incompatible_qualified_id_operands)
             << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-          ImpCastExprToType(rex, lType);
-          return ResultTy;
-        }
+        ImpCastExprToType(rex, lType);
+        return ResultTy;
       }
       ImpCastExprToType(rex, lType);
       return ResultTy;

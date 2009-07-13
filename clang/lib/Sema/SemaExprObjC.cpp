@@ -765,7 +765,6 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
           if (!ClassImplementsProtocol(*I, rhsID, true))
             return false;
         }
-        return true;
       }
       // If there are no qualifiers and no interface, we have an 'id'.
       return true;
