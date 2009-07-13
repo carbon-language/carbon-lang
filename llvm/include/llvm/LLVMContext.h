@@ -183,6 +183,11 @@ public:
   
   // ConstantFP accessors
   ConstantFP* getConstantFP(const APFloat& V);
+  
+  /// get() - This returns a ConstantFP, or a vector containing a splat of a
+  /// ConstantFP, for the specified value in the specified type.  This should
+  /// only be used for simple constant values like 2.0/1.0 etc, that are
+  /// known-valid both as host double and as the target format.
   Constant* getConstantFP(const Type* Ty, double V);
   ConstantFP* getConstantFPNegativeZero(const Type* Ty);
   

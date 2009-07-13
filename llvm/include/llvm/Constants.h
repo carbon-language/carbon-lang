@@ -256,12 +256,6 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantFP *get(const APFloat &V);
 
-  /// get() - This returns a ConstantFP, or a vector containing a splat of a
-  /// ConstantFP, for the specified value in the specified type.  This should
-  /// only be used for simple constant values like 2.0/1.0 etc, that are
-  /// known-valid both as host double and as the target format.
-  static Constant *get(const Type *Ty, double V);
-
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat& V);
   inline const APFloat& getValueAPF() const { return Val; }

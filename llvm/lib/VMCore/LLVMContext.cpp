@@ -442,8 +442,36 @@ ConstantFP* LLVMContext::getConstantFP(const APFloat& V) {
   return ConstantFP::get(V);
 }
 
+static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
+  if (Ty == Type::FloatTy)
+    return &APFloat::IEEEsingle;
+  if (Ty == Type::DoubleTy)
+    return &APFloat::IEEEdouble;
+  if (Ty == Type::X86_FP80Ty)
+    return &APFloat::x87DoubleExtended;
+  else if (Ty == Type::FP128Ty)
+    return &APFloat::IEEEquad;
+  
+  assert(Ty == Type::PPC_FP128Ty && "Unknown FP format");
+  return &APFloat::PPCDoubleDouble;
+}
+
+/// get() - This returns a constant fp for the specified value in the
+/// specified type.  This should only be used for simple constant values like
+/// 2.0/1.0 etc, that are known-valid both as double and as the target format.
 Constant* LLVMContext::getConstantFP(const Type* Ty, double V) {
-  return ConstantFP::get(Ty, V);
+  APFloat FV(V);
+  bool ignored;
+  FV.convert(*TypeToFloatSemantics(Ty->getScalarType()),
+             APFloat::rmNearestTiesToEven, &ignored);
+  Constant *C = getConstantFP(FV);
+
+  // For vectors, broadcast the value.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return
+      getConstantVector(std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C;
 }
 
 ConstantFP* LLVMContext::getConstantFPNegativeZero(const Type* Ty) {

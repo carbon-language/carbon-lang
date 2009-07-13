@@ -382,24 +382,6 @@ ConstantFP *ConstantFP::get(const APFloat &V) {
   return Slot;
 }
 
-/// get() - This returns a constant fp for the specified value in the
-/// specified type.  This should only be used for simple constant values like
-/// 2.0/1.0 etc, that are known-valid both as double and as the target format.
-Constant *ConstantFP::get(const Type *Ty, double V) {
-  APFloat FV(V);
-  bool ignored;
-  FV.convert(*TypeToFloatSemantics(Ty->getScalarType()),
-             APFloat::rmNearestTiesToEven, &ignored);
-  Constant *C = get(FV);
-
-  // For vectors, broadcast the value.
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return
-      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
-
-  return C;
-}
-
 //===----------------------------------------------------------------------===//
 //                            ConstantXXX Classes
 //===----------------------------------------------------------------------===//
