@@ -8257,9 +8257,8 @@ static bool isSafeIntegerType(const Type *Ty) {
   }
 }
 
-/// Only the TRUNC, ZEXT, SEXT, and BITCAST can both operand and result as
-/// integer types. This function implements the common transforms for all those
-/// cases.
+/// Only the TRUNC, ZEXT, SEXT. This function implements the common transforms
+/// for all those cases.
 /// @brief Implement the transforms common to CastInst with integer operands
 Instruction *InstCombiner::commonIntCastTransforms(CastInst &CI) {
   if (Instruction *Result = commonCastTransforms(CI))
@@ -9004,10 +9003,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
   const Type *SrcTy = Src->getType();
   const Type *DestTy = CI.getType();
 
-  if (SrcTy->isInteger() && DestTy->isInteger()) {
-    if (Instruction *Result = commonIntCastTransforms(CI))
-      return Result;
-  } else if (isa<PointerType>(SrcTy)) {
+  if (isa<PointerType>(SrcTy)) {
     if (Instruction *I = commonPointerCastTransforms(CI))
       return I;
   } else {
