@@ -574,24 +574,6 @@ Constant *llvm::ConstantFoldInsertValueInstruction(LLVMContext &Context,
   return 0;
 }
 
-/// EvalVectorOp - Given two vector constants and a function pointer, apply the
-/// function pointer to each element pair, producing a new ConstantVector
-/// constant. Either or both of V1 and V2 may be NULL, meaning a
-/// ConstantAggregateZero operand.
-static Constant *EvalVectorOp(LLVMContext &Context, const ConstantVector *V1, 
-                              const ConstantVector *V2,
-                              const VectorType *VTy,
-                              Constant *(*FP)(Constant*, Constant*)) {
-  std::vector<Constant*> Res;
-  const Type *EltTy = VTy->getElementType();
-  for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
-    const Constant *C1 = V1 ? V1->getOperand(i) : Context.getNullValue(EltTy);
-    const Constant *C2 = V2 ? V2->getOperand(i) : Context.getNullValue(EltTy);
-    Res.push_back(FP(const_cast<Constant*>(C1),
-                     const_cast<Constant*>(C2)));
-  }
-  return Context.getConstantVector(Res);
-}
 
 Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
                                               unsigned Opcode,
@@ -833,45 +815,157 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
     const ConstantVector *CP2 = dyn_cast<ConstantVector>(C2);
     if ((CP1 != NULL || isa<ConstantAggregateZero>(C1)) &&
         (CP2 != NULL || isa<ConstantAggregateZero>(C2))) {
+      std::vector<Constant*> Res;
+      const Type* EltTy = VTy->getElementType();  
+      const Constant *C1 = 0;
+      const Constant *C2 = 0;
       switch (Opcode) {
       default:
         break;
       case Instruction::Add:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getAdd);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprAdd(const_cast<Constant*>(C1),
+                                                   const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::FAdd:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getFAdd);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprFAdd(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::Sub:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getSub);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprSub(const_cast<Constant*>(C1),
+                                                   const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::FSub:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getFSub);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprFSub(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::Mul:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getMul);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprMul(const_cast<Constant*>(C1),
+                                                   const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::FMul:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getFMul);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprFMul(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::UDiv:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getUDiv);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprUDiv(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::SDiv:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getSDiv);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprSDiv(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::FDiv:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getFDiv);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprFDiv(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::URem:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getURem);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprURem(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::SRem:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getSRem);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprSRem(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::FRem:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getFRem);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprFRem(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::And: 
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getAnd);
-      case Instruction::Or:  
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getOr);
-      case Instruction::Xor: 
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getXor);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprAnd(const_cast<Constant*>(C1),
+                                                   const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
+      case Instruction::Or:
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprOr(const_cast<Constant*>(C1),
+                                                  const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
+      case Instruction::Xor:
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprXor(const_cast<Constant*>(C1),
+                                                   const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::LShr:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getLShr);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprLShr(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::AShr:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getAShr);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprAShr(const_cast<Constant*>(C1),
+                                                    const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       case Instruction::Shl:
-        return EvalVectorOp(Context, CP1, CP2, VTy, ConstantExpr::getShl);
+        for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+          C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
+          C2 = CP2 ? CP2->getOperand(i) : Context.getNullValue(EltTy);
+          Res.push_back(Context.getConstantExprShl(const_cast<Constant*>(C1),
+                                                   const_cast<Constant*>(C2)));
+        }
+        return Context.getConstantVector(Res);
       }
     }
   }
