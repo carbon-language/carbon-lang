@@ -1450,6 +1450,11 @@ $(ObjDir)/%GenAsmWriter1.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) assembly writer #1 with tblgen"
 	$(Verb) $(TableGen) -gen-asm-writer -asmwriternum=1 -o $(call SYSPATH, $@) $<
 
+$(TARGET:%=$(ObjDir)/%GenAsmMatcher.inc.tmp): \
+$(ObjDir)/%GenAsmMatcher.inc.tmp : %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) assembly matcher with tblgen"
+	$(Verb) $(TableGen) -gen-asm-matcher -o $(call SYSPATH, $@) $<
+
 $(TARGET:%=$(ObjDir)/%GenCodeEmitter.inc.tmp): \
 $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) code emitter with tblgen"
