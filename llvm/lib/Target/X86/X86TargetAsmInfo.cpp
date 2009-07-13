@@ -93,13 +93,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   AbsoluteEHSectionOffsets = false;
   DwarfEHFrameSection =
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
-
-  // Leopard and earlier put exception tables in __DATA. Greater than Leopard
-  // put them in __TEXT.
-  if (Subtarget->getDarwinVers() > 9)
-    DwarfExceptionSection = ".section __TEXT,__gcc_except_tab";
-  else
-    DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
+  DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
 }
 
 unsigned
