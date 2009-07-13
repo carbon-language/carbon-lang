@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "sched-instrs"
 #include "ScheduleDAGInstrs.h"
+#include "llvm/Constants.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"

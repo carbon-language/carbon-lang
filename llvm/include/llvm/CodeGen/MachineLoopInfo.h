@@ -35,45 +35,6 @@
 
 namespace llvm {
 
-class MachineLoop;
-
-// Provide overrides for Loop methods that don't make sense for machine loops.
-template<> inline
-PHINode *
-LoopBase<MachineBasicBlock, MachineLoop>::getCanonicalInductionVariable() const {
-  assert(0 && "getCanonicalInductionVariable not supported for machine loops!");
-  return 0;
-}
-
-template<> inline Instruction*
-LoopBase<MachineBasicBlock,
-         MachineLoop>::getCanonicalInductionVariableIncrement() const {
-  assert(0 &&
-     "getCanonicalInductionVariableIncrement not supported for machine loops!");
-  return 0;
-}
-
-template<>
-inline bool
-LoopBase<MachineBasicBlock, MachineLoop>::isLoopInvariant(Value *V) const {
-  assert(0 && "isLoopInvariant not supported for machine loops!");
-  return false;
-}
-
-template<>
-inline Value *
-LoopBase<MachineBasicBlock, MachineLoop>::getTripCount() const {
-  assert(0 && "getTripCount not supported for machine loops!");
-  return 0;
-}
-
-template<>
-inline bool
-LoopBase<MachineBasicBlock, MachineLoop>::isLCSSAForm() const {
-  assert(0 && "isLCSSAForm not supported for machine loops");
-  return false;
-}
-
 class MachineLoop : public LoopBase<MachineBasicBlock, MachineLoop> {
 public:
   MachineLoop();

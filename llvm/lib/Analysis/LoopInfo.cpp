@@ -34,6 +34,184 @@ X("loops", "Natural Loop Information", true, true);
 // Loop implementation
 //
 
+/// isLoopInvariant - Return true if the specified value is loop invariant
+///
+bool Loop::isLoopInvariant(Value *V) const {
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    return !contains(I->getParent());
+  return true;  // All non-instructions are loop invariant
+}
+
+/// getCanonicalInductionVariable - Check to see if the loop has a canonical
+/// induction variable: an integer recurrence that starts at 0 and increments
+/// by one each time through the loop.  If so, return the phi node that
+/// corresponds to it.
+///
+/// The IndVarSimplify pass transforms loops to have a canonical induction
+/// variable.
+///
+PHINode *Loop::getCanonicalInductionVariable() const {
+  BasicBlock *H = getHeader();
+
+  BasicBlock *Incoming = 0, *Backedge = 0;
+  typedef GraphTraits<Inverse<BasicBlock*> > InvBlockTraits;
+  InvBlockTraits::ChildIteratorType PI = InvBlockTraits::child_begin(H);
+  assert(PI != InvBlockTraits::child_end(H) &&
+         "Loop must have at least one backedge!");
+  Backedge = *PI++;
+  if (PI == InvBlockTraits::child_end(H)) return 0;  // dead loop
+  Incoming = *PI++;
+  if (PI != InvBlockTraits::child_end(H)) return 0;  // multiple backedges?
+
+  if (contains(Incoming)) {
+    if (contains(Backedge))
+      return 0;
+    std::swap(Incoming, Backedge);
+  } else if (!contains(Backedge))
+    return 0;
+
+  // Loop over all of the PHI nodes, looking for a canonical indvar.
+  for (BasicBlock::iterator I = H->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
+    if (ConstantInt *CI =
+        dyn_cast<ConstantInt>(PN->getIncomingValueForBlock(Incoming)))
+      if (CI->isNullValue())
+        if (Instruction *Inc =
+            dyn_cast<Instruction>(PN->getIncomingValueForBlock(Backedge)))
+          if (Inc->getOpcode() == Instruction::Add &&
+                Inc->getOperand(0) == PN)
+            if (ConstantInt *CI = dyn_cast<ConstantInt>(Inc->getOperand(1)))
+              if (CI->equalsInt(1))
+                return PN;
+  }
+  return 0;
+}
+
+/// getCanonicalInductionVariableIncrement - Return the LLVM value that holds
+/// the canonical induction variable value for the "next" iteration of the
+/// loop.  This always succeeds if getCanonicalInductionVariable succeeds.
+///
+Instruction *Loop::getCanonicalInductionVariableIncrement() const {
+  if (PHINode *PN = getCanonicalInductionVariable()) {
+    bool P1InLoop = contains(PN->getIncomingBlock(1));
+    return cast<Instruction>(PN->getIncomingValue(P1InLoop));
+  }
+  return 0;
+}
+
+/// getTripCount - Return a loop-invariant LLVM value indicating the number of
+/// times the loop will be executed.  Note that this means that the backedge
+/// of the loop executes N-1 times.  If the trip-count cannot be determined,
+/// this returns null.
+///
+/// The IndVarSimplify pass transforms loops to have a form that this
+/// function easily understands.
+///
+Value *Loop::getTripCount() const {
+  // Canonical loops will end with a 'cmp ne I, V', where I is the incremented
+  // canonical induction variable and V is the trip count of the loop.
+  Instruction *Inc = getCanonicalInductionVariableIncrement();
+  if (Inc == 0) return 0;
+  PHINode *IV = cast<PHINode>(Inc->getOperand(0));
+
+  BasicBlock *BackedgeBlock =
+    IV->getIncomingBlock(contains(IV->getIncomingBlock(1)));
+
+  if (BranchInst *BI = dyn_cast<BranchInst>(BackedgeBlock->getTerminator()))
+    if (BI->isConditional()) {
+      if (ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition())) {
+        if (ICI->getOperand(0) == Inc) {
+          if (BI->getSuccessor(0) == getHeader()) {
+            if (ICI->getPredicate() == ICmpInst::ICMP_NE)
+              return ICI->getOperand(1);
+          } else if (ICI->getPredicate() == ICmpInst::ICMP_EQ) {
+            return ICI->getOperand(1);
+          }
+        }
+      }
+    }
+
+  return 0;
+}
+
+/// getSmallConstantTripCount - Returns the trip count of this loop as a
+/// normal unsigned value, if possible. Returns 0 if the trip count is unknown
+/// of not constant. Will also return 0 if the trip count is very large
+/// (>= 2^32)
+unsigned Loop::getSmallConstantTripCount() const {
+  Value* TripCount = this->getTripCount();
+  if (TripCount) {
+    if (ConstantInt *TripCountC = dyn_cast<ConstantInt>(TripCount)) {
+      // Guard against huge trip counts.
+      if (TripCountC->getValue().getActiveBits() <= 32) {
+        return (unsigned)TripCountC->getZExtValue();
+      }
+    }
+  }
+  return 0;
+}
+
+/// getSmallConstantTripMultiple - Returns the largest constant divisor of the
+/// trip count of this loop as a normal unsigned value, if possible. This
+/// means that the actual trip count is always a multiple of the returned
+/// value (don't forget the trip count could very well be zero as well!).
+///
+/// Returns 1 if the trip count is unknown or not guaranteed to be the
+/// multiple of a constant (which is also the case if the trip count is simply
+/// constant, use getSmallConstantTripCount for that case), Will also return 1
+/// if the trip count is very large (>= 2^32).
+unsigned Loop::getSmallConstantTripMultiple() const {
+  Value* TripCount = this->getTripCount();
+  // This will hold the ConstantInt result, if any
+  ConstantInt *Result = NULL;
+  if (TripCount) {
+    // See if the trip count is constant itself
+    Result = dyn_cast<ConstantInt>(TripCount);
+    // if not, see if it is a multiplication
+    if (!Result)
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(TripCount)) {
+        switch (BO->getOpcode()) {
+        case BinaryOperator::Mul:
+          Result = dyn_cast<ConstantInt>(BO->getOperand(1));
+          break;
+        default:
+          break;
+        }
+      }
+  }
+  // Guard against huge trip counts.
+  if (Result && Result->getValue().getActiveBits() <= 32) {
+    return (unsigned)Result->getZExtValue();
+  } else {
+    return 1;
+  }
+}
+
+/// isLCSSAForm - Return true if the Loop is in LCSSA form
+bool Loop::isLCSSAForm() const {
+  // Sort the blocks vector so that we can use binary search to do quick
+  // lookups.
+  SmallPtrSet<BasicBlock *, 16> LoopBBs(block_begin(), block_end());
+
+  for (block_iterator BI = block_begin(), E = block_end(); BI != E; ++BI) {
+    BasicBlock  *BB = *BI;
+    for (BasicBlock ::iterator I = BB->begin(), E = BB->end(); I != E;++I)
+      for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;
+           ++UI) {
+        BasicBlock *UserBB = cast<Instruction>(*UI)->getParent();
+        if (PHINode *P = dyn_cast<PHINode>(*UI)) {
+          UserBB = P->getIncomingBlock(UI);
+        }
+
+        // Check the current block, as a fast-path.  Most values are used in
+        // the same block they are defined in.
+        if (UserBB != BB && !LoopBBs.count(UserBB))
+          return false;
+      }
+  }
+
+  return true;
+}
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //
