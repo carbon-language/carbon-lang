@@ -372,56 +372,26 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
   }
 }
 
-void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
-                                    const char *Modifier) {
-  const MachineOperand &MO = MI->getOperand(OpNo);
-  switch (MO.getType()) {
-  default: LLVM_UNREACHABLE( "unknown operand type!");
-  case MachineOperand::MO_Register: {
-    assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
-           "Virtual registers should not make it this far!");
-    O << '%';
-    unsigned Reg = MO.getReg();
-    if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
-      MVT VT = (strcmp(Modifier+6,"64") == 0) ?
-        MVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? MVT::i32 :
-                    ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
-      Reg = getX86SubSuperRegister(Reg, VT);
-    }
-    O << TRI->getAsmName(Reg);
-    return;
-  }
 
-  case MachineOperand::MO_Immediate:
-    if (!Modifier || strcmp(Modifier, "mem"))
-      O << '$';
-    O << MO.getImm();
-    return;
+void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
+  switch (MO.getType()) {
+  default: LLVM_UNREACHABLE("unknown symbol type!");
   case MachineOperand::MO_JumpTableIndex: {
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
       << MO.getIndex();
     break;
   }
   case MachineOperand::MO_ConstantPoolIndex: {
-    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
-    if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
       << MO.getIndex();
-
     printOffset(MO.getOffset());
     break;
   }
   case MachineOperand::MO_GlobalAddress: {
-    bool isMemOp = Modifier && !strcmp(Modifier, "mem");
-    if (!isMemOp)
-      O << '$';
-    
     const GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
     decorateName(Name, GV);
-
+    
     bool needCloseParen = false;
     if (Name[0] == '$') {
       // The name begins with a dollar-sign. In order to avoid having it look
@@ -429,7 +399,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       O << '(';
       needCloseParen = true;
     }
-
+    
     // Handle dllimport linkage.
     if (MO.getTargetFlags() == X86II::MO_DLLIMPORT) {
       O << "__imp_" << Name;
@@ -447,7 +417,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     } else {
       O << Name;
     }
-
+    
     if (needCloseParen)
       O << ')';
     
@@ -463,9 +433,6 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     /// by _GLOBAL_OFFSET_TABLE_ on X86-32.  All others are call operands, which
     /// are pcrel_imm's.
     assert(!Subtarget->is64Bit());
-    // These are never used as memory operands.
-    assert(Modifier == 0 || strcmp(Modifier, "mem"));
-    O << '$';
     O << TAI->getGlobalPrefix();
     O << MO.getSymbolName();
     break;
@@ -500,6 +467,44 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case X86II::MO_GOTPCREL:  O << "@GOTPCREL";  break;
   case X86II::MO_GOT:       O << "@GOT";       break;
   case X86II::MO_GOTOFF:    O << "@GOTOFF";    break;
+  }
+}
+
+
+void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
+                                    const char *Modifier) {
+  const MachineOperand &MO = MI->getOperand(OpNo);
+  switch (MO.getType()) {
+  default: LLVM_UNREACHABLE("unknown operand type!");
+  case MachineOperand::MO_Register: {
+    assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+           "Virtual registers should not make it this far!");
+    O << '%';
+    unsigned Reg = MO.getReg();
+    if (Modifier && strncmp(Modifier, "subreg", strlen("subreg")) == 0) {
+      MVT VT = (strcmp(Modifier+6,"64") == 0) ?
+        MVT::i64 : ((strcmp(Modifier+6, "32") == 0) ? MVT::i32 :
+                    ((strcmp(Modifier+6,"16") == 0) ? MVT::i16 : MVT::i8));
+      Reg = getX86SubSuperRegister(Reg, VT);
+    }
+    O << TRI->getAsmName(Reg);
+    return;
+  }
+
+  case MachineOperand::MO_Immediate:
+    O << '$' << MO.getImm();
+    return;
+
+  case MachineOperand::MO_JumpTableIndex:
+  case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_GlobalAddress: 
+  case MachineOperand::MO_ExternalSymbol: {
+    bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
+    if (!isMemOp) O << '$';
+    
+    printSymbolOperand(MO);
+    break;
+  }
   }
 }
 
@@ -659,7 +664,10 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     switch (ExtraCode[0]) {
     default: return true;  // Unknown modifier.
     case 'c': // Don't print "$" before a global var name or constant.
-      printOperand(MI, OpNo, "mem");
+      if (MI->getOperand(OpNo).isImm())
+        O << MI->getOperand(OpNo).getImm();
+      else
+        printOperand(MI, OpNo, "mem");
       return false;
 
     case 'A': // Print '*' before a register (it must be a register)
