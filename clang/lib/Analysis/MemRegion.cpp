@@ -191,7 +191,7 @@ void StringRegion::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 void SymbolicRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << "SymRegion-" << sym;
+  os << "SymRegion{" << sym << '}';
 }
 
 void TypedViewRegion::dumpToStream(llvm::raw_ostream& os) const {
