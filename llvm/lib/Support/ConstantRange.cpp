@@ -557,13 +557,13 @@ ConstantRange::multiply(const ConstantRange &Other) const {
   if (isFullSet() || Other.isFullSet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/true);
 
-  ConstantRange this_zext = zeroExtend(getBitWidth() * 2);
-  ConstantRange Other_zext = Other.zeroExtend(getBitWidth() * 2);
+  APInt this_min = getUnsignedMin().zext(getBitWidth() * 2);
+  APInt this_max = getUnsignedMax().zext(getBitWidth() * 2);
+  APInt Other_min = Other.getUnsignedMin().zext(getBitWidth() * 2);
+  APInt Other_max = Other.getUnsignedMax().zext(getBitWidth() * 2);
 
-  ConstantRange Result_zext = ConstantRange(
-      this_zext.getLower() * Other_zext.getLower(),
-      ((this_zext.getUpper()-1) * (Other_zext.getUpper()-1)) + 1);
-
+  ConstantRange Result_zext = ConstantRange(this_min * Other_min,
+                                            this_max * Other_max + 1);
   return Result_zext.truncate(getBitWidth());
 }
 

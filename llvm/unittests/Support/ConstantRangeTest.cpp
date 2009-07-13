@@ -275,6 +275,11 @@ TEST_F(ConstantRangeTest, Multiply) {
   EXPECT_TRUE(Some.multiply(Some).isFullSet());
   EXPECT_EQ(Some.multiply(Wrap), Full);
   EXPECT_EQ(Wrap.multiply(Wrap), Full);
+
+  // http://llvm.org/PR4545
+  EXPECT_EQ(ConstantRange(APInt(4, 1), APInt(4, 6)).multiply(
+              ConstantRange(APInt(4, 6), APInt(4, 2))),
+            ConstantRange(4, /*isFullSet=*/true));
 }
 
 TEST_F(ConstantRangeTest, UMax) {
