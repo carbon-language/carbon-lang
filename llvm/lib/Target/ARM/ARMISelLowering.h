@@ -205,7 +205,7 @@ namespace llvm {
     /// make the right decision when generating code for different targets.
     const ARMSubtarget *Subtarget;
 
-    /// ARMPCLabelIndex - Keep track the number of ARM PC labels created.
+    /// ARMPCLabelIndex - Keep track of the number of ARM PC labels created.
     ///
     unsigned ARMPCLabelIndex;
 

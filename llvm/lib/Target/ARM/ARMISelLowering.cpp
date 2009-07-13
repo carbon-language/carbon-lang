@@ -1114,7 +1114,7 @@ SDValue ARMTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
 }
 
 // ConstantPool, JumpTable, GlobalAddress, and ExternalSymbol are lowered as
-// their target countpart wrapped in the ARMISD::Wrapper node. Suppose N is
+// their target counterpart wrapped in the ARMISD::Wrapper node. Suppose N is
 // one of the above mentioned nodes. It has to be wrapped because otherwise
 // Select(N) returns N. So the raw TargetGlobalAddress nodes, etc. can only
 // be used to form addressing mode. These wrapped nodes will be selected
