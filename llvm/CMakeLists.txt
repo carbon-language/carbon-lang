@@ -28,6 +28,24 @@ set(LLVM_TOOLS_BINARY_DIR ${LLVM_BINARY_DIR}/bin)
 set(LLVM_EXAMPLES_BINARY_DIR ${LLVM_BINARY_DIR}/examples)
 set(LLVM_LIBDIR_SUFFIX "" CACHE STRING "Define suffix of library directory name (32/64)" )
 
+if( NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
+  file(GLOB_RECURSE
+    tablegenned_files_on_include_dir
+    "${LLVM_MAIN_SRC_DIR}/include/llvm/*.gen")
+  file(GLOB_RECURSE
+    tablegenned_files_on_lib_dir
+    "${LLVM_MAIN_SRC_DIR}/lib/Target/*.inc")
+  if( tablegenned_files_on_include_dir OR tablegenned_files_on_lib_dir)
+    message(FATAL_ERROR "Apparently there is a previous in-source build,
+probably as the result of running `configure' and `make' on
+${LLVM_MAIN_SRC_DIR}.
+This may cause problems. The suspicious files are:
+${tablegenned_files_on_lib_dir}
+${tablegenned_files_on_include_dir}
+Please clean the source directory.")
+  endif()
+endif()
+
 set(LLVM_ALL_TARGETS
   Alpha
   ARM
