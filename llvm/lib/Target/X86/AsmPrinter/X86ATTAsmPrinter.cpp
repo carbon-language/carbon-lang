@@ -346,12 +346,26 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     break;
   }
   case MachineOperand::MO_ExternalSymbol:
-    /// NOTE: MO_ExternalSymbol in a non-pcrel_imm context is *only* generated
-    /// by _GLOBAL_OFFSET_TABLE_ on X86-32.  All others are call operands, which
-    /// are pcrel_imm's.
-    assert(!Subtarget->is64Bit());
-    O << TAI->getGlobalPrefix();
-    O << MO.getSymbolName();
+    bool needCloseParen = false;
+    std::string Name(TAI->getGlobalPrefix());
+    Name += MO.getSymbolName();
+    
+    if (Name[0] == '$') {
+      // The name begins with a dollar-sign. In order to avoid having it look
+      // like an integer immediate to the assembler, enclose it in parens.
+      O << '(';
+      needCloseParen = true;
+    }
+    
+    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
+      FnStubs.insert(Name);
+      printSuffixedName(Name, "$stub");
+    } else {
+      O << Name;
+    }
+    
+    if (needCloseParen)
+      O << ')';
     break;
   }
   
@@ -363,6 +377,7 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY:
   case X86II::MO_DLLIMPORT:
+  case X86II::MO_DARWIN_STUB:
     // These affect the name of the symbol, not any suffix.
     break;
   case X86II::MO_GOT_ABSOLUTE_ADDRESS:
@@ -384,6 +399,7 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
   case X86II::MO_GOTPCREL:  O << "@GOTPCREL";  break;
   case X86II::MO_GOT:       O << "@GOT";       break;
   case X86II::MO_GOTOFF:    O << "@GOTOFF";    break;
+  case X86II::MO_PLT:       O << "@PLT";       break;
   }
 }
 
@@ -400,75 +416,12 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
     return;
-      
-  case MachineOperand::MO_GlobalAddress: {
-    const GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getValueName(GV);
-    decorateName(Name, GV);
-    
-    bool needCloseParen = false;
-    if (Name[0] == '$') {
-      // The name begins with a dollar-sign. In order to avoid having it look
-      // like an integer immediate to the assembler, enclose it in parens.
-      O << '(';
-      needCloseParen = true;
-    }
-    
-    // Handle dllimport linkage.
-    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-      O << "__imp_" << Name;
-    else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      FnStubs.insert(Name);
-      printSuffixedName(Name, "$stub");
-    } else {
-      O << Name;
-    }
-    
-    if (needCloseParen)
-      O << ')';
-
-    // Assemble call via PLT for externally visible symbols.
-    if (MO.getTargetFlags() == X86II::MO_PLT)
-      O << "@PLT";
-    
-    printOffset(MO.getOffset());
-    
+  case MachineOperand::MO_GlobalAddress:
+    printSymbolOperand(MO);
     return;
-  }
-      
-  case MachineOperand::MO_ExternalSymbol: {
-    bool needCloseParen = false;
-    std::string Name(TAI->getGlobalPrefix());
-    Name += MO.getSymbolName();
-     
-    if (Name[0] == '$') {
-      // The name begins with a dollar-sign. In order to avoid having it look
-      // like an integer immediate to the assembler, enclose it in parens.
-      O << '(';
-      needCloseParen = true;
-    }
-    
-    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      FnStubs.insert(Name);
-      printSuffixedName(Name, "$stub");
-    } else {
-      O << Name;
-    }
-    
-    if (MO.getTargetFlags() == X86II::MO_GOT_ABSOLUTE_ADDRESS) {
-      O << " + [.-";
-      PrintPICBaseSymbol();
-      O << ']';
-    }
-    
-    if (MO.getTargetFlags() == X86II::MO_PLT)
-      O << "@PLT";
-    
-    if (needCloseParen)
-      O << ')';
-    
+  case MachineOperand::MO_ExternalSymbol:
+    printSymbolOperand(MO);
     return;
-  }
   }
 }
 
