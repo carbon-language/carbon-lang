@@ -1121,16 +1121,20 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
     }
     case ARMII::AddrModeT2_i12: {
-      ImmIdx = i+2;
+      ImmIdx = i+1;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
       NumBits = 12;
       break;
     }
-    case ARMII::AddrModeT2_so:
     case ARMII::AddrModeT2_i8: {
-      ImmIdx = i+2;
+      ImmIdx = i+1;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
       NumBits = 8;
+      break;
+    }
+    case ARMII::AddrModeT2_so: {
+      ImmIdx = i+2;
+      InstrOffs = MI.getOperand(ImmIdx).getImm();
       break;
     }
     default:
