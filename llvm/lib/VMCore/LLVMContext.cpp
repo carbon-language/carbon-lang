@@ -19,6 +19,7 @@
 #include "llvm/MDNode.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "LLVMContextImpl.h"
+#include <cstdarg>
 
 using namespace llvm;
 
