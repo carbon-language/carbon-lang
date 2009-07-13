@@ -4278,8 +4278,6 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
           !Context.typesAreCompatible(lType, rType)) {
         Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-        ImpCastExprToType(rex, lType);
-        return ResultTy;
       }
       ImpCastExprToType(rex, lType);
       return ResultTy;
@@ -4293,8 +4291,6 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
         if (!ObjCQualifiedIdTypesAreCompatible(lType, rType, true))
           Diag(Loc, diag::warn_incompatible_qualified_id_operands)
             << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-        ImpCastExprToType(rex, lType);
-        return ResultTy;
       }
       ImpCastExprToType(rex, lType);
       return ResultTy;
