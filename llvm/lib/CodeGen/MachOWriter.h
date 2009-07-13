@@ -24,9 +24,9 @@ namespace llvm {
   class Mangler;
   class MachineRelocation;
   class MachOCodeEmitter;
-  class MachODySymTab;
-  class MachOHeader;
-  class MachOSection;
+  struct MachODySymTab;
+  struct MachOHeader;
+  struct MachOSection;
   struct MachOSym;
   class TargetData;
   class TargetMachine;
