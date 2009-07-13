@@ -10,6 +10,8 @@ namespace llvmc {
 }
 
 // Returns the platform specific directory separator via #ifdefs.
+// FIXME: This currently work on linux and windows only. It does not 
+// work on other unices. 
 static std::string GetDirSeparator(void) {
 #ifdef __linux__
   return "/";
