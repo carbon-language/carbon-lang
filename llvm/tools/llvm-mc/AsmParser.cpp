@@ -527,6 +527,9 @@ bool AsmParser::ParseStatement() {
     if (!strcmp(IDVal, ".zerofill"))
       return ParseDirectiveDarwinZerofill();
 
+    if (!strcmp(IDVal, ".subsections_via_symbols"))
+      return ParseDirectiveDarwinSubsectionsViaSymbols();
+
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
     return false;
@@ -1049,6 +1052,19 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
 
   // Create the zerofill Symbol with Size and Pow2Alignment
   Out.EmitZerofill(Ctx.GetSection(Section.c_str()), Sym, Size, Pow2Alignment);
+
+  return false;
+}
+
+/// ParseDirectiveDarwinSubsectionsViaSymbols
+///  ::= .subsections_via_symbols
+bool AsmParser::ParseDirectiveDarwinSubsectionsViaSymbols() {
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.subsections_via_symbols' directive");
+  
+  Lexer.Lex();
+
+  Out.SubsectionsViaSymbols();
 
   return false;
 }

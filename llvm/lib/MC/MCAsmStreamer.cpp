@@ -38,6 +38,8 @@ namespace {
 
     virtual void EmitLabel(MCSymbol *Symbol);
 
+    virtual void SubsectionsViaSymbols(void);
+
     virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
                                 bool MakeAbsolute = false);
 
@@ -115,6 +117,10 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   OS << Symbol->getName() << ":\n";
   Symbol->setSection(CurSection);
   Symbol->setExternal(false);
+}
+
+void MCAsmStreamer::SubsectionsViaSymbols(void) {
+  OS << ".subsections_via_symbols\n";
 }
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,

@@ -89,6 +89,11 @@ namespace llvm {
     // symbol section in the constructor and initialize it here?
     virtual void EmitLabel(MCSymbol *Symbol) = 0;
 
+    /// SubsectionsViaSymbols - Note in the output that the conventions used in
+    /// in the assembly file allows the bytes of a section to be divided up at
+    /// the boundaries of the symbols by a link editor for processing as atoms.
+    virtual void SubsectionsViaSymbols(void) = 0;
+
     /// EmitAssignment - Emit an assignment of @param Value to @param Symbol.
     ///
     /// This corresponds to an assembler statement such as:

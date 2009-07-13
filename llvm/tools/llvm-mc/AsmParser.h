@@ -112,6 +112,9 @@ private:
 
   bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
   bool ParseDirectiveDarwinZerofill(); // Darwin specific ".zerofill"
+
+  // Darwin specific ".subsections_via_symbols"
+  bool ParseDirectiveDarwinSubsectionsViaSymbols();
 };
 
 } // end namespace llvm
