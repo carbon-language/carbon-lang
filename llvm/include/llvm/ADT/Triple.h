@@ -54,6 +54,7 @@ public:
     DragonFly,
     FreeBSD,
     Linux,
+    NetBSD,
     OpenBSD
   };
   

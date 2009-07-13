@@ -48,6 +48,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case DragonFly: return "dragonfly";
   case FreeBSD: return "freebsd";
   case Linux: return "linux";
+  case NetBSD: return "netbsd";
   case OpenBSD: return "openbsd";
   }
 
@@ -91,6 +92,8 @@ void Triple::Parse() const {
     OS = FreeBSD;
   else if (memcmp(&OSName[0], "linux", 5) == 0)
     OS = Linux;
+  else if (memcmp(&OSName[0], "netbsd", 6) == 0)
+    OS = NetBSD;
   else if (memcmp(&OSName[0], "openbsd", 7) == 0)
     OS = OpenBSD;
   else
