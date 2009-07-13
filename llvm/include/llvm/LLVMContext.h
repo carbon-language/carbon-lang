@@ -120,6 +120,11 @@ public:
                                        bool isSigned);
   Constant* getConstantExprFPCast(Constant* C, const Type* Ty);
   Constant* getConstantExprSelect(Constant* C, Constant* V1, Constant* V2);
+  
+  /// getAlignOf constant expr - computes the alignment of a type in a target
+  /// independent way (Note: the return type is an i32; Note: assumes that i8
+  /// is byte aligned).
+  ///
   Constant* getConstantExprAlignOf(const Type* Ty);
   Constant* getConstantExprCompare(unsigned short pred,
                                    Constant* C1, Constant* C2);
@@ -162,7 +167,15 @@ public:
   Constant* getConstantExprInsertValue(Constant* Agg, Constant* Val,
                                        const unsigned* IdxList,
                                        unsigned NumIdx);
+
+  /// getSizeOf constant expr - computes the size of a type in a target
+  /// independent way (Note: the return type is an i64).
+  ///
   Constant* getConstantExprSizeOf(const Type* Ty);
+  
+  /// Floating point negation must be implemented with f(x) = -0.0 - x. This
+  /// method returns the negative zero constant for floating point or vector
+  /// floating point types; for all other types, it returns the null value.
   Constant* getZeroValueForNegation(const Type* Ty);
   
   // ConstantFP accessors
@@ -200,6 +213,7 @@ public:
   StructType* getStructType(bool isPacked=false);
   StructType* getStructType(const std::vector<const Type*>& Params,
                             bool isPacked = false);
+  StructType* getStructType(const Type* type, ...);
   
   // ArrayType accessors
   ArrayType* getArrayType(const Type* ElementType, uint64_t NumElements);

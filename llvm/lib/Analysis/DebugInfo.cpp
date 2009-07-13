@@ -463,7 +463,7 @@ DIFactory::DIFactory(Module &m)
 /// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.
 /// This is only valid when the descriptor is non-null.
 Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
-  if (D.isNull()) return Constant::getNullValue(EmptyStructPtr);
+  if (D.isNull()) return VMContext.getNullValue(EmptyStructPtr);
   return VMContext.getConstantExprBitCast(D.getGV(), EmptyStructPtr);
 }
 

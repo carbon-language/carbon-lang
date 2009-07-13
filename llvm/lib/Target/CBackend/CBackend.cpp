@@ -1239,7 +1239,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       Out << '{';
       if (AT->getNumElements()) {
         Out << ' ';
-        Constant *CZ = Constant::getNullValue(AT->getElementType());
+        Constant *CZ = Context->getNullValue(AT->getElementType());
         printConstant(CZ, Static);
         for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
           Out << ", ";
@@ -1264,7 +1264,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       assert(isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV));
       const VectorType *VT = cast<VectorType>(CPV->getType());
       Out << "{ ";
-      Constant *CZ = Constant::getNullValue(VT->getElementType());
+      Constant *CZ = Context->getNullValue(VT->getElementType());
       printConstant(CZ, Static);
       for (unsigned i = 1, e = VT->getNumElements(); i != e; ++i) {
         Out << ", ";
@@ -1286,10 +1286,10 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       Out << '{';
       if (ST->getNumElements()) {
         Out << ' ';
-        printConstant(Constant::getNullValue(ST->getElementType(0)), Static);
+        printConstant(Context->getNullValue(ST->getElementType(0)), Static);
         for (unsigned i = 1, e = ST->getNumElements(); i != e; ++i) {
           Out << ", ";
-          printConstant(Constant::getNullValue(ST->getElementType(i)), Static);
+          printConstant(Context->getNullValue(ST->getElementType(i)), Static);
         }
       }
       Out << " }";
@@ -2621,11 +2621,11 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 
   // If this is a negation operation, print it out as such.  For FP, we don't
   // want to print "-0.0 - X".
-  if (BinaryOperator::isNeg(&I)) {
+  if (BinaryOperator::isNeg(*Context, &I)) {
     Out << "-(";
     writeOperand(BinaryOperator::getNegArgument(cast<BinaryOperator>(&I)));
     Out << ")";
-  } else if (BinaryOperator::isFNeg(&I)) {
+  } else if (BinaryOperator::isFNeg(*Context, &I)) {
     Out << "-(";
     writeOperand(BinaryOperator::getFNegArgument(cast<BinaryOperator>(&I)));
     Out << ")";

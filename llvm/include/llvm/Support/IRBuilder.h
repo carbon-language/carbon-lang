@@ -311,12 +311,12 @@ public:
   Value *CreateNeg(Value *V, const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
       return Folder.CreateNeg(VC);
-    return Insert(BinaryOperator::CreateNeg(V), Name);
+    return Insert(BinaryOperator::CreateNeg(getGlobalContext(), V), Name);
   }
   Value *CreateFNeg(Value *V, const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))
       return Folder.CreateFNeg(VC);
-    return Insert(BinaryOperator::CreateFNeg(V), Name);
+    return Insert(BinaryOperator::CreateFNeg(getGlobalContext(), V), Name);
   }
   Value *CreateNot(Value *V, const char *Name = "") {
     if (Constant *VC = dyn_cast<Constant>(V))

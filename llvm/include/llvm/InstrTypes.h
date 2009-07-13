@@ -202,13 +202,17 @@ public:
   /// CreateNeg, CreateNot - Create the NEG and NOT
   ///     instructions out of SUB and XOR instructions.
   ///
-  static BinaryOperator *CreateNeg(Value *Op, const std::string &Name = "",
+  static BinaryOperator *CreateNeg(LLVMContext &Context,
+                                   Value *Op, const std::string &Name = "",
                                    Instruction *InsertBefore = 0);
-  static BinaryOperator *CreateNeg(Value *Op, const std::string &Name,
+  static BinaryOperator *CreateNeg(LLVMContext &Context,
+                                   Value *Op, const std::string &Name,
                                    BasicBlock *InsertAtEnd);
-  static BinaryOperator *CreateFNeg(Value *Op, const std::string &Name = "",
+  static BinaryOperator *CreateFNeg(LLVMContext &Context, 
+                                    Value *Op, const std::string &Name = "",
                                     Instruction *InsertBefore = 0);
-  static BinaryOperator *CreateFNeg(Value *Op, const std::string &Name,
+  static BinaryOperator *CreateFNeg(LLVMContext &Context,
+                                    Value *Op, const std::string &Name,
                                     BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateNot(Value *Op, const std::string &Name = "",
                                    Instruction *InsertBefore = 0);
@@ -218,8 +222,8 @@ public:
   /// isNeg, isFNeg, isNot - Check if the given Value is a
   /// NEG, FNeg, or NOT instruction.
   ///
-  static bool isNeg(const Value *V);
-  static bool isFNeg(const Value *V);
+  static bool isNeg(LLVMContext &Context, const Value *V);
+  static bool isFNeg(LLVMContext &Context, const Value *V);
   static bool isNot(const Value *V);
 
   /// getNegArgument, getNotArgument - Helper functions to extract the

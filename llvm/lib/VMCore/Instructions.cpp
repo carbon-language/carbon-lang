@@ -1633,33 +1633,37 @@ BinaryOperator *BinaryOperator::Create(BinaryOps Op, Value *S1, Value *S2,
   return Res;
 }
 
-BinaryOperator *BinaryOperator::CreateNeg(Value *Op, const std::string &Name,
+BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
+                                          Value *Op, const std::string &Name,
                                           Instruction *InsertBefore) {
-  Value *zero = ConstantExpr::getZeroValueForNegationExpr(Op->getType());
+  Value *zero = Context.getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::Sub,
                             zero, Op,
                             Op->getType(), Name, InsertBefore);
 }
 
-BinaryOperator *BinaryOperator::CreateNeg(Value *Op, const std::string &Name,
+BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context, 
+                                          Value *Op, const std::string &Name,
                                           BasicBlock *InsertAtEnd) {
-  Value *zero = ConstantExpr::getZeroValueForNegationExpr(Op->getType());
+  Value *zero = Context.getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::Sub,
                             zero, Op,
                             Op->getType(), Name, InsertAtEnd);
 }
 
-BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const std::string &Name,
+BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
+                                           Value *Op, const std::string &Name,
                                            Instruction *InsertBefore) {
-  Value *zero = ConstantExpr::getZeroValueForNegationExpr(Op->getType());
+  Value *zero = Context.getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::FSub,
                             zero, Op,
                             Op->getType(), Name, InsertBefore);
 }
 
-BinaryOperator *BinaryOperator::CreateFNeg(Value *Op, const std::string &Name,
+BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
+                                           Value *Op, const std::string &Name,
                                            BasicBlock *InsertAtEnd) {
-  Value *zero = ConstantExpr::getZeroValueForNegationExpr(Op->getType());
+  Value *zero = Context.getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::FSub,
                             zero, Op,
                             Op->getType(), Name, InsertAtEnd);
@@ -1705,19 +1709,19 @@ static inline bool isConstantAllOnes(const Value *V) {
   return false;
 }
 
-bool BinaryOperator::isNeg(const Value *V) {
+bool BinaryOperator::isNeg(LLVMContext &Context, const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     if (Bop->getOpcode() == Instruction::Sub)
       return Bop->getOperand(0) ==
-             ConstantExpr::getZeroValueForNegationExpr(Bop->getType());
+             Context.getZeroValueForNegation(Bop->getType());
   return false;
 }
 
-bool BinaryOperator::isFNeg(const Value *V) {
+bool BinaryOperator::isFNeg(LLVMContext &Context, const Value *V) {
   if (const BinaryOperator *Bop = dyn_cast<BinaryOperator>(V))
     if (Bop->getOpcode() == Instruction::FSub)
       return Bop->getOperand(0) ==
-             ConstantExpr::getZeroValueForNegationExpr(Bop->getType());
+             Context.getZeroValueForNegation(Bop->getType());
   return false;
 }
 
@@ -1730,7 +1734,6 @@ bool BinaryOperator::isNot(const Value *V) {
 }
 
 Value *BinaryOperator::getNegArgument(Value *BinOp) {
-  assert(isNeg(BinOp) && "getNegArgument from non-'neg' instruction!");
   return cast<BinaryOperator>(BinOp)->getOperand(1);
 }
 
@@ -1739,7 +1742,6 @@ const Value *BinaryOperator::getNegArgument(const Value *BinOp) {
 }
 
 Value *BinaryOperator::getFNegArgument(Value *BinOp) {
-  assert(isFNeg(BinOp) && "getFNegArgument from non-'fneg' instruction!");
   return cast<BinaryOperator>(BinOp)->getOperand(1);
 }
 

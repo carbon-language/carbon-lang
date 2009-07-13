@@ -23,37 +23,47 @@ namespace llvm {
   class Value;
   class Constant;
   class Type;
+  class LLVMContext;
 
   // Constant fold various types of instruction...
   Constant *ConstantFoldCastInstruction(
+    LLVMContext &Context,
     unsigned opcode,     ///< The opcode of the cast
     const Constant *V,   ///< The source constant
     const Type *DestTy   ///< The destination type
   );
-  Constant *ConstantFoldSelectInstruction(const Constant *Cond,
+  Constant *ConstantFoldSelectInstruction(LLVMContext &Context,
+                                          const Constant *Cond,
                                           const Constant *V1,
                                           const Constant *V2);
-  Constant *ConstantFoldExtractElementInstruction(const Constant *Val,
+  Constant *ConstantFoldExtractElementInstruction(LLVMContext &Context,
+                                                  const Constant *Val,
                                                   const Constant *Idx);
-  Constant *ConstantFoldInsertElementInstruction(const Constant *Val,
+  Constant *ConstantFoldInsertElementInstruction(LLVMContext &Context,
+                                                 const Constant *Val,
                                                  const Constant *Elt,
                                                  const Constant *Idx);
-  Constant *ConstantFoldShuffleVectorInstruction(const Constant *V1,
+  Constant *ConstantFoldShuffleVectorInstruction(LLVMContext &Context,
+                                                 const Constant *V1,
                                                  const Constant *V2,
                                                  const Constant *Mask);
-  Constant *ConstantFoldExtractValueInstruction(const Constant *Agg,
+  Constant *ConstantFoldExtractValueInstruction(LLVMContext &Context,
+                                                const Constant *Agg,
                                                 const unsigned *Idxs,
                                                 unsigned NumIdx);
-  Constant *ConstantFoldInsertValueInstruction(const Constant *Agg,
+  Constant *ConstantFoldInsertValueInstruction(LLVMContext &Context,
+                                               const Constant *Agg,
                                                const Constant *Val,
                                                const unsigned* Idxs,
                                                unsigned NumIdx);
-  Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
+  Constant *ConstantFoldBinaryInstruction(LLVMContext &Context,
+                                          unsigned Opcode, const Constant *V1,
                                           const Constant *V2);
-  Constant *ConstantFoldCompareInstruction(unsigned short predicate, 
+  Constant *ConstantFoldCompareInstruction(LLVMContext &Context,
+                                           unsigned short predicate, 
                                            const Constant *C1, 
                                            const Constant *C2);
-  Constant *ConstantFoldGetElementPtr(const Constant *C,
+  Constant *ConstantFoldGetElementPtr(LLVMContext &Context, const Constant *C,
                                       Constant* const *Idxs, unsigned NumIdx);
 } // End llvm namespace
 

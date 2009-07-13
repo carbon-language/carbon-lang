@@ -2139,7 +2139,7 @@ void SelectionDAGLowering::visitFSub(User &I) {
       const VectorType *DestTy = cast<VectorType>(I.getType());
       const Type *ElTy = DestTy->getElementType();
       unsigned VL = DestTy->getNumElements();
-      std::vector<Constant*> NZ(VL, ConstantFP::getNegativeZero(ElTy));
+      std::vector<Constant*> NZ(VL, Context->getConstantFPNegativeZero(ElTy));
       Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
       if (CV == CNZ) {
         SDValue Op2 = getValue(I.getOperand(1));
@@ -2150,7 +2150,8 @@ void SelectionDAGLowering::visitFSub(User &I) {
     }
   }
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
-    if (CFP->isExactlyValue(ConstantFP::getNegativeZero(Ty)->getValueAPF())) {
+    if (CFP->isExactlyValue(
+                       Context->getConstantFPNegativeZero(Ty)->getValueAPF())) {
       SDValue Op2 = getValue(I.getOperand(1));
       setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
                                Op2.getValueType(), Op2));
@@ -2398,7 +2399,7 @@ void SelectionDAGLowering::visitShuffleVector(User &I) {
   // Convert the ConstantVector mask operand into an array of ints, with -1
   // representing undef values.
   SmallVector<Constant*, 8> MaskElts;
-  cast<Constant>(I.getOperand(2))->getVectorElements(MaskElts);
+  cast<Constant>(I.getOperand(2))->getVectorElements(*Context, MaskElts);
   unsigned MaskNumElts = MaskElts.size();
   for (unsigned i = 0; i != MaskNumElts; ++i) {
     if (isa<UndefValue>(MaskElts[i]))

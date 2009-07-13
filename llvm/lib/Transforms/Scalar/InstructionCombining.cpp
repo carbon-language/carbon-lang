@@ -408,9 +408,10 @@ X("instcombine", "Combine redundant instructions");
 
 // getComplexity:  Assign a complexity or rank value to LLVM Values...
 //   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
-static unsigned getComplexity(Value *V) {
+static unsigned getComplexity(LLVMContext *Context, Value *V) {
   if (isa<Instruction>(V)) {
-    if (BinaryOperator::isNeg(V) || BinaryOperator::isFNeg(V) ||
+    if (BinaryOperator::isNeg(*Context, V) ||
+        BinaryOperator::isFNeg(*Context, V) ||
         BinaryOperator::isNot(V))
       return 3;
     return 4;
@@ -521,7 +522,8 @@ static bool ValueRequiresCast(Instruction::CastOps opcode, const Value *V,
 //
 bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
   bool Changed = false;
-  if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1)))
+  if (getComplexity(Context, I.getOperand(0)) < 
+      getComplexity(Context, I.getOperand(1)))
     Changed = !I.swapOperands();
 
   if (!I.isAssociative()) return Changed;
@@ -559,7 +561,8 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
 /// so that theyare listed from right (least complex) to left (most complex).
 /// This puts constants before unary operators before binary operators.
 bool InstCombiner::SimplifyCompare(CmpInst &I) {
-  if (getComplexity(I.getOperand(0)) >= getComplexity(I.getOperand(1)))
+  if (getComplexity(Context, I.getOperand(0)) >=
+      getComplexity(Context, I.getOperand(1)))
     return false;
   I.swapOperands();
   // Compare instructions are not associative so there's nothing else we can do.
@@ -570,7 +573,7 @@ bool InstCombiner::SimplifyCompare(CmpInst &I) {
 // if the LHS is a constant zero (which is the 'negate' form).
 //
 static inline Value *dyn_castNegVal(Value *V, LLVMContext *Context) {
-  if (BinaryOperator::isNeg(V))
+  if (BinaryOperator::isNeg(*Context, V))
     return BinaryOperator::getNegArgument(V);
 
   // Constants can be considered to be negated values if they can be folded.
@@ -589,7 +592,7 @@ static inline Value *dyn_castNegVal(Value *V, LLVMContext *Context) {
 // form).
 //
 static inline Value *dyn_castFNegVal(Value *V, LLVMContext *Context) {
-  if (BinaryOperator::isFNeg(V))
+  if (BinaryOperator::isFNeg(*Context, V))
     return BinaryOperator::getFNegArgument(V);
 
   // Constants can be considered to be negated values if they can be folded.
@@ -2185,7 +2188,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (Value *RHSV = dyn_castNegVal(RHS, Context)) {
         Instruction *NewAdd = BinaryOperator::CreateAdd(LHSV, RHSV, "sum");
         InsertNewInstBefore(NewAdd, I);
-        return BinaryOperator::CreateNeg(NewAdd);
+        return BinaryOperator::CreateNeg(*Context, NewAdd);
       }
     }
     
@@ -2530,9 +2533,11 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
     if (Op1I->getOpcode() == Instruction::Add) {
       if (Op1I->getOperand(0) == Op0)              // X-(X+Y) == -Y
-        return BinaryOperator::CreateNeg(Op1I->getOperand(1), I.getName());
+        return BinaryOperator::CreateNeg(*Context, Op1I->getOperand(1),
+                                         I.getName());
       else if (Op1I->getOperand(1) == Op0)         // X-(Y+X) == -Y
-        return BinaryOperator::CreateNeg(Op1I->getOperand(0), I.getName());
+        return BinaryOperator::CreateNeg(*Context, Op1I->getOperand(0), 
+                                         I.getName());
       else if (ConstantInt *CI1 = dyn_cast<ConstantInt>(I.getOperand(0))) {
         if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Op1I->getOperand(1)))
           // C1-(X+C2) --> (C1-C2)-X
@@ -2593,7 +2598,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         return ReplaceInstUsesWith(I, Op0I->getOperand(0));
     } else if (Op0I->getOpcode() == Instruction::Sub) {
       if (Op0I->getOperand(0) == Op1)             // (X-Y)-X == -Y
-        return BinaryOperator::CreateNeg(Op0I->getOperand(1), I.getName());
+        return BinaryOperator::CreateNeg(*Context, Op0I->getOperand(1),
+                                         I.getName());
     }
   }
 
@@ -2619,9 +2625,11 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
   if (BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1)) {
     if (Op1I->getOpcode() == Instruction::FAdd) {
       if (Op1I->getOperand(0) == Op0)              // X-(X+Y) == -Y
-        return BinaryOperator::CreateFNeg(Op1I->getOperand(1), I.getName());
+        return BinaryOperator::CreateFNeg(*Context, Op1I->getOperand(1),
+                                          I.getName());
       else if (Op1I->getOperand(1) == Op0)         // X-(Y+X) == -Y
-        return BinaryOperator::CreateFNeg(Op1I->getOperand(0), I.getName());
+        return BinaryOperator::CreateFNeg(*Context, Op1I->getOperand(0),
+                                          I.getName());
     }
   }
 
@@ -2683,7 +2691,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
       if (CI->equalsInt(1))                  // X * 1  == X
         return ReplaceInstUsesWith(I, Op0);
       if (CI->isAllOnesValue())              // X * -1 == 0 - X
-        return BinaryOperator::CreateNeg(Op0, I.getName());
+        return BinaryOperator::CreateNeg(*Context, Op0, I.getName());
 
       const APInt& Val = cast<ConstantInt>(CI)->getValue();
       if (Val.isPowerOf2()) {          // Replace X*(2^C) with X << C
@@ -2695,7 +2703,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
 
       if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
         if (Op1V->isAllOnesValue())              // X * -1 == 0 - X
-          return BinaryOperator::CreateNeg(Op0, I.getName());
+          return BinaryOperator::CreateNeg(*Context, Op0, I.getName());
 
         // As above, vector X*splat(1.0) -> X in all defined cases.
         if (Constant *Splat = Op1V->getSplatValue()) {
@@ -3108,7 +3116,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // sdiv X, -1 == -X
     if (RHS->isAllOnesValue())
-      return BinaryOperator::CreateNeg(Op0);
+      return BinaryOperator::CreateNeg(*Context, Op0);
   }
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
@@ -4042,7 +4050,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           ConstantInt *A = dyn_cast<ConstantInt>(Op0LHS);
           if (!(A && A->isZero()) &&               // avoid infinite recursion.
               MaskedValueIsZero(Op0LHS, Mask)) {
-            Instruction *NewNeg = BinaryOperator::CreateNeg(Op0RHS);
+            Instruction *NewNeg = BinaryOperator::CreateNeg(*Context, Op0RHS);
             InsertNewInstBefore(NewNeg, I);
             return BinaryOperator::CreateAnd(NewNeg, AndRHS);
           }
@@ -7094,7 +7102,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           else if (Value *NegVal = dyn_castNegVal(BOp0, Context))
             return new ICmpInst(*Context, ICI.getPredicate(), NegVal, BOp1);
           else if (BO->hasOneUse()) {
-            Instruction *Neg = BinaryOperator::CreateNeg(BOp1);
+            Instruction *Neg = BinaryOperator::CreateNeg(*Context, BOp1);
             InsertNewInstBefore(Neg, ICI);
             Neg->takeName(BO);
             return new ICmpInst(*Context, ICI.getPredicate(), BOp0, Neg);
@@ -9587,7 +9595,8 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               NegVal = Context->getConstantExprNeg(C);
             } else {
               NegVal = InsertNewInstBefore(
-                    BinaryOperator::CreateNeg(SubOp->getOperand(1), "tmp"), SI);
+                    BinaryOperator::CreateNeg(*Context, SubOp->getOperand(1),
+                                              "tmp"), SI);
             }
 
             Value *NewTrueOp = OtherAddOp;

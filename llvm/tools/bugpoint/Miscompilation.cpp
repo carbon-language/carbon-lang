@@ -711,7 +711,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // sbyte* so it matches the signature of the resolver function.
 
         // GetElementPtr *funcName, ulong 0, ulong 0
-        std::vector<Constant*> GEPargs(2,Constant::getNullValue(Type::Int32Ty));
+        std::vector<Constant*> GEPargs(2,
+                                   BD.getContext().getNullValue(Type::Int32Ty));
         Value *GEP = ConstantExpr::getGetElementPtr(funcName, &GEPargs[0], 2);
         std::vector<Value*> ResolverArgs;
         ResolverArgs.push_back(GEP);

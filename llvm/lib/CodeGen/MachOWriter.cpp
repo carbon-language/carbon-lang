@@ -123,7 +123,7 @@ bool MachOWriter::doFinalization(Module &M) {
 // getConstSection - Get constant section for Constant 'C'
 MachOSection *MachOWriter::getConstSection(Constant *C) {
   const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-  if (CVA && CVA->isCString())
+  if (CVA && CVA->isCString(*Context))
     return getSection("__TEXT", "__cstring", 
                       MachOSection::S_CSTRING_LITERALS);
 

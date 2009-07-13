@@ -68,7 +68,7 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
       BasicBlock *BB = I;
       DeadBlocks.push_back(BB);
       while (PHINode *PN = dyn_cast<PHINode>(BB->begin())) {
-        PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
+        PN->replaceAllUsesWith(Context->getNullValue(PN->getType()));
         BB->getInstList().pop_front();
       }
       for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)

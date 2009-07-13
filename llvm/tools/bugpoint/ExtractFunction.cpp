@@ -74,7 +74,7 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
   if (isa<StructType>(TheInst->getType()))
     TheInst->replaceAllUsesWith(UndefValue::get(TheInst->getType()));
   else if (TheInst->getType() != Type::VoidTy)
-    TheInst->replaceAllUsesWith(Constant::getNullValue(TheInst->getType()));
+    TheInst->replaceAllUsesWith(Context.getNullValue(TheInst->getType()));
 
   // Remove the instruction from the program.
   TheInst->getParent()->getInstList().erase(TheInst);

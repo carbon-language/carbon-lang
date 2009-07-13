@@ -15,6 +15,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instruction.h"
 #include "llvm/MDNode.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "LLVMContextImpl.h"
@@ -31,8 +32,34 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl()) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
 // Constant accessors
+
+// Constructor to create a '0' constant of arbitrary type...
+static const uint64_t zero[2] = {0, 0};
 Constant* LLVMContext::getNullValue(const Type* Ty) {
-  return Constant::getNullValue(Ty);
+  switch (Ty->getTypeID()) {
+  case Type::IntegerTyID:
+    return getConstantInt(Ty, 0);
+  case Type::FloatTyID:
+    return getConstantFP(APFloat(APInt(32, 0)));
+  case Type::DoubleTyID:
+    return getConstantFP(APFloat(APInt(64, 0)));
+  case Type::X86_FP80TyID:
+    return getConstantFP(APFloat(APInt(80, 2, zero)));
+  case Type::FP128TyID:
+    return getConstantFP(APFloat(APInt(128, 2, zero), true));
+  case Type::PPC_FP128TyID:
+    return getConstantFP(APFloat(APInt(128, 2, zero)));
+  case Type::PointerTyID:
+    return getConstantPointerNull(cast<PointerType>(Ty));
+  case Type::StructTyID:
+  case Type::ArrayTyID:
+  case Type::VectorTyID:
+    return getConstantAggregateZero(Ty);
+  default:
+    // Function, Label, or Opaque type?
+    assert(!"Cannot create a null constant of that type!");
+    return 0;
+  }
 }
 
 Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
@@ -222,7 +249,14 @@ Constant* LLVMContext::getConstantExprSelect(Constant* C, Constant* V1,
 }
 
 Constant* LLVMContext::getConstantExprAlignOf(const Type* Ty) {
-  return ConstantExpr::getAlignOf(Ty);
+  // alignof is implemented as: (i64) gep ({i8,Ty}*)null, 0, 1
+  const Type *AligningTy = getStructType(Type::Int8Ty, Ty, NULL);
+  Constant *NullPtr = getNullValue(AligningTy->getPointerTo());
+  Constant *Zero = getConstantInt(Type::Int32Ty, 0);
+  Constant *One = getConstantInt(Type::Int32Ty, 1);
+  Constant *Indices[2] = { Zero, One };
+  Constant *GEP = getConstantExprGetElementPtr(NullPtr, Indices, 2);
+  return getConstantExprCast(Instruction::PtrToInt, GEP, Type::Int32Ty);
 }
 
 Constant* LLVMContext::getConstantExprCompare(unsigned short pred,
@@ -231,11 +265,22 @@ Constant* LLVMContext::getConstantExprCompare(unsigned short pred,
 }
 
 Constant* LLVMContext::getConstantExprNeg(Constant* C) {
-  return ConstantExpr::getNeg(C);
+  // API compatibility: Adjust integer opcodes to floating-point opcodes.
+  if (C->getType()->isFPOrFPVector())
+    return getConstantExprFNeg(C);
+  assert(C->getType()->isIntOrIntVector() &&
+         "Cannot NEG a nonintegral value!");
+  return getConstantExpr(Instruction::Sub,
+             getZeroValueForNegation(C->getType()),
+             C);
 }
 
 Constant* LLVMContext::getConstantExprFNeg(Constant* C) {
-  return ConstantExpr::getFNeg(C);
+  assert(C->getType()->isFPOrFPVector() &&
+         "Cannot FNEG a non-floating-point value!");
+  return getConstantExpr(Instruction::FSub,
+             getZeroValueForNegation(C->getType()),
+             C);
 }
 
 Constant* LLVMContext::getConstantExprNot(Constant* C) {
@@ -365,11 +410,25 @@ Constant* LLVMContext::getConstantExprInsertValue(Constant* Agg, Constant* Val,
 }
 
 Constant* LLVMContext::getConstantExprSizeOf(const Type* Ty) {
-  return ConstantExpr::getSizeOf(Ty);
+  // sizeof is implemented as: (i64) gep (Ty*)null, 1
+  Constant *GEPIdx = getConstantInt(Type::Int32Ty, 1);
+  Constant *GEP = getConstantExprGetElementPtr(
+                            getNullValue(getPointerTypeUnqual(Ty)), &GEPIdx, 1);
+  return getConstantExprCast(Instruction::PtrToInt, GEP, Type::Int64Ty);
 }
 
 Constant* LLVMContext::getZeroValueForNegation(const Type* Ty) {
-  return ConstantExpr::getZeroValueForNegationExpr(Ty);
+  if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
+    if (PTy->getElementType()->isFloatingPoint()) {
+      std::vector<Constant*> zeros(PTy->getNumElements(),
+                           getConstantFPNegativeZero(PTy->getElementType()));
+      return getConstantVector(PTy, zeros);
+    }
+
+  if (Ty->isFloatingPoint()) 
+    return getConstantFPNegativeZero(Ty);
+
+  return getNullValue(Ty);
 }
 
 
@@ -383,7 +442,9 @@ Constant* LLVMContext::getConstantFP(const Type* Ty, double V) {
 }
 
 ConstantFP* LLVMContext::getConstantFPNegativeZero(const Type* Ty) {
-  return ConstantFP::getNegativeZero(Ty);
+  APFloat apf = cast <ConstantFP>(getNullValue(Ty))->getValueAPF();
+  apf.changeSign();
+  return getConstantFP(apf);
 }
 
 
@@ -450,6 +511,17 @@ StructType* LLVMContext::getStructType(bool isPacked) {
 StructType* LLVMContext::getStructType(const std::vector<const Type*>& Params,
                                        bool isPacked) {
   return StructType::get(Params, isPacked);
+}
+
+StructType *LLVMContext::getStructType(const Type *type, ...) {
+  va_list ap;
+  std::vector<const llvm::Type*> StructFields;
+  va_start(ap, type);
+  while (type) {
+    StructFields.push_back(type);
+    type = va_arg(ap, llvm::Type*);
+  }
+  return StructType::get(StructFields);
 }
 
 // ArrayType accessors

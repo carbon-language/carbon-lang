@@ -276,9 +276,6 @@ public:
   /// considers -0.0 to be null as well as 0.0.  :(
   virtual bool isNullValue() const;
 
-  // Get a negative zero.
-  static ConstantFP *getNegativeZero(const Type* Ty);
-
   /// isExactlyValue - We don't rely on operator== working on double values, as
   /// it returns true for things that are clearly not equal, like -0.0 and 0.0.
   /// As such, this method can be used to do an exact bit-for-bit comparison of
@@ -383,7 +380,7 @@ public:
   /// isString) and it ends in a null byte \0 and does not contains any other
   /// @endverbatim
   /// null bytes except its terminator.
-  bool isCString() const;
+  bool isCString(LLVMContext &Context) const;
 
   /// getAsString - If this array is isString(), then this method converts the
   /// array to an std::string and returns it.  Otherwise, it asserts out.
@@ -694,17 +691,6 @@ public:
     return getSelectTy(V1->getType(), C, V1, V2);
   }
 
-  /// getAlignOf constant expr - computes the alignment of a type in a target
-  /// independent way (Note: the return type is an i32; Note: assumes that i8
-  /// is byte aligned).
-  ///
-  static Constant *getAlignOf(const Type *Ty);
-
-  /// getSizeOf constant expr - computes the size of a type in a target
-  /// independent way (Note: the return type is an i64).
-  ///
-  static Constant *getSizeOf(const Type *Ty);
-
   /// ConstantExpr::get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
@@ -716,8 +702,6 @@ public:
   /// ConstantExpr::get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
   ///
-  static Constant *getNeg(Constant *C);
-  static Constant *getFNeg(Constant *C);
   static Constant *getNot(Constant *C);
   static Constant *getAdd(Constant *C1, Constant *C2);
   static Constant *getFAdd(Constant *C1, Constant *C2);
@@ -755,11 +739,6 @@ public:
                                    const unsigned *IdxList, unsigned NumIdx);
   static Constant *getInsertValue(Constant *Agg, Constant *Val,
                                   const unsigned *IdxList, unsigned NumIdx);
-
-  /// Floating point negation must be implemented with f(x) = -0.0 - x. This
-  /// method returns the negative zero constant for floating point or vector
-  /// floating point types; for all other types, it returns the null value.
-  static Constant *getZeroValueForNegationExpr(const Type *Ty);
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.

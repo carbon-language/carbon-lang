@@ -145,7 +145,7 @@ void BrainF::header(LLVMContext& C) {
 
     //call i32 @puts(i8 *getelementptr([%d x i8] *@aberrormsg, i32 0, i32 0))
     {
-      Constant *zero_32 = Constant::getNullValue(IntegerType::Int32Ty);
+      Constant *zero_32 = C.getNullValue(IntegerType::Int32Ty);
 
       Constant *gep_params[] = {
         zero_32,

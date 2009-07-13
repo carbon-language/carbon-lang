@@ -315,6 +315,7 @@ static void ReplaceFPIntrinsicWithCall(CallInst *CI, const char *Fname,
 
 void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   IRBuilder<> Builder(CI->getParent(), CI);
+  LLVMContext *Context = CI->getParent()->getContext();
 
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
@@ -340,7 +341,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   }
   case Intrinsic::sigsetjmp:
      if (CI->getType() != Type::VoidTy)
-       CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+       CI->replaceAllUsesWith(Context->getNullValue(CI->getType()));
      break;
 
   case Intrinsic::longjmp: {
@@ -387,7 +388,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                "save" : "restore") << " intrinsic.\n";
     Warned = true;
     if (Callee->getIntrinsicID() == Intrinsic::stacksave)
-      CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+      CI->replaceAllUsesWith(Context->getNullValue(CI->getType()));
     break;
   }
     
@@ -422,7 +423,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::eh_exception:
   case Intrinsic::eh_selector_i32:
   case Intrinsic::eh_selector_i64:
-    CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+    CI->replaceAllUsesWith(Context->getNullValue(CI->getType()));
     break;
 
   case Intrinsic::eh_typeid_for_i32:

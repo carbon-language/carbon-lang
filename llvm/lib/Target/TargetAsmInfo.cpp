@@ -170,11 +170,11 @@ static bool isSuitableForBSS(const GlobalVariable *GV) {
   return (C->isNullValue() && !GV->isConstant() && !NoZerosInBSS);
 }
 
-static bool isConstantString(const Constant *C) {
+static bool isConstantString(LLVMContext &Context, const Constant *C) {
   // First check: is we have constant array of i8 terminated with zero
   const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
   // Check, if initializer is a null-terminated string
-  if (CVA && CVA->isCString())
+  if (CVA && CVA->isCString(Context))
     return true;
 
   // Another possibility: [1 x i8] zeroinitializer
@@ -229,7 +229,7 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
       }
     } else {
       // Check, if initializer is a null-terminated string
-      if (isConstantString(C))
+      if (isConstantString(GV->getParent()->getContext(), C))
         return SectionKind::RODataMergeStr;
       else
         return SectionKind::RODataMergeConst;

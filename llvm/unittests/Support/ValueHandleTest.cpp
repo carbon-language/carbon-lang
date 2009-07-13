@@ -284,14 +284,17 @@ TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
   public:
     int DeletedCalls;
     Value *AURWArgument;
+    LLVMContext *Context;
 
-    RecoveringVH() : DeletedCalls(0), AURWArgument(NULL) {}
+    RecoveringVH() : DeletedCalls(0), AURWArgument(NULL), 
+                     Context(&getGlobalContext()) {}
     RecoveringVH(Value *V)
-      : CallbackVH(V), DeletedCalls(0), AURWArgument(NULL) {}
+      : CallbackVH(V), DeletedCalls(0), AURWArgument(NULL), 
+        Context(&getGlobalContext()) {}
 
   private:
     virtual void deleted() {
-      getValPtr()->replaceAllUsesWith(Constant::getNullValue(Type::Int32Ty));
+      getValPtr()->replaceAllUsesWith(Context->getNullValue(Type::Int32Ty));
       setValPtr(NULL);
     }
     virtual void allUsesReplacedWith(Value *new_value) {
@@ -307,11 +310,13 @@ TEST_F(ValueHandle, CallbackVH_DeletionCanRAUW) {
   RecoveringVH RVH;
   RVH = BitcastV.get();
   std::auto_ptr<BinaryOperator> BitcastUser(
-    BinaryOperator::CreateAdd(RVH, Constant::getNullValue(Type::Int32Ty)));
+    BinaryOperator::CreateAdd(RVH, 
+                              getGlobalContext().getNullValue(Type::Int32Ty)));
   EXPECT_EQ(BitcastV.get(), BitcastUser->getOperand(0));
   BitcastV.reset();  // Would crash without the ValueHandler.
-  EXPECT_EQ(Constant::getNullValue(Type::Int32Ty), RVH.AURWArgument);
-  EXPECT_EQ(Constant::getNullValue(Type::Int32Ty), BitcastUser->getOperand(0));
+  EXPECT_EQ(getGlobalContext().getNullValue(Type::Int32Ty), RVH.AURWArgument);
+  EXPECT_EQ(getGlobalContext().getNullValue(Type::Int32Ty),
+            BitcastUser->getOperand(0));
 }
 
 }

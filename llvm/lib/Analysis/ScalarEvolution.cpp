@@ -2084,7 +2084,8 @@ const SCEV *ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
 ///
 const SCEV *ScalarEvolution::getNegativeSCEV(const SCEV *V) {
   if (const SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
-    return getConstant(cast<ConstantInt>(ConstantExpr::getNeg(VC->getValue())));
+    return getConstant(
+               cast<ConstantInt>(Context->getConstantExprNeg(VC->getValue())));
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
@@ -3284,7 +3285,7 @@ EvaluateConstantChrecAtConstant(const SCEVAddRecExpr *AddRec, ConstantInt *C,
 /// the addressed element of the initializer or null if the index expression is
 /// invalid.
 static Constant *
-GetAddressedElementFromGlobal(GlobalVariable *GV,
+GetAddressedElementFromGlobal(LLVMContext *Context, GlobalVariable *GV,
                               const std::vector<ConstantInt*> &Indices) {
   Constant *Init = GV->getInitializer();
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
@@ -3298,10 +3299,10 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
     } else if (isa<ConstantAggregateZero>(Init)) {
       if (const StructType *STy = dyn_cast<StructType>(Init->getType())) {
         assert(Idx < STy->getNumElements() && "Bad struct index!");
-        Init = Constant::getNullValue(STy->getElementType(Idx));
+        Init = Context->getNullValue(STy->getElementType(Idx));
       } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Init->getType())) {
         if (Idx >= ATy->getNumElements()) return 0;  // Bogus program
-        Init = Constant::getNullValue(ATy->getElementType());
+        Init = Context->getNullValue(ATy->getElementType());
       } else {
         LLVM_UNREACHABLE("Unknown constant aggregate type!");
       }
@@ -3372,7 +3373,7 @@ ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
     // Form the GEP offset.
     Indexes[VarIdxNum] = Val;
 
-    Constant *Result = GetAddressedElementFromGlobal(GV, Indexes);
+    Constant *Result = GetAddressedElementFromGlobal(Context, GV, Indexes);
     if (Result == 0) break;  // Cannot compute!
 
     // Evaluate the condition for this iteration.

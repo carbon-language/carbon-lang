@@ -251,7 +251,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       // Insert a return instruction.  This really should be a "barrier", as it
       // is unreachable.
       ReturnInst::Create(F.getReturnType() == Type::VoidTy ? 0 :
-                         Constant::getNullValue(F.getReturnType()), UI);
+                         Context->getNullValue(F.getReturnType()), UI);
 
       // Remove the unwind instruction now.
       BB->getInstList().erase(UI);
@@ -285,7 +285,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
 
   BasicBlock::iterator NI = II->getNormalDest()->getFirstNonPHI();
   // nonvolatile.
-  new StoreInst(Constant::getNullValue(Type::Int32Ty), InvokeNum, false, NI);
+  new StoreInst(Context->getNullValue(Type::Int32Ty), InvokeNum, false, NI);
 
   // Add a switch case to our unwind block.
   CatchSwitch->addCase(InvokeNoC, II->getUnwindDest());
@@ -473,7 +473,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       new AllocaInst(JBLinkTy, 0, Align, "jblink", F.begin()->begin());
 
     std::vector<Value*> Idx;
-    Idx.push_back(Constant::getNullValue(Type::Int32Ty));
+    Idx.push_back(Context->getNullValue(Type::Int32Ty));
     Idx.push_back(ConstantInt::get(Type::Int32Ty, 1));
     OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
                                              "OldBuf", EntryBB->getTerminator());
@@ -525,7 +525,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // Compare the return value to zero.
     Value *IsNormal = new ICmpInst(EntryBB->getTerminator(),
                                    ICmpInst::ICMP_EQ, SJRet,
-                                   Constant::getNullValue(SJRet->getType()),
+                                   Context->getNullValue(SJRet->getType()),
                                    "notunwind");
     // Nuke the uncond branch.
     EntryBB->getTerminator()->eraseFromParent();
@@ -559,14 +559,14 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
   // Load the JBList, if it's null, then there was no catch!
   Value *NotNull = new ICmpInst(*UnwindHandler, ICmpInst::ICMP_NE, BufPtr,
-                                Constant::getNullValue(BufPtr->getType()),
+                                Context->getNullValue(BufPtr->getType()),
                                 "notnull");
   BranchInst::Create(UnwindBlock, TermBlock, NotNull, UnwindHandler);
 
   // Create the block to do the longjmp.
   // Get a pointer to the jmpbuf and longjmp.
   std::vector<Value*> Idx;
-  Idx.push_back(Constant::getNullValue(Type::Int32Ty));
+  Idx.push_back(Context->getNullValue(Type::Int32Ty));
   Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx[0] = GetElementPtrInst::Create(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
                                      UnwindBlock);

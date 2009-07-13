@@ -178,7 +178,7 @@ unsigned Reassociate::getRank(Value *V) {
   // If this is a not or neg instruction, do not count it for rank.  This
   // assures us that X and ~X will have the same rank.
   if (!I->getType()->isInteger() ||
-      (!BinaryOperator::isNot(I) && !BinaryOperator::isNeg(I)))
+      (!BinaryOperator::isNot(I) && !BinaryOperator::isNeg(*Context, I)))
     ++Rank;
 
   //DOUT << "Calculated Rank[" << V->getName() << "] = "
@@ -264,12 +264,12 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
   // If this is a multiply expression tree and it contains internal negations,
   // transform them into multiplies by -1 so they can be reassociated.
   if (I->getOpcode() == Instruction::Mul) {
-    if (!LHSBO && LHS->hasOneUse() && BinaryOperator::isNeg(LHS)) {
+    if (!LHSBO && LHS->hasOneUse() && BinaryOperator::isNeg(*Context, LHS)) {
       LHS = LowerNegateToMultiply(cast<Instruction>(LHS),
                                   ValueRankMap, Context);
       LHSBO = isReassociableOp(LHS, Opcode);
     }
-    if (!RHSBO && RHS->hasOneUse() && BinaryOperator::isNeg(RHS)) {
+    if (!RHSBO && RHS->hasOneUse() && BinaryOperator::isNeg(*Context, RHS)) {
       RHS = LowerNegateToMultiply(cast<Instruction>(RHS),
                                   ValueRankMap, Context);
       RHSBO = isReassociableOp(RHS, Opcode);
@@ -373,7 +373,7 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
 // version of the value is returned, and BI is left pointing at the instruction
 // that should be processed next by the reassociation pass.
 //
-static Value *NegateValue(Value *V, Instruction *BI) {
+static Value *NegateValue(LLVMContext *Context, Value *V, Instruction *BI) {
   // We are trying to expose opportunity for reassociation.  One of the things
   // that we want to do to achieve this is to push a negation as deep into an
   // expression chain as possible, to expose the add instructions.  In practice,
@@ -386,8 +386,8 @@ static Value *NegateValue(Value *V, Instruction *BI) {
   if (Instruction *I = dyn_cast<Instruction>(V))
     if (I->getOpcode() == Instruction::Add && I->hasOneUse()) {
       // Push the negates through the add.
-      I->setOperand(0, NegateValue(I->getOperand(0), BI));
-      I->setOperand(1, NegateValue(I->getOperand(1), BI));
+      I->setOperand(0, NegateValue(Context, I->getOperand(0), BI));
+      I->setOperand(1, NegateValue(Context, I->getOperand(1), BI));
 
       // We must move the add instruction here, because the neg instructions do
       // not dominate the old add instruction in general.  By moving it, we are
@@ -402,14 +402,14 @@ static Value *NegateValue(Value *V, Instruction *BI) {
   // Insert a 'neg' instruction that subtracts the value from zero to get the
   // negation.
   //
-  return BinaryOperator::CreateNeg(V, V->getName() + ".neg", BI);
+  return BinaryOperator::CreateNeg(*Context, V, V->getName() + ".neg", BI);
 }
 
 /// ShouldBreakUpSubtract - Return true if we should break up this subtract of
 /// X-Y into (X + -Y).
-static bool ShouldBreakUpSubtract(Instruction *Sub) {
+static bool ShouldBreakUpSubtract(LLVMContext *Context, Instruction *Sub) {
   // If this is a negation, we can't split it up!
-  if (BinaryOperator::isNeg(Sub))
+  if (BinaryOperator::isNeg(*Context, Sub))
     return false;
   
   // Don't bother to break this up unless either the LHS is an associable add or
@@ -431,7 +431,7 @@ static bool ShouldBreakUpSubtract(Instruction *Sub) {
 /// BreakUpSubtract - If we have (X-Y), and if either X is an add, or if this is
 /// only used by an add, transform this into (X+(0-Y)) to promote better
 /// reassociation.
-static Instruction *BreakUpSubtract(Instruction *Sub,
+static Instruction *BreakUpSubtract(LLVMContext *Context, Instruction *Sub,
                               std::map<AssertingVH<>, unsigned> &ValueRankMap) {
   // Convert a subtract into an add and a neg instruction... so that sub
   // instructions can be commuted with other add instructions...
@@ -439,7 +439,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub,
   // Calculate the negative value of Operand 1 of the sub instruction...
   // and set it as the RHS of the add instruction we just made...
   //
-  Value *NegVal = NegateValue(Sub->getOperand(1), Sub);
+  Value *NegVal = NegateValue(Context, Sub->getOperand(1), Sub);
   Instruction *New =
     BinaryOperator::CreateAdd(Sub->getOperand(0), NegVal, "", Sub);
   New->takeName(Sub);
@@ -663,7 +663,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       assert(i < Ops.size());
       // Check for X and -X in the operand list.
-      if (BinaryOperator::isNeg(Ops[i].Op)) {
+      if (BinaryOperator::isNeg(*Context, Ops[i].Op)) {
         Value *X = BinaryOperator::getNegArgument(Ops[i].Op);
         unsigned FoundX = FindInOperandList(Ops, i, X);
         if (FoundX != i) {
@@ -798,10 +798,10 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // If this is a subtract instruction which is not already in negate form,
     // see if we can convert it to X+-Y.
     if (BI->getOpcode() == Instruction::Sub) {
-      if (ShouldBreakUpSubtract(BI)) {
-        BI = BreakUpSubtract(BI, ValueRankMap);
+      if (ShouldBreakUpSubtract(Context, BI)) {
+        BI = BreakUpSubtract(Context, BI, ValueRankMap);
         MadeChange = true;
-      } else if (BinaryOperator::isNeg(BI)) {
+      } else if (BinaryOperator::isNeg(*Context, BI)) {
         // Otherwise, this is a negation.  See if the operand is a multiply tree
         // and if this is not an inner node of a multiply tree.
         if (isReassociableOp(BI->getOperand(1), Instruction::Mul) &&

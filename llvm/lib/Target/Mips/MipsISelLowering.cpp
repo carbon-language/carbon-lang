@@ -227,7 +227,7 @@ bool MipsTargetLowering::IsGlobalInSmallSection(GlobalValue *GV)
   if (GVA->hasInitializer() && GV->hasLocalLinkage()) {
     Constant *C = GVA->getInitializer();
     const ConstantArray *CVA = dyn_cast<ConstantArray>(C);
-    if (CVA && CVA->isCString()) 
+    if (CVA && CVA->isCString(GV->getParent()->getContext())) 
       return false;
   }
 

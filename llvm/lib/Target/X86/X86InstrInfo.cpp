@@ -20,6 +20,7 @@
 #include "X86TargetMachine.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -2312,7 +2313,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     MachineConstantPool &MCP = *MF.getConstantPool();
     const VectorType *Ty = VectorType::get(Type::Int32Ty, 4);
     Constant *C = LoadMI->getOpcode() == X86::V_SET0 ?
-                    ConstantVector::getNullValue(Ty) :
+                    MF.getFunction()->getContext()->getNullValue(Ty) :
                     ConstantVector::getAllOnesValue(Ty);
     unsigned CPI = MCP.getConstantPoolIndex(C, 16);
 

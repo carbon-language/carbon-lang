@@ -15,6 +15,7 @@
 #define SELECTIONDAGBUILD_H
 
 #include "llvm/Constants.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #ifndef NDEBUG
@@ -362,11 +363,14 @@ public:
   /// GFI - Garbage collection metadata for the function.
   GCFunctionInfo *GFI;
 
+  LLVMContext *Context;
+
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
                        FunctionLoweringInfo &funcinfo,
                        CodeGenOpt::Level ol)
     : CurDebugLoc(DebugLoc::getUnknownLoc()), 
-      TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol) {
+      TLI(tli), DAG(dag), FuncInfo(funcinfo), OptLevel(ol), 
+      Context(dag.getContext()) {
   }
 
   void init(GCFunctionInfo *gfi, AliasAnalysis &aa);
