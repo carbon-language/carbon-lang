@@ -181,6 +181,8 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
                              shift; next; }
   if (/^-with-externals$/) { $CONFIGUREARGS .= " --with-externals=$ARGV[0]";
                              shift; next; }
+  if (/^-configure-args$/) { $CONFIGUREARGS .= " $ARGV[0]";
+                             shift; next; }
   if (/^-submit-server/)   { $SUBMITSERVER = "$ARGV[0]"; shift; next; }
   if (/^-submit-script/)   { $SUBMITSCRIPT = "$ARGV[0]"; shift; next; }
   if (/^-submit-aux/)      { $SUBMITAUX = "$ARGV[0]"; shift; next; }
