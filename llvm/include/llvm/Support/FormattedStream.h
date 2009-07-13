@@ -12,23 +12,24 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_ASMSTREAM_H
-#define LLVM_CODEGEN_ASMSTREAM_H
+#ifndef LLVM_SUPPORT_FORMATTEDSTREAM_H
+#define LLVM_SUPPORT_FORMATTEDSTREAM_H
 
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm 
 {
-  /// raw_asm_fd_ostream - Formatted raw_fd_ostream to handle
-  /// asm-specific constructs
+  /// formatted_raw_ostream - Formatted raw_fd_ostream to handle
+  /// asm-specific constructs.
   ///
   class formatted_raw_ostream : public raw_ostream {
   private:
-    /// TheStream - The real stream we output to
+    /// TheStream - The real stream we output to.
     ///
     raw_ostream &TheStream;
 
-    /// Column - The current output column of the stream
+    /// Column - The current output column of the stream.  The column
+    /// scheme is zero-based.
     ///
     unsigned Column;
 
@@ -63,44 +64,14 @@ namespace llvm
     formatted_raw_ostream(raw_ostream &Stream) 
         : raw_ostream(), TheStream(Stream), Column(0) {}
 
-    /// PadToColumn - Align the output to some column number
+    /// PadToColumn - Align the output to some column number.
     ///
-    /// \param NewCol - The column to move to
+    /// \param NewCol - The column to move to.
     /// \param MinPad - The minimum space to give after the most
-    /// recent I/O, even if the current column + minpad > newcol
+    /// recent I/O, even if the current column + minpad > newcol.
     ///
     void PadToColumn(unsigned NewCol, unsigned MinPad = 0);
   };
-
-  /// Column - An I/O manipulator to advance the output to a certain column
-  ///
-  class Column {
-  private:
-    /// Col - The column to move to
-    ///
-    unsigned int Col;
-
-  public:
-    explicit Column(unsigned int c) 
-        : Col(c) {}
-
-    /// operator() - Make Column a functor invokable by a stream
-    /// output operator.
-    ///
-    formatted_raw_ostream &operator()(formatted_raw_ostream &Out) const {
-      // Make at least one space before the next output
-      Out.PadToColumn(Col, 1);
-      return(Out);
-    }
-  };
-
-  /// operator<< - Support coulmn-setting in formatted streams.
-  ///
-  inline formatted_raw_ostream &operator<<(formatted_raw_ostream &Out,
-                                           const Column &Func)
-  {
-    return(Func(Out));
-  }
 }
 
 #endif
