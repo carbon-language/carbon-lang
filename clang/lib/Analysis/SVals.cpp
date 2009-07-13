@@ -239,98 +239,83 @@ SVal loc::ConcreteInt::EvalBinOp(BasicValueFactory& BasicVals,
 // Pretty-Printing.
 //===----------------------------------------------------------------------===//
 
-void SVal::printStdErr() const { print(llvm::errs()); }
+void SVal::dump() const { dumpToStream(llvm::errs()); }
 
-void SVal::print(llvm::raw_ostream& Out) const {
-
-  switch (getBaseKind()) {
-      
+void SVal::dumpToStream(llvm::raw_ostream& os) const {
+  switch (getBaseKind()) {      
     case UnknownKind:
-      Out << "Invalid"; break;
-      
+      os << "Invalid";
+      break;      
     case NonLocKind:
-      cast<NonLoc>(this)->print(Out); break;
-      
+      cast<NonLoc>(this)->dumpToStream(os);
+      break;      
     case LocKind:
-      cast<Loc>(this)->print(Out); break;
-      
+      cast<Loc>(this)->dumpToStream(os);
+      break;      
     case UndefinedKind:
-      Out << "Undefined"; break;
-      
+      os << "Undefined";
+      break;      
     default:
       assert (false && "Invalid SVal.");
   }
 }
 
-void NonLoc::print(llvm::raw_ostream& Out) const {
-
+void NonLoc::dumpToStream(llvm::raw_ostream& os) const {
   switch (getSubKind()) {  
-
     case nonloc::ConcreteIntKind:
-      Out << cast<nonloc::ConcreteInt>(this)->getValue().getZExtValue();
-
+      os << cast<nonloc::ConcreteInt>(this)->getValue().getZExtValue();
       if (cast<nonloc::ConcreteInt>(this)->getValue().isUnsigned())
-        Out << 'U';
-      
-      break;
-      
+        os << 'U';      
+      break;      
     case nonloc::SymbolValKind:
-      Out << '$' << cast<nonloc::SymbolVal>(this)->getSymbol();
-      break;
-     
+      os << '$' << cast<nonloc::SymbolVal>(this)->getSymbol();
+      break;     
     case nonloc::SymExprValKind: {
       const nonloc::SymExprVal& C = *cast<nonloc::SymExprVal>(this);
       const SymExpr *SE = C.getSymbolicExpression();
-      Out << SE;
+      os << SE;
       break;
-    }
-    
+    }    
     case nonloc::LocAsIntegerKind: {
       const nonloc::LocAsInteger& C = *cast<nonloc::LocAsInteger>(this);
-      C.getLoc().print(Out);
-      Out << " [as " << C.getNumBits() << " bit integer]";
+      os << C.getLoc() << " [as " << C.getNumBits() << " bit integer]";
       break;
     }
-      
     case nonloc::CompoundValKind: {
       const nonloc::CompoundVal& C = *cast<nonloc::CompoundVal>(this);
-      Out << " {";
+      os << " {";
       bool first = true;
       for (nonloc::CompoundVal::iterator I=C.begin(), E=C.end(); I!=E; ++I) {
-        if (first) { Out << ' '; first = false; }
-        else Out << ", ";
-        (*I).print(Out);
+        if (first) { 
+          os << ' '; first = false;
+        }
+        else
+          os << ", ";
+
+        (*I).dumpToStream(os);
       }
-      Out << " }";
+      os << " }";
       break;
-    }
-      
+    }      
     default:
       assert (false && "Pretty-printed not implemented for this NonLoc.");
       break;
   }
 }
 
-void Loc::print(llvm::raw_ostream& Out) const {
-  
+void Loc::dumpToStream(llvm::raw_ostream& os) const {  
   switch (getSubKind()) {        
-
     case loc::ConcreteIntKind:
-      Out << cast<loc::ConcreteInt>(this)->getValue().getZExtValue()
-          << " (Loc)";
-      break;
-      
+      os << cast<loc::ConcreteInt>(this)->getValue().getZExtValue() << " (Loc)";
+      break;      
     case loc::GotoLabelKind:
-      Out << "&&"
-          << cast<loc::GotoLabel>(this)->getLabel()->getID()->getName();
+      os << "&&" << cast<loc::GotoLabel>(this)->getLabel()->getID()->getName();
       break;
-
     case loc::MemRegionKind:
-      Out << '&' << cast<loc::MemRegionVal>(this)->getRegion()->getString();
-      break;
-      
+      os << '&' << cast<loc::MemRegionVal>(this)->getRegion()->getString();
+      break;      
     default:
-      assert (false && "Pretty-printing not implemented for this Loc.");
+      assert(false && "Pretty-printing not implemented for this Loc.");
       break;
   }
 }

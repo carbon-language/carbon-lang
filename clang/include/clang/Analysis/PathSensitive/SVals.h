@@ -18,7 +18,11 @@
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/ImmutableList.h"
-  
+
+namespace llvm {
+  class raw_ostream;
+}
+
 //==------------------------------------------------------------------------==//
 //  Base SVal types.
 //==------------------------------------------------------------------------==//
@@ -113,8 +117,8 @@ public:
 
   const MemRegion *getAsRegion() const;
   
-  void print(llvm::raw_ostream& OS) const;
-  void printStdErr() const;
+  void dumpToStream(llvm::raw_ostream& OS) const;
+  void dump() const;
 
   // Iterators.
   class symbol_iterator {
@@ -171,7 +175,7 @@ protected:
   NonLoc(unsigned SubKind, const void* d) : SVal(d, false, SubKind) {}
   
 public:
-  void print(llvm::raw_ostream& Out) const;
+  void dumpToStream(llvm::raw_ostream& Out) const;
   
   // Implement isa<T> support.
   static inline bool classof(const SVal* V) {
@@ -185,7 +189,7 @@ protected:
   : SVal(const_cast<void*>(D), true, SubKind) {}
 
 public:
-  void print(llvm::raw_ostream& Out) const;
+  void dumpToStream(llvm::raw_ostream& Out) const;
 
   Loc(const Loc& X) : SVal(X.Data, true, X.getSubKind()) {}
   Loc& operator=(const Loc& X) { memcpy(this, &X, sizeof(Loc)); return *this; }
@@ -418,4 +422,11 @@ public:
 } // end clang::loc namespace
 } // end clang namespace  
 
+namespace llvm {
+static inline llvm::raw_ostream& operator<<(llvm::raw_ostream& os,
+                                            clang::SVal V) {
+  V.dumpToStream(os);
+  return os;
+}
+} // end llvm namespace
 #endif

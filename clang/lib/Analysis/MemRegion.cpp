@@ -178,7 +178,7 @@ void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
 }
 
 void ElementRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << superRegion << '['; Index.print(os); os << ']';
+  os << superRegion << '[' << Index << ']';
 }
 
 void FieldRegion::dumpToStream(llvm::raw_ostream& os) const {

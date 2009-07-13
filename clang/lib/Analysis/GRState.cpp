@@ -168,8 +168,7 @@ void GRState::print(llvm::raw_ostream& Out, const char* nl,
     Out << " (" << (void*) I.getKey() << ") ";
     LangOptions LO; // FIXME.
     I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
-    Out << " : ";
-    I.getData().print(Out);
+    Out << " : " << I.getData();
   }
   
   // Print block-expression bindings.
@@ -186,8 +185,7 @@ void GRState::print(llvm::raw_ostream& Out, const char* nl,
     Out << " (" << (void*) I.getKey() << ") ";
     LangOptions LO; // FIXME.
     I.getKey()->printPretty(Out, 0, PrintingPolicy(LO));
-    Out << " : ";
-    I.getData().print(Out);
+    Out << " : " << I.getData();
   }
   
   Mgr->getConstraintManager().print(this, Out, nl, sep);

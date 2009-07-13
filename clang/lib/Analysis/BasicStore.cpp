@@ -611,8 +611,7 @@ void BasicStoreManager::print(Store store, llvm::raw_ostream& Out,
     else
       Out << nl;
     
-    Out << ' ' << I.getKey() << " : ";
-    I.getData().print(Out);
+    Out << ' ' << I.getKey() << " : " << I.getData();
   }
 }
 
