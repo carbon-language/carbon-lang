@@ -102,12 +102,14 @@ namespace {
     std::set<const Argument*> ByValParams;
     unsigned FPCounter;
     unsigned OpaqueCounter;
+    DenseMap<const Value*, unsigned> AnonValueNumbers;
+    unsigned NextAnonValueNumber;
 
   public:
     static char ID;
     explicit CWriter(raw_ostream &o)
       : FunctionPass(&ID), Out(o), IL(0), Mang(0), LI(0), 
-        TheModule(0), TAsm(0), TD(0), OpaqueCounter(0) {
+        TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
       FPCounter = 0;
     }
 
@@ -1428,33 +1430,36 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
 }
 
 std::string CWriter::GetValueName(const Value *Operand) {
-  std::string Name;
+  // Mangle globals with the standard mangler interface for LLC compatibility.
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(Operand))
+    return Mang->getValueName(GV);
+    
+  std::string Name = Operand->getName();
+    
+  if (Name.empty()) { // Assign unique names to local temporaries.
+    unsigned &No = AnonValueNumbers[Operand];
+    if (No == 0)
+      No = ++NextAnonValueNumber;
+    Name = "tmp__" + utostr(No);
+  }
+    
+  std::string VarName;
+  VarName.reserve(Name.capacity());
 
-  if (!isa<GlobalValue>(Operand) && Operand->getName() != "") {
-    std::string VarName;
+  for (std::string::iterator I = Name.begin(), E = Name.end();
+       I != E; ++I) {
+    char ch = *I;
 
-    Name = Operand->getName();
-    VarName.reserve(Name.capacity());
-
-    for (std::string::iterator I = Name.begin(), E = Name.end();
-         I != E; ++I) {
-      char ch = *I;
-
-      if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
-            (ch >= '0' && ch <= '9') || ch == '_')) {
-        char buffer[5];
-        sprintf(buffer, "_%x_", ch);
-        VarName += buffer;
-      } else
-        VarName += ch;
-    }
-
-    Name = "llvm_cbe_" + VarName;
-  } else {
-    Name = Mang->getValueName(Operand);
+    if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+          (ch >= '0' && ch <= '9') || ch == '_')) {
+      char buffer[5];
+      sprintf(buffer, "_%x_", ch);
+      VarName += buffer;
+    } else
+      VarName += ch;
   }
 
-  return Name;
+  return "llvm_cbe_" + VarName;
 }
 
 /// writeInstComputationInline - Emit the computation for the specified

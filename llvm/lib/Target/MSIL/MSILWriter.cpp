@@ -240,8 +240,17 @@ bool MSILWriter::isZeroValue(const Value* V) {
 
 
 std::string MSILWriter::getValueName(const Value* V) {
+  std::string Name;
+  if (const GlobalValue *GV = cast<GlobalValue>(V))
+    Name = Mang->getValueName(GV);
+  else {
+    unsigned &No = AnonValueNumbers[V];
+    if (No == 0) No = ++NextAnonValueNumber;
+    Name = "tmp" + utostr(No);
+  }
+  
   // Name into the quotes allow control and space characters.
-  return "'"+Mang->getValueName(V)+"'";
+  return "'"+Name+"'";
 }
 
 
@@ -258,7 +267,16 @@ std::string MSILWriter::getLabelName(const std::string& Name) {
 
 
 std::string MSILWriter::getLabelName(const Value* V) {
-  return getLabelName(Mang->getValueName(V));
+  std::string Name;
+  if (const GlobalValue *GV = cast<GlobalValue>(V))
+    Name = Mang->getValueName(GV);
+  else {
+    unsigned &No = AnonValueNumbers[V];
+    if (No == 0) No = ++NextAnonValueNumber;
+    Name = "tmp" + utostr(No);
+  }
+  
+  return getLabelName(Name);
 }
 
 

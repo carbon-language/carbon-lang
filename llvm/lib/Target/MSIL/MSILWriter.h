@@ -85,7 +85,11 @@ namespace {
       StaticInitList;
     const std::set<const Type *>* UsedTypes;
     static char ID;
-    MSILWriter(raw_ostream &o) : FunctionPass(&ID), Out(o) {
+    DenseMap<const Value*, unsigned> AnonValueNumbers;
+    unsigned NextAnonValueNumber;
+
+    MSILWriter(raw_ostream &o)
+       : FunctionPass(&ID), Out(o), NextAnonValueNumber(0) {
       UniqID = 0;
     }
 
