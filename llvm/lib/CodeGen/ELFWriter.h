@@ -26,7 +26,7 @@ namespace llvm {
   class ELFCodeEmitter;
   class ELFRelocation;
   class ELFSection;
-  class ELFSym;
+  struct ELFSym;
   class GlobalVariable;
   class Mangler;
   class MachineCodeEmitter;

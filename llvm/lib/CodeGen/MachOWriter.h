@@ -27,7 +27,7 @@ namespace llvm {
   class MachODySymTab;
   class MachOHeader;
   class MachOSection;
-  class MachOSym;
+  struct MachOSym;
   class TargetData;
   class TargetMachine;
   class TargetAsmInfo;
