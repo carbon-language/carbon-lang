@@ -26,6 +26,7 @@
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/ConstantRange.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include <iosfwd>
@@ -330,11 +331,19 @@ namespace llvm {
     /// found.
     BasicBlock* getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
 
-    /// isNecessaryCond - Test whether the given CondValue value is a condition
-    /// which is at least as strict as the one described by Pred, LHS, and RHS.
+    /// isNecessaryCond - Test whether the condition described by Pred, LHS,
+    /// and RHS is a necessary condition for the given Cond value to evaluate
+    /// to true.
     bool isNecessaryCond(Value *Cond, ICmpInst::Predicate Pred,
                          const SCEV *LHS, const SCEV *RHS,
                          bool Inverse);
+
+    /// isNecessaryCondOperands - Test whether the condition described by Pred,
+    /// LHS, and RHS is a necessary condition for the condition described by
+    /// Pred, FoundLHS, and FoundRHS to evaluate to true.
+    bool isNecessaryCondOperands(ICmpInst::Predicate Pred,
+                                 const SCEV *LHS, const SCEV *RHS,
+                                 const SCEV *FoundLHS, const SCEV *FoundRHS);
 
     /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
     /// in the header of its containing loop, we know the loop executes a
@@ -495,9 +504,15 @@ namespace llvm {
 
     /// isLoopGuardedByCond - Test whether entry to the loop is protected by
     /// a conditional between LHS and RHS.  This is used to help avoid max
-    /// expressions in loop trip counts.
+    /// expressions in loop trip counts, and to eliminate casts.
     bool isLoopGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
                              const SCEV *LHS, const SCEV *RHS);
+
+    /// isLoopBackedgeGuardedByCond - Test whether the backedge of the loop is
+    /// protected by a conditional between LHS and RHS.  This is used to
+    /// to eliminate casts.
+    bool isLoopBackedgeGuardedByCond(const Loop *L, ICmpInst::Predicate Pred,
+                                     const SCEV *LHS, const SCEV *RHS);
 
     /// getBackedgeTakenCount - If the specified loop has a predictable
     /// backedge-taken count, return it, otherwise return a SCEVCouldNotCompute
@@ -534,13 +549,42 @@ namespace llvm {
     /// bitwidth of S.
     uint32_t GetMinTrailingZeros(const SCEV *S);
 
-    /// GetMinLeadingZeros - Determine the minimum number of zero bits that S is
-    /// guaranteed to begin with (at every loop iteration).
-    uint32_t GetMinLeadingZeros(const SCEV *S);
+    /// getUnsignedRange - Determine the unsigned range for a particular SCEV.
+    ///
+    ConstantRange getUnsignedRange(const SCEV *S);
 
-    /// GetMinSignBits - Determine the minimum number of sign bits that S is
-    /// guaranteed to begin with.
-    uint32_t GetMinSignBits(const SCEV *S);
+    /// getSignedRange - Determine the signed range for a particular SCEV.
+    ///
+    ConstantRange getSignedRange(const SCEV *S);
+
+    /// isKnownNegative - Test if the given expression is known to be negative.
+    ///
+    bool isKnownNegative(const SCEV *S);
+
+    /// isKnownPositive - Test if the given expression is known to be positive.
+    ///
+    bool isKnownPositive(const SCEV *S);
+
+    /// isKnownNonNegative - Test if the given expression is known to be
+    /// non-negative.
+    ///
+    bool isKnownNonNegative(const SCEV *S);
+
+    /// isKnownNonPositive - Test if the given expression is known to be
+    /// non-positive.
+    ///
+    bool isKnownNonPositive(const SCEV *S);
+
+    /// isKnownNonZero - Test if the given expression is known to be
+    /// non-zero.
+    ///
+    bool isKnownNonZero(const SCEV *S);
+
+    /// isKnownNonZero - Test if the given expression is known to satisfy
+    /// the condition described by Pred, LHS, and RHS.
+    ///
+    bool isKnownPredicate(ICmpInst::Predicate Pred,
+                          const SCEV *LHS, const SCEV *RHS);
 
     virtual bool runOnFunction(Function &F);
     virtual void releaseMemory();

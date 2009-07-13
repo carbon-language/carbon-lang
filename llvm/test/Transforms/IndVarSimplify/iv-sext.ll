@@ -1,7 +1,6 @@
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
 ; RUN: grep {= sext} %t | count 4
 ; RUN: grep {phi i64} %t | count 2
-; XFAIL: *
 
 ; Indvars should be able to promote the hiPart induction variable in the
 ; inner loop to i64.
