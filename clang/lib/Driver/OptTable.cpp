@@ -91,7 +91,11 @@ static Info &getInfo(unsigned id) {
   return OptionInfos[id - 1];
 }
 
-OptTable::OptTable() : Options(new Option*[numOptions]()) {
+OptTable::OptTable() : Options(new Option*[numOptions]) {
+  // Explicitly zero initialize the error to work around a bug in array
+  // value-initialization on MinGW with gcc 4.3.5.
+  memset(Options, 0, sizeof(*Options) * numOptions);
+
   // Find start of normal options.
   FirstSearchableOption = 0;
   for (unsigned i = OPT_UNKNOWN + 1; i < LastOption; ++i) {
