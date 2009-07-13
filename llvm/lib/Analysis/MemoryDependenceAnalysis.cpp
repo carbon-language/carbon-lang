@@ -731,10 +731,22 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
     // If we do need to do phi translation, then there are a bunch of different
     // cases, because we have to find a Value* live in the predecessor block. We
     // know that PtrInst is defined in this block at least.
+
+    // We may have added values to the cache list before this PHI translation.
+    // If so, we haven't done anything to ensure that the cache remains sorted.
+    // Sort it now (if needed) so that recursive invocations of
+    // getNonLocalPointerDepFromBB and other routines that could reuse the cache
+    // value will only see properly sorted cache arrays.
+    if (Cache && NumSortedEntries != Cache->size()) {
+      std::sort(Cache->begin(), Cache->end());
+      NumSortedEntries = Cache->size();
+    }
     
     // If this is directly a PHI node, just use the incoming values for each
     // pred as the phi translated version.
     if (PHINode *PtrPHI = dyn_cast<PHINode>(PtrInst)) {
+      Cache = 0;
+      
       for (BasicBlock **PI = PredCache->GetPreds(BB); *PI; ++PI) {
         BasicBlock *Pred = *PI;
         Value *PredPtr = PtrPHI->getIncomingValueForBlock(Pred);
@@ -759,15 +771,6 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
           goto PredTranslationFailure;
         }
 
-        // We may have added values to the cache list before this PHI
-        // translation.  If so, we haven't done anything to ensure that the
-        // cache remains sorted.  Sort it now (if needed) so that recursive
-        // invocations of getNonLocalPointerDepFromBB that could reuse the cache
-        // value will only see properly sorted cache arrays.
-        if (Cache && NumSortedEntries != Cache->size())
-          std::sort(Cache->begin(), Cache->end());
-        Cache = 0;
-        
         // FIXME: it is entirely possible that PHI translating will end up with
         // the same value.  Consider PHI translating something like:
         // X = phi [x, bb1], [y, bb2].  PHI translating for bb1 doesn't *need*
@@ -779,7 +782,7 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
                                         Result, Visited))
           goto PredTranslationFailure;
       }
-
+      
       // Refresh the CacheInfo/Cache pointer so that it isn't invalidated.
       CacheInfo = &NonLocalPointerDeps[CacheKey];
       Cache = &CacheInfo->second;
@@ -806,11 +809,8 @@ getNonLocalPointerDepFromBB(Value *Pointer, uint64_t PointeeSize,
       CacheInfo = &NonLocalPointerDeps[CacheKey];
       Cache = &CacheInfo->second;
       NumSortedEntries = Cache->size();
-    } else if (NumSortedEntries != Cache->size()) {
-      std::sort(Cache->begin(), Cache->end());
-      NumSortedEntries = Cache->size();
     }
-
+    
     // Since we did phi translation, the "Cache" set won't contain all of the
     // results for the query.  This is ok (we can still use it to accelerate
     // specific block queries) but we can't do the fastpath "return all
