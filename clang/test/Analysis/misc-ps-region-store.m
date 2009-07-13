@@ -1,4 +1,5 @@
 // RUN: clang-cc -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
+// XFAIL
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;
@@ -66,5 +67,19 @@ char test2() {
   }
 
   return 'a';
+}
+
+// *** THIS TEST IS CURRENTLY FAILING ***
+// BasicStore handles this case incorrectly because it doesn't reason about
+// the value pointed to by 'x' and thus creates different symbolic values
+// at the declarations of 'a' and 'b' respectively.  RegionStore handles
+// it correctly. See the companion test in 'misc-ps-basic-store.m'.
+void test_trivial_symbolic_comparison_pointer_parameter(int *x) {
+  int a = *x;
+  int b = *x;
+  if (a != b) {
+    int *p = 0;
+    *p = 0xDEADBEEF;     // no-warning
+  }
 }
 

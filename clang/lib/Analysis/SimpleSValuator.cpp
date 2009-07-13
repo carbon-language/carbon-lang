@@ -176,7 +176,26 @@ static SVal EvalEquality(ValueManager &ValMgr, Loc lhs, Loc rhs, bool isEqual,
 
 SVal SimpleSValuator::EvalBinOpNN(BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
-                                  QualType resultTy)  {  
+                                  QualType resultTy)  {
+
+  assert(!lhs.isUnknownOrUndef());
+  assert(!rhs.isUnknownOrUndef());
+
+  // Handle trivial case where left-side and right-side are the same.
+  if (lhs == rhs)
+    switch (op) {
+      default:
+        break;
+      case BinaryOperator::EQ:
+      case BinaryOperator::LE:
+      case BinaryOperator::GE:
+        return ValMgr.makeTruthVal(true, resultTy);
+      case BinaryOperator::LT:
+      case BinaryOperator::GT:
+      case BinaryOperator::NE:
+        return ValMgr.makeTruthVal(false, resultTy);
+    }
+  
   while (1) {
     switch (lhs.getSubKind()) {
     default:

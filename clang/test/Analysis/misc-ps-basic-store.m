@@ -20,3 +20,17 @@ void checkaccess_union() {
       ).__i))) & 0xff00) >> 8) == 1)
         ret = 1;
 }
+
+// BasicStore handles this case incorrectly because it doesn't reason about
+// the value pointed to by 'x' and thus creates different symbolic values
+// at the declarations of 'a' and 'b' respectively.  See the companion test
+// in 'misc-ps-region-store.m'.
+void test_trivial_symbolic_comparison_pointer_parameter(int *x) {
+  int a = *x;
+  int b = *x;
+  if (a != b) {
+    int *p = 0;
+    *p = 0xDEADBEEF;     // expected-warning{{null}}
+  }
+}
+
