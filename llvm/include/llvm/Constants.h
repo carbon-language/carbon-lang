@@ -692,26 +692,8 @@ public:
   /// ConstantExpr::get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
   ///
-  static Constant *getAdd(Constant *C1, Constant *C2);
-  static Constant *getFAdd(Constant *C1, Constant *C2);
-  static Constant *getSub(Constant *C1, Constant *C2);
-  static Constant *getFSub(Constant *C1, Constant *C2);
-  static Constant *getMul(Constant *C1, Constant *C2);
-  static Constant *getFMul(Constant *C1, Constant *C2);
-  static Constant *getUDiv(Constant *C1, Constant *C2);
-  static Constant *getSDiv(Constant *C1, Constant *C2);
-  static Constant *getFDiv(Constant *C1, Constant *C2);
-  static Constant *getURem(Constant *C1, Constant *C2); // unsigned rem
-  static Constant *getSRem(Constant *C1, Constant *C2); // signed rem
-  static Constant *getFRem(Constant *C1, Constant *C2);
-  static Constant *getAnd(Constant *C1, Constant *C2);
-  static Constant *getOr(Constant *C1, Constant *C2);
-  static Constant *getXor(Constant *C1, Constant *C2);
   static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
-  static Constant *getShl(Constant *C1, Constant *C2);
-  static Constant *getLShr(Constant *C1, Constant *C2);
-  static Constant *getAShr(Constant *C1, Constant *C2);
 
   /// Getelementptr form.  std::vector<Value*> is only accepted for convenience:
   /// all elements must be Constant's.

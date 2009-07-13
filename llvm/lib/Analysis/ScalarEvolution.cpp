@@ -1722,7 +1722,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
     if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
-      return getConstant(cast<ConstantInt>(ConstantExpr::getUDiv(LHSCV,
+      return getConstant(cast<ConstantInt>(Context->getConstantExprUDiv(LHSCV,
                                                                  RHSCV)));
     }
   }

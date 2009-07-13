@@ -754,64 +754,10 @@ const SmallVector<unsigned, 4> &ConstantExpr::getIndices() const {
   return cast<InsertValueConstantExpr>(this)->Indices;
 }
 
-Constant *ConstantExpr::getAdd(Constant *C1, Constant *C2) {
-  return get(Instruction::Add, C1, C2);
-}
-Constant *ConstantExpr::getFAdd(Constant *C1, Constant *C2) {
-  return get(Instruction::FAdd, C1, C2);
-}
-Constant *ConstantExpr::getSub(Constant *C1, Constant *C2) {
-  return get(Instruction::Sub, C1, C2);
-}
-Constant *ConstantExpr::getFSub(Constant *C1, Constant *C2) {
-  return get(Instruction::FSub, C1, C2);
-}
-Constant *ConstantExpr::getMul(Constant *C1, Constant *C2) {
-  return get(Instruction::Mul, C1, C2);
-}
-Constant *ConstantExpr::getFMul(Constant *C1, Constant *C2) {
-  return get(Instruction::FMul, C1, C2);
-}
-Constant *ConstantExpr::getUDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::UDiv, C1, C2);
-}
-Constant *ConstantExpr::getSDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::SDiv, C1, C2);
-}
-Constant *ConstantExpr::getFDiv(Constant *C1, Constant *C2) {
-  return get(Instruction::FDiv, C1, C2);
-}
-Constant *ConstantExpr::getURem(Constant *C1, Constant *C2) {
-  return get(Instruction::URem, C1, C2);
-}
-Constant *ConstantExpr::getSRem(Constant *C1, Constant *C2) {
-  return get(Instruction::SRem, C1, C2);
-}
-Constant *ConstantExpr::getFRem(Constant *C1, Constant *C2) {
-  return get(Instruction::FRem, C1, C2);
-}
-Constant *ConstantExpr::getAnd(Constant *C1, Constant *C2) {
-  return get(Instruction::And, C1, C2);
-}
-Constant *ConstantExpr::getOr(Constant *C1, Constant *C2) {
-  return get(Instruction::Or, C1, C2);
-}
-Constant *ConstantExpr::getXor(Constant *C1, Constant *C2) {
-  return get(Instruction::Xor, C1, C2);
-}
 unsigned ConstantExpr::getPredicate() const {
   assert(getOpcode() == Instruction::FCmp || 
          getOpcode() == Instruction::ICmp);
   return ((const CompareConstantExpr*)this)->predicate;
-}
-Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
-  return get(Instruction::Shl, C1, C2);
-}
-Constant *ConstantExpr::getLShr(Constant *C1, Constant *C2) {
-  return get(Instruction::LShr, C1, C2);
-}
-Constant *ConstantExpr::getAShr(Constant *C1, Constant *C2) {
-  return get(Instruction::AShr, C1, C2);
 }
 
 /// getWithOperandReplaced - Return a constant expression identical to this

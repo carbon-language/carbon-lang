@@ -293,63 +293,63 @@ Constant* LLVMContext::getConstantExprNot(Constant* C) {
 }
 
 Constant* LLVMContext::getConstantExprAdd(Constant* C1, Constant* C2) {
-  return ConstantExpr::getAdd(C1, C2);
+  return getConstantExpr(Instruction::Add, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprFAdd(Constant* C1, Constant* C2) {
-  return ConstantExpr::getFAdd(C1, C2);
+  return getConstantExpr(Instruction::FAdd, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprSub(Constant* C1, Constant* C2) {
-  return ConstantExpr::getSub(C1, C2);
+  return getConstantExpr(Instruction::Sub, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprFSub(Constant* C1, Constant* C2) {
-  return ConstantExpr::getFSub(C1, C2);
+  return getConstantExpr(Instruction::FSub, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprMul(Constant* C1, Constant* C2) {
-  return ConstantExpr::getMul(C1, C2);
+  return getConstantExpr(Instruction::Mul, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprFMul(Constant* C1, Constant* C2) {
-  return ConstantExpr::getFMul(C1, C2);
+  return getConstantExpr(Instruction::FMul, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprUDiv(Constant* C1, Constant* C2) {
-  return ConstantExpr::getUDiv(C1, C2);
+  return getConstantExpr(Instruction::UDiv, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprSDiv(Constant* C1, Constant* C2) {
-  return ConstantExpr::getSDiv(C1, C2);
+  return getConstantExpr(Instruction::SDiv, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprFDiv(Constant* C1, Constant* C2) {
-  return ConstantExpr::getFDiv(C1, C2);
+  return getConstantExpr(Instruction::FDiv, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprURem(Constant* C1, Constant* C2) {
-  return ConstantExpr::getURem(C1, C2);
+  return getConstantExpr(Instruction::URem, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprSRem(Constant* C1, Constant* C2) {
-  return ConstantExpr::getSRem(C1, C2);
+  return getConstantExpr(Instruction::SRem, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprFRem(Constant* C1, Constant* C2) {
-  return ConstantExpr::getFRem(C1, C2);
+  return getConstantExpr(Instruction::FRem, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprAnd(Constant* C1, Constant* C2) {
-  return ConstantExpr::getAnd(C1, C2);
+  return getConstantExpr(Instruction::And, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprOr(Constant* C1, Constant* C2) {
-  return ConstantExpr::getOr(C1, C2);
+  return getConstantExpr(Instruction::Or, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprXor(Constant* C1, Constant* C2) {
-  return ConstantExpr::getXor(C1, C2);
+  return getConstantExpr(Instruction::Xor, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprICmp(unsigned short pred, Constant* LHS,
@@ -363,15 +363,15 @@ Constant* LLVMContext::getConstantExprFCmp(unsigned short pred, Constant* LHS,
 }
 
 Constant* LLVMContext::getConstantExprShl(Constant* C1, Constant* C2) {
-  return ConstantExpr::getShl(C1, C2);
+  return getConstantExpr(Instruction::Shl, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprLShr(Constant* C1, Constant* C2) {
-  return ConstantExpr::getLShr(C1, C2);
+  return getConstantExpr(Instruction::LShr, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprAShr(Constant* C1, Constant* C2) {
-  return ConstantExpr::getAShr(C1, C2);
+  return getConstantExpr(Instruction::AShr, C1, C2);
 }
 
 Constant* LLVMContext::getConstantExprGetElementPtr(Constant* C,
