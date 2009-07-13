@@ -697,7 +697,7 @@ namespace llvm {
     char getSeparatorChar() const {
       return SeparatorChar;
     }
-    const unsigned getCommentColumn() const {
+    unsigned getCommentColumn() const {
       return CommentColumn;
     }
     const char *getCommentString() const {
