@@ -321,6 +321,24 @@ public:
   }
 };
 
+// NetBSD Target
+template<typename Target>
+class NetBSDTargetInfo : public OSTargetInfo<Target> {
+protected:
+  virtual void getOSDefines(const LangOptions &Opts, const char *Triple,
+                    std::vector<char> &Defs) const {
+    // NetBSD defines; list based off of gcc output
+    Define(Defs, "__NetBSD__", "1");
+    Define(Defs, "__unix__", "1");
+    Define(Defs, "__ELF__", "1");
+  }
+public:
+  NetBSDTargetInfo(const std::string &triple) 
+    : OSTargetInfo<Target>(triple) {
+      this->UserLabelPrefix = "";
+    }
+};
+
 // OpenBSD Target
 template<typename Target>
 class OpenBSDTargetInfo : public OSTargetInfo<Target> {
@@ -1372,6 +1390,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
   // Additions and corrections are welcome.
   bool isDarwin = T.find("-darwin") != std::string::npos;
   bool isDragonFly = T.find("-dragonfly") != std::string::npos;
+  bool isNetBSD = T.find("-netbsd") != std::string::npos;
   bool isOpenBSD = T.find("-openbsd") != std::string::npos;
   bool isFreeBSD = T.find("-freebsd") != std::string::npos;
   bool isSolaris = T.find("-solaris") != std::string::npos;
@@ -1411,6 +1430,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new DarwinX86_64TargetInfo(T);
     if (isLinux)
       return new LinuxTargetInfo<X86_64TargetInfo>(T);
+    if (isNetBSD)
+      return new NetBSDTargetInfo<X86_64TargetInfo>(T);
     if (isOpenBSD)
       return new OpenBSDX86_64TargetInfo(T);
     if (isFreeBSD)
@@ -1433,6 +1454,8 @@ TargetInfo* TargetInfo::CreateTargetInfo(const std::string &T) {
       return new LinuxTargetInfo<X86_32TargetInfo>(T);
     if (isDragonFly)
       return new DragonFlyBSDTargetInfo<X86_32TargetInfo>(T);
+    if (isNetBSD)
+      return new NetBSDTargetInfo<X86_32TargetInfo>(T);
     if (isOpenBSD)
       return new OpenBSDI386TargetInfo(T);
     if (isFreeBSD)
