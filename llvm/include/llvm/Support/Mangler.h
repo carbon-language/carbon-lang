@@ -50,11 +50,6 @@ class Mangler {
   ///
   unsigned Count;
 
-  /// TypeMap - If the client wants us to unique types, this keeps track of the
-  /// current assignments and TypeCounter keeps track of the next id to assign.
-  DenseMap<const Type*, unsigned> TypeMap;
-  unsigned TypeCounter;
-
   /// AcceptableChars - This bitfield contains a one for each character that is
   /// allowed to be part of an unmangled name.
   unsigned AcceptableChars[256/32];
@@ -99,11 +94,6 @@ public:
   ///
   std::string makeNameProper(const std::string &x, const char *Prefix = 0,
                              const char *PrivatePrefix = 0);
-
-private:
-  /// getTypeID - Return a unique ID for the specified LLVM type.
-  ///
-  unsigned getTypeID(const Type *Ty);
 };
 
 } // End llvm namespace

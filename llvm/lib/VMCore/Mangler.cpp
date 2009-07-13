@@ -128,14 +128,6 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix,
   return Result;
 }
 
-/// getTypeID - Return a unique ID for the specified LLVM type.
-///
-unsigned Mangler::getTypeID(const Type *Ty) {
-  unsigned &E = TypeMap[Ty];
-  if (E == 0) E = ++TypeCounter;
-  return E;
-}
-
 std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
   // Check to see whether we've already named V.
   std::string &Name = Memo[GV];
@@ -162,7 +154,7 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
 
 Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix)
   : Prefix(prefix), PrivatePrefix (privatePrefix), UseQuotes(false),
-    PreserveAsmNames(false), Count(0), TypeCounter(0) {
+    PreserveAsmNames(false), Count(0) {
   std::fill(AcceptableChars, array_endof(AcceptableChars), 0);
 
   // Letters and numbers are acceptable.
