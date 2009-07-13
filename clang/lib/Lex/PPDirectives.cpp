@@ -588,7 +588,7 @@ TryAgain:
   // various pseudo-ops.  Just return the # token and push back the following
   // token to be lexed next time.
   if (getLangOptions().AsmPreprocessor) {
-    Token *Toks = new Token[2]();
+    Token *Toks = new Token[2];
     // Return the # and the token after it.
     Toks[0] = SavedHash; 
     Toks[1] = Result;
