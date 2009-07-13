@@ -788,8 +788,9 @@ DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
   GV.getLinkageName(LinkageName);
   if (!LinkageName.empty()) {
     Mangler *Mg = Asm->getMangler();
+    assert (Mg && "Unable to find Mangler!");
     AddString(GVDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              Mg ? Mg->makeNameProper(LinkageName) : LinkageName);
+              Mg->makeNameProper(LinkageName));
   }
   AddType(DW_Unit, GVDie, GV.getType());
   if (!GV.isLocalToUnit())
@@ -861,8 +862,9 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
 
   if (!LinkageName.empty()) {
     Mangler *Mg = Asm->getMangler();
+    assert (Mg && "Unable to find Mangler!");
     AddString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              Mg ? Mg->makeNameProper(LinkageName) : LinkageName);
+              Mg->makeNameProper(LinkageName));
   }
 
   AddSourceLine(SPDie, &SP);
