@@ -732,7 +732,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   if (Ty.isNull())
     return llvm::DIType();
   
-  // Check to see if the compile unit already has created this type.
+  // Check TypeCache first.
   llvm::DIType &Slot = TypeCache[Ty.getAsOpaquePtr()];
   if (!Slot.isNull()) return Slot;
 
