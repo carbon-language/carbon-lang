@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineLocation.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -179,7 +180,9 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
 
   /// DebugTimer - Timer for the Dwarf debug writer.
   Timer *DebugTimer;
-  
+ 
+  Mangler *LLVMMangler;
+
   struct FunctionDebugFrameInfo {
     unsigned Number;
     std::vector<MachineMove> Moves;

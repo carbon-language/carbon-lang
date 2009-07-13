@@ -225,7 +225,7 @@ DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
     ValuesSet(InitValuesSetSize), Values(), StringPool(), SectionMap(),
     SectionSourceLines(), didInitial(false), shouldEmit(false),
-    FunctionDbgScope(0), DebugTimer(0) {
+    FunctionDbgScope(0), DebugTimer(0), LLVMMangler(0) {
   if (TimePassesIsEnabled)
     DebugTimer = new Timer("Dwarf Debug Writer",
                            getDwarfTimerGroup());
@@ -787,7 +787,7 @@ DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
   GV.getLinkageName(LinkageName);
   if (!LinkageName.empty())
     AddString(GVDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              LinkageName);
+              LLVMMangler->makeNameProper(LinkageName));
   AddType(DW_Unit, GVDie, GV.getType());
   if (!GV.isLocalToUnit())
     AddUInt(GVDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
@@ -858,7 +858,7 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
 
   if (!LinkageName.empty())
     AddString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              LinkageName);
+              LLVMMangler->makeNameProper(LinkageName));
 
   AddSourceLine(SPDie, &SP);
 
@@ -1278,6 +1278,16 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
   SmallVector<GlobalVariable *, 4> SPs;
   CollectDebugInfoAnchors(*M, CUs, GVs, SPs);
 
+  LLVMMangler = new Mangler(*M, TAI->getGlobalPrefix());
+  // add chars used in ObjC method names so method names aren't mangled
+  LLVMMangler->markCharAcceptable('[');
+  LLVMMangler->markCharAcceptable(']');
+  LLVMMangler->markCharAcceptable('(');
+  LLVMMangler->markCharAcceptable(')');
+  LLVMMangler->markCharAcceptable('-');
+  LLVMMangler->markCharAcceptable('+');
+  LLVMMangler->markCharAcceptable(' ');
+
   // Create all the compile unit DIEs.
   for (SmallVector<GlobalVariable *, 2>::iterator I = CUs.begin(),
          E = CUs.end(); I != E; ++I) 
@@ -1408,6 +1418,8 @@ void DwarfDebug::EndModule() {
 
   if (TimePassesIsEnabled)
     DebugTimer->stopTimer();
+
+  delete LLVMMangler;
 }
 
 /// BeginFunction - Gather pre-function debug information.  Assumes being
