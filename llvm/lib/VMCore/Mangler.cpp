@@ -14,7 +14,6 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/System/Atomic.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -151,7 +150,7 @@ std::string Mangler::getValueName(const Value *V) {
 }
 
 
-std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
+std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
   // Check to see whether we've already named V.
   std::string &Name = Memo[GV];
   if (!Name.empty())
@@ -164,13 +163,7 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
     Name = GV->getNameStart(); // Is an intrinsic function
   } else if (!GV->hasName()) {
     // Must mangle the global into a unique ID.
-    unsigned TypeUniqueID = getTypeID(GV->getType());
-    static uint32_t GlobalID = 0;
-    
-    unsigned OldID = GlobalID;
-    sys::AtomicIncrement(&GlobalID);
-    
-    Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(OldID);
+    Name = "__unnamed_" + utostr(Count++);
   } else {
     if (GV->hasPrivateLinkage())
       Name = makeNameProper(GV->getName() + Suffix, Prefix, PrivatePrefix);
