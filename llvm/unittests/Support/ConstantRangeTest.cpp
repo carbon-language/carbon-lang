@@ -175,7 +175,7 @@ TEST_F(ConstantRangeTest, SExt) {
   ConstantRange SSome = Some.signExtend(20);
   ConstantRange SWrap = Wrap.signExtend(20);
   EXPECT_EQ(SFull, ConstantRange(APInt(20, INT16_MIN, true),
-                                 APInt(20, INT16_MAX, true)));
+                                 APInt(20, INT16_MAX + 1, true)));
   EXPECT_TRUE(SEmpty.isEmptySet());
   EXPECT_EQ(SOne, ConstantRange(APInt(One.getLower()).sext(20),
                                 APInt(One.getUpper()).sext(20)));

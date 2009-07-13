@@ -505,7 +505,7 @@ ConstantRange ConstantRange::signExtend(uint32_t DstTySize) const {
   assert(SrcTySize < DstTySize && "Not a value extension");
   if (isFullSet()) {
     return ConstantRange(APInt::getHighBitsSet(DstTySize,DstTySize-SrcTySize+1),
-                         APInt::getLowBitsSet(DstTySize, SrcTySize-1));
+                         APInt::getLowBitsSet(DstTySize, SrcTySize-1) + 1);
   }
 
   APInt L = Lower; L.sext(DstTySize);
