@@ -335,7 +335,47 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     }
 
     Proto += ")";
-    AFT->getResultType().getAsStringInternal(Proto, Policy);
+    if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D)) {
+      if (CDecl->getNumBaseOrMemberInitializers() > 0) {
+        Proto += " : ";
+        Out << Proto;
+        Proto.clear();
+        for (CXXConstructorDecl::init_const_iterator B = CDecl->init_begin(), 
+             E = CDecl->init_end();
+             B != E; ++B) {
+          CXXBaseOrMemberInitializer * BMInitializer = (*B);
+          if (B != CDecl->init_begin())
+            Out << ", ";
+          bool hasArguments = (BMInitializer->begin() != BMInitializer->end());
+          if (BMInitializer->isMemberInitializer()) {
+            FieldDecl *FD = BMInitializer->getMember();
+            Out <<  FD->getNameAsString();
+          }
+          else {
+            const RecordType *RT = 
+              BMInitializer->getBaseClass()->getAsRecordType();
+            const CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(RT->getDecl());
+            Out << BaseDecl->getNameAsString();
+            if (!hasArguments)
+              Out << "()";
+          }
+          if (hasArguments) {
+            Out << "(";
+            for (CXXBaseOrMemberInitializer::arg_const_iterator BE = 
+                 BMInitializer->begin(), EE =  BMInitializer->end(); 
+                 BE != EE; BE++) {
+              if (BE != BMInitializer->begin())
+                Out<< ", ";
+              Expr *Exp = (*BE);
+              Exp->printPretty(Out, Context, 0, Policy, Indentation);
+            }
+            Out << ")";
+          }
+        }
+      }
+    }
+    else
+      AFT->getResultType().getAsStringInternal(Proto, Policy);
   } else {
     D->getType().getAsStringInternal(Proto, Policy);
   }
