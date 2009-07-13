@@ -148,6 +148,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-nocheckout$/)     { $NOCHECKOUT = 1; next; }
   if (/^-nocvsstats$/)     { $NOCVSSTATS = 1; next; }
   if (/^-noremove$/)       { $NOREMOVE = 1; next; }
+  if (/^-noremoveatend$/)  { $NOREMOVEATEND = 1; next; }
   if (/^-noremoveresults$/){ $NOREMOVERESULTS = 1; next; }
   if (/^-notest$/)         { $NOTEST = 1; next; }
   if (/^-norunningtests$/) { next; } # Backward compatibility, ignored.
@@ -1147,6 +1148,6 @@ if ($SUBMIT || !($SUBMITAUX eq "")) {
 #
 ##############################################################
 system ( "$NICE rm -rf $BuildDir")
-  if (!$NOCHECKOUT and !$NOREMOVE);
+  if (!$NOCHECKOUT and !$NOREMOVE and !$NOREMOVEATEND);
 system ( "$NICE rm -rf $WebDir")
   if (!$NOCHECKOUT and !$NOREMOVE and !$NOREMOVERESULTS);
