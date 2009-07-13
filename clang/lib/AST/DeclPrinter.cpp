@@ -356,8 +356,6 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
               BMInitializer->getBaseClass()->getAsRecordType();
             const CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(RT->getDecl());
             Out << BaseDecl->getNameAsString();
-            if (!hasArguments)
-              Out << "()";
           }
           if (hasArguments) {
             Out << "(";
@@ -370,7 +368,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
               Exp->printPretty(Out, Context, 0, Policy, Indentation);
             }
             Out << ")";
-          }
+          } else
+            Out << "()";
         }
       }
     }
