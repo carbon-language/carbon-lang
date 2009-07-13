@@ -145,11 +145,7 @@ bool SCEV::isAllOnesValue() const {
 }
 
 SCEVCouldNotCompute::SCEVCouldNotCompute() :
-  SCEV(scCouldNotCompute) {}
-
-void SCEVCouldNotCompute::Profile(FoldingSetNodeID &ID) const {
-  LLVM_UNREACHABLE("Attempt to use a SCEVCouldNotCompute object!");
-}
+  SCEV(FoldingSetNodeID(), scCouldNotCompute) {}
 
 bool SCEVCouldNotCompute::isLoopInvariant(const Loop *L) const {
   LLVM_UNREACHABLE("Attempt to use a SCEVCouldNotCompute object!");
@@ -189,7 +185,7 @@ const SCEV *ScalarEvolution::getConstant(ConstantInt *V) {
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVConstant>();
-  new (S) SCEVConstant(V);
+  new (S) SCEVConstant(ID, V);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -203,33 +199,23 @@ ScalarEvolution::getConstant(const Type *Ty, uint64_t V, bool isSigned) {
   return getConstant(ConstantInt::get(cast<IntegerType>(Ty), V, isSigned));
 }
 
-void SCEVConstant::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(scConstant);
-  ID.AddPointer(V);
-}
-
 const Type *SCEVConstant::getType() const { return V->getType(); }
 
 void SCEVConstant::print(raw_ostream &OS) const {
   WriteAsOperand(OS, V, false);
 }
 
-SCEVCastExpr::SCEVCastExpr(unsigned SCEVTy,
-                           const SCEV *op, const Type *ty)
-  : SCEV(SCEVTy), Op(op), Ty(ty) {}
-
-void SCEVCastExpr::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(getSCEVType());
-  ID.AddPointer(Op);
-  ID.AddPointer(Ty);
-}
+SCEVCastExpr::SCEVCastExpr(const FoldingSetNodeID &ID,
+                           unsigned SCEVTy, const SCEV *op, const Type *ty)
+  : SCEV(ID, SCEVTy), Op(op), Ty(ty) {}
 
 bool SCEVCastExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   return Op->dominates(BB, DT);
 }
 
-SCEVTruncateExpr::SCEVTruncateExpr(const SCEV *op, const Type *ty)
-  : SCEVCastExpr(scTruncate, op, ty) {
+SCEVTruncateExpr::SCEVTruncateExpr(const FoldingSetNodeID &ID,
+                                   const SCEV *op, const Type *ty)
+  : SCEVCastExpr(ID, scTruncate, op, ty) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot truncate non-integer value!");
@@ -239,8 +225,9 @@ void SCEVTruncateExpr::print(raw_ostream &OS) const {
   OS << "(trunc " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
 
-SCEVZeroExtendExpr::SCEVZeroExtendExpr(const SCEV *op, const Type *ty)
-  : SCEVCastExpr(scZeroExtend, op, ty) {
+SCEVZeroExtendExpr::SCEVZeroExtendExpr(const FoldingSetNodeID &ID,
+                                       const SCEV *op, const Type *ty)
+  : SCEVCastExpr(ID, scZeroExtend, op, ty) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot zero extend non-integer value!");
@@ -250,8 +237,9 @@ void SCEVZeroExtendExpr::print(raw_ostream &OS) const {
   OS << "(zext " << *Op->getType() << " " << *Op << " to " << *Ty << ")";
 }
 
-SCEVSignExtendExpr::SCEVSignExtendExpr(const SCEV *op, const Type *ty)
-  : SCEVCastExpr(scSignExtend, op, ty) {
+SCEVSignExtendExpr::SCEVSignExtendExpr(const FoldingSetNodeID &ID,
+                                       const SCEV *op, const Type *ty)
+  : SCEVCastExpr(ID, scSignExtend, op, ty) {
   assert((Op->getType()->isInteger() || isa<PointerType>(Op->getType())) &&
          (Ty->isInteger() || isa<PointerType>(Ty)) &&
          "Cannot sign extend non-integer value!");
@@ -303,25 +291,12 @@ SCEVCommutativeExpr::replaceSymbolicValuesWithConcrete(
   return this;
 }
 
-void SCEVNAryExpr::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(getSCEVType());
-  ID.AddInteger(Operands.size());
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-    ID.AddPointer(Operands[i]);
-}
-
 bool SCEVNAryExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (!getOperand(i)->dominates(BB, DT))
       return false;
   }
   return true;
-}
-
-void SCEVUDivExpr::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(scUDivExpr);
-  ID.AddPointer(LHS);
-  ID.AddPointer(RHS);
 }
 
 bool SCEVUDivExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
@@ -339,14 +314,6 @@ const Type *SCEVUDivExpr::getType() const {
   // avoid extra casts in the SCEVExpander. The LHS is more likely to be
   // a pointer type than the RHS, so use the RHS' type here.
   return RHS->getType();
-}
-
-void SCEVAddRecExpr::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(scAddRecExpr);
-  ID.AddInteger(Operands.size());
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
-    ID.AddPointer(Operands[i]);
-  ID.AddPointer(L);
 }
 
 const SCEV *
@@ -397,11 +364,6 @@ void SCEVAddRecExpr::print(raw_ostream &OS) const {
   for (unsigned i = 1, e = Operands.size(); i != e; ++i)
     OS << ",+," << *Operands[i];
   OS << "}<" << L->getHeader()->getName() + ">";
-}
-
-void SCEVUnknown::Profile(FoldingSetNodeID &ID) const {
-  ID.AddInteger(scUnknown);
-  ID.AddPointer(V);
 }
 
 bool SCEVUnknown::isLoopInvariant(const Loop *L) const {
@@ -749,6 +711,13 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
          "This is not a conversion to a SCEVable type!");
   Ty = getEffectiveSCEVType(Ty);
 
+  FoldingSetNodeID ID;
+  ID.AddInteger(scTruncate);
+  ID.AddPointer(Op);
+  ID.AddPointer(Ty);
+  void *IP = 0;
+  if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
+
   // Fold if the operand is constant.
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(Op))
     return getConstant(
@@ -774,14 +743,11 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
     return getAddRecExpr(Operands, AddRec->getLoop());
   }
 
-  FoldingSetNodeID ID;
-  ID.AddInteger(scTruncate);
-  ID.AddPointer(Op);
-  ID.AddPointer(Ty);
-  void *IP = 0;
+  // The cast wasn't folded; create an explicit cast node.
+  // Recompute the insert position, as it may have been invalidated.
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVTruncateExpr>();
-  new (S) SCEVTruncateExpr(Op, Ty);
+  new (S) SCEVTruncateExpr(ID, Op, Ty);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -877,7 +843,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVZeroExtendExpr>();
-  new (S) SCEVZeroExtendExpr(Op, Ty);
+  new (S) SCEVZeroExtendExpr(ID, Op, Ty);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -957,7 +923,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVSignExtendExpr>();
-  new (S) SCEVSignExtendExpr(Op, Ty);
+  new (S) SCEVSignExtendExpr(ID, Op, Ty);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -1426,7 +1392,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops) {
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVAddExpr>();
-  new (S) SCEVAddExpr(Ops);
+  new (S) SCEVAddExpr(ID, Ops);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -1597,7 +1563,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops) {
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVMulExpr>();
-  new (S) SCEVMulExpr(Ops);
+  new (S) SCEVMulExpr(ID, Ops);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -1696,7 +1662,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVUDivExpr>();
-  new (S) SCEVUDivExpr(LHS, RHS);
+  new (S) SCEVUDivExpr(ID, LHS, RHS);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -1779,7 +1745,7 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVAddRecExpr>();
-  new (S) SCEVAddRecExpr(Operands, L);
+  new (S) SCEVAddRecExpr(ID, Operands, L);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -1876,7 +1842,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVSMaxExpr>();
-  new (S) SCEVSMaxExpr(Ops);
+  new (S) SCEVSMaxExpr(ID, Ops);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -1973,7 +1939,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVUMaxExpr>();
-  new (S) SCEVUMaxExpr(Ops);
+  new (S) SCEVUMaxExpr(ID, Ops);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }
@@ -2002,7 +1968,7 @@ const SCEV *ScalarEvolution::getUnknown(Value *V) {
   void *IP = 0;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = SCEVAllocator.Allocate<SCEVUnknown>();
-  new (S) SCEVUnknown(V);
+  new (S) SCEVUnknown(ID, V);
   UniqueSCEVs.InsertNode(S, IP);
   return S;
 }

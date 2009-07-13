@@ -42,7 +42,7 @@ namespace llvm {
   /// are opaque objects that the client is not allowed to do much with
   /// directly.
   ///
-  class SCEV : public FoldingSetNode {
+  class SCEV : public FastFoldingSetNode {
     const unsigned SCEVType;      // The SCEV baseclass this node corresponds to
 
     SCEV(const SCEV &);            // DO NOT IMPLEMENT
@@ -50,10 +50,8 @@ namespace llvm {
   protected:
     virtual ~SCEV();
   public:
-    explicit SCEV(unsigned SCEVTy) :
-      SCEVType(SCEVTy) {}
-
-    virtual void Profile(FoldingSetNodeID &ID) const = 0;
+    explicit SCEV(const FoldingSetNodeID &ID, unsigned SCEVTy) :
+      FastFoldingSetNode(ID), SCEVType(SCEVTy) {}
 
     unsigned getSCEVType() const { return SCEVType; }
 
@@ -129,7 +127,6 @@ namespace llvm {
     SCEVCouldNotCompute();
 
     // None of these methods are valid for this object.
-    virtual void Profile(FoldingSetNodeID &ID) const;
     virtual bool isLoopInvariant(const Loop *L) const;
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;

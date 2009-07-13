@@ -37,11 +37,9 @@ namespace llvm {
     friend class ScalarEvolution;
 
     ConstantInt *V;
-    explicit SCEVConstant(ConstantInt *v) :
-      SCEV(scConstant), V(v) {}
+    SCEVConstant(const FoldingSetNodeID &ID, ConstantInt *v) :
+      SCEV(ID, scConstant), V(v) {}
   public:
-    virtual void Profile(FoldingSetNodeID &ID) const;
-
     ConstantInt *getValue() const { return V; }
 
     virtual bool isLoopInvariant(const Loop *L) const {
@@ -81,11 +79,10 @@ namespace llvm {
     const SCEV *Op;
     const Type *Ty;
 
-    SCEVCastExpr(unsigned SCEVTy, const SCEV *op, const Type *ty);
+    SCEVCastExpr(const FoldingSetNodeID &ID,
+                 unsigned SCEVTy, const SCEV *op, const Type *ty);
 
   public:
-    virtual void Profile(FoldingSetNodeID &ID) const;
-
     const SCEV *getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
 
@@ -115,7 +112,8 @@ namespace llvm {
   class SCEVTruncateExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVTruncateExpr(const SCEV *op, const Type *ty);
+    SCEVTruncateExpr(const FoldingSetNodeID &ID,
+                     const SCEV *op, const Type *ty);
 
   public:
     const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
@@ -143,7 +141,8 @@ namespace llvm {
   class SCEVZeroExtendExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVZeroExtendExpr(const SCEV *op, const Type *ty);
+    SCEVZeroExtendExpr(const FoldingSetNodeID &ID,
+                       const SCEV *op, const Type *ty);
 
   public:
     const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
@@ -171,7 +170,8 @@ namespace llvm {
   class SCEVSignExtendExpr : public SCEVCastExpr {
     friend class ScalarEvolution;
 
-    SCEVSignExtendExpr(const SCEV *op, const Type *ty);
+    SCEVSignExtendExpr(const FoldingSetNodeID &ID,
+                       const SCEV *op, const Type *ty);
 
   public:
     const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
@@ -201,12 +201,11 @@ namespace llvm {
   protected:
     SmallVector<const SCEV *, 8> Operands;
 
-    SCEVNAryExpr(enum SCEVTypes T, const SmallVectorImpl<const SCEV *> &ops)
-      : SCEV(T), Operands(ops.begin(), ops.end()) {}
+    SCEVNAryExpr(const FoldingSetNodeID &ID,
+                 enum SCEVTypes T, const SmallVectorImpl<const SCEV *> &ops)
+      : SCEV(ID, T), Operands(ops.begin(), ops.end()) {}
 
   public:
-    virtual void Profile(FoldingSetNodeID &ID) const;
-
     unsigned getNumOperands() const { return (unsigned)Operands.size(); }
     const SCEV *getOperand(unsigned i) const {
       assert(i < Operands.size() && "Operand index out of range!");
@@ -262,9 +261,10 @@ namespace llvm {
   ///
   class SCEVCommutativeExpr : public SCEVNAryExpr {
   protected:
-    SCEVCommutativeExpr(enum SCEVTypes T,
+    SCEVCommutativeExpr(const FoldingSetNodeID &ID,
+                        enum SCEVTypes T,
                         const SmallVectorImpl<const SCEV *> &ops)
-      : SCEVNAryExpr(T, ops) {}
+      : SCEVNAryExpr(ID, T, ops) {}
 
   public:
     const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
@@ -292,8 +292,9 @@ namespace llvm {
   class SCEVAddExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVAddExpr(const SmallVectorImpl<const SCEV *> &ops)
-      : SCEVCommutativeExpr(scAddExpr, ops) {
+    SCEVAddExpr(const FoldingSetNodeID &ID,
+                const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVCommutativeExpr(ID, scAddExpr, ops) {
     }
 
   public:
@@ -312,8 +313,9 @@ namespace llvm {
   class SCEVMulExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVMulExpr(const SmallVectorImpl<const SCEV *> &ops)
-      : SCEVCommutativeExpr(scMulExpr, ops) {
+    SCEVMulExpr(const FoldingSetNodeID &ID,
+                const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVCommutativeExpr(ID, scMulExpr, ops) {
     }
 
   public:
@@ -335,12 +337,10 @@ namespace llvm {
 
     const SCEV *LHS;
     const SCEV *RHS;
-    SCEVUDivExpr(const SCEV *lhs, const SCEV *rhs)
-      : SCEV(scUDivExpr), LHS(lhs), RHS(rhs) {}
+    SCEVUDivExpr(const FoldingSetNodeID &ID, const SCEV *lhs, const SCEV *rhs)
+      : SCEV(ID, scUDivExpr), LHS(lhs), RHS(rhs) {}
 
   public:
-    virtual void Profile(FoldingSetNodeID &ID) const;
-
     const SCEV *getLHS() const { return LHS; }
     const SCEV *getRHS() const { return RHS; }
 
@@ -392,16 +392,15 @@ namespace llvm {
 
     const Loop *L;
 
-    SCEVAddRecExpr(const SmallVectorImpl<const SCEV *> &ops, const Loop *l)
-      : SCEVNAryExpr(scAddRecExpr, ops), L(l) {
+    SCEVAddRecExpr(const FoldingSetNodeID &ID,
+                   const SmallVectorImpl<const SCEV *> &ops, const Loop *l)
+      : SCEVNAryExpr(ID, scAddRecExpr, ops), L(l) {
       for (size_t i = 0, e = Operands.size(); i != e; ++i)
         assert(Operands[i]->isLoopInvariant(l) &&
                "Operands of AddRec must be loop-invariant!");
     }
 
   public:
-    virtual void Profile(FoldingSetNodeID &ID) const;
-
     const SCEV *getStart() const { return Operands[0]; }
     const Loop *getLoop() const { return L; }
 
@@ -454,6 +453,12 @@ namespace llvm {
                                                  const SCEV *Conc,
                                                  ScalarEvolution &SE) const;
 
+    /// getPostIncExpr - Return an expression representing the value of
+    /// this expression one iteration of the loop ahead.
+    const SCEV *getPostIncExpr(ScalarEvolution &SE) const {
+      return SE.getAddExpr(this, getStepRecurrence(SE));
+    }
+
     virtual void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -470,8 +475,9 @@ namespace llvm {
   class SCEVSMaxExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVSMaxExpr(const SmallVectorImpl<const SCEV *> &ops)
-      : SCEVCommutativeExpr(scSMaxExpr, ops) {
+    SCEVSMaxExpr(const FoldingSetNodeID &ID,
+                 const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVCommutativeExpr(ID, scSMaxExpr, ops) {
     }
 
   public:
@@ -491,8 +497,9 @@ namespace llvm {
   class SCEVUMaxExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    explicit SCEVUMaxExpr(const SmallVectorImpl<const SCEV *> &ops)
-      : SCEVCommutativeExpr(scUMaxExpr, ops) {
+    SCEVUMaxExpr(const FoldingSetNodeID &ID,
+                 const SmallVectorImpl<const SCEV *> &ops)
+      : SCEVCommutativeExpr(ID, scUMaxExpr, ops) {
     }
 
   public:
@@ -515,12 +522,10 @@ namespace llvm {
     friend class ScalarEvolution;
 
     Value *V;
-    explicit SCEVUnknown(Value *v) :
-      SCEV(scUnknown), V(v) {}
-      
-  public:
-    virtual void Profile(FoldingSetNodeID &ID) const;
+    SCEVUnknown(const FoldingSetNodeID &ID, Value *v) :
+      SCEV(ID, scUnknown), V(v) {}
 
+  public:
     Value *getValue() const { return V; }
 
     virtual bool isLoopInvariant(const Loop *L) const;
