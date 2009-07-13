@@ -82,9 +82,9 @@ public:
   
   bool hasHeapOrStackStorage() const;
 
-  virtual void print(llvm::raw_ostream& os) const;
+  virtual void dumpToStream(llvm::raw_ostream& os) const;
 
-  void printStdErr() const;
+  void dump() const;
   
   Kind getKind() const { return kind; }  
   
@@ -163,7 +163,7 @@ public:
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const Expr* Ex,
                             unsigned Cnt, const MemRegion *superRegion);
   
-  void print(llvm::raw_ostream& os) const;
+  void dumpToStream(llvm::raw_ostream& os) const;
   
   static bool classof(const MemRegion* R) {
     return R->getKind() == AllocaRegionKind;
@@ -259,7 +259,7 @@ public:
   
   bool isBoundable() const { return false; }
   
-  virtual void print(llvm::raw_ostream& os) const;
+  virtual void dumpToStream(llvm::raw_ostream& os) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
@@ -296,7 +296,7 @@ public:
                             SymbolRef sym,
                             const MemRegion* superRegion);
   
-  void print(llvm::raw_ostream& os) const;
+  void dumpToStream(llvm::raw_ostream& os) const;
   
   static bool classof(const MemRegion* R) {
     return R->getKind() == SymbolicRegionKind;
@@ -330,7 +330,7 @@ public:
     ProfileRegion(ID, Str, superRegion);
   }
 
-  void print(llvm::raw_ostream& os) const;
+  void dumpToStream(llvm::raw_ostream& os) const;
 
   static bool classof(const MemRegion* R) {
     return R->getKind() == StringRegionKind;
@@ -349,7 +349,7 @@ class TypedViewRegion : public TypedRegion {
 
 public:
 
-  void print(llvm::raw_ostream& os) const;
+  void dumpToStream(llvm::raw_ostream& os) const;
   
   QualType getLocationType(ASTContext&) const {
     return LValueType;
@@ -400,7 +400,7 @@ public:
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
   
-  void print(llvm::raw_ostream& os) const;
+  void dumpToStream(llvm::raw_ostream& os) const;
 
   const CompoundLiteralExpr* getLiteralExpr() const { return CL; }
   
@@ -448,7 +448,7 @@ public:
     return C.getCanonicalType(getDecl()->getType());
   }    
     
-  void print(llvm::raw_ostream& os) const;
+  void dumpToStream(llvm::raw_ostream& os) const;
   
   static bool classof(const MemRegion* R) {
     return R->getKind() == VarRegionKind;
@@ -463,7 +463,7 @@ class FieldRegion : public DeclRegion {
 
 public:
   
-  void print(llvm::raw_ostream& os) const;
+  void dumpToStream(llvm::raw_ostream& os) const;
   
   const FieldDecl* getDecl() const { return cast<FieldDecl>(D); }
     
@@ -559,7 +559,7 @@ public:
     return ElementType;
   }
   
-  void print(llvm::raw_ostream& os) const;
+  void dumpToStream(llvm::raw_ostream& os) const;
 
   void Profile(llvm::FoldingSetNodeID& ID) const;
 
@@ -840,10 +840,10 @@ template<> struct MemRegionManagerTrait<CodeTextRegion> {
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
-static inline raw_ostream& operator<<(raw_ostream& O,
+static inline raw_ostream& operator<<(raw_ostream& os,
                                       const clang::MemRegion* R) { 
-  R->print(O);
-  return O;
+  R->dumpToStream(os);
+  return os;
 }
 } // end llvm namespace
 

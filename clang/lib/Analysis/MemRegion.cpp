@@ -143,26 +143,26 @@ void CodeTextRegion::Profile(llvm::FoldingSetNodeID& ID) const {
 // Region pretty-printing.
 //===----------------------------------------------------------------------===//
 
-void MemRegion::printStdErr() const {
-  print(llvm::errs());
+void MemRegion::dump() const {
+  dumpToStream(llvm::errs());
 }
 
 std::string MemRegion::getString() const {
   std::string s;
   llvm::raw_string_ostream os(s);
-  print(os);
+  dumpToStream(os);
   return os.str();
 }
 
-void MemRegion::print(llvm::raw_ostream& os) const {
+void MemRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "<Unknown Region>";
 }
 
-void AllocaRegion::print(llvm::raw_ostream& os) const {
+void AllocaRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "alloca{" << (void*) Ex << ',' << Cnt << '}';
 }
 
-void CodeTextRegion::print(llvm::raw_ostream& os) const {
+void CodeTextRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "code{";
   if (isDeclared())
     os << getDecl()->getDeclName().getAsString();
@@ -172,37 +172,34 @@ void CodeTextRegion::print(llvm::raw_ostream& os) const {
   os << '}';
 }
 
-void CompoundLiteralRegion::print(llvm::raw_ostream& os) const {
+void CompoundLiteralRegion::dumpToStream(llvm::raw_ostream& os) const {
   // FIXME: More elaborate pretty-printing.
   os << "{ " << (void*) CL <<  " }";
 }
 
-void ElementRegion::print(llvm::raw_ostream& os) const {
-  superRegion->print(os);
-  os << '['; Index.print(os); os << ']';
+void ElementRegion::dumpToStream(llvm::raw_ostream& os) const {
+  os << superRegion << '['; Index.print(os); os << ']';
 }
 
-void FieldRegion::print(llvm::raw_ostream& os) const {
-  superRegion->print(os);
-  os << "->" << getDecl()->getNameAsString();
+void FieldRegion::dumpToStream(llvm::raw_ostream& os) const {
+  os << superRegion << "->" << getDecl()->getNameAsString();
 }
 
-void StringRegion::print(llvm::raw_ostream& os) const {
+void StringRegion::dumpToStream(llvm::raw_ostream& os) const {
   LangOptions LO; // FIXME.
   Str->printPretty(os, 0, PrintingPolicy(LO));
 }
 
-void SymbolicRegion::print(llvm::raw_ostream& os) const {
+void SymbolicRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "SymRegion-" << sym;
 }
 
-void TypedViewRegion::print(llvm::raw_ostream& os) const {
-  os << "typed_view{" << LValueType.getAsString() << ',';
-  getSuperRegion()->print(os);
-  os << '}';
+void TypedViewRegion::dumpToStream(llvm::raw_ostream& os) const {
+  os << "typed_view{" << LValueType.getAsString() << ',' 
+     << getSuperRegion() << '}';
 }
 
-void VarRegion::print(llvm::raw_ostream& os) const {
+void VarRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << cast<VarDecl>(D)->getNameAsString();
 }
 

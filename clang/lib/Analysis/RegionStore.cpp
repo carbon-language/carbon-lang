@@ -1439,7 +1439,7 @@ void RegionStoreManager::print(Store store, llvm::raw_ostream& OS,
   OS << "Store:" << nl;
   
   for (RegionBindingsTy::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    OS << ' '; I.getKey()->print(OS); OS << " : ";
+    OS << ' ' << I.getKey() << " : ";
     I.getData().print(OS); OS << nl;
   }
 }

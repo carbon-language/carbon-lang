@@ -50,6 +50,10 @@ public:
   virtual ~SymExpr() {}
   
   Kind getKind() const { return K; }  
+    
+  void dump() const;
+  
+  virtual void dumpToStream(llvm::raw_ostream &os) const = 0;
   
   virtual QualType getType(ASTContext&) const = 0;  
   virtual void Profile(llvm::FoldingSetNodeID& profile) = 0;
@@ -71,7 +75,7 @@ public:
   virtual ~SymbolData() {}
   
   SymbolID getSymbolID() const { return Sym; }
-    
+
   // Implement isa<T> support.
   static inline bool classof(const SymExpr* SE) { 
     Kind k = SE->getKind();
@@ -104,6 +108,8 @@ public:
     Profile(profile, R, T);
   }
   
+  void dumpToStream(llvm::raw_ostream &os) const;
+  
   QualType getType(ASTContext&) const;
 
   // Implement isa<T> support.
@@ -129,6 +135,8 @@ public:
   const void* getTag() const { return SymbolTag; }
   
   QualType getType(ASTContext&) const;
+  
+  void dumpToStream(llvm::raw_ostream &os) const;
   
   static void Profile(llvm::FoldingSetNodeID& profile, const Stmt* S,
                       QualType T, unsigned Count, const void* SymbolTag) {    
@@ -166,6 +174,8 @@ public:
   QualType getType(ASTContext& C) const { return T; }  
   
   BinaryOperator::Opcode getOpcode() const { return Op; }
+    
+  void dumpToStream(llvm::raw_ostream &os) const;  
   
   const SymExpr *getLHS() const { return LHS; }
   const llvm::APSInt &getRHS() const { return RHS; }
@@ -208,7 +218,9 @@ public:
   // FIXME: We probably need to make this out-of-line to avoid redundant
   // generation of virtual functions.
   QualType getType(ASTContext& C) const { return T; }
-
+  
+  void dumpToStream(llvm::raw_ostream &os) const;
+  
   static void Profile(llvm::FoldingSetNodeID& ID, const SymExpr *lhs,
                     BinaryOperator::Opcode op, const SymExpr *rhs, QualType t) {
     ID.AddInteger((unsigned) SymSymKind);
@@ -325,7 +337,10 @@ public:
 } // end clang namespace
 
 namespace llvm {
-  llvm::raw_ostream& operator<<(llvm::raw_ostream& Out,
-                                const clang::SymExpr *SE);
+static inline llvm::raw_ostream& operator<<(llvm::raw_ostream& os,
+                                            const clang::SymExpr *SE) {
+  SE->dumpToStream(os);
+  return os;
 }
+} // end llvm namespace
 #endif

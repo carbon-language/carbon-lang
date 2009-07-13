@@ -18,7 +18,9 @@
 
 using namespace clang;
 
-static void print(llvm::raw_ostream& os, const SymExpr *SE);
+void SymExpr::dump() const {
+  dumpToStream(llvm::errs());
+}
 
 static void print(llvm::raw_ostream& os, BinaryOperator::Opcode Op) {  
   switch (Op) {
@@ -44,45 +46,30 @@ static void print(llvm::raw_ostream& os, BinaryOperator::Opcode Op) {
   }        
 }
 
-static void print(llvm::raw_ostream& os, const SymIntExpr *SE) {
+void SymIntExpr::dumpToStream(llvm::raw_ostream& os) const {
   os << '(';
-  print(os, SE->getLHS());
+  getLHS()->dumpToStream(os);
   os << ") ";
-  print(os, SE->getOpcode());
-  os << ' ' << SE->getRHS().getZExtValue();
-  if (SE->getRHS().isUnsigned()) os << 'U';
+  print(os, getOpcode());
+  os << ' ' << getRHS().getZExtValue();
+  if (getRHS().isUnsigned()) os << 'U';
 }
   
-static void print(llvm::raw_ostream& os, const SymSymExpr *SE) {
+void SymSymExpr::dumpToStream(llvm::raw_ostream& os) const {
   os << '(';
-  print(os, SE->getLHS());
+  getLHS()->dumpToStream(os);
   os << ") ";
   os << '(';
-  print(os, SE->getRHS());
+  getRHS()->dumpToStream(os);
   os << ')';  
 }
 
-static void print(llvm::raw_ostream& os, const SymExpr *SE) {
-  switch (SE->getKind()) {
-    case SymExpr::BEGIN_SYMBOLS:
-    case SymExpr::RegionValueKind:
-    case SymExpr::ConjuredKind:
-    case SymExpr::END_SYMBOLS:
-      os << '$' << cast<SymbolData>(SE)->getSymbolID();
-      return;
-    case SymExpr::SymIntKind:
-      print(os, cast<SymIntExpr>(SE));
-      return;
-    case SymExpr::SymSymKind:
-      print(os, cast<SymSymExpr>(SE));
-      return;
-  }
+void SymbolConjured::dumpToStream(llvm::raw_ostream& os) const {
+  os << "conj_$" << getSymbolID();
 }
 
-
-llvm::raw_ostream& llvm::operator<<(llvm::raw_ostream& os, const SymExpr *SE) {
-  print(os, SE);
-  return os;
+void SymbolRegionValue::dumpToStream(llvm::raw_ostream& os) const {
+  os << "reg_$" << getSymbolID() << "<" << R << ">";
 }
 
 const SymbolRegionValue* 
