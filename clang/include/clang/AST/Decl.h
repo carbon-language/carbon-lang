@@ -413,6 +413,10 @@ public:
     PreviousDeclaration = PrevDecl;
   }
 
+  /// \brief For multiple redeclarations returns the first one, otherwise
+  /// returns itself.
+  const VarDecl *getFirstDeclaration() const;
+
   virtual Decl *getPrimaryDecl() const;
 
   /// hasLocalStorage - Returns true if a variable with function scope
@@ -810,6 +814,10 @@ public:
   const FunctionDecl *getPreviousDeclaration() const {
     return PreviousDeclaration;
   }
+
+  /// \brief For multiple redeclarations returns the first one, otherwise
+  /// returns itself.
+  const FunctionDecl *getFirstDeclaration() const;
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 

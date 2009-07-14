@@ -358,12 +358,16 @@ const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
   return Def? Def->getInit() : 0;
 }
 
-Decl *VarDecl::getPrimaryDecl() const {
-  const VarDecl *Prim = this;
-  while (Prim->getPreviousDeclaration())
-    Prim = Prim->getPreviousDeclaration();
+const VarDecl *VarDecl::getFirstDeclaration() const {
+  const VarDecl *First = this;
+  while (First->getPreviousDeclaration())
+    First = First->getPreviousDeclaration();
 
-  return const_cast<VarDecl *>(Prim);
+  return First;
+}
+
+Decl *VarDecl::getPrimaryDecl() const {
+  return const_cast<VarDecl *>(getFirstDeclaration());
 }
 
 //===----------------------------------------------------------------------===//
@@ -577,12 +581,16 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
   }
 }
 
-Decl *FunctionDecl::getPrimaryDecl() const {
-  const FunctionDecl *Prim = this;
-  while (Prim->getPreviousDeclaration())
-    Prim = Prim->getPreviousDeclaration();
+const FunctionDecl *FunctionDecl::getFirstDeclaration() const {
+  const FunctionDecl *First = this;
+  while (First->getPreviousDeclaration())
+    First = First->getPreviousDeclaration();
 
-  return const_cast<FunctionDecl *>(Prim);
+  return First;
+}
+
+Decl *FunctionDecl::getPrimaryDecl() const {
+  return const_cast<FunctionDecl *>(getFirstDeclaration());
 }
 
 /// getOverloadedOperator - Which C++ overloaded operator this
