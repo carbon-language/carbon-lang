@@ -843,7 +843,8 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
   unsigned LineNo = SM.getPresumedLoc(CurLoc).getLine();
   
   llvm::DISubprogram SP =
-    DebugFactory.CreateSubprogram(Unit, Name, Name, LLVMMangler->getValueName(Fn), 
+    DebugFactory.CreateSubprogram(Unit, Name, Name,
+                                  LLVMMangler->getMangledName(Fn), 
                                   Unit, LineNo,
                                   getOrCreateType(ReturnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/);
@@ -980,7 +981,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   }
 
   DebugFactory.CreateGlobalVariable(Unit, Name, Name, 
-                                    LLVMMangler->getValueName(Var),
+                                    LLVMMangler->getMangledName(Var),
                                     Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
@@ -1012,7 +1013,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
   }
 
   DebugFactory.CreateGlobalVariable(Unit, Name, Name, 
-                                    LLVMMangler->getValueName(Var),
+                                    LLVMMangler->getMangledName(Var),
                                     Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
