@@ -77,7 +77,8 @@ public:
   void dump() const;
 };
 
-  inline std::ostream &operator<<(std::ostream &O, const ARMConstantPoolValue &V) {
+inline std::ostream &operator<<(std::ostream &O,
+                                const ARMConstantPoolValue &V) {
   V.print(O);
   return O;
 }
