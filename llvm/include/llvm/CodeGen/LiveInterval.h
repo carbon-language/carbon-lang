@@ -223,10 +223,6 @@ namespace llvm {
 #endif
     }
 
-    Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
-    void extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd);
-    Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
-    LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
 
   public:
 
@@ -597,6 +593,13 @@ namespace llvm {
       if (OS) print(*OS, TRI);
     }
     void dump() const;
+
+  private:
+
+    Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
+    void extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd);
+    Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
+    LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
 
   };
 
