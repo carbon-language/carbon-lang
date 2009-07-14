@@ -41,6 +41,8 @@ protected:
   bool TLSSupported;
   unsigned char PointerWidth, PointerAlign;
   unsigned char WCharWidth, WCharAlign;
+  unsigned char Char16Width, Char16Align;
+  unsigned char Char32Width, Char32Align;
   unsigned char IntWidth, IntAlign;
   unsigned char FloatWidth, FloatAlign;
   unsigned char DoubleWidth, DoubleAlign;
@@ -77,7 +79,7 @@ public:
   };
 protected:
   IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
-          Int64Type;
+          Char16Type, Char32Type, Int64Type;
 public:
   IntType getSizeType() const { return SizeType; }
   IntType getIntMaxType() const { return IntMaxType; }
@@ -87,6 +89,8 @@ public:
   }
   IntType getIntPtrType() const { return IntPtrType; }
   IntType getWCharType() const { return WCharType; }
+  IntType getChar16Type() const { return Char16Type; }
+  IntType getChar32Type() const { return Char32Type; }
   IntType getInt64Type() const { return Int64Type; }
 
   /// getPointerWidth - Return the width of pointers on this target, for the
@@ -102,13 +106,9 @@ public:
   /// target, in bits.
   unsigned getBoolWidth(bool isWide = false) const { return 8; }  // FIXME
   unsigned getBoolAlign(bool isWide = false) const { return 8; }  // FIXME
-  
-  unsigned getCharWidth(bool isWide = false) const {
-    return isWide ? getWCharWidth() : 8; // FIXME
-  }
-  unsigned getCharAlign(bool isWide = false) const {
-    return isWide ? getWCharAlign() : 8; // FIXME
-  }
+ 
+  unsigned getCharWidth() const { return 8; } // FIXME
+  unsigned getCharAlign() const { return 8; } // FIXME
   
   /// getShortWidth/Align - Return the size of 'signed short' and
   /// 'unsigned short' for this target, in bits.  
@@ -130,10 +130,20 @@ public:
   unsigned getLongLongWidth() const { return LongLongWidth; }
   unsigned getLongLongAlign() const { return LongLongAlign; }
   
-  /// getWcharWidth/Align - Return the size of 'wchar_t' for this target, in
+  /// getWCharWidth/Align - Return the size of 'wchar_t' for this target, in
   /// bits.
   unsigned getWCharWidth() const { return WCharWidth; }
   unsigned getWCharAlign() const { return WCharAlign; }
+
+  /// getChar16Width/Align - Return the size of 'char16_t' for this target, in
+  /// bits.
+  unsigned getChar16Width() const { return Char16Width; }
+  unsigned getChar16Align() const { return Char16Align; }
+
+  /// getChar32Width/Align - Return the size of 'char32_t' for this target, in
+  /// bits.
+  unsigned getChar32Width() const { return Char32Width; }
+  unsigned getChar32Align() const { return Char32Align; }
 
   /// getFloatWidth/Align/Format - Return the size/align/format of 'float'.
   unsigned getFloatWidth() const { return FloatWidth; }

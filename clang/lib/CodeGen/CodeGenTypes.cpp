@@ -249,6 +249,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     case BuiltinType::LongLong:
     case BuiltinType::ULongLong:
     case BuiltinType::WChar:
+    case BuiltinType::Char16:
+    case BuiltinType::Char32:
       return llvm::IntegerType::get(
         static_cast<unsigned>(Context.getTypeSize(T)));
       

@@ -198,7 +198,9 @@ public:
   QualType VoidTy;
   QualType BoolTy;
   QualType CharTy;
-  QualType WCharTy; // [C++ 3.9.1p5], integer type in C99.
+  QualType WCharTy;  // [C++ 3.9.1p5], integer type in C99.
+  QualType Char16Ty; // [C++0x 3.9.1p5], integer type in C99.
+  QualType Char32Ty; // [C++0x 3.9.1p5], integer type in C99.
   QualType SignedCharTy, ShortTy, IntTy, LongTy, LongLongTy, Int128Ty;
   QualType UnsignedCharTy, UnsignedShortTy, UnsignedIntTy, UnsignedLongTy;
   QualType UnsignedLongLongTy, UnsignedInt128Ty;

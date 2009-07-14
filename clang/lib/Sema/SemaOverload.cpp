@@ -2792,7 +2792,8 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
                  LastPromotedArithmeticType = 16;
   const unsigned NumArithmeticTypes = 16;
   QualType ArithmeticTypes[NumArithmeticTypes] = {
-    Context.BoolTy, Context.CharTy, Context.WCharTy,
+    Context.BoolTy, Context.CharTy, Context.WCharTy, 
+//    Context.Char16Ty, Context.Char32Ty, 
     Context.SignedCharTy, Context.ShortTy,
     Context.UnsignedCharTy, Context.UnsignedShortTy,
     Context.IntTy, Context.LongTy, Context.LongLongTy,

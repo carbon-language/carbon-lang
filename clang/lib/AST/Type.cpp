@@ -1003,6 +1003,8 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case Double:            return "double";
   case LongDouble:        return "long double";
   case WChar:             return "wchar_t";
+  case Char16:            return "char16_t";
+  case Char32:            return "char32_t";
   case NullPtr:           return "nullptr_t";
   case Overload:          return "<overloaded function type>";
   case Dependent:         return "<dependent type>";

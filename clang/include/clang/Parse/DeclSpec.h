@@ -68,6 +68,8 @@ public:
     TST_void,
     TST_char,
     TST_wchar,        // C++ wchar_t
+    TST_char16,       // C++0x char16_t
+    TST_char32,       // C++0x char32_t
     TST_int,
     TST_float,
     TST_double,

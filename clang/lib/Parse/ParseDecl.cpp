@@ -159,6 +159,8 @@ AttributeList *Parser::ParseAttributes(SourceLocation *EndLoc) {
             break;
           case tok::kw_char:
           case tok::kw_wchar_t:
+          case tok::kw_char16_t:
+          case tok::kw_char32_t:
           case tok::kw_bool:
           case tok::kw_short:
           case tok::kw_int:
@@ -999,6 +1001,12 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw_wchar_t:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
       break;
+    case tok::kw_char16_t:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char16, Loc, PrevSpec);
+      break;
+    case tok::kw_char32_t:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char32, Loc, PrevSpec);
+      break;
     case tok::kw_bool:
     case tok::kw__Bool:
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
@@ -1225,6 +1233,12 @@ bool Parser::ParseOptionalTypeSpecifier(DeclSpec &DS, int& isInvalid,
     break;
   case tok::kw_wchar_t:
     isInvalid = DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
+    break;
+  case tok::kw_char16_t:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char16, Loc, PrevSpec);
+    break;
+  case tok::kw_char32_t:
+    isInvalid = DS.SetTypeSpecType(DeclSpec::TST_char32, Loc, PrevSpec);
     break;
   case tok::kw_bool:
   case tok::kw__Bool:
@@ -1714,6 +1728,8 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw_void:
   case tok::kw_char:
   case tok::kw_wchar_t:
+  case tok::kw_char16_t:
+  case tok::kw_char32_t:
   case tok::kw_int:
   case tok::kw_float:
   case tok::kw_double:
@@ -1802,6 +1818,9 @@ bool Parser::isDeclarationSpecifier() {
   case tok::kw_void:
   case tok::kw_char:
   case tok::kw_wchar_t:
+  case tok::kw_char16_t:
+  case tok::kw_char32_t:
+
   case tok::kw_int:
   case tok::kw_float:
   case tok::kw_double:

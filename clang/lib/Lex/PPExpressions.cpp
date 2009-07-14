@@ -224,8 +224,10 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     unsigned NumBits;
     if (Literal.isMultiChar())
       NumBits = TI.getIntWidth();
+    else if (Literal.isWide())
+      NumBits = TI.getWCharWidth();
     else
-      NumBits = TI.getCharWidth(Literal.isWide());
+      NumBits = TI.getCharWidth();
 
     // Set the width.
     llvm::APSInt Val(NumBits);

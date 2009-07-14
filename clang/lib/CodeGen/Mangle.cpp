@@ -540,8 +540,8 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   // UNSUPPORTED:    ::= De # IEEE 754r decimal floating point (128 bits)
   // UNSUPPORTED:    ::= Df # IEEE 754r decimal floating point (32 bits)
   // UNSUPPORTED:    ::= Dh # IEEE 754r half-precision floating point (16 bits)
-  // UNSUPPORTED:    ::= Di # char32_t
-  // UNSUPPORTED:    ::= Ds # char16_t
+  //                 ::= Di # char32_t
+  //                 ::= Ds # char16_t
   //                 ::= u <source-name>    # vendor extended type
   // From our point of view, std::nullptr_t is a builtin, but as far as mangling
   // is concerned, it's a type called std::nullptr_t.
@@ -557,6 +557,8 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::UInt128: Out << 'o'; break;
   case BuiltinType::SChar: Out << 'a'; break;
   case BuiltinType::WChar: Out << 'w'; break;
+  case BuiltinType::Char16: Out << "Ds"; break;
+  case BuiltinType::Char32: Out << "Di"; break;
   case BuiltinType::Short: Out << 's'; break;
   case BuiltinType::Int: Out << 'i'; break;
   case BuiltinType::Long: Out << 'l'; break;

@@ -170,6 +170,16 @@ void ASTContext::InitBuiltinTypes() {
   else // C99
     WCharTy = getFromTargetType(Target.getWCharType());
 
+  if (LangOpts.CPlusPlus) // C++0x 3.9.1p5, extension for C++
+    InitBuiltinType(Char16Ty,           BuiltinType::Char16);
+  else // C99
+    Char16Ty = getFromTargetType(Target.getChar16Type());
+
+  if (LangOpts.CPlusPlus) // C++0x 3.9.1p5, extension for C++
+    InitBuiltinType(Char32Ty,           BuiltinType::Char32);
+  else // C99
+    Char32Ty = getFromTargetType(Target.getChar32Type());
+
   // Placeholder type for functions.
   InitBuiltinType(OverloadTy,          BuiltinType::Overload);
 
@@ -521,6 +531,14 @@ ASTContext::getTypeInfo(const Type *T) {
     case BuiltinType::WChar:
       Width = Target.getWCharWidth();
       Align = Target.getWCharAlign();
+      break;
+    case BuiltinType::Char16:
+      Width = Target.getChar16Width();
+      Align = Target.getChar16Align();
+      break;
+    case BuiltinType::Char32:
+      Width = Target.getChar32Width();
+      Align = Target.getChar32Align();
       break;
     case BuiltinType::UShort:
     case BuiltinType::Short:
@@ -2325,6 +2343,12 @@ unsigned ASTContext::getIntegerRank(Type *T) {
 
   if (T->isSpecificBuiltinType(BuiltinType::WChar))
     T = getFromTargetType(Target.getWCharType()).getTypePtr();
+
+  if (T->isSpecificBuiltinType(BuiltinType::Char16))
+    T = getFromTargetType(Target.getChar16Type()).getTypePtr();
+
+  if (T->isSpecificBuiltinType(BuiltinType::Char32))
+    T = getFromTargetType(Target.getChar32Type()).getTypePtr();
 
   // There are two things which impact the integer rank: the width, and
   // the ordering of builtins.  The builtin ordering is encoded in the

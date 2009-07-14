@@ -654,6 +654,12 @@ void Parser::ParseCXXSimpleTypeSpecifier(DeclSpec &DS) {
   case tok::kw_wchar_t:
     DS.SetTypeSpecType(DeclSpec::TST_wchar, Loc, PrevSpec);
     break;
+  case tok::kw_char16_t:
+    DS.SetTypeSpecType(DeclSpec::TST_char16, Loc, PrevSpec);
+    break;
+  case tok::kw_char32_t:
+    DS.SetTypeSpecType(DeclSpec::TST_char32, Loc, PrevSpec);
+    break;
   case tok::kw_bool:
     DS.SetTypeSpecType(DeclSpec::TST_bool, Loc, PrevSpec);
     break;

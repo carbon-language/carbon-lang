@@ -739,6 +739,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 
   case tok::kw_char:
   case tok::kw_wchar_t:
+  case tok::kw_char16_t:
+  case tok::kw_char32_t:
   case tok::kw_bool:
   case tok::kw_short:
   case tok::kw_int:

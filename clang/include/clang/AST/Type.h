@@ -567,6 +567,8 @@ public:
     Bool,     // This is bool and/or _Bool.
     Char_U,   // This is 'char' for targets where char is unsigned.
     UChar,    // This is explicitly qualified unsigned char.
+    Char16,   // This is 'char16_t' for C++.
+    Char32,   // This is 'char32_t' for C++.
     UShort,
     UInt,
     ULong,

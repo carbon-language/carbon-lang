@@ -25,6 +25,8 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   TLSSupported = true;
   PointerWidth = PointerAlign = 32;
   WCharWidth = WCharAlign = 32;
+  Char16Width = Char16Align = 16;
+  Char32Width = Char32Align = 32;
   IntWidth = IntAlign = 32;
   LongWidth = LongAlign = 32;
   LongLongWidth = LongLongAlign = 64;
@@ -41,6 +43,8 @@ TargetInfo::TargetInfo(const std::string &T) : Triple(T) {
   UIntMaxType = UnsignedLongLong;
   IntPtrType = SignedLong;
   WCharType = SignedInt;
+  Char16Type = UnsignedShort;
+  Char32Type = UnsignedInt;
   Int64Type = SignedLongLong;
   FloatFormat = &llvm::APFloat::IEEEsingle;
   DoubleFormat = &llvm::APFloat::IEEEdouble;
