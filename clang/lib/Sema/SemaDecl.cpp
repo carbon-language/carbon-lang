@@ -2298,8 +2298,12 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         Diag(Param->getLocation(), diag::err_param_typedef_of_void);
       // FIXME: Leaks decl?
     } else if (FTI.NumArgs > 0 && FTI.ArgInfo[0].Param != 0) {
-      for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-        Params.push_back(FTI.ArgInfo[i].Param.getAs<ParmVarDecl>());
+      for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
+        ParmVarDecl *Param = FTI.ArgInfo[i].Param.getAs<ParmVarDecl>();
+        assert(Param->getDeclContext() != NewFD && "Was set before ?");
+        Param->setDeclContext(NewFD);
+        Params.push_back(Param);
+      }
     }
   
   } else if (const FunctionProtoType *FT = R->getAsFunctionProtoType()) {
@@ -2546,8 +2550,11 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
       if (FunctionTemplateDecl *OldTemplateDecl
             = dyn_cast<FunctionTemplateDecl>(OldDecl))
         NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());
-      else
+      else {
+        if (isa<CXXMethodDecl>(NewFD)) // Set access for out-of-line definitions
+          NewFD->setAccess(OldDecl->getAccess());
         NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
+      }
     }
   }
 
