@@ -1137,22 +1137,28 @@ class FieldDecl : public ValueDecl {
   // FIXME: This can be packed into the bitfields in Decl.
   bool Mutable : 1;
   Expr *BitWidth;
+  SourceLocation TypeSpecStartLoc;
 protected:
   FieldDecl(Kind DK, DeclContext *DC, SourceLocation L, 
-            IdentifierInfo *Id, QualType T, Expr *BW, bool Mutable)
-    : ValueDecl(DK, DC, L, Id, T), Mutable(Mutable), BitWidth(BW)
-      { }
+            IdentifierInfo *Id, QualType T, Expr *BW, bool Mutable,
+            SourceLocation TSSL = SourceLocation())
+    : ValueDecl(DK, DC, L, Id, T), Mutable(Mutable), BitWidth(BW),
+      TypeSpecStartLoc(TSSL) { }
 
 public:
   static FieldDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L, 
                            IdentifierInfo *Id, QualType T, Expr *BW, 
-                           bool Mutable);
+                           bool Mutable,
+                           SourceLocation TypeSpecStartLoc = SourceLocation());
 
   /// isMutable - Determines whether this field is mutable (C++ only).
   bool isMutable() const { return Mutable; }
 
   /// \brief Set whether this field is mutable (C++ only).
   void setMutable(bool M) { Mutable = M; }
+
+  SourceLocation getTypeSpecStartLoc() const { return TypeSpecStartLoc; }
+  void setTypeSpecStartLoc(SourceLocation TSSL) { TypeSpecStartLoc = TSSL; }
 
   /// isBitfield - Determines whether this field is a bitfield.
   bool isBitField() const { return BitWidth != NULL; }

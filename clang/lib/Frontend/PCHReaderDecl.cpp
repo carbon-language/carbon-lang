@@ -333,6 +333,7 @@ void PCHDeclReader::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 void PCHDeclReader::VisitFieldDecl(FieldDecl *FD) {
   VisitValueDecl(FD);
   FD->setMutable(Record[Idx++]);
+  FD->setTypeSpecStartLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   if (Record[Idx++])
     FD->setBitWidth(Reader.ReadDeclExpr());
 }
@@ -667,7 +668,7 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     break;
   case pch::DECL_FIELD:
     D = FieldDecl::Create(*Context, 0, SourceLocation(), 0, QualType(), 0, 
-                          false);
+                          false, SourceLocation());
     break;
   case pch::DECL_VAR:
     D = VarDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),

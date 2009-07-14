@@ -541,6 +541,7 @@ public:
   FieldDecl *CheckFieldDecl(DeclarationName Name, QualType T, 
                             RecordDecl *Record, SourceLocation Loc,
                             bool Mutable, Expr *BitfieldWidth,
+                            SourceLocation TSSL,
                             AccessSpecifier AS, NamedDecl *PrevDecl,
                             Declarator *D = 0);
   

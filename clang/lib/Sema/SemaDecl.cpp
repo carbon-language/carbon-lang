@@ -1268,7 +1268,8 @@ Sema::DeclPtrTy Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
     Anon = FieldDecl::Create(Context, OwningClass, Record->getLocation(),
                              /*IdentifierInfo=*/0, 
                              Context.getTypeDeclType(Record),
-                             /*BitWidth=*/0, /*Mutable=*/false);
+                             /*BitWidth=*/0, /*Mutable=*/false,
+                             DS.getSourceRange().getBegin());
     Anon->setAccess(AS_public);
     if (getLangOptions().CPlusPlus)
       FieldCollector->Add(cast<FieldDecl>(Anon));
@@ -3947,10 +3948,12 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
   if (PrevDecl && !isDeclInScope(PrevDecl, Record, S))
     PrevDecl = 0;
 
-  FieldDecl *NewFD 
-    = CheckFieldDecl(II, T, Record, Loc,
-               D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_mutable,
-                     BitWidth, AS, PrevDecl, &D);
+  bool Mutable
+    = (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_mutable);
+  SourceLocation TSSL = D.getSourceRange().getBegin();
+  FieldDecl *NewFD
+    = CheckFieldDecl(II, T, Record, Loc, Mutable, BitWidth, TSSL,
+                     AS, PrevDecl, &D);
   if (NewFD->isInvalidDecl() && PrevDecl) {
     // Don't introduce NewFD into scope; there's already something
     // with the same name in the same scope.
@@ -3975,6 +3978,7 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
 FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T, 
                                 RecordDecl *Record, SourceLocation Loc,
                                 bool Mutable, Expr *BitWidth, 
+                                SourceLocation TSSL,
                                 AccessSpecifier AS, NamedDecl *PrevDecl,
                                 Declarator *D) {
   IdentifierInfo *II = Name.getAsIdentifierInfo();
@@ -4020,7 +4024,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
   
   FieldDecl *NewFD = FieldDecl::Create(Context, Record, Loc, II, T, BitWidth,
-                                       Mutable);
+                                       Mutable, TSSL);
   if (InvalidDecl)
     NewFD->setInvalidDecl();
 

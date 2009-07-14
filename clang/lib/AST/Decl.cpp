@@ -149,8 +149,8 @@ BlockDecl *BlockDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L) {
 
 FieldDecl *FieldDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                              IdentifierInfo *Id, QualType T, Expr *BW,
-                             bool Mutable) {
-  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable);
+                             bool Mutable, SourceLocation TSSL) {
+  return new (C) FieldDecl(Decl::Field, DC, L, Id, T, BW, Mutable, TSSL);
 }
 
 bool FieldDecl::isAnonymousStructOrUnion() const {

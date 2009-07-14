@@ -182,6 +182,7 @@ Decl *TemplateDeclInstantiator::VisitFieldDecl(FieldDecl *D) {
                                             D->getLocation(),
                                             D->isMutable(),
                                             BitWidth,
+                                            D->getTypeSpecStartLoc(),
                                             D->getAccess(),
                                             0);
   if (Field) {

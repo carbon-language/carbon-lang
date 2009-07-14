@@ -325,6 +325,7 @@ void PCHDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
 void PCHDeclWriter::VisitFieldDecl(FieldDecl *D) {
   VisitValueDecl(D);
   Record.push_back(D->isMutable());
+  Writer.AddSourceLocation(D->getTypeSpecStartLoc(), Record);
   Record.push_back(D->getBitWidth()? 1 : 0);
   if (D->getBitWidth())
     Writer.AddStmt(D->getBitWidth());
