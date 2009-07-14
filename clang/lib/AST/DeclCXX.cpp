@@ -482,12 +482,81 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
                                     ASTContext &C,
                                     CXXBaseOrMemberInitializer **Initializers,
                                     unsigned NumInitializers) {
+  // We need to build the initializer AST according to order of construction
+  // and not what user specified in the Initializers list.
+  // FIXME. We probably don't need this. But it is cleaner.
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(getDeclContext());
+  llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
+  // Push virtual bases before others.
+  for (CXXRecordDecl::base_class_iterator VBase =
+       ClassDecl->vbases_begin(),
+       E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
+    const Type * T = VBase->getType()->getAsRecordType();
+    unsigned int i = 0;
+    for (i = 0; i < NumInitializers; i++) {
+      CXXBaseOrMemberInitializer *Member = Initializers[i];
+      if (Member->isBaseInitializer() &&
+          Member->getBaseClass() == T) {
+        AllToInit.push_back(Member);
+        break;
+      }
+    }
+    if (i == NumInitializers) {
+      CXXBaseOrMemberInitializer *Member = 
+        new CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,SourceLocation());
+      AllToInit.push_back(Member);
+    }
+  }
+  for (CXXRecordDecl::base_class_iterator Base =
+       ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); Base != E; ++Base) {
+    // Virtuals are in the virtual base list and already constructed.
+    if (Base->isVirtual())
+      continue;
+    const Type * T = Base->getType()->getAsRecordType();
+    unsigned int i = 0;
+    for (i = 0; i < NumInitializers; i++) {
+      CXXBaseOrMemberInitializer *Member = Initializers[i];
+      if (Member->isBaseInitializer() && Member->getBaseClass() == T) {
+        AllToInit.push_back(Member);
+        break;
+      }
+    }
+    if (i == NumInitializers) {
+      CXXBaseOrMemberInitializer *Member = 
+        new CXXBaseOrMemberInitializer(Base->getType(), 0, 0, SourceLocation());
+      AllToInit.push_back(Member);
+    }
+  }
+  // non-static data members.
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); Field != E; ++Field) {
+    unsigned int i = 0;
+    for (i = 0; i < NumInitializers; i++) {
+      CXXBaseOrMemberInitializer *Member = Initializers[i];
+      if (Member->isMemberInitializer() && Member->getMember() == (*Field)) {
+        AllToInit.push_back(Member);
+        break;
+      }
+    }
+    if (i == NumInitializers) {
+      // FIXME. What do we do with arrays?
+      QualType FieldType = C.getCanonicalType((*Field)->getType());
+      if (FieldType->getAsRecordType()) {
+        CXXBaseOrMemberInitializer *Member = 
+          new CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
+          AllToInit.push_back(Member);
+      }      
+    }
+  }
+  
+  NumInitializers = AllToInit.size();
   if (NumInitializers > 0) {
     NumBaseOrMemberInitializers = NumInitializers;
     BaseOrMemberInitializers = 
       new (C) CXXBaseOrMemberInitializer*[NumInitializers]; 
     for (unsigned Idx = 0; Idx < NumInitializers; ++Idx)
-      BaseOrMemberInitializers[Idx] = Initializers[Idx];
+      BaseOrMemberInitializers[Idx] = AllToInit[Idx];
   }
 }
 

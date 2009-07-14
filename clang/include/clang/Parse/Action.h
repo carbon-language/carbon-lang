@@ -1232,6 +1232,8 @@ public:
                                     SourceLocation ColonLoc,
                                     MemInitTy **MemInits, unsigned NumMemInits){
   }
+ 
+ virtual void ActOnDefaultInitializers(DeclPtrTy ConstructorDecl) {}
 
   /// ActOnFinishCXXMemberSpecification - Invoked after all member declarators
   /// are parsed but *before* parsing of inline method definitions.

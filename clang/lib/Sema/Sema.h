@@ -1468,6 +1468,7 @@ public:
                                                     SourceLocation MemberLoc,
                                                     IdentifierInfo &Member,
                                                     DeclPtrTy ImplDecl);
+  virtual void ActOnDefaultInitializers(DeclPtrTy ConstructorDecl);
   bool ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
                                FunctionDecl *FDecl,
                                const FunctionProtoType *Proto,

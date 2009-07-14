@@ -902,6 +902,17 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   }
 }
 
+void Sema::ActOnDefaultInitializers(DeclPtrTy ConstructorDecl) {
+  if (!ConstructorDecl)
+    return;
+  
+  if (CXXConstructorDecl *Constructor 
+      = dyn_cast<CXXConstructorDecl>(ConstructorDecl.getAs<Decl>()))
+    Constructor->setBaseOrMemberInitializers(Context, 
+                                           (CXXBaseOrMemberInitializer **)0, 0);
+                                           
+}
+
 namespace {
   /// PureVirtualMethodCollector - traverses a class and its superclasses
   /// and determines if it has any pure virtual methods.
