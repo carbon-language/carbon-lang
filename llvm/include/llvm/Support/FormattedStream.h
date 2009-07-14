@@ -35,7 +35,7 @@ namespace llvm
   private:
     /// TheStream - The real stream we output to.
     ///
-    raw_ostream &TheStream;
+    raw_ostream *TheStream;
     /// DeleteStream - Do we need to delete TheStream in the
     /// destructor?
     ///
@@ -48,7 +48,7 @@ namespace llvm
 
     virtual void write_impl(const char *Ptr, unsigned Size) {
       ComputeColumn(Ptr, Size);
-      TheStream.write(Ptr, Size);
+      TheStream->write(Ptr, Size);
     }
 
     /// current_pos - Return the current position within the stream,
@@ -56,7 +56,7 @@ namespace llvm
     virtual uint64_t current_pos() { 
       // This has the same effect as calling TheStream.current_pos(),
       // but that interface is private.
-      return TheStream.tell() - TheStream.GetNumBytesInBuffer();
+      return TheStream->tell() - TheStream->GetNumBytesInBuffer();
     }
 
     /// ComputeColumn - Examine the current output and figure out
@@ -75,11 +75,18 @@ namespace llvm
     /// \param Binary - The file should be opened in binary mode on
     /// platforms that support this distinction.
     formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
-        : raw_ostream(), TheStream(Stream), DeleteStream(Delete), Column(0) {}
+        : raw_ostream(), TheStream(&Stream), DeleteStream(Delete), Column(0) {}
+    explicit formatted_raw_ostream() 
+      : raw_ostream(), TheStream(0), DeleteStream(false), Column(0) {}
 
     ~formatted_raw_ostream() {
       if (DeleteStream)
         delete &TheStream;
+    }
+    
+    void setStream(raw_ostream &Stream, bool Delete = false) {
+      TheStream = &Stream;
+      DeleteStream = Delete;
     }
 
     /// PadToColumn - Align the output to some column number.
