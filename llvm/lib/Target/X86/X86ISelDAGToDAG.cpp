@@ -1604,7 +1604,7 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
         break;
       case MVT::i64:
         LoReg = X86::RAX; HiReg = X86::RDX;
-        ClrOpcode  = X86::MOV64r0;
+        ClrOpcode  = ~0U; // NOT USED.
         SExtOpcode = X86::CQO;
         break;
       }
@@ -1643,8 +1643,26 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
             SDValue(CurDAG->getTargetNode(SExtOpcode, dl, MVT::Flag, InFlag),0);
         } else {
           // Zero out the high part, effectively zero extending the input.
-          SDValue ClrNode = SDValue(CurDAG->getTargetNode(ClrOpcode, dl, NVT), 
-                                    0);
+          SDValue ClrNode;
+          
+          if (NVT.getSimpleVT() == MVT::i64) {
+            ClrNode = SDValue(CurDAG->getTargetNode(X86::MOV32r0, dl, MVT::i32),
+                              0);
+            // We just did a 32-bit clear, insert it into a 64-bit register to
+            // clear the whole 64-bit reg.
+            SDValue Undef =
+              SDValue(CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
+                                            dl, MVT::i64), 0);
+            SDValue SubRegNo = 
+              CurDAG->getTargetConstant(X86::SUBREG_32BIT, MVT::i32);
+            ClrNode = 
+              SDValue(CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl,
+                                            MVT::i64, Undef, ClrNode, SubRegNo),
+                      0);
+          } else {
+            ClrNode = SDValue(CurDAG->getTargetNode(ClrOpcode, dl, NVT), 0);
+          }
+          
           InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, HiReg,
                                         ClrNode, InFlag).getValue(1);
         }

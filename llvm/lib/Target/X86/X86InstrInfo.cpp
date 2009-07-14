@@ -930,8 +930,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
   default: break;
   case X86::MOV8r0:
   case X86::MOV16r0:
-  case X86::MOV32r0:
-  case X86::MOV64r0: {
+  case X86::MOV32r0: {
     if (!isSafeToClobberEFLAGS(MBB, I)) {
       unsigned Opc = 0;
       switch (Orig->getOpcode()) {
@@ -939,7 +938,6 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
       case X86::MOV8r0:  Opc = X86::MOV8ri;  break;
       case X86::MOV16r0: Opc = X86::MOV16ri; break;
       case X86::MOV32r0: Opc = X86::MOV32ri; break;
-      case X86::MOV64r0: Opc = X86::MOV64ri32; break;
       }
       BuildMI(MBB, I, DL, get(Opc), DestReg).addImm(0);
       Emitted = true;
@@ -2166,8 +2164,6 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
       NewMI = MakeM0Inst(*this, X86::MOV16mi, MOs, MI);
     else if (MI->getOpcode() == X86::MOV32r0)
       NewMI = MakeM0Inst(*this, X86::MOV32mi, MOs, MI);
-    else if (MI->getOpcode() == X86::MOV64r0)
-      NewMI = MakeM0Inst(*this, X86::MOV64mi32, MOs, MI);
     else if (MI->getOpcode() == X86::MOV8r0)
       NewMI = MakeM0Inst(*this, X86::MOV8mi, MOs, MI);
     if (NewMI)
@@ -2366,10 +2362,9 @@ bool X86InstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
     OpcodeTablePtr = &RegOp2MemOpTable2Addr;
   } else if (OpNum == 0) { // If operand 0
     switch (Opc) {
+    case X86::MOV8r0:
     case X86::MOV16r0:
     case X86::MOV32r0:
-    case X86::MOV64r0:
-    case X86::MOV8r0:
       return true;
     default: break;
     }
