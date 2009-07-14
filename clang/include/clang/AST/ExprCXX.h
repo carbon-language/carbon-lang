@@ -51,10 +51,14 @@ public:
                       SourceLocation operatorloc)
     : CallExpr(C, CXXOperatorCallExprClass, fn, args, numargs, t, operatorloc),
       Operator(Op) {}
+  explicit CXXOperatorCallExpr(ASTContext& C, EmptyShell Empty) : 
+    CallExpr(C, CXXOperatorCallExprClass, Empty) { }
+  
 
   /// getOperator - Returns the kind of overloaded operator that this
   /// expression refers to.
   OverloadedOperatorKind getOperator() const { return Operator; }
+  void setOperator(OverloadedOperatorKind Kind) { Operator = Kind; }
 
   /// getOperatorLoc - Returns the location of the operator symbol in
   /// the expression. When @c getOperator()==OO_Call, this is the

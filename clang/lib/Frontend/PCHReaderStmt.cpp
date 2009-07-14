@@ -111,6 +111,8 @@ namespace {
     unsigned VisitObjCAtTryStmt(ObjCAtTryStmt *);
     unsigned VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
     unsigned VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
+
+    unsigned VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   };
 }
 
@@ -816,6 +818,15 @@ unsigned PCHStmtReader::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
   return 1;
 }
 
+//===----------------------------------------------------------------------===//
+// C++ Expressions and Statements
+
+unsigned PCHStmtReader::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+  unsigned num = VisitCallExpr(E);
+  E->setOperator((OverloadedOperatorKind)Record[Idx++]);
+  return num;
+}
+
 
 // Within the bitstream, expressions are stored in Reverse Polish
 // Notation, with each of the subexpressions preceding the
@@ -983,7 +994,7 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
 
     case pch::EXPR_CALL:
-      S = new (Context) CallExpr(*Context, Empty);
+      S = new (Context) CallExpr(*Context, Stmt::CallExprClass, Empty);
       break;
 
     case pch::EXPR_MEMBER:
@@ -1112,6 +1123,10 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
     case pch::STMT_OBJC_AT_THROW:
       S = new (Context) ObjCAtThrowStmt(Empty);
+      break;
+      
+    case pch::EXPR_CXX_OPERATOR_CALL:
+      S = new (Context) CXXOperatorCallExpr(*Context, Empty);
       break;
     }
 

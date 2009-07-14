@@ -105,6 +105,9 @@ namespace {
     void VisitObjCAtTryStmt(ObjCAtTryStmt *);
     void VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *);
     void VisitObjCAtThrowStmt(ObjCAtThrowStmt *);
+
+    // C++ Statements    
+    void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E);
   };
 }
 
@@ -743,6 +746,16 @@ void PCHStmtWriter::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
   Writer.WriteSubStmt(S->getThrowExpr());
   Writer.AddSourceLocation(S->getThrowLoc(), Record);
   Code = pch::STMT_OBJC_AT_THROW;
+}
+
+//===----------------------------------------------------------------------===//
+// C++ Expressions and Statements.
+//===----------------------------------------------------------------------===//
+
+void PCHStmtWriter::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+  VisitCallExpr(E);
+  Record.push_back(E->getOperator());
+  Code = pch::EXPR_CXX_OPERATOR_CALL;
 }
 
 //===----------------------------------------------------------------------===//

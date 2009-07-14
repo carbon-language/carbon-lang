@@ -213,8 +213,8 @@ CallExpr::CallExpr(ASTContext& C, Expr *fn, Expr **args, unsigned numargs,
   RParenLoc = rparenloc;
 }
 
-CallExpr::CallExpr(ASTContext &C, EmptyShell Empty) 
-  : Expr(CallExprClass, Empty), SubExprs(0), NumArgs(0) { 
+CallExpr::CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty) 
+  : Expr(SC, Empty), SubExprs(0), NumArgs(0) { 
   SubExprs = new (C) Stmt*[1];
 }
 

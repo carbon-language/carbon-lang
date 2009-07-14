@@ -648,7 +648,12 @@ namespace clang {
       /// \brief An ObjCAtSynchronizedStmt record.      
       STMT_OBJC_AT_SYNCHRONIZED,
       /// \brief An ObjCAtThrowStmt record.      
-      STMT_OBJC_AT_THROW
+      STMT_OBJC_AT_THROW,
+
+      // C++
+
+      /// \brief An CXXOperatorCallExpr record.      
+      EXPR_CXX_OPERATOR_CALL
     };
 
     /// \brief The kinds of designators that can occur in a

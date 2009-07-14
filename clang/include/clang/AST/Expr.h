@@ -955,7 +955,7 @@ public:
            SourceLocation rparenloc);
   
   /// \brief Build an empty call expression.
-  CallExpr(ASTContext &C, EmptyShell Empty);
+  CallExpr(ASTContext &C, StmtClass SC, EmptyShell Empty);
 
   ~CallExpr() {}
   
