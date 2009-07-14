@@ -47,9 +47,9 @@ unsigned PPCMachOWriterInfo::GetTargetRelocation(MachineRelocation &MR,
     Addr = (uintptr_t)MR.getResultPointer() + ToAddr;
 
   switch ((PPC::RelocationType)MR.getRelocationType()) {
-  default: LLVM_UNREACHABLE("Unknown PPC relocation type!");
+  default: llvm_unreachable("Unknown PPC relocation type!");
   case PPC::reloc_absolute_low_ix:
-    LLVM_UNREACHABLE("Unhandled PPC relocation type!");
+    llvm_unreachable("Unhandled PPC relocation type!");
     break;
   case PPC::reloc_vanilla:
     {

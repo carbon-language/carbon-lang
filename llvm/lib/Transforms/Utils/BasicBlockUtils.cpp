@@ -264,7 +264,7 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
   case Instruction::Switch:    // Should remove entry
   default:
   case Instruction::Ret:       // Cannot happen, has no successors!
-    LLVM_UNREACHABLE("Unhandled terminator instruction type in RemoveSuccessor!");
+    llvm_unreachable("Unhandled terminator instruction type in RemoveSuccessor!");
   }
 
   if (NewTI)   // If it's a different instruction, replace.

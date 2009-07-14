@@ -158,7 +158,7 @@ namespace {
 
     virtual void getArgumentAccesses(Function *F, CallSite CS,
                                      std::vector<PointerAccessInfo> &Info) {
-      LLVM_UNREACHABLE("This method may not be called on this function!");
+      llvm_unreachable("This method may not be called on this function!");
     }
 
     virtual void getMustAliases(Value *P, std::vector<Value*> &RetVals) { }

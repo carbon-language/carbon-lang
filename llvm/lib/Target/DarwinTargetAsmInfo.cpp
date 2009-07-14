@@ -152,7 +152,7 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
             ConstDataCoalSection:
             MergeableConstSection(cast<GlobalVariable>(GV)));
    default:
-    LLVM_UNREACHABLE("Unsuported section kind for global");
+    llvm_unreachable("Unsuported section kind for global");
   }
 
   // FIXME: Do we have any extra special weird cases?
@@ -212,6 +212,6 @@ DarwinTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
 std::string
 DarwinTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const {
-  LLVM_UNREACHABLE("Darwin does not use unique sections");
+  llvm_unreachable("Darwin does not use unique sections");
   return "";
 }

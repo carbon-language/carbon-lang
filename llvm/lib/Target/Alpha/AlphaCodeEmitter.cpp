@@ -166,7 +166,7 @@ static unsigned getAlphaRegNumber(unsigned Reg) {
   case Alpha::R30 : case Alpha::F30 : return 30;
   case Alpha::R31 : case Alpha::F31 : return 31;
   default:
-    LLVM_UNREACHABLE("Unhandled reg");
+    llvm_unreachable("Unhandled reg");
   }
 }
 
@@ -217,7 +217,7 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
       Offset = MI.getOperand(3).getImm();
       break;
     default:
-      LLVM_UNREACHABLE("unknown relocatable instruction");
+      llvm_unreachable("unknown relocatable instruction");
     }
     if (MO.isGlobal())
       MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
@@ -238,7 +238,7 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 #ifndef NDEBUG
     cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 
   return rv;

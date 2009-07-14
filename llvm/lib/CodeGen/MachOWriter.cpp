@@ -635,7 +635,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
       case Instruction::Add:
       default:
         cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
-        llvm_unreachable();
+        llvm_unreachable(0);
       }
     } else if (PC->getType()->isSingleValueType()) {
       unsigned char *ptr = (unsigned char *)PA;
@@ -669,7 +669,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
           ptr[6] = val >> 48;
           ptr[7] = val >> 56;
         } else {
-          LLVM_UNREACHABLE("Not implemented: bit widths > 64");
+          llvm_unreachable("Not implemented: bit widths > 64");
         }
         break;
       }
@@ -710,7 +710,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
                                                  ScatteredOffset));
           ScatteredOffset = 0;
         } else
-          LLVM_UNREACHABLE("Unknown constant pointer type!");
+          llvm_unreachable("Unknown constant pointer type!");
         break;
       default:
         std::string msg;
@@ -733,7 +733,7 @@ void MachOWriter::InitMem(const Constant *C, uintptr_t Offset,
                                  PA+SL->getElementOffset(i)));
     } else {
       cerr << "Bad Type: " << *PC->getType() << "\n";
-      LLVM_UNREACHABLE("Unknown constant type to initialize memory with!");
+      llvm_unreachable("Unknown constant type to initialize memory with!");
     }
   }
 }
@@ -749,7 +749,7 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
 
   switch (GV->getLinkage()) {
   default:
-    LLVM_UNREACHABLE("Unexpected linkage type!");
+    llvm_unreachable("Unexpected linkage type!");
     break;
   case GlobalValue::WeakAnyLinkage:
   case GlobalValue::WeakODRLinkage:

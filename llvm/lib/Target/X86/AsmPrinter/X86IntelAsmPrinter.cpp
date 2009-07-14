@@ -115,7 +115,7 @@ void X86IntelAsmPrinter::decorateName(std::string &Name,
 
     break;
   default:
-    LLVM_UNREACHABLE("Unsupported DecorationStyle");
+    llvm_unreachable("Unsupported DecorationStyle");
   }
 }
 
@@ -144,7 +144,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   SwitchToTextSection("_text", F);
   switch (F->getLinkage()) {
-  default: LLVM_UNREACHABLE("Unsupported linkage type!");
+  default: llvm_unreachable("Unsupported linkage type!");
   case Function::PrivateLinkage:
   case Function::InternalLinkage:
     EmitAlignment(FnAlign);
@@ -268,7 +268,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
 void X86IntelAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo){
   const MachineOperand &MO = MI->getOperand(OpNo);
   switch (MO.getType()) {
-  default: LLVM_UNREACHABLE("Unknown pcrel immediate operand");
+  default: llvm_unreachable("Unknown pcrel immediate operand");
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
     return;
@@ -520,7 +520,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
       SwitchToSection(TAI->getDataSection());
       break;
     default:
-      LLVM_UNREACHABLE("Unknown linkage type!");
+      llvm_unreachable("Unknown linkage type!");
     }
 
     if (!bCustomSegment)

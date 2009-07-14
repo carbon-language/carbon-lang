@@ -100,7 +100,7 @@ void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   EmitAlignment(FnAlign, F);
 
   switch (F->getLinkage()) {
-  default: LLVM_UNREACHABLE("Unknown linkage type!");
+  default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
     break;
@@ -162,7 +162,7 @@ void MSP430AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   if (printInstruction(MI))
     return;
 
-  LLVM_UNREACHABLE("Should not happen");
+  llvm_unreachable("Should not happen");
 }
 
 void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
@@ -207,7 +207,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     return;
   }
   default:
-    LLVM_UNREACHABLE("Not implemented yet!");
+    llvm_unreachable("Not implemented yet!");
   }
 }
 
@@ -231,7 +231,7 @@ void MSP430AsmPrinter::printSrcMemOperand(const MachineInstr *MI, int OpNum,
       printOperand(MI, OpNum);
     }
   } else
-    LLVM_UNREACHABLE("Unsupported memory operand");
+    llvm_unreachable("Unsupported memory operand");
 }
 
 void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
@@ -239,7 +239,7 @@ void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
 
   switch (CC) {
   default:
-   LLVM_UNREACHABLE("Unsupported CC code");
+   llvm_unreachable("Unsupported CC code");
    break;
   case MSP430::COND_E:
    O << "eq";

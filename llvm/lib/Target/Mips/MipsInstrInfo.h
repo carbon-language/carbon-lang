@@ -93,7 +93,7 @@ namespace Mips {
   inline static const char *MipsFCCToString(Mips::CondCode CC) 
   {
     switch (CC) {
-      default: LLVM_UNREACHABLE("Unknown condition code");
+      default: llvm_unreachable("Unknown condition code");
       case FCOND_F:
       case FCOND_T:   return "f";
       case FCOND_UN:

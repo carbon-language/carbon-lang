@@ -308,7 +308,7 @@ namespace PIC16CC {
 
   inline static const char *PIC16CondCodeToString(PIC16CC::CondCodes CC) {
     switch (CC) {
-    default: LLVM_UNREACHABLE("Unknown condition code");
+    default: llvm_unreachable("Unknown condition code");
     case PIC16CC::NE:  return "ne";
     case PIC16CC::EQ:   return "eq";
     case PIC16CC::LT:   return "lt";
@@ -324,7 +324,7 @@ namespace PIC16CC {
 
   inline static bool isSignedComparison(PIC16CC::CondCodes CC) {
     switch (CC) {
-    default: LLVM_UNREACHABLE("Unknown condition code");
+    default: llvm_unreachable("Unknown condition code");
     case PIC16CC::NE:  
     case PIC16CC::EQ: 
     case PIC16CC::LT:

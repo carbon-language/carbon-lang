@@ -431,7 +431,7 @@ void ScheduleDAGSDNodes::EmitSubregNode(SDNode *Node,
     MI->addOperand(MachineOperand::CreateImm(SubIdx));
     BB->insert(InsertPos, MI);
   } else
-    LLVM_UNREACHABLE("Node is not insert_subreg, extract_subreg, or subreg_to_reg");
+    llvm_unreachable("Node is not insert_subreg, extract_subreg, or subreg_to_reg");
      
   SDValue Op(Node, 0);
   bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
@@ -552,10 +552,10 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
 #ifndef NDEBUG
     Node->dump(DAG);
 #endif
-    LLVM_UNREACHABLE("This target-independent node should have been selected!");
+    llvm_unreachable("This target-independent node should have been selected!");
     break;
   case ISD::EntryToken:
-    LLVM_UNREACHABLE("EntryToken should have been excluded from the schedule!");
+    llvm_unreachable("EntryToken should have been excluded from the schedule!");
     break;
   case ISD::TokenFactor: // fall thru
     break;
@@ -619,7 +619,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
       ++i;  // Skip the ID value.
         
       switch (Flags & 7) {
-      default: LLVM_UNREACHABLE("Bad flags!");
+      default: llvm_unreachable("Bad flags!");
       case 2:   // Def of register.
         for (; NumVals; --NumVals, ++i) {
           unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();

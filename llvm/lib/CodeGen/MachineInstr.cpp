@@ -157,7 +157,7 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
     return false;
   
   switch (getType()) {
-  default: LLVM_UNREACHABLE("Unrecognized operand type");
+  default: llvm_unreachable("Unrecognized operand type");
   case MachineOperand::MO_Register:
     return getReg() == Other.getReg() && isDef() == Other.isDef() &&
            getSubReg() == Other.getSubReg();
@@ -275,7 +275,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << '>';
     break;
   default:
-    LLVM_UNREACHABLE("Unrecognized operand type");
+    llvm_unreachable("Unrecognized operand type");
   }
   
   if (unsigned TF = getTargetFlags())

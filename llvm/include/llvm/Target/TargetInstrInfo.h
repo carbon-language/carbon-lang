@@ -429,7 +429,7 @@ public:
   /// point.
   virtual void insertNoop(MachineBasicBlock &MBB, 
                           MachineBasicBlock::iterator MI) const {
-    LLVM_UNREACHABLE("Target didn't implement insertNoop!");
+    llvm_unreachable("Target didn't implement insertNoop!");
   }
 
   /// isPredicated - Returns true if the instruction is already predicated.

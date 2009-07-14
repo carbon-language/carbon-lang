@@ -140,7 +140,7 @@ void ScheduleDAGFast::ReleasePred(SUnit *SU, SDep *PredEdge) {
     cerr << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
     cerr << " has been released too many times!\n";
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 #endif
   
@@ -569,7 +569,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
       }
 
       if (!CurSU) {
-        LLVM_UNREACHABLE("Unable to resolve live physical register dependencies!");
+        llvm_unreachable("Unable to resolve live physical register dependencies!");
       }
     }
 

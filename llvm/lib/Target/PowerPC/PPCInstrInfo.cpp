@@ -487,7 +487,7 @@ PPCInstrInfo::StoreRegToStackSlot(MachineFunction &MF,
                      .addReg(PPC::R0)
                      .addReg(PPC::R0));
   } else {
-    LLVM_UNREACHABLE("Unknown regclass!");
+    llvm_unreachable("Unknown regclass!");
   }
 
   return false;
@@ -538,7 +538,7 @@ void PPCInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   } else if (RC == PPC::VRRCRegisterClass) {
     Opc = PPC::STVX;
   } else {
-    LLVM_UNREACHABLE("Unknown regclass!");
+    llvm_unreachable("Unknown regclass!");
   }
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
     .addReg(SrcReg, getKillRegState(isKill));
@@ -634,7 +634,7 @@ PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
     NewMIs.push_back(BuildMI(MF, DL, get(PPC::LVX),DestReg).addReg(PPC::R0)
                      .addReg(PPC::R0));
   } else {
-    LLVM_UNREACHABLE("Unknown regclass!");
+    llvm_unreachable("Unknown regclass!");
   }
 }
 
@@ -676,7 +676,7 @@ void PPCInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   } else if (RC == PPC::VRRCRegisterClass) {
     Opc = PPC::LVX;
   } else {
-    LLVM_UNREACHABLE("Unknown regclass!");
+    llvm_unreachable("Unknown regclass!");
   }
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);

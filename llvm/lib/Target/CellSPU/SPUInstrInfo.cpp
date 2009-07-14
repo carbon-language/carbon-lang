@@ -314,7 +314,7 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   } else if (RC == SPU::VECREGRegisterClass) {
     opc = (isValidFrameIdx) ? SPU::STQDv16i8 : SPU::STQXv16i8;
   } else {
-    LLVM_UNREACHABLE("Unknown regclass!");
+    llvm_unreachable("Unknown regclass!");
   }
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
@@ -347,7 +347,7 @@ void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     } else if (RC == SPU::VECREGRegisterClass) {
       /* Opc = PPC::STVX; */
     } else {
-      LLVM_UNREACHABLE("Unknown regclass!");
+      llvm_unreachable("Unknown regclass!");
     }
     DebugLoc DL = DebugLoc::getUnknownLoc();
     MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
@@ -383,7 +383,7 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   } else if (RC == SPU::VECREGRegisterClass) {
     opc = (isValidFrameIdx) ? SPU::LQDv16i8 : SPU::LQXv16i8;
   } else {
-    LLVM_UNREACHABLE("Unknown regclass in loadRegFromStackSlot!");
+    llvm_unreachable("Unknown regclass in loadRegFromStackSlot!");
   }
 
   DebugLoc DL = DebugLoc::getUnknownLoc();
@@ -420,7 +420,7 @@ void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     } else if (RC == SPU::GPRCRegisterClass) {
       /* Opc = something else! */
     } else {
-      LLVM_UNREACHABLE("Unknown regclass!");
+      llvm_unreachable("Unknown regclass!");
     }
     DebugLoc DL = DebugLoc::getUnknownLoc();
     MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);

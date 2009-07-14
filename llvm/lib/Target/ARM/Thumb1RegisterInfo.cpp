@@ -511,7 +511,7 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
     }
     default:
-      LLVM_UNREACHABLE("Unsupported addressing mode!");
+      llvm_unreachable("Unsupported addressing mode!");
       break;
     }
 

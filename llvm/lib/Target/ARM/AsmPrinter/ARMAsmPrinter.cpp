@@ -211,7 +211,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   switch (F->getLinkage()) {
-  default: LLVM_UNREACHABLE("Unknown linkage type!");
+  default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
   case Function::InternalLinkage:
     SwitchToTextSection("\t.text", F);
@@ -308,7 +308,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
         O << TRI->getAsmName(Reg);
       }
     } else
-      LLVM_UNREACHABLE("not implemented");
+      llvm_unreachable("not implemented");
     break;
   }
   case MachineOperand::MO_Immediate: {
@@ -1139,7 +1139,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::InternalLinkage:
     break;
    default:
-    LLVM_UNREACHABLE("Unknown linkage type!");
+    llvm_unreachable("Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);

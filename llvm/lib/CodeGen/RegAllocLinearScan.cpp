@@ -237,7 +237,7 @@ namespace {
         }
       }
       if (Error)
-        llvm_unreachable();
+        llvm_unreachable(0);
 #endif
       regUse_.clear();
       regUseBackUp_.clear();

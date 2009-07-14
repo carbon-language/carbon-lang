@@ -45,7 +45,7 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
     cerr << "PromoteIntegerResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    LLVM_UNREACHABLE("Do not know how to promote this operator!");
+    llvm_unreachable("Do not know how to promote this operator!");
   case ISD::AssertSext:  Res = PromoteIntRes_AssertSext(N); break;
   case ISD::AssertZext:  Res = PromoteIntRes_AssertZext(N); break;
   case ISD::BIT_CONVERT: Res = PromoteIntRes_BIT_CONVERT(N); break;
@@ -491,7 +491,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_TRUNCATE(SDNode *N) {
   SDValue Res;
 
   switch (getTypeAction(N->getOperand(0).getValueType())) {
-  default: LLVM_UNREACHABLE("Unknown type action!");
+  default: llvm_unreachable("Unknown type action!");
   case Legal:
   case ExpandInteger:
     Res = N->getOperand(0);
@@ -610,7 +610,7 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
     cerr << "PromoteIntegerOperand Op #" << OpNo << ": ";
     N->dump(&DAG); cerr << "\n";
   #endif
-    LLVM_UNREACHABLE("Do not know how to promote this operator's operand!");
+    llvm_unreachable("Do not know how to promote this operator's operand!");
 
   case ISD::ANY_EXTEND:   Res = PromoteIntOp_ANY_EXTEND(N); break;
   case ISD::BIT_CONVERT:  Res = PromoteIntOp_BIT_CONVERT(N); break;
@@ -666,7 +666,7 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDValue &NewLHS,SDValue &NewRHS,
   // insert sign extends for ALL conditions, but zero extend is cheaper on
   // many machines (an AND instead of two shifts), so prefer it.
   switch (CCCode) {
-  default: LLVM_UNREACHABLE("Unknown integer comparison!");
+  default: llvm_unreachable("Unknown integer comparison!");
   case ISD::SETEQ:
   case ISD::SETNE:
   case ISD::SETUGE:
@@ -923,7 +923,7 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
     cerr << "ExpandIntegerResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    LLVM_UNREACHABLE("Do not know how to expand the result of this operator!");
+    llvm_unreachable("Do not know how to expand the result of this operator!");
 
   case ISD::MERGE_VALUES: SplitRes_MERGE_VALUES(N, Lo, Hi); break;
   case ISD::SELECT:       SplitRes_SELECT(N, Lo, Hi); break;
@@ -1104,7 +1104,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
                       DAG.getConstant(~HighBitMask, ShTy));
 
     switch (N->getOpcode()) {
-    default: LLVM_UNREACHABLE("Unknown shift");
+    default: llvm_unreachable("Unknown shift");
     case ISD::SHL:
       Lo = DAG.getConstant(0, NVT);              // Low part is zero.
       Hi = DAG.getNode(ISD::SHL, dl, NVT, InL, Amt); // High part from Lo part.
@@ -1132,7 +1132,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
                                  Amt);
     unsigned Op1, Op2;
     switch (N->getOpcode()) {
-    default: LLVM_UNREACHABLE("Unknown shift");
+    default: llvm_unreachable("Unknown shift");
     case ISD::SHL:  Op1 = ISD::SHL; Op2 = ISD::SRL; break;
     case ISD::SRL:
     case ISD::SRA:  Op1 = ISD::SRL; Op2 = ISD::SHL; break;
@@ -1172,7 +1172,7 @@ ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
 
   SDValue Lo1, Hi1, Lo2, Hi2;
   switch (N->getOpcode()) {
-  default: LLVM_UNREACHABLE("Unknown shift");
+  default: llvm_unreachable("Unknown shift");
   case ISD::SHL:
     // ShAmt < NVTBits
     Lo1 = DAG.getConstant(0, NVT);                  // Low part is zero.
@@ -1792,7 +1792,7 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
   }
 
   if (!ExpandShiftWithUnknownAmountBit(N, Lo, Hi))
-    LLVM_UNREACHABLE("Unsupported shift!");
+    llvm_unreachable("Unsupported shift!");
 }
 
 void DAGTypeLegalizer::ExpandIntRes_SIGN_EXTEND(SDNode *N,
@@ -1968,7 +1968,7 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
     cerr << "ExpandIntegerOperand Op #" << OpNo << ": ";
     N->dump(&DAG); cerr << "\n";
   #endif
-    LLVM_UNREACHABLE("Do not know how to expand this operator's operand!");
+    llvm_unreachable("Do not know how to expand this operator's operand!");
 
   case ISD::BIT_CONVERT:       Res = ExpandOp_BIT_CONVERT(N); break;
   case ISD::BR_CC:             Res = ExpandIntOp_BR_CC(N); break;
@@ -2050,7 +2050,7 @@ void DAGTypeLegalizer::IntegerExpandSetCCOperands(SDValue &NewLHS,
   // FIXME: This generated code sucks.
   ISD::CondCode LowCC;
   switch (CCCode) {
-  default: LLVM_UNREACHABLE("Unknown integer setcc!");
+  default: llvm_unreachable("Unknown integer setcc!");
   case ISD::SETLT:
   case ISD::SETULT: LowCC = ISD::SETULT; break;
   case ISD::SETGT:

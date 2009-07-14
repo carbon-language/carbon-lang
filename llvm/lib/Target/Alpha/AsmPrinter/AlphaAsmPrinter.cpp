@@ -101,7 +101,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_Immediate:
-    LLVM_UNREACHABLE("printOp() does not handle immediate values");
+    llvm_unreachable("printOp() does not handle immediate values");
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
@@ -155,7 +155,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   EmitAlignment(MF.getAlignment(), F);
   switch (F->getLinkage()) {
-  default: LLVM_UNREACHABLE("Unknown linkage type!");
+  default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
     break;
@@ -188,7 +188,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // Print the assembly for the instruction.
       ++EmittedInsts;
       if (!printInstruction(II)) {
-        LLVM_UNREACHABLE("Unhandled instruction in asm writer!");
+        llvm_unreachable("Unhandled instruction in asm writer!");
       }
     }
   }
@@ -248,7 +248,7 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     case GlobalValue::PrivateLinkage:
       break;
     default:
-      LLVM_UNREACHABLE("Unknown linkage type!");
+      llvm_unreachable("Unknown linkage type!");
     }
 
   // 3: Type, Size, Align

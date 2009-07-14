@@ -111,7 +111,7 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
         
         JCE->emitULEB128Bytes(Offset);
       } else {
-        LLVM_UNREACHABLE("Machine move no supported yet.");
+        llvm_unreachable("Machine move no supported yet.");
       }
     } else if (Src.isReg() &&
       Src.getReg() == MachineLocation::VirtualFP) {
@@ -119,7 +119,7 @@ JITDwarfEmitter::EmitFrameMoves(intptr_t BaseLabelPtr,
         JCE->emitByte(dwarf::DW_CFA_def_cfa_register);
         JCE->emitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), true));
       } else {
-        LLVM_UNREACHABLE("Machine move no supported yet.");
+        llvm_unreachable("Machine move no supported yet.");
       }
     } else {
       unsigned Reg = RI->getDwarfRegNum(Src.getReg(), true);
@@ -762,7 +762,7 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
         
         FinalSize += TargetAsmInfo::getULEB128Size(Offset);
       } else {
-        LLVM_UNREACHABLE("Machine move no supported yet.");
+        llvm_unreachable("Machine move no supported yet.");
       }
     } else if (Src.isReg() &&
       Src.getReg() == MachineLocation::VirtualFP) {
@@ -771,7 +771,7 @@ JITDwarfEmitter::GetFrameMovesSizeInBytes(intptr_t BaseLabelPtr,
         unsigned RegNum = RI->getDwarfRegNum(Dst.getReg(), true);
         FinalSize += TargetAsmInfo::getULEB128Size(RegNum);
       } else {
-        LLVM_UNREACHABLE("Machine move no supported yet.");
+        llvm_unreachable("Machine move no supported yet.");
       }
     } else {
       unsigned Reg = RI->getDwarfRegNum(Src.getReg(), true);

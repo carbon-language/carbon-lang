@@ -334,13 +334,13 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       //  Clean up the old call now that it has been completely upgraded.
       CI->eraseFromParent();
     } else {
-      LLVM_UNREACHABLE("Unknown function for CallInst upgrade.");
+      llvm_unreachable("Unknown function for CallInst upgrade.");
     }
     return;
   }
 
   switch (NewFn->getIntrinsicID()) {
-  default:  LLVM_UNREACHABLE("Unknown function for CallInst upgrade.");
+  default:  llvm_unreachable("Unknown function for CallInst upgrade.");
   case Intrinsic::x86_mmx_psll_d:
   case Intrinsic::x86_mmx_psll_q:
   case Intrinsic::x86_mmx_psll_w:

@@ -283,7 +283,7 @@ X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    case SectionKind::RODataMergeStr:
     return ".rdata$linkonce" + GV->getName();
    default:
-    LLVM_UNREACHABLE("Unknown section kind");
+    llvm_unreachable("Unknown section kind");
   }
   return NULL;
 }

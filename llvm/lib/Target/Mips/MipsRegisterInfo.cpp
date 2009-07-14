@@ -80,7 +80,7 @@ getRegisterNumbering(unsigned RegEnum)
     case Mips::SP   : case Mips::F29: return 29;
     case Mips::FP   : case Mips::F30: case Mips::D15: return 30;
     case Mips::RA   : case Mips::F31: return 31;
-    default: LLVM_UNREACHABLE("Unknown register number!");
+    default: llvm_unreachable("Unknown register number!");
   }    
   return 0; // Not reached
 }
@@ -516,19 +516,19 @@ getFrameRegister(MachineFunction &MF) const {
 
 unsigned MipsRegisterInfo::
 getEHExceptionRegister() const {
-  LLVM_UNREACHABLE("What is the exception register");
+  llvm_unreachable("What is the exception register");
   return 0;
 }
 
 unsigned MipsRegisterInfo::
 getEHHandlerRegister() const {
-  LLVM_UNREACHABLE("What is the exception handler register");
+  llvm_unreachable("What is the exception handler register");
   return 0;
 }
 
 int MipsRegisterInfo::
 getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  LLVM_UNREACHABLE("What is the dwarf register number");
+  llvm_unreachable("What is the dwarf register number");
   return -1;
 }
 

@@ -516,7 +516,7 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
       cerr << "While deleting: " << *V->getType() << " %" << V->getNameStr()
            << "\n";
 #endif
-      LLVM_UNREACHABLE("An asserting value handle still pointed to this"
+      llvm_unreachable("An asserting value handle still pointed to this"
                        " value!");
     case Weak:
       // Weak just goes to null, which will unlink it from the list.

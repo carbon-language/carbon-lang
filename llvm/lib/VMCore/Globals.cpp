@@ -79,7 +79,7 @@ void GlobalValue::removeDeadConstantUsers() const {
 /// Override destroyConstant to make sure it doesn't get called on
 /// GlobalValue's because they shouldn't be treated like other constants.
 void GlobalValue::destroyConstant() {
-  LLVM_UNREACHABLE("You can't GV->destroyConstant()!");
+  llvm_unreachable("You can't GV->destroyConstant()!");
 }
 
 /// copyAttributesFrom - copy all additional attributes (those not needed to
@@ -246,7 +246,7 @@ const GlobalValue *GlobalAlias::getAliasedGlobal() const {
            CE->getOpcode() == Instruction::GetElementPtr))
         return dyn_cast<GlobalValue>(CE->getOperand(0));
       else
-        LLVM_UNREACHABLE("Unsupported aliasee");
+        llvm_unreachable("Unsupported aliasee");
     }
   }
   return 0;

@@ -1426,7 +1426,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
           }
         }
       } else {
-        LLVM_UNREACHABLE("Unknown argument type!");
+        llvm_unreachable("Unknown argument type!");
       }
 
       unsigned Reg = DAG.getMachineFunction().addLiveIn(VA.getLocReg(), RC);
@@ -1721,7 +1721,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-    default: LLVM_UNREACHABLE("Unknown loc info!");
+    default: llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::SExt:
       Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
@@ -2167,7 +2167,7 @@ static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
     }
 
     switch (SetCCOpcode) {
-    default: LLVM_UNREACHABLE("Invalid integer condition!");
+    default: llvm_unreachable("Invalid integer condition!");
     case ISD::SETEQ:  return X86::COND_E;
     case ISD::SETGT:  return X86::COND_G;
     case ISD::SETGE:  return X86::COND_GE;
@@ -2207,7 +2207,7 @@ static unsigned TranslateX86CC(ISD::CondCode SetCCOpcode, bool isFP,
   //  1 | 0 | 0 | X == Y
   //  1 | 1 | 1 | unordered
   switch (SetCCOpcode) {
-  default: LLVM_UNREACHABLE("Condcode should be pre-legalized away");
+  default: llvm_unreachable("Condcode should be pre-legalized away");
   case ISD::SETUEQ:
   case ISD::SETEQ:   return X86::COND_E;
   case ISD::SETOLT:              // flipped
@@ -4715,7 +4715,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) {
                                Subtarget->is64Bit());
   }
   
-  LLVM_UNREACHABLE("Unreachable");
+  llvm_unreachable("Unreachable");
   return SDValue();
 }
 
@@ -5038,7 +5038,7 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) {
   
   unsigned Opc;
   switch (DstTy.getSimpleVT()) {
-  default: LLVM_UNREACHABLE("Invalid FP_TO_SINT to lower!");
+  default: llvm_unreachable("Invalid FP_TO_SINT to lower!");
   case MVT::i16: Opc = X86ISD::FP_TO_INT16_IN_MEM; break;
   case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
   case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
@@ -5461,7 +5461,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
         NEQ = DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(4, MVT::i8));
         return DAG.getNode(ISD::AND, dl, VT, ORD, NEQ);
       }
-      LLVM_UNREACHABLE("Illegal FP comparison");
+      llvm_unreachable("Illegal FP comparison");
     }
     // Handle all other FP comparisons here.
     return DAG.getNode(Opc, dl, VT, Op0, Op1, DAG.getConstant(SSECC, MVT::i8));
@@ -6247,7 +6247,7 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
       case Intrinsic::x86_mmx_psrai_d:
         NewIntNo = Intrinsic::x86_mmx_psra_d;
         break;
-      default: LLVM_UNREACHABLE("Impossible intrinsic");  // Can't reach here.
+      default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
       }
       break;
     }
@@ -6397,7 +6397,7 @@ SDValue X86TargetLowering::LowerTRAMPOLINE(SDValue Op,
 
     switch (CC) {
     default:
-      LLVM_UNREACHABLE("Unsupported calling convention");
+      llvm_unreachable("Unsupported calling convention");
     case CallingConv::C:
     case CallingConv::X86_StdCall: {
       // Pass 'nest' parameter in ECX.
@@ -6646,7 +6646,7 @@ SDValue X86TargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
 
   switch (Op.getOpcode()) {
-  default: LLVM_UNREACHABLE("Unknown ovf instruction!");
+  default: llvm_unreachable("Unknown ovf instruction!");
   case ISD::SADDO:
     // A subtract of one will be selected as a INC. Note that INC doesn't
     // set CF, so we can't do this for UADDO.
@@ -6768,7 +6768,7 @@ SDValue X86TargetLowering::LowerLOAD_SUB(SDValue Op, SelectionDAG &DAG) {
 ///
 SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
-  default: LLVM_UNREACHABLE("Should not custom lower this!");
+  default: llvm_unreachable("Should not custom lower this!");
   case ISD::ATOMIC_CMP_SWAP:    return LowerCMP_SWAP(Op,DAG);
   case ISD::ATOMIC_LOAD_SUB:    return LowerLOAD_SUB(Op,DAG);
   case ISD::BUILD_VECTOR:       return LowerBUILD_VECTOR(Op, DAG);
@@ -7616,7 +7616,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
     // Get the X86 opcode to use.
     unsigned Opc;
     switch (MI->getOpcode()) {
-    default: LLVM_UNREACHABLE("illegal opcode!");
+    default: llvm_unreachable("illegal opcode!");
     case X86::FP32_TO_INT16_IN_MEM: Opc = X86::IST_Fp16m32; break;
     case X86::FP32_TO_INT32_IN_MEM: Opc = X86::IST_Fp32m32; break;
     case X86::FP32_TO_INT64_IN_MEM: Opc = X86::IST_Fp64m32; break;
@@ -8355,7 +8355,7 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
   SDValue  ValOp = N->getOperand(0);
   switch (N->getOpcode()) {
   default:
-    LLVM_UNREACHABLE("Unknown shift opcode!");
+    llvm_unreachable("Unknown shift opcode!");
     break;
   case ISD::SHL:
     if (VT == MVT::v2i64)

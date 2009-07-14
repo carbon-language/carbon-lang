@@ -203,7 +203,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
     cerr << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
     cerr << " has been released too many times!\n";
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 #endif
   
@@ -830,7 +830,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SU, const SDep *SuccEdge) {
     cerr << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     cerr << " has been released too many times!\n";
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 #endif
   

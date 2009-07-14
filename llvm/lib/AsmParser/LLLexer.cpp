@@ -700,7 +700,7 @@ lltok::Kind LLLexer::Lex0x() {
 
   uint64_t Pair[2];
   switch (Kind) {
-  default: LLVM_UNREACHABLE("Unknown kind!");
+  default: llvm_unreachable("Unknown kind!");
   case 'K':
     // F80HexFPConstant - x87 long double in hexadecimal format (10 bytes)
     FP80HexToIntPair(TokStart+3, CurPtr, Pair);

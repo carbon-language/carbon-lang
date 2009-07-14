@@ -150,7 +150,7 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
         if (Mapped & 128)
           cerr << " WidenedVectors";
         cerr << "\n";
-        llvm_unreachable();
+        llvm_unreachable(0);
       }
     }
   }
@@ -432,7 +432,7 @@ NodeDone:
 
     if (Failed) {
       I->dump(&DAG); cerr << "\n";
-      llvm_unreachable();
+      llvm_unreachable(0);
     }
   }
 #endif

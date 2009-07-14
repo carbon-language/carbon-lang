@@ -393,7 +393,7 @@ static SDValue GetNegatedExpression(SDValue Op, SelectionDAG &DAG,
 
   assert(Depth <= 6 && "GetNegatedExpression doesn't match isNegatibleForFree");
   switch (Op.getOpcode()) {
-  default: LLVM_UNREACHABLE("Unknown code");
+  default: llvm_unreachable("Unknown code");
   case ISD::ConstantFP: {
     APFloat V = cast<ConstantFPSDNode>(Op)->getValueAPF();
     V.changeSign();
@@ -2259,7 +2259,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
     if (!LegalOperations || TLI.isCondCodeLegal(NotCC, LHS.getValueType())) {
       switch (N0.getOpcode()) {
       default:
-        LLVM_UNREACHABLE("Unhandled SetCC Equivalent!");
+        llvm_unreachable("Unhandled SetCC Equivalent!");
       case ISD::SETCC:
         return DAG.getSetCC(N->getDebugLoc(), VT, LHS, RHS, NotCC);
       case ISD::SELECT_CC:
@@ -5063,7 +5063,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     if (Value.getOpcode() != ISD::TargetConstantFP) {
       SDValue Tmp;
       switch (CFP->getValueType(0).getSimpleVT()) {
-      default: LLVM_UNREACHABLE("Unknown FP type");
+      default: llvm_unreachable("Unknown FP type");
       case MVT::f80:    // We don't do this for these yet.
       case MVT::f128:
       case MVT::ppcf128:
@@ -6107,7 +6107,7 @@ bool DAGCombiner::FindAliasInfo(SDNode *N,
     SrcValue = ST->getSrcValue();
     SrcValueOffset = ST->getSrcValueOffset();
   } else {
-    LLVM_UNREACHABLE("FindAliasInfo expected a memory operand");
+    llvm_unreachable("FindAliasInfo expected a memory operand");
   }
 
   return false;

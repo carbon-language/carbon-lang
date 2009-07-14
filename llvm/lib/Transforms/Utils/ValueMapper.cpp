@@ -127,7 +127,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
       return VM[V] = C;
 
     } else {
-      LLVM_UNREACHABLE("Unknown type of constant!");
+      llvm_unreachable("Unknown type of constant!");
     }
   }
 

@@ -307,7 +307,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned AlphaRegisterInfo::getRARegister() const {
-  LLVM_UNREACHABLE("What is the return address register");
+  llvm_unreachable("What is the return address register");
   return 0;
 }
 
@@ -316,17 +316,17 @@ unsigned AlphaRegisterInfo::getFrameRegister(MachineFunction &MF) const {
 }
 
 unsigned AlphaRegisterInfo::getEHExceptionRegister() const {
-  LLVM_UNREACHABLE("What is the exception register");
+  llvm_unreachable("What is the exception register");
   return 0;
 }
 
 unsigned AlphaRegisterInfo::getEHHandlerRegister() const {
-  LLVM_UNREACHABLE("What is the exception handler register");
+  llvm_unreachable("What is the exception handler register");
   return 0;
 }
 
 int AlphaRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  LLVM_UNREACHABLE("What is the dwarf register number");
+  llvm_unreachable("What is the dwarf register number");
   return -1;
 }
 

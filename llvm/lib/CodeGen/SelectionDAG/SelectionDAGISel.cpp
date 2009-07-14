@@ -157,7 +157,7 @@ MachineBasicBlock *TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
           "'usesCustomDAGSchedInserter', it must implement "
           "TargetLowering::EmitInstrWithCustomInserter!";
 #endif
-  llvm_unreachable();
+  llvm_unreachable(0);
   return 0;  
 }
 
@@ -878,7 +878,7 @@ void SelectionDAGISel::SelectAllBasicBlocks(Function &Fn,
           if (EnableFastISelAbort)
             // The "fast" selector couldn't handle something and bailed.
             // For the purpose of debugging, just abort.
-            LLVM_UNREACHABLE("FastISel didn't select the entire block");
+            llvm_unreachable("FastISel didn't select the entire block");
         }
         break;
       }

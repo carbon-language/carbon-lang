@@ -208,7 +208,7 @@ namespace {
       if (!Broken) return false;
       msgs << "Broken module found, ";
       switch (action) {
-      default: LLVM_UNREACHABLE("Unknown action");
+      default: llvm_unreachable("Unknown action");
       case AbortProcessAction:
         msgs << "compilation aborted!\n";
         cerr << msgs.str();
@@ -1117,7 +1117,7 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
             "Shift return type must be same as operands!", &B);
     break;
   default:
-    LLVM_UNREACHABLE("Unknown BinaryOperator opcode!");
+    llvm_unreachable("Unknown BinaryOperator opcode!");
   }
 
   visitInstruction(B);

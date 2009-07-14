@@ -540,10 +540,10 @@ private:
   void visitVACopy(CallInst &I);
 
   void visitUserOp1(Instruction &I) {
-    LLVM_UNREACHABLE("UserOp1 should not exist at instruction selection time!");
+    llvm_unreachable("UserOp1 should not exist at instruction selection time!");
   }
   void visitUserOp2(Instruction &I) {
-    LLVM_UNREACHABLE("UserOp2 should not exist at instruction selection time!");
+    llvm_unreachable("UserOp2 should not exist at instruction selection time!");
   }
   
   const char *implVisitBinaryAtomic(CallInst& I, ISD::NodeType Op);

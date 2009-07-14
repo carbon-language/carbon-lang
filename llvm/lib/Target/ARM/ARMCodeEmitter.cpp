@@ -223,7 +223,7 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
 template<class CodeEmitter>
 unsigned Emitter<CodeEmitter>::getShiftOp(unsigned Imm) const {
   switch (ARM_AM::getAM2ShiftOpc(Imm)) {
-  default: LLVM_UNREACHABLE("Unknown shift opc!");
+  default: llvm_unreachable("Unknown shift opc!");
   case ARM_AM::asr: return 2;
   case ARM_AM::lsl: return 0;
   case ARM_AM::lsr: return 1;
@@ -260,7 +260,7 @@ unsigned Emitter<CodeEmitter>::getMachineOpValue(const MachineInstr &MI,
 #ifndef NDEBUG
     cerr << MO;
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
   return 0;
 }
@@ -340,7 +340,7 @@ void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI) {
   NumEmitted++;  // Keep track of the # of mi's emitted
   switch (MI.getDesc().TSFlags & ARMII::FormMask) {
   default: {
-    LLVM_UNREACHABLE("Unhandled instruction encoding format!");
+    llvm_unreachable("Unhandled instruction encoding format!");
     break;
   }
   case ARMII::Pseudo:
@@ -458,10 +458,10 @@ void Emitter<CodeEmitter>::emitConstPoolInstruction(const MachineInstr &MI) {
       else if (CFP->getType() == Type::DoubleTy)
         emitDWordLE(CFP->getValueAPF().bitcastToAPInt().getZExtValue());
       else {
-        LLVM_UNREACHABLE("Unable to handle this constantpool entry!");
+        llvm_unreachable("Unable to handle this constantpool entry!");
       }
     } else {
-      LLVM_UNREACHABLE("Unable to handle this constantpool entry!");
+      llvm_unreachable("Unable to handle this constantpool entry!");
     }
   }
 }
@@ -589,7 +589,7 @@ void Emitter<CodeEmitter>::emitPseudoInstruction(const MachineInstr &MI) {
   unsigned Opcode = MI.getDesc().Opcode;
   switch (Opcode) {
   default:
-    LLVM_UNREACHABLE("ARMCodeEmitter::emitPseudoInstruction");//FIXME:
+    llvm_unreachable("ARMCodeEmitter::emitPseudoInstruction");//FIXME:
   case TargetInstrInfo::INLINEASM: {
     // We allow inline assembler nodes with empty bodies - they can
     // implicitly define registers, which is ok for JIT.
@@ -676,7 +676,7 @@ unsigned Emitter<CodeEmitter>::getMachineSoRegOpValue(
     // ROR - 0111
     // RRX - 0110 and bit[11:8] clear.
     switch (SOpc) {
-    default: LLVM_UNREACHABLE("Unknown shift opc!");
+    default: llvm_unreachable("Unknown shift opc!");
     case ARM_AM::lsl: SBits = 0x1; break;
     case ARM_AM::lsr: SBits = 0x3; break;
     case ARM_AM::asr: SBits = 0x5; break;
@@ -690,7 +690,7 @@ unsigned Emitter<CodeEmitter>::getMachineSoRegOpValue(
     // ASR - 100
     // ROR - 110
     switch (SOpc) {
-    default: LLVM_UNREACHABLE("Unknown shift opc!");
+    default: llvm_unreachable("Unknown shift opc!");
     case ARM_AM::lsl: SBits = 0x0; break;
     case ARM_AM::lsr: SBits = 0x2; break;
     case ARM_AM::asr: SBits = 0x4; break;
@@ -959,7 +959,7 @@ static unsigned getAddrModeUPBits(unsigned Mode) {
   // DA - Decrement after  - bit U = 0 and bit P = 0
   // DB - Decrement before - bit U = 0 and bit P = 1
   switch (Mode) {
-  default: LLVM_UNREACHABLE("Unknown addressing sub-mode!");
+  default: llvm_unreachable("Unknown addressing sub-mode!");
   case ARM_AM::da:                      break;
   case ARM_AM::db: Binary |= 0x1 << ARMII::P_BitShift; break;
   case ARM_AM::ia: Binary |= 0x1 << ARMII::U_BitShift; break;
@@ -1123,7 +1123,7 @@ void Emitter<CodeEmitter>::emitBranchInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
 
   if (TID.Opcode == ARM::TPsoft) {
-    LLVM_UNREACHABLE("ARM::TPsoft FIXME"); // FIXME
+    llvm_unreachable("ARM::TPsoft FIXME"); // FIXME
   }
 
   // Part of binary is determined by TableGn.

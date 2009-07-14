@@ -256,7 +256,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     case X86II::CompareFP:  handleCompareFP(I); break;
     case X86II::CondMovFP:  handleCondMovFP(I); break;
     case X86II::SpecialFP:  handleSpecialFP(I); break;
-    default: LLVM_UNREACHABLE("Unknown FP Type!");
+    default: llvm_unreachable("Unknown FP Type!");
     }
 
     // Check to see if any of the values defined by this instruction are dead
@@ -946,7 +946,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
   DebugLoc dl = MI->getDebugLoc();
   switch (MI->getOpcode()) {
-  default: LLVM_UNREACHABLE("Unknown SpecialFP instruction!");
+  default: llvm_unreachable("Unknown SpecialFP instruction!");
   case X86::FpGET_ST0_32:// Appears immediately after a call returning FP type!
   case X86::FpGET_ST0_64:// Appears immediately after a call returning FP type!
   case X86::FpGET_ST0_80:// Appears immediately after a call returning FP type!

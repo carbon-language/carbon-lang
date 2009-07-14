@@ -393,7 +393,7 @@ static Value *RemapOperand(const Value *In,
       Result = CE->getWithOperands(Ops);
     } else {
       assert(!isa<GlobalValue>(CPV) && "Unmapped global?");
-      LLVM_UNREACHABLE("Unknown type of derived type constant value!");
+      llvm_unreachable("Unknown type of derived type constant value!");
     }
   } else if (isa<InlineAsm>(In)) {
     Result = const_cast<Value*>(In);
@@ -410,7 +410,7 @@ static Value *RemapOperand(const Value *In,
   PrintMap(ValueMap);
 
   cerr << "Couldn't remap value: " << (void*)In << " " << *In << "\n";
-  LLVM_UNREACHABLE("Couldn't remap value!");
+  llvm_unreachable("Couldn't remap value!");
 #endif
   return 0;
 }
@@ -900,9 +900,9 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
             // Nothing is required, mapped values will take the new global
             // automatically.
           } else if (DGVar->hasAppendingLinkage()) {
-            LLVM_UNREACHABLE("Appending linkage unimplemented!");
+            llvm_unreachable("Appending linkage unimplemented!");
           } else {
-            LLVM_UNREACHABLE("Unknown linkage!");
+            llvm_unreachable("Unknown linkage!");
           }
         } else {
           // Copy the initializer over now...

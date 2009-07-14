@@ -191,7 +191,7 @@ void Dwarf::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
         Asm->EmitULEB128Bytes(Offset);
         Asm->EOL("Offset");
       } else {
-        LLVM_UNREACHABLE("Machine move not supported yet.");
+        llvm_unreachable("Machine move not supported yet.");
       }
     } else if (Src.isReg() &&
                Src.getReg() == MachineLocation::VirtualFP) {
@@ -201,7 +201,7 @@ void Dwarf::EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
         Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getReg(), isEH));
         Asm->EOL("Register");
       } else {
-        LLVM_UNREACHABLE("Machine move not supported yet.");
+        llvm_unreachable("Machine move not supported yet.");
       }
     } else {
       unsigned Reg = RI->getDwarfRegNum(Src.getReg(), isEH);

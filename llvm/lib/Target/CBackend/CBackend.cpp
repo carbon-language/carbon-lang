@@ -289,11 +289,11 @@ namespace {
     void visitBranchInst(BranchInst &I);
     void visitSwitchInst(SwitchInst &I);
     void visitInvokeInst(InvokeInst &I) {
-      LLVM_UNREACHABLE("Lowerinvoke pass didn't work!");
+      llvm_unreachable("Lowerinvoke pass didn't work!");
     }
 
     void visitUnwindInst(UnwindInst &I) {
-      LLVM_UNREACHABLE("Lowerinvoke pass didn't work!");
+      llvm_unreachable("Lowerinvoke pass didn't work!");
     }
     void visitUnreachableInst(UnreachableInst &I);
 
@@ -327,7 +327,7 @@ namespace {
 #ifndef NDEBUG
       cerr << "C Writer does not know about " << I;
 #endif
-      llvm_unreachable();
+      llvm_unreachable(0);
     }
 
     void outputLValue(Instruction *I) {
@@ -513,7 +513,7 @@ CWriter::printSimpleType(raw_ostream &Out, const Type *Ty, bool isSigned,
 #ifndef NDEBUG
     cerr << "Unknown primitive type: " << *Ty << "\n";
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 }
 
@@ -560,7 +560,7 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
 #ifndef NDEBUG
     cerr << "Unknown primitive type: " << *Ty << "\n";
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 }
 
@@ -661,7 +661,7 @@ raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
     return Out << TyName << ' ' << NameSoFar;
   }
   default:
-    LLVM_UNREACHABLE("Unhandled case in getTypeProps!");
+    llvm_unreachable("Unhandled case in getTypeProps!");
   }
 
   return Out;
@@ -764,7 +764,7 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     return Out << TyName << ' ' << NameSoFar;
   }
   default:
-    LLVM_UNREACHABLE("Unhandled case in getTypeProps!");
+    llvm_unreachable("Unhandled case in getTypeProps!");
   }
 
   return Out;
@@ -923,7 +923,7 @@ void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
       Out << ')';
       break;
     default:
-      LLVM_UNREACHABLE("Invalid cast opcode");
+      llvm_unreachable("Invalid cast opcode");
   }
 
   // Print the source type cast
@@ -953,7 +953,7 @@ void CWriter::printCast(unsigned opc, const Type *SrcTy, const Type *DstTy) {
     case Instruction::FPToUI:
       break; // These don't need a source cast.
     default:
-      LLVM_UNREACHABLE("Invalid cast opcode");
+      llvm_unreachable("Invalid cast opcode");
       break;
   }
 }
@@ -1062,10 +1062,10 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
           case ICmpInst::ICMP_UGT: Out << " > "; break;
           case ICmpInst::ICMP_SGE:
           case ICmpInst::ICMP_UGE: Out << " >= "; break;
-          default: LLVM_UNREACHABLE("Illegal ICmp predicate");
+          default: llvm_unreachable("Illegal ICmp predicate");
         }
         break;
-      default: LLVM_UNREACHABLE("Illegal opcode here!");
+      default: llvm_unreachable("Illegal opcode here!");
       }
       printConstantWithCast(CE->getOperand(1), CE->getOpcode());
       if (NeedsClosingParens)
@@ -1083,7 +1083,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       else {
         const char* op = 0;
         switch (CE->getPredicate()) {
-        default: LLVM_UNREACHABLE("Illegal FCmp predicate");
+        default: llvm_unreachable("Illegal FCmp predicate");
         case FCmpInst::FCMP_ORD: op = "ord"; break;
         case FCmpInst::FCMP_UNO: op = "uno"; break;
         case FCmpInst::FCMP_UEQ: op = "ueq"; break;
@@ -1115,7 +1115,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
       cerr << "CWriter Error: Unhandled constant expression: "
            << *CE << "\n";
 #endif
-      llvm_unreachable();
+      llvm_unreachable(0);
     }
   } else if (isa<UndefValue>(CPV) && CPV->getType()->isSingleValueType()) {
     Out << "((";
@@ -1324,7 +1324,7 @@ void CWriter::printConstant(Constant *CPV, bool Static) {
 #ifndef NDEBUG
     cerr << "Unknown constant type: " << *CPV << "\n";
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 }
 
@@ -2128,7 +2128,7 @@ void CWriter::printFloatingPointConstants(const Constant *C) {
     << "}; /* Long double constant */\n";
     
   } else {
-    LLVM_UNREACHABLE("Unknown float type!");
+    llvm_unreachable("Unknown float type!");
   }
 }
 
@@ -2680,7 +2680,7 @@ void CWriter::visitBinaryOperator(Instruction &I) {
 #ifndef NDEBUG
        cerr << "Invalid operator type!" << I;
 #endif
-       llvm_unreachable();
+       llvm_unreachable(0);
     }
 
     writeOperandWithCast(I.getOperand(1), I.getOpcode());
@@ -2721,7 +2721,7 @@ void CWriter::visitICmpInst(ICmpInst &I) {
 #ifndef NDEBUG
     cerr << "Invalid icmp predicate!" << I; 
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 
   writeOperandWithCast(I.getOperand(1), I);
@@ -2745,7 +2745,7 @@ void CWriter::visitFCmpInst(FCmpInst &I) {
 
   const char* op = 0;
   switch (I.getPredicate()) {
-  default: LLVM_UNREACHABLE("Illegal FCmp predicate");
+  default: llvm_unreachable("Illegal FCmp predicate");
   case FCmpInst::FCMP_ORD: op = "ord"; break;
   case FCmpInst::FCMP_UNO: op = "uno"; break;
   case FCmpInst::FCMP_UEQ: op = "ueq"; break;
@@ -2773,7 +2773,7 @@ void CWriter::visitFCmpInst(FCmpInst &I) {
 
 static const char * getFloatBitCastField(const Type *Ty) {
   switch (Ty->getTypeID()) {
-    default: LLVM_UNREACHABLE("Invalid Type");
+    default: llvm_unreachable("Invalid Type");
     case Type::FloatTyID:  return "Float";
     case Type::DoubleTyID: return "Double";
     case Type::IntegerTyID: {
@@ -3136,7 +3136,7 @@ bool CWriter::visitBuiltinCall(CallInst &I, Intrinsic::ID ID,
     Out << ')';  
     // Multiple GCC builtins multiplex onto this intrinsic.
     switch (cast<ConstantInt>(I.getOperand(3))->getZExtValue()) {
-    default: LLVM_UNREACHABLE("Invalid llvm.x86.sse.cmp!");
+    default: llvm_unreachable("Invalid llvm.x86.sse.cmp!");
     case 0: Out << "__builtin_ia32_cmpeq"; break;
     case 1: Out << "__builtin_ia32_cmplt"; break;
     case 2: Out << "__builtin_ia32_cmple"; break;
@@ -3348,7 +3348,7 @@ void CWriter::visitInlineAsm(CallInst &CI) {
 }
 
 void CWriter::visitMallocInst(MallocInst &I) {
-  LLVM_UNREACHABLE("lowerallocations pass didn't work!");
+  llvm_unreachable("lowerallocations pass didn't work!");
 }
 
 void CWriter::visitAllocaInst(AllocaInst &I) {
@@ -3365,7 +3365,7 @@ void CWriter::visitAllocaInst(AllocaInst &I) {
 }
 
 void CWriter::visitFreeInst(FreeInst &I) {
-  LLVM_UNREACHABLE("lowerallocations pass didn't work!");
+  llvm_unreachable("lowerallocations pass didn't work!");
 }
 
 void CWriter::printGEPExpression(Value *Ptr, gep_type_iterator I,

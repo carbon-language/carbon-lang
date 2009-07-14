@@ -99,7 +99,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
     MVT ObjectVT = getValueType(I->getType());
 
     switch (ObjectVT.getSimpleVT()) {
-    default: LLVM_UNREACHABLE("Unhandled argument type!");
+    default: llvm_unreachable("Unhandled argument type!");
     case MVT::i1:
     case MVT::i8:
     case MVT::i16:
@@ -252,7 +252,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
   unsigned ArgsSize = 0;
   for (unsigned i = 0, e = TheCall->getNumArgs(); i != e; ++i) {
     switch (TheCall->getArg(i).getValueType().getSimpleVT()) {
-      default: LLVM_UNREACHABLE("Unknown value type!");
+      default: llvm_unreachable("Unknown value type!");
       case MVT::i1:
       case MVT::i8:
       case MVT::i16:
@@ -290,7 +290,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-    default: LLVM_UNREACHABLE("Unknown loc info!");
+    default: llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::SExt:
       Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
@@ -332,7 +332,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
     SDValue ValToStore(0, 0);
     unsigned ObjSize;
     switch (ObjectVT.getSimpleVT()) {
-    default: LLVM_UNREACHABLE("Unhandled argument type!");
+    default: llvm_unreachable("Unhandled argument type!");
     case MVT::i32:
       ObjSize = 4;
 
@@ -498,7 +498,7 @@ static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
 /// condition.
 static SPCC::CondCodes IntCondCCodeToICC(ISD::CondCode CC) {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Unknown integer condition code!");
+  default: llvm_unreachable("Unknown integer condition code!");
   case ISD::SETEQ:  return SPCC::ICC_E;
   case ISD::SETNE:  return SPCC::ICC_NE;
   case ISD::SETLT:  return SPCC::ICC_L;
@@ -516,7 +516,7 @@ static SPCC::CondCodes IntCondCCodeToICC(ISD::CondCode CC) {
 /// FCC condition.
 static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Unknown fp condition code!");
+  default: llvm_unreachable("Unknown fp condition code!");
   case ISD::SETEQ:
   case ISD::SETOEQ: return SPCC::FCC_E;
   case ISD::SETNE:
@@ -902,12 +902,12 @@ static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) {
 SDValue SparcTargetLowering::
 LowerOperation(SDValue Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
-  default: LLVM_UNREACHABLE("Should not custom lower this!");
+  default: llvm_unreachable("Should not custom lower this!");
   // Frame & Return address.  Currently unimplemented
   case ISD::RETURNADDR: return SDValue();
   case ISD::FRAMEADDR:  return SDValue();
   case ISD::GlobalTLSAddress:
-    LLVM_UNREACHABLE("TLS not implemented for Sparc.");
+    llvm_unreachable("TLS not implemented for Sparc.");
   case ISD::GlobalAddress:      return LowerGLOBALADDRESS(Op, DAG);
   case ISD::ConstantPool:       return LowerCONSTANTPOOL(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
@@ -931,7 +931,7 @@ SparcTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   DebugLoc dl = MI->getDebugLoc();
   // Figure out the conditional branch opcode to use for this select_cc.
   switch (MI->getOpcode()) {
-  default: LLVM_UNREACHABLE("Unknown SELECT_CC!");
+  default: llvm_unreachable("Unknown SELECT_CC!");
   case SP::SELECT_CC_Int_ICC:
   case SP::SELECT_CC_FP_ICC:
   case SP::SELECT_CC_DFP_ICC:

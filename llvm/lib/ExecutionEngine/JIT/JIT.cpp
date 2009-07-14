@@ -410,7 +410,7 @@ GenericValue JIT::runFunction(Function *F,
   if (ArgValues.empty()) {
     GenericValue rv;
     switch (RetTy->getTypeID()) {
-    default: LLVM_UNREACHABLE("Unknown return type for function call!");
+    default: llvm_unreachable("Unknown return type for function call!");
     case Type::IntegerTyID: {
       unsigned BitWidth = cast<IntegerType>(RetTy)->getBitWidth();
       if (BitWidth == 1)
@@ -424,7 +424,7 @@ GenericValue JIT::runFunction(Function *F,
       else if (BitWidth <= 64)
         rv.IntVal = APInt(BitWidth, ((int64_t(*)())(intptr_t)FPtr)());
       else 
-        LLVM_UNREACHABLE("Integer types > 64 bits not supported");
+        llvm_unreachable("Integer types > 64 bits not supported");
       return rv;
     }
     case Type::VoidTyID:
@@ -439,7 +439,7 @@ GenericValue JIT::runFunction(Function *F,
     case Type::X86_FP80TyID:
     case Type::FP128TyID:
     case Type::PPC_FP128TyID:
-      LLVM_UNREACHABLE("long double not supported yet");
+      llvm_unreachable("long double not supported yet");
       return rv;
     case Type::PointerTyID:
       return PTOGV(((void*(*)())(intptr_t)FPtr)());
@@ -467,7 +467,7 @@ GenericValue JIT::runFunction(Function *F,
     const Type *ArgTy = FTy->getParamType(i);
     const GenericValue &AV = ArgValues[i];
     switch (ArgTy->getTypeID()) {
-    default: LLVM_UNREACHABLE("Unknown argument type for function call!");
+    default: llvm_unreachable("Unknown argument type for function call!");
     case Type::IntegerTyID:
         C = ConstantInt::get(AV.IntVal);
         break;

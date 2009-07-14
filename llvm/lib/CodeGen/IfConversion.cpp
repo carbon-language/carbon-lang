@@ -1135,7 +1135,7 @@ void IfConverter::PredicateBlock(BBInfo &BBI,
 #ifndef NDEBUG
       cerr << "Unable to predicate " << *I << "!\n";
 #endif
-      llvm_unreachable();
+      llvm_unreachable(0);
     }
   }
 
@@ -1171,7 +1171,7 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
 #ifndef NDEBUG
         cerr << "Unable to predicate " << *I << "!\n";
 #endif
-        llvm_unreachable();
+        llvm_unreachable(0);
       }
   }
 

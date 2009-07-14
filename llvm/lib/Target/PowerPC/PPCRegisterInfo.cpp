@@ -113,7 +113,7 @@ unsigned PPCRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   case R30:  case X30:  case F30:  case V30: case CR7EQ: return 30;
   case R31:  case X31:  case F31:  case V31: case CR7UN: return 31;
   default:
-    LLVM_UNREACHABLE("Unhandled reg in PPCRegisterInfo::getRegisterNumbering!");
+    llvm_unreachable("Unhandled reg in PPCRegisterInfo::getRegisterNumbering!");
   }
 }
 
@@ -1065,7 +1065,7 @@ PPCRegisterInfo::processFunctionBeforeFrameFinalized(MachineFunction &MF)
         MinVR = Reg;
       }
     } else {
-      LLVM_UNREACHABLE("Unknown RegisterClass!");
+      llvm_unreachable("Unknown RegisterClass!");
     }
   }
 

@@ -84,7 +84,7 @@ bool PseudoSourceValue::isConstant(const MachineFrameInfo *) const {
       this == getConstantPool() ||
       this == getJumpTable())
     return true;
-  LLVM_UNREACHABLE("Unknown PseudoSourceValue!");
+  llvm_unreachable("Unknown PseudoSourceValue!");
   return false;
 }
 

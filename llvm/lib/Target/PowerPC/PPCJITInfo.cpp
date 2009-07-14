@@ -199,7 +199,7 @@ asm(
     );
 #else
 void PPC32CompilationCallback() {
-  LLVM_UNREACHABLE("This is not a power pc, you can't execute this!");
+  llvm_unreachable("This is not a power pc, you can't execute this!");
 }
 #endif
 
@@ -265,7 +265,7 @@ asm(
     );
 #else
 void PPC64CompilationCallback() {
-  LLVM_UNREACHABLE("This is not a power pc, you can't execute this!");
+  llvm_unreachable("This is not a power pc, you can't execute this!");
 }
 #endif
 
@@ -383,7 +383,7 @@ void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
     unsigned *RelocPos = (unsigned*)Function + MR->getMachineCodeOffset()/4;
     intptr_t ResultPtr = (intptr_t)MR->getResultPointer();
     switch ((PPC::RelocationType)MR->getRelocationType()) {
-    default: LLVM_UNREACHABLE("Unknown relocation type!");
+    default: llvm_unreachable("Unknown relocation type!");
     case PPC::reloc_pcrel_bx:
       // PC-relative relocation for b and bl instructions.
       ResultPtr = (ResultPtr-(intptr_t)RelocPos) >> 2;

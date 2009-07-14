@@ -181,7 +181,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
         assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
       }
       switch (MI.getOpcode()) {
-      default: MI.dump(); LLVM_UNREACHABLE("Unknown instruction for relocation!");
+      default: MI.dump(); llvm_unreachable("Unknown instruction for relocation!");
       case PPC::LIS:
       case PPC::LIS8:
       case PPC::ADDIS:
@@ -268,7 +268,7 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 #ifndef NDEBUG
     cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 
   return rv;

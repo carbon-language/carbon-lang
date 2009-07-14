@@ -105,7 +105,7 @@ void PIC16InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addImm(1); // Emit banksel for it.
   }
   else
-    LLVM_UNREACHABLE("Can't store this register to stack slot");
+    llvm_unreachable("Can't store this register to stack slot");
 }
 
 void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB, 
@@ -145,7 +145,7 @@ void PIC16InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
       .addImm(1); // Emit banksel for it.
   }
   else
-    LLVM_UNREACHABLE("Can't load this register from stack slot");
+    llvm_unreachable("Can't load this register from stack slot");
 }
 
 bool PIC16InstrInfo::copyRegToReg (MachineBasicBlock &MBB,

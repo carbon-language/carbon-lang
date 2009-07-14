@@ -1300,7 +1300,7 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
     unsigned Opc;
     unsigned Size;
     switch (MI->getOpcode()) {
-    default: LLVM_UNREACHABLE("Unreachable!");
+    default: llvm_unreachable("Unreachable!");
     case X86::SHRD16rri8: Size = 16; Opc = X86::SHLD16rri8; break;
     case X86::SHLD16rri8: Size = 16; Opc = X86::SHRD16rri8; break;
     case X86::SHRD32rri8: Size = 32; Opc = X86::SHLD32rri8; break;
@@ -1455,7 +1455,7 @@ static X86::CondCode GetCondFromBranchOpc(unsigned BrOpc) {
 
 unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Illegal condition code!");
+  default: llvm_unreachable("Illegal condition code!");
   case X86::COND_E:  return X86::JE;
   case X86::COND_NE: return X86::JNE;
   case X86::COND_L:  return X86::JL;
@@ -1479,7 +1479,7 @@ unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
 /// e.g. turning COND_E to COND_NE.
 X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Illegal condition code!");
+  default: llvm_unreachable("Illegal condition code!");
   case X86::COND_E:  return X86::COND_NE;
   case X86::COND_NE: return X86::COND_E;
   case X86::COND_L:  return X86::COND_GE;
@@ -1885,7 +1885,7 @@ static unsigned getStoreRegOpcode(unsigned SrcReg,
   } else if (RC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64mr;
   } else {
-    LLVM_UNREACHABLE("Unknown regclass");
+    llvm_unreachable("Unknown regclass");
   }
 
   return Opc;
@@ -1977,7 +1977,7 @@ static unsigned getLoadRegOpcode(unsigned DestReg,
   } else if (RC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64rm;
   } else {
-    LLVM_UNREACHABLE("Unknown regclass");
+    llvm_unreachable("Unknown regclass");
   }
 
   return Opc;
@@ -2645,7 +2645,7 @@ unsigned X86InstrInfo::sizeOfImm(const TargetInstrDesc *Desc) {
   case X86II::Imm16:  return 2;
   case X86II::Imm32:  return 4;
   case X86II::Imm64:  return 8;
-  default: LLVM_UNREACHABLE("Immediate size not set!");
+  default: llvm_unreachable("Immediate size not set!");
     return 0;
   }
 }
@@ -2830,7 +2830,7 @@ static unsigned getDisplacementFieldSize(const MachineOperand *RelocOp) {
   } else if (RelocOp->isJTI()) {
     FinalSize += sizeJumpTableAddress(false);
   } else {
-    LLVM_UNREACHABLE("Unknown value to relocate!");
+    llvm_unreachable("Unknown value to relocate!");
   }
   return FinalSize;
 }
@@ -2927,7 +2927,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   case X86II::GS:
    ++FinalSize;
    break;
-  default: LLVM_UNREACHABLE("Invalid segment!");
+  default: llvm_unreachable("Invalid segment!");
   case 0: break;  // No segment override!
   }
 
@@ -2960,7 +2960,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
   case X86II::DC: case X86II::DD: case X86II::DE: case X86II::DF:
     ++FinalSize;
     break; // Two-byte opcode prefix
-  default: LLVM_UNREACHABLE("Invalid prefix!");
+  default: llvm_unreachable("Invalid prefix!");
   case 0: break;  // No prefix!
   }
 
@@ -2994,7 +2994,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
     --NumOps;
 
   switch (Desc->TSFlags & X86II::FormMask) {
-  default: LLVM_UNREACHABLE("Unknown FormMask value in X86 MachineCodeEmitter!");
+  default: llvm_unreachable("Unknown FormMask value in X86 MachineCodeEmitter!");
   case X86II::Pseudo:
     // Remember the current PC offset, this is the PIC relocation
     // base address.
@@ -3039,7 +3039,7 @@ static unsigned GetInstSizeWithDesc(const MachineInstr &MI,
       } else if (MO.isImm()) {
         FinalSize += sizeConstant(X86InstrInfo::sizeOfImm(Desc));
       } else {
-        LLVM_UNREACHABLE("Unknown RawFrm operand!");
+        llvm_unreachable("Unknown RawFrm operand!");
       }
     }
     break;

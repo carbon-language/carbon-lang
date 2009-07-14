@@ -278,7 +278,7 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
       Flags |= SectionFlags::Small;
       break;
      default:
-      LLVM_UNREACHABLE("Unexpected section kind!");
+      llvm_unreachable("Unexpected section kind!");
     }
 
     if (GV->isWeakForLinker())
@@ -388,7 +388,7 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
    case SectionKind::ThreadBSS:
     return ".gnu.linkonce.tb." + GV->getName();
    default:
-    LLVM_UNREACHABLE("Unknown section kind");
+    llvm_unreachable("Unknown section kind");
   }
   return NULL;
 }

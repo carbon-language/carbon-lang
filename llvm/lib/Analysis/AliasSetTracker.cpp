@@ -540,7 +540,7 @@ void AliasSet::print(std::ostream &OS) const {
   case Refs    : OS << "Ref       "; break;
   case Mods    : OS << "Mod       "; break;
   case ModRef  : OS << "Mod/Ref   "; break;
-  default: LLVM_UNREACHABLE("Bad value for AccessTy!");
+  default: llvm_unreachable("Bad value for AccessTy!");
   }
   if (isVolatile()) OS << "[volatile] ";
   if (Forward)

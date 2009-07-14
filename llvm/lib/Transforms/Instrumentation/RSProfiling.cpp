@@ -408,7 +408,7 @@ Value* ProfilerRS::Translate(Value* v) {
     TransCache[v] = v;
     return v;
   }
-  LLVM_UNREACHABLE("Value not handled");
+  llvm_unreachable("Value not handled");
   return 0;
 }
 

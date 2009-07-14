@@ -147,7 +147,7 @@ public:
   void visitStoreInst(StoreInst &I);
   void visitGetElementPtrInst(GetElementPtrInst &I);
   void visitPHINode(PHINode &PN) { 
-    LLVM_UNREACHABLE("PHI nodes already handled!"); 
+    llvm_unreachable("PHI nodes already handled!"); 
   }
   void visitTruncInst(TruncInst &I);
   void visitZExtInst(ZExtInst &I);
@@ -177,7 +177,7 @@ public:
   void visitVAArgInst(VAArgInst &I);
   void visitInstruction(Instruction &I) {
     cerr << I;
-    LLVM_UNREACHABLE("Instruction not interpretable yet!");
+    llvm_unreachable("Instruction not interpretable yet!");
   }
 
   GenericValue callExternalFunction(Function *F,

@@ -338,7 +338,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
       bool rev = false;
       bool inv = false;
       switch(CC) {
-      default: DEBUG(N->dump(CurDAG)); LLVM_UNREACHABLE("Unknown FP comparison!");
+      default: DEBUG(N->dump(CurDAG)); llvm_unreachable("Unknown FP comparison!");
       case ISD::SETEQ: case ISD::SETOEQ: case ISD::SETUEQ:
         Opc = Alpha::CMPTEQ; break;
       case ISD::SETLT: case ISD::SETOLT: case ISD::SETULT: 
@@ -472,7 +472,7 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
      } else if (TypeOperands[i] == MVT::f64) {
        Opc = Alpha::STT;
      } else
-       LLVM_UNREACHABLE("Unknown operand"); 
+       llvm_unreachable("Unknown operand"); 
 
      SDValue Ops[] = { CallOperands[i],  getI64Imm((i - 6) * 8), 
                        CurDAG->getCopyFromReg(Chain, dl, Alpha::R30, MVT::i64),
@@ -489,7 +489,7 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
                                     CallOperands[i], InFlag);
        InFlag = Chain.getValue(1);
      } else
-       LLVM_UNREACHABLE("Unknown operand"); 
+       llvm_unreachable("Unknown operand"); 
    }
 
    // Finally, once everything is in registers to pass to the call, emit the
@@ -512,7 +512,7 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
    std::vector<SDValue> CallResults;
   
    switch (N->getValueType(0).getSimpleVT()) {
-   default: LLVM_UNREACHABLE("Unexpected ret value!");
+   default: llvm_unreachable("Unexpected ret value!");
      case MVT::Other: break;
    case MVT::i64:
      Chain = CurDAG->getCopyFromReg(Chain, dl, 

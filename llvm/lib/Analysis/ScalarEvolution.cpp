@@ -148,17 +148,17 @@ SCEVCouldNotCompute::SCEVCouldNotCompute() :
   SCEV(FoldingSetNodeID(), scCouldNotCompute) {}
 
 bool SCEVCouldNotCompute::isLoopInvariant(const Loop *L) const {
-  LLVM_UNREACHABLE("Attempt to use a SCEVCouldNotCompute object!");
+  llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
   return false;
 }
 
 const Type *SCEVCouldNotCompute::getType() const {
-  LLVM_UNREACHABLE("Attempt to use a SCEVCouldNotCompute object!");
+  llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
   return 0;
 }
 
 bool SCEVCouldNotCompute::hasComputableLoopEvolution(const Loop *L) const {
-  LLVM_UNREACHABLE("Attempt to use a SCEVCouldNotCompute object!");
+  llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
   return false;
 }
 
@@ -285,7 +285,7 @@ SCEVCommutativeExpr::replaceSymbolicValuesWithConcrete(
       else if (isa<SCEVUMaxExpr>(this))
         return SE.getUMaxExpr(NewOps);
       else
-        LLVM_UNREACHABLE("Unknown commutative expr!");
+        llvm_unreachable("Unknown commutative expr!");
     }
   }
   return this;
@@ -506,7 +506,7 @@ namespace {
         return operator()(LC->getOperand(), RC->getOperand());
       }
 
-      LLVM_UNREACHABLE("Unknown SCEV kind!");
+      llvm_unreachable("Unknown SCEV kind!");
       return false;
     }
   };
@@ -3475,7 +3475,7 @@ GetAddressedElementFromGlobal(LLVMContext *Context, GlobalVariable *GV,
         if (Idx >= ATy->getNumElements()) return 0;  // Bogus program
         Init = Context->getNullValue(ATy->getElementType());
       } else {
-        LLVM_UNREACHABLE("Unknown constant aggregate type!");
+        llvm_unreachable("Unknown constant aggregate type!");
       }
       return 0;
     } else {
@@ -3885,7 +3885,7 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
           return getSMaxExpr(NewOps);
         if (isa<SCEVUMaxExpr>(Comm))
           return getUMaxExpr(NewOps);
-        LLVM_UNREACHABLE("Unknown commutative SCEV type!");
+        llvm_unreachable("Unknown commutative SCEV type!");
       }
     }
     // If we got here, all operands are loop invariant.
@@ -3936,7 +3936,7 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
     return getTruncateExpr(Op, Cast->getType());
   }
 
-  LLVM_UNREACHABLE("Unknown SCEV type!");
+  llvm_unreachable("Unknown SCEV type!");
   return 0;
 }
 

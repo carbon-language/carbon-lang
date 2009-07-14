@@ -108,7 +108,7 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
       MR.setResultPointer((void*)Addr);
       MR.setConstantVal(JumpTableSectionIdx);
     } else {
-      LLVM_UNREACHABLE("Unhandled relocation type");
+      llvm_unreachable("Unhandled relocation type");
     }
     ES->addRelocation(MR);
   }

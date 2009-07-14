@@ -114,7 +114,7 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SU, const SDep &D) {
     cerr << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     cerr << " has been released too many times!\n";
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 #endif
   

@@ -72,7 +72,7 @@ static void EmitBranchToAt(void *At, void *To) {
 
 void AlphaJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   //FIXME
-  llvm_unreachable();
+  llvm_unreachable(0);
 }
 
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
@@ -185,7 +185,7 @@ extern "C" {
       );
 #else
   void AlphaCompilationCallback() {
-    LLVM_UNREACHABLE("Cannot call AlphaCompilationCallback() on a non-Alpha arch!");
+    llvm_unreachable("Cannot call AlphaCompilationCallback() on a non-Alpha arch!");
   }
 #endif
 }
@@ -241,7 +241,7 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
     long idx = 0;
     bool doCommon = true;
     switch ((Alpha::RelocationType)MR->getRelocationType()) {
-    default: LLVM_UNREACHABLE("Unknown relocation type!");
+    default: llvm_unreachable("Unknown relocation type!");
     case Alpha::reloc_literal:
       //This is a LDQl
       idx = MR->getGOTIndex();
@@ -281,7 +281,7 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
         DOUT << "LDA: " << idx << "\n";
         break;
       default:
-        LLVM_UNREACHABLE("Cannot handle gpdist yet");
+        llvm_unreachable("Cannot handle gpdist yet");
       }
       break;
     case Alpha::reloc_bsr: {

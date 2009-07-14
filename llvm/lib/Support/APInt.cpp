@@ -1387,7 +1387,7 @@ APInt APInt::sqrt() const {
     else
       return x_old + 1;
   } else
-    LLVM_UNREACHABLE("Error in APInt::sqrt computation");
+    llvm_unreachable("Error in APInt::sqrt computation");
   return x_old + 1;
 }
 
@@ -2033,7 +2033,7 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
     char cdigit = str[i];
     if (radix == 16) {
       if (!isxdigit(cdigit))
-        LLVM_UNREACHABLE("Invalid hex digit in string");
+        llvm_unreachable("Invalid hex digit in string");
       if (isdigit(cdigit))
         digit = cdigit - '0';
       else if (cdigit >= 'a')
@@ -2041,7 +2041,7 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
       else if (cdigit >= 'A')
         digit = cdigit - 'A' + 10;
       else
-        LLVM_UNREACHABLE("huh? we shouldn't get here");
+        llvm_unreachable("huh? we shouldn't get here");
     } else if (isdigit(cdigit)) {
       digit = cdigit - '0';
       assert((radix == 10 ||
@@ -2049,7 +2049,7 @@ void APInt::fromString(unsigned numbits, const char *str, unsigned slen,
               (radix == 2 && (digit == 0 || digit == 1))) &&
              "Invalid digit in string for given radix");
     } else {
-      LLVM_UNREACHABLE("Invalid character in digit string");
+      llvm_unreachable("Invalid character in digit string");
     }
 
     // Shift or multiply the value by the radix

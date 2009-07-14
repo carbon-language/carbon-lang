@@ -2041,7 +2041,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     return Error(ID.Loc, "functions are not values, refer to them as pointers");
   
   switch (ID.Kind) {
-  default: LLVM_UNREACHABLE("Unknown ValID!");
+  default: llvm_unreachable("Unknown ValID!");
   case ValID::t_LocalID:
   case ValID::t_LocalName:
     return Error(ID.Loc, "invalid use of function-local name");
@@ -2836,7 +2836,7 @@ bool LLParser::ParseArithmetic(Instruction *&Inst, PerFunctionState &PFS,
 
   bool Valid;
   switch (OperandType) {
-  default: LLVM_UNREACHABLE("Unknown operand type!");
+  default: llvm_unreachable("Unknown operand type!");
   case 0: // int or FP.
     Valid = LHS->getType()->isIntOrIntVector() ||
             LHS->getType()->isFPOrFPVector();

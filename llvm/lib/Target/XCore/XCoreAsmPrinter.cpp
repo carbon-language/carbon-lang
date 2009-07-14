@@ -204,13 +204,13 @@ emitGlobal(const GlobalVariable *GV)
     case GlobalValue::PrivateLinkage:
       break;
     case GlobalValue::GhostLinkage:
-      LLVM_UNREACHABLE("Should not have any unmaterialized functions!");
+      llvm_unreachable("Should not have any unmaterialized functions!");
     case GlobalValue::DLLImportLinkage:
-      LLVM_UNREACHABLE("DLLImport linkage is not supported by this target!");
+      llvm_unreachable("DLLImport linkage is not supported by this target!");
     case GlobalValue::DLLExportLinkage:
-      LLVM_UNREACHABLE("DLLExport linkage is not supported by this target!");
+      llvm_unreachable("DLLExport linkage is not supported by this target!");
     default:
-      LLVM_UNREACHABLE("Unknown linkage type!");
+      llvm_unreachable("Unknown linkage type!");
     }
 
     EmitAlignment(Align, GV, 2);
@@ -255,7 +255,7 @@ emitFunctionStart(MachineFunction &MF)
   O << "\t.cc_top " << CurrentFnName << ".function," << CurrentFnName << "\n";
 
   switch (F->getLinkage()) {
-  default: LLVM_UNREACHABLE("Unknown linkage type!");
+  default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
     break;
@@ -358,7 +358,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
       O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
     else
-      LLVM_UNREACHABLE("not implemented");
+      llvm_unreachable("not implemented");
     break;
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
@@ -381,7 +381,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       << '_' << MO.getIndex();
     break;
   default:
-    LLVM_UNREACHABLE("not implemented");
+    llvm_unreachable("not implemented");
   }
 }
 
@@ -410,7 +410,7 @@ void XCoreAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   if (printInstruction(MI)) {
     return;
   }
-  LLVM_UNREACHABLE("Unhandled instruction in asm writer!");
+  llvm_unreachable("Unhandled instruction in asm writer!");
 }
 
 bool XCoreAsmPrinter::doInitialization(Module &M) {

@@ -120,7 +120,7 @@ public:
 
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
-    LLVM_UNREACHABLE("This should never be called because MDNodes have no ops");
+    llvm_unreachable("This should never be called because MDNodes have no ops");
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:

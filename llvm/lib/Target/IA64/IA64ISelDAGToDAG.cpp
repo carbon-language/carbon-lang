@@ -215,7 +215,7 @@ SDNode *IA64DAGToDAGISel::SelectDIV(SDValue Op) {
     
     if(isFP) { // if this is an FP divide, we finish up here and exit early
       if(isModulus)
-        LLVM_UNREACHABLE("Sorry, try another FORTRAN compiler.");
+        llvm_unreachable("Sorry, try another FORTRAN compiler.");
  
       SDValue TmpE2, TmpY3, TmpQ0, TmpR0;
 
@@ -406,7 +406,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
                                   APFloat(+1.0f) : APFloat(+1.0))) {
       V = CurDAG->getCopyFromReg(Chain, dl, IA64::F1, MVT::f64);
     } else
-      LLVM_UNREACHABLE("Unexpected FP constant!");
+      llvm_unreachable("Unexpected FP constant!");
     
     ReplaceUses(SDValue(N, 0), V);
     return 0;
@@ -468,7 +468,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
 #ifndef NDEBUG
       N->dump(CurDAG);
 #endif
-      LLVM_UNREACHABLE("Cannot load this type!");
+      llvm_unreachable("Cannot load this type!");
     case MVT::i1: { // this is a bool
       Opc = IA64::LD1; // first we load a byte, then compare for != 0
       if(N->getValueType(0) == MVT::i1) { // XXX: early exit!
@@ -504,7 +504,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
     unsigned Opc;
     if (ISD::isNON_TRUNCStore(N)) {
       switch (N->getOperand(1).getValueType().getSimpleVT()) {
-      default: LLVM_UNREACHABLE("unknown type in store");
+      default: llvm_unreachable("unknown type in store");
       case MVT::i1: { // this is a bool
         Opc = IA64::ST1; // we store either 0 or 1 as a byte 
         // first load zero!
@@ -524,7 +524,7 @@ SDNode *IA64DAGToDAGISel::Select(SDValue Op) {
       }
     } else { // Truncating store
       switch(ST->getMemoryVT().getSimpleVT()) {
-      default: LLVM_UNREACHABLE("unknown type in truncstore");
+      default: llvm_unreachable("unknown type in truncstore");
       case MVT::i8:  Opc = IA64::ST1;  break;
       case MVT::i16: Opc = IA64::ST2;  break;
       case MVT::i32: Opc = IA64::ST4;  break;

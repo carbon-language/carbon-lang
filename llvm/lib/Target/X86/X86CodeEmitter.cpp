@@ -335,7 +335,7 @@ void Emitter<CodeEmitter>::emitDisplacementField(const MachineOperand *RelocOp,
     unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
     emitJumpTableAddress(RelocOp->getIndex(), rt, PCAdj);
   } else {
-    LLVM_UNREACHABLE("Unknown value to relocate!");
+    llvm_unreachable("Unknown value to relocate!");
   }
 }
 
@@ -478,7 +478,7 @@ void Emitter<CodeEmitter>::emitInstruction(
   case X86II::GS:
     MCE.emitByte(0x65);
     break;
-  default: LLVM_UNREACHABLE("Invalid segment!");
+  default: llvm_unreachable("Invalid segment!");
   case 0: break;  // No segment override!
   }
 
@@ -513,7 +513,7 @@ void Emitter<CodeEmitter>::emitInstruction(
                  (((Desc->TSFlags & X86II::Op0Mask)-X86II::D8)
                                    >> X86II::Op0Shift));
     break; // Two-byte opcode prefix
-  default: LLVM_UNREACHABLE("Invalid prefix!");
+  default: llvm_unreachable("Invalid prefix!");
   case 0: break;  // No prefix!
   }
 
@@ -548,13 +548,13 @@ void Emitter<CodeEmitter>::emitInstruction(
 
   unsigned char BaseOpcode = II->getBaseOpcodeFor(Desc);
   switch (Desc->TSFlags & X86II::FormMask) {
-  default: LLVM_UNREACHABLE("Unknown FormMask value in X86 MachineCodeEmitter!");
+  default: llvm_unreachable("Unknown FormMask value in X86 MachineCodeEmitter!");
   case X86II::Pseudo:
     // Remember the current PC offset, this is the PIC relocation
     // base address.
     switch (Opcode) {
     default: 
-      LLVM_UNREACHABLE("psuedo instructions should be removed before code emission");
+      llvm_unreachable("psuedo instructions should be removed before code emission");
       break;
     case TargetInstrInfo::INLINEASM: {
       // We allow inline assembler nodes with empty bodies - they can
@@ -620,7 +620,7 @@ void Emitter<CodeEmitter>::emitInstruction(
         } else
           emitConstant(MO.getImm(), X86InstrInfo::sizeOfImm(Desc));
       } else {
-        LLVM_UNREACHABLE("Unknown RawFrm operand!");
+        llvm_unreachable("Unknown RawFrm operand!");
       }
     }
     break;
@@ -811,7 +811,7 @@ void Emitter<CodeEmitter>::emitInstruction(
 #ifndef NDEBUG
     cerr << "Cannot encode: " << MI << "\n";
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 }
 

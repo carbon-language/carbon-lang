@@ -292,7 +292,7 @@ void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
   switch (RetOpcode) {
   case MSP430::RET: break;  // These are ok
   default:
-    LLVM_UNREACHABLE("Can only insert epilog into returning blocks");
+    llvm_unreachable("Can only insert epilog into returning blocks");
   }
 
   // Get the number of bytes to allocate from the FrameInfo
@@ -328,7 +328,7 @@ void MSP430RegisterInfo::emitEpilogue(MachineFunction &MF,
   //  mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
 
   if (MFI->hasVarSizedObjects()) {
-    LLVM_UNREACHABLE("Not implemented yet!");
+    llvm_unreachable("Not implemented yet!");
   } else {
     // adjust stack pointer back: SPW += numbytes
     if (NumBytes) {
@@ -350,7 +350,7 @@ unsigned MSP430RegisterInfo::getFrameRegister(MachineFunction &MF) const {
 }
 
 int MSP430RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  LLVM_UNREACHABLE("Not implemented yet!");
+  llvm_unreachable("Not implemented yet!");
   return 0;
 }
 

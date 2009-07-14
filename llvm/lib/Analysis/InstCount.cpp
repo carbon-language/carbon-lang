@@ -48,7 +48,7 @@ namespace {
 
     void visitInstruction(Instruction &I) {
       cerr << "Instruction Count does not know about " << I;
-      llvm_unreachable();
+      llvm_unreachable(0);
     }
   public:
     static char ID; // Pass identification, replacement for typeid

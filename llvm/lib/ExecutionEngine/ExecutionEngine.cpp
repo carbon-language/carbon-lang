@@ -421,7 +421,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
           const_cast<GlobalVariable *>(dyn_cast<GlobalVariable>(GV)))
     EmitGlobalVariable(GVar);
   else
-    LLVM_UNREACHABLE("Global hasn't had an address allocated yet!");
+    llvm_unreachable("Global hasn't had an address allocated yet!");
   return state.getGlobalAddressMap(locked)[GV];
 }
 
@@ -548,7 +548,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       GenericValue GV = getConstantValue(Op0);
       const Type* DestTy = CE->getType();
       switch (Op0->getType()->getTypeID()) {
-        default: LLVM_UNREACHABLE("Invalid bitcast operand");
+        default: llvm_unreachable("Invalid bitcast operand");
         case Type::IntegerTyID:
           assert(DestTy->isFloatingPoint() && "invalid bitcast");
           if (DestTy == Type::FloatTy)
@@ -587,10 +587,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       GenericValue RHS = getConstantValue(CE->getOperand(1));
       GenericValue GV;
       switch (CE->getOperand(0)->getType()->getTypeID()) {
-      default: LLVM_UNREACHABLE("Bad add type!");
+      default: llvm_unreachable("Bad add type!");
       case Type::IntegerTyID:
         switch (CE->getOpcode()) {
-          default: LLVM_UNREACHABLE("Invalid integer opcode");
+          default: llvm_unreachable("Invalid integer opcode");
           case Instruction::Add: GV.IntVal = LHS.IntVal + RHS.IntVal; break;
           case Instruction::Sub: GV.IntVal = LHS.IntVal - RHS.IntVal; break;
           case Instruction::Mul: GV.IntVal = LHS.IntVal * RHS.IntVal; break;
@@ -605,7 +605,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         break;
       case Type::FloatTyID:
         switch (CE->getOpcode()) {
-          default: LLVM_UNREACHABLE("Invalid float opcode");
+          default: llvm_unreachable("Invalid float opcode");
           case Instruction::FAdd:
             GV.FloatVal = LHS.FloatVal + RHS.FloatVal; break;
           case Instruction::FSub:
@@ -620,7 +620,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         break;
       case Type::DoubleTyID:
         switch (CE->getOpcode()) {
-          default: LLVM_UNREACHABLE("Invalid double opcode");
+          default: llvm_unreachable("Invalid double opcode");
           case Instruction::FAdd:
             GV.DoubleVal = LHS.DoubleVal + RHS.DoubleVal; break;
           case Instruction::FSub:
@@ -638,7 +638,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       case Type::FP128TyID: {
         APFloat apfLHS = APFloat(LHS.IntVal);
         switch (CE->getOpcode()) {
-          default: LLVM_UNREACHABLE("Invalid long double opcode");llvm_unreachable();
+          default: llvm_unreachable("Invalid long double opcode");llvm_unreachable(0);
           case Instruction::FAdd:
             apfLHS.add(APFloat(RHS.IntVal), APFloat::rmNearestTiesToEven);
             GV.IntVal = apfLHS.bitcastToAPInt();
@@ -698,7 +698,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     else if (const GlobalVariable* GV = dyn_cast<GlobalVariable>(C))
       Result = PTOGV(getOrEmitGlobalVariable(const_cast<GlobalVariable*>(GV)));
     else
-      LLVM_UNREACHABLE("Unknown constant pointer type!");
+      llvm_unreachable("Unknown constant pointer type!");
     break;
   default:
     std::string msg;
@@ -881,7 +881,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   }
 
   cerr << "Bad Type: " << *Init->getType() << "\n";
-  LLVM_UNREACHABLE("Unknown constant type to initialize memory with!");
+  llvm_unreachable("Unknown constant type to initialize memory with!");
 }
 
 /// EmitGlobals - Emit all of the global variables to memory, storing their

@@ -223,7 +223,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
     // If NewBBDominatesDestBB hasn't been computed yet, do so with DF.
     if (!OtherPreds.empty()) {
       // FIXME: IMPLEMENT THIS!
-      LLVM_UNREACHABLE("Requiring domfrontiers but not idom/domtree/domset."
+      llvm_unreachable("Requiring domfrontiers but not idom/domtree/domset."
                        " not implemented yet!");
     }
     

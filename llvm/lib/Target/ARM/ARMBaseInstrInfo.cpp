@@ -434,7 +434,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       return 0;
     switch (MI->getOpcode()) {
     default:
-      LLVM_UNREACHABLE("Unknown or unset size field for instr!");
+      llvm_unreachable("Unknown or unset size field for instr!");
     case TargetInstrInfo::IMPLICIT_DEF:
     case TargetInstrInfo::DECLARE:
     case TargetInstrInfo::DBG_LABEL:

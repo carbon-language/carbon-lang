@@ -75,7 +75,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
-     default: LLVM_UNREACHABLE("Unknown linkage type!");
+     default: llvm_unreachable("Unknown linkage type!");
      case Function::PrivateLinkage:
      case Function::InternalLinkage:
      case Function::DLLExportLinkage:
@@ -124,11 +124,11 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
        case SectionKind::ThreadBSS:
         return TLSBSSSection;
        default:
-        LLVM_UNREACHABLE("Unsuported section kind for global");
+        llvm_unreachable("Unsuported section kind for global");
       }
     }
   } else
-    LLVM_UNREACHABLE("Unsupported global");
+    llvm_unreachable("Unsupported global");
 
   return NULL;
 }

@@ -76,7 +76,7 @@ static void getDoubleRegPair(unsigned DoubleReg, unsigned &EvenReg,
       OddReg = OddHalvesOfPairs[i];
       return;
     }
-  LLVM_UNREACHABLE("Can't find reg");
+  llvm_unreachable("Can't find reg");
 }
 
 /// runOnMachineBasicBlock - Fixup FpMOVD instructions in this MBB.
@@ -109,7 +109,7 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       else if (MI->getOpcode() == SP::FpABSD)
         MI->setDesc(TII->get(SP::FABSS));
       else
-        LLVM_UNREACHABLE("Unknown opcode!");
+        llvm_unreachable("Unknown opcode!");
         
       MI->getOperand(0).setReg(EvenDestReg);
       MI->getOperand(1).setReg(EvenSrcReg);

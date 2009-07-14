@@ -1319,7 +1319,7 @@ bool X86FastISel::X86SelectCall(Instruction *I) {
   
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-    default: LLVM_UNREACHABLE("Unknown loc info!");
+    default: llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full: break;
     case CCValAssign::SExt: {
       bool Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(),

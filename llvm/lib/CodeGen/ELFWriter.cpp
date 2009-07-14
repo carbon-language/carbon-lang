@@ -149,7 +149,7 @@ bool ELFWriter::doInitialization(Module &M) {
 unsigned ELFWriter::getGlobalELFVisibility(const GlobalValue *GV) {
   switch (GV->getVisibility()) {
   default:
-    LLVM_UNREACHABLE("unknown visibility type");
+    llvm_unreachable("unknown visibility type");
   case GlobalValue::DefaultVisibility:
     return ELFSym::STV_DEFAULT;
   case GlobalValue::HiddenVisibility:
@@ -359,9 +359,9 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
     else if (CFP->getType() == Type::FloatTy)
       GblS.emitWord32(Val);
     else if (CFP->getType() == Type::X86_FP80Ty) {
-      LLVM_UNREACHABLE("X86_FP80Ty global emission not implemented");
+      llvm_unreachable("X86_FP80Ty global emission not implemented");
     } else if (CFP->getType() == Type::PPC_FP128Ty)
-      LLVM_UNREACHABLE("PPC_FP128Ty global emission not implemented");
+      llvm_unreachable("PPC_FP128Ty global emission not implemented");
     return;
   } else if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     if (Size == 4)
@@ -369,7 +369,7 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
     else if (Size == 8)
       GblS.emitWord64(CI->getZExtValue());
     else
-      LLVM_UNREACHABLE("LargeInt global emission not implemented");
+      llvm_unreachable("LargeInt global emission not implemented");
     return;
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     const VectorType *PTy = CP->getType();
@@ -377,7 +377,7 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
       EmitGlobalConstant(CP->getOperand(I), GblS);
     return;
   }
-  LLVM_UNREACHABLE("unknown global constant");
+  llvm_unreachable("unknown global constant");
 }
 
 

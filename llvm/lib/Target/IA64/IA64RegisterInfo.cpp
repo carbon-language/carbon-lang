@@ -293,7 +293,7 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned IA64RegisterInfo::getRARegister() const {
-  LLVM_UNREACHABLE("What is the return address register");
+  llvm_unreachable("What is the return address register");
   return 0;
 }
 
@@ -302,17 +302,17 @@ unsigned IA64RegisterInfo::getFrameRegister(MachineFunction &MF) const {
 }
 
 unsigned IA64RegisterInfo::getEHExceptionRegister() const {
-  LLVM_UNREACHABLE("What is the exception register");
+  llvm_unreachable("What is the exception register");
   return 0;
 }
 
 unsigned IA64RegisterInfo::getEHHandlerRegister() const {
-  LLVM_UNREACHABLE("What is the exception handler register");
+  llvm_unreachable("What is the exception handler register");
   return 0;
 }
 
 int IA64RegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  LLVM_UNREACHABLE("What is the dwarf register number");
+  llvm_unreachable("What is the dwarf register number");
   return -1;
 }
 

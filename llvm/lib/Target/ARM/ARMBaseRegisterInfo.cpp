@@ -72,7 +72,7 @@ unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum) {
   case S30: return 30;
   case S31: return 31;
   default:
-    LLVM_UNREACHABLE("Unknown ARM register!");
+    llvm_unreachable("Unknown ARM register!");
   }
 }
 
@@ -83,7 +83,7 @@ unsigned ARMBaseRegisterInfo::getRegisterNumbering(unsigned RegEnum,
   using namespace ARM;
   switch (RegEnum) {
   default:
-    LLVM_UNREACHABLE("Unknown ARM register!");
+    llvm_unreachable("Unknown ARM register!");
   case R0:  case D0:  return 0;
   case R1:  case D1:  return 1;
   case R2:  case D2:  return 2;
@@ -707,12 +707,12 @@ unsigned ARMBaseRegisterInfo::getFrameRegister(MachineFunction &MF) const {
 }
 
 unsigned ARMBaseRegisterInfo::getEHExceptionRegister() const {
-  LLVM_UNREACHABLE("What is the exception register");
+  llvm_unreachable("What is the exception register");
   return 0;
 }
 
 unsigned ARMBaseRegisterInfo::getEHHandlerRegister() const {
-  LLVM_UNREACHABLE("What is the exception handler register");
+  llvm_unreachable("What is the exception handler register");
   return 0;
 }
 
@@ -1138,7 +1138,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
     }
     default:
-      LLVM_UNREACHABLE("Unsupported addressing mode!");
+      llvm_unreachable("Unsupported addressing mode!");
       break;
     }
 

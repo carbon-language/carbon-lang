@@ -536,11 +536,11 @@ unsigned ReturnInst::getNumSuccessorsV() const {
 /// Out-of-line ReturnInst method, put here so the C++ compiler can choose to
 /// emit the vtable for the class in this translation unit.
 void ReturnInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  LLVM_UNREACHABLE("ReturnInst has no successors!");
+  llvm_unreachable("ReturnInst has no successors!");
 }
 
 BasicBlock *ReturnInst::getSuccessorV(unsigned idx) const {
-  LLVM_UNREACHABLE("ReturnInst has no successors!");
+  llvm_unreachable("ReturnInst has no successors!");
   return 0;
 }
 
@@ -564,11 +564,11 @@ unsigned UnwindInst::getNumSuccessorsV() const {
 }
 
 void UnwindInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  LLVM_UNREACHABLE("UnwindInst has no successors!");
+  llvm_unreachable("UnwindInst has no successors!");
 }
 
 BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
-  LLVM_UNREACHABLE("UnwindInst has no successors!");
+  llvm_unreachable("UnwindInst has no successors!");
   return 0;
 }
 
@@ -588,11 +588,11 @@ unsigned UnreachableInst::getNumSuccessorsV() const {
 }
 
 void UnreachableInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  LLVM_UNREACHABLE("UnwindInst has no successors!");
+  llvm_unreachable("UnwindInst has no successors!");
 }
 
 BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
-  LLVM_UNREACHABLE("UnwindInst has no successors!");
+  llvm_unreachable("UnwindInst has no successors!");
   return 0;
 }
 
@@ -2298,7 +2298,7 @@ CastInst::getCastOpcode(
       PTy = NULL;
       return BitCast;                             // same size, no-op cast
     } else {
-      LLVM_UNREACHABLE("Casting pointer or non-first class to float");
+      llvm_unreachable("Casting pointer or non-first class to float");
     }
   } else if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
     if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
@@ -2709,7 +2709,7 @@ ICmpInst::makeConstantRange(Predicate pred, const APInt &C) {
   APInt Upper(C);
   uint32_t BitWidth = C.getBitWidth();
   switch (pred) {
-  default: LLVM_UNREACHABLE("Invalid ICmp opcode to ConstantRange ctor!");
+  default: llvm_unreachable("Invalid ICmp opcode to ConstantRange ctor!");
   case ICmpInst::ICMP_EQ: Upper++; break;
   case ICmpInst::ICMP_NE: Lower++; break;
   case ICmpInst::ICMP_ULT: Lower = APInt::getMinValue(BitWidth); break;

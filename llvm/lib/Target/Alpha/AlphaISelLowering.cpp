@@ -314,7 +314,7 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
                                     SDValue());
   switch (Op.getNumOperands()) {
   default:
-    LLVM_UNREACHABLE("Do not know how to return this many arguments!");
+    llvm_unreachable("Do not know how to return this many arguments!");
   case 1: 
     break;
     //return SDValue(); // ret void is legal
@@ -380,7 +380,7 @@ AlphaTargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy,
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
   {
     switch (getValueType(Args[i].Ty).getSimpleVT()) {
-    default: LLVM_UNREACHABLE("Unexpected ValueType for argument!");
+    default: llvm_unreachable("Unexpected ValueType for argument!");
     case MVT::i1:
     case MVT::i8:
     case MVT::i16:
@@ -476,7 +476,7 @@ void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
 SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   switch (Op.getOpcode()) {
-  default: LLVM_UNREACHABLE("Wasn't expecting to be able to lower this!");
+  default: llvm_unreachable("Wasn't expecting to be able to lower this!");
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG, 
                                                            VarArgsBase,
                                                            VarArgsOffset);
@@ -527,7 +527,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
     return Lo;
   }
   case ISD::GlobalTLSAddress:
-    LLVM_UNREACHABLE("TLS not implemented for Alpha.");
+    llvm_unreachable("TLS not implemented for Alpha.");
   case ISD::GlobalAddress: {
     GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
     GlobalValue *GV = GSDN->getGlobal();

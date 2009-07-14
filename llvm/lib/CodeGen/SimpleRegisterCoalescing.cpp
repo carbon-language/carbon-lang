@@ -1345,7 +1345,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     DstSubIdx = CopyMI->getOperand(3).getImm();
     SrcReg    = CopyMI->getOperand(2).getReg();
   } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
-    LLVM_UNREACHABLE("Unrecognized copy instruction!");
+    llvm_unreachable("Unrecognized copy instruction!");
   }
 
   // If they are already joined we continue.
@@ -2062,7 +2062,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
         *tri_->getSuperRegisters(LHS.reg))
       // Imprecise sub-register information. Can't handle it.
       return false;
-    LLVM_UNREACHABLE("No copies from the RHS?");
+    llvm_unreachable("No copies from the RHS?");
   } else {
     LHSValNo = EliminatedLHSVals[0];
   }

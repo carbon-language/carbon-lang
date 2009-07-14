@@ -313,7 +313,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     break;
   }
 
-  LLVM_UNREACHABLE("Failed to cast constant expression");
+  llvm_unreachable("Failed to cast constant expression");
   return 0;
 }
 
@@ -1418,7 +1418,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     APInt V1 = cast<ConstantInt>(C1)->getValue();
     APInt V2 = cast<ConstantInt>(C2)->getValue();
     switch (pred) {
-    default: LLVM_UNREACHABLE("Invalid ICmp Predicate"); return 0;
+    default: llvm_unreachable("Invalid ICmp Predicate"); return 0;
     case ICmpInst::ICMP_EQ:
       return Context.getConstantInt(Type::Int1Ty, V1 == V2);
     case ICmpInst::ICMP_NE: 
@@ -1445,7 +1445,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     APFloat C2V = cast<ConstantFP>(C2)->getValueAPF();
     APFloat::cmpResult R = C1V.compare(C2V);
     switch (pred) {
-    default: LLVM_UNREACHABLE("Invalid FCmp Predicate"); return 0;
+    default: llvm_unreachable("Invalid FCmp Predicate"); return 0;
     case FCmpInst::FCMP_FALSE: return Context.getConstantIntFalse();
     case FCmpInst::FCMP_TRUE:  return Context.getConstantIntTrue();
     case FCmpInst::FCMP_UNO:
@@ -1502,7 +1502,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
   if (C1->getType()->isFloatingPoint()) {
     int Result = -1;  // -1 = unknown, 0 = known false, 1 = known true.
     switch (evaluateFCmpRelation(Context, C1, C2)) {
-    default: LLVM_UNREACHABLE("Unknown relation!");
+    default: llvm_unreachable("Unknown relation!");
     case FCmpInst::FCMP_UNO:
     case FCmpInst::FCMP_ORD:
     case FCmpInst::FCMP_UEQ:
@@ -1561,7 +1561,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     // Evaluate the relation between the two constants, per the predicate.
     int Result = -1;  // -1 = unknown, 0 = known false, 1 = known true.
     switch (evaluateICmpRelation(Context, C1, C2, CmpInst::isSigned(pred))) {
-    default: LLVM_UNREACHABLE("Unknown relational!");
+    default: llvm_unreachable("Unknown relational!");
     case ICmpInst::BAD_ICMP_PREDICATE:
       break;  // Couldn't determine anything about these constants.
     case ICmpInst::ICMP_EQ:   // We know the constants are equal!

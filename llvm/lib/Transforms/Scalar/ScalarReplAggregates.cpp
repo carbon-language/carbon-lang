@@ -267,7 +267,7 @@ bool SROA::performScalarRepl(Function &F) {
       // Check that all of the users of the allocation are capable of being
       // transformed.
       switch (isSafeAllocaToScalarRepl(AI)) {
-      default: LLVM_UNREACHABLE("Unexpected value!");
+      default: llvm_unreachable("Unexpected value!");
       case 0:  // Not safe to scalar replace.
         break;
       case 1:  // Safe, but requires cleanup/canonicalizations first
@@ -1511,7 +1511,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
       continue;
     }
 
-    LLVM_UNREACHABLE("Unsupported operation!");
+    llvm_unreachable("Unsupported operation!");
   }
 }
 

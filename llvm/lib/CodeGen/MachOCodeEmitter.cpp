@@ -105,7 +105,7 @@ bool MachOCodeEmitter::finishFunction(MachineFunction &MF) {
       // FIXME: This should be a set or something that uniques
       MOW.PendingGlobals.push_back(MR.getGlobalValue());
     } else {
-      LLVM_UNREACHABLE("Unhandled relocation type");
+      llvm_unreachable("Unhandled relocation type");
     }
     MOS->addRelocation(MR);
   }

@@ -67,11 +67,11 @@ void CCState::AnalyzeFormalArguments(SDNode *TheArgs, CCAssignFn Fn) {
     ISD::ArgFlagsTy ArgFlags =
       cast<ARG_FLAGSSDNode>(TheArgs->getOperand(3+i))->getArgFlags();
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Formal argument #" << i << " has unhandled type "
+#ifndef NDEBUG
+      cerr << "Formal argument #" << i << " has unhandled type "
            << ArgVT.getMVTString();
-      llvm_report_error(Msg.str());
+#endif
+      llvm_unreachable(0);
     }
   }
 }
@@ -84,12 +84,12 @@ void CCState::AnalyzeReturn(SDNode *TheRet, CCAssignFn Fn) {
     MVT VT = TheRet->getOperand(i*2+1).getValueType();
     ISD::ArgFlagsTy ArgFlags =
       cast<ARG_FLAGSSDNode>(TheRet->getOperand(i*2+2))->getArgFlags();
-    if (Fn(i, VT, VT, CCValAssign::Full, ArgFlags, *this)){
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Return operand #" << i << " has unhandled type "
+    if (Fn(i, VT, VT, CCValAssign::Full, ArgFlags, *this)) {
+#ifndef NDEBUG
+      cerr << "Return operand #" << i << " has unhandled type "
            << VT.getMVTString();
-      llvm_report_error(Msg.str());
+#endif
+      llvm_unreachable(0);
     }
   }
 }
@@ -103,11 +103,11 @@ void CCState::AnalyzeCallOperands(CallSDNode *TheCall, CCAssignFn Fn) {
     MVT ArgVT = TheCall->getArg(i).getValueType();
     ISD::ArgFlagsTy ArgFlags = TheCall->getArgFlags(i);
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Call operand #" << i << " has unhandled type "
+#ifndef NDEBUG
+      cerr << "Call operand #" << i << " has unhandled type "
            << ArgVT.getMVTString();
-      llvm_report_error(Msg.str());
+#endif
+      llvm_unreachable(0);
     }
   }
 }
@@ -122,11 +122,11 @@ void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
     MVT ArgVT = ArgVTs[i];
     ISD::ArgFlagsTy ArgFlags = Flags[i];
     if (Fn(i, ArgVT, ArgVT, CCValAssign::Full, ArgFlags, *this)) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Call operand #" << i << " has unhandled type "
+#ifndef NDEBUG
+      cerr << "Call operand #" << i << " has unhandled type "
            << ArgVT.getMVTString();
-      llvm_report_error(Msg.str());
+#endif
+      llvm_unreachable(0);
     }
   }
 }
@@ -140,11 +140,11 @@ void CCState::AnalyzeCallResult(CallSDNode *TheCall, CCAssignFn Fn) {
     if (TheCall->isInreg())
       Flags.setInReg();
     if (Fn(i, VT, VT, CCValAssign::Full, Flags, *this)) {
-      std::string msg;
-      raw_string_ostream Msg(msg);
-      Msg << "Call result #" << i << " has unhandled type "
+#ifndef NDEBUG
+      cerr << "Call result #" << i << " has unhandled type "
            << VT.getMVTString();
-      llvm_report_error(Msg.str());
+#endif
+      llvm_unreachable(0);
     }
   }
 }
@@ -153,10 +153,10 @@ void CCState::AnalyzeCallResult(CallSDNode *TheCall, CCAssignFn Fn) {
 /// produce a single value.
 void CCState::AnalyzeCallResult(MVT VT, CCAssignFn Fn) {
   if (Fn(0, VT, VT, CCValAssign::Full, ISD::ArgFlagsTy(), *this)) {
-    std::string msg;
-    raw_string_ostream Msg(msg);
-    Msg << "Call result has unhandled type "
+#ifndef NDEBUG
+    cerr << "Call result has unhandled type "
          << VT.getMVTString();
-    llvm_report_error(Msg.str());
+#endif
+    llvm_unreachable(0);
   }
 }

@@ -129,7 +129,7 @@ static bool isEquivalentType(const Type *Ty1, const Type *Ty2) {
     return false;
 
   default:
-    LLVM_UNREACHABLE("Unknown type!");
+    llvm_unreachable("Unknown type!");
     return false;
 
   case Type::PointerTyID: {
@@ -470,7 +470,7 @@ static LinkageCategory categorize(const Function *F) {
     return ExternalStrong;
   }
 
-  LLVM_UNREACHABLE("Unknown LinkageType.");
+  llvm_unreachable("Unknown LinkageType.");
   return ExternalWeak;
 }
 
@@ -576,7 +576,7 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
     case Internal:
       switch (catG) {
         case ExternalStrong:
-          llvm_unreachable();
+          llvm_unreachable(0);
           // fall-through
         case ExternalWeak:
 	  if (F->hasAddressTaken())

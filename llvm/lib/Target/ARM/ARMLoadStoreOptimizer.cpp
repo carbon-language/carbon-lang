@@ -138,7 +138,7 @@ static int getLoadStoreMultipleOpcode(int Opcode) {
   case ARM::FSTD:
     NumFSTMGened++;
     return ARM::FSTMD;
-  default: LLVM_UNREACHABLE("Unhandled opcode!");
+  default: llvm_unreachable("Unhandled opcode!");
   }
   return 0;
 }
@@ -513,7 +513,7 @@ static unsigned getPreIndexedLoadStoreOpcode(unsigned Opc) {
   case ARM::t2STRi8:
   case ARM::t2STRi12:
     return ARM::t2STR_PRE;
-  default: LLVM_UNREACHABLE("Unhandled opcode!");
+  default: llvm_unreachable("Unhandled opcode!");
   }
   return 0;
 }
@@ -532,7 +532,7 @@ static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc) {
   case ARM::t2STRi8:
   case ARM::t2STRi12:
     return ARM::t2STR_POST;
-  default: LLVM_UNREACHABLE("Unhandled opcode!");
+  default: llvm_unreachable("Unhandled opcode!");
   }
   return 0;
 }

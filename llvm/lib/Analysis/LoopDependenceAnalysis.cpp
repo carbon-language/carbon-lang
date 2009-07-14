@@ -64,7 +64,7 @@ static Value *GetPointerOperand(Value *I) {
     return i->getPointerOperand();
   if (StoreInst *i = dyn_cast<StoreInst>(I))
     return i->getPointerOperand();
-  LLVM_UNREACHABLE("Value is no load or store instruction!");
+  llvm_unreachable("Value is no load or store instruction!");
   // Never reached.
   return 0;
 }

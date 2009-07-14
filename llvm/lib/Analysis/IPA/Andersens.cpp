@@ -508,7 +508,7 @@ namespace {
 #ifndef NDEBUG
         V->dump();
 #endif
-        LLVM_UNREACHABLE("Value does not have a node in the points-to graph!");
+        llvm_unreachable("Value does not have a node in the points-to graph!");
       }
       return I->second;
     }
@@ -827,10 +827,10 @@ unsigned Andersens::getNodeForConstantPointer(Constant *C) {
       return getNodeForConstantPointer(CE->getOperand(0));
     default:
       cerr << "Constant Expr not yet handled: " << *CE << "\n";
-      llvm_unreachable();
+      llvm_unreachable(0);
     }
   } else {
-    LLVM_UNREACHABLE("Unknown constant pointer!");
+    llvm_unreachable("Unknown constant pointer!");
   }
   return 0;
 }
@@ -854,10 +854,10 @@ unsigned Andersens::getNodeForConstantPointerTarget(Constant *C) {
       return getNodeForConstantPointerTarget(CE->getOperand(0));
     default:
       cerr << "Constant Expr not yet handled: " << *CE << "\n";
-      llvm_unreachable();
+      llvm_unreachable(0);
     }
   } else {
-    LLVM_UNREACHABLE("Unknown constant pointer!");
+    llvm_unreachable("Unknown constant pointer!");
   }
   return 0;
 }
@@ -1154,7 +1154,7 @@ void Andersens::visitInstruction(Instruction &I) {
   default:
     // Is this something we aren't handling yet?
     cerr << "Unknown instruction: " << I;
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 }
 
@@ -1244,7 +1244,7 @@ void Andersens::visitSelectInst(SelectInst &SI) {
 }
 
 void Andersens::visitVAArg(VAArgInst &I) {
-  LLVM_UNREACHABLE("vaarg not handled yet!");
+  llvm_unreachable("vaarg not handled yet!");
 }
 
 /// AddConstraintsForCall - Add constraints for a call with actual arguments

@@ -1102,7 +1102,7 @@ unsigned LiveIntervals::getVNInfoSourceReg(const VNInfo *VNI) const {
   unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
   if (tii_->isMoveInstr(*VNI->copy, SrcReg, DstReg, SrcSubReg, DstSubReg))
     return SrcReg;
-  LLVM_UNREACHABLE("Unrecognized copy instruction!");
+  llvm_unreachable("Unrecognized copy instruction!");
   return 0;
 }
 

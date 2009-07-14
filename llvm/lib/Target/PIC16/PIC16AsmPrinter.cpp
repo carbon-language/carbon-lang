@@ -128,7 +128,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       if (TargetRegisterInfo::isPhysicalRegister(MO.getReg()))
         O << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
       else
-        LLVM_UNREACHABLE("not implemented");
+        llvm_unreachable("not implemented");
       return;
 
     case MachineOperand::MO_Immediate:
@@ -155,7 +155,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       return;
 
     default:
-      LLVM_UNREACHABLE(" Operand type not supported.");
+      llvm_unreachable(" Operand type not supported.");
   }
 }
 

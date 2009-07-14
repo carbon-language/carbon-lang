@@ -449,7 +449,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
               Bits = 8;  // Taking the address of a CP entry.
               break;
             }
-            LLVM_UNREACHABLE("Unknown addressing mode for CP reference!");
+            llvm_unreachable("Unknown addressing mode for CP reference!");
           case ARMII::AddrMode1: // AM1: 8 bits << 2
             Bits = 8;
             Scale = 4;  // Taking the address of a CP entry.

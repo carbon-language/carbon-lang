@@ -1228,7 +1228,7 @@ SDValue PIC16TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
 
   // return should have odd number of operands
   if ((Op.getNumOperands() % 2) == 0 ) {
-    LLVM_UNREACHABLE("Do not know how to return this many arguments!");
+    llvm_unreachable("Do not know how to return this many arguments!");
   }
   
   // Number of values to return 
@@ -1697,7 +1697,7 @@ SDValue PIC16TargetLowering::PerformDAGCombine(SDNode *N,
 
 static PIC16CC::CondCodes IntCCToPIC16CC(ISD::CondCode CC) {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Unknown condition code!");
+  default: llvm_unreachable("Unknown condition code!");
   case ISD::SETNE:  return PIC16CC::NE;
   case ISD::SETEQ:  return PIC16CC::EQ;
   case ISD::SETGT:  return PIC16CC::GT;

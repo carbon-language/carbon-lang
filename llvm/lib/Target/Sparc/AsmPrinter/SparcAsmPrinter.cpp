@@ -185,7 +185,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       << MO.getIndex();
     break;
   default:
-    LLVM_UNREACHABLE("<unknown operand type>");
+    llvm_unreachable("<unknown operand type>");
   }
   if (CloseParen) O << ")";
 }
@@ -299,13 +299,13 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
    case GlobalValue::InternalLinkage:
     break;
    case GlobalValue::GhostLinkage:
-    LLVM_UNREACHABLE("Should not have any unmaterialized functions!");
+    llvm_unreachable("Should not have any unmaterialized functions!");
    case GlobalValue::DLLImportLinkage:
-    LLVM_UNREACHABLE("DLLImport linkage is not supported by this target!");
+    llvm_unreachable("DLLImport linkage is not supported by this target!");
    case GlobalValue::DLLExportLinkage:
-    LLVM_UNREACHABLE("DLLExport linkage is not supported by this target!");
+    llvm_unreachable("DLLExport linkage is not supported by this target!");
    default:
-    LLVM_UNREACHABLE("Unknown linkage type!");
+    llvm_unreachable("Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);

@@ -238,7 +238,7 @@ bool AsmPrinter::doFinalization(Module &M) {
       else if (I->hasWeakLinkage())
         O << TAI->getWeakRefDirective() << Name << '\n';
       else if (!I->hasLocalLinkage())
-        LLVM_UNREACHABLE("Invalid alias linkage");
+        llvm_unreachable("Invalid alias linkage");
 
       printVisibility(Name, I->getVisibility());
 
@@ -902,7 +902,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     case Instruction::SIToFP:
     case Instruction::FPToUI:
     case Instruction::FPToSI:
-      LLVM_UNREACHABLE("FIXME: Don't yet support this kind of constant cast expr");
+      llvm_unreachable("FIXME: Don't yet support this kind of constant cast expr");
       break;
     case Instruction::BitCast:
       return EmitConstantValueOnly(CE->getOperand(0));
@@ -968,10 +968,10 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       O << ')';
       break;
     default:
-      LLVM_UNREACHABLE("Unsupported operator!");
+      llvm_unreachable("Unsupported operator!");
     }
   } else {
-    LLVM_UNREACHABLE("Unknown constant value!");
+    llvm_unreachable("Unknown constant value!");
   }
 }
 
@@ -1210,7 +1210,7 @@ void AsmPrinter::EmitGlobalConstantFP(const ConstantFP *CFP,
       O << '\n';
     }
     return;
-  } else LLVM_UNREACHABLE("Floating point constant type not handled");
+  } else llvm_unreachable("Floating point constant type not handled");
 }
 
 void AsmPrinter::EmitGlobalConstantLargeInt(const ConstantInt *CI,
@@ -1302,7 +1302,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, unsigned AddrSpace) {
 
 void AsmPrinter::EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   // Target doesn't support this yet!
-  LLVM_UNREACHABLE("Target does not support EmitMachineConstantPoolValue");
+  llvm_unreachable("Target does not support EmitMachineConstantPoolValue");
 }
 
 /// PrintSpecial - Print information related to the specified machine instr
@@ -1661,7 +1661,7 @@ void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
              "Target cannot handle 64-bit constant exprs!");
       O << TAI->getData64bitsDirective(AddrSpace);
     } else {
-      LLVM_UNREACHABLE("Target cannot handle given data directive width!");
+      llvm_unreachable("Target cannot handle given data directive width!");
     }
     break;
   }
@@ -1747,7 +1747,7 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
     }
   
   cerr << "no GCMetadataPrinter registered for GC: " << Name << "\n";
-  llvm_unreachable();
+  llvm_unreachable(0);
 }
 
 /// EmitComments - Pretty-print comments for instructions

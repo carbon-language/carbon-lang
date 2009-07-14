@@ -265,10 +265,10 @@ const Type *Type::getForwardedTypeInternal() const {
 }
 
 void Type::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-  LLVM_UNREACHABLE("Attempting to refine a derived type!");
+  llvm_unreachable("Attempting to refine a derived type!");
 }
 void Type::typeBecameConcrete(const DerivedType *AbsTy) {
-  LLVM_UNREACHABLE("DerivedType is already a concrete type!");
+  llvm_unreachable("DerivedType is already a concrete type!");
 }
 
 
@@ -634,7 +634,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     }
     return true;
   } else {
-    LLVM_UNREACHABLE("Unknown derived type!");
+    llvm_unreachable("Unknown derived type!");
     return false;
   }
 }

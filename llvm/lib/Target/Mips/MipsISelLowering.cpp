@@ -248,7 +248,7 @@ static Mips::FPBranchCode GetFPBranchCodeFromCond(Mips::CondCode CC) {
 static unsigned FPBranchCodeToOpc(Mips::FPBranchCode BC) {
   switch(BC) {
     default:
-      LLVM_UNREACHABLE("Unknown branch code");
+      llvm_unreachable("Unknown branch code");
     case Mips::BRANCH_T  : return Mips::BC1T;
     case Mips::BRANCH_F  : return Mips::BC1F;
     case Mips::BRANCH_TL : return Mips::BC1TL;
@@ -258,7 +258,7 @@ static unsigned FPBranchCodeToOpc(Mips::FPBranchCode BC) {
 
 static Mips::CondCode FPCondCCodeToFCC(ISD::CondCode CC) {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Unknown fp condition code!");
+  default: llvm_unreachable("Unknown fp condition code!");
   case ISD::SETEQ:  
   case ISD::SETOEQ: return Mips::FCOND_EQ;
   case ISD::SETUNE: return Mips::FCOND_OGL;
@@ -542,14 +542,14 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG)
     return DAG.getNode(ISD::ADD, dl, MVT::i32, ResNode, Lo);
   }
 
-  LLVM_UNREACHABLE("Dont know how to handle GlobalAddress");
+  llvm_unreachable("Dont know how to handle GlobalAddress");
   return SDValue(0,0);
 }
 
 SDValue MipsTargetLowering::
 LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
 {
-  LLVM_UNREACHABLE("TLS not implemented for MIPS.");
+  llvm_unreachable("TLS not implemented for MIPS.");
   return SDValue(); // Not reached
 }
 
@@ -753,7 +753,7 @@ LowerCALL(SDValue Op, SelectionDAG &DAG)
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
-    default: LLVM_UNREACHABLE("Unknown loc info!");
+    default: llvm_unreachable("Unknown loc info!");
     case CCValAssign::Full: 
       if (Subtarget->isABI_O32() && VA.isRegLoc()) {
         if (VA.getValVT() == MVT::f32 && VA.getLocVT() == MVT::i32)
@@ -978,7 +978,7 @@ LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG)
         if (!Subtarget->isSingleFloat()) 
           RC = Mips::AFGR64RegisterClass;
       } else  
-        LLVM_UNREACHABLE("RegVT not supported by FORMAL_ARGUMENTS Lowering");
+        llvm_unreachable("RegVT not supported by FORMAL_ARGUMENTS Lowering");
 
       // Transform the arguments stored on 
       // physical registers into virtual ones
@@ -1140,7 +1140,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
     unsigned Reg = MipsFI->getSRetReturnReg();
 
     if (!Reg) 
-      LLVM_UNREACHABLE("sret virtual register not created in the entry block");
+      llvm_unreachable("sret virtual register not created in the entry block");
     SDValue Val = DAG.getCopyFromReg(Chain, dl, Reg, getPointerTy());
 
     Chain = DAG.getCopyToReg(Chain, dl, Mips::V0, Val, Flag);

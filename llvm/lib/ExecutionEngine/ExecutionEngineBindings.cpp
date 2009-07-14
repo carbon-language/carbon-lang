@@ -46,7 +46,7 @@ LLVMGenericValueRef LLVMCreateGenericValueOfFloat(LLVMTypeRef TyRef, double N) {
     GenVal->DoubleVal = N;
     break;
   default:
-    LLVM_UNREACHABLE("LLVMGenericValueToFloat supports only float and double.");
+    llvm_unreachable("LLVMGenericValueToFloat supports only float and double.");
   }
   return wrap(GenVal);
 }
@@ -75,7 +75,7 @@ double LLVMGenericValueToFloat(LLVMTypeRef TyRef, LLVMGenericValueRef GenVal) {
   case Type::DoubleTyID:
     return unwrap(GenVal)->DoubleVal;
   default:
-    LLVM_UNREACHABLE("LLVMGenericValueToFloat supports only float and double.");
+    llvm_unreachable("LLVMGenericValueToFloat supports only float and double.");
     break;
   }
   return 0; // Not reached

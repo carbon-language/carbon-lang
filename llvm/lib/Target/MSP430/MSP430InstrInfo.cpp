@@ -45,7 +45,7 @@ void MSP430InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addFrameIndex(FrameIdx).addImm(0)
       .addReg(SrcReg, getKillRegState(isKill));
   else
-    LLVM_UNREACHABLE("Cannot store this register to stack slot!");
+    llvm_unreachable("Cannot store this register to stack slot!");
 }
 
 void MSP430InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -62,7 +62,7 @@ void MSP430InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, DL, get(MSP430::MOV8rm))
       .addReg(DestReg).addFrameIndex(FrameIdx).addImm(0);
   else
-    LLVM_UNREACHABLE("Cannot store this register to stack slot!");
+    llvm_unreachable("Cannot store this register to stack slot!");
 }
 
 bool MSP430InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -172,7 +172,7 @@ MSP430InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
   // Conditional branch.
   unsigned Count = 0;
-  LLVM_UNREACHABLE("Implement conditional branches!");
+  llvm_unreachable("Implement conditional branches!");
 
   return Count;
 }

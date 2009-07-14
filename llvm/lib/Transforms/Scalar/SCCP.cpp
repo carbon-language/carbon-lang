@@ -456,7 +456,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
     } else if (SCValue.isConstant())
       Succs[SI->findCaseValue(cast<ConstantInt>(SCValue.getConstant()))] = true;
   } else {
-    LLVM_UNREACHABLE("SCCP: Don't know how to handle this terminator!");
+    llvm_unreachable("SCCP: Don't know how to handle this terminator!");
   }
 }
 
@@ -517,7 +517,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 #ifndef NDEBUG
     cerr << "Unknown terminator instruction: " << *TI;
 #endif
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 }
 
@@ -1806,7 +1806,7 @@ bool IPSCCP::runOnModule(Module &M) {
           } else if (SwitchInst *SI = dyn_cast<SwitchInst>(I)) {
             assert(isa<UndefValue>(SI->getCondition()) && "Switch should fold");
           } else {
-            LLVM_UNREACHABLE("Didn't fold away reference to block!");
+            llvm_unreachable("Didn't fold away reference to block!");
           }
 #endif
           

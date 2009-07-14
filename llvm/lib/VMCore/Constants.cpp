@@ -964,7 +964,7 @@ namespace llvm {
   template<class ConstantClass, class TypeClass>
   struct VISIBILITY_HIDDEN ConvertConstantType {
     static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
-      LLVM_UNREACHABLE("This type cannot be converted!");
+      llvm_unreachable("This type cannot be converted!");
     }
   };
 
@@ -1782,7 +1782,7 @@ namespace llvm {
       if (V.opcode == Instruction::FCmp) 
         return new CompareConstantExpr(Ty, Instruction::FCmp, V.predicate, 
                                        V.operands[0], V.operands[1]);
-      LLVM_UNREACHABLE("Invalid ConstantExpr!");
+      llvm_unreachable("Invalid ConstantExpr!");
       return 0;
     }
   };
@@ -1874,7 +1874,7 @@ Constant *ConstantExpr::getCast(unsigned oc, Constant *C, const Type *Ty) {
 
   switch (opc) {
     default:
-      LLVM_UNREACHABLE("Invalid cast opcode");
+      llvm_unreachable("Invalid cast opcode");
       break;
     case Instruction::Trunc:    return getTrunc(C, Ty);
     case Instruction::ZExt:     return getZExt(C, Ty);
@@ -2113,7 +2113,7 @@ Constant *ConstantExpr::getTy(const Type *ReqTy, unsigned Opcode,
 Constant *ConstantExpr::getCompareTy(unsigned short predicate,
                                      Constant *C1, Constant *C2) {
   switch (predicate) {
-    default: LLVM_UNREACHABLE("Invalid CmpInst predicate");
+    default: llvm_unreachable("Invalid CmpInst predicate");
     case CmpInst::FCMP_FALSE: case CmpInst::FCMP_OEQ: case CmpInst::FCMP_OGT:
     case CmpInst::FCMP_OGE:   case CmpInst::FCMP_OLT: case CmpInst::FCMP_OLE:
     case CmpInst::FCMP_ONE:   case CmpInst::FCMP_ORD: case CmpInst::FCMP_UNO:
@@ -2715,7 +2715,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     if (C2 == From) C2 = To;
     Replacement = ConstantExpr::get(getOpcode(), C1, C2);
   } else {
-    LLVM_UNREACHABLE("Unknown ConstantExpr type!");
+    llvm_unreachable("Unknown ConstantExpr type!");
     return;
   }
   

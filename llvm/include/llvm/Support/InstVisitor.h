@@ -114,7 +114,7 @@ public:
   //
   RetTy visit(Instruction &I) {
     switch (I.getOpcode()) {
-    default: LLVM_UNREACHABLE("Unknown instruction type encountered!");
+    default: llvm_unreachable("Unknown instruction type encountered!");
       // Build the switch statement using the Instruction.def file...
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
     case Instruction::OPCODE: return \

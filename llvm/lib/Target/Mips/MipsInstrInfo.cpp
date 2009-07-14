@@ -373,7 +373,7 @@ static Mips::CondCode GetCondFromBranchOpc(unsigned BrOpc)
 unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC) 
 {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Illegal condition code!");
+  default: llvm_unreachable("Illegal condition code!");
   case Mips::COND_E   : return Mips::BEQ;
   case Mips::COND_NE  : return Mips::BNE;
   case Mips::COND_GZ  : return Mips::BGTZ;
@@ -422,7 +422,7 @@ unsigned Mips::GetCondBranchFromCond(Mips::CondCode CC)
 Mips::CondCode Mips::GetOppositeBranchCondition(Mips::CondCode CC) 
 {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Illegal condition code!");
+  default: llvm_unreachable("Illegal condition code!");
   case Mips::COND_E   : return Mips::COND_NE;
   case Mips::COND_NE  : return Mips::COND_E;
   case Mips::COND_GZ  : return Mips::COND_LEZ;

@@ -104,7 +104,7 @@ extern "C" {
       );
 #else  // Not an ARM host
   void ARMCompilationCallback() {
-    LLVM_UNREACHABLE("Cannot call ARMCompilationCallback() on a non-ARM arch!");
+    llvm_unreachable("Cannot call ARMCompilationCallback() on a non-ARM arch!");
   }
 #endif
 }
@@ -123,12 +123,12 @@ extern "C" void ARMCompilationCallbackC(intptr_t StubAddr) {
   //   ldr pc, [pc,#-4]
   //   <addr>
   if (!sys::Memory::setRangeWritable((void*)StubAddr, 8)) {
-    LLVM_UNREACHABLE("ERROR: Unable to mark stub writable");
+    llvm_unreachable("ERROR: Unable to mark stub writable");
   }
   *(intptr_t *)StubAddr = 0xe51ff004;  // ldr pc, [pc, #-4]
   *(intptr_t *)(StubAddr+4) = NewVal;
   if (!sys::Memory::setRangeExecutable((void*)StubAddr, 8)) {
-    LLVM_UNREACHABLE("ERROR: Unable to mark stub executable");
+    llvm_unreachable("ERROR: Unable to mark stub executable");
   }
 }
 

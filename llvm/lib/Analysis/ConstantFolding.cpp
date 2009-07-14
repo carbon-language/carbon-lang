@@ -366,7 +366,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
     return 0;
   case Instruction::ICmp:
   case Instruction::FCmp:
-    LLVM_UNREACHABLE("This function is invalid for compares: no predicate specified");
+    llvm_unreachable("This function is invalid for compares: no predicate specified");
   case Instruction::PtrToInt:
     // If the input is a inttoptr, eliminate the pair.  This requires knowing
     // the width of a pointer, so it can't be done in ConstantExpr::getCast.
@@ -691,7 +691,7 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
     return Context->getConstantFP(APFloat((float)V));
   if (Ty == Type::DoubleTy)
     return Context->getConstantFP(APFloat(V));
-  LLVM_UNREACHABLE("Can only constant fold float/double");
+  llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
 }
 
@@ -710,7 +710,7 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
     return Context->getConstantFP(APFloat((float)V));
   if (Ty == Type::DoubleTy)
     return Context->getConstantFP(APFloat(V));
-  LLVM_UNREACHABLE("Can only constant fold float/double");
+  llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
 }
 

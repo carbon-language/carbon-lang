@@ -169,27 +169,27 @@ void SparcRegisterInfo::emitEpilogue(MachineFunction &MF,
 }
 
 unsigned SparcRegisterInfo::getRARegister() const {
-  LLVM_UNREACHABLE("What is the return address register");
+  llvm_unreachable("What is the return address register");
   return 0;
 }
 
 unsigned SparcRegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  LLVM_UNREACHABLE("What is the frame register");
+  llvm_unreachable("What is the frame register");
   return SP::G1;
 }
 
 unsigned SparcRegisterInfo::getEHExceptionRegister() const {
-  LLVM_UNREACHABLE("What is the exception register");
+  llvm_unreachable("What is the exception register");
   return 0;
 }
 
 unsigned SparcRegisterInfo::getEHHandlerRegister() const {
-  LLVM_UNREACHABLE("What is the exception handler register");
+  llvm_unreachable("What is the exception handler register");
   return 0;
 }
 
 int SparcRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  LLVM_UNREACHABLE("What is the dwarf register number");
+  llvm_unreachable("What is the dwarf register number");
   return -1;
 }
 

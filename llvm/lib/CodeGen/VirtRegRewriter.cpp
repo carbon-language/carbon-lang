@@ -1000,7 +1000,7 @@ private:
     // Unfold current MI.
     SmallVector<MachineInstr*, 4> NewMIs;
     if (!TII->unfoldMemoryOperand(MF, &MI, VirtReg, false, false, NewMIs))
-      LLVM_UNREACHABLE("Unable unfold the load / store folding instruction!");
+      llvm_unreachable("Unable unfold the load / store folding instruction!");
     assert(NewMIs.size() == 1);
     AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg);
     VRM.transferRestorePts(&MI, NewMIs[0]);
@@ -1016,7 +1016,7 @@ private:
       NextMII = next(NextMII);
       NewMIs.clear();
       if (!TII->unfoldMemoryOperand(MF, &NextMI, VirtReg, false, false, NewMIs))
-        LLVM_UNREACHABLE("Unable unfold the load / store folding instruction!");
+        llvm_unreachable("Unable unfold the load / store folding instruction!");
       assert(NewMIs.size() == 1);
       AssignPhysToVirtReg(NewMIs[0], VirtReg, PhysReg);
       VRM.transferRestorePts(&NextMI, NewMIs[0]);
@@ -1452,7 +1452,7 @@ private:
           assert(RC && "Unable to determine register class!");
           int SS = VRM.getEmergencySpillSlot(RC);
           if (UsedSS.count(SS))
-            LLVM_UNREACHABLE("Need to spill more than one physical registers!");
+            llvm_unreachable("Need to spill more than one physical registers!");
           UsedSS.insert(SS);
           TII->storeRegToStackSlot(MBB, MII, PhysReg, true, SS, RC);
           MachineInstr *StoreMI = prior(MII);
@@ -2177,7 +2177,7 @@ private:
 
 llvm::VirtRegRewriter* llvm::createVirtRegRewriter() {
   switch (RewriterOpt) {
-  default: LLVM_UNREACHABLE("Unreachable!");
+  default: llvm_unreachable("Unreachable!");
   case local:
     return new LocalRewriter();
   case trivial:

@@ -51,7 +51,7 @@ void FoldingSetNodeID::AddInteger(unsigned long I) {
   else if (sizeof(long) == sizeof(long long)) {
     AddInteger((unsigned long long)I);
   } else {
-    LLVM_UNREACHABLE("unexpected sizeof(long)");
+    llvm_unreachable("unexpected sizeof(long)");
   }
 }
 void FoldingSetNodeID::AddInteger(long long I) {

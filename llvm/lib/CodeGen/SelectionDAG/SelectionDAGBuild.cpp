@@ -556,7 +556,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc dl,
   if (PartVT.getSizeInBits() == ValueVT.getSizeInBits())
     return DAG.getNode(ISD::BIT_CONVERT, dl, ValueVT, Val);
 
-  LLVM_UNREACHABLE("Unknown mismatch!");
+  llvm_unreachable("Unknown mismatch!");
   return SDValue();
 }
 
@@ -592,7 +592,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
         ValueVT = MVT::getIntegerVT(NumParts * PartBits);
         Val = DAG.getNode(ExtendKind, dl, ValueVT, Val);
       } else {
-        LLVM_UNREACHABLE("Unknown mismatch!");
+        llvm_unreachable("Unknown mismatch!");
       }
     } else if (PartBits == ValueVT.getSizeInBits()) {
       // Different types of the same size.
@@ -604,7 +604,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc dl, SDValue Val,
         ValueVT = MVT::getIntegerVT(NumParts * PartBits);
         Val = DAG.getNode(ISD::TRUNCATE, dl, ValueVT, Val);
       } else {
-        LLVM_UNREACHABLE("Unknown mismatch!");
+        llvm_unreachable("Unknown mismatch!");
       }
     }
 
@@ -818,7 +818,7 @@ void SelectionDAGLowering::visit(unsigned Opcode, User &I) {
   // Note: this doesn't use InstVisitor, because it has to work with
   // ConstantExpr's in addition to instructions.
   switch (Opcode) {
-  default: LLVM_UNREACHABLE("Unknown instruction type encountered!");
+  default: llvm_unreachable("Unknown instruction type encountered!");
     // Build the switch statement using the Instruction.def file.
 #define HANDLE_INST(NUM, OPCODE, CLASS) \
   case Instruction::OPCODE:return visit##OPCODE((CLASS&)I);
@@ -1073,7 +1073,7 @@ static ISD::CondCode getFCmpCondCode(FCmpInst::Predicate Pred) {
   case FCmpInst::FCMP_UNE:   FOC = ISD::SETNE; FPC = ISD::SETUNE; break;
   case FCmpInst::FCMP_TRUE:  FOC = FPC = ISD::SETTRUE; break;
   default:
-    LLVM_UNREACHABLE("Invalid FCmp predicate opcode!");
+    llvm_unreachable("Invalid FCmp predicate opcode!");
     FOC = FPC = ISD::SETFALSE;
     break;
   }
@@ -1099,7 +1099,7 @@ static ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred) {
   case ICmpInst::ICMP_SGT: return ISD::SETGT;
   case ICmpInst::ICMP_UGT: return ISD::SETUGT;
   default:
-    LLVM_UNREACHABLE("Invalid ICmp predicate opcode!");
+    llvm_unreachable("Invalid ICmp predicate opcode!");
     return ISD::SETNE;
   }
 }
@@ -1131,7 +1131,7 @@ SelectionDAGLowering::EmitBranchForMergedCondition(Value *Cond,
         Condition = getFCmpCondCode(FC->getPredicate());
       } else {
         Condition = ISD::SETEQ; // silence warning.
-        LLVM_UNREACHABLE("Unknown compare instruction");
+        llvm_unreachable("Unknown compare instruction");
       }
 
       CaseBlock CB(Condition, BOp->getOperand(0),
@@ -4256,7 +4256,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
   case Intrinsic::gcread:
   case Intrinsic::gcwrite:
-    LLVM_UNREACHABLE("GC failed to lower gcread/gcwrite intrinsics!");
+    llvm_unreachable("GC failed to lower gcread/gcwrite intrinsics!");
     return 0;
 
   case Intrinsic::flt_rounds: {
@@ -5763,7 +5763,7 @@ void TargetLowering::LowerOperationWrapper(SDNode *N,
 }
 
 SDValue TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
-  LLVM_UNREACHABLE("LowerOperation not implemented for this target!");
+  llvm_unreachable("LowerOperation not implemented for this target!");
   return SDValue();
 }
 

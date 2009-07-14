@@ -462,7 +462,7 @@ static bool MergeCompare(const std::pair<unsigned,MachineBasicBlock*> &p,
       // _GLIBCXX_DEBUG checks strict weak ordering, which involves comparing
       // an object with itself.
 #ifndef _GLIBCXX_DEBUG
-      LLVM_UNREACHABLE("Predecessor appears twice");
+      llvm_unreachable("Predecessor appears twice");
 #endif
       return false;
     }

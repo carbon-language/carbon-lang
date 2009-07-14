@@ -216,7 +216,7 @@ emitCurrentABIString(void)
     default: break;
   }
 
-  LLVM_UNREACHABLE("Unknown Mips ABI");
+  llvm_unreachable("Unknown Mips ABI");
   return NULL;
 }  
 
@@ -406,7 +406,7 @@ printOperand(const MachineInstr *MI, int opNum)
       break;
   
     default:
-      LLVM_UNREACHABLE("<unknown operand type>");
+      llvm_unreachable("<unknown operand type>");
   }
 
   if (closeP) O << ")";
@@ -545,13 +545,13 @@ printModuleLevelGV(const GlobalVariable* GVar) {
       printSizeAndType = false;
     break;
    case GlobalValue::GhostLinkage:
-    LLVM_UNREACHABLE("Should not have any unmaterialized functions!");
+    llvm_unreachable("Should not have any unmaterialized functions!");
    case GlobalValue::DLLImportLinkage:
-    LLVM_UNREACHABLE("DLLImport linkage is not supported by this target!");
+    llvm_unreachable("DLLImport linkage is not supported by this target!");
    case GlobalValue::DLLExportLinkage:
-    LLVM_UNREACHABLE("DLLExport linkage is not supported by this target!");
+    llvm_unreachable("DLLExport linkage is not supported by this target!");
    default:
-    LLVM_UNREACHABLE("Unknown linkage type!");
+    llvm_unreachable("Unknown linkage type!");
   }
 
   EmitAlignment(Align, GVar);

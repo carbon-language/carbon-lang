@@ -187,7 +187,7 @@ static XCore::CondCode GetCondFromBranchOpc(unsigned BrOpc)
 static inline unsigned GetCondBranchFromCond(XCore::CondCode CC) 
 {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Illegal condition code!");
+  default: llvm_unreachable("Illegal condition code!");
   case XCore::COND_TRUE   : return XCore::BRFT_lru6;
   case XCore::COND_FALSE  : return XCore::BRFF_lru6;
   }
@@ -198,7 +198,7 @@ static inline unsigned GetCondBranchFromCond(XCore::CondCode CC)
 static inline XCore::CondCode GetOppositeBranchCondition(XCore::CondCode CC)
 {
   switch (CC) {
-  default: LLVM_UNREACHABLE("Illegal condition code!");
+  default: llvm_unreachable("Illegal condition code!");
   case XCore::COND_TRUE   : return XCore::COND_FALSE;
   case XCore::COND_FALSE  : return XCore::COND_TRUE;
   }
@@ -408,7 +408,7 @@ void XCoreInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                             const TargetRegisterClass *RC,
                             SmallVectorImpl<MachineInstr*> &NewMIs) const
 {
-  LLVM_UNREACHABLE("unimplemented");
+  llvm_unreachable("unimplemented");
 }
 
 void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -428,7 +428,7 @@ void XCoreInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                               const TargetRegisterClass *RC,
                               SmallVectorImpl<MachineInstr*> &NewMIs) const
 {
-  LLVM_UNREACHABLE("unimplemented");
+  llvm_unreachable("unimplemented");
 }
 
 bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,

@@ -47,19 +47,20 @@ namespace llvm {
   void llvm_report_error(const std::string &reason) NORETURN;
 
   /// This function calls abort(), and prints the optional message to stderr.
-  /// Call this instead of assert(0), so that compiler knows the path is not
-  /// reachable even for NDEBUG builds.
-  /// Use the LLVM_UNREACHABLE macro instead that adds location info.
-  void llvm_unreachable(const char *msg=0, const char *file=0,
-                        unsigned line=0) NORETURN;
+  /// Use the llvm_unreachable macro (that adds location info), instead of
+  /// calling this function directly.
+  void llvm_unreachable_internal(const char *msg=0, const char *file=0,
+                                 unsigned line=0) NORETURN;
 }
 
-/// Macro that calls llvm_unreachable with location info and message in 
-/// debug mode. In NDEBUG mode it calls llvm_unreachable with no message.
+/// Prints the message and location info to stderr in !NDEBUG builds.
+/// In NDEBUG mode it only prints "UNREACHABLE executed".
+/// Use this instead of assert(0), so that the compiler knows this path
+/// is not reachable even for NDEBUG builds.
 #ifndef NDEBUG
-#define LLVM_UNREACHABLE(msg) llvm_unreachable(msg, __FILE__, __LINE__)
+#define llvm_unreachable(msg) llvm_unreachable_internal(msg, __FILE__, __LINE__)
 #else
-#define LLVM_UNREACHABLE(msg) llvm_unreachable()
+#define llvm_unreachable(msg) llvm_unreachable_internal()
 #endif
 
 #endif

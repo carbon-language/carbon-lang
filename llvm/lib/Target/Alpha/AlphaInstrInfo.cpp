@@ -201,7 +201,7 @@ AlphaInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addReg(SrcReg, getKillRegState(isKill))
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
-    LLVM_UNREACHABLE("Unhandled register class");
+    llvm_unreachable("Unhandled register class");
 }
 
 void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
@@ -217,7 +217,7 @@ void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   else if (RC == Alpha::GPRCRegisterClass)
     Opc = Alpha::STQ;
   else
-    LLVM_UNREACHABLE("Unhandled register class");
+    llvm_unreachable("Unhandled register class");
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = 
     BuildMI(MF, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill));
@@ -246,7 +246,7 @@ AlphaInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, DL, get(Alpha::LDQ), DestReg)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
-    LLVM_UNREACHABLE("Unhandled register class");
+    llvm_unreachable("Unhandled register class");
 }
 
 void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
@@ -261,7 +261,7 @@ void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   else if (RC == Alpha::GPRCRegisterClass)
     Opc = Alpha::LDQ;
   else
-    LLVM_UNREACHABLE("Unhandled register class");
+    llvm_unreachable("Unhandled register class");
   DebugLoc DL = DebugLoc::getUnknownLoc();
   MachineInstrBuilder MIB = 
     BuildMI(MF, DL, get(Opc), DestReg);
@@ -332,7 +332,7 @@ static unsigned AlphaRevCondCode(unsigned Opcode) {
   case Alpha::FBLE: return Alpha::FBGT;
   case Alpha::FBLT: return Alpha::FBGE;
   default:
-    LLVM_UNREACHABLE("Unknown opcode");
+    llvm_unreachable("Unknown opcode");
   }
   return 0; // Not reached
 }

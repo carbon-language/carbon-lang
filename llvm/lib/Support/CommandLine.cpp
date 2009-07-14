@@ -205,7 +205,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
     cerr << ProgramName
          << ": Bad ValueMask flag! CommandLine usage error:"
          << Handler->getValueExpectedFlag() << "\n";
-    llvm_unreachable();
+    llvm_unreachable(0);
   }
 
   // If this isn't a multi-arg option, just run the handler.
@@ -693,7 +693,7 @@ void cl::ParseCommandLineOptions(int argc, char **argv,
           ValNo++;
           break;
         default:
-          LLVM_UNREACHABLE("Internal error, unexpected NumOccurrences flag in "
+          llvm_unreachable("Internal error, unexpected NumOccurrences flag in "
                  "positional argument processing!");
         }
       }

@@ -1063,7 +1063,7 @@ unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr) {
     return CI->getCallingConv();
   else if (InvokeInst *II = dyn_cast<InvokeInst>(V))
     return II->getCallingConv();
-  LLVM_UNREACHABLE("LLVMGetInstructionCallConv applies only to call and invoke!");
+  llvm_unreachable("LLVMGetInstructionCallConv applies only to call and invoke!");
   return 0;
 }
 
@@ -1073,7 +1073,7 @@ void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
     return CI->setCallingConv(CC);
   else if (InvokeInst *II = dyn_cast<InvokeInst>(V))
     return II->setCallingConv(CC);
-  LLVM_UNREACHABLE("LLVMSetInstructionCallConv applies only to call and invoke!");
+  llvm_unreachable("LLVMSetInstructionCallConv applies only to call and invoke!");
 }
 
 void LLVMAddInstrAttribute(LLVMValueRef Instr, unsigned index, 

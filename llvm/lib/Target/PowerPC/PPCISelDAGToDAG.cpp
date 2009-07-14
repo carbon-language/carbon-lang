@@ -602,8 +602,8 @@ static PPC::Predicate getPredicateForSetCC(ISD::CondCode CC) {
   case ISD::SETONE:
   case ISD::SETOLE:
   case ISD::SETOGE:
-    LLVM_UNREACHABLE("Should be lowered by legalize!");
-  default: LLVM_UNREACHABLE("Unknown condition!");
+    llvm_unreachable("Should be lowered by legalize!");
+  default: llvm_unreachable("Unknown condition!");
   case ISD::SETOEQ:
   case ISD::SETEQ:  return PPC::PRED_EQ;
   case ISD::SETUNE:
@@ -634,7 +634,7 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
   Invert = false;
   Other = -1;
   switch (CC) {
-  default: LLVM_UNREACHABLE("Unknown condition!");
+  default: llvm_unreachable("Unknown condition!");
   case ISD::SETOLT:
   case ISD::SETLT:  return 0;                  // Bit #0 = SETOLT
   case ISD::SETOGT:
@@ -653,7 +653,7 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool &Invert, int &Other) {
   case ISD::SETOGE: 
   case ISD::SETOLE: 
   case ISD::SETONE:
-    LLVM_UNREACHABLE("Invalid branch code: should be expanded by legalize");
+    llvm_unreachable("Invalid branch code: should be expanded by legalize");
   // These are invalid for floating point.  Assume integer.
   case ISD::SETULT: return 0;
   case ISD::SETUGT: return 1;
@@ -941,7 +941,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
         // Handle PPC32 integer and normal FP loads.
         assert((!isSExt || LoadedVT == MVT::i16) && "Invalid sext update load");
         switch (LoadedVT.getSimpleVT()) {
-          default: LLVM_UNREACHABLE("Invalid PPC load type!");
+          default: llvm_unreachable("Invalid PPC load type!");
           case MVT::f64: Opcode = PPC::LFDU; break;
           case MVT::f32: Opcode = PPC::LFSU; break;
           case MVT::i32: Opcode = PPC::LWZU; break;
@@ -953,7 +953,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
         assert(LD->getValueType(0) == MVT::i64 && "Unknown load result type!");
         assert((!isSExt || LoadedVT == MVT::i16) && "Invalid sext update load");
         switch (LoadedVT.getSimpleVT()) {
-          default: LLVM_UNREACHABLE("Invalid PPC load type!");
+          default: llvm_unreachable("Invalid PPC load type!");
           case MVT::i64: Opcode = PPC::LDU; break;
           case MVT::i32: Opcode = PPC::LWZU8; break;
           case MVT::i16: Opcode = isSExt ? PPC::LHAU8 : PPC::LHZU8; break;
@@ -970,7 +970,7 @@ SDNode *PPCDAGToDAGISel::Select(SDValue Op) {
                                    PPCLowering.getPointerTy(),
                                    MVT::Other, Ops, 3);
     } else {
-      LLVM_UNREACHABLE("R+R preindex loads not supported yet!");
+      llvm_unreachable("R+R preindex loads not supported yet!");
     }
   }
     

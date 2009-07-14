@@ -584,12 +584,12 @@ namespace llvm {
       case scCouldNotCompute:
         return ((SC*)this)->visitCouldNotCompute((const SCEVCouldNotCompute*)S);
       default:
-        LLVM_UNREACHABLE("Unknown SCEV type!");
+        llvm_unreachable("Unknown SCEV type!");
       }
     }
 
     RetVal visitCouldNotCompute(const SCEVCouldNotCompute *S) {
-      LLVM_UNREACHABLE("Invalid use of SCEVCouldNotCompute!");
+      llvm_unreachable("Invalid use of SCEVCouldNotCompute!");
       return RetVal();
     }
   };

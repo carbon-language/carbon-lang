@@ -1069,7 +1069,7 @@ APFloat::roundAwayFromZero(roundingMode rounding_mode,
 
   switch (rounding_mode) {
   default:
-    llvm_unreachable();
+    llvm_unreachable(0);
 
   case rmNearestTiesToAway:
     return lost_fraction == lfExactlyHalf || lost_fraction == lfMoreThanHalf;
@@ -1208,7 +1208,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
 {
   switch (convolve(category, rhs.category)) {
   default:
-    llvm_unreachable();
+    llvm_unreachable(0);
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -1332,7 +1332,7 @@ APFloat::multiplySpecials(const APFloat &rhs)
 {
   switch (convolve(category, rhs.category)) {
   default:
-    llvm_unreachable();
+    llvm_unreachable(0);
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -1374,7 +1374,7 @@ APFloat::divideSpecials(const APFloat &rhs)
 {
   switch (convolve(category, rhs.category)) {
   default:
-    llvm_unreachable();
+    llvm_unreachable(0);
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -1416,7 +1416,7 @@ APFloat::modSpecials(const APFloat &rhs)
 {
   switch (convolve(category, rhs.category)) {
   default:
-    llvm_unreachable();
+    llvm_unreachable(0);
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -1693,7 +1693,7 @@ APFloat::compare(const APFloat &rhs) const
 
   switch (convolve(category, rhs.category)) {
   default:
-    llvm_unreachable();
+    llvm_unreachable(0);
 
   case convolve(fcNaN, fcZero):
   case convolve(fcNaN, fcNormal):
@@ -2930,7 +2930,7 @@ APFloat::initFromAPInt(const APInt& api, bool isIEEE)
   else if (api.getBitWidth()==128 && !isIEEE)
     return initFromPPCDoubleDoubleAPInt(api);
   else
-    llvm_unreachable();
+    llvm_unreachable(0);
 }
 
 APFloat::APFloat(const APInt& api, bool isIEEE)

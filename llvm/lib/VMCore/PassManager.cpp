@@ -724,7 +724,7 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
     OtherDT.dump();
     cerr << "----- Invalid -----\n";
     DT->dump();
-    LLVM_UNREACHABLE("Invalid dominator info");
+    llvm_unreachable("Invalid dominator info");
   }
 
   DominanceFrontier *DF = P.getAnalysisIfAvailable<DominanceFrontier>();
@@ -741,7 +741,7 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
     OtherDF.dump();
     cerr << "----- Invalid -----\n";
     DF->dump();
-    LLVM_UNREACHABLE("Invalid dominator info");
+    llvm_unreachable("Invalid dominator info");
   }
 }
 
@@ -883,7 +883,7 @@ void PMDataManager::add(Pass *P, bool ProcessAnalysis) {
       // Keep track of higher level analysis used by this manager.
       HigherLevelAnalysis.push_back(PRequired);
     } else 
-      LLVM_UNREACHABLE("Unable to accomodate Required Pass");
+      llvm_unreachable("Unable to accomodate Required Pass");
   }
 
   // Set P as P's last user until someone starts using P.
@@ -1106,7 +1106,7 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   cerr << "Unable to schedule '" << RequiredPass->getPassName();
   cerr << "' required by '" << P->getPassName() << "'\n";
 #endif
-  LLVM_UNREACHABLE("Unable to schedule pass");
+  llvm_unreachable("Unable to schedule pass");
 }
 
 // Destructor

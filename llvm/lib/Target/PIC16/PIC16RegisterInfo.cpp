@@ -65,17 +65,17 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
 
 int PIC16RegisterInfo::
 getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  LLVM_UNREACHABLE("Not keeping track of debug information yet!!");
+  llvm_unreachable("Not keeping track of debug information yet!!");
   return -1;
 }
 
 unsigned PIC16RegisterInfo::getFrameRegister(MachineFunction &MF) const {
-  LLVM_UNREACHABLE("PIC16 Does not have any frame register");
+  llvm_unreachable("PIC16 Does not have any frame register");
   return 0;
 }
 
 unsigned PIC16RegisterInfo::getRARegister() const {
-  LLVM_UNREACHABLE("PIC16 Does not have any return address register");
+  llvm_unreachable("PIC16 Does not have any return address register");
   return 0;
 }
 

@@ -291,7 +291,7 @@ unsigned MachineModuleInfo::getPersonalityIndex() const {
   }
 
   // This should never happen
-  LLVM_UNREACHABLE("Personality function should be set!");
+  llvm_unreachable("Personality function should be set!");
   return 0;
 }
 

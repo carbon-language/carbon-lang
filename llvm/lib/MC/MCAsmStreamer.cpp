@@ -204,7 +204,7 @@ void MCAsmStreamer::EmitValue(const MCValue &Value, unsigned Size) {
   // Need target hooks to know how to print this.
   switch (Size) {
   default:
-    LLVM_UNREACHABLE("Invalid size for machine code value!");
+    llvm_unreachable("Invalid size for machine code value!");
   case 1: OS << ".byte"; break;
   case 2: OS << ".short"; break;
   case 4: OS << ".long"; break;
@@ -225,9 +225,9 @@ void MCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
 
   switch (ValueSize) {
   default:
-    LLVM_UNREACHABLE("Invalid size for machine code value!");
+    llvm_unreachable("Invalid size for machine code value!");
   case 8:
-    LLVM_UNREACHABLE("Unsupported alignment size!");
+    llvm_unreachable("Unsupported alignment size!");
   case 1: OS << (IsPow2 ? ".p2align" : ".balign"); break;
   case 2: OS << (IsPow2 ? ".p2alignw" : ".balignw"); break;
   case 4: OS << (IsPow2 ? ".p2alignl" : ".balignl"); break;

@@ -148,7 +148,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         cerr << "eliminateCallFramePseudoInstr size too big: "
              << Amount << "\n";
 #endif
-        llvm_unreachable();
+        llvm_unreachable(0);
       }
 
       MachineInstr *New;
@@ -257,7 +257,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
               .addReg(ScratchReg, RegState::Kill);
         break;
       default:
-        LLVM_UNREACHABLE("Unexpected Opcode");
+        llvm_unreachable("Unexpected Opcode");
       }
     } else {
       switch (MI.getOpcode()) {
@@ -278,7 +278,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
               .addImm(Offset);
         break;
       default:
-        LLVM_UNREACHABLE("Unexpected Opcode");
+        llvm_unreachable("Unexpected Opcode");
       }
     }
   } else {
@@ -309,7 +309,7 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
             .addImm(Offset);
       break;
     default:
-      LLVM_UNREACHABLE("Unexpected Opcode");
+      llvm_unreachable("Unexpected Opcode");
     }
   }
   // Erase old instruction.
