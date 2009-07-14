@@ -609,9 +609,15 @@ Value *SCEVExpander::visitSignExtendExpr(const SCEVSignExtendExpr *S) {
 }
 
 Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
-  const Type *Ty = SE.getEffectiveSCEVType(S->getType());
-  Value *LHS = expandCodeFor(S->getOperand(0), Ty);
-  for (unsigned i = 1; i < S->getNumOperands(); ++i) {
+  Value *LHS = expand(S->getOperand(S->getNumOperands()-1));
+  const Type *Ty = LHS->getType();
+  for (int i = S->getNumOperands()-2; i >= 0; --i) {
+    // In the case of mixed integer and pointer types, do the
+    // rest of the comparisons as integer.
+    if (S->getOperand(i)->getType() != Ty) {
+      Ty = SE.getEffectiveSCEVType(Ty);
+      LHS = InsertNoopCastOfTo(LHS, Ty);
+    }
     Value *RHS = expandCodeFor(S->getOperand(i), Ty);
     Value *ICmp = Builder.CreateICmpSGT(LHS, RHS, "tmp");
     InsertedValues.insert(ICmp);
@@ -619,13 +625,23 @@ Value *SCEVExpander::visitSMaxExpr(const SCEVSMaxExpr *S) {
     InsertedValues.insert(Sel);
     LHS = Sel;
   }
+  // In the case of mixed integer and pointer types, cast the
+  // final result back to the pointer type.
+  if (LHS->getType() != S->getType())
+    LHS = InsertNoopCastOfTo(LHS, S->getType());
   return LHS;
 }
 
 Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
-  const Type *Ty = SE.getEffectiveSCEVType(S->getType());
-  Value *LHS = expandCodeFor(S->getOperand(0), Ty);
-  for (unsigned i = 1; i < S->getNumOperands(); ++i) {
+  Value *LHS = expand(S->getOperand(S->getNumOperands()-1));
+  const Type *Ty = LHS->getType();
+  for (int i = S->getNumOperands()-2; i >= 0; --i) {
+    // In the case of mixed integer and pointer types, do the
+    // rest of the comparisons as integer.
+    if (S->getOperand(i)->getType() != Ty) {
+      Ty = SE.getEffectiveSCEVType(Ty);
+      LHS = InsertNoopCastOfTo(LHS, Ty);
+    }
     Value *RHS = expandCodeFor(S->getOperand(i), Ty);
     Value *ICmp = Builder.CreateICmpUGT(LHS, RHS, "tmp");
     InsertedValues.insert(ICmp);
@@ -633,6 +649,10 @@ Value *SCEVExpander::visitUMaxExpr(const SCEVUMaxExpr *S) {
     InsertedValues.insert(Sel);
     LHS = Sel;
   }
+  // In the case of mixed integer and pointer types, cast the
+  // final result back to the pointer type.
+  if (LHS->getType() != S->getType())
+    LHS = InsertNoopCastOfTo(LHS, S->getType());
   return LHS;
 }
 
