@@ -864,8 +864,6 @@ dnl=== SECTION 5: Check for libraries
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-dnl libelf is for sparc only; we can ignore it if we don't have it
-AC_CHECK_LIB(elf, elf_begin)
 AC_CHECK_LIB(m,sin)
 if test "$llvm_cv_os_type" = "MingW" ; then
   AC_CHECK_LIB(imagehlp, main)

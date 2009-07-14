@@ -184,9 +184,6 @@
 /* Define if you have the libdl library or equivalent. */
 #undef HAVE_LIBDL
 
-/* Define to 1 if you have the `elf' library (-lelf). */
-#undef HAVE_LIBELF
-
 /* Define to 1 if you have the `imagehlp' library (-limagehlp). */
 #undef HAVE_LIBIMAGEHLP
 
