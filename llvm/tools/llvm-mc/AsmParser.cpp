@@ -528,6 +528,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveDarwinZerofill();
     if (!strcmp(IDVal, ".desc"))
       return ParseDirectiveDarwinSymbolDesc();
+    if (!strcmp(IDVal, ".lsym"))
+      return ParseDirectiveDarwinLsym();
 
     if (!strcmp(IDVal, ".subsections_via_symbols"))
       return ParseDirectiveDarwinSubsectionsViaSymbols();
@@ -1123,6 +1125,36 @@ bool AsmParser::ParseDirectiveAbort() {
   Lexer.Lex();
 
   Out.AbortAssembly(Str);
+
+  return false;
+}
+
+/// ParseDirectiveLsym
+///  ::= .lsym identifier , expression
+bool AsmParser::ParseDirectiveDarwinLsym() {
+  if (Lexer.isNot(asmtok::Identifier))
+    return TokError("expected identifier in directive");
+  
+  // handle the identifier as the key symbol.
+  SMLoc IDLoc = Lexer.getLoc();
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+  Lexer.Lex();
+
+  if (Lexer.isNot(asmtok::Comma))
+    return TokError("unexpected token in '.lsym' directive");
+  Lexer.Lex();
+
+  MCValue Expr;
+  if (ParseRelocatableExpression(Expr))
+    return true;
+
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.lsym' directive");
+  
+  Lexer.Lex();
+
+  // Create the Sym with the value of the Expr
+  Out.EmitLocalSymbol(Sym, Expr);
 
   return false;
 }

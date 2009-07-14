@@ -110,6 +110,7 @@ private:
   /// accepts a single symbol (which should be a label or an external).
   bool ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr);
   bool ParseDirectiveDarwinSymbolDesc(); // Darwin specific ".desc"
+  bool ParseDirectiveDarwinLsym(); // Darwin specific ".lsym"
 
   bool ParseDirectiveComm(bool IsLocal); // ".comm" and ".lcomm"
   bool ParseDirectiveDarwinZerofill(); // Darwin specific ".zerofill"

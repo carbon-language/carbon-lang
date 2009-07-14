@@ -126,6 +126,12 @@ namespace llvm {
     /// @param DescValue - The value to set into the n_desc field.
     virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) = 0;
 
+    /// EmitLocalSymbol - Emit a local symbol of @param Value to @param Symbol.
+    ///
+    /// @param Symbol - The local symbol being created.
+    /// @param Value - The value for the symbol.
+    virtual void EmitLocalSymbol(MCSymbol *Symbol, const MCValue &Value) = 0;
+
     /// EmitCommonSymbol - Emit a common or local common symbol of @param Size
     /// with the @param Pow2Alignment if non-zero.
     ///
