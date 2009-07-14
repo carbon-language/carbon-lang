@@ -159,8 +159,8 @@ const Type *MVT::getTypeForMVT(LLVMContext &Context) const {
   case MVT::v32i8:   return Context.getVectorType(Type::Int8Ty, 32);
   case MVT::v2i16:   return Context.getVectorType(Type::Int16Ty, 2);
   case MVT::v4i16:   return Context.getVectorType(Type::Int16Ty, 4);
-  case MVT::v8i16:   return Context.getVectorType(Type::Int16Ty, 16);
-  case MVT::v16i16:  return Context.getVectorType(Type::Int16Ty, 8);
+  case MVT::v8i16:   return Context.getVectorType(Type::Int16Ty, 8);
+  case MVT::v16i16:  return Context.getVectorType(Type::Int16Ty, 16);
   case MVT::v2i32:   return Context.getVectorType(Type::Int32Ty, 2);
   case MVT::v3i32:   return Context.getVectorType(Type::Int32Ty, 3);
   case MVT::v4i32:   return Context.getVectorType(Type::Int32Ty, 4);
