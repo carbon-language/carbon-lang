@@ -170,7 +170,7 @@ public:
     unsigned byte = V.getLoBits(curBits).getZExtValue() << (fieldOffset & 7);
     do {
       llvm::Constant* byteC = llvm::ConstantInt::get(llvm::Type::Int8Ty, byte);
-      Elts[i] = llvm::ConstantExpr::getOr(Elts[i], byteC);
+      Elts[i] = CGM.getLLVMContext().getConstantExprOr(Elts[i], byteC);
       ++i;
       V = V.lshr(curBits);
       bitsToInsert -= curBits;
