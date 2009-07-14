@@ -225,11 +225,15 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
   if (!R->isBoundable())
     return state;
 
-  if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R)) {
+  if (isa<AllocaRegion>(R) || isa<SymbolicRegion>(R) 
+      || isa<ObjCObjectRegion>(R)) {
     // Invalidate the alloca region by setting its default value to 
     // conjured symbol. The type of the symbol is irrelavant.
     SVal V = ValMgr.getConjuredSymbolVal(E, Ctx.IntTy, Count);
     state = setDefaultValue(state, R, V);
+    
+    // FIXME: This form of invalidation is a little bogus; we actually need
+    // to invalidate all subregions as well.
     return state;
   }
 
