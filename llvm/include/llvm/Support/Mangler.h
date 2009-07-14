@@ -89,10 +89,6 @@ public:
   ///
   std::string getMangledName(const GlobalValue *V, const char *Suffix = "",
                              bool ForcePrivate = false);
-  
-  std::string getValueName(const GlobalValue *V, const char *Suffix = "") {
-    return getMangledName(V, Suffix);
-  }
 
   /// makeNameProper - We don't want identifier names with ., space, or
   /// - in them, so we mangle these characters into the strings "d_",
