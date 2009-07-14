@@ -81,7 +81,7 @@ namespace llvm
 
     ~formatted_raw_ostream() {
       if (DeleteStream)
-        delete &TheStream;
+        delete TheStream;
     }
     
     void setStream(raw_ostream &Stream, bool Delete = false) {
