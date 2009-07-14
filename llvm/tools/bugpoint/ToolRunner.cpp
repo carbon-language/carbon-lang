@@ -635,6 +635,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   std::vector<const char*> ProgramArgs;
 
+  std::string Exec;
   if (RemoteClientPath.isEmpty())
     ProgramArgs.push_back(OutputBinary.c_str());
   else {
@@ -650,10 +651,10 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
       ProgramArgs.push_back(RemoteExtra.c_str());
     }
 
+    // Full path to the binary
     char* env_pwd = getenv("PWD");
-    std::string Exec = "cd ";
     Exec += env_pwd;
-    Exec += "; ./";
+    Exec += "/";
     Exec += OutputBinary.c_str();
     ProgramArgs.push_back(Exec.c_str());
   }
@@ -673,14 +674,21 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   FileRemover OutputBinaryRemover(OutputBinary);
 
-  if (RemoteClientPath.isEmpty())
+  if (RemoteClientPath.isEmpty()) {
+    DEBUG(std::cerr << "<run locally>" << std::flush;);
     return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
         sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
         Timeout, MemoryLimit);
-  else
-    return RunProgramWithTimeout(sys::Path(RemoteClientPath), &ProgramArgs[0],
-        sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
-        Timeout, MemoryLimit);
+  } else {
+    std::cout << "<run remotely>" << std::flush;
+    int RemoteClientStatus = RunProgramWithTimeout(sys::Path(RemoteClientPath),
+        &ProgramArgs[0], sys::Path(InputFile), sys::Path(OutputFile),
+        sys::Path(OutputFile), Timeout, MemoryLimit);
+    if (RemoteClientStatus != 0) {
+      std::cerr << "Remote Client failed with an error: " <<
+        RemoteClientStatus << ".\n" << std::flush;
+    }
+  }
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
