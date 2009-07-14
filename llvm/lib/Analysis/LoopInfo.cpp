@@ -38,8 +38,69 @@ X("loops", "Natural Loop Information", true, true);
 ///
 bool Loop::isLoopInvariant(Value *V) const {
   if (Instruction *I = dyn_cast<Instruction>(V))
-    return !contains(I->getParent());
+    return isLoopInvariant(I);
   return true;  // All non-instructions are loop invariant
+}
+
+/// isLoopInvariant - Return true if the specified instruction is
+/// loop-invariant.
+///
+bool Loop::isLoopInvariant(Instruction *I) const {
+  return !contains(I->getParent());
+}
+
+/// makeLoopInvariant - If the given value is an instruciton inside of the
+/// loop and it can be hoisted, do so to make it trivially loop-invariant.
+/// Return true if the value after any hoisting is loop invariant. This
+/// function can be used as a slightly more aggressive replacement for
+/// isLoopInvariant.
+///
+/// If InsertPt is specified, it is the point to hoist instructions to.
+/// If null, the terminator of the loop preheader is used.
+///
+bool Loop::makeLoopInvariant(Value *V, Instruction *InsertPt) const {
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    return makeLoopInvariant(I);
+  return true;  // All non-instructions are loop-invariant.
+}
+
+/// makeLoopInvariant - If the given instruction is inside of the
+/// loop and it can be hoisted, do so to make it trivially loop-invariant.
+/// Return true if the instruction after any hoisting is loop invariant. This
+/// function can be used as a slightly more aggressive replacement for
+/// isLoopInvariant.
+///
+/// If InsertPt is specified, it is the point to hoist instructions to.
+/// If null, the terminator of the loop preheader is used.
+///
+bool Loop::makeLoopInvariant(Instruction *I, Instruction *InsertPt) const {
+  // Test if the value is already loop-invariant.
+  if (isLoopInvariant(I))
+    return true;
+  // Don't hoist instructions with side-effects.
+  if (I->isTrapping())
+    return false;
+  // Don't hoist PHI nodes.
+  if (isa<PHINode>(I))
+    return false;
+  // Don't hoist allocation instructions.
+  if (isa<AllocationInst>(I))
+    return false;
+  // Determine the insertion point, unless one was given.
+  if (!InsertPt) {
+    BasicBlock *Preheader = getLoopPreheader();
+    // Without a preheader, hoisting is not feasible.
+    if (!Preheader)
+      return false;
+    InsertPt = Preheader->getTerminator();
+  }
+  // Don't hoist instructions with loop-variant operands.
+  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+    if (!makeLoopInvariant(I->getOperand(i), InsertPt))
+      return false;
+  // Hoist.
+  I->moveBefore(InsertPt);
+  return true;
 }
 
 /// getCanonicalInductionVariable - Check to see if the loop has a canonical

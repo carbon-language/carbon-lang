@@ -476,6 +476,33 @@ public:
   ///
   bool isLoopInvariant(Value *V) const;
 
+  /// isLoopInvariant - Return true if the specified instruction is
+  /// loop-invariant.
+  ///
+  bool isLoopInvariant(Instruction *I) const;
+
+  /// makeLoopInvariant - If the given value is an instruciton inside of the
+  /// loop and it can be hoisted, do so to make it trivially loop-invariant.
+  /// Return true if the value after any hoisting is loop invariant. This
+  /// function can be used as a slightly more aggressive replacement for
+  /// isLoopInvariant.
+  ///
+  /// If InsertPt is specified, it is the point to hoist instructions to.
+  /// If null, the terminator of the loop preheader is used.
+  ///
+  bool makeLoopInvariant(Value *V, Instruction *InsertPt = 0) const;
+
+  /// makeLoopInvariant - If the given instruction is inside of the
+  /// loop and it can be hoisted, do so to make it trivially loop-invariant.
+  /// Return true if the instruction after any hoisting is loop invariant. This
+  /// function can be used as a slightly more aggressive replacement for
+  /// isLoopInvariant.
+  ///
+  /// If InsertPt is specified, it is the point to hoist instructions to.
+  /// If null, the terminator of the loop preheader is used.
+  ///
+  bool makeLoopInvariant(Instruction *I, Instruction *InsertPt = 0) const;
+
   /// getCanonicalInductionVariable - Check to see if the loop has a canonical
   /// induction variable: an integer recurrence that starts at 0 and increments
   /// by one each time through the loop.  If so, return the phi node that
