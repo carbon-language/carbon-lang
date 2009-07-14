@@ -41,7 +41,6 @@ struct OperandTraits<User> {
   struct Layout {
     typedef U overlay;
   };
-  static inline void *allocate(unsigned);
 };
 
 class User : public Value {

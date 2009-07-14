@@ -48,7 +48,6 @@ struct FixedNumOperandTraits {
       overlay(); // DO NOT IMPLEMENT
     };
   };
-  static inline void *allocate(unsigned); // FIXME
 };
 
 //===----------------------------------------------------------------------===//
@@ -81,7 +80,6 @@ struct VariadicOperandTraits {
   static unsigned operands(const User *U) {
     return U->getNumOperands();
   }
-  static inline void *allocate(unsigned); // FIXME
 };
 
 //===----------------------------------------------------------------------===//
@@ -109,7 +107,6 @@ struct HungoffOperandTraits {
   static unsigned operands(const User *U) {
     return U->getNumOperands();
   }
-  static inline void *allocate(unsigned); // FIXME
 };
 
 /// Macro for generating in-class operand accessor declarations.
