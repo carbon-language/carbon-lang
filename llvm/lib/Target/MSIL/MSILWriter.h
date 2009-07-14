@@ -187,7 +187,7 @@ namespace {
     void printIndirectSave(const Type* Ty);
 
     void printCastInstruction(unsigned int Op, const Value* V,
-                              const Type* Ty);
+                              const Type* Ty, const Type* SrcTy=0);
 
     void printGepInstruction(const Value* V, gep_type_iterator I,
                              gep_type_iterator E);

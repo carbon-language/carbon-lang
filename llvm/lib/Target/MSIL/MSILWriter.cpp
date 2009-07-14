@@ -670,12 +670,18 @@ void MSILWriter::printIndirectSave(const Type* Ty) {
 
 
 void MSILWriter::printCastInstruction(unsigned int Op, const Value* V,
-                                      const Type* Ty) {
+                                      const Type* Ty, const Type* SrcTy) {
   std::string Tmp("");
   printValueLoad(V);
   switch (Op) {
   // Signed
   case Instruction::SExt:
+    // If sign extending int, convert first from unsigned to signed
+    // with the same bit size - because otherwise we will loose the sign.
+    if (SrcTy) {
+      Tmp = "conv."+getTypePostfix(SrcTy,false,true);
+      printSimpleInstruction(Tmp.c_str());
+    }
   case Instruction::SIToFP:
   case Instruction::FPToSI:
     Tmp = "conv."+getTypePostfix(Ty,false,true);
@@ -1152,9 +1158,13 @@ void MSILWriter::printInstruction(const Instruction* Inst) {
   case Instruction::Store:
     printIndirectSave(Inst->getOperand(1), Inst->getOperand(0));
     break;
+  case Instruction::SExt:
+    printCastInstruction(Inst->getOpcode(),Left,
+                         cast<CastInst>(Inst)->getDestTy(),
+                         cast<CastInst>(Inst)->getSrcTy());
+    break;
   case Instruction::Trunc:
   case Instruction::ZExt:
-  case Instruction::SExt:
   case Instruction::FPTrunc:
   case Instruction::FPExt:
   case Instruction::UIToFP:
