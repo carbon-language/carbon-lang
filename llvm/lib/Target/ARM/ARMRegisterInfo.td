@@ -78,14 +78,14 @@ def D14 : ARMReg<14, "d14", [S28, S29]>;
 def D15 : ARMReg<15, "d15", [S30, S31]>;
 
 // VFP3 defines 16 additional double registers
-def D16 : ARMFReg<16, "d16">; def D17 : ARMFReg<17, "d16">;
-def D18 : ARMFReg<18, "d16">; def D19 : ARMFReg<19, "d16">;
-def D20 : ARMFReg<20, "d16">; def D21 : ARMFReg<21, "d16">;
-def D22 : ARMFReg<22, "d16">; def D23 : ARMFReg<23, "d16">;
-def D24 : ARMFReg<24, "d16">; def D25 : ARMFReg<25, "d16">;
-def D26 : ARMFReg<26, "d16">; def D27 : ARMFReg<27, "d16">;
-def D28 : ARMFReg<28, "d16">; def D29 : ARMFReg<29, "d16">;
-def D30 : ARMFReg<30, "d16">; def D31 : ARMFReg<31, "d16">;
+def D16 : ARMFReg<16, "d16">; def D17 : ARMFReg<17, "d17">;
+def D18 : ARMFReg<18, "d18">; def D19 : ARMFReg<19, "d19">;
+def D20 : ARMFReg<20, "d20">; def D21 : ARMFReg<21, "d21">;
+def D22 : ARMFReg<22, "d22">; def D23 : ARMFReg<23, "d23">;
+def D24 : ARMFReg<24, "d24">; def D25 : ARMFReg<25, "d25">;
+def D26 : ARMFReg<26, "d26">; def D27 : ARMFReg<27, "d27">;
+def D28 : ARMFReg<28, "d28">; def D29 : ARMFReg<29, "d29">;
+def D30 : ARMFReg<30, "d30">; def D31 : ARMFReg<31, "d31">;
 
 // Advanced SIMD (NEON) defines 16 quad-word aliases
 def Q0  : ARMReg< 0,  "q0", [D0,   D1]>;
