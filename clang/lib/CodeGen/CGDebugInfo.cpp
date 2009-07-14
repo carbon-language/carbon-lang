@@ -19,7 +19,6 @@
 #include "clang/AST/Expr.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CompileOptions.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -34,22 +33,12 @@
 using namespace clang;
 using namespace clang::CodeGen;
 
-CGDebugInfo::CGDebugInfo(CodeGenModule *m, TargetInfo *t)
+CGDebugInfo::CGDebugInfo(CodeGenModule *m)
   : M(m), isMainCompileUnitCreated(false), DebugFactory(M->getModule()),
     BlockLiteralGenericSet(false) {
-  LLVMMangler = new llvm::Mangler(m->getModule(), t->getUserLabelPrefix(), ".");
-  // add chars used in ObjC method names so method names aren't mangled
-  LLVMMangler->markCharAcceptable('[');
-  LLVMMangler->markCharAcceptable(']');
-  LLVMMangler->markCharAcceptable('(');
-  LLVMMangler->markCharAcceptable(')');
-  LLVMMangler->markCharAcceptable('-');
-  LLVMMangler->markCharAcceptable('+');
-  LLVMMangler->markCharAcceptable(' ');
 }
 
 CGDebugInfo::~CGDebugInfo() {
-  delete LLVMMangler;
   assert(RegionStack.empty() && "Region stack mismatch, stack not empty!");
 }
 
@@ -831,6 +820,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
 void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
                                     llvm::Function *Fn,
                                     CGBuilderTy &Builder) {
+  const char *LinkageName = Name;
+  
   // Skip the asm prefix if it exists.
   //
   // FIXME: This should probably be the unmangled name?
@@ -843,9 +834,7 @@ void CGDebugInfo::EmitFunctionStart(const char *Name, QualType ReturnType,
   unsigned LineNo = SM.getPresumedLoc(CurLoc).getLine();
   
   llvm::DISubprogram SP =
-    DebugFactory.CreateSubprogram(Unit, Name, Name,
-                                  LLVMMangler->getMangledName(Fn), 
-                                  Unit, LineNo,
+    DebugFactory.CreateSubprogram(Unit, Name, Name, LinkageName, Unit, LineNo,
                                   getOrCreateType(ReturnType, Unit),
                                   Fn->hasInternalLinkage(), true/*definition*/);
   
@@ -980,9 +969,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                            ArrayType::Normal, 0);
   }
 
-  DebugFactory.CreateGlobalVariable(Unit, Name, Name, 
-                                    LLVMMangler->getMangledName(Var),
-                                    Unit, LineNo,
+  DebugFactory.CreateGlobalVariable(Unit, Name, Name, "", Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);
@@ -1012,9 +999,7 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                            ArrayType::Normal, 0);
   }
 
-  DebugFactory.CreateGlobalVariable(Unit, Name, Name, 
-                                    LLVMMangler->getMangledName(Var),
-                                    Unit, LineNo,
+  DebugFactory.CreateGlobalVariable(Unit, Name, Name, "", Unit, LineNo,
                                     getOrCreateType(T, Unit),
                                     Var->hasInternalLinkage(),
                                     true/*definition*/, Var);

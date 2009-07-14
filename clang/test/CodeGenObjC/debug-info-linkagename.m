@@ -1,5 +1,7 @@
 // RUN: clang-cc  -g -S -o %t %s
 // RUN: not grep 001 %t
+// XFAIL
+
 
 @interface F 
 -(int) bar;

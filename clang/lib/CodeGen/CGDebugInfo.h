@@ -16,7 +16,6 @@
 
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include <map>
@@ -26,7 +25,6 @@
 namespace clang {
   class VarDecl;
   class ObjCInterfaceDecl;
-  class TargetInfo;
 
 namespace CodeGen {
   class CodeGenModule;
@@ -36,7 +34,6 @@ namespace CodeGen {
 /// the backend.
 class CGDebugInfo {
   CodeGenModule *M;
-  llvm::Mangler *LLVMMangler;
   bool isMainCompileUnitCreated;
   llvm::DIFactory DebugFactory;
   
@@ -71,7 +68,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DICompileUnit U);
 
 public:
-  CGDebugInfo(CodeGenModule *m, TargetInfo *t);
+  CGDebugInfo(CodeGenModule *m);
   ~CGDebugInfo();
 
   /// setLocation - Update the current source location. If \arg loc is
