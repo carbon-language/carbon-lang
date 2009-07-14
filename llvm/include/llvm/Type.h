@@ -270,7 +270,7 @@ public:
   ///
   /// Note that this may not reflect the size of memory allocated for an
   /// instance of the type or the number of bytes that are written when an
-  /// intance of the type is stored to memory. The TargetData class provides
+  /// instance of the type is stored to memory. The TargetData class provides
   /// additional query functions to provide this information.
   ///
   unsigned getPrimitiveSizeInBits() const;
