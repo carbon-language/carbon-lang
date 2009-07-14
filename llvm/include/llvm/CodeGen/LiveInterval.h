@@ -211,7 +211,25 @@ namespace llvm {
   /// LiveInterval - This class represents some number of live ranges for a
   /// register or value.  This class also contains a bit of register allocator
   /// state.
-  struct LiveInterval {
+  class LiveInterval {
+  private:
+  
+    inline unsigned getVNInfoAlignment(void) {
+#ifdef __GNUC__
+      return (unsigned)__alignof__(VNInfo);
+#else
+      // FIXME: ugly.
+      return 8u;
+#endif
+    }
+
+    Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
+    void extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd);
+    Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
+    LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
+
+  public:
+
     typedef SmallVector<LiveRange,4> Ranges;
     typedef SmallVector<VNInfo*,4> VNInfoList;
 
@@ -220,8 +238,6 @@ namespace llvm {
     float weight;        // weight of this interval
     Ranges ranges;       // the ranges in which this register is live
     VNInfoList valnos;   // value#'s
-
-  public:
     
     struct InstrSlots {
       enum {
@@ -330,15 +346,9 @@ namespace llvm {
 
       assert(MIIdx != ~0u && MIIdx != ~1u &&
              "PHI def / unused flags should now be passed explicitly.");
-#ifdef __GNUC__
-      unsigned Alignment = (unsigned)__alignof__(VNInfo);
-#else
-      // FIXME: ugly.
-      unsigned Alignment = 8;
-#endif
       VNInfo *VNI =
         static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
-                                                      Alignment));
+                                                      getVNInfoAlignment()));
       new (VNI) VNInfo((unsigned)valnos.size(), MIIdx, CopyMI);
       VNI->setIsDefAccurate(isDefAccurate);
       valnos.push_back(VNI);
@@ -349,15 +359,9 @@ namespace llvm {
     /// for the Value number.
     VNInfo *createValueCopy(const VNInfo *orig, BumpPtrAllocator &VNInfoAllocator) {
 
-#ifdef __GNUC__
-      unsigned Alignment = (unsigned)__alignof__(VNInfo);
-#else
-      // FIXME: ugly.
-      unsigned Alignment = 8;
-#endif
       VNInfo *VNI =
         static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
-                                                      Alignment));
+                                                      getVNInfoAlignment()));
     
       new (VNI) VNInfo((unsigned)valnos.size(), *orig);
       valnos.push_back(VNI);
@@ -594,11 +598,6 @@ namespace llvm {
     }
     void dump() const;
 
-  private:
-    Ranges::iterator addRangeFrom(LiveRange LR, Ranges::iterator From);
-    void extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd);
-    Ranges::iterator extendIntervalStartTo(Ranges::iterator I, unsigned NewStr);
-    LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
   };
 
   inline std::ostream &operator<<(std::ostream &OS, const LiveInterval &LI) {
