@@ -1119,9 +1119,9 @@ void GRExprEngine::EvalLoad(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
     //  invalidate(y);  // 'x' now binds to a symbolic region
     //  int z = *y;
     //    
-    if (isa<Loc>(V) && !Loc::IsLocType(Ex->getType())) {
-      V = EvalCast(V, Ex->getType());
-    }
+    //if (isa<Loc>(V) && !Loc::IsLocType(Ex->getType())) {
+    //  V = EvalCast(V, Ex->getType());
+    //}
     
     MakeNode(Dst, Ex, Pred, state->bindExpr(Ex, V), K, tag);
   }

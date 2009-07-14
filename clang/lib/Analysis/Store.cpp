@@ -235,7 +235,14 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
 
   const TypedRegion *TR = cast<TypedRegion>(R);
 
-  QualType T = TR->getValueType(Ctx);
+  QualType T;
+ 
+  // If the region is cast to another type, use that type.
+  if (const QualType *CastTy = getCastType(state, R)) {
+    assert(!(*CastTy)->isObjCObjectPointerType());
+    T = (*CastTy)->getAsPointerType()->getPointeeType();
+  } else
+    T = TR->getValueType(Ctx);
 
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
     SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);

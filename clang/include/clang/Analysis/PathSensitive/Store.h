@@ -145,6 +145,10 @@ public:
     return state;
   }
 
+  virtual const QualType *getCastType(const GRState *state, const MemRegion *R){
+    return 0;
+  }
+
   /// EvalBinOp - Perform pointer arithmetic.
   virtual SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode Op,
                          Loc lhs, NonLoc rhs, QualType resultTy) {

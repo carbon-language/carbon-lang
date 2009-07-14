@@ -327,6 +327,10 @@ public:
   const GRState *setCastType(const GRState *state, const MemRegion* R,
                              QualType T);
 
+  const QualType *getCastType(const GRState *state, const MemRegion *R) {
+    return state->get<RegionCasts>(R);
+  }
+
   static inline RegionBindingsTy GetRegionBindings(Store store) {
    return RegionBindingsTy(static_cast<const RegionBindingsTy::TreeTy*>(store));
   }
@@ -348,6 +352,27 @@ public:
 };
 
 } // end anonymous namespace
+
+static bool isGenericPtr(ASTContext &Ctx, QualType Ty) {
+  if (Ty->isObjCIdType() || Ty->isObjCQualifiedIdType())
+    return true;
+
+  while (true) {
+    Ty = Ctx.getCanonicalType(Ty);
+    
+    if (Ty->isVoidType())
+      return true;
+    
+    if (const PointerType *PT = Ty->getAsPointerType()) {
+      Ty = PT->getPointeeType();
+      continue;
+    }
+    
+    break;
+  }
+  
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // RegionStore creation.
@@ -1251,6 +1276,13 @@ const GRState *RegionStoreManager::RemoveRegionView(const GRState *state,
 
 const GRState *RegionStoreManager::setCastType(const GRState *state, 
 					       const MemRegion* R, QualType T) {
+  // We do not record generic cast type, since we are using cast type to
+  // invlidate regions, and generic type is meaningless for invalidating
+  // regions.
+  // If the region already has a cast type before, that type is preserved.
+  // FIXME: is this the right thing to do?
+  if (isGenericPtr(getContext(), T))
+    return state;
   return state->set<RegionCasts>(R, T);
 }
 
