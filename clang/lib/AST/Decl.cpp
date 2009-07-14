@@ -658,6 +658,11 @@ void FunctionDecl::setExplicitSpecialization(bool ES) {
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
 
+SourceRange TagDecl::getSourceRange() const {
+  SourceLocation E = RBraceLoc.isValid() ? RBraceLoc : getLocation();
+  return SourceRange(getLocation(), E);
+}
+
 void TagDecl::startDefinition() {
   TagType *TagT = const_cast<TagType *>(TypeForDecl->getAsTagType());
   TagT->decl.setPointer(this);

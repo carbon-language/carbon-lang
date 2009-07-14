@@ -1150,7 +1150,9 @@ private:
   /// TypedefForAnonDecl - If a TagDecl is anonymous and part of a typedef,
   /// this points to the TypedefDecl. Used for mangling.
   TypedefDecl *TypedefForAnonDecl;
-  
+
+  SourceLocation RBraceLoc;
+
 protected:
   TagDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
           IdentifierInfo *Id)
@@ -1161,6 +1163,11 @@ protected:
   }
 public:
   
+  SourceLocation getRBraceLoc() const { return RBraceLoc; }
+  void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
+
+  virtual SourceRange getSourceRange() const;
+
   /// isDefinition - Return true if this decl has its body specified.
   bool isDefinition() const {
     return IsDefinition;
