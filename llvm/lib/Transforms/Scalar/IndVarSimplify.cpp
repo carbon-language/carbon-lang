@@ -281,17 +281,15 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
         // If this instruction is dead now, delete it.
         RecursivelyDeleteTriviallyDeadInstructions(Inst);
 
-        // If we're inserting code into the exit block rather than the
-        // preheader, we can (and have to) remove the PHI entirely.
-        // This is safe, because the NewVal won't be variant
-        // in the loop, so we don't need an LCSSA phi node anymore.
-        if (ExitBlocks.size() == 1) {
+        if (NumPreds == 1) {
+          // Completely replace a single-pred PHI. This is safe, because the
+          // NewVal won't be variant in the loop, so we don't need an LCSSA phi
+          // node anymore.
           PN->replaceAllUsesWith(ExitVal);
           RecursivelyDeleteTriviallyDeadInstructions(PN);
-          break;
         }
       }
-      if (ExitBlocks.size() != 1) {
+      if (NumPreds != 1) {
         // Clone the PHI and delete the original one. This lets IVUsers and
         // any other maps purge the original user from their records.
         PHINode *NewPN = PN->clone(*Context);
