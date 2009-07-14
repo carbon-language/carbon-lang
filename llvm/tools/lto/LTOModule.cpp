@@ -332,7 +332,7 @@ void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler,
         return;
 
     // string is owned by _defines
-    const char* symbolName = ::strdup(mangler.getValueName(def).c_str());
+    const char* symbolName = ::strdup(mangler.getMangledName(def).c_str());
 
     // set alignment part log2() can have rounding errors
     uint32_t align = def->getAlignment();
@@ -405,7 +405,7 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
     if (isa<GlobalAlias>(decl))
         return;
 
-    const char* name = mangler.getValueName(decl).c_str();
+    const char* name = mangler.getMangledName(decl).c_str();
 
     // we already have the symbol
     if (_undefines.find(name) != _undefines.end())
