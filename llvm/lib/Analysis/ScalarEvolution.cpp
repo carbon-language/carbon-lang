@@ -4845,6 +4845,7 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
   // so that future queries will recompute the expressions using the new
   // value.
   SmallVector<User *, 16> Worklist;
+  SmallPtrSet<User *, 8> Visited;
   Value *Old = getValPtr();
   bool DeleteOld = false;
   for (Value::use_iterator UI = Old->use_begin(), UE = Old->use_end();
@@ -4858,15 +4859,18 @@ void ScalarEvolution::SCEVCallbackVH::allUsesReplacedWith(Value *) {
       DeleteOld = true;
       continue;
     }
+    if (!Visited.insert(U))
+      continue;
     if (PHINode *PN = dyn_cast<PHINode>(U))
       SE->ConstantEvolutionLoopExitValue.erase(PN);
     if (Instruction *I = dyn_cast<Instruction>(U))
       SE->ValuesAtScopes.erase(I);
-    if (SE->Scalars.erase(U))
-      for (Value::use_iterator UI = U->use_begin(), UE = U->use_end();
-           UI != UE; ++UI)
-        Worklist.push_back(*UI);
+    SE->Scalars.erase(U);
+    for (Value::use_iterator UI = U->use_begin(), UE = U->use_end();
+         UI != UE; ++UI)
+      Worklist.push_back(*UI);
   }
+  // Delete the Old value if it (indirectly) references itself.
   if (DeleteOld) {
     if (PHINode *PN = dyn_cast<PHINode>(Old))
       SE->ConstantEvolutionLoopExitValue.erase(PN);
