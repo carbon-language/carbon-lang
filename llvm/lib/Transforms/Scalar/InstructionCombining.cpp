@@ -2702,7 +2702,8 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
                  Context->getConstantInt(Op0->getType(), Val.logBase2()));
       }
     } else if (isa<VectorType>(Op1->getType())) {
-      // TODO: If Op1 is all zeros and Op0 is all finite, return all zeros.
+      if (Op1->isNullValue())
+        return ReplaceInstUsesWith(I, Op1);
 
       if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1)) {
         if (Op1V->isAllOnesValue())              // X * -1 == 0 - X
