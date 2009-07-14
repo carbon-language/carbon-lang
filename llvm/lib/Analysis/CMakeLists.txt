@@ -23,6 +23,7 @@ add_llvm_library(LLVMAnalysis
   LoopPass.cpp
   LoopVR.cpp
   MemoryDependenceAnalysis.cpp
+  PointerTracking.cpp
   PostDominators.cpp
   ProfileInfo.cpp
   ProfileInfoLoader.cpp
