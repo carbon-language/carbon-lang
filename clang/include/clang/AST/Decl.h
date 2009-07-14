@@ -248,7 +248,11 @@ private:
   bool DeclaredInCondition : 1;
 
   /// \brief The previous declaration of this variable.
-  VarDecl *PreviousDeclaration;
+  ///
+  /// If the int part is 0, this is a link to the previous declaration.
+  /// If the int part is 1, this is the first declaration and
+  /// PreviousDeclaration points to the latest declaration.
+  llvm::PointerIntPair<VarDecl *, 1> PreviousDeclaration;
 
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
@@ -258,7 +262,7 @@ protected:
           QualType T, StorageClass SC, SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, Id, T), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
-      DeclaredInCondition(false), PreviousDeclaration(0), 
+      DeclaredInCondition(false), PreviousDeclaration(this, 1), 
       TypeSpecStartLoc(TSSL) { 
     SClass = SC; 
   }
@@ -406,16 +410,32 @@ public:
   }
 
   /// getPreviousDeclaration - Return the previous declaration of this
-  /// variable.
-  const VarDecl *getPreviousDeclaration() const { return PreviousDeclaration; }
-
-  void setPreviousDeclaration(VarDecl *PrevDecl) {
-    PreviousDeclaration = PrevDecl;
+  /// variable or NULL if this is the first declaration.
+  VarDecl *getPreviousDeclaration() {
+    if (PreviousDeclaration.getInt() == 0)
+      return PreviousDeclaration.getPointer();
+    return 0;
   }
+  const VarDecl *getPreviousDeclaration() const {
+    return const_cast<VarDecl *>(this)->getPreviousDeclaration();
+  }
+
+  void setPreviousDeclaration(VarDecl *PrevDecl);
 
   /// \brief For multiple redeclarations returns the first one, otherwise
   /// returns itself.
-  const VarDecl *getFirstDeclaration() const;
+  VarDecl *getFirstDeclaration();
+  const VarDecl *getFirstDeclaration() const {
+    return const_cast<VarDecl *>(this)->getFirstDeclaration();
+  }
+
+  /// \brief For multiple redeclarations returns the latest, otherwise
+  /// returns itself.
+  const VarDecl *getLatestDeclaration() const {
+    const VarDecl *First = getFirstDeclaration();
+    assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
+    return First->PreviousDeclaration.getPointer();
+  }
 
   virtual Decl *getPrimaryDecl() const;
 
@@ -642,16 +662,19 @@ private:
   
   LazyDeclStmtPtr Body;
   
-  /// PreviousDeclaration - A link to the previous declaration of this
-  /// same function, NULL if this is the first declaration. For
+  /// PreviousDeclaration - If the int part is 0, this is a link to the previous
+  /// declaration of this same function. If the int part is 1, this is the first
+  /// declaration and PreviousDeclaration points to the latest declaration. For
   /// example, in the following code, the PreviousDeclaration can be
   /// traversed several times to see all three declarations of the
   /// function "f", the last of which is also a definition.
   ///
-  ///   int f(int x, int y = 1);
-  ///   int f(int x = 0, int y);
-  ///   int f(int x, int y) { return x + y; }
-  FunctionDecl *PreviousDeclaration;
+  ///  #1 int f(int x, int y = 1); // <pointer to #3, 1>
+  ///  #2 int f(int x = 0, int y); // <pointer to #1, 0>
+  ///  #3 int f(int x, int y) { return x + y; } // <pointer to #2, 0>
+  ///
+  /// If there is only one declaration, it is <pointer to self, 1>
+  llvm::PointerIntPair<FunctionDecl *, 1> PreviousDeclaration;
 
   // FIXME: This can be packed into the bitfields in Decl.
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
@@ -699,7 +722,7 @@ protected:
                SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, N, T), 
       DeclContext(DK),
-      ParamInfo(0), Body(), PreviousDeclaration(0),
+      ParamInfo(0), Body(), PreviousDeclaration(this, 1),
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false), 
       HasWrittenPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
@@ -810,14 +833,30 @@ public:
   bool isGlobal() const;
 
   /// getPreviousDeclaration - Return the previous declaration of this
-  /// function.
+  /// function or NULL if this is the first declaration.
+  FunctionDecl *getPreviousDeclaration() {
+    if (PreviousDeclaration.getInt() == 0)
+      return PreviousDeclaration.getPointer();
+    return 0;
+  }
   const FunctionDecl *getPreviousDeclaration() const {
-    return PreviousDeclaration;
+    return const_cast<FunctionDecl *>(this)->getPreviousDeclaration();
   }
 
   /// \brief For multiple redeclarations returns the first one, otherwise
   /// returns itself.
-  const FunctionDecl *getFirstDeclaration() const;
+  FunctionDecl *getFirstDeclaration();
+  const FunctionDecl *getFirstDeclaration() const {
+    return const_cast<FunctionDecl *>(this)->getFirstDeclaration();
+  }
+
+  /// \brief For multiple redeclarations returns the latest, otherwise
+  /// returns itself.
+  const FunctionDecl *getLatestDeclaration() const {
+    const FunctionDecl *First = getFirstDeclaration();
+    assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
+    return First->PreviousDeclaration.getPointer();
+  }
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 

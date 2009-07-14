@@ -358,8 +358,25 @@ const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
   return Def? Def->getInit() : 0;
 }
 
-const VarDecl *VarDecl::getFirstDeclaration() const {
-  const VarDecl *First = this;
+void VarDecl::setPreviousDeclaration(VarDecl *PrevDecl) {
+  if (PrevDecl) {
+    // Point to previous.
+    PreviousDeclaration.setPointer(PrevDecl);
+    PreviousDeclaration.setInt(0);
+    
+    // First one will point to this one as latest.
+    VarDecl *First = PrevDecl->getFirstDeclaration();
+    assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
+    First->PreviousDeclaration.setPointer(this);
+  } else {
+    // This is first.
+    PreviousDeclaration.setPointer(this);
+    PreviousDeclaration.setInt(1);
+  }
+}
+
+VarDecl *VarDecl::getFirstDeclaration() {
+  VarDecl *First = this;
   while (First->getPreviousDeclaration())
     First = First->getPreviousDeclaration();
 
@@ -388,7 +405,8 @@ void FunctionDecl::Destroy(ASTContext& C) {
 
 
 Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
-  for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
+  for (const FunctionDecl *FD = this;
+       FD != 0; FD = FD->getPreviousDeclaration()) {
     if (FD->Body) {
       Definition = FD;
       return FD->Body.get(getASTContext().getExternalSource());
@@ -399,7 +417,8 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
 }
 
 Stmt *FunctionDecl::getBodyIfAvailable() const {
-  for (const FunctionDecl *FD = this; FD != 0; FD = FD->PreviousDeclaration) {
+  for (const FunctionDecl *FD = this;
+       FD != 0; FD = FD->getPreviousDeclaration()) {
     if (FD->Body && !FD->Body.isOffset()) {
       return FD->Body.get(0);
     }
@@ -571,7 +590,20 @@ bool FunctionDecl::isExternGNUInline(ASTContext &Context) const {
 
 void 
 FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
-  PreviousDeclaration = PrevDecl;
+  if (PrevDecl) {
+    // Point to previous.
+    PreviousDeclaration.setPointer(PrevDecl);
+    PreviousDeclaration.setInt(0);
+    
+    // First one will point to this one as latest.
+    FunctionDecl *First = PrevDecl->getFirstDeclaration();
+    assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
+    First->PreviousDeclaration.setPointer(this);
+  } else {
+    // This is first.
+    PreviousDeclaration.setPointer(this);
+    PreviousDeclaration.setInt(1);
+  }
   
   if (FunctionTemplateDecl *FunTmpl = getDescribedFunctionTemplate()) {
     FunctionTemplateDecl *PrevFunTmpl 
@@ -581,8 +613,8 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
   }
 }
 
-const FunctionDecl *FunctionDecl::getFirstDeclaration() const {
-  const FunctionDecl *First = this;
+FunctionDecl *FunctionDecl::getFirstDeclaration() {
+  FunctionDecl *First = this;
   while (First->getPreviousDeclaration())
     First = First->getPreviousDeclaration();
 
