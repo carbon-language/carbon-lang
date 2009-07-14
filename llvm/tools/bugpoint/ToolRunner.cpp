@@ -689,6 +689,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         RemoteClientStatus << ".\n" << std::flush;
     }
   }
+
+  return 0;
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
