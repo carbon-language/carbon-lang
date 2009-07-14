@@ -682,6 +682,7 @@ void MSILWriter::printCastInstruction(unsigned int Op, const Value* V,
       Tmp = "conv."+getTypePostfix(SrcTy,false,true);
       printSimpleInstruction(Tmp.c_str());
     }
+    // FALLTHROUGH
   case Instruction::SIToFP:
   case Instruction::FPToSI:
     Tmp = "conv."+getTypePostfix(Ty,false,true);
