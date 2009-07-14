@@ -129,32 +129,29 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix,
 }
 
 std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
-  // Check to see whether we've already named V.
-  std::string &Name = Memo[GV];
-  if (!Name.empty())
-    return Name;       // Return the already-computed name for V.
-
-  // Name mangling occurs as follows:
-  // - If V is an intrinsic function, do not change name at all
-  // - Otherwise, mangling occurs if global collides with existing name.
-  if (isa<Function>(GV) && cast<Function>(GV)->isIntrinsic()) {
-    Name = GV->getNameStart(); // Is an intrinsic function
-  } else if (!GV->hasName()) {
-    // Must mangle the global into a unique ID.
-    Name = "__unnamed_" + utostr(Count++) + Suffix;
-  } else {
+  // Never mangle intrinsic functions.
+  // FIXME: These should never come into the mangler.
+  if (isa<Function>(GV) && cast<Function>(GV)->isIntrinsic())
+    return GV->getNameStart();
+  
+  if (GV->hasName()) {
     if (GV->hasPrivateLinkage())
-      Name = makeNameProper(GV->getName() + Suffix, Prefix, PrivatePrefix);
-    else
-      Name = makeNameProper(GV->getName() + Suffix, Prefix);
+      return makeNameProper(GV->getName() + Suffix, Prefix, PrivatePrefix);
+    return makeNameProper(GV->getName() + Suffix, Prefix);
   }
-
-  return Name;
+  
+  // Get the ID for the global, assigning a new one if we haven't got one
+  // already.
+  unsigned &ID = AnonGlobalIDs[GV];
+  if (ID == 0) ID = NextAnonGlobalID++;
+  
+  // Must mangle the global into a unique ID.
+  return "__unnamed_" + utostr(ID) + Suffix;
 }
 
 Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix)
   : Prefix(prefix), PrivatePrefix (privatePrefix), UseQuotes(false),
-    PreserveAsmNames(false), Count(0) {
+    PreserveAsmNames(false), NextAnonGlobalID(1) {
   std::fill(AcceptableChars, array_endof(AcceptableChars), 0);
 
   // Letters and numbers are acceptable.

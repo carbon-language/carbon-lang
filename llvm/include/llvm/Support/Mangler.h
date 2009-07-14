@@ -42,13 +42,15 @@ class Mangler {
   /// from names with 'asm' specifiers.
   bool PreserveAsmNames;
 
-  /// Memo - This is used to remember the name that we assign a value.
+  /// AnonGlobalIDs - We need to give global values the same name every time
+  /// they are mangled.  This keeps track of the number we give to anonymous
+  /// ones.
   ///
-  DenseMap<const Value*, std::string> Memo;
+  DenseMap<const GlobalValue*, unsigned> AnonGlobalIDs;
 
-  /// Count - This simple counter is used to unique value names.
+  /// NextAnonGlobalID - This simple counter is used to unique value names.
   ///
-  unsigned Count;
+  unsigned NextAnonGlobalID;
 
   /// AcceptableChars - This bitfield contains a one for each character that is
   /// allowed to be part of an unmangled name.
