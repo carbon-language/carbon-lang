@@ -1500,7 +1500,7 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
                       LBraceLoc, RBraceLoc,
                       AttrList);
   StructScope.Exit();
-  Actions.ActOnTagFinishDefinition(CurScope, TagDecl);
+  Actions.ActOnTagFinishDefinition(CurScope, TagDecl, RBraceLoc);
 }
 
 
@@ -1656,7 +1656,7 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, DeclPtrTy EnumDecl) {
     AttrList = ParseAttributes(); // FIXME: where do they do?
 
   EnumScope.Exit();
-  Actions.ActOnTagFinishDefinition(CurScope, EnumDecl);
+  Actions.ActOnTagFinishDefinition(CurScope, EnumDecl, RBraceLoc);
 }
 
 /// isTypeSpecifierQualifier - Return true if the current token could be the

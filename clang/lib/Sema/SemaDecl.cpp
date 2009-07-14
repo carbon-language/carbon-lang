@@ -3830,9 +3830,11 @@ void Sema::ActOnTagStartDefinition(Scope *S, DeclPtrTy TagD) {
   }
 }
 
-void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD) {
+void Sema::ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagD,
+                                    SourceLocation RBraceLoc) {
   AdjustDeclIfTemplate(TagD);
   TagDecl *Tag = cast<TagDecl>(TagD.getAs<Decl>());
+  Tag->setRBraceLoc(RBraceLoc);
 
   if (isa<CXXRecordDecl>(Tag))
     FieldCollector->FinishClass();

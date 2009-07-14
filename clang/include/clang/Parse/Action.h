@@ -455,7 +455,8 @@ public:
 
   /// ActOnTagFinishDefinition - Invoked once we have finished parsing
   /// the definition of a tag (enumeration, class, struct, or union).
-  virtual void ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagDecl) { }
+  virtual void ActOnTagFinishDefinition(Scope *S, DeclPtrTy TagDecl,
+                                        SourceLocation RBraceLoc) { }
 
   virtual DeclPtrTy ActOnEnumConstant(Scope *S, DeclPtrTy EnumDecl,
                                       DeclPtrTy LastEnumConstant,

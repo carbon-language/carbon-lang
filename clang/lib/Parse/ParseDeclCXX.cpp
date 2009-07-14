@@ -1213,7 +1213,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
   ParsingDef.Pop();
   ClassScope.Exit();
 
-  Actions.ActOnTagFinishDefinition(CurScope, TagDecl);
+  Actions.ActOnTagFinishDefinition(CurScope, TagDecl, RBraceLoc);
 }
 
 /// ParseConstructorInitializer - Parse a C++ constructor initializer,
