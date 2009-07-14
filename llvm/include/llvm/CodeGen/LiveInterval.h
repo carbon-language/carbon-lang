@@ -23,6 +23,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/AlignOf.h"
 #include <iosfwd>
 #include <cassert>
 #include <climits>
@@ -212,18 +213,6 @@ namespace llvm {
   /// register or value.  This class also contains a bit of register allocator
   /// state.
   class LiveInterval {
-  private:
-  
-    inline unsigned getVNInfoAlignment(void) {
-#ifdef __GNUC__
-      return (unsigned)__alignof__(VNInfo);
-#else
-      // FIXME: ugly.
-      return 8u;
-#endif
-    }
-
-
   public:
 
     typedef SmallVector<LiveRange,4> Ranges;
@@ -344,7 +333,7 @@ namespace llvm {
              "PHI def / unused flags should now be passed explicitly.");
       VNInfo *VNI =
         static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
-                                                      getVNInfoAlignment()));
+                                                      alignof<VNInfo>()));
       new (VNI) VNInfo((unsigned)valnos.size(), MIIdx, CopyMI);
       VNI->setIsDefAccurate(isDefAccurate);
       valnos.push_back(VNI);
@@ -357,7 +346,7 @@ namespace llvm {
 
       VNInfo *VNI =
         static_cast<VNInfo*>(VNInfoAllocator.Allocate((unsigned)sizeof(VNInfo),
-                                                      getVNInfoAlignment()));
+                                                      alignof<VNInfo>()));
     
       new (VNI) VNInfo((unsigned)valnos.size(), *orig);
       valnos.push_back(VNI);
