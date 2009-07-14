@@ -45,6 +45,8 @@ namespace {
 
     virtual void EmitSymbolAttribute(MCSymbol *Symbol, SymbolAttr Attribute);
 
+    virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
+
     virtual void EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,
                                   unsigned Pow2Alignment, bool IsLocal);
 
@@ -164,6 +166,10 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   }
 
   OS << ' ' << Symbol->getName() << '\n';
+}
+
+void MCAsmStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
+  OS << ".desc" << ' ' << Symbol->getName() << ',' << DescValue << '\n';
 }
 
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, unsigned Size,

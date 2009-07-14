@@ -526,6 +526,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveComm(/*IsLocal=*/true);
     if (!strcmp(IDVal, ".zerofill"))
       return ParseDirectiveDarwinZerofill();
+    if (!strcmp(IDVal, ".desc"))
+      return ParseDirectiveDarwinSymbolDesc();
 
     if (!strcmp(IDVal, ".subsections_via_symbols"))
       return ParseDirectiveDarwinSubsectionsViaSymbols();
@@ -907,6 +909,37 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
 
   Lexer.Lex();
   return false;  
+}
+
+/// ParseDirectiveDarwinSymbolDesc
+///  ::= .desc identifier , expression
+bool AsmParser::ParseDirectiveDarwinSymbolDesc() {
+  if (Lexer.isNot(asmtok::Identifier))
+    return TokError("expected identifier in directive");
+  
+  // handle the identifier as the key symbol.
+  SMLoc IDLoc = Lexer.getLoc();
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+  Lexer.Lex();
+
+  if (Lexer.isNot(asmtok::Comma))
+    return TokError("unexpected token in '.desc' directive");
+  Lexer.Lex();
+
+  SMLoc DescLoc = Lexer.getLoc();
+  int64_t DescValue;
+  if (ParseAbsoluteExpression(DescValue))
+    return true;
+
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.desc' directive");
+  
+  Lexer.Lex();
+
+  // Set the n_desc field of this Symbol to this DescValue
+  Out.EmitSymbolDesc(Sym, DescValue);
+
+  return false;
 }
 
 /// ParseDirectiveComm
