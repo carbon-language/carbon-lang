@@ -109,6 +109,8 @@ static bool MarkAliveBlocks(BasicBlock *BB,
     if (!Reachable.insert(BB))
       continue;
 
+    bool AsmFound = false;
+    StoreInst *UndefStore = 0;
     // Do a quick scan of the basic block, turning any obviously unreachable
     // instructions into LLVM unreachable insts.  The instruction combining pass
     // canonicalizes unreachable insts into stores to null or undef.
@@ -125,19 +127,26 @@ static bool MarkAliveBlocks(BasicBlock *BB,
           }
           break;
         }
+        if (isa<InlineAsm>(CI->getOperand(0)))
+          AsmFound = true;
       }
       
       if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
         Value *Ptr = SI->getOperand(1);
-        
-        if (isa<UndefValue>(Ptr) ||
-            (isa<ConstantPointerNull>(Ptr) &&
-             cast<PointerType>(Ptr->getType())->getAddressSpace() == 0)) {
-          ChangeToUnreachable(SI, Context);
-          Changed = true;
-          break;
-        }
+
+        if ((isa<UndefValue>(Ptr) ||
+             (isa<ConstantPointerNull>(Ptr) &&
+              cast<PointerType>(Ptr->getType())->getAddressSpace() == 0)) &&
+            !UndefStore)
+          UndefStore = SI;
       }
+    }
+    // We can't delete asm's just because their inputs are undefined;
+    // xor R, R is a common idiom for zeroing a register, for example.
+    // Assume user knows what he is doing.
+    if (UndefStore && !AsmFound) {
+      ChangeToUnreachable(UndefStore, Context);
+      Changed = true;
     }
 
     // Turn invokes that call 'nounwind' functions into ordinary calls.
