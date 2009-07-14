@@ -60,7 +60,7 @@ void MachOCodeEmitter::startFunction(MachineFunction &MF) {
 
   // Create symbol for function entry
   const GlobalValue *FuncV = MF.getFunction();
-  MachOSym FnSym(FuncV, MOW.Mang->getMangledName(FuncV), MOS->Index, TAI);
+  MachOSym FnSym(FuncV, MOW.Mang->getValueName(FuncV), MOS->Index, TAI);
   FnSym.n_value = getCurrentPCOffset();
 
   // add it to the symtab.

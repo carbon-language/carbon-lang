@@ -221,7 +221,7 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
   }
   // Globals without external linkage apparently do not go in the symbol table.
   if (!GV->hasLocalLinkage()) {
-    MachOSym Sym(GV, Mang->getMangledName(GV), Sec->Index, TAI);
+    MachOSym Sym(GV, Mang->getValueName(GV), Sec->Index, TAI);
     Sym.n_value = Sec->size();
     SymbolTable.push_back(Sym);
   }
@@ -255,7 +255,7 @@ void MachOWriter::EmitGlobal(GlobalVariable *GV) {
     // merged with other symbols.
     if (NoInit || GV->hasLinkOnceLinkage() || GV->hasWeakLinkage() ||
         GV->hasCommonLinkage()) {
-      MachOSym ExtOrCommonSym(GV, Mang->getMangledName(GV),
+      MachOSym ExtOrCommonSym(GV, Mang->getValueName(GV),
                               MachOSym::NO_SECT, TAI);
       // For undefined (N_UNDF) external (N_EXT) types, n_value is the size in
       // bytes of the symbol.
@@ -454,7 +454,7 @@ void MachOWriter::BufferSymbolAndStringTable() {
   for (std::vector<GlobalValue*>::iterator I = PendingGlobals.begin(),
          E = PendingGlobals.end(); I != E; ++I) {
     if (GVOffset[*I] == 0 && GVSection[*I] == 0) {
-      MachOSym UndfSym(*I, Mang->getMangledName(*I), MachOSym::NO_SECT, TAI);
+      MachOSym UndfSym(*I, Mang->getValueName(*I), MachOSym::NO_SECT, TAI);
       SymbolTable.push_back(UndfSym);
       GVOffset[*I] = -1;
     }

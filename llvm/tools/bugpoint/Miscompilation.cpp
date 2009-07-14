@@ -244,9 +244,9 @@ static void DisambiguateGlobalSymbols(Module *M) {
   Mang.setPreserveAsmNames(true);
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
-    I->setName(Mang.getMangledName(I));
+    I->setName(Mang.getValueName(I));
   for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I)
-    I->setName(Mang.getMangledName(I));
+    I->setName(Mang.getValueName(I));
 }
 
 /// ExtractLoops - Given a reduced list of functions that still exposed the bug,

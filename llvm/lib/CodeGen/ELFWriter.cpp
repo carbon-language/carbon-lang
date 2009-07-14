@@ -601,7 +601,7 @@ void ELFWriter::EmitStringTable() {
 
     // Use the name mangler to uniquify the LLVM symbol.
     std::string Name;
-    if (I->GV) Name.append(Mang->getMangledName(I->GV));
+    if (I->GV) Name.append(Mang->getValueName(I->GV));
 
     if (Name.empty()) {
       I->NameIdx = 0;

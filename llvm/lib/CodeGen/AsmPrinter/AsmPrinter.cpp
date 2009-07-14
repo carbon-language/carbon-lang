@@ -210,13 +210,13 @@ bool AsmPrinter::doFinalization(Module &M) {
     for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I) {
       if (I->hasExternalWeakLinkage())
-        O << TAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
+        O << TAI->getWeakRefDirective() << Mang->getValueName(I) << '\n';
     }
     
     for (Module::const_iterator I = M.begin(), E = M.end();
          I != E; ++I) {
       if (I->hasExternalWeakLinkage())
-        O << TAI->getWeakRefDirective() << Mang->getMangledName(I) << '\n';
+        O << TAI->getWeakRefDirective() << Mang->getValueName(I) << '\n';
     }
   }
 
@@ -227,10 +227,11 @@ bool AsmPrinter::doFinalization(Module &M) {
     O << '\n';
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I != E; ++I) {
-      std::string Name = Mang->getMangledName(I);
+      std::string Name = Mang->getValueName(I);
+      std::string Target;
 
       const GlobalValue *GV = cast<GlobalValue>(I->getAliasedGlobal());
-      std::string Target = Mang->getMangledName(GV);
+      Target = Mang->getValueName(GV);
 
       if (I->hasExternalLinkage() || !TAI->getWeakRefDirective())
         O << "\t.globl\t" << Name << '\n';
@@ -269,16 +270,15 @@ AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF,
   assert(MF && "No machine function?");
   Name = MF->getFunction()->getName();
   if (Name.empty())
-    Name = Mang->getMangledName(MF->getFunction());
+    Name = Mang->getValueName(MF->getFunction());
   
-  // FIXME: THIS SEEMS REALLY WRONG, it will get two prefixes.
   Name = Mang->makeNameProper(TAI->getEHGlobalPrefix() + Name + ".eh");
   return Name;
 }
 
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
-  CurrentFnName = Mang->getMangledName(MF.getFunction());
+  CurrentFnName = Mang->getValueName(MF.getFunction());
   IncrementFunctionNumber();
 }
 
@@ -576,11 +576,11 @@ const std::string &AsmPrinter::getGlobalLinkName(const GlobalVariable *GV,
                                                  std::string &LinkName) const {
   if (isa<Function>(GV)) {
     LinkName += TAI->getFunctionAddrPrefix();
-    LinkName += Mang->getMangledName(GV);
+    LinkName += Mang->getValueName(GV);
     LinkName += TAI->getFunctionAddrSuffix();
   } else {
     LinkName += TAI->getGlobalVarAddrPrefix();
-    LinkName += Mang->getMangledName(GV);
+    LinkName += Mang->getValueName(GV);
     LinkName += TAI->getGlobalVarAddrSuffix();
   }  
   
@@ -858,11 +858,11 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     // FunctionAddrPrefix/Suffix (these all default to "" )
     if (isa<Function>(GV)) {
       O << TAI->getFunctionAddrPrefix()
-        << Mang->getMangledName(GV)
+        << Mang->getValueName(GV)
         << TAI->getFunctionAddrSuffix();
     } else {
       O << TAI->getGlobalVarAddrPrefix()
-        << Mang->getMangledName(GV)
+        << Mang->getValueName(GV)
         << TAI->getGlobalVarAddrSuffix();
     }
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {

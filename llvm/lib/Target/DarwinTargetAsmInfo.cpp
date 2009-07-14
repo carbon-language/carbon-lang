@@ -103,21 +103,18 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
 /// emitUsedDirectiveFor - On Darwin, internally linked data beginning with
 /// the PrivateGlobalPrefix or the LessPrivateGlobalPrefix does not have the
 /// directive emitted (this occurs in ObjC metadata).
+
 bool
 DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
                                           Mangler *Mang) const {
   if (GV==0)
     return false;
-  
-  /// FIXME: WHAT IS THIS?
-  
   if (GV->hasLocalLinkage() && !isa<Function>(GV) &&
       ((strlen(getPrivateGlobalPrefix()) != 0 &&
-        Mang->getMangledName(GV).substr(0,strlen(getPrivateGlobalPrefix())) ==
+        Mang->getValueName(GV).substr(0,strlen(getPrivateGlobalPrefix())) ==
           getPrivateGlobalPrefix()) ||
        (strlen(getLessPrivateGlobalPrefix()) != 0 &&
-        Mang->getMangledName(GV).substr(0,
-                                        strlen(getLessPrivateGlobalPrefix())) ==
+        Mang->getValueName(GV).substr(0,strlen(getLessPrivateGlobalPrefix())) ==
           getLessPrivateGlobalPrefix())))
     return false;
   return true;

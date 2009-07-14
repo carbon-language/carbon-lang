@@ -1432,7 +1432,7 @@ void CWriter::printConstantWithCast(Constant* CPV, unsigned Opcode) {
 std::string CWriter::GetValueName(const Value *Operand) {
   // Mangle globals with the standard mangler interface for LLC compatibility.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(Operand))
-    return Mang->getMangledName(GV);
+    return Mang->getValueName(GV);
     
   std::string Name = Operand->getName();
     
