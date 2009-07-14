@@ -351,11 +351,15 @@ bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
 }
 
 const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
-  Def = this;
-  while (Def && !Def->getInit())
-    Def = Def->getPreviousDeclaration();
+  redecl_iterator I = redecls_begin(), E = redecls_end();
+  while (I != E && !I->getInit())
+    ++I;
 
-  return Def? Def->getInit() : 0;
+  if (I != E) {
+    Def = *I;
+    return I->getInit();
+  }
+  return 0;
 }
 
 void VarDecl::setPreviousDeclaration(VarDecl *PrevDecl) {
@@ -405,11 +409,10 @@ void FunctionDecl::Destroy(ASTContext& C) {
 
 
 Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
-  for (const FunctionDecl *FD = this;
-       FD != 0; FD = FD->getPreviousDeclaration()) {
-    if (FD->Body) {
-      Definition = FD;
-      return FD->Body.get(getASTContext().getExternalSource());
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    if (I->Body) {
+      Definition = *I;
+      return I->Body.get(getASTContext().getExternalSource());
     }
   }
 
@@ -417,10 +420,9 @@ Stmt *FunctionDecl::getBody(const FunctionDecl *&Definition) const {
 }
 
 Stmt *FunctionDecl::getBodyIfAvailable() const {
-  for (const FunctionDecl *FD = this;
-       FD != 0; FD = FD->getPreviousDeclaration()) {
-    if (FD->Body && !FD->Body.isOffset()) {
-      return FD->Body.get(0);
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    if (I->Body && !I->Body.isOffset()) {
+      return I->Body.get(0);
     }
   }
 
@@ -568,11 +570,9 @@ bool FunctionDecl::hasActiveGNUInlineAttribute(ASTContext &Context) const {
   if (!isInline() || !hasAttr<GNUInlineAttr>())
     return false;
 
-  for (const FunctionDecl *FD = getPreviousDeclaration(); FD; 
-       FD = FD->getPreviousDeclaration()) {
-    if (FD->isInline() && !FD->hasAttr<GNUInlineAttr>())
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)
+    if (I->isInline() && !I->hasAttr<GNUInlineAttr>())
       return false;
-  }
 
   return true;
 }
@@ -581,8 +581,8 @@ bool FunctionDecl::isExternGNUInline(ASTContext &Context) const {
   if (!hasActiveGNUInlineAttribute(Context))
     return false;
 
-  for (const FunctionDecl *FD = this; FD; FD = FD->getPreviousDeclaration())
-    if (FD->getStorageClass() == Extern && FD->hasAttr<GNUInlineAttr>())
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I)
+    if (I->getStorageClass() == Extern && I->hasAttr<GNUInlineAttr>())
       return true;
 
   return false;

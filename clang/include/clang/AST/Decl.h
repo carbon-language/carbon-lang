@@ -439,6 +439,54 @@ public:
 
   virtual Decl *getPrimaryDecl() const;
 
+  /// \brief Iterates through all the redeclarations of the same var decl.
+  class redecl_iterator {
+    /// Current - The current declaration.
+    VarDecl *Current;
+    VarDecl *Starter;
+
+  public:
+    typedef VarDecl*             value_type;
+    typedef VarDecl*             reference;
+    typedef VarDecl*             pointer;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef std::ptrdiff_t            difference_type;
+
+    redecl_iterator() : Current(0) { }
+    explicit redecl_iterator(VarDecl *C) : Current(C), Starter(C) { }
+
+    reference operator*() const { return Current; }
+    pointer operator->() const { return Current; }
+
+    redecl_iterator& operator++() {
+      assert(Current && "Advancing while iterator has reached end");
+      // Get either previous decl or latest decl.
+      VarDecl *Next = Current->PreviousDeclaration.getPointer();
+      Current = (Next != Starter ? Next : 0);
+      return *this;
+    }
+
+    redecl_iterator operator++(int) {
+      redecl_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    friend bool operator==(redecl_iterator x, redecl_iterator y) { 
+      return x.Current == y.Current;
+    }
+    friend bool operator!=(redecl_iterator x, redecl_iterator y) { 
+      return x.Current != y.Current;
+    }
+  };
+
+  /// \brief Returns iterator for all the redeclarations of the same variable.
+  /// It will iterate at least once (when this decl is the only one).
+  redecl_iterator redecls_begin() const {
+    return redecl_iterator(const_cast<VarDecl*>(this));
+  }
+  redecl_iterator redecls_end() const { return redecl_iterator(); }
+
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
   bool hasLocalStorage() const {
@@ -861,6 +909,54 @@ public:
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
   virtual Decl *getPrimaryDecl() const;
+
+  /// \brief Iterates through all the redeclarations of the same function decl.
+  class redecl_iterator {
+    /// Current - The current declaration.
+    FunctionDecl *Current;
+    FunctionDecl *Starter;
+
+  public:
+    typedef FunctionDecl*             value_type;
+    typedef FunctionDecl*             reference;
+    typedef FunctionDecl*             pointer;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef std::ptrdiff_t            difference_type;
+
+    redecl_iterator() : Current(0) { }
+    explicit redecl_iterator(FunctionDecl *C) : Current(C), Starter(C) { }
+
+    reference operator*() const { return Current; }
+    pointer operator->() const { return Current; }
+
+    redecl_iterator& operator++() {
+      assert(Current && "Advancing while iterator has reached end");
+      // Get either previous decl or latest decl.
+      FunctionDecl *Next = Current->PreviousDeclaration.getPointer();
+      Current = (Next != Starter ? Next : 0);
+      return *this;
+    }
+
+    redecl_iterator operator++(int) {
+      redecl_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    friend bool operator==(redecl_iterator x, redecl_iterator y) { 
+      return x.Current == y.Current;
+    }
+    friend bool operator!=(redecl_iterator x, redecl_iterator y) { 
+      return x.Current != y.Current;
+    }
+  };
+
+  /// \brief Returns iterator for all the redeclarations of the same function
+  /// decl. It will iterate at least once (when this decl is the only one).
+  redecl_iterator redecls_begin() const {
+    return redecl_iterator(const_cast<FunctionDecl*>(this));
+  }
+  redecl_iterator redecls_end() const { return redecl_iterator(); }
 
   unsigned getBuiltinID(ASTContext &Context) const;
 
