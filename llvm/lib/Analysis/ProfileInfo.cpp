@@ -26,8 +26,8 @@ char ProfileInfo::ID = 0;
 
 ProfileInfo::~ProfileInfo() {}
 
-unsigned ProfileInfo::getExecutionCount(BasicBlock *BB) const {
-  pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+unsigned ProfileInfo::getExecutionCount(const BasicBlock *BB) const {
+  pred_const_iterator PI = pred_begin(BB), PE = pred_end(BB);
 
   // Are there zero predecessors of this block?
   if (PI == PE) {
@@ -49,23 +49,23 @@ unsigned ProfileInfo::getExecutionCount(BasicBlock *BB) const {
   // has a LARGE number of in-edges.  Handle the common case of having only a
   // few in-edges with special code.
   //
-  BasicBlock *FirstPred = *PI;
+  const BasicBlock *FirstPred = *PI;
   unsigned Count = getEdgeWeight(FirstPred, BB);
   ++PI;
   if (PI == PE) return Count;   // Quick exit for single predecessor blocks
 
-  BasicBlock *SecondPred = *PI;
+  const BasicBlock *SecondPred = *PI;
   if (SecondPred != FirstPred) Count += getEdgeWeight(SecondPred, BB);
   ++PI;
   if (PI == PE) return Count;   // Quick exit for two predecessor blocks
 
-  BasicBlock *ThirdPred = *PI;
+  const BasicBlock *ThirdPred = *PI;
   if (ThirdPred != FirstPred && ThirdPred != SecondPred)
     Count += getEdgeWeight(ThirdPred, BB);
   ++PI;
   if (PI == PE) return Count;   // Quick exit for three predecessor blocks
 
-  std::set<BasicBlock*> ProcessedPreds;
+  std::set<const BasicBlock*> ProcessedPreds;
   ProcessedPreds.insert(FirstPred);
   ProcessedPreds.insert(SecondPred);
   ProcessedPreds.insert(ThirdPred);
@@ -75,6 +75,10 @@ unsigned ProfileInfo::getExecutionCount(BasicBlock *BB) const {
   return Count;
 }
 
+unsigned ProfileInfo::getExecutionCount(const Function *F) const {
+  if (F->isDeclaration()) return -1;
+  return getExecutionCount(&F->getEntryBlock());
+}
 
 
 //===----------------------------------------------------------------------===//
