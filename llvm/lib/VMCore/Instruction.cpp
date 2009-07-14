@@ -380,6 +380,7 @@ bool Instruction::isTrapping(unsigned op) {
   case Call:
   case Invoke:
   case VAArg:
+  case Free:
     return true;
   default:
     return false;
