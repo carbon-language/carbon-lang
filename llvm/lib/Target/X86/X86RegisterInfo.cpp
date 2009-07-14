@@ -691,29 +691,6 @@ void X86RegisterInfo::emitCalleeSavedFrameMoves(MachineFunction &MF,
     unsigned Reg = I->getReg();
     Offset = MaxOffset - Offset + saveAreaOffset;
 
-    // Don't output a new machine move if we're re-saving the frame
-    // pointer. This happens when the PrologEpilogInserter has inserted an extra
-    // "PUSH" of the frame pointer -- the "emitPrologue" method automatically
-    // generates one when frame pointers are used. If we generate a "machine
-    // move" for this extra "PUSH", the linker will lose track of the fact that
-    // the frame pointer should have the value of the first "PUSH" when it's
-    // trying to unwind.
-    // 
-    // FIXME: This looks inelegant. It's possibly correct, but it's covering up
-    //        another bug. I.e., one where we generate a prolog like this:
-    //
-    //          pushl  %ebp
-    //          movl   %esp, %ebp
-    //          pushl  %ebp
-    //          pushl  %esi
-    //           ...
-    //
-    //        The immediate re-push of EBP is unnecessary. At the least, it's an
-    //        optimization bug. EBP can be used as a scratch register in certain
-    //        cases, but probably not when we have a frame pointer.
-    if (HasFP && FramePtr == Reg)
-      continue;
-
     MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
     MachineLocation CSSrc(Reg);
     Moves.push_back(MachineMove(LabelId, CSDst, CSSrc));
