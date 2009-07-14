@@ -52,7 +52,9 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CompileOptions &compileOpts,
     Runtime = CreateMacObjCRuntime(*this);
 
   // If debug info generation is enabled, create the CGDebugInfo object.
-  DebugInfo = CompileOpts.DebugInfo ? new CGDebugInfo(this) : 0;
+  DebugInfo = 0;
+  if (CompileOpts.DebugInfo)
+    DebugInfo = new CGDebugInfo(this, &Context.Target);
 }
 
 CodeGenModule::~CodeGenModule() {
