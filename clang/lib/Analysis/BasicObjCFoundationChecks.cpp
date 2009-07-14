@@ -458,7 +458,84 @@ clang::CreateAuditCFNumberCreate(ASTContext& Ctx, BugReporter& BR) {
 }
 
 //===----------------------------------------------------------------------===//
+// CFRetain/CFRelease auditing for null arguments.
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN AuditCFRetainRelease : public GRSimpleAPICheck {
+  APIMisuse *BT;
+  
+  // FIXME: Either this should be refactored into GRSimpleAPICheck, or
+  //   it should always be passed with a call to Audit.  The latter
+  //   approach makes this class more stateless.
+  ASTContext& Ctx;
+  IdentifierInfo *Retain, *Release;
+  BugReporter& BR;
+  
+public:
+  AuditCFRetainRelease(ASTContext& ctx, BugReporter& br) 
+  : BT(0), Ctx(ctx),
+    Retain(&Ctx.Idents.get("CFRetain")), Release(&Ctx.Idents.get("CFRelease")),
+    BR(br){}
+  
+  ~AuditCFRetainRelease() {}
+  
+  bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
+};
+} // end anonymous namespace
+
+
+bool AuditCFRetainRelease::Audit(ExplodedNode<GRState>* N, GRStateManager&) {
+  CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
+  
+  // If the CallExpr doesn't have exactly 1 argument just give up checking.
+  if (CE->getNumArgs() != 1)
+    return false;
+  
+  // Check if we called CFRetain/CFRelease.
+  const GRState* state = N->getState();
+  SVal X = state->getSVal(CE->getCallee());
+  const FunctionDecl* FD = X.getAsFunctionDecl();
+  
+  if (!FD)
+    return false;
+  
+  const IdentifierInfo *FuncII = FD->getIdentifier();  
+  if (!(FuncII == Retain || FuncII == Release))
+    return false;
+  
+  // Finally, check if the argument is NULL.
+  // FIXME: We should be able to bifurcate the state here, as a successful
+  // check will result in the value not being NULL afterwards.
+  // FIXME: Need a way to register vistors for the BugReporter.  Would like
+  // to benefit from the same diagnostics that regular null dereference
+  // reporting has.
+  if (state->getStateManager().isEqual(state, CE->getArg(0), 0)) {
+    if (!BT)
+      BT = new APIMisuse("null passed to CFRetain/CFRelease");
+    
+    const char *description = (FuncII == Retain)
+                            ? "Null pointer argument in call to CFRetain"
+                            : "Null pointer argument in call to CFRelease";
+
+    RangedBugReport *report = new RangedBugReport(*BT, description, N);
+    report->addRange(CE->getArg(0)->getSourceRange());
+    BR.EmitReport(report);
+    return true;
+  }
+
+  return false;
+}
+    
+    
+GRSimpleAPICheck*
+clang::CreateAuditCFRetainRelease(ASTContext& Ctx, BugReporter& BR) {  
+  return new AuditCFRetainRelease(Ctx, BR);
+}
+
+//===----------------------------------------------------------------------===//
 // Check registration.
+//===----------------------------------------------------------------------===//
 
 void clang::RegisterAppleChecks(GRExprEngine& Eng) {
   ASTContext& Ctx = Eng.getContext();
@@ -466,9 +543,8 @@ void clang::RegisterAppleChecks(GRExprEngine& Eng) {
 
   Eng.AddCheck(CreateBasicObjCFoundationChecks(Ctx, BR),
                Stmt::ObjCMessageExprClass);
-
-  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, BR),
-               Stmt::CallExprClass);
+  Eng.AddCheck(CreateAuditCFNumberCreate(Ctx, BR), Stmt::CallExprClass);  
+  Eng.AddCheck(CreateAuditCFRetainRelease(Ctx, BR), Stmt::CallExprClass);
   
   RegisterNSErrorChecks(BR, Eng);
 }

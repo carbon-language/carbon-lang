@@ -390,6 +390,18 @@ void f15() {
   CFRelease(*B);  // no-warning
 }
 
+// Test when we pass NULL to CFRetain/CFRelease.
+void f16(int x, CFTypeRef p) {
+  if (p)
+    return;
+
+  if (x) {
+    CFRelease(p); // expected-warning{{Null pointer argument in call to CFRelease}}
+  }
+  else {
+    CFRetain(p); // expected-warning{{Null pointer argument in call to CFRetain}}
+  }
+}
 
 // Test basic tracking of ivars associated with 'self'.  For the retain/release
 // checker we currently do not want to flag leaks associated with stores

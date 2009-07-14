@@ -32,11 +32,14 @@ class GRStateManager;
 class BugReporter;
 class GRExprEngine;
   
-GRSimpleAPICheck* CreateBasicObjCFoundationChecks(ASTContext& Ctx,
+GRSimpleAPICheck *CreateBasicObjCFoundationChecks(ASTContext& Ctx,
                                                   BugReporter& BR);
   
-GRSimpleAPICheck* CreateAuditCFNumberCreate(ASTContext& Ctx,
+GRSimpleAPICheck *CreateAuditCFNumberCreate(ASTContext& Ctx,
                                             BugReporter& BR);
+  
+GRSimpleAPICheck *CreateAuditCFRetainRelease(ASTContext& Ctx,
+                                             BugReporter& BR);
   
 void RegisterNSErrorChecks(BugReporter& BR, GRExprEngine &Eng);
   
