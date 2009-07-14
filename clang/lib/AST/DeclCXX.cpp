@@ -496,7 +496,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     for (i = 0; i < NumInitializers; i++) {
       CXXBaseOrMemberInitializer *Member = Initializers[i];
       if (Member->isBaseInitializer() &&
-          Member->getBaseClass() == T) {
+          Member->getBaseClass()->getAsRecordType() == T) {
         AllToInit.push_back(Member);
         break;
       }
@@ -517,7 +517,8 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     unsigned int i = 0;
     for (i = 0; i < NumInitializers; i++) {
       CXXBaseOrMemberInitializer *Member = Initializers[i];
-      if (Member->isBaseInitializer() && Member->getBaseClass() == T) {
+      if (Member->isBaseInitializer() && 
+          Member->getBaseClass()->getAsRecordType() == T) {
         AllToInit.push_back(Member);
         break;
       }
