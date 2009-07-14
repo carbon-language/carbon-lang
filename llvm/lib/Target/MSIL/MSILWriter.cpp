@@ -242,7 +242,7 @@ bool MSILWriter::isZeroValue(const Value* V) {
 std::string MSILWriter::getValueName(const Value* V) {
   std::string Name;
   if (const GlobalValue *GV = cast<GlobalValue>(V))
-    Name = Mang->getMangledName(GV);
+    Name = Mang->getValueName(GV);
   else {
     unsigned &No = AnonValueNumbers[V];
     if (No == 0) No = ++NextAnonValueNumber;
@@ -269,7 +269,7 @@ std::string MSILWriter::getLabelName(const std::string& Name) {
 std::string MSILWriter::getLabelName(const Value* V) {
   std::string Name;
   if (const GlobalValue *GV = cast<GlobalValue>(V))
-    Name = Mang->getMangledName(GV);
+    Name = Mang->getValueName(GV);
   else {
     unsigned &No = AnonValueNumbers[V];
     if (No == 0) No = ++NextAnonValueNumber;
@@ -1630,7 +1630,7 @@ const char* MSILWriter::getLibraryName(const Function* F) {
 
 
 const char* MSILWriter::getLibraryName(const GlobalVariable* GV) {
-  return getLibraryForSymbol(Mang->getMangledName(GV).c_str(), false, 0);
+  return getLibraryForSymbol(Mang->getValueName(GV).c_str(), false, 0);
 }
 
 
@@ -1688,7 +1688,7 @@ void MSILWriter::printExternals() {
     std::string Tmp = getTypeName(I->getType())+getValueName(&*I);
     printSimpleInstruction("ldsflda",Tmp.c_str());
     Out << "\tldstr\t\"" << getLibraryName(&*I) << "\"\n";
-    Out << "\tldstr\t\"" << Mang->getMangledName(&*I) << "\"\n";
+    Out << "\tldstr\t\"" << Mang->getValueName(&*I) << "\"\n";
     printSimpleInstruction("call","void* $MSIL_Import(string,string)");
     printIndirectSave(I->getType());
   }

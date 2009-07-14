@@ -185,7 +185,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_GlobalAddress: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    std::string Name = Mang->getMangledName(MO.getGlobal());
+    std::string Name = Mang->getValueName(MO.getGlobal());
     assert(MO.getOffset() == 0 && "No offsets allowed!");
 
     if (isCallOp)

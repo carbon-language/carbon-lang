@@ -240,7 +240,8 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_GlobalAddress: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
+    std::string Name = Mang->getValueName(GV);
+
     decorateName(Name, GV);
 
     if (!isMemOp) O << "OFFSET ";
@@ -277,7 +278,7 @@ void X86IntelAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo){
     
   case MachineOperand::MO_GlobalAddress: {
     GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
+    std::string Name = Mang->getValueName(GV);
     decorateName(Name, GV);
     
     // Handle dllimport linkage.
@@ -445,7 +446,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   // Emit declarations for external functions.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (I->isDeclaration()) {
-      std::string Name = Mang->getMangledName(I);
+      std::string Name = Mang->getValueName(I);
       decorateName(Name, I);
 
       O << "\tEXTERN " ;
@@ -460,7 +461,7 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (I->isDeclaration()) {
-      std::string Name = Mang->getMangledName(I);
+      std::string Name = Mang->getValueName(I);
 
       O << "\tEXTERN " ;
       if (I->hasDLLImportLinkage()) {
@@ -485,7 +486,7 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     if (EmitSpecialLLVMGlobal(I))
       continue;
 
-    std::string name = Mang->getMangledName(I);
+    std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
     unsigned Align = TD->getPreferredAlignmentLog(I);
     bool bCustomSegment = false;

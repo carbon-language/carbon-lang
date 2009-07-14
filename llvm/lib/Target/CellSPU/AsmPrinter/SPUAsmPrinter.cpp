@@ -347,7 +347,7 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
   case MachineOperand::MO_GlobalAddress: {
     // Computing the address of a global symbol, not calling it.
     GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
+    std::string Name = Mang->getValueName(GV);
 
     // External or weakly linked global variables need non-lazily-resolved
     // stubs
@@ -515,7 +515,7 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string name = Mang->getMangledName(GVar);
+  std::string name = Mang->getValueName(GVar);
 
   printVisibility(name, GVar->getVisibility());
 

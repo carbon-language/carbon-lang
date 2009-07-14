@@ -172,7 +172,10 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_GlobalAddress:
-    O << Mang->getMangledName(MO.getGlobal());
+    {
+      const GlobalValue *GV = MO.getGlobal();
+      O << Mang->getValueName(GV);
+    }
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();
@@ -248,7 +251,7 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
 
   O << "\n\n";
-  std::string name = Mang->getMangledName(GVar);
+  std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   if (isa<MDNode>(C) || isa<MDString>(C))
     return;

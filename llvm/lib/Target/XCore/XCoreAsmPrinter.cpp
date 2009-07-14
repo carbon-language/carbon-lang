@@ -178,7 +178,7 @@ emitGlobal(const GlobalVariable *GV)
 
     SwitchToSection(TAI->SectionForGlobal(GV));
     
-    std::string name = Mang->getMangledName(GV);
+    std::string name = Mang->getValueName(GV);
     Constant *C = GV->getInitializer();
     unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
     
@@ -367,7 +367,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     printBasicBlockLabel(MO.getMBB());
     break;
   case MachineOperand::MO_GlobalAddress:
-    O << Mang->getMangledName(MO.getGlobal());
+    O << Mang->getValueName(MO.getGlobal());
     break;
   case MachineOperand::MO_ExternalSymbol:
     O << MO.getSymbolName();

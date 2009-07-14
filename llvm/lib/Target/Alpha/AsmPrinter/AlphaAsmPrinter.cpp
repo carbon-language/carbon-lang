@@ -117,9 +117,11 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     O << MO.getSymbolName();
     return;
 
-  case MachineOperand::MO_GlobalAddress:
-    O << Mang->getMangledName(MO.getGlobal());
+  case MachineOperand::MO_GlobalAddress: {
+    GlobalValue *GV = MO.getGlobal();
+    O << Mang->getValueName(GV);
     return;
+  }
 
   case MachineOperand::MO_JumpTableIndex:
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
@@ -216,7 +218,7 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string name = Mang->getMangledName(GVar);
+  std::string name = Mang->getValueName(GVar);
   Constant *C = GVar->getInitializer();
   if (isa<MDNode>(C) || isa<MDString>(C))
     return;

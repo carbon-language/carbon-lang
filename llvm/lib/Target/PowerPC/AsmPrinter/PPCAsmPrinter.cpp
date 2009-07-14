@@ -191,7 +191,7 @@ namespace {
           GlobalValue *GV = MO.getGlobal();
           if (GV->isDeclaration() || GV->isWeakForLinker()) {
             // Dynamically-resolved functions need a stub for the function.
-            std::string Name = Mang->getMangledName(GV);
+            std::string Name = Mang->getValueName(GV);
             FnStubs.insert(Name);
             printSuffixedName(Name, "$stub");
             return;
@@ -376,7 +376,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
   case MachineOperand::MO_GlobalAddress: {
     // Computing the address of a global symbol, not calling it.
     GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
+    std::string Name = Mang->getValueName(GV);
 
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static) {
@@ -646,7 +646,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string name = Mang->getMangledName(GVar);
+  std::string name = Mang->getValueName(GVar);
 
   printVisibility(name, GVar->getVisibility());
 
@@ -865,7 +865,8 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
   }
 
-  std::string name = Mang->getMangledName(GVar);
+  std::string name = Mang->getValueName(GVar);
+
   printVisibility(name, GVar->getVisibility());
 
   Constant *C = GVar->getInitializer();
