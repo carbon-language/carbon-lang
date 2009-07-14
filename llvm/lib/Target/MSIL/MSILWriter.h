@@ -21,8 +21,8 @@
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
@@ -75,7 +75,7 @@ namespace {
     }
 
   public:
-    raw_ostream &Out;
+    formatted_raw_ostream &Out;
     Module* ModulePtr;
     const TargetData* TD;
     Mangler* Mang;
@@ -85,11 +85,15 @@ namespace {
       StaticInitList;
     const std::set<const Type *>* UsedTypes;
     static char ID;
+<<<<<<< .mine
+    MSILWriter(formatted_raw_ostream &o) : FunctionPass(&ID), Out(o) {
+=======
     DenseMap<const Value*, unsigned> AnonValueNumbers;
     unsigned NextAnonValueNumber;
 
     MSILWriter(raw_ostream &o)
        : FunctionPass(&ID), Out(o), NextAnonValueNumber(0) {
+>>>>>>> .r75668
       UniqID = 0;
     }
 

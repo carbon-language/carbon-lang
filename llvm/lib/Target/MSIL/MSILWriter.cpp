@@ -35,7 +35,8 @@ namespace {
       : DataLayout(&M) {}
 
     virtual bool WantsWholeFile() const { return true; }
-    virtual bool addPassesToEmitWholeFile(PassManager &PM, raw_ostream &Out,
+    virtual bool addPassesToEmitWholeFile(PassManager &PM,
+                                          formatted_raw_ostream &Out,
                                           CodeGenFileType FileType,
                                           CodeGenOpt::Level OptLevel);
 
@@ -1702,7 +1703,8 @@ void MSILWriter::printExternals() {
 //                      External Interface declaration
 //===----------------------------------------------------------------------===//
 
-bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM, raw_ostream &o,
+bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM,
+                                          formatted_raw_ostream &o,
                                           CodeGenFileType FileType,
                                           CodeGenOpt::Level OptLevel)
 {

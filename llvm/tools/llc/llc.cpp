@@ -30,12 +30,12 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/RegistryParser.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
@@ -128,10 +128,10 @@ GetFileNameRoot(const std::string &InputFilename) {
   return outputFilename;
 }
 
-static raw_ostream *GetOutputStream(const char *ProgName) {
+static formatted_raw_ostream *GetOutputStream(const char *ProgName) {
   if (OutputFilename != "") {
     if (OutputFilename == "-")
-      return &outs();
+      return &fouts();
 
     // Specified an output filename?
     if (!Force && std::ifstream(OutputFilename.c_str())) {
@@ -146,7 +146,10 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
     std::string error;
-    raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), true, error);
+    raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(),
+                                               true, error);
+    formatted_raw_ostream *Out =
+      new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
     if (!error.empty()) {
       std::cerr << error << '\n';
       delete Out;
@@ -158,7 +161,7 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
 
   if (InputFilename == "-") {
     OutputFilename = "-";
-    return &outs();
+    return &fouts();
   }
 
   OutputFilename = GetFileNameRoot(InputFilename);
@@ -199,7 +202,10 @@ static raw_ostream *GetOutputStream(const char *ProgName) {
   sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   std::string error;
-  raw_ostream *Out = new raw_fd_ostream(OutputFilename.c_str(), Binary, error);
+  raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(),
+                                             Binary, error);
+  formatted_raw_ostream *Out =
+    new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
   if (!error.empty()) {
     std::cerr << error << '\n';
     delete Out;
@@ -268,7 +274,7 @@ int main(int argc, char **argv) {
   TargetMachine &Target = *target.get();
 
   // Figure out where we are going to send the output...
-  raw_ostream *Out = GetOutputStream(argv[0]);
+  formatted_raw_ostream *Out = GetOutputStream(argv[0]);
   if (Out == 0) return 1;
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
@@ -295,7 +301,7 @@ int main(int argc, char **argv) {
     if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, OLvl)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
-      if (Out != &outs()) delete Out;
+      if (Out != &fouts()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
@@ -325,7 +331,7 @@ int main(int argc, char **argv) {
     case FileModel::Error:
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
-      if (Out != &outs()) delete Out;
+      if (Out != &fouts()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
@@ -342,7 +348,7 @@ int main(int argc, char **argv) {
     if (Target.addPassesToEmitFileFinish(Passes, OCE, OLvl)) {
       std::cerr << argv[0] << ": target does not support generation of this"
                 << " file type!\n";
-      if (Out != &outs()) delete Out;
+      if (Out != &fouts()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
       return 1;
@@ -364,8 +370,10 @@ int main(int argc, char **argv) {
     Passes.doFinalization();
   }
 
+  Out->flush();
+
   // Delete the ostream if it's not a stdout stream
-  if (Out != &outs()) delete Out;
+  if (Out != &fouts()) delete Out;
 
   return 0;
 }

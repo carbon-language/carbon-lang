@@ -38,7 +38,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -56,7 +56,7 @@ namespace {
     StringSet<> FnStubs, GVStubs, HiddenGVStubs;
     const PPCSubtarget &Subtarget;
   public:
-    explicit PPCAsmPrinter(raw_ostream &O, TargetMachine &TM,
+    explicit PPCAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                            const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V),
         Subtarget(TM.getSubtarget<PPCSubtarget>()) {}
@@ -294,7 +294,7 @@ namespace {
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
   class VISIBILITY_HIDDEN PPCLinuxAsmPrinter : public PPCAsmPrinter {
   public:
-    explicit PPCLinuxAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
+    explicit PPCLinuxAsmPrinter(formatted_raw_ostream &O, PPCTargetMachine &TM,
                                 const TargetAsmInfo *T, bool V)
       : PPCAsmPrinter(O, TM, T, V){}
 
@@ -318,9 +318,9 @@ namespace {
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
   /// OS X
   class VISIBILITY_HIDDEN PPCDarwinAsmPrinter : public PPCAsmPrinter {
-    raw_ostream &OS;
+    formatted_raw_ostream &OS;
   public:
-    explicit PPCDarwinAsmPrinter(raw_ostream &O, PPCTargetMachine &TM,
+    explicit PPCDarwinAsmPrinter(formatted_raw_ostream &O, PPCTargetMachine &TM,
                                  const TargetAsmInfo *T, bool V)
       : PPCAsmPrinter(O, TM, T, V), OS(O) {}
 
@@ -629,7 +629,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
+static void PrintUnmangledNameSafely(const Value *V, formatted_raw_ostream &OS) {
   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
        Name != E; ++Name)
     if (isprint(*Name))
@@ -1108,7 +1108,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 /// for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
 ///
-FunctionPass *llvm::createPPCAsmPrinterPass(raw_ostream &o,
+FunctionPass *llvm::createPPCAsmPrinterPass(formatted_raw_ostream &o,
                                             PPCTargetMachine &tm,
                                             bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();

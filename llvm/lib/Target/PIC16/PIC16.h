@@ -27,7 +27,7 @@ namespace llvm {
   class PIC16TargetMachine;
   class FunctionPass;
   class MachineCodeEmitter;
-  class raw_ostream;
+  class formatted_raw_ostream;
 
 namespace PIC16CC {
   enum CondCodes {
@@ -343,7 +343,7 @@ namespace PIC16CC {
 
 
   FunctionPass *createPIC16ISelDag(PIC16TargetMachine &TM);
-  FunctionPass *createPIC16CodePrinterPass(raw_ostream &OS, 
+  FunctionPass *createPIC16CodePrinterPass(formatted_raw_ostream &OS, 
                                            PIC16TargetMachine &TM,
                                            bool Verbose);
   // Banksel optimzer pass.

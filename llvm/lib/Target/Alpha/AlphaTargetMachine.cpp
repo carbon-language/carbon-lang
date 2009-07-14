@@ -17,7 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetMachineRegistry.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 
 using namespace llvm;
 
@@ -89,7 +89,7 @@ bool AlphaTargetMachine::addPreEmitPass(PassManagerBase &PM,
 bool AlphaTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
                                             bool Verbose,
-                                            raw_ostream &Out) {
+                                            formatted_raw_ostream &Out) {
   PM.add(createAlphaLLRPPass(*this));
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
@@ -104,7 +104,7 @@ bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
   return false;
 }
@@ -115,7 +115,7 @@ bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
   return false;
 }
@@ -126,7 +126,7 @@ bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
   return false;
 }

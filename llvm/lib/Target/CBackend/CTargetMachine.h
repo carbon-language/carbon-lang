@@ -26,7 +26,8 @@ struct CTargetMachine : public TargetMachine {
     : DataLayout(&M) {}
 
   virtual bool WantsWholeFile() const { return true; }
-  virtual bool addPassesToEmitWholeFile(PassManager &PM, raw_ostream &Out,
+  virtual bool addPassesToEmitWholeFile(PassManager &PM,
+                                        formatted_raw_ostream &Out,
                                         CodeGenFileType FileType,
                                         CodeGenOpt::Level OptLevel);
 

@@ -21,10 +21,10 @@
 namespace llvm {
   class SPUTargetMachine;
   class FunctionPass;
-  class raw_ostream;
+  class formatted_raw_ostream;
 
   FunctionPass *createSPUISelDag(SPUTargetMachine &TM);
-  FunctionPass *createSPUAsmPrinterPass(raw_ostream &o,
+  FunctionPass *createSPUAsmPrinterPass(formatted_raw_ostream &o,
                                         SPUTargetMachine &tm,
                                         bool verbose);
 

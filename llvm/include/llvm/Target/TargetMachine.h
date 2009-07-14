@@ -37,7 +37,7 @@ class PassManager;
 class Pass;
 class TargetMachOWriterInfo;
 class TargetELFWriterInfo;
-class raw_ostream;
+class formatted_raw_ostream;
 
 // Relocation model types.
 namespace Reloc {
@@ -232,7 +232,7 @@ public:
   /// is not supported.
   ///
   virtual FileModel::Model addPassesToEmitFile(PassManagerBase &,
-                                               raw_ostream &,
+                                               formatted_raw_ostream &,
                                                CodeGenFileType,
                                                CodeGenOpt::Level) {
     return FileModel::None;
@@ -296,7 +296,7 @@ public:
   /// require having the entire module at once.  This is not recommended, do not
   /// use this.
   virtual bool WantsWholeFile() const { return false; }
-  virtual bool addPassesToEmitWholeFile(PassManager &, raw_ostream &,
+  virtual bool addPassesToEmitWholeFile(PassManager &, formatted_raw_ostream &,
                                         CodeGenFileType,
                                         CodeGenOpt::Level) {
     return true;
@@ -329,7 +329,7 @@ public:
   /// target-specific passes in standard locations.
   ///
   virtual FileModel::Model addPassesToEmitFile(PassManagerBase &PM,
-                                               raw_ostream &Out,
+                                               formatted_raw_ostream &Out,
                                                CodeGenFileType FileType,
                                                CodeGenOpt::Level);
   
@@ -413,7 +413,8 @@ public:
   /// the asmprinter, if asm emission is supported.  If this is not supported,
   /// 'true' should be returned.
   virtual bool addAssemblyEmitter(PassManagerBase &, CodeGenOpt::Level,
-                                  bool /* VerboseAsmDefault */, raw_ostream &) {
+                                  bool /* VerboseAsmDefault */,
+                                  formatted_raw_ostream &) {
     return true;
   }
   

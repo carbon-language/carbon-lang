@@ -38,7 +38,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 #include <cctype>
 using namespace llvm;
 
@@ -82,7 +82,7 @@ namespace {
     /// True if asm printer is printing a series of CONSTPOOL_ENTRY.
     bool InCPMode;
   public:
-    explicit ARMAsmPrinter(raw_ostream &O, TargetMachine &TM,
+    explicit ARMAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                            const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V), DW(0), AFI(NULL), MCP(NULL),
         InCPMode(false) {
@@ -371,7 +371,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
 }
 
-static void printSOImm(raw_ostream &O, int64_t V, bool VerboseAsm,
+static void printSOImm(formatted_raw_ostream &O, int64_t V, bool VerboseAsm,
                        const TargetAsmInfo *TAI) {
   // Break it up into two parts that make up a shifter immediate.
   V = ARM_AM::getSOImmVal(V);
@@ -1013,7 +1013,7 @@ bool ARMAsmPrinter::doInitialization(Module &M) {
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
+static void PrintUnmangledNameSafely(const Value *V, formatted_raw_ostream &OS) {
   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
        Name != E; ++Name)
     if (isprint(*Name))
@@ -1253,7 +1253,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createARMCodePrinterPass(raw_ostream &o,
+FunctionPass *llvm::createARMCodePrinterPass(formatted_raw_ostream &o,
                                              ARMBaseTargetMachine &tm,
                                              bool verbose) {
   return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);

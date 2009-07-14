@@ -29,8 +29,8 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Streams.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <set>
@@ -98,7 +98,7 @@ namespace {
   /// CppWriter - This class is the main chunk of code that converts an LLVM
   /// module to a C++ translation unit.
   class CppWriter : public ModulePass {
-    raw_ostream &Out;
+    formatted_raw_ostream &Out;
     const Module *TheModule;
     uint64_t uniqueNum;
     TypeMap TypeNames;
@@ -113,7 +113,7 @@ namespace {
 
   public:
     static char ID;
-    explicit CppWriter(raw_ostream &o) :
+    explicit CppWriter(formatted_raw_ostream &o) :
       ModulePass(&ID), Out(o), uniqueNum(0), is_inline(false) {}
 
     virtual const char *getPassName() const { return "C++ backend"; }
@@ -166,7 +166,7 @@ namespace {
   };
 
   static unsigned indent_level = 0;
-  inline raw_ostream& nl(raw_ostream& Out, int delta = 0) {
+  inline formatted_raw_ostream& nl(formatted_raw_ostream& Out, int delta = 0) {
     Out << "\n";
     if (delta >= 0 || indent_level >= unsigned(-delta))
       indent_level += delta;
@@ -1807,8 +1807,8 @@ namespace {
     Out << "#include <llvm/BasicBlock.h>\n";
     Out << "#include <llvm/Instructions.h>\n";
     Out << "#include <llvm/InlineAsm.h>\n";
+    Out << "#include <llvm/Support/FormattedStream.h>\n";
     Out << "#include <llvm/Support/MathExtras.h>\n";
-    Out << "#include <llvm/Support/raw_ostream.h>\n";
     Out << "#include <llvm/Pass.h>\n";
     Out << "#include <llvm/PassManager.h>\n";
     Out << "#include <llvm/ADT/SmallVector.h>\n";
@@ -2013,7 +2013,7 @@ char CppWriter::ID = 0;
 //===----------------------------------------------------------------------===//
 
 bool CPPTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
-                                                raw_ostream &o,
+                                                formatted_raw_ostream &o,
                                                 CodeGenFileType FileType,
                                                 CodeGenOpt::Level OptLevel) {
   if (FileType != TargetMachine::AssemblyFile) return true;

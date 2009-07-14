@@ -21,10 +21,10 @@ namespace llvm {
   class FunctionPass;
   class TargetMachine;
   class XCoreTargetMachine;
-  class raw_ostream;
+  class formatted_raw_ostream;
 
   FunctionPass *createXCoreISelDag(XCoreTargetMachine &TM);
-  FunctionPass *createXCoreCodePrinterPass(raw_ostream &OS,
+  FunctionPass *createXCoreCodePrinterPass(formatted_raw_ostream &OS,
                                            XCoreTargetMachine &TM,
                                            bool Verbose);
 } // end namespace llvm;

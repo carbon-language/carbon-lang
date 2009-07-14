@@ -23,7 +23,7 @@ class X86TargetMachine;
 class FunctionPass;
 class MachineCodeEmitter;
 class JITCodeEmitter;
-class raw_ostream;
+class formatted_raw_ostream;
 
 /// createX86ISelDag - This pass converts a legalized DAG into a 
 /// X86-specific DAG, ready for instruction scheduling.
@@ -46,7 +46,8 @@ FunctionPass *createX87FPRegKillInserterPass();
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.
 ///
-FunctionPass *createX86CodePrinterPass(raw_ostream &o, X86TargetMachine &tm,
+FunctionPass *createX86CodePrinterPass(formatted_raw_ostream &o,
+                                       X86TargetMachine &tm,
                                        bool Verbose);
 
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code

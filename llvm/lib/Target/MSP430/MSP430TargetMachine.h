@@ -59,7 +59,7 @@ public:
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addAssemblyEmitter(PassManagerBase &PM,
                                   CodeGenOpt::Level OptLevel, bool Verbose,
-                                  raw_ostream &Out);
+                                  formatted_raw_ostream &Out);
   static unsigned getModuleMatchQuality(const Module &M);
 }; // MSP430TargetMachine.
 

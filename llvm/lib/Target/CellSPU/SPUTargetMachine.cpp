@@ -90,7 +90,7 @@ SPUTargetMachine::addInstSelector(PassManagerBase &PM,
 bool SPUTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           bool Verbose,
-                                          raw_ostream &Out) {
+                                          formatted_raw_ostream &Out) {
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)

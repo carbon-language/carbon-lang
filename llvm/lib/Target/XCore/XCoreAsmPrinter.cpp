@@ -33,8 +33,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
 using namespace llvm;
@@ -58,7 +58,7 @@ namespace {
     DwarfWriter *DW;
     const XCoreSubtarget &Subtarget;
   public:
-    explicit XCoreAsmPrinter(raw_ostream &O, XCoreTargetMachine &TM,
+    explicit XCoreAsmPrinter(formatted_raw_ostream &O, XCoreTargetMachine &TM,
                              const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V), DW(0),
         Subtarget(*TM.getSubtargetImpl()) {}
@@ -104,7 +104,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createXCoreCodePrinterPass(raw_ostream &o,
+FunctionPass *llvm::createXCoreCodePrinterPass(formatted_raw_ostream &o,
                                                XCoreTargetMachine &tm,
                                                bool verbose) {
   return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
@@ -112,7 +112,8 @@ FunctionPass *llvm::createXCoreCodePrinterPass(raw_ostream &o,
 
 // PrintEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
-static void PrintEscapedString(const std::string &Str, raw_ostream &Out) {
+static void PrintEscapedString(const std::string &Str,
+                               formatted_raw_ostream &Out) {
   for (unsigned i = 0, e = Str.size(); i != e; ++i) {
     unsigned char C = Str[i];
     if (isprint(C) && C != '"' && C != '\\') {

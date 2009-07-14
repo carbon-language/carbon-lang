@@ -18,8 +18,8 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/DwarfWriter.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/DwarfWriter.h"
@@ -112,7 +112,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createPIC16CodePrinterPass(raw_ostream &o,
+FunctionPass *llvm::createPIC16CodePrinterPass(formatted_raw_ostream &o,
                                                PIC16TargetMachine &tm,
                                                bool verbose) {
   return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);

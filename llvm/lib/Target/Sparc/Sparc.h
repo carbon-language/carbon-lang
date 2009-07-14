@@ -22,10 +22,11 @@
 namespace llvm {
   class FunctionPass;
   class SparcTargetMachine;
-  class raw_ostream;
+  class formatted_raw_ostream;
 
   FunctionPass *createSparcISelDag(SparcTargetMachine &TM);
-  FunctionPass *createSparcCodePrinterPass(raw_ostream &OS, TargetMachine &TM,
+  FunctionPass *createSparcCodePrinterPass(formatted_raw_ostream &OS,
+                                           TargetMachine &TM,
                                            bool Verbose);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createSparcFPMoverPass(TargetMachine &TM);

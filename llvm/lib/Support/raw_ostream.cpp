@@ -166,7 +166,7 @@ raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
   case 0: break;
   default:
     // Normally the string to emit is shorter than the buffer.
-    if (Size <= unsigned(OutBufEnd-OutBufStart)) {
+    if (Size <= unsigned(OutBufEnd-OutBufCur)) {
       memcpy(OutBufCur, Ptr, Size);
       break;
     } 

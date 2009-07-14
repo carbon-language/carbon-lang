@@ -67,7 +67,7 @@ bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM,
 bool XCoreTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
                                             bool Verbose,
-                                            raw_ostream &Out) {
+                                            formatted_raw_ostream &Out) {
   // Output assembly language.
   PM.add(createXCoreCodePrinterPass(Out, *this, Verbose));
   return false;

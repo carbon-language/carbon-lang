@@ -18,7 +18,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
@@ -237,7 +237,7 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM,
 bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           bool Verbose,
-                                          raw_ostream &Out) {
+                                          formatted_raw_ostream &Out) {
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
     PM.add(AsmPrinterCtor(Out, *this, Verbose));
@@ -270,7 +270,7 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
 
   return false;
@@ -302,7 +302,7 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
 
   return false;
@@ -316,7 +316,7 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
 
   return false;
@@ -330,7 +330,7 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
 
   return false;
@@ -344,7 +344,7 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
 
   return false;
@@ -358,7 +358,7 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
   if (DumpAsm) {
     assert(AsmPrinterCtor && "AsmPrinter was not linked in");
     if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(errs(), *this, true));
+      PM.add(AsmPrinterCtor(ferrs(), *this, true));
   }
 
   return false;

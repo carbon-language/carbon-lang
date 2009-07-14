@@ -27,8 +27,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -38,7 +38,7 @@ namespace {
   class IA64AsmPrinter : public AsmPrinter {
     std::set<std::string> ExternalFunctionNames, ExternalObjectNames;
   public:
-    explicit IA64AsmPrinter(raw_ostream &O, TargetMachine &TM,
+    explicit IA64AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                             const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V) {}
 
@@ -368,7 +368,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 /// assembly code for a MachineFunction to the given output stream, using
 /// the given target machine description.
 ///
-FunctionPass *llvm::createIA64CodePrinterPass(raw_ostream &o,
+FunctionPass *llvm::createIA64CodePrinterPass(formatted_raw_ostream &o,
                                               IA64TargetMachine &tm,
                                               bool verbose) {
   return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);

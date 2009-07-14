@@ -39,8 +39,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
 #include <cctype>
 
 using namespace llvm;
@@ -51,7 +51,7 @@ namespace {
   class VISIBILITY_HIDDEN MipsAsmPrinter : public AsmPrinter {
     const MipsSubtarget *Subtarget;
   public:
-    explicit MipsAsmPrinter(raw_ostream &O, MipsTargetMachine &TM, 
+    explicit MipsAsmPrinter(formatted_raw_ostream &O, MipsTargetMachine &TM, 
                             const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
@@ -91,7 +91,7 @@ namespace {
 /// assembly code for a MachineFunction to the given output stream,
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
-FunctionPass *llvm::createMipsCodePrinterPass(raw_ostream &o,
+FunctionPass *llvm::createMipsCodePrinterPass(formatted_raw_ostream &o,
                                               MipsTargetMachine &tm,
                                               bool verbose) {
   return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);

@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-class raw_ostream;
+class formatted_raw_ostream;
 
 struct CPPTargetMachine : public TargetMachine {
   const TargetData DataLayout;       // Calculates type size & alignment
@@ -28,7 +28,8 @@ struct CPPTargetMachine : public TargetMachine {
     : DataLayout(&M) {}
 
   virtual bool WantsWholeFile() const { return true; }
-  virtual bool addPassesToEmitWholeFile(PassManager &PM, raw_ostream &Out,
+  virtual bool addPassesToEmitWholeFile(PassManager &PM,
+                                        formatted_raw_ostream &Out,
                                         CodeGenFileType FileType,
                                         CodeGenOpt::Level OptLevel);
 

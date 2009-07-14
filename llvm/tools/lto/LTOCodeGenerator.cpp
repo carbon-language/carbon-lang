@@ -30,11 +30,11 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/FileWriters.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/SystemUtils.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetOptions.h"
@@ -185,7 +185,9 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     // generate assembly code
     bool genResult = false;
     {
-      raw_fd_ostream asmFile(uniqueAsmPath.c_str(), false, errMsg);
+      raw_fd_ostream asmFD(raw_fd_ostream(uniqueAsmPath.c_str(),
+                                          false, errMsg));
+      formatted_raw_ostream asmFile(asmFD);
       if (!errMsg.empty())
         return NULL;
       genResult = this->generateAssemblyCode(asmFile, errMsg);
@@ -390,7 +392,7 @@ void LTOCodeGenerator::applyScopeRestrictions()
 }
 
 /// Optimize merged modules using various IPO passes
-bool LTOCodeGenerator::generateAssemblyCode(raw_ostream& out,
+bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
                                             std::string& errMsg)
 {
     if (  this->determineTarget(errMsg) ) 

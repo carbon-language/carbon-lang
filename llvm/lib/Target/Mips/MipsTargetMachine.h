@@ -22,7 +22,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 
 namespace llvm {
-  class raw_ostream;
+  class formatted_raw_ostream;
   
   class MipsTargetMachine : public LLVMTargetMachine {
     MipsSubtarget       Subtarget;
@@ -37,7 +37,7 @@ namespace llvm {
     // To avoid having target depend on the asmprinter stuff libraries,
     // asmprinter set this functions to ctor pointer at startup time if they are
     // linked in.
-    typedef FunctionPass *(*AsmPrinterCtorFn)(raw_ostream &o,
+    typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
                                               MipsTargetMachine &tm,
                                               bool verbose);
     static AsmPrinterCtorFn AsmPrinterCtor;
@@ -75,7 +75,7 @@ namespace llvm {
                                 CodeGenOpt::Level OptLevel);
     virtual bool addAssemblyEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
-                                    bool Verbose, raw_ostream &Out);
+                                    bool Verbose, formatted_raw_ostream &Out);
   };
 
 /// MipselTargetMachine - Mipsel target machine.

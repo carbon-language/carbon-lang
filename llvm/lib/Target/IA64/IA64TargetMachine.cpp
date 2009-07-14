@@ -87,7 +87,7 @@ bool IA64TargetMachine::addPreEmitPass(PassManagerBase &PM,
 bool IA64TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                            CodeGenOpt::Level OptLevel,
                                            bool Verbose,
-                                           raw_ostream &Out) {
+                                           formatted_raw_ostream &Out) {
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)

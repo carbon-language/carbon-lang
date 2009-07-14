@@ -40,7 +40,7 @@ namespace llvm {
   class Section;
   class TargetAsmInfo;
   class Type;
-  class raw_ostream;
+  class formatted_raw_ostream;
 
   /// AsmPrinter - This class is intended to be used as a driving class for all
   /// asm writers.
@@ -69,7 +69,7 @@ namespace llvm {
   public:
     /// Output stream on which we're printing assembly code.
     ///
-    raw_ostream &O;
+    formatted_raw_ostream &O;
 
     /// Target machine description.
     ///
@@ -118,7 +118,7 @@ namespace llvm {
     mutable DebugLocTuple PrevDLT;
 
   protected:
-    explicit AsmPrinter(raw_ostream &o, TargetMachine &TM,
+    explicit AsmPrinter(formatted_raw_ostream &o, TargetMachine &TM,
                         const TargetAsmInfo *T, bool V);
     
   public:

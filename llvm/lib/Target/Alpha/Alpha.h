@@ -23,10 +23,10 @@ namespace llvm {
   class FunctionPass;
   class MachineCodeEmitter;
   class ObjectCodeEmitter;
-  class raw_ostream;
+  class formatted_raw_ostream;
 
   FunctionPass *createAlphaISelDag(AlphaTargetMachine &TM);
-  FunctionPass *createAlphaCodePrinterPass(raw_ostream &OS,
+  FunctionPass *createAlphaCodePrinterPass(formatted_raw_ostream &OS,
                                            TargetMachine &TM,
                                            bool Verbose);
   FunctionPass *createAlphaPatternInstructionSelector(TargetMachine &TM);

@@ -26,7 +26,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
@@ -43,7 +43,7 @@ AsmVerbose("asm-verbose", cl::desc("Add comments to directives."),
            cl::init(cl::BOU_UNSET));
 
 char AsmPrinter::ID = 0;
-AsmPrinter::AsmPrinter(raw_ostream &o, TargetMachine &tm,
+AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
@@ -736,7 +736,7 @@ static inline char toOctal(int X) {
 
 /// printStringChar - Print a char, escaped if necessary.
 ///
-static void printStringChar(raw_ostream &O, unsigned char C) {
+static void printStringChar(formatted_raw_ostream &O, unsigned char C) {
   if (C == '"') {
     O << "\\\"";
   } else if (C == '\\') {
@@ -978,7 +978,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
 /// printAsCString - Print the specified array as a C compatible string, only if
 /// the predicate isString is true.
 ///
-static void printAsCString(raw_ostream &O, const ConstantArray *CVA,
+static void printAsCString(formatted_raw_ostream &O, const ConstantArray *CVA,
                            unsigned LastElt) {
   assert(CVA->isString() && "Array is not string compatible!");
 

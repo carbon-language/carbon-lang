@@ -29,8 +29,8 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
@@ -40,7 +40,7 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   class VISIBILITY_HIDDEN MSP430AsmPrinter : public AsmPrinter {
   public:
-    MSP430AsmPrinter(raw_ostream &O, MSP430TargetMachine &TM,
+    MSP430AsmPrinter(formatted_raw_ostream &O, MSP430TargetMachine &TM,
                      const TargetAsmInfo *TAI, bool V)
       : AsmPrinter(O, TM, TAI, V) {}
 
@@ -75,7 +75,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createMSP430CodePrinterPass(raw_ostream &o,
+FunctionPass *llvm::createMSP430CodePrinterPass(formatted_raw_ostream &o,
                                                 MSP430TargetMachine &tm,
                                                 bool verbose) {
   return new MSP430AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);

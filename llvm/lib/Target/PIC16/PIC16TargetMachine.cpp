@@ -67,7 +67,8 @@ bool PIC16TargetMachine::addInstSelector(PassManagerBase &PM,
 
 bool PIC16TargetMachine::addAssemblyEmitter(PassManagerBase &PM, 
                                             CodeGenOpt::Level OptLevel,
-                                            bool Verbose, raw_ostream &Out) {
+                                            bool Verbose,
+                                            formatted_raw_ostream &Out) {
   // Output assembly language.
   PM.add(createPIC16CodePrinterPass(Out, *this, Verbose));
   return false;

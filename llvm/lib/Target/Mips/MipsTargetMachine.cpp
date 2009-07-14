@@ -131,7 +131,7 @@ addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
 // true if AssemblyEmitter is supported
 bool MipsTargetMachine::
 addAssemblyEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel, 
-                   bool Verbose, raw_ostream &Out)  {
+                   bool Verbose, formatted_raw_ostream &Out)  {
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   PM.add(AsmPrinterCtor(Out, *this, Verbose));

@@ -27,8 +27,8 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -50,7 +50,7 @@ namespace {
     ValueMapTy NumberForBB;
     unsigned BBNumber;
   public:
-    explicit SparcAsmPrinter(raw_ostream &O, TargetMachine &TM,
+    explicit SparcAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                              const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V), BBNumber(0) {}
 
@@ -82,7 +82,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createSparcCodePrinterPass(raw_ostream &o,
+FunctionPass *llvm::createSparcCodePrinterPass(formatted_raw_ostream &o,
                                                TargetMachine &tm,
                                                bool verbose) {
   return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);

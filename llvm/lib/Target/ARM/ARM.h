@@ -26,7 +26,7 @@ class FunctionPass;
 class MachineCodeEmitter;
 class JITCodeEmitter;
 class ObjectCodeEmitter;
-class raw_ostream;
+class formatted_raw_ostream;
 
 // Enums corresponding to ARM condition codes
 namespace ARMCC {
@@ -93,7 +93,7 @@ inline static const char *ARMCondCodeToString(ARMCC::CondCodes CC) {
 }
 
 FunctionPass *createARMISelDag(ARMBaseTargetMachine &TM);
-FunctionPass *createARMCodePrinterPass(raw_ostream &O,
+FunctionPass *createARMCodePrinterPass(formatted_raw_ostream &O,
                                        ARMBaseTargetMachine &TM,
                                        bool Verbose);
 FunctionPass *createARMCodeEmitterPass(ARMBaseTargetMachine &TM,

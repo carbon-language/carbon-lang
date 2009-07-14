@@ -21,11 +21,11 @@ namespace llvm {
   class MipsTargetMachine;
   class FunctionPass;
   class MachineCodeEmitter;
-  class raw_ostream;
+  class formatted_raw_ostream;
 
   FunctionPass *createMipsISelDag(MipsTargetMachine &TM);
   FunctionPass *createMipsDelaySlotFillerPass(MipsTargetMachine &TM);
-  FunctionPass *createMipsCodePrinterPass(raw_ostream &OS, 
+  FunctionPass *createMipsCodePrinterPass(formatted_raw_ostream &OS, 
                                           MipsTargetMachine &TM,
                                           bool Verbose);
 } // end namespace llvm;

@@ -36,11 +36,11 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
@@ -89,7 +89,7 @@ namespace {
   /// CWriter - This class is the main chunk of code that converts an LLVM
   /// module to a C translation unit.
   class CWriter : public FunctionPass, public InstVisitor<CWriter> {
-    raw_ostream &Out;
+    formatted_raw_ostream &Out;
     IntrinsicLowering *IL;
     Mangler *Mang;
     LoopInfo *LI;
@@ -107,7 +107,7 @@ namespace {
 
   public:
     static char ID;
-    explicit CWriter(raw_ostream &o)
+    explicit CWriter(formatted_raw_ostream &o)
       : FunctionPass(&ID), Out(o), IL(0), Mang(0), LI(0), 
         TheModule(0), TAsm(0), TD(0), OpaqueCounter(0), NextAnonValueNumber(0) {
       FPCounter = 0;
@@ -152,24 +152,26 @@ namespace {
       return false;
     }
 
-    raw_ostream &printType(raw_ostream &Out, const Type *Ty, 
-                            bool isSigned = false,
-                            const std::string &VariableName = "",
-                            bool IgnoreName = false,
-                            const AttrListPtr &PAL = AttrListPtr());
+    raw_ostream &printType(formatted_raw_ostream &Out,
+                           const Type *Ty, 
+                           bool isSigned = false,
+                           const std::string &VariableName = "",
+                           bool IgnoreName = false,
+                           const AttrListPtr &PAL = AttrListPtr());
     std::ostream &printType(std::ostream &Out, const Type *Ty, 
                            bool isSigned = false,
                            const std::string &VariableName = "",
                            bool IgnoreName = false,
                            const AttrListPtr &PAL = AttrListPtr());
-    raw_ostream &printSimpleType(raw_ostream &Out, const Type *Ty, 
-                                  bool isSigned, 
-                                  const std::string &NameSoFar = "");
+    raw_ostream &printSimpleType(formatted_raw_ostream &Out,
+                                 const Type *Ty, 
+                                 bool isSigned, 
+                                 const std::string &NameSoFar = "");
     std::ostream &printSimpleType(std::ostream &Out, const Type *Ty, 
                                  bool isSigned, 
                                  const std::string &NameSoFar = "");
 
-    void printStructReturnPointerFunctionType(raw_ostream &Out,
+    void printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
                                               const AttrListPtr &PAL,
                                               const PointerType *Ty);
 
@@ -435,7 +437,7 @@ bool CBackendNameAllUsedStructsAndMergeFunctions::runOnModule(Module &M) {
 /// printStructReturnPointerFunctionType - This is like printType for a struct
 /// return type, except, instead of printing the type as void (*)(Struct*, ...)
 /// print it as "Struct (*)(...)", for struct return functions.
-void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
+void CWriter::printStructReturnPointerFunctionType(formatted_raw_ostream &Out,
                                                    const AttrListPtr &PAL,
                                                    const PointerType *TheTy) {
   const FunctionType *FTy = cast<FunctionType>(TheTy->getElementType());
@@ -471,7 +473,8 @@ void CWriter::printStructReturnPointerFunctionType(raw_ostream &Out,
 }
 
 raw_ostream &
-CWriter::printSimpleType(raw_ostream &Out, const Type *Ty, bool isSigned,
+CWriter::printSimpleType(formatted_raw_ostream &Out, const Type *Ty,
+                         bool isSigned,
                          const std::string &NameSoFar) {
   assert((Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) && 
          "Invalid type for printSimpleType");
@@ -567,9 +570,10 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
 // Pass the Type* and the variable name and this prints out the variable
 // declaration.
 //
-raw_ostream &CWriter::printType(raw_ostream &Out, const Type *Ty,
-                                 bool isSigned, const std::string &NameSoFar,
-                                 bool IgnoreName, const AttrListPtr &PAL) {
+raw_ostream &CWriter::printType(formatted_raw_ostream &Out,
+                                const Type *Ty,
+                                bool isSigned, const std::string &NameSoFar,
+                                bool IgnoreName, const AttrListPtr &PAL) {
   if (Ty->isPrimitiveType() || Ty->isInteger() || isa<VectorType>(Ty)) {
     printSimpleType(Out, Ty, isSigned, NameSoFar);
     return Out;
@@ -1640,7 +1644,7 @@ void CWriter::writeOperandWithCast(Value* Operand, const ICmpInst &Cmp) {
 // generateCompilerSpecificCode - This is where we add conditional compilation
 // directives to cater to specific compilers as need be.
 //
-static void generateCompilerSpecificCode(raw_ostream& Out,
+static void generateCompilerSpecificCode(formatted_raw_ostream& Out,
                                          const TargetData *TD) {
   // Alloca is hard to get, and we don't want to include stdlib.h here.
   Out << "/* get a declaration for alloca */\n"
@@ -3626,7 +3630,7 @@ void CWriter::visitExtractValueInst(ExtractValueInst &EVI) {
 //===----------------------------------------------------------------------===//
 
 bool CTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
-                                              raw_ostream &o,
+                                              formatted_raw_ostream &o,
                                               CodeGenFileType FileType,
                                               CodeGenOpt::Level OptLevel) {
   if (FileType != TargetMachine::AssemblyFile) return true;

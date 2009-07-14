@@ -23,10 +23,23 @@ namespace llvm
   /// asm-specific constructs.
   ///
   class formatted_raw_ostream : public raw_ostream {
+  public:
+    /// DELETE_STREAM - Tell the destructor to delete the held stream.
+    ///
+    const static bool DELETE_STREAM = true;
+    /// PRESERVE_STREAM - Tell the destructor to not delete the held
+    /// stream.
+    ///
+    const static bool PRESERVE_STREAM = false;
+    
   private:
     /// TheStream - The real stream we output to.
     ///
     raw_ostream &TheStream;
+    /// DeleteStream - Do we need to delete TheStream in the
+    /// destructor?
+    ///
+    bool DeleteStream;
 
     /// Column - The current output column of the stream.  The column
     /// scheme is zero-based.
@@ -61,8 +74,13 @@ namespace llvm
     /// stream will use stdout instead.
     /// \param Binary - The file should be opened in binary mode on
     /// platforms that support this distinction.
-    formatted_raw_ostream(raw_ostream &Stream) 
-        : raw_ostream(), TheStream(Stream), Column(0) {}
+    formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
+        : raw_ostream(), TheStream(Stream), DeleteStream(Delete), Column(0) {}
+
+    ~formatted_raw_ostream() {
+      if (DeleteStream)
+        delete &TheStream;
+    }
 
     /// PadToColumn - Align the output to some column number.
     ///
@@ -72,6 +90,16 @@ namespace llvm
     ///
     void PadToColumn(unsigned NewCol, unsigned MinPad = 0);
   };
-}
+
+/// fouts() - This returns a reference to a formatted_raw_ostream for
+/// standard output.  Use it like: fouts() << "foo" << "bar";
+formatted_raw_ostream &fouts();
+
+/// ferrs() - This returns a reference to a formatted_raw_ostream for
+/// standard error.  Use it like: ferrs() << "foo" << "bar";
+formatted_raw_ostream &ferrs();
+
+} // end llvm namespace
+
 
 #endif

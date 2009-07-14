@@ -55,7 +55,7 @@ public:
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addAssemblyEmitter(PassManagerBase &PM,
                                   CodeGenOpt::Level OptLevel, 
-                                  bool Verbose, raw_ostream &Out);
+                                  bool Verbose, formatted_raw_ostream &Out);
 };
 
 } // end namespace llvm

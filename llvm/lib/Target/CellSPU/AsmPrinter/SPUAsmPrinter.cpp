@@ -32,7 +32,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -50,7 +50,7 @@ namespace {
   class VISIBILITY_HIDDEN SPUAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs;
   public:
-    explicit SPUAsmPrinter(raw_ostream &O, TargetMachine &TM,
+    explicit SPUAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                            const TargetAsmInfo *T, bool V) :
       AsmPrinter(O, TM, T, V) {}
 
@@ -289,7 +289,7 @@ namespace {
   class VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
     DwarfWriter *DW;
   public:
-    explicit LinuxAsmPrinter(raw_ostream &O, SPUTargetMachine &TM,
+    explicit LinuxAsmPrinter(formatted_raw_ostream &O, SPUTargetMachine &TM,
                              const TargetAsmInfo *T, bool V)
       : SPUAsmPrinter(O, TM, T, V), DW(0) {}
 
@@ -492,7 +492,7 @@ bool LinuxAsmPrinter::doInitialization(Module &M) {
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
+static void PrintUnmangledNameSafely(const Value *V, formatted_raw_ostream &OS) {
   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
        Name != E; ++Name)
     if (isprint(*Name))
@@ -598,7 +598,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
 /// assembly code for a MachineFunction to the given output stream, in a format
 /// that the Linux SPU assembler can deal with.
 ///
-FunctionPass *llvm::createSPUAsmPrinterPass(raw_ostream &o,
+FunctionPass *llvm::createSPUAsmPrinterPass(formatted_raw_ostream &o,
                                             SPUTargetMachine &tm,
                                             bool verbose) {
   return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);

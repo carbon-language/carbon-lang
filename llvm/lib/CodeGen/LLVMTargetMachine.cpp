@@ -22,7 +22,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
 namespace llvm {
@@ -56,7 +56,7 @@ EnableFastISelOption("fast-isel", cl::Hidden,
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
-                                       raw_ostream &Out,
+                                       formatted_raw_ostream &Out,
                                        CodeGenFileType FileType,
                                        CodeGenOpt::Level OptLevel) {
   // Add common CodeGen passes.

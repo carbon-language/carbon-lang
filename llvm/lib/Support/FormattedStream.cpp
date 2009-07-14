@@ -55,3 +55,16 @@ void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad)
   }
 }
 
+/// fouts() - This returns a reference to a formatted_raw_ostream for
+/// standard output.  Use it like: fouts() << "foo" << "bar";
+formatted_raw_ostream &llvm::fouts() {
+  static formatted_raw_ostream S(outs());
+  return S;
+}
+
+/// ferrs() - This returns a reference to a formatted_raw_ostream for
+/// standard error.  Use it like: ferrs() << "foo" << "bar";
+formatted_raw_ostream &llvm::ferrs() {
+  static formatted_raw_ostream S(errs());
+  return S;
+}

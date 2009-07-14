@@ -34,8 +34,8 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
@@ -60,7 +60,8 @@ void X86ATTAsmPrinter::PrintPICBaseSymbol() const {
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
+static void PrintUnmangledNameSafely(const Value *V,
+                                     formatted_raw_ostream &OS) {
   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
        Name != E; ++Name)
     if (isprint(*Name))

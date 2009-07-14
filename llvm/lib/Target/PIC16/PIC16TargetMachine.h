@@ -61,7 +61,7 @@ public:
                                CodeGenOpt::Level OptLevel);
   virtual bool addAssemblyEmitter(PassManagerBase &PM,
                                   CodeGenOpt::Level OptLevel,
-                                  bool Verbose, raw_ostream &Out);
+                                  bool Verbose, formatted_raw_ostream &Out);
   virtual bool addPostRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
 }; // PIC16TargetMachine.
 
