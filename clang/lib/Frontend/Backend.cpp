@@ -24,8 +24,8 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/StandardPasses.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Path.h"
@@ -42,6 +42,7 @@ namespace {
     BackendAction Action;
     CompileOptions CompileOpts;
     llvm::raw_ostream *AsmOutStream;
+    llvm::formatted_raw_ostream FormattedOutStream;
     ASTContext *Context;
 
     Timer LLVMIRGeneration;
@@ -79,13 +80,17 @@ namespace {
                     LLVMContext& C) :
       Action(action), 
       CompileOpts(compopts),
-      AsmOutStream(OS), 
+      AsmOutStream(OS),
       LLVMIRGeneration("LLVM IR Generation Time"),
       CodeGenerationTime("Code Generation Time"),
       Gen(CreateLLVMCodeGen(Diags, infile, compopts, C)),
       TheModule(0), TheTargetData(0), ModuleProvider(0),
       CodeGenPasses(0), PerModulePasses(0), PerFunctionPasses(0) {
       
+      if (AsmOutStream)
+        FormattedOutStream.setStream(*AsmOutStream,
+                                     formatted_raw_ostream::PRESERVE_STREAM);
+        
       // Enable -time-passes if -ftime-report is enabled.
       llvm::TimePassesIsEnabled = CompileOpts.TimePasses;
     }
@@ -145,7 +150,7 @@ namespace {
       
       // Force a flush here in case we never get released.
       if (AsmOutStream)
-        AsmOutStream->flush();
+        FormattedOutStream.flush();
     }
     
     virtual void HandleTagDeclDefinition(TagDecl *D) {
@@ -193,9 +198,9 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     return true;
 
   if (Action == Backend_EmitBC) {
-    getPerModulePasses()->add(createBitcodeWriterPass(*AsmOutStream));
+    getPerModulePasses()->add(createBitcodeWriterPass(FormattedOutStream));
   } else if (Action == Backend_EmitLL) {
-    getPerModulePasses()->add(createPrintModulePass(AsmOutStream));
+    getPerModulePasses()->add(createPrintModulePass(&FormattedOutStream));
   } else {
     bool Fast = CompileOpts.OptimizationLevel == 0;
 
@@ -240,7 +245,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
 
     // Normal mode, emit a .s file by running the code generator.
     // Note, this also adds codegenerator level optimization passes.
-    switch (TM->addPassesToEmitFile(*PM, *AsmOutStream,
+    switch (TM->addPassesToEmitFile(*PM, FormattedOutStream,
                                     TargetMachine::AssemblyFile, OptLevel)) {
     default:
     case FileModel::Error:
