@@ -95,7 +95,9 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
     }
 
     // See if any bits will be truncated when evaluated as a character.
-    unsigned CharWidth = PP.getTargetInfo().getCharWidth(IsWide);
+    unsigned CharWidth = IsWide
+                       ? PP.getTargetInfo().getWCharWidth()
+                       : PP.getTargetInfo().getCharWidth();
                        
     if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
       Overflow = true;
@@ -124,7 +126,9 @@ static unsigned ProcessCharEscape(const char *&ThisTokBuf,
              ThisTokBuf[0] >= '0' && ThisTokBuf[0] <= '7');
     
     // Check for overflow.  Reject '\777', but not L'\777'.
-    unsigned CharWidth = PP.getTargetInfo().getCharWidth(IsWide);
+    unsigned CharWidth = IsWide
+                       ? PP.getTargetInfo().getWCharWidth()
+                       : PP.getTargetInfo().getCharWidth();
                        
     if (CharWidth != 32 && (ResultChar >> CharWidth) != 0) {
       PP.Diag(Loc, diag::warn_octal_escape_too_large);
