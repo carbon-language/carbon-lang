@@ -1,5 +1,4 @@
 // RUN: clang-cc -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
-// XFAIL
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;
@@ -69,7 +68,6 @@ char test2() {
   return 'a';
 }
 
-// *** THIS TEST IS CURRENTLY FAILING ***
 // BasicStore handles this case incorrectly because it doesn't reason about
 // the value pointed to by 'x' and thus creates different symbolic values
 // at the declarations of 'a' and 'b' respectively.  RegionStore handles
@@ -83,3 +81,45 @@ void test_trivial_symbolic_comparison_pointer_parameter(int *x) {
   }
 }
 
+// This is a modified test from 'misc-ps.m'.  Here we have the extra
+// NULL dereferences which are pruned out by RegionStore's symbolic reasoning
+// of fields.
+typedef struct _BStruct { void *grue; } BStruct;
+void testB_aux(void *ptr);
+void testB(BStruct *b) {
+  {
+    int *__gruep__ = ((int *)&((b)->grue));
+    int __gruev__ = *__gruep__;
+    int __gruev2__ = *__gruep__;
+    if (__gruev__ != __gruev2__) {
+      int *p = 0;
+      *p = 0xDEADBEEF;
+    }
+    
+    testB_aux(__gruep__);
+  }
+  {
+    int *__gruep__ = ((int *)&((b)->grue));
+    int __gruev__ = *__gruep__;
+    int __gruev2__ = *__gruep__;
+    if (__gruev__ != __gruev2__) {
+      int *p = 0;
+      *p = 0xDEADBEEF;
+    }
+    
+    if (~0 != __gruev__) {}
+  }
+}
+
+void testB_2(BStruct *b) {
+  {
+    int **__gruep__ = ((int **)&((b)->grue));
+    int *__gruev__ = *__gruep__;
+    testB_aux(__gruep__);
+  }
+  {
+    int **__gruep__ = ((int **)&((b)->grue));
+    int *__gruev__ = *__gruep__;
+    if ((int*)~0 != __gruev__) {}
+  }
+}

@@ -799,9 +799,15 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // char* p = alloca();
   // read(p);
   // c = *p;
-  if (isa<SymbolicRegion>(MR) || isa<AllocaRegion>(MR))
+  if (isa<AllocaRegion>(MR))
     return UnknownVal();
-
+  
+  if (isa<SymbolicRegion>(MR)) {
+    ASTContext &Ctx = getContext();
+    SVal idx = ValMgr.makeIntVal(0, Ctx.IntTy);
+    MR = MRMgr.getElementRegion(T, idx, MR, Ctx);
+  }
+  
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
   const TypedRegion *R = cast<TypedRegion>(MR);
