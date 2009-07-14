@@ -31,7 +31,7 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(const llvm::Type *Ty,
                                                     const char *Name) {
   if (!Builder.isNamePreserving())
     Name = "";
-  return new llvm::AllocaInst(Ty, 0, Name, AllocaInsertPt);
+  return new llvm::AllocaInst(VMContext, Ty, 0, Name, AllocaInsertPt);
 }
 
 /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
@@ -121,13 +121,13 @@ RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
     return RValue::get(0);
   } else if (const ComplexType *CTy = Ty->getAsComplexType()) {
     const llvm::Type *EltTy = ConvertType(CTy->getElementType());
-    llvm::Value *U = llvm::UndefValue::get(EltTy);
+    llvm::Value *U = VMContext.getUndef(EltTy);
     return RValue::getComplex(std::make_pair(U, U));
   } else if (hasAggregateLLVMType(Ty)) {
-    const llvm::Type *LTy = llvm::PointerType::getUnqual(ConvertType(Ty));
-    return RValue::getAggregate(llvm::UndefValue::get(LTy));
+    const llvm::Type *LTy = VMContext.getPointerTypeUnqual(ConvertType(Ty));
+    return RValue::getAggregate(VMContext.getUndef(LTy));
   } else {
-    return RValue::get(llvm::UndefValue::get(ConvertType(Ty)));
+    return RValue::get(VMContext.getUndef(ConvertType(Ty)));
   }
 }
 
@@ -140,8 +140,8 @@ RValue CodeGenFunction::EmitUnsupportedRValue(const Expr *E,
 LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
                                               const char *Name) {
   ErrorUnsupported(E, Name);
-  llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
-  return LValue::MakeAddr(llvm::UndefValue::get(Ty),
+  llvm::Type *Ty = VMContext.getPointerTypeUnqual(ConvertType(E->getType()));
+  return LValue::MakeAddr(VMContext.getUndef(Ty),
                           E->getType().getCVRQualifiers(),
                           getContext().getObjCGCAttrKind(E->getType()));
 }
@@ -253,7 +253,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
     const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
     if (DstPtr->getElementType() != SrcTy) {
       const llvm::Type *MemTy = 
-        llvm::PointerType::get(SrcTy, DstPtr->getAddressSpace());
+        VMContext.getPointerType(SrcTy, DstPtr->getAddressSpace());
       Addr = Builder.CreateBitCast(Addr, MemTy, "storetmp");
     }
   }
@@ -328,19 +328,19 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
   
   // Shift to proper location.
   if (StartBit)
-    Val = Builder.CreateLShr(Val, llvm::ConstantInt::get(EltTy, StartBit), 
+    Val = Builder.CreateLShr(Val, VMContext.getConstantInt(EltTy, StartBit), 
                              "bf.lo");
   
   // Mask off unused bits.
   llvm::Constant *LowMask = 
-    llvm::ConstantInt::get(llvm::APInt::getLowBitsSet(EltTySize, LowBits));
+    VMContext.getConstantInt(llvm::APInt::getLowBitsSet(EltTySize, LowBits));
   Val = Builder.CreateAnd(Val, LowMask, "bf.lo.cleared");
   
   // Fetch the high bits if necessary.
   if (LowBits < BitfieldSize) {
     unsigned HighBits = BitfieldSize - LowBits;
     llvm::Value *HighPtr = 
-      Builder.CreateGEP(Ptr, llvm::ConstantInt::get(llvm::Type::Int32Ty, 1),
+      Builder.CreateGEP(Ptr, VMContext.getConstantInt(llvm::Type::Int32Ty, 1),
                         "bf.ptr.hi");    
     llvm::Value *HighVal = Builder.CreateLoad(HighPtr, 
                                               LV.isVolatileQualified(),
@@ -348,18 +348,18 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV,
     
     // Mask off unused bits.
     llvm::Constant *HighMask = 
-      llvm::ConstantInt::get(llvm::APInt::getLowBitsSet(EltTySize, HighBits));
+      VMContext.getConstantInt(llvm::APInt::getLowBitsSet(EltTySize, HighBits));
     HighVal = Builder.CreateAnd(HighVal, HighMask, "bf.lo.cleared");
 
     // Shift to proper location and or in to bitfield value.
     HighVal = Builder.CreateShl(HighVal, 
-                                llvm::ConstantInt::get(EltTy, LowBits));
+                                VMContext.getConstantInt(EltTy, LowBits));
     Val = Builder.CreateOr(Val, HighVal, "bf.val");
   }
 
   // Sign extend if necessary.
   if (LV.isBitfieldSigned()) {
-    llvm::Value *ExtraBits = llvm::ConstantInt::get(EltTy, 
+    llvm::Value *ExtraBits = VMContext.getConstantInt(EltTy, 
                                                     EltTySize - BitfieldSize);
     Val = Builder.CreateAShr(Builder.CreateShl(Val, ExtraBits), 
                              ExtraBits, "bf.val.sext");
@@ -396,7 +396,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   const VectorType *ExprVT = ExprType->getAsVectorType();
   if (!ExprVT) {
     unsigned InIdx = getAccessedFieldNo(0, Elts);
-    llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
+    llvm::Value *Elt = VMContext.getConstantInt(llvm::Type::Int32Ty, InIdx);
     return RValue::get(Builder.CreateExtractElement(Vec, Elt, "tmp"));
   }
 
@@ -406,12 +406,12 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   llvm::SmallVector<llvm::Constant*, 4> Mask;
   for (unsigned i = 0; i != NumResultElts; ++i) {
     unsigned InIdx = getAccessedFieldNo(i, Elts);
-    Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
+    Mask.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, InIdx));
   }
   
-  llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+  llvm::Value *MaskV = VMContext.getConstantVector(&Mask[0], Mask.size());
   Vec = Builder.CreateShuffleVector(Vec,
-                                    llvm::UndefValue::get(Vec->getType()),
+                                    VMContext.getUndef(Vec->getType()),
                                     MaskV, "tmp");
   return RValue::get(Vec);
 }
@@ -501,7 +501,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   llvm::Value *SrcVal = Src.getScalarVal();
   llvm::Value *NewVal = Builder.CreateIntCast(SrcVal, EltTy, false, "tmp");
   llvm::Constant *Mask = 
-    llvm::ConstantInt::get(llvm::APInt::getLowBitsSet(EltTySize, BitfieldSize));
+    VMContext.getConstantInt(llvm::APInt::getLowBitsSet(EltTySize, BitfieldSize));
   NewVal = Builder.CreateAnd(NewVal, Mask, "bf.value");
 
   // Return the new value of the bit-field, if requested.
@@ -514,7 +514,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     // Sign extend if necessary.
     if (Dst.isBitfieldSigned()) {
       unsigned SrcTySize = CGM.getTargetData().getTypeSizeInBits(SrcTy);
-      llvm::Value *ExtraBits = llvm::ConstantInt::get(SrcTy,
+      llvm::Value *ExtraBits = VMContext.getConstantInt(SrcTy,
                                                       SrcTySize - BitfieldSize);
       SrcTrunc = Builder.CreateAShr(Builder.CreateShl(SrcTrunc, ExtraBits), 
                                     ExtraBits, "bf.reload.sext");
@@ -532,14 +532,14 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
 
   // Compute the mask for zero-ing the low part of this bitfield.
   llvm::Constant *InvMask = 
-    llvm::ConstantInt::get(~llvm::APInt::getBitsSet(EltTySize, StartBit, 
+    VMContext.getConstantInt(~llvm::APInt::getBitsSet(EltTySize, StartBit, 
                                                     StartBit + LowBits));
   
   // Compute the new low part as
   //   LowVal = (LowVal & InvMask) | (NewVal << StartBit),
   // with the shift of NewVal implicitly stripping the high bits.
   llvm::Value *NewLowVal = 
-    Builder.CreateShl(NewVal, llvm::ConstantInt::get(EltTy, StartBit), 
+    Builder.CreateShl(NewVal, VMContext.getConstantInt(EltTy, StartBit), 
                       "bf.value.lo");  
   LowVal = Builder.CreateAnd(LowVal, InvMask, "bf.prev.lo.cleared");
   LowVal = Builder.CreateOr(LowVal, NewLowVal, "bf.new.lo");
@@ -551,7 +551,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
   if (LowBits < BitfieldSize) {
     unsigned HighBits = BitfieldSize - LowBits;
     llvm::Value *HighPtr = 
-      Builder.CreateGEP(Ptr, llvm::ConstantInt::get(llvm::Type::Int32Ty, 1),
+      Builder.CreateGEP(Ptr, VMContext.getConstantInt(llvm::Type::Int32Ty, 1),
                         "bf.ptr.hi");    
     llvm::Value *HighVal = Builder.CreateLoad(HighPtr, 
                                               Dst.isVolatileQualified(),
@@ -559,14 +559,15 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
     
     // Compute the mask for zero-ing the high part of this bitfield.
     llvm::Constant *InvMask = 
-      llvm::ConstantInt::get(~llvm::APInt::getLowBitsSet(EltTySize, HighBits));
+      VMContext.getConstantInt(~llvm::APInt::getLowBitsSet(EltTySize, 
+                               HighBits));
   
     // Compute the new high part as
     //   HighVal = (HighVal & InvMask) | (NewVal lshr LowBits),
     // where the high bits of NewVal have already been cleared and the
     // shift stripping the low bits.
     llvm::Value *NewHighVal = 
-      Builder.CreateLShr(NewVal, llvm::ConstantInt::get(EltTy, LowBits), 
+      Builder.CreateLShr(NewVal, VMContext.getConstantInt(EltTy, LowBits), 
                         "bf.value.high");  
     HighVal = Builder.CreateAnd(HighVal, InvMask, "bf.prev.hi.cleared");
     HighVal = Builder.CreateOr(HighVal, NewHighVal, "bf.new.hi");
@@ -610,12 +611,12 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       llvm::SmallVector<llvm::Constant*, 4> Mask(NumDstElts);
       for (unsigned i = 0; i != NumSrcElts; ++i) {
         unsigned InIdx = getAccessedFieldNo(i, Elts);
-        Mask[InIdx] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+        Mask[InIdx] = VMContext.getConstantInt(llvm::Type::Int32Ty, i);
       }
     
-      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+      llvm::Value *MaskV = VMContext.getConstantVector(&Mask[0], Mask.size());
       Vec = Builder.CreateShuffleVector(SrcVal,
-                                        llvm::UndefValue::get(Vec->getType()),
+                                        VMContext.getUndef(Vec->getType()),
                                         MaskV, "tmp");
     }
     else if (NumDstElts > NumSrcElts) {
@@ -626,26 +627,26 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       llvm::SmallVector<llvm::Constant*, 4> ExtMask;
       unsigned i;
       for (i = 0; i != NumSrcElts; ++i)
-        ExtMask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, i));
+        ExtMask.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, i));
       for (; i != NumDstElts; ++i)
-        ExtMask.push_back(llvm::UndefValue::get(llvm::Type::Int32Ty));
-      llvm::Value *ExtMaskV = llvm::ConstantVector::get(&ExtMask[0],
+        ExtMask.push_back(VMContext.getUndef(llvm::Type::Int32Ty));
+      llvm::Value *ExtMaskV = VMContext.getConstantVector(&ExtMask[0],
                                                         ExtMask.size());
       llvm::Value *ExtSrcVal = 
         Builder.CreateShuffleVector(SrcVal,
-                                    llvm::UndefValue::get(SrcVal->getType()),
+                                    VMContext.getUndef(SrcVal->getType()),
                                     ExtMaskV, "tmp");
       // build identity
       llvm::SmallVector<llvm::Constant*, 4> Mask;
       for (unsigned i = 0; i != NumDstElts; ++i) {
-        Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, i));
+        Mask.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, i));
       }
       // modify when what gets shuffled in
       for (unsigned i = 0; i != NumSrcElts; ++i) {
         unsigned Idx = getAccessedFieldNo(i, Elts);
-        Mask[Idx] =llvm::ConstantInt::get(llvm::Type::Int32Ty, i+NumDstElts);
+        Mask[Idx] = VMContext.getConstantInt(llvm::Type::Int32Ty, i+NumDstElts);
       }
-      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
+      llvm::Value *MaskV = VMContext.getConstantVector(&Mask[0], Mask.size());
       Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV, "tmp");
     }
     else {
@@ -655,7 +656,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
   } else {
     // If the Src is a scalar (not a vector) it must be updating one element.
     unsigned InIdx = getAccessedFieldNo(0, Elts);
-    llvm::Value *Elt = llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx);
+    llvm::Value *Elt = VMContext.getConstantInt(llvm::Type::Int32Ty, InIdx);
     Vec = Builder.CreateInsertElement(Vec, SrcVal, Elt, "tmp");
   }
   
@@ -689,7 +690,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
         bool needsCopyDispose = BlockRequiresCopying(VD->getType());
         const llvm::Type *PtrStructTy = V->getType();
         const llvm::Type *Ty = PtrStructTy;
-        Ty = llvm::PointerType::get(Ty, 0);
+        Ty = VMContext.getPointerType(Ty, 0);
         V = Builder.CreateStructGEP(V, 1, "forwarding");
         V = Builder.CreateBitCast(V, Ty);
         V = Builder.CreateLoad(V, false);
@@ -864,7 +865,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // Extend or truncate the index type to 32 or 64-bits.
   unsigned IdxBitwidth = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
   if (IdxBitwidth != LLVMPointerWidth)
-    Idx = Builder.CreateIntCast(Idx, llvm::IntegerType::get(LLVMPointerWidth),
+    Idx = Builder.CreateIntCast(Idx, VMContext.getIntegerType(LLVMPointerWidth),
                                 IdxSigned, "idxprom");
 
   // We know that the pointer points to a type of the correct size,
@@ -880,18 +881,18 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   
     uint64_t BaseTypeSize = getContext().getTypeSize(BaseType) / 8;
     Idx = Builder.CreateUDiv(Idx,
-                             llvm::ConstantInt::get(Idx->getType(), 
+                             VMContext.getConstantInt(Idx->getType(), 
                                                     BaseTypeSize));
     Address = Builder.CreateGEP(Base, Idx, "arrayidx");
   } else if (const ObjCInterfaceType *OIT = 
              dyn_cast<ObjCInterfaceType>(E->getType())) {
     llvm::Value *InterfaceSize = 
-      llvm::ConstantInt::get(Idx->getType(),
+      VMContext.getConstantInt(Idx->getType(),
                              getContext().getTypeSize(OIT) / 8);
     
     Idx = Builder.CreateMul(Idx, InterfaceSize);
 
-    llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    llvm::Type *i8PTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
     Address = Builder.CreateGEP(Builder.CreateBitCast(Base, i8PTy), 
                                 Idx, "arrayidx");
     Address = Builder.CreateBitCast(Address, Base->getType());
@@ -913,13 +914,14 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 }
 
 static 
-llvm::Constant *GenerateConstantVector(llvm::SmallVector<unsigned, 4> &Elts) {
+llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
+                                       llvm::SmallVector<unsigned, 4> &Elts) {
   llvm::SmallVector<llvm::Constant *, 4> CElts;
   
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
-    CElts.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, Elts[i]));
+    CElts.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, Elts[i]));
 
-  return llvm::ConstantVector::get(&CElts[0], CElts.size());
+  return VMContext.getConstantVector(&CElts[0], CElts.size());
 }
 
 LValue CodeGenFunction::
@@ -942,7 +944,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   E->getEncodedElementAccess(Indices);
 
   if (Base.isSimple()) {
-    llvm::Constant *CV = GenerateConstantVector(Indices);
+    llvm::Constant *CV = GenerateConstantVector(VMContext, Indices);
     return LValue::MakeExtVectorElt(Base.getAddress(), CV,
                                     Base.getQualifiers());
   }
@@ -953,11 +955,11 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
 
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
     if (isa<llvm::ConstantAggregateZero>(BaseElts))
-      CElts.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+      CElts.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, 0));
     else
       CElts.push_back(BaseElts->getOperand(Indices[i]));
   }
-  llvm::Constant *CV = llvm::ConstantVector::get(&CElts[0], CElts.size());
+  llvm::Constant *CV = VMContext.getConstantVector(&CElts[0], CElts.size());
   return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV,
                                   Base.getQualifiers());
 }
@@ -1020,10 +1022,10 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
   cast<llvm::PointerType>(BaseValue->getType());
   unsigned AS = BaseTy->getAddressSpace();
   BaseValue = Builder.CreateBitCast(BaseValue,
-                                    llvm::PointerType::get(FieldTy, AS),
+                                    VMContext.getPointerType(FieldTy, AS),
                                     "tmp");
   llvm::Value *V = Builder.CreateGEP(BaseValue,
-                              llvm::ConstantInt::get(llvm::Type::Int32Ty, idx),
+                            VMContext.getConstantInt(llvm::Type::Int32Ty, idx),
                               "tmp");
   
   CodeGenTypes::BitFieldInfo bitFieldInfo = 
@@ -1052,7 +1054,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
       cast<llvm::PointerType>(BaseValue->getType());
     unsigned AS = BaseTy->getAddressSpace();
     V = Builder.CreateBitCast(V, 
-                              llvm::PointerType::get(FieldTy, AS), 
+                              VMContext.getPointerType(FieldTy, AS), 
                               "tmp");
   }
   if (Field->getType()->isReferenceType())

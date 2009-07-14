@@ -31,9 +31,10 @@ class VISIBILITY_HIDDEN ConstExprEmitter :
   public StmtVisitor<ConstExprEmitter, llvm::Constant*> {
   CodeGenModule &CGM;
   CodeGenFunction *CGF;
+  llvm::LLVMContext &VMContext;
 public:
   ConstExprEmitter(CodeGenModule &cgm, CodeGenFunction *cgf)
-    : CGM(cgm), CGF(cgf) {
+    : CGM(cgm), CGF(cgf), VMContext(cgm.getLLVMContext()) {
   }
     
   //===--------------------------------------------------------------------===//
@@ -106,18 +107,18 @@ public:
     // Initialize remaining array elements.
     // FIXME: This doesn't handle member pointers correctly!
     for (; i < NumElements; ++i)
-      Elts.push_back(CGM.getLLVMContext().getNullValue(ElemTy));
+      Elts.push_back(VMContext.getNullValue(ElemTy));
 
     if (RewriteType) {
       // FIXME: Try to avoid packing the array
       std::vector<const llvm::Type*> Types;
       for (unsigned i = 0; i < Elts.size(); ++i)
         Types.push_back(Elts[i]->getType());
-      const llvm::StructType *SType = llvm::StructType::get(Types, true);
-      return llvm::ConstantStruct::get(SType, Elts);
+      const llvm::StructType *SType = VMContext.getStructType(Types, true);
+      return VMContext.getConstantStruct(SType, Elts);
     }
 
-    return llvm::ConstantArray::get(AType, Elts);    
+    return VMContext.getConstantArray(AType, Elts);    
   }
 
   void InsertBitfieldIntoStruct(std::vector<llvm::Constant*>& Elts,
@@ -169,8 +170,9 @@ public:
     unsigned curBits = std::min(8 - (fieldOffset & 7), bitsToInsert);
     unsigned byte = V.getLoBits(curBits).getZExtValue() << (fieldOffset & 7);
     do {
-      llvm::Constant* byteC = llvm::ConstantInt::get(llvm::Type::Int8Ty, byte);
-      Elts[i] = CGM.getLLVMContext().getConstantExprOr(Elts[i], byteC);
+      llvm::Constant* byteC =
+        VMContext.getConstantInt(llvm::Type::Int8Ty, byte);
+      Elts[i] = VMContext.getConstantExprOr(Elts[i], byteC);
       ++i;
       V = V.lshr(curBits);
       bitsToInsert -= curBits;
@@ -193,7 +195,7 @@ public:
     // FIXME: This doesn't handle member pointers correctly!
     for (unsigned i = 0; i < SType->getNumElements(); ++i) {
       const llvm::Type *FieldTy = SType->getElementType(i);
-      Elts.push_back(CGM.getLLVMContext().getNullValue(FieldTy));
+      Elts.push_back(VMContext.getNullValue(FieldTy));
     }
 
     // Copy initializer elements. Skip padding fields.
@@ -223,10 +225,10 @@ public:
       std::vector<const llvm::Type*> Types;
       for (unsigned i = 0; i < Elts.size(); ++i)
         Types.push_back(Elts[i]->getType());
-      SType = llvm::StructType::get(Types, true);
+      SType = VMContext.getStructType(Types, true);
     }
 
-    return llvm::ConstantStruct::get(SType, Elts);
+    return VMContext.getConstantStruct(SType, Elts);
   }
 
   llvm::Constant *EmitUnion(llvm::Constant *C, const llvm::Type *Ty) {
@@ -242,15 +244,15 @@ public:
     unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
     unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(Ty);
     while (CurSize < TotalSize) {
-      Elts.push_back(CGM.getLLVMContext().getNullValue(llvm::Type::Int8Ty));
+      Elts.push_back(VMContext.getNullValue(llvm::Type::Int8Ty));
       Types.push_back(llvm::Type::Int8Ty);
       CurSize++;
     }
 
     // This always generates a packed struct
     // FIXME: Try to generate an unpacked struct when we can
-    llvm::StructType* STy = llvm::StructType::get(Types, true);
-    return llvm::ConstantStruct::get(STy, Elts);
+    llvm::StructType* STy = VMContext.getStructType(Types, true);
+    return VMContext.getConstantStruct(STy, Elts);
   }
 
   llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
@@ -268,20 +270,20 @@ public:
            Field != FieldEnd; ++Field)
         assert(Field->isUnnamedBitfield() && "Only unnamed bitfields allowed");
 #endif
-      return CGM.getLLVMContext().getNullValue(Ty);
+      return VMContext.getNullValue(Ty);
     }
 
     if (curField->isBitField()) {
       // Create a dummy struct for bit-field insertion
       unsigned NumElts = CGM.getTargetData().getTypeAllocSize(Ty);
       llvm::Constant* NV = 
-        CGM.getLLVMContext().getNullValue(llvm::Type::Int8Ty);
+        VMContext.getNullValue(llvm::Type::Int8Ty);
       std::vector<llvm::Constant*> Elts(NumElts, NV);
 
       InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(0));
       const llvm::ArrayType *RetTy =
-          llvm::ArrayType::get(NV->getType(), NumElts);
-      return llvm::ConstantArray::get(RetTy, Elts);
+          VMContext.getArrayType(NV->getType(), NumElts);
+      return VMContext.getConstantArray(RetTy, Elts);
     }
 
     llvm::Constant *InitElem;
@@ -315,9 +317,9 @@ public:
     }
 
     for (; i < NumElements; ++i)
-      Elts.push_back(CGM.getLLVMContext().getNullValue(ElemTy));
+      Elts.push_back(VMContext.getNullValue(ElemTy));
 
-    return llvm::ConstantVector::get(VType, Elts);    
+    return VMContext.getConstantVector(VType, Elts);    
   }
   
   llvm::Constant *VisitImplicitValueInitExpr(ImplicitValueInitExpr* E) {
@@ -358,7 +360,7 @@ public:
     // This must be a string initializing an array in a static initializer.
     // Don't emit it as the address of the string, emit the string data itself
     // as an inline array.
-    return llvm::ConstantArray::get(CGM.GetStringForStringLiteral(E), false);
+    return VMContext.getConstantArray(CGM.GetStringForStringLiteral(E), false);
   }
 
   llvm::Constant *VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
@@ -372,7 +374,7 @@ public:
     // Resize the string to the right size, adding zeros at the end, or
     // truncating as needed.
     Str.resize(CAT->getSize().getZExtValue(), '\0');
-    return llvm::ConstantArray::get(Str, false);
+    return VMContext.getConstantArray(Str, false);
   }
     
   llvm::Constant *VisitUnaryExtension(const UnaryOperator *E) {
@@ -426,7 +428,7 @@ public:
     case Expr::ObjCStringLiteralClass: {
       ObjCStringLiteral* SL = cast<ObjCStringLiteral>(E);
       llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(SL);
-      return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
+      return VMContext.getConstantExprBitCast(C, ConvertType(E->getType()));
     }
     case Expr::PredefinedExprClass: {
       // __func__/__FUNCTION__ -> "".  __PRETTY_FUNCTION__ -> "top level".
@@ -440,8 +442,8 @@ public:
     case Expr::AddrLabelExprClass: {
       assert(CGF && "Invalid address of label expression outside function.");
       unsigned id = CGF->GetIDForAddrOfLabel(cast<AddrLabelExpr>(E)->getLabel());
-      llvm::Constant *C = llvm::ConstantInt::get(llvm::Type::Int32Ty, id);
-      return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
+      llvm::Constant *C = VMContext.getConstantInt(llvm::Type::Int32Ty, id);
+      return VMContext.getConstantExprIntToPtr(C, ConvertType(E->getType()));
     }
     case Expr::CallExprClass: {
       CallExpr* CE = cast<CallExpr>(E);
@@ -492,7 +494,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     case APValue::LValue: {
       const llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
       llvm::Constant *Offset = 
-        llvm::ConstantInt::get(llvm::Type::Int64Ty, 
+        VMContext.getConstantInt(llvm::Type::Int64Ty, 
                                Result.Val.getLValueOffset());
       
       llvm::Constant *C;
@@ -502,59 +504,59 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         // Apply offset if necessary.
         if (!Offset->isNullValue()) {
           const llvm::Type *Type = 
-            llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-          llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
-          Casted = llvm::ConstantExpr::getGetElementPtr(Casted, &Offset, 1);
-          C = llvm::ConstantExpr::getBitCast(Casted, C->getType());
+            VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+          llvm::Constant *Casted = VMContext.getConstantExprBitCast(C, Type);
+          Casted = VMContext.getConstantExprGetElementPtr(Casted, &Offset, 1);
+          C = VMContext.getConstantExprBitCast(Casted, C->getType());
         }
 
         // Convert to the appropriate type; this could be an lvalue for
         // an integer.
         if (isa<llvm::PointerType>(DestTy))
-          return llvm::ConstantExpr::getBitCast(C, DestTy);
+          return VMContext.getConstantExprBitCast(C, DestTy);
 
-        return llvm::ConstantExpr::getPtrToInt(C, DestTy);
+        return VMContext.getConstantExprPtrToInt(C, DestTy);
       } else {
         C = Offset;
 
         // Convert to the appropriate type; this could be an lvalue for
         // an integer.
         if (isa<llvm::PointerType>(DestTy))
-          return llvm::ConstantExpr::getIntToPtr(C, DestTy);
+          return VMContext.getConstantExprIntToPtr(C, DestTy);
 
         // If the types don't match this should only be a truncate.
         if (C->getType() != DestTy)
-          return llvm::ConstantExpr::getTrunc(C, DestTy);
+          return VMContext.getConstantExprTrunc(C, DestTy);
 
         return C;
       }
     }
     case APValue::Int: {
-      llvm::Constant *C = llvm::ConstantInt::get(Result.Val.getInt());
+      llvm::Constant *C = VMContext.getConstantInt(Result.Val.getInt());
       
       if (C->getType() == llvm::Type::Int1Ty) {
         const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
-        C = llvm::ConstantExpr::getZExt(C, BoolTy);
+        C = VMContext.getConstantExprZExt(C, BoolTy);
       }
       return C;
     }
     case APValue::ComplexInt: {
       llvm::Constant *Complex[2];
       
-      Complex[0] = llvm::ConstantInt::get(Result.Val.getComplexIntReal());
-      Complex[1] = llvm::ConstantInt::get(Result.Val.getComplexIntImag());
+      Complex[0] = VMContext.getConstantInt(Result.Val.getComplexIntReal());
+      Complex[1] = VMContext.getConstantInt(Result.Val.getComplexIntImag());
       
-      return llvm::ConstantStruct::get(Complex, 2);
+      return VMContext.getConstantStruct(Complex, 2);
     }
     case APValue::Float:
-      return llvm::ConstantFP::get(Result.Val.getFloat());
+      return VMContext.getConstantFP(Result.Val.getFloat());
     case APValue::ComplexFloat: {
       llvm::Constant *Complex[2];
       
-      Complex[0] = llvm::ConstantFP::get(Result.Val.getComplexFloatReal());
-      Complex[1] = llvm::ConstantFP::get(Result.Val.getComplexFloatImag());
+      Complex[0] = VMContext.getConstantFP(Result.Val.getComplexFloatReal());
+      Complex[1] = VMContext.getConstantFP(Result.Val.getComplexFloatImag());
       
-      return llvm::ConstantStruct::get(Complex, 2);
+      return VMContext.getConstantStruct(Complex, 2);
     }
     case APValue::Vector: {
       llvm::SmallVector<llvm::Constant *, 4> Inits;
@@ -563,11 +565,11 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       for (unsigned i = 0; i != NumElts; ++i) {
         APValue &Elt = Result.Val.getVectorElt(i);
         if (Elt.isInt())
-          Inits.push_back(llvm::ConstantInt::get(Elt.getInt()));
+          Inits.push_back(VMContext.getConstantInt(Elt.getInt()));
         else
-          Inits.push_back(llvm::ConstantFP::get(Elt.getFloat()));
+          Inits.push_back(VMContext.getConstantFP(Elt.getFloat()));
       }
-      return llvm::ConstantVector::get(&Inits[0], Inits.size());
+      return VMContext.getConstantVector(&Inits[0], Inits.size());
     }
     }
   }
@@ -575,7 +577,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
   if (C && C->getType() == llvm::Type::Int1Ty) {
     const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
-    C = llvm::ConstantExpr::getZExt(C, BoolTy);
+    C = VMContext.getConstantExprZExt(C, BoolTy);
   }
   return C;
 }

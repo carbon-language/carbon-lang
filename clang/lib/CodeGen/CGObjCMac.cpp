@@ -101,12 +101,13 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                unsigned CVRQualifiers,
                                                llvm::Value *Offset) {
   // Compute (type*) ( (char *) BaseValue + Offset)
-  llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::LLVMContext &VMContext = CGF.getLLVMContext();
+  llvm::Type *I8Ptr = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
   QualType IvarTy = Ivar->getType();
   const llvm::Type *LTy = CGF.CGM.getTypes().ConvertTypeForMem(IvarTy);
   llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, I8Ptr);
   V = CGF.Builder.CreateGEP(V, Offset, "add.ptr");
-  V = CGF.Builder.CreateBitCast(V, llvm::PointerType::getUnqual(LTy));
+  V = CGF.Builder.CreateBitCast(V, VMContext.getPointerTypeUnqual(LTy));
   
   if (Ivar->isBitField()) {
     // We need to compute the bit offset for the bit-field, the offset
@@ -139,6 +140,9 @@ namespace {
   // concatenation is lame.
 
 class ObjCCommonTypesHelper {
+protected:
+  llvm::LLVMContext &VMContext;
+  
 private:
   llvm::Constant *getMessageSendFn() const {
     // id objc_msgSend (id, SEL, ...)
@@ -146,7 +150,7 @@ private:
     Params.push_back(ObjectPtrTy);
     Params.push_back(SelectorPtrTy);
     return
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                       Params, true),
                               "objc_msgSend");
   }
@@ -157,7 +161,7 @@ private:
     Params.push_back(ObjectPtrTy);
     Params.push_back(SelectorPtrTy);
     return
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+    CGM.CreateRuntimeFunction(VMContext.getFunctionType(llvm::Type::VoidTy,
                                                       Params, true),
                               "objc_msgSend_stret");
     
@@ -170,7 +174,7 @@ private:
     Params.push_back(ObjectPtrTy);
     Params.push_back(SelectorPtrTy);
     return
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::DoubleTy,
+    CGM.CreateRuntimeFunction(VMContext.getFunctionType(llvm::Type::DoubleTy,
                                                       Params,
                                                       true),
                               "objc_msgSend_fpret");
@@ -183,7 +187,7 @@ private:
     std::vector<const llvm::Type*> Params;
     Params.push_back(SuperPtrTy);
     Params.push_back(SelectorPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                              Params, true),
                                      SuperName);
   }
@@ -194,7 +198,7 @@ private:
     std::vector<const llvm::Type*> Params;
     Params.push_back(SuperPtrTy);
     Params.push_back(SelectorPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                              Params, true),
                                      SuperName);
   }
@@ -206,7 +210,8 @@ private:
     Params.push_back(Int8PtrTy);
     Params.push_back(SuperPtrTy);
     Params.push_back(SelectorPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+    return CGM.CreateRuntimeFunction(
+                                  VMContext.getFunctionType(llvm::Type::VoidTy,
                                                              Params, true),
                                      "objc_msgSendSuper_stret");
   }
@@ -218,7 +223,8 @@ private:
     Params.push_back(Int8PtrTy);
     Params.push_back(SuperPtrTy);
     Params.push_back(SelectorPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+    return CGM.CreateRuntimeFunction(
+                                   VMContext.getFunctionType(llvm::Type::VoidTy,
                                                              Params, true),
                                      "objc_msgSendSuper2_stret");
   }
@@ -331,7 +337,8 @@ public:
     // id objc_read_weak (id *)
     std::vector<const llvm::Type*> Args;
     Args.push_back(ObjectPtrTy->getPointerTo());
-    llvm::FunctionType *FTy = llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    llvm::FunctionType *FTy = 
+      VMContext.getFunctionType(ObjectPtrTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_read_weak");
   }    
   
@@ -341,7 +348,7 @@ public:
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     Args.push_back(ObjectPtrTy->getPointerTo());
     llvm::FunctionType *FTy =
-      llvm::FunctionType::get(ObjectPtrTy, Args, false);
+      VMContext.getFunctionType(ObjectPtrTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_assign_weak");
   }
   
@@ -350,7 +357,8 @@ public:
     // id objc_assign_global(id, id *)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     Args.push_back(ObjectPtrTy->getPointerTo());
-    llvm::FunctionType *FTy = llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    llvm::FunctionType *FTy =
+      VMContext.getFunctionType(ObjectPtrTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_assign_global");
   }
   
@@ -359,7 +367,8 @@ public:
     // id objc_assign_ivar(id, id *)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     Args.push_back(ObjectPtrTy->getPointerTo());
-    llvm::FunctionType *FTy = llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    llvm::FunctionType *FTy =
+      VMContext.getFunctionType(ObjectPtrTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_assign_ivar");
   }
   
@@ -369,7 +378,7 @@ public:
     std::vector<const llvm::Type*> Args(1, Int8PtrTy);
     Args.push_back(Int8PtrTy);
     Args.push_back(LongTy);
-    llvm::FunctionType *FTy = llvm::FunctionType::get(Int8PtrTy, Args, false);
+    llvm::FunctionType *FTy = VMContext.getFunctionType(Int8PtrTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_memmove_collectable");
   }
   
@@ -378,7 +387,8 @@ public:
     // id objc_assign_global(id, id *)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     Args.push_back(ObjectPtrTy->getPointerTo());
-    llvm::FunctionType *FTy = llvm::FunctionType::get(ObjectPtrTy, Args, false);
+    llvm::FunctionType *FTy =
+      VMContext.getFunctionType(ObjectPtrTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_assign_strongCast");
   }
 
@@ -387,7 +397,7 @@ public:
     // void objc_exception_throw(id)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     llvm::FunctionType *FTy =
-      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+      VMContext.getFunctionType(llvm::Type::VoidTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_exception_throw");
   }
   
@@ -396,7 +406,7 @@ public:
     // void objc_sync_enter (id)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     llvm::FunctionType *FTy =
-      llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+      VMContext.getFunctionType(llvm::Type::VoidTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_sync_enter");
   }
   
@@ -405,7 +415,7 @@ public:
     // void objc_sync_exit (id)
     std::vector<const llvm::Type*> Args(1, ObjectPtrTy);
     llvm::FunctionType *FTy =
-    llvm::FunctionType::get(llvm::Type::VoidTy, Args, false);
+      VMContext.getFunctionType(llvm::Type::VoidTy, Args, false);
     return CGM.CreateRuntimeFunction(FTy, "objc_sync_exit");
   }
   
@@ -498,8 +508,9 @@ public:
   /// ExceptionTryEnterFn - LLVM objc_exception_try_enter function.
   llvm::Constant *getExceptionTryEnterFn() {
     std::vector<const llvm::Type*> Params;
-    Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+    Params.push_back(VMContext.getPointerTypeUnqual(ExceptionDataTy));
+    return CGM.CreateRuntimeFunction(
+                                   VMContext.getFunctionType(llvm::Type::VoidTy,
                                                              Params, false),
                                      "objc_exception_try_enter");
   }
@@ -507,8 +518,9 @@ public:
   /// ExceptionTryExitFn - LLVM objc_exception_try_exit function.
   llvm::Constant *getExceptionTryExitFn() {
     std::vector<const llvm::Type*> Params;
-    Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+    Params.push_back(VMContext.getPointerTypeUnqual(ExceptionDataTy));
+    return CGM.CreateRuntimeFunction(
+                                   VMContext.getFunctionType(llvm::Type::VoidTy,
                                                              Params, false),
                                      "objc_exception_try_exit");
   }
@@ -516,8 +528,8 @@ public:
   /// ExceptionExtractFn - LLVM objc_exception_extract function.
   llvm::Constant *getExceptionExtractFn() {
     std::vector<const llvm::Type*> Params;
-    Params.push_back(llvm::PointerType::getUnqual(ExceptionDataTy));
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    Params.push_back(VMContext.getPointerTypeUnqual(ExceptionDataTy));
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                              Params, false),
                                      "objc_exception_extract");
     
@@ -528,7 +540,8 @@ public:
     std::vector<const llvm::Type*> Params;
     Params.push_back(ClassPtrTy);
     Params.push_back(ObjectPtrTy);
-   return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+   return CGM.CreateRuntimeFunction(
+                                  VMContext.getFunctionType(llvm::Type::Int32Ty,
                                                             Params, false),
                                     "objc_exception_match");
     
@@ -537,9 +550,9 @@ public:
   /// SetJmpFn - LLVM _setjmp function.
   llvm::Constant *getSetJmpFn() {
     std::vector<const llvm::Type*> Params;
-    Params.push_back(llvm::PointerType::getUnqual(llvm::Type::Int32Ty));
+    Params.push_back(VMContext.getPointerTypeUnqual(llvm::Type::Int32Ty));
     return
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+      CGM.CreateRuntimeFunction(VMContext.getFunctionType(llvm::Type::Int32Ty,
                                                         Params, false),
                                 "_setjmp");
     
@@ -631,7 +644,7 @@ public:
     std::vector<const llvm::Type*> Params;
     Params.push_back(ObjectPtrTy);
     Params.push_back(MessageRefPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                              Params, true),
                                      "objc_msgSend_fixup");
   }
@@ -641,7 +654,7 @@ public:
     std::vector<const llvm::Type*> Params;
     Params.push_back(ObjectPtrTy);
     Params.push_back(MessageRefPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                              Params, true),
                                      "objc_msgSend_fpret_fixup");
   }
@@ -651,7 +664,7 @@ public:
     std::vector<const llvm::Type*> Params;
     Params.push_back(ObjectPtrTy);
     Params.push_back(MessageRefPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                              Params, true),
                                      "objc_msgSend_stret_fixup");
   }
@@ -661,7 +674,7 @@ public:
     std::vector<const llvm::Type*> Params;
     Params.push_back(ObjectPtrTy);
     Params.push_back(MessageRefPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                              Params, true),
                                      "objc_msgSendId_fixup");
   }
@@ -671,7 +684,7 @@ public:
     std::vector<const llvm::Type*> Params;
     Params.push_back(ObjectPtrTy);
     Params.push_back(MessageRefPtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                              Params, true),
                                      "objc_msgSendId_stret_fixup");
   }
@@ -681,7 +694,7 @@ public:
     std::vector<const llvm::Type*> Params;
     Params.push_back(SuperPtrTy);
     Params.push_back(SuperMessageRefPtrTy);
-    return  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return  CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                               Params, true),
                                       "objc_msgSendSuper2_fixup");
   }
@@ -692,7 +705,7 @@ public:
     std::vector<const llvm::Type*> Params;
     Params.push_back(SuperPtrTy);
     Params.push_back(SuperMessageRefPtrTy);
-    return  CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
+    return  CGM.CreateRuntimeFunction(VMContext.getFunctionType(ObjectPtrTy,
                                                               Params, true),
                                       "objc_msgSendSuper2_stret_fixup");
   }
@@ -703,22 +716,23 @@ public:
   /// exception personality function.
   llvm::Value *getEHPersonalityPtr() {
     llvm::Constant *Personality = 
-      CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::Int32Ty,
+      CGM.CreateRuntimeFunction(VMContext.getFunctionType(llvm::Type::Int32Ty,
                                                         true),
                               "__objc_personality_v0");
-    return llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
+    return VMContext.getConstantExprBitCast(Personality, Int8PtrTy);
   }
 
   llvm::Constant *getUnwindResumeOrRethrowFn() {
     std::vector<const llvm::Type*> Params;
     Params.push_back(Int8PtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+    return CGM.CreateRuntimeFunction(
+                                   VMContext.getFunctionType(llvm::Type::VoidTy,
                                                              Params, false),
                                      "_Unwind_Resume_or_Rethrow");
   }
   
   llvm::Constant *getObjCEndCatchFn() {
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(llvm::Type::VoidTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(llvm::Type::VoidTy,
                                                              false),
                                      "objc_end_catch");
     
@@ -727,7 +741,7 @@ public:
   llvm::Constant *getObjCBeginCatchFn() {
     std::vector<const llvm::Type*> Params;
     Params.push_back(Int8PtrTy);
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(Int8PtrTy,
+    return CGM.CreateRuntimeFunction(VMContext.getFunctionType(Int8PtrTy,
                                                              Params, false),
                                      "objc_begin_catch");
   }
@@ -1366,14 +1380,15 @@ public:
 /* *** Helper Functions *** */
 
 /// getConstantGEP() - Help routine to construct simple GEPs.
-static llvm::Constant *getConstantGEP(llvm::Constant *C, 
+static llvm::Constant *getConstantGEP(llvm::LLVMContext &VMContext,
+                                      llvm::Constant *C, 
                                       unsigned idx0,
                                       unsigned idx1) {
   llvm::Value *Idxs[] = {
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, idx0),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, idx1)
+    VMContext.getConstantInt(llvm::Type::Int32Ty, idx0),
+    VMContext.getConstantInt(llvm::Type::Int32Ty, idx1)
   };
-  return llvm::ConstantExpr::getGetElementPtr(C, Idxs, 2);
+  return VMContext.getConstantExprGetElementPtr(C, Idxs, 2);
 }
 
 /// hasObjCExceptionAttribute - Return true if this class or any super
@@ -1544,7 +1559,8 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
                         : ObjCTypes.getSendFn(IsSuper);
   }
   assert(Fn && "EmitLegacyMessageSend - unknown API");
-  Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
+  Fn = VMContext.getConstantExprBitCast(Fn,
+                                        VMContext.getPointerTypeUnqual(FTy));
   return CGF.EmitCall(FnInfo, Fn, ActualArgs);
 }
 
@@ -1554,7 +1570,7 @@ llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,
   // resolved. Investigate. Its also wasteful to look this up over and over.
   LazySymbols.insert(&CGM.getContext().Idents.get("Protocol"));
 
-  return llvm::ConstantExpr::getBitCast(GetProtocolRef(PD),
+  return VMContext.getConstantExprBitCast(GetProtocolRef(PD),
                                         ObjCTypes.ExternalProtocolPtrTy);
 }
 
@@ -1643,7 +1659,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
                             + PD->getNameAsString(),
                        "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                        ClassMethods);
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
+  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ProtocolTy,
                                                    Values);
   
   if (Entry) {
@@ -1703,7 +1719,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
   uint64_t Size = 
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.ProtocolExtensionTy);
   std::vector<llvm::Constant*> Values(4);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
   Values[1] = 
     EmitMethodDescList("\01L_OBJC_PROTOCOL_INSTANCE_METHODS_OPT_" 
                            + PD->getNameAsString(),
@@ -1724,7 +1740,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
     return VMContext.getNullValue(ObjCTypes.ProtocolExtensionPtrTy);
 
   llvm::Constant *Init = 
-    llvm::ConstantStruct::get(ObjCTypes.ProtocolExtensionTy, Values);
+    VMContext.getConstantStruct(ObjCTypes.ProtocolExtensionTy, Values);
 
   // No special section, but goes in llvm.used
   return CreateMetadataVar("\01L_OBJC_PROTOCOLEXT_" + PD->getNameAsString(),
@@ -1758,17 +1774,18 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
   std::vector<llvm::Constant*> Values(3);
   // This field is only used by the runtime.
   Values[0] = VMContext.getNullValue(ObjCTypes.ProtocolListPtrTy);
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.LongTy, ProtocolRefs.size() - 1);
+  Values[1] = VMContext.getConstantInt(ObjCTypes.LongTy,
+                                       ProtocolRefs.size() - 1);
   Values[2] = 
-    llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.ProtocolPtrTy, 
+    VMContext.getConstantArray(VMContext.getArrayType(ObjCTypes.ProtocolPtrTy, 
                                                   ProtocolRefs.size()), 
                              ProtocolRefs);
   
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);
   llvm::GlobalVariable *GV = 
     CreateMetadataVar(Name, Init, "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                       4, false);
-  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListPtrTy);
+  return VMContext.getConstantExprBitCast(GV, ObjCTypes.ProtocolListPtrTy);
 }
 
 /*
@@ -1793,7 +1810,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
     const ObjCPropertyDecl *PD = *I;
     Prop[0] = GetPropertyName(PD->getIdentifier());
     Prop[1] = GetPropertyTypeString(PD, Container);
-    Properties.push_back(llvm::ConstantStruct::get(ObjCTypes.PropertyTy,
+    Properties.push_back(VMContext.getConstantStruct(ObjCTypes.PropertyTy,
                                                    Prop));
   }
 
@@ -1804,12 +1821,12 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
   unsigned PropertySize = 
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.PropertyTy);
   std::vector<llvm::Constant*> Values(3);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, PropertySize);
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Properties.size());
-  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.PropertyTy, 
+  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, PropertySize);
+  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, Properties.size());
+  llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.PropertyTy, 
                                              Properties.size());
-  Values[2] = llvm::ConstantArray::get(AT, Properties);
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  Values[2] = VMContext.getConstantArray(AT, Properties);
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);
 
   llvm::GlobalVariable *GV = 
     CreateMetadataVar(Name, Init, 
@@ -1817,7 +1834,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
                       "__OBJC,__property,regular,no_dead_strip",
                       (ObjCABI == 2) ? 8 : 4, 
                       true);
-  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.PropertyListPtrTy);
+  return VMContext.getConstantExprBitCast(GV, ObjCTypes.PropertyListPtrTy);
 }
 
 /*
@@ -1829,10 +1846,11 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
 llvm::Constant *
 CGObjCMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
   std::vector<llvm::Constant*> Desc(2);
-  Desc[0] = llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
+  Desc[0] =
+          VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
                                            ObjCTypes.SelectorPtrTy);
   Desc[1] = GetMethodVarType(MD);
-  return llvm::ConstantStruct::get(ObjCTypes.MethodDescriptionTy,
+  return VMContext.getConstantStruct(ObjCTypes.MethodDescriptionTy,
                                    Desc);
 }
 
@@ -1844,14 +1862,14 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
     return VMContext.getNullValue(ObjCTypes.MethodDescriptionListPtrTy);
 
   std::vector<llvm::Constant*> Values(2);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Methods.size());
-  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.MethodDescriptionTy, 
+  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Methods.size());
+  llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodDescriptionTy, 
                                              Methods.size());
-  Values[1] = llvm::ConstantArray::get(AT, Methods);
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  Values[1] = VMContext.getConstantArray(AT, Methods);
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);
 
   llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
-  return llvm::ConstantExpr::getBitCast(GV, 
+  return VMContext.getConstantExprBitCast(GV, 
                                         ObjCTypes.MethodDescriptionListPtrTy);
 }
 
@@ -1912,7 +1930,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   } else {
     Values[4] = VMContext.getNullValue(ObjCTypes.ProtocolListPtrTy);
   }
-  Values[5] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+  Values[5] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
 
   // If there is no category @interface then there can be no properties.
   if (Category) {
@@ -1922,7 +1940,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     Values[6] = VMContext.getNullValue(ObjCTypes.PropertyListPtrTy);
   }
   
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.CategoryTy,
+  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.CategoryTy,
                                                    Values);
 
   llvm::GlobalVariable *GV = 
@@ -2016,16 +2034,16 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     LazySymbols.insert(Super->getIdentifier());
 
     Values[ 1] = 
-      llvm::ConstantExpr::getBitCast(GetClassName(Super->getIdentifier()),
+      VMContext.getConstantExprBitCast(GetClassName(Super->getIdentifier()),
                                      ObjCTypes.ClassPtrTy);
   } else {
     Values[ 1] = VMContext.getNullValue(ObjCTypes.ClassPtrTy);
   }
   Values[ 2] = GetClassName(ID->getIdentifier());
   // Version is always 0.
-  Values[ 3] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
-  Values[ 4] = llvm::ConstantInt::get(ObjCTypes.LongTy, Flags);
-  Values[ 5] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
+  Values[ 3] = VMContext.getConstantInt(ObjCTypes.LongTy, 0);
+  Values[ 4] = VMContext.getConstantInt(ObjCTypes.LongTy, Flags);
+  Values[ 5] = VMContext.getConstantInt(ObjCTypes.LongTy, Size);
   Values[ 6] = EmitIvarList(ID, false);
   Values[ 7] = 
     EmitMethodList("\01L_OBJC_INSTANCE_METHODS_" + ID->getNameAsString(),
@@ -2036,7 +2054,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[ 9] = Protocols;
   Values[10] = BuildIvarLayout(ID, true); 
   Values[11] = EmitClassExtension(ID);
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
+  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ClassTy,
                                                    Values);
 
   llvm::GlobalVariable *GV = 
@@ -2061,23 +2079,23 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   while (const ObjCInterfaceDecl *Super = Root->getSuperClass())
     Root = Super;
   Values[ 0] = 
-    llvm::ConstantExpr::getBitCast(GetClassName(Root->getIdentifier()),
+    VMContext.getConstantExprBitCast(GetClassName(Root->getIdentifier()),
                                    ObjCTypes.ClassPtrTy);
   // The super class for the metaclass is emitted as the name of the
   // super class. The runtime fixes this up to point to the
   // *metaclass* for the super class.
   if (ObjCInterfaceDecl *Super = ID->getClassInterface()->getSuperClass()) {
     Values[ 1] = 
-      llvm::ConstantExpr::getBitCast(GetClassName(Super->getIdentifier()),
+      VMContext.getConstantExprBitCast(GetClassName(Super->getIdentifier()),
                                      ObjCTypes.ClassPtrTy);
   } else {
     Values[ 1] = VMContext.getNullValue(ObjCTypes.ClassPtrTy);
   }
   Values[ 2] = GetClassName(ID->getIdentifier());
   // Version is always 0.
-  Values[ 3] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
-  Values[ 4] = llvm::ConstantInt::get(ObjCTypes.LongTy, Flags);
-  Values[ 5] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
+  Values[ 3] = VMContext.getConstantInt(ObjCTypes.LongTy, 0);
+  Values[ 4] = VMContext.getConstantInt(ObjCTypes.LongTy, Flags);
+  Values[ 5] = VMContext.getConstantInt(ObjCTypes.LongTy, Size);
   Values[ 6] = EmitIvarList(ID, true);
   Values[ 7] = 
     EmitMethodList("\01L_OBJC_CLASS_METHODS_" + ID->getNameAsString(),
@@ -2090,7 +2108,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   Values[10] = VMContext.getNullValue(ObjCTypes.Int8PtrTy);
   // The class extension is always unused for metaclasses.
   Values[11] = VMContext.getNullValue(ObjCTypes.ClassExtensionPtrTy);
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
+  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ClassTy,
                                                    Values);
 
   std::string Name("\01L_OBJC_METACLASS_");
@@ -2153,7 +2171,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.ClassExtensionTy);
 
   std::vector<llvm::Constant*> Values(3);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
   Values[1] = BuildIvarLayout(ID, false);
   Values[2] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID, ID->getClassInterface(), ObjCTypes);
@@ -2163,7 +2181,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
     return VMContext.getNullValue(ObjCTypes.ClassExtensionPtrTy);
 
   llvm::Constant *Init = 
-    llvm::ConstantStruct::get(ObjCTypes.ClassExtensionTy, Values);
+    VMContext.getConstantStruct(ObjCTypes.ClassExtensionTy, Values);
   return CreateMetadataVar("\01L_OBJC_CLASSEXT_" + ID->getNameAsString(),
                            Init, "__OBJC,__class_ext,regular,no_dead_strip", 
                            4, true);
@@ -2206,9 +2224,9 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
       continue;    
     Ivar[0] = GetMethodVarName(IVD->getIdentifier());
     Ivar[1] = GetMethodVarType(IVD);
-    Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 
+    Ivar[2] = VMContext.getConstantInt(ObjCTypes.IntTy, 
                                      ComputeIvarBaseOffset(CGM, OID, IVD));
-    Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
+    Ivars.push_back(VMContext.getConstantStruct(ObjCTypes.IvarTy, Ivar));
   }
 
   // Return null for empty list.
@@ -2216,11 +2234,11 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     return VMContext.getNullValue(ObjCTypes.IvarListPtrTy);
 
   std::vector<llvm::Constant*> Values(2);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Ivars.size());
-  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.IvarTy,
+  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Ivars.size());
+  llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.IvarTy,
                                              Ivars.size());
-  Values[1] = llvm::ConstantArray::get(AT, Ivars);
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  Values[1] = VMContext.getConstantArray(AT, Ivars);
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);
 
   llvm::GlobalVariable *GV;
   if (ForClass)
@@ -2232,7 +2250,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
                            + ID->getNameAsString(),
                            Init, "__OBJC,__instance_vars,regular,no_dead_strip",
                            4, true);
-  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.IvarListPtrTy);
+  return VMContext.getConstantExprBitCast(GV, ObjCTypes.IvarListPtrTy);
 }
 
 /*
@@ -2260,11 +2278,11 @@ llvm::Constant *CGObjCMac::GetMethodConstant(const ObjCMethodDecl *MD) {
   
   std::vector<llvm::Constant*> Method(3);
   Method[0] = 
-    llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
+    VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
                                    ObjCTypes.SelectorPtrTy);
   Method[1] = GetMethodVarType(MD);
-  Method[2] = llvm::ConstantExpr::getBitCast(Fn, ObjCTypes.Int8PtrTy);
-  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
+  Method[2] = VMContext.getConstantExprBitCast(Fn, ObjCTypes.Int8PtrTy);
+  return VMContext.getConstantStruct(ObjCTypes.MethodTy, Method);
 }
 
 llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
@@ -2276,14 +2294,14 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
 
   std::vector<llvm::Constant*> Values(3);
   Values[0] = VMContext.getNullValue(ObjCTypes.Int8PtrTy);
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Methods.size());
-  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.MethodTy,
+  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, Methods.size());
+  llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodTy,
                                              Methods.size());
-  Values[2] = llvm::ConstantArray::get(AT, Methods);
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  Values[2] = VMContext.getConstantArray(AT, Methods);
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);
 
   llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
-  return llvm::ConstantExpr::getBitCast(GV,
+  return VMContext.getConstantExprBitCast(GV,
                                         ObjCTypes.MethodListPtrTy);
 }
 
@@ -2468,7 +2486,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                                  "_rethrow");
   llvm::Value *CallTryExitPtr = CGF.CreateTempAlloca(llvm::Type::Int1Ty,
                                                      "_call_try_exit");
-  CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(), CallTryExitPtr);
+  CGF.Builder.CreateStore(VMContext.getConstantIntTrue(), CallTryExitPtr);
   
   // Enter a new try block and call setjmp.
   CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData);
@@ -2501,7 +2519,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   if (!isTry)
   {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
-    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
+    CGF.Builder.CreateStore(VMContext.getConstantIntFalse(), CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
   }
   else if (const ObjCAtCatchStmt* CatchStmt = 
@@ -2602,11 +2620,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                     CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
                                            ExceptionData), 
                             RethrowPtr);
-    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
+    CGF.Builder.CreateStore(VMContext.getConstantIntFalse(), CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
   } else {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
-    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(), CallTryExitPtr);
+    CGF.Builder.CreateStore(VMContext.getConstantIntFalse(), CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
   }
   
@@ -2777,7 +2795,7 @@ void CGObjCMac::EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                                unsigned long size) {
   SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
   DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
-  llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
+  llvm::Value *N = VMContext.getConstantInt(ObjCTypes.LongTy, size);
   CGF.Builder.CreateCall3(ObjCTypes.GcMemmoveCollectableFn(),
                           DestPtr, SrcPtr, N);
   return;
@@ -2799,7 +2817,7 @@ llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                        const ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
   uint64_t Offset = ComputeIvarBaseOffset(CGM, Interface, Ivar);
-  return llvm::ConstantInt::get(
+  return VMContext.getConstantInt(
                             CGM.getTypes().ConvertType(CGM.getContext().LongTy),
                             Offset);
 }
@@ -2841,10 +2859,10 @@ void CGObjCMac::EmitImageInfo() {
 
   // Emitted as int[2];
   llvm::Constant *values[2] = {
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, version),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, flags)
+    VMContext.getConstantInt(llvm::Type::Int32Ty, version),
+    VMContext.getConstantInt(llvm::Type::Int32Ty, flags)
   };
-  llvm::ArrayType *AT = llvm::ArrayType::get(llvm::Type::Int32Ty, 2);  
+  llvm::ArrayType *AT = VMContext.getArrayType(llvm::Type::Int32Ty, 2);  
 
   const char *Section;
   if (ObjCABI == 1)
@@ -2853,7 +2871,7 @@ void CGObjCMac::EmitImageInfo() {
     Section = "__DATA, __objc_imageinfo, regular, no_dead_strip";
   llvm::GlobalVariable *GV = 
     CreateMetadataVar("\01L_OBJC_IMAGE_INFO",
-                      llvm::ConstantArray::get(AT, values, 2),
+                      VMContext.getConstantArray(AT, values, 2),
                       Section,
                       0,
                       true);
@@ -2875,13 +2893,13 @@ void CGObjCMac::EmitModuleInfo() {
   uint64_t Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.ModuleTy);
   
   std::vector<llvm::Constant*> Values(4);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, ModuleVersion);
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
+  Values[0] = VMContext.getConstantInt(ObjCTypes.LongTy, ModuleVersion);
+  Values[1] = VMContext.getConstantInt(ObjCTypes.LongTy, Size);
   // This used to be the filename, now it is unused. <rdr://4327263>
   Values[2] = GetClassName(&CGM.getContext().Idents.get(""));
   Values[3] = EmitModuleSymbols();
   CreateMetadataVar("\01L_OBJC_MODULES", 
-                    llvm::ConstantStruct::get(ObjCTypes.ModuleTy, Values),
+                    VMContext.getConstantStruct(ObjCTypes.ModuleTy, Values),
                     "__OBJC,__module_info,regular,no_dead_strip",
                     4, true);
 }
@@ -2895,34 +2913,34 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
     return VMContext.getNullValue(ObjCTypes.SymtabPtrTy);
 
   std::vector<llvm::Constant*> Values(5);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
+  Values[0] = VMContext.getConstantInt(ObjCTypes.LongTy, 0);
   Values[1] = VMContext.getNullValue(ObjCTypes.SelectorPtrTy);
-  Values[2] = llvm::ConstantInt::get(ObjCTypes.ShortTy, NumClasses);
-  Values[3] = llvm::ConstantInt::get(ObjCTypes.ShortTy, NumCategories);
+  Values[2] = VMContext.getConstantInt(ObjCTypes.ShortTy, NumClasses);
+  Values[3] = VMContext.getConstantInt(ObjCTypes.ShortTy, NumCategories);
 
   // The runtime expects exactly the list of defined classes followed
   // by the list of defined categories, in a single array.
   std::vector<llvm::Constant*> Symbols(NumClasses + NumCategories);
   for (unsigned i=0; i<NumClasses; i++)
-    Symbols[i] = llvm::ConstantExpr::getBitCast(DefinedClasses[i],
+    Symbols[i] = VMContext.getConstantExprBitCast(DefinedClasses[i],
                                                 ObjCTypes.Int8PtrTy);
   for (unsigned i=0; i<NumCategories; i++)
     Symbols[NumClasses + i] = 
-      llvm::ConstantExpr::getBitCast(DefinedCategories[i],
+      VMContext.getConstantExprBitCast(DefinedCategories[i],
                                      ObjCTypes.Int8PtrTy);
 
   Values[4] = 
-    llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.Int8PtrTy,
+    VMContext.getConstantArray(VMContext.getArrayType(ObjCTypes.Int8PtrTy,
                                                   NumClasses + NumCategories),
                              Symbols);
 
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);  
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);  
 
   llvm::GlobalVariable *GV =
     CreateMetadataVar("\01L_OBJC_SYMBOLS", Init,
                       "__OBJC,__symbols,regular,no_dead_strip",
                       4, true);
-  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.SymtabPtrTy);
+  return VMContext.getConstantExprBitCast(GV, ObjCTypes.SymtabPtrTy);
 }
 
 llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder, 
@@ -2933,7 +2951,7 @@ llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
   
   if (!Entry) {
     llvm::Constant *Casted = 
-      llvm::ConstantExpr::getBitCast(GetClassName(ID->getIdentifier()),
+      VMContext.getConstantExprBitCast(GetClassName(ID->getIdentifier()),
                                      ObjCTypes.ClassPtrTy);
     Entry = 
       CreateMetadataVar("\01L_OBJC_CLASS_REFERENCES_", Casted,
@@ -2949,7 +2967,7 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
   
   if (!Entry) {
     llvm::Constant *Casted = 
-      llvm::ConstantExpr::getBitCast(GetMethodVarName(Sel),
+      VMContext.getConstantExprBitCast(GetMethodVarName(Sel),
                                      ObjCTypes.SelectorPtrTy);
     Entry = 
       CreateMetadataVar("\01L_OBJC_SELECTOR_REFERENCES_", Casted,
@@ -2965,11 +2983,11 @@ llvm::Constant *CGObjCCommonMac::GetClassName(IdentifierInfo *Ident) {
 
   if (!Entry)
     Entry = CreateMetadataVar("\01L_OBJC_CLASS_NAME_", 
-                              llvm::ConstantArray::get(Ident->getName()), 
+                              VMContext.getConstantArray(Ident->getName()), 
                               "__TEXT,__cstring,cstring_literals",
                               1, true);
 
-  return getConstantGEP(Entry, 0, 0);
+  return getConstantGEP(VMContext, Entry, 0, 0);
 }
 
 /// GetIvarLayoutName - Returns a unique constant for the given
@@ -3179,7 +3197,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   bool hasUnion = false;
   
   unsigned int WordsToScan, WordsToSkip;
-  const llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *PtrTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
   if (CGM.getLangOptions().getGCMode() == LangOptions::NonGC)
     return VMContext.getNullValue(PtrTy);
   
@@ -3344,10 +3362,10 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   if (ForStrongLayout && !BytesSkipped)
     return VMContext.getNullValue(PtrTy);
   llvm::GlobalVariable * Entry = CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
-                                      llvm::ConstantArray::get(BitMap.c_str()),
+                                    VMContext.getConstantArray(BitMap.c_str()),
                                       "__TEXT,__cstring,cstring_literals",
                                       1, true);
-    return getConstantGEP(Entry, 0, 0);
+    return getConstantGEP(VMContext, Entry, 0, 0);
 }
 
 llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
@@ -3356,11 +3374,11 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarName(Selector Sel) {
   // FIXME: Avoid std::string copying.
   if (!Entry)
     Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_NAME_", 
-                              llvm::ConstantArray::get(Sel.getAsString()),
+                              VMContext.getConstantArray(Sel.getAsString()),
                               "__TEXT,__cstring,cstring_literals",
                               1, true);
 
-  return getConstantGEP(Entry, 0, 0);
+  return getConstantGEP(VMContext, Entry, 0, 0);
 }
 
 // FIXME: Merge into a single cstring creation function.
@@ -3381,11 +3399,11 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(const FieldDecl *Field) {
 
   if (!Entry)
     Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_TYPE_",
-                              llvm::ConstantArray::get(TypeStr),
+                              VMContext.getConstantArray(TypeStr),
                               "__TEXT,__cstring,cstring_literals",
                               1, true);
     
-  return getConstantGEP(Entry, 0, 0);
+  return getConstantGEP(VMContext, Entry, 0, 0);
 }
 
 llvm::Constant *CGObjCCommonMac::GetMethodVarType(const ObjCMethodDecl *D) {
@@ -3397,11 +3415,11 @@ llvm::Constant *CGObjCCommonMac::GetMethodVarType(const ObjCMethodDecl *D) {
 
   if (!Entry)
     Entry = CreateMetadataVar("\01L_OBJC_METH_VAR_TYPE_",
-                              llvm::ConstantArray::get(TypeStr),
+                              VMContext.getConstantArray(TypeStr),
                               "__TEXT,__cstring,cstring_literals",
                               1, true);
 
-  return getConstantGEP(Entry, 0, 0);
+  return getConstantGEP(VMContext, Entry, 0, 0);
 }
 
 // FIXME: Merge into a single cstring creation function.
@@ -3410,11 +3428,11 @@ llvm::Constant *CGObjCCommonMac::GetPropertyName(IdentifierInfo *Ident) {
   
   if (!Entry)
     Entry = CreateMetadataVar("\01L_OBJC_PROP_NAME_ATTR_", 
-                              llvm::ConstantArray::get(Ident->getName()),
+                              VMContext.getConstantArray(Ident->getName()),
                               "__TEXT,__cstring,cstring_literals",
                               1, true);
 
-  return getConstantGEP(Entry, 0, 0);
+  return getConstantGEP(VMContext, Entry, 0, 0);
 }
 
 // FIXME: Merge into a single cstring creation function.
@@ -3448,10 +3466,11 @@ void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
 
 void CGObjCCommonMac::MergeMetadataGlobals(
                                   std::vector<llvm::Constant*> &UsedArray) {
-  llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::Type *i8PTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
   for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(),
        e = UsedGlobals.end(); i != e; ++i) {
-    UsedArray.push_back(llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(*i), 
+    UsedArray.push_back(
+                      VMContext.getConstantExprBitCast(cast<llvm::Constant>(*i), 
                                                        i8PTy));
   }
 }
@@ -3473,7 +3492,7 @@ void CGObjCMac::FinishModule() {
     Values[3] = Values[4] =
       VMContext.getNullValue(ObjCTypes.MethodDescriptionListPtrTy);
     i->second->setLinkage(llvm::GlobalValue::InternalLinkage);
-    i->second->setInitializer(llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
+    i->second->setInitializer(VMContext.getConstantStruct(ObjCTypes.ProtocolTy,
                                                         Values));
   }
 
@@ -3511,7 +3530,7 @@ CGObjCNonFragileABIMac::CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm)
 /* *** */
 
 ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
-: CGM(cgm)
+: VMContext(cgm.getLLVMContext()), CGM(cgm)
 {
   CodeGen::CodeGenTypes &Types = CGM.getTypes();
   ASTContext &Ctx = CGM.getContext();
@@ -3520,16 +3539,16 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   IntTy = Types.ConvertType(Ctx.IntTy);
   LongTy = Types.ConvertType(Ctx.LongTy);
   LongLongTy = Types.ConvertType(Ctx.LongLongTy);
-  Int8PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  Int8PtrTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
   
   ObjectPtrTy = Types.ConvertType(Ctx.getObjCIdType());
-  PtrObjectPtrTy = llvm::PointerType::getUnqual(ObjectPtrTy);
+  PtrObjectPtrTy = VMContext.getPointerTypeUnqual(ObjectPtrTy);
   SelectorPtrTy = Types.ConvertType(Ctx.getObjCSelType());
   
   // FIXME: It would be nice to unify this with the opaque type, so that the IR
   // comes out a bit cleaner.
   const llvm::Type *T = Types.ConvertType(Ctx.getObjCProtoType());
-  ExternalProtocolPtrTy = llvm::PointerType::getUnqual(T);
+  ExternalProtocolPtrTy = VMContext.getPointerTypeUnqual(T);
   
   // I'm not sure I like this. The implicit coordination is a bit
   // gross. We should solve this in a reasonable fashion because this
@@ -3556,13 +3575,13 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   SuperPtrCTy = Ctx.getPointerType(SuperCTy);
   
   SuperTy = cast<llvm::StructType>(Types.ConvertType(SuperCTy));
-  SuperPtrTy = llvm::PointerType::getUnqual(SuperTy); 
+  SuperPtrTy = VMContext.getPointerTypeUnqual(SuperTy); 
   
   // struct _prop_t {
   //   char *name;
   //   char *attributes; 
   // }
-  PropertyTy = llvm::StructType::get(Int8PtrTy, Int8PtrTy, NULL);
+  PropertyTy = VMContext.getStructType(Int8PtrTy, Int8PtrTy, NULL);
   CGM.getModule().addTypeName("struct._prop_t", 
                               PropertyTy);
   
@@ -3571,30 +3590,30 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   //   uint32_t count_of_properties;
   //   struct _prop_t prop_list[count_of_properties];
   // }
-  PropertyListTy = llvm::StructType::get(IntTy,
+  PropertyListTy = VMContext.getStructType(IntTy,
                                          IntTy,
-                                         llvm::ArrayType::get(PropertyTy, 0),
+                                         VMContext.getArrayType(PropertyTy, 0),
                                          NULL);
   CGM.getModule().addTypeName("struct._prop_list_t", 
                               PropertyListTy);
   // struct _prop_list_t *
-  PropertyListPtrTy = llvm::PointerType::getUnqual(PropertyListTy);
+  PropertyListPtrTy = VMContext.getPointerTypeUnqual(PropertyListTy);
   
   // struct _objc_method {
   //   SEL _cmd;
   //   char *method_type;
   //   char *_imp;
   // }
-  MethodTy = llvm::StructType::get(SelectorPtrTy,
+  MethodTy = VMContext.getStructType(SelectorPtrTy,
                                    Int8PtrTy,
                                    Int8PtrTy,
                                    NULL);
   CGM.getModule().addTypeName("struct._objc_method", MethodTy);
   
   // struct _objc_cache *
-  CacheTy = llvm::OpaqueType::get();
+  CacheTy = VMContext.getOpaqueType();
   CGM.getModule().addTypeName("struct._objc_cache", CacheTy);
-  CachePtrTy = llvm::PointerType::getUnqual(CacheTy);
+  CachePtrTy = VMContext.getPointerTypeUnqual(CacheTy);
 }
 
 ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm) 
@@ -3605,7 +3624,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *types;
   // }
   MethodDescriptionTy = 
-    llvm::StructType::get(SelectorPtrTy,
+    VMContext.getStructType(SelectorPtrTy,
                           Int8PtrTy,
                           NULL);
   CGM.getModule().addTypeName("struct._objc_method_description", 
@@ -3616,15 +3635,15 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   struct _objc_method_description[1];
   // }
   MethodDescriptionListTy = 
-    llvm::StructType::get(IntTy,
-                          llvm::ArrayType::get(MethodDescriptionTy, 0),
+    VMContext.getStructType(IntTy,
+                          VMContext.getArrayType(MethodDescriptionTy, 0),
                           NULL);
   CGM.getModule().addTypeName("struct._objc_method_description_list", 
                               MethodDescriptionListTy);
   
   // struct _objc_method_description_list *
   MethodDescriptionListPtrTy = 
-    llvm::PointerType::getUnqual(MethodDescriptionListTy);
+    VMContext.getPointerTypeUnqual(MethodDescriptionListTy);
 
   // Protocol description structures
 
@@ -3635,7 +3654,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   struct _objc_property_list *instance_properties;
   // }
   ProtocolExtensionTy = 
-    llvm::StructType::get(IntTy,
+    VMContext.getStructType(IntTy,
                           MethodDescriptionListPtrTy,
                           MethodDescriptionListPtrTy,
                           PropertyListPtrTy,
@@ -3644,17 +3663,17 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
                               ProtocolExtensionTy);
   
   // struct _objc_protocol_extension *
-  ProtocolExtensionPtrTy = llvm::PointerType::getUnqual(ProtocolExtensionTy);
+  ProtocolExtensionPtrTy = VMContext.getPointerTypeUnqual(ProtocolExtensionTy);
 
   // Handle recursive construction of Protocol and ProtocolList types
 
-  llvm::PATypeHolder ProtocolTyHolder = llvm::OpaqueType::get();
-  llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get();
+  llvm::PATypeHolder ProtocolTyHolder = VMContext.getOpaqueType();
+  llvm::PATypeHolder ProtocolListTyHolder = VMContext.getOpaqueType();
 
   const llvm::Type *T = 
-    llvm::StructType::get(llvm::PointerType::getUnqual(ProtocolListTyHolder),
+    VMContext.getStructType(VMContext.getPointerTypeUnqual(ProtocolListTyHolder),
                           LongTy,
-                          llvm::ArrayType::get(ProtocolTyHolder, 0),
+                          VMContext.getArrayType(ProtocolTyHolder, 0),
                           NULL);
   cast<llvm::OpaqueType>(ProtocolListTyHolder.get())->refineAbstractTypeTo(T);
 
@@ -3665,9 +3684,9 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   struct _objc_method_description_list *instance_methods;
   //   struct _objc_method_description_list *class_methods;
   // }
-  T = llvm::StructType::get(ProtocolExtensionPtrTy,
+  T = VMContext.getStructType(ProtocolExtensionPtrTy,
                             Int8PtrTy,
-                            llvm::PointerType::getUnqual(ProtocolListTyHolder),
+                           VMContext.getPointerTypeUnqual(ProtocolListTyHolder),
                             MethodDescriptionListPtrTy,
                             MethodDescriptionListPtrTy,
                             NULL);
@@ -3677,11 +3696,11 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   CGM.getModule().addTypeName("struct._objc_protocol_list", 
                               ProtocolListTy);
   // struct _objc_protocol_list *
-  ProtocolListPtrTy = llvm::PointerType::getUnqual(ProtocolListTy);
+  ProtocolListPtrTy = VMContext.getPointerTypeUnqual(ProtocolListTy);
 
   ProtocolTy = cast<llvm::StructType>(ProtocolTyHolder.get());
   CGM.getModule().addTypeName("struct._objc_protocol", ProtocolTy);
-  ProtocolPtrTy = llvm::PointerType::getUnqual(ProtocolTy);
+  ProtocolPtrTy = VMContext.getPointerTypeUnqual(ProtocolTy);
 
   // Class description structures
 
@@ -3690,32 +3709,32 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *ivar_type;
   //   int  ivar_offset;
   // }
-  IvarTy = llvm::StructType::get(Int8PtrTy, 
+  IvarTy = VMContext.getStructType(Int8PtrTy, 
                                  Int8PtrTy, 
                                  IntTy, 
                                  NULL);
   CGM.getModule().addTypeName("struct._objc_ivar", IvarTy);
 
   // struct _objc_ivar_list *
-  IvarListTy = llvm::OpaqueType::get();
+  IvarListTy = VMContext.getOpaqueType();
   CGM.getModule().addTypeName("struct._objc_ivar_list", IvarListTy);
-  IvarListPtrTy = llvm::PointerType::getUnqual(IvarListTy);
+  IvarListPtrTy = VMContext.getPointerTypeUnqual(IvarListTy);
 
   // struct _objc_method_list *
-  MethodListTy = llvm::OpaqueType::get();
+  MethodListTy = VMContext.getOpaqueType();
   CGM.getModule().addTypeName("struct._objc_method_list", MethodListTy);
-  MethodListPtrTy = llvm::PointerType::getUnqual(MethodListTy);
+  MethodListPtrTy = VMContext.getPointerTypeUnqual(MethodListTy);
 
   // struct _objc_class_extension *
   ClassExtensionTy = 
-    llvm::StructType::get(IntTy,
+    VMContext.getStructType(IntTy,
                           Int8PtrTy,
                           PropertyListPtrTy,
                           NULL);
   CGM.getModule().addTypeName("struct._objc_class_extension", ClassExtensionTy);
-  ClassExtensionPtrTy = llvm::PointerType::getUnqual(ClassExtensionTy);
+  ClassExtensionPtrTy = VMContext.getPointerTypeUnqual(ClassExtensionTy);
 
-  llvm::PATypeHolder ClassTyHolder = llvm::OpaqueType::get();
+  llvm::PATypeHolder ClassTyHolder = VMContext.getOpaqueType();
 
   // struct _objc_class {
   //   Class isa;
@@ -3731,8 +3750,8 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   char *ivar_layout;
   //   struct _objc_class_ext *ext;
   // };
-  T = llvm::StructType::get(llvm::PointerType::getUnqual(ClassTyHolder),
-                            llvm::PointerType::getUnqual(ClassTyHolder),
+  T = VMContext.getStructType(VMContext.getPointerTypeUnqual(ClassTyHolder),
+                            VMContext.getPointerTypeUnqual(ClassTyHolder),
                             Int8PtrTy,
                             LongTy,
                             LongTy,
@@ -3748,7 +3767,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   
   ClassTy = cast<llvm::StructType>(ClassTyHolder.get());
   CGM.getModule().addTypeName("struct._objc_class", ClassTy);
-  ClassPtrTy = llvm::PointerType::getUnqual(ClassTy);
+  ClassPtrTy = VMContext.getPointerTypeUnqual(ClassTy);
 
   // struct _objc_category {
   //   char *category_name;
@@ -3758,7 +3777,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   uint32_t size;  // sizeof(struct _objc_category)
   //   struct _objc_property_list *instance_properties;// category's @property
   // }
-  CategoryTy = llvm::StructType::get(Int8PtrTy,
+  CategoryTy = VMContext.getStructType(Int8PtrTy,
                                      Int8PtrTy,
                                      MethodListPtrTy,
                                      MethodListPtrTy,
@@ -3777,14 +3796,14 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   short cat_def_cnt;
   //   char *defs[cls_def_cnt + cat_def_cnt];
   // }
-  SymtabTy = llvm::StructType::get(LongTy,
+  SymtabTy = VMContext.getStructType(LongTy,
                                    SelectorPtrTy,
                                    ShortTy,
                                    ShortTy,
-                                   llvm::ArrayType::get(Int8PtrTy, 0),
+                                   VMContext.getArrayType(Int8PtrTy, 0),
                                    NULL);
   CGM.getModule().addTypeName("struct._objc_symtab", SymtabTy);
-  SymtabPtrTy = llvm::PointerType::getUnqual(SymtabTy);
+  SymtabPtrTy = VMContext.getPointerTypeUnqual(SymtabTy);
 
   // struct _objc_module {
   //   long version;
@@ -3793,7 +3812,7 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   //   struct _objc_symtab* symtab;
   //  }
   ModuleTy = 
-    llvm::StructType::get(LongTy,
+    VMContext.getStructType(LongTy,
                           LongTy,
                           Int8PtrTy,
                           SymtabPtrTy,
@@ -3806,11 +3825,11 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   uint64_t SetJmpBufferSize = 18;
  
   // Exceptions
-  const llvm::Type *StackPtrTy = 
-    llvm::ArrayType::get(llvm::PointerType::getUnqual(llvm::Type::Int8Ty), 4);
+  const llvm::Type *StackPtrTy = VMContext.getArrayType(
+                         VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty), 4);
                            
   ExceptionDataTy = 
-    llvm::StructType::get(llvm::ArrayType::get(llvm::Type::Int32Ty, 
+    VMContext.getStructType(VMContext.getArrayType(llvm::Type::Int32Ty, 
                                                SetJmpBufferSize),
                           StackPtrTy, NULL);
   CGM.getModule().addTypeName("struct._objc_exception_data", 
@@ -3826,14 +3845,14 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   uint32_t method_count;
   //   struct _objc_method method_list[method_count];
   // }
-  MethodListnfABITy = llvm::StructType::get(IntTy,
+  MethodListnfABITy = VMContext.getStructType(IntTy,
                                             IntTy,
-                                            llvm::ArrayType::get(MethodTy, 0),
+                                            VMContext.getArrayType(MethodTy, 0),
                                             NULL);
   CGM.getModule().addTypeName("struct.__method_list_t",
                               MethodListnfABITy);
   // struct method_list_t *
-  MethodListnfABIPtrTy = llvm::PointerType::getUnqual(MethodListnfABITy);
+  MethodListnfABIPtrTy = VMContext.getPointerTypeUnqual(MethodListnfABITy);
   
   // struct _protocol_t {
   //   id isa;  // NULL
@@ -3849,11 +3868,11 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   // }
   
   // Holder for struct _protocol_list_t *
-  llvm::PATypeHolder ProtocolListTyHolder = llvm::OpaqueType::get();
+  llvm::PATypeHolder ProtocolListTyHolder = VMContext.getOpaqueType();
   
-  ProtocolnfABITy = llvm::StructType::get(ObjectPtrTy,
+  ProtocolnfABITy = VMContext.getStructType(ObjectPtrTy,
                                           Int8PtrTy,
-                                          llvm::PointerType::getUnqual(
+                                          VMContext.getPointerTypeUnqual(
                                             ProtocolListTyHolder),
                                           MethodListnfABIPtrTy,
                                           MethodListnfABIPtrTy,
@@ -3867,14 +3886,14 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                               ProtocolnfABITy);
 
   // struct _protocol_t*
-  ProtocolnfABIPtrTy = llvm::PointerType::getUnqual(ProtocolnfABITy);
+  ProtocolnfABIPtrTy = VMContext.getPointerTypeUnqual(ProtocolnfABITy);
   
   // struct _protocol_list_t {
   //   long protocol_count;   // Note, this is 32/64 bit
   //   struct _protocol_t *[protocol_count];
   // }
-  ProtocolListnfABITy = llvm::StructType::get(LongTy,
-                                              llvm::ArrayType::get(
+  ProtocolListnfABITy = VMContext.getStructType(LongTy,
+                                              VMContext.getArrayType(
                                                 ProtocolnfABIPtrTy, 0),
                                               NULL);
   CGM.getModule().addTypeName("struct._objc_protocol_list",
@@ -3883,7 +3902,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
                                                       ProtocolListnfABITy);
   
   // struct _objc_protocol_list*
-  ProtocolListnfABIPtrTy = llvm::PointerType::getUnqual(ProtocolListnfABITy);
+  ProtocolListnfABIPtrTy = VMContext.getPointerTypeUnqual(ProtocolListnfABITy);
   
   // struct _ivar_t {
   //   unsigned long int *offset;  // pointer to ivar offset location
@@ -3892,7 +3911,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   uint32_t alignment;
   //   uint32_t size;
   // }
-  IvarnfABITy = llvm::StructType::get(llvm::PointerType::getUnqual(LongTy),
+  IvarnfABITy = VMContext.getStructType(VMContext.getPointerTypeUnqual(LongTy),
                                       Int8PtrTy,
                                       Int8PtrTy,
                                       IntTy,
@@ -3905,14 +3924,14 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   uint32 count;
   //   struct _iver_t list[count];
   // }
-  IvarListnfABITy = llvm::StructType::get(IntTy,
+  IvarListnfABITy = VMContext.getStructType(IntTy,
                                           IntTy,
-                                          llvm::ArrayType::get(
+                                          VMContext.getArrayType(
                                                                IvarnfABITy, 0),
                                           NULL);
   CGM.getModule().addTypeName("struct._ivar_list_t", IvarListnfABITy);
   
-  IvarListnfABIPtrTy = llvm::PointerType::getUnqual(IvarListnfABITy);
+  IvarListnfABIPtrTy = VMContext.getPointerTypeUnqual(IvarListnfABITy);
   
   // struct _class_ro_t {
   //   uint32_t const flags;
@@ -3929,7 +3948,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   // }
   
   // FIXME. Add 'reserved' field in 64bit abi mode!
-  ClassRonfABITy = llvm::StructType::get(IntTy,
+  ClassRonfABITy = VMContext.getStructType(IntTy,
                                          IntTy,
                                          IntTy,
                                          Int8PtrTy,
@@ -3947,8 +3966,8 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   std::vector<const llvm::Type*> Params;
   Params.push_back(ObjectPtrTy);
   Params.push_back(SelectorPtrTy);
-  ImpnfABITy = llvm::PointerType::getUnqual(
-                          llvm::FunctionType::get(ObjectPtrTy, Params, false));
+  ImpnfABITy = VMContext.getPointerTypeUnqual(
+                      VMContext.getFunctionType(ObjectPtrTy, Params, false));
   
   // struct _class_t {
   //   struct _class_t *isa;
@@ -3958,21 +3977,21 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   struct class_ro_t *ro;
   // }
   
-  llvm::PATypeHolder ClassTyHolder = llvm::OpaqueType::get();
-  ClassnfABITy = llvm::StructType::get(llvm::PointerType::getUnqual(ClassTyHolder),
-                                       llvm::PointerType::getUnqual(ClassTyHolder),
-                                       CachePtrTy,
-                                       llvm::PointerType::getUnqual(ImpnfABITy),
-                                       llvm::PointerType::getUnqual(
-                                                                ClassRonfABITy),
-                                       NULL);
+  llvm::PATypeHolder ClassTyHolder = VMContext.getOpaqueType();
+  ClassnfABITy =
+    VMContext.getStructType(VMContext.getPointerTypeUnqual(ClassTyHolder),
+                            VMContext.getPointerTypeUnqual(ClassTyHolder),
+                            CachePtrTy,
+                            VMContext.getPointerTypeUnqual(ImpnfABITy),
+                            VMContext.getPointerTypeUnqual(ClassRonfABITy),
+                            NULL);
   CGM.getModule().addTypeName("struct._class_t", ClassnfABITy);
 
   cast<llvm::OpaqueType>(ClassTyHolder.get())->refineAbstractTypeTo(
                                                                 ClassnfABITy);
   
   // LLVM for struct _class_t *
-  ClassnfABIPtrTy = llvm::PointerType::getUnqual(ClassnfABITy);
+  ClassnfABIPtrTy = VMContext.getPointerTypeUnqual(ClassnfABITy);
   
   // struct _category_t {
   //   const char * const name;
@@ -3982,7 +4001,7 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   const struct _protocol_list_t * const protocols;
   //   const struct _prop_list_t * const properties;
   // }
-  CategorynfABITy = llvm::StructType::get(Int8PtrTy,
+  CategorynfABITy = VMContext.getStructType(Int8PtrTy,
                                           ClassnfABIPtrTy,
                                           MethodListnfABIPtrTy,
                                           MethodListnfABIPtrTy,
@@ -4016,20 +4035,20 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   MessageRefTy = cast<llvm::StructType>(Types.ConvertType(MessageRefCTy));
   
   // MessageRefPtrTy - LLVM for struct _message_ref_t*
-  MessageRefPtrTy = llvm::PointerType::getUnqual(MessageRefTy);
+  MessageRefPtrTy = VMContext.getPointerTypeUnqual(MessageRefTy);
   
   // SuperMessageRefTy - LLVM for:
   // struct _super_message_ref_t {
   //   SUPER_IMP messenger;
   //   SEL name;
   // };
-  SuperMessageRefTy = llvm::StructType::get(ImpnfABITy,
+  SuperMessageRefTy = VMContext.getStructType(ImpnfABITy,
                                             SelectorPtrTy,
                                             NULL);
   CGM.getModule().addTypeName("struct._super_message_ref_t", SuperMessageRefTy);
   
   // SuperMessageRefPtrTy - LLVM for struct _super_message_ref_t*
-  SuperMessageRefPtrTy = llvm::PointerType::getUnqual(SuperMessageRefTy);  
+  SuperMessageRefPtrTy = VMContext.getPointerTypeUnqual(SuperMessageRefTy);  
   
 
   // struct objc_typeinfo {
@@ -4037,12 +4056,12 @@ ObjCNonFragileABITypesHelper::ObjCNonFragileABITypesHelper(CodeGen::CodeGenModul
   //   const char*  name;    // c++ typeinfo string
   //   Class        cls;
   // };
-  EHTypeTy = llvm::StructType::get(llvm::PointerType::getUnqual(Int8PtrTy),
+  EHTypeTy = VMContext.getStructType(VMContext.getPointerTypeUnqual(Int8PtrTy),
                                    Int8PtrTy,
                                    ClassnfABIPtrTy,
                                    NULL);
   CGM.getModule().addTypeName("struct._objc_typeinfo", EHTypeTy);
-  EHTypePtrTy = llvm::PointerType::getUnqual(EHTypeTy);
+  EHTypePtrTy = VMContext.getPointerTypeUnqual(EHTypeTy);
 }
 
 llvm::Function *CGObjCNonFragileABIMac::ModuleInitFunction() { 
@@ -4063,10 +4082,10 @@ void CGObjCNonFragileABIMac::AddModuleClassList(const
   
   std::vector<llvm::Constant*> Symbols(NumClasses);
   for (unsigned i=0; i<NumClasses; i++)
-    Symbols[i] = llvm::ConstantExpr::getBitCast(Container[i],
+    Symbols[i] = VMContext.getConstantExprBitCast(Container[i],
                                                 ObjCTypes.Int8PtrTy);
   llvm::Constant* Init = 
-    llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.Int8PtrTy,
+    VMContext.getConstantArray(VMContext.getArrayType(ObjCTypes.Int8PtrTy,
                                                   NumClasses),
                              Symbols);
   
@@ -4104,16 +4123,16 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   //  static int L_OBJC_IMAGE_INFO[2] = { 0, flags };
   // FIXME. flags can be 0 | 1 | 2 | 6. For now just use 0
   std::vector<llvm::Constant*> Values(2);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
+  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, 0);
   unsigned int flags = 0;
   // FIXME: Fix and continue?
   if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC)
     flags |= eImageInfo_GarbageCollected;
   if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly)
     flags |= eImageInfo_GCOnly;
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
-  llvm::Constant* Init = llvm::ConstantArray::get(
-                                      llvm::ArrayType::get(ObjCTypes.IntTy, 2),
+  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, flags);
+  llvm::Constant* Init = VMContext.getConstantArray(
+                                    VMContext.getArrayType(ObjCTypes.IntTy, 2),
                                       Values);   
   llvm::GlobalVariable *IMGV =
     new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
@@ -4193,9 +4212,9 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
                                                 const ObjCImplementationDecl *ID) {
   std::string ClassName = ID->getNameAsString();
   std::vector<llvm::Constant*> Values(10); // 11 for 64bit targets!
-  Values[ 0] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
-  Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceStart);
-  Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
+  Values[ 0] = VMContext.getConstantInt(ObjCTypes.IntTy, flags);
+  Values[ 1] = VMContext.getConstantInt(ObjCTypes.IntTy, InstanceStart);
+  Values[ 2] = VMContext.getConstantInt(ObjCTypes.IntTy, InstanceSize);
   // FIXME. For 64bit targets add 0 here.
   Values[ 3] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
                                   : BuildIvarLayout(ID, true); 
@@ -4256,7 +4275,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
       EmitPropertyList(
                        "\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                        ID, ID->getClassInterface(), ObjCTypes);
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
+  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ClassRonfABITy,
                                                    Values);
   llvm::GlobalVariable *CLASS_RO_GV =
   new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassRonfABITy, false,
@@ -4296,7 +4315,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   Values[2] = ObjCEmptyCacheVar;  // &ObjCEmptyCacheVar
   Values[3] = ObjCEmptyVtableVar; // &ObjCEmptyVtableVar
   Values[4] = ClassRoGV;                 // &CLASS_RO_GV
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassnfABITy, 
+  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ClassnfABITy, 
                                                    Values);
   llvm::GlobalVariable *GV = GetClassGlobal(ClassName);
   GV->setInitializer(Init);
@@ -4440,7 +4459,8 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
   // This routine is called for @protocol only. So, we must build definition
   // of protocol's meta-data (not a reference to it!)
   //
-  llvm::Constant *Init =  llvm::ConstantExpr::getBitCast(GetOrEmitProtocol(PD),
+  llvm::Constant *Init = 
+       VMContext.getConstantExprBitCast(GetOrEmitProtocol(PD),
                                         ObjCTypes.ExternalProtocolPtrTy);
   
   std::string ProtocolName("\01l_OBJC_PROTOCOL_REFERENCE_$_");
@@ -4532,7 +4552,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   }
     
   llvm::Constant *Init = 
-    llvm::ConstantStruct::get(ObjCTypes.CategorynfABITy, 
+    VMContext.getConstantStruct(ObjCTypes.CategorynfABITy, 
                               Values);
   llvm::GlobalVariable *GCATV
     = new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.CategorynfABITy, 
@@ -4563,11 +4583,11 @@ llvm::Constant *CGObjCNonFragileABIMac::GetMethodConstant(
   
   std::vector<llvm::Constant*> Method(3);
   Method[0] = 
-  llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
-                                 ObjCTypes.SelectorPtrTy);
+    VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
+                                     ObjCTypes.SelectorPtrTy);
   Method[1] = GetMethodVarType(MD);
-  Method[2] = llvm::ConstantExpr::getBitCast(Fn, ObjCTypes.Int8PtrTy);
-  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
+  Method[2] = VMContext.getConstantExprBitCast(Fn, ObjCTypes.Int8PtrTy);
+  return VMContext.getConstantStruct(ObjCTypes.MethodTy, Method);
 }
 
 /// EmitMethodList - Build meta-data for method declarations
@@ -4588,13 +4608,13 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
   std::vector<llvm::Constant*> Values(3);
   // sizeof(struct _objc_method)
   unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.MethodTy);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
   // method_count
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Methods.size());
-  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.MethodTy,
+  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, Methods.size());
+  llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodTy,
                                              Methods.size());
-  Values[2] = llvm::ConstantArray::get(AT, Methods);
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  Values[2] = VMContext.getConstantArray(AT, Methods);
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);
   
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
@@ -4605,7 +4625,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
     CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
   GV->setSection(Section);
   UsedGlobals.push_back(GV);
-  return llvm::ConstantExpr::getBitCast(GV,
+  return VMContext.getConstantExprBitCast(GV,
                                         ObjCTypes.MethodListnfABIPtrTy);
 }
 
@@ -4638,7 +4658,7 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
                                               const ObjCIvarDecl *Ivar,
                                               unsigned long int Offset) {
   llvm::GlobalVariable *IvarOffsetGV = ObjCIvarOffsetVariable(ID, Ivar);
-  IvarOffsetGV->setInitializer(llvm::ConstantInt::get(ObjCTypes.LongTy, 
+  IvarOffsetGV->setInitializer(VMContext.getConstantInt(ObjCTypes.LongTy, 
                                                       Offset));
   IvarOffsetGV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
@@ -4701,26 +4721,26 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     unsigned Align = CGM.getContext().getPreferredTypeAlign(
                        IVD->getType().getTypePtr()) >> 3;
     Align = llvm::Log2_32(Align);
-    Ivar[3] = llvm::ConstantInt::get(ObjCTypes.IntTy, Align);
+    Ivar[3] = VMContext.getConstantInt(ObjCTypes.IntTy, Align);
     // NOTE. Size of a bitfield does not match gcc's, because of the
     // way bitfields are treated special in each. But I am told that
     // 'size' for bitfield ivars is ignored by the runtime so it does
     // not matter.  If it matters, there is enough info to get the
     // bitfield right!
-    Ivar[4] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
-    Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarnfABITy, Ivar));
+    Ivar[4] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
+    Ivars.push_back(VMContext.getConstantStruct(ObjCTypes.IvarnfABITy, Ivar));
   }
   // Return null for empty list.
   if (Ivars.empty())
     return VMContext.getNullValue(ObjCTypes.IvarListnfABIPtrTy);
   std::vector<llvm::Constant*> Values(3);
   unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.IvarnfABITy);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
-  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Ivars.size());
-  llvm::ArrayType *AT = llvm::ArrayType::get(ObjCTypes.IvarnfABITy,
+  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
+  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, Ivars.size());
+  llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.IvarnfABITy,
                                              Ivars.size());
-  Values[2] = llvm::ConstantArray::get(AT, Ivars);
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  Values[2] = VMContext.getConstantArray(AT, Ivars);
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);
   const char *Prefix = "\01l_OBJC_$_INSTANCE_VARIABLES_";
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
@@ -4732,8 +4752,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   GV->setSection("__DATA, __objc_const");
                  
   UsedGlobals.push_back(GV);
-  return llvm::ConstantExpr::getBitCast(GV,
-                                        ObjCTypes.IvarListnfABIPtrTy);
+  return VMContext.getConstantExprBitCast(GV, ObjCTypes.IvarListnfABIPtrTy);
 }
 
 llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
@@ -4837,9 +4856,9 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                                0, PD, ObjCTypes);
   uint32_t Size = 
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.ProtocolnfABITy);
-  Values[8] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+  Values[8] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
   Values[9] = VMContext.getNullValue(ObjCTypes.IntTy);
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolnfABITy,
+  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ProtocolnfABITy,
                                                    Values);
   
   if (Entry) {
@@ -4896,7 +4915,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
   // FIXME: We shouldn't need to do this lookup here, should we?
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name, true);
   if (GV)
-    return llvm::ConstantExpr::getBitCast(GV, 
+    return VMContext.getConstantExprBitCast(GV, 
                                           ObjCTypes.ProtocolListnfABIPtrTy);
   
   for (; begin != end; ++begin)
@@ -4907,13 +4926,15 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
                                             ObjCTypes.ProtocolnfABIPtrTy));
   
   std::vector<llvm::Constant*> Values(2);
-  Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, ProtocolRefs.size() - 1);
+  Values[0] =
+    VMContext.getConstantInt(ObjCTypes.LongTy, ProtocolRefs.size() - 1);
   Values[1] = 
-    llvm::ConstantArray::get(llvm::ArrayType::get(ObjCTypes.ProtocolnfABIPtrTy,
-                                                  ProtocolRefs.size()), 
-                                                  ProtocolRefs);
+    VMContext.getConstantArray(
+      VMContext.getArrayType(ObjCTypes.ProtocolnfABIPtrTy,
+                             ProtocolRefs.size()), 
+                             ProtocolRefs);
   
-  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+  llvm::Constant *Init = VMContext.getConstantStruct(Values);
   GV = new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
                                 llvm::GlobalValue::InternalLinkage,
                                 Init,
@@ -4922,7 +4943,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
   GV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
   UsedGlobals.push_back(GV);
-  return llvm::ConstantExpr::getBitCast(GV, 
+  return VMContext.getConstantExprBitCast(GV, 
                                         ObjCTypes.ProtocolListnfABIPtrTy);
 }
 
@@ -4936,12 +4957,13 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
 llvm::Constant *
 CGObjCNonFragileABIMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
   std::vector<llvm::Constant*> Desc(3);
-  Desc[0] = llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
+  Desc[0] =
+          VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
                                            ObjCTypes.SelectorPtrTy);
   Desc[1] = GetMethodVarType(MD);
   // Protocol methods have no implementation. So, this entry is always NULL.
   Desc[2] = VMContext.getNullValue(ObjCTypes.Int8PtrTy);
-  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Desc);
+  return VMContext.getConstantStruct(ObjCTypes.MethodTy, Desc);
 }
 
 /// EmitObjCValueForIvar - Code Gen for nonfragile ivar reference.
@@ -5055,7 +5077,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     std::vector<llvm::Constant*> Values(2);
     Values[0] = Fn;
     Values[1] = GetMethodVarName(Sel);
-    llvm::Constant *Init = llvm::ConstantStruct::get(Values);
+    llvm::Constant *Init = VMContext.getConstantStruct(Values);
     GV =  new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
                                    llvm::GlobalValue::WeakAnyLinkage,
                                    Init,
@@ -5076,7 +5098,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
   Callee = CGF.Builder.CreateLoad(Callee);
   const llvm::FunctionType *FTy = Types.GetFunctionType(FnInfo1, true);
   Callee = CGF.Builder.CreateBitCast(Callee,
-                                     llvm::PointerType::getUnqual(FTy));
+                                     VMContext.getPointerTypeUnqual(FTy));
   return CGF.EmitCall(FnInfo1, Callee, ActualArgs);
 }
 
@@ -5252,7 +5274,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
   
   if (!Entry) {
     llvm::Constant *Casted = 
-    llvm::ConstantExpr::getBitCast(GetMethodVarName(Sel),
+    VMContext.getConstantExprBitCast(GetMethodVarName(Sel),
                                    ObjCTypes.SelectorPtrTy);
     Entry = 
     new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.SelectorPtrTy, false,
@@ -5314,7 +5336,7 @@ void CGObjCNonFragileABIMac::EmitGCMemmoveCollectable(
                                          unsigned long size) {
   SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
   DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
-  llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
+  llvm::Value *N = VMContext.getConstantInt(ObjCTypes.LongTy, size);
   CGF.Builder.CreateCall3(ObjCTypes.GcMemmoveCollectableFn(),
                           DestPtr, SrcPtr, N);
   return;
@@ -5477,7 +5499,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // We use a cleanup unless there was already a catch all.
   if (!HasCatchAll) {
-    SelectorArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
+    SelectorArgs.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, 0));
     Handlers.push_back(std::make_pair((const ParmVarDecl*) 0, (const Stmt*) 0));
   }
     
@@ -5547,7 +5569,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       llvm::SmallVector<llvm::Value*, 8> Args;
       Args.push_back(Exc);
       Args.push_back(ObjCTypes.getEHPersonalityPtr());
-      Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty,
+      Args.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty,
                                             0));
       CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
       CGF.Builder.CreateStore(Exc, RethrowPtr);
@@ -5579,7 +5601,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       Args.clear();
       Args.push_back(Exc);
       Args.push_back(ObjCTypes.getEHPersonalityPtr());
-      Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty,
+      Args.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty,
                                             0));
       CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
       CGF.Builder.CreateStore(Exc, RethrowPtr);
@@ -5692,13 +5714,14 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                         llvm::GlobalValue::ExternalLinkage,
                                         0, VTableName);
 
-  llvm::Value *VTableIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, 2);
+  llvm::Value *VTableIdx = VMContext.getConstantInt(llvm::Type::Int32Ty, 2);
 
   std::vector<llvm::Constant*> Values(3);
-  Values[0] = llvm::ConstantExpr::getGetElementPtr(VTableGV, &VTableIdx, 1);
+  Values[0] = VMContext.getConstantExprGetElementPtr(VTableGV, &VTableIdx, 1);
   Values[1] = GetClassName(ID->getIdentifier());
   Values[2] = GetClassGlobal(ClassName);
-  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.EHTypeTy, Values);
+  llvm::Constant *Init =
+    VMContext.getConstantStruct(ObjCTypes.EHTypeTy, Values);
 
   if (Entry) {
     Entry->setInitializer(Init);

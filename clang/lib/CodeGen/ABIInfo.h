@@ -17,6 +17,7 @@
 namespace llvm {
   class Type;
   class Value;
+  class LLVMContext;
 }
 
 namespace clang {
@@ -128,7 +129,8 @@ namespace clang {
     virtual ~ABIInfo();
 
     virtual void computeInfo(CodeGen::CGFunctionInfo &FI,
-                             ASTContext &Ctx) const = 0;
+                             ASTContext &Ctx,
+                             llvm::LLVMContext &VMContext) const = 0;
 
     /// EmitVAArg - Emit the target dependent code to load a value of
     /// \arg Ty from the va_list pointed to by \arg VAListAddr.

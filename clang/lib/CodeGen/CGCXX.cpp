@@ -40,16 +40,16 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
   llvm::GlobalValue *GuardV = 
     new llvm::GlobalVariable(CGM.getModule(), llvm::Type::Int64Ty, false,
                              GV->getLinkage(),
-                             getLLVMContext().getNullValue(llvm::Type::Int64Ty),
+                             VMContext.getNullValue(llvm::Type::Int64Ty),
                              GuardVName.c_str());
   
   // Load the first byte of the guard variable.
-  const llvm::Type *PtrTy = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  const llvm::Type *PtrTy = VMContext.getPointerType(llvm::Type::Int8Ty, 0);
   llvm::Value *V = Builder.CreateLoad(Builder.CreateBitCast(GuardV, PtrTy), 
                                       "tmp");
   
   // Compare it against 0.
-  llvm::Value *nullValue = getLLVMContext().getNullValue(llvm::Type::Int8Ty);
+  llvm::Value *nullValue = VMContext.getNullValue(llvm::Type::Int8Ty);
   llvm::Value *ICmp = Builder.CreateICmpEQ(V, nullValue , "tobool");
   
   llvm::BasicBlock *InitBlock = createBasicBlock("init");
@@ -70,7 +70,7 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
     EmitAggExpr(Init, GV, D.getType().isVolatileQualified());
   }
     
-  Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::Int8Ty, 1),
+  Builder.CreateStore(VMContext.getConstantInt(llvm::Type::Int8Ty, 1),
                       Builder.CreateBitCast(GuardV, PtrTy));
                       
   EmitBlock(EndBlock);
@@ -191,7 +191,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   if (E->isArray()) {
     ErrorUnsupported(E, "new[] expression");
-    return llvm::UndefValue::get(ConvertType(E->getType()));
+    return VMContext.getUndef(ConvertType(E->getType()));
   }
   
   QualType AllocType = E->getAllocatedType();
@@ -203,7 +203,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // The allocation size is the first argument.
   QualType SizeTy = getContext().getSizeType();
   llvm::Value *AllocSize = 
-    llvm::ConstantInt::get(ConvertType(SizeTy), 
+    VMContext.getConstantInt(ConvertType(SizeTy), 
                            getContext().getTypeSize(AllocType) / 8);
 
   NewArgs.push_back(std::make_pair(RValue::get(AllocSize), SizeTy));
@@ -267,7 +267,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     
     llvm::Value *IsNull = 
       Builder.CreateICmpEQ(NewPtr, 
-                           getLLVMContext().getNullValue(NewPtr->getType()),
+                           VMContext.getNullValue(NewPtr->getType()),
                            "isnull");
     
     Builder.CreateCondBr(IsNull, NewNull, NewNotNull);
@@ -308,7 +308,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     llvm::PHINode *PHI = Builder.CreatePHI(NewPtr->getType());
     PHI->reserveOperandSpace(2);
     PHI->addIncoming(NewPtr, NewNotNull);
-    PHI->addIncoming(getLLVMContext().getNullValue(NewPtr->getType()), NewNull);
+    PHI->addIncoming(VMContext.getNullValue(NewPtr->getType()), NewNull);
     
     NewPtr = PHI;
   }

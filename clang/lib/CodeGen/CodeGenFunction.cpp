@@ -156,7 +156,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.  Don't create this with the builder, because we don't want it
   // folded.
-  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
+  llvm::Value *Undef = VMContext.getUndef(llvm::Type::Int32Ty);
   AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "",
                                          EntryBB);
   if (Builder.isNamePreserving())
@@ -399,7 +399,7 @@ unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
 }
 
 void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
-  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BP = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
 
@@ -411,13 +411,13 @@ void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
     return;
   
   // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
+  const llvm::Type *IntPtr = VMContext.getIntegerType(LLVMPointerWidth);
 
   Builder.CreateCall4(CGM.getMemSetFn(), DestPtr,
                       getLLVMContext().getNullValue(llvm::Type::Int8Ty),
                       // TypeInfo.first describes size in bits.
-                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
-                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+                      VMContext.getConstantInt(IntPtr, TypeInfo.first/8),
+                      VMContext.getConstantInt(llvm::Type::Int32Ty, 
                                              TypeInfo.second/8));
 }
 
@@ -443,7 +443,7 @@ void CodeGenFunction::EmitIndirectSwitches() {
     I->setSuccessor(0, Default);
     for (std::map<const LabelStmt*,unsigned>::iterator LI = LabelIDs.begin(), 
            LE = LabelIDs.end(); LI != LE; ++LI) {
-      I->addCase(llvm::ConstantInt::get(llvm::Type::Int32Ty,
+      I->addCase(VMContext.getConstantInt(llvm::Type::Int32Ty,
                                         LI->second), 
                  getBasicBlockForLabel(LI->first));
     }
@@ -477,7 +477,7 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
       if (ElemTy->isVariableArrayType())
         ElemSize = EmitVLASize(ElemTy);
       else {
-        ElemSize = llvm::ConstantInt::get(SizeTy,
+        ElemSize = VMContext.getConstantInt(SizeTy,
                                           getContext().getTypeSize(ElemTy) / 8);
       }
     
@@ -596,13 +596,13 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
         
         // Check if we already have a destination for this block.
         if (Dest == SI->getDefaultDest())
-          ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+          ID = VMContext.getConstantInt(llvm::Type::Int32Ty, 0);
         else {
           ID = SI->findCaseDest(Dest);
           if (!ID) {
             // No code found, get a new unique one by using the number of
             // switch successors.
-            ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+            ID = VMContext.getConstantInt(llvm::Type::Int32Ty, 
                                         SI->getNumSuccessors());
             SI->addCase(ID, Dest);
           }
@@ -619,7 +619,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
         llvm::BasicBlock *CleanupPad = createBasicBlock("cleanup.pad", CurFn);
 
         // Create a unique case ID.
-        llvm::ConstantInt *ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
+        llvm::ConstantInt *ID = VMContext.getConstantInt(llvm::Type::Int32Ty, 
                                                        SI->getNumSuccessors());
 
         // Store the jump destination before the branch instruction.

@@ -28,7 +28,7 @@ llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E)
 {
   llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(E);
   // FIXME: This bitcast should just be made an invariant on the Runtime.
-  return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
+  return VMContext.getConstantExprBitCast(C, ConvertType(E->getType()));
 }
 
 /// Emit a selector.
@@ -179,7 +179,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
       Builder.CreateBitCast(LoadObjCSelf(), Types.ConvertType(IdTy));
     llvm::Value *Offset = EmitIvarOffset(IMP->getClassInterface(), Ivar);
     llvm::Value *True =
-      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
+      VMContext.getConstantInt(Types.ConvertType(getContext().BoolTy), 1);
     CallArgList Args;
     Args.push_back(std::make_pair(RValue::get(SelfAsId), IdTy));
     Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
@@ -262,9 +262,9 @@ void CodeGenFunction::GenerateObjCSetter(ObjCImplementationDecl *IMP,
       Builder.CreateBitCast(Builder.CreateLoad(Arg, "arg"),
                             Types.ConvertType(IdTy));
     llvm::Value *True =
-      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 1);
+      VMContext.getConstantInt(Types.ConvertType(getContext().BoolTy), 1);
     llvm::Value *False =
-      llvm::ConstantInt::get(Types.ConvertType(getContext().BoolTy), 0);
+      VMContext.getConstantInt(Types.ConvertType(getContext().BoolTy), 0);
     CallArgList Args;
     Args.push_back(std::make_pair(RValue::get(SelfAsId), IdTy));
     Args.push_back(std::make_pair(RValue::get(CmdVal), Cmd->getType()));
@@ -471,7 +471,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
                                 getContext().getPointerType(ItemsTy)));
   
   const llvm::Type *UnsignedLongLTy = ConvertType(getContext().UnsignedLongTy);
-  llvm::Constant *Count = llvm::ConstantInt::get(UnsignedLongLTy, NumItems);
+  llvm::Constant *Count = VMContext.getConstantInt(UnsignedLongLTy, NumItems);
   Args.push_back(std::make_pair(RValue::get(Count), 
                                 getContext().UnsignedLongTy));
   
@@ -488,7 +488,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   llvm::BasicBlock *SetStartMutations = createBasicBlock("setstartmutations");
   
   llvm::Value *Limit = Builder.CreateLoad(LimitPtr);
-  llvm::Value *Zero = getLLVMContext().getNullValue(UnsignedLongLTy);
+  llvm::Value *Zero = VMContext.getNullValue(UnsignedLongLTy);
 
   llvm::Value *IsZero = Builder.CreateICmpEQ(Limit, Zero, "iszero");
   Builder.CreateCondBr(IsZero, NoElements, SetStartMutations);
@@ -574,7 +574,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   
   // Increment the counter.
   Counter = Builder.CreateAdd(Counter, 
-                              llvm::ConstantInt::get(UnsignedLongLTy, 1));
+                              VMContext.getConstantInt(UnsignedLongLTy, 1));
   Builder.CreateStore(Counter, CounterPtr);
   
   llvm::BasicBlock *LoopEnd = createBasicBlock("loopend");
@@ -618,7 +618,7 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
     LValue LV = EmitLValue(cast<Expr>(S.getElement()));
     
     // Set the value to null.
-    Builder.CreateStore(getLLVMContext().getNullValue(ConvertType(ElementTy)),
+    Builder.CreateStore(VMContext.getNullValue(ConvertType(ElementTy)),
                         LV.getAddress());
   }
 

@@ -106,7 +106,7 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   return new llvm::GlobalVariable(CGM.getModule(), LTy,
                                   Ty.isConstant(getContext()), Linkage,
-                                  getLLVMContext().getNullValue(LTy), Name,
+                                  VMContext.getNullValue(LTy), Name,
                                   0, D.isThreadSpecified(),
                                   Ty.getAddressSpace());
 }
@@ -161,7 +161,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
 
         // Replace all uses of the old global with the new global
         llvm::Constant *NewPtrForOldDecl = 
-          llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
+          VMContext.getConstantExprBitCast(GV, OldGV->getType());
         OldGV->replaceAllUsesWith(NewPtrForOldDecl);
 
         // Erase the old global, since it is no longer used.
@@ -194,8 +194,8 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   // RAUW's the GV uses of this constant will be invalid.
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
   const llvm::Type *LPtrTy =
-    llvm::PointerType::get(LTy, D.getType().getAddressSpace());
-  DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
+    VMContext.getPointerType(LTy, D.getType().getAddressSpace());
+  DMEntry = VMContext.getConstantExprBitCast(GV, LPtrTy);
 
   // Emit global variable debug descriptor for static vars.
   CGDebugInfo *DI = getDebugInfo();
@@ -225,7 +225,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
   bool needsCopyDispose = BlockRequiresCopying(Ty);
   std::vector<const llvm::Type *> Types(needsCopyDispose*2+5);
   const llvm::PointerType *PtrToInt8Ty
-    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+    = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
   Types[0] = PtrToInt8Ty;
   Types[1] = PtrToInt8Ty;
   Types[2] = llvm::Type::Int32Ty;
@@ -238,7 +238,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
   assert((Align <= unsigned(Target.getPointerAlign(0))/8)
          && "Can't align more than pointer yet");
   Types[needsCopyDispose*2 + 4] = LTy;
-  return llvm::StructType::get(Types, false);
+  return VMContext.getStructType(Types, false);
 }
 
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
@@ -279,7 +279,8 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   } else {
     if (!DidCallStackSave) {
       // Save the stack.
-      const llvm::Type *LTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+      const llvm::Type *LTy =
+        VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
       llvm::Value *Stack = CreateTempAlloca(LTy, "saved_stack");
       
       llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stacksave);
@@ -302,7 +303,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     // Get the element type.
     const llvm::Type *LElemTy = ConvertTypeForMem(Ty);    
     const llvm::Type *LElemPtrTy =
-      llvm::PointerType::get(LElemTy, D.getType().getAddressSpace());
+      VMContext.getPointerType(LElemTy, D.getType().getAddressSpace());
 
     llvm::Value *VLASize = EmitVLASize(Ty);
 
@@ -358,7 +359,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   }
   if (isByRef) {
     const llvm::PointerType *PtrToInt8Ty
-      = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+      = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
 
     llvm::Value *isa_field = Builder.CreateStructGEP(DeclPtr, 0);
     llvm::Value *forwarding_field = Builder.CreateStructGEP(DeclPtr, 1);
@@ -385,19 +386,19 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     int isa = 0;
     if (flag&BLOCK_FIELD_IS_WEAK)
       isa = 1;
-    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, isa);
+    V = VMContext.getConstantInt(llvm::Type::Int32Ty, isa);
     V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "isa");
     Builder.CreateStore(V, isa_field);
 
     V = Builder.CreateBitCast(DeclPtr, PtrToInt8Ty, "forwarding");
     Builder.CreateStore(V, forwarding_field);
 
-    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, flags);
+    V = VMContext.getConstantInt(llvm::Type::Int32Ty, flags);
     Builder.CreateStore(V, flags_field);
 
     const llvm::Type *V1;
     V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
-    V = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+    V = VMContext.getConstantInt(llvm::Type::Int32Ty,
                                (CGM.getTargetData().getTypeStoreSizeInBits(V1)
                                 / 8));
     Builder.CreateStore(V, size_field);

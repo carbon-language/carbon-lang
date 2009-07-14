@@ -176,6 +176,8 @@ class CodeGenModule : public BlockModule {
   /// CFConstantStringClassRef - Cached reference to the class for constant
   /// strings. This value has type int * but is actually an Obj-C class pointer.
   llvm::Constant *CFConstantStringClassRef;
+  
+  llvm::LLVMContext &VMContext;
 public:
   CodeGenModule(ASTContext &C, const CompileOptions &CompileOpts,
                 llvm::Module &M, const llvm::TargetData &TD, Diagnostic &Diags);
@@ -204,7 +206,7 @@ public:
   CodeGenTypes &getTypes() { return Types; }
   Diagnostic &getDiags() const { return Diags; }
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
-  llvm::LLVMContext &getLLVMContext() { return TheModule.getContext(); }
+  llvm::LLVMContext &getLLVMContext() { return VMContext; }
 
   /// getDeclVisibilityMode - Compute the visibility of the decl \arg D.
   LangOptions::VisibilityMode getDeclVisibilityMode(const Decl *D) const;

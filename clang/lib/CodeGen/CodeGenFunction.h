@@ -294,7 +294,7 @@ public:
   llvm::BasicBlock *getInvokeDest() { return InvokeDest; }
   void setInvokeDest(llvm::BasicBlock *B) { InvokeDest = B; }
 
-  llvm::LLVMContext &getLLVMContext() { return CGM.getLLVMContext(); }
+  llvm::LLVMContext &getLLVMContext() { return VMContext; }
 
   //===--------------------------------------------------------------------===//
   //                                  Objective-C

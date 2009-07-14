@@ -118,7 +118,7 @@ const CGFunctionInfo &CodeGenTypes::getFunctionInfo(QualType ResTy,
   FunctionInfos.InsertNode(FI, InsertPos);
 
   // Compute ABI information.
-  getABIInfo().computeInfo(*FI, getContext());
+  getABIInfo().computeInfo(*FI, getContext(), TheModule.getContext());
 
   return *FI;
 }

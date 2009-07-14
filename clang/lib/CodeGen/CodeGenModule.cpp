@@ -40,7 +40,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CompileOptions &compileOpts,
   : BlockModule(C, M, TD, Types, *this), Context(C),
     Features(C.getLangOptions()), CompileOpts(compileOpts), TheModule(M),
     TheTargetData(TD), Diags(diags), Types(C, M, TD), Runtime(0),
-    MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0) {
+    MemCpyFn(0), MemMoveFn(0), MemSetFn(0), CFConstantStringClassRef(0),
+    VMContext(M.getContext()) {
 
   if (!Features.ObjC1)
     Runtime = 0;
@@ -195,30 +196,31 @@ void CodeGenModule::AddGlobalDtor(llvm::Function * Dtor, int Priority) {
 void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
   // Ctor function type is void()*.
   llvm::FunctionType* CtorFTy =
-    llvm::FunctionType::get(llvm::Type::VoidTy, 
+    VMContext.getFunctionType(llvm::Type::VoidTy, 
                             std::vector<const llvm::Type*>(),
                             false);
-  llvm::Type *CtorPFTy = llvm::PointerType::getUnqual(CtorFTy);
+  llvm::Type *CtorPFTy = VMContext.getPointerTypeUnqual(CtorFTy);
 
   // Get the type of a ctor entry, { i32, void ()* }.
   llvm::StructType* CtorStructTy = 
-    llvm::StructType::get(llvm::Type::Int32Ty, 
-                          llvm::PointerType::getUnqual(CtorFTy), NULL);
+    VMContext.getStructType(llvm::Type::Int32Ty, 
+                          VMContext.getPointerTypeUnqual(CtorFTy), NULL);
 
   // Construct the constructor and destructor arrays.
   std::vector<llvm::Constant*> Ctors;
   for (CtorList::const_iterator I = Fns.begin(), E = Fns.end(); I != E; ++I) {
     std::vector<llvm::Constant*> S;
-    S.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, I->second, false));
-    S.push_back(llvm::ConstantExpr::getBitCast(I->first, CtorPFTy));
-    Ctors.push_back(llvm::ConstantStruct::get(CtorStructTy, S));
+    S.push_back(
+      VMContext.getConstantInt(llvm::Type::Int32Ty, I->second, false));
+    S.push_back(VMContext.getConstantExprBitCast(I->first, CtorPFTy));
+    Ctors.push_back(VMContext.getConstantStruct(CtorStructTy, S));
   }
 
   if (!Ctors.empty()) {
-    llvm::ArrayType *AT = llvm::ArrayType::get(CtorStructTy, Ctors.size());
+    llvm::ArrayType *AT = VMContext.getArrayType(CtorStructTy, Ctors.size());
     new llvm::GlobalVariable(TheModule, AT, false,
                              llvm::GlobalValue::AppendingLinkage,
-                             llvm::ConstantArray::get(AT, Ctors),
+                             VMContext.getConstantArray(AT, Ctors),
                              GlobalName);
   }
 }
@@ -229,7 +231,7 @@ void CodeGenModule::EmitAnnotations() {
 
   // Create a new global variable for the ConstantStruct in the Module.
   llvm::Constant *Array =
-  llvm::ConstantArray::get(llvm::ArrayType::get(Annotations[0]->getType(),
+  VMContext.getConstantArray(VMContext.getArrayType(Annotations[0]->getType(),
                                                 Annotations.size()),
                            Annotations);
   llvm::GlobalValue *gv = 
@@ -418,26 +420,27 @@ void CodeGenModule::EmitLLVMUsed() {
   if (LLVMUsed.empty() && !Runtime)
     return;
 
-  llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::Type *i8PTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
   
   // Convert LLVMUsed to what ConstantArray needs.
   std::vector<llvm::Constant*> UsedArray;
   UsedArray.resize(LLVMUsed.size());
   for (unsigned i = 0, e = LLVMUsed.size(); i != e; ++i) {
     UsedArray[i] = 
-     llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(&*LLVMUsed[i]), i8PTy);
+     VMContext.getConstantExprBitCast(cast<llvm::Constant>(&*LLVMUsed[i]), 
+                                      i8PTy);
   }
   
   if (Runtime)
     Runtime->MergeMetadataGlobals(UsedArray);
   if (UsedArray.empty())
     return;
-  llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, UsedArray.size());
+  llvm::ArrayType *ATy = VMContext.getArrayType(i8PTy, UsedArray.size());
   
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(getModule(), ATy, false, 
                              llvm::GlobalValue::AppendingLinkage,
-                             llvm::ConstantArray::get(ATy, UsedArray),
+                             VMContext.getConstantArray(ATy, UsedArray),
                              "llvm.used");
 
   GV->setSection("llvm.metadata");
@@ -484,9 +487,9 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
 
   // get [N x i8] constants for the annotation string, and the filename string
   // which are the 2nd and 3rd elements of the global annotation structure.
-  const llvm::Type *SBP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  llvm::Constant *anno = llvm::ConstantArray::get(AA->getAnnotation(), true);
-  llvm::Constant *unit = llvm::ConstantArray::get(M->getModuleIdentifier(),
+  const llvm::Type *SBP = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+  llvm::Constant *anno = VMContext.getConstantArray(AA->getAnnotation(), true);
+  llvm::Constant *unit = VMContext.getConstantArray(M->getModuleIdentifier(),
                                                   true);
 
   // Get the two global values corresponding to the ConstantArrays we just
@@ -504,12 +507,12 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
 
   // Create the ConstantStruct for the global annotation.
   llvm::Constant *Fields[4] = {
-    llvm::ConstantExpr::getBitCast(GV, SBP),
-    llvm::ConstantExpr::getBitCast(annoGV, SBP),
-    llvm::ConstantExpr::getBitCast(unitGV, SBP),
-    llvm::ConstantInt::get(llvm::Type::Int32Ty, LineNo)
+    VMContext.getConstantExprBitCast(GV, SBP),
+    VMContext.getConstantExprBitCast(annoGV, SBP),
+    VMContext.getConstantExprBitCast(unitGV, SBP),
+    VMContext.getConstantInt(llvm::Type::Int32Ty, LineNo)
   };
-  return llvm::ConstantStruct::get(Fields, 4, false);
+  return VMContext.getConstantStruct(Fields, 4, false);
 }
 
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
@@ -622,8 +625,8 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
       return Entry;
     
     // Make sure the result is of the correct type.
-    const llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
-    return llvm::ConstantExpr::getBitCast(Entry, PTy);
+    const llvm::Type *PTy = VMContext.getPointerTypeUnqual(Ty);
+    return VMContext.getConstantExprBitCast(Entry, PTy);
   }
   
   // This is the first use or definition of a mangled name.  If there is a
@@ -649,7 +652,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
   // sure not to try to set attributes.
   bool IsIncompleteFunction = false;
   if (!isa<llvm::FunctionType>(Ty)) {
-    Ty = llvm::FunctionType::get(llvm::Type::VoidTy,
+    Ty = VMContext.getFunctionType(llvm::Type::VoidTy,
                                  std::vector<const llvm::Type*>(), false);
     IsIncompleteFunction = true;
   }
@@ -702,7 +705,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
       return Entry;
         
     // Make sure the result is of the correct type.
-    return llvm::ConstantExpr::getBitCast(Entry, Ty);
+    return VMContext.getConstantExprBitCast(Entry, Ty);
   }
   
   // This is the first use or definition of a mangled name.  If there is a
@@ -757,7 +760,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
     Ty = getTypes().ConvertTypeForMem(ASTTy);
   
   const llvm::PointerType *PTy = 
-    llvm::PointerType::get(Ty, ASTTy.getAddressSpace());
+    VMContext.getPointerType(Ty, ASTTy.getAddressSpace());
   return GetOrCreateLLVMGlobal(getMangledName(D), PTy, D);
 }
 
@@ -768,7 +771,7 @@ CodeGenModule::CreateRuntimeVariable(const llvm::Type *Ty,
                                      const char *Name) {
   // Convert Name to be a uniqued string from the IdentifierInfo table.
   Name = getContext().Idents.get(Name).getName();
-  return GetOrCreateLLVMGlobal(Name, llvm::PointerType::getUnqual(Ty), 0);
+  return GetOrCreateLLVMGlobal(Name, VMContext.getPointerTypeUnqual(Ty), 0);
 }
 
 void CodeGenModule::EmitTentativeDefinition(const VarDecl *D) {
@@ -810,7 +813,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     if (!Init) {
       ErrorUnsupported(D, "static initializer");
       QualType T = D->getInit()->getType();
-      Init = llvm::UndefValue::get(getTypes().ConvertType(T));
+      Init = VMContext.getUndef(getTypes().ConvertType(T));
     }
   }
 
@@ -848,7 +851,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
     // Replace all uses of the old global with the new global
     llvm::Constant *NewPtrForOldDecl = 
-        llvm::ConstantExpr::getBitCast(GV, Entry->getType());
+        VMContext.getConstantExprBitCast(GV, Entry->getType());
     Entry->replaceAllUsesWith(NewPtrForOldDecl);
 
     // Erase the old global, since it is no longer used.
@@ -974,7 +977,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
       // Just create the same type as was lowered by ConvertType 
       // but strip off the varargs bit.
       std::vector<const llvm::Type*> Args(Ty->param_begin(), Ty->param_end());
-      Ty = llvm::FunctionType::get(Ty->getReturnType(), Args, false);
+      Ty = VMContext.getFunctionType(Ty->getReturnType(), Args, false);
     }
   }
 
@@ -1018,7 +1021,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
     // Replace uses of F with the Function we will endow with a body.
     if (!Entry->use_empty()) {
       llvm::Constant *NewPtrForOldDecl = 
-        llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
+        VMContext.getConstantExprBitCast(NewFn, Entry->getType());
       Entry->replaceAllUsesWith(NewPtrForOldDecl);
     }
     
@@ -1058,7 +1061,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
     Aliasee = GetOrCreateLLVMFunction(AliaseeName, DeclTy, GlobalDecl());
   else
     Aliasee = GetOrCreateLLVMGlobal(AliaseeName,
-                                    llvm::PointerType::getUnqual(DeclTy), 0);
+                                    VMContext.getPointerTypeUnqual(DeclTy), 0);
 
   // Create the new alias itself, but don't set a name yet.
   llvm::GlobalValue *GA = 
@@ -1086,7 +1089,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
     //
     // Remove it and replace uses of it with the alias.
     
-    Entry->replaceAllUsesWith(llvm::ConstantExpr::getBitCast(GA,
+    Entry->replaceAllUsesWith(VMContext.getConstantExprBitCast(GA,
                                                           Entry->getType()));
     Entry->eraseFromParent();
   }
@@ -1237,7 +1240,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   
   if (!CFConstantStringClassRef) {
     const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
-    Ty = llvm::ArrayType::get(Ty, 0);
+    Ty = VMContext.getArrayType(Ty, 0);
 
     // FIXME: This is fairly broken if __CFConstantStringClassReference is
     // already defined, in that it will get renamed and the user will most
@@ -1250,7 +1253,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
     
     // Decay array -> ptr
     CFConstantStringClassRef =
-      llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
+      VMContext.getConstantExprGetElementPtr(GV, Zeros, 2);
   }
   
   QualType CFTy = getContext().getCFConstantStringType();
@@ -1273,14 +1276,14 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   NextField = *Field++;
   const llvm::Type *Ty = getTypes().ConvertType(getContext().UnsignedIntTy);
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        isUTF16 ? llvm::ConstantInt::get(Ty, 0x07d0)
-                                : llvm::ConstantInt::get(Ty, 0x07C8), 
+                        isUTF16 ? VMContext.getConstantInt(Ty, 0x07d0)
+                                : VMContext.getConstantInt(Ty, 0x07C8), 
                         CFRD, STy);
     
   // String pointer.
   CurField = NextField;
   NextField = *Field++;
-  llvm::Constant *C = llvm::ConstantArray::get(str);
+  llvm::Constant *C = VMContext.getConstantArray(str);
 
   const char *Sect, *Prefix;
   bool isConstant;
@@ -1307,7 +1310,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
     GV->setAlignment(Align); 
   }
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2),
+                        VMContext.getConstantExprGetElementPtr(GV, Zeros, 2),
                         CFRD, STy);
   
   // String length.
@@ -1315,10 +1318,10 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   NextField = 0;
   Ty = getTypes().ConvertType(getContext().LongTy);
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        llvm::ConstantInt::get(Ty, StringLength), CFRD, STy);
+                        VMContext.getConstantInt(Ty, StringLength), CFRD, STy);
   
   // The struct.
-  C = llvm::ConstantStruct::get(STy, Fields);
+  C = VMContext.getConstantStruct(STy, Fields);
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true, 
                                 llvm::GlobalVariable::InternalLinkage, C, 
                                 getContext().Target.getCFStringSymbolPrefix());
@@ -1376,7 +1379,7 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
                                              CodeGenModule &CGM,
                                              const char *GlobalName) {
   // Create Constant for this string literal. Don't add a '\0'.
-  llvm::Constant *C = llvm::ConstantArray::get(str, false);
+  llvm::Constant *C = CGM.getLLVMContext().getConstantArray(str, false);
   
   // Create a global variable for this string
   return new llvm::GlobalVariable(CGM.getModule(), C->getType(), constant, 
