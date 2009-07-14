@@ -611,6 +611,17 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   bool SawStore = false;
   if (!DefMI->isSafeToMove(tii_, SawStore))
     return false;
+  if (TID.getNumDefs() != 1)
+    return false;
+  // Make sure the copy destination register class fits the instruction
+  // definition register class. The mismatch can happen as a result of earlier
+  // extract_subreg, insert_subreg, subreg_to_reg coalescing.
+  const TargetRegisterClass *RC = getInstrOperandRegClass(tri_, TID, 0);
+  if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
+    if (mri_->getRegClass(DstReg) != RC)
+      return false;
+  } else if (!RC->contains(DstReg))
+    return false;
 
   unsigned DefIdx = li_->getDefIndex(CopyIdx);
   const LiveRange *DLR= li_->getInterval(DstReg).getLiveRangeContaining(DefIdx);
