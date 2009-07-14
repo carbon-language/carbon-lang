@@ -56,6 +56,8 @@ class CGDebugInfo {
   llvm::DIType CreateType(const ComplexType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateCVRType(QualType Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const TypedefType *Ty, llvm::DICompileUnit U);
+  llvm::DIType CreateType(const ObjCObjectPointerType *Ty, 
+                          llvm::DICompileUnit Unit);
   llvm::DIType CreateType(const PointerType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const BlockPointerType *Ty, llvm::DICompileUnit U);
   llvm::DIType CreateType(const FunctionType *Ty, llvm::DICompileUnit U);

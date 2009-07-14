@@ -16,3 +16,11 @@
 @implementation A // Line 15
 -(void) m0 {}
 @end
+
+@interface I1 {
+  I1 *iv0;
+}
+@end
+void f0(void) {
+  I1 *x;
+}

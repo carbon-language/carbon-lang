@@ -200,6 +200,19 @@ llvm::DIType CGDebugInfo::CreateCVRType(QualType Ty, llvm::DICompileUnit Unit) {
                                         0, 0, 0, 0, 0, FromTy);
 }
 
+llvm::DIType CGDebugInfo::CreateType(const ObjCObjectPointerType *Ty,
+                                     llvm::DICompileUnit Unit) {
+  llvm::DIType EltTy = getOrCreateType(Ty->getPointeeType(), Unit);
+ 
+  // Bit size, align and offset of the type.
+  uint64_t Size = M->getContext().getTypeSize(Ty);
+  uint64_t Align = M->getContext().getTypeAlign(Ty);
+                                                                               
+  return DebugFactory.CreateDerivedType(llvm::dwarf::DW_TAG_pointer_type, Unit,
+                                        "", llvm::DICompileUnit(),
+                                        0, Size, Align, 0, 0, EltTy);
+}
+
 llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
                                      llvm::DICompileUnit Unit) {
   llvm::DIType EltTy = getOrCreateType(Ty->getPointeeType(), Unit);
@@ -764,11 +777,8 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
   case Type::QualifiedName:
     // Unsupported types
     return llvm::DIType();
-  case Type::ObjCObjectPointer:   // Encode id<p> in debug info just like id.
-    {
-    ObjCObjectPointerType *OPT = cast<ObjCObjectPointerType>(Ty);
-    return Slot = CreateType(OPT->getInterfaceType(), Unit);
-    }
+  case Type::ObjCObjectPointer:
+    return Slot = CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
   case Type::ObjCQualifiedInterface:  // Drop protocols from interface.
   case Type::ObjCInterface: 
     return Slot = CreateType(cast<ObjCInterfaceType>(Ty), Unit);
