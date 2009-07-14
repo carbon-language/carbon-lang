@@ -91,7 +91,7 @@ namespace {
   private:
     bool ProcessLoop(Loop *L);
     BasicBlock *RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
-    void InsertPreheaderForLoop(Loop *L);
+    BasicBlock *InsertPreheaderForLoop(Loop *L);
     Loop *SeparateNestedLoop(Loop *L);
     void InsertUniqueBackedgeBlock(Loop *L);
     void PlaceSplitBlockCarefully(BasicBlock *NewBB,
@@ -193,8 +193,9 @@ ReprocessLoop:
          "Header isn't first block in loop?");
 
   // Does the loop already have a preheader?  If so, don't insert one.
-  if (L->getLoopPreheader() == 0) {
-    InsertPreheaderForLoop(L);
+  BasicBlock *Preheader = L->getLoopPreheader();
+  if (!Preheader) {
+    Preheader = InsertPreheaderForLoop(L);
     NumInserted++;
     Changed = true;
   }
@@ -287,19 +288,11 @@ ReprocessLoop:
         Instruction *Inst = I++;
         if (Inst == CI)
           continue;
-        if (Inst->isTrapping()) {
+        if (!L->makeLoopInvariant(Inst, Preheader->getTerminator())) {
           AllInvariant = false;
+          Changed = true;
           break;
         }
-        for (unsigned j = 0, f = Inst->getNumOperands(); j != f; ++j)
-          if (!L->isLoopInvariant(Inst->getOperand(j))) {
-            AllInvariant = false;
-            break;
-          }
-        if (!AllInvariant)
-          break;
-        // Hoist.
-        Inst->moveBefore(L->getLoopPreheader()->getTerminator());
       }
       if (!AllInvariant) continue;
 
@@ -340,7 +333,7 @@ ReprocessLoop:
 /// preheader, this method is called to insert one.  This method has two phases:
 /// preheader insertion and analysis updating.
 ///
-void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
+BasicBlock *LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   BasicBlock *Header = L->getHeader();
 
   // Compute the set of predecessors of the loop that are not in the loop.
@@ -367,6 +360,8 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   // Make sure that NewBB is put someplace intelligent, which doesn't mess up
   // code layout too horribly.
   PlaceSplitBlockCarefully(NewBB, OutsideBlocks, L);
+
+  return NewBB;
 }
 
 /// RewriteLoopExitBlock - Ensure that the loop preheader dominates all exit

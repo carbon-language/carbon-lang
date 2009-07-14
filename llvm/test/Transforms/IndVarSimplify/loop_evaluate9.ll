@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis > %t
-; RUN: grep {\[%\]tmp5.lcssa = phi i8 \\\[ 63, \[%\]cc70a02__complex_integers__Oadd.153.exit.i \\\]} %t
-; RUN: grep {\[%\]tmp4.lcssa = phi i8 \\\[ -28, \[%\]cc70a02__complex_integers__Oadd.153.exit.i \\\]} %t
+; RUN: grep {\[%\]tmp7 = icmp eq i8 -28, -28} %t
+; RUN: grep {\[%\]tmp8 = icmp eq i8 63, 63} %t
 ; PR4477
 
 ; Indvars should compute the exit values in loop.

@@ -168,8 +168,13 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
   if (isa<Constant>(Cond)) return 0;
 
   // TODO: Handle: br (VARIANT|INVARIANT).
-  // TODO: Hoist simple expressions out of loops.
   if (L->isLoopInvariant(Cond)) return Cond;
+
+  // Hoist simple values out.
+  if (L->makeLoopInvariant(Cond)) {
+    Changed = true;
+    return Cond;
+  }
 
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Cond))
     if (BO->getOpcode() == Instruction::And ||
