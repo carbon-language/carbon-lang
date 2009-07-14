@@ -351,11 +351,12 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
             FieldDecl *FD = BMInitializer->getMember();
             Out <<  FD->getNameAsString();
           }
-          else {
-            const RecordType *RT = 
-              BMInitializer->getBaseClass()->getAsRecordType();
-            const CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(RT->getDecl());
-            Out << BaseDecl->getNameAsString();
+          else // FIXME. skip dependent types for now.
+            if (const RecordType *RT = 
+                BMInitializer->getBaseClass()->getAsRecordType()) {
+              const CXXRecordDecl *BaseDecl = 
+                cast<CXXRecordDecl>(RT->getDecl());
+              Out << BaseDecl->getNameAsString();
           }
           if (hasArguments) {
             Out << "(";
