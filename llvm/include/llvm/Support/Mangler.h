@@ -82,13 +82,10 @@ public:
     return (AcceptableChars[X/32] & (1 << (X&31))) != 0;
   }
 
-  /// getMangledName - Returns the mangled name of V, an LLVM Value,
-  /// in the current module.  If 'Suffix' is specified, the name ends with the
-  /// specified suffix.  If 'ForcePrivate' is specified, the label is specified
-  /// to have a private label prefix.
+  /// getValueName - Returns the mangled name of V, an LLVM Value,
+  /// in the current module.
   ///
-  std::string getMangledName(const GlobalValue *V, const char *Suffix = "",
-                             bool ForcePrivate = false);
+  std::string getValueName(const GlobalValue *V, const char *Suffix = "");
 
   /// makeNameProper - We don't want identifier names with ., space, or
   /// - in them, so we mangle these characters into the strings "d_",

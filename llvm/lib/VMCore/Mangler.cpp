@@ -116,19 +116,12 @@ std::string Mangler::makeNameProper(const std::string &X,
   return Result;
 }
 
-/// getMangledName - Returns the mangled name of V, an LLVM Value,
-/// in the current module.  If 'Suffix' is specified, the name ends with the
-/// specified suffix.  If 'ForcePrivate' is specified, the label is specified
-/// to have a private label prefix.
-///
-std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
-                                    bool ForcePrivate) {
+std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
   assert((!isa<Function>(GV) || !cast<Function>(GV)->isIntrinsic()) &&
          "Intrinsic functions cannot be mangled by Mangler");
   
   if (GV->hasName())
-    return makeNameProper(GV->getName() + Suffix,
-                          GV->hasPrivateLinkage() | ForcePrivate);
+    return makeNameProper(GV->getName() + Suffix, GV->hasPrivateLinkage());
   
   // Get the ID for the global, assigning a new one if we haven't got one
   // already.
@@ -136,8 +129,7 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
   if (ID == 0) ID = NextAnonGlobalID++;
   
   // Must mangle the global into a unique ID.
-  return makeNameProper("__unnamed_" + utostr(ID) + Suffix,
-                        GV->hasPrivateLinkage() | ForcePrivate);
+  return "__unnamed_" + utostr(ID) + Suffix;
 }
 
 Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix)
