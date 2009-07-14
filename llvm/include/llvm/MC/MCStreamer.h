@@ -160,6 +160,12 @@ namespace llvm {
     /// @param AbortReason - The reason assembly is terminated, if non-NULL.
     virtual void AbortAssembly(const char *AbortReason) = 0;
 
+    /// SwitchInputAssemblyFile - Assemble the contents of the specified file in
+    /// @param FileName at this point in the assembly.
+    ///
+    /// @param FileName - The file to assemble at this point
+    virtual void SwitchInputAssemblyFile(const char *FileName) = 0;
+
     /// @}
     /// @name Generating Data
     /// @{

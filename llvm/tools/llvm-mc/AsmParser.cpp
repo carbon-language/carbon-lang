@@ -535,6 +535,8 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveDarwinSubsectionsViaSymbols();
     if (!strcmp(IDVal, ".abort"))
       return ParseDirectiveAbort();
+    if (!strcmp(IDVal, ".include"))
+      return ParseDirectiveInclude();
 
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
@@ -1155,6 +1157,28 @@ bool AsmParser::ParseDirectiveDarwinLsym() {
 
   // Create the Sym with the value of the Expr
   Out.EmitLocalSymbol(Sym, Expr);
+
+  return false;
+}
+
+/// ParseDirectiveInclude
+///  ::= .include "filename"
+bool AsmParser::ParseDirectiveInclude() {
+  const char *Str;
+
+  if (Lexer.isNot(asmtok::String))
+    return TokError("expected string in '.include' directive");
+  
+  Str = Lexer.getCurStrVal();
+
+  Lexer.Lex();
+
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.include' directive");
+  
+  Lexer.Lex();
+
+  Out.SwitchInputAssemblyFile(Str);
 
   return false;
 }

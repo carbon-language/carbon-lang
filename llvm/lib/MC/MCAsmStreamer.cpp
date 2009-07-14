@@ -57,6 +57,8 @@ namespace {
 
     virtual void AbortAssembly(const char *AbortReason = NULL);
 
+    virtual void SwitchInputAssemblyFile(const char *FileName);
+
     virtual void EmitBytes(const char *Data, unsigned Length);
 
     virtual void EmitValue(const MCValue &Value, unsigned Size);
@@ -135,6 +137,10 @@ void MCAsmStreamer::AbortAssembly(const char *AbortReason) {
     OS << ' ' << AbortReason;
   OS << '\n';
   
+}
+
+void MCAsmStreamer::SwitchInputAssemblyFile(const char *FileName) {
+  OS << ".include" << ' ' << FileName << '\n';
 }
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,

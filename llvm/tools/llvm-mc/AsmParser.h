@@ -119,6 +119,7 @@ private:
   bool ParseDirectiveDarwinSubsectionsViaSymbols();
 
   bool ParseDirectiveAbort(); // ".abort"
+  bool ParseDirectiveInclude(); // ".include"
 };
 
 } // end namespace llvm
