@@ -89,7 +89,9 @@ public:
   DeclLocResolver(ASTContext &ctx, SourceLocation loc)
     : LocResolverBase(ctx, loc) {}
 
+  ASTLocation VisitDeclContext(DeclContext *DC);
   ASTLocation VisitTranslationUnitDecl(TranslationUnitDecl *TU);
+  ASTLocation VisitRecordDecl(RecordDecl *D);
   ASTLocation VisitVarDecl(VarDecl *D);
   ASTLocation VisitFunctionDecl(FunctionDecl *D);
   ASTLocation VisitDecl(Decl *D);
@@ -131,9 +133,7 @@ ASTLocation StmtLocResolver::VisitStmt(Stmt *Node) {
   return ASTLocation(Parent, Node);
 }
 
-ASTLocation DeclLocResolver::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
-  DeclContext *DC = TU;
-
+ASTLocation DeclLocResolver::VisitDeclContext(DeclContext *DC) {
   for (DeclContext::decl_iterator
          I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
     RangePos RP = CheckRange(*I);
@@ -143,7 +143,20 @@ ASTLocation DeclLocResolver::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
       return Visit(*I);
   }
 
-  return ASTLocation();
+  return ASTLocation(cast<Decl>(DC));
+}
+
+ASTLocation DeclLocResolver::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
+  ASTLocation ASTLoc = VisitDeclContext(TU);
+  if (ASTLoc.getDecl() == TU)
+    return ASTLocation();
+  return ASTLoc;
+}
+
+ASTLocation DeclLocResolver::VisitRecordDecl(RecordDecl *D) {
+  assert(ContainsLocation(D) &&
+         "Should visit only after verifying that loc is in range");
+  return VisitDeclContext(D);
 }
 
 ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
