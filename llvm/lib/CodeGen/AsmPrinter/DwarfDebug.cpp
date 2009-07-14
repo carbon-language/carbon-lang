@@ -15,7 +15,6 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/Timer.h"
-#include "llvm/Support/Mangler.h"
 #include "llvm/System/Path.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -786,12 +785,9 @@ DIE *DwarfDebug::CreateGlobalVariableDIE(CompileUnit *DW_Unit,
   AddString(GVDie, dwarf::DW_AT_name, dwarf::DW_FORM_string, Name);
   std::string LinkageName;
   GV.getLinkageName(LinkageName);
-  if (!LinkageName.empty()) {
-    Mangler *Mg = Asm->getMangler();
-    assert (Mg && "Unable to find Mangler!");
+  if (!LinkageName.empty())
     AddString(GVDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              Mg->makeNameProper(LinkageName));
-  }
+              LinkageName);
   AddType(DW_Unit, GVDie, GV.getType());
   if (!GV.isLocalToUnit())
     AddUInt(GVDie, dwarf::DW_AT_external, dwarf::DW_FORM_flag, 1);
@@ -859,14 +855,9 @@ DIE *DwarfDebug::CreateSubprogramDIE(CompileUnit *DW_Unit,
 
   std::string LinkageName;
   SP.getLinkageName(LinkageName);
-
-  if (!LinkageName.empty()) {
-    Mangler *Mg = Asm->getMangler();
-    assert (Mg && "Unable to find Mangler!");
+  if (!LinkageName.empty())
     AddString(SPDie, dwarf::DW_AT_MIPS_linkage_name, dwarf::DW_FORM_string,
-              Mg->makeNameProper(LinkageName));
-  }
-
+              LinkageName);
   AddSourceLine(SPDie, &SP);
 
   DICompositeType SPTy = SP.getType();

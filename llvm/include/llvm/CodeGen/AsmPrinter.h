@@ -333,10 +333,6 @@ namespace llvm {
     /// debug tables.
     void printDeclare(const MachineInstr *MI) const;
 
-    /// getMangler - Return Mangler used by the AsmPrinter. This is used by
-    /// DWARF debug info generator.
-    Mangler *getMangler() { return Mang; }
-
     /// postInstructionAction - Handling printing of items after the
     /// instruction iteself has been printed (e.g. comments)
     void postInstructionAction(const MachineInstr &MI) const {
