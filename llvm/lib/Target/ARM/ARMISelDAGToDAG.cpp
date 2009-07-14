@@ -902,7 +902,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, TFI,
                                   CurDAG->getTargetConstant(0, MVT::i32));
     } else {
-      unsigned Opc = Subtarget->hasThumb2() ? ARM::t2ADDri : ARM::ADDri;
+      unsigned Opc = ((Subtarget->isThumb() && Subtarget->hasThumb2()) ?
+                      ARM::t2ADDri : ARM::ADDri);
       SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
@@ -941,7 +942,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
                             getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getRegister(0, MVT::i32) };
-        return CurDAG->SelectNodeTo(N, (Subtarget->hasThumb2()) ? 
+        return CurDAG->SelectNodeTo(N, (Subtarget->isThumb() &&
+                                        Subtarget->hasThumb2()) ? 
                                     ARM::t2ADDrs : ARM::ADDrs, MVT::i32, Ops, 7);
       }
       if (isPowerOf2_32(RHSV+1)) {  // 2^n-1?
@@ -951,7 +953,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                             CurDAG->getTargetConstant(ShImm, MVT::i32),
                             getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                             CurDAG->getRegister(0, MVT::i32) };
-        return CurDAG->SelectNodeTo(N, (Subtarget->hasThumb2()) ? 
+        return CurDAG->SelectNodeTo(N, (Subtarget->isThumb() &&
+                                        Subtarget->hasThumb2()) ? 
                                     ARM::t2RSBrs : ARM::RSBrs, MVT::i32, Ops, 7);
       }
     }
