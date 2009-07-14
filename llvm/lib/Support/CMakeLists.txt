@@ -11,6 +11,7 @@ add_llvm_library(LLVMSupport
   ErrorHandling.cpp
   FileUtilities.cpp
   FoldingSet.cpp
+  FormattedStream.cpp
   GraphWriter.cpp
   IsInf.cpp
   IsNAN.cpp
