@@ -406,7 +406,7 @@ struct SelectClass_match {
 };
 
 template<typename Cond, typename LHS, typename RHS>
-inline SelectClass_match<Cond, RHS, LHS>
+inline SelectClass_match<Cond, LHS, RHS>
 m_Select(const Cond &C, const LHS &L, const RHS &R) {
   return SelectClass_match<Cond, LHS, RHS>(C, L, R);
 }
