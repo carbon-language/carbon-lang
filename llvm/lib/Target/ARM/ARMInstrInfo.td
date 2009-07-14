@@ -617,15 +617,13 @@ let isCall = 1, Itinerary = IIC_Br,
     let Inst{27-20} = 0b00010010;
   }
 
-  let Uses = [LR] in {
-    // ARMv4T
-    def BX : ABXIx2<(outs), (ins GPR:$func, variable_ops),
-                     "mov lr, pc\n\tbx $func",
-                    [(ARMcall_nolink GPR:$func)]>, Requires<[IsNotDarwin]> {
-      let Inst{7-4}   = 0b0001;
-      let Inst{19-8}  = 0b111111111111;
-      let Inst{27-20} = 0b00010010;
-    }
+  // ARMv4T
+  def BX : ABXIx2<(outs), (ins GPR:$func, variable_ops),
+                   "mov lr, pc\n\tbx $func",
+                  [(ARMcall_nolink GPR:$func)]>, Requires<[IsNotDarwin]> {
+    let Inst{7-4}   = 0b0001;
+    let Inst{19-8}  = 0b111111111111;
+    let Inst{27-20} = 0b00010010;
   }
 }
 
@@ -650,15 +648,13 @@ let isCall = 1, Itinerary = IIC_Br,
     let Inst{27-20} = 0b00010010;
   }
 
-  let Uses = [LR] in {
-    // ARMv4T
-    def BXr9 : ABXIx2<(outs), (ins GPR:$func, variable_ops),
-                     "mov lr, pc\n\tbx $func",
-                    [(ARMcall_nolink GPR:$func)]>, Requires<[IsDarwin]> {
-      let Inst{7-4}   = 0b0001;
-      let Inst{19-8}  = 0b111111111111;
-      let Inst{27-20} = 0b00010010;
-    }
+  // ARMv4T
+  def BXr9 : ABXIx2<(outs), (ins GPR:$func, variable_ops),
+                   "mov lr, pc\n\tbx $func",
+                  [(ARMcall_nolink GPR:$func)]>, Requires<[IsARM, IsDarwin]> {
+    let Inst{7-4}   = 0b0001;
+    let Inst{19-8}  = 0b111111111111;
+    let Inst{27-20} = 0b00010010;
   }
 }
 

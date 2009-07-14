@@ -180,7 +180,7 @@ let isCall = 1,
                   [(ARMtcall tGPR:$func)]>, Requires<[HasV5T]>;
   // ARMv4T
   def tBX : T1Ix2<(outs), (ins tGPR:$func, variable_ops),
-                  "cpy lr, pc\n\tbx $func",
+                  "mov lr, pc\n\tbx $func",
                   [(ARMcall_nolink tGPR:$func)]>;
 }
 
@@ -196,7 +196,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   def tBR_JTr : T1JTI<(outs),
                       (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
-                      "cpy pc, $target \n\t.align\t2\n$jt",
+                      "mov pc, $target \n\t.align\t2\n$jt",
                       [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>;
   }
 }
