@@ -340,6 +340,7 @@ void IVUsers::print(raw_ostream &OS, const Module *M) const {
         OS << " (post-inc)";
       OS << " in ";
       UI->getUser()->print(OS);
+      OS << '\n';
     }
   }
 }
