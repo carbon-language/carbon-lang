@@ -2402,6 +2402,10 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
         return SymbolicName;
       }
 
+  // It's tempting to recognize PHIs with a unique incoming value, however
+  // this leads passes like indvars to break LCSSA form. Fortunately, such
+  // PHIs are rare, as instcombine zaps them.
+
   // If it's not a loop phi, we can't handle it yet.
   return getUnknown(PN);
 }
