@@ -201,16 +201,16 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     // Intel ias rightly complains of an 'undefined symbol')
 
     if (F /*&& isBRCALLinsn*/ && F->isDeclaration())
-      ExternalFunctionNames.insert(Mang->getValueName(MO.getGlobal()));
+      ExternalFunctionNames.insert(Mang->getMangledName(MO.getGlobal()));
     else
       if (GV->isDeclaration()) // e.g. stuff like 'stdin'
-        ExternalObjectNames.insert(Mang->getValueName(MO.getGlobal()));
+        ExternalObjectNames.insert(Mang->getMangledName(MO.getGlobal()));
 
     if (!isBRCALLinsn)
       O << "@ltoff(";
     if (Needfptr)
       O << "@fptr(";
-    O << Mang->getValueName(MO.getGlobal());
+    O << Mang->getMangledName(MO.getGlobal());
 
     if (Needfptr && !isBRCALLinsn)
       O << "#))"; // close both fptr( and ltoff(
@@ -268,7 +268,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
 
   O << "\n\n";
-  std::string name = Mang->getValueName(GVar);
+  std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
   if (isa<MDNode>(C) || isa<MDString>(C))
     return;

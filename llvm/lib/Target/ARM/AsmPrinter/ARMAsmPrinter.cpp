@@ -155,9 +155,11 @@ namespace {
 
       ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
       GlobalValue *GV = ACPV->getGV();
-      std::string Name = GV ? Mang->getValueName(GV) : TAI->getGlobalPrefix();
-      if (!GV)
-        Name += ACPV->getSymbol();
+      std::string Name;
+      if (GV)
+        Name = Mang->getMangledName(GV);
+      else
+        Name = std::string(TAI->getGlobalPrefix()) + ACPV->getSymbol();
       if (ACPV->isNonLazyPointer()) {
         if (GV->hasHiddenVisibility())
           HiddenGVNonLazyPtrs.insert(Name);
@@ -324,7 +326,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getValueName(GV);
+    std::string Name = Mang->getMangledName(GV);
     bool isExt = (GV->isDeclaration() || GV->hasWeakLinkage() ||
                   GV->hasLinkOnceLinkage());
     if (isExt && isCallOp && Subtarget->isTargetDarwin() &&
@@ -1037,7 +1039,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
   }
 
-  std::string name = Mang->getValueName(GVar);
+  std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
   if (isa<MDNode>(C) || isa<MDString>(C))
     return;

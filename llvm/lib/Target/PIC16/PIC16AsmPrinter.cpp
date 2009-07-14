@@ -47,7 +47,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Get the mangled name.
   const Function *F = MF.getFunction();
-  CurrentFnName = Mang->getValueName(F);
+  CurrentFnName = Mang->getMangledName(F);
 
   // Emit the function frame (args and temps).
   EmitFunctionFrame(MF);
@@ -136,7 +136,7 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       return;
 
     case MachineOperand::MO_GlobalAddress: {
-      O << Mang->getValueName(MO.getGlobal());
+      O << Mang->getMangledName(MO.getGlobal());
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
@@ -222,7 +222,7 @@ void PIC16AsmPrinter::EmitFunctionDecls (Module &M) {
  // Emit declarations for external functions.
   O <<"\n"<<TAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
-    std::string Name = Mang->getValueName(I);
+    std::string Name = Mang->getMangledName(I);
     if (Name.compare("@abort") == 0)
       continue;
     
@@ -252,7 +252,7 @@ void PIC16AsmPrinter::EmitUndefinedVars (Module &M)
 
   O << "\n" << TAI->getCommentString() << "Imported Variables - BEGIN" << "\n";
   for (unsigned j = 0; j < Items.size(); j++) {
-    O << TAI->getExternDirective() << Mang->getValueName(Items[j]) << "\n";
+    O << TAI->getExternDirective() << Mang->getMangledName(Items[j]) << "\n";
   }
   O << TAI->getCommentString() << "Imported Variables - END" << "\n";
 }
@@ -265,7 +265,7 @@ void PIC16AsmPrinter::EmitDefinedVars (Module &M)
 
   O << "\n" <<  TAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
   for (unsigned j = 0; j < Items.size(); j++) {
-    O << TAI->getGlobalDirective() << Mang->getValueName(Items[j]) << "\n";
+    O << TAI->getGlobalDirective() << Mang->getMangledName(Items[j]) << "\n";
   }
   O <<  TAI->getCommentString() << "Exported Variables - END" << "\n";
 }
@@ -281,7 +281,7 @@ void PIC16AsmPrinter::EmitRomData (Module &M)
     O << "\n";
     SwitchToSection(PTAI->ROSections[i]->S_);
     for (unsigned j = 0; j < Items.size(); j++) {
-      O << Mang->getValueName(Items[j]);
+      O << Mang->getMangledName(Items[j]);
       Constant *C = Items[j]->getInitializer();
       int AddrSpace = Items[j]->getType()->getAddressSpace();
       EmitGlobalConstant(C, AddrSpace);
@@ -300,7 +300,7 @@ bool PIC16AsmPrinter::doFinalization(Module &M) {
 
 void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   const Function *F = MF.getFunction();
-  std::string FuncName = Mang->getValueName(F);
+  std::string FuncName = Mang->getMangledName(F);
   const TargetData *TD = TM.getTargetData();
   // Emit the data section name.
   O << "\n"; 
@@ -354,7 +354,7 @@ void PIC16AsmPrinter::EmitIData (Module &M) {
     SwitchToSection(IDATASections[i]->S_);
     std::vector<const GlobalVariable*> Items = IDATASections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
-      std::string Name = Mang->getValueName(Items[j]);
+      std::string Name = Mang->getMangledName(Items[j]);
       Constant *C = Items[j]->getInitializer();
       int AddrSpace = Items[j]->getType()->getAddressSpace();
       O << Name;
@@ -373,7 +373,7 @@ void PIC16AsmPrinter::EmitUData (Module &M) {
     SwitchToSection(BSSSections[i]->S_);
     std::vector<const GlobalVariable*> Items = BSSSections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
-      std::string Name = Mang->getValueName(Items[j]);
+      std::string Name = Mang->getMangledName(Items[j]);
       Constant *C = Items[j]->getInitializer();
       const Type *Ty = C->getType();
       unsigned Size = TD->getTypeAllocSize(Ty);
@@ -401,7 +401,7 @@ void PIC16AsmPrinter::EmitAutos (std::string FunctName)
       SwitchToSection(AutosSections[i]->S_);
       std::vector<const GlobalVariable*> Items = AutosSections[i]->Items;
       for (unsigned j = 0; j < Items.size(); j++) {
-        std::string VarName = Mang->getValueName(Items[j]);
+        std::string VarName = Mang->getMangledName(Items[j]);
         Constant *C = Items[j]->getInitializer();
         const Type *Ty = C->getType();
         unsigned Size = TD->getTypeAllocSize(Ty);
@@ -434,7 +434,7 @@ void PIC16AsmPrinter::EmitRemainingAutos()
     SwitchToSection(AutosSections[i]->S_);
     std::vector<const GlobalVariable*> Items = AutosSections[i]->Items;
     for (unsigned j = 0; j < Items.size(); j++) {
-      std::string VarName = Mang->getValueName(Items[j]);
+      std::string VarName = Mang->getMangledName(Items[j]);
       Constant *C = Items[j]->getInitializer();
       const Type *Ty = C->getType();
       unsigned Size = TD->getTypeAllocSize(Ty);
