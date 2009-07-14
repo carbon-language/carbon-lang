@@ -67,7 +67,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
     BD.EmitProgressBitcode("pass-error",  false);
     exit(BD.debugOptimizerCrash());
   }
-
+  
   // Check to see if the finished program matches the reference output...
   if (BD.diffProgram(BitcodeResult, "", true /*delete bitcode*/)) {
     std::cout << " nope.\n";
@@ -640,6 +640,8 @@ bool BugDriver::debugMiscompilation() {
 ///
 static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                                      Module *Safe) {
+  LLVMContext &Context = BD.getContext(); 
+  
   // Clean up the modules, removing extra cruft that we don't need anymore...
   Test = BD.performFinalCleanups(Test);
 
@@ -689,8 +691,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   // Prototype: void *getPointerToNamedFunction(const char* Name)
   Constant *resolverFunc =
     Safe->getOrInsertFunction("getPointerToNamedFunction",
-                              PointerType::getUnqual(Type::Int8Ty),
-                              PointerType::getUnqual(Type::Int8Ty), (Type *)0);
+                        Context.getPointerTypeUnqual(Type::Int8Ty),
+                        Context.getPointerTypeUnqual(Type::Int8Ty), (Type *)0);
 
   // Use the function we just added to get addresses of functions we need.
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
@@ -701,7 +703,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       // Don't forward functions which are external in the test module too.
       if (TestFn && !TestFn->isDeclaration()) {
         // 1. Add a string constant with its name to the global file
-        Constant *InitArray = ConstantArray::get(F->getName());
+        Constant *InitArray = Context.getConstantArray(F->getName());
         GlobalVariable *funcName =
           new GlobalVariable(*Safe, InitArray->getType(), true /*isConstant*/,
                              GlobalValue::InternalLinkage, InitArray,
@@ -711,9 +713,9 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // sbyte* so it matches the signature of the resolver function.
 
         // GetElementPtr *funcName, ulong 0, ulong 0
-        std::vector<Constant*> GEPargs(2,
-                                   BD.getContext().getNullValue(Type::Int32Ty));
-        Value *GEP = ConstantExpr::getGetElementPtr(funcName, &GEPargs[0], 2);
+        std::vector<Constant*> GEPargs(2, Context.getNullValue(Type::Int32Ty));
+        Value *GEP =
+                Context.getConstantExprGetElementPtr(funcName, &GEPargs[0], 2);
         std::vector<Value*> ResolverArgs;
         ResolverArgs.push_back(GEP);
 
@@ -721,7 +723,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // function that dynamically resolves the calls to F via our JIT API
         if (!F->use_empty()) {
           // Create a new global to hold the cached function pointer.
-          Constant *NullPtr = ConstantPointerNull::get(F->getType());
+          Constant *NullPtr = Context.getConstantPointerNull(F->getType());
           GlobalVariable *Cache =
             new GlobalVariable(*F->getParent(), F->getType(), 
                                false, GlobalValue::InternalLinkage,
@@ -753,7 +755,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
           // Cast the result from the resolver to correctly-typed function.
           CastInst *CastedResolver =
             new BitCastInst(Resolver,
-                            PointerType::getUnqual(F->getFunctionType()),
+                            Context.getPointerTypeUnqual(F->getFunctionType()),
                             "resolverCast", LookupBB);
 
           // Save the value in our cache.

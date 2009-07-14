@@ -27,6 +27,7 @@ class PHINode;
 class AllocaInst;
 class ConstantExpr;
 class TargetData;
+class LLVMContext;
 struct DbgInfoIntrinsic;
 
 template<typename T> class SmallVectorImpl;
@@ -107,13 +108,15 @@ bool FoldBranchToCommonDest(BranchInst *BI);
 /// invalidating the SSA information for the value.  It returns the pointer to
 /// the alloca inserted to create a stack slot for X.
 ///
-AllocaInst *DemoteRegToStack(Instruction &X, bool VolatileLoads = false,
+AllocaInst *DemoteRegToStack(LLVMContext &Context, Instruction &X,
+                             bool VolatileLoads = false,
                              Instruction *AllocaPoint = 0);
 
 /// DemotePHIToStack - This function takes a virtual register computed by a phi
 /// node and replaces it with a slot in the stack frame, allocated via alloca.
 /// The phi node is deleted and it returns the pointer to the alloca inserted. 
-AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = 0);
+AllocaInst *DemotePHIToStack(LLVMContext &Context, PHINode *P,
+                             Instruction *AllocaPoint = 0);
 
 /// OnlyUsedByDbgIntrinsics - Return true if the instruction I is only used
 /// by DbgIntrinsics. If DbgInUses is specified then the vector is filled 

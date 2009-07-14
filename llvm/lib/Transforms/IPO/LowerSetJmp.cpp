@@ -311,7 +311,7 @@ AllocaInst* LowerSetJmp::GetSetJmpMap(Function* Func)
 
   // Fill in the alloca and call to initialize the SJ map.
   const Type *SBPTy = Context->getPointerTypeUnqual(Type::Int8Ty);
-  AllocaInst* Map = new AllocaInst(SBPTy, 0, "SJMap", Inst);
+  AllocaInst* Map = new AllocaInst(*Context, SBPTy, 0, "SJMap", Inst);
   CallInst::Create(InitSJMap, Map, "", Inst);
   return SJMap[Func] = Map;
 }
@@ -408,7 +408,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
          UI != E; ++UI)
       if (cast<Instruction>(*UI)->getParent() != ABlock ||
           InstrsAfterCall.count(cast<Instruction>(*UI))) {
-        DemoteRegToStack(*II);
+        DemoteRegToStack(*Context, *II);
         break;
       }
   InstrsAfterCall.clear();

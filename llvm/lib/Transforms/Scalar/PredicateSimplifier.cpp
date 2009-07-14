@@ -1891,7 +1891,7 @@ namespace {
         assert(!Ty->isFPOrFPVector() && "Float in work queue!");
 
         Constant *Zero = Context->getNullValue(Ty);
-        Constant *One = ConstantInt::get(Ty, 1);
+        Constant *One = Context->getConstantInt(Ty, 1);
         ConstantInt *AllOnes = cast<ConstantInt>(Context->getAllOnesValue(Ty));
 
         switch (Opcode) {

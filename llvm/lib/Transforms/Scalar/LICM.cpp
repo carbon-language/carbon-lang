@@ -508,7 +508,7 @@ void LICM::sink(Instruction &I) {
     AllocaInst *AI = 0;
 
     if (I.getType() != Type::VoidTy) {
-      AI = new AllocaInst(I.getType(), 0, I.getName(),
+      AI = new AllocaInst(*Context, I.getType(), 0, I.getName(),
                           I.getParent()->getParent()->getEntryBlock().begin());
       CurAST->add(AI);
     }
@@ -853,7 +853,8 @@ void LICM::FindPromotableValuesInLoop(
       continue;
     
     const Type *Ty = cast<PointerType>(V->getType())->getElementType();
-    AllocaInst *AI = new AllocaInst(Ty, 0, V->getName()+".tmp", FnStart);
+    AllocaInst *AI = new AllocaInst(*Context, Ty, 0,
+                                    V->getName()+".tmp", FnStart);
     PromotedValues.push_back(std::make_pair(AI, V));
 
     // Update the AST and alias analysis.

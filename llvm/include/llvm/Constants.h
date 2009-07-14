@@ -102,38 +102,9 @@ public:
     return CreateTrueFalseVals(false);
   }
 
-  /// Return a ConstantInt with the specified integer value for the specified
-  /// type. If the type is wider than 64 bits, the value will be zero-extended
-  /// to fit the type, unless isSigned is true, in which case the value will
-  /// be interpreted as a 64-bit signed integer and sign-extended to fit
-  /// the type.
-  /// @brief Get a ConstantInt for a specific value.
-  static ConstantInt *get(const IntegerType *Ty,
-                          uint64_t V, bool isSigned = false);
-
-  /// If Ty is a vector type, return a Constant with a splat of the given
-  /// value. Otherwise return a ConstantInt for the given value.
-  static Constant *get(const Type *Ty, uint64_t V, bool isSigned = false);
-
-  /// Return a ConstantInt with the specified value for the specified type. The
-  /// value V will be canonicalized to a an unsigned APInt. Accessing it with
-  /// either getSExtValue() or getZExtValue() will yield a correctly sized and
-  /// signed value for the type Ty.
-  /// @brief Get a ConstantInt for a specific signed value.
-  static ConstantInt *getSigned(const IntegerType *Ty, int64_t V) {
-    return get(Ty, V, true);
-  }
-  static Constant *getSigned(const Type *Ty, int64_t V) {
-    return get(Ty, V, true);
-  }
-
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
   static ConstantInt *get(const APInt &V);
-
-  /// If Ty is a vector type, return a Constant with a splat of the given
-  /// value. Otherwise return a ConstantInt for the given value.
-  static Constant *get(const Type *Ty, const APInt &V);
 
   /// getType - Specialize the getType() method to always return an IntegerType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -347,14 +318,6 @@ public:
     // FIXME: make this the primary ctor method.
     return get(T, std::vector<Constant*>(Vals, Vals+NumVals));
   }
-
-  /// This method constructs a ConstantArray and initializes it with a text
-  /// string. The default behavior (AddNull==true) causes a null terminator to
-  /// be placed at the end of the array. This effectively increases the length
-  /// of the array by one (you've been warned).  However, in some situations 
-  /// this is not desired so if AddNull==false then the string is copied without
-  /// null termination. 
-  static Constant *get(const std::string &Initializer, bool AddNull = true);
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

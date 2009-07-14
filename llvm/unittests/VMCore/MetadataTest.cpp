@@ -23,9 +23,9 @@ namespace {
 // MDString objects, even with the same string pointer and nulls in the string.
 TEST(MDStringTest, CreateDifferent) {
   char x[3] = { 'f', 0, 'A' };
-  MDString *s1 = MDString::get(&x[0], &x[3]);
+  MDString *s1 = getGlobalContext().getMDString(&x[0], &x[3]);
   x[2] = 'B';
-  MDString *s2 = MDString::get(&x[0], &x[3]);
+  MDString *s2 = getGlobalContext().getMDString(&x[0], &x[3]);
   EXPECT_NE(s1, s2);
 }
 
@@ -35,8 +35,8 @@ TEST(MDStringTest, CreateSame) {
   char x[4] = { 'a', 'b', 'c', 'X' };
   char y[4] = { 'a', 'b', 'c', 'Y' };
 
-  MDString *s1 = MDString::get(&x[0], &x[3]);
-  MDString *s2 = MDString::get(&y[0], &y[3]);
+  MDString *s1 = getGlobalContext().getMDString(&x[0], &x[3]);
+  MDString *s2 = getGlobalContext().getMDString(&y[0], &y[3]);
   EXPECT_EQ(s1, s2);
 }
 
@@ -44,7 +44,7 @@ TEST(MDStringTest, CreateSame) {
 TEST(MDStringTest, PrintingSimple) {
   char *str = new char[13];
   strncpy(str, "testing 1 2 3", 13);
-  MDString *s = MDString::get(str, str+13);
+  MDString *s = getGlobalContext().getMDString(str, str+13);
   strncpy(str, "aaaaaaaaaaaaa", 13);
   delete[] str;
 
@@ -56,7 +56,7 @@ TEST(MDStringTest, PrintingSimple) {
 // Test printing of MDString with non-printable characters.
 TEST(MDStringTest, PrintingComplex) {
   char str[5] = {0, '\n', '"', '\\', -1};
-  MDString *s = MDString::get(str+0, str+5);
+  MDString *s = getGlobalContext().getMDString(str+0, str+5);
   std::ostringstream oss;
   s->print(oss);
   EXPECT_STREQ("metadata !\"\\00\\0A\\22\\5C\\FF\"", oss.str().c_str());
@@ -67,19 +67,19 @@ TEST(MDNodeTest, Simple) {
   char x[3] = { 'a', 'b', 'c' };
   char y[3] = { '1', '2', '3' };
 
-  MDString *s1 = MDString::get(&x[0], &x[3]);
-  MDString *s2 = MDString::get(&y[0], &y[3]);
-  ConstantInt *CI = ConstantInt::get(APInt(8, 0));
+  MDString *s1 = getGlobalContext().getMDString(&x[0], &x[3]);
+  MDString *s2 = getGlobalContext().getMDString(&y[0], &y[3]);
+  ConstantInt *CI = getGlobalContext().getConstantInt(APInt(8, 0));
 
   std::vector<Value *> V;
   V.push_back(s1);
   V.push_back(CI);
   V.push_back(s2);
 
-  MDNode *n1 = MDNode::get(&V[0], 3);
+  MDNode *n1 = getGlobalContext().getMDNode(&V[0], 3);
   Value *const c1 = n1;
-  MDNode *n2 = MDNode::get(&c1, 1);
-  MDNode *n3 = MDNode::get(&V[0], 3);
+  MDNode *n2 = getGlobalContext().getMDNode(&c1, 1);
+  MDNode *n3 = getGlobalContext().getMDNode(&V[0], 3);
   EXPECT_NE(n1, n2);
   EXPECT_EQ(n1, n3);
 
@@ -102,15 +102,15 @@ TEST(MDNodeTest, Simple) {
 }
 
 TEST(MDNodeTest, RAUW) {
-  Constant *C = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *C = getGlobalContext().getConstantInt(Type::Int32Ty, 1);
   Instruction *I = new BitCastInst(C, Type::Int32Ty);
 
   Value *const V1 = I;
-  MDNode *n1 = MDNode::get(&V1, 1);
+  MDNode *n1 = getGlobalContext().getMDNode(&V1, 1);
   WeakVH wn1 = n1;
 
   Value *const V2 = C;
-  MDNode *n2 = MDNode::get(&V2, 1);
+  MDNode *n2 = getGlobalContext().getMDNode(&V2, 1);
   WeakVH wn2 = n2;
 
   EXPECT_NE(wn1, wn2);
@@ -121,11 +121,11 @@ TEST(MDNodeTest, RAUW) {
 }
 
 TEST(MDNodeTest, Delete) {
-  Constant *C = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *C = getGlobalContext().getConstantInt(Type::Int32Ty, 1);
   Instruction *I = new BitCastInst(C, Type::Int32Ty);
 
   Value *const V = I;
-  MDNode *n = MDNode::get(&V, 1);
+  MDNode *n = getGlobalContext().getMDNode(&V, 1);
   WeakVH wvh = n;
 
   EXPECT_EQ(n, wvh);

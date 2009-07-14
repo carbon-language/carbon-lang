@@ -21,6 +21,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -865,7 +866,8 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                !ARM_AM::isSOImmTwoPartVal(Val));     // two instrs.
     if (UseCP) {
       SDValue CPIdx =
-        CurDAG->getTargetConstantPool(ConstantInt::get(Type::Int32Ty, Val),
+        CurDAG->getTargetConstantPool(
+                       CurDAG->getContext()->getConstantInt(Type::Int32Ty, Val),
                                       TLI.getPointerTy());
 
       SDNode *ResNode;

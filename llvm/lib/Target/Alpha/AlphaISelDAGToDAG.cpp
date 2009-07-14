@@ -26,6 +26,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -304,7 +305,7 @@ SDNode *AlphaDAGToDAGISel::Select(SDValue Op) {
       // val32 >= IMM_LOW  + IMM_LOW  * IMM_MULT) //always true
       break; //(zext (LDAH (LDA)))
     //Else use the constant pool
-    ConstantInt *C = ConstantInt::get(Type::Int64Ty, uval);
+    ConstantInt *C = CurDAG->getContext()->getConstantInt(Type::Int64Ty, uval);
     SDValue CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
     SDNode *Tmp = CurDAG->getTargetNode(Alpha::LDAHr, dl, MVT::i64, CPI,
                                         SDValue(getGlobalBaseReg(), 0));

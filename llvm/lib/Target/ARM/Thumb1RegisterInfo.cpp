@@ -20,6 +20,8 @@
 #include "Thumb1RegisterInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Function.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -65,7 +67,8 @@ void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
                                            unsigned PredReg) const {
   MachineFunction &MF = *MBB.getParent();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
-  Constant *C = ConstantInt::get(Type::Int32Ty, Val);
+  Constant *C =
+             MF.getFunction()->getContext()->getConstantInt(Type::Int32Ty, Val);
   unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
 
   BuildMI(MBB, MBBI, dl, TII.get(ARM::tLDRcp), DestReg)

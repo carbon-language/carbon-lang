@@ -30,6 +30,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -2035,7 +2036,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
   }
   if (TLI.isLittleEndian()) FF <<= 32;
-  Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
+  Constant *FudgeFactor = DAG.getContext()->getConstantInt(Type::Int64Ty, FF);
 
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();

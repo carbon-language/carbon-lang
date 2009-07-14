@@ -89,7 +89,7 @@ namespace {
         NumRegsDemoted += worklist.size();
         for (std::list<Instruction*>::iterator ilb = worklist.begin(), 
                ile = worklist.end(); ilb != ile; ++ilb)
-          DemoteRegToStack(**ilb, false, AllocaInsertionPoint);
+          DemoteRegToStack(*Context, **ilb, false, AllocaInsertionPoint);
 
         worklist.clear();
 
@@ -105,7 +105,7 @@ namespace {
         NumPhisDemoted += worklist.size();
         for (std::list<Instruction*>::iterator ilb = worklist.begin(), 
                ile = worklist.end(); ilb != ile; ++ilb)
-          DemotePHIToStack(cast<PHINode>(*ilb), AllocaInsertionPoint);
+          DemotePHIToStack(*Context, cast<PHINode>(*ilb), AllocaInsertionPoint);
 
         return true;
       }

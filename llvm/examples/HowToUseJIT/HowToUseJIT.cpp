@@ -69,7 +69,7 @@ int main() {
   BasicBlock *BB = BasicBlock::Create("EntryBlock", Add1F);
 
   // Get pointers to the constant `1'.
-  Value *One = ConstantInt::get(Type::Int32Ty, 1);
+  Value *One = Context.getConstantInt(Type::Int32Ty, 1);
 
   // Get pointers to the integer argument of the add1 function...
   assert(Add1F->arg_begin() != Add1F->arg_end()); // Make sure there's an arg
@@ -94,7 +94,7 @@ int main() {
   BB = BasicBlock::Create("EntryBlock", FooF);
 
   // Get pointers to the constant `10'.
-  Value *Ten = ConstantInt::get(Type::Int32Ty, 10);
+  Value *Ten = Context.getConstantInt(Type::Int32Ty, 10);
 
   // Pass Ten to the call call:
   CallInst *Add1CallRes = CallInst::Create(Add1F, Ten, "add1", BB);

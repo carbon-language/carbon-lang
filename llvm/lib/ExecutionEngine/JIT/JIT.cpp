@@ -351,6 +351,7 @@ void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
 GenericValue JIT::runFunction(Function *F,
                               const std::vector<GenericValue> &ArgValues) {
   assert(F && "Function *F was null at entry to run()");
+  LLVMContext *Context = F->getContext();
 
   void *FPtr = getPointerToFunction(F);
   assert(FPtr && "Pointer to fn's code was null after getPointerToFunction");
@@ -452,7 +453,7 @@ GenericValue JIT::runFunction(Function *F,
   // arguments.  Make this function and return.
 
   // First, create the function.
-  FunctionType *STy=FunctionType::get(RetTy, false);
+  FunctionType *STy=Context->getFunctionType(RetTy, false);
   Function *Stub = Function::Create(STy, Function::InternalLinkage, "",
                                     F->getParent());
 
@@ -469,26 +470,27 @@ GenericValue JIT::runFunction(Function *F,
     switch (ArgTy->getTypeID()) {
     default: llvm_unreachable("Unknown argument type for function call!");
     case Type::IntegerTyID:
-        C = ConstantInt::get(AV.IntVal);
+        C = Context->getConstantInt(AV.IntVal);
         break;
     case Type::FloatTyID:
-        C = ConstantFP::get(APFloat(AV.FloatVal));
+        C = Context->getConstantFP(APFloat(AV.FloatVal));
         break;
     case Type::DoubleTyID:
-        C = ConstantFP::get(APFloat(AV.DoubleVal));
+        C = Context->getConstantFP(APFloat(AV.DoubleVal));
         break;
     case Type::PPC_FP128TyID:
     case Type::X86_FP80TyID:
     case Type::FP128TyID:
-        C = ConstantFP::get(APFloat(AV.IntVal));
+        C = Context->getConstantFP(APFloat(AV.IntVal));
         break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
       if (sizeof(void*) == 4)
-        C = ConstantInt::get(Type::Int32Ty, (int)(intptr_t)ArgPtr);
+        C = Context->getConstantInt(Type::Int32Ty, (int)(intptr_t)ArgPtr);
       else
-        C = ConstantInt::get(Type::Int64Ty, (intptr_t)ArgPtr);
-      C = ConstantExpr::getIntToPtr(C, ArgTy);  // Cast the integer to pointer
+        C = Context->getConstantInt(Type::Int64Ty, (intptr_t)ArgPtr);
+      // Cast the integer to pointer
+      C = Context->getConstantExprIntToPtr(C, ArgTy);
       break;
     }
     Args.push_back(C);

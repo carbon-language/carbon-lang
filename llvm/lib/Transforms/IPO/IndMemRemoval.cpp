@@ -1,4 +1,4 @@
-//===-- IndMemRemoval.cpp - Remove indirect allocations and frees ----------===//
+//===-- IndMemRemoval.cpp - Remove indirect allocations and frees ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,8 +10,8 @@
 // This pass finds places where memory allocation functions may escape into
 // indirect land.  Some transforms are much easier (aka possible) only if free 
 // or malloc are not called indirectly.
-// Thus find places where the address of memory functions are taken and construct
-// bounce functions with direct calls of those functions.
+// Thus find places where the address of memory functions are taken and 
+// construct bounce functions with direct calls of those functions.
 //
 //===----------------------------------------------------------------------===//
 
@@ -73,7 +73,7 @@ bool IndMemRemPass::runOnModule(Module &M) {
       BasicBlock* bb = BasicBlock::Create("entry",FN);
       Instruction* c = CastInst::CreateIntegerCast(
           FN->arg_begin(), Type::Int32Ty, false, "c", bb);
-      Instruction* a = new MallocInst(Type::Int8Ty, c, "m", bb);
+      Instruction* a = new MallocInst(*Context, Type::Int8Ty, c, "m", bb);
       ReturnInst::Create(a, bb);
       ++NumBounce;
       NumBounceSites += F->getNumUses();

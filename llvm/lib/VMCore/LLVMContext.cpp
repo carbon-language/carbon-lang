@@ -90,18 +90,30 @@ ConstantInt* LLVMContext::getConstantIntFalse() {
 
 Constant* LLVMContext::getConstantInt(const Type* Ty, uint64_t V,
                                          bool isSigned) {
-  return ConstantInt::get(Ty, V, isSigned);
+  Constant *C = getConstantInt(cast<IntegerType>(Ty->getScalarType()),
+                               V, isSigned);
+
+  // For vectors, broadcast the value.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return
+      getConstantVector(std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C;
 }
 
 
 ConstantInt* LLVMContext::getConstantInt(const IntegerType* Ty, uint64_t V,
                                          bool isSigned) {
-  return ConstantInt::get(Ty, V, isSigned);
+  return getConstantInt(APInt(Ty->getBitWidth(), V, isSigned));
 }
 
 ConstantInt* LLVMContext::getConstantIntSigned(const IntegerType* Ty,
                                                int64_t V) {
-  return ConstantInt::getSigned(Ty, V);
+  return getConstantInt(Ty, V, true);
+}
+
+Constant *LLVMContext::getConstantIntSigned(const Type *Ty, int64_t V) {
+  return getConstantInt(Ty, V, true);
 }
 
 ConstantInt* LLVMContext::getConstantInt(const APInt& V) {
@@ -109,7 +121,16 @@ ConstantInt* LLVMContext::getConstantInt(const APInt& V) {
 }
 
 Constant* LLVMContext::getConstantInt(const Type* Ty, const APInt& V) {
-  return ConstantInt::get(Ty, V);
+  ConstantInt *C = getConstantInt(V);
+  assert(C->getType() == Ty->getScalarType() &&
+         "ConstantInt type doesn't match the type implied by its value!");
+
+  // For vectors, broadcast the value.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return
+      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C;
 }
 
 // ConstantPointerNull accessors.
@@ -153,9 +174,25 @@ Constant* LLVMContext::getConstantArray(const ArrayType* T,
   return ConstantArray::get(T, Vals, NumVals);
 }
 
-Constant* LLVMContext::getConstantArray(const std::string& Initializer,
+/// ConstantArray::get(const string&) - Return an array that is initialized to
+/// contain the specified string.  If length is zero then a null terminator is 
+/// added to the specified string so that it may be used in a natural way. 
+/// Otherwise, the length parameter specifies how much of the string to use 
+/// and it won't be null terminated.
+///
+Constant* LLVMContext::getConstantArray(const std::string& Str,
                                         bool AddNull) {
-  return ConstantArray::get(Initializer, AddNull);
+  std::vector<Constant*> ElementVals;
+  for (unsigned i = 0; i < Str.length(); ++i)
+    ElementVals.push_back(getConstantInt(Type::Int8Ty, Str[i]));
+
+  // Add a null terminator to the string...
+  if (AddNull) {
+    ElementVals.push_back(getConstantInt(Type::Int8Ty, 0));
+  }
+
+  ArrayType *ATy = getArrayType(Type::Int8Ty, ElementVals.size());
+  return getConstantArray(ATy, ElementVals);
 }
 
 

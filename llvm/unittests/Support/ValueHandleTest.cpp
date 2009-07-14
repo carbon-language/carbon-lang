@@ -25,8 +25,9 @@ protected:
   Constant *ConstantV;
   std::auto_ptr<BitCastInst> BitcastV;
 
-  ValueHandle() : ConstantV(ConstantInt::get(Type::Int32Ty, 0)),
-                  BitcastV(new BitCastInst(ConstantV, Type::Int32Ty)) {
+  ValueHandle() :
+    ConstantV(getGlobalContext().getConstantInt(Type::Int32Ty, 0)),
+    BitcastV(new BitCastInst(ConstantV, Type::Int32Ty)) {
   }
 };
 

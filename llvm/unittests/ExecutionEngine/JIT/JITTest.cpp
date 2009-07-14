@@ -30,14 +30,16 @@ namespace {
 
 Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
   std::vector<const Type*> params;
-  const FunctionType *FTy = FunctionType::get(G->getType()->getElementType(),
+  const FunctionType *FTy =
+    getGlobalContext().getFunctionType(G->getType()->getElementType(),
                                               params, false);
   Function *F = Function::Create(FTy, GlobalValue::ExternalLinkage, Name, M);
   BasicBlock *Entry = BasicBlock::Create("entry", F);
   IRBuilder<> builder(Entry);
   Value *Load = builder.CreateLoad(G);
   const Type *GTy = G->getType()->getElementType();
-  Value *Add = builder.CreateAdd(Load, ConstantInt::get(GTy, 1LL));
+  Value *Add = builder.CreateAdd(Load,
+    getGlobalContext().getConstantInt(GTy, 1LL));
   builder.CreateStore(Add, G);
   builder.CreateRet(Add);
   return F;

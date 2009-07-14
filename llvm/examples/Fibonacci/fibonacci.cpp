@@ -36,7 +36,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-static Function *CreateFibFunction(Module *M) {
+static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
   Function *FibF =
@@ -47,8 +47,8 @@ static Function *CreateFibFunction(Module *M) {
   BasicBlock *BB = BasicBlock::Create("EntryBlock", FibF);
 
   // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::Int32Ty, 1);
-  Value *Two = ConstantInt::get(Type::Int32Ty, 2);
+  Value *One = Context.getConstantInt(Type::Int32Ty, 1);
+  Value *Two = Context.getConstantInt(Type::Int32Ty, 2);
 
   // Get pointer to the integer argument of the add1 function...
   Argument *ArgX = FibF->arg_begin();   // Get the arg.
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
   Module *M = new Module("test", Context);
 
   // We are about to create the "fib" function:
-  Function *FibF = CreateFibFunction(M);
+  Function *FibF = CreateFibFunction(M, Context);
 
   // Now we going to create JIT
   ExistingModuleProvider *MP = new ExistingModuleProvider(M);

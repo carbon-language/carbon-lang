@@ -169,7 +169,8 @@ bool RaiseAllocations::runOnModule(Module &M) {
               CastInst::CreateIntegerCast(Source, Type::Int32Ty, false/*ZExt*/,
                                           "MallocAmtCast", I);
 
-          MallocInst *MI = new MallocInst(Type::Int8Ty, Source, "", I);
+          MallocInst *MI = new MallocInst(*Context, Type::Int8Ty,
+                                          Source, "", I);
           MI->takeName(I);
           I->replaceAllUsesWith(MI);
 

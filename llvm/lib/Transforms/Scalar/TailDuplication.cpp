@@ -285,7 +285,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
     if (I->isUsedOutsideOfBlock(DestBlock)) {
       // We found a use outside of the tail.  Create a new stack slot to
       // break this inter-block usage pattern.
-      DemoteRegToStack(*I);
+      DemoteRegToStack(*Context, *I);
     }
 
   // We are going to have to map operands from the original block B to the new

@@ -29,6 +29,7 @@ namespace llvm {
 class ConstantInt;
 class ConstantRange;
 class APInt;
+class LLVMContext;
 
 //===----------------------------------------------------------------------===//
 //                             AllocationInst Class
@@ -39,10 +40,14 @@ class APInt;
 ///
 class AllocationInst : public UnaryInstruction {
 protected:
-  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, unsigned Align,
-                 const std::string &Name = "", Instruction *InsertBefore = 0);
-  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, unsigned Align,
-                 const std::string &Name, BasicBlock *InsertAtEnd);
+  LLVMContext &Context;
+
+  AllocationInst(LLVMContext &Context, const Type *Ty, Value *ArraySize, 
+                 unsigned iTy, unsigned Align, const std::string &Name = "", 
+                 Instruction *InsertBefore = 0);
+  AllocationInst(LLVMContext &Context, const Type *Ty, Value *ArraySize,
+                 unsigned iTy, unsigned Align, const std::string &Name,
+                 BasicBlock *InsertAtEnd);
 public:
   // Out of line virtual method, so the vtable, etc. has a home.
   virtual ~AllocationInst();
@@ -98,28 +103,33 @@ public:
 class MallocInst : public AllocationInst {
   MallocInst(const MallocInst &MI);
 public:
-  explicit MallocInst(const Type *Ty, Value *ArraySize = 0,
+  explicit MallocInst(LLVMContext &Context, 
+                      const Type *Ty, Value *ArraySize = 0,
                       const std::string &NameStr = "",
                       Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Malloc, 0, NameStr, InsertBefore) {}
-  MallocInst(const Type *Ty, Value *ArraySize, const std::string &NameStr,
-             BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Malloc, 0, NameStr, InsertAtEnd) {}
-
-  MallocInst(const Type *Ty, const std::string &NameStr,
-             Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, 0, Malloc, 0, NameStr, InsertBefore) {}
-  MallocInst(const Type *Ty, const std::string &NameStr,
-             BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, 0, Malloc, 0, NameStr, InsertAtEnd) {}
-
-  MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
+    : AllocationInst(Context, Ty, ArraySize, Malloc,
+                     0, NameStr, InsertBefore) {}
+  MallocInst(LLVMContext &Context, const Type *Ty, Value *ArraySize,
              const std::string &NameStr, BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Malloc, Align, NameStr, InsertAtEnd) {}
-  MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
-                      const std::string &NameStr = "",
-                      Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Malloc, Align, NameStr, InsertBefore) {}
+    : AllocationInst(Context, Ty, ArraySize, Malloc, 0, NameStr, InsertAtEnd) {}
+
+  MallocInst(LLVMContext &Context, const Type *Ty, const std::string &NameStr,
+             Instruction *InsertBefore = 0)
+    : AllocationInst(Context, Ty, 0, Malloc, 0, NameStr, InsertBefore) {}
+  MallocInst(LLVMContext &Context, const Type *Ty, const std::string &NameStr,
+             BasicBlock *InsertAtEnd)
+    : AllocationInst(Context, Ty, 0, Malloc, 0, NameStr, InsertAtEnd) {}
+
+  MallocInst(LLVMContext &Context, const Type *Ty, Value *ArraySize,
+             unsigned Align, const std::string &NameStr,
+             BasicBlock *InsertAtEnd)
+    : AllocationInst(Context, Ty, ArraySize, Malloc,
+                     Align, NameStr, InsertAtEnd) {}
+  MallocInst(LLVMContext &Context, const Type *Ty, Value *ArraySize,
+             unsigned Align, const std::string &NameStr = "", 
+             Instruction *InsertBefore = 0)
+    : AllocationInst(Context, Ty, ArraySize,
+                     Malloc, Align, NameStr, InsertBefore) {}
 
   virtual MallocInst *clone(LLVMContext &Context) const;
 
@@ -143,27 +153,34 @@ public:
 class AllocaInst : public AllocationInst {
   AllocaInst(const AllocaInst &);
 public:
-  explicit AllocaInst(const Type *Ty, Value *ArraySize = 0,
+  explicit AllocaInst(LLVMContext &Context, const Type *Ty,
+                      Value *ArraySize = 0,
                       const std::string &NameStr = "",
                       Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Alloca, 0, NameStr, InsertBefore) {}
-  AllocaInst(const Type *Ty, Value *ArraySize, const std::string &NameStr,
+    : AllocationInst(Context, Ty, ArraySize, Alloca,
+                     0, NameStr, InsertBefore) {}
+  AllocaInst(LLVMContext &Context, const Type *Ty,
+             Value *ArraySize, const std::string &NameStr,
              BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Alloca, 0, NameStr, InsertAtEnd) {}
+    : AllocationInst(Context, Ty, ArraySize, Alloca, 0, NameStr, InsertAtEnd) {}
 
-  AllocaInst(const Type *Ty, const std::string &NameStr,
+  AllocaInst(LLVMContext &Context, const Type *Ty, const std::string &NameStr,
              Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, 0, Alloca, 0, NameStr, InsertBefore) {}
-  AllocaInst(const Type *Ty, const std::string &NameStr,
+    : AllocationInst(Context, Ty, 0, Alloca, 0, NameStr, InsertBefore) {}
+  AllocaInst(LLVMContext &Context, const Type *Ty, const std::string &NameStr,
              BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, 0, Alloca, 0, NameStr, InsertAtEnd) {}
+    : AllocationInst(Context, Ty, 0, Alloca, 0, NameStr, InsertAtEnd) {}
 
-  AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
-             const std::string &NameStr = "", Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Alloca, Align, NameStr, InsertBefore) {}
-  AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
-             const std::string &NameStr, BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Alloca, Align, NameStr, InsertAtEnd) {}
+  AllocaInst(LLVMContext &Context, const Type *Ty, Value *ArraySize,
+             unsigned Align, const std::string &NameStr = "",
+             Instruction *InsertBefore = 0)
+    : AllocationInst(Context, Ty, ArraySize, Alloca,
+                     Align, NameStr, InsertBefore) {}
+  AllocaInst(LLVMContext &Context, const Type *Ty, Value *ArraySize,
+             unsigned Align, const std::string &NameStr,
+             BasicBlock *InsertAtEnd)
+    : AllocationInst(Context, Ty, ArraySize, Alloca,
+                     Align, NameStr, InsertAtEnd) {}
 
   virtual AllocaInst *clone(LLVMContext &Context) const;
 
@@ -1266,11 +1283,7 @@ public:
   }
   ExtractElementInst(Value *Vec, Value *Idx, const std::string &NameStr = "",
                      Instruction *InsertBefore = 0);
-  ExtractElementInst(Value *Vec, unsigned Idx, const std::string &NameStr = "",
-                     Instruction *InsertBefore = 0);
   ExtractElementInst(Value *Vec, Value *Idx, const std::string &NameStr,
-                     BasicBlock *InsertAtEnd);
-  ExtractElementInst(Value *Vec, unsigned Idx, const std::string &NameStr,
                      BasicBlock *InsertAtEnd);
 
   /// isValidOperands - Return true if an extractelement instruction can be
@@ -1310,12 +1323,7 @@ class InsertElementInst : public Instruction {
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const std::string &NameStr = "",
                     Instruction *InsertBefore = 0);
-  InsertElementInst(Value *Vec, Value *NewElt, unsigned Idx,
-                    const std::string &NameStr = "",
-                    Instruction *InsertBefore = 0);
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
-                    const std::string &NameStr, BasicBlock *InsertAtEnd);
-  InsertElementInst(Value *Vec, Value *NewElt, unsigned Idx,
                     const std::string &NameStr, BasicBlock *InsertAtEnd);
 public:
   static InsertElementInst *Create(const InsertElementInst &IE) {
@@ -1326,17 +1334,7 @@ public:
                                    Instruction *InsertBefore = 0) {
     return new(3) InsertElementInst(Vec, NewElt, Idx, NameStr, InsertBefore);
   }
-  static InsertElementInst *Create(Value *Vec, Value *NewElt, unsigned Idx,
-                                   const std::string &NameStr = "",
-                                   Instruction *InsertBefore = 0) {
-    return new(3) InsertElementInst(Vec, NewElt, Idx, NameStr, InsertBefore);
-  }
   static InsertElementInst *Create(Value *Vec, Value *NewElt, Value *Idx,
-                                   const std::string &NameStr,
-                                   BasicBlock *InsertAtEnd) {
-    return new(3) InsertElementInst(Vec, NewElt, Idx, NameStr, InsertAtEnd);
-  }
-  static InsertElementInst *Create(Value *Vec, Value *NewElt, unsigned Idx,
                                    const std::string &NameStr,
                                    BasicBlock *InsertAtEnd) {
     return new(3) InsertElementInst(Vec, NewElt, Idx, NameStr, InsertAtEnd);

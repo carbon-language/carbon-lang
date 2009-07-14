@@ -700,9 +700,9 @@ void BranchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 //                        AllocationInst Implementation
 //===----------------------------------------------------------------------===//
 
-static Value *getAISize(Value *Amt) {
+static Value *getAISize(LLVMContext &Context, Value *Amt) {
   if (!Amt)
-    Amt = ConstantInt::get(Type::Int32Ty, 1);
+    Amt = Context.getConstantInt(Type::Int32Ty, 1);
   else {
     assert(!isa<BasicBlock>(Amt) &&
            "Passed basic block into allocation size parameter! Use other ctor");
@@ -712,21 +712,25 @@ static Value *getAISize(Value *Amt) {
   return Amt;
 }
 
-AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
+AllocationInst::AllocationInst(LLVMContext &C, 
+                               const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                Instruction *InsertBefore)
-  : UnaryInstruction(PointerType::getUnqual(Ty), iTy, getAISize(ArraySize),
-                     InsertBefore) {
+  : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
+                     getAISize(Context, ArraySize), InsertBefore),
+    Context(C) {
   setAlignment(Align);
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
   setName(Name);
 }
 
-AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
+AllocationInst::AllocationInst(LLVMContext &C,
+                               const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                BasicBlock *InsertAtEnd)
-  : UnaryInstruction(PointerType::getUnqual(Ty), iTy, getAISize(ArraySize),
-                     InsertAtEnd) {
+  : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
+                     getAISize(Context, ArraySize), InsertAtEnd),
+    Context(C) {
   setAlignment(Align);
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
   setName(Name);
@@ -753,8 +757,9 @@ const Type *AllocationInst::getAllocatedType() const {
 }
 
 AllocaInst::AllocaInst(const AllocaInst &AI)
-  : AllocationInst(AI.getType()->getElementType(), (Value*)AI.getOperand(0),
-                   Instruction::Alloca, AI.getAlignment()) {
+  : AllocationInst(AI.Context, AI.getType()->getElementType(),    
+                   (Value*)AI.getOperand(0), Instruction::Alloca,
+                   AI.getAlignment()) {
 }
 
 /// isStaticAlloca - Return true if this alloca is in the entry block of the
@@ -770,8 +775,9 @@ bool AllocaInst::isStaticAlloca() const {
 }
 
 MallocInst::MallocInst(const MallocInst &MI)
-  : AllocationInst(MI.getType()->getElementType(), (Value*)MI.getOperand(0),
-                   Instruction::Malloc, MI.getAlignment()) {
+  : AllocationInst(MI.Context, MI.getType()->getElementType(), 
+                   (Value*)MI.getOperand(0), Instruction::Malloc,
+                   MI.getAlignment()) {
 }
 
 //===----------------------------------------------------------------------===//
@@ -1173,22 +1179,6 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
   setName(Name);
 }
 
-ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
-                                       const std::string &Name,
-                                       Instruction *InsertBef)
-  : Instruction(cast<VectorType>(Val->getType())->getElementType(),
-                ExtractElement,
-                OperandTraits<ExtractElementInst>::op_begin(this),
-                2, InsertBef) {
-  Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
-  assert(isValidOperands(Val, Index) &&
-         "Invalid extractelement instruction operands!");
-  Op<0>() = Val;
-  Op<1>() = Index;
-  setName(Name);
-}
-
-
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
                                        const std::string &Name,
                                        BasicBlock *InsertAE)
@@ -1199,22 +1189,6 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
   assert(isValidOperands(Val, Index) &&
          "Invalid extractelement instruction operands!");
 
-  Op<0>() = Val;
-  Op<1>() = Index;
-  setName(Name);
-}
-
-ExtractElementInst::ExtractElementInst(Value *Val, unsigned IndexV,
-                                       const std::string &Name,
-                                       BasicBlock *InsertAE)
-  : Instruction(cast<VectorType>(Val->getType())->getElementType(),
-                ExtractElement,
-                OperandTraits<ExtractElementInst>::op_begin(this),
-                2, InsertAE) {
-  Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
-  assert(isValidOperands(Val, Index) &&
-         "Invalid extractelement instruction operands!");
-  
   Op<0>() = Val;
   Op<1>() = Index;
   setName(Name);
@@ -1253,22 +1227,6 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
   setName(Name);
 }
 
-InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
-                                     const std::string &Name,
-                                     Instruction *InsertBef)
-  : Instruction(Vec->getType(), InsertElement,
-                OperandTraits<InsertElementInst>::op_begin(this),
-                3, InsertBef) {
-  Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
-  assert(isValidOperands(Vec, Elt, Index) &&
-         "Invalid insertelement instruction operands!");
-  Op<0>() = Vec;
-  Op<1>() = Elt;
-  Op<2>() = Index;
-  setName(Name);
-}
-
-
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
                                      const std::string &Name,
                                      BasicBlock *InsertAE)
@@ -1278,22 +1236,6 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
   assert(isValidOperands(Vec, Elt, Index) &&
          "Invalid insertelement instruction operands!");
 
-  Op<0>() = Vec;
-  Op<1>() = Elt;
-  Op<2>() = Index;
-  setName(Name);
-}
-
-InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, unsigned IndexV,
-                                     const std::string &Name,
-                                     BasicBlock *InsertAE)
-: Instruction(Vec->getType(), InsertElement,
-              OperandTraits<InsertElementInst>::op_begin(this),
-              3, InsertAE) {
-  Constant *Index = ConstantInt::get(Type::Int32Ty, IndexV);
-  assert(isValidOperands(Vec, Elt, Index) &&
-         "Invalid insertelement instruction operands!");
-  
   Op<0>() = Vec;
   Op<1>() = Elt;
   Op<2>() = Index;

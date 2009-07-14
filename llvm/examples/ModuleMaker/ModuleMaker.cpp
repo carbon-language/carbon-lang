@@ -30,7 +30,8 @@ int main() {
   Module *M = new Module("test", Context);
 
   // Create the main function: first create the type 'int ()'
-  FunctionType *FT = FunctionType::get(Type::Int32Ty, /*not vararg*/false);
+  FunctionType *FT =
+    Context.getFunctionType(Type::Int32Ty, /*not vararg*/false);
 
   // By passing a module as the last parameter to the Function constructor,
   // it automatically gets appended to the Module.
@@ -41,8 +42,8 @@ int main() {
   BasicBlock *BB = BasicBlock::Create("EntryBlock", F);
 
   // Get pointers to the constant integers...
-  Value *Two = ConstantInt::get(Type::Int32Ty, 2);
-  Value *Three = ConstantInt::get(Type::Int32Ty, 3);
+  Value *Two = Context.getConstantInt(Type::Int32Ty, 2);
+  Value *Three = Context.getConstantInt(Type::Int32Ty, 3);
 
   // Create the add instruction... does not insert...
   Instruction *Add = BinaryOperator::Create(Instruction::Add, Two, Three,

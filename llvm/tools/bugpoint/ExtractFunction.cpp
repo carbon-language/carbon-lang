@@ -74,7 +74,7 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
 
   // If this instruction produces a value, replace any users with null values
   if (isa<StructType>(TheInst->getType()))
-    TheInst->replaceAllUsesWith(UndefValue::get(TheInst->getType()));
+    TheInst->replaceAllUsesWith(Context.getUndef(TheInst->getType()));
   else if (TheInst->getType() != Type::VoidTy)
     TheInst->replaceAllUsesWith(Context.getNullValue(TheInst->getType()));
 
@@ -183,14 +183,15 @@ void llvm::DeleteFunctionBody(Function *F) {
 /// as a constant array.
 static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
   assert(!TorList.empty() && "Don't create empty tor list!");
+  LLVMContext &Context = *TorList[0].first->getContext();
   std::vector<Constant*> ArrayElts;
   for (unsigned i = 0, e = TorList.size(); i != e; ++i) {
     std::vector<Constant*> Elts;
-    Elts.push_back(ConstantInt::get(Type::Int32Ty, TorList[i].second));
+    Elts.push_back(Context.getConstantInt(Type::Int32Ty, TorList[i].second));
     Elts.push_back(TorList[i].first);
-    ArrayElts.push_back(ConstantStruct::get(Elts));
+    ArrayElts.push_back(Context.getConstantStruct(Elts));
   }
-  return ConstantArray::get(ArrayType::get(ArrayElts[0]->getType(), 
+  return Context.getConstantArray(Context.getArrayType(ArrayElts[0]->getType(), 
                                            ArrayElts.size()),
                             ArrayElts);
 }

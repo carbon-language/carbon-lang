@@ -44,7 +44,7 @@ static Function* createAdd1(Module *M) {
   BasicBlock *BB = BasicBlock::Create("EntryBlock", Add1F);
 
   // Get pointers to the constant `1'.
-  Value *One = ConstantInt::get(Type::Int32Ty, 1);
+  Value *One = M->getContext().getConstantInt(Type::Int32Ty, 1);
 
   // Get pointers to the integer argument of the add1 function...
   assert(Add1F->arg_begin() != Add1F->arg_end()); // Make sure there's an arg
@@ -72,8 +72,8 @@ static Function *CreateFibFunction(Module *M) {
   BasicBlock *BB = BasicBlock::Create("EntryBlock", FibF);
 
   // Get pointers to the constants.
-  Value *One = ConstantInt::get(Type::Int32Ty, 1);
-  Value *Two = ConstantInt::get(Type::Int32Ty, 2);
+  Value *One = M->getContext().getConstantInt(Type::Int32Ty, 1);
+  Value *Two = M->getContext().getConstantInt(Type::Int32Ty, 2);
 
   // Get pointer to the integer argument of the add1 function...
   Argument *ArgX = FibF->arg_begin();   // Get the arg.

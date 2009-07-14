@@ -70,7 +70,8 @@ class BrainF {
 
     /// The main loop for parsing.  It calls itself recursively
     /// to handle the depth of nesting of "[]".
-    void readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb);
+    void readloop(PHINode *phi, BasicBlock *oldbb,
+                  BasicBlock *testbb, LLVMContext &Context);
 
     /// Constants during parsing
     int memtotal;

@@ -196,7 +196,8 @@ const SCEV *ScalarEvolution::getConstant(const APInt& Val) {
 
 const SCEV *
 ScalarEvolution::getConstant(const Type *Ty, uint64_t V, bool isSigned) {
-  return getConstant(ConstantInt::get(cast<IntegerType>(Ty), V, isSigned));
+  return getConstant(
+    Context->getConstantInt(cast<IntegerType>(Ty), V, isSigned));
 }
 
 const Type *SCEVConstant::getType() const { return V->getType(); }
@@ -2115,7 +2116,7 @@ const SCEV *ScalarEvolution::getSCEV(Value *V) {
 /// specified signed integer value and return a SCEV for the constant.
 const SCEV *ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
   const IntegerType *ITy = cast<IntegerType>(getEffectiveSCEVType(Ty));
-  return getConstant(ConstantInt::get(ITy, Val));
+  return getConstant(Context->getConstantInt(ITy, Val));
 }
 
 /// getNegativeSCEV - Return a SCEV corresponding to -V = -1*V
@@ -3537,8 +3538,8 @@ ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
 
   unsigned MaxSteps = MaxBruteForceIterations;
   for (unsigned IterationNum = 0; IterationNum != MaxSteps; ++IterationNum) {
-    ConstantInt *ItCst =
-      ConstantInt::get(cast<IntegerType>(IdxExpr->getType()), IterationNum);
+    ConstantInt *ItCst = Context->getConstantInt(
+                           cast<IntegerType>(IdxExpr->getType()), IterationNum);
     ConstantInt *Val = EvaluateConstantChrecAtConstant(IdxExpr, ItCst, *this);
 
     // Form the GEP offset.

@@ -309,8 +309,9 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
         // Create the alloca.  If we have TargetData, use nice alignment.
         unsigned Align = 1;
         if (TD) Align = TD->getPrefTypeAlignment(AggTy);
-        Value *NewAlloca = new AllocaInst(AggTy, 0, Align, I->getName(),
-                                          Caller->begin()->begin());
+        Value *NewAlloca = new AllocaInst(*Context, AggTy, 0, Align, 
+                                          I->getName(), 
+                                          &*Caller->begin()->begin());
         // Emit a memcpy.
         const Type *Tys[] = { Type::Int64Ty };
         Function *MemCpyFn = Intrinsic::getDeclaration(Caller->getParent(),

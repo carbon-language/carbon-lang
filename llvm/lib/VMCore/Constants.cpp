@@ -181,8 +181,8 @@ static ManagedCleanup<llvm::CleanupTrueFalse> TrueFalseCleanup;
 
 ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
   assert(TheTrueVal == 0 && TheFalseVal == 0);
-  TheTrueVal  = get(Type::Int1Ty, 1);
-  TheFalseVal = get(Type::Int1Ty, 0);
+  TheTrueVal  = getGlobalContext().getConstantInt(Type::Int1Ty, 1);
+  TheFalseVal = getGlobalContext().getConstantInt(Type::Int1Ty, 0);
   
   // Ensure that llvm_shutdown nulls out TheTrueVal/TheFalseVal.
   TrueFalseCleanup.Register();
@@ -223,22 +223,6 @@ typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*,
                  DenseMapAPIntKeyInfo> IntMapTy;
 static ManagedStatic<IntMapTy> IntConstants;
 
-ConstantInt *ConstantInt::get(const IntegerType *Ty,
-                              uint64_t V, bool isSigned) {
-  return get(APInt(Ty->getBitWidth(), V, isSigned));
-}
-
-Constant *ConstantInt::get(const Type *Ty, uint64_t V, bool isSigned) {
-  Constant *C = get(cast<IntegerType>(Ty->getScalarType()), V, isSigned);
-
-  // For vectors, broadcast the value.
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return
-      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
-
-  return C;
-}
-
 // Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
 // as the key, is a DenseMapAPIntKeyInfo::KeyTy which has provided the
 // operator== and operator!= to ensure that the DenseMap doesn't attempt to
@@ -265,19 +249,6 @@ ConstantInt *ConstantInt::get(const APInt& V) {
   } else {
     return Slot;
   }
-}
-
-Constant *ConstantInt::get(const Type *Ty, const APInt &V) {
-  ConstantInt *C = ConstantInt::get(V);
-  assert(C->getType() == Ty->getScalarType() &&
-         "ConstantInt type doesn't match the type implied by its value!");
-
-  // For vectors, broadcast the value.
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return
-      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
-
-  return C;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1305,26 +1276,6 @@ void ConstantArray::destroyConstant() {
   // Implicitly locked.
   ArrayConstants->remove(this);
   destroyConstantImpl();
-}
-
-/// ConstantArray::get(const string&) - Return an array that is initialized to
-/// contain the specified string.  If length is zero then a null terminator is 
-/// added to the specified string so that it may be used in a natural way. 
-/// Otherwise, the length parameter specifies how much of the string to use 
-/// and it won't be null terminated.
-///
-Constant *ConstantArray::get(const std::string &Str, bool AddNull) {
-  std::vector<Constant*> ElementVals;
-  for (unsigned i = 0; i < Str.length(); ++i)
-    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, Str[i]));
-
-  // Add a null terminator to the string...
-  if (AddNull) {
-    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, 0));
-  }
-
-  ArrayType *ATy = ArrayType::get(Type::Int8Ty, ElementVals.size());
-  return ConstantArray::get(ATy, ElementVals);
 }
 
 /// isString - This method returns true if the array is an array of i8, and 

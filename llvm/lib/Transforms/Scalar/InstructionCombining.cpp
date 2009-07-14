@@ -1756,8 +1756,10 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           Value *LHS = II->getOperand(1);
           Value *RHS = II->getOperand(2);
           // Extract the element as scalars.
-          LHS = InsertNewInstBefore(new ExtractElementInst(LHS, 0U,"tmp"), *II);
-          RHS = InsertNewInstBefore(new ExtractElementInst(RHS, 0U,"tmp"), *II);
+          LHS = InsertNewInstBefore(new ExtractElementInst(LHS, 
+            Context->getConstantInt(Type::Int32Ty, 0U, false), "tmp"), *II);
+          RHS = InsertNewInstBefore(new ExtractElementInst(RHS,
+            Context->getConstantInt(Type::Int32Ty, 0U, false), "tmp"), *II);
           
           switch (II->getIntrinsicID()) {
           default: llvm_unreachable("Case stmts out of sync!");
@@ -1775,7 +1777,8 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           
           Instruction *New =
             InsertElementInst::Create(
-              Context->getUndef(II->getType()), TmpV, 0U, II->getName());
+              Context->getUndef(II->getType()), TmpV,
+              Context->getConstantInt(Type::Int32Ty, 0U, false), II->getName());
           InsertNewInstBefore(New, *II);
           AddSoonDeadInstToWorklist(*II, 0);
           return New;
@@ -7888,9 +7891,9 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   
   AllocationInst *New;
   if (isa<MallocInst>(AI))
-    New = new MallocInst(CastElTy, Amt, AI.getAlignment());
+    New = new MallocInst(*Context, CastElTy, Amt, AI.getAlignment());
   else
-    New = new AllocaInst(CastElTy, Amt, AI.getAlignment());
+    New = new AllocaInst(*Context, CastElTy, Amt, AI.getAlignment());
   InsertNewInstBefore(New, AI);
   New->takeName(&AI);
   
@@ -9974,14 +9977,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           
           if (ExtractedElts[Idx] == 0) {
             Instruction *Elt = 
-              new ExtractElementInst(Idx < 16 ? Op0 : Op1, Idx&15, "tmp");
+              new ExtractElementInst(Idx < 16 ? Op0 : Op1, 
+                  Context->getConstantInt(Type::Int32Ty, Idx&15, false), "tmp");
             InsertNewInstBefore(Elt, CI);
             ExtractedElts[Idx] = Elt;
           }
         
           // Insert this value into the result vector.
           Result = InsertElementInst::Create(Result, ExtractedElts[Idx],
-                                             i, "tmp");
+                               Context->getConstantInt(Type::Int32Ty, i, false), 
+                               "tmp");
           InsertNewInstBefore(cast<Instruction>(Result), CI);
         }
         return CastInst::Create(Instruction::BitCast, Result, CI.getType());
@@ -11363,10 +11368,12 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
 
       // Create and insert the replacement instruction...
       if (isa<MallocInst>(AI))
-        New = new MallocInst(NewTy, 0, AI.getAlignment(), AI.getName());
+        New = new MallocInst(*Context, NewTy, 0,
+                             AI.getAlignment(), AI.getName());
       else {
         assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
-        New = new AllocaInst(NewTy, 0, AI.getAlignment(), AI.getName());
+        New = new AllocaInst(*Context, NewTy, 0,
+                             AI.getAlignment(), AI.getName());
       }
 
       InsertNewInstBefore(New, AI);
@@ -12475,7 +12482,8 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         } else {
           return ReplaceInstUsesWith(EI, Context->getUndef(EI.getType()));
         }
-        return new ExtractElementInst(Src, SrcIdx);
+        return new ExtractElementInst(Src,
+                         Context->getConstantInt(Type::Int32Ty, SrcIdx, false));
       }
     }
   }
