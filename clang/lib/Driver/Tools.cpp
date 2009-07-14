@@ -597,7 +597,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (A->getOption().matches(options::OPT_fno_unit_at_a_time))
       D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
-  
+
+  if (Arg *A = Args.getLastArg(options::OPT_traditional, 
+                               options::OPT_traditional_cpp))
+    D.Diag(clang::diag::err_drv_clang_unsupported) << A->getAsString(Args);
+
   Args.AddLastArg(CmdArgs, options::OPT_dM);
   Args.AddLastArg(CmdArgs, options::OPT_dD);
 
@@ -1114,7 +1118,6 @@ void darwin::Preprocess::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-E");
 
   if (Args.hasArg(options::OPT_traditional) ||
-      Args.hasArg(options::OPT_ftraditional) ||
       Args.hasArg(options::OPT_traditional_cpp))
     CmdArgs.push_back("-traditional-cpp");
 
@@ -1153,8 +1156,7 @@ void darwin::Compile::ConstructJob(Compilation &C, const JobAction &JA,
 
   types::ID InputType = Inputs[0].getType();
   const Arg *A;
-  if ((A = Args.getLastArg(options::OPT_traditional)) ||
-      (A = Args.getLastArg(options::OPT_ftraditional)))
+  if ((A = Args.getLastArg(options::OPT_traditional)))
     D.Diag(clang::diag::err_drv_argument_only_allowed_with)
       << A->getAsString(Args) << "-E";
 
