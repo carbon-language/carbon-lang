@@ -644,7 +644,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm8Offset(SDValue Op, SDValue N,
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N)) {
     int RHSC = (int)RHS->getZExtValue();
     if (RHSC >= 0 && RHSC < 0x100) { // 8 bits.
-      OffImm = (AM == ISD::PRE_INC)
+      OffImm = ((AM == ISD::PRE_INC) || (AM == ISD::POST_INC))
         ? CurDAG->getTargetConstant(RHSC, MVT::i32)
         : CurDAG->getTargetConstant(-RHSC, MVT::i32);
       return true;
