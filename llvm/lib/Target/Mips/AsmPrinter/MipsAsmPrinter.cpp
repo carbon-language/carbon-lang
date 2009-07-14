@@ -385,10 +385,7 @@ printOperand(const MachineInstr *MI, int opNum)
       return;
 
     case MachineOperand::MO_GlobalAddress:
-      {
-        const GlobalValue *GV = MO.getGlobal();
-        O << Mang->getValueName(GV);
-      }
+      O << Mang->getMangledName(MO.getGlobal());
       break;
 
     case MachineOperand::MO_ExternalSymbol:
@@ -481,7 +478,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     return;
 
   O << "\n\n";
-  std::string name = Mang->getValueName(GVar);
+  std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
   if (isa<MDNode>(C) || isa<MDString>(C))
     return;

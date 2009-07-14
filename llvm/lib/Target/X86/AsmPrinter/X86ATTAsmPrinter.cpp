@@ -233,7 +233,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   if (F->hasDLLExportLinkage())
-    DLLExportedFns.insert(Mang->getValueName(F));
+    DLLExportedFns.insert(Mang->getMangledName(F));
 
   // Print the 'header' of function
   emitFunctionHeader(MF);
@@ -304,62 +304,58 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     break;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getValueName(GV);
+    
+    const char *Suffix = "";
+    
+    if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
+      Suffix = "$stub";
+    else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
+             MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
+             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
+             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+      Suffix = "$non_lazy_ptr";
+    
+    std::string Name = Mang->getMangledName(GV, Suffix, Suffix[0] != '\0');
     decorateName(Name, GV);
     
-    bool needCloseParen = false;
-    if (Name[0] == '$') {
-      // The name begins with a dollar-sign. In order to avoid having it look
-      // like an integer immediate to the assembler, enclose it in parens.
-      O << '(';
-      needCloseParen = true;
-    }
-    
     // Handle dllimport linkage.
-    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT) {
-      O << "__imp_" << Name;
-    } else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
-               MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
-      GVStubs.insert(Name);
-      printSuffixedName(Name, "$non_lazy_ptr");
-    } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
-               MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
-      HiddenGVStubs.insert(Name);
-      printSuffixedName(Name, "$non_lazy_ptr");
-    } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      FnStubs.insert(Name);
-      printSuffixedName(Name, "$stub");
-    } else {
-      O << Name;
-    }
+    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
+      Name = "__imp_" + Name;
     
-    if (needCloseParen)
-      O << ')';
+    if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
+        MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE)
+      GVStubs[Name] = Mang->getMangledName(GV);
+    else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
+             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+      HiddenGVStubs[Name] = Mang->getMangledName(GV);
+    else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
+      FnStubs[Name] = Mang->getMangledName(GV);
+    
+    // If the name begins with a dollar-sign, enclose it in parens.  We do this
+    // to avoid having it look like an integer immediate to the assembler.
+    if (Name[0] == '$') 
+      O << '(' << Name << ')';
+    else
+      O << Name;
     
     printOffset(MO.getOffset());
     break;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    bool needCloseParen = false;
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
-    
-    if (Name[0] == '$') {
-      // The name begins with a dollar-sign. In order to avoid having it look
-      // like an integer immediate to the assembler, enclose it in parens.
-      O << '(';
-      needCloseParen = true;
-    }
-    
+
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
-      FnStubs.insert(Name);
-      printSuffixedName(Name, "$stub");
-    } else {
-      O << Name;
+      FnStubs[Name+"$stub"] = Name;
+      Name += "$stub";
     }
     
-    if (needCloseParen)
-      O << ')';
+    // If the name begins with a dollar-sign, enclose it in parens.  We do this
+    // to avoid having it look like an integer immediate to the assembler.
+    if (Name[0] == '$') 
+      O << '(' << Name << ')';
+    else
+      O << Name;
     break;
   }
   }
@@ -787,7 +783,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     return;
   }
 
-  std::string name = Mang->getValueName(GVar);
+  std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
   if (isa<MDNode>(C) || isa<MDString>(C))
     return;
@@ -910,7 +906,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     printModuleLevelGV(I);
 
     if (I->hasDLLExportLinkage())
-      DLLExportedGVs.insert(Mang->getValueName(I));
+      DLLExportedGVs.insert(Mang->getMangledName(I));
   }
 
   if (Subtarget->isTargetDarwin()) {
@@ -921,26 +917,21 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     if (TAI->doesSupportExceptionHandling() && MMI && !Subtarget->is64Bit()) {
       const std::vector<Function*> &Personalities = MMI->getPersonalities();
       for (unsigned i = 0, e = Personalities.size(); i != e; ++i) {
-        if (Personalities[i] == 0)
-          continue;
-        std::string Name = Mang->getValueName(Personalities[i]);
-        decorateName(Name, Personalities[i]);
-        GVStubs.insert(Name);
+        if (Personalities[i])
+          GVStubs[Mang->getMangledName(Personalities[i], "$non_lazy_ptr",
+                                       true /*private label*/)] = 
+            Mang->getMangledName(Personalities[i]);
       }
     }
 
     // Output stubs for dynamically-linked functions
     if (!FnStubs.empty()) {
-      for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
-           I != E; ++I) {
-        SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
-                            "self_modifying_code+pure_instructions,5", 0);
-        const char *Name = I->getKeyData();
-        printSuffixedName(Name, "$stub");
-        O << ":\n"
-             "\t.indirect_symbol " << Name << "\n"
-             "\thlt ; hlt ; hlt ; hlt ; hlt\n";
-      }
+      SwitchToDataSection("\t.section __IMPORT,__jump_table,symbol_stubs,"
+                          "self_modifying_code+pure_instructions,5", 0);
+      for (StringMap<std::string>::iterator I = FnStubs.begin(),
+           E = FnStubs.end(); I != E; ++I)
+        O << I->getKeyData() << ":\n" << "\t.indirect_symbol " << I->second
+          << "\n\thlt ; hlt ; hlt ; hlt ; hlt\n";
       O << '\n';
     }
 
@@ -948,23 +939,19 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     if (!GVStubs.empty()) {
       SwitchToDataSection(
                     "\t.section __IMPORT,__pointers,non_lazy_symbol_pointers");
-      for (StringSet<>::iterator I = GVStubs.begin(), E = GVStubs.end();
-           I != E; ++I) {
-        const char *Name = I->getKeyData();
-        printSuffixedName(Name, "$non_lazy_ptr");
-        O << ":\n\t.indirect_symbol " << Name << "\n\t.long\t0\n";
-      }
+      for (StringMap<std::string>::iterator I = GVStubs.begin(),
+           E = GVStubs.end(); I != E; ++I)
+        O << I->getKeyData() << ":\n\t.indirect_symbol "
+          << I->second << "\n\t.long\t0\n";
     }
 
     if (!HiddenGVStubs.empty()) {
       SwitchToSection(TAI->getDataSection());
       EmitAlignment(2);
-      for (StringSet<>::iterator I = HiddenGVStubs.begin(),
-           E = HiddenGVStubs.end(); I != E; ++I) {
-        const char *Name = I->getKeyData();
-        printSuffixedName(Name, "$non_lazy_ptr");
-        O << ":\n" << TAI->getData32bitsDirective() << Name << '\n';
-      }
+      for (StringMap<std::string>::iterator I = HiddenGVStubs.begin(),
+           E = HiddenGVStubs.end(); I != E; ++I)
+        O << I->getKeyData() << ":\n" << TAI->getData32bitsDirective()
+          << I->second << '\n';
     }
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
