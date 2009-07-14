@@ -129,10 +129,8 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix,
 }
 
 std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
-  // Never mangle intrinsic functions.
-  // FIXME: These should never come into the mangler.
-  if (isa<Function>(GV) && cast<Function>(GV)->isIntrinsic())
-    return GV->getNameStart();
+  assert((!isa<Function>(GV) || !cast<Function>(GV)->isIntrinsic()) &&
+         "Intrinsic functions cannot be mangled by Mangler");
   
   if (GV->hasName()) {
     if (GV->hasPrivateLinkage())
