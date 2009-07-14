@@ -484,8 +484,8 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
                                     unsigned NumInitializers) {
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
-  // FIXME. We probably don't need this. But it is cleaner.
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(getDeclContext());
+  // FIXME. We probably don't need to use AllToInit. But it is cleaner.
   llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
   // Push virtual bases before others.
   for (CXXRecordDecl::base_class_iterator VBase =
