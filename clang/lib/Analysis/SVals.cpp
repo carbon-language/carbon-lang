@@ -283,7 +283,7 @@ void NonLoc::dumpToStream(llvm::raw_ostream& os) const {
     }
     case nonloc::CompoundValKind: {
       const nonloc::CompoundVal& C = *cast<nonloc::CompoundVal>(this);
-      os << " {";
+      os << "compoundVal{";
       bool first = true;
       for (nonloc::CompoundVal::iterator I=C.begin(), E=C.end(); I!=E; ++I) {
         if (first) { 
@@ -294,7 +294,7 @@ void NonLoc::dumpToStream(llvm::raw_ostream& os) const {
 
         (*I).dumpToStream(os);
       }
-      os << " }";
+      os << "}";
       break;
     }      
     default:
