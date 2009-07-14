@@ -7,20 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the implementation of formatted_raw_ostream and
-// friends.
+// This file contains the implementation of formatted_raw_ostream.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FormattedStream.h"
-
 using namespace llvm;
 
 /// ComputeColumn - Examine the current output and figure out which
 /// column we end up in after output.
 ///
-void formatted_raw_ostream::ComputeColumn(const char *Ptr, unsigned Size)
-{
+void formatted_raw_ostream::ComputeColumn(const char *Ptr, unsigned Size) {
   // Keep track of the current column by scanning the string for
   // special characters
 
@@ -39,20 +36,17 @@ void formatted_raw_ostream::ComputeColumn(const char *Ptr, unsigned Size)
 /// \param MinPad - The minimum space to give after the most recent
 /// I/O, even if the current column + minpad > newcol.
 ///
-void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) 
-{
+void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) {
   flush();
 
   // Output spaces until we reach the desired column.
   unsigned num = NewCol - Column;
-  if (NewCol < Column || num < MinPad) {
+  if (NewCol < Column || num < MinPad)
     num = MinPad;
-  }
 
   // TODO: Write a whole string at a time.
-  while (num-- > 0) {
+  while (num-- > 0)
     write(' ');
-  }
 }
 
 /// fouts() - This returns a reference to a formatted_raw_ostream for
