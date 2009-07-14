@@ -49,11 +49,15 @@ namespace llvm {
   /// This function calls abort(), and prints the optional message to stderr.
   /// Call this instead of assert(0), so that compiler knows the path is not
   /// reachable even for NDEBUG builds.
-  void llvm_unreachable(const char *msg=0) NORETURN;
+  /// Use the LLVM_UNREACHABLE macro instead that adds location info.
+  void llvm_unreachable(const char *msg=0, const char *file=0,
+                        unsigned line=0) NORETURN;
 }
 
+/// Macro that calls llvm_unreachable with location info and message in 
+/// debug mode. In NDEBUG mode it calls llvm_unreachable with no message.
 #ifndef NDEBUG
-#define LLVM_UNREACHABLE(msg) llvm_unreachable(msg)
+#define LLVM_UNREACHABLE(msg) llvm_unreachable(msg, __FILE__, __LINE__)
 #else
 #define LLVM_UNREACHABLE(msg) llvm_unreachable()
 #endif

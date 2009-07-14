@@ -44,9 +44,13 @@ void llvm_report_error(const std::string &reason) {
   exit(1);
 }
 
-void llvm_unreachable(const char *msg) {
+void llvm_unreachable(const char *msg, const char *file, unsigned line) {
   if (msg)
     errs() << msg << "\n";
+  errs() << "UNREACHABLE executed";
+  if (file)
+    errs() << " at " << file << ":" << line;
+  errs() << "!\n";
   abort();
 }
 }
