@@ -112,6 +112,7 @@ void PCHDeclWriter::VisitTagDecl(TagDecl *D) {
   Record.push_back((unsigned)D->getTagKind()); // FIXME: stable encoding
   Record.push_back(D->isDefinition());
   Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);
+  Writer.AddSourceLocation(D->getRBraceLoc(), Record);
 }
 
 void PCHDeclWriter::VisitEnumDecl(EnumDecl *D) {

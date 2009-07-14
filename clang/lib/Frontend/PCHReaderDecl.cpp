@@ -116,6 +116,7 @@ void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
   TD->setDefinition(Record[Idx++]);
   TD->setTypedefForAnonDecl(
                     cast_or_null<TypedefDecl>(Reader.GetDecl(Record[Idx++])));
+  TD->setRBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHDeclReader::VisitEnumDecl(EnumDecl *ED) {
