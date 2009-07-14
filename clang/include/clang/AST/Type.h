@@ -375,6 +375,7 @@ public:
   bool isFunctionNoProtoType() const { return getAsFunctionNoProtoType() != 0; }
   bool isFunctionProtoType() const { return getAsFunctionProtoType() != 0; }
   bool isPointerType() const;
+  bool isAnyPointerType() const;   // Any C pointer or ObjC object pointer
   bool isBlockPointerType() const;
   bool isVoidPointerType() const;
   bool isReferenceType() const;
@@ -2119,6 +2120,9 @@ inline bool Type::isFunctionType() const {
 }
 inline bool Type::isPointerType() const {
   return isa<PointerType>(CanonicalType.getUnqualifiedType()); 
+}
+inline bool Type::isAnyPointerType() const {
+  return isPointerType() || isObjCObjectPointerType();
 }
 inline bool Type::isBlockPointerType() const {
   return isa<BlockPointerType>(CanonicalType.getUnqualifiedType()); 

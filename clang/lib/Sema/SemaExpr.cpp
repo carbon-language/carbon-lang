@@ -3094,14 +3094,12 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   }
   // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
   // the type of the other operand."
-  if ((LHSTy->isPointerType() || LHSTy->isBlockPointerType() ||
-       LHSTy->isObjCObjectPointerType()) &&
+  if ((LHSTy->isAnyPointerType() || LHSTy->isBlockPointerType()) &&
       RHS->isNullPointerConstant(Context)) {
     ImpCastExprToType(RHS, LHSTy); // promote the null to a pointer.
     return LHSTy;
   }
-  if ((RHSTy->isPointerType() || RHSTy->isBlockPointerType() ||
-       RHSTy->isObjCObjectPointerType()) &&
+  if ((RHSTy->isAnyPointerType() || RHSTy->isBlockPointerType()) &&
       LHS->isNullPointerConstant(Context)) {
     ImpCastExprToType(LHS, RHSTy); // promote the null to a pointer.
     return RHSTy;
@@ -3823,12 +3821,10 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
 
   // Put any potential pointer into PExp
   Expr* PExp = lex, *IExp = rex;
-  if (IExp->getType()->isPointerType() || 
-      IExp->getType()->isObjCObjectPointerType())
+  if (IExp->getType()->isAnyPointerType())
     std::swap(PExp, IExp);
 
-  if (PExp->getType()->isPointerType() || 
-      PExp->getType()->isObjCObjectPointerType()) {
+  if (PExp->getType()->isAnyPointerType()) {
     
     if (IExp->getType()->isIntegerType()) {
       QualType PointeeTy = PExp->getType()->getPointeeType();
@@ -3912,8 +3908,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
   }
     
   // Either ptr - int   or   ptr - ptr.
-  if (lex->getType()->isPointerType() || 
-      lex->getType()->isObjCObjectPointerType()) {
+  if (lex->getType()->isAnyPointerType()) {
     QualType lpointee = lex->getType()->getPointeeType();
 
     // The LHS must be an completely-defined object type.
@@ -4293,8 +4288,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       return ResultTy;
     }
   }
-  if ((lType->isPointerType() || lType->isObjCObjectPointerType()) &&
-       rType->isIntegerType()) {
+  if (lType->isAnyPointerType() && rType->isIntegerType()) {
     if (isRelational)
       Diag(Loc, diag::ext_typecheck_ordered_comparison_of_pointer_integer)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
@@ -4304,8 +4298,7 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
     ImpCastExprToType(rex, lType); // promote the integer to pointer
     return ResultTy;
   }
-  if (lType->isIntegerType() &&
-      (rType->isPointerType() || rType->isObjCObjectPointerType())) {
+  if (lType->isIntegerType() && rType->isAnyPointerType()) {
     if (isRelational)
       Diag(Loc, diag::ext_typecheck_ordered_comparison_of_pointer_integer)
         << lType << rType << lex->getSourceRange() << rex->getSourceRange();
@@ -4578,15 +4571,9 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
     Diag(OpLoc, diag::warn_increment_bool) << Op->getSourceRange();
   } else if (ResType->isRealType()) {
     // OK!
-  } else if (ResType->getAsPointerType() ||ResType->isObjCObjectPointerType()) {
-    QualType PointeeTy;
+  } else if (ResType->isAnyPointerType()) {
+    QualType PointeeTy = ResType->getPointeeType();
     
-    if (const PointerType *PTy = ResType->getAsPointerType())
-      PointeeTy = PTy->getPointeeType();
-    else if (const ObjCObjectPointerType *OPT = 
-               ResType->getAsObjCObjectPointerType())
-      PointeeTy = OPT->getPointeeType();
-      
     // C99 6.5.2.4p2, 6.5.6p2
     if (PointeeTy->isVoidType()) {
       if (getLangOptions().CPlusPlus) {

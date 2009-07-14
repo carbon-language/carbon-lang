@@ -986,7 +986,7 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
 }
 
 Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
-  if (!Ops.Ty->isPointerType() && !Ops.Ty->isObjCObjectPointerType()) {
+  if (!Ops.Ty->isAnyPointerType()) {
     if (CGF.getContext().getLangOptions().OverflowChecking &&
         Ops.Ty->isSignedIntegerType())
       return EmitOverflowCheckedBinOp(Ops);
