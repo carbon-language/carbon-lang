@@ -4209,7 +4209,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
         // Build the actual expression node.
         Expr *FnExpr = new (Context) DeclRefExpr(FnDecl, FnDecl->getType(),
-                                                 SourceLocation());
+                                                 OpLoc);
         UsualUnaryConversions(FnExpr);
 
         return Owned(new (Context) CXXOperatorCallExpr(Context, Op, FnExpr, 
