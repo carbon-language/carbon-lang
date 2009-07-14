@@ -95,6 +95,8 @@ DisableFree("disable-free",
            llvm::cl::desc("Disable freeing of memory on exit"),
            llvm::cl::init(false));
 
+static bool HadErrors = false;
+
 static void ProcessDecl(Decl *D) {
   assert(D);
   llvm::raw_ostream &OS = llvm::outs();
@@ -155,10 +157,17 @@ static void ProcessASTLocation(ASTLocation ASTLoc, IndexProvider &IdxProvider) {
   if (ASTLoc.isStmt()) {
     if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(ASTLoc.getStmt()))
       D = RefExpr->getDecl();
+    else if (MemberExpr *ME = dyn_cast<MemberExpr>(ASTLoc.getStmt()))
+      D = ME->getMemberDecl();
   } else {
     D = ASTLoc.getDecl();
   }
-  assert(D);
+  
+  if (D == 0) {
+    llvm::errs() << "Error: Couldn't get a Decl out of the ASTLocation";
+    HadErrors = true;
+    return;
+  }
 
   Entity *Ent = Entity::get(D, IdxProvider.getProgram());
   // If there is no Entity associated with this Decl, it means that it's not
@@ -267,6 +276,9 @@ int main(int argc, char **argv) {
       ProcessASTLocation(ASTLoc, IdxProvider);
     }
   }
+  
+  if (HadErrors)
+    return 1;
 
   if (!DisableFree) {
     for (int i=0, e=TUnits.size(); i != e; ++i)

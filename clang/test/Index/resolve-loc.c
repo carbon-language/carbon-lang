@@ -11,3 +11,6 @@
 // RUN: index-test %t.ast -point-at %S/resolve-loc-input.c:8:9 | grep local_var2 &&
 // RUN: index-test %t.ast -point-at %S/resolve-loc-input.c:8:30 | grep local_var2 &&
 // RUN: index-test %t.ast -point-at %S/resolve-loc-input.c:8:30 | grep 'for_var + 1' &&
+
+// fields test.
+// RUN: index-test %t.ast -point-at %S/resolve-loc-input.c:13:10 | grep field_var

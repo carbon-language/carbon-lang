@@ -8,3 +8,7 @@ void top_func_def(int param2) {
     int local_var2 = for_var + 1;
   }
 }
+
+struct S {
+  int field_var;
+};

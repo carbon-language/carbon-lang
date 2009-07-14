@@ -15,4 +15,11 @@
 // RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:5:30 -print-refs | count 3 &&
 // RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:5:30 -print-refs | grep 't1.c:5:27,' &&
 // RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:5:30 -print-refs | grep 't1.c:5:44,' &&
-// RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:5:30 -print-refs | grep 't1.c:6:26,'
+// RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:5:30 -print-refs | grep 't1.c:6:26,' &&
+
+// field test
+// FIXME: References point at the start of MemberExpr, make them point at the field instead.
+// RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:12:7 -print-refs | count 1 &&
+// RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:12:7 -print-refs | grep 't1.c:21:3,' &&
+// RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:16:7 -print-refs | count 1 &&
+// RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:16:7 -print-refs | grep 't1.c:22:3,'
