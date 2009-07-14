@@ -233,7 +233,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitConstantPool(MF.getConstantPool());
 
   if (F->hasDLLExportLinkage())
-    DLLExportedFns.insert(Mang->makeNameProper(F->getName(), ""));
+    DLLExportedFns.insert(Mang->getValueName(F));
 
   // Print the 'header' of function
   emitFunctionHeader(MF);
@@ -910,7 +910,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     printModuleLevelGV(I);
 
     if (I->hasDLLExportLinkage())
-      DLLExportedGVs.insert(Mang->makeNameProper(I->getName(),""));
+      DLLExportedGVs.insert(Mang->getValueName(I));
   }
 
   if (Subtarget->isTargetDarwin()) {
