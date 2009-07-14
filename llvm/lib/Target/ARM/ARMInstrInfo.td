@@ -168,16 +168,16 @@ def bf_inv_mask_imm : Operand<i32>,
   uint32_t v = (uint32_t)N->getZExtValue();
   if (v == 0xffffffff)
     return 0;
-  // naive checker. should do better, but simple is best for now since it's
-  // more likely to be correct.
-  while (v & 1) v >>= 1;    // shift off the leading 1's
-  if (v)
-    {
-      while (!(v & 1)) v >>=1;  // shift off the mask
-      while (v & 1) v >>= 1;    // shift off the trailing 1's
-    }
-  // if this is a mask for clearing a bitfield, what's left should be zero.
-  return (v == 0);
+  // there can be 1's on either or both "outsides", all the "inside"
+  // bits must be 0's
+  unsigned int lsb = 0, msb = 31;
+  while (v & (1 << msb)) --msb;
+  while (v & (1 << lsb)) ++lsb;
+  for (unsigned int i = lsb; i <= msb; ++i) {
+    if (v & (1 << i))
+      return 0;
+  }
+  return 1;
 }] > {
   let PrintMethod = "printBitfieldInvMaskImmOperand";
 }
