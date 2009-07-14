@@ -896,6 +896,7 @@ void MSILWriter::printICmpInstruction(unsigned Predicate, const Value* Left,
     break;
   case ICmpInst::ICMP_UGT:
     printBinaryInstruction("cgt.un",Left,Right);
+    break;
   case ICmpInst::ICMP_SGT:
     printBinaryInstruction("cgt",Left,Right);
     break;
