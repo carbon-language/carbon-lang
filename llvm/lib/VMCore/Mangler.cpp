@@ -31,13 +31,16 @@ static std::string MangleLetter(unsigned char C) {
 /// makeNameProper - We don't want identifier names non-C-identifier characters
 /// in them, so mangle them as appropriate.
 ///
-std::string Mangler::makeNameProper(const std::string &X, const char *Prefix,
-                                    const char *PrivatePrefix) {
-  if (X.empty()) return X;  // Empty names are uniqued by the caller.
+std::string Mangler::makeNameProper(const std::string &X,
+                                    bool hasPrivateLinkage) {
+  assert(!X.empty() && "Cannot mangle empty strings");
   
   // If PreserveAsmNames is set, names with asm identifiers are not modified. 
   if (PreserveAsmNames && X[0] == 1)
     return X;
+
+  // Figure out the prefix to use.
+  const char *ThePrefix = hasPrivateLinkage ? PrivatePrefix : Prefix;
   
   if (!UseQuotes) {
     std::string Result;
@@ -61,12 +64,8 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix,
         Result += *I;
     }
 
-    if (NeedPrefix) {
-      if (Prefix)
-        Result = Prefix + Result;
-      if (PrivatePrefix)
-        Result = PrivatePrefix + Result;
-    }
+    if (NeedPrefix)
+      Result = ThePrefix + Result;
     return Result;
   }
 
@@ -94,17 +93,12 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix,
     
   // In the common case, we don't need quotes.  Handle this quickly.
   if (!NeedQuotes) {
-    if (NeedPrefix) {
-      if (Prefix)
-        Result = Prefix + X;
-      else
-        Result = X;
-      if (PrivatePrefix)
-        Result = PrivatePrefix + Result;
-      return Result;
-    } else
-      return X.substr(1);
+    if (!NeedPrefix)
+      return X.substr(1);   // Strip off the \001.
+    return ThePrefix + X;
   }
+  
+  Result = X.substr(0, I-X.begin());
     
   // Otherwise, construct the string the expensive way.
   for (std::string::const_iterator E = X.end(); I != E; ++I) {
@@ -116,14 +110,8 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix,
       Result += *I;
   }
 
-  if (NeedPrefix) {
-    if (Prefix)
-      Result = Prefix + X;
-    else
-      Result = X;
-    if (PrivatePrefix)
-      Result = PrivatePrefix + Result;
-  }
+  if (NeedPrefix)
+    Result = ThePrefix + Result;
   Result = '"' + Result + '"';
   return Result;
 }
@@ -132,11 +120,8 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char *Suffix) {
   assert((!isa<Function>(GV) || !cast<Function>(GV)->isIntrinsic()) &&
          "Intrinsic functions cannot be mangled by Mangler");
   
-  if (GV->hasName()) {
-    if (GV->hasPrivateLinkage())
-      return makeNameProper(GV->getName() + Suffix, Prefix, PrivatePrefix);
-    return makeNameProper(GV->getName() + Suffix, Prefix);
-  }
+  if (GV->hasName())
+    return makeNameProper(GV->getName() + Suffix, GV->hasPrivateLinkage());
   
   // Get the ID for the global, assigning a new one if we haven't got one
   // already.

@@ -271,8 +271,8 @@ AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF,
   Name = MF->getFunction()->getName();
   if (Name.empty())
     Name = Mang->getValueName(MF->getFunction());
-  Name = Mang->makeNameProper(TAI->getEHGlobalPrefix() +
-                              Name + ".eh", TAI->getGlobalPrefix());
+  
+  Name = Mang->makeNameProper(TAI->getEHGlobalPrefix() + Name + ".eh");
   return Name;
 }
 

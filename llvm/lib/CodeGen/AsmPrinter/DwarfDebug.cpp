@@ -86,8 +86,8 @@ public:
   /// specified debug variable.
   DIE *&getDieMapSlotFor(GlobalVariable *GV) { return GVToDieMap[GV]; }
 
-  /// getDIEEntrySlotFor - Returns the debug information entry proxy slot for the
-  /// specified debug variable.
+  /// getDIEEntrySlotFor - Returns the debug information entry proxy slot for
+  /// the specified debug variable.
   DIEEntry *&getDIEEntrySlotFor(GlobalVariable *GV) {
     return GVToDIEEntryMap[GV];
   }
