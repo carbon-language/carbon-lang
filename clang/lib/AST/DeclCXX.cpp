@@ -540,8 +540,10 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       }
     }
     if (i == NumInitializers) {
-      // FIXME. What do we do with arrays?
       QualType FieldType = C.getCanonicalType((*Field)->getType());
+      while (const ArrayType *AT = C.getAsArrayType(FieldType))
+        FieldType = AT->getElementType();
+      
       if (FieldType->getAsRecordType()) {
         CXXBaseOrMemberInitializer *Member = 
           new CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
