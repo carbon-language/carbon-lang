@@ -73,7 +73,7 @@ namespace llvm {
       v8f32          =  33,   //  8 x f32
       v2f64          =  34,   //  2 x f64
       v4f64          =  35,   //  4 x f64
-  
+
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
 
@@ -84,7 +84,7 @@ namespace llvm {
       // This value must be a multiple of 32.
       MAX_ALLOWED_VALUETYPE = 64,
 
-      // Metadata - This is MDNode or MDString. 
+      // Metadata - This is MDNode or MDString.
       Metadata       = 251,
 
       // iPTRAny - An int value the size of the pointer of the current
@@ -193,18 +193,18 @@ namespace llvm {
         if (NumElements == 2)  return v2i16;
         if (NumElements == 4)  return v4i16;
         if (NumElements == 8)  return v8i16;
-        if (NumElements == 16)  return v16i16;
+        if (NumElements == 16) return v16i16;
         break;
       case i32:
         if (NumElements == 2)  return v2i32;
         if (NumElements == 3)  return v3i32;
         if (NumElements == 4)  return v4i32;
-	if (NumElements == 8)  return v8i32;
+        if (NumElements == 8)  return v8i32;
         break;
       case i64:
         if (NumElements == 1)  return v1i64;
         if (NumElements == 2)  return v2i64;
-	if (NumElements == 4)  return v4i64;
+        if (NumElements == 4)  return v4i64;
         break;
       case f32:
         if (NumElements == 2)  return v2f32;
@@ -284,7 +284,7 @@ namespace llvm {
 
     /// is256BitVector - Return true if this is a 256-bit vector type.
     inline bool is256BitVector() const {
-      return isSimple() ? 
+      return isSimple() ?
              (V==v8f32 || V==v4f64 || V==v32i8 || V==v16i16 || V==v8i32 ||
               V==v4i64) : isExtended256BitVector();
     }
@@ -438,7 +438,7 @@ namespace llvm {
       case v32i8:
       case v16i16:
       case v8i32:
-      case v4i64:	
+      case v4i64:
       case v8f32:
       case v4f64: return 256;
       }
