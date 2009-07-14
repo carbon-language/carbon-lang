@@ -1,4 +1,4 @@
-//===--- RecordLayout.h - Layout information for a struct/union -*- C++ -*-===//
+//=== ASTRecordLayout.h - Layout information for a struct/union -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the RecordLayout interface.
+//  This file defines the ASTRecordLayout interface.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_LAYOUTINFO_H
-#define LLVM_CLANG_AST_LAYOUTINFO_H
+#ifndef LLVM_CLANG_AST_ASTRECORDLAYOUT_H
+#define LLVM_CLANG_AST_ASTRECORDLAYOUT_H
 
 #include "llvm/Support/DataTypes.h"
 

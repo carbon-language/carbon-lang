@@ -14,7 +14,7 @@
 
 #include "ABIInfo.h"
 #include "CodeGenFunction.h"
-#include "clang/AST/RecordLayout.h"
+#include "clang/AST/ASTRecordLayout.h"
 #include "llvm/Type.h"
 
 using namespace clang;

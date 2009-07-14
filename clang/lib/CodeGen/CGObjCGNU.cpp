@@ -19,9 +19,9 @@
 #include "CodeGenFunction.h"
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTRecordLayout.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtObjC.h"
 
 #include "llvm/Intrinsics.h"
