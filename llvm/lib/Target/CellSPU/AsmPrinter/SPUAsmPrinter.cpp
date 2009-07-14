@@ -434,7 +434,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   EmitAlignment(MF.getAlignment(), F);
 
   switch (F->getLinkage()) {
-  default: LLVM_UNREACHABLE( "Unknown linkage type!");
+  default: LLVM_UNREACHABLE("Unknown linkage type!");
   case Function::PrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;

@@ -28,7 +28,7 @@ using namespace llvm;
 
 void X86ATTAsmPrinter::printSSECC(const MCInst *MI, unsigned Op) {
   switch (MI->getOperand(Op).getImm()) {
-  default: LLVM_UNREACHABLE( "Invalid ssecc argument!");
+  default: LLVM_UNREACHABLE("Invalid ssecc argument!");
   case 0: O << "eq"; break;
   case 1: O << "lt"; break;
   case 2: O << "le"; break;
@@ -42,8 +42,8 @@ void X86ATTAsmPrinter::printSSECC(const MCInst *MI, unsigned Op) {
 
 
 void X86ATTAsmPrinter::printPICLabel(const MCInst *MI, unsigned Op) {
-  LLVM_UNREACHABLE(
-         "This is only used for MOVPC32r, should lower before asm printing!");
+  LLVM_UNREACHABLE("This is only used for MOVPC32r,"
+                   "should lower before asm printing!");
 }
 
 
@@ -61,7 +61,7 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo) {
     O << TAI->getPrivateGlobalPrefix() << "BB" << Op.getMBBLabelFunction()
       << '_' << Op.getMBBLabelBlock();
   else
-    LLVM_UNREACHABLE( "Unknown pcrel immediate operand");
+    LLVM_UNREACHABLE("Unknown pcrel immediate operand");
 }
 
 

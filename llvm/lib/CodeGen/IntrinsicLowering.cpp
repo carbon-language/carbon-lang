@@ -295,7 +295,7 @@ static void ReplaceFPIntrinsicWithCall(CallInst *CI, const char *Fname,
                                        const char *Dname,
                                        const char *LDname) {
   switch (CI->getOperand(1)->getType()->getTypeID()) {
-  default: LLVM_UNREACHABLE( "Invalid type in intrinsic");
+  default: LLVM_UNREACHABLE("Invalid type in intrinsic");
   case Type::FloatTyID:
     ReplaceCallWith(Fname, CI, CI->op_begin() + 1, CI->op_end(),
                   Type::FloatTy);

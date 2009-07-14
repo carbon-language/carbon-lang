@@ -875,9 +875,8 @@ LowerConstantPool(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     }
   }
 
-  LLVM_UNREACHABLE(
-         "LowerConstantPool: Relocation model other than static"
-         " not supported.");
+  LLVM_UNREACHABLE("LowerConstantPool: Relocation model other than static"
+                   " not supported.");
   return SDValue();
 }
 
@@ -907,8 +906,8 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     }
   }
 
-  LLVM_UNREACHABLE(
-         "LowerJumpTable: Relocation model other than static not supported.");
+  LLVM_UNREACHABLE("LowerJumpTable: Relocation model other than static"
+                   " not supported.");
   return SDValue();
 }
 
@@ -1836,7 +1835,7 @@ static SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) {
     // Create a constant vector:
     switch (Op.getValueType().getSimpleVT()) {
     default: LLVM_UNREACHABLE("Unexpected constant value type in "
-                         "LowerSCALAR_TO_VECTOR");
+                              "LowerSCALAR_TO_VECTOR");
     case MVT::v16i8: n_copies = 16; VT = MVT::i8; break;
     case MVT::v8i16: n_copies = 8; VT = MVT::i16; break;
     case MVT::v4i32: n_copies = 4; VT = MVT::i32; break;

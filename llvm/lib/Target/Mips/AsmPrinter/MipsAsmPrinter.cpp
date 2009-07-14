@@ -216,7 +216,7 @@ emitCurrentABIString(void)
     default: break;
   }
 
-  LLVM_UNREACHABLE( "Unknown Mips ABI");
+  LLVM_UNREACHABLE("Unknown Mips ABI");
   return NULL;
 }  
 
