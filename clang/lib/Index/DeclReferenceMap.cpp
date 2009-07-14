@@ -34,6 +34,7 @@ public:
 
   void VisitDeclStmt(DeclStmt *Node);
   void VisitDeclRefExpr(DeclRefExpr *Node);
+  void VisitMemberExpr(MemberExpr *Node);
   void VisitStmt(Stmt *Node);
 };
 
@@ -66,6 +67,11 @@ void StmtMapper::VisitDeclStmt(DeclStmt *Node) {
 
 void StmtMapper::VisitDeclRefExpr(DeclRefExpr *Node) {
   NamedDecl *PrimD = cast<NamedDecl>(Node->getDecl()->getPrimaryDecl());
+  Map.insert(std::make_pair(PrimD, ASTLocation(Parent, Node)));
+}
+
+void StmtMapper::VisitMemberExpr(MemberExpr *Node) {
+  NamedDecl *PrimD = cast<NamedDecl>(Node->getMemberDecl()->getPrimaryDecl());
   Map.insert(std::make_pair(PrimD, ASTLocation(Parent, Node)));
 }
 
