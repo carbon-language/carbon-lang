@@ -16,7 +16,6 @@
 #ifndef LTO_H
 #define LTO_H  1
 
-#include "llvm-c/Core.h"
 #include <stdbool.h>
 #include <stddef.h>
 
