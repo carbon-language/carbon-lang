@@ -134,7 +134,7 @@ static void DumpSymbolNamesFromModule(Module *M) {
 }
 
 static void DumpSymbolNamesFromFile(std::string &Filename) {
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
   std::string ErrorMessage;
   sys::Path aPath(Filename);
   // Note: Currently we do not support reading an archive from stdin.

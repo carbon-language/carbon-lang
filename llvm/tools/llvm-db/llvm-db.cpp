@@ -55,7 +55,7 @@ int main(int argc, char **argv, char * const *envp) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   std::cout << "NOTE: llvm-db is known useless right now.\n";
   try {

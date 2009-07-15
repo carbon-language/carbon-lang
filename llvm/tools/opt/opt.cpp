@@ -309,7 +309,7 @@ void AddStandardCompilePasses(PassManager &PM) {
 //
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
   try {
     cl::ParseCommandLineOptions(argc, argv,
       "llvm .bc -> .bc modular optimizer and analysis printer\n");

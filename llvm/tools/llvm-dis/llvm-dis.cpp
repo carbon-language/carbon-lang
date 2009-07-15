@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");

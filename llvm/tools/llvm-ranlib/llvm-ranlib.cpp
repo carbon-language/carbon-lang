@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
 
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   // Have the command line options parsed and handle things

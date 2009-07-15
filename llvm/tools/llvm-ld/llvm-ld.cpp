@@ -507,7 +507,7 @@ int main(int argc, char **argv, char **envp) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
 
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
   try {
     // Initial global variable above for convenience printing of program name.

@@ -94,7 +94,7 @@ int main(int argc, char **argv, char * const *envp) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
   atexit(do_shutdown);  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv,
                               "llvm interpreter & dynamic compiler\n");
