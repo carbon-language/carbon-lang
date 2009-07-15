@@ -29,7 +29,7 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 namespace {
-  class VISIBILITY_HIDDEN DFS : public GRWorkList {
+class VISIBILITY_HIDDEN DFS : public GRWorkList {
   llvm::SmallVector<GRWorkListUnit,20> Stack;
 public:
   virtual bool hasWork() const {
