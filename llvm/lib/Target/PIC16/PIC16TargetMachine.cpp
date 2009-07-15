@@ -32,10 +32,13 @@ int PIC16TargetMachineModule = 0;
 
 
 // Register the targets
+extern Target ThePIC16Target;
 static RegisterTarget<PIC16TargetMachine> 
-X("pic16", "PIC16 14-bit [experimental].");
+X(ThePIC16Target, "pic16", "PIC16 14-bit [experimental].");
+
+extern Target TheCooperTarget;
 static RegisterTarget<CooperTargetMachine> 
-Y("cooper", "PIC16 Cooper [experimental].");
+Y(TheCooperTarget, "cooper", "PIC16 Cooper [experimental].");
 
 // Force static initialization.
 extern "C" void LLVMInitializePIC16Target() { }

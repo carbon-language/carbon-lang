@@ -38,7 +38,7 @@ namespace llvm {
     // asmprinter set this functions to ctor pointer at startup time if they are
     // linked in.
     typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                              MipsTargetMachine &tm,
+                                              TargetMachine &tm,
                                               bool verbose);
     static AsmPrinterCtorFn AsmPrinterCtor;
     

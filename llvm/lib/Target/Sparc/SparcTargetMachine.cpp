@@ -19,7 +19,8 @@
 using namespace llvm;
 
 // Register the target.
-static RegisterTarget<SparcTargetMachine> X("sparc", "SPARC");
+extern Target TheSparcTarget;
+static RegisterTarget<SparcTargetMachine> X(TheSparcTarget, "sparc", "SPARC");
 
 // No assembler printer by default
 SparcTargetMachine::AsmPrinterCtorFn SparcTargetMachine::AsmPrinterCtor = 0;

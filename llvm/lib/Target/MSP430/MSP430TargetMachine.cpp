@@ -32,8 +32,9 @@ int MSP430TargetMachineModule = 0;
 
 
 // Register the targets
+extern Target TheMSP430Target;
 static RegisterTarget<MSP430TargetMachine>
-X("msp430", "MSP430 [experimental]");
+X(TheMSP430Target, "msp430", "MSP430 [experimental]");
 
 // Force static initialization.
 extern "C" void LLVMInitializeMSP430Target() { }

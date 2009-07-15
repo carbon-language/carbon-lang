@@ -36,8 +36,11 @@ extern "C" int ARMTargetMachineModule;
 int ARMTargetMachineModule = 0;
 
 // Register the target.
-static RegisterTarget<ARMTargetMachine>   X("arm",   "ARM");
-static RegisterTarget<ThumbTargetMachine> Y("thumb", "Thumb");
+extern Target TheARMTarget;
+static RegisterTarget<ARMTargetMachine>   X(TheARMTarget, "arm",   "ARM");
+
+extern Target TheThumbTarget;
+static RegisterTarget<ThumbTargetMachine> Y(TheThumbTarget, "thumb", "Thumb");
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMTarget() { }

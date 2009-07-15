@@ -30,10 +30,13 @@ extern "C" int PowerPCTargetMachineModule;
 int PowerPCTargetMachineModule = 0;
 
 // Register the targets
+extern Target ThePPC32Target;
 static RegisterTarget<PPC32TargetMachine>
-X("ppc32", "PowerPC 32");
+X(ThePPC32Target, "ppc32", "PowerPC 32");
+
+extern Target ThePPC64Target;
 static RegisterTarget<PPC64TargetMachine>
-Y("ppc64", "PowerPC 64");
+Y(ThePPC64Target, "ppc64", "PowerPC 64");
 
 // Force static initialization.
 extern "C" void LLVMInitializePowerPCTarget() { }

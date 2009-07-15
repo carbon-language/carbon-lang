@@ -19,6 +19,7 @@
 
 #include "llvm/Module.h"
 #include "llvm/Support/Registry.h"
+#include "llvm/Target/TargetRegistry.h"
 
 namespace llvm {
   class Module;
@@ -76,12 +77,13 @@ namespace llvm {
 
   template<class TargetMachineImpl>
   struct RegisterTarget {
-    RegisterTarget(const char *Name, const char *ShortDesc)
+    RegisterTarget(Target &T, const char *Name, const char *ShortDesc)
       : Entry(Name, ShortDesc, &Allocator,
               &TargetMachineImpl::getModuleMatchQuality,
               &TargetMachineImpl::getJITMatchQuality),
-        Node(Entry)
-    {}
+        Node(Entry) {
+      TargetRegistry::RegisterTargetMachine(T, &Allocator);
+    }
 
   private:
     TargetMachineRegistry::entry Entry;

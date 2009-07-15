@@ -58,7 +58,8 @@ extern "C" int CBackendTargetMachineModule;
 int CBackendTargetMachineModule = 0;
 
 // Register the target.
-static RegisterTarget<CTargetMachine> X("c", "C backend");
+extern Target TheCBackendTarget;
+static RegisterTarget<CTargetMachine> X(TheCBackendTarget, "c", "C backend");
 
 // Force static initialization.
 extern "C" void LLVMInitializeCBackendTarget() { }

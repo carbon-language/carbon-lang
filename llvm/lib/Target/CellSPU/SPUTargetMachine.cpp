@@ -23,10 +23,11 @@
 
 using namespace llvm;
 
+extern Target TheCellSPUTarget;
 namespace {
   // Register the targets
   RegisterTarget<SPUTargetMachine>
-  CELLSPU("cellspu", "STI CBEA Cell SPU [experimental]");
+  CELLSPU(TheCellSPUTarget, "cellspu", "STI CBEA Cell SPU [experimental]");
 }
 
 // No assembler printer by default

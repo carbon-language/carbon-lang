@@ -22,7 +22,9 @@
 using namespace llvm;
 
 // Register the targets
-static RegisterTarget<AlphaTargetMachine> X("alpha", "Alpha [experimental]");
+extern Target TheAlphaTarget;
+static RegisterTarget<AlphaTargetMachine> X(TheAlphaTarget, "alpha", 
+                                            "Alpha [experimental]");
 
 // No assembler printer by default
 AlphaTargetMachine::AsmPrinterCtorFn AlphaTargetMachine::AsmPrinterCtor = 0;

@@ -26,9 +26,10 @@ using namespace llvm;
 extern "C" int XCoreTargetMachineModule;
 int XCoreTargetMachineModule = 0;
 
+extern Target TheXCoreTarget;
 namespace {
   // Register the target.
-  RegisterTarget<XCoreTargetMachine> X("xcore", "XCore");
+  RegisterTarget<XCoreTargetMachine> X(TheXCoreTarget, "xcore", "XCore");
 }
 
 // Force static initialization.

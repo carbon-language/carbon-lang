@@ -55,7 +55,8 @@ namespace {
 extern "C" int MSILTargetMachineModule;
 int MSILTargetMachineModule = 0;
 
-static RegisterTarget<MSILTarget> X("msil", "MSIL backend");
+extern Target TheMSILTarget;
+static RegisterTarget<MSILTarget> X(TheMSILTarget, "msil", "MSIL backend");
 
 // Force static initialization.
 extern "C" void LLVMInitializeMSILTarget() { }

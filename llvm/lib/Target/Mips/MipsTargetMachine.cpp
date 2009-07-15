@@ -28,8 +28,12 @@ extern "C" int MipsTargetMachineModule;
 int MipsTargetMachineModule = 0;
 
 // Register the target.
-static RegisterTarget<MipsTargetMachine>    X("mips", "Mips");
-static RegisterTarget<MipselTargetMachine>  Y("mipsel", "Mipsel");
+extern Target TheMipsTarget;
+static RegisterTarget<MipsTargetMachine>    X(TheMipsTarget, "mips", "Mips");
+
+extern Target TheMipselTarget;
+static RegisterTarget<MipselTargetMachine>  Y(TheMipselTarget, "mipsel", 
+                                              "Mipsel");
 
 MipsTargetMachine::AsmPrinterCtorFn MipsTargetMachine::AsmPrinterCtor = 0;
 

@@ -17,6 +17,7 @@
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
 #include "X86Subtarget.h"
+#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
 /// createX86CodePrinterPass - Returns a pass that prints the X86 assembly code
@@ -24,7 +25,7 @@ using namespace llvm;
 /// machine description.
 ///
 FunctionPass *llvm::createX86CodePrinterPass(formatted_raw_ostream &o,
-                                             X86TargetMachine &tm,
+                                             TargetMachine &tm,
                                              bool verbose) {
   const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
 
@@ -45,4 +46,10 @@ extern "C" int X86AsmPrinterForceLink;
 int X86AsmPrinterForceLink = 0;
 
 // Force static initialization.
-extern "C" void LLVMInitializeX86AsmPrinter() { }
+extern "C" void LLVMInitializeX86AsmPrinter() { 
+  extern Target TheX86_32Target;
+  TargetRegistry::RegisterAsmPrinter(TheX86_32Target, createX86CodePrinterPass);
+
+  extern Target TheX86_64Target;
+  TargetRegistry::RegisterAsmPrinter(TheX86_64Target, createX86CodePrinterPass);
+}

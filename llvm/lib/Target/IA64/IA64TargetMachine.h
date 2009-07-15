@@ -37,7 +37,7 @@ protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                            IA64TargetMachine &tm,
+                                            TargetMachine &tm,
                                             bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
