@@ -59,6 +59,10 @@ namespace {
 
     virtual void SwitchInputAssemblyFile(const char *FileName);
 
+    virtual void DumpSymbolsandMacros(const char *FileName);
+
+    virtual void LoadSymbolsandMacros(const char *FileName);
+
     virtual void EmitBytes(const char *Data, unsigned Length);
 
     virtual void EmitValue(const MCValue &Value, unsigned Size);
@@ -141,6 +145,14 @@ void MCAsmStreamer::AbortAssembly(const char *AbortReason) {
 
 void MCAsmStreamer::SwitchInputAssemblyFile(const char *FileName) {
   OS << ".include" << ' ' << FileName << '\n';
+}
+
+void MCAsmStreamer::DumpSymbolsandMacros(const char *FileName) {
+  OS << ".dump" << ' ' << FileName << '\n';
+}
+
+void MCAsmStreamer::LoadSymbolsandMacros(const char *FileName) {
+  OS << ".load" << ' ' << FileName << '\n';
 }
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,

@@ -537,6 +537,10 @@ bool AsmParser::ParseStatement() {
       return ParseDirectiveAbort();
     if (!strcmp(IDVal, ".include"))
       return ParseDirectiveInclude();
+    if (!strcmp(IDVal, ".dump"))
+      return ParseDirectiveDarwinDumpOrLoad(/*IsDump=*/true);
+    if (!strcmp(IDVal, ".load"))
+      return ParseDirectiveDarwinDumpOrLoad(/*IsLoad=*/false);
 
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
@@ -1179,6 +1183,31 @@ bool AsmParser::ParseDirectiveInclude() {
   Lexer.Lex();
 
   Out.SwitchInputAssemblyFile(Str);
+
+  return false;
+}
+
+/// ParseDirectiveDarwinDumpOrLoad
+///  ::= ( .dump | .load ) "filename"
+bool AsmParser::ParseDirectiveDarwinDumpOrLoad(bool IsDump) {
+  const char *Str;
+
+  if (Lexer.isNot(asmtok::String))
+    return TokError("expected string in '.dump' or '.load' directive");
+  
+  Str = Lexer.getCurStrVal();
+
+  Lexer.Lex();
+
+  if (Lexer.isNot(asmtok::EndOfStatement))
+    return TokError("unexpected token in '.dump' or '.load' directive");
+  
+  Lexer.Lex();
+
+  if (IsDump)
+    Out.DumpSymbolsandMacros(Str);
+  else
+    Out.LoadSymbolsandMacros(Str);
 
   return false;
 }
