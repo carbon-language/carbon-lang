@@ -988,11 +988,12 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
       EmitAlignment(4);
+      const FnStubInfo &Info = I->second;
       const char *p = I->getKeyData();
+      
       bool hasQuote = p[0]=='\"';
-      printSuffixedName(p, "$stub");
-      O << ":\n";
-      O << "\t.indirect_symbol " << p << '\n';
+      O << Info.Stub << ":\n";
+      O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << "\tmflr r0\n";
       O << "\tbcl 20,31,";
       if (hasQuote)
@@ -1006,9 +1007,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
         O << "L0$" << p;
       O << ":\n";
       O << "\tmflr r11\n";
-      O << "\taddis r11,r11,ha16(";
-      printSuffixedName(p, "$lazy_ptr");
-      O << "-";
+      O << "\taddis r11,r11,ha16(" << Info.LazyPtr << "-";
       if (hasQuote)
         O << "\"L0$" << &p[1];
       else
@@ -1019,8 +1018,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
         O << "\tldu r12,lo16(";
       else
         O << "\tlwzu r12,lo16(";
-      printSuffixedName(p, "$lazy_ptr");
-      O << "-";
+      O << Info.LazyPtr << "-";
       if (hasQuote)
         O << "\"L0$" << &p[1];
       else
@@ -1029,9 +1027,8 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer");
-      printSuffixedName(p, "$lazy_ptr");
-      O << ":\n";
-      O << "\t.indirect_symbol " << p << '\n';
+      O << Info.LazyPtr << ":\n";
+      O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       if (isPPC64)
         O << "\t.quad dyld_stub_binding_helper\n";
       else
@@ -1043,25 +1040,20 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
       EmitAlignment(4);
-      const char *p = I->getKeyData();
-      printSuffixedName(p, "$stub");
-      O << ":\n";
-      O << "\t.indirect_symbol " << p << '\n';
-      O << "\tlis r11,ha16(";
-      printSuffixedName(p, "$lazy_ptr");
-      O << ")\n";
+      const FnStubInfo &Info = I->second;
+      O << Info.Stub << ":\n";
+      O << "\t.indirect_symbol " << I->getKeyData() << '\n';
+      O << "\tlis r11,ha16(" << Info.LazyPtr << ")\n";
       if (isPPC64)
         O << "\tldu r12,lo16(";
       else
         O << "\tlwzu r12,lo16(";
-      printSuffixedName(p, "$lazy_ptr");
-      O << ")(r11)\n";
+      O << Info.LazyPtr << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer");
-      printSuffixedName(p, "$lazy_ptr");
-      O << ":\n";
-      O << "\t.indirect_symbol " << p << '\n';
+      O << Info.LazyPtr << ":\n";
+      O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       if (isPPC64)
         O << "\t.quad dyld_stub_binding_helper\n";
       else
