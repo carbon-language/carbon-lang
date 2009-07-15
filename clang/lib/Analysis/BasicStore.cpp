@@ -521,10 +521,6 @@ Store BasicStoreManager::getInitialStore() {
       }
     }
     else if (VarDecl* VD = dyn_cast<VarDecl>(ND)) {
-      // Punt on static variables for now.
-      if (VD->getStorageClass() == VarDecl::Static)
-        continue;
-      
       // Only handle simple types that we can symbolicate.
       if (!SymbolManager::canSymbolicate(VD->getType()))
         continue;

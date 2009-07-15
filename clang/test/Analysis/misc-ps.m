@@ -388,3 +388,30 @@ void test_trivial_symbolic_comparison(int *x) {
   }
 }
 
+// Test for:
+//  <rdar://problem/7062158> false positive null dereference due to
+//   BasicStoreManager not tracking *static* globals
+//
+// This just tests the proper tracking of symbolic values for globals (both 
+// static and non-static).
+//
+static int* x_rdar_7062158;
+void rdar_7062158() {
+  int *current = x_rdar_7062158;
+  if (current == x_rdar_7062158)
+    return;
+    
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning  
+}
+
+int* x_rdar_7062158_2;
+void rdar_7062158_2() {
+  int *current = x_rdar_7062158_2;
+  if (current == x_rdar_7062158_2)
+    return;
+    
+  int *p = 0;
+  *p = 0xDEADBEEF; // no-warning  
+}
+
