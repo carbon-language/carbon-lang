@@ -98,17 +98,6 @@ bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM,
   return false;
 }
 
-bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                          CodeGenOpt::Level OptLevel,
-                                          bool Verbose,
-                                          formatted_raw_ostream &Out) {
-  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
-  if (!Printer)
-    llvm_report_error("unable to create assembly printer");
-  PM.add(Printer);
-  return false;
-}
-
 bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
                                       MachineCodeEmitter &MCE) {

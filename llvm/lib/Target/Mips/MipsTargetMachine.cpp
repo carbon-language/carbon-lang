@@ -94,15 +94,3 @@ addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel)
   PM.add(createMipsDelaySlotFillerPass(*this));
   return true;
 }
-
-// Implements the AssemblyEmitter for the target. Must return
-// true if AssemblyEmitter is supported
-bool MipsTargetMachine::
-addAssemblyEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel, 
-                   bool Verbose, formatted_raw_ostream &Out)  {
-  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
-  if (!Printer)
-    llvm_report_error("unable to create assembly printer");
-  PM.add(Printer);
-  return false;
-}

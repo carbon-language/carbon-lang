@@ -64,9 +64,6 @@ public:
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPreRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPostRegAlloc(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM,
-                                  CodeGenOpt::Level OptLevel, 
-                                  bool Verbose, formatted_raw_ostream &Out);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
                               MachineCodeEmitter &MCE);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,

@@ -61,16 +61,6 @@ bool AlphaTargetMachine::addPreEmitPass(PassManagerBase &PM,
   PM.add(createAlphaLLRPPass(*this));
   return false;
 }
-bool AlphaTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                            CodeGenOpt::Level OptLevel,
-                                            bool Verbose,
-                                            formatted_raw_ostream &Out) {
-  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
-  if (!Printer)
-    llvm_report_error("unable to create assembly printer");
-  PM.add(Printer);
-  return false;
-}
 bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                         CodeGenOpt::Level OptLevel,
                                         MachineCodeEmitter &MCE) {

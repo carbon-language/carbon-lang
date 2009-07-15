@@ -181,17 +181,6 @@ bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM,
   return true;  // -print-machineinstr should print after this.
 }
 
-bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                          CodeGenOpt::Level OptLevel,
-                                          bool Verbose,
-                                          formatted_raw_ostream &Out) {
-  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
-  if (!Printer)
-    llvm_report_error("unable to create assembly printer");
-  PM.add(Printer);
-  return false;
-}
-
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
                                       MachineCodeEmitter &MCE) {

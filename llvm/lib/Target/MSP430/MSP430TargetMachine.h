@@ -57,9 +57,6 @@ public:
   }
 
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM,
-                                  CodeGenOpt::Level OptLevel, bool Verbose,
-                                  formatted_raw_ostream &Out);
 }; // MSP430TargetMachine.
 
 } // end namespace llvm

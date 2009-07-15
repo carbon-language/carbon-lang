@@ -63,14 +63,3 @@ bool MSP430TargetMachine::addInstSelector(PassManagerBase &PM,
   return false;
 }
 
-bool MSP430TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                             CodeGenOpt::Level OptLevel,
-                                             bool Verbose,
-                                             formatted_raw_ostream &Out) {
-  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
-  if (!Printer)
-    llvm_report_error("unable to create assembly printer");
-  PM.add(Printer);
-  return false;
-}
-

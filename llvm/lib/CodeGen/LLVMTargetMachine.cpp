@@ -92,6 +92,17 @@ LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   return FileModel::Error;
 }
 
+bool LLVMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
+                                           CodeGenOpt::Level OptLevel,
+                                           bool Verbose,
+                                           formatted_raw_ostream &Out) {
+  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  if (!Printer)
+    llvm_report_error("unable to create assembly printer");
+  PM.add(Printer);
+  return false;
+}
+
 /// addPassesToEmitFileFinish - If the passes to emit the specified file had to
 /// be split up (e.g., to add an object writer pass), this method can be used to
 /// finish up adding passes to emit the file, if necessary.

@@ -129,18 +129,6 @@ bool ARMBaseTargetMachine::addPreEmitPass(PassManagerBase &PM,
   return true;
 }
 
-bool ARMBaseTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                              CodeGenOpt::Level OptLevel,
-                                              bool Verbose,
-                                              formatted_raw_ostream &Out) {
-  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
-  if (!Printer)
-    llvm_report_error("unable to create assembly printer");
-  PM.add(Printer);
-  return false;
-}
-
-
 bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           MachineCodeEmitter &MCE) {

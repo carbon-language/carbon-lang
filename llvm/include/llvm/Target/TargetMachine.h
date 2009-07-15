@@ -402,15 +402,6 @@ public:
   }
   
   
-  /// addAssemblyEmitter - This pass should be overridden by the target to add
-  /// the asmprinter, if asm emission is supported.  If this is not supported,
-  /// 'true' should be returned.
-  virtual bool addAssemblyEmitter(PassManagerBase &, CodeGenOpt::Level,
-                                  bool /* VerboseAsmDefault */,
-                                  formatted_raw_ostream &) {
-    return true;
-  }
-  
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be
   /// returned.
@@ -454,6 +445,14 @@ public:
   /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
   /// on this target.  User flag overrides.
   virtual bool getEnableTailMergeDefault() const { return true; }
+
+  /// addAssemblyEmitter - Helper function which creates a target specific
+  /// assembly printer, if available.
+  ///
+  /// \return Returns 'false' on success.
+  bool addAssemblyEmitter(PassManagerBase &, CodeGenOpt::Level,
+                          bool /* VerboseAsmDefault */,
+                          formatted_raw_ostream &);
 };
 
 } // End llvm namespace
