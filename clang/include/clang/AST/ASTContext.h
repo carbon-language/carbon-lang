@@ -376,7 +376,7 @@ public:
 
   /// getObjCObjectPointerType - Return a ObjCObjectPointerType type for the
   /// given interface decl and the conforming protocol list.
-  QualType getObjCObjectPointerType(QualType OIT = QualType(),
+  QualType getObjCObjectPointerType(QualType OIT,
                                     ObjCProtocolDecl **ProtocolList = 0,
                                     unsigned NumProtocols = 0);
   
