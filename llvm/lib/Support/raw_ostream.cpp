@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <ostream>
 
 #if defined(HAVE_UNISTD_H)
@@ -285,7 +286,8 @@ raw_fd_ostream::~raw_fd_ostream() {
 void raw_fd_ostream::write_impl(const char *Ptr, unsigned Size) {
   assert (FD >= 0 && "File already closed.");
   pos += Size;
-  ::write(FD, Ptr, Size);
+  if (::write(FD, Ptr, Size) != (ssize_t) Size)
+    llvm_report_error("IO failure writing to output stream.");
 }
 
 void raw_fd_ostream::close() {
@@ -298,7 +300,7 @@ void raw_fd_ostream::close() {
 
 uint64_t raw_fd_ostream::seek(uint64_t off) {
   flush();
-  pos = lseek(FD, off, SEEK_SET);
+  pos = ::lseek(FD, off, SEEK_SET);
   return pos;  
 }
 
