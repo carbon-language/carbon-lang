@@ -219,7 +219,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
   typedef std::map<const Function*, X86MachineFunctionInfo> FMFInfoMap;
   FMFInfoMap FunctionInfoMap;
 
-  void decorateName(std::string& Name, const GlobalValue* GV);
+  void DecorateCygMingName(std::string &Name, const GlobalValue *GV);
 };
 
 } // end namespace llvm

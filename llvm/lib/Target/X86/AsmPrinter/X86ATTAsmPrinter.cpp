@@ -102,15 +102,17 @@ static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
   return Info;
 }
 
-/// decorateName - Query FunctionInfoMap and use this information for various
-/// name decoration.
-void X86ATTAsmPrinter::decorateName(std::string &Name,
-                                    const GlobalValue *GV) {
+/// DecorateCygMingName - Query FunctionInfoMap and use this information for
+/// various name decorations for Cygwin and MingW.
+void X86ATTAsmPrinter::DecorateCygMingName(std::string &Name,
+                                           const GlobalValue *GV) {
+  assert(Subtarget->isTargetCygMing() && "This is only for cygwin and mingw");
+  
   const Function *F = dyn_cast<Function>(GV);
   if (!F) return;
 
   // Save function name for later type emission.
-  if (Subtarget->isTargetCygMing() && F->isDeclaration())
+  if (F->isDeclaration())
     CygMingStubs.insert(Name);
   
   // We don't want to decorate non-stdcall or non-fastcall functions right now
@@ -118,13 +120,10 @@ void X86ATTAsmPrinter::decorateName(std::string &Name,
   if (CC != CallingConv::X86_StdCall && CC != CallingConv::X86_FastCall)
     return;
 
-  // Decorate names only when we're targeting Cygwin/Mingw32 targets
-  if (!Subtarget->isTargetCygMing())
-    return;
-
-  FMFInfoMap::const_iterator info_item = FunctionInfoMap.find(F);
 
   const X86MachineFunctionInfo *Info;
+  
+  FMFInfoMap::const_iterator info_item = FunctionInfoMap.find(F);
   if (info_item == FunctionInfoMap.end()) {
     // Calculate apropriate function info and populate map
     FunctionInfoMap[F] = calculateFunctionInfo(F, TM.getTargetData());
@@ -164,7 +163,8 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   unsigned FnAlign = MF.getAlignment();
   const Function *F = MF.getFunction();
 
-  decorateName(CurrentFnName, F);
+  if (Subtarget->isTargetCygMing())
+    DecorateCygMingName(CurrentFnName, F);
 
   SwitchToSection(TAI->SectionForGlobal(F));
   switch (F->getLinkage()) {
@@ -316,7 +316,8 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
       Suffix = "$non_lazy_ptr";
     
     std::string Name = Mang->getMangledName(GV, Suffix, Suffix[0] != '\0');
-    decorateName(Name, GV);
+    if (Subtarget->isTargetCygMing())
+      DecorateCygMingName(Name, GV);
     
     // Handle dllimport linkage.
     if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
