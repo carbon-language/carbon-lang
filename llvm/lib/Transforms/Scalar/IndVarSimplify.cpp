@@ -75,24 +75,24 @@ namespace {
     bool Changed;
   public:
 
-   static char ID; // Pass identification, replacement for typeid
-   IndVarSimplify() : LoopPass(&ID) {}
+    static char ID; // Pass identification, replacement for typeid
+    IndVarSimplify() : LoopPass(&ID) {}
 
-   virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
+    virtual bool runOnLoop(Loop *L, LPPassManager &LPM);
 
-   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-     AU.addRequired<DominatorTree>();
-     AU.addRequired<LoopInfo>();
-     AU.addRequired<ScalarEvolution>();
-     AU.addRequiredID(LoopSimplifyID);
-     AU.addRequiredID(LCSSAID);
-     AU.addRequired<IVUsers>();
-     AU.addPreserved<ScalarEvolution>();
-     AU.addPreservedID(LoopSimplifyID);
-     AU.addPreservedID(LCSSAID);
-     AU.addPreserved<IVUsers>();
-     AU.setPreservesCFG();
-   }
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<DominatorTree>();
+      AU.addRequired<LoopInfo>();
+      AU.addRequired<ScalarEvolution>();
+      AU.addRequiredID(LoopSimplifyID);
+      AU.addRequiredID(LCSSAID);
+      AU.addRequired<IVUsers>();
+      AU.addPreserved<ScalarEvolution>();
+      AU.addPreservedID(LoopSimplifyID);
+      AU.addPreservedID(LCSSAID);
+      AU.addPreserved<IVUsers>();
+      AU.setPreservesCFG();
+    }
 
   private:
 
