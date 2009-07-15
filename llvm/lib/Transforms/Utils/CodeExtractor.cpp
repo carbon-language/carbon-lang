@@ -372,8 +372,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       StructValues.push_back(*i);
     } else {
       AllocaInst *alloca =
-        new AllocaInst(*codeReplacer->getContext(), 
-                       (*i)->getType(), 0, (*i)->getName()+".loc",
+        new AllocaInst((*i)->getType(), 0, (*i)->getName()+".loc",
                        codeReplacer->getParent()->begin()->begin());
       ReloadOutputs.push_back(alloca);
       params.push_back(alloca);
@@ -390,7 +389,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     // Allocate a struct at the beginning of this function
     Type *StructArgTy = Context->getStructType(ArgTypes);
     Struct =
-      new AllocaInst(*codeReplacer->getContext(), StructArgTy, 0, "structArg",
+      new AllocaInst(StructArgTy, 0, "structArg",
                      codeReplacer->getParent()->begin()->begin());
     params.push_back(Struct);
 

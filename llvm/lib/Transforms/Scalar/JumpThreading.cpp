@@ -912,7 +912,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
     
     // We found a use of I outside of BB.  Create a new stack slot to
     // break this inter-block usage pattern.
-    DemoteRegToStack(*Context, *I);
+    DemoteRegToStack(*I);
   }
  
   // We are going to have to map operands from the original BB block to the new

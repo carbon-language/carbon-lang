@@ -828,7 +828,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     Type *NewTy = Context->getArrayType(MI->getAllocatedType(),
                                  NElements->getZExtValue());
     MallocInst *NewMI =
-      new MallocInst(*Context, NewTy, Context->getNullValue(Type::Int32Ty),
+      new MallocInst(NewTy, Context->getNullValue(Type::Int32Ty),
                      MI->getAlignment(), MI->getName(), MI);
     Value* Indices[2];
     Indices[0] = Indices[1] = Context->getNullValue(Type::Int32Ty);
@@ -1291,7 +1291,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
                          GV->isThreadLocal());
     FieldGlobals.push_back(NGV);
     
-    MallocInst *NMI = new MallocInst(*Context, FieldTy, MI->getArraySize(),
+    MallocInst *NMI = new MallocInst(FieldTy, MI->getArraySize(),
                                      MI->getName() + ".f" + utostr(FieldNo),MI);
     FieldMallocs.push_back(NMI);
     new StoreInst(NMI, NGV, MI);
@@ -1507,7 +1507,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
       // structs.  malloc [100 x struct],1 -> malloc struct, 100
       if (const ArrayType *AT = dyn_cast<ArrayType>(MI->getAllocatedType())) {
         MallocInst *NewMI = 
-          new MallocInst(*Context, AllocSTy, 
+          new MallocInst(AllocSTy, 
                   Context->getConstantInt(Type::Int32Ty, AT->getNumElements()),
                          "", MI);
         NewMI->takeName(MI);
@@ -1703,8 +1703,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       Instruction* FirstI = GS.AccessingFunction->getEntryBlock().begin();
       const Type* ElemTy = GV->getType()->getElementType();
       // FIXME: Pass Global's alignment when globals have alignment
-      AllocaInst* Alloca = new AllocaInst(*Context, ElemTy, NULL,
-                                          GV->getName(), FirstI);
+      AllocaInst* Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), FirstI);
       if (!isa<UndefValue>(GV->getInitializer()))
         new StoreInst(GV->getInitializer(), Alloca, FirstI);
 

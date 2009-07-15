@@ -29,8 +29,7 @@ using namespace llvm;
 /// invalidating the SSA information for the value.  It returns the pointer to
 /// the alloca inserted to create a stack slot for I.
 ///
-AllocaInst* llvm::DemoteRegToStack(LLVMContext &Context, 
-                                   Instruction &I, bool VolatileLoads,
+AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
                                    Instruction *AllocaPoint) {
   if (I.use_empty()) {
     I.eraseFromParent();
@@ -40,11 +39,11 @@ AllocaInst* llvm::DemoteRegToStack(LLVMContext &Context,
   // Create a stack slot to hold the value.
   AllocaInst *Slot;
   if (AllocaPoint) {
-    Slot = new AllocaInst(Context, I.getType(), 0,
+    Slot = new AllocaInst(I.getType(), 0,
                           I.getName()+".reg2mem", AllocaPoint);
   } else {
     Function *F = I.getParent()->getParent();
-    Slot = new AllocaInst(Context, I.getType(), 0, I.getName()+".reg2mem",
+    Slot = new AllocaInst(I.getType(), 0, I.getName()+".reg2mem",
                           F->getEntryBlock().begin());
   }
   
@@ -109,8 +108,7 @@ AllocaInst* llvm::DemoteRegToStack(LLVMContext &Context,
 /// DemotePHIToStack - This function takes a virtual register computed by a phi
 /// node and replaces it with a slot in the stack frame, allocated via alloca.
 /// The phi node is deleted and it returns the pointer to the alloca inserted.
-AllocaInst* llvm::DemotePHIToStack(LLVMContext &Context, PHINode *P,
-                                   Instruction *AllocaPoint) {
+AllocaInst* llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
   if (P->use_empty()) {
     P->eraseFromParent();    
     return 0;                
@@ -119,11 +117,11 @@ AllocaInst* llvm::DemotePHIToStack(LLVMContext &Context, PHINode *P,
   // Create a stack slot to hold the value.
   AllocaInst *Slot;
   if (AllocaPoint) {
-    Slot = new AllocaInst(Context, P->getType(), 0,
+    Slot = new AllocaInst(P->getType(), 0,
                           P->getName()+".reg2mem", AllocaPoint);
   } else {
     Function *F = P->getParent()->getParent();
-    Slot = new AllocaInst(Context, P->getType(), 0, P->getName()+".reg2mem",
+    Slot = new AllocaInst(P->getType(), 0, P->getName()+".reg2mem",
                           F->getEntryBlock().begin());
   }
   

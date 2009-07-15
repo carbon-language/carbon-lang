@@ -248,7 +248,7 @@ void GlobalRandomCounterOpt::PrepFunction(Function* F) {
   //make a local temporary to cache the global
   BasicBlock& bb = F->getEntryBlock();
   BasicBlock::iterator InsertPt = bb.begin();
-  AI = new AllocaInst(*F->getContext(), T, 0, "localcounter", InsertPt);
+  AI = new AllocaInst(T, 0, "localcounter", InsertPt);
   LoadInst* l = new LoadInst(Counter, "counterload", InsertPt);
   new StoreInst(l, AI, InsertPt);
   

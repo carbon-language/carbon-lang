@@ -1817,8 +1817,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *Size = getFnValueByID(Record[1], Type::Int32Ty);
       unsigned Align = Record[2];
       if (!Ty || !Size) return Error("Invalid MALLOC record");
-      I = new MallocInst(Context, Ty->getElementType(), Size,
-                         (1 << Align) >> 1);
+      I = new MallocInst(Ty->getElementType(), Size, (1 << Align) >> 1);
       break;
     }
     case bitc::FUNC_CODE_INST_FREE: { // FREE: [op, opty]
@@ -1838,8 +1837,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *Size = getFnValueByID(Record[1], Type::Int32Ty);
       unsigned Align = Record[2];
       if (!Ty || !Size) return Error("Invalid ALLOCA record");
-      I = new AllocaInst(Context, Ty->getElementType(), Size,
-                         (1 << Align) >> 1);
+      I = new AllocaInst(Ty->getElementType(), Size, (1 << Align) >> 1);
       break;
     }
     case bitc::FUNC_CODE_INST_LOAD: { // LOAD: [opty, op, align, vol]

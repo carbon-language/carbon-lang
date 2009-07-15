@@ -302,16 +302,14 @@ bool SROA::performScalarRepl(Function &F) {
         DOUT << "CONVERT TO VECTOR: " << *AI << "  TYPE = " << *VectorTy <<"\n";
         
         // Create and insert the vector alloca.
-        NewAI = new AllocaInst(*Context, VectorTy, 0, "", 
-                               AI->getParent()->begin());
+        NewAI = new AllocaInst(VectorTy, 0, "",  AI->getParent()->begin());
         ConvertUsesToScalar(AI, NewAI, 0);
       } else {
         DOUT << "CONVERT TO SCALAR INTEGER: " << *AI << "\n";
         
         // Create and insert the integer alloca.
         const Type *NewTy = Context->getIntegerType(AllocaSize*8);
-        NewAI = new AllocaInst(*Context, NewTy, 0, "", 
-                               AI->getParent()->begin());
+        NewAI = new AllocaInst(NewTy, 0, "", AI->getParent()->begin());
         ConvertUsesToScalar(AI, NewAI, 0);
       }
       NewAI->takeName(AI);
@@ -336,8 +334,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
     for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
-      AllocaInst *NA = new AllocaInst(*Context,
-                                      ST->getContainedType(i), 0, 
+      AllocaInst *NA = new AllocaInst(ST->getContainedType(i), 0, 
                                       AI->getAlignment(),
                                       AI->getName() + "." + utostr(i), AI);
       ElementAllocas.push_back(NA);
@@ -348,7 +345,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
     ElementAllocas.reserve(AT->getNumElements());
     const Type *ElTy = AT->getElementType();
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
-      AllocaInst *NA = new AllocaInst(*Context, ElTy, 0, AI->getAlignment(),
+      AllocaInst *NA = new AllocaInst(ElTy, 0, AI->getAlignment(),
                                       AI->getName() + "." + utostr(i), AI);
       ElementAllocas.push_back(NA);
       WorkList.push_back(NA);  // Add to worklist for recursive processing

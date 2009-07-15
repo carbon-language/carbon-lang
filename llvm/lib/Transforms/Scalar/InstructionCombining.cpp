@@ -7891,9 +7891,9 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   
   AllocationInst *New;
   if (isa<MallocInst>(AI))
-    New = new MallocInst(*Context, CastElTy, Amt, AI.getAlignment());
+    New = new MallocInst(CastElTy, Amt, AI.getAlignment());
   else
-    New = new AllocaInst(*Context, CastElTy, Amt, AI.getAlignment());
+    New = new AllocaInst(CastElTy, Amt, AI.getAlignment());
   InsertNewInstBefore(New, AI);
   New->takeName(&AI);
   
@@ -11368,12 +11368,10 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
 
       // Create and insert the replacement instruction...
       if (isa<MallocInst>(AI))
-        New = new MallocInst(*Context, NewTy, 0,
-                             AI.getAlignment(), AI.getName());
+        New = new MallocInst(NewTy, 0, AI.getAlignment(), AI.getName());
       else {
         assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
-        New = new AllocaInst(*Context, NewTy, 0,
-                             AI.getAlignment(), AI.getName());
+        New = new AllocaInst(NewTy, 0, AI.getAlignment(), AI.getName());
       }
 
       InsertNewInstBefore(New, AI);

@@ -3182,9 +3182,9 @@ bool LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS,
     return Error(SizeLoc, "element count must be i32");
 
   if (Opc == Instruction::Malloc)
-    Inst = new MallocInst(Context, Ty, Size, Alignment);
+    Inst = new MallocInst(Ty, Size, Alignment);
   else
-    Inst = new AllocaInst(Context, Ty, Size, Alignment);
+    Inst = new AllocaInst(Ty, Size, Alignment);
   return false;
 }
 

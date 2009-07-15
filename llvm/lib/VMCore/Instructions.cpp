@@ -712,25 +712,21 @@ static Value *getAISize(LLVMContext &Context, Value *Amt) {
   return Amt;
 }
 
-AllocationInst::AllocationInst(LLVMContext &C, 
-                               const Type *Ty, Value *ArraySize, unsigned iTy,
+AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                Instruction *InsertBefore)
-  : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
-                     getAISize(Context, ArraySize), InsertBefore),
-    Context(C) {
+  : UnaryInstruction(Ty->getContext().getPointerTypeUnqual(Ty), iTy,
+                     getAISize(Ty->getContext(), ArraySize), InsertBefore) {
   setAlignment(Align);
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
   setName(Name);
 }
 
-AllocationInst::AllocationInst(LLVMContext &C,
-                               const Type *Ty, Value *ArraySize, unsigned iTy,
+AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                BasicBlock *InsertAtEnd)
-  : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
-                     getAISize(Context, ArraySize), InsertAtEnd),
-    Context(C) {
+  : UnaryInstruction(Ty->getContext().getPointerTypeUnqual(Ty), iTy,
+                     getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
   setAlignment(Align);
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
   setName(Name);
@@ -757,7 +753,7 @@ const Type *AllocationInst::getAllocatedType() const {
 }
 
 AllocaInst::AllocaInst(const AllocaInst &AI)
-  : AllocationInst(AI.Context, AI.getType()->getElementType(),    
+  : AllocationInst(AI.getType()->getElementType(),    
                    (Value*)AI.getOperand(0), Instruction::Alloca,
                    AI.getAlignment()) {
 }
@@ -775,7 +771,7 @@ bool AllocaInst::isStaticAlloca() const {
 }
 
 MallocInst::MallocInst(const MallocInst &MI)
-  : AllocationInst(MI.Context, MI.getType()->getElementType(), 
+  : AllocationInst(MI.getType()->getElementType(), 
                    (Value*)MI.getOperand(0), Instruction::Malloc,
                    MI.getAlignment()) {
 }

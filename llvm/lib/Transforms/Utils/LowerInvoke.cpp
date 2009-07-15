@@ -417,7 +417,7 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
       // If we decided we need a spill, do it.
       if (NeedsSpill) {
         ++NumSpilled;
-        DemoteRegToStack(*Context, *Inst, true);
+        DemoteRegToStack(*Inst, true);
       }
     }
 }
@@ -470,7 +470,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // alloca because the value needs to be live across invokes.
     unsigned Align = TLI ? TLI->getJumpBufAlignment() : 0;
     AllocaInst *JmpBuf =
-      new AllocaInst(*Context, JBLinkTy, 0, Align,
+      new AllocaInst(JBLinkTy, 0, Align,
                      "jblink", F.begin()->begin());
 
     std::vector<Value*> Idx;
@@ -494,7 +494,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
     // Create an alloca which keeps track of which invoke is currently
     // executing.  For normal calls it contains zero.
-    AllocaInst *InvokeNum = new AllocaInst(*Context, Type::Int32Ty, 0,
+    AllocaInst *InvokeNum = new AllocaInst(Type::Int32Ty, 0,
                                            "invokenum",EntryBB->begin());
     new StoreInst(Context->getConstantInt(Type::Int32Ty, 0), InvokeNum, true,
                   EntryBB->getTerminator());

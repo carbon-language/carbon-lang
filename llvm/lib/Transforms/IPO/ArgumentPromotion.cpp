@@ -755,7 +755,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
       // Just add all the struct element types.
       const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
-      Value *TheAlloca = new AllocaInst(*Context, AgTy, 0, "", InsertPt);
+      Value *TheAlloca = new AllocaInst(AgTy, 0, "", InsertPt);
       const StructType *STy = cast<StructType>(AgTy);
       Value *Idxs[2] = { Context->getConstantInt(Type::Int32Ty, 0), 0 };
 

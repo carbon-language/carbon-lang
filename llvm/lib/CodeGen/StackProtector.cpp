@@ -154,7 +154,7 @@ bool StackProtector::InsertStackProtectors() {
       BasicBlock &Entry = F->getEntryBlock();
       Instruction *InsPt = &Entry.front();
 
-      AI = new AllocaInst(*Context, PtrTy, "StackGuardSlot", InsPt);
+      AI = new AllocaInst(PtrTy, "StackGuardSlot", InsPt);
       LoadInst *LI = new LoadInst(StackGuardVar, "StackGuard", false, InsPt);
 
       Value *Args[] = { LI, AI };

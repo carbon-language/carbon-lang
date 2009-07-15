@@ -110,8 +110,8 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   DOUT << "SretPromotion: sret argument will be promoted\n";
   NumSRET++;
   // [1] Replace use of sret parameter 
-  AllocaInst *TheAlloca = new AllocaInst (*Context, STy, NULL, "mrv", 
-                                          F->getEntryBlock().begin());
+  AllocaInst *TheAlloca = new AllocaInst(STy, NULL, "mrv", 
+                                         F->getEntryBlock().begin());
   Value *NFirstArg = F->arg_begin();
   NFirstArg->replaceAllUsesWith(TheAlloca);
 
