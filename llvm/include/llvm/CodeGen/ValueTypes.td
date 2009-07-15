@@ -44,19 +44,17 @@ def v4i16  : ValueType<64 , 20>;   //  4 x i16 vector value
 def v8i16  : ValueType<128, 21>;   //  8 x i16 vector value
 def v16i16 : ValueType<256, 22>;   // 16 x i16 vector value
 def v2i32  : ValueType<64 , 23>;   //  2 x i32 vector value
-def v3i32  : ValueType<96 , 24>;   //  3 x i32 vector value
-def v4i32  : ValueType<128, 25>;   //  4 x i32 vector value
-def v8i32  : ValueType<256, 26>;   //  8 x i32 vector value
-def v1i64  : ValueType<64 , 27>;   //  1 x i64 vector value
-def v2i64  : ValueType<128, 28>;   //  2 x i64 vector value
-def v4i64  : ValueType<256, 29>;   //  4 x f64 vector value
+def v4i32  : ValueType<128, 24>;   //  4 x i32 vector value
+def v8i32  : ValueType<256, 25>;   //  8 x i32 vector value
+def v1i64  : ValueType<64 , 26>;   //  1 x i64 vector value
+def v2i64  : ValueType<128, 27>;   //  2 x i64 vector value
+def v4i64  : ValueType<256, 28>;   //  4 x f64 vector value
 
-def v2f32  : ValueType<64,  30>;   //  2 x f32 vector value
-def v3f32  : ValueType<96 , 31>;   //  3 x f32 vector value
-def v4f32  : ValueType<128, 32>;   //  4 x f32 vector value
-def v8f32  : ValueType<256, 33>;   //  8 x f32 vector value
-def v2f64  : ValueType<128, 34>;   //  2 x f64 vector value
-def v4f64  : ValueType<256, 35>;   //  4 x f64 vector value
+def v2f32  : ValueType<64,  29>;   //  2 x f32 vector value
+def v4f32  : ValueType<128, 30>;   //  4 x f32 vector value
+def v8f32  : ValueType<256, 31>;   //  8 x f32 vector value
+def v2f64  : ValueType<128, 32>;   //  2 x f64 vector value
+def v4f64  : ValueType<256, 33>;   //  4 x f64 vector value
 
 def MetadataVT: ValueType<0, 251>; // Metadata
 

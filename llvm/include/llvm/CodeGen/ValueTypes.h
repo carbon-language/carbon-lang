@@ -60,24 +60,22 @@ namespace llvm {
       v8i16          =  21,   //  8 x i16
       v16i16         =  22,   // 16 x i16
       v2i32          =  23,   //  2 x i32
-      v3i32          =  24,   //  3 x i32
-      v4i32          =  25,   //  4 x i32
-      v8i32          =  26,   //  8 x i32
-      v1i64          =  27,   //  1 x i64
-      v2i64          =  28,   //  2 x i64
-      v4i64          =  29,   //  4 x i64
+      v4i32          =  24,   //  4 x i32
+      v8i32          =  25,   //  8 x i32
+      v1i64          =  26,   //  1 x i64
+      v2i64          =  27,   //  2 x i64
+      v4i64          =  28,   //  4 x i64
 
-      v2f32          =  30,   //  2 x f32
-      v3f32          =  31,   //  3 x f32
-      v4f32          =  32,   //  4 x f32
-      v8f32          =  33,   //  8 x f32
-      v2f64          =  34,   //  2 x f64
-      v4f64          =  35,   //  4 x f64
+      v2f32          =  29,   //  2 x f32
+      v4f32          =  30,   //  4 x f32
+      v8f32          =  31,   //  8 x f32
+      v2f64          =  32,   //  2 x f64
+      v4f64          =  33,   //  4 x f64
 
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
 
-      LAST_VALUETYPE =  36,   // This always remains at the end of the list.
+      LAST_VALUETYPE =  34,   // This always remains at the end of the list.
 
       // This is the current maximum for LAST_VALUETYPE.
       // MVT::MAX_ALLOWED_VALUETYPE is used for asserts and to size bit vectors
@@ -197,7 +195,6 @@ namespace llvm {
         break;
       case i32:
         if (NumElements == 2)  return v2i32;
-        if (NumElements == 3)  return v3i32;
         if (NumElements == 4)  return v4i32;
         if (NumElements == 8)  return v8i32;
         break;
@@ -208,7 +205,6 @@ namespace llvm {
         break;
       case f32:
         if (NumElements == 2)  return v2f32;
-        if (NumElements == 3)  return v3f32;
         if (NumElements == 4)  return v4f32;
         if (NumElements == 8)  return v8f32;
         break;
@@ -227,7 +223,6 @@ namespace llvm {
       default: return getVectorVT(i8, NumElts);
       case  1: return v1i64;
       case  2: return v2i32;
-      case  3: return v3i32;
       case  4: return v4i16;
       case  8: return v8i8;
       case 16: return v16i8;
@@ -350,14 +345,12 @@ namespace llvm {
       case v8i16:
       case v16i16: return i16;
       case v2i32:
-      case v3i32:
       case v4i32:
       case v8i32: return i32;
       case v1i64:
       case v2i64:
       case v4i64: return i64;
       case v2f32:
-      case v3f32:
       case v4f32:
       case v8f32: return f32;
       case v2f64:
@@ -385,8 +378,6 @@ namespace llvm {
       case v4i64:
       case v4f32:
       case v4f64: return 4;
-      case v3i32:
-      case v3f32: return 3;
       case v2i8:
       case v2i16:
       case v2i32:
@@ -424,8 +415,6 @@ namespace llvm {
       case v1i64:
       case v2f32: return 64;
       case f80 :  return 80;
-      case v3i32:
-      case v3f32: return 96;
       case f128:
       case ppcf128:
       case i128:
