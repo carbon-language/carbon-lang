@@ -374,6 +374,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
         }
       }
     }
+#if 0
     else if (CXXDestructorDecl *DDecl = dyn_cast<CXXDestructorDecl>(D)) {
       if (DDecl->getNumBaseOrMemberDestructions() > 0) {
         // FIXME. This is strictly for visualization of destructor's AST for
@@ -404,6 +405,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
         }
       }
     }
+#endif
     else
       AFT->getResultType().getAsStringInternal(Proto, Policy);
   } else {
