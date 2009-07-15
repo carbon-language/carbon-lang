@@ -67,8 +67,6 @@ namespace llvm {
       return const_cast<MipsTargetLowering*>(&TLInfo); 
     }
 
-    static unsigned getModuleMatchQuality(const Module &M);
-
     // Pass Pipeline Configuration
     virtual bool addInstSelector(PassManagerBase &PM,
                                  CodeGenOpt::Level OptLevel);

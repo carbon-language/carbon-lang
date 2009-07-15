@@ -67,9 +67,6 @@ public:
     return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
   }
 
-  static unsigned getModuleMatchQuality(const Module &M);
-  static unsigned getJITMatchQuality();
-
   static void registerAsmPrinter(AsmPrinterCtorFn F) {
     AsmPrinterCtor = F;
   }

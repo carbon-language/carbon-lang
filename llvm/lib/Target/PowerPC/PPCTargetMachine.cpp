@@ -51,57 +51,6 @@ const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
     return new PPCLinuxTargetAsmInfo(*this);
 }
 
-unsigned PPC32TargetMachine::getJITMatchQuality() {
-#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
-  if (sizeof(void*) == 4)
-    return 10;
-#endif
-  return 0;
-}
-unsigned PPC64TargetMachine::getJITMatchQuality() {
-#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
-  if (sizeof(void*) == 8)
-    return 10;
-#endif
-  return 0;
-}
-
-unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
-  // We strongly match "powerpc-*".
-  std::string TT = M.getTargetTriple();
-  if (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "powerpc-")
-    return 20;
-  
-  // If the target triple is something non-powerpc, we don't match.
-  if (!TT.empty()) return 0;
-  
-  if (M.getEndianness()  == Module::BigEndian &&
-      M.getPointerSize() == Module::Pointer32)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-  
-  return getJITMatchQuality()/2;
-}
-
-unsigned PPC64TargetMachine::getModuleMatchQuality(const Module &M) {
-  // We strongly match "powerpc64-*".
-  std::string TT = M.getTargetTriple();
-  if (TT.size() >= 10 && std::string(TT.begin(), TT.begin()+10) == "powerpc64-")
-    return 20;
-  
-  if (M.getEndianness()  == Module::BigEndian &&
-      M.getPointerSize() == Module::Pointer64)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-  
-  return getJITMatchQuality()/2;
-}
-
-
 PPCTargetMachine::PPCTargetMachine(const Target&T, const Module &M, 
                                    const std::string &FS, bool is64Bit)
   : LLVMTargetMachine(T),

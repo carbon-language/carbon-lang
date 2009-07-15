@@ -48,20 +48,6 @@ SPUTargetMachine::createTargetAsmInfo() const
   return new SPULinuxTargetAsmInfo(*this);
 }
 
-unsigned
-SPUTargetMachine::getModuleMatchQuality(const Module &M)
-{
-  // We strongly match "spu-*" or "cellspu-*".
-  std::string TT = M.getTargetTriple();
-  if ((TT.size() == 3 && std::string(TT.begin(), TT.begin()+3) == "spu")
-      || (TT.size() == 7 && std::string(TT.begin(), TT.begin()+7) == "cellspu")
-      || (TT.size() >= 4 && std::string(TT.begin(), TT.begin()+4) == "spu-")
-      || (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "cellspu-"))
-    return 20;
-  
-  return 0;                     // No match at all...
-}
-
 SPUTargetMachine::SPUTargetMachine(const Target &T, const Module &M, 
                                    const std::string &FS)
   : LLVMTargetMachine(T),

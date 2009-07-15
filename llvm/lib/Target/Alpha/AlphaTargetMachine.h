@@ -61,9 +61,6 @@ public:
     return &JITInfo;
   }
 
-  static unsigned getJITMatchQuality();
-  static unsigned getModuleMatchQuality(const Module &M);
-
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
   virtual bool addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

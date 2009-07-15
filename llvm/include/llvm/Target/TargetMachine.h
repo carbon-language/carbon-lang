@@ -120,19 +120,6 @@ protected: // Can only create subclasses.
 public:
   virtual ~TargetMachine();
 
-  /// getModuleMatchQuality - This static method should be implemented by
-  /// targets to indicate how closely they match the specified module.  This is
-  /// used by the LLC tool to determine which target to use when an explicit
-  /// -march option is not specified.  If a target returns zero, it will never
-  /// be chosen without an explicit -march option.
-  static unsigned getModuleMatchQuality(const Module &) { return 0; }
-
-  /// getJITMatchQuality - This static method should be implemented by targets
-  /// that provide JIT capabilities to indicate how suitable they are for
-  /// execution on the current host.  If a value of 0 is returned, the target
-  /// will not be used unless an explicit -march option is used.
-  static unsigned getJITMatchQuality() { return 0; }
-
   const Target &getTarget() const { return TheTarget; }
 
   // Interfaces to the major aspects of target machine information:

@@ -105,9 +105,6 @@ public:
 class PPC32TargetMachine : public PPCTargetMachine {
 public:
   PPC32TargetMachine(const Target &T, const Module &M, const std::string &FS);
-  
-  static unsigned getJITMatchQuality();
-  static unsigned getModuleMatchQuality(const Module &M);
 };
 
 /// PPC64TargetMachine - PowerPC 64-bit target machine.
@@ -115,9 +112,6 @@ public:
 class PPC64TargetMachine : public PPCTargetMachine {
 public:
   PPC64TargetMachine(const Target &T, const Module &M, const std::string &FS);
-  
-  static unsigned getJITMatchQuality();
-  static unsigned getModuleMatchQuality(const Module &M);
 };
 
 } // end namespace llvm

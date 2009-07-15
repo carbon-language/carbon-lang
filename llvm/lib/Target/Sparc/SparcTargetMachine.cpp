@@ -44,32 +44,6 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, const Module &M,
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }
 
-unsigned SparcTargetMachine::getModuleMatchQuality(const Module &M) {
-  std::string TT = M.getTargetTriple();
-  if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "sparc-")
-    return 20;
-  
-  // If the target triple is something non-sparc, we don't match.
-  if (!TT.empty()) return 0;
-
-  if (M.getEndianness()  == Module::BigEndian &&
-      M.getPointerSize() == Module::Pointer32)
-#ifdef __sparc__
-    return 20;   // BE/32 ==> Prefer sparc on sparc
-#else
-    return 5;    // BE/32 ==> Prefer ppc elsewhere
-#endif
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-#if defined(__sparc__)
-  return 10;
-#else
-  return 0;
-#endif
-}
-
 bool SparcTargetMachine::addInstSelector(PassManagerBase &PM,
                                          CodeGenOpt::Level OptLevel) {
   PM.add(createSparcISelDag(*this));

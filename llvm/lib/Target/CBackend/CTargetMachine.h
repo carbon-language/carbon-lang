@@ -30,10 +30,6 @@ struct CTargetMachine : public TargetMachine {
                                         formatted_raw_ostream &Out,
                                         CodeGenFileType FileType,
                                         CodeGenOpt::Level OptLevel);
-
-  // This class always works, but must be requested explicitly on 
-  // llc command line.
-  static unsigned getModuleMatchQuality(const Module &M) { return 0; }
   
   virtual const TargetData *getTargetData() const { return &DataLayout; }
 };

@@ -60,7 +60,6 @@ public:
   virtual bool addAssemblyEmitter(PassManagerBase &PM,
                                   CodeGenOpt::Level OptLevel, bool Verbose,
                                   formatted_raw_ostream &Out);
-  static unsigned getModuleMatchQuality(const Module &M);
 }; // MSP430TargetMachine.
 
 } // end namespace llvm

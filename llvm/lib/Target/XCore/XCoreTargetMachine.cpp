@@ -52,15 +52,6 @@ XCoreTargetMachine::XCoreTargetMachine(const Target &T, const Module &M,
     TLInfo(*this) {
 }
 
-unsigned XCoreTargetMachine::getModuleMatchQuality(const Module &M) {
-  std::string TT = M.getTargetTriple();
-  if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "xcore-")
-    return 20;
-  
-  // Otherwise we don't match.
-  return 0;
-}
-
 bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM,
                                          CodeGenOpt::Level OptLevel) {
   PM.add(createXCoreISelDag(*this));

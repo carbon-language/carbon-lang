@@ -66,12 +66,6 @@ public:
   virtual       TargetJITInfo    *getJITInfo() {
     return NULL;
   }
-  
-  //! Module match function
-  /*!
-    Module matching function called by TargetMachineRegistry().
-   */
-  static unsigned getModuleMatchQuality(const Module &M);
 
   virtual       SPUTargetLowering *getTargetLowering() const { 
    return const_cast<SPUTargetLowering*>(&TLInfo); 

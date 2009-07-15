@@ -69,14 +69,3 @@ bool MSP430TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
   return false;
 }
 
-unsigned MSP430TargetMachine::getModuleMatchQuality(const Module &M) {
-  std::string TT = M.getTargetTriple();
-
-  // We strongly match msp430
-  if (TT.size() >= 6 && TT[0] == 'm' && TT[1] == 's' && TT[2] == 'p' &&
-      TT[3] == '4' &&  TT[4] == '3' && TT[5] == '0')
-    return 20;
-
-  return 0;
-}
-

@@ -34,32 +34,6 @@ const TargetAsmInfo *IA64TargetMachine::createTargetAsmInfo() const {
   return new IA64TargetAsmInfo(*this);
 }
 
-unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
-  // we match [iI][aA]*64
-  bool seenIA64=false;
-  std::string TT = M.getTargetTriple();
-
-  if (TT.size() >= 4) {
-    if( (TT[0]=='i' || TT[0]=='I') &&
-        (TT[1]=='a' || TT[1]=='A') ) {
-      for(unsigned int i=2; i<(TT.size()-1); i++)
-        if(TT[i]=='6' && TT[i+1]=='4')
-          seenIA64=true;
-    }
-
-    if (seenIA64)
-      return 20; // strong match
-  }
-  // If the target triple is something non-ia64, we don't match.
-  if (!TT.empty()) return 0;
-
-#if defined(__ia64__) || defined(__IA64__)
-  return 5;
-#else
-  return 0;
-#endif
-}
-
 /// IA64TargetMachine ctor - Create an LP64 architecture model
 ///
 IA64TargetMachine::IA64TargetMachine(const Target &T, const Module &M, 

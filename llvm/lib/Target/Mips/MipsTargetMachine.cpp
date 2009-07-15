@@ -79,41 +79,6 @@ MipselTargetMachine::
 MipselTargetMachine(const Target &T, const Module &M, const std::string &FS) :
   MipsTargetMachine(T, M, FS, true) {}
 
-// return 0 and must specify -march to gen MIPS code.
-unsigned MipsTargetMachine::
-getModuleMatchQuality(const Module &M) 
-{
-  // We strongly match "mips*-*".
-  std::string TT = M.getTargetTriple();
-  if (TT.size() >= 5 && std::string(TT.begin(), TT.begin()+5) == "mips-")
-    return 20;
-  
-  if (TT.size() >= 13 && std::string(TT.begin(), 
-      TT.begin()+13) == "mipsallegrex-")
-    return 20;
-
-  return 0;
-}
-
-// return 0 and must specify -march to gen MIPSEL code.
-unsigned MipselTargetMachine::
-getModuleMatchQuality(const Module &M) 
-{
-  // We strongly match "mips*el-*".
-  std::string TT = M.getTargetTriple();
-  if (TT.size() >= 7 && std::string(TT.begin(), TT.begin()+7) == "mipsel-")
-    return 20;
-
-  if (TT.size() >= 15 && std::string(TT.begin(), 
-      TT.begin()+15) == "mipsallegrexel-")
-    return 20;
-
-  if (TT.size() == 3 && std::string(TT.begin(), TT.begin()+3) == "psp")
-    return 20;
-  
-  return 0;
-}
-
 // Install an instruction selector pass using 
 // the ISelDag to gen Mips code.
 bool MipsTargetMachine::

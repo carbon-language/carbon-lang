@@ -61,9 +61,6 @@ public:
     AsmPrinterCtor = F;
   }
 
-  static unsigned getModuleMatchQuality(const Module &M);
-  static unsigned getJITMatchQuality();
-
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
   // Pass Pipeline Configuration

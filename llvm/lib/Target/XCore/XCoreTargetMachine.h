@@ -49,7 +49,6 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
-  static unsigned getModuleMatchQuality(const Module &M);
 
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

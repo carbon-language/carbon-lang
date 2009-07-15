@@ -48,35 +48,6 @@ extern "C" void LLVMInitializeARMTarget() { }
 // No assembler printer by default
 ARMBaseTargetMachine::AsmPrinterCtorFn ARMBaseTargetMachine::AsmPrinterCtor = 0;
 
-/// ThumbTargetMachine - Create an Thumb architecture model.
-///
-unsigned ThumbTargetMachine::getJITMatchQuality() {
-#if defined(__thumb__)
-  return 10;
-#endif
-  return 0;
-}
-
-unsigned ThumbTargetMachine::getModuleMatchQuality(const Module &M) {
-  std::string TT = M.getTargetTriple();
-  // Match thumb-foo-bar, as well as things like thumbv5blah-*
-  if (TT.size() >= 6 &&
-      (TT.substr(0, 6) == "thumb-" || TT.substr(0, 6) == "thumbv"))
-    return 20;
-
-  // If the target triple is something non-thumb, we don't match.
-  if (!TT.empty()) return 0;
-
-  if (M.getEndianness()  == Module::LittleEndian &&
-      M.getPointerSize() == Module::Pointer32)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return getJITMatchQuality()/2;
-}
-
 /// TargetMachine ctor - Create an ARM architecture model.
 ///
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
@@ -114,32 +85,6 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const Module &M,
     InstrInfo = new Thumb2InstrInfo(Subtarget);
   else
     InstrInfo = new Thumb1InstrInfo(Subtarget);
-}
-
-unsigned ARMTargetMachine::getJITMatchQuality() {
-#if defined(__arm__)
-  return 10;
-#endif
-  return 0;
-}
-
-unsigned ARMTargetMachine::getModuleMatchQuality(const Module &M) {
-  std::string TT = M.getTargetTriple();
-  // Match arm-foo-bar, as well as things like armv5blah-*
-  if (TT.size() >= 4 &&
-      (TT.substr(0, 4) == "arm-" || TT.substr(0, 4) == "armv"))
-    return 20;
-  // If the target triple is something non-arm, we don't match.
-  if (!TT.empty()) return 0;
-
-  if (M.getEndianness()  == Module::LittleEndian &&
-      M.getPointerSize() == Module::Pointer32)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return getJITMatchQuality()/2;
 }
 
 

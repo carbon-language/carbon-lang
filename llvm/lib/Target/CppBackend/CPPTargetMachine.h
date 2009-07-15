@@ -33,9 +33,6 @@ struct CPPTargetMachine : public TargetMachine {
                                         CodeGenFileType FileType,
                                         CodeGenOpt::Level OptLevel);
 
-  // This class always works, but shouldn't be the default in most cases.
-  static unsigned getModuleMatchQuality(const Module &M) { return 1; }
-
   virtual const TargetData *getTargetData() const { return &DataLayout; }
 };
 
