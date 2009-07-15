@@ -146,13 +146,18 @@ Constant* LLVMContext::getConstantStruct(const StructType* T,
 }
 
 Constant* LLVMContext::getConstantStruct(const std::vector<Constant*>& V,
-                                         bool Packed) {
-  return ConstantStruct::get(V, Packed);
+                                         bool packed) {
+  std::vector<const Type*> StructEls;
+  StructEls.reserve(V.size());
+  for (unsigned i = 0, e = V.size(); i != e; ++i)
+    StructEls.push_back(V[i]->getType());
+  return getConstantStruct(getStructType(StructEls, packed), V);
 }
 
 Constant* LLVMContext::getConstantStruct(Constant* const *Vals,
                                          unsigned NumVals, bool Packed) {
-  return ConstantStruct::get(Vals, NumVals, Packed);
+  // FIXME: make this the primary ctor method.
+  return getConstantStruct(std::vector<Constant*>(Vals, Vals+NumVals), Packed);
 }
 
 

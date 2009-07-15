@@ -1371,14 +1371,6 @@ Constant *ConstantStruct::get(const StructType *Ty,
   return ConstantAggregateZero::get(Ty);
 }
 
-Constant *ConstantStruct::get(const std::vector<Constant*> &V, bool packed) {
-  std::vector<const Type*> StructEls;
-  StructEls.reserve(V.size());
-  for (unsigned i = 0, e = V.size(); i != e; ++i)
-    StructEls.push_back(V[i]->getType());
-  return get(StructType::get(StructEls, packed), V);
-}
-
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantStruct::destroyConstant() {

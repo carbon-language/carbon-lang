@@ -379,12 +379,6 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   ///
   static Constant *get(const StructType *T, const std::vector<Constant*> &V);
-  static Constant *get(const std::vector<Constant*> &V, bool Packed = false);
-  static Constant *get(Constant*const* Vals, unsigned NumVals,
-                       bool Packed = false) {
-    // FIXME: make this the primary ctor method.
-    return get(std::vector<Constant*>(Vals, Vals+NumVals), Packed);
-  }
   
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
