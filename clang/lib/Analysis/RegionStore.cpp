@@ -838,7 +838,8 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     SVal idx = ValMgr.makeIntVal(0, Ctx.IntTy);
     R = MRMgr.getElementRegion(T, idx, R, Ctx);
     RTy = T;
-    assert(RTy == R->getValueType(Ctx));
+    assert(Ctx.getCanonicalType(RTy) ==
+           Ctx.getCanonicalType(R->getValueType(Ctx)));
   }  
 
   if (RTy->isStructureType())
