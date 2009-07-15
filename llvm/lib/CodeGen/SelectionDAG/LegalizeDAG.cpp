@@ -337,6 +337,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
                                 SelectionDAG &DAG, const TargetLowering &TLI) {
   bool Extend = false;
   DebugLoc dl = CFP->getDebugLoc();
+  LLVMContext *Context = DAG.getContext();
 
   // If a FP immediate is precise when represented as a float and if the
   // target can do an extending load from float to double, we put it into
@@ -362,7 +363,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
         TLI.isLoadExtLegal(ISD::EXTLOAD, SVT) &&
         TLI.ShouldShrinkFPConstant(OrigVT)) {
       const Type *SType = SVT.getTypeForMVT(*DAG.getContext());
-      LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
+      LLVMC = cast<ConstantFP>(Context->getConstantExprFPTrunc(LLVMC, SType));
       VT = SVT;
       Extend = true;
     }
@@ -1794,6 +1795,7 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
 /// ExpandBUILD_VECTOR - Expand a BUILD_VECTOR node on targets that don't
 /// support the operation, but do support the resultant vector type.
 SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
+  LLVMContext *Context = DAG.getContext();
   unsigned NumElems = Node->getNumOperands();
   SDValue Value1, Value2;
   DebugLoc dl = Node->getDebugLoc();
@@ -1844,10 +1846,10 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
         const Type *OpNTy = OpVT.getTypeForMVT(*DAG.getContext());
-        CV.push_back(UndefValue::get(OpNTy));
+        CV.push_back(Context->getUndef(OpNTy));
       }
     }
-    Constant *CP = ConstantVector::get(CV);
+    Constant *CP = Context->getConstantVector(CV);
     SDValue CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
     unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     return DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,

@@ -30,6 +30,7 @@
 #include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
@@ -305,7 +306,7 @@ namespace {
         CV.push_back(const_cast<ConstantInt *> (V->getConstantIntValue()));
       }
 
-      Constant *CP = ConstantVector::get(CV);
+      Constant *CP = CurDAG->getContext()->getConstantVector(CV);
       SDValue CPIdx = CurDAG->getConstantPool(CP, SPUtli.getPointerTy());
       unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
       SDValue CGPoolOffset =

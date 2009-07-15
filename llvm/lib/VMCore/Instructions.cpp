@@ -1617,7 +1617,8 @@ BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
   Constant *C;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
     C = Context.getAllOnesValue(PTy->getElementType());
-    C = ConstantVector::get(std::vector<Constant*>(PTy->getNumElements(), C));
+    C = Context.getConstantVector(
+                              std::vector<Constant*>(PTy->getNumElements(), C));
   } else {
     C = Context.getAllOnesValue(Op->getType());
   }
@@ -1633,8 +1634,8 @@ BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
     // Create a vector of all ones values.
     Constant *Elt = Context.getAllOnesValue(PTy->getElementType());
-    AllOnes = 
-      ConstantVector::get(std::vector<Constant*>(PTy->getNumElements(), Elt));
+    AllOnes = Context.getConstantVector(
+                            std::vector<Constant*>(PTy->getNumElements(), Elt));
   } else {
     AllOnes = Context.getAllOnesValue(Op->getType());
   }

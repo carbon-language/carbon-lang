@@ -19,6 +19,7 @@
 #define DEBUG_TYPE "dagcombine"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
@@ -5808,7 +5809,8 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
         const TargetData &TD = *TLI.getTargetData();
         
         // Create a ConstantArray of the two constants.
-        Constant *CA = ConstantArray::get(ArrayType::get(FPTy, 2), Elts, 2);
+        Constant *CA = DAG.getContext()->getConstantArray(
+                          DAG.getContext()->getArrayType(FPTy, 2), Elts, 2);
         SDValue CPIdx = DAG.getConstantPool(CA, TLI.getPointerTy(),
                                             TD.getPrefTypeAlignment(FPTy));
         unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();

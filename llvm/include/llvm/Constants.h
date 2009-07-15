@@ -313,11 +313,6 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
-  static Constant *get(const ArrayType *T,
-                       Constant*const*Vals, unsigned NumVals) {
-    // FIXME: make this the primary ctor method.
-    return get(T, std::vector<Constant*>(Vals, Vals+NumVals));
-  }
 
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
@@ -424,11 +419,6 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const VectorType *T, const std::vector<Constant*> &);
-  static Constant *get(const std::vector<Constant*> &V);
-  static Constant *get(Constant*const* Vals, unsigned NumVals) {
-    // FIXME: make this the primary ctor method.
-    return get(std::vector<Constant*>(Vals, Vals+NumVals));
-  }
   
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

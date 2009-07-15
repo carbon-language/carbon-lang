@@ -128,7 +128,7 @@ Constant* LLVMContext::getConstantInt(const Type* Ty, const APInt& V) {
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
     return
-      ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
+      getConstantVector(std::vector<Constant *>(VTy->getNumElements(), C));
 
   return C;
 }
@@ -176,7 +176,8 @@ Constant* LLVMContext::getConstantArray(const ArrayType* T,
 Constant* LLVMContext::getConstantArray(const ArrayType* T,
                                         Constant* const* Vals,
                                         unsigned NumVals) {
-  return ConstantArray::get(T, Vals, NumVals);
+  // FIXME: make this the primary ctor method.
+  return getConstantArray(T, std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
 /// ConstantArray::get(const string&) - Return an array that is initialized to
@@ -530,12 +531,14 @@ Constant* LLVMContext::getConstantVector(const VectorType* T,
 }
 
 Constant* LLVMContext::getConstantVector(const std::vector<Constant*>& V) {
-  return ConstantVector::get(V);
+  assert(!V.empty() && "Cannot infer type if V is empty");
+  return getConstantVector(getVectorType(V.front()->getType(),V.size()), V);
 }
 
 Constant* LLVMContext::getConstantVector(Constant* const* Vals,
                                          unsigned NumVals) {
-  return ConstantVector::get(Vals, NumVals);
+  // FIXME: make this the primary ctor method.
+  return getConstantVector(std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
 // MDNode accessors

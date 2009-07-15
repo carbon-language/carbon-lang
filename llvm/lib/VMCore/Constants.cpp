@@ -1434,11 +1434,6 @@ Constant *ConstantVector::get(const VectorType *Ty,
   return VectorConstants->getOrCreate(Ty, V);
 }
 
-Constant *ConstantVector::get(const std::vector<Constant*> &V) {
-  assert(!V.empty() && "Cannot infer type if V is empty");
-  return get(VectorType::get(V.front()->getType(),V.size()), V);
-}
-
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantVector::destroyConstant() {
