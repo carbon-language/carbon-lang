@@ -1902,7 +1902,7 @@ public:
 /// Duplicate protocols are removed and protocol list is canonicalized to be in
 /// alphabetical order.
 class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
-  QualType PointeeType; // A builin or interface type.
+  QualType PointeeType; // A builtin or interface type.
   
   // List of protocols for this protocol conforming object type
   // List is sorted on protocol name. No protocol is entered more than once.
