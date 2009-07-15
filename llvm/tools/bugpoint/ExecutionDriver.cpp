@@ -186,7 +186,7 @@ bool BugDriver::initializeExecutionEnvironment() {
     break;
   }
   if (!Interpreter)
-    std::cerr << Message;
+    errs() << Message;
   else // Display informational messages on stdout instead of stderr
     std::cout << Message;
 
@@ -278,13 +278,13 @@ void BugDriver::compileProgram(Module *M) {
   sys::Path BitcodeFile ("bugpoint-test-program.bc");
   std::string ErrMsg;
   if (BitcodeFile.makeUnique(true,&ErrMsg)) {
-    std::cerr << ToolName << ": Error making unique filename: " << ErrMsg 
-              << "\n";
+    errs() << ToolName << ": Error making unique filename: " << ErrMsg 
+           << "\n";
     exit(1);
   }
   if (writeProgramToFile(BitcodeFile.toString(), M)) {
-    std::cerr << ToolName << ": Error emitting bitcode to file '"
-              << BitcodeFile << "'!\n";
+    errs() << ToolName << ": Error emitting bitcode to file '"
+           << BitcodeFile << "'!\n";
     exit(1);
   }
 
@@ -313,15 +313,15 @@ std::string BugDriver::executeProgram(std::string OutputFile,
     // Emit the program to a bitcode file...
     sys::Path uniqueFilename("bugpoint-test-program.bc");
     if (uniqueFilename.makeUnique(true, &ErrMsg)) {
-      std::cerr << ToolName << ": Error making unique filename: " 
-                << ErrMsg << "!\n";
+      errs() << ToolName << ": Error making unique filename: "
+             << ErrMsg << "!\n";
       exit(1);
     }
     BitcodeFile = uniqueFilename.toString();
 
     if (writeProgramToFile(BitcodeFile, Program)) {
-      std::cerr << ToolName << ": Error emitting bitcode to file '"
-                << BitcodeFile << "'!\n";
+      errs() << ToolName << ": Error emitting bitcode to file '"
+             << BitcodeFile << "'!\n";
       exit(1);
     }
     CreatedBitcode = true;
@@ -336,8 +336,8 @@ std::string BugDriver::executeProgram(std::string OutputFile,
   // Check to see if this is a valid output filename...
   sys::Path uniqueFile(OutputFile);
   if (uniqueFile.makeUnique(true, &ErrMsg)) {
-    std::cerr << ToolName << ": Error making unique filename: "
-              << ErrMsg << "\n";
+    errs() << ToolName << ": Error making unique filename: "
+           << ErrMsg << "\n";
     exit(1);
   }
   OutputFile = uniqueFile.toString();
@@ -352,7 +352,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
                                   Timeout, MemoryLimit);
 
   if (RetVal == -1) {
-    std::cerr << "<timeout>";
+    errs() << "<timeout>";
     static bool FirstTimeout = true;
     if (FirstTimeout) {
       std::cout << "\n"
@@ -420,12 +420,12 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
     ReferenceOutputFile = executeProgramSafely(Filename);
     std::cout << "\nReference output is: " << ReferenceOutputFile << "\n\n";
   } catch (ToolExecutionError &TEE) {
-    std::cerr << TEE.what();
+    errs() << TEE.what();
     if (Interpreter != SafeInterpreter) {
-      std::cerr << "*** There is a bug running the \"safe\" backend.  Either"
-                << " debug it (for example with the -run-cbe bugpoint option,"
-                << " if CBE is being used as the \"safe\" backend), or fix the"
-                << " error some other way.\n";
+      errs() << "*** There is a bug running the \"safe\" backend.  Either"
+             << " debug it (for example with the -run-cbe bugpoint option,"
+             << " if CBE is being used as the \"safe\" backend), or fix the"
+             << " error some other way.\n";
     }
     return false;
   }
@@ -452,7 +452,7 @@ bool BugDriver::diffProgram(const std::string &BitcodeFile,
                                         sys::Path(Output.toString()),
                                         AbsTolerance, RelTolerance, &Error)) {
     if (Diff == 2) {
-      std::cerr << "While diffing output: " << Error << '\n';
+      errs() << "While diffing output: " << Error << '\n';
       exit(1);
     }
     FilesDifferent = true;

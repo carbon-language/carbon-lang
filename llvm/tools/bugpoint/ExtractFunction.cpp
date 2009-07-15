@@ -127,7 +127,7 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
 
   Module *New = runPassesOn(M, CleanupPasses);
   if (New == 0) {
-    std::cerr << "Final cleanups failed.  Sorry. :(  Please report a bug!\n";
+    errs() << "Final cleanups failed.  Sorry. :(  Please report a bug!\n";
     return M;
   }
   delete M;
@@ -288,9 +288,9 @@ llvm::SplitFunctionsOutOfModule(Module *M,
   std::set<Function *> TestFunctions;
   for (unsigned i = 0, e = F.size(); i != e; ++i) {
     Function *TNOF = cast<Function>(ValueMap[F[i]]);
-    DEBUG(std::cerr << "Removing function ");
-    DEBUG(WriteAsOperand(std::cerr, TNOF, false));
-    DEBUG(std::cerr << "\n");
+    DEBUG(errs() << "Removing function ");
+    DEBUG(WriteAsOperand(errs(), TNOF, false));
+    DEBUG(errs() << "\n");
     TestFunctions.insert(cast<Function>(NewValueMap[TNOF]));
     DeleteFunctionBody(TNOF);       // Function is now external in this module!
   }
@@ -328,7 +328,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   std::string ErrMsg;
   if (uniqueFilename.createTemporaryFileOnDisk(true, &ErrMsg)) {
     std::cout << "*** Basic Block extraction failed!\n";
-    std::cerr << "Error creating temporary file: " << ErrMsg << "\n";
+    errs() << "Error creating temporary file: " << ErrMsg << "\n";
     M = swapProgramIn(M);
     EmitProgressBitcode("basicblockextractfail", true);
     swapProgramIn(M);
@@ -339,8 +339,8 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   std::ofstream BlocksToNotExtractFile(uniqueFilename.c_str());
   if (!BlocksToNotExtractFile) {
     std::cout << "*** Basic Block extraction failed!\n";
-    std::cerr << "Error writing list of blocks to not extract: " << ErrMsg
-              << "\n";
+    errs() << "Error writing list of blocks to not extract: " << ErrMsg
+           << "\n";
     M = swapProgramIn(M);
     EmitProgressBitcode("basicblockextractfail", true);
     swapProgramIn(M);

@@ -94,9 +94,9 @@ int main(int argc, char **argv, char * const *envp) {
     // Now that we have initialized the debugger, run it.
     return D.run();
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    errs() << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   return 1;
 }

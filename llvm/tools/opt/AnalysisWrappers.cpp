@@ -21,6 +21,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Support/raw_ostream.h"
 #include <iostream>
 using namespace llvm;
 
@@ -45,10 +46,10 @@ namespace {
                        E = CS.arg_end(); AI != E; ++AI)
                   if (isa<Constant>(*AI)) {
                     if (!PrintedFn) {
-                      std::cerr << "Function '" << I->getName() << "':\n";
+                      errs() << "Function '" << I->getName() << "':\n";
                       PrintedFn = true;
                     }
-                    std::cerr << *User;
+                    errs() << *User;
                     break;
                   }
               }

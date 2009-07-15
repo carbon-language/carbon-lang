@@ -18,6 +18,7 @@
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/StandardPasses.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/DynamicLibrary.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
@@ -109,8 +110,8 @@ void Optimize(Module* M) {
     if (Opt->getNormalCtor())
       addPass(Passes, Opt->getNormalCtor()());
     else
-      std::cerr << "llvm-ld: cannot create pass: " << Opt->getPassName() 
-                << "\n";
+      errs() << "llvm-ld: cannot create pass: " << Opt->getPassName() 
+             << "\n";
   }
 
   // The user's passes may leave cruft around. Clean up after them them but

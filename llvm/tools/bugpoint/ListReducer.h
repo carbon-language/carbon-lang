@@ -15,8 +15,8 @@
 #ifndef BUGPOINT_LIST_REDUCER_H
 #define BUGPOINT_LIST_REDUCER_H
 
+#include "llvm/Support/raw_ostream.h"
 #include <vector>
-#include <iostream>
 #include <cstdlib>
 #include <algorithm>
 
@@ -58,7 +58,7 @@ struct ListReducer {
 
     case KeepSuffix:
       // cannot be reached!
-      std::cerr << "bugpoint ListReducer internal error: selected empty set.\n";
+      errs() << "bugpoint ListReducer internal error: selected empty set.\n";
       abort();
 
     case NoFailure:
@@ -77,7 +77,7 @@ Backjump:
     while (MidTop > 1) { // Binary split reduction loop
       // Halt if the user presses ctrl-c.
       if (BugpointIsInterrupted) {
-        std::cerr << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
+        errs() << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
         return true;
       }
 
@@ -88,7 +88,7 @@ Backjump:
           NumOfIterationsWithoutProgress > MaxIterations) {
         std::vector<ElTy> ShuffledList(TheList);
         std::random_shuffle(ShuffledList.begin(), ShuffledList.end());
-        std::cerr << "\n\n*** Testing shuffled set...\n\n";
+        errs() << "\n\n*** Testing shuffled set...\n\n";
         // Check that random shuffle doesn't loose the bug
         if (doTest(ShuffledList, empty) == KeepPrefix) {
           // If the bug is still here, use the shuffled list.
@@ -97,10 +97,10 @@ Backjump:
           // Must increase the shuffling treshold to avoid the small 
           // probability of inifinite looping without making progress.
           MaxIterations += 2;
-          std::cerr << "\n\n*** Shuffling does not hide the bug...\n\n";
+          errs() << "\n\n*** Shuffling does not hide the bug...\n\n";
         } else {
           ShufflingEnabled = false; // Disable shuffling further on
-          std::cerr << "\n\n*** Shuffling hides the bug...\n\n";
+          errs() << "\n\n*** Shuffling hides the bug...\n\n";
         }
         NumOfIterationsWithoutProgress = 0;
       }
@@ -160,7 +160,7 @@ Backjump:
         
         for (unsigned i = 1; i < TheList.size()-1; ++i) { // Check interior elts
           if (BugpointIsInterrupted) {
-            std::cerr << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
+            errs() << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
             return true;
           }
           

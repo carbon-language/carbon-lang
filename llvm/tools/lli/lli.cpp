@@ -112,8 +112,8 @@ int main(int argc, char **argv, char * const *envp) {
   }
   
   if (!MP) {
-    std::cerr << argv[0] << ": error loading program '" << InputFile << "': "
-              << ErrorMsg << "\n";
+    errs() << argv[0] << ": error loading program '" << InputFile << "': "
+           << ErrorMsg << "\n";
     exit(1);
   }
 
@@ -121,8 +121,8 @@ int main(int argc, char **argv, char * const *envp) {
   Module *Mod = NoLazyCompilation
     ? MP->materializeModule(&ErrorMsg) : MP->getModule();
   if (!Mod) {
-    std::cerr << argv[0] << ": bitcode didn't read correctly.\n";
-    std::cerr << "Reason: " << ErrorMsg << "\n";
+    errs() << argv[0] << ": bitcode didn't read correctly.\n";
+    errs() << "Reason: " << ErrorMsg << "\n";
     exit(1);
   }
 
@@ -133,7 +133,7 @@ int main(int argc, char **argv, char * const *envp) {
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {
   default:
-    std::cerr << argv[0] << ": invalid optimization level.\n";
+    errs() << argv[0] << ": invalid optimization level.\n";
     return 1;
   case ' ': break;
   case '0': OLvl = CodeGenOpt::None; break;
@@ -149,9 +149,9 @@ int main(int argc, char **argv, char * const *envp) {
   EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg, OLvl);
   if (!EE) {
     if (!ErrorMsg.empty())
-      std::cerr << argv[0] << ": error creating EE: " << ErrorMsg << "\n";
+      errs() << argv[0] << ": error creating EE: " << ErrorMsg << "\n";
     else
-      std::cerr << argv[0] << ": unknown error creating EE!\n";
+      errs() << argv[0] << ": unknown error creating EE!\n";
     exit(1);
   }
 
@@ -182,7 +182,7 @@ int main(int argc, char **argv, char * const *envp) {
   //
   Function *EntryFn = Mod->getFunction(EntryFunc);
   if (!EntryFn) {
-    std::cerr << '\'' << EntryFunc << "\' function not found in module.\n";
+    errs() << '\'' << EntryFunc << "\' function not found in module.\n";
     return -1;
   }
 
@@ -219,10 +219,10 @@ int main(int argc, char **argv, char * const *envp) {
     ResultGV.IntVal = APInt(32, Result);
     Args.push_back(ResultGV);
     EE->runFunction(ExitF, Args);
-    std::cerr << "ERROR: exit(" << Result << ") returned!\n";
+    errs() << "ERROR: exit(" << Result << ") returned!\n";
     abort();
   } else {
-    std::cerr << "ERROR: exit defined with wrong prototype!\n";
+    errs() << "ERROR: exit defined with wrong prototype!\n";
     abort();
   }
 }

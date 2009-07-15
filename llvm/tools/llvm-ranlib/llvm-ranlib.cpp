@@ -17,6 +17,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <iomanip>
@@ -87,13 +88,13 @@ int main(int argc, char **argv) {
       printSymbolTable(TheArchive);
 
   } catch (const char* msg) {
-    std::cerr << argv[0] << ": " << msg << "\n\n";
+    errs() << argv[0] << ": " << msg << "\n\n";
     exitCode = 1;
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    errs() << argv[0] << ": " << msg << "\n";
     exitCode = 2;
   } catch (...) {
-    std::cerr << argv[0] << ": An unexpected unknown exception occurred.\n";
+    errs() << argv[0] << ": An unexpected unknown exception occurred.\n";
     exitCode = 3;
   }
   return exitCode;

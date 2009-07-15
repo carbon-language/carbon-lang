@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
       delete Buffer;
     }
     if (M == 0) {
-      std::cerr << argv[0] << ": " << BitcodeFile << ": " 
+      errs() << argv[0] << ": " << BitcodeFile << ": "
         << ErrorMessage << "\n";
       return 1;
     }
@@ -289,9 +289,9 @@ int main(int argc, char **argv) {
 
     return 0;
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    errs() << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   
   return 1;

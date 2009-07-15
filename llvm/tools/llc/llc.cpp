@@ -137,9 +137,9 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
     // Specified an output filename?
     if (!Force && std::ifstream(OutputFilename.c_str())) {
       // If force is not specified, make sure not to overwrite a file!
-      std::cerr << ProgName << ": error opening '" << OutputFilename
-                << "': file exists!\n"
-                << "Use -f command line argument to force output\n";
+      errs() << ProgName << ": error opening '" << OutputFilename
+             << "': file exists!\n"
+             << "Use -f command line argument to force output\n";
       return 0;
     }
     // Make sure that the Out file gets unlinked from the disk if we get a
@@ -152,7 +152,7 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
     formatted_raw_ostream *Out =
       new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
     if (!error.empty()) {
-      std::cerr << error << '\n';
+      errs() << error << '\n';
       delete Out;
       return 0;
     }
@@ -192,9 +192,9 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
 
   if (!Force && std::ifstream(OutputFilename.c_str())) {
     // If force is not specified, make sure not to overwrite a file!
-    std::cerr << ProgName << ": error opening '" << OutputFilename
-                          << "': file exists!\n"
-                          << "Use -f command line argument to force output\n";
+    errs() << ProgName << ": error opening '" << OutputFilename
+                       << "': file exists!\n"
+                       << "Use -f command line argument to force output\n";
     return 0;
   }
 
@@ -208,7 +208,7 @@ static formatted_raw_ostream *GetOutputStream(const char *TargetName,
   formatted_raw_ostream *Out =
     new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
   if (!error.empty()) {
-    std::cerr << error << '\n';
+    errs() << error << '\n';
     delete Out;
     return 0;
   }
@@ -237,8 +237,8 @@ int main(int argc, char **argv) {
   if (Buffer.get())
     M.reset(ParseBitcodeFile(Buffer.get(), Context, &ErrorMessage));
   if (M.get() == 0) {
-    std::cerr << argv[0] << ": bitcode didn't read correctly.\n";
-    std::cerr << "Reason: " << ErrorMessage << "\n";
+    errs() << argv[0] << ": bitcode didn't read correctly.\n";
+    errs() << "Reason: " << ErrorMessage << "\n";
     return 1;
   }
   Module &mod = *M.get();
@@ -256,9 +256,9 @@ int main(int argc, char **argv) {
     std::string Err;
     TheTarget = TargetRegistry::getClosestStaticTargetForModule(mod, Err);
     if (TheTarget == 0) {
-      std::cerr << argv[0] << ": error auto-selecting target for module '"
-                << Err << "'.  Please use the -march option to explicitly "
-                << "pick a target.\n";
+      errs() << argv[0] << ": error auto-selecting target for module '"
+             << Err << "'.  Please use the -march option to explicitly "
+             << "pick a target.\n";
       return 1;
     }
   }
@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
   switch (OptLevel) {
   default:
-    std::cerr << argv[0] << ": invalid optimization level.\n";
+    errs() << argv[0] << ": invalid optimization level.\n";
     return 1;
   case ' ': break;
   case '0': OLvl = CodeGenOpt::None; break;
@@ -304,8 +304,8 @@ int main(int argc, char **argv) {
 
     // Ask the target to add backend passes as necessary.
     if (Target.addPassesToEmitWholeFile(PM, *Out, FileType, OLvl)) {
-      std::cerr << argv[0] << ": target does not support generation of this"
-                << " file type!\n";
+      errs() << argv[0] << ": target does not support generation of this"
+             << " file type!\n";
       if (Out != &fouts()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
@@ -334,8 +334,8 @@ int main(int argc, char **argv) {
       assert(0 && "Invalid file model!");
       return 1;
     case FileModel::Error:
-      std::cerr << argv[0] << ": target does not support generation of this"
-                << " file type!\n";
+      errs() << argv[0] << ": target does not support generation of this"
+             << " file type!\n";
       if (Out != &fouts()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();
@@ -351,8 +351,8 @@ int main(int argc, char **argv) {
     }
 
     if (Target.addPassesToEmitFileFinish(Passes, OCE, OLvl)) {
-      std::cerr << argv[0] << ": target does not support generation of this"
-                << " file type!\n";
+      errs() << argv[0] << ": target does not support generation of this"
+             << " file type!\n";
       if (Out != &fouts()) delete Out;
       // And the Out file is empty and useless, so remove it now.
       sys::Path(OutputFilename).eraseFromDisk();

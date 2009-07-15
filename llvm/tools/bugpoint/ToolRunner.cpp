@@ -63,10 +63,10 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
   redirects[2] = &StdErrFile;
                                    
   if (0) {
-    std::cerr << "RUN:";
+    errs() << "RUN:";
     for (unsigned i = 0; Args[i]; ++i)
-      std::cerr << " " << Args[i];
-    std::cerr << "\n";
+      errs() << " " << Args[i];
+    errs() << "\n";
   }
 
   return
@@ -87,7 +87,7 @@ static void ProcessFailure(sys::Path ProgPath, const char** Args) {
   sys::Path ErrorFilename("bugpoint.program_error_messages");
   std::string ErrMsg;
   if (ErrorFilename.makeUnique(true, &ErrMsg)) {
-    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    errs() << "Error making unique filename: " << ErrMsg << "\n";
     exit(1);
   }
   RunProgramWithTimeout(ProgPath, Args, sys::Path(""), ErrorFilename,
@@ -159,10 +159,10 @@ int LLI::ExecuteProgram(const std::string &Bitcode,
   LLIArgs.push_back(0);
 
   std::cout << "<lli>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\t";
+  DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = LLIArgs.size()-1; i != e; ++i)
-          std::cerr << " " << LLIArgs[i];
-        std::cerr << "\n";
+          errs() << " " << LLIArgs[i];
+        errs() << "\n";
         );
   return RunProgramWithTimeout(sys::Path(LLIPath), &LLIArgs[0],
       sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
@@ -295,7 +295,7 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
   sys::Path uniqueFile(Bitcode+".llc.s");
   std::string ErrMsg;
   if (uniqueFile.makeUnique(true, &ErrMsg)) {
-    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    errs() << "Error making unique filename: " << ErrMsg << "\n";
     exit(1);
   }
   OutputAsmFile = uniqueFile;
@@ -313,10 +313,10 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
   LLCArgs.push_back (0);
 
   std::cout << "<llc>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\t";
+  DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = LLCArgs.size()-1; i != e; ++i)
-          std::cerr << " " << LLCArgs[i];
-        std::cerr << "\n";
+          errs() << " " << LLCArgs[i];
+        errs() << "\n";
         );
   if (RunProgramWithTimeout(sys::Path(LLCPath), &LLCArgs[0],
                             sys::Path(), sys::Path(), sys::Path()))
@@ -369,7 +369,7 @@ LLC *AbstractInterpreter::createLLC(const std::string &ProgramPath,
   Message = "Found llc: " + LLCPath + "\n";
   GCC *gcc = GCC::create(ProgramPath, Message, GCCArgs);
   if (!gcc) {
-    std::cerr << Message << "\n";
+    errs() << Message << "\n";
     exit(1);
   }
   return new LLC(LLCPath, gcc, Args, GCCArgs);
@@ -430,12 +430,12 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
   JITArgs.push_back(0);
 
   std::cout << "<jit>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\t";
+  DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = JITArgs.size()-1; i != e; ++i)
-          std::cerr << " " << JITArgs[i];
-        std::cerr << "\n";
+          errs() << " " << JITArgs[i];
+        errs() << "\n";
         );
-  DEBUG(std::cerr << "\nSending output to " << OutputFile << "\n");
+  DEBUG(errs() << "\nSending output to " << OutputFile << "\n");
   return RunProgramWithTimeout(sys::Path(LLIPath), &JITArgs[0],
       sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
       Timeout, MemoryLimit);
@@ -460,7 +460,7 @@ GCC::FileType CBE::OutputCode(const std::string &Bitcode,
   sys::Path uniqueFile(Bitcode+".cbe.c");
   std::string ErrMsg;
   if (uniqueFile.makeUnique(true, &ErrMsg)) {
-    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    errs() << "Error making unique filename: " << ErrMsg << "\n";
     exit(1);
   }
   OutputCFile = uniqueFile;
@@ -479,10 +479,10 @@ GCC::FileType CBE::OutputCode(const std::string &Bitcode,
   LLCArgs.push_back (0);
 
   std::cout << "<cbe>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\t";
+  DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = LLCArgs.size()-1; i != e; ++i)
-          std::cerr << " " << LLCArgs[i];
-        std::cerr << "\n";
+          errs() << " " << LLCArgs[i];
+        errs() << "\n";
         );
   if (RunProgramWithTimeout(LLCPath, &LLCArgs[0], sys::Path(), sys::Path(),
                             sys::Path()))
@@ -533,7 +533,7 @@ CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
   Message = "Found llc: " + LLCPath.toString() + "\n";
   GCC *gcc = GCC::create(ProgramPath, Message, GCCArgs);
   if (!gcc) {
-    std::cerr << Message << "\n";
+    errs() << Message << "\n";
     exit(1);
   }
   return new CBE(LLCPath, gcc, Args);
@@ -599,7 +599,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   sys::Path OutputBinary (ProgramFile+".gcc.exe");
   std::string ErrMsg;
   if (OutputBinary.makeUnique(true, &ErrMsg)) {
-    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    errs() << "Error making unique filename: " << ErrMsg << "\n";
     exit(1);
   }
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
@@ -622,10 +622,10 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   GCCArgs.push_back(0);                    // NULL terminator
 
   std::cout << "<gcc>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\t";
+  DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = GCCArgs.size()-1; i != e; ++i)
-          std::cerr << " " << GCCArgs[i];
-        std::cerr << "\n";
+          errs() << " " << GCCArgs[i];
+        errs() << "\n";
         );
   if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], sys::Path(), sys::Path(),
         sys::Path())) {
@@ -666,16 +666,16 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   // Now that we have a binary, run it!
   std::cout << "<program>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\t";
+  DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = ProgramArgs.size()-1; i != e; ++i)
-          std::cerr << " " << ProgramArgs[i];
-        std::cerr << "\n";
+          errs() << " " << ProgramArgs[i];
+        errs() << "\n";
         );
 
   FileRemover OutputBinaryRemover(OutputBinary);
 
   if (RemoteClientPath.isEmpty()) {
-    DEBUG(std::cerr << "<run locally>" << std::flush;);
+    DEBUG(errs() << "<run locally>";);
     return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
         sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
         Timeout, MemoryLimit);
@@ -685,8 +685,8 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         &ProgramArgs[0], sys::Path(InputFile), sys::Path(OutputFile),
         sys::Path(OutputFile), Timeout, MemoryLimit);
     if (RemoteClientStatus != 0) {
-      std::cerr << "Remote Client failed with an error: " <<
-        RemoteClientStatus << ".\n" << std::flush;
+      errs() << "Remote Client failed with an error: " <<
+        RemoteClientStatus << ".\n";
     }
   }
 
@@ -699,7 +699,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   sys::Path uniqueFilename(InputFile+LTDL_SHLIB_EXT);
   std::string ErrMsg;
   if (uniqueFilename.makeUnique(true, &ErrMsg)) {
-    std::cerr << "Error making unique filename: " << ErrMsg << "\n";
+    errs() << "Error making unique filename: " << ErrMsg << "\n";
     exit(1);
   }
   OutputFile = uniqueFilename.toString();
@@ -757,10 +757,10 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
   
 
   std::cout << "<gcc>" << std::flush;
-  DEBUG(std::cerr << "\nAbout to run:\t";
+  DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = GCCArgs.size()-1; i != e; ++i)
-          std::cerr << " " << GCCArgs[i];
-        std::cerr << "\n";
+          errs() << " " << GCCArgs[i];
+        errs() << "\n";
         );
   if (RunProgramWithTimeout(GCCPath, &GCCArgs[0], sys::Path(), sys::Path(),
                             sys::Path())) {

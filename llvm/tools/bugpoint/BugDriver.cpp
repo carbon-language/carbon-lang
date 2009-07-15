@@ -117,13 +117,13 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
         std::cout << "Linking in input file: '" << Filenames[i] << "'\n";
       std::string ErrorMessage;
       if (Linker::LinkModules(Program, M.get(), &ErrorMessage)) {
-        std::cerr << ToolName << ": error linking in '" << Filenames[i] << "': "
-                  << ErrorMessage << '\n';
+        errs() << ToolName << ": error linking in '" << Filenames[i] << "': "
+               << ErrorMessage << '\n';
         return true;
       }
     }
   } catch (const std::string &Error) {
-    std::cerr << ToolName << ": error reading input '" << Error << "'\n";
+    errs() << ToolName << ": error reading input '" << Error << "'\n";
     return true;
   }
 
@@ -209,7 +209,7 @@ bool BugDriver::run() {
       return debugMiscompilation();
     }
   } catch (ToolExecutionError &TEE) {
-    std::cerr << TEE.what();
+    errs() << TEE.what();
     return debugCodeGeneratorCrash();
   }
 
@@ -218,7 +218,7 @@ bool BugDriver::run() {
   try {
     return debugCodeGenerator();
   } catch (ToolExecutionError &TEE) {
-    std::cerr << TEE.what();
+    errs() << TEE.what();
     return debugCodeGeneratorCrash();
   }
 }

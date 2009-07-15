@@ -97,7 +97,7 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
         std::cout << "\n*** diff'd output matches!\n";
       }
     } catch (ToolExecutionError &TEE) {
-      std::cerr << TEE.what();
+      errs() << TEE.what();
       debugCodeGeneratorCrash();
       return true;
     }

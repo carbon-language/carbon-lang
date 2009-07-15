@@ -87,20 +87,20 @@ int main(int argc, char **argv) {
   try {
     return D.run();
   } catch (ToolExecutionError &TEE) {
-    std::cerr << "Tool execution error: " << TEE.what() << '\n';
+    errs() << "Tool execution error: " << TEE.what() << '\n';
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    errs() << argv[0] << ": " << msg << "\n";
   } catch (const std::bad_alloc &e) {
-    std::cerr << "Oh no, a bugpoint process ran out of memory!\n"
-                 "To increase the allocation limits for bugpoint child\n"
-                 "processes, use the -mlimit option.\n";
+    errs() << "Oh no, a bugpoint process ran out of memory!\n"
+              "To increase the allocation limits for bugpoint child\n"
+              "processes, use the -mlimit option.\n";
   } catch (const std::exception &e) {
-    std::cerr << "Whoops, a std::exception leaked out of bugpoint: "
-              << e.what() << "\n"
-              << "This is a bug in bugpoint!\n";
+    errs() << "Whoops, a std::exception leaked out of bugpoint: "
+           << e.what() << "\n"
+           << "This is a bug in bugpoint!\n";
   } catch (...) {
-    std::cerr << "Whoops, an exception leaked out of bugpoint.  "
-              << "This is a bug in bugpoint!\n";
+    errs() << "Whoops, an exception leaked out of bugpoint.  "
+           << "This is a bug in bugpoint!\n";
   }
   return 1;
 }

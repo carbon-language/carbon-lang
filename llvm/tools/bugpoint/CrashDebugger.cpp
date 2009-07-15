@@ -28,6 +28,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/CommandLine.h"
+#include <iostream>
 #include <fstream>
 #include <set>
 using namespace llvm;
@@ -75,8 +76,8 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
 
     BD.Program = ParseInputFile(PrefixOutput.toString(), BD.getContext());
     if (BD.Program == 0) {
-      std::cerr << BD.getToolName() << ": Error reading bitcode file '"
-                << PrefixOutput << "'!\n";
+      errs() << BD.getToolName() << ": Error reading bitcode file '"
+             << PrefixOutput << "'!\n";
       exit(1);
     }
     PrefixOutput.eraseFromDisk();
@@ -631,10 +632,10 @@ bool BugDriver::debugOptimizerCrash(const std::string &ID) {
 static bool TestForCodeGenCrash(BugDriver &BD, Module *M) {
   try {
     BD.compileProgram(M);
-    std::cerr << '\n';
+    errs() << '\n';
     return false;
   } catch (ToolExecutionError &) {
-    std::cerr << "<crash>\n";
+    errs() << "<crash>\n";
     return true;  // Tool is still crashing.
   }
 }
@@ -643,7 +644,7 @@ static bool TestForCodeGenCrash(BugDriver &BD, Module *M) {
 /// crashes on an input.  It attempts to reduce the input as much as possible
 /// while still causing the code generator to crash.
 bool BugDriver::debugCodeGeneratorCrash() {
-  std::cerr << "*** Debugging code generator crash!\n";
+  errs() << "*** Debugging code generator crash!\n";
 
   return DebugACrash(*this, TestForCodeGenCrash);
 }

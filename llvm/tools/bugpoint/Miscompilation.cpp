@@ -26,6 +26,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Config/config.h"   // for HAVE_LINK_R
+#include <iostream>
 using namespace llvm;
 
 namespace llvm {
@@ -61,8 +62,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   std::string BitcodeResult;
   if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << " Error running this sequence of passes"
-              << " on the input program!\n";
+    errs() << " Error running this sequence of passes"
+           << " on the input program!\n";
     BD.setPassesToRun(Suffix);
     BD.EmitProgressBitcode("pass-error",  false);
     exit(BD.debugOptimizerCrash());
@@ -72,8 +73,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   if (BD.diffProgram(BitcodeResult, "", true /*delete bitcode*/)) {
     std::cout << " nope.\n";
     if (Suffix.empty()) {
-      std::cerr << BD.getToolName() << ": I'm confused: the test fails when "
-                << "no passes are run, nondeterministic program?\n";
+      errs() << BD.getToolName() << ": I'm confused: the test fails when "
+             << "no passes are run, nondeterministic program?\n";
       exit(1);
     }
     return KeepSuffix;         // Miscompilation detected!
@@ -94,8 +95,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // prefix passes, then discard the prefix passes.
   //
   if (BD.runPasses(Prefix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << " Error running this sequence of passes"
-              << " on the input program!\n";
+    errs() << " Error running this sequence of passes"
+           << " on the input program!\n";
     BD.setPassesToRun(Prefix);
     BD.EmitProgressBitcode("pass-error",  false);
     exit(BD.debugOptimizerCrash());
@@ -114,8 +115,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   //
   Module *PrefixOutput = ParseInputFile(BitcodeResult, BD.getContext());
   if (PrefixOutput == 0) {
-    std::cerr << BD.getToolName() << ": Error reading bitcode file '"
-              << BitcodeResult << "'!\n";
+    errs() << BD.getToolName() << ": Error reading bitcode file '"
+           << BitcodeResult << "'!\n";
     exit(1);
   }
   sys::Path(BitcodeResult).eraseFromDisk();  // No longer need the file on disk
@@ -130,8 +131,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   Module *OriginalInput = BD.swapProgramIn(PrefixOutput);
   if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << " Error running this sequence of passes"
-              << " on the input program!\n";
+    errs() << " Error running this sequence of passes"
+           << " on the input program!\n";
     BD.setPassesToRun(Suffix);
     BD.EmitProgressBitcode("pass-error",  false);
     exit(BD.debugOptimizerCrash());
@@ -187,8 +188,8 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
     M2 = CloneModule(M2);
   }
   if (Linker::LinkModules(M1, M2, &ErrorMsg)) {
-    std::cerr << BD.getToolName() << ": Error linking modules together:"
-              << ErrorMsg << '\n';
+    errs() << BD.getToolName() << ": Error linking modules together:"
+           << ErrorMsg << '\n';
     exit(1);
   }
   delete M2;   // We are done with this module.
@@ -279,7 +280,7 @@ static bool ExtractLoops(BugDriver &BD,
       return MadeChange;
     }
 
-    std::cerr << "Extracted a loop from the breaking portion of the program.\n";
+    errs() << "Extracted a loop from the breaking portion of the program.\n";
 
     // Bugpoint is intentionally not very trusting of LLVM transformations.  In
     // particular, we're not going to assume that the loop extractor works, so
@@ -291,16 +292,16 @@ static bool ExtractLoops(BugDriver &BD,
       BD.switchToInterpreter(AI);
 
       // Merged program doesn't work anymore!
-      std::cerr << "  *** ERROR: Loop extraction broke the program. :("
-                << " Please report a bug!\n";
-      std::cerr << "      Continuing on with un-loop-extracted version.\n";
+      errs() << "  *** ERROR: Loop extraction broke the program. :("
+             << " Please report a bug!\n";
+      errs() << "      Continuing on with un-loop-extracted version.\n";
 
       BD.writeProgramToFile("bugpoint-loop-extract-fail-tno.bc", ToNotOptimize);
       BD.writeProgramToFile("bugpoint-loop-extract-fail-to.bc", ToOptimize);
       BD.writeProgramToFile("bugpoint-loop-extract-fail-to-le.bc",
                             ToOptimizeLoopExtracted);
 
-      std::cerr << "Please submit the bugpoint-loop-extract-fail-*.bc files.\n";
+      errs() << "Please submit the bugpoint-loop-extract-fail-*.bc files.\n";
       delete ToOptimize;
       delete ToNotOptimize;
       delete ToOptimizeLoopExtracted;
@@ -339,8 +340,8 @@ static bool ExtractLoops(BugDriver &BD,
     // extract another loop.
     std::string ErrorMsg;
     if (Linker::LinkModules(ToNotOptimize, ToOptimizeLoopExtracted, &ErrorMsg)){
-      std::cerr << BD.getToolName() << ": Error linking modules together:"
-                << ErrorMsg << '\n';
+      errs() << BD.getToolName() << ": Error linking modules together:"
+             << ErrorMsg << '\n';
       exit(1);
     }
     delete ToOptimizeLoopExtracted;
@@ -462,7 +463,7 @@ static bool ExtractBlocks(BugDriver &BD,
   Module *Extracted = BD.ExtractMappedBlocksFromModule(Blocks, ToExtract);
   if (Extracted == 0) {
     // Weird, extraction should have worked.
-    std::cerr << "Nondeterministic problem extracting blocks??\n";
+    errs() << "Nondeterministic problem extracting blocks??\n";
     delete ProgClone;
     delete ToExtract;
     return false;
@@ -481,8 +482,8 @@ static bool ExtractBlocks(BugDriver &BD,
 
   std::string ErrorMsg;
   if (Linker::LinkModules(ProgClone, Extracted, &ErrorMsg)) {
-    std::cerr << BD.getToolName() << ": Error linking modules together:"
-              << ErrorMsg << '\n';
+    errs() << BD.getToolName() << ": Error linking modules together:"
+           << ErrorMsg << '\n';
     exit(1);
   }
   delete Extracted;
@@ -606,8 +607,8 @@ bool BugDriver::debugMiscompilation() {
   // Make sure something was miscompiled...
   if (!BugpointIsInterrupted)
     if (!ReduceMiscompilingPasses(*this).reduceList(PassesToRun)) {
-      std::cerr << "*** Optimized program matches reference output!  No problem"
-                << " detected...\nbugpoint can't help you with your problem!\n";
+      errs() << "*** Optimized program matches reference output!  No problem"
+             << " detected...\nbugpoint can't help you with your problem!\n";
       return false;
     }
 
@@ -796,7 +797,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   }
 
   if (verifyModule(*Test) || verifyModule(*Safe)) {
-    std::cerr << "Bugpoint has a bug, which corrupted a module!!\n";
+    errs() << "Bugpoint has a bug, which corrupted a module!!\n";
     abort();
   }
 }
@@ -813,12 +814,12 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
   sys::Path TestModuleBC("bugpoint.test.bc");
   std::string ErrMsg;
   if (TestModuleBC.makeUnique(true, &ErrMsg)) {
-    std::cerr << BD.getToolName() << "Error making unique filename: "
-              << ErrMsg << "\n";
+    errs() << BD.getToolName() << "Error making unique filename: "
+           << ErrMsg << "\n";
     exit(1);
   }
   if (BD.writeProgramToFile(TestModuleBC.toString(), Test)) {
-    std::cerr << "Error writing bitcode to `" << TestModuleBC << "'\nExiting.";
+    errs() << "Error writing bitcode to `" << TestModuleBC << "'\nExiting.";
     exit(1);
   }
   delete Test;
@@ -826,13 +827,13 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
   // Make the shared library
   sys::Path SafeModuleBC("bugpoint.safe.bc");
   if (SafeModuleBC.makeUnique(true, &ErrMsg)) {
-    std::cerr << BD.getToolName() << "Error making unique filename: "
-              << ErrMsg << "\n";
+    errs() << BD.getToolName() << "Error making unique filename: "
+           << ErrMsg << "\n";
     exit(1);
   }
 
   if (BD.writeProgramToFile(SafeModuleBC.toString(), Safe)) {
-    std::cerr << "Error writing bitcode to `" << SafeModuleBC << "'\nExiting.";
+    errs() << "Error writing bitcode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
   }
   std::string SharedObject = BD.compileSharedObject(SafeModuleBC.toString());
@@ -843,9 +844,9 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
   int Result = BD.diffProgram(TestModuleBC.toString(), SharedObject, false);
 
   if (Result)
-    std::cerr << ": still failing!\n";
+    errs() << ": still failing!\n";
   else
-    std::cerr << ": didn't fail.\n";
+    errs() << ": didn't fail.\n";
   TestModuleBC.eraseFromDisk();
   SafeModuleBC.eraseFromDisk();
   sys::Path(SharedObject).eraseFromDisk();
@@ -885,13 +886,13 @@ bool BugDriver::debugCodeGenerator() {
   sys::Path TestModuleBC("bugpoint.test.bc");
   std::string ErrMsg;
   if (TestModuleBC.makeUnique(true, &ErrMsg)) {
-    std::cerr << getToolName() << "Error making unique filename: "
-              << ErrMsg << "\n";
+    errs() << getToolName() << "Error making unique filename: "
+           << ErrMsg << "\n";
     exit(1);
   }
 
   if (writeProgramToFile(TestModuleBC.toString(), ToCodeGen)) {
-    std::cerr << "Error writing bitcode to `" << TestModuleBC << "'\nExiting.";
+    errs() << "Error writing bitcode to `" << TestModuleBC << "'\nExiting.";
     exit(1);
   }
   delete ToCodeGen;
@@ -899,13 +900,13 @@ bool BugDriver::debugCodeGenerator() {
   // Make the shared library
   sys::Path SafeModuleBC("bugpoint.safe.bc");
   if (SafeModuleBC.makeUnique(true, &ErrMsg)) {
-    std::cerr << getToolName() << "Error making unique filename: "
-              << ErrMsg << "\n";
+    errs() << getToolName() << "Error making unique filename: "
+           << ErrMsg << "\n";
     exit(1);
   }
 
   if (writeProgramToFile(SafeModuleBC.toString(), ToNotCodeGen)) {
-    std::cerr << "Error writing bitcode to `" << SafeModuleBC << "'\nExiting.";
+    errs() << "Error writing bitcode to `" << SafeModuleBC << "'\nExiting.";
     exit(1);
   }
   std::string SharedObject = compileSharedObject(SafeModuleBC.toString());

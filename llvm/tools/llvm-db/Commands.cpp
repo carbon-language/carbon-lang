@@ -500,7 +500,7 @@ void CLIDebugger::breakCommand(std::string &Options) {
   if (File == 0)
     throw "Unknown file to place breakpoint!";
 
-  std::cerr << "Break: " << File->getFilename() << ":" << LineNo << "\n";
+  errs() << "Break: " << File->getFilename() << ":" << LineNo << "\n";
 
   throw "breakpoints not implemented yet!";
 }

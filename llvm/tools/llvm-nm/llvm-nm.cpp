@@ -24,6 +24,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include <algorithm>
 #include <cctype>
@@ -147,7 +148,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
     if (Result)
       DumpSymbolNamesFromModule(Result);
     else {
-      std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
+      errs() << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
       return;
     }
     
@@ -156,17 +157,17 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
     Archive* archive = Archive::OpenAndLoad(sys::Path(Filename), Context,
                                             &ErrorMessage);
     if (!archive)
-      std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
+      errs() << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
     std::vector<Module *> Modules;
     if (archive->getAllModules(Modules, &ErrorMessage)) {
-      std::cerr << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
+      errs() << ToolName << ": " << Filename << ": " << ErrorMessage << "\n";
       return;
     }
     MultipleFiles = true;
     std::for_each (Modules.begin(), Modules.end(), DumpSymbolNamesFromModule);
   } else {
-    std::cerr << ToolName << ": " << Filename << ": "
-              << "unrecognizable file type\n";
+    errs() << ToolName << ": " << Filename << ": "
+           << "unrecognizable file type\n";
     return;
   }
 }

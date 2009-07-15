@@ -18,6 +18,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <algorithm>
@@ -718,15 +719,15 @@ int main(int argc, char **argv) {
     if (!ArchivePath.exists()) {
       // Produce a warning if we should and we're creating the archive
       if (!Create)
-        std::cerr << argv[0] << ": creating " << ArchivePath.toString() << "\n";
+        errs() << argv[0] << ": creating " << ArchivePath.toString() << "\n";
       TheArchive = Archive::CreateEmpty(ArchivePath, Context);
       TheArchive->writeToDisk();
     } else {
       std::string Error;
       TheArchive = Archive::OpenAndLoad(ArchivePath, Context, &Error);
       if (TheArchive == 0) {
-        std::cerr << argv[0] << ": error loading '" << ArchivePath << "': "
-                  << Error << "!\n";
+        errs() << argv[0] << ": error loading '" << ArchivePath << "': "
+               << Error << "!\n";
         return 1;
       }
     }
@@ -749,27 +750,27 @@ int main(int argc, char **argv) {
       case DisplayTable:    haveError = doDisplayTable(&ErrMsg); break;
       case Extract:         haveError = doExtract(&ErrMsg); break;
       case NoOperation:
-        std::cerr << argv[0] << ": No operation was selected.\n";
+        errs() << argv[0] << ": No operation was selected.\n";
         break;
     }
     if (haveError) {
-      std::cerr << argv[0] << ": " << ErrMsg << "\n";
+      errs() << argv[0] << ": " << ErrMsg << "\n";
       return 1;
     }
   } catch (const char*msg) {
     // These errors are usage errors, thrown only by the various checks in the
     // code above.
-    std::cerr << argv[0] << ": " << msg << "\n\n";
+    errs() << argv[0] << ": " << msg << "\n\n";
     cl::PrintHelpMessage();
     exitCode = 1;
   } catch (const std::string& msg) {
     // These errors are thrown by LLVM libraries (e.g. lib System) and represent
     // a more serious error so we bump the exitCode and don't print the usage.
-    std::cerr << argv[0] << ": " << msg << "\n";
+    errs() << argv[0] << ": " << msg << "\n";
     exitCode = 2;
   } catch (...) {
     // This really shouldn't happen, but just in case ....
-    std::cerr << argv[0] << ": An unexpected unknown exception occurred.\n";
+    errs() << argv[0] << ": An unexpected unknown exception occurred.\n";
     exitCode = 3;
   }
 
