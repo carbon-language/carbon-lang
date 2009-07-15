@@ -32,7 +32,6 @@ namespace llvm {
   class MachineInstr;
   class MachineRegisterInfo;
   class TargetRegisterInfo;
-  struct LiveInterval;
 
   /// VNInfo - Value Number Information.
   /// This class holds information about a machine level values, including
