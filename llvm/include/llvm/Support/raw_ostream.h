@@ -44,6 +44,10 @@ private:
   char *OutBufStart, *OutBufEnd, *OutBufCur;
   bool Unbuffered;
 
+  /// Error This flag is true if an error of any kind has been detected.
+  ///
+  bool Error;
+
 public:
   // color order matches ANSI escape sequence, don't change
   enum Colors {
@@ -58,17 +62,30 @@ public:
     SAVEDCOLOR
   };
 
-  explicit raw_ostream(bool unbuffered=false) : Unbuffered(unbuffered) {
+  explicit raw_ostream(bool unbuffered=false)
+    : Unbuffered(unbuffered), Error(false) {
     // Start out ready to flush.
     OutBufStart = OutBufEnd = OutBufCur = 0;
   }
 
-  virtual ~raw_ostream() {
-    delete [] OutBufStart;
-  }
+  virtual ~raw_ostream();
 
   /// tell - Return the current offset with the file.
   uint64_t tell() { return current_pos() + GetNumBytesInBuffer(); }
+
+  /// has_error - Return the value of the flag in this raw_ostream indicating
+  /// whether an output error has been encountered.
+  bool has_error() const {
+    return Error;
+  };
+
+  /// clear_error - Set the flag read by has_error() to false. If the error
+  /// flag is set at the time when this raw_ostream's destructor is called,
+  /// llvm_report_error is called to report the error. Use clear_error()
+  /// after handling the error to avoid this behavior.
+  void clear_error() {
+    Error = false;
+  };
 
   //===--------------------------------------------------------------------===//
   // Configuration Interface
@@ -213,6 +230,11 @@ private:
   /// counting the bytes currently in the buffer.
   virtual uint64_t current_pos() = 0;
 
+protected:
+  /// error_detected - Set the flag indicating that an output error has
+  /// been encountered.
+  void error_detected() { Error = true; }
+
   //===--------------------------------------------------------------------===//
   // Private Interface
   //===--------------------------------------------------------------------===//
@@ -311,8 +333,8 @@ raw_ostream &errs();
 //===----------------------------------------------------------------------===//
 
 /// raw_os_ostream - A raw_ostream that writes to an std::ostream.  This is a
-/// simple adaptor class.  It does not check for I/O errors; clients should use
-/// the underlying stream to detect errors.
+/// simple adaptor class.  It does not check for output errors; clients should
+/// use the underlying stream to detect errors.
 class raw_os_ostream : public raw_ostream {
   std::ostream &OS;
 
@@ -332,7 +354,7 @@ public:
 };
 
 /// raw_string_ostream - A raw_ostream that writes to an std::string.  This is a
-/// simple adaptor class.
+/// simple adaptor class. This class does not encounter output errors.
 class raw_string_ostream : public raw_ostream {
   std::string &OS;
 
@@ -358,7 +380,8 @@ public:
 };
 
 /// raw_svector_ostream - A raw_ostream that writes to an SmallVector or
-/// SmallString.  This is a simple adaptor class.
+/// SmallString.  This is a simple adaptor class. This class does not
+/// encounter output errors.
 class raw_svector_ostream : public raw_ostream {
   SmallVectorImpl<char> &OS;
 

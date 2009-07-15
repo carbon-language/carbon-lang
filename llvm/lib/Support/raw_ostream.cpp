@@ -44,6 +44,16 @@
 
 using namespace llvm;
 
+raw_ostream::~raw_ostream() {
+  delete [] OutBufStart;
+
+  // If there are any pending errors, report them now. Clients wishing
+  // to avoid llvm_report_error calls should check for errors with
+  // has_error() and clear the error flag with clear_error() before
+  // destructing raw_ostream objects which may have errors.
+  if (Error)
+    llvm_report_error("IO failure on output stream.");
+}
 
 // An out of line virtual method to provide a home for the class vtable.
 void raw_ostream::handle() {}
@@ -282,7 +292,7 @@ raw_fd_ostream::~raw_fd_ostream() {
     flush();
     if (ShouldClose)
       if (::close(FD) != 0)
-        llvm_report_error("IO failure closing output stream.");
+        error_detected();
   }
 }
 
@@ -290,7 +300,7 @@ void raw_fd_ostream::write_impl(const char *Ptr, unsigned Size) {
   assert (FD >= 0 && "File already closed.");
   pos += Size;
   if (::write(FD, Ptr, Size) != (ssize_t) Size)
-    llvm_report_error("IO failure writing to output stream.");
+    error_detected();
 }
 
 void raw_fd_ostream::close() {
@@ -298,7 +308,7 @@ void raw_fd_ostream::close() {
   ShouldClose = false;
   flush();
   if (::close(FD) != 0)
-    llvm_report_error("IO failure closing output stream.");
+    error_detected();
   FD = -1;
 }
 
@@ -306,7 +316,7 @@ uint64_t raw_fd_ostream::seek(uint64_t off) {
   flush();
   pos = ::lseek(FD, off, SEEK_SET);
   if (pos != off)
-    llvm_report_error("IO failure seeking on output stream.");
+    error_detected();
   return pos;  
 }
 
