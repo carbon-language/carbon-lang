@@ -15,6 +15,7 @@
 #define LLVM_SYSTEM_PATH_H
 
 #include "llvm/System/TimeValue.h"
+#include "llvm/Support/raw_ostream.h"
 #include <set>
 #include <string>
 #include <vector>
@@ -712,6 +713,17 @@ namespace sys {
   /// This is the OS-specific path separator: a colon on Unix or a semicolon
   /// on Windows.
   extern const char PathSeparator;
+}
+
+inline raw_ostream& operator<<(raw_ostream& strm, const sys::Path& aPath) {
+  strm << aPath.toString();
+  return strm;
+}
+
+inline raw_ostream& operator<<(raw_ostream& strm,
+                               const sys::PathWithStatus& aPath) {
+  strm << static_cast<const sys::Path&>(aPath);
+  return strm;
 }
 
 std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath);
