@@ -41,12 +41,6 @@ using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
-static cl::opt<std::string> FileDirective("xcore-file-directive", cl::Optional,
-  cl::desc("Output a file directive into the assembly file"),
-  cl::Hidden,
-  cl::value_desc("filename"),
-  cl::init(""));
-
 static cl::opt<unsigned> MaxThreads("xcore-max-threads", cl::Optional,
   cl::desc("Maximum number of threads (for emulation thread-local storage)"),
   cl::Hidden,
@@ -71,8 +65,7 @@ namespace {
     void printOperand(const MachineInstr *MI, int opNum);
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                         unsigned AsmVariant, const char *ExtraCode);
-    
-    void emitFileDirective(const std::string &filename);
+
     void emitGlobalDirective(const std::string &name);
     void emitExternDirective(const std::string &name);
     
@@ -124,14 +117,6 @@ static void PrintEscapedString(const std::string &Str,
           << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
     }
   }
-}
-
-void XCoreAsmPrinter::
-emitFileDirective(const std::string &name)
-{
-  O << "\t.file\t\"";
-  PrintEscapedString(name, O);
-  O << "\"\n";
 }
 
 void XCoreAsmPrinter::
@@ -418,9 +403,6 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
   bool Result = AsmPrinter::doInitialization(M);
   DW = getAnalysisIfAvailable<DwarfWriter>();
   
-  if (!FileDirective.empty())
-    emitFileDirective(FileDirective);
-
   return Result;
 }
 
