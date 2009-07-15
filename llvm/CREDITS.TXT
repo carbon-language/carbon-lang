@@ -307,6 +307,10 @@ E: lauro.venancio@indt.org.br
 D: ARM backend improvements
 D: Thread Local Storage implementation
 
+N: Xerxes Ranby
+E: xerxes@zafena.se
+D: Cmake dependency chain and various bug fixes
+
 N: Bill Wendling
 E: isanbard@gmail.com
 D: Bunches of stuff
