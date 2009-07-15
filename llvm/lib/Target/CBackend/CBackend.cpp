@@ -30,9 +30,10 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -3187,27 +3188,27 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
 
   const char *const *table = 0;
   
-  //Grab the translation table from TargetAsmInfo if it exists
+  // Grab the translation table from TargetAsmInfo if it exists.
   if (!TAsm) {
     std::string E;
-    const TargetMachineRegistry::entry* Match = 
-      TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, E);
+    const Target *Match =
+      TargetRegistry::getClosestStaticTargetForModule(*TheModule, E);
     if (Match) {
-      //Per platform Target Machines don't exist, so create it
-      // this must be done only once
-      const TargetMachine* TM = Match->CtorFn(*TheModule, "");
+      // Per platform Target Machines don't exist, so create it;
+      // this must be done only once.
+      const TargetMachine* TM = Match->createTargetMachine(*TheModule, "");
       TAsm = TM->getTargetAsmInfo();
     }
   }
   if (TAsm)
     table = TAsm->getAsmCBE();
 
-  //Search the translation table if it exists
+  // Search the translation table if it exists.
   for (int i = 0; table && table[i]; i += 2)
     if (c.Codes[0] == table[i])
       return table[i+1];
 
-  //default is identity
+  // Default is identity.
   return c.Codes[0];
 }
 
