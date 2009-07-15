@@ -49,6 +49,8 @@ namespace llvm {
                                               bool);
 
     friend struct TargetRegistry;
+    // FIXME: Temporary hack, please remove.
+    friend struct TargetMachineRegistry;
 
     /// Next - The next registered target in the linked list, maintained by the
     /// TargetRegistry.
