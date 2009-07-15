@@ -219,11 +219,10 @@ MachineVerifier::runOnMachineFunction(MachineFunction &MF)
 
   if (OutFileName)
     OutFile.close();
-
-  if (foundErrors) {
+  else if (foundErrors) {
     std::string msg;
     raw_string_ostream Msg(msg);
-    Msg << "\nStopping with " << foundErrors << " machine code errors.";
+    Msg << "Found " << foundErrors << " machine code errors.";
     llvm_report_error(Msg.str());
   }
 
@@ -353,8 +352,12 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum)
     if (MO->isUse()) {
       if (MO->isKill()) {
         addRegWithSubRegs(regsKilled, Reg);
+        // Tied operands on two-address instuctions MUST NOT have a <kill> flag.
+        if (MI->isRegTiedToDefOperand(MONum))
+            report("Illegal kill flag on two-address instruction operand",
+                   MO, MONum);
       } else {
-        // TwoAddress instr modyfying a reg is treated as kill+def.
+        // TwoAddress instr modifying a reg is treated as kill+def.
         unsigned defIdx;
         if (MI->isRegTiedToDefOperand(MONum, &defIdx) &&
             MI->getOperand(defIdx).getReg() == Reg)
