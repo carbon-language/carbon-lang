@@ -366,7 +366,8 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
   case MachineOperand::MO_ExternalSymbol:
     // Computing the address of an external symbol, not calling it.
     if (TM.getRelocationModel() != Reloc::Static) {
-      std::string Name(TAI->getGlobalPrefix()); Name += MO.getSymbolName();
+      std::string Name(TAI->getGlobalPrefix());
+      Name += MO.getSymbolName();
       GVStubs.insert(Name);
       printSuffixedName(Name, "$non_lazy_ptr");
       return;
@@ -381,17 +382,15 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static) {
       if (GV->isDeclaration() || GV->isWeakForLinker()) {
-        if (GV->hasHiddenVisibility()) {
-          if (GV->isDeclaration() || GV->hasCommonLinkage() ||
-              GV->hasAvailableExternallyLinkage()) {
-            HiddenGVStubs.insert(Name);
-            printSuffixedName(Name, "$non_lazy_ptr");
-          } else {
-            O << Name;
-          }
-        } else {
+        if (!GV->hasHiddenVisibility()) {
           GVStubs.insert(Name);
           printSuffixedName(Name, "$non_lazy_ptr");
+        } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
+                   GV->hasAvailableExternallyLinkage()) {
+          HiddenGVStubs.insert(Name);
+          printSuffixedName(Name, "$non_lazy_ptr");
+        } else {
+          O << Name;
         }
         return;
       }
@@ -962,11 +961,11 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   bool isPPC64 = TD->getPointerSizeInBits() == 64;
 
   // Output stubs for dynamically-linked functions
-  if (TM.getRelocationModel() == Reloc::PIC_) {
+  if (TM.getRelocationModel() == Reloc::PIC_ && !FnStubs.empty()) {
+    SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
+                        "pure_instructions,32");
     for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
-                          "pure_instructions,32");
       EmitAlignment(4);
       const char *p = i->getKeyData();
       bool hasQuote = p[0]=='\"';
@@ -1017,11 +1016,11 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       else
         O << "\t.long dyld_stub_binding_helper\n";
     }
-  } else {
+  } else if (!FnStubs.empty()) {
+    SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
+                        "pure_instructions,16");
     for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
-                          "pure_instructions,16");
       EmitAlignment(4);
       const char *p = i->getKeyData();
       printSuffixedName(p, "$stub");
