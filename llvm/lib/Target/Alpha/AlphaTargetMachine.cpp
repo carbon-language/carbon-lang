@@ -61,13 +61,13 @@ bool AlphaTargetMachine::addPreEmitPass(PassManagerBase &PM,
                                         CodeGenOpt::Level OptLevel) {
   // Must run branch selection immediately preceding the asm printer
   PM.add(createAlphaBranchSelectionPass());
+  PM.add(createAlphaLLRPPass(*this));
   return false;
 }
 bool AlphaTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
                                             bool Verbose,
                                             formatted_raw_ostream &Out) {
-  PM.add(createAlphaLLRPPass(*this));
   // Output assembly language.
   assert(AsmPrinterCtor && "AsmPrinter was not linked in");
   if (AsmPrinterCtor)
