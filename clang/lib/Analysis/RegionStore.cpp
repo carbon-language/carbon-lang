@@ -281,9 +281,11 @@ public:
   ///       return symbolic
   SVal Retrieve(const GRState *state, Loc L, QualType T = QualType());
 
-  SVal RetrieveElement(const GRState* state, const ElementRegion* R);
+  SVal RetrieveElement(const GRState *state, const ElementRegion *R);
 
-  SVal RetrieveField(const GRState* state, const FieldRegion* R);
+  SVal RetrieveField(const GRState *state, const FieldRegion *R);
+  
+  SVal RetrieveObjCIvar(const GRState *state, const ObjCIvarRegion *R);
 
   /// Retrieve the values in a struct and return a CompoundVal, used when doing
   /// struct copy: 
@@ -865,20 +867,8 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   if (V)
     return *V;
 
-  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R)) {
-    const MemRegion *SR = IVR->getSuperRegion();
-
-    // If the super region is 'self' then return the symbol representing
-    // the value of the ivar upon entry to the method.
-    if (SR == SelfRegion) {
-      // FIXME: Do we need to handle the case where the super region
-      // has a view?  We want to canonicalize the bindings.
-      return ValMgr.getRegionValueSymbolVal(R);
-    }
-    
-    // Otherwise, we need a new symbol.  For now return Unknown.
-    return UnknownVal();
-  }
+  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
+    return RetrieveObjCIvar(state, IVR);
 
   // The location does not have a bound value.  This means that it has
   // the value it had upon its creation and/or entry to the analyzed
@@ -1024,6 +1014,40 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
   // All other values are symbolic.
   return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
 }
+
+SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state, 
+                                          const ObjCIvarRegion* R) {
+
+  QualType Ty = R->getValueType(getContext());
+  
+    // Check if the region has a binding.
+  RegionBindingsTy B = GetRegionBindings(state->getStore());
+
+  if (const SVal* V = B.lookup(R))
+    return *V;
+  
+  const MemRegion *superR = R->getSuperRegion();
+
+  // Check if the super region has a binding.
+  if (const SVal *V = B.lookup(superR)) {
+    if (SymbolRef parentSym = V->getAsSymbol())
+      return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+    
+    // Other cases: give up.
+    return UnknownVal();
+  }
+  
+  // If the region is already cast to another type, use that type to create the
+  // symbol value.
+  if (const QualType *p = state->get<RegionCasts>(R)) {
+    QualType tmp = *p;
+    Ty = tmp->getAsPointerType()->getPointeeType();
+  }
+  
+  // All other values are symbolic.
+  return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
+}
+
 
 SVal RegionStoreManager::RetrieveStruct(const GRState *state, 
 					const TypedRegion* R){
