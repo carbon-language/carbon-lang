@@ -137,7 +137,8 @@ namespace llvm {
     /// @name Target Registration
     /// @{
 
-    /// RegisterTarget - Register the given target.
+    /// RegisterTarget - Register the given target. Attempts to register a
+    /// target which has already been registered will be ignored.
     /// 
     /// Clients are responsible for ensuring that registration doesn't occur
     /// while another thread is attempting to access the registry. Typically
