@@ -451,6 +451,12 @@ API changes are:</p>
     <tt>CreateFNeg</tt> should now be used for floating-point arithmetic.</li>
 <li>The DynamicLibrary class can no longer be constructed, its functionality has
     moved to static member functions.</li>
+<li><tt>raw_fd_ostream</tt>'s constructor for opening a given filename now
+    takes an extra <tt>Force</tt> argument. If <tt>Force</tt> is set to
+    <tt>false</tt>, an error will be reported if a file with the given name
+    already exists. If <tt>Force</tt> is set to <tt>true</tt>, the file will
+    be silently truncated (which is the behavior before this flag was
+    added).</li>
 </ul>
 
 </div>
