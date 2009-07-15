@@ -33,7 +33,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
@@ -52,7 +51,7 @@ namespace {
   class VISIBILITY_HIDDEN MipsAsmPrinter : public AsmPrinter {
     const MipsSubtarget *Subtarget;
   public:
-    explicit MipsAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM, 
+    explicit MipsAsmPrinter(formatted_raw_ostream &O, MipsTargetMachine &TM, 
                             const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V) {
       Subtarget = &TM.getSubtarget<MipsSubtarget>();
@@ -93,7 +92,7 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 FunctionPass *llvm::createMipsCodePrinterPass(formatted_raw_ostream &o,
-                                              TargetMachine &tm,
+                                              MipsTargetMachine &tm,
                                               bool verbose) {
   return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
@@ -585,11 +584,4 @@ namespace {
 }
 
 // Force static initialization.
-extern "C" void LLVMInitializeMipsAsmPrinter() { 
-  extern Target TheMipsTarget;
-  TargetRegistry::RegisterAsmPrinter(TheMipsTarget, createMipsCodePrinterPass);
-
-  extern Target TheMipselTarget;
-  TargetRegistry::RegisterAsmPrinter(TheMipselTarget, 
-                                     createMipsCodePrinterPass);
-}
+extern "C" void LLVMInitializeMipsAsmPrinter() { }

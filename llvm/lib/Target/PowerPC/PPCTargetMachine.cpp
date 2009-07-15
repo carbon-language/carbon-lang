@@ -30,13 +30,10 @@ extern "C" int PowerPCTargetMachineModule;
 int PowerPCTargetMachineModule = 0;
 
 // Register the targets
-extern Target ThePPC32Target;
 static RegisterTarget<PPC32TargetMachine>
-X(ThePPC32Target, "ppc32", "PowerPC 32");
-
-extern Target ThePPC64Target;
+X("ppc32", "PowerPC 32");
 static RegisterTarget<PPC64TargetMachine>
-Y(ThePPC64Target, "ppc64", "PowerPC 64");
+Y("ppc64", "PowerPC 64");
 
 // Force static initialization.
 extern "C" void LLVMInitializePowerPCTarget() { }
@@ -51,10 +48,60 @@ const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
     return new PPCLinuxTargetAsmInfo(*this);
 }
 
-PPCTargetMachine::PPCTargetMachine(const Target&T, const Module &M, 
-                                   const std::string &FS, bool is64Bit)
-  : LLVMTargetMachine(T),
-    Subtarget(*this, M, FS, is64Bit),
+unsigned PPC32TargetMachine::getJITMatchQuality() {
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
+  if (sizeof(void*) == 4)
+    return 10;
+#endif
+  return 0;
+}
+unsigned PPC64TargetMachine::getJITMatchQuality() {
+#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
+  if (sizeof(void*) == 8)
+    return 10;
+#endif
+  return 0;
+}
+
+unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
+  // We strongly match "powerpc-*".
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "powerpc-")
+    return 20;
+  
+  // If the target triple is something non-powerpc, we don't match.
+  if (!TT.empty()) return 0;
+  
+  if (M.getEndianness()  == Module::BigEndian &&
+      M.getPointerSize() == Module::Pointer32)
+    return 10;                                   // Weak match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+  
+  return getJITMatchQuality()/2;
+}
+
+unsigned PPC64TargetMachine::getModuleMatchQuality(const Module &M) {
+  // We strongly match "powerpc64-*".
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 10 && std::string(TT.begin(), TT.begin()+10) == "powerpc64-")
+    return 20;
+  
+  if (M.getEndianness()  == Module::BigEndian &&
+      M.getPointerSize() == Module::Pointer64)
+    return 10;                                   // Weak match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+  
+  return getJITMatchQuality()/2;
+}
+
+
+PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
+                                   bool is64Bit)
+  : Subtarget(*this, M, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()), MachOWriterInfo(*this) {
@@ -71,15 +118,13 @@ PPCTargetMachine::PPCTargetMachine(const Target&T, const Module &M,
 /// groups, which typically degrades performance.
 bool PPCTargetMachine::getEnableTailMergeDefault() const { return false; }
 
-PPC32TargetMachine::PPC32TargetMachine(const Target &T, const Module &M, 
-                                       const std::string &FS) 
-  : PPCTargetMachine(T, M, FS, false) {
+PPC32TargetMachine::PPC32TargetMachine(const Module &M, const std::string &FS) 
+  : PPCTargetMachine(M, FS, false) {
 }
 
 
-PPC64TargetMachine::PPC64TargetMachine(const Target &T, const Module &M, 
-                                       const std::string &FS)
-  : PPCTargetMachine(T, M, FS, true) {
+PPC64TargetMachine::PPC64TargetMachine(const Module &M, const std::string &FS)
+  : PPCTargetMachine(M, FS, true) {
 }
 
 

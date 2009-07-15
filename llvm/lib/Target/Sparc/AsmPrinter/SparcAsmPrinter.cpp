@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
@@ -360,8 +359,4 @@ namespace {
 }
 
 // Force static initialization.
-extern "C" void LLVMInitializeSparcAsmPrinter() { 
-  extern Target TheSparcTarget;
-  TargetRegistry::RegisterAsmPrinter(TheSparcTarget, 
-                                     createSparcCodePrinterPass);
-}
+extern "C" void LLVMInitializeSparcAsmPrinter() { }

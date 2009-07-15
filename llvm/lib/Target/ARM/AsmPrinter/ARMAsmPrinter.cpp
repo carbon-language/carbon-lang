@@ -31,7 +31,6 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
@@ -1288,7 +1287,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createARMCodePrinterPass(formatted_raw_ostream &o,
-                                             TargetMachine &tm,
+                                             ARMBaseTargetMachine &tm,
                                              bool verbose) {
   return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
@@ -1302,8 +1301,4 @@ namespace {
 }
 
 // Force static initialization.
-extern "C" void LLVMInitializeARMAsmPrinter() { 
-  extern Target TheARMTarget, TheThumbTarget;
-  TargetRegistry::RegisterAsmPrinter(TheARMTarget, createARMCodePrinterPass);
-  TargetRegistry::RegisterAsmPrinter(TheThumbTarget, createARMCodePrinterPass);
-}
+extern "C" void LLVMInitializeARMAsmPrinter() { }

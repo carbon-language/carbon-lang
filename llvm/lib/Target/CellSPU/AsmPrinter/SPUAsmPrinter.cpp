@@ -37,7 +37,6 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include <set>
@@ -290,7 +289,7 @@ namespace {
   class VISIBILITY_HIDDEN LinuxAsmPrinter : public SPUAsmPrinter {
     DwarfWriter *DW;
   public:
-    explicit LinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
+    explicit LinuxAsmPrinter(formatted_raw_ostream &O, SPUTargetMachine &TM,
                              const TargetAsmInfo *T, bool V)
       : SPUAsmPrinter(O, TM, T, V), DW(0) {}
 
@@ -600,10 +599,13 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
 /// that the Linux SPU assembler can deal with.
 ///
 FunctionPass *llvm::createSPUAsmPrinterPass(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
+                                            SPUTargetMachine &tm,
                                             bool verbose) {
   return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
+
+// Force static initialization.
+extern "C" void LLVMInitializeCellSPUAsmPrinter() { }
 
 namespace {
   static struct Register {
@@ -611,10 +613,4 @@ namespace {
       SPUTargetMachine::registerAsmPrinter(createSPUAsmPrinterPass);
     }
   } Registrator;
-}
-
-// Force static initialization.
-extern "C" void LLVMInitializeCellSPUAsmPrinter() { 
-  extern Target TheCellSPUTarget;
-  TargetRegistry::RegisterAsmPrinter(TheCellSPUTarget, createSPUAsmPrinterPass);
 }

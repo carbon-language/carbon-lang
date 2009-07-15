@@ -41,7 +41,7 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
 public:
-  PIC16TargetMachine(const Target &T, const Module &M, const std::string &FS, 
+  PIC16TargetMachine(const Module &M, const std::string &FS, 
                      bool Cooper = false);
 
   virtual const TargetFrameInfo *getFrameInfo() const { return &FrameInfo; }
@@ -68,7 +68,7 @@ public:
 /// CooperTargetMachine
 class CooperTargetMachine : public PIC16TargetMachine {
 public:
-  CooperTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  CooperTargetMachine(const Module &M, const std::string &FS);
 }; // CooperTargetMachine.
 
 } // end namespace llvm

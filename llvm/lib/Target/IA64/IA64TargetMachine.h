@@ -37,12 +37,12 @@ protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
+                                            IA64TargetMachine &tm,
                                             bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  IA64TargetMachine(const Target &T, const Module &M, const std::string &FS);
+  IA64TargetMachine(const Module &M, const std::string &FS);
 
   virtual const IA64InstrInfo      *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo    *getFrameInfo() const { return &FrameInfo; }
@@ -54,6 +54,8 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
+
+  static unsigned getModuleMatchQuality(const Module &M);
 
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

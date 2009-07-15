@@ -45,7 +45,7 @@ protected:
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  AlphaTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  AlphaTargetMachine(const Module &M, const std::string &FS);
 
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
@@ -60,6 +60,9 @@ public:
   virtual AlphaJITInfo* getJITInfo() {
     return &JITInfo;
   }
+
+  static unsigned getJITMatchQuality();
+  static unsigned getModuleMatchQuality(const Module &M);
 
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

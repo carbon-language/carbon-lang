@@ -30,7 +30,7 @@ namespace llvm {
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPCISelDag(PPCTargetMachine &TM);
 FunctionPass *createPPCAsmPrinterPass(formatted_raw_ostream &OS,
-                                      TargetMachine &TM,
+                                      PPCTargetMachine &TM,
                                       bool Verbose);
 FunctionPass *createPPCCodeEmitterPass(PPCTargetMachine &TM,
                                        MachineCodeEmitter &MCE);

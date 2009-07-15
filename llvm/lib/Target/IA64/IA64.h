@@ -38,7 +38,7 @@ FunctionPass *createIA64BundlingPass(IA64TargetMachine &TM);
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *createIA64CodePrinterPass(formatted_raw_ostream &o,
-                                        TargetMachine &tm,
+                                        IA64TargetMachine &tm,
                                         bool verbose);
 
 } // End llvm namespace

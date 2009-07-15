@@ -42,13 +42,12 @@ protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
+                                            ARMBaseTargetMachine &tm,
                                             bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  ARMBaseTargetMachine(const Target &T, const Module &M, const std::string &FS, 
-                       bool isThumb);
+  ARMBaseTargetMachine(const Module &M, const std::string &FS, bool isThumb);
 
   virtual const ARMFrameInfo     *getFrameInfo() const { return &FrameInfo; }
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
@@ -60,6 +59,9 @@ public:
   static void registerAsmPrinter(AsmPrinterCtorFn F) {
     AsmPrinterCtor = F;
   }
+
+  static unsigned getModuleMatchQuality(const Module &M);
+  static unsigned getJITMatchQuality();
 
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
@@ -97,7 +99,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   const TargetData    DataLayout;       // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
 public:
-  ARMTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  ARMTargetMachine(const Module &M, const std::string &FS);
 
   virtual const ARMRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
@@ -123,7 +125,7 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   const TargetData    DataLayout;   // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
 public:
-  ThumbTargetMachine(const Target &T, const Module &M, const std::string &FS);
+  ThumbTargetMachine(const Module &M, const std::string &FS);
 
   /// returns either Thumb1RegisterInfo of Thumb2RegisterInfo
   virtual const ARMBaseRegisterInfo *getRegisterInfo() const {

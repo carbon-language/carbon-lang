@@ -42,8 +42,7 @@ namespace llvm {
     typedef unsigned (*ModuleMatchQualityFnTy)(const Module &M);
     typedef unsigned (*JITMatchQualityFnTy)();
 
-    typedef TargetMachine *(*TargetMachineCtorTy)(const Target &,
-                                                  const Module &, 
+    typedef TargetMachine *(*TargetMachineCtorTy)(const Module &, 
                                                   const std::string &);
     typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &,
                                               TargetMachine &,
@@ -88,22 +87,18 @@ namespace llvm {
     /// getShortDescription - Get a short description of the target.
     const char *getShortDescription() const { return ShortDesc; }
 
-    /// getJITMatchQuality - Get the quality of this targets match for use as a
-    /// JIT.
-    unsigned getJITMatchQuality() const { return JITMatchQualityFn(); }
-
     /// createTargetMachine - Create a target specific machine implementation.
     TargetMachine *createTargetMachine(const Module &M,
-                                       const std::string &Features) const {
+                                       const std::string &Features) {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(*this, M, Features);
+      return TargetMachineCtorFn(M, Features);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.
     FunctionPass *createAsmPrinter(formatted_raw_ostream &OS,
                                    TargetMachine &M,
-                                   bool Verbose) const {
+                                   bool Verbose) {
       if (!AsmPrinterCtorFn)
         return 0;
       return AsmPrinterCtorFn(OS, M, Verbose);
@@ -140,8 +135,7 @@ namespace llvm {
     /// @name Target Registration
     /// @{
 
-    /// RegisterTarget - Register the given target. Attempts to register a
-    /// target which has already been registered will be ignored.
+    /// RegisterTarget - Register the given target.
     /// 
     /// Clients are responsible for ensuring that registration doesn't occur
     /// while another thread is attempting to access the registry. Typically

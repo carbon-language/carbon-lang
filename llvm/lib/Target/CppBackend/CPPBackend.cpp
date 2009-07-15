@@ -81,8 +81,7 @@ extern "C" int CppBackendTargetMachineModule;
 int CppBackendTargetMachineModule = 0;
 
 // Register the target.
-extern Target TheCppBackendTarget;
-static RegisterTarget<CPPTargetMachine> X(TheCppBackendTarget, "cpp", "C++ backend");
+static RegisterTarget<CPPTargetMachine> X("cpp", "C++ backend");
 
 // Force static initialization.
 extern "C" void LLVMInitializeCppBackendTarget() { }

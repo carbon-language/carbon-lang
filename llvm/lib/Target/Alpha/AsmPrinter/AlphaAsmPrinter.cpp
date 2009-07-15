@@ -24,7 +24,6 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
@@ -293,17 +292,13 @@ bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
+// Force static initialization.
+extern "C" void LLVMInitializeAlphaAsmPrinter() { }
+
 namespace {
   static struct Register {
     Register() {
       AlphaTargetMachine::registerAsmPrinter(createAlphaCodePrinterPass);
     }
   } Registrator;
-}
-
-// Force static initialization.
-extern "C" void LLVMInitializeAlphaAsmPrinter() { 
-  extern Target TheAlphaTarget;
-  TargetRegistry::RegisterAsmPrinter(TheAlphaTarget,
-                                     createAlphaCodePrinterPass);
 }

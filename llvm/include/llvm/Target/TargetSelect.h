@@ -58,9 +58,7 @@ namespace llvm {
   inline bool InitializeNativeTarget() {
   // If we have a native target, initialize it to ensure it is linked in.
 #ifdef LLVM_NATIVE_ARCH
-#define DoInit2(TARG) \
-    LLVMInitialize ## TARG ## Info ();          \
-    LLVMInitialize ## TARG ()
+#define DoInit2(TARG)   LLVMInitialize ## TARG ()
 #define DoInit(T) DoInit2(T)
     DoInit(LLVM_NATIVE_ARCH);
     return false;
