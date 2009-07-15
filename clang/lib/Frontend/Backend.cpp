@@ -33,7 +33,7 @@
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetMachineRegistry.h"
 using namespace clang;
 using namespace llvm;
 
@@ -205,9 +205,9 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     bool Fast = CompileOpts.OptimizationLevel == 0;
 
     // Create the TargetMachine for generating code.
-    const llvm::Target *TheTarget = 
-      TargetRegistry::getClosestStaticTargetForModule(*TheModule, Error);
-    if (!TheTarget) {
+    const TargetMachineRegistry::entry *TME = 
+      TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, Error);
+    if (!TME) {
       Error = std::string("Unable to get target machine: ") + Error;
       return false;
     }
@@ -222,7 +222,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
         Features.AddFeature(*it);
       FeaturesStr = Features.getString();
     }
-    TargetMachine *TM = TheTarget->createTargetMachine(*TheModule, FeaturesStr);
+    TargetMachine *TM = TME->CtorFn(*TheModule, FeaturesStr);
     
     // Set register scheduler & allocation policy.
     RegisterScheduler::setDefault(createDefaultScheduler);
