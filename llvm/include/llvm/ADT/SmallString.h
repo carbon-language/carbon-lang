@@ -93,12 +93,11 @@ public:
   }
 
   SmallString &append_sint(int64_t N) {
-    // TODO, wrong for minint64.
     if (N < 0) {
       this->push_back('-');
       N = -N;
     }
-    return append_uint(N);
+    return append_uint((uint64_t)N);
   }
 
 };
