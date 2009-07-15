@@ -89,6 +89,10 @@ namespace llvm {
     /// getShortDescription - Get a short description of the target.
     const char *getShortDescription() const { return ShortDesc; }
 
+    /// getJITMatchQuality - Get the quality of this targets match for use as a
+    /// JIT.
+    unsigned getJITMatchQuality() const { return JITMatchQualityFn(); }
+
     /// createTargetMachine - Create a target specific machine implementation.
     TargetMachine *createTargetMachine(const Module &M,
                                        const std::string &Features) const {

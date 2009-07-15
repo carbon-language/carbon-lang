@@ -128,7 +128,8 @@ GetFileNameRoot(const std::string &InputFilename) {
   return outputFilename;
 }
 
-static formatted_raw_ostream *GetOutputStream(const char *ProgName) {
+static formatted_raw_ostream *GetOutputStream(const char *TargetName, 
+                                              const char *ProgName) {
   if (OutputFilename != "") {
     if (OutputFilename == "-")
       return &fouts();
@@ -169,10 +170,10 @@ static formatted_raw_ostream *GetOutputStream(const char *ProgName) {
   bool Binary = false;
   switch (FileType) {
   case TargetMachine::AssemblyFile:
-    if (MArch->Name[0] == 'c') {
-      if (MArch->Name[1] == 0)
+    if (TargetName[0] == 'c') {
+      if (TargetName[1] == 0)
         OutputFilename += ".cbe.c";
-      else if (MArch->Name[1] == 'p' && MArch->Name[2] == 'p')
+      else if (TargetName[1] == 'p' && TargetName[2] == 'p')
         OutputFilename += ".cpp";
       else
         OutputFilename += ".s";
@@ -248,10 +249,13 @@ int main(int argc, char **argv) {
 
   // Allocate target machine.  First, check whether the user has
   // explicitly specified an architecture to compile for.
-  if (MArch == 0) {
+  const Target *TheTarget;
+  if (MArch) {
+    TheTarget = &MArch->TheTarget;
+  } else {
     std::string Err;
-    MArch = TargetMachineRegistry::getClosestStaticTargetForModule(mod, Err);
-    if (MArch == 0) {
+    TheTarget = TargetRegistry::getClosestStaticTargetForModule(mod, Err);
+    if (TheTarget == 0) {
       std::cerr << argv[0] << ": error auto-selecting target for module '"
                 << Err << "'.  Please use the -march option to explicitly "
                 << "pick a target.\n";
@@ -269,12 +273,13 @@ int main(int argc, char **argv) {
     FeaturesStr = Features.getString();
   }
 
-  std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, FeaturesStr));
+  std::auto_ptr<TargetMachine> 
+    target(TheTarget->createTargetMachine(mod, FeaturesStr));
   assert(target.get() && "Could not allocate target machine!");
   TargetMachine &Target = *target.get();
 
   // Figure out where we are going to send the output...
-  formatted_raw_ostream *Out = GetOutputStream(argv[0]);
+  formatted_raw_ostream *Out = GetOutputStream(TheTarget->getName(), argv[0]);
   if (Out == 0) return 1;
 
   CodeGenOpt::Level OLvl = CodeGenOpt::Default;
