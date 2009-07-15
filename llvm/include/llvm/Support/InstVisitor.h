@@ -31,13 +31,13 @@ namespace llvm {
 
 /// @brief Base class for instruction visitors
 ///
-/// Instruction visitors are used when you want to perform different action for
-/// different kinds of instruction without without having to use lots of casts
-/// and a big switch statement (in your code that is).
+/// Instruction visitors are used when you want to perform different actions
+/// for different kinds of instructions without having to use lots of casts
+/// and a big switch statement (in your code, that is).
 ///
 /// To define your own visitor, inherit from this class, specifying your
 /// new type for the 'SubClass' template parameter, and "override" visitXXX
-/// functions in your class. I say "overriding" because this class is defined
+/// functions in your class. I say "override" because this class is defined
 /// in terms of statically resolved overloading, not virtual functions.
 ///
 /// For example, here is a visitor that counts the number of malloc
@@ -59,12 +59,12 @@ namespace llvm {
 ///    NumMallocs = CMV.Count;
 ///
 /// The defined has 'visit' methods for Instruction, and also for BasicBlock,
-/// Function, and Module, which recursively process all conained instructions.
+/// Function, and Module, which recursively process all contained instructions.
 ///
 /// Note that if you don't implement visitXXX for some instruction type,
 /// the visitXXX method for instruction superclass will be invoked. So
 /// if instructions are added in the future, they will be automatically
-/// supported, if you handle on of their superclasses.
+/// supported, if you handle one of their superclasses.
 ///
 /// The optional second template argument specifies the type that instruction
 /// visitation functions should return. If you specify this, you *MUST* provide
@@ -193,7 +193,7 @@ public:
   RetTy visitExtractValueInst(ExtractValueInst &I)  { DELEGATE(Instruction);}
   RetTy visitInsertValueInst(InsertValueInst &I)    { DELEGATE(Instruction); }
 
-  // Next level propagators... if the user does not overload a specific
+  // Next level propagators: If the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class
   // of instructions...
   //
@@ -204,7 +204,7 @@ public:
   RetTy visitCastInst(CastInst &I)             { DELEGATE(Instruction); }
 
   // If the user wants a 'default' case, they can choose to override this
-  // function.  If this function is not overloaded in the users subclass, then
+  // function.  If this function is not overloaded in the user's subclass, then
   // this instruction just gets ignored.
   //
   // Note that you MUST override this function if your return type is not void.
