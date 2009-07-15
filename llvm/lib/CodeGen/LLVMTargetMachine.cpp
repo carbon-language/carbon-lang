@@ -23,7 +23,6 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
@@ -100,7 +99,8 @@ bool LLVMTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                            formatted_raw_ostream &Out) {
   FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
   if (!Printer)
-    llvm_report_error("unable to create assembly printer");
+    return true;
+
   PM.add(Printer);
   return false;
 }
