@@ -255,20 +255,6 @@ ConstantInt *ConstantInt::get(const APInt& V) {
 //                                ConstantFP
 //===----------------------------------------------------------------------===//
 
-static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
-  if (Ty == Type::FloatTy)
-    return &APFloat::IEEEsingle;
-  if (Ty == Type::DoubleTy)
-    return &APFloat::IEEEdouble;
-  if (Ty == Type::X86_FP80Ty)
-    return &APFloat::x87DoubleExtended;
-  else if (Ty == Type::FP128Ty)
-    return &APFloat::IEEEquad;
-  
-  assert(Ty == Type::PPC_FP128Ty && "Unknown FP format");
-  return &APFloat::PPCDoubleDouble;
-}
-
 ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
   : Constant(Ty, ConstantFPVal, 0, 0), Val(V) {
   assert(&V.getSemantics() == TypeToFloatSemantics(Ty) &&
