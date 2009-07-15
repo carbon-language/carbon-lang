@@ -217,11 +217,8 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   }
 
   PM.add(createX86CodeEmitterPass(*this, MCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -249,11 +246,8 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   }
 
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -263,11 +257,8 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       bool DumpAsm,
                                       ObjectCodeEmitter &OCE) {
   PM.add(createX86ObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -277,11 +268,8 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             bool DumpAsm,
                                             MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -291,11 +279,8 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             bool DumpAsm,
                                             JITCodeEmitter &JCE) {
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -305,11 +290,8 @@ bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             bool DumpAsm,
                                             ObjectCodeEmitter &OCE) {
   PM.add(createX86ObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }

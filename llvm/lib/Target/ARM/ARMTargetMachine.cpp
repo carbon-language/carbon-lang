@@ -155,11 +155,8 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
 
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -174,11 +171,8 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
 
   // Machine code emitter pass for ARM.
   PM.add(createARMJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -193,11 +187,8 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
 
   // Machine code emitter pass for ARM.
   PM.add(createARMObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -208,11 +199,8 @@ bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                                 MachineCodeEmitter &MCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -223,11 +211,8 @@ bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                                 JITCodeEmitter &JCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -238,11 +223,8 @@ bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             ObjectCodeEmitter &OCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }

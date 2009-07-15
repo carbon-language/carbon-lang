@@ -135,11 +135,8 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -167,11 +164,8 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -199,11 +193,8 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -214,11 +205,8 @@ bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -229,11 +217,8 @@ bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             JITCodeEmitter &JCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
@@ -244,11 +229,8 @@ bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             ObjectCodeEmitter &OCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm) {
-    assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-    if (AsmPrinterCtor)
-      PM.add(AsmPrinterCtor(ferrs(), *this, true));
-  }
+  if (DumpAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
