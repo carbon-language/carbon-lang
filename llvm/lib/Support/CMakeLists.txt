@@ -28,6 +28,7 @@ add_llvm_library(LLVMSupport
   StringMap.cpp
   StringPool.cpp
   SystemUtils.cpp
+  TargetRegistry.cpp
   Timer.cpp
   Triple.cpp
   raw_ostream.cpp
