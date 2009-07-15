@@ -123,6 +123,13 @@ Decl *Entity::getDecl(ASTContext &AST) {
   return 0; // Failed to find a decl using this Entity.
 }
 
+const char *Entity::getName(ASTContext &Ctx) {
+  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(getDecl(Ctx))) {
+    return ND->getNameAsCString();
+  }
+  return 0;
+}
+
 /// \brief Get an Entity associated with the given Decl.
 /// \returns Null if an Entity cannot refer to this Decl.
 Entity *Entity::get(Decl *D, Program &Prog) {
