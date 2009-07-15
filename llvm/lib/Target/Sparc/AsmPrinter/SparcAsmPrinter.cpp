@@ -351,14 +351,6 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-namespace {
-  static struct Register {
-    Register() {
-      SparcTargetMachine::registerAsmPrinter(createSparcCodePrinterPass);
-    }
-  } Registrator;
-}
-
 // Force static initialization.
 extern "C" void LLVMInitializeSparcAsmPrinter() { 
   extern Target TheSparcTarget;

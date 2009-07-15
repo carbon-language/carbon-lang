@@ -605,14 +605,6 @@ FunctionPass *llvm::createSPUAsmPrinterPass(formatted_raw_ostream &o,
   return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
-namespace {
-  static struct Register {
-    Register() {
-      SPUTargetMachine::registerAsmPrinter(createSPUAsmPrinterPass);
-    }
-  } Registrator;
-}
-
 // Force static initialization.
 extern "C" void LLVMInitializeCellSPUAsmPrinter() { 
   extern Target TheCellSPUTarget;

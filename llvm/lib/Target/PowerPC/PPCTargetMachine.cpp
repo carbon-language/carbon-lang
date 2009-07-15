@@ -41,9 +41,6 @@ Y(ThePPC64Target, "ppc64", "PowerPC 64");
 // Force static initialization.
 extern "C" void LLVMInitializePowerPCTarget() { }
 
-// No assembler printer by default
-PPCTargetMachine::AsmPrinterCtorFn PPCTargetMachine::AsmPrinterCtor = 0;
-
 const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isDarwin())
     return new PPCDarwinTargetAsmInfo(*this);
@@ -105,10 +102,10 @@ bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           formatted_raw_ostream &Out) {
-  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-  if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, Verbose));
-
+  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  if (!Printer)
+    llvm_report_error("unable to create assembly printer");
+  PM.add(Printer);
   return false;
 }
 

@@ -34,14 +34,6 @@ FunctionPass *llvm::createX86CodePrinterPass(formatted_raw_ostream &o,
   return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
-namespace {
-  static struct Register {
-    Register() {
-      X86TargetMachine::registerAsmPrinter(createX86CodePrinterPass);
-    }
-  } Registrator;
-}
-
 extern "C" int X86AsmPrinterForceLink;
 int X86AsmPrinterForceLink = 0;
 

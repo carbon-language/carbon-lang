@@ -38,14 +38,6 @@ private:
   InstrItineraryData  InstrItins;
   Reloc::Model        DefRelocModel;    // Reloc model before it's overridden.
 
-protected:
-  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
-  // set this functions to ctor pointer at startup time if they are linked in.
-  typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
-                                            bool verbose);
-  static AsmPrinterCtorFn AsmPrinterCtor;
-
 public:
   ARMBaseTargetMachine(const Target &T, const Module &M, const std::string &FS, 
                        bool isThumb);
@@ -55,10 +47,6 @@ public:
   virtual const ARMSubtarget  *getSubtargetImpl() const { return &Subtarget; }
   virtual const InstrItineraryData getInstrItineraryData() const {
     return InstrItins;
-  }
-
-  static void registerAsmPrinter(AsmPrinterCtorFn F) {
-    AsmPrinterCtor = F;
   }
 
   virtual const TargetAsmInfo *createTargetAsmInfo() const;

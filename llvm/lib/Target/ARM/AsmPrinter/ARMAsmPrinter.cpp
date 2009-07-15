@@ -1293,14 +1293,6 @@ FunctionPass *llvm::createARMCodePrinterPass(formatted_raw_ostream &o,
   return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
-namespace {
-  static struct Register {
-    Register() {
-      ARMBaseTargetMachine::registerAsmPrinter(createARMCodePrinterPass);
-    }
-  } Registrator;
-}
-
 // Force static initialization.
 extern "C" void LLVMInitializeARMAsmPrinter() { 
   extern Target TheARMTarget, TheThumbTarget;

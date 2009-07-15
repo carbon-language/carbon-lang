@@ -30,9 +30,6 @@ namespace {
   CELLSPU(TheCellSPUTarget, "cellspu", "STI CBEA Cell SPU [experimental]");
 }
 
-// No assembler printer by default
-SPUTargetMachine::AsmPrinterCtorFn SPUTargetMachine::AsmPrinterCtor = 0;
-
 // Force static initialization.
 extern "C" void LLVMInitializeCellSPUTarget() { }
 
@@ -80,9 +77,9 @@ bool SPUTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           formatted_raw_ostream &Out) {
-  // Output assembly language.
-  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-  if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, Verbose));
+  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  if (!Printer)
+    llvm_report_error("unable to create assembly printer");
+  PM.add(Printer);
   return false;
 }

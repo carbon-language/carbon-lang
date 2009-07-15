@@ -44,9 +44,6 @@ extern "C" void LLVMInitializeX86Target() {
   
 }
 
-// No assembler printer by default
-X86TargetMachine::AsmPrinterCtorFn X86TargetMachine::AsmPrinterCtor = 0;
-
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isFlavorIntel())
     return new X86WinTargetAsmInfo(*this);
@@ -188,9 +185,10 @@ bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
                                           bool Verbose,
                                           formatted_raw_ostream &Out) {
-  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-  if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, Verbose));
+  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  if (!Printer)
+    llvm_report_error("unable to create assembly printer");
+  PM.add(Printer);
   return false;
 }
 

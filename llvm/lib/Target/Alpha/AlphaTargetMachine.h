@@ -37,13 +37,6 @@ class AlphaTargetMachine : public LLVMTargetMachine {
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
-  // To avoid having target depend on the asmprinter stuff libraries, asmprinter
-  // set this functions to ctor pointer at startup time if they are linked in.
-  typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
-                                            bool verbose);
-  static AsmPrinterCtorFn AsmPrinterCtor;
-
 public:
   AlphaTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
@@ -85,10 +78,6 @@ public:
                                     CodeGenOpt::Level OptLevel,
                                     bool DumpAsm,
                                     ObjectCodeEmitter &OCE);
-
-  static void registerAsmPrinter(AsmPrinterCtorFn F) {
-    AsmPrinterCtor = F;
-  }
 };
 
 } // end namespace llvm

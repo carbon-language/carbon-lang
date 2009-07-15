@@ -45,9 +45,6 @@ static RegisterTarget<ThumbTargetMachine> Y(TheThumbTarget, "thumb", "Thumb");
 // Force static initialization.
 extern "C" void LLVMInitializeARMTarget() { }
 
-// No assembler printer by default
-ARMBaseTargetMachine::AsmPrinterCtorFn ARMBaseTargetMachine::AsmPrinterCtor = 0;
-
 /// TargetMachine ctor - Create an ARM architecture model.
 ///
 ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
@@ -136,11 +133,10 @@ bool ARMBaseTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                               CodeGenOpt::Level OptLevel,
                                               bool Verbose,
                                               formatted_raw_ostream &Out) {
-  // Output assembly language.
-  assert(AsmPrinterCtor && "AsmPrinter was not linked in");
-  if (AsmPrinterCtor)
-    PM.add(AsmPrinterCtor(Out, *this, Verbose));
-
+  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  if (!Printer)
+    llvm_report_error("unable to create assembly printer");
+  PM.add(Printer);
   return false;
 }
 

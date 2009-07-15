@@ -1092,14 +1092,6 @@ FunctionPass *llvm::createPPCAsmPrinterPass(formatted_raw_ostream &o,
   }
 }
 
-namespace {
-  static struct Register {
-    Register() {
-      PPCTargetMachine::registerAsmPrinter(createPPCAsmPrinterPass);
-    }
-  } Registrator;
-}
-
 extern "C" int PowerPCAsmPrinterForceLink;
 int PowerPCAsmPrinterForceLink = 0;
 

@@ -293,14 +293,6 @@ bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-namespace {
-  static struct Register {
-    Register() {
-      AlphaTargetMachine::registerAsmPrinter(createAlphaCodePrinterPass);
-    }
-  } Registrator;
-}
-
 // Force static initialization.
 extern "C" void LLVMInitializeAlphaAsmPrinter() { 
   extern Target TheAlphaTarget;
