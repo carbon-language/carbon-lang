@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
   if (DumpAsm) cerr << "Here's the assembly:\n" << *Composite.get();
 
-  // FIXME: cout is not binary!
+  // FIXME: outs() is not binary!
   raw_ostream *Out = &outs();  // Default to printing to stdout...
   if (OutputFilename != "-") {
     std::string ErrorInfo;
