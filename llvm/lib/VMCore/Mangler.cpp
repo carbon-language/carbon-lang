@@ -35,10 +35,6 @@ std::string Mangler::makeNameProper(const std::string &X,
                                     bool hasPrivateLinkage) {
   assert(!X.empty() && "Cannot mangle empty strings");
   
-  // If PreserveAsmNames is set, names with asm identifiers are not modified. 
-  if (PreserveAsmNames && X[0] == 1)
-    return X;
-
   if (!UseQuotes) {
     std::string Result;
 
@@ -149,7 +145,7 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
 
 Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix)
   : Prefix(prefix), PrivatePrefix (privatePrefix), UseQuotes(false),
-    PreserveAsmNames(false), NextAnonGlobalID(1) {
+    NextAnonGlobalID(1) {
   std::fill(AcceptableChars, array_endof(AcceptableChars), 0);
 
   // Letters and numbers are acceptable.

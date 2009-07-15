@@ -241,12 +241,17 @@ static void DisambiguateGlobalSymbols(Module *M) {
   Mangler Mang(*M);
   // Agree with the CBE on symbol naming
   Mang.markCharUnacceptable('.');
-  Mang.setPreserveAsmNames(true);
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I)
-    I->setName(Mang.getMangledName(I));
-  for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I)
-    I->setName(Mang.getMangledName(I));
+       I != E; ++I) {
+    // Don't mangle asm names.
+    if (!I->hasName() || I->getName()[0] != 1)
+      I->setName(Mang.getMangledName(I));
+  }
+  for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
+    // Don't mangle asm names.
+    if (!I->hasName() || I->getName()[0] != 1)
+      I->setName(Mang.getMangledName(I));
+  }
 }
 
 /// ExtractLoops - Given a reduced list of functions that still exposed the bug,

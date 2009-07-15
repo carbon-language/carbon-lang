@@ -38,10 +38,6 @@ class Mangler {
   /// the space character.  By default, this is false.
   bool UseQuotes;
 
-  /// PreserveAsmNames - If this is set, the asm escape character is not removed
-  /// from names with 'asm' specifiers.
-  bool PreserveAsmNames;
-
   /// AnonGlobalIDs - We need to give global values the same name every time
   /// they are mangled.  This keeps track of the number we give to anonymous
   /// ones.
@@ -64,10 +60,6 @@ public:
   /// setUseQuotes - If UseQuotes is set to true, this target accepts quoted
   /// strings for assembler labels.
   void setUseQuotes(bool Val) { UseQuotes = Val; }
-
-  /// setPreserveAsmNames - If the mangler should not strip off the asm name
-  /// @verbatim identifier (\001), this should be set. @endverbatim
-  void setPreserveAsmNames(bool Val) { PreserveAsmNames = Val; }
 
   /// Acceptable Characters - This allows the target to specify which characters
   /// are acceptable to the assembler without being mangled.  By default we
