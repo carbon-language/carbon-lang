@@ -90,6 +90,10 @@ N: Alkis Evlogimenos
 E: alkis@evlogimenos.com
 D: Linear scan register allocator, many codegen improvements, Java frontend
 
+N: Ryan Flynn
+E: pizza@parseerror.com
+D: Miscellaneous bug fixes
+
 N: Brian Gaeke
 E: gaeke@uiuc.edu
 W: http://www.students.uiuc.edu/~gaeke/
