@@ -266,7 +266,7 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary,
   if (Binary)
     Flags |= O_BINARY;
 #endif
-  FD = open(Filename, Flags, 0644);
+  FD = open(Filename, Flags, 0664);
   if (FD < 0) {
     ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";
     ShouldClose = false;
