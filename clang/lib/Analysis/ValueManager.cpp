@@ -118,6 +118,22 @@ SVal ValueManager::getConjuredSymbolVal(const Expr* E, QualType T,
   return UnknownVal();
 }
 
+
+SVal ValueManager::getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
+                                                  const TypedRegion *R) {
+  SymbolRef sym = SymMgr.getDerivedSymbol(parentSymbol, R);
+  
+  QualType T = R->getValueType(R->getContext());
+  
+  if (Loc::IsLocType(T))
+    return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));
+  
+  if (T->isIntegerType() && T->isScalarType())
+    return nonloc::SymbolVal(sym);
+  
+  return UnknownVal();
+}
+
 SVal ValueManager::getFunctionPointer(const FunctionDecl* FD) {
   CodeTextRegion* R 
     = MemMgr.getCodeTextRegion(FD, Context.getPointerType(FD->getType()));

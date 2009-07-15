@@ -30,6 +30,7 @@ namespace llvm {
 
 namespace clang {  
   class MemRegion;
+  class TypedRegion;
   class ASTContext;
   class BasicValueFactory;
 }
@@ -38,7 +39,9 @@ namespace clang {
   
 class SymExpr : public llvm::FoldingSetNode {
 public:
-  enum Kind { BEGIN_SYMBOLS, RegionValueKind, ConjuredKind, END_SYMBOLS,
+  enum Kind { BEGIN_SYMBOLS,
+              RegionValueKind, ConjuredKind, DerivedKind,
+              END_SYMBOLS,
               SymIntKind, SymSymKind };
 private:
   Kind K;
@@ -156,6 +159,38 @@ public:
     return SE->getKind() == ConjuredKind;
   }  
 };
+  
+class SymbolDerived : public SymbolData {
+  SymbolRef parentSymbol;
+  const TypedRegion *R;
+  
+public:
+  SymbolDerived(SymbolID sym, SymbolRef parent, const TypedRegion *r)
+    : SymbolData(DerivedKind, sym), parentSymbol(parent), R(r) {}
+
+  SymbolRef getParentSymbol() const { return parentSymbol; }
+  const TypedRegion *getRegion() const { return R; }
+  
+  QualType getType(ASTContext&) const;
+  
+  void dumpToStream(llvm::raw_ostream &os) const;
+  
+  static void Profile(llvm::FoldingSetNodeID& profile, SymbolRef parent,
+                      const TypedRegion *r) {
+    profile.AddInteger((unsigned) DerivedKind);
+    profile.AddPointer(r);
+    profile.AddPointer(parent);
+  }
+ 
+  virtual void Profile(llvm::FoldingSetNodeID& profile) {
+    Profile(profile, parentSymbol, R);
+  }
+  
+  // Implement isa<T> support.
+  static inline bool classof(const SymExpr* SE) {
+    return SE->getKind() == DerivedKind;
+  }  
+};
 
 // SymIntExpr - Represents symbolic expression like 'x' + 3.
 class SymIntExpr : public SymExpr {
@@ -268,6 +303,9 @@ public:
                                           const void* SymbolTag = 0) {    
     return getConjuredSymbol(E, E->getType(), VisitCount, SymbolTag);
   }
+  
+  const SymbolDerived *getDerivedSymbol(SymbolRef parentSymbol,
+                                        const TypedRegion *R);
 
   const SymIntExpr *getSymIntExpr(const SymExpr *lhs, BinaryOperator::Opcode op,
                                   const llvm::APSInt& rhs, QualType t);

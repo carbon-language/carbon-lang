@@ -82,6 +82,9 @@ public:
   SVal getConjuredSymbolVal(const Expr *E, unsigned Count);  
   SVal getConjuredSymbolVal(const Expr* E, QualType T, unsigned Count);
 
+  SVal getDerivedRegionValueSymbolVal(SymbolRef parentSymbol,
+                                      const TypedRegion *R);
+  
   SVal getFunctionPointer(const FunctionDecl* FD);
 
   NonLoc makeCompoundVal(QualType T, llvm::ImmutableList<SVal> Vals) {

@@ -68,6 +68,11 @@ void SymbolConjured::dumpToStream(llvm::raw_ostream& os) const {
   os << "conj_$" << getSymbolID();
 }
 
+void SymbolDerived::dumpToStream(llvm::raw_ostream& os) const {
+  os << "derived_$" << getSymbolID() << '{'
+     << getParentSymbol() << ',' << getRegion() << '}';
+}
+
 void SymbolRegionValue::dumpToStream(llvm::raw_ostream& os) const {
   os << "reg_$" << getSymbolID() << "<" << R << ">";
 }
@@ -104,6 +109,24 @@ SymbolManager::getConjuredSymbol(const Stmt* E, QualType T, unsigned Count,
   }
   
   return cast<SymbolConjured>(SD);
+}
+
+const SymbolDerived*
+SymbolManager::getDerivedSymbol(SymbolRef parentSymbol,
+                                const TypedRegion *R) {
+  
+  llvm::FoldingSetNodeID profile;
+  SymbolDerived::Profile(profile, parentSymbol, R);
+  void* InsertPos;  
+  SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);  
+  if (!SD) {  
+    SD = (SymExpr*) BPAlloc.Allocate<SymbolDerived>();
+    new (SD) SymbolDerived(SymbolCounter, parentSymbol, R);
+    DataSet.InsertNode(SD, InsertPos);  
+    ++SymbolCounter;
+  }
+  
+  return cast<SymbolDerived>(SD);
 }
 
 const SymIntExpr *SymbolManager::getSymIntExpr(const SymExpr *lhs,
@@ -144,6 +167,11 @@ const SymSymExpr *SymbolManager::getSymSymExpr(const SymExpr *lhs,
 
 QualType SymbolConjured::getType(ASTContext&) const {
   return T;
+}
+
+
+QualType SymbolDerived::getType(ASTContext& Ctx) const {
+  return R->getValueType(Ctx);
 }
 
 QualType SymbolRegionValue::getType(ASTContext& C) const {
