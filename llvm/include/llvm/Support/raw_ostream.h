@@ -311,7 +311,7 @@ raw_ostream &errs();
 //===----------------------------------------------------------------------===//
 
 /// raw_os_ostream - A raw_ostream that writes to an std::ostream.  This is a
-/// simple adaptor class.  It does check for I/O errors; clients should use
+/// simple adaptor class.  It does not check for I/O errors; clients should use
 /// the underlying stream to detect errors.
 class raw_os_ostream : public raw_ostream {
   std::ostream &OS;
