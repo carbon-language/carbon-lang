@@ -248,7 +248,8 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
     // The only exception is if the original region had a location type as its
     // value type we always want to treat the region as binding to a location.
     // This issue can arise when pointers are casted to integers and back.
-    if (!Loc::IsLocType(T) || Loc::IsLocType(NewT))
+
+    if (!(Loc::IsLocType(T) && !Loc::IsLocType(NewT)))
       T = NewT;
   }
   
