@@ -307,16 +307,19 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     const GlobalValue *GV = MO.getGlobal();
     
     const char *Suffix = "";
+    bool isPrivate = false;
     
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
       Suffix = "$stub";
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
              MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
              MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
-             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
+             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE) {
       Suffix = "$non_lazy_ptr";
+      isPrivate = true;
+    }
     
-    std::string Name = Mang->getMangledName(GV, Suffix, Suffix[0] != '\0');
+    std::string Name = Mang->getMangledName(GV, Suffix, isPrivate);
     decorateName(Name, GV);
     
     // Handle dllimport linkage.
@@ -409,8 +412,6 @@ void X86ATTAsmPrinter::print_pcrel_imm(const MachineInstr *MI, unsigned OpNo) {
     printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
     return;
   case MachineOperand::MO_GlobalAddress:
-    printSymbolOperand(MO);
-    return;
   case MachineOperand::MO_ExternalSymbol:
     printSymbolOperand(MO);
     return;
