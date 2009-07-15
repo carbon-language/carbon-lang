@@ -481,7 +481,7 @@ public:
   ///
   bool isLoopInvariant(Instruction *I) const;
 
-  /// makeLoopInvariant - If the given value is an instruciton inside of the
+  /// makeLoopInvariant - If the given value is an instruction inside of the
   /// loop and it can be hoisted, do so to make it trivially loop-invariant.
   /// Return true if the value after any hoisting is loop invariant. This
   /// function can be used as a slightly more aggressive replacement for
