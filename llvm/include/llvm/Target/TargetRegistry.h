@@ -183,7 +183,7 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an AsmPrinter for the target.
     static void RegisterAsmPrinter(Target &T, Target::AsmPrinterCtorTy Fn) {
-      assert(!T.TargetMachineCtorFn && "Constructor already registered!");
+      assert(!T.AsmPrinterCtorFn && "Constructor already registered!");
       T.AsmPrinterCtorFn = Fn;
     }
 
