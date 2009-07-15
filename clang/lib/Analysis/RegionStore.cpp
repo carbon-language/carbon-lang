@@ -814,7 +814,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   
   if (isa<SymbolicRegion>(MR)) {
     ASTContext &Ctx = getContext();
-    SVal idx = ValMgr.makeIntVal(0, Ctx.IntTy);
+    SVal idx = ValMgr.makeZeroArrayIndex();
     assert(!T.isNull());
     MR = MRMgr.getElementRegion(T, idx, MR, Ctx);
   }
