@@ -5,17 +5,17 @@ add_clang_library(clangAST
   ASTConsumer.cpp
   ASTContext.cpp
   CFG.cpp
-  DeclarationName.cpp
-  DeclBase.cpp
   Decl.cpp
+  DeclBase.cpp
   DeclCXX.cpp
   DeclGroup.cpp
   DeclObjC.cpp
   DeclPrinter.cpp
   DeclTemplate.cpp
-  ExprConstant.cpp
+  DeclarationName.cpp
   Expr.cpp
   ExprCXX.cpp
+  ExprConstant.cpp
   InheritViz.cpp
   NestedNameSpecifier.cpp
   ParentMap.cpp

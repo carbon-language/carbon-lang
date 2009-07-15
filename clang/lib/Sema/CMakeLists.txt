@@ -7,10 +7,10 @@ add_clang_library(clangSema
   Sema.cpp
   SemaAccess.cpp
   SemaAttr.cpp
-  SemaChecking.cpp
   SemaCXXScopeSpec.cpp
-  SemaDeclAttr.cpp
+  SemaChecking.cpp
   SemaDecl.cpp
+  SemaDeclAttr.cpp
   SemaDeclCXX.cpp
   SemaDeclObjC.cpp
   SemaExpr.cpp

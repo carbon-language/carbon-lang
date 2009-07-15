@@ -14,13 +14,13 @@ add_clang_library(clangLex
   PPExpressions.cpp
   PPLexerChange.cpp
   PPMacroExpansion.cpp
+  PTHLexer.cpp
   Pragma.cpp
   Preprocessor.cpp
   PreprocessorLexer.cpp
-  PTHLexer.cpp
   ScratchBuffer.cpp
-  TokenLexer.cpp
   TokenConcatenation.cpp
+  TokenLexer.cpp
   )
 
 add_dependencies(clangLex ClangDiagnosticLex)

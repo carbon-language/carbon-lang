@@ -1,9 +1,9 @@
 set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangFrontend
-  AnalysisConsumer.cpp
   ASTConsumers.cpp
   ASTUnit.cpp
+  AnalysisConsumer.cpp
   Backend.cpp
   CacheTokens.cpp
   DeclXML.cpp

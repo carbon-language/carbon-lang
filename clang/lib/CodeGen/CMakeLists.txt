@@ -1,17 +1,17 @@
 set(LLVM_NO_RTTI 1)
 
 add_clang_library(clangCodeGen
-  CGBuiltin.cpp
   CGBlocks.cpp
-  CGCall.cpp
+  CGBuiltin.cpp
   CGCXX.cpp
   CGCXXTemp.cpp
+  CGCall.cpp
   CGDebugInfo.cpp
   CGDecl.cpp
+  CGExpr.cpp
   CGExprAgg.cpp
   CGExprComplex.cpp
   CGExprConstant.cpp
-  CGExpr.cpp
   CGExprScalar.cpp
   CGObjC.cpp
   CGObjCGNU.cpp

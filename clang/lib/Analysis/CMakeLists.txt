@@ -24,10 +24,10 @@ add_clang_library(clangAnalysis
   PathDiagnostic.cpp
   RangeConstraintManager.cpp
   RegionStore.cpp
+  SVals.cpp
   SimpleConstraintManager.cpp
   SimpleSValuator.cpp
   Store.cpp
-  SVals.cpp
   SymbolManager.cpp
   UninitializedValues.cpp
   ValueManager.cpp
