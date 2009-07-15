@@ -19,25 +19,21 @@
 
 #include "llvm/Module.h"
 #include "llvm/Support/Registry.h"
+#include "llvm/Target/TargetRegistry.h"
 
 namespace llvm {
   class Module;
+  class Target;
   class TargetMachine;
 
   struct TargetMachineRegistryEntry {
+    const Target &TheTarget;
     const char *Name;
     const char *ShortDesc;
-    TargetMachine *(*CtorFn)(const Module &, const std::string &);
-    unsigned (*ModuleMatchQualityFn)(const Module &M);
-    unsigned (*JITMatchQualityFn)();
 
   public:
-    TargetMachineRegistryEntry(const char *N, const char *SD,
-                      TargetMachine *(*CF)(const Module &, const std::string &),
-                               unsigned (*MMF)(const Module &M),
-                               unsigned (*JMF)())
-      : Name(N), ShortDesc(SD), CtorFn(CF), ModuleMatchQualityFn(MMF),
-        JITMatchQualityFn(JMF) {}
+    TargetMachineRegistryEntry(const Target &T, const char *N, const char *SD)
+      : TheTarget(T), Name(N), ShortDesc(SD) {}
   };
 
   template<>
@@ -50,24 +46,15 @@ namespace llvm {
   };
 
   struct TargetMachineRegistry : public Registry<TargetMachine> {
-    /// getClosestStaticTargetForModule - Given an LLVM module, pick the best
-    /// target that is compatible with the module.  If no close target can be
-    /// found, this returns null and sets the Error string to a reason.
-    static const entry *getClosestStaticTargetForModule(const Module &M,
-                                                        std::string &Error);
-
-    /// getClosestTargetForJIT - Pick the best target that is compatible with
-    /// the current host.  If no close target can be found, this returns null
-    /// and sets the Error string to a reason.
-    static const entry *getClosestTargetForJIT(std::string &Error);
 
   };
 
   //===--------------------------------------------------------------------===//
   /// RegisterTarget - This class is used to make targets automatically register
-  /// themselves with the tool they are linked.  Targets should define an
-  /// instance of this and implement the static methods described in the
-  /// TargetMachine comments.
+  /// themselves with the tools they are linked with.  Targets should define an
+  /// single global Target instance and register it using the TargetRegistry
+  /// interfaces. Targets must also include a static instance of this class.
+  ///
   /// The type 'TargetMachineImpl' should provide a constructor with two
   /// parameters:
   /// - const Module& M: the module that is being compiled:
@@ -76,19 +63,19 @@ namespace llvm {
 
   template<class TargetMachineImpl>
   struct RegisterTarget {
-    RegisterTarget(const char *Name, const char *ShortDesc)
-      : Entry(Name, ShortDesc, &Allocator,
-              &TargetMachineImpl::getModuleMatchQuality,
-              &TargetMachineImpl::getJITMatchQuality),
-        Node(Entry)
-    {}
+    RegisterTarget(Target &T, const char *Name, const char *ShortDesc)
+      : Entry(T, Name, ShortDesc),
+        Node(Entry) {
+      TargetRegistry::RegisterTargetMachine(T, &Allocator);
+    }
 
   private:
     TargetMachineRegistry::entry Entry;
     TargetMachineRegistry::node Node;
 
-    static TargetMachine *Allocator(const Module &M, const std::string &FS) {
-      return new TargetMachineImpl(M, FS);
+    static TargetMachine *Allocator(const Target &T, const Module &M, 
+                                    const std::string &FS) {
+      return new TargetMachineImpl(T, M, FS);
     }
   };
 

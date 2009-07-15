@@ -45,12 +45,13 @@ protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                            PPCTargetMachine &tm, 
+                                            TargetMachine &m, 
                                             bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  PPCTargetMachine(const Module &M, const std::string &FS, bool is64Bit);
+  PPCTargetMachine(const Target &T, const Module &M, const std::string &FS, 
+                   bool is64Bit);
 
   virtual const PPCInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const PPCFrameInfo     *getFrameInfo() const { return &FrameInfo; }
@@ -103,20 +104,14 @@ public:
 ///
 class PPC32TargetMachine : public PPCTargetMachine {
 public:
-  PPC32TargetMachine(const Module &M, const std::string &FS);
-  
-  static unsigned getJITMatchQuality();
-  static unsigned getModuleMatchQuality(const Module &M);
+  PPC32TargetMachine(const Target &T, const Module &M, const std::string &FS);
 };
 
 /// PPC64TargetMachine - PowerPC 64-bit target machine.
 ///
 class PPC64TargetMachine : public PPCTargetMachine {
 public:
-  PPC64TargetMachine(const Module &M, const std::string &FS);
-  
-  static unsigned getJITMatchQuality();
-  static unsigned getModuleMatchQuality(const Module &M);
+  PPC64TargetMachine(const Target &T, const Module &M, const std::string &FS);
 };
 
 } // end namespace llvm

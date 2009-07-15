@@ -43,7 +43,7 @@ protected:
   static AsmPrinterCtorFn AsmPrinterCtor;
   
 public:
-  SparcTargetMachine(const Module &M, const std::string &FS);
+  SparcTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   virtual const SparcInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
@@ -55,7 +55,6 @@ public:
     return const_cast<SparcTargetLowering*>(&TLInfo);
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
-  static unsigned getModuleMatchQuality(const Module &M);
 
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

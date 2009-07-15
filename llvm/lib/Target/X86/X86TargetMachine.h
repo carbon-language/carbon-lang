@@ -44,12 +44,13 @@ protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                            X86TargetMachine &tm,
+                                            TargetMachine &tm,
                                             bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  X86TargetMachine(const Module &M, const std::string &FS, bool is64Bit);
+  X86TargetMachine(const Target &T, const Module &M, const std::string &FS, 
+                   bool is64Bit);
 
   virtual const X86InstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
@@ -65,9 +66,6 @@ public:
   virtual const X86ELFWriterInfo *getELFWriterInfo() const {
     return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
   }
-
-  static unsigned getModuleMatchQuality(const Module &M);
-  static unsigned getJITMatchQuality();
 
   static void registerAsmPrinter(AsmPrinterCtorFn F) {
     AsmPrinterCtor = F;
@@ -101,7 +99,7 @@ public:
 ///
 class X86_32TargetMachine : public X86TargetMachine {
 public:
-  X86_32TargetMachine(const Module &M, const std::string &FS);
+  X86_32TargetMachine(const Target &T, const Module &M, const std::string &FS);
   
   static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);
@@ -111,7 +109,7 @@ public:
 ///
 class X86_64TargetMachine : public X86TargetMachine {
 public:
-  X86_64TargetMachine(const Module &M, const std::string &FS);
+  X86_64TargetMachine(const Target &T, const Module &M, const std::string &FS);
   
   static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);

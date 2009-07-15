@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
@@ -369,7 +370,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
 /// the given target machine description.
 ///
 FunctionPass *llvm::createIA64CodePrinterPass(formatted_raw_ostream &o,
-                                              IA64TargetMachine &tm,
+                                              TargetMachine &tm,
                                               bool verbose) {
   return new IA64AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
@@ -384,4 +385,7 @@ namespace {
 
 
 // Force static initialization.
-extern "C" void LLVMInitializeIA64AsmPrinter() { }
+extern "C" void LLVMInitializeIA64AsmPrinter() { 
+  extern Target TheIA64Target;
+  TargetRegistry::RegisterAsmPrinter(TheIA64Target, createIA64CodePrinterPass);
+}

@@ -45,19 +45,22 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
                                 JITMemoryManager *JMM,
                                 CodeGenOpt::Level OptLevel,
                                 bool AllocateGVsWithCode) {
-  const TargetMachineRegistry::entry *TheArch = MArch;
-  if (TheArch == 0) {
+  const Target *TheTarget;
+  if (MArch == 0) {
     std::string Error;
-    TheArch = TargetMachineRegistry::getClosestTargetForJIT(Error);
-    if (TheArch == 0) {
+    TheTarget = TargetRegistry::getClosestTargetForJIT(Error);
+    if (TheTarget == 0) {
       if (ErrorStr)
         *ErrorStr = Error;
       return 0;
     }
-  } else if (TheArch->JITMatchQualityFn() == 0) {
-    cerr << "WARNING: This target JIT is not designed for the host you are"
-         << " running.  If bad things happen, please choose a different "
-         << "-march switch.\n";
+  } else {
+    TheTarget = &MArch->TheTarget;
+    if (TheTarget->getJITMatchQuality() == 0) {
+      cerr << "WARNING: This target JIT is not designed for the host you are"
+           << " running.  If bad things happen, please choose a different "
+           << "-march switch.\n";
+    }
   }
 
   // Package up features to be passed to target/subtarget
@@ -71,7 +74,8 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
   }
 
   // Allocate a target...
-  TargetMachine *Target = TheArch->CtorFn(*MP->getModule(), FeaturesStr);
+  TargetMachine *Target = 
+    TheTarget->createTargetMachine(*MP->getModule(), FeaturesStr);
   assert(Target && "Could not allocate target machine!");
 
   // If the target supports JIT code generation, return a new JIT now.

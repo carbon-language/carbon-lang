@@ -31,8 +31,8 @@ namespace {
   struct VISIBILITY_HIDDEN MSILTarget : public TargetMachine {
     const TargetData DataLayout;       // Calculates type size & alignment
 
-    MSILTarget(const Module &M, const std::string &FS)
-      : DataLayout(&M) {}
+    MSILTarget(const Target &T, const Module &M, const std::string &FS)
+      : TargetMachine(T), DataLayout(&M) {}
 
     virtual bool WantsWholeFile() const { return true; }
     virtual bool addPassesToEmitWholeFile(PassManager &PM,
@@ -55,7 +55,8 @@ namespace {
 extern "C" int MSILTargetMachineModule;
 int MSILTargetMachineModule = 0;
 
-static RegisterTarget<MSILTarget> X("msil", "MSIL backend");
+extern Target TheMSILTarget;
+static RegisterTarget<MSILTarget> X(TheMSILTarget, "msil", "MSIL backend");
 
 // Force static initialization.
 extern "C" void LLVMInitializeMSILTarget() { }

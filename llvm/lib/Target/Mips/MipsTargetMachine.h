@@ -38,12 +38,13 @@ namespace llvm {
     // asmprinter set this functions to ctor pointer at startup time if they are
     // linked in.
     typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                              MipsTargetMachine &tm,
+                                              TargetMachine &tm,
                                               bool verbose);
     static AsmPrinterCtorFn AsmPrinterCtor;
     
   public:
-    MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle);
+    MipsTargetMachine(const Target &T, const Module &M, const std::string &FS, 
+                      bool isLittle);
 
     static void registerAsmPrinter(AsmPrinterCtorFn F) {
       AsmPrinterCtor = F;
@@ -66,8 +67,6 @@ namespace llvm {
       return const_cast<MipsTargetLowering*>(&TLInfo); 
     }
 
-    static unsigned getModuleMatchQuality(const Module &M);
-
     // Pass Pipeline Configuration
     virtual bool addInstSelector(PassManagerBase &PM,
                                  CodeGenOpt::Level OptLevel);
@@ -82,7 +81,7 @@ namespace llvm {
 ///
 class MipselTargetMachine : public MipsTargetMachine {
 public:
-  MipselTargetMachine(const Module &M, const std::string &FS);
+  MipselTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   static unsigned getModuleMatchQuality(const Module &M);
 };

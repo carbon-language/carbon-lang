@@ -43,6 +43,7 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
@@ -317,7 +318,7 @@ namespace {
   /// PPCLinuxAsmPrinter - PowerPC assembly printer, customized for Linux
   class VISIBILITY_HIDDEN PPCLinuxAsmPrinter : public PPCAsmPrinter {
   public:
-    explicit PPCLinuxAsmPrinter(formatted_raw_ostream &O, PPCTargetMachine &TM,
+    explicit PPCLinuxAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                                 const TargetAsmInfo *T, bool V)
       : PPCAsmPrinter(O, TM, T, V){}
 
@@ -343,7 +344,7 @@ namespace {
   class VISIBILITY_HIDDEN PPCDarwinAsmPrinter : public PPCAsmPrinter {
     formatted_raw_ostream &OS;
   public:
-    explicit PPCDarwinAsmPrinter(formatted_raw_ostream &O, PPCTargetMachine &TM,
+    explicit PPCDarwinAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                                  const TargetAsmInfo *T, bool V)
       : PPCAsmPrinter(O, TM, T, V), OS(O) {}
 
@@ -1080,7 +1081,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 /// Darwin assembler can deal with.
 ///
 FunctionPass *llvm::createPPCAsmPrinterPass(formatted_raw_ostream &o,
-                                            PPCTargetMachine &tm,
+                                            TargetMachine &tm,
                                             bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
@@ -1103,4 +1104,10 @@ extern "C" int PowerPCAsmPrinterForceLink;
 int PowerPCAsmPrinterForceLink = 0;
 
 // Force static initialization.
-extern "C" void LLVMInitializePowerPCAsmPrinter() { }
+extern "C" void LLVMInitializePowerPCAsmPrinter() { 
+  extern Target ThePPC32Target;
+  TargetRegistry::RegisterAsmPrinter(ThePPC32Target, createPPCAsmPrinterPass);
+
+  extern Target ThePPC64Target;
+  TargetRegistry::RegisterAsmPrinter(ThePPC64Target, createPPCAsmPrinterPass);
+}

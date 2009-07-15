@@ -36,7 +36,7 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
 public:
-  XCoreTargetMachine(const Module &M, const std::string &FS);
+  XCoreTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   virtual const XCoreInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const XCoreFrameInfo *getFrameInfo() const { return &FrameInfo; }
@@ -49,7 +49,6 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
-  static unsigned getModuleMatchQuality(const Module &M);
 
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);

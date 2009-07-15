@@ -111,15 +111,13 @@ void TargetRegistry::RegisterTarget(Target &T,
                                     Target::TripleMatchQualityFnTy TQualityFn,
                                     Target::ModuleMatchQualityFnTy MQualityFn,
                                     Target::JITMatchQualityFnTy JITQualityFn) {
-  // Note that we don't require the constructor functions already be defined, in
-  // case a module happens to initialize the optional functionality before the
-  // target.
-  assert(!T.Next && !T.Name && !T.ShortDesc && !T.TripleMatchQualityFn &&
-         !T.ModuleMatchQualityFn && !T.JITMatchQualityFn && 
-         "This Target already registered!");
-
   assert(Name && ShortDesc && TQualityFn && MQualityFn && JITQualityFn &&
          "Missing required target information!");
+
+  // Check if this target has already been initialized, we allow this as a
+  // convenience to some clients.
+  if (T.Name)
+    return;
          
   // Add to the list of targets.
   T.Next = FirstTarget;

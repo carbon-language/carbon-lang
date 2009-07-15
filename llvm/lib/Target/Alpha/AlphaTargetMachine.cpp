@@ -22,7 +22,9 @@
 using namespace llvm;
 
 // Register the targets
-static RegisterTarget<AlphaTargetMachine> X("alpha", "Alpha [experimental]");
+extern Target TheAlphaTarget;
+static RegisterTarget<AlphaTargetMachine> X(TheAlphaTarget, "alpha", 
+                                            "Alpha [experimental]");
 
 // No assembler printer by default
 AlphaTargetMachine::AsmPrinterCtorFn AlphaTargetMachine::AsmPrinterCtor = 0;
@@ -34,35 +36,10 @@ const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
   return new AlphaTargetAsmInfo(*this);
 }
 
-unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
-  // We strongly match "alpha*".
-  std::string TT = M.getTargetTriple();
-  if (TT.size() >= 5 && TT[0] == 'a' && TT[1] == 'l' && TT[2] == 'p' &&
-      TT[3] == 'h' && TT[4] == 'a')
-    return 20;
-  // If the target triple is something non-alpha, we don't match.
-  if (!TT.empty()) return 0;
-
-  if (M.getEndianness()  == Module::LittleEndian &&
-      M.getPointerSize() == Module::Pointer64)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return getJITMatchQuality()/2;
-}
-
-unsigned AlphaTargetMachine::getJITMatchQuality() {
-#ifdef __alpha
-  return 10;
-#else
-  return 0;
-#endif
-}
-
-AlphaTargetMachine::AlphaTargetMachine(const Module &M, const std::string &FS)
-  : DataLayout("e-f128:128:128"),
+AlphaTargetMachine::AlphaTargetMachine(const Target &T, const Module &M, 
+                                       const std::string &FS)
+  : LLVMTargetMachine(T),
+    DataLayout("e-f128:128:128"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
     Subtarget(M, FS),

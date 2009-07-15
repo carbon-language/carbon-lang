@@ -42,12 +42,12 @@ protected:
   // To avoid having target depend on the asmprinter stuff libraries, asmprinter
   // set this functions to ctor pointer at startup time if they are linked in.
   typedef FunctionPass *(*AsmPrinterCtorFn)(formatted_raw_ostream &o,
-                                            SPUTargetMachine &tm,
+                                            TargetMachine &tm,
                                             bool verbose);
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  SPUTargetMachine(const Module &M, const std::string &FS);
+  SPUTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   /// Return the subtarget implementation object
   virtual const SPUSubtarget     *getSubtargetImpl() const {
@@ -66,12 +66,6 @@ public:
   virtual       TargetJITInfo    *getJITInfo() {
     return NULL;
   }
-  
-  //! Module match function
-  /*!
-    Module matching function called by TargetMachineRegistry().
-   */
-  static unsigned getModuleMatchQuality(const Module &M);
 
   virtual       SPUTargetLowering *getTargetLowering() const { 
    return const_cast<SPUTargetLowering*>(&TLInfo); 

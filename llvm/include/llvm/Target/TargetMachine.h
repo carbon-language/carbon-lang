@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class Target;
 class TargetAsmInfo;
 class TargetData;
 class TargetSubtarget;
@@ -99,11 +100,14 @@ class TargetMachine {
   TargetMachine(const TargetMachine &);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine &);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses.
-  TargetMachine();
+  TargetMachine(const Target &);
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtarget-derived member variable.
   virtual const TargetSubtarget *getSubtargetImpl() const { return 0; }
+
+  /// TheTarget - The Target that this machine was created for.
+  const Target &TheTarget;
   
   /// AsmInfo - Contains target specific asm information.
   ///
@@ -116,18 +120,7 @@ protected: // Can only create subclasses.
 public:
   virtual ~TargetMachine();
 
-  /// getModuleMatchQuality - This static method should be implemented by
-  /// targets to indicate how closely they match the specified module.  This is
-  /// used by the LLC tool to determine which target to use when an explicit
-  /// -march option is not specified.  If a target returns zero, it will never
-  /// be chosen without an explicit -march option.
-  static unsigned getModuleMatchQuality(const Module &) { return 0; }
-
-  /// getJITMatchQuality - This static method should be implemented by targets
-  /// that provide JIT capabilities to indicate how suitable they are for
-  /// execution on the current host.  If a value of 0 is returned, the target
-  /// will not be used unless an explicit -march option is used.
-  static unsigned getJITMatchQuality() { return 0; }
+  const Target &getTarget() const { return TheTarget; }
 
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information
@@ -308,7 +301,7 @@ public:
 ///
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
-  LLVMTargetMachine() { }
+  LLVMTargetMachine(const Target &T) : TargetMachine(T) { }
 
   /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
   /// both emitting to assembly files or machine code output.

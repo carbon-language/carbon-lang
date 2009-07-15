@@ -147,15 +147,15 @@ LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
     if ( !m )
         return NULL;
     // find machine architecture for this module
-    const TargetMachineRegistry::entry* march = 
-            TargetMachineRegistry::getClosestStaticTargetForModule(*m, errMsg);
+    const Target* march = 
+      TargetRegistry::getClosestStaticTargetForModule(*m, errMsg);
 
     if ( march == NULL ) 
         return NULL;
 
     // construct LTModule, hand over ownership of module and target
     std::string FeatureStr = getFeatureString(m->getTargetTriple().c_str());
-    TargetMachine* target = march->CtorFn(*m, FeatureStr);
+    TargetMachine* target = march->createTargetMachine(*m, FeatureStr);
     return new LTOModule(m.take(), target);
 }
 
