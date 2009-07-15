@@ -103,22 +103,6 @@ FunctionPass *llvm::createXCoreCodePrinterPass(formatted_raw_ostream &o,
   return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
-// PrintEscapedString - Print each character of the specified string, escaping
-// it if it is not printable or if it is an escape char.
-static void PrintEscapedString(const std::string &Str,
-                               formatted_raw_ostream &Out) {
-  for (unsigned i = 0, e = Str.size(); i != e; ++i) {
-    unsigned char C = Str[i];
-    if (isprint(C) && C != '"' && C != '\\') {
-      Out << C;
-    } else {
-      Out << '\\'
-          << (char) ((C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'))
-          << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
-    }
-  }
-}
-
 void XCoreAsmPrinter::
 emitGlobalDirective(const std::string &name)
 {
