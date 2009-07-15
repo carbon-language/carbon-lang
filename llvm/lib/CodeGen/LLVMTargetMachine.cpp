@@ -20,8 +20,10 @@
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
