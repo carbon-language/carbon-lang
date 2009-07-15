@@ -279,7 +279,8 @@ raw_fd_ostream::~raw_fd_ostream() {
   if (FD >= 0) {
     flush();
     if (ShouldClose)
-      ::close(FD);
+      if (::close(FD) != 0)
+        llvm_report_error("IO failure closing output stream.");
   }
 }
 
@@ -294,13 +295,16 @@ void raw_fd_ostream::close() {
   assert (ShouldClose);
   ShouldClose = false;
   flush();
-  ::close(FD);
+  if (::close(FD) != 0)
+    llvm_report_error("IO failure closing output stream.");
   FD = -1;
 }
 
 uint64_t raw_fd_ostream::seek(uint64_t off) {
   flush();
   pos = ::lseek(FD, off, SEEK_SET);
+  if (pos != off)
+    llvm_report_error("IO failure seeking on output stream.");
   return pos;  
 }
 
