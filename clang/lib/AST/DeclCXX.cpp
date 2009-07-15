@@ -478,6 +478,50 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 }
 
 void
+CXXDestructorDecl::setBaseOrMemberDestructions(ASTContext &C) {
+  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(getDeclContext());
+  llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToDestruct;
+  for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
+       E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
+    CXXBaseOrMemberInitializer *Member = 
+      new CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,SourceLocation());
+    AllToDestruct.push_back(Member);
+  }
+  for (CXXRecordDecl::base_class_iterator Base =
+       ClassDecl->bases_begin(),
+       E = ClassDecl->bases_end(); Base != E; ++Base) {
+    if (Base->isVirtual())
+      continue;
+    CXXBaseOrMemberInitializer *Member = 
+      new CXXBaseOrMemberInitializer(Base->getType(), 0, 0, SourceLocation());
+    AllToDestruct.push_back(Member);
+  }
+  // non-static data members.
+  for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
+       E = ClassDecl->field_end(); Field != E; ++Field) {
+    QualType FieldType = C.getCanonicalType((*Field)->getType());
+    while (const ArrayType *AT = C.getAsArrayType(FieldType))
+      FieldType = AT->getElementType();
+    
+    if (FieldType->getAsRecordType()) {
+      CXXBaseOrMemberInitializer *Member = 
+        new CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
+      AllToDestruct.push_back(Member);
+    }
+  }
+  
+  unsigned NumDestructions = AllToDestruct.size();
+  if (NumDestructions > 0) {
+    NumBaseOrMemberDestructions = NumDestructions;
+    BaseOrMemberDestructions = 
+      new (C) CXXBaseOrMemberInitializer*[NumDestructions];
+    // Insert in reverse order.
+    for (int Idx = NumDestructions-1, i=0 ; Idx >= 0; --Idx)
+      BaseOrMemberDestructions[i++] = AllToDestruct[Idx];
+  }
+}
+
+void
 CXXConstructorDecl::setBaseOrMemberInitializers(
                                     ASTContext &C,
                                     CXXBaseOrMemberInitializer **Initializers,

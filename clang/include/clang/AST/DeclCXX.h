@@ -895,7 +895,16 @@ class CXXDestructorDecl : public CXXMethodDecl {
   /// explicitly defaulted (i.e., defined with " = default") will have
   /// @c !Implicit && ImplicitlyDefined.
   bool ImplicitlyDefined : 1;
-
+  
+  /// Support for base and member destruction.
+  /// BaseOrMemberDestructions - The arguments used to destruct the base 
+  /// or member.
+  // FIXME. May want to use a new class as CXXBaseOrMemberInitializer has
+  // more info. than is needed. At the least, CXXBaseOrMemberInitializer need
+  // be renamed to something neutral.
+  CXXBaseOrMemberInitializer **BaseOrMemberDestructions;
+  unsigned NumBaseOrMemberDestructions;
+  
   CXXDestructorDecl(CXXRecordDecl *RD, SourceLocation L,
                     DeclarationName N, QualType T,
                     bool isInline, bool isImplicitlyDeclared)
@@ -928,6 +937,34 @@ public:
     ImplicitlyDefined = ID; 
   }
 
+  /// destr_iterator - Iterates through the member/base destruction list.
+  typedef CXXBaseOrMemberInitializer **destr_iterator;
+  
+  /// destr_const_iterator - Iterates through the member/base destruction list.
+  typedef CXXBaseOrMemberInitializer * const * destr_const_iterator;
+  
+  /// destr_begin() - Retrieve an iterator to the first destructed member/base.
+  destr_iterator       destr_begin()       { return BaseOrMemberDestructions; }
+  /// destr_begin() - Retrieve an iterator to the first destructed member/base.
+  destr_const_iterator destr_begin() const { return BaseOrMemberDestructions; }
+  
+  /// destr_end() - Retrieve an iterator past the last destructed member/base.
+  destr_iterator       destr_end()       { 
+    return BaseOrMemberDestructions + NumBaseOrMemberDestructions; 
+  }
+  /// destr_end() - Retrieve an iterator past the last destructed member/base.
+  destr_const_iterator destr_end() const { 
+    return BaseOrMemberDestructions + NumBaseOrMemberDestructions; 
+  }
+  
+  /// getNumArgs - Determine the number of arguments used to
+  /// destruct the member or base.
+  unsigned getNumBaseOrMemberDestructions() const { 
+    return NumBaseOrMemberDestructions; 
+  }
+  
+  void setBaseOrMemberDestructions(ASTContext &C);
+                        
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
     return D->getKind() == CXXDestructor;

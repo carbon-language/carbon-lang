@@ -1233,7 +1233,7 @@ public:
                                     MemInitTy **MemInits, unsigned NumMemInits){
   }
  
- virtual void ActOnDefaultInitializers(DeclPtrTy ConstructorDecl) {}
+ virtual void ActOnDefaultCDtorInitializers(DeclPtrTy CDtorDecl) {}
 
   /// ActOnFinishCXXMemberSpecification - Invoked after all member declarators
   /// are parsed but *before* parsing of inline method definitions.
