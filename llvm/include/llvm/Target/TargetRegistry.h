@@ -89,7 +89,7 @@ namespace llvm {
 
     /// createTargetMachine - Create a target specific machine implementation.
     TargetMachine *createTargetMachine(const Module &M,
-                                       const std::string &Features) {
+                                       const std::string &Features) const {
       if (!TargetMachineCtorFn)
         return 0;
       return TargetMachineCtorFn(M, Features);
@@ -98,7 +98,7 @@ namespace llvm {
     /// createAsmPrinter - Create a target specific assembly printer pass.
     FunctionPass *createAsmPrinter(formatted_raw_ostream &OS,
                                    TargetMachine &M,
-                                   bool Verbose) {
+                                   bool Verbose) const {
       if (!AsmPrinterCtorFn)
         return 0;
       return AsmPrinterCtorFn(OS, M, Verbose);
