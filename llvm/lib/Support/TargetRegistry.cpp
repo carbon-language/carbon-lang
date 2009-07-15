@@ -123,7 +123,7 @@ void TargetRegistry::RegisterTarget(Target &T,
          
   // Add to the list of targets.
   T.Next = FirstTarget;
-  FirstTarget = T.Next;
+  FirstTarget = &T;
 
   T.Name = Name;
   T.ShortDesc = ShortDesc;
