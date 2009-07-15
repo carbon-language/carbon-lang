@@ -1,4 +1,4 @@
-//===- TargetSelect.h - Target Selection & Registration -------------------===//
+//===- TargetSelect.h - Target Selection & Registration ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,6 +20,9 @@
 
 extern "C" {
   // Declare all of the target-initialization functions that are available.
+#define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##TargetInfo();
+#include "llvm/Config/Targets.def"
+
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
   
@@ -30,8 +33,13 @@ extern "C" {
 
 namespace llvm {
   /// InitializeAllTargets - The main program should call this function if it
-  /// wants to link in all available targets that LLVM is configured to support.
+  /// wants access to all available targets that LLVM is configured to
+  /// support. This allows the client to query the available targets using the
+  /// target registration mechanisms.
   inline void InitializeAllTargets() {
+#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
+#include "llvm/Config/Targets.def"
+
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
 #include "llvm/Config/Targets.def"
   }
