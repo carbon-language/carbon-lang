@@ -1029,10 +1029,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       SwitchToDataSection(".lazy_symbol_pointer");
       O << Info.LazyPtr << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
-      if (isPPC64)
-        O << "\t.quad dyld_stub_binding_helper\n";
-      else
-        O << "\t.long dyld_stub_binding_helper\n";
+      O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
   } else if (!FnStubs.empty()) {
     SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
@@ -1044,20 +1041,14 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << Info.Stub << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << "\tlis r11,ha16(" << Info.LazyPtr << ")\n";
-      if (isPPC64)
-        O << "\tldu r12,lo16(";
-      else
-        O << "\tlwzu r12,lo16(";
+      O << (isPPC64 ? "\tldu" :  "\tlwzu") << " r12,lo16(";
       O << Info.LazyPtr << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer");
       O << Info.LazyPtr << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
-      if (isPPC64)
-        O << "\t.quad dyld_stub_binding_helper\n";
-      else
-        O << "\t.long dyld_stub_binding_helper\n";
+      O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
   }
 
