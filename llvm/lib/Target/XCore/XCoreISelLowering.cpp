@@ -874,44 +874,30 @@ static inline bool isImmUs4(int64_t val)
 bool
 XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM, 
                                               const Type *Ty) const {
-  MVT VT = getValueType(Ty, true);
-  // Get expected value type after legalization
-  switch (VT.getSimpleVT()) {
-  // Legal load / stores
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32:
-    break;
-  // Expand i1 -> i8
-  case MVT::i1:
-    VT = MVT::i8;
-    break;
-  // Everything else is lowered to words
-  default:
-    VT = MVT::i32;
-    break;
-  }
+  const TargetData *TD = TM.getTargetData();
+  unsigned Size = TD->getTypeAllocSize(Ty);
   if (AM.BaseGV) {
-    return VT == MVT::i32 && !AM.HasBaseReg && AM.Scale == 0 &&
+    return Size >= 4 && !AM.HasBaseReg && AM.Scale == 0 &&
                  AM.BaseOffs%4 == 0;
   }
   
-  switch (VT.getSimpleVT()) {
-  default:
-    return false;
-  case MVT::i8:
+  switch (Size) {
+  case 1:
     // reg + imm
     if (AM.Scale == 0) {
       return isImmUs(AM.BaseOffs);
     }
+    // reg + reg
     return AM.Scale == 1 && AM.BaseOffs == 0;
-  case MVT::i16:
+  case 2:
+  case 3:
     // reg + imm
     if (AM.Scale == 0) {
       return isImmUs2(AM.BaseOffs);
     }
+    // reg + reg<<1
     return AM.Scale == 2 && AM.BaseOffs == 0;
-  case MVT::i32:
+  default:
     // reg + imm
     if (AM.Scale == 0) {
       return isImmUs4(AM.BaseOffs);
