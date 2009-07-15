@@ -1,4 +1,4 @@
-##===- lib/Target/CBackend/Makefile ------------------------*- Makefile -*-===##
+##===- lib/Target/IA64/TargetInfo/Makefile -----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,12 +6,10 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
+LEVEL = ../../../..
+LIBRARYNAME = LLVMIA64Info
 
-LEVEL = ../../..
-LIBRARYNAME = LLVMCBackend
-
-DIRS = TargetInfo
+# Hack: we need to include 'main' target directory to grab private headers
+CPPFLAGS = -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LEVEL)/Makefile.common
-
-CompileCommonOpts += -Wno-format

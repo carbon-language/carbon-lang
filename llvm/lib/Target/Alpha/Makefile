@@ -17,6 +17,6 @@ BUILT_SOURCES = AlphaGenRegisterInfo.h.inc AlphaGenRegisterNames.inc \
                 AlphaGenAsmWriter.inc AlphaGenDAGISel.inc \
                 AlphaGenSubtarget.inc
 
-DIRS = AsmPrinter
+DIRS = AsmPrinter TargetInfo
 
 include $(LEVEL)/Makefile.common

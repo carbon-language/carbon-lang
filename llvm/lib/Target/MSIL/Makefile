@@ -9,6 +9,9 @@
 
 LEVEL = ../../..
 LIBRARYNAME = LLVMMSIL
+
+DIRS = TargetInfo
+
 include $(LEVEL)/Makefile.common
 
 CompileCommonOpts := $(CompileCommonOpts) -Wno-format

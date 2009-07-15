@@ -14,7 +14,7 @@ BUILT_SOURCES = IA64GenRegisterInfo.h.inc IA64GenRegisterNames.inc \
                 IA64GenInstrInfo.inc IA64GenAsmWriter.inc \
 		IA64GenDAGISel.inc
 
-DIRS = AsmPrinter
+DIRS = AsmPrinter TargetInfo
 
 include $(LEVEL)/Makefile.common
 

@@ -16,7 +16,7 @@ BUILT_SOURCES = SparcGenRegisterInfo.h.inc SparcGenRegisterNames.inc \
                 SparcGenInstrInfo.inc SparcGenAsmWriter.inc \
                 SparcGenDAGISel.inc SparcGenSubtarget.inc SparcGenCallingConv.inc
 
-DIRS = AsmPrinter
+DIRS = AsmPrinter TargetInfo
 
 include $(LEVEL)/Makefile.common
 
