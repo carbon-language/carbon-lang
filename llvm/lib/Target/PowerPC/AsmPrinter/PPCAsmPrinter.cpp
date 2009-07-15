@@ -53,7 +53,8 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   class VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
   protected:
-    StringSet<> FnStubs, GVStubs, HiddenGVStubs;
+    StringSet<> FnStubs;
+    StringMap<std::string> GVStubs, HiddenGVStubs;
     const PPCSubtarget &Subtarget;
   public:
     explicit PPCAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
@@ -363,37 +364,38 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
       << '_' << MO.getIndex();
     return;
-  case MachineOperand::MO_ExternalSymbol:
+  case MachineOperand::MO_ExternalSymbol: {
     // Computing the address of an external symbol, not calling it.
+    std::string Name(TAI->getGlobalPrefix());
+    Name += MO.getSymbolName();
+    
     if (TM.getRelocationModel() != Reloc::Static) {
-      std::string Name(TAI->getGlobalPrefix());
-      Name += MO.getSymbolName();
-      GVStubs.insert(Name);
-      printSuffixedName(Name, "$non_lazy_ptr");
-      return;
+      GVStubs[Name] = Name+"$non_lazy_ptr";
+      Name += "$non_lazy_ptr";
     }
-    O << TAI->getGlobalPrefix() << MO.getSymbolName();
+    O << Name;
     return;
+  }
   case MachineOperand::MO_GlobalAddress: {
     // Computing the address of a global symbol, not calling it.
     GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
+    std::string Name;
 
     // External or weakly linked global variables need non-lazily-resolved stubs
-    if (TM.getRelocationModel() != Reloc::Static) {
-      if (GV->isDeclaration() || GV->isWeakForLinker()) {
-        if (!GV->hasHiddenVisibility()) {
-          GVStubs.insert(Name);
-          printSuffixedName(Name, "$non_lazy_ptr");
-        } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
-                   GV->hasAvailableExternallyLinkage()) {
-          HiddenGVStubs.insert(Name);
-          printSuffixedName(Name, "$non_lazy_ptr");
-        } else {
-          O << Name;
-        }
-        return;
+    if (TM.getRelocationModel() != Reloc::Static &&
+        (GV->isDeclaration() || GV->isWeakForLinker())) {
+      if (!GV->hasHiddenVisibility()) {
+        Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
+        GVStubs[Mang->getMangledName(GV)] = Name;
+      } else if (GV->isDeclaration() || GV->hasCommonLinkage() ||
+                 GV->hasAvailableExternallyLinkage()) {
+        Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
+        HiddenGVStubs[Mang->getMangledName(GV)] = Name;
+      } else {
+        Name = Mang->getMangledName(GV);
       }
+    } else {
+      Name = Mang->getMangledName(GV);
     }
     O << Name;
 
@@ -411,14 +413,16 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 ///
 void PPCAsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
   std::string Name;
-  getGlobalLinkName(GV, Name);
+  
   if (TM.getRelocationModel() != Reloc::Static) {
+    Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
+    
     if (GV->hasHiddenVisibility())
-      HiddenGVStubs.insert(Name);
+      HiddenGVStubs[Mang->getMangledName(GV)] = Name;
     else
-      GVStubs.insert(Name);
-    printSuffixedName(Name, "$non_lazy_ptr");
-    return;
+      GVStubs[Mang->getMangledName(GV)] = Name;
+  } else {
+    Name = Mang->getMangledName(GV);
   }
   O << Name;
 }
@@ -964,10 +968,10 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   if (TM.getRelocationModel() == Reloc::PIC_ && !FnStubs.empty()) {
     SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
                         "pure_instructions,32");
-    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
-         i != e; ++i) {
+    for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
+         I != E; ++I) {
       EmitAlignment(4);
-      const char *p = i->getKeyData();
+      const char *p = I->getKeyData();
       bool hasQuote = p[0]=='\"';
       printSuffixedName(p, "$stub");
       O << ":\n";
@@ -1019,10 +1023,10 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   } else if (!FnStubs.empty()) {
     SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
                         "pure_instructions,16");
-    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
-         i != e; ++i) {
+    for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
+         I != E; ++I) {
       EmitAlignment(4);
-      const char *p = i->getKeyData();
+      const char *p = I->getKeyData();
       printSuffixedName(p, "$stub");
       O << ":\n";
       O << "\t.indirect_symbol " << p << '\n';
@@ -1055,39 +1059,31 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
     // Only referenced functions get into the Personalities list.
     const std::vector<Function *> &Personalities = MMI->getPersonalities();
     for (std::vector<Function *>::const_iterator I = Personalities.begin(),
-           E = Personalities.end(); I != E; ++I)
-      if (*I) GVStubs.insert("_" + (*I)->getName());
+         E = Personalities.end(); I != E; ++I) {
+      if (*I)
+        GVStubs[Mang->getMangledName(*I)] =
+          Mang->getMangledName(*I, "$non_lazy_ptr", true);;
+    }
   }
 
   // Output stubs for external and common global variables.
   if (!GVStubs.empty()) {
     SwitchToDataSection(".non_lazy_symbol_pointer");
-    for (StringSet<>::iterator i = GVStubs.begin(), e = GVStubs.end();
-         i != e; ++i) {
-      std::string p = i->getKeyData();
-      printSuffixedName(p, "$non_lazy_ptr");
-      O << ":\n";
-      O << "\t.indirect_symbol " << p << '\n';
-      if (isPPC64)
-        O << "\t.quad\t0\n";
-      else
-        O << "\t.long\t0\n";
+    for (StringMap<std::string>::iterator I = GVStubs.begin(),
+         E = GVStubs.end(); I != E; ++I) {
+      O << I->second << ":\n";
+      O << "\t.indirect_symbol " << I->getKeyData() << '\n';
+      O << (isPPC64 ? "\t.quad\t0\n" : "\t.long\t0\n");
     }
   }
 
   if (!HiddenGVStubs.empty()) {
     SwitchToSection(TAI->getDataSection());
-    for (StringSet<>::iterator i = HiddenGVStubs.begin(), e = HiddenGVStubs.end();
-         i != e; ++i) {
-      std::string p = i->getKeyData();
-      EmitAlignment(isPPC64 ? 3 : 2);
-      printSuffixedName(p, "$non_lazy_ptr");
-      O << ":\n";
-      if (isPPC64)
-        O << "\t.quad\t";
-      else
-        O << "\t.long\t";
-      O << p << '\n';
+    EmitAlignment(isPPC64 ? 3 : 2);
+    for (StringMap<std::string>::iterator I = HiddenGVStubs.begin(),
+         E = HiddenGVStubs.end(); I != E; ++I) {
+      O << I->second << ":\n";
+      O << (isPPC64 ? "\t.quad\t" : "\t.long\t") << I->getKeyData() << '\n';
     }
   }
 
