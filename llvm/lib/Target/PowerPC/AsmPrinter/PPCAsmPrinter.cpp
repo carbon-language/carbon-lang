@@ -416,11 +416,6 @@ void PPCAsmPrinter::EmitExternalGlobal(const GlobalVariable *GV) {
   
   if (TM.getRelocationModel() != Reloc::Static) {
     Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
-    
-    if (GV->hasHiddenVisibility())
-      HiddenGVStubs[Mang->getMangledName(GV)] = Name;
-    else
-      GVStubs[Mang->getMangledName(GV)] = Name;
   } else {
     Name = Mang->getMangledName(GV);
   }
@@ -1062,7 +1057,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
          E = Personalities.end(); I != E; ++I) {
       if (*I)
         GVStubs[Mang->getMangledName(*I)] =
-          Mang->getMangledName(*I, "$non_lazy_ptr", true);;
+          Mang->getMangledName(*I, "$non_lazy_ptr", true);
     }
   }
 
