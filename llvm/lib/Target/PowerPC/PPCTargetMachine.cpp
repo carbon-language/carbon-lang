@@ -111,7 +111,7 @@ bool PPCTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
 
 bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      bool DumpAsm, MachineCodeEmitter &MCE) {
+                                      MachineCodeEmitter &MCE) {
   // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
   if (Subtarget.isPPC64()) {
@@ -132,15 +132,13 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
 
 bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      bool DumpAsm, JITCodeEmitter &JCE) {
+                                      JITCodeEmitter &JCE) {
   // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
   if (Subtarget.isPPC64()) {
@@ -161,15 +159,13 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
 
 bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      bool DumpAsm, ObjectCodeEmitter &OCE) {
+                                      ObjectCodeEmitter &OCE) {
   // The JIT should use the static relocation model in ppc32 mode, PIC in ppc64.
   // FIXME: This should be moved to TargetJITInfo!!
   if (Subtarget.isPPC64()) {
@@ -190,45 +186,31 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
 
 bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm, 
                                             MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCCodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm,
                                             JITCodeEmitter &JCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool PPCTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm,
                                             ObjectCodeEmitter &OCE) {
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 

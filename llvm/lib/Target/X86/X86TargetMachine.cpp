@@ -194,7 +194,6 @@ bool X86TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
 
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      bool DumpAsm, 
                                       MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
@@ -215,15 +214,12 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   }
 
   PM.add(createX86CodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
 
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      bool DumpAsm,
                                       JITCodeEmitter &JCE) {
   // FIXME: Move this to TargetJITInfo!
   // On Darwin, do not override 64-bit setting made in X86TargetMachine().
@@ -244,52 +240,34 @@ bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
   }
 
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   return false;
 }
 
 bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
                                       CodeGenOpt::Level OptLevel,
-                                      bool DumpAsm,
                                       ObjectCodeEmitter &OCE) {
   PM.add(createX86ObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm,
                                             MachineCodeEmitter &MCE) {
   PM.add(createX86CodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm,
                                             JITCodeEmitter &JCE) {
   PM.add(createX86JITCodeEmitterPass(*this, JCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool X86TargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm,
                                             ObjectCodeEmitter &OCE) {
   PM.add(createX86ObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }

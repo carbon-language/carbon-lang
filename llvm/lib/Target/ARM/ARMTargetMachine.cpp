@@ -143,7 +143,6 @@ bool ARMBaseTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
 
 bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
-                                          bool DumpAsm,
                                           MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
   if (DefRelocModel == Reloc::Default)
@@ -151,15 +150,11 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
 
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
-                                          bool DumpAsm,
                                           JITCodeEmitter &JCE) {
   // FIXME: Move this to TargetJITInfo!
   if (DefRelocModel == Reloc::Default)
@@ -167,15 +162,11 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
 
   // Machine code emitter pass for ARM.
   PM.add(createARMJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel,
-                                          bool DumpAsm,
                                           ObjectCodeEmitter &OCE) {
   // FIXME: Move this to TargetJITInfo!
   if (DefRelocModel == Reloc::Default)
@@ -183,45 +174,30 @@ bool ARMBaseTargetMachine::addCodeEmitter(PassManagerBase &PM,
 
   // Machine code emitter pass for ARM.
   PM.add(createARMObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                                 CodeGenOpt::Level OptLevel,
-                                                bool DumpAsm,
                                                 MachineCodeEmitter &MCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMCodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                                 CodeGenOpt::Level OptLevel,
-                                                bool DumpAsm,
                                                 JITCodeEmitter &JCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 
 bool ARMBaseTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
-                                            bool DumpAsm,
                                             ObjectCodeEmitter &OCE) {
   // Machine code emitter pass for ARM.
   PM.add(createARMObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
-
   return false;
 }
 

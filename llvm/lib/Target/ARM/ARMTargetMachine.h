@@ -59,22 +59,19 @@ public:
                                   CodeGenOpt::Level OptLevel,
                                   bool Verbose, formatted_raw_ostream &Out);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
-                              bool DumpAsm, MachineCodeEmitter &MCE);
+                              MachineCodeEmitter &MCE);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
-                              bool DumpAsm, JITCodeEmitter &MCE);
+                              JITCodeEmitter &MCE);
   virtual bool addCodeEmitter(PassManagerBase &PM, CodeGenOpt::Level OptLevel,
-                              bool DumpAsm, ObjectCodeEmitter &OCE);
+                              ObjectCodeEmitter &OCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
-                                    bool DumpAsm,
                                     MachineCodeEmitter &MCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
-                                    bool DumpAsm,
                                     JITCodeEmitter &MCE);
   virtual bool addSimpleCodeEmitter(PassManagerBase &PM,
                                     CodeGenOpt::Level OptLevel,
-                                    bool DumpAsm,
                                     ObjectCodeEmitter &OCE);
 };
 

@@ -73,44 +73,35 @@ bool AlphaTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
 }
 bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                         CodeGenOpt::Level OptLevel,
-                                        bool DumpAsm, MachineCodeEmitter &MCE) {
+                                        MachineCodeEmitter &MCE) {
   PM.add(createAlphaCodeEmitterPass(*this, MCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
   return false;
 }
 bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                         CodeGenOpt::Level OptLevel,
-                                        bool DumpAsm, JITCodeEmitter &JCE) {
+                                        JITCodeEmitter &JCE) {
   PM.add(createAlphaJITCodeEmitterPass(*this, JCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
   return false;
 }
 bool AlphaTargetMachine::addCodeEmitter(PassManagerBase &PM,
                                         CodeGenOpt::Level OptLevel,
-                                        bool DumpAsm, ObjectCodeEmitter &OCE) {
+                                        ObjectCodeEmitter &OCE) {
   PM.add(createAlphaObjectCodeEmitterPass(*this, OCE));
-  if (DumpAsm)
-    addAssemblyEmitter(PM, OptLevel, true, ferrs());
   return false;
 }
 bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                               CodeGenOpt::Level OptLevel,
-                                              bool DumpAsm,
                                               MachineCodeEmitter &MCE) {
-  return addCodeEmitter(PM, OptLevel, DumpAsm, MCE);
+  return addCodeEmitter(PM, OptLevel, MCE);
 }
 bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                               CodeGenOpt::Level OptLevel,
-                                              bool DumpAsm,
                                               JITCodeEmitter &JCE) {
-  return addCodeEmitter(PM, OptLevel, DumpAsm, JCE);
+  return addCodeEmitter(PM, OptLevel, JCE);
 }
 bool AlphaTargetMachine::addSimpleCodeEmitter(PassManagerBase &PM,
                                               CodeGenOpt::Level OptLevel,
-                                              bool DumpAsm,
                                               ObjectCodeEmitter &OCE) {
-  return addCodeEmitter(PM, OptLevel, DumpAsm, OCE);
+  return addCodeEmitter(PM, OptLevel, OCE);
 }
 

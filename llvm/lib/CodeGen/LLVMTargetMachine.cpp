@@ -99,7 +99,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
                                                   MachineCodeEmitter *MCE,
                                                   CodeGenOpt::Level OptLevel) {
   if (MCE)
-    addSimpleCodeEmitter(PM, OptLevel, PrintEmittedAsm, *MCE);
+    addSimpleCodeEmitter(PM, OptLevel, *MCE);
+  if (PrintEmittedAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
 
@@ -116,7 +118,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
                                                   JITCodeEmitter *JCE,
                                                   CodeGenOpt::Level OptLevel) {
   if (JCE)
-    addSimpleCodeEmitter(PM, OptLevel, PrintEmittedAsm, *JCE);
+    addSimpleCodeEmitter(PM, OptLevel, *JCE);
+  if (PrintEmittedAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
 
@@ -133,7 +137,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
                                                   ObjectCodeEmitter *OCE,
                                                   CodeGenOpt::Level OptLevel) {
   if (OCE)
-    addSimpleCodeEmitter(PM, OptLevel, PrintEmittedAsm, *OCE);
+    addSimpleCodeEmitter(PM, OptLevel, *OCE);
+  if (PrintEmittedAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
 
@@ -159,7 +165,9 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   if (addPreEmitPass(PM, OptLevel) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  addCodeEmitter(PM, OptLevel, PrintEmittedAsm, MCE);
+  addCodeEmitter(PM, OptLevel, MCE);
+  if (PrintEmittedAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
 
@@ -185,7 +193,9 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
   if (addPreEmitPass(PM, OptLevel) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  addCodeEmitter(PM, OptLevel, PrintEmittedAsm, JCE);
+  addCodeEmitter(PM, OptLevel, JCE);
+  if (PrintEmittedAsm)
+    addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
 
