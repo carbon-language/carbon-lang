@@ -427,10 +427,10 @@ class X86InstrInfo : public TargetInstrInfoImpl {
   /// RegOp2MemOpTable2Addr, RegOp2MemOpTable0, RegOp2MemOpTable1,
   /// RegOp2MemOpTable2 - Load / store folding opcode maps.
   ///
-  DenseMap<unsigned*, unsigned> RegOp2MemOpTable2Addr;
-  DenseMap<unsigned*, unsigned> RegOp2MemOpTable0;
-  DenseMap<unsigned*, unsigned> RegOp2MemOpTable1;
-  DenseMap<unsigned*, unsigned> RegOp2MemOpTable2;
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> > RegOp2MemOpTable2Addr;
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> > RegOp2MemOpTable0;
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> > RegOp2MemOpTable1;
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> > RegOp2MemOpTable2;
   
   /// MemOp2RegOpTable - Load / store unfolding opcode map.
   ///
@@ -602,9 +602,10 @@ public:
 
 private:
   MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                      MachineInstr* MI,
-                                      unsigned OpNum,
-                                      const SmallVectorImpl<MachineOperand> &MOs) const;
+                                     MachineInstr* MI,
+                                     unsigned OpNum,
+                                     const SmallVectorImpl<MachineOperand> &MOs,
+                                     unsigned Alignment) const;
 };
 
 } // End llvm namespace
