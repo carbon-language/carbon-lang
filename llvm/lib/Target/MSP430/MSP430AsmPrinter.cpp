@@ -40,7 +40,7 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   class VISIBILITY_HIDDEN MSP430AsmPrinter : public AsmPrinter {
   public:
-    MSP430AsmPrinter(formatted_raw_ostream &O, MSP430TargetMachine &TM,
+    MSP430AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                      const TargetAsmInfo *TAI, bool V)
       : AsmPrinter(O, TM, TAI, V) {}
 
@@ -76,7 +76,7 @@ namespace {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createMSP430CodePrinterPass(formatted_raw_ostream &o,
-                                                MSP430TargetMachine &tm,
+                                                TargetMachine &tm,
                                                 bool verbose) {
   return new MSP430AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }

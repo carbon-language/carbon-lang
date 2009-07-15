@@ -41,7 +41,12 @@ static RegisterTarget<CooperTargetMachine>
 Y(TheCooperTarget, "cooper", "PIC16 Cooper [experimental].");
 
 // Force static initialization.
-extern "C" void LLVMInitializePIC16Target() { }
+extern "C" void LLVMInitializePIC16Target() { 
+  TargetRegistry::RegisterAsmPrinter(ThePIC16Target,
+                                     &createPIC16CodePrinterPass);
+  TargetRegistry::RegisterAsmPrinter(TheCooperTarget,
+                                     &createPIC16CodePrinterPass);
+}
 
 // PIC16TargetMachine - Traditional PIC16 Machine.
 PIC16TargetMachine::PIC16TargetMachine(const Target &T, const Module &M, 
@@ -74,8 +79,10 @@ bool PIC16TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
                                             bool Verbose,
                                             formatted_raw_ostream &Out) {
-  // Output assembly language.
-  PM.add(createPIC16CodePrinterPass(Out, *this, Verbose));
+  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  if (!Printer)
+    llvm_report_error("unable to create assembly printer");
+  PM.add(Printer);
   return false;
 }
 

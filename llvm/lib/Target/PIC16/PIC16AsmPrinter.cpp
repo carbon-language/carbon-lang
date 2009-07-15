@@ -113,7 +113,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createPIC16CodePrinterPass(formatted_raw_ostream &o,
-                                               PIC16TargetMachine &tm,
+                                               TargetMachine &tm,
                                                bool verbose) {
   return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }

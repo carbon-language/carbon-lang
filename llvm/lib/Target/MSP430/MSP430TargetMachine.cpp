@@ -37,7 +37,10 @@ static RegisterTarget<MSP430TargetMachine>
 X(TheMSP430Target, "msp430", "MSP430 [experimental]");
 
 // Force static initialization.
-extern "C" void LLVMInitializeMSP430Target() { }
+extern "C" void LLVMInitializeMSP430Target() { 
+  TargetRegistry::RegisterAsmPrinter(TheMSP430Target,
+                                     &createMSP430CodePrinterPass);
+}
 
 MSP430TargetMachine::MSP430TargetMachine(const Target &T,
                                          const Module &M,
@@ -64,8 +67,10 @@ bool MSP430TargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                              CodeGenOpt::Level OptLevel,
                                              bool Verbose,
                                              formatted_raw_ostream &Out) {
-  // Output assembly language.
-  PM.add(createMSP430CodePrinterPass(Out, *this, Verbose));
+  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  if (!Printer)
+    llvm_report_error("unable to create assembly printer");
+  PM.add(Printer);
   return false;
 }
 

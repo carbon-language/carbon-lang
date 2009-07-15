@@ -52,10 +52,10 @@ namespace {
     DwarfWriter *DW;
     const XCoreSubtarget &Subtarget;
   public:
-    explicit XCoreAsmPrinter(formatted_raw_ostream &O, XCoreTargetMachine &TM,
+    explicit XCoreAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
                              const TargetAsmInfo *T, bool V)
       : AsmPrinter(O, TM, T, V), DW(0),
-        Subtarget(*TM.getSubtargetImpl()) {}
+      Subtarget(TM.getSubtarget<XCoreSubtarget>()) {}
 
     virtual const char *getPassName() const {
       return "XCore Assembly Printer";
@@ -98,7 +98,7 @@ namespace {
 /// regardless of whether the function is in SSA form.
 ///
 FunctionPass *llvm::createXCoreCodePrinterPass(formatted_raw_ostream &o,
-                                               XCoreTargetMachine &tm,
+                                               TargetMachine &tm,
                                                bool verbose) {
   return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }

@@ -33,7 +33,10 @@ namespace {
 }
 
 // Force static initialization.
-extern "C" void LLVMInitializeXCoreTarget() { }
+extern "C" void LLVMInitializeXCoreTarget() { 
+  TargetRegistry::RegisterAsmPrinter(TheXCoreTarget,
+                                     &createXCoreCodePrinterPass);
+}
 
 const TargetAsmInfo *XCoreTargetMachine::createTargetAsmInfo() const {
   return new XCoreTargetAsmInfo(*this);
@@ -62,7 +65,9 @@ bool XCoreTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
                                             CodeGenOpt::Level OptLevel,
                                             bool Verbose,
                                             formatted_raw_ostream &Out) {
-  // Output assembly language.
-  PM.add(createXCoreCodePrinterPass(Out, *this, Verbose));
+  FunctionPass *Printer = getTarget().createAsmPrinter(Out, *this, Verbose);
+  if (!Printer)
+    llvm_report_error("unable to create assembly printer");
+  PM.add(Printer);
   return false;
 }
