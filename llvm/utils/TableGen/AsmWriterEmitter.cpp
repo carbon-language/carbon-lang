@@ -383,7 +383,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
 
     // If this is the last operand, emit a return.
     if (Inst->Operands.size() == 1) {
-      Command += "    postInstructionAction(*MI);\n";
+      Command += "    EmitComments(*MI);\n";
       // Print the final newline
       Command += "    O << \"\\n\";\n";
       Command += "    return true;\n";
@@ -454,7 +454,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       
       // If this is the last operand, emit a return after the code.
       if (FirstInst->Operands.size() == Op+1) {
-        Command += "    postInstructionAction(*MI);\n";
+        Command += "    EmitComments(*MI);\n";
         // Print the final newline
         Command += "    O << \"\\n\";\n";
         Command += "    return true;\n";
@@ -570,7 +570,7 @@ void AsmWriterEmitter::run(raw_ostream &O) {
     // just opcode strings to use.
     if (isFirst) {
       // Do the post instruction processing and print the final newline
-      UniqueOperandCommands.push_back("    postInstructionAction(*MI);\n    O << \"\\n\";\n    return true;\n");
+      UniqueOperandCommands.push_back("    EmitComments(*MI);\n    O << \"\\n\";\n    return true;\n");
       isFirst = false;
     }
 
@@ -745,7 +745,7 @@ void AsmWriterEmitter::run(raw_ostream &O) {
       EmitInstructions(Instructions, O);
 
     O << "  }\n";
-    O << "  postInstructionAction(*MI);\n";
+    O << "  EmitComments(*MI);\n";
     // Print the final newline
     O << "  O << \"\\n\";\n";
     O << "  return true;\n";

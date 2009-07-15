@@ -333,17 +333,11 @@ namespace llvm {
     /// debug tables.
     void printDeclare(const MachineInstr *MI) const;
 
-    /// postInstructionAction - Handling printing of items after the
-    /// instruction iteself has been printed (e.g. comments)
-    void postInstructionAction(const MachineInstr &MI) const {
-      postInstructionActionImpl(MI);
-      EmitComments(MI);
-    }
-    void postInstructionAction(const MCInst &MI) const {
-      postInstructionActionImpl(MI);
-      EmitComments(MI);
-    }
-    
+    /// EmitComments - Pretty-print comments for instructions
+    void EmitComments(const MachineInstr &MI) const;
+    /// EmitComments - Pretty-print comments for instructions
+    void EmitComments(const MCInst &MI) const;
+
   protected:
     /// EmitZeros - Emit a block of zeros.
     ///
@@ -413,14 +407,6 @@ namespace llvm {
     void EmitGlobalConstantFP(const ConstantFP* CFP, unsigned AddrSpace);
     void EmitGlobalConstantLargeInt(const ConstantInt* CI, unsigned AddrSpace);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
-
-    /// EmitComments - Pretty-print comments for instructions
-    void EmitComments(const MachineInstr &MI) const;
-    /// EmitComments - Pretty-print comments for instructions
-    void EmitComments(const MCInst &MI) const;
-
-    virtual void postInstructionActionImpl(const MachineInstr &MI) const {}
-    virtual void postInstructionActionImpl(const MCInst &MI) const {}
   };
 }
 
