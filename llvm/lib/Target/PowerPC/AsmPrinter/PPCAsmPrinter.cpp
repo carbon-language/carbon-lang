@@ -53,7 +53,29 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   class VISIBILITY_HIDDEN PPCAsmPrinter : public AsmPrinter {
   protected:
-    StringSet<> FnStubs;
+    struct FnStubInfo {
+      std::string Stub, LazyPtr, AnonSymbol;
+      
+      FnStubInfo() {}
+      
+      void Init(const GlobalValue *GV, Mangler *Mang) {
+        // Already initialized.
+        if (!Stub.empty()) return;
+        Stub = Mang->getMangledName(GV, "$stub", true);
+        LazyPtr = Mang->getMangledName(GV, "$lazy_ptr", true);
+        AnonSymbol = Mang->getMangledName(GV, "$stub$tmp", true);
+      }
+
+      void Init(const std::string &GV, Mangler *Mang) {
+        // Already initialized.
+        if (!Stub.empty()) return;
+        Stub = Mang->makeNameProper(GV+"$stub", true);
+        LazyPtr = Mang->makeNameProper(GV+"$lazy_ptr", true);
+        AnonSymbol = Mang->makeNameProper(GV+"$stub$tmp", true);
+      }
+    };
+    
+    StringMap<FnStubInfo> FnStubs;
     StringMap<std::string> GVStubs, HiddenGVStubs;
     const PPCSubtarget &Subtarget;
   public:
@@ -192,16 +214,16 @@ namespace {
           GlobalValue *GV = MO.getGlobal();
           if (GV->isDeclaration() || GV->isWeakForLinker()) {
             // Dynamically-resolved functions need a stub for the function.
-            std::string Name = Mang->getMangledName(GV);
-            FnStubs.insert(Name);
-            printSuffixedName(Name, "$stub");
+            FnStubInfo &FnInfo = FnStubs[Mang->getMangledName(GV)];
+            FnInfo.Init(GV, Mang);
+            O << FnInfo.Stub;
             return;
           }
         }
         if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
-          std::string Name(TAI->getGlobalPrefix()); Name += MO.getSymbolName();
-          FnStubs.insert(Name);
-          printSuffixedName(Name, "$stub");
+          FnStubInfo &FnInfo =FnStubs[Mang->makeNameProper(MO.getSymbolName())];
+          FnInfo.Init(MO.getSymbolName(), Mang);
+          O << FnInfo.Stub;
           return;
         }
       }
@@ -963,7 +985,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   if (TM.getRelocationModel() == Reloc::PIC_ && !FnStubs.empty()) {
     SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
                         "pure_instructions,32");
-    for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
+    for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
       EmitAlignment(4);
       const char *p = I->getKeyData();
@@ -1018,7 +1040,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   } else if (!FnStubs.empty()) {
     SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
                         "pure_instructions,16");
-    for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
+    for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
       EmitAlignment(4);
       const char *p = I->getKeyData();
