@@ -861,8 +861,9 @@ bool SimpleRegisterCoalescing::ShortenDeadCopyLiveRange(LiveInterval &li,
     return false;  // Already removed by ShortenDeadCopySrcLiveRange.
   unsigned RemoveStart = MLR->start;
   unsigned RemoveEnd = MLR->end;
+  unsigned DefIdx = li_->getDefIndex(CopyIdx);
   // Remove the liverange that's defined by this.
-  if (RemoveEnd == li_->getDefIndex(CopyIdx)+1) {
+  if (RemoveStart == DefIdx && RemoveEnd == DefIdx+1) {
     removeRange(li, RemoveStart, RemoveEnd, li_, tri_);
     return removeIntervalIfEmpty(li, li_, tri_);
   }
@@ -933,6 +934,10 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
   // Shorten the live interval and return.
   MachineBasicBlock *CopyMBB = CopyMI->getParent();
   if (TrimLiveIntervalToLastUse(CopyIdx, CopyMBB, li, LR))
+    return false;
+
+  // There are other kills of the val#. Nothing to do.
+  if (!li.isOnlyLROfValNo(LR))
     return false;
 
   MachineBasicBlock *StartMBB = li_->getMBBFromIndex(RemoveStart);
