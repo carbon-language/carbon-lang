@@ -23,9 +23,11 @@
 
 namespace llvm {
   class Module;
+  class Target;
   class TargetMachine;
 
   struct TargetMachineRegistryEntry {
+    const Target &TheTarget;
     const char *Name;
     const char *ShortDesc;
     TargetMachine *(*CtorFn)(const Module &, const std::string &);
@@ -33,12 +35,12 @@ namespace llvm {
     unsigned (*JITMatchQualityFn)();
 
   public:
-    TargetMachineRegistryEntry(const char *N, const char *SD,
+    TargetMachineRegistryEntry(const Target &T, const char *N, const char *SD,
                       TargetMachine *(*CF)(const Module &, const std::string &),
                                unsigned (*MMF)(const Module &M),
                                unsigned (*JMF)())
-      : Name(N), ShortDesc(SD), CtorFn(CF), ModuleMatchQualityFn(MMF),
-        JITMatchQualityFn(JMF) {}
+      : TheTarget(T), Name(N), ShortDesc(SD), CtorFn(CF), 
+        ModuleMatchQualityFn(MMF), JITMatchQualityFn(JMF) {}
   };
 
   template<>
@@ -78,7 +80,7 @@ namespace llvm {
   template<class TargetMachineImpl>
   struct RegisterTarget {
     RegisterTarget(Target &T, const char *Name, const char *ShortDesc)
-      : Entry(Name, ShortDesc, &Allocator,
+      : Entry(T, Name, ShortDesc, &Allocator,
               &TargetMachineImpl::getModuleMatchQuality,
               &TargetMachineImpl::getJITMatchQuality),
         Node(Entry) {

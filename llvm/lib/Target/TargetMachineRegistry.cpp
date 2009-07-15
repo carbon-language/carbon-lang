@@ -28,7 +28,7 @@ TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
   if (!T)
     return 0;
   // FIXME: Temporary hack, please remove.
-  return new TargetMachineRegistry::entry(T->Name, T->ShortDesc,
+  return new TargetMachineRegistry::entry(*T, T->Name, T->ShortDesc,
                                           T->TargetMachineCtorFn,
                                           T->ModuleMatchQualityFn,
                                           T->JITMatchQualityFn); 
@@ -43,7 +43,7 @@ TargetMachineRegistry::getClosestTargetForJIT(std::string &Error) {
   if (!T)
     return 0;
   // FIXME: Temporary hack, please remove.
-  return new TargetMachineRegistry::entry(T->Name, T->ShortDesc,
+  return new TargetMachineRegistry::entry(*T, T->Name, T->ShortDesc,
                                           T->TargetMachineCtorFn,
                                           T->ModuleMatchQualityFn,
                                           T->JITMatchQualityFn); 
