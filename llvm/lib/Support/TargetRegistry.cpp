@@ -11,9 +11,7 @@
 #include <cassert>
 using namespace llvm;
 
-// FIXME: Worry about locking? In general everything should be registered at
-// startup.
-
+// Clients are responsible for avoid race conditions in registration.
 static Target *FirstTarget = 0;
 
 const Target *

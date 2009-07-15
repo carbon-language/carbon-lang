@@ -32,7 +32,11 @@ namespace llvm {
   ///
   /// For registration purposes, this is a POD type so that targets can be
   /// registered without the use of static constructors.
-  struct Target {
+  ///
+  /// Targets should implement a single global instance of this class (which
+  /// will be zero initialized), and pass that instance to the TargetRegistry as
+  /// part of their initialization.
+  class Target {
   private:
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
     typedef unsigned (*ModuleMatchQualityFnTy)(const Module &M);
@@ -44,7 +48,7 @@ namespace llvm {
                                               TargetMachine &,
                                               bool);
 
-    friend class TargetRegistry;
+    friend struct TargetRegistry;
 
     /// Next - The next registered target in the linked list, maintained by the
     /// TargetRegistry.
@@ -132,6 +136,10 @@ namespace llvm {
     /// @{
 
     /// RegisterTarget - Register the given target.
+    /// 
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
     ///
     /// @param T - The target being registered.
     /// @param Name - The target name. This should be a static string.
@@ -153,6 +161,10 @@ namespace llvm {
     /// RegisterTargetMachine - Register a TargetMachine implementation for the
     /// given target.
     /// 
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    /// 
     /// @param T - The target being registered.
     /// @param Fn - A function to construct a TargetMachine for the target.
     static void RegisterTargetMachine(Target &T, 
@@ -164,6 +176,10 @@ namespace llvm {
     /// RegisterAsmPrinter - Register an AsmPrinter implementation for the given
     /// target.
     /// 
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an AsmPrinter for the target.
     static void RegisterAsmPrinter(Target &T, Target::AsmPrinterCtorTy Fn) {
