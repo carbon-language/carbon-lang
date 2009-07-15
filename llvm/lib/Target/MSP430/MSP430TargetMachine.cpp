@@ -39,8 +39,10 @@ X(TheMSP430Target, "msp430", "MSP430 [experimental]");
 // Force static initialization.
 extern "C" void LLVMInitializeMSP430Target() { }
 
-MSP430TargetMachine::MSP430TargetMachine(const Module &M,
+MSP430TargetMachine::MSP430TargetMachine(const Target &T,
+                                         const Module &M,
                                          const std::string &FS) :
+  LLVMTargetMachine(T),
   Subtarget(*this, M, FS),
   // FIXME: Check TargetData string.
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"),

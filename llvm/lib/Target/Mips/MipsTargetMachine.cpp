@@ -55,7 +55,9 @@ createTargetAsmInfo() const
 // an easier handling.
 // Using CodeModel::Large enables different CALL behavior.
 MipsTargetMachine::
-MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle=false):
+MipsTargetMachine(const Target &T, const Module &M, const std::string &FS, 
+                  bool isLittle=false):
+  LLVMTargetMachine(T),
   Subtarget(*this, M, FS, isLittle), 
   DataLayout(isLittle ? std::string("e-p:32:32:32-i8:8:32-i16:16:32") :
                         std::string("E-p:32:32:32-i8:8:32-i16:16:32")), 
@@ -74,8 +76,8 @@ MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle=false):
 }
 
 MipselTargetMachine::
-MipselTargetMachine(const Module &M, const std::string &FS) :
-  MipsTargetMachine(M, FS, true) {}
+MipselTargetMachine(const Target &T, const Module &M, const std::string &FS) :
+  MipsTargetMachine(T, M, FS, true) {}
 
 // return 0 and must specify -march to gen MIPS code.
 unsigned MipsTargetMachine::

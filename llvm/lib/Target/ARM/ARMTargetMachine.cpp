@@ -79,26 +79,30 @@ unsigned ThumbTargetMachine::getModuleMatchQuality(const Module &M) {
 
 /// TargetMachine ctor - Create an ARM architecture model.
 ///
-ARMBaseTargetMachine::ARMBaseTargetMachine(const Module &M,
+ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T,
+                                           const Module &M,
                                            const std::string &FS,
                                            bool isThumb)
-  : Subtarget(M, FS, isThumb),
+  : LLVMTargetMachine(T),
+    Subtarget(M, FS, isThumb),
     FrameInfo(Subtarget),
     JITInfo(),
     InstrItins(Subtarget.getInstrItineraryData()) {
   DefRelocModel = getRelocationModel();
 }
 
-ARMTargetMachine::ARMTargetMachine(const Module &M, const std::string &FS)
-  : ARMBaseTargetMachine(M, FS, false), InstrInfo(Subtarget),
+ARMTargetMachine::ARMTargetMachine(const Target &T, const Module &M, 
+                                   const std::string &FS)
+  : ARMBaseTargetMachine(T, M, FS, false), InstrInfo(Subtarget),
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:32-i64:32:32") :
                std::string("e-p:32:32-f64:64:64-i64:64:64")),
     TLInfo(*this) {
 }
 
-ThumbTargetMachine::ThumbTargetMachine(const Module &M, const std::string &FS)
-  : ARMBaseTargetMachine(M, FS, true),
+ThumbTargetMachine::ThumbTargetMachine(const Target &T, const Module &M, 
+                                       const std::string &FS)
+  : ARMBaseTargetMachine(T, M, FS, true),
     DataLayout(Subtarget.isAPCS_ABI() ?
                std::string("e-p:32:32-f64:32:32-i64:32:32-"
                            "i16:16:32-i8:8:32-i1:8:32-a:0:32") :

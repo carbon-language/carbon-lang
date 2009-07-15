@@ -49,7 +49,8 @@ protected:
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  X86TargetMachine(const Module &M, const std::string &FS, bool is64Bit);
+  X86TargetMachine(const Target &T, const Module &M, const std::string &FS, 
+                   bool is64Bit);
 
   virtual const X86InstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
@@ -101,7 +102,7 @@ public:
 ///
 class X86_32TargetMachine : public X86TargetMachine {
 public:
-  X86_32TargetMachine(const Module &M, const std::string &FS);
+  X86_32TargetMachine(const Target &T, const Module &M, const std::string &FS);
   
   static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);
@@ -111,7 +112,7 @@ public:
 ///
 class X86_64TargetMachine : public X86TargetMachine {
 public:
-  X86_64TargetMachine(const Module &M, const std::string &FS);
+  X86_64TargetMachine(const Target &T, const Module &M, const std::string &FS);
   
   static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);

@@ -124,20 +124,23 @@ unsigned X86_64TargetMachine::getModuleMatchQuality(const Module &M) {
   return getJITMatchQuality()/2;
 }
 
-X86_32TargetMachine::X86_32TargetMachine(const Module &M, const std::string &FS)
-  : X86TargetMachine(M, FS, false) {
+X86_32TargetMachine::X86_32TargetMachine(const Target &T, const Module &M, 
+                                         const std::string &FS)
+  : X86TargetMachine(T, M, FS, false) {
 }
 
 
-X86_64TargetMachine::X86_64TargetMachine(const Module &M, const std::string &FS)
-  : X86TargetMachine(M, FS, true) {
+X86_64TargetMachine::X86_64TargetMachine(const Target &T, const Module &M, 
+                                         const std::string &FS)
+  : X86TargetMachine(T, M, FS, true) {
 }
 
 /// X86TargetMachine ctor - Create an X86 target.
 ///
-X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
-                                   bool is64Bit)
-  : Subtarget(M, FS, is64Bit),
+X86TargetMachine::X86TargetMachine(const Target &T, const Module &M, 
+                                   const std::string &FS, bool is64Bit)
+  : LLVMTargetMachine(T), 
+    Subtarget(M, FS, is64Bit),
     DataLayout(Subtarget.getDataLayout()),
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),

@@ -42,7 +42,7 @@ protected:
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  IA64TargetMachine(const Module &M, const std::string &FS);
+  IA64TargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   virtual const IA64InstrInfo      *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo    *getFrameInfo() const { return &FrameInfo; }

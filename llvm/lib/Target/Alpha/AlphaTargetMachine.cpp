@@ -63,8 +63,10 @@ unsigned AlphaTargetMachine::getJITMatchQuality() {
 #endif
 }
 
-AlphaTargetMachine::AlphaTargetMachine(const Module &M, const std::string &FS)
-  : DataLayout("e-f128:128:128"),
+AlphaTargetMachine::AlphaTargetMachine(const Target &T, const Module &M, 
+                                       const std::string &FS)
+  : LLVMTargetMachine(T),
+    DataLayout("e-f128:128:128"),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this),
     Subtarget(M, FS),

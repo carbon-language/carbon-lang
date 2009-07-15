@@ -176,8 +176,8 @@ EnableStrongPHIElim(cl::Hidden, "strong-phi-elim",
 // TargetMachine Class
 //
 
-TargetMachine::TargetMachine() 
-  : AsmInfo(0) {
+TargetMachine::TargetMachine(const Target &T) 
+  : TheTarget(T), AsmInfo(0) {
   // Typically it will be subtargets that will adjust FloatABIType from Default
   // to Soft or Hard.
   if (UseSoftFloat)

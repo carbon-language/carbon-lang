@@ -50,7 +50,8 @@ protected:
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  PPCTargetMachine(const Module &M, const std::string &FS, bool is64Bit);
+  PPCTargetMachine(const Target &T, const Module &M, const std::string &FS, 
+                   bool is64Bit);
 
   virtual const PPCInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const PPCFrameInfo     *getFrameInfo() const { return &FrameInfo; }
@@ -103,7 +104,7 @@ public:
 ///
 class PPC32TargetMachine : public PPCTargetMachine {
 public:
-  PPC32TargetMachine(const Module &M, const std::string &FS);
+  PPC32TargetMachine(const Target &T, const Module &M, const std::string &FS);
   
   static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);
@@ -113,7 +114,7 @@ public:
 ///
 class PPC64TargetMachine : public PPCTargetMachine {
 public:
-  PPC64TargetMachine(const Module &M, const std::string &FS);
+  PPC64TargetMachine(const Target &T, const Module &M, const std::string &FS);
   
   static unsigned getJITMatchQuality();
   static unsigned getModuleMatchQuality(const Module &M);

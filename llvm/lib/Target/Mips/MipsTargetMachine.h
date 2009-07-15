@@ -43,7 +43,8 @@ namespace llvm {
     static AsmPrinterCtorFn AsmPrinterCtor;
     
   public:
-    MipsTargetMachine(const Module &M, const std::string &FS, bool isLittle);
+    MipsTargetMachine(const Target &T, const Module &M, const std::string &FS, 
+                      bool isLittle);
 
     static void registerAsmPrinter(AsmPrinterCtorFn F) {
       AsmPrinterCtor = F;
@@ -82,7 +83,7 @@ namespace llvm {
 ///
 class MipselTargetMachine : public MipsTargetMachine {
 public:
-  MipselTargetMachine(const Module &M, const std::string &FS);
+  MipselTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   static unsigned getModuleMatchQuality(const Module &M);
 };

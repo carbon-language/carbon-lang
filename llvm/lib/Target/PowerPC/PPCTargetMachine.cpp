@@ -102,9 +102,10 @@ unsigned PPC64TargetMachine::getModuleMatchQuality(const Module &M) {
 }
 
 
-PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
-                                   bool is64Bit)
-  : Subtarget(*this, M, FS, is64Bit),
+PPCTargetMachine::PPCTargetMachine(const Target&T, const Module &M, 
+                                   const std::string &FS, bool is64Bit)
+  : LLVMTargetMachine(T),
+    Subtarget(*this, M, FS, is64Bit),
     DataLayout(Subtarget.getTargetDataString()), InstrInfo(*this),
     FrameInfo(*this, is64Bit), JITInfo(*this, is64Bit), TLInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()), MachOWriterInfo(*this) {
@@ -121,13 +122,15 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, const std::string &FS,
 /// groups, which typically degrades performance.
 bool PPCTargetMachine::getEnableTailMergeDefault() const { return false; }
 
-PPC32TargetMachine::PPC32TargetMachine(const Module &M, const std::string &FS) 
-  : PPCTargetMachine(M, FS, false) {
+PPC32TargetMachine::PPC32TargetMachine(const Target &T, const Module &M, 
+                                       const std::string &FS) 
+  : PPCTargetMachine(T, M, FS, false) {
 }
 
 
-PPC64TargetMachine::PPC64TargetMachine(const Module &M, const std::string &FS)
-  : PPCTargetMachine(M, FS, true) {
+PPC64TargetMachine::PPC64TargetMachine(const Target &T, const Module &M, 
+                                       const std::string &FS)
+  : PPCTargetMachine(T, M, FS, true) {
 }
 
 

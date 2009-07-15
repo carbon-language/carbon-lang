@@ -62,8 +62,10 @@ SPUTargetMachine::getModuleMatchQuality(const Module &M)
   return 0;                     // No match at all...
 }
 
-SPUTargetMachine::SPUTargetMachine(const Module &M, const std::string &FS)
-  : Subtarget(*this, M, FS),
+SPUTargetMachine::SPUTargetMachine(const Target &T, const Module &M, 
+                                   const std::string &FS)
+  : LLVMTargetMachine(T),
+    Subtarget(*this, M, FS),
     DataLayout(Subtarget.getTargetDataString()),
     InstrInfo(*this),
     FrameInfo(*this),

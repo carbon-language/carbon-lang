@@ -42,7 +42,8 @@ namespace llvm {
     typedef unsigned (*ModuleMatchQualityFnTy)(const Module &M);
     typedef unsigned (*JITMatchQualityFnTy)();
 
-    typedef TargetMachine *(*TargetMachineCtorTy)(const Module &, 
+    typedef TargetMachine *(*TargetMachineCtorTy)(const Target &,
+                                                  const Module &, 
                                                   const std::string &);
     typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &,
                                               TargetMachine &,
@@ -96,7 +97,7 @@ namespace llvm {
                                        const std::string &Features) const {
       if (!TargetMachineCtorFn)
         return 0;
-      return TargetMachineCtorFn(M, Features);
+      return TargetMachineCtorFn(*this, M, Features);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.

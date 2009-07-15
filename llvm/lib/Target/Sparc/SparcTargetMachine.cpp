@@ -36,8 +36,10 @@ const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
 ///
-SparcTargetMachine::SparcTargetMachine(const Module &M, const std::string &FS)
-  : DataLayout("E-p:32:32-f128:128:128"),
+SparcTargetMachine::SparcTargetMachine(const Target &T, const Module &M, 
+                                       const std::string &FS)
+  : LLVMTargetMachine(T),
+    DataLayout("E-p:32:32-f128:128:128"),
     Subtarget(M, FS), TLInfo(*this), InstrInfo(Subtarget),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }

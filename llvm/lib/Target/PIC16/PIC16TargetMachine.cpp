@@ -44,17 +44,19 @@ Y(TheCooperTarget, "cooper", "PIC16 Cooper [experimental].");
 extern "C" void LLVMInitializePIC16Target() { }
 
 // PIC16TargetMachine - Traditional PIC16 Machine.
-PIC16TargetMachine::PIC16TargetMachine(const Module &M, const std::string &FS,
-                                       bool Cooper)
-: Subtarget(M, FS, Cooper),
+PIC16TargetMachine::PIC16TargetMachine(const Target &T, const Module &M, 
+                                       const std::string &FS, bool Cooper)
+: LLVMTargetMachine(T),
+  Subtarget(M, FS, Cooper),
   DataLayout("e-p:16:8:8-i8:8:8-i16:8:8-i32:8:8"), 
   InstrInfo(*this), TLInfo(*this),
   FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0) { }
 
 // CooperTargetMachine - Uses the same PIC16TargetMachine, but makes IsCooper
 // as true.
-CooperTargetMachine::CooperTargetMachine(const Module &M, const std::string &FS)
-  : PIC16TargetMachine(M, FS, true) {}
+CooperTargetMachine::CooperTargetMachine(const Target &T, const Module &M, 
+                                         const std::string &FS)
+  : PIC16TargetMachine(T, M, FS, true) {}
 
 
 const TargetAsmInfo *PIC16TargetMachine::createTargetAsmInfo() const {

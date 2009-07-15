@@ -73,8 +73,9 @@ namespace llvm {
     TargetMachineRegistry::entry Entry;
     TargetMachineRegistry::node Node;
 
-    static TargetMachine *Allocator(const Module &M, const std::string &FS) {
-      return new TargetMachineImpl(M, FS);
+    static TargetMachine *Allocator(const Target &T, const Module &M, 
+                                    const std::string &FS) {
+      return new TargetMachineImpl(T, M, FS);
     }
   };
 

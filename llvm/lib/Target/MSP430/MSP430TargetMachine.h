@@ -41,7 +41,7 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
 public:
-  MSP430TargetMachine(const Module &M, const std::string &FS);
+  MSP430TargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   virtual const TargetFrameInfo *getFrameInfo() const { return &FrameInfo; }
   virtual const MSP430InstrInfo *getInstrInfo() const  { return &InstrInfo; }

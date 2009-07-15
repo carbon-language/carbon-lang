@@ -47,7 +47,8 @@ protected:
   static AsmPrinterCtorFn AsmPrinterCtor;
 
 public:
-  ARMBaseTargetMachine(const Module &M, const std::string &FS, bool isThumb);
+  ARMBaseTargetMachine(const Target &T, const Module &M, const std::string &FS, 
+                       bool isThumb);
 
   virtual const ARMFrameInfo     *getFrameInfo() const { return &FrameInfo; }
   virtual       ARMJITInfo       *getJITInfo()         { return &JITInfo; }
@@ -99,7 +100,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   const TargetData    DataLayout;       // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
 public:
-  ARMTargetMachine(const Module &M, const std::string &FS);
+  ARMTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   virtual const ARMRegisterInfo  *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
@@ -125,7 +126,7 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   const TargetData    DataLayout;   // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
 public:
-  ThumbTargetMachine(const Module &M, const std::string &FS);
+  ThumbTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   /// returns either Thumb1RegisterInfo of Thumb2RegisterInfo
   virtual const ARMBaseRegisterInfo *getRegisterInfo() const {
