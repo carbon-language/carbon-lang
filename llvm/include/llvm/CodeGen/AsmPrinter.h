@@ -395,13 +395,6 @@ namespace llvm {
     /// specified type.
     void printDataDirective(const Type *type, unsigned AddrSpace = 0);
 
-    /// printSuffixedName - This prints a name with preceding 
-    /// getPrivateGlobalPrefix and the specified suffix, handling quoted names
-    /// correctly.
-    void printSuffixedName(const char *Name, const char *Suffix,
-                           const char *Prefix = 0);
-    void printSuffixedName(const std::string &Name, const char* Suffix);
-
     /// printVisibility - This prints visibility information about symbol, if
     /// this is suported by the target.
     void printVisibility(const std::string& Name, unsigned Visibility) const;

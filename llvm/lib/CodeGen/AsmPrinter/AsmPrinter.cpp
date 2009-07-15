@@ -1648,6 +1648,11 @@ void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
 void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
   const TargetData *TD = TM.getTargetData();
   switch (type->getTypeID()) {
+  case Type::FloatTyID: case Type::DoubleTyID:
+  case Type::X86_FP80TyID: case Type::FP128TyID: case Type::PPC_FP128TyID:
+    assert(0 && "Should have already output floating point constant.");
+  default:
+    assert(0 && "Can't handle printing this type of thing");
   case Type::IntegerTyID: {
     unsigned BitWidth = cast<IntegerType>(type)->getBitWidth();
     if (BitWidth <= 8)
@@ -1678,34 +1683,7 @@ void AsmPrinter::printDataDirective(const Type *type, unsigned AddrSpace) {
       O << TAI->getData32bitsDirective(AddrSpace);
     }
     break;
-  case Type::FloatTyID: case Type::DoubleTyID:
-  case Type::X86_FP80TyID: case Type::FP128TyID: case Type::PPC_FP128TyID:
-    assert (0 && "Should have already output floating point constant.");
-  default:
-    assert (0 && "Can't handle printing this type of thing");
-    break;
   }
-}
-
-void AsmPrinter::printSuffixedName(const char *Name, const char *Suffix,
-                                   const char *Prefix) {
-  if (Name[0]=='\"')
-    O << '\"';
-  O << TAI->getPrivateGlobalPrefix();
-  if (Prefix) O << Prefix;
-  if (Name[0]=='\"')
-    O << '\"';
-  if (Name[0]=='\"')
-    O << Name[1];
-  else
-    O << Name;
-  O << Suffix;
-  if (Name[0]=='\"')
-    O << '\"';
-}
-
-void AsmPrinter::printSuffixedName(const std::string &Name, const char* Suffix) {
-  printSuffixedName(Name.c_str(), Suffix);
 }
 
 void AsmPrinter::printVisibility(const std::string& Name,
