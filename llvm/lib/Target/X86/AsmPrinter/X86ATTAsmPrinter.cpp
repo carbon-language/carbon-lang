@@ -307,19 +307,15 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     const GlobalValue *GV = MO.getGlobal();
     
     const char *Suffix = "";
-    bool isPrivate = false;
-    
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB)
       Suffix = "$stub";
     else if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
              MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE ||
              MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY ||
-             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE) {
+             MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE)
       Suffix = "$non_lazy_ptr";
-      isPrivate = true;
-    }
     
-    std::string Name = Mang->getMangledName(GV, Suffix, isPrivate);
+    std::string Name = Mang->getMangledName(GV, Suffix, Suffix[0] != '\0');
     decorateName(Name, GV);
     
     // Handle dllimport linkage.
