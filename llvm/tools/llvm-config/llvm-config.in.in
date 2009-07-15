@@ -333,7 +333,12 @@ sub build_name_map {
     foreach my $target (@TARGETS_BUILT) {
         # FIXME: Temporary, until we don't switch all targets
         if (defined $NAME_MAP{$target.'asmprinter'}) {
-            $NAME_MAP{$target} = [$target.'asmprinter', $target.'codegen']
+            $NAME_MAP{$target} = [$target.'info',
+                                  $target.'asmprinter', 
+                                  $target.'codegen']
+        } else {
+            $NAME_MAP{$target} = [$target.'info',
+                                  $NAME_MAP{$target}[0]]
         }
     }
 
