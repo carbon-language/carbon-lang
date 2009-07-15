@@ -51,15 +51,15 @@ void f7(int cond, id x, A *a) {
 }
 
 void f8(int cond, id<P0,P1> x0, id<P0,P2> x1) {
-  barP0(cond ? x0 : x1);
+  barP0(cond ? x0 : x1); // expected-warning {{incompatible operand types ('id<P0,P1>' and 'id<P0,P2>')}}
 }
 
 void f9(int cond, id<P0,P1> x0, id<P0,P2> x1) {
-  barP1(cond ? x0 : x1);
+  barP1(cond ? x0 : x1); // expected-warning {{incompatible operand types ('id<P0,P1>' and 'id<P0,P2>')}}
 }
 
 void f10(int cond, id<P0,P1> x0, id<P0,P2> x1) {
-  barP2(cond ? x0 : x1); // expected-warning {{incompatible type passing 'id<P0,P1>', expected 'id<P2>'}}
+  barP2(cond ? x0 : x1); // expected-warning {{incompatible operand types ('id<P0,P1>' and 'id<P0,P2>')}}
 }
 
 int f11(int cond, A* a, B* b) {

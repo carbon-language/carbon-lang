@@ -149,35 +149,23 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
     PushOnScopeChains(ProtocolDecl, TUScope);
   }
-  // Create the built-in decls/typedefs for 'id' and 'Class'.
+  // Create the built-in typedef for 'id'.
   if (Context.getObjCIdType().isNull()) {
-    ObjCInterfaceDecl *IdIDecl =
-      ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
-                                &Context.Idents.get("id"), 
-                                SourceLocation(), true);
-    QualType IdIType = Context.getObjCInterfaceType(IdIDecl);
-    QualType ObjCIdType = Context.getObjCObjectPointerType(IdIType);
-
-    TypedefDecl *IdTypedef = TypedefDecl::Create(Context, CurContext,
-                                                 SourceLocation(),
-                                                 &Context.Idents.get("id"),
-                                                 ObjCIdType);
+    TypedefDecl *IdTypedef = 
+      TypedefDecl::Create( 
+        Context, CurContext, SourceLocation(), &Context.Idents.get("id"),
+        Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy)
+      );
     PushOnScopeChains(IdTypedef, TUScope);
     Context.setObjCIdType(Context.getTypeDeclType(IdTypedef));
   }
-  // Create the built-in decls/typedefs and type for "Class".
+  // Create the built-in typedef for 'Class'.
   if (Context.getObjCClassType().isNull()) {
-    ObjCInterfaceDecl *ClassIDecl =
-      ObjCInterfaceDecl::Create(Context, CurContext, SourceLocation(),
-                                &Context.Idents.get("Class"), 
-                                SourceLocation(), true);
-    QualType ClassIType = Context.getObjCInterfaceType(ClassIDecl);
-    QualType ObjCClassType = Context.getObjCObjectPointerType(ClassIType);
-    
-    TypedefDecl *ClassTypedef = TypedefDecl::Create(Context, CurContext,
-                                                    SourceLocation(),
-                                                    &Context.Idents.get("Class"),
-                                                    ObjCClassType);
+    TypedefDecl *ClassTypedef = 
+      TypedefDecl::Create( 
+        Context, CurContext, SourceLocation(), &Context.Idents.get("Class"),
+        Context.getObjCObjectPointerType(Context.ObjCBuiltinClassTy)
+      );
     PushOnScopeChains(ClassTypedef, TUScope);
     Context.setObjCClassType(Context.getTypeDeclType(ClassTypedef));
   }

@@ -333,7 +333,11 @@ namespace clang {
       /// \brief The C++ 'char16_t' type.
       PREDEF_TYPE_CHAR16_ID     = 24,
       /// \brief The C++ 'char32_t' type.
-      PREDEF_TYPE_CHAR32_ID     = 25
+      PREDEF_TYPE_CHAR32_ID     = 25,
+      /// \brief The ObjC 'id' type.
+      PREDEF_TYPE_OBJC_ID       = 26,
+      /// \brief The ObjC 'Class' type.
+      PREDEF_TYPE_OBJC_CLASS    = 27     
     };
 
     /// \brief The number of predefined type IDs that are reserved for

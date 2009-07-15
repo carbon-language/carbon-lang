@@ -106,7 +106,7 @@ class ASTContext {
   QualType BuiltinVaListType;
 
   /// ObjCIdType - a pseudo built-in typedef type (set by Sema).
-  QualType ObjCIdType;
+  QualType ObjCIdTypedefType;
   
   /// ObjCSelType - another pseudo built-in typedef type (set by Sema).
   QualType ObjCSelType;
@@ -117,7 +117,7 @@ class ASTContext {
   const RecordType *ProtoStructType;
 
   /// ObjCClassType - another pseudo built-in typedef type (set by Sema).
-  QualType ObjCClassType;
+  QualType ObjCClassTypedefType;
   
   QualType ObjCConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
@@ -210,6 +210,7 @@ public:
   QualType OverloadTy;
   QualType DependentTy;
   QualType UndeducedAutoTy;
+  QualType ObjCBuiltinIdTy, ObjCBuiltinClassTy;
 
   ASTContext(const LangOptions& LOpts, SourceManager &SM, TargetInfo &t,
              IdentifierTable &idents, SelectorTable &sels,
@@ -490,7 +491,7 @@ public:
 
   /// This setter/getter represents the ObjC 'id' type. It is setup lazily, by
   /// Sema.  id is always a (typedef for a) pointer type, a pointer to a struct.
-  QualType getObjCIdType() const { return ObjCIdType; }
+  QualType getObjCIdType() const { return ObjCIdTypedefType; }
   void setObjCIdType(QualType T);
   
   void setObjCSelType(QualType T);
@@ -502,7 +503,7 @@ public:
   /// This setter/getter repreents the ObjC 'Class' type. It is setup lazily, by
   /// Sema.  'Class' is always a (typedef for a) pointer type, a pointer to a
   /// struct.
-  QualType getObjCClassType() const { return ObjCClassType; }
+  QualType getObjCClassType() const { return ObjCClassTypedefType; }
   void setObjCClassType(QualType T);
   
   void setBuiltinVaListType(QualType T);
@@ -768,10 +769,10 @@ public:
   bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
   
   bool isObjCIdType(QualType T) const {
-    return T == ObjCIdType;
+    return T == ObjCIdTypedefType;
   }
   bool isObjCClassType(QualType T) const {
-    return T == ObjCClassType;
+    return T == ObjCClassTypedefType;
   }
   bool isObjCSelType(QualType T) const {
     assert(SelStructType && "isObjCSelType used before 'SEL' type is built");

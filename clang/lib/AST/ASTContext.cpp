@@ -201,8 +201,13 @@ void ASTContext::InitBuiltinTypes() {
 
   BuiltinVaListType = QualType();
   
-  ObjCIdType = QualType();
-  ObjCClassType = QualType();
+  // "Builtin" typedefs set by Sema::ActOnTranslationUnitScope().
+  ObjCIdTypedefType = QualType();
+  ObjCClassTypedefType = QualType();
+  
+  // Builtin types for 'id' and 'Class'.
+  InitBuiltinType(ObjCBuiltinIdTy, BuiltinType::ObjCId);
+  InitBuiltinType(ObjCBuiltinClassTy, BuiltinType::ObjCClass);
 
   ObjCConstantStringType = QualType();
   
@@ -1868,7 +1873,7 @@ QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
                                               ObjCProtocolDecl **Protocols, 
                                               unsigned NumProtocols) {
   if (InterfaceT.isNull()) 
-    InterfaceT = QualType(ObjCObjectPointerType::getIdInterface(), 0);
+    InterfaceT = ObjCBuiltinIdTy;
     
   // Sort the protocol list alphabetically to canonicalize it.
   if (NumProtocols)
@@ -2471,7 +2476,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
     
     QualType FieldTypes[] = {
       UnsignedLongTy,
-      getPointerType(ObjCIdType),
+      getPointerType(ObjCIdTypedefType),
       getPointerType(UnsignedLongTy),
       getConstantArrayType(UnsignedLongTy,
                            llvm::APInt(32, 5), ArrayType::Normal, 0)
@@ -3018,13 +3023,7 @@ void ASTContext::setBuiltinVaListType(QualType T) {
 }
 
 void ASTContext::setObjCIdType(QualType T) {
-  ObjCIdType = T;
-  const TypedefType *TT = T->getAsTypedefType();
-  assert(TT && "missing 'id' typedef");
-  const ObjCObjectPointerType *OPT = 
-    TT->getDecl()->getUnderlyingType()->getAsObjCObjectPointerType();
-  assert(OPT && "missing 'id' type");
-  ObjCObjectPointerType::setIdInterface(OPT->getPointeeType());
+  ObjCIdTypedefType = T;
 }
 
 void ASTContext::setObjCSelType(QualType T) {
@@ -3050,13 +3049,7 @@ void ASTContext::setObjCProtoType(QualType QT) {
 }
 
 void ASTContext::setObjCClassType(QualType T) {
-  ObjCClassType = T;
-  const TypedefType *TT = T->getAsTypedefType();
-  assert(TT && "missing 'Class' typedef");
-  const ObjCObjectPointerType *OPT = 
-    TT->getDecl()->getUnderlyingType()->getAsObjCObjectPointerType();
-  assert(OPT && "missing 'Class' type");
-  ObjCObjectPointerType::setClassInterface(OPT->getPointeeType());
+  ObjCClassTypedefType = T;
 }
 
 void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
@@ -3235,27 +3228,38 @@ static bool areCompatVectorTypes(const VectorType *LHS,
 /// FIXME: Move the following to ObjCObjectPointerType/ObjCInterfaceType.
 bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
                                          const ObjCObjectPointerType *RHSOPT) {
-  // If either interface represents the built-in 'id' or 'Class' types, 
-  // then return true (no need to call canAssignObjCInterfaces()).
-  if (LHSOPT->isObjCIdType() || RHSOPT->isObjCIdType() ||
-      LHSOPT->isObjCClassType() || RHSOPT->isObjCClassType())
+  // If either type represents the built-in 'id' or 'Class' types, return true.
+  if (LHSOPT->isObjCBuiltinType() || RHSOPT->isObjCBuiltinType())
     return true;
 
   const ObjCInterfaceType* LHS = LHSOPT->getInterfaceType();
   const ObjCInterfaceType* RHS = RHSOPT->getInterfaceType();
-  if (!LHS || !RHS)
-    return false;
+  if (!LHS || !RHS) {
+    // We have qualified builtin types.
+    // Both the right and left sides have qualifiers.    
+    for (ObjCObjectPointerType::qual_iterator I = LHSOPT->qual_begin(),
+         E = LHSOPT->qual_end(); I != E; ++I) {
+      bool RHSImplementsProtocol = false;
+
+      // when comparing an id<P> on lhs with a static type on rhs,
+      // see if static class implements all of id's protocols, directly or
+      // through its super class and categories.
+      for (ObjCObjectPointerType::qual_iterator J = RHSOPT->qual_begin(),
+           E = RHSOPT->qual_end(); J != E; ++J) {
+        if ((*J)->lookupProtocolNamed((*I)->getIdentifier()))
+          RHSImplementsProtocol = true;
+      }
+      if (!RHSImplementsProtocol)
+        return false;
+    }
+    // The RHS implements all protocols listed on the LHS.
+    return true;
+  }
   return canAssignObjCInterfaces(LHS, RHS);
 }
 
 bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
                                          const ObjCInterfaceType *RHS) {
-  // If either interface represents the built-in 'id' or 'Class' types, 
-  // then return true.
-  if (LHS->isObjCIdInterface() || RHS->isObjCIdInterface() ||
-      LHS->isObjCClassInterface() || RHS->isObjCClassInterface())
-    return true;
-
   // Verify that the base decls are compatible: the RHS must be a subclass of
   // the LHS.
   if (!LHS->getDecl()->isSuperClassOf(RHS->getDecl()))

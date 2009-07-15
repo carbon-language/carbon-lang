@@ -404,6 +404,7 @@ public:
   bool isObjCQualifiedIdType() const;           // id<foo>
   bool isObjCIdType() const;                    // id
   bool isObjCClassType() const;                 // Class
+  bool isObjCBuiltinType() const;               // 'id' or 'Class'
   bool isTemplateTypeParmType() const;          // C++ template type parameter
   bool isNullPtrType() const;                   // C++0x nullptr_t
 
@@ -592,8 +593,10 @@ public:
     Overload,  // This represents the type of an overloaded function declaration.
     Dependent, // This represents the type of a type-dependent expression.
     
-    UndeducedAuto  // In C++0x, this represents the type of an auto variable
+    UndeducedAuto, // In C++0x, this represents the type of an auto variable
                    // that has not been deduced yet.
+    ObjCId,    // This represents the ObjC 'id' type.
+    ObjCClass  // This represents the ObjC 'Class' type.
   };
 private:
   Kind TypeKind;
@@ -1899,7 +1902,7 @@ public:
 /// Duplicate protocols are removed and protocol list is canonicalized to be in
 /// alphabetical order.
 class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
-  QualType PointeeType; // will always point to an interface type.
+  QualType PointeeType; // A builin or interface type.
   
   // List of protocols for this protocol conforming object type
   // List is sorted on protocol name. No protocol is entered more than once.
@@ -1909,20 +1912,10 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
     Type(ObjCObjectPointer, QualType(), /*Dependent=*/false),
     PointeeType(T), Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
-  friend class ObjCInterfaceType; // To enable 'id' and 'Class' predicates.
   
-  static ObjCInterfaceType *IdInterfaceT;
-  static ObjCInterfaceType *ClassInterfaceT;
-  static void setIdInterface(QualType T) { 
-    IdInterfaceT =  dyn_cast<ObjCInterfaceType>(T.getTypePtr()); 
-  }
-  static void setClassInterface(QualType T) { 
-    ClassInterfaceT =  dyn_cast<ObjCInterfaceType>(T.getTypePtr()); 
-  }
-  static ObjCInterfaceType *getIdInterface() { return IdInterfaceT; }
-  static ObjCInterfaceType *getClassInterface() { return ClassInterfaceT; }
 public:
-  // Get the pointee type. Pointee is required to always be an interface type.
+  // Get the pointee type. Pointee will either be a built-in type (for 'id' and
+  // 'Class') or will be an interface type (for user-defined types).
   // Note: Pointee can be a TypedefType whose canonical type is an interface. 
   // Example: typedef NSObject T; T *var;
   QualType getPointeeType() const { return PointeeType; }
@@ -1930,18 +1923,29 @@ public:
   const ObjCInterfaceType *getInterfaceType() const { 
     return PointeeType->getAsObjCInterfaceType(); 
   }
+  /// getInterfaceDecl - returns an interface decl for user-defined types.
   ObjCInterfaceDecl *getInterfaceDecl() const {
-    return getInterfaceType()->getDecl();
+    return getInterfaceType() ? getInterfaceType()->getDecl() : 0;
+  }
+  /// isObjCIdType - true for "id".
+  bool isObjCIdType() const {
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) && 
+           !Protocols.size();
+  }
+  /// isObjCClassType - true for "Class".
+  bool isObjCClassType() const {
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) && 
+           !Protocols.size();
   }
   /// isObjCQualifiedIdType - true for "id <p>".
   bool isObjCQualifiedIdType() const { 
-    return getInterfaceType() == IdInterfaceT && Protocols.size(); 
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCId) && 
+           Protocols.size(); 
   }
-  bool isObjCIdType() const {
-    return getInterfaceType() == IdInterfaceT && !Protocols.size();
-  }
-  bool isObjCClassType() const {
-    return getInterfaceType() == ClassInterfaceT && !Protocols.size();
+  /// isObjCQualifiedClassType - true for "Class <p>".
+  bool isQualifiedClassType() const {
+    return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) && 
+           Protocols.size();
   }
   /// qual_iterator and friends: this provides access to the (potentially empty)
   /// list of protocols qualifying this interface.
@@ -2188,23 +2192,24 @@ inline bool Type::isObjCQualifiedInterfaceType() const {
   return isa<ObjCQualifiedInterfaceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isObjCQualifiedIdType() const {
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
     return OPT->isObjCQualifiedIdType();
-  }
   return false;
 }
 inline bool Type::isObjCIdType() const {
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
     return OPT->isObjCIdType();
-  }
   return false;
 }
 inline bool Type::isObjCClassType() const {
-  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType()) {
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
     return OPT->isObjCClassType();
-  }
   return false;
 }
+inline bool Type::isObjCBuiltinType() const {
+  return isObjCIdType() || isObjCClassType();
+}
+
 inline bool Type::isTemplateTypeParmType() const {
   return isa<TemplateTypeParmType>(CanonicalType.getUnqualifiedType());
 }

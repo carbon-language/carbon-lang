@@ -2338,9 +2338,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                        << IDecl->getDeclName() << &Member
                        << BaseExpr->getSourceRange());
   }
-  // Handle properties on qualified "id" protocols.
-  const ObjCObjectPointerType *QIdTy;
-  if (OpKind == tok::period && (QIdTy = BaseType->getAsObjCQualifiedIdType())) {
+  // Handle properties on 'id' and qualified "id".
+  if (OpKind == tok::period && (BaseType->isObjCIdType() || 
+                                BaseType->isObjCQualifiedIdType())) {
+    const ObjCObjectPointerType *QIdTy = BaseType->getAsObjCObjectPointerType();
+    
     // Check protocols on qualified interfaces.
     Selector Sel = PP.getSelectorTable().getNullarySelector(&Member);
     if (Decl *PMDecl = FindGetterNameDecl(QIdTy, Member, Sel, Context)) {
@@ -3531,6 +3533,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return CheckPointeeTypesForAssignment(lhptee, rhptee);
     }
     if (rhsType->isObjCObjectPointerType()) {
+      if (lhsType->isObjCBuiltinType() || rhsType->isObjCBuiltinType())
+        return Compatible;
       QualType lhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
       QualType rhptee = rhsType->getAsObjCObjectPointerType()->getPointeeType();
       return CheckPointeeTypesForAssignment(lhptee, rhptee);
@@ -4278,11 +4282,6 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       if (!Context.areComparableObjCPointerTypes(lType, rType)) {
         Diag(Loc, diag::ext_typecheck_comparison_of_distinct_pointers)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
-      }
-      if (lType->isObjCQualifiedIdType() && rType->isObjCQualifiedIdType()) {
-        if (!ObjCQualifiedIdTypesAreCompatible(lType, rType, true))
-          Diag(Loc, diag::warn_incompatible_qualified_id_operands)
-            << lType << rType << lex->getSourceRange() << rex->getSourceRange();
       }
       ImpCastExprToType(rex, lType);
       return ResultTy;

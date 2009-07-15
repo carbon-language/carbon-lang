@@ -228,6 +228,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     switch (cast<BuiltinType>(Ty).getKind()) {
     default: assert(0 && "Unknown builtin type!");
     case BuiltinType::Void:
+    case BuiltinType::ObjCId:
+    case BuiltinType::ObjCClass:
       // LLVM void type can only be used as the result of a function call.  Just
       // map to the same as char.
       return llvm::IntegerType::get(8);

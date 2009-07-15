@@ -577,6 +577,8 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::UndeducedAuto:
     assert(0 && "Should not see undeduced auto here");
     break;
+  case BuiltinType::ObjCId: Out << "2id"; break;
+  case BuiltinType::ObjCClass: Out << "5Class"; break;
   }
 }
 

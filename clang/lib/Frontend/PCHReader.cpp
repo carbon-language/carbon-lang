@@ -1986,6 +1986,8 @@ QualType PCHReader::GetType(pch::TypeID ID) {
     case pch::PREDEF_TYPE_NULLPTR_ID:    T = Context->NullPtrTy;          break;
     case pch::PREDEF_TYPE_CHAR16_ID:     T = Context->Char16Ty;           break;
     case pch::PREDEF_TYPE_CHAR32_ID:     T = Context->Char32Ty;           break;
+    case pch::PREDEF_TYPE_OBJC_ID:       T = Context->ObjCBuiltinIdTy;    break;
+    case pch::PREDEF_TYPE_OBJC_CLASS:    T = Context->ObjCBuiltinClassTy; break;
     }
 
     assert(!T.isNull() && "Unknown predefined type");

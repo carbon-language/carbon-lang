@@ -1457,8 +1457,6 @@ def err_cannot_initialize_decl : Error<
   "cannot initialize %0 with an %select{rvalue|lvalue}1 of type %2">;
 def warn_incompatible_qualified_id : Warning<
   "incompatible type %2 %1, expected %0">;
-def warn_incompatible_qualified_id_operands : Warning<
-  "invalid operands to binary expression (%0 and %1)">;
 def ext_typecheck_convert_pointer_int : ExtWarn<
   "incompatible pointer to integer conversion %2 %1, expected %0">;
 def ext_typecheck_convert_int_pointer : ExtWarn<

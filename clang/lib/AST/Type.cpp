@@ -22,9 +22,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
-ObjCInterfaceType *ObjCObjectPointerType::IdInterfaceT;
-ObjCInterfaceType *ObjCObjectPointerType::ClassInterfaceT;
-
 bool QualType::isConstant(ASTContext &Ctx) const {
   if (isConstQualified())
     return true;
@@ -1009,6 +1006,8 @@ const char *BuiltinType::getName(const LangOptions &LO) const {
   case Overload:          return "<overloaded function type>";
   case Dependent:         return "<dependent type>";
   case UndeducedAuto:     return "auto";
+  case ObjCId:            return "id";
+  case ObjCClass:         return "Class";
   }
 }
 
@@ -1687,14 +1686,6 @@ void TypenameType::getAsStringInternal(std::string &InnerString, const PrintingP
     InnerString = MyString + ' ' + InnerString;
 }
 
-bool ObjCInterfaceType::isObjCIdInterface() const {
-  return this == ObjCObjectPointerType::getIdInterface();
-}
-
-bool ObjCInterfaceType::isObjCClassInterface() const {
-  return this == ObjCObjectPointerType::getClassInterface();
-}  
-
 void ObjCInterfaceType::getAsStringInternal(std::string &InnerString, const PrintingPolicy &Policy) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
@@ -1703,7 +1694,14 @@ void ObjCInterfaceType::getAsStringInternal(std::string &InnerString, const Prin
 
 void ObjCObjectPointerType::getAsStringInternal(std::string &InnerString, 
                                                 const PrintingPolicy &Policy) const {
-  std::string ObjCQIString = getInterfaceType()->getDecl()->getNameAsString();
+  std::string ObjCQIString;
+  
+  if (isObjCIdType() || isObjCQualifiedIdType())
+    ObjCQIString = "id";
+  else if (isObjCClassType())
+    ObjCQIString = "Class";
+  else
+    ObjCQIString = getInterfaceDecl()->getNameAsString();
 
   if (!qual_empty()) {
     ObjCQIString += '<';
