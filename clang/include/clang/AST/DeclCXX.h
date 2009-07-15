@@ -909,7 +909,8 @@ class CXXDestructorDecl : public CXXMethodDecl {
                     DeclarationName N, QualType T,
                     bool isInline, bool isImplicitlyDeclared)
     : CXXMethodDecl(CXXDestructor, RD, L, N, T, false, isInline),
-      ImplicitlyDefined(false) { 
+      ImplicitlyDefined(false),
+      BaseOrMemberDestructions(0), NumBaseOrMemberDestructions(0) { 
     setImplicit(isImplicitlyDeclared);
   }
 
