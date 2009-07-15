@@ -75,9 +75,34 @@ namespace {
     /// visibility that require non-lazy-pointers for indirect access.
     StringMap<std::string> HiddenGVNonLazyPtrs;
 
+    struct FnStubInfo {
+      std::string Stub, LazyPtr, SLP, SCV;
+      
+      FnStubInfo() {}
+      
+      void Init(const GlobalValue *GV, Mangler *Mang) {
+        // Already initialized.
+        if (!Stub.empty()) return;
+        Stub = Mang->getMangledName(GV, "$stub", true);
+        LazyPtr = Mang->getMangledName(GV, "$lazy_ptr", true);
+        SLP = Mang->getMangledName(GV, "$slp", true);
+        SCV = Mang->getMangledName(GV, "$scv", true);
+      }
+      
+      void Init(const std::string &GV, Mangler *Mang) {
+        // Already initialized.
+        if (!Stub.empty()) return;
+        Stub = Mang->makeNameProper(GV+"$stub", true);
+        LazyPtr = Mang->makeNameProper(GV+"$lazy_ptr", true);
+        SLP = Mang->makeNameProper(GV+"$slp", true);
+        SCV = Mang->makeNameProper(GV+"$scv", true);
+      }
+      
+    };
+    
     /// FnStubs - Keeps the set of external function GlobalAddresses that the
     /// asm printer should generate stubs for.
-    StringSet<> FnStubs;
+    StringMap<FnStubInfo> FnStubs;
 
     /// True if asm printer is printing a series of CONSTPOOL_ENTRY.
     bool InCPMode;
@@ -166,27 +191,23 @@ namespace {
           HiddenGVNonLazyPtrs[SymName] = Name;
         else
           GVNonLazyPtrs[SymName] = Name;
-        O << Name;
       } else if (ACPV->isStub()) {
-        //if (GV)
-        //Name = Mang->getMangledName(GV, "$stub", true);
-        //else
-        //Name = Mang->makeNameProper(ACPV->getSymbol()+"$stub", true);
-        
-        if (GV)
-          Name = Mang->getMangledName(GV);
-        else
-          Name = Mang->makeNameProper(ACPV->getSymbol());
-        
-        FnStubs.insert(Name);
-        printSuffixedName(Name, "$stub");
+        if (GV) {
+          FnStubInfo &FnInfo = FnStubs[Mang->getMangledName(GV)];
+          FnInfo.Init(GV, Mang);
+          Name = FnInfo.Stub;
+        } else {
+          FnStubInfo &FnInfo = FnStubs[Mang->makeNameProper(ACPV->getSymbol())];
+          FnInfo.Init(ACPV->getSymbol(), Mang);
+          Name = FnInfo.Stub;
+        }
       } else {
         if (GV)
           Name = Mang->getMangledName(GV);
         else
           Name = Mang->makeNameProper(ACPV->getSymbol());
-        O << Name;
       }
+      O << Name;
       
       
       
@@ -345,14 +366,18 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getMangledName(GV);
+    std::string Name;
     bool isExt = GV->isDeclaration() || GV->isWeakForLinker();
     if (isExt && isCallOp && Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() != Reloc::Static) {
-      printSuffixedName(Name, "$stub");
-      FnStubs.insert(Name);
-    } else
-      O << Name;
+      FnStubInfo &FnInfo = FnStubs[Mang->getMangledName(GV)];
+      FnInfo.Init(GV, Mang);
+      Name = FnInfo.Stub;
+    } else {
+      Name = Mang->getMangledName(GV);
+    }
+    
+    O << Name;
 
     printOffset(MO.getOffset());
 
@@ -363,13 +388,16 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    std::string Name = Mang->makeNameProper(MO.getSymbolName());
+    std::string Name;
     if (isCallOp && Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() != Reloc::Static) {
-      printSuffixedName(Name, "$stub");
-      FnStubs.insert(Name);
+      FnStubInfo &FnInfo = FnStubs[Mang->makeNameProper(MO.getSymbolName())];
+      FnInfo.Init(MO.getSymbolName(), Mang);
+      Name = FnInfo.Stub;
     } else
-      O << Name;
+      Name = Mang->makeNameProper(MO.getSymbolName());
+    
+    O << Name;
     if (isCallOp && Subtarget->isTargetELF() &&
         TM.getRelocationModel() == Reloc::PIC_)
       O << "(PLT)";
@@ -1186,8 +1214,9 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
 
     O << '\n';
     // Output stubs for dynamically-linked functions
-    for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
+    for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
+      const FnStubInfo &Info = I->second;
       if (TM.getRelocationModel() == Reloc::PIC_)
         SwitchToTextSection(".section __TEXT,__picsymbolstub4,symbol_stubs,"
                             "none,16", 0);
@@ -1198,33 +1227,23 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       EmitAlignment(2);
       O << "\t.code\t32\n";
 
-      const char *p = I->getKeyData();
-      printSuffixedName(p, "$stub");
-      O << ":\n";
-      O << "\t.indirect_symbol " << p << "\n";
-      O << "\tldr ip, ";
-      printSuffixedName(p, "$slp");
-      O << "\n";
+      O << Info.Stub << ":\n";
+      O << "\t.indirect_symbol " << I->getKeyData() << '\n';
+      O << "\tldr ip, " << Info.SLP << '\n';
       if (TM.getRelocationModel() == Reloc::PIC_) {
-        printSuffixedName(p, "$scv");
-        O << ":\n";
+        O << Info.SCV << ":\n";
         O << "\tadd ip, pc, ip\n";
       }
       O << "\tldr pc, [ip, #0]\n";
-      printSuffixedName(p, "$slp");
-      O << ":\n";
-      O << "\t.long\t";
-      printSuffixedName(p, "$lazy_ptr");
-      if (TM.getRelocationModel() == Reloc::PIC_) {
-        O << "-(";
-        printSuffixedName(p, "$scv");
-        O << "+8)\n";
-      } else
-        O << "\n";
+      O << Info.SLP << ":\n";
+      O << "\t.long\t" << Info.LazyPtr;
+      if (TM.getRelocationModel() == Reloc::PIC_)
+        O << "-(" << Info.SCV << "+8)";
+      O << '\n';
+      
       SwitchToDataSection(".lazy_symbol_pointer", 0);
-      printSuffixedName(p, "$lazy_ptr");
-      O << ":\n";
-      O << "\t.indirect_symbol " << p << "\n";
+      O << Info.LazyPtr << ":\n";
+      O << "\t.indirect_symbol " << I->getKeyData() << "\n";
       O << "\t.long\tdyld_stub_binding_helper\n";
     }
     O << '\n';
