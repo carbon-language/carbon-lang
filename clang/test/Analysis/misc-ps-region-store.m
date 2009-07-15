@@ -89,9 +89,28 @@ typedef struct _BStruct { void *grue; } BStruct;
 void testB_aux(void *ptr);
 
 void testB(BStruct *b) {
-  // This case has moved to 'misc-ps-region-store-i386.m' and
-  // 'misc-ps-region-store-x86_64.m'.  It succeeds under x86_64.  When it
-  // passes it both, pull it in here.
+  {
+    int *__gruep__ = ((int *)&((b)->grue));
+    int __gruev__ = *__gruep__;
+    int __gruev2__ = *__gruep__;
+    if (__gruev__ != __gruev2__) {
+      int *p = 0;
+      *p = 0xDEADBEEF; // no-warning
+    }
+
+    testB_aux(__gruep__);
+  }
+  {
+    int *__gruep__ = ((int *)&((b)->grue));
+    int __gruev__ = *__gruep__;
+    int __gruev2__ = *__gruep__;
+    if (__gruev__ != __gruev2__) {
+      int *p = 0;
+      *p = 0xDEADBEEF; // no-warning
+    }
+
+    if (~0 != __gruev__) {}
+  }
 }
 
 void testB_2(BStruct *b) {

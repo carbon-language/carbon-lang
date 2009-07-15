@@ -59,9 +59,10 @@ private:
 protected:
   MemRegion(Kind k) : kind(k) {}
   virtual ~MemRegion();
-  ASTContext &getContext() const;
 
 public:
+  ASTContext &getContext() const;
+  
   virtual void Profile(llvm::FoldingSetNodeID& ID) const = 0;
 
   virtual MemRegionManager* getMemRegionManager() const = 0;

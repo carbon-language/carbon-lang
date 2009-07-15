@@ -1,29 +1,14 @@
 // RUN: clang-cc -triple i386-apple-darwin9 -analyze -checker-cfref --analyzer-store=region --verify -fblocks %s
 
-typedef struct _BStruct { void *grue; } BStruct;
-void testB_aux(void *ptr);
-void testB(BStruct *b) {
-  {
-    int *__gruep__ = ((int *)&((b)->grue));
-    int __gruev__ = *__gruep__;
-    int __gruev2__ = *__gruep__;
-    if (__gruev__ != __gruev2__) {
-      int *p = 0;
-      *p = 0xDEADBEEF;
-    }
-    
-    testB_aux(__gruep__);
-  }
-  {
-    int *__gruep__ = ((int *)&((b)->grue));
-    int __gruev__ = *__gruep__;
-    int __gruev2__ = *__gruep__;
-    if (__gruev__ != __gruev2__) {
-      int *p = 0;
-      *p = 0xDEADBEEF;
-    }
-    
-    if (~0 != __gruev__) {}
-  }
+// Here is a case where a pointer is treated as integer, invalidated as an
+// integer, and then used again as a pointer.   This test just makes sure
+// we don't crash.
+typedef unsigned uintptr_t;
+void test_pointer_invalidated_as_int_aux(uintptr_t* ptr);
+void test_pointer_invalidated_as_int() {
+  void *x;
+  test_pointer_invalidated_as_int_aux((uintptr_t*) &x);
+  // Here we have a pointer to integer cast.
+  uintptr_t y = (uintptr_t) x;
 }
 

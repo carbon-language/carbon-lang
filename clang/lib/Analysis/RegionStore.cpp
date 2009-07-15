@@ -781,6 +781,16 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
 // Loading values from regions.
 //===----------------------------------------------------------------------===//
 
+static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
+  RTy = Ctx.getCanonicalType(RTy);
+  UsedTy = Ctx.getCanonicalType(UsedTy);
+  
+  if (RTy == UsedTy)
+    return false;
+  
+  return !(Loc::IsLocType(RTy) && Loc::IsLocType(UsedTy));
+}
+
 SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 
   assert(!isa<UnknownVal>(L) && "location unknown");
@@ -805,13 +815,14 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   if (isa<SymbolicRegion>(MR)) {
     ASTContext &Ctx = getContext();
     SVal idx = ValMgr.makeIntVal(0, Ctx.IntTy);
+    assert(!T.isNull());
     MR = MRMgr.getElementRegion(T, idx, MR, Ctx);
   }
   
   // FIXME: Perhaps this method should just take a 'const MemRegion*' argument
   //  instead of 'Loc', and have the other Loc cases handled at a higher level.
   const TypedRegion *R = cast<TypedRegion>(MR);
-  assert(R && "bad region");
+  QualType RTy = R->getValueType(getContext());
 
   // FIXME: We should eventually handle funny addressing.  e.g.:
   //
@@ -822,7 +833,13 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   //
   // Such funny addressing will occur due to layering of regions.
 
-  QualType RTy = R->getValueType(getContext());
+  ASTContext &Ctx = getContext();
+  if (!T.isNull() && IsReinterpreted(RTy, T, Ctx)) {
+    SVal idx = ValMgr.makeIntVal(0, Ctx.IntTy);
+    R = MRMgr.getElementRegion(T, idx, R, Ctx);
+    RTy = T;
+    assert(RTy == R->getValueType(Ctx));
+  }  
 
   if (RTy->isStructureType())
     return RetrieveStruct(state, R);
@@ -929,8 +946,11 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   }
 
   // Check if the super region has a binding.
-  if (B.lookup(superR)) {
-    // We do not extract the bit value from super region for now.
+  if (const SVal *V = B.lookup(superR)) {
+    if (SymbolRef parentSym = V->getAsSymbol())
+      return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+    
+    // Other cases: give up.
     return UnknownVal();
   }
   

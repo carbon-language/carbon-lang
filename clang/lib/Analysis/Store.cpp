@@ -238,16 +238,20 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
   }
 
   const TypedRegion *TR = cast<TypedRegion>(R);
+  QualType T = TR->getValueType(Ctx);
 
-  QualType T;
- 
-  // If the region is cast to another type, use that type.
+  // If the region is cast to another type, use that type.  
   if (const QualType *CastTy = getCastType(state, R)) {
     assert(!(*CastTy)->isObjCObjectPointerType());
-    T = (*CastTy)->getAsPointerType()->getPointeeType();
-  } else
-    T = TR->getValueType(Ctx);
+    QualType NewT = (*CastTy)->getAsPointerType()->getPointeeType();    
 
+    // The only exception is if the original region had a location type as its
+    // value type we always want to treat the region as binding to a location.
+    // This issue can arise when pointers are casted to integers and back.
+    if (!Loc::IsLocType(T) || Loc::IsLocType(NewT))
+      T = NewT;
+  }
+  
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
     SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);
     return Bind(state, ValMgr.makeLoc(TR), V);
