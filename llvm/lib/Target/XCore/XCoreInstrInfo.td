@@ -821,7 +821,7 @@ def : Pat<(zextloadi8 (add GRRegs:$addr, GRRegs:$offset)),
           (LD8U_3r GRRegs:$addr, GRRegs:$offset)>;
 def : Pat<(zextloadi8 GRRegs:$addr), (LD8U_3r GRRegs:$addr, (LDC_ru6 0))>;
 
-def : Pat<(zextloadi16 (lda16f GRRegs:$addr, GRRegs:$offset)),
+def : Pat<(sextloadi16 (lda16f GRRegs:$addr, GRRegs:$offset)),
           (LD16S_3r GRRegs:$addr, GRRegs:$offset)>;
 def : Pat<(sextloadi16 GRRegs:$addr), (LD16S_3r GRRegs:$addr, (LDC_ru6 0))>;
 
