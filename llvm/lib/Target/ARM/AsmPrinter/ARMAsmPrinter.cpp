@@ -69,11 +69,11 @@ namespace {
 
     /// GVNonLazyPtrs - Keeps the set of GlobalValues that require
     /// non-lazy-pointers for indirect access.
-    StringSet<> GVNonLazyPtrs;
+    StringMap<std::string> GVNonLazyPtrs;
 
     /// HiddenGVNonLazyPtrs - Keeps the set of GlobalValues with hidden
     /// visibility that require non-lazy-pointers for indirect access.
-    StringSet<> HiddenGVNonLazyPtrs;
+    StringMap<std::string> HiddenGVNonLazyPtrs;
 
     /// FnStubs - Keeps the set of external function GlobalAddresses that the
     /// asm printer should generate stubs for.
@@ -156,21 +156,40 @@ namespace {
       ARMConstantPoolValue *ACPV = static_cast<ARMConstantPoolValue*>(MCPV);
       GlobalValue *GV = ACPV->getGV();
       std::string Name;
-      if (GV)
-        Name = Mang->getMangledName(GV);
-      else
-        Name = std::string(TAI->getGlobalPrefix()) + ACPV->getSymbol();
+      
+      
       if (ACPV->isNonLazyPointer()) {
+        std::string SymName = Mang->getMangledName(GV);
+        Name = Mang->getMangledName(GV, "$non_lazy_ptr", true);
+        
         if (GV->hasHiddenVisibility())
-          HiddenGVNonLazyPtrs.insert(Name);
+          HiddenGVNonLazyPtrs[SymName] = Name;
         else
-          GVNonLazyPtrs.insert(Name);
-        printSuffixedName(Name, "$non_lazy_ptr");
+          GVNonLazyPtrs[SymName] = Name;
+        O << Name;
       } else if (ACPV->isStub()) {
+        //if (GV)
+        //Name = Mang->getMangledName(GV, "$stub", true);
+        //else
+        //Name = Mang->makeNameProper(ACPV->getSymbol()+"$stub", true);
+        
+        if (GV)
+          Name = Mang->getMangledName(GV);
+        else
+          Name = Mang->makeNameProper(ACPV->getSymbol());
+        
         FnStubs.insert(Name);
         printSuffixedName(Name, "$stub");
-      } else
+      } else {
+        if (GV)
+          Name = Mang->getMangledName(GV);
+        else
+          Name = Mang->makeNameProper(ACPV->getSymbol());
         O << Name;
+      }
+      
+      
+      
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
       if (ACPV->getPCAdjustment() != 0) {
         O << "-(" << TAI->getPrivateGlobalPrefix() << "PC"
@@ -345,8 +364,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   }
   case MachineOperand::MO_ExternalSymbol: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
-    std::string Name(TAI->getGlobalPrefix());
-    Name += MO.getSymbolName();
+    std::string Name = Mang->makeNameProper(MO.getSymbolName());
     if (isCallOp && Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() != Reloc::Static) {
       printSuffixedName(Name, "$stub");
@@ -1168,8 +1186,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     SwitchToDataSection("");
 
     // Output stubs for dynamically-linked functions
-    for (StringSet<>::iterator i = FnStubs.begin(), e = FnStubs.end();
-         i != e; ++i) {
+    for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
+         I != E; ++I) {
       if (TM.getRelocationModel() == Reloc::PIC_)
         SwitchToTextSection(".section __TEXT,__picsymbolstub4,symbol_stubs,"
                             "none,16", 0);
@@ -1180,7 +1198,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       EmitAlignment(2);
       O << "\t.code\t32\n";
 
-      const char *p = i->getKeyData();
+      const char *p = I->getKeyData();
       printSuffixedName(p, "$stub");
       O << ":\n";
       O << "\t.indirect_symbol " << p << "\n";
@@ -1214,25 +1232,21 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     // Output non-lazy-pointers for external and common global variables.
     if (!GVNonLazyPtrs.empty()) {
       SwitchToDataSection("\t.non_lazy_symbol_pointer", 0);
-      for (StringSet<>::iterator i =  GVNonLazyPtrs.begin(),
-             e = GVNonLazyPtrs.end(); i != e; ++i) {
-        const char *p = i->getKeyData();
-        printSuffixedName(p, "$non_lazy_ptr");
-        O << ":\n";
-        O << "\t.indirect_symbol " << p << "\n";
+      for (StringMap<std::string>::iterator I =  GVNonLazyPtrs.begin(),
+             E = GVNonLazyPtrs.end(); I != E; ++I) {
+        O << I->second << ":\n";
+        O << "\t.indirect_symbol " << I->getKeyData() << "\n";
         O << "\t.long\t0\n";
       }
     }
 
     if (!HiddenGVNonLazyPtrs.empty()) {
       SwitchToSection(TAI->getDataSection());
-      for (StringSet<>::iterator i = HiddenGVNonLazyPtrs.begin(),
-             e = HiddenGVNonLazyPtrs.end(); i != e; ++i) {
-        const char *p = i->getKeyData();
+      for (StringMap<std::string>::iterator I = HiddenGVNonLazyPtrs.begin(),
+             E = HiddenGVNonLazyPtrs.end(); I != E; ++I) {
         EmitAlignment(2);
-        printSuffixedName(p, "$non_lazy_ptr");
-        O << ":\n";
-        O << "\t.long " << p << "\n";
+        O << I->second << ":\n";
+        O << "\t.long " << I->getKeyData() << "\n";
       }
     }
 
