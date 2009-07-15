@@ -346,8 +346,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
     GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getMangledName(GV);
-    bool isExt = (GV->isDeclaration() || GV->hasWeakLinkage() ||
-                  GV->hasLinkOnceLinkage());
+    bool isExt = GV->isDeclaration() || GV->isWeakForLinker();
     if (isExt && isCallOp && Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() != Reloc::Static) {
       printSuffixedName(Name, "$stub");
@@ -1185,6 +1184,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
   if (Subtarget->isTargetDarwin()) {
     SwitchToDataSection("");
 
+    O << '\n';
     // Output stubs for dynamically-linked functions
     for (StringSet<>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
@@ -1227,7 +1227,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
       O << "\t.indirect_symbol " << p << "\n";
       O << "\t.long\tdyld_stub_binding_helper\n";
     }
-    O << "\n";
+    O << '\n';
 
     // Output non-lazy-pointers for external and common global variables.
     if (!GVNonLazyPtrs.empty()) {

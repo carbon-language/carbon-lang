@@ -935,8 +935,7 @@ SDValue ARMTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     GlobalValue *GV = G->getGlobal();
     isDirect = true;
-    bool isExt = (GV->isDeclaration() || GV->hasWeakLinkage() ||
-                  GV->hasLinkOnceLinkage());
+    bool isExt = GV->isDeclaration() || GV->isWeakForLinker();
     bool isStub = (isExt && Subtarget->isTargetDarwin()) &&
                    getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || isStub;
@@ -1179,7 +1178,7 @@ ARMTargetLowering::LowerToTLSExecModels(GlobalAddressSDNode *GA,
   // Get the Thread Pointer
   SDValue ThreadPointer = DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
 
-  if (GV->isDeclaration()){
+  if (GV->isDeclaration()) {
     // initial exec model
     unsigned char PCAdj = Subtarget->isThumb() ? 4 : 8;
     ARMConstantPoolValue *CPV =
@@ -1254,7 +1253,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
 static bool GVIsIndirectSymbol(GlobalValue *GV, Reloc::Model RelocM) {
   // If symbol visibility is hidden, the extra load is not needed if
   // the symbol is definitely defined in the current translation unit.
-  bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
+  bool isDecl = GV->isDeclaration() || GV->hasAvailableExternallyLinkage();
   if (GV->hasHiddenVisibility() && (!isDecl && !GV->hasCommonLinkage()))
     return false;
   return RelocM != Reloc::Static && (isDecl || GV->isWeakForLinker());
