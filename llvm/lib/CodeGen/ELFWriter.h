@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/SetVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include <list>
 #include <map>
 
 namespace llvm {
@@ -95,13 +94,13 @@ namespace llvm {
     BinaryObject ElfHdr;
 
     /// SectionList - This is the list of sections that we have emitted to the
-    /// file.  Once the file has been completely built, the section header table
+    /// file. Once the file has been completely built, the section header table
     /// is constructed from this info.
-    std::list<ELFSection> SectionList;
+    std::vector<ELFSection*> SectionList;
     unsigned NumSections;   // Always = SectionList.size()
 
     /// SectionLookup - This is a mapping from section name to section number in
-    /// the SectionList.
+    /// the SectionList. Used to quickly gather the Section Index from TAI names
     std::map<std::string, ELFSection*> SectionLookup;
 
     /// GblSymLookup - This is a mapping from global value to a symbol index
@@ -109,17 +108,18 @@ namespace llvm {
     /// must be quickly mapped to a symbol table index
     std::map<const GlobalValue*, uint32_t> GblSymLookup;
 
-    /// SymbolList - This is the list of symbols emitted to the symbol table
-    /// Local symbols go to the front and Globals to the back.
-    std::list<ELFSym> SymbolList;
+    /// SymbolList - This is the list of symbols emitted to the symbol table.
+    /// When the SymbolList is finally built, local symbols must be placed in
+    /// the beginning while non-locals at the end.
+    std::vector<ELFSym*> SymbolList;
 
     /// PendingGlobals - List of externally defined symbols that we have been
     /// asked to emit, but have not seen a reference to.  When a reference
     /// is seen, the symbol will move from this list to the SymbolList.
     SetVector<GlobalValue*> PendingGlobals;
 
-    // Remove tab from section name prefix. This is necessary becase TAI 
-    // sometimes return a section name prefixed with a "\t" char. This is
+    // Remove tab from section name prefix. This is necessary becase TAI
+    // sometimes return a section name prefixed with elf unused chars. This is
     // a little bit dirty. FIXME: find a better approach, maybe add more
     // methods to TAI to get the clean name?
     void fixNameForSection(std::string &Name) {
@@ -140,14 +140,14 @@ namespace llvm {
     /// section if one does not already exist.
     ELFSection &getSection(const std::string &Name, unsigned Type,
                            unsigned Flags = 0, unsigned Align = 0) {
-      std::string SectionName(Name);
-      fixNameForSection(SectionName);
+      std::string SName(Name);
+      fixNameForSection(SName);
 
-      ELFSection *&SN = SectionLookup[SectionName];
+      ELFSection *&SN = SectionLookup[SName];
       if (SN) return *SN;
 
-      SectionList.push_back(ELFSection(SectionName, isLittleEndian, is64Bit));
-      SN = &SectionList.back();
+      SectionList.push_back(new ELFSection(SName, isLittleEndian, is64Bit));
+      SN = SectionList.back();
       SN->SectionIdx = NumSections++;
       SN->Type = Type;
       SN->Flags = Flags;
@@ -245,6 +245,7 @@ namespace llvm {
     void EmitSymbolTable();
     void EmitStringTable();
     void OutputSectionsAndSectionTable();
+    unsigned SortSymbols();
   };
 }
 

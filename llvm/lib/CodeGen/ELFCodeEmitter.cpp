@@ -60,23 +60,18 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
 bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   // Add a symbol to represent the function.
   const Function *F = MF.getFunction();
-  ELFSym FnSym(F);
-  FnSym.setType(ELFSym::STT_FUNC);
-  FnSym.setBind(EW.getGlobalELFBinding(F));
-  FnSym.setVisibility(EW.getGlobalELFVisibility(F));
-  FnSym.SectionIdx = ES->SectionIdx;
-  FnSym.Size = ES->getCurrentPCOffset()-FnStartOff;
+  ELFSym *FnSym = new ELFSym(F);
+  FnSym->setType(ELFSym::STT_FUNC);
+  FnSym->setBind(EW.getGlobalELFBinding(F));
+  FnSym->setVisibility(EW.getGlobalELFVisibility(F));
+  FnSym->SectionIdx = ES->SectionIdx;
+  FnSym->Size = ES->getCurrentPCOffset()-FnStartOff;
 
   // Offset from start of Section
-  FnSym.Value = FnStartOff;
+  FnSym->Value = FnStartOff;
 
-  // Locals should go on the symbol list front
-  if (!F->hasPrivateLinkage()) {
-    if (FnSym.getBind() == ELFSym::STB_LOCAL)
-      EW.SymbolList.push_front(FnSym);
-    else
-      EW.SymbolList.push_back(FnSym);
-  }
+  if (!F->hasPrivateLinkage())
+    EW.SymbolList.push_back(FnSym);
 
   // Emit constant pool to appropriate section(s)
   emitConstantPool(MF.getConstantPool());

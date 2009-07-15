@@ -235,13 +235,13 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
   // Handle ELF Bind, Visibility and Type for the current symbol
   unsigned SymBind = getGlobalELFBinding(GV);
-  ELFSym GblSym(GV);
-  GblSym.setBind(SymBind);
-  GblSym.setVisibility(getGlobalELFVisibility(GV));
-  GblSym.setType(getGlobalELFType(GV));
+  ELFSym *GblSym = new ELFSym(GV);
+  GblSym->setBind(SymBind);
+  GblSym->setVisibility(getGlobalELFVisibility(GV));
+  GblSym->setType(getGlobalELFType(GV));
 
   if (isELFUndefSym(GV)) {
-    GblSym.SectionIdx = ELFSection::SHN_UNDEF;
+    GblSym->SectionIdx = ELFSection::SHN_UNDEF;
   } else {
     assert(isa<GlobalVariable>(GV) && "GV not a global variable!");
     const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
@@ -254,41 +254,41 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     const TargetData *TD = TM.getTargetData();
     unsigned Align = TD->getPreferredAlignment(GVar);
     unsigned Size = TD->getTypeAllocSize(GVar->getInitializer()->getType());
-    GblSym.Size = Size;
+    GblSym->Size = Size;
 
     if (isELFCommonSym(GV)) {
-      GblSym.SectionIdx = ELFSection::SHN_COMMON;
+      GblSym->SectionIdx = ELFSection::SHN_COMMON;
       getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags, 1);
 
       // A new linkonce section is created for each global in the
       // common section, the default alignment is 1 and the symbol
       // value contains its alignment.
-      GblSym.Value = Align;
+      GblSym->Value = Align;
 
     } else if (isELFBssSym(GV)) {
       ELFSection &ES =
         getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags);
-      GblSym.SectionIdx = ES.SectionIdx;
+      GblSym->SectionIdx = ES.SectionIdx;
 
       // Update the size with alignment and the next object can
       // start in the right offset in the section
       if (Align) ES.Size = (ES.Size + Align-1) & ~(Align-1);
       ES.Align = std::max(ES.Align, Align);
 
-      // GblSym.Value should contain the virtual offset inside the section.
+      // GblSym->Value should contain the virtual offset inside the section.
       // Virtual because the BSS space is not allocated on ELF objects
-      GblSym.Value = ES.Size;
+      GblSym->Value = ES.Size;
       ES.Size += Size;
 
     } else if (isELFDataSym(GV)) {
       ELFSection &ES =
         getSection(S->getName(), ELFSection::SHT_PROGBITS, SectionFlags);
-      GblSym.SectionIdx = ES.SectionIdx;
+      GblSym->SectionIdx = ES.SectionIdx;
 
-      // GblSym.Value should contain the symbol offset inside the section,
+      // GblSym->Value should contain the symbol offset inside the section,
       // and all symbols should start on their required alignment boundary
       ES.Align = std::max(ES.Align, Align);
-      GblSym.Value = (ES.size() + (Align-1)) & (-Align);
+      GblSym->Value = (ES.size() + (Align-1)) & (-Align);
       ES.emitAlignment(ES.Align);
 
       // Emit the global to the data section 'ES'
@@ -296,13 +296,8 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     }
   }
 
-  // Local symbols should come first on the symbol table.
-  if (!GV->hasPrivateLinkage()) {
-    if (SymBind == ELFSym::STB_LOCAL)
-      SymbolList.push_front(GblSym);
-    else
-      SymbolList.push_back(GblSym);
-  }
+  if (!GV->hasPrivateLinkage())
+    SymbolList.push_back(GblSym);
 }
 
 void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
@@ -419,23 +414,17 @@ bool ELFWriter::doFinalization(Module &M) {
   if (TAI->getNonexecutableStackDirective())
     getNonExecStackSection();
 
-  // Emit a symbol for each section created until now
-  for (std::map<std::string, ELFSection*>::iterator I = SectionLookup.begin(),
-       E = SectionLookup.end(); I != E; ++I) {
-    ELFSection *ES = I->second;
-
-    // Skip null section
-    if (ES->SectionIdx == 0) continue;
-
-    ELFSym SectionSym(0);
-    SectionSym.SectionIdx = ES->SectionIdx;
-    SectionSym.Size = 0;
-    SectionSym.setBind(ELFSym::STB_LOCAL);
-    SectionSym.setType(ELFSym::STT_SECTION);
-    SectionSym.setVisibility(ELFSym::STV_DEFAULT);
-
-    // Local symbols go in the list front
-    SymbolList.push_front(SectionSym);
+  // Emit a symbol for each section created until now, skip null section
+  for (unsigned i = 1, e = SectionList.size(); i < e; ++i) {
+    ELFSection &ES = *SectionList[i];
+    ELFSym *SectionSym = new ELFSym(0);
+    SectionSym->SectionIdx = ES.SectionIdx;
+    SectionSym->Size = 0;
+    SectionSym->setBind(ELFSym::STB_LOCAL);
+    SectionSym->setType(ELFSym::STT_SECTION);
+    SectionSym->setVisibility(ELFSym::STV_DEFAULT);
+    SymbolList.push_back(SectionSym);
+    ES.Sym = SymbolList.back();
   }
 
   // Emit string table
@@ -454,6 +443,7 @@ bool ELFWriter::doFinalization(Module &M) {
   OutputSectionsAndSectionTable();
 
   // We are done with the abstract symbols.
+  SymbolList.clear();
   SectionList.clear();
   NumSections = 0;
 
@@ -466,26 +456,26 @@ bool ELFWriter::doFinalization(Module &M) {
 void ELFWriter::EmitRelocations() {
 
   // Create Relocation sections for each section which needs it.
-  for (std::list<ELFSection>::iterator I = SectionList.begin(),
-       E = SectionList.end(); I != E; ++I) {
+  for (unsigned i=0, e=SectionList.size(); i < e; ++i) {
+    ELFSection &S = *SectionList[i];
 
     // This section does not have relocations
-    if (!I->hasRelocations()) continue;
+    if (!S.hasRelocations()) continue;
 
-    // Get the relocation section for section 'I'
+    // Get the relocation section for section 'S'
     bool HasRelA = TEW->hasRelocationAddend();
-    ELFSection &RelSec = getRelocSection(I->getName(), HasRelA,
+    ELFSection &RelSec = getRelocSection(S.getName(), HasRelA,
                                          TEW->getPrefELFAlignment());
 
     // 'Link' - Section hdr idx of the associated symbol table
     // 'Info' - Section hdr idx of the section to which the relocation applies
     ELFSection &SymTab = getSymbolTableSection();
     RelSec.Link = SymTab.SectionIdx;
-    RelSec.Info = I->SectionIdx;
+    RelSec.Info = S.SectionIdx;
     RelSec.EntSize = TEW->getRelocationEntrySize();
 
     // Get the relocations from Section
-    std::vector<MachineRelocation> Relos = I->getRelocations();
+    std::vector<MachineRelocation> Relos = S.getRelocations();
     for (std::vector<MachineRelocation>::iterator MRI = Relos.begin(),
          MRE = Relos.end(); MRI != MRE; ++MRI) {
       MachineRelocation &MR = *MRI;
@@ -510,15 +500,10 @@ void ELFWriter::EmitRelocations() {
         SymIdx = GblSymLookup[G];
         Addend = TEW->getAddendForRelTy(RelType);
       } else {
+        // Get the symbol index for the section symbol referenced
+        // by the relocation
         unsigned SectionIdx = MR.getConstantVal();
-        // TODO: use a map for this.
-        for (std::list<ELFSym>::iterator I = SymbolList.begin(),
-             E = SymbolList.end(); I != E; ++I)
-          if ((SectionIdx == I->SectionIdx) &&
-              (I->getType() == ELFSym::STT_SECTION)) {
-            SymIdx = I->SymTabIdx;
-            break;
-          }
+        SymIdx = SectionList[SectionIdx]->Sym->SymTabIdx;
         Addend = (uint64_t)MR.getResultPointer();
       }
 
@@ -596,17 +581,17 @@ void ELFWriter::EmitStringTable() {
   // Walk on the symbol list and write symbol names into the
   // string table.
   unsigned Index = 1;
-  for (std::list<ELFSym>::iterator I = SymbolList.begin(),
-       E = SymbolList.end(); I != E; ++I) {
+  for (unsigned i = 0, e = SymbolList.size(); i < e; ++i) {
+    ELFSym &Sym = *SymbolList[i];
 
     // Use the name mangler to uniquify the LLVM symbol.
     std::string Name;
-    if (I->GV) Name.append(Mang->getMangledName(I->GV));
+    if (Sym.GV) Name.append(Mang->getMangledName(Sym.GV));
 
     if (Name.empty()) {
-      I->NameIdx = 0;
+      Sym.NameIdx = 0;
     } else {
-      I->NameIdx = Index;
+      Sym.NameIdx = Index;
       StrTab.emitString(Name);
 
       // Keep track of the number of bytes emitted to this section.
@@ -617,11 +602,38 @@ void ELFWriter::EmitStringTable() {
   StrTab.Size = Index;
 }
 
+// SortSymbols - On the symbol table local symbols must come before
+// all other symbols with non-local bindings. The return value is
+// the position of the first non local symbol.
+unsigned ELFWriter::SortSymbols() {
+  unsigned FirstNonLocalSymbol, i, e;
+  std::vector<ELFSym*> LocalSyms, OtherSyms;
+
+  for (i = 0, e = SymbolList.size(); i < e; ++i) {
+    if (SymbolList[i]->isLocalBind())
+      LocalSyms.push_back(SymbolList[i]);
+    else
+      OtherSyms.push_back(SymbolList[i]);
+  }
+  SymbolList.clear();
+  FirstNonLocalSymbol = LocalSyms.size();
+
+  for (i = 0; i < FirstNonLocalSymbol; ++i)
+    SymbolList.push_back(LocalSyms[i]);
+
+  for (i = 0, e = OtherSyms.size(); i < e; ++i)
+    SymbolList.push_back(OtherSyms[i]);
+
+  LocalSyms.clear();
+  OtherSyms.clear();
+
+  return FirstNonLocalSymbol;
+}
+
 /// EmitSymbolTable - Emit the symbol table itself.
 void ELFWriter::EmitSymbolTable() {
   if (!SymbolList.size()) return;  // Empty symbol table.
 
-  unsigned FirstNonLocalSymbol = 1;
   // Now that we have emitted the string table and know the offset into the
   // string table of each symbol, emit the symbol table itself.
   ELFSection &SymTab = getSymbolTableSection();
@@ -634,29 +646,26 @@ void ELFWriter::EmitSymbolTable() {
   SymTab.EntSize = TEW->getSymTabEntrySize();
 
   // The first entry in the symtab is the null symbol
-  ELFSym NullSym = ELFSym(0);
-  EmitSymbol(SymTab, NullSym);
+  SymbolList.insert(SymbolList.begin(), new ELFSym(0));
 
-  // Emit all the symbols to the symbol table. Skip the null
-  // symbol, cause it's emitted already
-  unsigned Index = 1;
-  for (std::list<ELFSym>::iterator I = SymbolList.begin(),
-       E = SymbolList.end(); I != E; ++I, ++Index) {
-    // Keep track of the first non-local symbol
-    if (I->getBind() == ELFSym::STB_LOCAL)
-      FirstNonLocalSymbol++;
+  // Reorder the symbol table with local symbols first!
+  unsigned FirstNonLocalSymbol = SortSymbols();
+
+  // Emit all the symbols to the symbol table.
+  for (unsigned i = 0, e = SymbolList.size(); i < e; ++i) {
+    ELFSym &Sym = *SymbolList[i];
 
     // Emit symbol to the symbol table
-    EmitSymbol(SymTab, *I);
+    EmitSymbol(SymTab, Sym);
 
     // Record the symbol table index for each global value
-    if (I->GV)
-      GblSymLookup[I->GV] = Index;
+    if (Sym.GV) GblSymLookup[Sym.GV] = i;
 
     // Keep track on the symbol index into the symbol table
-    I->SymTabIdx = Index;
+    Sym.SymTabIdx = i;
   }
 
+  // One greater than the symbol table index of the last local symbol
   SymTab.Info = FirstNonLocalSymbol;
   SymTab.Size = SymTab.size();
 }
@@ -676,15 +685,14 @@ void ELFWriter::EmitSectionTableStringTable() {
   // the string table.
   unsigned Index = 0;
 
-  for (std::list<ELFSection>::iterator I = SectionList.begin(),
-         E = SectionList.end(); I != E; ++I) {
+  for (unsigned i=0, e=SectionList.size(); i < e; ++i) {
     // Set the index into the table.  Note if we have lots of entries with
     // common suffixes, we could memoize them here if we cared.
-    I->NameIdx = Index;
-    SHStrTab.emitString(I->getName());
+    SectionList[i]->NameIdx = Index;
+    SHStrTab.emitString(SectionList[i]->getName());
 
     // Keep track of the number of bytes emitted to this section.
-    Index += I->getName().size()+1;
+    Index += SectionList[i]->getName().size()+1;
   }
 
   // Set the size of .shstrtab now that we know what it is.
@@ -699,29 +707,24 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   // Pass #1: Compute the file offset for each section.
   size_t FileOff = ElfHdr.size();   // File header first.
 
-  // Adjust alignment of all section if needed.
-  for (std::list<ELFSection>::iterator I = SectionList.begin(),
-         E = SectionList.end(); I != E; ++I) {
-
-    // Section idx 0 has 0 offset
-    if (!I->SectionIdx)
-      continue;
-
-    if (!I->size()) {
-      I->Offset = FileOff;
+  // Adjust alignment of all section if needed, skip the null section.
+  for (unsigned i=1, e=SectionList.size(); i < e; ++i) {
+    ELFSection &ES = *SectionList[i];
+    if (!ES.size()) {
+      ES.Offset = FileOff;
       continue;
     }
 
     // Update Section size
-    if (!I->Size)
-      I->Size = I->size();
+    if (!ES.Size)
+      ES.Size = ES.size();
 
     // Align FileOff to whatever the alignment restrictions of the section are.
-    if (I->Align)
-      FileOff = (FileOff+I->Align-1) & ~(I->Align-1);
+    if (ES.Align)
+      FileOff = (FileOff+ES.Align-1) & ~(ES.Align-1);
 
-    I->Offset = FileOff;
-    FileOff += I->Size;
+    ES.Offset = FileOff;
+    FileOff += ES.Size;
   }
 
   // Align Section Header.
@@ -745,8 +748,8 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   BinaryObject SHdrTable(isLittleEndian, is64Bit);
 
   // Emit all of sections to the file and build the section header table.
-  while (!SectionList.empty()) {
-    ELFSection &S = *SectionList.begin();
+  for (unsigned i=0, e=SectionList.size(); i < e; ++i) {
+    ELFSection &S = *SectionList[i];
     DOUT << "SectionIdx: " << S.SectionIdx << ", Name: " << S.getName()
          << ", Size: " << S.Size << ", Offset: " << S.Offset
          << ", SectionData Size: " << S.size() << "\n";
@@ -763,7 +766,6 @@ void ELFWriter::OutputSectionsAndSectionTable() {
     }
 
     EmitSectionHeader(SHdrTable, S);
-    SectionList.pop_front();
   }
 
   // Align output for the section table.

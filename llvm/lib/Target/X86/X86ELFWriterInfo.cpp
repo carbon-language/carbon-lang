@@ -65,6 +65,8 @@ long int X86ELFWriterInfo::getAddendForRelTy(unsigned RelTy) const {
     switch(RelTy) {
     case R_X86_64_PC32: return -4;
       break;
+    case R_X86_64_32: return 0;
+      break;
     default:
       llvm_unreachable("unknown x86 relocation type");
     }

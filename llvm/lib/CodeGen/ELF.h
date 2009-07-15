@@ -52,6 +52,70 @@ namespace llvm {
     EV_CURRENT = 1
   };
 
+  /// ELFSym - This struct contains information about each symbol that is
+  /// added to logical symbol table for the module.  This is eventually
+  /// turned into a real symbol table in the file.
+  struct ELFSym {
+    // The global value this symbol matches. This should be null if the symbol
+    // is not a global value.
+    const GlobalValue *GV;
+
+    // ELF specific fields
+    unsigned NameIdx;         // Index in .strtab of name, once emitted.
+    uint64_t Value;
+    unsigned Size;
+    uint8_t Info;
+    uint8_t Other;
+    unsigned short SectionIdx;
+
+    // Symbol index into the Symbol table
+    unsigned SymTabIdx;
+
+    enum {
+      STB_LOCAL = 0,
+      STB_GLOBAL = 1,
+      STB_WEAK = 2
+    };
+
+    enum {
+      STT_NOTYPE = 0,
+      STT_OBJECT = 1,
+      STT_FUNC = 2,
+      STT_SECTION = 3,
+      STT_FILE = 4
+    };
+
+    enum {
+      STV_DEFAULT = 0,  // Visibility is specified by binding type
+      STV_INTERNAL = 1, // Defined by processor supplements
+      STV_HIDDEN = 2,   // Not visible to other components
+      STV_PROTECTED = 3 // Visible in other components but not preemptable
+    };
+
+    ELFSym(const GlobalValue *gv) : GV(gv), NameIdx(0), Value(0),
+                                    Size(0), Info(0), Other(STV_DEFAULT),
+                                    SectionIdx(0), SymTabIdx(0) {}
+
+    unsigned getBind() const { return (Info >> 4) & 0xf; }
+    unsigned getType() const { return Info & 0xf; }
+    bool isLocalBind() const { return getBind() == STB_LOCAL; }
+
+    void setBind(unsigned X) {
+      assert(X == (X & 0xF) && "Bind value out of range!");
+      Info = (Info & 0x0F) | (X << 4);
+    }
+
+    void setType(unsigned X) {
+      assert(X == (X & 0xF) && "Type value out of range!");
+      Info = (Info & 0xF0) | X;
+    }
+
+    void setVisibility(unsigned V) {
+      assert(V == (V & 0x3) && "Visibility value out of range!");
+      Other = V;
+    }
+  };
+
   /// ELFSection - This struct contains information about each section that is
   /// emitted to the file.  This is eventually turned into the section header
   /// table at the end of the file.
@@ -117,73 +181,12 @@ namespace llvm {
     /// SectionIdx - The number of the section in the Section Table.
     unsigned short SectionIdx;
 
+    /// Sym - The symbol to represent this section if it has one.
+    ELFSym *Sym;
+
     ELFSection(const std::string &name, bool isLittleEndian, bool is64Bit)
       : BinaryObject(name, isLittleEndian, is64Bit), Type(0), Flags(0), Addr(0),
-        Offset(0), Size(0), Link(0), Info(0), Align(0), EntSize(0) {}
-  };
-
-  /// ELFSym - This struct contains information about each symbol that is
-  /// added to logical symbol table for the module.  This is eventually
-  /// turned into a real symbol table in the file.
-  struct ELFSym {
-    // The global value this symbol matches. This should be null if the symbol
-    // is not a global value.
-    const GlobalValue *GV;
-
-    // ELF specific fields
-    unsigned NameIdx;         // Index in .strtab of name, once emitted.
-    uint64_t Value;
-    unsigned Size;
-    uint8_t Info;
-    uint8_t Other;
-    unsigned short SectionIdx;
-
-    // Symbol index into the Symbol table
-    unsigned SymTabIdx;
-
-    enum {
-      STB_LOCAL = 0,
-      STB_GLOBAL = 1,
-      STB_WEAK = 2 
-    };
-
-    enum {
-      STT_NOTYPE = 0,
-      STT_OBJECT = 1,
-      STT_FUNC = 2,
-      STT_SECTION = 3,
-      STT_FILE = 4
-    };
-
-    enum {
-      STV_DEFAULT = 0,  // Visibility is specified by binding type
-      STV_INTERNAL = 1, // Defined by processor supplements
-      STV_HIDDEN = 2,   // Not visible to other components
-      STV_PROTECTED = 3 // Visible in other components but not preemptable
-    };
-
-    ELFSym(const GlobalValue *gv) : GV(gv), NameIdx(0), Value(0),
-                                    Size(0), Info(0), Other(STV_DEFAULT),
-                                    SectionIdx(ELFSection::SHN_UNDEF),
-                                    SymTabIdx(0) {}
-
-    unsigned getBind() { return (Info >> 4) & 0xf; }
-    unsigned getType() { return Info & 0xf; }
-
-    void setBind(unsigned X) {
-      assert(X == (X & 0xF) && "Bind value out of range!");
-      Info = (Info & 0x0F) | (X << 4);
-    }
-
-    void setType(unsigned X) {
-      assert(X == (X & 0xF) && "Type value out of range!");
-      Info = (Info & 0xF0) | X;
-    }
-
-    void setVisibility(unsigned V) {
-      assert(V == (V & 0x3) && "Type value out of range!");
-      Other = V;
-    }
+        Offset(0), Size(0), Link(0), Info(0), Align(0), EntSize(0), Sym(0) {}
   };
 
   /// ELFRelocation - This class contains all the information necessary to
