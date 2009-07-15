@@ -426,7 +426,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // Mask off the registers which are not in the TargetRegisterClass.
   BitVector Candidates(NumPhysRegs, false);
   CreateRegClassMask(RC, Candidates);
-  Candidates ^= ReservedRegs;  // Do not include reserved registers.
+  Candidates ^= ReservedRegs & Candidates; // Do not include reserved registers.
 
   // Exclude all the registers being used by the instruction.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
