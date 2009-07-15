@@ -38,9 +38,9 @@ namespace {
     bool SingleDominatingExit(Loop* L,
                               SmallVector<BasicBlock*, 4>& exitingBlocks);
     bool IsLoopDead(Loop* L, SmallVector<BasicBlock*, 4>& exitingBlocks,
-                    SmallVector<BasicBlock*, 4>& exitBlocks);
-    bool IsLoopInvariantInst(Instruction *I, Loop* L);
-    
+                    SmallVector<BasicBlock*, 4>& exitBlocks,
+                    bool &Changed, BasicBlock *Preheader);
+
     virtual void getAnalysisUsage(AnalysisUsage& AU) const {
       AU.addRequired<ScalarEvolution>();
       AU.addRequired<DominatorTree>();
@@ -84,32 +84,13 @@ bool LoopDeletion::SingleDominatingExit(Loop* L,
   return DT.dominates(exitingBlocks[0], latch);
 }
 
-/// IsLoopInvariantInst - Checks if an instruction is invariant with respect to
-/// a loop, which is defined as being true if all of its operands are defined
-/// outside of the loop.  These instructions can be hoisted out of the loop
-/// if their results are needed.  This could be made more aggressive by
-/// recursively checking the operands for invariance, but it's not clear that
-/// it's worth it.
-bool LoopDeletion::IsLoopInvariantInst(Instruction *I, Loop* L)  {
-  // PHI nodes are not loop invariant if defined in  the loop.
-  if (isa<PHINode>(I) && L->contains(I->getParent()))
-    return false;
-    
-  // The instruction is loop invariant if all of its operands are loop-invariant
-  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-    if (!L->isLoopInvariant(I->getOperand(i)))
-      return false;
-  
-  // If we got this far, the instruction is loop invariant!
-  return true;
-}
-
 /// IsLoopDead - Determined if a loop is dead.  This assumes that we've already
 /// checked for unique exit and exiting blocks, and that the code is in LCSSA
 /// form.
 bool LoopDeletion::IsLoopDead(Loop* L,
                               SmallVector<BasicBlock*, 4>& exitingBlocks,
-                              SmallVector<BasicBlock*, 4>& exitBlocks) {
+                              SmallVector<BasicBlock*, 4>& exitBlocks,
+                              bool &Changed, BasicBlock *Preheader) {
   BasicBlock* exitingBlock = exitingBlocks[0];
   BasicBlock* exitBlock = exitBlocks[0];
   
@@ -122,7 +103,7 @@ bool LoopDeletion::IsLoopDead(Loop* L,
   while (PHINode* P = dyn_cast<PHINode>(BI)) {
     Value* incoming = P->getIncomingValueForBlock(exitingBlock);
     if (Instruction* I = dyn_cast<Instruction>(incoming))
-      if (!IsLoopInvariantInst(I, L))
+      if (!L->makeLoopInvariant(I, Changed, Preheader->getTerminator()))
         return false;
       
     BI++;
@@ -181,15 +162,16 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
     return false;
   
   // Finally, we have to check that the loop really is dead.
-  if (!IsLoopDead(L, exitingBlocks, exitBlocks))
-    return false;
+  bool Changed = false;
+  if (!IsLoopDead(L, exitingBlocks, exitBlocks, Changed, preheader))
+    return Changed;
   
   // Don't remove loops for which we can't solve the trip count.
   // They could be infinite, in which case we'd be changing program behavior.
   ScalarEvolution& SE = getAnalysis<ScalarEvolution>();
   const SCEV *S = SE.getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(S))
-    return false;
+    return Changed;
   
   // Now that we know the removal is safe, remove the loop by changing the
   // branch from the preheader to go to the single exit block.  
@@ -205,17 +187,6 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // to determine what it needs to clean up.
   SE.forgetLoopBackedgeTakenCount(L);
 
-  // Move simple loop-invariant expressions out of the loop, since they
-  // might be needed by the exit phis.
-  for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
-       LI != LE; ++LI)
-    for (BasicBlock::iterator BI = (*LI)->begin(), BE = (*LI)->end();
-         BI != BE; ) {
-      Instruction* I = BI++;
-      if (!I->use_empty() && IsLoopInvariantInst(I, L))
-        I->moveBefore(preheader->getTerminator());
-    }
-  
   // Connect the preheader directly to the exit block.
   TerminatorInst* TI = preheader->getTerminator();
   TI->replaceUsesOfWith(L->getHeader(), exitBlock);
@@ -273,8 +244,9 @@ bool LoopDeletion::runOnLoop(Loop* L, LPPassManager& LPM) {
   // The last step is to inform the loop pass manager that we've
   // eliminated this loop.
   LPM.deleteLoopFromQueue(L);
+  Changed = true;
   
   NumDeleted++;
   
-  return true;
+  return Changed;
 }

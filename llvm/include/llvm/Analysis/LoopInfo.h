@@ -490,7 +490,8 @@ public:
   /// If InsertPt is specified, it is the point to hoist instructions to.
   /// If null, the terminator of the loop preheader is used.
   ///
-  bool makeLoopInvariant(Value *V, Instruction *InsertPt = 0) const;
+  bool makeLoopInvariant(Value *V, bool &Changed,
+                         Instruction *InsertPt = 0) const;
 
   /// makeLoopInvariant - If the given instruction is inside of the
   /// loop and it can be hoisted, do so to make it trivially loop-invariant.
@@ -501,7 +502,8 @@ public:
   /// If InsertPt is specified, it is the point to hoist instructions to.
   /// If null, the terminator of the loop preheader is used.
   ///
-  bool makeLoopInvariant(Instruction *I, Instruction *InsertPt = 0) const;
+  bool makeLoopInvariant(Instruction *I, bool &Changed,
+                         Instruction *InsertPt = 0) const;
 
   /// getCanonicalInductionVariable - Check to see if the loop has a canonical
   /// induction variable: an integer recurrence that starts at 0 and increments

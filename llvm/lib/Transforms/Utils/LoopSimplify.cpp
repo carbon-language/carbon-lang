@@ -93,7 +93,7 @@ namespace {
     BasicBlock *RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
     BasicBlock *InsertPreheaderForLoop(Loop *L);
     Loop *SeparateNestedLoop(Loop *L);
-    void InsertUniqueBackedgeBlock(Loop *L);
+    void InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader);
     void PlaceSplitBlockCarefully(BasicBlock *NewBB,
                                   SmallVectorImpl<BasicBlock*> &SplitPreds,
                                   Loop *L);
@@ -244,7 +244,7 @@ ReprocessLoop:
     // If we either couldn't, or didn't want to, identify nesting of the loops,
     // insert a new block that all backedges target, then make it jump to the
     // loop header.
-    InsertUniqueBackedgeBlock(L);
+    InsertUniqueBackedgeBlock(L, Preheader);
     NumInserted++;
     Changed = true;
   }
@@ -288,9 +288,8 @@ ReprocessLoop:
         Instruction *Inst = I++;
         if (Inst == CI)
           continue;
-        if (!L->makeLoopInvariant(Inst, Preheader->getTerminator())) {
+        if (!L->makeLoopInvariant(Inst, Changed, Preheader->getTerminator())) {
           AllInvariant = false;
-          Changed = true;
           break;
         }
       }
@@ -574,11 +573,10 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
 /// backedges to target a new basic block and have that block branch to the loop
 /// header.  This ensures that loops have exactly one backedge.
 ///
-void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
+void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader) {
   assert(L->getNumBackEdges() > 1 && "Must have > 1 backedge!");
 
   // Get information about the loop
-  BasicBlock *Preheader = L->getLoopPreheader();
   BasicBlock *Header = L->getHeader();
   Function *F = Header->getParent();
 

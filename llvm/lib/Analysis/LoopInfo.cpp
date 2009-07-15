@@ -58,9 +58,10 @@ bool Loop::isLoopInvariant(Instruction *I) const {
 /// If InsertPt is specified, it is the point to hoist instructions to.
 /// If null, the terminator of the loop preheader is used.
 ///
-bool Loop::makeLoopInvariant(Value *V, Instruction *InsertPt) const {
+bool Loop::makeLoopInvariant(Value *V, bool &Changed,
+                             Instruction *InsertPt) const {
   if (Instruction *I = dyn_cast<Instruction>(V))
-    return makeLoopInvariant(I);
+    return makeLoopInvariant(I, Changed, InsertPt);
   return true;  // All non-instructions are loop-invariant.
 }
 
@@ -73,7 +74,8 @@ bool Loop::makeLoopInvariant(Value *V, Instruction *InsertPt) const {
 /// If InsertPt is specified, it is the point to hoist instructions to.
 /// If null, the terminator of the loop preheader is used.
 ///
-bool Loop::makeLoopInvariant(Instruction *I, Instruction *InsertPt) const {
+bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
+                             Instruction *InsertPt) const {
   // Test if the value is already loop-invariant.
   if (isLoopInvariant(I))
     return true;
@@ -96,10 +98,11 @@ bool Loop::makeLoopInvariant(Instruction *I, Instruction *InsertPt) const {
   }
   // Don't hoist instructions with loop-variant operands.
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-    if (!makeLoopInvariant(I->getOperand(i), InsertPt))
+    if (!makeLoopInvariant(I->getOperand(i), Changed, InsertPt))
       return false;
   // Hoist.
   I->moveBefore(InsertPt);
+  Changed = true;
   return true;
 }
 
