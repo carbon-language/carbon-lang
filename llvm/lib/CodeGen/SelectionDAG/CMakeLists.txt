@@ -9,13 +9,13 @@ add_llvm_library(LLVMSelectionDAG
   LegalizeTypesGeneric.cpp
   LegalizeVectorOps.cpp
   LegalizeVectorTypes.cpp
-  ScheduleDAGSDNodes.cpp
-  ScheduleDAGSDNodesEmit.cpp
   ScheduleDAGFast.cpp
   ScheduleDAGList.cpp
   ScheduleDAGRRList.cpp
-  SelectionDAGBuild.cpp
+  ScheduleDAGSDNodes.cpp
+  ScheduleDAGSDNodesEmit.cpp
   SelectionDAG.cpp
+  SelectionDAGBuild.cpp
   SelectionDAGISel.cpp
   SelectionDAGPrinter.cpp
   TargetLowering.cpp

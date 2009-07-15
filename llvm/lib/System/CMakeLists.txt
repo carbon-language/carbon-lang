@@ -13,9 +13,9 @@ add_llvm_library(LLVMSystem
   Program.cpp
   RWMutex.cpp
   Signals.cpp
+  ThreadLocal.cpp
   Threading.cpp
   TimeValue.cpp
-  ThreadLocal.cpp
   )
 
 if( BUILD_SHARED_LIBS AND NOT WIN32 )
