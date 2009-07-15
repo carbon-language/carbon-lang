@@ -34,13 +34,13 @@ entry:
 ; PIC: L_exact_log2$stub:
 ; PIC: .indirect_symbol _exact_log2
 ; PIC: mflr r0
-; PIC: bcl 20,31,L0$_exact_log2
+; PIC: bcl 20,31,L_exact_log2$stub$tmp
 
-; PIC: L0$_exact_log2:
+; PIC: L_exact_log2$stub$tmp:
 ; PIC: mflr r11
-; PIC: addis r11,r11,ha16(L_exact_log2$lazy_ptr-L0$_exact_log2)
+; PIC: addis r11,r11,ha16(L_exact_log2$lazy_ptr-L_exact_log2$stub$tmp)
 ; PIC: mtlr r0
-; PIC: lwzu r12,lo16(L_exact_log2$lazy_ptr-L0$_exact_log2)(r11)
+; PIC: lwzu r12,lo16(L_exact_log2$lazy_ptr-L_exact_log2$stub$tmp)(r11)
 ; PIC: mtctr r12
 ; PIC: bctr
 

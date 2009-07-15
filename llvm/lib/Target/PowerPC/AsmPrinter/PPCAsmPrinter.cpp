@@ -989,41 +989,17 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
          I != E; ++I) {
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
-      const char *p = I->getKeyData();
-      
-      bool hasQuote = p[0]=='\"';
       O << Info.Stub << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << "\tmflr r0\n";
-      O << "\tbcl 20,31,";
-      if (hasQuote)
-        O << "\"L0$" << &p[1];
-      else
-        O << "L0$" << p;
-      O << '\n';
-      if (hasQuote)
-        O << "\"L0$" << &p[1];
-      else
-        O << "L0$" << p;
-      O << ":\n";
+      O << "\tbcl 20,31," << Info.AnonSymbol << '\n';
+      O << Info.AnonSymbol << ":\n";
       O << "\tmflr r11\n";
-      O << "\taddis r11,r11,ha16(" << Info.LazyPtr << "-";
-      if (hasQuote)
-        O << "\"L0$" << &p[1];
-      else
-        O << "L0$" << p;
+      O << "\taddis r11,r11,ha16(" << Info.LazyPtr << "-" << Info.AnonSymbol;
       O << ")\n";
       O << "\tmtlr r0\n";
-      if (isPPC64)
-        O << "\tldu r12,lo16(";
-      else
-        O << "\tlwzu r12,lo16(";
-      O << Info.LazyPtr << "-";
-      if (hasQuote)
-        O << "\"L0$" << &p[1];
-      else
-        O << "L0$" << p;
-      O << ")(r11)\n";
+      O << (isPPC64 ? "\tldu" : "\tlwzu") << " r12,lo16(";
+      O << Info.LazyPtr << "-" << Info.AnonSymbol << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
       SwitchToDataSection(".lazy_symbol_pointer");
