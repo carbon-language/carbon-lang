@@ -246,7 +246,7 @@ void format_object_base::home() {
 /// occurs, information about the error is put into ErrorInfo, and the
 /// stream should be immediately destroyed; the string will be empty
 /// if no error occurred.
-raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary,
+raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary, bool Force,
                                std::string &ErrorInfo) : pos(0) {
   ErrorInfo.clear();
 
@@ -266,6 +266,8 @@ raw_fd_ostream::raw_fd_ostream(const char *Filename, bool Binary,
   if (Binary)
     Flags |= O_BINARY;
 #endif
+  if (!Force)
+    Flags |= O_EXCL;
   FD = open(Filename, Flags, 0664);
   if (FD < 0) {
     ErrorInfo = "Error opening output file '" + std::string(Filename) + "'";

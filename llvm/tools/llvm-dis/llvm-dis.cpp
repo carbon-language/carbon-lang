@@ -28,8 +28,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
-#include <iostream>
-#include <fstream>
 #include <memory>
 using namespace llvm;
 
@@ -56,7 +54,7 @@ int main(int argc, char **argv) {
   try {
     cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
 
-    std::ostream *Out = &std::cout;  // Default to printing to stdout.
+    raw_ostream *Out = &outs();  // Default to printing to stdout.
     std::string ErrorMessage;
 
     std::auto_ptr<Module> M;
@@ -80,12 +78,15 @@ int main(int argc, char **argv) {
       // Just use stdout.  We won't actually print anything on it.
     } else if (OutputFilename != "") {   // Specified an output filename?
       if (OutputFilename != "-") { // Not stdout?
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          cerr << argv[0] << ": error opening '" << OutputFilename
-               << "': file exists! Sending to standard output.\n";
-        } else {
-          Out = new std::ofstream(OutputFilename.c_str());
+        std::string ErrorInfo;
+        Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/false,
+                                 Force, ErrorInfo);
+        if (!ErrorInfo.empty()) {
+          errs() << ErrorInfo << '\n';
+          if (!Force)
+            errs() << "Use -f command line argument to force output\n";
+          delete Out;
+          return 1;
         }
       }
     } else {
@@ -101,38 +102,32 @@ int main(int argc, char **argv) {
           OutputFilename = IFN+".ll";
         }
 
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          cerr << argv[0] << ": error opening '" << OutputFilename
-               << "': file exists! Sending to standard output.\n";
-        } else {
-          Out = new std::ofstream(OutputFilename.c_str());
-
-          // Make sure that the Out file gets unlinked from the disk if we get a
-          // SIGINT
-          sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+        std::string ErrorInfo;
+        Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/false,
+                                 Force, ErrorInfo);
+        if (!ErrorInfo.empty()) {
+          errs() << ErrorInfo << '\n';
+          if (!Force)
+            errs() << "Use -f command line argument to force output\n";
+          delete Out;
+          return 1;
         }
-      }
-    }
 
-    if (!Out->good()) {
-      cerr << argv[0] << ": error opening " << OutputFilename
-           << ": sending to stdout instead!\n";
-      Out = &std::cout;
+        // Make sure that the Out file gets unlinked from the disk if we get a
+        // SIGINT
+        sys::RemoveFileOnSignal(sys::Path(OutputFilename));
+      }
     }
 
     // All that llvm-dis does is write the assembly to a file.
     if (!DontPrint) {
       PassManager Passes;
-      raw_os_ostream L(*Out);
-      Passes.add(createPrintModulePass(&L));
+      Passes.add(createPrintModulePass(Out));
       Passes.run(*M.get());
     }
 
-    if (Out != &std::cout) {
-      ((std::ofstream*)Out)->close();
+    if (Out != &outs())
       delete Out;
-    }
     return 0;
   } catch (const std::string& msg) {
     cerr << argv[0] << ": " << msg << "\n";

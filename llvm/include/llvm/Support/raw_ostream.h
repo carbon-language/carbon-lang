@@ -251,7 +251,10 @@ public:
   /// stream will use stdout instead.
   /// \param Binary - The file should be opened in binary mode on
   /// platforms that support this distinction.
-  raw_fd_ostream(const char *Filename, bool Binary, std::string &ErrorInfo);
+  /// \param Force - Don't consider the case where the file already
+  /// exists to be an error.
+  raw_fd_ostream(const char *Filename, bool Binary, bool Force,
+                 std::string &ErrorInfo);
 
   /// raw_fd_ostream ctor - FD is the file descriptor that this writes to.  If
   /// ShouldClose is true, this closes the file when the stream is destroyed.

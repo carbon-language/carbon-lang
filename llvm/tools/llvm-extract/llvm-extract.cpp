@@ -22,10 +22,9 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
-#include <iostream>
 #include <memory>
-#include <fstream>
 using namespace llvm;
 
 // InputFilename - The filename to read from.
@@ -111,28 +110,28 @@ int main(int argc, char **argv) {
   Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
   Passes.add(createStripDeadPrototypesPass());   // Remove dead func decls
 
-  std::ostream *Out = 0;
+  raw_ostream *Out = 0;
 
   if (OutputFilename != "-") {  // Not stdout?
-    if (!Force && std::ifstream(OutputFilename.c_str())) {
-      // If force is not specified, make sure not to overwrite a file!
-      cerr << argv[0] << ": error opening '" << OutputFilename
-           << "': file exists!\n"
-           << "Use -f command line argument to force output\n";
+    std::string ErrorInfo;
+    Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
+                             Force, ErrorInfo);
+    if (!ErrorInfo.empty()) {
+      errs() << ErrorInfo << '\n';
+      if (!Force)
+        errs() << "Use -f command line argument to force output\n";
+      delete Out;
       return 1;
     }
-    std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                                 std::ios::binary;
-    Out = new std::ofstream(OutputFilename.c_str(), io_mode);
   } else {                      // Specified stdout
-    // FIXME: cout is not binary!
-    Out = &std::cout;
+    // FIXME: errs() is not binary!
+    Out = &errs();
   }
 
-  Passes.add(CreateBitcodeWriterPass(*Out));
+  Passes.add(createBitcodeWriterPass(*Out));
   Passes.run(*M.get());
 
-  if (Out != &std::cout)
+  if (Out != &errs())
     delete Out;
   return 0;
 }

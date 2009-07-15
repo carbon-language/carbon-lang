@@ -35,8 +35,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
-#include <iostream>
-#include <fstream>
 #include <memory>
 #include <algorithm>
 using namespace llvm;
@@ -342,21 +340,16 @@ int main(int argc, char **argv) {
 
     // Figure out what stream we are supposed to write to...
     // FIXME: cout is not binary!
-    std::ostream *Out = &std::cout;  // Default to printing to stdout...
+    raw_ostream *Out = &outs();  // Default to printing to stdout...
     if (OutputFilename != "-") {
-      if (!Force && std::ifstream(OutputFilename.c_str())) {
-        // If force is not specified, make sure not to overwrite a file!
-        cerr << argv[0] << ": error opening '" << OutputFilename
-             << "': file exists!\n"
-             << "Use -f command line argument to force output\n";
-        return 1;
-      }
-      std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                                   std::ios::binary;
-      Out = new std::ofstream(OutputFilename.c_str(), io_mode);
-
-      if (!Out->good()) {
-        cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
+      std::string ErrorInfo;
+      Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
+                               Force, ErrorInfo);
+      if (!ErrorInfo.empty()) {
+        errs() << ErrorInfo << '\n';
+        if (!Force)
+          errs() << "Use -f command line argument to force output\n";
+        delete Out;
         return 1;
       }
 
@@ -479,13 +472,13 @@ int main(int argc, char **argv) {
 
     // Write bitcode out to disk or cout as the last step...
     if (!NoOutput && !AnalyzeOnly)
-      Passes.add(CreateBitcodeWriterPass(*Out));
+      Passes.add(createBitcodeWriterPass(*Out));
 
     // Now that we have all of the passes ready, run them.
     Passes.run(*M.get());
 
     // Delete the ofstream.
-    if (Out != &std::cout) 
+    if (Out != &outs())
       delete Out;
     return 0;
 

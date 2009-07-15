@@ -20,7 +20,6 @@
 #include "llvm/Support/FileUtilities.h"
 #include <fstream>
 #include <sstream>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -158,7 +157,7 @@ int LLI::ExecuteProgram(const std::string &Bitcode,
     LLIArgs.push_back(Args[i].c_str());
   LLIArgs.push_back(0);
 
-  std::cout << "<lli>" << std::flush;
+  outs() << "<lli>"; outs().flush();
   DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = LLIArgs.size()-1; i != e; ++i)
           errs() << " " << LLIArgs[i];
@@ -312,7 +311,7 @@ GCC::FileType LLC::OutputCode(const std::string &Bitcode,
   LLCArgs.push_back (Bitcode.c_str());      // This is the input bitcode
   LLCArgs.push_back (0);
 
-  std::cout << "<llc>" << std::flush;
+  outs() << "<llc>"; outs().flush();
   DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = LLCArgs.size()-1; i != e; ++i)
           errs() << " " << LLCArgs[i];
@@ -429,7 +428,7 @@ int JIT::ExecuteProgram(const std::string &Bitcode,
     JITArgs.push_back(Args[i].c_str());
   JITArgs.push_back(0);
 
-  std::cout << "<jit>" << std::flush;
+  outs() << "<jit>"; outs().flush();
   DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = JITArgs.size()-1; i != e; ++i)
           errs() << " " << JITArgs[i];
@@ -478,7 +477,7 @@ GCC::FileType CBE::OutputCode(const std::string &Bitcode,
   LLCArgs.push_back (Bitcode.c_str());      // This is the input bitcode
   LLCArgs.push_back (0);
 
-  std::cout << "<cbe>" << std::flush;
+  outs() << "<cbe>"; outs().flush();
   DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = LLCArgs.size()-1; i != e; ++i)
           errs() << " " << LLCArgs[i];
@@ -621,7 +620,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 #endif
   GCCArgs.push_back(0);                    // NULL terminator
 
-  std::cout << "<gcc>" << std::flush;
+  outs() << "<gcc>"; outs().flush();
   DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = GCCArgs.size()-1; i != e; ++i)
           errs() << " " << GCCArgs[i];
@@ -665,7 +664,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   ProgramArgs.push_back(0);                // NULL terminator
 
   // Now that we have a binary, run it!
-  std::cout << "<program>" << std::flush;
+  outs() << "<program>"; outs().flush();
   DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = ProgramArgs.size()-1; i != e; ++i)
           errs() << " " << ProgramArgs[i];
@@ -680,7 +679,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
         Timeout, MemoryLimit);
   } else {
-    std::cout << "<run remotely>" << std::flush;
+    outs() << "<run remotely>"; outs().flush();
     int RemoteClientStatus = RunProgramWithTimeout(sys::Path(RemoteClientPath),
         &ProgramArgs[0], sys::Path(InputFile), sys::Path(OutputFile),
         sys::Path(OutputFile), Timeout, MemoryLimit);
@@ -756,7 +755,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
 
   
 
-  std::cout << "<gcc>" << std::flush;
+  outs() << "<gcc>"; outs().flush();
   DEBUG(errs() << "\nAbout to run:\t";
         for (unsigned i=0, e = GCCArgs.size()-1; i != e; ++i)
           errs() << " " << GCCArgs[i];

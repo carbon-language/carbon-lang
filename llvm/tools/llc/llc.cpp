@@ -41,8 +41,6 @@
 #include "llvm/Config/config.h"
 #include "llvm/LinkAllVMCore.h"
 #include "llvm/Target/TargetSelect.h"
-#include <fstream>
-#include <iostream>
 #include <memory>
 using namespace llvm;
 
@@ -133,28 +131,22 @@ static formatted_raw_ostream *GetOutputStream(const char *ProgName) {
     if (OutputFilename == "-")
       return &fouts();
 
-    // Specified an output filename?
-    if (!Force && std::ifstream(OutputFilename.c_str())) {
-      // If force is not specified, make sure not to overwrite a file!
-      errs() << ProgName << ": error opening '" << OutputFilename
-             << "': file exists!\n"
-             << "Use -f command line argument to force output\n";
-      return 0;
-    }
     // Make sure that the Out file gets unlinked from the disk if we get a
     // SIGINT
     sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
     std::string error;
     raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(),
-                                               true, error);
-    formatted_raw_ostream *Out =
-      new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
+                                               /*Binary=*/true, Force, error);
     if (!error.empty()) {
       errs() << error << '\n';
-      delete Out;
+      if (!Force)
+        errs() << "Use -f command line argument to force output\n";
+      delete FDOut;
       return 0;
     }
+    formatted_raw_ostream *Out =
+      new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
 
     return Out;
   }
@@ -189,28 +181,23 @@ static formatted_raw_ostream *GetOutputStream(const char *ProgName) {
     break;
   }
 
-  if (!Force && std::ifstream(OutputFilename.c_str())) {
-    // If force is not specified, make sure not to overwrite a file!
-    errs() << ProgName << ": error opening '" << OutputFilename
-                       << "': file exists!\n"
-                       << "Use -f command line argument to force output\n";
-    return 0;
-  }
-
   // Make sure that the Out file gets unlinked from the disk if we get a
   // SIGINT
   sys::RemoveFileOnSignal(sys::Path(OutputFilename));
 
   std::string error;
   raw_fd_ostream *FDOut = new raw_fd_ostream(OutputFilename.c_str(),
-                                             Binary, error);
-  formatted_raw_ostream *Out =
-    new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
+                                             Binary, Force, error);
   if (!error.empty()) {
     errs() << error << '\n';
-    delete Out;
+    if (!Force)
+      errs() << "Use -f command line argument to force output\n";
+    delete FDOut;
     return 0;
   }
+
+  formatted_raw_ostream *Out =
+    new formatted_raw_ostream(*FDOut, formatted_raw_ostream::DELETE_STREAM);
 
   return Out;
 }

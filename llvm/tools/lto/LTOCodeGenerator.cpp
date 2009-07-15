@@ -186,7 +186,8 @@ const void* LTOCodeGenerator::compile(size_t* length, std::string& errMsg)
     bool genResult = false;
     {
       raw_fd_ostream asmFD(raw_fd_ostream(uniqueAsmPath.c_str(),
-                                          false, errMsg));
+                                          /*Binary=*/false, /*Force=*/true,
+                                          errMsg));
       formatted_raw_ostream asmFile(asmFD);
       if (!errMsg.empty())
         return NULL;

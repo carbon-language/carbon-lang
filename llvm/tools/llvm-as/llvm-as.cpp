@@ -28,8 +28,6 @@
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
-#include <fstream>
-#include <iostream>
 #include <memory>
 using namespace llvm;
 
@@ -62,7 +60,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm .ll -> .bc assembler\n");
 
   int exitCode = 0;
-  std::ostream *Out = 0;
+  raw_ostream *Out = 0;
   try {
     // Parse the file now...
     SMDiagnostic Err;
@@ -86,23 +84,24 @@ int main(int argc, char **argv) {
 
     if (OutputFilename != "") {   // Specified an output filename?
       if (OutputFilename != "-") {  // Not stdout?
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          cerr << argv[0] << ": error opening '" << OutputFilename
-               << "': file exists!\n"
-               << "Use -f command line argument to force output\n";
+        std::string ErrorInfo;
+        Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
+                                 Force, ErrorInfo);
+        if (!ErrorInfo.empty()) {
+          errs() << ErrorInfo << '\n';
+          if (!Force)
+            errs() << "Use -f command line argument to force output\n";
+          delete Out;
           return 1;
         }
-        Out = new std::ofstream(OutputFilename.c_str(), std::ios::out |
-                                std::ios::trunc | std::ios::binary);
       } else {                      // Specified stdout
-        // FIXME: cout is not binary!
-        Out = &std::cout;
+        // FIXME: outs() is not binary!
+        Out = &outs();
       }
     } else {
       if (InputFilename == "-") {
         OutputFilename = "-";
-        Out = &std::cout;
+        Out = &outs();
       } else {
         std::string IFN = InputFilename;
         int Len = IFN.length();
@@ -114,25 +113,20 @@ int main(int argc, char **argv) {
         }
         OutputFilename += ".bc";
 
-        if (!Force && std::ifstream(OutputFilename.c_str())) {
-          // If force is not specified, make sure not to overwrite a file!
-          cerr << argv[0] << ": error opening '" << OutputFilename
-               << "': file exists!\n"
-               << "Use -f command line argument to force output\n";
+        std::string ErrorInfo;
+        Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
+                                 Force, ErrorInfo);
+        if (!ErrorInfo.empty()) {
+          errs() << ErrorInfo << '\n';
+          if (!Force)
+            errs() << "Use -f command line argument to force output\n";
+          delete Out;
           return 1;
         }
-
-        Out = new std::ofstream(OutputFilename.c_str(), std::ios::out |
-                                std::ios::trunc | std::ios::binary);
         // Make sure that the Out file gets unlinked from the disk if we get a
         // SIGINT
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
       }
-    }
-
-    if (!Out->good()) {
-      cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
-      return 1;
     }
 
     if (!DisableOutput)
@@ -146,7 +140,7 @@ int main(int argc, char **argv) {
     exitCode = 1;
   }
 
-  if (Out != &std::cout) delete Out;
+  if (Out != &outs()) delete Out;
   return exitCode;
 }
 

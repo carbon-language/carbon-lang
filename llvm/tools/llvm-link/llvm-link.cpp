@@ -24,8 +24,6 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
-#include <fstream>
-#include <iostream>
 #include <memory>
 using namespace llvm;
 
@@ -122,20 +120,16 @@ int main(int argc, char **argv) {
   if (DumpAsm) cerr << "Here's the assembly:\n" << *Composite.get();
 
   // FIXME: cout is not binary!
-  std::ostream *Out = &std::cout;  // Default to printing to stdout...
+  raw_ostream *Out = &outs();  // Default to printing to stdout...
   if (OutputFilename != "-") {
-    if (!Force && std::ifstream(OutputFilename.c_str())) {
-      // If force is not specified, make sure not to overwrite a file!
-      cerr << argv[0] << ": error opening '" << OutputFilename
-           << "': file exists!\n"
-           << "Use -f command line argument to force output\n";
-      return 1;
-    }
-    std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                                 std::ios::binary;
-    Out = new std::ofstream(OutputFilename.c_str(), io_mode);
-    if (!Out->good()) {
-      cerr << argv[0] << ": error opening '" << OutputFilename << "'!\n";
+    std::string ErrorInfo;
+    Out = new raw_fd_ostream(OutputFilename.c_str(), /*Binary=*/true,
+                             Force, ErrorInfo);
+    if (!ErrorInfo.empty()) {
+      errs() << ErrorInfo << '\n';
+      if (!Force)
+        errs() << "Use -f command line argument to force output\n";
+      delete Out;
       return 1;
     }
 
@@ -152,6 +146,6 @@ int main(int argc, char **argv) {
   if (Verbose) cerr << "Writing bitcode...\n";
   WriteBitcodeToFile(Composite.get(), *Out);
 
-  if (Out != &std::cout) delete Out;
+  if (Out != &outs()) delete Out;
   return 0;
 }
