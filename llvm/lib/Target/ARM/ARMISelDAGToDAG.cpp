@@ -613,23 +613,21 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue Op, SDValue N,
 
 bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDValue Op, SDValue N,
                                            SDValue &Base, SDValue &OffImm) {
-  if (N.getOpcode() == ISD::ADD) {
+  if ((N.getOpcode() == ISD::ADD) || (N.getOpcode() == ISD::SUB)) {
     if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      int RHSC = (int)RHS->getZExtValue();
-      if (RHSC < 0 && RHSC > -0x100) { // 8 bits.
+      int RHSC = (int)RHS->getSExtValue();
+      if (N.getOpcode() == ISD::SUB)
+        RHSC = -RHSC;
+
+      if ((RHSC >= -255) && (RHSC <= 255)) { // sign + 8 bits.
         Base   = N.getOperand(0);
         OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
         return true;
       }
-    }
-  } else if (N.getOpcode() == ISD::SUB) {
-    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      int RHSC = (int)RHS->getZExtValue();
-      if (RHSC >= 0 && RHSC < 0x100) { // 8 bits.
-        Base   = N.getOperand(0);
-        OffImm = CurDAG->getTargetConstant(-RHSC, MVT::i32);
-        return true;
-      }
+    } else if (N.getOpcode() == ISD::SUB) {
+      Base   = N;
+      OffImm = CurDAG->getTargetConstant(0, MVT::i32);
+      return true;
     }
   }
 
@@ -700,6 +698,10 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue Op, SDValue N,
     return true;
   }
 
+  // Thumb2 does not support (R - R) or (R - (R << [1,2,3])).
+  if (N.getOpcode() != ISD::ADD)
+    return false;
+
   // Look for (R + R) or (R + (R << [1,2,3])).
   unsigned ShAmt = 0;
   Base   = N.getOperand(0);
@@ -727,9 +729,10 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue Op, SDValue N,
       ShOpcVal = ARM_AM::no_shift;
     }
   } else if (SelectT2AddrModeImm12(Op, N, Base, ShImm) ||
-             SelectT2AddrModeImm8 (Op, N, Base, ShImm))
+             SelectT2AddrModeImm8 (Op, N, Base, ShImm)) {
     // Don't match if it's possible to match to one of the r +/- imm cases.
     return false;
+  }
   
   ShImm = CurDAG->getTargetConstant(ShAmt, MVT::i32);
 
