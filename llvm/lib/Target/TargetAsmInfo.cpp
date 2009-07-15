@@ -59,7 +59,6 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
   InlineAsmStart = "#APP";
   InlineAsmEnd = "#NO_APP";
   AssemblerDialect = 0;
-  StringConstantPrefix = ".str";
   AllowQuotesInName = false;
   ZeroDirective = "\t.zero\t";
   ZeroDirectiveSuffix = 0;

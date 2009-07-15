@@ -275,12 +275,6 @@ namespace llvm {
     /// AssemblerDialect - Which dialect of an assembler variant to use.
     unsigned AssemblerDialect;            // Defaults to 0
 
-    /// StringConstantPrefix - Prefix for FEs to use when generating unnamed
-    /// constant strings.  These names get run through the Mangler later; if
-    /// you want the Mangler not to add the GlobalPrefix as well, 
-    /// use '\1' as the first character.
-    const char *StringConstantPrefix;     // Defaults to ".str"
-
     /// AllowQuotesInName - This is true if the assembler allows for complex
     /// symbol names to be surrounded in quotes.  This defaults to false.
     bool AllowQuotesInName;
@@ -750,9 +744,6 @@ namespace llvm {
     }
     unsigned getAssemblerDialect() const {
       return AssemblerDialect;
-    }
-    const char *getStringConstantPrefix() const {
-      return StringConstantPrefix;
     }
     bool doesAllowQuotesInName() const {
       return AllowQuotesInName;

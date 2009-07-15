@@ -58,7 +58,6 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "L";
   LessPrivateGlobalPrefix = "l";  // Marker for some ObjC metadata
-  StringConstantPrefix = "\1LC";
   NeedsSet = true;
   NeedsIndirectEncoding = true;
   AllowQuotesInName = true;
