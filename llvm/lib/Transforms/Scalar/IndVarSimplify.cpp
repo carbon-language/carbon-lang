@@ -544,7 +544,13 @@ void IndVarSimplify::SinkUnusedInvariants(Loop *L) {
     // New instructions were inserted at the end of the preheader.
     if (isa<PHINode>(I))
       break;
-    if (I->isTrapping())
+    // Don't move instructions which might have side effects, since the side
+    // effects need to complete before instructions inside the loop.  Also
+    // don't move instructions which might read memory, since the loop may
+    // modify memory. Note that it's okay if the instruction might have
+    // undefined behavior: LoopSimplify guarantees that the preheader
+    // dominates the exit block.
+    if (I->mayHaveSideEffects() || I->mayReadFromMemory())
       continue;
     // Determine if there is a use in or before the loop (direct or
     // otherwise).
