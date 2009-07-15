@@ -12,6 +12,7 @@
 #define LLVM_TYPE_H
 
 #include "llvm/AbstractTypeUser.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/System/Atomic.h"
@@ -106,6 +107,9 @@ private:
   ///
   mutable sys::cas_flag RefCount;
 
+  /// Context - This refers to the LLVMContext in which this type was uniqued.
+  LLVMContext &Context;
+
   const Type *getForwardedTypeInternal() const;
 
   // Some Type instances are allocated as arrays, some aren't. So we provide
@@ -114,7 +118,8 @@ private:
 
 protected:
   explicit Type(TypeID id) : ID(id), Abstract(false), SubclassData(0),
-                             RefCount(0), ForwardType(0), NumContainedTys(0),
+                             RefCount(0), Context(getGlobalContext()),
+                             ForwardType(0), NumContainedTys(0),
                              ContainedTys(0) {}
   virtual ~Type() {
     assert(AbstractTypeUsers.empty() && "Abstract types remain");
@@ -169,6 +174,9 @@ public:
   /// @brief Debugging support: print to stderr (use type names from context
   /// module).
   void dump(const Module *Context) const;
+
+  /// getContext - Fetch the LLVMContext in which this type was uniqued.
+  LLVMContext &getContext() const { return Context; }
 
   //===--------------------------------------------------------------------===//
   // Property accessors for dealing with types... Some of these virtual methods
