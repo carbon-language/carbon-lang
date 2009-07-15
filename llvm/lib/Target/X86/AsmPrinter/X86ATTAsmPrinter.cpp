@@ -342,9 +342,7 @@ void X86ATTAsmPrinter::printSymbolOperand(const MachineOperand &MO) {
     break;
   }
   case MachineOperand::MO_ExternalSymbol: {
-    std::string Name(TAI->getGlobalPrefix());
-    Name += MO.getSymbolName();
-
+    std::string Name = Mang->makeNameProper(MO.getSymbolName());
     if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       FnStubs[Name+"$stub"] = Name;
       Name += "$stub";
