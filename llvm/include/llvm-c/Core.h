@@ -115,7 +115,8 @@ typedef enum {
   LLVMArrayTypeKind,       /**< Arrays */
   LLVMPointerTypeKind,     /**< Pointers */
   LLVMOpaqueTypeKind,      /**< Opaque: type with unknown structure */
-  LLVMVectorTypeKind       /**< SIMD 'packed' format, or other vector type */
+  LLVMVectorTypeKind,      /**< SIMD 'packed' format, or other vector type */
+  LLVMMetadataTypeKind     /**< Metadata */
 } LLVMTypeKind;
 
 typedef enum {

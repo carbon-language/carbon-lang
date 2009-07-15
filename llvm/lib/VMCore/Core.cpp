@@ -117,7 +117,40 @@ void LLVMDumpModule(LLVMModuleRef M) {
 /*--.. Operations on all types (mostly) ....................................--*/
 
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
-  return static_cast<LLVMTypeKind>(unwrap(Ty)->getTypeID());
+  switch (unwrap(Ty)->getTypeID()) {
+  case Type::VoidTyID:
+    return LLVMVoidTypeKind;
+  case Type::FloatTyID:
+    return LLVMFloatTypeKind;
+  case Type::DoubleTyID:
+    return LLVMDoubleTypeKind;
+  case Type::X86_FP80TyID:
+    return LLVMX86_FP80TypeKind;
+  case Type::FP128TyID:
+    return LLVMFP128TypeKind;
+  case Type::PPC_FP128TyID:
+    return LLVMPPC_FP128TypeKind;
+  case Type::LabelTyID:
+    return LLVMLabelTypeKind;
+  case Type::MetadataTyID:
+    return LLVMMetadataTypeKind;
+  case Type::IntegerTyID:
+    return LLVMIntegerTypeKind;
+  case Type::FunctionTyID:
+    return LLVMFunctionTypeKind;
+  case Type::StructTyID:
+    return LLVMStructTypeKind;
+  case Type::ArrayTyID:
+    return LLVMArrayTypeKind;
+  case Type::PointerTyID:
+    return LLVMPointerTypeKind;
+  case Type::OpaqueTyID:
+    return LLVMOpaqueTypeKind;
+  case Type::VectorTyID:
+    return LLVMVectorTypeKind;
+  default:
+    assert (false && "Unhandled TypeID.");
+  }
 }
 
 /*--.. Operations on integer types .........................................--*/

@@ -66,6 +66,7 @@ public:
   /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)
   /// Note: If you add an element to this, you need to add an element to the
   /// Type::getPrimitiveType function, or else things will break!
+  /// Also update LLVMTypeKind and LLVMGetTypeKind () in the C binding.
   ///
   enum TypeID {
     // PrimitiveTypes .. make sure LastPrimitiveTyID stays up to date
