@@ -47,6 +47,7 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
     OutFile = new llvm::raw_fd_ostream(OutFileName.c_str(), 
                                        // set binary mode (critical for Windoze)
                                        true, 
+                                       /*Force=*/true,
                                        Err);
     OwnedStream.reset(OutFile);
   } else if (InFileName == "-") {
@@ -60,6 +61,7 @@ bool FixItRewriter::WriteFixedFile(const std::string &InFileName,
     OutFile = new llvm::raw_fd_ostream(Path.toString().c_str(), 
                                        // set binary mode (critical for Windoze)
                                        true, 
+                                       /*Force=*/true,
                                        Err);
     OwnedStream.reset(OutFile);
   }  

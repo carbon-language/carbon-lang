@@ -587,7 +587,8 @@ static ExplodedNodeImpl::Auditor* CreateUbiViz() {
   
   llvm::OwningPtr<llvm::raw_fd_ostream> Stream;
   std::string filename = Filename.toString();
-  Stream.reset(new llvm::raw_fd_ostream(filename.c_str(), false, ErrMsg));
+  Stream.reset(new llvm::raw_fd_ostream(filename.c_str(), false,
+                                        /*Force=*/true, ErrMsg));
 
   if (!ErrMsg.empty())
     return 0;
