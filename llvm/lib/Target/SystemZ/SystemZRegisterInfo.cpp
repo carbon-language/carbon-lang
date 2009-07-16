@@ -39,7 +39,8 @@ SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     SystemZ::R6D,  SystemZ::R7D,  SystemZ::R8D,  SystemZ::R9D,
     SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D,
     SystemZ::R14D, SystemZ::R15D,
-    SystemZ::F1L,  SystemZ::F3L,  SystemZ::F5L,  SystemZ::F7L,
+    SystemZ::F8L,  SystemZ::F9L,  SystemZ::F10L, SystemZ::F11L,
+    SystemZ::F12L, SystemZ::F13L, SystemZ::F14L, SystemZ::F15L,
     0
   };
 
@@ -54,6 +55,8 @@ SystemZRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
+    &SystemZ::FP64RegClass, &SystemZ::FP64RegClass,
+    &SystemZ::FP64RegClass, &SystemZ::FP64RegClass,
     &SystemZ::FP64RegClass, &SystemZ::FP64RegClass,
     &SystemZ::FP64RegClass, &SystemZ::FP64RegClass, 0
   };
@@ -142,18 +145,33 @@ SystemZRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // Determine whether R15/R14 will ever be clobbered inside the function. And
   // if yes - mark it as 'callee' saved.
   MachineFrameInfo *FFI = MF.getFrameInfo();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  // Check whether high FPRs are ever used, if yes - we need to save R15 as
+  // well.
+  static const unsigned HighFPRs[] = {
+    SystemZ::F8L,  SystemZ::F9L,  SystemZ::F10L, SystemZ::F11L,
+    SystemZ::F12L, SystemZ::F13L, SystemZ::F14L, SystemZ::F15L,
+    SystemZ::F8S,  SystemZ::F9S,  SystemZ::F10S, SystemZ::F11S,
+    SystemZ::F12S, SystemZ::F13S, SystemZ::F14S, SystemZ::F15S,
+  };
+
+  bool HighFPRsUsed = false;
+  for (unsigned i = 0, e = array_lengthof(HighFPRs); i != e; ++i)
+    HighFPRsUsed |= MRI.isPhysRegUsed(HighFPRs[i]);
 
   if (FFI->hasCalls())
     /* FIXME: function is varargs */
     /* FIXME: function grabs RA */
     /* FIXME: function calls eh_return */
-    MF.getRegInfo().setPhysRegUsed(SystemZ::R14D);
+    MRI.setPhysRegUsed(SystemZ::R14D);
 
-  if (FFI->hasCalls() ||
+  if (HighFPRsUsed ||
+      FFI->hasCalls() ||
       FFI->getObjectIndexEnd() != 0 || // Contains automatic variables
       FFI->hasVarSizedObjects() // Function calls dynamic alloca's
       /* FIXME: function is varargs */)
-    MF.getRegInfo().setPhysRegUsed(SystemZ::R15D);
+    MRI.setPhysRegUsed(SystemZ::R15D);
 }
 
 /// emitSPUpdate - Emit a series of instructions to increment / decrement the

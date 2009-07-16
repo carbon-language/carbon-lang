@@ -186,50 +186,71 @@ bool
 SystemZInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI) const {
+  if (CSI.empty())
+    return false;
+
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
   MachineFunction &MF = *MBB.getParent();
   SystemZMachineFunctionInfo *MFI = MF.getInfo<SystemZMachineFunctionInfo>();
-  MFI->setCalleeSavedFrameSize(CSI.size() * 8);
+  unsigned CalleeFrameSize = 0;
 
   // Scan the callee-saved and find the bounds of register spill area.
   unsigned LowReg = 0, HighReg = 0, StartOffset = -1U, EndOffset = 0;
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    unsigned Offset = RegSpillOffsets[Reg];
-    if (StartOffset > Offset) {
-      LowReg = Reg; StartOffset = Offset;
-    }
-    if (EndOffset < Offset) {
-      HighReg = Reg; EndOffset = RegSpillOffsets[Reg];
+    const TargetRegisterClass *RegClass = CSI[i].getRegClass();
+    if (RegClass != &SystemZ::FP64RegClass) {
+      unsigned Offset = RegSpillOffsets[Reg];
+      CalleeFrameSize += 8;
+      if (StartOffset > Offset) {
+        LowReg = Reg; StartOffset = Offset;
+      }
+      if (EndOffset < Offset) {
+        HighReg = Reg; EndOffset = RegSpillOffsets[Reg];
+      }
     }
   }
 
   // Save information for epilogue inserter.
+  MFI->setCalleeSavedFrameSize(CalleeFrameSize);
   MFI->setLowReg(LowReg); MFI->setHighReg(HighReg);
 
-  // Build a store instruction. Use STORE MULTIPLE instruction if there are many
-  // registers to store, otherwise - just STORE.
-  MachineInstrBuilder MIB =
-    BuildMI(MBB, MI, DL, get((LowReg == HighReg ?
-                              SystemZ::MOV64mr : SystemZ::MOV64mrm)));
+  // Save GPRs
+  if (StartOffset) {
+    // Build a store instruction. Use STORE MULTIPLE instruction if there are many
+    // registers to store, otherwise - just STORE.
+    MachineInstrBuilder MIB =
+      BuildMI(MBB, MI, DL, get((LowReg == HighReg ?
+                                SystemZ::MOV64mr : SystemZ::MOV64mrm)));
 
-  // Add store operands.
-  MIB.addReg(SystemZ::R15D).addImm(StartOffset);
-  if (LowReg == HighReg)
-    MIB.addReg(0);
-  MIB.addReg(LowReg, RegState::Kill);
-  if (LowReg != HighReg)
-    MIB.addReg(HighReg, RegState::Kill);
+    // Add store operands.
+    MIB.addReg(SystemZ::R15D).addImm(StartOffset);
+    if (LowReg == HighReg)
+      MIB.addReg(0);
+    MIB.addReg(LowReg, RegState::Kill);
+    if (LowReg != HighReg)
+      MIB.addReg(HighReg, RegState::Kill);
 
-  // Do a second scan adding regs as being killed by instruction
+    // Do a second scan adding regs as being killed by instruction
+    for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+      unsigned Reg = CSI[i].getReg();
+      // Add the callee-saved register as live-in. It's killed at the spill.
+      MBB.addLiveIn(Reg);
+      if (Reg != LowReg && Reg != HighReg)
+        MIB.addReg(Reg, RegState::ImplicitKill);
+    }
+  }
+
+  // Save FPRs
   for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    // Add the callee-saved register as live-in. It's killed at the spill.
-    MBB.addLiveIn(Reg);
-    if (Reg != LowReg && Reg != HighReg)
-      MIB.addReg(Reg, RegState::ImplicitKill);
+    const TargetRegisterClass *RegClass = CSI[i].getRegClass();
+    if (RegClass == &SystemZ::FP64RegClass) {
+      MBB.addLiveIn(Reg);
+      storeRegToStackSlot(MBB, MI, Reg, true, CSI[i].getFrameIdx(), RegClass);
+    }
   }
 
   return true;
@@ -249,29 +270,40 @@ SystemZInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   const TargetRegisterInfo *RegInfo= MF.getTarget().getRegisterInfo();
   SystemZMachineFunctionInfo *MFI = MF.getInfo<SystemZMachineFunctionInfo>();
 
+  // Restore FP registers
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    const TargetRegisterClass *RegClass = CSI[i].getRegClass();
+    if (RegClass == &SystemZ::FP64RegClass)
+      loadRegFromStackSlot(MBB, MI, Reg, CSI[i].getFrameIdx(), RegClass);
+  }
+
+  // Restore GP registers
   unsigned LowReg = MFI->getLowReg(), HighReg = MFI->getHighReg();
   unsigned StartOffset = RegSpillOffsets[LowReg];
 
-  // Build a load instruction. Use LOAD MULTIPLE instruction if there are many
-  // registers to load, otherwise - just LOAD.
-  MachineInstrBuilder MIB =
-    BuildMI(MBB, MI, DL, get((LowReg == HighReg ?
-                              SystemZ::MOV64rm : SystemZ::MOV64rmm)));
-  // Add store operands.
-  MIB.addReg(LowReg, RegState::Define);
-  if (LowReg != HighReg)
-    MIB.addReg(HighReg, RegState::Define);
+  if (StartOffset) {
+    // Build a load instruction. Use LOAD MULTIPLE instruction if there are many
+    // registers to load, otherwise - just LOAD.
+    MachineInstrBuilder MIB =
+      BuildMI(MBB, MI, DL, get((LowReg == HighReg ?
+                                SystemZ::MOV64rm : SystemZ::MOV64rmm)));
+    // Add store operands.
+    MIB.addReg(LowReg, RegState::Define);
+    if (LowReg != HighReg)
+      MIB.addReg(HighReg, RegState::Define);
 
-  MIB.addReg((RegInfo->hasFP(MF) ? SystemZ::R11D : SystemZ::R15D));
-  MIB.addImm(StartOffset);
-  if (LowReg == HighReg)
-    MIB.addReg(0);
+    MIB.addReg((RegInfo->hasFP(MF) ? SystemZ::R11D : SystemZ::R15D));
+    MIB.addImm(StartOffset);
+    if (LowReg == HighReg)
+      MIB.addReg(0);
 
-  // Do a second scan adding regs as being defined by instruction
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    if (Reg != LowReg && Reg != HighReg)
-      MIB.addReg(Reg, RegState::ImplicitDefine);
+    // Do a second scan adding regs as being defined by instruction
+    for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+      unsigned Reg = CSI[i].getReg();
+      if (Reg != LowReg && Reg != HighReg)
+        MIB.addReg(Reg, RegState::ImplicitDefine);
+    }
   }
 
   return true;
