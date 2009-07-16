@@ -190,6 +190,12 @@ void SystemZAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
+  case MachineOperand::MO_Immediate:
+    O << MO.getImm();
+    return;
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMBB(), false, false, VerboseAsm);
+    return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
