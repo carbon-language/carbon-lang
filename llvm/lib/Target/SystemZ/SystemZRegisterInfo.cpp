@@ -261,10 +261,12 @@ void SystemZRegisterInfo::emitEpilogue(MachineFunction &MF,
   // During callee-saved restores emission stack frame was not yet finialized
   // (and thus - the stack size was unknown). Tune the offset having full stack
   // size in hands.
-  if (SystemZMFI->getCalleeSavedFrameSize()) {
+  if (StackSize || MFI->hasCalls()) {
     assert((MBBI->getOpcode() == SystemZ::MOV64rmm ||
             MBBI->getOpcode() == SystemZ::MOV64rm) &&
            "Expected to see callee-save register restore code");
+    assert(MF.getRegInfo().isPhysRegUsed(SystemZ::R15D) &&
+           "Invalid stack frame calculation!");
 
     unsigned i = 0;
     MachineInstr &MI = *MBBI;
