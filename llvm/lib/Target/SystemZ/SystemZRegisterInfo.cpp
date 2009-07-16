@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZ.h"
+#include "SystemZMachineFunctionInfo.h"
 #include "SystemZRegisterInfo.h"
 #include "SystemZSubtarget.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -26,7 +27,7 @@ using namespace llvm;
 
 SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm,
                                          const TargetInstrInfo &tii)
-  : SystemZGenRegisterInfo(SystemZ::NOP, SystemZ::NOP),
+  : SystemZGenRegisterInfo(SystemZ::ADJCALLSTACKUP, SystemZ::ADJCALLSTACKDOWN),
     TM(tm), TII(tii) {
 }
 
@@ -34,7 +35,7 @@ const unsigned*
 SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs[] = {
     SystemZ::R6D,  SystemZ::R7D,  SystemZ::R8D,  SystemZ::R9D,
-    SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D,
+    SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D, SystemZ::R14D,
     SystemZ::F1,  SystemZ::F3,  SystemZ::F5,  SystemZ::F7,
     0
   };
@@ -49,6 +50,7 @@ SystemZRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
+    &SystemZ::GR64RegClass,
     &SystemZ::FP64RegClass, &SystemZ::FP64RegClass,
     &SystemZ::FP64RegClass, &SystemZ::FP64RegClass, 0
   };
@@ -73,17 +75,31 @@ bool SystemZRegisterInfo::hasFP(const MachineFunction &MF) const {
   return NoFramePointerElim || MFI->hasVarSizedObjects();
 }
 
+bool SystemZRegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
+  return !MF.getFrameInfo()->hasVarSizedObjects();
+}
+
 void SystemZRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
-  assert(0 && "Not implemented yet!");
+  if (!hasReservedCallFrame(MF)) {
+    assert(0 && "Not implemented yet!");
+  }
+
+  MBB.erase(I);
 }
 
 int SystemZRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  SystemZMachineFunctionInfo *SystemZMFI =
+    MF.getInfo<SystemZMachineFunctionInfo>();
   int Offset = MFI->getObjectOffset(FI) + MFI->getOffsetAdjustment();
   uint64_t StackSize = MFI->getStackSize();
+
+  // Fixed objects are really located in the "previous" frame.
+  if (FI < 0)
+    StackSize -= SystemZMFI->getCalleeSavedFrameSize();
 
   Offset += StackSize - TFI.getOffsetOfLocalArea();
 
@@ -149,12 +165,17 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  SystemZMachineFunctionInfo *SystemZMFI =
+    MF.getInfo<SystemZMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc DL = (MBBI != MBB.end() ? MBBI->getDebugLoc() :
                  DebugLoc::getUnknownLoc());
 
   // Get the number of bytes to allocate from the FrameInfo.
-  uint64_t StackSize = MFI->getStackSize();
+  // Note that area for callee-saved stuff is already allocated, thus we need to
+  // 'undo' the stack movement.
+  uint64_t StackSize =
+    MFI->getStackSize() - SystemZMFI->getCalleeSavedFrameSize();
 
   // FIXME: Skip the callee-saved push instructions.
 
@@ -184,6 +205,8 @@ void SystemZRegisterInfo::emitEpilogue(MachineFunction &MF,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  SystemZMachineFunctionInfo *SystemZMFI =
+    MF.getInfo<SystemZMachineFunctionInfo>();
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc DL = MBBI->getDebugLoc();
 
@@ -194,7 +217,10 @@ void SystemZRegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 
   // Get the number of bytes to allocate from the FrameInfo
-  uint64_t StackSize = MFI->getStackSize();
+  // Note that area for callee-saved stuff is already allocated, thus we need to
+  // 'undo' the stack movement.
+  uint64_t StackSize =
+    MFI->getStackSize() - SystemZMFI->getCalleeSavedFrameSize();
   uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
 
   // Skip the callee-saved regs load instructions.

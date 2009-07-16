@@ -185,6 +185,20 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMBB());
     return;
+  case MachineOperand::MO_GlobalAddress: {
+    std::string Name = Mang->getValueName(MO.getGlobal());
+    assert(MO.getOffset() == 0 && "No offsets allowed!");
+
+    O << Name;
+
+    return;
+  }
+  case MachineOperand::MO_ExternalSymbol: {
+    std::string Name(TAI->getGlobalPrefix());
+    Name += MO.getSymbolName();
+    O << Name;
+    return;
+  }
   default:
     assert(0 && "Not implemented yet!");
   }

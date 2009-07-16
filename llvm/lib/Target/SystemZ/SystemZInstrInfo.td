@@ -14,13 +14,33 @@
 include "SystemZInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
+// Type Constraints.
+//===----------------------------------------------------------------------===//
+class SDTCisI8<int OpNum> : SDTCisVT<OpNum, i8>;
+class SDTCisI16<int OpNum> : SDTCisVT<OpNum, i16>;
+class SDTCisI32<int OpNum> : SDTCisVT<OpNum, i32>;
+class SDTCisI64<int OpNum> : SDTCisVT<OpNum, i64>;
+
+//===----------------------------------------------------------------------===//
+// Type Profiles.
+//===----------------------------------------------------------------------===//
+def SDT_SystemZCall         : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
+def SDT_SystemZCallSeqStart : SDCallSeqStart<[SDTCisI64<0>]>;
+def SDT_SystemZCallSeqEnd   : SDCallSeqEnd<[SDTCisI64<0>, SDTCisI64<1>]>;
+
+//===----------------------------------------------------------------------===//
 // SystemZ Specific Node Definitions.
 //===----------------------------------------------------------------------===//
 def SystemZretflag : SDNode<"SystemZISD::RET_FLAG", SDTNone,
                      [SDNPHasChain, SDNPOptInFlag]>;
-
-let neverHasSideEffects = 1 in
-def NOP : Pseudo<(outs), (ins), "# no-op", []>;
+def SystemZcall    : SDNode<"SystemZISD::CALL", SDT_SystemZCall,
+                     [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
+def SystemZcallseq_start :
+                 SDNode<"ISD::CALLSEQ_START", SDT_SystemZCallSeqStart,
+                        [SDNPHasChain, SDNPOutFlag]>;
+def SystemZcallseq_end :
+                 SDNode<"ISD::CALLSEQ_END",   SDT_SystemZCallSeqEnd,
+                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff.
@@ -172,6 +192,23 @@ def laaddr : Operand<i64>,
   let MIOperandInfo = (ops ADDR64:$base, i64imm:$disp, ADDR64:$index);
 }
 
+//===----------------------------------------------------------------------===//
+// Instruction list..
+
+// ADJCALLSTACKDOWN/UP implicitly use/def SP because they may be expanded into
+// a stack adjustment and the codegen must know that they may modify the stack
+// pointer before prolog-epilog rewriting occurs.
+// Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become
+// sub / add which can clobber R15D.
+let Defs = [R15D], Uses = [R15D] in {
+def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i64imm:$amt),
+                              "#ADJCALLSTACKDOWN",
+                              [(SystemZcallseq_start timm:$amt)]>;
+def ADJCALLSTACKUP   : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
+                              "#ADJCALLSTACKUP",
+                              [(SystemZcallseq_end timm:$amt1, timm:$amt2)]>;
+}
+
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
@@ -182,6 +219,22 @@ let isReturn = 1, isTerminator = 1, Uses = [R14D] in {
   def RET : Pseudo<(outs), (ins), "br\t%r14", [(SystemZretflag)]>;
 }
 
+//===----------------------------------------------------------------------===//
+//  Call Instructions...
+//
+
+let isCall = 1 in
+  // All calls clobber the non-callee saved registers. R15 is marked as
+  // a use to prevent stack-pointer assignments that appear immediately
+  // before calls from potentially appearing dead. Uses for argument
+  // registers are added manually.
+  let Defs = [R0D, R1D, R3D, R4D, R5D, R14D, R15D],
+      Uses = [R15D] in {
+    def CALLi     : Pseudo<(outs), (ins i64imm:$dst, variable_ops),
+                           "brasl\t%r14, $dst", [(SystemZcall imm:$dst)]>;
+    def CALLr     : Pseudo<(outs), (ins ADDR64:$dst, variable_ops),
+                           "brasl\t%r14, $dst", [(SystemZcall ADDR64:$dst)]>;
+  }
 
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions.
@@ -193,6 +246,8 @@ def LA64r  : Pseudo<(outs GR64:$dst), (ins laaddr:$src),
                     "lay\t{$dst, $src}",
                     [(set GR64:$dst, laaddr:$src)]>;
 
+let neverHasSideEffects = 1 in
+def NOP : Pseudo<(outs), (ins), "# no-op", []>;
 
 //===----------------------------------------------------------------------===//
 // Move Instructions
@@ -525,3 +580,9 @@ def : Pat<(sext_inreg GR64:$src, i32),
 def : Pat<(extloadi64i8  rriaddr:$src), (MOVZX64rm8  rriaddr:$src)>;
 def : Pat<(extloadi64i16 rriaddr:$src), (MOVZX64rm16 rriaddr:$src)>;
 def : Pat<(extloadi64i32 rriaddr:$src), (MOVZX64rm32 rriaddr:$src)>;
+
+// calls
+def : Pat<(SystemZcall (i64 tglobaladdr:$dst)),
+          (CALLi tglobaladdr:$dst)>;
+def : Pat<(SystemZcall (i64 texternalsym:$dst)),
+          (CALLi texternalsym:$dst)>;
