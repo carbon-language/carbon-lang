@@ -45,7 +45,7 @@ namespace {
     } Base;
 
     SDValue IndexReg;
-    int32_t Disp;
+    int64_t Disp;
 
     SystemZRRIAddressMode()
       : BaseType(RegBase), IndexReg(), Disp(0) {
@@ -134,22 +134,22 @@ FunctionPass *llvm::createSystemZISelDag(SystemZTargetMachine &TM,
 /// or 64-bit immediate, and if the value can be accurately represented as a
 /// sign extension from a 20-bit value. If so, this returns true and the
 /// immediate.
-static bool isImmSExt20(int64_t Val, int32_t &Imm) {
+static bool isImmSExt20(int64_t Val, int64_t &Imm) {
   if (Val >= -524288 && Val <= 524287) {
-    Imm = (int32_t)Val;
+    Imm = Val;
     return true;
   }
   return false;
 }
 
-static bool isImmSExt20(SDNode *N, int32_t &Imm) {
+static bool isImmSExt20(SDNode *N, int64_t &Imm) {
   if (N->getOpcode() != ISD::Constant)
     return false;
 
   return isImmSExt20(cast<ConstantSDNode>(N)->getSExtValue(), Imm);
 }
 
-static bool isImmSExt20(SDValue Op, int32_t &Imm) {
+static bool isImmSExt20(SDValue Op, int64_t &Imm) {
   return isImmSExt20(Op.getNode(), Imm);
 }
 
@@ -162,9 +162,9 @@ bool SystemZDAGToDAGISel::SelectAddrRI(const SDValue& Op, SDValue& Addr,
   MVT VT = Addr.getValueType();
 
   if (Addr.getOpcode() == ISD::ADD) {
-    int32_t Imm = 0;
+    int64_t Imm = 0;
     if (isImmSExt20(Addr.getOperand(1), Imm)) {
-      Disp = CurDAG->getTargetConstant(Imm, MVT::i32);
+      Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
       if (FrameIndexSDNode *FI =
           dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
         Base = CurDAG->getTargetFrameIndex(FI->getIndex(), VT);
@@ -174,7 +174,7 @@ bool SystemZDAGToDAGISel::SelectAddrRI(const SDValue& Op, SDValue& Addr,
       return true; // [r+i]
     }
   } else if (Addr.getOpcode() == ISD::OR) {
-    int32_t Imm = 0;
+    int64_t Imm = 0;
     if (isImmSExt20(Addr.getOperand(1), Imm)) {
       // If this is an or of disjoint bitfields, we can codegen this as an add
       // (for better address arithmetic) if the LHS and RHS of the OR are
@@ -189,7 +189,7 @@ bool SystemZDAGToDAGISel::SelectAddrRI(const SDValue& Op, SDValue& Addr,
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
         Base = Addr.getOperand(0);
-        Disp = CurDAG->getTargetConstant(Imm, MVT::i32);
+        Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
         return true;
       }
     }
@@ -198,15 +198,15 @@ bool SystemZDAGToDAGISel::SelectAddrRI(const SDValue& Op, SDValue& Addr,
 
     // If this address fits entirely in a 20-bit sext immediate field, codegen
     // this as "d(r0)"
-    int32_t Imm;
+    int64_t Imm;
     if (isImmSExt20(CN, Imm)) {
-      Disp = CurDAG->getTargetConstant(Imm, MVT::i32);
+      Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
       Base = CurDAG->getRegister(0, VT);
       return true;
     }
   }
 
-  Disp = CurDAG->getTargetConstant(0, MVT::i32);
+  Disp = CurDAG->getTargetConstant(0, MVT::i64);
   if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr))
     Base = CurDAG->getTargetFrameIndex(FI->getIndex(), VT);
   else
@@ -231,8 +231,8 @@ bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
   switch (N.getOpcode()) {
   default: break;
   case ISD::Constant: {
-    uint64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
-    int32_t Imm;
+    int64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
+    int64_t Imm;
     if (isImmSExt20(AM.Disp + Val, Imm)) {
       AM.Disp = Imm;
       return false;
@@ -324,8 +324,8 @@ bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
     // Handle "X | C" as "X + C" iff X is known to have C bits clear.
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       SystemZRRIAddressMode Backup = AM;
-      uint64_t Offset = CN->getSExtValue();
-      int32_t Imm;
+      int64_t Offset = CN->getSExtValue();
+      int64_t Imm;
       // Start with the LHS as an addr mode.
       if (!MatchAddress(N.getOperand(0), AM, Depth+1) &&
           // The resultant disp must fit in 20-bits.
@@ -393,6 +393,8 @@ bool SystemZDAGToDAGISel::SelectAddrRRI(SDValue Op, SDValue Addr,
   if (!Done && MatchAddress(Addr, AM))
     return false;
 
+  DOUT << "MatchAddress (final): "; DEBUG(AM.dump());
+
   MVT VT = Addr.getValueType();
   if (AM.BaseType == SystemZRRIAddressMode::RegBase) {
     if (!AM.Base.Reg.getNode())
@@ -407,7 +409,7 @@ bool SystemZDAGToDAGISel::SelectAddrRRI(SDValue Op, SDValue Addr,
   else
     Base = CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, TLI.getPointerTy());
   Index = AM.IndexReg;
-  Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
+  Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i64);
 
   return true;
 }
@@ -446,7 +448,7 @@ bool SystemZDAGToDAGISel::SelectLAAddr(SDValue Op, SDValue Addr,
       Base = CurDAG->getTargetFrameIndex(AM.Base.FrameIndex,
                                          TLI.getPointerTy());
     Index = AM.IndexReg;
-    Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
+    Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i64);
     return true;
   }
 
