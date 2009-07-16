@@ -92,6 +92,12 @@ namespace llvm {
     /// JIT.
     unsigned getJITMatchQuality() const { return JITMatchQualityFn(); }
 
+    /// hasTargetMachine - Check if this target supports code generation.
+    bool hasTargetMachine() const { return TargetMachineCtorFn != 0; }
+
+    /// hasAsmPrinter - Check if this target supports .s printing.
+    bool hasAsmPrinter() const { return AsmPrinterCtorFn != 0; }
+
     /// createTargetMachine - Create a target specific machine implementation.
     TargetMachine *createTargetMachine(const Module &M,
                                        const std::string &Features) const {
@@ -114,8 +120,49 @@ namespace llvm {
   //
   // FIXME: Provide Target* iterator.
   struct TargetRegistry {
+    class iterator {
+      const Target *Current;
+      explicit iterator(Target *T) : Current(T) {}
+      friend class TargetRegistry;
+    public:
+      iterator(const iterator &I) : Current(I.Current) {}
+      iterator() : Current(0) {}
+
+      bool operator==(const iterator &x) const {
+        return Current == x.Current;
+      }
+      bool operator!=(const iterator &x) const {
+        return !operator==(x);
+      }
+
+      // Iterator traversal: forward iteration only
+      iterator &operator++() {          // Preincrement
+        assert(Current && "Cannot increment end iterator!");
+        Current = Current->Next;
+        return *this;
+      }
+      iterator operator++(int) {        // Postincrement
+        iterator tmp = *this; 
+        ++*this; 
+        return tmp;
+      }
+
+      const Target &operator*() const {
+        assert(Current && "Cannot dereference end iterator!");
+        return *Current;
+      }
+
+      const Target *operator->() const {
+        return &operator*();
+      }
+    };
+
     /// @name Registry Access
     /// @{
+
+    static iterator begin();
+
+    static iterator end() { return iterator(); }
 
     /// getClosestStaticTargetForTriple - Given a target triple, pick the most
     /// capable target for that triple.

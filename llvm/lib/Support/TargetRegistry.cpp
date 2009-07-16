@@ -14,20 +14,23 @@ using namespace llvm;
 // Clients are responsible for avoid race conditions in registration.
 static Target *FirstTarget = 0;
 
+TargetRegistry::iterator TargetRegistry::begin() {
+  return iterator(FirstTarget);
+}
+
 const Target *
 TargetRegistry::getClosestStaticTargetForTriple(const std::string &TT,
                                                 std::string &Error) {
-  Target *Best = 0, *EquallyBest = 0;
+  const Target *Best = 0, *EquallyBest = 0;
   unsigned BestQuality = 0;
-  // FIXME: Use iterator.
-  for (Target *i = FirstTarget; i; i = i->Next) {
-    if (unsigned Qual = i->TripleMatchQualityFn(TT)) {
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    if (unsigned Qual = it->TripleMatchQualityFn(TT)) {
       if (!Best || Qual > BestQuality) {
-        Best = i;
+        Best = &*it;
         EquallyBest = 0;
         BestQuality = Qual;
       } else if (Qual == BestQuality)
-        EquallyBest = i;
+        EquallyBest = &*it;
     }
   }
 
@@ -50,17 +53,16 @@ TargetRegistry::getClosestStaticTargetForTriple(const std::string &TT,
 const Target *
 TargetRegistry::getClosestStaticTargetForModule(const Module &M,
                                                 std::string &Error) {
-  Target *Best = 0, *EquallyBest = 0;
+  const Target *Best = 0, *EquallyBest = 0;
   unsigned BestQuality = 0;
-  // FIXME: Use iterator.
-  for (Target *i = FirstTarget; i; i = i->Next) {
-    if (unsigned Qual = i->ModuleMatchQualityFn(M)) {
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    if (unsigned Qual = it->ModuleMatchQualityFn(M)) {
       if (!Best || Qual > BestQuality) {
-        Best = i;
+        Best = &*it;
         EquallyBest = 0;
         BestQuality = Qual;
       } else if (Qual == BestQuality)
-        EquallyBest = i;
+        EquallyBest = &*it;
     }
   }
 
@@ -82,17 +84,16 @@ TargetRegistry::getClosestStaticTargetForModule(const Module &M,
 
 const Target *
 TargetRegistry::getClosestTargetForJIT(std::string &Error) {
-  Target *Best = 0, *EquallyBest = 0;
+  const Target *Best = 0, *EquallyBest = 0;
   unsigned BestQuality = 0;
-  // FIXME: Use iterator.
-  for (Target *i = FirstTarget; i; i = i->Next) {
-    if (unsigned Qual = i->JITMatchQualityFn()) {
+  for (iterator it = begin(), ie = end(); it != ie; ++it) {
+    if (unsigned Qual = it->JITMatchQualityFn()) {
       if (!Best || Qual > BestQuality) {
-        Best = i;
+        Best = &*it;
         EquallyBest = 0;
         BestQuality = Qual;
       } else if (Qual == BestQuality)
-        EquallyBest = i;
+        EquallyBest = &*it;
     }
   }
 

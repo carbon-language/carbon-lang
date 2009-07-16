@@ -23,6 +23,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/System/Path.h"
 #include <algorithm>
 #include <functional>
@@ -823,8 +824,8 @@ size_t alias::getOptionWidth() const {
 // Print out the option for the alias.
 void alias::printOptionInfo(size_t GlobalWidth) const {
   size_t L = std::strlen(ArgStr);
-  cout << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
-       << HelpStr << "\n";
+  cerr << "  -" << ArgStr << std::string(GlobalWidth-L-6, ' ') << " - "
+         << HelpStr << "\n";
 }
 
 
@@ -1140,6 +1141,23 @@ public:
 #endif
         cout << ".\n";
         cout << "  Built " << __DATE__ << "(" << __TIME__ << ").\n";
+        cout << "\n";
+        cout << "  Registered Targets:\n";
+
+        size_t Width = 0;
+        for (TargetRegistry::iterator it = TargetRegistry::begin(), 
+               ie = TargetRegistry::end(); it != ie; ++it)
+          Width = std::max(Width, ::strlen(it->getName()));
+
+        unsigned NumTargets = 0;
+        for (TargetRegistry::iterator it = TargetRegistry::begin(), 
+               ie = TargetRegistry::end(); it != ie; ++it, ++NumTargets) {
+          cout << "    " << it->getName()
+               << std::string(Width - ::strlen(it->getName()), ' ') << " - "
+               << it->getShortDescription() << "\n";
+        }
+        if (!NumTargets)
+          cout << "    (none)\n";
   }
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
