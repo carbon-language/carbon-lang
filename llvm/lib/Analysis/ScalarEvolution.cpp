@@ -960,6 +960,22 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
             return getAddRecExpr(getSignExtendExpr(Start, Ty),
                                  getSignExtendExpr(Step, Ty),
                                  L);
+
+          // Similar to above, only this time treat the step value as unsigned.
+          // This covers loops that count up with an unsigned step.
+          const SCEV *UMul =
+            getMulExpr(CastedMaxBECount,
+                       getTruncateOrZeroExtend(Step, Start->getType()));
+          Add = getAddExpr(Start, UMul);
+          OperandExtendedAdd =
+            getAddExpr(getZeroExtendExpr(Start, WideTy),
+                       getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
+                                  getZeroExtendExpr(Step, WideTy)));
+          if (getZeroExtendExpr(Add, WideTy) == OperandExtendedAdd)
+            // Return the expression with the addrec on the outside.
+            return getAddRecExpr(getSignExtendExpr(Start, Ty),
+                                 getZeroExtendExpr(Step, Ty),
+                                 L);
         }
 
         // If the backedge is guarded by a comparison with the pre-inc value
@@ -4248,7 +4264,7 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
 
   switch (Pred) {
   default:
-    assert(0 && "Unexpected ICmpInst::Predicate value!");
+    llvm_unreachable("Unexpected ICmpInst::Predicate value!");
     break;
   case ICmpInst::ICMP_SGT:
     Pred = ICmpInst::ICMP_SLT;
@@ -4556,23 +4572,32 @@ ScalarEvolution::isNecessaryCondOperands(ICmpInst::Predicate Pred,
                                          const SCEV *FoundLHS,
                                          const SCEV *FoundRHS) {
   switch (Pred) {
-  default: break;
+  default: llvm_unreachable("Unexpected ICmpInst::Predicate value!");
+  case ICmpInst::ICMP_EQ:
+  case ICmpInst::ICMP_NE:
+    if (HasSameValue(LHS, FoundLHS) && HasSameValue(RHS, FoundRHS))
+      return true;
+    break;
   case ICmpInst::ICMP_SLT:
+  case ICmpInst::ICMP_SLE:
     if (isKnownPredicate(ICmpInst::ICMP_SLE, LHS, FoundLHS) &&
         isKnownPredicate(ICmpInst::ICMP_SGE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_SGT:
+  case ICmpInst::ICMP_SGE:
     if (isKnownPredicate(ICmpInst::ICMP_SGE, LHS, FoundLHS) &&
         isKnownPredicate(ICmpInst::ICMP_SLE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_ULE:
     if (isKnownPredicate(ICmpInst::ICMP_ULE, LHS, FoundLHS) &&
         isKnownPredicate(ICmpInst::ICMP_UGE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_UGE:
     if (isKnownPredicate(ICmpInst::ICMP_UGE, LHS, FoundLHS) &&
         isKnownPredicate(ICmpInst::ICMP_ULE, RHS, FoundRHS))
       return true;
