@@ -104,25 +104,48 @@ let isBranch = 1, isTerminator = 1 in {
   }
 
   let Uses = [PSW] in {
-    def JE  : Pseudo<(outs), (ins brtarget:$dst),
-                     "je\t$dst",
-                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_E)]>;
-    def JNE : Pseudo<(outs), (ins brtarget:$dst),
-                     "jne\t$dst",
-                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NE)]>;
+    def JO  : Pseudo<(outs), (ins brtarget:$dst),
+                     "jo\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_O)]>;
     def JH  : Pseudo<(outs), (ins brtarget:$dst),
                      "jh\t$dst",
                      [(SystemZbrcond bb:$dst, SYSTEMZ_COND_H)]>;
+    def JNLE: Pseudo<(outs), (ins brtarget:$dst),
+                     "jnle\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NLE)]>;
     def JL  : Pseudo<(outs), (ins brtarget:$dst),
                      "jl\t$dst",
                      [(SystemZbrcond bb:$dst, SYSTEMZ_COND_L)]>;
+    def JNHE: Pseudo<(outs), (ins brtarget:$dst),
+                     "jnhe\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NHE)]>;
+    def JLH : Pseudo<(outs), (ins brtarget:$dst),
+                     "jlh\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_LH)]>;
+    def JNE : Pseudo<(outs), (ins brtarget:$dst),
+                     "jne\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NE)]>;
+    def JE  : Pseudo<(outs), (ins brtarget:$dst),
+                     "je\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_E)]>;
+    def JNLH: Pseudo<(outs), (ins brtarget:$dst),
+                     "jnlh\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NLH)]>;
     def JHE : Pseudo<(outs), (ins brtarget:$dst),
                      "jhe\t$dst",
                      [(SystemZbrcond bb:$dst, SYSTEMZ_COND_HE)]>;
+    def JNL : Pseudo<(outs), (ins brtarget:$dst),
+                     "jnl\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NL)]>;
     def JLE : Pseudo<(outs), (ins brtarget:$dst),
                      "jle\t$dst",
                      [(SystemZbrcond bb:$dst, SYSTEMZ_COND_LE)]>;
-
+    def JNH : Pseudo<(outs), (ins brtarget:$dst),
+                     "jnh\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NH)]>;
+    def JNO : Pseudo<(outs), (ins brtarget:$dst),
+                     "jno\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NO)]>;
   } // Uses = [PSW]
 } // isBranch = 1
 

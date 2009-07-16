@@ -484,8 +484,6 @@ SDValue SystemZTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
 SDValue SystemZTargetLowering::EmitCmp(SDValue LHS, SDValue RHS,
                                        ISD::CondCode CC, SDValue &SystemZCC,
                                        SelectionDAG &DAG) {
-  assert(!LHS.getValueType().isFloatingPoint() && "We don't handle FP yet");
-
   // FIXME: Emit a test if RHS is zero
 
   bool isUnsigned = false;
@@ -493,29 +491,63 @@ SDValue SystemZTargetLowering::EmitCmp(SDValue LHS, SDValue RHS,
   switch (CC) {
   default: assert(0 && "Invalid integer condition!");
   case ISD::SETEQ:
+  case ISD::SETOEQ:
     TCC = SystemZCC::E;
     break;
+  case ISD::SETUEQ:
+    TCC = SystemZCC::NLH;
+    break;
   case ISD::SETNE:
+  case ISD::SETONE:
     TCC = SystemZCC::NE;
     break;
+  case ISD::SETUNE:
+    TCC = SystemZCC::LH;
+    break;
+  case ISD::SETO:
+    TCC = SystemZCC::O;
+    break;
+  case ISD::SETUO:
+    TCC = SystemZCC::NO;
+    break;
   case ISD::SETULE:
+    if (LHS.getValueType().isFloatingPoint()) {
+      TCC = SystemZCC::NH;
+      break;
+    }
     isUnsigned = true;   // FALLTHROUGH
   case ISD::SETLE:
+  case ISD::SETOLE:
     TCC = SystemZCC::LE;
     break;
   case ISD::SETUGE:
+    if (LHS.getValueType().isFloatingPoint()) {
+      TCC = SystemZCC::NL;
+      break;
+    }
     isUnsigned = true;   // FALLTHROUGH
   case ISD::SETGE:
+  case ISD::SETOGE:
     TCC = SystemZCC::HE;
     break;
   case ISD::SETUGT:
-    isUnsigned = true;
+    if (LHS.getValueType().isFloatingPoint()) {
+      TCC = SystemZCC::NLE;
+      break;
+    }
+    isUnsigned = true;  // FALLTHROUGH
   case ISD::SETGT:
-    TCC = SystemZCC::H; // FALLTHROUGH
+  case ISD::SETOGT:
+    TCC = SystemZCC::H;
     break;
   case ISD::SETULT:
-    isUnsigned = true;
-  case ISD::SETLT:      // FALLTHROUGH
+    if (LHS.getValueType().isFloatingPoint()) {
+      TCC = SystemZCC::NHE;
+      break;
+    }
+    isUnsigned = true;  // FALLTHROUGH
+  case ISD::SETLT:
+  case ISD::SETOLT:
     TCC = SystemZCC::L;
     break;
   }

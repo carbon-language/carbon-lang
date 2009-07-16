@@ -17,12 +17,20 @@
 
 // SystemZ specific condition code. These correspond to CondCode in
 // SystemZ.h. They must be kept in synch.
-def SYSTEMZ_COND_E  : PatLeaf<(i8 0)>;
-def SYSTEMZ_COND_NE : PatLeaf<(i8 1)>;
-def SYSTEMZ_COND_H  : PatLeaf<(i8 2)>;
-def SYSTEMZ_COND_L  : PatLeaf<(i8 3)>;
-def SYSTEMZ_COND_HE : PatLeaf<(i8 4)>;
-def SYSTEMZ_COND_LE : PatLeaf<(i8 5)>;
+def SYSTEMZ_COND_O   : PatLeaf<(i8 0)>;
+def SYSTEMZ_COND_H   : PatLeaf<(i8 1)>;
+def SYSTEMZ_COND_NLE : PatLeaf<(i8 2)>;
+def SYSTEMZ_COND_L   : PatLeaf<(i8 3)>;
+def SYSTEMZ_COND_NHE : PatLeaf<(i8 4)>;
+def SYSTEMZ_COND_LH  : PatLeaf<(i8 5)>;
+def SYSTEMZ_COND_NE  : PatLeaf<(i8 6)>;
+def SYSTEMZ_COND_E   : PatLeaf<(i8 7)>;
+def SYSTEMZ_COND_NLH : PatLeaf<(i8 8)>;
+def SYSTEMZ_COND_HE  : PatLeaf<(i8 9)>;
+def SYSTEMZ_COND_NL  : PatLeaf<(i8 10)>;
+def SYSTEMZ_COND_LE  : PatLeaf<(i8 11)>;
+def SYSTEMZ_COND_NH  : PatLeaf<(i8 12)>;
+def SYSTEMZ_COND_NO  : PatLeaf<(i8 13)>;
 
 def LL16 : SDNodeXForm<imm, [{
   // Transformation function: return low 16 bits.

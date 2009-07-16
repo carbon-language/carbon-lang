@@ -26,12 +26,20 @@ namespace llvm {
     // SystemZ specific condition code. These correspond to SYSTEMZ_*_COND in
     // SystemZInstrInfo.td. They must be kept in synch.
     enum CondCodes {
-      E  = 0,
-      NE = 1,
-      H  = 2,
-      L  = 3,
-      HE = 4,
-      LE = 5
+      O   = 0,
+      H   = 1,
+      NLE = 2,
+      L   = 3,
+      NHE = 4,
+      LH  = 5,
+      NE  = 6,
+      E   = 7,
+      NLH = 8,
+      HE  = 9,
+      NL  = 10,
+      LE  = 11,
+      NH  = 12,
+      NO  = 13
     };
   }
 
