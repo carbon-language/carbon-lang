@@ -85,7 +85,13 @@ void SystemZRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   if (!hasReservedCallFrame(MF)) {
-    assert(0 && "Not implemented yet!");
+    // If the stack pointer can be changed after prologue, turn the
+    // adjcallstackup instruction into a 'sub R15, <amt>' and the
+    // adjcallstackdown instruction into 'add R15, <amt>'
+    MachineInstr *Old = I;
+    uint64_t Amount = Old->getOperand(0).getImm();
+
+    assert((Amount == 0) && "Not implemented yet!");
   }
 
   MBB.erase(I);

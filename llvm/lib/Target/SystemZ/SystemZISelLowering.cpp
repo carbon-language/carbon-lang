@@ -68,6 +68,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::BR_CC,            MVT::i64, Custom);
   setOperationAction(ISD::GlobalAddress,    MVT::i64, Custom);
   setOperationAction(ISD::JumpTable,        MVT::i64, Custom);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
 
   // FIXME: Can we lower these 2 efficiently?
   setOperationAction(ISD::SETCC,            MVT::i32, Expand);
