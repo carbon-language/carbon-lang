@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -1731,11 +1732,23 @@ GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
 /// EmitComments - Pretty-print comments for instructions
 void AsmPrinter::EmitComments(const MachineInstr &MI) const
 {
-  // No comments in MachineInstr yet
+  if (!MI.getDebugLoc().isUnknown()) {
+    DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
+
+    // Print source line info
+    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O << TAI->getCommentString() << " SrcLine " << DLT.Line << ":" << DLT.Col;
+  }
 }
 
 /// EmitComments - Pretty-print comments for instructions
 void AsmPrinter::EmitComments(const MCInst &MI) const
 {
-  // No comments in MCInst yet
+  if (!MI.getDebugLoc().isUnknown()) {
+    DebugLocTuple DLT = MF->getDebugLocTuple(MI.getDebugLoc());
+
+    // Print source line info
+    O.PadToColumn(TAI->getCommentColumn(), 1);
+    O << TAI->getCommentString() << " SrcLine " << DLT.Line << ":" << DLT.Col;
+  }
 }
