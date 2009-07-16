@@ -100,28 +100,8 @@ bool SystemZAsmPrinter::doInitialization(Module &M) {
 bool SystemZAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
+       I != E; ++I)
     printModuleLevelGV(I);
-
-    // If the global is a extern weak symbol, remember to emit the weak
-    // reference!
-    // FIXME: This is rather hacky, since we'll emit references to ALL weak
-    // stuff, not used. But currently it's the only way to deal with extern weak
-    // initializers hidden deep inside constant expressions.
-    if (I->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(I);
-  }
-
-  for (Module::const_iterator I = M.begin(), E = M.end();
-       I != E; ++I) {
-    // If the global is a extern weak symbol, remember to emit the weak
-    // reference!
-    // FIXME: This is rather hacky, since we'll emit references to ALL weak
-    // stuff, not used. But currently it's the only way to deal with extern weak
-    // initializers hidden deep inside constant expressions.
-    if (I->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(I);
-  }
 
   return AsmPrinter::doFinalization(M);
 }
@@ -244,9 +224,6 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     assert(MO.getOffset() == 0 && "No offsets allowed!");
 
     O << Name;
-
-    if (GV->hasExternalWeakLinkage())
-      ExtWeakSymbols.insert(GV);
 
     return;
   }
