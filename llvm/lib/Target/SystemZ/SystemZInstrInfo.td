@@ -13,5 +13,20 @@
 
 include "SystemZInstrFormats.td"
 
+//===----------------------------------------------------------------------===//
+// SystemZ Specific Node Definitions.
+//===----------------------------------------------------------------------===//
+def SystemZretflag : SDNode<"SystemZISD::RET_FLAG", SDTNone,
+                     [SDNPHasChain, SDNPOptInFlag]>;
+
 let neverHasSideEffects = 1 in
 def NOP : Pseudo<(outs), (ins), "# no-op", []>;
+
+//===----------------------------------------------------------------------===//
+//  Control Flow Instructions...
+//
+
+// FIXME: Provide proper encoding!
+let isReturn = 1, isTerminator = 1 in {
+  def RET : Pseudo<(outs), (ins), "br\t%r14", [(SystemZretflag)]>;
+}

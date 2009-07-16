@@ -22,7 +22,10 @@
 namespace llvm {
   namespace SystemZISD {
     enum {
-      FIRST_NUMBER = ISD::BUILTIN_OP_END
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
+
+      /// Return with a flag operand. Operand 0 is the chain operand.
+      RET_FLAG
     };
   }
 
@@ -39,6 +42,14 @@ namespace llvm {
     /// getTargetNodeName - This method returns the name of a target specific
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
+
+    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
+
+    SDNode* LowerCallResult(SDValue Chain, SDValue InFlag,
+                            CallSDNode *TheCall,
+                            unsigned CallingConv, SelectionDAG &DAG);
 
   private:
     const SystemZSubtarget &Subtarget;
