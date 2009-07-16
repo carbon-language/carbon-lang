@@ -14,6 +14,17 @@
 
 // FIXME: multiclassify!
 
+//===----------------------------------------------------------------------===//
+// FP Pattern fragments
+
+def fpimm0 : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def fpimmneg0 : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(-0.0);
+}]>;
+
 let usesCustomDAGSchedInserter = 1 in {
   def SelectF32 : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2, i8imm:$cc),
                         "# SelectF32 PSEUDO",
@@ -27,6 +38,16 @@ let usesCustomDAGSchedInserter = 1 in {
 
 //===----------------------------------------------------------------------===//
 // Move Instructions
+
+// Floating point constant loads.
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+def LD_Fp032 : Pseudo<(outs FP32:$dst), (ins),
+                      "lzer\t{$dst}",
+                      [(set FP32:$dst, fpimm0)]>;
+def LD_Fp064 : Pseudo<(outs FP64:$dst), (ins),
+                      "lzdr\t{$dst}",
+                      [(set FP64:$dst, fpimm0)]>;
+}
 
 let neverHasSideEffects = 1 in {
 def FMOV32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
@@ -211,6 +232,20 @@ def FDIV64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2),
 
 } // isTwoAddress = 1
 
+def FSQRT32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
+                       "sqebr\t{$dst, $src}",
+                       [(set FP32:$dst, (fsqrt FP32:$src))]>;
+def FSQRT64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
+                       "sqdbr\t{$dst, $src}",
+                       [(set FP64:$dst, (fsqrt FP64:$src))]>;
+
+def FSQRT32rm : Pseudo<(outs FP32:$dst), (ins rriaddr:$src),
+                       "sqeb\t{$dst, $src}",
+                       [(set FP32:$dst, (fsqrt (load rriaddr:$src)))]>;
+def FSQRT64rm : Pseudo<(outs FP64:$dst), (ins rriaddr:$src),
+                       "sqdb\t{$dst, $src}",
+                       [(set FP64:$dst, (fsqrt (load rriaddr:$src)))]>;
+
 def FROUND64r32 : Pseudo<(outs FP32:$dst), (ins FP64:$src),
                          "ledbr\t{$dst, $src}",
                          [(set FP32:$dst, (fround FP64:$src))]>;
@@ -281,3 +316,11 @@ def FCMP64rm : Pseudo<(outs), (ins FP64:$src1, rriaddr:$src2),
                       [(SystemZcmp FP64:$src1, (load rriaddr:$src2)),
                        (implicit PSW)]>;
 } // Defs = [PSW]
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns
+//===----------------------------------------------------------------------===//
+
+// Floating point constant -0.0
+def : Pat<(f32 fpimmneg0), (FNEG32rr (LD_Fp032))>;
+def : Pat<(f64 fpimmneg0), (FNEG64rr (LD_Fp064))>;

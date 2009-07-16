@@ -51,6 +51,11 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   if (!UseSoftFloat) {
     addRegisterClass(MVT::f32, SystemZ::FP32RegisterClass);
     addRegisterClass(MVT::f64, SystemZ::FP64RegisterClass);
+
+    addLegalFPImmediate(APFloat(+0.0));  // lzer
+    addLegalFPImmediate(APFloat(+0.0f)); // lzdr
+    addLegalFPImmediate(APFloat(-0.0));  // lzer + lner
+    addLegalFPImmediate(APFloat(-0.0f)); // lzdr + lndr
   }
 
   // Compute derived properties from the register classes
