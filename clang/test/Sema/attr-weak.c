@@ -11,3 +11,5 @@ int __attribute__((weak_import)) g5(void) {
 struct __attribute__((weak)) s0 {}; // expected-warning {{'weak' attribute only applies to variable and function types}}
 struct __attribute__((weak_import)) s1 {}; // expected-warning {{'weak_import' attribute only applies to variable and function types}}
 
+static int x __attribute__((weak)); // expected-error {{weak declaration of 'x' must be public}}
+

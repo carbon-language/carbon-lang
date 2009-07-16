@@ -796,6 +796,19 @@ static void HandleWeakAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
+  /* weak only applies to non-static declarations */
+  bool isStatic = false;
+  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    isStatic = VD->getStorageClass() == VarDecl::Static;
+  } else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    isStatic = FD->getStorageClass() == FunctionDecl::Static;
+  }
+  if (isStatic) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_weak_static) <<
+      dyn_cast<NamedDecl>(D)->getNameAsString();
+    return;
+  }
+
   // TODO: could also be applied to methods?
   if (!isa<FunctionDecl>(D) && !isa<VarDecl>(D)) {
     S.Diag(Attr.getLoc(), diag::warn_attribute_wrong_decl_type)
