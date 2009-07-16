@@ -57,7 +57,15 @@ def FMOV64mry : Pseudo<(outs), (ins rriaddr:$dst, FP64:$src),
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
 
+
+
 let isTwoAddress = 1 in {
+def FNEG32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
+                       "lcebr\t{$dst}",
+                       [(set FP32:$dst, (fneg FP32:$src))]>;
+def FNEG64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
+                       "lcdbr\t{$dst}",
+                       [(set FP64:$dst, (fneg FP64:$src))]>;
 
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
 def FADD32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
