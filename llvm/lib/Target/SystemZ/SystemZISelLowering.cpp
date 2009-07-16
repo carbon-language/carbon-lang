@@ -545,10 +545,38 @@ SDValue SystemZTargetLowering::LowerGlobalAddress(SDValue Op,
                                                   SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-  SDValue GA = DAG.getTargetGlobalAddress(GV, getPointerTy());
+  int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
 
-  // FIXME: Verify stuff for constant globals entries
-  return DAG.getNode(SystemZISD::PCRelativeWrapper, dl, getPointerTy(), GA);
+  bool IsPic = getTargetMachine().getRelocationModel() == Reloc::PIC_;
+  bool ExtraLoadRequired =
+    Subtarget.GVRequiresExtraLoad(GV, getTargetMachine(), false);
+
+  SDValue Result;
+  if (!IsPic && !ExtraLoadRequired) {
+    Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
+    Offset = 0;
+  } else {
+    unsigned char OpFlags = 0;
+    if (ExtraLoadRequired)
+      OpFlags = SystemZII::MO_GOTENT;
+
+    Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0, OpFlags);
+  }
+
+  Result = DAG.getNode(SystemZISD::PCRelativeWrapper, dl,
+                       getPointerTy(), Result);
+
+  if (ExtraLoadRequired)
+    Result = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), Result,
+                         PseudoSourceValue::getGOT(), 0);
+
+  // If there was a non-zero offset that we didn't fold, create an explicit
+  // addition for it.
+  if (Offset != 0)
+    Result = DAG.getNode(ISD::ADD, dl, getPointerTy(), Result,
+                         DAG.getConstant(Offset, getPointerTy()));
+
+  return Result;
 }
 
 

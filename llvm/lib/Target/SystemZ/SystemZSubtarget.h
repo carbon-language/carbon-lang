@@ -21,6 +21,7 @@
 namespace llvm {
 class Module;
 class TargetMachine;
+class GlobalValue;
 
 class SystemZSubtarget : public TargetSubtarget {
   bool HasZ10Insts;
@@ -37,6 +38,9 @@ public:
                                      const std::string &CPU);
 
   bool isZ10() const { return HasZ10Insts; }
+
+  bool GVRequiresExtraLoad(const GlobalValue* GV, const TargetMachine& TM,
+                           bool isDirectCall) const;
 };
 } // End llvm namespace
 

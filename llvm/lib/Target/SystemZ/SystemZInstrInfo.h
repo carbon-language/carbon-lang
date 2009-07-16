@@ -23,6 +23,30 @@ namespace llvm {
 
 class SystemZTargetMachine;
 
+/// SystemZII - This namespace holds all of the target specific flags that
+/// instruction info tracks.
+///
+namespace SystemZII {
+  enum {
+    //===------------------------------------------------------------------===//
+    // SystemZ Specific MachineOperand flags.
+
+    MO_NO_FLAG = 0,
+
+    /// MO_GOTENT - On a symbol operand this indicates that the immediate is
+    /// the offset to the location of the symbol name from the base of the GOT.
+    ///
+    ///    SYMBOL_LABEL @GOTENT
+    MO_GOTENT = 1,
+
+    /// MO_PLT - On a symbol operand this indicates that the immediate is
+    /// offset to the PLT entry of symbol name from the current code location.
+    ///
+    ///    SYMBOL_LABEL @PLT
+    MO_PLT = 2
+  };
+}
+
 class SystemZInstrInfo : public TargetInstrInfoImpl {
   const SystemZRegisterInfo RI;
   SystemZTargetMachine &TM;

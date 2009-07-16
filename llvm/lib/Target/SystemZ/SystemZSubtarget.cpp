@@ -14,6 +14,7 @@
 #include "SystemZSubtarget.h"
 #include "SystemZ.h"
 #include "SystemZGenSubtarget.inc"
+#include "llvm/GlobalValue.h"
 #include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
@@ -25,4 +26,22 @@ SystemZSubtarget::SystemZSubtarget(const TargetMachine &TM, const Module &M,
 
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
+}
+
+/// True if accessing the GV requires an extra load.
+bool SystemZSubtarget::GVRequiresExtraLoad(const GlobalValue* GV,
+                                           const TargetMachine& TM,
+                                           bool isDirectCall) const {
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    // Extra load is needed for all externally visible.
+    if (isDirectCall)
+      return false;
+
+    if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
+      return false;
+
+    return true;
+  }
+
+  return false;
 }

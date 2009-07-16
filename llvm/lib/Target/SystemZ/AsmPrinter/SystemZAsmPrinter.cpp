@@ -50,6 +50,7 @@ namespace {
 
     void printOperand(const MachineInstr *MI, int OpNum,
                       const char* Modifier = 0);
+    void printPCRelImmOperand(const MachineInstr *MI, int OpNum);
     void printRIAddrOperand(const MachineInstr *MI, int OpNum,
                             const char* Modifier = 0);
     void printRRIAddrOperand(const MachineInstr *MI, int OpNum,
@@ -186,6 +187,40 @@ void SystemZAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   assert(0 && "Should not happen");
 }
 
+void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum) {
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  switch (MO.getType()) {
+  case MachineOperand::MO_GlobalAddress: {
+    const GlobalValue *GV = MO.getGlobal();
+    std::string Name = Mang->getValueName(GV);
+
+    O << Name;
+
+    // Assemble calls via PLT for externally visible symbols if PIC.
+    if (TM.getRelocationModel() == Reloc::PIC_ &&
+        !GV->hasHiddenVisibility() && !GV->hasProtectedVisibility() &&
+        !GV->hasLocalLinkage())
+      O << "@PLT";
+
+    printOffset(MO.getOffset());
+    return;
+  }
+  case MachineOperand::MO_ExternalSymbol: {
+    std::string Name(TAI->getGlobalPrefix());
+    Name += MO.getSymbolName();
+    O << Name;
+
+    if (TM.getRelocationModel() == Reloc::PIC_)
+      O << "@PLT";
+
+    return;
+  }
+  default:
+    assert(0 && "Not implemented yet!");
+  }
+}
+
+
 void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                      const char* Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNum);
@@ -219,23 +254,31 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
-
     std::string Name = Mang->getValueName(GV);
-    assert(MO.getOffset() == 0 && "No offsets allowed!");
 
     O << Name;
-
-    return;
+    break;
   }
   case MachineOperand::MO_ExternalSymbol: {
     std::string Name(TAI->getGlobalPrefix());
     Name += MO.getSymbolName();
     O << Name;
-    return;
+    break;
   }
   default:
     assert(0 && "Not implemented yet!");
   }
+
+  switch (MO.getTargetFlags()) {
+  default:
+    assert(0 && "Unknown target flag on GV operand");
+  case SystemZII::MO_NO_FLAG:
+    break;
+  case SystemZII::MO_GOTENT:    O << "@GOTENT";    break;
+  case SystemZII::MO_PLT:       O << "@PLT";       break;
+  }
+
+  printOffset(MO.getOffset());
 }
 
 void SystemZAsmPrinter::printRIAddrOperand(const MachineInstr *MI, int OpNum,

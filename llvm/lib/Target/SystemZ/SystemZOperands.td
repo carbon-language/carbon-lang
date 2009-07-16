@@ -244,6 +244,10 @@ def s32imm64 : Operand<i64> {
   let PrintMethod = "printS32ImmOperand";
 }
 
+def imm_pcrel : Operand<i64> {
+  let PrintMethod = "printPCRelImmOperand";
+}
+
 //===----------------------------------------------------------------------===//
 // SystemZ Operand Definitions.
 //===----------------------------------------------------------------------===//
