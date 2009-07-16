@@ -173,33 +173,42 @@ SDValue SystemZTargetLowering::LowerCCCArguments(SDValue Op,
     if (VA.isRegLoc()) {
       // Arguments passed in registers
       MVT RegVT = VA.getLocVT();
+      TargetRegisterClass *RC;
       switch (RegVT.getSimpleVT()) {
       default:
         cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
              << RegVT.getSimpleVT()
              << "\n";
         abort();
-      case MVT::i64:
-        unsigned VReg =
-          RegInfo.createVirtualRegister(SystemZ::GR64RegisterClass);
-        RegInfo.addLiveIn(VA.getLocReg(), VReg);
-        SDValue ArgValue = DAG.getCopyFromReg(Root, dl, VReg, RegVT);
-
-        // If this is an 8/16/32-bit value, it is really passed promoted to 64
-        // bits. Insert an assert[sz]ext to capture this, then truncate to the
-        // right size.
-        if (VA.getLocInfo() == CCValAssign::SExt)
-          ArgValue = DAG.getNode(ISD::AssertSext, dl, RegVT, ArgValue,
-                                 DAG.getValueType(VA.getValVT()));
-        else if (VA.getLocInfo() == CCValAssign::ZExt)
-          ArgValue = DAG.getNode(ISD::AssertZext, dl, RegVT, ArgValue,
-                                 DAG.getValueType(VA.getValVT()));
-
-        if (VA.getLocInfo() != CCValAssign::Full)
-          ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
-
-        ArgValues.push_back(ArgValue);
+       case MVT::i64:
+        RC = SystemZ::GR64RegisterClass;
+        break;
+       case MVT::f32:
+        RC = SystemZ::FP32RegisterClass;
+        break;
+       case MVT::f64:
+        RC = SystemZ::FP64RegisterClass;
+        break;
       }
+
+      unsigned VReg = RegInfo.createVirtualRegister(RC);
+      RegInfo.addLiveIn(VA.getLocReg(), VReg);
+      SDValue ArgValue = DAG.getCopyFromReg(Root, dl, VReg, RegVT);
+
+      // If this is an 8/16/32-bit value, it is really passed promoted to 64
+      // bits. Insert an assert[sz]ext to capture this, then truncate to the
+      // right size.
+      if (VA.getLocInfo() == CCValAssign::SExt)
+        ArgValue = DAG.getNode(ISD::AssertSext, dl, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+      else if (VA.getLocInfo() == CCValAssign::ZExt)
+        ArgValue = DAG.getNode(ISD::AssertZext, dl, RegVT, ArgValue,
+                               DAG.getValueType(VA.getValVT()));
+
+      if (VA.getLocInfo() != CCValAssign::Full)
+        ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
+
+      ArgValues.push_back(ArgValue);
     } else {
       // Sanity check
       assert(VA.isMemLoc());
