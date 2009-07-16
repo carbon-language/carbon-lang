@@ -570,7 +570,7 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   if (Range.ult(llvm::APInt(Range.getBitWidth(), 64))) {
     // Range is small enough to add multiple switch instruction cases.
     for (unsigned i = 0, e = Range.getZExtValue() + 1; i != e; ++i) {
-      SwitchInsn->addCase(llvm::ConstantInt::get(LHS), CaseDest);
+      SwitchInsn->addCase(VMContext.getConstantInt(LHS), CaseDest);
       LHS++;
     }
     return;
@@ -591,10 +591,10 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
 
   // Emit range check.
   llvm::Value *Diff = 
-    Builder.CreateSub(SwitchInsn->getCondition(), llvm::ConstantInt::get(LHS), 
+    Builder.CreateSub(SwitchInsn->getCondition(), VMContext.getConstantInt(LHS), 
                       "tmp");
   llvm::Value *Cond = 
-    Builder.CreateICmpULE(Diff, llvm::ConstantInt::get(Range), "tmp");
+    Builder.CreateICmpULE(Diff, VMContext.getConstantInt(Range), "tmp");
   Builder.CreateCondBr(Cond, CaseDest, FalseDest);
 
   // Restore the appropriate insertion point.
@@ -613,7 +613,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   EmitBlock(createBasicBlock("sw.bb"));
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
   llvm::APSInt CaseVal = S.getLHS()->EvaluateAsInt(getContext());
-  SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), CaseDest);
+  SwitchInsn->addCase(VMContext.getConstantInt(CaseVal), CaseDest);
   
   // Recursively emitting the statement is acceptable, but is not wonderful for
   // code where we have many case statements nested together, i.e.:
@@ -631,7 +631,7 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   while (NextCase && NextCase->getRHS() == 0) {
     CurCase = NextCase;
     CaseVal = CurCase->getLHS()->EvaluateAsInt(getContext());
-    SwitchInsn->addCase(llvm::ConstantInt::get(CaseVal), CaseDest);
+    SwitchInsn->addCase(VMContext.getConstantInt(CaseVal), CaseDest);
 
     NextCase = dyn_cast<CaseStmt>(CurCase->getSubStmt());
   }
