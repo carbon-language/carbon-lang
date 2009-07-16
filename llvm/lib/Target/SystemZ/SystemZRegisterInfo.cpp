@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
@@ -77,9 +78,46 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   assert(0 && "Not implemented yet!");
 }
 
+int SystemZRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const {
+  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  int Offset = MFI->getObjectOffset(FI) + MFI->getOffsetAdjustment();
+  uint64_t StackSize = MFI->getStackSize();
+
+  Offset += StackSize - TFI.getOffsetOfLocalArea();
+
+  // Skip the register save area if we generated the stack frame.
+  if (StackSize)
+    Offset -= TFI.getOffsetOfLocalArea();
+
+  return Offset;
+}
+
 void SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                             int SPAdj, RegScavenger *RS) const {
-  assert(0 && "Not implemented yet!");
+  assert(SPAdj == 0 && "Unxpected");
+
+  unsigned i = 0;
+  MachineInstr &MI = *II;
+  MachineFunction &MF = *MI.getParent()->getParent();
+  while (!MI.getOperand(i).isFI()) {
+    ++i;
+    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  }
+
+  int FrameIndex = MI.getOperand(i).getIndex();
+
+  unsigned BasePtr = (hasFP(MF) ? SystemZ::R11D : SystemZ::R15D);
+
+  // This must be part of a rri or ri operand memory reference.  Replace the
+  // FrameIndex with base register with BasePtr.  Add an offset to the
+  // displacement field.
+  MI.getOperand(i).ChangeToRegister(BasePtr, false);
+
+  // Offset is a 20-bit integer.
+  // FIXME: handle "too long" displacements.
+  int Offset = getFrameIndexOffset(MF, FrameIndex) + MI.getOperand(i+1).getImm();
+  MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
 
 void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {

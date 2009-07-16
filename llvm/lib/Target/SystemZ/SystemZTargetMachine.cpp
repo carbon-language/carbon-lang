@@ -41,7 +41,7 @@ SystemZTargetMachine::SystemZTargetMachine(const Module &M, const std::string &F
   : Subtarget(*this, M, FS),
     DataLayout("E-p:64:64:64-i1:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128"),
     InstrInfo(*this), TLInfo(*this),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -160) {
 }
 
 bool SystemZTargetMachine::addInstSelector(PassManagerBase &PM,

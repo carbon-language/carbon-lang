@@ -39,6 +39,8 @@ struct SystemZRegisterInfo : public SystemZGenRegisterInfo {
 
   bool hasFP(const MachineFunction &MF) const;
 
+  int getFrameIndexOffset(MachineFunction &MF, int FI) const;
+
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
