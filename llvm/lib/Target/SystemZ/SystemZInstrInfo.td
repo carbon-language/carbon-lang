@@ -45,6 +45,16 @@ def HH16 : SDNodeXForm<imm, [{
   return getI16Imm((N->getZExtValue() & 0xFFFF000000000000ULL) >> 48);
 }]>;
 
+def LO32 : SDNodeXForm<imm, [{
+  // Transformation function: return low 32 bits.
+  return getI32Imm(N->getZExtValue() & 0x00000000FFFFFFFFULL);
+}]>;
+
+def HI32 : SDNodeXForm<imm, [{
+  // Transformation function: return bits 32-63.
+  return getI32Imm(N->getZExtValue() >> 32);
+}]>;
+
 def i64ll16 : PatLeaf<(i64 imm), [{  
   // i64ll16 predicate - true if the 64-bit immediate has only rightmost 16
   // bits set.
@@ -73,6 +83,24 @@ def immSExt16 : PatLeaf<(i64 imm), [{
   return ((int64_t)val == (int16_t)val);
 }]>;
 
+def immSExt32 : PatLeaf<(i64 imm), [{
+  // immSExt32 predicate - true if the immediate fits in a 32-bit sign extended
+  // field.
+  uint64_t val = N->getZExtValue();
+  return ((int64_t)val == (int32_t)val);
+}]>;
+
+def i64lo32 : PatLeaf<(i64 imm), [{
+  // i64lo32 predicate - true if the 64-bit immediate has only rightmost 32
+  // bits set.
+  return ((N->getZExtValue() & 0x00000000FFFFFFFFULL) == N->getZExtValue());
+}], LO32>;
+
+def i64hi32 : PatLeaf<(i64 imm), [{
+  // i64hi32 predicate - true if the 64-bit immediate has only bits 32-63 set.
+  return ((N->getZExtValue() & 0xFFFFFFFF00000000ULL) == N->getZExtValue());
+}], HI32>;
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
 //
@@ -97,6 +125,29 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
 def MOV64ri16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
                        "lghi\t{$dst, $src}",
                        [(set GR64:$dst, immSExt16:$src)]>;
+
+def MOV64rill16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                         "llill\t{$dst, $src}",
+                         [(set GR64:$dst, i64ll16:$src)]>;
+def MOV64rilh16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                         "llilh\t{$dst, $src}",
+                         [(set GR64:$dst, i64lh16:$src)]>;
+def MOV64rihl16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                         "llihl\t{$dst, $src}",
+                         [(set GR64:$dst, i64hl16:$src)]>;
+def MOV64rihh16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                         "llihh\t{$dst, $src}",
+                         [(set GR64:$dst, i64hh16:$src)]>;
+// FIXME: these 3 instructions seem to require extimm facility
+def MOV64ri32 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                       "lgfi\t{$dst, $src}",
+                       [(set GR64:$dst, immSExt32:$src)]>;
+def MOV64rilo32 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                         "llilf\t{$dst, $src}",
+                         [(set GR64:$dst, i64lo32:$src)]>;
+def MOV64rihi32 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                         "llihf\t{$dst, $src}",
+                         [(set GR64:$dst, i64hi32:$src)]>;
 }
 
 //===----------------------------------------------------------------------===//
