@@ -92,3 +92,30 @@ void f5(int cond, id<P0> x, C *y) {
 void f6(int cond, C *x, D *y) {
   (cond ? x : y).intProp = 1; // expected-warning {{incompatible operand types}}, expected-error {{property 'intProp' not found on object of type 'id'}}
 }
+
+id f7(int a, id<P0> x, A* p) {
+  return a ? x : p;
+}
+
+void f8(int a, A<P0> *x, A *y) {
+  [ (a ? x : y ) intProp ];
+}
+
+void f9(int a, A<P0> *x, A<P1> *y) {
+  id l0 = (a ? x : y ); // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')'}}
+  A<P0> *l1 = (a ? x : y ); // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')}}
+  A<P1> *l2 = (a ? x : y ); // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')}}
+  [ (a ? x : y ) intProp ]; // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')}}
+}
+
+void f10(int a, id<P0> x, id y) {
+  [ (a ? x : y ) intProp ];
+}
+
+void f11(int a, id<P0> x, id<P1> y) {
+  [ (a ? x : y ) intProp ]; // expected-warning {{incompatible operand types ('id<P0>' and 'id<P1>')}}
+}
+
+void f12(int a, A<P0> *x, A<P1> *y) {
+  A<P1>* l0 = (a ? x : y ); // expected-warning {{incompatible operand types ('A<P0> *' and 'A<P1> *')}}
+}
