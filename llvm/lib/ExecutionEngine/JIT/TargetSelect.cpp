@@ -16,7 +16,7 @@
 #include "JIT.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
-#include "llvm/Support/RegistryParser.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetMachine.h"
