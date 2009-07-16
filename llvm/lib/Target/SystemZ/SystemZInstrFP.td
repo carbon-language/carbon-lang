@@ -132,13 +132,13 @@ def FADD64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2),
                         (implicit PSW)]>;
 }
 
-def FADD32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2),
+def FADD32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr12:$src2),
                        "aeb\t{$dst, $src2}",
-                       [(set FP32:$dst, (fadd FP32:$src1, (load rriaddr:$src2))),
+                       [(set FP32:$dst, (fadd FP32:$src1, (load rriaddr12:$src2))),
                         (implicit PSW)]>;
-def FADD64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2),
+def FADD64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr12:$src2),
                        "adb\t{$dst, $src2}",
-                       [(set FP64:$dst, (fadd FP64:$src1, (load rriaddr:$src2))),
+                       [(set FP64:$dst, (fadd FP64:$src1, (load rriaddr12:$src2))),
                         (implicit PSW)]>;
 
 def FSUB32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
@@ -150,13 +150,13 @@ def FSUB64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2),
                        [(set FP64:$dst, (fsub FP64:$src1, FP64:$src2)),
                         (implicit PSW)]>;
 
-def FSUB32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2),
+def FSUB32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr12:$src2),
                        "seb\t{$dst, $src2}",
-                       [(set FP32:$dst, (fsub FP32:$src1, (load rriaddr:$src2))),
+                       [(set FP32:$dst, (fsub FP32:$src1, (load rriaddr12:$src2))),
                         (implicit PSW)]>;
-def FSUB64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2),
+def FSUB64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr12:$src2),
                        "sdb\t{$dst, $src2}",
-                       [(set FP64:$dst, (fsub FP64:$src1, (load rriaddr:$src2))),
+                       [(set FP64:$dst, (fsub FP64:$src1, (load rriaddr12:$src2))),
                         (implicit PSW)]>;
 } // Defs = [PSW]
 
@@ -169,20 +169,20 @@ def FMUL64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2),
                        [(set FP64:$dst, (fmul FP64:$src1, FP64:$src2))]>;
 }
 
-def FMUL32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2),
+def FMUL32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr12:$src2),
                        "meeb\t{$dst, $src2}",
-                       [(set FP32:$dst, (fmul FP32:$src1, (load rriaddr:$src2)))]>;
-def FMUL64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2),
+                       [(set FP32:$dst, (fmul FP32:$src1, (load rriaddr12:$src2)))]>;
+def FMUL64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr12:$src2),
                        "mdb\t{$dst, $src2}",
-                       [(set FP64:$dst, (fmul FP64:$src1, (load rriaddr:$src2)))]>;
+                       [(set FP64:$dst, (fmul FP64:$src1, (load rriaddr12:$src2)))]>;
 
 def FMADD32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2, FP32:$src3),
                        "maebr\t{$dst, $src3, $src2}",
                        [(set FP32:$dst, (fadd (fmul FP32:$src2, FP32:$src3),
                                               FP32:$src1))]>;
-def FMADD32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2, FP32:$src3),
+def FMADD32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr12:$src2, FP32:$src3),
                        "maeb\t{$dst, $src3, $src2}",
-                       [(set FP32:$dst, (fadd (fmul (load rriaddr:$src2),
+                       [(set FP32:$dst, (fadd (fmul (load rriaddr12:$src2),
                                                      FP32:$src3),
                                               FP32:$src1))]>;
 
@@ -190,9 +190,9 @@ def FMADD64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2, FP64:$src3
                        "madbr\t{$dst, $src3, $src2}",
                        [(set FP64:$dst, (fadd (fmul FP64:$src2, FP64:$src3),
                                               FP64:$src1))]>;
-def FMADD64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2, FP64:$src3),
+def FMADD64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr12:$src2, FP64:$src3),
                        "madb\t{$dst, $src3, $src2}",
-                       [(set FP64:$dst, (fadd (fmul (load rriaddr:$src2),
+                       [(set FP64:$dst, (fadd (fmul (load rriaddr12:$src2),
                                                      FP64:$src3),
                                               FP64:$src1))]>;
 
@@ -200,9 +200,9 @@ def FMSUB32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2, FP32:$src3
                        "msebr\t{$dst, $src3, $src2}",
                        [(set FP32:$dst, (fsub (fmul FP32:$src2, FP32:$src3),
                                               FP32:$src1))]>;
-def FMSUB32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2, FP32:$src3),
+def FMSUB32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr12:$src2, FP32:$src3),
                        "mseb\t{$dst, $src3, $src2}",
-                       [(set FP32:$dst, (fsub (fmul (load rriaddr:$src2),
+                       [(set FP32:$dst, (fsub (fmul (load rriaddr12:$src2),
                                                      FP32:$src3),
                                               FP32:$src1))]>;
 
@@ -210,9 +210,9 @@ def FMSUB64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2, FP64:$src3
                        "msdbr\t{$dst, $src3, $src2}",
                        [(set FP64:$dst, (fsub (fmul FP64:$src2, FP64:$src3),
                                               FP64:$src1))]>;
-def FMSUB64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2, FP64:$src3),
+def FMSUB64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr12:$src2, FP64:$src3),
                        "msdb\t{$dst, $src3, $src2}",
-                       [(set FP64:$dst, (fsub (fmul (load rriaddr:$src2),
+                       [(set FP64:$dst, (fsub (fmul (load rriaddr12:$src2),
                                                      FP64:$src3),
                                               FP64:$src1))]>;
 
@@ -223,12 +223,12 @@ def FDIV64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2),
                        "ddbr\t{$dst, $src2}",
                        [(set FP64:$dst, (fdiv FP64:$src1, FP64:$src2))]>;
 
-def FDIV32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2),
+def FDIV32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr12:$src2),
                        "deb\t{$dst, $src2}",
-                       [(set FP32:$dst, (fdiv FP32:$src1, (load rriaddr:$src2)))]>;
-def FDIV64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2),
+                       [(set FP32:$dst, (fdiv FP32:$src1, (load rriaddr12:$src2)))]>;
+def FDIV64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr12:$src2),
                        "ddb\t{$dst, $src2}",
-                       [(set FP64:$dst, (fdiv FP64:$src1, (load rriaddr:$src2)))]>;
+                       [(set FP64:$dst, (fdiv FP64:$src1, (load rriaddr12:$src2)))]>;
 
 } // isTwoAddress = 1
 
@@ -239,12 +239,12 @@ def FSQRT64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
                        "sqdbr\t{$dst, $src}",
                        [(set FP64:$dst, (fsqrt FP64:$src))]>;
 
-def FSQRT32rm : Pseudo<(outs FP32:$dst), (ins rriaddr:$src),
+def FSQRT32rm : Pseudo<(outs FP32:$dst), (ins rriaddr12:$src),
                        "sqeb\t{$dst, $src}",
-                       [(set FP32:$dst, (fsqrt (load rriaddr:$src)))]>;
-def FSQRT64rm : Pseudo<(outs FP64:$dst), (ins rriaddr:$src),
+                       [(set FP32:$dst, (fsqrt (load rriaddr12:$src)))]>;
+def FSQRT64rm : Pseudo<(outs FP64:$dst), (ins rriaddr12:$src),
                        "sqdb\t{$dst, $src}",
-                       [(set FP64:$dst, (fsqrt (load rriaddr:$src)))]>;
+                       [(set FP64:$dst, (fsqrt (load rriaddr12:$src)))]>;
 
 def FROUND64r32 : Pseudo<(outs FP32:$dst), (ins FP64:$src),
                          "ledbr\t{$dst, $src}",
@@ -253,9 +253,9 @@ def FROUND64r32 : Pseudo<(outs FP32:$dst), (ins FP64:$src),
 def FEXT32r64   : Pseudo<(outs FP64:$dst), (ins FP32:$src),
                          "ldebr\t{$dst, $src}",
                          [(set FP64:$dst, (fextend FP32:$src))]>;
-def FEXT32m64   : Pseudo<(outs FP64:$dst), (ins rriaddr:$src),
+def FEXT32m64   : Pseudo<(outs FP64:$dst), (ins rriaddr12:$src),
                          "ldeb\t{$dst, $src}",
-                         [(set FP64:$dst, (fextend (load rriaddr:$src)))]>;
+                         [(set FP64:$dst, (fextend (load rriaddr12:$src)))]>;
 
 let Defs = [PSW] in {
 def FCONVFP32   : Pseudo<(outs FP32:$dst), (ins GR32:$src),
@@ -314,13 +314,13 @@ def FCMP64rr : Pseudo<(outs), (ins FP64:$src1, FP64:$src2),
                       "cdbr\t$src1, $src2",
                       [(SystemZcmp FP64:$src1, FP64:$src2), (implicit PSW)]>;
 
-def FCMP32rm : Pseudo<(outs), (ins FP32:$src1, rriaddr:$src2),
+def FCMP32rm : Pseudo<(outs), (ins FP32:$src1, rriaddr12:$src2),
                       "ceb\t$src1, $src2",
-                      [(SystemZcmp FP32:$src1, (load rriaddr:$src2)),
+                      [(SystemZcmp FP32:$src1, (load rriaddr12:$src2)),
                        (implicit PSW)]>;
-def FCMP64rm : Pseudo<(outs), (ins FP64:$src1, rriaddr:$src2),
+def FCMP64rm : Pseudo<(outs), (ins FP64:$src1, rriaddr12:$src2),
                       "cdb\t$src1, $src2",
-                      [(SystemZcmp FP64:$src1, (load rriaddr:$src2)),
+                      [(SystemZcmp FP64:$src1, (load rriaddr12:$src2)),
                        (implicit PSW)]>;
 } // Defs = [PSW]
 
