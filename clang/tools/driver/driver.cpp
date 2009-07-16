@@ -79,6 +79,8 @@ static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
 /// they are applied in order to the input argument lists. Edits
 /// should be one of the following forms:
 ///
+///  '#': Silence information about the changes to the command line arguments.
+///
 ///  '^': Add FOO as a new argument at the beginning of the command line.
 ///
 ///  '+': Add FOO as a new argument at the end of the command line.
@@ -93,7 +95,13 @@ static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
 ///
 ///  'Ox': Removes all flags matching 'O' or 'O[sz0-9]' and adds 'Ox'
 ///  at the end of the command line.
-void ApplyOneQAOverride(std::vector<const char*> &Args, 
+///
+/// \param OS - The stream to write edit information to.
+/// \param Args - The vector of command line arguments.
+/// \param Edit - The override command to perform.
+/// \param SavedStrings - Set to use for storing string representations.
+void ApplyOneQAOverride(llvm::raw_ostream &OS,
+                        std::vector<const char*> &Args, 
                         const std::string &Edit,
                         std::set<std::string> &SavedStrings) {
   // This does not need to be efficient.
@@ -101,25 +109,25 @@ void ApplyOneQAOverride(std::vector<const char*> &Args,
    if (Edit[0] == '^') {
      const char *Str = 
        SaveStringInSet(SavedStrings, Edit.substr(1, std::string::npos));
-     llvm::errs() << "### Adding argument " << Str << " at beginning\n";
+     OS << "### Adding argument " << Str << " at beginning\n";
      Args.insert(Args.begin() + 1, Str);
    } else if (Edit[0] == '+') {
      const char *Str = 
        SaveStringInSet(SavedStrings, Edit.substr(1, std::string::npos));
-     llvm::errs() << "### Adding argument " << Str << " at end\n";
+     OS << "### Adding argument " << Str << " at end\n";
      Args.push_back(Str);
    } else if (Edit[0] == 'x' || Edit[0] == 'X') {
      std::string Option = Edit.substr(1, std::string::npos);
      for (unsigned i = 1; i < Args.size();) {
        if (Option == Args[i]) {
-         llvm::errs() << "### Deleting argument " << Args[i] << '\n';
+         OS << "### Deleting argument " << Args[i] << '\n';
          Args.erase(Args.begin() + i);
          if (Edit[0] == 'X') {
            if (i < Args.size()) {
-             llvm::errs() << "### Deleting argument " << Args[i] << '\n';
+             OS << "### Deleting argument " << Args[i] << '\n';
              Args.erase(Args.begin() + i);
            } else
-             llvm::errs() << "### Invalid X edit, end of command line!\n";
+             OS << "### Invalid X edit, end of command line!\n";
          }
        } else
          ++i;
@@ -131,15 +139,15 @@ void ApplyOneQAOverride(std::vector<const char*> &Args,
            (A[2] == '\0' || 
             (A[3] == '\0' && (A[2] == 's' || A[2] == 'z' ||
                               ('0' <= A[2] && A[2] <= '9'))))) {
-         llvm::errs() << "### Deleting argument " << Args[i] << '\n';
+         OS << "### Deleting argument " << Args[i] << '\n';
          Args.erase(Args.begin() + i);
        } else
          ++i;
      }     
-     llvm::errs() << "### Adding argument " << Edit << " at end\n";
+     OS << "### Adding argument " << Edit << " at end\n";
      Args.push_back(SaveStringInSet(SavedStrings, '-' + Edit));
    } else {
-     llvm::errs() << "### Unrecognized edit: " << Edit << "\n";
+     OS << "### Unrecognized edit: " << Edit << "\n";
    }
 }
 
@@ -147,7 +155,14 @@ void ApplyOneQAOverride(std::vector<const char*> &Args,
 /// input argument lists. See ApplyOneQAOverride.
 void ApplyQAOverride(std::vector<const char*> &Args, const char *OverrideStr,
                      std::set<std::string> &SavedStrings) {
-  llvm::errs() << "### QA_OVERRIDE_GCC3_OPTIONS: " << OverrideStr << "\n";
+  llvm::raw_ostream *OS = &llvm::errs();
+  
+  if (OverrideStr[0] == '#') {
+    ++OverrideStr;
+    OS = &llvm::nulls();
+  }
+
+  *OS << "### QA_OVERRIDE_GCC3_OPTIONS: " << OverrideStr << "\n";
 
   // This does not need to be efficient.
 
@@ -157,7 +172,7 @@ void ApplyQAOverride(std::vector<const char*> &Args, const char *OverrideStr,
     if (!End)
       End = S + strlen(S);
     if (End != S)
-      ApplyOneQAOverride(Args, std::string(S, End), SavedStrings);
+      ApplyOneQAOverride(*OS, Args, std::string(S, End), SavedStrings);
     S = End;
     if (*S != '\0')
       ++S;
