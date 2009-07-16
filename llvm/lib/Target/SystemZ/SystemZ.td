@@ -47,6 +47,7 @@ include "SystemZCallingConv.td"
 //===----------------------------------------------------------------------===//
 
 include "SystemZInstrInfo.td"
+include "SystemZInstrFP.td"
 
 def SystemZInstrInfo : InstrInfo {} 
 
