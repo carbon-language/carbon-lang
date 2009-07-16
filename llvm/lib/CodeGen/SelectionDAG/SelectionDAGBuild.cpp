@@ -981,6 +981,13 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
       if (F->paramHasAttr(0, Attribute::InReg))
         Flags.setInReg();
+
+      // Propagate extension type if any
+      if (F->paramHasAttr(0, Attribute::SExt))
+        Flags.setSExt();
+      else if (F->paramHasAttr(0, Attribute::ZExt))
+        Flags.setZExt();
+
       for (unsigned i = 0; i < NumParts; ++i) {
         NewValues.push_back(Parts[i]);
         NewValues.push_back(DAG.getArgFlags(Flags));
