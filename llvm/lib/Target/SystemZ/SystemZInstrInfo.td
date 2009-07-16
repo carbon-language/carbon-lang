@@ -205,12 +205,24 @@ def i32i16imm : Operand<i32>;
 def i64i32imm : Operand<i64>;
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
+
+// Unigned i12
+def u12imm : Operand<i32> {
+  let PrintMethod = "printU16ImmOperand";
+}
 // Signed i16
 def s16imm : Operand<i32> {
   let PrintMethod = "printS16ImmOperand";
 }
 def s16imm64 : Operand<i64> {
   let PrintMethod = "printS16ImmOperand";
+}
+// Signed i20
+def s20imm : Operand<i32> {
+  let PrintMethod = "printS20ImmOperand";
+}
+def s20imm64 : Operand<i64> {
+  let PrintMethod = "printS20ImmOperand";
 }
 // Signed i32
 def s32imm : Operand<i32> {
@@ -228,15 +240,15 @@ def s32imm64 : Operand<i64> {
 
 // riaddr := reg + imm
 def riaddr32 : Operand<i32>,
-               ComplexPattern<i32, 2, "SelectAddrRI", []> {
+               ComplexPattern<i32, 2, "SelectAddrRI32", []> {
   let PrintMethod = "printRIAddrOperand";
-  let MIOperandInfo = (ops ADDR32:$base, i32imm:$disp);
+  let MIOperandInfo = (ops ADDR32:$base, u12imm:$disp);
 }
 
 def riaddr : Operand<i64>,
              ComplexPattern<i64, 2, "SelectAddrRI", []> {
   let PrintMethod = "printRIAddrOperand";
-  let MIOperandInfo = (ops ADDR64:$base, i64imm:$disp);
+  let MIOperandInfo = (ops ADDR64:$base, s20imm64:$disp);
 }
 
 //===----------------------------------------------------------------------===//
@@ -245,12 +257,12 @@ def riaddr : Operand<i64>,
 def rriaddr : Operand<i64>,
               ComplexPattern<i64, 3, "SelectAddrRRI", [], []> {
   let PrintMethod = "printRRIAddrOperand";
-  let MIOperandInfo = (ops ADDR64:$base, i64imm:$disp, ADDR64:$index);
+  let MIOperandInfo = (ops ADDR64:$base, s20imm64:$disp, ADDR64:$index);
 }
 def laaddr : Operand<i64>,
              ComplexPattern<i64, 3, "SelectLAAddr", [add, sub, or, frameindex], []> {
   let PrintMethod = "printRRIAddrOperand";
-  let MIOperandInfo = (ops ADDR64:$base, i64imm:$disp, ADDR64:$index);
+  let MIOperandInfo = (ops ADDR64:$base, s20imm64:$disp, ADDR64:$index);
 }
 
 //===----------------------------------------------------------------------===//
