@@ -54,6 +54,21 @@ asmtok::TokKind AsmLexer::ReturnError(const char *Loc, const std::string &Msg) {
   return asmtok::Error;
 }
 
+/// EnterIncludeFile - Enter the specified file.  This prints an error and
+/// returns true on failure.
+bool AsmLexer::EnterIncludeFile(const std::string &Filename) {
+  int NewBuf = SrcMgr.AddIncludeFile(Filename, SMLoc::getFromPointer(CurPtr));
+  if (NewBuf == -1)
+    return true;
+  
+  // Save the line number and lex buffer of the includer.
+  CurBuffer = NewBuf;
+  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
+  CurPtr = CurBuf->getBufferStart();
+  return false;
+}
+
+
 int AsmLexer::getNextChar() {
   char CurChar = *CurPtr++;
   switch (CurChar) {
@@ -72,6 +87,10 @@ int AsmLexer::getNextChar() {
       CurBuffer = SrcMgr.FindBufferContainingLoc(ParentIncludeLoc);
       CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
       CurPtr = ParentIncludeLoc.getPointer();
+      
+      // Reset the token start pointer to the start of the new file.
+      TokStart = CurPtr;
+      
       return getNextChar();
     }
     

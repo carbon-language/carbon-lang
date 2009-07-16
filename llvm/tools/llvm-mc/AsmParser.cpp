@@ -1168,21 +1168,27 @@ bool AsmParser::ParseDirectiveDarwinLsym() {
 /// ParseDirectiveInclude
 ///  ::= .include "filename"
 bool AsmParser::ParseDirectiveInclude() {
-  const char *Str;
-
   if (Lexer.isNot(asmtok::String))
     return TokError("expected string in '.include' directive");
   
-  Str = Lexer.getCurStrVal();
-
+  std::string Filename = Lexer.getCurStrVal();
+  SMLoc IncludeLoc = Lexer.getLoc();
   Lexer.Lex();
 
   if (Lexer.isNot(asmtok::EndOfStatement))
     return TokError("unexpected token in '.include' directive");
   
-  Lexer.Lex();
-
-  Out.SwitchInputAssemblyFile(Str);
+  // Strip the quotes.
+  Filename = Filename.substr(1, Filename.size()-2);
+  
+  // Attempt to switch the lexer to the included file before consuming the end
+  // of statement to avoid losing it when we switch.
+  if (Lexer.EnterIncludeFile(Filename)) {
+    Lexer.PrintMessage(IncludeLoc,
+                       "Could not find include file '" + Filename + "'",
+                       "error");
+    return true;
+  }
 
   return false;
 }

@@ -57,8 +57,6 @@ namespace {
 
     virtual void AbortAssembly(const char *AbortReason = NULL);
 
-    virtual void SwitchInputAssemblyFile(const char *FileName);
-
     virtual void DumpSymbolsandMacros(const char *FileName);
 
     virtual void LoadSymbolsandMacros(const char *FileName);
@@ -141,10 +139,6 @@ void MCAsmStreamer::AbortAssembly(const char *AbortReason) {
     OS << ' ' << AbortReason;
   OS << '\n';
   
-}
-
-void MCAsmStreamer::SwitchInputAssemblyFile(const char *FileName) {
-  OS << ".include" << ' ' << FileName << '\n';
 }
 
 void MCAsmStreamer::DumpSymbolsandMacros(const char *FileName) {
