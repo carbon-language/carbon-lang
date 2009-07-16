@@ -62,6 +62,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
 
   setOperationAction(ISD::RET,              MVT::Other, Custom);
 
+  setOperationAction(ISD::BR_JT,            MVT::Other, Expand);
   setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,            MVT::i32, Custom);
   setOperationAction(ISD::BR_CC,            MVT::i64, Custom);

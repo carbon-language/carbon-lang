@@ -99,6 +99,12 @@ let isBranch = 1, isTerminator = 1 in {
   let isBarrier = 1 in
     def JMP  : Pseudo<(outs), (ins brtarget:$dst), "j\t{$dst}", [(br bb:$dst)]>;
 
+  let isBarrier = 1, isIndirectBranch = 1 in {
+    def JMPr   : Pseudo<(outs), (ins GR64:$dst), "br\t{$dst}", [(brind GR64:$dst)]>;
+    // FIXME: displacement here is 12 bits
+    def JMPrri : Pseudo<(outs), (ins rriaddr:$dst), "b\t{$dst}", [(brind rriaddr:$dst)]>;
+  }
+
   let Uses = [PSW] in {
     def JE  : Pseudo<(outs), (ins brtarget:$dst),
                      "je\t$dst",
