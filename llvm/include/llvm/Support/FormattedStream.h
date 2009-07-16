@@ -77,15 +77,8 @@ namespace llvm
     /// underneath it.
     ///
     formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
-      : raw_ostream(), TheStream(&Stream), DeleteStream(Delete), Column(0) {
-      // This formatted_raw_ostream inherits from raw_ostream, so it'll do its
-      // own buffering, and it doesn't need or want TheStream to do another
-      // layer of buffering underneath. Resize the buffer to what TheStream
-      // had been using, and tell TheStream not to do its own buffering.
-      TheStream->flush();
-      if (size_t BufferSize = TheStream->GetNumBytesInBuffer())
-        SetBufferSize(BufferSize);
-      TheStream->SetUnbuffered();
+      : raw_ostream(), TheStream(0), DeleteStream(false), Column(0) {
+      setStream(Stream, Delete);
     }
     explicit formatted_raw_ostream()
       : raw_ostream(), TheStream(0), DeleteStream(false), Column(0) {}
@@ -96,10 +89,16 @@ namespace llvm
     }
     
     void setStream(raw_ostream &Stream, bool Delete = false) {
+      if (DeleteStream)
+        delete TheStream;
+
       TheStream = &Stream;
       DeleteStream = Delete;
 
-      // Avoid double-buffering, as above.
+      // This formatted_raw_ostream inherits from raw_ostream, so it'll do its
+      // own buffering, and it doesn't need or want TheStream to do another
+      // layer of buffering underneath. Resize the buffer to what TheStream
+      // had been using, and tell TheStream not to do its own buffering.
       TheStream->flush();
       if (size_t BufferSize = TheStream->GetNumBytesInBuffer())
         SetBufferSize(BufferSize);
