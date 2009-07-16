@@ -783,15 +783,15 @@ def : Pat<(extloadi64i32 rriaddr:$src), (MOVZX64rm32 rriaddr:$src)>;
 // muls
 def : Pat<(mulhs GR32:$src1, GR32:$src2),
           (EXTRACT_SUBREG (MUL64rrP (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-                                                   GR32:$src1, subreg_odd),
+                                                   GR32:$src1, subreg_odd32),
                                     GR32:$src2),
-                          subreg_even)>;
+                          subreg_even32)>;
 
 def : Pat<(mulhu GR32:$src1, GR32:$src2),
           (EXTRACT_SUBREG (UMUL64rrP (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-                                                    GR32:$src1, subreg_odd),
+                                                    GR32:$src1, subreg_odd32),
                                      GR32:$src2),
-                          subreg_even)>;
+                          subreg_even32)>;
 def : Pat<(mulhu GR64:$src1, GR64:$src2),
           (EXTRACT_SUBREG (UMUL128rrP (INSERT_SUBREG (i128 (IMPLICIT_DEF)),
                                                      GR64:$src1, subreg_odd),
