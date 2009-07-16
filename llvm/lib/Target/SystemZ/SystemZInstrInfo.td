@@ -744,8 +744,9 @@ def UCMPZX64rm32  : Pseudo<(outs), (ins GR64:$src1, rriaddr:$src2),
 // Non-Instruction Patterns.
 //===----------------------------------------------------------------------===//
 
-// JumpTable
+// ConstPools, JumpTables
 def : Pat<(SystemZpcrelwrapper tjumptable:$src), (LA64rm tjumptable:$src)>;
+def : Pat<(SystemZpcrelwrapper tconstpool:$src), (LA64rm tconstpool:$src)>;
 
 // anyext
 def : Pat<(i64 (anyext GR32:$src)),

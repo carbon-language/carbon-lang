@@ -144,6 +144,9 @@ bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
 
+  // Print out constants referenced by the function
+  EmitConstantPool(MF.getConstantPool());
+
   // Print the 'header' of function
   emitFunctionHeader(MF);
 
@@ -258,6 +261,12 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
       << MO.getIndex();
 
     return;
+  case MachineOperand::MO_ConstantPoolIndex:
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
+      << MO.getIndex();
+
+    printOffset(MO.getOffset());
+    break;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);

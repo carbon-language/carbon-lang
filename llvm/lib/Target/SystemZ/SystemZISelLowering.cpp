@@ -74,6 +74,10 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,            MVT::i32, Custom);
   setOperationAction(ISD::BR_CC,            MVT::i64, Custom);
+  setOperationAction(ISD::BR_CC,            MVT::f32, Custom);
+  setOperationAction(ISD::BR_CC,            MVT::f64, Custom);
+  setOperationAction(ISD::ConstantPool,     MVT::i32, Custom);
+  setOperationAction(ISD::ConstantPool,     MVT::i64, Custom);
   setOperationAction(ISD::GlobalAddress,    MVT::i64, Custom);
   setOperationAction(ISD::JumpTable,        MVT::i64, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
@@ -94,6 +98,8 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::SELECT,           MVT::i64, Expand);
   setOperationAction(ISD::SELECT_CC,        MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::i64, Custom);
+  setOperationAction(ISD::SELECT_CC,        MVT::f32, Custom);
+  setOperationAction(ISD::SELECT_CC,        MVT::f64, Custom);
 
   // Funny enough: we don't have 64-bit signed versions of these stuff, but have
   // unsigned.
@@ -110,6 +116,7 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
   case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
+  case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -594,12 +601,27 @@ SDValue SystemZTargetLowering::LowerGlobalAddress(SDValue Op,
   return Result;
 }
 
-
+// FIXME: PIC here
 SDValue SystemZTargetLowering::LowerJumpTable(SDValue Op,
                                               SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
+
+  return DAG.getNode(SystemZISD::PCRelativeWrapper, dl, getPointerTy(), Result);
+}
+
+
+// FIXME: PIC here
+// FIXME: This is just dirty hack. We need to lower cpool properly
+SDValue SystemZTargetLowering::LowerConstantPool(SDValue Op,
+                                                 SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
+  ConstantPoolSDNode *CP = cast<ConstantPoolSDNode>(Op);
+
+  SDValue Result = DAG.getTargetConstantPool(CP->getConstVal(), getPointerTy(),
+                                             CP->getAlignment(),
+                                             CP->getOffset());
 
   return DAG.getNode(SystemZISD::PCRelativeWrapper, dl, getPointerTy(), Result);
 }
