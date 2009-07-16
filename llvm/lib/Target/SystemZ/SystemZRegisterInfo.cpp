@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
@@ -120,13 +121,100 @@ void SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
 
+/// emitSPUpdate - Emit a series of instructions to increment / decrement the
+/// stack pointer by a constant value.
+static
+void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
+                  int64_t NumBytes, const TargetInstrInfo &TII) {
+  // FIXME: Handle different stack sizes here.
+  bool isSub = NumBytes < 0;
+  uint64_t Offset = isSub ? -NumBytes : NumBytes;
+  unsigned Opc = SystemZ::ADD64ri16;
+  uint64_t Chunk = (1LL << 15) - 1;
+  DebugLoc DL = (MBBI != MBB.end() ? MBBI->getDebugLoc() :
+                 DebugLoc::getUnknownLoc());
+
+  while (Offset) {
+    uint64_t ThisVal = (Offset > Chunk) ? Chunk : Offset;
+    MachineInstr *MI =
+      BuildMI(MBB, MBBI, DL, TII.get(Opc), SystemZ::R15D)
+      .addReg(SystemZ::R15D).addImm((isSub ? -(int64_t)ThisVal : ThisVal));
+    // The PSW implicit def is dead.
+    MI->getOperand(3).setIsDead();
+    Offset -= ThisVal;
+  }
+}
+
 void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
-  // Nothing here yet
+  MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
+  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineBasicBlock::iterator MBBI = MBB.begin();
+  DebugLoc DL = (MBBI != MBB.end() ? MBBI->getDebugLoc() :
+                 DebugLoc::getUnknownLoc());
+
+  // Get the number of bytes to allocate from the FrameInfo.
+  uint64_t StackSize = MFI->getStackSize();
+
+  // FIXME: Skip the callee-saved push instructions.
+
+  if (MBBI != MBB.end())
+    DL = MBBI->getDebugLoc();
+
+  uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
+
+  if (StackSize) // adjust stack pointer: R15 -= numbytes
+    emitSPUpdate(MBB, MBBI, -(int64_t)NumBytes, TII);
+
+  if (hasFP(MF)) {
+    // Update R11 with the new base value...
+    BuildMI(MBB, MBBI, DL, TII.get(SystemZ::MOV64rr), SystemZ::R11D)
+      .addReg(SystemZ::R15D);
+
+    // Mark the FramePtr as live-in in every block except the entry.
+    for (MachineFunction::iterator I = next(MF.begin()), E = MF.end();
+         I != E; ++I)
+      I->addLiveIn(SystemZ::R11D);
+
+  }
 }
 
 void SystemZRegisterInfo::emitEpilogue(MachineFunction &MF,
                                      MachineBasicBlock &MBB) const {
-  // Nothing here yet
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetFrameInfo &TFI = *MF.getTarget().getFrameInfo();
+  MachineBasicBlock::iterator MBBI = prior(MBB.end());
+  unsigned RetOpcode = MBBI->getOpcode();
+  DebugLoc DL = MBBI->getDebugLoc();
+
+  switch (RetOpcode) {
+  case SystemZ::RET: break;  // These are ok
+  default:
+    assert(0 && "Can only insert epilog into returning blocks");
+  }
+
+  // Get the number of bytes to allocate from the FrameInfo
+  uint64_t StackSize = MFI->getStackSize();
+  uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
+
+  // Skip the callee-saved regs load instructions.
+  MachineBasicBlock::iterator LastCSPop = MBBI;
+  while (MBBI != MBB.begin()) {
+    MachineBasicBlock::iterator PI = prior(MBBI);
+    if (!PI->getDesc().isTerminator())
+      break;
+    --MBBI;
+  }
+
+  DL = MBBI->getDebugLoc();
+
+  if (MFI->hasVarSizedObjects()) {
+    assert(0 && "Not implemented yet!");
+  } else {
+    // adjust stack pointer back: R15 += numbytes
+    if (StackSize)
+      emitSPUpdate(MBB, MBBI, NumBytes, TII);
+  }
 }
 
 unsigned SystemZRegisterInfo::getRARegister() const {

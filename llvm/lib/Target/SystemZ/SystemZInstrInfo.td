@@ -178,7 +178,7 @@ def laaddr : Operand<i64>,
 //
 
 // FIXME: Provide proper encoding!
-let isReturn = 1, isTerminator = 1 in {
+let isReturn = 1, isTerminator = 1, Uses = [R14D] in {
   def RET : Pseudo<(outs), (ins), "br\t%r14", [(SystemZretflag)]>;
 }
 
