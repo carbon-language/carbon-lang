@@ -18,9 +18,8 @@ include "llvm/Target/Target.td"
 //===----------------------------------------------------------------------===//
 // Subtarget Features. 
 //===----------------------------------------------------------------------===//
-def FeatureX
- : SubtargetFeature<"dummy", "DummyFeature", "true",
-                    "Some feature">;
+def FeatureZ10 : SubtargetFeature<"z10", "HasZ10Insts", "true",
+                                  "Support Z10 instructions">;
 
 //===----------------------------------------------------------------------===//
 // SystemZ supported processors.
@@ -28,7 +27,8 @@ def FeatureX
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, NoItineraries, Features>;
 
-def : Proc<"generic",         []>;
+def : Proc<"z9",  []>;
+def : Proc<"z10", [FeatureZ10]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

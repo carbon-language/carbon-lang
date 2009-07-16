@@ -11,6 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// SystemZ Instruction Predicate Definitions.
+def IsZ10 : Predicate<"Subtarget.isZ10()">;
+
 include "SystemZInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
@@ -406,7 +410,7 @@ def MOV64rihl16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
 def MOV64rihh16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
                          "llihh\t{$dst, $src}",
                          [(set GR64:$dst, i64hh16:$src)]>;
-// FIXME: these 3 instructions seem to require extimm facility
+
 def MOV64ri32 : Pseudo<(outs GR64:$dst), (ins s32imm64:$src),
                        "lgfi\t{$dst, $src}",
                        [(set GR64:$dst, immSExt32:$src)]>;
@@ -439,15 +443,19 @@ def MOV64mr : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
 def MOV8mi    : Pseudo<(outs), (ins riaddr:$dst, i32i8imm:$src),
                        "mviy\t{$dst, $src}",
                        [(truncstorei8 (i32 i32immSExt8:$src), riaddr:$dst)]>;
+
 def MOV16mi   : Pseudo<(outs), (ins riaddr:$dst, s16imm:$src),
                        "mvhhi\t{$dst, $src}",
-                       [(truncstorei16 (i32 i32immSExt16:$src), riaddr:$dst)]>;
+                       [(truncstorei16 (i32 i32immSExt16:$src), riaddr:$dst)]>,
+                       Requires<[IsZ10]>;
 def MOV32mi16 : Pseudo<(outs), (ins riaddr:$dst, s32imm:$src),
                        "mvhi\t{$dst, $src}",
-                       [(store (i32 immSExt16:$src), riaddr:$dst)]>;
+                       [(store (i32 immSExt16:$src), riaddr:$dst)]>,
+                       Requires<[IsZ10]>;
 def MOV64mi16 : Pseudo<(outs), (ins riaddr:$dst, s32imm64:$src),
                        "mvghi\t{$dst, $src}",
-                       [(store (i64 immSExt16:$src), riaddr:$dst)]>;
+                       [(store (i64 immSExt16:$src), riaddr:$dst)]>,
+                       Requires<[IsZ10]>;
 
 // sexts
 def MOVSX32rr8  : Pseudo<(outs GR32:$dst), (ins GR32:$src),
@@ -634,7 +642,7 @@ def OR64rihl16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
 def OR64rihh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                         "oihh\t{$dst, $src2}",
                         [(set GR64:$dst, (or GR64:$src1, i64hh16:$src2))]>;
-// FIXME: these 2 instructions seem to require extimm facility
+
 def OR64rilo32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                         "oilf\t{$dst, $src2}",
                         [(set GR64:$dst, (or GR64:$src1, i64lo32:$src2))]>;
@@ -698,15 +706,18 @@ def UMUL128rrP : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR64:$src2),
 def MUL32ri16   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s16imm:$src2),
                          "mhi\t{$dst, $src2}",
                          [(set GR32:$dst, (mul GR32:$src1, i32immSExt16:$src2))]>;
-def MUL32ri     : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s32imm:$src2),
-                         "msfi\t{$dst, $src2}",
-                         [(set GR32:$dst, (mul GR32:$src1, imm:$src2))]>;
 def MUL64ri16   : Pseudo<(outs GR64:$dst), (ins GR64:$src1, s16imm64:$src2),
                          "mghi\t{$dst, $src2}",
                          [(set GR64:$dst, (mul GR64:$src1, immSExt16:$src2))]>;
+
+def MUL32ri     : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s32imm:$src2),
+                         "msfi\t{$dst, $src2}",
+                         [(set GR32:$dst, (mul GR32:$src1, imm:$src2))]>,
+                         Requires<[IsZ10]>;
 def MUL64ri32   : Pseudo<(outs GR64:$dst), (ins GR64:$src1, s32imm64:$src2),
                          "msgfi\t{$dst, $src2}",
-                         [(set GR64:$dst, (mul GR64:$src1, i64immSExt32:$src2))]>;
+                         [(set GR64:$dst, (mul GR64:$src1, i64immSExt32:$src2))]>,
+                         Requires<[IsZ10]>;
 
 def MUL32rm : Pseudo<(outs GR32:$dst), (ins GR32:$src1, rriaddr:$src2),
                      "msy\t{$dst, $src2}",

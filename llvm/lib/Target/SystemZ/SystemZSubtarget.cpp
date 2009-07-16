@@ -19,8 +19,9 @@
 using namespace llvm;
 
 SystemZSubtarget::SystemZSubtarget(const TargetMachine &TM, const Module &M,
-                                 const std::string &FS) {
-  std::string CPU = "generic";
+                                   const std::string &FS):
+  HasZ10Insts(false) {
+  std::string CPU = "z9";
 
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);
