@@ -66,6 +66,13 @@ def i64hh16 : PatLeaf<(i64 imm), [{
   return ((N->getZExtValue() & 0xFFFF000000000000ULL) == N->getZExtValue());
 }], HH16>;
 
+def immSExt16 : PatLeaf<(i64 imm), [{
+  // immSExt16 predicate - true if the immediate fits in a 16-bit sign extended
+  // field.
+  uint64_t val = N->getZExtValue();
+  return ((int64_t)val == (int16_t)val);
+}]>;
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
 //
@@ -87,9 +94,9 @@ def MOV64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src),
 
 // FIXME: Provide proper encoding!
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-def MOV64ri : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
-                     "lghi\t{$dst, $src}",
-                     [(set GR64:$dst, imm:$src)]>;
+def MOV64ri16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                       "lghi\t{$dst, $src}",
+                       [(set GR64:$dst, immSExt16:$src)]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -108,10 +115,10 @@ def ADD64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
 }
 
 // FIXME: Provide proper encoding!
-def ADD64ri : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
-                     "aghi\t{$dst, $src2}",
-                     [(set GR64:$dst, (add GR64:$src1, imm:$src2)),
-                      (implicit PSW)]>;
+def ADD64ri16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                       "aghi\t{$dst, $src2}",
+                       [(set GR64:$dst, (add GR64:$src1, immSExt16:$src2)),
+                        (implicit PSW)]>;
 
 let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
 // FIXME: Provide proper encoding!
