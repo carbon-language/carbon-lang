@@ -34,6 +34,9 @@ namespace llvm {
   class TargetELFWriterInfo;
   class raw_ostream;
 
+  typedef std::vector<ELFSym*>::iterator ELFSymIter;
+  typedef std::vector<ELFSection*>::iterator ELFSectionIter;
+
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
   /// parameterize the output format.

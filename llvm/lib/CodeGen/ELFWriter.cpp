@@ -456,8 +456,8 @@ bool ELFWriter::doFinalization(Module &M) {
 void ELFWriter::EmitRelocations() {
 
   // Create Relocation sections for each section which needs it.
-  for (unsigned i=0, e=SectionList.size(); i < e; ++i) {
-    ELFSection &S = *SectionList[i];
+  for (ELFSectionIter I=SectionList.begin(), E=SectionList.end(); I != E; ++I) {
+    ELFSection &S = *(*I);
 
     // This section does not have relocations
     if (!S.hasRelocations()) continue;
@@ -581,8 +581,8 @@ void ELFWriter::EmitStringTable() {
   // Walk on the symbol list and write symbol names into the
   // string table.
   unsigned Index = 1;
-  for (unsigned i = 0, e = SymbolList.size(); i < e; ++i) {
-    ELFSym &Sym = *SymbolList[i];
+  for (ELFSymIter I=SymbolList.begin(), E=SymbolList.end(); I != E; ++I) {
+    ELFSym &Sym = *(*I);
 
     // Use the name mangler to uniquify the LLVM symbol.
     std::string Name;
@@ -606,23 +606,23 @@ void ELFWriter::EmitStringTable() {
 // all other symbols with non-local bindings. The return value is
 // the position of the first non local symbol.
 unsigned ELFWriter::SortSymbols() {
-  unsigned FirstNonLocalSymbol, i, e;
+  unsigned FirstNonLocalSymbol;
   std::vector<ELFSym*> LocalSyms, OtherSyms;
 
-  for (i = 0, e = SymbolList.size(); i < e; ++i) {
-    if (SymbolList[i]->isLocalBind())
-      LocalSyms.push_back(SymbolList[i]);
+  for (ELFSymIter I=SymbolList.begin(), E=SymbolList.end(); I != E; ++I) {
+    if ((*I)->isLocalBind())
+      LocalSyms.push_back(*I);
     else
-      OtherSyms.push_back(SymbolList[i]);
+      OtherSyms.push_back(*I);
   }
   SymbolList.clear();
   FirstNonLocalSymbol = LocalSyms.size();
 
-  for (i = 0; i < FirstNonLocalSymbol; ++i)
+  for (unsigned i = 0; i < FirstNonLocalSymbol; ++i)
     SymbolList.push_back(LocalSyms[i]);
 
-  for (i = 0, e = OtherSyms.size(); i < e; ++i)
-    SymbolList.push_back(OtherSyms[i]);
+  for (ELFSymIter I=OtherSyms.begin(), E=OtherSyms.end(); I != E; ++I)
+    SymbolList.push_back(*I);
 
   LocalSyms.clear();
   OtherSyms.clear();
@@ -685,14 +685,15 @@ void ELFWriter::EmitSectionTableStringTable() {
   // the string table.
   unsigned Index = 0;
 
-  for (unsigned i=0, e=SectionList.size(); i < e; ++i) {
+  for (ELFSectionIter I=SectionList.begin(), E=SectionList.end(); I != E; ++I) {
+    ELFSection &S = *(*I);
     // Set the index into the table.  Note if we have lots of entries with
     // common suffixes, we could memoize them here if we cared.
-    SectionList[i]->NameIdx = Index;
-    SHStrTab.emitString(SectionList[i]->getName());
+    S.NameIdx = Index;
+    SHStrTab.emitString(S.getName());
 
     // Keep track of the number of bytes emitted to this section.
-    Index += SectionList[i]->getName().size()+1;
+    Index += S.getName().size()+1;
   }
 
   // Set the size of .shstrtab now that we know what it is.
@@ -748,8 +749,8 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   BinaryObject SHdrTable(isLittleEndian, is64Bit);
 
   // Emit all of sections to the file and build the section header table.
-  for (unsigned i=0, e=SectionList.size(); i < e; ++i) {
-    ELFSection &S = *SectionList[i];
+  for (ELFSectionIter I=SectionList.begin(), E=SectionList.end(); I != E; ++I) {
+    ELFSection &S = *(*I);
     DOUT << "SectionIdx: " << S.SectionIdx << ", Name: " << S.getName()
          << ", Size: " << S.Size << ", Offset: " << S.Offset
          << ", SectionData Size: " << S.size() << "\n";

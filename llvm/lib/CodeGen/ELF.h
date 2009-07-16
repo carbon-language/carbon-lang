@@ -72,17 +72,17 @@ namespace llvm {
     unsigned SymTabIdx;
 
     enum {
-      STB_LOCAL = 0,
-      STB_GLOBAL = 1,
-      STB_WEAK = 2
+      STB_LOCAL = 0,  // Local sym, not visible outside obj file containing def
+      STB_GLOBAL = 1, // Global sym, visible to all object files being combined
+      STB_WEAK = 2    // Weak symbol, like global but lower-precedence
     };
 
     enum {
-      STT_NOTYPE = 0,
-      STT_OBJECT = 1,
-      STT_FUNC = 2,
-      STT_SECTION = 3,
-      STT_FILE = 4
+      STT_NOTYPE = 0,  // Symbol's type is not specified
+      STT_OBJECT = 1,  // Symbol is a data object (variable, array, etc.)
+      STT_FUNC = 2,    // Symbol is executable code (function, etc.)
+      STT_SECTION = 3, // Symbol refers to a section
+      STT_FILE = 4     // Local, absolute symbol that refers to a file
     };
 
     enum {
