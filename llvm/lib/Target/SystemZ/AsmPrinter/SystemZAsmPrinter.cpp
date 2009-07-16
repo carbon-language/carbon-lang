@@ -180,7 +180,8 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     O << '%' << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
     return;
   case MachineOperand::MO_Immediate:
-    O << MO.getImm();
+    // FIXME: Temporary until generic tblgen stuff won't be resolved.
+    O << (int32_t)MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMBB());
