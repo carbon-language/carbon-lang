@@ -925,3 +925,6 @@ def : Pat<(urem GR64:$src1, GR64:$src2),
                                                         GR64:$src1, subreg_odd),
                                          GR64:$src2),
                           subreg_even)>;
+
+def : Pat<(i32 imm:$src),
+          (EXTRACT_SUBREG (MOV64ri32 (i64 imm:$src)), subreg_32bit)>;
