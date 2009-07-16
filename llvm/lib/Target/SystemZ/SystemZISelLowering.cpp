@@ -112,6 +112,11 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   // unsigned.
   setOperationAction(ISD::MULHS,            MVT::i64, Expand);
   setOperationAction(ISD::SMUL_LOHI,        MVT::i64, Expand);
+
+  setOperationAction(ISD::FSIN,             MVT::f32, Expand);
+  setOperationAction(ISD::FSIN,             MVT::f64, Expand);
+  setOperationAction(ISD::FCOS,             MVT::f32, Expand);
+  setOperationAction(ISD::FCOS,             MVT::f64, Expand);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
