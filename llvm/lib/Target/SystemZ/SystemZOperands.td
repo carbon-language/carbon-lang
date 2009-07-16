@@ -214,10 +214,14 @@ def i64i32imm : Operand<i64>;
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
 
-// Unigned i12
+// Unsigned i12
 def u12imm : Operand<i32> {
-  let PrintMethod = "printU16ImmOperand";
+  let PrintMethod = "printU12ImmOperand";
 }
+def u12imm64 : Operand<i64> {
+  let PrintMethod = "printU12ImmOperand";
+}
+
 // Signed i16
 def s16imm : Operand<i32> {
   let PrintMethod = "printS16ImmOperand";
@@ -262,8 +266,13 @@ def riaddr : Operand<i64>,
 //===----------------------------------------------------------------------===//
 
 // rriaddr := reg + reg + imm
+def rriaddr12 : Operand<i64>,
+                ComplexPattern<i64, 3, "SelectAddrRRI12", [], []> {
+  let PrintMethod = "printRRIAddrOperand";
+  let MIOperandInfo = (ops ADDR64:$base, u12imm64:$disp, ADDR64:$index);
+}
 def rriaddr : Operand<i64>,
-              ComplexPattern<i64, 3, "SelectAddrRRI", [], []> {
+              ComplexPattern<i64, 3, "SelectAddrRRI20", [], []> {
   let PrintMethod = "printRRIAddrOperand";
   let MIOperandInfo = (ops ADDR64:$base, s20imm64:$disp, ADDR64:$index);
 }

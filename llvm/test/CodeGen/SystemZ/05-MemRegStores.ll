@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | llc | not grep aghi
 ; RUN: llvm-as < %s | llc | grep stg  | count 1
-; RUN: llvm-as < %s | llc | grep sty  | count 2
-; RUN: llvm-as < %s | llc | grep sthy | count 2
-; RUN: llvm-as < %s | llc | grep stcy | count 2
+; RUN: llvm-as < %s | llc | grep st   | count 8
+; RUN: llvm-as < %s | llc | grep sth  | count 2
+; RUN: llvm-as < %s | llc | grep stc  | count 2
 
 target datalayout = "E-p:64:64:64-i1:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128"
 target triple = "s390x-unknown-linux-gnu"
