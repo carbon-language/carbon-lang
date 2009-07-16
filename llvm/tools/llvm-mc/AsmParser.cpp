@@ -1196,12 +1196,10 @@ bool AsmParser::ParseDirectiveInclude() {
 /// ParseDirectiveDarwinDumpOrLoad
 ///  ::= ( .dump | .load ) "filename"
 bool AsmParser::ParseDirectiveDarwinDumpOrLoad(bool IsDump) {
-  const char *Str;
-
   if (Lexer.isNot(asmtok::String))
     return TokError("expected string in '.dump' or '.load' directive");
   
-  Str = Lexer.getCurStrVal();
+  const char *Str = Lexer.getCurStrVal();
 
   Lexer.Lex();
 
