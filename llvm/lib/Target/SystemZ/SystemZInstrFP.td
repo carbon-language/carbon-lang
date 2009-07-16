@@ -14,6 +14,17 @@
 
 // FIXME: multiclassify!
 
+let usesCustomDAGSchedInserter = 1 in {
+  def SelectF32 : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2, i8imm:$cc),
+                        "# SelectF32 PSEUDO",
+                        [(set FP32:$dst,
+                              (SystemZselect FP32:$src1, FP32:$src2, imm:$cc))]>;
+  def SelectF64 : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2, i8imm:$cc),
+                        "# SelectF64 PSEUDO",
+                        [(set FP64:$dst,
+                              (SystemZselect FP64:$src1, FP64:$src2, imm:$cc))]>;
+}
+
 //===----------------------------------------------------------------------===//
 // Move Instructions
 

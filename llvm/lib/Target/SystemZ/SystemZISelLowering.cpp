@@ -101,8 +101,12 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   // FIXME: Can we lower these 2 efficiently?
   setOperationAction(ISD::SETCC,            MVT::i32, Expand);
   setOperationAction(ISD::SETCC,            MVT::i64, Expand);
+  setOperationAction(ISD::SETCC,            MVT::f32, Expand);
+  setOperationAction(ISD::SETCC,            MVT::f64, Expand);
   setOperationAction(ISD::SELECT,           MVT::i32, Expand);
   setOperationAction(ISD::SELECT,           MVT::i64, Expand);
+  setOperationAction(ISD::SELECT,           MVT::f32, Expand);
+  setOperationAction(ISD::SELECT,           MVT::f64, Expand);
   setOperationAction(ISD::SELECT_CC,        MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::i64, Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::f32, Custom);
@@ -692,8 +696,10 @@ SystemZTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *BB) const {
   const SystemZInstrInfo &TII = *TM.getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
-  assert((MI->getOpcode() == SystemZ::Select32 ||
-          MI->getOpcode() == SystemZ::Select64) &&
+  assert((MI->getOpcode() == SystemZ::Select32  ||
+          MI->getOpcode() == SystemZ::SelectF32 ||
+          MI->getOpcode() == SystemZ::Select64  ||
+          MI->getOpcode() == SystemZ::SelectF64) &&
          "Unexpected instr type to insert");
 
   // To "insert" a SELECT instruction, we actually have to insert the diamond
