@@ -137,7 +137,7 @@ let isCall = 1 in
     def CALLi     : Pseudo<(outs), (ins i64imm:$dst, variable_ops),
                            "brasl\t%r14, $dst", [(SystemZcall imm:$dst)]>;
     def CALLr     : Pseudo<(outs), (ins ADDR64:$dst, variable_ops),
-                           "brasl\t%r14, $dst", [(SystemZcall ADDR64:$dst)]>;
+                           "basr\t%r14, $dst", [(SystemZcall ADDR64:$dst)]>;
   }
 
 //===----------------------------------------------------------------------===//
