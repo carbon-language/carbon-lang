@@ -106,6 +106,13 @@ public:
   SystemZCC::CondCodes getCondFromBranchOpc(unsigned Opc) const;
   const TargetInstrDesc& getBrCond(SystemZCC::CondCodes CC) const;
   const TargetInstrDesc& getLongDispOpc(unsigned Opc) const;
+
+  const TargetInstrDesc& getMemoryInstr(unsigned Opc, int64_t Offset = 0) const {
+    if (Offset < 0 || Offset >= 4096)
+      return getLongDispOpc(Opc);
+    else
+      return get(Opc);
+  }
 };
 
 }

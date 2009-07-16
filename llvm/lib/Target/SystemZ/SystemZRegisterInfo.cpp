@@ -133,8 +133,7 @@ void SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int Offset = getFrameIndexOffset(MF, FrameIndex) + MI.getOperand(i+1).getImm();
 
   // Check whether displacement is too long to fit into 12 bit zext field.
-  if (Offset < 0 || Offset >= 4096)
-    MI.setDesc(TII.getLongDispOpc(MI.getOpcode()));
+  MI.setDesc(TII.getMemoryInstr(MI.getOpcode(), Offset));
 
   MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
@@ -179,11 +178,18 @@ SystemZRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 static
 void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
                   int64_t NumBytes, const TargetInstrInfo &TII) {
-  // FIXME: Handle different stack sizes here.
+  unsigned Opc; uint64_t Chunk;
   bool isSub = NumBytes < 0;
   uint64_t Offset = isSub ? -NumBytes : NumBytes;
-  unsigned Opc = SystemZ::ADD64ri16;
-  uint64_t Chunk = (1LL << 15) - 1;
+
+  if (Offset >= (1LL << 15) - 1) {
+    Opc = SystemZ::ADD64ri32;
+    Chunk = (1LL << 31) - 1;
+  } else {
+    Opc = SystemZ::ADD64ri16;
+    Chunk = (1LL << 15) - 1;
+  }
+
   DebugLoc DL = (MBBI != MBB.end() ? MBBI->getDebugLoc() :
                  DebugLoc::getUnknownLoc());
 
@@ -293,7 +299,17 @@ void SystemZRegisterInfo::emitEpilogue(MachineFunction &MF,
       assert(i < MI.getNumOperands() && "Unexpected restore code!");
     }
 
-    MI.getOperand(i).ChangeToImmediate(NumBytes + MI.getOperand(i).getImm());
+    uint64_t Offset = NumBytes + MI.getOperand(i).getImm();
+    // If Offset does not fit into 20-bit signed displacement field we need to
+    // emit some additional code...
+    if (Offset > 524287) {
+      // Fold the displacement into load instruction as much as possible.
+      NumBytes = Offset - 524287;
+      Offset = 524287;
+      emitSPUpdate(MBB, MBBI, NumBytes, TII);
+    }
+
+    MI.getOperand(i).ChangeToImmediate(Offset);
   }
 }
 

@@ -650,7 +650,8 @@ SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   case SystemZ::FMOV64mr:  return get(SystemZ::FMOV64mry);
   case SystemZ::FMOV32rm:  return get(SystemZ::FMOV32rmy);
   case SystemZ::FMOV64rm:  return get(SystemZ::FMOV64rmy);
-  default: return get(Opc);
+  default:
+   assert(0 && "Don't have long disp version of this instruction");
   }
 }
 
