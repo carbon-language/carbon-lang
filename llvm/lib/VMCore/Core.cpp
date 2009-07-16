@@ -118,6 +118,8 @@ void LLVMDumpModule(LLVMModuleRef M) {
 
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   switch (unwrap(Ty)->getTypeID()) {
+  default:
+    assert(false && "Unhandled TypeID.");
   case Type::VoidTyID:
     return LLVMVoidTypeKind;
   case Type::FloatTyID:
@@ -148,8 +150,6 @@ LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
     return LLVMOpaqueTypeKind;
   case Type::VectorTyID:
     return LLVMVectorTypeKind;
-  default:
-    assert (false && "Unhandled TypeID.");
   }
 }
 
