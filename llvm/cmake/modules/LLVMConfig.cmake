@@ -27,36 +27,8 @@ endmacro(llvm_config)
 function(explicit_llvm_config executable)
   set( link_components ${ARGN} )
 
-  set(lfgs)
-  if (MSVC)
-    if( CMAKE_CL_64 )
-      set(include_lflag "/INCLUDE:")
-    else( CMAKE_CL_64 )
-      set(include_lflag "/INCLUDE:_")
-    endif()
-    foreach(c ${link_components})
-      if( c STREQUAL "jit" )
-        set(lfgs "${lfgs} ${include_lflag}X86TargetMachineModule")
-      endif( c STREQUAL "jit" )
-      list(FIND LLVM_TARGETS_TO_BUILD ${c} idx)
-      if( NOT idx LESS 0 )
-        set(lfgs "${lfgs} ${include_lflag}${c}TargetMachineModule")
-        list(FIND LLVM_ASMPRINTERS_FORCE_LINK ${c} idx)
-        if( NOT idx LESS 0 )
-	  set(lfgs "${lfgs} ${include_lflag}${c}AsmPrinterForceLink")
-        endif()
-      endif()
-    endforeach(c)
-  endif ()
-
   explicit_map_components_to_libraries(LIBRARIES ${link_components})
   target_link_libraries(${executable} ${LIBRARIES})
-
-  if( lfgs )
-    set_target_properties(${executable}
-      PROPERTIES
-      LINK_FLAGS ${lfgs})
-  endif()
 endfunction(explicit_llvm_config)
 
 
