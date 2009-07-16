@@ -173,7 +173,7 @@ isPointerConversionToVoidPointer(ASTContext& Context) const
     FromType = Context.getArrayDecayedType(FromType);
 
   if (Second == ICK_Pointer_Conversion)
-    if (const PointerType* ToPtrType = ToType->getAsPointerType())
+    if (const PointerType* ToPtrType = ToType->getAs<PointerType>())
       return ToPtrType->getPointeeType()->isVoidType();
 
   return false;
@@ -915,7 +915,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
 
   // Blocks: Block pointers can be converted to void*.
   if (FromType->isBlockPointerType() && ToType->isPointerType() &&
-      ToType->getAsPointerType()->getPointeeType()->isVoidType()) {
+      ToType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
     ConvertedType = ToType;
     return true;
   }
@@ -933,7 +933,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
   }
 
-  const PointerType* ToTypePtr = ToType->getAsPointerType();
+  const PointerType* ToTypePtr = ToType->getAs<PointerType>();
   if (!ToTypePtr)
     return false;
 
@@ -944,7 +944,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
   }
 
   // Beyond this point, both types need to be pointers.
-  const PointerType *FromTypePtr = FromType->getAsPointerType();
+  const PointerType *FromTypePtr = FromType->getAs<PointerType>();
   if (!FromTypePtr)
     return false;
 
@@ -1042,17 +1042,17 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
   } 
   // Beyond this point, both types need to be C pointers or block pointers.
   QualType ToPointeeType;
-  if (const PointerType *ToCPtr = ToType->getAsPointerType())
+  if (const PointerType *ToCPtr = ToType->getAs<PointerType>())
     ToPointeeType = ToCPtr->getPointeeType();
-  else if (const BlockPointerType *ToBlockPtr = ToType->getAsBlockPointerType())
+  else if (const BlockPointerType *ToBlockPtr = ToType->getAs<BlockPointerType>())
     ToPointeeType = ToBlockPtr->getPointeeType();
   else
     return false;
 
   QualType FromPointeeType;
-  if (const PointerType *FromCPtr = FromType->getAsPointerType())
+  if (const PointerType *FromCPtr = FromType->getAs<PointerType>())
     FromPointeeType = FromCPtr->getPointeeType();
-  else if (const BlockPointerType *FromBlockPtr = FromType->getAsBlockPointerType())
+  else if (const BlockPointerType *FromBlockPtr = FromType->getAs<BlockPointerType>())
     FromPointeeType = FromBlockPtr->getPointeeType();
   else
     return false;
@@ -1142,8 +1142,8 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
 bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
   QualType FromType = From->getType();
 
-  if (const PointerType *FromPtrType = FromType->getAsPointerType())
-    if (const PointerType *ToPtrType = ToType->getAsPointerType()) {
+  if (const PointerType *FromPtrType = FromType->getAs<PointerType>())
+    if (const PointerType *ToPtrType = ToType->getAs<PointerType>()) {
       QualType FromPointeeType = FromPtrType->getPointeeType(),
                ToPointeeType   = ToPtrType->getPointeeType();
 
@@ -1404,7 +1404,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
         User.ConversionFunction = Constructor;
         User.After.setAsIdentityConversion();
         User.After.FromTypePtr 
-          = ThisType->getAsPointerType()->getPointeeType().getAsOpaquePtr();
+          = ThisType->getAs<PointerType>()->getPointeeType().getAsOpaquePtr();
         User.After.ToTypePtr = ToType.getAsOpaquePtr();
         return true;
       } else if (CXXConversionDecl *Conversion
@@ -1579,9 +1579,9 @@ Sema::CompareStandardConversionSequences(const StandardConversionSequence& SCS1,
       FromType2 = Context.getArrayDecayedType(FromType2);
 
     QualType FromPointee1 
-      = FromType1->getAsPointerType()->getPointeeType().getUnqualifiedType();
+      = FromType1->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
     QualType FromPointee2
-      = FromType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
+      = FromType2->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
 
     if (IsDerivedFrom(FromPointee2, FromPointee1))
       return ImplicitConversionSequence::Better;
@@ -1771,13 +1771,13 @@ Sema::CompareDerivedToBaseConversions(const StandardConversionSequence& SCS1,
       FromType1->isPointerType() && FromType2->isPointerType() &&
       ToType1->isPointerType() && ToType2->isPointerType()) {
     QualType FromPointee1 
-      = FromType1->getAsPointerType()->getPointeeType().getUnqualifiedType();
+      = FromType1->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
     QualType ToPointee1 
-      = ToType1->getAsPointerType()->getPointeeType().getUnqualifiedType();
+      = ToType1->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
     QualType FromPointee2
-      = FromType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
+      = FromType2->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
     QualType ToPointee2
-      = ToType2->getAsPointerType()->getPointeeType().getUnqualifiedType();
+      = ToType2->getAs<PointerType>()->getPointeeType().getUnqualifiedType();
 
     const ObjCInterfaceType* FromIface1 = FromPointee1->getAsObjCInterfaceType();
     const ObjCInterfaceType* FromIface2 = FromPointee2->getAsObjCInterfaceType();
@@ -1943,7 +1943,7 @@ Sema::TryObjectArgumentInitialization(Expr *From, CXXMethodDecl *Method) {
 
   // We need to have an object of class type.
   QualType FromType = From->getType();
-  if (const PointerType *PT = FromType->getAsPointerType())
+  if (const PointerType *PT = FromType->getAs<PointerType>())
     FromType = PT->getPointeeType();
 
   assert(FromType->isRecordType());
@@ -1991,9 +1991,9 @@ bool
 Sema::PerformObjectArgumentInitialization(Expr *&From, CXXMethodDecl *Method) {
   QualType FromRecordType, DestType;
   QualType ImplicitParamRecordType  = 
-    Method->getThisType(Context)->getAsPointerType()->getPointeeType();
+    Method->getThisType(Context)->getAs<PointerType>()->getPointeeType();
   
-  if (const PointerType *PT = From->getType()->getAsPointerType()) {
+  if (const PointerType *PT = From->getType()->getAs<PointerType>()) {
     FromRecordType = PT->getPointeeType();
     DestType = Method->getThisType(Context);
   } else {
@@ -2634,7 +2634,7 @@ BuiltinCandidateTypeSet::AddPointerWithMoreQualifiedTypeVariants(QualType Ty) {
   if (!PointerTypes.insert(Ty))
     return false;
 
-  if (const PointerType *PointerTy = Ty->getAsPointerType()) {
+  if (const PointerType *PointerTy = Ty->getAs<PointerType>()) {
     QualType PointeeTy = PointerTy->getPointeeType();
     // FIXME: Optimize this so that we don't keep trying to add the same types.
 
@@ -2710,7 +2710,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   // We don't care about qualifiers on the type.
   Ty = Ty.getUnqualifiedType();
 
-  if (const PointerType *PointerTy = Ty->getAsPointerType()) {
+  if (const PointerType *PointerTy = Ty->getAs<PointerType>()) {
     QualType PointeeTy = PointerTy->getPointeeType();
 
     // Insert our type, and its more-qualified variants, into the set
@@ -2898,7 +2898,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       // Skip pointer types that aren't pointers to object types.
-      if (!(*Ptr)->getAsPointerType()->getPointeeType()->isObjectType())
+      if (!(*Ptr)->getAs<PointerType>()->getPointeeType()->isObjectType())
         continue;
 
       QualType ParamTypes[2] = { 
@@ -2936,7 +2936,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       QualType ParamTy = *Ptr;
-      QualType PointeeTy = ParamTy->getAsPointerType()->getPointeeType();
+      QualType PointeeTy = ParamTy->getAs<PointerType>()->getPointeeType();
       AddBuiltinCandidate(Context.getLValueReferenceType(PointeeTy), 
                           &ParamTy, Args, 1, CandidateSet);
     }
@@ -3336,7 +3336,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
     for (BuiltinCandidateTypeSet::iterator Ptr = CandidateTypes.pointer_begin();
          Ptr != CandidateTypes.pointer_end(); ++Ptr) {
       QualType ParamTypes[2] = { *Ptr, Context.getPointerDiffType() };
-      QualType PointeeType = (*Ptr)->getAsPointerType()->getPointeeType();
+      QualType PointeeType = (*Ptr)->getAs<PointerType>()->getPointeeType();
       QualType ResultTy = Context.getLValueReferenceType(PointeeType);
 
       // T& operator[](T*, ptrdiff_t)
@@ -3624,7 +3624,7 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
           FnType = FnTypeRef->getPointeeType();
           isRValueReference = true;
         }
-        if (const PointerType *FnTypePtr = FnType->getAsPointerType()) {
+        if (const PointerType *FnTypePtr = FnType->getAs<PointerType>()) {
           FnType = FnTypePtr->getPointeeType();
           isPointer = true;
         }
@@ -3673,7 +3673,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
                                          bool Complain) {
   QualType FunctionType = ToType;
   bool IsMember = false;
-  if (const PointerType *ToTypePtr = ToType->getAsPointerType())
+  if (const PointerType *ToTypePtr = ToType->getAs<PointerType>())
     FunctionType = ToTypePtr->getPointeeType();
   else if (const ReferenceType *ToTypeRef = ToType->getAsReferenceType())
     FunctionType = ToTypeRef->getPointeeType();
@@ -4414,7 +4414,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
     // Strip the reference type (if any) and then the pointer type (if
     // any) to get down to what might be a function type.
     QualType ConvType = Conv->getConversionType().getNonReferenceType();
-    if (const PointerType *ConvPtrType = ConvType->getAsPointerType())
+    if (const PointerType *ConvPtrType = ConvType->getAs<PointerType>())
       ConvType = ConvPtrType->getPointeeType();
 
     if (const FunctionProtoType *Proto = ConvType->getAsFunctionProtoType())

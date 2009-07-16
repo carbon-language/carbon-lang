@@ -1009,9 +1009,9 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
     return RequireNonAbstractType(Loc, AT->getElementType(), DiagID, SelID,
                                   CurrentRD);
   
-  if (const PointerType *PT = T->getAsPointerType()) {
+  if (const PointerType *PT = T->getAs<PointerType>()) {
     // Find the innermost pointer type.
-    while (const PointerType *T = PT->getPointeeType()->getAsPointerType())
+    while (const PointerType *T = PT->getPointeeType()->getAs<PointerType>())
       PT = T;
     
     if (const ArrayType *AT = Context.getAsArrayType(PT->getPointeeType()))
@@ -3079,7 +3079,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
   QualType BaseType = ExDeclType;
   int Mode = 0; // 0 for direct type, 1 for pointer, 2 for reference
   unsigned DK = diag::err_catch_incomplete;
-  if (const PointerType *Ptr = BaseType->getAsPointerType()) {
+  if (const PointerType *Ptr = BaseType->getAs<PointerType>()) {
     BaseType = Ptr->getPointeeType();
     Mode = 1;
     DK = diag::err_catch_incomplete_ptr;

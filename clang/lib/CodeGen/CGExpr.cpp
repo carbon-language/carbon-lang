@@ -934,7 +934,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     assert(E->getBase()->getType()->isVectorType());
     Base = EmitLValue(E->getBase());
   } else {
-    const PointerType *PT = E->getBase()->getType()->getAsPointerType();
+    const PointerType *PT = E->getBase()->getType()->getAs<PointerType>();
     llvm::Value *Ptr = EmitScalarExpr(E->getBase());
     Base = LValue::MakeAddr(Ptr, PT->getPointeeType().getCVRQualifiers());
   }
@@ -976,7 +976,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   if (E->isArrow()) {
     BaseValue = EmitScalarExpr(BaseExpr);
     const PointerType *PTy = 
-      BaseExpr->getType()->getAsPointerType();
+      BaseExpr->getType()->getAs<PointerType>();
     if (PTy->getPointeeType()->isUnionType())
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
@@ -1317,7 +1317,7 @@ RValue CodeGenFunction::EmitCall(llvm::Value *Callee, QualType CalleeType,
   assert(CalleeType->isFunctionPointerType() && 
          "Call must have function pointer type!");
 
-  QualType FnType = CalleeType->getAsPointerType()->getPointeeType();
+  QualType FnType = CalleeType->getAs<PointerType>()->getPointeeType();
   QualType ResultType = FnType->getAsFunctionType()->getResultType();
 
   CallArgList Args;

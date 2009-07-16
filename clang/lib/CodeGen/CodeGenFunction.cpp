@@ -490,7 +490,7 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
     return SizeEntry;
   } else if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
     EmitVLASize(AT->getElementType());
-  } else if (const PointerType *PT = Ty->getAsPointerType())
+  } else if (const PointerType *PT = Ty->getAs<PointerType>())
     EmitVLASize(PT->getPointeeType());
   else {
     assert(0 && "unknown VM type!");

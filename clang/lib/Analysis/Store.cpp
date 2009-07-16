@@ -62,7 +62,7 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
 
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
-  QualType PointeeTy = CastToTy->getAsPointerType()->getPointeeType();
+  QualType PointeeTy = CastToTy->getAs<PointerType>()->getPointeeType();
   
   // Process region cast according to the kind of the region being cast.
   switch (R->getKind()) {
@@ -243,7 +243,7 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
   // If the region is cast to another type, use that type.  
   if (const QualType *CastTy = getCastType(state, R)) {
     assert(!(*CastTy)->isObjCObjectPointerType());
-    QualType NewT = (*CastTy)->getAsPointerType()->getPointeeType();    
+    QualType NewT = (*CastTy)->getAs<PointerType>()->getPointeeType();    
 
     // The only exception is if the original region had a location type as its
     // value type we always want to treat the region as binding to a location.

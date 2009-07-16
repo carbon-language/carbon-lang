@@ -431,8 +431,6 @@ public:
   const FunctionType *getAsFunctionType() const;
   const FunctionNoProtoType *getAsFunctionNoProtoType() const;
   const FunctionProtoType *getAsFunctionProtoType() const;
-  const PointerType *getAsPointerType() const;
-  const BlockPointerType *getAsBlockPointerType() const;
   const ReferenceType *getAsReferenceType() const;
   const LValueReferenceType *getAsLValueReferenceType() const;
   const RValueReferenceType *getAsRValueReferenceType() const;
@@ -457,6 +455,10 @@ public:
   const ObjCQualifiedInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
 
+  // Member-template getAs<specific type>'.  This scheme will eventually
+  // replace the specific getAsXXXX methods above.
+  template <typename T> const T *getAs() const;
+  
   const TemplateSpecializationType *
     getAsTemplateSpecializationType() const;
   
@@ -2113,7 +2115,7 @@ inline const TypedefType* Type::getAsTypedefType() const {
   return dyn_cast<TypedefType>(this);
 }
 inline const ObjCInterfaceType *Type::getAsPointerToObjCInterfaceType() const {
-  if (const PointerType *PT = getAsPointerType())
+  if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType()->getAsObjCInterfaceType();
   return 0;
 }
@@ -2142,7 +2144,7 @@ inline bool Type::isRValueReferenceType() const {
   return isa<RValueReferenceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isFunctionPointerType() const {
-  if (const PointerType* T = getAsPointerType())
+  if (const PointerType* T = getAs<PointerType>())
     return T->getPointeeType()->isFunctionType();
   else
     return false;
@@ -2247,6 +2249,25 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                   Diagnostic::ak_qualtype);
   return DB;
 }
+  
+/// Member-template getAs<specific type>'.
+template <typename T> const T *Type::getAs() const {
+  // If this is directly a T type, return it.
+  if (const T *Ty = dyn_cast<T>(this))
+    return Ty;
+    
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<T>(CanonicalType)) {
+    // Look through type qualifiers
+    if (isa<T>(CanonicalType.getUnqualifiedType()))
+      return CanonicalType.getUnqualifiedType()->getAs<T>();
+    return 0;
+  }
+    
+  // If this is a typedef for a pointer type, strip the typedef off without
+  // losing all typedef information.
+  return cast<T>(getDesugaredType());
+}  
 
 }  // end namespace clang
 

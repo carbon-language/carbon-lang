@@ -133,8 +133,8 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
       const FunctionType *FT = Ty->isFunctionPointerType() 
-      ? Ty->getAsPointerType()->getPointeeType()->getAsFunctionType()
-      : Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
+      ? Ty->getAs<PointerType>()->getPointeeType()->getAsFunctionType()
+      : Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
       if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT)) {
         unsigned NumArgsInProto = Proto->getNumArgs();
         unsigned k;
@@ -756,7 +756,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
     // whether its a pointer and whether it adds any qualifiers to the
     // anonymous struct/union fields we're looking into.
     QualType ObjectType = BaseObjectExpr->getType();
-    if (const PointerType *ObjectPtr = ObjectType->getAsPointerType()) {
+    if (const PointerType *ObjectPtr = ObjectType->getAs<PointerType>()) {
       BaseObjectIsPointer = true;
       ObjectType = ObjectPtr->getPointeeType();
     }
@@ -1835,11 +1835,11 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     ResultType = Context.DependentTy;
-  } else if (const PointerType *PTy = LHSTy->getAsPointerType()) {
+  } else if (const PointerType *PTy = LHSTy->getAs<PointerType>()) {
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
     ResultType = PTy->getPointeeType();
-  } else if (const PointerType *PTy = RHSTy->getAsPointerType()) {
+  } else if (const PointerType *PTy = RHSTy->getAs<PointerType>()) {
      // Handle the uncommon case of "123[Ptr]".
     BaseExpr = RHSExp;
     IndexExpr = LHSExp;
@@ -1874,7 +1874,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
-    ResultType = LHSTy->getAsPointerType()->getPointeeType();
+    ResultType = LHSTy->getAs<PointerType>()->getPointeeType();
   } else if (RHSTy->isArrayType()) {
     // Same as previous, except for 123[f().a] case
     Diag(RHSExp->getLocStart(), diag::ext_subscript_non_lvalue) <<
@@ -1884,7 +1884,7 @@ Sema::ActOnArraySubscriptExpr(Scope *S, ExprArg Base, SourceLocation LLoc,
 
     BaseExpr = RHSExp;
     IndexExpr = LHSExp;
-    ResultType = RHSTy->getAsPointerType()->getPointeeType();
+    ResultType = RHSTy->getAs<PointerType>()->getPointeeType();
   } else {
     return ExprError(Diag(LLoc, diag::err_typecheck_subscript_value)
        << LHSExp->getSourceRange() << RHSExp->getSourceRange());
@@ -2098,7 +2098,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                          OpLoc, 
                                                      DeclarationName(&Member),
                                                          MemberLoc));
-    else if (const PointerType *PT = BaseType->getAsPointerType())
+    else if (const PointerType *PT = BaseType->getAs<PointerType>())
       BaseType = PT->getPointeeType();
     else if (BaseType->isObjCObjectPointerType())
       ;
@@ -2119,7 +2119,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // In Obj-C++, however, the above expression is valid, since it could be
       // accessing the 'f' property if T is an Obj-C interface. The extra check
       // allows this, while still reporting an error if T is a struct pointer.
-      const PointerType *PT = BaseType->getAsPointerType();
+      const PointerType *PT = BaseType->getAs<PointerType>();
 
       if (!PT || (getLangOptions().ObjC1 && 
                   !PT->getPointeeType()->isRecordType()))
@@ -2500,7 +2500,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   if (BaseType == Context.OverloadTy || 
       BaseType->isFunctionType() ||
       (BaseType->isPointerType() && 
-       BaseType->getAsPointerType()->isFunctionType())) {
+       BaseType->getAs<PointerType>()->isFunctionType())) {
     SourceLocation Loc = PP.getLocForEndOfToken(BaseExpr->getLocEnd());
     Diag(Loc, diag::note_member_reference_needs_call)
       << CodeModificationHint::CreateInsertion(Loc, "()");
@@ -2794,13 +2794,13 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
   if (!Fn->getType()->isBlockPointerType()) {
     // C99 6.5.2.2p1 - "The expression that denotes the called function shall
     // have type pointer to function".
-    const PointerType *PT = Fn->getType()->getAsPointerType();
+    const PointerType *PT = Fn->getType()->getAs<PointerType>();
     if (PT == 0)
       return ExprError(Diag(LParenLoc, diag::err_typecheck_call_not_function)
         << Fn->getType() << Fn->getSourceRange());
     FuncT = PT->getPointeeType()->getAsFunctionType();
   } else { // This is a block call.
-    FuncT = Fn->getType()->getAsBlockPointerType()->getPointeeType()->
+    FuncT = Fn->getType()->getAs<BlockPointerType>()->getPointeeType()->
                 getAsFunctionType();
   }
   if (FuncT == 0)
@@ -3131,8 +3131,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
       return LHSTy;
     }
     // The block pointer types aren't identical, continue checking.
-    QualType lhptee = LHSTy->getAsBlockPointerType()->getPointeeType();
-    QualType rhptee = RHSTy->getAsBlockPointerType()->getPointeeType();
+    QualType lhptee = LHSTy->getAs<BlockPointerType>()->getPointeeType();
+    QualType rhptee = RHSTy->getAs<BlockPointerType>()->getPointeeType();
 
     if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(),
                                     rhptee.getUnqualifiedType())) {
@@ -3206,8 +3206,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // Check constraints for C object pointers types (C99 6.5.15p3,6).
   if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
     // get the "pointed to" types
-    QualType lhptee = LHSTy->getAsPointerType()->getPointeeType();
-    QualType rhptee = RHSTy->getAsPointerType()->getPointeeType();
+    QualType lhptee = LHSTy->getAs<PointerType>()->getPointeeType();
+    QualType rhptee = RHSTy->getAs<PointerType>()->getPointeeType();
 
     // ignore qualifiers on void (C99 6.5.15p3, clause 6)
     if (lhptee->isVoidType() && rhptee->isIncompleteOrObjectType()) {
@@ -3313,8 +3313,8 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   QualType lhptee, rhptee;
 
   // get the "pointed to" type (ignoring qualifiers at the top level)
-  lhptee = lhsType->getAsPointerType()->getPointeeType();
-  rhptee = rhsType->getAsPointerType()->getPointeeType();
+  lhptee = lhsType->getAs<PointerType>()->getPointeeType();
+  rhptee = rhsType->getAs<PointerType>()->getPointeeType();
 
   return CheckPointeeTypesForAssignment(lhptee, rhptee);
 }
@@ -3396,8 +3396,8 @@ Sema::CheckBlockPointerTypesForAssignment(QualType lhsType,
   QualType lhptee, rhptee;
 
   // get the "pointed to" type (ignoring qualifiers at the top level)
-  lhptee = lhsType->getAsBlockPointerType()->getPointeeType();
-  rhptee = rhsType->getAsBlockPointerType()->getPointeeType();
+  lhptee = lhsType->getAs<BlockPointerType>()->getPointeeType();
+  rhptee = rhsType->getAs<BlockPointerType>()->getPointeeType();
 
   // make sure we operate on the canonical type
   lhptee = Context.getCanonicalType(lhptee);
@@ -3496,12 +3496,12 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
     if (isa<ObjCObjectPointerType>(rhsType)) {
       QualType rhptee = rhsType->getAsObjCObjectPointerType()->getPointeeType();
-      QualType lhptee = lhsType->getAsPointerType()->getPointeeType();
+      QualType lhptee = lhsType->getAs<PointerType>()->getPointeeType();
       return CheckPointeeTypesForAssignment(lhptee, rhptee);
     }
 
-    if (rhsType->getAsBlockPointerType()) {
-      if (lhsType->getAsPointerType()->getPointeeType()->isVoidType())
+    if (rhsType->getAs<BlockPointerType>()) {
+      if (lhsType->getAs<PointerType>()->getPointeeType()->isVoidType())
         return Compatible;
 
       // Treat block pointers as objects.
@@ -3522,7 +3522,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (rhsType->isBlockPointerType())
       return CheckBlockPointerTypesForAssignment(lhsType, rhsType);
 
-    if (const PointerType *RHSPT = rhsType->getAsPointerType()) {
+    if (const PointerType *RHSPT = rhsType->getAs<PointerType>()) {
       if (RHSPT->getPointeeType()->isVoidType())
         return Compatible;
     }
@@ -3535,7 +3535,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
     if (isa<PointerType>(rhsType)) {
       QualType lhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
-      QualType rhptee = rhsType->getAsPointerType()->getPointeeType();
+      QualType rhptee = rhsType->getAs<PointerType>()->getPointeeType();
       return CheckPointeeTypesForAssignment(lhptee, rhptee);
     }
     if (rhsType->isObjCObjectPointerType()) {
@@ -3545,7 +3545,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       QualType rhptee = rhsType->getAsObjCObjectPointerType()->getPointeeType();
       return CheckPointeeTypesForAssignment(lhptee, rhptee);
     }
-    if (const PointerType *RHSPT = rhsType->getAsPointerType()) {
+    if (const PointerType *RHSPT = rhsType->getAs<PointerType>()) {
       if (RHSPT->getPointeeType()->isVoidType())
         return Compatible;
     }
@@ -3566,7 +3566,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return CheckPointerTypesForAssignment(lhsType, rhsType);
 
     if (isa<BlockPointerType>(lhsType) &&
-        rhsType->getAsPointerType()->getPointeeType()->isVoidType())
+        rhsType->getAs<PointerType>()->getPointeeType()->isVoidType())
       return Compatible;
     return Incompatible;
   }
@@ -3580,11 +3580,11 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
     if (isa<PointerType>(lhsType)) {
       QualType rhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
-      QualType lhptee = rhsType->getAsPointerType()->getPointeeType();
+      QualType lhptee = rhsType->getAs<PointerType>()->getPointeeType();
       return CheckPointeeTypesForAssignment(lhptee, rhptee);
     }
     if (isa<BlockPointerType>(lhsType) &&
-        rhsType->getAsPointerType()->getPointeeType()->isVoidType())
+        rhsType->getAs<PointerType>()->getPointeeType()->isVoidType())
       return Compatible;
     return Incompatible;
   }
@@ -3636,7 +3636,7 @@ Sema::CheckTransparentUnionArgumentConstraints(QualType ArgType, Expr *&rExpr) {
       // 1) void pointer
       // 2) null pointer constant
       if (FromType->isPointerType())
-        if (FromType->getAsPointerType()->getPointeeType()->isVoidType()) {
+        if (FromType->getAs<PointerType>()->getPointeeType()->isVoidType()) {
           ImpCastExprToType(rExpr, it->getType());
           InitField = *it;
           break;
@@ -3973,7 +3973,7 @@ QualType Sema::CheckSubtractionOperands(Expr *&lex, Expr *&rex,
     }
 
     // Handle pointer-pointer subtractions.
-    if (const PointerType *RHSPTy = rex->getType()->getAsPointerType()) {
+    if (const PointerType *RHSPTy = rex->getType()->getAs<PointerType>()) {
       QualType rpointee = RHSPTy->getPointeeType();
 
       // RHS must be a completely-type object type.
@@ -4168,9 +4168,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   // errors (when -pedantic-errors is enabled).
   if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
     QualType LCanPointeeTy =
-      Context.getCanonicalType(lType->getAsPointerType()->getPointeeType());
+      Context.getCanonicalType(lType->getAs<PointerType>()->getPointeeType());
     QualType RCanPointeeTy =
-      Context.getCanonicalType(rType->getAsPointerType()->getPointeeType());
+      Context.getCanonicalType(rType->getAs<PointerType>()->getPointeeType());
 
     if (isRelational) {
       if (lType->isFunctionPointerType() || rType->isFunctionPointerType()) {
@@ -4240,8 +4240,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
   }
   // Handle block pointer types.
   if (!isRelational && lType->isBlockPointerType() && rType->isBlockPointerType()) {
-    QualType lpointee = lType->getAsBlockPointerType()->getPointeeType();
-    QualType rpointee = rType->getAsBlockPointerType()->getPointeeType();
+    QualType lpointee = lType->getAs<BlockPointerType>()->getPointeeType();
+    QualType rpointee = rType->getAs<BlockPointerType>()->getPointeeType();
 
     if (!LHSIsNull && !RHSIsNull &&
         !Context.typesAreCompatible(lpointee, rpointee)) {
@@ -4256,9 +4256,9 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
       && ((lType->isBlockPointerType() && rType->isPointerType())
           || (lType->isPointerType() && rType->isBlockPointerType()))) {
     if (!LHSIsNull && !RHSIsNull) {
-      if (!((rType->isPointerType() && rType->getAsPointerType()
+      if (!((rType->isPointerType() && rType->getAs<PointerType>()
              ->getPointeeType()->isVoidType())
-            || (lType->isPointerType() && lType->getAsPointerType()
+            || (lType->isPointerType() && lType->getAs<PointerType>()
                 ->getPointeeType()->isVoidType())))
         Diag(Loc, diag::err_typecheck_comparison_of_distinct_blocks)
           << lType << rType << lex->getSourceRange() << rex->getSourceRange();
@@ -4269,8 +4269,8 @@ QualType Sema::CheckCompareOperands(Expr *&lex, Expr *&rex, SourceLocation Loc,
 
   if ((lType->isObjCObjectPointerType() || rType->isObjCObjectPointerType())) {
     if (lType->isPointerType() || rType->isPointerType()) {
-      const PointerType *LPT = lType->getAsPointerType();
-      const PointerType *RPT = rType->getAsPointerType();
+      const PointerType *LPT = lType->getAs<PointerType>();
+      const PointerType *RPT = rType->getAs<PointerType>();
       bool LPtrToVoid = LPT ?
         Context.getCanonicalType(LPT->getPointeeType())->isVoidType() : false;
       bool RPtrToVoid = RPT ?
@@ -4798,7 +4798,7 @@ QualType Sema::CheckIndirectionOperand(Expr *Op, SourceLocation OpLoc) {
   // incomplete type or void.  It would be possible to warn about dereferencing
   // a void pointer, but it's completely well-defined, and such a warning is
   // unlikely to catch any mistakes.
-  if (const PointerType *PT = Ty->getAsPointerType())
+  if (const PointerType *PT = Ty->getAs<PointerType>())
     return PT->getPointeeType();
 
   if (const ObjCObjectPointerType *OPT = Ty->getAsObjCObjectPointerType())

@@ -300,7 +300,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     if (TypeQuals & QualType::Restrict) {
       if (Result->isPointerType() || Result->isReferenceType()) {
         QualType EltTy = Result->isPointerType() ? 
-          Result->getAsPointerType()->getPointeeType() :
+          Result->getAs<PointerType>()->getPointeeType() :
           Result->getAsReferenceType()->getPointeeType();
       
         // If we have a pointer or reference, the pointee must have an object
@@ -1185,7 +1185,7 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
   //   an incomplete type a pointer or reference to an incomplete type, other
   //   than (cv) void*.
   int kind;
-  if (const PointerType* IT = T->getAsPointerType()) {
+  if (const PointerType* IT = T->getAs<PointerType>()) {
     T = IT->getPointeeType();
     kind = 1;
   } else if (const ReferenceType* IT = T->getAsReferenceType()) {
@@ -1205,7 +1205,7 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
 /// to member to a function with an exception specification. This means that
 /// it is invalid to add another level of indirection.
 bool Sema::CheckDistantExceptionSpec(QualType T) {
-  if (const PointerType *PT = T->getAsPointerType())
+  if (const PointerType *PT = T->getAs<PointerType>())
     T = PT->getPointeeType();
   else if (const MemberPointerType *PT = T->getAsMemberPointerType())
     T = PT->getPointeeType();
@@ -1287,7 +1287,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
     bool SubIsPointer = false;
     if (const ReferenceType *RefTy = CanonicalSubT->getAsReferenceType())
       CanonicalSubT = RefTy->getPointeeType();
-    if (const PointerType *PtrTy = CanonicalSubT->getAsPointerType()) {
+    if (const PointerType *PtrTy = CanonicalSubT->getAs<PointerType>()) {
       CanonicalSubT = PtrTy->getPointeeType();
       SubIsPointer = true;
     }
@@ -1308,7 +1308,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
       if (const ReferenceType *RefTy = CanonicalSuperT->getAsReferenceType())
         CanonicalSuperT = RefTy->getPointeeType();
       if (SubIsPointer) {
-        if (const PointerType *PtrTy = CanonicalSuperT->getAsPointerType())
+        if (const PointerType *PtrTy = CanonicalSuperT->getAs<PointerType>())
           CanonicalSuperT = PtrTy->getPointeeType();
         else {
           continue;
@@ -1384,8 +1384,8 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclPtrTy D) {
 /// be called in a loop that successively "unwraps" pointer and
 /// pointer-to-member types to compare them at each level.
 bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2) {
-  const PointerType *T1PtrType = T1->getAsPointerType(),
-                    *T2PtrType = T2->getAsPointerType();
+  const PointerType *T1PtrType = T1->getAs<PointerType>(),
+                    *T2PtrType = T2->getAs<PointerType>();
   if (T1PtrType && T2PtrType) {
     T1 = T1PtrType->getPointeeType();
     T2 = T2PtrType->getPointeeType();

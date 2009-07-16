@@ -397,7 +397,7 @@ DeduceTemplateArguments(ASTContext &Context,
       
     //     T *
     case Type::Pointer: {
-      const PointerType *PointerArg = Arg->getAsPointerType();
+      const PointerType *PointerArg = Arg->getAs<PointerType>();
       if (!PointerArg)
         return Sema::TDK_NonDeducedMismatch;
       
@@ -1320,7 +1320,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     if (isSimpleTemplateIdType(ParamType) ||
         (isa<PointerType>(ParamType) && 
          isSimpleTemplateIdType(
-                              ParamType->getAsPointerType()->getPointeeType())))
+                              ParamType->getAs<PointerType>()->getPointeeType())))
       TDF |= TDF_DerivedClass;
     
     if (TemplateDeductionResult Result

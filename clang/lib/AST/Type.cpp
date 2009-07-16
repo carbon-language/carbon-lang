@@ -202,7 +202,7 @@ bool Type::isStructureType() const {
   return false;
 }
 bool Type::isVoidPointerType() const {
-  if (const PointerType *PT = getAsPointerType())
+  if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType()->isVoidType();
   return false;
 }
@@ -296,49 +296,13 @@ const FunctionProtoType *Type::getAsFunctionProtoType() const {
 }
 
 QualType Type::getPointeeType() const {
-  if (const PointerType *PT = getAsPointerType())
+  if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType();
   if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
     return OPT->getPointeeType();
-  if (const BlockPointerType *BPT = getAsBlockPointerType())
+  if (const BlockPointerType *BPT = getAs<BlockPointerType>())
     return BPT->getPointeeType();
   return QualType();
-}
-
-const PointerType *Type::getAsPointerType() const {
-  // If this is directly a pointer type, return it.
-  if (const PointerType *PTy = dyn_cast<PointerType>(this))
-    return PTy;
-  
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<PointerType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<PointerType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsPointerType();
-    return 0;
-  }
-
-  // If this is a typedef for a pointer type, strip the typedef off without
-  // losing all typedef information.
-  return cast<PointerType>(getDesugaredType());
-}
-
-const BlockPointerType *Type::getAsBlockPointerType() const {
-  // If this is directly a block pointer type, return it.
-  if (const BlockPointerType *PTy = dyn_cast<BlockPointerType>(this))
-    return PTy;
-  
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<BlockPointerType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<BlockPointerType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsBlockPointerType();
-    return 0;
-  }
-  
-  // If this is a typedef for a block pointer type, strip the typedef off 
-  // without losing all typedef information.
-  return cast<BlockPointerType>(getDesugaredType());
 }
 
 const ReferenceType *Type::getAsReferenceType() const {
@@ -429,7 +393,7 @@ bool Type::isVariablyModifiedType() const {
   // Also, C++ references and member pointers can point to a variably modified
   // type, where VLAs appear as an extension to C++, and should be treated
   // correctly.
-  if (const PointerType *PT = getAsPointerType())
+  if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType()->isVariablyModifiedType();
   if (const ReferenceType *RT = getAsReferenceType())
     return RT->getPointeeType()->isVariablyModifiedType();

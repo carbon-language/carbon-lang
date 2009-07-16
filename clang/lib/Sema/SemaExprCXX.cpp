@@ -136,7 +136,7 @@ bool Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *&E) {
   //   to an incomplete type other than (cv) void the program is ill-formed.
   QualType Ty = E->getType();
   int isPointer = 0;
-  if (const PointerType* Ptr = Ty->getAsPointerType()) {
+  if (const PointerType* Ptr = Ty->getAs<PointerType>()) {
     Ty = Ptr->getPointeeType();
     isPointer = 1;
   }
@@ -708,7 +708,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
       return ExprError(Diag(StartLoc, diag::err_delete_operand)
         << Type << Ex->getSourceRange());
 
-    QualType Pointee = Type->getAsPointerType()->getPointeeType();
+    QualType Pointee = Type->getAs<PointerType>()->getPointeeType();
     if (Pointee->isFunctionType() || Pointee->isVoidType())
       return ExprError(Diag(StartLoc, diag::err_delete_operand)
         << Type << Ex->getSourceRange());
@@ -812,7 +812,7 @@ Sema::IsStringLiteralToNonConstPointerConversion(Expr *From, QualType ToType) {
   // string literal can be converted to an rvalue of type "pointer
   // to wchar_t" (C++ 4.2p2).
   if (StringLiteral *StrLit = dyn_cast<StringLiteral>(From))
-    if (const PointerType *ToPtrType = ToType->getAsPointerType())
+    if (const PointerType *ToPtrType = ToType->getAs<PointerType>())
       if (const BuiltinType *ToPointeeType 
           = ToPtrType->getPointeeType()->getAsBuiltinType()) {
         // This conversion is considered only when there is an
@@ -1066,7 +1066,7 @@ QualType Sema::CheckPointerToMemberOperands(
   //   such a class]
   QualType LType = lex->getType();
   if (isIndirect) {
-    if (const PointerType *Ptr = LType->getAsPointerType())
+    if (const PointerType *Ptr = LType->getAs<PointerType>())
       LType = Ptr->getPointeeType().getNonReferenceType();
     else {
       Diag(Loc, diag::err_bad_memptr_lhs)
@@ -1515,8 +1515,8 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
   llvm::SmallVector<unsigned, 4> QualifierUnion;
   QualType Composite1 = T1, Composite2 = T2;
   const PointerType *Ptr1, *Ptr2;
-  while ((Ptr1 = Composite1->getAsPointerType()) &&
-         (Ptr2 = Composite2->getAsPointerType())) {
+  while ((Ptr1 = Composite1->getAs<PointerType>()) &&
+         (Ptr2 = Composite2->getAs<PointerType>())) {
     Composite1 = Ptr1->getPointeeType();
     Composite2 = Ptr2->getPointeeType();
     QualifierUnion.push_back(

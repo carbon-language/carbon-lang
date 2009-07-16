@@ -1435,7 +1435,7 @@ addAssociatedClassesAndNamespaces(QualType T,
   // We handle this by unwrapping pointer and array types immediately,
   // to avoid unnecessary recursion.
   while (true) {
-    if (const PointerType *Ptr = T->getAsPointerType())
+    if (const PointerType *Ptr = T->getAs<PointerType>())
       T = Ptr->getPointeeType();
     else if (const ArrayType *Ptr = Context.getAsArrayType(T))
       T = Ptr->getElementType();

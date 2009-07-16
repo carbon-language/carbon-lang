@@ -225,8 +225,8 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
   if (T->isIntegralType() || T->isEnumeralType() ||
       //   -- pointer to object or pointer to function, 
       (T->isPointerType() && 
-       (T->getAsPointerType()->getPointeeType()->isObjectType() ||
-        T->getAsPointerType()->getPointeeType()->isFunctionType())) ||
+       (T->getAs<PointerType>()->getPointeeType()->isObjectType() ||
+        T->getAs<PointerType>()->getPointeeType()->isFunctionType())) ||
       //   -- reference to object or reference to function, 
       T->isReferenceType() ||
       //   -- pointer to member.
@@ -1648,7 +1648,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       //    function is selected from the set (13.4).
       // In C++0x, any std::nullptr_t value can be converted.
       (ParamType->isPointerType() &&
-       ParamType->getAsPointerType()->getPointeeType()->isFunctionType()) ||
+       ParamType->getAs<PointerType>()->getPointeeType()->isFunctionType()) ||
       // -- For a non-type template-parameter of type reference to
       //    function, no conversions apply. If the template-argument
       //    represents a set of overloaded functions, the matching
@@ -1721,7 +1721,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //      object, qualification conversions (4.4) and the
     //      array-to-pointer conversion (4.2) are applied.
     // C++0x also allows a value of std::nullptr_t.
-    assert(ParamType->getAsPointerType()->getPointeeType()->isObjectType() &&
+    assert(ParamType->getAs<PointerType>()->getPointeeType()->isObjectType() &&
            "Only object pointers allowed here");
 
     if (ArgType->isNullPtrType()) {

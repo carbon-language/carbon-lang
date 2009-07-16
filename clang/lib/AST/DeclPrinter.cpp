@@ -90,7 +90,7 @@ static QualType GetBaseType(QualType T) {
   while (!BaseType->isSpecifierType()) {
     if (isa<TypedefType>(BaseType))
       break;
-    else if (const PointerType* PTy = BaseType->getAsPointerType())
+    else if (const PointerType* PTy = BaseType->getAs<PointerType>())
       BaseType = PTy->getPointeeType();
     else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
       BaseType = ATy->getElementType();

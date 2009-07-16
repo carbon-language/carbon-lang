@@ -529,10 +529,10 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // Reverse pointer conversion to void*. C++ 4.10.p2 specifies conversion to
   // void*. C++ 5.2.9p10 specifies additional restrictions, which really is
   // just the usual constness stuff.
-  if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
+  if (const PointerType *SrcPointer = SrcType->getAs<PointerType>()) {
     QualType SrcPointee = SrcPointer->getPointeeType();
     if (SrcPointee->isVoidType()) {
-      if (const PointerType *DestPointer = DestType->getAsPointerType()) {
+      if (const PointerType *DestPointer = DestType->getAs<PointerType>()) {
         QualType DestPointee = DestPointer->getPointeeType();
         if (DestPointee->isIncompleteOrObjectType()) {
           // This is definitely the intended conversion, but it might fail due
@@ -627,12 +627,12 @@ TryStaticPointerDowncast(Sema &Self, QualType SrcType, QualType DestType,
   // In addition, DR54 clarifies that the base must be accessible in the
   // current context.
 
-  const PointerType *SrcPointer = SrcType->getAsPointerType();
+  const PointerType *SrcPointer = SrcType->getAs<PointerType>();
   if (!SrcPointer) {
     return TSC_NotApplicable;
   }
 
-  const PointerType *DestPointer = DestType->getAsPointerType();
+  const PointerType *DestPointer = DestType->getAs<PointerType>();
   if (!DestPointer) {
     return TSC_NotApplicable;
   }
@@ -828,7 +828,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   //   or "pointer to cv void".
 
   QualType DestPointee;
-  const PointerType *DestPointer = DestType->getAsPointerType();
+  const PointerType *DestPointer = DestType->getAs<PointerType>();
   const ReferenceType *DestReference = DestType->getAsReferenceType();
   if (DestPointer) {
     DestPointee = DestPointer->getPointeeType();
@@ -863,7 +863,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   QualType SrcType = Self.Context.getCanonicalType(OrigSrcType);
   QualType SrcPointee;
   if (DestPointer) {
-    if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
+    if (const PointerType *SrcPointer = SrcType->getAs<PointerType>()) {
       SrcPointee = SrcPointer->getPointeeType();
     } else {
       Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ptr)
