@@ -79,6 +79,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
 
   setStackPointerRegisterToSaveRestore(SystemZ::R15D);
   setSchedulingPreference(SchedulingForLatency);
+  setBooleanContents(ZeroOrOneBooleanContent);
 
   setOperationAction(ISD::RET,              MVT::Other, Custom);
 
