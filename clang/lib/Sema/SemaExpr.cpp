@@ -2285,58 +2285,64 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     const ObjCObjectPointerType *OPT = BaseType->getAsObjCObjectPointerType();
     const ObjCInterfaceType *IFaceT = 
       OPT ? OPT->getInterfaceType() : BaseType->getAsObjCInterfaceType();
-    ObjCInterfaceDecl *IDecl = IFaceT->getDecl();
-    ObjCInterfaceDecl *ClassDeclared;
     
-    if (ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(&Member, 
-                                                         ClassDeclared)) {
-      // If the decl being referenced had an error, return an error for this
-      // sub-expr without emitting another error, in order to avoid cascading
-      // error cases.
-      if (IV->isInvalidDecl())
-        return ExprError();
+    if (IFaceT) {
+      ObjCInterfaceDecl *IDecl = IFaceT->getDecl();
+      ObjCInterfaceDecl *ClassDeclared;
+      ObjCIvarDecl *IV = IDecl->lookupInstanceVariable(&Member, ClassDeclared);
+      
+      if (IV) {
+        // If the decl being referenced had an error, return an error for this
+        // sub-expr without emitting another error, in order to avoid cascading
+        // error cases.
+        if (IV->isInvalidDecl())
+          return ExprError();
 
-      // Check whether we can reference this field.
-      if (DiagnoseUseOfDecl(IV, MemberLoc))
-        return ExprError();
-      if (IV->getAccessControl() != ObjCIvarDecl::Public &&
-          IV->getAccessControl() != ObjCIvarDecl::Package) {
-        ObjCInterfaceDecl *ClassOfMethodDecl = 0;
-        if (ObjCMethodDecl *MD = getCurMethodDecl())
-          ClassOfMethodDecl =  MD->getClassInterface();
-        else if (ObjCImpDecl && getCurFunctionDecl()) {
-          // Case of a c-function declared inside an objc implementation.
-          // FIXME: For a c-style function nested inside an objc implementation
-          // class, there is no implementation context available, so we pass
-          // down the context as argument to this routine. Ideally, this context
-          // need be passed down in the AST node and somehow calculated from the
-          // AST for a function decl.
-          Decl *ImplDecl = ObjCImpDecl.getAs<Decl>();
-          if (ObjCImplementationDecl *IMPD = 
-              dyn_cast<ObjCImplementationDecl>(ImplDecl))
-            ClassOfMethodDecl = IMPD->getClassInterface();
-          else if (ObjCCategoryImplDecl* CatImplClass =
-                      dyn_cast<ObjCCategoryImplDecl>(ImplDecl))
-            ClassOfMethodDecl = CatImplClass->getClassInterface();
+        // Check whether we can reference this field.
+        if (DiagnoseUseOfDecl(IV, MemberLoc))
+          return ExprError();
+        if (IV->getAccessControl() != ObjCIvarDecl::Public &&
+            IV->getAccessControl() != ObjCIvarDecl::Package) {
+          ObjCInterfaceDecl *ClassOfMethodDecl = 0;
+          if (ObjCMethodDecl *MD = getCurMethodDecl())
+            ClassOfMethodDecl =  MD->getClassInterface();
+          else if (ObjCImpDecl && getCurFunctionDecl()) {
+            // Case of a c-function declared inside an objc implementation.
+            // FIXME: For a c-style function nested inside an objc implementation
+            // class, there is no implementation context available, so we pass
+            // down the context as argument to this routine. Ideally, this context
+            // need be passed down in the AST node and somehow calculated from the
+            // AST for a function decl.
+            Decl *ImplDecl = ObjCImpDecl.getAs<Decl>();
+            if (ObjCImplementationDecl *IMPD = 
+                dyn_cast<ObjCImplementationDecl>(ImplDecl))
+              ClassOfMethodDecl = IMPD->getClassInterface();
+            else if (ObjCCategoryImplDecl* CatImplClass =
+                        dyn_cast<ObjCCategoryImplDecl>(ImplDecl))
+              ClassOfMethodDecl = CatImplClass->getClassInterface();
+          }
+          
+          if (IV->getAccessControl() == ObjCIvarDecl::Private) { 
+            if (ClassDeclared != IDecl || 
+                ClassOfMethodDecl != ClassDeclared)
+              Diag(MemberLoc, diag::error_private_ivar_access) 
+                << IV->getDeclName();
+          }
+          // @protected
+          else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
+            Diag(MemberLoc, diag::error_protected_ivar_access) 
+              << IV->getDeclName();
         }
-        
-        if (IV->getAccessControl() == ObjCIvarDecl::Private) { 
-          if (ClassDeclared != IDecl || 
-              ClassOfMethodDecl != ClassDeclared)
-            Diag(MemberLoc, diag::error_private_ivar_access) << IV->getDeclName();
-        }
-        // @protected
-        else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
-          Diag(MemberLoc, diag::error_protected_ivar_access) << IV->getDeclName();
+
+        return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
+                                                   MemberLoc, BaseExpr,
+                                                   OpKind == tok::arrow));
       }
-
-      return Owned(new (Context) ObjCIvarRefExpr(IV, IV->getType(),
-                                                 MemberLoc, BaseExpr,
-                                                 OpKind == tok::arrow));
+      return ExprError(Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
+                         << IDecl->getDeclName() << &Member
+                         << BaseExpr->getSourceRange());
     }
-    return ExprError(Diag(MemberLoc, diag::err_typecheck_member_reference_ivar)
-                       << IDecl->getDeclName() << &Member
-                       << BaseExpr->getSourceRange());
+    // We don't have an interface. FIXME: deal with ObjC builtin 'id' type.
   }
   // Handle properties on 'id' and qualified "id".
   if (OpKind == tok::period && (BaseType->isObjCIdType() || 
