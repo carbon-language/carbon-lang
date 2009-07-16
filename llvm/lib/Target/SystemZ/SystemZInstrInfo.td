@@ -538,6 +538,7 @@ def MUL32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
 def MUL64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                      "msgr\t{$dst, $src2}",
                      [(set GR64:$dst, (mul GR64:$src1, GR64:$src2))]>;
+}
 
 def MUL64rrP   : Pseudo<(outs GR64P:$dst), (ins GR64P:$src1, GR32:$src2),
                         "mr\t{$dst, $src2}",
@@ -548,8 +549,6 @@ def UMUL64rrP  : Pseudo<(outs GR64P:$dst), (ins GR64P:$src1, GR32:$src2),
 def UMUL128rrP : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR64:$src2),
                         "mlgr\t{$dst, $src2}",
                         []>;
-}
-
 
 def MUL32ri16   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s16imm:$src2),
                          "mhi\t{$dst, $src2}",
