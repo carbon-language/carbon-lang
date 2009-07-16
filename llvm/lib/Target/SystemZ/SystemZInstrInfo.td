@@ -608,6 +608,39 @@ def XOR64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                          [(set GR64:$dst, (xor GR64:$src1, i64hi32:$src2))]>;
 
 } // Defs = [PSW]
+
+let isCommutable = 1 in { // X = MUL Y, Z == X = MUL Z, Y
+def MUL32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                     "msr\t{$dst, $src2}",
+                     [(set GR32:$dst, (mul GR32:$src1, GR32:$src2))]>;
+def MUL64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                     "msgr\t{$dst, $src2}",
+                     [(set GR64:$dst, (mul GR64:$src1, GR64:$src2))]>;
+}
+
+def MUL32ri16   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32i16imm:$src2),
+                         "mhi\t{$dst, $src2}",
+                         [(set GR32:$dst, (mul GR32:$src1, i32immSExt16:$src2))]>;
+def MUL32ri     : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                         "msfi\t{$dst, $src2}",
+                         [(set GR32:$dst, (mul GR32:$src1, imm:$src2))]>;
+def MUL64ri16   : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "mghi\t{$dst, $src2}",
+                         [(set GR64:$dst, (mul GR64:$src1, immSExt16:$src2))]>;
+def MUL64ri32   : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+                         "msgfi\t{$dst, $src2}",
+                         [(set GR64:$dst, (mul GR64:$src1, i64immSExt32:$src2))]>;
+
+def MUL32rm : Pseudo<(outs GR32:$dst), (ins GR32:$src1, rriaddr:$src2),
+                     "msy\t{$dst, $src2}",
+                     [(set GR32:$dst, (mul GR32:$src1, (load rriaddr:$src2)))]>;
+def MUL64rm : Pseudo<(outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
+                     "msgy\t{$dst, $src2}",
+                     [(set GR64:$dst, (mul GR64:$src1, (load rriaddr:$src2)))]>;
+
+def MULSX64rr32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR32:$src2),
+                         "msgfr\t{$dst, $src2}",
+                         [(set GR64:$dst, (mul GR64:$src1, (sext GR32:$src2)))]>;
 } // isTwoAddress = 1
 
 //===----------------------------------------------------------------------===//

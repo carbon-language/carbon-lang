@@ -72,6 +72,17 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::SELECT,           MVT::i64, Expand);
   setOperationAction(ISD::SELECT_CC,        MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::i64, Custom);
+
+  // FIXME: We can lower this better
+  setOperationAction(ISD::MULHS,            MVT::i32, Expand);
+  setOperationAction(ISD::MULHS,            MVT::i64, Expand);
+  setOperationAction(ISD::MULHU,            MVT::i32, Expand);
+  setOperationAction(ISD::MULHU,            MVT::i64, Expand);
+
+  setOperationAction(ISD::SMUL_LOHI,        MVT::i32, Expand);
+  setOperationAction(ISD::SMUL_LOHI,        MVT::i64, Expand);
+  setOperationAction(ISD::UMUL_LOHI,        MVT::i32, Expand);
+  setOperationAction(ISD::UMUL_LOHI,        MVT::i64, Expand);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
