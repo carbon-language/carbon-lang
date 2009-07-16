@@ -29,9 +29,7 @@ def CC_SystemZ : CallingConv<[
 
   // The first 5 integer arguments of non-varargs functions are passed in
   // integer registers.
-  // FIXME: Check stuff for varagrs
-  CCIfNotVarArg<CCIfType<[i64],
-                CCAssignToReg<[R2D, R3D, R4D, R5D, R6D]>>>,
+  CCIfType<[i64], CCAssignToReg<[R2D, R3D, R4D, R5D, R6D]>>,
 
   // Integer values get stored in stack slots that are 8 bytes in
   // size and 8-byte aligned.
