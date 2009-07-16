@@ -187,7 +187,7 @@ Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
   // If the PHI node is dead, because it has zero entries, nuke it now.
   if (NumOps == 2 && DeletePHIIfEmpty) {
     // If anyone is using this PHI, make them use a dummy value instead...
-    replaceAllUsesWith(UndefValue::get(getType()));
+    replaceAllUsesWith(getType()->getContext().getUndef(getType()));
     eraseFromParent();
   }
   return Removed;
@@ -231,7 +231,8 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
     if (getIncomingValue(0) != this)   // not  X = phi X
       return getIncomingValue(0);
     else
-      return UndefValue::get(getType());  // Self cycle is dead.
+      return
+        getType()->getContext().getUndef(getType());  // Self cycle is dead.
   }
       
   // Otherwise if all of the incoming values are the same for the PHI, replace
@@ -253,7 +254,7 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
   // that only has entries for itself.  In this case, there is no entry into the
   // loop, so kill the PHI.
   //
-  if (InVal == 0) InVal = UndefValue::get(getType());
+  if (InVal == 0) InVal = getType()->getContext().getUndef(getType());
   
   // If we have a PHI node like phi(X, undef, X), where X is defined by some
   // instruction, we cannot always return X as the result of the PHI node.  Only
@@ -1045,8 +1046,8 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, Instruction *InBe)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx)),
-                                 retrieveAddrSpace(Ptr)),
+  : Instruction(Ptr->getType()->getContext().getPointerType(
+      checkType(getIndexedType(Ptr->getType(),Idx)), retrieveAddrSpace(Ptr)),
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - 2,
                 2, InBe) {
@@ -1055,8 +1056,9 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, BasicBlock *IAE)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx)),
-                                 retrieveAddrSpace(Ptr)),
+  : Instruction(Ptr->getType()->getContext().getPointerType(
+            checkType(getIndexedType(Ptr->getType(),Idx)),  
+                retrieveAddrSpace(Ptr)),
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - 2,
                 2, IAE) {
@@ -1268,7 +1270,8 @@ ShuffleVectorInst::ShuffleVectorInst(const ShuffleVectorInst &SV)
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                                      const std::string &Name,
                                      Instruction *InsertBefore)
-: Instruction(VectorType::get(cast<VectorType>(V1->getType())->getElementType(),
+: Instruction(V1->getType()->getContext().getVectorType(
+                              cast<VectorType>(V1->getType())->getElementType(),
                 cast<VectorType>(Mask->getType())->getNumElements()),
               ShuffleVector,
               OperandTraits<ShuffleVectorInst>::op_begin(this),
