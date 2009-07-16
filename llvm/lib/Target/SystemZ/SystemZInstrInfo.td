@@ -219,6 +219,11 @@ def MOV64rm : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
 
 }
 
+def MOV64mr : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
+                     "stg\t{$src, $dst}",
+                     [(store GR64:$src, rriaddr:$dst)]>;
+
+// extloads
 def MOVSX64rm8  : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
                          "lgb\t{$dst, $src}",
                          [(set GR64:$dst, (sextloadi64i8 rriaddr:$src))]>;
@@ -239,6 +244,27 @@ def MOVZX64rm32 : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
                          "llgf\t{$dst, $src}",
                          [(set GR64:$dst, (zextloadi64i32 rriaddr:$src))]>;
 
+// truncstores
+// FIXME: Implement 12-bit displacement stuff someday
+def MOV32m8r  : Pseudo<(outs), (ins rriaddr:$dst, GR32:$src),
+                       "stcy\t{$src, $dst}",
+                       [(truncstorei8 GR32:$src, rriaddr:$dst)]>;
+
+def MOV32m16r : Pseudo<(outs), (ins rriaddr:$dst, GR32:$src),
+                       "sthy\t{$src, $dst}",
+                       [(truncstorei16 GR32:$src, rriaddr:$dst)]>;
+
+def MOV64m8r  : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
+                       "stcy\t{$src, $dst}",
+                       [(truncstorei8 GR64:$src, rriaddr:$dst)]>;
+
+def MOV64m16r : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
+                       "sthy\t{$src, $dst}",
+                       [(truncstorei16 GR64:$src, rriaddr:$dst)]>;
+
+def MOV64m32r : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
+                       "sty\t{$src, $dst}",
+                       [(truncstorei32 GR64:$src, rriaddr:$dst)]>;
 
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions

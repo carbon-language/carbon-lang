@@ -52,18 +52,19 @@ namespace {
     }
 
     void dump() {
-      cerr << "SystemZRRIAddressMode " << this << "\n";
+      cerr << "SystemZRRIAddressMode " << this << '\n';
       if (BaseType == RegBase) {
         cerr << "Base.Reg ";
         if (Base.Reg.getNode() != 0) Base.Reg.getNode()->dump();
         else cerr << "nul";
+        cerr << '\n';
       } else {
-        cerr << " Base.FrameIndex " << Base.FrameIndex << "\n";
+        cerr << " Base.FrameIndex " << Base.FrameIndex << '\n';
       }
       cerr << "IndexReg ";
       if (IndexReg.getNode() != 0) IndexReg.getNode()->dump();
       else cerr << "nul";
-      cerr << " Disp " << Disp << "\n";
+      cerr << " Disp " << Disp << '\n';
     }
   };
 }
