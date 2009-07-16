@@ -82,7 +82,6 @@ def FNEG64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
 
 let isTwoAddress = 1 in {
 let Defs = [PSW] in {
-// FIXME: Add peephole for fneg(fabs) => load negative
 
 def FABS32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
                        "lpebr\t{$dst}",
@@ -91,6 +90,15 @@ def FABS32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
 def FABS64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
                        "lpdbr\t{$dst}",
                        [(set FP64:$dst, (fabs FP64:$src)),
+                        (implicit PSW)]>;
+
+def FNABS32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
+                       "lnebr\t{$dst}",
+                       [(set FP32:$dst, (fneg(fabs FP32:$src))),
+                        (implicit PSW)]>;
+def FNABS64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
+                       "lndbr\t{$dst}",
+                       [(set FP64:$dst, (fneg(fabs FP64:$src))),
                         (implicit PSW)]>;
 
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
