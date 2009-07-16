@@ -144,7 +144,7 @@ def : SubRegSet<5, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
 /// Register classes
 def GR32 : RegisterClass<"SystemZ", [i32], 32,
    // Volatile registers
-  [R0D, R1W, R2W, R3W, R4W, R5W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
+  [R0W, R1W, R2W, R3W, R4W, R5W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
    // Frame pointer, sometimes allocable
    R11W,
    // Volatile, but not allocable
