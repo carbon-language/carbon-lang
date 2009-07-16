@@ -1,4 +1,4 @@
-//===-- llvm/SymbolTableListTraitsImpl.h - Implementation ------*- C++ -*--===//
+//===----------------- LLVMContextImpl.h - Implementation ------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,9 +15,57 @@
 #ifndef LLVM_LLVMCONTEXT_IMPL_H
 #define LLVM_LLVMCONTEXT_IMPL_H
 
-namespace llvm {
-class LLVMContextImpl {
+#include "llvm/System/RWMutex.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/DenseMap.h"
 
+namespace llvm {
+
+class ConstantInt;
+class LLVMContext;
+class Type;
+
+struct DenseMapAPIntKeyInfo {
+  struct KeyTy {
+    APInt val;
+    const Type* type;
+    KeyTy(const APInt& V, const Type* Ty) : val(V), type(Ty) {}
+    KeyTy(const KeyTy& that) : val(that.val), type(that.type) {}
+    bool operator==(const KeyTy& that) const {
+      return type == that.type && this->val == that.val;
+    }
+    bool operator!=(const KeyTy& that) const {
+      return !this->operator==(that);
+    }
+  };
+  static inline KeyTy getEmptyKey() { return KeyTy(APInt(1,0), 0); }
+  static inline KeyTy getTombstoneKey() { return KeyTy(APInt(1,1), 0); }
+  static unsigned getHashValue(const KeyTy &Key) {
+    return DenseMapInfo<void*>::getHashValue(Key.type) ^ 
+      Key.val.getHashValue();
+  }
+  static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
+    return LHS == RHS;
+  }
+  static bool isPod() { return false; }
+};
+
+class LLVMContextImpl {
+  sys::SmartRWMutex<true> ConstantsLock;
+  
+  typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
+                   DenseMapAPIntKeyInfo> IntMapTy;
+  IntMapTy IntConstants;
+  
+  LLVMContext &Context;
+  LLVMContextImpl();
+  LLVMContextImpl(const LLVMContextImpl&);
+public:
+  LLVMContextImpl(LLVMContext &C) : Context(C) { }
+  
+  /// Return a ConstantInt with the specified value and an implied Type. The
+  /// type is the integer type that corresponds to the bit width of the value.
+  ConstantInt* getConstantInt(const APInt &V);
 };
 
 }

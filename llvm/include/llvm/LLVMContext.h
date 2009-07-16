@@ -93,6 +93,8 @@ public:
   ConstantInt* getConstantIntSigned(const IntegerType* Ty, int64_t V);
   Constant *getConstantIntSigned(const Type *Ty, int64_t V);
   
+  /// Return a ConstantInt with the specified value and an implied Type. The
+  /// type is the integer type that corresponds to the bit width of the value.
   ConstantInt* getConstantInt(const APInt& V);
   
   /// If Ty is a vector type, return a Constant with a splat of the given

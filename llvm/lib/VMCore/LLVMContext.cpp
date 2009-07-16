@@ -29,7 +29,7 @@ LLVMContext& llvm::getGlobalContext() {
   return *GlobalContext;
 }
 
-LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl()) { }
+LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
 
 // Constant accessors
@@ -117,7 +117,7 @@ Constant *LLVMContext::getConstantIntSigned(const Type *Ty, int64_t V) {
 }
 
 ConstantInt* LLVMContext::getConstantInt(const APInt& V) {
-  return ConstantInt::get(V);
+  return pImpl->getConstantInt(V);
 }
 
 Constant* LLVMContext::getConstantInt(const Type* Ty, const APInt& V) {

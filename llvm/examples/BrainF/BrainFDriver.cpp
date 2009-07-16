@@ -80,13 +80,13 @@ void addMainFunction(Module *mod) {
   }
 
   //ret i32 0
-  ReturnInst::Create(ConstantInt::get(APInt(32, 0)), bb);
+  ReturnInst::Create(getGlobalContext().getConstantInt(APInt(32, 0)), bb);
 }
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, " BrainF compiler\n");
 
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
 
   if (InputFilename == "") {
     std::cerr<<"Error: You must specify the filename of the program to "

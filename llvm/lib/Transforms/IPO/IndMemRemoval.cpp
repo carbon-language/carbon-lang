@@ -44,6 +44,8 @@ static RegisterPass<IndMemRemPass>
 X("indmemrem","Indirect Malloc and Free Removal");
 
 bool IndMemRemPass::runOnModule(Module &M) {
+  Context = &M.getContext();
+  
   // In theory, all direct calls of malloc and free should be promoted
   // to intrinsics.  Therefore, this goes through and finds where the
   // address of free or malloc are taken and replaces those with bounce

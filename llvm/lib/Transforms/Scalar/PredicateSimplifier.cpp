@@ -905,6 +905,7 @@ namespace {
   class VISIBILITY_HIDDEN ValueRanges {
     ValueNumbering &VN;
     TargetData *TD;
+    LLVMContext *Context;
 
     class VISIBILITY_HIDDEN ScopedRange {
       typedef std::vector<std::pair<DomTreeDFS::Node *, ConstantRange> >
@@ -1025,7 +1026,8 @@ namespace {
 
   public:
 
-    ValueRanges(ValueNumbering &VN, TargetData *TD) : VN(VN), TD(TD) {}
+    ValueRanges(ValueNumbering &VN, TargetData *TD, LLVMContext *C) :
+      VN(VN), TD(TD), Context(C) {}
 
 #ifndef NDEBUG
     virtual ~ValueRanges() {}
@@ -1167,7 +1169,7 @@ namespace {
         Value *V = VN.value(n); // XXX: redesign worklist.
         const Type *Ty = V->getType();
         if (Ty->isInteger()) {
-          addToWorklist(V, ConstantInt::get(*I), ICmpInst::ICMP_EQ, VRP);
+          addToWorklist(V, Context->getConstantInt(*I), ICmpInst::ICMP_EQ, VRP);
           return;
         } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
           assert(*I == 0 && "Pointer is null but not zero?");
@@ -1678,7 +1680,8 @@ namespace {
         Top(DTDFS->getNodeForBlock(TopInst->getParent())),
         TopBB(TopInst->getParent()),
         TopInst(TopInst),
-        modified(modified)
+        modified(modified),
+        Context(TopInst->getParent()->getContext())
     {
       assert(Top && "VRPSolver created for unreachable basic block.");
       assert(Top->getBlock() == TopInst->getParent() && "Context mismatch.");
@@ -1779,7 +1782,8 @@ namespace {
 
             if (ConstantInt *CI = dyn_cast<ConstantInt>(Canonical)) {
               if (ConstantInt *Arg = dyn_cast<ConstantInt>(LHS)) {
-                add(RHS, ConstantInt::get(CI->getValue() ^ Arg->getValue()),
+                add(RHS,
+                    Context->getConstantInt(CI->getValue() ^ Arg->getValue()),
                     ICmpInst::ICMP_EQ, NewContext);
               }
             }
@@ -2404,7 +2408,7 @@ namespace {
     DomTreeDFS::Node *Root = DTDFS->getRootNode();
     VN = new ValueNumbering(DTDFS);
     IG = new InequalityGraph(*VN, Root);
-    VR = new ValueRanges(*VN, TD);
+    VR = new ValueRanges(*VN, TD, Context);
     WorkList.push_back(Root);
 
     do {
@@ -2526,21 +2530,23 @@ namespace {
 
   void PredicateSimplifier::Forwards::visitSExtInst(SExtInst &SI) {
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &SI);
+    LLVMContext *Context = SI.getParent()->getContext();
     uint32_t SrcBitWidth = cast<IntegerType>(SI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(SI.getDestTy())->getBitWidth();
     APInt Min(APInt::getHighBitsSet(DstBitWidth, DstBitWidth-SrcBitWidth+1));
     APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth-1));
-    VRP.add(ConstantInt::get(Min), &SI, ICmpInst::ICMP_SLE);
-    VRP.add(ConstantInt::get(Max), &SI, ICmpInst::ICMP_SGE);
+    VRP.add(Context->getConstantInt(Min), &SI, ICmpInst::ICMP_SLE);
+    VRP.add(Context->getConstantInt(Max), &SI, ICmpInst::ICMP_SGE);
     VRP.solve();
   }
 
   void PredicateSimplifier::Forwards::visitZExtInst(ZExtInst &ZI) {
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &ZI);
+    LLVMContext *Context = ZI.getParent()->getContext();
     uint32_t SrcBitWidth = cast<IntegerType>(ZI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(ZI.getDestTy())->getBitWidth();
     APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth));
-    VRP.add(ConstantInt::get(Max), &ZI, ICmpInst::ICMP_UGE);
+    VRP.add(Context->getConstantInt(Max), &ZI, ICmpInst::ICMP_UGE);
     VRP.solve();
   }
 
@@ -2629,6 +2635,8 @@ namespace {
 
     Pred = IC.getPredicate();
 
+    LLVMContext *Context = IC.getParent()->getContext();
+
     if (ConstantInt *Op1 = dyn_cast<ConstantInt>(IC.getOperand(1))) {
       ConstantInt *NextVal = 0;
       switch (Pred) {
@@ -2636,12 +2644,12 @@ namespace {
         case ICmpInst::ICMP_SLT:
         case ICmpInst::ICMP_ULT:
           if (Op1->getValue() != 0)
-            NextVal = ConstantInt::get(Op1->getValue()-1);
+            NextVal = Context->getConstantInt(Op1->getValue()-1);
          break;
         case ICmpInst::ICMP_SGT:
         case ICmpInst::ICMP_UGT:
           if (!Op1->getValue().isAllOnesValue())
-            NextVal = ConstantInt::get(Op1->getValue()+1);
+            NextVal = Context->getConstantInt(Op1->getValue()+1);
          break;
       }
 

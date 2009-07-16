@@ -115,6 +115,8 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
+  Context = &M.getContext();
+  
   const Type *VoidPtrTy = Context->getPointerTypeUnqual(Type::Int8Ty);
   AbortMessage = 0;
   if (ExpensiveEHSupport) {

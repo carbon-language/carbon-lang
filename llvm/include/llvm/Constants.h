@@ -50,6 +50,7 @@ class ConstantInt : public Constant {
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(const IntegerType *Ty, const APInt& V);
   APInt Val;
+  friend class LLVMContextImpl;
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
@@ -101,10 +102,6 @@ public:
     if (TheFalseVal) return TheFalseVal;
     return CreateTrueFalseVals(false);
   }
-
-  /// Return a ConstantInt with the specified value and an implied Type. The
-  /// type is the integer type that corresponds to the bit width of the value.
-  static ConstantInt *get(const APInt &V);
 
   /// getType - Specialize the getType() method to always return an IntegerType,
   /// which reduces the amount of casting needed in parts of the compiler.

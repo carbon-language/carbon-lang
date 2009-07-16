@@ -22,6 +22,7 @@
 #define LLVM_CALL_GRAPH_SCC_PASS_H
 
 #include "llvm/Pass.h"
+#include "llvm/Analysis/CallGraph.h"
 
 namespace llvm {
 
@@ -37,6 +38,7 @@ struct CallGraphSCCPass : public Pass {
   /// doInitialization - This method is called before the SCC's of the program
   /// has been processed, allowing the pass to do initialization as necessary.
   virtual bool doInitialization(CallGraph &CG) {
+    Context = &CG.getModule().getContext();
     return false;
   }
 

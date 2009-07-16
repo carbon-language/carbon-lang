@@ -190,67 +190,6 @@ ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
   return WhichOne ? TheTrueVal : TheFalseVal;
 }
 
-
-namespace {
-  struct DenseMapAPIntKeyInfo {
-    struct KeyTy {
-      APInt val;
-      const Type* type;
-      KeyTy(const APInt& V, const Type* Ty) : val(V), type(Ty) {}
-      KeyTy(const KeyTy& that) : val(that.val), type(that.type) {}
-      bool operator==(const KeyTy& that) const {
-        return type == that.type && this->val == that.val;
-      }
-      bool operator!=(const KeyTy& that) const {
-        return !this->operator==(that);
-      }
-    };
-    static inline KeyTy getEmptyKey() { return KeyTy(APInt(1,0), 0); }
-    static inline KeyTy getTombstoneKey() { return KeyTy(APInt(1,1), 0); }
-    static unsigned getHashValue(const KeyTy &Key) {
-      return DenseMapInfo<void*>::getHashValue(Key.type) ^ 
-        Key.val.getHashValue();
-    }
-    static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
-      return LHS == RHS;
-    }
-    static bool isPod() { return false; }
-  };
-}
-
-
-typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
-                 DenseMapAPIntKeyInfo> IntMapTy;
-static ManagedStatic<IntMapTy> IntConstants;
-
-// Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
-// as the key, is a DenseMapAPIntKeyInfo::KeyTy which has provided the
-// operator== and operator!= to ensure that the DenseMap doesn't attempt to
-// compare APInt's of different widths, which would violate an APInt class
-// invariant which generates an assertion.
-ConstantInt *ConstantInt::get(const APInt& V) {
-  // Get the corresponding integer type for the bit width of the value.
-  const IntegerType *ITy = IntegerType::get(V.getBitWidth());
-  // get an existing value or the insertion position
-  DenseMapAPIntKeyInfo::KeyTy Key(V, ITy);
-  
-  ConstantsLock->reader_acquire();
-  ConstantInt *&Slot = (*IntConstants)[Key]; 
-  ConstantsLock->reader_release();
-    
-  if (!Slot) {
-    sys::SmartScopedWriter<true> Writer(*ConstantsLock);
-    ConstantInt *&NewSlot = (*IntConstants)[Key]; 
-    if (!Slot) {
-      NewSlot = new ConstantInt(ITy, V);
-    }
-    
-    return NewSlot;
-  } else {
-    return Slot;
-  }
-}
-
 //===----------------------------------------------------------------------===//
 //                                ConstantFP
 //===----------------------------------------------------------------------===//

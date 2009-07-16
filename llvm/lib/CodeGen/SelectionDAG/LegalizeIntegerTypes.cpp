@@ -2305,7 +2305,8 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
                                    ISD::SETLT);
 
     // Build a 64 bit pair (0, FF) in the constant pool, with FF in the lo bits.
-    SDValue FudgePtr = DAG.getConstantPool(ConstantInt::get(FF.zext(64)),
+    SDValue FudgePtr = DAG.getConstantPool(
+                                  DAG.getContext()->getConstantInt(FF.zext(64)),
                                            TLI.getPointerTy());
 
     // Get a pointer to FF if the sign bit was set, or to 0 otherwise.

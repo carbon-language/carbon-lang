@@ -1730,6 +1730,8 @@ void SimplifyLibCalls::setDoesNotAlias(Function &F, unsigned n) {
 /// doInitialization - Add attributes to well-known functions.
 ///
 bool SimplifyLibCalls::doInitialization(Module &M) {
+  Context = &M.getContext();
+  
   Modified = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     Function &F = *I;

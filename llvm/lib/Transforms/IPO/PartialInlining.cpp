@@ -141,6 +141,8 @@ Function* PartialInliner::unswitchFunction(Function* F) {
 }
 
 bool PartialInliner::runOnModule(Module& M) {
+  Context = &M.getContext();
+  
   std::vector<Function*> worklist;
   worklist.reserve(M.size());
   for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI)

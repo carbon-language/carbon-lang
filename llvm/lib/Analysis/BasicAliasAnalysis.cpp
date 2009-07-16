@@ -312,6 +312,8 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
                           const Value *V2, unsigned V2Size) {
+  Context = &V1->getType()->getContext();
+
   // Strip off any constant expression casts if they exist
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V1))
     if (CE->isCast() && isa<PointerType>(CE->getOperand(0)->getType()))
@@ -529,6 +531,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
     return MayAlias;
 
   const PointerType *GEPPointerTy = cast<PointerType>(BasePtr1Ty);
+
+  Context = &GEPPointerTy->getContext();
 
   // Find the (possibly empty) initial sequence of equal values... which are not
   // necessarily constants.

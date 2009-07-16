@@ -42,6 +42,7 @@ X("strip-dead-prototypes", "Strip Unused Function Prototypes");
 
 bool StripDeadPrototypesPass::runOnModule(Module &M) {
   bool MadeChange = false;
+  Context = &M.getContext();
   
   // Erase dead function prototypes.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {

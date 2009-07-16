@@ -134,6 +134,8 @@ static RegisterPass<LowerSetJmp> X("lowersetjmp", "Lower Set Jump");
 bool LowerSetJmp::runOnModule(Module& M) {
   bool Changed = false;
 
+  Context = &M.getContext();
+
   // These are what the functions are called.
   Function* SetJmp = M.getFunction("llvm.setjmp");
   Function* LongJmp = M.getFunction("llvm.longjmp");

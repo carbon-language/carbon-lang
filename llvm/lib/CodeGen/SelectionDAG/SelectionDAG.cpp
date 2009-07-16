@@ -874,7 +874,7 @@ SDValue SelectionDAG::getConstant(uint64_t Val, MVT VT, bool isT) {
 }
 
 SDValue SelectionDAG::getConstant(const APInt &Val, MVT VT, bool isT) {
-  return getConstant(*ConstantInt::get(Val), VT, isT);
+  return getConstant(*Context->getConstantInt(Val), VT, isT);
 }
 
 SDValue SelectionDAG::getConstant(const ConstantInt &Val, MVT VT, bool isT) {

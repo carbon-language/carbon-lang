@@ -108,6 +108,8 @@ SpecializeFunction(Function* F,
 
 
 bool PartSpec::runOnModule(Module &M) {
+  Context = &M.getContext();
+  
   bool Changed = false;
   for (Module::iterator I = M.begin(); I != M.end(); ++I) {
     Function &F = *I;

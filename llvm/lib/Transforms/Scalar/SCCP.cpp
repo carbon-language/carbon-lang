@@ -1662,7 +1662,10 @@ static bool AddressIsTaken(GlobalValue *GV) {
 }
 
 bool IPSCCP::runOnModule(Module &M) {
+  Context = &M.getContext();
+  
   SCCPSolver Solver;
+  Solver.setContext(Context);
 
   // Loop over all functions, marking arguments to those with their addresses
   // taken or that are external as overdefined.

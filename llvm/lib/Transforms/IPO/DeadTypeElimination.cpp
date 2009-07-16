@@ -77,6 +77,7 @@ static inline bool ShouldNukeSymtabEntry(const Type *Ty){
 //
 bool DTE::runOnModule(Module &M) {
   bool Changed = false;
+  Context = &M.getContext();
 
   TypeSymbolTable &ST = M.getTypeSymbolTable();
   std::set<const Type *> UsedTypes = getAnalysis<FindUsedTypes>().getTypes();

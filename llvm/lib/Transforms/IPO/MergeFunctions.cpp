@@ -615,6 +615,8 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
 
+  Context = &M.getContext();
+
   std::map<unsigned long, std::vector<Function *> > FnMap;
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {

@@ -56,6 +56,8 @@ bool IPCP::runOnModule(Module &M) {
   bool Changed = false;
   bool LocalChange = true;
 
+  Context = &M.getContext();
+
   // FIXME: instead of using smart algorithms, we just iterate until we stop
   // making changes.
   while (LocalChange) {

@@ -191,7 +191,7 @@ const SCEV *ScalarEvolution::getConstant(ConstantInt *V) {
 }
 
 const SCEV *ScalarEvolution::getConstant(const APInt& Val) {
-  return getConstant(ConstantInt::get(Val));
+  return getConstant(Context->getConstantInt(Val));
 }
 
 const SCEV *
@@ -1517,7 +1517,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops) {
     ++Idx;
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      ConstantInt *Fold = ConstantInt::get(LHSC->getValue()->getValue() *
+      ConstantInt *Fold = Context->getConstantInt(LHSC->getValue()->getValue() *
                                            RHSC->getValue()->getValue());
       Ops[0] = getConstant(Fold);
       Ops.erase(Ops.begin()+1);  // Erase the folded element
@@ -1868,7 +1868,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
     assert(Idx < Ops.size());
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      ConstantInt *Fold = ConstantInt::get(
+      ConstantInt *Fold = Context->getConstantInt(
                               APIntOps::smax(LHSC->getValue()->getValue(),
                                              RHSC->getValue()->getValue()));
       Ops[0] = getConstant(Fold);
@@ -1965,7 +1965,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
     assert(Idx < Ops.size());
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      ConstantInt *Fold = ConstantInt::get(
+      ConstantInt *Fold = Context->getConstantInt(
                               APIntOps::umax(LHSC->getValue()->getValue(),
                                              RHSC->getValue()->getValue()));
       Ops[0] = getConstant(Fold);
@@ -2887,7 +2887,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // Turn shift left of a constant amount into a multiply.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
       uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-      Constant *X = ConstantInt::get(
+      Constant *X = Context->getConstantInt(
         APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
       return getMulExpr(getSCEV(U->getOperand(0)), getSCEV(X));
     }
@@ -2897,7 +2897,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // Turn logical shift right of a constant into a unsigned divide.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
       uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-      Constant *X = ConstantInt::get(
+      Constant *X = Context->getConstantInt(
         APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
       return getUDivExpr(getSCEV(U->getOperand(0)), getSCEV(X));
     }

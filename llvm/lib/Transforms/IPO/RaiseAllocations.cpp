@@ -70,6 +70,7 @@ ModulePass *llvm::createRaiseAllocationsPass() {
 // function into the appropriate instruction.
 //
 void RaiseAllocations::doInitialization(Module &M) {
+  Context = &M.getContext();
 
   // Get Malloc and free prototypes if they exist!
   MallocFunc = M.getFunction("malloc");

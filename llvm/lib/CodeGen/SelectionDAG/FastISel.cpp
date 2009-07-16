@@ -108,7 +108,7 @@ unsigned FastISel::getRegForValue(Value *V) {
       if (isExact) {
         APInt IntVal(IntBitWidth, 2, x);
 
-        unsigned IntegerReg = getRegForValue(ConstantInt::get(IntVal));
+        unsigned IntegerReg = getRegForValue(Context->getConstantInt(IntVal));
         if (IntegerReg != 0)
           Reg = FastEmit_r(IntVT.getSimpleVT(), VT, ISD::SINT_TO_FP, IntegerReg);
       }

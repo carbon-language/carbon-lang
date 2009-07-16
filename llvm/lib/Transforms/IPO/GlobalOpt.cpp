@@ -2476,6 +2476,7 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
 
 bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
+  Context = &M.getContext();
   
   // Try to find the llvm.globalctors list.
   GlobalVariable *GlobalCtors = FindGlobalCtors(M);

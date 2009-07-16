@@ -44,6 +44,8 @@ namespace {
         return false;  // Nothing to extract
       }
       
+      Context = &M.getContext();
+      
       if (deleteStuff)
         return deleteGV();
       M.setModuleInlineAsm("");
