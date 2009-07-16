@@ -32,9 +32,18 @@ namespace llvm {
       /// instruction, which includes a bunch of information.
       CALL,
 
+      /// CMP, UCMP - Compare instruction
       CMP,
       UCMP,
-      BRCOND
+
+      /// BRCOND - Conditional branch. Operand 0 is chain operand, operand 1 is
+      /// the block to branch if condition is true, operand 2 is condition code
+      /// and operand 3 is the flag operand produced by a CMP instruction.
+      BRCOND,
+
+      /// SELECT - Operands 0 and 1 are selection variables, operand 2 is
+      /// condition code and operand 3 is the flag operand.
+      SELECT
     };
   }
 
@@ -56,6 +65,7 @@ namespace llvm {
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC);
@@ -66,6 +76,10 @@ namespace llvm {
     SDValue EmitCmp(SDValue LHS, SDValue RHS,
                     ISD::CondCode CC, SDValue &SystemZCC,
                     SelectionDAG &DAG);
+
+
+    MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                   MachineBasicBlock *BB) const;
 
   private:
     const SystemZSubtarget &Subtarget;

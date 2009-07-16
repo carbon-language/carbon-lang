@@ -14,6 +14,7 @@
 #ifndef LLVM_TARGET_SYSTEMZINSTRINFO_H
 #define LLVM_TARGET_SYSTEMZINSTRINFO_H
 
+#include "SystemZ.h"
 #include "SystemZRegisterInfo.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -65,6 +66,7 @@ public:
                                 MachineBasicBlock *FBB,
                              const SmallVectorImpl<MachineOperand> &Cond) const;
 
+  const TargetInstrDesc& getBrCond(SystemZCC::CondCodes CC) const;
 };
 
 }

@@ -239,3 +239,32 @@ SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
   return 0;
 }
+
+const TargetInstrDesc&
+SystemZInstrInfo::getBrCond(SystemZCC::CondCodes CC) const {
+  unsigned Opc;
+  switch (CC) {
+  default:
+    assert(0 && "Unknown condition code!");
+  case SystemZCC::E:
+    Opc = SystemZ::JE;
+    break;
+  case SystemZCC::NE:
+    Opc = SystemZ::JNE;
+    break;
+  case SystemZCC::H:
+    Opc = SystemZ::JH;
+    break;
+  case SystemZCC::L:
+    Opc = SystemZ::JL;
+    break;
+  case SystemZCC::HE:
+    Opc = SystemZ::JHE;
+    break;
+  case SystemZCC::LE:
+    Opc = SystemZ::JLE;
+    break;
+  }
+
+  return get(Opc);
+}

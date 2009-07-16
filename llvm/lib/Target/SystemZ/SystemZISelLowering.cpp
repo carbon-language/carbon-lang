@@ -61,6 +61,14 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,            MVT::i32, Custom);
   setOperationAction(ISD::BR_CC,            MVT::i64, Custom);
+
+  // FIXME: Can we lower these 2 efficiently?
+  setOperationAction(ISD::SETCC,            MVT::i32, Expand);
+  setOperationAction(ISD::SETCC,            MVT::i64, Expand);
+  setOperationAction(ISD::SELECT,           MVT::i32, Expand);
+  setOperationAction(ISD::SELECT,           MVT::i64, Expand);
+  setOperationAction(ISD::SELECT_CC,        MVT::i32, Custom);
+  setOperationAction(ISD::SELECT_CC,        MVT::i64, Custom);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -69,6 +77,7 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::RET:              return LowerRET(Op, DAG);
   case ISD::CALL:             return LowerCALL(Op, DAG);
   case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
+  case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -472,6 +481,27 @@ SDValue SystemZTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
                      Chain, Dest, SystemZCC, Flag);
 }
 
+SDValue SystemZTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
+  SDValue LHS    = Op.getOperand(0);
+  SDValue RHS    = Op.getOperand(1);
+  SDValue TrueV  = Op.getOperand(2);
+  SDValue FalseV = Op.getOperand(3);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+  DebugLoc dl   = Op.getDebugLoc();
+
+  SDValue SystemZCC;
+  SDValue Flag = EmitCmp(LHS, RHS, CC, SystemZCC, DAG);
+
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Flag);
+  SmallVector<SDValue, 4> Ops;
+  Ops.push_back(TrueV);
+  Ops.push_back(FalseV);
+  Ops.push_back(SystemZCC);
+  Ops.push_back(Flag);
+
+  return DAG.getNode(SystemZISD::SELECT, dl, VTs, &Ops[0], Ops.size());
+}
+
 
 const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
@@ -480,7 +510,70 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case SystemZISD::BRCOND:             return "SystemZISD::BRCOND";
   case SystemZISD::CMP:                return "SystemZISD::CMP";
   case SystemZISD::UCMP:               return "SystemZISD::UCMP";
+  case SystemZISD::SELECT:             return "SystemZISD::SELECT";
   default: return NULL;
   }
 }
 
+//===----------------------------------------------------------------------===//
+//  Other Lowering Code
+//===----------------------------------------------------------------------===//
+
+MachineBasicBlock*
+SystemZTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
+                                                   MachineBasicBlock *BB) const {
+  const SystemZInstrInfo &TII = *TM.getInstrInfo();
+  DebugLoc dl = MI->getDebugLoc();
+  assert((MI->getOpcode() == SystemZ::Select32 ||
+          MI->getOpcode() == SystemZ::Select64) &&
+         "Unexpected instr type to insert");
+
+  // To "insert" a SELECT instruction, we actually have to insert the diamond
+  // control-flow pattern.  The incoming instruction knows the destination vreg
+  // to set, the condition code register to branch on, the true/false values to
+  // select between, and a branch opcode to use.
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  MachineFunction::iterator I = BB;
+  ++I;
+
+  //  thisMBB:
+  //  ...
+  //   TrueVal = ...
+  //   cmpTY ccX, r1, r2
+  //   jCC copy1MBB
+  //   fallthrough --> copy0MBB
+  MachineBasicBlock *thisMBB = BB;
+  MachineFunction *F = BB->getParent();
+  MachineBasicBlock *copy0MBB = F->CreateMachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *copy1MBB = F->CreateMachineBasicBlock(LLVM_BB);
+  SystemZCC::CondCodes CC = (SystemZCC::CondCodes)MI->getOperand(3).getImm();
+  BuildMI(BB, dl, TII.getBrCond(CC)).addMBB(copy1MBB);
+  F->insert(I, copy0MBB);
+  F->insert(I, copy1MBB);
+  // Update machine-CFG edges by transferring all successors of the current
+  // block to the new block which will contain the Phi node for the select.
+  copy1MBB->transferSuccessors(BB);
+  // Next, add the true and fallthrough blocks as its successors.
+  BB->addSuccessor(copy0MBB);
+  BB->addSuccessor(copy1MBB);
+
+  //  copy0MBB:
+  //   %FalseValue = ...
+  //   # fallthrough to copy1MBB
+  BB = copy0MBB;
+
+  // Update machine-CFG edges
+  BB->addSuccessor(copy1MBB);
+
+  //  copy1MBB:
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+  //  ...
+  BB = copy1MBB;
+  BuildMI(BB, dl, TII.get(SystemZ::PHI),
+          MI->getOperand(0).getReg())
+    .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
+    .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB);
+
+  F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
+  return BB;
+}

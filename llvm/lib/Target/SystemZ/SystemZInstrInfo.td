@@ -31,6 +31,10 @@ def SDT_CmpTest             : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_BrCond              : SDTypeProfile<0, 2,
                                            [SDTCisVT<0, OtherVT>,
                                             SDTCisI8<1>]>;
+def SDT_SelectCC            : SDTypeProfile<1, 3,
+                                           [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
+                                            SDTCisI8<3>]>;
+
 
 //===----------------------------------------------------------------------===//
 // SystemZ Specific Node Definitions.
@@ -49,6 +53,7 @@ def SystemZcmp     : SDNode<"SystemZISD::CMP", SDT_CmpTest, [SDNPOutFlag]>;
 def SystemZucmp    : SDNode<"SystemZISD::UCMP", SDT_CmpTest, [SDNPOutFlag]>;
 def SystemZbrcond  : SDNode<"SystemZISD::BRCOND", SDT_BrCond,
                             [SDNPHasChain, SDNPInFlag]>;
+def SystemZselect  : SDNode<"SystemZISD::SELECT", SDT_SelectCC, [SDNPInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff.
@@ -235,6 +240,17 @@ def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i64imm:$amt),
 def ADJCALLSTACKUP   : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
                               "#ADJCALLSTACKUP",
                               [(SystemZcallseq_end timm:$amt1, timm:$amt2)]>;
+
+let usesCustomDAGSchedInserter = 1 in {
+  def Select32 : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2, i8imm:$cc),
+                        "# Select32 PSEUDO",
+                        [(set GR32:$dst,
+                              (SystemZselect GR32:$src1, GR32:$src2, imm:$cc))]>;
+  def Select64 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2, i8imm:$cc),
+                        "# Select64 PSEUDO",
+                        [(set GR64:$dst,
+                              (SystemZselect GR64:$src1, GR64:$src2, imm:$cc))]>;
+}
 
 
 //===----------------------------------------------------------------------===//
