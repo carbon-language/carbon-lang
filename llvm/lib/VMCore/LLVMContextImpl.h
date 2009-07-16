@@ -19,6 +19,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringMap.h"
 
 namespace llvm {
@@ -26,8 +27,10 @@ namespace llvm {
 class ConstantInt;
 class ConstantFP;
 class MDString;
+class MDNode;
 class LLVMContext;
 class Type;
+class Value;
 
 struct DenseMapAPIntKeyInfo {
   struct KeyTy {
@@ -94,6 +97,8 @@ class LLVMContextImpl {
   
   StringMap<MDString*> MDStringCache;
   
+  FoldingSet<MDNode> MDNodeSet;
+  
   LLVMContext &Context;
   LLVMContextImpl();
   LLVMContextImpl(const LLVMContextImpl&);
@@ -108,8 +113,10 @@ public:
   
   MDString *getMDString(const char *StrBegin, const char *StrEnd);
   
+  MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
   
   void erase(MDString *M);
+  void erase(MDNode *M);
 };
 
 }

@@ -1443,8 +1443,6 @@ void MDString::destroyConstant() {
 //---- MDNode::get() implementation
 //
 
-static ManagedStatic<FoldingSet<MDNode> > MDNodeSet;
-
 MDNode::MDNode(Value*const* Vals, unsigned NumVals)
   : Constant(Type::MetadataTy, MDNodeVal, 0, 0) {
   for (unsigned i = 0; i != NumVals; ++i)
@@ -1456,32 +1454,8 @@ void MDNode::Profile(FoldingSetNodeID &ID) const {
     ID.AddPointer(*I);
 }
 
-MDNode *MDNode::get(Value*const* Vals, unsigned NumVals) {
-  FoldingSetNodeID ID;
-  for (unsigned i = 0; i != NumVals; ++i)
-    ID.AddPointer(Vals[i]);
-
-  ConstantsLock->reader_acquire();
-  void *InsertPoint;
-  MDNode *N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
-  ConstantsLock->reader_release();
-  
-  if (!N) {
-    sys::SmartScopedWriter<true> Writer(*ConstantsLock);
-    N = MDNodeSet->FindNodeOrInsertPos(ID, InsertPoint);
-    if (!N) {
-      // InsertPoint will have been set by the FindNodeOrInsertPos call.
-      N = new(0) MDNode(Vals, NumVals);
-      MDNodeSet->InsertNode(N, InsertPoint);
-    }
-  }
-  return N;
-}
-
 void MDNode::destroyConstant() {
-  sys::SmartScopedWriter<true> Writer(*ConstantsLock); 
-  MDNodeSet->RemoveNode(this);
-  
+  getType()->getContext().erase(this);
   destroyConstantImpl();
 }
 
@@ -2519,7 +2493,8 @@ void MDNode::replaceElement(Value *From, Value *To) {
     Values.push_back(Val);
   }
 
-  MDNode *Replacement = MDNode::get(&Values[0], Values.size());
+  MDNode *Replacement =
+    getType()->getContext().getMDNode(&Values[0], Values.size());
   assert(Replacement != this && "I didn't contain From!");
 
   uncheckedReplaceAllUsesWith(Replacement);

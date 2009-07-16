@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/MDNode.h"
 using namespace llvm;
 
 // Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
@@ -92,9 +93,38 @@ MDString *LLVMContextImpl::getMDString(const char *StrBegin,
   return S;
 }
 
+MDNode *LLVMContextImpl::getMDNode(Value*const* Vals, unsigned NumVals) {
+  FoldingSetNodeID ID;
+  for (unsigned i = 0; i != NumVals; ++i)
+    ID.AddPointer(Vals[i]);
+
+  ConstantsLock.reader_acquire();
+  void *InsertPoint;
+  MDNode *N = MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
+  ConstantsLock.reader_release();
+  
+  if (!N) {
+    sys::SmartScopedWriter<true> Writer(ConstantsLock);
+    N = MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
+    if (!N) {
+      // InsertPoint will have been set by the FindNodeOrInsertPos call.
+      N = new(0) MDNode(Vals, NumVals);
+      MDNodeSet.InsertNode(N, InsertPoint);
+    }
+  }
+
+  return N;
+}
+
+
 // *** erase methods ***
 
 void LLVMContextImpl::erase(MDString *M) {
   sys::SmartScopedWriter<true> Writer(ConstantsLock);
   MDStringCache.erase(MDStringCache.find(M->StrBegin, M->StrEnd));
+}
+
+void LLVMContextImpl::erase(MDNode *M) {
+  sys::SmartScopedWriter<true> Writer(ConstantsLock);
+  MDNodeSet.RemoveNode(M);
 }

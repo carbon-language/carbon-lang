@@ -271,6 +271,7 @@ public:
   
   // Methods for erasing constants
   void erase(MDString *M);
+  void erase(MDNode *M);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

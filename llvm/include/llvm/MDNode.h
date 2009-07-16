@@ -46,6 +46,8 @@ namespace llvm {
 class MDNode : public Constant, public FoldingSetNode {
   MDNode(const MDNode &);      // DO NOT IMPLEMENT
 
+  friend class LLVMContextImpl;
+
   friend class ElementVH;
   struct ElementVH : public CallbackVH {
     MDNode *OwningNode;
@@ -72,14 +74,11 @@ class MDNode : public Constant, public FoldingSetNode {
 
   SmallVector<ElementVH, 4> Node;
   typedef SmallVectorImpl<ElementVH>::iterator elem_iterator;
+
 protected:
   explicit MDNode(Value*const* Vals, unsigned NumVals);
 public:
   typedef SmallVectorImpl<ElementVH>::const_iterator const_elem_iterator;
-
-  /// get() - Static factory methods - Return objects of the specified value.
-  ///
-  static MDNode *get(Value*const* Vals, unsigned NumVals);
 
   Value *getElement(unsigned i) const {
     return Node[i];

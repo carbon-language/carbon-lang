@@ -543,7 +543,7 @@ Constant* LLVMContext::getConstantVector(Constant* const* Vals,
 
 // MDNode accessors
 MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
-  return MDNode::get(Vals, NumVals);
+  return pImpl->getMDNode(Vals, NumVals);
 }
 
 // MDString accessors
@@ -639,5 +639,9 @@ const Type* LLVMContext::makeCmpResultType(const Type* opnd_type) {
 }
 
 void LLVMContext::erase(MDString *M) {
+  pImpl->erase(M);
+}
+
+void LLVMContext::erase(MDNode *M) {
   pImpl->erase(M);
 }
