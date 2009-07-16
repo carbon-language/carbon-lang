@@ -52,7 +52,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
 
   // Set shifts properties
   setShiftAmountFlavor(Extend);
-  setShiftAmountType(MVT::i32);
+  setShiftAmountType(MVT::i64);
 
   // Provide all sorts of operation actions
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);

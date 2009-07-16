@@ -627,10 +627,7 @@ def SRL32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
                       [(set GR32:$dst, (srl GR32:$src, riaddr32:$amt))]>;
 def SRL64rri : Pseudo<(outs GR64:$dst), (ins GR64:$src, riaddr:$amt),
                       "srlg\t{$dst, $src, $amt}",
-                      [(set GR64:$dst, (srl GR64:$src, (i32 (trunc riaddr:$amt))))]>;
-def SRLA64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
-                      "srlg\t{$dst, $src, $amt}",
-                      [(set GR64:$dst, (srl GR64:$src, (i32 imm:$amt)))]>;
+                      [(set GR64:$dst, (srl GR64:$src, riaddr:$amt))]>;
 
 let isTwoAddress = 1 in
 def SHL32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
@@ -638,10 +635,7 @@ def SHL32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
                       [(set GR32:$dst, (shl GR32:$src, riaddr32:$amt))]>;
 def SHL64rri : Pseudo<(outs GR64:$dst), (ins GR64:$src, riaddr:$amt),
                       "sllg\t{$dst, $src, $amt}",
-                      [(set GR64:$dst, (shl GR64:$src, (i32 (trunc riaddr:$amt))))]>;
-def SHL64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
-                      "sllg\t{$dst, $src, $amt}",
-                      [(set GR64:$dst, (shl GR64:$src, (i32 imm:$amt)))]>;
+                      [(set GR64:$dst, (shl GR64:$src, riaddr:$amt))]>;
 
 let Defs = [PSW] in {
 let isTwoAddress = 1 in
@@ -649,13 +643,10 @@ def SRA32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
                       "sra\t{$src, $amt}",
                       [(set GR32:$dst, (sra GR32:$src, riaddr32:$amt)),
                        (implicit PSW)]>;
+
 def SRA64rri : Pseudo<(outs GR64:$dst), (ins GR64:$src, riaddr:$amt),
                       "srag\t{$dst, $src, $amt}",
-                      [(set GR64:$dst, (sra GR64:$src, (i32 (trunc riaddr:$amt)))),
-                       (implicit PSW)]>;
-def SRA64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
-                      "srag\t{$dst, $src, $amt}",
-                      [(set GR64:$dst, (sra GR64:$src, (i32 imm:$amt))),
+                      [(set GR64:$dst, (sra GR64:$src, riaddr:$amt)),
                        (implicit PSW)]>;
 } // Defs = [PSW]
 
@@ -664,10 +655,7 @@ def ROTL32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
                        [(set GR32:$dst, (rotl GR32:$src, riaddr32:$amt))]>;
 def ROTL64rri : Pseudo<(outs GR64:$dst), (ins GR64:$src, riaddr:$amt),
                        "rllg\t{$dst, $src, $amt}",
-                       [(set GR64:$dst, (rotl GR64:$src, (i32 (trunc riaddr:$amt))))]>;
-def ROTL64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
-                       "rllg\t{$dst, $src, $amt}",
-                       [(set GR64:$dst, (rotl GR64:$src, (i32 imm:$amt)))]>;
+                       [(set GR64:$dst, (rotl GR64:$src, riaddr:$amt))]>;
 
 //===----------------------------------------------------------------------===//
 // Test instructions (like AND but do not produce any result)

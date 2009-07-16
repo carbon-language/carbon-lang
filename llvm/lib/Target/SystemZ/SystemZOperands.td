@@ -251,10 +251,10 @@ def s32imm64 : Operand<i64> {
 // Address operands
 
 // riaddr := reg + imm
-def riaddr32 : Operand<i32>,
-               ComplexPattern<i32, 2, "SelectAddrRI12Only", []> {
+def riaddr32 : Operand<i64>,
+               ComplexPattern<i64, 2, "SelectAddrRI12Only", []> {
   let PrintMethod = "printRIAddrOperand";
-  let MIOperandInfo = (ops ADDR32:$base, u12imm:$disp);
+  let MIOperandInfo = (ops ADDR64:$base, u12imm:$disp);
 }
 
 def riaddr12 : Operand<i64>,
