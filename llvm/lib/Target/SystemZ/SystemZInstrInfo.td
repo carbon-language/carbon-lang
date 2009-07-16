@@ -271,6 +271,9 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1 in {
+  let isBarrier = 1 in
+    def JMP  : Pseudo<(outs), (ins brtarget:$dst), "j\t{$dst}", [(br bb:$dst)]>;
+
   let Uses = [PSW] in {
     def JE  : Pseudo<(outs), (ins brtarget:$dst),
                      "je\t$dst",
