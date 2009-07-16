@@ -432,6 +432,24 @@ def MOV128r0_even : Pseudo<(outs GR128:$dst), (ins GR128:$src),
                            []>;
 }
 
+// Byte swaps
+def BSWAP32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src),
+                       "lrvr\t{$dst, $src}",
+                       [(set GR32:$dst, (bswap GR32:$src))]>;
+def BSWAP64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src),
+                       "lrvgr\t{$dst, $src}",
+                       [(set GR64:$dst, (bswap GR64:$src))]>;
+
+def BSWAP16rm : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
+                       "lrvh\t{$dst, $src}",
+                       [(set GR32:$dst, (bswap (extloadi32i16 rriaddr:$src)))]>;
+def BSWAP32rm : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
+                       "lrv\t{$dst, $src}",
+                       [(set GR32:$dst, (bswap (load rriaddr:$src)))]>;
+def BSWAP64rm : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
+                       "lrvg\t{$dst, $src}",
+                       [(set GR64:$dst, (bswap (load rriaddr:$src)))]>;
+
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
 
