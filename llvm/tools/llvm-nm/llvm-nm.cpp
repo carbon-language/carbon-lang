@@ -30,7 +30,6 @@
 #include <cctype>
 #include <cerrno>
 #include <cstring>
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -100,31 +99,31 @@ static void DumpSymbolNameForGlobalValue(GlobalValue &GV) {
   if (GV.hasLocalLinkage () && ExternalOnly)
     return;
   if (OutputFormat == posix) {
-    std::cout << GV.getName () << " " << TypeCharForSymbol(GV) << " "
-              << SymbolAddrStr << "\n";
+    outs() << GV.getName () << " " << TypeCharForSymbol(GV) << " "
+           << SymbolAddrStr << "\n";
   } else if (OutputFormat == bsd) {
-    std::cout << SymbolAddrStr << " " << TypeCharForSymbol(GV) << " "
-              << GV.getName () << "\n";
+    outs() << SymbolAddrStr << " " << TypeCharForSymbol(GV) << " "
+           << GV.getName () << "\n";
   } else if (OutputFormat == sysv) {
     std::string PaddedName (GV.getName ());
     while (PaddedName.length () < 20)
       PaddedName += " ";
-    std::cout << PaddedName << "|" << SymbolAddrStr << "|   "
-              << TypeCharForSymbol(GV)
-              << "  |                  |      |     |\n";
+    outs() << PaddedName << "|" << SymbolAddrStr << "|   "
+           << TypeCharForSymbol(GV)
+           << "  |                  |      |     |\n";
   }
 }
 
 static void DumpSymbolNamesFromModule(Module *M) {
   const std::string &Filename = M->getModuleIdentifier ();
   if (OutputFormat == posix && MultipleFiles) {
-    std::cout << Filename << ":\n";
+    outs() << Filename << ":\n";
   } else if (OutputFormat == bsd && MultipleFiles) {
-    std::cout << "\n" << Filename << ":\n";
+    outs() << "\n" << Filename << ":\n";
   } else if (OutputFormat == sysv) {
-    std::cout << "\n\nSymbols from " << Filename << ":\n\n"
-              << "Name                  Value   Class        Type"
-              << "         Size   Line  Section\n";
+    outs() << "\n\nSymbols from " << Filename << ":\n\n"
+           << "Name                  Value   Class        Type"
+           << "         Size   Line  Section\n";
   }
   std::for_each (M->begin(), M->end(), DumpSymbolNameForGlobalValue);
   std::for_each (M->global_begin(), M->global_end(),

@@ -31,8 +31,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 
-#include <fstream>
-
 using namespace llvm;
 
 bool LTOModule::isBitcodeFile(const void* mem, size_t length)

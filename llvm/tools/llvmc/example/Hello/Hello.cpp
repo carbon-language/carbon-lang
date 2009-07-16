@@ -13,13 +13,12 @@
 
 #include "llvm/CompilerDriver/CompilationGraph.h"
 #include "llvm/CompilerDriver/Plugin.h"
-
-#include <iostream>
+#include "llvm/Support/raw_ostream.h"
 
 namespace {
 struct MyPlugin : public llvmc::BasePlugin {
   void PopulateLanguageMap(llvmc::LanguageMap&) const
-  { std::cout << "Hello!\n"; }
+  { outs() << "Hello!\n"; }
 
   void PopulateCompilationGraph(llvmc::CompilationGraph&) const
   {}

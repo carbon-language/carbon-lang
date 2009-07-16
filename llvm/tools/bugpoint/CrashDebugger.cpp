@@ -28,8 +28,6 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/CommandLine.h"
-#include <iostream>
-#include <fstream>
 #include <set>
 using namespace llvm;
 
@@ -65,8 +63,8 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
   sys::Path PrefixOutput;
   Module *OrigProgram = 0;
   if (!Prefix.empty()) {
-    std::cout << "Checking to see if these passes crash: "
-              << getPassesString(Prefix) << ": ";
+    outs() << "Checking to see if these passes crash: "
+           << getPassesString(Prefix) << ": ";
     std::string PfxOutput;
     if (BD.runPasses(Prefix, PfxOutput))
       return KeepPrefix;
@@ -83,8 +81,8 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
     PrefixOutput.eraseFromDisk();
   }
 
-  std::cout << "Checking to see if these passes crash: "
-            << getPassesString(Suffix) << ": ";
+  outs() << "Checking to see if these passes crash: "
+         << getPassesString(Suffix) << ": ";
 
   if (BD.runPasses(Suffix)) {
     delete OrigProgram;            // The suffix crashes alone...
@@ -143,9 +141,9 @@ ReduceCrashingGlobalVariables::TestGlobalVariables(
     GVSet.insert(CMGV);
   }
 
-  std::cout << "Checking for crash with only these global variables: ";
+  outs() << "Checking for crash with only these global variables: ";
   PrintGlobalVariableList(GVs);
-  std::cout << ": ";
+  outs() << ": ";
 
   // Loop over and delete any global variables which we aren't supposed to be
   // playing with...
@@ -217,9 +215,9 @@ bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
     Functions.insert(CMF);
   }
 
-  std::cout << "Checking for crash with only these functions: ";
+  outs() << "Checking for crash with only these functions: ";
   PrintFunctionList(Funcs);
-  std::cout << ": ";
+  outs() << ": ";
 
   // Loop over and delete any functions which we aren't supposed to be playing
   // with...
@@ -277,14 +275,14 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   for (unsigned i = 0, e = BBs.size(); i != e; ++i)
     Blocks.insert(cast<BasicBlock>(ValueMap[BBs[i]]));
 
-  std::cout << "Checking for crash with only these blocks:";
+  outs() << "Checking for crash with only these blocks:";
   unsigned NumPrint = Blocks.size();
   if (NumPrint > 10) NumPrint = 10;
   for (unsigned i = 0, e = NumPrint; i != e; ++i)
-    std::cout << " " << BBs[i]->getName();
+    outs() << " " << BBs[i]->getName();
   if (NumPrint < Blocks.size())
-    std::cout << "... <" << Blocks.size() << " total>";
-  std::cout << ": ";
+    outs() << "... <" << Blocks.size() << " total>";
+  outs() << ": ";
 
   // Loop over and delete any hack up any blocks that are not listed...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
@@ -382,11 +380,11 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
     Instructions.insert(cast<Instruction>(ValueMap[Insts[i]]));
   }
 
-  std::cout << "Checking for crash with only " << Instructions.size();
+  outs() << "Checking for crash with only " << Instructions.size();
   if (Instructions.size() == 1)
-    std::cout << " instruction: ";
+    outs() << " instruction: ";
   else
-    std::cout << " instructions: ";
+    outs() << " instructions: ";
 
   for (Module::iterator MI = M->begin(), ME = M->end(); MI != ME; ++MI)
     for (Function::iterator FI = MI->begin(), FE = MI->end(); FI != FE; ++FI)
@@ -445,13 +443,13 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
       delete M;  // No change made...
     } else {
       // See if the program still causes a crash...
-      std::cout << "\nChecking to see if we can delete global inits: ";
+      outs() << "\nChecking to see if we can delete global inits: ";
 
       if (TestFn(BD, M)) {      // Still crashes?
         BD.setNewProgram(M);
-        std::cout << "\n*** Able to remove all global initializers!\n";
+        outs() << "\n*** Able to remove all global initializers!\n";
       } else {                  // No longer crashes?
-        std::cout << "  - Removing all global inits hides problem!\n";
+        outs() << "  - Removing all global inits hides problem!\n";
         delete M;
 
         std::vector<GlobalVariable*> GVs;
@@ -462,7 +460,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
             GVs.push_back(I);
 
         if (GVs.size() > 1 && !BugpointIsInterrupted) {
-          std::cout << "\n*** Attempting to reduce the number of global "
+          outs() << "\n*** Attempting to reduce the number of global "
                     << "variables in the testcase\n";
 
           unsigned OldSize = GVs.size();
@@ -483,7 +481,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
       Functions.push_back(I);
 
   if (Functions.size() > 1 && !BugpointIsInterrupted) {
-    std::cout << "\n*** Attempting to reduce the number of functions "
+    outs() << "\n*** Attempting to reduce the number of functions "
       "in the testcase\n";
 
     unsigned OldSize = Functions.size();
@@ -532,8 +530,8 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   do {
     if (BugpointIsInterrupted) break;
     --Simplification;
-    std::cout << "\n*** Attempting to reduce testcase by deleting instruc"
-              << "tions: Simplification Level #" << Simplification << '\n';
+    outs() << "\n*** Attempting to reduce testcase by deleting instruc"
+           << "tions: Simplification Level #" << Simplification << '\n';
 
     // Now that we have deleted the functions that are unnecessary for the
     // program, try to remove instructions that are not necessary to cause the
@@ -561,7 +559,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
             } else {
               if (BugpointIsInterrupted) goto ExitLoops;
 
-              std::cout << "Checking instruction: " << *I;
+              outs() << "Checking instruction: " << *I;
               Module *M = BD.deleteInstructionFromProgram(I, Simplification);
 
               // Find out if the pass still crashes on this pass...
@@ -588,7 +586,7 @@ ExitLoops:
 
   // Try to clean up the testcase by running funcresolve and globaldce...
   if (!BugpointIsInterrupted) {
-    std::cout << "\n*** Attempting to perform final cleanups: ";
+    outs() << "\n*** Attempting to perform final cleanups: ";
     Module *M = CloneModule(BD.getProgram());
     M = BD.performFinalCleanups(M, true);
 
@@ -614,15 +612,15 @@ static bool TestForOptimizerCrash(BugDriver &BD, Module *M) {
 /// out exactly which pass is crashing.
 ///
 bool BugDriver::debugOptimizerCrash(const std::string &ID) {
-  std::cout << "\n*** Debugging optimizer crash!\n";
+  outs() << "\n*** Debugging optimizer crash!\n";
 
   // Reduce the list of passes which causes the optimizer to crash...
   if (!BugpointIsInterrupted)
     ReducePassList(*this).reduceList(PassesToRun);
 
-  std::cout << "\n*** Found crashing pass"
-            << (PassesToRun.size() == 1 ? ": " : "es: ")
-            << getPassesString(PassesToRun) << '\n';
+  outs() << "\n*** Found crashing pass"
+         << (PassesToRun.size() == 1 ? ": " : "es: ")
+         << getPassesString(PassesToRun) << '\n';
 
   EmitProgressBitcode(ID);
 

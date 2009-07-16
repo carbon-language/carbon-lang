@@ -34,11 +34,9 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
-#include <fstream>
 #include <memory>
 #include <cstring>
 using namespace llvm;
@@ -123,7 +121,7 @@ static std::string progname;
 ///  Message  - The message to print to standard error.
 ///
 static void PrintAndExit(const std::string &Message, int errcode = 1) {
-  cerr << progname << ": " << Message << "\n";
+  errs() << progname << ": " << Message << "\n";
   llvm_shutdown();
   exit(errcode);
 }
@@ -132,8 +130,8 @@ static void PrintCommand(const std::vector<const char*> &args) {
   std::vector<const char*>::const_iterator I = args.begin(), E = args.end(); 
   for (; I != E; ++I)
     if (*I)
-      cout << "'" << *I << "'" << " ";
-  cout << "\n" << std::flush;
+      outs() << "'" << *I << "'" << " ";
+  outs() << "\n"; outs().flush();
 }
 
 /// CopyEnv - This function takes an array of environment variables and makes a
@@ -218,14 +216,14 @@ static void RemoveEnv(const char * name, char ** const envp) {
 void GenerateBitcode(Module* M, const std::string& FileName) {
 
   if (Verbose)
-    cout << "Generating Bitcode To " << FileName << '\n';
+    outs() << "Generating Bitcode To " << FileName << '\n';
 
   // Create the output file.
-  std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
-                               std::ios::binary;
-  std::ofstream Out(FileName.c_str(), io_mode);
-  if (!Out.good())
-    PrintAndExit("error opening '" + FileName + "' for writing!");
+  std::string ErrorInfo;
+  raw_fd_ostream Out(FileName.c_str(), /*Binary=*/true, /*Force=*/true,
+                     ErrorInfo);
+  if (!ErrorInfo.empty())
+    PrintAndExit(ErrorInfo);
 
   // Ensure that the bitcode file gets removed from the disk if we get a
   // terminating signal.
@@ -266,7 +264,7 @@ static int GenerateAssembly(const std::string &OutputFilename,
   args.push_back(0);
 
   if (Verbose) {
-    cout << "Generating Assembly With: \n";
+    outs() << "Generating Assembly With: \n";
     PrintCommand(args);
   }
 
@@ -289,7 +287,7 @@ static int GenerateCFile(const std::string &OutputFile,
   args.push_back(0);
 
   if (Verbose) {
-    cout << "Generating C Source With: \n";
+    outs() << "Generating C Source With: \n";
     PrintCommand(args);
   }
 
@@ -386,7 +384,7 @@ static int GenerateNative(const std::string &OutputFilename,
   Args.push_back(0);
 
   if (Verbose) {
-    cout << "Generating Native Executable With:\n";
+    outs() << "Generating Native Executable With:\n";
     PrintCommand(Args);
   }
 
@@ -401,7 +399,7 @@ static int GenerateNative(const std::string &OutputFilename,
 /// bitcode file for the program.
 static void EmitShellScript(char **argv) {
   if (Verbose)
-    cout << "Emitting Shell Script\n";
+    outs() << "Emitting Shell Script\n";
 #if defined(_WIN32) || defined(__CYGWIN__)
   // Windows doesn't support #!/bin/sh style shell scripts in .exe files.  To
   // support windows systems, we copy the llvm-stub.exe executable from the
@@ -418,9 +416,11 @@ static void EmitShellScript(char **argv) {
 #endif
 
   // Output the script to start the program...
-  std::ofstream Out2(OutputFilename.c_str());
-  if (!Out2.good())
-    PrintAndExit("error opening '" + OutputFilename + "' for writing!");
+  std::string ErrorInfo;
+  raw_fd_ostream Out2(OutputFilename.c_str(), /*Binary=*/false, /*Force=*/true,
+                      ErrorInfo);
+  if (!ErrorInfo.empty())
+    PrintAndExit(ErrorInfo);
 
   Out2 << "#!/bin/sh\n";
   // Allow user to setenv LLVMINTERP if lli is not in their PATH.

@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
   
   MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename);
   if (Buffer == 0) {
-    cerr << argv[0] << ": Error reading file '" + InputFilename + "'\n";
+    errs() << argv[0] << ": Error reading file '" + InputFilename + "'\n";
     return 1;
   } else {
     M.reset(ParseBitcodeFile(Buffer, Context));
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
   delete Buffer;
   
   if (M.get() == 0) {
-    cerr << argv[0] << ": bitcode didn't read correctly.\n";
+    errs() << argv[0] << ": bitcode didn't read correctly.\n";
     return 1;
   }
 
@@ -90,8 +90,8 @@ int main(int argc, char **argv) {
   Function *F = M.get()->getFunction(ExtractFunc);
 
   if (F == 0 && G == 0) {
-    cerr << argv[0] << ": program doesn't contain function named '"
-         << ExtractFunc << "' or a global named '" << ExtractGlobal << "'!\n";
+    errs() << argv[0] << ": program doesn't contain function named '"
+           << ExtractFunc << "' or a global named '" << ExtractGlobal << "'!\n";
     return 1;
   }
 

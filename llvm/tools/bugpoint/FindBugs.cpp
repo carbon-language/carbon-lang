@@ -19,7 +19,6 @@
 #include "llvm/Pass.h"
 #include <algorithm>
 #include <ctime>
-#include <iostream>
 using namespace llvm;
 
 /// runManyPasses - Take the specified pass list and create different 
@@ -31,14 +30,14 @@ using namespace llvm;
 ///
 bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
   setPassesToRun(AllPasses);
-  std::cout << "Starting bug finding procedure...\n\n";
+  outs() << "Starting bug finding procedure...\n\n";
   
   // Creating a reference output if necessary
   if (initializeExecutionEnvironment()) return false;
   
-  std::cout << "\n";
+  outs() << "\n";
   if (ReferenceOutputFile.empty()) {
-    std::cout << "Generating reference output from raw program: \n";
+    outs() << "Generating reference output from raw program: \n";
     if (!createReferenceFile(Program))
       return false;
   }
@@ -55,31 +54,31 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
     //
     // Step 2: Run optimizer passes on the program and check for success.
     //
-    std::cout << "Running selected passes on program to test for crash: ";
+    outs() << "Running selected passes on program to test for crash: ";
     for(int i = 0, e = PassesToRun.size(); i != e; i++) {
-      std::cout << "-" << PassesToRun[i]->getPassArgument( )<< " ";
+      outs() << "-" << PassesToRun[i]->getPassArgument( )<< " ";
     }
     
     std::string Filename;
     if(runPasses(PassesToRun, Filename, false)) {
-      std::cout << "\n";
-      std::cout << "Optimizer passes caused failure!\n\n";
+      outs() << "\n";
+      outs() << "Optimizer passes caused failure!\n\n";
       debugOptimizerCrash();
       return true;
     } else {
-      std::cout << "Combination " << num << " optimized successfully!\n";
+      outs() << "Combination " << num << " optimized successfully!\n";
     }
     
     //
     // Step 3: Compile the optimized code.
     //
-    std::cout << "Running the code generator to test for a crash: ";
+    outs() << "Running the code generator to test for a crash: ";
     try {
       compileProgram(Program);
-      std::cout << '\n';
+      outs() << '\n';
     } catch (ToolExecutionError &TEE) {
-      std::cout << "\n*** compileProgram threw an exception: ";
-      std::cout << TEE.what();
+      outs() << "\n*** compileProgram threw an exception: ";
+      outs() << TEE.what();
       return debugCodeGeneratorCrash();
     }
     
@@ -87,14 +86,14 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
     // Step 4: Run the program and compare its output to the reference 
     // output (created above).
     //
-    std::cout << "*** Checking if passes caused miscompliation:\n";
+    outs() << "*** Checking if passes caused miscompliation:\n";
     try {
       if (diffProgram(Filename, "", false)) {
-        std::cout << "\n*** diffProgram returned true!\n";
+        outs() << "\n*** diffProgram returned true!\n";
         debugMiscompilation();
         return true;
       } else {
-        std::cout << "\n*** diff'd output matches!\n";
+        outs() << "\n*** diff'd output matches!\n";
       }
     } catch (ToolExecutionError &TEE) {
       errs() << TEE.what();
@@ -104,7 +103,7 @@ bool BugDriver::runManyPasses(const std::vector<const PassInfo*> &AllPasses) {
     
     sys::Path(Filename).eraseFromDisk();
     
-    std::cout << "\n\n";
+    outs() << "\n\n";
     num++;
   } //end while
   

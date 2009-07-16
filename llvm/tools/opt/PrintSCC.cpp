@@ -29,8 +29,8 @@
 #include "llvm/Module.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SCCIterator.h"
-#include <iostream>
 using namespace llvm;
 
 namespace {
@@ -73,18 +73,18 @@ namespace {
 
 bool CFGSCC::runOnFunction(Function &F) {
   unsigned sccNum = 0;
-  std::cout << "SCCs for Function " << F.getName() << " in PostOrder:";
+  outs() << "SCCs for Function " << F.getName() << " in PostOrder:";
   for (scc_iterator<Function*> SCCI = scc_begin(&F),
          E = scc_end(&F); SCCI != E; ++SCCI) {
     std::vector<BasicBlock*> &nextSCC = *SCCI;
-    std::cout << "\nSCC #" << ++sccNum << " : ";
+    outs() << "\nSCC #" << ++sccNum << " : ";
     for (std::vector<BasicBlock*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)
-      std::cout << (*I)->getName() << ", ";
+      outs() << (*I)->getName() << ", ";
     if (nextSCC.size() == 1 && SCCI.hasLoop())
-      std::cout << " (Has self-loop).";
+      outs() << " (Has self-loop).";
   }
-  std::cout << "\n";
+  outs() << "\n";
 
   return true;
 }
@@ -94,19 +94,19 @@ bool CFGSCC::runOnFunction(Function &F) {
 bool CallGraphSCC::runOnModule(Module &M) {
   CallGraphNode* rootNode = getAnalysis<CallGraph>().getRoot();
   unsigned sccNum = 0;
-  std::cout << "SCCs for the program in PostOrder:";
+  outs() << "SCCs for the program in PostOrder:";
   for (scc_iterator<CallGraphNode*> SCCI = scc_begin(rootNode),
          E = scc_end(rootNode); SCCI != E; ++SCCI) {
     const std::vector<CallGraphNode*> &nextSCC = *SCCI;
-    std::cout << "\nSCC #" << ++sccNum << " : ";
+    outs() << "\nSCC #" << ++sccNum << " : ";
     for (std::vector<CallGraphNode*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)
-      std::cout << ((*I)->getFunction() ? (*I)->getFunction()->getName()
-                    : std::string("Indirect CallGraph node")) << ", ";
+      outs() << ((*I)->getFunction() ? (*I)->getFunction()->getName()
+                 : std::string("Indirect CallGraph node")) << ", ";
     if (nextSCC.size() == 1 && SCCI.hasLoop())
-      std::cout << " (Has self-loop).";
+      outs() << " (Has self-loop).";
   }
-  std::cout << "\n";
+  outs() << "\n";
 
   return true;
 }

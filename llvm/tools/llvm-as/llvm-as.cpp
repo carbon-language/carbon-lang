@@ -24,7 +24,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
@@ -73,14 +72,14 @@ int main(int argc, char **argv) {
     if (!DisableVerify) {
       std::string Err;
       if (verifyModule(*M.get(), ReturnStatusAction, &Err)) {
-        cerr << argv[0]
-             << ": assembly parsed, but does not verify as correct!\n";
-        cerr << Err;
+        errs() << argv[0]
+               << ": assembly parsed, but does not verify as correct!\n";
+        errs() << Err;
         return 1;
       } 
     }
 
-    if (DumpAsm) cerr << "Here's the assembly:\n" << *M.get();
+    if (DumpAsm) errs() << "Here's the assembly:\n" << *M.get();
 
     if (OutputFilename != "") {   // Specified an output filename?
       if (OutputFilename != "-") {  // Not stdout?
@@ -133,10 +132,10 @@ int main(int argc, char **argv) {
       if (Force || !CheckBitcodeOutputToConsole(Out,true))
         WriteBitcodeToFile(M.get(), *Out);
   } catch (const std::string& msg) {
-    cerr << argv[0] << ": " << msg << "\n";
+    errs() << argv[0] << ": " << msg << "\n";
     exitCode = 1;
   } catch (...) {
-    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
     exitCode = 1;
   }
 

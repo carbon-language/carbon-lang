@@ -25,7 +25,6 @@
 #include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
 #include "llvm/LinkAllVMCore.h"
-#include <iostream>
 using namespace llvm;
 
 // AsChild - Specifies that this invocation of bugpoint is being generated

@@ -32,8 +32,6 @@
 #include "llvm/System/Path.h"
 #include "llvm/System/Signals.h"
 #include <set>
-#include <fstream>
-#include <iostream>
 using namespace llvm;
 
 namespace llvm {
@@ -145,9 +143,9 @@ Module *BugDriver::ExtractLoop(Module *M) {
   Module *NewM = runPassesOn(M, LoopExtractPasses);
   if (NewM == 0) {
     Module *Old = swapProgramIn(M);
-    std::cout << "*** Loop extraction failed: ";
+    outs() << "*** Loop extraction failed: ";
     EmitProgressBitcode("loopextraction", true);
-    std::cout << "*** Sorry. :(  Please report a bug!\n";
+    outs() << "*** Sorry. :(  Please report a bug!\n";
     swapProgramIn(Old);
     return 0;
   }
@@ -327,7 +325,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   sys::Path uniqueFilename("bugpoint-extractblocks");
   std::string ErrMsg;
   if (uniqueFilename.createTemporaryFileOnDisk(true, &ErrMsg)) {
-    std::cout << "*** Basic Block extraction failed!\n";
+    outs() << "*** Basic Block extraction failed!\n";
     errs() << "Error creating temporary file: " << ErrMsg << "\n";
     M = swapProgramIn(M);
     EmitProgressBitcode("basicblockextractfail", true);
@@ -336,10 +334,13 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   }
   sys::RemoveFileOnSignal(uniqueFilename);
 
-  std::ofstream BlocksToNotExtractFile(uniqueFilename.c_str());
-  if (!BlocksToNotExtractFile) {
-    std::cout << "*** Basic Block extraction failed!\n";
-    errs() << "Error writing list of blocks to not extract: " << ErrMsg
+  std::string ErrorInfo;
+  raw_fd_ostream BlocksToNotExtractFile(uniqueFilename.c_str(),
+                                        /*Binary=*/false, /*Force=*/true,
+                                        ErrorInfo);
+  if (!ErrorInfo.empty()) {
+    outs() << "*** Basic Block extraction failed!\n";
+    errs() << "Error writing list of blocks to not extract: " << ErrorInfo
            << "\n";
     M = swapProgramIn(M);
     EmitProgressBitcode("basicblockextractfail", true);
@@ -371,7 +372,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
   free(ExtraArg);
 
   if (Ret == 0) {
-    std::cout << "*** Basic Block extraction failed, please report a bug!\n";
+    outs() << "*** Basic Block extraction failed, please report a bug!\n";
     M = swapProgramIn(M);
     EmitProgressBitcode("basicblockextractfail", true);
     swapProgramIn(M);

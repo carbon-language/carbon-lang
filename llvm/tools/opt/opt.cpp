@@ -30,7 +30,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/StandardPasses.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/LinkAllPasses.h"
@@ -126,12 +125,15 @@ struct CallGraphSCCPassPrinter : public CallGraphSCCPass {
 
   virtual bool runOnSCC(const std::vector<CallGraphNode *>&SCC) {
     if (!Quiet) {
-      cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
+      outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
 
       for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
         Function *F = SCC[i]->getFunction();
-        if (F) 
+        if (F) {
+          outs().flush();
           getAnalysisID<Pass>(PassToPrint).print(cout, F->getParent());
+          cout << std::flush;
+        }
       }
     }
     // Get and print pass...
@@ -156,8 +158,10 @@ struct ModulePassPrinter : public ModulePass {
 
   virtual bool runOnModule(Module &M) {
     if (!Quiet) {
-      cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
+      outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
+      outs().flush();
       getAnalysisID<Pass>(PassToPrint).print(cout, &M);
+      cout << std::flush;
     }
 
     // Get and print pass...
@@ -181,11 +185,13 @@ struct FunctionPassPrinter : public FunctionPass {
 
   virtual bool runOnFunction(Function &F) {
     if (!Quiet) { 
-      cout << "Printing analysis '" << PassToPrint->getPassName()
-           << "' for function '" << F.getName() << "':\n";
+      outs() << "Printing analysis '" << PassToPrint->getPassName()
+              << "' for function '" << F.getName() << "':\n";
     }
     // Get and print pass...
+    outs().flush();
     getAnalysisID<Pass>(PassToPrint).print(cout, F.getParent());
+    cout << std::flush;
     return false;
   }
 
@@ -207,9 +213,11 @@ struct LoopPassPrinter : public LoopPass {
 
   virtual bool runOnLoop(Loop *L, LPPassManager &LPM) {
     if (!Quiet) {
-      cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
-      getAnalysisID<Pass>(PassToPrint).print(cout, 
+      outs() << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
+      outs().flush();
+      getAnalysisID<Pass>(PassToPrint).print(cout,
                                   L->getHeader()->getParent()->getParent());
+      cout << std::flush;
     }
     // Get and print pass...
     return false;
@@ -233,12 +241,14 @@ struct BasicBlockPassPrinter : public BasicBlockPass {
 
   virtual bool runOnBasicBlock(BasicBlock &BB) {
     if (!Quiet) {
-      cout << "Printing Analysis info for BasicBlock '" << BB.getName()
-           << "': Pass " << PassToPrint->getPassName() << ":\n";
+      outs() << "Printing Analysis info for BasicBlock '" << BB.getName()
+             << "': Pass " << PassToPrint->getPassName() << ":\n";
     }
 
     // Get and print pass...
+    outs().flush();
     getAnalysisID<Pass>(PassToPrint).print(cout, BB.getParent()->getParent());
+    cout << std::flush;
     return false;
   }
 
@@ -330,16 +340,16 @@ int main(int argc, char **argv) {
     }
     
     if (M.get() == 0) {
-      cerr << argv[0] << ": ";
+      errs() << argv[0] << ": ";
       if (ErrorMessage.size())
-        cerr << ErrorMessage << "\n";
+        errs() << ErrorMessage << "\n";
       else
-        cerr << "bitcode didn't read correctly.\n";
+        errs() << "bitcode didn't read correctly.\n";
       return 1;
     }
 
     // Figure out what stream we are supposed to write to...
-    // FIXME: cout is not binary!
+    // FIXME: outs() is not binary!
     raw_ostream *Out = &outs();  // Default to printing to stdout...
     if (OutputFilename != "-") {
       std::string ErrorInfo;
@@ -414,8 +424,8 @@ int main(int argc, char **argv) {
       if (PassInf->getNormalCtor())
         P = PassInf->getNormalCtor()();
       else
-        cerr << argv[0] << ": cannot create pass: "
-             << PassInf->getPassName() << "\n";
+        errs() << argv[0] << ": cannot create pass: "
+               << PassInf->getPassName() << "\n";
       if (P) {
         bool isBBPass = dynamic_cast<BasicBlockPass*>(P) != 0;
         bool isLPass = !isBBPass && dynamic_cast<LoopPass*>(P) != 0;
@@ -470,22 +480,22 @@ int main(int argc, char **argv) {
     if (!NoVerify && !VerifyEach)
       Passes.add(createVerifierPass());
 
-    // Write bitcode out to disk or cout as the last step...
+    // Write bitcode out to disk or outs() as the last step...
     if (!NoOutput && !AnalyzeOnly)
       Passes.add(createBitcodeWriterPass(*Out));
 
     // Now that we have all of the passes ready, run them.
     Passes.run(*M.get());
 
-    // Delete the ofstream.
+    // Delete the raw_fd_ostream.
     if (Out != &outs())
       delete Out;
     return 0;
 
   } catch (const std::string& msg) {
-    cerr << argv[0] << ": " << msg << "\n";
+    errs() << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
   llvm_shutdown();
   return 1;

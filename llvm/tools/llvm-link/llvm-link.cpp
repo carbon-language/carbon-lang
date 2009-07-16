@@ -21,7 +21,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/System/Path.h"
 #include <memory>
@@ -50,13 +49,13 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN,
                                              LLVMContext& Context) {
   sys::Path Filename;
   if (!Filename.set(FN)) {
-    cerr << "Invalid file name: '" << FN << "'\n";
+    errs() << "Invalid file name: '" << FN << "'\n";
     return std::auto_ptr<Module>();
   }
 
   std::string ErrorMessage;
   if (Filename.exists()) {
-    if (Verbose) cerr << "Loading '" << Filename.c_str() << "'\n";
+    if (Verbose) errs() << "Loading '" << Filename.c_str() << "'\n";
     Module* Result = 0;
     
     const std::string &FNStr = Filename.toString();
@@ -68,12 +67,12 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN,
     if (Result) return std::auto_ptr<Module>(Result);   // Load successful!
 
     if (Verbose) {
-      cerr << "Error opening bitcode file: '" << Filename.c_str() << "'";
-      if (ErrorMessage.size()) cerr << ": " << ErrorMessage;
-      cerr << "\n";
+      errs() << "Error opening bitcode file: '" << Filename.c_str() << "'";
+      if (ErrorMessage.size()) errs() << ": " << ErrorMessage;
+      errs() << "\n";
     }
   } else {
-    cerr << "Bitcode file: '" << Filename.c_str() << "' does not exist.\n";
+    errs() << "Bitcode file: '" << Filename.c_str() << "' does not exist.\n";
   }
 
   return std::auto_ptr<Module>();
@@ -93,23 +92,23 @@ int main(int argc, char **argv) {
 
   std::auto_ptr<Module> Composite(LoadFile(InputFilenames[BaseArg], Context));
   if (Composite.get() == 0) {
-    cerr << argv[0] << ": error loading file '"
-         << InputFilenames[BaseArg] << "'\n";
+    errs() << argv[0] << ": error loading file '"
+           << InputFilenames[BaseArg] << "'\n";
     return 1;
   }
 
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
     std::auto_ptr<Module> M(LoadFile(InputFilenames[i], Context));
     if (M.get() == 0) {
-      cerr << argv[0] << ": error loading file '" <<InputFilenames[i]<< "'\n";
+      errs() << argv[0] << ": error loading file '" <<InputFilenames[i]<< "'\n";
       return 1;
     }
 
-    if (Verbose) cerr << "Linking in '" << InputFilenames[i] << "'\n";
+    if (Verbose) errs() << "Linking in '" << InputFilenames[i] << "'\n";
 
     if (Linker::LinkModules(Composite.get(), M.get(), &ErrorMessage)) {
-      cerr << argv[0] << ": link error in '" << InputFilenames[i]
-           << "': " << ErrorMessage << "\n";
+      errs() << argv[0] << ": link error in '" << InputFilenames[i]
+             << "': " << ErrorMessage << "\n";
       return 1;
     }
   }
@@ -117,7 +116,7 @@ int main(int argc, char **argv) {
   // TODO: Iterate over the -l list and link in any modules containing
   // global symbols that have not been resolved so far.
 
-  if (DumpAsm) cerr << "Here's the assembly:\n" << *Composite.get();
+  if (DumpAsm) errs() << "Here's the assembly:\n" << *Composite.get();
 
   // FIXME: outs() is not binary!
   raw_ostream *Out = &outs();  // Default to printing to stdout...
@@ -139,11 +138,11 @@ int main(int argc, char **argv) {
   }
 
   if (verifyModule(*Composite.get())) {
-    cerr << argv[0] << ": linked module is broken!\n";
+    errs() << argv[0] << ": linked module is broken!\n";
     return 1;
   }
 
-  if (Verbose) cerr << "Writing bitcode...\n";
+  if (Verbose) errs() << "Writing bitcode...\n";
   WriteBitcodeToFile(Composite.get(), *Out);
 
   if (Out != &outs()) delete Out;

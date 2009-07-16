@@ -25,7 +25,6 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
 #include <memory>
@@ -66,11 +65,11 @@ int main(int argc, char **argv) {
     }
 
     if (M.get() == 0) {
-      cerr << argv[0] << ": ";
+      errs() << argv[0] << ": ";
       if (ErrorMessage.size())
-        cerr << ErrorMessage << "\n";
+        errs() << ErrorMessage << "\n";
       else
-        cerr << "bitcode didn't read correctly.\n";
+        errs() << "bitcode didn't read correctly.\n";
       return 1;
     }
     
@@ -130,9 +129,9 @@ int main(int argc, char **argv) {
       delete Out;
     return 0;
   } catch (const std::string& msg) {
-    cerr << argv[0] << ": " << msg << "\n";
+    errs() << argv[0] << ": " << msg << "\n";
   } catch (...) {
-    cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
+    errs() << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
 
   return 1;

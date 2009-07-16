@@ -37,8 +37,6 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/System/Signals.h"
 #include <map>
-#include <fstream>
-#include <iostream>
 #include <algorithm>
 using namespace llvm;
 

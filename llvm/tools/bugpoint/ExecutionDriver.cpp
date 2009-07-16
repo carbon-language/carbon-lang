@@ -19,7 +19,6 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/SystemUtils.h"
 #include <fstream>
-#include <iostream>
 
 using namespace llvm;
 
@@ -126,7 +125,7 @@ namespace {
 /// environment for executing LLVM programs.
 ///
 bool BugDriver::initializeExecutionEnvironment() {
-  std::cout << "Initializing execution environment: ";
+  outs() << "Initializing execution environment: ";
 
   // Create an instance of the AbstractInterpreter interface as specified on
   // the command line
@@ -188,7 +187,7 @@ bool BugDriver::initializeExecutionEnvironment() {
   if (!Interpreter)
     errs() << Message;
   else // Display informational messages on stdout instead of stderr
-    std::cout << Message;
+    outs() << Message;
 
   std::string Path = SafeInterpreterPath;
   if (Path.empty())
@@ -260,10 +259,10 @@ bool BugDriver::initializeExecutionEnvironment() {
               "\"safe\" backend right now!\n";
     break;
   }
-  if (!SafeInterpreter) { std::cout << Message << "\nExiting.\n"; exit(1); }
+  if (!SafeInterpreter) { outs() << Message << "\nExiting.\n"; exit(1); }
   
   gcc = GCC::create(getToolName(), Message, &GCCToolArgv);
-  if (!gcc) { std::cout << Message << "\nExiting.\n"; exit(1); }
+  if (!gcc) { outs() << Message << "\nExiting.\n"; exit(1); }
 
   // If there was an error creating the selected interpreter, quit with error.
   return Interpreter == 0;
@@ -355,7 +354,7 @@ std::string BugDriver::executeProgram(std::string OutputFile,
     errs() << "<timeout>";
     static bool FirstTimeout = true;
     if (FirstTimeout) {
-      std::cout << "\n"
+      outs() << "\n"
  "*** Program execution timed out!  This mechanism is designed to handle\n"
  "    programs stuck in infinite loops gracefully.  The -timeout option\n"
  "    can be used to change the timeout threshold or disable it completely\n"
@@ -418,7 +417,7 @@ bool BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
   }
   try {
     ReferenceOutputFile = executeProgramSafely(Filename);
-    std::cout << "\nReference output is: " << ReferenceOutputFile << "\n\n";
+    outs() << "\nReference output is: " << ReferenceOutputFile << "\n\n";
   } catch (ToolExecutionError &TEE) {
     errs() << TEE.what();
     if (Interpreter != SafeInterpreter) {

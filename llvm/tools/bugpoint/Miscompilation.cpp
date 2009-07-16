@@ -26,7 +26,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Config/config.h"   // for HAVE_LINK_R
-#include <iostream>
 using namespace llvm;
 
 namespace llvm {
@@ -57,8 +56,8 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
                                  std::vector<const PassInfo*> &Suffix) {
   // First, run the program with just the Suffix passes.  If it is still broken
   // with JUST the kept passes, discard the prefix passes.
-  std::cout << "Checking to see if '" << getPassesString(Suffix)
-            << "' compiles correctly: ";
+  outs() << "Checking to see if '" << getPassesString(Suffix)
+         << "' compiles correctly: ";
 
   std::string BitcodeResult;
   if (BD.runPasses(Suffix, BitcodeResult, false/*delete*/, true/*quiet*/)) {
@@ -71,7 +70,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   
   // Check to see if the finished program matches the reference output...
   if (BD.diffProgram(BitcodeResult, "", true /*delete bitcode*/)) {
-    std::cout << " nope.\n";
+    outs() << " nope.\n";
     if (Suffix.empty()) {
       errs() << BD.getToolName() << ": I'm confused: the test fails when "
              << "no passes are run, nondeterministic program?\n";
@@ -79,14 +78,14 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
     }
     return KeepSuffix;         // Miscompilation detected!
   }
-  std::cout << " yup.\n";      // No miscompilation!
+  outs() << " yup.\n";      // No miscompilation!
 
   if (Prefix.empty()) return NoFailure;
 
   // Next, see if the program is broken if we run the "prefix" passes first,
   // then separately run the "kept" passes.
-  std::cout << "Checking to see if '" << getPassesString(Prefix)
-            << "' compiles correctly: ";
+  outs() << "Checking to see if '" << getPassesString(Prefix)
+         << "' compiles correctly: ";
 
   // If it is not broken with the kept passes, it's possible that the prefix
   // passes must be run before the kept passes to break it.  If the program
@@ -104,11 +103,11 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   // If the prefix maintains the predicate by itself, only keep the prefix!
   if (BD.diffProgram(BitcodeResult)) {
-    std::cout << " nope.\n";
+    outs() << " nope.\n";
     sys::Path(BitcodeResult).eraseFromDisk();
     return KeepPrefix;
   }
-  std::cout << " yup.\n";      // No miscompilation!
+  outs() << " yup.\n";      // No miscompilation!
 
   // Ok, so now we know that the prefix passes work, try running the suffix
   // passes on the result of the prefix passes.
@@ -125,7 +124,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   if (Suffix.empty())
     return NoFailure;
 
-  std::cout << "Checking to see if '" << getPassesString(Suffix)
+  outs() << "Checking to see if '" << getPassesString(Suffix)
             << "' passes compile correctly after the '"
             << getPassesString(Prefix) << "' passes: ";
 
@@ -140,13 +139,13 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   // Run the result...
   if (BD.diffProgram(BitcodeResult, "", true/*delete bitcode*/)) {
-    std::cout << " nope.\n";
+    outs() << " nope.\n";
     delete OriginalInput;     // We pruned down the original input...
     return KeepSuffix;
   }
 
   // Otherwise, we must not be running the bad pass anymore.
-  std::cout << " yup.\n";      // No miscompilation!
+  outs() << " yup.\n";      // No miscompilation!
   delete BD.swapProgramIn(OriginalInput); // Restore orig program & free test
   return NoFailure;
 }
@@ -213,12 +212,12 @@ static bool TestMergedProgram(BugDriver &BD, Module *M1, Module *M2,
 bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
-  std::cout << "Checking to see if the program is misoptimized when "
-            << (Funcs.size()==1 ? "this function is" : "these functions are")
-            << " run through the pass"
-            << (BD.getPassesToRun().size() == 1 ? "" : "es") << ":";
+  outs() << "Checking to see if the program is misoptimized when "
+         << (Funcs.size()==1 ? "this function is" : "these functions are")
+         << " run through the pass"
+         << (BD.getPassesToRun().size() == 1 ? "" : "es") << ":";
   PrintFunctionList(Funcs);
-  std::cout << '\n';
+  outs() << '\n';
 
   // Split the module into the two halves of the program we want.
   DenseMap<const Value*, Value*> ValueMap;
@@ -310,12 +309,12 @@ static bool ExtractLoops(BugDriver &BD,
     delete ToOptimize;
     BD.switchToInterpreter(AI);
 
-    std::cout << "  Testing after loop extraction:\n";
+    outs() << "  Testing after loop extraction:\n";
     // Clone modules, the tester function will free them.
     Module *TOLEBackup = CloneModule(ToOptimizeLoopExtracted);
     Module *TNOBackup  = CloneModule(ToNotOptimize);
     if (!TestFn(BD, ToOptimizeLoopExtracted, ToNotOptimize)) {
-      std::cout << "*** Loop extraction masked the problem.  Undoing.\n";
+      outs() << "*** Loop extraction masked the problem.  Undoing.\n";
       // If the program is not still broken, then loop extraction did something
       // that masked the error.  Stop loop extraction now.
       delete TOLEBackup;
@@ -325,7 +324,7 @@ static bool ExtractLoops(BugDriver &BD,
     ToOptimizeLoopExtracted = TOLEBackup;
     ToNotOptimize = TNOBackup;
 
-    std::cout << "*** Loop extraction successful!\n";
+    outs() << "*** Loop extraction successful!\n";
 
     std::vector<std::pair<std::string, const FunctionType*> > MisCompFunctions;
     for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
@@ -394,16 +393,16 @@ namespace {
 bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs) {
   // Test to see if the function is misoptimized if we ONLY run it on the
   // functions listed in Funcs.
-  std::cout << "Checking to see if the program is misoptimized when all ";
+  outs() << "Checking to see if the program is misoptimized when all ";
   if (!BBs.empty()) {
-    std::cout << "but these " << BBs.size() << " blocks are extracted: ";
+    outs() << "but these " << BBs.size() << " blocks are extracted: ";
     for (unsigned i = 0, e = BBs.size() < 10 ? BBs.size() : 10; i != e; ++i)
-      std::cout << BBs[i]->getName() << " ";
-    if (BBs.size() > 10) std::cout << "...";
+      outs() << BBs[i]->getName() << " ";
+    if (BBs.size() > 10) outs() << "...";
   } else {
-    std::cout << "blocks are extracted.";
+    outs() << "blocks are extracted.";
   }
-  std::cout << '\n';
+  outs() << '\n';
 
   // Split the module into the two halves of the program we want.
   DenseMap<const Value*, Value*> ValueMap;
@@ -526,11 +525,11 @@ DebugAMiscompilation(BugDriver &BD,
   if (!BugpointIsInterrupted)
     ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
 
-  std::cout << "\n*** The following function"
-            << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
-            << " being miscompiled: ";
+  outs() << "\n*** The following function"
+         << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
+         << " being miscompiled: ";
   PrintFunctionList(MiscompiledFunctions);
-  std::cout << '\n';
+  outs() << '\n';
 
   // See if we can rip any loops out of the miscompiled functions and still
   // trigger the problem.
@@ -549,11 +548,11 @@ DebugAMiscompilation(BugDriver &BD,
     if (!BugpointIsInterrupted)
       ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
 
-    std::cout << "\n*** The following function"
-              << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
-              << " being miscompiled: ";
+    outs() << "\n*** The following function"
+           << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
+           << " being miscompiled: ";
     PrintFunctionList(MiscompiledFunctions);
-    std::cout << '\n';
+    outs() << '\n';
   }
 
   if (!BugpointIsInterrupted &&
@@ -569,11 +568,11 @@ DebugAMiscompilation(BugDriver &BD,
     // Do the reduction...
     ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
 
-    std::cout << "\n*** The following function"
-              << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
-              << " being miscompiled: ";
+    outs() << "\n*** The following function"
+           << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
+           << " being miscompiled: ";
     PrintFunctionList(MiscompiledFunctions);
-    std::cout << '\n';
+    outs() << '\n';
   }
 
   return MiscompiledFunctions;
@@ -586,15 +585,15 @@ DebugAMiscompilation(BugDriver &BD,
 static bool TestOptimizer(BugDriver &BD, Module *Test, Module *Safe) {
   // Run the optimization passes on ToOptimize, producing a transformed version
   // of the functions being tested.
-  std::cout << "  Optimizing functions being tested: ";
+  outs() << "  Optimizing functions being tested: ";
   Module *Optimized = BD.runPassesOn(Test, BD.getPassesToRun(),
                                      /*AutoDebugCrashes*/true);
-  std::cout << "done.\n";
+  outs() << "done.\n";
   delete Test;
 
-  std::cout << "  Checking to see if the merged program executes correctly: ";
+  outs() << "  Checking to see if the merged program executes correctly: ";
   bool Broken = TestMergedProgram(BD, Optimized, Safe, true);
-  std::cout << (Broken ? " nope.\n" : " yup.\n");
+  outs() << (Broken ? " nope.\n" : " yup.\n");
   return Broken;
 }
 
@@ -612,28 +611,28 @@ bool BugDriver::debugMiscompilation() {
       return false;
     }
 
-  std::cout << "\n*** Found miscompiling pass"
-            << (getPassesToRun().size() == 1 ? "" : "es") << ": "
-            << getPassesString(getPassesToRun()) << '\n';
+  outs() << "\n*** Found miscompiling pass"
+         << (getPassesToRun().size() == 1 ? "" : "es") << ": "
+         << getPassesString(getPassesToRun()) << '\n';
   EmitProgressBitcode("passinput");
 
   std::vector<Function*> MiscompiledFunctions =
     DebugAMiscompilation(*this, TestOptimizer);
 
   // Output a bunch of bitcode files for the user...
-  std::cout << "Outputting reduced bitcode files which expose the problem:\n";
+  outs() << "Outputting reduced bitcode files which expose the problem:\n";
   DenseMap<const Value*, Value*> ValueMap;
   Module *ToNotOptimize = CloneModule(getProgram(), ValueMap);
   Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
                                                  MiscompiledFunctions,
                                                  ValueMap);
 
-  std::cout << "  Non-optimized portion: ";
+  outs() << "  Non-optimized portion: ";
   ToNotOptimize = swapProgramIn(ToNotOptimize);
   EmitProgressBitcode("tonotoptimize", true);
   setNewProgram(ToNotOptimize);   // Delete hacked module.
 
-  std::cout << "  Portion that is input to optimizer: ";
+  outs() << "  Portion that is input to optimizer: ";
   ToOptimize = swapProgramIn(ToOptimize);
   EmitProgressBitcode("tooptimize");
   setNewProgram(ToOptimize);      // Delete hacked module.
@@ -860,14 +859,14 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
 bool BugDriver::debugCodeGenerator() {
   if ((void*)SafeInterpreter == (void*)Interpreter) {
     std::string Result = executeProgramSafely("bugpoint.safe.out");
-    std::cout << "\n*** The \"safe\" i.e. 'known good' backend cannot match "
-              << "the reference diff.  This may be due to a\n    front-end "
-              << "bug or a bug in the original program, but this can also "
-              << "happen if bugpoint isn't running the program with the "
-              << "right flags or input.\n    I left the result of executing "
-              << "the program with the \"safe\" backend in this file for "
-              << "you: '"
-              << Result << "'.\n";
+    outs() << "\n*** The \"safe\" i.e. 'known good' backend cannot match "
+           << "the reference diff.  This may be due to a\n    front-end "
+           << "bug or a bug in the original program, but this can also "
+           << "happen if bugpoint isn't running the program with the "
+           << "right flags or input.\n    I left the result of executing "
+           << "the program with the \"safe\" backend in this file for "
+           << "you: '"
+           << Result << "'.\n";
     return true;
   }
 
@@ -912,31 +911,31 @@ bool BugDriver::debugCodeGenerator() {
   std::string SharedObject = compileSharedObject(SafeModuleBC.toString());
   delete ToNotCodeGen;
 
-  std::cout << "You can reproduce the problem with the command line: \n";
+  outs() << "You can reproduce the problem with the command line: \n";
   if (isExecutingJIT()) {
-    std::cout << "  lli -load " << SharedObject << " " << TestModuleBC;
+    outs() << "  lli -load " << SharedObject << " " << TestModuleBC;
   } else {
-    std::cout << "  llc -f " << TestModuleBC << " -o " << TestModuleBC<< ".s\n";
-    std::cout << "  gcc " << SharedObject << " " << TestModuleBC
+    outs() << "  llc -f " << TestModuleBC << " -o " << TestModuleBC<< ".s\n";
+    outs() << "  gcc " << SharedObject << " " << TestModuleBC
               << ".s -o " << TestModuleBC << ".exe";
 #if defined (HAVE_LINK_R)
-    std::cout << " -Wl,-R.";
+    outs() << " -Wl,-R.";
 #endif
-    std::cout << "\n";
-    std::cout << "  " << TestModuleBC << ".exe";
+    outs() << "\n";
+    outs() << "  " << TestModuleBC << ".exe";
   }
   for (unsigned i=0, e = InputArgv.size(); i != e; ++i)
-    std::cout << " " << InputArgv[i];
-  std::cout << '\n';
-  std::cout << "The shared object was created with:\n  llc -march=c "
-            << SafeModuleBC << " -o temporary.c\n"
-            << "  gcc -xc temporary.c -O2 -o " << SharedObject
+    outs() << " " << InputArgv[i];
+  outs() << '\n';
+  outs() << "The shared object was created with:\n  llc -march=c "
+         << SafeModuleBC << " -o temporary.c\n"
+         << "  gcc -xc temporary.c -O2 -o " << SharedObject
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
-            << " -G"            // Compile a shared library, `-G' for Sparc
+         << " -G"            // Compile a shared library, `-G' for Sparc
 #else
-            << " -fPIC -shared"       // `-shared' for Linux/X86, maybe others
+         << " -fPIC -shared"       // `-shared' for Linux/X86, maybe others
 #endif
-            << " -fno-strict-aliasing\n";
+         << " -fno-strict-aliasing\n";
 
   return false;
 }
