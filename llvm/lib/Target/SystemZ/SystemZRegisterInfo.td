@@ -399,7 +399,7 @@ def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
   }];
 }
 
-def GR128 : RegisterClass<"SystemZ", [i128, v2i64], 128,
+def GR128 : RegisterClass<"SystemZ", [v2i64], 128,
   [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]>
 {
   let SubRegClassList = [GR32, GR32, GR64, GR64];

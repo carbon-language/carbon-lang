@@ -45,7 +45,6 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   addRegisterClass(MVT::i32,  SystemZ::GR32RegisterClass);
   addRegisterClass(MVT::i64,  SystemZ::GR64RegisterClass);
   addRegisterClass(MVT::v2i32,SystemZ::GR64PRegisterClass);
-  addRegisterClass(MVT::i128, SystemZ::GR128RegisterClass);
   addRegisterClass(MVT::v2i64,SystemZ::GR128RegisterClass);
 
   if (!UseSoftFloat) {
