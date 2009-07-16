@@ -23,6 +23,50 @@ let neverHasSideEffects = 1 in
 def NOP : Pseudo<(outs), (ins), "# no-op", []>;
 
 //===----------------------------------------------------------------------===//
+// Instruction Pattern Stuff.
+//===----------------------------------------------------------------------===//
+def LL16 : SDNodeXForm<imm, [{
+  // Transformation function: return low 16 bits.
+  return getI16Imm(N->getZExtValue() & 0x000000000000FFFFULL);
+}]>;
+
+def LH16 : SDNodeXForm<imm, [{
+  // Transformation function: return bits 16-31.
+  return getI16Imm((N->getZExtValue() & 0x00000000FFFF0000ULL) >> 16);
+}]>;
+
+def HL16 : SDNodeXForm<imm, [{
+  // Transformation function: return bits 32-47.
+  return getI16Imm((N->getZExtValue() & 0x0000FFFF00000000ULL) >> 32);
+}]>;
+
+def HH16 : SDNodeXForm<imm, [{
+  // Transformation function: return bits 48-63.
+  return getI16Imm((N->getZExtValue() & 0xFFFF000000000000ULL) >> 48);
+}]>;
+
+def i64ll16 : PatLeaf<(i64 imm), [{  
+  // i64ll16 predicate - true if the 64-bit immediate has only rightmost 16
+  // bits set.
+  return ((N->getZExtValue() & 0x000000000000FFFFULL) == N->getZExtValue());
+}], LL16>;
+
+def i64lh16 : PatLeaf<(i64 imm), [{  
+  // i64lh16 predicate - true if the 64-bit immediate has only bits 16-31 set.
+  return ((N->getZExtValue() & 0x00000000FFFF0000ULL) == N->getZExtValue());
+}], LH16>;
+
+def i64hl16 : PatLeaf<(i64 imm), [{  
+  // i64hl16 predicate - true if the 64-bit immediate has only bits 32-47 set.
+  return ((N->getZExtValue() & 0x0000FFFF00000000ULL) == N->getZExtValue());
+}], HL16>;
+
+def i64hh16 : PatLeaf<(i64 imm), [{  
+  // i64hh16 predicate - true if the 64-bit immediate has only bits 48-63 set.
+  return ((N->getZExtValue() & 0xFFFF000000000000ULL) == N->getZExtValue());
+}], HH16>;
+
+//===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
 //
 
@@ -75,7 +119,20 @@ def AND64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                      "ngr\t{$dst, $src2}",
                      [(set GR64:$dst, (and GR64:$src1, GR64:$src2))]>;
 }
-// FIXME: provide patterns for masked and-with-imm
+
+// FIXME: Provide proper encoding!
+def AND64rill16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "nill\t{$dst, $src2}",
+                         [(set GR64:$dst, (and GR64:$src1, i64ll16:$src2))]>;
+def AND64rilh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "nilh\t{$dst, $src2}",
+                         [(set GR64:$dst, (and GR64:$src1, i64lh16:$src2))]>;
+def AND64rihl16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "nihl\t{$dst, $src2}",
+                         [(set GR64:$dst, (and GR64:$src1, i64hl16:$src2))]>;
+def AND64rihh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "nihh\t{$dst, $src2}",
+                         [(set GR64:$dst, (and GR64:$src1, i64hh16:$src2))]>;
 
 let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
 // FIXME: Provide proper encoding!
@@ -83,7 +140,18 @@ def OR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                     "ogr\t{$dst, $src2}",
                     [(set GR64:$dst, (or GR64:$src1, GR64:$src2))]>;
 }
-// FIXME: provide patterns for masked or-with-imm
+def OR64rill16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                        "oill\t{$dst, $src2}",
+                        [(set GR64:$dst, (or GR64:$src1, i64ll16:$src2))]>;
+def OR64rilh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                        "oilh\t{$dst, $src2}",
+                        [(set GR64:$dst, (or GR64:$src1, i64lh16:$src2))]>;
+def OR64rihl16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                        "oihl\t{$dst, $src2}",
+                        [(set GR64:$dst, (or GR64:$src1, i64hl16:$src2))]>;
+def OR64rihh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                        "oihh\t{$dst, $src2}",
+                        [(set GR64:$dst, (or GR64:$src1, i64hh16:$src2))]>;
 
 // FIXME: Provide proper encoding!
 def SUB64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
