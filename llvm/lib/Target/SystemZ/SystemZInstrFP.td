@@ -152,10 +152,23 @@ def FCONVFP32r64: Pseudo<(outs FP32:$dst), (ins GR64:$src),
 def FCONVFP64r32: Pseudo<(outs FP64:$dst), (ins GR32:$src),
                          "cdfbr\t{$dst, $src}",
                          [(set FP64:$dst, (sint_to_fp GR32:$src))]>;
-
 def FCONVFP64   : Pseudo<(outs FP64:$dst), (ins GR64:$src),
                          "cdgbr\t{$dst, $src}",
                          [(set FP64:$dst, (sint_to_fp GR64:$src))]>;
+
+def FCONVGR32   : Pseudo<(outs GR32:$dst), (ins FP32:$src),
+                         "cfebr\t{$dst, $src}",
+                         [(set GR32:$dst, (fp_to_sint FP32:$src))]>;
+def FCONVGR32r64: Pseudo<(outs GR32:$dst), (ins FP64:$src),
+                         "cgebr\t{$dst, $src}",
+                         [(set GR32:$dst, (fp_to_sint FP64:$src))]>;
+
+def FCONVGR64r32: Pseudo<(outs GR64:$dst), (ins FP32:$src),
+                         "cfdbr\t{$dst, $src}",
+                         [(set GR64:$dst, (fp_to_sint FP32:$src))]>;
+def FCONVGR64   : Pseudo<(outs GR64:$dst), (ins FP64:$src),
+                         "cgdbr\t{$dst, $src}",
+                         [(set GR64:$dst, (fp_to_sint FP64:$src))]>;
 
 //===----------------------------------------------------------------------===//
 // Test instructions (like AND but do not produce any result)
