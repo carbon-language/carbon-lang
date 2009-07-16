@@ -327,6 +327,9 @@ raw_ostream &outs();
 /// Use it like: errs() << "foo" << "bar";
 raw_ostream &errs();
 
+/// nulls() - This returns a reference to a raw_ostream which simply discards
+/// output.
+raw_ostream &nulls();
 
 //===----------------------------------------------------------------------===//
 // Output Stream Adaptors
@@ -397,6 +400,19 @@ public:
 
   /// tell - Return the current offset with the stream.
   uint64_t tell();
+};
+
+/// raw_null_ostream - A raw_ostream that discards all output.
+class raw_null_ostream : public raw_ostream {
+  /// write_impl - See raw_ostream::write_impl.
+  virtual void write_impl(const char *Ptr, size_t size);
+  
+  /// current_pos - Return the current position within the stream, not
+  /// counting the bytes currently in the buffer.
+  virtual uint64_t current_pos();
+
+public:
+  explicit raw_null_ostream() {}
 };
 
 } // end llvm namespace

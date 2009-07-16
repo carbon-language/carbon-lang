@@ -375,6 +375,12 @@ raw_ostream &llvm::errs() {
   return S;
 }
 
+/// nulls() - This returns a reference to a raw_ostream which discards output.
+raw_ostream &llvm::nulls() {
+  static raw_null_ostream S;
+  return S;
+}
+
 //===----------------------------------------------------------------------===//
 //  raw_os_ostream
 //===----------------------------------------------------------------------===//
@@ -421,4 +427,15 @@ uint64_t raw_svector_ostream::current_pos() { return OS.size(); }
 
 uint64_t raw_svector_ostream::tell() { 
   return OS.size() + GetNumBytesInBuffer(); 
+}
+
+//===----------------------------------------------------------------------===//
+//  raw_null_ostream
+//===----------------------------------------------------------------------===//
+
+void raw_null_ostream::write_impl(const char *Ptr, size_t Size) {
+}
+
+uint64_t raw_null_ostream::current_pos() {
+  return 0;
 }
