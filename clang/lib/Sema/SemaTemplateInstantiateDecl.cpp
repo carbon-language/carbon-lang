@@ -646,6 +646,7 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
           = dyn_cast<FunctionTemplateDecl>((Decl *)ActiveInst.Entity)) {
       assert(FunTmpl->getTemplatedDecl() == Tmpl && 
              "Deduction from the wrong function template?");
+      (void) FunTmpl;
       ActiveInst.Kind = ActiveInstType::TemplateInstantiation;
       ActiveInst.Entity = reinterpret_cast<uintptr_t>(New);
     }
