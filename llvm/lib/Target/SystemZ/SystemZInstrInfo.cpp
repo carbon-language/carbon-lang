@@ -50,10 +50,21 @@ bool SystemZInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
-  if (DestRC == SrcRC) {
+  // Determine if DstRC and SrcRC have a common superclass.
+  const TargetRegisterClass *CommonRC = DestRC;
+  if (DestRC == SrcRC)
+    /* Same regclass for source and dest */;
+  else if (CommonRC->hasSuperClass(SrcRC))
+    CommonRC = SrcRC;
+  else if (!CommonRC->hasSubClass(SrcRC))
+    CommonRC = 0;
+
+  if (CommonRC) {
     unsigned Opc;
-    if (DestRC == &SystemZ::GR64RegClass) {
+    if (CommonRC == &SystemZ::GR64RegClass) {
       Opc = SystemZ::MOV64rr;
+    } else if (CommonRC == &SystemZ::GR32RegClass) {
+      Opc = SystemZ::MOV32rr;
     } else {
       return false;
     }
@@ -74,6 +85,7 @@ SystemZInstrInfo::isMoveInstr(const MachineInstr& MI,
   switch (MI.getOpcode()) {
   default:
     return false;
+  case SystemZ::MOV32rr:
   case SystemZ::MOV64rr:
     assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&

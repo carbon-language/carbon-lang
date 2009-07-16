@@ -135,6 +135,7 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
    // Volatile, but not allocable
    R14D, R15D]>
 {
+  let SubRegClassList = [GR32];
   let MethodProtos = [{
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];

@@ -39,6 +39,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   TargetLowering(tm), Subtarget(*tm.getSubtargetImpl()), TM(tm) {
 
   // Set up the register classes.
+  addRegisterClass(MVT::i32, SystemZ::GR32RegisterClass);
   addRegisterClass(MVT::i64, SystemZ::GR64RegisterClass);
 
   // Compute derived properties from the register classes
@@ -191,12 +192,21 @@ SDValue SystemZTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   // Copy the result values into the output registers.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
     CCValAssign &VA = RVLocs[i];
+    SDValue ResValue = Op.getOperand(i*2+1);
     assert(VA.isRegLoc() && "Can only return in registers!");
+
+    // If this is an 8/16/32-bit value, it is really should be passed promoted
+    // to 64 bits.
+    if (VA.getLocInfo() == CCValAssign::SExt)
+      ResValue = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), ResValue);
+    else if (VA.getLocInfo() == CCValAssign::ZExt)
+      ResValue = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), ResValue);
+    else if (VA.getLocInfo() == CCValAssign::AExt)
+      ResValue = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), ResValue);
 
     // ISD::RET => ret chain, (regnum1,val1), ...
     // So i*2+1 index only the regnums
-    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(),
-                             Op.getOperand(i*2+1), Flag);
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), ResValue, Flag);
 
     // Guarantee that all emitted copies are stuck together,
     // avoiding something bad.

@@ -55,13 +55,13 @@ def HI32 : SDNodeXForm<imm, [{
   return getI32Imm(N->getZExtValue() >> 32);
 }]>;
 
-def i64ll16 : PatLeaf<(i64 imm), [{  
+def i64ll16 : PatLeaf<(imm), [{  
   // i64ll16 predicate - true if the 64-bit immediate has only rightmost 16
   // bits set.
   return ((N->getZExtValue() & 0x000000000000FFFFULL) == N->getZExtValue());
 }], LL16>;
 
-def i64lh16 : PatLeaf<(i64 imm), [{  
+def i64lh16 : PatLeaf<(imm), [{  
   // i64lh16 predicate - true if the 64-bit immediate has only bits 16-31 set.
   return ((N->getZExtValue() & 0x00000000FFFF0000ULL) == N->getZExtValue());
 }], LH16>;
@@ -76,11 +76,18 @@ def i64hh16 : PatLeaf<(i64 imm), [{
   return ((N->getZExtValue() & 0xFFFF000000000000ULL) == N->getZExtValue());
 }], HH16>;
 
-def immSExt16 : PatLeaf<(i64 imm), [{
+def immSExt16 : PatLeaf<(imm), [{
   // immSExt16 predicate - true if the immediate fits in a 16-bit sign extended
   // field.
-  uint64_t val = N->getZExtValue();
-  return ((int64_t)val == (int16_t)val);
+  if (N->getValueType(0) == MVT::i64) {
+    uint64_t val = N->getZExtValue();
+    return ((int64_t)val == (int16_t)val);
+  } else if (N->getValueType(0) == MVT::i32) {
+    uint32_t val = N->getZExtValue();
+    return ((int32_t)val == (int16_t)val);
+  }
+
+  return false;
 }]>;
 
 def immSExt32 : PatLeaf<(i64 imm), [{
@@ -115,13 +122,26 @@ let isReturn = 1, isTerminator = 1 in {
 
 // FIXME: Provide proper encoding!
 let neverHasSideEffects = 1 in {
+def MOV32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src),
+                     "lr\t{$dst, $src}",
+                     []>;
 def MOV64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src),
                      "lgr\t{$dst, $src}",
                      []>;
 }
 
+def MOVSX64rr32 : Pseudo<(outs GR64:$dst), (ins GR32:$src),
+                         "lgfr\t{$dst, $src}",
+                         [(set GR64:$dst, (sext GR32:$src))]>;
+def MOVZX64rr32 : Pseudo<(outs GR64:$dst), (ins GR32:$src),
+                         "llgfr\t{$dst, $src}",
+                         [(set GR64:$dst, (zext GR32:$src))]>;
+
 // FIXME: Provide proper encoding!
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+def MOV32ri16 : Pseudo<(outs GR32:$dst), (ins i32imm:$src),
+                       "lhi\t{$dst, $src}",
+                       [(set GR32:$dst, immSExt16:$src)]>;
 def MOV64ri16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
                        "lghi\t{$dst, $src}",
                        [(set GR64:$dst, immSExt16:$src)]>;
@@ -159,6 +179,10 @@ let Defs = [PSW] in {
 
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
 // FIXME: Provide proper encoding!
+def ADD32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                     "ar\t{$dst, $src2}",
+                     [(set GR32:$dst, (add GR32:$src1, GR32:$src2)),
+                      (implicit PSW)]>;
 def ADD64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                      "agr\t{$dst, $src2}",
                      [(set GR64:$dst, (add GR64:$src1, GR64:$src2)),
@@ -166,6 +190,14 @@ def ADD64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
 }
 
 // FIXME: Provide proper encoding!
+def ADD32ri16 : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                       "ahi\t{$dst, $src2}",
+                       [(set GR32:$dst, (add GR32:$src1, immSExt16:$src2)),
+                        (implicit PSW)]>;
+def ADD32ri   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                       "afi\t{$dst, $src2}",
+                       [(set GR32:$dst, (add GR32:$src1, imm:$src2)),
+                        (implicit PSW)]>;
 def ADD64ri16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                        "aghi\t{$dst, $src2}",
                        [(set GR64:$dst, (add GR64:$src1, immSExt16:$src2)),
@@ -177,6 +209,9 @@ def ADD64ri32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
 
 let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
 // FIXME: Provide proper encoding!
+def AND32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                     "nr\t{$dst, $src2}",
+                     [(set GR32:$dst, (and GR32:$src1, GR32:$src2))]>;
 def AND64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                      "ngr\t{$dst, $src2}",
                      [(set GR64:$dst, (and GR64:$src1, GR64:$src2))]>;
@@ -205,10 +240,23 @@ def AND64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
 
 let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
 // FIXME: Provide proper encoding!
+def OR32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                    "or\t{$dst, $src2}",
+                    [(set GR32:$dst, (or GR32:$src1, GR32:$src2))]>;
 def OR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                     "ogr\t{$dst, $src2}",
                     [(set GR64:$dst, (or GR64:$src1, GR64:$src2))]>;
 }
+
+def OR32ri16  : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i16imm:$src2),
+                      "oill\t{$dst, $src2}",
+                      [(set GR32:$dst, (or GR32:$src1, i64ll16:$src2))]>;
+def OR32ri16h : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i16imm:$src2),
+                      "oilh\t{$dst, $src2}",
+                      [(set GR32:$dst, (or GR32:$src1, i64lh16:$src2))]>;
+def OR32ri : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                    "oilf\t{$dst, $src2}",
+                    [(set GR32:$dst, (or GR32:$src1, imm:$src2))]>;
 
 def OR64rill16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                         "oill\t{$dst, $src2}",
@@ -231,6 +279,9 @@ def OR64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                         [(set GR64:$dst, (or GR64:$src1, i64hi32:$src2))]>;
 
 // FIXME: Provide proper encoding!
+def SUB32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                     "sr\t{$dst, $src2}",
+                     [(set GR32:$dst, (sub GR32:$src1, GR32:$src2))]>;
 def SUB64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                      "sgr\t{$dst, $src2}",
                      [(set GR64:$dst, (sub GR64:$src1, GR64:$src2))]>;
@@ -238,10 +289,17 @@ def SUB64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
 
 let isCommutable = 1 in { // X = XOR Y, Z  == X = XOR Z, Y
 // FIXME: Provide proper encoding!
+def XOR32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                     "xr\t{$dst, $src2}",
+                     [(set GR32:$dst, (xor GR32:$src1, GR32:$src2))]>;
 def XOR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                      "xgr\t{$dst, $src2}",
                      [(set GR64:$dst, (xor GR64:$src1, GR64:$src2))]>;
 }
+
+def XOR32ri : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                     "xilf\t{$dst, $src2}",
+                     [(set GR32:$dst, (xor GR32:$src1, imm:$src2))]>;
 
 // FIXME: these 2 instructions seem to require extimm facility
 def XOR64rilo32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
@@ -253,3 +311,25 @@ def XOR64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
 
 } // Defs = [PSW]
 } // isTwoAddress = 1
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns.
+//===----------------------------------------------------------------------===//
+
+// anyext
+def : Pat<(i64 (anyext GR32:$src)),
+          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_32bit)>;
+
+//===----------------------------------------------------------------------===//
+// Peepholes.
+//===----------------------------------------------------------------------===//
+
+// FIXME: use add/sub tricks with 32678/-32768
+
+// trunc patterns
+def : Pat<(i32 (trunc GR64:$src)),
+          (EXTRACT_SUBREG GR64:$src, subreg_32bit)>;
+
+// sext_inreg patterns
+def : Pat<(sext_inreg GR64:$src, i32),
+          (MOVSX64rr32 (EXTRACT_SUBREG GR64:$src, subreg_32bit))>;

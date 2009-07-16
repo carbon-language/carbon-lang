@@ -13,6 +13,9 @@
 // SystemZ Return Value Calling Convention
 //===----------------------------------------------------------------------===//
 def RetCC_SystemZ : CallingConv<[
+  // Promote i8/i16/i32 arguments to i64.
+  CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
+
   // i64 is returned in register R2
   CCIfType<[i64], CCAssignToReg<[R2D]>>
 ]>;
