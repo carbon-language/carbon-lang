@@ -82,6 +82,9 @@ namespace llvm {
     AsmPrinterCtorTy AsmPrinterCtorFn;
 
   public:
+    // getNext - Return the next registered target.
+    const Target *getNext() const { return Next; }
+
     /// getName - Get the target name.
     const char *getName() const { return Name; }
 
@@ -138,7 +141,7 @@ namespace llvm {
       // Iterator traversal: forward iteration only
       iterator &operator++() {          // Preincrement
         assert(Current && "Cannot increment end iterator!");
-        Current = Current->Next;
+        Current = Current->getNext();
         return *this;
       }
       iterator operator++(int) {        // Postincrement
