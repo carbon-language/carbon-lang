@@ -1157,11 +1157,6 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   if (DisableReMat)
     return false;
 
-  // FIXME: For now, avoid remating instructions whose definition has a subreg
-  // index. It's just incredibly difficult to get right.
-  if (MI->findRegisterDefOperand(li.reg)->getSubReg())
-    return false;
-
   if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
     return true;
 

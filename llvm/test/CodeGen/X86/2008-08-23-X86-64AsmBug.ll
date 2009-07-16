@@ -1,9 +1,6 @@
+; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movd | count 1
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movq
 ; PR2677
-
-; FIXME: llvm-as < %s | llc -mtriple=x86_64-apple-darwin | grep movd | count 1
-; We now no longer allow instruction whose def has a sub-reg index to be
-; rematerialized.
 
 
 	%struct.Bigint = type { %struct.Bigint*, i32, i32, i32, i32, [1 x i32] }

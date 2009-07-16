@@ -490,7 +490,14 @@ static void ReMaterialize(MachineBasicBlock &MBB,
                           const TargetInstrInfo *TII,
                           const TargetRegisterInfo *TRI,
                           VirtRegMap &VRM) {
-  TII->reMaterialize(MBB, MII, DestReg, 0, VRM.getReMaterializedMI(Reg));
+  MachineInstr *ReMatDefMI = VRM.getReMaterializedMI(Reg);
+#ifdef NDEBUG
+  const TargetInstrDesc &TID = ReMatDefMI->getDesc();
+  assert(TID.getNumDefs() != 1 &&
+         "Don't know how to remat instructions that define > 1 values!");
+#endif
+  TII->reMaterialize(MBB, MII, DestReg,
+                     ReMatDefMI->getOperand(0).getSubReg(), ReMatDefMI);
   MachineInstr *NewMI = prior(MII);
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);
