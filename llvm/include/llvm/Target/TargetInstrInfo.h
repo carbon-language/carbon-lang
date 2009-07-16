@@ -151,7 +151,7 @@ public:
   /// specific location targeting a new destination register.
   virtual void reMaterialize(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MI,
-                             unsigned DestReg,
+                             unsigned DestReg, unsigned SubIdx,
                              const MachineInstr *Orig) const = 0;
 
   /// isInvariantLoad - Return true if the specified instruction (which is
@@ -499,7 +499,7 @@ public:
                             const SmallVectorImpl<MachineOperand> &Pred) const;
   virtual void reMaterialize(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MI,
-                             unsigned DestReg,
+                             unsigned DestReg, unsigned SubReg,
                              const MachineInstr *Orig) const;
   virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const;
 };

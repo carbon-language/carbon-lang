@@ -867,7 +867,7 @@ void PreAllocSplitting::RenumberValno(VNInfo* VN) {
   NumRenumbers++;
 }
 
-bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
+bool PreAllocSplitting::Rematerialize(unsigned VReg, VNInfo* ValNo,
                                       MachineInstr* DefMI,
                                       MachineBasicBlock::iterator RestorePt,
                                       unsigned RestoreIdx,
@@ -884,7 +884,7 @@ bool PreAllocSplitting::Rematerialize(unsigned vreg, VNInfo* ValNo,
   if (KillPt == DefMI->getParent()->end())
     return false;
   
-  TII->reMaterialize(MBB, RestorePt, vreg, DefMI);
+  TII->reMaterialize(MBB, RestorePt, VReg, 0, DefMI);
   LIs->InsertMachineInstrInMaps(prior(RestorePt), RestoreIdx);
   
   ReconstructLiveInterval(CurrLI);

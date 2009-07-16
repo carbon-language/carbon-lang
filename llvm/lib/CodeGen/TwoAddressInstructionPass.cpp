@@ -798,6 +798,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           //     a = a op c
           unsigned regA = mi->getOperand(ti).getReg();
           unsigned regB = mi->getOperand(si).getReg();
+          unsigned regASubIdx = mi->getOperand(ti).getSubReg();
 
           assert(TargetRegisterInfo::isVirtualRegister(regB) &&
                  "cannot update physical register live information");
@@ -946,7 +947,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               DefMI->isSafeToReMat(TII, regB) &&
               isProfitableToReMat(regB, rc, mi, DefMI, mbbi, Dist)){
             DEBUG(cerr << "2addr: REMATTING : " << *DefMI << "\n");
-            TII->reMaterialize(*mbbi, mi, regA, DefMI);
+            TII->reMaterialize(*mbbi, mi, regA, regASubIdx, DefMI);
             ReMatRegs.set(regB);
             ++NumReMats;
           } else {

@@ -46,7 +46,8 @@ Thumb2RegisterInfo::Thumb2RegisterInfo(const ARMBaseInstrInfo &tii,
 void Thumb2RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator &MBBI,
                                            DebugLoc dl,
-                                           unsigned DestReg, int Val,
+                                           unsigned DestReg, unsigned SubIdx,
+                                           int Val,
                                            ARMCC::CondCodes Pred,
                                            unsigned PredReg) const {
   MachineFunction &MF = *MBB.getParent();
@@ -55,7 +56,8 @@ void Thumb2RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
              MF.getFunction()->getContext()->getConstantInt(Type::Int32Ty, Val);
   unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
 
-  BuildMI(MBB, MBBI, dl, TII.get(ARM::t2LDRpci), DestReg)
+  BuildMI(MBB, MBBI, dl, TII.get(ARM::t2LDRpci))
+    .addReg(DestReg, getDefRegState(true), SubIdx)
     .addConstantPoolIndex(Idx).addImm((int64_t)ARMCC::AL).addReg(0);
 }
 

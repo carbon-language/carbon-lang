@@ -490,7 +490,7 @@ static void ReMaterialize(MachineBasicBlock &MBB,
                           const TargetInstrInfo *TII,
                           const TargetRegisterInfo *TRI,
                           VirtRegMap &VRM) {
-  TII->reMaterialize(MBB, MII, DestReg, VRM.getReMaterializedMI(Reg));
+  TII->reMaterialize(MBB, MII, DestReg, 0, VRM.getReMaterializedMI(Reg));
   MachineInstr *NewMI = prior(MII);
   for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);

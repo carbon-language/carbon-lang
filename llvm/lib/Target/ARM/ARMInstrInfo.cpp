@@ -117,12 +117,12 @@ BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
 void ARMInstrInfo::
 reMaterialize(MachineBasicBlock &MBB,
               MachineBasicBlock::iterator I,
-              unsigned DestReg,
+              unsigned DestReg, unsigned SubIdx,
               const MachineInstr *Orig) const {
   DebugLoc dl = Orig->getDebugLoc();
   if (Orig->getOpcode() == ARM::MOVi2pieces) {
     RI.emitLoadConstPool(MBB, I, dl,
-                         DestReg,
+                         DestReg, SubIdx,
                          Orig->getOperand(1).getImm(),
                          (ARMCC::CondCodes)Orig->getOperand(2).getImm(),
                          Orig->getOperand(3).getReg());

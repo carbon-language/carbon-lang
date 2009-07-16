@@ -206,7 +206,7 @@ namespace llvm {
     /// ReMaterializeTrivialDef - If the source of a copy is defined by a trivial
     /// computation, replace the copy by rematerialize the definition.
     bool ReMaterializeTrivialDef(LiveInterval &SrcInt, unsigned DstReg,
-                                 MachineInstr *CopyMI);
+                                 unsigned DstSubIdx, MachineInstr *CopyMI);
 
     /// TurnCopyIntoImpDef - If source of the specified copy is an implicit def,
     /// turn the copy into an implicit def.

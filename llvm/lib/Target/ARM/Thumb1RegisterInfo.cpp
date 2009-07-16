@@ -62,7 +62,8 @@ const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
 void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator &MBBI,
                                            DebugLoc dl,
-                                           unsigned DestReg, int Val,
+                                           unsigned DestReg, unsigned SubIdx,
+                                           int Val,
                                            ARMCC::CondCodes Pred,
                                            unsigned PredReg) const {
   MachineFunction &MF = *MBB.getParent();
@@ -71,8 +72,9 @@ void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
              MF.getFunction()->getContext()->getConstantInt(Type::Int32Ty, Val);
   unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
 
-  BuildMI(MBB, MBBI, dl, TII.get(ARM::tLDRcp), DestReg)
-    .addConstantPoolIndex(Idx).addImm(Pred).addReg(PredReg);
+  BuildMI(MBB, MBBI, dl, TII.get(ARM::tLDRcp))
+          .addReg(DestReg, getDefRegState(true), SubIdx)
+          .addConstantPoolIndex(Idx).addImm(Pred).addReg(PredReg);
 }
 
 const TargetRegisterClass*
@@ -149,7 +151,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
       AddDefaultCC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tRSB), LdReg))
         .addReg(LdReg, RegState::Kill);
     } else
-      MRI.emitLoadConstPool(MBB, MBBI, dl, LdReg, NumBytes);
+      MRI.emitLoadConstPool(MBB, MBBI, dl, LdReg, 0, NumBytes);
 
     // Emit add / sub.
     int Opc = (isSub) ? ARM::tSUBrr : (isHigh ? ARM::tADDhirr : ARM::tADDrr);
@@ -570,7 +572,7 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,
                                  Offset, false, TII, *this, dl);
       else {
-        emitLoadConstPool(MBB, II, dl, TmpReg, Offset);
+        emitLoadConstPool(MBB, II, dl, TmpReg, 0, Offset);
         UseRR = true;
       }
     } else {
@@ -610,7 +612,7 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         emitThumbRegPlusImmInReg(MBB, II, TmpReg, FrameReg,
                                  Offset, false, TII, *this, dl);
       else {
-        emitLoadConstPool(MBB, II, dl, TmpReg, Offset);
+        emitLoadConstPool(MBB, II, dl, TmpReg, 0, Offset);
         UseRR = true;
       }
     } else

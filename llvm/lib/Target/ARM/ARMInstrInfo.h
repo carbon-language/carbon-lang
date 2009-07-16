@@ -45,7 +45,8 @@ public:
   const ARMRegisterInfo &getRegisterInfo() const { return RI; }
 
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
-                     unsigned DestReg, const MachineInstr *Orig) const;
+                     unsigned DestReg, unsigned SubIdx,
+                     const MachineInstr *Orig) const;
 };
 
 }

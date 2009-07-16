@@ -590,6 +590,7 @@ SimpleRegisterCoalescing::TrimLiveIntervalToLastUse(unsigned CopyIdx,
 /// computation, replace the copy by rematerialize the definition.
 bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
                                                        unsigned DstReg,
+                                                       unsigned DstSubIdx,
                                                        MachineInstr *CopyMI) {
   unsigned CopyIdx = li_->getUseIndex(li_->getInstructionIndex(CopyMI));
   LiveInterval::iterator SrcLR = SrcInt.FindLiveRangeContaining(CopyIdx);
@@ -647,7 +648,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     }
 
   MachineBasicBlock::iterator MII = next(MachineBasicBlock::iterator(CopyMI));
-  tii_->reMaterialize(*MBB, MII, DstReg, DefMI);
+  tii_->reMaterialize(*MBB, MII, DstReg, DstSubIdx, DefMI);
   MachineInstr *NewMI = prior(MII);
 
   if (checkForDeadDef) {
@@ -738,7 +739,8 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
           CopySrcReg == SrcReg && CopyDstReg != UseDstReg) {
         // If the use is a copy and it won't be coalesced away, and its source
         // is defined by a trivial computation, try to rematerialize it instead.
-        if (ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg,UseMI))
+        if (ReMaterializeTrivialDef(li_->getInterval(SrcReg), CopyDstReg,
+                                    CopyDstSubIdx, UseMI))
           continue;
       }
 
@@ -950,10 +952,9 @@ SimpleRegisterCoalescing::ShortenDeadCopySrcLiveRange(LiveInterval &li,
   if (LR->valno->def == RemoveStart) {
     // If the def MI defines the val# and this copy is the only kill of the
     // val#, then propagate the dead marker.
-    if (li.isOnlyLROfValNo(LR)) {
-      PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
-      ++numDeadValNo;
-    }
+    PropagateDeadness(li, CopyMI, RemoveStart, li_, tri_);
+    ++numDeadValNo;
+
     if (li.isKill(LR->valno, RemoveEnd))
       li.removeKill(LR->valno, RemoveEnd);
   }
@@ -1679,7 +1680,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     // If definition of source is defined by trivial computation, try
     // rematerializing it.
     if (!isExtSubReg && !isInsSubReg && !isSubRegToReg &&
-        ReMaterializeTrivialDef(SrcInt, DstInt.reg, CopyMI))
+        ReMaterializeTrivialDef(SrcInt, DstReg, DstSubIdx, CopyMI))
       return true;
     
     // If we can eliminate the copy without merging the live ranges, do so now.

@@ -916,14 +916,11 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
 
 void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator I,
-                                 unsigned DestReg,
+                                 unsigned DestReg, unsigned SubIdx,
                                  const MachineInstr *Orig) const {
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
-  unsigned SubIdx = Orig->getOperand(0).isReg()
-    ? Orig->getOperand(0).getSubReg() : 0;
-  bool ChangeSubIdx = SubIdx != 0;
   if (SubIdx && TargetRegisterInfo::isPhysicalRegister(DestReg)) {
     DestReg = RI.getSubReg(DestReg, SubIdx);
     SubIdx = 0;
@@ -931,37 +928,36 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
 
   // MOV32r0 etc. are implemented with xor which clobbers condition code.
   // Re-materialize them as movri instructions to avoid side effects.
-  bool Emitted = false;
-  switch (Orig->getOpcode()) {
+  bool Clone = true;
+  unsigned Opc = Orig->getOpcode();
+  switch (Opc) {
   default: break;
   case X86::MOV8r0:
   case X86::MOV16r0:
   case X86::MOV32r0: {
     if (!isSafeToClobberEFLAGS(MBB, I)) {
-      unsigned Opc = 0;
-      switch (Orig->getOpcode()) {
+      switch (Opc) {
       default: break;
       case X86::MOV8r0:  Opc = X86::MOV8ri;  break;
       case X86::MOV16r0: Opc = X86::MOV16ri; break;
       case X86::MOV32r0: Opc = X86::MOV32ri; break;
       }
-      BuildMI(MBB, I, DL, get(Opc), DestReg).addImm(0);
-      Emitted = true;
+      Clone = false;
     }
     break;
   }
   }
 
-  if (!Emitted) {
+  if (Clone) {
     MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
     MI->getOperand(0).setReg(DestReg);
     MBB.insert(I, MI);
+  } else {
+    BuildMI(MBB, I, DL, get(Opc), DestReg).addImm(0);
   }
 
-  if (ChangeSubIdx) {
-    MachineInstr *NewMI = prior(I);
-    NewMI->getOperand(0).setSubReg(SubIdx);
-  }
+  MachineInstr *NewMI = prior(I);
+  NewMI->getOperand(0).setSubReg(SubIdx);
 }
 
 /// isInvariantLoad - Return true if the specified instruction (which is marked

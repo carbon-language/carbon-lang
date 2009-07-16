@@ -130,9 +130,12 @@ bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
 void TargetInstrInfoImpl::reMaterialize(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator I,
                                         unsigned DestReg,
+                                        unsigned SubIdx,
                                         const MachineInstr *Orig) const {
   MachineInstr *MI = MBB.getParent()->CloneMachineInstr(Orig);
-  MI->getOperand(0).setReg(DestReg);
+  MachineOperand &MO = MI->getOperand(0);
+  MO.setReg(DestReg);
+  MO.setSubReg(SubIdx);
   MBB.insert(I, MI);
 }
 

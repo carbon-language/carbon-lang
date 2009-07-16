@@ -1157,6 +1157,11 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   if (DisableReMat)
     return false;
 
+  // FIXME: For now, avoid remating instructions whose definition has a subreg
+  // index. It's just incredibly difficult to get right.
+  if (MI->findRegisterDefOperand(li.reg)->getSubReg())
+    return false;
+
   if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
     return true;
 
@@ -1595,7 +1600,7 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
             
     if (CreatedNewVReg) {
       if (DefIsReMat) {
-        vrm.setVirtIsReMaterialized(NewVReg, ReMatDefMI/*, CanDelete*/);
+        vrm.setVirtIsReMaterialized(NewVReg, ReMatDefMI);
         if (ReMatIds[VNI->id] == VirtRegMap::MAX_STACK_SLOT) {
           // Each valnum may have its own remat id.
           ReMatIds[VNI->id] = vrm.assignVirtReMatId(NewVReg);
