@@ -2126,7 +2126,7 @@ InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
-  llvm::LLVMContext Context;
+  llvm::LLVMContext &Context = llvm::getGlobalContext();
   llvm::cl::ParseCommandLineOptions(argc, argv,
                               "LLVM 'Clang' Compiler: http://clang.llvm.org\n");
   
