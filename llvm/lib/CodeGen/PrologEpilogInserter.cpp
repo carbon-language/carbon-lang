@@ -59,14 +59,16 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   if (MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>())
     Fn.getFrameInfo()->setMachineModuleInfo(MMI);
 
+  // Calculate the MaxCallFrameSize and HasCalls variables for the function's
+  // frame information. Also eliminates call frame pseudo instructions.
+  calculateCallsInformation(Fn);
+
   // Allow the target machine to make some adjustments to the function
   // e.g. UsedPhysRegs before calculateCalleeSavedRegisters.
   TRI->processFunctionBeforeCalleeSavedScan(Fn, RS);
 
-  // Scan the function for modified callee saved registers and insert spill
-  // code for any callee saved registers that are modified.  Also calculate
-  // the MaxCallFrameSize and HasCalls variables for the function's frame
-  // information and eliminates call frame pseudo instructions.
+  // Scan the function for modified callee saved registers and insert spill code
+  // for any callee saved registers that are modified.
   calculateCalleeSavedRegisters(Fn);
 
   // Determine placement of CSR spill/restore code:
@@ -117,34 +119,23 @@ void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 #endif
 
-/// calculateCalleeSavedRegisters - Scan the function for modified callee saved
-/// registers.  Also calculate the MaxCallFrameSize and HasCalls variables for
-/// the function's frame information and eliminates call frame pseudo
-/// instructions.
-///
-void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
+/// calculateCallsInformation - Calculate the MaxCallFrameSize and HasCalls
+/// variables for the function's frame information and eliminate call frame
+/// pseudo instructions.
+void PEI::calculateCallsInformation(MachineFunction &Fn) {
   const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
-  const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
 
-  // Get the callee saved register list...
-  const unsigned *CSRegs = RegInfo->getCalleeSavedRegs(&Fn);
+  unsigned MaxCallFrameSize = 0;
+  bool HasCalls = false;
 
   // Get the function call frame set-up and tear-down instruction opcode
   int FrameSetupOpcode   = RegInfo->getCallFrameSetupOpcode();
   int FrameDestroyOpcode = RegInfo->getCallFrameDestroyOpcode();
 
-  // These are used to keep track the callee-save area. Initialize them.
-  MinCSFrameIndex = INT_MAX;
-  MaxCSFrameIndex = 0;
-
-  // Early exit for targets which have no callee saved registers and no call
-  // frame setup/destroy pseudo instructions.
-  if ((CSRegs == 0 || CSRegs[0] == 0) &&
-      FrameSetupOpcode == -1 && FrameDestroyOpcode == -1)
+  // Early exit for targets which have no call frame setup/destroy pseudo
+  // instructions.
+  if (FrameSetupOpcode == -1 && FrameDestroyOpcode == -1)
     return;
-
-  unsigned MaxCallFrameSize = 0;
-  bool HasCalls = false;
 
   std::vector<MachineBasicBlock::iterator> FrameSDOps;
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB)
@@ -173,8 +164,28 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     if (RegInfo->hasReservedCallFrame(Fn) || RegInfo->hasFP(Fn))
       RegInfo->eliminateCallFramePseudoInstr(Fn, *I->getParent(), I);
   }
+}
 
-  // Now figure out which *callee saved* registers are modified by the current
+
+/// calculateCalleeSavedRegisters - Scan the function for modified callee saved
+/// registers.
+void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
+  const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
+  const TargetFrameInfo *TFI = Fn.getTarget().getFrameInfo();
+  MachineFrameInfo *FFI = Fn.getFrameInfo();
+
+  // Get the callee saved register list...
+  const unsigned *CSRegs = RegInfo->getCalleeSavedRegs(&Fn);
+
+  // These are used to keep track the callee-save area. Initialize them.
+  MinCSFrameIndex = INT_MAX;
+  MaxCSFrameIndex = 0;
+
+  // Early exit for targets which have no callee saved registers.
+  if (CSRegs == 0 || CSRegs[0] == 0)
+    return;
+
+  // Figure out which *callee saved* registers are modified by the current
   // function, thus needing to be saved and restored in the prolog/epilog.
   const TargetRegisterClass * const *CSRegClasses =
     RegInfo->getCalleeSavedRegClasses(&Fn);

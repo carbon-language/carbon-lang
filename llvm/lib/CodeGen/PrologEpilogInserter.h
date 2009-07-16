@@ -118,6 +118,7 @@ namespace llvm {
                                CSRegBlockMap &prevRestores);
     void placeSpillsAndRestores(MachineFunction &Fn);
     void placeCSRSpillsAndRestores(MachineFunction &Fn);
+    void calculateCallsInformation(MachineFunction &Fn);
     void calculateCalleeSavedRegisters(MachineFunction &Fn);
     void insertCSRSpillsAndRestores(MachineFunction &Fn);
     void calculateFrameObjectOffsets(MachineFunction &Fn);
