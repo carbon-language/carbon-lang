@@ -4603,6 +4603,12 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *Op, SourceLocation OpLoc,
                                    Op->getSourceRange(), SourceRange(),
                                    ResType))
       return QualType();
+    // Diagnose bad cases where we step over interface counts.
+    else if (PointeeTy->isObjCInterfaceType() && LangOpts.ObjCNonFragileABI) {
+      Diag(OpLoc, diag::err_arithmetic_nonfragile_interface)
+        << PointeeTy << Op->getSourceRange();
+      return QualType();
+    }
   } else if (ResType->isComplexType()) {
     // C99 does not support ++/-- on complex types, we allow as an extension.
     Diag(OpLoc, diag::ext_integer_increment_complex)

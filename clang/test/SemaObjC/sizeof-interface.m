@@ -77,3 +77,14 @@ int bar(I0 *P) {
 }
 @end
 
+
+@interface Foo @end
+
+int foo()
+{
+  Foo *f;
+  
+  // Both of these crash clang nicely
+  ++f; 	// expected-error {{arithmetic on pointer to interface 'Foo', which is not a constant size in non-fragile ABI}}
+  --f; 	// expected-error {{arithmetic on pointer to interface 'Foo', which is not a constant size in non-fragile ABI}}
+}
