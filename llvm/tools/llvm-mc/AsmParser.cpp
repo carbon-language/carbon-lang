@@ -1107,7 +1107,7 @@ bool AsmParser::ParseDirectiveDarwinSubsectionsViaSymbols() {
   
   Lexer.Lex();
 
-  Out.SubsectionsViaSymbols();
+  Out.EmitAssemblerFlag(MCStreamer::SubsectionsViaSymbols);
 
   return false;
 }

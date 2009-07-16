@@ -38,7 +38,7 @@ namespace {
 
     virtual void EmitLabel(MCSymbol *Symbol);
 
-    virtual void SubsectionsViaSymbols(void);
+    virtual void EmitAssemblerFlag(AssemblerFlag Flag);
 
     virtual void EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
                                 bool MakeAbsolute = false);
@@ -129,8 +129,11 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   Symbol->setExternal(false);
 }
 
-void MCAsmStreamer::SubsectionsViaSymbols(void) {
-  OS << ".subsections_via_symbols\n";
+void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
+  switch (Flag) {
+  case SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
+  }
+  OS << '\n';
 }
 
 void MCAsmStreamer::AbortAssembly(const char *AbortReason) {
