@@ -77,6 +77,12 @@ def OR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
 }
 // FIXME: provide patterns for masked or-with-imm
 
+// FIXME: Provide proper encoding!
+def SUB64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                     "sgr\t{$dst, $src2}",
+                     [(set GR64:$dst, (sub GR64:$src1, GR64:$src2))]>;
+
+
 let isCommutable = 1 in { // X = XOR Y, Z  == X = XOR Z, Y
 // FIXME: Provide proper encoding!
 def XOR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
