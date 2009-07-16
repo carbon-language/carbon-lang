@@ -1,12 +1,11 @@
+; RUN: llvm-as < %s | llc | grep lay | count 1
 
+target datalayout = "E-p:64:64:64-i1:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128"
+target triple = "s390x-unknown-linux-gnu"
 
-	.text
-	.align	4
-	.globl	foo
-	.type	foo,@function
-foo:
-.BB1_0:	# entry
-	sllg	%r1, %r3, 3
-	lay	%r2, 8(%r1,%r2)
-	br	%r14
-	.size	foo, .-foo
+define i64* @foo(i64* %a, i64 %idx) nounwind readnone {
+entry:
+	%add.ptr.sum = add i64 %idx, 1		; <i64> [#uses=1]
+	%add.ptr2 = getelementptr i64* %a, i64 %add.ptr.sum		; <i64*> [#uses=1]
+	ret i64* %add.ptr2
+}
