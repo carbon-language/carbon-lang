@@ -149,7 +149,8 @@ SystemZRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       /* FIXME: function calls eh_return */)
     MF.getRegInfo().setPhysRegUsed(SystemZ::R14D);
 
-  if (FFI->getObjectIndexEnd() != 0 || // Contains automatic variables
+  if (FFI->hasCalls() ||
+      FFI->getObjectIndexEnd() != 0 || // Contains automatic variables
       FFI->hasVarSizedObjects() // Function calls dynamic alloca's
       /* FIXME: function is varargs */)
     MF.getRegInfo().setPhysRegUsed(SystemZ::R15D);
