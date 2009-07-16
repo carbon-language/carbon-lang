@@ -645,7 +645,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
       default: assert(0 && "Unsupported VT!");
       case MVT::i32:
         Opc = SystemZ::SDIVREM32r; MOpc = SystemZ::SDIVREM32m;
-        ClrOpc = SystemZ::MOV32ri16;
+        ClrOpc = SystemZ::MOV64Pr0_even;
         ResVT = MVT::v2i32;
         break;
       case MVT::i64:
@@ -669,15 +669,8 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
                             CurDAG->getTargetConstant(subreg_odd, MVT::i32));
 
     // Zero out even subreg, if needed
-    if (ClrOpc) {
-      SDNode * ZeroHi = CurDAG->getTargetNode(SystemZ::MOV32ri16, dl, NVT,
-                                        CurDAG->getTargetConstant(0, MVT::i32));
-      Dividend =
-        CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
-                              SDValue(Dividend, 0),
-                              SDValue(ZeroHi, 0),
-                              CurDAG->getTargetConstant(subreg_even, MVT::i32));
-    }
+    if (ClrOpc)
+      Dividend = CurDAG->getTargetNode(ClrOpc, dl, ResVT, SDValue(Dividend, 0));
 
     SDNode *Result;
     SDValue DivVal = SDValue(Dividend, 0);
@@ -736,12 +729,12 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
       default: assert(0 && "Unsupported VT!");
       case MVT::i32:
         Opc = SystemZ::UDIVREM32r; MOpc = SystemZ::UDIVREM32m;
-        ClrOpc = SystemZ::MOV32ri16;
+        ClrOpc = SystemZ::MOV64Pr0_even;
         ResVT = MVT::v2i32;
         break;
       case MVT::i64:
         Opc = SystemZ::UDIVREM64r; MOpc = SystemZ::UDIVREM64m;
-        ClrOpc = SystemZ::MOV64ri16;
+        ClrOpc = SystemZ::MOV128r0_even;
         ResVT = MVT::v2i64;
         break;
     }
@@ -760,15 +753,8 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
                             SDValue(Tmp, 0), SDValue(Dividend, 0),
                             CurDAG->getTargetConstant(subreg_odd, MVT::i32));
 
-    // Zero out even subreg, if needed
-    SDNode * ZeroHi = CurDAG->getTargetNode(ClrOpc, dl, NVT,
-                                            CurDAG->getTargetConstant(0,
-                                                                      MVT::i32));
-    Dividend =
-      CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
-                            SDValue(Dividend, 0),
-                            SDValue(ZeroHi, 0),
-                            CurDAG->getTargetConstant(subreg_even, MVT::i32));
+    // Zero out even subreg
+    Dividend = CurDAG->getTargetNode(ClrOpc, dl, ResVT, SDValue(Dividend, 0));
 
     SDValue DivVal = SDValue(Dividend, 0);
     SDNode *Result;

@@ -370,6 +370,14 @@ def MOV64rmm  : Pseudo<(outs GR64:$from, GR64:$to), (ins riaddr:$dst),
                        "lmg\t{$from, $to, $dst}",
                        []>;
 
+let isReMaterializable = 1, isAsCheapAsAMove = 1, isTwoAddress = 1 in {
+def MOV64Pr0_even : Pseudo<(outs GR64P:$dst), (ins GR64P:$src),
+                           "lhi\t${dst:subreg_even}, 0",
+                           []>;
+def MOV128r0_even : Pseudo<(outs GR128:$dst), (ins GR128:$src),
+                           "lghi\t${dst:subreg_even}, 0",
+                           []>;
+}
 
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
