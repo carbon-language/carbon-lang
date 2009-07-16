@@ -210,15 +210,16 @@ SDValue SystemZTargetLowering::LowerCCCArguments(SDValue Op,
 
   SmallVector<SDValue, 16> ArgValues;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    SDValue ArgValue;
     CCValAssign &VA = ArgLocs[i];
+    MVT LocVT = VA.getLocVT();
     if (VA.isRegLoc()) {
       // Arguments passed in registers
-      MVT RegVT = VA.getLocVT();
       TargetRegisterClass *RC;
-      switch (RegVT.getSimpleVT()) {
+      switch (LocVT.getSimpleVT()) {
       default:
         cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-             << RegVT.getSimpleVT()
+             << LocVT.getSimpleVT()
              << "\n";
         abort();
        case MVT::i64:
@@ -234,37 +235,37 @@ SDValue SystemZTargetLowering::LowerCCCArguments(SDValue Op,
 
       unsigned VReg = RegInfo.createVirtualRegister(RC);
       RegInfo.addLiveIn(VA.getLocReg(), VReg);
-      SDValue ArgValue = DAG.getCopyFromReg(Root, dl, VReg, RegVT);
-
-      // If this is an 8/16/32-bit value, it is really passed promoted to 64
-      // bits. Insert an assert[sz]ext to capture this, then truncate to the
-      // right size.
-      if (VA.getLocInfo() == CCValAssign::SExt)
-        ArgValue = DAG.getNode(ISD::AssertSext, dl, RegVT, ArgValue,
-                               DAG.getValueType(VA.getValVT()));
-      else if (VA.getLocInfo() == CCValAssign::ZExt)
-        ArgValue = DAG.getNode(ISD::AssertZext, dl, RegVT, ArgValue,
-                               DAG.getValueType(VA.getValVT()));
-
-      if (VA.getLocInfo() != CCValAssign::Full)
-        ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
-
-      ArgValues.push_back(ArgValue);
+      ArgValue = DAG.getCopyFromReg(Root, dl, VReg, LocVT);
     } else {
       // Sanity check
       assert(VA.isMemLoc());
 
       // Create the nodes corresponding to a load from this parameter slot.
       // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
+      int FI = MFI->CreateFixedObject(LocVT.getSizeInBits()/8,
                                       VA.getLocMemOffset());
 
       // Create the SelectionDAG nodes corresponding to a load
-      //from this parameter
+      // from this parameter
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValues.push_back(DAG.getLoad(VA.getValVT(), dl, Root, FIN,
-                                      PseudoSourceValue::getFixedStack(FI), 0));
+      ArgValue = DAG.getLoad(LocVT, dl, Root, FIN,
+                             PseudoSourceValue::getFixedStack(FI), 0);
     }
+
+    // If this is an 8/16/32-bit value, it is really passed promoted to 64
+    // bits. Insert an assert[sz]ext to capture this, then truncate to the
+    // right size.
+    if (VA.getLocInfo() == CCValAssign::SExt)
+      ArgValue = DAG.getNode(ISD::AssertSext, dl, LocVT, ArgValue,
+                             DAG.getValueType(VA.getValVT()));
+    else if (VA.getLocInfo() == CCValAssign::ZExt)
+      ArgValue = DAG.getNode(ISD::AssertZext, dl, LocVT, ArgValue,
+                             DAG.getValueType(VA.getValVT()));
+
+    if (VA.getLocInfo() != CCValAssign::Full)
+      ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
+
+    ArgValues.push_back(ArgValue);
   }
 
   ArgValues.push_back(Root);
