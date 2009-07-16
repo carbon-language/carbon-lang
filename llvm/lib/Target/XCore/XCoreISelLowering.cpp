@@ -131,7 +131,11 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
 
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8, Expand);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i16, Expand);
-  
+
+  // Custom expand misaligned loads / stores.
+  setOperationAction(ISD::LOAD, MVT::i32, Custom);
+  setOperationAction(ISD::STORE, MVT::i32, Custom);
+
   // Varargs
   setOperationAction(ISD::VAEND, MVT::Other, Expand);
   setOperationAction(ISD::VACOPY, MVT::Other, Expand);
@@ -159,6 +163,8 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
   case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
   case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
+  case ISD::LOAD:             return LowerLOAD(Op, DAG);
+  case ISD::STORE:            return LowerSTORE(Op, DAG);
   case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   case ISD::VAARG:            return LowerVAARG(Op, DAG);
   case ISD::VASTART:          return LowerVASTART(Op, DAG);
@@ -317,6 +323,87 @@ LowerJumpTable(SDValue Op, SelectionDAG &DAG)
   JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
   return DAG.getNode(XCoreISD::DPRelativeWrapper, dl, MVT::i32, JTI);
+}
+
+SDValue XCoreTargetLowering::
+LowerLOAD(SDValue Op, SelectionDAG &DAG)
+{
+  LoadSDNode *LD = cast<LoadSDNode>(Op);
+  assert(LD->getExtensionType() == ISD::NON_EXTLOAD && "Unexpected extension type");
+  assert(LD->getMemoryVT() == MVT::i32 && "Unexpected load MVT");
+  if (allowsUnalignedMemoryAccesses()) {
+    return SDValue();
+  }
+  unsigned ABIAlignment = getTargetData()->
+    getABITypeAlignment(LD->getMemoryVT().getTypeForMVT(*DAG.getContext()));
+  // Leave aligned load alone.
+  if (LD->getAlignment() >= ABIAlignment) {
+    return SDValue();
+  }
+  SDValue Chain = LD->getChain();
+  SDValue BasePtr = LD->getBasePtr();
+  DebugLoc dl = Op.getDebugLoc();
+  
+  // Lower to a call to __misaligned_load(BasePtr).
+  const Type *IntPtrTy = getTargetData()->getIntPtrType();
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  
+  Entry.Ty = IntPtrTy;
+  Entry.Node = BasePtr;
+  Args.push_back(Entry);
+  
+  std::pair<SDValue, SDValue> CallResult =
+        LowerCallTo(Chain, IntPtrTy, false, false,
+                    false, false, 0, CallingConv::C, false,
+                    DAG.getExternalSymbol("__misaligned_load", getPointerTy()),
+                    Args, DAG, dl);
+
+  SDValue Ops[] =
+    { CallResult.first, CallResult.second };
+
+  return DAG.getMergeValues(Ops, 2, dl);
+}
+
+SDValue XCoreTargetLowering::
+LowerSTORE(SDValue Op, SelectionDAG &DAG)
+{
+  StoreSDNode *ST = cast<StoreSDNode>(Op);
+  assert(!ST->isTruncatingStore() && "Unexpected store type");
+  assert(ST->getMemoryVT() == MVT::i32 && "Unexpected store MVT");
+  if (allowsUnalignedMemoryAccesses()) {
+    return SDValue();
+  }
+  unsigned ABIAlignment = getTargetData()->
+    getABITypeAlignment(ST->getMemoryVT().getTypeForMVT(*DAG.getContext()));
+  // Leave aligned store alone.
+  if (ST->getAlignment() >= ABIAlignment) {
+    return SDValue();
+  }
+  SDValue Chain = ST->getChain();
+  SDValue BasePtr = ST->getBasePtr();
+  SDValue Value = ST->getValue();
+  DebugLoc dl = Op.getDebugLoc();
+  
+  // Lower to a call to __misaligned_store(BasePtr, Value).
+  const Type *IntPtrTy = getTargetData()->getIntPtrType();
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  
+  Entry.Ty = IntPtrTy;
+  Entry.Node = BasePtr;
+  Args.push_back(Entry);
+  
+  Entry.Node = Value;
+  Args.push_back(Entry);
+  
+  std::pair<SDValue, SDValue> CallResult =
+        LowerCallTo(Chain, Type::VoidTy, false, false,
+                    false, false, 0, CallingConv::C, false,
+                    DAG.getExternalSymbol("__misaligned_store", getPointerTy()),
+                    Args, DAG, dl);
+
+  return CallResult.second;
 }
 
 SDValue XCoreTargetLowering::

@@ -101,6 +101,8 @@ namespace llvm {
                                     SelectionDAG &DAG);
 
     // Lower Operand specifics
+    SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
