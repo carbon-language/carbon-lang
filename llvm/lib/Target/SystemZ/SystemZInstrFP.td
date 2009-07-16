@@ -69,18 +69,19 @@ def FMOV64mry : Pseudo<(outs), (ins rriaddr:$dst, FP64:$src),
 // Arithmetic Instructions
 
 
-let isTwoAddress = 1 in {
 let Defs = [PSW] in {
-
 def FNEG32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
-                       "lcebr\t{$dst}",
+                       "lcebr\t{$dst, $src}",
                        [(set FP32:$dst, (fneg FP32:$src)),
                         (implicit PSW)]>;
 def FNEG64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
-                       "lcdbr\t{$dst}",
+                       "lcdbr\t{$dst, $src}",
                        [(set FP64:$dst, (fneg FP64:$src)),
                         (implicit PSW)]>;
+}
 
+let isTwoAddress = 1 in {
+let Defs = [PSW] in {
 // FIXME: Add peephole for fneg(fabs) => load negative
 
 def FABS32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
