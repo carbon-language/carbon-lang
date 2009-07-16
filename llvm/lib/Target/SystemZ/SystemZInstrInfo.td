@@ -588,8 +588,8 @@ def MULSX64rr32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR32:$src2),
                          "msgfr\t{$dst, $src2}",
                          [(set GR64:$dst, (mul GR64:$src1, (sext GR32:$src2)))]>;
 
-def SDIVREM32r : Pseudo<(outs GR64P:$dst), (ins GR64P:$src1, GR32:$src2),
-                        "dr\t{$dst, $src2}",
+def SDIVREM32r : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR32:$src2),
+                        "dsgfr\t{$dst, $src2}",
                         []>;
 def SDIVREM64r : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR64:$src2),
                         "dsgr\t{$dst, $src2}",
@@ -602,8 +602,8 @@ def UDIVREM64r : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR64:$src2),
                         "dlgr\t{$dst, $src2}",
                         []>;
 let mayLoad = 1 in {
-def SDIVREM32m : Pseudo<(outs GR64P:$dst), (ins GR64P:$src1, rriaddr:$src2),
-                        "d\t{$dst, $src2}",
+def SDIVREM32m : Pseudo<(outs GR128:$dst), (ins GR128:$src1, rriaddr:$src2),
+                        "dsgf\t{$dst, $src2}",
                         []>;
 def SDIVREM64m : Pseudo<(outs GR128:$dst), (ins GR128:$src1, rriaddr:$src2),
                         "dsg\t{$dst, $src2}",
