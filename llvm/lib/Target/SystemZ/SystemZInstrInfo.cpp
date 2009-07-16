@@ -149,8 +149,6 @@ bool
 SystemZInstrInfo::isMoveInstr(const MachineInstr& MI,
                               unsigned &SrcReg, unsigned &DstReg,
                               unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
-  SrcSubIdx = DstSubIdx = 0; // No sub-registers yet.
-
   switch (MI.getOpcode()) {
   default:
     return false;
@@ -164,6 +162,8 @@ SystemZInstrInfo::isMoveInstr(const MachineInstr& MI,
            "invalid register-register move instruction");
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
+    SrcSubIdx = MI.getOperand(1).getSubReg();
+    DstSubIdx = MI.getOperand(0).getSubReg();
     return true;
   }
 }

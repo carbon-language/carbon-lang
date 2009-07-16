@@ -27,15 +27,19 @@ class GPR32<bits<4> num, string n> : SystemZReg<n> {
 }
 
 // GPR64 - One of the 16 64-bit general-purpose registers
-class GPR64<bits<4> num, string n, list<Register> subregs>
+class GPR64<bits<4> num, string n, list<Register> subregs,
+            list<Register> aliases = []>
  : SystemZRegWithSubregs<n, subregs> {
   field bits<4> Num = num;
+  let Aliases = aliases;
 }
 
 // GPR128 - 8 even-odd register pairs
-class GPR128<bits<4> num, string n, list<Register> subregs>
+class GPR128<bits<4> num, string n, list<Register> subregs,
+             list<Register> aliases = []>
  : SystemZRegWithSubregs<n, subregs> {
   field bits<4> Num = num;
+  let Aliases = aliases;
 }
 
 // FPR - One of the 16 64-bit floating-point registers
@@ -79,23 +83,23 @@ def R14D : GPR64<14, "r14", [R14W]>, DwarfRegNum<[14]>;
 def R15D : GPR64<15, "r15", [R15W]>, DwarfRegNum<[15]>;
 
 // Register pairs
-def R0P  : GPR64< 0,  "r0", [R0W,  R1W]>,  DwarfRegNum<[0]>;
-def R2P  : GPR64< 2,  "r2", [R2W,  R3W]>,  DwarfRegNum<[2]>;
-def R4P  : GPR64< 4,  "r4", [R4W,  R5W]>,  DwarfRegNum<[4]>;
-def R6P  : GPR64< 6,  "r6", [R6W,  R7W]>,  DwarfRegNum<[6]>;
-def R8P  : GPR64< 8,  "r8", [R8W,  R9W]>,  DwarfRegNum<[8]>;
-def R10P : GPR64<10, "r10", [R10W, R11W]>, DwarfRegNum<[10]>;
-def R12P : GPR64<12, "r12", [R12W, R13W]>, DwarfRegNum<[12]>;
-def R14P : GPR64<14, "r14", [R14W, R15W]>, DwarfRegNum<[14]>;
+def R0P  : GPR64< 0,  "r0", [R0W,  R1W],  [R0D,  R1D]>,  DwarfRegNum<[0]>;
+def R2P  : GPR64< 2,  "r2", [R2W,  R3W],  [R2D,  R3D]>,  DwarfRegNum<[2]>;
+def R4P  : GPR64< 4,  "r4", [R4W,  R5W],  [R4D,  R5D]>,  DwarfRegNum<[4]>;
+def R6P  : GPR64< 6,  "r6", [R6W,  R7W],  [R6D,  R7D]>,  DwarfRegNum<[6]>;
+def R8P  : GPR64< 8,  "r8", [R8W,  R9W],  [R8D,  R9D]>,  DwarfRegNum<[8]>;
+def R10P : GPR64<10, "r10", [R10W, R11W], [R10D, R11D]>, DwarfRegNum<[10]>;
+def R12P : GPR64<12, "r12", [R12W, R13W], [R12D, R13D]>, DwarfRegNum<[12]>;
+def R14P : GPR64<14, "r14", [R14W, R15W], [R14D, R15D]>, DwarfRegNum<[14]>;
 
-def R0Q  : GPR128< 0,  "r0", [R0D,  R1D]>,  DwarfRegNum<[0]>;
-def R2Q  : GPR128< 2,  "r2", [R2D,  R3D]>,  DwarfRegNum<[2]>;
-def R4Q  : GPR128< 4,  "r4", [R4D,  R5D]>,  DwarfRegNum<[4]>;
-def R6Q  : GPR128< 6,  "r6", [R6D,  R7D]>,  DwarfRegNum<[6]>;
-def R8Q  : GPR128< 8,  "r8", [R8D,  R9D]>,  DwarfRegNum<[8]>;
-def R10Q : GPR128<10, "r10", [R10D, R11D]>, DwarfRegNum<[10]>;
-def R12Q : GPR128<12, "r12", [R12D, R13D]>, DwarfRegNum<[12]>;
-def R14Q : GPR128<14, "r14", [R14D, R15D]>, DwarfRegNum<[14]>;
+def R0Q  : GPR128< 0,  "r0", [R0D,  R1D],  [R0P]>,  DwarfRegNum<[0]>;
+def R2Q  : GPR128< 2,  "r2", [R2D,  R3D],  [R2P]>,  DwarfRegNum<[2]>;
+def R4Q  : GPR128< 4,  "r4", [R4D,  R5D],  [R4P]>,  DwarfRegNum<[4]>;
+def R6Q  : GPR128< 6,  "r6", [R6D,  R7D],  [R6P]>,  DwarfRegNum<[6]>;
+def R8Q  : GPR128< 8,  "r8", [R8D,  R9D],  [R8P]>,  DwarfRegNum<[8]>;
+def R10Q : GPR128<10, "r10", [R10D, R11D], [R10P]>, DwarfRegNum<[10]>;
+def R12Q : GPR128<12, "r12", [R12D, R13D], [R12P]>, DwarfRegNum<[12]>;
+def R14Q : GPR128<14, "r14", [R14D, R15D], [R14P]>, DwarfRegNum<[14]>;
 
 // Floating-point registers
 def F0  : FPR< 0,  "f0">, DwarfRegNum<[16]>;
