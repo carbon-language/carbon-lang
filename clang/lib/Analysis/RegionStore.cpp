@@ -672,8 +672,8 @@ SVal RegionStoreManager::ArrayToPointer(Loc Array) {
   ArrayType *AT = cast<ArrayType>(T);
   T = AT->getElementType();
   
-  nonloc::ConcreteInt Idx(getBasicVals().getZeroWithPtrWidth(false));
-  ElementRegion* ER = MRMgr.getElementRegion(T, Idx, ArrayR, getContext());
+  SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+  ElementRegion* ER = MRMgr.getElementRegion(T, ZeroIdx, ArrayR, getContext());
   
   return loc::MemRegionVal(ER);                    
 }
