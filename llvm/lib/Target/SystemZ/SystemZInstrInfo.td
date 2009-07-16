@@ -205,6 +205,20 @@ def i32i16imm : Operand<i32>;
 def i64i32imm : Operand<i64>;
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
+// Signed i16
+def s16imm : Operand<i32> {
+  let PrintMethod = "printS16ImmOperand";
+}
+def s16imm64 : Operand<i64> {
+  let PrintMethod = "printS16ImmOperand";
+}
+// Signed i32
+def s32imm : Operand<i32> {
+  let PrintMethod = "printS32ImmOperand";
+}
+def s32imm64 : Operand<i64> {
+  let PrintMethod = "printS32ImmOperand";
+}
 
 //===----------------------------------------------------------------------===//
 // SystemZ Operand Definitions.
@@ -360,10 +374,10 @@ def MOVZX64rr32 : Pseudo<(outs GR64:$dst), (ins GR32:$src),
 
 // FIXME: Provide proper encoding!
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
-def MOV32ri16 : Pseudo<(outs GR32:$dst), (ins i32imm:$src),
+def MOV32ri16 : Pseudo<(outs GR32:$dst), (ins s16imm:$src),
                        "lhi\t{$dst, $src}",
                        [(set GR32:$dst, immSExt16:$src)]>;
-def MOV64ri16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+def MOV64ri16 : Pseudo<(outs GR64:$dst), (ins s16imm64:$src),
                        "lghi\t{$dst, $src}",
                        [(set GR64:$dst, immSExt16:$src)]>;
 
@@ -380,7 +394,7 @@ def MOV64rihh16 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
                          "llihh\t{$dst, $src}",
                          [(set GR64:$dst, i64hh16:$src)]>;
 // FIXME: these 3 instructions seem to require extimm facility
-def MOV64ri32 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+def MOV64ri32 : Pseudo<(outs GR64:$dst), (ins s32imm64:$src),
                        "lgfi\t{$dst, $src}",
                        [(set GR64:$dst, immSExt32:$src)]>;
 def MOV64rilo32 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
@@ -410,15 +424,15 @@ def MOV64mr : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
 
 // FIXME: displacements here are really 12 bit, not 20!
 def MOV8mi    : Pseudo<(outs), (ins riaddr:$dst, i32i8imm:$src),
-                       "mvi\t{$dst, $src}",
+                       "mviy\t{$dst, $src}",
                        [(truncstorei8 (i32 i32immSExt8:$src), riaddr:$dst)]>;
-def MOV16mi   : Pseudo<(outs), (ins riaddr:$dst, i32i16imm:$src),
+def MOV16mi   : Pseudo<(outs), (ins riaddr:$dst, s16imm:$src),
                        "mvhhi\t{$dst, $src}",
                        [(truncstorei16 (i32 i32immSExt16:$src), riaddr:$dst)]>;
-def MOV32mi16 : Pseudo<(outs), (ins riaddr:$dst, i32imm:$src),
+def MOV32mi16 : Pseudo<(outs), (ins riaddr:$dst, s32imm:$src),
                        "mvhi\t{$dst, $src}",
                        [(store (i32 immSExt16:$src), riaddr:$dst)]>;
-def MOV64mi16 : Pseudo<(outs), (ins riaddr:$dst, i64imm:$src),
+def MOV64mi16 : Pseudo<(outs), (ins riaddr:$dst, s32imm64:$src),
                        "mvghi\t{$dst, $src}",
                        [(store (i64 immSExt16:$src), riaddr:$dst)]>;
 
@@ -527,19 +541,19 @@ def ADD64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
 }
 
 // FIXME: Provide proper encoding!
-def ADD32ri16 : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
-                       "ahi\t{$dst, $src2}",
+def ADD32ri16 : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s16imm:$src2),
+                       "ahi\t{$dst, $src2:}",
                        [(set GR32:$dst, (add GR32:$src1, immSExt16:$src2)),
                         (implicit PSW)]>;
-def ADD32ri   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+def ADD32ri   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s32imm:$src2),
                        "afi\t{$dst, $src2}",
                        [(set GR32:$dst, (add GR32:$src1, imm:$src2)),
                         (implicit PSW)]>;
-def ADD64ri16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+def ADD64ri16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, s16imm64:$src2),
                        "aghi\t{$dst, $src2}",
                        [(set GR64:$dst, (add GR64:$src1, immSExt16:$src2)),
                         (implicit PSW)]>;
-def ADD64ri32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+def ADD64ri32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, s32imm64:$src2),
                        "agfi\t{$dst, $src2}",
                        [(set GR64:$dst, (add GR64:$src1, immSExt32:$src2)),
                         (implicit PSW)]>;
@@ -668,16 +682,16 @@ def UMUL128rrP : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR64:$src2),
 }
 
 
-def MUL32ri16   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32i16imm:$src2),
+def MUL32ri16   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s16imm:$src2),
                          "mhi\t{$dst, $src2}",
                          [(set GR32:$dst, (mul GR32:$src1, i32immSExt16:$src2))]>;
-def MUL32ri     : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+def MUL32ri     : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s32imm:$src2),
                          "msfi\t{$dst, $src2}",
                          [(set GR32:$dst, (mul GR32:$src1, imm:$src2))]>;
-def MUL64ri16   : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+def MUL64ri16   : Pseudo<(outs GR64:$dst), (ins GR64:$src1, s16imm64:$src2),
                          "mghi\t{$dst, $src2}",
                          [(set GR64:$dst, (mul GR64:$src1, immSExt16:$src2))]>;
-def MUL64ri32   : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64i32imm:$src2),
+def MUL64ri32   : Pseudo<(outs GR64:$dst), (ins GR64:$src1, s32imm64:$src2),
                          "msgfi\t{$dst, $src2}",
                          [(set GR64:$dst, (mul GR64:$src1, i64immSExt32:$src2))]>;
 
@@ -764,10 +778,10 @@ def CMP64rr : Pseudo<(outs), (ins GR64:$src1, GR64:$src2),
                      "cgr\t$src1, $src2",
                      [(SystemZcmp GR64:$src1, GR64:$src2), (implicit PSW)]>;
 
-def CMP32ri   : Pseudo<(outs), (ins GR32:$src1, i32imm:$src2),
+def CMP32ri   : Pseudo<(outs), (ins GR32:$src1, s32imm:$src2),
                        "cfi\t$src1, $src2",
                        [(SystemZcmp GR32:$src1, imm:$src2), (implicit PSW)]>;
-def CMP64ri32 : Pseudo<(outs), (ins GR64:$src1, i64i32imm:$src2),
+def CMP64ri32 : Pseudo<(outs), (ins GR64:$src1, s32imm64:$src2),
                        "cgfi\t$src1, $src2",
                        [(SystemZcmp GR64:$src1, i64immSExt32:$src2),
                         (implicit PSW)]>;
