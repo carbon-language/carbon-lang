@@ -55,6 +55,10 @@ use Socket;
 #                   override the default.
 #  -ldflags         Next argument specifies that linker options that override
 #                   the default.
+#  -test-cflags     Next argument specifies that C compilation options that
+#                   override the default when running the testsuite.
+#  -test-cxxflags   Next argument specifies that C++ compilation options that
+#                   override the default when running the testsuite.
 #  -compileflags    Next argument specifies extra options passed to make when
 #                   building LLVM.
 #  -use-gmake       Use gmake instead of the default make command to build
@@ -139,6 +143,7 @@ $SUBMITSCRIPT = "/nightlytest/NightlyTestAccept.php";
 $SUBMITAUX="";
 $SUBMIT = 1;
 $PARALLELJOBS = "2";
+my $TESTFLAGS="";
 
 while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   shift;
@@ -202,6 +207,10 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-cxxflags/)        { $MAKEOPTS = "$MAKEOPTS CXX.Flags=\'$ARGV[0]\'";
                              shift; next; }
   if (/^-ldflags/)         { $MAKEOPTS = "$MAKEOPTS LD.Flags=\'$ARGV[0]\'";
+                             shift; next; }
+  if (/^-test-cflags/)     { $TESTFLAGS = "$TESTFLAGS CFLAGS=\'$ARGV[0]\'";
+                             shift; next; }
+  if (/^-test-cxxflags/)   { $TESTFLAGS = "$TESTFLAGS CXXFLAGS=\'$ARGV[0]\'";
                              shift; next; }
   if (/^-compileflags/)    { $MAKEOPTS = "$MAKEOPTS $ARGV[0]"; shift; next; }
   if (/^-use-gmake/)       { $MAKECMD = "gmake"; shift; next; }
@@ -924,10 +933,11 @@ sub TestDirectory {
   if (!$NOTEST) {
     if( $VERBOSE) {
       print "$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
-            "TEST=nightly > $ProgramTestLog 2>&1\n";
+            "$TESTFLAGS TEST=nightly > $ProgramTestLog 2>&1\n";
     }
     RunLoggedCommand("$MAKECMD -k $MAKEOPTS $PROGTESTOPTS report.nightly.csv ".
-                     "TEST=nightly", $ProgramTestLog, "TEST DIRECTORY $SubDir");
+                     "$TESTFLAGS TEST=nightly",
+                     $ProgramTestLog, "TEST DIRECTORY $SubDir");
     $llcbeta_options=`$MAKECMD print-llcbeta-option`;
   }
 
