@@ -182,6 +182,70 @@ SystemZInstrInfo::isMoveInstr(const MachineInstr& MI,
   }
 }
 
+unsigned SystemZInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
+                                               int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case SystemZ::MOV32rm:
+  case SystemZ::MOV32rmy:
+  case SystemZ::MOV64rm:
+  case SystemZ::MOVSX32rm8:
+  case SystemZ::MOVSX32rm16y:
+  case SystemZ::MOVSX64rm8:
+  case SystemZ::MOVSX64rm16:
+  case SystemZ::MOVSX64rm32:
+  case SystemZ::MOVZX32rm8:
+  case SystemZ::MOVZX32rm16:
+  case SystemZ::MOVZX64rm8:
+  case SystemZ::MOVZX64rm16:
+  case SystemZ::MOVZX64rm32:
+  case SystemZ::FMOV32rm:
+  case SystemZ::FMOV32rmy:
+  case SystemZ::FMOV64rm:
+  case SystemZ::FMOV64rmy:
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() && MI->getOperand(3).isReg() &&
+        MI->getOperand(2).getImm() == 0 && MI->getOperand(3).getReg() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
+  return 0;
+}
+
+unsigned SystemZInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
+                                              int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case SystemZ::MOV32mr:
+  case SystemZ::MOV32mry:
+  case SystemZ::MOV64mr:
+  case SystemZ::MOV32m8r:
+  case SystemZ::MOV32m8ry:
+  case SystemZ::MOV32m16r:
+  case SystemZ::MOV32m16ry:
+  case SystemZ::MOV64m8r:
+  case SystemZ::MOV64m8ry:
+  case SystemZ::MOV64m16r:
+  case SystemZ::MOV64m16ry:
+  case SystemZ::MOV64m32r:
+  case SystemZ::MOV64m32ry:
+  case SystemZ::FMOV32mr:
+  case SystemZ::FMOV32mry:
+  case SystemZ::FMOV64mr:
+  case SystemZ::FMOV64mry:
+    if (MI->getOperand(0).isFI() &&
+        MI->getOperand(1).isImm() && MI->getOperand(2).isReg() &&
+        MI->getOperand(1).getImm() == 0 && MI->getOperand(2).getReg() == 0) {
+      FrameIndex = MI->getOperand(0).getIndex();
+      return MI->getOperand(3).getReg();
+    }
+    break;
+  }
+  return 0;
+}
+
 bool
 SystemZInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
