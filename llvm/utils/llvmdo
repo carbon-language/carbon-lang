@@ -53,7 +53,7 @@ if test "$1" = "-dirs" ; then
   LLVMDO_DIRS="$2"
   shift ; shift
 elif test -z "$LLVMDO_DIRS" ; then
-  LLVMDO_DIRS="include lib tools utils runtime autoconf docs test examples projects"
+  LLVMDO_DIRS="include lib tools utils runtime autoconf docs test examples projects cmake"
 fi
 
 if test "$1" = "-code-only" ; then
@@ -126,6 +126,7 @@ files_to_match="\
   -o -name *.tr \
   -o -name *.y \
   -o -name Make* \
+  -o -name *.cmake \
   -o -name llvmdo \
   -o -name llvmgrep \
   -o -name check-each-file \
