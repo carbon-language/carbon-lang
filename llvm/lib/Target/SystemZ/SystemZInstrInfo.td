@@ -162,10 +162,16 @@ def riaddr : Operand<i64>,
 
 // rriaddr := reg + reg + imm
 def rriaddr : Operand<i64>,
-              ComplexPattern<i64, 3, "SelectAddrRRI", []> {
+              ComplexPattern<i64, 3, "SelectAddrRRI", [], []> {
   let PrintMethod = "printRRIAddrOperand";
   let MIOperandInfo = (ops ADDR64:$base, ADDR64:$index, i32imm:$disp);
 }
+def laaddr : Operand<i64>,
+             ComplexPattern<i64, 3, "SelectLAAddr", [add, sub, or, frameindex], []> {
+  let PrintMethod = "printRRIAddrOperand";
+  let MIOperandInfo = (ops ADDR64:$base, ADDR64:$index, i32imm:$disp);
+}
+
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
@@ -175,6 +181,18 @@ def rriaddr : Operand<i64>,
 let isReturn = 1, isTerminator = 1 in {
   def RET : Pseudo<(outs), (ins), "br\t%r14", [(SystemZretflag)]>;
 }
+
+
+//===----------------------------------------------------------------------===//
+//  Miscellaneous Instructions.
+//
+
+let isReMaterializable = 1 in
+// FIXME: Provide imm12 variant
+def LA64r  : Pseudo<(outs GR64:$dst), (ins laaddr:$src),
+                    "lay\t{$dst, $src}",
+                    [(set GR64:$dst, laaddr:$src)]>;
+
 
 //===----------------------------------------------------------------------===//
 // Move Instructions

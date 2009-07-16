@@ -107,6 +107,9 @@ namespace {
   private:
     bool SelectAddrRRI(SDValue Op, SDValue Addr,
                        SDValue &Base, SDValue &Index, SDValue &Disp);
+    bool SelectLAAddr(SDValue Op, SDValue Addr,
+                      SDValue &Base, SDValue &Index, SDValue &Disp);
+
     SDNode *Select(SDValue Op);
     bool SelectAddrRI(const SDValue& Op, SDValue& Addr,
                       SDValue &Base, SDValue &Disp);
@@ -369,8 +372,24 @@ bool SystemZDAGToDAGISel::SelectAddrRRI(SDValue Op, SDValue Addr,
   SystemZRRIAddressMode AM;
   bool Done = false;
 
-  // FIXME: Should we better use lay instruction for non-single uses?
-
+  if (!Addr.hasOneUse()) {
+    unsigned Opcode = Addr.getOpcode();
+    if (Opcode != ISD::Constant && Opcode != ISD::FrameIndex) {
+      // If we are able to fold N into addressing mode, then we'll allow it even
+      // if N has multiple uses. In general, addressing computation is used as
+      // addresses by all of its uses. But watch out for CopyToReg uses, that
+      // means the address computation is liveout. It will be computed by a LA
+      // so we want to avoid computing the address twice.
+      for (SDNode::use_iterator UI = Addr.getNode()->use_begin(),
+             UE = Addr.getNode()->use_end(); UI != UE; ++UI) {
+        if (UI->getOpcode() == ISD::CopyToReg) {
+          MatchAddressBase(Addr, AM);
+          Done = true;
+          break;
+        }
+      }
+    }
+  }
   if (!Done && MatchAddress(Addr, AM))
     return false;
 
@@ -388,9 +407,50 @@ bool SystemZDAGToDAGISel::SelectAddrRRI(SDValue Op, SDValue Addr,
   else
     Base = CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, TLI.getPointerTy());
   Index = AM.IndexReg;
-  Disp = Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
+  Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
 
   return true;
+}
+
+/// SelectLAAddr - it calls SelectAddr and determines if the maximal addressing
+/// mode it matches can be cost effectively emitted as an LA/LAY instruction.
+bool SystemZDAGToDAGISel::SelectLAAddr(SDValue Op, SDValue Addr,
+                                SDValue &Base, SDValue &Index, SDValue &Disp) {
+  SystemZRRIAddressMode AM;
+
+  if (MatchAddress(Addr, AM))
+    return false;
+
+  MVT VT = Addr.getValueType();
+  unsigned Complexity = 0;
+  if (AM.BaseType == SystemZRRIAddressMode::RegBase)
+    if (AM.Base.Reg.getNode())
+      Complexity = 1;
+    else
+      AM.Base.Reg = CurDAG->getRegister(0, VT);
+  else if (AM.BaseType == SystemZRRIAddressMode::FrameIndexBase)
+    Complexity = 4;
+
+  if (AM.IndexReg.getNode())
+    Complexity += 1;
+  else
+    AM.IndexReg = CurDAG->getRegister(0, VT);
+
+  if (AM.Disp && (AM.Base.Reg.getNode() || AM.IndexReg.getNode()))
+    Complexity += 1;
+
+  if (Complexity > 2) {
+    if (AM.BaseType == SystemZRRIAddressMode::RegBase)
+      Base = AM.Base.Reg;
+    else
+      Base = CurDAG->getTargetFrameIndex(AM.Base.FrameIndex,
+                                         TLI.getPointerTy());
+    Index = AM.IndexReg;
+    Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i32);
+    return true;
+  }
+
+  return false;
 }
 
 /// InstructionSelect - This callback is invoked by
