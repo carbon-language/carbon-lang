@@ -193,8 +193,9 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo.
   // Note that area for callee-saved stuff is already allocated, thus we need to
   // 'undo' the stack movement.
-  uint64_t StackSize =
-    MFI->getStackSize() - SystemZMFI->getCalleeSavedFrameSize();
+  uint64_t StackSize =  MFI->getStackSize();
+  uint64_t NumBytes = StackSize - SystemZMFI->getCalleeSavedFrameSize();
+  NumBytes -= TFI.getOffsetOfLocalArea();
 
   // Skip the callee-saved push instructions.
   while (MBBI != MBB.end() &&
@@ -205,9 +206,8 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (MBBI != MBB.end())
     DL = MBBI->getDebugLoc();
 
-  uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
-
-  if (NumBytes) // adjust stack pointer: R15 -= numbytes
+  // adjust stack pointer: R15 -= numbytes
+  if (StackSize)
     emitSPUpdate(MBB, MBBI, -(int64_t)NumBytes, TII);
 
   if (hasFP(MF)) {
