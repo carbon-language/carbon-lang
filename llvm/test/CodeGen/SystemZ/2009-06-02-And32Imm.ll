@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llc -march=systemz | grep nilf | count 2
+; RUN: llvm-as < %s | llc -march=systemz | grep nilf | count 1
+; RUN: llvm-as < %s | llc -march=systemz | grep nill | count 1
 
 define i32 @gnu_dev_major(i64 %__dev) nounwind readnone {
 entry:

@@ -1,6 +1,4 @@
-; XFAIL: *
-; RUN: llvm-as < %s | llc -march=systemz | grep nill | count 3
-; RUN: llvm-as < %s | llc -march=systemz | grep nilh | count 3
+; RUN: llvm-as < %s | llc -march=systemz | grep ngr  | count 6
 
 define i32 @foo1(i32 %a, i32 %b) {
 entry:
