@@ -1070,7 +1070,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
       if (attr == QualType::Weak)
         attr = QualType::GCNone;
     }
-    else if (getContext().isObjCObjectPointerType(Ty))
+    else if (Ty->isObjCObjectPointerType())
       attr = QualType::Strong;
   }
   LValue LV =  

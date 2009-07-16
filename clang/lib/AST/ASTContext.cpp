@@ -3133,6 +3133,7 @@ QualType ASTContext::getFromTargetType(unsigned Type) const {
 /// isObjCNSObjectType - Return true if this is an NSObject object using
 /// NSObject attribute on a c-style pointer type.
 /// FIXME - Make it work directly on types.
+/// FIXME: Move to Type.
 ///
 bool ASTContext::isObjCNSObjectType(QualType Ty) const {
   if (TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
@@ -3141,46 +3142,6 @@ bool ASTContext::isObjCNSObjectType(QualType Ty) const {
         return true;
   }
   return false;  
-}
-
-/// isObjCObjectPointerType - Returns true if type is an Objective-C pointer
-/// to an object type.  This includes "id" and "Class" (two 'special' pointers
-/// to struct), Interface* (pointer to ObjCInterfaceType) and id<P> (qualified
-/// ID type).
-bool ASTContext::isObjCObjectPointerType(QualType Ty) const {
-  if (Ty->isObjCObjectPointerType())
-    return true;
-  if (Ty->isObjCQualifiedIdType())
-    return true;
-  
-  // Blocks are objects.
-  if (Ty->isBlockPointerType())
-    return true;
-    
-  // All other object types are pointers.
-  const PointerType *PT = Ty->getAsPointerType();
-  if (PT == 0)
-    return false;
-  
-  // If this a pointer to an interface (e.g. NSString*), it is ok.
-  if (PT->getPointeeType()->isObjCInterfaceType() ||
-      // If is has NSObject attribute, OK as well.
-      isObjCNSObjectType(Ty))
-    return true;
-  
-  // Check to see if this is 'id' or 'Class', both of which are typedefs for
-  // pointer types.  This looks for the typedef specifically, not for the
-  // underlying type.  Iteratively strip off typedefs so that we can handle
-  // typedefs of typedefs.
-  while (TypedefType *TDT = dyn_cast<TypedefType>(Ty)) {
-    if (Ty.getUnqualifiedType() == getObjCIdType() ||
-        Ty.getUnqualifiedType() == getObjCClassType())
-      return true;
-    
-    Ty = TDT->getDecl()->getUnderlyingType();
-  }
-  
-  return false;
 }
 
 /// getObjCGCAttr - Returns one of GCNone, Weak or Strong objc's
@@ -3195,14 +3156,14 @@ QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
     // (or pointers to them) be treated as though they were declared 
     // as __strong.
     if (GCAttrs == QualType::GCNone) {
-      if (isObjCObjectPointerType(Ty))
+      if (Ty->isObjCObjectPointerType())
         GCAttrs = QualType::Strong;
       else if (Ty->isPointerType())
         return getObjCGCAttrKind(Ty->getAsPointerType()->getPointeeType());
     }
     // Non-pointers have none gc'able attribute regardless of the attribute
     // set on them.
-    else if (!Ty->isPointerType() && !isObjCObjectPointerType(Ty))
+    else if (!Ty->isAnyPointerType() && !Ty->isBlockPointerType())
       return QualType::GCNone;
   }
   return GCAttrs;

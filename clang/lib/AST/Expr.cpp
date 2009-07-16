@@ -991,7 +991,7 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
       QualType T = VD->getType();
       // dereferencing to an object pointer is always a gc'able candidate
       if (T->isPointerType() && 
-          Ctx.isObjCObjectPointerType(T->getAsPointerType()->getPointeeType()))
+          T->getAsPointerType()->getPointeeType()->isObjCObjectPointerType())
         return true;
         
     }

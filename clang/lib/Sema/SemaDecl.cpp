@@ -4271,7 +4271,7 @@ void Sema::ActOnFields(Scope* S,
     else if (getLangOptions().ObjC1 &&
              getLangOptions().getGCMode() != LangOptions::NonGC &&
              Record &&
-             (Context.isObjCObjectPointerType(FD->getType()) ||
+             (FD->getType()->isObjCObjectPointerType() ||
               FD->getType().isObjCGCStrong()))
       Record->setHasObjectMember(true);
     // Keep track of the number of named members.

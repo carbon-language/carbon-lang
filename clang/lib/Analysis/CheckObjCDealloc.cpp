@@ -108,7 +108,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
     ObjCIvarDecl* ID = *I;
     QualType T = ID->getType();
     
-    if (!Ctx.isObjCObjectPointerType(T) ||
+    if (!T->isObjCObjectPointerType() ||
         ID->getAttr<IBOutletAttr>()) // Skip IBOutlets.
       continue;
     
@@ -210,7 +210,7 @@ void clang::CheckObjCDealloc(ObjCImplementationDecl* D,
       continue;
     
     QualType T = ID->getType();
-    if (!Ctx.isObjCObjectPointerType(T)) // Skip non-pointer ivars
+    if (!T->isObjCObjectPointerType()) // Skip non-pointer ivars
       continue;
 
     const ObjCPropertyDecl* PD = (*I)->getPropertyDecl();

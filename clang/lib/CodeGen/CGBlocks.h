@@ -223,7 +223,7 @@ public:
       return true;
     if (getContext().isObjCNSObjectType(Ty))
       return true;
-    if (getContext().isObjCObjectPointerType(Ty))
+    if (Ty->isObjCObjectPointerType())
       return true;
     return false;
   }

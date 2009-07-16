@@ -669,14 +669,14 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
 
       FirstType = static_cast<Expr*>(First)->getType();        
     }
-    if (!Context.isObjCObjectPointerType(FirstType))
+    if (!FirstType->isObjCObjectPointerType())
         Diag(ForLoc, diag::err_selector_element_type)
           << FirstType << First->getSourceRange();
   }
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
-    if (!Context.isObjCObjectPointerType(SecondType))
+    if (!SecondType->isObjCObjectPointerType())
       Diag(ForLoc, diag::err_collection_expr_type)
         << SecondType << Second->getSourceRange();
   }
@@ -1161,7 +1161,7 @@ Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc,
     if (PVD->isInvalidDecl())
       return StmtError();
     
-    if (!Context.isObjCObjectPointerType(PVD->getType()))
+    if (!PVD->getType()->isObjCObjectPointerType())
       return StmtError(Diag(PVD->getLocation(), 
                        diag::err_catch_param_not_objc_type));
     if (PVD->getType()->isObjCQualifiedIdType())
@@ -1203,7 +1203,7 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
   } else {
     QualType ThrowType = ThrowExpr->getType();
     // Make sure the expression type is an ObjC pointer or "void *".
-    if (!Context.isObjCObjectPointerType(ThrowType)) {
+    if (!ThrowType->isObjCObjectPointerType()) {
       const PointerType *PT = ThrowType->getAsPointerType();
       if (!PT || !PT->getPointeeType()->isVoidType())
         return StmtError(Diag(AtLoc, diag::error_objc_throw_expects_object)
@@ -1220,7 +1220,7 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
 
   // Make sure the expression type is an ObjC pointer or "void *".
   Expr *SyncExpr = static_cast<Expr*>(SynchExpr.get());
-  if (!Context.isObjCObjectPointerType(SyncExpr->getType())) {
+  if (!SyncExpr->getType()->isObjCObjectPointerType()) {
     const PointerType *PT = SyncExpr->getType()->getAsPointerType();
     if (!PT || !PT->getPointeeType()->isVoidType())
       return StmtError(Diag(AtLoc, diag::error_objc_synchronized_expects_object)

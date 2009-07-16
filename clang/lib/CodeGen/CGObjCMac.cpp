@@ -3005,7 +3005,7 @@ static QualType::GCAttrTypes GetGCAttrTypeForType(ASTContext &Ctx,
   if (FQT.isObjCGCWeak())
     return QualType::Weak;
 
-  if (Ctx.isObjCObjectPointerType(FQT))
+  if (FQT->isObjCObjectPointerType())
     return QualType::Strong;
 
   if (const PointerType *PT = FQT->getAsPointerType())

@@ -881,7 +881,7 @@ RetainSummaryManager::getPersistentSummary(ArgEffects AE, RetEffect RetEff,
 //===----------------------------------------------------------------------===//
 
 bool RetainSummaryManager::isTrackedObjCObjectType(QualType Ty) {
-  if (!Ctx.isObjCObjectPointerType(Ty))
+  if (!Ty->isObjCObjectPointerType())
     return false;
 
   const ObjCObjectPointerType *PT = Ty->getAsObjCObjectPointerType();

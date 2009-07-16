@@ -25,7 +25,7 @@ bool Sema::DiagnosePropertyAccessorMismatch(ObjCPropertyDecl *property,
   if (GetterMethod &&
       GetterMethod->getResultType() != property->getType()) {
     AssignConvertType result = Incompatible;
-    if (Context.isObjCObjectPointerType(property->getType()))
+    if (property->getType()->isObjCObjectPointerType())
       result = CheckAssignmentConstraints(GetterMethod->getResultType(), property->getType());
     if (result != Compatible) {
       Diag(Loc, diag::warn_accessor_property_type_mismatch) 
@@ -1739,7 +1739,9 @@ void Sema::CheckObjCPropertyAttributes(QualType PropertyTy,
 
   // Check for copy or retain on non-object types.
   if ((Attributes & (ObjCDeclSpec::DQ_PR_copy | ObjCDeclSpec::DQ_PR_retain)) &&
-      !Context.isObjCObjectPointerType(PropertyTy)) {
+      !PropertyTy->isObjCObjectPointerType() && 
+      !PropertyTy->isBlockPointerType() && 
+      !Context.isObjCNSObjectType(PropertyTy)) {
     Diag(Loc, diag::err_objc_property_requires_object)
       << (Attributes & ObjCDeclSpec::DQ_PR_copy ? "copy" : "retain");
     Attributes &= ~(ObjCDeclSpec::DQ_PR_copy | ObjCDeclSpec::DQ_PR_retain);
@@ -1770,7 +1772,7 @@ void Sema::CheckObjCPropertyAttributes(QualType PropertyTy,
   if (!(Attributes & (ObjCDeclSpec::DQ_PR_assign | ObjCDeclSpec::DQ_PR_copy |
                       ObjCDeclSpec::DQ_PR_retain)) &&
       !(Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-      Context.isObjCObjectPointerType(PropertyTy)) {
+      PropertyTy->isObjCObjectPointerType()) {
     // Skip this warning in gc-only mode.
     if (getLangOptions().getGCMode() != LangOptions::GCOnly)    
       Diag(Loc, diag::warn_objc_property_no_assignment_attribute);

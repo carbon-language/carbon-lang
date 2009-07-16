@@ -718,7 +718,7 @@ public:
           ASTContext &C = BRC.getASTContext();
           if (R->isBoundable()) {
             if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
-              if (C.isObjCObjectPointerType(TR->getValueType(C))) {
+              if (TR->getValueType(C)->isObjCObjectPointerType()) {
                 os << "initialized to nil";
                 b = true;
               }
@@ -749,7 +749,7 @@ public:
         ASTContext &C = BRC.getASTContext();
         if (R->isBoundable()) {
           if (const TypedRegion *TR = dyn_cast<TypedRegion>(R)) {
-            if (C.isObjCObjectPointerType(TR->getValueType(C))) {
+            if (TR->getValueType(C)->isObjCObjectPointerType()) {
               os << "nil object reference stored to ";
               b = true;
             }

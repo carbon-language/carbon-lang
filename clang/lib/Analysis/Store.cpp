@@ -55,7 +55,7 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
   QualType ToTy = Ctx.getCanonicalType(CastToTy);
 
   // Handle casts to Objective-C objects.
-  if (Ctx.isObjCObjectPointerType(CastToTy)) {
+  if (CastToTy->isObjCObjectPointerType()) {
     state = setCastType(state, R, CastToTy);
     return CastResult(state, R);
   }

@@ -4500,9 +4500,9 @@ QualType Sema::CheckAssignmentOperands(Expr *LHS, Expr *&RHS,
     // Special case of NSObject attributes on c-style pointer types.
     if (ConvTy == IncompatiblePointer &&
         ((Context.isObjCNSObjectType(LHSType) &&
-          Context.isObjCObjectPointerType(RHSType)) ||
+          RHSType->isObjCObjectPointerType()) ||
          (Context.isObjCNSObjectType(RHSType) &&
-          Context.isObjCObjectPointerType(LHSType))))
+          LHSType->isObjCObjectPointerType())))
       ConvTy = Compatible;
 
     // If the RHS is a unary plus or minus, check to see if they = and + are

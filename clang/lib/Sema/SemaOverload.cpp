@@ -907,7 +907,7 @@ bool Sema::IsPointerConversion(Expr *From, QualType FromType, QualType ToType,
     return true;
 
   // Conversion from a null pointer constant to any Objective-C pointer type. 
-  if (Context.isObjCObjectPointerType(ToType) && 
+  if (ToType->isObjCObjectPointerType() && 
       From->isNullPointerConstant(Context)) {
     ConvertedType = ToType;
     return true;
