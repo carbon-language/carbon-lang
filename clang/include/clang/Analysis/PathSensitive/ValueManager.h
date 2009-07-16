@@ -16,10 +16,12 @@
 #ifndef LLVM_CLANG_ANALYSIS_AGGREGATE_VALUE_MANAGER_H
 #define LLVM_CLANG_ANALYSIS_AGGREGATE_VALUE_MANAGER_H
 
+#include "llvm/ADT/OwningPtr.h"
 #include "clang/Analysis/PathSensitive/MemRegion.h"
 #include "clang/Analysis/PathSensitive/SVals.h"
 #include "clang/Analysis/PathSensitive/BasicValueFactory.h"
 #include "clang/Analysis/PathSensitive/SymbolManager.h"
+#include "clang/Analysis/PathSensitive/SValuator.h"
 
 namespace llvm { class BumpPtrAllocator; }
 
@@ -32,14 +34,25 @@ class ValueManager {
   /// SymMgr - Object that manages the symbol information.
   SymbolManager SymMgr;
 
+  /// SVator - SValuator object that creates SVals from expressions.
+  llvm::OwningPtr<SValuator> SVator;
 
   MemRegionManager MemMgr;
+  
+  const QualType ArrayIndexTy;
+  const unsigned ArrayIndexWidth;
   
 public:
   ValueManager(llvm::BumpPtrAllocator &alloc, ASTContext &context)
                : Context(context), BasicVals(Context, alloc),
                  SymMgr(Context, BasicVals, alloc),
-                 MemMgr(Context, alloc) {}
+                 MemMgr(Context, alloc),
+                 ArrayIndexTy(Context.IntTy),
+                 ArrayIndexWidth(Context.getTypeSize(ArrayIndexTy))  
+  {
+    // FIXME: Generalize later.
+    SVator.reset(clang::CreateSimpleSValuator(*this));
+  }
 
   // Accessors to submanagers.
   
@@ -51,6 +64,8 @@ public:
   
   SymbolManager &getSymbolManager() { return SymMgr; }
   const SymbolManager &getSymbolManager() const { return SymMgr; }
+                 
+  SValuator &getSValuator() { return *SVator.get(); }
 
   MemRegionManager &getRegionManager() { return MemMgr; }
   const MemRegionManager &getRegionManager() const { return MemMgr; }
@@ -92,8 +107,14 @@ public:
   }
 
   NonLoc makeZeroArrayIndex() {
-    return nonloc::ConcreteInt(BasicVals.getZeroWithPtrWidth(false));
+    return nonloc::ConcreteInt(BasicVals.getValue(0, ArrayIndexTy));
   }
+  
+  NonLoc makeArrayIndex(uint64_t idx) {
+    return nonloc::ConcreteInt(BasicVals.getValue(idx, ArrayIndexTy));
+  }
+  
+  SVal convertToArrayIndex(SVal V);
 
   nonloc::ConcreteInt makeIntVal(const IntegerLiteral* I) {
     return nonloc::ConcreteInt(BasicVals.getValue(I->getValue(),

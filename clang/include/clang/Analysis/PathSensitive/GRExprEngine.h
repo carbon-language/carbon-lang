@@ -20,7 +20,6 @@
 #include "clang/Analysis/PathSensitive/GRState.h"
 #include "clang/Analysis/PathSensitive/GRSimpleAPICheck.h"
 #include "clang/Analysis/PathSensitive/GRTransferFuncs.h"
-#include "clang/Analysis/PathSensitive/SValuator.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/ExprObjC.h"
@@ -69,7 +68,7 @@ protected:
   ValueManager &ValMgr;
   
   /// SVator - SValuator object that creates SVals from expressions.
-  llvm::OwningPtr<SValuator> SVator;
+  SValuator &SVator;
   
   /// EntryNode - The immediate predecessor node.
   NodeTy* EntryNode;
@@ -603,31 +602,25 @@ protected:
   void EvalEagerlyAssume(NodeSet& Dst, NodeSet& Src, Expr *Ex);
   
   SVal EvalCast(SVal X, QualType CastT) {
-    if (X.isUnknownOrUndef())
-      return X;
-    
-    if (isa<Loc>(X))
-      return SVator->EvalCast(cast<Loc>(X), CastT);
-    else
-      return SVator->EvalCast(cast<NonLoc>(X), CastT);
+    return SVator.EvalCast(X, CastT);
   }
   
   SVal EvalMinus(SVal X) {
-    return X.isValid() ? SVator->EvalMinus(cast<NonLoc>(X)) : X;
+    return X.isValid() ? SVator.EvalMinus(cast<NonLoc>(X)) : X;
   }
   
   SVal EvalComplement(SVal X) {
-    return X.isValid() ? SVator->EvalComplement(cast<NonLoc>(X)) : X;
+    return X.isValid() ? SVator.EvalComplement(cast<NonLoc>(X)) : X;
   }
   
 public:
   
   SVal EvalBinOp(BinaryOperator::Opcode op, NonLoc L, NonLoc R, QualType T) {
-    return SVator->EvalBinOpNN(op, L, R, T);
+    return SVator.EvalBinOpNN(op, L, R, T);
   }
 
   SVal EvalBinOp(BinaryOperator::Opcode op, NonLoc L, SVal R, QualType T) {
-    return R.isValid() ? SVator->EvalBinOpNN(op, L, cast<NonLoc>(R), T) : R;
+    return R.isValid() ? SVator.EvalBinOpNN(op, L, cast<NonLoc>(R), T) : R;
   }
   
   SVal EvalBinOp(const GRState *state, BinaryOperator::Opcode op,

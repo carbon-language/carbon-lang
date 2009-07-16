@@ -124,7 +124,7 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
     StateMgr(G.getContext(), SMC, CMC, G.getAllocator(), cfg, CD, L),
     SymMgr(StateMgr.getSymbolManager()),
     ValMgr(StateMgr.getValueManager()),
-    SVator(clang::CreateSimpleSValuator(ValMgr)), // FIXME: Generalize later.
+    SVator(ValMgr.getSValuator()),
     CurrentStmt(NULL),
     NSExceptionII(NULL), NSExceptionInstanceRaiseSelectors(NULL),
     RaiseSel(GetNullarySelector("raise", G.getContext())), 
@@ -3090,9 +3090,9 @@ SVal GRExprEngine::EvalBinOp(const GRState* state, BinaryOperator::Opcode Op,
   
   if (isa<Loc>(L)) {
     if (isa<Loc>(R))
-      return SVator->EvalBinOpLL(Op, cast<Loc>(L), cast<Loc>(R), T);
+      return SVator.EvalBinOpLL(Op, cast<Loc>(L), cast<Loc>(R), T);
     else
-      return SVator->EvalBinOpLN(state, Op, cast<Loc>(L), cast<NonLoc>(R), T);
+      return SVator.EvalBinOpLN(state, Op, cast<Loc>(L), cast<NonLoc>(R), T);
   }
   
   if (isa<Loc>(R)) {
@@ -3102,10 +3102,10 @@ SVal GRExprEngine::EvalBinOp(const GRState* state, BinaryOperator::Opcode Op,
     assert (Op == BinaryOperator::Add || Op == BinaryOperator::Sub);
     
     // Commute the operands.
-    return SVator->EvalBinOpLN(state, Op, cast<Loc>(R), cast<NonLoc>(L), T);
+    return SVator.EvalBinOpLN(state, Op, cast<Loc>(R), cast<NonLoc>(L), T);
   }
   else
-    return SVator->EvalBinOpNN(Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
+    return SVator.EvalBinOpNN(Op, cast<NonLoc>(L), cast<NonLoc>(R), T);
 }
 
 //===----------------------------------------------------------------------===//
