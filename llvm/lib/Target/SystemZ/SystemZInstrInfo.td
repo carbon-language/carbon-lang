@@ -255,7 +255,21 @@ def MOV32rmy : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
 def MOV64rm  : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
                       "lg\t{$dst, $src}",
                       [(set GR64:$dst, (load rriaddr:$src))]>;
-
+def MOV64Prm : Pseudo<(outs GR64P:$dst), (ins rriaddr12:$src),
+                      "# MOV64P PSEUDO!\n"
+                      "\tl\t${dst:subreg_odd},  $src\n"
+                      "\tl\t${dst:subreg_even}, 4+$src",
+                      [(set GR64P:$dst, (load rriaddr12:$src))]>;
+def MOV64Prmy : Pseudo<(outs GR64P:$dst), (ins rriaddr:$src),
+                       "# MOV64P PSEUDO!\n"
+                       "\tly\t${dst:subreg_odd},  $src\n"
+                       "\tly\t${dst:subreg_even}, 4+$src",
+                       [(set GR64P:$dst, (load rriaddr:$src))]>;
+def MOV128rm : Pseudo<(outs GR128:$dst), (ins rriaddr:$src),
+                      "# MOV128 PSEUDO!\n"
+                      "\tlg\t${dst:subreg_odd},  $src\n"
+                      "\tlg\t${dst:subreg_even}, 8+$src",
+                      [(set GR128:$dst, (load rriaddr:$src))]>;
 }
 
 def MOV32mr  : Pseudo<(outs), (ins rriaddr12:$dst, GR32:$src),
@@ -267,6 +281,21 @@ def MOV32mry : Pseudo<(outs), (ins rriaddr:$dst, GR32:$src),
 def MOV64mr  : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
                       "stg\t{$src, $dst}",
                       [(store GR64:$src, rriaddr:$dst)]>;
+def MOV64Pmr : Pseudo<(outs), (ins rriaddr12:$dst, GR64P:$src),
+                      "# MOV64P PSEUDO!\n"
+                      "\tst\t${src:subreg_odd}, $dst\n"
+                      "\tst\t${src:subreg_even}, 4+$dst",
+                      [(store GR64P:$src, rriaddr12:$dst)]>;
+def MOV64Pmry : Pseudo<(outs), (ins rriaddr:$dst, GR64P:$src),
+                       "# MOV64P PSEUDO!\n"
+                       "\tsty\t${src:subreg_odd}, $dst\n"
+                       "\tsty\t${src:subreg_even}, 4+$dst",
+                       [(store GR64P:$src, rriaddr:$dst)]>;
+def MOV128mr : Pseudo<(outs), (ins rriaddr:$dst, GR128:$src),
+                      "# MOV128 PSEUDO!\n"
+                      "\tstg\t${src:subreg_odd}, $dst\n"
+                      "\tstg\t${src:subreg_even}, 8+$dst",
+                      [(store GR128:$src, rriaddr:$dst)]>;
 
 def MOV8mi    : Pseudo<(outs), (ins riaddr12:$dst, i32i8imm:$src),
                        "mvi\t{$dst, $src}",

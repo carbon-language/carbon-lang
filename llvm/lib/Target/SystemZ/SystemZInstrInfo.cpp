@@ -76,6 +76,10 @@ void SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opc = SystemZ::FMOV32mr;
   } else if (RC == &SystemZ::FP64RegClass) {
     Opc = SystemZ::FMOV64mr;
+  } else if (RC == &SystemZ::GR64PRegClass) {
+    Opc = SystemZ::MOV64Pmr;
+  } else if (RC == &SystemZ::GR128RegClass) {
+    Opc = SystemZ::MOV128mr;
   } else
     assert(0 && "Unsupported regclass to store");
 
@@ -101,8 +105,12 @@ void SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opc = SystemZ::FMOV32rm;
   } else if (RC == &SystemZ::FP64RegClass) {
     Opc = SystemZ::FMOV64rm;
+  } else if (RC == &SystemZ::GR64PRegClass) {
+    Opc = SystemZ::MOV64Prm;
+  } else if (RC == &SystemZ::GR128RegClass) {
+    Opc = SystemZ::MOV128rm;
   } else
-    assert(0 && "Unsupported regclass to store");
+    assert(0 && "Unsupported regclass to load");
 
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc), DestReg), FrameIdx);
 }
@@ -209,6 +217,9 @@ unsigned SystemZInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
   case SystemZ::FMOV32rmy:
   case SystemZ::FMOV64rm:
   case SystemZ::FMOV64rmy:
+  case SystemZ::MOV64Prm:
+  case SystemZ::MOV64Prmy:
+  case SystemZ::MOV128rm:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isImm() && MI->getOperand(3).isReg() &&
         MI->getOperand(2).getImm() == 0 && MI->getOperand(3).getReg() == 0) {
@@ -241,6 +252,9 @@ unsigned SystemZInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
   case SystemZ::FMOV32mry:
   case SystemZ::FMOV64mr:
   case SystemZ::FMOV64mry:
+  case SystemZ::MOV64Pmr:
+  case SystemZ::MOV64Pmry:
+  case SystemZ::MOV128mr:
     if (MI->getOperand(0).isFI() &&
         MI->getOperand(1).isImm() && MI->getOperand(2).isReg() &&
         MI->getOperand(1).getImm() == 0 && MI->getOperand(2).getReg() == 0) {
@@ -650,6 +664,8 @@ SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   case SystemZ::FMOV64mr:  return get(SystemZ::FMOV64mry);
   case SystemZ::FMOV32rm:  return get(SystemZ::FMOV32rmy);
   case SystemZ::FMOV64rm:  return get(SystemZ::FMOV64rmy);
+  case SystemZ::MOV64Pmr:  return get(SystemZ::MOV64Pmry);
+  case SystemZ::MOV64Prm:  return get(SystemZ::MOV64Prmy);
   default:
    assert(0 && "Don't have long disp version of this instruction");
   }
