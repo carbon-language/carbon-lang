@@ -123,12 +123,15 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::MULHS,            MVT::i64, Expand);
   setOperationAction(ISD::SMUL_LOHI,        MVT::i64, Expand);
 
+  // Lower some FP stuff
   setOperationAction(ISD::FSIN,             MVT::f32, Expand);
   setOperationAction(ISD::FSIN,             MVT::f64, Expand);
   setOperationAction(ISD::FCOS,             MVT::f32, Expand);
   setOperationAction(ISD::FCOS,             MVT::f64, Expand);
   setOperationAction(ISD::UINT_TO_FP,       MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP,       MVT::i64, Expand);
+
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
