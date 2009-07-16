@@ -57,6 +57,10 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setSchedulingPreference(SchedulingForLatency);
 
   setOperationAction(ISD::RET,              MVT::Other, Custom);
+
+  setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
+  setOperationAction(ISD::BR_CC,            MVT::i32, Custom);
+  setOperationAction(ISD::BR_CC,            MVT::i64, Custom);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
@@ -64,6 +68,7 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::RET:              return LowerRET(Op, DAG);
   case ISD::CALL:             return LowerCALL(Op, DAG);
+  case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -406,10 +411,75 @@ SDValue SystemZTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(SystemZISD::RET_FLAG, dl, MVT::Other, Chain);
 }
 
+SDValue SystemZTargetLowering::EmitCmp(SDValue LHS, SDValue RHS,
+                                       ISD::CondCode CC, SDValue &SystemZCC,
+                                       SelectionDAG &DAG) {
+  assert(!LHS.getValueType().isFloatingPoint() && "We don't handle FP yet");
+
+  // FIXME: Emit a test if RHS is zero
+
+  bool isUnsigned = false;
+  SystemZCC::CondCodes TCC;
+  switch (CC) {
+  default: assert(0 && "Invalid integer condition!");
+  case ISD::SETEQ:
+    TCC = SystemZCC::E;
+    break;
+  case ISD::SETNE:
+    TCC = SystemZCC::NE;
+    break;
+  case ISD::SETULE:
+    isUnsigned = true;   // FALLTHROUGH
+  case ISD::SETLE:
+    TCC = SystemZCC::LE;
+    break;
+  case ISD::SETUGE:
+    isUnsigned = true;   // FALLTHROUGH
+  case ISD::SETGE:
+    TCC = SystemZCC::HE;
+    break;
+  case ISD::SETUGT:
+    isUnsigned = true;
+  case ISD::SETGT:
+    TCC = SystemZCC::H; // FALLTHROUGH
+    break;
+  case ISD::SETULT:
+    isUnsigned = true;
+  case ISD::SETLT:      // FALLTHROUGH
+    TCC = SystemZCC::L;
+    break;
+  }
+
+  SystemZCC = DAG.getConstant(TCC, MVT::i32);
+
+  DebugLoc dl = LHS.getDebugLoc();
+  return DAG.getNode((isUnsigned ? SystemZISD::UCMP : SystemZISD::CMP),
+                     dl, MVT::Flag, LHS, RHS);
+}
+
+
+SDValue SystemZTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) {
+  SDValue Chain = Op.getOperand(0);
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
+  SDValue LHS   = Op.getOperand(2);
+  SDValue RHS   = Op.getOperand(3);
+  SDValue Dest  = Op.getOperand(4);
+  DebugLoc dl   = Op.getDebugLoc();
+
+  SDValue SystemZCC;
+  SDValue Flag = EmitCmp(LHS, RHS, CC, SystemZCC, DAG);
+  return DAG.getNode(SystemZISD::BRCOND, dl, Op.getValueType(),
+                     Chain, Dest, SystemZCC, Flag);
+}
+
+
 const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   case SystemZISD::RET_FLAG:           return "SystemZISD::RET_FLAG";
   case SystemZISD::CALL:               return "SystemZISD::CALL";
+  case SystemZISD::BRCOND:             return "SystemZISD::BRCOND";
+  case SystemZISD::CMP:                return "SystemZISD::CMP";
+  case SystemZISD::UCMP:               return "SystemZISD::UCMP";
   default: return NULL;
   }
 }

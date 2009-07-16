@@ -27,6 +27,10 @@ class SDTCisI64<int OpNum> : SDTCisVT<OpNum, i64>;
 def SDT_SystemZCall         : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 def SDT_SystemZCallSeqStart : SDCallSeqStart<[SDTCisI64<0>]>;
 def SDT_SystemZCallSeqEnd   : SDCallSeqEnd<[SDTCisI64<0>, SDTCisI64<1>]>;
+def SDT_CmpTest             : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
+def SDT_BrCond              : SDTypeProfile<0, 2,
+                                           [SDTCisVT<0, OtherVT>,
+                                            SDTCisI8<1>]>;
 
 //===----------------------------------------------------------------------===//
 // SystemZ Specific Node Definitions.
@@ -41,10 +45,24 @@ def SystemZcallseq_start :
 def SystemZcallseq_end :
                  SDNode<"ISD::CALLSEQ_END",   SDT_SystemZCallSeqEnd,
                         [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
+def SystemZcmp     : SDNode<"SystemZISD::CMP", SDT_CmpTest, [SDNPOutFlag]>;
+def SystemZucmp    : SDNode<"SystemZISD::UCMP", SDT_CmpTest, [SDNPOutFlag]>;
+def SystemZbrcond  : SDNode<"SystemZISD::BRCOND", SDT_BrCond,
+                            [SDNPHasChain, SDNPInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff.
 //===----------------------------------------------------------------------===//
+
+// SystemZ specific condition code. These correspond to CondCode in
+// SystemZ.h. They must be kept in synch.
+def SYSTEMZ_COND_E  : PatLeaf<(i8 0)>;
+def SYSTEMZ_COND_NE : PatLeaf<(i8 1)>;
+def SYSTEMZ_COND_H  : PatLeaf<(i8 2)>;
+def SYSTEMZ_COND_L  : PatLeaf<(i8 3)>;
+def SYSTEMZ_COND_HE : PatLeaf<(i8 4)>;
+def SYSTEMZ_COND_LE : PatLeaf<(i8 5)>;
+
 def LL16 : SDNodeXForm<imm, [{
   // Transformation function: return low 16 bits.
   return getI16Imm(N->getZExtValue() & 0x000000000000FFFFULL);
@@ -140,6 +158,18 @@ def i32immSExt16 : PatLeaf<(i32 imm), [{
   return (int32_t)N->getZExtValue() == (int16_t)N->getZExtValue();
 }]>;
 
+def i64immSExt32 : PatLeaf<(i64 imm), [{
+  // i64immSExt32 predicate - True if the 64-bit immediate fits in a 32-bit
+  // sign extended field.
+  return (int64_t)N->getZExtValue() == (int32_t)N->getZExtValue();
+}]>;
+
+def i64immZExt32 : PatLeaf<(i64 imm), [{
+  // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
+  // zero extended field.
+  return (uint64_t)N->getZExtValue() == (uint32_t)N->getZExtValue();
+}]>;
+
 // extloads
 def extloadi64i8   : PatFrag<(ops node:$ptr), (i64 (extloadi8  node:$ptr))>;
 def extloadi64i16  : PatFrag<(ops node:$ptr), (i64 (extloadi16 node:$ptr))>;
@@ -158,6 +188,10 @@ def zextloadi64i32  : PatFrag<(ops node:$ptr), (i64 (zextloadi32 node:$ptr))>;
 def i32i8imm  : Operand<i32>;
 // 32-bits but only 16 bits are significant.
 def i32i16imm : Operand<i32>;
+// 64-bits but only 32 bits are significant.
+def i64i32imm : Operand<i64>;
+// Branch targets have OtherVT type.
+def brtarget : Operand<OtherVT>;
 
 //===----------------------------------------------------------------------===//
 // SystemZ Operand Definitions.
@@ -208,9 +242,33 @@ def ADJCALLSTACKUP   : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
 //
 
 // FIXME: Provide proper encoding!
-let isReturn = 1, isTerminator = 1 in {
+let isReturn = 1, isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in {
   def RET : Pseudo<(outs), (ins), "br\t%r14", [(SystemZretflag)]>;
 }
+
+let isBranch = 1, isTerminator = 1 in {
+  let Uses = [PSW] in {
+    def JE  : Pseudo<(outs), (ins brtarget:$dst),
+                     "je\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_E)]>;
+    def JNE : Pseudo<(outs), (ins brtarget:$dst),
+                     "jne\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_NE)]>;
+    def JH  : Pseudo<(outs), (ins brtarget:$dst),
+                     "jh\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_H)]>;
+    def JL  : Pseudo<(outs), (ins brtarget:$dst),
+                     "jl\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_L)]>;
+    def JHE : Pseudo<(outs), (ins brtarget:$dst),
+                     "jhe\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_HE)]>;
+    def JLE : Pseudo<(outs), (ins brtarget:$dst),
+                     "jle\t$dst",
+                     [(SystemZbrcond bb:$dst, SYSTEMZ_COND_LE)]>;
+
+  } // Uses = [PSW]
+} // isBranch = 1
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
@@ -558,6 +616,81 @@ def SRA64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
                       "srag\t{$dst, $src, $amt}",
                       [(set GR64:$dst, (sra GR64:$src, (i32 imm:$amt))),
                        (implicit PSW)]>;
+} // Defs = [PSW]
+
+//===----------------------------------------------------------------------===//
+// Test instructions (like AND but do not produce any result
+
+// Integer comparisons
+let Defs = [PSW] in {
+def CMP32rr : Pseudo<(outs), (ins GR32:$src1, GR32:$src2),
+                     "cr\t$src1, $src2",
+                     [(SystemZcmp GR32:$src1, GR32:$src2), (implicit PSW)]>;
+def CMP64rr : Pseudo<(outs), (ins GR64:$src1, GR64:$src2),
+                     "cgr\t$src1, $src2",
+                     [(SystemZcmp GR64:$src1, GR64:$src2), (implicit PSW)]>;
+
+def CMP32ri   : Pseudo<(outs), (ins GR32:$src1, i32imm:$src2),
+                       "cfi\t$src1, $src2",
+                       [(SystemZcmp GR32:$src1, imm:$src2), (implicit PSW)]>;
+def CMP64ri32 : Pseudo<(outs), (ins GR64:$src1, i64i32imm:$src2),
+                       "cgfi\t$src1, $src2",
+                       [(SystemZcmp GR64:$src1, i64immSExt32:$src2),
+                        (implicit PSW)]>;
+
+def CMP32rm : Pseudo<(outs), (ins GR32:$src1, rriaddr:$src2),
+                     "cy\t$src1, $src2",
+                     [(SystemZcmp GR32:$src1, (load rriaddr:$src2)),
+                      (implicit PSW)]>;
+def CMP64rm : Pseudo<(outs), (ins GR64:$src1, rriaddr:$src2),
+                     "cg\t$src1, $src2",
+                     [(SystemZcmp GR64:$src1, (load rriaddr:$src2)),
+                      (implicit PSW)]>;
+
+def UCMP32rr : Pseudo<(outs), (ins GR32:$src1, GR32:$src2),
+                      "clr\t$src1, $src2",
+                      [(SystemZucmp GR32:$src1, GR32:$src2), (implicit PSW)]>;
+def UCMP64rr : Pseudo<(outs), (ins GR64:$src1, GR64:$src2),
+                      "clgr\t$src1, $src2",
+                      [(SystemZucmp GR64:$src1, GR64:$src2), (implicit PSW)]>;
+
+def UCMP32ri   : Pseudo<(outs), (ins GR32:$src1, i32imm:$src2),
+                        "clfi\t$src1, $src2",
+                        [(SystemZucmp GR32:$src1, imm:$src2), (implicit PSW)]>;
+def UCMP64ri32 : Pseudo<(outs), (ins GR64:$src1, i64i32imm:$src2),
+                        "clgfi\t$src1, $src2",
+                        [(SystemZucmp GR64:$src1, i64immZExt32:$src2),
+                         (implicit PSW)]>;
+
+def UCMP32rm : Pseudo<(outs), (ins GR32:$src1, rriaddr:$src2),
+                      "cly\t$src1, $src2",
+                      [(SystemZucmp GR32:$src1, (load rriaddr:$src2)),
+                       (implicit PSW)]>;
+def UCMP64rm : Pseudo<(outs), (ins GR64:$src1, rriaddr:$src2),
+                      "clg\t$src1, $src2",
+                      [(SystemZucmp GR64:$src1, (load rriaddr:$src2)),
+                       (implicit PSW)]>;
+
+def CMPSX64rr32  : Pseudo<(outs), (ins GR64:$src1, GR32:$src2),
+                          "cgfr\t$src1, $src2",
+                          [(SystemZucmp GR64:$src1, (sext GR32:$src2)),
+                           (implicit PSW)]>;
+def UCMPZX64rr32 : Pseudo<(outs), (ins GR64:$src1, GR32:$src2),
+                          "clgfr\t$src1, $src2",
+                          [(SystemZucmp GR64:$src1, (zext GR32:$src2)),
+                           (implicit PSW)]>;
+
+def CMPSX64rm32   : Pseudo<(outs), (ins GR64:$src1, rriaddr:$src2),
+                           "cgf\t$src1, $src2",
+                           [(SystemZucmp GR64:$src1, (sextloadi64i32 rriaddr:$src2)),
+                            (implicit PSW)]>;
+def UCMPZX64rm32  : Pseudo<(outs), (ins GR64:$src1, rriaddr:$src2),
+                           "clgf\t$src1, $src2",
+                           [(SystemZucmp GR64:$src1, (zextloadi64i32 rriaddr:$src2)),
+                            (implicit PSW)]>;
+
+// FIXME: Add other crazy ucmp forms
+
 } // Defs = [PSW]
 
 //===----------------------------------------------------------------------===//

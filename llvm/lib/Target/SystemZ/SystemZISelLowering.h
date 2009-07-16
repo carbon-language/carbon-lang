@@ -30,7 +30,11 @@ namespace llvm {
 
       /// CALL/TAILCALL - These operations represent an abstract call
       /// instruction, which includes a bunch of information.
-      CALL
+      CALL,
+
+      CMP,
+      UCMP,
+      BRCOND
     };
   }
 
@@ -51,13 +55,17 @@ namespace llvm {
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerRET(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC);
-
     SDNode* LowerCallResult(SDValue Chain, SDValue InFlag,
                             CallSDNode *TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
+
+    SDValue EmitCmp(SDValue LHS, SDValue RHS,
+                    ISD::CondCode CC, SDValue &SystemZCC,
+                    SelectionDAG &DAG);
 
   private:
     const SystemZSubtarget &Subtarget;
