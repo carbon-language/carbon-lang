@@ -194,6 +194,9 @@ SDValue SystemZTargetLowering::LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
   DebugLoc dl = Op.getDebugLoc();
   MachineFunction &MF = DAG.getMachineFunction();
 
+  // Offset to first argument stack slot.
+  const unsigned FirstArgOffset = 160;
+
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
@@ -246,14 +249,13 @@ SDValue SystemZTargetLowering::LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
                               SystemZ::R11D : SystemZ::R15D),
                              getPointerTy());
 
-      SDValue PtrOff =
-        DAG.getNode(ISD::ADD, dl, getPointerTy(),
-                    StackPtr,
-                    DAG.getIntPtrConstant(160+VA.getLocMemOffset()));
+      unsigned Offset = FirstArgOffset + VA.getLocMemOffset();
+      SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                                   StackPtr,
+                                   DAG.getIntPtrConstant(Offset));
 
       MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
-                                         PseudoSourceValue::getStack(),
-                                         VA.getLocMemOffset()));
+                                         PseudoSourceValue::getStack(), Offset));
     }
   }
 
