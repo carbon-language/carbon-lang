@@ -79,6 +79,15 @@ def R14D : GPR64<14, "r14", [R14W]>, DwarfRegNum<[14]>;
 def R15D : GPR64<15, "r15", [R15W]>, DwarfRegNum<[15]>;
 
 // Register pairs
+def R0P  : GPR64< 0,  "r0", [R0W,  R1W]>,  DwarfRegNum<[0]>;
+def R2P  : GPR64< 2,  "r2", [R2W,  R3W]>,  DwarfRegNum<[2]>;
+def R4P  : GPR64< 4,  "r4", [R4W,  R5W]>,  DwarfRegNum<[4]>;
+def R6P  : GPR64< 6,  "r6", [R6W,  R7W]>,  DwarfRegNum<[6]>;
+def R8P  : GPR64< 8,  "r8", [R8W,  R9W]>,  DwarfRegNum<[8]>;
+def R10P : GPR64<10, "r10", [R10W, R11W]>, DwarfRegNum<[10]>;
+def R12P : GPR64<12, "r12", [R12W, R13W]>, DwarfRegNum<[12]>;
+def R14P : GPR64<14, "r14", [R14W, R15W]>, DwarfRegNum<[14]>;
+
 def R0Q  : GPR128< 0,  "r0", [R0D,  R1D]>,  DwarfRegNum<[0]>;
 def R2Q  : GPR128< 2,  "r2", [R2D,  R3D]>,  DwarfRegNum<[2]>;
 def R4Q  : GPR128< 4,  "r4", [R4D,  R5D]>,  DwarfRegNum<[4]>;
@@ -112,6 +121,8 @@ def PSW : SystemZReg<"psw">;
 def subreg_32bit  : PatLeaf<(i32 1)>;
 def subreg_64even : PatLeaf<(i32 2)>;
 def subreg_64odd  : PatLeaf<(i32 3)>;
+def subreg_32even : PatLeaf<(i32 4)>;
+def subreg_32odd  : PatLeaf<(i32 5)>;
 
 def : SubRegSet<1, [R0D, R1D,  R2D,  R3D,  R4D,  R5D,  R6D,  R7D,
                     R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
@@ -123,6 +134,12 @@ def : SubRegSet<2, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
 
 def : SubRegSet<3, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
                    [R1D, R3D, R5D, R7D, R9D, R11D, R13D, R15D]>;
+
+def : SubRegSet<4, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
+                   [R0W, R2W, R4W, R6W, R8W, R10W, R12W, R14W]>;
+
+def : SubRegSet<5, [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P],
+                   [R1W, R3W, R5W, R7W, R9W, R11W, R13W, R15W]>;
 
 /// Register classes
 def GR32 : RegisterClass<"SystemZ", [i32], 32,
@@ -313,6 +330,42 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
 }
 
 // Even-odd register pairs
+def GR64P : RegisterClass<"SystemZ", [i64], 64,
+  [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P]>
+{
+  let SubRegClassList = [GR32, GR32];
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    static const unsigned SystemZ_REG64P[] = {
+      SystemZ::R0P,  SystemZ::R2P,  SystemZ::R4P, SystemZ::R10P,
+      SystemZ::R8P,  SystemZ::R6P };
+    static const unsigned SystemZ_REG64P_nofp[] = {
+      SystemZ::R0P,  SystemZ::R2P,  SystemZ::R4P, /* NO R10P */
+      SystemZ::R8P,  SystemZ::R6P };
+    GR64PClass::iterator
+    GR64PClass::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return SystemZ_REG64P_nofp;
+      else
+        return SystemZ_REG64P;
+    }
+    GR64PClass::iterator
+    GR64PClass::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return SystemZ_REG64P_nofp + (sizeof(SystemZ_REG64P_nofp) / sizeof(unsigned));
+      else
+        return SystemZ_REG64P + (sizeof(SystemZ_REG64P) / sizeof(unsigned));
+    }
+  }];
+}
+
 def GR128 : RegisterClass<"SystemZ", [i128], 128,
   [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]>
 {
