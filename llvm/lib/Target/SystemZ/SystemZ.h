@@ -39,7 +39,8 @@ namespace llvm {
       NL  = 10,
       LE  = 11,
       NH  = 12,
-      NO  = 13
+      NO  = 13,
+      INVALID = -1
     };
   }
 

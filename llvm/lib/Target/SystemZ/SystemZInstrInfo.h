@@ -86,10 +86,21 @@ public:
                                            MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI) const;
 
+  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+  virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
+  virtual bool isUnpredicatedTerminator(const MachineInstr *MI) const;
+  virtual bool AnalyzeBranch(MachineBasicBlock &MBB,
+                             MachineBasicBlock *&TBB,
+                             MachineBasicBlock *&FBB,
+                             SmallVectorImpl<MachineOperand> &Cond,
+                             bool AllowModify) const;
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                              const SmallVectorImpl<MachineOperand> &Cond) const;
+  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
 
+  SystemZCC::CondCodes getOppositeCondition(SystemZCC::CondCodes CC) const;
+  SystemZCC::CondCodes getCondFromBranchOpc(unsigned Opc) const;
   const TargetInstrDesc& getBrCond(SystemZCC::CondCodes CC) const;
   const TargetInstrDesc& getLongDispOpc(unsigned Opc) const;
 };

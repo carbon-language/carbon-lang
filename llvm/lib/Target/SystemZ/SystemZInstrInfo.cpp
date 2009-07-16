@@ -309,6 +309,137 @@ SystemZInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
+bool SystemZInstrInfo::
+ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
+  assert(Cond.size() == 1 && "Invalid Xbranch condition!");
+
+  SystemZCC::CondCodes CC = static_cast<SystemZCC::CondCodes>(Cond[0].getImm());
+  Cond[0].setImm(getOppositeCondition(CC));
+  return false;
+}
+
+bool SystemZInstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB)const{
+  if (MBB.empty()) return false;
+
+  switch (MBB.back().getOpcode()) {
+  case SystemZ::RET:   // Return.
+  case SystemZ::JMP:   // Uncond branch.
+  case SystemZ::JMPr:  // Indirect branch.
+    return true;
+  default: return false;
+  }
+}
+
+bool SystemZInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.isTerminator()) return false;
+
+  // Conditional branch is a special case.
+  if (TID.isBranch() && !TID.isBarrier())
+    return true;
+  if (!TID.isPredicable())
+    return true;
+  return !isPredicated(MI);
+}
+
+bool SystemZInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
+                                     MachineBasicBlock *&TBB,
+                                     MachineBasicBlock *&FBB,
+                                     SmallVectorImpl<MachineOperand> &Cond,
+                                     bool AllowModify) const {
+  // Start from the bottom of the block and work up, examining the
+  // terminator instructions.
+  MachineBasicBlock::iterator I = MBB.end();
+  while (I != MBB.begin()) {
+    --I;
+    // Working from the bottom, when we see a non-terminator
+    // instruction, we're done.
+    if (!isUnpredicatedTerminator(I))
+      break;
+
+    // A terminator that isn't a branch can't easily be handled
+    // by this analysis.
+    if (!I->getDesc().isBranch())
+      return true;
+
+    // Handle unconditional branches.
+    if (I->getOpcode() == SystemZ::JMP) {
+      if (!AllowModify) {
+        TBB = I->getOperand(0).getMBB();
+        continue;
+      }
+
+      // If the block has any instructions after a JMP, delete them.
+      while (next(I) != MBB.end())
+        next(I)->eraseFromParent();
+      Cond.clear();
+      FBB = 0;
+
+      // Delete the JMP if it's equivalent to a fall-through.
+      if (MBB.isLayoutSuccessor(I->getOperand(0).getMBB())) {
+        TBB = 0;
+        I->eraseFromParent();
+        I = MBB.end();
+        continue;
+      }
+
+      // TBB is used to indicate the unconditinal destination.
+      TBB = I->getOperand(0).getMBB();
+      continue;
+    }
+
+    // Handle conditional branches.
+    SystemZCC::CondCodes BranchCode = getCondFromBranchOpc(I->getOpcode());
+    if (BranchCode == SystemZCC::INVALID)
+      return true;  // Can't handle indirect branch.
+
+    // Working from the bottom, handle the first conditional branch.
+    if (Cond.empty()) {
+      FBB = TBB;
+      TBB = I->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(BranchCode));
+      continue;
+    }
+
+    // Handle subsequent conditional branches. Only handle the case where all
+    // conditional branches branch to the same destination.
+    assert(Cond.size() == 1);
+    assert(TBB);
+
+    // Only handle the case where all conditional branches branch to
+    // the same destination.
+    if (TBB != I->getOperand(0).getMBB())
+      return true;
+
+    SystemZCC::CondCodes OldBranchCode = (SystemZCC::CondCodes)Cond[0].getImm();
+    // If the conditions are the same, we can leave them alone.
+    if (OldBranchCode == BranchCode)
+      continue;
+
+    return true;
+  }
+
+  return false;
+}
+
+unsigned SystemZInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  MachineBasicBlock::iterator I = MBB.end();
+  unsigned Count = 0;
+
+  while (I != MBB.begin()) {
+    --I;
+    if (I->getOpcode() != SystemZ::JMP &&
+        getCondFromBranchOpc(I->getOpcode()) == SystemZCC::INVALID)
+      break;
+    // Remove the branch.
+    I->eraseFromParent();
+    I = MBB.end();
+    ++Count;
+  }
+
+  return Count;
+}
+
 unsigned
 SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                MachineBasicBlock *FBB,
@@ -360,6 +491,49 @@ SystemZInstrInfo::getBrCond(SystemZCC::CondCodes CC) const {
   case SystemZCC::LE:  return get(SystemZ::JLE);
   case SystemZCC::NH:  return get(SystemZ::JNH);
   case SystemZCC::NO:  return get(SystemZ::JNO);
+  }
+}
+
+SystemZCC::CondCodes
+SystemZInstrInfo::getCondFromBranchOpc(unsigned Opc) const {
+  switch (Opc) {
+  default:            return SystemZCC::INVALID;
+  case SystemZ::JO:   return SystemZCC::O;
+  case SystemZ::JH:   return SystemZCC::H;
+  case SystemZ::JNLE: return SystemZCC::NLE;
+  case SystemZ::JL:   return SystemZCC::L;
+  case SystemZ::JNHE: return SystemZCC::NHE;
+  case SystemZ::JLH:  return SystemZCC::LH;
+  case SystemZ::JNE:  return SystemZCC::NE;
+  case SystemZ::JE:   return SystemZCC::E;
+  case SystemZ::JNLH: return SystemZCC::NLH;
+  case SystemZ::JHE:  return SystemZCC::HE;
+  case SystemZ::JNL:  return SystemZCC::NL;
+  case SystemZ::JLE:  return SystemZCC::LE;
+  case SystemZ::JNH:  return SystemZCC::NH;
+  case SystemZ::JNO:  return SystemZCC::NO;
+  }
+}
+
+SystemZCC::CondCodes
+SystemZInstrInfo::getOppositeCondition(SystemZCC::CondCodes CC) const {
+  switch (CC) {
+  default:
+   assert(0 && "Invalid condition!");
+  case SystemZCC::O:   return SystemZCC::NO;
+  case SystemZCC::H:   return SystemZCC::NH;
+  case SystemZCC::NLE: return SystemZCC::LE;
+  case SystemZCC::L:   return SystemZCC::NL;
+  case SystemZCC::NHE: return SystemZCC::HE;
+  case SystemZCC::LH:  return SystemZCC::NLH;
+  case SystemZCC::NE:  return SystemZCC::E;
+  case SystemZCC::E:   return SystemZCC::NE;
+  case SystemZCC::NLH: return SystemZCC::LH;
+  case SystemZCC::HE:  return SystemZCC::NHE;
+  case SystemZCC::NL:  return SystemZCC::L;
+  case SystemZCC::LE:  return SystemZCC::NLE;
+  case SystemZCC::NH:  return SystemZCC::H;
+  case SystemZCC::NO:  return SystemZCC::O;
   }
 }
 
