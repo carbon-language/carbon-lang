@@ -27,9 +27,9 @@
 #include "llvm/System/Path.h"
 #include "llvm/System/Process.h"
 #include "llvm/Target/SubtargetFeature.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegistry.h"
 
 #include <fstream>
 

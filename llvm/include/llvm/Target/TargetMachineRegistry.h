@@ -18,36 +18,12 @@
 #define LLVM_TARGET_TARGETMACHINEREGISTRY_H
 
 #include "llvm/Module.h"
-#include "llvm/Support/Registry.h"
 #include "llvm/Target/TargetRegistry.h"
 
 namespace llvm {
   class Module;
   class Target;
   class TargetMachine;
-
-  struct TargetMachineRegistryEntry {
-    const Target &TheTarget;
-    const char *Name;
-    const char *ShortDesc;
-
-  public:
-    TargetMachineRegistryEntry(const Target &T, const char *N, const char *SD)
-      : TheTarget(T), Name(N), ShortDesc(SD) {}
-  };
-
-  template<>
-  class RegistryTraits<TargetMachine> {
-  public:
-    typedef TargetMachineRegistryEntry entry;
-
-    static const char *nameof(const entry &Entry) { return Entry.Name; }
-    static const char *descof(const entry &Entry) { return Entry.ShortDesc; }
-  };
-
-  struct TargetMachineRegistry : public Registry<TargetMachine> {
-
-  };
 
   //===--------------------------------------------------------------------===//
   /// RegisterTarget - This class is used to make targets automatically register
@@ -63,16 +39,11 @@ namespace llvm {
 
   template<class TargetMachineImpl>
   struct RegisterTarget {
-    RegisterTarget(Target &T, const char *Name, const char *ShortDesc)
-      : Entry(T, Name, ShortDesc),
-        Node(Entry) {
+    RegisterTarget(Target &T, const char *Name, const char *ShortDesc) {
       TargetRegistry::RegisterTargetMachine(T, &Allocator);
     }
 
   private:
-    TargetMachineRegistry::entry Entry;
-    TargetMachineRegistry::node Node;
-
     static TargetMachine *Allocator(const Target &T, const Module &M, 
                                     const std::string &FS) {
       return new TargetMachineImpl(T, M, FS);
