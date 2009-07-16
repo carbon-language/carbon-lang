@@ -7,6 +7,7 @@ add_clang_library(clangAnalysis
   BasicValueFactory.cpp
   BugReporter.cpp
   CFRefCount.cpp
+  CallGraph.cpp
   CheckDeadStores.cpp
   CheckNSError.cpp
   CheckObjCDealloc.cpp
