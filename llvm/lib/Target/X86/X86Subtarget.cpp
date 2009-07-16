@@ -44,6 +44,10 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
   if (GV->hasDLLImportLinkage())
     return X86II::MO_DLLIMPORT;
 
+  // GV with ghost linkage (in JIT lazy compilation mode) do not require an
+  // extra load from stub.
+  bool isDecl = GV->isDeclaration() && !GV->hasNotBeenReadFromBitcode();
+
   // X86-64 in PIC mode.
   if (isPICStyleRIPRel()) {
     // Large model never uses stubs.
@@ -55,7 +59,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
       // target is x86-64 or the symbol is definitely defined in the current
       // translation unit.
       if (GV->hasDefaultVisibility() &&
-          (GV->isDeclaration() || GV->isWeakForLinker()))
+          (isDecl || GV->isWeakForLinker()))
         return X86II::MO_GOTPCREL;
     } else {
       assert(isTargetELF() && "Unknown rip-relative target");
@@ -81,7 +85,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     
     // If this is a strong reference to a definition, it is definitely not
     // through a stub.
-    if (!GV->isDeclaration() && !GV->isWeakForLinker())
+    if (!isDecl && !GV->isWeakForLinker())
       return X86II::MO_PIC_BASE_OFFSET;
 
     // Unless we have a symbol with hidden visibility, we have to go through a
@@ -91,7 +95,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     
     // If symbol visibility is hidden, we have a stub for common symbol
     // references and external declarations.
-    if (GV->isDeclaration() || GV->hasCommonLinkage()) {
+    if (isDecl || GV->hasCommonLinkage()) {
       // Hidden $non_lazy_ptr reference.
       return X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE;
     }
@@ -105,7 +109,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     
     // If this is a strong reference to a definition, it is definitely not
     // through a stub.
-    if (!GV->isDeclaration() && !GV->isWeakForLinker())
+    if (!isDecl && !GV->isWeakForLinker())
       return X86II::MO_NO_FLAG;
     
     // Unless we have a symbol with hidden visibility, we have to go through a
@@ -115,7 +119,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
     
     // If symbol visibility is hidden, we have a stub for common symbol
     // references and external declarations.
-    if (GV->isDeclaration() || GV->hasCommonLinkage()) {
+    if (isDecl || GV->hasCommonLinkage()) {
       // Hidden $non_lazy_ptr reference.
       return X86II::MO_DARWIN_HIDDEN_NONLAZY;
     }
