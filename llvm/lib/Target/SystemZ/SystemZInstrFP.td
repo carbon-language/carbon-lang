@@ -281,12 +281,12 @@ def FCONVGR32   : Pseudo<(outs GR32:$dst), (ins FP32:$src),
                          [(set GR32:$dst, (fp_to_sint FP32:$src)),
                           (implicit PSW)]>;
 def FCONVGR32r64: Pseudo<(outs GR32:$dst), (ins FP64:$src),
-                         "cgebr\t{$dst, 5, $src}",
+                         "cfdbr\t{$dst, 5, $src}",
                          [(set GR32:$dst, (fp_to_sint FP64:$src)),
                           (implicit PSW)]>;
 
 def FCONVGR64r32: Pseudo<(outs GR64:$dst), (ins FP32:$src),
-                         "cfdbr\t{$dst, 5, $src}",
+                         "cgebr\t{$dst, 5, $src}",
                          [(set GR64:$dst, (fp_to_sint FP32:$src)),
                           (implicit PSW)]>;
 def FCONVGR64   : Pseudo<(outs GR64:$dst), (ins FP64:$src),
