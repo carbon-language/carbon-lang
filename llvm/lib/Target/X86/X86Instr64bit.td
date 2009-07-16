@@ -1309,7 +1309,7 @@ def Int_CVTTSS2SI64rm: RSSI<0x2C, MRMSrcMem, (outs GR64:$dst), (ins f32mem:$src)
 // when we have a better way to specify isel priority.
 let AddedComplexity = 1 in
 def : Pat<(i64 0),
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), (MOV32r0), x86_subreg_32bit)>;
+          (SUBREG_TO_REG (i64 0), (MOV32r0), x86_subreg_32bit)>;
 
 
 // Materialize i64 constant where top 32-bits are zero.
