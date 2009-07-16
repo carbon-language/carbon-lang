@@ -343,106 +343,44 @@ SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
 
 const TargetInstrDesc&
 SystemZInstrInfo::getBrCond(SystemZCC::CondCodes CC) const {
-  unsigned Opc;
   switch (CC) {
   default:
     assert(0 && "Unknown condition code!");
-  case SystemZCC::O:
-    Opc = SystemZ::JO;
-    break;
-  case SystemZCC::H:
-    Opc = SystemZ::JH;
-    break;
-  case SystemZCC::NLE:
-    Opc = SystemZ::JNLE;
-    break;
-  case SystemZCC::L:
-    Opc = SystemZ::JL;
-    break;
-  case SystemZCC::NHE:
-    Opc = SystemZ::JNHE;
-    break;
-  case SystemZCC::LH:
-    Opc = SystemZ::JLH;
-    break;
-  case SystemZCC::NE:
-    Opc = SystemZ::JNE;
-    break;
-  case SystemZCC::E:
-    Opc = SystemZ::JE;
-    break;
-  case SystemZCC::NLH:
-    Opc = SystemZ::JNLH;
-    break;
-  case SystemZCC::HE:
-    Opc = SystemZ::JHE;
-    break;
-  case SystemZCC::NL:
-    Opc = SystemZ::JNL;
-    break;
-  case SystemZCC::LE:
-    Opc = SystemZ::JLE;
-    break;
-  case SystemZCC::NH:
-    Opc = SystemZ::JNH;
-    break;
-  case SystemZCC::NO:
-    Opc = SystemZ::JNO;
-    break;
+  case SystemZCC::O:   return get(SystemZ::JO);
+  case SystemZCC::H:   return get(SystemZ::JH);
+  case SystemZCC::NLE: return get(SystemZ::JNLE);
+  case SystemZCC::L:   return get(SystemZ::JL);
+  case SystemZCC::NHE: return get(SystemZ::JNHE);
+  case SystemZCC::LH:  return get(SystemZ::JLH);
+  case SystemZCC::NE:  return get(SystemZ::JNE);
+  case SystemZCC::E:   return get(SystemZ::JE);
+  case SystemZCC::NLH: return get(SystemZ::JNLH);
+  case SystemZCC::HE:  return get(SystemZ::JHE);
+  case SystemZCC::NL:  return get(SystemZ::JNL);
+  case SystemZCC::LE:  return get(SystemZ::JLE);
+  case SystemZCC::NH:  return get(SystemZ::JNH);
+  case SystemZCC::NO:  return get(SystemZ::JNO);
   }
-
-  return get(Opc);
 }
 
 const TargetInstrDesc&
 SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   switch (Opc) {
-  case SystemZ::MOV32mr:
-    Opc = SystemZ::MOV32mry;
-    break;
-  case SystemZ::MOV32rm:
-    Opc = SystemZ::MOV32rmy;
-    break;
-  case SystemZ::MOVSX32rm16:
-    Opc = SystemZ::MOVSX32rm16y;
-    break;
-  case SystemZ::MOV32m8r:
-    Opc = SystemZ::MOV32m8ry;
-    break;
-  case SystemZ::MOV32m16r:
-    Opc = SystemZ::MOV32m16ry;
-    break;
-  case SystemZ::MOV64m8r:
-    Opc = SystemZ::MOV64m8ry;
-    break;
-  case SystemZ::MOV64m16r:
-    Opc = SystemZ::MOV64m16ry;
-    break;
-  case SystemZ::MOV64m32r:
-    Opc = SystemZ::MOV64m32ry;
-    break;
-  case SystemZ::MOV8mi:
-    Opc = SystemZ::MOV8miy;
-    break;
-  case SystemZ::MUL32rm:
-    Opc = SystemZ::MUL32rmy;
-    break;
-  case SystemZ::CMP32rm:
-    Opc = SystemZ::CMP32rmy;
-    break;
-  case SystemZ::UCMP32rm:
-    Opc = SystemZ::UCMP32rmy;
-    break;
-  case SystemZ::FMOV32mr:
-    Opc = SystemZ::FMOV32mry;
-    break;
-  case SystemZ::FMOV64mr:
-    Opc = SystemZ::FMOV64mry;
-    break;
-  default:
-    break;
+  case SystemZ::MOV32mr:   return get(SystemZ::MOV32mry);
+  case SystemZ::MOV32rm:   return get(SystemZ::MOV32rmy);
+  case SystemZ::MOVSX32rm16: return get(SystemZ::MOVSX32rm16y);
+  case SystemZ::MOV32m8r:  return get(SystemZ::MOV32m8ry);
+  case SystemZ::MOV32m16r: return get(SystemZ::MOV32m16ry);
+  case SystemZ::MOV64m8r:  return get(SystemZ::MOV64m8ry);
+  case SystemZ::MOV64m16r: return get(SystemZ::MOV64m16ry);
+  case SystemZ::MOV64m32r: return get(SystemZ::MOV64m32ry);
+  case SystemZ::MOV8mi:    return get(SystemZ::MOV8miy);
+  case SystemZ::MUL32rm:   return get(SystemZ::MUL32rmy);
+  case SystemZ::CMP32rm:   return get(SystemZ::CMP32rmy);
+  case SystemZ::UCMP32rm:  return get(SystemZ::UCMP32rmy);
+  case SystemZ::FMOV32mr:  return get(SystemZ::FMOV32mry);
+  case SystemZ::FMOV64mr:  return get(SystemZ::FMOV64mry);
+  default: return get(Opc);
   }
-
-  return get(Opc);
 }
 
