@@ -122,6 +122,8 @@ namespace llvm {
   
     // Expand specifics
     SDValue ExpandADDSUB(SDNode *Op, SelectionDAG &DAG);
+
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   };
 }
 

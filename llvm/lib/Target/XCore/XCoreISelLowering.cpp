@@ -153,6 +153,9 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
 
   maxStoresPerMemset = 4;
   maxStoresPerMemmove = maxStoresPerMemcpy = 2;
+
+  // We have target-specific dag combine patterns for the following nodes:
+  setTargetDAGCombine(ISD::STORE);
 }
 
 SDValue XCoreTargetLowering::
@@ -1047,6 +1050,55 @@ XCoreTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   
   F->DeleteMachineInstr(MI);   // The pseudo instruction is gone now.
   return BB;
+}
+
+//===----------------------------------------------------------------------===//
+// Target Optimization Hooks
+//===----------------------------------------------------------------------===//
+
+SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
+                                             DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  DebugLoc dl = N->getDebugLoc();
+  switch (N->getOpcode()) {
+  default: break;
+  case ISD::STORE: {
+    // Replace unaligned store of unaligned load with memmove.
+    StoreSDNode *ST  = cast<StoreSDNode>(N);
+    if (!DCI.isBeforeLegalize() || allowsUnalignedMemoryAccesses() ||
+        ST->isVolatile() || ST->isIndexed()) {
+      break;
+    }
+    SDValue Chain = ST->getChain();
+
+    unsigned StoreBits = ST->getMemoryVT().getStoreSizeInBits();
+    if (StoreBits % 8) {
+      break;
+    }
+    unsigned ABIAlignment = getTargetData()->
+      getABITypeAlignment(ST->getMemoryVT().getTypeForMVT(*DAG.getContext()));
+    unsigned Alignment = ST->getAlignment();
+    if (Alignment >= ABIAlignment) {
+      break;
+    }
+
+    if (LoadSDNode *LD = dyn_cast<LoadSDNode>(ST->getValue())) {
+      if (LD->hasNUsesOfValue(1, 0) && ST->getMemoryVT() == LD->getMemoryVT() &&
+        LD->getAlignment() == Alignment &&
+        !LD->isVolatile() && !LD->isIndexed() &&
+        Chain.reachesChainWithoutSideEffects(SDValue(LD, 1))) {
+        return DAG.getMemmove(Chain, dl, ST->getBasePtr(),
+                              LD->getBasePtr(),
+                              DAG.getConstant(StoreBits/8, MVT::i32),
+                              Alignment, ST->getSrcValue(),
+                              ST->getSrcValueOffset(), LD->getSrcValue(),
+                              LD->getSrcValueOffset());
+      }
+    }
+    break;
+  }
+  }
+  return SDValue();
 }
 
 //===----------------------------------------------------------------------===//
