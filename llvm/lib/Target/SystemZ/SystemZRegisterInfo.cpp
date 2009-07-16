@@ -206,7 +206,7 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
 
-  if (StackSize) // adjust stack pointer: R15 -= numbytes
+  if (NumBytes) // adjust stack pointer: R15 -= numbytes
     emitSPUpdate(MBB, MBBI, -(int64_t)NumBytes, TII);
 
   if (hasFP(MF)) {
