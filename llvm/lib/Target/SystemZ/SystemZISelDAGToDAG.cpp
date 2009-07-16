@@ -241,7 +241,7 @@ bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
       break;
     }
     // Test if the index field is free for use.
-    if (AM.IndexReg.getNode() && !AM.isRI) {
+    if (AM.IndexReg.getNode() || AM.isRI) {
       AM = Backup;
       break;
     }
