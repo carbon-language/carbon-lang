@@ -150,6 +150,9 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   // Debug
   setOperationAction(ISD::DBG_STOPPOINT, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
+
+  maxStoresPerMemset = 4;
+  maxStoresPerMemmove = maxStoresPerMemcpy = 2;
 }
 
 SDValue XCoreTargetLowering::
