@@ -352,6 +352,7 @@ def main():
         sys.exit(1)
         
     if opts.timeTests:
+        print '\nTest Times:'
         provider.results.sort(key=lambda t: t and t.elapsed)
         for tr in provider.results:
             if tr:
