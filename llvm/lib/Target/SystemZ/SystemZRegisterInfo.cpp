@@ -31,8 +31,8 @@ SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm,
 const unsigned*
 SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs[] = {
-    SystemZ::R6,  SystemZ::R7,  SystemZ::R8,  SystemZ::R9,
-    SystemZ::R10, SystemZ::R11, SystemZ::R12, SystemZ::R13,
+    SystemZ::R6D,  SystemZ::R7D,  SystemZ::R8D,  SystemZ::R9D,
+    SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D,
     SystemZ::F1,  SystemZ::F3,  SystemZ::F5,  SystemZ::F7,
     0
   };
@@ -56,9 +56,9 @@ SystemZRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
 BitVector SystemZRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   if (hasFP(MF))
-    Reserved.set(SystemZ::R11);
-  Reserved.set(SystemZ::R14);
-  Reserved.set(SystemZ::R15);
+    Reserved.set(SystemZ::R11D);
+  Reserved.set(SystemZ::R14D);
+  Reserved.set(SystemZ::R15D);
   return Reserved;
 }
 

@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 def RetCC_SystemZ : CallingConv<[
   // i64 is returned in register R2
-  CCIfType<[i64], CCAssignToReg<[R2]>>
+  CCIfType<[i64], CCAssignToReg<[R2D]>>
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -28,7 +28,7 @@ def CC_SystemZ : CallingConv<[
   // integer registers.
   // FIXME: Check stuff for varagrs
   CCIfNotVarArg<CCIfType<[i64],
-                CCAssignToReg<[R2, R3, R4, R5, R6]>>>,
+                CCAssignToReg<[R2D, R3D, R4D, R5D, R6D]>>>,
 
   // Integer values get stored in stack slots that are 8 bytes in
   // size and 8-byte aligned.
