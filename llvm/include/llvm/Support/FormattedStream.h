@@ -76,10 +76,6 @@ namespace llvm
     /// so it doesn't want another layer of buffering to be happening
     /// underneath it.
     ///
-    /// \param Filename - The file to open. If this is "-" then the
-    /// stream will use stdout instead.
-    /// \param Binary - The file should be opened in binary mode on
-    /// platforms that support this distinction.
     formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
       : raw_ostream(), TheStream(&Stream), DeleteStream(Delete), Column(0) {
       // This formatted_raw_ostream inherits from raw_ostream, so it'll do its
