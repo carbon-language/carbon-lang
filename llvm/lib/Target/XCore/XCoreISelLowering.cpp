@@ -424,7 +424,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG)
                                  BasePtr, LD->getSrcValue(), SVOffset, MVT::i16,
                                  LD->isVolatile(), 2);
     SDValue HighAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, BasePtr,
-                                   DAG.getConstant(1, MVT::i32));
+                                   DAG.getConstant(2, MVT::i32));
     SDValue High = DAG.getExtLoad(ISD::EXTLOAD, dl, MVT::i32, Chain,
                                   HighAddr, LD->getSrcValue(), SVOffset + 2,
                                   MVT::i16, LD->isVolatile(), 2);
@@ -487,7 +487,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
                                          ST->getSrcValue(), SVOffset, MVT::i16,
                                          ST->isVolatile(), 2);
     SDValue HighAddr = DAG.getNode(ISD::ADD, dl, MVT::i32, BasePtr,
-                                   DAG.getConstant(1, MVT::i32));
+                                   DAG.getConstant(2, MVT::i32));
     SDValue StoreHigh = DAG.getTruncStore(Chain, dl, High, HighAddr,
                                           ST->getSrcValue(), SVOffset + 2,
                                           MVT::i16, ST->isVolatile(), 2);
