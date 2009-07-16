@@ -783,16 +783,20 @@ isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
     const MachineOperand &MO = getOperand(UseOpIdx);
     if (!MO.isReg() || !MO.isUse() || MO.getReg() == 0)
       return false;
-    int FlagIdx = UseOpIdx - 1;
-    if (FlagIdx < 1)
-      return false;
-    while (!getOperand(FlagIdx).isImm()) {
-      if (--FlagIdx == 0)
-        return false;
+
+    // Find the flag operand corresponding to UseOpIdx
+    unsigned FlagIdx, NumOps=0;
+    for (FlagIdx = 1; FlagIdx < UseOpIdx; FlagIdx += NumOps+1) {
+      const MachineOperand &UFMO = getOperand(FlagIdx);
+      assert(UFMO.isImm() && "Expecting flag operand on inline asm");
+      NumOps = InlineAsm::getNumOperandRegisters(UFMO.getImm());
+      assert(NumOps < getNumOperands() && "Invalid inline asm flag");
+      if (UseOpIdx < FlagIdx+NumOps+1)
+        break;
     }
-    const MachineOperand &UFMO = getOperand(FlagIdx);
-    if (FlagIdx + InlineAsm::getNumOperandRegisters(UFMO.getImm()) < UseOpIdx)
+    if (FlagIdx >= UseOpIdx)
       return false;
+    const MachineOperand &UFMO = getOperand(FlagIdx);
     unsigned DefNo;
     if (InlineAsm::isUseOperandTiedToDef(UFMO.getImm(), DefNo)) {
       if (!DefOpIdx)
