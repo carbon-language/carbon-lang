@@ -415,3 +415,18 @@ void rdar_7062158_2() {
   *p = 0xDEADBEEF; // no-warning  
 }
 
+// This test reproduces a case for a crash when analyzing ClamAV using
+// RegionStoreManager (the crash doesn't exhibit in BasicStoreManager because
+// it isn't doing anything smart about arrays).  The problem is that on the
+// second line, 'p = &p[i]', p is assigned an ElementRegion whose index
+// is a 16-bit integer.  On the third line, a new ElementRegion is created
+// based on the previous region, but there the region uses a 32-bit integer,
+// resulting in a clash of values (an assertion failure at best).  We resolve
+// this problem by implicitly converting index values to 'int' when the
+// ElementRegion is created.
+unsigned char test_array_index_bitwidth(const unsigned char *p) {
+  unsigned short i = 0;
+  for (i = 0; i < 2; i++) p = &p[i];  
+  return p[i+1];
+}
+

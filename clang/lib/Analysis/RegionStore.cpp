@@ -500,6 +500,9 @@ SVal RegionStoreManager::getLValueElement(const GRState *St,
   // Pointer of any type can be cast and used as array base.
   const ElementRegion *ElemR = dyn_cast<ElementRegion>(BaseRegion);
   
+  // Convert the offset to the appropriate size and signedness.
+  Offset = ValMgr.convertToArrayIndex(Offset);
+  
   if (!ElemR) {
     //
     // If the base region is not an ElementRegion, create one.
@@ -510,16 +513,6 @@ SVal RegionStoreManager::getLValueElement(const GRState *St,
     //
     //  Observe that 'p' binds to an AllocaRegion.
     //
-
-    // Offset might be unsigned. We have to convert it to signed ConcreteInt.
-    if (nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&Offset)) {
-      const llvm::APSInt& OffI = CI->getValue();
-      if (OffI.isUnsigned()) {
-        llvm::APSInt Tmp = OffI;
-        Tmp.setIsSigned(true);
-        Offset = ValMgr.makeIntVal(Tmp);
-      }
-    }
     return loc::MemRegionVal(MRMgr.getElementRegion(elementType, Offset,
                                                     BaseRegion, getContext()));
   }
@@ -533,29 +526,11 @@ SVal RegionStoreManager::getLValueElement(const GRState *St,
   const llvm::APSInt& OffI = cast<nonloc::ConcreteInt>(Offset).getValue();
   assert(BaseIdxI.isSigned());
   
-  // FIXME: This appears to be the assumption of this code.  We should review
-  // whether or not BaseIdxI.getBitWidth() < OffI.getBitWidth().  If it
-  // can't we need to put a comment here.  If it can, we should handle it.
-  assert(BaseIdxI.getBitWidth() >= OffI.getBitWidth());
-
-  const MemRegion *ArrayR = ElemR->getSuperRegion();
-  SVal NewIdx;
+  // Compute the new index.
+  SVal NewIdx = nonloc::ConcreteInt(getBasicVals().getValue(BaseIdxI + OffI));
   
-  if (OffI.isUnsigned() || OffI.getBitWidth() < BaseIdxI.getBitWidth()) {
-    // 'Offset' might be unsigned.  We have to convert it to signed and
-    // possibly extend it.
-    llvm::APSInt Tmp = OffI;
-    
-    if (OffI.getBitWidth() < BaseIdxI.getBitWidth())
-        Tmp.extend(BaseIdxI.getBitWidth());
-    
-    Tmp.setIsSigned(true);
-    Tmp += BaseIdxI; // Compute the new offset.    
-    NewIdx = ValMgr.makeIntVal(Tmp);    
-  }
-  else
-    NewIdx = nonloc::ConcreteInt(getBasicVals().getValue(BaseIdxI + OffI));
-
+  // Construct the new ElementRegion.
+  const MemRegion *ArrayR = ElemR->getSuperRegion();
   return loc::MemRegionVal(MRMgr.getElementRegion(elementType, NewIdx, ArrayR,
 						  getContext()));
 }
@@ -760,20 +735,13 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
 
   // Only support concrete integer indexes for now.
   if (Base && Offset) {
-    // FIXME: For now, convert the signedness and bitwidth of offset in case
-    //  they don't match.  This can result from pointer arithmetic.  In reality,
-    //  we should figure out what are the proper semantics and implement them.
-    // 
-    //  This addresses the test case test/Analysis/ptr-arith.c
-    //
-    nonloc::ConcreteInt OffConverted(getBasicVals().Convert(Base->getValue(),
-                                                           Offset->getValue()));
-    SVal NewIdx = Base->evalBinOp(ValMgr, Op, OffConverted);
+    // FIXME: Should use SValuator here.
+    SVal NewIdx = Base->evalBinOp(ValMgr, Op,
+                cast<nonloc::ConcreteInt>(ValMgr.convertToArrayIndex(*Offset)));
     const MemRegion* NewER =
-      MRMgr.getElementRegion(ER->getElementType(), NewIdx,ER->getSuperRegion(),
-			     getContext());
+      MRMgr.getElementRegion(ER->getElementType(), NewIdx, ER->getSuperRegion(),
+                             getContext());
     return ValMgr.makeLoc(NewER);
-
   }
   
   return UnknownVal();
@@ -837,8 +805,8 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 
   ASTContext &Ctx = getContext();
   if (!T.isNull() && IsReinterpreted(RTy, T, Ctx)) {
-    SVal idx = ValMgr.makeIntVal(0, Ctx.IntTy);
-    R = MRMgr.getElementRegion(T, idx, R, Ctx);
+    SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
+    R = MRMgr.getElementRegion(T, ZeroIdx, R, Ctx);
     RTy = T;
     assert(Ctx.getCanonicalType(RTy) ==
            Ctx.getCanonicalType(R->getValueType(Ctx)));
@@ -1083,11 +1051,9 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
 
   llvm::ImmutableList<SVal> ArrayVal = getBasicVals().getEmptySValList();
-  llvm::APSInt Size(CAT->getSize(), false);
-  llvm::APSInt i = getBasicVals().getZeroWithPtrWidth(false);
-
-  for (; i < Size; ++i) {
-    SVal Idx = ValMgr.makeIntVal(i);
+  uint64_t size = CAT->getSize().getZExtValue();
+  for (uint64_t i = 0; i < size; ++i) {
+    SVal Idx = ValMgr.makeArrayIndex(i);
     ElementRegion* ER = MRMgr.getElementRegion(CAT->getElementType(), Idx, R,
 					       getContext());
     QualType ETy = ER->getElementType();
@@ -1160,15 +1126,14 @@ RegionStoreManager::BindCompoundLiteral(const GRState *state,
 }
 
 const GRState *RegionStoreManager::BindArray(const GRState *state,
-                                              const TypedRegion* R,
+                                             const TypedRegion* R,
                                              SVal Init) {
 
   QualType T = R->getValueType(getContext());
   ConstantArrayType* CAT = cast<ConstantArrayType>(T.getTypePtr());
   QualType ElementTy = CAT->getElementType();
 
-  llvm::APSInt Size(CAT->getSize(), false);
-  llvm::APSInt i(llvm::APInt::getNullValue(Size.getBitWidth()), false);
+  uint64_t size = CAT->getSize().getZExtValue();
 
   // Check if the init expr is a StringLiteral.
   if (isa<loc::MemRegionVal>(Init)) {
@@ -1181,12 +1146,13 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
     // Copy bytes from the string literal into the target array. Trailing bytes
     // in the array that are not covered by the string literal are initialized
     // to zero.
-    for (; i < Size; ++i, ++j) {
+    for (uint64_t i = 0; i < size; ++i, ++j) {
       if (j >= len)
         break;
 
-      SVal Idx = ValMgr.makeIntVal(i);
-      ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx,R,getContext());
+      SVal Idx = ValMgr.makeArrayIndex(i);
+      ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx, R,
+                                                 getContext());
 
       SVal V = ValMgr.makeIntVal(str[j], sizeof(char)*8, true);
       state = Bind(state, loc::MemRegionVal(ER), V);
@@ -1197,13 +1163,14 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
 
   nonloc::CompoundVal& CV = cast<nonloc::CompoundVal>(Init);
   nonloc::CompoundVal::iterator VI = CV.begin(), VE = CV.end();
-
-  for (; i < Size; ++i, ++VI) {
+  uint64_t i = 0;
+  
+  for (; i < size; ++i, ++VI) {
     // The init list might be shorter than the array length.
     if (VI == VE)
       break;
 
-    SVal Idx = ValMgr.makeIntVal(i);
+    SVal Idx = ValMgr.makeArrayIndex(i);
     ElementRegion* ER = MRMgr.getElementRegion(ElementTy, Idx, R, getContext());
 
     if (CAT->getElementType()->isStructureType())
@@ -1214,7 +1181,7 @@ const GRState *RegionStoreManager::BindArray(const GRState *state,
 
   // If the init list is shorter than the array length, set the array default
   // value.
-  if (i < Size) {
+  if (i < size) {
     if (ElementTy->isIntegerType()) {
       SVal V = ValMgr.makeZeroVal(ElementTy);
       state = setDefaultValue(state, R, V);

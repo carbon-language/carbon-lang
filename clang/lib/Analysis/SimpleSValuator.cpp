@@ -23,8 +23,8 @@ public:
   SimpleSValuator(ValueManager &valMgr) : SValuator(valMgr) {}
   virtual ~SimpleSValuator() {}
   
-  virtual SVal EvalCast(NonLoc val, QualType castTy);    
-  virtual SVal EvalCast(Loc val, QualType castTy);    
+  virtual SVal EvalCastNL(NonLoc val, QualType castTy);    
+  virtual SVal EvalCastL(Loc val, QualType castTy);    
   virtual SVal EvalMinus(NonLoc val);    
   virtual SVal EvalComplement(NonLoc val);    
   virtual SVal EvalBinOpNN(BinaryOperator::Opcode op, NonLoc lhs, NonLoc rhs,
@@ -44,7 +44,7 @@ SValuator *clang::CreateSimpleSValuator(ValueManager &valMgr) {
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-SVal SimpleSValuator::EvalCast(NonLoc val, QualType castTy) {  
+SVal SimpleSValuator::EvalCastNL(NonLoc val, QualType castTy) {  
   if (!isa<nonloc::ConcreteInt>(val))
     return UnknownVal();
 
@@ -64,7 +64,7 @@ SVal SimpleSValuator::EvalCast(NonLoc val, QualType castTy) {
     return ValMgr.makeIntVal(i);
 }
 
-SVal SimpleSValuator::EvalCast(Loc val, QualType castTy) {
+SVal SimpleSValuator::EvalCastL(Loc val, QualType castTy) {
   
   // Casts from pointers -> pointers, just return the lval.
   //

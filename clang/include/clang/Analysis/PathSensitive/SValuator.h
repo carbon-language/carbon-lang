@@ -31,9 +31,17 @@ public:
   SValuator(ValueManager &valMgr) : ValMgr(valMgr) {}
   virtual ~SValuator() {}
   
-  virtual SVal EvalCast(NonLoc val, QualType castTy) = 0;  
+  virtual SVal EvalCastNL(NonLoc val, QualType castTy) = 0;  
 
-  virtual SVal EvalCast(Loc val, QualType castTy) = 0;
+  virtual SVal EvalCastL(Loc val, QualType castTy) = 0;
+  
+  SVal EvalCast(SVal val, QualType castTy) {
+    if (val.isUnknownOrUndef())
+      return val;
+    
+    return isa<Loc>(val) ? EvalCastL(cast<Loc>(val), castTy)
+                         : EvalCastNL(cast<NonLoc>(val), castTy);
+  }
   
   virtual SVal EvalMinus(NonLoc val) = 0;
   

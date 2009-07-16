@@ -259,7 +259,8 @@ MemRegionManager::getCompoundLiteralRegion(const CompoundLiteralExpr* CL) {
 
 ElementRegion*
 MemRegionManager::getElementRegion(QualType elementType, SVal Idx,
-                                 const MemRegion* superRegion, ASTContext& Ctx){
+                                   const MemRegion* superRegion,
+                                   ASTContext& Ctx){
 
   QualType T = Ctx.getCanonicalType(elementType);
 
