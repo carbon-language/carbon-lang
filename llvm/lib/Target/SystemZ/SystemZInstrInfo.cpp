@@ -52,6 +52,12 @@ SystemZInstrInfo::SystemZInstrInfo(SystemZTargetMachine &tm)
     RegSpillOffsets[SpillOffsTab[i][0]] = SpillOffsTab[i][1];
 }
 
+/// isGVStub - Return true if the GV requires an extra load to get the
+/// real address.
+static inline bool isGVStub(GlobalValue *GV, SystemZTargetMachine &TM) {
+  return TM.getSubtarget<SystemZSubtarget>().GVRequiresExtraLoad(GV, TM, false);
+}
+
 void SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                     unsigned SrcReg, bool isKill, int FrameIdx,
@@ -244,6 +250,30 @@ unsigned SystemZInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
     break;
   }
   return 0;
+}
+
+bool SystemZInstrInfo::isInvariantLoad(const MachineInstr *MI) const {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    // Loads from constant pools are trivially invariant.
+    if (MO.isCPI())
+      return true;
+
+    if (MO.isGlobal())
+      return isGVStub(MO.getGlobal(), TM);
+
+    // If this is a load from an invariant stack slot, the load is a constant.
+    if (MO.isFI()) {
+      const MachineFrameInfo &MFI =
+        *MI->getParent()->getParent()->getFrameInfo();
+      int Idx = MO.getIndex();
+      return MFI.isFixedObjectIndex(Idx) && MFI.isImmutableObjectIndex(Idx);
+    }
+  }
+
+  // All other instances of these instructions are presumed to have other
+  // issues.
+  return false;
 }
 
 bool
