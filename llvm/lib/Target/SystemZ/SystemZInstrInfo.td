@@ -712,7 +712,7 @@ def MUL32rm : Pseudo<(outs GR32:$dst), (ins GR32:$src1, rriaddr:$src2),
                      "msy\t{$dst, $src2}",
                      [(set GR32:$dst, (mul GR32:$src1, (load rriaddr:$src2)))]>;
 def MUL64rm : Pseudo<(outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
-                     "msgy\t{$dst, $src2}",
+                     "msg\t{$dst, $src2}",
                      [(set GR64:$dst, (mul GR64:$src1, (load rriaddr:$src2)))]>;
 
 def MULSX64rr32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR32:$src2),
