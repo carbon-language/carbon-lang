@@ -35,12 +35,12 @@ def CC_SystemZ : CallingConv<[
   // integer registers.
   CCIfType<[i64], CCAssignToReg<[R2D, R3D, R4D, R5D, R6D]>>,
 
-  // The first 4 ifloating point arguments of non-varargs functions are passed
+  // The first 4 floating point arguments of non-varargs functions are passed
   // in FP registers.
   CCIfType<[f32], CCAssignToReg<[F0S, F2S, F4S, F6S]>>,
   CCIfType<[f64], CCAssignToReg<[F0L, F2L, F4L, F6L]>>,
 
   // Integer values get stored in stack slots that are 8 bytes in
   // size and 8-byte aligned.
-  CCIfType<[i64], CCAssignToStack<8, 8>>
+  CCIfType<[i64, f32, f64], CCAssignToStack<8, 8>>
 ]>;
