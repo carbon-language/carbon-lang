@@ -1,4 +1,5 @@
 // RUN: %llvmgxx %s -S
+// XFAIL: darwin
 
 #include <set>
 
