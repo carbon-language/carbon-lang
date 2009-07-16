@@ -103,26 +103,46 @@ def subreg_32bit : PatLeaf<(i32 1)>;
 /// Register classes
 def GR32 : RegisterClass<"SystemZ", [i32], 32,
    // Volatile registers
-  [R1W, R2W, R3W, R4W, R5W, R0W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
+  [R0D, R1W, R2W, R3W, R4W, R5W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
    // Frame pointer, sometimes allocable
    R11W,
    // Volatile, but not allocable
    R14W, R15W]>
 {
   let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
+    static const unsigned SystemZ_REG32[] = {
+      SystemZ::R1W,  SystemZ::R2W,  SystemZ::R3W,  SystemZ::R4W,
+      SystemZ::R5W,  SystemZ::R0W,  SystemZ::R12W, SystemZ::R11W,
+      SystemZ::R10W, SystemZ::R9W,  SystemZ::R8W,  SystemZ::R7W,
+      SystemZ::R6W,  SystemZ::R14W, SystemZ::R13W
+    };
+    static const unsigned SystemZ_REG32_nofp[] = {
+      SystemZ::R1W,  SystemZ::R2W,  SystemZ::R3W,  SystemZ::R4W,
+      SystemZ::R5W,  SystemZ::R0W,  SystemZ::R12W, /* No R11W */
+      SystemZ::R10W, SystemZ::R9W,  SystemZ::R8W,  SystemZ::R7W,
+      SystemZ::R6W,  SystemZ::R14W, SystemZ::R13W
+    };
+    GR32Class::iterator
+    GR32Class::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return SystemZ_REG32_nofp;
+      else
+        return SystemZ_REG32;
+    }
     GR32Class::iterator
     GR32Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      // Depending on whether the function uses frame pointer or not, last 2 or 3
-      // registers on the list above are reserved
       if (RI->hasFP(MF))
-        return end()-3;
+        return SystemZ_REG32_nofp + (sizeof(SystemZ_REG32_nofp) / sizeof(unsigned));
       else
-        return end()-2;
+        return SystemZ_REG32 + (sizeof(SystemZ_REG32) / sizeof(unsigned));
     }
   }];
 }
@@ -137,26 +157,46 @@ def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
    R14W, R15W]>
 {
   let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
+    static const unsigned SystemZ_ADDR32[] = {
+      SystemZ::R1W,  SystemZ::R2W,  SystemZ::R3W,  SystemZ::R4W,
+      SystemZ::R5W,  /* No R0W */   SystemZ::R12W, SystemZ::R11W,
+      SystemZ::R10W, SystemZ::R9W,  SystemZ::R8W,  SystemZ::R7W,
+      SystemZ::R6W,  SystemZ::R14W, SystemZ::R13W
+    };
+    static const unsigned SystemZ_ADDR32_nofp[] = {
+      SystemZ::R1W,  SystemZ::R2W,  SystemZ::R3W,  SystemZ::R4W,
+      SystemZ::R5W,  /* No R0W */   SystemZ::R12W, /* No R11W */
+      SystemZ::R10W, SystemZ::R9W,  SystemZ::R8W,  SystemZ::R7W,
+      SystemZ::R6W,  SystemZ::R14W, SystemZ::R13W
+    };
+    ADDR32Class::iterator
+    ADDR32Class::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return SystemZ_ADDR32_nofp;
+      else
+        return SystemZ_ADDR32;
+    }
     ADDR32Class::iterator
     ADDR32Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      // Depending on whether the function uses frame pointer or not, last 2 or 3
-      // registers on the list above are reserved
       if (RI->hasFP(MF))
-        return end()-3;
+        return SystemZ_ADDR32_nofp + (sizeof(SystemZ_ADDR32_nofp) / sizeof(unsigned));
       else
-        return end()-2;
+        return SystemZ_ADDR32 + (sizeof(SystemZ_ADDR32) / sizeof(unsigned));
     }
   }];
 }
 
 def GR64 : RegisterClass<"SystemZ", [i64], 64,
    // Volatile registers
-  [R1D, R2D, R3D, R4D, R5D, R0D, R6D, R7D, R8D, R9D, R10D, R12D, R13D,
+  [R0D, R1D, R2D, R3D, R4D, R5D, R6D, R7D, R8D, R9D, R10D, R12D, R13D,
    // Frame pointer, sometimes allocable
    R11D,
    // Volatile, but not allocable
@@ -164,19 +204,39 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
 {
   let SubRegClassList = [GR32];
   let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
+    static const unsigned SystemZ_REG64[] = {
+      SystemZ::R1D,  SystemZ::R2D,  SystemZ::R3D,  SystemZ::R4D,
+      SystemZ::R5D,  SystemZ::R0D,  SystemZ::R12D, SystemZ::R11D,
+      SystemZ::R10D, SystemZ::R9D,  SystemZ::R8D,  SystemZ::R7D,
+      SystemZ::R6D,  SystemZ::R14D, SystemZ::R13D
+    };
+    static const unsigned SystemZ_REG64_nofp[] = {
+      SystemZ::R1D,  SystemZ::R2D,  SystemZ::R3D,  SystemZ::R4D,
+      SystemZ::R5D,  SystemZ::R0D,  SystemZ::R12D, /* No R11D */
+      SystemZ::R10D, SystemZ::R9D,  SystemZ::R8D,  SystemZ::R7D,
+      SystemZ::R6D,  SystemZ::R14D, SystemZ::R13D
+    };
+    GR64Class::iterator
+    GR64Class::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return SystemZ_REG64_nofp;
+      else
+        return SystemZ_REG64;
+    }
     GR64Class::iterator
     GR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      // Depending on whether the function uses frame pointer or not, last 2 or 3
-      // registers on the list above are reserved
       if (RI->hasFP(MF))
-        return end()-3;
+        return SystemZ_REG64_nofp + (sizeof(SystemZ_REG64_nofp) / sizeof(unsigned));
       else
-        return end()-2;
+        return SystemZ_REG64 + (sizeof(SystemZ_REG64) / sizeof(unsigned));
     }
   }];
 }
@@ -191,19 +251,39 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
 {
   let SubRegClassList = [ADDR32];
   let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
     iterator allocation_order_end(const MachineFunction &MF) const;
   }];
   let MethodBodies = [{
+    static const unsigned SystemZ_ADDR64[] = {
+      SystemZ::R1D,  SystemZ::R2D,  SystemZ::R3D,  SystemZ::R4D,
+      SystemZ::R5D,  /* No R0D */   SystemZ::R12D, SystemZ::R11D,
+      SystemZ::R10D, SystemZ::R9D,  SystemZ::R8D,  SystemZ::R7D,
+      SystemZ::R6D,  SystemZ::R14D, SystemZ::R13D
+    };
+    static const unsigned SystemZ_ADDR64_nofp[] = {
+      SystemZ::R1D,  SystemZ::R2D,  SystemZ::R3D,  SystemZ::R4D,
+      SystemZ::R5D,  /* No R0D */   SystemZ::R12D, /* No R11D */
+      SystemZ::R10D, SystemZ::R9D,  SystemZ::R8D,  SystemZ::R7D,
+      SystemZ::R6D,  SystemZ::R14D, SystemZ::R13D
+    };
+    ADDR64Class::iterator
+    ADDR64Class::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return SystemZ_ADDR64_nofp;
+      else
+        return SystemZ_ADDR64;
+    }
     ADDR64Class::iterator
     ADDR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      // Depending on whether the function uses frame pointer or not, last 2 or 3
-      // registers on the list above are reserved
       if (RI->hasFP(MF))
-        return end()-3;
+        return SystemZ_ADDR64_nofp + (sizeof(SystemZ_ADDR64_nofp) / sizeof(unsigned));
       else
-        return end()-2;
+        return SystemZ_ADDR64 + (sizeof(SystemZ_ADDR64) / sizeof(unsigned));
     }
   }];
 }
