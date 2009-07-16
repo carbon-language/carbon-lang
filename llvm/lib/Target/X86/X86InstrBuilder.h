@@ -61,20 +61,20 @@ struct X86AddressMode {
 /// current instruction -- that is, a dereference of an address in a register,
 /// with no scale, index or displacement. An example is: DWORD PTR [EAX].
 ///
-inline const MachineInstrBuilder &addDirectMem(const MachineInstrBuilder &MIB,
-                                               unsigned Reg) {
+static inline const MachineInstrBuilder &
+addDirectMem(const MachineInstrBuilder &MIB, unsigned Reg) {
   // Because memory references are always represented with four
   // values, this adds: Reg, [1, NoReg, 0] to the instruction.
   return MIB.addReg(Reg).addImm(1).addReg(0).addImm(0);
 }
 
-inline const MachineInstrBuilder &addLeaOffset(const MachineInstrBuilder &MIB,
-                                            int Offset) {
+static inline const MachineInstrBuilder &
+addLeaOffset(const MachineInstrBuilder &MIB, int Offset) {
   return MIB.addImm(1).addReg(0).addImm(Offset);
 }
 
-inline const MachineInstrBuilder &addOffset(const MachineInstrBuilder &MIB,
-                                            int Offset) {
+static inline const MachineInstrBuilder &
+addOffset(const MachineInstrBuilder &MIB, int Offset) {
   return addLeaOffset(MIB, Offset).addReg(0);
 }
 
@@ -82,29 +82,29 @@ inline const MachineInstrBuilder &addOffset(const MachineInstrBuilder &MIB,
 /// [Reg + Offset], i.e., one with no scale or index, but with a
 /// displacement. An example is: DWORD PTR [EAX + 4].
 ///
-inline const MachineInstrBuilder &addRegOffset(const MachineInstrBuilder &MIB,
-                                               unsigned Reg, bool isKill,
-                                               int Offset) {
+static inline const MachineInstrBuilder &
+addRegOffset(const MachineInstrBuilder &MIB,
+             unsigned Reg, bool isKill, int Offset) {
   return addOffset(MIB.addReg(Reg, getKillRegState(isKill)), Offset);
 }
 
-inline const MachineInstrBuilder &addLeaRegOffset(const MachineInstrBuilder &MIB,
-                                                  unsigned Reg, bool isKill,
-                                                  int Offset) {
+static inline const MachineInstrBuilder &
+addLeaRegOffset(const MachineInstrBuilder &MIB,
+                unsigned Reg, bool isKill, int Offset) {
   return addLeaOffset(MIB.addReg(Reg, getKillRegState(isKill)), Offset);
 }
 
 /// addRegReg - This function is used to add a memory reference of the form:
 /// [Reg + Reg].
-inline const MachineInstrBuilder &addRegReg(const MachineInstrBuilder &MIB,
+static inline const MachineInstrBuilder &addRegReg(const MachineInstrBuilder &MIB,
                                             unsigned Reg1, bool isKill1,
                                             unsigned Reg2, bool isKill2) {
   return MIB.addReg(Reg1, getKillRegState(isKill1)).addImm(1)
     .addReg(Reg2, getKillRegState(isKill2)).addImm(0);
 }
 
-inline const MachineInstrBuilder &addLeaAddress(const MachineInstrBuilder &MIB,
-                                                const X86AddressMode &AM) {
+static inline const MachineInstrBuilder &
+addLeaAddress(const MachineInstrBuilder &MIB, const X86AddressMode &AM) {
   assert (AM.Scale == 1 || AM.Scale == 2 || AM.Scale == 4 || AM.Scale == 8);
 
   if (AM.BaseType == X86AddressMode::RegBase)
@@ -120,8 +120,9 @@ inline const MachineInstrBuilder &addLeaAddress(const MachineInstrBuilder &MIB,
     return MIB.addImm(AM.Disp);
 }
 
-inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
-                                                 const X86AddressMode &AM) {
+static inline const MachineInstrBuilder &
+addFullAddress(const MachineInstrBuilder &MIB,
+               const X86AddressMode &AM) {
   return addLeaAddress(MIB, AM).addReg(0);
 }
 
@@ -130,7 +131,7 @@ inline const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
 /// reference has base register as the FrameIndex offset until it is resolved.
 /// This allows a constant offset to be specified as well...
 ///
-inline const MachineInstrBuilder &
+static inline const MachineInstrBuilder &
 addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
   MachineInstr *MI = MIB;
   MachineFunction &MF = *MI->getParent()->getParent();
@@ -157,7 +158,7 @@ addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0) {
 /// the GlobalBaseReg parameter can be used to make this a
 /// GlobalBaseReg-relative reference.
 ///
-inline const MachineInstrBuilder &
+static inline const MachineInstrBuilder &
 addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
                          unsigned GlobalBaseReg, unsigned char OpFlags) {
   //FIXME: factor this
