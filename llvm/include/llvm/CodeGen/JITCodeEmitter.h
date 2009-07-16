@@ -19,7 +19,6 @@
 
 #include <string>
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 
 using namespace std;

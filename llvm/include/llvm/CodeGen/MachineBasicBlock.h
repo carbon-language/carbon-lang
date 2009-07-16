@@ -16,7 +16,6 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/Support/Streams.h"
 
 namespace llvm {
 

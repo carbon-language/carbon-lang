@@ -18,9 +18,9 @@
 #ifndef LLVM_ANALYSIS_TRACE_H
 #define LLVM_ANALYSIS_TRACE_H
 
-#include "llvm/Support/Streams.h"
 #include <vector>
 #include <cassert>
+#include <iosfwd>
 
 namespace llvm {
   class BasicBlock;

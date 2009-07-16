@@ -18,7 +18,6 @@
 #define LLVM_ANALYSIS_ALIASSETTRACKER_H
 
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/ilist.h"
