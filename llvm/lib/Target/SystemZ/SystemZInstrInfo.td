@@ -330,6 +330,16 @@ def MOV32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src),
 def MOV64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src),
                      "lgr\t{$dst, $src}",
                      []>;
+def MOV128rr : Pseudo<(outs GR128:$dst), (ins GR128:$src),
+                     "# MOV128 PSEUDO!"
+                     "lgr\t{$dst:subreg_odd, $src:subreg_odd}\n"
+                     "lgr\t{$dst:subreg_even, $src:subreg_even}",
+                     []>;
+def MOV64rrP : Pseudo<(outs GR64P:$dst), (ins GR64P:$src),
+                     "# MOV64P PSEUDO!"
+                     "lr\t{$dst:subreg_odd, $src:subreg_odd}\n"
+                     "lr\t{$dst:subreg_even, $src:subreg_even}",
+                     []>;
 }
 
 def MOVSX64rr32 : Pseudo<(outs GR64:$dst), (ins GR32:$src),
@@ -616,7 +626,18 @@ def MUL32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
 def MUL64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                      "msgr\t{$dst, $src2}",
                      [(set GR64:$dst, (mul GR64:$src1, GR64:$src2))]>;
+
+def MUL64rrP   : Pseudo<(outs GR64P:$dst), (ins GR64P:$src1, GR32:$src2),
+                        "mr\t{$dst, $src2}",
+                        []>;
+def UMUL64rrP  : Pseudo<(outs GR64P:$dst), (ins GR64P:$src1, GR32:$src2),
+                         "mlr\t{$dst, $src2}",
+                         []>;
+def UMUL128rrP : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR64:$src2),
+                        "mlgr\t{$dst, $src2}",
+                        []>;
 }
+
 
 def MUL32ri16   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32i16imm:$src2),
                          "mhi\t{$dst, $src2}",
@@ -641,6 +662,23 @@ def MUL64rm : Pseudo<(outs GR64:$dst), (ins GR64:$src1, rriaddr:$src2),
 def MULSX64rr32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR32:$src2),
                          "msgfr\t{$dst, $src2}",
                          [(set GR64:$dst, (mul GR64:$src1, (sext GR32:$src2)))]>;
+
+def SDIVREM64rrP  : Pseudo<(outs GR64P:$dst), (ins GR64P:$src1, GR32:$src2),
+                           "dr\t{$dst, $src2}",
+                           []>;
+
+def SDIVREM128rrP : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR64:$src2),
+                           "dsgr\t{$dst, $src2}",
+                           []>;
+
+def UDIVREM64rrP  : Pseudo<(outs GR64P:$dst), (ins GR64P:$src1, GR32:$src2),
+                           "dlr\t{$dst, $src2}",
+                           []>;
+
+def UDIVREM128rrP : Pseudo<(outs GR128:$dst), (ins GR128:$src1, GR64:$src2),
+                           "dlgr\t{$dst, $src2}",
+                           []>;
+
 } // isTwoAddress = 1
 
 //===----------------------------------------------------------------------===//
@@ -794,3 +832,67 @@ def : Pat<(SystemZcall (i64 tglobaladdr:$dst)),
           (CALLi tglobaladdr:$dst)>;
 def : Pat<(SystemZcall (i64 texternalsym:$dst)),
           (CALLi texternalsym:$dst)>;
+
+// muls
+def : Pat<(mulhs GR32:$src1, GR32:$src2),
+          (EXTRACT_SUBREG (MUL64rrP (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+                                                   GR32:$src1, subreg_odd),
+                                    GR32:$src2),
+                          subreg_even)>;
+
+def : Pat<(mulhu GR32:$src1, GR32:$src2),
+          (EXTRACT_SUBREG (UMUL64rrP (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+                                                    GR32:$src1, subreg_odd),
+                                     GR32:$src2),
+                          subreg_even)>;
+def : Pat<(mulhu GR64:$src1, GR64:$src2),
+          (EXTRACT_SUBREG (UMUL128rrP (INSERT_SUBREG (i128 (IMPLICIT_DEF)),
+                                                     GR64:$src1, subreg_odd),
+                                      GR64:$src2),
+                          subreg_even)>;
+
+// divs
+// FIXME: Add memory versions
+def : Pat<(sdiv GR32:$src1, GR32:$src2),
+          (EXTRACT_SUBREG (SDIVREM64rrP (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+                                                       GR32:$src1, subreg_odd),
+                                         GR32:$src2),
+                          subreg_odd)>;
+def : Pat<(sdiv GR64:$src1, GR64:$src2),
+          (EXTRACT_SUBREG (SDIVREM128rrP (INSERT_SUBREG (i128 (IMPLICIT_DEF)),
+                                                        GR64:$src1, subreg_odd),
+                                         GR64:$src2),
+                          subreg_odd)>;
+def : Pat<(udiv GR32:$src1, GR32:$src2),
+          (EXTRACT_SUBREG (UDIVREM64rrP (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+                                                       GR32:$src1, subreg_odd),
+                                         GR32:$src2),
+                          subreg_odd)>;
+def : Pat<(udiv GR64:$src1, GR64:$src2),
+          (EXTRACT_SUBREG (UDIVREM128rrP (INSERT_SUBREG (i128 (IMPLICIT_DEF)),
+                                                        GR64:$src1, subreg_odd),
+                                         GR64:$src2),
+                          subreg_odd)>;
+
+// rems
+// FIXME: Add memory versions
+def : Pat<(srem GR32:$src1, GR32:$src2),
+          (EXTRACT_SUBREG (SDIVREM64rrP (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+                                                       GR32:$src1, subreg_odd),
+                                         GR32:$src2),
+                          subreg_even)>;
+def : Pat<(srem GR64:$src1, GR64:$src2),
+          (EXTRACT_SUBREG (SDIVREM128rrP (INSERT_SUBREG (i128 (IMPLICIT_DEF)),
+                                                        GR64:$src1, subreg_odd),
+                                         GR64:$src2),
+                          subreg_even)>;
+def : Pat<(urem GR32:$src1, GR32:$src2),
+          (EXTRACT_SUBREG (UDIVREM64rrP (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+                                                       GR32:$src1, subreg_odd),
+                                         GR32:$src2),
+                          subreg_even)>;
+def : Pat<(urem GR64:$src1, GR64:$src2),
+          (EXTRACT_SUBREG (UDIVREM128rrP (INSERT_SUBREG (i128 (IMPLICIT_DEF)),
+                                                        GR64:$src1, subreg_odd),
+                                         GR64:$src2),
+                          subreg_even)>;

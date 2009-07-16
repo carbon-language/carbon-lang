@@ -83,18 +83,20 @@ bool SystemZInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     CommonRC = 0;
 
   if (CommonRC) {
-    unsigned Opc;
     if (CommonRC == &SystemZ::GR64RegClass ||
         CommonRC == &SystemZ::ADDR64RegClass) {
-      Opc = SystemZ::MOV64rr;
+      BuildMI(MBB, I, DL, get(SystemZ::MOV64rr), DestReg).addReg(SrcReg);
     } else if (CommonRC == &SystemZ::GR32RegClass ||
                CommonRC == &SystemZ::ADDR32RegClass) {
-      Opc = SystemZ::MOV32rr;
+      BuildMI(MBB, I, DL, get(SystemZ::MOV32rr), DestReg).addReg(SrcReg);
+    } else if (CommonRC == &SystemZ::GR64PRegClass) {
+      BuildMI(MBB, I, DL, get(SystemZ::MOV64rrP), DestReg).addReg(SrcReg);
+    } else if (CommonRC == &SystemZ::GR128RegClass) {
+      BuildMI(MBB, I, DL, get(SystemZ::MOV128rr), DestReg).addReg(SrcReg);
     } else {
       return false;
     }
 
-    BuildMI(MBB, I, DL, get(Opc), DestReg).addReg(SrcReg);
     return true;
   }
 
@@ -126,6 +128,8 @@ SystemZInstrInfo::isMoveInstr(const MachineInstr& MI,
     return false;
   case SystemZ::MOV32rr:
   case SystemZ::MOV64rr:
+  case SystemZ::MOV64rrP:
+  case SystemZ::MOV128rr:
     assert(MI.getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&

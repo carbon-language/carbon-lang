@@ -41,8 +41,9 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   RegInfo = TM.getRegisterInfo();
 
   // Set up the register classes.
-  addRegisterClass(MVT::i32, SystemZ::GR32RegisterClass);
-  addRegisterClass(MVT::i64, SystemZ::GR64RegisterClass);
+  addRegisterClass(MVT::i32,  SystemZ::GR32RegisterClass);
+  addRegisterClass(MVT::i64,  SystemZ::GR64RegisterClass);
+  addRegisterClass(MVT::i128, SystemZ::GR128RegisterClass);
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
@@ -73,16 +74,10 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::SELECT_CC,        MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC,        MVT::i64, Custom);
 
-  // FIXME: We can lower this better
-  setOperationAction(ISD::MULHS,            MVT::i32, Expand);
+  // Funny enough: we don't have 64-bit signed versions of these stuff, but have
+  // unsigned.
   setOperationAction(ISD::MULHS,            MVT::i64, Expand);
-  setOperationAction(ISD::MULHU,            MVT::i32, Expand);
-  setOperationAction(ISD::MULHU,            MVT::i64, Expand);
-
-  setOperationAction(ISD::SMUL_LOHI,        MVT::i32, Expand);
   setOperationAction(ISD::SMUL_LOHI,        MVT::i64, Expand);
-  setOperationAction(ISD::UMUL_LOHI,        MVT::i32, Expand);
-  setOperationAction(ISD::UMUL_LOHI,        MVT::i64, Expand);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
