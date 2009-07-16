@@ -96,13 +96,11 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, hasCtrlDep = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1 in {
-  let isBarrier = 1 in
+  let isBarrier = 1 in {
     def JMP  : Pseudo<(outs), (ins brtarget:$dst), "j\t{$dst}", [(br bb:$dst)]>;
 
-  let isBarrier = 1, isIndirectBranch = 1 in {
-    def JMPr   : Pseudo<(outs), (ins GR64:$dst), "br\t{$dst}", [(brind GR64:$dst)]>;
-    // FIXME: displacement here is 12 bits
-    def JMPrri : Pseudo<(outs), (ins rriaddr:$dst), "b\t{$dst}", [(brind rriaddr:$dst)]>;
+    let isIndirectBranch = 1 in
+      def JMPr   : Pseudo<(outs), (ins GR64:$dst), "br\t{$dst}", [(brind GR64:$dst)]>;
   }
 
   let Uses = [PSW] in {
@@ -699,9 +697,16 @@ def UCMPZX64rm32  : Pseudo<(outs), (ins GR64:$src1, rriaddr:$src2),
 // Non-Instruction Patterns.
 //===----------------------------------------------------------------------===//
 
+// JumpTable
+def : Pat<(SystemZpcrelwrapper tjumptable:$src), (LA64rm tjumptable:$src)>;
+
 // anyext
 def : Pat<(i64 (anyext GR32:$src)),
           (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_32bit)>;
+
+// calls
+def : Pat<(SystemZcall (i64 tglobaladdr:$dst)), (CALLi tglobaladdr:$dst)>;
+def : Pat<(SystemZcall (i64 texternalsym:$dst)), (CALLi texternalsym:$dst)>;
 
 //===----------------------------------------------------------------------===//
 // Peepholes.
@@ -727,12 +732,6 @@ def : Pat<(extloadi32i16 rriaddr:$src), (MOVZX32rm16 rriaddr:$src)>;
 def : Pat<(extloadi64i8  rriaddr:$src), (MOVZX64rm8  rriaddr:$src)>;
 def : Pat<(extloadi64i16 rriaddr:$src), (MOVZX64rm16 rriaddr:$src)>;
 def : Pat<(extloadi64i32 rriaddr:$src), (MOVZX64rm32 rriaddr:$src)>;
-
-// calls
-def : Pat<(SystemZcall (i64 tglobaladdr:$dst)),
-          (CALLi tglobaladdr:$dst)>;
-def : Pat<(SystemZcall (i64 texternalsym:$dst)),
-          (CALLi texternalsym:$dst)>;
 
 // muls
 def : Pat<(mulhs GR32:$src1, GR32:$src2),

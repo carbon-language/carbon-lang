@@ -67,6 +67,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::BR_CC,            MVT::i32, Custom);
   setOperationAction(ISD::BR_CC,            MVT::i64, Custom);
   setOperationAction(ISD::GlobalAddress,    MVT::i64, Custom);
+  setOperationAction(ISD::JumpTable,        MVT::i64, Custom);
 
   // FIXME: Can we lower these 2 efficiently?
   setOperationAction(ISD::SETCC,            MVT::i32, Expand);
@@ -90,6 +91,7 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
   case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
   case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
+  case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -541,6 +543,15 @@ SDValue SystemZTargetLowering::LowerGlobalAddress(SDValue Op,
   return DAG.getNode(SystemZISD::PCRelativeWrapper, dl, getPointerTy(), GA);
 }
 
+
+SDValue SystemZTargetLowering::LowerJumpTable(SDValue Op,
+                                              SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
+  JumpTableSDNode *JT = cast<JumpTableSDNode>(Op);
+  SDValue Result = DAG.getTargetJumpTable(JT->getIndex(), getPointerTy());
+
+  return DAG.getNode(SystemZISD::PCRelativeWrapper, dl, getPointerTy(), Result);
+}
 
 const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {

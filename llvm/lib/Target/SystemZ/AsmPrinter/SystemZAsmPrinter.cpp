@@ -187,6 +187,9 @@ bool SystemZAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   if (TAI->hasDotTypeDotSizeDirective())
     O << "\t.size\t" << CurrentFnName << ", .-" << CurrentFnName << '\n';
 
+  // Print out jump tables referenced by the function.
+  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
+
   O.flush();
 
   // We didn't modify anything
@@ -228,6 +231,11 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMBB());
+    return;
+  case MachineOperand::MO_JumpTableIndex:
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << '_'
+      << MO.getIndex();
+
     return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
