@@ -36,6 +36,8 @@ namespace llvm {
   /// wants access to all available targets that LLVM is configured to
   /// support. This allows the client to query the available targets using the
   /// target registration mechanisms.
+  ///
+  /// It is legal for a client to make multiple calls to this function.
   inline void InitializeAllTargets() {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
 #include "llvm/Config/Targets.def"
@@ -47,6 +49,8 @@ namespace llvm {
   /// InitializeAllAsmPrinters - The main program should call this function if
   /// it wants all asm printers that LLVM is configured to support.  This will
   /// cause them to be linked into its executable.
+  ///
+  /// It is legal for a client to make multiple calls to this function.
   inline void InitializeAllAsmPrinters() {
 #define LLVM_ASM_PRINTER(TargetName) LLVMInitialize##TargetName##AsmPrinter();
 #include "llvm/Config/AsmPrinters.def"
@@ -55,6 +59,8 @@ namespace llvm {
   /// InitializeNativeTarget - The main program should call this function to
   /// initialize the native target corresponding to the host.  This is useful 
   /// for JIT applications to ensure that the target gets linked in correctly.
+  ///
+  /// It is legal for a client to make multiple calls to this function.
   inline bool InitializeNativeTarget() {
   // If we have a native target, initialize it to ensure it is linked in.
 #ifdef LLVM_NATIVE_ARCH
