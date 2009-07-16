@@ -181,11 +181,22 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                      const char* Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
-  case MachineOperand::MO_Register:
+  case MachineOperand::MO_Register: {
     assert (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
             "Virtual registers should be already mapped!");
-    O << '%' << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
+    unsigned Reg = MO.getReg();
+    if (Modifier && strncmp(Modifier, "subreg", 6) == 0) {
+      if (strncmp(Modifier + 7, "even", 4) == 0)
+        Reg = TRI->getSubReg(Reg, SystemZ::SUBREG_EVEN);
+      else if (strncmp(Modifier + 7, "odd", 3) == 0)
+        Reg = TRI->getSubReg(Reg, SystemZ::SUBREG_ODD);
+      else
+        assert(0 && "Invalid subreg modifier");
+    }
+
+    O << '%' << TRI->getAsmName(Reg);
     return;
+  }
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
     return;

@@ -366,14 +366,14 @@ def MOV64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src),
                      "lgr\t{$dst, $src}",
                      []>;
 def MOV128rr : Pseudo<(outs GR128:$dst), (ins GR128:$src),
-                     "# MOV128 PSEUDO!"
-                     "lgr\t{$dst:subreg_odd, $src:subreg_odd}\n"
-                     "lgr\t{$dst:subreg_even, $src:subreg_even}",
+                     "# MOV128 PSEUDO!\n"
+                     "\tlgr\t${dst:subreg_odd}, ${src:subreg_odd}\n"
+                     "\tlgr\t${dst:subreg_even}, ${src:subreg_even}",
                      []>;
 def MOV64rrP : Pseudo<(outs GR64P:$dst), (ins GR64P:$src),
-                     "# MOV64P PSEUDO!"
-                     "lr\t{$dst:subreg_odd, $src:subreg_odd}\n"
-                     "lr\t{$dst:subreg_even, $src:subreg_even}",
+                     "# MOV64P PSEUDO!\n"
+                     "\tlr\t${dst:subreg_odd}, ${src:subreg_odd}\n"
+                     "\tlr\t${dst:subreg_even}, ${src:subreg_even}",
                      []>;
 }
 
@@ -554,7 +554,7 @@ def ADD64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
 
 // FIXME: Provide proper encoding!
 def ADD32ri16 : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s16imm:$src2),
-                       "ahi\t{$dst, $src2:}",
+                       "ahi\t{$dst, $src2}",
                        [(set GR32:$dst, (add GR32:$src1, immSExt16:$src2)),
                         (implicit PSW)]>;
 def ADD32ri   : Pseudo<(outs GR32:$dst), (ins GR32:$src1, s32imm:$src2),
