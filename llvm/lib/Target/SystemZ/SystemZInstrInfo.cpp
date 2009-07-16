@@ -380,6 +380,8 @@ SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   case SystemZ::UCMP32rm:  return get(SystemZ::UCMP32rmy);
   case SystemZ::FMOV32mr:  return get(SystemZ::FMOV32mry);
   case SystemZ::FMOV64mr:  return get(SystemZ::FMOV64mry);
+  case SystemZ::FMOV32rm:  return get(SystemZ::FMOV32rmy);
+  case SystemZ::FMOV64rm:  return get(SystemZ::FMOV64rmy);
   default: return get(Opc);
   }
 }
