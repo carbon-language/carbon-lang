@@ -41,7 +41,7 @@ protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;
 
 public:
-  SystemZTargetMachine(const Module &M, const std::string &FS);
+  SystemZTargetMachine(const Target &T, const Module &M, const std::string &FS);
 
   virtual const TargetFrameInfo *getFrameInfo() const { return &FrameInfo; }
   virtual const SystemZInstrInfo *getInstrInfo() const  { return &InstrInfo; }
@@ -57,9 +57,6 @@ public:
   }
 
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
-  virtual bool addAssemblyEmitter(PassManagerBase &PM,
-                                  CodeGenOpt::Level OptLevel, bool Verbose,
-                                  raw_ostream &Out);
   static unsigned getModuleMatchQuality(const Module &M);
 }; // SystemZTargetMachine.
 

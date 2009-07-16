@@ -203,7 +203,7 @@ SDValue SystemZTargetLowering::LowerCCCArguments(SDValue Op,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_SystemZ);
 
   assert(!isVarArg && "Varargs not supported yet");
@@ -292,7 +292,7 @@ SDValue SystemZTargetLowering::LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
 
   CCInfo.AnalyzeCallOperands(TheCall, CC_SystemZ);
 
@@ -422,7 +422,8 @@ SystemZTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
+  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs,
+                 DAG.getContext());
 
   CCInfo.AnalyzeCallResult(TheCall, RetCC_SystemZ);
   SmallVector<SDValue, 8> ResultVals;
@@ -468,7 +469,7 @@ SDValue SystemZTargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs, DAG.getContext());
 
   // Analize return values of ISD::RET
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_SystemZ);

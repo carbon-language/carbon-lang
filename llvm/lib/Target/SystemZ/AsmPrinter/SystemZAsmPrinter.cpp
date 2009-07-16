@@ -27,10 +27,11 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
-#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -39,10 +40,9 @@ STATISTIC(EmittedInsts, "Number of machine instrs printed");
 namespace {
   class VISIBILITY_HIDDEN SystemZAsmPrinter : public AsmPrinter {
   public:
-    SystemZAsmPrinter(raw_ostream &O, SystemZTargetMachine &TM,
-                     const TargetAsmInfo *TAI,
-                     CodeGenOpt::Level OL, bool V)
-      : AsmPrinter(O, TM, TAI, OL, V) {}
+    SystemZAsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
+                      const TargetAsmInfo *TAI, bool V)
+      : AsmPrinter(O, TM, TAI, V) {}
 
     virtual const char *getPassName() const {
       return "SystemZ Assembly Printer";
@@ -85,11 +85,10 @@ namespace {
 /// using the given target machine description.  This should work
 /// regardless of whether the function is in SSA form.
 ///
-FunctionPass *llvm::createSystemZCodePrinterPass(raw_ostream &o,
-                                                SystemZTargetMachine &tm,
-                                                CodeGenOpt::Level OptLevel,
-                                                bool verbose) {
-  return new SystemZAsmPrinter(o, tm, tm.getTargetAsmInfo(), OptLevel, verbose);
+FunctionPass *llvm::createSystemZCodePrinterPass(formatted_raw_ostream &o,
+                                                 TargetMachine &tm,
+                                                 bool verbose) {
+  return new SystemZAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
 bool SystemZAsmPrinter::doInitialization(Module &M) {
@@ -108,13 +107,10 @@ bool SystemZAsmPrinter::doFinalization(Module &M) {
 }
 
 void SystemZAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
+  unsigned FnAlign = MF.getAlignment();
   const Function *F = MF.getFunction();
 
   SwitchToSection(TAI->SectionForGlobal(F));
-
-  unsigned FnAlign = 4;
-  if (F->hasFnAttr(Attribute::OptimizeForSize))
-    FnAlign = 1;
 
   EmitAlignment(FnAlign, F);
 
@@ -201,7 +197,7 @@ void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum) 
     return;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getValueName(GV);
+    std::string Name = Mang->getMangledName(GV);
 
     O << Name;
 
@@ -269,7 +265,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     break;
   case MachineOperand::MO_GlobalAddress: {
     const GlobalValue *GV = MO.getGlobal();
-    std::string Name = Mang->getValueName(GV);
+    std::string Name = Mang->getMangledName(GV);
 
     O << Name;
     break;
@@ -334,7 +330,7 @@ void SystemZAsmPrinter::printRRIAddrOperand(const MachineInstr *MI, int OpNum,
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
+static void PrintUnmangledNameSafely(const Value *V, formatted_raw_ostream &OS) {
   for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
        Name != E; ++Name)
     if (isprint(*Name))
@@ -351,10 +347,9 @@ void SystemZAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar))
     return;
 
-  std::string name = Mang->getValueName(GVar);
+  std::string name = Mang->getMangledName(GVar);
   Constant *C = GVar->getInitializer();
-  const Type *Type = C->getType();
-  unsigned Size = TD->getTypeAllocSize(Type);
+  unsigned Size = TD->getTypeAllocSize(C->getType());
   unsigned Align = std::max(1U, TD->getPreferredAlignmentLog(GVar));
 
   printVisibility(name, GVar->getVisibility());
@@ -419,4 +414,11 @@ void SystemZAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << "\t.size\t" << name << ", " << Size << '\n';
 
   EmitGlobalConstant(C);
+}
+
+// Force static initialization.
+extern "C" void LLVMInitializeSystemZAsmPrinter() {
+  extern Target TheSystemZTarget;
+  TargetRegistry::RegisterAsmPrinter(TheSystemZTarget,
+                                     createSystemZCodePrinterPass);
 }

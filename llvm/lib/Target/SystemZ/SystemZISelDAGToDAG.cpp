@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 static const unsigned subreg_even32 = 1;

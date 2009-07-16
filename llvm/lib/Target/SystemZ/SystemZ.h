@@ -20,7 +20,7 @@
 namespace llvm {
   class SystemZTargetMachine;
   class FunctionPass;
-  class raw_ostream;
+  class formatted_raw_ostream;
 
   namespace SystemZCC {
     // SystemZ specific condition code. These correspond to SYSTEMZ_*_COND in
@@ -46,10 +46,9 @@ namespace llvm {
 
   FunctionPass *createSystemZISelDag(SystemZTargetMachine &TM,
                                     CodeGenOpt::Level OptLevel);
-  FunctionPass *createSystemZCodePrinterPass(raw_ostream &o,
-                                            SystemZTargetMachine &tm,
-                                            CodeGenOpt::Level OptLevel,
-                                            bool verbose);
+  FunctionPass *createSystemZCodePrinterPass(formatted_raw_ostream &o,
+                                             TargetMachine &tm,
+                                             bool verbose);
 
 } // end namespace llvm;
 

@@ -18,17 +18,18 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
-/// SystemZTargetMachineModule - Note that this is used on hosts that
-/// cannot link in a library unless there are references into the
-/// library.  In particular, it seems that it is not possible to get
-/// things to work on Win32 without this.  Though it is unused, do not
-/// remove it.
-extern "C" int SystemZTargetMachineModule;
-int SystemZTargetMachineModule = 0;
+extern Target TheSystemZTarget;
+namespace {
+  // Register the target.
+  RegisterTarget<SystemZTargetMachine> X(TheSystemZTarget,
+                                         "systemz",
+                                         "SystemZ [experimental]");
+}
 
-// Register the target.
-static RegisterTarget<SystemZTargetMachine>
-X("systemz", "SystemZ [experimental]");
+// Force static initialization.
+extern "C" void LLVMInitializeSystemZTarget() {
+
+}
 
 const TargetAsmInfo *SystemZTargetMachine::createTargetAsmInfo() const {
   // FIXME: Handle Solaris subtarget someday :)
@@ -37,9 +38,13 @@ const TargetAsmInfo *SystemZTargetMachine::createTargetAsmInfo() const {
 
 /// SystemZTargetMachine ctor - Create an ILP64 architecture model
 ///
-SystemZTargetMachine::SystemZTargetMachine(const Module &M, const std::string &FS)
-  : Subtarget(*this, M, FS),
-    DataLayout("E-p:64:64:64-i8:8:16-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-a0:16:16"),
+SystemZTargetMachine::SystemZTargetMachine(const Target &T,
+                                           const Module &M,
+                                           const std::string &FS)
+  : LLVMTargetMachine(T),
+    Subtarget(*this, M, FS),
+    DataLayout("E-p:64:64:64-i8:8:16-i16:16:16-i32:32:32-i64:64:64-f32:32:32"
+               "-f64:64:64-f128:128:128-a0:16:16"),
     InstrInfo(*this), TLInfo(*this),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -160) {
 
@@ -51,15 +56,6 @@ bool SystemZTargetMachine::addInstSelector(PassManagerBase &PM,
                                           CodeGenOpt::Level OptLevel) {
   // Install an instruction selector.
   PM.add(createSystemZISelDag(*this, OptLevel));
-  return false;
-}
-
-bool SystemZTargetMachine::addAssemblyEmitter(PassManagerBase &PM,
-                                             CodeGenOpt::Level OptLevel,
-                                             bool Verbose,
-                                             raw_ostream &Out) {
-  // Output assembly language.
-  PM.add(createSystemZCodePrinterPass(Out, *this, OptLevel, Verbose));
   return false;
 }
 
