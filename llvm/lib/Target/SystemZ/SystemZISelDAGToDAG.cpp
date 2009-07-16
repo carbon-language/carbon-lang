@@ -30,6 +30,10 @@
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
+static const unsigned subreg_32bit = 1;
+static const unsigned subreg_even = 1;
+static const unsigned subreg_odd = 2;
+
 namespace {
   /// SystemZRRIAddressMode - This corresponds to rriaddr, but uses SDValue's
   /// instead of register numbers for the leaves of the matched tree.
@@ -129,6 +133,10 @@ namespace {
                       SDValue &Base, SDValue &Disp, SDValue &Index);
 
     SDNode *Select(SDValue Op);
+
+    bool TryFoldLoad(SDValue P, SDValue N,
+                     SDValue &Base, SDValue &Disp, SDValue &Index);
+
     bool MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
                       bool is12Bit, unsigned Depth = 0);
     bool MatchAddressBase(SDValue N, SystemZRRIAddressMode &AM);
@@ -573,6 +581,15 @@ bool SystemZDAGToDAGISel::SelectLAAddr(SDValue Op, SDValue Addr,
   return false;
 }
 
+bool SystemZDAGToDAGISel::TryFoldLoad(SDValue P, SDValue N,
+                                 SDValue &Base, SDValue &Disp, SDValue &Index) {
+  if (ISD::isNON_EXTLoad(N.getNode()) &&
+      N.hasOneUse() &&
+      IsLegalAndProfitableToFold(N.getNode(), P.getNode(), P.getNode()))
+    return SelectAddrRRI20(P, N.getOperand(1), Base, Disp, Index);
+  return false;
+}
+
 /// InstructionSelect - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
 void SystemZDAGToDAGISel::InstructionSelect() {
@@ -593,7 +610,9 @@ void SystemZDAGToDAGISel::InstructionSelect() {
 
 SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
   SDNode *Node = Op.getNode();
+  MVT NVT = Node->getValueType(0);
   DebugLoc dl = Op.getDebugLoc();
+  unsigned Opcode = Node->getOpcode();
 
   // Dump information about the Node being selected
   #ifndef NDEBUG
@@ -611,7 +630,194 @@ SDNode *SystemZDAGToDAGISel::Select(SDValue Op) {
     DOUT << "\n";
     Indent -= 2;
     #endif
+    return NULL; // Already selected.
+  }
+
+  switch (Opcode) {
+  default: break;
+  case ISD::SDIVREM: {
+    unsigned Opc, MOpc, ClrOpc = 0;
+    SDValue N0 = Node->getOperand(0);
+    SDValue N1 = Node->getOperand(1);
+
+    MVT ResVT;
+    switch (NVT.getSimpleVT()) {
+      default: assert(0 && "Unsupported VT!");
+      case MVT::i32:
+        Opc = SystemZ::SDIVREM32r; MOpc = SystemZ::SDIVREM32m;
+        ClrOpc = SystemZ::MOV32ri16;
+        ResVT = MVT::v2i32;
+        break;
+      case MVT::i64:
+        Opc = SystemZ::SDIVREM64r; MOpc = SystemZ::SDIVREM64m;
+        ResVT = MVT::v2i64;
+        break;
+    }
+
+    SDValue Tmp0, Tmp1, Tmp2;
+    bool foldedLoad = TryFoldLoad(Op, N1, Tmp0, Tmp1, Tmp2);
+
+    // Prepare the dividend
+    SDNode *Dividend = N0.getNode();
+
+    // Insert prepared dividend into suitable 'subreg'
+    SDNode *Tmp = CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
+                                        dl, ResVT);
+    Dividend =
+      CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
+                            SDValue(Tmp, 0), SDValue(Dividend, 0),
+                            CurDAG->getTargetConstant(subreg_odd, MVT::i32));
+
+    // Zero out even subreg, if needed
+    if (ClrOpc) {
+      SDNode * ZeroHi = CurDAG->getTargetNode(SystemZ::MOV32ri16, dl, NVT,
+                                        CurDAG->getTargetConstant(0, MVT::i32));
+      Dividend =
+        CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
+                              SDValue(Dividend, 0),
+                              SDValue(ZeroHi, 0),
+                              CurDAG->getTargetConstant(subreg_even, MVT::i32));
+    }
+
+    SDNode *Result;
+    SDValue DivVal = SDValue(Dividend, 0);
+    if (foldedLoad) {
+      SDValue Ops[] = { DivVal, Tmp0, Tmp1, Tmp2, N1.getOperand(0) };
+      Result = CurDAG->getTargetNode(MOpc, dl, ResVT, Ops, array_lengthof(Ops));
+      // Update the chain.
+      ReplaceUses(N1.getValue(1), SDValue(Result, 0));
+    } else {
+      Result = CurDAG->getTargetNode(Opc, dl, ResVT, SDValue(Dividend, 0), N1);
+    }
+
+    // Copy the division (odd subreg) result, if it is needed.
+    if (!Op.getValue(0).use_empty()) {
+      SDNode *Div = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
+                                          dl, NVT,
+                                          SDValue(Result, 0),
+                                          CurDAG->getTargetConstant(subreg_odd,
+                                                                    MVT::i32));
+      ReplaceUses(Op.getValue(0), SDValue(Div, 0));
+      #ifndef NDEBUG
+      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(Result->dump(CurDAG));
+      DOUT << "\n";
+      #endif
+    }
+
+    // Copy the remainder (even subreg) result, if it is needed.
+    if (!Op.getValue(1).use_empty()) {
+      SDNode *Rem = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
+                                          dl, NVT,
+                                          SDValue(Result, 0),
+                                          CurDAG->getTargetConstant(subreg_even,
+                                                                    MVT::i32));
+      ReplaceUses(Op.getValue(1), SDValue(Rem, 0));
+      #ifndef NDEBUG
+      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(Result->dump(CurDAG));
+      DOUT << "\n";
+      #endif
+    }
+
+#ifndef NDEBUG
+    Indent -= 2;
+#endif
+
     return NULL;
+  }
+  case ISD::UDIVREM: {
+    unsigned Opc, MOpc, ClrOpc;
+    SDValue N0 = Node->getOperand(0);
+    SDValue N1 = Node->getOperand(1);
+    MVT ResVT;
+
+    switch (NVT.getSimpleVT()) {
+      default: assert(0 && "Unsupported VT!");
+      case MVT::i32:
+        Opc = SystemZ::UDIVREM32r; MOpc = SystemZ::UDIVREM32m;
+        ClrOpc = SystemZ::MOV32ri16;
+        ResVT = MVT::v2i32;
+        break;
+      case MVT::i64:
+        Opc = SystemZ::UDIVREM64r; MOpc = SystemZ::UDIVREM64m;
+        ClrOpc = SystemZ::MOV64ri16;
+        ResVT = MVT::v2i64;
+        break;
+    }
+
+    SDValue Tmp0, Tmp1, Tmp2;
+    bool foldedLoad = TryFoldLoad(Op, N1, Tmp0, Tmp1, Tmp2);
+
+    // Prepare the dividend
+    SDNode *Dividend = N0.getNode();
+
+    // Insert prepared dividend into suitable 'subreg'
+    SDNode *Tmp = CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
+                                        dl, ResVT);
+    Dividend =
+      CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
+                            SDValue(Tmp, 0), SDValue(Dividend, 0),
+                            CurDAG->getTargetConstant(subreg_odd, MVT::i32));
+
+    // Zero out even subreg, if needed
+    SDNode * ZeroHi = CurDAG->getTargetNode(ClrOpc, dl, NVT,
+                                            CurDAG->getTargetConstant(0,
+                                                                      MVT::i32));
+    Dividend =
+      CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG, dl, ResVT,
+                            SDValue(Dividend, 0),
+                            SDValue(ZeroHi, 0),
+                            CurDAG->getTargetConstant(subreg_even, MVT::i32));
+
+    SDValue DivVal = SDValue(Dividend, 0);
+    SDNode *Result;
+    if (foldedLoad) {
+      SDValue Ops[] = { DivVal, Tmp0, Tmp1, Tmp2, N1.getOperand(0) };
+      Result = CurDAG->getTargetNode(MOpc, dl,ResVT,
+                                     Ops, array_lengthof(Ops));
+      // Update the chain.
+      ReplaceUses(N1.getValue(1), SDValue(Result, 0));
+    } else {
+      Result = CurDAG->getTargetNode(Opc, dl, ResVT, DivVal, N1);
+    }
+
+    // Copy the division (odd subreg) result, if it is needed.
+    if (!Op.getValue(0).use_empty()) {
+      SDNode *Div = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
+                                          dl, NVT,
+                                          SDValue(Result, 0),
+                                          CurDAG->getTargetConstant(subreg_odd,
+                                                                    MVT::i32));
+      ReplaceUses(Op.getValue(0), SDValue(Div, 0));
+      #ifndef NDEBUG
+      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(Result->dump(CurDAG));
+      DOUT << "\n";
+      #endif
+    }
+
+    // Copy the remainder (even subreg) result, if it is needed.
+    if (!Op.getValue(1).use_empty()) {
+      SDNode *Rem = CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,
+                                          dl, NVT,
+                                          SDValue(Result, 0),
+                                          CurDAG->getTargetConstant(subreg_even,
+                                                                    MVT::i32));
+      ReplaceUses(Op.getValue(1), SDValue(Rem, 0));
+      #ifndef NDEBUG
+      DOUT << std::string(Indent-2, ' ') << "=> ";
+      DEBUG(Result->dump(CurDAG));
+      DOUT << "\n";
+      #endif
+    }
+
+#ifndef NDEBUG
+    Indent -= 2;
+#endif
+
+    return NULL;
+  }
   }
 
   // Select the default instruction

@@ -43,7 +43,9 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   // Set up the register classes.
   addRegisterClass(MVT::i32,  SystemZ::GR32RegisterClass);
   addRegisterClass(MVT::i64,  SystemZ::GR64RegisterClass);
+  addRegisterClass(MVT::v2i32,SystemZ::GR64PRegisterClass);
   addRegisterClass(MVT::i128, SystemZ::GR128RegisterClass);
+  addRegisterClass(MVT::v2i64,SystemZ::GR128RegisterClass);
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
@@ -69,6 +71,15 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::GlobalAddress,    MVT::i64, Custom);
   setOperationAction(ISD::JumpTable,        MVT::i64, Custom);
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
+
+  setOperationAction(ISD::SDIV,             MVT::i32, Expand);
+  setOperationAction(ISD::UDIV,             MVT::i32, Expand);
+  setOperationAction(ISD::SDIV,             MVT::i64, Expand);
+  setOperationAction(ISD::UDIV,             MVT::i64, Expand);
+  setOperationAction(ISD::SREM,             MVT::i32, Expand);
+  setOperationAction(ISD::UREM,             MVT::i32, Expand);
+  setOperationAction(ISD::SREM,             MVT::i64, Expand);
+  setOperationAction(ISD::UREM,             MVT::i64, Expand);
 
   // FIXME: Can we lower these 2 efficiently?
   setOperationAction(ISD::SETCC,            MVT::i32, Expand);

@@ -332,7 +332,7 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
 }
 
 // Even-odd register pairs
-def GR64P : RegisterClass<"SystemZ", [i64], 64,
+def GR64P : RegisterClass<"SystemZ", [v2i32], 64,
   [R0P, R2P, R4P, R6P, R8P, R10P, R12P, R14P]>
 {
   let SubRegClassList = [GR32, GR32];
@@ -368,7 +368,7 @@ def GR64P : RegisterClass<"SystemZ", [i64], 64,
   }];
 }
 
-def GR128 : RegisterClass<"SystemZ", [i128], 128,
+def GR128 : RegisterClass<"SystemZ", [i128, v2i64], 128,
   [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]>
 {
   let SubRegClassList = [GR64, GR64];
