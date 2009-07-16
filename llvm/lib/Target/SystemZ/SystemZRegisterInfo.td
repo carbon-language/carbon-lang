@@ -103,7 +103,7 @@ def subreg_32bit : PatLeaf<(i32 1)>;
 /// Register classes
 def GR32 : RegisterClass<"SystemZ", [i32], 32,
    // Volatile registers
-  [R0W, R1W, R2W, R3W, R4W, R5W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
+  [R1W, R2W, R3W, R4W, R5W, R0W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
    // Frame pointer, sometimes allocable
    R11W,
    // Volatile, but not allocable
@@ -156,7 +156,7 @@ def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
 
 def GR64 : RegisterClass<"SystemZ", [i64], 64,
    // Volatile registers
-  [R0D, R1D, R2D, R3D, R4D, R5D, R6D, R7D, R8D, R9D, R10D, R12D, R13D,
+  [R1D, R2D, R3D, R4D, R5D, R0D, R6D, R7D, R8D, R9D, R10D, R12D, R13D,
    // Frame pointer, sometimes allocable
    R11D,
    // Volatile, but not allocable
