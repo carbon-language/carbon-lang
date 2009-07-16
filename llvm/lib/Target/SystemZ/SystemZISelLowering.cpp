@@ -361,10 +361,27 @@ SystemZTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
   // Copy all of the result registers out of their specified physreg.
   for (unsigned i = 0; i != RVLocs.size(); ++i) {
-    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
-                               RVLocs[i].getValVT(), InFlag).getValue(1);
+    CCValAssign &VA = RVLocs[i];
+
+    Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
+                               VA.getLocVT(), InFlag).getValue(1);
+    SDValue RetValue = Chain.getValue(0);
     InFlag = Chain.getValue(2);
-    ResultVals.push_back(Chain.getValue(0));
+
+    // If this is an 8/16/32-bit value, it is really passed promoted to 64
+    // bits. Insert an assert[sz]ext to capture this, then truncate to the
+    // right size.
+    if (VA.getLocInfo() == CCValAssign::SExt)
+      RetValue = DAG.getNode(ISD::AssertSext, dl, VA.getLocVT(), RetValue,
+                             DAG.getValueType(VA.getValVT()));
+    else if (VA.getLocInfo() == CCValAssign::ZExt)
+      RetValue = DAG.getNode(ISD::AssertZext, dl, VA.getLocVT(), RetValue,
+                             DAG.getValueType(VA.getValVT()));
+
+    if (VA.getLocInfo() != CCValAssign::Full)
+      RetValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), RetValue);
+
+    ResultVals.push_back(RetValue);
   }
 
   ResultVals.push_back(Chain);

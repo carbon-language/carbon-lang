@@ -304,7 +304,7 @@ let isBranch = 1, isTerminator = 1 in {
 let isCall = 1 in
   // All calls clobber the non-callee saved registers (except R14 which we
   // handle separately). Uses for argument registers are added manually.
-  let Defs = [R0D, R1D, R3D, R4D, R5D] in {
+  let Defs = [R0D, R1D, R2D, R3D, R4D, R5D] in {
     def CALLi     : Pseudo<(outs), (ins i64imm:$dst, variable_ops),
                            "brasl\t%r14, $dst", [(SystemZcall imm:$dst)]>;
     def CALLr     : Pseudo<(outs), (ins ADDR64:$dst, variable_ops),
