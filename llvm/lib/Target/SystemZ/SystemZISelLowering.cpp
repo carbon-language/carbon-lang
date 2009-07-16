@@ -55,7 +55,6 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setSchedulingPreference(SchedulingForLatency);
 
   setOperationAction(ISD::RET,              MVT::Other, Custom);
-
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {

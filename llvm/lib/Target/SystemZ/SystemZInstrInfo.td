@@ -223,6 +223,20 @@ def MOV64mr : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
                      "stg\t{$src, $dst}",
                      [(store GR64:$src, rriaddr:$dst)]>;
 
+// FIXME: displacements here are really 12 bit, not 20!
+def MOV8mi    : Pseudo<(outs), (ins riaddr:$dst, i32imm:$src),
+                       "mvi\t{$dst, $src}",
+                       [(truncstorei8 (i32 imm:$src), riaddr:$dst)]>;
+def MOV16mi   : Pseudo<(outs), (ins riaddr:$dst, i32imm:$src),
+                       "mvhhi\t{$dst, $src}",
+                       [(truncstorei16 (i32 imm:$src), riaddr:$dst)]>;
+def MOV32mi16 : Pseudo<(outs), (ins riaddr:$dst, i32imm:$src),
+                       "mvhi\t{$dst, $src}",
+                       [(store (i32 immSExt16:$src), riaddr:$dst)]>;
+def MOV64mi16 : Pseudo<(outs), (ins riaddr:$dst, i64imm:$src),
+                       "mvghi\t{$dst, $src}",
+                       [(store (i64 immSExt16:$src), riaddr:$dst)]>;
+
 // extloads
 def MOVSX64rm8  : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
                          "lgb\t{$dst, $src}",
