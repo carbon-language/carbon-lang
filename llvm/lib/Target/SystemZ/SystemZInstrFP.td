@@ -167,10 +167,12 @@ def FROUND64r32 : Pseudo<(outs FP32:$dst), (ins FP64:$src),
                          "ledbr\t{$dst, $src}",
                          [(set FP32:$dst, (fround FP64:$src))]>;
 
-// FIXME: memory variant
 def FEXT32r64   : Pseudo<(outs FP64:$dst), (ins FP32:$src),
                          "ldebr\t{$dst, $src}",
                          [(set FP64:$dst, (fextend FP32:$src))]>;
+def FEXT32m64   : Pseudo<(outs FP64:$dst), (ins rriaddr:$src),
+                         "ldeb\t{$dst, $src}",
+                         [(set FP64:$dst, (fextend (load rriaddr:$src)))]>;
 
 let Defs = [PSW] in {
 def FCONVFP32   : Pseudo<(outs FP32:$dst), (ins GR32:$src),
