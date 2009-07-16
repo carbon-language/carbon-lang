@@ -37,6 +37,12 @@ public:
   // Return true if the block does not fall through.
   bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
 
+  bool copyRegToReg(MachineBasicBlock &MBB,
+                    MachineBasicBlock::iterator I,
+                    unsigned DestReg, unsigned SrcReg,
+                    const TargetRegisterClass *DestRC,
+                    const TargetRegisterClass *SrcRC) const;
+
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).

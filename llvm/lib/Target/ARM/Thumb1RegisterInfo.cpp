@@ -47,16 +47,6 @@ Thumb1RegisterInfo::Thumb1RegisterInfo(const ARMBaseInstrInfo &tii,
   : ARMBaseRegisterInfo(tii, sti) {
 }
 
-static inline
-const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
-  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
-}
-
-static inline
-const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
-  return MIB.addReg(ARM::CPSR);
-}
-
 /// emitLoadConstPool - Emits a load from constpool to materialize the
 /// specified immediate.
 void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,

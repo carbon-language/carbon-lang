@@ -30,16 +30,6 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
-static inline
-const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
-  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
-}
-
-static inline
-const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
-  return MIB.addReg(0);
-}
-
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget &STI)
   : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)) {
 }

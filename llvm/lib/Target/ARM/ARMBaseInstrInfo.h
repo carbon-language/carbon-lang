@@ -14,9 +14,10 @@
 #ifndef ARMBASEINSTRUCTIONINFO_H
 #define ARMBASEINSTRUCTIONINFO_H
 
-#include "llvm/Target/TargetInstrInfo.h"
-#include "ARMRegisterInfo.h"
 #include "ARM.h"
+#include "ARMRegisterInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
   class ARMSubtarget;
@@ -185,6 +186,16 @@ namespace ARMII {
     VMOVD,
     VMOVQ
   };
+}
+
+static inline
+const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
+  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
+}
+
+static inline
+const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
+  return MIB.addReg(0);
 }
 
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {

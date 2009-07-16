@@ -87,3 +87,24 @@ Thumb2InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
 
   return false;
 }
+
+bool
+Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator I,
+                              unsigned DestReg, unsigned SrcReg,
+                              const TargetRegisterClass *DestRC,
+                              const TargetRegisterClass *SrcRC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
+
+  if ((DestRC == ARM::GPRRegisterClass &&
+       SrcRC == ARM::tGPRRegisterClass) ||
+      (DestRC == ARM::tGPRRegisterClass &&
+       SrcRC == ARM::GPRRegisterClass)) {
+    AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::MOVr)),
+                                        DestReg).addReg(SrcReg)));
+    return true;
+  }
+
+  return ARMBaseInstrInfo::copyRegToReg(MBB, I, DestReg, SrcReg, DestRC, SrcRC);
+}
