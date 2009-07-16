@@ -312,7 +312,7 @@ bool SystemZDAGToDAGISel::MatchAddressBase(SDValue N,
                                            SystemZRRIAddressMode &AM) {
   // Is the base register already occupied?
   if (AM.BaseType != SystemZRRIAddressMode::RegBase || AM.Base.Reg.getNode()) {
-    // If so, check to see if the scale register is set.
+    // If so, check to see if the index register is set.
     if (AM.IndexReg.getNode() == 0 && !AM.isRI) {
       AM.IndexReg = N;
       return false;
@@ -439,7 +439,7 @@ bool SystemZDAGToDAGISel::SelectAddrRI(SDValue Op, SDValue& Addr,
 /// index register plus an unsigned 12-bit displacement [base + idx + imm].
 bool SystemZDAGToDAGISel::SelectAddrRRI12(SDValue Op, SDValue Addr,
                                 SDValue &Base, SDValue &Disp, SDValue &Index) {
-  SystemZRRIAddressMode AM20(/*isRI*/true), AM12(/*isRI*/true);
+  SystemZRRIAddressMode AM20, AM12;
   bool Done = false;
 
   if (!Addr.hasOneUse()) {
