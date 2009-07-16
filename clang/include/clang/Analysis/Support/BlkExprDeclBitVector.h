@@ -17,7 +17,7 @@
 #ifndef LLVM_CLANG_STMTDECLBVDVAL_H
 #define LLVM_CLANG_STMTDECLBVDVAL_H
 
-#include "clang/AST/CFG.h"
+#include "clang/Analysis/CFG.h"
 #include "clang/AST/Decl.h" // for Decl* -> NamedDecl* conversion
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"

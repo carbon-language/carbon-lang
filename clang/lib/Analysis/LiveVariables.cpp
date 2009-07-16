@@ -15,7 +15,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"
-#include "clang/AST/CFG.h"
+#include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/FlowSensitive/DataflowSolver.h"
 #include "llvm/ADT/SmallPtrSet.h"

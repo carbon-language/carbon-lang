@@ -15,7 +15,7 @@
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/CFG.h"
+#include "clang/Analysis/CFG.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"

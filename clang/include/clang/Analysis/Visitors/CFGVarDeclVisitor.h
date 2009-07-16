@@ -18,7 +18,6 @@
 #include "clang/Analysis/Visitors/CFGStmtVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
-#include "clang/AST/CFG.h"
 
 namespace clang {
 

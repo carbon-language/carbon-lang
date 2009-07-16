@@ -19,7 +19,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "clang/AST/CFG.h"
+#include "clang/Analysis/CFG.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/PathDiagnostic.h"
 #include "clang/Basic/SourceManager.h"

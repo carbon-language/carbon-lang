@@ -4,7 +4,6 @@ add_clang_library(clangAST
   APValue.cpp
   ASTConsumer.cpp
   ASTContext.cpp
-  CFG.cpp
   Decl.cpp
   DeclBase.cpp
   DeclCXX.cpp

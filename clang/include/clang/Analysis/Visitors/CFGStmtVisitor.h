@@ -18,7 +18,7 @@
 #define LLVM_CLANG_ANALYSIS_CFGSTMTVISITOR_H
 
 #include "clang/AST/StmtVisitor.h"
-#include "clang/AST/CFG.h"
+#include "clang/Analysis/CFG.h"
 
 namespace clang {
 

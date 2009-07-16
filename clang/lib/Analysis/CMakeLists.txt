@@ -6,6 +6,7 @@ add_clang_library(clangAnalysis
   BasicStore.cpp
   BasicValueFactory.cpp
   BugReporter.cpp
+  CFG.cpp
   CFRefCount.cpp
   CallGraph.cpp
   CheckDeadStores.cpp
