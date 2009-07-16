@@ -128,8 +128,11 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::FSIN,             MVT::f64, Expand);
   setOperationAction(ISD::FCOS,             MVT::f32, Expand);
   setOperationAction(ISD::FCOS,             MVT::f64, Expand);
+
   setOperationAction(ISD::UINT_TO_FP,       MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP,       MVT::i64, Expand);
+  setOperationAction(ISD::FP_TO_UINT,       MVT::i32, Expand);
+  setOperationAction(ISD::FP_TO_UINT,       MVT::i64, Expand);
 
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 }
