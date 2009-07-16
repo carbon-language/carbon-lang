@@ -143,10 +143,10 @@ SystemZRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // if yes - mark it as 'callee' saved.
   MachineFrameInfo *FFI = MF.getFrameInfo();
 
-  if (FFI->hasCalls()
-      /* FIXME: function is varargs */
-      /* FIXME: function grabs RA */
-      /* FIXME: function calls eh_return */)
+  if (FFI->hasCalls())
+    /* FIXME: function is varargs */
+    /* FIXME: function grabs RA */
+    /* FIXME: function calls eh_return */
     MF.getRegInfo().setPhysRegUsed(SystemZ::R14D);
 
   if (FFI->hasCalls() ||
@@ -193,9 +193,10 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get the number of bytes to allocate from the FrameInfo.
   // Note that area for callee-saved stuff is already allocated, thus we need to
   // 'undo' the stack movement.
-  uint64_t StackSize =  MFI->getStackSize();
-  uint64_t NumBytes = StackSize - SystemZMFI->getCalleeSavedFrameSize();
-  NumBytes -= TFI.getOffsetOfLocalArea();
+  uint64_t StackSize = MFI->getStackSize();
+  StackSize -= SystemZMFI->getCalleeSavedFrameSize();
+
+  uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
 
   // Skip the callee-saved push instructions.
   while (MBBI != MBB.end() &&
@@ -207,8 +208,11 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
     DL = MBBI->getDebugLoc();
 
   // adjust stack pointer: R15 -= numbytes
-  if (StackSize)
+  if (StackSize || MFI->hasCalls()) {
+    assert(MF.getRegInfo().isPhysRegUsed(SystemZ::R15D) &&
+           "Invalid stack frame calculation!");
     emitSPUpdate(MBB, MBBI, -(int64_t)NumBytes, TII);
+  }
 
   if (hasFP(MF)) {
     // Update R11 with the new base value...
