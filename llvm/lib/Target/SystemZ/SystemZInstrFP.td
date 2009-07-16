@@ -67,6 +67,15 @@ def FNEG64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
                        "lcdbr\t{$dst}",
                        [(set FP64:$dst, (fneg FP64:$src))]>;
 
+// FIXME: Add peephole for fneg(fabs) => load negative
+
+def FABS32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
+                       "lpebr\t{$dst}",
+                       [(set FP32:$dst, (fabs FP32:$src))]>;
+def FABS64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
+                       "lpdbr\t{$dst}",
+                       [(set FP64:$dst, (fabs FP64:$src))]>;
+
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
 def FADD32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
                        "aebr\t{$dst, $src2}",
