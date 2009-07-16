@@ -42,3 +42,53 @@
   return nextOutputStream ? nextOutputStream : self;
 }
 @end
+
+//
+
+@protocol P0
+@property int intProp;
+@end
+@protocol P1
+@end
+@protocol P2
+@end
+
+@interface A <P0>
+@end
+
+@interface B : A
+@end
+
+@interface C
+@end
+
+@interface D
+@end
+
+void f0(id<P0> x) {
+  x.intProp = 1;
+}
+
+void f1(int cond, id<P0> x, id<P0> y) {
+  (cond ? x : y).intProp = 1;
+}
+
+void f2(int cond, id<P0> x, A *y) {
+  (cond ? x : y).intProp = 1;
+}
+
+void f3(int cond, id<P0> x, B *y) {
+  (cond ? x : y).intProp = 1;
+}
+
+void f4(int cond, id x, B *y) {
+  (cond ? x : y).intProp = 1; // expected-error {{property 'intProp' not found on object of type 'id'}}
+}
+
+void f5(int cond, id<P0> x, C *y) {
+  (cond ? x : y).intProp = 1; // expected-error {{property 'intProp' not found on object of type 'C *'}}
+}
+
+void f6(int cond, C *x, D *y) {
+  (cond ? x : y).intProp = 1; // expected-warning {{incompatible operand types}}, expected-error {{property 'intProp' not found on object of type 'id'}}
+}
