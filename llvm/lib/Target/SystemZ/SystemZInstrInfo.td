@@ -104,6 +104,17 @@ def HI32 : SDNodeXForm<imm, [{
   return getI32Imm(N->getZExtValue() >> 32);
 }]>;
 
+def i32ll16 : PatLeaf<(i32 imm), [{
+  // i32ll16 predicate - true if the 32-bit immediate has only rightmost 16
+  // bits set.
+  return ((N->getZExtValue() & 0x000000000000FFFFULL) == N->getZExtValue());
+}], LL16>;
+
+def i32lh16 : PatLeaf<(i32 imm), [{
+  // i32lh16 predicate - true if the 32-bit immediate has only bits 16-31 set.
+  return ((N->getZExtValue() & 0x00000000FFFF0000ULL) == N->getZExtValue());
+}], LH16>;
+
 def i64ll16 : PatLeaf<(imm), [{  
   // i64ll16 predicate - true if the 64-bit immediate has only rightmost 16
   // bits set.
@@ -590,25 +601,39 @@ def AND64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
 }
 
 // FIXME: Provide proper encoding!
+// FIXME: Compute masked bits properly!
+/*
+def AND32rill16 : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                         "nill\t{$dst, $src2}",
+                         [(set GR32:$dst, (and GR32:$src1, i32ll16:$src2))]>;
 def AND64rill16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                          "nill\t{$dst, $src2}",
                          [(set GR64:$dst, (and GR64:$src1, i64ll16:$src2))]>;
+
+def AND32rilh16 : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                         "nilh\t{$dst, $src2}",
+                         [(set GR32:$dst, (and GR32:$src1, i32lh16:$src2))]>;
 def AND64rilh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                          "nilh\t{$dst, $src2}",
                          [(set GR64:$dst, (and GR64:$src1, i64lh16:$src2))]>;
+
 def AND64rihl16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                          "nihl\t{$dst, $src2}",
                          [(set GR64:$dst, (and GR64:$src1, i64hl16:$src2))]>;
 def AND64rihh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                          "nihh\t{$dst, $src2}",
                          [(set GR64:$dst, (and GR64:$src1, i64hh16:$src2))]>;
-// FIXME: these 2 instructions seem to require extimm facility
-def AND64rilo32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+*/
+def AND32ri     : Pseudo<(outs GR32:$dst), (ins GR32:$src1, i32imm:$src2),
+                         "nilf\t{$dst, $src2}",
+                         [(set GR32:$dst, (and GR32:$src1, imm:$src2))]>;
+/*def AND64rilo32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                          "nilf\t{$dst, $src2}",
                          [(set GR64:$dst, (and GR64:$src1, i64lo32:$src2))]>;
 def AND64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                          "nihf\t{$dst, $src2}",
                          [(set GR64:$dst, (and GR64:$src1, i64hi32:$src2))]>;
+*/
 
 let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
 // FIXME: Provide proper encoding!

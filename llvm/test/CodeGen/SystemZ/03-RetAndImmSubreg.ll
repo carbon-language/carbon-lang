@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llvm-as < %s | llc -march=systemz | grep nill | count 3
 ; RUN: llvm-as < %s | llc -march=systemz | grep nilh | count 3
 
