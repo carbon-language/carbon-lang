@@ -221,6 +221,9 @@ bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
   if (Depth > 5)
     return MatchAddressBase(N, AM);
 
+  // FIXME: We can perform better here. If we have something like
+  // (shift (add A, imm), N), we can try to reassociate stuff and fold shift of
+  // imm into addressing mode.
   switch (N.getOpcode()) {
   default: break;
   case ISD::Constant: {

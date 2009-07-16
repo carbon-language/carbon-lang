@@ -108,6 +108,20 @@ def i64hi32 : PatLeaf<(i64 imm), [{
   return ((N->getZExtValue() & 0xFFFFFFFF00000000ULL) == N->getZExtValue());
 }], HI32>;
 
+// extloads
+def extloadi64i8   : PatFrag<(ops node:$ptr), (i64 (extloadi8  node:$ptr))>;
+def extloadi64i16  : PatFrag<(ops node:$ptr), (i64 (extloadi16 node:$ptr))>;
+def extloadi64i32  : PatFrag<(ops node:$ptr), (i64 (extloadi32 node:$ptr))>;
+
+def sextloadi64i8   : PatFrag<(ops node:$ptr), (i64 (sextloadi8  node:$ptr))>;
+def sextloadi64i16  : PatFrag<(ops node:$ptr), (i64 (sextloadi16 node:$ptr))>;
+def sextloadi64i32  : PatFrag<(ops node:$ptr), (i64 (sextloadi32 node:$ptr))>;
+
+def zextloadi64i8   : PatFrag<(ops node:$ptr), (i64 (zextloadi8  node:$ptr))>;
+def zextloadi64i16  : PatFrag<(ops node:$ptr), (i64 (zextloadi16 node:$ptr))>;
+def zextloadi64i32  : PatFrag<(ops node:$ptr), (i64 (zextloadi32 node:$ptr))>;
+
+
 //===----------------------------------------------------------------------===//
 // SystemZ Operand Definitions.
 //===----------------------------------------------------------------------===//
@@ -200,9 +214,30 @@ def MOV64rihi32 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
 
 let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
 def MOV64rm : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
-                     "lgr\t{$dst, $src}",
+                     "lg\t{$dst, $src}",
                      [(set GR64:$dst, (load rriaddr:$src))]>;
+
 }
+
+def MOVSX64rm8  : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
+                         "lgb\t{$dst, $src}",
+                         [(set GR64:$dst, (sextloadi64i8 rriaddr:$src))]>;
+def MOVSX64rm16 : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
+                         "lgh\t{$dst, $src}",
+                         [(set GR64:$dst, (sextloadi64i16 rriaddr:$src))]>;
+def MOVSX64rm32 : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
+                         "lgf\t{$dst, $src}",
+                         [(set GR64:$dst, (sextloadi64i32 rriaddr:$src))]>;
+
+def MOVZX64rm8  : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
+                         "llgc\t{$dst, $src}",
+                         [(set GR64:$dst, (zextloadi64i8 rriaddr:$src))]>;
+def MOVZX64rm16 : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
+                         "llgh\t{$dst, $src}",
+                         [(set GR64:$dst, (zextloadi64i16 rriaddr:$src))]>;
+def MOVZX64rm32 : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
+                         "llgf\t{$dst, $src}",
+                         [(set GR64:$dst, (zextloadi64i32 rriaddr:$src))]>;
 
 
 //===----------------------------------------------------------------------===//
@@ -410,3 +445,8 @@ def : Pat<(i32 (trunc GR64:$src)),
 // sext_inreg patterns
 def : Pat<(sext_inreg GR64:$src, i32),
           (MOVSX64rr32 (EXTRACT_SUBREG GR64:$src, subreg_32bit))>;
+
+// extload patterns
+def : Pat<(extloadi64i8  rriaddr:$src), (MOVZX64rm8  rriaddr:$src)>;
+def : Pat<(extloadi64i16 rriaddr:$src), (MOVZX64rm16 rriaddr:$src)>;
+def : Pat<(extloadi64i32 rriaddr:$src), (MOVZX64rm32 rriaddr:$src)>;
