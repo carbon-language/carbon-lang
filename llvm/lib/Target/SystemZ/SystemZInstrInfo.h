@@ -67,6 +67,7 @@ public:
                              const SmallVectorImpl<MachineOperand> &Cond) const;
 
   const TargetInstrDesc& getBrCond(SystemZCC::CondCodes CC) const;
+  const TargetInstrDesc& getLongDispOpc(unsigned Opc) const;
 };
 
 }

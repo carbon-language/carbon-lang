@@ -323,3 +323,47 @@ SystemZInstrInfo::getBrCond(SystemZCC::CondCodes CC) const {
 
   return get(Opc);
 }
+
+const TargetInstrDesc&
+SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
+  switch (Opc) {
+  case SystemZ::MOV32mr:
+    Opc = SystemZ::MOV32mry;
+    break;
+  case SystemZ::MOV32rm:
+    Opc = SystemZ::MOV32rmy;
+    break;
+  case SystemZ::MOVSX32rm16:
+    Opc = SystemZ::MOVSX32rm16y;
+    break;
+  case SystemZ::MOV32m8r:
+    Opc = SystemZ::MOV32m8ry;
+    break;
+  case SystemZ::MOV32m16r:
+    Opc = SystemZ::MOV32m16ry;
+    break;
+  case SystemZ::MOV64m8r:
+    Opc = SystemZ::MOV64m8ry;
+    break;
+  case SystemZ::MOV64m16r:
+    Opc = SystemZ::MOV64m16ry;
+    break;
+  case SystemZ::MOV64m32r:
+    Opc = SystemZ::MOV64m32ry;
+    break;
+  case SystemZ::MUL32rm:
+    Opc = SystemZ::MUL32rmy;
+    break;
+  case SystemZ::CMP32rm:
+    Opc = SystemZ::CMP32rmy;
+    break;
+  case SystemZ::UCMP32rm:
+    Opc = SystemZ::UCMP32rmy;
+    break;
+  default:
+    break;
+  }
+
+  return get(Opc);
+}
+

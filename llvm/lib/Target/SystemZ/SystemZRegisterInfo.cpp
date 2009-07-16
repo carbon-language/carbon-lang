@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZ.h"
+#include "SystemZInstrInfo.h"
 #include "SystemZMachineFunctionInfo.h"
 #include "SystemZRegisterInfo.h"
 #include "SystemZSubtarget.h"
@@ -27,7 +28,7 @@
 using namespace llvm;
 
 SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm,
-                                         const TargetInstrInfo &tii)
+                                         const SystemZInstrInfo &tii)
   : SystemZGenRegisterInfo(SystemZ::ADJCALLSTACKUP, SystemZ::ADJCALLSTACKDOWN),
     TM(tm), TII(tii) {
 }
@@ -124,9 +125,14 @@ void SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // displacement field.
   MI.getOperand(i).ChangeToRegister(BasePtr, false);
 
-  // Offset is a 20-bit integer.
+  // Offset is a either 12-bit unsigned or 20-bit signed integer.
   // FIXME: handle "too long" displacements.
   int Offset = getFrameIndexOffset(MF, FrameIndex) + MI.getOperand(i+1).getImm();
+
+  // Check whether displacement is too long to fit into 12 bit zext field.
+  if (Offset < 0 || Offset >= 4096)
+    MI.setDesc(TII.getLongDispOpc(MI.getOpcode()));
+
   MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
 

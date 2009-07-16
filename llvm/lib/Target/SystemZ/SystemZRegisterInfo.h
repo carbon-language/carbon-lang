@@ -29,14 +29,14 @@ namespace SystemZ {
 }
 
 class SystemZSubtarget;
-class TargetInstrInfo;
+class SystemZInstrInfo;
 class Type;
 
 struct SystemZRegisterInfo : public SystemZGenRegisterInfo {
   SystemZTargetMachine &TM;
-  const TargetInstrInfo &TII;
+  const SystemZInstrInfo &TII;
 
-  SystemZRegisterInfo(SystemZTargetMachine &tm, const TargetInstrInfo &tii);
+  SystemZRegisterInfo(SystemZTargetMachine &tm, const SystemZInstrInfo &tii);
 
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
