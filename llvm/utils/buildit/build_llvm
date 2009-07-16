@@ -56,8 +56,11 @@ DIR=`pwd`
 DARWIN_VERS=`uname -r | sed 's/\..*//'`
 echo DARWIN_VERS = $DARWIN_VERS
 
-# If the user has CC set in their environment unset it now
-unset CC
+# If we can find an LLVM-GCC, prefer it.
+export CC=/Developer/usr/bin/llvm-gcc
+if [ ! -x $CC ] ; then unset CC ; fi
+export CXX=/Developer/usr/bin/llvm-g++
+if [ ! -x $CXX ] ; then unset CXX ; fi
 
 DT_HOME=$DEST_DIR/Developer/usr
 DEST_ROOT="/Developer$DEST_ROOT"
