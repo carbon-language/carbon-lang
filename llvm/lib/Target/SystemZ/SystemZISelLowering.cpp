@@ -45,6 +45,10 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   // Compute derived properties from the register classes
   computeRegisterProperties();
 
+  // Set shifts properties
+  setShiftAmountFlavor(Extend);
+  setShiftAmountType(MVT::i32);
+
   // Provide all sorts of operation actions
 
   setStackPointerRegisterToSaveRestore(SystemZ::R15D);

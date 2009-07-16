@@ -61,15 +61,31 @@ bool SystemZInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   if (CommonRC) {
     unsigned Opc;
-    if (CommonRC == &SystemZ::GR64RegClass) {
+    if (CommonRC == &SystemZ::GR64RegClass ||
+        CommonRC == &SystemZ::ADDR64RegClass) {
       Opc = SystemZ::MOV64rr;
-    } else if (CommonRC == &SystemZ::GR32RegClass) {
+    } else if (CommonRC == &SystemZ::GR32RegClass ||
+               CommonRC == &SystemZ::ADDR32RegClass) {
       Opc = SystemZ::MOV32rr;
     } else {
       return false;
     }
 
     BuildMI(MBB, I, DL, get(Opc), DestReg).addReg(SrcReg);
+    return true;
+  }
+
+  if ((SrcRC == &SystemZ::GR64RegClass &&
+       DestRC == &SystemZ::ADDR64RegClass) ||
+      (DestRC == &SystemZ::GR64RegClass &&
+       SrcRC == &SystemZ::ADDR64RegClass)) {
+    BuildMI(MBB, I, DL, get(SystemZ::MOV64rr), DestReg).addReg(SrcReg);
+    return true;
+  } else if ((SrcRC == &SystemZ::GR32RegClass &&
+              DestRC == &SystemZ::ADDR32RegClass) ||
+             (DestRC == &SystemZ::GR32RegClass &&
+              SrcRC == &SystemZ::ADDR32RegClass)) {
+    BuildMI(MBB, I, DL, get(SystemZ::MOV32rr), DestReg).addReg(SrcReg);
     return true;
   }
 

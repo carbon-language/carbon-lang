@@ -109,6 +109,27 @@ def i64hi32 : PatLeaf<(i64 imm), [{
 }], HI32>;
 
 //===----------------------------------------------------------------------===//
+// SystemZ Operand Definitions.
+//===----------------------------------------------------------------------===//
+
+// Address operands
+
+// riaddr := reg + imm
+def riaddr32 : Operand<i32>,
+               ComplexPattern<i32, 2, "SelectAddrRI", []> {
+  let PrintMethod = "printRIAddrOperand";
+  let MIOperandInfo = (ops ADDR32:$base, i32imm:$disp);
+}
+
+def riaddr : Operand<i64>,
+             ComplexPattern<i64, 2, "SelectAddrRI", []> {
+  let PrintMethod = "printRIAddrOperand";
+  let MIOperandInfo = (ops ADDR64:$base, i32imm:$disp);
+}
+
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
 //
 
@@ -311,6 +332,48 @@ def XOR64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
 
 } // Defs = [PSW]
 } // isTwoAddress = 1
+
+//===----------------------------------------------------------------------===//
+// Shifts
+
+let isTwoAddress = 1 in
+def SRL32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
+                      "srl\t{$src, $amt}",
+                      [(set GR32:$dst, (srl GR32:$src, riaddr32:$amt))]>;
+def SRL64rri : Pseudo<(outs GR64:$dst), (ins GR64:$src, riaddr:$amt),
+                      "srlg\t{$dst, $src, $amt}",
+                      [(set GR64:$dst, (srl GR64:$src, (i32 (trunc riaddr:$amt))))]>;
+def SRLA64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
+                      "srlg\t{$dst, $src, $amt}",
+                      [(set GR64:$dst, (srl GR64:$src, (i32 imm:$amt)))]>;
+
+let isTwoAddress = 1 in
+def SHL32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
+                      "sll\t{$src, $amt}",
+                      [(set GR32:$dst, (shl GR32:$src, riaddr32:$amt))]>;
+def SHL64rri : Pseudo<(outs GR64:$dst), (ins GR64:$src, riaddr:$amt),
+                      "sllg\t{$dst, $src, $amt}",
+                      [(set GR64:$dst, (shl GR64:$src, (i32 (trunc riaddr:$amt))))]>;
+def SHL64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
+                      "sllg\t{$dst, $src, $amt}",
+                      [(set GR64:$dst, (shl GR64:$src, (i32 imm:$amt)))]>;
+
+
+let Defs = [PSW] in {
+let isTwoAddress = 1 in
+def SRA32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
+                      "sra\t{$src, $amt}",
+                      [(set GR32:$dst, (sra GR32:$src, riaddr32:$amt)),
+                       (implicit PSW)]>;
+def SRA64rri : Pseudo<(outs GR64:$dst), (ins GR64:$src, riaddr:$amt),
+                      "srag\t{$dst, $src, $amt}",
+                      [(set GR64:$dst, (sra GR64:$src, (i32 (trunc riaddr:$amt)))),
+                       (implicit PSW)]>;
+def SRA64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
+                      "srag\t{$dst, $src, $amt}",
+                      [(set GR64:$dst, (sra GR64:$src, (i32 imm:$amt))),
+                       (implicit PSW)]>;
+} // Defs = [PSW]
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns.

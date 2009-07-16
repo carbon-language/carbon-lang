@@ -67,6 +67,8 @@ namespace {
 
   private:
     SDNode *Select(SDValue Op);
+    bool SelectAddrRI(const SDValue& Op, SDValue& Addr,
+                      SDValue &Base, SDValue &Disp);
 
   #ifndef NDEBUG
     unsigned Indent;
@@ -80,6 +82,91 @@ namespace {
 FunctionPass *llvm::createSystemZISelDag(SystemZTargetMachine &TM,
                                         CodeGenOpt::Level OptLevel) {
   return new SystemZDAGToDAGISel(TM, OptLevel);
+}
+
+/// isImmSExt20 - This method tests to see if the node is either a 32-bit
+/// or 64-bit immediate, and if the value can be accurately represented as a
+/// sign extension from a 20-bit value. If so, this returns true and the
+/// immediate.
+static bool isImmSExt20(SDNode *N, int32_t &Imm) {
+  if (N->getOpcode() != ISD::Constant)
+    return false;
+
+  Imm = (int32_t)cast<ConstantSDNode>(N)->getZExtValue();
+
+  if (Imm >= -524288 && Imm <= 524287) {
+    if (N->getValueType(0) == MVT::i32)
+      return Imm == (int32_t)cast<ConstantSDNode>(N)->getZExtValue();
+    else
+      return Imm == (int64_t)cast<ConstantSDNode>(N)->getZExtValue();
+  }
+
+  return false;
+}
+
+static bool isImmSExt20(SDValue Op, int32_t &Imm) {
+  return isImmSExt20(Op.getNode(), Imm);
+}
+
+/// Returns true if the address can be represented by a base register plus
+/// a signed 20-bit displacement [r+imm].
+bool SystemZDAGToDAGISel::SelectAddrRI(const SDValue& Op, SDValue& Addr,
+                                       SDValue &Base, SDValue &Disp) {
+  // FIXME dl should come from parent load or store, not from address
+  DebugLoc dl = Addr.getDebugLoc();
+  MVT VT = Addr.getValueType();
+
+  if (Addr.getOpcode() == ISD::ADD) {
+    int32_t Imm = 0;
+    if (isImmSExt20(Addr.getOperand(1), Imm)) {
+      Disp = CurDAG->getTargetConstant(Imm, MVT::i32);
+      if (FrameIndexSDNode *FI =
+          dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
+        Base = CurDAG->getTargetFrameIndex(FI->getIndex(), VT);
+      } else {
+        Base = Addr.getOperand(0);
+      }
+      return true; // [r+i]
+    }
+  } else if (Addr.getOpcode() == ISD::OR) {
+    int32_t Imm = 0;
+    if (isImmSExt20(Addr.getOperand(1), Imm)) {
+      // If this is an or of disjoint bitfields, we can codegen this as an add
+      // (for better address arithmetic) if the LHS and RHS of the OR are
+      // provably disjoint.
+      APInt LHSKnownZero, LHSKnownOne;
+      CurDAG->ComputeMaskedBits(Addr.getOperand(0),
+                                APInt::getAllOnesValue(Addr.getOperand(0)
+                                                       .getValueSizeInBits()),
+                                LHSKnownZero, LHSKnownOne);
+
+      if ((LHSKnownZero.getZExtValue()|~(uint64_t)Imm) == ~0ULL) {
+        // If all of the bits are known zero on the LHS or RHS, the add won't
+        // carry.
+        Base = Addr.getOperand(0);
+        Disp = CurDAG->getTargetConstant(Imm, MVT::i32);
+        return true;
+      }
+    }
+  } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr)) {
+    // Loading from a constant address.
+
+    // If this address fits entirely in a 20-bit sext immediate field, codegen
+    // this as "d(r0)"
+    int32_t Imm;
+    if (isImmSExt20(CN, Imm)) {
+      Disp = CurDAG->getTargetConstant(Imm, MVT::i32);
+      Base = CurDAG->getRegister(SystemZ::R0D, MVT::i64);
+      return true;
+    }
+  }
+
+  Disp = CurDAG->getTargetConstant(0, MVT::i32);
+  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr))
+    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), VT);
+  else
+    Base = Addr;
+  return true;      // [r+0]
 }
 
 

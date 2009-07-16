@@ -127,6 +127,33 @@ def GR32 : RegisterClass<"SystemZ", [i32], 32,
   }];
 }
 
+/// Registers used to generate address. Everything except R0.
+def ADDR32 : RegisterClass<"SystemZ", [i32], 32,
+   // Volatile registers
+  [R1W, R2W, R3W, R4W, R5W, R6W, R7W, R8W, R9W, R10W, R12W, R13W,
+   // Frame pointer, sometimes allocable
+   R11W,
+   // Volatile, but not allocable
+   R14W, R15W]>
+{
+  let MethodProtos = [{
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    ADDR32Class::iterator
+    ADDR32Class::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      // Depending on whether the function uses frame pointer or not, last 2 or 3
+      // registers on the list above are reserved
+      if (RI->hasFP(MF))
+        return end()-3;
+      else
+        return end()-2;
+    }
+  }];
+}
+
 def GR64 : RegisterClass<"SystemZ", [i64], 64,
    // Volatile registers
   [R0D, R1D, R2D, R3D, R4D, R5D, R6D, R7D, R8D, R9D, R10D, R12D, R13D,
@@ -142,6 +169,33 @@ def GR64 : RegisterClass<"SystemZ", [i64], 64,
   let MethodBodies = [{
     GR64Class::iterator
     GR64Class::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      // Depending on whether the function uses frame pointer or not, last 2 or 3
+      // registers on the list above are reserved
+      if (RI->hasFP(MF))
+        return end()-3;
+      else
+        return end()-2;
+    }
+  }];
+}
+
+def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
+   // Volatile registers
+  [R1D, R2D, R3D, R4D, R5D, R6D, R7D, R8D, R9D, R10D, R12D, R13D,
+   // Frame pointer, sometimes allocable
+   R11D,
+   // Volatile, but not allocable
+   R14D, R15D]>
+{
+  let SubRegClassList = [ADDR32];
+  let MethodProtos = [{
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    ADDR64Class::iterator
+    ADDR64Class::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       // Depending on whether the function uses frame pointer or not, last 2 or 3
