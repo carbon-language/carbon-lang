@@ -1,3 +1,17 @@
+//===--- clang-wpa.cpp - clang whole program analyzer ---------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This tool reads a sequence of precompiled AST files, and do various
+// cross translation unit analyses.
+//
+//===----------------------------------------------------------------------===//
+
 #include "clang/Analysis/CallGraph.h"
 
 #include "clang/Basic/FileManager.h"
