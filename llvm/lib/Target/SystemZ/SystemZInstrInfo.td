@@ -343,6 +343,7 @@ let isCall = 1 in
 
 let isReMaterializable = 1 in
 // FIXME: Provide imm12 variant
+// FIXME: Address should be halfword aligned...
 def LA64r  : Pseudo<(outs GR64:$dst), (ins laaddr:$src),
                     "lay\t{$dst, $src}",
                     [(set GR64:$dst, laaddr:$src)]>;

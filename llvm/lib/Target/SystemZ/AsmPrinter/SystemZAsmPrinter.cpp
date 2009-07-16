@@ -68,6 +68,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
+    void printModuleLevelGV(const GlobalVariable* GVar);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
@@ -97,6 +98,31 @@ bool SystemZAsmPrinter::doInitialization(Module &M) {
 
 
 bool SystemZAsmPrinter::doFinalization(Module &M) {
+  // Print out module-level global variables here.
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
+    printModuleLevelGV(I);
+
+    // If the global is a extern weak symbol, remember to emit the weak
+    // reference!
+    // FIXME: This is rather hacky, since we'll emit references to ALL weak
+    // stuff, not used. But currently it's the only way to deal with extern weak
+    // initializers hidden deep inside constant expressions.
+    if (I->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(I);
+  }
+
+  for (Module::const_iterator I = M.begin(), E = M.end();
+       I != E; ++I) {
+    // If the global is a extern weak symbol, remember to emit the weak
+    // reference!
+    // FIXME: This is rather hacky, since we'll emit references to ALL weak
+    // stuff, not used. But currently it's the only way to deal with extern weak
+    // initializers hidden deep inside constant expressions.
+    if (I->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(I);
+  }
+
   return AsmPrinter::doFinalization(M);
 }
 
@@ -204,10 +230,15 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_GlobalAddress: {
-    std::string Name = Mang->getValueName(MO.getGlobal());
+    const GlobalValue *GV = MO.getGlobal();
+
+    std::string Name = Mang->getValueName(GV);
     assert(MO.getOffset() == 0 && "No offsets allowed!");
 
     O << Name;
+
+    if (GV->hasExternalWeakLinkage())
+      ExtWeakSymbols.insert(GV);
 
     return;
   }
@@ -258,3 +289,91 @@ void SystemZAsmPrinter::printRRIAddrOperand(const MachineInstr *MI, int OpNum,
     assert(!Index.getReg() && "Should allocate base register first!");
 }
 
+/// PrintUnmangledNameSafely - Print out the printable characters in the name.
+/// Don't print things like \\n or \\0.
+static void PrintUnmangledNameSafely(const Value *V, raw_ostream &OS) {
+  for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
+       Name != E; ++Name)
+    if (isprint(*Name))
+      OS << *Name;
+}
+
+void SystemZAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
+  const TargetData *TD = TM.getTargetData();
+
+  if (!GVar->hasInitializer())
+    return;   // External global require no code
+
+  // Check to see if this is a special global used by LLVM, if so, emit it.
+  if (EmitSpecialLLVMGlobal(GVar))
+    return;
+
+  std::string name = Mang->getValueName(GVar);
+  Constant *C = GVar->getInitializer();
+  const Type *Type = C->getType();
+  unsigned Size = TD->getTypeAllocSize(Type);
+  unsigned Align = std::max(1U, TD->getPreferredAlignmentLog(GVar));
+
+  printVisibility(name, GVar->getVisibility());
+
+  O << "\t.type\t" << name << ",@object\n";
+
+  SwitchToSection(TAI->SectionForGlobal(GVar));
+
+  if (C->isNullValue() && !GVar->hasSection() &&
+      !GVar->isThreadLocal() &&
+      (GVar->hasLocalLinkage() || GVar->isWeakForLinker())) {
+
+    if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+
+    if (GVar->hasLocalLinkage())
+      O << "\t.local\t" << name << '\n';
+
+    O << TAI->getCOMMDirective()  << name << ',' << Size;
+    if (TAI->getCOMMDirectiveTakesAlignment())
+      O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
+
+    if (VerboseAsm) {
+      O << "\t\t" << TAI->getCommentString() << ' ';
+      PrintUnmangledNameSafely(GVar, O);
+    }
+    O << '\n';
+    return;
+  }
+
+  switch (GVar->getLinkage()) {
+  case GlobalValue::CommonLinkage:
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+    O << "\t.weak\t" << name << '\n';
+    break;
+  case GlobalValue::DLLExportLinkage:
+  case GlobalValue::AppendingLinkage:
+    // FIXME: appending linkage variables should go into a section of
+    // their name or something.  For now, just emit them as external.
+  case GlobalValue::ExternalLinkage:
+    // If external or appending, declare as a global symbol
+    O << "\t.globl " << name << '\n';
+    // FALL THROUGH
+  case GlobalValue::PrivateLinkage:
+  case GlobalValue::InternalLinkage:
+     break;
+  default:
+    assert(0 && "Unknown linkage type!");
+  }
+
+  // Use 16-bit alignment by default to simplify bunch of stuff
+  EmitAlignment(Align, GVar, 1);
+  O << name << ":";
+  if (VerboseAsm) {
+    O << "\t\t\t\t" << TAI->getCommentString() << ' ';
+    PrintUnmangledNameSafely(GVar, O);
+  }
+  O << '\n';
+  if (TAI->hasDotTypeDotSizeDirective())
+    O << "\t.size\t" << name << ", " << Size << '\n';
+
+  EmitGlobalConstant(C);
+}

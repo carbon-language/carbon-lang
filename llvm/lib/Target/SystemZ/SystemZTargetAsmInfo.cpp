@@ -18,5 +18,13 @@ using namespace llvm;
 
 SystemZTargetAsmInfo::SystemZTargetAsmInfo(const SystemZTargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
-  AlignmentIsInBytes = false;
+  AlignmentIsInBytes = true;
+
+  CStringSection = ".rodata.str";
+  PrivateGlobalPrefix = ".L";
+  WeakRefDirective = "\t.weak\t";
+  SetDirective = "\t.set\t";
+  PCSymbol = ".";
+
+  NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
 }
