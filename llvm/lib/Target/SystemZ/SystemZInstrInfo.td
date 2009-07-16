@@ -170,6 +170,10 @@ def ADD64ri16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                        "aghi\t{$dst, $src2}",
                        [(set GR64:$dst, (add GR64:$src1, immSExt16:$src2)),
                         (implicit PSW)]>;
+def ADD64ri32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                       "agfi\t{$dst, $src2}",
+                       [(set GR64:$dst, (add GR64:$src1, immSExt32:$src2)),
+                        (implicit PSW)]>;
 
 let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
 // FIXME: Provide proper encoding!
@@ -191,6 +195,13 @@ def AND64rihl16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
 def AND64rihh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                          "nihh\t{$dst, $src2}",
                          [(set GR64:$dst, (and GR64:$src1, i64hh16:$src2))]>;
+// FIXME: these 2 instructions seem to require extimm facility
+def AND64rilo32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "nilf\t{$dst, $src2}",
+                         [(set GR64:$dst, (and GR64:$src1, i64lo32:$src2))]>;
+def AND64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "nihf\t{$dst, $src2}",
+                         [(set GR64:$dst, (and GR64:$src1, i64hi32:$src2))]>;
 
 let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
 // FIXME: Provide proper encoding!
@@ -198,6 +209,7 @@ def OR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                     "ogr\t{$dst, $src2}",
                     [(set GR64:$dst, (or GR64:$src1, GR64:$src2))]>;
 }
+
 def OR64rill16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                         "oill\t{$dst, $src2}",
                         [(set GR64:$dst, (or GR64:$src1, i64ll16:$src2))]>;
@@ -210,6 +222,13 @@ def OR64rihl16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
 def OR64rihh16 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                         "oihh\t{$dst, $src2}",
                         [(set GR64:$dst, (or GR64:$src1, i64hh16:$src2))]>;
+// FIXME: these 2 instructions seem to require extimm facility
+def OR64rilo32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                        "oilf\t{$dst, $src2}",
+                        [(set GR64:$dst, (or GR64:$src1, i64lo32:$src2))]>;
+def OR64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                        "oihf\t{$dst, $src2}",
+                        [(set GR64:$dst, (or GR64:$src1, i64hi32:$src2))]>;
 
 // FIXME: Provide proper encoding!
 def SUB64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
@@ -223,6 +242,14 @@ def XOR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                      "xgr\t{$dst, $src2}",
                      [(set GR64:$dst, (xor GR64:$src1, GR64:$src2))]>;
 }
+
+// FIXME: these 2 instructions seem to require extimm facility
+def XOR64rilo32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "xilf\t{$dst, $src2}",
+                         [(set GR64:$dst, (xor GR64:$src1, i64lo32:$src2))]>;
+def XOR64rihi32 : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                         "xihf\t{$dst, $src2}",
+                         [(set GR64:$dst, (xor GR64:$src1, i64hi32:$src2))]>;
 
 } // Defs = [PSW]
 } // isTwoAddress = 1
