@@ -186,20 +186,16 @@ SDValue SystemZTargetLowering::LowerCCCArguments(SDValue Op,
     } else {
       // Sanity check
       assert(VA.isMemLoc());
-      // Load the argument to a virtual register
-      unsigned ObjSize = VA.getLocVT().getSizeInBits()/8;
-      if (ObjSize > 8) {
-        cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-             << VA.getLocVT().getSimpleVT()
-             << "\n";
-      }
+
+      // Create the nodes corresponding to a load from this parameter slot.
       // Create the frame index object for this incoming parameter...
-      int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset());
+      int FI = MFI->CreateFixedObject(VA.getValVT().getSizeInBits()/8,
+                                      VA.getLocMemOffset());
 
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
-      SDValue FIN = DAG.getFrameIndex(FI, MVT::i64);
-      ArgValues.push_back(DAG.getLoad(VA.getLocVT(), dl, Root, FIN,
+      SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+      ArgValues.push_back(DAG.getLoad(VA.getValVT(), dl, Root, FIN,
                                       PseudoSourceValue::getFixedStack(FI), 0));
     }
   }
