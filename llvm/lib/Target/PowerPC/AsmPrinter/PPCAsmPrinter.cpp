@@ -984,10 +984,10 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
   // Output stubs for dynamically-linked functions
   if (TM.getRelocationModel() == Reloc::PIC_ && !FnStubs.empty()) {
-    SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
-                        "pure_instructions,32");
     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
+      SwitchToTextSection("\t.section __TEXT,__picsymbolstub1,symbol_stubs,"
+                          "pure_instructions,32");
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
       O << Info.Stub << ":\n";
@@ -1003,16 +1003,17 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       O << Info.LazyPtr << "-" << Info.AnonSymbol << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
+      
       SwitchToDataSection(".lazy_symbol_pointer");
       O << Info.LazyPtr << ":\n";
       O << "\t.indirect_symbol " << I->getKeyData() << '\n';
       O << (isPPC64 ? "\t.quad" : "\t.long") << " dyld_stub_binding_helper\n";
     }
   } else if (!FnStubs.empty()) {
-    SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
-                        "pure_instructions,16");
     for (StringMap<FnStubInfo>::iterator I = FnStubs.begin(), E = FnStubs.end();
          I != E; ++I) {
+      SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
+                          "pure_instructions,16");
       EmitAlignment(4);
       const FnStubInfo &Info = I->second;
       O << Info.Stub << ":\n";
