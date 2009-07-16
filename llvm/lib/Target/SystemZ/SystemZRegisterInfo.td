@@ -62,8 +62,11 @@ def F13 : FPR<13, "f13">, DwarfRegNum<[29]>;
 def F14 : FPR<14, "f14">, DwarfRegNum<[30]>;
 def F15 : FPR<15, "f15">, DwarfRegNum<[31]>;
 
+// Status register
+def PSW : SystemZReg<"psw">;
+
 /// Register classes
-def GR64 : RegisterClass<"SystemZ", [i64], 16,
+def GR64 : RegisterClass<"SystemZ", [i64], 64,
    // Volatile registers
   [R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R12, R13, 
    // Frame pointer, sometimes allocable
@@ -91,3 +94,8 @@ def GR64 : RegisterClass<"SystemZ", [i64], 16,
 
 def FP64 : RegisterClass<"SystemZ", [f64], 64,
  [F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15]>;
+
+// Status flags registers.
+def CCR : RegisterClass<"SystemZ", [i64], 64, [PSW]> {
+  let CopyCost = -1;  // Don't allow copying of status registers.
+}

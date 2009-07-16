@@ -47,3 +47,27 @@ def MOV64ri : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
                      "lghi\t{$dst, $src}",
                      [(set GR64:$dst, imm:$src)]>;
 }
+
+//===----------------------------------------------------------------------===//
+// Arithmetic Instructions
+
+let isTwoAddress = 1 in {
+
+let Defs = [PSW] in {
+
+let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
+// FIXME: Provide proper encoding!
+def ADD64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                     "agr\t{$dst, $src2}",
+                     [(set GR64:$dst, (add GR64:$src1, GR64:$src2)),
+                      (implicit PSW)]>;
+}
+
+// FIXME: Provide proper encoding!
+def ADD64ri : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
+                     "aghi\t{$dst, $src2}",
+                     [(set GR64:$dst, (add GR64:$src1, imm:$src2)),
+                      (implicit PSW)]>;
+
+} // Defs = [PSW]
+} // isTwoAddress = 1
