@@ -7,8 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This just asks the TargetMachineRegistry for the appropriate JIT to use, and
-// allows the user to specify a specific one on the commandline with -march=x.
+// This just asks the TargetRegistry for the appropriate JIT to use, and allows
+// the user to specify a specific one on the commandline with -march=x. Clients
+// should initialize targets prior to calling createJIT.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,12 +20,11 @@
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-static cl::opt<const TargetMachineRegistry::entry*, false,
-               RegistryParser<TargetMachine> >
-MArch("march", cl::desc("Architecture to generate assembly for:"));
+static cl::opt<std::string>
+MArch("march", cl::desc("Architecture to generate assembly for (see --version)"));
 
 static cl::opt<std::string>
 MCPU("mcpu",
@@ -45,8 +45,8 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
                                 JITMemoryManager *JMM,
                                 CodeGenOpt::Level OptLevel,
                                 bool AllocateGVsWithCode) {
-  const Target *TheTarget;
-  if (MArch == 0) {
+  const Target *TheTarget = 0;
+  if (MArch.empty()) {
     std::string Error;
     TheTarget = TargetRegistry::getClosestTargetForJIT(Error);
     if (TheTarget == 0) {
@@ -55,7 +55,20 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
       return 0;
     }
   } else {
-    TheTarget = &MArch->TheTarget;
+    for (TargetRegistry::iterator it = TargetRegistry::begin(),
+           ie = TargetRegistry::end(); it != ie; ++it) {
+      if (MArch == it->getName()) {
+        TheTarget = &*it;
+        break;
+      }
+    }
+    
+    if (TheTarget == 0) {
+      if (ErrorStr)
+        *ErrorStr = std::string("invalid target '" + MArch + "'.\n");
+      return 0;
+    }        
+
     if (TheTarget->getJITMatchQuality() == 0) {
       cerr << "WARNING: This target JIT is not designed for the host you are"
            << " running.  If bad things happen, please choose a different "

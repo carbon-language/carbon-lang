@@ -21,7 +21,7 @@
 #include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
@@ -35,7 +35,6 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/RegistryParser.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
@@ -68,9 +67,8 @@ OptLevel("O",
 static cl::opt<std::string>
 TargetTriple("mtriple", cl::desc("Override target triple for module"));
 
-static cl::opt<const TargetMachineRegistry::entry*, false,
-               RegistryParser<TargetMachine> >
-MArch("march", cl::desc("Architecture to generate code for:"));
+static cl::opt<std::string>
+MArch("march", cl::desc("Architecture to generate code for (see --version)"));
 
 static cl::opt<std::string>
 MCPU("mcpu",
@@ -238,9 +236,20 @@ int main(int argc, char **argv) {
 
   // Allocate target machine.  First, check whether the user has
   // explicitly specified an architecture to compile for.
-  const Target *TheTarget;
-  if (MArch) {
-    TheTarget = &MArch->TheTarget;
+  const Target *TheTarget = 0;
+  if (!MArch.empty()) {
+    for (TargetRegistry::iterator it = TargetRegistry::begin(),
+           ie = TargetRegistry::end(); it != ie; ++it) {
+      if (MArch == it->getName()) {
+        TheTarget = &*it;
+        break;
+      }
+    }
+
+    if (!TheTarget) {
+      errs() << argv[0] << ": error: invalid target '" << MArch << "'.\n";
+      return 1;
+    }        
   } else {
     std::string Err;
     TheTarget = TargetRegistry::getClosestStaticTargetForModule(mod, Err);

@@ -139,6 +139,9 @@ public:
   /// createJIT - This is the factory method for creating a JIT for the current
   /// machine, it does not fall back to the interpreter.  This takes ownership
   /// of the ModuleProvider and JITMemoryManager if successful.
+  ///
+  /// Clients should make sure to initialize targets prior to calling this
+  /// function.
   static ExecutionEngine *createJIT(ModuleProvider *MP,
                                     std::string *ErrorStr = 0,
                                     JITMemoryManager *JMM = 0,
