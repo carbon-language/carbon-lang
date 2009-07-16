@@ -168,5 +168,20 @@ void SystemZAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 
 void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                     const char* Modifier) {
-  assert(0 && "Not implemented yet!");
+  const MachineOperand &MO = MI->getOperand(OpNum);
+  switch (MO.getType()) {
+  case MachineOperand::MO_Register:
+    assert (TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
+            "Virtual registers should be already mapped!");
+    O << '%' << TM.getRegisterInfo()->get(MO.getReg()).AsmName;
+    return;
+  case MachineOperand::MO_Immediate:
+    O << MO.getImm();
+    return;
+  case MachineOperand::MO_MachineBasicBlock:
+    printBasicBlockLabel(MO.getMBB());
+    return;
+  default:
+    assert(0 && "Not implemented yet!");
+  }
 }

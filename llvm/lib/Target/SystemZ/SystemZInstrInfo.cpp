@@ -43,18 +43,46 @@ void SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 bool SystemZInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator I,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC) const {
+                                    MachineBasicBlock::iterator I,
+                                    unsigned DestReg, unsigned SrcReg,
+                                    const TargetRegisterClass *DestRC,
+                                    const TargetRegisterClass *SrcRC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
+
+  if (DestRC == SrcRC) {
+    unsigned Opc;
+    if (DestRC == &SystemZ::GR64RegClass) {
+      Opc = SystemZ::MOV64rr;
+    } else {
+      return false;
+    }
+
+    BuildMI(MBB, I, DL, get(Opc), DestReg).addReg(SrcReg);
+    return true;
+  }
+
   return false;
 }
 
 bool
 SystemZInstrInfo::isMoveInstr(const MachineInstr& MI,
-                             unsigned &SrcReg, unsigned &DstReg,
-                             unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
-  return false;
+                              unsigned &SrcReg, unsigned &DstReg,
+                              unsigned &SrcSubIdx, unsigned &DstSubIdx) const {
+  SrcSubIdx = DstSubIdx = 0; // No sub-registers yet.
+
+  switch (MI.getOpcode()) {
+  default:
+    return false;
+  case SystemZ::MOV64rr:
+    assert(MI.getNumOperands() >= 2 &&
+           MI.getOperand(0).isReg() &&
+           MI.getOperand(1).isReg() &&
+           "invalid register-register move instruction");
+    SrcReg = MI.getOperand(1).getReg();
+    DstReg = MI.getOperand(0).getReg();
+    return true;
+  }
 }
 
 bool

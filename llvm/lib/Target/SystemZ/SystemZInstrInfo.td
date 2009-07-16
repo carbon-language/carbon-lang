@@ -30,3 +30,20 @@ def NOP : Pseudo<(outs), (ins), "# no-op", []>;
 let isReturn = 1, isTerminator = 1 in {
   def RET : Pseudo<(outs), (ins), "br\t%r14", [(SystemZretflag)]>;
 }
+
+//===----------------------------------------------------------------------===//
+// Move Instructions
+
+// FIXME: Provide proper encoding!
+let neverHasSideEffects = 1 in {
+def MOV64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src),
+                     "lgr\t{$dst, $src}",
+                     []>;
+}
+
+// FIXME: Provide proper encoding!
+let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
+def MOV64ri : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                     "lghi\t{$dst, $src}",
+                     [(set GR64:$dst, imm:$src)]>;
+}
