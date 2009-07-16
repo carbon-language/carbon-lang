@@ -32,6 +32,12 @@ class GPR64<bits<4> num, string n, list<Register> subregs>
   field bits<4> Num = num;
 }
 
+// GPR128 - 8 even-odd register pairs
+class GPR128<bits<4> num, string n, list<Register> subregs>
+ : SystemZRegWithSubregs<n, subregs> {
+  field bits<4> Num = num;
+}
+
 // FPR - One of the 16 64-bit floating-point registers
 class FPR<bits<4> num, string n> : SystemZReg<n> {
   field bits<4> Num = num;
@@ -72,6 +78,16 @@ def R13D : GPR64<13, "r13", [R13W]>, DwarfRegNum<[13]>;
 def R14D : GPR64<14, "r14", [R14W]>, DwarfRegNum<[14]>;
 def R15D : GPR64<15, "r15", [R15W]>, DwarfRegNum<[15]>;
 
+// Register pairs
+def R0Q  : GPR128< 0,  "r0", [R0D,  R1D]>,  DwarfRegNum<[0]>;
+def R2Q  : GPR128< 2,  "r2", [R2D,  R3D]>,  DwarfRegNum<[2]>;
+def R4Q  : GPR128< 4,  "r4", [R4D,  R5D]>,  DwarfRegNum<[4]>;
+def R6Q  : GPR128< 6,  "r6", [R6D,  R7D]>,  DwarfRegNum<[6]>;
+def R8Q  : GPR128< 8,  "r8", [R8D,  R9D]>,  DwarfRegNum<[8]>;
+def R10Q : GPR128<10, "r10", [R10D, R11D]>, DwarfRegNum<[10]>;
+def R12Q : GPR128<12, "r12", [R12D, R13D]>, DwarfRegNum<[12]>;
+def R14Q : GPR128<14, "r14", [R14D, R15D]>, DwarfRegNum<[14]>;
+
 // Floating-point registers
 def F0  : FPR< 0,  "f0">, DwarfRegNum<[16]>;
 def F1  : FPR< 1,  "f1">, DwarfRegNum<[17]>;
@@ -93,12 +109,20 @@ def F15 : FPR<15, "f15">, DwarfRegNum<[31]>;
 // Status register
 def PSW : SystemZReg<"psw">;
 
+def subreg_32bit  : PatLeaf<(i32 1)>;
+def subreg_64even : PatLeaf<(i32 2)>;
+def subreg_64odd  : PatLeaf<(i32 3)>;
+
 def : SubRegSet<1, [R0D, R1D,  R2D,  R3D,  R4D,  R5D,  R6D,  R7D,
                     R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D],
                    [R0W, R1W,  R2W,  R3W,  R4W,  R5W,  R6W,  R7W,
                     R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
 
-def subreg_32bit : PatLeaf<(i32 1)>;
+def : SubRegSet<2, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
+                   [R0D, R2D, R4D, R6D, R8D, R10D, R12D, R14D]>;
+
+def : SubRegSet<3, [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q],
+                   [R1D, R3D, R5D, R7D, R9D, R11D, R13D, R15D]>;
 
 /// Register classes
 def GR32 : RegisterClass<"SystemZ", [i32], 32,
@@ -284,6 +308,43 @@ def ADDR64 : RegisterClass<"SystemZ", [i64], 64,
         return SystemZ_ADDR64_nofp + (sizeof(SystemZ_ADDR64_nofp) / sizeof(unsigned));
       else
         return SystemZ_ADDR64 + (sizeof(SystemZ_ADDR64) / sizeof(unsigned));
+    }
+  }];
+}
+
+// Even-odd register pairs
+def GR128 : RegisterClass<"SystemZ", [i128], 128,
+  [R0Q, R2Q, R4Q, R6Q, R8Q, R10Q, R12Q, R14Q]>
+{
+  let SubRegClassList = [GR64, GR64];
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    static const unsigned SystemZ_REG128[] = {
+      SystemZ::R0Q,  SystemZ::R2Q,  SystemZ::R4Q,  SystemZ::R10Q,
+      SystemZ::R8Q,  SystemZ::R6Q };
+    static const unsigned SystemZ_REG128_nofp[] = {
+      SystemZ::R0Q,  SystemZ::R2Q,  SystemZ::R4Q, /* NO R10Q */
+      SystemZ::R8Q,  SystemZ::R6Q };
+    GR128Class::iterator
+    GR128Class::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return SystemZ_REG128_nofp;
+      else
+        return SystemZ_REG128;
+    }
+    GR128Class::iterator
+    GR128Class::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      if (RI->hasFP(MF))
+        return SystemZ_REG128_nofp + (sizeof(SystemZ_REG128_nofp) / sizeof(unsigned));
+      else
+        return SystemZ_REG128 + (sizeof(SystemZ_REG128) / sizeof(unsigned));
     }
   }];
 }
