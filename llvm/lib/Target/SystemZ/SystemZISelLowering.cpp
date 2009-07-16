@@ -32,6 +32,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
@@ -46,6 +47,11 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   addRegisterClass(MVT::v2i32,SystemZ::GR64PRegisterClass);
   addRegisterClass(MVT::i128, SystemZ::GR128RegisterClass);
   addRegisterClass(MVT::v2i64,SystemZ::GR128RegisterClass);
+
+  if (!UseSoftFloat) {
+    addRegisterClass(MVT::f32, SystemZ::FP32RegisterClass);
+    addRegisterClass(MVT::f64, SystemZ::FP64RegisterClass);
+  }
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
