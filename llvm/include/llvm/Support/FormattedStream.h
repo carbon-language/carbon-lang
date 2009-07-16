@@ -33,7 +33,8 @@ namespace llvm
     const static bool PRESERVE_STREAM = false;
     
   private:
-    /// TheStream - The real stream we output to.
+    /// TheStream - The real stream we output to. We set it to be
+    /// unbuffered, since we're already doing our own buffering.
     ///
     raw_ostream *TheStream;
     /// DeleteStream - Do we need to delete TheStream in the
@@ -70,13 +71,27 @@ namespace llvm
     /// put into ErrorInfo, and the stream should be immediately
     /// destroyed; the string will be empty if no error occurred.
     ///
+    /// As a side effect, the given Stream is set to be Unbuffered.
+    /// This is because formatted_raw_ostream does its own buffering,
+    /// so it doesn't want another layer of buffering to be happening
+    /// underneath it.
+    ///
     /// \param Filename - The file to open. If this is "-" then the
     /// stream will use stdout instead.
     /// \param Binary - The file should be opened in binary mode on
     /// platforms that support this distinction.
     formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
-        : raw_ostream(), TheStream(&Stream), DeleteStream(Delete), Column(0) {}
-    explicit formatted_raw_ostream() 
+      : raw_ostream(), TheStream(&Stream), DeleteStream(Delete), Column(0) {
+      // This formatted_raw_ostream inherits from raw_ostream, so it'll do its
+      // own buffering, and it doesn't need or want TheStream to do another
+      // layer of buffering underneath. Resize the buffer to what TheStream
+      // had been using, and tell TheStream not to do its own buffering.
+      TheStream->flush();
+      if (size_t BufferSize = TheStream->GetNumBytesInBuffer())
+        SetBufferSize(BufferSize);
+      TheStream->SetUnbuffered();
+    }
+    explicit formatted_raw_ostream()
       : raw_ostream(), TheStream(0), DeleteStream(false), Column(0) {}
 
     ~formatted_raw_ostream() {
@@ -87,6 +102,12 @@ namespace llvm
     void setStream(raw_ostream &Stream, bool Delete = false) {
       TheStream = &Stream;
       DeleteStream = Delete;
+
+      // Avoid double-buffering, as above.
+      TheStream->flush();
+      if (size_t BufferSize = TheStream->GetNumBytesInBuffer())
+        SetBufferSize(BufferSize);
+      TheStream->SetUnbuffered();
     }
 
     /// PadToColumn - Align the output to some column number.
