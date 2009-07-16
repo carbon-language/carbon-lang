@@ -773,8 +773,7 @@ def : Pat<(SystemZpcrelwrapper tjumptable:$src), (LA64rm tjumptable:$src)>;
 def : Pat<(SystemZpcrelwrapper tconstpool:$src), (LA64rm tconstpool:$src)>;
 
 // anyext
-def : Pat<(i64 (anyext GR32:$src)),
-          (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR32:$src, subreg_32bit)>;
+def : Pat<(i64 (anyext GR32:$src)), (MOVZX64rr32 GR32:$src)>;
 
 // calls
 def : Pat<(SystemZcall (i64 tglobaladdr:$dst)), (CALLi tglobaladdr:$dst)>;

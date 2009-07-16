@@ -1,8 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=systemz | grep oill  | count 3
 ; RUN: llvm-as < %s | llc -march=systemz | grep oilh  | count 3
 ; RUN: llvm-as < %s | llc -march=systemz | grep oilf  | count 3
-; RUN: llvm-as < %s | llc -march=systemz | grep llgfr | count 3
-; RUN: llvm-as < %s | llc -march=systemz | grep lgfr  | count 6
+; RUN: llvm-as < %s | llc -march=systemz | grep llgfr | count 6
+; RUN: llvm-as < %s | llc -march=systemz | grep lgfr  | count 9
 
 define i32 @foo1(i32 %a, i32 %b) {
 entry:
