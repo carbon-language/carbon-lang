@@ -239,9 +239,32 @@ unsigned
 SystemZInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                               MachineBasicBlock *FBB,
                             const SmallVectorImpl<MachineOperand> &Cond) const {
-  assert(0 && "Implement branches!");
+  // FIXME this should probably have a DebugLoc operand
+  DebugLoc dl = DebugLoc::getUnknownLoc();
+  // Shouldn't be a fall through.
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+  assert((Cond.size() == 1 || Cond.size() == 0) &&
+         "SystemZ branch conditions have one component!");
 
-  return 0;
+  if (Cond.empty()) {
+    // Unconditional branch?
+    assert(!FBB && "Unconditional branch with multiple successors!");
+    BuildMI(&MBB, dl, get(SystemZ::JMP)).addMBB(TBB);
+    return 1;
+  }
+
+  // Conditional branch.
+  unsigned Count = 0;
+  SystemZCC::CondCodes CC = (SystemZCC::CondCodes)Cond[0].getImm();
+  BuildMI(&MBB, dl, getBrCond(CC)).addMBB(TBB);
+  ++Count;
+
+  if (FBB) {
+    // Two-way Conditional branch. Insert the second branch.
+    BuildMI(&MBB, dl, get(SystemZ::JMP)).addMBB(FBB);
+    ++Count;
+  }
+  return Count;
 }
 
 const TargetInstrDesc&
