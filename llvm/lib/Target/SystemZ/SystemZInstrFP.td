@@ -295,6 +295,13 @@ def FCONVGR64   : Pseudo<(outs GR64:$dst), (ins FP64:$src),
                           (implicit PSW)]>;
 } // Defs = [PSW]
 
+def FBCONVG64   : Pseudo<(outs GR64:$dst), (ins FP64:$src),
+                         "lgdr\t{$dst, $src}",
+                         [(set GR64:$dst, (bitconvert FP64:$src))]>;
+def FBCONVF64   : Pseudo<(outs FP64:$dst), (ins GR64:$src),
+                         "ldgr\t{$dst, $src}",
+                         [(set FP64:$dst, (bitconvert GR64:$src))]>;
+
 //===----------------------------------------------------------------------===//
 // Test instructions (like AND but do not produce any result)
 

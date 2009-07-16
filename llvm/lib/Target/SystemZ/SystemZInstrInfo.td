@@ -785,7 +785,11 @@ def : Pat<(SystemZcall (i64 texternalsym:$dst)), (CALLi texternalsym:$dst)>;
 
 // FIXME: use add/sub tricks with 32678/-32768
 
-// Arbitrary immediate support.  Implement in terms of LLIHF/OILF.
+// Arbitrary immediate support.
+def : Pat<(i32 imm:$src),
+          (EXTRACT_SUBREG (MOV64ri32 (i64 imm:$src)), subreg_32bit)>;
+
+// Implement in terms of LLIHF/OILF.
 def : Pat<(i64 imm:$imm),
           (OR64rilo32 (MOV64rihi32 (HI32 imm:$imm)), (LO32 imm:$imm))>;
 
@@ -821,6 +825,3 @@ def : Pat<(mulhu GR64:$src1, GR64:$src2),
                                                      GR64:$src1, subreg_odd),
                                       GR64:$src2),
                           subreg_even)>;
-
-def : Pat<(i32 imm:$src),
-          (EXTRACT_SUBREG (MOV64ri32 (i64 imm:$src)), subreg_32bit)>;
