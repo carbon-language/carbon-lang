@@ -176,14 +176,20 @@ def i64immZExt32 : PatLeaf<(i64 imm), [{
 }]>;
 
 // extloads
+def extloadi32i8   : PatFrag<(ops node:$ptr), (i32 (extloadi8  node:$ptr))>;
+def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extloadi16 node:$ptr))>;
 def extloadi64i8   : PatFrag<(ops node:$ptr), (i64 (extloadi8  node:$ptr))>;
 def extloadi64i16  : PatFrag<(ops node:$ptr), (i64 (extloadi16 node:$ptr))>;
 def extloadi64i32  : PatFrag<(ops node:$ptr), (i64 (extloadi32 node:$ptr))>;
 
+def sextloadi32i8   : PatFrag<(ops node:$ptr), (i32 (sextloadi8  node:$ptr))>;
+def sextloadi32i16  : PatFrag<(ops node:$ptr), (i32 (sextloadi16 node:$ptr))>;
 def sextloadi64i8   : PatFrag<(ops node:$ptr), (i64 (sextloadi8  node:$ptr))>;
 def sextloadi64i16  : PatFrag<(ops node:$ptr), (i64 (sextloadi16 node:$ptr))>;
 def sextloadi64i32  : PatFrag<(ops node:$ptr), (i64 (sextloadi32 node:$ptr))>;
 
+def zextloadi32i8   : PatFrag<(ops node:$ptr), (i32 (zextloadi8  node:$ptr))>;
+def zextloadi32i16  : PatFrag<(ops node:$ptr), (i32 (zextloadi16 node:$ptr))>;
 def zextloadi64i8   : PatFrag<(ops node:$ptr), (i64 (zextloadi8  node:$ptr))>;
 def zextloadi64i16  : PatFrag<(ops node:$ptr), (i64 (zextloadi16 node:$ptr))>;
 def zextloadi64i32  : PatFrag<(ops node:$ptr), (i64 (zextloadi32 node:$ptr))>;
@@ -392,6 +398,12 @@ def MOV64mi16 : Pseudo<(outs), (ins riaddr:$dst, i64imm:$src),
                        [(store (i64 immSExt16:$src), riaddr:$dst)]>;
 
 // extloads
+def MOVSX32rm8  : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
+                         "lb\t{$dst, $src}",
+                         [(set GR32:$dst, (sextloadi32i8 rriaddr:$src))]>;
+def MOVSX32rm16 : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
+                         "lhy\t{$dst, $src}",
+                         [(set GR32:$dst, (sextloadi32i16 rriaddr:$src))]>;
 def MOVSX64rm8  : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
                          "lgb\t{$dst, $src}",
                          [(set GR64:$dst, (sextloadi64i8 rriaddr:$src))]>;
@@ -402,6 +414,12 @@ def MOVSX64rm32 : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
                          "lgf\t{$dst, $src}",
                          [(set GR64:$dst, (sextloadi64i32 rriaddr:$src))]>;
 
+def MOVZX32rm8  : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
+                         "llc\t{$dst, $src}",
+                         [(set GR32:$dst, (zextloadi32i8 rriaddr:$src))]>;
+def MOVZX32rm16 : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
+                         "llh\t{$dst, $src}",
+                         [(set GR32:$dst, (zextloadi32i16 rriaddr:$src))]>;
 def MOVZX64rm8  : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
                          "llgc\t{$dst, $src}",
                          [(set GR64:$dst, (zextloadi64i8 rriaddr:$src))]>;
@@ -732,6 +750,8 @@ def : Pat<(sext_inreg GR64:$src, i32),
           (MOVSX64rr32 (EXTRACT_SUBREG GR64:$src, subreg_32bit))>;
 
 // extload patterns
+def : Pat<(extloadi32i8  rriaddr:$src), (MOVZX32rm8  rriaddr:$src)>;
+def : Pat<(extloadi32i16 rriaddr:$src), (MOVZX32rm16 rriaddr:$src)>;
 def : Pat<(extloadi64i8  rriaddr:$src), (MOVZX64rm8  rriaddr:$src)>;
 def : Pat<(extloadi64i16 rriaddr:$src), (MOVZX64rm16 rriaddr:$src)>;
 def : Pat<(extloadi64i32 rriaddr:$src), (MOVZX64rm32 rriaddr:$src)>;

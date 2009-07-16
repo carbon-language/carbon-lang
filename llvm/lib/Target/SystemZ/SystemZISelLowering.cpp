@@ -52,6 +52,9 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setShiftAmountType(MVT::i32);
 
   // Provide all sorts of operation actions
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
 
   setStackPointerRegisterToSaveRestore(SystemZ::R15D);
   setSchedulingPreference(SchedulingForLatency);
