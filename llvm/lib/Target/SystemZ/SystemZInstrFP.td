@@ -128,6 +128,13 @@ def FROUND64r32 : Pseudo<(outs FP32:$dst), (ins FP64:$src),
 def FCONVFP32   : Pseudo<(outs FP32:$dst), (ins GR32:$src),
                          "cefbr\t{$dst, $src}",
                          [(set FP32:$dst, (sint_to_fp GR32:$src))]>;
+def FCONVFP32r64: Pseudo<(outs FP32:$dst), (ins GR64:$src),
+                         "cegbr\t{$dst, $src}",
+                         [(set FP32:$dst, (sint_to_fp GR64:$src))]>;
+
+def FCONVFP64r32: Pseudo<(outs FP64:$dst), (ins GR32:$src),
+                         "cdfbr\t{$dst, $src}",
+                         [(set FP64:$dst, (sint_to_fp GR32:$src))]>;
 
 def FCONVFP64   : Pseudo<(outs FP64:$dst), (ins GR64:$src),
                          "cdgbr\t{$dst, $src}",
