@@ -494,9 +494,10 @@ def BSWAP64rr : RREI<0xB90F,
                      "lrvgr\t{$dst, $src}",
                      [(set GR64:$dst, (bswap GR64:$src))]>;
 
-def BSWAP16rm : RXYI<0x1FE3, (outs GR32:$dst), (ins rriaddr:$src),
-                     "lrvh\t{$dst, $src}",
-                     [(set GR32:$dst, (bswap (extloadi32i16 rriaddr:$src)))]>;
+// FIXME: this is invalid pattern for big-endian
+//def BSWAP16rm : RXYI<0x1FE3, (outs GR32:$dst), (ins rriaddr:$src),
+//                     "lrvh\t{$dst, $src}",
+//                     [(set GR32:$dst, (bswap (extloadi32i16 rriaddr:$src)))]>;
 def BSWAP32rm : RXYI<0x1EE3, (outs GR32:$dst), (ins rriaddr:$src),
                      "lrv\t{$dst, $src}",
                      [(set GR32:$dst, (bswap (load rriaddr:$src)))]>;

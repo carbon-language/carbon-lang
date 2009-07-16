@@ -1,3 +1,4 @@
+; XFAIL
 ; RUN: llvm-as < %s | llc | grep lrvr  | count 2
 ; RUN: llvm-as < %s | llc | grep lrvgr | count 1
 ; RUN: llvm-as < %s | llc | grep lrvh  | count 1
