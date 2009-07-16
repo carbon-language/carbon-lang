@@ -66,6 +66,10 @@ void SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   else if (RC == &SystemZ::GR64RegClass ||
            RC == &SystemZ::ADDR64RegClass) {
     Opc = SystemZ::MOV64mr;
+  } else if (RC == &SystemZ::FP32RegClass) {
+    Opc = SystemZ::FMOV32mr;
+  } else if (RC == &SystemZ::FP64RegClass) {
+    Opc = SystemZ::FMOV64mr;
   } else
     assert(0 && "Unsupported regclass to store");
 
@@ -87,6 +91,10 @@ void SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   else if (RC == &SystemZ::GR64RegClass ||
            RC == &SystemZ::ADDR64RegClass) {
     Opc = SystemZ::MOV64rm;
+  } else if (RC == &SystemZ::FP32RegClass) {
+    Opc = SystemZ::FMOV32rm;
+  } else if (RC == &SystemZ::FP64RegClass) {
+    Opc = SystemZ::FMOV64rm;
   } else
     assert(0 && "Unsupported regclass to store");
 
@@ -368,6 +376,12 @@ SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
     break;
   case SystemZ::UCMP32rm:
     Opc = SystemZ::UCMP32rmy;
+    break;
+  case SystemZ::FMOV32mr:
+    Opc = SystemZ::FMOV32mry;
+    break;
+  case SystemZ::FMOV64mr:
+    Opc = SystemZ::FMOV64mry;
     break;
   default:
     break;
