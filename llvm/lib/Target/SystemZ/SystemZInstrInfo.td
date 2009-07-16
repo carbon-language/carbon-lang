@@ -340,6 +340,21 @@ def MOV64rmm  : Pseudo<(outs GR64:$from, GR64:$to), (ins riaddr:$dst),
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
 
+let Defs = [PSW] in {
+def NEG32rr : Pseudo<(outs GR32:$dst), (ins GR32:$src),
+                     "lcr\t{$dst, $src}",
+                     [(set GR32:$dst, (ineg GR32:$src)),
+                      (implicit PSW)]>;
+def NEG64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src),
+                     "lcgr\t{$dst, $src}",
+                     [(set GR64:$dst, (ineg GR64:$src)),
+                      (implicit PSW)]>;
+def NEG64rr32 : Pseudo<(outs GR64:$dst), (ins GR32:$src),
+                       "lcgfr\t{$dst, $src}",
+                       [(set GR64:$dst, (ineg (sext GR32:$src))),
+                        (implicit PSW)]>;
+}
+
 let isTwoAddress = 1 in {
 
 let Defs = [PSW] in {
