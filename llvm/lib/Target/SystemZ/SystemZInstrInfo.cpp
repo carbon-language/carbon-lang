@@ -347,23 +347,47 @@ SystemZInstrInfo::getBrCond(SystemZCC::CondCodes CC) const {
   switch (CC) {
   default:
     assert(0 && "Unknown condition code!");
-  case SystemZCC::E:
-    Opc = SystemZ::JE;
-    break;
-  case SystemZCC::NE:
-    Opc = SystemZ::JNE;
+  case SystemZCC::O:
+    Opc = SystemZ::JO;
     break;
   case SystemZCC::H:
     Opc = SystemZ::JH;
     break;
+  case SystemZCC::NLE:
+    Opc = SystemZ::JNLE;
+    break;
   case SystemZCC::L:
     Opc = SystemZ::JL;
+    break;
+  case SystemZCC::NHE:
+    Opc = SystemZ::JNHE;
+    break;
+  case SystemZCC::LH:
+    Opc = SystemZ::JLH;
+    break;
+  case SystemZCC::NE:
+    Opc = SystemZ::JNE;
+    break;
+  case SystemZCC::E:
+    Opc = SystemZ::JE;
+    break;
+  case SystemZCC::NLH:
+    Opc = SystemZ::JNLH;
     break;
   case SystemZCC::HE:
     Opc = SystemZ::JHE;
     break;
+  case SystemZCC::NL:
+    Opc = SystemZ::JNL;
+    break;
   case SystemZCC::LE:
     Opc = SystemZ::JLE;
+    break;
+  case SystemZCC::NH:
+    Opc = SystemZ::JNH;
+    break;
+  case SystemZCC::NO:
+    Opc = SystemZ::JNO;
     break;
   }
 
