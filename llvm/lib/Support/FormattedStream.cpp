@@ -17,7 +17,7 @@ using namespace llvm;
 /// ComputeColumn - Examine the current output and figure out which
 /// column we end up in after output.
 ///
-void formatted_raw_ostream::ComputeColumn(const char *Ptr, unsigned Size) {
+void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
   // Keep track of the current column by scanning the string for
   // special characters
 

@@ -121,7 +121,7 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
   char *CurPtr = EndPtr;
 
   while (N) {
-    unsigned x = N % 16;
+    uintptr_t x = N % 16;
     *--CurPtr = (x < 10 ? '0' + x : 'a' + x - 10);
     N /= 16;
   }
@@ -153,7 +153,7 @@ raw_ostream &raw_ostream::write(unsigned char C) {
   return *this;
 }
 
-raw_ostream &raw_ostream::write(const char *Ptr, unsigned Size) {
+raw_ostream &raw_ostream::write(const char *Ptr, size_t Size) {
   // Group exceptional cases into a single branch.
   if (BUILTIN_EXPECT(OutBufCur+Size > OutBufEnd, false)) {
     if (Unbuffered) {
@@ -203,10 +203,10 @@ raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
   // anyway. We should just flush upfront in such cases, and use the
   // whole buffer as our scratch pad. Note, however, that this case is
   // also necessary for correctness on unbuffered streams.
-  unsigned NextBufferSize = 127;
+  size_t NextBufferSize = 127;
   if (OutBufEnd-OutBufCur > 3) {
-    unsigned BufferBytesLeft = OutBufEnd-OutBufCur;
-    unsigned BytesUsed = Fmt.print(OutBufCur, BufferBytesLeft);
+    size_t BufferBytesLeft = OutBufEnd-OutBufCur;
+    size_t BytesUsed = Fmt.print(OutBufCur, BufferBytesLeft);
     
     // Common case is that we have plenty of space.
     if (BytesUsed < BufferBytesLeft) {
@@ -228,7 +228,7 @@ raw_ostream &raw_ostream::operator<<(const format_object_base &Fmt) {
     V.resize(NextBufferSize);
     
     // Try formatting into the SmallVector.
-    unsigned BytesUsed = Fmt.print(&V[0], NextBufferSize);
+    size_t BytesUsed = Fmt.print(&V[0], NextBufferSize);
     
     // If BytesUsed fit into the vector, we win.
     if (BytesUsed <= NextBufferSize)
@@ -296,7 +296,7 @@ raw_fd_ostream::~raw_fd_ostream() {
   }
 }
 
-void raw_fd_ostream::write_impl(const char *Ptr, unsigned Size) {
+void raw_fd_ostream::write_impl(const char *Ptr, size_t Size) {
   assert (FD >= 0 && "File already closed.");
   pos += Size;
   if (::write(FD, Ptr, Size) != (ssize_t) Size)
@@ -328,7 +328,7 @@ raw_ostream &raw_fd_ostream::changeColor(enum Colors colors, bool bold,
     (colors == SAVEDCOLOR) ? sys::Process::OutputBold(bg)
     : sys::Process::OutputColor(colors, bold, bg);
   if (colorcode) {
-    unsigned len = strlen(colorcode);
+    size_t len = strlen(colorcode);
     write(colorcode, len);
     // don't account colors towards output characters
     pos -= len;
@@ -341,7 +341,7 @@ raw_ostream &raw_fd_ostream::resetColor() {
     flush();
   const char *colorcode = sys::Process::ResetColor();
   if (colorcode) {
-    unsigned len = strlen(colorcode);
+    size_t len = strlen(colorcode);
     write(colorcode, len);
     // don't account colors towards output characters
     pos -= len;
@@ -383,7 +383,7 @@ raw_os_ostream::~raw_os_ostream() {
   flush();
 }
 
-void raw_os_ostream::write_impl(const char *Ptr, unsigned Size) {
+void raw_os_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.write(Ptr, Size);
 }
 
@@ -401,7 +401,7 @@ raw_string_ostream::~raw_string_ostream() {
   flush();
 }
 
-void raw_string_ostream::write_impl(const char *Ptr, unsigned Size) {
+void raw_string_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.append(Ptr, Size);
 }
 
@@ -413,7 +413,7 @@ raw_svector_ostream::~raw_svector_ostream() {
   flush();
 }
 
-void raw_svector_ostream::write_impl(const char *Ptr, unsigned Size) {
+void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
   OS.append(Ptr, Ptr + Size);
 }
 

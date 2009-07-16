@@ -47,7 +47,7 @@ namespace llvm
     ///
     unsigned Column;
 
-    virtual void write_impl(const char *Ptr, unsigned Size) {
+    virtual void write_impl(const char *Ptr, size_t Size) {
       ComputeColumn(Ptr, Size);
       TheStream->write(Ptr, Size);
     }
@@ -63,7 +63,7 @@ namespace llvm
     /// ComputeColumn - Examine the current output and figure out
     /// which column we end up in after output.
     ///
-    void ComputeColumn(const char *Ptr, unsigned Size);
+    void ComputeColumn(const char *Ptr, size_t Size);
 
   public:
     /// formatted_raw_ostream - Open the specified file for

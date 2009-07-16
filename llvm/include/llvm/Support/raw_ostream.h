@@ -93,7 +93,7 @@ public:
 
   /// SetBufferSize - Set the internal buffer size to the specified amount
   /// instead of the default.
-  void SetBufferSize(unsigned Size=4096) {
+  void SetBufferSize(size_t Size=4096) {
     assert(Size >= 64 &&
            "Buffer size must be somewhat large for invariants to hold");
     flush();
@@ -117,7 +117,7 @@ public:
     Unbuffered = true;
   }
 
-  unsigned GetNumBytesInBuffer() const {
+  size_t GetNumBytesInBuffer() const {
     return OutBufCur - OutBufStart;
   }
 
@@ -155,7 +155,7 @@ public:
     // Inline fast path, particulary for constant strings where a
     // sufficiently smart compiler will simplify strlen.
 
-    unsigned Size = strlen(Str);
+    size_t Size = strlen(Str);
 
     // Make sure we can use the fast path.
     if (OutBufCur+Size > OutBufEnd)
@@ -192,7 +192,7 @@ public:
   }
 
   raw_ostream &write(unsigned char C);
-  raw_ostream &write(const char *Ptr, unsigned Size);
+  raw_ostream &write(const char *Ptr, size_t Size);
 
   // Formatted output, see the format() function in Support/Format.h.
   raw_ostream &operator<<(const format_object_base &Fmt);
@@ -221,7 +221,7 @@ private:
   /// \arg Ptr to the underlying stream.
   /// 
   /// \invariant { Size > 0 }
-  virtual void write_impl(const char *Ptr, unsigned Size) = 0;
+  virtual void write_impl(const char *Ptr, size_t Size) = 0;
 
   // An out of line virtual method to provide a home for the class vtable.
   virtual void handle();
@@ -257,7 +257,7 @@ class raw_fd_ostream : public raw_ostream {
   uint64_t pos;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, unsigned Size);
+  virtual void write_impl(const char *Ptr, size_t Size);
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
@@ -339,7 +339,7 @@ class raw_os_ostream : public raw_ostream {
   std::ostream &OS;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, unsigned Size);
+  virtual void write_impl(const char *Ptr, size_t Size);
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
@@ -359,7 +359,7 @@ class raw_string_ostream : public raw_ostream {
   std::string &OS;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, unsigned Size);
+  virtual void write_impl(const char *Ptr, size_t Size);
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
@@ -386,7 +386,7 @@ class raw_svector_ostream : public raw_ostream {
   SmallVectorImpl<char> &OS;
 
   /// write_impl - See raw_ostream::write_impl.
-  virtual void write_impl(const char *Ptr, unsigned Size);
+  virtual void write_impl(const char *Ptr, size_t Size);
 
   /// current_pos - Return the current position within the stream, not
   /// counting the bytes currently in the buffer.
