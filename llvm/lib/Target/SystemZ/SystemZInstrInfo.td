@@ -129,6 +129,13 @@ def riaddr : Operand<i64>,
 
 //===----------------------------------------------------------------------===//
 
+// rriaddr := reg + reg + imm
+def rriaddr : Operand<i64>,
+              ComplexPattern<i64, 3, "SelectAddrRRI", []> {
+  let PrintMethod = "printRRIAddrOperand";
+  let MIOperandInfo = (ops ADDR64:$base, ADDR64:$index, i32imm:$disp);
+}
+
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
 //
@@ -190,6 +197,13 @@ def MOV64rihi32 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
                          "llihf\t{$dst, $src}",
                          [(set GR64:$dst, i64hi32:$src)]>;
 }
+
+let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+def MOV64rm : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
+                     "lgr\t{$dst, $src}",
+                     [(set GR64:$dst, (load rriaddr:$src))]>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions
