@@ -3207,8 +3207,10 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
       // through its super class and categories.
       for (ObjCObjectPointerType::qual_iterator J = RHSOPT->qual_begin(),
            E = RHSOPT->qual_end(); J != E; ++J) {
-        if ((*J)->lookupProtocolNamed((*I)->getIdentifier()))
+        if ((*J)->lookupProtocolNamed((*I)->getIdentifier())) {
           RHSImplementsProtocol = true;
+          break;
+        }
       }
       if (!RHSImplementsProtocol)
         return false;
@@ -3252,9 +3254,11 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
     // are incompatible.
     for (ObjCQualifiedInterfaceType::qual_iterator RHSPI = RHSP->qual_begin(),
                                                    RHSPE = RHSP->qual_end();
-         !RHSImplementsProtocol && (RHSPI != RHSPE); RHSPI++) {
-      if ((*RHSPI)->lookupProtocolNamed((*LHSPI)->getIdentifier()))
+         RHSPI != RHSPE; RHSPI++) {
+      if ((*RHSPI)->lookupProtocolNamed((*LHSPI)->getIdentifier())) {
         RHSImplementsProtocol = true;
+        break;
+      }
     }
     // FIXME: For better diagnostics, consider passing back the protocol name.
     if (!RHSImplementsProtocol)

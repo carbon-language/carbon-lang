@@ -1914,10 +1914,11 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   friend class ASTContext;  // ASTContext creates these.
   
 public:
-  // Get the pointee type. Pointee will either be a built-in type (for 'id' and
-  // 'Class') or will be an interface type (for user-defined types).
-  // Note: Pointee can be a TypedefType whose canonical type is an interface. 
-  // Example: typedef NSObject T; T *var;
+  // Get the pointee type. Pointee will either be:
+  // - a built-in type (for 'id' and 'Class').
+  // - an interface type (for user-defined types).
+  // - a TypedefType whose canonical type is an interface (as in 'T' below).
+  //   For example: typedef NSObject T; T *var;
   QualType getPointeeType() const { return PointeeType; }
 
   const ObjCInterfaceType *getInterfaceType() const { 
