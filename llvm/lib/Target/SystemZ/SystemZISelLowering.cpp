@@ -127,6 +127,8 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::FSIN,             MVT::f64, Expand);
   setOperationAction(ISD::FCOS,             MVT::f32, Expand);
   setOperationAction(ISD::FCOS,             MVT::f64, Expand);
+  setOperationAction(ISD::UINT_TO_FP,       MVT::i32, Expand);
+  setOperationAction(ISD::UINT_TO_FP,       MVT::i64, Expand);
 }
 
 SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
