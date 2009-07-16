@@ -640,9 +640,8 @@ def SRA64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
                        (implicit PSW)]>;
 } // Defs = [PSW]
 
-let isTwoAddress = 1 in
 def ROTL32rri : Pseudo<(outs GR32:$dst), (ins GR32:$src, riaddr32:$amt),
-                       "rll\t{$src, $amt}",
+                       "rll\t{$dst, $src, $amt}",
                        [(set GR32:$dst, (rotl GR32:$src, riaddr32:$amt))]>;
 def ROTL64rri : Pseudo<(outs GR64:$dst), (ins GR64:$src, riaddr:$amt),
                        "rllg\t{$dst, $src, $amt}",
