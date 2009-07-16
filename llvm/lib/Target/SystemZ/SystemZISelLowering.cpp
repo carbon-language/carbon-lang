@@ -65,6 +65,13 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1, Promote);
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1, Promote);
 
+  setLoadExtAction(ISD::SEXTLOAD, MVT::f32, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::f32, Promote);
+  setLoadExtAction(ISD::EXTLOAD,  MVT::f32, Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::f64, Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::f64, Promote);
+  setLoadExtAction(ISD::EXTLOAD,  MVT::f64, Promote);
+
   setStackPointerRegisterToSaveRestore(SystemZ::R15D);
   setSchedulingPreference(SchedulingForLatency);
 
