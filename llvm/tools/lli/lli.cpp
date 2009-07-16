@@ -96,6 +96,11 @@ int main(int argc, char **argv, char * const *envp) {
   
   LLVMContext &Context = getGlobalContext();
   atexit(do_shutdown);  // Call llvm_shutdown() on exit.
+
+  // If we have a native target, initialize it to ensure it is linked in and
+  // usable by the JIT.
+  InitializeNativeTarget();
+
   cl::ParseCommandLineOptions(argc, argv,
                               "llvm interpreter & dynamic compiler\n");
 
@@ -142,10 +147,6 @@ int main(int argc, char **argv, char * const *envp) {
   case '3': OLvl = CodeGenOpt::Aggressive; break;
   }
   
-  // If we have a native target, initialize it to ensure it is linked in and
-  // usable by the JIT.
-  InitializeNativeTarget();
-
   EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg, OLvl);
   if (!EE) {
     if (!ErrorMsg.empty())

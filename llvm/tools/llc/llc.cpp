@@ -210,10 +210,12 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   LLVMContext &Context = getGlobalContext();
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
 
+  // Initialize targets first.
   InitializeAllTargets();
   InitializeAllAsmPrinters();
+
+  cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
   
   // Load the module to be compiled...
   std::string ErrorMessage;
