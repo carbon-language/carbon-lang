@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc | grep 168 | count 2
+; RUN: llvm-as < %s | llc | grep 168 | count 1
 ; RUN: llvm-as < %s | llc | grep 160 | count 3
 ; RUN: llvm-as < %s | llc | grep 328 | count 1
 

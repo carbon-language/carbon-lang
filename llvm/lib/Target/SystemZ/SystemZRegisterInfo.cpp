@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -35,7 +36,8 @@ const unsigned*
 SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs[] = {
     SystemZ::R6D,  SystemZ::R7D,  SystemZ::R8D,  SystemZ::R9D,
-    SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D, SystemZ::R14D,
+    SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D,
+    SystemZ::R14D, SystemZ::R15D,
     SystemZ::F1,  SystemZ::F3,  SystemZ::F5,  SystemZ::F7,
     0
   };
@@ -50,7 +52,7 @@ SystemZRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
     &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
-    &SystemZ::GR64RegClass,
+    &SystemZ::GR64RegClass, &SystemZ::GR64RegClass,
     &SystemZ::FP64RegClass, &SystemZ::FP64RegClass,
     &SystemZ::FP64RegClass, &SystemZ::FP64RegClass, 0
   };
@@ -66,16 +68,16 @@ BitVector SystemZRegisterInfo::getReservedRegs(const MachineFunction &MF) const 
   return Reserved;
 }
 
-// needsFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
-//
+/// needsFP - Return true if the specified function should have a dedicated
+/// frame pointer register.  This is true if the function has variable sized
+/// allocas or if frame pointer elimination is disabled.
 bool SystemZRegisterInfo::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   return NoFramePointerElim || MFI->hasVarSizedObjects();
 }
 
 bool SystemZRegisterInfo::hasReservedCallFrame(MachineFunction &MF) const {
+  // FIXME: Should we always have reserved call frame?
   return !MF.getFrameInfo()->hasVarSizedObjects();
 }
 
@@ -137,6 +139,25 @@ void SystemZRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(i+1).ChangeToImmediate(Offset);
 }
 
+void
+SystemZRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                                       RegScavenger *RS) const {
+  // Determine whether R15/R14 will ever be clobbered inside the function. And
+  // if yes - mark it as 'callee' saved.
+  MachineFrameInfo *FFI = MF.getFrameInfo();
+
+  if (FFI->hasCalls()
+      /* FIXME: function is varargs */
+      /* FIXME: function grabs RA */
+      /* FIXME: function calls eh_return */)
+    MF.getRegInfo().setPhysRegUsed(SystemZ::R14D);
+
+  if (FFI->getObjectIndexEnd() != 0 || // Contains automatic variables
+      FFI->hasVarSizedObjects() // Function calls dynamic alloca's
+      /* FIXME: function is varargs */)
+    MF.getRegInfo().setPhysRegUsed(SystemZ::R15D);
+}
+
 /// emitSPUpdate - Emit a series of instructions to increment / decrement the
 /// stack pointer by a constant value.
 static
@@ -177,7 +198,11 @@ void SystemZRegisterInfo::emitPrologue(MachineFunction &MF) const {
   uint64_t StackSize =
     MFI->getStackSize() - SystemZMFI->getCalleeSavedFrameSize();
 
-  // FIXME: Skip the callee-saved push instructions.
+  // Skip the callee-saved push instructions.
+  while (MBBI != MBB.end() &&
+         (MBBI->getOpcode() == SystemZ::MOV64mr ||
+          MBBI->getOpcode() == SystemZ::MOV64mrm))
+    ++MBBI;
 
   if (MBBI != MBB.end())
     DL = MBBI->getDebugLoc();
@@ -223,23 +248,30 @@ void SystemZRegisterInfo::emitEpilogue(MachineFunction &MF,
     MFI->getStackSize() - SystemZMFI->getCalleeSavedFrameSize();
   uint64_t NumBytes = StackSize - TFI.getOffsetOfLocalArea();
 
-  // Skip the callee-saved regs load instructions.
-  MachineBasicBlock::iterator LastCSPop = MBBI;
+  // Skip the final terminator instruction.
   while (MBBI != MBB.begin()) {
     MachineBasicBlock::iterator PI = prior(MBBI);
+    --MBBI;
     if (!PI->getDesc().isTerminator())
       break;
-    --MBBI;
   }
 
-  DL = MBBI->getDebugLoc();
+  // During callee-saved restores emission stack frame was not yet finialized
+  // (and thus - the stack size was unknown). Tune the offset having full stack
+  // size in hands.
+  if (SystemZMFI->getCalleeSavedFrameSize()) {
+    assert((MBBI->getOpcode() == SystemZ::MOV64rmm ||
+            MBBI->getOpcode() == SystemZ::MOV64rm) &&
+           "Expected to see callee-save register restore code");
 
-  if (MFI->hasVarSizedObjects()) {
-    assert(0 && "Not implemented yet!");
-  } else {
-    // adjust stack pointer back: R15 += numbytes
-    if (StackSize)
-      emitSPUpdate(MBB, MBBI, NumBytes, TII);
+    unsigned i = 0;
+    MachineInstr &MI = *MBBI;
+    while (!MI.getOperand(i).isImm()) {
+      ++i;
+      assert(i < MI.getNumOperands() && "Unexpected restore code!");
+    }
+
+    MI.getOperand(i).ChangeToImmediate(NumBytes + MI.getOperand(i).getImm());
   }
 }
 

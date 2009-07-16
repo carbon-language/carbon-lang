@@ -25,6 +25,11 @@ class SystemZMachineFunctionInfo : public MachineFunctionInfo {
   /// stack frame in bytes.
   unsigned CalleeSavedFrameSize;
 
+  /// LowReg - Low register of range of callee-saved registers to store.
+  unsigned LowReg;
+
+  /// HighReg - High register of range of callee-saved registers to store.
+  unsigned HighReg;
 public:
   SystemZMachineFunctionInfo() : CalleeSavedFrameSize(0) {}
 
@@ -32,6 +37,12 @@ public:
 
   unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }
   void setCalleeSavedFrameSize(unsigned bytes) { CalleeSavedFrameSize = bytes; }
+
+  unsigned getLowReg() const { return LowReg; }
+  void setLowReg(unsigned Reg) { LowReg = Reg; }
+
+  unsigned getHighReg() const { return HighReg; }
+  void setHighReg(unsigned Reg) { HighReg = Reg; }
 };
 
 } // End llvm namespace

@@ -195,19 +195,12 @@ def laaddr : Operand<i64>,
 //===----------------------------------------------------------------------===//
 // Instruction list..
 
-// ADJCALLSTACKDOWN/UP implicitly use/def SP because they may be expanded into
-// a stack adjustment and the codegen must know that they may modify the stack
-// pointer before prolog-epilog rewriting occurs.
-// Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become
-// sub / add which can clobber R15D.
-let Defs = [R15D], Uses = [R15D] in {
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i64imm:$amt),
                               "#ADJCALLSTACKDOWN",
                               [(SystemZcallseq_start timm:$amt)]>;
 def ADJCALLSTACKUP   : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
                               "#ADJCALLSTACKUP",
                               [(SystemZcallseq_end timm:$amt1, timm:$amt2)]>;
-}
 
 
 //===----------------------------------------------------------------------===//
@@ -215,7 +208,7 @@ def ADJCALLSTACKUP   : Pseudo<(outs), (ins i64imm:$amt1, i64imm:$amt2),
 //
 
 // FIXME: Provide proper encoding!
-let isReturn = 1, isTerminator = 1, Uses = [R14D] in {
+let isReturn = 1, isTerminator = 1 in {
   def RET : Pseudo<(outs), (ins), "br\t%r14", [(SystemZretflag)]>;
 }
 
@@ -224,12 +217,9 @@ let isReturn = 1, isTerminator = 1, Uses = [R14D] in {
 //
 
 let isCall = 1 in
-  // All calls clobber the non-callee saved registers. R15 is marked as
-  // a use to prevent stack-pointer assignments that appear immediately
-  // before calls from potentially appearing dead. Uses for argument
-  // registers are added manually.
-  let Defs = [R0D, R1D, R3D, R4D, R5D, R14D, R15D],
-      Uses = [R15D] in {
+  // All calls clobber the non-callee saved registers (except R14 which we
+  // handle separately). Uses for argument registers are added manually.
+  let Defs = [R0D, R1D, R3D, R4D, R5D] in {
     def CALLi     : Pseudo<(outs), (ins i64imm:$dst, variable_ops),
                            "brasl\t%r14, $dst", [(SystemZcall imm:$dst)]>;
     def CALLr     : Pseudo<(outs), (ins ADDR64:$dst, variable_ops),
@@ -369,6 +359,22 @@ def MOV64m16r : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
 def MOV64m32r : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
                        "sty\t{$src, $dst}",
                        [(truncstorei32 GR64:$src, rriaddr:$dst)]>;
+
+// multiple regs moves
+// FIXME: should we use multiple arg nodes?
+def MOV32mrm  : Pseudo<(outs), (ins riaddr:$dst, GR32:$from, GR32:$to),
+                       "stmy\t{$from, $to, $dst}",
+                       []>;
+def MOV64mrm  : Pseudo<(outs), (ins riaddr:$dst, GR64:$from, GR64:$to),
+                       "stmg\t{$from, $to, $dst}",
+                       []>;
+def MOV32rmm  : Pseudo<(outs GR32:$from, GR32:$to), (ins riaddr:$dst),
+                       "lmy\t{$from, $to, $dst}",
+                       []>;
+def MOV64rmm  : Pseudo<(outs GR64:$from, GR64:$to), (ins riaddr:$dst),
+                       "lmg\t{$from, $to, $dst}",
+                       []>;
+
 
 //===----------------------------------------------------------------------===//
 // Arithmetic Instructions

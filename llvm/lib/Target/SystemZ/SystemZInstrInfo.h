@@ -14,8 +14,9 @@
 #ifndef LLVM_TARGET_SYSTEMZINSTRINFO_H
 #define LLVM_TARGET_SYSTEMZINSTRINFO_H
 
-#include "llvm/Target/TargetInstrInfo.h"
 #include "SystemZRegisterInfo.h"
+#include "llvm/ADT/IndexedMap.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {
 
@@ -24,6 +25,7 @@ class SystemZTargetMachine;
 class SystemZInstrInfo : public TargetInstrInfoImpl {
   const SystemZRegisterInfo RI;
   SystemZTargetMachine &TM;
+  IndexedMap<unsigned> RegSpillOffsets;
 public:
   explicit SystemZInstrInfo(SystemZTargetMachine &TM);
 
