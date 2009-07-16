@@ -690,7 +690,25 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     llvm::Constant *Inc =
       VMContext.getConstantInt(llvm::Type::Int32Ty, AmountVal);
     if (!isa<llvm::FunctionType>(PT->getElementType())) {
-      NextVal = Builder.CreateGEP(InVal, Inc, "ptrincdec");
+      QualType PTEE = ValTy->getPointeeType();
+      if (const ObjCInterfaceType *OIT = 
+          dyn_cast<ObjCInterfaceType>(PTEE)) {
+        // Handle interface types, which are not represented with a concrete type.
+        int size = CGF.getContext().getTypeSize(OIT) / 8;
+        if (!isInc)
+          size = -size;
+        Inc = VMContext.getConstantInt(Inc->getType(), size);
+        const llvm::Type *i8Ty = 
+          VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+        InVal = Builder.CreateBitCast(InVal, i8Ty);
+        NextVal = Builder.CreateGEP(InVal, Inc, "add.ptr");
+        llvm::Value *lhs = LV.getAddress();
+        lhs = Builder.CreateBitCast(lhs, VMContext.getPointerTypeUnqual(i8Ty));
+        LV = LValue::MakeAddr(lhs, ValTy.getCVRQualifiers(), 
+                              CGF.getContext().getObjCGCAttrKind(ValTy));
+      }
+      else
+        NextVal = Builder.CreateGEP(InVal, Inc, "ptrincdec");
     } else {
       const llvm::Type *i8Ty =
         VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
