@@ -19,6 +19,10 @@
 #include "llvm/ADT/SmallString.h"
 using namespace llvm;
 
+namespace llvm {
+  bool DisablePrettyStackTrace = false;
+}
+
 // FIXME: This should be thread local when llvm supports threads.
 static sys::ThreadLocal<const PrettyStackTraceEntry> PrettyStackTraceHead;
 
@@ -75,7 +79,8 @@ static void CrashHandler(void *Cookie) {
 }
 
 static bool RegisterCrashPrinter() {
-  sys::AddSignalHandler(CrashHandler, 0);
+  if (!DisablePrettyStackTrace)
+    sys::AddSignalHandler(CrashHandler, 0);
   return false;
 }
 
