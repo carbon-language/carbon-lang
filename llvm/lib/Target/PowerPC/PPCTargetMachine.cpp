@@ -21,14 +21,6 @@
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
-/// PowerPCTargetMachineModule - Note that this is used on hosts that
-/// cannot link in a library unless there are references into the
-/// library.  In particular, it seems that it is not possible to get
-/// things to work on Win32 without this.  Though it is unused, do not
-/// remove it.
-extern "C" int PowerPCTargetMachineModule;
-int PowerPCTargetMachineModule = 0;
-
 // Register the targets
 extern Target ThePPC32Target;
 static RegisterTarget<PPC32TargetMachine>

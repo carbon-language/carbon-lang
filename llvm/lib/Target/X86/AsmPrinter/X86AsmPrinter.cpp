@@ -34,9 +34,6 @@ FunctionPass *llvm::createX86CodePrinterPass(formatted_raw_ostream &o,
   return new X86ATTAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
-extern "C" int X86AsmPrinterForceLink;
-int X86AsmPrinterForceLink = 0;
-
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmPrinter() { 
   extern Target TheX86_32Target;

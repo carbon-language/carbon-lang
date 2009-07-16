@@ -22,15 +22,6 @@
 
 using namespace llvm;
 
-/// PIC16TargetMachineModule - Note that this is used on hosts that
-/// cannot link in a library unless there are references into the
-/// library.  In particular, it seems that it is not possible to get
-/// things to work on Win32 without this.  Though it is unused, do not
-/// remove it.
-extern "C" int PIC16TargetMachineModule;
-int PIC16TargetMachineModule = 0;
-
-
 // Register the targets
 extern Target ThePIC16Target;
 static RegisterTarget<PIC16TargetMachine> 

@@ -1093,9 +1093,6 @@ FunctionPass *llvm::createPPCAsmPrinterPass(formatted_raw_ostream &o,
   }
 }
 
-extern "C" int PowerPCAsmPrinterForceLink;
-int PowerPCAsmPrinterForceLink = 0;
-
 // Force static initialization.
 extern "C" void LLVMInitializePowerPCAsmPrinter() { 
   extern Target ThePPC32Target;
