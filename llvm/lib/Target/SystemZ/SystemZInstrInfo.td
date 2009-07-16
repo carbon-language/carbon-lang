@@ -69,6 +69,14 @@ def ADD64ri : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                      [(set GR64:$dst, (add GR64:$src1, imm:$src2)),
                       (implicit PSW)]>;
 
+let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
+// FIXME: Provide proper encoding!
+def AND64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                     "ngr\t{$dst, $src2}",
+                     [(set GR64:$dst, (and GR64:$src1, GR64:$src2))]>;
+}
+// FIXME: provide patterns for masked and-with-imm
+
 let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
 // FIXME: Provide proper encoding!
 def OR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
