@@ -16,6 +16,7 @@
 #define LLVM_TARGET_SystemZ_ISELLOWERING_H
 
 #include "SystemZ.h"
+#include "SystemZRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 
@@ -61,6 +62,7 @@ namespace llvm {
   private:
     const SystemZSubtarget &Subtarget;
     const SystemZTargetMachine &TM;
+    const SystemZRegisterInfo *RegInfo;
   };
 } // namespace llvm
 

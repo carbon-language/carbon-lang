@@ -38,6 +38,8 @@ using namespace llvm;
 SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   TargetLowering(tm), Subtarget(*tm.getSubtargetImpl()), TM(tm) {
 
+  RegInfo = TM.getRegisterInfo();
+
   // Set up the register classes.
   addRegisterClass(MVT::i32, SystemZ::GR32RegisterClass);
   addRegisterClass(MVT::i64, SystemZ::GR64RegisterClass);
@@ -190,6 +192,7 @@ SDValue SystemZTargetLowering::LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
   SDValue Callee = TheCall->getCallee();
   bool isVarArg  = TheCall->isVarArg();
   DebugLoc dl = Op.getDebugLoc();
+  MachineFunction &MF = DAG.getMachineFunction();
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -237,12 +240,16 @@ SDValue SystemZTargetLowering::LowerCCCCallTo(SDValue Op, SelectionDAG &DAG,
       assert(VA.isMemLoc());
 
       if (StackPtr.getNode() == 0)
-        StackPtr = DAG.getCopyFromReg(Chain, dl, SystemZ::R15D, getPointerTy());
+        StackPtr =
+          DAG.getCopyFromReg(Chain, dl,
+                             (RegInfo->hasFP(MF) ?
+                              SystemZ::R11D : SystemZ::R15D),
+                             getPointerTy());
 
-      SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(),
-                                   StackPtr,
-                                   DAG.getIntPtrConstant(VA.getLocMemOffset()));
-
+      SDValue PtrOff =
+        DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                    StackPtr,
+                    DAG.getIntPtrConstant(160+VA.getLocMemOffset()));
 
       MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
                                          PseudoSourceValue::getStack(),

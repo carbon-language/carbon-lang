@@ -48,7 +48,7 @@ public:
   virtual const TargetData *getTargetData() const     { return &DataLayout;}
   virtual const SystemZSubtarget *getSubtargetImpl() const { return &Subtarget; }
 
-  virtual const TargetRegisterInfo *getRegisterInfo() const {
+  virtual const SystemZRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
 
