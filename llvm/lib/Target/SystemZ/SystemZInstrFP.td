@@ -69,53 +69,67 @@ def FMOV64mry : Pseudo<(outs), (ins rriaddr:$dst, FP64:$src),
 // Arithmetic Instructions
 
 
-
 let isTwoAddress = 1 in {
+let Defs = [PSW] in {
+
 def FNEG32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
                        "lcebr\t{$dst}",
-                       [(set FP32:$dst, (fneg FP32:$src))]>;
+                       [(set FP32:$dst, (fneg FP32:$src)),
+                        (implicit PSW)]>;
 def FNEG64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
                        "lcdbr\t{$dst}",
-                       [(set FP64:$dst, (fneg FP64:$src))]>;
+                       [(set FP64:$dst, (fneg FP64:$src)),
+                        (implicit PSW)]>;
 
 // FIXME: Add peephole for fneg(fabs) => load negative
 
 def FABS32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
                        "lpebr\t{$dst}",
-                       [(set FP32:$dst, (fabs FP32:$src))]>;
+                       [(set FP32:$dst, (fabs FP32:$src)),
+                        (implicit PSW)]>;
 def FABS64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
                        "lpdbr\t{$dst}",
-                       [(set FP64:$dst, (fabs FP64:$src))]>;
+                       [(set FP64:$dst, (fabs FP64:$src)),
+                        (implicit PSW)]>;
 
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
 def FADD32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
                        "aebr\t{$dst, $src2}",
-                       [(set FP32:$dst, (fadd FP32:$src1, FP32:$src2))]>;
+                       [(set FP32:$dst, (fadd FP32:$src1, FP32:$src2)),
+                        (implicit PSW)]>;
 def FADD64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2),
                        "adbr\t{$dst, $src2}",
-                       [(set FP64:$dst, (fadd FP64:$src1, FP64:$src2))]>;
+                       [(set FP64:$dst, (fadd FP64:$src1, FP64:$src2)),
+                        (implicit PSW)]>;
 }
 
 def FADD32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2),
                        "aeb\t{$dst, $src2}",
-                       [(set FP32:$dst, (fadd FP32:$src1, (load rriaddr:$src2)))]>;
+                       [(set FP32:$dst, (fadd FP32:$src1, (load rriaddr:$src2))),
+                        (implicit PSW)]>;
 def FADD64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2),
                        "adb\t{$dst, $src2}",
-                       [(set FP64:$dst, (fadd FP64:$src1, (load rriaddr:$src2)))]>;
+                       [(set FP64:$dst, (fadd FP64:$src1, (load rriaddr:$src2))),
+                        (implicit PSW)]>;
 
 def FSUB32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
                        "sebr\t{$dst, $src2}",
-                       [(set FP32:$dst, (fsub FP32:$src1, FP32:$src2))]>;
+                       [(set FP32:$dst, (fsub FP32:$src1, FP32:$src2)),
+                        (implicit PSW)]>;
 def FSUB64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2),
                        "sdbr\t{$dst, $src2}",
-                       [(set FP64:$dst, (fsub FP64:$src1, FP64:$src2))]>;
+                       [(set FP64:$dst, (fsub FP64:$src1, FP64:$src2)),
+                        (implicit PSW)]>;
 
 def FSUB32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2),
                        "seb\t{$dst, $src2}",
-                       [(set FP32:$dst, (fsub FP32:$src1, (load rriaddr:$src2)))]>;
+                       [(set FP32:$dst, (fsub FP32:$src1, (load rriaddr:$src2))),
+                        (implicit PSW)]>;
 def FSUB64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2),
                        "sdb\t{$dst, $src2}",
-                       [(set FP64:$dst, (fsub FP64:$src1, (load rriaddr:$src2)))]>;
+                       [(set FP64:$dst, (fsub FP64:$src1, (load rriaddr:$src2))),
+                        (implicit PSW)]>;
+} // Defs = [PSW]
 
 let isCommutable = 1 in { // X = MUL Y, Z  == X = MUL Z, Y
 def FMUL32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
@@ -153,33 +167,48 @@ def FROUND64r32 : Pseudo<(outs FP32:$dst), (ins FP64:$src),
                          "ledbr\t{$dst, $src}",
                          [(set FP32:$dst, (fround FP64:$src))]>;
 
+// FIXME: memory variant
+def FEXT32r64   : Pseudo<(outs FP64:$dst), (ins FP32:$src),
+                         "ldebr\t{$dst, $src}",
+                         [(set FP64:$dst, (fextend FP32:$src))]>;
+
+let Defs = [PSW] in {
 def FCONVFP32   : Pseudo<(outs FP32:$dst), (ins GR32:$src),
                          "cefbr\t{$dst, $src}",
-                         [(set FP32:$dst, (sint_to_fp GR32:$src))]>;
+                         [(set FP32:$dst, (sint_to_fp GR32:$src)),
+                          (implicit PSW)]>;
 def FCONVFP32r64: Pseudo<(outs FP32:$dst), (ins GR64:$src),
                          "cegbr\t{$dst, $src}",
-                         [(set FP32:$dst, (sint_to_fp GR64:$src))]>;
+                         [(set FP32:$dst, (sint_to_fp GR64:$src)),
+                          (implicit PSW)]>;
 
 def FCONVFP64r32: Pseudo<(outs FP64:$dst), (ins GR32:$src),
                          "cdfbr\t{$dst, $src}",
-                         [(set FP64:$dst, (sint_to_fp GR32:$src))]>;
+                         [(set FP64:$dst, (sint_to_fp GR32:$src)),
+                          (implicit PSW)]>;
 def FCONVFP64   : Pseudo<(outs FP64:$dst), (ins GR64:$src),
                          "cdgbr\t{$dst, $src}",
-                         [(set FP64:$dst, (sint_to_fp GR64:$src))]>;
+                         [(set FP64:$dst, (sint_to_fp GR64:$src)),
+                          (implicit PSW)]>;
 
 def FCONVGR32   : Pseudo<(outs GR32:$dst), (ins FP32:$src),
                          "cfebr\t{$dst, $src}",
-                         [(set GR32:$dst, (fp_to_sint FP32:$src))]>;
+                         [(set GR32:$dst, (fp_to_sint FP32:$src)),
+                          (implicit PSW)]>;
 def FCONVGR32r64: Pseudo<(outs GR32:$dst), (ins FP64:$src),
                          "cgebr\t{$dst, $src}",
-                         [(set GR32:$dst, (fp_to_sint FP64:$src))]>;
+                         [(set GR32:$dst, (fp_to_sint FP64:$src)),
+                          (implicit PSW)]>;
 
 def FCONVGR64r32: Pseudo<(outs GR64:$dst), (ins FP32:$src),
                          "cfdbr\t{$dst, $src}",
-                         [(set GR64:$dst, (fp_to_sint FP32:$src))]>;
+                         [(set GR64:$dst, (fp_to_sint FP32:$src)),
+                          (implicit PSW)]>;
 def FCONVGR64   : Pseudo<(outs GR64:$dst), (ins FP64:$src),
                          "cgdbr\t{$dst, $src}",
-                         [(set GR64:$dst, (fp_to_sint FP64:$src))]>;
+                         [(set GR64:$dst, (fp_to_sint FP64:$src)),
+                          (implicit PSW)]>;
+} // Defs = [PSW]
 
 //===----------------------------------------------------------------------===//
 // Test instructions (like AND but do not produce any result)

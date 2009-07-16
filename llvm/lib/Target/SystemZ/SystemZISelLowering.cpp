@@ -68,6 +68,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setLoadExtAction(ISD::SEXTLOAD, MVT::f32, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::f32, Promote);
   setLoadExtAction(ISD::EXTLOAD,  MVT::f32, Promote);
+
   setLoadExtAction(ISD::SEXTLOAD, MVT::f64, Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::f64, Promote);
   setLoadExtAction(ISD::EXTLOAD,  MVT::f64, Promote);
