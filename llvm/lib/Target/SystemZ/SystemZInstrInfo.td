@@ -392,12 +392,18 @@ def MOV64rihi32 : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
 }
 
 let canFoldAsLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in {
+def MOV32rm : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
+                     "ly\t{$dst, $src}",
+                     [(set GR32:$dst, (load rriaddr:$src))]>;
 def MOV64rm : Pseudo<(outs GR64:$dst), (ins rriaddr:$src),
                      "lg\t{$dst, $src}",
                      [(set GR64:$dst, (load rriaddr:$src))]>;
 
 }
 
+def MOV32mr : Pseudo<(outs), (ins rriaddr:$dst, GR32:$src),
+                     "sty\t{$src, $dst}",
+                     [(store GR32:$src, rriaddr:$dst)]>;
 def MOV64mr : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
                      "stg\t{$src, $dst}",
                      [(store GR64:$src, rriaddr:$dst)]>;
