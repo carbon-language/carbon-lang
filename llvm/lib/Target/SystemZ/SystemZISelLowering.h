@@ -32,6 +32,9 @@ namespace llvm {
       /// instruction, which includes a bunch of information.
       CALL,
 
+      /// PCRelativeWrapper - PC relative address
+      PCRelativeWrapper,
+
       /// CMP, UCMP - Compare instruction
       CMP,
       UCMP,
@@ -66,6 +69,7 @@ namespace llvm {
     SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG);
 
     SDValue LowerCCCArguments(SDValue Op, SelectionDAG &DAG);
     SDValue LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC);

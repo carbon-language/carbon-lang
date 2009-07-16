@@ -65,6 +65,7 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::BRCOND,           MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,            MVT::i32, Custom);
   setOperationAction(ISD::BR_CC,            MVT::i64, Custom);
+  setOperationAction(ISD::GlobalAddress,    MVT::i64, Custom);
 
   // FIXME: Can we lower these 2 efficiently?
   setOperationAction(ISD::SETCC,            MVT::i32, Expand);
@@ -87,6 +88,7 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::CALL:             return LowerCALL(Op, DAG);
   case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
   case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
+  case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
   default:
     assert(0 && "unimplemented operand");
     return SDValue();
@@ -511,6 +513,16 @@ SDValue SystemZTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) {
   return DAG.getNode(SystemZISD::SELECT, dl, VTs, &Ops[0], Ops.size());
 }
 
+SDValue SystemZTargetLowering::LowerGlobalAddress(SDValue Op,
+                                                  SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
+  GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  SDValue GA = DAG.getTargetGlobalAddress(GV, getPointerTy());
+
+  // FIXME: Verify stuff for constant globals entries
+  return DAG.getNode(SystemZISD::PCRelativeWrapper, dl, getPointerTy(), GA);
+}
+
 
 const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
@@ -520,6 +532,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case SystemZISD::CMP:                return "SystemZISD::CMP";
   case SystemZISD::UCMP:               return "SystemZISD::UCMP";
   case SystemZISD::SELECT:             return "SystemZISD::SELECT";
+  case SystemZISD::PCRelativeWrapper:  return "SystemZISD::PCRelativeWrapper";
   default: return NULL;
   }
 }

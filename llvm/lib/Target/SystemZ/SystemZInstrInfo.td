@@ -24,7 +24,7 @@ class SDTCisI64<int OpNum> : SDTCisVT<OpNum, i64>;
 //===----------------------------------------------------------------------===//
 // Type Profiles.
 //===----------------------------------------------------------------------===//
-def SDT_SystemZCall         : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
+def SDT_SystemZCall         : SDTypeProfile<0, -1, [SDTCisPtrTy<0>]>;
 def SDT_SystemZCallSeqStart : SDCallSeqStart<[SDTCisI64<0>]>;
 def SDT_SystemZCallSeqEnd   : SDCallSeqEnd<[SDTCisI64<0>, SDTCisI64<1>]>;
 def SDT_CmpTest             : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
@@ -34,7 +34,8 @@ def SDT_BrCond              : SDTypeProfile<0, 2,
 def SDT_SelectCC            : SDTypeProfile<1, 3,
                                            [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
                                             SDTCisI8<3>]>;
-
+def SDT_Address             : SDTypeProfile<1, 1,
+                                            [SDTCisSameAs<0, 1>, SDTCisPtrTy<0>]>;
 
 //===----------------------------------------------------------------------===//
 // SystemZ Specific Node Definitions.
@@ -54,6 +55,7 @@ def SystemZucmp    : SDNode<"SystemZISD::UCMP", SDT_CmpTest, [SDNPOutFlag]>;
 def SystemZbrcond  : SDNode<"SystemZISD::BRCOND", SDT_BrCond,
                             [SDNPHasChain, SDNPInFlag]>;
 def SystemZselect  : SDNode<"SystemZISD::SELECT", SDT_SelectCC, [SDNPInFlag]>;
+def SystemZpcrelwrapper : SDNode<"SystemZISD::PCRelativeWrapper", SDT_Address, []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction Pattern Stuff.
@@ -315,6 +317,10 @@ let isReMaterializable = 1 in
 def LA64r  : Pseudo<(outs GR64:$dst), (ins laaddr:$src),
                     "lay\t{$dst, $src}",
                     [(set GR64:$dst, laaddr:$src)]>;
+def LA64rm : Pseudo<(outs GR64:$dst), (ins i64imm:$src),
+                    "larl\t{$dst, $src}",
+                    [(set GR64:$dst,
+                          (SystemZpcrelwrapper tglobaladdr:$src))]>;
 
 let neverHasSideEffects = 1 in
 def NOP : Pseudo<(outs), (ins), "# no-op", []>;
