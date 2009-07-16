@@ -164,12 +164,12 @@ def riaddr : Operand<i64>,
 def rriaddr : Operand<i64>,
               ComplexPattern<i64, 3, "SelectAddrRRI", [], []> {
   let PrintMethod = "printRRIAddrOperand";
-  let MIOperandInfo = (ops ADDR64:$base, ADDR64:$index, i64imm:$disp);
+  let MIOperandInfo = (ops ADDR64:$base, i64imm:$disp, ADDR64:$index);
 }
 def laaddr : Operand<i64>,
              ComplexPattern<i64, 3, "SelectLAAddr", [add, sub, or, frameindex], []> {
   let PrintMethod = "printRRIAddrOperand";
-  let MIOperandInfo = (ops ADDR64:$base, ADDR64:$index, i64imm:$disp);
+  let MIOperandInfo = (ops ADDR64:$base, i64imm:$disp, ADDR64:$index);
 }
 
 

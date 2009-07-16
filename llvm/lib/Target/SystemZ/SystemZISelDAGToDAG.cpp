@@ -105,14 +105,14 @@ namespace {
     #include "SystemZGenDAGISel.inc"
 
   private:
-    bool SelectAddrRRI(SDValue Op, SDValue Addr,
-                       SDValue &Base, SDValue &Index, SDValue &Disp);
-    bool SelectLAAddr(SDValue Op, SDValue Addr,
-                      SDValue &Base, SDValue &Index, SDValue &Disp);
-
-    SDNode *Select(SDValue Op);
     bool SelectAddrRI(const SDValue& Op, SDValue& Addr,
                       SDValue &Base, SDValue &Disp);
+    bool SelectAddrRRI(SDValue Op, SDValue Addr,
+                       SDValue &Base, SDValue &Disp, SDValue &Index);
+    bool SelectLAAddr(SDValue Op, SDValue Addr,
+                      SDValue &Base, SDValue &Disp, SDValue &Index);
+
+    SDNode *Select(SDValue Op);
     bool MatchAddress(SDValue N, SystemZRRIAddressMode &AM, unsigned Depth = 0);
     bool MatchAddressBase(SDValue N, SystemZRRIAddressMode &AM);
 
@@ -368,7 +368,7 @@ bool SystemZDAGToDAGISel::MatchAddressBase(SDValue N,
 /// Returns true if the address can be represented by a base register plus
 /// index register plus a signed 20-bit displacement [base + idx + imm].
 bool SystemZDAGToDAGISel::SelectAddrRRI(SDValue Op, SDValue Addr,
-                                SDValue &Base, SDValue &Index, SDValue &Disp) {
+                                SDValue &Base, SDValue &Disp, SDValue &Index) {
   SystemZRRIAddressMode AM;
   bool Done = false;
 
@@ -417,7 +417,7 @@ bool SystemZDAGToDAGISel::SelectAddrRRI(SDValue Op, SDValue Addr,
 /// SelectLAAddr - it calls SelectAddr and determines if the maximal addressing
 /// mode it matches can be cost effectively emitted as an LA/LAY instruction.
 bool SystemZDAGToDAGISel::SelectLAAddr(SDValue Op, SDValue Addr,
-                                SDValue &Base, SDValue &Index, SDValue &Disp) {
+                                  SDValue &Base, SDValue &Disp, SDValue &Index) {
   SystemZRRIAddressMode AM;
 
   if (MatchAddress(Addr, AM))

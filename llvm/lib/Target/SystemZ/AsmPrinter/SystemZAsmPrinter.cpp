@@ -208,10 +208,10 @@ void SystemZAsmPrinter::printRIAddrOperand(const MachineInstr *MI, int OpNum,
 void SystemZAsmPrinter::printRRIAddrOperand(const MachineInstr *MI, int OpNum,
                                             const char* Modifier) {
   const MachineOperand &Base = MI->getOperand(OpNum);
-  const MachineOperand &Index = MI->getOperand(OpNum+1);
+  const MachineOperand &Index = MI->getOperand(OpNum+2);
 
   // Print displacement operand.
-  printOperand(MI, OpNum+2);
+  printOperand(MI, OpNum+1);
 
   // Print base operand (if any)
   if (Base.getReg()) {
@@ -219,7 +219,7 @@ void SystemZAsmPrinter::printRRIAddrOperand(const MachineInstr *MI, int OpNum,
     printOperand(MI, OpNum);
     if (Index.getReg()) {
       O << ',';
-      printOperand(MI, OpNum+1);
+      printOperand(MI, OpNum+2);
     }
     O << ')';
   } else
