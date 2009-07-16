@@ -78,29 +78,28 @@ def FNEG64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
                        "lcdbr\t{$dst, $src}",
                        [(set FP64:$dst, (fneg FP64:$src)),
                         (implicit PSW)]>;
-}
-
-let isTwoAddress = 1 in {
-let Defs = [PSW] in {
 
 def FABS32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
-                       "lpebr\t{$dst}",
+                       "lpebr\t{$dst, $src}",
                        [(set FP32:$dst, (fabs FP32:$src)),
                         (implicit PSW)]>;
 def FABS64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
-                       "lpdbr\t{$dst}",
+                       "lpdbr\t{$dst, $src}",
                        [(set FP64:$dst, (fabs FP64:$src)),
                         (implicit PSW)]>;
 
 def FNABS32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src),
-                       "lnebr\t{$dst}",
+                       "lnebr\t{$dst, $src}",
                        [(set FP32:$dst, (fneg(fabs FP32:$src))),
                         (implicit PSW)]>;
 def FNABS64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src),
-                       "lndbr\t{$dst}",
+                       "lndbr\t{$dst, $src}",
                        [(set FP64:$dst, (fneg(fabs FP64:$src))),
                         (implicit PSW)]>;
+}
 
+let isTwoAddress = 1 in {
+let Defs = [PSW] in {
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
 def FADD32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
                        "aebr\t{$dst, $src2}",
