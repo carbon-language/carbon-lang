@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SystemZ.h"
+#include "SystemZInstrBuilder.h"
 #include "SystemZInstrInfo.h"
 #include "SystemZMachineFunctionInfo.h"
 #include "SystemZTargetMachine.h"
@@ -55,14 +56,41 @@ void SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                     unsigned SrcReg, bool isKill, int FrameIdx,
                                     const TargetRegisterClass *RC) const {
-  assert(0 && "Cannot store this register to stack slot!");
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  unsigned Opc = 0;
+  if (RC == &SystemZ::GR32RegClass ||
+      RC == &SystemZ::ADDR32RegClass)
+    Opc = SystemZ::MOV32mr;
+  else if (RC == &SystemZ::GR64RegClass ||
+           RC == &SystemZ::ADDR64RegClass) {
+    Opc = SystemZ::MOV64mr;
+  } else
+    assert(0 && "Unsupported regclass to store");
+
+  addFrameReference(BuildMI(MBB, MI, DL, get(Opc)), FrameIdx)
+    .addReg(SrcReg, getKillRegState(isKill));
 }
 
 void SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                            unsigned DestReg, int FrameIdx,
                                            const TargetRegisterClass *RC) const{
-  assert(0 && "Cannot store this register to stack slot!");
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  unsigned Opc = 0;
+  if (RC == &SystemZ::GR32RegClass ||
+      RC == &SystemZ::ADDR32RegClass)
+    Opc = SystemZ::MOV32rm;
+  else if (RC == &SystemZ::GR64RegClass ||
+           RC == &SystemZ::ADDR64RegClass) {
+    Opc = SystemZ::MOV64rm;
+  } else
+    assert(0 && "Unsupported regclass to store");
+
+  addFrameReference(BuildMI(MBB, MI, DL, get(Opc), DestReg), FrameIdx);
 }
 
 bool SystemZInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
