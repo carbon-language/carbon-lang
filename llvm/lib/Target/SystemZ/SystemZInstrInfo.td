@@ -69,5 +69,13 @@ def ADD64ri : Pseudo<(outs GR64:$dst), (ins GR64:$src1, i64imm:$src2),
                      [(set GR64:$dst, (add GR64:$src1, imm:$src2)),
                       (implicit PSW)]>;
 
+let isCommutable = 1 in { // X = OR Y, Z  == X = OR Z, Y
+// FIXME: Provide proper encoding!
+def OR64rr : Pseudo<(outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                    "ogr\t{$dst, $src2}",
+                    [(set GR64:$dst, (or GR64:$src1, GR64:$src2))]>;
+}
+// FIXME: provide patterns for masked or-with-imm
+
 } // Defs = [PSW]
 } // isTwoAddress = 1
