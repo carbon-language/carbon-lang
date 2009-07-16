@@ -652,7 +652,7 @@ def ROTL64ri  : Pseudo<(outs GR64:$dst), (ins GR64:$src, i32imm:$amt),
                        [(set GR64:$dst, (rotl GR64:$src, (i32 imm:$amt)))]>;
 
 //===----------------------------------------------------------------------===//
-// Test instructions (like AND but do not produce any result
+// Test instructions (like AND but do not produce any result)
 
 // Integer comparisons
 let Defs = [PSW] in {

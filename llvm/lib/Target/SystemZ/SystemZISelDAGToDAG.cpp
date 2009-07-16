@@ -114,8 +114,11 @@ namespace {
     #include "SystemZGenDAGISel.inc"
 
   private:
+    bool SelectAddrRI12Only(SDValue Op, SDValue& Addr,
+                            SDValue &Base, SDValue &Disp);
     bool SelectAddrRI12(SDValue Op, SDValue& Addr,
-                        SDValue &Base, SDValue &Disp);
+                        SDValue &Base, SDValue &Disp,
+                        bool is12BitOnly = false);
     bool SelectAddrRI(SDValue Op, SDValue& Addr,
                       SDValue &Base, SDValue &Disp);
     bool SelectAddrRRI12(SDValue Op, SDValue Addr,
@@ -346,8 +349,14 @@ void SystemZDAGToDAGISel::getAddressOperands(const SystemZRRIAddressMode &AM,
 
 /// Returns true if the address can be represented by a base register plus
 /// an unsigned 12-bit displacement [r+imm].
+bool SystemZDAGToDAGISel::SelectAddrRI12Only(SDValue Op, SDValue& Addr,
+                                             SDValue &Base, SDValue &Disp) {
+  return SelectAddrRI12(Op, Addr, Base, Disp, /*is12BitOnly*/true);
+}
+
 bool SystemZDAGToDAGISel::SelectAddrRI12(SDValue Op, SDValue& Addr,
-                                         SDValue &Base, SDValue &Disp) {
+                                         SDValue &Base, SDValue &Disp,
+                                         bool is12BitOnly) {
   SystemZRRIAddressMode AM20(/*isRI*/true), AM12(/*isRI*/true);
   bool Done = false;
 
@@ -373,7 +382,8 @@ bool SystemZDAGToDAGISel::SelectAddrRI12(SDValue Op, SDValue& Addr,
     return false;
 
   // Check, whether we can match stuff using 20-bit displacements
-  if (!Done && !MatchAddress(Addr, AM20, /* is12Bit */ false))
+  if (!Done && !is12BitOnly &&
+      !MatchAddress(Addr, AM20, /* is12Bit */ false))
     if (AM12.Disp == 0 && AM20.Disp != 0)
       return false;
 
