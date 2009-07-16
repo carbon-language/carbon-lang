@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc | grep dsgr  | count 2
-; RUN: llvm-as < %s | llc | grep dr    | count 2
+; RUN: llvm-as < %s | llc | grep dsgfr | count 2
 ; RUN: llvm-as < %s | llc | grep dlr   | count 2
 ; RUN: llvm-as < %s | llc | grep dlgr  | count 2
 
