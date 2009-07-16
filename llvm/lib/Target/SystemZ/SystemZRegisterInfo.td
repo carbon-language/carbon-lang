@@ -42,8 +42,14 @@ class GPR128<bits<4> num, string n, list<Register> subregs,
   let Aliases = aliases;
 }
 
-// FPR - One of the 16 64-bit floating-point registers
-class FPR<bits<4> num, string n> : SystemZReg<n> {
+// FPRS - Lower 32 bits of one of the 16 64-bit floating-point registers
+class FPRS<bits<4> num, string n> : SystemZReg<n> {
+  field bits<4> Num = num;
+}
+
+// FPRL - One of the 16 64-bit floating-point registers
+class FPRL<bits<4> num, string n, list<Register> subregs>
+ : SystemZRegWithSubregs<n, subregs> {
   field bits<4> Num = num;
 }
 
@@ -102,22 +108,39 @@ def R12Q : GPR128<12, "r12", [R12D, R13D], [R12P]>, DwarfRegNum<[12]>;
 def R14Q : GPR128<14, "r14", [R14D, R15D], [R14P]>, DwarfRegNum<[14]>;
 
 // Floating-point registers
-def F0  : FPR< 0,  "f0">, DwarfRegNum<[16]>;
-def F1  : FPR< 1,  "f1">, DwarfRegNum<[17]>;
-def F2  : FPR< 2,  "f2">, DwarfRegNum<[18]>;
-def F3  : FPR< 3,  "f3">, DwarfRegNum<[19]>;
-def F4  : FPR< 4,  "f4">, DwarfRegNum<[20]>;
-def F5  : FPR< 5,  "f5">, DwarfRegNum<[21]>;
-def F6  : FPR< 6,  "f6">, DwarfRegNum<[22]>;
-def F7  : FPR< 7,  "f7">, DwarfRegNum<[23]>;
-def F8  : FPR< 8,  "f8">, DwarfRegNum<[24]>;
-def F9  : FPR< 9,  "f9">, DwarfRegNum<[25]>;
-def F10 : FPR<10, "f10">, DwarfRegNum<[26]>;
-def F11 : FPR<11, "f11">, DwarfRegNum<[27]>;
-def F12 : FPR<12, "f12">, DwarfRegNum<[28]>;
-def F13 : FPR<13, "f13">, DwarfRegNum<[29]>;
-def F14 : FPR<14, "f14">, DwarfRegNum<[30]>;
-def F15 : FPR<15, "f15">, DwarfRegNum<[31]>;
+def F0S  : FPRS< 0,  "f0">, DwarfRegNum<[16]>;
+def F1S  : FPRS< 1,  "f1">, DwarfRegNum<[17]>;
+def F2S  : FPRS< 2,  "f2">, DwarfRegNum<[18]>;
+def F3S  : FPRS< 3,  "f3">, DwarfRegNum<[19]>;
+def F4S  : FPRS< 4,  "f4">, DwarfRegNum<[20]>;
+def F5S  : FPRS< 5,  "f5">, DwarfRegNum<[21]>;
+def F6S  : FPRS< 6,  "f6">, DwarfRegNum<[22]>;
+def F7S  : FPRS< 7,  "f7">, DwarfRegNum<[23]>;
+def F8S  : FPRS< 8,  "f8">, DwarfRegNum<[24]>;
+def F9S  : FPRS< 9,  "f9">, DwarfRegNum<[25]>;
+def F10S : FPRS<10, "f10">, DwarfRegNum<[26]>;
+def F11S : FPRS<11, "f11">, DwarfRegNum<[27]>;
+def F12S : FPRS<12, "f12">, DwarfRegNum<[28]>;
+def F13S : FPRS<13, "f13">, DwarfRegNum<[29]>;
+def F14S : FPRS<14, "f14">, DwarfRegNum<[30]>;
+def F15S : FPRS<15, "f15">, DwarfRegNum<[31]>;
+
+def F0L  : FPRL< 0,  "f0", [F0S]>,  DwarfRegNum<[16]>;
+def F1L  : FPRL< 1,  "f1", [F1S]>,  DwarfRegNum<[17]>;
+def F2L  : FPRL< 2,  "f2", [F2S]>,  DwarfRegNum<[18]>;
+def F3L  : FPRL< 3,  "f3", [F3S]>,  DwarfRegNum<[19]>;
+def F4L  : FPRL< 4,  "f4", [F4S]>,  DwarfRegNum<[20]>;
+def F5L  : FPRL< 5,  "f5", [F5S]>,  DwarfRegNum<[21]>;
+def F6L  : FPRL< 6,  "f6", [F6S]>,  DwarfRegNum<[22]>;
+def F7L  : FPRL< 7,  "f7", [F7S]>,  DwarfRegNum<[23]>;
+def F8L  : FPRL< 8,  "f8", [F8S]>,  DwarfRegNum<[24]>;
+def F9L  : FPRL< 9,  "f9", [F9S]>,  DwarfRegNum<[25]>;
+def F10L : FPRL<10, "f10", [F10S]>, DwarfRegNum<[26]>;
+def F11L : FPRL<11, "f11", [F11S]>, DwarfRegNum<[27]>;
+def F12L : FPRL<12, "f12", [F12S]>, DwarfRegNum<[28]>;
+def F13L : FPRL<13, "f13", [F13S]>, DwarfRegNum<[29]>;
+def F14L : FPRL<14, "f14", [F14S]>, DwarfRegNum<[30]>;
+def F15L : FPRL<15, "f15", [F15S]>, DwarfRegNum<[31]>;
 
 // Status register
 def PSW : SystemZReg<"psw">;
@@ -412,8 +435,54 @@ def GR128 : RegisterClass<"SystemZ", [i128, v2i64], 128,
   }];
 }
 
+def FP32 : RegisterClass<"SystemZ", [f32], 32,
+ [F0S, F1S,  F2S,  F3S,  F4S,  F5S,  F6S,  F7S,
+  F8S, F9S, F10S, F11S, F12S, F13S, F14S, F15S]> {
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    static const unsigned SystemZ_REGFP32[] = {
+      SystemZ::F0S,  SystemZ::F2S,  SystemZ::F4S,  SystemZ::F6S,
+      SystemZ::F1S,  SystemZ::F3S,  SystemZ::F5S,  SystemZ::F7S,
+      SystemZ::F8S,  SystemZ::F9S,  SystemZ::F10S, SystemZ::F11S,
+      SystemZ::F12S, SystemZ::F13S, SystemZ::F14S, SystemZ::F15S };
+    FP32Class::iterator
+    FP32Class::allocation_order_begin(const MachineFunction &MF) const {
+      return SystemZ_REGFP32;
+    }
+    FP32Class::iterator
+    FP32Class::allocation_order_end(const MachineFunction &MF) const {
+      return SystemZ_REGFP32 + (sizeof(SystemZ_REGFP32) / sizeof(unsigned));
+    }
+  }];
+}
+
 def FP64 : RegisterClass<"SystemZ", [f64], 64,
- [F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15]>;
+ [F0L, F1L,  F2L,  F3L,  F4L,  F5L,  F6L,  F7L, 
+  F8L, F9L, F10L, F11L, F12L, F13L, F14L, F15L]> {
+  let SubRegClassList = [FP32];
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    static const unsigned SystemZ_REGFP64[] = {
+      SystemZ::F0L,  SystemZ::F2L,  SystemZ::F4L,  SystemZ::F6L,
+      SystemZ::F1L,  SystemZ::F3L,  SystemZ::F5L,  SystemZ::F7L,
+      SystemZ::F8L,  SystemZ::F9L,  SystemZ::F10L, SystemZ::F11L,
+      SystemZ::F12L, SystemZ::F13L, SystemZ::F14L, SystemZ::F15L };
+    FP64Class::iterator
+    FP64Class::allocation_order_begin(const MachineFunction &MF) const {
+      return SystemZ_REGFP64;
+    }
+    FP64Class::iterator
+    FP64Class::allocation_order_end(const MachineFunction &MF) const {
+      return SystemZ_REGFP64 + (sizeof(SystemZ_REGFP64) / sizeof(unsigned));
+    }
+  }];
+}
 
 // Status flags registers.
 def CCR : RegisterClass<"SystemZ", [i64], 64, [PSW]> {

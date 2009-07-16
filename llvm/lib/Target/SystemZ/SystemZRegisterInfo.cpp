@@ -39,7 +39,7 @@ SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     SystemZ::R6D,  SystemZ::R7D,  SystemZ::R8D,  SystemZ::R9D,
     SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D,
     SystemZ::R14D, SystemZ::R15D,
-    SystemZ::F1,  SystemZ::F3,  SystemZ::F5,  SystemZ::F7,
+    SystemZ::F1L,  SystemZ::F3L,  SystemZ::F5L,  SystemZ::F7L,
     0
   };
 
