@@ -548,11 +548,11 @@ MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
 
 // MDString accessors
 MDString* LLVMContext::getMDString(const char *StrBegin, const char *StrEnd) {
-  return MDString::get(StrBegin, StrEnd);
+  return pImpl->getMDString(StrBegin, StrEnd);
 }
 
 MDString* LLVMContext::getMDString(const std::string &Str) {
-  return MDString::get(Str);
+  return getMDString(Str.data(), Str.data()+Str.size());
 }
 
 // FunctionType accessors
@@ -636,4 +636,8 @@ const Type* LLVMContext::makeCmpResultType(const Type* opnd_type) {
     return getVectorType(Type::Int1Ty, vt->getNumElements());
   }
   return Type::Int1Ty;
+}
+
+void LLVMContext::erase(MDString *M) {
+  pImpl->erase(M);
 }

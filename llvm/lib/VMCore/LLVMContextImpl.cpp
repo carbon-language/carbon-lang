@@ -79,3 +79,22 @@ ConstantFP *LLVMContextImpl::getConstantFP(const APFloat &V) {
   
   return Slot;
 }
+
+MDString *LLVMContextImpl::getMDString(const char *StrBegin,
+                                       const char *StrEnd) {
+  sys::SmartScopedWriter<true> Writer(ConstantsLock);
+  StringMapEntry<MDString *> &Entry = MDStringCache.GetOrCreateValue(
+                                        StrBegin, StrEnd);
+  MDString *&S = Entry.getValue();
+  if (!S) S = new MDString(Entry.getKeyData(),
+                           Entry.getKeyData() + Entry.getKeyLength());
+
+  return S;
+}
+
+// *** erase methods ***
+
+void LLVMContextImpl::erase(MDString *M) {
+  sys::SmartScopedWriter<true> Writer(ConstantsLock);
+  MDStringCache.erase(MDStringCache.find(M->StrBegin, M->StrEnd));
+}

@@ -268,6 +268,9 @@ public:
   // Other helpers
   /// @brief Create a result type for fcmp/icmp
   const Type* makeCmpResultType(const Type* opnd_type);
+  
+  // Methods for erasing constants
+  void erase(MDString *M);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

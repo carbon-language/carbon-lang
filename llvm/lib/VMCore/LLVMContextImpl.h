@@ -19,11 +19,13 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
 
 namespace llvm {
 
 class ConstantInt;
 class ConstantFP;
+class MDString;
 class LLVMContext;
 class Type;
 
@@ -90,6 +92,8 @@ class LLVMContextImpl {
                    DenseMapAPFloatKeyInfo> FPMapTy;
   FPMapTy FPConstants;
   
+  StringMap<MDString*> MDStringCache;
+  
   LLVMContext &Context;
   LLVMContextImpl();
   LLVMContextImpl(const LLVMContextImpl&);
@@ -101,6 +105,11 @@ public:
   ConstantInt *getConstantInt(const APInt &V);
   
   ConstantFP *getConstantFP(const APFloat &V);
+  
+  MDString *getMDString(const char *StrBegin, const char *StrEnd);
+  
+  
+  void erase(MDString *M);
 };
 
 }

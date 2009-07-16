@@ -1435,33 +1435,8 @@ MDString::MDString(const char *begin, const char *end)
   : Constant(Type::MetadataTy, MDStringVal, 0, 0),
     StrBegin(begin), StrEnd(end) {}
 
-static ManagedStatic<StringMap<MDString*> > MDStringCache;
-
-MDString *MDString::get(const char *StrBegin, const char *StrEnd) {
-  sys::SmartScopedWriter<true> Writer(*ConstantsLock);
-  StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(
-                                        StrBegin, StrEnd);
-  MDString *&S = Entry.getValue();
-  if (!S) S = new MDString(Entry.getKeyData(),
-                           Entry.getKeyData() + Entry.getKeyLength());
-
-  return S;
-}
-
-MDString *MDString::get(const std::string &Str) {
-  sys::SmartScopedWriter<true> Writer(*ConstantsLock);
-  StringMapEntry<MDString *> &Entry = MDStringCache->GetOrCreateValue(
-                                        Str.data(), Str.data() + Str.size());
-  MDString *&S = Entry.getValue();
-  if (!S) S = new MDString(Entry.getKeyData(),
-                           Entry.getKeyData() + Entry.getKeyLength());
-
-  return S;
-}
-
 void MDString::destroyConstant() {
-  sys::SmartScopedWriter<true> Writer(*ConstantsLock);
-  MDStringCache->erase(MDStringCache->find(StrBegin, StrEnd));
+  getType()->getContext().erase(this);
   destroyConstantImpl();
 }
 

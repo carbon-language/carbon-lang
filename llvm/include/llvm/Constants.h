@@ -745,17 +745,13 @@ class MDString : public Constant {
   MDString(const char *begin, const char *end);
 
   const char *StrBegin, *StrEnd;
+  friend class LLVMContextImpl;
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
     return User::operator new(s, 0);
   }
 public:
-  /// get() - Static factory methods - Return objects of the specified value.
-  ///
-  static MDString *get(const char *StrBegin, const char *StrEnd);
-  static MDString *get(const std::string &Str);
-
   /// size() - The length of this string.
   ///
   intptr_t size() const { return StrEnd - StrBegin; }
