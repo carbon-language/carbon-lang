@@ -276,6 +276,30 @@ bool Loop::isLCSSAForm() const {
 
   return true;
 }
+
+/// isLoopSimplifyForm - Return true if the Loop is in the form that
+/// the LoopSimplify form transforms loops to, which is sometimes called
+/// normal form.
+bool Loop::isLoopSimplifyForm() const {
+  // Normal-form loops have a preheader.
+  if (!getLoopPreheader())
+    return false;
+  // Normal-form loops have a single backedge.
+  if (!getLoopLatch())
+    return false;
+  // Each predecessor of each exit block of a normal loop is contained
+  // within the loop.
+  SmallVector<BasicBlock *, 4> ExitBlocks;
+  getExitBlocks(ExitBlocks);
+  for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
+    for (pred_iterator PI = pred_begin(ExitBlocks[i]),
+         PE = pred_end(ExitBlocks[i]); PI != PE; ++PI)
+      if (!contains(*PI))
+        return false;
+  // All the requirements are met.
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 // LoopInfo implementation
 //

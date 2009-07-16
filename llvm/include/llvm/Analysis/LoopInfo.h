@@ -551,6 +551,11 @@ public:
   /// isLCSSAForm - Return true if the Loop is in LCSSA form
   bool isLCSSAForm() const;
 
+  /// isLoopSimplifyForm - Return true if the Loop is in the form that
+  /// the LoopSimplify form transforms loops to, which is sometimes called
+  /// normal form.
+  bool isLoopSimplifyForm() const;
+
 private:
   friend class LoopInfoBase<BasicBlock, Loop>;
   explicit Loop(BasicBlock *BB) : LoopBase<BasicBlock, Loop>(BB) {}
