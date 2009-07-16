@@ -1419,6 +1419,81 @@ ABIArgInfo DefaultABIInfo::classifyReturnType(QualType RetTy,
   }
 }
 
+namespace {
+class SystemZABIInfo : public ABIInfo {
+  bool isPromotableIntegerType(QualType Ty) const;
+
+  ABIArgInfo classifyReturnType(QualType RetTy, ASTContext &Context,
+                                llvm::LLVMContext &VMContext) const;
+
+  ABIArgInfo classifyArgumentType(QualType RetTy, ASTContext &Context,
+                                  llvm::LLVMContext &VMContext) const;
+
+  virtual void computeInfo(CGFunctionInfo &FI, ASTContext &Context,
+                          llvm::LLVMContext &VMContext) const {
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType(),
+                                            Context, VMContext);
+    for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
+         it != ie; ++it)
+      it->info = classifyArgumentType(it->type, Context, VMContext);
+  }
+
+  virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                 CodeGenFunction &CGF) const;
+};
+}
+
+bool SystemZABIInfo::isPromotableIntegerType(QualType Ty) const {
+  // SystemZ ABI requires all 8, 16 and 32 bit quantities to be extended.
+  if (const BuiltinType *BT = Ty->getAsBuiltinType())
+    switch (BT->getKind()) {
+    case BuiltinType::Bool:
+    case BuiltinType::Char_S:
+    case BuiltinType::Char_U:
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+    case BuiltinType::Int:
+    case BuiltinType::UInt:
+      return true;
+    default:
+      return false;
+    }
+  return false;
+}
+
+llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
+                                       CodeGenFunction &CGF) const {
+  // FIXME: Implement
+  return 0;
+}
+
+
+ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy,
+                                              ASTContext &Context,
+                                            llvm::LLVMContext &VMContext) const {
+  if (RetTy->isVoidType()) {
+    return ABIArgInfo::getIgnore();
+  } else if (CodeGenFunction::hasAggregateLLVMType(RetTy)) {
+    return ABIArgInfo::getIndirect(0);
+  } else {
+    return (isPromotableIntegerType(RetTy) ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  }
+}
+
+ABIArgInfo SystemZABIInfo::classifyArgumentType(QualType Ty,
+                                                ASTContext &Context,
+                                            llvm::LLVMContext &VMContext) const {
+  if (CodeGenFunction::hasAggregateLLVMType(Ty)) {
+    return ABIArgInfo::getIndirect(0);
+  } else {
+    return (isPromotableIntegerType(Ty) ?
+            ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
+  }
+}
+
 ABIArgInfo DefaultABIInfo::classifyArgumentType(QualType Ty,
                                                 ASTContext &Context,
                                           llvm::LLVMContext &VMContext) const {
@@ -1455,6 +1530,8 @@ const ABIInfo &CodeGenTypes::getABIInfo() const {
     return *(TheABIInfo = new ARMABIInfo());
   } else if (strcmp(TargetPrefix, "pic16") == 0) {
     return *(TheABIInfo = new PIC16ABIInfo());
+  } else if (strcmp(TargetPrefix, "s390x") == 0) {
+    return *(TheABIInfo = new SystemZABIInfo());
   }
 
   return *(TheABIInfo = new DefaultABIInfo);
