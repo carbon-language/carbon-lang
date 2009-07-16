@@ -703,6 +703,10 @@ def : Pat<(i64 (anyext GR32:$src)),
 
 // FIXME: use add/sub tricks with 32678/-32768
 
+// Arbitrary immediate support.  Implement in terms of LLIHF/OILF.
+def : Pat<(i64 imm:$imm),
+          (OR64rilo32 (MOV64rihi32 (HI32 imm:$imm)), (LO32 imm:$imm))>;
+
 // trunc patterns
 def : Pat<(i32 (trunc GR64:$src)),
           (EXTRACT_SUBREG GR64:$src, subreg_32bit)>;
