@@ -422,6 +422,20 @@ def MOV64mi16 : Pseudo<(outs), (ins riaddr:$dst, i64imm:$src),
                        "mvghi\t{$dst, $src}",
                        [(store (i64 immSExt16:$src), riaddr:$dst)]>;
 
+// sexts
+def MOVSX32rr8  : Pseudo<(outs GR32:$dst), (ins GR32:$src),
+                         "lbr\t{$dst, $src}",
+                         [(set GR32:$dst, (sext_inreg GR32:$src, i8))]>;
+def MOVSX64rr8  : Pseudo<(outs GR64:$dst), (ins GR64:$src),
+                         "lgbr\t{$dst, $src}",
+                         [(set GR64:$dst, (sext_inreg GR64:$src, i8))]>;
+def MOVSX32rr16 : Pseudo<(outs GR32:$dst), (ins GR32:$src),
+                         "lhr\t{$dst, $src}",
+                         [(set GR32:$dst, (sext_inreg GR32:$src, i16))]>;
+def MOVSX64rr16 : Pseudo<(outs GR64:$dst), (ins GR64:$src),
+                         "lghr\t{$dst, $src}",
+                         [(set GR64:$dst, (sext_inreg GR64:$src, i16))]>;
+
 // extloads
 def MOVSX32rm8  : Pseudo<(outs GR32:$dst), (ins rriaddr:$src),
                          "lb\t{$dst, $src}",
