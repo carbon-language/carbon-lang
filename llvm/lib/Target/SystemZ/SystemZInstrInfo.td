@@ -244,22 +244,24 @@ def MOV64mr  : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
                       "stg\t{$src, $dst}",
                       [(store GR64:$src, rriaddr:$dst)]>;
 
-// FIXME: displacements here are really 12 bit, not 20!
-def MOV8mi    : Pseudo<(outs), (ins riaddr:$dst, i32i8imm:$src),
+def MOV8mi    : Pseudo<(outs), (ins riaddr12:$dst, i32i8imm:$src),
+                       "mvi\t{$dst, $src}",
+                       [(truncstorei8 (i32 i32immSExt8:$src), riaddr12:$dst)]>;
+def MOV8miy   : Pseudo<(outs), (ins riaddr:$dst, i32i8imm:$src),
                        "mviy\t{$dst, $src}",
                        [(truncstorei8 (i32 i32immSExt8:$src), riaddr:$dst)]>;
 
-def MOV16mi   : Pseudo<(outs), (ins riaddr:$dst, s16imm:$src),
+def MOV16mi   : Pseudo<(outs), (ins riaddr12:$dst, s16imm:$src),
                        "mvhhi\t{$dst, $src}",
-                       [(truncstorei16 (i32 i32immSExt16:$src), riaddr:$dst)]>,
+                       [(truncstorei16 (i32 i32immSExt16:$src), riaddr12:$dst)]>,
                        Requires<[IsZ10]>;
-def MOV32mi16 : Pseudo<(outs), (ins riaddr:$dst, s32imm:$src),
+def MOV32mi16 : Pseudo<(outs), (ins riaddr12:$dst, s32imm:$src),
                        "mvhi\t{$dst, $src}",
-                       [(store (i32 immSExt16:$src), riaddr:$dst)]>,
+                       [(store (i32 immSExt16:$src), riaddr12:$dst)]>,
                        Requires<[IsZ10]>;
-def MOV64mi16 : Pseudo<(outs), (ins riaddr:$dst, s32imm64:$src),
+def MOV64mi16 : Pseudo<(outs), (ins riaddr12:$dst, s32imm64:$src),
                        "mvghi\t{$dst, $src}",
-                       [(store (i64 immSExt16:$src), riaddr:$dst)]>,
+                       [(store (i64 immSExt16:$src), riaddr12:$dst)]>,
                        Requires<[IsZ10]>;
 
 // sexts

@@ -46,9 +46,10 @@ namespace {
 
     SDValue IndexReg;
     int64_t Disp;
+    bool isRI;
 
-    SystemZRRIAddressMode()
-      : BaseType(RegBase), IndexReg(), Disp(0) {
+    SystemZRRIAddressMode(bool RI = false)
+      : BaseType(RegBase), IndexReg(), Disp(0), isRI(RI) {
     }
 
     void dump() {
@@ -61,9 +62,11 @@ namespace {
       } else {
         cerr << " Base.FrameIndex " << Base.FrameIndex << '\n';
       }
-      cerr << "IndexReg ";
-      if (IndexReg.getNode() != 0) IndexReg.getNode()->dump();
-      else cerr << "nul";
+      if (!isRI) {
+        cerr << "IndexReg ";
+        if (IndexReg.getNode() != 0) IndexReg.getNode()->dump();
+        else cerr << "nul";
+      }
       cerr << " Disp " << Disp << '\n';
     }
   };
@@ -77,6 +80,8 @@ namespace {
     SystemZTargetLowering &Lowering;
     const SystemZSubtarget &Subtarget;
 
+    void getAddressOperandsRI(const SystemZRRIAddressMode &AM,
+                            SDValue &Base, SDValue &Disp);
     void getAddressOperands(const SystemZRRIAddressMode &AM,
                             SDValue &Base, SDValue &Disp,
                             SDValue &Index);
@@ -109,9 +114,9 @@ namespace {
     #include "SystemZGenDAGISel.inc"
 
   private:
-    bool SelectAddrRI32(const SDValue& Op, SDValue& Addr,
+    bool SelectAddrRI12(SDValue Op, SDValue& Addr,
                         SDValue &Base, SDValue &Disp);
-    bool SelectAddrRI(const SDValue& Op, SDValue& Addr,
+    bool SelectAddrRI(SDValue Op, SDValue& Addr,
                       SDValue &Base, SDValue &Disp);
     bool SelectAddrRRI12(SDValue Op, SDValue Addr,
                          SDValue &Base, SDValue &Disp, SDValue &Index);
@@ -124,6 +129,8 @@ namespace {
     bool MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
                       bool is12Bit, unsigned Depth = 0);
     bool MatchAddressBase(SDValue N, SystemZRRIAddressMode &AM);
+    bool MatchAddressRI(SDValue N, SystemZRRIAddressMode &AM,
+                        bool is12Bit);
 
   #ifndef NDEBUG
     unsigned Indent;
@@ -151,17 +158,6 @@ static bool isImmSExt20(int64_t Val, int64_t &Imm) {
   return false;
 }
 
-static bool isImmSExt20(SDNode *N, int64_t &Imm) {
-  if (N->getOpcode() != ISD::Constant)
-    return false;
-
-  return isImmSExt20(cast<ConstantSDNode>(N)->getSExtValue(), Imm);
-}
-
-static bool isImmSExt20(SDValue Op, int64_t &Imm) {
-  return isImmSExt20(Op.getNode(), Imm);
-}
-
 /// isImmZExt12 - This method tests to see if the node is either a 32-bit
 /// or 64-bit immediate, and if the value can be accurately represented as a
 /// zero extension from a 12-bit value. If so, this returns true and the
@@ -172,139 +168,6 @@ static bool isImmZExt12(int64_t Val, int64_t &Imm) {
     return true;
   }
   return false;
-}
-
-static bool isImmZExt12(SDNode *N, int64_t &Imm) {
-  if (N->getOpcode() != ISD::Constant)
-    return false;
-
-  return isImmZExt12(cast<ConstantSDNode>(N)->getSExtValue(), Imm);
-}
-
-static bool isImmZExt12(SDValue Op, int64_t &Imm) {
-  return isImmZExt12(Op.getNode(), Imm);
-}
-
-/// Returns true if the address can be represented by a base register plus
-/// an unsigned 12-bit displacement [r+imm].
-bool SystemZDAGToDAGISel::SelectAddrRI32(const SDValue& Op, SDValue& Addr,
-                                         SDValue &Base, SDValue &Disp) {
-  // FIXME dl should come from parent load or store, not from address
-  DebugLoc dl = Addr.getDebugLoc();
-  MVT VT = Addr.getValueType();
-
-  if (Addr.getOpcode() == ISD::ADD) {
-    int64_t Imm = 0;
-    if (isImmZExt12(Addr.getOperand(1), Imm)) {
-      Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
-      if (FrameIndexSDNode *FI =
-          dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
-        Base = CurDAG->getTargetFrameIndex(FI->getIndex(), VT);
-      } else {
-        Base = Addr.getOperand(0);
-      }
-      return true; // [r+i]
-    }
-  } else if (Addr.getOpcode() == ISD::OR) {
-    int64_t Imm = 0;
-    if (isImmZExt12(Addr.getOperand(1), Imm)) {
-      // If this is an or of disjoint bitfields, we can codegen this as an add
-      // (for better address arithmetic) if the LHS and RHS of the OR are
-      // provably disjoint.
-      APInt LHSKnownZero, LHSKnownOne;
-      CurDAG->ComputeMaskedBits(Addr.getOperand(0),
-                                APInt::getAllOnesValue(Addr.getOperand(0)
-                                                       .getValueSizeInBits()),
-                                LHSKnownZero, LHSKnownOne);
-
-      if ((LHSKnownZero.getZExtValue()|~(uint64_t)Imm) == ~0ULL) {
-        // If all of the bits are known zero on the LHS or RHS, the add won't
-        // carry.
-        Base = Addr.getOperand(0);
-        Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
-        return true;
-      }
-    }
-  } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr)) {
-    // Loading from a constant address.
-
-    // If this address fits entirely in a 12-bit zext immediate field, codegen
-    // this as "d(r0)"
-    int64_t Imm;
-    if (isImmZExt12(CN, Imm)) {
-      Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
-      Base = CurDAG->getRegister(0, VT);
-      return true;
-    }
-  }
-
-  Disp = CurDAG->getTargetConstant(0, MVT::i64);
-  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr))
-    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), VT);
-  else
-    Base = Addr;
-  return true;      // [r+0]
-}
-
-/// Returns true if the address can be represented by a base register plus
-/// a signed 20-bit displacement [r+imm].
-bool SystemZDAGToDAGISel::SelectAddrRI(const SDValue& Op, SDValue& Addr,
-                                       SDValue &Base, SDValue &Disp) {
-  // FIXME dl should come from parent load or store, not from address
-  DebugLoc dl = Addr.getDebugLoc();
-  MVT VT = Addr.getValueType();
-
-  if (Addr.getOpcode() == ISD::ADD) {
-    int64_t Imm = 0;
-    if (isImmSExt20(Addr.getOperand(1), Imm)) {
-      Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
-      if (FrameIndexSDNode *FI =
-          dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
-        Base = CurDAG->getTargetFrameIndex(FI->getIndex(), VT);
-      } else {
-        Base = Addr.getOperand(0);
-      }
-      return true; // [r+i]
-    }
-  } else if (Addr.getOpcode() == ISD::OR) {
-    int64_t Imm = 0;
-    if (isImmSExt20(Addr.getOperand(1), Imm)) {
-      // If this is an or of disjoint bitfields, we can codegen this as an add
-      // (for better address arithmetic) if the LHS and RHS of the OR are
-      // provably disjoint.
-      APInt LHSKnownZero, LHSKnownOne;
-      CurDAG->ComputeMaskedBits(Addr.getOperand(0),
-                                APInt::getAllOnesValue(Addr.getOperand(0)
-                                                       .getValueSizeInBits()),
-                                LHSKnownZero, LHSKnownOne);
-
-      if ((LHSKnownZero.getZExtValue()|~(uint64_t)Imm) == ~0ULL) {
-        // If all of the bits are known zero on the LHS or RHS, the add won't
-        // carry.
-        Base = Addr.getOperand(0);
-        Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
-        return true;
-      }
-    }
-  } else if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr)) {
-    // Loading from a constant address.
-
-    // If this address fits entirely in a 20-bit sext immediate field, codegen
-    // this as "d(r0)"
-    int64_t Imm;
-    if (isImmSExt20(CN, Imm)) {
-      Disp = CurDAG->getTargetConstant(Imm, MVT::i64);
-      Base = CurDAG->getRegister(0, VT);
-      return true;
-    }
-  }
-
-  Disp = CurDAG->getTargetConstant(0, MVT::i64);
-  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr))
-    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), VT);
-  else
-    Base = Addr;
-  return true;      // [r+0]
 }
 
 /// MatchAddress - Add the specified node to the specified addressing mode,
@@ -360,7 +223,7 @@ bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
       break;
     }
     // Test if the index field is free for use.
-    if (AM.IndexReg.getNode()) {
+    if (AM.IndexReg.getNode() && !AM.isRI) {
       AM = Backup;
       break;
     }
@@ -407,7 +270,8 @@ bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
     // If we couldn't fold both operands into the address at the same time,
     // see if we can just put each operand into a register and fold at least
     // the add.
-    if (AM.BaseType == SystemZRRIAddressMode::RegBase &&
+    if (!AM.isRI &&
+        AM.BaseType == SystemZRRIAddressMode::RegBase &&
         !AM.Base.Reg.getNode() && !AM.IndexReg.getNode()) {
       AM.Base.Reg = N.getNode()->getOperand(0);
       AM.IndexReg = N.getNode()->getOperand(1);
@@ -448,8 +312,8 @@ bool SystemZDAGToDAGISel::MatchAddressBase(SDValue N,
                                            SystemZRRIAddressMode &AM) {
   // Is the base register already occupied?
   if (AM.BaseType != SystemZRRIAddressMode::RegBase || AM.Base.Reg.getNode()) {
-    // If so, check to see if the scale index register is set.
-    if (AM.IndexReg.getNode() == 0) {
+    // If so, check to see if the scale register is set.
+    if (AM.IndexReg.getNode() == 0 && !AM.isRI) {
       AM.IndexReg = N;
       return false;
     }
@@ -464,22 +328,118 @@ bool SystemZDAGToDAGISel::MatchAddressBase(SDValue N,
   return false;
 }
 
-void SystemZDAGToDAGISel::getAddressOperands(const SystemZRRIAddressMode &AM,
-                                             SDValue &Base, SDValue &Disp,
-                                             SDValue &Index) {
+void SystemZDAGToDAGISel::getAddressOperandsRI(const SystemZRRIAddressMode &AM,
+                                               SDValue &Base, SDValue &Disp) {
   if (AM.BaseType == SystemZRRIAddressMode::RegBase)
     Base = AM.Base.Reg;
   else
     Base = CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, TLI.getPointerTy());
-  Index = AM.IndexReg;
   Disp = CurDAG->getTargetConstant(AM.Disp, MVT::i64);
+}
+
+void SystemZDAGToDAGISel::getAddressOperands(const SystemZRRIAddressMode &AM,
+                                             SDValue &Base, SDValue &Disp,
+                                             SDValue &Index) {
+  getAddressOperandsRI(AM, Base, Disp);
+  Index = AM.IndexReg;
+}
+
+/// Returns true if the address can be represented by a base register plus
+/// an unsigned 12-bit displacement [r+imm].
+bool SystemZDAGToDAGISel::SelectAddrRI12(SDValue Op, SDValue& Addr,
+                                         SDValue &Base, SDValue &Disp) {
+  SystemZRRIAddressMode AM20(/*isRI*/true), AM12(/*isRI*/true);
+  bool Done = false;
+
+  if (!Addr.hasOneUse()) {
+    unsigned Opcode = Addr.getOpcode();
+    if (Opcode != ISD::Constant && Opcode != ISD::FrameIndex) {
+      // If we are able to fold N into addressing mode, then we'll allow it even
+      // if N has multiple uses. In general, addressing computation is used as
+      // addresses by all of its uses. But watch out for CopyToReg uses, that
+      // means the address computation is liveout. It will be computed by a LA
+      // so we want to avoid computing the address twice.
+      for (SDNode::use_iterator UI = Addr.getNode()->use_begin(),
+             UE = Addr.getNode()->use_end(); UI != UE; ++UI) {
+        if (UI->getOpcode() == ISD::CopyToReg) {
+          MatchAddressBase(Addr, AM12);
+          Done = true;
+          break;
+        }
+      }
+    }
+  }
+  if (!Done && MatchAddress(Addr, AM12, /* is12Bit */ true))
+    return false;
+
+  // Check, whether we can match stuff using 20-bit displacements
+  if (!Done && !MatchAddress(Addr, AM20, /* is12Bit */ false))
+    if (AM12.Disp == 0 && AM20.Disp != 0)
+      return false;
+
+  DOUT << "MatchAddress (final): "; DEBUG(AM12.dump());
+
+  MVT VT = Addr.getValueType();
+  if (AM12.BaseType == SystemZRRIAddressMode::RegBase) {
+    if (!AM12.Base.Reg.getNode())
+      AM12.Base.Reg = CurDAG->getRegister(0, VT);
+  }
+
+  assert(AM12.IndexReg.getNode() == 0 && "Invalid reg-imm address mode!");
+
+  getAddressOperandsRI(AM12, Base, Disp);
+
+  return true;
+}
+
+/// Returns true if the address can be represented by a base register plus
+/// a signed 20-bit displacement [r+imm].
+bool SystemZDAGToDAGISel::SelectAddrRI(SDValue Op, SDValue& Addr,
+                                       SDValue &Base, SDValue &Disp) {
+  SystemZRRIAddressMode AM(/*isRI*/true);
+  bool Done = false;
+
+  if (!Addr.hasOneUse()) {
+    unsigned Opcode = Addr.getOpcode();
+    if (Opcode != ISD::Constant && Opcode != ISD::FrameIndex) {
+      // If we are able to fold N into addressing mode, then we'll allow it even
+      // if N has multiple uses. In general, addressing computation is used as
+      // addresses by all of its uses. But watch out for CopyToReg uses, that
+      // means the address computation is liveout. It will be computed by a LA
+      // so we want to avoid computing the address twice.
+      for (SDNode::use_iterator UI = Addr.getNode()->use_begin(),
+             UE = Addr.getNode()->use_end(); UI != UE; ++UI) {
+        if (UI->getOpcode() == ISD::CopyToReg) {
+          MatchAddressBase(Addr, AM);
+          Done = true;
+          break;
+        }
+      }
+    }
+  }
+  if (!Done && MatchAddress(Addr, AM, /* is12Bit */ false))
+    return false;
+
+  DOUT << "MatchAddress (final): "; DEBUG(AM.dump());
+
+  MVT VT = Addr.getValueType();
+  if (AM.BaseType == SystemZRRIAddressMode::RegBase) {
+    if (!AM.Base.Reg.getNode())
+      AM.Base.Reg = CurDAG->getRegister(0, VT);
+  }
+
+  assert(AM.IndexReg.getNode() == 0 && "Invalid reg-imm address mode!");
+
+  getAddressOperandsRI(AM, Base, Disp);
+
+  return true;
 }
 
 /// Returns true if the address can be represented by a base register plus
 /// index register plus an unsigned 12-bit displacement [base + idx + imm].
 bool SystemZDAGToDAGISel::SelectAddrRRI12(SDValue Op, SDValue Addr,
                                 SDValue &Base, SDValue &Disp, SDValue &Index) {
-  SystemZRRIAddressMode AM20, AM12;
+  SystemZRRIAddressMode AM20(/*isRI*/true), AM12(/*isRI*/true);
   bool Done = false;
 
   if (!Addr.hasOneUse()) {

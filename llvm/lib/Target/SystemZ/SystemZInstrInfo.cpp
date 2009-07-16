@@ -351,6 +351,9 @@ SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   case SystemZ::MOV64m32r:
     Opc = SystemZ::MOV64m32ry;
     break;
+  case SystemZ::MOV8mi:
+    Opc = SystemZ::MOV8miy;
+    break;
   case SystemZ::MUL32rm:
     Opc = SystemZ::MUL32rmy;
     break;
