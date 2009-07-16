@@ -101,7 +101,7 @@ int SystemZRegisterInfo::getFrameIndexOffset(MachineFunction &MF, int FI) const 
   Offset += StackSize - TFI.getOffsetOfLocalArea();
 
   // Skip the register save area if we generated the stack frame.
-  if (StackSize)
+  if (StackSize || MFI->hasCalls())
     Offset -= TFI.getOffsetOfLocalArea();
 
   return Offset;
