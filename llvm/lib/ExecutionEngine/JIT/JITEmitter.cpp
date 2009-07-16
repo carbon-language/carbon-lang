@@ -473,7 +473,12 @@ namespace {
     // CurFn - The llvm function being emitted.  Only valid during 
     // finishFunction().
     const Function *CurFn;
-    
+
+    /// Information about emitted code, which is passed to the
+    /// JITEventListeners.  This is reset in startFunction and used in
+    /// finishFunction.
+    JITEvent_EmittedFunctionDetails EmissionDetails;
+
     // CurFnStubUses - For a given Function, a vector of stubs that it
     // references.  This facilitates the JIT detecting that a stub is no
     // longer used, so that it may be deallocated.
@@ -487,6 +492,8 @@ namespace {
     // ExtFnStubs - A map of external function names to stubs which have entries
     // in the JITResolver's ExternalFnToStubMap.
     StringMap<void *> ExtFnStubs;
+
+    DebugLocTuple PrevDLT;
 
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit), CurFn(0) {
@@ -567,6 +574,8 @@ namespace {
     /// MachineRelocations that reference external functions by name.
     const StringMap<void*> &getExternalFnStubs() const { return ExtFnStubs; }
     
+    virtual void processDebugLoc(DebugLoc DL);
+
     virtual void emitLabel(uint64_t LabelID) {
       if (LabelLocations.size() <= LabelID)
         LabelLocations.resize((LabelID+1)*2);
@@ -674,6 +683,21 @@ void JITEmitter::AddStubToCurrentFunction(void *StubAddr) {
 
   SmallPtrSet<const Function *, 1> &FnRefs = StubFnRefs[StubAddr];
   FnRefs.insert(CurFn);
+}
+
+void JITEmitter::processDebugLoc(DebugLoc DL) {
+  if (!DL.isUnknown()) {
+    DebugLocTuple CurDLT = EmissionDetails.MF->getDebugLocTuple(DL);
+
+    if (CurDLT.CompileUnit != 0 && PrevDLT != CurDLT) {
+      JITEvent_EmittedFunctionDetails::LineStart NextLine;
+      NextLine.Address = getCurrentPCValue();
+      NextLine.Loc = DL;
+      EmissionDetails.LineStarts.push_back(NextLine);
+    }
+
+    PrevDLT = CurDLT;
+  }
 }
 
 static unsigned GetConstantPoolSizeInBytes(MachineConstantPool *MCP,
@@ -918,6 +942,9 @@ void JITEmitter::startFunction(MachineFunction &F) {
   TheJIT->updateGlobalMapping(F.getFunction(), CurBufferPtr);
 
   MBBLocations.clear();
+
+  EmissionDetails.MF = &F;
+  EmissionDetails.LineStarts.clear();
 }
 
 bool JITEmitter::finishFunction(MachineFunction &F) {
@@ -1028,9 +1055,8 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   // Invalidate the icache if necessary.
   sys::Memory::InvalidateInstructionCache(FnStart, FnEnd-FnStart);
 
-  JITEvent_EmittedFunctionDetails Details;
   TheJIT->NotifyFunctionEmitted(*F.getFunction(), FnStart, FnEnd-FnStart,
-                                Details);
+                                EmissionDetails);
 
   DOUT << "JIT: Finished CodeGen of [" << (void*)FnStart
        << "] Function: " << F.getFunction()->getName()

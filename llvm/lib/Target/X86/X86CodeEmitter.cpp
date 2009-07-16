@@ -465,6 +465,8 @@ void Emitter<CodeEmitter>::emitInstruction(
                               const TargetInstrDesc *Desc) {
   DOUT << MI;
 
+  MCE.processDebugLoc(MI.getDebugLoc());
+
   unsigned Opcode = Desc->Opcode;
 
   // Emit the lock opcode prefix as needed.
@@ -816,4 +818,3 @@ void Emitter<CodeEmitter>::emitInstruction(
     llvm_unreachable(0);
   }
 }
-

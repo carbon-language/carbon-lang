@@ -3918,8 +3918,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
   case Intrinsic::dbg_func_start: {
     DwarfWriter *DW = DAG.getDwarfWriter();
     DbgFuncStartInst &FSI = cast<DbgFuncStartInst>(I);
-    if (!isValidDebugInfoIntrinsic(FSI, CodeGenOpt::None) || !DW
-        || !DW->ShouldEmitDwarfDebug()) 
+    if (!isValidDebugInfoIntrinsic(FSI, CodeGenOpt::None))
       return 0;
 
     MachineFunction &MF = DAG.getMachineFunction();
@@ -3940,6 +3939,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       // Record the source line.
       setCurDebugLoc(ExtractDebugLocation(FSI, MF.getDebugLocInfo()));
       
+      if (!DW || !DW->ShouldEmitDwarfDebug())
+        return 0;
       DebugLocTuple PrevLocTpl = MF.getDebugLocTuple(PrevLoc);
       DISubprogram SP(cast<GlobalVariable>(FSI.getSubprogram()));
       DICompileUnit CU(PrevLocTpl.CompileUnit);
@@ -3953,7 +3954,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
     // This is a beginning of a new function.
     MF.setDefaultDebugLoc(ExtractDebugLocation(FSI, MF.getDebugLocInfo()));
-                    
+
+    if (!DW || !DW->ShouldEmitDwarfDebug())
+      return 0;
     // llvm.dbg.func_start also defines beginning of function scope.
     DW->RecordRegionStart(cast<GlobalVariable>(FSI.getSubprogram()));
     return 0;

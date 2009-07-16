@@ -18,6 +18,8 @@
 
 #define DEBUG_TYPE "oprofile-jit-event-listener"
 #include "llvm/Function.h"
+#include "llvm/Analysis/DebugInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/System/Errno.h"
@@ -64,10 +66,47 @@ OProfileJITEventListener::~OProfileJITEventListener() {
   }
 }
 
+class FilenameCache {
+  // Holds the filename of each CompileUnit, so that we can pass the
+  // pointer into oprofile.  These char*s are freed in the destructor.
+  DenseMap<GlobalVariable*, char*> Filenames;
+  // Used as the scratch space in DICompileUnit::getFilename().
+  std::string TempFilename;
+
+ public:
+  const char* getFilename(GlobalVariable *CompileUnit) {
+    char *&Filename = Filenames[CompileUnit];
+    if (Filename == NULL) {
+      DICompileUnit CU(CompileUnit);
+      Filename = strdup(CU.getFilename(TempFilename).c_str());
+    }
+    return Filename;
+  }
+  ~FilenameCache() {
+    for (DenseMap<GlobalVariable*, char*>::iterator
+             I = Filenames.begin(), E = Filenames.end(); I != E;++I) {
+      free(I->second);
+    }
+  }
+};
+
+static debug_line_info LineStartToOProfileFormat(
+    const MachineFunction &MF, FilenameCache &Filenames,
+    uintptr_t Address, DebugLoc Loc) {
+  debug_line_info Result;
+  Result.vma = Address;
+  const DebugLocTuple& tuple = MF.getDebugLocTuple(Loc);
+  Result.lineno = tuple.Line;
+  Result.filename = Filenames.getFilename(tuple.CompileUnit);
+  DOUT << "Mapping " << reinterpret_cast<void*>(Result.vma) << " to "
+       << Result.filename << ":" << Result.lineno << "\n";
+  return Result;
+}
+
 // Adds the just-emitted function to the symbol table.
 void OProfileJITEventListener::NotifyFunctionEmitted(
     const Function &F, void *FnStart, size_t FnSize,
-    const EmittedFunctionDetails &) {
+    const EmittedFunctionDetails &Details) {
   const char *const FnName = F.getNameStart();
   assert(FnName != 0 && FnStart != 0 && "Bad symbol to add");
   if (op_write_native_code(Agent, FnName,
@@ -75,6 +114,35 @@ void OProfileJITEventListener::NotifyFunctionEmitted(
                            FnStart, FnSize) == -1) {
     DOUT << "Failed to tell OProfile about native function " << FnName
          << " at [" << FnStart << "-" << ((char*)FnStart + FnSize) << "]\n";
+    return;
+  }
+
+  // Now we convert the line number information from the address/DebugLoc format
+  // in Details to the address/filename/lineno format that OProfile expects.
+  // OProfile 0.9.4 (and maybe later versions) has a bug that causes it to
+  // ignore line numbers for addresses above 4G.
+  FilenameCache Filenames;
+  std::vector<debug_line_info> LineInfo;
+  LineInfo.reserve(1 + Details.LineStarts.size());
+  if (!Details.MF->getDefaultDebugLoc().isUnknown()) {
+    LineInfo.push_back(LineStartToOProfileFormat(
+        *Details.MF, Filenames,
+        reinterpret_cast<uintptr_t>(FnStart),
+        Details.MF->getDefaultDebugLoc()));
+  }
+  for (std::vector<EmittedFunctionDetails::LineStart>::const_iterator
+           I = Details.LineStarts.begin(), E = Details.LineStarts.end();
+       I != E; ++I) {
+    LineInfo.push_back(LineStartToOProfileFormat(
+        *Details.MF, Filenames, I->Address, I->Loc));
+  }
+  if (!LineInfo.empty()) {
+    if (op_write_debug_line_info(Agent, FnStart,
+                                 LineInfo.size(), &*LineInfo.begin()) == -1) {
+      DOUT << "Failed to tell OProfile about line numbers for native function "
+           << FnName << " at [" << FnStart << "-" << ((char*)FnStart + FnSize)
+           << "]\n";
+    }
   }
 }
 

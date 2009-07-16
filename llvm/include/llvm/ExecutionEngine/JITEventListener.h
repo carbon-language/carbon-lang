@@ -16,13 +16,28 @@
 #define LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/DebugLoc.h"
+
+#include <vector>
 
 namespace llvm {
 class Function;
+class MachineFunction;
 
 /// Empty for now, but this object will contain all details about the
 /// generated machine code that a Listener might care about.
 struct JITEvent_EmittedFunctionDetails {
+  const MachineFunction *MF;
+
+  struct LineStart {
+    // The address at which the current line changes.
+    uintptr_t Address;
+    // The new location information.  These can be translated to
+    // DebugLocTuples using MF->getDebugLocTuple().
+    DebugLoc Loc;
+  };
+  // This holds line boundary information sorted by address.
+  std::vector<LineStart> LineStarts;
 };
 
 /// JITEventListener - This interface is used by the JIT to notify clients about

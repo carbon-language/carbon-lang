@@ -27,6 +27,9 @@ namespace llvm {
     GlobalVariable *CompileUnit;
     unsigned Line, Col;
 
+    DebugLocTuple()
+      : CompileUnit(0), Line(~0U), Col(~0U) {};
+
     DebugLocTuple(GlobalVariable *v, unsigned l, unsigned c)
       : CompileUnit(v), Line(l), Col(c) {};
 
