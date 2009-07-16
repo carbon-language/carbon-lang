@@ -494,16 +494,15 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
 
   // Get the two global values corresponding to the ConstantArrays we just
   // created to hold the bytes of the strings.
-  const char *StringPrefix = getContext().Target.getStringSymbolPrefix(true);
   llvm::GlobalValue *annoGV = 
-  new llvm::GlobalVariable(*M, anno->getType(), false,
-                           llvm::GlobalValue::InternalLinkage, anno,
-                           GV->getName() + StringPrefix);
+    new llvm::GlobalVariable(*M, anno->getType(), false,
+                             llvm::GlobalValue::PrivateLinkage, anno,
+                             GV->getName());
   // translation unit name string, emitted into the llvm.metadata section.
   llvm::GlobalValue *unitGV =
-  new llvm::GlobalVariable(*M, unit->getType(), false,
-                           llvm::GlobalValue::InternalLinkage, unit, 
-                           StringPrefix);
+    new llvm::GlobalVariable(*M, unit->getType(), false,
+                             llvm::GlobalValue::PrivateLinkage, unit, 
+                             ".str");
 
   // Create the ConstantStruct for the global annotation.
   llvm::Constant *Fields[4] = {
@@ -1287,22 +1286,25 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
 
   const char *Sect, *Prefix;
   bool isConstant;
+  llvm::GlobalValue::LinkageTypes Linkage;
   if (isUTF16) {
     Prefix = getContext().Target.getUnicodeStringSymbolPrefix();
     Sect = getContext().Target.getUnicodeStringSection();
+    // FIXME: why do utf strings get "l" labels instead of "L" labels?
+    Linkage = llvm::GlobalValue::InternalLinkage;
     // FIXME: Why does GCC not set constant here?
     isConstant = false;
   } else {
-    Prefix = getContext().Target.getStringSymbolPrefix(true);
+    Prefix = ".str";
     Sect = getContext().Target.getCFStringDataSection();
+    Linkage = llvm::GlobalValue::PrivateLinkage;
     // FIXME: -fwritable-strings should probably affect this, but we
     // are following gcc here.
     isConstant = true;
   }
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(getModule(), C->getType(), isConstant, 
-                             llvm::GlobalValue::InternalLinkage,
-                             C, Prefix);
+                             Linkage, C, Prefix);
   if (Sect)
     GV->setSection(Sect);
   if (isUTF16) {
@@ -1323,8 +1325,8 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   // The struct.
   C = VMContext.getConstantStruct(STy, Fields);
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true, 
-                                llvm::GlobalVariable::InternalLinkage, C, 
-                                getContext().Target.getCFStringSymbolPrefix());
+                                llvm::GlobalVariable::PrivateLinkage, C, 
+                                "_unnamed_cfstring_");
   if (const char *Sect = getContext().Target.getCFStringSection())
     GV->setSection(Sect);
   Entry.setValue(GV);
@@ -1383,7 +1385,7 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
   
   // Create a global variable for this string
   return new llvm::GlobalVariable(CGM.getModule(), C->getType(), constant, 
-                                  llvm::GlobalValue::InternalLinkage,
+                                  llvm::GlobalValue::PrivateLinkage,
                                   C, GlobalName);
 }
 
@@ -1401,14 +1403,14 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str,
 
   // Get the default prefix if a name wasn't specified.
   if (!GlobalName)
-    GlobalName = getContext().Target.getStringSymbolPrefix(IsConstant);
+    GlobalName = ".str";
 
   // Don't share any string literals if strings aren't constant.
   if (!IsConstant)
     return GenerateStringLiteral(str, false, *this, GlobalName);
   
   llvm::StringMapEntry<llvm::Constant *> &Entry = 
-  ConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
+    ConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
 
   if (Entry.getValue())
     return Entry.getValue();

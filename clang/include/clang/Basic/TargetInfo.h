@@ -300,18 +300,6 @@ public:
 
   virtual bool useGlobalsForAutomaticVariables() const { return false; }
 
-  /// getStringSymbolPrefix - Get the default symbol prefix to
-  /// use for string literals.
-  virtual const char *getStringSymbolPrefix(bool IsConstant) const { 
-    return ".str";
-  }
-
-  /// getCFStringSymbolPrefix - Get the default symbol prefix
-  /// to use for CFString literals.
-  virtual const char *getCFStringSymbolPrefix() const { 
-    return "";
-  }
-
   /// getUnicodeStringSymbolPrefix - Get the default symbol prefix to
   /// use for string literals.
   virtual const char *getUnicodeStringSymbolPrefix() const { 

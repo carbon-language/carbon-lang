@@ -238,14 +238,6 @@ public:
       this->TLSSupported = false;
     }
 
-  virtual const char *getCFStringSymbolPrefix() const {
-    return "\01L_unnamed_cfstring_";
-  }
-
-  virtual const char *getStringSymbolPrefix(bool IsConstant) const {
-    return IsConstant ? "\01LC" : "\01lC";
-  }
-
   virtual const char *getUnicodeStringSymbolPrefix() const {
     return "__utf16_string_";
   }
