@@ -235,7 +235,7 @@ bool MSILWriter::isZeroValue(const Value* V) {
 
 std::string MSILWriter::getValueName(const Value* V) {
   std::string Name;
-  if (const GlobalValue *GV = cast<GlobalValue>(V))
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     Name = Mang->getMangledName(GV);
   else {
     unsigned &No = AnonValueNumbers[V];
@@ -262,7 +262,7 @@ std::string MSILWriter::getLabelName(const std::string& Name) {
 
 std::string MSILWriter::getLabelName(const Value* V) {
   std::string Name;
-  if (const GlobalValue *GV = cast<GlobalValue>(V))
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
     Name = Mang->getMangledName(GV);
   else {
     unsigned &No = AnonValueNumbers[V];
