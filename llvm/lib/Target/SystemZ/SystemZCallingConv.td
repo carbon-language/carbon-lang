@@ -1,0 +1,36 @@
+//=- SystemZCallingConv.td - Calling Conventions for SystemZ -*- tablegen -*-=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+// This describes the calling conventions for SystemZ architecture.
+//===----------------------------------------------------------------------===//
+
+//===----------------------------------------------------------------------===//
+// SystemZ Return Value Calling Convention
+//===----------------------------------------------------------------------===//
+def RetCC_SystemZ : CallingConv<[
+  // i64 is returned in register R2
+  CCIfType<[i64], CCAssignToReg<[R2]>>
+]>;
+
+//===----------------------------------------------------------------------===//
+// SystemZ Argument Calling Conventions
+//===----------------------------------------------------------------------===//
+def CC_SystemZ : CallingConv<[
+  // Promote i8/i16/i32 arguments to i64.
+  CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
+
+  // The first 5 integer arguments of non-varargs functions are passed in
+  // integer registers.
+  // FIXME: Check stuff for varagrs
+  CCIfNotVarArg<CCIfType<[i64],
+                CCAssignToReg<[R2, R3, R4, R5, R6]>>>,
+
+  // Integer values get stored in stack slots that are 8 bytes in
+  // size and 8-byte aligned.
+  CCIfType<[i64], CCAssignToStack<8, 8>>
+]>;
