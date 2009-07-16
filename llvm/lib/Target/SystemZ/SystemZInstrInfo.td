@@ -108,6 +108,18 @@ def i64hi32 : PatLeaf<(i64 imm), [{
   return ((N->getZExtValue() & 0xFFFFFFFF00000000ULL) == N->getZExtValue());
 }], HI32>;
 
+def i32immSExt8  : PatLeaf<(i32 imm), [{
+  // i32immSExt8 predicate - True if the 32-bit immediate fits in a 8-bit
+  // sign extended field.
+  return (int32_t)N->getZExtValue() == (int8_t)N->getZExtValue();
+}]>;
+
+def i32immSExt16 : PatLeaf<(i32 imm), [{
+  // i32immSExt16 predicate - True if the 32-bit immediate fits in a 16-bit
+  // sign extended field.
+  return (int32_t)N->getZExtValue() == (int16_t)N->getZExtValue();
+}]>;
+
 // extloads
 def extloadi64i8   : PatFrag<(ops node:$ptr), (i64 (extloadi8  node:$ptr))>;
 def extloadi64i16  : PatFrag<(ops node:$ptr), (i64 (extloadi16 node:$ptr))>;
@@ -121,6 +133,11 @@ def zextloadi64i8   : PatFrag<(ops node:$ptr), (i64 (zextloadi8  node:$ptr))>;
 def zextloadi64i16  : PatFrag<(ops node:$ptr), (i64 (zextloadi16 node:$ptr))>;
 def zextloadi64i32  : PatFrag<(ops node:$ptr), (i64 (zextloadi32 node:$ptr))>;
 
+// A couple of more descriptive operand definitions.
+// 32-bits but only 8 bits are significant.
+def i32i8imm  : Operand<i32>;
+// 32-bits but only 16 bits are significant.
+def i32i16imm : Operand<i32>;
 
 //===----------------------------------------------------------------------===//
 // SystemZ Operand Definitions.
@@ -224,12 +241,12 @@ def MOV64mr : Pseudo<(outs), (ins rriaddr:$dst, GR64:$src),
                      [(store GR64:$src, rriaddr:$dst)]>;
 
 // FIXME: displacements here are really 12 bit, not 20!
-def MOV8mi    : Pseudo<(outs), (ins riaddr:$dst, i32imm:$src),
+def MOV8mi    : Pseudo<(outs), (ins riaddr:$dst, i32i8imm:$src),
                        "mvi\t{$dst, $src}",
-                       [(truncstorei8 (i32 imm:$src), riaddr:$dst)]>;
-def MOV16mi   : Pseudo<(outs), (ins riaddr:$dst, i32imm:$src),
+                       [(truncstorei8 (i32 i32immSExt8:$src), riaddr:$dst)]>;
+def MOV16mi   : Pseudo<(outs), (ins riaddr:$dst, i32i16imm:$src),
                        "mvhhi\t{$dst, $src}",
-                       [(truncstorei16 (i32 imm:$src), riaddr:$dst)]>;
+                       [(truncstorei16 (i32 i32immSExt16:$src), riaddr:$dst)]>;
 def MOV32mi16 : Pseudo<(outs), (ins riaddr:$dst, i32imm:$src),
                        "mvhi\t{$dst, $src}",
                        [(store (i32 immSExt16:$src), riaddr:$dst)]>;
