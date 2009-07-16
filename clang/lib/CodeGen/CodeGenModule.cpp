@@ -821,7 +821,9 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   
   // Strip off a bitcast if we got one back.
   if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
-    assert(CE->getOpcode() == llvm::Instruction::BitCast);
+    assert(CE->getOpcode() == llvm::Instruction::BitCast ||
+           // all zero index gep.
+           CE->getOpcode() == llvm::Instruction::GetElementPtr);
     Entry = CE->getOperand(0);
   }
   
@@ -1237,19 +1239,12 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   llvm::Constant *Zero = getLLVMContext().getNullValue(llvm::Type::Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
   
+  // If we don't already have it, get __CFConstantStringClassReference.
   if (!CFConstantStringClassRef) {
     const llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
     Ty = VMContext.getArrayType(Ty, 0);
-
-    // FIXME: This is fairly broken if __CFConstantStringClassReference is
-    // already defined, in that it will get renamed and the user will most
-    // likely see an opaque error message. This is a general issue with relying
-    // on particular names.
-    llvm::GlobalVariable *GV = 
-      new llvm::GlobalVariable(getModule(), Ty, false,
-                               llvm::GlobalVariable::ExternalLinkage, 0, 
-                               "__CFConstantStringClassReference");
-    
+    llvm::Constant *GV = CreateRuntimeVariable(Ty, 
+                                           "__CFConstantStringClassReference");
     // Decay array -> ptr
     CFConstantStringClassRef =
       VMContext.getConstantExprGetElementPtr(GV, Zeros, 2);
