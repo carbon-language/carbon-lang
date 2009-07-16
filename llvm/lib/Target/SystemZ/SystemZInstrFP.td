@@ -147,6 +147,46 @@ def FMUL64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2),
                        "mdb\t{$dst, $src2}",
                        [(set FP64:$dst, (fmul FP64:$src1, (load rriaddr:$src2)))]>;
 
+def FMADD32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2, FP32:$src3),
+                       "maebr\t{$dst, $src3, $src2}",
+                       [(set FP32:$dst, (fadd (fmul FP32:$src2, FP32:$src3),
+                                              FP32:$src1))]>;
+def FMADD32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2, FP32:$src3),
+                       "maeb\t{$dst, $src3, $src2}",
+                       [(set FP32:$dst, (fadd (fmul (load rriaddr:$src2),
+                                                     FP32:$src3),
+                                              FP32:$src1))]>;
+
+def FMADD64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2, FP64:$src3),
+                       "madbr\t{$dst, $src3, $src2}",
+                       [(set FP64:$dst, (fadd (fmul FP64:$src2, FP64:$src3),
+                                              FP64:$src1))]>;
+def FMADD64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2, FP64:$src3),
+                       "madb\t{$dst, $src3, $src2}",
+                       [(set FP64:$dst, (fadd (fmul (load rriaddr:$src2),
+                                                     FP64:$src3),
+                                              FP64:$src1))]>;
+
+def FMSUB32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2, FP32:$src3),
+                       "msebr\t{$dst, $src3, $src2}",
+                       [(set FP32:$dst, (fsub (fmul FP32:$src2, FP32:$src3),
+                                              FP32:$src1))]>;
+def FMSUB32rm : Pseudo<(outs FP32:$dst), (ins FP32:$src1, rriaddr:$src2, FP32:$src3),
+                       "mseb\t{$dst, $src3, $src2}",
+                       [(set FP32:$dst, (fsub (fmul (load rriaddr:$src2),
+                                                     FP32:$src3),
+                                              FP32:$src1))]>;
+
+def FMSUB64rr : Pseudo<(outs FP64:$dst), (ins FP64:$src1, FP64:$src2, FP64:$src3),
+                       "msdbr\t{$dst, $src3, $src2}",
+                       [(set FP64:$dst, (fsub (fmul FP64:$src2, FP64:$src3),
+                                              FP64:$src1))]>;
+def FMSUB64rm : Pseudo<(outs FP64:$dst), (ins FP64:$src1, rriaddr:$src2, FP64:$src3),
+                       "msdb\t{$dst, $src3, $src2}",
+                       [(set FP64:$dst, (fsub (fmul (load rriaddr:$src2),
+                                                     FP64:$src3),
+                                              FP64:$src1))]>;
+
 def FDIV32rr : Pseudo<(outs FP32:$dst), (ins FP32:$src1, FP32:$src2),
                        "debr\t{$dst, $src2}",
                        [(set FP32:$dst, (fdiv FP32:$src1, FP32:$src2))]>;
