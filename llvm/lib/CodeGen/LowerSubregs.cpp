@@ -132,10 +132,11 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
         }
   } else {
     // Insert copy
-    const TargetRegisterClass *TRC = TRI.getPhysicalRegisterRegClass(DstReg);
-    assert(TRC == TRI.getPhysicalRegisterRegClass(SrcReg) &&
-            "Extract subreg and Dst must be of same register class");
-    TII.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC, TRC);
+    const TargetRegisterClass *TRCS = TRI.getPhysicalRegisterRegClass(DstReg);
+    const TargetRegisterClass *TRCD = TRI.getPhysicalRegisterRegClass(SrcReg);
+    bool Emitted = TII.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRCD, TRCS);
+    (void)Emitted;
+    assert(Emitted && "Subreg and Dst must be of compatible register class");
     // Transfer the kill/dead flags, if needed.
     if (MI->getOperand(0).isDead())
       TransferDeadFlag(MI, DstReg, TRI);
