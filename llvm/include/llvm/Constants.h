@@ -213,6 +213,7 @@ class ConstantFP : public Constant {
   APFloat Val;
   void *operator new(size_t, unsigned);// DO NOT IMPLEMENT
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
+  friend class LLVMContextImpl;
 protected:
   ConstantFP(const Type *Ty, const APFloat& V);
 protected:
@@ -221,9 +222,6 @@ protected:
     return User::operator new(s, 0);
   }
 public:
-  /// get() - Static factory methods - Return objects of the specified value
-  static ConstantFP *get(const APFloat &V);
-
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat& V);
   inline const APFloat& getValueAPF() const { return Val; }

@@ -159,7 +159,7 @@ we'll do numeric literals:</p>
 <div class="doc_code">
 <pre>
 Value *NumberExprAST::Codegen() {
-  return ConstantFP::get(APFloat(Val));
+  return getGlobalContext().getConstantFP(APFloat(Val));
 }
 </pre>
 </div>
@@ -170,7 +170,7 @@ internally (<tt>APFloat</tt> has the capability of holding floating point
 constants of <em>A</em>rbitrary <em>P</em>recision).  This code basically just
 creates and returns a <tt>ConstantFP</tt>.  Note that in the LLVM IR
 that constants are all uniqued together and shared.  For this reason, the API
-uses "the foo::get(..)" idiom instead of "new foo(..)" or "foo::Create(..)".</p>
+uses "the Context.get..." idiom instead of "new foo(..)" or "foo::Create(..)".</p>
 
 <div class="doc_code">
 <pre>
@@ -308,7 +308,7 @@ bodies and external function declarations.  The code starts with:</p>
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
   std::vector&lt;const Type*&gt; Doubles(Args.size(), Type::DoubleTy);
-  FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
+  FunctionType *FT = getGlobalContext().getFunctionType(Type::DoubleTy, Doubles, false);
   
   Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
 </pre>
@@ -320,10 +320,10 @@ really talks about the external interface for a function (not the value computed
 by an expression), it makes sense for it to return the LLVM Function it
 corresponds to when codegen'd.</p>
 
-<p>The call to <tt>FunctionType::get</tt> creates
+<p>The call to <tt>Context.get</tt> creates
 the <tt>FunctionType</tt> that should be used for a given Prototype.  Since all
 function arguments in Kaleidoscope are of type double, the first line creates
-a vector of "N" LLVM double types.  It then uses the <tt>FunctionType::get</tt>
+a vector of "N" LLVM double types.  It then uses the <tt>Context.get</tt>
 method to create a function type that takes "N" doubles as arguments, returns
 one double as a result, and that is not vararg (the false parameter indicates
 this).  Note that Types in LLVM are uniqued just like Constants are, so you
@@ -1034,7 +1034,7 @@ static std::map&lt;std::string, Value*&gt; NamedValues;
 Value *ErrorV(const char *Str) { Error(Str); return 0; }
 
 Value *NumberExprAST::Codegen() {
-  return ConstantFP::get(APFloat(Val));
+  return getGlobalContext().getConstantFP(APFloat(Val));
 }
 
 Value *VariableExprAST::Codegen() {
@@ -1082,7 +1082,7 @@ Value *CallExprAST::Codegen() {
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
   std::vector&lt;const Type*&gt; Doubles(Args.size(), Type::DoubleTy);
-  FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
+  FunctionType *FT = getGlobalContext().getFunctionType(Type::DoubleTy, Doubles, false);
   
   Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
   

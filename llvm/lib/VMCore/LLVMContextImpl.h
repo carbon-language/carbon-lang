@@ -16,12 +16,14 @@
 #define LLVM_LLVMCONTEXT_IMPL_H
 
 #include "llvm/System/RWMutex.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
 class ConstantInt;
+class ConstantFP;
 class LLVMContext;
 class Type;
 
@@ -50,12 +52,43 @@ struct DenseMapAPIntKeyInfo {
   static bool isPod() { return false; }
 };
 
+struct DenseMapAPFloatKeyInfo {
+  struct KeyTy {
+    APFloat val;
+    KeyTy(const APFloat& V) : val(V){}
+    KeyTy(const KeyTy& that) : val(that.val) {}
+    bool operator==(const KeyTy& that) const {
+      return this->val.bitwiseIsEqual(that.val);
+    }
+    bool operator!=(const KeyTy& that) const {
+      return !this->operator==(that);
+    }
+  };
+  static inline KeyTy getEmptyKey() { 
+    return KeyTy(APFloat(APFloat::Bogus,1));
+  }
+  static inline KeyTy getTombstoneKey() { 
+    return KeyTy(APFloat(APFloat::Bogus,2)); 
+  }
+  static unsigned getHashValue(const KeyTy &Key) {
+    return Key.val.getHashValue();
+  }
+  static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
+    return LHS == RHS;
+  }
+  static bool isPod() { return false; }
+};
+
 class LLVMContextImpl {
   sys::SmartRWMutex<true> ConstantsLock;
   
   typedef DenseMap<DenseMapAPIntKeyInfo::KeyTy, ConstantInt*, 
                    DenseMapAPIntKeyInfo> IntMapTy;
   IntMapTy IntConstants;
+  
+  typedef DenseMap<DenseMapAPFloatKeyInfo::KeyTy, ConstantFP*, 
+                   DenseMapAPFloatKeyInfo> FPMapTy;
+  FPMapTy FPConstants;
   
   LLVMContext &Context;
   LLVMContextImpl();
@@ -65,7 +98,9 @@ public:
   
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
-  ConstantInt* getConstantInt(const APInt &V);
+  ConstantInt *getConstantInt(const APInt &V);
+  
+  ConstantFP *getConstantFP(const APFloat &V);
 };
 
 }

@@ -916,7 +916,7 @@ SDValue SelectionDAG::getIntPtrConstant(uint64_t Val, bool isTarget) {
 
 
 SDValue SelectionDAG::getConstantFP(const APFloat& V, MVT VT, bool isTarget) {
-  return getConstantFP(*ConstantFP::get(V), VT, isTarget);
+  return getConstantFP(*Context->getConstantFP(V), VT, isTarget);
 }
 
 SDValue SelectionDAG::getConstantFP(const ConstantFP& V, MVT VT, bool isTarget){

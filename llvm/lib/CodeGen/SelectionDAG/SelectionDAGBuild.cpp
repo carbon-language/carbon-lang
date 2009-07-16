@@ -2146,7 +2146,8 @@ void SelectionDAGLowering::visitFSub(User &I) {
       const VectorType *DestTy = cast<VectorType>(I.getType());
       const Type *ElTy = DestTy->getElementType();
       unsigned VL = DestTy->getNumElements();
-      std::vector<Constant*> NZ(VL, Context->getConstantFPNegativeZero(ElTy));
+      std::vector<Constant*> NZ(VL, 
+                            DAG.getContext()->getConstantFPNegativeZero(ElTy));
       Constant *CNZ = DAG.getContext()->getConstantVector(&NZ[0], NZ.size());
       if (CV == CNZ) {
         SDValue Op2 = getValue(I.getOperand(1));
@@ -2158,7 +2159,7 @@ void SelectionDAGLowering::visitFSub(User &I) {
   }
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
     if (CFP->isExactlyValue(
-                       Context->getConstantFPNegativeZero(Ty)->getValueAPF())) {
+             DAG.getContext()->getConstantFPNegativeZero(Ty)->getValueAPF())) {
       SDValue Op2 = getValue(I.getOperand(1));
       setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),
                                Op2.getValueType(), Op2));

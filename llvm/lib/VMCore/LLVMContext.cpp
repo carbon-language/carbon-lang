@@ -482,7 +482,7 @@ Constant* LLVMContext::getZeroValueForNegation(const Type* Ty) {
 
 // ConstantFP accessors.
 ConstantFP* LLVMContext::getConstantFP(const APFloat& V) {
-  return ConstantFP::get(V);
+  return pImpl->getConstantFP(V);
 }
 
 static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {

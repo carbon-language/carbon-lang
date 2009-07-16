@@ -621,7 +621,7 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
 
 
 Value *NumberExprAST::Codegen() {
-  return ConstantFP::get(APFloat(Val));
+  return getGlobalContext().getConstantFP(APFloat(Val));
 }
 
 Value *VariableExprAST::Codegen() {
@@ -714,7 +714,7 @@ Value *IfExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   CondV = Builder.CreateFCmpONE(CondV, 
-                                ConstantFP::get(APFloat(0.0)),
+                                getGlobalContext().getConstantFP(APFloat(0.0)),
                                 "ifcond");
   
   Function *TheFunction = Builder.GetInsertBlock()->getParent();
@@ -819,7 +819,7 @@ Value *ForExprAST::Codegen() {
     if (StepVal == 0) return 0;
   } else {
     // If not specified, use 1.0.
-    StepVal = ConstantFP::get(APFloat(1.0));
+    StepVal = getGlobalContext().getConstantFP(APFloat(1.0));
   }
   
   // Compute the end condition.
@@ -834,7 +834,7 @@ Value *ForExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   EndCond = Builder.CreateFCmpONE(EndCond, 
-                                  ConstantFP::get(APFloat(0.0)),
+                                getGlobalContext().getConstantFP(APFloat(0.0)),
                                   "loopcond");
   
   // Create the "after loop" block and insert it.
@@ -877,7 +877,7 @@ Value *VarExprAST::Codegen() {
       InitVal = Init->Codegen();
       if (InitVal == 0) return 0;
     } else { // If not specified, use 0.0.
-      InitVal = ConstantFP::get(APFloat(0.0));
+      InitVal = getGlobalContext().getConstantFP(APFloat(0.0));
     }
     
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);
@@ -907,7 +907,8 @@ Value *VarExprAST::Codegen() {
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
   std::vector<const Type*> Doubles(Args.size(), Type::DoubleTy);
-  FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
+  FunctionType *FT =
+    getGlobalContext().getFunctionType(Type::DoubleTy, Doubles, false);
   
   Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
   
@@ -1084,7 +1085,7 @@ double printd(double X) {
 
 int main() {
   InitializeNativeTarget();
-  LLVMContext Context;
+  LLVMContext &Context = getGlobalContext();
   
   // Install standard binary operators.
   // 1 is lowest precedence.
