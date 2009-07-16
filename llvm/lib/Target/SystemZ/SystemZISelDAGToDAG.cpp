@@ -103,6 +103,12 @@ namespace {
       return "SystemZ DAG->DAG Pattern Instruction Selection";
     }
 
+    /// getI8Imm - Return a target constant with the specified value, of type
+    /// i8.
+    inline SDValue getI8Imm(uint64_t Imm) {
+      return CurDAG->getTargetConstant(Imm, MVT::i8);
+    }
+
     /// getI16Imm - Return a target constant with the specified value, of type
     /// i16.
     inline SDValue getI16Imm(uint64_t Imm) {

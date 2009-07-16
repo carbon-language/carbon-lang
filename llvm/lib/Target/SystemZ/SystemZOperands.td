@@ -32,6 +32,11 @@ def SYSTEMZ_COND_LE  : PatLeaf<(i8 11)>;
 def SYSTEMZ_COND_NH  : PatLeaf<(i8 12)>;
 def SYSTEMZ_COND_NO  : PatLeaf<(i8 13)>;
 
+def LO8 : SDNodeXForm<imm, [{
+  // Transformation function: return low 8 bits.
+  return getI8Imm(N->getZExtValue() & 0x00000000000000FFULL);
+}]>;
+
 def LL16 : SDNodeXForm<imm, [{
   // Transformation function: return low 16 bits.
   return getI16Imm(N->getZExtValue() & 0x000000000000FFFFULL);
@@ -138,14 +143,14 @@ def immSExt16 : PatLeaf<(imm), [{
   }
 
   return false;
-}]>;
+}], LL16>;
 
 def immSExt32 : PatLeaf<(i64 imm), [{
   // immSExt32 predicate - true if the immediate fits in a 32-bit sign extended
   // field.
   uint64_t val = N->getZExtValue();
   return ((int64_t)val == (int32_t)val);
-}]>;
+}], LO32>;
 
 def i64lo32 : PatLeaf<(i64 imm), [{
   // i64lo32 predicate - true if the 64-bit immediate has only rightmost 32
@@ -173,25 +178,25 @@ def i32immSExt8  : PatLeaf<(i32 imm), [{
   // i32immSExt8 predicate - True if the 32-bit immediate fits in a 8-bit
   // sign extended field.
   return (int32_t)N->getZExtValue() == (int8_t)N->getZExtValue();
-}]>;
+}], LO8>;
 
 def i32immSExt16 : PatLeaf<(i32 imm), [{
   // i32immSExt16 predicate - True if the 32-bit immediate fits in a 16-bit
   // sign extended field.
   return (int32_t)N->getZExtValue() == (int16_t)N->getZExtValue();
-}]>;
+}], LL16>;
 
 def i64immSExt32 : PatLeaf<(i64 imm), [{
   // i64immSExt32 predicate - True if the 64-bit immediate fits in a 32-bit
   // sign extended field.
   return (int64_t)N->getZExtValue() == (int32_t)N->getZExtValue();
-}]>;
+}], LO32>;
 
 def i64immZExt32 : PatLeaf<(i64 imm), [{
   // i64immZExt32 predicate - True if the 64-bit immediate fits in a 32-bit
   // zero extended field.
   return (uint64_t)N->getZExtValue() == (uint32_t)N->getZExtValue();
-}]>;
+}], LO32>;
 
 // extloads
 def extloadi32i8   : PatFrag<(ops node:$ptr), (i32 (extloadi8  node:$ptr))>;
