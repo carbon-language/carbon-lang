@@ -1251,7 +1251,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   }
   
   QualType CFTy = getContext().getCFConstantStringType();
-  RecordDecl *CFRD = CFTy->getAsRecordType()->getDecl();
+  RecordDecl *CFRD = CFTy->getAs<RecordType>()->getDecl();
 
   const llvm::StructType *STy = 
     cast<llvm::StructType>(getTypes().ConvertType(CFTy));

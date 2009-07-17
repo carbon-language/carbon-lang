@@ -353,7 +353,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           }
           else // FIXME. skip dependent types for now.
             if (const RecordType *RT = 
-                BMInitializer->getBaseClass()->getAsRecordType()) {
+                BMInitializer->getBaseClass()->getAs<RecordType>()) {
               const CXXRecordDecl *BaseDecl = 
                 cast<CXXRecordDecl>(RT->getDecl());
               Out << BaseDecl->getNameAsString();
@@ -394,7 +394,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           }
           else // FIXME. skip dependent types for now.
             if (const RecordType *RT = 
-                BMInitializer->getBaseClass()->getAsRecordType()) {
+                BMInitializer->getBaseClass()->getAs<RecordType>()) {
               const CXXRecordDecl *BaseDecl = 
                 cast<CXXRecordDecl>(RT->getDecl());
               Proto += "~";

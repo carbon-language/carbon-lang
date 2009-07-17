@@ -230,7 +230,7 @@ APValue LValueExprEvaluator::VisitMemberExpr(MemberExpr *E) {
     Ty = E->getBase()->getType();
   }
 
-  RecordDecl *RD = Ty->getAsRecordType()->getDecl();
+  RecordDecl *RD = Ty->getAs<RecordType>()->getDecl();
   const ASTRecordLayout &RL = Info.Ctx.getASTRecordLayout(RD);
 
   FieldDecl *FD = dyn_cast<FieldDecl>(E->getMemberDecl());

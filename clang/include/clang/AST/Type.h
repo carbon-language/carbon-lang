@@ -431,11 +431,6 @@ public:
   const FunctionType *getAsFunctionType() const;
   const FunctionNoProtoType *getAsFunctionNoProtoType() const;
   const FunctionProtoType *getAsFunctionProtoType() const;
-  const LValueReferenceType *getAsLValueReferenceType() const;
-  const RValueReferenceType *getAsRValueReferenceType() const;
-  const MemberPointerType *getAsMemberPointerType() const;
-  const TagType *getAsTagType() const;
-  const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;
   /// NOTE: getAs*ArrayType are methods on ASTContext.
   const TypedefType *getAsTypedefType() const;
@@ -2152,7 +2147,7 @@ inline bool Type::isMemberPointerType() const {
   return isa<MemberPointerType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isMemberFunctionPointerType() const {
-  if (const MemberPointerType* T = getAsMemberPointerType())
+  if (const MemberPointerType* T = getAs<MemberPointerType>())
     return T->getPointeeType()->isFunctionType();
   else
     return false;

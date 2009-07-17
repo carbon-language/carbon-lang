@@ -179,7 +179,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   assert(Dest && "Must have a destination!");
   
   const CXXRecordDecl *RD = 
-  cast<CXXRecordDecl>(E->getType()->getAsRecordType()->getDecl());
+  cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
   if (RD->hasTrivialConstructor())
     return;
   

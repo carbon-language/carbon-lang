@@ -81,7 +81,7 @@ CXXRecordDecl::setBases(ASTContext &C,
     if (BaseType->isDependentType())
       continue;
     CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(BaseType->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
     if (Base->isVirtual())
       hasDirectVirtualBase = true;
     for (CXXRecordDecl::base_class_iterator VBase = 
@@ -125,7 +125,7 @@ CXXRecordDecl::setBases(ASTContext &C,
     for (int i = 0; i < vbaseCount; i++) {
       QualType QT = UniqueVbases[i]->getType();
       CXXRecordDecl *VBaseClassDecl
-        = cast<CXXRecordDecl>(QT->getAsRecordType()->getDecl());
+        = cast<CXXRecordDecl>(QT->getAs<RecordType>()->getDecl());
       this->VBases[i] = 
         *new CXXBaseSpecifier(
                           VBaseClassDecl->getSourceRange(), true,
@@ -185,7 +185,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
       continue;
     bool AcceptsConst = true;
     QualType ArgType = FnType->getArgType(0);
-    if (const LValueReferenceType *Ref = ArgType->getAsLValueReferenceType()) {
+    if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>()) {
       ArgType = Ref->getPointeeType();
       // Is it a non-const lvalue reference?
       if (!ArgType.isConstQualified())
@@ -237,7 +237,7 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   assert(FnType && "Overloaded operator has no proto function type.");
   assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
   QualType ArgType = FnType->getArgType(0);
-  if (const LValueReferenceType *Ref = ArgType->getAsLValueReferenceType())
+  if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>())
     ArgType = Ref->getPointeeType();
 
   ArgType = ArgType.getUnqualifiedType();
@@ -433,7 +433,7 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
 
   // Do we have a reference type? Rvalue references don't count.
   const LValueReferenceType *ParamRefType =
-    Param->getType()->getAsLValueReferenceType();
+    Param->getType()->getAs<LValueReferenceType>();
   if (!ParamRefType)
     return false;
 
@@ -503,7 +503,7 @@ CXXDestructorDecl::setBaseOrMemberDestructions(ASTContext &C) {
     while (const ArrayType *AT = C.getAsArrayType(FieldType))
       FieldType = AT->getElementType();
     
-    if (FieldType->getAsRecordType()) {
+    if (FieldType->getAs<RecordType>()) {
       CXXBaseOrMemberInitializer *Member = 
         new CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
       AllToDestruct.push_back(Member);
@@ -535,12 +535,12 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   for (CXXRecordDecl::base_class_iterator VBase =
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
-    const Type * T = VBase->getType()->getAsRecordType();
+    const Type * T = VBase->getType()->getAs<RecordType>();
     unsigned int i = 0;
     for (i = 0; i < NumInitializers; i++) {
       CXXBaseOrMemberInitializer *Member = Initializers[i];
       if (Member->isBaseInitializer() &&
-          Member->getBaseClass()->getAsRecordType() == T) {
+          Member->getBaseClass()->getAs<RecordType>() == T) {
         AllToInit.push_back(Member);
         break;
       }
@@ -557,12 +557,12 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     // Virtuals are in the virtual base list and already constructed.
     if (Base->isVirtual())
       continue;
-    const Type * T = Base->getType()->getAsRecordType();
+    const Type * T = Base->getType()->getAs<RecordType>();
     unsigned int i = 0;
     for (i = 0; i < NumInitializers; i++) {
       CXXBaseOrMemberInitializer *Member = Initializers[i];
       if (Member->isBaseInitializer() && 
-          Member->getBaseClass()->getAsRecordType() == T) {
+          Member->getBaseClass()->getAs<RecordType>() == T) {
         AllToInit.push_back(Member);
         break;
       }
@@ -589,7 +589,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       while (const ArrayType *AT = C.getAsArrayType(FieldType))
         FieldType = AT->getElementType();
       
-      if (FieldType->getAsRecordType()) {
+      if (FieldType->getAs<RecordType>()) {
         CXXBaseOrMemberInitializer *Member = 
           new CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
           AllToInit.push_back(Member);

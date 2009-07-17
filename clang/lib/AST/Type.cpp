@@ -192,12 +192,12 @@ bool Type::isDerivedType() const {
 }
 
 bool Type::isClassType() const {
-  if (const RecordType *RT = getAsRecordType())
+  if (const RecordType *RT = getAs<RecordType>())
     return RT->getDecl()->isClass();
   return false;
 }
 bool Type::isStructureType() const {
-  if (const RecordType *RT = getAsRecordType())
+  if (const RecordType *RT = getAs<RecordType>())
     return RT->getDecl()->isStruct();
   return false;
 }
@@ -208,7 +208,7 @@ bool Type::isVoidPointerType() const {
 }
 
 bool Type::isUnionType() const {
-  if (const RecordType *RT = getAsRecordType())
+  if (const RecordType *RT = getAs<RecordType>())
     return RT->getDecl()->isUnion();
   return false;
 }
@@ -305,60 +305,6 @@ QualType Type::getPointeeType() const {
   return QualType();
 }
 
-const LValueReferenceType *Type::getAsLValueReferenceType() const {
-  // If this is directly an lvalue reference type, return it.
-  if (const LValueReferenceType *RTy = dyn_cast<LValueReferenceType>(this))
-    return RTy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<LValueReferenceType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<LValueReferenceType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsLValueReferenceType();
-    return 0;
-  }
-
-  // If this is a typedef for an lvalue reference type, strip the typedef off
-  // without losing all typedef information.
-  return cast<LValueReferenceType>(getDesugaredType());
-}
-
-const RValueReferenceType *Type::getAsRValueReferenceType() const {
-  // If this is directly an rvalue reference type, return it.
-  if (const RValueReferenceType *RTy = dyn_cast<RValueReferenceType>(this))
-    return RTy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<RValueReferenceType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<RValueReferenceType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsRValueReferenceType();
-    return 0;
-  }
-
-  // If this is a typedef for an rvalue reference type, strip the typedef off
-  // without losing all typedef information.
-  return cast<RValueReferenceType>(getDesugaredType());
-}
-
-const MemberPointerType *Type::getAsMemberPointerType() const {
-  // If this is directly a member pointer type, return it.
-  if (const MemberPointerType *MTy = dyn_cast<MemberPointerType>(this))
-    return MTy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<MemberPointerType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<MemberPointerType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsMemberPointerType();
-    return 0;
-  }
-
-  // If this is a typedef for a member pointer type, strip the typedef off
-  // without losing all typedef information.
-  return cast<MemberPointerType>(getDesugaredType());
-}
-
 /// isVariablyModifiedType (C99 6.7.5p3) - Return true for variable length
 /// array types and types that contain variable array types in their
 /// declarator
@@ -379,7 +325,7 @@ bool Type::isVariablyModifiedType() const {
     return PT->getPointeeType()->isVariablyModifiedType();
   if (const ReferenceType *RT = getAs<ReferenceType>())
     return RT->getPointeeType()->isVariablyModifiedType();
-  if (const MemberPointerType *PT = getAsMemberPointerType())
+  if (const MemberPointerType *PT = getAs<MemberPointerType>())
     return PT->getPointeeType()->isVariablyModifiedType();
 
   // A function can return a variably modified type
@@ -390,42 +336,6 @@ bool Type::isVariablyModifiedType() const {
     return FT->getResultType()->isVariablyModifiedType();
 
   return false;
-}
-
-const RecordType *Type::getAsRecordType() const {
-  // If this is directly a record type, return it.
-  if (const RecordType *RTy = dyn_cast<RecordType>(this))
-    return RTy;
-  
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<RecordType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<RecordType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsRecordType();
-    return 0;
-  }
-
-  // If this is a typedef for a record type, strip the typedef off without
-  // losing all typedef information.
-  return cast<RecordType>(getDesugaredType());
-}
-
-const TagType *Type::getAsTagType() const {
-  // If this is directly a tag type, return it.
-  if (const TagType *TagTy = dyn_cast<TagType>(this))
-    return TagTy;
-  
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<TagType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<TagType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsTagType();
-    return 0;
-  }
-
-  // If this is a typedef for a tag type, strip the typedef off without
-  // losing all typedef information.
-  return cast<TagType>(getDesugaredType());
 }
 
 const RecordType *Type::getAsStructureType() const {

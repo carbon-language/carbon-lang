@@ -1543,7 +1543,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
     if (const TypedefType *Typedef = FileType->getAsTypedefType())
       Context->setFILEDecl(Typedef->getDecl());
     else {
-      const TagType *Tag = FileType->getAsTagType();
+      const TagType *Tag = FileType->getAs<TagType>();
       assert(Tag && "Invalid FILE type in PCH file");
       Context->setFILEDecl(Tag->getDecl());
     }

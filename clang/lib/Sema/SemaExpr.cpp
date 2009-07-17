@@ -2133,7 +2133,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
 
   // Handle field access to simple records.  This also handles access to fields
   // of the ObjC 'id' struct.
-  if (const RecordType *RTy = BaseType->getAsRecordType()) {
+  if (const RecordType *RTy = BaseType->getAs<RecordType>()) {
     RecordDecl *RDecl = RTy->getDecl();
     if (RequireCompleteType(OpLoc, BaseType,
                                diag::err_typecheck_incomplete_tag,
@@ -2937,7 +2937,7 @@ bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
         << castType << castExpr->getSourceRange();
     } else if (castType->isUnionType()) {
       // GCC cast to union extension
-      RecordDecl *RD = castType->getAsRecordType()->getDecl();
+      RecordDecl *RD = castType->getAs<RecordType>()->getDecl();
       RecordDecl::field_iterator Field, FieldEnd;
       for (Field = RD->field_begin(), FieldEnd = RD->field_end();
            Field != FieldEnd; ++Field) {
@@ -3078,8 +3078,8 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
 
   // If both operands are the same structure or union type, the result is that
   // type.
-  if (const RecordType *LHSRT = LHSTy->getAsRecordType()) {    // C99 6.5.15p3
-    if (const RecordType *RHSRT = RHSTy->getAsRecordType())
+  if (const RecordType *LHSRT = LHSTy->getAs<RecordType>()) {    // C99 6.5.15p3
+    if (const RecordType *RHSRT = RHSTy->getAs<RecordType>())
       if (LHSRT->getDecl() == RHSRT->getDecl())
         // "If both the operands have structure or union type, the result has
         // that type."  This implies that CV qualifiers are dropped.
@@ -5256,7 +5256,7 @@ Sema::OwningExprResult Sema::ActOnBuiltinOffsetOf(Scope *S,
         continue;
       }
 
-      const RecordType *RC = Res->getType()->getAsRecordType();
+      const RecordType *RC = Res->getType()->getAs<RecordType>();
       if (!RC) {
         Res->Destroy(Context);
         return ExprError(Diag(OC.LocEnd, diag::err_offsetof_record_type)

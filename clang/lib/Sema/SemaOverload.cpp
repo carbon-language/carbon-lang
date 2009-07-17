@@ -1178,7 +1178,7 @@ bool Sema::CheckPointerConversion(Expr *From, QualType ToType) {
 bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
                                      QualType ToType, QualType &ConvertedType)
 {
-  const MemberPointerType *ToTypePtr = ToType->getAsMemberPointerType();
+  const MemberPointerType *ToTypePtr = ToType->getAs<MemberPointerType>();
   if (!ToTypePtr)
     return false;
 
@@ -1189,7 +1189,7 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
   }
 
   // Otherwise, both types have to be member pointers.
-  const MemberPointerType *FromTypePtr = FromType->getAsMemberPointerType();
+  const MemberPointerType *FromTypePtr = FromType->getAs<MemberPointerType>();
   if (!FromTypePtr)
     return false;
 
@@ -1216,11 +1216,11 @@ bool Sema::IsMemberPointerConversion(Expr *From, QualType FromType,
 /// otherwise.
 bool Sema::CheckMemberPointerConversion(Expr *From, QualType ToType) {
   QualType FromType = From->getType();
-  const MemberPointerType *FromPtrType = FromType->getAsMemberPointerType();
+  const MemberPointerType *FromPtrType = FromType->getAs<MemberPointerType>();
   if (!FromPtrType)
     return false;
 
-  const MemberPointerType *ToPtrType = ToType->getAsMemberPointerType();
+  const MemberPointerType *ToPtrType = ToType->getAs<MemberPointerType>();
   assert(ToPtrType && "No member pointer cast has a target type "
                       "that is not a member pointer.");
 
@@ -1340,7 +1340,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
                                    bool AllowExplicit, bool ForceRValue)
 {
   OverloadCandidateSet CandidateSet;
-  if (const RecordType *ToRecordType = ToType->getAsRecordType()) {
+  if (const RecordType *ToRecordType = ToType->getAs<RecordType>()) {
     if (CXXRecordDecl *ToRecordDecl 
           = dyn_cast<CXXRecordDecl>(ToRecordType->getDecl())) {
       // C++ [over.match.ctor]p1:
@@ -1369,7 +1369,7 @@ bool Sema::IsUserDefinedConversion(Expr *From, QualType ToType,
   if (!AllowConversionFunctions) {
     // Don't allow any conversion functions to enter the overload set.
   } else if (const RecordType *FromRecordType 
-               = From->getType()->getAsRecordType()) {
+               = From->getType()->getAs<RecordType>()) {
     if (CXXRecordDecl *FromRecordDecl 
           = dyn_cast<CXXRecordDecl>(FromRecordType->getDecl())) {
       // Add all of the conversion functions as candidates.
@@ -2500,7 +2500,7 @@ void Sema::AddMemberOperatorCandidates(OverloadedOperatorKind Op,
   //        (13.3.1.1.1); otherwise, the set of member candidates is
   //        empty.
   // FIXME: Lookup in base classes, too!
-  if (const RecordType *T1Rec = T1->getAsRecordType()) {
+  if (const RecordType *T1Rec = T1->getAs<RecordType>()) {
     DeclContext::lookup_const_iterator Oper, OperEnd;
     for (llvm::tie(Oper, OperEnd) = T1Rec->getDecl()->lookup(OpName);
          Oper != OperEnd; ++Oper)
@@ -2668,7 +2668,7 @@ BuiltinCandidateTypeSet::AddMemberPointerWithMoreQualifiedTypeVariants(
   if (!MemberPointerTypes.insert(Ty))
     return false;
 
-  if (const MemberPointerType *PointerTy = Ty->getAsMemberPointerType()) {
+  if (const MemberPointerType *PointerTy = Ty->getAs<MemberPointerType>()) {
     QualType PointeeTy = PointerTy->getPointeeType();
     const Type *ClassTy = PointerTy->getClass();
     // FIXME: Optimize this so that we don't keep trying to add the same types.
@@ -2728,7 +2728,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
     // If this is a pointer to a class type, add pointers to its bases
     // (with the same level of cv-qualification as the original
     // derived class, of course).
-    if (const RecordType *PointeeRec = PointeeTy->getAsRecordType()) {
+    if (const RecordType *PointeeRec = PointeeTy->getAs<RecordType>()) {
       CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(PointeeRec->getDecl());
       for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
            Base != ClassDecl->bases_end(); ++Base) {
@@ -2747,7 +2747,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
   } else if (Ty->isEnumeralType()) {
     EnumerationTypes.insert(Ty);
   } else if (AllowUserConversions) {
-    if (const RecordType *TyRec = Ty->getAsRecordType()) {
+    if (const RecordType *TyRec = Ty->getAs<RecordType>()) {
       CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(TyRec->getDecl());
       // FIXME: Visit conversion functions in the base classes, too.
       OverloadedFunctionDecl *Conversions 
@@ -3616,11 +3616,11 @@ Sema::PrintOverloadCandidates(OverloadCandidateSet& CandidateSet,
         bool isRValueReference = false;
         bool isPointer = false;
         if (const LValueReferenceType *FnTypeRef =
-              FnType->getAsLValueReferenceType()) {
+              FnType->getAs<LValueReferenceType>()) {
           FnType = FnTypeRef->getPointeeType();
           isLValueReference = true;
         } else if (const RValueReferenceType *FnTypeRef =
-                     FnType->getAsRValueReferenceType()) {
+                     FnType->getAs<RValueReferenceType>()) {
           FnType = FnTypeRef->getPointeeType();
           isRValueReference = true;
         }
@@ -3678,7 +3678,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   else if (const ReferenceType *ToTypeRef = ToType->getAs<ReferenceType>())
     FunctionType = ToTypeRef->getPointeeType();
   else if (const MemberPointerType *MemTypePtr =
-                    ToType->getAsMemberPointerType()) {
+                    ToType->getAs<MemberPointerType>()) {
     FunctionType = MemTypePtr->getPointeeType();
     IsMember = true;
   }
@@ -4367,7 +4367,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Object,
                                    SourceLocation *CommaLocs, 
                                    SourceLocation RParenLoc) {
   assert(Object->getType()->isRecordType() && "Requires object type argument");
-  const RecordType *Record = Object->getType()->getAsRecordType();
+  const RecordType *Record = Object->getType()->getAs<RecordType>();
   
   // C++ [over.call.object]p1:
   //  If the primary-expression E in the function call syntax
@@ -4579,7 +4579,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   // FIXME: look in base classes.
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Arrow);
   OverloadCandidateSet CandidateSet;
-  const RecordType *BaseRecord = Base->getType()->getAsRecordType();
+  const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();
   
   DeclContext::lookup_const_iterator Oper, OperEnd;
   for (llvm::tie(Oper, OperEnd) 

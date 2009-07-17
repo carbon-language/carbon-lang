@@ -36,7 +36,7 @@ StoreManager::MakeElementRegion(const GRState *state, const MemRegion *region,
 }
 
 static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
-  if (const RecordType *RT = Ty->getAsRecordType()) {
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
     const RecordDecl *D = RT->getDecl();
     if (!D->getDefinition(Ctx))
       return false;

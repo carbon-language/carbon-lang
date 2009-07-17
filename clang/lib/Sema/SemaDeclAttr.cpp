@@ -137,7 +137,7 @@ static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
   if (!PT)
     return false;
 
-  const RecordType *RT = PT->getPointeeType()->getAsRecordType();
+  const RecordType *RT = PT->getPointeeType()->getAs<RecordType>();
   if (!RT)
     return false;
   

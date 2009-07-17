@@ -3072,7 +3072,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
       if (FQT->isUnionType())
         HasUnion = true;
 
-      BuildAggrIvarRecordLayout(FQT->getAsRecordType(), 
+      BuildAggrIvarRecordLayout(FQT->getAs<RecordType>(), 
                                 BytePos + FieldOffset,
                                 ForStrongLayout, HasUnion);
       continue;
@@ -3097,7 +3097,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
         int OldIndex = IvarsInfo.size() - 1;
         int OldSkIndex = SkipIvars.size() -1;
         
-        const RecordType *RT = FQT->getAsRecordType();
+        const RecordType *RT = FQT->getAs<RecordType>();
         BuildAggrIvarRecordLayout(RT, BytePos + FieldOffset,
                                   ForStrongLayout, HasUnion);
                                   

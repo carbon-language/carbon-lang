@@ -380,7 +380,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
 /// getCGRecordLayout - Return record layout info.
 const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
                                                          QualType Ty) {
-  const RecordType *RTy = Ty->getAsRecordType();
+  const RecordType *RTy = Ty->getAs<RecordType>();
   assert (RTy && "Unexpected type. RecordType expected here.");
 
   return CGT.getCGRecordLayout(RTy->getDecl());

@@ -2462,7 +2462,7 @@ QualType ASTContext::getCFConstantStringType() {
 }
 
 void ASTContext::setCFConstantStringType(QualType T) {
-  const RecordType *Rec = T->getAsRecordType();
+  const RecordType *Rec = T->getAs<RecordType>();
   assert(Rec && "Invalid CFConstantStringType");
   CFConstantStringTypeDecl = Rec->getDecl();
 }
@@ -2498,7 +2498,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
 }
 
 void ASTContext::setObjCFastEnumerationStateType(QualType T) {
-  const RecordType *Rec = T->getAsRecordType();
+  const RecordType *Rec = T->getAs<RecordType>();
   assert(Rec && "Invalid ObjCFAstEnumerationStateType");
   ObjCFastEnumerationStateTypeDecl = Rec->getDecl();
 }
@@ -2866,7 +2866,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
   
-  if (const RecordType *RTy = T->getAsRecordType()) {
+  if (const RecordType *RTy = T->getAs<RecordType>()) {
     RecordDecl *RDecl = RTy->getDecl();
     S += RDecl->isUnion() ? '(' : '{';
     // Anonymous structures print as '?'

@@ -915,7 +915,7 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   if (CT->isIncompleteType())
     return MLV_IncompleteType;
     
-  if (const RecordType *r = CT->getAsRecordType()) {
+  if (const RecordType *r = CT->getAs<RecordType>()) {
     if (r->hasConstFields()) 
       return MLV_ConstQualified;
   }

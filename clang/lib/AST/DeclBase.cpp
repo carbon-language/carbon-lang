@@ -473,7 +473,7 @@ DeclContext *DeclContext::getPrimaryContext() {
     if (DeclKind >= Decl::TagFirst && DeclKind <= Decl::TagLast) {
       // If this is a tag type that has a definition or is currently
       // being defined, that definition is our primary context.
-      if (const TagType *TagT =cast<TagDecl>(this)->TypeForDecl->getAsTagType())
+      if (const TagType *TagT =cast<TagDecl>(this)->TypeForDecl->getAs<TagType>())
         if (TagT->isBeingDefined() || 
             (TagT->getDecl() && TagT->getDecl()->isDefinition()))
           return TagT->getDecl();

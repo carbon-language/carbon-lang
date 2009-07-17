@@ -410,7 +410,7 @@ DeduceTemplateArguments(ASTContext &Context,
       
     //     T &
     case Type::LValueReference: {
-      const LValueReferenceType *ReferenceArg = Arg->getAsLValueReferenceType();
+      const LValueReferenceType *ReferenceArg = Arg->getAs<LValueReferenceType>();
       if (!ReferenceArg)
         return Sema::TDK_NonDeducedMismatch;
       
@@ -422,7 +422,7 @@ DeduceTemplateArguments(ASTContext &Context,
 
     //     T && [C++0x]
     case Type::RValueReference: {
-      const RValueReferenceType *ReferenceArg = Arg->getAsRValueReferenceType();
+      const RValueReferenceType *ReferenceArg = Arg->getAs<RValueReferenceType>();
       if (!ReferenceArg)
         return Sema::TDK_NonDeducedMismatch;
       
@@ -615,7 +615,7 @@ DeduceTemplateArguments(ASTContext &Context,
                Base != BaseEnd; ++Base) {
               assert(Base->getType()->isRecordType() && 
                      "Base class that isn't a record?");
-              ToVisit.push_back(Base->getType()->getAsRecordType());
+              ToVisit.push_back(Base->getType()->getAs<RecordType>());
             }
           }
           

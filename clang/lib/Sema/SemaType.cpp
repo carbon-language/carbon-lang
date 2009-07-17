@@ -414,7 +414,7 @@ QualType Sema::BuildPointerType(QualType T, unsigned Quals,
 QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
                                   SourceLocation Loc, DeclarationName Entity) {
   if (LValueRef) {
-    if (const RValueReferenceType *R = T->getAsRValueReferenceType()) {
+    if (const RValueReferenceType *R = T->getAs<RValueReferenceType>()) {
       // C++0x [dcl.typedef]p9: If a typedef TD names a type that is a
       //   reference to a type T, and attempt to create the type "lvalue
       //   reference to cv TD" creates the type "lvalue reference to T".
@@ -524,7 +524,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     return QualType();
   }
   
-  if (const RecordType *EltTy = T->getAsRecordType()) {
+  if (const RecordType *EltTy = T->getAs<RecordType>()) {
     // If the element type is a struct or union that contains a variadic
     // array, accept it as a GNU extension: C99 6.7.2.1p2.
     if (EltTy->getDecl()->hasFlexibleArrayMember())
@@ -1207,7 +1207,7 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
 bool Sema::CheckDistantExceptionSpec(QualType T) {
   if (const PointerType *PT = T->getAs<PointerType>())
     T = PT->getPointeeType();
-  else if (const MemberPointerType *PT = T->getAsMemberPointerType())
+  else if (const MemberPointerType *PT = T->getAs<MemberPointerType>())
     T = PT->getPointeeType();
   else
     return false;
@@ -1392,8 +1392,8 @@ bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2) {
     return true;
   }
 
-  const MemberPointerType *T1MPType = T1->getAsMemberPointerType(),
-                          *T2MPType = T2->getAsMemberPointerType();
+  const MemberPointerType *T1MPType = T1->getAs<MemberPointerType>(),
+                          *T2MPType = T2->getAs<MemberPointerType>();
   if (T1MPType && T2MPType &&
       Context.getCanonicalType(T1MPType->getClass()) ==
       Context.getCanonicalType(T2MPType->getClass())) {
@@ -1567,7 +1567,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
 
   // If we have a class template specialization or a class member of a
   // class template specialization, try to instantiate it.
-  if (const RecordType *Record = T->getAsRecordType()) {
+  if (const RecordType *Record = T->getAs<RecordType>()) {
     if (ClassTemplateSpecializationDecl *ClassTemplateSpec
           = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
       if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
@@ -1603,7 +1603,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
   // If the type was a forward declaration of a class/struct/union
   // type, produce 
   const TagType *Tag = 0;
-  if (const RecordType *Record = T->getAsRecordType())
+  if (const RecordType *Record = T->getAs<RecordType>())
     Tag = Record;
   else if (const EnumType *Enum = T->getAsEnumType())
     Tag = Enum;

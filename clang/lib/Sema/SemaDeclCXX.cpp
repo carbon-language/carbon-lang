@@ -384,7 +384,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     return 0;
 
   // If the base class is polymorphic, the new one is, too.
-  RecordDecl *BaseDecl = BaseType->getAsRecordType()->getDecl();
+  RecordDecl *BaseDecl = BaseType->getAs<RecordType>()->getDecl();
   assert(BaseDecl && "Record type has no declaration");
   BaseDecl = BaseDecl->getDefinition(Context);
   assert(BaseDecl && "Base type is not incomplete, but has no definition");
@@ -833,7 +833,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     for (CXXRecordDecl::base_class_iterator VBase =
          ClassDecl->vbases_begin(),
          E = ClassDecl->vbases_end(); VBase != E; ++VBase)
-      AllBaseOrMembers.push_back(VBase->getType()->getAsRecordType());
+      AllBaseOrMembers.push_back(VBase->getType()->getAs<RecordType>());
       
     for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
          E = ClassDecl->bases_end(); Base != E; ++Base) {
@@ -841,7 +841,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
       // first.
       if (Base->isVirtual())
         continue;
-      AllBaseOrMembers.push_back(Base->getType()->getAsRecordType());
+      AllBaseOrMembers.push_back(Base->getType()->getAs<RecordType>());
     }
     
     for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
@@ -956,7 +956,7 @@ namespace {
     // First, collect the pure virtual methods for the base classes.
     for (CXXRecordDecl::base_class_const_iterator Base = RD->bases_begin(),
          BaseEnd = RD->bases_end(); Base != BaseEnd; ++Base) {
-      if (const RecordType *RT = Base->getType()->getAsRecordType()) {
+      if (const RecordType *RT = Base->getType()->getAs<RecordType>()) {
         const CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(RT->getDecl());
         if (BaseDecl && BaseDecl->isAbstract())
           Collect(BaseDecl, Methods);
@@ -1019,7 +1019,7 @@ bool Sema::RequireNonAbstractType(SourceLocation Loc, QualType T,
                                     CurrentRD);
   }
   
-  const RecordType *RT = T->getAsRecordType();
+  const RecordType *RT = T->getAs<RecordType>();
   if (!RT)
     return false;
   
@@ -1150,7 +1150,7 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
       while (const ArrayType *AT = Context.getAsArrayType(FTy))
         FTy = AT->getElementType();
       
-      if (const RecordType *RT = FTy->getAsRecordType()) {
+      if (const RecordType *RT = FTy->getAs<RecordType>()) {
         CXXRecordDecl *FieldRD = cast<CXXRecordDecl>(RT->getDecl());
         
         if (!FieldRD->hasTrivialConstructor())
@@ -1224,7 +1224,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
          HasConstCopyConstructor && Base != ClassDecl->bases_end(); ++Base) {
       const CXXRecordDecl *BaseClassDecl
-        = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+        = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
       HasConstCopyConstructor 
         = BaseClassDecl->hasConstCopyConstructor(Context);
     }
@@ -1239,7 +1239,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       QualType FieldType = (*Field)->getType();
       if (const ArrayType *Array = Context.getAsArrayType(FieldType))
         FieldType = Array->getElementType();
-      if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+      if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
         const CXXRecordDecl *FieldClassDecl 
           = cast<CXXRecordDecl>(FieldClassType->getDecl());
         HasConstCopyConstructor 
@@ -1304,7 +1304,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
          HasConstCopyAssignment && Base != ClassDecl->bases_end(); ++Base) {
       const CXXRecordDecl *BaseClassDecl
-        = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+        = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
       HasConstCopyAssignment = BaseClassDecl->hasConstCopyAssignment(Context);
     }
 
@@ -1318,7 +1318,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       QualType FieldType = (*Field)->getType();
       if (const ArrayType *Array = Context.getAsArrayType(FieldType))
         FieldType = Array->getElementType();
-      if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+      if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
         const CXXRecordDecl *FieldClassDecl
           = cast<CXXRecordDecl>(FieldClassType->getDecl());
         HasConstCopyAssignment
@@ -2041,7 +2041,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
     CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (!BaseClassDecl->hasTrivialConstructor()) {
       if (CXXConstructorDecl *BaseCtor = 
             BaseClassDecl->getDefaultConstructor(Context))
@@ -2061,7 +2061,7 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (!FieldClassDecl->hasTrivialConstructor()) {
@@ -2113,7 +2113,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
     CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (!BaseClassDecl->hasTrivialDestructor()) {
       if (CXXDestructorDecl *BaseDtor = 
           const_cast<CXXDestructorDecl*>(BaseClassDecl->getDestructor(Context)))
@@ -2129,7 +2129,7 @@ void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (!FieldClassDecl->hasTrivialDestructor()) {
@@ -2165,7 +2165,7 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
     CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXMethodDecl *BaseAssignOpMethod = 
           getAssignOperatorMethod(MethodDecl->getParamDecl(0), BaseClassDecl))
       MarkDeclarationReferenced(CurrentLocation, BaseAssignOpMethod);
@@ -2175,7 +2175,7 @@ void Sema::DefineImplicitOverloadedAssign(SourceLocation CurrentLocation,
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (CXXMethodDecl *FieldAssignOpMethod = 
@@ -2251,7 +2251,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   for (CXXRecordDecl::base_class_iterator Base = ClassDecl->bases_begin();
        Base != ClassDecl->bases_end(); ++Base) {
     CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (CXXConstructorDecl *BaseCopyCtor = 
         BaseClassDecl->getCopyConstructor(Context, TypeQuals))
       MarkDeclarationReferenced(CurrentLocation, BaseCopyCtor);
@@ -2262,7 +2262,7 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
     QualType FieldType = Context.getCanonicalType((*Field)->getType());
     if (const ArrayType *Array = Context.getAsArrayType(FieldType))
       FieldType = Array->getElementType();
-    if (const RecordType *FieldClassType = FieldType->getAsRecordType()) {
+    if (const RecordType *FieldClassType = FieldType->getAs<RecordType>()) {
       CXXRecordDecl *FieldClassDecl
         = cast<CXXRecordDecl>(FieldClassType->getDecl());
       if (CXXConstructorDecl *FieldCopyCtor = 
@@ -2286,7 +2286,7 @@ void Sema::InitializeVarWithConstructor(VarDecl *VD,
 void Sema::MarkDestructorReferenced(SourceLocation Loc, QualType DeclInitType)
 {
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(
-                                  DeclInitType->getAsRecordType()->getDecl());
+                                  DeclInitType->getAs<RecordType>()->getDecl());
   if (!ClassDecl->hasTrivialDestructor())
     if (CXXDestructorDecl *Destructor = 
         const_cast<CXXDestructorDecl*>(ClassDecl->getDestructor(Context)))
@@ -2402,7 +2402,7 @@ Sema::PerformInitializationByConstructor(QualType ClassType,
                                          SourceLocation Loc, SourceRange Range,
                                          DeclarationName InitEntity,
                                          InitializationKind Kind) {
-  const RecordType *ClassRec = ClassType->getAsRecordType();
+  const RecordType *ClassRec = ClassType->getAs<RecordType>();
   assert(ClassRec && "Can only initialize a class type here");
 
   // C++ [dcl.init]p14: 
@@ -2652,7 +2652,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
   if (!isRValRef && !SuppressUserConversions && T2->isRecordType()) {
     // FIXME: Look for conversions in base classes!
     CXXRecordDecl *T2RecordDecl 
-      = dyn_cast<CXXRecordDecl>(T2->getAsRecordType()->getDecl());
+      = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 
     OverloadCandidateSet CandidateSet;
     OverloadedFunctionDecl *Conversions 

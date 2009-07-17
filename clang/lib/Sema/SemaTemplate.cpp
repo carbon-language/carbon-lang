@@ -1329,7 +1329,7 @@ bool Sema::CheckTemplateArgument(TemplateTypeParmDecl *Param,
   const TagType *Tag = 0;
   if (const EnumType *EnumT = Arg->getAsEnumType())
     Tag = EnumT;
-  else if (const RecordType *RecordT = Arg->getAsRecordType())
+  else if (const RecordType *RecordT = Arg->getAs<RecordType>())
     Tag = RecordT;
   if (Tag && Tag->getDecl()->getDeclContext()->isFunctionOrMethod())
     return Diag(ArgLoc, diag::err_template_arg_local_type)
@@ -1662,7 +1662,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       //    the set (13.4).
       // Again, C++0x allows a std::nullptr_t value.
       (ParamType->isMemberPointerType() &&
-       ParamType->getAsMemberPointerType()->getPointeeType()
+       ParamType->getAs<MemberPointerType>()->getPointeeType()
          ->isFunctionType())) {
     if (Context.hasSameUnqualifiedType(ArgType, 
                                        ParamType.getNonReferenceType())) {

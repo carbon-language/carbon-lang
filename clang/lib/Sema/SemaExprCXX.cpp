@@ -83,7 +83,7 @@ Sema::ActOnCXXTypeid(SourceLocation OpLoc, SourceLocation LParenLoc,
     Expr *E = static_cast<Expr *>(TyOrExpr);
     if (E && !E->isTypeDependent() && E->isLvalue(Context) == Expr::LV_Valid) {
       QualType T = E->getType();
-      if (const RecordType *RecordT = T->getAsRecordType()) {
+      if (const RecordType *RecordT = T->getAs<RecordType>()) {
         CXXRecordDecl *RecordD = cast<CXXRecordDecl>(RecordT->getDecl());
         if (RecordD->isPolymorphic())
           isUnevaluatedOperand = false;
@@ -211,7 +211,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
                                                      RParenLoc));
   }
 
-  if (const RecordType *RT = Ty->getAsRecordType()) {
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
     CXXRecordDecl *Record = cast<CXXRecordDecl>(RT->getDecl());
 
     // FIXME: We should always create a CXXTemporaryObjectExpr here unless
@@ -414,7 +414,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (AllocType->isDependentType()) {
     // Skip all the checks.
   }
-  else if ((RT = AllocType->getAsRecordType()) &&
+  else if ((RT = AllocType->getAs<RecordType>()) &&
             !AllocType->isAggregateType()) {
     Constructor = PerformInitializationByConstructor(
                       AllocType, ConsArgs, NumConsArgs,
@@ -516,7 +516,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
                                         IsArray ? OO_Array_New : OO_New);
   if (AllocType->isRecordType() && !UseGlobal) {
     CXXRecordDecl *Record 
-      = cast<CXXRecordDecl>(AllocType->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(AllocType->getAs<RecordType>()->getDecl());
     // FIXME: We fail to find inherited overloads.
     if (FindAllocationOverload(StartLoc, Range, NewName, &AllocArgs[0],
                           AllocArgs.size(), Record, /*AllowMissing=*/true,
@@ -757,7 +757,7 @@ Sema::ActOnCXXConditionDeclarationExpr(Scope *S, SourceLocation StartLoc,
   } else if (Ty->isArrayType()) { // ...or an array.
     Diag(StartLoc, diag::err_invalid_use_of_array_type)
       << SourceRange(StartLoc, EqualLoc);
-  } else if (const RecordType *RT = Ty->getAsRecordType()) {
+  } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
     RecordDecl *RD = RT->getDecl();
     // The type-specifier-seq shall not declare a new class...
     if (RD->isDefinition() &&
@@ -1051,7 +1051,7 @@ QualType Sema::CheckPointerToMemberOperands(
   //   be of type "pointer to member of T" (where T is a completely-defined
   //   class type) [...]
   QualType RType = rex->getType();
-  const MemberPointerType *MemPtr = RType->getAsMemberPointerType();
+  const MemberPointerType *MemPtr = RType->getAs<MemberPointerType>();
   if (!MemPtr) {
     Diag(Loc, diag::err_bad_memptr_rhs)
       << OpSpelling << RType << rex->getSourceRange();
@@ -1163,8 +1163,8 @@ static bool TryClassUnification(Sema &Self, Expr *From, Expr *To,
   //         the same or one is a base class of the other:
   QualType FTy = From->getType();
   QualType TTy = To->getType();
-  const RecordType *FRec = FTy->getAsRecordType();
-  const RecordType *TRec = TTy->getAsRecordType();
+  const RecordType *FRec = FTy->getAs<RecordType>();
+  const RecordType *TRec = TTy->getAs<RecordType>();
   bool FDerivedFromT = FRec && TRec && Self.IsDerivedFrom(FTy, TTy);
   if (FRec && TRec && (FRec == TRec ||
         FDerivedFromT || Self.IsDerivedFrom(TTy, FTy))) {
@@ -1418,8 +1418,8 @@ QualType Sema::CXXCheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
   // containing class, and second-level cv-ness.
   // cv-ness is not a union, but must match one of the two operands. (Which,
   // frankly, is stupid.)
-  const MemberPointerType *LMemPtr = LTy->getAsMemberPointerType();
-  const MemberPointerType *RMemPtr = RTy->getAsMemberPointerType();
+  const MemberPointerType *LMemPtr = LTy->getAs<MemberPointerType>();
+  const MemberPointerType *RMemPtr = RTy->getAs<MemberPointerType>();
   if (LMemPtr && RHS->isNullPointerConstant(Context)) {
     ImpCastExprToType(RHS, LTy);
     return LTy;
@@ -1562,7 +1562,7 @@ QualType Sema::FindCompositePointerType(Expr *&E1, Expr *&E2) {
 }
 
 Sema::OwningExprResult Sema::MaybeBindToTemporary(Expr *E) {
-  const RecordType *RT = E->getType()->getAsRecordType();
+  const RecordType *RT = E->getType()->getAs<RecordType>();
   if (!RT)
     return Owned(E);
   

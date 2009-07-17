@@ -1201,7 +1201,7 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
   QualType T = R->getValueType(getContext());
   assert(T->isStructureType());
 
-  const RecordType* RT = T->getAsRecordType();
+  const RecordType* RT = T->getAs<RecordType>();
   RecordDecl* RD = RT->getDecl();
 
   if (!RD->isDefinition())

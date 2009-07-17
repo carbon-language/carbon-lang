@@ -253,7 +253,7 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
   } else {
     if (CGF.getContext().getLangOptions().NeXTRuntime) {
       QualType LHSTy = E->getLHS()->getType();
-      if (const RecordType *FDTTy = LHSTy.getTypePtr()->getAsRecordType())
+      if (const RecordType *FDTTy = LHSTy.getTypePtr()->getAs<RecordType>())
         if (FDTTy->getDecl()->hasObjectMember()) {
           LValue RHS = CGF.EmitLValue(E->getRHS());
           CGF.CGM.getObjCRuntime().EmitGCMemmoveCollectable(CGF, LHS.getAddress(), 
@@ -441,7 +441,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   // the disadvantage is that the generated code is more difficult for
   // the optimizer, especially with bitfields.
   unsigned NumInitElements = E->getNumInits();
-  RecordDecl *SD = E->getType()->getAsRecordType()->getDecl();
+  RecordDecl *SD = E->getType()->getAs<RecordType>()->getDecl();
   unsigned CurInitVal = 0;
 
   if (E->getType()->isUnionType()) {
