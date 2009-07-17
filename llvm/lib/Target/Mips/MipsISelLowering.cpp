@@ -83,6 +83,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
+  // MIPS doesn't have extending float->double load (?)
+  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+
   // Used by legalize types to correctly generate the setcc result. 
   // Without this, every float setcc comes with a AND/OR with the result, 
   // we don't want this, since the fpcmp result goes to a flag register, 
@@ -120,11 +123,20 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::CTPOP,             MVT::i32,   Expand);
   setOperationAction(ISD::CTTZ,              MVT::i32,   Expand);
   setOperationAction(ISD::ROTL,              MVT::i32,   Expand);
+  setOperationAction(ISD::ROTR,              MVT::i32,   Expand);
   setOperationAction(ISD::SHL_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRA_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::SRL_PARTS,         MVT::i32,   Expand);
   setOperationAction(ISD::FCOPYSIGN,         MVT::f32,   Expand);
   setOperationAction(ISD::FCOPYSIGN,         MVT::f64,   Expand);
+  setOperationAction(ISD::FSIN,              MVT::f32,   Expand);
+  setOperationAction(ISD::FCOS,              MVT::f32,   Expand);
+  setOperationAction(ISD::FPOWI,             MVT::f32,   Expand);
+  setOperationAction(ISD::FPOW,              MVT::f32,   Expand);
+  setOperationAction(ISD::FLOG,              MVT::f32,   Expand);
+  setOperationAction(ISD::FLOG2,             MVT::f32,   Expand);
+  setOperationAction(ISD::FLOG10,            MVT::f32,   Expand);
+  setOperationAction(ISD::FEXP,              MVT::f32,   Expand);
 
   // We don't have line number support yet.
   setOperationAction(ISD::DBG_STOPPOINT,     MVT::Other, Expand);
