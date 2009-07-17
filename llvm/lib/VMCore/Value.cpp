@@ -16,6 +16,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
+#include "llvm/Operator.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/Debug.h"
@@ -372,15 +373,12 @@ Value *Value::getUnderlyingObject() {
   Value *V = this;
   unsigned MaxLookup = 6;
   do {
-    if (Instruction *I = dyn_cast<Instruction>(V)) {
-      if (!isa<BitCastInst>(I) && !isa<GetElementPtrInst>(I))
+    if (Operator *O = dyn_cast<Operator>(V)) {
+      if (O->getOpcode() != Instruction::BitCast &&
+          (O->getOpcode() != Instruction::GetElementPtr ||
+           !cast<GEPOperator>(V)->hasNoPointerOverflow()))
         return V;
-      V = I->getOperand(0);
-    } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-      if (CE->getOpcode() != Instruction::BitCast &&
-          CE->getOpcode() != Instruction::GetElementPtr)
-        return V;
-      V = CE->getOperand(0);
+      V = O->getOperand(0);
     } else {
       return V;
     }

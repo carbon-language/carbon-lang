@@ -23,6 +23,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Operator.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
@@ -38,10 +39,11 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 static const User *isGEP(const Value *V) {
-  if (isa<GetElementPtrInst>(V) ||
-      (isa<ConstantExpr>(V) &&
-       cast<ConstantExpr>(V)->getOpcode() == Instruction::GetElementPtr))
-    return cast<User>(V);
+  if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V))
+    // For the purposes of BasicAliasAnalysis, if the GEP has overflow it
+    // could do crazy things.
+    if (GEP->hasNoPointerOverflow())
+      return GEP;
   return 0;
 }
 

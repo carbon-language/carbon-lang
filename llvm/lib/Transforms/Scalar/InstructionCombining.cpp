@@ -2310,7 +2310,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         cast<PointerType>(CI->getOperand(0)->getType())->getAddressSpace();
       Value *I2 = InsertBitCastBefore(CI->getOperand(0),
                                   Context->getPointerType(Type::Int8Ty, AS), I);
-      I2 = InsertNewInstBefore(GetElementPtrInst::Create(I2, Other, "ctg2"), I);
+      GetElementPtrInst *GEP = GetElementPtrInst::Create(I2, Other, "ctg2");
+      // A GEP formed from an arbitrary add may overflow.
+      cast<GEPOperator>(GEP)->setHasNoPointerOverflow(false);
+      I2 = InsertNewInstBefore(GEP, I);
       return new PtrToIntInst(I2, CI->getType());
     }
   }
@@ -8942,7 +8945,12 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
       // If Offset is evenly divisible by Size, we can do this xform.
       if (Size && !APIntOps::srem(Offset, APInt(Offset.getBitWidth(), Size))){
         Offset = APIntOps::sdiv(Offset, APInt(Offset.getBitWidth(), Size));
-        return GetElementPtrInst::Create(X, Context->getConstantInt(Offset));
+        GetElementPtrInst *GEP =
+          GetElementPtrInst::Create(X, Context->getConstantInt(Offset));
+        // A gep synthesized from inttoptr+add+ptrtoint must be assumed to
+        // potentially overflow, in the absense of further analysis.
+        cast<GEPOperator>(GEP)->setHasNoPointerOverflow(false);
+        return GEP;
       }
     }
     // TODO: Could handle other cases, e.g. where add is indexing into field of
@@ -8966,8 +8974,12 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
       
       Instruction *P = InsertNewInstBefore(new IntToPtrInst(X, CI.getType(),
                                                             "tmp"), CI);
-      return GetElementPtrInst::Create(P,
-                                       Context->getConstantInt(Offset), "tmp");
+      GetElementPtrInst *GEP =
+        GetElementPtrInst::Create(P, Context->getConstantInt(Offset), "tmp");
+      // A gep synthesized from inttoptr+add+ptrtoint must be assumed to
+      // potentially overflow, in the absense of further analysis.
+      cast<GEPOperator>(GEP)->setHasNoPointerOverflow(false);
+      return GEP;
     }
   }
   return 0;
