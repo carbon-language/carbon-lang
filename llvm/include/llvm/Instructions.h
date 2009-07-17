@@ -2398,7 +2398,7 @@ public:
 
   /// @brief Determine if the call does not access memory.
   bool doesNotAccessMemory() const {
-    return paramHasAttr(0, Attribute::ReadNone);
+    return paramHasAttr(~0, Attribute::ReadNone);
   }
   void setDoesNotAccessMemory(bool NotAccessMemory = true) {
     if (NotAccessMemory) addAttribute(~0, Attribute::ReadNone);
