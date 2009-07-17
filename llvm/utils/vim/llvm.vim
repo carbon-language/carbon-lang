@@ -40,7 +40,7 @@ syn keyword llvmStatement extractvalue insertvalue
 
 " Keywords.
 syn keyword llvmKeyword define declare global constant
-syn keyword llvmKeyword internal external
+syn keyword llvmKeyword internal external private
 syn keyword llvmKeyword linkonce linkonce_odr weak weak_odr appending
 syn keyword llvmKeyword common extern_weak
 syn keyword llvmKeyword thread_local dllimport dllexport
