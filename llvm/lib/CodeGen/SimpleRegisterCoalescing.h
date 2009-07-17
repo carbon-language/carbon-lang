@@ -208,12 +208,6 @@ namespace llvm {
     bool ReMaterializeTrivialDef(LiveInterval &SrcInt, unsigned DstReg,
                                  unsigned DstSubIdx, MachineInstr *CopyMI);
 
-    /// TurnCopyIntoImpDef - If source of the specified copy is an implicit def,
-    /// turn the copy into an implicit def.
-    bool TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
-                            MachineBasicBlock *MBB,
-                            unsigned DstReg, unsigned SrcReg);
-
     /// CanCoalesceWithImpDef - Returns true if the specified copy instruction
     /// from an implicit def to another register can be coalesced away.
     bool CanCoalesceWithImpDef(MachineInstr *CopyMI,

@@ -941,33 +941,14 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
                                                      LiveInterval &ImpLi) const{
   if (!CopyMI->killsRegister(ImpLi.reg))
     return false;
-  unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
-  LiveInterval::iterator LR = li.FindLiveRangeContaining(CopyIdx);
-  if (LR == li.end())
-    return false;
-  if (LR->valno->hasPHIKill())
-    return false;
-  if (LR->valno->def != CopyIdx)
-    return false;
-  // Make sure all of val# uses are copies.
-  for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(li.reg),
+  // Make sure this is the only use.
+  for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(ImpLi.reg),
          UE = mri_->use_end(); UI != UE;) {
     MachineInstr *UseMI = &*UI;
     ++UI;
-    if (JoinedCopies.count(UseMI))
+    if (CopyMI == UseMI || JoinedCopies.count(UseMI))
       continue;
-    unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(UseMI));
-    LiveInterval::iterator ULR = li.FindLiveRangeContaining(UseIdx);
-    if (ULR == li.end() || ULR->valno != LR->valno)
-      continue;
-    // If the use is not a use, then it's not safe to coalesce the move.
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (!tii_->isMoveInstr(*UseMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)) {
-      if (UseMI->getOpcode() == TargetInstrInfo::INSERT_SUBREG &&
-          UseMI->getOperand(1).getReg() == li.reg)
-        continue;
-      return false;
-    }
+    return false;
   }
   return true;
 }
@@ -2554,56 +2535,6 @@ static bool isZeroLengthInterval(LiveInterval *li) {
   return true;
 }
 
-/// TurnCopyIntoImpDef - If source of the specified copy is an implicit def,
-/// turn the copy into an implicit def.
-bool
-SimpleRegisterCoalescing::TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
-                                             MachineBasicBlock *MBB,
-                                             unsigned DstReg, unsigned SrcReg) {
-  MachineInstr *CopyMI = &*I;
-  unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
-  if (!li_->hasInterval(SrcReg))
-    return false;
-  LiveInterval &SrcInt = li_->getInterval(SrcReg);
-  if (!SrcInt.empty())
-    return false;
-  if (!li_->hasInterval(DstReg))
-    return false;
-  LiveInterval &DstInt = li_->getInterval(DstReg);
-  const LiveRange *DstLR = DstInt.getLiveRangeContaining(CopyIdx);
-  // If the valno extends beyond this basic block, then it's not safe to delete
-  // the val# or else livein information won't be correct.
-  MachineBasicBlock *EndMBB = li_->getMBBFromIndex(DstLR->end);
-  if (EndMBB != MBB)
-    return false;
-  DstInt.removeValNo(DstLR->valno);
-  li_->RemoveMachineInstrFromMaps(CopyMI);
-  CopyMI->eraseFromParent();
-  bool NoUse = mri_->use_empty(SrcReg);
-  if (NoUse) {
-    for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(SrcReg),
-           RE = mri_->reg_end(); RI != RE; ) {
-      assert(RI.getOperand().isDef());
-      MachineInstr *DefMI = &*RI;
-      ++RI;
-      // The implicit_def source has no other uses, delete it.
-      assert(DefMI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF);
-      li_->RemoveMachineInstrFromMaps(DefMI);
-      DefMI->eraseFromParent();
-    }
-  }
-
-  // Mark uses of implicit_def isUndef.
-  for (MachineRegisterInfo::use_iterator RI = mri_->use_begin(DstReg),
-         RE = mri_->use_end(); RI != RE; ++RI) {
-    assert((*RI).getParent() == MBB);
-    RI.getOperand().setIsUndef();
-  }
-
-  ++I;
-  return true;
-}
-
 
 bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   mf_ = &fn;
@@ -2716,7 +2647,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         li_->RemoveMachineInstrFromMaps(MI);
         mii = mbbi->erase(mii);
         ++numPeep;
-      } else if (!isMove || !TurnCopyIntoImpDef(mii, mbb, DstReg, SrcReg)) {
+      } else {
         SmallSet<unsigned, 4> UniqueUses;
         for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
           const MachineOperand &mop = MI->getOperand(i);
