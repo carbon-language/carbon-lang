@@ -59,10 +59,12 @@ public:
   LocResolverBase(ASTContext &ctx, SourceLocation loc)
     : Ctx(ctx), Loc(loc) {}
 
+#ifndef NDEBUG
   /// \brief Debugging output.
   void print(Decl *D);
   /// \brief Debugging output.
   void print(Stmt *Node);
+#endif
 };
 
 /// \brief Searches a statement for the ASTLocation that corresponds to a source
@@ -255,9 +257,10 @@ LocResolverBase::RangePos LocResolverBase::CheckRange(SourceRange Range) {
   return ContainsLoc;
 }
 
+#ifndef NDEBUG
 void LocResolverBase::print(Decl *D) {
   llvm::raw_ostream &OS = llvm::outs();
-  OS << "#### DECL ####\n";
+  OS << "#### DECL " << D->getDeclKindName() << " ####\n";
   D->print(OS);
   OS << " <";
   D->getLocStart().print(OS, Ctx.getSourceManager());
@@ -269,7 +272,7 @@ void LocResolverBase::print(Decl *D) {
 
 void LocResolverBase::print(Stmt *Node) {
   llvm::raw_ostream &OS = llvm::outs();
-  OS << "#### STMT ####\n";
+  OS << "#### STMT " << Node->getStmtClassName() << " ####\n";
   Node->printPretty(OS, Ctx, 0, PrintingPolicy(Ctx.getLangOptions()));
   OS << " <";
   Node->getLocStart().print(OS, Ctx.getSourceManager());
@@ -278,6 +281,7 @@ void LocResolverBase::print(Stmt *Node) {
   OS << ">\n\n";
   OS.flush();
 }
+#endif
 
 
 /// \brief Returns the AST node that a source location points to.
