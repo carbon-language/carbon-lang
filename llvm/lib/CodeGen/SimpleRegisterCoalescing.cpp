@@ -786,35 +786,6 @@ SimpleRegisterCoalescing::UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg,
   }
 }
 
-/// RemoveDeadImpDef - Remove implicit_def instructions which are "re-defining"
-/// registers due to insert_subreg coalescing. e.g.
-/// r1024 = op
-/// r1025 = implicit_def
-/// r1025 = insert_subreg r1025, r1024
-///       = op r1025
-/// =>
-/// r1025 = op
-/// r1025 = implicit_def
-/// r1025 = insert_subreg r1025, r1025
-///       = op r1025
-void
-SimpleRegisterCoalescing::RemoveDeadImpDef(unsigned Reg, LiveInterval &LI) {
-  for (MachineRegisterInfo::reg_iterator I = mri_->reg_begin(Reg),
-         E = mri_->reg_end(); I != E; ) {
-    MachineOperand &O = I.getOperand();
-    MachineInstr *DefMI = &*I;
-    ++I;
-    if (!O.isDef())
-      continue;
-    if (DefMI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF)
-      continue;
-    if (!LI.liveBeforeAndAt(li_->getInstructionIndex(DefMI)))
-      continue;
-    li_->RemoveMachineInstrFromMaps(DefMI);
-    DefMI->eraseFromParent();
-  }
-}
-
 /// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
 /// due to live range lengthening as the result of coalescing.
 void SimpleRegisterCoalescing::RemoveUnnecessaryKills(unsigned Reg,
@@ -1001,65 +972,6 @@ bool SimpleRegisterCoalescing::CanCoalesceWithImpDef(MachineInstr *CopyMI,
   return true;
 }
 
-
-/// TurnCopiesFromValNoToImpDefs - The specified value# is defined by an
-/// implicit_def and it is being removed. Turn all copies from this value#
-/// into implicit_defs.
-void SimpleRegisterCoalescing::TurnCopiesFromValNoToImpDefs(LiveInterval &li,
-                                                            VNInfo *VNI) {
-  SmallVector<MachineInstr*, 4> ImpDefs;
-  MachineOperand *LastUse = NULL;
-  unsigned LastUseIdx = li_->getUseIndex(VNI->def);
-  for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(li.reg),
-         RE = mri_->reg_end(); RI != RE;) {
-    MachineOperand *MO = &RI.getOperand();
-    MachineInstr *MI = &*RI;
-    ++RI;
-    if (MO->isDef()) {
-      if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF)
-        ImpDefs.push_back(MI);
-      continue;
-    }
-    if (JoinedCopies.count(MI))
-      continue;
-    unsigned UseIdx = li_->getUseIndex(li_->getInstructionIndex(MI));
-    LiveInterval::iterator ULR = li.FindLiveRangeContaining(UseIdx);
-    if (ULR == li.end() || ULR->valno != VNI)
-      continue;
-    // If the use is a copy, turn it into an identity copy.
-    unsigned SrcReg, DstReg, SrcSubIdx, DstSubIdx;
-    if (tii_->isMoveInstr(*MI, SrcReg, DstReg, SrcSubIdx, DstSubIdx) &&
-        SrcReg == li.reg) {
-      // Change it to an implicit_def.
-      MI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
-      for (int i = MI->getNumOperands() - 1, e = 0; i > e; --i)
-        MI->RemoveOperand(i);
-      // It's no longer a copy, update the valno it defines.
-      unsigned DefIdx = li_->getDefIndex(UseIdx);
-      LiveInterval &DstInt = li_->getInterval(DstReg);
-      LiveInterval::iterator DLR = DstInt.FindLiveRangeContaining(DefIdx);
-      assert(DLR != DstInt.end() && "Live range not found!");
-      assert(DLR->valno->copy == MI);
-      DLR->valno->copy = NULL;
-      ReMatCopies.insert(MI);
-    } else if (UseIdx > LastUseIdx) {
-      LastUseIdx = UseIdx;
-      LastUse = MO;
-    }
-  }
-  if (LastUse) {
-    LastUse->setIsKill();
-    li.addKill(VNI, LastUseIdx+1, false);
-  } else {
-    // Remove dead implicit_def's.
-    while (!ImpDefs.empty()) {
-      MachineInstr *ImpDef = ImpDefs.back();
-      ImpDefs.pop_back();
-      li_->RemoveMachineInstrFromMaps(ImpDef);
-      ImpDef->eraseFromParent();
-    }
-  }
-}
 
 /// isWinToJoinVRWithSrcPhysReg - Return true if it's worth while to join a
 /// a virtual destination register with physical source register.
@@ -1786,13 +1698,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   if (TargetRegisterInfo::isVirtualRegister(DstReg))
     RemoveUnnecessaryKills(DstReg, *ResDstInt);
 
-  if (isInsSubReg)
-    // Avoid:
-    // r1024 = op
-    // r1024 = implicit_def
-    // ...
-    //       = r1024
-    RemoveDeadImpDef(DstReg, *ResDstInt);
   UpdateRegDefsUses(SrcReg, DstReg, SubIdx);
 
   // SrcReg is guarateed to be the register whose live interval that is
@@ -1806,29 +1711,6 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
   if (SavedLI) {
     SavedLI->clear();
     delete SavedLI;
-  }
-
-  if (isEmpty) {
-    // Now the copy is being coalesced away, the val# previously defined
-    // by the copy is being defined by an IMPLICIT_DEF which defines a zero
-    // length interval. Remove the val#.
-    unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
-    const LiveRange *LR = ResDstInt->getLiveRangeContaining(CopyIdx);
-    VNInfo *ImpVal = LR->valno;
-    assert(ImpVal->def == CopyIdx);
-    unsigned NextDef = LR->end;
-    TurnCopiesFromValNoToImpDefs(*ResDstInt, ImpVal);
-    ResDstInt->removeValNo(ImpVal);
-    LR = ResDstInt->FindLiveRangeContaining(NextDef);
-    if (LR != ResDstInt->end() && LR->valno->def == NextDef) {
-      // Special case: vr1024 = implicit_def
-      //               vr1024 = insert_subreg vr1024, vr1025, c
-      // The insert_subreg becomes a "copy" that defines a val# which can itself
-      // be coalesced away.
-      MachineInstr *DefMI = li_->getInstructionFromIndex(NextDef);
-      if (DefMI->getOpcode() == TargetInstrInfo::INSERT_SUBREG)
-        LR->valno->copy = DefMI;
-    }
   }
 
   // If resulting interval has a preference that no longer fits because of subreg
@@ -2695,10 +2577,8 @@ SimpleRegisterCoalescing::TurnCopyIntoImpDef(MachineBasicBlock::iterator &I,
   if (EndMBB != MBB)
     return false;
   DstInt.removeValNo(DstLR->valno);
-  CopyMI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
-  for (int i = CopyMI->getNumOperands() - 1, e = 0; i > e; --i)
-    CopyMI->RemoveOperand(i);
-  CopyMI->getOperand(0).setIsUndef();
+  li_->RemoveMachineInstrFromMaps(CopyMI);
+  CopyMI->eraseFromParent();
   bool NoUse = mri_->use_empty(SrcReg);
   if (NoUse) {
     for (MachineRegisterInfo::reg_iterator RI = mri_->reg_begin(SrcReg),

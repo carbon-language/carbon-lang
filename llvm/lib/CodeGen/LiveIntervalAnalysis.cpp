@@ -123,7 +123,6 @@ void LiveIntervals::processImplicitDefs() {
       ++I;
       if (MI->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
         unsigned Reg = MI->getOperand(0).getReg();
-        MI->getOperand(0).setIsUndef();
         ImpDefRegs.insert(Reg);
         ImpDefMIs.push_back(MI);
         continue;
@@ -175,11 +174,13 @@ void LiveIntervals::processImplicitDefs() {
     for (unsigned i = 0, e = ImpDefMIs.size(); i != e; ++i) {
       MachineInstr *MI = ImpDefMIs[i];
       unsigned Reg = MI->getOperand(0).getReg();
-      if (TargetRegisterInfo::isPhysicalRegister(Reg))
-        // Physical registers are not liveout (yet).
+      if (TargetRegisterInfo::isPhysicalRegister(Reg) ||
+          !ImpDefRegs.count(Reg)) {
+        // Delete all "local" implicit_def's. That include those which define
+        // physical registers since they cannot be liveout.
+        MI->eraseFromParent();
         continue;
-      if (!ImpDefRegs.count(Reg))
-        continue;
+      }
 
       // If there are multiple defs of the same register and at least one
       // is not an implicit_def, do not insert implicit_def's before the
@@ -195,6 +196,10 @@ void LiveIntervals::processImplicitDefs() {
       if (Skip)
         continue;
 
+      // The only implicit_def which we want to keep are those that are live
+      // out of its block.
+      MI->eraseFromParent();
+
       for (MachineRegisterInfo::use_iterator UI = mri_->use_begin(Reg),
              UE = mri_->use_end(); UI != UE; ) {
         MachineOperand &RMO = UI.getOperand();
@@ -203,12 +208,19 @@ void LiveIntervals::processImplicitDefs() {
         MachineBasicBlock *RMBB = RMI->getParent();
         if (RMBB == MBB)
           continue;
+
+        // Turn a copy use into an implicit_def.
+        unsigned SrcReg, DstReg, SrcSubReg, DstSubReg;
+        if (tii_->isMoveInstr(*RMI, SrcReg, DstReg, SrcSubReg, DstSubReg) &&
+            Reg == SrcReg) {
+          RMI->setDesc(tii_->get(TargetInstrInfo::IMPLICIT_DEF));
+          for (int j = RMI->getNumOperands() - 1, ee = 0; j > ee; --j)
+            RMI->RemoveOperand(j);
+          continue;
+        }
+
         const TargetRegisterClass* RC = mri_->getRegClass(Reg);
         unsigned NewVReg = mri_->createVirtualRegister(RC);
-        MachineInstrBuilder MIB =
-          BuildMI(*RMBB, RMI, RMI->getDebugLoc(),
-                  tii_->get(TargetInstrInfo::IMPLICIT_DEF), NewVReg);
-        (*MIB).getOperand(0).setIsUndef();
         RMO.setReg(NewVReg);
         RMO.setIsUndef();
         RMO.setIsKill();
@@ -593,17 +605,12 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
                                              unsigned MOIdx,
                                              LiveInterval &interval) {
   DOUT << "\t\tregister: "; DEBUG(printRegName(interval.reg));
-  LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
-
-  if (mi->getOpcode() == TargetInstrInfo::IMPLICIT_DEF) {
-    DOUT << "is a implicit_def\n";
-    return;
-  }
 
   // Virtual registers may be defined multiple times (due to phi
   // elimination and 2-addr elimination).  Much of what we do only has to be
   // done once for the vreg.  We use an empty interval to detect the first
   // time we see a vreg.
+  LiveVariables::VarInfo& vi = lv_->getVarInfo(interval.reg);
   if (interval.empty()) {
     // Get the Idx of the defining instructions.
     unsigned defIndex = getDefIndex(MIIdx);
@@ -981,7 +988,8 @@ void LiveIntervals::computeIntervals() {
   DOUT << "********** COMPUTING LIVE INTERVALS **********\n"
        << "********** Function: "
        << ((Value*)mf_->getFunction())->getName() << '\n';
-  
+
+  SmallVector<unsigned, 8> UndefUses;
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock *MBB = MBBI;
@@ -1013,10 +1021,14 @@ void LiveIntervals::computeIntervals() {
       // Handle defs.
       for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
         MachineOperand &MO = MI->getOperand(i);
+        if (!MO.isReg() || !MO.getReg())
+          continue;
+
         // handle register defs - build intervals
-        if (MO.isReg() && MO.getReg() && MO.isDef()) {
+        if (MO.isDef())
           handleRegisterDef(MBB, MI, MIIndex, MO, i);
-        }
+        else if (MO.isUndef())
+          UndefUses.push_back(MO.getReg());
       }
 
       // Skip over the empty slots after each instruction.
@@ -1030,6 +1042,14 @@ void LiveIntervals::computeIntervals() {
              getInstructionFromIndex(MIIndex) == 0)
         MIIndex += InstrSlots::NUM;
     }
+  }
+
+  // Create empty intervals for registers defined by implicit_def's (except
+  // for those implicit_def that define values which are liveout of their
+  // blocks.
+  for (unsigned i = 0, e = UndefUses.size(); i != e; ++i) {
+    unsigned UndefReg = UndefUses[i];
+    (void)getOrCreateInterval(UndefReg);
   }
 }
 
@@ -1523,22 +1543,12 @@ rewriteInstructionForSpills(const LiveInterval &li, const VNInfo *VNI,
         continue;
       if (RegJ == RegI) {
         Ops.push_back(j);
-        HasUse |= MOj.isUse();
-        HasDef |= MOj.isDef();
+        if (!MOj.isUndef()) {
+          HasUse |= MOj.isUse();
+          HasDef |= MOj.isDef();
+        }
       }
     }
-
-    if (HasUse && !li.liveAt(getUseIndex(index)))
-      // Must be defined by an implicit def. It should not be spilled. Note,
-      // this is for correctness reason. e.g.
-      // 8   %reg1024<def> = IMPLICIT_DEF
-      // 12  %reg1024<def> = INSERT_SUBREG %reg1024<kill>, %reg1025, 2
-      // The live range [12, 14) are not part of the r1024 live interval since
-      // it's defined by an implicit def. It will not conflicts with live
-      // interval of r1025. Now suppose both registers are spilled, you can
-      // easily see a situation where both registers are reloaded before
-      // the INSERT_SUBREG and both target registers that would overlap.
-      HasUse = false;
 
     // Create a new virtual register for the spill interval.
     // Create the new register now so we can map the fold instruction
@@ -1728,7 +1738,8 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     unsigned index = getInstructionIndex(MI);
     if (index < start || index >= end)
       continue;
-    if (O.isUse() && !li.liveAt(getUseIndex(index)))
+
+    if (O.isUndef())
       // Must be defined by an implicit def. It should not be spilled. Note,
       // this is for correctness reason. e.g.
       // 8   %reg1024<def> = IMPLICIT_DEF

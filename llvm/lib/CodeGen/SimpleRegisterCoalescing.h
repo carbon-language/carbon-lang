@@ -277,10 +277,6 @@ namespace llvm {
     /// subregister.
     void UpdateRegDefsUses(unsigned SrcReg, unsigned DstReg, unsigned SubIdx);
 
-    /// RemoveDeadImpDef - Remove implicit_def instructions which are
-    /// "re-defining" registers due to insert_subreg coalescing. e.g.
-    void RemoveDeadImpDef(unsigned Reg, LiveInterval &LI);
-
     /// RemoveUnnecessaryKills - Remove kill markers that are no longer accurate
     /// due to live range lengthening as the result of coalescing.
     void RemoveUnnecessaryKills(unsigned Reg, LiveInterval &LI);
