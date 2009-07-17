@@ -207,7 +207,7 @@ bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
   default: break;
   case ISD::Constant: {
     int64_t Val = cast<ConstantSDNode>(N)->getSExtValue();
-    int64_t Imm;
+    int64_t Imm = 0;
     bool Match = (is12Bit ?
                   isImmZExt12(AM.Disp + Val, Imm) :
                   isImmSExt20(AM.Disp + Val, Imm));
@@ -304,7 +304,7 @@ bool SystemZDAGToDAGISel::MatchAddress(SDValue N, SystemZRRIAddressMode &AM,
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       SystemZRRIAddressMode Backup = AM;
       int64_t Offset = CN->getSExtValue();
-      int64_t Imm;
+      int64_t Imm = 0;
       bool MatchOffset = (is12Bit ?
                           isImmZExt12(AM.Disp + Offset, Imm) :
                           isImmSExt20(AM.Disp + Offset, Imm));
