@@ -62,6 +62,12 @@ class Value {
   const unsigned char SubclassID;   // Subclass identifier (for isa/dyn_cast)
   unsigned char HasValueHandle : 1; // Has a ValueHandle pointing to this?
 protected:
+  /// SubclassOptionalData - This member is similar to SubclassData, however it
+  /// is for holding information which may be used to aid optimization, but
+  /// which may be cleared to zero without affecting conservative
+  /// interpretation.
+  unsigned char SubclassOptionalData : 7;
+
   /// SubclassData - This member is defined by this class, but is not used for
   /// anything.  Subclasses can use it to hold whatever state they find useful.
   /// This field is initialized to zero by the ctor.
