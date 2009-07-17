@@ -1049,7 +1049,7 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
   for (unsigned i = 0, E = NumOperands; i != E; ++i)
     OL[i] = GEPIOL[i];
 
-  // Transfor the hasNoPointerOverflow() value from the original GEPI.
+  // Transfer the hasNoPointerOverflow() value from the original GEPI.
   setHasNoPointerOverflow(GEPI.hasNoPointerOverflow());
 }
 
