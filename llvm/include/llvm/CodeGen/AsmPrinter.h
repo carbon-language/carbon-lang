@@ -395,7 +395,6 @@ namespace llvm {
     void printOffset(int64_t Offset) const;
  
   private:
-    const GlobalValue *findGlobalValue(const Constant* CV);
     void EmitLLVMUsedList(Constant *List);
     void EmitXXStructorList(Constant *List);
     void EmitGlobalConstantStruct(const ConstantStruct* CVS,
