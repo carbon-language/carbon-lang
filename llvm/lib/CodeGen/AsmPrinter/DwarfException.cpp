@@ -194,18 +194,9 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
 
     EmitLabel("eh_frame_begin", EHFrameInfo.Number);
 
-    if (!TAI->is_EHSymbolPrivate()) {
-// FIXME: HOW ARE THESE TWO ARMS DIFFERENT??  EH_frame vs eh_frame_common?
-      PrintRelDirective(true, true);
-      PrintLabelName("eh_frame_begin", EHFrameInfo.Number);
-
-      if (!TAI->isAbsoluteEHSectionOffsets())
-        O << "-EH_frame" << EHFrameInfo.PersonalityIndex;
-    } else {
-      EmitSectionOffset("eh_frame_begin", "eh_frame_common",
-                        EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
-                        true, true, false);
-    }
+    EmitSectionOffset("eh_frame_begin", "eh_frame_common",
+                      EHFrameInfo.Number, EHFrameInfo.PersonalityIndex,
+                      true, true, false);
 
     Asm->EOL("FDE CIE offset");
 
