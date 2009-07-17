@@ -43,6 +43,7 @@ namespace llvm {
   class LLVMContext;
   class Loop;
   class LoopInfo;
+  class Operator;
 
   /// SCEV - This class represents an analyzed expression in the program.  These
   /// are opaque objects that the client is not allowed to do much with
@@ -242,7 +243,7 @@ namespace llvm {
 
     /// createNodeForGEP - Provide the special handling we need to analyze GEP
     /// SCEVs.
-    const SCEV *createNodeForGEP(User *GEP);
+    const SCEV *createNodeForGEP(Operator *GEP);
 
     /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value
     /// for the specified instruction and replaces any references to the
