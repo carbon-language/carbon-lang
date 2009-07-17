@@ -182,19 +182,32 @@ public:
 
   /// mayHaveSideEffects - Return true if the instruction may have side effects.
   ///
+  /// Note that this does not consider malloc and alloca to have side
+  /// effects because the newly allocated memory is completely invisible to
+  /// instructions which don't used the returned value.  For cases where this
+  /// matters, isSafeToSpeculativelyExecute may be more appropriate.
   bool mayHaveSideEffects() const {
     return mayWriteToMemory() || mayThrow();
   }
 
   /// isSafeToSpeculativelyExecute - Return true if the instruction does not
   /// have any effects besides calculating the result and does not have
-  /// undefined behavior. Unlike in mayHaveSideEffects(), allocating memory
-  /// is considered an effect.
+  /// undefined behavior.
+  ///
+  /// This method never returns true for an instruction that returns true for
+  /// mayHaveSideEffects; however, this method also does some other checks in
+  /// addition. It checks for undefined behavior, like dividing by zero or
+  /// loading from an invalid pointer (but not for undefined results, like a
+  /// shift with a shift amount larger than the width of the result). It checks
+  /// for malloc and alloca because speculatively executing them might cause a
+  /// memory leak. It also returns false for instructions related to control
+  /// flow, specifically terminators and PHI nodes.
   ///
   /// This method only looks at the instruction itself and its operands, so if
   /// this method returns true, it is safe to move the instruction as long as
-  /// the operands still dominate it.  However, care must be taken with
-  /// instructions which read memory.
+  /// the correct dominance relationships for the operands and users hold.
+  /// However, this method can return true for instructions that read memory;
+  /// for such instructions, moving them may change the resulting value.
   bool isSafeToSpeculativelyExecute() const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
