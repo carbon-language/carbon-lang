@@ -244,43 +244,26 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   setOperationAction(ISD::CALL,   MVT::i16, Custom);
   setOperationAction(ISD::RET,    MVT::Other, Custom);
 
-  setOperationAction(ISD::MUL,    MVT::i8,  Custom); 
-  setOperationAction(ISD::MUL,    MVT::i16, Expand);
-  setOperationAction(ISD::MUL,    MVT::i32, Expand);
+  setOperationAction(ISD::MUL,    MVT::i8,  Custom);
 
   setOperationAction(ISD::SMUL_LOHI,    MVT::i8,  Expand);
-  setOperationAction(ISD::SMUL_LOHI,    MVT::i16, Expand);
-  setOperationAction(ISD::SMUL_LOHI,    MVT::i32, Expand);
   setOperationAction(ISD::UMUL_LOHI,    MVT::i8,  Expand);
-  setOperationAction(ISD::UMUL_LOHI,    MVT::i16, Expand);
-  setOperationAction(ISD::UMUL_LOHI,    MVT::i32, Expand);
   setOperationAction(ISD::MULHU,        MVT::i8, Expand);
-  setOperationAction(ISD::MULHU,        MVT::i16, Expand);
-  setOperationAction(ISD::MULHU,        MVT::i32, Expand);
   setOperationAction(ISD::MULHS,        MVT::i8, Expand);
-  setOperationAction(ISD::MULHS,        MVT::i16, Expand);
-  setOperationAction(ISD::MULHS,        MVT::i32, Expand);
 
   setOperationAction(ISD::SRA,    MVT::i8,  Custom);
-  setOperationAction(ISD::SRA,    MVT::i16, Expand);
-  setOperationAction(ISD::SRA,    MVT::i32, Expand);
   setOperationAction(ISD::SHL,    MVT::i8,  Custom);
-  setOperationAction(ISD::SHL,    MVT::i16, Expand);
-  setOperationAction(ISD::SHL,    MVT::i32, Expand);
   setOperationAction(ISD::SRL,    MVT::i8,  Custom);
-  setOperationAction(ISD::SRL,    MVT::i16, Expand);
-  setOperationAction(ISD::SRL,    MVT::i32, Expand);
+
+  setOperationAction(ISD::ROTL,    MVT::i8,  Expand);
+  setOperationAction(ISD::ROTR,    MVT::i8,  Expand);
+
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
 
   // PIC16 does not support shift parts
-  setOperationAction(ISD::SRA_PARTS,    MVT::i8,  Expand);
-  setOperationAction(ISD::SRA_PARTS,    MVT::i16, Expand);
-  setOperationAction(ISD::SRA_PARTS,    MVT::i32, Expand);
+  setOperationAction(ISD::SRA_PARTS,    MVT::i8, Expand);
   setOperationAction(ISD::SHL_PARTS,    MVT::i8, Expand);
-  setOperationAction(ISD::SHL_PARTS,    MVT::i16, Expand);
-  setOperationAction(ISD::SHL_PARTS,    MVT::i32, Expand);
   setOperationAction(ISD::SRL_PARTS,    MVT::i8, Expand);
-  setOperationAction(ISD::SRL_PARTS,    MVT::i16, Expand);
-  setOperationAction(ISD::SRL_PARTS,    MVT::i32, Expand);
 
 
   // PIC16 does not have a SETCC, expand it to SELECT_CC.
