@@ -41,7 +41,7 @@ IncludeDirs("I", cl::desc("Directory of include files"),
 static cl::opt<std::string>
 Triple("triple", cl::desc("Target triple to assemble for,"
                           "see -version for available targets"),
-       cl::init(""));
+       cl::init(LLVM_HOSTTRIPLE));
 
 enum ActionType {
   AC_AsLex,
