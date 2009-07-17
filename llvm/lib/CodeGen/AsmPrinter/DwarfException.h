@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_DWARFEXCEPTION_H__
-#define CODEGEN_ASMPRINTER_DWARFEXCEPTION_H__
+#ifndef LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
+#define LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 
 #include "DIE.h"
 #include "DwarfPrinter.h"
