@@ -505,7 +505,7 @@ def tSUBrr : T1sI<(outs tGPR:$dst), (ins tGPR:$lhs, tGPR:$rhs),
 
 // TODO: A7-96: STMIA - store multiple.
 
-def tSUBspi : T1It<(outs tGPR:$dst), (ins tGPR:$lhs, i32imm:$rhs),
+def tSUBspi : T1It<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
                   "sub $dst, $rhs * 4", []>;
 
 // sign-extend byte
