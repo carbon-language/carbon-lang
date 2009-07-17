@@ -22,6 +22,8 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetSelect.h"
 #include "AsmParser.h"
 using namespace llvm;
 
@@ -35,6 +37,11 @@ OutputFilename("o", cl::desc("Output filename"),
 static cl::list<std::string>
 IncludeDirs("I", cl::desc("Directory of include files"),
             cl::value_desc("directory"), cl::Prefix);
+
+static cl::opt<std::string>
+Triple("triple", cl::desc("Target triple to assemble for,"
+                          "see -version for available targets"),
+       cl::init(""));
 
 enum ActionType {
   AC_AsLex,
@@ -137,6 +144,23 @@ static int AsLexInput(const char *ProgName) {
 }
 
 static int AssembleInput(const char *ProgName) {
+  // Get the target specific parser.
+  std::string Error;
+  const Target *TheTarget =
+    TargetRegistry::getClosestStaticTargetForTriple(Triple, Error);
+  if (TheTarget == 0) {
+    errs() << ProgName << ": error: unable to get target for '" << Triple
+           << "', see --version and --triple.\n";
+    return 1;
+  }
+
+  TargetAsmParser *TAP = TheTarget->createAsmParser();
+  if (!TAP) {
+    errs() << ProgName 
+           << ": error: this target does not support assembly parsing.\n";
+    return 1;    
+  }
+
   std::string ErrorMessage;
   MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
                                                       &ErrorMessage);
@@ -174,6 +198,11 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  // Initialize targets and assembly parsers.
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllAsmParsers();
+  
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
 
   switch (Action) {

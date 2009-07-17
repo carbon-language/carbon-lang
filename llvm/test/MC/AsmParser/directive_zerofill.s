@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s | FileCheck %s
+# RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
 
 # CHECK: TEST0:
 # CHECK: .zerofill __FOO,__bar,x,1

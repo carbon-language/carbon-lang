@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s -I  %p | FileCheck %s
+# RUN: llvm-mc -triple i386-unknown-unknown %s -I  %p | FileCheck %s
 
 # CHECK: TESTA:
 # CHECK: TEST0:

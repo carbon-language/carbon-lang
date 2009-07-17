@@ -1,8 +1,8 @@
-// FIXME: For now this test just checks that llvm-mc works. Once we have .macro,
+// FIXME: For now this test just checks that llvm-mc -triple i386-unknown-unknown works. Once we have .macro,
 // .if, and .abort we can write a better test (without resorting to miles of
 // greps).
         
-// RUN: llvm-mc %s > %t
+// RUN: llvm-mc -triple i386-unknown-unknown %s > %t
 
         .text
 g:
