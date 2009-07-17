@@ -87,6 +87,9 @@ Pass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
 // This function is always successful.
 //
 bool LowerAllocations::doInitialization(Module &M) {
+  // Ensure context initialization.
+  BasicBlockPass::doInitialization(M);
+
   const Type *BPTy = Context->getPointerTypeUnqual(Type::Int8Ty);
   // Prototype malloc as "char* malloc(...)", because we don't know in
   // doInitialization whether size_t is int or long.
