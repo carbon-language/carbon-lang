@@ -1073,7 +1073,7 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
         Ctx = FD->getDeclContext();
         MemberType = FD->getType();
 
-        if (const ReferenceType *RefType = MemberType->getAsReferenceType())
+        if (const ReferenceType *RefType = MemberType->getAs<ReferenceType>())
           MemberType = RefType->getPointeeType();
         else if (!FD->isMutable()) {
           unsigned combinedQualifiers 
@@ -2177,7 +2177,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       // Figure out the type of the member; see C99 6.5.2.3p3, C++ [expr.ref]
       // FIXME: Handle address space modifiers
       QualType MemberType = FD->getType();
-      if (const ReferenceType *Ref = MemberType->getAsReferenceType())
+      if (const ReferenceType *Ref = MemberType->getAs<ReferenceType>())
         MemberType = Ref->getPointeeType();
       else {
         unsigned combinedQualifiers =
@@ -3447,7 +3447,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   // right-hand side type. The caller is responsible for adjusting
   // lhsType so that the resulting expression does not have reference
   // type.
-  if (const ReferenceType *lhsTypeRef = lhsType->getAsReferenceType()) {
+  if (const ReferenceType *lhsTypeRef = lhsType->getAs<ReferenceType>()) {
     if (Context.typesAreCompatible(lhsTypeRef->getPointeeType(), rhsType))
       return Compatible;
     return Incompatible;

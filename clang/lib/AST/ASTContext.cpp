@@ -447,7 +447,7 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
 
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
-    if (const ReferenceType* RT = T->getAsReferenceType()) {
+    if (const ReferenceType* RT = T->getAs<ReferenceType>()) {
       unsigned AS = RT->getPointeeType().getAddressSpace();
       Align = Target.getPointerAlign(AS);
     } else if (!T->isIncompleteType() && !T->isFunctionType()) {
@@ -779,7 +779,7 @@ void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
       FieldSize = 0;
       const ArrayType* ATy = Context.getAsArrayType(FD->getType());
       FieldAlign = Context.getTypeAlign(ATy->getElementType());
-    } else if (const ReferenceType *RT = FD->getType()->getAsReferenceType()) {
+    } else if (const ReferenceType *RT = FD->getType()->getAs<ReferenceType>()) {
       unsigned AS = RT->getPointeeType().getAddressSpace();
       FieldSize = Context.Target.getPointerWidth(AS);
       FieldAlign = Context.Target.getPointerAlign(AS);
@@ -3382,9 +3382,9 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   // enough that they should be handled separately.
   // FIXME: Merging of lvalue and rvalue references is incorrect. C++ *really*
   // shouldn't be going through here!
-  if (const ReferenceType *RT = LHS->getAsReferenceType())
+  if (const ReferenceType *RT = LHS->getAs<ReferenceType>())
     LHS = RT->getPointeeType();
-  if (const ReferenceType *RT = RHS->getAsReferenceType())
+  if (const ReferenceType *RT = RHS->getAs<ReferenceType>())
     RHS = RT->getPointeeType();
 
   QualType LHSCan = getCanonicalType(LHS),

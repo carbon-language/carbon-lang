@@ -1282,7 +1282,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //   are ignored for type deduction. 
     if (CanonParamType.getCVRQualifiers())
       ParamType = CanonParamType.getUnqualifiedType();
-    if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
+    if (const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>()) {
       //   [...] If P is a reference type, the type referred to by P is used 
       //   for type deduction. 
       ParamType = ParamRefType->getPointeeType();

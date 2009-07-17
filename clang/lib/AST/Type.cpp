@@ -305,24 +305,6 @@ QualType Type::getPointeeType() const {
   return QualType();
 }
 
-const ReferenceType *Type::getAsReferenceType() const {
-  // If this is directly a reference type, return it.
-  if (const ReferenceType *RTy = dyn_cast<ReferenceType>(this))
-    return RTy;
-
-  // If the canonical form of this type isn't the right kind, reject it.
-  if (!isa<ReferenceType>(CanonicalType)) {
-    // Look through type qualifiers
-    if (isa<ReferenceType>(CanonicalType.getUnqualifiedType()))
-      return CanonicalType.getUnqualifiedType()->getAsReferenceType();
-    return 0;
-  }
-
-  // If this is a typedef for a reference type, strip the typedef off without
-  // losing all typedef information.
-  return cast<ReferenceType>(getDesugaredType());
-}
-
 const LValueReferenceType *Type::getAsLValueReferenceType() const {
   // If this is directly an lvalue reference type, return it.
   if (const LValueReferenceType *RTy = dyn_cast<LValueReferenceType>(this))
@@ -395,7 +377,7 @@ bool Type::isVariablyModifiedType() const {
   // correctly.
   if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType()->isVariablyModifiedType();
-  if (const ReferenceType *RT = getAsReferenceType())
+  if (const ReferenceType *RT = getAs<ReferenceType>())
     return RT->getPointeeType()->isVariablyModifiedType();
   if (const MemberPointerType *PT = getAsMemberPointerType())
     return PT->getPointeeType()->isVariablyModifiedType();

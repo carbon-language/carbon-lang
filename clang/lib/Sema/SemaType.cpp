@@ -301,7 +301,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
       if (Result->isPointerType() || Result->isReferenceType()) {
         QualType EltTy = Result->isPointerType() ? 
           Result->getAs<PointerType>()->getPointeeType() :
-          Result->getAsReferenceType()->getPointeeType();
+          Result->getAs<ReferenceType>()->getPointeeType();
       
         // If we have a pointer or reference, the pointee must have an object
         // incomplete type.
@@ -1188,7 +1188,7 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
   if (const PointerType* IT = T->getAs<PointerType>()) {
     T = IT->getPointeeType();
     kind = 1;
-  } else if (const ReferenceType* IT = T->getAsReferenceType()) {
+  } else if (const ReferenceType* IT = T->getAs<ReferenceType>()) {
     T = IT->getPointeeType();
     kind = 2;
   } else
@@ -1285,7 +1285,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
     // Take one type from the subset.
     QualType CanonicalSubT = Context.getCanonicalType(*SubI);
     bool SubIsPointer = false;
-    if (const ReferenceType *RefTy = CanonicalSubT->getAsReferenceType())
+    if (const ReferenceType *RefTy = CanonicalSubT->getAs<ReferenceType>())
       CanonicalSubT = RefTy->getPointeeType();
     if (const PointerType *PtrTy = CanonicalSubT->getAs<PointerType>()) {
       CanonicalSubT = PtrTy->getPointeeType();
@@ -1305,7 +1305,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
       QualType CanonicalSuperT = Context.getCanonicalType(*SuperI);
       // SubT must be SuperT or derived from it, or pointer or reference to
       // such types.
-      if (const ReferenceType *RefTy = CanonicalSuperT->getAsReferenceType())
+      if (const ReferenceType *RefTy = CanonicalSuperT->getAs<ReferenceType>())
         CanonicalSuperT = RefTy->getPointeeType();
       if (SubIsPointer) {
         if (const PointerType *PtrTy = CanonicalSuperT->getAs<PointerType>())

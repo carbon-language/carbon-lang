@@ -1654,7 +1654,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       //    represents a set of overloaded functions, the matching
       //    function is selected from the set (13.4).
       (ParamType->isReferenceType() &&
-       ParamType->getAsReferenceType()->getPointeeType()->isFunctionType()) ||
+       ParamType->getAs<ReferenceType>()->getPointeeType()->isFunctionType()) ||
       // -- For a non-type template-parameter of type pointer to
       //    member function, no conversions apply. If the
       //    template-argument represents a set of overloaded member
@@ -1755,7 +1755,7 @@ bool Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     return false;
   }
     
-  if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
+  if (const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>()) {
     //   -- For a non-type template-parameter of type reference to
     //      object, no conversions apply. The type referred to by the
     //      reference may be more cv-qualified than the (otherwise

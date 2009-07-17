@@ -1751,7 +1751,7 @@ Sema::DeclPtrTy Sema::ActOnConversionDeclarator(CXXConversionDecl *Conversion) {
   // virtual function that overrides a virtual function in a base class.
   QualType ClassType 
     = Context.getCanonicalType(Context.getTypeDeclType(ClassDecl));
-  if (const ReferenceType *ConvTypeRef = ConvType->getAsReferenceType())
+  if (const ReferenceType *ConvTypeRef = ConvType->getAs<ReferenceType>())
     ConvType = ConvTypeRef->getPointeeType();
   if (ConvType->isRecordType()) {
     ConvType = Context.getCanonicalType(ConvType).getUnqualifiedType();
@@ -2548,7 +2548,7 @@ Sema::CheckReferenceInit(Expr *&Init, QualType DeclType,
                          bool AllowExplicit, bool ForceRValue) {
   assert(DeclType->isReferenceType() && "Reference init needs a reference");
 
-  QualType T1 = DeclType->getAsReferenceType()->getPointeeType();
+  QualType T1 = DeclType->getAs<ReferenceType>()->getPointeeType();
   QualType T2 = Init->getType();
 
   // If the initializer is the address of an overloaded function, try
@@ -3083,7 +3083,7 @@ VarDecl *Sema::BuildExceptionDeclaration(Scope *S, QualType ExDeclType,
     BaseType = Ptr->getPointeeType();
     Mode = 1;
     DK = diag::err_catch_incomplete_ptr;
-  } else if(const ReferenceType *Ref = BaseType->getAsReferenceType()) {
+  } else if(const ReferenceType *Ref = BaseType->getAs<ReferenceType>()) {
     // For the purpose of error recovery, we treat rvalue refs like lvalue refs.
     BaseType = Ref->getPointeeType();
     Mode = 2;

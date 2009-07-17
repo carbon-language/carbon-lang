@@ -2704,7 +2704,7 @@ BuiltinCandidateTypeSet::AddTypesConvertedFrom(QualType Ty,
 
   // Look through reference types; they aren't part of the type of an
   // expression for the purposes of conversions.
-  if (const ReferenceType *RefTy = Ty->getAsReferenceType())
+  if (const ReferenceType *RefTy = Ty->getAs<ReferenceType>())
     Ty = RefTy->getPointeeType();
 
   // We don't care about qualifiers on the type.
@@ -3675,7 +3675,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
   bool IsMember = false;
   if (const PointerType *ToTypePtr = ToType->getAs<PointerType>())
     FunctionType = ToTypePtr->getPointeeType();
-  else if (const ReferenceType *ToTypeRef = ToType->getAsReferenceType())
+  else if (const ReferenceType *ToTypeRef = ToType->getAs<ReferenceType>())
     FunctionType = ToTypeRef->getPointeeType();
   else if (const MemberPointerType *MemTypePtr =
                     ToType->getAsMemberPointerType()) {

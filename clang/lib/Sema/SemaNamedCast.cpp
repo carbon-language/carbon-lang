@@ -604,7 +604,7 @@ TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr, QualType DestType,
     return TSC_NotApplicable;
   }
 
-  const ReferenceType *DestReference = DestType->getAsReferenceType();
+  const ReferenceType *DestReference = DestType->getAs<ReferenceType>();
   if (!DestReference) {
     return TSC_NotApplicable;
   }
@@ -829,7 +829,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
 
   QualType DestPointee;
   const PointerType *DestPointer = DestType->getAs<PointerType>();
-  const ReferenceType *DestReference = DestType->getAsReferenceType();
+  const ReferenceType *DestReference = DestType->getAs<ReferenceType>();
   if (DestPointer) {
     DestPointee = DestPointer->getPointeeType();
   } else if (DestReference) {

@@ -431,7 +431,6 @@ public:
   const FunctionType *getAsFunctionType() const;
   const FunctionNoProtoType *getAsFunctionNoProtoType() const;
   const FunctionProtoType *getAsFunctionProtoType() const;
-  const ReferenceType *getAsReferenceType() const;
   const LValueReferenceType *getAsLValueReferenceType() const;
   const RValueReferenceType *getAsRValueReferenceType() const;
   const MemberPointerType *getAsMemberPointerType() const;
@@ -2105,7 +2104,7 @@ inline bool QualType::isAtLeastAsQualifiedAs(QualType Other) const {
 ///   analysis, the expression designates the object or function
 ///   denoted by the reference, and the expression is an lvalue.
 inline QualType QualType::getNonReferenceType() const {
-  if (const ReferenceType *RefType = (*this)->getAsReferenceType())
+  if (const ReferenceType *RefType = (*this)->getAs<ReferenceType>())
     return RefType->getPointeeType();
   else
     return *this;
