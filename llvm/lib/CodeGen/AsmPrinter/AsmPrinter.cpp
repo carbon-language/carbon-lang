@@ -264,17 +264,11 @@ bool AsmPrinter::doFinalization(Module &M) {
   return false;
 }
 
-const std::string &
-AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF,
-                                     std::string &Name) const {
+std::string 
+AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) const {
   assert(MF && "No machine function?");
-  Name = MF->getFunction()->getName();
-  if (Name.empty())
-    Name = Mang->getMangledName(MF->getFunction());
-  
-  // FIXME: THIS SEEMS REALLY WRONG, it will get two prefixes.
-  Name = Mang->makeNameProper(TAI->getEHGlobalPrefix() + Name + ".eh");
-  return Name;
+  return Mang->getMangledName(MF->getFunction(), ".eh",
+                              TAI->is_EHSymbolPrivate());
 }
 
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {

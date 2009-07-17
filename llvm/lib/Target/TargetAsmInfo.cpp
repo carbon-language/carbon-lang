@@ -106,7 +106,7 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
   SupportsExceptionHandling = false;
   DwarfRequiresFrameSection = true;
   DwarfUsesInlineInfoSection = false;
-  NonLocalEHFrameLabel = false;
+  Is_EHSymbolPrivate = true;
   GlobalEHDirective = 0;
   SupportsWeakOmittedEHFrame = true;
   DwarfSectionOffsetDirective = 0;

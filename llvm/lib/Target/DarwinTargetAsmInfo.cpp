@@ -86,6 +86,11 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
     StaticDtorsSection = ".mod_term_func";
   }
     
+  // _foo.eh symbols are currently always exported so that the linker knows
+  // about them.  This may not strictly be necessary on 10.6 and later, but it
+  // doesn't hurt anything.
+  Is_EHSymbolPrivate = false;
+    
   DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
   DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
   DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";

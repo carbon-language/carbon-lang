@@ -480,9 +480,9 @@ namespace llvm {
     /// encode inline subroutine information.
     bool DwarfUsesInlineInfoSection; // Defaults to false.
 
-    /// NonLocalEHFrameLabel - If set, the EH_frame label needs to be non-local.
-    ///
-    bool NonLocalEHFrameLabel;              // Defaults to false.
+    /// Is_EHSymbolPrivate - If set, the "_foo.eh" is made private so that it
+    /// doesn't show up in the symbol table of the object file.
+    bool Is_EHSymbolPrivate;                // Defaults to true.
 
     /// GlobalEHDirective - This is the directive used to make exception frame
     /// tables globally visible.
@@ -714,12 +714,6 @@ namespace llvm {
     const char *getPrivateGlobalPrefix() const {
       return PrivateGlobalPrefix;
     }
-    /// EHGlobalPrefix - Prefix for EH_frame and the .eh symbols.
-    /// This is normally PrivateGlobalPrefix, but some targets want
-    /// these symbols to be visible.
-    virtual const char *getEHGlobalPrefix() const {
-      return PrivateGlobalPrefix;
-    }
     const char *getLessPrivateGlobalPrefix() const {
       return LessPrivateGlobalPrefix;
     }
@@ -876,8 +870,8 @@ namespace llvm {
     bool doesDwarfUsesInlineInfoSection() const {
       return DwarfUsesInlineInfoSection;
     }
-    bool doesRequireNonLocalEHFrameLabel() const {
-      return NonLocalEHFrameLabel;
+    bool is_EHSymbolPrivate() const {
+      return Is_EHSymbolPrivate;
     }
     const char *getGlobalEHDirective() const {
       return GlobalEHDirective;

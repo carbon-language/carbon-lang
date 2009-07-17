@@ -170,11 +170,9 @@ namespace llvm {
     /// Should be overridden if an indirect reference should be used.
     virtual void EmitExternalGlobal(const GlobalVariable *GV);
 
-    /// getCurrentFunctionEHName - Called to return (and cache) the
-    /// CurrentFnEHName.
+    /// getCurrentFunctionEHName - Called to return the CurrentFnEHName.
     /// 
-    const std::string &getCurrentFunctionEHName(const MachineFunction *MF,
-                                                std::string &FuncEHName) const;
+    std::string getCurrentFunctionEHName(const MachineFunction *MF) const;
 
   protected:
     /// getAnalysisUsage - Record analysis usage.

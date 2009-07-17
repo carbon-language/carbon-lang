@@ -57,8 +57,8 @@ void DwarfException::EmitCommonEHFrame(const Function *Personality,
   // Begin eh frame section.
   Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
 
-  if (!TAI->doesRequireNonLocalEHFrameLabel())
-    O << TAI->getEHGlobalPrefix();
+  if (TAI->is_EHSymbolPrivate())
+    O << TAI->getPrivateGlobalPrefix();
 
   O << "EH_frame" << Index << ":\n";
   EmitLabel("section_eh_frame", Index);
@@ -194,7 +194,8 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
 
     EmitLabel("eh_frame_begin", EHFrameInfo.Number);
 
-    if (TAI->doesRequireNonLocalEHFrameLabel()) {
+    if (!TAI->is_EHSymbolPrivate()) {
+// FIXME: HOW ARE THESE TWO ARMS DIFFERENT??  EH_frame vs eh_frame_common?
       PrintRelDirective(true, true);
       PrintLabelName("eh_frame_begin", EHFrameInfo.Number);
 
@@ -690,9 +691,8 @@ void DwarfException::EndFunction() {
     EmitExceptionTable();
 
     // Save EH frame information
-    std::string Name;
     EHFrames.push_back(
-        FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF, Name),
+        FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF),
                             SubprogramCount,
                             MMI->getPersonalityIndex(),
                             MF->getFrameInfo()->hasCalls(),

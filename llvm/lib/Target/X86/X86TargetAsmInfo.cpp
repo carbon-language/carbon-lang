@@ -64,8 +64,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   // Leopard and above support aligned common symbols.
   COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);
   HasDotTypeDotSizeDirective = false;
-  NonLocalEHFrameLabel = true;
-
+    
   if (is64Bit) {
     PersonalityPrefix = "";
     PersonalitySuffix = "+4@GOTPCREL";
