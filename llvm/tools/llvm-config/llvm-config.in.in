@@ -340,6 +340,10 @@ sub build_name_map {
             $NAME_MAP{$target} = [$target.'info',
                                   $NAME_MAP{$target}[0]]
         }
+
+        if (defined $NAME_MAP{$target.'asmparser'}) {
+            push @{$NAME_MAP{$target}},$target.'asmparser'
+        }
     }
 
     # Add virtual entries.
