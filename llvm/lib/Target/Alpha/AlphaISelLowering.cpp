@@ -64,6 +64,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setLoadExtAction(ISD::SEXTLOAD, MVT::i8,  Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i16, Expand);
 
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+
   //  setOperationAction(ISD::BRIND,        MVT::Other,   Expand);
   setOperationAction(ISD::BR_JT,        MVT::Other, Expand);
   setOperationAction(ISD::BR_CC,        MVT::Other, Expand);
