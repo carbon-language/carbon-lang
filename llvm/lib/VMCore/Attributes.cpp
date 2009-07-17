@@ -40,7 +40,7 @@ std::string Attribute::getAsString(Attributes Attrs) {
   if (Attrs & Attribute::NoCapture)
     Result += "nocapture ";
   if (Attrs & Attribute::StructRet)
-    Result += "sret ";  
+    Result += "sret ";
   if (Attrs & Attribute::ByVal)
     Result += "byval ";
   if (Attrs & Attribute::Nest)
@@ -63,6 +63,8 @@ std::string Attribute::getAsString(Attributes Attrs) {
     Result += "noredzone ";
   if (Attrs & Attribute::NoImplicitFloat)
     Result += "noimplicitfloat ";
+  if (Attrs & Attribute::Naked)
+    Result += "naked ";
   if (Attrs & Attribute::Alignment) {
     Result += "align ";
     Result += utostr(Attribute::getAlignmentFromAttrs(Attrs));

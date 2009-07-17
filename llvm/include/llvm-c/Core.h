@@ -98,7 +98,8 @@ typedef enum {
     LLVMByValAttribute      = 1<<7,
     LLVMNestAttribute       = 1<<8,
     LLVMReadNoneAttribute   = 1<<9,
-    LLVMReadOnlyAttribute   = 1<<10
+    LLVMReadOnlyAttribute   = 1<<10,
+    LLVMNakedAttribute      = 1<<24
 } LLVMAttribute;
 
 typedef enum {

@@ -51,6 +51,7 @@ FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 /// frame indexes with appropriate references.
 ///
 bool PEI::runOnMachineFunction(MachineFunction &Fn) {
+  const Function* F = Fn.getFunction();
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
 
@@ -80,7 +81,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   placeCSRSpillsAndRestores(Fn);
 
   // Add the code to save and restore the callee saved registers
-  insertCSRSpillsAndRestores(Fn);
+  if (!F->hasFnAttr(Attribute::Naked))
+    insertCSRSpillsAndRestores(Fn);
 
   // Allow the target machine to make final modifications to the function
   // before the frame layout is finalized.
@@ -94,7 +96,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   // called functions.  Because of this, calculateCalleeSavedRegisters
   // must be called before this function in order to set the HasCalls
   // and MaxCallFrameSize variables.
-  insertPrologEpilogCode(Fn);
+  if (!F->hasFnAttr(Attribute::Naked))
+    insertPrologEpilogCode(Fn);
 
   // Replace all MO_FrameIndex operands with physical register references
   // and actual offsets.
