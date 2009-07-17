@@ -429,6 +429,7 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
     return addStmt(B->getLHS());
   } 
   else if (B->getOpcode() == BinaryOperator::Comma) { // ,
+    autoCreateBlock();
     Block->appendStmt(B);
     addStmt(B->getRHS());
     return addStmt(B->getLHS());
