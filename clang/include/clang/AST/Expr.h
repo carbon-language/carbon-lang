@@ -964,7 +964,10 @@ public:
   const Expr *getCallee() const { return cast<Expr>(SubExprs[FN]); }
   Expr *getCallee() { return cast<Expr>(SubExprs[FN]); }
   void setCallee(Expr *F) { SubExprs[FN] = F; }
-  
+
+  /// \brief If the callee is a FunctionDecl, return it. Otherwise return 0.
+  FunctionDecl *getDirectCallee();
+
   /// getNumArgs - Return the number of actual arguments to this call.
   ///
   unsigned getNumArgs() const { return NumArgs; }

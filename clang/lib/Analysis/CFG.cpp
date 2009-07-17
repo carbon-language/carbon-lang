@@ -475,14 +475,9 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
   case Stmt::CallExprClass: {
     bool NoReturn = false;
     CallExpr *C = cast<CallExpr>(Terminator);
-    Expr *CEE = C->getCallee()->IgnoreParenCasts();
-    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
-      // FIXME: We can follow objective-c methods and C++ member functions...
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
-        if (FD->hasAttr<NoReturnAttr>())
-          NoReturn = true;
-      }
-    }
+    if (FunctionDecl *FD = C->getDirectCallee())
+      if (FD->hasAttr<NoReturnAttr>())
+        NoReturn = true;
 
     if (!NoReturn)
       break;

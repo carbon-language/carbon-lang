@@ -224,6 +224,16 @@ void CallExpr::Destroy(ASTContext& C) {
   C.Deallocate(this);
 }
 
+FunctionDecl *CallExpr::getDirectCallee() {
+  Expr *CEE = getCallee()->IgnoreParenCasts();
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
+    // FIXME: We can follow objective-c methods and C++ member functions...
+    return dyn_cast<FunctionDecl>(DRE->getDecl());
+  }
+
+  return 0;
+}
+
 /// setNumArgs - This changes the number of arguments present in this call.
 /// Any orphaned expressions are deleted by this, and any new operands are set
 /// to null.

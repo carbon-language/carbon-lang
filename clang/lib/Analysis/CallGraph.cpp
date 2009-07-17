@@ -66,21 +66,10 @@ public:
 }
 
 void CGBuilder::VisitCallExpr(CallExpr *CE) {
-  Expr *Callee = CE->getCallee();
-
-  if (CastExpr *CE = dyn_cast<CastExpr>(Callee))
-    Callee = CE->getSubExpr();
-
-  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Callee)) {
-    Decl *D = DRE->getDecl();
-    if (FunctionDecl *CalleeDecl = dyn_cast<FunctionDecl>(D)) {
-
-      Entity *Ent = Entity::get(CalleeDecl, G.getProgram());
-
-      CallGraphNode *CalleeNode = G.getOrInsertFunction(Ent);
-
-      CallerNode->addCallee(ASTLocation(FD, CE), CalleeNode);
-    }
+  if (FunctionDecl *CalleeDecl = CE->getDirectCallee()) {
+    Entity *Ent = Entity::get(CalleeDecl, G.getProgram());
+    CallGraphNode *CalleeNode = G.getOrInsertFunction(Ent);
+    CallerNode->addCallee(ASTLocation(FD, CE), CalleeNode);
   }
 }
 
