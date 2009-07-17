@@ -99,6 +99,14 @@ typedef enum {
     LLVMNestAttribute       = 1<<8,
     LLVMReadNoneAttribute   = 1<<9,
     LLVMReadOnlyAttribute   = 1<<10,
+    LLVMNoInlineAttribute   = 1<<11;
+    LLVMAlwaysInlineAttribute    = 1<<12;
+    LLVMOptimizeForSizeAttribute = 1<<13;
+    LLVMStackProtectAttribute    = 1<<14;
+    LLVMStackProtectReqAttribute = 1<<15;
+    LLVMNoCaptureAttribute  = 1<<21;
+    LLVMNoRedZoneAttribute  = 1<<22;
+    LLVMNoImplicitFloatAttribute = 1<<23;
     LLVMNakedAttribute      = 1<<24
 } LLVMAttribute;
 
