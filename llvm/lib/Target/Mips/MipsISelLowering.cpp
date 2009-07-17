@@ -83,8 +83,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
 
-  // MIPS doesn't have extending float->double load (?)
+  // MIPS doesn't have extending float->double load/store
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
   // Used by legalize types to correctly generate the setcc result. 
   // Without this, every float setcc comes with a AND/OR with the result, 
