@@ -1816,6 +1816,8 @@ static SpecialGlobalClass getGlobalVariableClass(const GlobalVariable *GV) {
 
 
 bool CWriter::doInitialization(Module &M) {
+  FunctionPass::doInitialization(M);
+  
   // Initialize
   TheModule = &M;
 
