@@ -94,7 +94,7 @@ addFullAddress(const MachineInstrBuilder &MIB, const SystemZAddressMode &AM) {
   else
     assert(0);
 
-  MIB.addImm(AM.Disp).addReg(AM.IndexReg);
+  return MIB.addImm(AM.Disp).addReg(AM.IndexReg);
 }
 
 /// addFrameReference - This function is used to add a reference to the base of
