@@ -33,13 +33,27 @@ public:
   CGBuilder(CallGraph &g, FunctionDecl *fd, Entity *E, CallGraphNode *N)
     : G(g), FD(fd), CallerEnt(E), CallerNode(N) {}
 
-  void VisitCompoundStmt(CompoundStmt *S) {
-    VisitChildren(S);
-  }
+  void VisitCompoundStmt(CompoundStmt *S) { VisitChildren(S); }
 
-  void VisitIfStmt(IfStmt *S) {
-    VisitChildren(S);
-  }
+  void VisitCastStmt(CaseStmt *S) { VisitChildren(S); }
+
+  void VisitDefaultStmt(DefaultStmt *S) { VisitChildren(S); }
+
+  void VisitLabelStmt(LabelStmt *S) { VisitChildren(S); }
+
+  void VisitIfStmt(IfStmt *S) { VisitChildren(S); }
+
+  void VisitSwitchStmt(SwitchStmt *S) { VisitChildren(S); }
+
+  void VisitDoStmt(DoStmt *S) { VisitChildren(S); }
+
+  void VisitForStmt(ForStmt *S) { VisitChildren(S); }
+
+  void VisitIndirectGotoStmt(IndirectGotoStmt *S) { VisitChildren(S); }
+
+  void VisitReturnStmt(ReturnStmt *S) { VisitChildren(S); }
+
+  void VisitDeclStmt(DeclStmt *S) { VisitChildren(S); }
 
   void VisitCallExpr(CallExpr *CE);
 
