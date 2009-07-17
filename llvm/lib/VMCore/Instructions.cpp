@@ -16,6 +16,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ConstantRange.h"
@@ -1024,7 +1025,7 @@ void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
   setName(Name);
 
   // GetElementPtr instructions have undefined results on overflow by default.
-  setHasNoPointerOverflow(true);
+  cast<GEPOperator>(this)->setHasNoPointerOverflow(true);
 }
 
 void GetElementPtrInst::init(Value *Ptr, Value *Idx, const std::string &Name) {
@@ -1036,7 +1037,7 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx, const std::string &Name) {
   setName(Name);
 
   // GetElementPtr instructions have undefined results on overflow by default.
-  setHasNoPointerOverflow(true);
+  cast<GEPOperator>(this)->setHasNoPointerOverflow(true);
 }
 
 GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
@@ -1050,7 +1051,8 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
     OL[i] = GEPIOL[i];
 
   // Transfer the hasNoPointerOverflow() value from the original GEPI.
-  setHasNoPointerOverflow(GEPI.hasNoPointerOverflow());
+  cast<GEPOperator>(this)
+    ->setHasNoPointerOverflow(cast<GEPOperator>(GEPI).hasNoPointerOverflow());
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,

@@ -127,6 +127,41 @@ public:
   }
 };
 
+class GEPOperator : public Operator {
+public:
+  /// hasNoPointerOverflow - Return true if this GetElementPtr is known to
+  /// never have overflow in the pointer addition portions of its effective
+  /// computation. GetElementPtr computation involves several phases;
+  /// overflow can be considered to occur in index typecasting, array index
+  /// scaling, and the addition of the base pointer with offsets. This flag
+  /// only applies to the last of these. The operands are added to the base
+  /// pointer one at a time from left to right. This function returns false
+  /// if any of these additions results in an address value which is not
+  /// known to be within the allocated address space that the base pointer
+  /// points into, or within one element (of the original allocation) past
+  /// the end.
+  bool hasNoPointerOverflow() const {
+    return SubclassOptionalData & (1 << 0);
+  }
+  void setHasNoPointerOverflow(bool B) {
+    SubclassOptionalData = (SubclassOptionalData & ~(1 << 0)) | (B << 0);
+  }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const GEPOperator *) { return true; }
+  static inline bool classof(const GetElementPtrInst *) { return true; }
+  static inline bool classof(const ConstantExpr *CE) {
+    return CE->getOpcode() == Instruction::GetElementPtr;
+  }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::GetElementPtr;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<GetElementPtrInst>(V) ||
+           (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
+  }
+};
+
 } // End llvm namespace
 
 #endif
