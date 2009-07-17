@@ -37,6 +37,10 @@ public:
     VisitChildren(S);
   }
 
+  void VisitIfStmt(IfStmt *S) {
+    VisitChildren(S);
+  }
+
   void VisitCallExpr(CallExpr *CE);
 
   void VisitChildren(Stmt *S) {
@@ -106,13 +110,15 @@ CallGraphNode *CallGraph::getOrInsertFunction(Entity *F) {
 
 void CallGraph::print(llvm::raw_ostream &os) {
   for (iterator I = begin(), E = end(); I != E; ++I) {
-    ASTContext &Ctx = *CallerCtx[I->second];
-    os << "function: " << I->first->getName(Ctx) << " calls:\n";
-    for (CallGraphNode::iterator CI = I->second->begin(), CE = I->second->end();
-         CI != CE; ++CI) {
-      os << "    " << CI->second->getName(Ctx);
+    if (I->second->hasCallee()) {
+      ASTContext &Ctx = *CallerCtx[I->second];
+      os << "function: " << I->first->getName(Ctx) << " calls:\n";
+      for (CallGraphNode::iterator CI = I->second->begin(), 
+             CE = I->second->end(); CI != CE; ++CI) {
+        os << "    " << CI->second->getName(Ctx);
+      }
+      os << '\n';
     }
-    os << '\n';
   }
 }
 

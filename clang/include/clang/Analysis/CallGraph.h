@@ -43,6 +43,8 @@ public:
     CalledFunctions.push_back(std::make_pair(L, Node));
   }
 
+  bool hasCallee() const { return begin() != end(); }
+
   const char *getName(ASTContext &Ctx) { return F->getName(Ctx); }
 };
 
