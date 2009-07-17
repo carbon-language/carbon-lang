@@ -155,6 +155,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setLoadExtAction(ISD::EXTLOAD,  MVT::f32, Expand);
   setLoadExtAction(ISD::EXTLOAD,  MVT::f64, Expand);
 
+  setTruncStoreAction(MVT::i128, MVT::i64, Expand);
+  setTruncStoreAction(MVT::i128, MVT::i32, Expand);
+  setTruncStoreAction(MVT::i128, MVT::i16, Expand);
+  setTruncStoreAction(MVT::i128, MVT::i8, Expand);
+
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+
   // SPU constant load actions are custom lowered:
   setOperationAction(ISD::ConstantFP, MVT::f32, Legal);
   setOperationAction(ISD::ConstantFP, MVT::f64, Custom);
@@ -203,11 +210,37 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // SPU has no intrinsics for these particular operations:
   setOperationAction(ISD::MEMBARRIER, MVT::Other, Expand);
 
-  // SPU has no SREM/UREM instructions
-  setOperationAction(ISD::SREM, MVT::i32, Expand);
-  setOperationAction(ISD::UREM, MVT::i32, Expand);
-  setOperationAction(ISD::SREM, MVT::i64, Expand);
-  setOperationAction(ISD::UREM, MVT::i64, Expand);
+  // SPU has no division/remainder instructions
+  setOperationAction(ISD::SREM,    MVT::i8,   Expand);
+  setOperationAction(ISD::UREM,    MVT::i8,   Expand);
+  setOperationAction(ISD::SDIV,    MVT::i8,   Expand);
+  setOperationAction(ISD::UDIV,    MVT::i8,   Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i8,   Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i8,   Expand);
+  setOperationAction(ISD::SREM,    MVT::i16,  Expand);
+  setOperationAction(ISD::UREM,    MVT::i16,  Expand);
+  setOperationAction(ISD::SDIV,    MVT::i16,  Expand);
+  setOperationAction(ISD::UDIV,    MVT::i16,  Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i16,  Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i16,  Expand);
+  setOperationAction(ISD::SREM,    MVT::i32,  Expand);
+  setOperationAction(ISD::UREM,    MVT::i32,  Expand);
+  setOperationAction(ISD::SDIV,    MVT::i32,  Expand);
+  setOperationAction(ISD::UDIV,    MVT::i32,  Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i32,  Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i32,  Expand);
+  setOperationAction(ISD::SREM,    MVT::i64,  Expand);
+  setOperationAction(ISD::UREM,    MVT::i64,  Expand);
+  setOperationAction(ISD::SDIV,    MVT::i64,  Expand);
+  setOperationAction(ISD::UDIV,    MVT::i64,  Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i64,  Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i64,  Expand);
+  setOperationAction(ISD::SREM,    MVT::i128, Expand);
+  setOperationAction(ISD::UREM,    MVT::i128, Expand);
+  setOperationAction(ISD::SDIV,    MVT::i128, Expand);
+  setOperationAction(ISD::UDIV,    MVT::i128, Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i128, Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i128, Expand);
 
   // We don't support sin/cos/sqrt/fmod
   setOperationAction(ISD::FSIN , MVT::f64, Expand);
@@ -287,11 +320,19 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::CTPOP, MVT::i16,   Custom);
   setOperationAction(ISD::CTPOP, MVT::i32,   Custom);
   setOperationAction(ISD::CTPOP, MVT::i64,   Custom);
+  setOperationAction(ISD::CTPOP, MVT::i128,  Expand);
 
+  setOperationAction(ISD::CTTZ , MVT::i8,    Expand);
+  setOperationAction(ISD::CTTZ , MVT::i16,   Expand);
   setOperationAction(ISD::CTTZ , MVT::i32,   Expand);
   setOperationAction(ISD::CTTZ , MVT::i64,   Expand);
+  setOperationAction(ISD::CTTZ , MVT::i128,  Expand);
 
+  setOperationAction(ISD::CTLZ , MVT::i8,    Promote);
+  setOperationAction(ISD::CTLZ , MVT::i16,   Promote);
   setOperationAction(ISD::CTLZ , MVT::i32,   Legal);
+  setOperationAction(ISD::CTLZ , MVT::i64,   Expand);
+  setOperationAction(ISD::CTLZ , MVT::i128,  Expand);
 
   // SPU has a version of select that implements (a&~c)|(b&c), just like
   // select ought to work:
@@ -309,10 +350,18 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Custom lower i128 -> i64 truncates
   setOperationAction(ISD::TRUNCATE, MVT::i64, Custom);
 
+  setOperationAction(ISD::FP_TO_SINT, MVT::i8, Promote);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i8, Promote);
+  setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i16, Promote);
   // SPU has a legal FP -> signed INT instruction for f32, but for f64, need
   // to expand to a libcall, hence the custom lowering:
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
   setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
+  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Expand);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Expand);
+  setOperationAction(ISD::FP_TO_SINT, MVT::i128, Expand);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i128, Expand);
 
   // FDIV on SPU requires custom lowering
   setOperationAction(ISD::FDIV, MVT::f64, Expand);      // to libcall
