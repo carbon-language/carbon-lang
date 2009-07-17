@@ -18,23 +18,12 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Operator.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
 using namespace llvm;
-
-/// getOpcode - If this is an Instruction or a ConstantExpr, return the
-/// opcode value. Otherwise return UserOp1.
-static unsigned getOpcode(const Value *V) {
-  if (const Instruction *I = dyn_cast<Instruction>(V))
-    return I->getOpcode();
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    return CE->getOpcode();
-  // Use UserOp1 to mean there's no opcode.
-  return Instruction::UserOp1;
-}
-
 
 /// ComputeMaskedBits - Determine which of the bits specified in Mask are
 /// known to be either zero or one and return them in the KnownZero/KnownOne
@@ -108,11 +97,11 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   if (Depth == MaxDepth || Mask == 0)
     return;  // Limit search depth.
 
-  User *I = dyn_cast<User>(V);
+  Operator *I = dyn_cast<Operator>(V);
   if (!I) return;
 
   APInt KnownZero2(KnownZero), KnownOne2(KnownOne);
-  switch (getOpcode(I)) {
+  switch (I->getOpcode()) {
   default: break;
   case Instruction::And: {
     // If either the LHS or the RHS are Zero, the result is zero.
@@ -383,7 +372,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     // Determine which operand has more trailing zeros, and use that
     // many bits from the other operand.
     if (LHSKnownZeroOut > RHSKnownZeroOut) {
-      if (getOpcode(I) == Instruction::Add) {
+      if (I->getOpcode() == Instruction::Add) {
         APInt Mask = APInt::getLowBitsSet(BitWidth, LHSKnownZeroOut);
         KnownZero |= KnownZero2 & Mask;
         KnownOne  |= KnownOne2 & Mask;
@@ -523,10 +512,10 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
       for (unsigned i = 0; i != 2; ++i) {
         Value *L = P->getIncomingValue(i);
         Value *R = P->getIncomingValue(!i);
-        User *LU = dyn_cast<User>(L);
+        Operator *LU = dyn_cast<Operator>(L);
         if (!LU)
           continue;
-        unsigned Opcode = getOpcode(LU);
+        unsigned Opcode = LU->getOpcode();
         // Check for operations that have the property that if
         // both their operands have low zero bits, the result
         // will have low zero bits.
@@ -643,8 +632,8 @@ unsigned llvm::ComputeNumSignBits(Value *V, TargetData *TD, unsigned Depth) {
   if (Depth == 6)
     return 1;  // Limit search depth.
   
-  User *U = dyn_cast<User>(V);
-  switch (getOpcode(V)) {
+  Operator *U = dyn_cast<Operator>(V);
+  switch (Operator::getOpcode(V)) {
   default: break;
   case Instruction::SExt:
     Tmp = TyBits-cast<IntegerType>(U->getOperand(0)->getType())->getBitWidth();
@@ -790,7 +779,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
   if (Depth == 6)
     return 1;  // Limit search depth.
 
-  const Instruction *I = dyn_cast<Instruction>(V);
+  const Operator *I = dyn_cast<Operator>(V);
   if (I == 0) return false;
   
   // (add x, 0.0) is guaranteed to return +0.0, not -0.0.

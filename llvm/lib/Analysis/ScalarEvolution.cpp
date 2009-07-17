@@ -66,6 +66,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/Operator.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -2430,7 +2431,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 /// createNodeForGEP - Expand GEP instructions into add and multiply
 /// operations. This allows them to be analyzed by regular SCEV code.
 ///
-const SCEV *ScalarEvolution::createNodeForGEP(User *GEP) {
+const SCEV *ScalarEvolution::createNodeForGEP(Operator *GEP) {
 
   const Type *IntPtrTy = TD->getIntPtrType();
   Value *Base = GEP->getOperand(0);
@@ -2779,7 +2780,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
   else
     return getUnknown(V);
 
-  User *U = cast<User>(V);
+  Operator *U = cast<Operator>(V);
   switch (Opcode) {
   case Instruction::Add:
     return getAddExpr(getSCEV(U->getOperand(0)),

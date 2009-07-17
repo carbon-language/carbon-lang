@@ -40,6 +40,7 @@
 #include "llvm/Pass.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Operator.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Target/TargetData.h"
@@ -648,17 +649,6 @@ static User *dyn_castGetElementPtr(Value *V) {
     if (CE->getOpcode() == Instruction::GetElementPtr)
       return cast<User>(V);
   return false;
-}
-
-/// getOpcode - If this is an Instruction or a ConstantExpr, return the
-/// opcode value. Otherwise return UserOp1.
-static unsigned getOpcode(const Value *V) {
-  if (const Instruction *I = dyn_cast<Instruction>(V))
-    return I->getOpcode();
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    return CE->getOpcode();
-  // Use UserOp1 to mean there's no opcode.
-  return Instruction::UserOp1;
 }
 
 /// AddOne - Add one to a ConstantInt
@@ -8710,7 +8700,7 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
 
   // See if the value being truncated is already sign extended.  If so, just
   // eliminate the trunc/sext pair.
-  if (getOpcode(Src) == Instruction::Trunc) {
+  if (Operator::getOpcode(Src) == Instruction::Trunc) {
     Value *Op = cast<User>(Src)->getOperand(0);
     unsigned OpBits   = Op->getType()->getScalarSizeInBits();
     unsigned MidBits  = Src->getType()->getScalarSizeInBits();
@@ -9625,7 +9615,7 @@ static unsigned EnforceKnownAlignment(Value *V,
   User *U = dyn_cast<User>(V);
   if (!U) return Align;
 
-  switch (getOpcode(U)) {
+  switch (Operator::getOpcode(U)) {
   default: break;
   case Instruction::BitCast:
     return EnforceKnownAlignment(U->getOperand(0), Align, PrefAlign);
