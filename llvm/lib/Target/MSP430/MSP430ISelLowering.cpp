@@ -109,7 +109,6 @@ MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
   setOperationAction(ISD::SRA_PARTS,        MVT::i16,   Expand);
 
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1,   Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,   Expand);
 
   // FIXME: Implement efficiently multiplication by a constant
   setOperationAction(ISD::MUL,              MVT::i16,   Expand);
