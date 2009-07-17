@@ -23,7 +23,6 @@
     <li><a href="#nounused">No Unused Functionality</a></li>
     <li><a href="#virtuals">No Virtual Methods</a></li>
     <li><a href="#softerrors">Minimize Soft Errors</a></li>
-    <li><a href="#throw">Throw Only std::string</a></li>
     <li><a href="#throw_spec">No throw() Specifications</a></li>
     <li><a href="#organization">Code Organization</a></li>
     <li><a href="#semantics">Consistent Semantics</a></li>
@@ -211,8 +210,8 @@
   "out of space", "bad disk sector", or "system call interrupted". We'll call 
   the first group "<i>soft</i>" errors and the second group "<i>hard</i>" 
   errors.<p>
-  <p>lib/System must always attempt to minimize soft errors and always just
-  throw a std::string on hard errors. This is a design requirement because the
+  <p>lib/System must always attempt to minimize soft errors.
+  This is a design requirement because the
   minimization of soft errors can affect the granularity and the nature of the
   interface. In general, if you find that you're wanting to throw soft errors,
   you must review the granularity of the interface because it is likely you're
@@ -240,31 +239,6 @@
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"><a name="throw">Throw Only std::string</a></div>
-<div class="doc_text">
-  <p>If an error occurs that lib/System cannot handle, the only action taken by
-  lib/System is to throw an instance of std:string. The contents of the string
-  must explain both what happened and the context in which it happened. The
-  format of the string should be a (possibly empty) list of contexts each 
-  terminated with a : and a space, followed by the error message, optionally
-  followed by a reason, and optionally followed by a suggestion.</p>
-  <p>For example, failure to open a file named "foo" could result in a message
-  like:</p>
-  <ul><li>foo: Unable to open file because it doesn't exist."</li></ul>
-  <p>The "foo:" part is the context. The "Unable to open file" part is the error
-  message. The "because it doesn't exist." part is the reason. This message has
-  no suggestion. Where possible, the implementation of lib/System should use
-  operating system specific facilities for converting the error code returned by
-  a system call into an error message. This will help to make the error message
-  more familiar to users of that type of operating system.</p>
-  <p>Note that this requirement precludes the throwing of any other exceptions.
-  For example, various C++ standard library functions can cause exceptions to be
-  thrown (e.g. out of memory situation). In all cases, if there is a possibility
-  that non-string exceptions could be thrown, the lib/System library must ensure
-  that the exceptions are translated to std::string form.</p>
-</div>
-
-<!-- ======================================================================= -->
 <div class="doc_subsection"><a name="throw_spec">No throw Specifications</a>
 </div>
 <div class="doc_text">
@@ -273,7 +247,8 @@
   compiler does not insert additional exception handling code into the interface
   functions. This is a performance consideration: lib/System functions are at
   the bottom of many call chains and as such can be frequently called. We
-  need them to be as efficient as possible.</p>
+  need them to be as efficient as possible.  However, no routines in the
+  system library should actually throw exceptions.</p>
 </div>
 
 <!-- ======================================================================= -->
