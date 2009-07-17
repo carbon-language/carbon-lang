@@ -365,7 +365,7 @@ static bool isGenericPtr(ASTContext &Ctx, QualType Ty) {
     if (Ty->isVoidType())
       return true;
     
-    if (const PointerType *PT = Ty->getAs<PointerType>()) {
+    if (const PointerType *PT = Ty->getAsPointerType()) {
       Ty = PT->getPointeeType();
       continue;
     }
@@ -680,7 +680,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
         T = Sym->getType(getContext());
       }
       
-      QualType EleTy = T->getAs<PointerType>()->getPointeeType();        
+      QualType EleTy = T->getAsPointerType()->getPointeeType();        
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());
       break;        
@@ -689,7 +689,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
       // Get the alloca region's current cast type.
       const AllocaRegion *AR = cast<AllocaRegion>(MR);
       QualType T = *(state->get<RegionCasts>(AR));
-      QualType EleTy = T->getAs<PointerType>()->getPointeeType();
+      QualType EleTy = T->getAsPointerType()->getPointeeType();
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
       break;      
@@ -865,7 +865,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R)) {
     QualType T = *p;
-    RTy = T->getAs<PointerType>()->getPointeeType();
+    RTy = T->getAsPointerType()->getPointeeType();
   }
 
   // All other values are symbolic.
@@ -937,7 +937,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   // If the region is already cast to another type, use that type to create the
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R))
-    Ty = (*p)->getAs<PointerType>()->getPointeeType();
+    Ty = (*p)->getAsPointerType()->getPointeeType();
 
   return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
 }
@@ -976,7 +976,7 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R)) {
     QualType tmp = *p;
-    Ty = tmp->getAs<PointerType>()->getPointeeType();
+    Ty = tmp->getAsPointerType()->getPointeeType();
   }
 
   // All other values are symbolic.
@@ -1009,7 +1009,7 @@ SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state,
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R)) {
     QualType tmp = *p;
-    Ty = tmp->getAs<PointerType>()->getPointeeType();
+    Ty = tmp->getAsPointerType()->getPointeeType();
   }
   
   // All other values are symbolic.
@@ -1201,7 +1201,7 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
   QualType T = R->getValueType(getContext());
   assert(T->isStructureType());
 
-  const RecordType* RT = T->getAs<RecordType>();
+  const RecordType* RT = T->getAsRecordType();
   RecordDecl* RD = RT->getDecl();
 
   if (!RD->isDefinition())

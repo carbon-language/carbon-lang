@@ -679,7 +679,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   int AmountVal = isInc ? 1 : -1;
 
   if (ValTy->isPointerType() &&
-      ValTy->getAs<PointerType>()->isVariableArrayType()) {
+      ValTy->getAsPointerType()->isVariableArrayType()) {
     // The amount of the addition/subtraction needs to account for the VLA size
     CGF.ErrorUnsupported(E, "VLA pointer inc/dec");
   }
@@ -1020,13 +1020,13 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   }
 
   if (Ops.Ty->isPointerType() &&
-      Ops.Ty->getAs<PointerType>()->isVariableArrayType()) {
+      Ops.Ty->getAsPointerType()->isVariableArrayType()) {
     // The amount of the addition needs to account for the VLA size
     CGF.ErrorUnsupported(Ops.E, "VLA pointer addition");
   }
   Value *Ptr, *Idx;
   Expr *IdxExp;
-  const PointerType *PT = Ops.E->getLHS()->getType()->getAs<PointerType>();
+  const PointerType *PT = Ops.E->getLHS()->getType()->getAsPointerType();
   const ObjCObjectPointerType *OPT = 
     Ops.E->getLHS()->getType()->getAsObjCObjectPointerType();
   if (PT || OPT) {
@@ -1034,7 +1034,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     Idx = Ops.RHS;
     IdxExp = Ops.E->getRHS();
   } else {  // int + pointer
-    PT = Ops.E->getRHS()->getType()->getAs<PointerType>();
+    PT = Ops.E->getRHS()->getType()->getAsPointerType();
     OPT = Ops.E->getRHS()->getType()->getAsObjCObjectPointerType();
     assert((PT || OPT) && "Invalid add expr");
     Ptr = Ops.RHS;
@@ -1091,7 +1091,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
   }
 
   if (Ops.E->getLHS()->getType()->isPointerType() &&
-      Ops.E->getLHS()->getType()->getAs<PointerType>()->isVariableArrayType()) {
+      Ops.E->getLHS()->getType()->getAsPointerType()->isVariableArrayType()) {
     // The amount of the addition needs to account for the VLA size for
     // ptr-int
     // The amount of the division needs to account for the VLA size for

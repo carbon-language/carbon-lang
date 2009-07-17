@@ -380,7 +380,7 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
 /// getCGRecordLayout - Return record layout info.
 const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
                                                          QualType Ty) {
-  const RecordType *RTy = Ty->getAs<RecordType>();
+  const RecordType *RTy = Ty->getAsRecordType();
   assert (RTy && "Unexpected type. RecordType expected here.");
 
   return CGT.getCGRecordLayout(RTy->getDecl());
@@ -490,7 +490,7 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
     return SizeEntry;
   } else if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
     EmitVLASize(AT->getElementType());
-  } else if (const PointerType *PT = Ty->getAs<PointerType>())
+  } else if (const PointerType *PT = Ty->getAsPointerType())
     EmitVLASize(PT->getPointeeType());
   else {
     assert(0 && "unknown VM type!");

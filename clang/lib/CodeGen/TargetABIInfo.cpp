@@ -68,7 +68,7 @@ static bool isEmptyField(ASTContext &Context, const FieldDecl *FD) {
 /// fields. Note that a structure with a flexible array member is not
 /// considered empty.
 static bool isEmptyRecord(ASTContext &Context, QualType T) {
-  const RecordType *RT = T->getAs<RecordType>();
+  const RecordType *RT = T->getAsRecordType();
   if (!RT)
     return 0;
   const RecordDecl *RD = RT->getDecl();
@@ -168,7 +168,7 @@ static bool typeContainsSSEVector(const RecordDecl *RD, ASTContext &Context) {
         Context.getTypeSize(FD->getType()) >= 128)
       return true;
 
-    if (const RecordType* RT = FD->getType()->getAs<RecordType>())
+    if (const RecordType* RT = FD->getType()->getAsRecordType())
       if (typeContainsSSEVector(RT->getDecl(), Context))
         return true;
   }
@@ -272,7 +272,7 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
     return shouldReturnTypeInRegister(AT->getElementType(), Context);
 
   // Otherwise, it must be a record type.
-  const RecordType *RT = Ty->getAs<RecordType>();
+  const RecordType *RT = Ty->getAsRecordType();
   if (!RT) return false;
 
   // Structure types are passed in register if all fields would be
@@ -385,7 +385,7 @@ unsigned X86_32ABIInfo::getIndirectArgumentAlignment(QualType Ty,
                                                      ASTContext &Context) {
   unsigned Align = Context.getTypeAlign(Ty);
   if (Align < 128) return 0;
-  if (const RecordType* RT = Ty->getAs<RecordType>())
+  if (const RecordType* RT = Ty->getAsRecordType())
     if (typeContainsSSEVector(RT->getDecl(), Context))
       return 16;
   return 0;
@@ -704,7 +704,7 @@ void X86_64ABIInfo::classify(QualType Ty,
     if (Hi == Memory)
       Lo = Memory;
     assert((Hi != SSEUp || Lo == SSE) && "Invalid SSEUp array classification.");
-  } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
+  } else if (const RecordType *RT = Ty->getAsRecordType()) {
     uint64_t Size = Context.getTypeSize(Ty);
 
     // AMD64-ABI 3.2.3p2: Rule 1. If the size of an object is larger

@@ -36,9 +36,9 @@ static const FunctionType *getFunctionType(Decl *d, bool blocksToo = true) {
     return 0;
   
   if (Ty->isFunctionPointerType())
-    Ty = Ty->getAs<PointerType>()->getPointeeType();
+    Ty = Ty->getAsPointerType()->getPointeeType();
   else if (blocksToo && Ty->isBlockPointerType())
-    Ty = Ty->getAs<BlockPointerType>()->getPointeeType();
+    Ty = Ty->getAsBlockPointerType()->getPointeeType();
 
   return Ty->getAsFunctionType();
 }
@@ -133,11 +133,11 @@ static inline bool isNSStringType(QualType T, ASTContext &Ctx) {
 }
 
 static inline bool isCFStringType(QualType T, ASTContext &Ctx) {
-  const PointerType *PT = T->getAs<PointerType>();
+  const PointerType *PT = T->getAsPointerType();
   if (!PT)
     return false;
 
-  const RecordType *RT = PT->getPointeeType()->getAs<RecordType>();
+  const RecordType *RT = PT->getPointeeType()->getAsRecordType();
   if (!RT)
     return false;
   
@@ -632,7 +632,7 @@ static void HandleObjCNSObject(Decl *D, const AttributeList &Attr, Sema &S) {
   if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     QualType T = TD->getUnderlyingType();
     if (!T->isPointerType() ||
-        !T->getAs<PointerType>()->getPointeeType()->isRecordType()) {
+        !T->getAsPointerType()->getPointeeType()->isRecordType()) {
       S.Diag(TD->getLocation(), diag::err_nsobject_attribute);
       return;
     }
@@ -751,7 +751,7 @@ static void HandleSentinelAttr(Decl *d, const AttributeList &Attr, Sema &S) {
     QualType Ty = V->getType();
     if (Ty->isBlockPointerType() || Ty->isFunctionPointerType()) {
       const FunctionType *FT = Ty->isFunctionPointerType() ? getFunctionType(d) 
-        : Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
+        : Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
       if (!cast<FunctionProtoType>(FT)->isVariadic()) {
         int m = Ty->isFunctionPointerType() ? 0 : 1;
         S.Diag(Attr.getLoc(), diag::warn_attribute_sentinel_not_variadic) << m;
@@ -1147,7 +1147,7 @@ static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (not_nsstring_type &&
       !isCFStringType(Ty, S.Context) &&
       (!Ty->isPointerType() ||
-       !Ty->getAs<PointerType>()->getPointeeType()->isCharType())) {
+       !Ty->getAsPointerType()->getPointeeType()->isCharType())) {
     // FIXME: Should highlight the actual expression that has the wrong type.
     S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
     << (not_nsstring_type ? "a string type" : "an NSString") 
@@ -1158,7 +1158,7 @@ static void HandleFormatArgAttr(Decl *d, const AttributeList &Attr, Sema &S) {
   if (!isNSStringType(Ty, S.Context) &&
       !isCFStringType(Ty, S.Context) &&
       (!Ty->isPointerType() ||
-       !Ty->getAs<PointerType>()->getPointeeType()->isCharType())) {
+       !Ty->getAsPointerType()->getPointeeType()->isCharType())) {
     // FIXME: Should highlight the actual expression that has the wrong type.
     S.Diag(Attr.getLoc(), diag::err_format_attribute_result_not)
     << (not_nsstring_type ? "string type" : "NSString") 
@@ -1266,7 +1266,7 @@ static void HandleFormatAttr(Decl *d, const AttributeList &Attr, Sema &S) {
       return;
     }    
   } else if (!Ty->isPointerType() ||
-             !Ty->getAs<PointerType>()->getPointeeType()->isCharType()) {
+             !Ty->getAsPointerType()->getPointeeType()->isCharType()) {
     // FIXME: Should highlight the actual expression that has the wrong type.
     S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
       << "a string type" << IdxExpr->getSourceRange();
@@ -1703,7 +1703,7 @@ static void HandleNSReturnsRetainedAttr(Decl *d, const AttributeList &Attr,
     return;
   }
   
-  if (!(S.Context.isObjCNSObjectType(RetTy) || RetTy->getAs<PointerType>()
+  if (!(S.Context.isObjCNSObjectType(RetTy) || RetTy->getAsPointerType()
         || RetTy->getAsObjCObjectPointerType())) {
     S.Diag(Attr.getLoc(), diag::warn_ns_attribute_wrong_return_type)
       << Attr.getName();

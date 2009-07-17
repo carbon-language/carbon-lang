@@ -46,7 +46,7 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS) {
 
   case NestedNameSpecifier::TypeSpec:
   case NestedNameSpecifier::TypeSpecWithTemplate: {
-    const TagType *Tag = NNS->getAsType()->getAs<TagType>();
+    const TagType *Tag = NNS->getAsType()->getAsTagType();
     assert(Tag && "Non-tag type in nested-name-specifier");
     return Tag->getDecl();
   } break;
@@ -169,7 +169,7 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
   if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
     // If we're currently defining this type, then lookup into the
     // type is okay: don't complain that it isn't complete yet.
-    const TagType *TagT = Context.getTypeDeclType(Tag)->getAs<TagType>();
+    const TagType *TagT = Context.getTypeDeclType(Tag)->getAsTagType();
     if (TagT->isBeingDefined())
       return false;
 

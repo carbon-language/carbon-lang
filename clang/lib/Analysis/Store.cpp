@@ -36,7 +36,7 @@ StoreManager::MakeElementRegion(const GRState *state, const MemRegion *region,
 }
 
 static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
-  if (const RecordType *RT = Ty->getAs<RecordType>()) {
+  if (const RecordType *RT = Ty->getAsRecordType()) {
     const RecordDecl *D = RT->getDecl();
     if (!D->getDefinition(Ctx))
       return false;
@@ -62,7 +62,7 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
 
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
-  QualType PointeeTy = CastToTy->getAs<PointerType>()->getPointeeType();
+  QualType PointeeTy = CastToTy->getAsPointerType()->getPointeeType();
   
   // Process region cast according to the kind of the region being cast.
   switch (R->getKind()) {
@@ -243,7 +243,7 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
   // If the region is cast to another type, use that type.  
   if (const QualType *CastTy = getCastType(state, R)) {
     assert(!(*CastTy)->isObjCObjectPointerType());
-    QualType NewT = (*CastTy)->getAs<PointerType>()->getPointeeType();    
+    QualType NewT = (*CastTy)->getAsPointerType()->getPointeeType();    
 
     // The only exception is if the original region had a location type as its
     // value type we always want to treat the region as binding to a location.

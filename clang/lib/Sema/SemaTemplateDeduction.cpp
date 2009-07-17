@@ -397,7 +397,7 @@ DeduceTemplateArguments(ASTContext &Context,
       
     //     T *
     case Type::Pointer: {
-      const PointerType *PointerArg = Arg->getAs<PointerType>();
+      const PointerType *PointerArg = Arg->getAsPointerType();
       if (!PointerArg)
         return Sema::TDK_NonDeducedMismatch;
       
@@ -410,7 +410,7 @@ DeduceTemplateArguments(ASTContext &Context,
       
     //     T &
     case Type::LValueReference: {
-      const LValueReferenceType *ReferenceArg = Arg->getAs<LValueReferenceType>();
+      const LValueReferenceType *ReferenceArg = Arg->getAsLValueReferenceType();
       if (!ReferenceArg)
         return Sema::TDK_NonDeducedMismatch;
       
@@ -422,7 +422,7 @@ DeduceTemplateArguments(ASTContext &Context,
 
     //     T && [C++0x]
     case Type::RValueReference: {
-      const RValueReferenceType *ReferenceArg = Arg->getAs<RValueReferenceType>();
+      const RValueReferenceType *ReferenceArg = Arg->getAsRValueReferenceType();
       if (!ReferenceArg)
         return Sema::TDK_NonDeducedMismatch;
       
@@ -615,7 +615,7 @@ DeduceTemplateArguments(ASTContext &Context,
                Base != BaseEnd; ++Base) {
               assert(Base->getType()->isRecordType() && 
                      "Base class that isn't a record?");
-              ToVisit.push_back(Base->getType()->getAs<RecordType>());
+              ToVisit.push_back(Base->getType()->getAsRecordType());
             }
           }
           
@@ -1282,7 +1282,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     //   are ignored for type deduction. 
     if (CanonParamType.getCVRQualifiers())
       ParamType = CanonParamType.getUnqualifiedType();
-    if (const ReferenceType *ParamRefType = ParamType->getAs<ReferenceType>()) {
+    if (const ReferenceType *ParamRefType = ParamType->getAsReferenceType()) {
       //   [...] If P is a reference type, the type referred to by P is used 
       //   for type deduction. 
       ParamType = ParamRefType->getPointeeType();
@@ -1320,7 +1320,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     if (isSimpleTemplateIdType(ParamType) ||
         (isa<PointerType>(ParamType) && 
          isSimpleTemplateIdType(
-                              ParamType->getAs<PointerType>()->getPointeeType())))
+                              ParamType->getAsPointerType()->getPointeeType())))
       TDF |= TDF_DerivedClass;
     
     if (TemplateDeductionResult Result

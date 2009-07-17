@@ -388,7 +388,7 @@ const llvm::Type *BlockModule::getGenericExtendedBlockLiteralType() {
 
 RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E) {
   const BlockPointerType *BPT =
-    E->getCallee()->getType()->getAs<BlockPointerType>();
+    E->getCallee()->getType()->getAsBlockPointerType();
 
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
 

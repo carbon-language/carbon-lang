@@ -1151,7 +1151,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
         IdResolver.AddDecl(*F);
       }
     } else if (const RecordType *InnerRecordType
-                 = (*F)->getType()->getAs<RecordType>()) {
+                 = (*F)->getType()->getAsRecordType()) {
       RecordDecl *InnerRecord = InnerRecordType->getDecl();
       if (InnerRecord->isAnonymousStructOrUnion())
         Invalid = Invalid || 
@@ -2814,7 +2814,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       if ((!Var->hasExternalStorage() && !Var->isExternC(Context)) &&
           InitType->isRecordType() && !InitType->isDependentType()) {
         CXXRecordDecl *RD = 
-          cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
+          cast<CXXRecordDecl>(InitType->getAsRecordType()->getDecl());
         CXXConstructorDecl *Constructor = 0;
         if (!RequireCompleteType(Var->getLocation(), InitType, 
                                     diag::err_invalid_incomplete_type_use))
@@ -4237,7 +4237,7 @@ void Sema::ActOnFields(Scope* S,
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;
-    } else if (const RecordType *FDTTy = FDTy->getAs<RecordType>()) {
+    } else if (const RecordType *FDTTy = FDTy->getAsRecordType()) {
       if (FDTTy->getDecl()->hasFlexibleArrayMember()) {
         // If this is a member of a union, then entire union becomes "flexible".
         if (Record && Record->isUnion()) {

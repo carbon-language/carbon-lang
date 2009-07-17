@@ -1204,7 +1204,7 @@ Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, ExprArg expr,Scope *CurScope) {
     QualType ThrowType = ThrowExpr->getType();
     // Make sure the expression type is an ObjC pointer or "void *".
     if (!ThrowType->isObjCObjectPointerType()) {
-      const PointerType *PT = ThrowType->getAs<PointerType>();
+      const PointerType *PT = ThrowType->getAsPointerType();
       if (!PT || !PT->getPointeeType()->isVoidType())
         return StmtError(Diag(AtLoc, diag::error_objc_throw_expects_object)
                         << ThrowExpr->getType() << ThrowExpr->getSourceRange());
@@ -1221,7 +1221,7 @@ Sema::ActOnObjCAtSynchronizedStmt(SourceLocation AtLoc, ExprArg SynchExpr,
   // Make sure the expression type is an ObjC pointer or "void *".
   Expr *SyncExpr = static_cast<Expr*>(SynchExpr.get());
   if (!SyncExpr->getType()->isObjCObjectPointerType()) {
-    const PointerType *PT = SyncExpr->getType()->getAs<PointerType>();
+    const PointerType *PT = SyncExpr->getType()->getAsPointerType();
     if (!PT || !PT->getPointeeType()->isVoidType())
       return StmtError(Diag(AtLoc, diag::error_objc_synchronized_expects_object)
                        << SyncExpr->getType() << SyncExpr->getSourceRange());

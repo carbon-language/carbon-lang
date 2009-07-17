@@ -357,7 +357,7 @@ public:
   }
 
   QualType getValueType(ASTContext&) const {
-    const PointerType* PTy = LValueType->getAs<PointerType>();
+    const PointerType* PTy = LValueType->getAsPointerType();
     assert(PTy);
     return PTy->getPointeeType();
   }

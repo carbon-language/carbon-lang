@@ -287,9 +287,9 @@ unsigned CallExpr::isBuiltinCall(ASTContext &Context) const {
 
 QualType CallExpr::getCallReturnType() const {
   QualType CalleeType = getCallee()->getType();
-  if (const PointerType *FnTypePtr = CalleeType->getAs<PointerType>())
+  if (const PointerType *FnTypePtr = CalleeType->getAsPointerType())
     CalleeType = FnTypePtr->getPointeeType();
-  else if (const BlockPointerType *BPT = CalleeType->getAs<BlockPointerType>())
+  else if (const BlockPointerType *BPT = CalleeType->getAsBlockPointerType())
     CalleeType = BPT->getPointeeType();
   
   const FunctionType *FnType = CalleeType->getAsFunctionType();
@@ -438,7 +438,7 @@ Expr *InitListExpr::updateInit(unsigned Init, Expr *expr) {
 /// getFunctionType - Return the underlying function type for this block.
 ///
 const FunctionType *BlockExpr::getFunctionType() const {
-  return getType()->getAs<BlockPointerType>()->
+  return getType()->getAsBlockPointerType()->
                     getPointeeType()->getAsFunctionType();
 }
 
@@ -923,7 +923,7 @@ Expr::isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc) const {
   if (CT->isIncompleteType())
     return MLV_IncompleteType;
     
-  if (const RecordType *r = CT->getAs<RecordType>()) {
+  if (const RecordType *r = CT->getAsRecordType()) {
     if (r->hasConstFields()) 
       return MLV_ConstQualified;
   }
@@ -999,7 +999,7 @@ bool Expr::isOBJCGCCandidate(ASTContext &Ctx) const {
       QualType T = VD->getType();
       // dereferencing to an object pointer is always a gc'able candidate
       if (T->isPointerType() && 
-          T->getAs<PointerType>()->getPointeeType()->isObjCObjectPointerType())
+          T->getAsPointerType()->getPointeeType()->isObjCObjectPointerType())
         return true;
         
     }
@@ -1427,7 +1427,7 @@ bool Expr::isNullPointerConstant(ASTContext &Ctx) const
   if (const ExplicitCastExpr *CE = dyn_cast<ExplicitCastExpr>(this)) {
     if (!Ctx.getLangOptions().CPlusPlus) {
       // Check that it is a cast to void*.
-      if (const PointerType *PT = CE->getType()->getAs<PointerType>()) {
+      if (const PointerType *PT = CE->getType()->getAsPointerType()) {
         QualType Pointee = PT->getPointeeType();
         if (Pointee.getCVRQualifiers() == 0 && 
             Pointee->isVoidType() &&                              // to void*

@@ -161,7 +161,7 @@ NSErrorCheck::CheckSignature(FunctionDecl& F, QualType& ResultTy,
 
 bool NSErrorCheck::CheckNSErrorArgument(QualType ArgTy) {
   
-  const PointerType* PPT = ArgTy->getAs<PointerType>();
+  const PointerType* PPT = ArgTy->getAsPointerType();
   if (!PPT)
     return false;
   
@@ -182,7 +182,7 @@ bool NSErrorCheck::CheckNSErrorArgument(QualType ArgTy) {
 
 bool NSErrorCheck::CheckCFErrorArgument(QualType ArgTy) {
   
-  const PointerType* PPT = ArgTy->getAs<PointerType>();
+  const PointerType* PPT = ArgTy->getAsPointerType();
   if (!PPT) return false;
   
   const TypedefType* TT = PPT->getPointeeType()->getAsTypedefType();

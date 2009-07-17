@@ -90,7 +90,7 @@ void InheritanceHierarchyWriter::WriteNode(QualType Type, bool FromVirtual) {
 
   // Display the base classes.
   const CXXRecordDecl *Decl 
-    = static_cast<const CXXRecordDecl *>(Type->getAs<RecordType>()->getDecl());
+    = static_cast<const CXXRecordDecl *>(Type->getAsRecordType()->getDecl());
   for (CXXRecordDecl::base_class_const_iterator Base = Decl->bases_begin();
        Base != Decl->bases_end(); ++Base) {
     QualType CanonBaseType = Context.getCanonicalType(Base->getType());

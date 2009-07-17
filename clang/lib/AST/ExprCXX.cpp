@@ -219,28 +219,28 @@ bool UnaryTypeTraitExpr::EvaluateTrait() const {
   case UTT_IsPOD: return QueriedType->isPODType();
   case UTT_IsClass: // Fallthrough
   case UTT_IsUnion:
-    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
+    if (const RecordType *Record = QueriedType->getAsRecordType()) {
       bool Union = Record->getDecl()->isUnion();
       return UTT == UTT_IsUnion ? Union : !Union;
     }
     return false;
   case UTT_IsEnum: return QueriedType->isEnumeralType();
   case UTT_IsPolymorphic:
-    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
+    if (const RecordType *Record = QueriedType->getAsRecordType()) {
       // Type traits are only parsed in C++, so we've got CXXRecords.
       return cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic();
     }
     return false;
   case UTT_IsAbstract:
-    if (const RecordType *RT = QueriedType->getAs<RecordType>())
+    if (const RecordType *RT = QueriedType->getAsRecordType())
       return cast<CXXRecordDecl>(RT->getDecl())->isAbstract();
     return false;
   case UTT_HasTrivialConstructor:
-    if (const RecordType *RT = QueriedType->getAs<RecordType>())
+    if (const RecordType *RT = QueriedType->getAsRecordType())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialConstructor();
     return false;
   case UTT_HasTrivialDestructor:
-    if (const RecordType *RT = QueriedType->getAs<RecordType>())
+    if (const RecordType *RT = QueriedType->getAsRecordType())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor();
     return false;
   }

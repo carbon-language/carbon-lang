@@ -130,7 +130,7 @@ public:
         OCT == Context->getCanonicalType(Context->getObjCClassType()))
       return true;
       
-    if (const PointerType *PT = OCT->getAs<PointerType>()) {
+    if (const PointerType *PT = OCT->getAsPointerType()) {
       if (isa<ObjCInterfaceType>(PT->getPointeeType()) || 
           PT->getPointeeType()->isObjCQualifiedIdType())
         return true;
@@ -684,13 +684,13 @@ std::string RewriteBlocks::SynthesizeBlockCall(CallExpr *Exp) {
   
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp->getCallee())) {
     closureName = DRE->getDecl()->getNameAsCString();
-    CPT = DRE->getType()->getAs<BlockPointerType>();
+    CPT = DRE->getType()->getAsBlockPointerType();
   } else if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(Exp->getCallee())) {
     closureName = CDRE->getDecl()->getNameAsCString();
-    CPT = CDRE->getType()->getAs<BlockPointerType>();
+    CPT = CDRE->getType()->getAsBlockPointerType();
   } else if (MemberExpr *MExpr = dyn_cast<MemberExpr>(Exp->getCallee())) {
     closureName = MExpr->getMemberDecl()->getNameAsCString();
-    CPT = MExpr->getType()->getAs<BlockPointerType>();
+    CPT = MExpr->getType()->getAsBlockPointerType();
   } else {
     assert(1 && "RewriteBlockClass: Bad type");
   }
@@ -813,11 +813,11 @@ void RewriteBlocks::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
 
 bool RewriteBlocks::PointerTypeTakesAnyBlockArguments(QualType QT) {
   const FunctionProtoType *FTP;
-  const PointerType *PT = QT->getAs<PointerType>();
+  const PointerType *PT = QT->getAsPointerType();
   if (PT) {
     FTP = PT->getPointeeType()->getAsFunctionProtoType();
   } else {
-    const BlockPointerType *BPT = QT->getAs<BlockPointerType>();
+    const BlockPointerType *BPT = QT->getAsBlockPointerType();
     assert(BPT && "BlockPointerTypeTakeAnyBlockArguments(): not a block pointer type");
     FTP = BPT->getPointeeType()->getAsFunctionProtoType();
   }
@@ -1068,7 +1068,7 @@ void RewriteBlocks::RewriteFunctionProtoType(QualType funcType, NamedDecl *D) {
 }
 
 void RewriteBlocks::CheckFunctionPointerDecl(QualType funcType, NamedDecl *ND) {
-  const PointerType *PT = funcType->getAs<PointerType>();
+  const PointerType *PT = funcType->getAsPointerType();
   if (PT && PointerTypeTakesAnyBlockArguments(funcType))
     RewriteFunctionProtoType(PT->getPointeeType(), ND);
 }

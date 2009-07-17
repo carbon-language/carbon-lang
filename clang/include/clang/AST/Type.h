@@ -431,6 +431,14 @@ public:
   const FunctionType *getAsFunctionType() const;
   const FunctionNoProtoType *getAsFunctionNoProtoType() const;
   const FunctionProtoType *getAsFunctionProtoType() const;
+  const PointerType *getAsPointerType() const;
+  const BlockPointerType *getAsBlockPointerType() const;
+  const ReferenceType *getAsReferenceType() const;
+  const LValueReferenceType *getAsLValueReferenceType() const;
+  const RValueReferenceType *getAsRValueReferenceType() const;
+  const MemberPointerType *getAsMemberPointerType() const;
+  const TagType *getAsTagType() const;
+  const RecordType *getAsRecordType() const;
   const RecordType *getAsStructureType() const;
   /// NOTE: getAs*ArrayType are methods on ASTContext.
   const TypedefType *getAsTypedefType() const;
@@ -2099,7 +2107,7 @@ inline bool QualType::isAtLeastAsQualifiedAs(QualType Other) const {
 ///   analysis, the expression designates the object or function
 ///   denoted by the reference, and the expression is an lvalue.
 inline QualType QualType::getNonReferenceType() const {
-  if (const ReferenceType *RefType = (*this)->getAs<ReferenceType>())
+  if (const ReferenceType *RefType = (*this)->getAsReferenceType())
     return RefType->getPointeeType();
   else
     return *this;
@@ -2109,7 +2117,7 @@ inline const TypedefType* Type::getAsTypedefType() const {
   return dyn_cast<TypedefType>(this);
 }
 inline const ObjCInterfaceType *Type::getAsPointerToObjCInterfaceType() const {
-  if (const PointerType *PT = getAs<PointerType>())
+  if (const PointerType *PT = getAsPointerType())
     return PT->getPointeeType()->getAsObjCInterfaceType();
   return 0;
 }
@@ -2138,7 +2146,7 @@ inline bool Type::isRValueReferenceType() const {
   return isa<RValueReferenceType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isFunctionPointerType() const {
-  if (const PointerType* T = getAs<PointerType>())
+  if (const PointerType* T = getAsPointerType())
     return T->getPointeeType()->isFunctionType();
   else
     return false;
@@ -2147,7 +2155,7 @@ inline bool Type::isMemberPointerType() const {
   return isa<MemberPointerType>(CanonicalType.getUnqualifiedType());
 }
 inline bool Type::isMemberFunctionPointerType() const {
-  if (const MemberPointerType* T = getAs<MemberPointerType>())
+  if (const MemberPointerType* T = getAsMemberPointerType())
     return T->getPointeeType()->isFunctionType();
   else
     return false;

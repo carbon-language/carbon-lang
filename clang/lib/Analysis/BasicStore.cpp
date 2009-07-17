@@ -251,7 +251,7 @@ SVal BasicStoreManager::getLValueElement(const GRState *state,
 static bool isHigherOrderRawPtr(QualType T, ASTContext &C) {
   bool foundPointer = false;
   while (1) {  
-    const PointerType *PT = T->getAs<PointerType>();
+    const PointerType *PT = T->getAsPointerType();
     if (!PT) {
       if (!foundPointer)
         return false;

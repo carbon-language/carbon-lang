@@ -354,7 +354,7 @@ namespace {
           OCT == Context->getCanonicalType(Context->getObjCClassType()))
         return true;
         
-      if (const PointerType *PT = OCT->getAs<PointerType>()) {
+      if (const PointerType *PT = OCT->getAsPointerType()) {
         if (isa<ObjCInterfaceType>(PT->getPointeeType()) || 
             PT->getPointeeType()->isObjCQualifiedIdType())
           return true;
@@ -394,7 +394,7 @@ void RewriteObjC::RewriteBlocksInFunctionProtoType(QualType funcType,
 }
 
 void RewriteObjC::CheckFunctionPointerDecl(QualType funcType, NamedDecl *ND) {
-  const PointerType *PT = funcType->getAs<PointerType>();
+  const PointerType *PT = funcType->getAsPointerType();
   if (PT && PointerTypeTakesAnyBlockArguments(funcType))
     RewriteBlocksInFunctionProtoType(PT->getPointeeType(), ND);
 }
@@ -864,9 +864,9 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
     // syntax (where a decaration models use).
     QualType retType = OMD->getResultType();
     QualType PointeeTy;
-    if (const PointerType* PT = retType->getAs<PointerType>())
+    if (const PointerType* PT = retType->getAsPointerType())
       PointeeTy = PT->getPointeeType();
-    else if (const BlockPointerType *BPT = retType->getAs<BlockPointerType>())
+    else if (const BlockPointerType *BPT = retType->getAsBlockPointerType())
       PointeeTy = BPT->getPointeeType();
     if ((FPRetType = PointeeTy->getAsFunctionType())) {
       ResultStr += FPRetType->getResultType().getAsString();
@@ -939,7 +939,7 @@ void RewriteObjC::RewriteObjCMethodDecl(ObjCMethodDecl *OMD,
       std::string Name = PDecl->getNameAsString();
       if (isTopLevelBlockPointerType(PDecl->getType())) {
         // Make sure we convert "t (^)(...)" to "t (*)(...)".
-        const BlockPointerType *BPT = PDecl->getType()->getAs<BlockPointerType>();
+        const BlockPointerType *BPT = PDecl->getType()->getAsBlockPointerType();
         Context->getPointerType(BPT->getPointeeType()).getAsStringInternal(Name,
                                                         Context->PrintingPolicy);
       } else
@@ -1138,7 +1138,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
                                           SourceLocation OrigStart) {
   ObjCIvarDecl *D = IV->getDecl();
   if (CurMethodDef) {
-    if (const PointerType *pType = IV->getBase()->getType()->getAs<PointerType>()) {
+    if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
       ObjCInterfaceType *iFaceDecl =
         dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
       // lookup which class implements the instance variable.
@@ -1184,7 +1184,7 @@ Stmt *RewriteObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV,
       
     // Explicit ivar refs need to have a cast inserted.
     // FIXME: consider sharing some of this code with the code above.
-    if (const PointerType *pType = IV->getBase()->getType()->getAs<PointerType>()) {
+    if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
       ObjCInterfaceType *iFaceDecl = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
       // lookup which class implements the instance variable.
       ObjCInterfaceDecl *clsDeclared = 0;
@@ -1608,7 +1608,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
         buf += "1) { ";
         ReplaceText(startLoc, lParenLoc-startBuf+1, buf.c_str(), buf.size());
         sawIdTypedCatch = true;
-      } else if (const PointerType *pType = t->getAs<PointerType>()) { 
+      } else if (const PointerType *pType = t->getAsPointerType()) { 
         ObjCInterfaceType *cls; // Should be a pointer to a class.
         
         cls = dyn_cast<ObjCInterfaceType>(pType->getPointeeType().getTypePtr());
@@ -1824,7 +1824,7 @@ bool RewriteObjC::needToScanForQualifiers(QualType T) {
   if (T->isObjCQualifiedIdType())
     return true;
   
-  if (const PointerType *pType = T->getAs<PointerType>()) {
+  if (const PointerType *pType = T->getAsPointerType()) {
     Type *pointeeType = pType->getPointeeType().getTypePtr();
     if (isa<ObjCQualifiedInterfaceType>(pointeeType))
       return true; // we have "Class <Protocol> *".
@@ -2485,7 +2485,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp) {
                      : (*PI)->getType();
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       if (isTopLevelBlockPointerType(t)) {
-        const BlockPointerType *BPT = t->getAs<BlockPointerType>();
+        const BlockPointerType *BPT = t->getAsBlockPointerType();
         t = Context->getPointerType(BPT->getPointeeType());
       }
       ArgTypes.push_back(t);
@@ -3890,13 +3890,13 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
   
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Exp->getCallee())) {
     closureName = DRE->getDecl()->getNameAsCString();
-    CPT = DRE->getType()->getAs<BlockPointerType>();
+    CPT = DRE->getType()->getAsBlockPointerType();
   } else if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(Exp->getCallee())) {
     closureName = CDRE->getDecl()->getNameAsCString();
-    CPT = CDRE->getType()->getAs<BlockPointerType>();
+    CPT = CDRE->getType()->getAsBlockPointerType();
   } else if (MemberExpr *MExpr = dyn_cast<MemberExpr>(Exp->getCallee())) {
     closureName = MExpr->getMemberDecl()->getNameAsCString();
-    CPT = MExpr->getType()->getAs<BlockPointerType>();
+    CPT = MExpr->getType()->getAsBlockPointerType();
   } else {
     assert(1 && "RewriteBlockClass: Bad type");
   }
@@ -3922,7 +3922,7 @@ Stmt *RewriteObjC::SynthesizeBlockCall(CallExpr *Exp) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
       if (isTopLevelBlockPointerType(t)) {
-        const BlockPointerType *BPT = t->getAs<BlockPointerType>();
+        const BlockPointerType *BPT = t->getAsBlockPointerType();
         t = Context->getPointerType(BPT->getPointeeType());
       }
       ArgTypes.push_back(t);
@@ -4063,11 +4063,11 @@ void RewriteObjC::RewriteBlockPointerFunctionArgs(FunctionDecl *FD) {
 
 bool RewriteObjC::PointerTypeTakesAnyBlockArguments(QualType QT) {
   const FunctionProtoType *FTP;
-  const PointerType *PT = QT->getAs<PointerType>();
+  const PointerType *PT = QT->getAsPointerType();
   if (PT) {
     FTP = PT->getPointeeType()->getAsFunctionProtoType();
   } else {
-    const BlockPointerType *BPT = QT->getAs<BlockPointerType>();
+    const BlockPointerType *BPT = QT->getAsBlockPointerType();
     assert(BPT && "BlockPointerTypeTakeAnyBlockArguments(): not a block pointer type");
     FTP = BPT->getPointeeType()->getAsFunctionProtoType();
   }

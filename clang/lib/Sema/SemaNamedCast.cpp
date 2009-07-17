@@ -118,7 +118,7 @@ CheckConstCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
   if (const LValueReferenceType *DestTypeTmp =
-        DestType->getAs<LValueReferenceType>()) {
+        DestType->getAsLValueReferenceType()) {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
       // Cannot cast non-lvalue to lvalue reference type.
       Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
@@ -220,7 +220,7 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
   if (const LValueReferenceType *DestTypeTmp =
-        DestType->getAs<LValueReferenceType>()) {
+        DestType->getAsLValueReferenceType()) {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
       // Cannot cast non-lvalue to reference type.
       Self.Diag(OpRange.getBegin(), diag::err_bad_cxx_cast_rvalue)
@@ -235,7 +235,7 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     DestType = Self.Context.getPointerType(DestTypeTmp->getPointeeType());
     SrcType = Self.Context.getPointerType(SrcType);
   } else if (const RValueReferenceType *DestTypeTmp =
-               DestType->getAs<RValueReferenceType>()) {
+               DestType->getAsRValueReferenceType()) {
     // Both the reference conversion and the rvalue rules apply.
     Self.DefaultFunctionArrayConversion(SrcExpr);
     SrcType = SrcExpr->getType();
@@ -253,8 +253,8 @@ CheckReinterpretCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // Canonicalize source for comparison.
   SrcType = Self.Context.getCanonicalType(SrcType);
 
-  const MemberPointerType *DestMemPtr = DestType->getAs<MemberPointerType>(),
-                          *SrcMemPtr = SrcType->getAs<MemberPointerType>();
+  const MemberPointerType *DestMemPtr = DestType->getAsMemberPointerType(),
+                          *SrcMemPtr = SrcType->getAsMemberPointerType();
   if (DestMemPtr && SrcMemPtr) {
     // C++ 5.2.10p9: An rvalue of type "pointer to member of X of type T1"
     //   can be explicitly converted to an rvalue of type "pointer to member
@@ -529,10 +529,10 @@ CheckStaticCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   // Reverse pointer conversion to void*. C++ 4.10.p2 specifies conversion to
   // void*. C++ 5.2.9p10 specifies additional restrictions, which really is
   // just the usual constness stuff.
-  if (const PointerType *SrcPointer = SrcType->getAs<PointerType>()) {
+  if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
     QualType SrcPointee = SrcPointer->getPointeeType();
     if (SrcPointee->isVoidType()) {
-      if (const PointerType *DestPointer = DestType->getAs<PointerType>()) {
+      if (const PointerType *DestPointer = DestType->getAsPointerType()) {
         QualType DestPointee = DestPointer->getPointeeType();
         if (DestPointee->isIncompleteOrObjectType()) {
           // This is definitely the intended conversion, but it might fail due
@@ -563,7 +563,7 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
 {
   // N2844 5.2.9p3: An lvalue of type "cv1 T1" can be cast to type "rvalue
   //   reference to cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
-  const RValueReferenceType *R = DestType->getAs<RValueReferenceType>();
+  const RValueReferenceType *R = DestType->getAsRValueReferenceType();
   if (!R)
     return TSC_NotApplicable;
 
@@ -604,7 +604,7 @@ TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr, QualType DestType,
     return TSC_NotApplicable;
   }
 
-  const ReferenceType *DestReference = DestType->getAs<ReferenceType>();
+  const ReferenceType *DestReference = DestType->getAsReferenceType();
   if (!DestReference) {
     return TSC_NotApplicable;
   }
@@ -627,12 +627,12 @@ TryStaticPointerDowncast(Sema &Self, QualType SrcType, QualType DestType,
   // In addition, DR54 clarifies that the base must be accessible in the
   // current context.
 
-  const PointerType *SrcPointer = SrcType->getAs<PointerType>();
+  const PointerType *SrcPointer = SrcType->getAsPointerType();
   if (!SrcPointer) {
     return TSC_NotApplicable;
   }
 
-  const PointerType *DestPointer = DestType->getAs<PointerType>();
+  const PointerType *DestPointer = DestType->getAsPointerType();
   if (!DestPointer) {
     return TSC_NotApplicable;
   }
@@ -738,10 +738,10 @@ TryStaticCastResult
 TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
                              const SourceRange &OpRange)
 {
-  const MemberPointerType *SrcMemPtr = SrcType->getAs<MemberPointerType>();
+  const MemberPointerType *SrcMemPtr = SrcType->getAsMemberPointerType();
   if (!SrcMemPtr)
     return TSC_NotApplicable;
-  const MemberPointerType *DestMemPtr = DestType->getAs<MemberPointerType>();
+  const MemberPointerType *DestMemPtr = DestType->getAsMemberPointerType();
   if (!DestMemPtr)
     return TSC_NotApplicable;
 
@@ -828,8 +828,8 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   //   or "pointer to cv void".
 
   QualType DestPointee;
-  const PointerType *DestPointer = DestType->getAs<PointerType>();
-  const ReferenceType *DestReference = DestType->getAs<ReferenceType>();
+  const PointerType *DestPointer = DestType->getAsPointerType();
+  const ReferenceType *DestReference = DestType->getAsReferenceType();
   if (DestPointer) {
     DestPointee = DestPointer->getPointeeType();
   } else if (DestReference) {
@@ -840,7 +840,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return;
   }
 
-  const RecordType *DestRecord = DestPointee->getAs<RecordType>();
+  const RecordType *DestRecord = DestPointee->getAsRecordType();
   if (DestPointee->isVoidType()) {
     assert(DestPointer && "Reference to void is not possible");
   } else if (DestRecord) {
@@ -863,7 +863,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   QualType SrcType = Self.Context.getCanonicalType(OrigSrcType);
   QualType SrcPointee;
   if (DestPointer) {
-    if (const PointerType *SrcPointer = SrcType->getAs<PointerType>()) {
+    if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
       SrcPointee = SrcPointer->getPointeeType();
     } else {
       Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ptr)
@@ -880,7 +880,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     SrcPointee = SrcType;
   }
 
-  const RecordType *SrcRecord = SrcPointee->getAs<RecordType>();
+  const RecordType *SrcRecord = SrcPointee->getAsRecordType();
   if (SrcRecord) {
     if (Self.RequireCompleteType(OpRange.getBegin(), SrcPointee,
                                     diag::err_bad_dynamic_cast_incomplete,

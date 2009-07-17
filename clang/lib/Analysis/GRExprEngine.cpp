@@ -1274,7 +1274,7 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
     return false;
   
   Expr *theValueExpr = CE->getArg(2);
-  const PointerType *theValueType = theValueExpr->getType()->getAs<PointerType>();
+  const PointerType *theValueType = theValueExpr->getType()->getAsPointerType();
   
   // theValueType not a pointer?
   if (!theValueType)
@@ -1382,7 +1382,7 @@ void GRExprEngine::VisitCall(CallExpr* CE, NodeTy* Pred,
   // Determine the type of function we're calling (if available).
   const FunctionProtoType *Proto = NULL;
   QualType FnType = CE->getCallee()->IgnoreParens()->getType();
-  if (const PointerType *FnTypePtr = FnType->getAs<PointerType>())
+  if (const PointerType *FnTypePtr = FnType->getAsPointerType())
     Proto = FnTypePtr->getPointeeType()->getAsFunctionProtoType();
 
   VisitCallRec(CE, Pred, AI, AE, Dst, Proto, /*ParamIdx=*/0);
