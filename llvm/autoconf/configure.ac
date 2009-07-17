@@ -1262,7 +1262,7 @@ dnl files can be updated automatically when their *.in sources change.
 AC_CONFIG_HEADERS([include/llvm/Config/config.h])
 AC_CONFIG_FILES([include/llvm/Config/Targets.def])
 AC_CONFIG_FILES([include/llvm/Config/AsmPrinters.def])
-AC_CONFIG_FILES([include/llvm/Config/AsmParser.def])
+AC_CONFIG_FILES([include/llvm/Config/AsmParsers.def])
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
 AC_CONFIG_HEADERS([include/llvm/ADT/iterator.h])
 
