@@ -95,9 +95,6 @@ public:
   /// this compilation unit with the runtime library.
   virtual llvm::Function *ModuleInitFunction() = 0;
 
-  /// Add metadata globals to the 'used' globals for final output.
-  virtual void MergeMetadataGlobals(std::vector<llvm::Constant*> &UsedArray) = 0;
-
   /// Get a selector for the specified name and type values. The
   /// return value should have the LLVM type for pointer-to
   /// ASTContext::getObjCSelType().

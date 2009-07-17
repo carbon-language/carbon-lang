@@ -415,9 +415,7 @@ void CodeGenModule::AddUsedGlobal(llvm::GlobalValue *GV) {
 
 void CodeGenModule::EmitLLVMUsed() {
   // Don't create llvm.used if there is no need.
-  // FIXME. Runtime indicates that there might be more 'used' symbols; but not
-  // necessariy. So, this test is not accurate for emptiness.
-  if (LLVMUsed.empty() && !Runtime)
+  if (LLVMUsed.empty())
     return;
 
   llvm::Type *i8PTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
@@ -431,8 +429,6 @@ void CodeGenModule::EmitLLVMUsed() {
                                       i8PTy);
   }
   
-  if (Runtime)
-    Runtime->MergeMetadataGlobals(UsedArray);
   if (UsedArray.empty())
     return;
   llvm::ArrayType *ATy = VMContext.getArrayType(i8PTy, UsedArray.size());

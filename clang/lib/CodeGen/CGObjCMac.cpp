@@ -841,10 +841,6 @@ protected:
   /// DefinedNonLazyCategories - List of defined "non-lazy" categories.
   std::vector<llvm::GlobalValue*> DefinedNonLazyCategories;
   
-  /// UsedGlobals - List of globals to pack into the llvm.used metadata
-  /// to prevent them from being clobbered.
-  std::vector<llvm::GlobalVariable*> UsedGlobals;
-
   /// GetNameForMethod - Return a name for the given method.
   /// \param[out] NameOut - The return value.
   void GetNameForMethod(const ObjCMethodDecl *OMD,
@@ -914,7 +910,7 @@ protected:
   ///
   /// This is a convenience wrapper which not only creates the
   /// variable, but also sets the section and alignment and adds the
-  /// global to the UsedGlobals list.
+  /// global to the "llvm.used" list.
   ///
   /// \param Name - The variable name.
   /// \param Init - The variable initializer; this is also used to
@@ -937,8 +933,6 @@ protected:
                                         bool IsSuper,
                                         const CallArgList &CallArgs,
                                         const ObjCCommonTypesHelper &ObjCTypes);
-
-  virtual void MergeMetadataGlobals(std::vector<llvm::Constant*> &UsedArray);
 
 public:
   CGObjCCommonMac(CodeGen::CodeGenModule &cgm) :
@@ -1674,10 +1668,10 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
                                std::string("\01L_OBJC_PROTOCOL_")+ProtocolName);
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
     Entry->setAlignment(4);
-    UsedGlobals.push_back(Entry);
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
   }
+  CGM.AddUsedGlobal(Entry);
 
   return Entry;
 }
@@ -1696,7 +1690,6 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocolRef(const ObjCProtocolDecl *PD) {
                                "\01L_OBJC_PROTOCOL_" + PD->getNameAsString());
     Entry->setSection("__OBJC,__protocol,regular,no_dead_strip");
     Entry->setAlignment(4);
-    UsedGlobals.push_back(Entry);
     // FIXME: Is this necessary? Why only for protocol?
     Entry->setAlignment(4);
   }
@@ -2128,7 +2121,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   }
   GV->setSection("__OBJC,__meta_class,regular,no_dead_strip");
   GV->setAlignment(4);
-  UsedGlobals.push_back(GV);
+  CGM.AddUsedGlobal(GV);
 
   return GV;
 }
@@ -2332,22 +2325,19 @@ CGObjCCommonMac::CreateMetadataVar(const std::string &Name,
   const llvm::Type *Ty = Init->getType();
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(CGM.getModule(), Ty, false,
-                             llvm::GlobalValue::InternalLinkage,
-                             Init,
-                             Name);
+                             llvm::GlobalValue::InternalLinkage, Init, Name);
   if (Section)
     GV->setSection(Section);
   if (Align)
     GV->setAlignment(Align);
   if (AddToUsed)
-    UsedGlobals.push_back(GV);
+    CGM.AddUsedGlobal(GV);
   return GV;
 }
 
 llvm::Function *CGObjCMac::ModuleInitFunction() { 
   // Abuse this interface function as a place to finalize.
   FinishModule();
-
   return NULL;
 }
 
@@ -3464,36 +3454,26 @@ void CGObjCCommonMac::GetNameForMethod(const ObjCMethodDecl *D,
   NameOut += ']';
 }
 
-void CGObjCCommonMac::MergeMetadataGlobals(
-                                  std::vector<llvm::Constant*> &UsedArray) {
-  llvm::Type *i8PTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
-  for (std::vector<llvm::GlobalVariable*>::iterator i = UsedGlobals.begin(),
-       e = UsedGlobals.end(); i != e; ++i) {
-    UsedArray.push_back(
-                      VMContext.getConstantExprBitCast(cast<llvm::Constant>(*i), 
-                                                       i8PTy));
-  }
-}
-
 void CGObjCMac::FinishModule() {
   EmitModuleInfo();
 
   // Emit the dummy bodies for any protocols which were referenced but
   // never defined.
   for (llvm::DenseMap<IdentifierInfo*, llvm::GlobalVariable*>::iterator 
-         i = Protocols.begin(), e = Protocols.end(); i != e; ++i) {
-    if (i->second->hasInitializer())
+         I = Protocols.begin(), e = Protocols.end(); I != e; ++I) {
+    if (I->second->hasInitializer())
       continue;
 
     std::vector<llvm::Constant*> Values(5);
     Values[0] = VMContext.getNullValue(ObjCTypes.ProtocolExtensionPtrTy);
-    Values[1] = GetClassName(i->first);
+    Values[1] = GetClassName(I->first);
     Values[2] = VMContext.getNullValue(ObjCTypes.ProtocolListPtrTy);
     Values[3] = Values[4] =
       VMContext.getNullValue(ObjCTypes.MethodDescriptionListPtrTy);
-    i->second->setLinkage(llvm::GlobalValue::InternalLinkage);
-    i->second->setInitializer(VMContext.getConstantStruct(ObjCTypes.ProtocolTy,
+    I->second->setLinkage(llvm::GlobalValue::InternalLinkage);
+    I->second->setInitializer(VMContext.getConstantStruct(ObjCTypes.ProtocolTy,
                                                         Values));
+    CGM.AddUsedGlobal(I->second);
   }
 
   // Add assembler directives to add lazy undefined symbol references
@@ -3506,14 +3486,14 @@ void CGObjCMac::FinishModule() {
   if (!CGM.getModule().getModuleInlineAsm().empty())
     s << "\n";
   
-  for (std::set<IdentifierInfo*>::iterator i = LazySymbols.begin(),
-         e = LazySymbols.end(); i != e; ++i) {
-    s << "\t.lazy_reference .objc_class_name_" << (*i)->getName() << "\n";
+  for (std::set<IdentifierInfo*>::iterator I = LazySymbols.begin(),
+         e = LazySymbols.end(); I != e; ++I) {
+    s << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
   }
-  for (std::set<IdentifierInfo*>::iterator i = DefinedSymbols.begin(),
-         e = DefinedSymbols.end(); i != e; ++i) {
-    s << "\t.objc_class_name_" << (*i)->getName() << "=0\n"
-      << "\t.globl .objc_class_name_" << (*i)->getName() << "\n";
+  for (std::set<IdentifierInfo*>::iterator I = DefinedSymbols.begin(),
+         e = DefinedSymbols.end(); I != e; ++I) {
+    s << "\t.objc_class_name_" << (*I)->getName() << "=0\n"
+      << "\t.globl .objc_class_name_" << (*I)->getName() << "\n";
   }  
   
   CGM.getModule().appendModuleInlineAsm(s.str());
@@ -4096,7 +4076,7 @@ void CGObjCNonFragileABIMac::AddModuleClassList(const
                              SymbolName);
   GV->setAlignment(8);
   GV->setSection(SectionName);
-  UsedGlobals.push_back(GV);
+  CGM.AddUsedGlobal(GV);
 }
                                                 
 void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
@@ -4141,7 +4121,7 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                              "\01L_OBJC_IMAGE_INFO");
   IMGV->setSection("__DATA, __objc_imageinfo, regular, no_dead_strip");
   IMGV->setConstant(true);
-  UsedGlobals.push_back(IMGV);
+  CGM.AddUsedGlobal(IMGV);
 }
 
 /// LegacyDispatchedSelector - Returns true if SEL is not in the list of
@@ -4477,7 +4457,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
                                 ProtocolName);
   PTGV->setSection("__DATA, __objc_protorefs, coalesced, no_dead_strip");
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  UsedGlobals.push_back(PTGV);
+  CGM.AddUsedGlobal(PTGV);
   return Builder.CreateLoad(PTGV, false, "tmp");
 }
 
@@ -4563,7 +4543,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   GCATV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.CategorynfABITy));
   GCATV->setSection("__DATA, __objc_const");
-  UsedGlobals.push_back(GCATV);
+  CGM.AddUsedGlobal(GCATV);
   DefinedCategories.push_back(GCATV);
 
   // Determine if this category is also "non-lazy".
@@ -4624,7 +4604,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
   GV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
   GV->setSection(Section);
-  UsedGlobals.push_back(GV);
+  CGM.AddUsedGlobal(GV);
   return VMContext.getConstantExprBitCast(GV,
                                         ObjCTypes.MethodListnfABIPtrTy);
 }
@@ -4751,7 +4731,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
   GV->setSection("__DATA, __objc_const");
                  
-  UsedGlobals.push_back(GV);
+  CGM.AddUsedGlobal(GV);
   return VMContext.getConstantExprBitCast(GV, ObjCTypes.IvarListnfABIPtrTy);
 }
 
@@ -4769,7 +4749,6 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
                              0,
                              "\01l_OBJC_PROTOCOL_$_" + PD->getNameAsString());
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
-    UsedGlobals.push_back(Entry);
   }
   
   return Entry;
@@ -4876,7 +4855,8 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
     Entry->setSection("__DATA,__datacoal_nt,coalesced");
   }
   Entry->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  
+  CGM.AddUsedGlobal(Entry);
+
   // Use this protocol meta-data to build protocol list table in section
   // __DATA, __objc_protolist
   llvm::GlobalVariable *PTGV = new llvm::GlobalVariable(
@@ -4890,7 +4870,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.ProtocolnfABIPtrTy));
   PTGV->setSection("__DATA, __objc_protolist, coalesced, no_dead_strip");
   PTGV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  UsedGlobals.push_back(PTGV);
+  CGM.AddUsedGlobal(PTGV);
   return Entry;
 }
 
@@ -4942,7 +4922,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
   GV->setSection("__DATA, __objc_const");
   GV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
-  UsedGlobals.push_back(GV);
+  CGM.AddUsedGlobal(GV);
   return VMContext.getConstantExprBitCast(GV, 
                                         ObjCTypes.ProtocolListnfABIPtrTy);
 }
@@ -5149,7 +5129,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitClassRef(CGBuilderTy &Builder,
                      CGM.getTargetData().getPrefTypeAlignment(
                                                   ObjCTypes.ClassnfABIPtrTy));
     Entry->setSection("__DATA, __objc_classrefs, regular, no_dead_strip");
-    UsedGlobals.push_back(Entry);
+    CGM.AddUsedGlobal(Entry);
   }
   
   return Builder.CreateLoad(Entry, false, "tmp");
@@ -5172,7 +5152,7 @@ CGObjCNonFragileABIMac::EmitSuperClassRef(CGBuilderTy &Builder,
                      CGM.getTargetData().getPrefTypeAlignment(
                                                   ObjCTypes.ClassnfABIPtrTy));
     Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
-    UsedGlobals.push_back(Entry);
+    CGM.AddUsedGlobal(Entry);
   }
   
   return Builder.CreateLoad(Entry, false, "tmp");
@@ -5199,7 +5179,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitMetaClassRef(CGBuilderTy &Builder,
                                                   ObjCTypes.ClassnfABIPtrTy));
     
   Entry->setSection("__DATA, __objc_superrefs, regular, no_dead_strip");
-  UsedGlobals.push_back(Entry);
+  CGM.AddUsedGlobal(Entry);
   
   return Builder.CreateLoad(Entry, false, "tmp");
 }
@@ -5281,7 +5261,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
                              llvm::GlobalValue::InternalLinkage,
                              Casted, "\01L_OBJC_SELECTOR_REFERENCES_");
     Entry->setSection("__DATA, __objc_selrefs, literal_pointers, no_dead_strip");
-    UsedGlobals.push_back(Entry);
+    CGM.AddUsedGlobal(Entry);
   }
   
   return Builder.CreateLoad(Entry, false, "tmp");

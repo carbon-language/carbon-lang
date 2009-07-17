@@ -140,7 +140,6 @@ public:
                                            const ObjCProtocolDecl *PD);
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
   virtual llvm::Function *ModuleInitFunction();
-  virtual void MergeMetadataGlobals(std::vector<llvm::Constant*> &UsedArray);
   virtual llvm::Function *GetPropertyGetFunction();
   virtual llvm::Function *GetPropertySetFunction();
   virtual llvm::Function *EnumerationMutationFunction();
@@ -1007,9 +1006,6 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   Classes.push_back(ClassStruct);
 }
 
-void CGObjCGNU::MergeMetadataGlobals(
-                          std::vector<llvm::Constant*> &UsedArray) {
-}
 
 llvm::Function *CGObjCGNU::ModuleInitFunction() { 
   // Only emit an ObjC load function if no Objective-C stuff has been called
