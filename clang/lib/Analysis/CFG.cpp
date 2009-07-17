@@ -102,6 +102,7 @@ public:
   CFGBlock* VisitBreakStmt(BreakStmt* B);
   CFGBlock* VisitCaseStmt(CaseStmt* Terminator);
   CFGBlock* VisitCompoundStmt(CompoundStmt* C);
+  CFGBlock* VisitConditionalOperator(ConditionalOperator *C);
   CFGBlock* VisitContinueStmt(ContinueStmt* C);
   CFGBlock* VisitDefaultStmt(DefaultStmt* D);
   CFGBlock* VisitDoStmt(DoStmt* D);
@@ -145,7 +146,7 @@ public:
 private:
   CFGBlock* createBlock(bool add_successor = true);
   CFGBlock* addStmt(Stmt* Terminator);
-  CFGBlock* WalkAST(Stmt* Terminator, bool AlwaysAddStmt);
+  CFGBlock* WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false);
   CFGBlock* WalkAST_VisitChildren(Stmt* Terminator);
   CFGBlock* WalkAST_VisitDeclSubExpr(Decl* D);
   CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* Terminator);
@@ -272,68 +273,17 @@ bool CFGBuilder::FinishBlock(CFGBlock* B) {
 ///  called if no additional blocks are created.
 CFGBlock* CFGBuilder::addStmt(Stmt* Terminator) {
   if (!Block) Block = createBlock();
-  return WalkAST(Terminator,true);
+  return WalkAST(Terminator, true);
 }
 
-/// WalkAST - Used by addStmt to walk the subtree of a statement and add extra
+/// WalkAST - Walk the subtree of a statement and add extra
 ///   blocks for ternary operators, &&, and ||.  We also process "," and
 ///   DeclStmts (which may contain nested control-flow).
-CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
+CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt) {
   switch (Terminator->getStmtClass()) {
-  case Stmt::ConditionalOperatorClass: {
-    ConditionalOperator* C = cast<ConditionalOperator>(Terminator);
-
-    // Create the confluence block that will "merge" the results of the ternary
-    // expression.
-    CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();
-    ConfluenceBlock->appendStmt(C);
-    if (!FinishBlock(ConfluenceBlock))
-      return 0;
-
-    // Create a block for the LHS expression if there is an LHS expression.  A
-    // GCC extension allows LHS to be NULL, causing the condition to be the
-    // value that is returned instead.
-    //  e.g: x ?: y is shorthand for: x ? x : y;
-    Succ = ConfluenceBlock;
-    Block = NULL;
-    CFGBlock* LHSBlock = NULL;
-    if (C->getLHS()) {
-      LHSBlock = Visit(C->getLHS());
-      if (!FinishBlock(LHSBlock))
-        return 0;
-      Block = NULL;
-    }
-
-    // Create the block for the RHS expression.
-    Succ = ConfluenceBlock;
-    CFGBlock* RHSBlock = Visit(C->getRHS());
-    if (!FinishBlock(RHSBlock))
-      return 0;
-
-    // Create the block that will contain the condition.
-    Block = createBlock(false);
-
-    if (LHSBlock)
-      Block->addSuccessor(LHSBlock);
-    else {
-      // If we have no LHS expression, add the ConfluenceBlock as a direct
-      // successor for the block containing the condition.  Moreover, we need to
-      // reverse the order of the predecessors in the ConfluenceBlock because
-      // the RHSBlock will have been added to the succcessors already, and we
-      // want the first predecessor to the the block containing the expression
-      // for the case when the ternary expression evaluates to true.
-      Block->addSuccessor(ConfluenceBlock);
-      assert (ConfluenceBlock->pred_size() == 2);
-      std::reverse(ConfluenceBlock->pred_begin(),
-                   ConfluenceBlock->pred_end());
-    }
-
-    Block->addSuccessor(RHSBlock);
-
-    Block->setTerminator(C);
-    return addStmt(C->getCond());
-  }
-
+  case Stmt::ConditionalOperatorClass:
+    return VisitConditionalOperator(cast<ConditionalOperator>(Terminator));
+  
   case Stmt::ChooseExprClass: {
     ChooseExpr* C = cast<ChooseExpr>(Terminator);
 
@@ -566,6 +516,59 @@ CFGBlock* CFGBuilder::VisitStmt(Stmt* Statement) {
 
 CFGBlock* CFGBuilder::VisitNullStmt(NullStmt* Statement) {
   return Block;
+}
+
+  
+CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
+  // Create the confluence block that will "merge" the results of the ternary
+  // expression.
+  CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
+  ConfluenceBlock->appendStmt(C);
+  if (!FinishBlock(ConfluenceBlock))
+    return 0;
+  
+  // Create a block for the LHS expression if there is an LHS expression.  A
+  // GCC extension allows LHS to be NULL, causing the condition to be the
+  // value that is returned instead.
+  //  e.g: x ?: y is shorthand for: x ? x : y;
+  Succ = ConfluenceBlock;
+  Block = NULL;
+  CFGBlock* LHSBlock = NULL;
+  if (C->getLHS()) {
+    LHSBlock = Visit(C->getLHS());
+    if (!FinishBlock(LHSBlock))
+      return 0;
+    Block = NULL;
+  }
+  
+  // Create the block for the RHS expression.
+  Succ = ConfluenceBlock;
+  CFGBlock* RHSBlock = Visit(C->getRHS());
+  if (!FinishBlock(RHSBlock))
+    return 0;
+  
+  // Create the block that will contain the condition.
+  Block = createBlock(false);
+  
+  if (LHSBlock)
+    Block->addSuccessor(LHSBlock);
+  else {
+    // If we have no LHS expression, add the ConfluenceBlock as a direct
+    // successor for the block containing the condition.  Moreover, we need to
+    // reverse the order of the predecessors in the ConfluenceBlock because
+    // the RHSBlock will have been added to the succcessors already, and we
+    // want the first predecessor to the the block containing the expression
+    // for the case when the ternary expression evaluates to true.
+    Block->addSuccessor(ConfluenceBlock);
+    assert (ConfluenceBlock->pred_size() == 2);
+    std::reverse(ConfluenceBlock->pred_begin(),
+                 ConfluenceBlock->pred_end());
+  }
+  
+  Block->addSuccessor(RHSBlock);
+  
+  Block->setTerminator(C);
+  return addStmt(C->getCond());
 }
 
 CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
