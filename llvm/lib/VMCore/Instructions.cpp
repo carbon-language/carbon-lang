@@ -1022,6 +1022,9 @@ void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
     OL[i+1] = Idx[i];
 
   setName(Name);
+
+  // GetElementPtr instructions have undefined results on overflow by default.
+  setHasNoPointerOverflow(true);
 }
 
 void GetElementPtrInst::init(Value *Ptr, Value *Idx, const std::string &Name) {
@@ -1031,6 +1034,9 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx, const std::string &Name) {
   OL[1] = Idx;
 
   setName(Name);
+
+  // GetElementPtr instructions have undefined results on overflow by default.
+  setHasNoPointerOverflow(true);
 }
 
 GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
@@ -1042,6 +1048,9 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
   Use *GEPIOL = GEPI.OperandList;
   for (unsigned i = 0, E = NumOperands; i != E; ++i)
     OL[i] = GEPIOL[i];
+
+  // Transfor the hasNoPointerOverflow() value from the original GEPI.
+  setHasNoPointerOverflow(GEPI.hasNoPointerOverflow());
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
