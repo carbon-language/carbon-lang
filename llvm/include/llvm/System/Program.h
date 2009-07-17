@@ -97,12 +97,12 @@ namespace sys {
      /// called then a std::string is thrown.
      /// @returns an integer result code indicating the status of the program.
      /// A zero or positive value indicates the result code of the program. A
-     /// negative value is the signal number on which it terminated. 
+     /// negative value is the signal number on which it terminated.
      /// @see FindProgrambyName
      /// @brief Executes the program with the given set of \p args.
      static void ExecuteNoWait(
-        const Path& path,  ///< sys::Path object providing the path of the 
-        ///< program to be executed. It is presumed this is the result of 
+        const Path& path,  ///< sys::Path object providing the path of the
+        ///< program to be executed. It is presumed this is the result of
         ///< the FindProgramByName method.
         const char** args, ///< A vector of strings that are passed to the
         ///< program.  The first element should be the name of the program.
@@ -120,7 +120,7 @@ namespace sys {
         ///< higher limit, the child is killed and this call returns. If zero -
         ///< no memory limit.
         std::string* ErrMsg = 0 ///< If non-zero, provides a pointer to a string
-        ///< instance in which error messages will be returned. If the string 
+        ///< instance in which error messages will be returned. If the string
         ///< is non-empty upon return an error occurred while invoking the
         ///< program.
         );

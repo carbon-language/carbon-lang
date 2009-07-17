@@ -1,10 +1,10 @@
 //===- llvm/System/Unix/Program.cpp -----------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Unix specific portion of the Program class.
@@ -51,10 +51,10 @@ Program::FindProgramByName(const std::string& progName) {
     return temp;
 
   // At this point, the file name is valid and its not executable
- 
+
   // Get the path. If its empty, we can't do anything to find it.
   const char *PathStr = getenv("PATH");
-  if (PathStr == 0) 
+  if (PathStr == 0)
     return Path();
 
   // Now we have a colon separated list of directories to search; try them.
@@ -142,14 +142,14 @@ static void SetMemoryLimits (unsigned size)
 #endif
 }
 
-int 
-Program::ExecuteAndWait(const Path& path, 
+int
+Program::ExecuteAndWait(const Path& path,
                         const char** args,
                         const char** envp,
                         const Path** redirects,
                         unsigned secondsToWait,
                         unsigned memoryLimit,
-                        std::string* ErrMsg) 
+                        std::string* ErrMsg)
 {
   if (!path.canExecute()) {
     if (ErrMsg)
@@ -174,7 +174,7 @@ Program::ExecuteAndWait(const Path& path,
         if (RedirectIO(redirects[0], 0, ErrMsg)) { return -1; }
         // Redirect stdout
         if (RedirectIO(redirects[1], 1, ErrMsg)) { return -1; }
-        if (redirects[1] && redirects[2] && 
+        if (redirects[1] && redirects[2] &&
             *(redirects[1]) == *(redirects[2])) {
           // If stdout and stderr should go to the same place, redirect stderr
           // to the FD already open for stdout.
@@ -192,7 +192,7 @@ Program::ExecuteAndWait(const Path& path,
       if (memoryLimit!=0) {
         SetMemoryLimits(memoryLimit);
       }
-      
+
       // Execute!
       if (envp != 0)
         execve (path.c_str(), (char**)args, (char**)envp);
@@ -233,7 +233,7 @@ Program::ExecuteAndWait(const Path& path,
     if (secondsToWait && errno == EINTR) {
       // Kill the child.
       kill(child, SIGKILL);
-        
+
       // Turn off the alarm and restore the signal handler
       alarm(0);
       sigaction(SIGALRM, &Old, 0);
@@ -271,16 +271,16 @@ Program::ExecuteAndWait(const Path& path,
 #else
   return -99;
 #endif
-    
+
 }
 
 void
-Program::ExecuteNoWait(const Path& path, 
+Program::ExecuteNoWait(const Path& path,
                        const char** args,
                        const char** envp,
                        const Path** redirects,
                        unsigned memoryLimit,
-                       std::string* ErrMsg) 
+                       std::string* ErrMsg)
 {
   if (!path.canExecute()) {
     if (ErrMsg)
@@ -304,7 +304,7 @@ Program::ExecuteNoWait(const Path& path,
         if (RedirectIO(redirects[0], 0, ErrMsg)) { return; }
         // Redirect stdout
         if (RedirectIO(redirects[1], 1, ErrMsg)) { return; }
-        if (redirects[1] && redirects[2] && 
+        if (redirects[1] && redirects[2] &&
             *(redirects[1]) == *(redirects[2])) {
           // If stdout and stderr should go to the same place, redirect stderr
           // to the FD already open for stdout.
@@ -322,7 +322,7 @@ Program::ExecuteNoWait(const Path& path,
       if (memoryLimit!=0) {
         SetMemoryLimits(memoryLimit);
       }
-      
+
       // Execute!
       if (envp != 0)
         execve (path.c_str(), (char**)args, (char**)envp);
