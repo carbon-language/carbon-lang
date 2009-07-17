@@ -69,7 +69,10 @@ void CGBuilder::VisitCallExpr(CallExpr *CE) {
   if (FunctionDecl *CalleeDecl = CE->getDirectCallee()) {
     Entity *Ent = Entity::get(CalleeDecl, G.getProgram());
     CallGraphNode *CalleeNode = G.getOrInsertFunction(Ent);
-    CallerNode->addCallee(ASTLocation(FD, CE), CalleeNode);
+
+    Decl *Parent = ASTLocation::FindImmediateParent(FD, CE);
+    
+    CallerNode->addCallee(ASTLocation(Parent, CE), CalleeNode);
   }
 }
 

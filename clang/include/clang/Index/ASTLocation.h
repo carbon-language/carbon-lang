@@ -42,7 +42,11 @@ class ASTLocation {
 public:
   ASTLocation() : D(0), Stm(0) {}
 
-  explicit ASTLocation(const Decl *d, const Stmt *stm = 0);
+  explicit ASTLocation(const Decl *d, const Stmt *stm = 0)
+    : D(const_cast<Decl*>(d)), Stm(const_cast<Stmt*>(stm)) {
+    assert((Stm == 0 || isImmediateParent(D, Stm)) &&
+           "The Decl is not the immediate parent of the Stmt.");
+  }
 
   const Decl *getDecl() const { return D; }
   const Stmt *getStmt() const { return Stm; }
@@ -58,6 +62,7 @@ public:
 
   /// \brief Checks that D is the immediate Decl parent of Node.
   static bool isImmediateParent(Decl *D, Stmt *Node);
+  static Decl *FindImmediateParent(Decl *D, Stmt *Node);
 
   friend bool operator==(const ASTLocation &L, const ASTLocation &R) { 
     return L.D == R.D && L.Stm == R.Stm;

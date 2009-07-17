@@ -33,7 +33,7 @@ static bool isContainedInStatement(Stmt *Node, Stmt *Parent) {
   return false;
 }
 
-static Decl *FindImmediateParent(Decl *D, Stmt *Node) {
+Decl *ASTLocation::FindImmediateParent(Decl *D, Stmt *Node) {
   assert(D && Node && "Passed null Decl or null Stmt");
 
   if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
@@ -60,16 +60,6 @@ static Decl *FindImmediateParent(Decl *D, Stmt *Node) {
   
   return 0;
 }
-
-ASTLocation::ASTLocation(const Decl *d, const Stmt *stm)
-  : D(const_cast<Decl*>(d)), Stm(const_cast<Stmt*>(stm)) {
-  if (Stm) {
-    Decl *Parent = FindImmediateParent(D, Stm);
-    assert(Parent);
-    D = Parent;
-  }
-}
-
 
 bool ASTLocation::isImmediateParent(Decl *D, Stmt *Node) {
   assert(D && Node && "Passed null Decl or null Stmt");
