@@ -648,6 +648,8 @@ SystemZInstrInfo::getOppositeCondition(SystemZCC::CondCodes CC) const {
 const TargetInstrDesc&
 SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   switch (Opc) {
+  default:
+   assert(0 && "Don't have long disp version of this instruction");
   case SystemZ::MOV32mr:   return get(SystemZ::MOV32mry);
   case SystemZ::MOV32rm:   return get(SystemZ::MOV32rmy);
   case SystemZ::MOVSX32rm16: return get(SystemZ::MOVSX32rm16y);
@@ -666,8 +668,5 @@ SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   case SystemZ::FMOV64rm:  return get(SystemZ::FMOV64rmy);
   case SystemZ::MOV64Pmr:  return get(SystemZ::MOV64Pmry);
   case SystemZ::MOV64Prm:  return get(SystemZ::MOV64Prmy);
-  default:
-   assert(0 && "Don't have long disp version of this instruction");
   }
 }
-
