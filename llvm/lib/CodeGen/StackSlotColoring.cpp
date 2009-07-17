@@ -503,6 +503,15 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
       if (Reg == OldReg) {
         if (MO.isImplicit())
           return false;
+
+        // Abort the use is actually a sub-register def. We don't have enough
+        // information to figure out if it is really legal.
+        if (MO.getSubReg() ||
+            TID.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
+            TID.getOpcode() == TargetInstrInfo::INSERT_SUBREG ||
+            TID.getOpcode() == TargetInstrInfo::SUBREG_TO_REG)
+          return false;
+
         const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TID, i);
         if (RC && !RC->contains(NewReg))
           return false;
@@ -561,12 +570,19 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
         if (MO.isDef() || MO.isImplicit())
           return false;
 
+        // Abort the use is actually a sub-register use. We don't have enough
+        // information to figure out if it is really legal.
+        if (MO.getSubReg() ||
+            TID.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
+          return false;
+
         const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TID, i);
         if (RC && !RC->contains(NewReg))
           return false;
         FoundUse = true;
         if (MO.isKill())
           FoundKill = true;
+
         Uses.push_back(&MO);
       } else if (TRI->regsOverlap(Reg, NewReg) ||
                  TRI->regsOverlap(Reg, OldReg))
