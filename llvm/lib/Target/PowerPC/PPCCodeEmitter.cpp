@@ -133,6 +133,7 @@ void Emitter<CodeEmitter>::emitBasicBlock(MachineBasicBlock &MBB) {
   
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     const MachineInstr &MI = *I;
+    MCE.processDebugLoc(MI.getDebugLoc());
     switch (MI.getOpcode()) {
     default:
       MCE.emitWordBE(getBinaryCodeForInstr(MI));
@@ -275,4 +276,3 @@ unsigned PPCCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 }
 
 #include "PPCGenCodeEmitter.inc"
-

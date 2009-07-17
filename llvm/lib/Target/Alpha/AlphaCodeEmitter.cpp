@@ -72,8 +72,6 @@ namespace {
       return "Alpha Machine Code Emitter";
     }
 
-    void emitInstruction(const MachineInstr &MI);
-
   private:
     void emitBasicBlock(MachineBasicBlock &MBB);
   };
@@ -118,6 +116,7 @@ void Emitter<CodeEmitter>::emitBasicBlock(MachineBasicBlock &MBB) {
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
        I != E; ++I) {
     const MachineInstr &MI = *I;
+    MCE.processDebugLoc(MI.getDebugLoc());
     switch(MI.getOpcode()) {
     default:
       MCE.emitWordLE(getBinaryCodeForInstr(*I));
@@ -245,5 +244,3 @@ unsigned AlphaCodeEmitter::getMachineOpValue(const MachineInstr &MI,
 }
 
 #include "AlphaGenCodeEmitter.inc"
-
-

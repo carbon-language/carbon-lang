@@ -337,6 +337,8 @@ template<class CodeEmitter>
 void Emitter<CodeEmitter>::emitInstruction(const MachineInstr &MI) {
   DOUT << "JIT: " << (void*)MCE.getCurrentPCValue() << ":\t" << MI;
 
+  MCE.processDebugLoc(MI.getDebugLoc());
+
   NumEmitted++;  // Keep track of the # of mi's emitted
   switch (MI.getDesc().TSFlags & ARMII::FormMask) {
   default: {
@@ -1422,4 +1424,3 @@ void Emitter<CodeEmitter>::emitMiscInstruction(const MachineInstr &MI) {
 }
 
 #include "ARMGenCodeEmitter.inc"
-
