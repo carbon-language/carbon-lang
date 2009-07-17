@@ -21,6 +21,11 @@ TargetRegistry::iterator TargetRegistry::begin() {
 const Target *
 TargetRegistry::getClosestStaticTargetForTriple(const std::string &TT,
                                                 std::string &Error) {
+  // Provide special warning when no targets are initialized.
+  if (begin() == end()) {
+    Error = "Unable to find target for this triple (no targets are registered)";
+    return 0;
+  }
   const Target *Best = 0, *EquallyBest = 0;
   unsigned BestQuality = 0;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -35,7 +40,7 @@ TargetRegistry::getClosestStaticTargetForTriple(const std::string &TT,
   }
 
   if (!Best) {
-    Error = "No available targets are compatible with this module";
+    Error = "No available targets are compatible with this triple";
     return 0;
   }
 
@@ -53,6 +58,12 @@ TargetRegistry::getClosestStaticTargetForTriple(const std::string &TT,
 const Target *
 TargetRegistry::getClosestStaticTargetForModule(const Module &M,
                                                 std::string &Error) {
+  // Provide special warning when no targets are initialized.
+  if (begin() == end()) {
+    Error = "Unable to find target for this module (no targets are registered)";
+    return 0;
+  }
+
   const Target *Best = 0, *EquallyBest = 0;
   unsigned BestQuality = 0;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
@@ -84,6 +95,12 @@ TargetRegistry::getClosestStaticTargetForModule(const Module &M,
 
 const Target *
 TargetRegistry::getClosestTargetForJIT(std::string &Error) {
+  // Provide special warning when no targets are initialized.
+  if (begin() == end()) {
+    Error = "No JIT is available for this host (no targets are registered)";
+    return 0;
+  }
+
   const Target *Best = 0, *EquallyBest = 0;
   unsigned BestQuality = 0;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
