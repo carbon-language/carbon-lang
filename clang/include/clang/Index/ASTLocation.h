@@ -42,11 +42,7 @@ class ASTLocation {
 public:
   ASTLocation() : D(0), Stm(0) {}
 
-  explicit ASTLocation(const Decl *d, const Stmt *stm = 0)
-    : D(const_cast<Decl*>(d)), Stm(const_cast<Stmt*>(stm)) {
-    assert((Stm == 0 || isImmediateParent(D, Stm)) &&
-           "The Decl is not the immediate parent of the Stmt.");
-  }
+  explicit ASTLocation(const Decl *d, const Stmt *stm = 0);
 
   const Decl *getDecl() const { return D; }
   const Stmt *getStmt() const { return Stm; }
