@@ -597,9 +597,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
       return 0;
   }
 
-  // Process the false branch.  NULL out Block so that the recursive call to
-  // Visit will create a new basic block.
-  // Null out Block so that all successor
+  // Process the false branch.
   CFGBlock* ElseBlock = Succ;
 
   if (Stmt* Else = I->getElse()) {
@@ -618,9 +616,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     }
   }
 
-  // Process the true branch.  NULL out Block so that the recursive call to
-  // Visit will create a new basic block.
-  // Null out Block so that all successor
+  // Process the true branch.
   CFGBlock* ThenBlock;
   {
     Stmt* Then = I->getThen();
