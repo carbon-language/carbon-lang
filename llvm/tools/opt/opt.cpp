@@ -81,9 +81,17 @@ static cl::opt<bool>
 DisableOptimizations("disable-opt", 
                      cl::desc("Do not run any optimization passes"));
 
+static cl::opt<bool> 
+DisableInternalize("disable-internalize",
+                   cl::desc("Do not mark all symbols as internal"));
+
 static cl::opt<bool>
 StandardCompileOpts("std-compile-opts", 
                    cl::desc("Include the standard compile time optimizations"));
+
+static cl::opt<bool>
+StandardLinkOpts("std-link-opts", 
+                 cl::desc("Include the standard link time optimizations"));
 
 static cl::opt<bool>
 OptLevelO1("O1",
@@ -311,6 +319,20 @@ void AddStandardCompilePasses(PassManager &PM) {
                              InliningPass);
 }
 
+void AddStandardLinkPasses(PassManager &PM) {
+  PM.add(createVerifierPass());                  // Verify that input is correct
+
+  // If the -strip-debug command line option was specified, do it.
+  if (StripDebug)
+    addPass(PM, createStripSymbolsPass(true));
+
+  if (DisableOptimizations) return;
+
+  createStandardLTOPasses(&PM, /*Internalize=*/ !DisableInternalize,
+                          /*RunInliner=*/ !DisableInline,
+                          /*VerifyEach=*/ VerifyEach);
+}
+
 } // anonymous namespace
 
 
@@ -404,6 +426,12 @@ int main(int argc, char **argv) {
         StandardCompileOpts = false;
       }
       
+      if (StandardLinkOpts && 
+          StandardLinkOpts.getPosition() < PassList.getPosition(i)) {
+        AddStandardLinkPasses(Passes);
+        StandardLinkOpts = false;
+      }
+      
       if (OptLevelO1 && OptLevelO1.getPosition() < PassList.getPosition(i)) {
         AddOptimizationPasses(Passes, *FPasses, 1);
         OptLevelO1 = false;
@@ -458,17 +486,22 @@ int main(int argc, char **argv) {
       StandardCompileOpts = false;
     }    
 
+    if (StandardLinkOpts) {
+      AddStandardLinkPasses(Passes);
+      StandardLinkOpts = false;
+    }    
+
     if (OptLevelO1) {
-        AddOptimizationPasses(Passes, *FPasses, 1);
-      }
+      AddOptimizationPasses(Passes, *FPasses, 1);
+    }
 
     if (OptLevelO2) {
-        AddOptimizationPasses(Passes, *FPasses, 2);
-      }
+      AddOptimizationPasses(Passes, *FPasses, 2);
+    }
 
     if (OptLevelO3) {
-        AddOptimizationPasses(Passes, *FPasses, 3);
-      }
+      AddOptimizationPasses(Passes, *FPasses, 3);
+    }
 
     if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
       for (Module::iterator I = M.get()->begin(), E = M.get()->end();
