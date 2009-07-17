@@ -76,6 +76,9 @@ if( LLVM_USING_GLIBC )
   add_llvm_definitions( -D_GNU_SOURCE )
 endif()
 
+# Define LLVM_MULTITHREADED if gcc atomic builtins exists.
+include(CheckAtomic)
+
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag("-fPIC" SUPPORTS_FPIC_FLAG)
 

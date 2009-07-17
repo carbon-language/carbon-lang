@@ -467,6 +467,9 @@
 /* Installation directory for man pages */
 #undef LLVM_MANDIR
 
+/* Build multithreading support into LLVM */
+#cmakedefine LLVM_MULTITHREADED ${LLVM_MULTITHREADED}
+
 /* Define if this is Unixish platform */
 #cmakedefine LLVM_ON_UNIX ${LLVM_ON_UNIX}
 
