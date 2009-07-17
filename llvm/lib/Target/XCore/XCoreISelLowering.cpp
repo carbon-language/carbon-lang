@@ -1125,6 +1125,11 @@ static inline bool isImmUs4(int64_t val)
 bool
 XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM, 
                                               const Type *Ty) const {
+  // Be conservative with void
+  // FIXME: Can we be more aggressive?
+  if (Ty->getTypeID() == Type::VoidTyID)
+    return false;
+
   const TargetData *TD = TM.getTargetData();
   unsigned Size = TD->getTypeAllocSize(Ty);
   if (AM.BaseGV) {
