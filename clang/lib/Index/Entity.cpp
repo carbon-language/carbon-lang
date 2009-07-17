@@ -56,6 +56,9 @@ Entity *EntityGetter::get(Entity *Parent, DeclarationName Name) {
     return 0;
 
   IdentifierInfo *II = Name.getAsIdentifierInfo();
+  if (!II)
+      return 0;
+
   ProgramImpl::IdEntryTy *Id =
       &Prog.getIdents().GetOrCreateValue(II->getName(),
                                          II->getName() + II->getLength());
