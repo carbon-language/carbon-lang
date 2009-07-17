@@ -456,8 +456,8 @@ bool ELFWriter::doFinalization(Module &M) {
 void ELFWriter::EmitRelocations() {
 
   // Create Relocation sections for each section which needs it.
-  for (ELFSectionIter I=SectionList.begin(), E=SectionList.end(); I != E; ++I) {
-    ELFSection &S = *(*I);
+  for (unsigned i=0, e=SectionList.size(); i != e; ++i) {
+    ELFSection &S = *SectionList[i];
 
     // This section does not have relocations
     if (!S.hasRelocations()) continue;
@@ -578,8 +578,7 @@ void ELFWriter::EmitStringTable() {
   // Set the zero'th symbol to a null byte, as required.
   StrTab.emitByte(0);
 
-  // Walk on the symbol list and write symbol names into the
-  // string table.
+  // Walk on the symbol list and write symbol names into the string table.
   unsigned Index = 1;
   for (ELFSymIter I=SymbolList.begin(), E=SymbolList.end(); I != E; ++I) {
     ELFSym &Sym = *(*I);
