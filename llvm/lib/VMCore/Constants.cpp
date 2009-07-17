@@ -194,6 +194,7 @@ ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
 //                                ConstantFP
 //===----------------------------------------------------------------------===//
 
+#ifndef NDEBUG 
 static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
   if (Ty == Type::FloatTy)
     return &APFloat::IEEEsingle;
@@ -207,6 +208,7 @@ static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
   assert(Ty == Type::PPC_FP128Ty && "Unknown FP format");
   return &APFloat::PPCDoubleDouble;
 }
+#endif
 
 ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
   : Constant(Ty, ConstantFPVal, 0, 0), Val(V) {
