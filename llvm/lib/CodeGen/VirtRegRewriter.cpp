@@ -491,12 +491,10 @@ static void ReMaterialize(MachineBasicBlock &MBB,
                           const TargetRegisterInfo *TRI,
                           VirtRegMap &VRM) {
   MachineInstr *ReMatDefMI = VRM.getReMaterializedMI(Reg);
-#if 0
 #ifndef NDEBUG
   const TargetInstrDesc &TID = ReMatDefMI->getDesc();
-  assert(TID.getNumDefs() != 1 &&
+  assert(TID.getNumDefs() == 1 &&
          "Don't know how to remat instructions that define > 1 values!");
-#endif
 #endif
   TII->reMaterialize(MBB, MII, DestReg,
                      ReMatDefMI->getOperand(0).getSubReg(), ReMatDefMI);
