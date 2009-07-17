@@ -99,14 +99,15 @@ public:
   // Visitors to walk an AST and construct the CFG.  Called by buildCFG.  Do not
   // call directly!
 
-  CFGBlock* VisitBreakStmt(BreakStmt* B);
-  CFGBlock* VisitCaseStmt(CaseStmt* Terminator);
-  CFGBlock* VisitCompoundStmt(CompoundStmt* C);
-  CFGBlock* VisitConditionalOperator(ConditionalOperator *C);
-  CFGBlock* VisitContinueStmt(ContinueStmt* C);
-  CFGBlock* VisitDefaultStmt(DefaultStmt* D);
-  CFGBlock* VisitDoStmt(DoStmt* D);
-  CFGBlock* VisitForStmt(ForStmt* F);
+  CFGBlock *VisitBreakStmt(BreakStmt* B);
+  CFGBlock *VisitCaseStmt(CaseStmt* Terminator);
+  CFGBlock *VisitChooseExpr(ChooseExpr *C);
+  CFGBlock *VisitCompoundStmt(CompoundStmt *C);
+  CFGBlock *VisitConditionalOperator(ConditionalOperator *C);
+  CFGBlock *VisitContinueStmt(ContinueStmt *C);
+  CFGBlock *VisitDefaultStmt(DefaultStmt *D);
+  CFGBlock *VisitDoStmt(DoStmt *D);
+  CFGBlock *VisitForStmt(ForStmt *F);
   CFGBlock* VisitGotoStmt(GotoStmt* G);
   CFGBlock* VisitIfStmt(IfStmt* I);
   CFGBlock* VisitIndirectGotoStmt(IndirectGotoStmt* I);
@@ -284,32 +285,8 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt) {
   case Stmt::ConditionalOperatorClass:
     return VisitConditionalOperator(cast<ConditionalOperator>(Terminator));
   
-  case Stmt::ChooseExprClass: {
-    ChooseExpr* C = cast<ChooseExpr>(Terminator);
-
-    CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
-    ConfluenceBlock->appendStmt(C);
-    if (!FinishBlock(ConfluenceBlock))
-      return 0;
-
-    Succ = ConfluenceBlock;
-    Block = NULL;
-    CFGBlock* LHSBlock = Visit(C->getLHS());
-    if (!FinishBlock(LHSBlock))
-      return 0;
-
-    Succ = ConfluenceBlock;
-    Block = NULL;
-    CFGBlock* RHSBlock = Visit(C->getRHS());
-    if (!FinishBlock(RHSBlock))
-      return 0;
-
-    Block = createBlock(false);
-    Block->addSuccessor(LHSBlock);
-    Block->addSuccessor(RHSBlock);
-    Block->setTerminator(C);
-    return addStmt(C->getCond());
-  }
+  case Stmt::ChooseExprClass:
+    return VisitChooseExpr(cast<ChooseExpr>(Terminator));
 
   case Stmt::DeclStmtClass: {
     DeclStmt *DS = cast<DeclStmt>(Terminator);
@@ -518,6 +495,30 @@ CFGBlock* CFGBuilder::VisitNullStmt(NullStmt* Statement) {
   return Block;
 }
 
+CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
+  CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
+  ConfluenceBlock->appendStmt(C);
+  if (!FinishBlock(ConfluenceBlock))
+    return 0;
+  
+  Succ = ConfluenceBlock;
+  Block = NULL;
+  CFGBlock* LHSBlock = Visit(C->getLHS());
+  if (!FinishBlock(LHSBlock))
+    return 0;
+  
+  Succ = ConfluenceBlock;
+  Block = NULL;
+  CFGBlock* RHSBlock = Visit(C->getRHS());
+  if (!FinishBlock(RHSBlock))
+    return 0;
+  
+  Block = createBlock(false);
+  Block->addSuccessor(LHSBlock);
+  Block->addSuccessor(RHSBlock);
+  Block->setTerminator(C);
+  return addStmt(C->getCond());  
+}
   
 CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
   // Create the confluence block that will "merge" the results of the ternary
