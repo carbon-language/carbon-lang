@@ -138,7 +138,8 @@ int f17() {
 
 // <rdar://problem/6506065>
 // The values of dead stores are only "consumed" in an enclosing expression
-// what that value is actually used.  In other words, don't say "Although the value stored to 'x' is used...".
+// what that value is actually used.  In other words, don't say "Although the
+// value stored to 'x' is used...".
 int f18() {
    int x = 0; // no-warning
    if (1)
@@ -173,3 +174,14 @@ void f20(void) {
 #pragma unused(x)
 }
 
+void halt() __attribute__((noreturn));
+int f21() {
+  int x = 4;
+  
+  ++x; // expected-warning{{never read}}
+  if (1) {
+    halt();
+    (void)x;
+  }
+  return 1;
+}

@@ -117,9 +117,9 @@ public:
   CFGBlock* VisitStmt(Stmt* Statement);
   CFGBlock* VisitSwitchStmt(SwitchStmt* Terminator);
   CFGBlock* VisitWhileStmt(WhileStmt* W);
-  
+
   // FIXME: Add support for ObjC-specific control-flow structures.
-  
+
   // NYS == Not Yet Supported
   CFGBlock* NYS() {
     badCFG = true;
@@ -280,7 +280,7 @@ CFGBlock* CFGBuilder::addStmt(Stmt* Terminator) {
 /// WalkAST - Used by addStmt to walk the subtree of a statement and
 ///   add extra blocks for ternary operators, &&, and ||.  We also
 ///   process "," and DeclStmts (which may contain nested control-flow).
-CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {    
+CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
   switch (Terminator->getStmtClass()) {
     case Stmt::ConditionalOperatorClass: {
       ConditionalOperator* C = cast<ConditionalOperator>(Terminator);
@@ -478,6 +478,36 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
     case Stmt::ParenExprClass:
       return WalkAST(cast<ParenExpr>(Terminator)->getSubExpr(), AlwaysAddStmt);
     
+  case Stmt::CallExprClass: {
+    bool NoReturn = false;
+    CallExpr *C = cast<CallExpr>(Terminator);
+    Expr *CEE = C->getCallee()->IgnoreParenCasts();
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
+      // FIXME: We can follow objective-c methods and C++ member functions...
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
+        if (FD->hasAttr<NoReturnAttr>())
+          NoReturn = true;
+      }
+    }
+
+    if (!NoReturn)
+      break;
+
+    if (Block) {
+      if (!FinishBlock(Block))
+        return 0;
+    }
+
+    // Create new block with no successor for the remaining pieces.
+    Block = createBlock(false);
+    Block->appendStmt(Terminator);
+
+    // Wire this to the exit block directly.
+    Block->addSuccessor(&cfg->getExit());
+
+    return WalkAST_VisitChildren(Terminator);
+  }
+
     default:
       break;
   };
@@ -1190,7 +1220,7 @@ CFGBlock* CFGBuilder::VisitBreakStmt(BreakStmt* B) {
       return 0;
   }
   
-  // Now create a new block that ends with the continue statement.
+  // Now create a new block that ends with the break statement.
   Block = createBlock(false);
   Block->setTerminator(B);
   
