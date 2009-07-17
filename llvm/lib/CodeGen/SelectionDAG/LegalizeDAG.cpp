@@ -2973,7 +2973,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
                                        SmallVectorImpl<SDValue> &Results) {
   MVT OVT = Node->getValueType(0);
   if (Node->getOpcode() == ISD::UINT_TO_FP ||
-      Node->getOpcode() == ISD::SINT_TO_FP) {
+      Node->getOpcode() == ISD::SINT_TO_FP ||
+      Node->getOpcode() == ISD::SETCC) {
     OVT = Node->getOperand(0).getValueType();
   }
   MVT NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
@@ -3085,30 +3086,11 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     break;
   }
   case ISD::SETCC: {
-    // First step, figure out the appropriate operation to use.
-    // Allow SETCC to not be supported for all legal data types
-    // Mostly this targets FP
-    MVT NewInTy = Node->getOperand(0).getValueType();
-    MVT OldVT = NewInTy; OldVT = OldVT;
-
-    // Scan for the appropriate larger type to use.
-    while (1) {
-      NewInTy = (MVT::SimpleValueType)(NewInTy.getSimpleVT()+1);
-
-      assert(NewInTy.isInteger() == OldVT.isInteger() &&
-              "Fell off of the edge of the integer world");
-      assert(NewInTy.isFloatingPoint() == OldVT.isFloatingPoint() &&
-              "Fell off of the edge of the floating point world");
-
-      // If the target supports SETCC of this type, use it.
-      if (TLI.isOperationLegalOrCustom(ISD::SETCC, NewInTy))
-        break;
-    }
-    if (NewInTy.isInteger())
+    if (NVT.isInteger())
       llvm_unreachable("Cannot promote Legal Integer SETCC yet");
     else {
-      Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NewInTy, Tmp1);
-      Tmp2 = DAG.getNode(ISD::FP_EXTEND, dl, NewInTy, Tmp2);
+      Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(0));
+      Tmp2 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(1));
     }
     Results.push_back(DAG.getNode(ISD::SETCC, dl, Node->getValueType(0),
                                   Tmp1, Tmp2, Node->getOperand(2)));
