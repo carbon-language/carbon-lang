@@ -883,6 +883,17 @@ public:
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+
+  static bool classof(const Decl *D) {
+    return D->getKind() >= ObjCImplFirst && D->getKind() <= ObjCImplLast;
+  }
+  static bool classof(const ObjCImplDecl *D) { return true; }
+  static DeclContext *castToDeclContext(const ObjCImplDecl *D) {
+    return static_cast<DeclContext *>(const_cast<ObjCImplDecl*>(D));
+  }
+  static ObjCImplDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<ObjCImplDecl *>(const_cast<DeclContext*>(DC));
+  }
 };
   
 /// ObjCCategoryImplDecl - An object of this class encapsulates a category 
@@ -931,12 +942,6 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == ObjCCategoryImpl;}
   static bool classof(const ObjCCategoryImplDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const ObjCCategoryImplDecl *D) {
-    return static_cast<DeclContext *>(const_cast<ObjCCategoryImplDecl*>(D));
-  }
-  static ObjCCategoryImplDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<ObjCCategoryImplDecl *>(const_cast<DeclContext*>(DC));
-  }
 };
 
 /// ObjCImplementationDecl - Represents a class definition - this is where
@@ -1010,12 +1015,6 @@ public:
     return D->getKind() == ObjCImplementation;
   }
   static bool classof(const ObjCImplementationDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const ObjCImplementationDecl *D) {
-    return static_cast<DeclContext *>(const_cast<ObjCImplementationDecl*>(D));
-  }
-  static ObjCImplementationDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<ObjCImplementationDecl *>(const_cast<DeclContext*>(DC));
-  }
 };
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is 

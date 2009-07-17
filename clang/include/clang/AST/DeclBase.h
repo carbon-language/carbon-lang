@@ -37,6 +37,7 @@ class ObjCCategoryDecl;
 class ObjCProtocolDecl;
 class ObjCImplementationDecl;
 class ObjCCategoryImplDecl;
+class ObjCImplDecl;
 class LinkageSpecDecl;
 class BlockDecl;
 class DeclarationName;
@@ -393,8 +394,7 @@ public:
 ///   TagDecl
 ///   ObjCMethodDecl
 ///   ObjCContainerDecl
-///   ObjCCategoryImplDecl
-///   ObjCImplementationDecl
+///   ObjCImpl
 ///   LinkageSpecDecl
 ///   BlockDecl
 ///
