@@ -441,29 +441,12 @@ static const Type *getPromotedType(const Type *Ty) {
 /// expression bitcast, or a GetElementPtrInst with all zero indices, return the
 /// operand value, otherwise return null.
 static Value *getBitCastOperand(Value *V) {
-  if (BitCastInst *I = dyn_cast<BitCastInst>(V))
-    // BitCastInst?
-    return I->getOperand(0);
-  else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V)) {
-    // GetElementPtrInst?
-    if (GEP->hasAllZeroIndices())
-      return GEP->getOperand(0);
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-    if (CE->getOpcode() == Instruction::BitCast)
-      // BitCast ConstantExp?
-      return CE->getOperand(0);
-    else if (CE->getOpcode() == Instruction::GetElementPtr) {
-      // GetElementPtr ConstantExp?
-      for (User::op_iterator I = CE->op_begin() + 1, E = CE->op_end();
-           I != E; ++I) {
-        ConstantInt *CI = dyn_cast<ConstantInt>(I);
-        if (!CI || !CI->isZero())
-          // Any non-zero indices? Not cast-like.
-          return 0;
-      }
-      // All-zero indices? This is just like casting.
-      return CE->getOperand(0);
-    }
+  if (Operator *O = dyn_cast<Operator>(V)) {
+    if (O->getOpcode() == Instruction::BitCast)
+      return O->getOperand(0);
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
+      if (GEP->hasAllZeroIndices())
+        return GEP->getPointerOperand();
   }
   return 0;
 }

@@ -343,23 +343,12 @@ Value *Value::stripPointerCasts() {
     return this;
   Value *V = this;
   do {
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr) {
-        for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
-          if (!CE->getOperand(i)->isNullValue())
-            return V;
-        V = CE->getOperand(0);
-      } else if (CE->getOpcode() == Instruction::BitCast) {
-        V = CE->getOperand(0);
-      } else {
-        return V;
-      }
-    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V)) {
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
       if (!GEP->hasAllZeroIndices())
         return V;
-      V = GEP->getOperand(0);
-    } else if (BitCastInst *CI = dyn_cast<BitCastInst>(V)) {
-      V = CI->getOperand(0);
+      V = GEP->getPointerOperand();
+    } else if (Operator::getOpcode(V) == Instruction::BitCast) {
+      V = cast<Operator>(V)->getOperand(0);
     } else {
       return V;
     }
@@ -373,12 +362,12 @@ Value *Value::getUnderlyingObject() {
   Value *V = this;
   unsigned MaxLookup = 6;
   do {
-    if (Operator *O = dyn_cast<Operator>(V)) {
-      if (O->getOpcode() != Instruction::BitCast &&
-          (O->getOpcode() != Instruction::GetElementPtr ||
-           !cast<GEPOperator>(V)->hasNoPointerOverflow()))
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
+      if (GEP->hasNoPointerOverflow())
         return V;
-      V = O->getOperand(0);
+      V = GEP->getPointerOperand();
+    } else if (Operator::getOpcode(V) == Instruction::BitCast) {
+      V = cast<Operator>(V)->getOperand(0);
     } else {
       return V;
     }

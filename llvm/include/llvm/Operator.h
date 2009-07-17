@@ -129,6 +129,48 @@ public:
 
 class GEPOperator : public Operator {
 public:
+  inline op_iterator       idx_begin()       { return op_begin()+1; }
+  inline const_op_iterator idx_begin() const { return op_begin()+1; }
+  inline op_iterator       idx_end()         { return op_end(); }
+  inline const_op_iterator idx_end()   const { return op_end(); }
+
+  Value *getPointerOperand() {
+    return getOperand(0);
+  }
+  const Value *getPointerOperand() const {
+    return getOperand(0);
+  }
+  static unsigned getPointerOperandIndex() {
+    return 0U;                      // get index for modifying correct operand
+  }
+
+  /// getPointerOperandType - Method to return the pointer operand as a
+  /// PointerType.
+  const PointerType *getPointerOperandType() const {
+    return reinterpret_cast<const PointerType*>(getPointerOperand()->getType());
+  }
+
+  unsigned getNumIndices() const {  // Note: always non-negative
+    return getNumOperands() - 1;
+  }
+
+  bool hasIndices() const {
+    return getNumOperands() > 1;
+  }
+
+  /// hasAllZeroIndices - Return true if all of the indices of this GEP are
+  /// zeros.  If so, the result pointer and the first operand have the same
+  /// value, just potentially different types.
+  bool hasAllZeroIndices() const {
+    for (const_op_iterator I = idx_begin(), E = idx_end(); I != E; ++I) {
+      if (Constant *C = dyn_cast<Constant>(I))
+        if (C->isNullValue())
+          continue;
+      return false;
+    }
+    return true;
+  }
+
   /// hasNoPointerOverflow - Return true if this GetElementPtr is known to
   /// never have overflow in the pointer addition portions of its effective
   /// computation. GetElementPtr computation involves several phases;
