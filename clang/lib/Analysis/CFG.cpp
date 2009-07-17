@@ -61,7 +61,7 @@ static SourceLocation GetEndLoc(Decl* D) {
 ///  constructed prior to its predecessor.  This allows us to nicely capture
 ///  implicit fall-throughs without extra basic blocks.
 ///
-class VISIBILITY_HIDDEN CFGBuilder : public StmtVisitor<CFGBuilder,CFGBlock*> {
+class VISIBILITY_HIDDEN CFGBuilder {
   CFG* cfg;
   CFGBlock* Block;
   CFGBlock* Succ;
@@ -96,30 +96,42 @@ public:
   // buildCFG - Used by external clients to construct the CFG.
   CFG* buildCFG(Stmt* Statement);
 
-  // Visitors to walk an AST and construct the CFG.  Called by buildCFG.  Do not
-  // call directly!
-
-  CFGBlock *VisitBreakStmt(BreakStmt* B);
-  CFGBlock *VisitCaseStmt(CaseStmt* Terminator);
+private:
+  // Visitors to walk an AST and construct the CFG.
+  CFGBlock *VisitAddrLabelExpr(AddrLabelExpr *A, bool alwaysAdd);
+  CFGBlock *VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd);
+  CFGBlock *VisitBlockExpr(BlockExpr* E);
+  CFGBlock *VisitBlockDeclRefExpr(BlockDeclRefExpr* E);
+  CFGBlock *VisitBreakStmt(BreakStmt *B);
+  CFGBlock *VisitCallExpr(CallExpr *C, bool alwaysAdd);
+  CFGBlock *VisitCaseStmt(CaseStmt *C);
   CFGBlock *VisitChooseExpr(ChooseExpr *C);
   CFGBlock *VisitCompoundStmt(CompoundStmt *C);
   CFGBlock *VisitConditionalOperator(ConditionalOperator *C);
   CFGBlock *VisitContinueStmt(ContinueStmt *C);
+  CFGBlock *VisitDeclStmt(DeclStmt *DS);
+  CFGBlock *VisitDeclSubExpr(Decl* D);
   CFGBlock *VisitDefaultStmt(DefaultStmt *D);
   CFGBlock *VisitDoStmt(DoStmt *D);
   CFGBlock *VisitForStmt(ForStmt *F);
-  CFGBlock* VisitGotoStmt(GotoStmt* G);
-  CFGBlock* VisitIfStmt(IfStmt* I);
-  CFGBlock* VisitIndirectGotoStmt(IndirectGotoStmt* I);
-  CFGBlock* VisitLabelStmt(LabelStmt* L);
-  CFGBlock* VisitNullStmt(NullStmt* Statement);
-  CFGBlock* VisitObjCForCollectionStmt(ObjCForCollectionStmt* S);
-  CFGBlock* VisitReturnStmt(ReturnStmt* R);
-  CFGBlock* VisitStmt(Stmt* Statement);
-  CFGBlock* VisitSwitchStmt(SwitchStmt* Terminator);
-  CFGBlock* VisitWhileStmt(WhileStmt* W);
+  CFGBlock *VisitGotoStmt(GotoStmt* G);
+  CFGBlock *VisitIfStmt(IfStmt *I);
+  CFGBlock *VisitIndirectGotoStmt(IndirectGotoStmt *I);
+  CFGBlock *VisitLabelStmt(LabelStmt *L);
+  CFGBlock *VisitObjCAtCatchStmt(ObjCAtCatchStmt *S);
+  CFGBlock *VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S);
+  CFGBlock *VisitObjCAtThrowStmt(ObjCAtThrowStmt *S);
+  CFGBlock *VisitObjCAtTryStmt(ObjCAtTryStmt *S);
+  CFGBlock *VisitObjCForCollectionStmt(ObjCForCollectionStmt *S);
+  CFGBlock *VisitReturnStmt(ReturnStmt* R);
+  CFGBlock *VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
+  CFGBlock *VisitStmtExpr(StmtExpr *S);
+  CFGBlock *VisitSwitchStmt(SwitchStmt *S);
+  CFGBlock *VisitWhileStmt(WhileStmt *W);
 
-  // FIXME: Add support for ObjC-specific control-flow structures.
+  CFGBlock *Visit(Stmt *S, bool alwaysAdd = false);
+  CFGBlock *VisitStmt(Stmt *S, bool alwaysAdd);
+  CFGBlock *VisitChildren(Stmt* S);
 
   // NYS == Not Yet Supported
   CFGBlock* NYS() {
@@ -127,32 +139,11 @@ public:
     return Block;
   }
 
-  CFGBlock* VisitObjCAtTryStmt(ObjCAtTryStmt* S);
-  CFGBlock* VisitObjCAtCatchStmt(ObjCAtCatchStmt* S) {
-    // FIXME: For now we pretend that @catch and the code it contains does not
-    //  exit.
-    return Block;
-  }
-
-  // FIXME: This is not completely supported.  We basically @throw like a
-  // 'return'.
-  CFGBlock* VisitObjCAtThrowStmt(ObjCAtThrowStmt* S);
-
-  CFGBlock* VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S);
-
-  // Blocks.
-  CFGBlock* VisitBlockExpr(BlockExpr* E) { return NYS(); }
-  CFGBlock* VisitBlockDeclRefExpr(BlockDeclRefExpr* E) { return NYS(); }
-
-private:
-  CFGBlock* createBlock(bool add_successor = true);
-  CFGBlock* addStmt(Stmt* Terminator);
-  CFGBlock* WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false);
-  CFGBlock* WalkAST_VisitChildren(Stmt* Terminator);
-  CFGBlock* WalkAST_VisitDeclSubExpr(Decl* D);
-  CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* Terminator);
+  void autoCreateBlock() { if (!Block) Block = createBlock(); }
+  CFGBlock *createBlock(bool add_successor = true);
   bool FinishBlock(CFGBlock* B);
-
+  CFGBlock *addStmt(Stmt *S) { return Visit(S, true); }
+  
   bool badCFG;
 };
 
@@ -176,8 +167,9 @@ static VariableArrayType* FindVA(Type* t) {
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
 CFG* CFGBuilder::buildCFG(Stmt* Statement) {
-  assert (cfg);
-  if (!Statement) return NULL;
+  assert(cfg);
+  if (!Statement)
+    return NULL;
 
   badCFG = false;
 
@@ -189,7 +181,7 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
   Block = NULL;  // the EXIT block is empty.  Create all other blocks lazily.
 
   // Visit the statements and create the CFG.
-  CFGBlock* B = Visit(Statement);
+  CFGBlock* B = addStmt(Statement);
   if (!B) B = Succ;
 
   if (B) {
@@ -251,7 +243,8 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
 ///  to the current (global) succcessor.
 CFGBlock* CFGBuilder::createBlock(bool add_successor) {
   CFGBlock* B = cfg->createBlock();
-  if (add_successor && Succ) B->addSuccessor(Succ);
+  if (add_successor && Succ)
+    B->addSuccessor(Succ);
   return B;
 }
 
@@ -261,238 +254,241 @@ bool CFGBuilder::FinishBlock(CFGBlock* B) {
   if (badCFG)
     return false;
 
-  assert (B);
+  assert(B);
   B->reverseStmts();
   return true;
 }
 
-/// addStmt - Used to add statements/expressions to the current CFGBlock
-///  "Block".  This method calls WalkAST on the passed statement to see if it
-///  contains any short-circuit expressions.  If so, it recursively creates the
-///  necessary blocks for such expressions.  It returns the "topmost" block of
-///  the created blocks, or the original value of "Block" when this method was
-///  called if no additional blocks are created.
-CFGBlock* CFGBuilder::addStmt(Stmt* Terminator) {
-  if (!Block) Block = createBlock();
-  return WalkAST(Terminator, true);
-}
-
-/// WalkAST - Walk the subtree of a statement and add extra
+/// Visit - Walk the subtree of a statement and add extra
 ///   blocks for ternary operators, &&, and ||.  We also process "," and
 ///   DeclStmts (which may contain nested control-flow).
-CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt) {
-  switch (Terminator->getStmtClass()) {
-  case Stmt::ConditionalOperatorClass:
-    return VisitConditionalOperator(cast<ConditionalOperator>(Terminator));
+CFGBlock* CFGBuilder::Visit(Stmt * S, bool alwaysAdd) {
+tryAgain:
+  switch (S->getStmtClass()) {
+    default:
+      return VisitStmt(S, alwaysAdd);
+
+    case Stmt::AddrLabelExprClass:
+      return VisitAddrLabelExpr(cast<AddrLabelExpr>(S), alwaysAdd);
+      
+    case Stmt::BinaryOperatorClass:
+      return VisitBinaryOperator(cast<BinaryOperator>(S), alwaysAdd);
+      
+    case Stmt::BlockExprClass:
+      return VisitBlockExpr(cast<BlockExpr>(S));
+
+    case Stmt::BlockDeclRefExprClass:
+      return VisitBlockDeclRefExpr(cast<BlockDeclRefExpr>(S));
+      
+    case Stmt::BreakStmtClass:
+      return VisitBreakStmt(cast<BreakStmt>(S));
+      
+    case Stmt::CallExprClass:
+      return VisitCallExpr(cast<CallExpr>(S), alwaysAdd);
+      
+    case Stmt::CaseStmtClass:
+      return VisitCaseStmt(cast<CaseStmt>(S));
+
+    case Stmt::ChooseExprClass:
+      return VisitChooseExpr(cast<ChooseExpr>(S));
+    
+    case Stmt::CompoundStmtClass:
+      return VisitCompoundStmt(cast<CompoundStmt>(S));
+      
+    case Stmt::ConditionalOperatorClass:
+      return VisitConditionalOperator(cast<ConditionalOperator>(S));
+      
+    case Stmt::ContinueStmtClass:
+      return VisitContinueStmt(cast<ContinueStmt>(S));
+    
+    case Stmt::DeclStmtClass:
+      return VisitDeclStmt(cast<DeclStmt>(S));
+      
+    case Stmt::DefaultStmtClass:
+      return VisitDefaultStmt(cast<DefaultStmt>(S));
+      
+    case Stmt::DoStmtClass:
+      return VisitDoStmt(cast<DoStmt>(S));
+      
+    case Stmt::ForStmtClass:
+      return VisitForStmt(cast<ForStmt>(S));
+    
+    case Stmt::GotoStmtClass:
+      return VisitGotoStmt(cast<GotoStmt>(S));
+      
+    case Stmt::IfStmtClass:
+      return VisitIfStmt(cast<IfStmt>(S));
+    
+    case Stmt::IndirectGotoStmtClass:
+      return VisitIndirectGotoStmt(cast<IndirectGotoStmt>(S));
+      
+    case Stmt::LabelStmtClass:
+      return VisitLabelStmt(cast<LabelStmt>(S));
+    
+    case Stmt::ObjCAtCatchStmtClass:
+      return VisitObjCAtCatchStmt(cast<ObjCAtCatchStmt>(S));   
+      
+    case Stmt::ObjCAtSynchronizedStmtClass:
+      return VisitObjCAtSynchronizedStmt(cast<ObjCAtSynchronizedStmt>(S));
+      
+    case Stmt::ObjCAtThrowStmtClass:
+      return VisitObjCAtThrowStmt(cast<ObjCAtThrowStmt>(S));
+      
+    case Stmt::ObjCAtTryStmtClass:
+      return VisitObjCAtTryStmt(cast<ObjCAtTryStmt>(S));
+      
+    case Stmt::ObjCForCollectionStmtClass:
+      return VisitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(S));
+            
+    case Stmt::ParenExprClass:
+      S = cast<ParenExpr>(S)->getSubExpr();
+      goto tryAgain;      
+      
+    case Stmt::NullStmtClass:
+      return Block;
+      
+    case Stmt::ReturnStmtClass:
+      return VisitReturnStmt(cast<ReturnStmt>(S));
+    
+    case Stmt::SizeOfAlignOfExprClass:
+      return VisitSizeOfAlignOfExpr(cast<SizeOfAlignOfExpr>(S));        
+    
+    case Stmt::StmtExprClass:
+      return VisitStmtExpr(cast<StmtExpr>(S));
+      
+    case Stmt::SwitchStmtClass:
+      return VisitSwitchStmt(cast<SwitchStmt>(S));
+    
+    case Stmt::WhileStmtClass:
+      return VisitWhileStmt(cast<WhileStmt>(S));
+  }
+}
   
-  case Stmt::ChooseExprClass:
-    return VisitChooseExpr(cast<ChooseExpr>(Terminator));
-
-  case Stmt::DeclStmtClass: {
-    DeclStmt *DS = cast<DeclStmt>(Terminator);
-    if (DS->isSingleDecl()) {
-      Block->appendStmt(Terminator);
-      return WalkAST_VisitDeclSubExpr(DS->getSingleDecl());
-    }
-
-    CFGBlock* B = 0;
-
-    // FIXME: Add a reverse iterator for DeclStmt to avoid this extra copy.
-    typedef llvm::SmallVector<Decl*,10> BufTy;
-    BufTy Buf(DS->decl_begin(), DS->decl_end());
-
-    for (BufTy::reverse_iterator I=Buf.rbegin(), E=Buf.rend(); I!=E; ++I) {
-      // Get the alignment of the new DeclStmt, padding out to >=8 bytes.
-      unsigned A = llvm::AlignOf<DeclStmt>::Alignment < 8
-                   ? 8 : llvm::AlignOf<DeclStmt>::Alignment;
-
-      // Allocate the DeclStmt using the BumpPtrAllocator.  It will get
-      // automatically freed with the CFG.
-      DeclGroupRef DG(*I);
-      Decl* D = *I;
-      void* Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);
-
-      DeclStmt* DS = new (Mem) DeclStmt(DG, D->getLocation(), GetEndLoc(D));
-
-      // Append the fake DeclStmt to block.
-      Block->appendStmt(DS);
-      B = WalkAST_VisitDeclSubExpr(D);
-    }
-    return B;
+CFGBlock *CFGBuilder::VisitStmt(Stmt *S, bool alwaysAdd) {
+  if (alwaysAdd) {
+    autoCreateBlock();
+    Block->appendStmt(S);
   }
-
-  case Stmt::AddrLabelExprClass: {
-    AddrLabelExpr* A = cast<AddrLabelExpr>(Terminator);
-    AddressTakenLabels.insert(A->getLabel());
-
-    if (AlwaysAddStmt) Block->appendStmt(Terminator);
-    return Block;
-  }
-
-  case Stmt::StmtExprClass:
-    return WalkAST_VisitStmtExpr(cast<StmtExpr>(Terminator));
-
-  case Stmt::SizeOfAlignOfExprClass: {
-    SizeOfAlignOfExpr* E = cast<SizeOfAlignOfExpr>(Terminator);
-
-    // VLA types have expressions that must be evaluated.
-    if (E->isArgumentType()) {
-      for (VariableArrayType* VA = FindVA(E->getArgumentType().getTypePtr());
-           VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
-        addStmt(VA->getSizeExpr());
-    }
-    // Expressions in sizeof/alignof are not evaluated and thus have no
-    // control flow.
-    else
-      Block->appendStmt(Terminator);
-
-    return Block;
-  }
-
-  case Stmt::BinaryOperatorClass: {
-    BinaryOperator* B = cast<BinaryOperator>(Terminator);
-
-    if (B->isLogicalOp()) { // && or ||
-      CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();
-      ConfluenceBlock->appendStmt(B);
-      if (!FinishBlock(ConfluenceBlock))
-        return 0;
-
-      // create the block evaluating the LHS
-      CFGBlock* LHSBlock = createBlock(false);
-      LHSBlock->setTerminator(B);
-
-      // create the block evaluating the RHS
-      Succ = ConfluenceBlock;
-      Block = NULL;
-      CFGBlock* RHSBlock = Visit(B->getRHS());
-      if (!FinishBlock(RHSBlock))
-        return 0;
-
-      // Now link the LHSBlock with RHSBlock.
-      if (B->getOpcode() == BinaryOperator::LOr) {
-        LHSBlock->addSuccessor(ConfluenceBlock);
-        LHSBlock->addSuccessor(RHSBlock);
-      } else {
-        assert (B->getOpcode() == BinaryOperator::LAnd);
-        LHSBlock->addSuccessor(RHSBlock);
-        LHSBlock->addSuccessor(ConfluenceBlock);
-      }
-
-      // Generate the blocks for evaluating the LHS.
-      Block = LHSBlock;
-      return addStmt(B->getLHS());
-    } else if (B->getOpcode() == BinaryOperator::Comma) { // ,
-      Block->appendStmt(B);
-      addStmt(B->getRHS());
-      return addStmt(B->getLHS());
-    }
-
-    break;
-  }
-
-    // Blocks: No support for blocks ... yet
-  case Stmt::BlockExprClass:
-  case Stmt::BlockDeclRefExprClass:
-    return NYS();
-
-  case Stmt::ParenExprClass:
-    return WalkAST(cast<ParenExpr>(Terminator)->getSubExpr(), AlwaysAddStmt);
-
-  case Stmt::CallExprClass: {
-    // If this is a call to a no-return function, this stops the block here.
-    FunctionDecl *FD = cast<CallExpr>(Terminator)->getDirectCallee();
-    if (FD == 0 || !FD->hasAttr<NoReturnAttr>())
-      break;
-
-    if (Block && !FinishBlock(Block))
-      return 0;
-
-    // Create new block with no successor for the remaining pieces.
-    Block = createBlock(false);
-    Block->appendStmt(Terminator);
-
-    // Wire this to the exit block directly.
-    Block->addSuccessor(&cfg->getExit());
-
-    return WalkAST_VisitChildren(Terminator);
-  }
-
-  default:
-    // TODO: We can follow objective-c methods (message sends).
-    break;
-  };
-
-  if (AlwaysAddStmt) Block->appendStmt(Terminator);
-  return WalkAST_VisitChildren(Terminator);
+  
+  return VisitChildren(S);
 }
 
-/// WalkAST_VisitDeclSubExpr - Utility method to add block-level expressions for
-///  initializers in Decls.
-CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExpr(Decl* D) {
-  VarDecl* VD = dyn_cast<VarDecl>(D);
-
-  if (!VD)
-    return Block;
-
-  Expr* Init = VD->getInit();
-
-  if (Init) {
-    // Optimization: Don't create separate block-level statements for literals.
-    switch (Init->getStmtClass()) {
-      case Stmt::IntegerLiteralClass:
-      case Stmt::CharacterLiteralClass:
-      case Stmt::StringLiteralClass:
-        break;
-      default:
-        Block = addStmt(Init);
-    }
-  }
-
-  // If the type of VD is a VLA, then we must process its size expressions.
-  for (VariableArrayType* VA = FindVA(VD->getType().getTypePtr()); VA != 0;
-       VA = FindVA(VA->getElementType().getTypePtr()))
-    Block = addStmt(VA->getSizeExpr());
-
-  return Block;
-}
-
-/// WalkAST_VisitChildren - Utility method to call WalkAST on the children of a
-///  Stmt.
-CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* Terminator) {
-  CFGBlock* B = Block;
+/// VisitChildren - Visit the children of a Stmt.
+CFGBlock *CFGBuilder::VisitChildren(Stmt* Terminator) {
+  CFGBlock *B = Block;
   for (Stmt::child_iterator I = Terminator->child_begin(),
-         E = Terminator->child_end();
-       I != E; ++I)
-    if (*I) B = WalkAST(*I);
-
+         E = Terminator->child_end(); I != E; ++I) {
+    if (*I) B = Visit(*I);
+  }
   return B;
 }
+  
+CFGBlock *CFGBuilder::VisitAddrLabelExpr(AddrLabelExpr *A, bool alwaysAdd) {
+  AddressTakenLabels.insert(A->getLabel());
 
-/// WalkAST_VisitStmtExpr - Utility method to handle (nested) statement
-///  expressions (a GCC extension).
-CFGBlock* CFGBuilder::WalkAST_VisitStmtExpr(StmtExpr* Terminator) {
-  Block->appendStmt(Terminator);
-  return VisitCompoundStmt(Terminator->getSubStmt());
-}
-
-/// VisitStmt - Handle statements with no branching control flow.
-CFGBlock* CFGBuilder::VisitStmt(Stmt* Statement) {
-  // We cannot assume that we are in the middle of a basic block, since the CFG
-  // might only be constructed for this single statement.  If we have no current
-  // basic block, just create one lazily.
-  if (!Block) Block = createBlock();
-
-  // Simply add the statement to the current block.  We actually insert
-  // statements in reverse order; this order is reversed later when processing
-  // the containing element in the AST.
-  addStmt(Statement);
+  if (alwaysAdd) {
+    autoCreateBlock();
+    Block->appendStmt(A);
+  }
 
   return Block;
 }
+  
+CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
+  if (B->isLogicalOp()) { // && or ||
 
-CFGBlock* CFGBuilder::VisitNullStmt(NullStmt* Statement) {
+    CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
+    ConfluenceBlock->appendStmt(B);
+    
+    if (!FinishBlock(ConfluenceBlock))
+      return 0;
+    
+    // create the block evaluating the LHS
+    CFGBlock* LHSBlock = createBlock(false);
+    LHSBlock->setTerminator(B);
+    
+    // create the block evaluating the RHS
+    Succ = ConfluenceBlock;
+    Block = NULL;
+    CFGBlock* RHSBlock = addStmt(B->getRHS());
+    if (!FinishBlock(RHSBlock))
+      return 0;
+    
+    // Now link the LHSBlock with RHSBlock.
+    if (B->getOpcode() == BinaryOperator::LOr) {
+      LHSBlock->addSuccessor(ConfluenceBlock);
+      LHSBlock->addSuccessor(RHSBlock);
+    } else {
+      assert (B->getOpcode() == BinaryOperator::LAnd);
+      LHSBlock->addSuccessor(RHSBlock);
+      LHSBlock->addSuccessor(ConfluenceBlock);
+    }
+    
+    // Generate the blocks for evaluating the LHS.
+    Block = LHSBlock;
+    return addStmt(B->getLHS());
+  } 
+  else if (B->getOpcode() == BinaryOperator::Comma) { // ,
+    Block->appendStmt(B);
+    addStmt(B->getRHS());
+    return addStmt(B->getLHS());
+  }
+  
+  return VisitStmt(B, alwaysAdd);
+}
+
+CFGBlock *CFGBuilder::VisitBlockExpr(BlockExpr* E) {
+  // FIXME
+  return NYS();
+}
+
+CFGBlock *CFGBuilder::VisitBlockDeclRefExpr(BlockDeclRefExpr* E) {
+  // FIXME
+  return NYS();
+}
+  
+CFGBlock *CFGBuilder::VisitBreakStmt(BreakStmt *B) {
+  // "break" is a control-flow statement.  Thus we stop processing the current
+  // block.
+  if (Block && !FinishBlock(Block))
+      return 0;
+  
+  // Now create a new block that ends with the break statement.
+  Block = createBlock(false);
+  Block->setTerminator(B);
+  
+  // If there is no target for the break, then we are looking at an incomplete
+  // AST.  This means that the CFG cannot be constructed.
+  if (BreakTargetBlock)
+    Block->addSuccessor(BreakTargetBlock);
+  else
+    badCFG = true;
+  
+  
   return Block;
+}
+  
+CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, bool alwaysAdd) {
+  // If this is a call to a no-return function, this stops the block here.
+  if (FunctionDecl *FD = C->getDirectCallee()) {
+    
+    if (!FD->hasAttr<NoReturnAttr>())
+      return VisitStmt(C, alwaysAdd);
+    
+    if (Block && !FinishBlock(Block))
+      return 0;
+    
+    // Create new block with no successor for the remaining pieces.
+    Block = createBlock(false);
+    Block->appendStmt(C);
+    
+    // Wire this to the exit block directly.
+    Block->addSuccessor(&cfg->getExit());
+    
+    return VisitChildren(C);
+  }
+  
+  return VisitStmt(C, alwaysAdd);
 }
 
 CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
@@ -503,13 +499,13 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
   
   Succ = ConfluenceBlock;
   Block = NULL;
-  CFGBlock* LHSBlock = Visit(C->getLHS());
+  CFGBlock* LHSBlock = addStmt(C->getLHS());
   if (!FinishBlock(LHSBlock))
     return 0;
   
   Succ = ConfluenceBlock;
   Block = NULL;
-  CFGBlock* RHSBlock = Visit(C->getRHS());
+  CFGBlock* RHSBlock = addStmt(C->getRHS());
   if (!FinishBlock(RHSBlock))
     return 0;
   
@@ -518,6 +514,17 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
   Block->addSuccessor(RHSBlock);
   Block->setTerminator(C);
   return addStmt(C->getCond());  
+}
+  
+  
+CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {  
+  CFGBlock* LastBlock = Block;  
+
+  for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
+       I != E; ++I ) {
+    LastBlock = addStmt(*I);
+  }  
+  return LastBlock;
 }
   
 CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
@@ -536,7 +543,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
   Block = NULL;
   CFGBlock* LHSBlock = NULL;
   if (C->getLHS()) {
-    LHSBlock = Visit(C->getLHS());
+    LHSBlock = addStmt(C->getLHS());
     if (!FinishBlock(LHSBlock))
       return 0;
     Block = NULL;
@@ -544,7 +551,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
   
   // Create the block for the RHS expression.
   Succ = ConfluenceBlock;
-  CFGBlock* RHSBlock = Visit(C->getRHS());
+  CFGBlock* RHSBlock = addStmt(C->getRHS());
   if (!FinishBlock(RHSBlock))
     return 0;
   
@@ -572,16 +579,70 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
   return addStmt(C->getCond());
 }
 
-CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
+CFGBlock *CFGBuilder::VisitDeclStmt(DeclStmt *DS) {
+  autoCreateBlock();
 
-  CFGBlock* LastBlock = Block;
-
-  for (CompoundStmt::reverse_body_iterator I=C->body_rbegin(), E=C->body_rend();
-                                                               I != E; ++I ) {
-    LastBlock = Visit(*I);
+  if (DS->isSingleDecl()) {
+    Block->appendStmt(DS);
+    return VisitDeclSubExpr(DS->getSingleDecl());
   }
+  
+  CFGBlock *B = 0;
+  
+  // FIXME: Add a reverse iterator for DeclStmt to avoid this extra copy.
+  typedef llvm::SmallVector<Decl*,10> BufTy;
+  BufTy Buf(DS->decl_begin(), DS->decl_end());
+  
+  for (BufTy::reverse_iterator I = Buf.rbegin(), E = Buf.rend(); I != E; ++I) {
+    // Get the alignment of the new DeclStmt, padding out to >=8 bytes.
+    unsigned A = llvm::AlignOf<DeclStmt>::Alignment < 8
+               ? 8 : llvm::AlignOf<DeclStmt>::Alignment;
+    
+    // Allocate the DeclStmt using the BumpPtrAllocator.  It will get
+    // automatically freed with the CFG.
+    DeclGroupRef DG(*I);
+    Decl *D = *I;
+    void *Mem = cfg->getAllocator().Allocate(sizeof(DeclStmt), A);    
+    DeclStmt *DSNew = new (Mem) DeclStmt(DG, D->getLocation(), GetEndLoc(D));
+    
+    // Append the fake DeclStmt to block.
+    Block->appendStmt(DSNew);
+    B = VisitDeclSubExpr(D);
+  }
+  
+  return B;  
+}
+  
+/// VisitDeclSubExpr - Utility method to add block-level expressions for
+///  initializers in Decls.
+CFGBlock *CFGBuilder::VisitDeclSubExpr(Decl* D) {
+  assert(Block);
 
-  return LastBlock;
+  VarDecl *VD = dyn_cast<VarDecl>(D);
+  
+  if (!VD)
+    return Block;
+  
+  Expr *Init = VD->getInit();
+  
+  if (Init) {
+    // Optimization: Don't create separate block-level statements for literals.
+    switch (Init->getStmtClass()) {
+      case Stmt::IntegerLiteralClass:
+      case Stmt::CharacterLiteralClass:
+      case Stmt::StringLiteralClass:
+        break;
+      default:
+        Block = addStmt(Init);
+    }
+  }
+  
+  // If the type of VD is a VLA, then we must process its size expressions.
+  for (VariableArrayType* VA = FindVA(VD->getType().getTypePtr()); VA != 0;
+       VA = FindVA(VA->getElementType().getTypePtr()))
+    Block = addStmt(VA->getSizeExpr());
+  
+  return Block;
 }
 
 CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
@@ -610,7 +671,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     // NULL out Block so that the recursive call to Visit will
     // create a new basic block.
     Block = NULL;
-    ElseBlock = Visit(Else);
+    ElseBlock = addStmt(Else);
 
     if (!ElseBlock) // Can occur when the Else body has all NullStmts.
       ElseBlock = sv.get();
@@ -627,7 +688,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
     assert (Then);
     SaveAndRestore<CFGBlock*> sv(Succ);
     Block = NULL;
-    ThenBlock = Visit(Then);
+    ThenBlock = addStmt(Then);
 
     if (!ThenBlock) {
       // We can reach here if the "then" body has all NullStmts.
@@ -654,7 +715,7 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // Add the condition as the last statement in the new block.  This may create
   // new blocks as the condition may contain control-flow.  Any newly created
   // blocks will be pointed to be "Block".
-  return addStmt(I->getCond()->IgnoreParens());
+  return addStmt(I->getCond());
 }
 
 
@@ -676,18 +737,18 @@ CFGBlock* CFGBuilder::VisitReturnStmt(ReturnStmt* R) {
 
   // Add the return statement to the block.  This may create new blocks if R
   // contains control-flow (short-circuit operations).
-  return addStmt(R);
+  return VisitStmt(R, true);
 }
 
 CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
   // Get the block of the labeled statement.  Add it to our map.
-  Visit(L->getSubStmt());
+  addStmt(L->getSubStmt());
   CFGBlock* LabelBlock = Block;
 
-  if (!LabelBlock)            // This can happen when the body is empty, i.e.
-    LabelBlock=createBlock(); // scopes that only contains NullStmts.
+  if (!LabelBlock)              // This can happen when the body is empty, i.e.
+    LabelBlock = createBlock(); // scopes that only contains NullStmts.
 
-  assert (LabelMap.find(L) == LabelMap.end() && "label already in map");
+  assert(LabelMap.find(L) == LabelMap.end() && "label already in map");
   LabelMap[ L ] = LabelBlock;
 
   // Labels partition blocks, so this is the end of the basic block we were
@@ -710,7 +771,9 @@ CFGBlock* CFGBuilder::VisitLabelStmt(LabelStmt* L) {
 CFGBlock* CFGBuilder::VisitGotoStmt(GotoStmt* G) {
   // Goto is a control-flow statement.  Thus we stop processing the current
   // block and create a new one.
-  if (Block) FinishBlock(Block);
+  if (Block)
+    FinishBlock(Block);
+
   Block = createBlock(false);
   Block->setTerminator(G);
 
@@ -729,14 +792,14 @@ CFGBlock* CFGBuilder::VisitGotoStmt(GotoStmt* G) {
 CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   // "for" is a control-flow statement.  Thus we stop processing the current
   // block.
-
   CFGBlock* LoopSuccessor = NULL;
 
   if (Block) {
     if (!FinishBlock(Block))
       return 0;
     LoopSuccessor = Block;
-  } else LoopSuccessor = Succ;
+  } else
+    LoopSuccessor = Succ;
 
   // Because of short-circuit evaluation, the condition of the loop can span
   // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
@@ -777,7 +840,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     if (Stmt* I = F->getInc()) {
       // Generate increment code in its own basic block.  This is the target of
       // continue statements.
-      Succ = Visit(I);
+      Succ = addStmt(I);
     } else {
       // No increment code.  Create a special, empty, block that is used as the
       // target block for "looping back" to the start of the loop.
@@ -804,7 +867,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 
     // Now populate the body block, and in the process create new blocks as we
     // walk the body of the loop.
-    CFGBlock* BodyBlock = Visit(F->getBody());
+    CFGBlock* BodyBlock = addStmt(F->getBody());
 
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "for (...;...; ) ;"
@@ -875,7 +938,8 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
       return 0;
     LoopSuccessor = Block;
     Block = 0;
-  } else LoopSuccessor = Succ;
+  } else
+    LoopSuccessor = Succ;
 
   // Build the condition blocks.
   CFGBlock* ExitConditionBlock = createBlock(false);
@@ -893,7 +957,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
   // Walk the 'element' expression to see if there are any side-effects.  We
   // generate new blocks as necesary.  We DON'T add the statement by default to
   // the CFG unless it contains control-flow.
-  EntryConditionBlock = WalkAST(S->getElement(), false);
+  EntryConditionBlock = Visit(S->getElement(), false);
   if (Block) {
     if (!FinishBlock(EntryConditionBlock))
       return 0;
@@ -913,7 +977,7 @@ CFGBlock* CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt* S) {
     BreakTargetBlock = LoopSuccessor;
     ContinueTargetBlock = EntryConditionBlock;
 
-    CFGBlock* BodyBlock = Visit(S->getBody());
+    CFGBlock* BodyBlock = addStmt(S->getBody());
 
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "for (X in Y) ;"
@@ -939,7 +1003,7 @@ CFGBlock* CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S) {
   // FIXME: Add locking 'primitives' to CFG for @synchronized.
 
   // Inline the body.
-  CFGBlock *SyncBlock = Visit(S->getSynchBody());
+  CFGBlock *SyncBlock = addStmt(S->getSynchBody());
 
   // The sync body starts its own basic block.  This makes it a little easier
   // for diagnostic clients.
@@ -953,10 +1017,11 @@ CFGBlock* CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt* S) {
   Succ = SyncBlock;
 
   // Inline the sync expression.
-  return Visit(S->getSynchExpr());
+  return addStmt(S->getSynchExpr());
 }
 
 CFGBlock* CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
+  // FIXME
   return NYS();
 }
 
@@ -970,7 +1035,8 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     if (!FinishBlock(Block))
       return 0;
     LoopSuccessor = Block;
-  } else LoopSuccessor = Succ;
+  } else
+    LoopSuccessor = Succ;
 
   // Because of short-circuit evaluation, the condition of the loop can span
   // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
@@ -1022,7 +1088,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     Block = NULL;
 
     // Create the body.  The returned block is the entry to the loop body.
-    CFGBlock* BodyBlock = Visit(W->getBody());
+    CFGBlock* BodyBlock = addStmt(W->getBody());
 
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "while(...) ;"
@@ -1047,6 +1113,13 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   Succ = EntryConditionBlock;
   return EntryConditionBlock;
 }
+  
+  
+CFGBlock *CFGBuilder::VisitObjCAtCatchStmt(ObjCAtCatchStmt* S) {
+  // FIXME: For now we pretend that @catch and the code it contains does not
+  //  exit.
+  return Block;
+}
 
 CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
   // FIXME: This isn't complete.  We basically treat @throw like a return
@@ -1054,10 +1127,8 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
 
   // If we were in the middle of a block we stop processing that block and
   // reverse its statements.
-  if (Block) {
-    if (!FinishBlock(Block))
-      return 0;
-  }
+  if (Block && !FinishBlock(Block))
+    return 0;
 
   // Create the new block.
   Block = createBlock(false);
@@ -1067,10 +1138,10 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
 
   // Add the statement to the block.  This may create new blocks if S contains
   // control-flow (short-circuit operations).
-  return addStmt(S);
+  return VisitStmt(S, true);
 }
 
-CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
+CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
   // "do...while" is a control-flow statement.  Thus we stop processing the
   // current block.
 
@@ -1080,7 +1151,8 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
     if (!FinishBlock(Block))
       return 0;
     LoopSuccessor = Block;
-  } else LoopSuccessor = Succ;
+  } else
+    LoopSuccessor = Succ;
 
   // Because of short-circuit evaluation, the condition of the loop can span
   // multiple basic blocks.  Thus we need the "Entry" and "Exit" blocks that
@@ -1125,7 +1197,7 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
     Block = NULL;
 
     // Create the body.  The returned block is the entry to the loop body.
-    BodyBlock = Visit(D->getBody());
+    BodyBlock = addStmt(D->getBody());
 
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "do ; while(...)"
@@ -1164,10 +1236,8 @@ CFGBlock* CFGBuilder::VisitDoStmt(DoStmt* D) {
 CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
   // "continue" is a control-flow statement.  Thus we stop processing the
   // current block.
-  if (Block) {
-    if (!FinishBlock(Block))
+  if (Block && !FinishBlock(Block))
       return 0;
-  }
 
   // Now create a new block that ends with the continue statement.
   Block = createBlock(false);
@@ -1182,28 +1252,30 @@ CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
 
   return Block;
 }
-
-CFGBlock* CFGBuilder::VisitBreakStmt(BreakStmt* B) {
-  // "break" is a control-flow statement.  Thus we stop processing the current
-  // block.
-  if (Block) {
-    if (!FinishBlock(Block))
-      return 0;
+  
+CFGBlock *CFGBuilder::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+  // VLA types have expressions that must be evaluated.
+  if (E->isArgumentType()) {
+    for (VariableArrayType* VA = FindVA(E->getArgumentType().getTypePtr());
+         VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
+      addStmt(VA->getSizeExpr());
   }
-
-  // Now create a new block that ends with the break statement.
-  Block = createBlock(false);
-  Block->setTerminator(B);
-
-  // If there is no target for the break, then we are looking at an incomplete
-  // AST.  This means that the CFG cannot be constructed.
-  if (BreakTargetBlock)
-    Block->addSuccessor(BreakTargetBlock);
-  else
-    badCFG = true;
-
-
+  // Expressions in sizeof/alignof are not evaluated and thus have no
+  // control flow.
+  else {
+    autoCreateBlock();
+    Block->appendStmt(E);
+  }
+  
   return Block;
+}
+  
+/// VisitStmtExpr - Utility method to handle (nested) statement
+///  expressions (a GCC extension).
+CFGBlock* CFGBuilder::VisitStmtExpr(StmtExpr *SE) {
+  autoCreateBlock();
+  Block->appendStmt(SE);
+  return VisitCompoundStmt(SE->getSubStmt());
 }
 
 CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
@@ -1240,7 +1312,7 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   // control-flow from the switch goes to case/default statements.
   assert (Terminator->getBody() && "switch must contain a non-NULL body");
   Block = NULL;
-  CFGBlock *BodyBlock = Visit(Terminator->getBody());
+  CFGBlock *BodyBlock = addStmt(Terminator->getBody());
   if (Block) {
     if (!FinishBlock(BodyBlock))
       return 0;
@@ -1258,23 +1330,27 @@ CFGBlock* CFGBuilder::VisitSwitchStmt(SwitchStmt* Terminator) {
   return addStmt(Terminator->getCond());
 }
 
-CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* Terminator) {
+CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* CS) {
   // CaseStmts are essentially labels, so they are the first statement in a
   // block.
 
-  if (Terminator->getSubStmt()) Visit(Terminator->getSubStmt());
+  if (CS->getSubStmt())
+    addStmt(CS->getSubStmt());
+  
   CFGBlock* CaseBlock = Block;
-  if (!CaseBlock) CaseBlock = createBlock();
+  if (!CaseBlock)
+    CaseBlock = createBlock();
 
   // Cases statements partition blocks, so this is the top of the basic block we
   // were processing (the "case XXX:" is the label).
-  CaseBlock->setLabel(Terminator);
+  CaseBlock->setLabel(CS);
+
   if (!FinishBlock(CaseBlock))
     return 0;
 
   // Add this block to the list of successors for the block with the switch
   // statement.
-  assert (SwitchTerminatedBlock);
+  assert(SwitchTerminatedBlock);
   SwitchTerminatedBlock->addSuccessor(CaseBlock);
 
   // We set Block to NULL to allow lazy creation of a new block (if necessary)
@@ -1287,13 +1363,18 @@ CFGBlock* CFGBuilder::VisitCaseStmt(CaseStmt* Terminator) {
 }
 
 CFGBlock* CFGBuilder::VisitDefaultStmt(DefaultStmt* Terminator) {
-  if (Terminator->getSubStmt()) Visit(Terminator->getSubStmt());
+  if (Terminator->getSubStmt())
+    addStmt(Terminator->getSubStmt());
+  
   DefaultCaseBlock = Block;
-  if (!DefaultCaseBlock) DefaultCaseBlock = createBlock();
+
+  if (!DefaultCaseBlock)
+    DefaultCaseBlock = createBlock();
 
   // Default statements partition blocks, so this is the top of the basic block
   // we were processing (the "default:" is the label).
   DefaultCaseBlock->setLabel(Terminator);
+  
   if (!FinishBlock(DefaultCaseBlock))
     return 0;
 
@@ -1323,16 +1404,14 @@ CFGBlock* CFGBuilder::VisitIndirectGotoStmt(IndirectGotoStmt* I) {
 
   // IndirectGoto is a control-flow statement.  Thus we stop processing the
   // current block and create a new one.
-  if (Block) {
-    if (!FinishBlock(Block))
-      return 0;
-  }
+  if (Block && !FinishBlock(Block))
+    return 0;
+
   Block = createBlock(false);
   Block->setTerminator(I);
   Block->addSuccessor(IBlock);
   return addStmt(I->getTarget());
 }
-
 
 } // end anonymous namespace
 
