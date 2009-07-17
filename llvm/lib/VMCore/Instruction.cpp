@@ -14,6 +14,8 @@
 #include "llvm/Type.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
+#include "llvm/Constants.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
@@ -365,24 +367,56 @@ bool Instruction::isCommutative(unsigned op) {
   }
 }
 
-/// isTrapping - Return true if the instruction may trap.
-///
-bool Instruction::isTrapping(unsigned op) {
-  switch(op) {
-  case UDiv:
-  case SDiv:
-  case FDiv:
-  case URem:
-  case SRem:
-  case FRem:
-  case Load:
-  case Store:
-  case Call:
-  case Invoke:
-  case VAArg:
-  case Free:
-    return true;
+bool Instruction::isSafeToSpeculativelyExecute() const {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    if (Constant *C = dyn_cast<Constant>(getOperand(i)))
+      if (C->canTrap())
+        return false;
+
+  switch (getOpcode()) {
   default:
+    return true;
+  case UDiv:
+  case URem: {
+    // x / y is undefined if y == 0, but calcuations like x / 3 are safe.
+    ConstantInt *Op = dyn_cast<ConstantInt>(getOperand(1));
+    return Op && !Op->isNullValue();
+  }
+  case SDiv:
+  case SRem: {
+    // x / y is undefined if y == 0, and might be undefined if y == -1,
+    // but calcuations like x / 3 are safe.
+    ConstantInt *Op = dyn_cast<ConstantInt>(getOperand(1));
+    return Op && !Op->isNullValue() && !Op->isAllOnesValue();
+  }
+  case Load: {
+    if (cast<LoadInst>(this)->isVolatile())
+      return false;
+    if (isa<AllocationInst>(getOperand(0)))
+      return true;
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(getOperand(0)))
+      return !GV->hasExternalWeakLinkage();
+    // FIXME: Handle cases involving GEPs.  We have to be careful because
+    // a load of a out-of-bounds GEP has undefined behavior.
     return false;
+  }
+  case Call:
+    return false; // The called function could have undefined behavior or
+                  // side-effects.
+                  // FIXME: We should special-case some intrinsics (bswap,
+                  // overflow-checking arithmetic, etc.)
+  case VAArg:
+  case Alloca:
+  case Malloc:
+  case Invoke:
+  case PHI:
+  case Store:
+  case Free:
+  case Ret:
+  case Br:
+  case Switch:
+  case Unwind:
+  case Unreachable:
+    return false; // Misc instructions which have effects
   }
 }

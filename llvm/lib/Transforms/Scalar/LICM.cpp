@@ -623,7 +623,8 @@ void LICM::hoist(Instruction &I) {
 ///
 bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   // If it is not a trapping instruction, it is always safe to hoist.
-  if (!Inst.isTrapping()) return true;
+  if (Inst.isSafeToSpeculativelyExecute())
+    return true;
 
   // Otherwise we have to check to make sure that the instruction dominates all
   // of the exit blocks.  If it doesn't, then there is a path out of the loop
@@ -634,12 +635,6 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   // is a common case, and can save some work, check it now.
   if (Inst.getParent() == CurLoop->getHeader())
     return true;
-
-  // It's always safe to load from a global or alloca.
-  if (isa<LoadInst>(Inst))
-    if (isa<AllocationInst>(Inst.getOperand(0)) ||
-        isa<GlobalVariable>(Inst.getOperand(0)))
-      return true;
 
   // Get the exit blocks for the current loop.
   SmallVector<BasicBlock*, 8> ExitBlocks;

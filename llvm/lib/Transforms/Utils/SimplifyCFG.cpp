@@ -384,26 +384,15 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
       // Okay, it looks like the instruction IS in the "condition".  Check to
       // see if its a cheap instruction to unconditionally compute, and if it
       // only uses stuff defined outside of the condition.  If so, hoist it out.
+      if (!I->isSafeToSpeculativelyExecute())
+        return false;
+
       switch (I->getOpcode()) {
       default: return false;  // Cannot hoist this out safely.
       case Instruction::Load: {
-        // We can hoist loads that are non-volatile and obviously cannot trap.
-        if (cast<LoadInst>(I)->isVolatile())
-          return false;
-        // FIXME: A computation of a constant can trap!
-        if (!isa<AllocaInst>(I->getOperand(0)) &&
-            !isa<Constant>(I->getOperand(0)))
-          return false;
-        // External weak globals may have address 0, so we can't load them.
-        Value *V2 = I->getOperand(0)->getUnderlyingObject();
-        if (V2) {
-          GlobalVariable* GV = dyn_cast<GlobalVariable>(V2);
-          if (GV && GV->hasExternalWeakLinkage())
-            return false;
-        }
-        // Finally, we have to check to make sure there are no instructions
-        // before the load in its basic block, as we are going to hoist the loop
-        // out to its predecessor.
+        // We have to check to make sure there are no instructions before the
+        // load in its basic block, as we are going to hoist the loop out to
+        // its predecessor.
         BasicBlock::iterator IP = PBB->begin();
         while (isa<DbgInfoIntrinsic>(IP))
           IP++;

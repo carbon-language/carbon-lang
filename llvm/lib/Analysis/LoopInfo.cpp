@@ -79,14 +79,9 @@ bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
   // Test if the value is already loop-invariant.
   if (isLoopInvariant(I))
     return true;
-  // Don't hoist instructions with side-effects.
-  if (I->isTrapping())
+  if (!I->isSafeToSpeculativelyExecute())
     return false;
-  // Don't hoist PHI nodes.
-  if (isa<PHINode>(I))
-    return false;
-  // Don't hoist allocation instructions.
-  if (isa<AllocationInst>(I))
+  if (I->mayReadFromMemory())
     return false;
   // Determine the insertion point, unless one was given.
   if (!InsertPt) {

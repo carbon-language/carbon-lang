@@ -168,13 +168,6 @@ public:
   bool isCommutative() const { return isCommutative(getOpcode()); }
   static bool isCommutative(unsigned op);
 
-  /// isTrapping - Return true if the instruction may trap.
-  ///
-  bool isTrapping() const {
-    return isTrapping(getOpcode());
-  }
-  static bool isTrapping(unsigned op);
-
   /// mayWriteToMemory - Return true if this instruction may modify memory.
   ///
   bool mayWriteToMemory() const;
@@ -192,6 +185,17 @@ public:
   bool mayHaveSideEffects() const {
     return mayWriteToMemory() || mayThrow();
   }
+
+  /// isSafeToSpeculativelyExecute - Return true if the instruction does not
+  /// have any effects besides calculating the result and does not have
+  /// undefined behavior. Unlike in mayHaveSideEffects(), allocating memory
+  /// is considered an effect.
+  ///
+  /// This method only looks at the instruction itself and its operands, so if
+  /// this method returns true, it is safe to move the instruction as long as
+  /// the operands still dominate it.  However, care must be taken with
+  /// instructions which read memory.
+  bool isSafeToSpeculativelyExecute() const;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *) { return true; }
