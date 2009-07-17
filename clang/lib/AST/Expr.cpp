@@ -226,10 +226,8 @@ void CallExpr::Destroy(ASTContext& C) {
 
 FunctionDecl *CallExpr::getDirectCallee() {
   Expr *CEE = getCallee()->IgnoreParenCasts();
-  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
-    // FIXME: We can follow objective-c methods and C++ member functions...
+  if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE))
     return dyn_cast<FunctionDecl>(DRE->getDecl());
-  }
 
   return 0;
 }
