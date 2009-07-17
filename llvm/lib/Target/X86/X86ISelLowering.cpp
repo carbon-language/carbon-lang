@@ -8840,7 +8840,37 @@ getRegClassForInlineAsmConstraint(const std::string &Constraint,
     // FIXME: not handling fp-stack yet!
     switch (Constraint[0]) {      // GCC X86 Constraint Letters
     default: break;  // Unknown constraint letter
-    case 'q':   // Q_REGS (GENERAL_REGS in 64-bit mode)
+    case 'q':   // GENERAL_REGS in 64-bit mode, Q_REGS in 32-bit mode.
+      if (Subtarget->is64Bit()) {
+        if (VT == MVT::i32)
+          return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX,
+                                       X86::ESI, X86::EDI, X86::R8D, X86::R9D,
+                                       X86::R10D,X86::R11D,X86::R12D,
+                                       X86::R13D,X86::R14D,X86::R15D,
+                                       X86::EBP, X86::ESP, 0);
+        else if (VT == MVT::i16)
+          return make_vector<unsigned>(X86::AX,  X86::DX,  X86::CX, X86::BX,
+                                       X86::SI,  X86::DI,  X86::R8W,X86::R9W,
+                                       X86::R10W,X86::R11W,X86::R12W,
+                                       X86::R13W,X86::R14W,X86::R15W,
+                                       X86::BP,  X86::SP, 0);
+        else if (VT == MVT::i8)
+          return make_vector<unsigned>(X86::AL,  X86::DL,  X86::CL, X86::BL,
+                                       X86::SIL, X86::DIL, X86::R8B,X86::R9B,
+                                       X86::R10B,X86::R11B,X86::R12B,
+                                       X86::R13B,X86::R14B,X86::R15B,
+                                       X86::BPL, X86::SPL, 0);
+
+        else if (VT == MVT::i64)
+          return make_vector<unsigned>(X86::RAX, X86::RDX, X86::RCX, X86::RBX,
+                                       X86::RSI, X86::RDI, X86::R8,  X86::R9,
+                                       X86::R10, X86::R11, X86::R12,
+                                       X86::R13, X86::R14, X86::R15,
+                                       X86::RBP, X86::RSP, 0);
+
+        break;
+      }
+      // 32-bit fallthrough 
     case 'Q':   // Q_REGS
       if (VT == MVT::i32)
         return make_vector<unsigned>(X86::EAX, X86::EDX, X86::ECX, X86::EBX, 0);
