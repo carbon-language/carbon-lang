@@ -116,10 +116,6 @@ my $Clang = $ClangSB;
 my %AvailableAnalyses;
 
 # Query clang for analysis options.
-if (!-x $ClangCC) {
-  DieDiag("No executable 'clang-cc' found\n");
-}
-
 open(PIPE, "-|", $ClangCC, "--help") or
   DieDiag("Cannot execute '$ClangCC'\n");
 
