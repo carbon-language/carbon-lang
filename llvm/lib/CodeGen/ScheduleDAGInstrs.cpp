@@ -14,7 +14,7 @@
 
 #define DEBUG_TYPE "sched-instrs"
 #include "ScheduleDAGInstrs.h"
-#include "llvm/Constants.h"
+#include "llvm/Operator.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -46,25 +46,14 @@ void ScheduleDAGInstrs::Run(MachineBasicBlock *bb,
   ScheduleDAG::Run(bb, end);
 }
 
-/// getOpcode - If this is an Instruction or a ConstantExpr, return the
-/// opcode value. Otherwise return UserOp1.
-static unsigned getOpcode(const Value *V) {
-  if (const Instruction *I = dyn_cast<Instruction>(V))
-    return I->getOpcode();
-  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    return CE->getOpcode();
-  // Use UserOp1 to mean there's no opcode.
-  return Instruction::UserOp1;
-}
-
 /// getUnderlyingObjectFromInt - This is the function that does the work of
 /// looking through basic ptrtoint+arithmetic+inttoptr sequences.
 static const Value *getUnderlyingObjectFromInt(const Value *V) {
   do {
-    if (const User *U = dyn_cast<User>(V)) {
+    if (const Operator *U = dyn_cast<Operator>(V)) {
       // If we find a ptrtoint, we can transfer control back to the
       // regular getUnderlyingObjectFromInt.
-      if (getOpcode(U) == Instruction::PtrToInt)
+      if (U->getOpcode() == Instruction::PtrToInt)
         return U->getOperand(0);
       // If we find an add of a constant or a multiplied value, it's
       // likely that the other operand will lead us to the base
@@ -72,9 +61,9 @@ static const Value *getUnderlyingObjectFromInt(const Value *V) {
       // object address is somehow being computed bt the multiply,
       // because our callers only care when the result is an
       // identifibale object.
-      if (getOpcode(U) != Instruction::Add ||
+      if (U->getOpcode() != Instruction::Add ||
           (!isa<ConstantInt>(U->getOperand(1)) &&
-           getOpcode(U->getOperand(1)) != Instruction::Mul))
+           Operator::getOpcode(U->getOperand(1)) != Instruction::Mul))
         return V;
       V = U->getOperand(0);
     } else {
@@ -91,7 +80,7 @@ static const Value *getUnderlyingObject(const Value *V) {
   do {
     V = V->getUnderlyingObject();
     // If it found an inttoptr, use special code to continue climing.
-    if (getOpcode(V) != Instruction::IntToPtr)
+    if (Operator::getOpcode(V) != Instruction::IntToPtr)
       break;
     const Value *O = getUnderlyingObjectFromInt(cast<User>(V)->getOperand(0));
     // If that succeeded in finding a pointer, continue the search.
