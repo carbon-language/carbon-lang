@@ -89,6 +89,7 @@ GVInternalLinkage
  | appending
  | dllexport
  | common
+ | private
  ;
 
 GVExternalLinkage
