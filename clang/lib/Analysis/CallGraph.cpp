@@ -118,10 +118,11 @@ void CallGraph::print(llvm::raw_ostream &os) {
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (I->second->hasCallee()) {
       ASTContext &Ctx = *CallerCtx[I->second];
-      os << "function: " << I->first->getName(Ctx) << " calls:\n";
+      os << "function: " << I->first->getPrintableName(Ctx).c_str() 
+         << " calls:\n";
       for (CallGraphNode::iterator CI = I->second->begin(), 
              CE = I->second->end(); CI != CE; ++CI) {
-        os << "    " << CI->second->getName(Ctx);
+        os << "    " << CI->second->getName(Ctx).c_str();
       }
       os << '\n';
     }

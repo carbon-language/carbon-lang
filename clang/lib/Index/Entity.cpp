@@ -126,11 +126,11 @@ Decl *Entity::getDecl(ASTContext &AST) {
   return 0; // Failed to find a decl using this Entity.
 }
 
-const char *Entity::getName(ASTContext &Ctx) {
+std::string Entity::getPrintableName(ASTContext &Ctx) {
   if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(getDecl(Ctx))) {
-    return ND->getNameAsCString();
+    return ND->getNameAsString();
   }
-  return 0;
+  return std::string();
 }
 
 /// \brief Get an Entity associated with the given Decl.

@@ -43,8 +43,8 @@ public:
   /// \brief Find the Decl that can be referred to by this entity.
   Decl *getDecl(ASTContext &AST);
 
-  /// \brief Get the Decl's name.
-  const char *getName(ASTContext &Ctx);
+  /// \brief Get a printable name for debugging purpose.
+  std::string getPrintableName(ASTContext &Ctx);
 
   /// \brief Get an Entity associated with the given Decl.
   /// \returns Null if an Entity cannot refer to this Decl.
