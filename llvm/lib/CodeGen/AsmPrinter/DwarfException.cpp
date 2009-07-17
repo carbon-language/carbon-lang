@@ -147,35 +147,26 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
   assert(!EHFrameInfo.function->hasAvailableExternallyLinkage() && 
          "Should not emit 'available externally' functions at all");
 
-  Function::LinkageTypes linkage = EHFrameInfo.function->getLinkage();
+  const Function *TheFunc = EHFrameInfo.function;
+  
   Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
 
   // Externally visible entry into the functions eh frame info. If the
   // corresponding function is static, this should not be externally visible.
-  if (linkage != Function::InternalLinkage &&
-      linkage != Function::PrivateLinkage) {
+  if (!TheFunc->hasLocalLinkage())
     if (const char *GlobalEHDirective = TAI->getGlobalEHDirective())
       O << GlobalEHDirective << EHFrameInfo.FnName << "\n";
-  }
 
   // If corresponding function is weak definition, this should be too.
-  if ((linkage == Function::WeakAnyLinkage ||
-       linkage == Function::WeakODRLinkage ||
-       linkage == Function::LinkOnceAnyLinkage ||
-       linkage == Function::LinkOnceODRLinkage) &&
-      TAI->getWeakDefDirective())
+  if (TheFunc->isWeakForLinker() && TAI->getWeakDefDirective())
     O << TAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
 
   // If there are no calls then you can't unwind.  This may mean we can omit the
   // EH Frame, but some environments do not handle weak absolute symbols. If
   // UnwindTablesMandatory is set we cannot do this optimization; the unwind
   // info is to be available for non-EH uses.
-  if (!EHFrameInfo.hasCalls &&
-      !UnwindTablesMandatory &&
-      ((linkage != Function::WeakAnyLinkage &&
-        linkage != Function::WeakODRLinkage &&
-        linkage != Function::LinkOnceAnyLinkage &&
-        linkage != Function::LinkOnceODRLinkage) ||
+  if (!EHFrameInfo.hasCalls && !UnwindTablesMandatory &&
+      (!TheFunc->isWeakForLinker() ||
        !TAI->getWeakDefDirective() ||
        TAI->getSupportsWeakOmittedEHFrame())) {
     O << EHFrameInfo.FnName << " = 0\n";
