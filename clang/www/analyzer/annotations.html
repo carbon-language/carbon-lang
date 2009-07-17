@@ -152,8 +152,12 @@ use 'cf_returns_retained'.</p>
 <span class="command">$ cat test.m</span>
 #import &lt;Foundation/Foundation.h&gt;
 
+#ifndef __has_feature      // Optional.
+#define __has_feature(x) 0 // Compatibility with non-clang compilers.
+#endif
+
 #ifndef NS_RETURNS_RETAINED
-#if __clang__
+#if __has_feature(attribute_ns_returns_retained)
 <span class="code_highlight">#define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))</span>
 #else
 #define NS_RETURNS_RETAINED
@@ -226,8 +230,12 @@ collection (<tt>-fobjc-gc-only</tt>).</p>
 $ cat test.m
 #import &lt;Cocoa/Cocoa.h&gt;
 
+#ifndef __has_feature      // Optional.
+#define __has_feature(x) 0 // Compatibility with non-clang compilers.
+#endif
+
 #ifndef CF_RETURNS_RETAINED
-#if __clang__
+#if __has_feature(attribute_cf_returns_retained)
 <span class="code_highlight">#define CF_RETURNS_RETAINED __attribute__((cf_returns_retained))</span>
 #else
 #define CF_RETURNS_RETAINED
