@@ -5456,13 +5456,13 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
 }
 
 
-/// EvaluateGEPOffsetExpression - Return an value that can be used to compare of
-/// the *offset* implied by GEP to zero.  For example, if we have &A[i], we want
-/// to return 'i' for "icmp ne i, 0".  Note that, in general, indices can be
-/// complex, and scales are involved.  The above expression would also be legal
-/// to codegen as "icmp ne (i*4), 0" (assuming A is a pointer to i32).  This
-/// later form is less amenable to optimization though, and we are allowed to
-/// generate the first by knowing that pointer arithmetic doesn't overflow.
+/// EvaluateGEPOffsetExpression - Return a value that can be used to compare
+/// the *offset* implied by a GEP to zero.  For example, if we have &A[i], we
+/// want to return 'i' for "icmp ne i, 0".  Note that, in general, indices can
+/// be complex, and scales are involved.  The above expression would also be
+/// legal to codegen as "icmp ne (i*4), 0" (assuming A is a pointer to i32).
+/// This later form is less amenable to optimization though, and we are allowed
+/// to generate the first by knowing that pointer arithmetic doesn't overflow.
 ///
 /// If we can't emit an optimized form for this expression, this returns null.
 /// 
