@@ -473,19 +473,13 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
     return WalkAST(cast<ParenExpr>(Terminator)->getSubExpr(), AlwaysAddStmt);
 
   case Stmt::CallExprClass: {
-    bool NoReturn = false;
-    CallExpr *C = cast<CallExpr>(Terminator);
-    if (FunctionDecl *FD = C->getDirectCallee())
-      if (FD->hasAttr<NoReturnAttr>())
-        NoReturn = true;
-
-    if (!NoReturn)
+    // If this is a call to a no-return function, this stops the block here.
+    FunctionDecl *FD = cast<CallExpr>(Terminator)->getDirectCallee();
+    if (FD == 0 || !FD->hasAttr<NoReturnAttr>())
       break;
 
-    if (Block) {
-      if (!FinishBlock(Block))
-        return 0;
-    }
+    if (Block && !FinishBlock(Block))
+      return 0;
 
     // Create new block with no successor for the remaining pieces.
     Block = createBlock(false);
@@ -498,6 +492,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* Terminator, bool AlwaysAddStmt = false) {
   }
 
   default:
+    // TODO: We can follow objective-c methods (message sends).
     break;
   };
 
