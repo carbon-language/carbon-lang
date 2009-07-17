@@ -3,6 +3,13 @@
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-old-cast -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 
+#if __has_feature(attribute_ns_returns_retained)
+#define NS_RETURNS_RETAINED __attribute__((ns_returns_retained))
+#endif
+#if __has_feature(attribute_cf_returns_retained)
+#define CF_RETURNS_RETAINED __attribute__((cf_returns_retained))
+#endif
+
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from Mac OS X headers:
 //
@@ -763,7 +770,7 @@ void IOServiceNameMatching_wrapper(const char * name) {
   IOServiceNameMatching(name); // expected-warning{{leak}}
 }
 
-__attribute__((cf_returns_retained)) CFDictionaryRef CreateDict();
+CF_RETURNS_RETAINED CFDictionaryRef CreateDict();
 
 void IOServiceAddNotification_wrapper(mach_port_t masterPort, const io_name_t notificationType,
   mach_port_t wakePort, uintptr_t reference, io_iterator_t * notification ) {
@@ -810,13 +817,13 @@ void IOServiceAddMatchingNotification_wrapper(IONotificationPortRef notifyPort, 
 typedef NSString* MyStringTy;
 
 @interface TestOwnershipAttr : NSObject
-- (NSString*) returnsAnOwnedString  __attribute__((ns_returns_retained)); // no-warning
-- (NSString*) returnsAnOwnedCFString  __attribute__((cf_returns_retained)); // no-warning
-- (MyStringTy) returnsAnOwnedTypedString __attribute__((ns_returns_retained)); // no-warning
-- (int) returnsAnOwnedInt __attribute__((ns_returns_retained)); // expected-warning{{'ns_returns_retained' attribute only applies to functions or methods that return a pointer or Objective-C object}}
+- (NSString*) returnsAnOwnedString  NS_RETURNS_RETAINED; // no-warning
+- (NSString*) returnsAnOwnedCFString  CF_RETURNS_RETAINED; // no-warning
+- (MyStringTy) returnsAnOwnedTypedString NS_RETURNS_RETAINED; // no-warning
+- (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions or methods that return a pointer or Objective-C object}}
 @end
 
-static int ownership_attribute_doesnt_go_here __attribute__((ns_returns_retained)); // expected-warning{{'ns_returns_retained' attribute only applies to function or method types}}
+static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to function or method types}}
 
 void test_attr_1(TestOwnershipAttr *X) {
   NSString *str = [X returnsAnOwnedString]; // expected-warning{{leak}}
@@ -827,14 +834,14 @@ void test_attr_1b(TestOwnershipAttr *X) {
 }
 
 @interface MyClassTestCFAttr : NSObject {}
-- (NSDate*) returnsCFRetained __attribute__((cf_returns_retained));
-- (CFDateRef) returnsCFRetainedAsCF __attribute__((cf_returns_retained));
+- (NSDate*) returnsCFRetained CF_RETURNS_RETAINED;
+- (CFDateRef) returnsCFRetainedAsCF CF_RETURNS_RETAINED;
 - (NSDate*) alsoReturnsRetained;
 - (CFDateRef) alsoReturnsRetainedAsCF;
-- (NSDate*) returnsNSRetained __attribute__((ns_returns_retained));
+- (NSDate*) returnsNSRetained NS_RETURNS_RETAINED;
 @end
 
-__attribute__((cf_returns_retained))
+CF_RETURNS_RETAINED
 CFDateRef returnsRetainedCFDate()  {
   return CFDateCreate(0, CFAbsoluteTimeGetCurrent());
 }
