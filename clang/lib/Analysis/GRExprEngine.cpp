@@ -2205,8 +2205,7 @@ void GRExprEngine::VisitDeclStmt(DeclStmt* DS, NodeTy* Pred, NodeSet& Dst) {
 
   if (InitEx)
     Visit(InitEx, Pred, Tmp);
-
-  if (Tmp.empty())
+  else
     Tmp.Add(Pred);
   
   for (NodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
