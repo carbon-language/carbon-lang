@@ -458,17 +458,22 @@ for a_target in $TARGETS_TO_BUILD; do
 done
 
 # Build the LLVM_TARGET and LLVM_ASM_PRINTER macro uses for
-# Targets.def and AsmPrinters.def.
+# Targets.def, AsmPrinters.def, and AsmParsers.def.
 LLVM_ENUM_TARGETS=""
 LLVM_ENUM_ASM_PRINTERS=""
+LLVM_ENUM_ASM_PARSERS=""
 for target_to_build in $TARGETS_TO_BUILD; do
   LLVM_ENUM_TARGETS="LLVM_TARGET($target_to_build) $LLVM_ENUM_TARGETS"
   if test -f ${srcdir}/lib/Target/${target_to_build}/AsmPrinter/Makefile ; then
     LLVM_ENUM_ASM_PRINTERS="LLVM_ASM_PRINTER($target_to_build) $LLVM_ENUM_ASM_PRINTERS";
   fi
+  if test -f ${srcdir}/lib/Target/${target_to_build}/AsmParser/Makefile ; then
+    LLVM_ENUM_ASM_PARSERS="LLVM_ASM_PARSER($target_to_build) $LLVM_ENUM_ASM_PARSERS";
+  fi
 done
 AC_SUBST(LLVM_ENUM_TARGETS)
 AC_SUBST(LLVM_ENUM_ASM_PRINTERS)
+AC_SUBST(LLVM_ENUM_ASM_PARSERS)
 
 dnl Prevent the CBackend from using printf("%a") for floating point so older
 dnl C compilers that cannot deal with the 0x0p+0 hex floating point format
@@ -1257,6 +1262,7 @@ dnl files can be updated automatically when their *.in sources change.
 AC_CONFIG_HEADERS([include/llvm/Config/config.h])
 AC_CONFIG_FILES([include/llvm/Config/Targets.def])
 AC_CONFIG_FILES([include/llvm/Config/AsmPrinters.def])
+AC_CONFIG_FILES([include/llvm/Config/AsmParser.def])
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
 AC_CONFIG_HEADERS([include/llvm/ADT/iterator.h])
 

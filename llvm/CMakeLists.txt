@@ -257,6 +257,7 @@ add_subdirectory(lib/Analysis/IPA)
 add_subdirectory(lib/MC)
 
  set(LLVM_ENUM_ASM_PRINTERS "")
+ set(LLVM_ENUM_ASM_PARSERS "")
  foreach(t ${LLVM_TARGETS_TO_BUILD})
   message(STATUS "Targeting ${t}")
   add_subdirectory(lib/Target/${t})
@@ -266,12 +267,23 @@ add_subdirectory(lib/MC)
     set(LLVM_ENUM_ASM_PRINTERS 
         "${LLVM_ENUM_ASM_PRINTERS}LLVM_ASM_PRINTER(${t})\n")
  endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmPrinter/CMakeLists.txt )
+  if( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmParser/CMakeLists.txt )
+   add_subdirectory(lib/Target/${t}/AsmParser)
+    set(LLVM_ENUM_ASM_PARSERS 
+        "${LLVM_ENUM_ASM_PARSERS}LLVM_ASM_PARSER(${t})\n")
+ endif( EXISTS ${LLVM_MAIN_SRC_DIR}/lib/Target/${t}/AsmParser/CMakeLists.txt )
 endforeach(t)
 
 # Produce llvm/Config/AsmPrinters.def
 configure_file(
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmPrinters.def.in
   ${LLVM_BINARY_DIR}/include/llvm/Config/AsmPrinters.def
+  )
+
+# Produce llvm/Config/AsmParsers.def
+configure_file(
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/Config/AsmParsers.def.in
+  ${LLVM_BINARY_DIR}/include/llvm/Config/AsmParsers.def
   )
 
 add_subdirectory(lib/ExecutionEngine)

@@ -25,6 +25,7 @@
 namespace llvm {
   class FunctionPass;
   class Module;
+  class TargetAsmParser;
   class TargetMachine;
   class formatted_raw_ostream;
 
@@ -48,6 +49,7 @@ namespace llvm {
     typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &,
                                               TargetMachine &,
                                               bool);
+    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &);
 
     friend struct TargetRegistry;
 
@@ -81,6 +83,10 @@ namespace llvm {
     /// if registered.
     AsmPrinterCtorTy AsmPrinterCtorFn;
 
+    /// AsmParserCtorFn - Construction function for this target's AsmParser,
+    /// if registered.
+    AsmParserCtorTy AsmParserCtorFn;
+
   public:
     // getNext - Return the next registered target.
     const Target *getNext() const { return Next; }
@@ -101,6 +107,9 @@ namespace llvm {
     /// hasAsmPrinter - Check if this target supports .s printing.
     bool hasAsmPrinter() const { return AsmPrinterCtorFn != 0; }
 
+    /// hasAsmParser - Check if this target supports .s parsing.
+    bool hasAsmParser() const { return AsmParserCtorFn != 0; }
+
     /// createTargetMachine - Create a target specific machine implementation.
     TargetMachine *createTargetMachine(const Module &M,
                                        const std::string &Features) const {
@@ -116,6 +125,13 @@ namespace llvm {
       if (!AsmPrinterCtorFn)
         return 0;
       return AsmPrinterCtorFn(OS, M, Verbose);
+    }
+
+    /// createAsmParser - Create a target specific assembly parser.
+    TargetAsmParser *createAsmParser() const {
+      if (!AsmParserCtorFn)
+        return 0;
+      return AsmParserCtorFn(*this);
     }
   };
 
@@ -225,8 +241,9 @@ namespace llvm {
     /// @param Fn - A function to construct a TargetMachine for the target.
     static void RegisterTargetMachine(Target &T, 
                                       Target::TargetMachineCtorTy Fn) {
-      assert(!T.TargetMachineCtorFn && "Constructor already registered!");
-      T.TargetMachineCtorFn = Fn;
+      // Ignore duplicate registration.
+      if (!T.TargetMachineCtorFn)
+        T.TargetMachineCtorFn = Fn;
     }
 
     /// RegisterAsmPrinter - Register an AsmPrinter implementation for the given
@@ -239,8 +256,23 @@ namespace llvm {
     /// @param T - The target being registered.
     /// @param Fn - A function to construct an AsmPrinter for the target.
     static void RegisterAsmPrinter(Target &T, Target::AsmPrinterCtorTy Fn) {
-      assert(!T.AsmPrinterCtorFn && "Constructor already registered!");
-      T.AsmPrinterCtorFn = Fn;
+      // Ignore duplicate registration.
+      if (!T.AsmPrinterCtorFn)
+        T.AsmPrinterCtorFn = Fn;
+    }
+
+    /// RegisterAsmParser - Register a TargetAsmParser implementation for the
+    /// given target.
+    /// 
+    /// Clients are responsible for ensuring that registration doesn't occur
+    /// while another thread is attempting to access the registry. Typically
+    /// this is done by initializing all targets at program startup.
+    ///
+    /// @param T - The target being registered.
+    /// @param Fn - A function to construct an AsmPrinter for the target.
+    static void RegisterAsmParser(Target &T, Target::AsmParserCtorTy Fn) {
+      if (!T.AsmParserCtorFn)
+        T.AsmParserCtorFn = Fn;
     }
 
     /// @}
