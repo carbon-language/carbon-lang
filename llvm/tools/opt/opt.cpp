@@ -504,6 +504,7 @@ int main(int argc, char **argv) {
     }
 
     if (OptLevelO1 || OptLevelO2 || OptLevelO3) {
+      FPasses->doInitialization();
       for (Module::iterator I = M.get()->begin(), E = M.get()->end();
            I != E; ++I)
         FPasses->run(*I);
