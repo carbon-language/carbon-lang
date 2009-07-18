@@ -1,4 +1,4 @@
-// RUN: clang-cc -triple i386-apple-darwin9 -fnext-runtime -emit-llvm %s
+// RUN: clang-cc -triple i386-apple-darwin9 -fnext-runtime -emit-llvm %s -o %t
 
 @interface Foo 
 {
