@@ -79,7 +79,6 @@ public:
     : LocResolverBase(ctx, loc), Parent(parent) {}
 
   ASTLocation VisitDeclStmt(DeclStmt *Node);
-  ASTLocation VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
   ASTLocation VisitStmt(Stmt *Node);
 };
 
@@ -116,12 +115,6 @@ ASTLocation StmtLocResolver::VisitDeclStmt(DeclStmt *Node) {
       return DeclLocResolver(Ctx, Loc).Visit(*I);
   }
 
-  return ASTLocation(Parent, Node);
-}
-
-ASTLocation StmtLocResolver::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
-  assert(ContainsLocation(Node) &&
-         "Should visit only after verifying that loc is in range");
   return ASTLocation(Parent, Node);
 }
 
