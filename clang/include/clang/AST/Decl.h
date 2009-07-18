@@ -437,7 +437,7 @@ public:
     return First->PreviousDeclaration.getPointer();
   }
 
-  virtual Decl *getPrimaryDecl() const;
+  virtual VarDecl *getCanonicalDecl();
 
   /// \brief Iterates through all the redeclarations of the same var decl.
   class redecl_iterator {
@@ -908,7 +908,7 @@ public:
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
-  virtual Decl *getPrimaryDecl() const;
+  virtual FunctionDecl *getCanonicalDecl();
 
   /// \brief Iterates through all the redeclarations of the same function decl.
   class redecl_iterator {
@@ -1316,6 +1316,8 @@ public:
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
 
   virtual SourceRange getSourceRange() const;
+  
+  virtual TagDecl* getCanonicalDecl();
 
   /// isDefinition - Return true if this decl has its body specified.
   bool isDefinition() const {

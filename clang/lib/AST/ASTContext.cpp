@@ -2085,38 +2085,7 @@ QualType ASTContext::getCanonicalType(QualType T) {
 Decl *ASTContext::getCanonicalDecl(Decl *D) {
   if (!D)
     return 0;
-
-  if (TagDecl *Tag = dyn_cast<TagDecl>(D)) {
-    QualType T = getTagDeclType(Tag);
-    return cast<TagDecl>(cast<TagType>(T.getTypePtr()->CanonicalType)
-                         ->getDecl());
-  }
-
-  if (ClassTemplateDecl *Template = dyn_cast<ClassTemplateDecl>(D)) {
-    while (Template->getPreviousDeclaration())
-      Template = Template->getPreviousDeclaration();
-    return Template;
-  }
-
-  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-    while (Function->getPreviousDeclaration())
-      Function = Function->getPreviousDeclaration();
-    return const_cast<FunctionDecl *>(Function);
-  }
-
-  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D)) {
-    while (FunTmpl->getPreviousDeclaration())
-      FunTmpl = FunTmpl->getPreviousDeclaration();
-    return FunTmpl;
-  }
-  
-  if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    while (Var->getPreviousDeclaration())
-      Var = Var->getPreviousDeclaration();
-    return const_cast<VarDecl *>(Var);
-  }
-
-  return D;
+  return D->getCanonicalDecl();
 }
 
 TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {

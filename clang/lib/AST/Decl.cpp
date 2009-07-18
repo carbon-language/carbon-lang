@@ -387,8 +387,11 @@ VarDecl *VarDecl::getFirstDeclaration() {
   return First;
 }
 
-Decl *VarDecl::getPrimaryDecl() const {
-  return const_cast<VarDecl *>(getFirstDeclaration());
+VarDecl *VarDecl::getCanonicalDecl() {
+  VarDecl *Var = this;
+  while (Var->getPreviousDeclaration())
+    Var = Var->getPreviousDeclaration();
+  return Var;
 }
 
 //===----------------------------------------------------------------------===//
@@ -621,8 +624,11 @@ FunctionDecl *FunctionDecl::getFirstDeclaration() {
   return First;
 }
 
-Decl *FunctionDecl::getPrimaryDecl() const {
-  return const_cast<FunctionDecl *>(getFirstDeclaration());
+FunctionDecl *FunctionDecl::getCanonicalDecl() {
+  FunctionDecl *FD = this;
+  while (FD->getPreviousDeclaration())
+    FD = FD->getPreviousDeclaration();
+  return FD;
 }
 
 /// getOverloadedOperator - Which C++ overloaded operator this
@@ -701,6 +707,14 @@ void FunctionDecl::setExplicitSpecialization(bool ES) {
 SourceRange TagDecl::getSourceRange() const {
   SourceLocation E = RBraceLoc.isValid() ? RBraceLoc : getLocation();
   return SourceRange(getLocation(), E);
+}
+
+TagDecl* TagDecl::getCanonicalDecl() {
+  Type *T = getTypeForDecl();
+  if (T == 0)
+    T = getASTContext().getTagDeclType(this).getTypePtr();
+
+  return cast<TagDecl>(cast<TagType>(T->getCanonicalTypeInternal())->getDecl());
 }
 
 void TagDecl::startDefinition() {

@@ -98,6 +98,13 @@ void FunctionTemplateDecl::Destroy(ASTContext &C) {
   Decl::Destroy(C);
 }
 
+FunctionTemplateDecl *FunctionTemplateDecl::getCanonicalDecl() {
+  FunctionTemplateDecl *FunTmpl = this;
+  while (FunTmpl->getPreviousDeclaration())
+    FunTmpl = FunTmpl->getPreviousDeclaration();
+  return FunTmpl;
+}
+
 FunctionTemplateDecl::Common *FunctionTemplateDecl::getCommonPtr() {
   // Find the first declaration of this function template.
   FunctionTemplateDecl *First = this;
@@ -114,6 +121,13 @@ FunctionTemplateDecl::Common *FunctionTemplateDecl::getCommonPtr() {
 //===----------------------------------------------------------------------===//
 // ClassTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
+
+ClassTemplateDecl *ClassTemplateDecl::getCanonicalDecl() {
+  ClassTemplateDecl *Template = this;
+  while (Template->getPreviousDeclaration())
+    Template = Template->getPreviousDeclaration();
+  return Template;
+}
 
 ClassTemplateDecl *ClassTemplateDecl::Create(ASTContext &C,
                                              DeclContext *DC,

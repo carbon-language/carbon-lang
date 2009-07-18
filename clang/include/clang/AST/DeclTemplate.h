@@ -604,6 +604,8 @@ public:
       CommonOrPrev = Prev;
   }
   
+  virtual FunctionTemplateDecl *getCanonicalDecl();
+  
   /// Create a template function node.
   static FunctionTemplateDecl *Create(ASTContext &C, DeclContext *DC,
                                       SourceLocation L,
@@ -1027,6 +1029,8 @@ public:
   ClassTemplateDecl *getPreviousDeclaration() const {
     return PreviousDeclaration;
   }
+  
+  virtual ClassTemplateDecl *getCanonicalDecl();
 
   /// Create a class template node.
   static ClassTemplateDecl *Create(ASTContext &C, DeclContext *DC,
