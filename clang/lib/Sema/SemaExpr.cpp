@@ -902,7 +902,8 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
           // FIXME: This should use a new expr for a direct reference, don't
           // turn this into Self->ivar, just return a BareIVarExpr or something.
           IdentifierInfo &II = Context.Idents.get("self");
-          OwningExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
+          OwningExprResult SelfExpr = ActOnIdentifierExpr(S, SourceLocation(),
+                                                          II, false);
           MarkDeclarationReferenced(Loc, IV);
           return Owned(new (Context) 
                        ObjCIvarRefExpr(IV, IV->getType(), Loc, 
