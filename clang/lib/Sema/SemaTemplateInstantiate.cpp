@@ -968,7 +968,7 @@ Sema::InstantiateClassTemplateSpecialization(
                            bool ExplicitInstantiation) {
   // Perform the actual instantiation on the canonical declaration.
   ClassTemplateSpec = cast<ClassTemplateSpecializationDecl>(
-                               Context.getCanonicalDecl(ClassTemplateSpec));
+                                         ClassTemplateSpec->getCanonicalDecl());
 
   // We can only instantiate something that hasn't already been
   // instantiated or specialized. Fail without any diagnostics: our

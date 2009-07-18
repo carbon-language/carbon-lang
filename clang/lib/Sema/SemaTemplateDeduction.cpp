@@ -170,8 +170,8 @@ DeduceTemplateArguments(ASTContext &Context,
     return Sema::TDK_Inconsistent;
   }
 
-  ParamDecl = cast<TemplateDecl>(Context.getCanonicalDecl(ParamDecl));
-  ArgDecl = cast<TemplateDecl>(Context.getCanonicalDecl(ArgDecl));
+  ParamDecl = cast<TemplateDecl>(ParamDecl->getCanonicalDecl());
+  ArgDecl = cast<TemplateDecl>(ArgDecl->getCanonicalDecl());
   if (ParamDecl != ArgDecl) {
     // FIXME: fill in Info.Param/Info.FirstArg
     return Sema::TDK_Inconsistent;
@@ -799,8 +799,8 @@ static bool isSameTemplateArg(ASTContext &Context,
              Context.getCanonicalType(Y.getAsType());
       
     case TemplateArgument::Declaration:
-      return Context.getCanonicalDecl(X.getAsDecl()) ==
-             Context.getCanonicalDecl(Y.getAsDecl());
+      return X.getAsDecl()->getCanonicalDecl() ==
+             Y.getAsDecl()->getCanonicalDecl();
       
     case TemplateArgument::Integral:
       return *X.getAsIntegral() == *Y.getAsIntegral();

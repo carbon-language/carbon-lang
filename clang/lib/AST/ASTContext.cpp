@@ -2082,17 +2082,11 @@ QualType ASTContext::getCanonicalType(QualType T) {
                               VAT->getBracketsRange());
 }
 
-Decl *ASTContext::getCanonicalDecl(Decl *D) {
-  if (!D)
-    return 0;
-  return D->getCanonicalDecl();
-}
-
 TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
   // If this template name refers to a template, the canonical
   // template name merely stores the template itself.
   if (TemplateDecl *Template = Name.getAsTemplateDecl())
-    return TemplateName(cast<TemplateDecl>(getCanonicalDecl(Template)));
+    return TemplateName(cast<TemplateDecl>(Template->getCanonicalDecl()));
 
   DependentTemplateName *DTN = Name.getAsDependentTemplateName();
   assert(DTN && "Non-dependent template names must refer to template decls.");

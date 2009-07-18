@@ -217,7 +217,7 @@ MergeLookupResults(ASTContext &Context, LookupResultsTy &Results) {
       NamedDecl *ND = I->getAsDecl()->getUnderlyingDecl();
         
       if (TagDecl *TD = dyn_cast<TagDecl>(ND)) {
-        TagFound = Context.getCanonicalDecl(TD);
+        TagFound = TD->getCanonicalDecl();
         TagNames += FoundDecls.insert(TagFound)?  1 : 0;
       } else if (ND->isFunctionOrFunctionTemplate())
         Functions += FoundDecls.insert(ND)? 1 : 0;

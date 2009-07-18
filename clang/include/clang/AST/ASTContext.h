@@ -643,19 +643,6 @@ public:
     return T1.getUnqualifiedType() == T2.getUnqualifiedType();
   }
 
-  /// \brief Retrieves the "canonical" declaration of the given declaration.
-  Decl *getCanonicalDecl(Decl *D);
-
-  /// \brief Retrieves the "canonical" declaration of the given tag
-  /// declaration.
-  ///
-  /// The canonical declaration for the given tag declaration is
-  /// either the definition of the tag (if it is a complete type) or
-  /// the first declaration of that tag.
-  TagDecl *getCanonicalDecl(TagDecl *Tag) {
-    return cast<TagDecl>(getCanonicalDecl((Decl *)Tag));
-  }
-
   /// \brief Retrieves the "canonical" declaration of 
 
   /// \brief Retrieves the "canonical" nested name specifier for a

@@ -200,7 +200,7 @@ QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
       TemplateArgs.push_back(TemplateArgument(TTP->getLocation(), TTP));
       CanonTemplateArgs.push_back(TemplateArgument(TTP->getLocation(), 
-                                              Context.getCanonicalDecl(TTP)));
+                                                   TTP->getCanonicalDecl()));
     }
   }
 

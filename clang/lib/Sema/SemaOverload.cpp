@@ -3764,7 +3764,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
         assert(FunctionType 
                  == Context.getCanonicalType(Specialization->getType()));
         Matches.insert(
-                cast<FunctionDecl>(Context.getCanonicalDecl(Specialization)));
+                cast<FunctionDecl>(Specialization->getCanonicalDecl()));
       }
     }
     
@@ -3778,7 +3778,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *From, QualType ToType,
 
     if (FunctionDecl *FunDecl = dyn_cast<FunctionDecl>(*Fun)) {
       if (FunctionType == Context.getCanonicalType(FunDecl->getType())) {
-        Matches.insert(cast<FunctionDecl>(Context.getCanonicalDecl(*Fun)));
+        Matches.insert(cast<FunctionDecl>(Fun->getCanonicalDecl()));
         FoundNonTemplateFunction = true;
       }
     } 

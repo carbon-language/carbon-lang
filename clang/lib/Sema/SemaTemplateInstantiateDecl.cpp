@@ -781,16 +781,16 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
     return false;
 
   if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(Other))
-    return Ctx.getCanonicalDecl(Record->getInstantiatedFromMemberClass())
-             == Ctx.getCanonicalDecl(D);
+    return Record->getInstantiatedFromMemberClass()->getCanonicalDecl()
+             == D->getCanonicalDecl();
 
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Other))
-    return Ctx.getCanonicalDecl(Function->getInstantiatedFromMemberFunction())
-             == Ctx.getCanonicalDecl(D);
+    return Function->getInstantiatedFromMemberFunction()->getCanonicalDecl()
+             == D->getCanonicalDecl();
 
   if (EnumDecl *Enum = dyn_cast<EnumDecl>(Other))
-    return Ctx.getCanonicalDecl(Enum->getInstantiatedFromMemberEnum())
-             == Ctx.getCanonicalDecl(D);
+    return Enum->getInstantiatedFromMemberEnum()->getCanonicalDecl()
+             == D->getCanonicalDecl();
 
   // FIXME: How can we find instantiations of anonymous unions?
 
@@ -891,8 +891,8 @@ NamedDecl * Sema::InstantiateCurrentDeclRef(NamedDecl *D) {
            DC = DC->getParent()) {
         if (ClassTemplateSpecializationDecl *Spec 
               = dyn_cast<ClassTemplateSpecializationDecl>(DC))
-          if (Context.getCanonicalDecl(Spec->getSpecializedTemplate())
-              == Context.getCanonicalDecl(ClassTemplate))
+          if (Spec->getSpecializedTemplate()->getCanonicalDecl()
+              == ClassTemplate->getCanonicalDecl())
             return Spec;
       }
 
