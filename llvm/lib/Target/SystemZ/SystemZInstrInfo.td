@@ -530,13 +530,13 @@ let Defs = [PSW] in {
 
 let isCommutable = 1 in { // X = ADD Y, Z  == X = ADD Z, Y
 def ADD32rr : RRI<0x1A, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                     "ar\t{$dst, $src2}",
-                     [(set GR32:$dst, (add GR32:$src1, GR32:$src2)),
-                      (implicit PSW)]>;
+                  "ar\t{$dst, $src2}",
+                  [(set GR32:$dst, (add GR32:$src1, GR32:$src2)),
+                   (implicit PSW)]>;
 def ADD64rr : RREI<0xB908, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
-                     "agr\t{$dst, $src2}",
-                     [(set GR64:$dst, (add GR64:$src1, GR64:$src2)),
-                      (implicit PSW)]>;
+                   "agr\t{$dst, $src2}",
+                   [(set GR64:$dst, (add GR64:$src1, GR64:$src2)),
+                    (implicit PSW)]>;
 }
 
 def ADD32ri16 : RII<0xA7A,
@@ -559,6 +559,35 @@ def ADD64ri32 : RILI<0xC28,
                      "agfi\t{$dst, $src2}",
                      [(set GR64:$dst, (add GR64:$src1, immSExt32:$src2)),
                       (implicit PSW)]>;
+
+let isCommutable = 1 in { // X = ADC Y, Z  == X = ADC Z, Y
+def ADC32rr : RRI<0x1E, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                  "alr\t{$dst, $src2}",
+                  [(set GR32:$dst, (addc GR32:$src1, GR32:$src2))]>;
+def ADC64rr : RREI<0xB90A, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                   "algr\t{$dst, $src2}",
+                   [(set GR64:$dst, (addc GR64:$src1, GR64:$src2))]>;
+}
+
+def ADC32ri   : RILI<0xC2B,
+                     (outs GR32:$dst), (ins GR32:$src1, s32imm:$src2),
+                     "alfi\t{$dst, $src2}",
+                     [(set GR32:$dst, (addc GR32:$src1, imm:$src2))]>;
+def ADC64ri32 : RILI<0xC2A,
+                     (outs GR64:$dst), (ins GR64:$src1, s32imm64:$src2),
+                     "algfi\t{$dst, $src2}",
+                     [(set GR64:$dst, (addc GR64:$src1, immSExt32:$src2))]>;
+
+let Uses = [PSW] in {
+def ADDE32rr : RREI<0xB998, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                  "alcr\t{$dst, $src2}",
+                  [(set GR32:$dst, (adde GR32:$src1, GR32:$src2)),
+                   (implicit PSW)]>;
+def ADDE64rr : RREI<0xB988, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                   "alcgr\t{$dst, $src2}",
+                   [(set GR64:$dst, (adde GR64:$src1, GR64:$src2)),
+                    (implicit PSW)]>;
+}
 
 let isCommutable = 1 in { // X = AND Y, Z  == X = AND Z, Y
 def AND32rr : RRI<0x14,
@@ -670,6 +699,34 @@ def SUB64rr : RREI<0xB909,
                    "sgr\t{$dst, $src2}",
                    [(set GR64:$dst, (sub GR64:$src1, GR64:$src2))]>;
 
+def SBC32rr : RRI<0x1F,
+                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                  "slr\t{$dst, $src2}",
+                  [(set GR32:$dst, (subc GR32:$src1, GR32:$src2))]>;
+def SBC64rr : RREI<0xB90B,
+                   (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                   "slgr\t{$dst, $src2}",
+                   [(set GR64:$dst, (subc GR64:$src1, GR64:$src2))]>;
+
+def SBC32ri   : RILI<0xC25,
+                     (outs GR32:$dst), (ins GR32:$src1, s32imm:$src2),
+                     "sllfi\t{$dst, $src2}",
+                     [(set GR32:$dst, (subc GR32:$src1, imm:$src2))]>;
+def SBC64ri32 : RILI<0xC24,
+                     (outs GR64:$dst), (ins GR64:$src1, s32imm64:$src2),
+                     "slgfi\t{$dst, $src2}",
+                     [(set GR64:$dst, (subc GR64:$src1, immSExt32:$src2))]>;
+
+let Uses = [PSW] in {
+def SUBE32rr : RREI<0xB999, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
+                    "slcr\t{$dst, $src2}",
+                    [(set GR32:$dst, (sube GR32:$src1, GR32:$src2)),
+                     (implicit PSW)]>;
+def SUBE64rr : RREI<0xB989, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
+                    "slcgr\t{$dst, $src2}",
+                    [(set GR64:$dst, (sube GR64:$src1, GR64:$src2)),
+                     (implicit PSW)]>;
+}
 
 let isCommutable = 1 in { // X = XOR Y, Z  == X = XOR Z, Y
 def XOR32rr : RRI<0x17,
