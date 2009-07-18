@@ -183,7 +183,7 @@ void SystemZAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   if (printInstruction(MI))
     return;
 
-  assert(0 && "Should not happen");
+  llvm_unreachable("Unreachable!");
 }
 
 void SystemZAsmPrinter::printPCRelImmOperand(const MachineInstr *MI, int OpNum) {
@@ -282,7 +282,7 @@ void SystemZAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
 
   switch (MO.getTargetFlags()) {
   default:
-    assert(0 && "Unknown target flag on GV operand");
+    llvm_unreachable("Unknown target flag on GV operand");
   case SystemZII::MO_NO_FLAG:
     break;
   case SystemZII::MO_GOTENT:    O << "@GOTENT";    break;

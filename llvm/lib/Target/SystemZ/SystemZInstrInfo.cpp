@@ -81,7 +81,7 @@ void SystemZInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   } else if (RC == &SystemZ::GR128RegClass) {
     Opc = SystemZ::MOV128mr;
   } else
-    assert(0 && "Unsupported regclass to store");
+    llvm_unreachable("Unsupported regclass to store");
 
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc)), FrameIdx)
     .addReg(SrcReg, getKillRegState(isKill));
@@ -110,7 +110,7 @@ void SystemZInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   } else if (RC == &SystemZ::GR128RegClass) {
     Opc = SystemZ::MOV128rm;
   } else
-    assert(0 && "Unsupported regclass to load");
+    llvm_unreachable("Unsupported regclass to load");
 
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc), DestReg), FrameIdx);
 }
@@ -584,7 +584,7 @@ const TargetInstrDesc&
 SystemZInstrInfo::getBrCond(SystemZCC::CondCodes CC) const {
   switch (CC) {
   default:
-    assert(0 && "Unknown condition code!");
+   llvm_unreachable("Unknown condition code!");
   case SystemZCC::O:   return get(SystemZ::JO);
   case SystemZCC::H:   return get(SystemZ::JH);
   case SystemZCC::NLE: return get(SystemZ::JNLE);
@@ -627,7 +627,7 @@ SystemZCC::CondCodes
 SystemZInstrInfo::getOppositeCondition(SystemZCC::CondCodes CC) const {
   switch (CC) {
   default:
-   assert(0 && "Invalid condition!");
+    llvm_unreachable("Invalid condition!");
   case SystemZCC::O:   return SystemZCC::NO;
   case SystemZCC::H:   return SystemZCC::NH;
   case SystemZCC::NLE: return SystemZCC::LE;
@@ -649,7 +649,7 @@ const TargetInstrDesc&
 SystemZInstrInfo::getLongDispOpc(unsigned Opc) const {
   switch (Opc) {
   default:
-   assert(0 && "Don't have long disp version of this instruction");
+    llvm_unreachable("Don't have long disp version of this instruction");
   case SystemZ::MOV32mr:   return get(SystemZ::MOV32mry);
   case SystemZ::MOV32rm:   return get(SystemZ::MOV32rmy);
   case SystemZ::MOVSX32rm16: return get(SystemZ::MOVSX32rm16y);

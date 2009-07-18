@@ -161,7 +161,7 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
   case ISD::ConstantPool:     return LowerConstantPool(Op, DAG);
   default:
-    assert(0 && "unimplemented operand");
+    llvm_unreachable("Should not custom lower this!");
     return SDValue();
   }
 }
@@ -177,7 +177,7 @@ SDValue SystemZTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
   unsigned CC = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
   switch (CC) {
   default:
-    assert(0 && "Unsupported calling convention");
+    llvm_unreachable("Unsupported calling convention");
   case CallingConv::C:
   case CallingConv::Fast:
     return LowerCCCArguments(Op, DAG);
@@ -189,7 +189,7 @@ SDValue SystemZTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
   unsigned CallingConv = TheCall->getCallingConv();
   switch (CallingConv) {
   default:
-    assert(0 && "Unsupported calling convention");
+    llvm_unreachable("Unsupported calling convention");
   case CallingConv::Fast:
   case CallingConv::C:
     return LowerCCCCallTo(Op, DAG, CallingConv);
@@ -215,7 +215,8 @@ SDValue SystemZTargetLowering::LowerCCCArguments(SDValue Op,
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_SystemZ);
 
-  assert(!isVarArg && "Varargs not supported yet");
+  if (isVarArg)
+    llvm_report_error("Varargs not supported yet");
 
   SmallVector<SDValue, 16> ArgValues;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -534,7 +535,8 @@ SDValue SystemZTargetLowering::EmitCmp(SDValue LHS, SDValue RHS,
   bool isUnsigned = false;
   SystemZCC::CondCodes TCC;
   switch (CC) {
-  default: assert(0 && "Invalid integer condition!");
+  default:
+    llvm_unreachable("Invalid integer condition!");
   case ISD::SETEQ:
   case ISD::SETOEQ:
     TCC = SystemZCC::E;
