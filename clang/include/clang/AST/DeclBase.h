@@ -318,7 +318,7 @@ public:
     return const_cast<Decl*>(this)->getCanonicalDecl();
   }
 
-  /// \brief Whether this particular Decl is a primary one.
+  /// \brief Whether this particular Decl is a canonical one.
   bool isCanonicalDecl() const { return getCanonicalDecl() == this; }
   
 protected:
