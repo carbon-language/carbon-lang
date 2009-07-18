@@ -125,3 +125,17 @@ void testB_2(BStruct *b) {
     if ((int*)~0 != __gruev__) {}
   }
 }
+
+// This test case is a reduced case of a caching bug discovered by an
+// assertion failure in RegionStoreManager::BindArray.  Essentially the
+// DeclStmt is evaluated twice, but on the second loop iteration the
+// engine caches out.  Previously a false transition would cause UnknownVal
+// to bind to the variable, firing an assertion failure.  This bug was fixed
+// in r76262.
+void test_declstmt_caching() {
+again:
+  {
+    const char a[] = "I like to crash";
+    goto again;
+  }
+}
