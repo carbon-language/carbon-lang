@@ -18,6 +18,7 @@
 
 namespace clang {
   class ASTContext;
+  class FieldDecl;
   class RecordDecl;
 
 /// ASTRecordLayout - 
@@ -34,11 +35,22 @@ class ASTRecordLayout {
   unsigned Alignment;   // Alignment of record in bits.
   unsigned FieldCount;  // Number of fields
   friend class ASTContext;
+  friend class ASTRecordLayoutBuilder;
 
   ASTRecordLayout(uint64_t S = 0, unsigned A = 8) 
     : Size(S), NextOffset(S), Alignment(A), FieldCount(0) {}
   ~ASTRecordLayout() {
     delete [] FieldOffsets;
+  }
+
+  ASTRecordLayout(uint64_t Size, unsigned Alignment,
+                  const uint64_t *fieldoffsets, unsigned fieldcount) 
+  : Size(Size), FieldOffsets(0), Alignment(Alignment), FieldCount(fieldcount) {
+    if (FieldCount > 0)  {
+      FieldOffsets = new uint64_t[FieldCount];
+      for (unsigned i = 0; i < FieldCount; ++i)
+        FieldOffsets[i] = fieldoffsets[i];
+    }
   }
 
   /// Initialize record layout. N is the number of fields in this record.
