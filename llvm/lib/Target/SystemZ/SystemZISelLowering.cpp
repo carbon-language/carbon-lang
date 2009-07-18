@@ -137,6 +137,8 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::FSIN,             MVT::f64, Expand);
   setOperationAction(ISD::FCOS,             MVT::f32, Expand);
   setOperationAction(ISD::FCOS,             MVT::f64, Expand);
+  setOperationAction(ISD::FREM,             MVT::f32, Expand);
+  setOperationAction(ISD::FREM,             MVT::f64, Expand);
 
   // We have only 64-bit bitconverts
   setOperationAction(ISD::BIT_CONVERT,      MVT::f32, Expand);
