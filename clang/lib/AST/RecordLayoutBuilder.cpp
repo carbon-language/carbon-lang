@@ -52,7 +52,7 @@ void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
     
     // We start laying out ivars not at the end of the superclass
     // structure, but at the next byte following the last field.
-    Size = llvm::RoundUpToAlignment(SL.NextOffset, 8);
+    Size = llvm::RoundUpToAlignment(SL.getDataSize(), 8);
     NextOffset = Size;
   }
   

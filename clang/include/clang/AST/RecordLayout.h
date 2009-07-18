@@ -30,17 +30,16 @@ namespace clang {
 /// These objects are managed by ASTContext.
 class ASTRecordLayout {
   uint64_t Size;        // Size of record in bits.
-  uint64_t NextOffset;  // Next available offset
+  uint64_t DataSize;    // Size of record in bits without tail padding.
   uint64_t *FieldOffsets;
   unsigned Alignment;   // Alignment of record in bits.
   unsigned FieldCount;  // Number of fields
   friend class ASTContext;
   friend class ASTRecordLayoutBuilder;
 
-  ASTRecordLayout(uint64_t Size, unsigned Alignment,
-                  unsigned nextoffset,
+  ASTRecordLayout(uint64_t size, unsigned alignment, unsigned datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount) 
-  : Size(Size), NextOffset(nextoffset), FieldOffsets(0), Alignment(Alignment), 
+  : Size(size), DataSize(datasize), FieldOffsets(0), Alignment(alignment),
     FieldCount(fieldcount) {
     if (FieldCount > 0)  {
       FieldOffsets = new uint64_t[FieldCount];
@@ -72,10 +71,10 @@ public:
     return FieldOffsets[FieldNo];
   }
     
-  /// getNextOffset - Get the next available (unused) offset in the
-  /// structure, in bits.
-  uint64_t getNextOffset() const {
-    return NextOffset;
+  /// getDataSize() - Get the record data size, which is the record size
+  /// without tail padding, in bits.
+  uint64_t getDataSize() const {
+    return DataSize;
   }
 };
 
