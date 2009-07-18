@@ -24,6 +24,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "RecordLayoutBuilder.h"
+
 using namespace clang;
 
 enum FloatingRank {
@@ -726,102 +728,6 @@ unsigned ASTContext::getPreferredTypeAlign(const Type *T) {
   return ABIAlign;
 }
 
-
-/// LayoutField - Field layout.
-void ASTRecordLayout::LayoutField(const FieldDecl *FD, unsigned FieldNo,
-                                  bool IsUnion, unsigned StructPacking,
-                                  ASTContext &Context) {
-  unsigned FieldPacking = StructPacking;
-  uint64_t FieldOffset = IsUnion ? 0 : Size;
-  uint64_t FieldSize;
-  unsigned FieldAlign;
-
-  // FIXME: Should this override struct packing? Probably we want to
-  // take the minimum?
-  if (const PackedAttr *PA = FD->getAttr<PackedAttr>())
-    FieldPacking = PA->getAlignment();
-  
-  if (const Expr *BitWidthExpr = FD->getBitWidth()) {
-    // TODO: Need to check this algorithm on other targets!
-    //       (tested on Linux-X86)
-    FieldSize = BitWidthExpr->EvaluateAsInt(Context).getZExtValue();
-    
-    std::pair<uint64_t, unsigned> FieldInfo = 
-      Context.getTypeInfo(FD->getType());
-    uint64_t TypeSize = FieldInfo.first;
-    
-    // Determine the alignment of this bitfield. The packing
-    // attributes define a maximum and the alignment attribute defines
-    // a minimum.
-    // FIXME: What is the right behavior when the specified alignment
-    // is smaller than the specified packing?
-    FieldAlign = FieldInfo.second;
-    if (FieldPacking)
-      FieldAlign = std::min(FieldAlign, FieldPacking);
-    if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
-      FieldAlign = std::max(FieldAlign, AA->getAlignment());
-    
-    // Check if we need to add padding to give the field the correct
-    // alignment.
-    if (FieldSize == 0 || (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize)
-      FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
-    
-    // Padding members don't affect overall alignment
-    if (!FD->getIdentifier())
-      FieldAlign = 1;
-  } else {
-    if (FD->getType()->isIncompleteArrayType()) {
-      // This is a flexible array member; we can't directly
-      // query getTypeInfo about these, so we figure it out here.
-      // Flexible array members don't have any size, but they
-      // have to be aligned appropriately for their element type.
-      FieldSize = 0;
-      const ArrayType* ATy = Context.getAsArrayType(FD->getType());
-      FieldAlign = Context.getTypeAlign(ATy->getElementType());
-    } else if (const ReferenceType *RT = FD->getType()->getAsReferenceType()) {
-      unsigned AS = RT->getPointeeType().getAddressSpace();
-      FieldSize = Context.Target.getPointerWidth(AS);
-      FieldAlign = Context.Target.getPointerAlign(AS);
-    } else {
-      std::pair<uint64_t, unsigned> FieldInfo = 
-        Context.getTypeInfo(FD->getType());
-      FieldSize = FieldInfo.first;
-      FieldAlign = FieldInfo.second;
-    }
-    
-    // Determine the alignment of this bitfield. The packing
-    // attributes define a maximum and the alignment attribute defines
-    // a minimum. Additionally, the packing alignment must be at least
-    // a byte for non-bitfields.
-    //
-    // FIXME: What is the right behavior when the specified alignment
-    // is smaller than the specified packing?
-    if (FieldPacking)
-      FieldAlign = std::min(FieldAlign, std::max(8U, FieldPacking));
-    if (const AlignedAttr *AA = FD->getAttr<AlignedAttr>())
-      FieldAlign = std::max(FieldAlign, AA->getAlignment());
-    
-    // Round up the current record size to the field's alignment boundary.
-    FieldOffset = (FieldOffset + (FieldAlign-1)) & ~(FieldAlign-1);
-  }
-  
-  // Place this field at the current location.
-  FieldOffsets[FieldNo] = FieldOffset;
-  
-  // Reserve space for this field.
-  if (IsUnion) {
-    Size = std::max(Size, FieldSize);
-  } else {
-    Size = FieldOffset + FieldSize;
-  }
-  
-  // Remember the next available offset.
-  NextOffset = Size;
-
-  // Remember max struct/class alignment.
-  Alignment = std::max(Alignment, FieldAlign);
-}
-
 static void CollectLocalObjCIvars(ASTContext *Ctx,
                                   const ObjCInterfaceDecl *OI,
                                   llvm::SmallVectorImpl<FieldDecl*> &Fields) {
@@ -934,9 +840,9 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   if (const ASTRecordLayout *Entry = ObjCLayouts[Key])
     return *Entry;
 
-  unsigned FieldCount = D->ivar_size();
   // Add in synthesized ivar count if laying out an implementation.
   if (Impl) {
+    unsigned FieldCount = D->ivar_size();
     unsigned SynthCount = CountSynthesizedIvars(D);
     FieldCount += SynthCount;
     // If there aren't any sythesized ivars then reuse the interface
@@ -947,40 +853,10 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
       return getObjCLayout(D, 0);
   }
 
-  ASTRecordLayout *NewEntry = NULL;
-  if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
-    const ASTRecordLayout &SL = getASTObjCInterfaceLayout(SD);
-    unsigned Alignment = SL.getAlignment();
-
-    // We start laying out ivars not at the end of the superclass
-    // structure, but at the next byte following the last field.
-    uint64_t Size = llvm::RoundUpToAlignment(SL.NextOffset, 8);
-
-    ObjCLayouts[Key] = NewEntry = new ASTRecordLayout(Size, Alignment);
-    NewEntry->InitializeLayout(FieldCount);
-  } else {
-    ObjCLayouts[Key] = NewEntry = new ASTRecordLayout();
-    NewEntry->InitializeLayout(FieldCount);
-  }
-
-  unsigned StructPacking = 0;
-  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
-    StructPacking = PA->getAlignment();
-
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    NewEntry->SetAlignment(std::max(NewEntry->getAlignment(), 
-                                    AA->getAlignment()));
-
-  // Layout each ivar sequentially.
-  unsigned i = 0;
-  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
-  ShallowCollectObjCIvars(D, Ivars, Impl);
-  for (unsigned k = 0, e = Ivars.size(); k != e; ++k)
-       NewEntry->LayoutField(Ivars[k], i++, false, StructPacking, *this);
- 
-  // Finally, round the size of the total struct up to the alignment of the
-  // struct itself.
-  NewEntry->FinalizeLayout();
+  const ASTRecordLayout *NewEntry = 
+    ASTRecordLayoutBuilder::ComputeLayout(*this, D, Impl);
+  ObjCLayouts[Key] = NewEntry;
+  
   return *NewEntry;
 }
 
@@ -1005,34 +881,10 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   const ASTRecordLayout *&Entry = ASTRecordLayouts[D];
   if (Entry) return *Entry;
 
-  // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
-  // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
-  ASTRecordLayout *NewEntry = new ASTRecordLayout();
+  const ASTRecordLayout *NewEntry = 
+    ASTRecordLayoutBuilder::ComputeLayout(*this, D);
   Entry = NewEntry;
-
-  // FIXME: Avoid linear walk through the fields, if possible.
-  NewEntry->InitializeLayout(std::distance(D->field_begin(), D->field_end()));
-  bool IsUnion = D->isUnion();
-
-  unsigned StructPacking = 0;
-  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
-    StructPacking = PA->getAlignment();
-
-  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
-    NewEntry->SetAlignment(std::max(NewEntry->getAlignment(), 
-                                    AA->getAlignment()));
-
-  // Layout each field, for now, just sequentially, respecting alignment.  In
-  // the future, this will need to be tweakable by targets.
-  unsigned FieldIdx = 0;
-  for (RecordDecl::field_iterator Field = D->field_begin(),
-                               FieldEnd = D->field_end();
-       Field != FieldEnd; (void)++Field, ++FieldIdx)
-    NewEntry->LayoutField(*Field, FieldIdx, IsUnion, StructPacking, *this);
-
-  // Finally, round the size of the total struct up to the alignment of the
-  // struct itself.
-  NewEntry->FinalizeLayout(getLangOptions().CPlusPlus);
+  
   return *NewEntry;
 }
 

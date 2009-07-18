@@ -37,12 +37,6 @@ class ASTRecordLayout {
   friend class ASTContext;
   friend class ASTRecordLayoutBuilder;
 
-  ASTRecordLayout(uint64_t S = 0, unsigned A = 8) 
-    : Size(S), NextOffset(S), Alignment(A), FieldCount(0) {}
-  ~ASTRecordLayout() {
-    delete [] FieldOffsets;
-  }
-
   ASTRecordLayout(uint64_t Size, unsigned Alignment,
                   unsigned nextoffset,
                   const uint64_t *fieldoffsets, unsigned fieldcount) 
@@ -54,37 +48,10 @@ class ASTRecordLayout {
         FieldOffsets[i] = fieldoffsets[i];
     }
   }
-
-  /// Initialize record layout. N is the number of fields in this record.
-  void InitializeLayout(unsigned N) {
-    FieldCount = N;
-    FieldOffsets = new uint64_t[N];
+  ~ASTRecordLayout() {
+    delete [] FieldOffsets;
   }
 
-  /// Finalize record layout. Adjust record size based on the alignment.
-  void FinalizeLayout(bool ForceNonEmpty = false) {
-    // In C++, records cannot be of size 0.
-    if (ForceNonEmpty && Size == 0)
-      Size = 8;
-    // Finally, round the size of the record up to the alignment of the
-    // record itself.
-    Size = (Size + (Alignment-1)) & ~(Alignment-1);
-  }
-
-  void SetFieldOffset(unsigned FieldNo, uint64_t Offset) {
-    assert (FieldNo < FieldCount && "Invalid Field No");
-    FieldOffsets[FieldNo] = Offset;
-  }
-
-  void SetAlignment(unsigned A) {  Alignment = A; }
-
-  /// LayoutField - Field layout. StructPacking is the specified
-  /// packing alignment (maximum alignment) in bits to use for the
-  /// structure, or 0 if no packing alignment is specified.
-  void LayoutField(const FieldDecl *FD, unsigned FieldNo,
-                   bool IsUnion, unsigned StructPacking,
-                   ASTContext &Context);
-  
   ASTRecordLayout(const ASTRecordLayout&);   // DO NOT IMPLEMENT
   void operator=(const ASTRecordLayout&); // DO NOT IMPLEMENT
 public:
