@@ -142,49 +142,47 @@ static void SetMemoryLimits (unsigned size)
 #endif
 }
 
-int
-Program::ExecuteAndWait(const Path& path,
-                        const char** args,
-                        const char** envp,
-                        const Path** redirects,
-                        unsigned secondsToWait,
-                        unsigned memoryLimit,
-                        std::string* ErrMsg)
+bool
+Program::Execute(const Path& path,
+                 const char** args,
+                 const char** envp,
+                 const Path** redirects,
+                 unsigned memoryLimit,
+                 std::string* ErrMsg)
 {
   if (!path.canExecute()) {
     if (ErrMsg)
       *ErrMsg = path.toString() + " is not executable";
-    return -1;
+    return false;
   }
 
-#ifdef HAVE_SYS_WAIT_H
   // Create a child process.
   int child = fork();
   switch (child) {
     // An error occured:  Return to the caller.
     case -1:
       MakeErrMsg(ErrMsg, "Couldn't fork");
-      return -1;
+      return false;
 
     // Child process: Execute the program.
     case 0: {
       // Redirect file descriptors...
       if (redirects) {
         // Redirect stdin
-        if (RedirectIO(redirects[0], 0, ErrMsg)) { return -1; }
+        if (RedirectIO(redirects[0], 0, ErrMsg)) { return false; }
         // Redirect stdout
-        if (RedirectIO(redirects[1], 1, ErrMsg)) { return -1; }
+        if (RedirectIO(redirects[1], 1, ErrMsg)) { return false; }
         if (redirects[1] && redirects[2] &&
             *(redirects[1]) == *(redirects[2])) {
           // If stdout and stderr should go to the same place, redirect stderr
           // to the FD already open for stdout.
           if (-1 == dup2(1,2)) {
             MakeErrMsg(ErrMsg, "Can't redirect stderr to stdout");
-            return -1;
+            return false;
           }
         } else {
           // Just redirect stderr
-          if (RedirectIO(redirects[2], 2, ErrMsg)) { return -1; }
+          if (RedirectIO(redirects[2], 2, ErrMsg)) { return false; }
         }
       }
 
@@ -214,7 +212,22 @@ Program::ExecuteAndWait(const Path& path,
   fsync(1);
   fsync(2);
 
+  Pid_ = child;
+
+  return true;
+}
+
+int
+Program::Wait(unsigned secondsToWait,
+              std::string* ErrMsg)
+{
+#ifdef HAVE_SYS_WAIT_H
   struct sigaction Act, Old;
+
+  if (Pid_ == 0) {
+    MakeErrMsg(ErrMsg, "Process not started!");
+    return -1;
+  }
 
   // Install a timeout handler.
   if (secondsToWait) {
@@ -229,6 +242,7 @@ Program::ExecuteAndWait(const Path& path,
 
   // Parent process: Wait for the child process to terminate.
   int status;
+  int child = this->Pid_;
   while (wait(&status) != child)
     if (secondsToWait && errno == EINTR) {
       // Kill the child.
@@ -271,78 +285,6 @@ Program::ExecuteAndWait(const Path& path,
 #else
   return -99;
 #endif
-
-}
-
-void
-Program::ExecuteNoWait(const Path& path,
-                       const char** args,
-                       const char** envp,
-                       const Path** redirects,
-                       unsigned memoryLimit,
-                       std::string* ErrMsg)
-{
-  if (!path.canExecute()) {
-    if (ErrMsg)
-      *ErrMsg = path.toString() + " is not executable";
-    return;
-  }
-
-  // Create a child process.
-  int child = fork();
-  switch (child) {
-    // An error occured:  Return to the caller.
-    case -1:
-      MakeErrMsg(ErrMsg, "Couldn't fork");
-      return;
-
-    // Child process: Execute the program.
-    case 0: {
-      // Redirect file descriptors...
-      if (redirects) {
-        // Redirect stdin
-        if (RedirectIO(redirects[0], 0, ErrMsg)) { return; }
-        // Redirect stdout
-        if (RedirectIO(redirects[1], 1, ErrMsg)) { return; }
-        if (redirects[1] && redirects[2] &&
-            *(redirects[1]) == *(redirects[2])) {
-          // If stdout and stderr should go to the same place, redirect stderr
-          // to the FD already open for stdout.
-          if (-1 == dup2(1,2)) {
-            MakeErrMsg(ErrMsg, "Can't redirect stderr to stdout");
-            return;
-          }
-        } else {
-          // Just redirect stderr
-          if (RedirectIO(redirects[2], 2, ErrMsg)) { return; }
-        }
-      }
-
-      // Set memory limits
-      if (memoryLimit!=0) {
-        SetMemoryLimits(memoryLimit);
-      }
-
-      // Execute!
-      if (envp != 0)
-        execve (path.c_str(), (char**)args, (char**)envp);
-      else
-        execv (path.c_str(), (char**)args);
-      // If the execve() failed, we should exit and let the parent pick up
-      // our non-zero exit status.
-      exit (errno);
-    }
-
-    // Parent process: Break out of the switch to do our processing.
-    default:
-      break;
-  }
-
-  // Make sure stderr and stdout have been flushed
-  std::cerr << std::flush;
-  std::cout << std::flush;
-  fsync(1);
-  fsync(2);
 
 }
 
