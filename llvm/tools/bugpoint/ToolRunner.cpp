@@ -46,8 +46,8 @@ namespace {
 
 ToolExecutionError::~ToolExecutionError() throw() { }
 
-/// RunProgramWithTimeout - This function provides an alternate interface to the
-/// sys::Program::ExecuteAndWait interface.
+/// RunProgramWithTimeout - This function provides an alternate interface
+/// to the sys::Program::ExecuteAndWait interface.
 /// @see sys:Program::ExecuteAndWait
 static int RunProgramWithTimeout(const sys::Path &ProgramPath,
                                  const char **Args,
@@ -60,20 +60,74 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
   redirects[0] = &StdInFile;
   redirects[1] = &StdOutFile;
   redirects[2] = &StdErrFile;
-                                   
-  if (0) {
+
+#if 0 // For debug purposes
+  {
     errs() << "RUN:";
     for (unsigned i = 0; Args[i]; ++i)
       errs() << " " << Args[i];
     errs() << "\n";
   }
+#endif
 
   return
     sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects,
                                  NumSeconds, MemoryLimit);
 }
 
+/// RunProgramRemotelyWithTimeout - This function runs the given program
+/// remotely using the given remote client and the sys::Program::ExecuteAndWait.
+/// Returns the remote program exit code or reports a remote client error if it
+/// fails. Remote client is required to return 255 if it failed or program exit
+/// code otherwise.
+/// @see sys:Program::ExecuteAndWait
+static int RunProgramRemotelyWithTimeout(const sys::Path &RemoteClientPath,
+                                         const char **Args,
+                                         const sys::Path &StdInFile,
+                                         const sys::Path &StdOutFile,
+                                         const sys::Path &StdErrFile,
+                                         unsigned NumSeconds = 0,
+                                         unsigned MemoryLimit = 0) {
+  const sys::Path* redirects[3];
+  redirects[0] = &StdInFile;
+  redirects[1] = &StdOutFile;
+  redirects[2] = &StdErrFile;
 
+#if 0 // For debug purposes
+  {
+    errs() << "RUN:";
+    for (unsigned i = 0; Args[i]; ++i)
+      errs() << " " << Args[i];
+    errs() << "\n";
+  }
+#endif
+
+  // Run the program remotely with the remote client
+  int ReturnCode = sys::Program::ExecuteAndWait(RemoteClientPath, Args,
+                                 0, redirects, NumSeconds, MemoryLimit);
+
+  // Has the remote client fail?
+  if (255 == ReturnCode) {
+    std::ostringstream OS;
+    OS << "\nError running remote client:\n ";
+    for (const char **Arg = Args; *Arg; ++Arg)
+      OS << " " << *Arg;
+    OS << "\n";
+
+    // The error message is in the output file, let's print it out from there.
+    std::ifstream ErrorFile(StdOutFile.c_str());
+    if (ErrorFile) {
+      std::copy(std::istreambuf_iterator<char>(ErrorFile),
+                std::istreambuf_iterator<char>(),
+                std::ostreambuf_iterator<char>(OS));
+      ErrorFile.close();
+    }
+
+    throw ToolExecutionError(OS.str());
+  }
+
+  return ReturnCode;
+}
 
 static void ProcessFailure(sys::Path ProgPath, const char** Args) {
   std::ostringstream OS;
@@ -680,16 +734,10 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
         Timeout, MemoryLimit);
   } else {
     outs() << "<run remotely>"; outs().flush();
-    int RemoteClientStatus = RunProgramWithTimeout(sys::Path(RemoteClientPath),
+    return RunProgramRemotelyWithTimeout(sys::Path(RemoteClientPath),
         &ProgramArgs[0], sys::Path(InputFile), sys::Path(OutputFile),
         sys::Path(OutputFile), Timeout, MemoryLimit);
-    if (RemoteClientStatus != 0) {
-      errs() << "Remote Client failed with an error: " <<
-        RemoteClientStatus << ".\n";
-    }
   }
-
-  return 0;
 }
 
 int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,

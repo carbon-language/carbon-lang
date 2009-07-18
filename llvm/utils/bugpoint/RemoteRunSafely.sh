@@ -2,11 +2,9 @@
 #
 # Program:  RemoteRunSafely.sh
 #
-# Synopsis: This script simply runs another program remotely using rsh.
-#           It always returns the another program exit code.
-#
-#           (?) only exit statuses that indicates that the program could not be executed
-#           normally is considered to indicate a test failure.
+# Synopsis: This script simply runs another program remotely using ssh.
+#           It always returns the another program exit code or exit with
+#           code 255 which indicates that the program could not be executed.
 #
 # Syntax: 
 #
@@ -25,8 +23,8 @@ printUsageAndExit()
 {
   echo "Usage:"
   echo "./RemoteRunSafely.sh <hostname> [-l <login_name>] [-p <port>] " \
-       "[cd <working_dir>] <program> <args...>"
-  exit 1
+       "<program> <args...>"
+  exit 255
 }
 
 moreArgsExpected()
@@ -88,7 +86,7 @@ fi
 local_program=$WORKING_DIR"/"$PROGRAM
 if [ ! -x "$local_program" ]; then
   echo "File "$local_program" does not exist or is not an executable.."
-  exit 2
+  exit 255
 fi
 
 connection=$RUSER'@'$RHOST
@@ -98,11 +96,10 @@ remote="./"$PROGRAM
   $RCLIENT $connection $RPORT \
    'rm -f '$remote' ; '       \
    'cat > '$remote' ; chmod +x '$remote' ; '$remote' '$*' ; ' \
-   'echo exit $? ; '          \
-   'rm -f '$remote
+   'err=$? ; rm -f '$remote' ; exit $err'
 )
+err=$?
 
-#DEBUG: err=$?
 #DEBUG: echo script exit $err
-#DEBUG: exit $err
+exit $err
 
