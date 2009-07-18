@@ -51,7 +51,14 @@ namespace llvm {
 
     /// getAddendForRelTy - Gets the addend value for an ELF relocation entry
     /// based on the target relocation type
-    virtual long int getAddendForRelTy(unsigned RelTy) const;
+    virtual long int getDefaultAddendForRelTy(unsigned RelTy) const;
+
+    /// getRelTySize - Returns the size of relocatable field in bits
+    virtual unsigned getRelocationTySize(unsigned RelTy) const;
+
+    /// getJumpTableRelocationTy - Returns the machine relocation type used
+    /// to reference a jumptable.
+    virtual unsigned getJumpTableMachineRelocationTy() const;
   };
 
 } // end llvm namespace

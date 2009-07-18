@@ -107,14 +107,18 @@ namespace llvm {
     std::map<std::string, ELFSection*> SectionLookup;
 
     /// GblSymLookup - This is a mapping from global value to a symbol index
-    /// in the symbol table. This is useful since relocations symbol references
-    /// must be quickly mapped to a symbol table index
+    /// in the symbol table or private symbols list. This is useful since reloc
+    /// symbol references must be quickly mapped to their indices on the lists
     std::map<const GlobalValue*, uint32_t> GblSymLookup;
 
     /// SymbolList - This is the list of symbols emitted to the symbol table.
     /// When the SymbolList is finally built, local symbols must be placed in
     /// the beginning while non-locals at the end.
     std::vector<ELFSym*> SymbolList;
+
+    /// PrivateSyms - Record private symbols, every symbol here must never be
+    /// present in the SymbolList.
+    std::vector<ELFSym*> PrivateSyms;
 
     /// PendingGlobals - List of externally defined symbols that we have been
     /// asked to emit, but have not seen a reference to.  When a reference

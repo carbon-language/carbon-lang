@@ -43,7 +43,7 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
       return R_X86_64_64;
     case X86::reloc_picrel_word:
     default:
-      llvm_unreachable("unknown relocation type");
+      llvm_unreachable("unknown x86_64 machine relocation type");
     }
   } else {
     switch(MachineRelTy) {
@@ -54,22 +54,55 @@ unsigned X86ELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
     case X86::reloc_absolute_dword:
     case X86::reloc_picrel_word:
     default:
-      llvm_unreachable("unknown relocation type");
+      llvm_unreachable("unknown x86 machine relocation type");
     }
   }
   return 0;
 }
 
-long int X86ELFWriterInfo::getAddendForRelTy(unsigned RelTy) const {
+long int X86ELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy) const {
   if (is64Bit) {
     switch(RelTy) {
     case R_X86_64_PC32: return -4;
-      break;
     case R_X86_64_32: return 0;
-      break;
+    default:
+      llvm_unreachable("unknown x86_64 relocation type");
+    }
+  } else {
+    switch(RelTy) {
+      case R_386_PC32: return -4;
+      case R_386_32: return 0;
     default:
       llvm_unreachable("unknown x86 relocation type");
     }
   }
   return 0;
 }
+
+unsigned X86ELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
+  if (is64Bit) {
+    switch(RelTy) {
+      case R_X86_64_PC32:
+      case R_X86_64_32:
+        return 32;
+      case R_X86_64_64:
+        return 64;
+    default:
+      llvm_unreachable("unknown x86_64 relocation type");
+    }
+  } else {
+    switch(RelTy) {
+      case R_386_PC32:
+      case R_386_32:
+        return 32;
+    default:
+      llvm_unreachable("unknown x86 relocation type");
+    }
+  }
+  return 0;
+}
+
+unsigned X86ELFWriterInfo::getJumpTableMachineRelocationTy() const {
+  return X86::reloc_absolute_dword;
+}
+

@@ -184,6 +184,13 @@ namespace llvm {
     /// Sym - The symbol to represent this section if it has one.
     ELFSym *Sym;
 
+    /// getSymIndex - Returns the symbol table index of the symbol
+    /// representing this section.
+    unsigned getSymbolTableIndex() const {
+      assert(Sym && "section not present in the symbol table");
+      return Sym->SymTabIdx;
+    }
+
     ELFSection(const std::string &name, bool isLittleEndian, bool is64Bit)
       : BinaryObject(name, isLittleEndian, is64Bit), Type(0), Flags(0), Addr(0),
         Offset(0), Size(0), Link(0), Info(0), Align(0), EntSize(0), Sym(0) {}

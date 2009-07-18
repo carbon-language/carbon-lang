@@ -296,8 +296,16 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     }
   }
 
-  if (!GV->hasPrivateLinkage())
+  // Private symbols must never go to the symbol table.
+  unsigned SymIdx = 0;
+  if (GV->hasPrivateLinkage()) {
+    PrivateSyms.push_back(GblSym);
+    SymIdx = PrivateSyms.size()-1;
+  } else {
     SymbolList.push_back(GblSym);
+  }
+
+  GblSymLookup[GV] = SymIdx;
 }
 
 void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
@@ -394,20 +402,16 @@ bool ELFWriter::doFinalization(Module &M) {
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     EmitGlobal(I);
-    GblSymLookup[I] = 0;
   }
 
   // Emit all pending globals
   // TODO: this should be done only for referenced symbols
   for (SetVector<GlobalValue*>::const_iterator I = PendingGlobals.begin(),
        E = PendingGlobals.end(); I != E; ++I) {
-
     // No need to emit the symbol again
     if (GblSymLookup.find(*I) != GblSymLookup.end())
       continue;
-
     EmitGlobal(*I);
-    GblSymLookup[*I] = 0;
   }
 
   // Emit non-executable stack note
@@ -480,7 +484,8 @@ void ELFWriter::EmitRelocations() {
          MRE = Relos.end(); MRI != MRE; ++MRI) {
       MachineRelocation &MR = *MRI;
 
-      // Offset from the start of the section containing the symbol
+      // Holds the relocatable field address as an offset from the
+      // beginning of the section where it lives
       unsigned Offset = MR.getMachineCodeOffset();
 
       // Symbol index in the symbol table
@@ -498,13 +503,32 @@ void ELFWriter::EmitRelocations() {
       if (MR.isGlobalValue()) {
         const GlobalValue *G = MR.getGlobalValue();
         SymIdx = GblSymLookup[G];
-        Addend = TEW->getAddendForRelTy(RelType);
+        if (G->hasPrivateLinkage()) {
+          // If the target uses a section offset in the relocation:
+          // SymIdx + Addend = section sym for global + section offset
+          unsigned SectionIdx = PrivateSyms[SymIdx]->SectionIdx;
+          Addend = PrivateSyms[SymIdx]->Value;
+          SymIdx = SectionList[SectionIdx]->getSymbolTableIndex();
+        } else {
+          Addend = TEW->getDefaultAddendForRelTy(RelType);
+        }
       } else {
         // Get the symbol index for the section symbol referenced
         // by the relocation
         unsigned SectionIdx = MR.getConstantVal();
-        SymIdx = SectionList[SectionIdx]->Sym->SymTabIdx;
+        SymIdx = SectionList[SectionIdx]->getSymbolTableIndex();
         Addend = (uint64_t)MR.getResultPointer();
+      }
+
+      // The target without addend on the relocation symbol must be
+      // patched in the relocation place itself to contain the addend
+      if (!HasRelA) {
+        if (TEW->getRelocationTySize(RelType) == 32)
+          S.fixWord32(Addend, Offset);
+        else if (TEW->getRelocationTySize(RelType) == 64)
+          S.fixWord64(Addend, Offset);
+        else
+          llvm_unreachable("don't know howto patch relocatable field");
       }
 
       // Get the relocation entry and emit to the relocation section

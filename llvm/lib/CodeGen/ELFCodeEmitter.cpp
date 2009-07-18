@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineRelocation.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetELFWriterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/Debug.h"
@@ -160,6 +161,7 @@ void ELFCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
          "PIC codegen not yet handled for elf jump tables!");
 
   const TargetAsmInfo *TAI = TM.getTargetAsmInfo();
+  const TargetELFWriterInfo *TEW = TM.getELFWriterInfo();
 
   // Get the ELF Section to emit the jump table
   unsigned Align = TM.getTargetData()->getPointerABIAlignment();
@@ -183,9 +185,10 @@ void ELFCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
     // Each MBB entry in the Jump table section has a relocation entry
     // against the current text section.
     for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
+      unsigned MachineRelTy = TEW->getJumpTableMachineRelocationTy();
       MachineRelocation MR =
         MachineRelocation::getBB(JTSection.size(),
-                                 MachineRelocation::VANILLA,
+                                 MachineRelTy,
                                  MBBs[mi]);
 
       // Offset of JT 'i' in JT section
