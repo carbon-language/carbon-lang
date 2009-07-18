@@ -1712,7 +1712,7 @@ int main() {
   TheModule = new Module("my cool jit", getGlobalContext());
   
   // Create the JIT.
-  TheExecutionEngine = ExecutionEngine::create(TheModule);
+  TheExecutionEngine = EngineBuilder(TheModule).create();
 
   {
     ExistingModuleProvider OurModuleProvider(TheModule);

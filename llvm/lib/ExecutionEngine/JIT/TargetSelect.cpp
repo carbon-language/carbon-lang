@@ -38,13 +38,9 @@ MAttrs("mattr",
   cl::desc("Target specific attributes (-mattr=help for details)"),
   cl::value_desc("a1,+a2,-a3,..."));
 
-/// createInternal - Create an return a new JIT compiler if there is one
-/// available for the current target.  Otherwise, return null.
-///
-ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
-                                JITMemoryManager *JMM,
-                                CodeGenOpt::Level OptLevel,
-                                bool AllocateGVsWithCode) {
+/// selectTarget - Pick a target either via -march or by guessing the native
+/// arch.  Add any CPU features specified via -mcpu or -mattr.
+TargetMachine *JIT::selectTarget(ModuleProvider *MP, std::string *ErrorStr) {
   const Target *TheTarget = 0;
   if (MArch.empty()) {
     std::string Error;
@@ -90,12 +86,5 @@ ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
   TargetMachine *Target = 
     TheTarget->createTargetMachine(*MP->getModule(), FeaturesStr);
   assert(Target && "Could not allocate target machine!");
-
-  // If the target supports JIT code generation, return a new JIT now.
-  if (TargetJITInfo *TJ = Target->getJITInfo())
-    return new JIT(MP, *Target, *TJ, JMM, OptLevel, AllocateGVsWithCode);
-
-  if (ErrorStr)
-    *ErrorStr = "target does not support JIT code generation";
-  return 0;
+  return Target;
 }

@@ -35,8 +35,13 @@ using namespace llvm;
 STATISTIC(NumInitBytes, "Number of bytes of global vars initialized");
 STATISTIC(NumGlobals  , "Number of global vars initialized");
 
-ExecutionEngine::EECtorFn ExecutionEngine::JITCtor = 0;
-ExecutionEngine::EECtorFn ExecutionEngine::InterpCtor = 0;
+ExecutionEngine *(*ExecutionEngine::JITCtor)(ModuleProvider *MP,
+                                             std::string *ErrorStr,
+                                             JITMemoryManager *JMM,
+                                             CodeGenOpt::Level OptLevel,
+                                             bool GVsWithCode) = 0;
+ExecutionEngine *(*ExecutionEngine::InterpCtor)(ModuleProvider *MP,
+                                                std::string *ErrorStr) = 0;
 ExecutionEngine::EERegisterFn ExecutionEngine::ExceptionTableRegister = 0;
 
 
@@ -382,26 +387,60 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
                                          std::string *ErrorStr,
                                          CodeGenOpt::Level OptLevel,
                                          bool GVsWithCode) {
-  ExecutionEngine *EE = 0;
+  return EngineBuilder(MP)
+      .setEngineKind(ForceInterpreter
+                     ? EngineKind::Interpreter
+                     : EngineKind::JIT)
+      .setErrorStr(ErrorStr)
+      .setOptLevel(OptLevel)
+      .setAllocateGVsWithCode(GVsWithCode)
+      .create();
+}
 
+ExecutionEngine *ExecutionEngine::create(Module *M) {
+  return EngineBuilder(M).create();
+}
+
+/// EngineBuilder - Overloaded constructor that automatically creates an
+/// ExistingModuleProvider for an existing module.
+EngineBuilder::EngineBuilder(Module *m) : MP(new ExistingModuleProvider(m)) {
+  InitEngine();
+}
+
+ExecutionEngine *EngineBuilder::create() {
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.
   if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr))
     return 0;
 
-  // Unless the interpreter was explicitly selected, try making a JIT.
-  if (!ForceInterpreter && JITCtor)
-    EE = JITCtor(MP, ErrorStr, OptLevel, GVsWithCode);
+  // If the user specified a memory manager but didn't specify which engine to
+  // create, we assume they only want the JIT, and we fail if they only want
+  // the interpreter.
+  if (JMM) {
+    if (WhichEngine & EngineKind::JIT) {
+      WhichEngine = EngineKind::JIT;
+    } else {
+      *ErrorStr = "Cannot create an interpreter with a memory manager.";
+    }
+  }
 
-  // If we can't make a JIT, make an interpreter instead.
-  if (EE == 0 && InterpCtor)
-    EE = InterpCtor(MP, ErrorStr, OptLevel, GVsWithCode);
+  ExecutionEngine *EE = 0;
+
+  // Unless the interpreter was explicitly selected or the JIT is not linked,
+  // try making a JIT.
+  if (WhichEngine & EngineKind::JIT && ExecutionEngine::JITCtor) {
+    EE = ExecutionEngine::JITCtor(MP, ErrorStr, JMM, OptLevel,
+                                  AllocateGVsWithCode);
+  }
+
+  // If we can't make a JIT and we didn't request one specifically, try making
+  // an interpreter instead.
+  if (WhichEngine & EngineKind::Interpreter && EE == 0 &&
+      ExecutionEngine::InterpCtor) {
+    EE = ExecutionEngine::InterpCtor(MP, ErrorStr);
+  }
 
   return EE;
-}
-
-ExecutionEngine *ExecutionEngine::create(Module *M) {
-  return create(new ExistingModuleProvider(M));
 }
 
 /// getPointerToGlobal - This returns the address of the specified global

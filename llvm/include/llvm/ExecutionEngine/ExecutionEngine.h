@@ -71,6 +71,8 @@ class ExecutionEngine {
   bool SymbolSearchingDisabled;
   bool DlsymStubsEnabled;
 
+  friend class EngineBuilder;  // To allow access to JITCtor and InterpCtor.
+
 protected:
   /// Modules - This is a list of ModuleProvider's that we are JIT'ing from.  We
   /// use a smallvector to optimize for the case where there is only one module.
@@ -86,10 +88,13 @@ protected:
   // To avoid having libexecutionengine depend on the JIT and interpreter
   // libraries, the JIT and Interpreter set these functions to ctor pointers
   // at startup time if they are linked in.
-  typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, std::string*,
-                                       CodeGenOpt::Level OptLevel,
-                                       bool GVsWithCode);
-  static EECtorFn JITCtor, InterpCtor;
+  static ExecutionEngine *(*JITCtor)(ModuleProvider *MP,
+                                     std::string *ErrorStr,
+                                     JITMemoryManager *JMM,
+                                     CodeGenOpt::Level OptLevel,
+                                     bool GVsWithCode);
+  static ExecutionEngine *(*InterpCtor)(ModuleProvider *MP,
+                                        std::string *ErrorStr);
 
   /// LazyFunctionCreator - If an unknown function is needed, this function
   /// pointer is invoked to create it. If this returns null, the JIT will abort.
@@ -370,6 +375,96 @@ protected:
   GenericValue getConstantValue(const Constant *C);
   void LoadValueFromMemory(GenericValue &Result, GenericValue *Ptr, 
                            const Type *Ty);
+};
+
+namespace EngineKind {
+  // These are actually bitmasks that get or-ed together.
+  enum Kind {
+    JIT         = 0x1,
+    Interpreter = 0x2
+  };
+  const static Kind Either = (Kind)(JIT | Interpreter);
+}
+
+/// EngineBuilder - Builder class for ExecutionEngines.  Use this by
+/// stack-allocating a builder, chaining the various set* methods, and
+/// terminating it with a .create() call.
+class EngineBuilder {
+
+ private:
+  ModuleProvider *MP;
+  EngineKind::Kind WhichEngine;
+  std::string *ErrorStr;
+  CodeGenOpt::Level OptLevel;
+  JITMemoryManager *JMM;
+  bool AllocateGVsWithCode;
+
+  /// InitEngine - Does the common initialization of default options.
+  ///
+  void InitEngine() {
+    WhichEngine = EngineKind::Either;
+    ErrorStr = NULL;
+    OptLevel = CodeGenOpt::Default;
+    JMM = NULL;
+    AllocateGVsWithCode = false;
+  }
+
+ public:
+  /// EngineBuilder - Constructor for EngineBuilder.  If create() is called and
+  /// is successful, the created engine takes ownership of the module
+  /// provider.
+  EngineBuilder(ModuleProvider *mp) : MP(mp) {
+    InitEngine();
+  }
+
+  /// EngineBuilder - Overloaded constructor that automatically creates an
+  /// ExistingModuleProvider for an existing module.
+  EngineBuilder(Module *m);
+
+  /// setEngineKind - Controls whether the user wants the interpreter, the JIT,
+  /// or whichever engine works.  This option defaults to EngineKind::Either.
+  EngineBuilder &setEngineKind(EngineKind::Kind w) {
+    WhichEngine = w;
+    return *this;
+  }
+
+  /// setJITMemoryManager - Sets the memory manager to use.  This allows
+  /// clients to customize their memory allocation policies.  If create() is
+  /// called and is successful, the created engine takes ownership of the
+  /// memory manager.  This option defaults to NULL.
+  EngineBuilder &setJITMemoryManager(JITMemoryManager *jmm) {
+    JMM = jmm;
+    return *this;
+  }
+
+  /// setErrorStr - Set the error string to write to on error.  This option
+  /// defaults to NULL.
+  EngineBuilder &setErrorStr(std::string *e) {
+    ErrorStr = e;
+    return *this;
+  }
+
+  /// setOptLevel - Set the optimization level for the JIT.  This option
+  /// defaults to CodeGenOpt::Default.
+  EngineBuilder &setOptLevel(CodeGenOpt::Level l) {
+    OptLevel = l;
+    return *this;
+  }
+
+  /// setAllocateGVsWithCode - Sets whether global values should be allocated
+  /// into the same buffer as code.  For most applications this should be set
+  /// to false.  Allocating globals with code breaks freeMachineCodeForFunction
+  /// and is probably unsafe and bad for performance.  However, we have clients
+  /// who depend on this behavior, so we must support it.  This option defaults
+  /// to false so that users of the new API can safely use the new memory
+  /// manager and free machine code.
+  EngineBuilder &setAllocateGVsWithCode(bool a) {
+    AllocateGVsWithCode = a;
+    return *this;
+  }
+
+  ExecutionEngine *create();
+
 };
 
 } // End llvm namespace

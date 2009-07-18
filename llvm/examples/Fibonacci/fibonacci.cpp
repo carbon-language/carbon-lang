@@ -100,8 +100,7 @@ int main(int argc, char **argv) {
   Function *FibF = CreateFibFunction(M, Context);
 
   // Now we going to create JIT
-  ExistingModuleProvider *MP = new ExistingModuleProvider(M);
-  ExecutionEngine *EE = ExecutionEngine::create(MP, false);
+  ExecutionEngine *EE = EngineBuilder(M).create();
 
   errs() << "verifying... ";
   if (verifyModule(*M)) {

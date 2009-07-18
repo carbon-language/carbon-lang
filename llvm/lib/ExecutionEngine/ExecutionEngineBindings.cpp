@@ -91,7 +91,10 @@ int LLVMCreateExecutionEngine(LLVMExecutionEngineRef *OutEE,
                               LLVMModuleProviderRef MP,
                               char **OutError) {
   std::string Error;
-  if (ExecutionEngine *EE = ExecutionEngine::create(unwrap(MP), false, &Error)){
+  EngineBuilder builder(unwrap(MP));
+  builder.setEngineKind(EngineKind::Either)
+         .setErrorStr(&Error);
+  if (ExecutionEngine *EE = builder.create()){
     *OutEE = wrap(EE);
     return 0;
   }
@@ -103,8 +106,10 @@ int LLVMCreateInterpreter(LLVMExecutionEngineRef *OutInterp,
                           LLVMModuleProviderRef MP,
                           char **OutError) {
   std::string Error;
-  if (ExecutionEngine *Interp =
-      ExecutionEngine::create(unwrap(MP), true, &Error)) {
+  EngineBuilder builder(unwrap(MP));
+  builder.setEngineKind(EngineKind::Interpreter)
+         .setErrorStr(&Error);
+  if (ExecutionEngine *Interp = builder.create()) {
     *OutInterp = wrap(Interp);
     return 0;
   }
@@ -117,9 +122,11 @@ int LLVMCreateJITCompiler(LLVMExecutionEngineRef *OutJIT,
                           unsigned OptLevel,
                           char **OutError) {
   std::string Error;
-  if (ExecutionEngine *JIT =
-      ExecutionEngine::create(unwrap(MP), false, &Error,
-                                 (CodeGenOpt::Level)OptLevel)) {
+  EngineBuilder builder(unwrap(MP));
+  builder.setEngineKind(EngineKind::JIT)
+         .setErrorStr(&Error)
+         .setOptLevel((CodeGenOpt::Level)OptLevel);
+  if (ExecutionEngine *JIT = builder.create()) {
     *OutJIT = wrap(JIT);
     return 0;
   }

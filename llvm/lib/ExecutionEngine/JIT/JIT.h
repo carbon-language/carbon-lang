@@ -79,11 +79,13 @@ public:
   /// create - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise, return null.
   ///
-  static ExecutionEngine *create(ModuleProvider *MP, std::string *Err,
+  static ExecutionEngine *create(ModuleProvider *MP,
+                                 std::string *Err,
+                                 JITMemoryManager *JMM,
                                  CodeGenOpt::Level OptLevel =
                                    CodeGenOpt::Default,
-                                 bool AllocateGVsWithCode = true) {
-    return createJIT(MP, Err, 0, OptLevel, AllocateGVsWithCode);
+                                 bool GVsWithCode = true) {
+    return ExecutionEngine::createJIT(MP, Err, JMM, OptLevel, GVsWithCode);
   }
 
   virtual void addModuleProvider(ModuleProvider *MP);
@@ -152,18 +154,22 @@ public:
   /// addPendingFunction - while jitting non-lazily, a called but non-codegen'd
   /// function was encountered.  Add it to a pending list to be processed after 
   /// the current function.
-  /// 
+  ///
   void addPendingFunction(Function *F);
-  
+
   /// getCodeEmitter - Return the code emitter this JIT is emitting into.
+  ///
   JITCodeEmitter *getCodeEmitter() const { return JCE; }
-  
+
+  /// selectTarget - Pick a target either via -march or by guessing the native
+  /// arch.  Add any CPU features specified via -mcpu or -mattr.
+  static TargetMachine *selectTarget(ModuleProvider *MP, std::string *Err);
+
   static ExecutionEngine *createJIT(ModuleProvider *MP,
-                                    std::string *Err,
+                                    std::string *ErrorStr,
                                     JITMemoryManager *JMM,
                                     CodeGenOpt::Level OptLevel,
-                                    bool AllocateGVsWithCode);
-
+                                    bool GVsWithCode);
 
   // Run the JIT on F and return information about the generated code
   void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0);

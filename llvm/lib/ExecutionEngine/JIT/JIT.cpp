@@ -199,14 +199,31 @@ ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
                                             JITMemoryManager *JMM,
                                             CodeGenOpt::Level OptLevel,
                                             bool GVsWithCode) {
-  ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM, OptLevel,
-                                       GVsWithCode);
-  if (!EE) return 0;
-  
+    return JIT::createJIT(MP, ErrorStr, JMM, OptLevel, GVsWithCode);
+}
+
+ExecutionEngine *JIT::createJIT(ModuleProvider *MP,
+                                std::string *ErrorStr,
+                                JITMemoryManager *JMM,
+                                CodeGenOpt::Level OptLevel,
+                                bool GVsWithCode) {
   // Make sure we can resolve symbols in the program as well. The zero arg
   // to the function tells DynamicLibrary to load the program, not a library.
-  sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr);
-  return EE;
+  if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr))
+    return 0;
+
+  // Pick a target either via -march or by guessing the native arch.
+  TargetMachine *TM = JIT::selectTarget(MP, ErrorStr);
+  if (!TM || (ErrorStr && ErrorStr->length() > 0)) return 0;
+
+  // If the target supports JIT code generation, create a the JIT.
+  if (TargetJITInfo *TJ = TM->getJITInfo()) {
+    return new JIT(MP, *TM, *TJ, JMM, OptLevel, GVsWithCode);
+  } else {
+    if (ErrorStr)
+      *ErrorStr = "target does not support JIT code generation";
+    return 0;
+  }
 }
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,

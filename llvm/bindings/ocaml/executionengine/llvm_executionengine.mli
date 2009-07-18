@@ -89,14 +89,14 @@ module ExecutionEngine: sig
       module provider [mp] if successful. Creates a JIT if possible, else falls
       back to an interpreter. Raises [Error msg] if an error occurrs. The
       execution engine is not garbage collected and must be destroyed with
-      [dispose ee]. See the function [llvm::ExecutionEngine::create]. *)
+      [dispose ee]. See the function [llvm::EngineBuilder::create]. *)
   val create: Llvm.llmoduleprovider -> t
   
   (** [create_interpreter mp] creates a new interpreter, taking ownership of the
       module provider [mp] if successful. Raises [Error msg] if an error
       occurrs. The execution engine is not garbage collected and must be
       destroyed with [dispose ee].
-      See the function [llvm::ExecutionEngine::create]. *)
+      See the function [llvm::EngineBuilder::create]. *)
   val create_interpreter: Llvm.llmoduleprovider -> t
   
   (** [create_jit mp] creates a new JIT (just-in-time compiler), taking
@@ -104,7 +104,7 @@ module ExecutionEngine: sig
       a JIT which favors code quality over compilation speed. Raises [Error msg]
       if an error occurrs. The execution engine is not garbage collected and
       must be destroyed with [dispose ee].
-      See the function [llvm::ExecutionEngine::create]. *)
+      See the function [llvm::EngineBuilder::create]. *)
   val create_jit: Llvm.llmoduleprovider -> t
   
   (** [create_fast_jit mp] creates a new JIT (just-in-time compiler) which
@@ -112,7 +112,7 @@ module ExecutionEngine: sig
       module provider [mp] if successful. Raises [Error msg] if an error
       occurrs. The execution engine is not garbage collected and must be
       destroyed with [dispose ee].
-      See the function [llvm::ExecutionEngine::create]. *)
+      See the function [llvm::EngineBuilder::create]. *)
   val create_fast_jit: Llvm.llmoduleprovider -> t
   
   (** [dispose ee] releases the memory used by the execution engine and must be

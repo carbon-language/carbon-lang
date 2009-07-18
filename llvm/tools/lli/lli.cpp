@@ -131,6 +131,12 @@ int main(int argc, char **argv, char * const *envp) {
     exit(1);
   }
 
+  EngineBuilder builder(MP);
+  builder.setErrorStr(&ErrorMsg)
+         .setEngineKind(ForceInterpreter
+                        ? EngineKind::Interpreter
+                        : EngineKind::JIT);
+
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())
     Mod->setTargetTriple(TargetTriple);
@@ -146,8 +152,9 @@ int main(int argc, char **argv, char * const *envp) {
   case '2': OLvl = CodeGenOpt::Default; break;
   case '3': OLvl = CodeGenOpt::Aggressive; break;
   }
-  
-  EE = ExecutionEngine::create(MP, ForceInterpreter, &ErrorMsg, OLvl);
+  builder.setOptLevel(OLvl);
+
+  EE = builder.create();
   if (!EE) {
     if (!ErrorMsg.empty())
       errs() << argv[0] << ": error creating EE: " << ErrorMsg << "\n";

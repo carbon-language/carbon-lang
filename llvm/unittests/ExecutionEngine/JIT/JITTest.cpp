@@ -1,4 +1,4 @@
-//===- JITEmitter.cpp - Unit tests for the JIT code emitter ---------------===//
+//===- JITTest.cpp - Unit tests for the JIT -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Support/IRBuilder.h"
@@ -60,12 +61,13 @@ TEST(JIT, GlobalInFunction) {
   // memory is more easily tested.
   MemMgr->setPoisonMemory(true);
   std::string Error;
-  OwningPtr<ExecutionEngine> JIT(ExecutionEngine::createJIT(
-      MP,
-      &Error,
-      MemMgr,
-      CodeGenOpt::Default,
-      false));  // This last argument enables the fix.
+  OwningPtr<ExecutionEngine> JIT(EngineBuilder(MP)
+                                 .setEnginePreference(EngineBuilder::JITONLY)
+                                 .setErrorStr(&Error)
+                                 .setJITMemoryManager(MemMgr)
+                                 // The next line enables the fix:
+                                 .setAllocateGVsWithCode(false)
+                                 .create());
   ASSERT_EQ(Error, "");
 
   // Create a global variable.
@@ -115,11 +117,12 @@ TEST(JIT, GlobalInFunction) {
   EXPECT_EQ(3, *GPtr);
 }
 
-// TODO(rnk): This seems to only run once for both tests, which is unexpected.
-// That works just fine, but we shouldn't duplicate the code.
+// This code is copied from JITEventListenerTest, but it only runs once for all
+// the tests in this directory.  Everything seems fine, but that's strange
+// behavior.
 class JITEnvironment : public testing::Environment {
   virtual void SetUp() {
-    // Required for ExecutionEngine::createJIT to create a JIT.
+    // Required to create a JIT.
     InitializeNativeTarget();
   }
 };

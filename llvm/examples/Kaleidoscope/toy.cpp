@@ -1103,7 +1103,7 @@ int main() {
   TheModule = new Module("my cool jit", Context);
   
   // Create the JIT.
-  TheExecutionEngine = ExecutionEngine::create(TheModule);
+  TheExecutionEngine = EngineBuilder(TheModule).create();
 
   {
     ExistingModuleProvider OurModuleProvider(TheModule);
@@ -1138,4 +1138,3 @@ int main() {
   
   return 0;
 }
-

@@ -66,7 +66,9 @@ class JITEventListenerTest : public testing::Test {
  protected:
   JITEventListenerTest()
       : M(new Module("module", getGlobalContext())),
-        EE(ExecutionEngine::createJIT(new ExistingModuleProvider(M))) {
+        EE(EngineBuilder(M)
+           .setEngineToCreate(EngineBuilder::ENG_JIT)
+           .create()) {
   }
 
   Module *M;
@@ -232,7 +234,7 @@ TEST_F(JITEventListenerTest, MatchesMachineCodeInfo) {
 
 class JITEnvironment : public testing::Environment {
   virtual void SetUp() {
-    // Required for ExecutionEngine::createJIT to create a JIT.
+    // Required to create a JIT.
     InitializeNativeTarget();
   }
 };

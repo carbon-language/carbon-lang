@@ -299,7 +299,7 @@ by adding a global variable and a call in <tt>main</tt>:</p>
 int main() {
   ..
   <b>// Create the JIT.
-  TheExecutionEngine = ExecutionEngine::create(TheModule);</b>
+    TheExecutionEngine = EngineBuilder(TheModule).create();</b>
   ..
 }
 </pre>
@@ -1078,7 +1078,7 @@ int main() {
   TheModule = new Module("my cool jit", getGlobalContext());
   
   // Create the JIT.
-  TheExecutionEngine = ExecutionEngine::create(TheModule);
+  TheExecutionEngine = EngineBuilder(TheModule).create();
 
   {
     ExistingModuleProvider OurModuleProvider(TheModule);

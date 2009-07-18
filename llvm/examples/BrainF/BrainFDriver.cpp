@@ -141,8 +141,7 @@ int main(int argc, char **argv) {
     InitializeNativeTarget();
 
     std::cout << "------- Running JIT -------\n";
-    ExistingModuleProvider *mp = new ExistingModuleProvider(mod);
-    ExecutionEngine *ee = ExecutionEngine::create(mp, false);
+    ExecutionEngine *ee = EngineBuilder(mod).create();
     std::vector<GenericValue> args;
     Function *brainf_func = mod->getFunction("brainf");
     GenericValue gv = ee->runFunction(brainf_func, args);

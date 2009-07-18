@@ -242,8 +242,7 @@ int main() {
   Function* fibF = CreateFibFunction( M );
 
   // Now we create the JIT.
-  ExistingModuleProvider* MP = new ExistingModuleProvider(M);
-  ExecutionEngine* EE = ExecutionEngine::create(MP, false);
+  ExecutionEngine* EE = EngineBuilder(M).create();
 
   //~ std::cout << "We just constructed this LLVM module:\n\n" << *M;
   //~ std::cout << "\n\nRunning foo: " << std::flush;

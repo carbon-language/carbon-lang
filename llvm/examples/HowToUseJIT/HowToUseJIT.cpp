@@ -104,8 +104,7 @@ int main() {
   ReturnInst::Create(Add1CallRes, BB);
 
   // Now we create the JIT.
-  ExistingModuleProvider* MP = new ExistingModuleProvider(M);
-  ExecutionEngine* EE = ExecutionEngine::create(MP, false);
+  ExecutionEngine* EE = EngineBuilder(M).create();
 
   outs() << "We just constructed this LLVM module:\n\n" << *M;
   outs() << "\n\nRunning foo: ";
