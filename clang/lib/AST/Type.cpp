@@ -486,7 +486,7 @@ const ObjCInterfaceType *Type::getAsObjCQualifiedInterfaceType() const {
 }
 
 bool Type::isObjCQualifiedInterfaceType() const {
-  return getAsObjCQualifiedIdType() != 0;
+  return getAsObjCQualifiedInterfaceType() != 0;
 }
 
 const ObjCObjectPointerType *Type::getAsObjCObjectPointerType() const {
