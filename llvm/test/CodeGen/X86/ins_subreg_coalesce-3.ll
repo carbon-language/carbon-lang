@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86-64 | grep mov | count 11
+; RUN: llvm-as < %s | llc -march=x86-64 | grep mov | count 10
 
 	%struct.COMPOSITE = type { i8, i16, i16 }
 	%struct.FILE = type { i8*, i32, i32, i16, i16, %struct.__sbuf, i32, i8*, i32 (i8*)*, i32 (i8*, i8*, i32)*, i64 (i8*, i64, i32)*, i32 (i8*, i8*, i32)*, %struct.__sbuf, %struct.__sFILEX*, i32, [3 x i8], [1 x i8], %struct.__sbuf, i32, i64 }
@@ -17,7 +17,7 @@
 	%struct.metrics = type { i16, i16, i16, i16, i16 }
 	%struct.rec = type { %struct.head_type }
 
-define void @FontChange(i1 %foo) {
+define void @FontChange(i1 %foo) nounwind {
 entry:
 	br i1 %foo, label %bb298, label %bb49
 bb49:		; preds = %entry

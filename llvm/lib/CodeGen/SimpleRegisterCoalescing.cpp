@@ -1235,14 +1235,17 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     SrcReg    = CopyMI->getOperand(1).getReg();
     SrcSubIdx = CopyMI->getOperand(2).getImm();
   } else if (isInsSubReg || isSubRegToReg) {
-    if (CopyMI->getOperand(2).getSubReg()) {
+    DstReg    = CopyMI->getOperand(0).getReg();
+    DstSubIdx = CopyMI->getOperand(3).getImm();
+    SrcReg    = CopyMI->getOperand(2).getReg();
+    SrcSubIdx = CopyMI->getOperand(2).getSubReg();
+    if (SrcSubIdx && SrcSubIdx != DstSubIdx) {
+      // r1025 = INSERT_SUBREG r1025, r1024<2>, 2 Then r1024 has already been
+      // coalesced to a larger register so the subreg indices cancel out.
       DOUT << "\tSource of insert_subreg is already coalesced "
            << "to another register.\n";
       return false;  // Not coalescable.
     }
-    DstReg    = CopyMI->getOperand(0).getReg();
-    DstSubIdx = CopyMI->getOperand(3).getImm();
-    SrcReg    = CopyMI->getOperand(2).getReg();
   } else if (!tii_->isMoveInstr(*CopyMI, SrcReg, DstReg, SrcSubIdx, DstSubIdx)){
     llvm_unreachable("Unrecognized copy instruction!");
   }
