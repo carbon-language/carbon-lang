@@ -735,14 +735,6 @@ InstantiateObjCInterfaceType(const ObjCInterfaceType *T) const {
   return QualType();
 }
 
-QualType 
-TemplateTypeInstantiator::
-InstantiateObjCQualifiedInterfaceType(
-                                 const ObjCQualifiedInterfaceType *T) const {
-  assert(false && "Objective-C types cannot be dependent");
-  return QualType();
-}
-
 /// \brief The actual implementation of Sema::InstantiateType().
 QualType TemplateTypeInstantiator::Instantiate(QualType T) const {
   // If T is not a dependent type, there is nothing to do.

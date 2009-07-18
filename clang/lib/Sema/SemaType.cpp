@@ -208,11 +208,12 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
       // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so we have
       // this "hack" for now...
       if (const ObjCInterfaceType *Interface = Result->getAsObjCInterfaceType())
-        // FIXME: Remove ObjCQualifiedInterfaceType (by moving the list of
-        // protocols 'up' to ObjCInterfaceType).
-        Result = Context.getObjCQualifiedInterfaceType(Interface->getDecl(),
-                                                       (ObjCProtocolDecl**)PQ,
-                                               DS.getNumProtocolQualifiers());
+        // FIXME: Investigate removing the protocol list in ObjCInterfaceType.
+        // To simply this, Sema::GetTypeForDeclarator() uses the declspec 
+        // protocol list, not the list we are storing here.
+        Result = Context.getObjCInterfaceType(Interface->getDecl(),
+                                              (ObjCProtocolDecl**)PQ,
+                                              DS.getNumProtocolQualifiers());
       else if (Result->isObjCIdType())
         // id<protocol-list>
         Result = Context.getObjCObjectPointerType(QualType(), 
@@ -900,10 +901,10 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S, unsigned Skip,
         // Build the type anyway.
       }
       if (getLangOptions().ObjC1 && T->isObjCInterfaceType()) {
-        const ObjCInterfaceType *OIT = T->getAsObjCInterfaceType();
+        const DeclSpec &DS = D.getDeclSpec();
         T = Context.getObjCObjectPointerType(T,
-                                       (ObjCProtocolDecl **)OIT->qual_begin(),
-                                       OIT->getNumProtocols());
+                                (ObjCProtocolDecl **)DS.getProtocolQualifiers(),
+                                DS.getNumProtocolQualifiers());
         break;
       }
       T = BuildPointerType(T, DeclType.Ptr.TypeQuals, DeclType.Loc, Name);

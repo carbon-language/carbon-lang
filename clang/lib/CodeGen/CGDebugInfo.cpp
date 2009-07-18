@@ -779,7 +779,6 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty,
     return llvm::DIType();
   case Type::ObjCObjectPointer:
     return Slot = CreateType(cast<ObjCObjectPointerType>(Ty), Unit);
-  case Type::ObjCQualifiedInterface:  // Drop protocols from interface.
   case Type::ObjCInterface: 
     return Slot = CreateType(cast<ObjCInterfaceType>(Ty), Unit);
   case Type::Builtin: return Slot = CreateType(cast<BuiltinType>(Ty), Unit);

@@ -1537,7 +1537,6 @@ MarkDeducedTemplateParameters(Sema &SemaRef, QualType T,
   case Type::Enum:
   case Type::Typename:
   case Type::ObjCInterface:
-  case Type::ObjCQualifiedInterface:
   case Type::ObjCObjectPointer:
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)

@@ -860,7 +860,7 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
     return false;
   
   QualType ltype = lhs->getAsPointerType()->getPointeeType();
-  if (const ObjCQualifiedInterfaceType *lhsQI =
+  if (const ObjCInterfaceType *lhsQI =
          ltype->getAsObjCQualifiedInterfaceType()) {
     ObjCObjectPointerType::qual_iterator LHSProtoI = lhsQI->qual_begin();
     ObjCObjectPointerType::qual_iterator LHSProtoE = lhsQI->qual_end();

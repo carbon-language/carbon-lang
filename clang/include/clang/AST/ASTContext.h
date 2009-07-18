@@ -79,7 +79,7 @@ class ASTContext {
   llvm::FoldingSet<TemplateSpecializationType> TemplateSpecializationTypes;
   llvm::FoldingSet<QualifiedNameType> QualifiedNameTypes;
   llvm::FoldingSet<TypenameType> TypenameTypes;
-  llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
+  llvm::FoldingSet<ObjCInterfaceType> ObjCInterfaceTypes;
   llvm::FoldingSet<ObjCObjectPointerType> ObjCObjectPointerTypes;
 
   llvm::FoldingSet<QualifiedTemplateName> QualifiedTemplateNames;
@@ -354,7 +354,6 @@ public:
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
-  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl);
 
   QualType getTemplateTypeParmType(unsigned Depth, unsigned Index, 
                                    bool ParameterPack,
@@ -374,18 +373,15 @@ public:
                            const TemplateSpecializationType *TemplateId,
                            QualType Canon = QualType());
 
+  QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
+                                ObjCProtocolDecl **Protocols = 0, 
+                                unsigned NumProtocols = 0);
+
   /// getObjCObjectPointerType - Return a ObjCObjectPointerType type for the
   /// given interface decl and the conforming protocol list.
   QualType getObjCObjectPointerType(QualType OIT,
                                     ObjCProtocolDecl **ProtocolList = 0,
                                     unsigned NumProtocols = 0);
-  
-  /// getObjCQualifiedInterfaceType - Return a 
-  /// ObjCQualifiedInterfaceType type for the given interface decl and
-  /// the conforming protocol list.
-  QualType getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
-                                         ObjCProtocolDecl **ProtocolList,
-                                         unsigned NumProtocols);
   
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExprType(Expr *e);

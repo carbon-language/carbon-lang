@@ -1820,16 +1820,7 @@ static void scanToNextArgument(const char *&argRef) {
 }
 
 bool RewriteObjC::needToScanForQualifiers(QualType T) {
-  
-  if (T->isObjCQualifiedIdType())
-    return true;
-  
-  if (const PointerType *pType = T->getAsPointerType()) {
-    Type *pointeeType = pType->getPointeeType().getTypePtr();
-    if (isa<ObjCQualifiedInterfaceType>(pointeeType))
-      return true; // we have "Class <Protocol> *".
-  }
-  return false;
+  return T->isObjCQualifiedIdType() || T->isObjCQualifiedInterfaceType();
 }
 
 void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Expr *E) {

@@ -341,12 +341,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return
       ConvertTypeRecursive(QualType(cast<ExtQualType>(Ty).getBaseType(), 0));
 
-  case Type::ObjCQualifiedInterface: {
-    // Lower foo<P1,P2> just like foo.
-    ObjCInterfaceDecl *ID = cast<ObjCQualifiedInterfaceType>(Ty).getDecl();
-    return ConvertTypeRecursive(Context.getObjCInterfaceType(ID));
-  }
-      
   case Type::ObjCInterface: {
     // Objective-C interfaces are always opaque (outside of the
     // runtime, which can do whatever it likes); we never refine

@@ -239,18 +239,11 @@ void PCHTypeWriter::VisitQualifiedNameType(const QualifiedNameType *T) {
 
 void PCHTypeWriter::VisitObjCInterfaceType(const ObjCInterfaceType *T) {
   Writer.AddDeclRef(T->getDecl(), Record);
-  Code = pch::TYPE_OBJC_INTERFACE;
-}
-
-void 
-PCHTypeWriter::VisitObjCQualifiedInterfaceType(
-                                      const ObjCQualifiedInterfaceType *T) {
-  VisitObjCInterfaceType(T);
   Record.push_back(T->getNumProtocols());
   for (ObjCInterfaceType::qual_iterator I = T->qual_begin(),
        E = T->qual_end(); I != E; ++I)
     Writer.AddDeclRef(*I, Record);
-  Code = pch::TYPE_OBJC_QUALIFIED_INTERFACE;
+  Code = pch::TYPE_OBJC_INTERFACE;
 }
 
 void
@@ -433,7 +426,6 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_RECORD);
   RECORD(TYPE_ENUM);
   RECORD(TYPE_OBJC_INTERFACE);
-  RECORD(TYPE_OBJC_QUALIFIED_INTERFACE);
   RECORD(TYPE_OBJC_OBJECT_POINTER);
   // Statements and Exprs can occur in the Types block.
   AddStmtsExprs(Stream, Record);
@@ -1844,6 +1836,18 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   WriteSourceManagerBlock(Context.getSourceManager(), PP, isysroot);
   WritePreprocessor(PP);
   WriteComments(Context);  
+  // Write the record of special types.
+  Record.clear();
+  
+  AddTypeRef(Context.getBuiltinVaListType(), Record);
+  AddTypeRef(Context.getObjCIdType(), Record);
+  AddTypeRef(Context.getObjCSelType(), Record);
+  AddTypeRef(Context.getObjCProtoType(), Record);
+  AddTypeRef(Context.getObjCClassType(), Record);
+  AddTypeRef(Context.getRawCFConstantStringType(), Record);
+  AddTypeRef(Context.getRawObjCFastEnumerationStateType(), Record);
+  AddTypeRef(Context.getFILEType(), Record);
+  Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
   
   // Keep writing types and declarations until all types and
   // declarations have been written.
@@ -1882,18 +1886,6 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   Stream.EmitRecordWithBlob(DeclOffsetAbbrev, Record,
                             (const char *)&DeclOffsets.front(), 
                             DeclOffsets.size() * sizeof(DeclOffsets[0]));
-
-  // Write the record of special types.
-  Record.clear();
-  AddTypeRef(Context.getBuiltinVaListType(), Record);
-  AddTypeRef(Context.getObjCIdType(), Record);
-  AddTypeRef(Context.getObjCSelType(), Record);
-  AddTypeRef(Context.getObjCProtoType(), Record);
-  AddTypeRef(Context.getObjCClassType(), Record);
-  AddTypeRef(Context.getRawCFConstantStringType(), Record);
-  AddTypeRef(Context.getRawObjCFastEnumerationStateType(), Record);
-  AddTypeRef(Context.getFILEType(), Record);
-  Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
 
   // Write the record containing external, unnamed definitions.
   if (!ExternalDefinitions.empty())

@@ -1918,19 +1918,14 @@ QualType PCHReader::ReadTypeRecord(uint64_t Offset) {
     assert(Record.size() == 1 && "incorrect encoding of enum type");
     return Context->getTypeDeclType(cast<EnumDecl>(GetDecl(Record[0])));
 
-  case pch::TYPE_OBJC_INTERFACE:
-    assert(Record.size() == 1 && "incorrect encoding of objc interface type");
-    return Context->getObjCInterfaceType(
-                                  cast<ObjCInterfaceDecl>(GetDecl(Record[0])));
-
-  case pch::TYPE_OBJC_QUALIFIED_INTERFACE: {
+  case pch::TYPE_OBJC_INTERFACE: {
     unsigned Idx = 0;
     ObjCInterfaceDecl *ItfD = cast<ObjCInterfaceDecl>(GetDecl(Record[Idx++]));
     unsigned NumProtos = Record[Idx++];
     llvm::SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(cast<ObjCProtocolDecl>(GetDecl(Record[Idx++])));
-    return Context->getObjCQualifiedInterfaceType(ItfD, Protos.data(), NumProtos);
+    return Context->getObjCInterfaceType(ItfD, Protos.data(), NumProtos);
   }
 
   case pch::TYPE_OBJC_OBJECT_POINTER: {
@@ -1995,7 +1990,7 @@ QualType PCHReader::GetType(pch::TypeID ID) {
   }
 
   Index -= pch::NUM_PREDEF_TYPE_IDS;
-  assert(Index < TypesLoaded.size() && "Type index out-of-range");
+  //assert(Index < TypesLoaded.size() && "Type index out-of-range");
   if (!TypesLoaded[Index])
     TypesLoaded[Index] = ReadTypeRecord(TypeOffsets[Index]).getTypePtr();
     
