@@ -83,11 +83,16 @@ bool ASTLocation::isImmediateParent(Decl *D, Stmt *Node) {
 }
 
 SourceRange ASTLocation::getSourceRange() const {
+  if (isInvalid())
+    return SourceRange();
   return isDecl() ? getDecl()->getSourceRange() : getStmt()->getSourceRange();
 }
 
 void ASTLocation::print(llvm::raw_ostream &OS) {
-  assert(isValid() && "ASTLocation is not valid");
+  if (isInvalid()) {
+    OS << "<< Invalid ASTLocation >>\n";
+    return;
+  }
 
   OS << "[Decl: " << getDecl()->getDeclKindName() << " ";
   if (NamedDecl *ND = dyn_cast<NamedDecl>(getDecl()))
