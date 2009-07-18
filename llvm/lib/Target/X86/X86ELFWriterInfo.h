@@ -58,7 +58,7 @@ namespace llvm {
 
     /// getJumpTableRelocationTy - Returns the machine relocation type used
     /// to reference a jumptable.
-    virtual unsigned getJumpTableMachineRelocationTy() const;
+    virtual unsigned getAbsoluteLabelMachineRelTy() const;
   };
 
 } // end llvm namespace

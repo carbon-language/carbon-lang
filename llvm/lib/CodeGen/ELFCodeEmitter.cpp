@@ -185,7 +185,7 @@ void ELFCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
     // Each MBB entry in the Jump table section has a relocation entry
     // against the current text section.
     for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
-      unsigned MachineRelTy = TEW->getJumpTableMachineRelocationTy();
+      unsigned MachineRelTy = TEW->getAbsoluteLabelMachineRelTy();
       MachineRelocation MR =
         MachineRelocation::getBB(JTSection.size(),
                                  MachineRelTy,

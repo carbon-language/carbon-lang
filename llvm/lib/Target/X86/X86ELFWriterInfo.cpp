@@ -102,7 +102,8 @@ unsigned X86ELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
   return 0;
 }
 
-unsigned X86ELFWriterInfo::getJumpTableMachineRelocationTy() const {
-  return X86::reloc_absolute_dword;
+unsigned X86ELFWriterInfo::getAbsoluteLabelMachineRelTy() const {
+  return is64Bit ?
+    X86::reloc_absolute_dword : X86::reloc_absolute_word;
 }
 
