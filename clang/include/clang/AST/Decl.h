@@ -259,7 +259,19 @@ protected:
       DeclaredInCondition(false), TypeSpecStartLoc(TSSL) { 
     SClass = SC; 
   }
+
+  typedef Redeclarable<VarDecl> redeclarable_base;
+  virtual VarDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+
 public:
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
+  redecl_iterator redecls_begin() const {
+    return redeclarable_base::redecls_begin();
+  } 
+  redecl_iterator redecls_end() const {
+    return redeclarable_base::redecls_end();
+  }
+
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation L, IdentifierInfo *Id,
                          QualType T, StorageClass S,
@@ -683,7 +695,18 @@ protected:
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
 
+  typedef Redeclarable<FunctionDecl> redeclarable_base;
+  virtual FunctionDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+
 public:
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
+  redecl_iterator redecls_begin() const {
+    return redeclarable_base::redecls_begin();
+  } 
+  redecl_iterator redecls_end() const {
+    return redeclarable_base::redecls_end();
+  }
+
   static FunctionDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                               DeclarationName N, QualType T, 
                               StorageClass S = None, bool isInline = false,

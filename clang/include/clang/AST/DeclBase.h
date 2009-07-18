@@ -320,6 +320,62 @@ public:
 
   /// \brief Whether this particular Decl is a primary one.
   bool isCanonicalDecl() const { return getCanonicalDecl() == this; }
+  
+protected:
+  /// \brief Returns the next redeclaration or itself if this is the only decl.
+  ///
+  /// Decl subclasses that can be redeclared should override this method so that
+  /// Decl::redecl_iterator can iterate over them.
+  virtual Decl *getNextRedeclaration() { return this; }
+
+public:
+  /// \brief Iterates through all the redeclarations of the same decl.
+  class redecl_iterator {
+    /// Current - The current declaration.
+    Decl *Current;
+    Decl *Starter;
+
+  public:
+    typedef Decl*                     value_type;
+    typedef Decl*                     reference;
+    typedef Decl*                     pointer;
+    typedef std::forward_iterator_tag iterator_category;
+    typedef std::ptrdiff_t            difference_type;
+
+    redecl_iterator() : Current(0) { }
+    explicit redecl_iterator(Decl *C) : Current(C), Starter(C) { }
+
+    reference operator*() const { return Current; }
+    pointer operator->() const { return Current; }
+
+    redecl_iterator& operator++() {
+      assert(Current && "Advancing while iterator has reached end");
+      // Get either previous decl or latest decl.
+      Decl *Next = Current->getNextRedeclaration();
+      Current = (Next != Starter ? Next : 0);
+      return *this;
+    }
+
+    redecl_iterator operator++(int) {
+      redecl_iterator tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+
+    friend bool operator==(redecl_iterator x, redecl_iterator y) { 
+      return x.Current == y.Current;
+    }
+    friend bool operator!=(redecl_iterator x, redecl_iterator y) { 
+      return x.Current != y.Current;
+    }
+  };
+
+  /// \brief Returns iterator for all the redeclarations of the same decl.
+  /// It will iterate at least once (when this decl is the only one).
+  redecl_iterator redecls_begin() const {
+    return redecl_iterator(const_cast<Decl*>(this));
+  }
+  redecl_iterator redecls_end() const { return redecl_iterator(); }
 
   /// getBody - If this Decl represents a declaration for a body of code,
   ///  such as a function or method definition, this method returns the

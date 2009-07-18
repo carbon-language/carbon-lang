@@ -133,16 +133,9 @@ static void ProcessDecl(Decl *D) {
   }
   
   case PrintDecls :
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      for (FunctionDecl::redecl_iterator I = FD->redecls_begin(),
-                                         E = FD->redecls_end(); I != E; ++I)
-        ASTLocation(*I).print(OS);
-    } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
-      for (VarDecl::redecl_iterator I = VD->redecls_begin(),
-                                    E = VD->redecls_end(); I != E; ++I)
-        ASTLocation(*I).print(OS);
-    } else
-      ASTLocation(D).print(OS);
+    for (Decl::redecl_iterator I = D->redecls_begin(),
+                               E = D->redecls_end(); I != E; ++I)
+      ASTLocation(*I).print(OS);
     break;
     
   }

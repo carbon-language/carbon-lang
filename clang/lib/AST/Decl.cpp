@@ -565,7 +565,7 @@ bool FunctionDecl::isExternGNUInline(ASTContext &Context) const {
 
 void 
 FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
-  Redeclarable<FunctionDecl>::setPreviousDeclaration(PrevDecl);
+  redeclarable_base::setPreviousDeclaration(PrevDecl);
 
   if (FunctionTemplateDecl *FunTmpl = getDescribedFunctionTemplate()) {
     FunctionTemplateDecl *PrevFunTmpl 
