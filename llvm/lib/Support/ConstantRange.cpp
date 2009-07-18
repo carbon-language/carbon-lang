@@ -275,49 +275,11 @@ ConstantRange::intersect1Wrapped(const ConstantRange &LHS,
 }
 
 /// intersectWith - Return the range that results from the intersection of this
-/// range with another range.
-///
+/// range with another range.  The resultant range is guaranteed to include all
+/// elements contained in both input ranges, and to have the smallest possible
+/// set size that does so.  Because there may be two intersections with the
+/// same set size, A.intersectWith(B) might not be equal to B.intersectWith(A).
 ConstantRange ConstantRange::intersectWith(const ConstantRange &CR) const {
-  assert(getBitWidth() == CR.getBitWidth() && 
-         "ConstantRange types don't agree!");
-  // Handle common special cases
-  if (isEmptySet() || CR.isFullSet())  
-    return *this;
-  if (isFullSet()  || CR.isEmptySet()) 
-    return CR;
-
-  if (!isWrappedSet()) {
-    if (!CR.isWrappedSet()) {
-      APInt L = APIntOps::umax(Lower, CR.Lower);
-      APInt U = APIntOps::umin(Upper, CR.Upper);
-
-      if (L.ult(U)) // If range isn't empty...
-        return ConstantRange(L, U);
-      else
-        return ConstantRange(getBitWidth(), false);// Otherwise, empty set
-    } else
-      return intersect1Wrapped(CR, *this);
-  } else {   // We know "this" is wrapped...
-    if (!CR.isWrappedSet())
-      return intersect1Wrapped(*this, CR);
-    else {
-      // Both ranges are wrapped...
-      APInt L = APIntOps::umax(Lower, CR.Lower);
-      APInt U = APIntOps::umin(Upper, CR.Upper);
-      return ConstantRange(L, U);
-    }
-  }
-  return *this;
-}
-
-/// maximalIntersectWith - Return the range that results from the intersection
-/// of this range with another range.  The resultant range is guaranteed to
-/// include all elements contained in both input ranges, and to have the
-/// smallest possible set size that does so.  Because there may be two
-/// intersections with the same set size, A.maximalIntersectWith(B) might not
-/// be equal to B.maximalIntersect(A).
-ConstantRange
-ConstantRange::maximalIntersectWith(const ConstantRange &CR) const {
   assert(getBitWidth() == CR.getBitWidth() && 
          "ConstantRange types don't agree!");
 
@@ -326,7 +288,7 @@ ConstantRange::maximalIntersectWith(const ConstantRange &CR) const {
   if (CR.isEmptySet() ||    isFullSet()) return CR;
 
   if (!isWrappedSet() && CR.isWrappedSet())
-    return CR.maximalIntersectWith(*this);
+    return CR.intersectWith(*this);
 
   if (!isWrappedSet() && !CR.isWrappedSet()) {
     if (Lower.ult(CR.Lower)) {

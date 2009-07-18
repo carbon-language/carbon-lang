@@ -203,22 +203,13 @@ TEST_F(ConstantRangeTest, IntersectWith) {
   EXPECT_TRUE(Some.intersectWith(Wrap).isEmptySet());
   EXPECT_TRUE(One.intersectWith(Wrap).isEmptySet());
   EXPECT_EQ(One.intersectWith(Wrap), Wrap.intersectWith(One));
-}
 
-TEST_F(ConstantRangeTest, MaximalIntersectWith) {
-  EXPECT_TRUE(Empty.maximalIntersectWith(Full).isEmptySet());
-  EXPECT_TRUE(Empty.maximalIntersectWith(Empty).isEmptySet());
-  EXPECT_TRUE(Empty.maximalIntersectWith(One).isEmptySet());
-  EXPECT_TRUE(Empty.maximalIntersectWith(Some).isEmptySet());
-  EXPECT_TRUE(Empty.maximalIntersectWith(Wrap).isEmptySet());
-  EXPECT_TRUE(Full.maximalIntersectWith(Full).isFullSet());
-  EXPECT_TRUE(Some.maximalIntersectWith(Some) == Some);
-  EXPECT_TRUE(Some.maximalIntersectWith(One) == One);
-  EXPECT_TRUE(Full.maximalIntersectWith(One) == One);
-  EXPECT_TRUE(Full.maximalIntersectWith(Some) == Some);
-  EXPECT_TRUE(Some.maximalIntersectWith(Wrap).isEmptySet());
-  EXPECT_TRUE(One.maximalIntersectWith(Wrap).isEmptySet());
-  EXPECT_EQ(One.maximalIntersectWith(Wrap), Wrap.maximalIntersectWith(One));
+  // Klee generated testcase from PR4545.
+  // The intersection of i16 [4, 2) and [6, 5) is disjoint, looking like
+  // 01..4.6789ABCDEF where the dots represent values not in the intersection.
+  ConstantRange LHS(APInt(16, 4), APInt(16, 2));
+  ConstantRange RHS(APInt(16, 6), APInt(16, 5));
+  EXPECT_EQ(LHS.intersectWith(RHS), LHS);
 }
 
 TEST_F(ConstantRangeTest, UnionWith) {

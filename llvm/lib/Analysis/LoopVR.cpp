@@ -142,14 +142,13 @@ ConstantRange LoopVR::getRange(const SCEV *S, const SCEV *T, ScalarEvolution &SE
 
     if (R.getUnsignedMin() == 0) {
       // Just because it contains zero, doesn't mean it will also contain one.
-      // Use maximalIntersectWith to get the right behaviour.
       ConstantRange NotZero(APInt(L.getBitWidth(), 1),
                             APInt::getNullValue(L.getBitWidth()));
-      R = R.maximalIntersectWith(NotZero);
+      R = R.intersectWith(NotZero);
     }
  
-    // But, the maximal intersection might still include zero. If it does, then
-    // we know it also included one.
+    // But, the intersection might still include zero. If it does, then we know
+    // it also included one.
     if (R.contains(APInt::getNullValue(L.getBitWidth())))
       Upper = L.getUnsignedMax();
     else
@@ -295,5 +294,5 @@ void LoopVR::narrow(Value *V, const ConstantRange &CR) {
   if (I == Map.end())
     Map[V] = new ConstantRange(CR);
   else
-    Map[V] = new ConstantRange(Map[V]->maximalIntersectWith(CR));
+    Map[V] = new ConstantRange(Map[V]->intersectWith(CR));
 }

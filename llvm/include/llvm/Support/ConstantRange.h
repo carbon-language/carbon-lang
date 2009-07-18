@@ -153,21 +153,13 @@ public:
   ConstantRange subtract(const APInt &CI) const;
 
   /// intersectWith - Return the range that results from the intersection of
-  /// this range with another range.  The resultant range is pruned as much as
-  /// possible, but there may be cases where elements are included that are in
-  /// one of the sets but not the other.  For example: [100, 8) intersect [3,
-  /// 120) yields [3, 120)
-  ///
-  ConstantRange intersectWith(const ConstantRange &CR) const;
-
-  /// maximalIntersectWith - Return the range that results from the intersection
-  /// of this range with another range.  The resultant range is guaranteed to
+  /// this range with another range.  The resultant range is guaranteed to
   /// include all elements contained in both input ranges, and to have the
   /// smallest possible set size that does so.  Because there may be two
-  /// intersections with the same set size, A.maximalIntersectWith(B) might not
-  /// be equal to B.maximalIntersectWith(A).
+  /// intersections with the same set size, A.intersectWith(B) might not
+  /// be equal to B.intersectWith(A).
   ///
-  ConstantRange maximalIntersectWith(const ConstantRange &CR) const;
+  ConstantRange intersectWith(const ConstantRange &CR) const;
 
   /// unionWith - Return the range that results from the union of this range
   /// with another range.  The resultant range is guaranteed to include the

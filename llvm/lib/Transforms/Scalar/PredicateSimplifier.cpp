@@ -968,7 +968,7 @@ namespace {
             std::lower_bound(begin(), E, std::make_pair(Subtree, empty), swo);
 
         if (I != end() && I->first == Subtree) {
-          ConstantRange CR2 = I->second.maximalIntersectWith(CR);
+          ConstantRange CR2 = I->second.intersectWith(CR);
           assert(!CR2.isEmptySet() && !CR2.isSingleElement() &&
                  "Invalid union of ranges.");
           I->second = CR2;
@@ -1000,18 +1000,18 @@ namespace {
       ConstantRange Range(CR.getBitWidth());
 
       if (LV_s == SGT_BIT) {
-        Range = Range.maximalIntersectWith(ConstantRange::makeICmpRegion(
+        Range = Range.intersectWith(ConstantRange::makeICmpRegion(
                     hasEQ ? ICmpInst::ICMP_SGE : ICmpInst::ICMP_SGT, CR));
       } else if (LV_s == SLT_BIT) {
-        Range = Range.maximalIntersectWith(ConstantRange::makeICmpRegion(
+        Range = Range.intersectWith(ConstantRange::makeICmpRegion(
                     hasEQ ? ICmpInst::ICMP_SLE : ICmpInst::ICMP_SLT, CR));
       }
 
       if (LV_u == UGT_BIT) {
-        Range = Range.maximalIntersectWith(ConstantRange::makeICmpRegion(
+        Range = Range.intersectWith(ConstantRange::makeICmpRegion(
                     hasEQ ? ICmpInst::ICMP_UGE : ICmpInst::ICMP_UGT, CR));
       } else if (LV_u == ULT_BIT) {
-        Range = Range.maximalIntersectWith(ConstantRange::makeICmpRegion(
+        Range = Range.intersectWith(ConstantRange::makeICmpRegion(
                     hasEQ ? ICmpInst::ICMP_ULE : ICmpInst::ICMP_ULT, CR));
       }
 
@@ -1083,7 +1083,7 @@ namespace {
       switch (LV) {
       default: assert(!"Impossible lattice value!");
       case NE:
-        return CR1.maximalIntersectWith(CR2).isEmptySet();
+        return CR1.intersectWith(CR2).isEmptySet();
       case ULT:
         return CR1.getUnsignedMax().ult(CR2.getUnsignedMin());
       case ULE:
@@ -1149,7 +1149,7 @@ namespace {
         unsigned i = VN.valueNumber(*I, Subtree);
         ConstantRange CR_Kill = i ? range(i, Subtree) : range(*I);
         if (CR_Kill.isFullSet()) continue;
-        Merged = Merged.maximalIntersectWith(CR_Kill);
+        Merged = Merged.intersectWith(CR_Kill);
       }
 
       if (Merged.isFullSet() || Merged == CR_New) return;
@@ -1159,7 +1159,7 @@ namespace {
 
     void applyRange(unsigned n, const ConstantRange &CR,
                     DomTreeDFS::Node *Subtree, VRPSolver *VRP) {
-      ConstantRange Merged = CR.maximalIntersectWith(range(n, Subtree));
+      ConstantRange Merged = CR.intersectWith(range(n, Subtree));
       if (Merged.isEmptySet()) {
         markBlock(VRP);
         return;
@@ -1249,13 +1249,13 @@ namespace {
       ConstantRange CR2 = range(n2, Subtree);
 
       if (!CR1.isSingleElement()) {
-        ConstantRange NewCR1 = CR1.maximalIntersectWith(create(LV, CR2));
+        ConstantRange NewCR1 = CR1.intersectWith(create(LV, CR2));
         if (NewCR1 != CR1)
           applyRange(n1, NewCR1, Subtree, VRP);
       }
 
       if (!CR2.isSingleElement()) {
-        ConstantRange NewCR2 = CR2.maximalIntersectWith(
+        ConstantRange NewCR2 = CR2.intersectWith(
                                        create(reversePredicate(LV), CR1));
         if (NewCR2 != CR2)
           applyRange(n2, NewCR2, Subtree, VRP);
