@@ -42,6 +42,13 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       // Figure out if this instruction will be removed due to simple constant
       // propagation.
       Instruction &Inst = cast<Instruction>(**UI);
+      
+      // We can't constant propagate instructions which have effects or
+      // read memory.
+      if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
+          isa<AllocationInst>(Inst))
+        continue;
+
       bool AllOperandsConstant = true;
       for (unsigned i = 0, e = Inst.getNumOperands(); i != e; ++i)
         if (!isa<Constant>(Inst.getOperand(i)) && Inst.getOperand(i) != V) {
