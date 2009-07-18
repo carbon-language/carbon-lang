@@ -2652,9 +2652,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0);
 
-  // TODO: If Op1 is undef and Op0 is finite, return zero.
-  if (!I.getType()->isFPOrFPVector() &&
-      isa<UndefValue>(I.getOperand(1)))              // undef * X -> 0
+  if (isa<UndefValue>(I.getOperand(1)))              // undef * X -> 0
     return ReplaceInstUsesWith(I, Context->getNullValue(I.getType()));
 
   // Simplify mul instructions with a constant RHS...
