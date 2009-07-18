@@ -42,6 +42,9 @@ namespace sys {
     Program() : Pid_(0)
     {}
 
+    /// Return process ID of this program.
+    unsigned GetPid() { return Pid_; }
+
     /// This function executes the program using the \p arguments provided.  The
     /// invoked program will inherit the stdin, stdout, and stderr file
     /// descriptors, the environment and other configuration settings of the
