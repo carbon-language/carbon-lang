@@ -13,6 +13,7 @@
 
 #include "clang/Index/ASTLocation.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
 using namespace clang;
@@ -42,7 +43,7 @@ Decl *ASTLocation::FindImmediateParent(Decl *D, Stmt *Node) {
       return 0;
     return isContainedInStatement(Node, Init) ? D : 0;
   }
-  
+
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (!FD->isThisDeclarationADefinition())
       return 0;
@@ -53,11 +54,26 @@ Decl *ASTLocation::FindImmediateParent(Decl *D, Stmt *Node) {
       if (Child)
         return Child;
     }
-    
+
     assert(FD->getBody() && "If not definition we should have exited already");
     return isContainedInStatement(Node, FD->getBody()) ? D : 0;
   }
-  
+
+  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    if (!MD->getBody())
+      return 0;
+
+    for (DeclContext::decl_iterator
+           I = MD->decls_begin(), E = MD->decls_end(); I != E; ++I) {
+      Decl *Child = FindImmediateParent(*I, Node);
+      if (Child)
+        return Child;
+    }
+
+    assert(MD->getBody() && "If not definition we should have exited already");
+    return isContainedInStatement(Node, MD->getBody()) ? D : 0;
+  }
+
   return 0;
 }
 
