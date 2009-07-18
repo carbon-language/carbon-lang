@@ -104,6 +104,8 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   setOperationAction(ISD::SREM,             MVT::i64, Expand);
   setOperationAction(ISD::UREM,             MVT::i64, Expand);
 
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+
   // FIXME: Can we lower these 2 efficiently?
   setOperationAction(ISD::SETCC,            MVT::i32, Expand);
   setOperationAction(ISD::SETCC,            MVT::i64, Expand);
