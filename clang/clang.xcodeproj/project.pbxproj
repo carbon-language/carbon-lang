@@ -165,7 +165,7 @@
 		DE67E7170C020EE400F66BC5 /* Sema.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE67E7160C020EE400F66BC5 /* Sema.cpp */; };
 		DE67E71A0C020F4F00F66BC5 /* ParseAST.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */; };
 		DE67E7280C02109800F66BC5 /* ParseAST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE67E7270C02109800F66BC5 /* ParseAST.h */; };
-		DE6951C70C4D1F5D00A5826B /* ASTRecordLayout.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE6951C60C4D1F5D00A5826B /* ASTRecordLayout.h */; };
+		DE6951C70C4D1F5D00A5826B /* RecordLayout.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE6951C60C4D1F5D00A5826B /* RecordLayout.h */; };
 		DE6954640C5121BD00A5826B /* Token.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE6954630C5121BD00A5826B /* Token.h */; };
 		DE704B260D0FBEBE009C7762 /* SemaDeclObjC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE704B250D0FBEBE009C7762 /* SemaDeclObjC.cpp */; };
 		DE704DD20D1668A4009C7762 /* HeaderMap.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE704DD10D1668A4009C7762 /* HeaderMap.cpp */; };
@@ -304,7 +304,7 @@
 				DEEBBD440C19C5D200A9FE82 /* TODO.txt in CopyFiles */,
 				84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */,
 				DEEBC3BA0C2363B800A9FE82 /* CodeGenTypes.h in CopyFiles */,
-				DE6951C70C4D1F5D00A5826B /* ASTRecordLayout.h in CopyFiles */,
+				DE6951C70C4D1F5D00A5826B /* RecordLayout.h in CopyFiles */,
 				DE6954640C5121BD00A5826B /* Token.h in CopyFiles */,
 				DEF2E95F0C5FBD74000C4259 /* InternalsManual.html in CopyFiles */,
 				DEC63B1C0C7B940600DBF169 /* CFG.h in CopyFiles */,
@@ -565,7 +565,7 @@
 		DE67E7160C020EE400F66BC5 /* Sema.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Sema.cpp; path = lib/Sema/Sema.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE67E7190C020F4F00F66BC5 /* ParseAST.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = ParseAST.cpp; path = lib/Sema/ParseAST.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE67E7270C02109800F66BC5 /* ParseAST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ParseAST.h; path = clang/Sema/ParseAST.h; sourceTree = "<group>"; };
-		DE6951C60C4D1F5D00A5826B /* ASTRecordLayout.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = ASTRecordLayout.h; path = clang/AST/ASTRecordLayout.h; sourceTree = "<group>"; tabWidth = 2; };
+		DE6951C60C4D1F5D00A5826B /* RecordLayout.h */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = RecordLayout.h; path = clang/AST/RecordLayout.h; sourceTree = "<group>"; tabWidth = 2; };
 		DE6954630C5121BD00A5826B /* Token.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Token.h; sourceTree = "<group>"; };
 		DE704B250D0FBEBE009C7762 /* SemaDeclObjC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaDeclObjC.cpp; path = lib/Sema/SemaDeclObjC.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		DE704BD10D1647E7009C7762 /* HeaderMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HeaderMap.h; sourceTree = "<group>"; };
@@ -1141,7 +1141,6 @@
 				35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
 				DEA09A6E0F31756F000C2258 /* ASTDiagnostic.h */,
-				DE6951C60C4D1F5D00A5826B /* ASTRecordLayout.h */,
 				1A72BEAC0D641E9400B085E9 /* Attr.h */,
 				90FB99DE0F98FB1D008F9415 /* DeclContextInternals.h */,
 				90FB99DF0F98FB1D008F9415 /* DeclVisitor.h */,
@@ -1161,6 +1160,7 @@
 				DEDFE5CB0F7206CC0035BD10 /* NestedNameSpecifier.h */,
 				35EE48AE0E0C4CB200715C54 /* ParentMap.h */,
 				3547129D0C88881300B3E1D5 /* PrettyPrinter.h */,
+				DE6951C60C4D1F5D00A5826B /* RecordLayout.h */,
 				DE3452800AEF1B1800DBC861 /* Stmt.h */,
 				DECB73550FA3EE5A00F5FBC7 /* StmtCXX.h */,
 				DE345F210AFD347900DBC861 /* StmtNodes.def */,
