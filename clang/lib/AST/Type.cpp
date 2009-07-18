@@ -57,7 +57,9 @@ void VariableArrayType::Destroy(ASTContext& C) {
 }
 
 void DependentSizedArrayType::Destroy(ASTContext& C) {
-  SizeExpr->Destroy(C);
+  // FIXME: Resource contention like in ConstantArrayWithExprType ?
+  // May crash, depending on platform or a particular build.
+  // SizeExpr->Destroy(C);
   this->~DependentSizedArrayType();
   C.Deallocate(this);
 }

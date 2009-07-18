@@ -1,8 +1,4 @@
-// FIXME: Disabled because this always crashes on some platforms.
-// RUNX: clang-cc -fsyntax-only -verify %s
-// RUN: false
-// XFAIL
-
+// RUN: clang-cc -fsyntax-only -verify %s
 template<typename T> struct vector;
 
 // C++ [temp.class.spec]p6:
