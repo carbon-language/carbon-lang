@@ -337,26 +337,6 @@
 
 </div>
 
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="msvc">Microsoft Visual C++</a>
-</div>
-
-<div class="doc_text">
-
-  <p>For linking the JIT into your executable, add</p>
-
-  <div class="doc_code">
-    <p><tt>/INCLUDE:_X86TargetMachineModule</tt></p>
-  </div>
-
-  <p>to your linker options. This is required for adding the relevant
-    LLVM object code to the executable. Not doing this will result on
-    some methods returning NULL (<i>EngineBuilder::create</i>, for
-    instance).</p>
-
-</div>
-
 <!-- *********************************************************************** -->
 
 <hr>
