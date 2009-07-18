@@ -228,17 +228,19 @@ SDValue SystemZTargetLowering::LowerCCCArguments(SDValue Op,
       TargetRegisterClass *RC;
       switch (LocVT.getSimpleVT()) {
       default:
+#ifndef NDEBUG
         cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
              << LocVT.getSimpleVT()
              << "\n";
-        abort();
-       case MVT::i64:
+#endif
+        llvm_unreachable(0);
+      case MVT::i64:
         RC = SystemZ::GR64RegisterClass;
         break;
-       case MVT::f32:
+      case MVT::f32:
         RC = SystemZ::FP32RegisterClass;
         break;
-       case MVT::f64:
+      case MVT::f64:
         RC = SystemZ::FP64RegisterClass;
         break;
       }
