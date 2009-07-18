@@ -3104,11 +3104,22 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   // unsigned inputs), turn this into a udiv.
   if (I.getType()->isInteger()) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
-    if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
-      // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
-      return BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+    if (MaskedValueIsZero(Op0, Mask)) {
+      if (MaskedValueIsZero(Op1, Mask)) {
+        // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
+        return BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+      }
+      ConstantInt *ShiftedInt;
+      if (match(Op1, m_Shl(m_ConstantInt(ShiftedInt), m_Value()), *Context) &&
+          ShiftedInt->getValue().isPowerOf2()) {
+        // X sdiv (1 << Y) -> X udiv (1 << Y) ( -> X u>> Y)
+        // Safe because the only negative value (1 << Y) can take on is
+        // INT_MIN, and X sdiv INT_MIN == X udiv INT_MIN == 0 if X doesn't have
+        // the sign bit set.
+        return BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+      }
     }
-  }      
+  }
   
   return 0;
 }
