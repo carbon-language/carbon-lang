@@ -17,11 +17,11 @@ def RetCC_SystemZ : CallingConv<[
   CCIfType<[i8, i16, i32], CCPromoteToType<i64>>,
 
   // i64 is returned in register R2
-  CCIfType<[i64], CCAssignToReg<[R2D]>>,
+  CCIfType<[i64], CCAssignToReg<[R2D, R3D, R4D, R5D]>>,
 
   // f32 / f64 are returned in F0
-  CCIfType<[f32], CCAssignToReg<[F0S]>>,
-  CCIfType<[f64], CCAssignToReg<[F0L]>>
+  CCIfType<[f32], CCAssignToReg<[F0S, F2S, F4S, F6S]>>,
+  CCIfType<[f64], CCAssignToReg<[F0L, F2L, F4L, F6L]>>
 ]>;
 
 //===----------------------------------------------------------------------===//
