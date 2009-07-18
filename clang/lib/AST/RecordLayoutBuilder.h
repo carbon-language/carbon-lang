@@ -37,6 +37,7 @@ class ASTRecordLayoutBuilder {
   void Layout(const ObjCInterfaceDecl *D,
               const ObjCImplementationDecl *Impl);
 
+  void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
 
   /// FinishLayout - Finalize record layout. Adjust record size based on the

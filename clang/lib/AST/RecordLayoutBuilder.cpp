@@ -32,11 +32,7 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getAlignment());
   
-  // Layout each field, for now, just sequentially, respecting alignment.  In
-  // the future, this will need to be tweakable by targets.
-  for (RecordDecl::field_iterator Field = D->field_begin(), 
-       FieldEnd = D->field_end(); Field != FieldEnd; ++Field)
-    LayoutField(*Field);
+  LayoutFields(D);
   
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
@@ -71,6 +67,14 @@ void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
   FinishLayout();
+}
+
+void ASTRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
+  // Layout each field, for now, just sequentially, respecting alignment.  In
+  // the future, this will need to be tweakable by targets.
+  for (RecordDecl::field_iterator Field = D->field_begin(), 
+       FieldEnd = D->field_end(); Field != FieldEnd; ++Field)
+    LayoutField(*Field);
 }
 
 void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
