@@ -100,8 +100,8 @@ private:
   // Visitors to walk an AST and construct the CFG.
   CFGBlock *VisitAddrLabelExpr(AddrLabelExpr *A, bool alwaysAdd);
   CFGBlock *VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd);
-  CFGBlock *VisitBlockExpr(BlockExpr* E);
-  CFGBlock *VisitBlockDeclRefExpr(BlockDeclRefExpr* E);
+  CFGBlock *VisitBlockExpr(BlockExpr* E, bool alwaysAdd);
+  CFGBlock *VisitBlockDeclRefExpr(BlockDeclRefExpr* E, bool alwaysAdd);
   CFGBlock *VisitBreakStmt(BreakStmt *B);
   CFGBlock *VisitCallExpr(CallExpr *C, bool alwaysAdd);
   CFGBlock *VisitCaseStmt(CaseStmt *C);
@@ -124,8 +124,8 @@ private:
   CFGBlock *VisitObjCAtTryStmt(ObjCAtTryStmt *S);
   CFGBlock *VisitObjCForCollectionStmt(ObjCForCollectionStmt *S);
   CFGBlock *VisitReturnStmt(ReturnStmt* R);
-  CFGBlock *VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E);
-  CFGBlock *VisitStmtExpr(StmtExpr *S);
+  CFGBlock *VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E, bool alwaysAdd);
+  CFGBlock *VisitStmtExpr(StmtExpr *S, bool alwaysAdd);
   CFGBlock *VisitSwitchStmt(SwitchStmt *S);
   CFGBlock *VisitWhileStmt(WhileStmt *W);
 
@@ -275,10 +275,10 @@ tryAgain:
       return VisitBinaryOperator(cast<BinaryOperator>(S), alwaysAdd);
       
     case Stmt::BlockExprClass:
-      return VisitBlockExpr(cast<BlockExpr>(S));
+      return VisitBlockExpr(cast<BlockExpr>(S), alwaysAdd);
 
     case Stmt::BlockDeclRefExprClass:
-      return VisitBlockDeclRefExpr(cast<BlockDeclRefExpr>(S));
+      return VisitBlockDeclRefExpr(cast<BlockDeclRefExpr>(S), alwaysAdd);
       
     case Stmt::BreakStmtClass:
       return VisitBreakStmt(cast<BreakStmt>(S));
@@ -351,10 +351,10 @@ tryAgain:
       return VisitReturnStmt(cast<ReturnStmt>(S));
     
     case Stmt::SizeOfAlignOfExprClass:
-      return VisitSizeOfAlignOfExpr(cast<SizeOfAlignOfExpr>(S));        
+      return VisitSizeOfAlignOfExpr(cast<SizeOfAlignOfExpr>(S), alwaysAdd);        
     
     case Stmt::StmtExprClass:
-      return VisitStmtExpr(cast<StmtExpr>(S));
+      return VisitStmtExpr(cast<StmtExpr>(S), alwaysAdd);
       
     case Stmt::SwitchStmtClass:
       return VisitSwitchStmt(cast<SwitchStmt>(S));
@@ -438,12 +438,13 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
   return VisitStmt(B, alwaysAdd);
 }
 
-CFGBlock *CFGBuilder::VisitBlockExpr(BlockExpr* E) {
+CFGBlock *CFGBuilder::VisitBlockExpr(BlockExpr* E, bool alwaysAdd) {
   // FIXME
   return NYS();
 }
 
-CFGBlock *CFGBuilder::VisitBlockDeclRefExpr(BlockDeclRefExpr* E) {
+CFGBlock *CFGBuilder::VisitBlockDeclRefExpr(BlockDeclRefExpr* E,
+                                            bool alwaysAdd) {
   // FIXME
   return NYS();
 }
@@ -1254,18 +1255,19 @@ CFGBlock* CFGBuilder::VisitContinueStmt(ContinueStmt* C) {
   return Block;
 }
   
-CFGBlock *CFGBuilder::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
+CFGBlock *CFGBuilder::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E,
+                                             bool alwaysAdd) {
+
+  if (alwaysAdd) {
+    autoCreateBlock();
+    Block->appendStmt(E);
+  }
+  
   // VLA types have expressions that must be evaluated.
   if (E->isArgumentType()) {
     for (VariableArrayType* VA = FindVA(E->getArgumentType().getTypePtr());
          VA != 0; VA = FindVA(VA->getElementType().getTypePtr()))
       addStmt(VA->getSizeExpr());
-  }
-  // Expressions in sizeof/alignof are not evaluated and thus have no
-  // control flow.
-  else {
-    autoCreateBlock();
-    Block->appendStmt(E);
   }
   
   return Block;
@@ -1273,9 +1275,11 @@ CFGBlock *CFGBuilder::VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *E) {
   
 /// VisitStmtExpr - Utility method to handle (nested) statement
 ///  expressions (a GCC extension).
-CFGBlock* CFGBuilder::VisitStmtExpr(StmtExpr *SE) {
-  autoCreateBlock();
-  Block->appendStmt(SE);
+CFGBlock* CFGBuilder::VisitStmtExpr(StmtExpr *SE, bool alwaysAdd) {
+  if (alwaysAdd) {
+    autoCreateBlock();
+    Block->appendStmt(SE);
+  }
   return VisitCompoundStmt(SE->getSubStmt());
 }
 
