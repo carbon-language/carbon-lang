@@ -59,7 +59,7 @@ NewHeuristic("new-coalescer-heuristic",
 static cl::opt<bool>
 CrossClassJoin("join-cross-class-copies",
                cl::desc("Coalesce cross register class copies"),
-               cl::init(false), cl::Hidden);
+               cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
 PhysJoinTweak("tweak-phys-join-heuristics",
@@ -1308,6 +1308,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // Should be non-null only when coalescing to a sub-register class.
   bool CrossRC = false;
+  const TargetRegisterClass *SrcRC= SrcIsPhys ? 0 : mri_->getRegClass(SrcReg);
+  const TargetRegisterClass *DstRC= DstIsPhys ? 0 : mri_->getRegClass(DstReg);
   const TargetRegisterClass *NewRC = NULL;
   MachineBasicBlock *CopyMBB = CopyMI->getParent();
   unsigned RealDstReg = 0;
@@ -1373,6 +1375,13 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         }
       }
       if (SubIdx) {
+        if (isInsSubReg || isSubRegToReg) {
+          if (!DstIsPhys && !SrcIsPhys) {
+            NewRC = tri_->getMatchingSuperRegClass(DstRC, SrcRC, SubIdx);
+            if (!NewRC)
+              return false;
+          }
+        }
         unsigned LargeReg = isExtSubReg ? SrcReg : DstReg;
         unsigned SmallReg = isExtSubReg ? DstReg : SrcReg;
         unsigned Limit= allocatableRCRegs_[mri_->getRegClass(SmallReg)].count();
@@ -1424,11 +1433,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       }
     }
 
-    const TargetRegisterClass *SrcRC= SrcIsPhys ? 0 : mri_->getRegClass(SrcReg);
-    const TargetRegisterClass *DstRC= DstIsPhys ? 0 : mri_->getRegClass(DstReg);
     unsigned LargeReg = SrcReg;
     unsigned SmallReg = DstReg;
-    unsigned Limit = 0;
 
     // Now determine the register class of the joined register.
     if (isExtSubReg) {
@@ -1439,7 +1445,8 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         Again = true;
         return false;
       }
-      Limit = allocatableRCRegs_[DstRC].count();
+      if (!DstIsPhys && !SrcIsPhys)
+        NewRC = SrcRC;
     } else if (!SrcIsPhys && !DstIsPhys) {
       NewRC = getCommonSubClass(SrcRC, DstRC);
       if (!NewRC) {
@@ -1643,11 +1650,15 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
 
   // Coalescing to a virtual register that is of a sub-register class of the
   // other. Make sure the resulting register is set to the right register class.
-  if (CrossRC) {
-      ++numCrossRCs;
-    if (NewRC)
-      mri_->setRegClass(DstReg, NewRC);
-  }
+  if (CrossRC)
+    ++numCrossRCs;
+
+  // This may happen even if it's cross-rc coalescing. e.g.
+  // %reg1026<def> = SUBREG_TO_REG 0, %reg1037<kill>, 4
+  // reg1026 -> GR64, reg1037 -> GR32_ABCD. The resulting register will have to
+  // be allocate a register from GR64_ABCD.
+  if (NewRC)
+    mri_->setRegClass(DstReg, NewRC);
 
   if (NewHeuristic) {
     // Add all copies that define val# in the source interval into the queue.

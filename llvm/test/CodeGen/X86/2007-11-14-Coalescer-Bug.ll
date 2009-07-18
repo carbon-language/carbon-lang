@@ -1,4 +1,5 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep movl | count 1
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | grep movl | count 2
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=att | not grep movb
 
 	%struct.double_int = type { i64, i64 }
 	%struct.tree_common = type <{ i8, [3 x i8] }>
@@ -6,7 +7,7 @@
 	%struct.tree_node = type { %struct.tree_int_cst }
 @tree_code_type = external constant [0 x i32]		; <[0 x i32]*> [#uses=1]
 
-define i32 @simple_cst_equal(%struct.tree_node* %t1, %struct.tree_node* %t2) {
+define i32 @simple_cst_equal(%struct.tree_node* %t1, %struct.tree_node* %t2) nounwind {
 entry:
 	%tmp2526 = bitcast %struct.tree_node* %t1 to i32*		; <i32*> [#uses=1]
 	br i1 false, label %UnifiedReturnBlock, label %bb21

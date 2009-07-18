@@ -1344,6 +1344,31 @@ private:
     ++NumStores;
   }
 
+  /// isSafeToDelete - Return true if this instruction doesn't produce any side
+  /// effect and all of its defs are dead.
+  static bool isSafeToDelete(MachineInstr &MI) {
+    const TargetInstrDesc &TID = MI.getDesc();
+    if (TID.mayLoad() || TID.mayStore() || TID.isCall() || TID.isTerminator() ||
+        TID.isCall() || TID.isBarrier() || TID.isReturn() ||
+        TID.hasUnmodeledSideEffects())
+      return false;
+    if (TID.getImplicitDefs())
+      return false;
+    for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI.getOperand(i);
+      if (!MO.isReg() || !MO.getReg())
+        continue;
+      if (MO.isDef() && !MO.isDead())
+        return false;
+      if (MO.isUse() && MO.isKill())
+        // FIXME: We can't remove kill markers or else the scavenger will assert.
+        // An alternative is to add a ADD pseudo instruction to replace kill
+        // markers.
+        return false;
+    }
+    return true;
+  }
+
   /// TransferDeadness - A identity copy definition is dead and it's being
   /// removed. Find the last def or use and mark it as dead / kill.
   void TransferDeadness(MachineBasicBlock *MBB, unsigned CurDist,
@@ -1385,9 +1410,7 @@ private:
       if (LastUD->isDef()) {
         // If the instruction has no side effect, delete it and propagate
         // backward further. Otherwise, mark is dead and we are done.
-        const TargetInstrDesc &TID = LastUDMI->getDesc();
-        if (TID.mayStore() || TID.isCall() || TID.isTerminator() ||
-            TID.hasUnmodeledSideEffects()) {
+        if (!isSafeToDelete(*LastUDMI)) {
           LastUD->setIsDead();
           break;
         }
@@ -2170,7 +2193,15 @@ private:
         }    
       }
     ProcessNextInst:
-      DistanceMap.insert(std::make_pair(&MI, Dist++));
+      // Delete dead instructions without side effects.
+      if (!Erased && !BackTracked && isSafeToDelete(MI)) {
+        InvalidateKills(MI, TRI, RegKills, KillOps);
+        VRM.RemoveMachineInstrFromMaps(&MI);
+        MBB.erase(&MI);
+        Erased = true;
+      }
+      if (!Erased)
+        DistanceMap.insert(std::make_pair(&MI, Dist++));
       if (!Erased && !BackTracked) {
         for (MachineBasicBlock::iterator II = &MI; II != NextMII; ++II)
           UpdateKills(*II, TRI, RegKills, KillOps);
