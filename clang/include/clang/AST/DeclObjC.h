@@ -125,7 +125,7 @@ private:
   ObjCList<ParmVarDecl> ParamInfo;
   
   /// List of attributes for this method declaration.
-  SourceLocation EndLoc; // the location of the ';' or '{'.
+  SourceLocation EndLoc; // the location of the ';' or '}'.
   
   // The following are only used for method definitions, null otherwise.
   // FIXME: space savings opportunity, consider a sub-class.
