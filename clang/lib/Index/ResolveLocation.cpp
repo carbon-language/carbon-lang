@@ -93,7 +93,6 @@ public:
 
   ASTLocation VisitDeclContext(DeclContext *DC);
   ASTLocation VisitTranslationUnitDecl(TranslationUnitDecl *TU);
-  ASTLocation VisitRecordDecl(RecordDecl *D);
   ASTLocation VisitVarDecl(VarDecl *D);
   ASTLocation VisitFunctionDecl(FunctionDecl *D);
   ASTLocation VisitDecl(Decl *D);
@@ -153,12 +152,6 @@ ASTLocation DeclLocResolver::VisitTranslationUnitDecl(TranslationUnitDecl *TU) {
   if (ASTLoc.getDecl() == TU)
     return ASTLocation();
   return ASTLoc;
-}
-
-ASTLocation DeclLocResolver::VisitRecordDecl(RecordDecl *D) {
-  assert(ContainsLocation(D) &&
-         "Should visit only after verifying that loc is in range");
-  return VisitDeclContext(D);
 }
 
 ASTLocation DeclLocResolver::VisitFunctionDecl(FunctionDecl *D) {
@@ -225,6 +218,8 @@ ASTLocation DeclLocResolver::VisitVarDecl(VarDecl *D) {
 ASTLocation DeclLocResolver::VisitDecl(Decl *D) {
   assert(ContainsLocation(D) &&
          "Should visit only after verifying that loc is in range");
+  if (DeclContext *DC = dyn_cast<DeclContext>(D))
+    return VisitDeclContext(DC);
   return ASTLocation(D);
 }
 
