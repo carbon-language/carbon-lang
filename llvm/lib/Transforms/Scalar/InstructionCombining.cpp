@@ -9033,6 +9033,29 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     }
   }
 
+  if (const VectorType *DestVTy = dyn_cast<VectorType>(DestTy)) {
+    if (DestVTy->getNumElements() == 1) {
+      if (!isa<VectorType>(SrcTy)) {
+        Value *Elem = InsertCastBefore(Instruction::BitCast, Src,
+                                       DestVTy->getElementType(), CI);
+        return InsertElementInst::Create(Context->getUndef(DestTy), Elem,
+                                         Context->getNullValue(Type::Int32Ty));
+      }
+      // FIXME: Canonicalize bitcast(insertelement) -> insertelement(bitcast)
+    }
+  }
+
+  if (const VectorType *SrcVTy = dyn_cast<VectorType>(SrcTy)) {
+    if (SrcVTy->getNumElements() == 1) {
+      if (!isa<VectorType>(DestTy)) {
+        Instruction *Elem =
+            new ExtractElementInst(Src, Context->getNullValue(Type::Int32Ty));
+        InsertNewInstBefore(Elem, CI);
+        return CastInst::Create(Instruction::BitCast, Elem, DestTy);
+      }
+    }
+  }
+
   if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(Src)) {
     if (SVI->hasOneUse()) {
       // Okay, we have (bitconvert (shuffle ..)).  Check to see if this is
@@ -12477,6 +12500,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                          Context->getConstantInt(Type::Int32Ty, SrcIdx, false));
       }
     }
+    // FIXME: Canonicalize extractelement(bitcast) -> bitcast(extractelement)
   }
   return 0;
 }
