@@ -78,6 +78,10 @@ struct D : B1, B2
 {
 };
 
+struct P : private A
+{
+};
+
 struct Base
 {
   virtual void f1() throw();
@@ -94,6 +98,7 @@ struct Base
   virtual void g2() throw(int); // expected-note {{overridden virtual function is here}}
   virtual void g3() throw(A); // expected-note {{overridden virtual function is here}}
   virtual void g4() throw(B1); // expected-note {{overridden virtual function is here}}
+  virtual void g5() throw(A); // expected-note {{overridden virtual function is here}}
 };
 struct Derived : Base
 {
@@ -111,4 +116,5 @@ struct Derived : Base
   virtual void g2(); // expected-error {{exception specification of overriding function is more lax}}
   virtual void g3() throw(D); // expected-error {{exception specification of overriding function is more lax}}
   virtual void g4() throw(A); // expected-error {{exception specification of overriding function is more lax}}
+  virtual void g5() throw(P); // expected-error {{exception specification of overriding function is more lax}}
 };

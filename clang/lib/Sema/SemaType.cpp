@@ -1294,7 +1294,7 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
     bool SubIsClass = CanonicalSubT->isRecordType();
     CanonicalSubT.setCVRQualifiers(0);
 
-    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/false,
+    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
                     /*DetectVirtual=*/false);
 
     bool Contained = false;
@@ -1332,7 +1332,8 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
       if (Paths.isAmbiguous(CanonicalSuperT))
         continue;
 
-      // FIXME: Check base access. Don't forget to enable path recording.
+      if (FindInaccessibleBase(CanonicalSubT, CanonicalSuperT, Paths, true))
+        continue;
 
       Contained = true;
       break;

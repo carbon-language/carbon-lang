@@ -1989,17 +1989,21 @@ public:
   //===--------------------------------------------------------------------===//
   // C++ Access Control
   //
-  
+
   bool SetMemberAccessSpecifier(NamedDecl *MemberDecl, 
                                 NamedDecl *PrevMemberDecl,
                                 AccessSpecifier LexicalAS);
-  
-  bool CheckBaseClassAccess(QualType Derived, QualType Base, 
+
+  const CXXBaseSpecifier *FindInaccessibleBase(QualType Derived, QualType Base,
+                                               BasePaths &Paths,
+                                               bool NoPrivileges = false);
+
+  bool CheckBaseClassAccess(QualType Derived, QualType Base,
                             unsigned InaccessibleBaseID,
                             BasePaths& Paths, SourceLocation AccessLoc,
                             DeclarationName Name);
-  
-  
+
+
   enum AbstractDiagSelID {
     AbstractNone = -1,
     AbstractReturnType,
