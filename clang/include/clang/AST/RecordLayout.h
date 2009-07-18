@@ -44,8 +44,10 @@ class ASTRecordLayout {
   }
 
   ASTRecordLayout(uint64_t Size, unsigned Alignment,
+                  unsigned nextoffset,
                   const uint64_t *fieldoffsets, unsigned fieldcount) 
-  : Size(Size), FieldOffsets(0), Alignment(Alignment), FieldCount(fieldcount) {
+  : Size(Size), NextOffset(nextoffset), FieldOffsets(0), Alignment(Alignment), 
+    FieldCount(fieldcount) {
     if (FieldCount > 0)  {
       FieldOffsets = new uint64_t[FieldCount];
       for (unsigned i = 0; i < FieldCount; ++i)

@@ -11,6 +11,7 @@
 
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/TargetInfo.h"
@@ -36,6 +37,36 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   for (RecordDecl::field_iterator Field = D->field_begin(), 
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field)
     LayoutField(*Field);
+  
+  // Finally, round the size of the total struct up to the alignment of the
+  // struct itself.
+  FinishLayout();
+}
+
+void ASTRecordLayoutBuilder::Layout(const ObjCInterfaceDecl *D,
+                                    const ObjCImplementationDecl *Impl) {
+  if (ObjCInterfaceDecl *SD = D->getSuperClass()) {
+    const ASTRecordLayout &SL = Ctx.getASTObjCInterfaceLayout(SD);
+
+    UpdateAlignment(SL.getAlignment());
+    
+    // We start laying out ivars not at the end of the superclass
+    // structure, but at the next byte following the last field.
+    Size = llvm::RoundUpToAlignment(SL.NextOffset, 8);
+    NextOffset = Size;
+  }
+  
+  if (const PackedAttr *PA = D->getAttr<PackedAttr>())
+    StructPacking = PA->getAlignment();
+  
+  if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
+    UpdateAlignment(AA->getAlignment());
+  
+  // Layout each ivar sequentially.
+  llvm::SmallVector<ObjCIvarDecl*, 16> Ivars;
+  Ctx.ShallowCollectObjCIvars(D, Ivars, Impl);
+  for (unsigned i = 0, e = Ivars.size(); i != e; ++i)
+    LayoutField(Ivars[i]);
   
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
@@ -157,6 +188,21 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
   Builder.Layout(D);
 
   return new ASTRecordLayout(Builder.Size, Builder.Alignment,
+                             Builder.NextOffset,
+                             Builder.FieldOffsets.data(), 
+                             Builder.FieldOffsets.size());
+}
+
+const ASTRecordLayout *
+ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
+                                      const ObjCInterfaceDecl *D,
+                                      const ObjCImplementationDecl *Impl) {
+  ASTRecordLayoutBuilder Builder(Ctx);
+  
+  Builder.Layout(D, Impl);
+  
+  return new ASTRecordLayout(Builder.Size, Builder.Alignment,
+                             Builder.NextOffset,
                              Builder.FieldOffsets.data(), 
                              Builder.FieldOffsets.size());
 }

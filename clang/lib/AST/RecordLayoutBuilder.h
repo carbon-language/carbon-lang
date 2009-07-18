@@ -16,6 +16,8 @@ namespace clang {
   class ASTContext;
   class ASTRecordLayout;
   class FieldDecl;
+  class ObjCImplementationDecl;
+  class ObjCInterfaceDecl;
   class RecordDecl;
   
 class ASTRecordLayoutBuilder {
@@ -32,6 +34,9 @@ class ASTRecordLayoutBuilder {
   ASTRecordLayoutBuilder(ASTContext &Ctx);
   
   void Layout(const RecordDecl *D);
+  void Layout(const ObjCInterfaceDecl *D,
+              const ObjCImplementationDecl *Impl);
+
   void LayoutField(const FieldDecl *D);
   void FinishLayout();
   
@@ -42,7 +47,9 @@ class ASTRecordLayoutBuilder {
 public:
   static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx, 
                                               const RecordDecl *RD);
-  
+  static const ASTRecordLayout *ComputeLayout(ASTContext &Ctx,
+                                              const ObjCInterfaceDecl *D,
+                                            const ObjCImplementationDecl *Impl);
 };
   
 } // end namespace clang
