@@ -369,7 +369,8 @@ void VarDecl::setPreviousDeclaration(VarDecl *PrevDecl) {
     PreviousDeclaration.setInt(0);
     
     // First one will point to this one as latest.
-    VarDecl *First = PrevDecl->getFirstDeclaration();
+    // getCanonicalDecl returns the first one.
+    VarDecl *First = PrevDecl->getCanonicalDecl();
     assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
     First->PreviousDeclaration.setPointer(this);
   } else {
@@ -377,14 +378,6 @@ void VarDecl::setPreviousDeclaration(VarDecl *PrevDecl) {
     PreviousDeclaration.setPointer(this);
     PreviousDeclaration.setInt(1);
   }
-}
-
-VarDecl *VarDecl::getFirstDeclaration() {
-  VarDecl *First = this;
-  while (First->getPreviousDeclaration())
-    First = First->getPreviousDeclaration();
-
-  return First;
 }
 
 VarDecl *VarDecl::getCanonicalDecl() {
@@ -599,7 +592,8 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
     PreviousDeclaration.setInt(0);
     
     // First one will point to this one as latest.
-    FunctionDecl *First = PrevDecl->getFirstDeclaration();
+    // getCanonicalDecl returns the first one.
+    FunctionDecl *First = PrevDecl->getCanonicalDecl();
     assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
     First->PreviousDeclaration.setPointer(this);
   } else {
@@ -614,14 +608,6 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
     assert((!PrevDecl || PrevFunTmpl) && "Function/function template mismatch");
     FunTmpl->setPreviousDeclaration(PrevFunTmpl);
   }
-}
-
-FunctionDecl *FunctionDecl::getFirstDeclaration() {
-  FunctionDecl *First = this;
-  while (First->getPreviousDeclaration())
-    First = First->getPreviousDeclaration();
-
-  return First;
 }
 
 FunctionDecl *FunctionDecl::getCanonicalDecl() {

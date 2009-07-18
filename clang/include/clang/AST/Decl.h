@@ -422,21 +422,6 @@ public:
 
   void setPreviousDeclaration(VarDecl *PrevDecl);
 
-  /// \brief For multiple redeclarations returns the first one, otherwise
-  /// returns itself.
-  VarDecl *getFirstDeclaration();
-  const VarDecl *getFirstDeclaration() const {
-    return const_cast<VarDecl *>(this)->getFirstDeclaration();
-  }
-
-  /// \brief For multiple redeclarations returns the latest, otherwise
-  /// returns itself.
-  const VarDecl *getLatestDeclaration() const {
-    const VarDecl *First = getFirstDeclaration();
-    assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
-    return First->PreviousDeclaration.getPointer();
-  }
-
   virtual VarDecl *getCanonicalDecl();
 
   /// \brief Iterates through all the redeclarations of the same var decl.
@@ -889,21 +874,6 @@ public:
   }
   const FunctionDecl *getPreviousDeclaration() const {
     return const_cast<FunctionDecl *>(this)->getPreviousDeclaration();
-  }
-
-  /// \brief For multiple redeclarations returns the first one, otherwise
-  /// returns itself.
-  FunctionDecl *getFirstDeclaration();
-  const FunctionDecl *getFirstDeclaration() const {
-    return const_cast<FunctionDecl *>(this)->getFirstDeclaration();
-  }
-
-  /// \brief For multiple redeclarations returns the latest, otherwise
-  /// returns itself.
-  const FunctionDecl *getLatestDeclaration() const {
-    const FunctionDecl *First = getFirstDeclaration();
-    assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
-    return First->PreviousDeclaration.getPointer();
   }
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
