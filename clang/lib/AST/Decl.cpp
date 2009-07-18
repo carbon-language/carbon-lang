@@ -362,29 +362,8 @@ const Expr *VarDecl::getDefinition(const VarDecl *&Def) const {
   return 0;
 }
 
-void VarDecl::setPreviousDeclaration(VarDecl *PrevDecl) {
-  if (PrevDecl) {
-    // Point to previous.
-    PreviousDeclaration.setPointer(PrevDecl);
-    PreviousDeclaration.setInt(0);
-    
-    // First one will point to this one as latest.
-    // getCanonicalDecl returns the first one.
-    VarDecl *First = PrevDecl->getCanonicalDecl();
-    assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
-    First->PreviousDeclaration.setPointer(this);
-  } else {
-    // This is first.
-    PreviousDeclaration.setPointer(this);
-    PreviousDeclaration.setInt(1);
-  }
-}
-
 VarDecl *VarDecl::getCanonicalDecl() {
-  VarDecl *Var = this;
-  while (Var->getPreviousDeclaration())
-    Var = Var->getPreviousDeclaration();
-  return Var;
+  return getFirstDeclaration();
 }
 
 //===----------------------------------------------------------------------===//
@@ -586,22 +565,8 @@ bool FunctionDecl::isExternGNUInline(ASTContext &Context) const {
 
 void 
 FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
-  if (PrevDecl) {
-    // Point to previous.
-    PreviousDeclaration.setPointer(PrevDecl);
-    PreviousDeclaration.setInt(0);
-    
-    // First one will point to this one as latest.
-    // getCanonicalDecl returns the first one.
-    FunctionDecl *First = PrevDecl->getCanonicalDecl();
-    assert(First->PreviousDeclaration.getInt() == 1 && "Expected first");
-    First->PreviousDeclaration.setPointer(this);
-  } else {
-    // This is first.
-    PreviousDeclaration.setPointer(this);
-    PreviousDeclaration.setInt(1);
-  }
-  
+  Redeclarable<FunctionDecl>::setPreviousDeclaration(PrevDecl);
+
   if (FunctionTemplateDecl *FunTmpl = getDescribedFunctionTemplate()) {
     FunctionTemplateDecl *PrevFunTmpl 
       = PrevDecl? PrevDecl->getDescribedFunctionTemplate() : 0;
@@ -611,10 +576,7 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
 }
 
 FunctionDecl *FunctionDecl::getCanonicalDecl() {
-  FunctionDecl *FD = this;
-  while (FD->getPreviousDeclaration())
-    FD = FD->getPreviousDeclaration();
-  return FD;
+  return getFirstDeclaration();
 }
 
 /// getOverloadedOperator - Which C++ overloaded operator this

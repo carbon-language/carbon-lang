@@ -16,6 +16,7 @@
 
 #include "clang/AST/APValue.h"
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/Redeclarable.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
 
@@ -224,7 +225,7 @@ struct EvaluatedStmt {
 
 /// VarDecl - An instance of this class is created to represent a variable
 /// declaration or definition.
-class VarDecl : public ValueDecl {
+class VarDecl : public ValueDecl, public Redeclarable<VarDecl> {
 public:
   enum StorageClass {
     None, Auto, Register, Extern, Static, PrivateExtern
@@ -247,13 +248,6 @@ private:
   /// condition, e.g., if (int x = foo()) { ... }.
   bool DeclaredInCondition : 1;
 
-  /// \brief The previous declaration of this variable.
-  ///
-  /// If the int part is 0, this is a link to the previous declaration.
-  /// If the int part is 1, this is the first declaration and
-  /// PreviousDeclaration points to the latest declaration.
-  llvm::PointerIntPair<VarDecl *, 1> PreviousDeclaration;
-
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
   friend class StmtIteratorBase;
@@ -262,8 +256,7 @@ protected:
           QualType T, StorageClass SC, SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, Id, T), Init(),
       ThreadSpecified(false), HasCXXDirectInit(false),
-      DeclaredInCondition(false), PreviousDeclaration(this, 1), 
-      TypeSpecStartLoc(TSSL) { 
+      DeclaredInCondition(false), TypeSpecStartLoc(TSSL) { 
     SClass = SC; 
   }
 public:
@@ -409,68 +402,7 @@ public:
     DeclaredInCondition = InCondition; 
   }
 
-  /// getPreviousDeclaration - Return the previous declaration of this
-  /// variable or NULL if this is the first declaration.
-  VarDecl *getPreviousDeclaration() {
-    if (PreviousDeclaration.getInt() == 0)
-      return PreviousDeclaration.getPointer();
-    return 0;
-  }
-  const VarDecl *getPreviousDeclaration() const {
-    return const_cast<VarDecl *>(this)->getPreviousDeclaration();
-  }
-
-  void setPreviousDeclaration(VarDecl *PrevDecl);
-
   virtual VarDecl *getCanonicalDecl();
-
-  /// \brief Iterates through all the redeclarations of the same var decl.
-  class redecl_iterator {
-    /// Current - The current declaration.
-    VarDecl *Current;
-    VarDecl *Starter;
-
-  public:
-    typedef VarDecl*             value_type;
-    typedef VarDecl*             reference;
-    typedef VarDecl*             pointer;
-    typedef std::forward_iterator_tag iterator_category;
-    typedef std::ptrdiff_t            difference_type;
-
-    redecl_iterator() : Current(0) { }
-    explicit redecl_iterator(VarDecl *C) : Current(C), Starter(C) { }
-
-    reference operator*() const { return Current; }
-    pointer operator->() const { return Current; }
-
-    redecl_iterator& operator++() {
-      assert(Current && "Advancing while iterator has reached end");
-      // Get either previous decl or latest decl.
-      VarDecl *Next = Current->PreviousDeclaration.getPointer();
-      Current = (Next != Starter ? Next : 0);
-      return *this;
-    }
-
-    redecl_iterator operator++(int) {
-      redecl_iterator tmp(*this);
-      ++(*this);
-      return tmp;
-    }
-
-    friend bool operator==(redecl_iterator x, redecl_iterator y) { 
-      return x.Current == y.Current;
-    }
-    friend bool operator!=(redecl_iterator x, redecl_iterator y) { 
-      return x.Current != y.Current;
-    }
-  };
-
-  /// \brief Returns iterator for all the redeclarations of the same variable.
-  /// It will iterate at least once (when this decl is the only one).
-  redecl_iterator redecls_begin() const {
-    return redecl_iterator(const_cast<VarDecl*>(this));
-  }
-  redecl_iterator redecls_end() const { return redecl_iterator(); }
 
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.
@@ -681,7 +613,8 @@ public:
 /// contains all of the information known about the function. Other,
 /// previous declarations of the function are available via the
 /// getPreviousDeclaration() chain. 
-class FunctionDecl : public ValueDecl, public DeclContext {
+class FunctionDecl : public ValueDecl, public DeclContext,
+                     public Redeclarable<FunctionDecl> {
 public:
   enum StorageClass {
     None, Extern, Static, PrivateExtern
@@ -694,20 +627,6 @@ private:
   ParmVarDecl **ParamInfo;
   
   LazyDeclStmtPtr Body;
-  
-  /// PreviousDeclaration - If the int part is 0, this is a link to the previous
-  /// declaration of this same function. If the int part is 1, this is the first
-  /// declaration and PreviousDeclaration points to the latest declaration. For
-  /// example, in the following code, the PreviousDeclaration can be
-  /// traversed several times to see all three declarations of the
-  /// function "f", the last of which is also a definition.
-  ///
-  ///  #1 int f(int x, int y = 1); // <pointer to #3, 1>
-  ///  #2 int f(int x = 0, int y); // <pointer to #1, 0>
-  ///  #3 int f(int x, int y) { return x + y; } // <pointer to #2, 0>
-  ///
-  /// If there is only one declaration, it is <pointer to self, 1>
-  llvm::PointerIntPair<FunctionDecl *, 1> PreviousDeclaration;
 
   // FIXME: This can be packed into the bitfields in Decl.
   // NOTE: VC++ treats enums as signed, avoid using the StorageClass enum
@@ -755,7 +674,7 @@ protected:
                SourceLocation TSSL = SourceLocation())
     : ValueDecl(DK, DC, L, N, T), 
       DeclContext(DK),
-      ParamInfo(0), Body(), PreviousDeclaration(this, 1),
+      ParamInfo(0), Body(),
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false), 
       HasWrittenPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
@@ -865,68 +784,9 @@ public:
   /// \brief Determines whether this is a global function.
   bool isGlobal() const;
 
-  /// getPreviousDeclaration - Return the previous declaration of this
-  /// function or NULL if this is the first declaration.
-  FunctionDecl *getPreviousDeclaration() {
-    if (PreviousDeclaration.getInt() == 0)
-      return PreviousDeclaration.getPointer();
-    return 0;
-  }
-  const FunctionDecl *getPreviousDeclaration() const {
-    return const_cast<FunctionDecl *>(this)->getPreviousDeclaration();
-  }
-
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 
   virtual FunctionDecl *getCanonicalDecl();
-
-  /// \brief Iterates through all the redeclarations of the same function decl.
-  class redecl_iterator {
-    /// Current - The current declaration.
-    FunctionDecl *Current;
-    FunctionDecl *Starter;
-
-  public:
-    typedef FunctionDecl*             value_type;
-    typedef FunctionDecl*             reference;
-    typedef FunctionDecl*             pointer;
-    typedef std::forward_iterator_tag iterator_category;
-    typedef std::ptrdiff_t            difference_type;
-
-    redecl_iterator() : Current(0) { }
-    explicit redecl_iterator(FunctionDecl *C) : Current(C), Starter(C) { }
-
-    reference operator*() const { return Current; }
-    pointer operator->() const { return Current; }
-
-    redecl_iterator& operator++() {
-      assert(Current && "Advancing while iterator has reached end");
-      // Get either previous decl or latest decl.
-      FunctionDecl *Next = Current->PreviousDeclaration.getPointer();
-      Current = (Next != Starter ? Next : 0);
-      return *this;
-    }
-
-    redecl_iterator operator++(int) {
-      redecl_iterator tmp(*this);
-      ++(*this);
-      return tmp;
-    }
-
-    friend bool operator==(redecl_iterator x, redecl_iterator y) { 
-      return x.Current == y.Current;
-    }
-    friend bool operator!=(redecl_iterator x, redecl_iterator y) { 
-      return x.Current != y.Current;
-    }
-  };
-
-  /// \brief Returns iterator for all the redeclarations of the same function
-  /// decl. It will iterate at least once (when this decl is the only one).
-  redecl_iterator redecls_begin() const {
-    return redecl_iterator(const_cast<FunctionDecl*>(this));
-  }
-  redecl_iterator redecls_end() const { return redecl_iterator(); }
 
   unsigned getBuiltinID(ASTContext &Context) const;
 
