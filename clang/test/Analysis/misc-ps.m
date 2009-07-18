@@ -430,3 +430,10 @@ unsigned char test_array_index_bitwidth(const unsigned char *p) {
   return p[i+1];
 }
 
+// This case tests that CastRegion handles casts involving BlockPointerTypes.
+// It should not crash.
+void test_block_cast() {
+  id test_block_cast_aux();
+  (void (^)(void *))test_block_cast_aux(); // expected-warning{{expression result unused}}
+}
+

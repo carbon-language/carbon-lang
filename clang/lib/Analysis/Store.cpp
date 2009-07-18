@@ -59,6 +59,23 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
     state = setCastType(state, R, CastToTy);
     return CastResult(state, R);
   }
+  
+  if (CastToTy->isBlockPointerType()) {
+    if (isa<CodeTextRegion>(R))
+      return CastResult(state, R);
+    
+    // FIXME: This may not be the right approach, depending on the symbol
+    // involved.  Blocks can be casted to/from 'id', as they can be treated
+    // as Objective-C objects.
+    if (SymbolRef sym = loc::MemRegionVal(R).getAsSymbol()) {
+      R = MRMgr.getCodeTextRegion(sym, CastToTy);
+      return CastResult(state, R);
+    }
+
+    // We don't know what to make of it.  Return a NULL region, which
+    // will be interpretted as UnknownVal.
+    return CastResult(state, NULL);
+  }
 
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
@@ -77,8 +94,9 @@ StoreManager::NewCastRegion(const GRState *state, const MemRegion* R,
     }
       
     case MemRegion::CodeTextRegionKind: {
-      // CodeTextRegion should be cast to only function pointer type, although
-      // they can in practice be casted to anything, e.g, void*, char*, etc.
+      // CodeTextRegion should be cast to only a function or block pointer type,
+      // although they can in practice be casted to anything, e.g, void*,
+      // char*, etc.
       // Just pass the region through.
       break;
     }
