@@ -8453,8 +8453,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
   uint32_t SrcBitWidth = Src->getType()->getScalarSizeInBits();
 
   // Canonicalize trunc x to i1 -> (icmp ne (and x, 1), 0)
-  if (DestBitWidth == 1 &&
-      isa<VectorType>(Ty) == isa<VectorType>(Src->getType())) {
+  if (DestBitWidth == 1) {
     Constant *One = Context->getConstantInt(Src->getType(), 1);
     Src = InsertNewInstBefore(BinaryOperator::CreateAnd(Src, One, "tmp"), CI);
     Value *Zero = Context->getNullValue(Src->getType());
