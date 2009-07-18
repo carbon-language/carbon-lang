@@ -67,7 +67,7 @@ class JITEventListenerTest : public testing::Test {
   JITEventListenerTest()
       : M(new Module("module", getGlobalContext())),
         EE(EngineBuilder(M)
-           .setEngineToCreate(EngineBuilder::ENG_JIT)
+           .setEngineKind(EngineKind::JIT)
            .create()) {
   }
 

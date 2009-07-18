@@ -62,7 +62,7 @@ TEST(JIT, GlobalInFunction) {
   MemMgr->setPoisonMemory(true);
   std::string Error;
   OwningPtr<ExecutionEngine> JIT(EngineBuilder(MP)
-                                 .setEnginePreference(EngineBuilder::JITONLY)
+                                 .setEngineKind(EngineKind::JIT)
                                  .setErrorStr(&Error)
                                  .setJITMemoryManager(MemMgr)
                                  // The next line enables the fix:
