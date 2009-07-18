@@ -29,6 +29,7 @@ namespace llvm {
   class GlobalVariable;
   class Mangler;
   class MachineCodeEmitter;
+  class MachineConstantPoolEntry;
   class ObjectCodeEmitter;
   class TargetAsmInfo;
   class TargetELFWriterInfo;
@@ -170,18 +171,6 @@ namespace llvm {
                         ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC);
     }
 
-    /// Get jump table section on the section name returned by TAI
-    ELFSection &getJumpTableSection(std::string SName, unsigned Align) {
-      return getSection(SName, ELFSection::SHT_PROGBITS,
-                        ELFSection::SHF_ALLOC, Align);
-    }
-
-    /// Get a constant pool section based on the section name returned by TAI
-    ELFSection &getConstantPoolSection(std::string SName, unsigned Align) {
-      return getSection(SName, ELFSection::SHT_PROGBITS,
-                        ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC, Align);
-    }
-
     /// Return the relocation section of section 'S'. 'RelA' is true
     /// if the relocation section contains entries with addends.
     ELFSection &getRelocSection(std::string SName, bool RelA, unsigned Align) {
@@ -223,6 +212,9 @@ namespace llvm {
     ELFSection &getNullSection() {
       return getSection("", ELFSection::SHT_NULL, 0);
     }
+
+    ELFSection &getJumpTableSection();
+    ELFSection &getConstantPoolSection(MachineConstantPoolEntry &CPE);
 
     // Helpers for obtaining ELF specific info.
     unsigned getGlobalELFBinding(const GlobalValue *GV);

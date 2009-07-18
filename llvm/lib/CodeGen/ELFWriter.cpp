@@ -145,6 +145,24 @@ bool ELFWriter::doInitialization(Module &M) {
   return false;
 }
 
+/// Get jump table section on the section name returned by TAI
+ELFSection &ELFWriter::getJumpTableSection() {
+  unsigned Align = TM.getTargetData()->getPointerABIAlignment();
+  return getSection(TAI->getJumpTableDataSection(),
+                    ELFSection::SHT_PROGBITS,
+                    ELFSection::SHF_ALLOC, Align);
+}
+
+///  Get a constant pool section based on the section name returned by TAI
+ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
+  std::string CstPoolName =
+    TAI->SelectSectionForMachineConst(CPE.getType())->getName();
+  return getSection(CstPoolName,
+                    ELFSection::SHT_PROGBITS,
+                    ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,
+                    CPE.getAlignment());
+}
+
 // getGlobalELFVisibility - Returns the ELF specific visibility type
 unsigned ELFWriter::getGlobalELFVisibility(const GlobalValue *GV) {
   switch (GV->getVisibility()) {
@@ -513,9 +531,14 @@ void ELFWriter::EmitRelocations() {
           Addend = TEW->getDefaultAddendForRelTy(RelType);
         }
       } else {
-        // Get the symbol index for the section symbol referenced
-        // by the relocation
+        // Get the symbol index for the section symbol
         unsigned SectionIdx = MR.getConstantVal();
+
+        // Handle Jump Table Index relocation
+        if ((SectionIdx == getJumpTableSection().SectionIdx) &&
+            TEW->hasCustomJumpTableIndexRelTy())
+          RelType = TEW->getJumpTableIndexRelTy();
+
         SymIdx = SectionList[SectionIdx]->getSymbolTableIndex();
         Addend = (uint64_t)MR.getResultPointer();
       }

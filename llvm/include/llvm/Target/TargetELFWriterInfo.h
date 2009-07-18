@@ -89,6 +89,14 @@ namespace llvm {
                      : (hasRelocationAddend() ? 12 : 8);
     }
 
+    /// hasCustomJumpTableIndexRelTy - Returns true if the target has a
+    /// specific relocation type for a jump table index.
+    virtual bool hasCustomJumpTableIndexRelTy() const { return false; }
+
+    /// getJumpTableIndexRelTy - Returns the target specific relocation type
+    /// for a jump table index.
+    virtual unsigned getJumpTableIndexRelTy() const { return 0; }
+
     /// getRelocationType - Returns the target specific ELF Relocation type.
     /// 'MachineRelTy' contains the object code independent relocation type
     virtual unsigned getRelocationType(unsigned MachineRelTy) const = 0;

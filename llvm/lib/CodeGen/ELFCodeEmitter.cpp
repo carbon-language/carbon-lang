@@ -101,8 +101,8 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
       MR.setResultPointer((void*)Addr);
     } else if (MR.isJumpTableIndex()) {
       Addr = getJumpTableEntryAddress(MR.getJumpTableIndex());
-      MR.setResultPointer((void*)Addr);
       MR.setConstantVal(JumpTableSectionIdx);
+      MR.setResultPointer((void*)Addr);
     } else {
       llvm_unreachable("Unhandled relocation type");
     }
@@ -128,25 +128,19 @@ void ELFCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
   assert(TM.getRelocationModel() != Reloc::PIC_ &&
          "PIC codegen not yet handled for elf constant pools!");
 
-  const TargetAsmInfo *TAI = TM.getTargetAsmInfo();
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     MachineConstantPoolEntry CPE = CP[i];
 
-    // Get the right ELF Section for this constant pool entry
-    std::string CstPoolName =
-      TAI->SelectSectionForMachineConst(CPE.getType())->getName();
-    ELFSection &CstPoolSection =
-      EW.getConstantPoolSection(CstPoolName, CPE.getAlignment());
-
     // Record the constant pool location and the section index
-    CPLocations.push_back(CstPoolSection.size());
-    CPSections.push_back(CstPoolSection.SectionIdx);
+    ELFSection &CstPool = EW.getConstantPoolSection(CPE);
+    CPLocations.push_back(CstPool.size());
+    CPSections.push_back(CstPool.SectionIdx);
 
     if (CPE.isMachineConstantPoolEntry())
       assert("CPE.isMachineConstantPoolEntry not supported yet");
 
     // Emit the constant to constant pool section
-    EW.EmitGlobalConstant(CPE.Val.ConstVal, CstPoolSection);
+    EW.EmitGlobalConstant(CPE.Val.ConstVal, CstPool);
   }
 }
 
@@ -160,13 +154,10 @@ void ELFCodeEmitter::emitJumpTables(MachineJumpTableInfo *MJTI) {
   assert(TM.getRelocationModel() != Reloc::PIC_ &&
          "PIC codegen not yet handled for elf jump tables!");
 
-  const TargetAsmInfo *TAI = TM.getTargetAsmInfo();
   const TargetELFWriterInfo *TEW = TM.getELFWriterInfo();
 
   // Get the ELF Section to emit the jump table
-  unsigned Align = TM.getTargetData()->getPointerABIAlignment();
-  std::string JTName(TAI->getJumpTableDataSection());
-  ELFSection &JTSection = EW.getJumpTableSection(JTName, Align);
+  ELFSection &JTSection = EW.getJumpTableSection();
   JumpTableSectionIdx = JTSection.SectionIdx;
 
   // Entries in the JT Section are relocated against the text section

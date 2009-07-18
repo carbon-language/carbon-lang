@@ -84,6 +84,7 @@ unsigned X86ELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
     switch(RelTy) {
       case R_X86_64_PC32:
       case R_X86_64_32:
+      case R_X86_64_32S:
         return 32;
       case R_X86_64_64:
         return 64;
