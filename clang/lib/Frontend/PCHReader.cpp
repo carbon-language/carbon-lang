@@ -1469,7 +1469,7 @@ PCHReader::PCHReadResult PCHReader::ReadPCH(const std::string &FileName) {
     return IgnorePCH;
   
   if (PP) {
-    // Initialization of builtins and library builtins occurs before the
+    // Initialization of keywords and pragmas occurs before the
     // PCH file is read, so there may be some identifiers that were
     // loaded into the IdentifierTable before we intercepted the
     // creation of identifiers. Iterate through the list of known
