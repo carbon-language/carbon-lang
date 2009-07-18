@@ -22,7 +22,6 @@
 using namespace llvm;
 
 // Register the targets
-extern Target TheAlphaTarget;
 static RegisterTarget<AlphaTargetMachine> X(TheAlphaTarget, "alpha", 
                                             "Alpha [experimental]");
 

@@ -34,6 +34,8 @@ struct CTargetMachine : public TargetMachine {
   virtual const TargetData *getTargetData() const { return &DataLayout; }
 };
 
+extern Target TheCBackendTarget;
+
 } // End llvm namespace
 
 

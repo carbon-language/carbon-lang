@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheCBackendTarget;
+Target llvm::TheCBackendTarget;
 
 static unsigned CBackend_JITMatchQuality() {
   return 0;

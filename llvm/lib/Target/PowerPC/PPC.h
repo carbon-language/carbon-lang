@@ -38,6 +38,10 @@ FunctionPass *createPPCJITCodeEmitterPass(PPCTargetMachine &TM,
                                           JITCodeEmitter &MCE);
 FunctionPass *createPPCObjectCodeEmitterPass(PPCTargetMachine &TM,
                                              ObjectCodeEmitter &OCE);
+
+extern Target ThePPC32Target;
+extern Target ThePPC64Target;
+
 } // end namespace llvm;
 
 // Defines symbolic names for PowerPC registers.  This defines a mapping from

@@ -50,6 +50,8 @@ namespace llvm {
                                              TargetMachine &tm,
                                              bool verbose);
 
+  extern Target TheSystemZTarget;
+
 } // end namespace llvm;
 
 // Defines symbolic names for SystemZ registers.

@@ -111,6 +111,8 @@ FunctionPass *createARMConstantIslandPass();
 
 FunctionPass *createThumb2ITBlockPass();
 
+extern Target TheARMTarget, TheThumbTarget;
+
 } // end namespace llvm;
 
 // Defines symbolic names for ARM registers.  This defines a mapping from

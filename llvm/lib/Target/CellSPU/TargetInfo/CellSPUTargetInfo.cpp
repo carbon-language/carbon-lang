@@ -11,7 +11,7 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheCellSPUTarget;
+Target llvm::TheCellSPUTarget;
 
 static unsigned CellSPU_JITMatchQuality() {
   return 0;

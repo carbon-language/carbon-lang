@@ -353,7 +353,6 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
 // Force static initialization.
 extern "C" void LLVMInitializeSparcAsmPrinter() { 
-  extern Target TheSparcTarget;
   TargetRegistry::RegisterAsmPrinter(TheSparcTarget, 
                                      createSparcCodePrinterPass);
 }

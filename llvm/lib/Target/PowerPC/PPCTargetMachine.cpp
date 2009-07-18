@@ -22,11 +22,9 @@
 using namespace llvm;
 
 // Register the targets
-extern Target ThePPC32Target;
 static RegisterTarget<PPC32TargetMachine>
 X(ThePPC32Target, "ppc32", "PowerPC 32");
 
-extern Target ThePPC64Target;
 static RegisterTarget<PPC64TargetMachine>
 Y(ThePPC64Target, "ppc64", "PowerPC 64");
 

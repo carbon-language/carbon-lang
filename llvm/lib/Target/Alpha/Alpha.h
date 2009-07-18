@@ -39,6 +39,8 @@ namespace llvm {
   FunctionPass *createAlphaLLRPPass(AlphaTargetMachine &tm);
   FunctionPass *createAlphaBranchSelectionPass();
 
+  extern Target TheAlphaTarget;
+
 } // end namespace llvm;
 
 // Defines symbolic names for Alpha registers.  This defines a mapping from

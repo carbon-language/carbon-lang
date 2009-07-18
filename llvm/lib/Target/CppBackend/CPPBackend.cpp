@@ -73,7 +73,6 @@ static cl::opt<std::string> NameToGenerate("cppfor", cl::Optional,
   cl::init("!bad!"));
 
 // Register the target.
-extern Target TheCppBackendTarget;
 static RegisterTarget<CPPTargetMachine> X(TheCppBackendTarget, "cpp", "C++ backend");
 
 // Force static initialization.

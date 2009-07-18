@@ -20,10 +20,8 @@
 using namespace llvm;
 
 // Register the target.
-extern Target TheMipsTarget;
 static RegisterTarget<MipsTargetMachine>    X(TheMipsTarget, "mips", "Mips");
 
-extern Target TheMipselTarget;
 static RegisterTarget<MipselTargetMachine>  Y(TheMipselTarget, "mipsel", 
                                               "Mipsel");
 

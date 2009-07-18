@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "SystemZ.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheSystemZTarget;
+Target llvm::TheSystemZTarget;
 
 static unsigned SystemZ_JITMatchQuality() {
   return 0;

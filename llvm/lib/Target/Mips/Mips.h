@@ -28,6 +28,10 @@ namespace llvm {
   FunctionPass *createMipsCodePrinterPass(formatted_raw_ostream &OS, 
                                           TargetMachine &TM,
                                           bool Verbose);
+
+  extern Target TheMipsTarget;
+  extern Target TheMipselTarget;
+
 } // end namespace llvm;
 
 // Defines symbolic names for Mips registers.  This defines a mapping from

@@ -23,7 +23,6 @@
 using namespace llvm;
 
 // Register the targets
-extern Target TheMSP430Target;
 static RegisterTarget<MSP430TargetMachine>
 X(TheMSP430Target, "msp430", "MSP430 [experimental]");
 

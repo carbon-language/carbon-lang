@@ -18,7 +18,6 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
-extern Target TheSystemZTarget;
 namespace {
   // Register the target.
   RegisterTarget<SystemZTargetMachine> X(TheSystemZTarget,

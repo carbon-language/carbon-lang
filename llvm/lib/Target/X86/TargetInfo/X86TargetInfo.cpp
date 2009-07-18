@@ -11,7 +11,7 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheX86_32Target;
+Target llvm::TheX86_32Target;
 
 static unsigned X86_32_JITMatchQuality() {
 #if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
@@ -47,7 +47,7 @@ static unsigned X86_32_ModuleMatchQuality(const Module &M) {
   return X86_32_JITMatchQuality()/2;
 }
 
-Target TheX86_64Target;
+Target llvm::TheX86_64Target;
 
 static unsigned X86_64_JITMatchQuality() {
 #if defined(__x86_64__) || defined(_M_AMD64)

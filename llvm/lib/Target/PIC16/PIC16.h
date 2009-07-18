@@ -348,6 +348,10 @@ namespace PIC16CC {
                                            bool Verbose);
   // Banksel optimzer pass.
   FunctionPass *createPIC16MemSelOptimizerPass();
+
+  extern Target ThePIC16Target;
+  extern Target TheCooperTarget;
+  
 } // end namespace llvm;
 
 // Defines symbolic names for PIC16 registers.  This defines a mapping from

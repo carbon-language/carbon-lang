@@ -295,7 +295,6 @@ bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
 // Force static initialization.
 extern "C" void LLVMInitializeAlphaAsmPrinter() { 
-  extern Target TheAlphaTarget;
   TargetRegistry::RegisterAsmPrinter(TheAlphaTarget,
                                      createAlphaCodePrinterPass);
 }

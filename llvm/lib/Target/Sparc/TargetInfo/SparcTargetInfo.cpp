@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Sparc.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheSparcTarget;
+Target llvm::TheSparcTarget;
 
 static unsigned Sparc_JITMatchQuality() {
   return 0;

@@ -30,6 +30,9 @@ namespace llvm {
                                            bool Verbose);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createSparcFPMoverPass(TargetMachine &TM);
+
+  extern Target TheSparcTarget;
+
 } // end namespace llvm;
 
 // Defines symbolic names for Sparc registers.  This defines a mapping from

@@ -24,11 +24,9 @@
 using namespace llvm;
 
 // Register the target.
-extern Target TheX86_32Target;
 static RegisterTarget<X86_32TargetMachine>
 X(TheX86_32Target, "x86",    "32-bit X86: Pentium-Pro and above");
 
-extern Target TheX86_64Target;
 static RegisterTarget<X86_64TargetMachine>
 Y(TheX86_64Target, "x86-64", "64-bit X86: EM64T and AMD64");
 

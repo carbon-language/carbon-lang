@@ -41,6 +41,8 @@ FunctionPass *createIA64CodePrinterPass(formatted_raw_ostream &o,
                                         TargetMachine &tm,
                                         bool verbose);
 
+extern Target TheIA64Target;
+
 } // End llvm namespace
 
 // Defines symbolic names for IA64 registers.  This defines a mapping from

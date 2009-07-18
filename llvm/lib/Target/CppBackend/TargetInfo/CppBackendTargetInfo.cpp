@@ -11,7 +11,7 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheCppBackendTarget;
+Target llvm::TheCppBackendTarget;
 
 static unsigned CppBackend_JITMatchQuality() {
   return 0;

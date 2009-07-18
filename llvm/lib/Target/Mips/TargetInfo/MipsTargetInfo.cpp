@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Mips.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheMipsTarget;
+Target llvm::TheMipsTarget;
 
 static unsigned Mips_JITMatchQuality() {
   return 0;
@@ -40,7 +41,7 @@ static unsigned Mips_ModuleMatchQuality(const Module &M) {
   return 0;
 }
 
-Target TheMipselTarget;
+Target llvm::TheMipselTarget;
 
 static unsigned Mipsel_JITMatchQuality() {
   return 0;

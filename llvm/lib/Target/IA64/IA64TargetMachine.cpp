@@ -20,7 +20,6 @@
 using namespace llvm;
 
 // Register the target
-extern Target TheIA64Target;
 static RegisterTarget<IA64TargetMachine> X(TheIA64Target, "ia64",
                                            "IA-64 (Itanium) [experimental]");
 

@@ -1095,9 +1095,7 @@ FunctionPass *llvm::createPPCAsmPrinterPass(formatted_raw_ostream &o,
 
 // Force static initialization.
 extern "C" void LLVMInitializePowerPCAsmPrinter() { 
-  extern Target ThePPC32Target;
   TargetRegistry::RegisterAsmPrinter(ThePPC32Target, createPPCAsmPrinterPass);
 
-  extern Target ThePPC64Target;
   TargetRegistry::RegisterAsmPrinter(ThePPC64Target, createPPCAsmPrinterPass);
 }

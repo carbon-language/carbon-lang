@@ -607,6 +607,5 @@ FunctionPass *llvm::createSPUAsmPrinterPass(formatted_raw_ostream &o,
 
 // Force static initialization.
 extern "C" void LLVMInitializeCellSPUAsmPrinter() { 
-  extern Target TheCellSPUTarget;
   TargetRegistry::RegisterAsmPrinter(TheCellSPUTarget, createSPUAsmPrinterPass);
 }

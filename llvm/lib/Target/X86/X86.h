@@ -71,6 +71,8 @@ FunctionPass *createEmitX86CodeToMemory();
 ///
 FunctionPass *createX86MaxStackAlignmentCalculatorPass();
 
+extern Target TheX86_32Target, TheX86_64Target;
+
 } // End llvm namespace
 
 // Defines symbolic names for X86 registers.  This defines a mapping from

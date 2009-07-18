@@ -1295,7 +1295,6 @@ FunctionPass *llvm::createARMCodePrinterPass(formatted_raw_ostream &o,
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMAsmPrinter() { 
-  extern Target TheARMTarget, TheThumbTarget;
   TargetRegistry::RegisterAsmPrinter(TheARMTarget, createARMCodePrinterPass);
   TargetRegistry::RegisterAsmPrinter(TheThumbTarget, createARMCodePrinterPass);
 }

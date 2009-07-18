@@ -30,6 +30,10 @@
 #include <ios>
 using namespace llvm;
 
+namespace llvm {
+  extern Target TheMSILTarget;
+}
+
 namespace {
 
   class MSILModule : public ModulePass {
@@ -253,6 +257,7 @@ namespace {
 
     void printExternals();
   };
+
 }
 
 #endif

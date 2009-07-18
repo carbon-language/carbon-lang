@@ -27,6 +27,9 @@ namespace llvm {
   FunctionPass *createMSP430CodePrinterPass(formatted_raw_ostream &o,
                                             TargetMachine &tm,
                                             bool verbose);
+
+  extern Target TheMSP430Target;
+
 } // end namespace llvm;
 
 // Defines symbolic names for MSP430 registers.

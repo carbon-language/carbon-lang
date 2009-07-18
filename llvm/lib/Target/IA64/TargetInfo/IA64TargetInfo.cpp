@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "IA64.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheIA64Target;
+Target llvm::TheIA64Target;
 
 static unsigned IA64_JITMatchQuality() {
   return 0;

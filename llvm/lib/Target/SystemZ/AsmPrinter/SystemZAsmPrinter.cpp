@@ -418,7 +418,6 @@ void SystemZAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
 // Force static initialization.
 extern "C" void LLVMInitializeSystemZAsmPrinter() {
-  extern Target TheSystemZTarget;
   TargetRegistry::RegisterAsmPrinter(TheSystemZTarget,
                                      createSystemZCodePrinterPass);
 }

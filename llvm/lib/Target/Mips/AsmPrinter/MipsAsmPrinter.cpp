@@ -578,10 +578,8 @@ doFinalization(Module &M)
 
 // Force static initialization.
 extern "C" void LLVMInitializeMipsAsmPrinter() { 
-  extern Target TheMipsTarget;
   TargetRegistry::RegisterAsmPrinter(TheMipsTarget, createMipsCodePrinterPass);
 
-  extern Target TheMipselTarget;
   TargetRegistry::RegisterAsmPrinter(TheMipselTarget, 
                                      createMipsCodePrinterPass);
 }

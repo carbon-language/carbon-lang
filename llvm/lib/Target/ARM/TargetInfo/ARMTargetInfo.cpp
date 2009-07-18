@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ARM.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheARMTarget;
+Target llvm::TheARMTarget;
 
 static unsigned ARM_JITMatchQuality() {
 #if defined(__arm__)
@@ -47,7 +48,7 @@ static unsigned ARM_ModuleMatchQuality(const Module &M) {
   return ARM_JITMatchQuality()/2;
 }
 
-Target TheThumbTarget;
+Target llvm::TheThumbTarget;
 
 static unsigned Thumb_JITMatchQuality() {
 #if defined(__thumb__)

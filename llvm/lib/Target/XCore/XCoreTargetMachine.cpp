@@ -18,7 +18,6 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
-extern Target TheXCoreTarget;
 namespace {
   // Register the target.
   RegisterTarget<XCoreTargetMachine> X(TheXCoreTarget, "xcore", "XCore");

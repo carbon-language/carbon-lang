@@ -19,7 +19,6 @@
 using namespace llvm;
 
 // Register the target.
-extern Target TheSparcTarget;
 static RegisterTarget<SparcTargetMachine> X(TheSparcTarget, "sparc", "SPARC");
 
 // Force static initialization.

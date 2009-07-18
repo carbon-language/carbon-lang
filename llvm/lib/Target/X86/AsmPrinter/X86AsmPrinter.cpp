@@ -14,6 +14,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "X86.h"
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
 #include "X86Subtarget.h"
@@ -36,9 +37,6 @@ FunctionPass *llvm::createX86CodePrinterPass(formatted_raw_ostream &o,
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmPrinter() { 
-  extern Target TheX86_32Target;
   TargetRegistry::RegisterAsmPrinter(TheX86_32Target, createX86CodePrinterPass);
-
-  extern Target TheX86_64Target;
   TargetRegistry::RegisterAsmPrinter(TheX86_64Target, createX86CodePrinterPass);
 }

@@ -92,6 +92,9 @@ namespace llvm {
   inline bool isU10Constant(uint64_t Value) {
     return (Value == (Value & 0x3ff));
   }
+
+  extern Target TheCellSPUTarget;
+
 }
 
 // Defines symbolic names for the SPU instructions.

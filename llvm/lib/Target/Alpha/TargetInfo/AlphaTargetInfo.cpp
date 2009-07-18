@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Alpha.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheAlphaTarget;
+llvm::Target llvm::TheAlphaTarget;
 
 static unsigned Alpha_JITMatchQuality() {
 #ifdef __alpha

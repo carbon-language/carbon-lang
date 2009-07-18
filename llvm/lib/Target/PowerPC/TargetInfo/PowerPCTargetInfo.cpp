@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "PPC.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target ThePPC32Target;
+Target llvm::ThePPC32Target;
 
 static unsigned PPC32_JITMatchQuality() {
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
@@ -47,7 +48,7 @@ static unsigned PPC32_ModuleMatchQuality(const Module &M) {
   return PPC32_JITMatchQuality()/2;
 }
 
-Target ThePPC64Target;
+Target llvm::ThePPC64Target;
 
 static unsigned PPC64_JITMatchQuality() {
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)

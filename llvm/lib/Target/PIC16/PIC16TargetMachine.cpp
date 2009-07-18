@@ -23,11 +23,9 @@
 using namespace llvm;
 
 // Register the targets
-extern Target ThePIC16Target;
 static RegisterTarget<PIC16TargetMachine> 
 X(ThePIC16Target, "pic16", "PIC16 14-bit [experimental].");
 
-extern Target TheCooperTarget;
 static RegisterTarget<CooperTargetMachine> 
 Y(TheCooperTarget, "cooper", "PIC16 Cooper [experimental].");
 

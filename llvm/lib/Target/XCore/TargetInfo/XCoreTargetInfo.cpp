@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "XCore.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheXCoreTarget;
+Target llvm::TheXCoreTarget;
 
 static unsigned XCore_JITMatchQuality() {
   return 0;

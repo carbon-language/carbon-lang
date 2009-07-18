@@ -23,7 +23,6 @@
 
 using namespace llvm;
 
-extern Target TheCellSPUTarget;
 namespace {
   // Register the targets
   RegisterTarget<SPUTargetMachine>

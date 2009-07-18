@@ -36,6 +36,8 @@ struct CPPTargetMachine : public TargetMachine {
   virtual const TargetData *getTargetData() const { return &DataLayout; }
 };
 
+extern Target TheCppBackendTarget;
+
 } // End llvm namespace
 
 

@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "X86.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
@@ -33,8 +34,6 @@ namespace {
 
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmParser() {
-  extern Target TheX86_32Target;
   TargetRegistry::RegisterAsmParser(TheX86_32Target, &createAsmParser);
-  extern Target TheX86_64Target;
   TargetRegistry::RegisterAsmParser(TheX86_64Target, &createAsmParser);
 }

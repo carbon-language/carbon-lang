@@ -11,7 +11,7 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheMSILTarget;
+Target llvm::TheMSILTarget;
 
 static unsigned MSIL_JITMatchQuality() {
   return 0;

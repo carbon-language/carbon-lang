@@ -51,7 +51,6 @@
 using namespace llvm;
 
 // Register the target.
-extern Target TheCBackendTarget;
 static RegisterTarget<CTargetMachine> X(TheCBackendTarget, "c", "C backend");
 
 // Force static initialization.

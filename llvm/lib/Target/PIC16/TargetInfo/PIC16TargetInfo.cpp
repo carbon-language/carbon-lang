@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "PIC16.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target ThePIC16Target;
+Target llvm::ThePIC16Target;
 
 static unsigned PIC16_JITMatchQuality() {
   return 0;
@@ -25,7 +26,7 @@ static unsigned PIC16_ModuleMatchQuality(const Module &M) {
   return 0;
 }
 
-Target TheCooperTarget;
+Target llvm::TheCooperTarget;
 
 static unsigned Cooper_JITMatchQuality() {
   return 0;

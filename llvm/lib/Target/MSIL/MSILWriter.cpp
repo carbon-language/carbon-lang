@@ -47,7 +47,6 @@ namespace {
   };
 }
 
-extern Target TheMSILTarget;
 static RegisterTarget<MSILTarget> X(TheMSILTarget, "msil", "MSIL backend");
 
 // Force static initialization.

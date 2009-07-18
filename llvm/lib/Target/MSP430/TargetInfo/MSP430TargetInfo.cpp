@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MSP430.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target TheMSP430Target;
+Target llvm::TheMSP430Target;
 
 static unsigned MSP430_JITMatchQuality() {
   return 0;

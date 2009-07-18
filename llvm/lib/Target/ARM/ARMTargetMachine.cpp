@@ -29,11 +29,10 @@ static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
                               cl::desc("Disable if-conversion pass"));
 
 // Register the target.
-extern Target TheARMTarget;
-static RegisterTarget<ARMTargetMachine>   X(TheARMTarget, "arm",   "ARM");
+static RegisterTarget<ARMTargetMachine>   X(llvm::TheARMTarget, "arm",   "ARM");
 
-extern Target TheThumbTarget;
-static RegisterTarget<ThumbTargetMachine> Y(TheThumbTarget, "thumb", "Thumb");
+static RegisterTarget<ThumbTargetMachine> Y(llvm::TheThumbTarget, "thumb", 
+                                            "Thumb");
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMTarget() { }
