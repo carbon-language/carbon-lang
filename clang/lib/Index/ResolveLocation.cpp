@@ -72,13 +72,14 @@ public:
 class VISIBILITY_HIDDEN StmtLocResolver : public LocResolverBase,
                                           public StmtVisitor<StmtLocResolver,
                                                              ASTLocation     > {
-  Decl *Parent;
+  Decl * const Parent;
 
 public:
   StmtLocResolver(ASTContext &ctx, SourceLocation loc, Decl *parent)
     : LocResolverBase(ctx, loc), Parent(parent) {}
 
   ASTLocation VisitDeclStmt(DeclStmt *Node);
+  ASTLocation VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
   ASTLocation VisitStmt(Stmt *Node);
 };
 
@@ -95,6 +96,7 @@ public:
   ASTLocation VisitTranslationUnitDecl(TranslationUnitDecl *TU);
   ASTLocation VisitVarDecl(VarDecl *D);
   ASTLocation VisitFunctionDecl(FunctionDecl *D);
+  ASTLocation VisitObjCMethodDecl(ObjCMethodDecl *D);
   ASTLocation VisitDecl(Decl *D);
 };
 
@@ -114,6 +116,12 @@ ASTLocation StmtLocResolver::VisitDeclStmt(DeclStmt *Node) {
       return DeclLocResolver(Ctx, Loc).Visit(*I);
   }
 
+  return ASTLocation(Parent, Node);
+}
+
+ASTLocation StmtLocResolver::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
+  assert(ContainsLocation(Node) &&
+         "Should visit only after verifying that loc is in range");
   return ASTLocation(Parent, Node);
 }
 
@@ -213,6 +221,55 @@ ASTLocation DeclLocResolver::VisitVarDecl(VarDecl *D) {
     return StmtLocResolver(Ctx, Loc, D).Visit(Init);
 
   return ASTLocation(D);
+}
+
+ASTLocation DeclLocResolver::VisitObjCMethodDecl(ObjCMethodDecl *D) {
+  assert(ContainsLocation(D) &&
+         "Should visit only after verifying that loc is in range");
+
+  // First, search through the parameters of the method.
+  for (ObjCMethodDecl::param_iterator
+         I = D->param_begin(), E = D->param_end(); I != E; ++I) {
+    RangePos RP = CheckRange(*I);
+    if (RP == AfterLoc)
+      return ASTLocation(D);
+    if (RP == ContainsLoc)
+      return Visit(*I);
+  }
+
+  // We didn't find the location in the parameters and we didn't get passed it.
+
+  if (!D->getBody())
+    return ASTLocation(D);
+
+  // Second, search through the declarations that are part of the method.
+  // If we find he location there, we won't have to search through its body.
+
+  for (DeclContext::decl_iterator
+         I = D->decls_begin(), E = D->decls_end(); I != E; ++I) {
+    if (isa<ParmVarDecl>(*I))
+      continue; // We already searched through the parameters.
+
+    RangePos RP = CheckRange(*I);
+    if (RP == AfterLoc)
+      break;
+    if (RP == ContainsLoc)
+      return Visit(*I);
+  }
+
+  // We didn't find a declaration that corresponds to the source location.
+
+  // Finally, search through the body of the method.
+  Stmt *Body = D->getBody();
+  assert(Body && "Expected definition");
+  assert(!isBeforeLocation(Body) &&
+         "This method is supposed to contain the loc");
+  if (isAfterLocation(Body))
+    return ASTLocation(D);
+
+  // The body contains the location.
+  assert(ContainsLocation(Body));
+  return StmtLocResolver(Ctx, Loc, D).Visit(Body);
 }
 
 ASTLocation DeclLocResolver::VisitDecl(Decl *D) {
