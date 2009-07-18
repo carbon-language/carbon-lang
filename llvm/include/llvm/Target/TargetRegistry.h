@@ -142,7 +142,7 @@ namespace llvm {
     class iterator {
       const Target *Current;
       explicit iterator(Target *T) : Current(T) {}
-      friend class TargetRegistry;
+      friend struct TargetRegistry;
     public:
       iterator(const iterator &I) : Current(I.Current) {}
       iterator() : Current(0) {}

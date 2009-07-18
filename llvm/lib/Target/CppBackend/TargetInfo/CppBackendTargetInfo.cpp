@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CPPTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
