@@ -994,12 +994,12 @@ struct VISIBILITY_HIDDEN MemSetOpt : public LibCallOptimization {
     const FunctionType *FT = Callee->getFunctionType();
     if (FT->getNumParams() != 3 || FT->getReturnType() != FT->getParamType(0) ||
         !isa<PointerType>(FT->getParamType(0)) ||
-        FT->getParamType(1) != TD->getIntPtrType() ||
+        !isa<IntegerType>(FT->getParamType(1)) ||
         FT->getParamType(2) != TD->getIntPtrType())
       return 0;
 
     // memset(p, v, n) -> llvm.memset(p, v, n, 1)
-    Value *Val = B.CreateTrunc(CI->getOperand(2), Type::Int8Ty);
+    Value *Val = B.CreateIntCast(CI->getOperand(2), Type::Int8Ty, false);
     EmitMemSet(CI->getOperand(1), Val,  CI->getOperand(3), B);
     return CI->getOperand(1);
   }
