@@ -95,13 +95,13 @@ bool Inliner::shouldInline(CallSite CS) {
   
   if (IC.isAlways()) {
     DOUT << "    Inlining: cost=always"
-         << ", Call: " << *CS.getInstruction();
+         << ", Call: " << *CS.getInstruction() << "\n";
     return true;
   }
   
   if (IC.isNever()) {
     DOUT << "    NOT Inlining: cost=never"
-         << ", Call: " << *CS.getInstruction();
+         << ", Call: " << *CS.getInstruction() << "\n";
     return false;
   }
   
@@ -116,11 +116,11 @@ bool Inliner::shouldInline(CallSite CS) {
   
   if (Cost >= (int)(CurrentThreshold * FudgeFactor)) {
     DOUT << "    NOT Inlining: cost=" << Cost
-         << ", Call: " << *CS.getInstruction();
+         << ", Call: " << *CS.getInstruction() << "\n";
     return false;
   } else {
     DOUT << "    Inlining: cost=" << Cost
-         << ", Call: " << *CS.getInstruction();
+         << ", Call: " << *CS.getInstruction() << "\n";
     return true;
   }
 }
