@@ -12366,13 +12366,18 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     if (op0)
       return ReplaceInstUsesWith(EI, op0);
   }
-  
+
+  unsigned VectorWidth = 
+     cast<VectorType>(EI.getOperand(0)->getType())->getNumElements();
+
+  // Canonicalize extractelement from a vector of width 1 to a bitcast
+  if (VectorWidth == 1)
+    return new BitCastInst(EI.getOperand(0), EI.getType());
+
   // If extracting a specified index from the vector, see if we can recursively
   // find a previously computed scalar that was inserted into the vector.
   if (ConstantInt *IdxC = dyn_cast<ConstantInt>(EI.getOperand(1))) {
     unsigned IndexVal = IdxC->getZExtValue();
-    unsigned VectorWidth = 
-      cast<VectorType>(EI.getOperand(0)->getType())->getNumElements();
       
     // If this is extracting an invalid index, turn this into undef, to avoid
     // crashing the code below.
@@ -12382,7 +12387,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     // This instruction only demands the single element from the input vector.
     // If the input vector has a single use, simplify it based on this use
     // property.
-    if (EI.getOperand(0)->hasOneUse() && VectorWidth != 1) {
+    if (EI.getOperand(0)->hasOneUse()) {
       APInt UndefElts(VectorWidth, 0);
       APInt DemandedMask(VectorWidth, 1 << IndexVal);
       if (Value *V = SimplifyDemandedVectorElts(EI.getOperand(0),
@@ -12619,13 +12624,18 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
   // Inserting an undef or into an undefined place, remove this.
   if (isa<UndefValue>(ScalarOp) || isa<UndefValue>(IdxOp))
     ReplaceInstUsesWith(IE, VecOp);
-  
+
+  unsigned NumVectorElts = IE.getType()->getNumElements();
+
+  // Canonicalize insertelement into vector of width 1 to a bitcast
+  if (NumVectorElts == 1)
+    return new BitCastInst(IE.getOperand(1), IE.getType());
+
   // If the inserted element was extracted from some other vector, and if the 
   // indexes are constant, try to turn this into a shufflevector operation.
   if (ExtractElementInst *EI = dyn_cast<ExtractElementInst>(ScalarOp)) {
     if (isa<ConstantInt>(EI->getOperand(1)) && isa<ConstantInt>(IdxOp) &&
         EI->getOperand(0)->getType() == IE.getType()) {
-      unsigned NumVectorElts = IE.getType()->getNumElements();
       unsigned ExtractedIdx =
         cast<ConstantInt>(EI->getOperand(1))->getZExtValue();
       unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getZExtValue();
