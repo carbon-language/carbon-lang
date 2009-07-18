@@ -45,6 +45,11 @@ unsigned InlineCostAnalyzer::FunctionInfo::
       
       // We can't constant propagate instructions which have effects or
       // read memory.
+      //
+      // FIXME: It would be nice to capture the fact that a load from a
+      // pointer-to-constant-global is actually a *really* good thing to zap.
+      // Unfortunately, we don't know the pointer that may get propagated here,
+      // so we can't make this decision.
       if (Inst.mayReadFromMemory() || Inst.mayHaveSideEffects() ||
           isa<AllocationInst>(Inst))
         continue;
