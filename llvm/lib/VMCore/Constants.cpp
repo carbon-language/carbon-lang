@@ -18,6 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/MDNode.h"
 #include "llvm/Module.h"
+#include "llvm/Operator.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -474,8 +475,11 @@ public:
   static GetElementPtrConstantExpr *Create(Constant *C,
                                            const std::vector<Constant*>&IdxList,
                                            const Type *DestTy) {
-    return new(IdxList.size() + 1)
+    GetElementPtrConstantExpr *Result = new(IdxList.size() + 1)
       GetElementPtrConstantExpr(C, IdxList, DestTy);
+    // Getelementptr defaults to having no pointer overflow.
+    cast<GEPOperator>(Result)->setHasNoPointerOverflow(true);
+    return Result;
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
