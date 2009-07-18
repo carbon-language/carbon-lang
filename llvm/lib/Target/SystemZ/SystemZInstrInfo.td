@@ -942,6 +942,15 @@ def UCMPZX64rm32  : RXYI<0xE331,
 } // Defs = [PSW]
 
 //===----------------------------------------------------------------------===//
+// Other crazy stuff
+let Defs = [PSW] in {
+def FLOGR64 : RREI<0xB983,
+                   (outs GR128:$dst), (ins GR64:$src),
+                   "flogr\t{$dst, $src}",
+                   []>;
+} // Defs = [PSW]
+
+//===----------------------------------------------------------------------===//
 // Non-Instruction Patterns.
 //===----------------------------------------------------------------------===//
 
@@ -1003,3 +1012,6 @@ def : Pat<(mulhu GR64:$src1, GR64:$src2),
                                                      GR64:$src1, subreg_odd),
                                       GR64:$src2),
                           subreg_even)>;
+
+def : Pat<(ctlz GR64:$src),
+          (EXTRACT_SUBREG (FLOGR64 GR64:$src), subreg_even)>;
