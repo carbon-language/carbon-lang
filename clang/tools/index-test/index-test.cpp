@@ -141,30 +141,12 @@ static void ProcessDecl(Decl *D) {
   }
 }
 
-static Decl *getDeclFromExpr(Stmt *E) {
-  if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
-    return RefExpr->getDecl();
-  if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
-    return ME->getMemberDecl();
-  if (CallExpr *CE = dyn_cast<CallExpr>(E))
-    return getDeclFromExpr(CE->getCallee());
-  if (CastExpr *CE = dyn_cast<CastExpr>(E))
-    return getDeclFromExpr(CE->getSubExpr());
-  
-  return 0;
-}
-
 static void ProcessASTLocation(ASTLocation ASTLoc, IndexProvider &IdxProvider) {
   assert(ASTLoc.isValid());
 
-  Decl *D = 0;
-  if (ASTLoc.isStmt())
-    D = getDeclFromExpr(ASTLoc.getStmt());
-  else
-    D = ASTLoc.getDecl();
-  
+  Decl *D = ASTLoc.getReferencedDecl();
   if (D == 0) {
-    llvm::errs() << "Error: Couldn't get a Decl out of the ASTLocation";
+    llvm::errs() << "Error: Couldn't get a referenced Decl for the ASTLocation";
     HadErrors = true;
     return;
   }

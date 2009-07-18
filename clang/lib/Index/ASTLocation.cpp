@@ -19,6 +19,30 @@
 using namespace clang;
 using namespace idx;
 
+static Decl *getDeclFromExpr(Stmt *E) {
+  if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
+    return RefExpr->getDecl();
+  if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
+    return ME->getMemberDecl();
+  if (CallExpr *CE = dyn_cast<CallExpr>(E))
+    return getDeclFromExpr(CE->getCallee());
+  if (CastExpr *CE = dyn_cast<CastExpr>(E))
+    return getDeclFromExpr(CE->getSubExpr());
+  
+  return 0;
+}
+
+Decl *ASTLocation::getReferencedDecl() {
+  if (isInvalid())
+    return 0;
+  if (isDecl())
+    return getDecl();
+  
+  assert(getStmt());
+  return getDeclFromExpr(getStmt());
+}
+
+
 static bool isContainedInStatement(Stmt *Node, Stmt *Parent) {
   assert(Node && Parent && "Passed null Node or Parent");
   

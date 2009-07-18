@@ -58,6 +58,16 @@ public:
   bool isDecl() const { return isValid() && Stm == 0; }
   bool isStmt() const { return isValid() && Stm != 0; }
 
+  /// \brief Returns the declaration that this ASTLocation references.
+  ///
+  /// If this points to a Decl, that Decl is returned.
+  /// If this points to an Expr that references a Decl, that Decl is returned,
+  /// otherwise it returns NULL.
+  Decl *getReferencedDecl();
+  const Decl *getReferencedDecl() const {
+    return const_cast<ASTLocation*>(this)->getReferencedDecl();
+  }
+
   SourceRange getSourceRange() const;
 
   /// \brief Checks that D is the immediate Decl parent of Node.
