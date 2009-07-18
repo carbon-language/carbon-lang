@@ -363,7 +363,7 @@ Value *Value::getUnderlyingObject() {
   unsigned MaxLookup = 6;
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
-      if (GEP->hasNoPointerOverflow())
+      if (!GEP->hasNoPointerOverflow())
         return V;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
