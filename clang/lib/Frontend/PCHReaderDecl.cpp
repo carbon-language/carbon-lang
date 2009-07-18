@@ -221,7 +221,7 @@ void PCHDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   ID->setImplicitInterfaceDecl(Record[Idx++]);
   ID->setClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   ID->setSuperClassLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
-  ID->setAtEndLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  ID->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHDeclReader::VisitObjCIvarDecl(ObjCIvarDecl *IVD) {
