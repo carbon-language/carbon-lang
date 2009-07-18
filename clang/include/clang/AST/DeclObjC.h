@@ -178,7 +178,7 @@ public:
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
   void setEndLoc(SourceLocation Loc) { EndLoc = Loc; }
-  SourceRange getSourceRange() const { 
+  virtual SourceRange getSourceRange() const { 
     return SourceRange(getLocation(), EndLoc); 
   }
     
@@ -341,6 +341,10 @@ public:
   // Marks the end of the container.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
   void setAtEndLoc(SourceLocation L) { AtEndLoc = L; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getLocation(), getAtEndLoc());
+  }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -484,7 +488,7 @@ public:
   ObjCMethodDecl *lookupClassMethod(Selector Sel);
   ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
 
-  // Location information, modeled after the Stmt API. 
+  // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
@@ -880,6 +884,9 @@ public:
   }
 
   // Location information, modeled after the Stmt API. 
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(getLocation(), EndLoc); 
+  }
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
   void setLocEnd(SourceLocation LE) { EndLoc = LE; };
@@ -1188,6 +1195,9 @@ public:
                                       Kind PK, 
                                       ObjCIvarDecl *ivarDecl);
 
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(AtLoc, getLocation()); 
+  }
   SourceLocation getLocStart() const { return AtLoc; }
   void setAtLoc(SourceLocation Loc) { AtLoc = Loc; }
 
