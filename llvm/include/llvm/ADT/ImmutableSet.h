@@ -166,7 +166,7 @@ public:
   /// contains - Returns true if this tree contains a subtree (node) that
   ///  has an data element that matches the specified key.  Complexity
   ///  is logarithmic in the size of the tree.
-  bool contains(const key_type_ref K) { return (bool) find(K); }
+  bool contains(key_type_ref K) { return (bool) find(K); }
 
   /// foreach - A member template the accepts invokes operator() on a functor
   ///  object (specifed by Callback) for every node/subtree in the tree.
@@ -992,7 +992,7 @@ public:
   friend class Factory;
 
   /// contains - Returns true if the set contains the specified value.
-  bool contains(const value_type_ref V) const {
+  bool contains(value_type_ref V) const {
     return Root ? Root->contains(V) : false;
   }
 
