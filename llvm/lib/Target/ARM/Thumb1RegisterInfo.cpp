@@ -133,12 +133,12 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     }
 
     if (NumBytes <= 255 && NumBytes >= 0)
-      AddDefaultCC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg))
+      AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg))
         .addImm(NumBytes);
     else if (NumBytes < 0 && NumBytes >= -255) {
-      AddDefaultCC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg))
+      AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg))
         .addImm(NumBytes);
-      AddDefaultCC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tRSB), LdReg))
+      AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tRSB), LdReg))
         .addReg(LdReg, RegState::Kill);
     } else
       MRI.emitLoadConstPool(MBB, MBBI, dl, LdReg, 0, NumBytes);
@@ -148,7 +148,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     MachineInstrBuilder MIB =
       BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg);
     if (Opc != ARM::tADDhirr)
-      MIB = AddDefaultCC(MIB);
+      MIB = AddDefaultT1CC(MIB);
     if (DestReg == ARM::SP || isSub)
       MIB.addReg(BaseReg).addReg(LdReg, RegState::Kill);
     else
@@ -254,7 +254,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       Bytes -= ThisVal;
       const TargetInstrDesc &TID = TII.get(isSub ? ARM::tSUBi3 : ARM::tADDi3);
       const MachineInstrBuilder MIB =
-        AddDefaultCC(BuildMI(MBB, MBBI, dl, TID, DestReg));
+        AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TID, DestReg));
       AddDefaultPred(MIB.addReg(BaseReg, RegState::Kill).addImm(ThisVal));
     } else {
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr), DestReg)
@@ -272,7 +272,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     if (isTwoAddr) {
       MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg);
       if (NeedCC)
-        MIB = AddDefaultCC(MIB);
+        MIB = AddDefaultT1CC(MIB);
       MIB .addReg(DestReg).addImm(ThisVal);
       if (NeedPred)
         MIB = AddDefaultPred(MIB);
@@ -281,7 +281,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
       bool isKill = BaseReg != ARM::SP;
       MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg);
       if (NeedCC)
-        MIB = AddDefaultCC(MIB);
+        MIB = AddDefaultT1CC(MIB);
       MIB.addReg(BaseReg, getKillRegState(isKill)).addImm(ThisVal);
       if (NeedPred)
         MIB = AddDefaultPred(MIB);
@@ -302,7 +302,7 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
 
   if (ExtraOpc) {
     const TargetInstrDesc &TID = TII.get(ExtraOpc);
-    AddDefaultPred(AddDefaultCC(BuildMI(MBB, MBBI, dl, TID, DestReg))
+    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TID, DestReg))
                    .addReg(DestReg, RegState::Kill)
                    .addImm(((unsigned)NumBytes) & 3));
   }
@@ -361,14 +361,14 @@ static void emitThumbConstant(MachineBasicBlock &MBB,
   int Chunk = (1 << 8) - 1;
   int ThisVal = (Imm > Chunk) ? Chunk : Imm;
   Imm -= ThisVal;
-  AddDefaultPred(AddDefaultCC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8),
-                                      DestReg))
+  AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8),
+                                        DestReg))
                  .addImm(ThisVal));
   if (Imm > 0)
     emitThumbRegPlusImmediate(MBB, MBBI, DestReg, DestReg, Imm, TII, MRI, dl);
   if (isSub) {
     const TargetInstrDesc &TID = TII.get(ARM::tRSB);
-    AddDefaultPred(AddDefaultCC(BuildMI(MBB, MBBI, dl, TID, DestReg))
+    AddDefaultPred(AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TID, DestReg))
                    .addReg(DestReg, RegState::Kill));
   }
 }
@@ -446,7 +446,8 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       if (Opcode == ARM::tADDi3) {
         removeOperands(MI, i);
         MachineInstrBuilder MIB(&MI);
-        AddDefaultPred(AddDefaultCC(MIB).addReg(FrameReg).addImm(Offset/Scale));
+        AddDefaultPred(AddDefaultT1CC(MIB).addReg(FrameReg)
+                       .addImm(Offset/Scale));
       } else {
         MI.getOperand(i).ChangeToRegister(FrameReg, false);
         MI.getOperand(i+1).ChangeToImmediate(Offset / Scale);
@@ -473,7 +474,7 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       if (Opcode == ARM::tADDi3) {
         removeOperands(MI, i);
         MachineInstrBuilder MIB(&MI);
-        AddDefaultPred(AddDefaultCC(MIB).addReg(FrameReg).addImm(Mask));
+        AddDefaultPred(AddDefaultT1CC(MIB).addReg(FrameReg).addImm(Mask));
       } else {
         MI.getOperand(i).ChangeToRegister(FrameReg, false);
         MI.getOperand(i+1).ChangeToImmediate(Mask);

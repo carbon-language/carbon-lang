@@ -198,6 +198,11 @@ const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
   return MIB.addReg(0);
 }
 
+static inline
+const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB) {
+  return MIB.addReg(ARM::CPSR);
+}
+
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {
 protected:
   // Can be only subclassed.
