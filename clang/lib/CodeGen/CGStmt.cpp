@@ -68,10 +68,19 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   default:
     // Must be an expression in a stmt context.  Emit the value (to get
     // side-effects) and ignore the result.
-    if (const Expr *E = dyn_cast<Expr>(S)) {
-      EmitAnyExpr(E, 0, false, true);
-    } else {
+    if (!isa<Expr>(S))
       ErrorUnsupported(S, "statement");
+
+    EmitAnyExpr(cast<Expr>(S), 0, false, true);
+    
+    // Expression emitters don't handle unreachable blocks yet, so look for one
+    // explicitly here. This handles the common case of a call to a noreturn
+    // function.
+    if (llvm::BasicBlock *CurBB = Builder.GetInsertBlock()) {
+      if (CurBB->empty() && CurBB->use_empty()) {
+        CurBB->eraseFromParent();
+        Builder.ClearInsertionPoint();
+      }
     }
     break;
   case Stmt::IndirectGotoStmtClass:  
