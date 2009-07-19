@@ -1066,6 +1066,8 @@ def note_protected_by_cxx_try : Note<
   "jump bypasses initialization of try block">;
 def note_protected_by_cxx_catch : Note<
   "jump bypasses initialization of catch block">;
+def note_protected_by___block : Note<
+  "jump bypasses setup of __block variable">;
 
 def err_func_returning_array_function : Error<
   "function cannot return array or function type %0">;

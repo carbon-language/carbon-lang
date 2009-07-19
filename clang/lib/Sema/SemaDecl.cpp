@@ -1954,7 +1954,8 @@ void Sema::CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
     Diag(NewVD->getLocation(), diag::warn_attribute_weak_on_local);
 
   bool isVM = T->isVariablyModifiedType();
-  if (isVM || NewVD->hasAttr<CleanupAttr>())
+  if (isVM || NewVD->hasAttr<CleanupAttr>() ||
+      NewVD->hasAttr<BlocksAttr>())
     CurFunctionNeedsScopeChecking = true;
   
   if ((isVM && NewVD->hasLinkage()) ||

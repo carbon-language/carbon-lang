@@ -185,3 +185,16 @@ void test18() {
   void (^const  blockA)(void) = ^{ };
   blockA = ^{ }; // expected-error {{read-only variable is not assignable}}
 }
+
+// rdar://7072507
+int test19() {
+  goto L0;       // expected-error {{illegal goto into protected scope}}
+  
+  __block int x; // expected-note {{jump bypasses setup of __block variable}}
+L0:
+  x = 0;
+  ^(){ ++x; }();
+  return x;
+}
+
+

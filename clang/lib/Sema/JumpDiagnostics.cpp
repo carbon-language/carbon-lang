@@ -83,6 +83,8 @@ static unsigned GetDiagForGotoScopeDecl(const Decl *D) {
       return diag::note_protected_by_vla;
     if (VD->hasAttr<CleanupAttr>())
       return diag::note_protected_by_cleanup;
+    if (VD->hasAttr<BlocksAttr>())
+      return diag::note_protected_by___block;
   } else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     if (TD->getUnderlyingType()->isVariablyModifiedType())
       return diag::note_protected_by_vla_typedef;
