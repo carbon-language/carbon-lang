@@ -82,11 +82,12 @@ void CodeGenFunction::EmitReturnBlock() {
   if (CurBB) {
     assert(!CurBB->getTerminator() && "Unexpected terminated block.");
 
-    // We have a valid insert point, reuse it if there are no explicit
-    // jumps to the return block.
-    if (ReturnBlock->use_empty())
+    // We have a valid insert point, reuse it if it is empty or there are no
+    // explicit jumps to the return block.
+    if (CurBB->empty() || ReturnBlock->use_empty()) {
+      ReturnBlock->replaceAllUsesWith(CurBB);
       delete ReturnBlock;
-    else
+    } else
       EmitBlock(ReturnBlock);
     return;
   }
