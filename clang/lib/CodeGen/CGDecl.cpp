@@ -325,10 +325,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
   // Emit debug info for local var declaration.
   if (CGDebugInfo *DI = getDebugInfo()) {
-    // FIXME: Remove this once debug info isn't modeled as instructions.
-    EnsureInsertPoint();
-
-    EmitStopPoint(S);
+    assert(HaveInsertPoint() && "Unexpected unreachable point!");
     
     DI->setLocation(D.getLocation());
     if (Target.useGlobalsForAutomaticVariables()) {
