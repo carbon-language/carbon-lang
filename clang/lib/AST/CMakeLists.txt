@@ -18,6 +18,7 @@ add_clang_library(clangAST
   InheritViz.cpp
   NestedNameSpecifier.cpp
   ParentMap.cpp
+  RecordLayoutBuilder.cpp
   Stmt.cpp
   StmtDumper.cpp
   StmtIterator.cpp
