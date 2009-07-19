@@ -732,7 +732,9 @@ isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx) const {
     unsigned DefPart = 0;
     for (unsigned i = 1, e = getNumOperands(); i < e; ) {
       const MachineOperand &FMO = getOperand(i);
-      assert(FMO.isImm());
+      // After the normal asm operands there may be additional imp-def regs.
+      if (!FMO.isImm())
+        return false;
       // Skip over this def.
       unsigned NumOps = InlineAsm::getNumOperandRegisters(FMO.getImm());
       unsigned PrevDef = i + 1;
@@ -788,7 +790,9 @@ isRegTiedToDefOperand(unsigned UseOpIdx, unsigned *DefOpIdx) const {
     unsigned FlagIdx, NumOps=0;
     for (FlagIdx = 1; FlagIdx < UseOpIdx; FlagIdx += NumOps+1) {
       const MachineOperand &UFMO = getOperand(FlagIdx);
-      assert(UFMO.isImm() && "Expecting flag operand on inline asm");
+      // After the normal asm operands there may be additional imp-def regs.
+      if (!UFMO.isImm())
+        return false;
       NumOps = InlineAsm::getNumOperandRegisters(UFMO.getImm());
       assert(NumOps < getNumOperands() && "Invalid inline asm flag");
       if (UseOpIdx < FlagIdx+NumOps+1)
