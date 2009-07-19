@@ -4,4 +4,4 @@ add_llvm_library(LLVMSystemZInfo
   SystemZTargetInfo.cpp
   )
 
-add_dependencies(LLVMSystemZInfo SystemZTable_gen)
+add_dependencies(LLVMSystemZInfo SystemZCodeGenTable_gen)
