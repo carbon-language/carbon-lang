@@ -219,6 +219,17 @@ TEST_F(ConstantRangeTest, UnionWith) {
   EXPECT_TRUE(Empty.unionWith(Empty).isEmptySet());
   EXPECT_TRUE(Full.unionWith(Full).isFullSet());
   EXPECT_TRUE(Some.unionWith(Wrap).isFullSet());
+
+  // PR4545
+  EXPECT_EQ(ConstantRange(APInt(16, 14), APInt(16, 1)).unionWith(
+            ConstantRange(APInt(16, 0), APInt(16, 8))),
+            ConstantRange(APInt(16, 14), APInt(16, 8)));
+  EXPECT_EQ(ConstantRange(APInt(16, 6), APInt(16, 4)).unionWith(
+            ConstantRange(APInt(16, 4), APInt(16, 0))),
+            ConstantRange(16));
+  EXPECT_EQ(ConstantRange(APInt(16, 1), APInt(16, 0)).unionWith(
+            ConstantRange(APInt(16, 2), APInt(16, 1))),
+            ConstantRange(16));
 }
 
 TEST_F(ConstantRangeTest, SubtractAPInt) {

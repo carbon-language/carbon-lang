@@ -371,69 +371,74 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
 
   if (!isWrappedSet() && CR.isWrappedSet()) return CR.unionWith(*this);
 
-  APInt L = Lower, U = Upper;
-
   if (!isWrappedSet() && !CR.isWrappedSet()) {
+    if (CR.Upper.ult(Lower) || Upper.ult(CR.Lower)) {
+      // If the two ranges are disjoint, find the smaller gap and bridge it.
+      APInt d1 = CR.Lower - Upper, d2 = Lower - CR.Upper;
+      if (d1.ult(d2))
+        return ConstantRange(Lower, CR.Upper);
+      else
+        return ConstantRange(CR.Lower, Upper);
+    }
+
+    APInt L = Lower, U = Upper;
     if (CR.Lower.ult(L))
       L = CR.Lower;
-
-    if (CR.Upper.ugt(U))
+    if ((CR.Upper - 1).ugt(U - 1))
       U = CR.Upper;
+
+    if (L == 0 && U == 0)
+      return ConstantRange(getBitWidth());
+
+    return ConstantRange(L, U);
   }
 
-  if (isWrappedSet() && !CR.isWrappedSet()) {
-    if ((CR.Lower.ult(Upper) && CR.Upper.ult(Upper)) ||
-        (CR.Lower.ugt(Lower) && CR.Upper.ugt(Lower))) {
+  if (!CR.isWrappedSet()) {
+    // ------U   L-----  and  ------U   L----- : this
+    //   L--U                            L--U  : CR
+    if (CR.Upper.ule(Upper) || CR.Lower.uge(Lower))
       return *this;
-    }
 
-    if (CR.Lower.ule(Upper) && Lower.ule(CR.Upper)) {
+    // ------U   L----- : this
+    //    L---------U   : CR
+    if (CR.Lower.ule(Upper) && Lower.ule(CR.Upper))
       return ConstantRange(getBitWidth());
-    }
 
-    if (CR.Lower.ule(Upper) && CR.Upper.ule(Lower)) {
-      APInt d1 = CR.Upper - Upper, d2 = Lower - CR.Upper;
-      if (d1.ult(d2)) {
-        U = CR.Upper;
-      } else {
-        L = CR.Upper;
-      }
-    }
-
-    if (Upper.ult(CR.Lower) && CR.Upper.ult(Lower)) {
+    // ----U       L---- : this
+    //       L---U       : CR
+    //    <d1>  <d2>
+    if (Upper.ule(CR.Lower) && CR.Upper.ule(Lower)) {
       APInt d1 = CR.Lower - Upper, d2 = Lower - CR.Upper;
-      if (d1.ult(d2)) {
-        U = CR.Lower + 1;
-      } else {
-        L = CR.Upper - 1;
-      }
+      if (d1.ult(d2))
+        return ConstantRange(Lower, CR.Upper);
+      else
+        return ConstantRange(CR.Lower, Upper);
     }
 
-    if (Upper.ult(CR.Lower) && Lower.ult(CR.Upper)) {
-      APInt d1 = CR.Lower - Upper, d2 = Lower - CR.Lower;
+    // ----U     L----- : this
+    //        L----U    : CR
+    if (Upper.ult(CR.Lower) && Lower.ult(CR.Upper))
+      return ConstantRange(CR.Lower, Upper);
 
-      if (d1.ult(d2)) {
-        U = CR.Lower + 1;
-      } else {
-        L = CR.Lower;
-      }
-    }
+    // ------U    L---- : this
+    //    L-----U       : CR
+    if (CR.Lower.ult(Upper) && CR.Upper.ult(Lower))
+      return ConstantRange(Lower, CR.Upper);
   }
 
-  if (isWrappedSet() && CR.isWrappedSet()) {
-    if (Lower.ult(CR.Upper) || CR.Lower.ult(Upper))
-      return ConstantRange(getBitWidth());
+  assert(isWrappedSet() && CR.isWrappedSet() &&
+         "ConstantRange::unionWith missed wrapped union unwrapped case");
 
-    if (CR.Upper.ugt(U)) {
-      U = CR.Upper;
-    }
+  // ------U    L----  and  ------U    L---- : this
+  // -U  L-----------  and  ------------U  L : CR
+  if (CR.Lower.ule(Upper) || Lower.ule(CR.Upper))
+    return ConstantRange(getBitWidth());
 
-    if (CR.Lower.ult(L)) {
-      L = CR.Lower;
-    }
-
-    if (L == U) return ConstantRange(getBitWidth());
-  }
+  APInt L = Lower, U = Upper;
+  if (CR.Upper.ugt(U))
+    U = CR.Upper;
+  if (CR.Lower.ult(L))
+    L = CR.Lower;
 
   return ConstantRange(L, U);
 }
