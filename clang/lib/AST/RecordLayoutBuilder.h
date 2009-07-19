@@ -15,6 +15,7 @@
 namespace clang {
   class ASTContext;
   class ASTRecordLayout;
+  class CXXRecordDecl;
   class FieldDecl;
   class ObjCImplementationDecl;
   class ObjCInterfaceDecl;
@@ -34,12 +35,16 @@ class ASTRecordLayoutBuilder {
   ASTRecordLayoutBuilder(ASTContext &Ctx);
   
   void Layout(const RecordDecl *D);
+  void Layout(const CXXRecordDecl *D);
   void Layout(const ObjCInterfaceDecl *D,
               const ObjCImplementationDecl *Impl);
 
   void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
 
+  void LayoutNonVirtualBases(const CXXRecordDecl *RD);
+  void LayoutNonVirtualBase(const CXXRecordDecl *RD);
+  
   /// FinishLayout - Finalize record layout. Adjust record size based on the
   /// alignment.
   void FinishLayout();

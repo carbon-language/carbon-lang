@@ -11,6 +11,7 @@
 
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
@@ -20,8 +21,47 @@
 using namespace clang;
 
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx) 
-  : Ctx(Ctx), Size(0), Alignment(8), StructPacking(0), NextOffset(0), 
+  : Ctx(Ctx), Size(0), Alignment(8), StructPacking(0), NextOffset(0),
   IsUnion(false) {}
+
+void 
+ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
+  assert(!RD->isPolymorphic() && 
+         "FIXME: We don't support polymorphic classes yet!");
+  
+  for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
+       e = RD->bases_end(); i != e; ++i) {
+    if (!i->isVirtual()) {
+      const CXXRecordDecl *Base = 
+        cast<CXXRecordDecl>(i->getType()->getAsRecordType()->getDecl());
+      LayoutNonVirtualBase(Base);
+    }
+  }
+}
+
+void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
+  const ASTRecordLayout &BaseInfo = Ctx.getASTRecordLayout(RD);
+    assert(BaseInfo.getDataSize() > 0 && 
+           "FIXME: Handle empty classes.");
+  
+  // FIXME: Should get the non-virtual alignment of the base.
+  unsigned BaseAlign = BaseInfo.getAlignment();
+  
+  // FIXME: Should get the non-virtual size of the base.
+  uint64_t BaseSize = BaseInfo.getDataSize();
+  
+  // Round up the current record size to the base's alignment boundary.
+  Size = (Size + (BaseAlign-1)) & ~(BaseAlign-1);
+
+  // Reserve space for this base.
+  Size += BaseSize;
+  
+  // Remember the next available offset.
+  NextOffset = Size;
+  
+  // Remember max struct/class alignment.
+  UpdateAlignment(BaseAlign);
+}
 
 void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   IsUnion = D->isUnion();
@@ -31,7 +71,11 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
   
   if (const AlignedAttr *AA = D->getAttr<AlignedAttr>())
     UpdateAlignment(AA->getAlignment());
-  
+
+  // If this is a C++ class, lay out the nonvirtual bases.
+  if (Ctx.getLangOptions().CPlusPlus)
+    LayoutNonVirtualBases(cast<CXXRecordDecl>(D));
+
   LayoutFields(D);
   
   // Finally, round the size of the total struct up to the alignment of the
@@ -191,8 +235,20 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
 
   Builder.Layout(D);
 
-  return new ASTRecordLayout(Builder.Size, Builder.Alignment,
-                             Builder.NextOffset,
+  bool IsPODForThePurposeOfLayout;
+  if (!Ctx.getLangOptions().CPlusPlus) {
+    // In C, all record types are POD.
+    IsPODForThePurposeOfLayout = true;
+  } else {
+    // FIXME: This is not always correct. See the part about bitfields at
+    // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
+    IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
+  }
+  
+  uint64_t DataSize = 
+    IsPODForThePurposeOfLayout ? Builder.Size : Builder.NextOffset;
+  
+  return new ASTRecordLayout(Builder.Size, Builder.Alignment, DataSize,
                              Builder.FieldOffsets.data(), 
                              Builder.FieldOffsets.size());
 }
