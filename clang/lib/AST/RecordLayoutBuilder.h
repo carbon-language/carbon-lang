@@ -11,6 +11,7 @@
 #define LLVM_CLANG_AST_RECORDLAYOUTBUILDER_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace clang {
   class ASTContext;
