@@ -446,55 +446,9 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
   SDNode *N = Op.getNode();
   SDValue Chain = N->getOperand(0);
   SDValue Addr = N->getOperand(1);
-  SDValue InFlag(0,0);  // Null incoming flag value.
+  SDValue InFlag = N->getOperand(N->getNumOperands() - 1);
   DebugLoc dl = N->getDebugLoc();
 
-   std::vector<SDValue> CallOperands;
-   std::vector<MVT> TypeOperands;
-  
-   //grab the arguments
-   for(int i = 2, e = N->getNumOperands(); i < e; ++i) {
-     TypeOperands.push_back(N->getOperand(i).getValueType());
-     CallOperands.push_back(N->getOperand(i));
-   }
-   int count = N->getNumOperands() - 2;
-
-   static const unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18,
-                                       Alpha::R19, Alpha::R20, Alpha::R21};
-   static const unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18,
-                                         Alpha::F19, Alpha::F20, Alpha::F21};
-   
-   for (int i = 6; i < count; ++i) {
-     unsigned Opc = Alpha::WTF;
-     if (TypeOperands[i].isInteger()) {
-       Opc = Alpha::STQ;
-     } else if (TypeOperands[i] == MVT::f32) {
-       Opc = Alpha::STS;
-     } else if (TypeOperands[i] == MVT::f64) {
-       Opc = Alpha::STT;
-     } else
-       llvm_unreachable("Unknown operand"); 
-
-     SDValue Ops[] = { CallOperands[i],  getI64Imm((i - 6) * 8), 
-                       CurDAG->getCopyFromReg(Chain, dl, Alpha::R30, MVT::i64),
-                       Chain };
-     Chain = SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 4), 0);
-   }
-   for (int i = 0; i < std::min(6, count); ++i) {
-     if (TypeOperands[i].isInteger()) {
-       Chain = CurDAG->getCopyToReg(Chain, dl, args_int[i], 
-                                    CallOperands[i], InFlag);
-       InFlag = Chain.getValue(1);
-     } else if (TypeOperands[i] == MVT::f32 || TypeOperands[i] == MVT::f64) {
-       Chain = CurDAG->getCopyToReg(Chain, dl, args_float[i], 
-                                    CallOperands[i], InFlag);
-       InFlag = Chain.getValue(1);
-     } else
-       llvm_unreachable("Unknown operand"); 
-   }
-
-   // Finally, once everything is in registers to pass to the call, emit the
-   // call itself.
    if (Addr.getOpcode() == AlphaISD::GPRelLo) {
      SDValue GOT = SDValue(getGlobalBaseReg(), 0);
      Chain = CurDAG->getCopyToReg(Chain, dl, Alpha::R29, GOT, InFlag);
@@ -510,31 +464,8 @@ void AlphaDAGToDAGISel::SelectCALL(SDValue Op) {
    }
    InFlag = Chain.getValue(1);
 
-   std::vector<SDValue> CallResults;
-  
-   switch (N->getValueType(0).getSimpleVT()) {
-   default: llvm_unreachable("Unexpected ret value!");
-     case MVT::Other: break;
-   case MVT::i64:
-     Chain = CurDAG->getCopyFromReg(Chain, dl, 
-                                    Alpha::R0, MVT::i64, InFlag).getValue(1);
-     CallResults.push_back(Chain.getValue(0));
-     break;
-   case MVT::f32:
-     Chain = CurDAG->getCopyFromReg(Chain, dl, 
-                                    Alpha::F0, MVT::f32, InFlag).getValue(1);
-     CallResults.push_back(Chain.getValue(0));
-     break;
-   case MVT::f64:
-     Chain = CurDAG->getCopyFromReg(Chain, dl,
-                                    Alpha::F0, MVT::f64, InFlag).getValue(1);
-     CallResults.push_back(Chain.getValue(0));
-     break;
-   }
-
-   CallResults.push_back(Chain);
-   for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
-     ReplaceUses(Op.getValue(i), CallResults[i]);
+  ReplaceUses(Op.getValue(0), Chain);
+  ReplaceUses(Op.getValue(1), InFlag);
 }
 
 

@@ -82,13 +82,9 @@ namespace llvm {
     // Friendly names for dumps
     const char *getTargetNodeName(unsigned Opcode) const;
 
-    /// LowerCallTo - This hook lowers an abstract call to a function into an
-    /// actual call.
-    virtual std::pair<SDValue, SDValue>
-    LowerCallTo(SDValue Chain, const Type *RetTy, bool RetSExt, bool RetZExt,
-                bool isVarArg, bool isInreg, unsigned NumFixedArgs, unsigned CC,
-                bool isTailCall, SDValue Callee, ArgListTy &Args,
-                SelectionDAG &DAG, DebugLoc dl);
+    SDValue LowerCALL(SDValue Op, SelectionDAG &DAG);
+    SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
+                            unsigned CallingConv, SelectionDAG &DAG);
 
     ConstraintType getConstraintType(const std::string &Constraint) const;
 

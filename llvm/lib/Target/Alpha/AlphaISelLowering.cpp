@@ -13,12 +13,14 @@
 
 #include "AlphaISelLowering.h"
 #include "AlphaTargetMachine.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -223,6 +225,174 @@ static SDValue LowerJumpTable(SDValue Op, SelectionDAG &DAG) {
 // //#define GP    $29
 // //#define SP    $30
 
+#include "AlphaGenCallingConv.inc"
+
+SDValue AlphaTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
+  CallSDNode *TheCall = cast<CallSDNode>(Op.getNode());
+  SDValue Chain  = TheCall->getChain();
+  SDValue Callee = TheCall->getCallee();
+  bool isVarArg  = TheCall->isVarArg();
+  DebugLoc dl = Op.getDebugLoc();
+  MachineFunction &MF = DAG.getMachineFunction();
+  unsigned CC = MF.getFunction()->getCallingConv();
+
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
+
+  CCInfo.AnalyzeCallOperands(TheCall, CC_Alpha);
+
+    // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCInfo.getNextStackOffset();
+
+  Chain = DAG.getCALLSEQ_START(Chain, DAG.getConstant(NumBytes,
+                                                      getPointerTy(), true));
+
+  SmallVector<std::pair<unsigned, SDValue>, 4> RegsToPass;
+  SmallVector<SDValue, 12> MemOpChains;
+  SDValue StackPtr;
+
+  // Walk the register/memloc assignments, inserting copies/loads.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+
+    // Arguments start after the 5 first operands of ISD::CALL
+    SDValue Arg = TheCall->getArg(i);
+
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+      default: assert(0 && "Unknown loc info!");
+      case CCValAssign::Full: break;
+      case CCValAssign::SExt:
+        Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+      case CCValAssign::ZExt:
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+      case CCValAssign::AExt:
+        Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+    }
+
+    // Arguments that can be passed on register must be kept at RegsToPass
+    // vector
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+    } else {
+      assert(VA.isMemLoc());
+
+      if (StackPtr.getNode() == 0)
+        StackPtr = DAG.getCopyFromReg(Chain, dl, Alpha::R30, MVT::i64);
+
+      SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(),
+                                   StackPtr,
+                                   DAG.getIntPtrConstant(VA.getLocMemOffset()));
+
+      MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
+                                         PseudoSourceValue::getStack(), 0));
+    }
+  }
+
+  // Transform all store nodes into one single node because all store nodes are
+  // independent of each other.
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
+
+  // Build a sequence of copy-to-reg nodes chained together with token chain and
+  // flag operands which copy the outgoing args into registers.  The InFlag in
+  // necessary since all emited instructions must be stuck together.
+  SDValue InFlag;
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
+                             RegsToPass[i].second, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
+  // Returns a chain & a flag for retval copy to use.
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+
+  // Add argument registers to the end of the list so that they are
+  // known live into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
+                                  RegsToPass[i].second.getValueType()));
+
+  if (InFlag.getNode())
+    Ops.push_back(InFlag);
+
+  Chain = DAG.getNode(AlphaISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
+  InFlag = Chain.getValue(1);
+
+  // Create the CALLSEQ_END node.
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(NumBytes, getPointerTy(), true),
+                             DAG.getConstant(0, getPointerTy(), true),
+                             InFlag);
+  InFlag = Chain.getValue(1);
+
+  // Handle result values, copying them out of physregs into vregs that we
+  // return.
+  return SDValue(LowerCallResult(Chain, InFlag, TheCall, CC, DAG),
+                 Op.getResNo());
+}
+
+/// LowerCallResult - Lower the result values of an ISD::CALL into the
+/// appropriate copies out of appropriate physical registers.  This assumes that
+/// Chain/InFlag are the input chain/flag to use, and that TheCall is the call
+/// being lowered. Returns a SDNode with the same number of values as the
+/// ISD::CALL.
+SDNode*
+AlphaTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
+                                     CallSDNode *TheCall,
+                                     unsigned CallingConv,
+                                     SelectionDAG &DAG) {
+  bool isVarArg = TheCall->isVarArg();
+  DebugLoc dl = TheCall->getDebugLoc();
+
+  // Assign locations to each value returned by this call.
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs,
+                 DAG.getContext());
+
+  CCInfo.AnalyzeCallResult(TheCall, RetCC_Alpha);
+  SmallVector<SDValue, 8> ResultVals;
+
+  // Copy all of the result registers out of their specified physreg.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    CCValAssign &VA = RVLocs[i];
+
+    Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
+                               VA.getLocVT(), InFlag).getValue(1);
+    SDValue RetValue = Chain.getValue(0);
+    InFlag = Chain.getValue(2);
+
+    // If this is an 8/16/32-bit value, it is really passed promoted to 64
+    // bits. Insert an assert[sz]ext to capture this, then truncate to the
+    // right size.
+    if (VA.getLocInfo() == CCValAssign::SExt)
+      RetValue = DAG.getNode(ISD::AssertSext, dl, VA.getLocVT(), RetValue,
+                             DAG.getValueType(VA.getValVT()));
+    else if (VA.getLocInfo() == CCValAssign::ZExt)
+      RetValue = DAG.getNode(ISD::AssertZext, dl, VA.getLocVT(), RetValue,
+                             DAG.getValueType(VA.getValVT()));
+
+    if (VA.getLocInfo() != CCValAssign::Full)
+      RetValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), RetValue);
+
+    ResultVals.push_back(RetValue);
+  }
+
+  ResultVals.push_back(Chain);
+
+  // Merge everything together with a MERGE_VALUES node.
+  return DAG.getNode(ISD::MERGE_VALUES, dl, TheCall->getVTList(),
+                     &ResultVals[0], ResultVals.size()).getNode();
+}
+
 static SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG,
                                        int &VarArgsBase,
                                        int &VarArgsOffset) {
@@ -365,85 +535,6 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
                      MVT::Other, Copy, Copy.getValue(1));
 }
 
-std::pair<SDValue, SDValue>
-AlphaTargetLowering::LowerCallTo(SDValue Chain, const Type *RetTy, 
-                                 bool RetSExt, bool RetZExt, bool isVarArg,
-                                 bool isInreg, unsigned NumFixedArgs,
-                                 unsigned CallingConv, 
-                                 bool isTailCall, SDValue Callee, 
-                                 ArgListTy &Args, SelectionDAG &DAG,
-                                 DebugLoc dl) {
-  int NumBytes = 0;
-  if (Args.size() > 6)
-    NumBytes = (Args.size() - 6) * 8;
-
-  Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(NumBytes, true));
-  std::vector<SDValue> args_to_use;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i)
-  {
-    switch (getValueType(Args[i].Ty).getSimpleVT()) {
-    default: llvm_unreachable("Unexpected ValueType for argument!");
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
-    case MVT::i32:
-      // Promote the integer to 64 bits.  If the input type is signed use a
-      // sign extend, otherwise use a zero extend.
-      if (Args[i].isSExt)
-        Args[i].Node = DAG.getNode(ISD::SIGN_EXTEND, dl, 
-                                   MVT::i64, Args[i].Node);
-      else if (Args[i].isZExt)
-        Args[i].Node = DAG.getNode(ISD::ZERO_EXTEND, dl,
-                                   MVT::i64, Args[i].Node);
-      else
-        Args[i].Node = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i64, Args[i].Node);
-      break;
-    case MVT::i64:
-    case MVT::f64:
-    case MVT::f32:
-      break;
-    }
-    args_to_use.push_back(Args[i].Node);
-  }
-
-  std::vector<MVT> RetVals;
-  MVT RetTyVT = getValueType(RetTy);
-  MVT ActualRetTyVT = RetTyVT;
-  if (RetTyVT.getSimpleVT() >= MVT::i1 && RetTyVT.getSimpleVT() <= MVT::i32)
-    ActualRetTyVT = MVT::i64;
-
-  if (RetTyVT != MVT::isVoid)
-    RetVals.push_back(ActualRetTyVT);
-  RetVals.push_back(MVT::Other);
-
-  std::vector<SDValue> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(Callee);
-  Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
-  SDValue TheCall = DAG.getNode(AlphaISD::CALL, dl, 
-                                RetVals, &Ops[0], Ops.size());
-  Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
-  Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
-                             DAG.getIntPtrConstant(0, true), SDValue());
-  SDValue RetVal = TheCall;
-
-  if (RetTyVT != ActualRetTyVT) {
-    ISD::NodeType AssertKind = ISD::DELETED_NODE;
-    if (RetSExt)
-      AssertKind = ISD::AssertSext;
-    else if (RetZExt)
-      AssertKind = ISD::AssertZext;
-
-    if (AssertKind != ISD::DELETED_NODE)
-      RetVal = DAG.getNode(AssertKind, dl, MVT::i64, RetVal,
-                           DAG.getValueType(RetTyVT));
-
-    RetVal = DAG.getNode(ISD::TRUNCATE, dl, RetTyVT, RetVal);
-  }
-
-  return std::make_pair(RetVal, Chain);
-}
-
 void AlphaTargetLowering::LowerVAARG(SDNode *N, SDValue &Chain,
                                      SDValue &DataPtr, SelectionDAG &DAG) {
   Chain = N->getOperand(0);
@@ -482,7 +573,7 @@ SDValue AlphaTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG, 
                                                            VarArgsBase,
                                                            VarArgsOffset);
-
+  case ISD::CALL: return LowerCALL(Op, DAG); 
   case ISD::RET: return LowerRET(Op,DAG);
   case ISD::JumpTable: return LowerJumpTable(Op, DAG);
 
