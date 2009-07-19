@@ -205,6 +205,9 @@ if( MSVC )
   add_llvm_definitions( -wd4146 -wd4503 -wd4996 -wd4800 -wd4244 -wd4624 )
   add_llvm_definitions( -wd4355 -wd4715 -wd4180 -wd4345 -wd4224 )
 
+  # Suppress 'new behavior: elements of array 'array' will be default initialized'
+  add_llvm_definitions( -wd4351 )
+
   if (NOT ${LLVM_USE_CRT} STREQUAL "")
     list(FIND MSVC_CRT ${LLVM_USE_CRT} idx)
     if (idx LESS 0)
