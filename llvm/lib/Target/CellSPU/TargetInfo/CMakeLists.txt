@@ -4,3 +4,4 @@ add_llvm_library(LLVMCellSPUInfo
   CellSPUTargetInfo.cpp
   )
 
+add_dependencies(LLVMCellSPUInfo CellSPUCodeGenTable_gen)
