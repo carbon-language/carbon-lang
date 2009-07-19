@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -x objective-c %s -pipe -std=gnu99 -O2 -fexceptions -S -o - | not grep Unwind_Resume
+// RUN: %llvmgcc -m32 -x objective-c %s -pipe -std=gnu99 -O2 -fexceptions -S -o - | not grep Unwind_Resume
 #import <stdio.h>
 
 @interface Foo {
