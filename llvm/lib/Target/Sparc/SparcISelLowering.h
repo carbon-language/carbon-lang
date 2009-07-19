@@ -44,6 +44,7 @@ namespace llvm {
   public:
     SparcTargetLowering(TargetMachine &TM);
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
 
     int getVarArgsFrameOffset() const { return VarArgsFrameOffset; }
 
@@ -57,9 +58,6 @@ namespace llvm {
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
 
-    virtual void LowerArguments(Function &F, SelectionDAG &DAG,
-                                SmallVectorImpl<SDValue> &ArgValues,
-                                DebugLoc dl);
     virtual MachineBasicBlock *EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *MBB) const;
 

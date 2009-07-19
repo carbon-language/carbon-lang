@@ -78,36 +78,41 @@ static SDValue LowerRET(SDValue Op, SelectionDAG &DAG) {
 /// LowerArguments - V8 uses a very simple ABI, where all values are passed in
 /// either one or two GPRs, including FP values.  TODO: we should pass FP values
 /// in FP registers for fastcc functions.
-void
-SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
-                                    SmallVectorImpl<SDValue> &ArgValues,
-                                    DebugLoc dl) {
+SDValue
+SparcTargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op,
+                                           SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
+  SDValue Root = Op.getOperand(0);
+  bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue() != 0;
+  unsigned CC = MF.getFunction()->getCallingConv();
+  DebugLoc dl = Op.getDebugLoc();
+
+  // Assign locations to all of the incoming arguments.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
+  CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_Sparc32);
 
   static const unsigned ArgRegs[] = {
     SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
   };
-
   const unsigned *CurArgReg = ArgRegs, *ArgRegEnd = ArgRegs+6;
   unsigned ArgOffset = 68;
 
-  SDValue Root = DAG.getRoot();
-  std::vector<SDValue> OutChains;
-
-  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
-    MVT ObjectVT = getValueType(I->getType());
-
+  SmallVector<SDValue, 16> ArgValues;
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    SDValue ArgValue;
+    CCValAssign &VA = ArgLocs[i];
+    // FIXME: We ignore the register assignments of AnalyzeFormalArguments
+    // because it doesn't know how to split a double into two i32 registers.
+    MVT ObjectVT = VA.getValVT();
     switch (ObjectVT.getSimpleVT()) {
     default: llvm_unreachable("Unhandled argument type!");
     case MVT::i1:
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
-      if (I->use_empty()) {                // Argument is dead.
-        if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getUNDEF(ObjectVT));
-      } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
+      if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
         unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
         MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
         SDValue Arg = DAG.getCopyFromReg(Root, dl, VReg, MVT::i32);
@@ -141,10 +146,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
       ArgOffset += 4;
       break;
     case MVT::f32:
-      if (I->use_empty()) {                // Argument is dead.
-        if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getUNDEF(ObjectVT));
-      } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
+      if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
         // FP value is passed in an integer register.
         unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
         MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
@@ -163,11 +165,7 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
 
     case MVT::i64:
     case MVT::f64:
-      if (I->use_empty()) {                // Argument is dead.
-        if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        if (CurArgReg < ArgRegEnd) ++CurArgReg;
-        ArgValues.push_back(DAG.getUNDEF(ObjectVT));
-      } else {
+      {
         SDValue HiVal;
         if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
           unsigned VRegHi = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
@@ -206,9 +204,11 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
   }
 
   // Store remaining ArgRegs to the stack if this is a varargs function.
-  if (F.isVarArg()) {
+  if (isVarArg) {
     // Remember the vararg offset for the va_start implementation.
     VarArgsFrameOffset = ArgOffset;
+
+    std::vector<SDValue> OutChains;
 
     for (; CurArgReg != ArgRegEnd; ++CurArgReg) {
       unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
@@ -221,11 +221,19 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG,
       OutChains.push_back(DAG.getStore(DAG.getRoot(), dl, Arg, FIPtr, NULL, 0));
       ArgOffset += 4;
     }
+
+    if (!OutChains.empty()) {
+      OutChains.push_back(Root);
+      Root = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                         &OutChains[0], OutChains.size());
+    }
   }
 
-  if (!OutChains.empty())
-    DAG.setRoot(DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                            &OutChains[0], OutChains.size()));
+  ArgValues.push_back(Root);
+
+  // Return the new list of results.
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getNode()->getVTList(),
+                     &ArgValues[0], ArgValues.size()).getValue(Op.getResNo());
 }
 
 static SDValue LowerCALL(SDValue Op, SelectionDAG &DAG) {
@@ -918,6 +926,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) {
   case ISD::VAARG:              return LowerVAARG(Op, DAG);
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::CALL:               return LowerCALL(Op, DAG);
+  case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::RET:                return LowerRET(Op, DAG);
   }
 }
