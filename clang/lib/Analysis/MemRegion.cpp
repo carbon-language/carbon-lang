@@ -185,6 +185,10 @@ void FieldRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << superRegion << "->" << getDecl()->getNameAsString();
 }
 
+void ObjCIvarRegion::dumpToStream(llvm::raw_ostream& os) const {
+  os << "ivar{" << superRegion << ',' << getDecl()->getNameAsString() << '}';
+}
+
 void StringRegion::dumpToStream(llvm::raw_ostream& os) const {
   LangOptions LO; // FIXME.
   Str->printPretty(os, 0, PrintingPolicy(LO));

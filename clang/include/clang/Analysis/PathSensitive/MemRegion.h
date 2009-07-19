@@ -526,6 +526,8 @@ public:
   const ObjCIvarDecl* getDecl() const { return cast<ObjCIvarDecl>(D); }
   QualType getValueType(ASTContext&) const { return getDecl()->getType(); }
   
+  void dumpToStream(llvm::raw_ostream& os) const;
+  
   static bool classof(const MemRegion* R) {
     return R->getKind() == ObjCIvarRegionKind;
   }
