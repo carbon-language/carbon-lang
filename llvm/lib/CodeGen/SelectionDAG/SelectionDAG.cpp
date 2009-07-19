@@ -3905,11 +3905,11 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
   if (VTList.NumVTs == 1)
     return getNode(Opcode, DL, VTList.VTs[0], Ops, NumOps);
 
+#if 0
   switch (Opcode) {
   // FIXME: figure out how to safely handle things like
   // int foo(int x) { return 1 << (x & 255); }
   // int bar() { return foo(256); }
-#if 0
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:
   case ISD::SHL_PARTS:
@@ -3925,8 +3925,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, DebugLoc DL, SDVTList VTList,
           return getNode(Opcode, DL, VT, N1, N2, N3.getOperand(0));
       }
     break;
-#endif
   }
+#endif
 
   // Memoize the node unless it returns a flag.
   SDNode *N;

@@ -365,9 +365,7 @@ static const char *GetCurrentX86CPU() {
         }
       case 15:
         if (HasSSE3) {
-          switch (Model) {
-          default: return "k8-sse3";
-          }
+          return "k8-sse3";
         } else {
           switch (Model) {
           case 1:  return "opteron";
@@ -376,9 +374,7 @@ static const char *GetCurrentX86CPU() {
           }
         }
       case 16:
-        switch (Model) {
-        default: return "amdfam10";
-        }
+        return "amdfam10";
     default:
       return "generic";
     }
