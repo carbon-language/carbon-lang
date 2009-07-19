@@ -450,18 +450,18 @@ void CodeGenFunction::EmitIndirectSwitches() {
   }         
 }
 
-llvm::Value *CodeGenFunction::GetVLASize(const VariableArrayType *VAT)
-{
+llvm::Value *CodeGenFunction::GetVLASize(const VariableArrayType *VAT) {
   llvm::Value *&SizeEntry = VLASizeMap[VAT];
   
   assert(SizeEntry && "Did not emit size for type");
   return SizeEntry;
 }
 
-llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty)
-{
+llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty) {
   assert(Ty->isVariablyModifiedType() &&
          "Must pass variably modified type to EmitVLASizes!");
+  
+  EnsureInsertPoint();
   
   if (const VariableArrayType *VAT = getContext().getAsVariableArrayType(Ty)) {
     llvm::Value *&SizeEntry = VLASizeMap[VAT];

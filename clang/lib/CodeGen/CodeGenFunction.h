@@ -147,7 +147,11 @@ public:
 
     ~CleanupScope() {
       CGF.PushCleanupBlock(CleanupBB);
-      CGF.Builder.SetInsertPoint(CurBB);
+      // FIXME: This is silly, move this into the builder.
+      if (CurBB)
+        CGF.Builder.SetInsertPoint(CurBB);
+      else
+        CGF.Builder.ClearInsertionPoint();
     }
   };
 
@@ -510,6 +514,8 @@ public:
   // EmitVLASize - Generate code for any VLA size expressions that might occur
   // in a variably modified type. If Ty is a VLA, will return the value that
   // corresponds to the size in bytes of the VLA type. Will return 0 otherwise.
+  ///
+  /// This function can be called with a null (unreachable) insert point.
   llvm::Value *EmitVLASize(QualType Ty);
 
   // GetVLASize - Returns an LLVM value that corresponds to the size in bytes
@@ -537,9 +543,21 @@ public:
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
 
+  /// EmitDecl - Emit a declaration.
+  ///
+  /// This function can be called with a null (unreachable) insert point.
   void EmitDecl(const Decl &D);
+
+  /// EmitBlockVarDecl - Emit a block variable declaration. 
+  ///
+  /// This function can be called with a null (unreachable) insert point.
   void EmitBlockVarDecl(const VarDecl &D);
+
+  /// EmitLocalBlockVarDecl - Emit a local block variable declaration.
+  ///
+  /// This function can be called with a null (unreachable) insert point.
   void EmitLocalBlockVarDecl(const VarDecl &D);
+
   void EmitStaticBlockVarDecl(const VarDecl &D);
 
   /// EmitParmDecl - Emit a ParmVarDecl or an ImplicitParamDecl.

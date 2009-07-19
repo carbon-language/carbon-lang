@@ -112,7 +112,6 @@ CodeGenFunction::CreateStaticBlockVarDecl(const VarDecl &D,
 }
 
 void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) { 
-
   llvm::Value *&DMEntry = LocalDeclMap[&D];
   assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
   
@@ -124,6 +123,8 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   DMEntry = GV;
 
   // Make sure to evaluate VLA bounds now so that we have them for later.
+  //
+  // FIXME: Can this happen?
   if (D.getType()->isVariablyModifiedType())
     EmitVLASize(D.getType());
 
@@ -274,9 +275,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
                                          ::InternalLinkage);
     }
     
+    // FIXME: Can this happen?
     if (Ty->isVariablyModifiedType())
       EmitVLASize(Ty);
   } else {
+    EnsureInsertPoint();
+
     if (!DidCallStackSave) {
       // Save the stack.
       const llvm::Type *LTy =
@@ -321,6 +325,11 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
 
   // Emit debug info for local var declaration.
   if (CGDebugInfo *DI = getDebugInfo()) {
+    // FIXME: Remove this once debug info isn't modeled as instructions.
+    EnsureInsertPoint();
+
+    EmitStopPoint(S);
+    
     DI->setLocation(D.getLocation());
     if (Target.useGlobalsForAutomaticVariables()) {
       DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr), &D);
@@ -338,7 +347,18 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   }
 
   // If this local has an initializer, emit it now.
-  if (const Expr *Init = D.getInit()) {
+  const Expr *Init = D.getInit();
+
+  // If we are at an unreachable point, we don't need to emit the initializer
+  // unless it contains a label.
+  if (!HaveInsertPoint()) {
+    if (!ContainsLabel(Init))
+      Init = 0;
+    else
+      EnsureInsertPoint();
+  }
+
+  if (Init) {
     llvm::Value *Loc = DeclPtr;
     if (isByRef) {
       bool needsCopyDispose = BlockRequiresCopying(Ty);
@@ -357,10 +377,12 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
       EmitAggExpr(Init, Loc, D.getType().isVolatileQualified());
     }
   }
+  
   if (isByRef) {
     const llvm::PointerType *PtrToInt8Ty
       = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
 
+    EnsureInsertPoint();
     llvm::Value *isa_field = Builder.CreateStructGEP(DeclPtr, 0);
     llvm::Value *forwarding_field = Builder.CreateStructGEP(DeclPtr, 1);
     llvm::Value *flags_field = Builder.CreateStructGEP(DeclPtr, 2);

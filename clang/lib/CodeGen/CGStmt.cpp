@@ -43,13 +43,24 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   if (EmitSimpleStmt(S))
     return;
 
-  // If we happen to be at an unreachable point just create a dummy
-  // basic block to hold the code. We could change parts of irgen to
-  // simply not generate this code, but this situation is rare and
-  // probably not worth the effort.
-  // FIXME: Verify previous performance/effort claim.
-  EnsureInsertPoint();
-  
+  // Check if we are generating unreachable code.
+  if (!HaveInsertPoint()) {
+    // If so, and the statement doesn't contain a label, then we do not need to
+    // generate actual code. This is safe because (1) the current point is
+    // unreachable, so we don't need to execute the code, and (2) we've already
+    // handled the statements which update internal data structures (like the
+    // local variable map) which could be used by subsequent statements.
+    if (!ContainsLabel(S)) {
+      // Verify that any decl statements were handled as simple, they may be in
+      // scope of subsequent reachable statements.
+      assert(!isa<DeclStmt>(*S) && "Unexpected DeclStmt!");
+      return;
+    }
+
+    // Otherwise, make a new block to hold the code.
+    EnsureInsertPoint();
+  }
+
   // Generate a stoppoint if we are emitting debug info.
   EmitStopPoint(S);
 
@@ -72,7 +83,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::ForStmtClass:      EmitForStmt(cast<ForStmt>(*S));           break;
     
   case Stmt::ReturnStmtClass:   EmitReturnStmt(cast<ReturnStmt>(*S));     break;
-  case Stmt::DeclStmtClass:     EmitDeclStmt(cast<DeclStmt>(*S));         break;
 
   case Stmt::SwitchStmtClass:   EmitSwitchStmt(cast<SwitchStmt>(*S));     break;
   case Stmt::AsmStmtClass:      EmitAsmStmt(cast<AsmStmt>(*S));           break;
@@ -103,6 +113,7 @@ bool CodeGenFunction::EmitSimpleStmt(const Stmt *S) {
   default: return false;
   case Stmt::NullStmtClass: break;
   case Stmt::CompoundStmtClass: EmitCompoundStmt(cast<CompoundStmt>(*S)); break;
+  case Stmt::DeclStmtClass:     EmitDeclStmt(cast<DeclStmt>(*S));         break;
   case Stmt::LabelStmtClass:    EmitLabelStmt(cast<LabelStmt>(*S));       break;
   case Stmt::GotoStmtClass:     EmitGotoStmt(cast<GotoStmt>(*S));         break;
   case Stmt::BreakStmtClass:    EmitBreakStmt(cast<BreakStmt>(*S));       break;
