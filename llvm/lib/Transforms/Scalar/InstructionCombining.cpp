@@ -2276,31 +2276,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         return R;
   }
 
-  // add (cast *A to intptrtype) B -> 
-  //   cast (GEP (cast *A to i8*) B)  -->  intptrtype
-  {
-    CastInst *CI = dyn_cast<CastInst>(LHS);
-    Value *Other = RHS;
-    if (!CI) {
-      CI = dyn_cast<CastInst>(RHS);
-      Other = LHS;
-    }
-    if (CI && CI->getType()->isSized() && 
-        (CI->getType()->getScalarSizeInBits() ==
-         TD->getIntPtrType()->getPrimitiveSizeInBits()) 
-        && isa<PointerType>(CI->getOperand(0)->getType())) {
-      unsigned AS =
-        cast<PointerType>(CI->getOperand(0)->getType())->getAddressSpace();
-      Value *I2 = InsertBitCastBefore(CI->getOperand(0),
-                                  Context->getPointerType(Type::Int8Ty, AS), I);
-      GetElementPtrInst *GEP = GetElementPtrInst::Create(I2, Other, "ctg2");
-      // A GEP formed from an arbitrary add may overflow.
-      cast<GEPOperator>(GEP)->setHasNoPointerOverflow(false);
-      I2 = InsertNewInstBefore(GEP, I);
-      return new PtrToIntInst(I2, CI->getType());
-    }
-  }
-  
   // add (select X 0 (sub n A)) A  -->  select X A n
   {
     SelectInst *SI = dyn_cast<SelectInst>(LHS);
@@ -8914,65 +8889,7 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   
   if (Instruction *I = commonCastTransforms(CI))
     return I;
-  
-  const Type *DestPointee = cast<PointerType>(CI.getType())->getElementType();
-  if (!DestPointee->isSized()) return 0;
 
-  // If this is inttoptr(add (ptrtoint x), cst), try to turn this into a GEP.
-  ConstantInt *Cst;
-  Value *X;
-  if (match(CI.getOperand(0), m_Add(m_Cast<PtrToIntInst>(m_Value(X)),
-                                    m_ConstantInt(Cst)), *Context)) {
-    // If the source and destination operands have the same type, see if this
-    // is a single-index GEP.
-    if (X->getType() == CI.getType()) {
-      // Get the size of the pointee type.
-      uint64_t Size = TD->getTypeAllocSize(DestPointee);
-
-      // Convert the constant to intptr type.
-      APInt Offset = Cst->getValue();
-      Offset.sextOrTrunc(TD->getPointerSizeInBits());
-
-      // If Offset is evenly divisible by Size, we can do this xform.
-      if (Size && !APIntOps::srem(Offset, APInt(Offset.getBitWidth(), Size))){
-        Offset = APIntOps::sdiv(Offset, APInt(Offset.getBitWidth(), Size));
-        GetElementPtrInst *GEP =
-          GetElementPtrInst::Create(X, Context->getConstantInt(Offset));
-        // A gep synthesized from inttoptr+add+ptrtoint must be assumed to
-        // potentially overflow, in the absense of further analysis.
-        cast<GEPOperator>(GEP)->setHasNoPointerOverflow(false);
-        return GEP;
-      }
-    }
-    // TODO: Could handle other cases, e.g. where add is indexing into field of
-    // struct etc.
-  } else if (CI.getOperand(0)->hasOneUse() &&
-             match(CI.getOperand(0), m_Add(m_Value(X),
-                   m_ConstantInt(Cst)), *Context)) {
-    // Otherwise, if this is inttoptr(add x, cst), try to turn this into an
-    // "inttoptr+GEP" instead of "add+intptr".
-    
-    // Get the size of the pointee type.
-    uint64_t Size = TD->getTypeAllocSize(DestPointee);
-    
-    // Convert the constant to intptr type.
-    APInt Offset = Cst->getValue();
-    Offset.sextOrTrunc(TD->getPointerSizeInBits());
-    
-    // If Offset is evenly divisible by Size, we can do this xform.
-    if (Size && !APIntOps::srem(Offset, APInt(Offset.getBitWidth(), Size))){
-      Offset = APIntOps::sdiv(Offset, APInt(Offset.getBitWidth(), Size));
-      
-      Instruction *P = InsertNewInstBefore(new IntToPtrInst(X, CI.getType(),
-                                                            "tmp"), CI);
-      GetElementPtrInst *GEP =
-        GetElementPtrInst::Create(P, Context->getConstantInt(Offset), "tmp");
-      // A gep synthesized from inttoptr+add+ptrtoint must be assumed to
-      // potentially overflow, in the absense of further analysis.
-      cast<GEPOperator>(GEP)->setHasNoPointerOverflow(false);
-      return GEP;
-    }
-  }
   return 0;
 }
 

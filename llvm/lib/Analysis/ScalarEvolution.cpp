@@ -2938,15 +2938,10 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       return getSCEV(U->getOperand(0));
     break;
 
-  case Instruction::IntToPtr:
-    if (!TD) break; // Without TD we can't analyze pointers.
-    return getTruncateOrZeroExtend(getSCEV(U->getOperand(0)),
-                                   TD->getIntPtrType());
-
-  case Instruction::PtrToInt:
-    if (!TD) break; // Without TD we can't analyze pointers.
-    return getTruncateOrZeroExtend(getSCEV(U->getOperand(0)),
-                                   U->getType());
+    // It's tempting to handle inttoptr and ptrtoint, however this can
+    // lead to pointer expressions which cannot be expanded to GEPs
+    // (because they may overflow). For now, the only pointer-typed
+    // expressions we handle are GEPs and address literals.
 
   case Instruction::GetElementPtr:
     if (!TD) break; // Without TD we can't analyze pointers.

@@ -38,13 +38,8 @@ using namespace llvm;
 // Useful predicates
 //===----------------------------------------------------------------------===//
 
-static const User *isGEP(const Value *V) {
-  if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V))
-    // For the purposes of BasicAliasAnalysis, if the GEP has overflow it
-    // could do crazy things.
-    if (GEP->hasNoPointerOverflow())
-      return GEP;
-  return 0;
+static const GEPOperator *isGEP(const Value *V) {
+  return dyn_cast<GEPOperator>(V);
 }
 
 static const Value *GetGEPOperands(const Value *V, 

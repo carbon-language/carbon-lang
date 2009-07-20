@@ -475,11 +475,8 @@ public:
   static GetElementPtrConstantExpr *Create(Constant *C,
                                            const std::vector<Constant*>&IdxList,
                                            const Type *DestTy) {
-    GetElementPtrConstantExpr *Result = new(IdxList.size() + 1)
-      GetElementPtrConstantExpr(C, IdxList, DestTy);
-    // Getelementptr defaults to having no pointer overflow.
-    cast<GEPOperator>(Result)->setHasNoPointerOverflow(true);
-    return Result;
+    return
+      new(IdxList.size() + 1) GetElementPtrConstantExpr(C, IdxList, DestTy);
   }
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
