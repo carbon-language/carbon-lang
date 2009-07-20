@@ -566,12 +566,14 @@ namespace llvm {
     /// call to be explicit llvm code if it wants to.  This is useful for
     /// turning simple inline asms into LLVM intrinsics, which gives the
     /// compiler more information about the behavior of the code.
+// FIXME: Move this to TargetLowering.
     virtual bool ExpandInlineAsm(CallInst *CI) const {
       return false;
     }
 
     /// emitUsedDirectiveFor - This hook allows targets to selectively decide
     /// not to emit the UsedDirective for some symbols in llvm.used.
+// FIXME: REMOVE this (rdar://7071300)
     virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
                                       Mangler *Mang) const {
       return (GV!=0);
@@ -586,6 +588,7 @@ namespace llvm {
 
     /// SectionKindForGlobal - This hook allows the target to select proper
     /// section kind used for global emission.
+// FIXME: Eliminate this.
     virtual SectionKind::Kind
     SectionKindForGlobal(const GlobalValue *GV) const;
 
@@ -598,36 +601,37 @@ namespace llvm {
 
     /// SectionFlagsForGlobal - This hook allows the target to select proper
     /// section flags either for given global or for section.
+// FIXME: Eliminate this.
     virtual unsigned
     SectionFlagsForGlobal(const GlobalValue *GV = NULL,
                           const char* name = NULL) const;
 
     /// SectionForGlobal - This hooks returns proper section name for given
     /// global with all necessary flags and marks.
+// FIXME: Eliminate this.
     virtual const Section* SectionForGlobal(const GlobalValue *GV) const;
 
     // Helper methods for SectionForGlobal
+// FIXME: Eliminate this.
     virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
                                                SectionKind::Kind kind) const;
 
-    const std::string& getSectionFlags(unsigned Flags) const;
+    const std::string &getSectionFlags(unsigned Flags) const;
     virtual std::string printSectionFlags(unsigned flags) const { return ""; }
 
+// FIXME: Eliminate this.
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
-
     virtual const Section* SelectSectionForMachineConst(const Type *Ty) const;
 
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.
-
     static unsigned getSLEB128Size(int Value);
 
     /// getULEB128Size - Compute the number of bytes required for an unsigned
     /// leb128 value.
-
     static unsigned getULEB128Size(unsigned Value);
 
-    // Data directive accessors
+    // Data directive accessors.
     //
     const char *getData8bitsDirective(unsigned AS = 0) const {
       return AS == 0 ? Data8bitsDirective : getDataASDirective(8, AS);
