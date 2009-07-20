@@ -3033,8 +3033,6 @@ public:
   // Helper function for CheckAssignmentConstraints (C99 6.5.16.1p1)
   AssignConvertType CheckPointerTypesForAssignment(QualType lhsType, 
                                                    QualType rhsType);
-  AssignConvertType CheckPointeeTypesForAssignment(QualType lhsType, 
-                                                   QualType rhsType);
                                                    
   // Helper function for CheckAssignmentConstraints involving two
   // block pointer types.

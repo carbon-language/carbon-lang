@@ -2758,10 +2758,9 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       if (FD || EncodingProperty) {
         // Note that we do extended encoding of protocol qualifer list
         // Only when doing ivar or property encoding.
-        const ObjCObjectPointerType *QIDT = T->getAsObjCQualifiedIdType();
         S += '"';
-        for (ObjCObjectPointerType::qual_iterator I = QIDT->qual_begin(),
-             E = QIDT->qual_end(); I != E; ++I) {
+        for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
+             E = OPT->qual_end(); I != E; ++I) {
           S += '<';
           S += (*I)->getNameAsString();
           S += '>';
@@ -2786,12 +2785,10 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
 
     S += '@';
     if (FD || EncodingProperty) {
-      const ObjCInterfaceType *OIT = OPT->getInterfaceType();
-      ObjCInterfaceDecl *OI = OIT->getDecl();
       S += '"';
-      S += OI->getNameAsCString();
-      for (ObjCInterfaceType::qual_iterator I = OIT->qual_begin(),
-           E = OIT->qual_end(); I != E; ++I) {
+      S += OPT->getInterfaceDecl()->getNameAsCString();
+      for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
+           E = OPT->qual_end(); I != E; ++I) {
         S += '<';
         S += (*I)->getNameAsString();
         S += '>';

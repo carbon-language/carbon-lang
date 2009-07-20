@@ -854,34 +854,6 @@ bool Sema::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
     }
     return true;
   }
-  // FIXME: The code below will be removed when ObjCQualifiedInterfaceType is
-  // removed.
-  if (!lhs->isPointerType())
-    return false;
-  
-  QualType ltype = lhs->getAsPointerType()->getPointeeType();
-  if (const ObjCInterfaceType *lhsQI =
-         ltype->getAsObjCQualifiedInterfaceType()) {
-    ObjCObjectPointerType::qual_iterator LHSProtoI = lhsQI->qual_begin();
-    ObjCObjectPointerType::qual_iterator LHSProtoE = lhsQI->qual_end();
-    for (; LHSProtoI != LHSProtoE; ++LHSProtoI) {
-      bool match = false;
-      ObjCProtocolDecl *lhsProto = *LHSProtoI;
-      for (ObjCObjectPointerType::qual_iterator I = rhsQID->qual_begin(),
-           E = rhsQID->qual_end(); I != E; ++I) {
-        ObjCProtocolDecl *rhsProto = *I;
-        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
-            (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
-          match = true;
-          break;
-        }
-      }
-      if (!match)
-        return false;
-    }
-    return true;
-  }
-  
   return false;
 }
 

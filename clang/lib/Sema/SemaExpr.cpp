@@ -2398,8 +2398,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                      MemberLoc, BaseExpr));
     }
     // Check protocols on qualified interfaces.
-    for (ObjCObjectPointerType::qual_iterator I = IFaceT->qual_begin(),
-         E = IFaceT->qual_end(); I != E; ++I)
+    for (ObjCObjectPointerType::qual_iterator I = OPT->qual_begin(),
+         E = OPT->qual_end(); I != E; ++I)
       if (ObjCPropertyDecl *PD = (*I)->FindPropertyDeclaration(&Member)) {
         // Check whether we can reference this property.
         if (DiagnoseUseOfDecl(PD, MemberLoc))
@@ -3303,7 +3303,6 @@ Action::OwningExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
                                                  RHSExpr, result));
 }
 
-
 // CheckPointerTypesForAssignment - This is a very tricky routine (despite
 // being closely modeled after the C99 spec:-). The odd characteristic of this
 // routine is it effectively iqnores the qualifiers on the top level pointee.
@@ -3317,11 +3316,6 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   lhptee = lhsType->getAsPointerType()->getPointeeType();
   rhptee = rhsType->getAsPointerType()->getPointeeType();
 
-  return CheckPointeeTypesForAssignment(lhptee, rhptee);
-}
-
-Sema::AssignConvertType
-Sema::CheckPointeeTypesForAssignment(QualType lhptee, QualType rhptee) {
   // make sure we operate on the canonical type
   lhptee = Context.getCanonicalType(lhptee);
   rhptee = Context.getCanonicalType(rhptee);
@@ -3495,12 +3489,12 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (isa<PointerType>(rhsType))
       return CheckPointerTypesForAssignment(lhsType, rhsType);
 
+    // In general, C pointers are not compatible with ObjC object pointers.
     if (isa<ObjCObjectPointerType>(rhsType)) {
-      QualType rhptee = rhsType->getAsObjCObjectPointerType()->getPointeeType();
-      QualType lhptee = lhsType->getAsPointerType()->getPointeeType();
-      return CheckPointeeTypesForAssignment(lhptee, rhptee);
+      if (lhsType->isVoidPointerType()) // an exception to the rule.
+        return Compatible;
+      return IncompatiblePointer;
     }
-
     if (rhsType->getAsBlockPointerType()) {
       if (lhsType->getAsPointerType()->getPointeeType()->isVoidType())
         return Compatible;
@@ -3533,18 +3527,19 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   if (isa<ObjCObjectPointerType>(lhsType)) {
     if (rhsType->isIntegerType())
       return IntToPointer;
-
+      
+    // In general, C pointers are not compatible with ObjC object pointers.
     if (isa<PointerType>(rhsType)) {
-      QualType lhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
-      QualType rhptee = rhsType->getAsPointerType()->getPointeeType();
-      return CheckPointeeTypesForAssignment(lhptee, rhptee);
+      if (rhsType->isVoidPointerType()) // an exception to the rule.
+        return Compatible;
+      return IncompatiblePointer;
     }
     if (rhsType->isObjCObjectPointerType()) {
       if (lhsType->isObjCBuiltinType() || rhsType->isObjCBuiltinType())
         return Compatible;
-      QualType lhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
-      QualType rhptee = rhsType->getAsObjCObjectPointerType()->getPointeeType();
-      return CheckPointeeTypesForAssignment(lhptee, rhptee);
+      if (Context.typesAreCompatible(lhsType, rhsType))
+        return Compatible;
+      return IncompatiblePointer;
     }
     if (const PointerType *RHSPT = rhsType->getAsPointerType()) {
       if (RHSPT->getPointeeType()->isVoidType())
@@ -3579,10 +3574,11 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (lhsType->isIntegerType())
       return PointerToInt;
 
+    // In general, C pointers are not compatible with ObjC object pointers.
     if (isa<PointerType>(lhsType)) {
-      QualType rhptee = lhsType->getAsObjCObjectPointerType()->getPointeeType();
-      QualType lhptee = rhsType->getAsPointerType()->getPointeeType();
-      return CheckPointeeTypesForAssignment(lhptee, rhptee);
+      if (lhsType->isVoidPointerType()) // an exception to the rule.
+        return Compatible;
+      return IncompatiblePointer;
     }
     if (isa<BlockPointerType>(lhsType) &&
         rhsType->getAsPointerType()->getPointeeType()->isVoidType())
