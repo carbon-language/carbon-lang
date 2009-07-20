@@ -1049,7 +1049,24 @@ void GRExprEngine::EvalBind(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   else {
     // We are binding to a value other than 'unknown'.  Perform the binding
     // using the StoreManager.
-    newState = state->bindLoc(cast<Loc>(location), Val);
+    Loc L = cast<Loc>(location);
+
+    // Handle implicit casts not reflected in the AST.  This can be due to
+    // custom checker logic such as what handles OSAtomicCompareAndSwap.
+    if (!Val.isUnknownOrUndef())
+      if (const TypedRegion *R =
+            dyn_cast_or_null<TypedRegion>(L.getAsRegion())) {
+        assert(R->isBoundable());
+        QualType ValTy = R->getValueType(getContext());
+        if (Loc::IsLocType(ValTy)) {
+          if (!isa<Loc>(Val))
+            Val = SVator.EvalCastNL(cast<NonLoc>(Val), ValTy);
+        }
+        else if (!isa<NonLoc>(Val))
+          Val = SVator.EvalCastL(cast<Loc>(Val), ValTy);
+      }
+    
+    newState = state->bindLoc(L, Val);
   }
 
   // The next thing to do is check if the GRTransferFuncs object wants to
