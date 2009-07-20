@@ -100,9 +100,9 @@ public:
   }
 };
 
-/// UDivOperator - An Operator with opcode Instruction::UDiv.
+/// SDivOperator - An Operator with opcode Instruction::SDiv.
 ///
-class UDivOperator : public Operator {
+class SDivOperator : public Operator {
 public:
   /// isExact - Test whether this division is known to be exact, with
   /// zero remainder.
@@ -114,12 +114,12 @@ public:
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const UDivOperator *) { return true; }
+  static inline bool classof(const SDivOperator *) { return true; }
   static inline bool classof(const ConstantExpr *CE) {
-    return CE->getOpcode() == Instruction::UDiv;
+    return CE->getOpcode() == Instruction::SDiv;
   }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::UDiv;
+    return I->getOpcode() == Instruction::SDiv;
   }
   static inline bool classof(const Value *V) {
     return (isa<Instruction>(V) && classof(cast<Instruction>(V))) ||
