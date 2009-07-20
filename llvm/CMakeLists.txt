@@ -59,6 +59,7 @@ set(LLVM_ALL_TARGETS
   PIC16
   PowerPC
   Sparc
+  SystemZ
   X86
   XCore
   )
