@@ -14,6 +14,7 @@
 #ifndef ASMLEXER_H
 #define ASMLEXER_H
 
+#include "llvm/MC/MCAsmLexer.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
 #include <cassert>
@@ -52,7 +53,7 @@ namespace asmtok {
 }
 
 /// AsmLexer - Lexer class for assembly files.
-class AsmLexer {
+class AsmLexer : public MCAsmLexer {
   SourceMgr &SrcMgr;
   
   const char *CurPtr;

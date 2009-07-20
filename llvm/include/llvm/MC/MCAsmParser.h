@@ -11,10 +11,7 @@
 #define LLVM_MC_MCASMPARSER_H
 
 namespace llvm {
-class MCAsmParser;
-class MCInst;
-class Target;
-class TargetAsmParser;
+class MCAsmLexer;
 
 /// MCAsmParser - Generic assembler parser interface, for use by target specific
 /// assembly parsers.
@@ -26,6 +23,8 @@ protected: // Can only create subclasses.
  
 public:
   virtual ~MCAsmParser();
+
+  virtual MCAsmLexer &getLexer() = 0;
 };
 
 } // End llvm namespace

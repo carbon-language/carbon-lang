@@ -8,21 +8,29 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCAsmParser.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
 
 namespace {
+  struct X86Operand {
+  };
 
-class X86ATTAsmParser : public TargetAsmParser {
- public:
-  explicit X86ATTAsmParser(const Target &);
+  class X86ATTAsmParser : public TargetAsmParser {
+    bool ParseOperand(X86Operand &Op);
+    
+    bool MatchInstruction(const char *Name, 
+                          llvm::SmallVector<X86Operand, 3> &Operands,
+                          MCInst &Inst);
 
-  virtual bool ParseInstruction(MCAsmParser &AP, const char *Name, 
-                                MCInst &Inst);
-};
-
+  public:
+    explicit X86ATTAsmParser(const Target &);
+    
+    virtual bool ParseInstruction(MCAsmParser &AP, const char *Name, 
+                                  MCInst &Inst);
+  };
 }
 
 X86ATTAsmParser::X86ATTAsmParser(const Target &T) 
@@ -30,9 +38,25 @@ X86ATTAsmParser::X86ATTAsmParser(const Target &T)
 {
 }
 
+bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {
+  return true;
+}
+
+bool 
+X86ATTAsmParser::MatchInstruction(const char *Name, 
+                                  llvm::SmallVector<X86Operand, 3> &Operands,
+                                  MCInst &Inst) {
+  return false;
+}
+
 bool X86ATTAsmParser::ParseInstruction(MCAsmParser &AP, const char *Name, 
                                        MCInst &Inst) {
-  return true;
+  MCAsmLexer &Lexer = AP.getLexer();
+  llvm::SmallVector<X86Operand, 3> Operands;
+  (void) Lexer;
+  (void) Operands;
+  
+  return MatchInstruction(Name, Operands, Inst);
 }
 
 namespace {

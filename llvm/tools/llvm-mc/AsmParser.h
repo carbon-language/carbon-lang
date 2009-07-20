@@ -24,6 +24,7 @@ class MCContext;
 class MCInst;
 class MCStreamer;
 class MCValue;
+class TargetAsmParser;
 
 class AsmParser : MCAsmParser {
 public:
@@ -45,6 +46,8 @@ public:
   
 public:
   TargetAsmParser &getTargetParser() const { return TargetParser; }
+
+  virtual MCAsmLexer &getLexer() { return Lexer; }
 
 private:
   bool ParseStatement();
