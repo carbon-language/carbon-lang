@@ -365,6 +365,47 @@ bool LLParser::ParseNamedGlobal() {
   return ParseAlias(Name, NameLoc, Visibility);
 }
 
+// MDString:
+//   ::= '!' STRINGCONSTANT
+bool LLParser::ParseMDString(Constant *&MDS) {
+  std::string Str;
+  if (ParseStringConstant(Str)) return true;
+  MDS = Context.getMDString(Str.data(), Str.data() + Str.size());
+  return false;
+}
+
+// MDNode:
+//   ::= '!' MDNodeNumber
+bool LLParser::ParseMDNode(Constant *&Node) {
+  // !{ ..., !42, ... }
+  unsigned MID = 0;
+  if (ParseUInt32(MID))  return true;
+  
+  // Check existing MDNode.
+  std::map<unsigned, Constant *>::iterator I = MetadataCache.find(MID);
+  if (I != MetadataCache.end()) {
+    Node = I->second;
+    return false;
+  }
+
+  // Check known forward references.
+  std::map<unsigned, std::pair<Constant *, LocTy> >::iterator
+    FI = ForwardRefMDNodes.find(MID);
+  if (FI != ForwardRefMDNodes.end()) {
+    Node = FI->second.first;
+    return false;
+  }
+
+  // Create MDNode forward reference
+  SmallVector<Value *, 1> Elts;
+  std::string FwdRefName = "llvm.mdnode.fwdref." + utostr(MID);
+  Elts.push_back(Context.getMDString(FwdRefName));
+  MDNode *FwdNode = Context.getMDNode(Elts.data(), Elts.size());
+  ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
+  Node = FwdNode;
+  return false;
+}    
+
 /// ParseStandaloneMetadata:
 ///   !42 = !{...} 
 bool LLParser::ParseStandaloneMetadata() {
@@ -1647,36 +1688,12 @@ bool LLParser::ParseValID(ValID &ID) {
 
     // Standalone metadata reference
     // !{ ..., !42, ... }
-    unsigned MID = 0;
-    if (!ParseUInt32(MID)) {
-      std::map<unsigned, Constant *>::iterator I = MetadataCache.find(MID);
-      if (I != MetadataCache.end()) 
-        ID.ConstantVal = I->second;
-      else {
-        std::map<unsigned, std::pair<Constant *, LocTy> >::iterator
-          FI = ForwardRefMDNodes.find(MID);
-        if (FI != ForwardRefMDNodes.end()) 
-          ID.ConstantVal = FI->second.first;
-        else {
-          // Create MDNode forward reference
-          SmallVector<Value *, 1> Elts;
-          std::string FwdRefName = "llvm.mdnode.fwdref." + utostr(MID);
-          Elts.push_back(Context.getMDString(FwdRefName));
-          MDNode *FwdNode = Context.getMDNode(Elts.data(), Elts.size());
-          ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
-          ID.ConstantVal = FwdNode;
-        }
-      }
-
+    if (!ParseMDNode(ID.ConstantVal))
       return false;
-    }
-    
+
     // MDString:
     //   ::= '!' STRINGCONSTANT
-    std::string Str;
-    if (ParseStringConstant(Str)) return true;
-
-    ID.ConstantVal = Context.getMDString(Str.data(), Str.data() + Str.size());
+    if (ParseMDString(ID.ConstantVal)) return true;
     return false;
   }
   case lltok::APSInt:
