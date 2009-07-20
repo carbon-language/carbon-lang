@@ -61,7 +61,8 @@ public:
 };
 
 /// OverflowingBinaryOperator - Utility class for integer arithmetic operators
-/// which may exhibit overflow - Add, Sub, and Mul.
+/// which may exhibit overflow - Add, Sub, and Mul. It does not include SDiv,
+/// despite that operator having the potential for overflow.
 ///
 class OverflowingBinaryOperator : public Operator {
 public:
