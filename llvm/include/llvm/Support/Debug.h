@@ -18,8 +18,8 @@
 // can specify '-debug-only=foo' to enable JUST the debug information for the
 // foo class.
 //
-// When compiling in release mode, the -debug-* options and all code in DEBUG()
-// statements disappears, so it does not effect the runtime of the code.
+// When compiling without assertions, the -debug-* options and all code in
+// DEBUG() statements disappears, so it does not effect the runtime of the code.
 //
 //===----------------------------------------------------------------------===//
 
