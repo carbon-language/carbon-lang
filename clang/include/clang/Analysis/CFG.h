@@ -29,7 +29,6 @@ namespace clang {
   class Expr;
   class CFG;
   class PrinterHelper;
-  class BlockEdge;
   class LangOptions;
   
 /// CFGBlock - Represents a single basic block in a source-level CFG.
