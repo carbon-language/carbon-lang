@@ -260,6 +260,8 @@ add_subdirectory(lib/Analysis)
 add_subdirectory(lib/Analysis/IPA)
 add_subdirectory(lib/MC)
 
+add_subdirectory(utils/FileCheck)
+
  set(LLVM_ENUM_ASM_PRINTERS "")
  set(LLVM_ENUM_ASM_PARSERS "")
  foreach(t ${LLVM_TARGETS_TO_BUILD})
