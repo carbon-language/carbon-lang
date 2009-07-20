@@ -139,7 +139,7 @@ def err_unexpected_typedef_ident : Error<
   "unexpected type name %0: expected identifier">;
 def err_expected_class_name : Error<"expected class name">;
 def err_destructor_class_name : Error<
-  "destructor name must be same as the class name">;
+  "expected the class name after '~' to name a destructor">;
 def err_unspecified_vla_size_with_static : Error<
   "'static' may not be used with an unspecified variable length array size">;
 
