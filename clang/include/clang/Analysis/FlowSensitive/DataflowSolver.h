@@ -194,9 +194,9 @@ private:
     
     while (!WorkList.isEmpty()) {
       const CFGBlock* B = WorkList.dequeue();
-      ProcessMerge(cfg,B);
+      ProcessMerge(cfg, B);
       ProcessBlock(B, recordStmtValues, AnalysisDirTag());
-      UpdateEdges(cfg,B,TF.getVal());
+      UpdateEdges(cfg, B, TF.getVal());
     }
   }  
   
@@ -211,16 +211,22 @@ private:
     bool firstMerge = true;
     
     for (PrevBItr I=ItrTraits::PrevBegin(B),E=ItrTraits::PrevEnd(B); I!=E; ++I){
+      
+      CFGBlock *PrevBlk = *I;
+
+      if (!PrevBlk)
+        continue;
 
       typename EdgeDataMapTy::iterator EI =
-        M.find(ItrTraits::PrevEdge(B, *I));
+        M.find(ItrTraits::PrevEdge(B, PrevBlk));
 
       if (EI != M.end()) {
         if (firstMerge) {
           firstMerge = false;
           V.copyValues(EI->second);
         }
-        else Merge(V,EI->second);
+        else
+          Merge(V, EI->second);
       }
     }
     
@@ -263,7 +269,8 @@ private:
   //    forward/backward analysis respectively)
   void UpdateEdges(CFG& cfg, const CFGBlock* B, ValTy& V) {
     for (NextBItr I=ItrTraits::NextBegin(B), E=ItrTraits::NextEnd(B); I!=E; ++I)
-      UpdateEdgeValue(ItrTraits::NextEdge(B, *I),V,*I);
+      if (CFGBlock *NextBlk = *I)
+        UpdateEdgeValue(ItrTraits::NextEdge(B, NextBlk),V, NextBlk);
   }
     
   /// UpdateEdgeValue - Update the value associated with a given edge.
