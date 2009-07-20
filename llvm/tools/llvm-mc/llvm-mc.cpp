@@ -186,9 +186,10 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<MCStreamer> Str(createAsmStreamer(Ctx, outs()));
 
   // FIXME: Target hook & command line option for initial section.
-  Str.get()->SwitchSection(Ctx.GetSection("__TEXT,__text,regular,pure_instructions"));
+  Str.get()->SwitchSection(Ctx.GetSection("__TEXT,__text,"
+                                          "regular,pure_instructions"));
 
-  AsmParser Parser(SrcMgr, Ctx, *Str.get());
+  AsmParser Parser(SrcMgr, Ctx, *Str.get(), *TAP);
   return Parser.Run();
 }  
 

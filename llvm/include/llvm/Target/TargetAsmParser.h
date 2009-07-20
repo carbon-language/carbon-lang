@@ -11,6 +11,8 @@
 #define LLVM_TARGET_TARGETPARSER_H
 
 namespace llvm {
+class MCAsmParser;
+class MCInst;
 class Target;
 
 /// TargetAsmParser - Generic interface to target specific assembly parsers.
@@ -27,6 +29,21 @@ public:
   virtual ~TargetAsmParser();
 
   const Target &getTarget() const { return TheTarget; }
+
+  /// ParseInstruction - Parse one assembly instruction.
+  ///
+  /// The parser is positioned following the instruction name. The target
+  /// specific instruction parser should parse the entire instruction and
+  /// construct the appropriate MCInst, or emit an error. On success, the entire
+  /// line should be parsed up to and including the end-of-statement token. On
+  /// failure, the parser is not required to read to the end of the line.
+  //
+  /// \param AP - The current parser object.
+  /// \param Name - The instruction name.
+  /// \param Inst [out] - On success, the parsed instruction.
+  /// \return True on failure.
+  virtual bool ParseInstruction(MCAsmParser &AP, const char *Name, 
+                                MCInst &Inst) = 0;
 };
 
 } // End llvm namespace

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "llvm/MC/MCAsmParser.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
@@ -17,6 +18,9 @@ namespace {
 class X86ATTAsmParser : public TargetAsmParser {
  public:
   explicit X86ATTAsmParser(const Target &);
+
+  virtual bool ParseInstruction(MCAsmParser &AP, const char *Name, 
+                                MCInst &Inst);
 };
 
 }
@@ -24,6 +28,11 @@ class X86ATTAsmParser : public TargetAsmParser {
 X86ATTAsmParser::X86ATTAsmParser(const Target &T) 
   : TargetAsmParser(T)
 {
+}
+
+bool X86ATTAsmParser::ParseInstruction(MCAsmParser &AP, const char *Name, 
+                                       MCInst &Inst) {
+  return true;
 }
 
 namespace {

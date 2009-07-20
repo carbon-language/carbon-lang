@@ -15,6 +15,7 @@
 #define ASMPARSER_H
 
 #include "AsmLexer.h"
+#include "llvm/MC/MCAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
@@ -24,7 +25,7 @@ class MCInst;
 class MCStreamer;
 class MCValue;
 
-class AsmParser {
+class AsmParser : MCAsmParser {
 public:
   struct X86Operand;
 
@@ -32,14 +33,19 @@ private:
   AsmLexer Lexer;
   MCContext &Ctx;
   MCStreamer &Out;
+  TargetAsmParser &TargetParser;
   
 public:
-  AsmParser(SourceMgr &SM, MCContext &ctx, MCStreamer &OutStr)
-    : Lexer(SM), Ctx(ctx), Out(OutStr) {}
+  AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out, 
+            TargetAsmParser &_TargetParser)
+    : Lexer(_SM), Ctx(_Ctx), Out(_Out), TargetParser(_TargetParser) {}
   ~AsmParser() {}
   
   bool Run();
   
+public:
+  TargetAsmParser &getTargetParser() const { return TargetParser; }
+
 private:
   bool ParseStatement();
 

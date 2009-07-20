@@ -20,6 +20,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
 
 void AsmParser::Warning(SMLoc L, const char *Msg) {
@@ -548,7 +549,8 @@ bool AsmParser::ParseStatement() {
   }
 
   MCInst Inst;
-  if (ParseX86InstOperands(IDVal, Inst))
+  if (ParseX86InstOperands(IDVal, Inst) &&
+      getTargetParser().ParseInstruction(*this, IDVal, Inst))
     return true;
   
   if (Lexer.isNot(asmtok::EndOfStatement))
