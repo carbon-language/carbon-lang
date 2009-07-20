@@ -351,7 +351,7 @@ multiclass T2I_sh_ir<string opc, PatFrag opnode> {
 /// T21_cmp_irs - Defines a set of (op r, {so_imm|r|so_reg}) cmp / test
 /// patterns. Similar to T2I_bin_irs except the instruction does not produce
 /// a explicit result, only implicitly set CPSR.
-let Uses = [CPSR] in {
+let Defs = [CPSR] in {
 multiclass T2I_cmp_is<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2I<(outs), (ins GPR:$lhs, t2_so_imm:$rhs),
