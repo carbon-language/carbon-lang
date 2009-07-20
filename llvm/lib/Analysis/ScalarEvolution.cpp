@@ -2644,7 +2644,9 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
     APInt Mask = APInt::getAllOnesValue(BitWidth);
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
     ComputeMaskedBits(U->getValue(), Mask, Zeros, Ones, TD);
-    return ConstantRange(Ones, ~Zeros);
+    if (Ones == ~Zeros + 1)
+      return FullSet;
+    return ConstantRange(Ones, ~Zeros + 1);
   }
 
   return FullSet;
