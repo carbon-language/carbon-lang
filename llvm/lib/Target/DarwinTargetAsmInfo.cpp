@@ -107,23 +107,23 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
 /// emitUsedDirectiveFor - On Darwin, internally linked data beginning with
 /// the PrivateGlobalPrefix or the LessPrivateGlobalPrefix does not have the
 /// directive emitted (this occurs in ObjC metadata).
-bool
-DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
-                                          Mangler *Mang) const {
-  if (GV==0)
-    return false;
+bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
+                                               Mangler *Mang) const {
+  if (!GV) return false;
   
-  /// FIXME: WHAT IS THIS?
-  
-  if (GV->hasLocalLinkage() && !isa<Function>(GV) &&
-      ((strlen(getPrivateGlobalPrefix()) != 0 &&
-        Mang->getMangledName(GV).substr(0,strlen(getPrivateGlobalPrefix())) ==
-          getPrivateGlobalPrefix()) ||
-       (strlen(getLessPrivateGlobalPrefix()) != 0 &&
-        Mang->getMangledName(GV).substr(0,
-                                        strlen(getLessPrivateGlobalPrefix())) ==
-          getLessPrivateGlobalPrefix())))
-    return false;
+  // Check whether the mangled name has the "Private" or "LessPrivate" prefix.
+  if (GV->hasLocalLinkage() && !isa<Function>(GV)) {
+    const std::string &Name = Mang->getMangledName(GV);
+    const char *PGPrefix = getPrivateGlobalPrefix();
+    const char *LPGPrefix = getLessPrivateGlobalPrefix();
+    unsigned PGPLen = strlen(PGPrefix);
+    unsigned LPGPLen = strlen(LPGPrefix);
+
+    if ((PGPLen != 0 && Name.substr(0, PGPLen) == PGPrefix) ||
+        (LPGPLen != 0 && Name.substr(0, LPGPLen) == LPGPrefix))
+      return false;
+  }
+
   return true;
 }
 

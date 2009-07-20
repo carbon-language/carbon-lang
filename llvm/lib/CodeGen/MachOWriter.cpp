@@ -774,4 +774,3 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
 }
 
 } // end namespace llvm
-
