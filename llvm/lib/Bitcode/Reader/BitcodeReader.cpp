@@ -60,19 +60,20 @@ static bool ConvertToString(SmallVector<uint64_t, 64> &Record, unsigned Idx,
 static GlobalValue::LinkageTypes GetDecodedLinkage(unsigned Val) {
   switch (Val) {
   default: // Map unknown/new linkages to external
-  case 0: return GlobalValue::ExternalLinkage;
-  case 1: return GlobalValue::WeakAnyLinkage;
-  case 2: return GlobalValue::AppendingLinkage;
-  case 3: return GlobalValue::InternalLinkage;
-  case 4: return GlobalValue::LinkOnceAnyLinkage;
-  case 5: return GlobalValue::DLLImportLinkage;
-  case 6: return GlobalValue::DLLExportLinkage;
-  case 7: return GlobalValue::ExternalWeakLinkage;
-  case 8: return GlobalValue::CommonLinkage;
-  case 9: return GlobalValue::PrivateLinkage;
+  case 0:  return GlobalValue::ExternalLinkage;
+  case 1:  return GlobalValue::WeakAnyLinkage;
+  case 2:  return GlobalValue::AppendingLinkage;
+  case 3:  return GlobalValue::InternalLinkage;
+  case 4:  return GlobalValue::LinkOnceAnyLinkage;
+  case 5:  return GlobalValue::DLLImportLinkage;
+  case 6:  return GlobalValue::DLLExportLinkage;
+  case 7:  return GlobalValue::ExternalWeakLinkage;
+  case 8:  return GlobalValue::CommonLinkage;
+  case 9:  return GlobalValue::PrivateLinkage;
   case 10: return GlobalValue::WeakODRLinkage;
   case 11: return GlobalValue::LinkOnceODRLinkage;
   case 12: return GlobalValue::AvailableExternallyLinkage;
+  case 13: return GlobalValue::LinkerPrivateLinkage;
   }
 }
 

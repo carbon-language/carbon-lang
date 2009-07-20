@@ -538,6 +538,7 @@ printModuleLevelGV(const GlobalVariable* GVar) {
     O << TAI->getGlobalDirective() << name << '\n';
     // Fall Through
    case GlobalValue::PrivateLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
    case GlobalValue::InternalLinkage:
     if (CVA && CVA->isCString())
       printSizeAndType = false;

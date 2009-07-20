@@ -25,6 +25,14 @@ class Value;
 class GlobalValue;
 
 class Mangler {
+public:
+  enum ManglerPrefixTy {
+    DefaultPrefixTy,       ///< Emit default string before each symbol.
+    PrivatePrefixTy,       ///< Emit "private" prefix before each symbol.
+    LinkerPrivatePrefixTy  ///< Emit "linker private" prefix before each symbol.
+  };
+
+private:
   /// Prefix - This string is added to each symbol that is emitted, unless the
   /// symbol is marked as not needing this prefix.
   const char *Prefix;
@@ -32,6 +40,10 @@ class Mangler {
   /// PrivatePrefix - This string is emitted before each symbol with private
   /// linkage.
   const char *PrivatePrefix;
+
+  /// LinkerPrivatePrefix - This string is emitted before each symbol with
+  /// "linker_private" linkage.
+  const char *LinkerPrivatePrefix;
 
   /// UseQuotes - If this is set, the target accepts global names in quotes,
   /// e.g. "foo bar" is a legal name.  This syntax is used instead of escaping
@@ -50,12 +62,13 @@ class Mangler {
 
   /// AcceptableChars - This bitfield contains a one for each character that is
   /// allowed to be part of an unmangled name.
-  unsigned AcceptableChars[256/32];
-public:
+  unsigned AcceptableChars[256 / 32];
 
+public:
   // Mangler ctor - if a prefix is specified, it will be prepended onto all
   // symbols.
-  Mangler(Module &M, const char *Prefix = "", const char *privatePrefix = "");
+  Mangler(Module &M, const char *Prefix = "", const char *privatePrefix = "",
+          const char *linkerPrivatePrefix = "");
 
   /// setUseQuotes - If UseQuotes is set to true, this target accepts quoted
   /// strings for assembler labels.
@@ -90,7 +103,7 @@ public:
   /// from getValueName.
   ///
   std::string makeNameProper(const std::string &x,
-                             bool hasPrivateLinkage = false);
+                             ManglerPrefixTy PrefixTy = DefaultPrefixTy);
 };
 
 } // End llvm namespace

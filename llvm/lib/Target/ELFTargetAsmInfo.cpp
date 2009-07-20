@@ -77,6 +77,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     switch (F->getLinkage()) {
      default: llvm_unreachable("Unknown linkage type!");
      case Function::PrivateLinkage:
+     case Function::LinkerPrivateLinkage:
      case Function::InternalLinkage:
      case Function::DLLExportLinkage:
      case Function::ExternalLinkage:

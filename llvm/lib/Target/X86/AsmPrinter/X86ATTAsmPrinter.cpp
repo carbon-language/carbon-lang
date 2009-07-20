@@ -171,6 +171,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
     EmitAlignment(FnAlign, F);
     break;
   case Function::DLLExportLinkage:
@@ -877,6 +878,7 @@ void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << "\t.globl " << name << '\n';
     // FALL THROUGH
   case GlobalValue::PrivateLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
   case GlobalValue::InternalLinkage:
      break;
   default:

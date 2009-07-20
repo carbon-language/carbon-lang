@@ -709,6 +709,9 @@ CalculateAliasLinkage(const GlobalValue *SGV, const GlobalValue *DGV) {
   else if (SL == GlobalValue::InternalLinkage &&
            DL == GlobalValue::InternalLinkage)
     return GlobalValue::InternalLinkage;
+  else if (SL == GlobalValue::LinkerPrivateLinkage &&
+           DL == GlobalValue::LinkerPrivateLinkage)
+    return GlobalValue::LinkerPrivateLinkage;
   else {
     assert (SL == GlobalValue::PrivateLinkage &&
             DL == GlobalValue::PrivateLinkage && "Unexpected linkage type");

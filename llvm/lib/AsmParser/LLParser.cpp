@@ -123,18 +123,19 @@ bool LLParser::ParseTopLevelEntities() {
     // optional leading prefixes, the production is:
     // GlobalVar ::= OptionalLinkage OptionalVisibility OptionalThreadLocal
     //               OptionalAddrSpace ('constant'|'global') ...
-    case lltok::kw_private:       // OptionalLinkage
-    case lltok::kw_internal:      // OptionalLinkage
-    case lltok::kw_weak:          // OptionalLinkage
-    case lltok::kw_weak_odr:      // OptionalLinkage
-    case lltok::kw_linkonce:      // OptionalLinkage
-    case lltok::kw_linkonce_odr:  // OptionalLinkage
-    case lltok::kw_appending:     // OptionalLinkage
-    case lltok::kw_dllexport:     // OptionalLinkage
-    case lltok::kw_common:        // OptionalLinkage
-    case lltok::kw_dllimport:     // OptionalLinkage
-    case lltok::kw_extern_weak:   // OptionalLinkage
-    case lltok::kw_external: {    // OptionalLinkage
+    case lltok::kw_private :       // OptionalLinkage
+    case lltok::kw_linker_private: // OptionalLinkage
+    case lltok::kw_internal:       // OptionalLinkage
+    case lltok::kw_weak:           // OptionalLinkage
+    case lltok::kw_weak_odr:       // OptionalLinkage
+    case lltok::kw_linkonce:       // OptionalLinkage
+    case lltok::kw_linkonce_odr:   // OptionalLinkage
+    case lltok::kw_appending:      // OptionalLinkage
+    case lltok::kw_dllexport:      // OptionalLinkage
+    case lltok::kw_common:         // OptionalLinkage
+    case lltok::kw_dllimport:      // OptionalLinkage
+    case lltok::kw_extern_weak:    // OptionalLinkage
+    case lltok::kw_external: {     // OptionalLinkage
       unsigned Linkage, Visibility;
       if (ParseOptionalLinkage(Linkage) ||
           ParseOptionalVisibility(Visibility) ||
@@ -420,7 +421,8 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
       Linkage != GlobalValue::WeakAnyLinkage &&
       Linkage != GlobalValue::WeakODRLinkage &&
       Linkage != GlobalValue::InternalLinkage &&
-      Linkage != GlobalValue::PrivateLinkage)
+      Linkage != GlobalValue::PrivateLinkage &&
+      Linkage != GlobalValue::LinkerPrivateLinkage)
     return Error(LinkageLoc, "invalid linkage type for alias");
   
   Constant *Aliasee;
@@ -792,6 +794,7 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
 /// ParseOptionalLinkage
 ///   ::= /*empty*/
 ///   ::= 'private'
+///   ::= 'linker_private'
 ///   ::= 'internal'
 ///   ::= 'weak'
 ///   ::= 'weak_odr'
@@ -806,22 +809,23 @@ bool LLParser::ParseOptionalAttrs(unsigned &Attrs, unsigned AttrKind) {
 bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   HasLinkage = false;
   switch (Lex.getKind()) {
-  default:                     Res = GlobalValue::ExternalLinkage; return false;
-  case lltok::kw_private:      Res = GlobalValue::PrivateLinkage; break;
-  case lltok::kw_internal:     Res = GlobalValue::InternalLinkage; break;
-  case lltok::kw_weak:         Res = GlobalValue::WeakAnyLinkage; break;
-  case lltok::kw_weak_odr:     Res = GlobalValue::WeakODRLinkage; break;
-  case lltok::kw_linkonce:     Res = GlobalValue::LinkOnceAnyLinkage; break;
-  case lltok::kw_linkonce_odr: Res = GlobalValue::LinkOnceODRLinkage; break;
+  default:                       Res=GlobalValue::ExternalLinkage; return false;
+  case lltok::kw_private:        Res = GlobalValue::PrivateLinkage;       break;
+  case lltok::kw_linker_private: Res = GlobalValue::LinkerPrivateLinkage; break;
+  case lltok::kw_internal:       Res = GlobalValue::InternalLinkage;      break;
+  case lltok::kw_weak:           Res = GlobalValue::WeakAnyLinkage;       break;
+  case lltok::kw_weak_odr:       Res = GlobalValue::WeakODRLinkage;       break;
+  case lltok::kw_linkonce:       Res = GlobalValue::LinkOnceAnyLinkage;   break;
+  case lltok::kw_linkonce_odr:   Res = GlobalValue::LinkOnceODRLinkage;   break;
   case lltok::kw_available_externally:
     Res = GlobalValue::AvailableExternallyLinkage;
     break;
-  case lltok::kw_appending:    Res = GlobalValue::AppendingLinkage; break;
-  case lltok::kw_dllexport:    Res = GlobalValue::DLLExportLinkage; break;
-  case lltok::kw_common:       Res = GlobalValue::CommonLinkage; break;
-  case lltok::kw_dllimport:    Res = GlobalValue::DLLImportLinkage; break;
-  case lltok::kw_extern_weak:  Res = GlobalValue::ExternalWeakLinkage; break;
-  case lltok::kw_external:     Res = GlobalValue::ExternalLinkage; break;
+  case lltok::kw_appending:      Res = GlobalValue::AppendingLinkage;     break;
+  case lltok::kw_dllexport:      Res = GlobalValue::DLLExportLinkage;     break;
+  case lltok::kw_common:         Res = GlobalValue::CommonLinkage;        break;
+  case lltok::kw_dllimport:      Res = GlobalValue::DLLImportLinkage;     break;
+  case lltok::kw_extern_weak:    Res = GlobalValue::ExternalWeakLinkage;  break;
+  case lltok::kw_external:       Res = GlobalValue::ExternalLinkage;      break;
   }
   Lex.Lex();
   HasLinkage = true;
@@ -2211,6 +2215,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       return Error(LinkageLoc, "invalid linkage for function definition");
     break;
   case GlobalValue::PrivateLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
   case GlobalValue::InternalLinkage:
   case GlobalValue::AvailableExternallyLinkage:
   case GlobalValue::LinkOnceAnyLinkage:

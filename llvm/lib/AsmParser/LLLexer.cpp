@@ -474,6 +474,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(global);  KEYWORD(constant);
 
   KEYWORD(private);
+  KEYWORD(linker_private);
   KEYWORD(internal);
   KEYWORD(available_externally);
   KEYWORD(linkonce);

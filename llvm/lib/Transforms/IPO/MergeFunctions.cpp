@@ -451,6 +451,7 @@ static LinkageCategory categorize(const Function *F) {
   switch (F->getLinkage()) {
   case GlobalValue::InternalLinkage:
   case GlobalValue::PrivateLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
     return Internal;
 
   case GlobalValue::WeakAnyLinkage:

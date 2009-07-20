@@ -32,7 +32,7 @@ static std::string MangleLetter(unsigned char C) {
 /// in them, so mangle them as appropriate.
 ///
 std::string Mangler::makeNameProper(const std::string &X,
-                                    bool hasPrivateLinkage) {
+                                    ManglerPrefixTy PrefixTy) {
   assert(!X.empty() && "Cannot mangle empty strings");
   
   if (!UseQuotes) {
@@ -59,9 +59,13 @@ std::string Mangler::makeNameProper(const std::string &X,
 
     if (NeedPrefix) {
       Result = Prefix + Result;
-      if (hasPrivateLinkage)
+
+      if (PrefixTy == PrivatePrefixTy)
         Result = PrivatePrefix + Result;
+      else if (PrefixTy == LinkerPrivatePrefixTy)
+        Result = LinkerPrivatePrefix + Result;
     }
+
     return Result;
   }
 
@@ -93,8 +97,12 @@ std::string Mangler::makeNameProper(const std::string &X,
       return X.substr(1);   // Strip off the \001.
     
     Result = Prefix + X;
-    if (hasPrivateLinkage)
+
+    if (PrefixTy == PrivatePrefixTy)
       Result = PrivatePrefix + Result;
+    else if (PrefixTy == LinkerPrivatePrefixTy)
+      Result = LinkerPrivatePrefix + Result;
+
     return Result;
   }
   
@@ -112,9 +120,13 @@ std::string Mangler::makeNameProper(const std::string &X,
 
   if (NeedPrefix) {
     Result = Prefix + Result;
-    if (hasPrivateLinkage)
+
+    if (PrefixTy == PrivatePrefixTy)
       Result = PrivatePrefix + Result;
+    else if (PrefixTy == LinkerPrivatePrefixTy)
+      Result = LinkerPrivatePrefix + Result;
   }
+
   Result = '"' + Result + '"';
   return Result;
 }
@@ -128,10 +140,13 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
                                     bool ForcePrivate) {
   assert((!isa<Function>(GV) || !cast<Function>(GV)->isIntrinsic()) &&
          "Intrinsic functions cannot be mangled by Mangler");
-  
+
+  ManglerPrefixTy PrefixTy =
+    (GV->hasPrivateLinkage() || ForcePrivate) ? PrivatePrefixTy :
+     GV->hasLinkerPrivateLinkage() ? LinkerPrivatePrefixTy : DefaultPrefixTy;
+
   if (GV->hasName())
-    return makeNameProper(GV->getName() + Suffix,
-                          GV->hasPrivateLinkage() | ForcePrivate);
+    return makeNameProper(GV->getName() + Suffix, PrefixTy);
   
   // Get the ID for the global, assigning a new one if we haven't got one
   // already.
@@ -139,12 +154,13 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
   if (ID == 0) ID = NextAnonGlobalID++;
   
   // Must mangle the global into a unique ID.
-  return makeNameProper("__unnamed_" + utostr(ID) + Suffix,
-                        GV->hasPrivateLinkage() | ForcePrivate);
+  return makeNameProper("__unnamed_" + utostr(ID) + Suffix, PrefixTy);
 }
 
-Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix)
-  : Prefix(prefix), PrivatePrefix (privatePrefix), UseQuotes(false),
+Mangler::Mangler(Module &M, const char *prefix, const char *privatePrefix,
+                 const char *linkerPrivatePrefix)
+  : Prefix(prefix), PrivatePrefix(privatePrefix),
+    LinkerPrivatePrefix(linkerPrivatePrefix), UseQuotes(false),
     NextAnonGlobalID(1) {
   std::fill(AcceptableChars, array_endof(AcceptableChars), 0);
 

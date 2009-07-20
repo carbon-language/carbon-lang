@@ -288,6 +288,8 @@ namespace {
       Out << "GlobalValue::InternalLinkage"; break;
     case GlobalValue::PrivateLinkage:
       Out << "GlobalValue::PrivateLinkage"; break;
+    case GlobalValue::LinkerPrivateLinkage:
+      Out << "GlobalValue::LinkerPrivateLinkage"; break;
     case GlobalValue::AvailableExternallyLinkage:
       Out << "GlobalValue::AvailableExternallyLinkage "; break;
     case GlobalValue::LinkOnceAnyLinkage:

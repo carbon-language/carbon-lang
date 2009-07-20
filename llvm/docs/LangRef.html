@@ -20,7 +20,24 @@
   <li><a href="#highlevel">High Level Structure</a>
     <ol>
       <li><a href="#modulestructure">Module Structure</a></li>
-      <li><a href="#linkage">Linkage Types</a></li>
+      <li><a href="#linkage">Linkage Types</a>
+        <ol>
+          <li><a href="#linkage_private">private</a></li>
+          <li><a href="#linkage_linker_private">linker_private</a></li>
+          <li><a href="#linkage_internal">internal</a></li>
+          <li><a href="#linkage_available_externally">available_externally</a></li>
+          <li><a href="#linkage_linkonce">linkonce</a></li>
+          <li><a href="#linkage_common">common</a></li>
+          <li><a href="#linkage_weak">weak</a></li>
+          <li><a href="#linkage_appending">appending</a></li>
+          <li><a href="#linkage_externweak">extern_weak</a></li>
+          <li><a href="#linkage_linkonce">linkonce_odr</a></li>
+          <li><a href="#linkage_weak">weak_odr</a></li>
+          <li><a href="#linkage_external">externally visible</a></li>
+          <li><a href="#linkage_dllimport">dllimport</a></li>
+          <li><a href="#linkage_dllexport">dllexport</a></li>
+        </ol>
+      </li>
       <li><a href="#callingconv">Calling Conventions</a></li>
       <li><a href="#namedtypes">Named Types</a></li>
       <li><a href="#globalvars">Global Variables</a></li>
@@ -502,6 +519,11 @@ All Global Variables and Functions have one of the following types of linkage:
   object file.
   </dd>
 
+  <dt><tt><b><a name="linkage_linker_private">linker_private</a></b></tt>: </dt>
+
+  <dd>Similar to private, but the symbol is passed through the assembler and
+      removed by the linker after evaluation.</dd>
+
   <dt><tt><b><a name="linkage_internal">internal</a></b></tt>: </dt>
 
   <dd> Similar to private, but the value shows as a local symbol (STB_LOCAL in
@@ -509,7 +531,7 @@ All Global Variables and Functions have one of the following types of linkage:
   '<tt>static</tt>' keyword in C.
   </dd>
 
-  <dt><tt><b><a name="available_externally">available_externally</a></b></tt>:
+  <dt><tt><b><a name="linkage_available_externally">available_externally</a></b></tt>:
   </dt>
 
   <dd>Globals with "<tt>available_externally</tt>" linkage are never emitted

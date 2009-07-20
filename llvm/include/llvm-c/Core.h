@@ -141,6 +141,7 @@ typedef enum {
   LLVMInternalLinkage,    /**< Rename collisions when linking (static
                                functions) */
   LLVMPrivateLinkage,     /**< Like Internal, but omit from symbol table */
+  LLVMLinkerPrivateLinkage, /**< Like Private, but linker removes. */
   LLVMDLLImportLinkage,   /**< Function to be imported from DLL */
   LLVMDLLExportLinkage,   /**< Function to be accessible from DLL */
   LLVMExternalWeakLinkage,/**< ExternalWeak linkage description */

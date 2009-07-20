@@ -317,6 +317,7 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
    case GlobalValue::PrivateLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
     break;
    case GlobalValue::GhostLinkage:
     llvm_unreachable("GhostLinkage cannot appear in IA64AsmPrinter!");

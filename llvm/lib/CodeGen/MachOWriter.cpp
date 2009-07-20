@@ -764,6 +764,9 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
   case GlobalValue::PrivateLinkage:
     GVName = TAI->getPrivateGlobalPrefix() + name;
     break;
+  case GlobalValue::LinkerPrivateLinkage:
+    GVName = TAI->getLessPrivateGlobalPrefix() + name;
+    break;
   case GlobalValue::InternalLinkage:
     GVName = TAI->getGlobalPrefix() + name;
     break;

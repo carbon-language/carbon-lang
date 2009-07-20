@@ -437,6 +437,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
@@ -571,6 +572,7 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       << "\t.type " << name << ", @object\n";
     // FALL THROUGH
    case GlobalValue::PrivateLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
    case GlobalValue::InternalLinkage:
     break;
    default:

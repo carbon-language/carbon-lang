@@ -70,9 +70,12 @@ namespace {
       void Init(const std::string &GV, Mangler *Mang) {
         // Already initialized.
         if (!Stub.empty()) return;
-        Stub = Mang->makeNameProper(GV+"$stub", true);
-        LazyPtr = Mang->makeNameProper(GV+"$lazy_ptr", true);
-        AnonSymbol = Mang->makeNameProper(GV+"$stub$tmp", true);
+        Stub = Mang->makeNameProper(GV + "$stub",
+                                    Mangler::PrivatePrefixTy);
+        LazyPtr = Mang->makeNameProper(GV + "$lazy_ptr",
+                                       Mangler::PrivatePrefixTy);
+        AnonSymbol = Mang->makeNameProper(GV + "$stub$tmp",
+                                          Mangler::PrivatePrefixTy);
       }
     };
     
@@ -594,6 +597,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
@@ -725,6 +729,7 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
    case GlobalValue::PrivateLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
     break;
    default:
     llvm_unreachable("Unknown linkage type!");
@@ -771,6 +776,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:  // Symbols default to internal.
     break;
   case Function::ExternalLinkage:
@@ -954,6 +960,7 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     // FALL THROUGH
    case GlobalValue::InternalLinkage:
    case GlobalValue::PrivateLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
     break;
    default:
     llvm_unreachable("Unknown linkage type!");

@@ -146,6 +146,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unsupported linkage type!");
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:
     EmitAlignment(FnAlign);
     break;

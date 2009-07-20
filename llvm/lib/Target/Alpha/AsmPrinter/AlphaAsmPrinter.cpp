@@ -157,6 +157,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
     break;
    case Function::ExternalLinkage:
      O << "\t.globl " << CurrentFnName << "\n";
@@ -245,6 +246,7 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
       break;
     case GlobalValue::InternalLinkage:
     case GlobalValue::PrivateLinkage:
+    case GlobalValue::LinkerPrivateLinkage:
       break;
     default:
       llvm_unreachable("Unknown linkage type!");

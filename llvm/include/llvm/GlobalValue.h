@@ -37,13 +37,14 @@ public:
     WeakAnyLinkage,     ///< Keep one copy of named function when linking (weak)
     WeakODRLinkage,     ///< Same, but only replaced by something equivalent.
     AppendingLinkage,   ///< Special purpose, only applies to global arrays
-    InternalLinkage,    ///< Rename collisions when linking (static functions)
-    PrivateLinkage,     ///< Like Internal, but omit from symbol table
+    InternalLinkage,    ///< Rename collisions when linking (static functions).
+    PrivateLinkage,     ///< Like Internal, but omit from symbol table.
+    LinkerPrivateLinkage, ///< Like Private, but linker removes.
     DLLImportLinkage,   ///< Function to be imported from DLL
-    DLLExportLinkage,   ///< Function to be accessible from DLL
-    ExternalWeakLinkage,///< ExternalWeak linkage description
-    GhostLinkage,       ///< Stand-in functions for streaming fns from BC files
-    CommonLinkage       ///< Tentative definitions
+    DLLExportLinkage,   ///< Function to be accessible from DLL.
+    ExternalWeakLinkage,///< ExternalWeak linkage description.
+    GhostLinkage,       ///< Stand-in functions for streaming fns from BC files.
+    CommonLinkage       ///< Tentative definitions.
   };
 
   /// @brief An enumeration for the kinds of visibility of global values.
@@ -123,8 +124,10 @@ public:
   bool hasAppendingLinkage() const { return Linkage == AppendingLinkage; }
   bool hasInternalLinkage() const { return Linkage == InternalLinkage; }
   bool hasPrivateLinkage() const { return Linkage == PrivateLinkage; }
+  bool hasLinkerPrivateLinkage() const { return Linkage==LinkerPrivateLinkage; }
   bool hasLocalLinkage() const {
-    return Linkage == InternalLinkage || Linkage == PrivateLinkage;
+    return hasInternalLinkage() || hasPrivateLinkage() ||
+      hasLinkerPrivateLinkage();
   }
   bool hasDLLImportLinkage() const { return Linkage == DLLImportLinkage; }
   bool hasDLLExportLinkage() const { return Linkage == DLLExportLinkage; }

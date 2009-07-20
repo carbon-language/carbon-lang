@@ -1334,21 +1334,22 @@ void AssemblyWriter::printModule(const Module *M) {
 
 static void PrintLinkage(GlobalValue::LinkageTypes LT, raw_ostream &Out) {
   switch (LT) {
-  case GlobalValue::PrivateLinkage:     Out << "private "; break;
-  case GlobalValue::InternalLinkage:    Out << "internal "; break;
+  case GlobalValue::ExternalLinkage: break;
+  case GlobalValue::PrivateLinkage:       Out << "private ";        break;
+  case GlobalValue::LinkerPrivateLinkage: Out << "linker_private "; break;
+  case GlobalValue::InternalLinkage:      Out << "internal ";       break;
+  case GlobalValue::LinkOnceAnyLinkage:   Out << "linkonce ";       break;
+  case GlobalValue::LinkOnceODRLinkage:   Out << "linkonce_odr ";   break;
+  case GlobalValue::WeakAnyLinkage:       Out << "weak ";           break;
+  case GlobalValue::WeakODRLinkage:       Out << "weak_odr ";       break;
+  case GlobalValue::CommonLinkage:        Out << "common ";         break;
+  case GlobalValue::AppendingLinkage:     Out << "appending ";      break;
+  case GlobalValue::DLLImportLinkage:     Out << "dllimport ";      break;
+  case GlobalValue::DLLExportLinkage:     Out << "dllexport ";      break;
+  case GlobalValue::ExternalWeakLinkage:  Out << "extern_weak ";    break;
   case GlobalValue::AvailableExternallyLinkage:
     Out << "available_externally ";
     break;
-  case GlobalValue::LinkOnceAnyLinkage: Out << "linkonce "; break;
-  case GlobalValue::LinkOnceODRLinkage: Out << "linkonce_odr "; break;
-  case GlobalValue::WeakAnyLinkage:     Out << "weak "; break;
-  case GlobalValue::WeakODRLinkage:     Out << "weak_odr "; break;
-  case GlobalValue::CommonLinkage:      Out << "common "; break;
-  case GlobalValue::AppendingLinkage:   Out << "appending "; break;
-  case GlobalValue::DLLImportLinkage:   Out << "dllimport "; break;
-  case GlobalValue::DLLExportLinkage:   Out << "dllexport "; break;
-  case GlobalValue::ExternalWeakLinkage: Out << "extern_weak "; break;
-  case GlobalValue::ExternalLinkage: break;
   case GlobalValue::GhostLinkage:
     llvm_unreachable("GhostLinkage not allowed in AsmWriter!");
   }

@@ -294,6 +294,7 @@ void SparcAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << TAI->getGlobalDirective() << name << '\n';
     // FALL THROUGH
    case GlobalValue::PrivateLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
    case GlobalValue::InternalLinkage:
     break;
    case GlobalValue::GhostLinkage:

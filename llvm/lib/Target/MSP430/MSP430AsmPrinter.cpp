@@ -103,6 +103,7 @@ void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
     O << "\t.globl\t" << CurrentFnName << '\n';

@@ -172,6 +172,7 @@ emitGlobal(const GlobalVariable *GV)
       // FALL THROUGH
     case GlobalValue::InternalLinkage:
     case GlobalValue::PrivateLinkage:
+    case GlobalValue::LinkerPrivateLinkage:
       break;
     case GlobalValue::GhostLinkage:
       llvm_unreachable("Should not have any unmaterialized functions!");
@@ -228,6 +229,7 @@ emitFunctionStart(MachineFunction &MF)
   default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
     emitGlobalDirective(CurrentFnName);

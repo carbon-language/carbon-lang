@@ -93,12 +93,15 @@ namespace {
       void Init(const std::string &GV, Mangler *Mang) {
         // Already initialized.
         if (!Stub.empty()) return;
-        Stub = Mang->makeNameProper(GV+"$stub", true);
-        LazyPtr = Mang->makeNameProper(GV+"$lazy_ptr", true);
-        SLP = Mang->makeNameProper(GV+"$slp", true);
-        SCV = Mang->makeNameProper(GV+"$scv", true);
+        Stub = Mang->makeNameProper(GV + "$stub",
+                                    Mangler::PrivatePrefixTy);
+        LazyPtr = Mang->makeNameProper(GV + "$lazy_ptr",
+                                       Mangler::PrivatePrefixTy);
+        SLP = Mang->makeNameProper(GV + "$slp",
+                                   Mangler::PrivatePrefixTy);
+        SCV = Mang->makeNameProper(GV + "$scv",
+                                   Mangler::PrivatePrefixTy);
       }
-      
     };
     
     /// FnStubs - Keeps the set of external function GlobalAddresses that the
@@ -256,6 +259,7 @@ bool ARMAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
   case Function::InternalLinkage:
     SwitchToTextSection("\t.text", F);
     break;
@@ -1184,6 +1188,7 @@ void ARMAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << "\t.globl " << name << "\n";
     // FALL THROUGH
    case GlobalValue::PrivateLinkage:
+   case GlobalValue::LinkerPrivateLinkage:
    case GlobalValue::InternalLinkage:
     break;
    default:

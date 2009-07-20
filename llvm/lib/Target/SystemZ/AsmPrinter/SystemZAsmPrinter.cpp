@@ -118,6 +118,7 @@ void SystemZAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   default: assert(0 && "Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
   case Function::PrivateLinkage:
+  case Function::LinkerPrivateLinkage:
     break;
   case Function::ExternalLinkage:
     O << "\t.globl\t" << CurrentFnName << '\n';
@@ -396,6 +397,7 @@ void SystemZAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
     O << "\t.globl " << name << '\n';
     // FALL THROUGH
   case GlobalValue::PrivateLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
   case GlobalValue::InternalLinkage:
      break;
   default:
