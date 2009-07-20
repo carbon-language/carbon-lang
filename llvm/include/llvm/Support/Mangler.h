@@ -27,9 +27,9 @@ class GlobalValue;
 class Mangler {
 public:
   enum ManglerPrefixTy {
-    DefaultPrefixTy,       ///< Emit default string before each symbol.
-    PrivatePrefixTy,       ///< Emit "private" prefix before each symbol.
-    LinkerPrivatePrefixTy  ///< Emit "linker private" prefix before each symbol.
+    Default,               ///< Emit default string before each symbol.
+    Private,               ///< Emit "private" prefix before each symbol.
+    LinkerPrivate          ///< Emit "linker private" prefix before each symbol.
   };
 
 private:
@@ -103,7 +103,7 @@ public:
   /// from getValueName.
   ///
   std::string makeNameProper(const std::string &x,
-                             ManglerPrefixTy PrefixTy = DefaultPrefixTy);
+                             ManglerPrefixTy PrefixTy = Mangler::Default);
 };
 
 } // End llvm namespace

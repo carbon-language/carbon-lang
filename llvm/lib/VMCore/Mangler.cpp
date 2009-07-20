@@ -60,9 +60,9 @@ std::string Mangler::makeNameProper(const std::string &X,
     if (NeedPrefix) {
       Result = Prefix + Result;
 
-      if (PrefixTy == PrivatePrefixTy)
+      if (PrefixTy == Mangler::Private)
         Result = PrivatePrefix + Result;
-      else if (PrefixTy == LinkerPrivatePrefixTy)
+      else if (PrefixTy == Mangler::LinkerPrivate)
         Result = LinkerPrivatePrefix + Result;
     }
 
@@ -98,9 +98,9 @@ std::string Mangler::makeNameProper(const std::string &X,
     
     Result = Prefix + X;
 
-    if (PrefixTy == PrivatePrefixTy)
+    if (PrefixTy == Mangler::Private)
       Result = PrivatePrefix + Result;
-    else if (PrefixTy == LinkerPrivatePrefixTy)
+    else if (PrefixTy == Mangler::LinkerPrivate)
       Result = LinkerPrivatePrefix + Result;
 
     return Result;
@@ -121,9 +121,9 @@ std::string Mangler::makeNameProper(const std::string &X,
   if (NeedPrefix) {
     Result = Prefix + Result;
 
-    if (PrefixTy == PrivatePrefixTy)
+    if (PrefixTy == Mangler::Private)
       Result = PrivatePrefix + Result;
-    else if (PrefixTy == LinkerPrivatePrefixTy)
+    else if (PrefixTy == Mangler::LinkerPrivate)
       Result = LinkerPrivatePrefix + Result;
   }
 
@@ -142,8 +142,8 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
          "Intrinsic functions cannot be mangled by Mangler");
 
   ManglerPrefixTy PrefixTy =
-    (GV->hasPrivateLinkage() || ForcePrivate) ? PrivatePrefixTy :
-     GV->hasLinkerPrivateLinkage() ? LinkerPrivatePrefixTy : DefaultPrefixTy;
+    (GV->hasPrivateLinkage() || ForcePrivate) ? Mangler::Private :
+      GV->hasLinkerPrivateLinkage() ? Mangler::LinkerPrivate : Mangler::Default;
 
   if (GV->hasName())
     return makeNameProper(GV->getName() + Suffix, PrefixTy);

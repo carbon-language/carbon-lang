@@ -93,14 +93,10 @@ namespace {
       void Init(const std::string &GV, Mangler *Mang) {
         // Already initialized.
         if (!Stub.empty()) return;
-        Stub = Mang->makeNameProper(GV + "$stub",
-                                    Mangler::PrivatePrefixTy);
-        LazyPtr = Mang->makeNameProper(GV + "$lazy_ptr",
-                                       Mangler::PrivatePrefixTy);
-        SLP = Mang->makeNameProper(GV + "$slp",
-                                   Mangler::PrivatePrefixTy);
-        SCV = Mang->makeNameProper(GV + "$scv",
-                                   Mangler::PrivatePrefixTy);
+        Stub = Mang->makeNameProper(GV + "$stub", Mangler::Private);
+        LazyPtr = Mang->makeNameProper(GV + "$lazy_ptr", Mangler::Private);
+        SLP = Mang->makeNameProper(GV + "$slp", Mangler::Private);
+        SCV = Mang->makeNameProper(GV + "$scv", Mangler::Private);
       }
     };
     

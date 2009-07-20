@@ -71,11 +71,11 @@ namespace {
         // Already initialized.
         if (!Stub.empty()) return;
         Stub = Mang->makeNameProper(GV + "$stub",
-                                    Mangler::PrivatePrefixTy);
+                                    Mangler::Private);
         LazyPtr = Mang->makeNameProper(GV + "$lazy_ptr",
-                                       Mangler::PrivatePrefixTy);
+                                       Mangler::Private);
         AnonSymbol = Mang->makeNameProper(GV + "$stub$tmp",
-                                          Mangler::PrivatePrefixTy);
+                                          Mangler::Private);
       }
     };
     
