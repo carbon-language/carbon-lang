@@ -22,6 +22,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/StandardPasses.h"
 #include "llvm/System/Process.h"
 #include "llvm/System/Signals.h"
 #include "llvm/LinkAllVMCore.h"
@@ -57,11 +58,33 @@ MemoryLimit("mlimit", cl::init(100), cl::value_desc("MBytes"),
 static cl::list<const PassInfo*, bool, PassNameParser>
 PassList(cl::desc("Passes available:"), cl::ZeroOrMore);
 
+static cl::opt<bool>
+StandardCompileOpts("std-compile-opts", 
+                   cl::desc("Include the standard compile time optimizations"));
+
+static cl::opt<bool>
+StandardLinkOpts("std-link-opts", 
+                 cl::desc("Include the standard link time optimizations"));
+
 /// BugpointIsInterrupted - Set to true when the user presses ctrl-c.
 bool llvm::BugpointIsInterrupted = false;
 
 static void BugpointInterruptFunction() {
   BugpointIsInterrupted = true;
+}
+
+// Hack to capture a pass list.
+namespace {
+  class AddToDriver : public PassManager {
+    BugDriver &D;
+  public:
+    AddToDriver(BugDriver &_D) : D(_D) {}
+    
+    virtual void add(Pass *P) {
+      const PassInfo *PI = P->getPassInfo();
+      D.addPasses(&PI, &PI + 1);
+    }
+  };
 }
 
 int main(int argc, char **argv) {
@@ -77,6 +100,23 @@ int main(int argc, char **argv) {
   LLVMContext& Context = getGlobalContext();
   BugDriver D(argv[0], AsChild, FindBugs, TimeoutValue, MemoryLimit, Context);
   if (D.addSources(InputFilenames)) return 1;
+
+  AddToDriver PM(D);
+  if (StandardCompileOpts) {
+    createStandardModulePasses(&PM, 3,
+                               /*OptimizeSize=*/ false,
+                               /*UnitAtATime=*/ true,
+                               /*UnrollLoops=*/ true,
+                               /*SimplifyLibCalls=*/ true,
+                               /*HaveExceptions=*/ true,
+                               createFunctionInliningPass());
+  }
+      
+  if (StandardLinkOpts)
+    createStandardLTOPasses(&PM, /*Internalize=*/false, 
+                            /*RunInliner=*/true,
+                            /*VerifyEach=*/false);
+
   D.addPasses(PassList.begin(), PassList.end());
 
   // Bugpoint has the ability of generating a plethora of core files, so to
