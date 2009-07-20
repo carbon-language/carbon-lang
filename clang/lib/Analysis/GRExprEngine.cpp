@@ -1310,6 +1310,11 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
     const GRState *stateLoad = N->getState();
     SVal theValueVal = stateLoad->getSVal(theValueExpr);
     SVal oldValueVal = stateLoad->getSVal(oldValueExpr);
+    
+    // FIXME: Issue an error.
+    if (theValueVal.isUndef() || oldValueVal.isUndef()) {
+      return false;      
+    }
         
     // Perform the comparison.
     SVal Cmp = Engine.EvalBinOp(stateLoad, BinaryOperator::EQ, theValueVal,
