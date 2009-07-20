@@ -259,6 +259,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       LastEmitted = VarEnd;
     }
   }
+
+  AddLiteralString("\\n");
 }
 
 /// MatchesAllButOneOp - If this instruction is exactly identical to the
@@ -355,6 +357,7 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
     }
     O << "\n";
   }
+
   O << "    break;\n";
 }
 
@@ -382,12 +385,8 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
     Command = "    " + Inst->Operands[0].getCode() + "\n";
 
     // If this is the last operand, emit a return.
-    if (Inst->Operands.size() == 1) {
-      Command += "    EmitComments(*MI);\n";
-      // Print the final newline
-      Command += "    O << \"\\n\";\n";
+    if (Inst->Operands.size() == 1)
       Command += "    return true;\n";
-    }
     
     // Check to see if we already have 'Command' in UniqueOperandCommands.
     // If not, add it.
@@ -453,12 +452,8 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       std::string Command = "    " + FirstInst->Operands[Op].getCode() + "\n";
       
       // If this is the last operand, emit a return after the code.
-      if (FirstInst->Operands.size() == Op+1) {
-        Command += "    EmitComments(*MI);\n";
-        // Print the final newline
-        Command += "    O << \"\\n\";\n";
+      if (FirstInst->Operands.size() == Op+1)
         Command += "    return true;\n";
-      }
       
       UniqueOperandCommands[CommandIdx] += Command;
       InstOpsUsed[CommandIdx]++;
@@ -569,11 +564,10 @@ void AsmWriterEmitter::run(raw_ostream &O) {
     // For the first operand check, add a default value for instructions with
     // just opcode strings to use.
     if (isFirst) {
-      // Do the post instruction processing and print the final newline
-      UniqueOperandCommands.push_back("    EmitComments(*MI);\n    O << \"\\n\";\n    return true;\n");
+      UniqueOperandCommands.push_back("    return true;\n");
       isFirst = false;
     }
-
+    
     std::vector<unsigned> InstIdxs;
     std::vector<unsigned> NumInstOpsHandled;
     FindUniqueOperandCommands(UniqueOperandCommands, InstIdxs,
@@ -745,9 +739,6 @@ void AsmWriterEmitter::run(raw_ostream &O) {
       EmitInstructions(Instructions, O);
 
     O << "  }\n";
-    O << "  EmitComments(*MI);\n";
-    // Print the final newline
-    O << "  O << \"\\n\";\n";
     O << "  return true;\n";
   }
   
