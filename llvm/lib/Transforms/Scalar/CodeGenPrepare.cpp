@@ -23,10 +23,8 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Utils/AddrModeMatcher.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -859,18 +857,16 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
     } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
       // If we found an inline asm expession, and if the target knows how to
       // lower it to normal LLVM code, do so now.
-      if (TLI && isa<InlineAsm>(CI->getCalledValue()))
-        if (const TargetAsmInfo *TAI =
-            TLI->getTargetMachine().getTargetAsmInfo()) {
-          if (TAI->ExpandInlineAsm(CI)) {
-            BBI = BB.begin();
-            // Avoid processing instructions out of order, which could cause
-            // reuse before a value is defined.
-            SunkAddrs.clear();
-          } else
-            // Sink address computing for memory operands into the block.
-            MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
-        }
+      if (TLI && isa<InlineAsm>(CI->getCalledValue())) {
+        if (TLI->ExpandInlineAsm(CI)) {
+          BBI = BB.begin();
+          // Avoid processing instructions out of order, which could cause
+          // reuse before a value is defined.
+          SunkAddrs.clear();
+        } else
+          // Sink address computing for memory operands into the block.
+          MadeChange |= OptimizeInlineAsmInst(I, &(*CI), SunkAddrs);
+      }
     }
   }
 
