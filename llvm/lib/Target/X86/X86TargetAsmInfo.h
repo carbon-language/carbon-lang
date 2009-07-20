@@ -26,18 +26,10 @@ namespace llvm {
 
   template <class BaseTAI>
   struct X86TargetAsmInfo : public BaseTAI {
-    explicit X86TargetAsmInfo(const X86TargetMachine &TM):
-      BaseTAI(TM) {
-      const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-
+    explicit X86TargetAsmInfo(const X86TargetMachine &TM) : BaseTAI(TM) {
       BaseTAI::AsmTransCBE = x86_asm_table;
-      BaseTAI::AssemblerDialect = Subtarget->getAsmFlavor();
+      BaseTAI::AssemblerDialect =TM.getSubtarget<X86Subtarget>().getAsmFlavor();
     }
-
-    virtual bool ExpandInlineAsm(CallInst *CI) const;
-
-  private:
-    bool LowerToBSwap(CallInst *CI) const;
   };
 
   typedef X86TargetAsmInfo<TargetAsmInfo> X86GenericTargetAsmInfo;

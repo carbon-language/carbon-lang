@@ -562,15 +562,6 @@ namespace llvm {
     /// length.
     virtual unsigned getInlineAsmLength(const char *Str) const;
 
-    /// ExpandInlineAsm - This hook allows the target to expand an inline asm
-    /// call to be explicit llvm code if it wants to.  This is useful for
-    /// turning simple inline asms into LLVM intrinsics, which gives the
-    /// compiler more information about the behavior of the code.
-// FIXME: Move this to TargetLowering.
-    virtual bool ExpandInlineAsm(CallInst *CI) const {
-      return false;
-    }
-
     /// emitUsedDirectiveFor - This hook allows targets to selectively decide
     /// not to emit the UsedDirective for some symbols in llvm.used.
 // FIXME: REMOVE this (rdar://7071300)
