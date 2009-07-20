@@ -30,7 +30,8 @@ namespace clang {
   class CFG;
   class PrinterHelper;
   class LangOptions;
-  
+  class ASTContext;
+
 /// CFGBlock - Represents a single basic block in a source-level CFG.
 ///  It consists of:
 ///
@@ -177,7 +178,8 @@ public:
   void reverseStmts();
   
   void addSuccessor(CFGBlock* Block) {
-    Block->Preds.push_back(this);
+    if (Block)
+      Block->Preds.push_back(this);
     Succs.push_back(Block);
   }
   
@@ -204,7 +206,7 @@ public:
 
   /// buildCFG - Builds a CFG from an AST.  The responsibility to free the
   ///   constructed CFG belongs to the caller.  
-  static CFG* buildCFG(Stmt* AST);  
+  static CFG* buildCFG(Stmt* AST, ASTContext *C);  
   
   /// createBlock - Create a new block in the CFG.  The CFG owns the block;
   ///  the caller should not directly free it.

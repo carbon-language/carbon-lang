@@ -62,6 +62,7 @@ static SourceLocation GetEndLoc(Decl* D) {
 ///  implicit fall-throughs without extra basic blocks.
 ///
 class VISIBILITY_HIDDEN CFGBuilder {
+  ASTContext *Context;
   CFG* cfg;
   CFGBlock* Block;
   CFGBlock* Succ;
@@ -94,7 +95,7 @@ public:
   ~CFGBuilder() { delete cfg; }
 
   // buildCFG - Used by external clients to construct the CFG.
-  CFG* buildCFG(Stmt* Statement);
+  CFG* buildCFG(Stmt *Statement, ASTContext *C);
 
 private:
   // Visitors to walk an AST and construct the CFG.
@@ -166,7 +167,8 @@ static VariableArrayType* FindVA(Type* t) {
 ///  body (compound statement).  The ownership of the returned CFG is
 ///  transferred to the caller.  If CFG construction fails, this method returns
 ///  NULL.
-CFG* CFGBuilder::buildCFG(Stmt* Statement) {
+CFG* CFGBuilder::buildCFG(Stmt* Statement, ASTContext* C) {
+  Context = C;
   assert(cfg);
   if (!Statement)
     return NULL;
@@ -397,6 +399,19 @@ CFGBlock *CFGBuilder::VisitAddrLabelExpr(AddrLabelExpr *A, bool alwaysAdd) {
 CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
   if (B->isLogicalOp()) { // && or ||
 
+    // See if this is a known constant.
+    bool KnownTrue = false;
+    bool KnownFalse = false;
+    Expr::EvalResult Result;
+    if (B->getLHS()->Evaluate(Result, *Context)
+        && Result.Val.isInt()) {
+      if ((B->getOpcode() == BinaryOperator::LAnd)
+          == Result.Val.getInt().getBoolValue())
+        KnownTrue = true;
+      else
+        KnownFalse = true;
+    }
+
     CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
     ConfluenceBlock->appendStmt(B);
     
@@ -416,12 +431,24 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
     
     // Now link the LHSBlock with RHSBlock.
     if (B->getOpcode() == BinaryOperator::LOr) {
-      LHSBlock->addSuccessor(ConfluenceBlock);
-      LHSBlock->addSuccessor(RHSBlock);
+      if (KnownTrue)
+        LHSBlock->addSuccessor(0);
+      else
+        LHSBlock->addSuccessor(ConfluenceBlock);
+      if (KnownFalse)
+        LHSBlock->addSuccessor(0);
+      else
+        LHSBlock->addSuccessor(RHSBlock);
     } else {
       assert (B->getOpcode() == BinaryOperator::LAnd);
-      LHSBlock->addSuccessor(RHSBlock);
-      LHSBlock->addSuccessor(ConfluenceBlock);
+      if (KnownFalse)
+        LHSBlock->addSuccessor(0);
+      else
+        LHSBlock->addSuccessor(RHSBlock);
+      if (KnownTrue)
+        LHSBlock->addSuccessor(0);
+      else
+        LHSBlock->addSuccessor(ConfluenceBlock);
     }
     
     // Generate the blocks for evaluating the LHS.
@@ -530,6 +557,18 @@ CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
 }
   
 CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
+  // See if this is a known constant.
+  bool KnownTrue = false;
+  bool KnownFalse = false;
+  Expr::EvalResult Result;
+  if (C->getCond()->Evaluate(Result, *Context)
+      && Result.Val.isInt()) {
+    if (Result.Val.getInt().getBoolValue())
+      KnownTrue = true;
+    else
+      KnownFalse = true;
+  }
+
   // Create the confluence block that will "merge" the results of the ternary
   // expression.
   CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
@@ -560,22 +599,36 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
   // Create the block that will contain the condition.
   Block = createBlock(false);
   
-  if (LHSBlock)
-    Block->addSuccessor(LHSBlock);
-  else {
-    // If we have no LHS expression, add the ConfluenceBlock as a direct
-    // successor for the block containing the condition.  Moreover, we need to
-    // reverse the order of the predecessors in the ConfluenceBlock because
-    // the RHSBlock will have been added to the succcessors already, and we
-    // want the first predecessor to the the block containing the expression
-    // for the case when the ternary expression evaluates to true.
-    Block->addSuccessor(ConfluenceBlock);
-    assert (ConfluenceBlock->pred_size() == 2);
-    std::reverse(ConfluenceBlock->pred_begin(),
-                 ConfluenceBlock->pred_end());
+  if (LHSBlock) {
+    if (KnownFalse)
+      Block->addSuccessor(0);
+    else
+      Block->addSuccessor(LHSBlock);
+  } else {
+    if (KnownFalse) {
+      // If we know the condition is false, add NULL as the successor for
+      // the block containing the condition.  In this case, the confluence
+      // block will have just one predecessor.
+      Block->addSuccessor(0);
+      assert (ConfluenceBlock->pred_size() == 1);
+    } else {
+      // If we have no LHS expression, add the ConfluenceBlock as a direct
+      // successor for the block containing the condition.  Moreover, we need to
+      // reverse the order of the predecessors in the ConfluenceBlock because
+      // the RHSBlock will have been added to the succcessors already, and we
+      // want the first predecessor to the the block containing the expression
+      // for the case when the ternary expression evaluates to true.
+      Block->addSuccessor(ConfluenceBlock);
+      assert (ConfluenceBlock->pred_size() == 2);
+      std::reverse(ConfluenceBlock->pred_begin(),
+                   ConfluenceBlock->pred_end());
+    }
   }
   
-  Block->addSuccessor(RHSBlock);
+  if (KnownTrue)
+    Block->addSuccessor(0);
+  else
+    Block->addSuccessor(RHSBlock);
   
   Block->setTerminator(C);
   return addStmt(C->getCond());
@@ -648,6 +701,18 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(Decl* D) {
 }
 
 CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
+  // See if this is a known constant first.
+  bool KnownTrue = false;
+  bool KnownFalse = false;
+  Expr::EvalResult Result;
+  if (I->getCond()->Evaluate(Result, *Context)
+      && Result.Val.isInt()) {
+    if (Result.Val.getInt().getBoolValue())
+      KnownTrue = true;
+    else
+      KnownFalse = true;
+  }
+
   // We may see an if statement in the middle of a basic block, or it may be the
   // first statement we are processing.  In either case, we create a new basic
   // block.  First, we create the blocks for the then...else statements, and
@@ -711,8 +776,14 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   Block->setTerminator(I);
 
   // Now add the successors.
-  Block->addSuccessor(ThenBlock);
-  Block->addSuccessor(ElseBlock);
+  if (KnownFalse)
+    Block->addSuccessor(0);
+  else
+    Block->addSuccessor(ThenBlock);
+  if (KnownTrue)
+    Block->addSuccessor(0);
+  else
+    Block->addSuccessor(ElseBlock);
 
   // Add the condition as the last statement in the new block.  This may create
   // new blocks as the condition may contain control-flow.  Any newly created
@@ -1438,9 +1509,9 @@ CFGBlock* CFG::createBlock() {
 
 /// buildCFG - Constructs a CFG from an AST.  Ownership of the returned
 ///  CFG is returned to the caller.
-CFG* CFG::buildCFG(Stmt* Statement) {
+CFG* CFG::buildCFG(Stmt* Statement, ASTContext *C) {
   CFGBuilder Builder;
-  return Builder.buildCFG(Statement);
+  return Builder.buildCFG(Statement, C);
 }
 
 /// reverseStmts - Reverses the orders of statements within a CFGBlock.
@@ -1826,7 +1897,10 @@ static void print_block(llvm::raw_ostream& OS, const CFG* cfg,
       if (i == 8 || (i-8) % 10 == 0)
         OS << "\n    ";
 
-      OS << " B" << (*I)->getBlockID();
+      if (*I)
+        OS << " B" << (*I)->getBlockID();
+      else
+        OS  << " NULL";
     }
 
     OS << '\n';

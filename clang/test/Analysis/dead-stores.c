@@ -185,3 +185,85 @@ int f21() {
   }
   return 1;
 }
+
+int j;
+void f22() {
+  int x = 4;
+  int y1 = 4;
+  int y2 = 4;
+  int y3 = 4;
+  int y4 = 4;
+  int y5 = 4;
+  int y6 = 4;
+  int y7 = 4;
+  int y8 = 4;
+  int y9 = 4;
+  int y10 = 4;
+
+  ++x; // expected-warning{{never read}}
+  ++y1;
+  ++y2;
+  ++y3;
+  ++y4;
+  ++y5;
+  ++y6;
+  ++y7;
+  ++y8;
+  ++y9;
+  ++y10;
+
+  switch (j) {
+  case 1:
+    if (0)
+      (void)x;
+    if (1) {
+      (void)y1;
+      return;
+    }
+    (void)x;
+    break;
+  case 2:
+    if (0)
+      (void)x;
+    else {
+      (void)y2;
+      return;
+    }
+    (void)x;
+    break;
+  case 3:
+    if (1) {
+      (void)y3;
+      return;
+    } else
+      (void)x;
+    (void)x;
+  break;
+  case 4:
+    0 ? : ((void)y4, ({ return; }));
+    (void)x;
+    break;
+  case 5:
+    1 ? : (void)x;
+    0 ? (void)x : ((void)y5, ({ return; }));
+    (void)x;
+    break;
+  case 6:
+    1 ? ((void)y6, ({ return; })) : (void)x;
+    (void)x;
+    break;
+  case 7:
+    (void)(0 && x);
+    (void)y7;
+    (void)(0 || (y8, ({ return; }), 1));
+    (void)x;
+    break;
+  case 8:
+    (void)(1 && (y9, ({ return; }), 1));
+    (void)x;
+    break;
+  case 9:
+    (void)(1 || x);
+    (void)y10;
+  }
+}

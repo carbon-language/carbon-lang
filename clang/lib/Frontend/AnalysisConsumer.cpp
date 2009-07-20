@@ -158,7 +158,7 @@ namespace {
     }
     
     virtual CFG* getCFG() {
-      if (!cfg) cfg.reset(CFG::buildCFG(getBody()));
+      if (!cfg) cfg.reset(CFG::buildCFG(getBody(), &getContext()));
       return cfg.get();
     }
     
