@@ -614,15 +614,17 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     return false;
   if (TID.getNumDefs() != 1)
     return false;
-  // Make sure the copy destination register class fits the instruction
-  // definition register class. The mismatch can happen as a result of earlier
-  // extract_subreg, insert_subreg, subreg_to_reg coalescing.
-  const TargetRegisterClass *RC = getInstrOperandRegClass(tri_, TID, 0);
-  if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
-    if (mri_->getRegClass(DstReg) != RC)
+  if (DefMI->getOpcode() != TargetInstrInfo::IMPLICIT_DEF) {
+    // Make sure the copy destination register class fits the instruction
+    // definition register class. The mismatch can happen as a result of earlier
+    // extract_subreg, insert_subreg, subreg_to_reg coalescing.
+    const TargetRegisterClass *RC = getInstrOperandRegClass(tri_, TID, 0);
+    if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
+      if (mri_->getRegClass(DstReg) != RC)
+        return false;
+    } else if (!RC->contains(DstReg))
       return false;
-  } else if (!RC->contains(DstReg))
-    return false;
+  }
 
   unsigned DefIdx = li_->getDefIndex(CopyIdx);
   const LiveRange *DLR= li_->getInterval(DstReg).getLiveRangeContaining(DefIdx);
@@ -1378,13 +1380,17 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
         }
       }
       if (SubIdx) {
-        if (isInsSubReg || isSubRegToReg) {
-          if (!DstIsPhys && !SrcIsPhys) {
+        if (!DstIsPhys && !SrcIsPhys) {
+          if (isInsSubReg || isSubRegToReg) {
             NewRC = tri_->getMatchingSuperRegClass(DstRC, SrcRC, SubIdx);
-            if (!NewRC)
-              return false;
+          } else // extract_subreg {
+            NewRC = tri_->getMatchingSuperRegClass(SrcRC, DstRC, SubIdx);
           }
+        if (!NewRC) {
+          DOUT << "\t Conflicting sub-register indices.\n";
+          return false;  // Not coalescable
         }
+
         unsigned LargeReg = isExtSubReg ? SrcReg : DstReg;
         unsigned SmallReg = isExtSubReg ? DstReg : SrcReg;
         unsigned Limit= allocatableRCRegs_[mri_->getRegClass(SmallReg)].count();
