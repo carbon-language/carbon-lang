@@ -222,6 +222,14 @@ namespace llvm {
     /// assembler.
     const char *CommentString;            // Defaults to "#"
 
+    /// FirstOperandColumn - The output column where the first operand
+    /// should be printed
+    unsigned FirstOperandColumn;          // Defaults to 0 (ignored)
+
+    /// MaxOperandLength - The maximum length of any printed asm
+    /// operand
+    unsigned MaxOperandLength;            // Defaults to 0 (ignored)
+
     /// GlobalPrefix - If this is set to a non-empty string, it is prepended
     /// onto all global symbols.  This is often used for "_" or ".".
     const char *GlobalPrefix;             // Defaults to ""
@@ -690,6 +698,9 @@ namespace llvm {
     }
     const char *getCommentString() const {
       return CommentString;
+    }
+    unsigned getOperandColumn(int operand) const {
+      return FirstOperandColumn + (MaxOperandLength+1)*(operand-1);
     }
     const char *getGlobalPrefix() const {
       return GlobalPrefix;

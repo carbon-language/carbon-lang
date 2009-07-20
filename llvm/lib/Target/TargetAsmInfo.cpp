@@ -45,6 +45,8 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
   SeparatorChar = ';';
   CommentColumn = 60;
   CommentString = "#";
+  FirstOperandColumn = 0;
+  MaxOperandLength = 0;
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
   LessPrivateGlobalPrefix = "";

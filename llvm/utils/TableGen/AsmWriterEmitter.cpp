@@ -19,6 +19,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
+#include <sstream>
 #include <iostream>
 using namespace llvm;
 
@@ -32,7 +33,11 @@ static bool isIdentChar(char C) {
 // This should be an anon namespace, this works around a GCC warning.
 namespace llvm {  
   struct AsmWriterOperand {
-    enum { isLiteralTextOperand, isMachineInstrOperand } OperandType;
+    enum OpType {
+      isLiteralTextOperand, 
+      isMachineInstrOperand,
+      isLiteralStatementOperand
+    } OperandType;
 
     /// Str - For isLiteralTextOperand, this IS the literal text.  For
     /// isMachineInstrOperand, this is the PrinterMethodName for the operand.
@@ -47,14 +52,16 @@ namespace llvm {
     std::string MiModifier;
 
     // To make VS STL happy
-    AsmWriterOperand():OperandType(isLiteralTextOperand) {}
+    AsmWriterOperand(OpType op = isLiteralTextOperand):OperandType(op) {}
 
-    explicit AsmWriterOperand(const std::string &LitStr)
-      : OperandType(isLiteralTextOperand), Str(LitStr) {}
+    AsmWriterOperand(const std::string &LitStr,
+                     OpType op = isLiteralTextOperand)
+      : OperandType(op), Str(LitStr) {}
 
     AsmWriterOperand(const std::string &Printer, unsigned OpNo, 
-                     const std::string &Modifier) 
-      : OperandType(isMachineInstrOperand), Str(Printer), MIOpNo(OpNo),
+                     const std::string &Modifier,
+                     OpType op = isMachineInstrOperand) 
+      : OperandType(op), Str(Printer), MIOpNo(OpNo),
       MiModifier(Modifier) {}
 
     bool operator!=(const AsmWriterOperand &Other) const {
@@ -78,6 +85,22 @@ namespace llvm {
     std::vector<AsmWriterOperand> Operands;
     const CodeGenInstruction *CGI;
 
+    /// MAX_GROUP_NESTING_LEVEL - The maximum number of group nesting
+    /// levels we ever expect to see in an asm operand.
+    static const int MAX_GROUP_NESTING_LEVEL = 10;
+
+    /// GroupLevel - The level of nesting of the current operand
+    /// group, such as [reg + (reg + offset)].  -1 means we are not in
+    /// a group.
+    int GroupLevel;
+
+    /// GroupDelim - Remember the delimeter for a group operand.
+    char GroupDelim[MAX_GROUP_NESTING_LEVEL];
+
+    /// InGroup - Determine whether we are in the middle of an
+    /// operand group.
+    bool InGroup() const { return GroupLevel != -1; }
+
     AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant);
 
     /// MatchesAllButOneOp - If this instruction is exactly identical to the
@@ -89,6 +112,70 @@ namespace llvm {
     void AddLiteralString(const std::string &Str) {
       // If the last operand was already a literal text string, append this to
       // it, otherwise add a new operand.
+
+      std::string::size_type SearchStart = 0;
+      std::string::size_type SpaceStartPos = std::string::npos;
+      do {
+        // Search for whitespace and replace with calls to set the
+        // output column.
+        SpaceStartPos = Str.find_first_of(" \t", SearchStart);
+        // Assume grouped text is one operand.
+        std::string::size_type StartDelimPos = Str.find_first_of("[{(", SearchStart);
+
+        SearchStart = std::string::npos;
+
+        if (StartDelimPos != std::string::npos) {
+          ++GroupLevel;
+          assert(GroupLevel < MAX_GROUP_NESTING_LEVEL
+                 && "Exceeded maximum operand group nesting level");
+          GroupDelim[GroupLevel] = Str[StartDelimPos];
+          if (SpaceStartPos != std::string::npos &&
+              SpaceStartPos > StartDelimPos) {
+            // This space doesn't count.
+            SpaceStartPos = std::string::npos;
+          }
+        }
+
+        if (InGroup()) {
+          // Find the end delimiter.
+          char EndDelim = (GroupDelim[GroupLevel] == '{' ? '}' : 
+                           (GroupDelim[GroupLevel] == '(' ? ')' : ']'));
+          std::string::size_type EndDelimSearchStart =
+            StartDelimPos == std::string::npos ? 0 : StartDelimPos+1;
+          std::string::size_type EndDelimPos = Str.find(EndDelim,
+                                                        EndDelimSearchStart);
+          SearchStart = EndDelimPos;
+          if (EndDelimPos != std::string::npos) {
+            // Iterate.
+            SearchStart = EndDelimPos + 1;
+            --GroupLevel;
+            assert(GroupLevel > -2 && "Too many end delimeters!");
+          }
+          if (InGroup())
+            SpaceStartPos = std::string::npos;
+        }
+      } while (SearchStart != std::string::npos);
+
+
+      if (SpaceStartPos != std::string::npos) {
+        std::string::size_type SpaceEndPos = 
+          Str.find_first_not_of(" \t", SpaceStartPos+1);
+        if (SpaceStartPos != 0) {
+          // Emit the first part of the string.
+          AddLiteralString(Str.substr(0, SpaceStartPos));
+        }
+        Operands.push_back(
+          AsmWriterOperand(
+            "O.PadToColumn(TAI->getOperandColumn(OperandColumn++), 1);\n",
+            AsmWriterOperand::isLiteralStatementOperand));
+        if (SpaceEndPos != std::string::npos) {
+          // Emit the last part of the string.
+          AddLiteralString(Str.substr(SpaceEndPos));
+        }
+        // We've emitted the whole string.
+        return;
+      }
+      
       if (!Operands.empty() &&
           Operands.back().OperandType == AsmWriterOperand::isLiteralTextOperand)
         Operands.back().Str.append(Str);
@@ -103,6 +190,18 @@ std::string AsmWriterOperand::getCode() const {
   if (OperandType == isLiteralTextOperand)
     return "O << \"" + Str + "\"; ";
 
+  if (OperandType == isLiteralStatementOperand) {
+    return Str;
+  }
+
+  if (OperandType == isLiteralStatementOperand) {
+    return Str;
+  }
+
+  if (OperandType == isLiteralStatementOperand) {
+    return Str;
+  }
+
   std::string Result = Str + "(MI";
   if (MIOpNo != ~0U)
     Result += ", " + utostr(MIOpNo);
@@ -115,7 +214,8 @@ std::string AsmWriterOperand::getCode() const {
 /// ParseAsmString - Parse the specified Instruction's AsmString into this
 /// AsmWriterInst.
 ///
-AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
+AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant)
+    : GroupLevel(-1) {
   this->CGI = &CGI;
   unsigned CurVariant = ~0U;  // ~0 if we are outside a {.|.|.} region, other #.
 
@@ -188,7 +288,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
     } else {
       // Get the name of the variable.
       std::string::size_type VarEnd = DollarPos+1;
-
+ 
       // handle ${foo}bar as $foo by detecting whether the character following
       // the dollar sign is a curly brace.  If so, advance VarEnd and DollarPos
       // so the variable name does not contain the leading curly brace.
@@ -260,6 +360,9 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
     }
   }
 
+  Operands.push_back(
+    AsmWriterOperand("EmitComments(*MI);\n",
+                     AsmWriterOperand::isLiteralStatementOperand));
   AddLiteralString("\\n");
 }
 
@@ -357,7 +460,6 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
     }
     O << "\n";
   }
-
   O << "    break;\n";
 }
 
@@ -385,8 +487,9 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
     Command = "    " + Inst->Operands[0].getCode() + "\n";
 
     // If this is the last operand, emit a return.
-    if (Inst->Operands.size() == 1)
+    if (Inst->Operands.size() == 1) {
       Command += "    return true;\n";
+    }
     
     // Check to see if we already have 'Command' in UniqueOperandCommands.
     // If not, add it.
@@ -431,7 +534,10 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       // Otherwise, scan to see if all of the other instructions in this command
       // set share the operand.
       bool AllSame = true;
-      
+      // Keep track of the maximum, number of operands or any
+      // instruction we see in the group.
+      size_t MaxSize = FirstInst->Operands.size();
+
       for (NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx);
            NIT != InstIdxs.end();
            NIT = std::find(NIT+1, InstIdxs.end(), CommandIdx)) {
@@ -439,6 +545,11 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
         // matches, we're ok, otherwise bail out.
         const AsmWriterInst *OtherInst = 
           getAsmWriterInstByID(NIT-InstIdxs.begin());
+
+        if (OtherInst &&
+            OtherInst->Operands.size() > FirstInst->Operands.size())
+          MaxSize = std::max(MaxSize, OtherInst->Operands.size());
+
         if (!OtherInst || OtherInst->Operands.size() == Op ||
             OtherInst->Operands[Op] != FirstInst->Operands[Op]) {
           AllSame = false;
@@ -452,8 +563,12 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
       std::string Command = "    " + FirstInst->Operands[Op].getCode() + "\n";
       
       // If this is the last operand, emit a return after the code.
-      if (FirstInst->Operands.size() == Op+1)
+      if (FirstInst->Operands.size() == Op+1 &&
+          // Don't early-out too soon.  Other instructions in this
+          // group may have more operands.
+          FirstInst->Operands.size() == MaxSize) {
         Command += "    return true;\n";
+      }
       
       UniqueOperandCommands[CommandIdx] += Command;
       InstOpsUsed[CommandIdx]++;
@@ -567,7 +682,7 @@ void AsmWriterEmitter::run(raw_ostream &O) {
       UniqueOperandCommands.push_back("    return true;\n");
       isFirst = false;
     }
-    
+
     std::vector<unsigned> InstIdxs;
     std::vector<unsigned> NumInstOpsHandled;
     FindUniqueOperandCommands(UniqueOperandCommands, InstIdxs,
@@ -675,8 +790,16 @@ void AsmWriterEmitter::run(raw_ostream &O) {
 
   O << "  // Emit the opcode for the instruction.\n"
     << "  unsigned Bits = OpInfo[MI->getOpcode()];\n"
-    << "  if (Bits == 0) return false;\n"
-    << "  O << AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << ");\n\n";
+    << "  if (Bits == 0) return false;\n\n";
+
+  O << "  std::string OpStr(AsmStrs+(Bits & " << (1 << AsmStrBits)-1 << "));\n"
+    << "  unsigned OperandColumn = 1;\n"
+    << "  O << OpStr;\n\n";
+
+  O << "  if (OpStr.find_last_of(\" \\t\") == OpStr.size()-1) {\n"
+    << "    O.PadToColumn(TAI->getOperandColumn(1));\n"
+    << "    OperandColumn = 2;\n"
+    << "  }\n\n";
 
   // Output the table driven operand information.
   BitsLeft = 32-AsmStrBits;
@@ -741,6 +864,7 @@ void AsmWriterEmitter::run(raw_ostream &O) {
     O << "  }\n";
     O << "  return true;\n";
   }
-  
+
+  O << "  return true;\n";
   O << "}\n";
 }
