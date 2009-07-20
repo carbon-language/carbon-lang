@@ -241,23 +241,14 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
 }
 
 PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
-  
-  for (unsigned i = 0; i < BSSSections.size(); i++) {
-      delete BSSSections[i]; 
-  }
-
-  for (unsigned i = 0; i < IDATASections.size(); i++) {
-      delete IDATASections[i]; 
-  }
-
-  for (unsigned i = 0; i < AutosSections.size(); i++) {
-      delete AutosSections[i]; 
-  }
-
-  for (unsigned i = 0; i < ROSections.size(); i++) {
-      delete ROSections[i];
-  }
-
+  for (unsigned i = 0; i < BSSSections.size(); i++)
+    delete BSSSections[i]; 
+  for (unsigned i = 0; i < IDATASections.size(); i++)
+    delete IDATASections[i]; 
+  for (unsigned i = 0; i < AutosSections.size(); i++)
+    delete AutosSections[i]; 
+  for (unsigned i = 0; i < ROSections.size(); i++)
+    delete ROSections[i];
   delete ExternalVarDecls;
   delete ExternalVarDefs;
 }
@@ -276,8 +267,7 @@ PIC16TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
       std::string SectAddr = SectName.substr(AddrStr.length());
       S = CreateSectionForGlobal(GV, SectAddr);
-    }
-    else {
+    } else {
       S = CreateSectionForGlobal(GV);
     } 
   } else {
