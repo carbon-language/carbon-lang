@@ -420,6 +420,8 @@ namespace llvm {
     
     SDValue getReturnAddressFrameIndex(SelectionDAG &DAG);
 
+    virtual bool ExpandInlineAsm(CallInst *CI) const;
+    
     ConstraintType getConstraintType(const std::string &Constraint) const;
      
     std::vector<unsigned> 
