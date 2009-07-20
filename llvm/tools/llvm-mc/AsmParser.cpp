@@ -539,9 +539,9 @@ bool AsmParser::ParseStatement() {
     if (!strcmp(IDVal, ".include"))
       return ParseDirectiveInclude();
     if (!strcmp(IDVal, ".dump"))
-      return ParseDirectiveDarwinDumpOrLoad(/*IsDump=*/true);
+      return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsDump=*/true);
     if (!strcmp(IDVal, ".load"))
-      return ParseDirectiveDarwinDumpOrLoad(/*IsLoad=*/false);
+      return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsLoad=*/false);
 
     Warning(IDLoc, "ignoring directive for now");
     EatToEndOfStatement();
@@ -1197,11 +1197,11 @@ bool AsmParser::ParseDirectiveInclude() {
 
 /// ParseDirectiveDarwinDumpOrLoad
 ///  ::= ( .dump | .load ) "filename"
-bool AsmParser::ParseDirectiveDarwinDumpOrLoad(bool IsDump) {
+bool AsmParser::ParseDirectiveDarwinDumpOrLoad(SMLoc IDLoc, bool IsDump) {
   if (Lexer.isNot(asmtok::String))
     return TokError("expected string in '.dump' or '.load' directive");
   
-  const char *Str = Lexer.getCurStrVal();
+  Lexer.getCurStrVal();
 
   Lexer.Lex();
 
@@ -1210,10 +1210,12 @@ bool AsmParser::ParseDirectiveDarwinDumpOrLoad(bool IsDump) {
   
   Lexer.Lex();
 
+  // FIXME: If/when .dump and .load are implemented they will be done in the
+  // the assembly parser and not have any need for an MCStreamer API.
   if (IsDump)
-    Out.DumpSymbolsandMacros(Str);
+    Warning(IDLoc, "ignoring directive .dump for now");
   else
-    Out.LoadSymbolsandMacros(Str);
+    Warning(IDLoc, "ignoring directive .load for now");
 
   return false;
 }

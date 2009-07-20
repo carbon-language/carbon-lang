@@ -57,10 +57,6 @@ namespace {
 
     virtual void AbortAssembly(const char *AbortReason = NULL);
 
-    virtual void DumpSymbolsandMacros(const char *FileName);
-
-    virtual void LoadSymbolsandMacros(const char *FileName);
-
     virtual void EmitBytes(const char *Data, unsigned Length);
 
     virtual void EmitValue(const MCValue &Value, unsigned Size);
@@ -142,14 +138,6 @@ void MCAsmStreamer::AbortAssembly(const char *AbortReason) {
     OS << ' ' << AbortReason;
   OS << '\n';
   
-}
-
-void MCAsmStreamer::DumpSymbolsandMacros(const char *FileName) {
-  OS << ".dump" << ' ' << FileName << '\n';
-}
-
-void MCAsmStreamer::LoadSymbolsandMacros(const char *FileName) {
-  OS << ".load" << ' ' << FileName << '\n';
 }
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,

@@ -127,7 +127,7 @@ private:
   // Darwin specific ".subsections_via_symbols"
   bool ParseDirectiveDarwinSubsectionsViaSymbols();
   // Darwin specific .dump and .load
-  bool ParseDirectiveDarwinDumpOrLoad(bool IsDump);
+  bool ParseDirectiveDarwinDumpOrLoad(SMLoc IDLoc, bool IsDump);
 
   bool ParseDirectiveAbort(); // ".abort"
   bool ParseDirectiveInclude(); // ".include"

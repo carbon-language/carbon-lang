@@ -162,18 +162,6 @@ namespace llvm {
     /// @param AbortReason - The reason assembly is terminated, if non-NULL.
     virtual void AbortAssembly(const char *AbortReason) = 0;
 
-    /// DumpSymbolsandMacros - Dump to the specified file in @param FileName all
-    /// symbols and macros at this point in the assembly.
-    ///
-    /// @param FileName - The file to dump the symbols and macros into.
-    virtual void DumpSymbolsandMacros(const char *FileName) = 0;
-
-    /// LoadSymbolsandMacros - Load from the specified file in @param FileName
-    /// symbols and macros into the assembler at this point in the assembly.
-    ///
-    /// @param FileName - The file to load the symbols and macros from.
-    virtual void LoadSymbolsandMacros(const char *FileName) = 0;
-
     /// @}
     /// @name Generating Data
     /// @{
