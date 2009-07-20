@@ -91,6 +91,15 @@
       <li><a href="#inlineasm">Inline Assembler Expressions</a></li>
     </ol>
   </li>
+  <li><a href="#intrinsic_globals">Intrinsic Global Variables</a>
+    <ol>
+      <li><a href="#intg_used">The '<tt>llvm.used</tt>' Global Variable</a></li>
+      <li><a href="#intg_global_ctors">The '<tt>llvm.global_ctors</tt>'
+         Global Variable</a></li>
+      <li><a href="#intg_global_dtors">The '<tt>llvm.global_dtors</tt>'
+         Global Variable</a></li>
+    </ol>
+  </li>
   <li><a href="#instref">Instruction Reference</a>
     <ol>
       <li><a href="#terminators">Terminator Instructions</a>
@@ -2149,6 +2158,76 @@ call void asm sideeffect "eieio", ""()
    another document that covers inline asm from a holistic perspective.</p>
 
 </div>
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="intrinsic_globals">Intrinsic Global Variables</a>
+</div>
+<!-- *********************************************************************** -->
+
+<p>LLVM has a number of "magic" global variables that contain data that affect
+code generation or other IR semantics.  These are documented here.  All globals
+of this sort should have a section specified as "llvm.metadata".  This section
+and all globals that start with "llvm." are reserved for LLVM.</p>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+<a name="intg_used">The '<tt>llvm.used</tt>' Global Variable</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>@llvm.used</tt> global is an array with i8* element type which has <a
+href="#linkage_appending">appending linkage</a>.  This array contains a list of
+pointers to global variables and functions which may optionally have a pointer
+cast formed of bitcast or getelementptr.  For example, a legal use of it is:</p>
+
+<pre>
+  @X = global i8 4
+  @Y = global i32 123
+
+  @llvm.used = appending global [2 x i8*] [
+     i8* @X,
+     i8* bitcast (i32* @Y to i8*)
+  ], section "llvm.metadata"
+</pre>
+
+<p>If a global variable appears in the <tt>@llvm.used</tt> list, then the
+compiler, assembler, and linker are required to treat the symbol as if there is
+a reference to the global that it cannot see.  For example, if a variable has
+internal linkage and no references other than that from the <tt>@llvm.used</tt>
+list, it cannot be deleted.  This is commonly used to represent references from
+inline asms and other things the compiler cannot "see", and corresponds to
+"attribute((used))" in GNU C.</p>
+
+<p>On some targets, the code generator must emit a directive to the assembler or
+object file to prevent the assembler and linker from molesting the symbol.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+<a name="intg_global_ctors">The '<tt>llvm.global_ctors</tt>' Global Variable</a>
+</div>
+
+<div class="doc_text">
+
+<p>TODO: Describe this.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+<a name="intg_global_dtors">The '<tt>llvm.global_dtors</tt>' Global Variable</a>
+</div>
+
+<div class="doc_text">
+
+<p>TODO: Describe this.</p>
+
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="instref">Instruction Reference</a> </div>
