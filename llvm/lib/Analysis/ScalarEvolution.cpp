@@ -4274,20 +4274,6 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
       return true;
     if (LHSRange.getSignedMin().sge(RHSRange.getSignedMax()))
       return false;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    ConstantRange DiffRange = getUnsignedRange(Diff);
-    if (isKnownNegative(Diff)) {
-      if (DiffRange.getUnsignedMax().ult(LHSRange.getUnsignedMin()))
-        return true;
-      if (DiffRange.getUnsignedMin().uge(LHSRange.getUnsignedMax()))
-        return false;
-    } else if (isKnownPositive(Diff)) {
-      if (LHSRange.getUnsignedMax().ult(DiffRange.getUnsignedMin()))
-        return true;
-      if (LHSRange.getUnsignedMin().uge(DiffRange.getUnsignedMax()))
-        return false;
-    }
     break;
   }
   case ICmpInst::ICMP_SGE:
@@ -4300,20 +4286,6 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
       return true;
     if (LHSRange.getSignedMin().sgt(RHSRange.getSignedMax()))
       return false;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    ConstantRange DiffRange = getUnsignedRange(Diff);
-    if (isKnownNonPositive(Diff)) {
-      if (DiffRange.getUnsignedMax().ule(LHSRange.getUnsignedMin()))
-        return true;
-      if (DiffRange.getUnsignedMin().ugt(LHSRange.getUnsignedMax()))
-        return false;
-    } else if (isKnownNonNegative(Diff)) {
-      if (LHSRange.getUnsignedMax().ule(DiffRange.getUnsignedMin()))
-        return true;
-      if (LHSRange.getUnsignedMin().ugt(DiffRange.getUnsignedMax()))
-        return false;
-    }
     break;
   }
   case ICmpInst::ICMP_UGT:
@@ -4326,13 +4298,6 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
       return true;
     if (LHSRange.getUnsignedMin().uge(RHSRange.getUnsignedMax()))
       return false;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    ConstantRange DiffRange = getUnsignedRange(Diff);
-    if (LHSRange.getUnsignedMax().ult(DiffRange.getUnsignedMin()))
-      return true;
-    if (LHSRange.getUnsignedMin().uge(DiffRange.getUnsignedMax()))
-      return false;
     break;
   }
   case ICmpInst::ICMP_UGE:
@@ -4344,13 +4309,6 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
     if (LHSRange.getUnsignedMax().ule(RHSRange.getUnsignedMin()))
       return true;
     if (LHSRange.getUnsignedMin().ugt(RHSRange.getUnsignedMax()))
-      return false;
-
-    const SCEV *Diff = getMinusSCEV(LHS, RHS);
-    ConstantRange DiffRange = getUnsignedRange(Diff);
-    if (LHSRange.getUnsignedMax().ule(DiffRange.getUnsignedMin()))
-      return true;
-    if (LHSRange.getUnsignedMin().ugt(DiffRange.getUnsignedMax()))
       return false;
     break;
   }
