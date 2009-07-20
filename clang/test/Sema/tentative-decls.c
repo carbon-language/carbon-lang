@@ -2,7 +2,7 @@
 
 // PR3310
 struct a x1; // expected-note 2{{forward declaration of 'struct a'}}
-static struct a x2; // expected-error{{variable has incomplete type 'struct a'}}
+static struct a x2; // expected-warning{{tentative definition of variable with internal linkage has incomplete non-array type 'struct a'}}
 struct a x3[10]; // expected-error{{array has incomplete element type 'struct a'}}
 struct a {int x;};
 static struct a x2_okay;

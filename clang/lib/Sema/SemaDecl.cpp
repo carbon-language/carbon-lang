@@ -2899,29 +2899,32 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
                               diag::err_typecheck_decl_incomplete_type))
         IDecl->setInvalidDecl();
     }
-    // File scope. C99 6.9.2p2: A declaration of an identifier for and 
+    // File scope. C99 6.9.2p2: A declaration of an identifier for an
     // object that has file scope without an initializer, and without a
     // storage-class specifier or with the storage-class specifier "static",
     // constitutes a tentative definition. Note: A tentative definition with
     // external linkage is valid (C99 6.2.2p5).
-    if (IDecl->isTentativeDefinition(Context)) {
-      QualType CheckType = T;
-      unsigned DiagID = diag::err_typecheck_decl_incomplete_type;
-      
-      const IncompleteArrayType *ArrayT = Context.getAsIncompleteArrayType(T);
-      if (ArrayT) {
-        CheckType = ArrayT->getElementType();
-        DiagID = diag::err_illegal_decl_array_incomplete_type;
+    if (IDecl->isTentativeDefinition(Context) && !IDecl->isInvalidDecl()) {
+      if (const IncompleteArrayType *ArrayT
+          = Context.getAsIncompleteArrayType(T)) {
+        if (RequireCompleteType(IDecl->getLocation(),
+                                ArrayT->getElementType(),
+                                diag::err_illegal_decl_array_incomplete_type))
+          IDecl->setInvalidDecl();
       }
-      
-      if (IDecl->isInvalidDecl()) {
-        // Do nothing with invalid declarations
-      } else if ((ArrayT || IDecl->getStorageClass() == VarDecl::Static) &&
-                 RequireCompleteType(IDecl->getLocation(), CheckType, DiagID)) {
+      else if (IDecl->getStorageClass() == VarDecl::Static) {
         // C99 6.9.2p3: If the declaration of an identifier for an object is
-        // a tentative definition and has internal linkage (C99 6.2.2p3), the  
+        // a tentative definition and has internal linkage (C99 6.2.2p3), the
         // declared type shall not be an incomplete type.
-        IDecl->setInvalidDecl();
+        // NOTE: code such as the following
+        //     static struct s;
+        //     struct s { int a; };
+        // is accepted by gcc. Hence here we issue a warning instead of
+        // an error and we do not invalidate the static declaration.
+        // NOTE: to avoid multiple warnings, only check the first declaration.
+        if (IDecl->getPreviousDeclaration() == 0)
+          RequireCompleteType(IDecl->getLocation(), T,
+                              diag::ext_typecheck_decl_incomplete_type);
       }
     }
   }

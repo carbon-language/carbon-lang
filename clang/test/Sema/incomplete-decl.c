@@ -1,12 +1,13 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-struct foo; // expected-note 4 {{forward declaration of 'struct foo'}}
+struct foo; // expected-note 5 {{forward declaration of 'struct foo'}}
 
 void b;  // expected-error {{variable has incomplete type 'void'}}
 struct foo f; // expected-error{{tentative definition has type 'struct foo' that is never completed}}
 
 static void c; // expected-error {{variable has incomplete type 'void'}}
-static struct foo g;  // expected-error {{variable has incomplete type 'struct foo'}}
+static struct foo g;  // expected-warning {{tentative definition of variable with internal linkage has incomplete non-array type 'struct foo'}} \
+    expected-error{{tentative definition has type 'struct foo' that is never completed}}
 
 extern void d;
 extern struct foo e;
