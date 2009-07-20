@@ -2600,7 +2600,9 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;          <i>; yields {ty}:result</i>
+  &lt;result&gt; = signed add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = unsigned add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt; <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2619,6 +2621,10 @@ Instruction</a> </div>
 
 <p>Because LLVM integers use a two's complement representation, this instruction
    is appropriate for both signed and unsigned integers.</p>
+
+<p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
+   the behavior of the <tt>add</tt> is undefined if signed and/or unsigned
+   overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2666,7 +2672,9 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;            <i>; yields {ty}:result</i>
+  &lt;result&gt; = signed sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {ty}:result</i>
+  &lt;result&gt; = unsigned sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2691,6 +2699,10 @@ Instruction</a> </div>
 
 <p>Because LLVM integers use a two's complement representation, this instruction
    is appropriate for both signed and unsigned integers.</p>
+
+<p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
+   the behavior of the <tt>sub</tt> is undefined if signed and/or unsigned
+   overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2745,7 +2757,9 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;            <i>; yields {ty}:result</i>
+  &lt;result&gt; = signed mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {ty}:result</i>
+  &lt;result&gt; = unsigned mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2769,6 +2783,10 @@ Instruction</a> </div>
    (e.g. <tt>i32</tt>x<tt>i32</tt>-><tt>i64</tt>) is needed, the operands should
    be sign-extended or zero-extended as appropriate to the width of the full
    product.</p>
+
+<p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
+   the behavior of the <tt>mul</tt> is undefined if signed and/or unsigned
+   overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2849,7 +2867,8 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = sdiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = sdiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;         <i>; yields {ty}:result</i>
+  &lt;result&gt; = exact sdiv &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2870,6 +2889,9 @@ Instruction</a> </div>
 <p>Division by zero leads to undefined behavior. Overflow also leads to
    undefined behavior; this is a rare case, but can occur, for example, by doing
    a 32-bit division of -2147483648 by -1.</p>
+
+<p>If the <tt>exact</tt> keyword is present, the result of the <tt>sdiv</tt>
+   is undefined if the result would be rounded or if overflow occurs.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -3911,13 +3933,6 @@ entry:
     ret i32* %t5
   }
 </pre>
-
-<p>Note that it is undefined to access an array out of bounds: array and pointer
-   indexes must always be within the defined bounds of the array type when
-   accessed with an instruction that dereferences the pointer (e.g. a load or
-   store instruction).  The one exception for this rule is zero length arrays.
-   These arrays are defined to be accessible as variable length arrays, which
-   requires access beyond the zero'th element.</p>
 
 <p>The getelementptr instruction is often confusing.  For some more insight into
    how it works, see <a href="GetElementPtr.html">the getelementptr FAQ</a>.</p>
