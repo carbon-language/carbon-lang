@@ -106,7 +106,9 @@ def Q14 : ARMReg<14, "q14", [D28, D29]>;
 def Q15 : ARMReg<15, "q15", [D30, D31]>;
 
 // Current Program Status Register.
-def CPSR : ARMReg<0, "cpsr">;
+def CPSR  : ARMReg<0, "cpsr">;
+
+def FPSCR : ARMReg<1, "fpscr">;
 
 // Register classes.
 //

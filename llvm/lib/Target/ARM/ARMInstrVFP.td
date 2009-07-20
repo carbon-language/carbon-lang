@@ -103,6 +103,7 @@ def FADDS  : ASbI<0b11100011, (outs SPR:$dst), (ins SPR:$a, SPR:$b),
                  [(set SPR:$dst, (fadd SPR:$a, SPR:$b))]>;
 
 // These are encoded as unary instructions.
+let Defs = [FPSCR] in {
 def FCMPED : ADuI<0b11101011, 0b0100, 0b1100, (outs), (ins DPR:$a, DPR:$b),
                  "fcmped", " $a, $b",
                  [(arm_cmpfp DPR:$a, DPR:$b)]>;
@@ -110,6 +111,7 @@ def FCMPED : ADuI<0b11101011, 0b0100, 0b1100, (outs), (ins DPR:$a, DPR:$b),
 def FCMPES : ASuI<0b11101011, 0b0100, 0b1100, (outs), (ins SPR:$a, SPR:$b),
                  "fcmpes", " $a, $b",
                  [(arm_cmpfp SPR:$a, SPR:$b)]>;
+}
 
 def FDIVD  : ADbI<0b11101000, (outs DPR:$dst), (ins DPR:$a, DPR:$b),
                  "fdivd", " $dst, $a, $b",
@@ -170,6 +172,7 @@ def FABSS  : ASuI<0b11101011, 0b0000, 0b1100, (outs SPR:$dst), (ins SPR:$a),
                  "fabss", " $dst, $a",
                  [(set SPR:$dst, (fabs SPR:$a))]>;
 
+let Defs = [FPSCR] in {
 def FCMPEZD : ADuI<0b11101011, 0b0101, 0b1100, (outs), (ins DPR:$a),
                   "fcmpezd", " $a",
                   [(arm_cmpfp0 DPR:$a)]>;
@@ -177,6 +180,7 @@ def FCMPEZD : ADuI<0b11101011, 0b0101, 0b1100, (outs), (ins DPR:$a),
 def FCMPEZS : ASuI<0b11101011, 0b0101, 0b1100, (outs), (ins SPR:$a),
                   "fcmpezs", " $a",
                   [(arm_cmpfp0 SPR:$a)]>;
+}
 
 def FCVTDS : ASuI<0b11101011, 0b0111, 0b1100, (outs DPR:$dst), (ins SPR:$a),
                  "fcvtds", " $dst, $a",
@@ -389,7 +393,7 @@ def FNEGScc  : ASuI<0b11101011, 0b0001, 0b0100,
 // Misc.
 //
 
-let Defs = [CPSR] in
+let Defs = [CPSR], Uses = [FPSCR] in
 def FMSTAT : VFPAI<(outs), (ins), VFPMiscFrm, "fmstat", "", [(arm_fmstat)]> {
   let Inst{27-20} = 0b11101111;
   let Inst{19-16} = 0b0001;
