@@ -4324,6 +4324,8 @@ bool ScalarEvolution::isKnownPredicate(ICmpInst::Predicate Pred,
     break;
   }
   case ICmpInst::ICMP_EQ:
+    // The check at the top of the function catches the case where
+    // the values are known to be equal.
     break;
   }
   return false;
