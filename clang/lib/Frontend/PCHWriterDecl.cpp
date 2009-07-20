@@ -354,9 +354,6 @@ void PCHDeclWriter::VisitImplicitParamDecl(ImplicitParamDecl *D) {
 void PCHDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
   VisitVarDecl(D);
   Record.push_back(D->getObjCDeclQualifier()); // FIXME: stable encoding
-  // FIXME: emit default argument (C++)
-  // FIXME: why isn't the "default argument" just stored as the initializer
-  // in VarDecl?
   Code = pch::DECL_PARM_VAR;
   
   

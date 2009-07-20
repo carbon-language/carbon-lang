@@ -358,7 +358,6 @@ void PCHDeclReader::VisitImplicitParamDecl(ImplicitParamDecl *PD) {
 void PCHDeclReader::VisitParmVarDecl(ParmVarDecl *PD) {
   VisitVarDecl(PD);
   PD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record[Idx++]);
-  // FIXME: default argument (C++ only)
 }
 
 void PCHDeclReader::VisitOriginalParmVarDecl(OriginalParmVarDecl *PD) {

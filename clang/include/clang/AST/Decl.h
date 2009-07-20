@@ -237,8 +237,17 @@ public:
   /// It is illegal to call this function with SC == None.
   static const char *getStorageClassSpecifierString(StorageClass SC);
 
+protected:
+  /// \brief Placeholder type used in Init to denote an unparsed C++ default
+  /// argument.
+  struct UnparsedDefaultArgument;
+  
+  /// \brief The initializer for this variable or, for a ParmVarDecl, the 
+  /// C++ default argument.
+  mutable llvm::PointerUnion3<Stmt *, EvaluatedStmt *, UnparsedDefaultArgument*>
+    Init;
+  
 private:
-  mutable llvm::PointerUnion<Stmt *, EvaluatedStmt *> Init;
   // FIXME: This can be packed into the bitfields in Decl.
   unsigned SClass : 3;
   bool ThreadSpecified : 1;
@@ -295,9 +304,10 @@ public:
       return 0;
 
     const Stmt *S = Init.dyn_cast<Stmt *>();
-    if (!S)
-      S = Init.get<EvaluatedStmt *>()->Value;
-
+    if (!S) {
+      if (EvaluatedStmt *ES = Init.dyn_cast<EvaluatedStmt*>())
+        S = ES->Value;
+    }
     return (const Expr*) S; 
   }
   Expr *getInit() { 
@@ -305,17 +315,19 @@ public:
       return 0;
 
     Stmt *S = Init.dyn_cast<Stmt *>();
-    if (!S)
-      S = Init.get<EvaluatedStmt *>()->Value;
+    if (!S) {
+      if (EvaluatedStmt *ES = Init.dyn_cast<EvaluatedStmt*>())
+        S = ES->Value;
+    }
 
     return (Expr*) S; 
   }
 
   /// \brief Retrieve the address of the initializer expression.
   Stmt **getInitAddress() {
-    if (Init.is<Stmt *>())
-      return reinterpret_cast<Stmt **>(&Init); // FIXME: ugly hack
-    return &Init.get<EvaluatedStmt *>()->Value;
+    if (EvaluatedStmt *ES = Init.dyn_cast<EvaluatedStmt*>())
+      return &ES->Value;
+    return reinterpret_cast<Stmt **>(&Init); // FIXME: ugly hack
   }
 
   void setInit(ASTContext &C, Expr *I);
@@ -495,12 +507,12 @@ public:
 class ImplicitParamDecl : public VarDecl {
 protected:
   ImplicitParamDecl(Kind DK, DeclContext *DC, SourceLocation L,
-            IdentifierInfo *Id, QualType Tw) 
+                    IdentifierInfo *Id, QualType Tw) 
     : VarDecl(DK, DC, L, Id, Tw, VarDecl::None) {}
 public:
   static ImplicitParamDecl *Create(ASTContext &C, DeclContext *DC,
-                         SourceLocation L, IdentifierInfo *Id,
-                         QualType T);
+                                   SourceLocation L, IdentifierInfo *Id,
+                                   QualType T);
   // Implement isa/cast/dyncast/etc.
   static bool classof(const ImplicitParamDecl *D) { return true; }
   static bool classof(const Decl *D) { return D->getKind() == ImplicitParam; }
@@ -513,14 +525,21 @@ class ParmVarDecl : public VarDecl {
   /// in, inout, etc.
   unsigned objcDeclQualifier : 6;
   
-  /// Default argument, if any.  [C++ Only]
-  Expr *DefaultArg;
+  /// \brief Retrieves the fake "value" of an unparsed 
+  static Expr *getUnparsedDefaultArgValue() {
+    uintptr_t Value = (uintptr_t)-1;
+    // Mask off the low bits
+    Value &= ~(uintptr_t)0x07;
+    return reinterpret_cast<Expr*> (Value);
+  }
+  
 protected:
   ParmVarDecl(Kind DK, DeclContext *DC, SourceLocation L,
               IdentifierInfo *Id, QualType T, StorageClass S,
               Expr *DefArg)
-    : VarDecl(DK, DC, L, Id, T, S), 
-      objcDeclQualifier(OBJC_TQ_None), DefaultArg(DefArg) {}
+  : VarDecl(DK, DC, L, Id, T, S), objcDeclQualifier(OBJC_TQ_None) {
+    setDefaultArg(DefArg);
+  }
 
 public:
   static ParmVarDecl *Create(ASTContext &C, DeclContext *DC,
@@ -536,18 +555,20 @@ public:
     
   const Expr *getDefaultArg() const { 
     assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
-    return DefaultArg; 
+    return getInit();
   }
   Expr *getDefaultArg() { 
     assert(!hasUnparsedDefaultArg() && "Default argument is not yet parsed!");
-    return DefaultArg; 
+    return getInit();
   }
-  void setDefaultArg(Expr *defarg) { DefaultArg = defarg; }
+  void setDefaultArg(Expr *defarg) { 
+    Init = reinterpret_cast<Stmt *>(defarg);
+  }
 
   /// hasDefaultArg - Determines whether this parameter has a default argument,
   /// either parsed or not.
   bool hasDefaultArg() const {
-    return DefaultArg != 0;
+    return getInit() || hasUnparsedDefaultArg();
   }
   
   /// hasUnparsedDefaultArg - Determines whether this parameter has a
@@ -561,7 +582,7 @@ public:
   ///   }; // x has a regular default argument now
   /// @endcode
   bool hasUnparsedDefaultArg() const {
-    return DefaultArg == reinterpret_cast<Expr *>(-1);
+    return Init.is<UnparsedDefaultArgument*>();
   }
 
   /// setUnparsedDefaultArg - Specify that this parameter has an
@@ -569,7 +590,9 @@ public:
   /// real default argument via setDefaultArg when the class
   /// definition enclosing the function declaration that owns this
   /// default argument is completed.
-  void setUnparsedDefaultArg() { DefaultArg = reinterpret_cast<Expr *>(-1); }
+  void setUnparsedDefaultArg() { 
+    Init = (UnparsedDefaultArgument *)0;
+  }
 
   QualType getOriginalType() const;
   
