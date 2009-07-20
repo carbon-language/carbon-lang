@@ -32,7 +32,6 @@ class MachineCodeEmitter;
 class JITCodeEmitter;
 class ObjectCodeEmitter;
 class TargetRegisterInfo;
-class Module;
 class PassManagerBase;
 class PassManager;
 class Pass;
