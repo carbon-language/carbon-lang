@@ -1274,7 +1274,6 @@ public:
   /// call to be explicit llvm code if it wants to.  This is useful for
   /// turning simple inline asms into LLVM intrinsics, which gives the
   /// compiler more information about the behavior of the code.
-  // FIXME: Move this to TargetLowering.
   virtual bool ExpandInlineAsm(CallInst *CI) const {
     return false;
   }
