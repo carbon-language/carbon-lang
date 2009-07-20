@@ -508,7 +508,6 @@ define i32 @main() {                                              <i>; i32()* </
 
 <dl>
   <dt><tt><b><a name="linkage_private">private</a></b></tt>: </dt>
-
   <dd>Global values with private linkage are only directly accessible by objects
       in the current module.  In particular, linking code into a module with an
       private global value may cause the private to be renamed as necessary to
@@ -517,18 +516,15 @@ define i32 @main() {                                              <i>; i32()* </
       object file.</dd>
 
   <dt><tt><b><a name="linkage_linker_private">linker_private</a></b></tt>: </dt>
-
   <dd>Similar to private, but the symbol is passed through the assembler and
       removed by the linker after evaluation.</dd>
 
   <dt><tt><b><a name="linkage_internal">internal</a></b></tt>: </dt>
-
   <dd>Similar to private, but the value shows as a local symbol
       (<tt>STB_LOCAL</tt> in the case of ELF) in the object file. This
       corresponds to the notion of the '<tt>static</tt>' keyword in C.</dd>
 
   <dt><tt><b><a name="linkage_available_externally">available_externally</a></b></tt>: </dt>
-
   <dd>Globals with "<tt>available_externally</tt>" linkage are never emitted
       into the object file corresponding to the LLVM module.  They exist to
       allow inlining and other optimizations to take place given knowledge of
@@ -538,7 +534,6 @@ define i32 @main() {                                              <i>; i32()* </
       This linkage type is only allowed on definitions, not declarations.</dd>
 
   <dt><tt><b><a name="linkage_linkonce">linkonce</a></b></tt>: </dt>
-
   <dd>Globals with "<tt>linkonce</tt>" linkage are merged with other globals of
       the same name when linkage occurs.  This is typically used to implement
       inline functions, templates, or other code which must be generated in each
@@ -546,7 +541,6 @@ define i32 @main() {                                              <i>; i32()* </
       allowed to be discarded.</dd>
 
   <dt><tt><b><a name="linkage_common">common</a></b></tt>: </dt>
-
   <dd>"<tt>common</tt>" linkage is exactly the same as <tt>linkonce</tt>
      linkage, except that unreferenced <tt>common</tt> globals may not be
      discarded.  This is used for globals that may be emitted in multiple
@@ -555,14 +549,12 @@ define i32 @main() {                                              <i>; i32()* </
      definitions in C, such as "<tt>int X;</tt>" at global scope.</dd>
 
   <dt><tt><b><a name="linkage_weak">weak</a></b></tt>: </dt>
-
   <dd>"<tt>weak</tt>" linkage is the same as <tt>common</tt> linkage, except
       that some targets may choose to emit different assembly sequences for them
       for target-dependent reasons.  This is used for globals that are declared
       "weak" in C source code.</dd>
 
   <dt><tt><b><a name="linkage_appending">appending</a></b></tt>: </dt>
-
   <dd>"<tt>appending</tt>" linkage may only be applied to global variables of
       pointer to array type.  When two global variables with appending linkage
       are linked together, the two global arrays are appended together.  This is
@@ -570,14 +562,12 @@ define i32 @main() {                                              <i>; i32()* </
       "sections" with identical names when .o files are linked.</dd>
 
   <dt><tt><b><a name="linkage_externweak">extern_weak</a></b></tt>: </dt>
-
   <dd>The semantics of this linkage follow the ELF object file model: the symbol
       is weak until linked, if not linked, the symbol becomes null instead of
       being an undefined reference.</dd>
 
   <dt><tt><b><a name="linkage_linkonce">linkonce_odr</a></b></tt>: </dt>
   <dt><tt><b><a name="linkage_weak">weak_odr</a></b></tt>: </dt>
-
   <dd>Some languages allow differing globals to be merged, such as two functions
       with different semantics.  Other languages, such as <tt>C++</tt>, ensure
       that only equivalent globals are ever merged (the "one definition rule" -
@@ -587,7 +577,6 @@ define i32 @main() {                                              <i>; i32()* </
       same as their non-<tt>odr</tt> versions.</dd>
 
   <dt><tt><b><a name="linkage_external">externally visible</a></b></tt>:</dt>
-
   <dd>If none of the above identifiers are used, the global is externally
       visible, meaning that it participates in linkage and can be used to
       resolve external symbol references.</dd>
@@ -599,7 +588,6 @@ define i32 @main() {                                              <i>; i32()* </
 
 <dl>
   <dt><tt><b><a name="linkage_dllimport">dllimport</a></b></tt>: </dt>
-
   <dd>"<tt>dllimport</tt>" linkage causes the compiler to reference a function
       or variable via a global pointer to a pointer that is set up by the DLL
       exporting the symbol. On Microsoft Windows targets, the pointer name is
@@ -607,7 +595,6 @@ define i32 @main() {                                              <i>; i32()* </
       name.</dd>
 
   <dt><tt><b><a name="linkage_dllexport">dllexport</a></b></tt>: </dt>
-
   <dd>"<tt>dllexport</tt>" linkage causes the compiler to provide a global
       pointer to a pointer in a DLL, so that it can be referenced with the
       <tt>dllimport</tt> attribute. On Microsoft Windows targets, the pointer
@@ -646,7 +633,6 @@ define i32 @main() {                                              <i>; i32()* </
 
 <dl>
   <dt><b>"<tt>ccc</tt>" - The C calling convention</b>:</dt>
-
   <dd>This calling convention (the default if no other calling convention is
       specified) matches the target C calling conventions.  This calling
       convention supports varargs function calls and tolerates some mismatch in
@@ -654,7 +640,6 @@ define i32 @main() {                                              <i>; i32()* </
       does normal C).</dd>
 
   <dt><b>"<tt>fastcc</tt>" - The fast calling convention</b>:</dt>
-
   <dd>This calling convention attempts to make calls as fast as possible
       (e.g. by passing things in registers).  This calling convention allows the
       target to use whatever tricks it wants to produce fast code for the
@@ -666,7 +651,6 @@ define i32 @main() {                                              <i>; i32()* </
       the prototype of the function definition.</dd>
 
   <dt><b>"<tt>coldcc</tt>" - The cold calling convention</b>:</dt>
-
   <dd>This calling convention attempts to make code in the caller as efficient
       as possible under the assumption that the call is not commonly executed.
       As such, these calls often preserve all registers so that the call does
@@ -675,7 +659,6 @@ define i32 @main() {                                              <i>; i32()* </
       exactly match the prototype of the function definition.</dd>
 
   <dt><b>"<tt>cc &lt;<em>n</em>&gt;</tt>" - Numbered convention</b>:</dt>
-
   <dd>Any calling convention may be specified by number, allowing
       target-specific calling conventions to be used.  Target specific calling
       conventions start at 64.</dd>
@@ -699,7 +682,6 @@ define i32 @main() {                                              <i>; i32()* </
 
 <dl>
   <dt><b>"<tt>default</tt>" - Default style</b>:</dt>
-
   <dd>On targets that use the ELF object file format, default visibility means
       that the declaration is visible to other modules and, in shared libraries,
       means that the declared entity may be overridden. On Darwin, default
@@ -707,7 +689,6 @@ define i32 @main() {                                              <i>; i32()* </
       visibility corresponds to "external linkage" in the language.</dd>
 
   <dt><b>"<tt>hidden</tt>" - Hidden style</b>:</dt>
-
   <dd>Two declarations of an object with hidden visibility refer to the same
       object if they are in the same shared object. Usually, hidden visibility
       indicates that the symbol will not be placed into the dynamic symbol
@@ -715,7 +696,6 @@ define i32 @main() {                                              <i>; i32()* </
       directly.</dd>
 
   <dt><b>"<tt>protected</tt>" - Protected style</b>:</dt>
-
   <dd>On ELF, protected visibility indicates that the symbol will be placed in
       the dynamic symbol table, but that references within the defining module
       will bind to the local symbol. That is, the symbol cannot be overridden by
@@ -863,8 +843,7 @@ define i32 @main() {                                              <i>; i32()* </
    specified, the function is forced to have at least that much alignment.  All
    alignments must be a power of 2.</p>
 
-  <h5>Syntax:</h5>
-
+<h5>Syntax:</h5>
 <div class="doc_code">
 <pre>
 define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
@@ -889,8 +868,7 @@ define [<a href="#linkage">linkage</a>] [<a href="#visibility">visibility</a>]
    may have an optional <a href="#linkage">linkage type</a>, and an
    optional <a href="#visibility">visibility style</a>.</p>
 
-  <h5>Syntax:</h5>
-
+<h5>Syntax:</h5>
 <div class="doc_code">
 <pre>
 @&lt;Name&gt; = alias [Linkage] [Visibility] &lt;AliaseeTy&gt; @&lt;Aliasee&gt;
@@ -930,19 +908,16 @@ declare signext i8 @returns_signed_char()
 
 <dl>
   <dt><tt>zeroext</tt></dt>
-
   <dd>This indicates to the code generator that the parameter or return value
       should be zero-extended to a 32-bit value by the caller (for a parameter)
       or the callee (for a return value).</dd>
 
   <dt><tt>signext</tt></dt>
-
   <dd>This indicates to the code generator that the parameter or return value
       should be sign-extended to a 32-bit value by the caller (for a parameter)
       or the callee (for a return value).</dd>
 
   <dt><tt>inreg</tt></dt>
-
   <dd>This indicates that this parameter or return value should be treated in a
       special target-dependent fashion during while emitting code for a function
       call or return (usually, by putting it in a register as opposed to memory,
@@ -950,7 +925,6 @@ declare signext i8 @returns_signed_char()
       registers).  Use of this attribute is target-specific.</dd>
 
   <dt><tt><a name="byval">byval</a></tt></dt>
-
   <dd>This indicates that the pointer parameter should really be passed by value
       to the function.  The attribute implies that a hidden copy of the pointee
       is made between the caller and the callee, so the callee is unable to
@@ -966,7 +940,6 @@ declare signext i8 @returns_signed_char()
       stack slot.</dd>
 
   <dt><tt>sret</tt></dt>
-
   <dd>This indicates that the pointer parameter specifies the address of a
       structure that is the return value of the function in the source program.
       This pointer must be guaranteed by the caller to be valid: loads and
@@ -975,7 +948,6 @@ declare signext i8 @returns_signed_char()
       for return values. </dd>
 
   <dt><tt>noalias</tt></dt>
-
   <dd>This indicates that the pointer does not alias any global or any other
       parameter.  The caller is responsible for ensuring that this is the
       case. On a function return value, <tt>noalias</tt> additionally indicates
@@ -986,13 +958,11 @@ declare signext i8 @returns_signed_char()
       analysis</a>.</dd>
 
   <dt><tt>nocapture</tt></dt>
-
   <dd>This indicates that the callee does not make any copies of the pointer
       that outlive the callee itself. This is not a valid attribute for return
       values.</dd>
 
   <dt><tt>nest</tt></dt>
-
   <dd>This indicates that the pointer parameter can be excised using the
       <a href="#int_trampoline">trampoline intrinsics</a>. This is not a valid
       attribute for return values.</dd>
@@ -1048,37 +1018,31 @@ define void @f() optsize
 
 <dl>
   <dt><tt>alwaysinline</tt></dt>
-
   <dd>This attribute indicates that the inliner should attempt to inline this
       function into callers whenever possible, ignoring any active inlining size
       threshold for this caller.</dd>
 
   <dt><tt>noinline</tt></dt>
-
   <dd>This attribute indicates that the inliner should never inline this
       function in any situation. This attribute may not be used together with
       the <tt>alwaysinline</tt> attribute.</dd>
 
   <dt><tt>optsize</tt></dt>
-
   <dd>This attribute suggests that optimization passes and code generator passes
       make choices that keep the code size of this function low, and otherwise
       do optimizations specifically to reduce code size.</dd>
 
   <dt><tt>noreturn</tt></dt>
-
   <dd>This function attribute indicates that the function never returns
       normally.  This produces undefined behavior at runtime if the function
       ever does dynamically return.</dd>
 
   <dt><tt>nounwind</tt></dt>
-
   <dd>This function attribute indicates that the function never returns with an
       unwind or exceptional control flow.  If the function does unwind, its
       runtime behavior is undefined.</dd>
 
   <dt><tt>readnone</tt></dt>
-
   <dd>This attribute indicates that the function computes its result (or decides
       to unwind an exception) based strictly on its arguments, without
       dereferencing any pointer arguments or otherwise accessing any mutable
@@ -1090,7 +1054,6 @@ define void @f() optsize
       could use the <tt>unwind</tt> instruction.</dd>
 
   <dt><tt><a name="readonly">readonly</a></tt></dt>
-
   <dd>This attribute indicates that the function does not write through any
       pointer arguments (including <tt><a href="#byval">byval</a></tt>
       arguments) or otherwise modify any state (e.g. memory, control registers,
@@ -1102,7 +1065,6 @@ define void @f() optsize
       use the <tt>unwind</tt> instruction.</dd>
 
   <dt><tt><a name="ssp">ssp</a></tt></dt>
-
   <dd>This attribute indicates that the function should emit a stack smashing
       protector. It is in the form of a "canary"&mdash;a random value placed on
       the stack before the local variables that's checked upon return from the
@@ -1114,27 +1076,23 @@ define void @f() optsize
       function will have an <tt>ssp</tt> attribute.</dd>
 
   <dt><tt>sspreq</tt></dt>
-
   <dd>This attribute indicates that the function should <em>always</em> emit a
       stack smashing protector. This overrides
-      the <tt><a href="#ssp">ssp</a></tt> function attribute.
-
-     If a function that has an <tt>sspreq</tt> attribute is inlined into a
-     function that doesn't have an <tt>sspreq</tt> attribute or which has
-     an <tt>ssp</tt> attribute, then the resulting function will have
-     an <tt>sspreq</tt> attribute.</dd>
+      the <tt><a href="#ssp">ssp</a></tt> function attribute.<br>
+<br>
+      If a function that has an <tt>sspreq</tt> attribute is inlined into a
+      function that doesn't have an <tt>sspreq</tt> attribute or which has
+      an <tt>ssp</tt> attribute, then the resulting function will have
+      an <tt>sspreq</tt> attribute.</dd>
 
   <dt><tt>noredzone</tt></dt>
-
   <dd>This attribute indicates that the code generator should not use a red
       zone, even if the target-specific ABI normally permits it.</dd>
 
   <dt><tt>noimplicitfloat</tt></dt>
-
   <dd>This attributes disables implicit floating point instructions.</dd>
 
   <dt><tt>naked</tt></dt>
-
   <dd>This attribute disables prologue / epilogue emission for the function.
       This can have very system-specific consequences.</dd>
 </dl>
@@ -1193,46 +1151,38 @@ target datalayout = "<i>layout specification</i>"
 
 <dl>
   <dt><tt>E</tt></dt>
-
   <dd>Specifies that the target lays out data in big-endian form. That is, the
       bits with the most significance have the lowest address location.</dd>
 
   <dt><tt>e</tt></dt>
-
   <dd>Specifies that the target lays out data in little-endian form. That is,
       the bits with the least significance have the lowest address
       location.</dd>
 
   <dt><tt>p:<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-
   <dd>This specifies the <i>size</i> of a pointer and its <i>abi</i> and 
       <i>preferred</i> alignments. All sizes are in bits. Specifying
       the <i>pref</i> alignment is optional. If omitted, the
       preceding <tt>:</tt> should be omitted too.</dd>
 
   <dt><tt>i<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-
   <dd>This specifies the alignment for an integer type of a given bit
       <i>size</i>. The value of <i>size</i> must be in the range [1,2^23).</dd>
 
   <dt><tt>v<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-
   <dd>This specifies the alignment for a vector type of a given bit 
       <i>size</i>.</dd>
 
   <dt><tt>f<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-
   <dd>This specifies the alignment for a floating point type of a given bit 
       <i>size</i>. The value of <i>size</i> must be either 32 (float) or 64
       (double).</dd>
 
   <dt><tt>a<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-
   <dd>This specifies the alignment for an aggregate type of a given bit
       <i>size</i>.</dd>
 
   <dt><tt>s<i>size</i>:<i>abi</i>:<i>pref</i></tt></dt>
-
   <dd>This specifies the alignment for a stack object of a given bit
       <i>size</i>.</dd>
 </dl>
@@ -1389,44 +1339,47 @@ Classifications</a> </div>
 <div class="doc_subsubsection"> <a name="t_void">Void Type</a> </div>
 
 <div class="doc_text">
+
 <h5>Overview:</h5>
 <p>The void type does not represent any value and has no size.</p>
 
 <h5>Syntax:</h5>
-
 <pre>
   void
 </pre>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_label">Label Type</a> </div>
 
 <div class="doc_text">
+
 <h5>Overview:</h5>
 <p>The label type represents code labels.</p>
 
 <h5>Syntax:</h5>
-
 <pre>
   label
 </pre>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_metadata">Metadata Type</a> </div>
 
 <div class="doc_text">
+
 <h5>Overview:</h5>
 <p>The metadata type represents embedded metadata. The only derived type that
    may contain metadata is <tt>metadata*</tt> or a function type that returns or
    takes metadata typed parameters, but not pointer to metadata types.</p>
 
 <h5>Syntax:</h5>
-
 <pre>
   metadata
 </pre>
+
 </div>
 
 
@@ -1453,7 +1406,6 @@ Classifications</a> </div>
    2^23-1 (about 8 million) can be specified.</p>
 
 <h5>Syntax:</h5>
-
 <pre>
   iN
 </pre>
@@ -1495,7 +1447,6 @@ Classifications</a> </div>
    and an underlying data type.</p>
 
 <h5>Syntax:</h5>
-
 <pre>
   [&lt;# elements&gt; x &lt;elementtype&gt;]
 </pre>
@@ -1561,7 +1512,6 @@ Classifications</a> </div>
    and the struct must have at least one element.</p>
 
 <h5>Syntax:</h5>
-
 <pre>
   &lt;returntype list&gt; (&lt;parameter list&gt;)
 </pre>
@@ -1621,8 +1571,9 @@ Classifications</a> </div>
    the '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.</p>
 
 <h5>Syntax:</h5>
-
-<pre>  { &lt;type list&gt; }<br></pre>
+<pre>
+  { &lt;type list&gt; }
+</pre>
 
 <h5>Examples:</h5>
 <table class="layout">
@@ -1662,8 +1613,9 @@ Classifications</a> </div>
    the '<tt><a href="#i_getelementptr">getelementptr</a></tt>' instruction.</p>
 
 <h5>Syntax:</h5>
-
-<pre>  &lt; { &lt;type list&gt; } &gt; <br></pre>
+<pre>
+  &lt; { &lt;type list&gt; } &gt;
+</pre>
 
 <h5>Examples:</h5>
 <table class="layout">
@@ -1697,8 +1649,9 @@ Classifications</a> </div>
    permit pointers to labels (<tt>label*</tt>).  Use <tt>i8*</tt> instead.</p>
 
 <h5>Syntax:</h5>
-
-<pre>  &lt;type&gt; *<br></pre>
+<pre>
+  &lt;type&gt; *
+</pre>
 
 <h5>Examples:</h5>
 <table class="layout">
@@ -1736,7 +1689,6 @@ Classifications</a> </div>
    <a href="#t_firstclass">first class</a>.</p>
 
 <h5>Syntax:</h5>
-
 <pre>
   &lt; &lt;# elements&gt; x &lt;elementtype&gt; &gt;
 </pre>
@@ -1745,7 +1697,6 @@ Classifications</a> </div>
    integer or floating point type.</p>
 
 <h5>Examples:</h5>
-
 <table class="layout">
   <tr class="layout">
     <td class="left"><tt>&lt;4 x i32&gt;</tt></td>
@@ -1779,13 +1730,11 @@ Classifications</a> </div>
    a structure type).</p>
 
 <h5>Syntax:</h5>
-
 <pre>
   opaque
 </pre>
 
 <h5>Examples:</h5>
-
 <table class="layout">
   <tr class="layout">
     <td class="left"><tt>opaque</tt></td>
@@ -1822,7 +1771,6 @@ Classifications</a> </div>
    in llvm IR).</p>
 
 <h5>Syntax:</h5>
-
 <pre>
    \&lt;level&gt;
 </pre>
@@ -1830,7 +1778,6 @@ Classifications</a> </div>
 <p>The level is the count of the lexical type that is being referred to.</p>
 
 <h5>Examples:</h5>
-
 <table class="layout">
   <tr class="layout">
     <td class="left"><tt>\1*</tt></td>
@@ -1863,18 +1810,15 @@ Classifications</a> </div>
 
 <dl>
   <dt><b>Boolean constants</b></dt>
-
   <dd>The two strings '<tt>true</tt>' and '<tt>false</tt>' are both valid
       constants of the <tt><a href="#t_primitive">i1</a></tt> type.</dd>
 
   <dt><b>Integer constants</b></dt>
-
   <dd>Standard integers (such as '4') are constants of
       the <a href="#t_integer">integer</a> type.  Negative numbers may be used
       with integer types.</dd>
 
   <dt><b>Floating point constants</b></dt>
-
   <dd>Floating point constants use standard decimal notation (e.g. 123.421),
       exponential notation (e.g. 1.23421e+2), or a more precise hexadecimal
       notation (see below).  The assembler requires the exact decimal value of a
@@ -1883,7 +1827,6 @@ Classifications</a> </div>
       constants must have a <a href="#t_floating">floating point</a> type. </dd>
 
   <dt><b>Null pointer constants</b></dt>
-
   <dd>The identifier '<tt>null</tt>' is recognized as a null pointer constant
       and must be of <a href="#t_pointer">pointer type</a>.</dd>
 </dl>
@@ -1927,7 +1870,6 @@ Classifications</a> </div>
 
 <dl>
   <dt><b>Structure constants</b></dt>
-
   <dd>Structure constants are represented with notation similar to structure
       type definitions (a comma separated list of elements, surrounded by braces
       (<tt>{}</tt>)).  For example: "<tt>{ i32 4, float 17.0, i32* @G }</tt>",
@@ -1937,7 +1879,6 @@ Classifications</a> </div>
       type.</dd>
 
   <dt><b>Array constants</b></dt>
-
   <dd>Array constants are represented with notation similar to array type
      definitions (a comma separated list of elements, surrounded by square
      brackets (<tt>[]</tt>)).  For example: "<tt>[ i32 42, i32 11, i32 74
@@ -1946,7 +1887,6 @@ Classifications</a> </div>
      type.</dd>
 
   <dt><b>Vector constants</b></dt>
-
   <dd>Vector constants are represented with notation similar to vector type
       definitions (a comma separated list of elements, surrounded by
       less-than/greater-than's (<tt>&lt;&gt;</tt>)).  For example: "<tt>&lt; i32
@@ -1955,7 +1895,6 @@ Classifications</a> </div>
       elements must match those specified by the type.</dd>
 
   <dt><b>Zero initialization</b></dt>
-
   <dd>The string '<tt>zeroinitializer</tt>' can be used to zero initialize a
       value to zero of <em>any</em> type, including scalar and aggregate types.
       This is often used to avoid having to print large zero initializers
@@ -1963,7 +1902,6 @@ Classifications</a> </div>
       zero initializers.</dd>
 
   <dt><b>Metadata node</b></dt>
-
   <dd>A metadata node is a structure-like constant with
       <a href="#t_metadata">metadata type</a>.  For example: "<tt>metadata !{
       i32 0, metadata !"test" }</tt>".  Unlike other constants that are meant to
@@ -2024,36 +1962,30 @@ Classifications</a> </div>
 
 <dl>
   <dt><b><tt>trunc ( CST to TYPE )</tt></b></dt>
-
   <dd>Truncate a constant to another type. The bit size of CST must be larger
       than the bit size of TYPE. Both types must be integers.</dd>
 
   <dt><b><tt>zext ( CST to TYPE )</tt></b></dt>
-
   <dd>Zero extend a constant to another type. The bit size of CST must be
       smaller or equal to the bit size of TYPE.  Both types must be
       integers.</dd>
 
   <dt><b><tt>sext ( CST to TYPE )</tt></b></dt>
-
   <dd>Sign extend a constant to another type. The bit size of CST must be
       smaller or equal to the bit size of TYPE.  Both types must be
       integers.</dd>
 
   <dt><b><tt>fptrunc ( CST to TYPE )</tt></b></dt>
-
   <dd>Truncate a floating point constant to another floating point type. The
       size of CST must be larger than the size of TYPE. Both types must be
       floating point.</dd>
 
   <dt><b><tt>fpext ( CST to TYPE )</tt></b></dt>
-
   <dd>Floating point extend a constant to another type. The size of CST must be
       smaller or equal to the size of TYPE. Both types must be floating
       point.</dd>
 
   <dt><b><tt>fptoui ( CST to TYPE )</tt></b></dt>
-
   <dd>Convert a floating point constant to the corresponding unsigned integer
       constant. TYPE must be a scalar or vector integer type. CST must be of
       scalar or vector floating point type. Both CST and TYPE must be scalars,
@@ -2061,7 +1993,6 @@ Classifications</a> </div>
       integer type, the results are undefined.</dd>
 
   <dt><b><tt>fptosi ( CST to TYPE )</tt></b></dt>
-
   <dd>Convert a floating point constant to the corresponding signed integer
       constant.  TYPE must be a scalar or vector integer type. CST must be of
       scalar or vector floating point type. Both CST and TYPE must be scalars,
@@ -2069,7 +2000,6 @@ Classifications</a> </div>
       integer type, the results are undefined.</dd>
 
   <dt><b><tt>uitofp ( CST to TYPE )</tt></b></dt>
-
   <dd>Convert an unsigned integer constant to the corresponding floating point
       constant. TYPE must be a scalar or vector floating point type. CST must be
       of scalar or vector integer type. Both CST and TYPE must be scalars, or
@@ -2077,7 +2007,6 @@ Classifications</a> </div>
       floating point type, the results are undefined.</dd>
 
   <dt><b><tt>sitofp ( CST to TYPE )</tt></b></dt>
-
   <dd>Convert a signed integer constant to the corresponding floating point
       constant. TYPE must be a scalar or vector floating point type. CST must be
       of scalar or vector integer type. Both CST and TYPE must be scalars, or
@@ -2085,61 +2014,50 @@ Classifications</a> </div>
       floating point type, the results are undefined.</dd>
 
   <dt><b><tt>ptrtoint ( CST to TYPE )</tt></b></dt>
-
   <dd>Convert a pointer typed constant to the corresponding integer constant
       <tt>TYPE</tt> must be an integer type. <tt>CST</tt> must be of pointer
       type. The <tt>CST</tt> value is zero extended, truncated, or unchanged to
       make it fit in <tt>TYPE</tt>.</dd>
 
   <dt><b><tt>inttoptr ( CST to TYPE )</tt></b></dt>
-
   <dd>Convert a integer constant to a pointer constant.  TYPE must be a pointer
       type.  CST must be of integer type. The CST value is zero extended,
       truncated, or unchanged to make it fit in a pointer size. This one is
       <i>really</i> dangerous!</dd>
 
   <dt><b><tt>bitcast ( CST to TYPE )</tt></b></dt>
-
   <dd>Convert a constant, CST, to another TYPE. The constraints of the operands
       are the same as those for the <a href="#i_bitcast">bitcast
       instruction</a>.</dd>
 
   <dt><b><tt>getelementptr ( CSTPTR, IDX0, IDX1, ... )</tt></b></dt>
-
   <dd>Perform the <a href="#i_getelementptr">getelementptr operation</a> on
       constants.  As with the <a href="#i_getelementptr">getelementptr</a>
       instruction, the index list may have zero or more indexes, which are
       required to make sense for the type of "CSTPTR".</dd>
 
   <dt><b><tt>select ( COND, VAL1, VAL2 )</tt></b></dt>
-
   <dd>Perform the <a href="#i_select">select operation</a> on constants.</dd>
 
   <dt><b><tt>icmp COND ( VAL1, VAL2 )</tt></b></dt>
-
   <dd>Performs the <a href="#i_icmp">icmp operation</a> on constants.</dd>
 
   <dt><b><tt>fcmp COND ( VAL1, VAL2 )</tt></b></dt>
-
   <dd>Performs the <a href="#i_fcmp">fcmp operation</a> on constants.</dd>
 
   <dt><b><tt>extractelement ( VAL, IDX )</tt></b></dt>
-
   <dd>Perform the <a href="#i_extractelement">extractelement operation</a> on
       constants.</dd>
 
   <dt><b><tt>insertelement ( VAL, ELT, IDX )</tt></b></dt>
-
   <dd>Perform the <a href="#i_insertelement">insertelement operation</a> on
     constants.</dd>
 
   <dt><b><tt>shufflevector ( VEC1, VEC2, IDXMASK )</tt></b></dt>
-
   <dd>Perform the <a href="#i_shufflevector">shufflevector operation</a> on
       constants.</dd>
 
   <dt><b><tt>OPCODE ( LHS, RHS )</tt></b></dt>
-
   <dd>Perform the specified operation of the LHS and RHS constants. OPCODE may
       be any of the <a href="#binaryops">binary</a>
       or <a href="#bitwiseops">bitwise binary</a> operations.  The constraints
@@ -2283,7 +2201,6 @@ Instruction</a> </div>
 </pre>
 
 <h5>Overview:</h5>
-
 <p>The '<tt>ret</tt>' instruction is used to return control flow (and optionally
    a value) from a function back to the caller.</p>
 
@@ -2292,7 +2209,6 @@ Instruction</a> </div>
    occur.</p>
 
 <h5>Arguments:</h5>
-
 <p>The '<tt>ret</tt>' instruction optionally accepts a single argument, the
    return value. The type of the return value must be a
    '<a href="#t_firstclass">first class</a>' type.</p>
@@ -2304,7 +2220,6 @@ Instruction</a> </div>
    return value.</p>
 
 <h5>Semantics:</h5>
-
 <p>When the '<tt>ret</tt>' instruction is executed, control flow returns back to
    the calling function's context.  If the caller is a
    "<a href="#i_call"><tt>call</tt></a>" instruction, execution continues at the
@@ -2315,7 +2230,6 @@ Instruction</a> </div>
    value.</p>
 
 <h5>Example:</h5>
-
 <pre>
   ret i32 5                       <i>; Return an integer value of 5</i>
   ret void                        <i>; Return from a void function</i>
@@ -2360,8 +2274,16 @@ Instruction</a> </div>
    control flows to the '<tt>iffalse</tt>' <tt>label</tt> argument.</p>
 
 <h5>Example:</h5>
-<pre>Test:<br>  %cond = <a href="#i_icmp">icmp</a> eq i32 %a, %b<br>  br i1 %cond, label %IfEqual, label %IfUnequal<br>IfEqual:<br>  <a
- href="#i_ret">ret</a> i32 1<br>IfUnequal:<br>  <a href="#i_ret">ret</a> i32 0<br></pre>
+<pre>
+Test:
+  %cond = <a href="#i_icmp">icmp</a> eq i32 %a, %b
+  br i1 %cond, label %IfEqual, label %IfUnequal
+IfEqual:
+  <a href="#i_ret">ret</a> i32 1
+IfUnequal:
+  <a href="#i_ret">ret</a> i32 0
+</pre>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -2585,7 +2507,6 @@ Instruction</a> </div>
 <p>The '<tt>add</tt>' instruction returns the sum of its two operands.</p>
 
 <h5>Arguments:</h5>
-
 <p>The two arguments to the '<tt>add</tt>' instruction must
    be <a href="#t_integer">integer</a> or <a href="#t_vector">vector</a> of
    integer values. Both arguments must have identical types.</p>
