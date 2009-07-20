@@ -879,10 +879,14 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             // so, swap the B and C operands.  This makes the live ranges of A
             // and C joinable.
             // FIXME: This code also works for A := B op C instructions.
-            if (TID.isCommutable() && mi->getNumOperands() >= 3) {
-              assert(mi->getOperand(3-si).isReg() &&
-                     "Not a proper commutative instruction!");
-              unsigned regC = mi->getOperand(3-si).getReg();
+            unsigned SrcOp1, SrcOp2;
+            if (TID.isCommutable() && mi->getNumOperands() >= 3 &&
+                TII->findCommutedOpIndices(mi, SrcOp1, SrcOp2)) {
+              unsigned regC = 0;
+              if (si == SrcOp1)
+                regC = mi->getOperand(SrcOp2).getReg();
+              else if (si == SrcOp2)
+                regC = mi->getOperand(SrcOp1).getReg();
               if (isKilled(*mi, regC, MRI, TII)) {
                 if (CommuteInstruction(mi, mbbi, regB, regC, Dist)) {
                   ++NumCommuted;
