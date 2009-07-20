@@ -58,7 +58,7 @@ namespace llvm {
     const char *RomData16bitsDirective;
     const char *RomData32bitsDirective;
     const char *getRomDirective(unsigned size) const;
-    virtual const char *getASDirective(unsigned size, unsigned AS) const;
+    virtual const char *getDataASDirective(unsigned size, unsigned AS) const;
     const Section *getBSSSectionForGlobal(const GlobalVariable *GV) const;
     const Section *getIDATASectionForGlobal(const GlobalVariable *GV) const;
     const Section *getSectionForAuto(const GlobalVariable *GV) const;

@@ -305,11 +305,10 @@ namespace llvm {
     const char *Data32bitsDirective;      // Defaults to "\t.long\t"
     const char *Data64bitsDirective;      // Defaults to "\t.quad\t"
 
-    /// getASDirective - Targets can override it to provide different data
-    /// directives for various sizes and non-default address spaces.
-    virtual const char *getASDirective(unsigned size, 
-                                       unsigned AS) const {
-      assert(AS > 0 && "Dont know the directives for default addr space");
+    /// getDataASDirective - Return the directive that should be used to emit
+    /// data of the specified size to the specified numeric address space.
+    virtual const char *getDataASDirective(unsigned Size, unsigned AS) const {
+      assert(AS != 0 && "Don't know the directives for default addr space");
       return NULL;
     }
 
@@ -631,16 +630,16 @@ namespace llvm {
     // Data directive accessors
     //
     const char *getData8bitsDirective(unsigned AS = 0) const {
-      return AS == 0 ? Data8bitsDirective : getASDirective(8, AS);
+      return AS == 0 ? Data8bitsDirective : getDataASDirective(8, AS);
     }
     const char *getData16bitsDirective(unsigned AS = 0) const {
-      return AS == 0 ? Data16bitsDirective : getASDirective(16, AS);
+      return AS == 0 ? Data16bitsDirective : getDataASDirective(16, AS);
     }
     const char *getData32bitsDirective(unsigned AS = 0) const {
-      return AS == 0 ? Data32bitsDirective : getASDirective(32, AS);
+      return AS == 0 ? Data32bitsDirective : getDataASDirective(32, AS);
     }
     const char *getData64bitsDirective(unsigned AS = 0) const {
-      return AS == 0 ? Data64bitsDirective : getASDirective(64, AS);
+      return AS == 0 ? Data64bitsDirective : getDataASDirective(64, AS);
     }
 
 

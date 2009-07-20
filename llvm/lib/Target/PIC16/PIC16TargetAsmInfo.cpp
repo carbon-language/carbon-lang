@@ -54,25 +54,21 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   HasSingleParameterDotFile = false;
 }
 
-const char *PIC16TargetAsmInfo::getRomDirective(unsigned size) const
-{
-  if (size == 8)
-    return RomData8bitsDirective;
-  else if (size == 16)
-    return RomData16bitsDirective;
-  else if (size == 32)
-    return RomData32bitsDirective;
-  else
-    return NULL;
+const char *PIC16TargetAsmInfo::getRomDirective(unsigned Size) const {
+  switch (Size) {
+  case  8: return RomData8bitsDirective;
+  case 16: return RomData16bitsDirective;
+  case 32: return RomData32bitsDirective;
+  default: return NULL;
+  }
 }
 
 
-const char *PIC16TargetAsmInfo::getASDirective(unsigned size, 
-                                               unsigned AS) const {
+const char *PIC16TargetAsmInfo::
+getDataASDirective(unsigned Size, unsigned AS) const {
   if (AS == PIC16ISD::ROM_SPACE)
-    return getRomDirective(size);
-  else
-    return NULL;
+    return getRomDirective(Size);
+  return NULL;
 }
 
 const Section *
