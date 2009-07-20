@@ -138,7 +138,9 @@ bool InternalizePass::runOnModule(Module &M) {
 
   // Never internalize the llvm.used symbol.  It is used to implement
   // attribute((used)).
+  // FIXME: Shouldn't this just filter on llvm.metadata section??
   ExternalNames.insert("llvm.used");
+  ExternalNames.insert("llvm.compiler.used");
 
   // Never internalize anchors used by the machine module info, else the info
   // won't find them.  (see MachineModuleInfo.)

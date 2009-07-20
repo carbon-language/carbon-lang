@@ -157,32 +157,26 @@ static void StripTypeSymtab(TypeSymbolTable &ST, bool PreserveDbgInfo) {
 }
 
 /// Find values that are marked as llvm.used.
-void findUsedValues(Module &M,
-                    SmallPtrSet<const GlobalValue*, 8>& llvmUsedValues) {
-  if (GlobalVariable *LLVMUsed = M.getGlobalVariable("llvm.used")) {
-    llvmUsedValues.insert(LLVMUsed);
-    // Collect values that are preserved as per explicit request.
-    // llvm.used is used to list these values.
-    if (ConstantArray *Inits = 
-        dyn_cast<ConstantArray>(LLVMUsed->getInitializer())) {
-      for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i) {
-        if (GlobalValue *GV = dyn_cast<GlobalValue>(Inits->getOperand(i)))
-          llvmUsedValues.insert(GV);
-        else if (ConstantExpr *CE =
-                 dyn_cast<ConstantExpr>(Inits->getOperand(i)))
-          if (CE->getOpcode() == Instruction::BitCast)
-            if (GlobalValue *GV = dyn_cast<GlobalValue>(CE->getOperand(0)))
-              llvmUsedValues.insert(GV);
-      }
-    }
-  }
+static void findUsedValues(GlobalVariable *LLVMUsed,
+                           SmallPtrSet<const GlobalValue*, 8> &UsedValues) {
+  if (LLVMUsed == 0) return;
+  UsedValues.insert(LLVMUsed);
+  
+  ConstantArray *Inits = dyn_cast<ConstantArray>(LLVMUsed->getInitializer());
+  if (Inits == 0) return;
+  
+  for (unsigned i = 0, e = Inits->getNumOperands(); i != e; ++i)
+    if (GlobalValue *GV = 
+          dyn_cast<GlobalValue>(Inits->getOperand(i)->stripPointerCasts()))
+      UsedValues.insert(GV);
 }
 
 /// StripSymbolNames - Strip symbol names.
 bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 
   SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
-  findUsedValues(M, llvmUsedValues);
+  findUsedValues(M.getGlobalVariable("llvm.used"), llvmUsedValues);
+  findUsedValues(M.getGlobalVariable("llvm.compiler.used"), llvmUsedValues);
 
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
@@ -210,7 +204,8 @@ bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
 bool StripDebugInfo(Module &M) {
 
   SmallPtrSet<const GlobalValue*, 8> llvmUsedValues;
-  findUsedValues(M, llvmUsedValues);
+  findUsedValues(M.getGlobalVariable("llvm.used"), llvmUsedValues);
+  findUsedValues(M.getGlobalVariable("llvm.compiler.used"), llvmUsedValues);
 
   SmallVector<GlobalVariable *, 2> CUs;
   SmallVector<GlobalVariable *, 4> GVs;

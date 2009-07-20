@@ -229,7 +229,7 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
     // retains the function in this case, and there is code around that depends
     // on unused functions (calling undefined externals) being dead-stripped to
     // link correctly.  Yes, there really is.
-    if (MMI->getUsedFunctions().count(EHFrameInfo.function))
+    if (MMI->isUsedFunction(EHFrameInfo.function))
       if (const char *UsedDirective = TAI->getUsedDirective())
         O << UsedDirective << EHFrameInfo.FnName << "\n\n";
   }

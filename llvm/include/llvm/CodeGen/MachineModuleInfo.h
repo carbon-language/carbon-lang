@@ -112,8 +112,9 @@ private:
   // common EH frames.
   std::vector<Function *> Personalities;
 
-  // UsedFunctions - the functions in the llvm.used list in a more easily
-  // searchable format.
+  /// UsedFunctions - The functions in the @llvm.used list in a more easily
+  /// searchable format.  This does not include the functions in
+  /// llvm.compiler.used.
   SmallPtrSet<const Function *, 32> UsedFunctions;
 
   /// UsedDbgLabels - labels are used by debug info entries.
@@ -240,9 +241,11 @@ public:
     return Personalities;
   }
 
-  // UsedFunctions - Return set of the functions in the llvm.used list.
-  const SmallPtrSet<const Function *, 32>& getUsedFunctions() const {
-    return UsedFunctions;
+  /// isUsedFunction - Return true if the functions in the llvm.used list.  This
+  /// does not return true for things in llvm.compiler.used unless they are also
+  /// in llvm.used.
+  bool isUsedFunction(const Function *F) {
+    return UsedFunctions.count(F);
   }
 
   /// addCatchTypeInfo - Provide the catch typeinfo for a landing pad.

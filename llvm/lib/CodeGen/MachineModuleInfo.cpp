@@ -88,7 +88,8 @@ void MachineModuleInfo::EndFunction() {
 /// AnalyzeModule - Scan the module for global debug information.
 ///
 void MachineModuleInfo::AnalyzeModule(Module &M) {
-  // Insert functions in the llvm.used array into UsedFunctions.
+  // Insert functions in the llvm.used array (but not llvm.compiler.used) into
+  // UsedFunctions.
   GlobalVariable *GV = M.getGlobalVariable("llvm.used");
   if (!GV || !GV->hasInitializer()) return;
 

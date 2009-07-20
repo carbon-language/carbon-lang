@@ -94,6 +94,8 @@
   <li><a href="#intrinsic_globals">Intrinsic Global Variables</a>
     <ol>
       <li><a href="#intg_used">The '<tt>llvm.used</tt>' Global Variable</a></li>
+      <li><a href="#intg_compiler_used">The '<tt>llvm.compiler.used</tt>'
+          Global Variable</a></li>
       <li><a href="#intg_global_ctors">The '<tt>llvm.global_ctors</tt>'
          Global Variable</a></li>
       <li><a href="#intg_global_dtors">The '<tt>llvm.global_dtors</tt>'
@@ -2168,8 +2170,9 @@ call void asm sideeffect "eieio", ""()
 
 <p>LLVM has a number of "magic" global variables that contain data that affect
 code generation or other IR semantics.  These are documented here.  All globals
-of this sort should have a section specified as "llvm.metadata".  This section
-and all globals that start with "llvm." are reserved for LLVM.</p>
+of this sort should have a section specified as "<tt>llvm.metadata</tt>".  This
+section and all globals that start with "<tt>llvm.</tt>" are reserved for use
+by LLVM.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -2203,6 +2206,24 @@ inline asms and other things the compiler cannot "see", and corresponds to
 
 <p>On some targets, the code generator must emit a directive to the assembler or
 object file to prevent the assembler and linker from molesting the symbol.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+<a name="intg_compiler_used">The '<tt>llvm.compiler.used</tt>' Global Variable</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>@llvm.compiler.used</tt> directive is the same as the
+<tt>@llvm.used</tt> directive, except that it only prevents the compiler from
+touching the symbol.  On targets that support it, this allows an intelligent
+linker to optimize references to the symbol without being impeded as it would be
+by <tt>@llvm.used</tt>.</p>
+
+<p>This is a rare construct that should only be used in rare circumstances, and
+should not be exposed to source languages.</p>
 
 </div>
 
