@@ -414,3 +414,36 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
   Name += '\0';
   return UniqueMangledName(Name.begin(), Name.end());
 }
+
+/// EmitCtorPrologue - This routine generates necessary code to initialize
+/// base classes and non-static data members belonging to this constructor.
+void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
+  for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(), 
+       E = CD->init_end();
+       B != E; ++B) {
+    CXXBaseOrMemberInitializer *Member = (*B);
+    if (Member->isBaseInitializer()) {
+      // FIXME. Added base initialilzers here.
+      assert(false && "FIXME. base initialization unsupported");
+    }
+    else {
+      // non-static data member initilaizers.
+      FieldDecl *Field = Member->getMember();
+      QualType FieldType = getContext().getCanonicalType((Field)->getType());
+      assert(!getContext().getAsArrayType(FieldType) 
+             && "FIXME. Field arrays initialization unsupported");
+      assert(!FieldType->getAsRecordType() 
+             && "FIXME. Field class initialization unsupported");
+      llvm::Value *LoadOfThis = LoadCXXThis();
+      LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
+      
+      assert(Member->getNumArgs() == 1 && "Initializer count must be 1 only");
+      Expr *RhsExpr = *Member->begin();
+      llvm::Value *RHS = EmitScalarExpr(RhsExpr, true);
+      if (LHS.isBitfield())
+        EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, FieldType, 0);
+      else
+        EmitStoreThroughLValue(RValue::get(RHS), LHS, FieldType);
+    }
+  }
+}
