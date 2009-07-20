@@ -44,11 +44,16 @@ SValuator *clang::CreateSimpleSValuator(ValueManager &valMgr) {
 // Transfer function for Casts.
 //===----------------------------------------------------------------------===//
 
-SVal SimpleSValuator::EvalCastNL(NonLoc val, QualType castTy) {  
+SVal SimpleSValuator::EvalCastNL(NonLoc val, QualType castTy) {
+  
+  bool isLocType = Loc::IsLocType(castTy);
+  
+  if (isLocType)
+    if (nonloc::LocAsInteger *LI = dyn_cast<nonloc::LocAsInteger>(&val))
+      return LI->getLoc();
+  
   if (!isa<nonloc::ConcreteInt>(val))
     return UnknownVal();
-
-  bool isLocType = Loc::IsLocType(castTy);
   
   // Only handle casts from integers to integers.
   if (!isLocType && !castTy->isIntegerType())
