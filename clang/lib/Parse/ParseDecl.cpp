@@ -2194,13 +2194,13 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
           SourceLocation NameLoc = Tok.getLocation();
           SourceLocation EndLoc;
           CXXScopeSpec *SS = afterCXXScope? &D.getCXXScopeSpec() : 0;
-          TypeResult Type = ParseClassName(EndLoc, SS);
+          TypeResult Type = ParseClassName(EndLoc, SS, true);
           if (Type.isInvalid())
             D.SetIdentifier(0, TildeLoc);
           else
             D.setDestructor(Type.get(), TildeLoc, NameLoc);
         } else {
-          Diag(Tok, diag::err_expected_class_name);
+          Diag(Tok, diag::err_destructor_class_name);
           D.SetIdentifier(0, TildeLoc);
         }
         goto PastIdentifier;

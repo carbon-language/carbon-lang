@@ -40,8 +40,8 @@ struct F {
   ~F(); // expected-error {{destructor cannot be redeclared}}
 };
 
-~; // expected-error {{expected class name}}
-~undef(); // expected-error {{expected class name}}
+~; // expected-error {{destructor name must be same as the class name}}
+~undef(); // expected-error {{destructor name must be same as the class name}}
 ~F(){} // expected-error {{destructor must be a non-static member function}}
 
 struct G {
