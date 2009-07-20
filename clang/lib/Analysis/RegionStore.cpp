@@ -286,6 +286,10 @@ public:
   SVal RetrieveField(const GRState *state, const FieldRegion *R);
   
   SVal RetrieveObjCIvar(const GRState *state, const ObjCIvarRegion *R);
+  
+  SVal RetrieveLazySymbol(const GRState *state, const TypedRegion *R);
+  
+  SVal CastRetrievedVal(SVal val, const TypedRegion *R, QualType castTy);
 
   /// Retrieve the values in a struct and return a CompoundVal, used when doing
   /// struct copy: 
@@ -758,7 +762,20 @@ static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
   if (RTy == UsedTy)
     return false;
   
-  return !(Loc::IsLocType(RTy) && Loc::IsLocType(UsedTy));
+ 
+  // Recursively check the types.  We basically want to see if a pointer value
+  // is ever reinterpreted as a non-pointer, e.g. void** and intptr_t* 
+  // represents a reinterpretation.
+  if (Loc::IsLocType(RTy) && Loc::IsLocType(UsedTy)) {
+    const PointerType *PRTy = RTy->getAsPointerType();    
+    const PointerType *PUsedTy = UsedTy->getAsPointerType();
+
+    return PUsedTy && PRTy &&
+           IsReinterpreted(PRTy->getPointeeType(),
+                           PUsedTy->getPointeeType(), Ctx);        
+  }
+
+  return true;
 }
 
 SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
@@ -823,20 +840,20 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
       return UnknownVal();
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
-    return RetrieveField(state, FR);
+    return CastRetrievedVal(RetrieveField(state, FR), FR, T);
 
   if (const ElementRegion* ER = dyn_cast<ElementRegion>(R))
-    return RetrieveElement(state, ER);
+    return CastRetrievedVal(RetrieveElement(state, ER), ER, T);
   
+  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
+    return CastRetrievedVal(RetrieveObjCIvar(state, IVR), IVR, T);
+
   RegionBindingsTy B = GetRegionBindings(state->getStore());
   RegionBindingsTy::data_type* V = B.lookup(R);
 
   // Check if the region has a binding.
   if (V)
     return *V;
-
-  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
-    return RetrieveObjCIvar(state, IVR);
 
   // The location does not have a bound value.  This means that it has
   // the value it had upon its creation and/or entry to the analyzed
@@ -986,8 +1003,6 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
 SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state, 
                                           const ObjCIvarRegion* R) {
 
-  QualType Ty = R->getValueType(getContext());
-  
     // Check if the region has a binding.
   RegionBindingsTy B = GetRegionBindings(state->getStore());
 
@@ -1005,17 +1020,28 @@ SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state,
     return UnknownVal();
   }
   
+  return RetrieveLazySymbol(state, R);
+}
+
+SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state, 
+                                            const TypedRegion *R) {
+  
+  QualType valTy = R->getValueType(getContext());
+  
   // If the region is already cast to another type, use that type to create the
   // symbol value.
-  if (const QualType *p = state->get<RegionCasts>(R)) {
-    QualType tmp = *p;
-    Ty = tmp->getAsPointerType()->getPointeeType();
+  if (const QualType *ty = state->get<RegionCasts>(R)) {
+    if (const PointerType *PT = (*ty)->getAsPointerType()) {
+      QualType castTy = PT->getPointeeType();
+      
+      if (!IsReinterpreted(valTy, castTy, getContext()))
+        valTy = castTy;
+    }
   }
   
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
+  return ValMgr.getRegionValueSymbolValOrUnknown(R, valTy);
 }
-
 
 SVal RegionStoreManager::RetrieveStruct(const GRState *state, 
 					const TypedRegion* R){
@@ -1062,6 +1088,15 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
   }
 
   return ValMgr.makeCompoundVal(T, ArrayVal);
+}
+
+SVal RegionStoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
+                                           QualType castTy) {
+
+  if (castTy.isNull() || R->getValueType(getContext()) == castTy)
+    return V;
+  
+  return ValMgr.getSValuator().EvalCast(V, castTy);
 }
 
 //===----------------------------------------------------------------------===//
