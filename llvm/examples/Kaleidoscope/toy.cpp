@@ -1125,6 +1125,8 @@ int main() {
     // Simplify the control flow graph (deleting unreachable blocks, etc).
     OurFPM.add(createCFGSimplificationPass());
 
+    OurFPM.doInitialization();
+
     // Set the global so the code gen can use this.
     TheFPM = &OurFPM;
 
