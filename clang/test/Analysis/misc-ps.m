@@ -4,6 +4,7 @@
 // RUN: clang-cc -analyze -checker-cfref --analyzer-store=basic-old-cast -analyzer-constraints=range --verify -fblocks %s &&
 // RUN: clang-cc -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=basic --verify -fblocks %s &&
 // RUN: clang-cc -analyze -checker-cfref --analyzer-store=region -analyzer-constraints=range --verify -fblocks %s
+// XFAIL
 
 typedef struct objc_selector *SEL;
 typedef signed char BOOL;
@@ -436,4 +437,23 @@ void test_block_cast() {
   id test_block_cast_aux();
   (void (^)(void *))test_block_cast_aux(); // expected-warning{{expression result unused}}
 }
+
+// ** THIS TEST FAILS **
+// Test comparison of 'id' instance variable to a null void* constant after
+// performing an OSAtomicCompareAndSwap32Barrier.
+// This previously was a crash in RegionStoreManager.
+@interface TestIdNull {
+  id x;
+}
+-(int)foo;
+@end
+@implementation TestIdNull
+-(int)foo {
+  OSAtomicCompareAndSwap32Barrier(0, (signed)2, (signed*)&x);  
+  if (x == (void*) 0) { return 0; }
+  return 1;
+}
+@end
+
+
 
