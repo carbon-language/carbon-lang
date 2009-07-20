@@ -697,12 +697,97 @@ int LLVMIsDeclaration(LLVMValueRef Global) {
 }
 
 LLVMLinkage LLVMGetLinkage(LLVMValueRef Global) {
-  return static_cast<LLVMLinkage>(unwrap<GlobalValue>(Global)->getLinkage());
+  switch (unwrap<GlobalValue>(Global)->getLinkage()) {
+  default:
+    assert(false && "Unhandled Linkage Type.");
+  case GlobalValue::ExternalLinkage:
+    return LLVMExternalLinkage;
+  case GlobalValue::AvailableExternallyLinkage:
+    return LLVMAvailableExternallyLinkage;
+  case GlobalValue::LinkOnceAnyLinkage:
+    return LLVMLinkOnceAnyLinkage;
+  case GlobalValue::LinkOnceODRLinkage:
+    return LLVMLinkOnceODRLinkage;
+  case GlobalValue::WeakAnyLinkage:
+    return LLVMWeakAnyLinkage;
+  case GlobalValue::WeakODRLinkage:
+    return LLVMWeakODRLinkage;
+  case GlobalValue::AppendingLinkage:
+    return LLVMAppendingLinkage;
+  case GlobalValue::InternalLinkage:
+    return LLVMInternalLinkage;
+  case GlobalValue::PrivateLinkage:
+    return LLVMPrivateLinkage;
+  case GlobalValue::LinkerPrivateLinkage:
+    return LLVMLinkerPrivateLinkage;
+  case GlobalValue::DLLImportLinkage:
+    return LLVMDLLImportLinkage;
+  case GlobalValue::DLLExportLinkage:
+    return LLVMDLLExportLinkage;
+  case GlobalValue::ExternalWeakLinkage:
+    return LLVMExternalWeakLinkage;
+  case GlobalValue::GhostLinkage:
+    return LLVMGhostLinkage;
+  case GlobalValue::CommonLinkage:
+    return LLVMCommonLinkage;
+  }
+
+  // Should never get here.
+  return static_cast<LLVMLinkage>(0);
 }
 
 void LLVMSetLinkage(LLVMValueRef Global, LLVMLinkage Linkage) {
-  unwrap<GlobalValue>(Global)
-    ->setLinkage(static_cast<GlobalValue::LinkageTypes>(Linkage));
+  GlobalValue *GV = unwrap<GlobalValue>(Global);
+
+  switch (Linkage) {
+  default:
+    assert(false && "Unhandled Linkage Type.");
+  case LLVMExternalLinkage:
+    GV->setLinkage(GlobalValue::ExternalLinkage);
+    break;
+  case LLVMAvailableExternallyLinkage:
+    GV->setLinkage(GlobalValue::AvailableExternallyLinkage);
+    break;
+  case LLVMLinkOnceAnyLinkage:
+    GV->setLinkage(GlobalValue::LinkOnceAnyLinkage);
+    break;
+  case LLVMLinkOnceODRLinkage:
+    GV->setLinkage(GlobalValue::LinkOnceODRLinkage);
+    break;
+  case LLVMWeakAnyLinkage:
+    GV->setLinkage(GlobalValue::WeakAnyLinkage);
+    break;
+  case LLVMWeakODRLinkage:
+    GV->setLinkage(GlobalValue::WeakODRLinkage);
+    break;
+  case LLVMAppendingLinkage:
+    GV->setLinkage(GlobalValue::AppendingLinkage);
+    break;
+  case LLVMInternalLinkage:
+    GV->setLinkage(GlobalValue::InternalLinkage);
+    break;
+  case LLVMPrivateLinkage:
+    GV->setLinkage(GlobalValue::PrivateLinkage);
+    break;
+  case LLVMLinkerPrivateLinkage:
+    GV->setLinkage(GlobalValue::LinkerPrivateLinkage);
+    break;
+  case LLVMDLLImportLinkage:
+    GV->setLinkage(GlobalValue::DLLImportLinkage);
+    break;
+  case LLVMDLLExportLinkage:
+    GV->setLinkage(GlobalValue::DLLExportLinkage);
+    break;
+  case LLVMExternalWeakLinkage:
+    GV->setLinkage(GlobalValue::ExternalWeakLinkage);
+    break;
+  case LLVMGhostLinkage:
+    GV->setLinkage(GlobalValue::GhostLinkage);
+    break;
+  case LLVMCommonLinkage:
+    GV->setLinkage(GlobalValue::CommonLinkage);
+    break;
+  }
 }
 
 const char *LLVMGetSection(LLVMValueRef Global) {
