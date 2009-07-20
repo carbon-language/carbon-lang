@@ -51,8 +51,9 @@ static bool isContainedInStatement(Stmt *Node, Stmt *Parent) {
   
   for (Stmt::child_iterator
          I = Parent->child_begin(), E = Parent->child_end(); I != E; ++I) {
-    if (isContainedInStatement(Node, *I))
-      return true;
+    if (*I)
+      if (isContainedInStatement(Node, *I))
+        return true;
   }
   
   return false;
