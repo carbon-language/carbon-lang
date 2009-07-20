@@ -64,6 +64,14 @@ bool llvm::isCurrentDebugType(const char *DebugType) {
 #endif
 }
 
+/// getNullOutputStream - Return a null string that does not output
+/// anything.  This hides the static variable from other modules.
+///
+OStream &llvm::getNullOutputStream() {
+  static llvm::OStream NullStream(0);
+  return NullStream;
+}
+
 // getErrorOutputStream - Returns the error output stream (std::cerr). This
 // places the std::c* I/O streams into one .cpp file and relieves the whole
 // program from having to have hundreds of static c'tor/d'tors for them.

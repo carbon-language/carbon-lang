@@ -61,6 +61,11 @@ bool isCurrentDebugType(const char *Type);
   do { if (DebugFlag && isCurrentDebugType(DEBUG_TYPE)) { X; } } while (0)
 #endif
 
+/// getNullOutputStream - Return a null string that does not output
+/// anything.  This hides the static variable from other modules.
+///
+OStream &getNullOutputStream();
+
 /// getErrorOutputStream - Returns the error output stream (std::cerr). This
 /// places the std::c* I/O streams into one .cpp file and relieves the whole
 /// program from having to have hundreds of static c'tor/d'tors for them.
@@ -68,8 +73,7 @@ bool isCurrentDebugType(const char *Type);
 OStream &getErrorOutputStream(const char *DebugType);
 
 #ifdef NDEBUG
-static llvm::OStream NullStream(0);
-#define DOUT llvm::NullStream
+#define DOUT llvm::getNullOutputStream()
 #else
 #define DOUT llvm::getErrorOutputStream(DEBUG_TYPE)
 #endif
