@@ -688,7 +688,6 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   std::vector<const char*> ProgramArgs;
 
-  std::string Exec;
   if (RemoteClientPath.isEmpty())
     ProgramArgs.push_back(OutputBinary.c_str());
   else {
@@ -704,10 +703,12 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
       ProgramArgs.push_back(RemoteExtra.c_str());
     }
 
-    // Full path to the binary
+    // Full path to the binary. We need to cd to the exec directory because
+    // there is a dylib there that the exec expects to find in the CWD
     char* env_pwd = getenv("PWD");
+    std::string Exec = "cd ";
     Exec += env_pwd;
-    Exec += "/";
+    Exec += "; ./";
     Exec += OutputBinary.c_str();
     ProgramArgs.push_back(Exec.c_str());
   }
