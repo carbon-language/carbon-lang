@@ -92,7 +92,8 @@ FunctionPass *llvm::createSystemZCodePrinterPass(formatted_raw_ostream &o,
 }
 
 bool SystemZAsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix());
+  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix(),
+                     TAI->getLessPrivateGlobalPrefix());
   return false; // success
 }
 

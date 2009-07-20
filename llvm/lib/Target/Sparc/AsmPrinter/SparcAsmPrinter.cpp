@@ -223,7 +223,8 @@ void SparcAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
 }
 
 bool SparcAsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix());
+  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix(),
+                     TAI->getLessPrivateGlobalPrefix());
   return false; // success
 }
 
