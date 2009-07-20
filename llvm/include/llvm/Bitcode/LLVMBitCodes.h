@@ -171,6 +171,18 @@ namespace bitc {
     BINOP_XOR  = 12
   };
 
+  /// OverflowingBinaryOperatorOptionalFlags - Flags for serializing
+  /// OverflowingBinaryOperator's SubclassOptionalData contents.
+  enum OverflowingBinaryOperatorOptionalFlags {
+    OBO_NO_UNSIGNED_OVERFLOW = 0,
+    OBO_NO_SIGNED_OVERFLOW = 1
+  };
+
+  /// SDivOperatorOptionalFlags - Flags for serializing SDivOperator's
+  /// SubclassOptionalData contents.
+  enum SDivOperatorOptionalFlags {
+    SDIV_EXACT = 0
+  };
 
   // The function body block (FUNCTION_BLOCK_ID) describes function bodies.  It
   // can contain a constant block (CONSTANTS_BLOCK_ID).

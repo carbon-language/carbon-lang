@@ -23,6 +23,7 @@
 #include "llvm/InlineAsm.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
+#include "llvm/Operator.h"
 #include "llvm/MDNode.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
@@ -851,6 +852,19 @@ static void WriteMDNodes(raw_ostream &Out, TypePrinting &TypePrinter,
   }
 }
 
+static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
+  if (const OverflowingBinaryOperator *OBO =
+        dyn_cast<OverflowingBinaryOperator>(U)) {
+    if (OBO->hasNoUnsignedOverflow())
+      Out << "unsigned ";
+    if (OBO->hasNoSignedOverflow())
+      Out << "signed ";
+  } else if (const SDivOperator *Div = dyn_cast<SDivOperator>(U)) {
+    if (Div->isExact())
+      Out << "exact ";
+  }
+}
+
 static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
                              TypePrinting &TypePrinter, SlotTracker *Machine) {
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
@@ -1062,6 +1076,7 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
   }
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
+    WriteOptimizationInfo(Out, CE);
     Out << CE->getOpcodeName();
     if (CE->isCompare())
       Out << ' ' << getPredicateText(CE->getPredicate());
@@ -1681,6 +1696,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     // If this is a call, check if it's a tail call.
     Out << "tail ";
   }
+
+  // Print out optimization information.
+  WriteOptimizationInfo(Out, &I);
 
   // Print out the opcode...
   Out << I.getOpcodeName();

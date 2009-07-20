@@ -21,6 +21,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/MDNode.h"
 #include "llvm/Module.h"
+#include "llvm/Operator.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -50,6 +51,7 @@ enum {
   // FUNCTION_BLOCK abbrev id's.
   FUNCTION_INST_LOAD_ABBREV = bitc::FIRST_APPLICATION_ABBREV,
   FUNCTION_INST_BINOP_ABBREV,
+  FUNCTION_INST_BINOP_FLAGS_ABBREV,
   FUNCTION_INST_CAST_ABBREV,
   FUNCTION_INST_RET_VOID_ABBREV,
   FUNCTION_INST_RET_VAL_ABBREV,
@@ -454,6 +456,22 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   }
 }
 
+static uint64_t GetOptimizationFlags(const Value *V) {
+  uint64_t Flags = 0;
+
+  if (const OverflowingBinaryOperator *OBO =
+        dyn_cast<OverflowingBinaryOperator>(V)) {
+    if (OBO->hasNoSignedOverflow())
+      Flags |= 1 << bitc::OBO_NO_SIGNED_OVERFLOW;
+    if (OBO->hasNoUnsignedOverflow())
+      Flags |= 1 << bitc::OBO_NO_UNSIGNED_OVERFLOW;
+  } else if (const SDivOperator *Div = dyn_cast<SDivOperator>(V)) {
+    if (Div->isExact())
+      Flags |= 1 << bitc::SDIV_EXACT;
+  }
+
+  return Flags;
+}
 
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
                            const ValueEnumerator &VE,
@@ -641,6 +659,9 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
           Record.push_back(GetEncodedBinaryOpcode(CE->getOpcode()));
           Record.push_back(VE.getValueID(C->getOperand(0)));
           Record.push_back(VE.getValueID(C->getOperand(1)));
+          uint64_t Flags = GetOptimizationFlags(CE);
+          if (Flags != 0)
+            Record.push_back(Flags);
         }
         break;
       case Instruction::GetElementPtr:
@@ -778,6 +799,12 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
         AbbrevToUse = FUNCTION_INST_BINOP_ABBREV;
       Vals.push_back(VE.getValueID(I.getOperand(1)));
       Vals.push_back(GetEncodedBinaryOpcode(I.getOpcode()));
+      uint64_t Flags = GetOptimizationFlags(&I);
+      if (Flags != 0) {
+        if (AbbrevToUse == FUNCTION_INST_BINOP_ABBREV)
+          AbbrevToUse = FUNCTION_INST_BINOP_FLAGS_ABBREV;
+        Vals.push_back(Flags);
+      }
     }
     break;
 
@@ -1223,6 +1250,17 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4)); // opc
     if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
                                    Abbv) != FUNCTION_INST_BINOP_ABBREV)
+      llvm_unreachable("Unexpected abbrev ordering!");
+  }
+  { // INST_BINOP_FLAGS abbrev for FUNCTION_BLOCK.
+    BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+    Abbv->Add(BitCodeAbbrevOp(bitc::FUNC_CODE_INST_BINOP));
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // LHS
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // RHS
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4)); // opc
+    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 7)); // flags
+    if (Stream.EmitBlockInfoAbbrev(bitc::FUNCTION_BLOCK_ID,
+                                   Abbv) != FUNCTION_INST_BINOP_FLAGS_ABBREV)
       llvm_unreachable("Unexpected abbrev ordering!");
   }
   { // INST_CAST abbrev for FUNCTION_BLOCK.

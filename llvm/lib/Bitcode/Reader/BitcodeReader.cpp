@@ -20,6 +20,7 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/MDNode.h"
 #include "llvm/Module.h"
+#include "llvm/Operator.h"
 #include "llvm/AutoUpgrade.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -747,6 +748,18 @@ bool BitcodeReader::ResolveGlobalAndAliasInits() {
   return false;
 }
 
+static void SetOptimizationFlags(Value *V, uint64_t Flags) {
+  if (OverflowingBinaryOperator *OBO =
+        dyn_cast<OverflowingBinaryOperator>(V)) {
+    if (Flags & (1 << bitc::OBO_NO_SIGNED_OVERFLOW))
+      OBO->setHasNoSignedOverflow(true);
+    if (Flags & (1 << bitc::OBO_NO_UNSIGNED_OVERFLOW))
+      OBO->setHasNoUnsignedOverflow(true);
+  } else if (SDivOperator *Div = dyn_cast<SDivOperator>(V)) {
+    if (Flags & (1 << bitc::SDIV_EXACT))
+      Div->setIsExact(true);
+  }
+}
 
 bool BitcodeReader::ParseConstants() {
   if (Stream.EnterSubBlock(bitc::CONSTANTS_BLOCK_ID))
@@ -778,7 +791,8 @@ bool BitcodeReader::ParseConstants() {
     // Read a record.
     Record.clear();
     Value *V = 0;
-    switch (Stream.ReadRecord(Code, Record)) {
+    unsigned BitCode = Stream.ReadRecord(Code, Record);
+    switch (BitCode) {
     default:  // Default behavior: unknown constant
     case bitc::CST_CODE_UNDEF:     // UNDEF
       V = Context.getUndef(CurTy);
@@ -899,6 +913,8 @@ bool BitcodeReader::ParseConstants() {
         Constant *RHS = ValueList.getConstantFwdRef(Record[2], CurTy);
         V = Context.getConstantExpr(Opc, LHS, RHS);
       }
+      if (Record.size() >= 4)
+        SetOptimizationFlags(V, Record[3]);
       break;
     }  
     case bitc::CST_CODE_CE_CAST: {  // CE_CAST: [opcode, opty, opval]
@@ -1451,7 +1467,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
     // Read a record.
     Record.clear();
     Instruction *I = 0;
-    switch (Stream.ReadRecord(Code, Record)) {
+    unsigned BitCode = Stream.ReadRecord(Code, Record);
+    switch (BitCode) {
     default: // Default behavior: reject
       return Error("Unknown instruction");
     case bitc::FUNC_CODE_DECLAREBLOCKS:     // DECLAREBLOCKS: [nblocks]
@@ -1469,12 +1486,14 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *LHS, *RHS;
       if (getValueTypePair(Record, OpNum, NextValueNo, LHS) ||
           getValue(Record, OpNum, LHS->getType(), RHS) ||
-          OpNum+1 != Record.size())
+          OpNum+1 > Record.size())
         return Error("Invalid BINOP record");
       
-      int Opc = GetDecodedBinaryOpcode(Record[OpNum], LHS->getType());
+      int Opc = GetDecodedBinaryOpcode(Record[OpNum++], LHS->getType());
       if (Opc == -1) return Error("Invalid BINOP record");
       I = BinaryOperator::Create((Instruction::BinaryOps)Opc, LHS, RHS);
+      if (OpNum < Record.size())
+        SetOptimizationFlags(I, Record[3]);
       break;
     }
     case bitc::FUNC_CODE_INST_CAST: {    // CAST: [opval, opty, destty, castopc]

@@ -501,6 +501,9 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(deplibs);
   KEYWORD(datalayout);
   KEYWORD(volatile);
+  KEYWORD(signed);
+  KEYWORD(unsigned);
+  KEYWORD(exact);
   KEYWORD(align);
   KEYWORD(addrspace);
   KEYWORD(section);
