@@ -171,18 +171,6 @@ namespace llvm {
                         ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC);
     }
 
-    /// Return the relocation section of section 'S'. 'RelA' is true
-    /// if the relocation section contains entries with addends.
-    ELFSection &getRelocSection(std::string SName, bool RelA, unsigned Align) {
-      std::string RelSName(".rel");
-      unsigned SHdrTy = RelA ? ELFSection::SHT_RELA : ELFSection::SHT_REL;
-
-      if (RelA) RelSName.append("a");
-      RelSName.append(SName);
-
-      return getSection(RelSName, SHdrTy, 0, Align);
-    }
-
     ELFSection &getNonExecStackSection() {
       return getSection(".note.GNU-stack", ELFSection::SHT_PROGBITS, 0, 1);
     }
@@ -215,6 +203,7 @@ namespace llvm {
 
     ELFSection &getJumpTableSection();
     ELFSection &getConstantPoolSection(MachineConstantPoolEntry &CPE);
+    ELFSection &getRelocSection(ELFSection &S);
 
     // Helpers for obtaining ELF specific info.
     unsigned getGlobalELFBinding(const GlobalValue *GV);
@@ -244,6 +233,8 @@ namespace llvm {
     void EmitSymbolTable();
     void EmitStringTable();
     void OutputSectionsAndSectionTable();
+    void RelocateField(BinaryObject &BO, uint32_t Offset, int64_t Value,
+                       unsigned Size);
     unsigned SortSymbols();
   };
 }

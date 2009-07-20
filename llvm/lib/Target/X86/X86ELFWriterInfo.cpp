@@ -103,8 +103,44 @@ unsigned X86ELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
   return 0;
 }
 
+bool X86ELFWriterInfo::isPCRelativeRel(unsigned RelTy) const {
+  if (is64Bit) {
+    switch(RelTy) {
+      case R_X86_64_PC32:
+        return true;
+      case R_X86_64_32:
+      case R_X86_64_32S:
+      case R_X86_64_64:
+        return false;
+    default:
+      llvm_unreachable("unknown x86_64 relocation type");
+    }
+  } else {
+    switch(RelTy) {
+      case R_386_PC32:
+        return true;
+      case R_386_32:
+        return false;
+    default:
+      llvm_unreachable("unknown x86 relocation type");
+    }
+  }
+  return 0;
+}
+
 unsigned X86ELFWriterInfo::getAbsoluteLabelMachineRelTy() const {
   return is64Bit ?
     X86::reloc_absolute_dword : X86::reloc_absolute_word;
 }
 
+long int X86ELFWriterInfo::computeRelocation(unsigned SymOffset,
+                                             unsigned RelOffset,
+                                             unsigned RelTy) const {
+
+  if (RelTy == R_X86_64_PC32 || RelTy == R_386_PC32)
+    return SymOffset - (RelOffset + 4);
+  else
+    assert("computeRelocation unknown for this relocation type");
+
+  return 0;
+}

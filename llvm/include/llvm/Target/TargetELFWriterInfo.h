@@ -105,16 +105,25 @@ namespace llvm {
     /// ELF relocation entry.
     virtual bool hasRelocationAddend() const = 0;
 
-    /// getAddendForRelTy - Gets the addend value for an ELF relocation entry
-    /// based on the target relocation type. If addend is not used returns 0.
+    /// getDefaultAddendForRelTy - Gets the default addend value for a
+    /// relocation entry based on the target ELF relocation type.
     virtual long int getDefaultAddendForRelTy(unsigned RelTy) const = 0;
 
     /// getRelTySize - Returns the size of relocatable field in bits
     virtual unsigned getRelocationTySize(unsigned RelTy) const = 0;
 
+    /// isPCRelativeRel - True if the relocation type is pc relative
+    virtual bool isPCRelativeRel(unsigned RelTy) const = 0;
+
     /// getJumpTableRelocationTy - Returns the machine relocation type used
     /// to reference a jumptable.
     virtual unsigned getAbsoluteLabelMachineRelTy() const = 0;
+
+    /// computeRelocation - Some relocatable fields could be relocated
+    /// directly, avoiding the emission of a relocation symbol, compute the
+    /// final relocation value for this symbol.
+    virtual long int computeRelocation(unsigned SymOffset, unsigned RelOffset,
+                                       unsigned RelTy) const = 0;
   };
 
 } // end llvm namespace

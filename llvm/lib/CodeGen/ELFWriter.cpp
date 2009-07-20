@@ -145,7 +145,7 @@ bool ELFWriter::doInitialization(Module &M) {
   return false;
 }
 
-/// Get jump table section on the section name returned by TAI
+// Get jump table section on the section name returned by TAI
 ELFSection &ELFWriter::getJumpTableSection() {
   unsigned Align = TM.getTargetData()->getPointerABIAlignment();
   return getSection(TAI->getJumpTableDataSection(),
@@ -153,7 +153,7 @@ ELFSection &ELFWriter::getJumpTableSection() {
                     ELFSection::SHF_ALLOC, Align);
 }
 
-///  Get a constant pool section based on the section name returned by TAI
+// Get a constant pool section based on the section name returned by TAI
 ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
   std::string CstPoolName =
     TAI->SelectSectionForMachineConst(CPE.getType())->getName();
@@ -161,6 +161,19 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,
                     CPE.getAlignment());
+}
+
+// Return the relocation section of section 'S'. 'RelA' is true
+// if the relocation section contains entries with addends.
+ELFSection &ELFWriter::getRelocSection(ELFSection &S) {
+  unsigned SectionHeaderTy = TEW->hasRelocationAddend() ?
+                              ELFSection::SHT_RELA : ELFSection::SHT_REL;
+  std::string RelSName(".rel");
+  if (TEW->hasRelocationAddend())
+    RelSName.append("a");
+  RelSName.append(S.getName());
+
+  return getSection(RelSName, SectionHeaderTy, 0, TEW->getPrefELFAlignment());
 }
 
 // getGlobalELFVisibility - Returns the ELF specific visibility type
@@ -474,8 +487,24 @@ bool ELFWriter::doFinalization(Module &M) {
   return false;
 }
 
+// RelocateField - Patch relocatable field with 'Offset' in 'BO'
+// using a 'Value' of known 'Size'
+void ELFWriter::RelocateField(BinaryObject &BO, uint32_t Offset,
+                              int64_t Value, unsigned Size) {
+  if (Size == 32)
+    BO.fixWord32(Value, Offset);
+  else if (Size == 64)
+    BO.fixWord64(Value, Offset);
+  else
+    llvm_unreachable("don't know howto patch relocatable field");
+}
+
 /// EmitRelocations - Emit relocations
 void ELFWriter::EmitRelocations() {
+
+  // True if the target uses the relocation entry to hold the addend,
+  // otherwise the addend is written directly to the relocatable field.
+  bool HasRelA = TEW->hasRelocationAddend();
 
   // Create Relocation sections for each section which needs it.
   for (unsigned i=0, e=SectionList.size(); i != e; ++i) {
@@ -483,11 +512,7 @@ void ELFWriter::EmitRelocations() {
 
     // This section does not have relocations
     if (!S.hasRelocations()) continue;
-
-    // Get the relocation section for section 'S'
-    bool HasRelA = TEW->hasRelocationAddend();
-    ELFSection &RelSec = getRelocSection(S.getName(), HasRelA,
-                                         TEW->getPrefELFAlignment());
+    ELFSection &RelSec = getRelocSection(S);
 
     // 'Link' - Section hdr idx of the associated symbol table
     // 'Info' - Section hdr idx of the section to which the relocation applies
@@ -502,18 +527,15 @@ void ELFWriter::EmitRelocations() {
          MRE = Relos.end(); MRI != MRE; ++MRI) {
       MachineRelocation &MR = *MRI;
 
-      // Holds the relocatable field address as an offset from the
-      // beginning of the section where it lives
-      unsigned Offset = MR.getMachineCodeOffset();
+      // Relocatable field offset from the section start
+      unsigned RelOffset = MR.getMachineCodeOffset();
 
       // Symbol index in the symbol table
       unsigned SymIdx = 0;
 
-      // Target specific ELF relocation type
+      // Target specific relocation field type and size
       unsigned RelType = TEW->getRelocationType(MR.getRelocationType());
-
-      // Constant addend used to compute the value to be stored
-      // into the relocatable field
+      unsigned RelTySize = TEW->getRelocationTySize(RelType);
       int64_t Addend = 0;
 
       // There are several machine relocations types, and each one of
@@ -533,29 +555,33 @@ void ELFWriter::EmitRelocations() {
       } else {
         // Get the symbol index for the section symbol
         unsigned SectionIdx = MR.getConstantVal();
+        SymIdx = SectionList[SectionIdx]->getSymbolTableIndex();
+        Addend = (uint64_t)MR.getResultPointer();
+
+        // For pc relative relocations where symbols are defined in the same
+        // section they are referenced, ignore the relocation entry and patch
+        // the relocatable field with the symbol offset directly.
+        if (S.SectionIdx == SectionIdx && TEW->isPCRelativeRel(RelType)) {
+          int64_t Value = TEW->computeRelocation(Addend, RelOffset, RelType);
+          RelocateField(S, RelOffset, Value, RelTySize);
+          continue;
+        }
 
         // Handle Jump Table Index relocation
         if ((SectionIdx == getJumpTableSection().SectionIdx) &&
-            TEW->hasCustomJumpTableIndexRelTy())
+            TEW->hasCustomJumpTableIndexRelTy()) {
           RelType = TEW->getJumpTableIndexRelTy();
-
-        SymIdx = SectionList[SectionIdx]->getSymbolTableIndex();
-        Addend = (uint64_t)MR.getResultPointer();
+          RelTySize = TEW->getRelocationTySize(RelType);
+        }
       }
 
       // The target without addend on the relocation symbol must be
       // patched in the relocation place itself to contain the addend
-      if (!HasRelA) {
-        if (TEW->getRelocationTySize(RelType) == 32)
-          S.fixWord32(Addend, Offset);
-        else if (TEW->getRelocationTySize(RelType) == 64)
-          S.fixWord64(Addend, Offset);
-        else
-          llvm_unreachable("don't know howto patch relocatable field");
-      }
+      if (!HasRelA)
+        RelocateField(S, RelOffset, Addend, RelTySize);
 
       // Get the relocation entry and emit to the relocation section
-      ELFRelocation Rel(Offset, SymIdx, RelType, HasRelA, Addend);
+      ELFRelocation Rel(RelOffset, SymIdx, RelType, HasRelA, Addend);
       EmitRelocation(RelSec, Rel, HasRelA);
     }
   }
