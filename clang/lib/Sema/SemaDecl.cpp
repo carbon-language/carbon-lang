@@ -4011,7 +4011,6 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
         Diag(Loc, diag::err_typecheck_negative_array_size);
       else
         Diag(Loc, diag::err_typecheck_field_variable_size);
-      T = Context.IntTy;
       InvalidDecl = true;
     }
   }
