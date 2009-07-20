@@ -19,7 +19,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
-#include "llvm/Support/CFG.h"
 #include "llvm/Target/TargetData.h"
 using namespace clang;
 using namespace CodeGen;
