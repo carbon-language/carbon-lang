@@ -2632,7 +2632,7 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
         APInt Max = APIntOps::umax(StartRange.getUnsignedMax(),
                                    EndRange.getUnsignedMax());
         if (Min.isMinValue() && Max.isMaxValue())
-          return ConstantRange(Min.getBitWidth(), /*isFullSet=*/true);
+          return FullSet;
         return ConstantRange(Min, Max+1);
       }
     }
