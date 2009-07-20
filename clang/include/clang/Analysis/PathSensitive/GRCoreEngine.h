@@ -311,12 +311,15 @@ class GRBranchNodeBuilderImpl {
   
   bool GeneratedTrue;
   bool GeneratedFalse;
+  bool InFeasibleTrue;
+  bool InFeasibleFalse;
   
 public:
   GRBranchNodeBuilderImpl(CFGBlock* src, CFGBlock* dstT, CFGBlock* dstF,
                           ExplodedNodeImpl* pred, GRCoreEngineImpl* e) 
   : Eng(*e), Src(src), DstT(dstT), DstF(dstF), Pred(pred),
-    GeneratedTrue(false), GeneratedFalse(false) {}
+    GeneratedTrue(false), GeneratedFalse(false),
+    InFeasibleTrue(!DstT), InFeasibleFalse(!DstF) {}
   
   ~GRBranchNodeBuilderImpl();
   
@@ -331,8 +334,14 @@ public:
   }    
   
   void markInfeasible(bool branch) {
-    if (branch) GeneratedTrue = true;
-    else GeneratedFalse = true;
+    if (branch)
+      InFeasibleTrue = GeneratedTrue = true;
+    else
+      InFeasibleFalse = GeneratedFalse = true;
+  }
+  
+  bool isFeasible(bool branch) {
+    return branch ? !InFeasibleTrue : !InFeasibleFalse;
   }
 };
 
@@ -373,6 +382,10 @@ public:
   
   void markInfeasible(bool branch) {
     NB.markInfeasible(branch);
+  }
+  
+  bool isFeasible(bool branch) {
+    return NB.isFeasible(branch);
   }
 };
   

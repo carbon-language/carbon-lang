@@ -452,7 +452,12 @@ GRStmtNodeBuilderImpl::generateNodeImpl(PostStmt Loc, const void* State,
 }
 
 ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
-                                                            bool branch) {  
+                                                            bool branch) {
+  
+  // If the branch has been marked infeasible we should not generate a node.
+  if (!isFeasible(branch))
+    return NULL;
+  
   bool IsNew;
   
   ExplodedNodeImpl* Succ =
@@ -460,8 +465,10 @@ ExplodedNodeImpl* GRBranchNodeBuilderImpl::generateNodeImpl(const void* State,
   
   Succ->addPredecessor(Pred);
   
-  if (branch) GeneratedTrue = true;
-  else GeneratedFalse = true;  
+  if (branch)
+    GeneratedTrue = true;
+  else
+    GeneratedFalse = true;  
   
   if (IsNew) {
     Deferred.push_back(Succ);

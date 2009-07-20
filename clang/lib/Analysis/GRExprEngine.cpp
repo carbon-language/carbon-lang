@@ -706,16 +706,20 @@ void GRExprEngine::ProcessBranch(Stmt* Condition, Stmt* Term,
   }
     
   // Process the true branch.
-  if (const GRState *state = PrevState->assume(V, true))
-    builder.generateNode(MarkBranch(state, Term, true), true);
-  else
-    builder.markInfeasible(true);
+  if (builder.isFeasible(true)) {
+    if (const GRState *state = PrevState->assume(V, true))
+      builder.generateNode(MarkBranch(state, Term, true), true);
+    else
+      builder.markInfeasible(true);
+  }
       
   // Process the false branch.  
-  if (const GRState *state = PrevState->assume(V, false))
-    builder.generateNode(MarkBranch(state, Term, false), false);
-  else
-    builder.markInfeasible(false);
+  if (builder.isFeasible(false)) {
+    if (const GRState *state = PrevState->assume(V, false))
+      builder.generateNode(MarkBranch(state, Term, false), false);
+    else
+      builder.markInfeasible(false);
+  }
 }
 
 /// ProcessIndirectGoto - Called by GRCoreEngine.  Used to generate successor
