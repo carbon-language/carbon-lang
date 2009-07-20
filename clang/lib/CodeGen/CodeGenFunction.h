@@ -358,6 +358,8 @@ public:
   /// legal to call this function even if there is no current insertion point.
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
+  void EmitCtorPrologue(const CXXConstructorDecl *CD);
+
   /// EmitFunctionProlog - Emit the target specific LLVM code to load the
   /// arguments for the given function. This is also responsible for naming the
   /// LLVM function arguments.
