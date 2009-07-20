@@ -2406,20 +2406,10 @@ void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
   
   // 'X' matches anything.
   if (OpInfo.ConstraintCode == "X" && OpInfo.CallOperandVal) {
-    // Look through bitcasts over functions.  In the context of an asm
-    // argument we don't care about bitcasting function types; the parameters
-    // to the function, if any, will have been handled elsewhere.
-    Value *v = OpInfo.CallOperandVal;
-    ConstantExpr *CE = NULL;
-    while ((CE = dyn_cast<ConstantExpr>(v)) &&
-           CE->getOpcode()==Instruction::BitCast)
-      v = CE->getOperand(0);
-    if (!isa<Function>(v))
-      v = OpInfo.CallOperandVal;
     // Labels and constants are handled elsewhere ('X' is the only thing
     // that matches labels).  For Functions, the type here is the type of
-    // the result, which is not what we want to look at; leave them alone
-    // (minus any bitcasts).
+    // the result, which is not what we want to look at; leave them alone.
+    Value *v = OpInfo.CallOperandVal;
     if (isa<BasicBlock>(v) || isa<ConstantInt>(v) || isa<Function>(v)) {
       OpInfo.CallOperandVal = v;
       return;

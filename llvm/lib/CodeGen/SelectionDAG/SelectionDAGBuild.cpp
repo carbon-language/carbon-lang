@@ -5059,6 +5059,11 @@ void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
     // If this is an input or an indirect output, process the call argument.
     // BasicBlocks are labels, currently appearing only in asm's.
     if (OpInfo.CallOperandVal) {
+      // Strip bitcasts, if any.  This mostly comes up for functions.
+      ConstantExpr* CE = NULL;
+      while ((CE = dyn_cast<ConstantExpr>(OpInfo.CallOperandVal)) &&
+             CE->getOpcode()==Instruction::BitCast)
+        OpInfo.CallOperandVal = CE->getOperand(0);
       if (BasicBlock *BB = dyn_cast<BasicBlock>(OpInfo.CallOperandVal)) {
         OpInfo.CallOperand = DAG.getBasicBlock(FuncInfo.MBBMap[BB]);
       } else {
