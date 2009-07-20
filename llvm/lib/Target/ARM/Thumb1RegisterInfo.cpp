@@ -231,8 +231,16 @@ void emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
     if (DestReg != BaseReg)
       DstNotEqBase = true;
     NumBits = 8;
-    Opc = isSub ? ARM::tSUBi8 : ARM::tADDi8;
-    NeedPred = NeedCC = true;
+    if (DestReg == ARM::SP) {
+      Opc = isSub ? ARM::tSUBspi : ARM::tADDspi;
+      assert(isMul4 && "Thumb sp inc / dec size must be multiple of 4!");
+      NumBits = 7;
+      Scale = 4;
+    } else {
+      Opc = isSub ? ARM::tSUBi8 : ARM::tADDi8;
+      NumBits = 8;
+      NeedPred = NeedCC = true;
+    }
     isTwoAddr = true;
   }
 
@@ -447,7 +455,7 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         removeOperands(MI, i);
         MachineInstrBuilder MIB(&MI);
         AddDefaultPred(AddDefaultT1CC(MIB).addReg(FrameReg)
-                       .addImm(Offset/Scale));
+                       .addImm(Offset / Scale));
       } else {
         MI.getOperand(i).ChangeToRegister(FrameReg, false);
         MI.getOperand(i+1).ChangeToImmediate(Offset / Scale);
