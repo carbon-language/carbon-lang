@@ -215,13 +215,11 @@ static bool FactorOutConstant(const SCEV *&S,
 
 /// expandAddToGEP - Expand a SCEVAddExpr with a pointer type into a GEP
 /// instead of using ptrtoint+arithmetic+inttoptr. This helps
-/// BasicAliasAnalysis analyze the result. However, it suffers from the
-/// underlying bug described in PR2831. Addition in LLVM currently always
-/// has two's complement wrapping guaranteed. However, the semantics for
-/// getelementptr overflow are ambiguous. In the common case though, this
-/// expansion gets used when a GEP in the original code has been converted
-/// into integer arithmetic, in which case the resulting code will be no
-/// more undefined than it was originally.
+/// BasicAliasAnalysis analyze the result.
+///
+/// Design note: This depends on ScalarEvolution not recognizing inttoptr
+/// and ptrtoint operators, as they may introduce pointer arithmetic
+/// which may not be safely converted into getelementptr.
 ///
 /// Design note: It might seem desirable for this function to be more
 /// loop-aware. If some of the indices are loop-invariant while others
