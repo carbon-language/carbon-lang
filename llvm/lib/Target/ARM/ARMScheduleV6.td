@@ -1,4 +1,4 @@
-//===- ARMSchedule.td - ARM v6 Scheduling Definitions ------*- tablegen -*-===//
+//===- ARMScheduleV6.td - ARM v6 Scheduling Definitions ----*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
