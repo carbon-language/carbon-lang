@@ -247,10 +247,13 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     DefineBuiltinMacro(Buf, "__STDC__=1");
   if (LangOpts.AsmPreprocessor)
     DefineBuiltinMacro(Buf, "__ASSEMBLER__=1");
-  if (LangOpts.C99 && !LangOpts.CPlusPlus)
-    DefineBuiltinMacro(Buf, "__STDC_VERSION__=199901L");
-  else if (0) // STDC94 ?
-    DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
+
+  if (!LangOpts.CPlusPlus) {
+    if (LangOpts.C99)
+      DefineBuiltinMacro(Buf, "__STDC_VERSION__=199901L");
+    else if (!LangOpts.GNUMode && LangOpts.Digraphs)
+      DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
+  }
 
   // Standard conforming mode?
   if (!LangOpts.GNUMode)
