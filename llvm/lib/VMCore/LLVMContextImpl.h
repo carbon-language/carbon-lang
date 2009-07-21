@@ -15,6 +15,8 @@
 #ifndef LLVM_LLVMCONTEXT_IMPL_H
 #define LLVM_LLVMCONTEXT_IMPL_H
 
+#include "llvm/LLVMContext.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/System/RWMutex.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
@@ -100,10 +102,13 @@ class LLVMContextImpl {
   FoldingSet<MDNode> MDNodeSet;
   
   LLVMContext &Context;
+  ConstantInt *TheTrueVal;
+  ConstantInt *TheFalseVal;
+  
   LLVMContextImpl();
   LLVMContextImpl(const LLVMContextImpl&);
 public:
-  LLVMContextImpl(LLVMContext &C) : Context(C) { }
+  LLVMContextImpl(LLVMContext &C) : Context(C), TheTrueVal(0), TheFalseVal(0) {} 
   
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
@@ -114,6 +119,20 @@ public:
   MDString *getMDString(const char *StrBegin, const char *StrEnd);
   
   MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
+  
+  ConstantInt *getConstantIntTrue() {
+    if (TheTrueVal)
+      return TheTrueVal;
+    else
+      return (TheTrueVal = Context.getConstantInt(IntegerType::get(1), 1));
+  }
+  
+  ConstantInt *getConstantIntFalse() {
+    if (TheFalseVal)
+      return TheFalseVal;
+    else
+      return (TheFalseVal = Context.getConstantInt(IntegerType::get(1), 0));
+  }
   
   void erase(MDString *M);
   void erase(MDNode *M);

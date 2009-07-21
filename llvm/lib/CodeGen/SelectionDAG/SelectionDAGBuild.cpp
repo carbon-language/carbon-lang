@@ -1149,7 +1149,7 @@ SelectionDAGLowering::EmitBranchForMergedCondition(Value *Cond,
   }
 
   // Create a CaseBlock record representing this branch.
-  CaseBlock CB(ISD::SETEQ, Cond, ConstantInt::getTrue(),
+  CaseBlock CB(ISD::SETEQ, Cond, DAG.getContext()->getConstantIntTrue(),
                NULL, TBB, FBB, CurBB);
   SwitchCases.push_back(CB);
 }
@@ -1304,7 +1304,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
   }
 
   // Create a CaseBlock record representing this branch.
-  CaseBlock CB(ISD::SETEQ, CondVal, ConstantInt::getTrue(),
+  CaseBlock CB(ISD::SETEQ, CondVal, DAG.getContext()->getConstantIntTrue(),
                NULL, Succ0MBB, Succ1MBB, CurMBB);
   // Use visitSwitchCase to actually insert the fast branch sequence for this
   // cond branch.
@@ -1322,9 +1322,11 @@ void SelectionDAGLowering::visitSwitchCase(CaseBlock &CB) {
   if (CB.CmpMHS == NULL) {
     // Fold "(X == true)" to X and "(X == false)" to !X to
     // handle common cases produced by branch lowering.
-    if (CB.CmpRHS == ConstantInt::getTrue() && CB.CC == ISD::SETEQ)
+    if (CB.CmpRHS == DAG.getContext()->getConstantIntTrue() &&
+        CB.CC == ISD::SETEQ)
       Cond = CondLHS;
-    else if (CB.CmpRHS == ConstantInt::getFalse() && CB.CC == ISD::SETEQ) {
+    else if (CB.CmpRHS == DAG.getContext()->getConstantIntFalse() &&
+             CB.CC == ISD::SETEQ) {
       SDValue True = DAG.getConstant(1, CondLHS.getValueType());
       Cond = DAG.getNode(ISD::XOR, dl, CondLHS.getValueType(), CondLHS, True);
     } else

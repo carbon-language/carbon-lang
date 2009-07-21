@@ -93,16 +93,6 @@ public:
     return Val == V;
   }
 
-  /// getTrue/getFalse - Return the singleton true/false values.
-  static inline ConstantInt *getTrue() {
-    if (TheTrueVal) return TheTrueVal;
-    return CreateTrueFalseVals(true);
-  }
-  static inline ConstantInt *getFalse() {
-    if (TheFalseVal) return TheFalseVal;
-    return CreateTrueFalseVals(false);
-  }
-
   /// getType - Specialize the getType() method to always return an IntegerType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
@@ -200,9 +190,6 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == ConstantIntVal;
   }
-  static void ResetTrueFalse() { TheTrueVal = TheFalseVal = 0; }
-private:
-  static ConstantInt *CreateTrueFalseVals(bool WhichOne);
 };
 
 

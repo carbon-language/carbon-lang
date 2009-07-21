@@ -169,28 +169,6 @@ ConstantInt::ConstantInt(const IntegerType *Ty, const APInt& V)
   assert(V.getBitWidth() == Ty->getBitWidth() && "Invalid constant for type");
 }
 
-ConstantInt *ConstantInt::TheTrueVal = 0;
-ConstantInt *ConstantInt::TheFalseVal = 0;
-
-namespace llvm {
-  void CleanupTrueFalse(void *) {
-    ConstantInt::ResetTrueFalse();
-  }
-}
-
-static ManagedCleanup<llvm::CleanupTrueFalse> TrueFalseCleanup;
-
-ConstantInt *ConstantInt::CreateTrueFalseVals(bool WhichOne) {
-  assert(TheTrueVal == 0 && TheFalseVal == 0);
-  TheTrueVal  = getGlobalContext().getConstantInt(Type::Int1Ty, 1);
-  TheFalseVal = getGlobalContext().getConstantInt(Type::Int1Ty, 0);
-  
-  // Ensure that llvm_shutdown nulls out TheTrueVal/TheFalseVal.
-  TrueFalseCleanup.Register();
-  
-  return WhichOne ? TheTrueVal : TheFalseVal;
-}
-
 //===----------------------------------------------------------------------===//
 //                                ConstantFP
 //===----------------------------------------------------------------------===//

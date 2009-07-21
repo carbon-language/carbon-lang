@@ -1690,8 +1690,8 @@ namespace {
     bool isRelatedBy(Value *V1, Value *V2, ICmpInst::Predicate Pred) const {
       if (Constant *C1 = dyn_cast<Constant>(V1))
         if (Constant *C2 = dyn_cast<Constant>(V2))
-          return ConstantExpr::getCompare(Pred, C1, C2) ==
-                 ConstantInt::getTrue();
+          return Context->getConstantExprCompare(Pred, C1, C2) ==
+                 Context->getConstantIntTrue();
 
       unsigned n1 = VN.valueNumber(V1, Top);
       unsigned n2 = VN.valueNumber(V2, Top);
@@ -1803,10 +1803,10 @@ namespace {
         // "icmp ult i32 %a, %y" EQ true then %a u< y
         // etc.
 
-        if (Canonical == ConstantInt::getTrue()) {
+        if (Canonical == Context->getConstantIntTrue()) {
           add(IC->getOperand(0), IC->getOperand(1), IC->getPredicate(),
               NewContext);
-        } else if (Canonical == ConstantInt::getFalse()) {
+        } else if (Canonical == Context->getConstantIntFalse()) {
           add(IC->getOperand(0), IC->getOperand(1),
               ICmpInst::getInversePredicate(IC->getPredicate()), NewContext);
         }
@@ -1822,11 +1822,11 @@ namespace {
         if (isRelatedBy(True, False, ICmpInst::ICMP_NE)) {
           if (Canonical == VN.canonicalize(True, Top) ||
               isRelatedBy(Canonical, False, ICmpInst::ICMP_NE))
-            add(SI->getCondition(), ConstantInt::getTrue(),
+            add(SI->getCondition(), Context->getConstantIntTrue(),
                 ICmpInst::ICMP_EQ, NewContext);
           else if (Canonical == VN.canonicalize(False, Top) ||
                    isRelatedBy(Canonical, True, ICmpInst::ICMP_NE))
-            add(SI->getCondition(), ConstantInt::getFalse(),
+            add(SI->getCondition(), Context->getConstantIntFalse(),
                 ICmpInst::ICMP_EQ, NewContext);
         }
       } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I)) {
@@ -2050,9 +2050,10 @@ namespace {
 
         ICmpInst::Predicate Pred = IC->getPredicate();
         if (isRelatedBy(Op0, Op1, Pred))
-          add(IC, ConstantInt::getTrue(), ICmpInst::ICMP_EQ, NewContext);
+          add(IC, Context->getConstantIntTrue(), ICmpInst::ICMP_EQ, NewContext);
         else if (isRelatedBy(Op0, Op1, ICmpInst::getInversePredicate(Pred)))
-          add(IC, ConstantInt::getFalse(), ICmpInst::ICMP_EQ, NewContext);
+          add(IC, Context->getConstantIntFalse(),
+              ICmpInst::ICMP_EQ, NewContext);
 
       } else if (SelectInst *SI = dyn_cast<SelectInst>(I)) {
         if (I->getType()->isFPOrFPVector()) return;
@@ -2063,9 +2064,9 @@ namespace {
         // %b EQ %c then %a EQ %b
 
         Value *Canonical = VN.canonicalize(SI->getCondition(), Top);
-        if (Canonical == ConstantInt::getTrue()) {
+        if (Canonical == Context->getConstantIntTrue()) {
           add(SI, SI->getTrueValue(), ICmpInst::ICMP_EQ, NewContext);
-        } else if (Canonical == ConstantInt::getFalse()) {
+        } else if (Canonical == Context->getConstantIntFalse()) {
           add(SI, SI->getFalseValue(), ICmpInst::ICMP_EQ, NewContext);
         } else if (VN.canonicalize(SI->getTrueValue(), Top) ==
                    VN.canonicalize(SI->getFalseValue(), Top)) {
@@ -2154,8 +2155,8 @@ namespace {
         // the BB as unreachable if so.
         if (Constant *CI_L = dyn_cast<Constant>(O.LHS)) {
           if (Constant *CI_R = dyn_cast<Constant>(O.RHS)) {
-            if (ConstantExpr::getCompare(O.Op, CI_L, CI_R) ==
-                ConstantInt::getFalse())
+            if (Context->getConstantExprCompare(O.Op, CI_L, CI_R) ==
+                Context->getConstantIntFalse())
               UB.mark(TopBB);
 
             WorkList.pop_front();
@@ -2446,6 +2447,8 @@ namespace {
       return;
     }
 
+    LLVMContext *Context = BI.getParent()->getContext();
+
     for (DomTreeDFS::Node::iterator I = DTNode->begin(), E = DTNode->end();
          I != E; ++I) {
       BasicBlock *Dest = (*I)->getBlock();
@@ -2455,7 +2458,7 @@ namespace {
       if (Dest == TrueDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") true set:\n";
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, Dest);
-        VRP.add(ConstantInt::getTrue(), Condition, ICmpInst::ICMP_EQ);
+        VRP.add(Context->getConstantIntTrue(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(VN.dump());
         DEBUG(IG.dump());
@@ -2463,7 +2466,7 @@ namespace {
       } else if (Dest == FalseDest) {
         DOUT << "(" << DTNode->getBlock()->getName() << ") false set:\n";
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, Dest);
-        VRP.add(ConstantInt::getFalse(), Condition, ICmpInst::ICMP_EQ);
+        VRP.add(Context->getConstantIntFalse(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
         DEBUG(VN.dump());
         DEBUG(IG.dump());
