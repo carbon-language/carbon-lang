@@ -1969,7 +1969,24 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
     LHSValNo->setHasPHIKill(true);
   LHS.addKills(LHSValNo, VNI->kills);
   LHS.MergeRangesInAsValue(RHS, LHSValNo);
-  LHS.weight += RHS.weight;
+
+  // If either of these intervals was spilled, the weight is the
+  // weight of the non-spilled interval.  This can only happen
+  // with iterative coalescers.
+  if (LHS.weight == HUGE_VALF && !TargetRegisterInfo::isPhysicalRegister(LHS.reg)) {
+    // Remove this assert if you have an iterative coalescer
+    assert(0 && "Joining to spilled interval");
+    LHS.weight = RHS.weight;
+  }
+  else if (RHS.weight != HUGE_VALF) {
+    LHS.weight += RHS.weight;
+  }
+  else {
+    // Remove this assert if you have an iterative coalescer
+    assert(0 && "Joining from spilled interval");
+  }
+
+  // Otherwise the LHS weight stays the same
 
   // Update regalloc hint if both are virtual registers.
   if (TargetRegisterInfo::isVirtualRegister(LHS.reg) && 
