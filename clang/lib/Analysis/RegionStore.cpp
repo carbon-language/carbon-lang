@@ -287,6 +287,8 @@ public:
   
   SVal RetrieveObjCIvar(const GRState *state, const ObjCIvarRegion *R);
   
+  SVal RetrieveVar(const GRState *state, const VarRegion *R);
+  
   SVal RetrieveLazySymbol(const GRState *state, const TypedRegion *R);
   
   SVal CastRetrievedVal(SVal val, const TypedRegion *R, QualType castTy);
@@ -847,6 +849,9 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
     return CastRetrievedVal(RetrieveObjCIvar(state, IVR), IVR, T);
+  
+  if (const VarRegion *VR = dyn_cast<VarRegion>(R))
+    return CastRetrievedVal(RetrieveVar(state, VR), VR, T);
 
   RegionBindingsTy B = GetRegionBindings(state->getStore());
   RegionBindingsTy::data_type* V = B.lookup(R);
@@ -859,16 +864,6 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // the value it had upon its creation and/or entry to the analyzed
   // function/method.  These are either symbolic values or 'undefined'.
 
-  // We treat function parameters as symbolic values.
-  if (const VarRegion* VR = dyn_cast<VarRegion>(R)) {
-    const VarDecl *VD = VR->getDecl();
-    
-    if (VD == SelfDecl)
-      return loc::MemRegionVal(getSelfRegion(0));
-    
-    if (VR->hasGlobalsOrParametersStorage())
-      return ValMgr.getRegionValueSymbolValOrUnknown(VR, VD->getType());
-  }  
 
   if (R->hasHeapOrStackStorage()) {
     // All stack variables are considered to have undefined values
@@ -1023,6 +1018,27 @@ SVal RegionStoreManager::RetrieveObjCIvar(const GRState* state,
   return RetrieveLazySymbol(state, R);
 }
 
+SVal RegionStoreManager::RetrieveVar(const GRState *state,
+                                     const VarRegion *R) {
+  
+  // Check if the region has a binding.
+  RegionBindingsTy B = GetRegionBindings(state->getStore());
+  
+  if (const SVal* V = B.lookup(R))
+    return *V;
+  
+  // Lazily derive a value for the VarRegion.
+  const VarDecl *VD = R->getDecl();
+    
+  if (VD == SelfDecl)
+    return loc::MemRegionVal(getSelfRegion(0));
+    
+  if (R->hasGlobalsOrParametersStorage())
+    return ValMgr.getRegionValueSymbolValOrUnknown(R, VD->getType());
+  
+  return UndefinedVal();
+}
+
 SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state, 
                                             const TypedRegion *R) {
   
@@ -1093,7 +1109,15 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
 SVal RegionStoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
                                            QualType castTy) {
 
-  if (castTy.isNull() || R->getValueType(getContext()) == castTy)
+  if (castTy.isNull())
+    return V;
+  
+  ASTContext &Ctx = getContext();  
+  QualType valTy = R->getValueType(Ctx);
+  castTy = Ctx.getCanonicalType(castTy);
+  
+  
+  if (valTy == castTy)
     return V;
   
   return ValMgr.getSValuator().EvalCast(V, castTy);

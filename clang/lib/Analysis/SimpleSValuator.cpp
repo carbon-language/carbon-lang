@@ -48,9 +48,27 @@ SVal SimpleSValuator::EvalCastNL(NonLoc val, QualType castTy) {
   
   bool isLocType = Loc::IsLocType(castTy);
   
-  if (isLocType)
-    if (nonloc::LocAsInteger *LI = dyn_cast<nonloc::LocAsInteger>(&val))
+  if (nonloc::LocAsInteger *LI = dyn_cast<nonloc::LocAsInteger>(&val)) {
+    if (isLocType)
       return LI->getLoc();
+    
+    ASTContext &Ctx = ValMgr.getContext();    
+    
+    // FIXME: Support promotions/truncations.
+    if (Ctx.getTypeSize(castTy) == Ctx.getTypeSize(Ctx.VoidPtrTy))
+      return val;
+    
+    return UnknownVal();
+  }
+
+  if (const SymExpr *se = val.getAsSymbolicExpression()) {
+    ASTContext &Ctx = ValMgr.getContext();
+    QualType T = Ctx.getCanonicalType(se->getType(Ctx));
+    if (T == Ctx.getCanonicalType(castTy))
+      return val;
+    
+    return UnknownVal();
+  }
   
   if (!isa<nonloc::ConcreteInt>(val))
     return UnknownVal();
