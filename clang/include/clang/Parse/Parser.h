@@ -1080,17 +1080,22 @@ private:
   class DeclaratorScopeObj {
     Parser &P;
     CXXScopeSpec &SS;
+    bool EnteredScope;
   public:
-    DeclaratorScopeObj(Parser &p, CXXScopeSpec &ss) : P(p), SS(ss) {}
+    DeclaratorScopeObj(Parser &p, CXXScopeSpec &ss)
+      : P(p), SS(ss), EnteredScope(false) {}
 
     void EnterDeclaratorScope() {
-      if (SS.isSet())
-        P.Actions.ActOnCXXEnterDeclaratorScope(P.CurScope, SS);
+      assert(SS.isSet() && "C++ scope was not set!");
+      P.Actions.ActOnCXXEnterDeclaratorScope(P.CurScope, SS);
+      EnteredScope = true;
     }
 
     ~DeclaratorScopeObj() {
-      if (SS.isSet())
+      if (EnteredScope) {
+        assert(SS.isSet() && "C++ scope was cleared ?");
         P.Actions.ActOnCXXExitDeclaratorScope(P.CurScope, SS);
+      }
     }
   };
   
