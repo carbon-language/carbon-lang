@@ -80,16 +80,16 @@ UndefValue* LLVMContext::getUndef(const Type* Ty) {
 }
 
 // ConstantInt accessors.
-ConstantInt* LLVMContext::getConstantIntTrue() {
+ConstantInt* LLVMContext::getTrue() {
   assert(this && "Context not initialized!");
   assert(pImpl && "Context not initialized!");
-  return pImpl->getConstantIntTrue();
+  return pImpl->getTrue();
 }
 
-ConstantInt* LLVMContext::getConstantIntFalse() {
+ConstantInt* LLVMContext::getFalse() {
   assert(this && "Context not initialized!");
   assert(pImpl && "Context not initialized!");
-  return pImpl->getConstantIntFalse();
+  return pImpl->getFalse();
 }
 
 Constant* LLVMContext::getConstantInt(const Type* Ty, uint64_t V,

@@ -120,14 +120,14 @@ public:
   
   MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
   
-  ConstantInt *getConstantIntTrue() {
+  ConstantInt *getTrue() {
     if (TheTrueVal)
       return TheTrueVal;
     else
       return (TheTrueVal = Context.getConstantInt(IntegerType::get(1), 1));
   }
   
-  ConstantInt *getConstantIntFalse() {
+  ConstantInt *getFalse() {
     if (TheFalseVal)
       return TheFalseVal;
     else

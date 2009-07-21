@@ -154,7 +154,7 @@ void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
     }
 
     // Constant condition variables mean the branch can only go a single way
-    Succs[C == Context->getConstantIntFalse()] = true;
+    Succs[C == Context->getFalse()] = true;
     return;
   }
   

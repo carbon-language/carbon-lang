@@ -1384,9 +1384,9 @@ bool GVN::processInstruction(Instruction *I,
     BasicBlock* falseSucc = BI->getSuccessor(1);
     
     if (trueSucc->getSinglePredecessor())
-      localAvail[trueSucc]->table[condVN] = Context->getConstantIntTrue();
+      localAvail[trueSucc]->table[condVN] = Context->getTrue();
     if (falseSucc->getSinglePredecessor())
-      localAvail[falseSucc]->table[condVN] = Context->getConstantIntFalse();
+      localAvail[falseSucc]->table[condVN] = Context->getFalse();
 
     return false;
     

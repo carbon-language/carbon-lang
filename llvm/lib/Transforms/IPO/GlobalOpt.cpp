@@ -865,7 +865,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   GlobalVariable *InitBool =
     new GlobalVariable(*Context, Type::Int1Ty, false,
                        GlobalValue::InternalLinkage,
-                       Context->getConstantIntFalse(), GV->getName()+".init",
+                       Context->getFalse(), GV->getName()+".init",
                        GV->isThreadLocal());
   bool InitBoolUsed = false;
 
@@ -886,7 +886,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
           default: llvm_unreachable("Unknown ICmp Predicate!");
           case ICmpInst::ICMP_ULT:
           case ICmpInst::ICMP_SLT:
-            LV = Context->getConstantIntFalse();   // X < null -> always false
+            LV = Context->getFalse();   // X < null -> always false
             break;
           case ICmpInst::ICMP_ULE:
           case ICmpInst::ICMP_SLE:
@@ -908,7 +908,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     } else {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
       // The global is initialized when the store to it occurs.
-      new StoreInst(Context->getConstantIntTrue(), InitBool, SI);
+      new StoreInst(Context->getTrue(), InitBool, SI);
       SI->eraseFromParent();
     }
 
@@ -1583,7 +1583,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal,
   
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(*Context, Type::Int1Ty, false,
-         GlobalValue::InternalLinkage, Context->getConstantIntFalse(),
+         GlobalValue::InternalLinkage, Context->getFalse(),
                                              GV->getName()+".b",
                                              GV->isThreadLocal());
   GV->getParent()->getGlobalList().insert(GV, NewGV);

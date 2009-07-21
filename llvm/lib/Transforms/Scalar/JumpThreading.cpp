@@ -718,7 +718,7 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   // Next, figure out which successor we are threading to.
   BasicBlock *SuccBB;
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
-    SuccBB = BI->getSuccessor(PredCst == Context->getConstantIntFalse());
+    SuccBB = BI->getSuccessor(PredCst == Context->getFalse());
   else {
     SwitchInst *SI = cast<SwitchInst>(BB->getTerminator());
     SuccBB = SI->getSuccessor(SI->findCaseValue(PredCst));
@@ -803,7 +803,7 @@ static Constant *GetResultOfComparison(CmpInst::Predicate pred,
   if (LHS == RHS)
     if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType()))
       return ICmpInst::isTrueWhenEqual(pred) ? 
-                 Context->getConstantIntTrue() : Context->getConstantIntFalse();
+                 Context->getTrue() : Context->getFalse();
 
   return 0;
 }

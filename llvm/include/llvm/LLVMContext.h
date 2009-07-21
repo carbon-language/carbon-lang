@@ -68,8 +68,8 @@ public:
   UndefValue* getUndef(const Type* Ty);
   
   // ConstantInt accessors
-  ConstantInt* getConstantIntTrue();
-  ConstantInt* getConstantIntFalse();
+  ConstantInt* getTrue();
+  ConstantInt* getFalse();
   
   /// If Ty is a vector type, return a Constant with a splat of the given
   /// value. Otherwise return a ConstantInt for the given value.
