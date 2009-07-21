@@ -457,6 +457,14 @@ API changes are:</p>
     already exists. If <tt>Force</tt> is set to <tt>true</tt>, the file will
     be silently truncated (which is the behavior before this flag was
     added).</li>
+<li><tt>SCEVHandle</tt> no longer exists, because reference counting is no
+longer done for <tt>SCEV*</tt> objects, instead <tt>const SCEV*</tt> should be
+used.</li>
+<li>llvm-dis now fails if output file exists, instead of dumping to stdout.
+FIXME: describe any other tool changes due to the raw_fd_ostream change</li>
+<li>temporarely due to Context API change passes should call doInitialization()
+method of the pass they inherit from, otherwise Context is NULL.
+FIXME: remove this entry when this is no longer needed.<li>
 </ul>
 
 </div>
