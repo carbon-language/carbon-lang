@@ -363,6 +363,15 @@ void ObjCInterfaceDecl::Destroy(ASTContext &C) {
   Decl::Destroy(C);
 }
 
+ObjCImplementationDecl *ObjCInterfaceDecl::getImplementation() const {
+  return getASTContext().getObjCImplementation(
+                                          const_cast<ObjCInterfaceDecl*>(this));
+}
+
+void ObjCInterfaceDecl::setImplementation(ObjCImplementationDecl *ImplD) {
+  getASTContext().setObjCImplementation(this, ImplD);
+}
+
 
 /// FindCategoryDeclaration - Finds category declaration in the list of
 /// categories for this class and returns it. Name of the category is passed
@@ -529,6 +538,16 @@ ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
   return new (C) ObjCCategoryDecl(DC, L, Id);
 }
 
+ObjCCategoryImplDecl *ObjCCategoryDecl::getImplementation() const {
+  return getASTContext().getObjCImplementation(
+                                           const_cast<ObjCCategoryDecl*>(this));
+}
+
+void ObjCCategoryDecl::setImplementation(ObjCCategoryImplDecl *ImplD) {
+  getASTContext().setObjCImplementation(this, ImplD);
+}
+
+
 //===----------------------------------------------------------------------===//
 // ObjCCategoryImplDecl
 //===----------------------------------------------------------------------===//
@@ -545,6 +564,23 @@ void ObjCImplDecl::addPropertyImplementation(ObjCPropertyImplDecl *property) {
   // FIXME: The context should be correct before we get here.
   property->setLexicalDeclContext(this);
   addDecl(property);
+}
+
+void ObjCImplDecl::setClassInterface(ObjCInterfaceDecl *IFace) {
+  ASTContext &Ctx = getASTContext();
+
+  if (ObjCImplementationDecl *ImplD
+        = dyn_cast_or_null<ObjCImplementationDecl>(this))
+    if (IFace)
+      Ctx.setObjCImplementation(IFace, ImplD);
+
+  else if (ObjCCategoryImplDecl *ImplD =
+             dyn_cast_or_null<ObjCCategoryImplDecl>(this)) {
+    if (ObjCCategoryDecl *CD = IFace->FindCategoryDeclaration(getIdentifier()))
+      Ctx.setObjCImplementation(CD, ImplD);
+  }
+
+  ClassInterface = IFace;
 }
 
 /// FindPropertyImplIvarDecl - This method lookup the ivar in the list of

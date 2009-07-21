@@ -605,6 +605,19 @@ Sema::DeclPtrTy Sema::ActOnStartCategoryImplementation(
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
+  ObjCCategoryDecl *CatIDecl = 0;
+  if (IDecl) {
+    CatIDecl = IDecl->FindCategoryDeclaration(CatName);
+    if (!CatIDecl) {
+      // Category @implementation with no corresponding @interface.
+      // Create and install one.
+      CatIDecl = ObjCCategoryDecl::Create(Context, CurContext, SourceLocation(),
+                                          CatName);
+      CatIDecl->setClassInterface(IDecl);
+      CatIDecl->insertNextClassCategory();
+    }
+  }
+
   ObjCCategoryImplDecl *CDecl = 
     ObjCCategoryImplDecl::Create(Context, CurContext, AtCatImplLoc, CatName,
                                  IDecl);
@@ -615,8 +628,17 @@ Sema::DeclPtrTy Sema::ActOnStartCategoryImplementation(
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(CDecl);
 
-  /// TODO: Check that CatName, category name, is not used in another
-  // implementation.
+  /// Check that CatName, category name, is not used in another implementation.
+  if (CatIDecl) {
+    if (CatIDecl->getImplementation()) {
+      Diag(ClassLoc, diag::err_dup_implementation_category) << ClassName
+        << CatName;
+      Diag(CatIDecl->getImplementation()->getLocation(),
+           diag::note_previous_definition);
+    } else
+      CatIDecl->setImplementation(CDecl);
+  }
+
   ObjCCategoryImpls.push_back(CDecl);
   
   CheckObjCDeclScope(CDecl);
@@ -697,8 +719,10 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
   if (LookupObjCImplementation(ClassName))
     // FIXME: Don't leak everything!
     Diag(ClassLoc, diag::err_dup_implementation_class) << ClassName;
-  else // add it to the list.
+  else { // add it to the list.
+    IDecl->setImplementation(IMPDecl);
     PushOnScopeChains(IMPDecl, TUScope);
+  }
   return DeclPtrTy::make(IMPDecl);
 }
 

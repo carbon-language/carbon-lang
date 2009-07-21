@@ -53,4 +53,8 @@
 @implementation XCRemoteComputerManager
 @end
 
+@implementation XCRemoteComputerManager(x) // expected-note {{previous definition is here}}
+@end
 
+@implementation XCRemoteComputerManager(x) // expected-error {{reimplementation of category 'x' for class 'XCRemoteComputerManager'}}
+@end

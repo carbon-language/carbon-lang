@@ -168,6 +168,8 @@ def warn_dup_category_def : Warning<
   "duplicate definition of category %1 on interface %0">;
 def err_conflicting_super_class : Error<"conflicting super class name %0">;
 def err_dup_implementation_class : Error<"reimplementation of class %0">;
+def err_dup_implementation_category : Error<
+  "reimplementation of category %1 for class %0">;
 def err_conflicting_ivar_type : Error<
   "instance variable %0 has conflicting type: %1 vs %2">;
 def err_conflicting_ivar_bitwidth : Error<

@@ -427,7 +427,10 @@ public:
   const ObjCList<ObjCProtocolDecl> &getReferencedProtocols() const { 
     return ReferencedProtocols; 
   }
-  
+
+  ObjCImplementationDecl *getImplementation() const;
+  void setImplementation(ObjCImplementationDecl *ImplD);
+
   ObjCCategoryDecl *FindCategoryDeclaration(IdentifierInfo *CategoryId) const;
 
   typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
@@ -775,7 +778,10 @@ public:
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjCInterfaceDecl *IDecl) { ClassInterface = IDecl; }
-  
+
+  ObjCCategoryImplDecl *getImplementation() const;
+  void setImplementation(ObjCCategoryImplDecl *ImplD);
+
   /// setProtocolList - Set the list of protocols that this interface
   /// implements.
   void setProtocolList(ObjCProtocolDecl *const*List, unsigned Num,
@@ -828,7 +834,7 @@ public:
   
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
-  void setClassInterface(ObjCInterfaceDecl *IFace) { ClassInterface = IFace; }
+  void setClassInterface(ObjCInterfaceDecl *IFace);
 
   void addInstanceMethod(ObjCMethodDecl *method) { 
     // FIXME: Context should be set correctly before we get here.

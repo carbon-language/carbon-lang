@@ -97,6 +97,9 @@ class ASTContext {
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
   llvm::DenseMap<const ObjCContainerDecl*, const ASTRecordLayout*> ObjCLayouts;
 
+  /// \brief Mapping from ObjCContainers to their ObjCImplementations.
+  llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*> ObjCImpls;
+
   llvm::DenseMap<unsigned, FixedWidthIntType*> SignedFixedWidthIntTypes;
   llvm::DenseMap<unsigned, FixedWidthIntType*> UnsignedFixedWidthIntTypes;
   
@@ -803,6 +806,18 @@ public:
     Res = Value;
     return Res;
   }
+
+  /// \brief Get the implementation of ObjCInterfaceDecl,or NULL if none exists.
+  ObjCImplementationDecl *getObjCImplementation(ObjCInterfaceDecl *D);
+  /// \brief Get the implementation of ObjCCategoryDecl, or NULL if none exists.
+  ObjCCategoryImplDecl   *getObjCImplementation(ObjCCategoryDecl *D);
+
+  /// \brief Set the implementation of ObjCInterfaceDecl.
+  void setObjCImplementation(ObjCInterfaceDecl *IFaceD,
+                             ObjCImplementationDecl *ImplD);
+  /// \brief Set the implementation of ObjCCategoryDecl.
+  void setObjCImplementation(ObjCCategoryDecl *CatD,
+                             ObjCCategoryImplDecl *ImplD);
 
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT

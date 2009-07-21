@@ -824,6 +824,36 @@ unsigned ASTContext::CountSynthesizedIvars(const ObjCInterfaceDecl *OI)
   return count;
 }
 
+/// \brief Get the implementation of ObjCInterfaceDecl,or NULL if none exists.
+ObjCImplementationDecl *ASTContext::getObjCImplementation(ObjCInterfaceDecl *D) {
+  llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*>::iterator
+    I = ObjCImpls.find(D);
+  if (I != ObjCImpls.end())
+    return cast<ObjCImplementationDecl>(I->second);
+  return 0;
+}
+/// \brief Get the implementation of ObjCCategoryDecl, or NULL if none exists.
+ObjCCategoryImplDecl *ASTContext::getObjCImplementation(ObjCCategoryDecl *D) {
+  llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*>::iterator
+    I = ObjCImpls.find(D);
+  if (I != ObjCImpls.end())
+    return cast<ObjCCategoryImplDecl>(I->second);
+  return 0;
+}
+
+/// \brief Set the implementation of ObjCInterfaceDecl.
+void ASTContext::setObjCImplementation(ObjCInterfaceDecl *IFaceD,
+                           ObjCImplementationDecl *ImplD) {
+  assert(IFaceD && ImplD && "Passed null params");
+  ObjCImpls[IFaceD] = ImplD;
+}
+/// \brief Set the implementation of ObjCCategoryDecl.
+void ASTContext::setObjCImplementation(ObjCCategoryDecl *CatD,
+                           ObjCCategoryImplDecl *ImplD) {
+  assert(CatD && ImplD && "Passed null params");
+  ObjCImpls[CatD] = ImplD;
+}
+
 /// getInterfaceLayoutImpl - Get or compute information about the
 /// layout of the given interface.
 ///
