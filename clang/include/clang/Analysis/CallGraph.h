@@ -45,7 +45,7 @@ public:
 
   bool hasCallee() const { return begin() != end(); }
 
-  std::string getName(ASTContext &Ctx) { return F.getPrintableName(Ctx); }
+  std::string getName() { return F.getPrintableName(); }
 };
 
 class CallGraph {

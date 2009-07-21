@@ -44,6 +44,8 @@ public:
   /// \brief Get an Entity associated with the given Decl.
   /// \returns Null if an Entity cannot refer to this Decl.
   static Entity get(Decl *D, ProgramImpl &Prog);
+  
+  std::string getPrintableName();
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
     Profile(ID, Parent, Id, IdNS);

@@ -134,6 +134,10 @@ Entity EntityImpl::get(Decl *D, ProgramImpl &Prog) {
   return EntityGetter(Prog).Visit(D);
 }
 
+std::string EntityImpl::getPrintableName() {
+  return std::string(Id->getKeyData(), Id->getKeyData() + Id->getKeyLength());
+}
+
 //===----------------------------------------------------------------------===//
 // Entity Implementation
 //===----------------------------------------------------------------------===//
@@ -152,11 +156,18 @@ Decl *Entity::getDecl(ASTContext &AST) {
   return Val.get<EntityImpl *>()->getDecl(AST);
 }
 
-std::string Entity::getPrintableName(ASTContext &Ctx) {
-  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(getDecl(Ctx))) {
-    return ND->getNameAsString();
+std::string Entity::getPrintableName() {
+  if (isInvalid())
+    return "<< Invalid >>";
+  
+  if (Decl *D = Val.dyn_cast<Decl *>()) {
+    if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
+      return ND->getNameAsString();
+    else
+      return std::string();
   }
-  return std::string();
+
+  return Val.get<EntityImpl *>()->getPrintableName();
 }
 
 /// \brief Get an Entity associated with the given Decl.
