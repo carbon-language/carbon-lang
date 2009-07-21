@@ -1256,11 +1256,22 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
 }
 
 CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
-  // "do...while" is a control-flow statement.  Thus we stop processing the
-  // current block.
+  // See if this is a known constant.
+  bool KnownTrue = false;
+  bool KnownFalse = false;
+  Expr::EvalResult Result;
+  if (D->getCond()->Evaluate(Result, *Context)
+      && Result.Val.isInt()) {
+    if (Result.Val.getInt().getBoolValue())
+      KnownTrue = true;
+    else
+      KnownFalse = true;
+  }
 
   CFGBlock* LoopSuccessor = NULL;
 
+  // "do...while" is a control-flow statement.  Thus we stop processing the
+  // current block.
   if (Block) {
     if (!FinishBlock(Block))
       return 0;
@@ -1330,13 +1341,21 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
     CFGBlock *LoopBackBlock = createBlock();
     LoopBackBlock->setLoopTarget(D);
 
-    // Add the loop body entry as a successor to the condition.
-    ExitConditionBlock->addSuccessor(LoopBackBlock);
+    if (KnownFalse)
+      ExitConditionBlock->addSuccessor(0);
+    else {
+      // Add the loop body entry as a successor to the condition.
+      ExitConditionBlock->addSuccessor(LoopBackBlock);
+    }
   }
 
-  // Link up the condition block with the code that follows the loop.
-  // (the false branch).
-  ExitConditionBlock->addSuccessor(LoopSuccessor);
+  if (KnownTrue)
+    ExitConditionBlock->addSuccessor(0);
+  else {
+    // Link up the condition block with the code that follows the loop.  (the
+    // false branch).
+    ExitConditionBlock->addSuccessor(LoopSuccessor);
+  }
 
   // There can be no more statements in the body block(s) since we loop back to
   // the body.  NULL out Block to force lazy creation of another block.
