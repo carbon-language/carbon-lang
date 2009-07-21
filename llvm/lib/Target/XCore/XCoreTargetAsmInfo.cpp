@@ -72,7 +72,7 @@ unsigned XCoreTargetAsmInfo::
 SectionFlagsForGlobal(const GlobalValue *GV, const char* Name) const {
   unsigned Flags = ELFTargetAsmInfo::SectionFlagsForGlobal(GV, Name);
   // Mask out unsupported flags
-  Flags &= ~(SectionFlags::Small | SectionFlags::TLS);
+  Flags &= ~SectionFlags::Small;
 
   // Set CP / DP relative flags
   if (GV) {
