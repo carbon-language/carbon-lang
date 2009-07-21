@@ -157,12 +157,11 @@ namespace {
     bool DoOneIteration(Function &F, unsigned ItNum);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
       AU.addPreservedID(LCSSAID);
       AU.setPreservesCFG();
     }
 
-    TargetData &getTargetData() const { return *TD; }
+    TargetData *getTargetData() const { return TD; }
 
     // Visitation implementation - Implement instruction combining for different
     // instruction types.  The semantics are as follows:
@@ -460,7 +459,7 @@ isEliminableCastPair(
   const Type *DstTy,     ///< The target type for the second cast instruction
   TargetData *TD         ///< The target data for pointer size
 ) {
-  
+
   const Type *SrcTy = CI->getOperand(0)->getType();   // A from above
   const Type *MidTy = CI->getType();                  // B from above
 
@@ -469,7 +468,8 @@ isEliminableCastPair(
   Instruction::CastOps secondOp = Instruction::CastOps(opcode);
 
   unsigned Res = CastInst::isEliminableCastPair(firstOp, secondOp, SrcTy, MidTy,
-                                                DstTy, TD->getIntPtrType());
+                                                DstTy,
+                                                TD ? TD->getIntPtrType() : 0);
   
   // We don't want to form an inttoptr or ptrtoint that converts to an integer
   // type that differs from the pointer size.
@@ -489,7 +489,7 @@ static bool ValueRequiresCast(Instruction::CastOps opcode, const Value *V,
   
   // If this is another cast that can be eliminated, it isn't codegen either.
   if (const CastInst *CI = dyn_cast<CastInst>(V))
-    if (isEliminableCastPair(CI, opcode, Ty, TD)) 
+    if (isEliminableCastPair(CI, opcode, Ty, TD))
       return false;
   return true;
 }
@@ -5350,7 +5350,7 @@ static bool SubWithOverflow(Constant *&Result, Constant *In1,
 /// code necessary to compute the offset from the base pointer (without adding
 /// in the base pointer).  Return the result as a signed integer of intptr size.
 static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
-  TargetData &TD = IC.getTargetData();
+  TargetData &TD = *IC.getTargetData();
   gep_type_iterator GTI = gep_type_begin(GEP);
   const Type *IntPtrTy = TD.getIntPtrType();
   LLVMContext *Context = IC.getContext();
@@ -5438,7 +5438,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
 /// 
 static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
                                           InstCombiner &IC) {
-  TargetData &TD = IC.getTargetData();
+  TargetData &TD = *IC.getTargetData();
   gep_type_iterator GTI = gep_type_begin(GEP);
 
   // Check to see if this gep only has a single variable index.  If so, and if
@@ -5544,7 +5544,7 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
     RHS = BCI->getOperand(0);
 
   Value *PtrBase = GEPLHS->getOperand(0);
-  if (PtrBase == RHS) {
+  if (TD && PtrBase == RHS) {
     // ((gep Ptr, OFFSET) cmp Ptr)   ---> (OFFSET cmp 0).
     // This transformation (ignoring the base and scales) is valid because we
     // know pointers can't overflow.  See if we can output an optimized form.
@@ -5635,7 +5635,8 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
 
     // Only lower this if the icmp is the only user of the GEP or if we expect
     // the result to fold to a constant!
-    if ((isa<ConstantExpr>(GEPLHS) || GEPLHS->hasOneUse()) &&
+    if (TD &&
+        (isa<ConstantExpr>(GEPLHS) || GEPLHS->hasOneUse()) &&
         (isa<ConstantExpr>(GEPRHS) || GEPRHS->hasOneUse())) {
       // ((gep Ptr, OFFSET1) cmp (gep Ptr, OFFSET2)  --->  (OFFSET1 cmp OFFSET2)
       Value *L = EmitGEPOffset(GEPLHS, I, *this);
@@ -7168,8 +7169,8 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 
   // Turn icmp (ptrtoint x), (ptrtoint/c) into a compare of the input if the 
   // integer type is the same size as the pointer type.
-  if (LHSCI->getOpcode() == Instruction::PtrToInt &&
-      getTargetData().getPointerSizeInBits() == 
+  if (TD && LHSCI->getOpcode() == Instruction::PtrToInt &&
+      TD->getPointerSizeInBits() ==
          cast<IntegerType>(DestTy)->getBitWidth()) {
     Value *RHSOp = 0;
     if (Constant *RHSC = dyn_cast<Constant>(ICI.getOperand(1))) {
@@ -7792,7 +7793,10 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
       EraseInstFromFunction(*User);
     }
   }
-  
+
+  // This requires TargetData to get the alloca alignment and size information.
+  if (!TD) return 0;
+
   // Get the type really allocated and the type casted to.
   const Type *AllocElTy = AI.getAllocatedType();
   const Type *CastElTy = PTy->getElementType();
@@ -8124,6 +8128,7 @@ static const Type *FindElementAtOffset(const Type *Ty, int64_t Offset,
                                        SmallVectorImpl<Value*> &NewIndices,
                                        const TargetData *TD,
                                        LLVMContext *Context) {
+  if (!TD) return 0;
   if (!Ty->isSized()) return 0;
   
   // Start with the index over the outer type.  Note that the type size
@@ -8197,7 +8202,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
     // GEP computes a constant offset, see if we can convert these three
     // instructions into fewer.  This typically happens with unions and other
     // non-type-safe code.
-    if (GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0))) {
+    if (TD && GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0))) {
       if (GEP->hasAllConstantIndices()) {
         // We are guaranteed to get a constant from EmitGEPOffset.
         ConstantInt *OffsetV =
@@ -8863,7 +8868,8 @@ Instruction *InstCombiner::visitPtrToInt(PtrToIntInst &CI) {
   // trunc to be exposed to other transforms.  Don't do this for extending
   // ptrtoint's, because we don't know if the target sign or zero extends its
   // pointers.
-  if (CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
+  if (TD &&
+      CI.getType()->getScalarSizeInBits() < TD->getPointerSizeInBits()) {
     Value *P = InsertNewInstBefore(new PtrToIntInst(CI.getOperand(0),
                                                     TD->getIntPtrType(),
                                                     "tmp"), CI);
@@ -8879,7 +8885,8 @@ Instruction *InstCombiner::visitIntToPtr(IntToPtrInst &CI) {
   // allows the trunc to be exposed to other transforms.  Don't do this for
   // extending inttoptr's, because we don't know if the target sign or zero
   // extends to pointers.
-  if (CI.getOperand(0)->getType()->getScalarSizeInBits() >
+  if (TD &&
+      CI.getOperand(0)->getType()->getScalarSizeInBits() >
       TD->getPointerSizeInBits()) {
     Value *P = InsertNewInstBefore(new TruncInst(CI.getOperand(0),
                                                  TD->getIntPtrType(),
@@ -9667,7 +9674,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   // integer datatype.
   if (Value *Op = getBitCastOperand(MI->getOperand(1))) {
     const Type *SrcETy = cast<PointerType>(Op->getType())->getElementType();
-    if (SrcETy->isSized() && TD->getTypeStoreSize(SrcETy) == Size) {
+    if (TD && SrcETy->isSized() && TD->getTypeStoreSize(SrcETy) == Size) {
       // The SrcETy might be something like {{{double}}} or [1 x double].  Rip
       // down through these levels if so.
       while (!SrcETy->isSingleValueType()) {
@@ -10000,7 +10007,7 @@ static bool isSafeToEliminateVarargsCast(const CallSite CS,
   const Type* DstTy = cast<PointerType>(CI->getType())->getElementType();
   if (!SrcTy->isSized() || !DstTy->isSized())
     return false;
-  if (TD->getTypeAllocSize(SrcTy) != TD->getTypeAllocSize(DstTy))
+  if (!TD || TD->getTypeAllocSize(SrcTy) != TD->getTypeAllocSize(DstTy))
     return false;
   return true;
 }
@@ -10110,8 +10117,10 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (Callee->isDeclaration() &&
         // Conversion is ok if changing from one pointer type to another or from
         // a pointer to an integer of the same size.
-        !((isa<PointerType>(OldRetTy) || OldRetTy == TD->getIntPtrType()) &&
-          (isa<PointerType>(NewRetTy) || NewRetTy == TD->getIntPtrType())))
+        !((isa<PointerType>(OldRetTy) || !TD ||
+           OldRetTy == TD->getIntPtrType()) &&
+          (isa<PointerType>(NewRetTy) || !TD ||
+           NewRetTy == TD->getIntPtrType())))
       return false;   // Cannot transform this return value.
 
     if (!Caller->use_empty() &&
@@ -10157,8 +10166,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     // Converting from one pointer type to another or between a pointer and an
     // integer of the same size is safe even if we do not have a body.
     bool isConvertible = ActTy == ParamTy ||
-      ((isa<PointerType>(ParamTy) || ParamTy == TD->getIntPtrType()) &&
-       (isa<PointerType>(ActTy) || ActTy == TD->getIntPtrType()));
+      (TD && ((isa<PointerType>(ParamTy) || ParamTy == TD->getIntPtrType()) &&
+              (isa<PointerType>(ActTy) || ActTy == TD->getIntPtrType())));
     if (Callee->isDeclaration() && !isConvertible) return false;
   }
 
@@ -10965,7 +10974,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   gep_type_iterator GTI = gep_type_begin(GEP);
   for (User::op_iterator i = GEP.op_begin() + 1, e = GEP.op_end();
        i != e; ++i, ++GTI) {
-    if (isa<SequentialType>(*GTI)) {
+    if (TD && isa<SequentialType>(*GTI)) {
       if (CastInst *CI = dyn_cast<CastInst>(*i)) {
         if (CI->getOpcode() == Instruction::ZExt ||
             CI->getOpcode() == Instruction::SExt) {
@@ -11054,7 +11063,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           } else if (Constant *GO1C = dyn_cast<Constant>(GO1)) {
             GO1 =
                 Context->getConstantExprIntegerCast(GO1C, SO1->getType(), true);
-          } else {
+          } else if (TD) {
             unsigned PS = TD->getPointerSizeInBits();
             if (TD->getTypeSizeInBits(SO1->getType()) == PS) {
               // Convert GO1 to SO1's type.
@@ -11161,7 +11170,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // into:  %t1 = getelementptr [2 x i32]* %str, i32 0, i32 %V; bitcast
       const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
       const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
-      if (isa<ArrayType>(SrcElTy) &&
+      if (TD && isa<ArrayType>(SrcElTy) &&
           TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
           TD->getTypeAllocSize(ResElTy)) {
         Value *Idx[2];
@@ -11178,7 +11187,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       //   (where tmp = 8*tmp2) into:
       // getelementptr [100 x double]* %arr, i32 0, i32 %tmp2; bitcast
       
-      if (isa<ArrayType>(SrcElTy) && ResElTy == Type::Int8Ty) {
+      if (TD && isa<ArrayType>(SrcElTy) && ResElTy == Type::Int8Ty) {
         uint64_t ArrayEltSize =
             TD->getTypeAllocSize(cast<ArrayType>(SrcElTy)->getElementType());
         
@@ -11244,7 +11253,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   /// into a gep of the original struct.  This is important for SROA and alias
   /// analysis of unions.  If "A" is also a bitcast, wait for A/X to be merged.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(PtrOp)) {
-    if (!isa<BitCastInst>(BCI->getOperand(0)) && GEP.hasAllConstantIndices()) {
+    if (TD &&
+        !isa<BitCastInst>(BCI->getOperand(0)) && GEP.hasAllConstantIndices()) {
       // Determine how much the GEP moves the pointer.  We are guaranteed to get
       // a constant back from EmitGEPOffset.
       ConstantInt *OffsetV =
@@ -11333,7 +11343,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
     }
   }
 
-  if (isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized()) {
+  if (TD && isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized()) {
     // If alloca'ing a zero byte object, replace the alloca with a null pointer.
     // Note that we only do this for alloca's, because malloc should allocate
     // and return a unique pointer, even for a zero byte allocation.
@@ -11456,13 +11466,14 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
             SrcPTy = SrcTy->getElementType();
           }
 
-      if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy) || 
+      if (IC.getTargetData() &&
+          (SrcPTy->isInteger() || isa<PointerType>(SrcPTy) || 
             isa<VectorType>(SrcPTy)) &&
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
           (isa<PointerType>(SrcPTy) == isa<PointerType>(LI.getType())) &&
-          IC.getTargetData().getTypeSizeInBits(SrcPTy) ==
-               IC.getTargetData().getTypeSizeInBits(DestPTy)) {
+          IC.getTargetData()->getTypeSizeInBits(SrcPTy) ==
+               IC.getTargetData()->getTypeSizeInBits(DestPTy)) {
 
         // Okay, we are casting from one integer or pointer type to another of
         // the same size.  Instead of casting the pointer before the load, cast
@@ -11482,12 +11493,14 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
   // Attempt to improve the alignment.
-  unsigned KnownAlign =
-    GetOrEnforceKnownAlignment(Op, TD->getPrefTypeAlignment(LI.getType()));
-  if (KnownAlign >
-      (LI.getAlignment() == 0 ? TD->getABITypeAlignment(LI.getType()) :
-                                LI.getAlignment()))
-    LI.setAlignment(KnownAlign);
+  if (TD) {
+    unsigned KnownAlign =
+      GetOrEnforceKnownAlignment(Op, TD->getPrefTypeAlignment(LI.getType()));
+    if (KnownAlign >
+        (LI.getAlignment() == 0 ? TD->getABITypeAlignment(LI.getType()) :
+                                  LI.getAlignment()))
+      LI.setAlignment(KnownAlign);
+  }
 
   // load (cast X) --> cast (load X) iff safe
   if (isa<CastInst>(Op))
@@ -11667,10 +11680,11 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   
   // If the pointers point into different address spaces or if they point to
   // values with different sizes, we can't do the transformation.
-  if (SrcTy->getAddressSpace() != 
+  if (!IC.getTargetData() ||
+      SrcTy->getAddressSpace() != 
         cast<PointerType>(CI->getType())->getAddressSpace() ||
-      IC.getTargetData().getTypeSizeInBits(SrcPTy) !=
-      IC.getTargetData().getTypeSizeInBits(DestPTy))
+      IC.getTargetData()->getTypeSizeInBits(SrcPTy) !=
+      IC.getTargetData()->getTypeSizeInBits(DestPTy))
     return 0;
 
   // Okay, we are casting from one integer or pointer type to another of
@@ -11800,12 +11814,14 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   }
 
   // Attempt to improve the alignment.
-  unsigned KnownAlign =
-    GetOrEnforceKnownAlignment(Ptr, TD->getPrefTypeAlignment(Val->getType()));
-  if (KnownAlign >
-      (SI.getAlignment() == 0 ? TD->getABITypeAlignment(Val->getType()) :
-                                SI.getAlignment()))
-    SI.setAlignment(KnownAlign);
+  if (TD) {
+    unsigned KnownAlign =
+      GetOrEnforceKnownAlignment(Ptr, TD->getPrefTypeAlignment(Val->getType()));
+    if (KnownAlign >
+        (SI.getAlignment() == 0 ? TD->getABITypeAlignment(Val->getType()) :
+                                  SI.getAlignment()))
+      SI.setAlignment(KnownAlign);
+  }
 
   // Do really simple DSE, to catch cases where there are several consecutive
   // stores to the same location, separated by a few arithmetic operations. This
@@ -12884,7 +12900,7 @@ static void AddReachableCodeToWorklist(BasicBlock *BB,
 
 bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   bool Changed = false;
-  TD = &getAnalysis<TargetData>();
+  TD = getAnalysisIfAvailable<TargetData>();
   
   DEBUG(DOUT << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
              << F.getNameStr() << "\n");
