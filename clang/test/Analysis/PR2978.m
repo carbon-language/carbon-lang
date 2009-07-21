@@ -55,6 +55,7 @@
   [self setW:@"newW"]; // This will release '_W', but retain the new value
   self.O = 0; // no-warning  
   [super dealloc];
+  return 0;
 }
 
 @end
