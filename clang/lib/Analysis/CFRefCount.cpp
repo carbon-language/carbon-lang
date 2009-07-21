@@ -496,24 +496,22 @@ class VISIBILITY_HIDDEN ObjCSummaryCache {
   MapTy M;
 public:
   ObjCSummaryCache() {}
-  
-  typedef MapTy::iterator iterator;
-  
-  iterator find(const ObjCInterfaceDecl* D, IdentifierInfo *ClsName,
+    
+  RetainSummary* find(const ObjCInterfaceDecl* D, IdentifierInfo *ClsName,
                 Selector S) {
     // Lookup the method using the decl for the class @interface.  If we
     // have no decl, lookup using the class name.
     return D ? find(D, S) : find(ClsName, S);
   }
   
-  iterator find(const ObjCInterfaceDecl* D, Selector S) {    
+  RetainSummary* find(const ObjCInterfaceDecl* D, Selector S) {    
     // Do a lookup with the (D,S) pair.  If we find a match return
     // the iterator.
     ObjCSummaryKey K(D, S);
     MapTy::iterator I = M.find(K);
     
     if (I != M.end() || !D)
-      return I;
+      return I->second;
     
     // Walk the super chain.  If we find a hit with a parent, we'll end
     // up returning that summary.  We actually allow that key (null,S), as
@@ -526,25 +524,30 @@ public:
         break;
       
       if (!C)
-        return I;
+        return NULL;
     }
     
     // Cache the summary with original key to make the next lookup faster 
     // and return the iterator.
-    M[K] = I->second;
-    return I;
+    RetainSummary *Summ = I->second;
+    M[K] = Summ;
+    return Summ;
   }
   
 
-  iterator find(Expr* Receiver, Selector S) {
+  RetainSummary* find(Expr* Receiver, Selector S) {
     return find(getReceiverDecl(Receiver), S);
   }
   
-  iterator find(IdentifierInfo* II, Selector S) {
+  RetainSummary* find(IdentifierInfo* II, Selector S) {
     // FIXME: Class method lookup.  Right now we dont' have a good way
     // of going between IdentifierInfo* and the class hierarchy.
-    iterator I = M.find(ObjCSummaryKey(II, S));
-    return I == M.end() ? M.find(ObjCSummaryKey(S)) : I;
+    MapTy::iterator I = M.find(ObjCSummaryKey(II, S));
+    
+    if (I == M.end())
+      I = M.find(ObjCSummaryKey(S));
+      
+    return I == M.end() ? NULL : I->second;
   }
   
   const ObjCInterfaceDecl* getReceiverDecl(Expr* E) {    
@@ -554,8 +557,6 @@ public:
 
     return NULL;
   }
-  
-  iterator end() { return M.end(); }
   
   RetainSummary*& operator[](ObjCMessageExpr* ME) {
     
@@ -1347,25 +1348,24 @@ RetainSummaryManager::getInstanceMethodSummary(Selector S,
                                                QualType RetTy) {
 
   // Look up a summary in our summary cache.
-  ObjCMethodSummariesTy::iterator I = ObjCMethodSummaries.find(ID, ClsName, S);
+  RetainSummary *Summ = ObjCMethodSummaries.find(ID, ClsName, S);
   
-  if (I != ObjCMethodSummaries.end())
-    return I->second;
-
-  assert(ScratchArgs.isEmpty());
-  RetainSummary *Summ = 0;
+  if (!Summ) {
+    assert(ScratchArgs.isEmpty());
   
-  // "initXXX": pass-through for receiver.
-  if (deriveNamingConvention(S) == InitRule)
-    Summ = getInitMethodSummary(RetTy);
-  else
-    Summ = getCommonMethodSummary(MD, S, RetTy);
+    // "initXXX": pass-through for receiver.
+    if (deriveNamingConvention(S) == InitRule)
+      Summ = getInitMethodSummary(RetTy);
+    else
+      Summ = getCommonMethodSummary(MD, S, RetTy);
   
-  // Annotations override defaults.
-  updateSummaryFromAnnotations(*Summ, MD);
+    // Annotations override defaults.
+    updateSummaryFromAnnotations(*Summ, MD);
   
-  // Memoize the summary.
-  ObjCMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
+    // Memoize the summary.
+    ObjCMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
+  }
+  
   return Summ;
 }
 
@@ -1376,19 +1376,16 @@ RetainSummaryManager::getClassMethodSummary(Selector S, IdentifierInfo *ClsName,
                                             QualType RetTy) {
 
   assert(ClsName && "Class name must be specified.");
-  ObjCMethodSummariesTy::iterator I =
-    ObjCClassMethodSummaries.find(ID, ClsName, S);  
+  RetainSummary *Summ = ObjCClassMethodSummaries.find(ID, ClsName, S);  
   
-  if (I != ObjCClassMethodSummaries.end())
-    return I->second;
-    
-  RetainSummary *Summ = getCommonMethodSummary(MD, S, RetTy);
+  if (!Summ) {
+    Summ = getCommonMethodSummary(MD, S, RetTy);
+    // Annotations override defaults.
+    updateSummaryFromAnnotations(*Summ, MD);
+    // Memoize the summary.
+    ObjCClassMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
+  }
   
-  // Annotations override defaults.
-  updateSummaryFromAnnotations(*Summ, MD);
-
-  // Memoize the summary.
-  ObjCClassMethodSummaries[ObjCSummaryKey(ID, ClsName, S)] = Summ;
   return Summ;
 }
 
