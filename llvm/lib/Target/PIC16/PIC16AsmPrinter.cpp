@@ -261,7 +261,7 @@ void PIC16AsmPrinter::EmitDefinedVars(Module &M) {
   std::vector<const GlobalVariable*> Items = PTAI->ExternalVarDefs->Items;
   if (!Items.size()) return;
 
-  O << "\n" <<  TAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
+  O << "\n" << TAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
   for (unsigned j = 0; j < Items.size(); j++) {
     O << TAI->getGlobalDirective() << Mang->getMangledName(Items[j]) << "\n";
   }

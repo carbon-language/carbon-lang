@@ -18,28 +18,33 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include <vector>
 #include "llvm/Module.h"
-#define DataBankSize 80
+
 namespace llvm {
+
+  enum { DataBankSize = 80 };
 
   // Forward declaration.
   class PIC16TargetMachine;
   class GlobalVariable;
 
-  // PIC16 Splits the global data into mulitple udata and idata sections.
-  // Each udata and idata section needs to contain a list of globals that
-  // they contain, in order to avoid scanning over all the global values 
-  // again and printing only those that match the current section. 
-  // Keeping values inside the sections make printing a section much easier.
+  /// PIC16 Splits the global data into mulitple udata and idata sections.
+  /// Each udata and idata section needs to contain a list of globals that
+  /// they contain, in order to avoid scanning over all the global values 
+  /// again and printing only those that match the current section. 
+  /// Keeping values inside the sections make printing a section much easier.
   struct PIC16Section {
-      const Section *S_; // Connection to actual Section.
-      unsigned Size;  // Total size of the objects contained.
-      bool SectionPrinted;
-      std::vector<const GlobalVariable*> Items;
-     
-      PIC16Section (const Section *s) { S_ = s; Size = 0; 
-                                        SectionPrinted = false;}
-      bool isPrinted() { return SectionPrinted ; }
-      void setPrintedStatus(bool status) { SectionPrinted = status ;} 
+    const Section *S_; // Connection to actual Section.
+    unsigned Size;  // Total size of the objects contained.
+    bool SectionPrinted;
+    std::vector<const GlobalVariable*> Items;
+   
+    PIC16Section(const Section *s) {
+      S_ = s;
+      Size = 0;
+      SectionPrinted = false;
+    }
+    bool isPrinted() const { return SectionPrinted; }
+    void setPrintedStatus(bool status) { SectionPrinted = status; } 
   };
       
   struct PIC16TargetAsmInfo : public TargetAsmInfo {
@@ -53,7 +58,7 @@ namespace llvm {
     mutable PIC16Section *ExternalVarDefs;
     virtual ~PIC16TargetAsmInfo();
 
-    private:
+  private:
     const char *RomData8bitsDirective;
     const char *RomData16bitsDirective;
     const char *RomData32bitsDirective;
@@ -72,21 +77,21 @@ namespace llvm {
     virtual const Section *SelectSectionForGlobal(const GlobalValue *GV) const;
     const Section * CreateSectionForGlobal(const GlobalValue *GV,
                                            std::string Addr = "") const;
-    public:
+  public:
     void SetSectionForGVs(Module &M);
-    std::vector<PIC16Section *> getBSSSections() const {
+    const std::vector<PIC16Section*> &getBSSSections() const {
       return BSSSections;
     }
-    std::vector<PIC16Section *> getIDATASections()  const {
+    const std::vector<PIC16Section*> &getIDATASections() const {
       return IDATASections;
     }
-    std::vector<PIC16Section *> getAutosSections()  const {
+    const std::vector<PIC16Section*> &getAutosSections() const {
       return AutosSections;
     }
-    std::vector<PIC16Section *> getROSections() const {
+    const std::vector<PIC16Section*> &getROSections() const {
       return ROSections;
     }
-    virtual const Section* SectionForGlobal(const GlobalValue *GV) const;
+    virtual const Section *SectionForGlobal(const GlobalValue *GV) const;
   };
 
 } // namespace llvm

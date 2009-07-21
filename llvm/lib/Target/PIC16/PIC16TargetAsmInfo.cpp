@@ -73,9 +73,9 @@ getDataASDirective(unsigned Size, unsigned AS) const {
 
 const Section *
 PIC16TargetAsmInfo::getBSSSectionForGlobal(const GlobalVariable *GV) const {
-  assert (GV->hasInitializer() && "This global doesn't need space");
+  assert(GV->hasInitializer() && "This global doesn't need space");
   Constant *C = GV->getInitializer();
-  assert (C->isNullValue() && "Unitialized globals has non-zero initializer");
+  assert(C->isNullValue() && "Unitialized globals has non-zero initializer");
 
   // Find how much space this global needs.
   const TargetData *TD = TM.getTargetData();
@@ -93,9 +93,9 @@ PIC16TargetAsmInfo::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   }
 
   // No BSS section spacious enough was found. Crate a new one.
-  if (! FoundBSS) {
+  if (!FoundBSS) {
     std::string name = PAN::getUdataSectionName(BSSSections.size());
-    const Section *NewSection = getNamedSection (name.c_str());
+    const Section *NewSection = getNamedSection(name.c_str());
 
     FoundBSS = new PIC16Section(NewSection);
 
@@ -106,21 +106,16 @@ PIC16TargetAsmInfo::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   // Insert the GV into this BSS.
   FoundBSS->Items.push_back(GV);
   FoundBSS->Size += ValSize;
-
-  // We can't do this here because GV is const .
-  // const std::string SName = FoundBSS->S_->getName();
-  // GV->setSection(SName);
-
   return FoundBSS->S_;
 } 
 
 const Section *
 PIC16TargetAsmInfo::getIDATASectionForGlobal(const GlobalVariable *GV) const {
-  assert (GV->hasInitializer() && "This global doesn't need space");
+  assert(GV->hasInitializer() && "This global doesn't need space");
   Constant *C = GV->getInitializer();
-  assert (!C->isNullValue() && "initialized globals has zero initializer");
-  assert (GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE &&
-          "can split initialized RAM data only");
+  assert(!C->isNullValue() && "initialized globals has zero initializer");
+  assert(GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE &&
+         "can split initialized RAM data only");
 
   // Find how much space this global needs.
   const TargetData *TD = TM.getTargetData();
@@ -131,16 +126,16 @@ PIC16TargetAsmInfo::getIDATASectionForGlobal(const GlobalVariable *GV) const {
   // to the first available section having enough space.
   PIC16Section *FoundIDATA = NULL;
   for (unsigned i = 0; i < IDATASections.size(); i++) {
-    if ( DataBankSize - IDATASections[i]->Size >= ValSize) {
+    if (DataBankSize - IDATASections[i]->Size >= ValSize) {
       FoundIDATA = IDATASections[i]; 
       break;
     }
   }
 
   // No IDATA section spacious enough was found. Crate a new one.
-  if (! FoundIDATA) {
+  if (!FoundIDATA) {
     std::string name = PAN::getIdataSectionName(IDATASections.size());
-    const Section *NewSection = getNamedSection (name.c_str());
+    const Section *NewSection = getNamedSection(name.c_str());
 
     FoundIDATA = new PIC16Section(NewSection);
 
@@ -151,10 +146,6 @@ PIC16TargetAsmInfo::getIDATASectionForGlobal(const GlobalVariable *GV) const {
   // Insert the GV into this IDATA.
   FoundIDATA->Items.push_back(GV);
   FoundIDATA->Size += ValSize;
-
-  // We can't do this here because GV is const .
-  // GV->setSection(FoundIDATA->S->getName());
-
   return FoundIDATA->S_;
 } 
 
@@ -169,15 +160,15 @@ PIC16TargetAsmInfo::getSectionForAuto(const GlobalVariable *GV) const {
   // to the appropriate section.
   PIC16Section *FoundAutoSec = NULL;
   for (unsigned i = 0; i < AutosSections.size(); i++) {
-    if ( AutosSections[i]->S_->getName() == name) {
+    if (AutosSections[i]->S_->getName() == name) {
       FoundAutoSec = AutosSections[i];
       break;
     }
   }
 
   // No Auto section was found. Crate a new one.
-  if (! FoundAutoSec) {
-    const Section *NewSection = getNamedSection (name.c_str());
+  if (!FoundAutoSec) {
+    const Section *NewSection = getNamedSection(name.c_str());
 
     FoundAutoSec = new PIC16Section(NewSection);
 
@@ -199,7 +190,6 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
   // We select the section based on the initializer here, so it really
   // has to be a GlobalVariable.
   const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1); 
-
   if (!GV)
     return TargetAsmInfo::SelectSectionForGlobal(GV1);
 
@@ -209,7 +199,7 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
     return ExternalVarDecls->S_;
   }
     
-  assert (GV->hasInitializer() && "A def without initializer?");
+  assert(GV->hasInitializer() && "A def without initializer?");
 
   // First, if this is an automatic variable for a function, get the section
   // name for it and return.
@@ -308,9 +298,9 @@ PIC16TargetAsmInfo::CreateSectionForGlobal(const GlobalValue *GV1,
 const Section *
 PIC16TargetAsmInfo::CreateBSSSectionForGlobal(const GlobalVariable *GV,
                                               std::string Addr) const {
-  assert (GV->hasInitializer() && "This global doesn't need space");
-  assert (GV->getInitializer()->isNullValue() &&
-          "Unitialized global has non-zero initializer");
+  assert(GV->hasInitializer() && "This global doesn't need space");
+  assert(GV->getInitializer()->isNullValue() &&
+         "Unitialized global has non-zero initializer");
   std::string Name;
   // If address is given then create a section at that address else create a
   // section by section name specified in GV.
@@ -323,15 +313,14 @@ PIC16TargetAsmInfo::CreateBSSSectionForGlobal(const GlobalVariable *GV,
         break;
       }
     }
-  }
-  else {
+  } else {
     std::string Prefix = GV->getName() + "." + Addr + ".";
     Name = PAN::getUdataSectionName(BSSSections.size(), Prefix) + " " + Addr;
   }
   
   PIC16Section *NewBSS = FoundBSS;
   if (NewBSS == NULL) {
-    const Section *NewSection = getNamedSection (Name.c_str());
+    const Section *NewSection = getNamedSection(Name.c_str());
     NewBSS = new PIC16Section(NewSection);
     BSSSections.push_back(NewBSS);
   }
@@ -357,11 +346,11 @@ PIC16TargetAsmInfo::getROSectionForGlobal(const GlobalVariable *GV) const {
 const Section *
 PIC16TargetAsmInfo::CreateIDATASectionForGlobal(const GlobalVariable *GV,
                                                 std::string Addr) const {
-  assert (GV->hasInitializer() && "This global doesn't need space");
-  assert (!GV->getInitializer()->isNullValue() &&
-          "initialized global has zero initializer");
-  assert (GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE &&
-          "can be used for initialized RAM data only");
+  assert(GV->hasInitializer() && "This global doesn't need space");
+  assert(!GV->getInitializer()->isNullValue() &&
+         "initialized global has zero initializer");
+  assert(GV->getType()->getAddressSpace() == PIC16ISD::RAM_SPACE &&
+         "can be used for initialized RAM data only");
 
   std::string Name;
   // If address is given then create a section at that address else create a
@@ -375,15 +364,14 @@ PIC16TargetAsmInfo::CreateIDATASectionForGlobal(const GlobalVariable *GV,
         break;
       }
     }
-  }
-  else {
+  } else {
     std::string Prefix = GV->getName() + "." + Addr + ".";
     Name = PAN::getIdataSectionName(IDATASections.size(), Prefix) + " " + Addr;
   }
 
   PIC16Section *NewIDATASec = FoundIDATASec;
   if (NewIDATASec == NULL) {
-    const Section *NewSection = getNamedSection (Name.c_str());
+    const Section *NewSection = getNamedSection(Name.c_str());
     NewIDATASec = new PIC16Section(NewSection);
     IDATASections.push_back(NewIDATASec);
   }
@@ -399,8 +387,8 @@ PIC16TargetAsmInfo::CreateIDATASectionForGlobal(const GlobalVariable *GV,
 const Section *
 PIC16TargetAsmInfo::CreateROSectionForGlobal(const GlobalVariable *GV,
                                              std::string Addr) const {
-  assert (GV->getType()->getAddressSpace() == PIC16ISD::ROM_SPACE &&
-          "can be used for ROM data only");
+  assert(GV->getType()->getAddressSpace() == PIC16ISD::ROM_SPACE &&
+         "can be used for ROM data only");
 
   std::string Name;
   // If address is given then create a section at that address else create a
@@ -414,15 +402,14 @@ PIC16TargetAsmInfo::CreateROSectionForGlobal(const GlobalVariable *GV,
         break;
       }
     }
-  }
-  else {
+  } else {
     std::string Prefix = GV->getName() + "." + Addr + ".";
     Name = PAN::getRomdataSectionName(ROSections.size(), Prefix) + " " + Addr;
   }
 
   PIC16Section *NewRomSec = FoundROSec;
   if (NewRomSec == NULL) {
-    const Section *NewSection = getNamedSection (Name.c_str());
+    const Section *NewSection = getNamedSection(Name.c_str());
     NewRomSec = new PIC16Section(NewSection);
     ROSections.push_back(NewRomSec);
   }
