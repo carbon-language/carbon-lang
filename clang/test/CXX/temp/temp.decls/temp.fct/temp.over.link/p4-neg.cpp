@@ -17,9 +17,9 @@ template<typename T>
 struct MetaFun;
 
 template<typename T>
-  typename MetaFun<T*>::type f0(const T&) { } // expected-note{{previous}}
+  typename MetaFun<T*>::type f0(const T&) { while (1) {} } // expected-note{{previous}}
 template<class U>
-  typename MetaFun<U*>::type f0(const U&) { } // expected-error{{redefinition}}
+  typename MetaFun<U*>::type f0(const U&) { while (1) {} } // expected-error{{redefinition}}
 
 // FIXME: We need canonicalization of expressions for this to work
 // template<int> struct A { };
