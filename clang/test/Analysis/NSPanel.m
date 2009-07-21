@@ -30,7 +30,7 @@ typedef struct _NSZone NSZone;
 @end
 typedef float CGFloat;
 typedef struct _NSPoint {} NSRect;
-static __inline__ __attribute__((always_inline)) NSRect NSMakeRect(CGFloat x, CGFloat y, CGFloat w, CGFloat h) {}
+static __inline__ __attribute__((always_inline)) NSRect NSMakeRect(CGFloat x, CGFloat y, CGFloat w, CGFloat h) { NSRect r; return r; }
 typedef struct {} NSFastEnumerationState;
 @protocol NSFastEnumeration 
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
