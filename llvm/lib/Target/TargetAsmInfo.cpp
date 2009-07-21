@@ -209,20 +209,11 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     // note, there is no thread-local r/o section.
     Constant *C = GVar->getInitializer();
     if (C->ContainsRelocations(Reloc::LocalOrGlobal)) {
-      // Decide, whether it is still possible to put symbol into r/o section.
-      unsigned Reloc = (TM.getRelocationModel() != Reloc::Static ?
-                        Reloc::LocalOrGlobal : Reloc::None);
-
-      // We already did a query for 'all' relocs, thus - early exits.
-      if (Reloc == Reloc::LocalOrGlobal)
+      // Decide whether it is still possible to put symbol into r/o section.
+      if (TM.getRelocationModel() != Reloc::Static)
         return SectionKind::Data;
-      else if (Reloc == Reloc::None)
+      else
         return SectionKind::ROData;
-      else {
-        // Ok, target wants something funny. Honour it.
-        return (C->ContainsRelocations(Reloc) ?
-                SectionKind::Data : SectionKind::ROData);
-      }
     } else {
       // Check, if initializer is a null-terminated string
       if (isConstantString(C))

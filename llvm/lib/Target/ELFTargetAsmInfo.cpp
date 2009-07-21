@@ -61,10 +61,8 @@ ELFTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     
     // By default - all relocations in PIC mode would force symbol to be
     // placed in r/w section.
-    unsigned Reloc = (TM.getRelocationModel() != Reloc::Static ?
-                      Reloc::LocalOrGlobal : Reloc::None);
-    
-    if (Reloc != Reloc::None && C->ContainsRelocations(Reloc))
+    if (TM.getRelocationModel() != Reloc::Static &&
+        C->ContainsRelocations(Reloc::LocalOrGlobal))
       return (C->ContainsRelocations(Reloc::Global) ?
               (isConstant ?
                SectionKind::DataRelRO : SectionKind::DataRel) :
