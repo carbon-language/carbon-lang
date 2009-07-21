@@ -863,10 +863,24 @@ CFGBlock* CFGBuilder::VisitGotoStmt(GotoStmt* G) {
 }
 
 CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
-  // "for" is a control-flow statement.  Thus we stop processing the current
-  // block.
+  // See if this is a known constant.
+  bool KnownTrue = false;
+  bool KnownFalse = false;
+  Expr::EvalResult Result;
+  if (F->getCond() && F->getCond()->Evaluate(Result, *Context)
+      && Result.Val.isInt()) {
+    if (Result.Val.getInt().getBoolValue())
+      KnownTrue = true;
+    else
+      KnownFalse = true;
+  }
+  if (F->getCond() == 0)
+    KnownTrue = true;
+
   CFGBlock* LoopSuccessor = NULL;
 
+  // "for" is a control-flow statement.  Thus we stop processing the current
+  // block.
   if (Block) {
     if (!FinishBlock(Block))
       return 0;
@@ -949,13 +963,21 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
         return 0;
     }
 
-    // This new body block is a successor to our "exit" condition block.
-    ExitConditionBlock->addSuccessor(BodyBlock);
+    if (KnownFalse)
+      ExitConditionBlock->addSuccessor(0);
+    else {
+      // This new body block is a successor to our "exit" condition block.
+      ExitConditionBlock->addSuccessor(BodyBlock);
+    }
   }
 
-  // Link up the condition block with the code that follows the loop.  (the
-  // false branch).
-  ExitConditionBlock->addSuccessor(LoopSuccessor);
+  if (KnownTrue)
+    ExitConditionBlock->addSuccessor(0);
+  else {
+    // Link up the condition block with the code that follows the loop.  (the
+    // false branch).
+    ExitConditionBlock->addSuccessor(LoopSuccessor);
+  }
 
   // If the loop contains initialization, create a new block for those
   // statements.  This block can also contain statements that precede the loop.
@@ -1099,9 +1121,6 @@ CFGBlock* CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
 }
 
 CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
-  // "while" is a control-flow statement.  Thus we stop processing the current
-  // block.
-
   // See if this is a known constant.
   bool KnownTrue = false;
   bool KnownFalse = false;
@@ -1116,6 +1135,8 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
 
   CFGBlock* LoopSuccessor = NULL;
 
+  // "while" is a control-flow statement.  Thus we stop processing the current
+  // block.
   if (Block) {
     if (!FinishBlock(Block))
       return 0;
