@@ -17,6 +17,7 @@
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
+#include <cstring>
 #include <utility>
 #include <new>
 
@@ -160,6 +161,9 @@ public:
         P->second.~ValueT();
       P->first.~KeyT();
     }
+#ifndef NDEBUG
+    memset(Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
+#endif
     operator delete(Buckets);
   }
 
@@ -318,8 +322,12 @@ private:
     NumEntries = other.NumEntries;
     NumTombstones = other.NumTombstones;
 
-    if (NumBuckets)
+    if (NumBuckets) {
+#ifndef NDEBUG
+      memset(Buckets, 0x5a, sizeof(BucketT)*NumBuckets);
+#endif
       operator delete(Buckets);
+    }
     Buckets = static_cast<BucketT*>(operator new(sizeof(BucketT) *
                                                  other.NumBuckets));
 
@@ -465,6 +473,9 @@ private:
       B->first.~KeyT();
     }
 
+#ifndef NDEBUG
+    memset(OldBuckets, 0x5a, sizeof(BucketT)*OldNumBuckets);
+#endif
     // Free the old table.
     operator delete(OldBuckets);
   }
@@ -495,6 +506,9 @@ private:
       B->first.~KeyT();
     }
 
+#ifndef NDEBUG
+    memset(OldBuckets, 0x5a, sizeof(BucketT)*OldNumBuckets);
+#endif
     // Free the old table.
     operator delete(OldBuckets);
 
