@@ -68,6 +68,10 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   FnSym->SectionIdx = ES->SectionIdx;
   FnSym->Size = ES->getCurrentPCOffset()-FnStartOff;
 
+  // keep track of the emitted function leaving its symbol index as zero
+  // to be patched up later when emitting the symbol table
+  EW.setGlobalSymLookup(F, 0);
+
   // Offset from start of Section
   FnSym->Value = FnStartOff;
 

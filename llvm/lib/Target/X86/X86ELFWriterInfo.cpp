@@ -64,7 +64,9 @@ long int X86ELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy) const {
   if (is64Bit) {
     switch(RelTy) {
     case R_X86_64_PC32: return -4;
-    case R_X86_64_32: return 0;
+    case R_X86_64_32:
+    case R_X86_64_64:
+      return 0;
     default:
       llvm_unreachable("unknown x86_64 relocation type");
     }

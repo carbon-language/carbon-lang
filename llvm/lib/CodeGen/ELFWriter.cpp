@@ -240,29 +240,30 @@ static bool isELFUndefSym(const GlobalValue *GV) {
 
 // isELFBssSym - for an undef or null value, the symbol must go to a bss
 // section if it's not weak for linker, otherwise it's a common sym.
-static bool isELFBssSym(const GlobalValue *GV) {
-  return (!GV->isDeclaration() &&
-          (GV->isNullValue() || isa<UndefValue>(GV)) &&
-          !GV->isWeakForLinker());
+static bool isELFBssSym(const GlobalVariable *GV) {
+  const Constant *CV = GV->getInitializer();
+  return ((CV->isNullValue() || isa<UndefValue>(CV)) && !GV->isWeakForLinker());
 }
 
 // isELFCommonSym - for an undef or null value, the symbol must go to a
 // common section if it's weak for linker, otherwise bss.
-static bool isELFCommonSym(const GlobalValue *GV) {
-  return (!GV->isDeclaration() &&
-          (GV->isNullValue() || isa<UndefValue>(GV))
-           && GV->isWeakForLinker());
+static bool isELFCommonSym(const GlobalVariable *GV) {
+  const Constant *CV = GV->getInitializer();
+  return ((CV->isNullValue() || isa<UndefValue>(CV)) && GV->isWeakForLinker());
 }
 
 // isELFDataSym - if the symbol is an initialized but no null constant
 // it must go to some kind of data section gathered from TAI
-static bool isELFDataSym(const GlobalValue *GV) {
-  return (!GV->isDeclaration() &&
-          !(GV->isNullValue() || isa<UndefValue>(GV)));
+static bool isELFDataSym(const Constant *CV) {
+  return (!(CV->isNullValue() || isa<UndefValue>(CV)));
 }
 
 // EmitGlobal - Choose the right section for global and emit it
 void ELFWriter::EmitGlobal(const GlobalValue *GV) {
+
+  // Check if the referenced symbol is already emitted
+  if (GblSymLookup.find(GV) != GblSymLookup.end())
+    return;
 
   // Handle ELF Bind, Visibility and Type for the current symbol
   unsigned SymBind = getGlobalELFBinding(GV);
@@ -287,7 +288,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     unsigned Size = TD->getTypeAllocSize(GVar->getInitializer()->getType());
     GblSym->Size = Size;
 
-    if (isELFCommonSym(GV)) {
+    if (isELFCommonSym(GVar)) {
       GblSym->SectionIdx = ELFSection::SHN_COMMON;
       getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags, 1);
 
@@ -296,7 +297,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
       // value contains its alignment.
       GblSym->Value = Align;
 
-    } else if (isELFBssSym(GV)) {
+    } else if (isELFBssSym(GVar)) {
       ELFSection &ES =
         getSection(S->getName(), ELFSection::SHT_NOBITS, SectionFlags);
       GblSym->SectionIdx = ES.SectionIdx;
@@ -336,7 +337,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     SymbolList.push_back(GblSym);
   }
 
-  GblSymLookup[GV] = SymIdx;
+  setGlobalSymLookup(GV, SymIdx);
 }
 
 void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
@@ -410,8 +411,37 @@ void ELFWriter::EmitGlobalConstant(const Constant *CV, ELFSection &GblS) {
     for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
       EmitGlobalConstant(CP->getOperand(I), GblS);
     return;
+  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
+    // This is a constant address for a global variable or function and
+    // therefore must be referenced using a relocation entry.
+
+    // Check if the referenced symbol is already emitted
+    if (GblSymLookup.find(GV) == GblSymLookup.end())
+      EmitGlobal(GV);
+
+    // Create the relocation entry for the global value
+    MachineRelocation MR =
+      MachineRelocation::getGV(GblS.getCurrentPCOffset(),
+                               TEW->getAbsoluteLabelMachineRelTy(),
+                               const_cast<GlobalValue*>(GV));
+
+    // Fill the data entry with zeros
+    for (unsigned i=0; i < Size; ++i)
+      GblS.emitByte(0);
+
+    // Add the relocation entry for the current data section
+    GblS.addRelocation(MR);
+    return;
+  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
+    if (CE->getOpcode() == Instruction::BitCast) {
+      EmitGlobalConstant(CE->getOperand(0), GblS);
+      return;
+    }
+    // See AsmPrinter::EmitConstantValueOnly for other ConstantExpr types
+    llvm_unreachable("Unsupported ConstantExpr type");
   }
-  llvm_unreachable("unknown global constant");
+
+  llvm_unreachable("Unknown global constant type");
 }
 
 
@@ -431,19 +461,13 @@ bool ELFWriter::doFinalization(Module &M) {
 
   // Build and emit data, bss and "common" sections.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
+       I != E; ++I)
     EmitGlobal(I);
-  }
 
   // Emit all pending globals
-  // TODO: this should be done only for referenced symbols
   for (SetVector<GlobalValue*>::const_iterator I = PendingGlobals.begin(),
-       E = PendingGlobals.end(); I != E; ++I) {
-    // No need to emit the symbol again
-    if (GblSymLookup.find(*I) != GblSymLookup.end())
-      continue;
+       E = PendingGlobals.end(); I != E; ++I)
     EmitGlobal(*I);
-  }
 
   // Emit non-executable stack note
   if (TAI->getNonexecutableStackDirective())
@@ -731,7 +755,7 @@ void ELFWriter::EmitSymbolTable() {
     EmitSymbol(SymTab, Sym);
 
     // Record the symbol table index for each global value
-    if (Sym.GV) GblSymLookup[Sym.GV] = i;
+    if (Sym.GV) setGlobalSymLookup(Sym.GV, i);
 
     // Keep track on the symbol index into the symbol table
     Sym.SymTabIdx = i;

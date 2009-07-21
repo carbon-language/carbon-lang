@@ -211,6 +211,11 @@ namespace llvm {
     unsigned getGlobalELFVisibility(const GlobalValue *GV);
     unsigned getElfSectionFlags(unsigned Flags);
 
+    // setGlobalSymLookup - Set global value 'GV' with 'Index' in the lookup map
+    void setGlobalSymLookup(const GlobalValue *GV, unsigned Index) {
+      GblSymLookup[GV] = Index;
+    }
+
     // As we complete the ELF file, we need to update fields in the ELF header
     // (e.g. the location of the section table).  These members keep track of
     // the offset in ELFHeader of these various pieces to update and other
