@@ -32,5 +32,6 @@ typedef struct {} TazVersion;
       }
     }
   }
+  while (1) {}
 }
 @end
