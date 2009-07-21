@@ -2619,10 +2619,15 @@ ScalarEvolution::getUnsignedRange(const SCEV *S) {
         MaxBECount = getNoopOrZeroExtend(MaxBECount, Ty);
 
         const SCEV *Start = AddRec->getStart();
+        const SCEV *Step = AddRec->getStepRecurrence(*this);
         const SCEV *End = AddRec->evaluateAtIteration(MaxBECount, *this);
 
         // Check for overflow.
-        if (!isKnownPredicate(ICmpInst::ICMP_ULE, Start, End))
+        // TODO: This is very conservative.
+        if (!(Step->isOne() &&
+              isKnownPredicate(ICmpInst::ICMP_ULT, Start, End)) &&
+            !(Step->isAllOnesValue() &&
+              isKnownPredicate(ICmpInst::ICMP_UGT, Start, End)))
           return FullSet;
 
         ConstantRange StartRange = getUnsignedRange(Start);
@@ -2728,9 +2733,10 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
         const SCEV *End = AddRec->evaluateAtIteration(MaxBECount, *this);
 
         // Check for overflow.
-        if (!(isKnownPositive(Step) &&
+        // TODO: This is very conservative.
+        if (!(Step->isOne() &&
               isKnownPredicate(ICmpInst::ICMP_SLT, Start, End)) &&
-            !(isKnownNegative(Step) &&
+            !(Step->isAllOnesValue() &&
               isKnownPredicate(ICmpInst::ICMP_SGT, Start, End)))
           return FullSet;
 
