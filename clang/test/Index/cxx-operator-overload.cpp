@@ -10,8 +10,7 @@ static void bar() {
     Cls x4 = x1 + x2 + x3;
 }
 
-Cls Cls::operator +(const Cls &RHS) {
-}
+Cls Cls::operator +(const Cls &RHS) { while (1) {} }
 
 // RUN: clang-cc -emit-pch %s -o %t.ast &&
 
