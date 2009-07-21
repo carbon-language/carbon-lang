@@ -2741,7 +2741,7 @@ ScalarEvolution::getSignedRange(const SCEV *S) {
         APInt Max = APIntOps::smax(StartRange.getSignedMax(),
                                    EndRange.getSignedMax());
         if (Min.isMinSignedValue() && Max.isMaxSignedValue())
-          return ConstantRange(Min.getBitWidth(), /*isFullSet=*/true);
+          return FullSet;
         return ConstantRange(Min, Max+1);
       }
     }
