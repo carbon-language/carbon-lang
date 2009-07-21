@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-int f1(int * p) {
+void f1(int * p) {
   
   // This branch should be infeasible
   // because __imag__ p is 0.
