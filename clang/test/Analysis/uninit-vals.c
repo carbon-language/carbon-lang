@@ -23,7 +23,7 @@ int f4(int x) {
   return y; // expected-warning {{use of uninitialized variable}}
 }
 
-int f5() {
+void f5() {
   int a;
   a = 30; // no-warning
 }
