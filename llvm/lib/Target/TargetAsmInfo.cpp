@@ -251,34 +251,34 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
   if (GV) {
     SectionKind::Kind Kind = SectionKindForGlobal(GV);
     switch (Kind) {
-     case SectionKind::Text:
+    case SectionKind::Text:
       Flags |= SectionFlags::Code;
       break;
-     case SectionKind::ThreadData:
-     case SectionKind::ThreadBSS:
+    case SectionKind::ThreadData:
+    case SectionKind::ThreadBSS:
       Flags |= SectionFlags::TLS;
       // FALLS THROUGH
-     case SectionKind::Data:
-     case SectionKind::DataRel:
-     case SectionKind::DataRelLocal:
-     case SectionKind::DataRelRO:
-     case SectionKind::DataRelROLocal:
-     case SectionKind::BSS:
+    case SectionKind::Data:
+    case SectionKind::DataRel:
+    case SectionKind::DataRelLocal:
+    case SectionKind::DataRelRO:
+    case SectionKind::DataRelROLocal:
+    case SectionKind::BSS:
       Flags |= SectionFlags::Writeable;
       break;
-     case SectionKind::ROData:
-     case SectionKind::RODataMergeStr:
-     case SectionKind::RODataMergeConst:
+    case SectionKind::ROData:
+    case SectionKind::RODataMergeStr:
+    case SectionKind::RODataMergeConst:
       // No additional flags here
       break;
-     case SectionKind::SmallData:
-     case SectionKind::SmallBSS:
+    case SectionKind::SmallData:
+    case SectionKind::SmallBSS:
       Flags |= SectionFlags::Writeable;
       // FALLS THROUGH
-     case SectionKind::SmallROData:
+    case SectionKind::SmallROData:
       Flags |= SectionFlags::Small;
       break;
-     default:
+    default:
       llvm_unreachable("Unexpected section kind!");
     }
 
