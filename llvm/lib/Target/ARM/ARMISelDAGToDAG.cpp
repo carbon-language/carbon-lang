@@ -949,26 +949,36 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       unsigned RHSV = C->getZExtValue();
       if (!RHSV) break;
       if (isPowerOf2_32(RHSV-1)) {  // 2^n+1?
+        unsigned ShImm = Log2_32(RHSV-1);
+        if (ShImm >= 32)
+          break;
         SDValue V = Op.getOperand(0);
-        unsigned ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, Log2_32(RHSV-1));
-        SDValue Ops[] = { V, V, CurDAG->getRegister(0, MVT::i32),
-                            CurDAG->getTargetConstant(ShImm, MVT::i32),
-                            getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
-                            CurDAG->getRegister(0, MVT::i32) };
-        return CurDAG->SelectNodeTo(N, (Subtarget->isThumb() &&
-                                        Subtarget->hasThumb2()) ? 
-                                    ARM::t2ADDrs : ARM::ADDrs, MVT::i32, Ops, 7);
+        ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, ShImm);
+        SDValue ShImmOp = CurDAG->getConstant(ShImm, MVT::i32);
+        SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
+        if (Subtarget->isThumb() && Subtarget->hasThumb2()) {
+          SDValue Ops[] = { V, V, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
+          return CurDAG->SelectNodeTo(N, ARM::t2ADDrs, MVT::i32, Ops, 6);
+        } else {
+          SDValue Ops[] = { V, V, Reg0, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
+          return CurDAG->SelectNodeTo(N, ARM::ADDrs, MVT::i32, Ops, 7);
+        }
       }
       if (isPowerOf2_32(RHSV+1)) {  // 2^n-1?
+        unsigned ShImm = Log2_32(RHSV+1);
+        if (ShImm >= 32)
+          break;
         SDValue V = Op.getOperand(0);
-        unsigned ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, Log2_32(RHSV+1));
-        SDValue Ops[] = { V, V, CurDAG->getRegister(0, MVT::i32),
-                            CurDAG->getTargetConstant(ShImm, MVT::i32),
-                            getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
-                            CurDAG->getRegister(0, MVT::i32) };
-        return CurDAG->SelectNodeTo(N, (Subtarget->isThumb() &&
-                                        Subtarget->hasThumb2()) ? 
-                                    ARM::t2RSBrs : ARM::RSBrs, MVT::i32, Ops, 7);
+        ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, ShImm);
+        SDValue ShImmOp = CurDAG->getConstant(ShImm, MVT::i32);
+        SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
+        if (Subtarget->isThumb() && Subtarget->hasThumb2()) {
+          SDValue Ops[] = { V, V, ShImmOp, getAL(CurDAG), Reg0 };
+          return CurDAG->SelectNodeTo(N, ARM::t2RSBrs, MVT::i32, Ops, 5);
+        } else {
+          SDValue Ops[] = { V, V, Reg0, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
+          return CurDAG->SelectNodeTo(N, ARM::RSBrs, MVT::i32, Ops, 7);
+        }
       }
     }
     break;
