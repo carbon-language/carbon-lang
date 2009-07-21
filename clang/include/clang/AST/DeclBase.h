@@ -352,6 +352,7 @@ public:
       assert(Current && "Advancing while iterator has reached end");
       // Get either previous decl or latest decl.
       Decl *Next = Current->getNextRedeclaration();
+      assert(Next && "Should return next redeclaration or itself, never null!");
       Current = (Next != Starter ? Next : 0);
       return *this;
     }
