@@ -25,6 +25,8 @@ using namespace idx;
 EntityHandler::~EntityHandler() { }
 TranslationUnit::~TranslationUnit() { }
 
+void EntityHandler::HandleEntity(Entity Ent) { }
+
 Program::Program() : Impl(new ProgramImpl()) { }
 
 Program::~Program() {
@@ -34,8 +36,10 @@ Program::~Program() {
 static void FindEntitiesInDC(DeclContext *DC, Program &Prog, EntityHandler *Handler) {
   for (DeclContext::decl_iterator
          I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
-    Entity *Ent = Entity::get(*I, Prog);
-    if (Ent)
+    if (I->getLocation().isInvalid())
+      continue;
+    Entity Ent = Entity::get(*I, Prog);
+    if (Ent.isValid())
       Handler->HandleEntity(Ent);
     if (DeclContext *SubDC = dyn_cast<DeclContext>(*I))
       FindEntitiesInDC(SubDC, Prog, Handler);

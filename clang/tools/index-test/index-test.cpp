@@ -151,10 +151,8 @@ static void ProcessASTLocation(ASTLocation ASTLoc, IndexProvider &IdxProvider) {
     return;
   }
 
-  Entity *Ent = Entity::get(D, IdxProvider.getProgram());
-  // If there is no Entity associated with this Decl, it means that it's not
-  // visible to other translation units.
-  if (!Ent)
+  Entity Ent = Entity::get(D, IdxProvider.getProgram());
+  if (Ent.isInvalid() || Ent.isInternalToTU())
     return ProcessDecl(D);
 
   // Find the "same" Decl in other translation units and print information.
@@ -162,7 +160,7 @@ static void ProcessASTLocation(ASTLocation ASTLoc, IndexProvider &IdxProvider) {
          I = IdxProvider.translation_units_begin(Ent),
          E = IdxProvider.translation_units_end(Ent); I != E; ++I) {
     TUnit *TU = static_cast<TUnit*>(*I);
-    Decl *OtherD = Ent->getDecl(TU->getASTContext());
+    Decl *OtherD = Ent.getDecl(TU->getASTContext());
     assert(OtherD && "Couldn't resolve Entity");
     ProcessDecl(OtherD);
   }

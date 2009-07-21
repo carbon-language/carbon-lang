@@ -25,12 +25,12 @@ class CGBuilder : public StmtVisitor<CGBuilder> {
   CallGraph &G;
   FunctionDecl *FD;
 
-  Entity *CallerEnt;
+  Entity CallerEnt;
 
   CallGraphNode *CallerNode;
 
 public:
-  CGBuilder(CallGraph &g, FunctionDecl *fd, Entity *E, CallGraphNode *N)
+  CGBuilder(CallGraph &g, FunctionDecl *fd, Entity E, CallGraphNode *N)
     : G(g), FD(fd), CallerEnt(E), CallerNode(N) {}
 
   void VisitStmt(Stmt *S) { VisitChildren(S); }
@@ -47,7 +47,7 @@ public:
 
 void CGBuilder::VisitCallExpr(CallExpr *CE) {
   if (FunctionDecl *CalleeDecl = CE->getDirectCallee()) {
-    Entity *Ent = Entity::get(CalleeDecl, G.getProgram());
+    Entity Ent = Entity::get(CalleeDecl, G.getProgram());
     CallGraphNode *CalleeNode = G.getOrInsertFunction(Ent);
 
     Decl *Parent = ASTLocation::FindImmediateParent(FD, CE);
@@ -75,7 +75,7 @@ void CallGraph::addTU(ASTUnit &AST) {
     if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
       if (FD->isThisDeclarationADefinition()) {
         // Set caller's ASTContext.
-        Entity *Ent = Entity::get(FD, Prog);
+        Entity Ent = Entity::get(FD, Prog);
         CallGraphNode *Node = getOrInsertFunction(Ent);
         CallerCtx[Node] = &Ctx;
         
@@ -86,7 +86,7 @@ void CallGraph::addTU(ASTUnit &AST) {
   }
 }
 
-CallGraphNode *CallGraph::getOrInsertFunction(Entity *F) {
+CallGraphNode *CallGraph::getOrInsertFunction(Entity F) {
   CallGraphNode *&Node = FunctionMap[F];
   if (Node)
     return Node;
@@ -98,7 +98,7 @@ void CallGraph::print(llvm::raw_ostream &os) {
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (I->second->hasCallee()) {
       ASTContext &Ctx = *CallerCtx[I->second];
-      os << "function: " << I->first->getPrintableName(Ctx).c_str() 
+      os << "function: " << I->first.getPrintableName(Ctx).c_str() 
          << " calls:\n";
       for (CallGraphNode::iterator CI = I->second->begin(), 
              CE = I->second->end(); CI != CE; ++CI) {

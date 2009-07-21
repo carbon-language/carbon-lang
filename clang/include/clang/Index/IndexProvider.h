@@ -26,11 +26,11 @@ namespace idx {
 
 /// \brief Maps Entities to TranslationUnits.
 class IndexProvider {
+public:
   typedef llvm::SmallPtrSet<TranslationUnit *, 4> TUSetTy;
-  typedef std::map<Entity *, TUSetTy> MapTy;
+  typedef std::map<Entity, TUSetTy> MapTy;
   class Indexer;
 
-public:
   explicit IndexProvider(Program &prog) : Prog(prog) { }
 
   Program &getProgram() const { return Prog; }
@@ -40,9 +40,9 @@ public:
 
   typedef TUSetTy::iterator translation_unit_iterator;
 
-  translation_unit_iterator translation_units_begin(Entity *Ent) const;
-  translation_unit_iterator translation_units_end(Entity *Ent) const;
-  bool translation_units_empty(Entity *Ent) const;
+  translation_unit_iterator translation_units_begin(Entity Ent) const;
+  translation_unit_iterator translation_units_end(Entity Ent) const;
+  bool translation_units_empty(Entity Ent) const;
   
 private:
   Program &Prog;

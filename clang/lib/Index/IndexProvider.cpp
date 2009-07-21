@@ -13,6 +13,7 @@
 
 #include "clang/Index/IndexProvider.h"
 #include "clang/Index/Program.h"
+#include "clang/Index/Entity.h"
 #include "clang/Index/EntityHandler.h"
 #include "clang/Index/TranslationUnit.h"
 using namespace clang;
@@ -25,7 +26,10 @@ class IndexProvider::Indexer : public EntityHandler {
 public:
   Indexer(TranslationUnit *tu, MapTy &map) : TU(tu), Map(map) { }
 
-  virtual void HandleEntity(Entity *Ent) {
+  virtual void HandleEntity(Entity Ent) {
+    if (Ent.isInternalToTU())
+      return;
+
     MapTy::iterator I = Map.find(Ent);
     if (I != Map.end()) {
       I->second.insert(TU);
@@ -41,25 +45,27 @@ void IndexProvider::IndexAST(TranslationUnit *TU) {
   Prog.FindEntities(TU->getASTContext(), &Idx);
 }
 
+static IndexProvider::TUSetTy EmptySet;
+
 IndexProvider::translation_unit_iterator
-IndexProvider::translation_units_begin(Entity *Ent) const {
+IndexProvider::translation_units_begin(Entity Ent) const {
   MapTy::iterator I = Map.find(Ent);
   if (I == Map.end())
-    return translation_unit_iterator(0);
+    return EmptySet.begin();
   
   return I->second.begin();
 }
 
 IndexProvider::translation_unit_iterator
-IndexProvider::translation_units_end(Entity *Ent) const {
+IndexProvider::translation_units_end(Entity Ent) const {
   MapTy::iterator I = Map.find(Ent);
   if (I == Map.end())
-    return translation_unit_iterator(0);
+    return EmptySet.end();
   
   return I->second.end();
 }
 
-bool IndexProvider::translation_units_empty(Entity *Ent) const {
+bool IndexProvider::translation_units_empty(Entity Ent) const {
   MapTy::iterator I = Map.find(Ent);
   if (I == Map.end())
     return true;

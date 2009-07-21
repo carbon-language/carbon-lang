@@ -24,12 +24,12 @@
 namespace clang {
 
 class CallGraphNode {
-  idx::Entity *F;
+  idx::Entity F;
   typedef std::pair<idx::ASTLocation, CallGraphNode*> CallRecord;
   std::vector<CallRecord> CalledFunctions;
 
 public:
-  CallGraphNode(idx::Entity *f) : F(f) {}
+  CallGraphNode(idx::Entity f) : F(f) {}
 
   typedef std::vector<CallRecord>::iterator iterator;
   typedef std::vector<CallRecord>::const_iterator const_iterator;
@@ -45,14 +45,14 @@ public:
 
   bool hasCallee() const { return begin() != end(); }
 
-  std::string getName(ASTContext &Ctx) { return F->getPrintableName(Ctx); }
+  std::string getName(ASTContext &Ctx) { return F.getPrintableName(Ctx); }
 };
 
 class CallGraph {
   /// Program manages all Entities.
   idx::Program Prog;
 
-  typedef llvm::DenseMap<idx::Entity *, CallGraphNode *> FunctionMapTy;
+  typedef llvm::DenseMap<idx::Entity, CallGraphNode *> FunctionMapTy;
 
   /// FunctionMap owns all CallGraphNodes.
   FunctionMapTy FunctionMap;
@@ -75,7 +75,7 @@ public:
 
   idx::Program &getProgram() { return Prog; }
 
-  CallGraphNode *getOrInsertFunction(idx::Entity *F);
+  CallGraphNode *getOrInsertFunction(idx::Entity F);
 
   void print(llvm::raw_ostream &os);
   void dump();

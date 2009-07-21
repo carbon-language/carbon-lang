@@ -23,7 +23,7 @@ namespace idx {
 class EntityHandler {
 public:
   virtual ~EntityHandler();
-  virtual void HandleEntity(Entity *Ent) { }
+  virtual void HandleEntity(Entity Ent);
 };
   
 } // namespace idx

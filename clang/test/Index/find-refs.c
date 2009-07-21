@@ -39,3 +39,8 @@
 // RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:16:7 -print-refs > %t &&
 // RUN: cat %t | count 1 &&
 // RUN: grep 't1.c:22:3,' %t
+
+// RUN: index-test %t1.ast %t2.ast -point-at %S/foo.h:7:11 -print-refs > %t &&
+// RUN: cat %t | count 2 &&
+// RUN: grep 't1.c:25:3,' %t &&
+// RUN: grep 't2.c:10:3,' %t

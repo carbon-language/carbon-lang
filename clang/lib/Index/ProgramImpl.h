@@ -14,8 +14,7 @@
 #ifndef LLVM_CLANG_INDEX_PROGRAMIMPL_H
 #define LLVM_CLANG_INDEX_PROGRAMIMPL_H
 
-#include "clang/Index/Entity.h"
-#include "llvm/ADT/StringSet.h"
+#include "EntityImpl.h"
 
 namespace clang {
 
@@ -24,11 +23,10 @@ namespace idx {
 
 class ProgramImpl {
 public:
-  typedef llvm::FoldingSet<Entity> EntitySetTy;
-  typedef llvm::StringMapEntry<char> IdEntryTy;
-  
+  typedef llvm::FoldingSet<EntityImpl> EntitySetTy;
+
 private:
-  llvm::FoldingSet<Entity> Entities;
+  EntitySetTy Entities;
   llvm::StringSet<> Idents;
   llvm::BumpPtrAllocator BumpAlloc;
 
@@ -38,7 +36,7 @@ private:
 public:
   ProgramImpl() { }
   
-  llvm::FoldingSet<Entity> &getEntities() { return Entities; }
+  EntitySetTy &getEntities() { return Entities; }
   llvm::StringSet<> &getIdents() { return Idents; }
 
   void *Allocate(unsigned Size, unsigned Align = 8) {
