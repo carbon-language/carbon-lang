@@ -544,9 +544,9 @@ const Type *MachineConstantPoolEntry::getType() const {
 }
 
 
-unsigned MachineConstantPoolEntry::getRelocatationInfo() const {
+unsigned MachineConstantPoolEntry::getRelocationInfo() const {
   if (isMachineConstantPoolEntry())
-    return Val.MachineCPVal->getRelocatationInfo();
+    return Val.MachineCPVal->getRelocationInfo();
   
   // FIXME: This API sucks.
   

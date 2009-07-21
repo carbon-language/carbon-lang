@@ -44,7 +44,7 @@ public:
   const Type *getType() const { return Ty; }
 
   
-  /// getRelocatationInfo - This method classifies the entry according to
+  /// getRelocationInfo - This method classifies the entry according to
   /// whether or not it may generate a relocation entry.  This must be
   /// conservative, so if it might codegen to a relocatable entry, it should say
   /// so.  The return values are:
@@ -55,7 +55,7 @@ public:
   ///     resolvable by the static linker, so the dynamic linker will never see
   ///     them.
   ///  2: This entry may have arbitrary relocations. 
-  virtual unsigned getRelocatationInfo() const = 0;
+  virtual unsigned getRelocationInfo() const = 0;
   
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
                                         unsigned Alignment) = 0;
@@ -109,7 +109,7 @@ public:
 
   const Type *getType() const;
   
-  /// getRelocatationInfo - This method classifies the entry according to
+  /// getRelocationInfo - This method classifies the entry according to
   /// whether or not it may generate a relocation entry.  This must be
   /// conservative, so if it might codegen to a relocatable entry, it should say
   /// so.  The return values are:
@@ -120,7 +120,7 @@ public:
   ///     resolvable by the static linker, so the dynamic linker will never see
   ///     them.
   ///  2: This entry may have arbitrary relocations. 
-  unsigned getRelocatationInfo() const;
+  unsigned getRelocationInfo() const;
 };
   
 /// The MachineConstantPool class keeps track of constants referenced by a

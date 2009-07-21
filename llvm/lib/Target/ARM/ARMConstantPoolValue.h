@@ -65,7 +65,7 @@ public:
   bool isStub() const { return Kind == ARMCP::CPStub; }
   unsigned char getPCAdjustment() const { return PCAdjust; }
 
-  virtual unsigned getRelocatationInfo() const {
+  virtual unsigned getRelocationInfo() const {
     // FIXME: This is conservatively claiming that these entries require a
     // relocation, we may be able to do better than this.
     return 2;
