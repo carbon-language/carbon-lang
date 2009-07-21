@@ -521,6 +521,18 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, bool alwaysAdd) {
 }
 
 CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
+  // See if this is a known constant.
+  bool KnownTrue = false;
+  bool KnownFalse = false;
+  Expr::EvalResult Result;
+  if (C->getCond()->Evaluate(Result, *Context)
+      && Result.Val.isInt()) {
+    if (Result.Val.getInt().getBoolValue())
+      KnownTrue = true;
+    else
+      KnownFalse = true;
+  }
+
   CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
   ConfluenceBlock->appendStmt(C);
   if (!FinishBlock(ConfluenceBlock))
@@ -539,8 +551,14 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
     return 0;
   
   Block = createBlock(false);
-  Block->addSuccessor(LHSBlock);
-  Block->addSuccessor(RHSBlock);
+  if (KnownFalse)
+    Block->addSuccessor(0);
+  else
+    Block->addSuccessor(LHSBlock);
+  if (KnownTrue)
+    Block->addSuccessor(0);
+  else
+    Block->addSuccessor(RHSBlock);
   Block->setTerminator(C);
   return addStmt(C->getCond());  
 }

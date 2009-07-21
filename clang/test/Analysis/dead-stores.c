@@ -207,6 +207,8 @@ void f22() {
   int y16 = 4;
   int y17 = 4;
   int y18 = 4;
+  int y19 = 4;
+  int y20 = 4;
 
   ++x; // expected-warning{{never read}}
   ++y1;
@@ -227,6 +229,8 @@ void f22() {
   ++y16;
   ++y17;
   ++y18;
+  ++y19;
+  ++y20;
 
   switch (j) {
   case 1:
@@ -323,6 +327,14 @@ void f22() {
       (void)x;
     }
     (void)y18;
+    break;
+  case 17:
+    __builtin_choose_expr(0, (void)x, ((void)y19, ({ return; })));
+    (void)x;
+    break;
+  case 19:
+    __builtin_choose_expr(1, ((void)y20, ({ return; })), (void)x);
+    (void)x;
     break;
   }
 }
