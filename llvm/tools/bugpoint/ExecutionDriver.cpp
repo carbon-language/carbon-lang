@@ -55,19 +55,19 @@ namespace {
 
   cl::opt<OutputType>
   SafeInterpreterSel(cl::desc("Specify \"safe\" i.e. known-good backend:"),
-                     cl::values(clEnumValN(AutoPick, "safe-auto", "Use best guess"),
-                                clEnumValN(RunLLC, "safe-run-llc", "Compile with LLC"),
-                                clEnumValN(RunCBE, "safe-run-cbe", "Compile with CBE"),
-                                clEnumValN(Custom, "safe-run-custom",
-                                "Use -exec-command to define a command to execute "
-                                "the bitcode. Useful for cross-compilation."),
-                                clEnumValEnd),
+              cl::values(clEnumValN(AutoPick, "safe-auto", "Use best guess"),
+                         clEnumValN(RunLLC, "safe-run-llc", "Compile with LLC"),
+                         clEnumValN(RunCBE, "safe-run-cbe", "Compile with CBE"),
+                         clEnumValN(Custom, "safe-run-custom",
+                         "Use -exec-command to define a command to execute "
+                         "the bitcode. Useful for cross-compilation."),
+                         clEnumValEnd),
                      cl::init(AutoPick));
 
   cl::opt<std::string>
   SafeInterpreterPath("safe-path",
-                      cl::desc("Specify the path to the \"safe\" backend program"),
-                      cl::init(""));
+                   cl::desc("Specify the path to the \"safe\" backend program"),
+                   cl::init(""));
 
   cl::opt<bool>
   AppendProgramExitCode("append-exit-code",
