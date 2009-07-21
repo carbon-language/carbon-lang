@@ -61,7 +61,6 @@ SystemZTargetLowering::SystemZTargetLowering(SystemZTargetMachine &tm) :
   computeRegisterProperties();
 
   // Set shifts properties
-  setShiftAmountFlavor(Extend);
   setShiftAmountType(MVT::i64);
 
   // Provide all sorts of operation actions
