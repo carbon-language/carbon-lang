@@ -23,14 +23,8 @@ namespace llvm {
   class XCoreSubtarget;
 
   class XCoreTargetAsmInfo : public ELFTargetAsmInfo {
-  private:
-    const XCoreSubtarget *Subtarget;
   public:
     explicit XCoreTargetAsmInfo(const XCoreTargetMachine &TM);
-    
-    virtual unsigned
-    SectionFlagsForGlobal(const GlobalValue *GV = NULL,
-                          const char* name = NULL) const;
   };
 
 } // namespace llvm

@@ -22,15 +22,14 @@
 using namespace llvm;
 
 XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
-  : ELFTargetAsmInfo(TM),
-    Subtarget(TM.getSubtargetImpl()) {
+  : ELFTargetAsmInfo(TM) {
   SupportsDebugInformation = true;
   TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
   DataSection = getNamedSection("\t.dp.data", SectionFlags::Writeable |
                                 SectionFlags::Small);
   BSSSection_  = getNamedSection("\t.dp.bss", SectionFlags::Writeable |
                                  SectionFlags::BSS | SectionFlags::Small);
-  if (Subtarget->isXS1A()) {
+  if (TM.getSubtargetImpl()->isXS1A()) {
     ReadOnlySection = getNamedSection("\t.dp.rodata", SectionFlags::None |
                                       SectionFlags::Writeable |
                                       SectionFlags::Small);
@@ -68,24 +67,3 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 }
 
-unsigned XCoreTargetAsmInfo::
-SectionFlagsForGlobal(const GlobalValue *GV, const char* Name) const {
-  unsigned Flags = ELFTargetAsmInfo::SectionFlagsForGlobal(GV, Name);
-
-  // Set CP / DP relative flags
-  if (GV) {
-    SectionKind::Kind Kind = SectionKindForGlobal(GV);
-    switch (Kind) {
-    case SectionKind::ROData:
-    case SectionKind::RODataMergeStr:
-    case SectionKind::SmallROData:
-      if (Subtarget->isXS1A())
-        Flags |= SectionFlags::Writeable;
-      break;
-    default:
-      break;
-    }
-  }
-
-  return Flags;
-}
