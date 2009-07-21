@@ -427,8 +427,12 @@ Parser::TPResult Parser::TryParseDeclarator(bool mayBeAbstract,
   // direct-declarator:
   // direct-abstract-declarator:
 
-  if (Tok.is(tok::identifier) && mayHaveIdentifier) {
+  if ((Tok.is(tok::identifier) ||
+       (Tok.is(tok::annot_cxxscope) && NextToken().is(tok::identifier))) &&
+      mayHaveIdentifier) {
     // declarator-id
+    if (Tok.is(tok::annot_cxxscope))
+      ConsumeToken();
     ConsumeToken();
   } else if (Tok.is(tok::l_paren)) {
     ConsumeParen();

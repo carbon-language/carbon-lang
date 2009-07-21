@@ -64,3 +64,10 @@ void foo7() {
 
 void h7(int *(C7[10])) { } // expected-note{{previous}}
 void h7(int *(*_fp)(C7 _parm[10])) { } // expected-error{{redefinition}}
+
+struct S5 {
+  static bool const value = false;
+};
+int foo8() {
+  int v(int(S5::value)); // expected-warning{{disambiguated}} expected-error{{parameter declarator cannot be qualified}}
+}
