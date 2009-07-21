@@ -61,7 +61,6 @@ module TypeKind : sig
   | Fp128
   | Ppc_fp128
   | Label
-  | Metadata
   | Integer
   | Function
   | Struct
@@ -69,6 +68,7 @@ module TypeKind : sig
   | Pointer
   | Opaque
   | Vector
+  | Metadata
 end
 
 (** The linkage of a global value, accessed with {!linkage} and

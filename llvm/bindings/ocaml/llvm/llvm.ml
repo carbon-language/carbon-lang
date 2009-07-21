@@ -26,7 +26,6 @@ module TypeKind = struct
   | Fp128
   | Ppc_fp128
   | Label
-  | Metadata
   | Integer
   | Function
   | Struct
@@ -34,6 +33,7 @@ module TypeKind = struct
   | Pointer
   | Opaque
   | Vector
+  | Metadata
 end
 
 module Linkage = struct
