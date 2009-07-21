@@ -73,7 +73,14 @@ namespace llvm {
     bool empty() const { return Length == 0; }
 
     /// size - Get the string size.
-    unsigned size() const { return Length; }
+    size_t size() const { return Length; }
+
+    /// equals - Check for string equality, this is more efficient than
+    /// compare() in when the relative ordering of inequal strings isn't needed.
+    bool equals(const StringRef &RHS) const {
+      return (Length == RHS.Length && 
+              memcmp(Data, RHS.Data, Length) == 0);
+    }
 
     /// compare - Compare two strings; the result is -1, 0, or 1 if this string
     /// is lexicographically less than, equal to, or greater than the \arg RHS.
@@ -94,20 +101,6 @@ namespace llvm {
     /// @}
     /// @name Operator Overloads
     /// @{
-
-    bool operator==(const StringRef &RHS) const { 
-      return Length == RHS.Length && memcmp(Data, RHS.Data, Length) == 0; 
-    }
-
-    bool operator!=(const StringRef &RHS) const { return !(*this == RHS); }
-
-    bool operator<(const StringRef &RHS) const { return compare(RHS) == -1; }
-
-    bool operator<=(const StringRef &RHS) const { return compare(RHS) != 1; }
-
-    bool operator>(const StringRef &RHS) const { return compare(RHS) == 1; }
-
-    bool operator>=(const StringRef &RHS) const { return compare(RHS) != -1; }
 
     char operator[](size_t Index) const { 
       assert(Index < Length && "Invalid index!");
@@ -142,11 +135,40 @@ namespace llvm {
 
     /// startswith - Check if this string starts with the given \arg Prefix.
     bool startswith(const StringRef &Prefix) const { 
-      return substr(0, Prefix.Length) == Prefix;
+      return substr(0, Prefix.Length).equals(Prefix);
     }
 
     /// @}
   };
+
+  /// @name StringRef Comparison Operators
+  /// @{
+
+  inline bool operator==(const StringRef &LHS, const StringRef &RHS) {
+    return LHS.equals(RHS);
+  }
+
+  inline bool operator!=(const StringRef &LHS, const StringRef &RHS) { 
+    return !(LHS == RHS);
+  }
+  
+  inline bool operator<(const StringRef &LHS, const StringRef &RHS) {
+    return LHS.compare(RHS) == -1; 
+  }
+
+  inline bool operator<=(const StringRef &LHS, const StringRef &RHS) {
+    return LHS.compare(RHS) != 1; 
+  }
+
+  inline bool operator>(const StringRef &LHS, const StringRef &RHS) {
+    return LHS.compare(RHS) == 1; 
+  }
+
+  inline bool operator>=(const StringRef &LHS, const StringRef &RHS) {
+    return LHS.compare(RHS) != -1; 
+  }
+
+  /// @}
 
 }
 
