@@ -12,10 +12,10 @@ add_clang_library(clangParse
   ParseInit.cpp
   ParseObjc.cpp
   ParsePragma.cpp
-  Parser.cpp
   ParseStmt.cpp
-  ParseTentative.cpp
   ParseTemplate.cpp
+  ParseTentative.cpp
+  Parser.cpp
   )
 
 add_dependencies(clangParse ClangDiagnosticParse)
