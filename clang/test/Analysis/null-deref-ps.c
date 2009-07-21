@@ -74,6 +74,7 @@ int f4_b() {
   else return; // expected-warning {{non-void function 'f4_b' should return a value}}
 
   *p += 10; // expected-warning{{Dereference of null pointer}}
+  return 0;
 }
 
 
@@ -162,7 +163,7 @@ int* f7c2(int *x) {
 }
 
 
-int f8(int *p, int *q) {
+void f8(int *p, int *q) {
   if (!p)
     if (p)
       *p = 1; // no-warning
