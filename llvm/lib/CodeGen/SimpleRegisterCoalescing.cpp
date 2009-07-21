@@ -57,9 +57,9 @@ NewHeuristic("new-coalescer-heuristic",
              cl::init(false), cl::Hidden);
 
 static cl::opt<bool>
-CrossClassJoin("join-cross-class-copies",
-               cl::desc("Coalesce cross register class copies"),
-               cl::init(true), cl::Hidden);
+DisableCrossClassJoin("disable-cross-class-join",
+               cl::desc("Avoid coalescing cross register class copies"),
+               cl::init(false), cl::Hidden);
 
 static cl::opt<bool>
 PhysJoinTweak("tweak-phys-join-heuristics",
@@ -1401,7 +1401,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       }
     }
   } else if (differingRegisterClasses(SrcReg, DstReg)) {
-    if (!CrossClassJoin)
+    if (DisableCrossClassJoin)
       return false;
     CrossRC = true;
 
