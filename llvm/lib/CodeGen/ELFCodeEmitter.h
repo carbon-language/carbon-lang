@@ -31,14 +31,14 @@ namespace llvm {
     /// Relocations - Record relocations needed by the current function 
     std::vector<MachineRelocation> Relocations;
 
+    /// JTRelocations - Record relocations needed by the relocation
+    /// section.
+    std::vector<MachineRelocation> JTRelocations;
+
     /// FnStartPtr - Function offset from the beginning of ELFSection 'ES'
     uintptr_t FnStartOff;
-
-    /// JumpTableSectionIdx - Holds the index of the Jump Table Section 
-    unsigned JumpTableSectionIdx;
   public:
-    explicit ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM),
-                                             JumpTableSectionIdx(0) {}
+    explicit ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM) {}
 
     /// addRelocation - Register new relocations for this function
     void addRelocation(const MachineRelocation &MR) {

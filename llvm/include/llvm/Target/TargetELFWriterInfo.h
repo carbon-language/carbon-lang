@@ -120,7 +120,7 @@ namespace llvm {
     virtual unsigned getAbsoluteLabelMachineRelTy() const = 0;
 
     /// computeRelocation - Some relocatable fields could be relocated
-    /// directly, avoiding the emission of a relocation symbol, compute the
+    /// directly, avoiding the relocation symbol emission, compute the
     /// final relocation value for this symbol.
     virtual long int computeRelocation(unsigned SymOffset, unsigned RelOffset,
                                        unsigned RelTy) const = 0;
