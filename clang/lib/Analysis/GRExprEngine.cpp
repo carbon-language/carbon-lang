@@ -1036,7 +1036,7 @@ void GRExprEngine::VisitMemberExpr(MemberExpr* M, NodeTy* Pred,
 /// EvalBind - Handle the semantics of binding a value to a specific location.
 ///  This method is used by EvalStore and (soon) VisitDeclStmt, and others.
 void GRExprEngine::EvalBind(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
-                             const GRState* state, SVal location, SVal Val) {
+                            const GRState* state, SVal location, SVal Val) {
 
   const GRState* newState = 0;
   
@@ -1049,24 +1049,7 @@ void GRExprEngine::EvalBind(NodeSet& Dst, Expr* Ex, NodeTy* Pred,
   else {
     // We are binding to a value other than 'unknown'.  Perform the binding
     // using the StoreManager.
-    Loc L = cast<Loc>(location);
-
-    // Handle implicit casts not reflected in the AST.  This can be due to
-    // custom checker logic such as what handles OSAtomicCompareAndSwap.
-    if (!Val.isUnknownOrUndef())
-      if (const TypedRegion *R =
-            dyn_cast_or_null<TypedRegion>(L.getAsRegion())) {
-        assert(R->isBoundable());
-        QualType ValTy = R->getValueType(getContext());
-        if (Loc::IsLocType(ValTy)) {
-          if (!isa<Loc>(Val))
-            Val = SVator.EvalCastNL(cast<NonLoc>(Val), ValTy);
-        }
-        else if (!isa<NonLoc>(Val))
-          Val = SVator.EvalCastL(cast<Loc>(Val), ValTy);
-      }
-    
-    newState = state->bindLoc(L, Val);
+    newState = state->bindLoc(cast<Loc>(location), Val);
   }
 
   // The next thing to do is check if the GRTransferFuncs object wants to
@@ -1343,8 +1326,18 @@ static bool EvalOSAtomicCompareAndSwap(ExplodedNodeSet<GRState>& Dst,
     if (stateEqual) {
       // Perform the store.
       ExplodedNodeSet<GRState> TmpStore;
+      SVal val = stateEqual->getSVal(newValueExpr);
+      
+      // Handle implicit value casts.
+      if (const TypedRegion *R =
+          dyn_cast_or_null<TypedRegion>(location.getAsRegion())) {
+        llvm::tie(state, val) =
+          Engine.getSValuator().EvalCast(val, state, R->getValueType(C),
+                                         newValueExpr->getType());
+      }      
+      
       Engine.EvalStore(TmpStore, theValueExpr, N, stateEqual, location, 
-                       stateEqual->getSVal(newValueExpr), OSAtomicStoreTag);
+                       val, OSAtomicStoreTag);
       
       // Now bind the result of the comparison.
       for (ExplodedNodeSet<GRState>::iterator I2 = TmpStore.begin(),
@@ -2034,22 +2027,6 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
 // Transfer functions: Miscellaneous statements.
 //===----------------------------------------------------------------------===//
 
-void GRExprEngine::VisitCastPointerToInteger(SVal V, const GRState* state,
-                                             QualType PtrTy,
-                                             Expr* CastE, NodeTy* Pred,
-                                             NodeSet& Dst) {
-  if (!V.isUnknownOrUndef()) {
-    // FIXME: Determine if the number of bits of the target type is 
-    // equal or exceeds the number of bits to store the pointer value.
-    // If not, flag an error.    
-    MakeNode(Dst, CastE, Pred, state->bindExpr(CastE, EvalCast(cast<Loc>(V),
-                                                               CastE->getType())));
-  }
-  else  
-    MakeNode(Dst, CastE, Pred, state->bindExpr(CastE, V));
-}
-
-  
 void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
   NodeSet S1;
   QualType T = CastE->getType();
@@ -2070,128 +2047,14 @@ void GRExprEngine::VisitCast(Expr* CastE, Expr* Ex, NodeTy* Pred, NodeSet& Dst){
 
     return;
   }
-  
-  // FIXME: The rest of this should probably just go into EvalCall, and
-  //   let the transfer function object be responsible for constructing
-  //   nodes.
-  
+
   for (NodeSet::iterator I1 = S1.begin(), E1 = S1.end(); I1 != E1; ++I1) {
     NodeTy* N = *I1;
     const GRState* state = GetState(N);
     SVal V = state->getSVal(Ex);
-    ASTContext& C = getContext();
-
-    // Unknown?
-    if (V.isUnknown()) {
-      Dst.Add(N);
-      continue;
-    }
-    
-    // Undefined?
-    if (V.isUndef())
-      goto PassThrough;
-    
-    // For const casts, just propagate the value.
-    if (C.getCanonicalType(T).getUnqualifiedType() == 
-        C.getCanonicalType(ExTy).getUnqualifiedType())
-      goto PassThrough;
-      
-    // Check for casts from pointers to integers.
-    if (T->isIntegerType() && Loc::IsLocType(ExTy)) {
-      VisitCastPointerToInteger(V, state, ExTy, CastE, N, Dst);
-      continue;
-    }
-    
-    // Check for casts from integers to pointers.
-    if (Loc::IsLocType(T) && ExTy->isIntegerType()) {
-      if (nonloc::LocAsInteger *LV = dyn_cast<nonloc::LocAsInteger>(&V)) {
-        // Just unpackage the lval and return it.
-        V = LV->getLoc();
-        MakeNode(Dst, CastE, N, state->bindExpr(CastE, V));
-        continue;
-      }
-      
-      goto DispatchCast;
-    }
-    
-    // Just pass through function and block pointers.
-    if (ExTy->isBlockPointerType() || ExTy->isFunctionPointerType()) {
-      assert(Loc::IsLocType(T));
-      goto PassThrough;
-    }
-    
-    // Check for casts from array type to another type.
-    if (ExTy->isArrayType()) {
-      // We will always decay to a pointer.
-      V = StateMgr.ArrayToPointer(cast<Loc>(V));
-      
-      // Are we casting from an array to a pointer?  If so just pass on
-      // the decayed value.
-      if (T->isPointerType())
-        goto PassThrough;
-      
-      // Are we casting from an array to an integer?  If so, cast the decayed
-      // pointer value to an integer.
-      assert(T->isIntegerType());
-      QualType ElemTy = cast<ArrayType>(ExTy)->getElementType();
-      QualType PointerTy = getContext().getPointerType(ElemTy);
-      VisitCastPointerToInteger(V, state, PointerTy, CastE, N, Dst);
-      continue;
-    }
-
-    // Check for casts from a region to a specific type.
-    if (loc::MemRegionVal *RV = dyn_cast<loc::MemRegionVal>(&V)) {      
-      // FIXME: For TypedViewRegions, we should handle the case where the
-      //  underlying symbolic pointer is a function pointer or
-      //  block pointer.
-      
-      // FIXME: We should handle the case where we strip off view layers to get
-      //  to a desugared type.
-      
-      assert(Loc::IsLocType(T));
-      // We get a symbolic function pointer for a dereference of a function
-      // pointer, but it is of function type. Example:
-
-      //  struct FPRec {
-      //    void (*my_func)(int * x);  
-      //  };
-      //
-      //  int bar(int x);
-      //
-      //  int f1_a(struct FPRec* foo) {
-      //    int x;
-      //    (*foo->my_func)(&x);
-      //    return bar(x)+1; // no-warning
-      //  }
-
-      assert(Loc::IsLocType(ExTy) || ExTy->isFunctionType());
-
-      const MemRegion* R = RV->getRegion();
-      StoreManager& StoreMgr = getStoreManager();
-      
-      // Delegate to store manager to get the result of casting a region
-      // to a different type.
-      const StoreManager::CastResult& Res = StoreMgr.CastRegion(state, R, T);
-      
-      // Inspect the result.  If the MemRegion* returned is NULL, this
-      // expression evaluates to UnknownVal.
-      R = Res.getRegion();
-      if (R) { V = loc::MemRegionVal(R); } else { V = UnknownVal(); }
-      
-      // Generate the new node in the ExplodedGraph.
-      MakeNode(Dst, CastE, N, Res.getState()->bindExpr(CastE, V));
-      continue;
-    }
-    // All other cases.
-    DispatchCast: {
-      MakeNode(Dst, CastE, N, state->bindExpr(CastE,
-                                              EvalCast(V, CastE->getType())));
-      continue;
-    }
-    
-    PassThrough: {
-      MakeNode(Dst, CastE, N, state->bindExpr(CastE, V));
-    }
+    const SValuator::CastResult &Res = SVator.EvalCast(V, state, T, ExTy);
+    state = Res.getState()->bindExpr(CastE, Res.getSVal());
+    MakeNode(Dst, CastE, N, state);
   }
 }
 
@@ -3034,17 +2897,19 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         //  The RHS is not Unknown.
         
         // Get the computation type.
-        QualType CTy = cast<CompoundAssignOperator>(B)->getComputationResultType();
+        QualType CTy =
+          cast<CompoundAssignOperator>(B)->getComputationResultType();
         CTy = getContext().getCanonicalType(CTy);
 
-        QualType CLHSTy = cast<CompoundAssignOperator>(B)->getComputationLHSType();
-        CLHSTy = getContext().getCanonicalType(CTy);
+        QualType CLHSTy =
+          cast<CompoundAssignOperator>(B)->getComputationLHSType();
+        CLHSTy = getContext().getCanonicalType(CLHSTy);
 
         QualType LTy = getContext().getCanonicalType(LHS->getType());
         QualType RTy = getContext().getCanonicalType(RHS->getType());
 
         // Promote LHS.
-        V = EvalCast(V, CLHSTy);
+        llvm::tie(state, V) = SVator.EvalCast(V, state, CLHSTy, LTy);
 
         // Evaluate operands and promote to result type.                    
         if (RightV.isUndef()) {            
@@ -3055,8 +2920,10 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
         }
       
         // Compute the result of the operation.      
-        SVal Result = EvalCast(EvalBinOp(state, Op, V, RightV, CTy),
-                               B->getType());
+        SVal Result;
+        llvm::tie(state, Result) = SVator.EvalCast(EvalBinOp(state, Op, V,
+                                                             RightV, CTy),
+                                                   state, B->getType(), CTy);
           
         if (Result.isUndef()) {
           // The operands were not undefined, but the result is undefined.
@@ -3085,12 +2952,12 @@ void GRExprEngine::VisitBinaryOperator(BinaryOperator* B,
           LHSVal = ValMgr.getConjuredSymbolVal(B->getRHS(), LTy, Count);
           
           // However, we need to convert the symbol to the computation type.
-          Result = (LTy == CTy) ? LHSVal : EvalCast(LHSVal,CTy);
+          llvm::tie(state, Result) = SVator.EvalCast(LHSVal, state, CTy, LTy);
         }
         else {
           // The left-hand side may bind to a different value then the
           // computation type.
-          LHSVal = (LTy == CTy) ? Result : EvalCast(Result,LTy);
+          llvm::tie(state, LHSVal) = SVator.EvalCast(Result, state, LTy, CTy);
         }
           
         EvalStore(Dst, B, LHS, *I3, state->bindExpr(B, Result), location,

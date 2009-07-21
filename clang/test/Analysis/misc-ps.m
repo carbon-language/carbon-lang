@@ -437,7 +437,6 @@ void test_block_cast() {
   (void (^)(void *))test_block_cast_aux(); // expected-warning{{expression result unused}}
 }
 
-// ** THIS TEST FAILS **
 // Test comparison of 'id' instance variable to a null void* constant after
 // performing an OSAtomicCompareAndSwap32Barrier.
 // This previously was a crash in RegionStoreManager.
@@ -454,5 +453,9 @@ void test_block_cast() {
 }
 @end
 
-
-
+// PR 4594 - This was a crash when handling casts in SimpleSValuator.
+void PR4594() {
+  char *buf[1];
+  char **foo = buf;
+  *foo = "test";
+}

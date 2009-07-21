@@ -279,7 +279,8 @@ public:
   ///       return undefined
   ///     else
   ///       return symbolic
-  SVal Retrieve(const GRState *state, Loc L, QualType T = QualType());
+  SValuator::CastResult Retrieve(const GRState *state, Loc L,
+                                 QualType T = QualType());
 
   SVal RetrieveElement(const GRState *state, const ElementRegion *R);
 
@@ -291,7 +292,8 @@ public:
   
   SVal RetrieveLazySymbol(const GRState *state, const TypedRegion *R);
   
-  SVal CastRetrievedVal(SVal val, const TypedRegion *R, QualType castTy);
+  SValuator::CastResult CastRetrievedVal(SVal val, const GRState *state,
+                                         const TypedRegion *R, QualType castTy);
 
   /// Retrieve the values in a struct and return a CompoundVal, used when doing
   /// struct copy: 
@@ -780,7 +782,8 @@ static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
   return true;
 }
 
-SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
+SValuator::CastResult
+RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
 
   assert(!isa<UnknownVal>(L) && "location unknown");
   assert(!isa<UndefinedVal>(L) && "location undefined");
@@ -788,7 +791,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // FIXME: Is this even possible?  Shouldn't this be treated as a null
   //  dereference at a higher level?
   if (isa<loc::ConcreteInt>(L))
-    return UndefinedVal();
+    return SValuator::CastResult(state, UndefinedVal());
 
   const MemRegion *MR = cast<loc::MemRegionVal>(L).getRegion();
 
@@ -799,7 +802,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // read(p);
   // c = *p;
   if (isa<AllocaRegion>(MR))
-    return UnknownVal();
+    return SValuator::CastResult(state, UnknownVal());
   
   if (isa<SymbolicRegion>(MR)) {
     ASTContext &Ctx = getContext();
@@ -832,33 +835,33 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   }  
 
   if (RTy->isStructureType())
-    return RetrieveStruct(state, R);
+    return SValuator::CastResult(state, RetrieveStruct(state, R));
 
   if (RTy->isArrayType())
-    return RetrieveArray(state, R);
+    return SValuator::CastResult(state, RetrieveArray(state, R));
 
   // FIXME: handle Vector types.
   if (RTy->isVectorType())
-      return UnknownVal();
+    return SValuator::CastResult(state, UnknownVal());
 
   if (const FieldRegion* FR = dyn_cast<FieldRegion>(R))
-    return CastRetrievedVal(RetrieveField(state, FR), FR, T);
+    return CastRetrievedVal(RetrieveField(state, FR), state, FR, T);
 
   if (const ElementRegion* ER = dyn_cast<ElementRegion>(R))
-    return CastRetrievedVal(RetrieveElement(state, ER), ER, T);
+    return CastRetrievedVal(RetrieveElement(state, ER), state, ER, T);
   
   if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
-    return CastRetrievedVal(RetrieveObjCIvar(state, IVR), IVR, T);
+    return CastRetrievedVal(RetrieveObjCIvar(state, IVR), state, IVR, T);
   
   if (const VarRegion *VR = dyn_cast<VarRegion>(R))
-    return CastRetrievedVal(RetrieveVar(state, VR), VR, T);
+    return CastRetrievedVal(RetrieveVar(state, VR), state, VR, T);
 
   RegionBindingsTy B = GetRegionBindings(state->getStore());
   RegionBindingsTy::data_type* V = B.lookup(R);
 
   // Check if the region has a binding.
   if (V)
-    return *V;
+    return SValuator::CastResult(state, *V);
 
   // The location does not have a bound value.  This means that it has
   // the value it had upon its creation and/or entry to the analyzed
@@ -870,7 +873,7 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     // upon creation.  All heap allocated blocks are considered to
     // have undefined values as well unless they are explicitly bound
     // to specific values.
-    return UndefinedVal();
+    return SValuator::CastResult(state, UndefinedVal());
   }
 
   // If the region is already cast to another type, use that type to create the
@@ -881,7 +884,8 @@ SVal RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   }
 
   // All other values are symbolic.
-  return ValMgr.getRegionValueSymbolValOrUnknown(R, RTy);
+  return SValuator::CastResult(state,
+                               ValMgr.getRegionValueSymbolValOrUnknown(R, RTy));
 }
 
 SVal RegionStoreManager::RetrieveElement(const GRState* state,
@@ -1079,7 +1083,7 @@ SVal RegionStoreManager::RetrieveStruct(const GRState *state,
        Field != FieldEnd; ++Field) {
     FieldRegion* FR = MRMgr.getFieldRegion(*Field, R);
     QualType FTy = (*Field)->getType();
-    SVal FieldValue = Retrieve(state, loc::MemRegionVal(FR), FTy);
+    SVal FieldValue = Retrieve(state, loc::MemRegionVal(FR), FTy).getSVal();
     StructVal = getBasicVals().consVals(FieldValue, StructVal);
   }
 
@@ -1099,28 +1103,22 @@ SVal RegionStoreManager::RetrieveArray(const GRState *state,
     ElementRegion* ER = MRMgr.getElementRegion(CAT->getElementType(), Idx, R,
 					       getContext());
     QualType ETy = ER->getElementType();
-    SVal ElementVal = Retrieve(state, loc::MemRegionVal(ER), ETy);
+    SVal ElementVal = Retrieve(state, loc::MemRegionVal(ER), ETy).getSVal();
     ArrayVal = getBasicVals().consVals(ElementVal, ArrayVal);
   }
 
   return ValMgr.makeCompoundVal(T, ArrayVal);
 }
 
-SVal RegionStoreManager::CastRetrievedVal(SVal V, const TypedRegion *R,
-                                           QualType castTy) {
-
+SValuator::CastResult RegionStoreManager::CastRetrievedVal(SVal V,
+                                                           const GRState *state,
+                                                           const TypedRegion *R,
+                                                           QualType castTy) {
   if (castTy.isNull())
-    return V;
+    return SValuator::CastResult(state, V);
   
   ASTContext &Ctx = getContext();  
-  QualType valTy = R->getValueType(Ctx);
-  castTy = Ctx.getCanonicalType(castTy);
-  
-  
-  if (valTy == castTy)
-    return V;
-  
-  return ValMgr.getSValuator().EvalCast(V, castTy);
+  return ValMgr.getSValuator().EvalCast(V, state, castTy, R->getValueType(Ctx));
 }
 
 //===----------------------------------------------------------------------===//

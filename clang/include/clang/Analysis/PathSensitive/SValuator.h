@@ -24,24 +24,28 @@ class GRState;
 class ValueManager;
 
 class SValuator {
+  friend class ValueManager;
 protected:
   ValueManager &ValMgr;
+
+  virtual SVal EvalCastNL(NonLoc val, QualType castTy) = 0;  
   
+  virtual SVal EvalCastL(Loc val, QualType castTy) = 0;
+
 public:
   SValuator(ValueManager &valMgr) : ValMgr(valMgr) {}
   virtual ~SValuator() {}
   
-  virtual SVal EvalCastNL(NonLoc val, QualType castTy) = 0;  
-
-  virtual SVal EvalCastL(Loc val, QualType castTy) = 0;
+  class CastResult : public std::pair<const GRState *, SVal> {
+  public:
+    const GRState *getState() const { return first; }
+    SVal getSVal() const { return second; }
+    CastResult(const GRState *s, SVal v)
+      : std::pair<const GRState*, SVal>(s, v) {}
+  };
   
-  SVal EvalCast(SVal val, QualType castTy) {
-    if (val.isUnknownOrUndef())
-      return val;
-    
-    return isa<Loc>(val) ? EvalCastL(cast<Loc>(val), castTy)
-                         : EvalCastNL(cast<NonLoc>(val), castTy);
-  }
+  CastResult EvalCast(SVal val, const GRState *state,
+                      QualType castTy, QualType originalType);
   
   virtual SVal EvalMinus(NonLoc val) = 0;
   

@@ -49,7 +49,8 @@ public:
     return new BasicStoreSubRegionMap();
   }
 
-  SVal Retrieve(const GRState *state, Loc loc, QualType T = QualType());  
+  SValuator::CastResult Retrieve(const GRState *state, Loc loc,
+                                 QualType T = QualType());  
 
   const GRState *Bind(const GRState *state, Loc L, SVal V) {
     return state->makeWithStore(BindInternal(state->getStore(), L, V));
@@ -269,10 +270,11 @@ static bool isHigherOrderRawPtr(QualType T, ASTContext &C) {
   }  
 }
  
-SVal BasicStoreManager::Retrieve(const GRState *state, Loc loc, QualType T) {
+SValuator::CastResult BasicStoreManager::Retrieve(const GRState *state,
+                                                  Loc loc, QualType T) {
   
   if (isa<UnknownVal>(loc))
-    return UnknownVal();
+    return SValuator::CastResult(state, UnknownVal());
   
   assert (!isa<UndefinedVal>(loc));
   
@@ -288,7 +290,7 @@ SVal BasicStoreManager::Retrieve(const GRState *state, Loc loc, QualType T) {
         QualType T = ER->getLocationType(Ctx);
 
         if (!isHigherOrderRawPtr(T, Ctx))
-          return UnknownVal();
+          return SValuator::CastResult(state, UnknownVal());
         
         // FIXME: Should check for element 0.
         // Otherwise, strip the element region.
@@ -296,25 +298,25 @@ SVal BasicStoreManager::Retrieve(const GRState *state, Loc loc, QualType T) {
       }
       
       if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
-        return UnknownVal();
+        return SValuator::CastResult(state, UnknownVal());
       
       BindingsTy B = GetBindings(state->getStore());
       BindingsTy::data_type* T = B.lookup(R);
-      return T ? *T : UnknownVal();
+      return SValuator::CastResult(state, T ? *T : UnknownVal());
     }
       
     case loc::ConcreteIntKind:
       // Some clients may call GetSVal with such an option simply because
       // they are doing a quick scan through their Locs (potentially to
       // invalidate their bindings).  Just return Undefined.
-      return UndefinedVal();            
+      return SValuator::CastResult(state, UndefinedVal());
       
     default:
       assert (false && "Invalid Loc.");
       break;
   }
   
-  return UnknownVal();
+  return SValuator::CastResult(state, UnknownVal());
 }
   
 Store BasicStoreManager::BindInternal(Store store, Loc loc, SVal V) {    
@@ -426,8 +428,8 @@ BasicStoreManager::RemoveDeadBindings(const GRState *state, Stmt* Loc,
         if (Marked.count(MR))
           break;
         
-        Marked.insert(MR);
-        SVal X = Retrieve(state, loc::MemRegionVal(MR));
+        Marked.insert(MR);        
+        SVal X = Retrieve(state, loc::MemRegionVal(MR)).getSVal();
     
         // FIXME: We need to handle symbols nested in region definitions.
         for (symbol_iterator SI=X.symbol_begin(),SE=X.symbol_end();SI!=SE;++SI)

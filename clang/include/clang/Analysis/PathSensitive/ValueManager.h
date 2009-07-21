@@ -26,6 +26,9 @@
 namespace llvm { class BumpPtrAllocator; }
 
 namespace clang {  
+
+class GRStateManager;
+  
 class ValueManager {
 
   ASTContext &Context;  
@@ -39,14 +42,17 @@ class ValueManager {
 
   MemRegionManager MemMgr;
   
+  GRStateManager &StateMgr;
+  
   const QualType ArrayIndexTy;
   const unsigned ArrayIndexWidth;
   
 public:
-  ValueManager(llvm::BumpPtrAllocator &alloc, ASTContext &context)
+  ValueManager(llvm::BumpPtrAllocator &alloc, ASTContext &context,
+               GRStateManager &stateMgr)
                : Context(context), BasicVals(Context, alloc),
                  SymMgr(Context, BasicVals, alloc),
-                 MemMgr(Context, alloc),
+                 MemMgr(Context, alloc), StateMgr(stateMgr),
                  ArrayIndexTy(Context.IntTy),
                  ArrayIndexWidth(Context.getTypeSize(ArrayIndexTy))  
   {
@@ -58,6 +64,8 @@ public:
   
   ASTContext &getContext() { return Context; }
   const ASTContext &getContext() const { return Context; }
+  
+  GRStateManager &getStateManager() { return StateMgr; }
   
   BasicValueFactory &getBasicValueFactory() { return BasicVals; }
   const BasicValueFactory &getBasicValueFactory() const { return BasicVals; }

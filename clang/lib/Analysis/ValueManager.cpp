@@ -56,6 +56,9 @@ NonLoc ValueManager::makeNonLoc(const SymExpr *lhs, BinaryOperator::Opcode op,
 
 
 SVal ValueManager::convertToArrayIndex(SVal V) {
+  if (V.isUnknownOrUndef())
+    return V;
+  
   // Common case: we have an appropriately sized integer.
   if (nonloc::ConcreteInt* CI = dyn_cast<nonloc::ConcreteInt>(&V)) {
     const llvm::APSInt& I = CI->getValue();
@@ -63,7 +66,7 @@ SVal ValueManager::convertToArrayIndex(SVal V) {
       return V;
   }
   
-  return SVator->EvalCast(V, ArrayIndexTy);
+  return SVator->EvalCastNL(cast<NonLoc>(V), ArrayIndexTy);
 }
 
 SVal ValueManager::getRegionValueSymbolVal(const MemRegion* R, QualType T) {

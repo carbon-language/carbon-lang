@@ -450,7 +450,7 @@ public:
   : EnvMgr(alloc),
     ISetFactory(alloc),
     GDMFactory(alloc),
-    ValueMgr(alloc, Ctx),
+    ValueMgr(alloc, Ctx, *this),
     Alloc(alloc),
     cfg(c),
     codedecl(cd),
@@ -693,11 +693,11 @@ inline SVal GRState::getSValAsScalarOrLoc(const Stmt *S) const {
 }
 
 inline SVal GRState::getSVal(Loc LV, QualType T) const {
-  return Mgr->StoreMgr->Retrieve(this, LV, T);
+  return Mgr->StoreMgr->Retrieve(this, LV, T).getSVal();
 }
 
 inline SVal GRState::getSVal(const MemRegion* R) const {
-  return Mgr->StoreMgr->Retrieve(this, loc::MemRegionVal(R));
+  return Mgr->StoreMgr->Retrieve(this, loc::MemRegionVal(R)).getSVal();
 }
   
 inline BasicValueFactory &GRState::getBasicVals() const {

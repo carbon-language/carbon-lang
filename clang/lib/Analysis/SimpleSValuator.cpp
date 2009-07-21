@@ -19,12 +19,14 @@ using namespace clang;
 
 namespace {
 class VISIBILITY_HIDDEN SimpleSValuator : public SValuator {
+protected:
+  virtual SVal EvalCastNL(NonLoc val, QualType castTy);    
+  virtual SVal EvalCastL(Loc val, QualType castTy);    
+
 public:
   SimpleSValuator(ValueManager &valMgr) : SValuator(valMgr) {}
   virtual ~SimpleSValuator() {}
   
-  virtual SVal EvalCastNL(NonLoc val, QualType castTy);    
-  virtual SVal EvalCastL(Loc val, QualType castTy);    
   virtual SVal EvalMinus(NonLoc val);    
   virtual SVal EvalComplement(NonLoc val);    
   virtual SVal EvalBinOpNN(BinaryOperator::Opcode op, NonLoc lhs, NonLoc rhs,
