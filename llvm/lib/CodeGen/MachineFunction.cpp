@@ -539,8 +539,27 @@ void MachineJumpTableInfo::dump() const { print(*cerr.stream()); }
 
 const Type *MachineConstantPoolEntry::getType() const {
   if (isMachineConstantPoolEntry())
-      return Val.MachineCPVal->getType();
+    return Val.MachineCPVal->getType();
   return Val.ConstVal->getType();
+}
+
+
+unsigned MachineConstantPoolEntry::getRelocatationInfo() const {
+  if (isMachineConstantPoolEntry())
+    return Val.MachineCPVal->getRelocatationInfo();
+  
+  // FIXME: This API sucks.
+  
+  // If no relocations, return 0.
+  if (!Val.ConstVal->ContainsRelocations())
+    return 0;
+
+  // If it contains no global relocations, return 1.
+  if (!Val.ConstVal->ContainsRelocations(Reloc::Global))
+    return 1;
+
+  // Otherwise, it has general relocations.
+  return 2;
 }
 
 MachineConstantPool::~MachineConstantPool() {

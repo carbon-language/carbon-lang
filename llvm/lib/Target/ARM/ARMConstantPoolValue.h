@@ -65,6 +65,13 @@ public:
   bool isStub() const { return Kind == ARMCP::CPStub; }
   unsigned char getPCAdjustment() const { return PCAdjust; }
 
+  virtual unsigned getRelocatationInfo() const {
+    // FIXME: This is conservatively claiming that these entries require a
+    // relocation, we may be able to do better than this.
+    return 2;
+  }
+
+  
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
                                         unsigned Alignment);
 
