@@ -24,8 +24,3 @@ AlphaTargetAsmInfo::AlphaTargetAsmInfo(const AlphaTargetMachine &TM)
   JumpTableDataSection = "\t.section .rodata\n";
   WeakRefDirective = "\t.weak\t";
 }
-
-unsigned AlphaTargetAsmInfo::RelocBehaviour() const {
-  return (TM.getRelocationModel() != Reloc::Static ?
-          Reloc::LocalOrGlobal : Reloc::Global);
-}
