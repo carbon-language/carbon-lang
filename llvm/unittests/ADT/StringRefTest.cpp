@@ -56,4 +56,16 @@ TEST(StringRefTest, Operators) {
   EXPECT_EQ('a', StringRef("aab")[1]);
 }
 
+TEST(StringRefTest, Utilities) {
+  StringRef Str("hello");
+  EXPECT_TRUE(Str.substr(3) == "lo");
+  EXPECT_TRUE(Str.substr(100) == "");
+  EXPECT_TRUE(Str.substr(0, 100) == "hello");
+  EXPECT_TRUE(Str.substr(4, 10) == "o");
+
+  EXPECT_TRUE(Str.startswith("he"));
+  EXPECT_FALSE(Str.startswith("helloworld"));
+  EXPECT_FALSE(Str.startswith("hi"));
+}
+
 } // end anonymous namespace

@@ -14,6 +14,7 @@
 #include <string>
 
 namespace llvm {
+
   /// StringRef - Represent a constant reference to a string, i.e. a character
   /// array and a length, which need not be null terminated.
   ///
@@ -24,13 +25,14 @@ namespace llvm {
   class StringRef {
   public:
     typedef const char *iterator;
+    static const size_t npos = std::string::npos;
 
   private:
     /// The start of the string, in an external buffer.
     const char *Data;
 
     /// The length of the string.
-    unsigned Length;
+    size_t Length;
 
   public:
     /// @name Constructors
@@ -121,7 +123,31 @@ namespace llvm {
     }
 
     /// @}
+    /// @name Utility Functions
+    /// @{
+
+    /// substr - Return a reference to a substring of this object.
+    ///
+    /// \param Start - The index of the starting character in the substring; if
+    /// the index is greater than the length of the string then the empty
+    /// substring will be returned.
+    ///
+    /// \param N - The number of characters to included in the substring. If N
+    /// exceeds the number of characters remaining in the string, the string
+    /// suffix (starting with \arg Start) will be returned.
+    StringRef substr(size_t Start, size_t N = npos) const {
+      Start = std::min(Start, Length);
+      return StringRef(Data + Start, std::min(N, Length - Start));
+    }
+
+    /// startswith - Check if this string starts with the given \arg Prefix.
+    bool startswith(const StringRef &Prefix) const { 
+      return substr(0, Prefix.Length) == Prefix;
+    }
+
+    /// @}
   };
+
 }
 
 #endif
