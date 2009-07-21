@@ -27,7 +27,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Dump.h"
 #include <cmath>
+#include <sstream>
 
 namespace llvm {
 
@@ -79,7 +81,7 @@ namespace llvm {
     /// FunctionSize - The number of instructions present in the function
     uint64_t FunctionSize;
 
-    typedef DenseMap<MachineInstr*, unsigned> Mi2IndexMap;
+    typedef DenseMap<const MachineInstr*, unsigned> Mi2IndexMap;
     Mi2IndexMap mi2iMap_;
 
     typedef std::vector<MachineInstr*> Index2MiMap;
@@ -198,7 +200,7 @@ namespace llvm {
     }
 
     /// getInstructionIndex - returns the base index of instr
-    unsigned getInstructionIndex(MachineInstr* instr) const {
+    unsigned getInstructionIndex(const MachineInstr* instr) const {
       Mi2IndexMap::const_iterator it = mi2iMap_.find(instr);
       assert(it != mi2iMap_.end() && "Invalid instruction!");
       return it->second;
@@ -538,6 +540,26 @@ namespace llvm {
     void printRegName(unsigned reg) const;
   };
 
+  // IntervalPrefixPrinter - Print live interval indices before each
+  // instruction.
+  class IntervalPrefixPrinter : public PrefixPrinter {
+  private:
+    const LiveIntervals &liinfo;
+
+  public:
+    IntervalPrefixPrinter(const LiveIntervals &lii)
+        : liinfo(lii) {};
+
+    std::string operator()(const MachineBasicBlock &) const {
+      return("");
+    };
+    
+    std::string operator()(const MachineInstr &instr) const {
+      std::stringstream out;
+      out << liinfo.getInstructionIndex(&instr);
+      return(out.str());
+    };  
+  };
 } // End llvm namespace
 
 #endif

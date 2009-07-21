@@ -464,7 +464,7 @@ void LiveIntervals::scaleNumbering(int factor) {
   i2miMap_.resize(highestSlot + 1);
   for (Mi2IndexMap::iterator MI = mi2iMap_.begin(), ME = mi2iMap_.end();
        MI != ME; ++MI) {
-    i2miMap_[MI->second] = MI->first;
+    i2miMap_[MI->second] = const_cast<MachineInstr *>(MI->first);
   }
 
 }
@@ -501,14 +501,7 @@ void LiveIntervals::print(std::ostream &O, const Module* ) const {
   }
 
   O << "********** MACHINEINSTRS **********\n";
-  for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
-       mbbi != mbbe; ++mbbi) {
-    O << ((Value*)mbbi->getBasicBlock())->getName() << ":\n";
-    for (MachineBasicBlock::iterator mii = mbbi->begin(),
-           mie = mbbi->end(); mii != mie; ++mii) {
-      O << getInstructionIndex(mii) << '\t' << *mii;
-    }
-  }
+  mf_->print(O, IntervalPrefixPrinter(*this));
 }
 
 /// conflictsWithPhysRegDef - Returns true if the specified register
