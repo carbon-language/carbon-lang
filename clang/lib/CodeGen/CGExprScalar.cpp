@@ -723,7 +723,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     // Bool = ((int)Bool+1) != 0
     // An interesting aspect of this is that increment is always true.
     // Decrement does not have this property.
-    NextVal = VMContext.getConstantIntTrue();
+    NextVal = VMContext.getTrue();
   } else if (isa<llvm::IntegerType>(InVal->getType())) {
     NextVal = VMContext.getConstantInt(InVal->getType(), AmountVal);
     NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
@@ -1320,7 +1320,7 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   PN->reserveOperandSpace(2);  // Normal case, two inputs.
   for (llvm::pred_iterator PI = pred_begin(ContBlock), PE = pred_end(ContBlock);
        PI != PE; ++PI)
-    PN->addIncoming(VMContext.getConstantIntFalse(), *PI);
+    PN->addIncoming(VMContext.getFalse(), *PI);
   
   CGF.PushConditionalTempDestruction();
   CGF.EmitBlock(RHSBlock);
@@ -1367,7 +1367,7 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
   PN->reserveOperandSpace(2);  // Normal case, two inputs.
   for (llvm::pred_iterator PI = pred_begin(ContBlock), PE = pred_end(ContBlock);
        PI != PE; ++PI)
-    PN->addIncoming(VMContext.getConstantIntTrue(), *PI);
+    PN->addIncoming(VMContext.getTrue(), *PI);
 
   CGF.PushConditionalTempDestruction();
 
