@@ -49,7 +49,7 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
   MaxOperandLength = 0;
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
-  LessPrivateGlobalPrefix = "";
+  LinkerPrivateGlobalPrefix = "";
   JumpTableSpecialLabelPrefix = 0;
   GlobalVarAddrPrefix = "";
   GlobalVarAddrSuffix = "";

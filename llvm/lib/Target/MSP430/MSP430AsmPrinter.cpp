@@ -82,7 +82,7 @@ FunctionPass *llvm::createMSP430CodePrinterPass(formatted_raw_ostream &o,
 
 bool MSP430AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix(),
-                     TAI->getLessPrivateGlobalPrefix());
+                     TAI->getLinkerPrivateGlobalPrefix());
   return false; // success
 }
 

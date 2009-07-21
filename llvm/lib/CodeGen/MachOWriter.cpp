@@ -747,6 +747,7 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
   GV(gv), n_strx(0), n_type(sect == NO_SECT ? N_UNDF : N_SECT), n_sect(sect),
   n_desc(0), n_value(0) {
 
+  // FIXME: This is completely broken, it should use the mangler interface.
   switch (GV->getLinkage()) {
   default:
     llvm_unreachable("Unexpected linkage type!");
@@ -765,7 +766,7 @@ MachOSym::MachOSym(const GlobalValue *gv, std::string name, uint8_t sect,
     GVName = TAI->getPrivateGlobalPrefix() + name;
     break;
   case GlobalValue::LinkerPrivateLinkage:
-    GVName = TAI->getLessPrivateGlobalPrefix() + name;
+    GVName = TAI->getLinkerPrivateGlobalPrefix() + name;
     break;
   case GlobalValue::InternalLinkage:
     GVName = TAI->getGlobalPrefix() + name;

@@ -57,7 +57,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
   // Syntax:
   GlobalPrefix = "_";
   PrivateGlobalPrefix = "L";
-  LessPrivateGlobalPrefix = "l";  // Marker for some ObjC metadata
+  LinkerPrivateGlobalPrefix = "l";  // Marker for some ObjC metadata
   NeedsSet = true;
   NeedsIndirectEncoding = true;
   AllowQuotesInName = true;
@@ -105,17 +105,18 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
 }
 
 /// emitUsedDirectiveFor - On Darwin, internally linked data beginning with
-/// the PrivateGlobalPrefix or the LessPrivateGlobalPrefix does not have the
+/// the PrivateGlobalPrefix or the LinkerPrivateGlobalPrefix does not have the
 /// directive emitted (this occurs in ObjC metadata).
 bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
                                                Mangler *Mang) const {
   if (!GV) return false;
   
-  // Check whether the mangled name has the "Private" or "LessPrivate" prefix.
+  // Check whether the mangled name has the "Private" or "LinkerPrivate" prefix.
   if (GV->hasLocalLinkage() && !isa<Function>(GV)) {
     const std::string &Name = Mang->getMangledName(GV);
+    // FIXME: Always "L" and "l", simplify!
     const char *PGPrefix = getPrivateGlobalPrefix();
-    const char *LPGPrefix = getLessPrivateGlobalPrefix();
+    const char *LPGPrefix = getLinkerPrivateGlobalPrefix();
     unsigned PGPLen = strlen(PGPrefix);
     unsigned LPGPLen = strlen(LPGPrefix);
 

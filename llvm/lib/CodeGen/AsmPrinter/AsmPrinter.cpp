@@ -155,7 +155,7 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, TAI->getGlobalPrefix(), TAI->getPrivateGlobalPrefix(),
-                     TAI->getLessPrivateGlobalPrefix());
+                     TAI->getLinkerPrivateGlobalPrefix());
   
   if (TAI->doesAllowQuotesInName())
     Mang->setUseQuotes(true);

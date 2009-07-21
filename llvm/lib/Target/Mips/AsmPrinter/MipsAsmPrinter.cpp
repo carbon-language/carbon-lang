@@ -452,7 +452,7 @@ bool MipsAsmPrinter::
 doInitialization(Module &M) 
 {
   Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix(),
-                     TAI->getLessPrivateGlobalPrefix());
+                     TAI->getLinkerPrivateGlobalPrefix());
 
   // Tell the assembler which ABI we are using
   O << "\t.section .mdebug." << emitCurrentABIString() << '\n';

@@ -239,10 +239,10 @@ namespace llvm {
     /// have names in the .o file.  This is often "." or "L".
     const char *PrivateGlobalPrefix;      // Defaults to "."
     
-    /// LessPrivateGlobalPrefix - This prefix is used for symbols that should
+    /// LinkerPrivateGlobalPrefix - This prefix is used for symbols that should
     /// be passed through the assembler but be removed by the linker.  This
     /// is "l" on Darwin, currently used for some ObjC metadata.
-    const char *LessPrivateGlobalPrefix;      // Defaults to ""
+    const char *LinkerPrivateGlobalPrefix;      // Defaults to ""
     
     /// JumpTableSpecialLabelPrefix - If not null, a extra (dead) label is
     /// emitted before jump tables with the specified prefix.
@@ -708,8 +708,8 @@ namespace llvm {
     const char *getPrivateGlobalPrefix() const {
       return PrivateGlobalPrefix;
     }
-    const char *getLessPrivateGlobalPrefix() const {
-      return LessPrivateGlobalPrefix;
+    const char *getLinkerPrivateGlobalPrefix() const {
+      return LinkerPrivateGlobalPrefix;
     }
     const char *getJumpTableSpecialLabelPrefix() const {
       return JumpTableSpecialLabelPrefix;
