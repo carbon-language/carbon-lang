@@ -411,8 +411,7 @@ printOperand(const MachineInstr *MI, int opNum)
 }
 
 void MipsAsmPrinter::
-printUnsignedImm(const MachineInstr *MI, int opNum) 
-{
+printUnsignedImm(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
   if (MO.getType() == MachineOperand::MO_Immediate)
     O << (unsigned short int)MO.getImm();
@@ -421,8 +420,7 @@ printUnsignedImm(const MachineInstr *MI, int opNum)
 }
 
 void MipsAsmPrinter::
-printMemOperand(const MachineInstr *MI, int opNum, const char *Modifier) 
-{
+printMemOperand(const MachineInstr *MI, int opNum, const char *Modifier) {
   // when using stack locations for not load/store instructions
   // print the same way as all normal 3 operand instructions.
   if (Modifier && !strcmp(Modifier, "stackloc")) {
@@ -442,18 +440,14 @@ printMemOperand(const MachineInstr *MI, int opNum, const char *Modifier)
 }
 
 void MipsAsmPrinter::
-printFCCOperand(const MachineInstr *MI, int opNum, const char *Modifier) 
-{
+printFCCOperand(const MachineInstr *MI, int opNum, const char *Modifier) {
   const MachineOperand& MO = MI->getOperand(opNum);
   O << Mips::MipsFCCToString((Mips::CondCode)MO.getImm()); 
 }
 
-bool MipsAsmPrinter::
-doInitialization(Module &M) 
-{
-  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix(),
-                     TAI->getLinkerPrivateGlobalPrefix());
-
+bool MipsAsmPrinter::doInitialization(Module &M) {
+  // FIXME: Use SwitchToDataSection.
+  
   // Tell the assembler which ABI we are using
   O << "\t.section .mdebug." << emitCurrentABIString() << '\n';
 
@@ -465,11 +459,11 @@ doInitialization(Module &M)
   // return to previous section
   O << "\t.previous" << '\n'; 
 
-  return false; // success
+  return AsmPrinter::doInitialization(M);
 }
 
 void MipsAsmPrinter::
-printModuleLevelGV(const GlobalVariable* GVar) {
+printModuleLevelGV(const GlobalVariable *GVar) {
   const TargetData *TD = TM.getTargetData();
 
   if (!GVar->hasInitializer())
