@@ -385,7 +385,7 @@ void Driver::PrintHelp(bool ShowHidden) const {
   OS.flush();
 }
 
-void Driver::PrintVersion(const Compilation &C) const {
+void Driver::PrintVersion(const Compilation &C, llvm::raw_ostream &OS) const {
   static char buf[] = "$URL$";
   char *zap = strstr(buf, "/lib/Driver");
   if (zap)
@@ -402,17 +402,16 @@ void Driver::PrintVersion(const Compilation &C) const {
 #endif
   // FIXME: The following handlers should use a callback mechanism, we
   // don't know what the client would like to do.
-
-  llvm::errs() << "clang version " CLANG_VERSION_STRING " (" 
+  OS << "clang version " CLANG_VERSION_STRING " (" 
                << vers << " " << revision << ")" << '\n';
 
   const ToolChain &TC = C.getDefaultToolChain();
-  llvm::errs() << "Target: " << TC.getTripleString() << '\n';
+  OS << "Target: " << TC.getTripleString() << '\n';
 
   // Print the threading model.
   //
   // FIXME: Implement correctly.
-  llvm::errs() << "Thread model: " << "posix" << '\n';
+  OS << "Thread model: " << "posix" << '\n';
 }
 
 bool Driver::HandleImmediateArgs(const Compilation &C) {
@@ -432,13 +431,14 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   if (C.getArgs().hasArg(options::OPT__version)) {
-    PrintVersion(C);
+    // Follow gcc behavior and use stdout for --version and stderr for -v
+    PrintVersion(C, llvm::outs());
     return false;
   }
 
   if (C.getArgs().hasArg(options::OPT_v) || 
       C.getArgs().hasArg(options::OPT__HASH_HASH_HASH)) {
-    PrintVersion(C);
+    PrintVersion(C, llvm::errs());
     SuppressMissingInputWarning = true;
   }
 
