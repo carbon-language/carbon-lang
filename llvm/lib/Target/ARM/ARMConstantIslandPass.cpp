@@ -71,8 +71,9 @@ namespace {
       MachineInstr *MI;
       MachineInstr *CPEMI;
       unsigned MaxDisp;
-      CPUser(MachineInstr *mi, MachineInstr *cpemi, unsigned maxdisp)
-        : MI(mi), CPEMI(cpemi), MaxDisp(maxdisp) {}
+      bool NegOk;
+      CPUser(MachineInstr *mi, MachineInstr *cpemi, unsigned maxdisp, bool neg)
+        : MI(mi), CPEMI(cpemi), MaxDisp(maxdisp), NegOk(neg) {}
     };
 
     /// CPUsers - Keep track of all of the machine instructions that use various
@@ -158,8 +159,8 @@ namespace {
     void RemoveDeadCPEMI(MachineInstr *CPEMI);
     bool RemoveUnusedCPEntries();
     bool CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
-                      MachineInstr *CPEMI, unsigned Disp,
-                      bool DoDump);
+                      MachineInstr *CPEMI, unsigned Disp, bool NegOk,
+                      bool DoDump = false);
     bool WaterIsInRange(unsigned UserOffset, MachineBasicBlock *Water,
                         CPUser &U);
     bool OffsetIsInRange(unsigned UserOffset, unsigned TrialOffset,
@@ -225,17 +226,17 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &Fn) {
   // the numbers agree with the position of the block in the function.
   Fn.RenumberBlocks();
 
-  /// Thumb functions containing constant pools get 2-byte alignment.
+  /// Thumb1 functions containing constant pools get 2-byte alignment.
   /// This is so we can keep exact track of where the alignment padding goes.
   /// Set default.
-  AFI->setAlign(isThumb ? 1U : 2U);
+  AFI->setAlign(isThumb1Only ? 1U : 2U);
 
   // Perform the initial placement of the constant pool entries.  To start with,
   // we put them all at the end of the function.
   std::vector<MachineInstr*> CPEMIs;
   if (!MCP.isEmpty()) {
     DoInitialPlacement(Fn, CPEMIs);
-    if (isThumb)
+    if (isThumb1Only)
       AFI->setAlign(2U);
   }
 
@@ -440,6 +441,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           unsigned Bits = 0;
           unsigned Scale = 1;
           unsigned TSFlags = I->getDesc().TSFlags;
+          bool NegOk = false;
           switch (TSFlags & ARMII::AddrModeMask) {
           default:
             // Constant pool entries can reach anything.
@@ -450,20 +452,24 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
               break;
             }
             llvm_unreachable("Unknown addressing mode for CP reference!");
-          case ARMII::AddrMode1: // AM1: 8 bits << 2
+          case ARMII::AddrMode1: // AM1: 8 bits << 2 - FIXME: this is wrong?
             Bits = 8;
             Scale = 4;  // Taking the address of a CP entry.
+            NegOk = true;
             break;
           case ARMII::AddrMode2:
             Bits = 12;  // +-offset_12
+            NegOk = true;
             break;
           case ARMII::AddrMode3:
             Bits = 8;   // +-offset_8
+            NegOk = true;
             break;
             // addrmode4 has no immediate offset.
           case ARMII::AddrMode5:
             Bits = 8;
             Scale = 4;  // +-(offset_8*4)
+            NegOk = true;
             break;
             // addrmode6 has no immediate offset.
           case ARMII::AddrModeT1_1:
@@ -490,7 +496,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           unsigned CPI = I->getOperand(op).getIndex();
           MachineInstr *CPEMI = CPEMIs[CPI];
           unsigned MaxOffs = ((1 << Bits)-1) * Scale;
-          CPUsers.push_back(CPUser(I, CPEMI, MaxOffs));
+          CPUsers.push_back(CPUser(I, CPEMI, MaxOffs, NegOk));
 
           // Increment corresponding CPEntry reference count.
           CPEntry *CPE = findConstPoolEntry(CPI, CPEMI);
@@ -651,7 +657,7 @@ MachineBasicBlock *ARMConstantIslands::SplitBlockBeforeInstr(MachineInstr *MI) {
 
   // We removed instructions from UserMBB, subtract that off from its size.
   // Add 2 or 4 to the block to count the unconditional branch we added to it.
-  unsigned delta = isThumb ? 2 : 4;
+  unsigned delta = isThumb1Only ? 2 : 4;
   BBSizes[OrigBBI] -= NewBBSize - delta;
 
   // ...and adjust BBOffsets for NewBB accordingly.
@@ -693,8 +699,7 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
 /// Water (a basic block) will be in range for the specific MI.
 
 bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
-                         MachineBasicBlock* Water, CPUser &U)
-{
+                                        MachineBasicBlock* Water, CPUser &U) {
   unsigned MaxDisp = U.MaxDisp;
   MachineFunction::iterator I = next(MachineFunction::iterator(Water));
   unsigned CPEOffset = BBOffsets[Water->getNumber()] +
@@ -706,14 +711,14 @@ bool ARMConstantIslands::WaterIsInRange(unsigned UserOffset,
   if (CPEOffset < UserOffset)
     UserOffset += U.CPEMI->getOperand(2).getImm();
 
-  return OffsetIsInRange (UserOffset, CPEOffset, MaxDisp, !isThumb);
+  return OffsetIsInRange(UserOffset, CPEOffset, MaxDisp, U.NegOk);
 }
 
 /// CPEIsInRange - Returns true if the distance between specific MI and
 /// specific ConstPool entry instruction can fit in MI's displacement field.
 bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
-                                      MachineInstr *CPEMI,
-                                      unsigned MaxDisp, bool DoDump) {
+                                      MachineInstr *CPEMI, unsigned MaxDisp,
+                                      bool NegOk, bool DoDump) {
   unsigned CPEOffset  = GetOffsetOf(CPEMI);
   assert(CPEOffset%4 == 0 && "Misaligned CPE");
 
@@ -725,7 +730,7 @@ bool ARMConstantIslands::CPEIsInRange(MachineInstr *MI, unsigned UserOffset,
          << " offset=" << int(CPEOffset-UserOffset) << "\t" << *MI;
   }
 
-  return OffsetIsInRange(UserOffset, CPEOffset, MaxDisp, !isThumb);
+  return OffsetIsInRange(UserOffset, CPEOffset, MaxDisp, NegOk);
 }
 
 #ifndef NDEBUG
@@ -827,7 +832,7 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
   MachineInstr *CPEMI  = U.CPEMI;
 
   // Check to see if the CPE is already in-range.
-  if (CPEIsInRange(UserMI, UserOffset, CPEMI, U.MaxDisp, true)) {
+  if (CPEIsInRange(UserMI, UserOffset, CPEMI, U.MaxDisp, U.NegOk, true)) {
     DOUT << "In range\n";
     return 1;
   }
@@ -842,7 +847,7 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
     // Removing CPEs can leave empty entries, skip
     if (CPEs[i].CPEMI == NULL)
       continue;
-    if (CPEIsInRange(UserMI, UserOffset, CPEs[i].CPEMI, U.MaxDisp, false)) {
+    if (CPEIsInRange(UserMI, UserOffset, CPEs[i].CPEMI, U.MaxDisp, U.NegOk)) {
       DOUT << "Replacing CPE#" << CPI << " with CPE#" << CPEs[i].CPI << "\n";
       // Point the CPUser node to the replacement
       U.CPEMI = CPEs[i].CPEMI;
