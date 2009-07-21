@@ -1619,17 +1619,18 @@ void MSILWriter::printGlobalVariables() {
 
 
 const char* MSILWriter::getLibraryName(const Function* F) {
-  return getLibraryForSymbol(F->getName().c_str(), true, F->getCallingConv());
+  return getLibraryForSymbol(F->getName(), true, F->getCallingConv());
 }
 
 
 const char* MSILWriter::getLibraryName(const GlobalVariable* GV) {
-  return getLibraryForSymbol(Mang->getMangledName(GV).c_str(), false, 0);
+  return getLibraryForSymbol(Mang->getMangledName(GV), false, 0);
 }
 
 
-const char* MSILWriter::getLibraryForSymbol(const char* Name, bool isFunction,
-                                           unsigned CallingConv) {
+const char* MSILWriter::getLibraryForSymbol(const StringRef &Name, 
+                                            bool isFunction,
+                                            unsigned CallingConv) {
   // TODO: Read *.def file with function and libraries definitions.
   return "MSVCRT.DLL";  
 }

@@ -252,7 +252,7 @@ namespace {
 
     const char* getLibraryName(const GlobalVariable* GV); 
     
-    const char* getLibraryForSymbol(const char* Name, bool isFunction,
+    const char* getLibraryForSymbol(const StringRef &Name, bool isFunction,
                                     unsigned CallingConv);
 
     void printExternals();
