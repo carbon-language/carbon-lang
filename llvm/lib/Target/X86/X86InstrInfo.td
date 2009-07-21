@@ -218,6 +218,10 @@ def brtarget : Operand<OtherVT> {
   let PrintMethod = "print_pcrel_imm";
 }
 
+def brtarget8 : Operand<OtherVT> {
+  let PrintMethod = "print_pcrel_imm";
+}
+
 //===----------------------------------------------------------------------===//
 // X86 Complex Pattern Definitions.
 //
@@ -527,6 +531,26 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
 
 // Conditional branches
 let Uses = [EFLAGS] in {
+// Short conditional jumps
+def JO8   : IBr<0x70, (ins brtarget8:$dst), "jo\t$dst", []>;
+def JNO8  : IBr<0x71, (ins brtarget8:$dst), "jno\t$dst", []>;
+def JB8   : IBr<0x72, (ins brtarget8:$dst), "jb\t$dst", []>;
+def JAE8  : IBr<0x73, (ins brtarget8:$dst), "jae\t$dst", []>;
+def JE8   : IBr<0x74, (ins brtarget8:$dst), "je\t$dst", []>;
+def JNE8  : IBr<0x75, (ins brtarget8:$dst), "jne\t$dst", []>;
+def JBE8  : IBr<0x76, (ins brtarget8:$dst), "jbe\t$dst", []>;
+def JA8   : IBr<0x77, (ins brtarget8:$dst), "ja\t$dst", []>;
+def JS8   : IBr<0x78, (ins brtarget8:$dst), "js\t$dst", []>;
+def JNS8  : IBr<0x79, (ins brtarget8:$dst), "jns\t$dst", []>;
+def JP8   : IBr<0x7A, (ins brtarget8:$dst), "jp\t$dst", []>;
+def JNP8  : IBr<0x7B, (ins brtarget8:$dst), "jnp\t$dst", []>;
+def JL8   : IBr<0x7C, (ins brtarget8:$dst), "jl\t$dst", []>;
+def JGE8  : IBr<0x7D, (ins brtarget8:$dst), "jge\t$dst", []>;
+def JLE8  : IBr<0x7E, (ins brtarget8:$dst), "jle\t$dst", []>;
+def JG8   : IBr<0x7F, (ins brtarget8:$dst), "jg\t$dst", []>;
+
+def JCXZ8 : IBr<0xE3, (ins brtarget8:$dst), "jcxz\t$dst", []>;
+
 def JE  : IBr<0x84, (ins brtarget:$dst), "je\t$dst",
               [(X86brcond bb:$dst, X86_COND_E, EFLAGS)]>, TB;
 def JNE : IBr<0x85, (ins brtarget:$dst), "jne\t$dst",
