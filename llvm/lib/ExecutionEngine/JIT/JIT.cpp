@@ -686,7 +686,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     if (GV->getName() == "__dso_handle")
       return (void*)&__dso_handle;
 #endif
-    Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName().c_str());
+    Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(GV->getName());
     if (Ptr == 0 && !areDlsymStubsEnabled()) {
       llvm_report_error("Could not resolve external global address: "
                         +GV->getName());

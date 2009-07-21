@@ -993,7 +993,7 @@ void ExecutionEngine::emitGlobals() {
         // External variable reference. Try to use the dynamic loader to
         // get a pointer to it.
         if (void *SymAddr =
-            sys::DynamicLibrary::SearchForAddressOfSymbol(I->getName().c_str()))
+            sys::DynamicLibrary::SearchForAddressOfSymbol(I->getName()))
           addGlobalMapping(I, SymAddr);
         else {
           llvm_report_error("Could not resolve external global address: "

@@ -568,7 +568,7 @@ void SelectionDAGISel::CodeGenAndEmitDAG() {
   if (ViewDAGCombine1 || ViewLegalizeTypesDAGs || ViewLegalizeDAGs ||
       ViewDAGCombine2 || ViewDAGCombineLT || ViewISelDAGs || ViewSchedDAGs ||
       ViewSUnitDAGs)
-    BlockName = CurDAG->getMachineFunction().getFunction()->getName() + ':' +
+    BlockName = CurDAG->getMachineFunction().getFunction()->getName() + ":" +
                 BB->getBasicBlock()->getName();
 
   DOUT << "Initial selection DAG:\n";

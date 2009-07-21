@@ -1432,7 +1432,7 @@ void JIT::updateDlsymStubTable() {
   SmallVector<unsigned, 8> Offsets;
   for (unsigned i = 0; i != GVs.size(); ++i) {
     Offsets.push_back(offset);
-    offset += GVs[i]->getName().length() + 1;
+    offset += GVs[i]->getName().size() + 1;
   }
   for (StringMapConstIterator<void*> i = ExtFns.begin(), e = ExtFns.end(); 
        i != e; ++i) {
