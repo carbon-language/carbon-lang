@@ -24,10 +24,7 @@ void f2() {
 void f3(int a) { // expected-note{{'a' declared here}}
   struct X {
     struct Y {
-      int f() {
-        return a; // expected-error{{reference to local variable 'a' declared in enclosed function 'f3'}}
-        return 1;
-      }
+      int f() { return a; } // expected-error{{reference to local variable 'a' declared in enclosed function 'f3'}}
     };
   };
 }
