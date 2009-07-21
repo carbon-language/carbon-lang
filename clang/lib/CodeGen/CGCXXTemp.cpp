@@ -29,12 +29,12 @@ void CodeGenFunction::PushCXXTemporary(const CXXTemporary *Temporary,
     // Initialize it to false. This initialization takes place right after
     // the alloca insert point.
     llvm::StoreInst *SI = 
-      new llvm::StoreInst(llvm::ConstantInt::getFalse(), CondPtr);
+      new llvm::StoreInst(VMContext.getConstantIntFalse(), CondPtr);
     llvm::BasicBlock *Block = AllocaInsertPt->getParent();
     Block->getInstList().insertAfter((llvm::Instruction *)AllocaInsertPt, SI);
 
     // Now set it to true.
-    Builder.CreateStore(llvm::ConstantInt::getTrue(), CondPtr);
+    Builder.CreateStore(VMContext.getConstantIntTrue(), CondPtr);
   }
   
   LiveTemporaries.push_back(CXXLiveTemporaryInfo(Temporary, Ptr, DtorBlock, 
@@ -74,7 +74,7 @@ void CodeGenFunction::PopCXXTemporary() {
 
   if (CondEnd) {
     // Reset the condition. to false.
-    Builder.CreateStore(llvm::ConstantInt::getFalse(), Info.CondPtr);
+    Builder.CreateStore(VMContext.getConstantIntFalse(), Info.CondPtr);
     EmitBlock(CondEnd);
   }
   
