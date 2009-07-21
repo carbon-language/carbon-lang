@@ -113,15 +113,11 @@ bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
   
   // Check whether the mangled name has the "Private" or "LinkerPrivate" prefix.
   if (GV->hasLocalLinkage() && !isa<Function>(GV)) {
+    // FIXME: ObjC metadata is currently emitted as internal symbols that have
+    // \1L and \0l prefixes on them.  Fix them to be Private/LinkerPrivate and
+    // this horrible hack can go away.
     const std::string &Name = Mang->getMangledName(GV);
-    // FIXME: Always "L" and "l", simplify!
-    const char *PGPrefix = getPrivateGlobalPrefix();
-    const char *LPGPrefix = getLinkerPrivateGlobalPrefix();
-    unsigned PGPLen = strlen(PGPrefix);
-    unsigned LPGPLen = strlen(LPGPrefix);
-
-    if ((PGPLen != 0 && Name.substr(0, PGPLen) == PGPrefix) ||
-        (LPGPLen != 0 && Name.substr(0, LPGPLen) == LPGPrefix))
+    if (Name[0] == 'L' || Name[0] == 'l')
       return false;
   }
 
