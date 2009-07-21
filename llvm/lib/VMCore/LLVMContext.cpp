@@ -174,7 +174,7 @@ ConstantAggregateZero* LLVMContext::getConstantAggregateZero(const Type* Ty) {
 // ConstantArray accessors.
 Constant* LLVMContext::getConstantArray(const ArrayType* T,
                                         const std::vector<Constant*>& V) {
-  return ConstantArray::get(T, V);
+  return pImpl->getConstantArray(T, V);
 }
 
 Constant* LLVMContext::getConstantArray(const ArrayType* T,
@@ -652,4 +652,13 @@ void LLVMContext::erase(MDNode *M) {
 
 void LLVMContext::erase(ConstantAggregateZero *Z) {
   pImpl->erase(Z);
+}
+
+void LLVMContext::erase(ConstantArray *C) {
+  pImpl->erase(C);
+}
+
+Constant *LLVMContext::replaceUsesOfWithOnConstant(ConstantArray *CA,
+                                               Value *From, Value *To, Use *U) {
+  return pImpl->replaceUsesOfWithOnConstant(CA, From, To, U);
 }

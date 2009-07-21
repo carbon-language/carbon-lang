@@ -44,6 +44,7 @@ class Type;
 class APInt;
 class APFloat;
 class Value;
+class Use;
 
 /// This is an important class for using LLVM in a threaded context.  It
 /// (opaquely) owns and manages the core "global" data of LLVM's core 
@@ -273,6 +274,11 @@ public:
   void erase(MDString *M);
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
+  void erase(ConstantArray *Z);
+  
+  // RAUW helpers
+  Constant *replaceUsesOfWithOnConstant(ConstantArray *CA,
+                                             Value *From, Value *To, Use *U);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

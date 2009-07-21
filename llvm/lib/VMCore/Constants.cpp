@@ -1033,60 +1033,11 @@ void ConstantAggregateZero::destroyConstant() {
   destroyConstantImpl();
 }
 
-//---- ConstantArray::get() implementation...
-//
-namespace llvm {
-  template<>
-  struct ConvertConstantType<ConstantArray, ArrayType> {
-    static void convert(ConstantArray *OldC, const ArrayType *NewTy) {
-      // Make everyone now use a constant of the new type...
-      std::vector<Constant*> C;
-      for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
-        C.push_back(cast<Constant>(OldC->getOperand(i)));
-      Constant *New = ConstantArray::get(NewTy, C);
-      assert(New != OldC && "Didn't replace constant??");
-      OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();    // This constant is now dead, destroy it.
-    }
-  };
-}
-
-static std::vector<Constant*> getValType(ConstantArray *CA) {
-  std::vector<Constant*> Elements;
-  Elements.reserve(CA->getNumOperands());
-  for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-    Elements.push_back(cast<Constant>(CA->getOperand(i)));
-  return Elements;
-}
-
-typedef ValueMap<std::vector<Constant*>, ArrayType, 
-                 ConstantArray, true /*largekey*/> ArrayConstantsTy;
-static ManagedStatic<ArrayConstantsTy> ArrayConstants;
-
-Constant *ConstantArray::get(const ArrayType *Ty,
-                             const std::vector<Constant*> &V) {
-  // If this is an all-zero array, return a ConstantAggregateZero object
-  if (!V.empty()) {
-    Constant *C = V[0];
-    if (!C->isNullValue()) {
-      // Implicitly locked.
-      return ArrayConstants->getOrCreate(Ty, V);
-    }
-    for (unsigned i = 1, e = V.size(); i != e; ++i)
-      if (V[i] != C) {
-        // Implicitly locked.
-        return ArrayConstants->getOrCreate(Ty, V);
-      }
-  }
-  
-  return Ty->getContext().getConstantAggregateZero(Ty);
-}
-
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantArray::destroyConstant() {
   // Implicitly locked.
-  ArrayConstants->remove(this);
+  getType()->getContext().erase(this);
   destroyConstantImpl();
 }
 
@@ -2160,77 +2111,10 @@ const char *ConstantExpr::getOpcodeName() const {
 /// array instance.
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 Use *U) {
-  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
-  Constant *ToC = cast<Constant>(To);
-
-  std::pair<ArrayConstantsTy::MapKey, Constant*> Lookup;
-  Lookup.first.first = getType();
-  Lookup.second = this;
-
-  std::vector<Constant*> &Values = Lookup.first.second;
-  Values.reserve(getNumOperands());  // Build replacement array.
-
-  // Fill values with the modified operands of the constant array.  Also, 
-  // compute whether this turns into an all-zeros array.
-  bool isAllZeros = false;
-  unsigned NumUpdated = 0;
-  if (!ToC->isNullValue()) {
-    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
-      Constant *Val = cast<Constant>(O->get());
-      if (Val == From) {
-        Val = ToC;
-        ++NumUpdated;
-      }
-      Values.push_back(Val);
-    }
-  } else {
-    isAllZeros = true;
-    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
-      Constant *Val = cast<Constant>(O->get());
-      if (Val == From) {
-        Val = ToC;
-        ++NumUpdated;
-      }
-      Values.push_back(Val);
-      if (isAllZeros) isAllZeros = Val->isNullValue();
-    }
-  }
-  
-  Constant *Replacement = 0;
-  if (isAllZeros) {
-    Replacement =
-              From->getType()->getContext().getConstantAggregateZero(getType());
-  } else {
-    // Check to see if we have this array type already.
-    sys::SmartScopedWriter<true> Writer(*ConstantsLock);
-    bool Exists;
-    ArrayConstantsTy::MapTy::iterator I =
-      ArrayConstants->InsertOrGetItem(Lookup, Exists);
-    
-    if (Exists) {
-      Replacement = I->second;
-    } else {
-      // Okay, the new shape doesn't exist in the system yet.  Instead of
-      // creating a new constant array, inserting it, replaceallusesof'ing the
-      // old with the new, then deleting the old... just update the current one
-      // in place!
-      ArrayConstants->MoveConstantToNewSlot(this, I);
-      
-      // Update to the new value.  Optimize for the case when we have a single
-      // operand that we're changing, but handle bulk updates efficiently.
-      if (NumUpdated == 1) {
-        unsigned OperandToUpdate = U-OperandList;
-        assert(getOperand(OperandToUpdate) == From &&
-               "ReplaceAllUsesWith broken!");
-        setOperand(OperandToUpdate, ToC);
-      } else {
-        for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-          if (getOperand(i) == From)
-            setOperand(i, ToC);
-      }
-      return;
-    }
-  }
+  Constant *Replacement =
+    getType()->getContext().replaceUsesOfWithOnConstant(this, From, To, U);
+ 
+  if (!Replacement) return;
  
   // Otherwise, I do need to replace this with an existing value.
   assert(Replacement != this && "I didn't contain From!");

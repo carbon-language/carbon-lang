@@ -30,7 +30,7 @@
 
 template<class ValType, class TypeClass, class ConstantClass,
          bool HasLargeKey = false  /*true for arrays and structs*/ >
-class ContextValueMap;
+class ValueMap;
 
 namespace llvm {
 template<class ValType>
@@ -111,7 +111,11 @@ class LLVMContextImpl {
   
   FoldingSet<MDNode> MDNodeSet;
   
-  ContextValueMap<char, Type, ConstantAggregateZero> *AggZeroConstants;
+  ValueMap<char, Type, ConstantAggregateZero> *AggZeroConstants;
+  
+  typedef ValueMap<std::vector<Constant*>, ArrayType, 
+    ConstantArray, true /*largekey*/> ArrayConstantsTy;
+  ArrayConstantsTy *ArrayConstants;
   
   LLVMContext &Context;
   ConstantInt *TheTrueVal;
@@ -135,6 +139,9 @@ public:
   
   ConstantAggregateZero *getConstantAggregateZero(const Type *Ty);
   
+  Constant *getConstantArray(const ArrayType *Ty,
+                             const std::vector<Constant*> &V);
+  
   ConstantInt *getTrue() {
     if (TheTrueVal)
       return TheTrueVal;
@@ -152,6 +159,12 @@ public:
   void erase(MDString *M);
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
+  void erase(ConstantArray *C);
+  
+  // RAUW helpers
+  
+  Constant *replaceUsesOfWithOnConstant(ConstantArray *CA, Value *From,
+                                             Value *To, Use *U);
 };
 
 }

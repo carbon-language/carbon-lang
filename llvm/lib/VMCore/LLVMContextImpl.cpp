@@ -21,6 +21,14 @@ using namespace llvm;
 
 static char getValType(ConstantAggregateZero *CPZ) { return 0; }
 
+static std::vector<Constant*> getValType(ConstantArray *CA) {
+  std::vector<Constant*> Elements;
+  Elements.reserve(CA->getNumOperands());
+  for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+    Elements.push_back(cast<Constant>(CA->getOperand(i)));
+  return Elements;
+}
+
 namespace llvm {
 template<typename T, typename Alloc>
 struct VISIBILITY_HIDDEN ConstantTraits< std::vector<T, Alloc> > {
@@ -61,11 +69,25 @@ struct ConvertConstantType<ConstantAggregateZero, Type> {
     OldC->destroyConstant();     // This constant is now dead, destroy it.
   }
 };
+
+template<>
+struct ConvertConstantType<ConstantArray, ArrayType> {
+  static void convert(ConstantArray *OldC, const ArrayType *NewTy) {
+    // Make everyone now use a constant of the new type...
+    std::vector<Constant*> C;
+    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
+      C.push_back(cast<Constant>(OldC->getOperand(i)));
+    Constant *New = NewTy->getContext().getConstantArray(NewTy, C);
+    assert(New != OldC && "Didn't replace constant??");
+    OldC->uncheckedReplaceAllUsesWith(New);
+    OldC->destroyConstant();    // This constant is now dead, destroy it.
+  }
+};
 }
   
 template<class ValType, class TypeClass, class ConstantClass,
          bool HasLargeKey  /*true for arrays and structs*/ >
-class VISIBILITY_HIDDEN ContextValueMap : public AbstractTypeUser {
+class VISIBILITY_HIDDEN ValueMap : public AbstractTypeUser {
 public:
   typedef std::pair<const Type*, ValType> MapKey;
   typedef std::map<MapKey, Constant *> MapTy;
@@ -300,11 +322,13 @@ public:
 
 LLVMContextImpl::LLVMContextImpl(LLVMContext &C) :
     Context(C), TheTrueVal(0), TheFalseVal(0) {
-  AggZeroConstants = new ContextValueMap<char, Type, ConstantAggregateZero>();
+  AggZeroConstants = new ValueMap<char, Type, ConstantAggregateZero>();
+  ArrayConstants = new ArrayConstantsTy();
 }
 
 LLVMContextImpl::~LLVMContextImpl() {
   delete AggZeroConstants;
+  delete ArrayConstants;
 }
 
 // Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
@@ -413,6 +437,25 @@ LLVMContextImpl::getConstantAggregateZero(const Type *Ty) {
   return AggZeroConstants->getOrCreate(Ty, 0);
 }
 
+Constant *LLVMContextImpl::getConstantArray(const ArrayType *Ty,
+                             const std::vector<Constant*> &V) {
+  // If this is an all-zero array, return a ConstantAggregateZero object
+  if (!V.empty()) {
+    Constant *C = V[0];
+    if (!C->isNullValue()) {
+      // Implicitly locked.
+      return ArrayConstants->getOrCreate(Ty, V);
+    }
+    for (unsigned i = 1, e = V.size(); i != e; ++i)
+      if (V[i] != C) {
+        // Implicitly locked.
+        return ArrayConstants->getOrCreate(Ty, V);
+      }
+  }
+  
+  return Context.getConstantAggregateZero(Ty);
+}
+
 // *** erase methods ***
 
 void LLVMContextImpl::erase(MDString *M) {
@@ -428,3 +471,87 @@ void LLVMContextImpl::erase(MDNode *M) {
 void LLVMContextImpl::erase(ConstantAggregateZero *Z) {
   AggZeroConstants->remove(Z);
 }
+
+void LLVMContextImpl::erase(ConstantArray *C) {
+  ArrayConstants->remove(C);
+}
+
+// *** RAUW helpers ***
+Constant *LLVMContextImpl::replaceUsesOfWithOnConstant(ConstantArray *CA,
+                                               Value *From, Value *To, Use *U) {
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  Constant *ToC = cast<Constant>(To);
+
+  std::pair<ArrayConstantsTy::MapKey, Constant*> Lookup;
+  Lookup.first.first = CA->getType();
+  Lookup.second = CA;
+
+  std::vector<Constant*> &Values = Lookup.first.second;
+  Values.reserve(CA->getNumOperands());  // Build replacement array.
+
+  // Fill values with the modified operands of the constant array.  Also, 
+  // compute whether this turns into an all-zeros array.
+  bool isAllZeros = false;
+  unsigned NumUpdated = 0;
+  if (!ToC->isNullValue()) {
+    for (Use *O = CA->OperandList, *E = CA->OperandList + CA->getNumOperands();
+         O != E; ++O) {
+      Constant *Val = cast<Constant>(O->get());
+      if (Val == From) {
+        Val = ToC;
+        ++NumUpdated;
+      }
+      Values.push_back(Val);
+    }
+  } else {
+    isAllZeros = true;
+    for (Use *O = CA->OperandList, *E = CA->OperandList + CA->getNumOperands();
+         O != E; ++O) {
+      Constant *Val = cast<Constant>(O->get());
+      if (Val == From) {
+        Val = ToC;
+        ++NumUpdated;
+      }
+      Values.push_back(Val);
+      if (isAllZeros) isAllZeros = Val->isNullValue();
+    }
+  }
+  
+  Constant *Replacement = 0;
+  if (isAllZeros) {
+    Replacement = Context.getConstantAggregateZero(CA->getType());
+  } else {
+    // Check to see if we have this array type already.
+    sys::SmartScopedWriter<true> Writer(ConstantsLock);
+    bool Exists;
+    ArrayConstantsTy::MapTy::iterator I =
+      ArrayConstants->InsertOrGetItem(Lookup, Exists);
+    
+    if (Exists) {
+      Replacement = I->second;
+    } else {
+      // Okay, the new shape doesn't exist in the system yet.  Instead of
+      // creating a new constant array, inserting it, replaceallusesof'ing the
+      // old with the new, then deleting the old... just update the current one
+      // in place!
+      ArrayConstants->MoveConstantToNewSlot(CA, I);
+      
+      // Update to the new value.  Optimize for the case when we have a single
+      // operand that we're changing, but handle bulk updates efficiently.
+      if (NumUpdated == 1) {
+        unsigned OperandToUpdate = U - CA->OperandList;
+        assert(CA->getOperand(OperandToUpdate) == From &&
+               "ReplaceAllUsesWith broken!");
+        CA->setOperand(OperandToUpdate, ToC);
+      } else {
+        for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+          if (CA->getOperand(i) == From)
+            CA->setOperand(i, ToC);
+      }
+      return 0;
+    }
+  }
+  
+  return Replacement;
+}
+

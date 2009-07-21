@@ -286,12 +286,10 @@ class ConstantArray : public Constant {
   friend struct ConstantCreator<ConstantArray, ArrayType,
                                     std::vector<Constant*> >;
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
+  friend class LLVMContextImpl;
 protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
 public:
-  /// get() - Static factory methods - Return objects of the specified value
-  static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
-
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
