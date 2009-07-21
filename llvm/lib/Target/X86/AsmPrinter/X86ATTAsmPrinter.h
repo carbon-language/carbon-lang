@@ -191,7 +191,7 @@ class VISIBILITY_HIDDEN X86ATTAsmPrinter : public AsmPrinter {
                               unsigned uid) const;
 
   void printPICLabel(const MachineInstr *MI, unsigned Op);
-  void printModuleLevelGV(const GlobalVariable* GVar);
+  void PrintGlobalVariable(const GlobalVariable* GVar);
 
   void PrintPICBaseSymbol() const;
   

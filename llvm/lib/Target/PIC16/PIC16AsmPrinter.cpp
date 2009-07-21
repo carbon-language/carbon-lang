@@ -291,8 +291,7 @@ bool PIC16AsmPrinter::doFinalization(Module &M) {
   EmitRemainingAutos();
   DbgInfo.EndModule(M);
   O << "\n\t" << "END\n";
-  bool Result = AsmPrinter::doFinalization(M);
-  return Result;
+  return AsmPrinter::doFinalization(M);
 }
 
 void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {

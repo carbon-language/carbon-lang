@@ -282,8 +282,6 @@ namespace {
     }
 
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
-    //! Assembly printer cleanup after function has been emitted
-    virtual bool doFinalization(Module &M) = 0;
   };
 
   /// LinuxAsmPrinter - SPU assembly printer, customized for Linux
@@ -300,8 +298,6 @@ namespace {
 
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
-    //! Dump globals, perform cleanup after function emission
-    bool doFinalization(Module &M);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -311,7 +307,7 @@ namespace {
     }
 
     //! Emit a global variable according to its section and type
-    void printModuleLevelGV(const GlobalVariable* GVar);
+    void PrintGlobalVariable(const GlobalVariable* GVar);
   };
 } // end of anonymous namespace
 
@@ -507,7 +503,7 @@ static void PrintUnmangledNameSafely(const Value *V, formatted_raw_ostream &OS) 
   \note This code was shamelessly copied from the PowerPC's assembly printer,
   which sort of screams for some kind of refactorization of common code.
  */
-void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
+void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   const TargetData *TD = TM.getTargetData();
 
   if (!GVar->hasInitializer())
@@ -586,15 +582,6 @@ void LinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   EmitGlobalConstant(C);
   O << '\n';
-}
-
-bool LinuxAsmPrinter::doFinalization(Module &M) {
-  // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    printModuleLevelGV(I);
-
-  return AsmPrinter::doFinalization(M);
 }
 
 /// createSPUCodePrinterPass - Returns a pass that prints the Cell SPU

@@ -474,71 +474,68 @@ bool X86IntelAsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
-bool X86IntelAsmPrinter::doFinalization(Module &M) {
+void X86IntelAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
+  // Check to see if this is a special global used by LLVM, if so, emit it.
+  if (GV->isDeclaration() ||
+      EmitSpecialLLVMGlobal(GV))
+    return;
+  
   const TargetData *TD = TM.getTargetData();
 
-  // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    if (I->isDeclaration()) continue;   // External global require no code
-
-    // Check to see if this is a special global used by LLVM, if so, emit it.
-    if (EmitSpecialLLVMGlobal(I))
-      continue;
-
-    std::string name = Mang->getMangledName(I);
-    Constant *C = I->getInitializer();
-    unsigned Align = TD->getPreferredAlignmentLog(I);
-    bool bCustomSegment = false;
-
-    switch (I->getLinkage()) {
-    case GlobalValue::CommonLinkage:
-    case GlobalValue::LinkOnceAnyLinkage:
-    case GlobalValue::LinkOnceODRLinkage:
-    case GlobalValue::WeakAnyLinkage:
-    case GlobalValue::WeakODRLinkage:
-      SwitchToDataSection("");
-      O << name << "?\tSEGEMNT PARA common 'COMMON'\n";
-      bCustomSegment = true;
-      // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
-      // are also available.
-      break;
-    case GlobalValue::AppendingLinkage:
-      SwitchToDataSection("");
-      O << name << "?\tSEGMENT PARA public 'DATA'\n";
-      bCustomSegment = true;
-      // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
-      // are also available.
-      break;
-    case GlobalValue::DLLExportLinkage:
-      DLLExportedGVs.insert(name);
-      // FALL THROUGH
-    case GlobalValue::ExternalLinkage:
-      O << "\tpublic " << name << "\n";
-      // FALL THROUGH
-    case GlobalValue::InternalLinkage:
-      SwitchToSection(TAI->getDataSection());
-      break;
-    default:
-      llvm_unreachable("Unknown linkage type!");
-    }
-
-    if (!bCustomSegment)
-      EmitAlignment(Align, I);
-
-    O << name << ":";
-    if (VerboseAsm)
-      O << "\t\t\t\t" << TAI->getCommentString()
-        << " " << I->getName();
-    O << '\n';
-
-    EmitGlobalConstant(C);
-
-    if (bCustomSegment)
-      O << name << "?\tends\n";
+  std::string name = Mang->getMangledName(GV);
+  Constant *C = GV->getInitializer();
+  unsigned Align = TD->getPreferredAlignmentLog(GV);
+  bool bCustomSegment = false;
+  
+  switch (GV->getLinkage()) {
+  case GlobalValue::CommonLinkage:
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+    SwitchToDataSection("");
+    O << name << "?\tSEGEMNT PARA common 'COMMON'\n";
+    bCustomSegment = true;
+    // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
+    // are also available.
+    break;
+  case GlobalValue::AppendingLinkage:
+    SwitchToDataSection("");
+    O << name << "?\tSEGMENT PARA public 'DATA'\n";
+    bCustomSegment = true;
+    // FIXME: the default alignment is 16 bytes, but 1, 2, 4, and 256
+    // are also available.
+    break;
+  case GlobalValue::DLLExportLinkage:
+    DLLExportedGVs.insert(name);
+    // FALL THROUGH
+  case GlobalValue::ExternalLinkage:
+    O << "\tpublic " << name << "\n";
+    // FALL THROUGH
+  case GlobalValue::InternalLinkage:
+    SwitchToSection(TAI->getDataSection());
+    break;
+  default:
+    llvm_unreachable("Unknown linkage type!");
   }
+  
+  if (!bCustomSegment)
+    EmitAlignment(Align, GV);
+  
+  O << name << ":";
+  if (VerboseAsm)
+    O << "\t\t\t\t" << TAI->getCommentString()
+    << " " << GV->getName();
+  O << '\n';
+  
+  EmitGlobalConstant(C);
+  
+  if (bCustomSegment)
+    O << name << "?\tends\n";
+}
 
-    // Output linker support code for dllexported globals
+bool X86IntelAsmPrinter::doFinalization(Module &M) {
+  // Output linker support code for dllexported globals
   if (!DLLExportedGVs.empty() || !DLLExportedFns.empty()) {
     SwitchToDataSection("");
     O << "; WARNING: The following code is valid only with MASM v8.x"

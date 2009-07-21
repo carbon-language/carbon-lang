@@ -1,4 +1,4 @@
-//===-- PIC16AsmPrinter.h - PIC16 LLVM assembly writer ------------------===//
+//===-- PIC16AsmPrinter.h - PIC16 LLVM assembly writer ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -35,7 +35,7 @@ namespace llvm {
       PTLI = static_cast<const PIC16TargetLowering *> (TM.getTargetLowering());
       PTAI = static_cast<const PIC16TargetAsmInfo *> (T);
     }
-    private :
+  private:
     virtual const char *getPassName() const {
       return "PIC16 Assembly Printer";
     }
@@ -55,11 +55,17 @@ namespace llvm {
     void EmitRomData (Module &M);
     void EmitFunctionFrame(MachineFunction &MF);
     void printLibcallDecls(void);
-    protected:
+  protected:
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
 
-    private:
+    /// PrintGlobalVariable - Emit the specified global variable and its
+    /// initializer to the output stream.
+    virtual void PrintGlobalVariable(const GlobalVariable *GV) {
+      // PIC16 doesn't use normal hooks for this.
+    }
+    
+  private:
     PIC16TargetLowering *PTLI;
     PIC16DbgInfo DbgInfo;
     const PIC16TargetAsmInfo *PTAI;

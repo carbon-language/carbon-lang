@@ -763,7 +763,7 @@ bool X86ATTAsmPrinter::doInitialization(Module &M) {
   return AsmPrinter::doInitialization(M);
 }
 
-void X86ATTAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
+void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   const TargetData *TD = TM.getTargetData();
 
   if (!GVar->hasInitializer())
@@ -902,8 +902,6 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
-    printModuleLevelGV(I);
-
     if (I->hasDLLExportLinkage())
       DLLExportedGVs.insert(Mang->getMangledName(I));
   }

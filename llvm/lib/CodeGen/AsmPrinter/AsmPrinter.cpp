@@ -196,6 +196,11 @@ bool AsmPrinter::doInitialization(Module &M) {
 }
 
 bool AsmPrinter::doFinalization(Module &M) {
+  // Emit global variables.
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
+    PrintGlobalVariable(I);
+  
   // Emit final debug information.
   if (TAI->doesSupportDebugInformation() || TAI->doesSupportExceptionHandling())
     DW->EndModule();

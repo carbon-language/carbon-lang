@@ -49,11 +49,10 @@ namespace {
     bool printInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
     void printOperand(const MachineInstr *MI, int opNum);
-    void printBaseOffsetPair (const MachineInstr *MI, int i, bool brackets=true);
-    void printModuleLevelGV(const GlobalVariable* GVar);
+    void printBaseOffsetPair(const MachineInstr *MI, int i, bool brackets=true);
+    void PrintGlobalVariable(const GlobalVariable *GVar);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
-    bool doFinalization(Module &M);
 
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode);
@@ -209,7 +208,7 @@ bool AlphaAsmPrinter::doInitialization(Module &M)
   return AsmPrinter::doInitialization(M);
 }
 
-void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
+void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   const TargetData *TD = TM.getTargetData();
 
   if (!GVar->hasInitializer()) return;  // External global require no code
@@ -264,14 +263,6 @@ void AlphaAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
   EmitGlobalConstant(C);
   O << '\n';
-}
-
-bool AlphaAsmPrinter::doFinalization(Module &M) {
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    printModuleLevelGV(I);
-
-  return AsmPrinter::doFinalization(M);
 }
 
 /// PrintAsmOperand - Print out an operand for an inline asm expression.

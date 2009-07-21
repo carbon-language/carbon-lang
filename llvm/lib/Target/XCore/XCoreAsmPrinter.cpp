@@ -70,7 +70,7 @@ namespace {
     void emitExternDirective(const std::string &name);
     
     void emitArrayBound(const std::string &name, const GlobalVariable *GV);
-    void emitGlobal(const GlobalVariable *GV);
+    virtual void PrintGlobalVariable(const GlobalVariable *GV);
 
     void emitFunctionStart(MachineFunction &MF);
     void emitFunctionEnd(MachineFunction &MF);
@@ -79,7 +79,6 @@ namespace {
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
-    bool doFinalization(Module &M);
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
@@ -136,7 +135,7 @@ emitArrayBound(const std::string &name, const GlobalVariable *GV)
   }
 }
 
-void XCoreAsmPrinter::emitGlobal(const GlobalVariable *GV) {
+void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (!GV->hasInitializer() ||
       EmitSpecialLLVMGlobal(GV))
@@ -387,13 +386,4 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
-bool XCoreAsmPrinter::doFinalization(Module &M) {
 
-  // Print out module-level global variables.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    emitGlobal(I);
-  }
-  
-  return AsmPrinter::doFinalization(M);
-}

@@ -67,8 +67,7 @@ namespace {
 
     void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
-    bool doFinalization(Module &M);
-    void printModuleLevelGV(const GlobalVariable* GVar);
+    void PrintGlobalVariable(const GlobalVariable* GVar);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
@@ -88,15 +87,6 @@ FunctionPass *llvm::createSystemZCodePrinterPass(formatted_raw_ostream &o,
                                                  TargetMachine &tm,
                                                  bool verbose) {
   return new SystemZAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
-
-bool SystemZAsmPrinter::doFinalization(Module &M) {
-  // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    printModuleLevelGV(I);
-
-  return AsmPrinter::doFinalization(M);
 }
 
 void SystemZAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
@@ -331,7 +321,7 @@ static void PrintUnmangledNameSafely(const Value *V, formatted_raw_ostream &OS) 
       OS << *Name;
 }
 
-void SystemZAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
+void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   const TargetData *TD = TM.getTargetData();
 
   if (!GVar->hasInitializer())

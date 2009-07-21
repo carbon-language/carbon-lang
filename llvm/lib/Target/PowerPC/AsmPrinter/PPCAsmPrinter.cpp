@@ -313,7 +313,6 @@ namespace {
                                const char *Modifier);
 
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
-    virtual bool doFinalization(Module &M) = 0;
 
     virtual void EmitExternalGlobal(const GlobalVariable *GV);
   };
@@ -330,7 +329,6 @@ namespace {
     }
 
     bool runOnMachineFunction(MachineFunction &F);
-    bool doFinalization(Module &M);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
@@ -339,7 +337,7 @@ namespace {
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
-    void printModuleLevelGV(const GlobalVariable* GVar);
+    void PrintGlobalVariable(const GlobalVariable *GVar);
   };
 
   /// PPCDarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac
@@ -366,7 +364,7 @@ namespace {
       PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
-    void printModuleLevelGV(const GlobalVariable* GVar);
+    void PrintGlobalVariable(const GlobalVariable *GVar);
   };
 } // end of anonymous namespace
 
@@ -661,7 +659,7 @@ static void PrintUnmangledNameSafely(const Value *V, formatted_raw_ostream &OS) 
       OS << *Name;
 }
 
-void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
+void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   const TargetData *TD = TM.getTargetData();
 
   if (!GVar->hasInitializer())
@@ -748,14 +746,6 @@ void PPCLinuxAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
   O << '\n';
 }
 
-bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
-  // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    printModuleLevelGV(I);
-
-  return AsmPrinter::doFinalization(M);
-}
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
@@ -875,7 +865,7 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
-void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
+void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   const TargetData *TD = TM.getTargetData();
 
   if (!GVar->hasInitializer())
@@ -981,11 +971,6 @@ void PPCDarwinAsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
 bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   const TargetData *TD = TM.getTargetData();
-
-  // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    printModuleLevelGV(I);
 
   bool isPPC64 = TD->getPointerSizeInBits() == 64;
 
@@ -1093,11 +1078,9 @@ FunctionPass *llvm::createPPCAsmPrinterPass(formatted_raw_ostream &o,
                                             bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();
 
-  if (Subtarget->isDarwin()) {
+  if (Subtarget->isDarwin())
     return new PPCDarwinAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-  } else {
-    return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-  }
+  return new PPCLinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
 // Force static initialization.

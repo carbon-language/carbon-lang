@@ -59,6 +59,10 @@ namespace {
     void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
 
+    virtual void PrintGlobalVariable(const GlobalVariable *GV) {
+      // FIXME: No support for global variables?
+    }
+
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
       AU.setPreservesAll();

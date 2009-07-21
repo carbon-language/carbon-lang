@@ -135,6 +135,8 @@ struct VISIBILITY_HIDDEN X86IntelAsmPrinter : public AsmPrinter {
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);
 
+  void PrintGlobalVariable(const GlobalVariable *GV);
+  
   // We have to propagate some information about MachineFunction to
   // AsmPrinter. It's ok, when we're printing the function, since we have
   // access to MachineFunction and can get the appropriate MachineFunctionInfo.

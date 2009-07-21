@@ -111,7 +111,7 @@ namespace {
 
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool isBRCALLinsn= false);
-    void printModuleLevelGV(const GlobalVariable* GVar);
+    void PrintGlobalVariable(const GlobalVariable *GVar);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
@@ -258,7 +258,7 @@ bool IA64AsmPrinter::doInitialization(Module &M) {
   return Result;
 }
 
-void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
+void IA64AsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   const TargetData *TD = TM.getTargetData();
 
   if (!GVar->hasInitializer())
@@ -342,11 +342,6 @@ void IA64AsmPrinter::printModuleLevelGV(const GlobalVariable* GVar) {
 
 
 bool IA64AsmPrinter::doFinalization(Module &M) {
-  // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    printModuleLevelGV(I);
-
   // we print out ".global X \n .type X, @function" for each external function
   O << "\n\n// br.call targets referenced (and not defined) above: \n";
   for (std::set<std::string>::iterator i = ExternalFunctionNames.begin(),
