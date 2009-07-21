@@ -2475,15 +2475,18 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::SRL &&
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     uint64_t c1 = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
-    uint64_t c2 = N1C->getZExtValue();
-    SDValue Mask = DAG.getNode(ISD::AND, N0.getDebugLoc(), VT, N0.getOperand(0),
-                               DAG.getConstant(~0ULL << c1, VT));
-    if (c2 > c1)
-      return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, Mask,
-                         DAG.getConstant(c2-c1, N1.getValueType()));
-    else
-      return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, Mask,
-                         DAG.getConstant(c1-c2, N1.getValueType()));
+    if (c1 < VT.getSizeInBits()) {
+      uint64_t c2 = N1C->getZExtValue();
+      SDValue Mask = DAG.getNode(ISD::AND, N0.getDebugLoc(), VT,
+                                 N0.getOperand(0),
+                                 DAG.getConstant(~0ULL << c1, VT));
+      if (c2 > c1)
+        return DAG.getNode(ISD::SHL, N->getDebugLoc(), VT, Mask,
+                           DAG.getConstant(c2-c1, N1.getValueType()));
+      else
+        return DAG.getNode(ISD::SRL, N->getDebugLoc(), VT, Mask,
+                           DAG.getConstant(c1-c2, N1.getValueType()));
+    }
   }
   // fold (shl (sra x, c1), c1) -> (and x, (shl -1, c1))
   if (N1C && N0.getOpcode() == ISD::SRA && N1 == N0.getOperand(1))
