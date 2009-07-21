@@ -6,7 +6,7 @@
 // (i.e., no assertions or crashes).
 
 
-static const char * f1(const char *x, char *y) {
+static void f1(const char *x, char *y) {
   while (*x != 0) {
     *y++ = *x++;
   }
