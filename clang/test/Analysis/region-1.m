@@ -80,6 +80,7 @@ typedef NSUInteger JabaSourceLanguage;
 Dos_CharacterRangeType = 0,     Dos_LineRangeType = 1 }
   DosTextRangeType;
 @implementation JabaSCSharedDiagramViewController  + (NSImage *)findImageNamed:(NSString *)name {
+  return 0;
 }
 - (void)revealSourceInEditor:(JabasectItem *)sectItem duperGesture:(BOOL)duperGesture {
   id <EcoNamedElement> selectedElement = [sectItem representedObject];
