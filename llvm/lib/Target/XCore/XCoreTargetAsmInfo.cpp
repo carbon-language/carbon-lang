@@ -89,23 +89,6 @@ XCoreTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   return ELFTargetAsmInfo::SelectSectionForGlobal(GV);
 }
 
-const Section*
-XCoreTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
-  const TargetData *TD = TM.getTargetData();
-
-  unsigned Size = TD->getTypeAllocSize(Ty);
-  if (Size == 4 || Size == 8 || Size == 16) {
-    std::string Name =  ".cp.const" + utostr(Size);
-
-    return getNamedSection(Name.c_str(),
-                           SectionFlags::setEntitySize(SectionFlags::Mergeable |
-                                                       SectionFlags::Small,
-                                                       Size));
-  }
-
-  return getReadOnlySection();
-}
-
 unsigned XCoreTargetAsmInfo::
 SectionFlagsForGlobal(const GlobalValue *GV, const char* Name) const {
   unsigned Flags = ELFTargetAsmInfo::SectionFlagsForGlobal(GV, Name);

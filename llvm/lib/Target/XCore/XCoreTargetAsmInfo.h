@@ -29,7 +29,6 @@ namespace llvm {
     explicit XCoreTargetAsmInfo(const XCoreTargetMachine &TM);
     
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
-    const Section* MergeableConstSection(const Type *Ty) const;
     virtual unsigned
     SectionFlagsForGlobal(const GlobalValue *GV = NULL,
                           const char* name = NULL) const;
