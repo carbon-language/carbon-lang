@@ -796,8 +796,12 @@ def err_template_arg_extra_parens : Error<
 // C++ class template specialization
 def err_template_spec_needs_header : Error<
   "template specialization requires 'template<>'">;
+def err_template_spec_needs_template_parameters : Error<
+  "template specialization or definition requires a template parameter list"
+  "corresponding to the nested type %0">;
 def err_template_spec_extra_headers : Error<
-  "template specialization must have a single 'template<>' header">;
+  "extraneous template parameter list in template specialization or "
+  "out-of-line template definition">;
 def err_template_spec_decl_out_of_scope_global : Error<
   "class template %select{|partial }0specialization of %1 must occur in the "
   "global scope">;

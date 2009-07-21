@@ -707,8 +707,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD) {
     const CXXMethodDecl* OldMethod = dyn_cast<CXXMethodDecl>(Old);
     const CXXMethodDecl* NewMethod = dyn_cast<CXXMethodDecl>(New);
     if (OldMethod && NewMethod && 
-        OldMethod->getLexicalDeclContext() == 
-          NewMethod->getLexicalDeclContext()) {
+        NewMethod->getLexicalDeclContext()->isRecord()) {
       //    -- Member function declarations with the same name and the 
       //       same parameter types cannot be overloaded if any of them 
       //       is a static member function declaration.
@@ -1445,7 +1444,7 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
                           NameKind == LookupRedeclarationWithLinkage,
                           D.getIdentifierLoc());
   } else { // Something like "int foo::x;"
-    DC = computeDeclContext(D.getCXXScopeSpec());
+    DC = computeDeclContext(D.getCXXScopeSpec(), true);
     // FIXME: RequireCompleteDeclContext(D.getCXXScopeSpec()); ?
     PrevDecl = LookupQualifiedName(DC, Name, LookupOrdinaryName, true);
 
@@ -2191,14 +2190,15 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // from the semantic context.
   NewFD->setLexicalDeclContext(CurContext);
 
-  // If there is a template parameter list, then we are dealing with a 
-  // template declaration or specialization.
+  // Match up the template parameter lists with the scope specifier, then
+  // determine whether we have a template or a template specialization.
   FunctionTemplateDecl *FunctionTemplate = 0;
-  if (TemplateParamLists.size()) {
-    // FIXME: member templates!
-    TemplateParameterList *TemplateParams 
-      = static_cast<TemplateParameterList *>(*TemplateParamLists.release());
-    
+  if (TemplateParameterList *TemplateParams
+        = MatchTemplateParametersToScopeSpecifier(
+                                  D.getDeclSpec().getSourceRange().getBegin(),
+                                  D.getCXXScopeSpec(),
+                        (TemplateParameterList**)TemplateParamLists.release(),
+                                                  TemplateParamLists.size())) {
     if (TemplateParams->size() > 0) {
       // This is a function template
       FunctionTemplate = FunctionTemplateDecl::Create(Context, CurContext,
@@ -2210,6 +2210,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       // FIXME: Handle function template specializations
     }
   }
+        
   
   // C++ [dcl.fct.spec]p5:
   //   The virtual specifier shall only be used in declarations of
@@ -3517,7 +3518,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
     if (RequireCompleteDeclContext(SS))
       return DeclPtrTy::make((Decl *)0);
 
-    DC = computeDeclContext(SS);
+    DC = computeDeclContext(SS, true);
     SearchDC = DC;
     // Look-up name inside 'foo::'.
     PrevDecl 

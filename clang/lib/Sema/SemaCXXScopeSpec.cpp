@@ -21,7 +21,19 @@ using namespace clang;
 
 /// \brief Compute the DeclContext that is associated with the given
 /// scope specifier.
-DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS) {
+///
+/// \param SS the C++ scope specifier as it appears in the source
+///
+/// \param EnteringContext when true, we will be entering the context of
+/// this scope specifier, so we can retrieve the declaration context of a
+/// class template or class template partial specialization even if it is
+/// not the current instantiation.
+///
+/// \returns the declaration context represented by the scope specifier @p SS,
+/// or NULL if the declaration context cannot be computed (e.g., because it is
+/// dependent and not the current instantiation).
+DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
+                                      bool EnteringContext) {
   if (!SS.isSet() || SS.isInvalid())
     return 0;
 
@@ -32,8 +44,29 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS) {
     // instantiation, return its DeclContext.
     if (CXXRecordDecl *Record = getCurrentInstantiationOf(NNS))
       return Record;
-    else
-      return 0;
+    
+    if (EnteringContext) {
+      // We are entering the context of the nested name specifier, so try to
+      // match the nested name specifier to either a primary class template
+      // or a class template partial specialization
+      if (const TemplateSpecializationType *SpecType
+            = dyn_cast_or_null<TemplateSpecializationType>(NNS->getAsType())) {
+        if (ClassTemplateDecl *ClassTemplate 
+              = dyn_cast_or_null<ClassTemplateDecl>(
+                            SpecType->getTemplateName().getAsTemplateDecl())) {
+          // If the type of the nested name specifier is the same as the
+          // injected class name of the named class template, we're entering
+          // into that class template definition.
+          QualType Injected = ClassTemplate->getInjectedClassNameType(Context);
+          if (Context.hasSameType(Injected, QualType(SpecType, 0)))
+            return ClassTemplate->getTemplatedDecl();
+                
+          // FIXME: Class template partial specializations
+        }
+      }
+    }
+    
+    return 0;
   }
 
   switch (NNS->getKind()) {
@@ -89,7 +122,10 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
   assert(getLangOptions().CPlusPlus && "Only callable in C++");
   assert(NNS->isDependent() && "Only dependent nested-name-specifier allowed");
 
-  QualType T = QualType(NNS->getAsType(), 0);
+  if (!NNS->getAsType())
+    return 0;
+  
+  QualType T = Context.getCanonicalType(QualType(NNS->getAsType(), 0));
   // If the nested name specifier does not refer to a type, then it
   // does not refer to the current instantiation.
   if (T.isNull())
@@ -138,7 +174,7 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
     // nested-name-specifier type that is equivalent to the
     // injected-class-name of one of the types that is currently in
     // our context.
-    if (Context.getTypeDeclType(Record) == T)
+    if (Context.getCanonicalType(Context.getTypeDeclType(Record)) == T)
       return Record;
     
     if (ClassTemplateDecl *Template = Record->getDescribedClassTemplate()) {
@@ -286,7 +322,7 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 /// The 'SS' should be a non-empty valid CXXScopeSpec.
 void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  if (DeclContext *DC = computeDeclContext(SS))
+  if (DeclContext *DC = computeDeclContext(SS, true))
     EnterDeclaratorContext(S, DC);
   else
     const_cast<CXXScopeSpec&>(SS).setScopeRep(0);
@@ -299,7 +335,7 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
 /// defining scope.
 void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  assert((SS.isInvalid() || S->getEntity() == computeDeclContext(SS)) && 
+  assert((SS.isInvalid() || S->getEntity() == computeDeclContext(SS, true)) && 
          "Context imbalance!");
   if (!SS.isInvalid())
     ExitDeclaratorContext(S);

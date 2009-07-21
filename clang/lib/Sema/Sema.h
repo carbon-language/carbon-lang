@@ -1775,7 +1775,8 @@ public:
 
   bool RequireCompleteDeclContext(const CXXScopeSpec &SS);
   
-  DeclContext *computeDeclContext(const CXXScopeSpec &SS);
+  DeclContext *computeDeclContext(const CXXScopeSpec &SS, 
+                                  bool EnteringContext = false);
   bool isDependentScopeSpecifier(const CXXScopeSpec &SS);
   CXXRecordDecl *getCurrentInstantiationOf(NestedNameSpecifier *NNS);
   bool isUnknownSpecialization(const CXXScopeSpec &SS);
@@ -2064,7 +2065,12 @@ public:
                              SourceLocation RAngleLoc);
   bool CheckTemplateParameterList(TemplateParameterList *NewParams,
                                   TemplateParameterList *OldParams);
-
+  TemplateParameterList *
+  MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
+                                          const CXXScopeSpec &SS,
+                                          TemplateParameterList **ParamLists,
+                                          unsigned NumParamLists);
+                                                
   virtual DeclResult
   ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                      SourceLocation KWLoc, const CXXScopeSpec &SS,

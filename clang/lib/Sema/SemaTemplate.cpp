@@ -739,6 +739,123 @@ bool Sema::CheckTemplateParameterList(TemplateParameterList *NewParams,
   return Invalid;
 }
 
+/// \brief Match the given template parameter lists to the given scope 
+/// specifier, returning the template parameter list that applies to the
+/// name.
+///
+/// \param DeclStartLoc the start of the declaration that has a scope
+/// specifier or a template parameter list.
+/// 
+/// \param SS the scope specifier that will be matched to the given template
+/// parameter lists. This scope specifier precedes a qualified name that is
+/// being declared.
+///
+/// \param ParamLists the template parameter lists, from the outermost to the
+/// innermost template parameter lists.
+///
+/// \param NumParamLists the number of template parameter lists in ParamLists.
+///
+/// \returns the template parameter list, if any, that corresponds to the 
+/// name that is preceded by the scope specifier @p SS. This template
+/// parameter list may be have template parameters (if we're declaring a
+/// template) or may have no template parameters (if we're declaring a 
+/// template specialization), or may be NULL (if we were's declaring isn't
+/// itself a template).
+TemplateParameterList *
+Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
+                                              const CXXScopeSpec &SS,
+                                          TemplateParameterList **ParamLists,
+                                              unsigned NumParamLists) {
+  // FIXME: This routine will need a lot more testing once we have support for
+  // member templates.
+  
+  // Find the template-ids that occur within the nested-name-specifier. These
+  // template-ids will match up with the template parameter lists.
+  llvm::SmallVector<const TemplateSpecializationType *, 4>
+    TemplateIdsInSpecifier;
+  for (NestedNameSpecifier *NNS = (NestedNameSpecifier *)SS.getScopeRep();
+       NNS; NNS = NNS->getPrefix()) {
+    if (const TemplateSpecializationType *SpecType 
+          = dyn_cast_or_null<TemplateSpecializationType>(NNS->getAsType())) {
+      TemplateDecl *Template = SpecType->getTemplateName().getAsTemplateDecl();
+      if (!Template)
+        continue; // FIXME: should this be an error? probably...
+   
+      if (const RecordType *Record = SpecType->getAsRecordType()) {
+        ClassTemplateSpecializationDecl *SpecDecl
+          = cast<ClassTemplateSpecializationDecl>(Record->getDecl());
+        // If the nested name specifier refers to an explicit specialization,
+        // we don't need a template<> header.
+        if (SpecDecl->getSpecializationKind() == TSK_ExplicitSpecialization)
+          continue;
+      }
+      
+      TemplateIdsInSpecifier.push_back(SpecType);
+    }
+  }
+  
+  // Reverse the list of template-ids in the scope specifier, so that we can
+  // more easily match up the template-ids and the template parameter lists.
+  std::reverse(TemplateIdsInSpecifier.begin(), TemplateIdsInSpecifier.end());
+  
+  SourceLocation FirstTemplateLoc = DeclStartLoc;
+  if (NumParamLists)
+    FirstTemplateLoc = ParamLists[0]->getTemplateLoc();
+      
+  // Match the template-ids found in the specifier to the template parameter
+  // lists.
+  unsigned Idx = 0;
+  for (unsigned NumTemplateIds = TemplateIdsInSpecifier.size();
+       Idx != NumTemplateIds; ++Idx) {
+    bool DependentTemplateId = TemplateIdsInSpecifier[Idx]->isDependentType();
+    if (Idx >= NumParamLists) {
+      // We have a template-id without a corresponding template parameter
+      // list.
+      if (DependentTemplateId) {
+        // FIXME: the location information here isn't great. 
+        Diag(SS.getRange().getBegin(), 
+             diag::err_template_spec_needs_template_parameters)
+          << QualType(TemplateIdsInSpecifier[Idx], 0)
+          << SS.getRange();
+      } else {
+        Diag(SS.getRange().getBegin(), diag::err_template_spec_needs_header)
+          << SS.getRange()
+          << CodeModificationHint::CreateInsertion(FirstTemplateLoc,
+                                                   "template<> ");
+      }
+      return 0;
+    }
+    
+    // Check the template parameter list against its corresponding template-id.
+    TemplateDecl *Template 
+      = TemplateIdsInSpecifier[Idx]->getTemplateName().getAsTemplateDecl();
+    TemplateParameterListsAreEqual(ParamLists[Idx], 
+                                   Template->getTemplateParameters(),
+                                   true);
+  }
+  
+  // If there were at least as many template-ids as there were template
+  // parameter lists, then there are no template parameter lists remaining for
+  // the declaration itself.
+  if (Idx >= NumParamLists)
+    return 0;
+  
+  // If there were too many template parameter lists, complain about that now.
+  if (Idx != NumParamLists - 1) {
+    while (Idx < NumParamLists - 1) {
+      Diag(ParamLists[Idx]->getTemplateLoc(), 
+           diag::err_template_spec_extra_headers)
+        << SourceRange(ParamLists[Idx]->getTemplateLoc(),
+                       ParamLists[Idx]->getRAngleLoc());
+      ++Idx;
+    }
+  }
+  
+  // Return the last template parameter list, which corresponds to the
+  // entity being declared.
+  return ParamLists[NumParamLists - 1];
+}
+
 /// \brief Translates template arguments as provided by the parser
 /// into template arguments used by semantic analysis.
 static void 
@@ -2572,12 +2689,12 @@ Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
   DeclPtrTy DP = HandleDeclarator(ParentScope, D, 
                                   move(TemplateParameterLists),
                                   /*IsFunctionDefinition=*/true);
-  FunctionTemplateDecl *FunctionTemplate 
-    = cast_or_null<FunctionTemplateDecl>(DP.getAs<Decl>());
-  if (FunctionTemplate)
+  if (FunctionTemplateDecl *FunctionTemplate 
+        = dyn_cast_or_null<FunctionTemplateDecl>(DP.getAs<Decl>()))
     return ActOnStartOfFunctionDef(FnBodyScope, 
                       DeclPtrTy::make(FunctionTemplate->getTemplatedDecl()));
-
+  if (FunctionDecl *Function = dyn_cast_or_null<FunctionDecl>(DP.getAs<Decl>()))
+    return ActOnStartOfFunctionDef(FnBodyScope, DeclPtrTy::make(Function));
   return DeclPtrTy();
 }
 
