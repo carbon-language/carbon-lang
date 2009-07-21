@@ -57,7 +57,13 @@ ELFTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   if (GVar->hasInitializer()) {
     Constant *C = GVar->getInitializer();
     bool isConstant = GVar->isConstant();
-    unsigned Reloc = RelocBehaviour();
+    
+    
+    // By default - all relocations in PIC mode would force symbol to be
+    // placed in r/w section.
+    unsigned Reloc = (TM.getRelocationModel() != Reloc::Static ?
+                      Reloc::LocalOrGlobal : Reloc::None);
+    
     if (Reloc != Reloc::None && C->ContainsRelocations(Reloc))
       return (C->ContainsRelocations(Reloc::Global) ?
               (isConstant ?

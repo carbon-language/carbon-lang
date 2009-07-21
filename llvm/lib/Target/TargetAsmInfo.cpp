@@ -190,13 +190,6 @@ static bool isConstantString(const Constant *C) {
   return false;
 }
 
-unsigned TargetAsmInfo::RelocBehaviour() const {
-  // By default - all relocations in PIC mode would force symbol to be
-  // placed in r/w section.
-  return (TM.getRelocationModel() != Reloc::Static ?
-          Reloc::LocalOrGlobal : Reloc::None);
-}
-
 SectionKind::Kind
 TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   // Early exit - functions should be always in text sections.
@@ -211,13 +204,14 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     // Variable can be easily put to BSS section.
     return (isThreadLocal ? SectionKind::ThreadBSS : SectionKind::BSS);
   } else if (GVar->isConstant() && !isThreadLocal) {
-    // Now we know, that varible has initializer and it is constant. We need to
+    // Now we know, that variable has initializer and it is constant. We need to
     // check its initializer to decide, which section to output it into. Also
     // note, there is no thread-local r/o section.
     Constant *C = GVar->getInitializer();
     if (C->ContainsRelocations(Reloc::LocalOrGlobal)) {
       // Decide, whether it is still possible to put symbol into r/o section.
-      unsigned Reloc = RelocBehaviour();
+      unsigned Reloc = (TM.getRelocationModel() != Reloc::Static ?
+                        Reloc::LocalOrGlobal : Reloc::None);
 
       // We already did a query for 'all' relocs, thus - early exits.
       if (Reloc == Reloc::LocalOrGlobal)
