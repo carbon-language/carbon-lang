@@ -97,34 +97,34 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       return getNamedSection(Name.c_str(), Flags);
     } else {
       switch (Kind) {
-       case SectionKind::Data:
-       case SectionKind::SmallData:
+      case SectionKind::Data:
+      case SectionKind::SmallData:
         return DataSection;
-       case SectionKind::DataRel:
+      case SectionKind::DataRel:
         return DataRelSection;
-       case SectionKind::DataRelLocal:
+      case SectionKind::DataRelLocal:
         return DataRelLocalSection;
-       case SectionKind::DataRelRO:
+      case SectionKind::DataRelRO:
         return DataRelROSection;
-       case SectionKind::DataRelROLocal:
+      case SectionKind::DataRelROLocal:
         return DataRelROLocalSection;
-       case SectionKind::BSS:
-       case SectionKind::SmallBSS:
+      case SectionKind::BSS:
+      case SectionKind::SmallBSS:
         // ELF targets usually have BSS sections
         return getBSSSection_();
-       case SectionKind::ROData:
-       case SectionKind::SmallROData:
+      case SectionKind::ROData:
+      case SectionKind::SmallROData:
         return getReadOnlySection();
-       case SectionKind::RODataMergeStr:
+      case SectionKind::RODataMergeStr:
         return MergeableStringSection(GVar);
-       case SectionKind::RODataMergeConst:
-        return MergeableConstSection(GVar);
-       case SectionKind::ThreadData:
+      case SectionKind::RODataMergeConst:
+        return MergeableConstSection(GVar->getInitializer()->getType());
+      case SectionKind::ThreadData:
         // ELF targets usually support TLS stuff
         return TLSDataSection;
-       case SectionKind::ThreadBSS:
+      case SectionKind::ThreadBSS:
         return TLSBSSSection;
-       default:
+      default:
         llvm_unreachable("Unsuported section kind for global");
       }
     }
@@ -138,11 +138,6 @@ const Section*
 ELFTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
   // FIXME: Support data.rel stuff someday
   return MergeableConstSection(Ty);
-}
-
-const Section*
-ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  return MergeableConstSection(GV->getInitializer()->getType());
 }
 
 const Section*
