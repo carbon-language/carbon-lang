@@ -59,7 +59,6 @@ namespace {
     void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
-    bool doFinalization(Module &M);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
@@ -87,10 +86,6 @@ bool MSP430AsmPrinter::doInitialization(Module &M) {
   return false; // success
 }
 
-
-bool MSP430AsmPrinter::doFinalization(Module &M) {
-  return AsmPrinter::doFinalization(M);
-}
 
 void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
