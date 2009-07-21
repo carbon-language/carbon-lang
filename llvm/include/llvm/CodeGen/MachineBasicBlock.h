@@ -16,6 +16,7 @@
 
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/Support/Dump.h"
 
 namespace llvm {
 
@@ -309,8 +310,12 @@ public:
 
   // Debugging methods.
   void dump() const;
-  void print(std::ostream &OS) const;
-  void print(std::ostream *OS) const { if (OS) print(*OS); }
+  void print(std::ostream &OS,
+             const PrefixPrinter &prefix = PrefixPrinter()) const;
+  void print(std::ostream *OS,
+             const PrefixPrinter &prefix = PrefixPrinter()) const {
+    if (OS) print(*OS, prefix); 
+  }
 
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
   /// level, unless they're not in a MachineFunction yet, in which case this
