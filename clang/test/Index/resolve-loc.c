@@ -24,11 +24,16 @@ struct S {
 // RUN: index-test %t.ast -point-at %s:7:23 | grep param2 &&
 // RUN: index-test %t.ast -point-at %s:8:10 | grep local_var1 &&
 // RUN: index-test %t.ast -point-at %s:9:15 | grep for_var &&
-// RUN: index-test %t.ast -point-at %s:9:43 | grep top_func_def &&
-// RUN: index-test %t.ast -point-at %s:9:43 | grep '++for_var' &&
+
+// RUN: index-test %t.ast -point-at %s:9:43 > %t &&
+// RUN: grep top_func_def %s &&
+// RUN: grep '++for_var' %s &&
+
 // RUN: index-test %t.ast -point-at %s:10:9 | grep local_var2 &&
-// RUN: index-test %t.ast -point-at %s:10:30 | grep local_var2 &&
-// RUN: index-test %t.ast -point-at %s:10:30 | grep 'for_var + 1' &&
+
+// RUN: index-test %t.ast -point-at %s:10:30 > %t &&
+// RUN: grep local_var2 %t &&
+// RUN: grep 'for_var + 1' %t &&
 
 // fields test.
 // RUN: index-test %t.ast -point-at %s:15:10 | grep field_var

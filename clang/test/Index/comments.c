@@ -1,15 +1,4 @@
-// RUN: clang-cc -emit-pch -o %t.ast %s &&
-// RUN: index-test %t.ast -point-at %s:22:6 | grep "starts here" &&
-// RUN: index-test %t.ast -point-at %s:22:6 | grep "block comment" &&
-// RUN: index-test %t.ast -point-at %s:28:6 | grep "BCPL" &&
-// RUN: index-test %t.ast -point-at %s:28:6 | grep "But" &&
-// RUN: index-test %t.ast -point-at %s:28:6 | grep "NOT" | count 0 &&
-// RUN: index-test %t.ast -point-at %s:30:6 | grep "member"
-
-
-
-
-
+// Run lines are sensitive to line numbers and come below the code.
 
 //! It all starts here.
 /*! It's a little odd to continue line this,
@@ -28,3 +17,18 @@ void f(int, int);
 void g(int);
 
 void h(int); ///< This is a member comment.
+
+
+// RUN: clang-cc -emit-pch -o %t.ast %s &&
+
+// RUN: index-test %t.ast -point-at %s:11:6 > %t &&
+// RUN: grep "starts here" %t &&
+// RUN: grep "block comment" %t &&
+
+// RUN: index-test %t.ast -point-at %s:17:6 > %t &&
+// RUN: grep "BCPL" %t &&
+// RUN: grep "But" %t &&
+
+// RUN: index-test %t.ast -point-at %s:19:6 > %t &&
+// RUN: grep "NOT" %t | count 0 &&
+// RUN: grep "member" %t
