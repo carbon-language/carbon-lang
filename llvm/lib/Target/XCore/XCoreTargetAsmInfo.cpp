@@ -72,12 +72,9 @@ const Section*
 XCoreTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
-  if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV))
-  {
+  if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
     if (!GVar->isWeakForLinker()) {
       switch (Kind) {
-      case SectionKind::RODataMergeStr:
-        return MergeableStringSection(GVar);
       case SectionKind::RODataMergeConst:
         return getReadOnlySection();
       case SectionKind::ThreadData:
@@ -93,17 +90,6 @@ XCoreTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 }
 
 const Section*
-XCoreTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
-  return MergeableConstSection(Ty);
-}
-
-const Section*
-XCoreTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  Constant *C = GV->getInitializer();
-  return MergeableConstSection(C->getType());
-}
-
-inline const Section*
 XCoreTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   const TargetData *TD = TM.getTargetData();
 
@@ -120,15 +106,8 @@ XCoreTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   return getReadOnlySection();
 }
 
-const Section* XCoreTargetAsmInfo::
-MergeableStringSection(const GlobalVariable *GV) const {
-  // FIXME insert in correct mergable section
-  return getReadOnlySection();
-}
-
 unsigned XCoreTargetAsmInfo::
-SectionFlagsForGlobal(const GlobalValue *GV,
-                                     const char* Name) const {
+SectionFlagsForGlobal(const GlobalValue *GV, const char* Name) const {
   unsigned Flags = ELFTargetAsmInfo::SectionFlagsForGlobal(GV, Name);
   // Mask out unsupported flags
   Flags &= ~(SectionFlags::Small | SectionFlags::TLS);
@@ -159,44 +138,6 @@ SectionFlagsForGlobal(const GlobalValue *GV,
       break;
     }
   }
-
-  return Flags;
-}
-
-std::string XCoreTargetAsmInfo::
-printSectionFlags(unsigned flags) const {
-  std::string Flags = ",\"";
-
-  if (!(flags & SectionFlags::Debug))
-    Flags += 'a';
-  if (flags & SectionFlags::Code)
-    Flags += 'x';
-  if (flags & SectionFlags::Writeable)
-    Flags += 'w';
-  if (flags & SectionFlags::Mergeable)
-    Flags += 'M';
-  if (flags & SectionFlags::Strings)
-    Flags += 'S';
-  if (flags & SectionFlags::TLS)
-    Flags += 'T';
-  if (flags & SectionFlags::Small) {
-    if (flags & SectionFlags::Writeable)
-      Flags += 'd'; // DP relative
-    else
-      Flags += 'c'; // CP relative
-  }
-
-  Flags += "\",";
-  
-  Flags += '@';
-
-  if (flags & SectionFlags::BSS)
-    Flags += "nobits";
-  else
-    Flags += "progbits";
-
-  if (unsigned entitySize = SectionFlags::getEntitySize(flags))
-    Flags += "," + utostr(entitySize);
 
   return Flags;
 }

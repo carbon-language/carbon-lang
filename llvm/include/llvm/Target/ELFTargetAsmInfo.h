@@ -29,7 +29,7 @@ namespace llvm {
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
     virtual std::string printSectionFlags(unsigned flags) const;
     const Section* MergeableConstSection(const GlobalVariable *GV) const;
-    inline const Section* MergeableConstSection(const Type *Ty) const;
+    const Section* MergeableConstSection(const Type *Ty) const;
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
     virtual const Section*
     SelectSectionForMachineConst(const Type *Ty) const;

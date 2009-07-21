@@ -142,11 +142,10 @@ ELFTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
 
 const Section*
 ELFTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  Constant *C = GV->getInitializer();
-  return MergeableConstSection(C->getType());
+  return MergeableConstSection(GV->getInitializer()->getType());
 }
 
-inline const Section*
+const Section*
 ELFTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   const TargetData *TD = TM.getTargetData();
 
