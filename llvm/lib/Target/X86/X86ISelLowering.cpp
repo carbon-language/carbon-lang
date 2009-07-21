@@ -4557,7 +4557,7 @@ X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
   SDValue Result;
   if (OpFlags == X86II::MO_NO_FLAG && isInt32(Offset)) {
     // A direct static reference to a global.
-    Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset, OpFlags);
+    Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), Offset);
     Offset = 0;
   } else {
     Result = DAG.getTargetGlobalAddress(GV, getPointerTy(), 0, OpFlags);
@@ -8911,7 +8911,10 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                         getTargetMachine())))
       return;
 
-    Op = LowerGlobalAddress(GV, Op.getDebugLoc(), Offset, DAG);
+    if (hasMemory)
+      Op = LowerGlobalAddress(GV, Op.getDebugLoc(), Offset, DAG);
+    else
+      Op = DAG.getTargetGlobalAddress(GV, GA->getValueType(0), Offset);
     Result = Op;
     break;
   }
