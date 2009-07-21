@@ -103,14 +103,16 @@ def : Processor<"mpcore",           V6Itineraries,
                 [ArchV6, FeatureVFP2]>;
 
 // V6T2 Processors.
-def : Processor<"arm1156t2-s",     V6Itineraries,
+def : Processor<"arm1156t2-s",      V6Itineraries,
                 [ArchV6T2, FeatureThumb2]>;
-def : Processor<"arm1156t2f-s",    V6Itineraries,
+def : Processor<"arm1156t2f-s",     V6Itineraries,
                 [ArchV6T2, FeatureThumb2, FeatureVFP2]>;
 
 // V7 Processors.
-def : ProcNoItin<"cortex-a8",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
-def : ProcNoItin<"cortex-a9",       [ArchV7A, FeatureThumb2, FeatureNEON]>;
+def : Processor<"cortex-a8",        CortexA8Itineraries,
+                [ArchV7A, FeatureThumb2, FeatureNEON]>;
+def : Processor<"cortex-a9",        V7Itineraries,
+                [ArchV7A, FeatureThumb2, FeatureNEON]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

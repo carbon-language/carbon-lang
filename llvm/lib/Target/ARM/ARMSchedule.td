@@ -33,3 +33,4 @@ def IIC_Br      : InstrItinClass;
 def GenericItineraries : ProcessorItineraries<[]>;
 
 include "ARMScheduleV6.td"
+include "ARMScheduleV7.td"
