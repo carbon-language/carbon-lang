@@ -337,19 +337,25 @@ namespace llvm {
     /// found.
     BasicBlock* getPredecessorWithUniqueSuccessorForBB(BasicBlock *BB);
 
-    /// isNecessaryCond - Test whether the condition described by Pred, LHS,
-    /// and RHS is a necessary condition for the given Cond value to evaluate
-    /// to true.
-    bool isNecessaryCond(Value *Cond, ICmpInst::Predicate Pred,
-                         const SCEV *LHS, const SCEV *RHS,
-                         bool Inverse);
+    /// isImpliedCond - Test whether the condition described by Pred, LHS,
+    /// and RHS is true whenever the given Cond value evaluates to true.
+    bool isImpliedCond(Value *Cond, ICmpInst::Predicate Pred,
+                       const SCEV *LHS, const SCEV *RHS,
+                       bool Inverse);
 
-    /// isNecessaryCondOperands - Test whether the condition described by Pred,
-    /// LHS, and RHS is a necessary condition for the condition described by
-    /// Pred, FoundLHS, and FoundRHS to evaluate to true.
-    bool isNecessaryCondOperands(ICmpInst::Predicate Pred,
-                                 const SCEV *LHS, const SCEV *RHS,
-                                 const SCEV *FoundLHS, const SCEV *FoundRHS);
+    /// isImpliedCondOperands - Test whether the condition described by Pred,
+    /// LHS, and RHS is true whenever the condition desribed by Pred, FoundLHS,
+    /// and FoundRHS is true.
+    bool isImpliedCondOperands(ICmpInst::Predicate Pred,
+                               const SCEV *LHS, const SCEV *RHS,
+                               const SCEV *FoundLHS, const SCEV *FoundRHS);
+
+    /// isImpliedCondOperandsHelper - Test whether the condition described by
+    /// Pred, LHS, and RHS is true whenever the condition desribed by Pred,
+    /// FoundLHS, and FoundRHS is true.
+    bool isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
+                                     const SCEV *LHS, const SCEV *RHS,
+                                     const SCEV *FoundLHS, const SCEV *FoundRHS);
 
     /// getConstantEvolutionLoopExitValue - If we know that the specified Phi is
     /// in the header of its containing loop, we know the loop executes a
