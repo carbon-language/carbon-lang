@@ -99,6 +99,11 @@ else
 BUGPOINT_TOPTS=""
 endif
 
+ifneq ($(OCAMLC),)
+CC_FOR_OCAMLC := $(shell $(OCAMLC) -config | grep native_c_compiler | sed -e 's/native_c_compiler: //')
+CXX_FOR_OCAMLC := $(patsubst gcc,g++,$(CC_FOR_OCAMLC))
+endif
+
 FORCE:
 
 site.exp: FORCE
@@ -127,7 +132,7 @@ site.exp: FORCE
 	@echo 'set llvmgccmajvers "$(LLVMGCC_MAJVERS)"' >> site.tmp
 	@echo 'set bugpoint_topts $(BUGPOINT_TOPTS)' >> site.tmp
 	@echo 'set shlibext "$(SHLIBEXT)"' >> site.tmp
-	@echo 'set ocamlc "$(OCAMLC) -cc $(CXX) -I $(LibDir)/ocaml"' >> site.tmp
+	@echo 'set ocamlc "$(OCAMLC) -cc \"$(CXX_FOR_OCAMLC)\" -I $(LibDir)/ocaml"' >> site.tmp
 	@echo 'set valgrind "$(VALGRIND)"' >> site.tmp
 	@echo 'set grep "$(GREP)"' >>site.tmp
 	@echo 'set gas "$(GAS)"' >>site.tmp
