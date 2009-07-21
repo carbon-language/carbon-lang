@@ -379,6 +379,7 @@ CFMutableArrayRef f13_autorelease_d() {
   [(id) A autorelease]; 
   CFMutableArrayRef B = CFArrayCreateMutable(0, 10, &kCFTypeArrayCallBacks); // expected-warning{{Object sent -autorelease too many times}}
   CFRelease(B); // no-warning
+  while (1) {}
 }
 
 
