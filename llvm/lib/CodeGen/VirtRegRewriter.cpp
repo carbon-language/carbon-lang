@@ -277,7 +277,8 @@ public:
   /// GetRegForReload - We are about to emit a reload into PhysReg.  If there
   /// is some other operand that is using the specified register, either pick
   /// a new register to use, or evict the previous reload and use this reg. 
-  unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
+  unsigned GetRegForReload(const TargetRegisterClass *RC, unsigned PhysReg,
+                           MachineFunction &MF, MachineInstr *MI,
                            AvailableSpills &Spills,
                            std::vector<MachineInstr*> &MaybeDeadStores,
                            SmallSet<unsigned, 8> &Rejected,
@@ -296,15 +297,17 @@ public:
   ///       sees r1 is taken by t2, tries t2's reload register r0
   ///       sees r0 is taken by t3, tries t3's reload register r1
   ///       sees r1 is taken by t2, tries t2's reload register r0 ...
-  unsigned GetRegForReload(unsigned PhysReg, MachineInstr *MI,
+  unsigned GetRegForReload(unsigned VirtReg, unsigned PhysReg, MachineInstr *MI,
                            AvailableSpills &Spills,
                            std::vector<MachineInstr*> &MaybeDeadStores,
                            BitVector &RegKills,
                            std::vector<MachineOperand*> &KillOps,
                            VirtRegMap &VRM) {
     SmallSet<unsigned, 8> Rejected;
-    return GetRegForReload(PhysReg, MI, Spills, MaybeDeadStores, Rejected,
-                           RegKills, KillOps, VRM);
+    MachineFunction &MF = *MI->getParent()->getParent();
+    const TargetRegisterClass* RC = MF.getRegInfo().getRegClass(VirtReg);
+    return GetRegForReload(RC, PhysReg, MF, MI, Spills, MaybeDeadStores,
+                           Rejected, RegKills, KillOps, VRM);
   }
 };
 
@@ -658,15 +661,17 @@ void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
 /// GetRegForReload - We are about to emit a reload into PhysReg.  If there
 /// is some other operand that is using the specified register, either pick
 /// a new register to use, or evict the previous reload and use this reg.
-unsigned ReuseInfo::GetRegForReload(unsigned PhysReg, MachineInstr *MI,
-                         AvailableSpills &Spills,
+unsigned ReuseInfo::GetRegForReload(const TargetRegisterClass *RC,
+                         unsigned PhysReg,
+                         MachineFunction &MF,
+                         MachineInstr *MI, AvailableSpills &Spills,
                          std::vector<MachineInstr*> &MaybeDeadStores,
                          SmallSet<unsigned, 8> &Rejected,
                          BitVector &RegKills,
                          std::vector<MachineOperand*> &KillOps,
                          VirtRegMap &VRM) {
-  const TargetInstrInfo* TII = MI->getParent()->getParent()->getTarget()
-                               .getInstrInfo();
+  const TargetInstrInfo* TII = MF.getTarget().getInstrInfo();
+  const TargetRegisterInfo *TRI = Spills.getRegInfo();
   
   if (Reuses.empty()) return PhysReg;  // This is most often empty.
 
@@ -678,18 +683,18 @@ unsigned ReuseInfo::GetRegForReload(unsigned PhysReg, MachineInstr *MI,
     // considered and subsequently rejected because it has also been reused
     // by another operand.
     if (Op.PhysRegReused == PhysReg &&
-        Rejected.count(Op.AssignedPhysReg) == 0) {
+        Rejected.count(Op.AssignedPhysReg) == 0 &&
+        RC->contains(Op.AssignedPhysReg)) {
       // Yup, use the reload register that we didn't use before.
       unsigned NewReg = Op.AssignedPhysReg;
       Rejected.insert(PhysReg);
-      return GetRegForReload(NewReg, MI, Spills, MaybeDeadStores, Rejected,
+      return GetRegForReload(RC, NewReg, MF, MI, Spills, MaybeDeadStores, Rejected,
                              RegKills, KillOps, VRM);
     } else {
       // Otherwise, we might also have a problem if a previously reused
-      // value aliases the new register.  If so, codegen the previous reload
+      // value aliases the new register. If so, codegen the previous reload
       // and use this one.          
       unsigned PRRU = Op.PhysRegReused;
-      const TargetRegisterInfo *TRI = Spills.getRegInfo();
       if (TRI->areAliases(PRRU, PhysReg)) {
         // Okay, we found out that an alias of a reused register
         // was used.  This isn't good because it means we have
@@ -707,9 +712,9 @@ unsigned ReuseInfo::GetRegForReload(unsigned PhysReg, MachineInstr *MI,
         // slot that we were supposed to in the first place.  However, that
         // register could hold a reuse.  Check to see if it conflicts or
         // would prefer us to use a different register.
-        unsigned NewPhysReg = GetRegForReload(NewOp.AssignedPhysReg,
-                                              MI, Spills, MaybeDeadStores,
-                                          Rejected, RegKills, KillOps, VRM);
+        unsigned NewPhysReg = GetRegForReload(RC, NewOp.AssignedPhysReg,
+                                              MF, MI, Spills, MaybeDeadStores,
+                                              Rejected, RegKills, KillOps, VRM);
         
         MachineBasicBlock::iterator MII = MI;
         if (NewOp.StackSlotOrReMat > VirtRegMap::MAX_STACK_SLOT) {
@@ -1352,8 +1357,6 @@ private:
         TID.isCall() || TID.isBarrier() || TID.isReturn() ||
         TID.hasUnmodeledSideEffects())
       return false;
-    if (TID.getImplicitDefs())
-      return false;
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
       if (!MO.isReg() || !MO.getReg())
@@ -1790,8 +1793,9 @@ private:
           // available.  If this occurs, use the register indicated by the
           // reuser.
           if (ReusedOperands.hasReuses())
-            DesignatedReg = ReusedOperands.GetRegForReload(DesignatedReg, &MI, 
-                                 Spills, MaybeDeadStores, RegKills, KillOps, VRM);
+            DesignatedReg = ReusedOperands.GetRegForReload(VirtReg,
+                                                           DesignatedReg, &MI, 
+                               Spills, MaybeDeadStores, RegKills, KillOps, VRM);
           
           // If the mapped designated register is actually the physreg we have
           // incoming, we don't need to inserted a dead copy.
@@ -1842,8 +1846,8 @@ private:
         // available.  If this occurs, use the register indicated by the
         // reuser.
         if (ReusedOperands.hasReuses())
-          PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
-                                 Spills, MaybeDeadStores, RegKills, KillOps, VRM);
+          PhysReg = ReusedOperands.GetRegForReload(VirtReg, PhysReg, &MI, 
+                               Spills, MaybeDeadStores, RegKills, KillOps, VRM);
         
         RegInfo->setPhysRegUsed(PhysReg);
         ReusedOperands.markClobbered(PhysReg);
@@ -2157,8 +2161,8 @@ private:
           if (ReusedOperands.isClobbered(PhysReg)) {
             // Another def has taken the assigned physreg. It must have been a
             // use&def which got it due to reuse. Undo the reuse!
-            PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
-                                 Spills, MaybeDeadStores, RegKills, KillOps, VRM);
+            PhysReg = ReusedOperands.GetRegForReload(VirtReg, PhysReg, &MI, 
+                               Spills, MaybeDeadStores, RegKills, KillOps, VRM);
           }
         }
 
