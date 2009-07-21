@@ -68,8 +68,6 @@ XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
   setIntDivIsCheap(false);
 
   setShiftAmountType(MVT::i32);
-  // shl X, 32 == 0
-  setShiftAmountFlavor(Extend);
   setStackPointerRegisterToSaveRestore(XCore::SP);
 
   setSchedulingPreference(SchedulingForRegPressure);

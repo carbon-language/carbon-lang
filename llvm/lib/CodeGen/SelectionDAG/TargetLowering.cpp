@@ -492,7 +492,6 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   IsLittleEndian = TD->isLittleEndian();
   UsesGlobalOffsetTable = false;
   ShiftAmountTy = PointerTy = getValueType(TD->getIntPtrType());
-  ShiftAmtHandling = Undefined;
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
   memset(TargetDAGCombineArray, 0, array_lengthof(TargetDAGCombineArray));
   maxStoresPerMemset = maxStoresPerMemcpy = maxStoresPerMemmove = 8;

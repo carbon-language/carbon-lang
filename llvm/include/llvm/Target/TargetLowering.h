@@ -87,12 +87,6 @@ public:
     Custom      // Use the LowerOperation hook to implement custom lowering.
   };
 
-  enum OutOfRangeShiftAmount {
-    Undefined,  // Oversized shift amounts are undefined (default).
-    Mask,       // Shift amounts are auto masked (anded) to value size.
-    Extend      // Oversized shift pulls in zeros or sign bits.
-  };
-
   enum BooleanContent { // How the target represents true/false values.
     UndefinedBooleanContent,    // Only bit 0 counts, the rest can hold garbage.
     ZeroOrOneBooleanContent,        // All bits zero except for bit 0.
@@ -114,7 +108,6 @@ public:
   bool isLittleEndian() const { return IsLittleEndian; }
   MVT getPointerTy() const { return PointerTy; }
   MVT getShiftAmountTy() const { return ShiftAmountTy; }
-  OutOfRangeShiftAmount getShiftAmountFlavor() const {return ShiftAmtHandling; }
 
   /// usesGlobalOffsetTable - Return true if this target uses a GOT for PIC
   /// codegen.
@@ -878,12 +871,6 @@ protected:
     SchedPreferenceInfo = Pref;
   }
 
-  /// setShiftAmountFlavor - Describe how the target handles out of range shift
-  /// amounts.
-  void setShiftAmountFlavor(OutOfRangeShiftAmount OORSA) {
-    ShiftAmtHandling = OORSA;
-  }
-
   /// setUseUnderscoreSetJmp - Indicate whether this target prefers to
   /// use _setjmp to implement llvm.setjmp or the non _ version.
   /// Defaults to false.
@@ -1524,8 +1511,6 @@ private:
   /// ShiftAmountTy - The type to use for shift amounts, usually i8 or whatever
   /// PointerTy is.
   MVT ShiftAmountTy;
-
-  OutOfRangeShiftAmount ShiftAmtHandling;
 
   /// BooleanContents - Information about the contents of the high-bits in
   /// boolean values held in a type wider than i1.  See getBooleanContents.

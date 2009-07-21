@@ -130,7 +130,6 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   addRegisterClass(MVT::i8, PIC16::GPRRegisterClass);
 
   setShiftAmountType(MVT::i8);
-  setShiftAmountFlavor(Extend);
 
   // SRA library call names
   setPIC16LibcallName(PIC16ISD::SRA_I8, getIntrinsicName(PIC16ISD::SRA_I8));
