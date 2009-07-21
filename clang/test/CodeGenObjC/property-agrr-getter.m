@@ -9,7 +9,7 @@ typedef struct {
 @end
 
 @implementation A
--(s0) f0{}
+-(s0) f0{ while (1) {} }
 - (unsigned) bar {
   return self.f0.f0;
 }
