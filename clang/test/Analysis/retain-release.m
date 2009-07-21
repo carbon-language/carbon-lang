@@ -817,11 +817,14 @@ void IOServiceAddMatchingNotification_wrapper(IONotificationPortRef notifyPort, 
 
 typedef NSString* MyStringTy;
 
+@protocol FooP;
+
 @interface TestOwnershipAttr : NSObject
 - (NSString*) returnsAnOwnedString  NS_RETURNS_RETAINED; // no-warning
 - (NSString*) returnsAnOwnedCFString  CF_RETURNS_RETAINED; // no-warning
 - (MyStringTy) returnsAnOwnedTypedString NS_RETURNS_RETAINED; // no-warning
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to functions or methods that return a pointer or Objective-C object}}
+- (id<FooP>) returnsOwnedProt NS_RETURNS_RETAINED; // no-warning
 @end
 
 static int ownership_attribute_doesnt_go_here NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to function or method types}}
