@@ -18,5 +18,4 @@ main(int argc, char *argv[])
 
   fp.func = &func;
   fp.func = func;
-  return 0;
 }
