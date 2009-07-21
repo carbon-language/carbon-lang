@@ -519,7 +519,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, Preprocessor& PP) {
     assert(SM.getFileID(LLoc.second) == FID &&
            "Start and end of expansion must be in the same ultimate file!");
 
-    std::string Expansion = PP.getSpelling(Tok);
+    std::string Expansion = EscapeText(PP.getSpelling(Tok));
     unsigned LineLen = Expansion.size();
     
     Token PrevTok = Tok;
