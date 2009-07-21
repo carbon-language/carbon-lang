@@ -1,18 +1,19 @@
 add_llvm_library(LLVMipo
-  FunctionAttrs.cpp
   ArgumentPromotion.cpp
   ConstantMerge.cpp
   DeadArgumentElimination.cpp
   DeadTypeElimination.cpp
   ExtractGV.cpp
+  FunctionAttrs.cpp
   GlobalDCE.cpp
   GlobalOpt.cpp
+  IPConstantPropagation.cpp
+  IPO.cpp
   IndMemRemoval.cpp
   InlineAlways.cpp
-  Inliner.cpp
   InlineSimple.cpp
+  Inliner.cpp
   Internalize.cpp
-  IPConstantPropagation.cpp
   LoopExtractor.cpp
   LowerSetJmp.cpp
   MergeFunctions.cpp
