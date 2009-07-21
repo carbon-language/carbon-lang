@@ -157,6 +157,7 @@ NSString* f11(CFDictionaryRef dict, const char* key) {
   if (s) {
     [s release];
   }
+  return 0;
 }
 
 // Test case for passing a tracked object by-reference to a function we
