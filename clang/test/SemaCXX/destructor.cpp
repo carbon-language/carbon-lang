@@ -55,3 +55,9 @@ G::~G() { }
 struct H {
   ~H(void) { } 
 };
+
+struct X {};
+
+struct Y {
+  ~X(); // expected-error {{expected the class name after '~' to name the enclosing class}}
+};

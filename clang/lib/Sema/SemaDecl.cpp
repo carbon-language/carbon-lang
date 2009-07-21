@@ -2456,6 +2456,16 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
       CheckConstructor(Constructor);
     } else if (isa<CXXDestructorDecl>(NewFD)) {
       CXXRecordDecl *Record = cast<CXXRecordDecl>(NewFD->getParent());
+      QualType ClassType = Context.getTypeDeclType(Record);
+      if (!ClassType->isDependentType()) {
+        ClassType = Context.getCanonicalType(ClassType);
+        DeclarationName Name 
+          = Context.DeclarationNames.getCXXDestructorName(ClassType);
+        if (NewFD->getDeclName() != Name) {
+          Diag(NewFD->getLocation(), diag::err_destructor_name);
+          return NewFD->setInvalidDecl();  
+        }
+      }
       Record->setUserDeclaredDestructor(true);
       // C++ [class]p4: A POD-struct is an aggregate class that has [...] no
       // user-defined destructor.

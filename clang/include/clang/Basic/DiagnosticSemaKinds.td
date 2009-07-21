@@ -385,6 +385,8 @@ def err_destructor_with_params : Error<"destructor cannot have any parameters">;
 def err_destructor_variadic : Error<"destructor cannot be variadic">;
 def err_destructor_typedef_name : Error<
   "destructor cannot be declared using a typedef %0 of the class name">;
+def err_destructor_name : Error<
+  "expected the class name after '~' to name the enclosing class">;
 
 // C++ initialization
 def err_lvalue_to_rvalue_ref : Error<"rvalue reference cannot bind to lvalue">;
