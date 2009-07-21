@@ -10,6 +10,7 @@
 #ifndef LLVM_ADT_STRINGREF_H
 #define LLVM_ADT_STRINGREF_H
 
+#include <cassert>
 #include <cstring>
 #include <string>
 
