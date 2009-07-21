@@ -96,7 +96,7 @@ sub UpdateCMake {
   my $digestB = Digest::MD5->new->addfile(*FILE)->hexdigest;
   close(FILE);
   
-  if ($digestA != $digestB) {
+  if ($digestA ne $digestB) {
     move($cmakeListNew, $cmakeList);
     return 1;    
   }
