@@ -217,9 +217,8 @@ public:
   ///  entry block has no predecessors and contains no statements.
   void setEntry(CFGBlock *B) { Entry = B; }
   
-  /// setExit - Set the exit block of the CFG.  This is typically used
-  ///  only during CFG construction.  Most CFG clients expect that the
-  ///  exit block has no successors and contains no statements.
+  /// setIndirectGotoBlock - Set the block used for indirect goto jumps.
+  ///  This is typically used only during CFG construction.
   void setIndirectGotoBlock(CFGBlock* B) { IndirectGotoBlock = B; }
   
   //===--------------------------------------------------------------------===//
