@@ -197,13 +197,6 @@ _bar:   addic r3,r3,-1
 
 //===---------------------------------------------------------------------===//
 
-Legalize should lower ctlz like this:
-  ctlz(x) = popcnt((x-1) & ~x)
-
-on targets that have popcnt but not ctlz.  itanium, what else?
-
-//===---------------------------------------------------------------------===//
-
 quantum_sigma_x in 462.libquantum contains the following loop:
 
       for(i=0; i<reg->size; i++)
@@ -332,11 +325,6 @@ we don't eliminate the computation of the top half of effective_addr2 because
 we don't have whole-function selection dags.  On x86, this means we use one
 extra register for the function when effective_addr2 is declared as U64 than
 when it is declared U32.
-
-//===---------------------------------------------------------------------===//
-
-Promote for i32 bswap can use i64 bswap + shr.  Useful on targets with 64-bit
-regs and bswap, like itanium.
 
 //===---------------------------------------------------------------------===//
 
