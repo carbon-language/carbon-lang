@@ -73,4 +73,17 @@ struct X : public virtual A, virtual V, public virtual B {
 			// expected-note {{base 'struct V'}}
 };
 
-
+class Anon {
+  int c; union {int a,b;}; int d;
+  Anon() : c(10), b(1), d(2) {}
+};
+class Anon2 {
+  int c; union {int a,b;}; int d;
+  Anon2() : c(2),
+            d(10), // expected-warning {{member 'd' will be initialized after}}
+            b(1) {} // expected-note {{field b}}
+};
+class Anon3 {
+  union {int a,b;};
+  Anon3() : b(1) {}
+};

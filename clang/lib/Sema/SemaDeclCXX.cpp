@@ -774,6 +774,29 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
                                         IdLoc);
 }
 
+static void *GetKeyForTopLevelField(FieldDecl *Field) {
+  // For anonymous unions, use the class declaration as the key.
+  if (const RecordType *RT = Field->getType()->getAsRecordType()) {
+    if (RT->getDecl()->isAnonymousStructOrUnion())
+      return static_cast<void *>(RT->getDecl());
+  }
+  return static_cast<void *>(Field);
+}
+
+static void *GetKeyForMember(CXXBaseOrMemberInitializer *Member) {
+  // For fields injected into the class via declaration of an anonymous union,
+  // use its anonymous union class declaration as the unique key.
+  if (FieldDecl *Field = Member->getMember()) {
+    if (Field->getDeclContext()->isRecord()) {
+      RecordDecl *RD = cast<RecordDecl>(Field->getDeclContext());
+      if (RD->isAnonymousStructOrUnion())
+        return static_cast<void *>(RD);
+    }
+    return static_cast<void *>(Field);
+  }
+  return static_cast<RecordType *>(Member->getBaseClass());
+}
+
 void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl, 
                                 SourceLocation ColonLoc,
                                 MemInitTy **MemInits, unsigned NumMemInits) {
@@ -792,13 +815,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   for (unsigned i = 0; i < NumMemInits; i++) {
     CXXBaseOrMemberInitializer *Member = 
       static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
-    void *KeyToMember = Member->getBaseOrMember();
-    // For fields injected into the class via declaration of an anonymous union,
-    // use its anonymous union class declaration as the unique key.
-    if (FieldDecl *Field = Member->getMember())
-      if (Field->getDeclContext()->isRecord() &&
-          cast<RecordDecl>(Field->getDeclContext())->isAnonymousStructOrUnion())
-        KeyToMember = static_cast<void *>(Field->getDeclContext());
+    void *KeyToMember = GetKeyForMember(Member);
     CXXBaseOrMemberInitializer *&PrevMember = Members[KeyToMember];
     if (!PrevMember) {
       PrevMember = Member;
@@ -823,6 +840,11 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     Constructor->setBaseOrMemberInitializers(Context, 
                     reinterpret_cast<CXXBaseOrMemberInitializer **>(MemInits), 
                     NumMemInits);
+  }
+  if (!err && (Diags.getDiagnosticLevel(diag::warn_base_initialized)
+               != Diagnostic::Ignored ||
+               Diags.getDiagnosticLevel(diag::warn_field_initialized)
+               != Diagnostic::Ignored)) {
     // Also issue warning if order of ctor-initializer list does not match order
     // of 1) base class declarations and 2) order of non-static data members.
     llvm::SmallVector<const void*, 32> AllBaseOrMembers;
@@ -846,7 +868,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     
     for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
          E = ClassDecl->field_end(); Field != E; ++Field)
-      AllBaseOrMembers.push_back(*Field);
+      AllBaseOrMembers.push_back(GetKeyForTopLevelField(*Field));
     
     int Last = AllBaseOrMembers.size();
     int curIndex = 0;
@@ -854,19 +876,13 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
     for (unsigned i = 0; i < NumMemInits; i++) {
       CXXBaseOrMemberInitializer *Member = 
         static_cast<CXXBaseOrMemberInitializer*>(MemInits[i]);
-      void *MemberInCtorList;
-      if (Member->isBaseInitializer())
-        MemberInCtorList = Member->getBaseClass();
-      else
-        MemberInCtorList = Member->getMember();
-      
-      int j;
-      for (j = curIndex; j < Last; j++)
-        if (MemberInCtorList == AllBaseOrMembers[j])
+      void *MemberInCtorList = GetKeyForMember(Member);
+
+      for (; curIndex < Last; curIndex++)
+        if (MemberInCtorList == AllBaseOrMembers[curIndex])
           break;
-      if (j == Last) {
-        if (!PrevMember)
-          continue;
+      if (curIndex == Last) {
+        assert(PrevMember && "Member not in member list?!");
         // Initializer as specified in ctor-initializer list is out of order.
         // Issue a warning diagnostic.
         if (PrevMember->isBaseInitializer()) {
@@ -893,11 +909,11 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
                diag::note_fieldorbase_initialized_here) << 1
             << BaseClass->getDesugaredType(true);
         }
+        for (curIndex = 0; curIndex < Last; curIndex++)
+          if (MemberInCtorList == AllBaseOrMembers[curIndex]) 
+            break;
       }
       PrevMember = Member;
-      for (curIndex=0; curIndex < Last; curIndex++)
-        if (MemberInCtorList == AllBaseOrMembers[curIndex]) 
-          break;
     }
   }
 }
