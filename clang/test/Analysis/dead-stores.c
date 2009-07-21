@@ -131,7 +131,7 @@ int f16(int x) {
 }
 
 // Self-assignments should not be flagged as dead stores.
-int f17() {
+void f17() {
   int x = 1;
   x = x; // no-warning
 }
