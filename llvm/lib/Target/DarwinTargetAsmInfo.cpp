@@ -156,9 +156,9 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
             ConstTextCoalSection :
             MergeableStringSection(cast<GlobalVariable>(GV)));
    case SectionKind::RODataMergeConst:
-    return (isWeak ?
-            ConstDataCoalSection:
-            MergeableConstSection(cast<GlobalVariable>(GV)));
+    if (isWeak) return ConstDataCoalSection;
+    return MergeableConstSection(cast<GlobalVariable>(GV)
+                                 ->getInitializer()->getType());
    default:
     llvm_unreachable("Unsuported section kind for global");
   }
@@ -184,13 +184,6 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
 }
 
 const Section*
-DarwinTargetAsmInfo::MergeableConstSection(const GlobalVariable *GV) const {
-  Constant *C = GV->getInitializer();
-
-  return MergeableConstSection(C->getType());
-}
-
-inline const Section*
 DarwinTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   const TargetData *TD = TM.getTargetData();
 

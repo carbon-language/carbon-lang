@@ -39,10 +39,11 @@ namespace llvm {
                                                SectionKind::Kind kind) const;
     virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
                                       Mangler *Mang) const;
-    const Section* MergeableConstSection(const GlobalVariable *GV) const;
+    const Section* SelectSectionForMachineConst(const Type *Ty) const;
+    
+  private:
     const Section* MergeableConstSection(const Type *Ty) const;
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
-    const Section* SelectSectionForMachineConst(const Type *Ty) const;
   };
 }
 
