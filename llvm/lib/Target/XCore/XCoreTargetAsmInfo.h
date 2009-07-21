@@ -28,7 +28,6 @@ namespace llvm {
   public:
     explicit XCoreTargetAsmInfo(const XCoreTargetMachine &TM);
     
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
     virtual unsigned
     SectionFlagsForGlobal(const GlobalValue *GV = NULL,
                           const char* name = NULL) const;

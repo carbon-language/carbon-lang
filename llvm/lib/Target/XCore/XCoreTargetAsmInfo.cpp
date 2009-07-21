@@ -68,27 +68,6 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   DwarfMacroInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
 }
 
-const Section*
-XCoreTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind Kind = SectionKindForGlobal(GV);
-
-  if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-    if (!GVar->isWeakForLinker()) {
-      switch (Kind) {
-      case SectionKind::RODataMergeConst:
-        return getReadOnlySection();
-      case SectionKind::ThreadData:
-        return DataSection;
-      case SectionKind::ThreadBSS:
-        return getBSSSection_();
-      default:
-        break;
-      }
-    }
-  }
-  return ELFTargetAsmInfo::SelectSectionForGlobal(GV);
-}
-
 unsigned XCoreTargetAsmInfo::
 SectionFlagsForGlobal(const GlobalValue *GV, const char* Name) const {
   unsigned Flags = ELFTargetAsmInfo::SectionFlagsForGlobal(GV, Name);
