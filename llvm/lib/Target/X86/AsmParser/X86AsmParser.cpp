@@ -51,10 +51,7 @@ X86ATTAsmParser::MatchInstruction(const char *Name,
 
 bool X86ATTAsmParser::ParseInstruction(MCAsmParser &AP, const char *Name, 
                                        MCInst &Inst) {
-  MCAsmLexer &Lexer = AP.getLexer();
   llvm::SmallVector<X86Operand, 3> Operands;
-  (void) Lexer;
-  (void) Operands;
   
   return MatchInstruction(Name, Operands, Inst);
 }
