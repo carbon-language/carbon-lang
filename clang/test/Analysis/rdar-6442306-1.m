@@ -29,4 +29,5 @@ __Beeble_check__Request__SetPortalSize_t(__attribute__((__unused__)) __Request__
     }
     while (0);
   }
+  return 0;
 }
