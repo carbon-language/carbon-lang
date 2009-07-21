@@ -146,7 +146,7 @@ void pr3422() {
 }
 
 // PR 3543 (handle empty statement expressions)
-int pr_3543(void) {
+void pr_3543(void) {
   ({});
 }
 
