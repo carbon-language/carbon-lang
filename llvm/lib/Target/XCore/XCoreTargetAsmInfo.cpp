@@ -71,31 +71,17 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
 unsigned XCoreTargetAsmInfo::
 SectionFlagsForGlobal(const GlobalValue *GV, const char* Name) const {
   unsigned Flags = ELFTargetAsmInfo::SectionFlagsForGlobal(GV, Name);
-  // Mask out unsupported flags
-  Flags &= ~SectionFlags::Small;
 
   // Set CP / DP relative flags
   if (GV) {
     SectionKind::Kind Kind = SectionKindForGlobal(GV);
     switch (Kind) {
-    case SectionKind::ThreadData:
-    case SectionKind::ThreadBSS:
-    case SectionKind::Data:
-    case SectionKind::BSS:
-    case SectionKind::SmallData:
-    case SectionKind::SmallBSS:
-      Flags |= SectionFlags::Small;
-      break;
     case SectionKind::ROData:
     case SectionKind::RODataMergeStr:
     case SectionKind::SmallROData:
-      if (Subtarget->isXS1A()) {
+      if (Subtarget->isXS1A())
         Flags |= SectionFlags::Writeable;
-      }
-      Flags |=SectionFlags::Small;
       break;
-    case SectionKind::RODataMergeConst:
-      Flags |=SectionFlags::Small;
     default:
       break;
     }
