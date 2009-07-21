@@ -252,8 +252,7 @@ void MachineFunction::dump() const {
   print(*cerr.stream());
 }
 
-void MachineFunction::print(std::ostream &OS,
-                            const PrefixPrinter &prefix) const {
+void MachineFunction::print(std::ostream &OS) const {
   OS << "# Machine code for " << Fn->getName () << "():\n";
 
   // Print Frame Information
@@ -295,10 +294,8 @@ void MachineFunction::print(std::ostream &OS,
     OS << "\n";
   }
   
-  for (const_iterator BB = begin(); BB != end(); ++BB) {
-    OS << prefix(*BB);
-    BB->print(OS, prefix);
-  }
+  for (const_iterator BB = begin(); BB != end(); ++BB)
+    BB->print(OS);
 
   OS << "\n# End machine code for " << Fn->getName () << "().\n\n";
 }
