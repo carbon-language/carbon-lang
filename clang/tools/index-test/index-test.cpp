@@ -146,7 +146,7 @@ static void ProcessASTLocation(ASTLocation ASTLoc, IndexProvider &IdxProvider) {
 
   Decl *D = ASTLoc.getReferencedDecl();
   if (D == 0) {
-    llvm::errs() << "Error: Couldn't get a referenced Decl for the ASTLocation";
+    llvm::errs() << "Error: Couldn't get referenced Decl for the ASTLocation\n";
     HadErrors = true;
     return;
   }
