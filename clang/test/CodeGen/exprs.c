@@ -15,7 +15,7 @@ void *test(int *i) {
 }
 
 _Bool test2b; 
-int test2() {if (test2b);}
+int test2() { if (test2b); return 0; }
 
 // PR1921
 int test3() {

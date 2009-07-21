@@ -32,6 +32,7 @@ void f1() {}
 
 // RUN: grep 'define .* @f3' %t | not grep -F '...'
 struct foo { int X, Y, Z; } f3() {
+  while (1) {}
 }
 
 // PR4423 - This shouldn't crash in codegen

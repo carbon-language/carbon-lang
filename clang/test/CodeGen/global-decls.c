@@ -11,7 +11,7 @@ int g0_common __attribute__((weak));
 // RUN: grep '@g0_def = weak global i32' %t &&
 int g0_def __attribute__((weak)) = 52;
 // RUN: grep 'define weak i32 @g1_def()' %t &&
-int __attribute__((weak)) g1_def (void) {}
+int __attribute__((weak)) g1_def (void) { return 0; }
 
 // Force _ext references
 void f0() {

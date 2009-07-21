@@ -74,6 +74,7 @@ void test_test3() { test3(); }
 extern int test4(void);
 extern __inline __attribute__ ((__gnu_inline__)) int test4(void)
 {
+  return 0;
 }
 
 void test_test4() { test4(); }
@@ -81,6 +82,7 @@ void test_test4() { test4(); }
 extern __inline int test5(void);
 extern __inline int __attribute__ ((__gnu_inline__)) test5(void)
 {
+  return 0;
 }
 
 void test_test5() { test5(); }

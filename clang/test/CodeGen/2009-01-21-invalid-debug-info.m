@@ -10,7 +10,7 @@
 @interface I1 @end
 
 @implementation I1
--im0 {}
+-im0 { return 0; }
 @end
 
 I1 *f1(void) { return 0; }

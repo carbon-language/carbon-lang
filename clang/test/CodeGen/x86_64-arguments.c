@@ -12,21 +12,27 @@
 // RUN: grep 'define void @f8_2(.0)' %t &&
 
 char f0(void) {
+  return 0;
 }
 
 short f1(void) {
+  return 0;
 }
 
 int f2(void) {
+  return 0;
 }
 
 float f3(void) {
+  return 0;
 }
 
 double f4(void) {
+  return 0;
 }
 
 long double f5(void) {
+  return 0;
 }
 
 void f6(char a0, short a1, int a2, long long a3, void *a4) {
@@ -42,23 +48,23 @@ union u8 {
   long double a;
   int b;
 };
-union u8 f8_1() {}
+union u8 f8_1() { while (1) {} }
 void f8_2(union u8 a0) {}
 
 // RUN: grep 'define i64 @f9()' %t &&
-struct s9 { int a; int b; int : 0; } f9(void) {}
+struct s9 { int a; int b; int : 0; } f9(void) { while (1) {} }
 
 // RUN: grep 'define void @f10(i64)' %t &&
 struct s10 { int a; int b; int : 0; };
 void f10(struct s10 a0) {}
 
 // RUN: grep 'define void @f11(.union.anon. noalias sret .agg.result)' %t &&
-union { long double a; float b; } f11() {}
+union { long double a; float b; } f11() { while (1) {} }
 
 // RUN: grep 'define i64 @f12_0()' %t &&
 // RUN: grep 'define void @f12_1(i64)' %t &&
 struct s12 { int a __attribute__((aligned(16))); };
-struct s12 f12_0(void) {}
+struct s12 f12_0(void) { while (1) {} }
 void f12_1(struct s12 a0) {}
 
 // Check that sret parameter is accounted for when checking available integer
@@ -67,7 +73,7 @@ void f12_1(struct s12 a0) {}
 
 struct s13_0 { long long f0[3]; };
 struct s13_0 f13(int a, int b, int c, int d, 
-                 struct s13_1 { long long f0[2]; } e, int f) {}
+                 struct s13_1 { long long f0[2]; } e, int f) { while (1) {} }
 
 // RUN: grep 'define void @f14(.*, i8 signext .X)' %t &&
 void f14(int a, int b, int c, int d, int e, int f, 
@@ -86,6 +92,6 @@ void f17(float a, float b, float c, float d, float e, float f, float g, float h,
 // RUN: grep '.1 = bitcast i64. .tmp to .struct.f18_s0.' %t &&
 // RUN: grep '.2 = load .struct.f18_s0. .1, align 1' %t &&
 // RUN: grep 'store .struct.f18_s0 .2, .struct.f18_s0. .f18_arg1' %t &&
-void f18(int a, struct f18_s0 { int f0; } f18_arg1) {}
+void f18(int a, struct f18_s0 { int f0; } f18_arg1) { while (1) {} }
 
 // RUN: true

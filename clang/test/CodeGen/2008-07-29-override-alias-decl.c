@@ -1,6 +1,6 @@
 // RUN: clang-cc -emit-llvm -o - %s | grep -e "^@f" | count 1
 
-int x() {}
+int x() { return 1; }
 
 int f() __attribute__((weak, alias("x")));
 

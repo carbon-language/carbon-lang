@@ -56,7 +56,7 @@ int ai_1() {  return 4; }
 static __inline__ __attribute__((always_inline))
 struct {
   int a, b, c, d, e;
-} ai_2() { }
+} ai_2() { while (1) {} }
 
 
 int foo() {

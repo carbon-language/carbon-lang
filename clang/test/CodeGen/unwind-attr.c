@@ -2,4 +2,5 @@
 // RUN: clang-cc -emit-llvm -o - %s | grep "@foo()" | grep nounwind 
 
 int foo(void) {
+  return 0;
 }
