@@ -16,6 +16,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprObjC.h"
 using namespace clang;
 using namespace idx;
 
@@ -24,6 +25,9 @@ static Decl *getDeclFromExpr(Stmt *E) {
     return RefExpr->getDecl();
   if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
     return ME->getMemberDecl();
+  if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
+    return RE->getDecl();
+
   if (CallExpr *CE = dyn_cast<CallExpr>(E))
     return getDeclFromExpr(CE->getCallee());
   if (CastExpr *CE = dyn_cast<CastExpr>(E))

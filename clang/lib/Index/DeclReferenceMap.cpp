@@ -35,6 +35,7 @@ public:
   void VisitDeclStmt(DeclStmt *Node);
   void VisitDeclRefExpr(DeclRefExpr *Node);
   void VisitMemberExpr(MemberExpr *Node);
+  void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
   void VisitStmt(Stmt *Node);
 };
 
@@ -48,6 +49,7 @@ public:
   void VisitDeclContext(DeclContext *DC);
   void VisitVarDecl(VarDecl *D);
   void VisitFunctionDecl(FunctionDecl *D);
+  void VisitObjCMethodDecl(ObjCMethodDecl *D);
   void VisitBlockDecl(BlockDecl *D);
   void VisitDecl(Decl *D);
 };
@@ -75,6 +77,10 @@ void StmtMapper::VisitMemberExpr(MemberExpr *Node) {
   Map.insert(std::make_pair(PrimD, ASTLocation(Parent, Node)));
 }
 
+void StmtMapper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
+  Map.insert(std::make_pair(Node->getDecl(), ASTLocation(Parent, Node)));
+}
+
 void StmtMapper::VisitStmt(Stmt *Node) {
   for (Stmt::child_iterator
          I = Node->child_begin(), E = Node->child_end(); I != E; ++I)
@@ -92,10 +98,13 @@ void DeclMapper::VisitDeclContext(DeclContext *DC) {
 }
 
 void DeclMapper::VisitFunctionDecl(FunctionDecl *D) {
-  if (!D->isThisDeclarationADefinition())
-    return;
-  
-  StmtMapper(Map, D).Visit(D->getBody());
+  if (D->isThisDeclarationADefinition())
+    StmtMapper(Map, D).Visit(D->getBody());
+}
+
+void DeclMapper::VisitObjCMethodDecl(ObjCMethodDecl *D) {
+  if (D->getBody())
+    StmtMapper(Map, D).Visit(D->getBody());
 }
 
 void DeclMapper::VisitBlockDecl(BlockDecl *D) {
