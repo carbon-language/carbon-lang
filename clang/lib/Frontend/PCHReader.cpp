@@ -1364,14 +1364,6 @@ PCHReader::ReadPCHBlock() {
       ExtVectorDecls.swap(Record);
       break;
 
-    case pch::OBJC_CATEGORY_IMPLEMENTATIONS:
-      if (!ObjCCategoryImpls.empty()) {
-        Error("duplicate OBJC_CATEGORY_IMPLEMENTATIONS record in PCH file");
-        return Failure;
-      }
-      ObjCCategoryImpls.swap(Record);
-      break;
-
     case pch::ORIGINAL_FILE_NAME:
       OriginalFileName.assign(BlobStart, BlobLen);
       MaybeAddSystemRootToFilename(OriginalFileName);
@@ -2210,13 +2202,6 @@ void PCHReader::InitializeSema(Sema &S) {
   for (unsigned I = 0, N = ExtVectorDecls.size(); I != N; ++I)
     SemaObj->ExtVectorDecls.push_back(
                                cast<TypedefDecl>(GetDecl(ExtVectorDecls[I])));
-
-  // If there were any Objective-C category implementations,
-  // deserialize them and add them to Sema's vector of such
-  // definitions.
-  for (unsigned I = 0, N = ObjCCategoryImpls.size(); I != N; ++I)
-    SemaObj->ObjCCategoryImpls.push_back(
-                cast<ObjCCategoryImplDecl>(GetDecl(ObjCCategoryImpls[I])));
 }
 
 IdentifierInfo* PCHReader::get(const char *NameStart, const char *NameEnd) {

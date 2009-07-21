@@ -185,10 +185,6 @@ public:
   /// us to associate a raw vector type with one of the ext_vector type names.
   /// This is only necessary for issuing pretty diagnostics.
   llvm::SmallVector<TypedefDecl*, 24> ExtVectorDecls;
-
-  /// ObjCCategoryImpls - Maintain a list of category implementations so 
-  /// we can check for duplicates and find local method declarations.
-  llvm::SmallVector<ObjCCategoryImplDecl*, 8> ObjCCategoryImpls;
   
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   llvm::OwningPtr<CXXFieldCollector> FieldCollector;

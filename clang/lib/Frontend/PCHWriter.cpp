@@ -385,7 +385,6 @@ void PCHWriter::WriteBlockInfoBlock() {
   RECORD(SOURCE_LOCATION_PRELOADS);
   RECORD(STAT_CACHE);
   RECORD(EXT_VECTOR_DECLS);
-  RECORD(OBJC_CATEGORY_IMPLEMENTATIONS);
   RECORD(COMMENT_RANGES);
   
   // SourceManager Block.
@@ -1820,12 +1819,6 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   for (unsigned I = 0, N = SemaRef.ExtVectorDecls.size(); I != N; ++I)
     AddDeclRef(SemaRef.ExtVectorDecls[I], ExtVectorDecls);
 
-  // Build a record containing all of the Objective-C category
-  // implementations.
-  RecordData ObjCCategoryImpls;
-  for (unsigned I = 0, N = SemaRef.ObjCCategoryImpls.size(); I != N; ++I)
-    AddDeclRef(SemaRef.ObjCCategoryImpls[I], ObjCCategoryImpls);
-
   // Write the remaining PCH contents.
   RecordData Record;
   Stream.EnterSubblock(pch::PCH_BLOCK_ID, 4);
@@ -1903,10 +1896,6 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   // Write the record containing ext_vector type names.
   if (!ExtVectorDecls.empty())
     Stream.EmitRecord(pch::EXT_VECTOR_DECLS, ExtVectorDecls);
-
-  // Write the record containing Objective-C category implementations.
-  if (!ObjCCategoryImpls.empty())
-    Stream.EmitRecord(pch::OBJC_CATEGORY_IMPLEMENTATIONS, ObjCCategoryImpls);
   
   // Some simple statistics
   Record.clear();

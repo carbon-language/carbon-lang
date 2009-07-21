@@ -212,17 +212,13 @@ namespace clang {
       /// \brief Record code for the set of ext_vector type names.
       EXT_VECTOR_DECLS = 18,
 
-      /// \brief Record code for the set of Objective-C category
-      /// implementations.
-      OBJC_CATEGORY_IMPLEMENTATIONS = 19,
-
       /// \brief Record code for the original file that was used to
       /// generate the precompiled header.
-      ORIGINAL_FILE_NAME = 20,
+      ORIGINAL_FILE_NAME = 19,
       
       /// \brief Record code for the sorted array of source ranges where
       /// comments were encountered in the source code.
-      COMMENT_RANGES = 21
+      COMMENT_RANGES = 20
     };
 
     /// \brief Record types used within a source manager block.

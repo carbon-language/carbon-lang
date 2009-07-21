@@ -432,6 +432,14 @@ public:
   void setImplementation(ObjCImplementationDecl *ImplD);
 
   ObjCCategoryDecl *FindCategoryDeclaration(IdentifierInfo *CategoryId) const;
+  
+  // Get the local instance/class method declared in a category.
+  ObjCMethodDecl *getCategoryInstanceMethod(Selector Sel) const;
+  ObjCMethodDecl *getCategoryClassMethod(Selector Sel) const;
+  ObjCMethodDecl *getCategoryMethod(Selector Sel, bool isInstance) const {
+    return isInstance ? getInstanceMethod(Sel) 
+                      : getClassMethod(Sel);
+  }
 
   typedef ObjCList<ObjCProtocolDecl>::iterator protocol_iterator;
   protocol_iterator protocol_begin() const {return ReferencedProtocols.begin();}

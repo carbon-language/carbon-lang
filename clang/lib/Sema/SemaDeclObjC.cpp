@@ -638,8 +638,6 @@ Sema::DeclPtrTy Sema::ActOnStartCategoryImplementation(
     } else
       CatIDecl->setImplementation(CDecl);
   }
-
-  ObjCCategoryImpls.push_back(CDecl);
   
   CheckObjCDeclScope(CDecl);
   return DeclPtrTy::make(CDecl);

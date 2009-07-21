@@ -2250,12 +2250,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
         Setter = FindMethodInNestedImplementations(IFace, SetterSel);
       }
       // Look through local category implementations associated with the class.
-      if (!Setter) {
-        for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
-          if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-            Setter = ObjCCategoryImpls[i]->getClassMethod(SetterSel);
-        }
-      }
+      if (!Setter)
+        Setter = IFace->getCategoryClassMethod(SetterSel);
 
       if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
         return ExprError();
@@ -2431,12 +2427,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       Getter = FindMethodInNestedImplementations(IFace, Sel);
 
     // Look through local category implementations associated with the class.
-    if (!Getter) {
-      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Getter; i++) {
-        if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-          Getter = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
-      }
-    }
+    if (!Getter)
+      Getter = IFace->getCategoryInstanceMethod(Sel);
     if (Getter) {
       // Check if we can reference this property.
       if (DiagnoseUseOfDecl(Getter, MemberLoc))
@@ -2454,12 +2446,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       Setter = FindMethodInNestedImplementations(IFace, SetterSel);
     }
     // Look through local category implementations associated with the class.
-    if (!Setter) {
-      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
-        if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-          Setter = ObjCCategoryImpls[i]->getInstanceMethod(SetterSel);
-      }
-    }
+    if (!Setter)
+      Setter = IFace->getCategoryInstanceMethod(SetterSel);
 
     if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
       return ExprError();

@@ -386,6 +386,25 @@ ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
   return 0;
 }
 
+ObjCMethodDecl *
+ObjCInterfaceDecl::getCategoryInstanceMethod(Selector Sel) const {
+  for (ObjCCategoryDecl *Category = getCategoryList();
+       Category; Category = Category->getNextClassCategory())
+    if (ObjCCategoryImplDecl *Impl = Category->getImplementation())
+      if (ObjCMethodDecl *MD = Impl->getInstanceMethod(Sel))
+        return MD;
+  return 0;
+}
+
+ObjCMethodDecl *ObjCInterfaceDecl::getCategoryClassMethod(Selector Sel) const {
+  for (ObjCCategoryDecl *Category = getCategoryList();
+       Category; Category = Category->getNextClassCategory())
+    if (ObjCCategoryImplDecl *Impl = Category->getImplementation())
+      if (ObjCMethodDecl *MD = Impl->getClassMethod(Sel))
+        return MD;
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 // ObjCIvarDecl
 //===----------------------------------------------------------------------===//

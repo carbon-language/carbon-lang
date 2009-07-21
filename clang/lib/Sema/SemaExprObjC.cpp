@@ -245,12 +245,8 @@ ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
       Method = ImpDecl->getClassMethod(Sel);
     
     // Look through local category implementations associated with the class.
-    if (!Method) {
-      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
-        if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-          Method = ObjCCategoryImpls[i]->getClassMethod(Sel);
-      }
-    }
+    if (!Method)
+      Method = ClassDecl->getCategoryClassMethod(Sel);
     
     // Before we give up, check if the selector is an instance method.
     // But only in the root. This matches gcc's behaviour and what the
@@ -277,12 +273,8 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
       Method = ImpDecl->getInstanceMethod(Sel);
     
     // Look through local category implementations associated with the class.
-    if (!Method) {
-      for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Method; i++) {
-        if (ObjCCategoryImpls[i]->getClassInterface() == ClassDecl)
-          Method = ObjCCategoryImpls[i]->getInstanceMethod(Sel);
-      }
-    }
+    if (!Method)
+      Method = ClassDecl->getCategoryInstanceMethod(Sel);
     ClassDecl = ClassDecl->getSuperClass();
   }
   return Method;
@@ -330,12 +322,8 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
           Setter = ImpDecl->getClassMethod(SetterSel);
   }
   // Look through local category implementations associated with the class.
-  if (!Setter) {
-    for (unsigned i = 0; i < ObjCCategoryImpls.size() && !Setter; i++) {
-      if (ObjCCategoryImpls[i]->getClassInterface() == IFace)
-        Setter = ObjCCategoryImpls[i]->getClassMethod(SetterSel);
-    }
-  }
+  if (!Setter)
+    Setter = IFace->getCategoryClassMethod(SetterSel);
 
   if (Setter && DiagnoseUseOfDecl(Setter, propertyNameLoc))
     return ExprError();
