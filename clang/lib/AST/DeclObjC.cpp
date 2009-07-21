@@ -272,6 +272,30 @@ void ObjCMethodDecl::Destroy(ASTContext &C) {
   Decl::Destroy(C);
 }
 
+/// \brief A definition will return its interface declaration.
+/// An interface declaration will return its definition.
+/// Otherwise it will return itself.
+ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
+  ASTContext &Ctx = getASTContext();
+  ObjCMethodDecl *Redecl = 0;
+  Decl *CtxD = cast<Decl>(getDeclContext());
+
+  if (ObjCInterfaceDecl *IFD = dyn_cast<ObjCInterfaceDecl>(CtxD)) {
+    if (ObjCImplementationDecl *ImplD = Ctx.getObjCImplementation(IFD))
+      Redecl = ImplD->getMethod(getSelector(), isInstanceMethod());
+
+  } else if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(CtxD)) {
+    if (ObjCCategoryImplDecl *ImplD = Ctx.getObjCImplementation(CD))
+      Redecl = ImplD->getMethod(getSelector(), isInstanceMethod());
+
+  } else if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(CtxD)) {
+    if (ObjCInterfaceDecl *IFD = ImplD->getClassInterface())
+      Redecl = IFD->getMethod(getSelector(), isInstanceMethod());
+  }
+
+  return Redecl ? Redecl : this;
+}
+
 void ObjCMethodDecl::createImplicitParams(ASTContext &Context, 
                                           const ObjCInterfaceDecl *OID) {
   QualType selfTy;

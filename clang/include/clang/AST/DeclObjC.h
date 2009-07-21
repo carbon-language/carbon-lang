@@ -154,7 +154,12 @@ private:
     EndLoc(endLoc), Body(0), SelfDecl(0), CmdDecl(0) {}
 
   virtual ~ObjCMethodDecl() {}
-  
+
+  /// \brief A definition will return its interface declaration.
+  /// An interface declaration will return its definition.
+  /// Otherwise it will return itself.
+  virtual ObjCMethodDecl *getNextRedeclaration();
+
 public:
   
   /// Destroy - Call destructors and release memory.
