@@ -286,7 +286,10 @@ Sema::CXXScopeTy *Sema::ActOnCXXNestedNameSpecifier(Scope *S,
 /// The 'SS' should be a non-empty valid CXXScopeSpec.
 void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  EnterDeclaratorContext(S, computeDeclContext(SS));
+  if (DeclContext *DC = computeDeclContext(SS))
+    EnterDeclaratorContext(S, DC);
+  else
+    const_cast<CXXScopeSpec&>(SS).setScopeRep(0);
 }
 
 /// ActOnCXXExitDeclaratorScope - Called when a declarator that previously
@@ -296,6 +299,8 @@ void Sema::ActOnCXXEnterDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
 /// defining scope.
 void Sema::ActOnCXXExitDeclaratorScope(Scope *S, const CXXScopeSpec &SS) {
   assert(SS.isSet() && "Parser passed invalid CXXScopeSpec.");
-  assert(S->getEntity() == computeDeclContext(SS) && "Context imbalance!");
-  ExitDeclaratorContext(S);
+  assert((SS.isInvalid() || S->getEntity() == computeDeclContext(SS)) && 
+         "Context imbalance!");
+  if (!SS.isInvalid())
+    ExitDeclaratorContext(S);
 }

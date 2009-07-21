@@ -1089,7 +1089,8 @@ private:
       assert(!EnteredScope && "Already entered the scope!");
       assert(SS.isSet() && "C++ scope was not set!");
       P.Actions.ActOnCXXEnterDeclaratorScope(P.CurScope, SS);
-      EnteredScope = true;
+      if (!SS.isInvalid())
+        EnteredScope = true;
     }
 
     ~DeclaratorScopeObj() {
