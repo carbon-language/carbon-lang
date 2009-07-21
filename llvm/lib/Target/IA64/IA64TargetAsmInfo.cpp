@@ -36,9 +36,4 @@ IA64TargetAsmInfo::IA64TargetAsmInfo(const TargetMachine &TM):
   ConstantPoolSection = "\n\t.section .data, \"aw\", \"progbits\"\n";
 }
 
-unsigned IA64TargetAsmInfo::RelocBehaviour() const {
-  return (TM.getRelocationModel() != Reloc::Static ?
-          Reloc::LocalOrGlobal : Reloc::Global);
-}
-
 // FIXME: Support small data/bss/rodata sections someday.
