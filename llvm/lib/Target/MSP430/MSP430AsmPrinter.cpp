@@ -58,7 +58,6 @@ namespace {
 
     void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
-    bool doInitialization(Module &M);
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AsmPrinter::getAnalysisUsage(AU);
@@ -78,12 +77,6 @@ FunctionPass *llvm::createMSP430CodePrinterPass(formatted_raw_ostream &o,
                                                 TargetMachine &tm,
                                                 bool verbose) {
   return new MSP430AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
-
-bool MSP430AsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix(),
-                     TAI->getLinkerPrivateGlobalPrefix());
-  return false; // success
 }
 
 

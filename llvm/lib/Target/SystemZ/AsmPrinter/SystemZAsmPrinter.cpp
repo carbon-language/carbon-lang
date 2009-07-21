@@ -67,7 +67,6 @@ namespace {
 
     void emitFunctionHeader(const MachineFunction &MF);
     bool runOnMachineFunction(MachineFunction &F);
-    bool doInitialization(Module &M);
     bool doFinalization(Module &M);
     void printModuleLevelGV(const GlobalVariable* GVar);
 
@@ -90,13 +89,6 @@ FunctionPass *llvm::createSystemZCodePrinterPass(formatted_raw_ostream &o,
                                                  bool verbose) {
   return new SystemZAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
-
-bool SystemZAsmPrinter::doInitialization(Module &M) {
-  Mang = new Mangler(M, "", TAI->getPrivateGlobalPrefix(),
-                     TAI->getLinkerPrivateGlobalPrefix());
-  return false; // success
-}
-
 
 bool SystemZAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
