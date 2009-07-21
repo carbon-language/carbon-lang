@@ -480,13 +480,25 @@ CXXDestructorDecl::Create(ASTContext &C, CXXRecordDecl *RD,
 }
 
 void
-CXXDestructorDecl::setBaseOrMemberDestructions(ASTContext &C) {
+CXXDestructorDecl::Destroy(ASTContext& C) {
+  C.Deallocate(BaseOrMemberDestructions);
+  CXXMethodDecl::Destroy(C);
+}
+
+void
+CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(getDeclContext());
-  llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToDestruct;
+  llvm::SmallVector<uintptr_t, 32> AllToDestruct;
+  
   for (CXXRecordDecl::base_class_iterator VBase = ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
-    CXXBaseOrMemberInitializer *Member = 
-      new CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,SourceLocation());
+    // Skip over virtual bases which have trivial destructors.
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(VBase->getType()->getAsRecordType()->getDecl());
+    if (BaseClassDecl->hasTrivialDestructor())
+      continue;
+    uintptr_t Member = 
+      reinterpret_cast<uintptr_t>(VBase->getType().getTypePtr()) | 0x1;
     AllToDestruct.push_back(Member);
   }
   for (CXXRecordDecl::base_class_iterator Base =
@@ -494,10 +506,17 @@ CXXDestructorDecl::setBaseOrMemberDestructions(ASTContext &C) {
        E = ClassDecl->bases_end(); Base != E; ++Base) {
     if (Base->isVirtual())
       continue;
-    CXXBaseOrMemberInitializer *Member = 
-      new CXXBaseOrMemberInitializer(Base->getType(), 0, 0, SourceLocation());
+    // Skip over virtual bases which have trivial destructors.
+    CXXRecordDecl *BaseClassDecl
+      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+    if (BaseClassDecl->hasTrivialDestructor())
+      continue;
+    
+    uintptr_t Member = 
+      reinterpret_cast<uintptr_t>(Base->getType().getTypePtr()) | 0x2;
     AllToDestruct.push_back(Member);
   }
+  
   // non-static data members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); Field != E; ++Field) {
@@ -506,8 +525,12 @@ CXXDestructorDecl::setBaseOrMemberDestructions(ASTContext &C) {
       FieldType = AT->getElementType();
     
     if (FieldType->getAsRecordType()) {
-      CXXBaseOrMemberInitializer *Member = 
-        new CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
+      // Skip over virtual bases which have trivial destructors.
+      CXXRecordDecl *BaseClassDecl
+        = cast<CXXRecordDecl>(FieldType->getAsRecordType()->getDecl());
+      if (BaseClassDecl->hasTrivialDestructor())
+        continue;
+      uintptr_t Member = reinterpret_cast<uintptr_t>(*Field);
       AllToDestruct.push_back(Member);
     }
   }
@@ -515,8 +538,7 @@ CXXDestructorDecl::setBaseOrMemberDestructions(ASTContext &C) {
   unsigned NumDestructions = AllToDestruct.size();
   if (NumDestructions > 0) {
     NumBaseOrMemberDestructions = NumDestructions;
-    BaseOrMemberDestructions = 
-      new (C) CXXBaseOrMemberInitializer*[NumDestructions];
+    BaseOrMemberDestructions = new (C) uintptr_t [NumDestructions];
     // Insert in reverse order.
     for (int Idx = NumDestructions-1, i=0 ; Idx >= 0; --Idx)
       BaseOrMemberDestructions[i++] = AllToDestruct[Idx];

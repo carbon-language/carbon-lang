@@ -918,7 +918,7 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
   }
 }
 
-void Sema::ActOnDefaultCDtorInitializers(DeclPtrTy CDtorDecl) {
+void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
   if (!CDtorDecl)
     return;
   
@@ -926,10 +926,6 @@ void Sema::ActOnDefaultCDtorInitializers(DeclPtrTy CDtorDecl) {
       = dyn_cast<CXXConstructorDecl>(CDtorDecl.getAs<Decl>()))
     Constructor->setBaseOrMemberInitializers(Context, 
                                            (CXXBaseOrMemberInitializer **)0, 0);
-  else 
-    if (CXXDestructorDecl *Destructor 
-        = dyn_cast<CXXDestructorDecl>(CDtorDecl.getAs<Decl>()))
-      Destructor->setBaseOrMemberDestructions(Context);
 }
 
 namespace {

@@ -172,7 +172,7 @@ void Parser::ParseLexedMethodDefs(ParsingClass &Class) {
     if (Tok.is(tok::colon))
       ParseConstructorInitializer(LM.D);
     else
-      Actions.ActOnDefaultCDtorInitializers(LM.D);
+      Actions.ActOnDefaultCtorInitializers(LM.D);
 
     // FIXME: What if ParseConstructorInitializer doesn't leave us with a '{'??
     ParseFunctionStatementBody(LM.D);

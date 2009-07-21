@@ -376,25 +376,25 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     }
     else if (CXXDestructorDecl *DDecl = dyn_cast<CXXDestructorDecl>(D)) {
       if (DDecl->getNumBaseOrMemberDestructions() > 0) {
-        // FIXME. This is strictly for visualization of destructor's AST for
-        // how base/members are destructed. It has no other validity.
+        // List order of base/member destruction for visualization purposes.
         assert (D->isThisDeclarationADefinition() && "Destructor with dtor-list");
-        Proto += " : ";
-        for (CXXDestructorDecl::destr_const_iterator B = DDecl->destr_begin(), 
-             E = DDecl->destr_end();
+        Proto += "/* : ";
+        for (CXXDestructorDecl::destr_const_iterator *B = DDecl->destr_begin(), 
+             *E = DDecl->destr_end();
              B != E; ++B) {
-          CXXBaseOrMemberInitializer * BMInitializer = (*B);
+          uintptr_t BaseOrMember = (*B);
           if (B != DDecl->destr_begin())
             Proto += ", ";
 
-          if (BMInitializer->isMemberInitializer()) {
-            FieldDecl *FD = BMInitializer->getMember();
+          if (DDecl->isMemberToDestroy(BaseOrMember)) {
+            FieldDecl *FD = DDecl->getMemberToDestroy(BaseOrMember);
             Proto += "~";
             Proto += FD->getNameAsString();
           }
           else // FIXME. skip dependent types for now.
             if (const RecordType *RT = 
-                BMInitializer->getBaseClass()->getAsRecordType()) {
+                  DDecl->getAnyBaseClassToDestroy(BaseOrMember)
+                    ->getAsRecordType()) {
               const CXXRecordDecl *BaseDecl = 
                 cast<CXXRecordDecl>(RT->getDecl());
               Proto += "~";
@@ -402,6 +402,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
             }
           Proto += "()";
         }
+        Proto += " */";
       }
     }
     else

@@ -666,7 +666,7 @@ Parser::DeclPtrTy Parser::ParseFunctionDefinition(Declarator &D,
   if (Tok.is(tok::colon))
     ParseConstructorInitializer(Res);
   else
-    Actions.ActOnDefaultCDtorInitializers(Res);
+    Actions.ActOnDefaultCtorInitializers(Res);
 
   return ParseFunctionStatementBody(Res);
 }

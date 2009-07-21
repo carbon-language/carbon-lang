@@ -3282,12 +3282,15 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   // Verify that that gotos and switch cases don't jump into scopes illegally.
   if (CurFunctionNeedsScopeChecking)
     DiagnoseInvalidJumps(Body);
-
-  // C++ constructors that have function-try-blocks can't have return statements
-  // in the handlers of that block. (C++ [except.handle]p14) Verify this.
+  
+  // C++ constructors that have function-try-blocks can't have return 
+  // statements in the handlers of that block. (C++ [except.handle]p14) 
+  // Verify this.
   if (isa<CXXConstructorDecl>(dcl) && isa<CXXTryStmt>(Body))
     DiagnoseReturnInConstructorExceptionHandler(cast<CXXTryStmt>(Body));
-
+  
+  if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(dcl))
+    Destructor->computeBaseOrMembersToDestroy(Context);
   return D;
 }
 
