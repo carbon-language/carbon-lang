@@ -107,7 +107,7 @@ first chunk of our <code>makeLLVMModule()</code>:</p>
 <pre>
 Module* makeLLVMModule() {
   // Module Construction
-  Module* mod = new Module("test");
+  Module* mod = new Module("test", getGlobalContext());
 </pre>
 </div>
 
@@ -200,7 +200,7 @@ function will interoperate properly with C code, which is a good thing.</p>
 
   <a href="mailto:owen@apple.com">Owen Anderson</a><br>
   <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
-  Last modified: $Date: 2007-10-17 11:05:13 -0700 (Wed, 17 Oct 2007) $
+  Last modified: $Date: 2009-07-21 11:05:13 -0700 (Tue, 21 Jul 2009) $
 </address>
 
 </body>
