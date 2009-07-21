@@ -17,14 +17,24 @@
 
 #include "llvm/LLVMContext.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/System/Mutex.h"
 #include "llvm/System/RWMutex.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringMap.h"
+#include <map>
+
+template<class ValType, class TypeClass, class ConstantClass,
+         bool HasLargeKey = false  /*true for arrays and structs*/ >
+class ContextValueMap;
 
 namespace llvm {
+template<class ValType>
+struct ConstantTraits;
 
 class ConstantInt;
 class ConstantFP;
@@ -101,6 +111,8 @@ class LLVMContextImpl {
   
   FoldingSet<MDNode> MDNodeSet;
   
+  ContextValueMap<char, Type, ConstantAggregateZero> *AggZeroConstants;
+  
   LLVMContext &Context;
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
@@ -108,7 +120,8 @@ class LLVMContextImpl {
   LLVMContextImpl();
   LLVMContextImpl(const LLVMContextImpl&);
 public:
-  LLVMContextImpl(LLVMContext &C) : Context(C), TheTrueVal(0), TheFalseVal(0) {} 
+  LLVMContextImpl(LLVMContext &C);
+  ~LLVMContextImpl();
   
   /// Return a ConstantInt with the specified value and an implied Type. The
   /// type is the integer type that corresponds to the bit width of the value.
@@ -119,6 +132,8 @@ public:
   MDString *getMDString(const char *StrBegin, const char *StrEnd);
   
   MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
+  
+  ConstantAggregateZero *getConstantAggregateZero(const Type *Ty);
   
   ConstantInt *getTrue() {
     if (TheTrueVal)
@@ -136,6 +151,7 @@ public:
   
   void erase(MDString *M);
   void erase(MDNode *M);
+  void erase(ConstantAggregateZero *Z);
 };
 
 }

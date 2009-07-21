@@ -264,10 +264,6 @@ protected:
     return User::operator new(s, 0);
   }
 public:
-  /// get() - static factory method for creating a null aggregate.  It is
-  /// illegal to call this method with a non-aggregate type.
-  static ConstantAggregateZero *get(const Type *Ty);
-
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return true; }

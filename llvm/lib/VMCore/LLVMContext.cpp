@@ -167,7 +167,7 @@ Constant* LLVMContext::getConstantStruct(Constant* const *Vals,
 
 // ConstantAggregateZero accessors.
 ConstantAggregateZero* LLVMContext::getConstantAggregateZero(const Type* Ty) {
-  return ConstantAggregateZero::get(Ty);
+  return pImpl->getConstantAggregateZero(Ty);
 }
 
 
@@ -648,4 +648,8 @@ void LLVMContext::erase(MDString *M) {
 
 void LLVMContext::erase(MDNode *M) {
   pImpl->erase(M);
+}
+
+void LLVMContext::erase(ConstantAggregateZero *Z) {
+  pImpl->erase(Z);
 }

@@ -1025,49 +1025,11 @@ public:
   };
 }
 
-
-
-//---- ConstantAggregateZero::get() implementation...
-//
-namespace llvm {
-  // ConstantAggregateZero does not take extra "value" argument...
-  template<class ValType>
-  struct ConstantCreator<ConstantAggregateZero, Type, ValType> {
-    static ConstantAggregateZero *create(const Type *Ty, const ValType &V){
-      return new ConstantAggregateZero(Ty);
-    }
-  };
-
-  template<>
-  struct ConvertConstantType<ConstantAggregateZero, Type> {
-    static void convert(ConstantAggregateZero *OldC, const Type *NewTy) {
-      // Make everyone now use a constant of the new type...
-      Constant *New = ConstantAggregateZero::get(NewTy);
-      assert(New != OldC && "Didn't replace constant??");
-      OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();     // This constant is now dead, destroy it.
-    }
-  };
-}
-
-static ManagedStatic<ValueMap<char, Type, 
-                              ConstantAggregateZero> > AggZeroConstants;
-
-static char getValType(ConstantAggregateZero *CPZ) { return 0; }
-
-ConstantAggregateZero *ConstantAggregateZero::get(const Type *Ty) {
-  assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
-         "Cannot create an aggregate zero of non-aggregate type!");
-  
-  // Implicitly locked.
-  return AggZeroConstants->getOrCreate(Ty, 0);
-}
-
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantAggregateZero::destroyConstant() {
   // Implicitly locked.
-  AggZeroConstants->remove(this);
+  getType()->getContext().erase(this);
   destroyConstantImpl();
 }
 
@@ -1117,7 +1079,7 @@ Constant *ConstantArray::get(const ArrayType *Ty,
       }
   }
   
-  return ConstantAggregateZero::get(Ty);
+  return Ty->getContext().getConstantAggregateZero(Ty);
 }
 
 /// destroyConstant - Remove the constant from the constant table...
@@ -1218,7 +1180,7 @@ Constant *ConstantStruct::get(const StructType *Ty,
       // Implicitly locked.
       return StructConstants->getOrCreate(Ty, V);
 
-  return ConstantAggregateZero::get(Ty);
+  return Ty->getContext().getConstantAggregateZero(Ty);
 }
 
 // destroyConstant - Remove the constant from the constant table...
@@ -1276,7 +1238,7 @@ Constant *ConstantVector::get(const VectorType *Ty,
   }
   
   if (isZero)
-    return ConstantAggregateZero::get(Ty);
+    return Ty->getContext().getConstantAggregateZero(Ty);
   if (isUndef)
     return UndefValue::get(Ty);
     
@@ -2236,7 +2198,8 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   Constant *Replacement = 0;
   if (isAllZeros) {
-    Replacement = ConstantAggregateZero::get(getType());
+    Replacement =
+              From->getType()->getContext().getConstantAggregateZero(getType());
   } else {
     // Check to see if we have this array type already.
     sys::SmartScopedWriter<true> Writer(*ConstantsLock);
@@ -2312,7 +2275,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   Constant *Replacement = 0;
   if (isAllZeros) {
-    Replacement = ConstantAggregateZero::get(getType());
+    Replacement = getType()->getContext().getConstantAggregateZero(getType());
   } else {
     // Check to see if we have this array type already.
     sys::SmartScopedWriter<true> Writer(*ConstantsLock);
