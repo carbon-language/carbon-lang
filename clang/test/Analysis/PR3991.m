@@ -45,6 +45,7 @@ typedef struct _NSZone NSZone;
 - (void)setCurrentPathComponentIndex:(unsigned int)aCurrentPathComponentIndex;
 - (NSURL *)folderFeedURL;
 @end  @implementation IHGoogleDocsAdapter    - (id)initWithUsername:(NSString *)inUsername password:(NSString *)inPassword owner:(NSObject <IHGoogleDocsAdapterDelegate> *)owner {
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//
