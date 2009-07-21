@@ -624,10 +624,10 @@ def : T1Pat<(extloadi16 t_addrmode_s2:$addr),  (tLDRH t_addrmode_s2:$addr)>;
 
 // If it's possible to use [r,r] address mode for sextload, select to
 // ldr{b|h} + sxt{b|h} instead.
-def : TPat<(sextloadi8 t_addrmode_s1:$addr),
-           (tSXTB (tLDRB t_addrmode_s1:$addr))>;
-def : TPat<(sextloadi16 t_addrmode_s2:$addr),
-           (tSXTH (tLDRH t_addrmode_s2:$addr))>;
+def : T1Pat<(sextloadi8 t_addrmode_s1:$addr),
+            (tSXTB (tLDRB t_addrmode_s1:$addr))>;
+def : T1Pat<(sextloadi16 t_addrmode_s2:$addr),
+            (tSXTH (tLDRH t_addrmode_s2:$addr))>;
 
 
 // Large immediate handling.
