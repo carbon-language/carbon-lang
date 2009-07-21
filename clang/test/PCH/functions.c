@@ -12,7 +12,6 @@ float *test_f1(int val, double x, double y) {
     return f1(x, y);
   else
     return f1(x); // expected-error{{too few arguments to function call}}
-  return 0;
 }
 
 void test_g0(int *x, float * y) {
