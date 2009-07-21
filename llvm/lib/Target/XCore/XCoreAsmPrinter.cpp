@@ -136,87 +136,82 @@ emitArrayBound(const std::string &name, const GlobalVariable *GV)
   }
 }
 
-void XCoreAsmPrinter::
-emitGlobal(const GlobalVariable *GV)
-{
+void XCoreAsmPrinter::emitGlobal(const GlobalVariable *GV) {
+  // Check to see if this is a special global used by LLVM, if so, emit it.
+  if (!GV->hasInitializer() ||
+      EmitSpecialLLVMGlobal(GV))
+    return;
+
   const TargetData *TD = TM.getTargetData();
+  
+  SwitchToSection(TAI->SectionForGlobal(GV));
+  
+  std::string name = Mang->getMangledName(GV);
+  Constant *C = GV->getInitializer();
+  unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
+  
+  // Mark the start of the global
+  O << "\t.cc_top " << name << ".data," << name << "\n";
 
-  if (GV->hasInitializer()) {
-    // Check to see if this is a special global used by LLVM, if so, emit it.
-    if (EmitSpecialLLVMGlobal(GV))
-      return;
-
-    SwitchToSection(TAI->SectionForGlobal(GV));
-    
-    std::string name = Mang->getMangledName(GV);
-    Constant *C = GV->getInitializer();
-    unsigned Align = (unsigned)TD->getPreferredTypeAlignmentShift(C->getType());
-    
-    // Mark the start of the global
-    O << "\t.cc_top " << name << ".data," << name << "\n";
-
-    switch (GV->getLinkage()) {
-    case GlobalValue::AppendingLinkage:
-      llvm_report_error("AppendingLinkage is not supported by this target!");
-    case GlobalValue::LinkOnceAnyLinkage:
-    case GlobalValue::LinkOnceODRLinkage:
-    case GlobalValue::WeakAnyLinkage:
-    case GlobalValue::WeakODRLinkage:
-    case GlobalValue::ExternalLinkage:
-      emitArrayBound(name, GV);
-      emitGlobalDirective(name);
-      // TODO Use COMDAT groups for LinkOnceLinkage
-      if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
-        O << TAI->getWeakDefDirective() << name << "\n";
-      }
-      // FALL THROUGH
-    case GlobalValue::InternalLinkage:
-    case GlobalValue::PrivateLinkage:
-    case GlobalValue::LinkerPrivateLinkage:
-      break;
-    case GlobalValue::GhostLinkage:
-      llvm_unreachable("Should not have any unmaterialized functions!");
-    case GlobalValue::DLLImportLinkage:
-      llvm_unreachable("DLLImport linkage is not supported by this target!");
-    case GlobalValue::DLLExportLinkage:
-      llvm_unreachable("DLLExport linkage is not supported by this target!");
-    default:
-      llvm_unreachable("Unknown linkage type!");
+  switch (GV->getLinkage()) {
+  case GlobalValue::AppendingLinkage:
+    llvm_report_error("AppendingLinkage is not supported by this target!");
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
+  case GlobalValue::ExternalLinkage:
+    emitArrayBound(name, GV);
+    emitGlobalDirective(name);
+    // TODO Use COMDAT groups for LinkOnceLinkage
+    if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage()) {
+      O << TAI->getWeakDefDirective() << name << "\n";
     }
-
-    EmitAlignment(Align, GV, 2);
-    
-    unsigned Size = TD->getTypeAllocSize(C->getType());
-    if (GV->isThreadLocal()) {
-      Size *= MaxThreads;
-    }
-    if (TAI->hasDotTypeDotSizeDirective()) {
-      O << "\t.type " << name << ",@object\n";
-      O << "\t.size " << name << "," << Size << "\n";
-    }
-    O << name << ":\n";
-    
-    EmitGlobalConstant(C);
-    if (GV->isThreadLocal()) {
-      for (unsigned i = 1; i < MaxThreads; ++i) {
-        EmitGlobalConstant(C);
-      }
-    }
-    if (Size < 4) {
-      // The ABI requires that unsigned scalar types smaller than 32 bits
-      // are are padded to 32 bits.
-      EmitZeros(4 - Size);
-    }
-    
-    // Mark the end of the global
-    O << "\t.cc_bottom " << name << ".data\n";
+    // FALL THROUGH
+  case GlobalValue::InternalLinkage:
+  case GlobalValue::PrivateLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
+    break;
+  case GlobalValue::GhostLinkage:
+    llvm_unreachable("Should not have any unmaterialized functions!");
+  case GlobalValue::DLLImportLinkage:
+    llvm_unreachable("DLLImport linkage is not supported by this target!");
+  case GlobalValue::DLLExportLinkage:
+    llvm_unreachable("DLLExport linkage is not supported by this target!");
+  default:
+    llvm_unreachable("Unknown linkage type!");
   }
+
+  EmitAlignment(Align, GV, 2);
+  
+  unsigned Size = TD->getTypeAllocSize(C->getType());
+  if (GV->isThreadLocal()) {
+    Size *= MaxThreads;
+  }
+  if (TAI->hasDotTypeDotSizeDirective()) {
+    O << "\t.type " << name << ",@object\n";
+    O << "\t.size " << name << "," << Size << "\n";
+  }
+  O << name << ":\n";
+  
+  EmitGlobalConstant(C);
+  if (GV->isThreadLocal()) {
+    for (unsigned i = 1; i < MaxThreads; ++i) {
+      EmitGlobalConstant(C);
+    }
+  }
+  if (Size < 4) {
+    // The ABI requires that unsigned scalar types smaller than 32 bits
+    // are are padded to 32 bits.
+    EmitZeros(4 - Size);
+  }
+  
+  // Mark the end of the global
+  O << "\t.cc_bottom " << name << ".data\n";
 }
 
 /// Emit the directives on the start of functions
-void XCoreAsmPrinter::
-emitFunctionStart(MachineFunction &MF)
-{
+void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
 
