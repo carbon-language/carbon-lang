@@ -613,11 +613,11 @@ void ObjCImplDecl::setClassInterface(ObjCInterfaceDecl *IFace) {
   ASTContext &Ctx = getASTContext();
 
   if (ObjCImplementationDecl *ImplD
-        = dyn_cast_or_null<ObjCImplementationDecl>(this))
+        = dyn_cast_or_null<ObjCImplementationDecl>(this)) {
     if (IFace)
       Ctx.setObjCImplementation(IFace, ImplD);
 
-  else if (ObjCCategoryImplDecl *ImplD =
+  } else if (ObjCCategoryImplDecl *ImplD =
              dyn_cast_or_null<ObjCCategoryImplDecl>(this)) {
     if (ObjCCategoryDecl *CD = IFace->FindCategoryDeclaration(getIdentifier()))
       Ctx.setObjCImplementation(CD, ImplD);
