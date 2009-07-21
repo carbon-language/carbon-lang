@@ -7,4 +7,5 @@
 
 int test(float4 f4) {
   return f4.xy; // expected-error{{float2}}
+  return 1;
 }

@@ -22,8 +22,7 @@
 @end
 
 @implementation TestMethodPool1
-+ alloc {
-}
++ alloc { return 0; }
 
 - (double)instMethod:(int)foo {
   return foo;
