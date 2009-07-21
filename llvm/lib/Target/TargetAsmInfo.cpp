@@ -311,21 +311,16 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
   return Flags;
 }
 
-const Section*
-TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
-  const Section* S;
+const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   // Select section name
   if (GV->hasSection()) {
-    // Honour section already set, if any
-    unsigned Flags = SectionFlagsForGlobal(GV,
-                                           GV->getSection().c_str());
-    S = getNamedSection(GV->getSection().c_str(), Flags);
-  } else {
-    // Use default section depending on the 'type' of global
-    S = SelectSectionForGlobal(GV);
+    // Honour section already set, if any.
+    unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+    return getNamedSection(GV->getSection().c_str(), Flags);
   }
-
-  return S;
+  
+  // Use default section depending on the 'type' of global
+  return SelectSectionForGlobal(GV);
 }
 
 // Lame default implementation. Calculate the section name for global.
@@ -394,10 +389,9 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
   return NULL;
 }
 
-const Section*
-TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags,
-                               bool Override) const {
-  Section& S = Sections[Name];
+const Section *TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags,
+                                              bool Override) const {
+  Section &S = Sections[Name];
 
   // This is newly-created section, set it up properly.
   if (S.Flags == SectionFlags::Invalid || Override) {
