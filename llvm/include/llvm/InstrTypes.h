@@ -479,7 +479,7 @@ public:
     const Type *SrcTy, ///< SrcTy of 1st cast
     const Type *MidTy, ///< DstTy of 1st cast & SrcTy of 2nd cast
     const Type *DstTy, ///< DstTy of 2nd cast
-    const Type *IntPtrTy ///< Integer type corresponding to Ptr types
+    const Type *IntPtrTy ///< Integer type corresponding to Ptr types, or null
   );
 
   /// @brief Return the opcode of this CastInst

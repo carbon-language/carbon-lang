@@ -1890,6 +1890,8 @@ unsigned CastInst::isEliminableCastPair(
       return 0;
     case 7: { 
       // ptrtoint, inttoptr -> bitcast (ptr -> ptr) if int size is >= ptr size
+      if (!IntPtrTy)
+        return 0;
       unsigned PtrSize = IntPtrTy->getScalarSizeInBits();
       unsigned MidSize = MidTy->getScalarSizeInBits();
       if (MidSize >= PtrSize)
@@ -1929,6 +1931,8 @@ unsigned CastInst::isEliminableCastPair(
       return 0;
     case 13: {
       // inttoptr, ptrtoint -> bitcast if SrcSize<=PtrSize and SrcSize==DstSize
+      if (!IntPtrTy)
+        return 0;
       unsigned PtrSize = IntPtrTy->getScalarSizeInBits();
       unsigned SrcSize = SrcTy->getScalarSizeInBits();
       unsigned DstSize = DstTy->getScalarSizeInBits();
