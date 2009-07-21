@@ -57,6 +57,7 @@ CMProfileLocation;
 - (GSEbayCategory *) parent;
 - (GSEbayCategory*) subcategoryWithID:(int) inID;
 @end   @implementation GBCategoryChooserPanelController  + (int) chooseCategoryIDFromCategories:(NSArray*) inCategories        searchRequest:(GBSearchRequest*)inRequest         parentWindow:(NSWindow*) inParent {
+  return 0;
 }
 - (void) addCategory:(EBayCategoryType*)inCategory toRootTreeCategory:(NSMutableArray*)inRootTreeCategories {
   GSEbayCategory *category = [rootCategory subcategoryWithID:[[inCategory categoryID] intValue]];
