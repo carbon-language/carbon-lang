@@ -568,8 +568,8 @@ static void GroupByComplexity(SmallVectorImpl<const SCEV *> &Ops,
 /// BinomialCoefficient - Compute BC(It, K).  The result has width W.
 /// Assume, K > 0.
 static const SCEV *BinomialCoefficient(const SCEV *It, unsigned K,
-                                      ScalarEvolution &SE,
-                                      const Type* ResultTy) {
+                                       ScalarEvolution &SE,
+                                       const Type* ResultTy) {
   // Handle the simplest case efficiently.
   if (K == 1)
     return SE.getTruncateOrZeroExtend(It, ResultTy);
@@ -686,7 +686,7 @@ static const SCEV *BinomialCoefficient(const SCEV *It, unsigned K,
 /// where BC(It, k) stands for binomial coefficient.
 ///
 const SCEV *SCEVAddRecExpr::evaluateAtIteration(const SCEV *It,
-                                               ScalarEvolution &SE) const {
+                                                ScalarEvolution &SE) const {
   const SCEV *Result = getStart();
   for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
     // The computation is correct in the face of overflow provided that the
