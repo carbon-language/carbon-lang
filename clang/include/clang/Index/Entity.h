@@ -47,7 +47,7 @@ class Entity {
   /// translation unit, otherwise it stores the associated EntityImpl.
   llvm::PointerUnion<Decl *, EntityImpl *> Val;
 
-  explicit Entity(Decl *D) : Val(D) { }
+  explicit Entity(Decl *D);
   explicit Entity(EntityImpl *impl) : Val(impl) { }
   friend class EntityGetter;
   

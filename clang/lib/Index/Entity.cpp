@@ -138,6 +138,8 @@ Entity EntityImpl::get(Decl *D, ProgramImpl &Prog) {
 // Entity Implementation
 //===----------------------------------------------------------------------===//
 
+Entity::Entity(Decl *D) : Val(D->getCanonicalDecl()) { }
+
 /// \brief Find the Decl that can be referred to by this entity.
 Decl *Entity::getDecl(ASTContext &AST) {
   if (isInvalid())
