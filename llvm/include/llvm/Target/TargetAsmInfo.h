@@ -33,20 +33,30 @@ namespace llvm {
 
   namespace SectionKind {
     enum Kind {
-      Unknown = 0,      ///< Custom section
-      Text,             ///< Text section
-      Data,             ///< Data section
-      DataRel,          ///< Contains data that has relocations
-      DataRelLocal,     ///< Contains data that has only local relocations
-      BSS,              ///< BSS section
-      ROData,           ///< Readonly data section
-      DataRelRO,        ///< Contains data that is otherwise readonly
-      DataRelROLocal,   ///< Contains r/o data with only local relocations
-      RODataMergeStr,   ///< Readonly data section (mergeable strings)
-      RODataMergeConst, ///< Readonly data section (mergeable constants)
+      Unknown = 0,      ///< Custom section.
+      Text,             ///< Text section.
+      BSS,              ///< BSS section.
+
+      Data,             ///< Data section.
+      DataRel,          ///< Data that has relocations.
+      DataRelLocal,     ///< Data that only has local relocations.
+
+      // Readonly data.
+      ROData,           ///< Readonly data section.
+      DataRelRO,        ///< Readonly data with non-local relocations.
+      DataRelROLocal,   ///< Readonly data with local relocations only.
+      
+      /// Mergable sections.
+      RODataMergeStr,   ///< Readonly data section: nul-terminated strings.
+      RODataMergeConst, ///< Readonly data section: fixed-length constants.
+      
+      /// Small sections - These sections contains "short" data, and should be
+      /// placed "near" the GP.
       SmallData,        ///< Small data section
       SmallBSS,         ///< Small bss section
       SmallROData,      ///< Small readonly section
+      
+      /// Thread local data.
       ThreadData,       ///< Initialized TLS data objects
       ThreadBSS         ///< Uninitialized TLS data objects
     };
