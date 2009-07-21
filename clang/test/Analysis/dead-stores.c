@@ -199,6 +199,8 @@ void f22() {
   int y8 = 4;
   int y9 = 4;
   int y10 = 4;
+  int y11 = 4;
+  int y12 = 4;
 
   ++x; // expected-warning{{never read}}
   ++y1;
@@ -211,6 +213,8 @@ void f22() {
   ++y8;
   ++y9;
   ++y10;
+  ++y11;
+  ++y12;
 
   switch (j) {
   case 1:
@@ -265,5 +269,18 @@ void f22() {
   case 9:
     (void)(1 || x);
     (void)y10;
+    break;
+  case 10:
+    while (1) {
+      (void)y11;
+    }
+    (void)x;
+    break;
+  case 11:
+    while (0) {
+      (void)x;
+    }
+    (void)y12;
+    break;
   }
 }

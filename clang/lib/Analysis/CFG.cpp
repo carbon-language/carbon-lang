@@ -701,7 +701,7 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(Decl* D) {
 }
 
 CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
-  // See if this is a known constant first.
+  // See if this is a known constant.
   bool KnownTrue = false;
   bool KnownFalse = false;
   Expr::EvalResult Result;
@@ -1102,6 +1102,18 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   // "while" is a control-flow statement.  Thus we stop processing the current
   // block.
 
+  // See if this is a known constant.
+  bool KnownTrue = false;
+  bool KnownFalse = false;
+  Expr::EvalResult Result;
+  if (W->getCond()->Evaluate(Result, *Context)
+      && Result.Val.isInt()) {
+    if (Result.Val.getInt().getBoolValue())
+      KnownTrue = true;
+    else
+      KnownFalse = true;
+  }
+
   CFGBlock* LoopSuccessor = NULL;
 
   if (Block) {
@@ -1170,13 +1182,21 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
         return 0;
     }
 
-    // Add the loop body entry as a successor to the condition.
-    ExitConditionBlock->addSuccessor(BodyBlock);
+    if (KnownFalse)
+      ExitConditionBlock->addSuccessor(0);
+    else {
+      // Add the loop body entry as a successor to the condition.
+      ExitConditionBlock->addSuccessor(BodyBlock);
+    }
   }
 
-  // Link up the condition block with the code that follows the loop.  (the
-  // false branch).
-  ExitConditionBlock->addSuccessor(LoopSuccessor);
+  if (KnownTrue)
+    ExitConditionBlock->addSuccessor(0);
+  else {
+    // Link up the condition block with the code that follows the loop.  (the
+    // false branch).
+    ExitConditionBlock->addSuccessor(LoopSuccessor);
+  }
 
   // There can be no more statements in the condition block since we loop back
   // to this block.  NULL out Block to force lazy creation of another block.
