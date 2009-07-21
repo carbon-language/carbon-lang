@@ -716,10 +716,12 @@ Sema::DeclPtrTy Sema::ActOnStartClassImplementation(
     return DeclPtrTy::make(IMPDecl);
   
   // Check that there is no duplicate implementation of this class.
-  if (LookupObjCImplementation(ClassName))
+  if (IDecl->getImplementation()) {
     // FIXME: Don't leak everything!
     Diag(ClassLoc, diag::err_dup_implementation_class) << ClassName;
-  else { // add it to the list.
+    Diag(IDecl->getImplementation()->getLocation(),
+         diag::note_previous_definition);
+  } else { // add it to the list.
     IDecl->setImplementation(IMPDecl);
     PushOnScopeChains(IMPDecl, TUScope);
   }
@@ -869,8 +871,7 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
     }
   }
   // Lastly, look through the implementation (if one is in scope).
-  if (ObjCImplementationDecl *ImpDecl 
-      = LookupObjCImplementation(IDecl->getIdentifier()))
+  if (ObjCImplementationDecl *ImpDecl = IDecl->getImplementation())
     if (ImpDecl->getInstanceMethod(PDecl->getSetterName()))
       return false;
   // If all fails, look at the super class.

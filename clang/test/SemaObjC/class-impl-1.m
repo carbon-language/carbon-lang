@@ -9,7 +9,7 @@ typedef int INTF3; // expected-note {{previous definition is here}}
 @interface INTF  : OBJECT
 @end
 
-@implementation INTF @end 
+@implementation INTF @end // expected-note {{previous definition is here}}
 
 @implementation INTF //  expected-error {{reimplementation of class 'INTF'}}
 @end

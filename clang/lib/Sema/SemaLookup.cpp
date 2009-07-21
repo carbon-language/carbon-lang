@@ -1671,13 +1671,6 @@ ObjCProtocolDecl *Sema::LookupProtocol(IdentifierInfo *II) {
   return cast_or_null<ObjCProtocolDecl>(D);
 }
 
-/// \brief Find the Objective-C implementation with the given name, if
-/// any.
-ObjCImplementationDecl *Sema::LookupObjCImplementation(IdentifierInfo *II) {
-  Decl *D = LookupName(TUScope, II, LookupObjCImplementationName).getAsDecl();
-  return cast_or_null<ObjCImplementationDecl>(D);
-}
-
 /// \brief Find the Objective-C category implementation with the given
 /// name, if any.
 ObjCCategoryImplDecl *Sema::LookupObjCCategoryImpl(IdentifierInfo *II) {

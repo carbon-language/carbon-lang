@@ -1153,7 +1153,6 @@ public:
                                 SourceLocation Loc = SourceLocation());
 
   ObjCProtocolDecl *LookupProtocol(IdentifierInfo *II);
-  ObjCImplementationDecl *LookupObjCImplementation(IdentifierInfo *II);
   ObjCCategoryImplDecl *LookupObjCCategoryImpl(IdentifierInfo *II);
 
   void LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,

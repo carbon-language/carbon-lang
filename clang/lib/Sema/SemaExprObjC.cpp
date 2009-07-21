@@ -241,8 +241,7 @@ ObjCMethodDecl *Sema::LookupPrivateClassMethod(Selector Sel,
   ObjCMethodDecl *Method = 0;
   // lookup in class and all superclasses
   while (ClassDecl && !Method) {
-    if (ObjCImplementationDecl *ImpDecl 
-          = LookupObjCImplementation(ClassDecl->getIdentifier()))
+    if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
       Method = ImpDecl->getClassMethod(Sel);
     
     // Look through local category implementations associated with the class.
@@ -274,8 +273,7 @@ ObjCMethodDecl *Sema::LookupPrivateInstanceMethod(Selector Sel,
   ObjCMethodDecl *Method = 0;
   while (ClassDecl && !Method) {
     // If we have implementations in scope, check "private" methods.
-    if (ObjCImplementationDecl *ImpDecl
-          = LookupObjCImplementation(ClassDecl->getIdentifier()))
+    if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
       Method = ImpDecl->getInstanceMethod(Sel);
     
     // Look through local category implementations associated with the class.
@@ -307,8 +305,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
   if (!Getter)
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCImplementationDecl *ImpDecl
-              = LookupObjCImplementation(ClassDecl->getIdentifier()))
+        if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
           Getter = ImpDecl->getClassMethod(Sel);
 
   if (Getter) {
@@ -329,8 +326,7 @@ Action::OwningExprResult Sema::ActOnClassPropertyRefExpr(
     // methods.
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
       if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCImplementationDecl *ImpDecl 
-              = LookupObjCImplementation(ClassDecl->getIdentifier()))
+        if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
           Setter = ImpDecl->getClassMethod(SetterSel);
   }
   // Look through local category implementations associated with the class.
