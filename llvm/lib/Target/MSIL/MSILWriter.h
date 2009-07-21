@@ -19,6 +19,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/FormattedStream.h"
