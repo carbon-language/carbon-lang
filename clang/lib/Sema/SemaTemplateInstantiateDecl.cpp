@@ -217,6 +217,7 @@ Decl *TemplateDeclInstantiator::VisitStaticAssertDecl(StaticAssertDecl *D) {
 Decl *TemplateDeclInstantiator::VisitEnumDecl(EnumDecl *D) {
   EnumDecl *Enum = EnumDecl::Create(SemaRef.Context, Owner, 
                                     D->getLocation(), D->getIdentifier(),
+                                    D->getTagKeywordLoc(),
                                     /*PrevDecl=*/0);
   Enum->setInstantiationOfMemberEnum(D);
   Enum->setAccess(D->getAccess());
@@ -284,7 +285,8 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   CXXRecordDecl *Record
     = CXXRecordDecl::Create(SemaRef.Context, D->getTagKind(), Owner, 
-                            D->getLocation(), D->getIdentifier(), PrevDecl);
+                            D->getLocation(), D->getIdentifier(),
+                            D->getTagKeywordLoc(), PrevDecl);
   Record->setImplicit(D->isImplicit());
   Record->setAccess(D->getAccess());
   if (!D->isInjectedClassName())

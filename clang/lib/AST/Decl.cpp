@@ -182,9 +182,9 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
 }
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
-                           IdentifierInfo *Id,
+                           IdentifierInfo *Id, SourceLocation TKL,
                            EnumDecl *PrevDecl) {
-  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id);
+  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, TKL);
   C.getTypeDeclType(Enum, PrevDecl);
   return Enum;
 }
@@ -654,7 +654,7 @@ void FunctionDecl::setExplicitSpecialization(bool ES) {
 
 SourceRange TagDecl::getSourceRange() const {
   SourceLocation E = RBraceLoc.isValid() ? RBraceLoc : getLocation();
-  return SourceRange(getLocation(), E);
+  return SourceRange(TagKeywordLoc, E);
 }
 
 TagDecl* TagDecl::getCanonicalDecl() {
@@ -692,8 +692,8 @@ TagDecl* TagDecl::getDefinition(ASTContext& C) const {
 //===----------------------------------------------------------------------===//
 
 RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
-                       IdentifierInfo *Id)
-  : TagDecl(DK, TK, DC, L, Id) {
+                       IdentifierInfo *Id, SourceLocation TKL)
+  : TagDecl(DK, TK, DC, L, Id, TKL) {
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   HasObjectMember = false;
@@ -702,9 +702,9 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
 
 RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
-                               RecordDecl* PrevDecl) {
+                               SourceLocation TKL, RecordDecl* PrevDecl) {
   
-  RecordDecl* R = new (C) RecordDecl(Record, TK, DC, L, Id);
+  RecordDecl* R = new (C) RecordDecl(Record, TK, DC, L, Id, TKL);
   C.getTypeDeclType(R, PrevDecl);
   return R;
 }

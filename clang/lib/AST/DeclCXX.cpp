@@ -24,8 +24,9 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
-                             SourceLocation L, IdentifierInfo *Id) 
-  : RecordDecl(K, TK, DC, L, Id),
+                             SourceLocation L, IdentifierInfo *Id,
+                             SourceLocation TKL) 
+  : RecordDecl(K, TK, DC, L, Id, TKL),
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Polymorphic(false), Abstract(false),
@@ -36,9 +37,10 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
 
 CXXRecordDecl *CXXRecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                      SourceLocation L, IdentifierInfo *Id,
+                                     SourceLocation TKL,
                                      CXXRecordDecl* PrevDecl,
                                      bool DelayTypeCreation) {
-  CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TK, DC, L, Id);
+  CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TK, DC, L, Id, TKL);
   if (!DelayTypeCreation)
     C.getTypeDeclType(R, PrevDecl);  
   return R;

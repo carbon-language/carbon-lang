@@ -335,7 +335,8 @@ class CXXRecordDecl : public RecordDecl {
 
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
-                SourceLocation L, IdentifierInfo *Id);
+                SourceLocation L, IdentifierInfo *Id,
+                SourceLocation TKL = SourceLocation());
 
   ~CXXRecordDecl();
 
@@ -350,6 +351,7 @@ public:
 
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
+                               SourceLocation TKL = SourceLocation(),
                                CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
   

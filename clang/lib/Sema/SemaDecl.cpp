@@ -3711,7 +3711,7 @@ CreateNewDecl:
   if (Kind == TagDecl::TK_enum) {
     // FIXME: Tag decls should be chained to any simultaneous vardecls, e.g.:
     // enum X { A, B, C } D;    D should chain to X.
-    New = EnumDecl::Create(Context, SearchDC, Loc, Name, 
+    New = EnumDecl::Create(Context, SearchDC, Loc, Name, KWLoc,
                            cast_or_null<EnumDecl>(PrevDecl));
     // If this is an undefined enum, warn.
     if (TK != TK_Definition && !Invalid)  {
@@ -3726,10 +3726,10 @@ CreateNewDecl:
     // struct X { int A; } D;    D should chain to X.
     if (getLangOptions().CPlusPlus)
       // FIXME: Look for a way to use RecordDecl for simple structs.
-      New = CXXRecordDecl::Create(Context, Kind, SearchDC, Loc, Name,
+      New = CXXRecordDecl::Create(Context, Kind, SearchDC, Loc, Name, KWLoc,
                                   cast_or_null<CXXRecordDecl>(PrevDecl));
     else
-      New = RecordDecl::Create(Context, Kind, SearchDC, Loc, Name,
+      New = RecordDecl::Create(Context, Kind, SearchDC, Loc, Name, KWLoc,
                                cast_or_null<RecordDecl>(PrevDecl));
   }
 
@@ -3831,7 +3831,9 @@ void Sema::ActOnTagStartDefinition(Scope *S, DeclPtrTy TagD) {
       CXXRecordDecl *InjectedClassName
         = CXXRecordDecl::Create(Context, Record->getTagKind(),
                                 CurContext, Record->getLocation(),
-                                Record->getIdentifier(), Record);
+                                Record->getIdentifier(),
+                                Record->getTagKeywordLoc(),
+                                Record);
       InjectedClassName->setImplicit();
       InjectedClassName->setAccess(AS_public);
       if (ClassTemplateDecl *Template = Record->getDescribedClassTemplate())

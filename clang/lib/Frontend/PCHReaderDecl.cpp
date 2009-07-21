@@ -117,6 +117,7 @@ void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
   TD->setTypedefForAnonDecl(
                     cast_or_null<TypedefDecl>(Reader.GetDecl(Record[Idx++])));
   TD->setRBraceLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  TD->setTagKeywordLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHDeclReader::VisitEnumDecl(EnumDecl *ED) {
@@ -607,11 +608,11 @@ Decl *PCHReader::ReadDeclRecord(uint64_t Offset, unsigned Index) {
     D = TypedefDecl::Create(*Context, 0, SourceLocation(), 0, QualType());
     break;
   case pch::DECL_ENUM:
-    D = EnumDecl::Create(*Context, 0, SourceLocation(), 0, 0);
+    D = EnumDecl::Create(*Context, 0, SourceLocation(), 0, SourceLocation(), 0);
     break;
   case pch::DECL_RECORD:
     D = RecordDecl::Create(*Context, TagDecl::TK_struct, 0, SourceLocation(),
-                           0, 0);
+                           0, SourceLocation(), 0);
     break;
   case pch::DECL_ENUM_CONSTANT:
     D = EnumConstantDecl::Create(*Context, 0, SourceLocation(), 0, QualType(),

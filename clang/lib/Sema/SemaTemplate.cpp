@@ -522,7 +522,7 @@ Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
   // declaration!
 
   CXXRecordDecl *NewClass = 
-    CXXRecordDecl::Create(Context, Kind, SemanticContext, NameLoc, Name,
+    CXXRecordDecl::Create(Context, Kind, SemanticContext, NameLoc, Name, KWLoc,
                           PrevClassTemplate? 
                             PrevClassTemplate->getTemplatedDecl() : 0,
                           /*DelayTypeCreation=*/true);

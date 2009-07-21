@@ -1176,12 +1176,14 @@ private:
   /// this points to the TypedefDecl. Used for mangling.
   TypedefDecl *TypedefForAnonDecl;
 
+  SourceLocation TagKeywordLoc;
   SourceLocation RBraceLoc;
 
 protected:
   TagDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
-          IdentifierInfo *Id)
-    : TypeDecl(DK, DC, L, Id), DeclContext(DK), TypedefForAnonDecl(0) {
+          IdentifierInfo *Id, SourceLocation TKL = SourceLocation())
+    : TypeDecl(DK, DC, L, Id), DeclContext(DK), TypedefForAnonDecl(0),
+      TagKeywordLoc(TKL) {
     assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
     TagDeclKind = TK;
     IsDefinition = false;
@@ -1190,6 +1192,9 @@ public:
   
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
+
+  SourceLocation getTagKeywordLoc() const { return TagKeywordLoc; }
+  void setTagKeywordLoc(SourceLocation TKL) { TagKeywordLoc = TKL; }
 
   virtual SourceRange getSourceRange() const;
   
@@ -1278,14 +1283,14 @@ class EnumDecl : public TagDecl {
   EnumDecl *InstantiatedFrom;
 
   EnumDecl(DeclContext *DC, SourceLocation L,
-           IdentifierInfo *Id)
-    : TagDecl(Enum, TK_enum, DC, L, Id), InstantiatedFrom(0) {
+           IdentifierInfo *Id, SourceLocation TKL)
+    : TagDecl(Enum, TK_enum, DC, L, Id, TKL), InstantiatedFrom(0) {
       IntegerType = QualType();
     }
 public:
   static EnumDecl *Create(ASTContext &C, DeclContext *DC,
                           SourceLocation L, IdentifierInfo *Id,
-                          EnumDecl *PrevDecl);
+                          SourceLocation TKL, EnumDecl *PrevDecl);
   
   virtual void Destroy(ASTContext& C);
 
@@ -1351,12 +1356,13 @@ class RecordDecl : public TagDecl {
 
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
-             SourceLocation L, IdentifierInfo *Id);
+             SourceLocation L, IdentifierInfo *Id, SourceLocation TKL);
   virtual ~RecordDecl();
 
 public:
   static RecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation L, IdentifierInfo *Id,
+                            SourceLocation TKL = SourceLocation(),
                             RecordDecl* PrevDecl = 0);
 
   virtual void Destroy(ASTContext& C);

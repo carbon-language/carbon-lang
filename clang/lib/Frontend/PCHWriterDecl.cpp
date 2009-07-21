@@ -113,6 +113,7 @@ void PCHDeclWriter::VisitTagDecl(TagDecl *D) {
   Record.push_back(D->isDefinition());
   Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);
   Writer.AddSourceLocation(D->getRBraceLoc(), Record);
+  Writer.AddSourceLocation(D->getTagKeywordLoc(), Record);
 }
 
 void PCHDeclWriter::VisitEnumDecl(EnumDecl *D) {
