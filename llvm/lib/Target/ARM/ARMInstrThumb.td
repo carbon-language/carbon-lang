@@ -166,8 +166,8 @@ def tPOP_RET : T1I<(outs reglist:$dst1, variable_ops), (ins),
                    "pop $dst1", []>;
 
 let isCall = 1,
-  Defs = [R0, R1, R2, R3, LR,
-          D0, D1, D2, D3, D4, D5, D6, D7] in {
+  Defs = [R0, R1, R2, R3, R12, LR,
+          D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
   def tBL  : T1Ix2<(outs), (ins i32imm:$func, variable_ops),
                    "bl ${func:call}",
                    [(ARMtcall tglobaladdr:$func)]>;
