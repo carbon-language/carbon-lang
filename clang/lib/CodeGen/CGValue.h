@@ -163,7 +163,8 @@ class LValue {
   // objective-c's gc attributes
   unsigned ObjCType : 2;  
 
-  
+  // address space
+  unsigned AddressSpace;
 
 private:
   static void SetQualifiers(unsigned Qualifiers, LValue& R) {
@@ -195,7 +196,9 @@ public:
   bool isGlobalObjCRef() const { return GlobalObjCRef; }
   bool isObjCWeak() const { return ObjCType == Weak; }
   bool isObjCStrong() const { return ObjCType == Strong; }
-  
+
+  unsigned getAddressSpace() const { return AddressSpace; }
+
   static void SetObjCIvar(LValue& R, bool iValue) {
     R.Ivar = iValue;
   }
@@ -254,11 +257,13 @@ public:
   }
 
   static LValue MakeAddr(llvm::Value *V, unsigned Qualifiers,
-                         QualType::GCAttrTypes GCAttrs = QualType::GCNone) {
+                         QualType::GCAttrTypes GCAttrs = QualType::GCNone,
+                         unsigned AddressSpace = 0) {
     LValue R;
     R.LVType = Simple;
     R.V = V;
     SetQualifiers(Qualifiers,R);
+    R.AddressSpace = AddressSpace;
     SetObjCType(GCAttrs, R);
     return R;
   }

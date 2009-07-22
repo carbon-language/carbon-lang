@@ -794,6 +794,7 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
   // Build the implicit member references to the field of the
   // anonymous struct/union.
   Expr *Result = BaseObjectExpr;
+  unsigned BaseAddrSpace = BaseObjectExpr->getType().getAddressSpace();
   for (llvm::SmallVector<FieldDecl *, 4>::reverse_iterator
          FI = AnonFields.rbegin(), FIEnd = AnonFields.rend();
        FI != FIEnd; ++FI) {
@@ -803,6 +804,8 @@ Sema::BuildAnonymousStructUnionMemberReference(SourceLocation Loc,
         = MemberType.getCVRQualifiers() | ExtraQuals;
       MemberType = MemberType.getQualifiedType(combinedQualifiers);
     }
+    if (BaseAddrSpace != MemberType.getAddressSpace())
+      MemberType = Context.getAddrSpaceQualType(MemberType, BaseAddrSpace);
     MarkDeclarationReferenced(Loc, *FI);
     Result = new (Context) MemberExpr(Result, BaseObjectIsPointer, *FI,
                                       OpLoc, MemberType);
@@ -2175,16 +2178,18 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                                                         BaseExpr, OpLoc);
 
       // Figure out the type of the member; see C99 6.5.2.3p3, C++ [expr.ref]
-      // FIXME: Handle address space modifiers
       QualType MemberType = FD->getType();
       if (const ReferenceType *Ref = MemberType->getAsReferenceType())
         MemberType = Ref->getPointeeType();
       else {
+        unsigned BaseAddrSpace = BaseType.getAddressSpace();
         unsigned combinedQualifiers =
           MemberType.getCVRQualifiers() | BaseType.getCVRQualifiers();
         if (FD->isMutable())
           combinedQualifiers &= ~QualType::Const;
         MemberType = MemberType.getQualifiedType(combinedQualifiers);
+        if (BaseAddrSpace != MemberType.getAddressSpace())
+           MemberType = Context.getAddrSpaceQualType(MemberType, BaseAddrSpace);
       }
 
       MarkDeclarationReferenced(MemberLoc, FD);

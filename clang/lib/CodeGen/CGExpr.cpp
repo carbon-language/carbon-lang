@@ -143,7 +143,8 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
   llvm::Type *Ty = VMContext.getPointerTypeUnqual(ConvertType(E->getType()));
   return LValue::MakeAddr(VMContext.getUndef(Ty),
                           E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
+                          getContext().getObjCGCAttrKind(E->getType()),
+                          E->getType().getAddressSpace());
 }
 
 /// EmitLValue - Emit code to compute a designator that specifies the location
@@ -676,7 +677,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       if (VD->getType()->isReferenceType())
         V = Builder.CreateLoad(V, "tmp");
       LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
-                            getContext().getObjCGCAttrKind(E->getType()));
+                            getContext().getObjCGCAttrKind(E->getType()),
+                            E->getType().getAddressSpace());
     }
     else {
       llvm::Value *V = LocalDeclMap[VD];
@@ -699,7 +701,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       }
       if (VD->getType()->isReferenceType())
         V = Builder.CreateLoad(V, "tmp");
-      LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(), attr);
+      LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(), attr,
+                            E->getType().getAddressSpace());
     }
     LValue::SetObjCNonGC(LV, NonGCable);
     return LV;
@@ -708,7 +711,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     if (VD->getType()->isReferenceType())
       V = Builder.CreateLoad(V, "tmp");
     LValue LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
-                                 getContext().getObjCGCAttrKind(E->getType()));
+                                 getContext().getObjCGCAttrKind(E->getType()),
+                                 E->getType().getAddressSpace());
     if (LV.isObjCStrong())
       LV.SetGlobalObjCRef(LV, true);
     return LV;
@@ -727,14 +731,16 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       }
     }
     return LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
-                            getContext().getObjCGCAttrKind(E->getType()));
+                            getContext().getObjCGCAttrKind(E->getType()),
+                            E->getType().getAddressSpace());
   }
   else if (const ImplicitParamDecl *IPD =
       dyn_cast<ImplicitParamDecl>(E->getDecl())) {
     llvm::Value *V = LocalDeclMap[IPD];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
     return LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
-                            getContext().getObjCGCAttrKind(E->getType()));
+                            getContext().getObjCGCAttrKind(E->getType()),
+                            E->getType().getAddressSpace());
   }
   assert(0 && "Unimp declref");
   //an invalid LValue, but the assert will
@@ -745,7 +751,8 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 LValue CodeGenFunction::EmitBlockDeclRefLValue(const BlockDeclRefExpr *E) {
   return LValue::MakeAddr(GetAddrOfBlockDecl(E), 
                           E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
+                          getContext().getObjCGCAttrKind(E->getType()),
+                          E->getType().getAddressSpace());
 }
 
 LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
@@ -763,7 +770,8 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
         
       LValue LV = LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()),
                                    T.getCVRQualifiers(), 
-                                   getContext().getObjCGCAttrKind(T));
+                                   getContext().getObjCGCAttrKind(T),
+                                   ExprTy.getAddressSpace());
      // We should not generate __weak write barrier on indirect reference
      // of a pointer to object; as in void foo (__weak id *param); *param = 0;
      // But, we continue to generate __strong write barrier on indirect write
@@ -780,7 +788,9 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     unsigned Idx = E->getOpcode() == UnaryOperator::Imag;
     return LValue::MakeAddr(Builder.CreateStructGEP(LV.getAddress(),
                                                     Idx, "idx"),
-                            ExprTy.getCVRQualifiers());
+                            ExprTy.getCVRQualifiers(),
+                            QualType::GCNone,
+                            ExprTy.getAddressSpace());
   }
 }
 
@@ -906,7 +916,8 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     
   LValue LV = LValue::MakeAddr(Address,
                                T.getCVRQualifiers(),
-                               getContext().getObjCGCAttrKind(T));
+                               getContext().getObjCGCAttrKind(T),
+                               E->getBase()->getType().getAddressSpace());
   if (getContext().getLangOptions().ObjC1 &&
       getContext().getLangOptions().getGCMode() != LangOptions::NonGC)
     LValue::SetObjCNonGC(LV, !E->isOBJCGCCandidate(getContext()));
@@ -936,7 +947,9 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   } else {
     const PointerType *PT = E->getBase()->getType()->getAsPointerType();
     llvm::Value *Ptr = EmitScalarExpr(E->getBase());
-    Base = LValue::MakeAddr(Ptr, PT->getPointeeType().getCVRQualifiers());
+    Base = LValue::MakeAddr(Ptr, PT->getPointeeType().getCVRQualifiers(),
+                            QualType::GCNone,
+                            PT->getPointeeType().getAddressSpace());
   }
 
   // Encode the element access list into a vector of unsigned indices.
@@ -1076,7 +1089,8 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
   LValue LV =  
     LValue::MakeAddr(V, 
                      Field->getType().getCVRQualifiers()|CVRQualifiers,
-                     attr);
+                     attr,
+                     Field->getType().getAddressSpace());
   return LV;
 }
 
@@ -1085,7 +1099,9 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
   llvm::Value *DeclPtr = CreateTempAlloca(LTy, ".compoundliteral");
 
   const Expr* InitExpr = E->getInitializer();
-  LValue Result = LValue::MakeAddr(DeclPtr, E->getType().getCVRQualifiers());
+  LValue Result = LValue::MakeAddr(DeclPtr, E->getType().getCVRQualifiers(),
+                                   QualType::GCNone,
+                                   E->getType().getAddressSpace());
 
   if (E->getType()->isComplexType()) {
     EmitComplexExprIntoAddr(InitExpr, DeclPtr, false);
@@ -1112,7 +1128,8 @@ LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
   EmitAggExpr(E, Temp, false);
 
   return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
+                          getContext().getObjCGCAttrKind(E->getType()),
+                          E->getType().getAddressSpace());
  
 }
 
@@ -1136,7 +1153,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   EmitAnyExpr(E->getSubExpr(), Temp, false);
   
   return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
+                          getContext().getObjCGCAttrKind(E->getType()),
+                          E->getType().getAddressSpace());
 }
 
 //===--------------------------------------------------------------------===//
@@ -1187,7 +1205,8 @@ LValue CodeGenFunction::EmitBinaryOperatorLValue(const BinaryOperator *E) {
   EmitAggExpr(E, Temp, false);
   // FIXME: Are these qualifiers correct?
   return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
+                          getContext().getObjCGCAttrKind(E->getType()),
+                          E->getType().getAddressSpace());
 }
 
 LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
@@ -1199,19 +1218,22 @@ LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
            "reference type!");
     
     return LValue::MakeAddr(RV.getScalarVal(), E->getType().getCVRQualifiers(), 
-                            getContext().getObjCGCAttrKind(E->getType()));
+                            getContext().getObjCGCAttrKind(E->getType()),
+                            E->getType().getAddressSpace());
   }
   
   return LValue::MakeAddr(RV.getAggregateAddr(),
                           E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
+                          getContext().getObjCGCAttrKind(E->getType()),
+                          E->getType().getAddressSpace());
 }
 
 LValue CodeGenFunction::EmitVAArgExprLValue(const VAArgExpr *E) {
   // FIXME: This shouldn't require another copy.
   llvm::Value *Temp = CreateTempAlloca(ConvertType(E->getType()));
   EmitAggExpr(E, Temp, false);
-  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers());
+  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
+                          QualType::GCNone, E->getType().getAddressSpace());
 }
 
 LValue
@@ -1223,7 +1245,8 @@ CodeGenFunction::EmitCXXConditionDeclLValue(const CXXConditionDeclExpr *E) {
 LValue CodeGenFunction::EmitCXXConstructLValue(const CXXConstructExpr *E) {
   llvm::Value *Temp = CreateTempAlloca(ConvertTypeForMem(E->getType()), "tmp");
   EmitCXXConstructExpr(Temp, E);
-  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers());
+  return LValue::MakeAddr(Temp, E->getType().getCVRQualifiers(),
+                          QualType::GCNone, E->getType().getAddressSpace());
 }
 
 LValue
@@ -1241,7 +1264,8 @@ LValue CodeGenFunction::EmitObjCMessageExprLValue(const ObjCMessageExpr *E) {
   // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(),
                           E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
+                          getContext().getObjCGCAttrKind(E->getType()),
+                          E->getType().getAddressSpace());
 }
 
 llvm::Value *CodeGenFunction::EmitIvarOffset(const ObjCInterfaceDecl *Interface,
@@ -1304,7 +1328,8 @@ LValue CodeGenFunction::EmitStmtExprLValue(const StmtExpr *E) {
   // FIXME: can this be volatile?
   return LValue::MakeAddr(RV.getAggregateAddr(),
                           E->getType().getCVRQualifiers(),
-                          getContext().getObjCGCAttrKind(E->getType()));
+                          getContext().getObjCGCAttrKind(E->getType()),
+                          E->getType().getAddressSpace());
 }
 
 

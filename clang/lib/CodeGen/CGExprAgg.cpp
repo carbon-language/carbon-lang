@@ -173,7 +173,8 @@ void AggExprEmitter::VisitCStyleCastExpr(CStyleCastExpr *E) {
         CGF.getContext().getPointerType(E->getSubExpr()->getType());
     llvm::Value *CastPtr = Builder.CreateBitCast(DestPtr,
                                                  CGF.ConvertType(PtrTy));
-    EmitInitializationToLValue(E->getSubExpr(), LValue::MakeAddr(CastPtr, 0));
+    EmitInitializationToLValue(E->getSubExpr(),
+                               LValue::MakeAddr(CastPtr, 0));
     return;
   }
 
