@@ -29,6 +29,7 @@ namespace clang {
   class PathDiagnosticClient;
   class Diagnostic;
   class ObjCForCollectionStmt;
+  class Checker;
 
 class GRExprEngine {  
 public:
@@ -88,6 +89,7 @@ protected:
   Selector RaiseSel;
   
   llvm::OwningPtr<GRSimpleAPICheck> BatchAuditor;
+  std::vector<Checker*> Checkers;
 
   /// PurgeDead - Remove dead bindings before processing a statement.
   bool PurgeDead;
@@ -260,6 +262,10 @@ public:
   const GraphTy& getGraph() const { return G; }
 
   void RegisterInternalChecks();
+  
+  void registerCheck(Checker *check) {
+    Checkers.push_back(check);
+  }
   
   bool isRetStackAddr(const NodeTy* N) const {
     return N->isSink() && RetsStackAddr.count(const_cast<NodeTy*>(N)) != 0;
@@ -491,7 +497,10 @@ public:
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0);
 protected:
-    
+  /// CheckerVisit - Dispatcher for performing checker-specific logic
+  ///  at specific statements.
+  void CheckerVisit(Stmt *S, NodeSet &Dst, NodeSet &Src, bool isPrevisit);
+  
   /// Visit - Transfer function logic for all statements.  Dispatches to
   ///  other functions that handle specific kinds of statements.
   void Visit(Stmt* S, NodeTy* Pred, NodeSet& Dst);

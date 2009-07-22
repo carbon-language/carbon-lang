@@ -15,6 +15,7 @@
 
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
 #include "clang/Analysis/PathSensitive/GRExprEngineBuilders.h"
+#include "clang/Analysis/PathSensitive/Checker.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"
 #include "clang/Basic/Builtins.h"
@@ -36,7 +37,7 @@ using llvm::cast;
 using llvm::APSInt;
 
 //===----------------------------------------------------------------------===//
-// Engine construction and deletion.
+// Batch auditor.  DEPRECATED.
 //===----------------------------------------------------------------------===//
 
 namespace {
@@ -103,6 +104,40 @@ public:
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
+// Checker worklist routines.
+//===----------------------------------------------------------------------===//
+  
+void GRExprEngine::CheckerVisit(Stmt *S, NodeSet &Dst, NodeSet &Src,
+                                bool isPrevisit) {
+  
+  if (Checkers.empty()) {
+    Dst = Src;
+    return;
+  }
+  
+  NodeSet Tmp;
+  NodeSet *PrevSet = &Src;
+  
+  for (std::vector<Checker*>::iterator I = Checkers.begin(), E = Checkers.end();
+       I != E; ++I) {
+
+    NodeSet *CurrSet = (I+1 == E) ? &Dst : (PrevSet == &Tmp) ? &Src : &Tmp;
+    CurrSet->clear();
+    Checker *checker = *I;
+    
+    for (NodeSet::iterator NI = PrevSet->begin(), NE = PrevSet->end();
+         NI != NE; ++NI)
+      checker->GR_Visit(*CurrSet, *Builder, *this, S, *NI, isPrevisit);
+    
+    // Update which NodeSet is the current one.
+    PrevSet = CurrSet;
+  }
+
+  // Don't autotransition.  The CheckerContext objects should do this
+  // automatically.
+}
+
+//===----------------------------------------------------------------------===//
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
 
@@ -135,6 +170,9 @@ GRExprEngine::GRExprEngine(CFG& cfg, Decl& CD, ASTContext& Ctx,
 GRExprEngine::~GRExprEngine() {    
   BR.FlushReports();
   delete [] NSExceptionInstanceRaiseSelectors;
+  for (std::vector<Checker*>::iterator I=Checkers.begin(), E=Checkers.end();
+       I!=E; ++I)
+    delete *I;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1436,11 +1474,16 @@ void GRExprEngine::VisitCallRec(CallExpr* CE, NodeTy* Pred,
 
   // If we reach here we have processed all of the arguments.  Evaluate
   // the callee expression.
-  
-  NodeSet DstTmp;    
+  NodeSet DstTmp;
   Expr* Callee = CE->getCallee()->IgnoreParens();
-
-  Visit(Callee, Pred, DstTmp);
+  
+  { // Enter new scope to make the lifetime of 'DstTmp2' bounded.
+    NodeSet DstTmp2;
+    Visit(Callee, Pred, DstTmp2);
+    
+    // Perform the previsit of the CallExpr, storing the results in DstTmp.
+    CheckerVisit(CE, DstTmp, DstTmp2, true);
+  }
   
   // Finally, evaluate the function call.
   for (NodeSet::iterator DI = DstTmp.begin(), DE = DstTmp.end(); DI!=DE; ++DI) {
