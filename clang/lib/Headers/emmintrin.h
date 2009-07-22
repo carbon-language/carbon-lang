@@ -35,7 +35,7 @@ typedef long long __m128i __attribute__((__vector_size__(16)));
 
 typedef int __v4si __attribute__((__vector_size__(16)));
 typedef short __v8hi __attribute__((__vector_size__(16)));
-typedef char __v16qi __attribute__((__vector_size__(16)));
+typedef signed char __v16qi __attribute__((__vector_size__(16)));
 
 static inline __m128d __attribute__((__always_inline__, __nodebug__))
 _mm_add_sd(__m128d a, __m128d b)
@@ -886,55 +886,55 @@ _mm_srl_epi64(__m128i a, __m128i count)
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_epi8(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpeqb128((__v16qi)a, (__v16qi)b);
+  return (__m128i)((__v16qi)a == (__v16qi)b);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_epi16(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpeqw128((__v8hi)a, (__v8hi)b);
+  return (__m128i)((__v8hi)a == (__v8hi)b);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_epi32(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpeqd128((__v4si)a, (__v4si)b);
+  return (__m128i)((__v4si)a == (__v4si)b);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_epi8(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpgtb128((__v16qi)a, (__v16qi)b);
+  return (__m128i)((__v16qi)a > (__v16qi)b);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_epi16(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpgtw128((__v8hi)a, (__v8hi)b);
+  return (__m128i)((__v8hi)a > (__v8hi)b);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_epi32(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpgtd128((__v4si)a, (__v4si)b);
+  return (__m128i)((__v4si)a > (__v4si)b);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmplt_epi8(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpgtb128((__v16qi)b, (__v16qi)a);
+  return _mm_cmpgt_epi8(b,a);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmplt_epi16(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpgtw128((__v8hi)b, (__v8hi)a);
+  return _mm_cmpgt_epi16(b,a);
 }
 
 static inline __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmplt_epi32(__m128i a, __m128i b)
 {
-  return (__m128i)__builtin_ia32_pcmpgtd128((__v4si)b, (__v4si)a);
+  return _mm_cmpgt_epi32(b,a);
 }
 
 #ifdef __x86_64__

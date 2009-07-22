@@ -32,7 +32,7 @@ typedef long long __m64 __attribute__((__vector_size__(8)));
 
 typedef int __v2si __attribute__((__vector_size__(8)));
 typedef short __v4hi __attribute__((__vector_size__(8)));
-typedef char __v8qi __attribute__((__vector_size__(8)));
+typedef signed char __v8qi __attribute__((__vector_size__(8)));
 
 static inline void __attribute__((__always_inline__, __nodebug__))
 _mm_empty(void)
@@ -348,37 +348,37 @@ _mm_xor_si64(__m64 __m1, __m64 __m2)
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_pi8(__m64 __m1, __m64 __m2)
 {
-    return (__m64)__builtin_ia32_pcmpeqb((__v8qi)__m1, (__v8qi)__m2);
+    return (__m64)((__v8qi)__m1 == (__v8qi)__m2);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_pi16(__m64 __m1, __m64 __m2)
 {
-    return (__m64)__builtin_ia32_pcmpeqw((__v4hi)__m1, (__v4hi)__m2);
+    return (__m64)((__v4hi)__m1 == (__v4hi)__m2);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpeq_pi32(__m64 __m1, __m64 __m2)
 {
-    return (__m64)__builtin_ia32_pcmpeqd((__v2si)__m1, (__v2si)__m2);
+    return (__m64)((__v2si)__m1 == (__v2si)__m2);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_pi8(__m64 __m1, __m64 __m2)
 {
-    return (__m64)__builtin_ia32_pcmpgtb((__v8qi)__m1, (__v8qi)__m2);
+    return (__m64)((__v8qi)__m1 > (__v8qi)__m2);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_pi16(__m64 __m1, __m64 __m2)
 {
-    return (__m64)__builtin_ia32_pcmpgtw((__v4hi)__m1, (__v4hi)__m2);
+    return (__m64)((__v4hi)__m1 > (__v4hi)__m2);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_pi32(__m64 __m1, __m64 __m2)
 {
-    return (__m64)__builtin_ia32_pcmpgtd((__v2si)__m1, (__v2si)__m2);
+    return (__m64)((__v2si)__m1 > (__v2si)__m2);
 }
 
 static inline __m64 __attribute__((__always_inline__, __nodebug__))
