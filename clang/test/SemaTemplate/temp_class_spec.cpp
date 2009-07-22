@@ -45,6 +45,9 @@ struct is_const<const T> {
 int is_const0[is_const<int>::value? -1 : 1];
 int is_const1[is_const<const int>::value? 1 : -1];
 int is_const2[is_const<const volatile int>::value? 1 : -1];
+int is_const3[is_const<const int [3]>::value? 1 : -1];
+int is_const4[is_const<const volatile int[3]>::value? 1 : -1];
+int is_const4[is_const<volatile int[3]>::value? -1 : 1];
 
 template<typename T>
 struct is_volatile {
