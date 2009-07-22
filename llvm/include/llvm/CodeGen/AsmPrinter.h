@@ -58,7 +58,7 @@ namespace llvm {
     typedef DenseMap<GCStrategy*,GCMetadataPrinter*> gcp_map_type;
     typedef gcp_map_type::iterator gcp_iterator;
     gcp_map_type GCMetadataPrinters;
-    
+
   protected:
     /// MMI - If available, this is a pointer to the current MachineModuleInfo.
     MachineModuleInfo *MMI;
