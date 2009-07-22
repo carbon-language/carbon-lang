@@ -280,6 +280,8 @@ public:
   BlkExprNumTy  getBlkExprNum(const Stmt* S);
   unsigned      getNumBlkExprs();
   
+  /// getNumBlockIDs - Returns the total number of BlockIDs allocated (which
+  /// start at 0).
   unsigned getNumBlockIDs() const { return NumBlockIDs; }
 
   //===--------------------------------------------------------------------===//
