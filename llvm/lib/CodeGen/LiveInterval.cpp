@@ -800,14 +800,14 @@ void LiveInterval::ComputeJoinedWeight(const LiveInterval &Other) {
   // weight of the non-spilled interval.  This can only happen with
   // iterative coalescers.
 
-  if (weight == HUGE_VALF &&
+  if (Other.weight != HUGE_VALF) {
+    weight += Other.weight;
+  }
+  else if (weight == HUGE_VALF &&
       !TargetRegisterInfo::isPhysicalRegister(reg)) {
     // Remove this assert if you have an iterative coalescer
     assert(0 && "Joining to spilled interval");
     weight = Other.weight;
-  }
-  else if (Other.weight != HUGE_VALF) {
-    weight += Other.weight;
   }
   else {
     // Otherwise the weight stays the same
