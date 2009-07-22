@@ -762,9 +762,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
         Idxs[1] = Context.getConstantInt(Type::Int32Ty, i);
-        std::string Name = TheAlloca->getName()+"."+utostr(i);
-        Value *Idx = GetElementPtrInst::Create(TheAlloca, Idxs, Idxs+2,
-                                               Name, InsertPt);
+        Value *Idx = 
+          GetElementPtrInst::Create(TheAlloca, Idxs, Idxs+2,
+                                    TheAlloca->getName()+"."+utostr(i), 
+                                    InsertPt);
         I2->setName(I->getName()+"."+utostr(i));
         new StoreInst(I2++, Idx, InsertPt);
       }
