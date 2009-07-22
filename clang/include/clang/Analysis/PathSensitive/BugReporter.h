@@ -460,6 +460,24 @@ public:
   str_iterator str_begin() const { return Strs.begin(); }
   str_iterator str_end() const { return Strs.end(); }
 };
+  
+//===----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
+  
+namespace bugreporter {
+  
+const Stmt *GetDerefExpr(const ExplodedNode<GRState> *N);
+const Stmt *GetReceiverExpr(const ExplodedNode<GRState> *N);
+const Stmt *GetDenomExpr(const ExplodedNode<GRState> *N);
+const Stmt *GetCalleeExpr(const ExplodedNode<GRState> *N);
+const Stmt *GetRetValExpr(const ExplodedNode<GRState> *N);
+
+void registerTrackNullOrUndefValue(BugReporterContext& BRC, const Stmt *S,
+                                   const ExplodedNode<GRState>* N);
+
+} // end namespace clang::bugreporter
+  
+//===----------------------------------------------------------------------===//
 
 } // end clang namespace
 
