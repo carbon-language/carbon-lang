@@ -105,7 +105,7 @@ int f6c(int *p, int *q) {
              : bar3(p, 2, q); // no-warning
 }
 
-int f6d(int *p) {
+void f6d(int *p) {
   bar(p, 0);
   // At this point, 'p' cannot be null.
   if (!p) {
