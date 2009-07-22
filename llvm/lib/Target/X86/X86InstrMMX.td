@@ -657,6 +657,33 @@ def : Pat<(v8i8 (bitconvert (i64 (vector_extract (v2i64 VR128:$src),
                                                   (iPTR 0))))),
           (v8i8 (MMX_MOVDQ2Qrr VR128:$src))>;
 
+// Patterns for vector comparisons
+def : Pat<(v8i8 (X86pcmpeqb VR64:$src1, VR64:$src2)),
+          (MMX_PCMPEQBrr VR64:$src1, VR64:$src2)>;
+def : Pat<(v8i8 (X86pcmpeqb VR64:$src1, (bitconvert (load_mmx addr:$src2)))),
+          (MMX_PCMPEQBrm VR64:$src1, addr:$src2)>;
+def : Pat<(v4i16 (X86pcmpeqw VR64:$src1, VR64:$src2)),
+          (MMX_PCMPEQWrr VR64:$src1, VR64:$src2)>;
+def : Pat<(v4i16 (X86pcmpeqw VR64:$src1, (bitconvert (load_mmx addr:$src2)))),
+          (MMX_PCMPEQWrm VR64:$src1, addr:$src2)>;
+def : Pat<(v2i32 (X86pcmpeqd VR64:$src1, VR64:$src2)),
+          (MMX_PCMPEQDrr VR64:$src1, VR64:$src2)>;
+def : Pat<(v2i32 (X86pcmpeqd VR64:$src1, (bitconvert (load_mmx addr:$src2)))),
+          (MMX_PCMPEQDrm VR64:$src1, addr:$src2)>;
+
+def : Pat<(v8i8 (X86pcmpgtb VR64:$src1, VR64:$src2)),
+          (MMX_PCMPGTBrr VR64:$src1, VR64:$src2)>;
+def : Pat<(v8i8 (X86pcmpgtb VR64:$src1, (bitconvert (load_mmx addr:$src2)))),
+          (MMX_PCMPGTBrm VR64:$src1, addr:$src2)>;
+def : Pat<(v4i16 (X86pcmpgtw VR64:$src1, VR64:$src2)),
+          (MMX_PCMPGTWrr VR64:$src1, VR64:$src2)>;
+def : Pat<(v4i16 (X86pcmpgtw VR64:$src1, (bitconvert (load_mmx addr:$src2)))),
+          (MMX_PCMPGTWrm VR64:$src1, addr:$src2)>;
+def : Pat<(v2i32 (X86pcmpgtd VR64:$src1, VR64:$src2)),
+          (MMX_PCMPGTDrr VR64:$src1, VR64:$src2)>;
+def : Pat<(v2i32 (X86pcmpgtd VR64:$src1, (bitconvert (load_mmx addr:$src2)))),
+          (MMX_PCMPGTDrm VR64:$src1, addr:$src2)>;
+
 // CMOV* - Used to implement the SELECT DAG operation.  Expanded by the
 // scheduler into a branch sequence.
 // These are expanded by the scheduler.

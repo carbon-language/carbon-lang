@@ -640,6 +640,9 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::SELECT,             MVT::v4i16, Promote);
     setOperationAction(ISD::SELECT,             MVT::v2i32, Promote);
     setOperationAction(ISD::SELECT,             MVT::v1i64, Custom);
+    setOperationAction(ISD::VSETCC,             MVT::v8i8, Custom);
+    setOperationAction(ISD::VSETCC,             MVT::v4i16, Custom);
+    setOperationAction(ISD::VSETCC,             MVT::v2i32, Custom);
   }
 
   if (!UseSoftFloat && Subtarget->hasSSE1()) {
@@ -5482,8 +5485,11 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) {
 
   switch (VT.getSimpleVT()) {
   default: break;
+  case MVT::v8i8:
   case MVT::v16i8: EQOpc = X86ISD::PCMPEQB; GTOpc = X86ISD::PCMPGTB; break;
+  case MVT::v4i16:
   case MVT::v8i16: EQOpc = X86ISD::PCMPEQW; GTOpc = X86ISD::PCMPGTW; break;
+  case MVT::v2i32:
   case MVT::v4i32: EQOpc = X86ISD::PCMPEQD; GTOpc = X86ISD::PCMPGTD; break;
   case MVT::v2i64: EQOpc = X86ISD::PCMPEQQ; GTOpc = X86ISD::PCMPGTQ; break;
   }
