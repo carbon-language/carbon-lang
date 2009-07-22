@@ -53,8 +53,8 @@ FPVAL               ::= ESAPINTVAL ^ "." ^ EUAPINTVAL | "0x" ^ HexDigitSeq ;
 The rest of this file is derived directly from llvmAsmParser.y.
 *)
 
-ArithmeticOps ::= add | fadd | sub | fsub | mul | fmul |
-                  udiv | sdiv | fdiv | urem | srem | frem ;
+ArithmeticOps ::= + OptNW add | fadd | OptNW sub | fsub | OptNW mul | fmul |
+                  udiv | OptExact sdiv | fdiv | urem | srem | frem ;
 LogicalOps    ::= shl | lshr | ashr | and | or | xor;
 CastOps       ::= trunc | zext | sext | fptrunc | fpext | bitcast |
                   uitofp | sitofp | fptoui | fptosi | inttoptr | ptrtoint ;
@@ -393,6 +393,10 @@ InstVal ::=
  | MemoryInst ;
 
 OptVolatile ::= - volatile | _ ;
+OptExact ::= - exact | _ ;
+OptNSW ::= - nsw | _ ;
+OptNUW ::= - nuw | _ ;
+OptNW  ::= OptNUW OptNSW ;
 
 MemoryInst ::= malloc Types OptCAlign
  | malloc Types ^ "," INTTYPE ValueRef OptCAlign
