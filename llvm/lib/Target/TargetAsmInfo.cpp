@@ -349,33 +349,33 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
                                       SectionKind::Kind Kind) const {
   switch (Kind) {
   case SectionKind::Text:
-    return ".gnu.linkonce.t." + GV->getName();
+    return ".gnu.linkonce.t." + GV->getNameStr();
   case SectionKind::Data:
-    return ".gnu.linkonce.d." + GV->getName();
+    return ".gnu.linkonce.d." + GV->getNameStr();
   case SectionKind::DataRel:
-    return ".gnu.linkonce.d.rel" + GV->getName();
+    return ".gnu.linkonce.d.rel" + GV->getNameStr();
   case SectionKind::DataRelLocal:
-    return ".gnu.linkonce.d.rel.local" + GV->getName();
+    return ".gnu.linkonce.d.rel.local" + GV->getNameStr();
   case SectionKind::DataRelRO:
-    return ".gnu.linkonce.d.rel.ro" + GV->getName();
+    return ".gnu.linkonce.d.rel.ro" + GV->getNameStr();
   case SectionKind::DataRelROLocal:
-    return ".gnu.linkonce.d.rel.ro.local" + GV->getName();
+    return ".gnu.linkonce.d.rel.ro.local" + GV->getNameStr();
   case SectionKind::SmallData:
-    return ".gnu.linkonce.s." + GV->getName();
+    return ".gnu.linkonce.s." + GV->getNameStr();
   case SectionKind::BSS:
-    return ".gnu.linkonce.b." + GV->getName();
+    return ".gnu.linkonce.b." + GV->getNameStr();
   case SectionKind::SmallBSS:
-    return ".gnu.linkonce.sb." + GV->getName();
+    return ".gnu.linkonce.sb." + GV->getNameStr();
   case SectionKind::ROData:
   case SectionKind::RODataMergeConst:
   case SectionKind::RODataMergeStr:
-    return ".gnu.linkonce.r." + GV->getName();
+    return ".gnu.linkonce.r." + GV->getNameStr();
   case SectionKind::SmallROData:
-    return ".gnu.linkonce.s2." + GV->getName();
+    return ".gnu.linkonce.s2." + GV->getNameStr();
   case SectionKind::ThreadData:
-    return ".gnu.linkonce.td." + GV->getName();
+    return ".gnu.linkonce.td." + GV->getNameStr();
   case SectionKind::ThreadBSS:
-    return ".gnu.linkonce.tb." + GV->getName();
+    return ".gnu.linkonce.tb." + GV->getNameStr();
   default:
     llvm_unreachable("Unknown section kind");
   }

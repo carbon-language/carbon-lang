@@ -87,8 +87,8 @@ void ScheduleDAG::viewGraph() {
 #ifndef NDEBUG
   if (BB->getBasicBlock())
     ViewGraph(this, "dag." + MF.getFunction()->getName(), false,
-              "Scheduling-Units Graph for " + MF.getFunction()->getName() + ':' +
-              BB->getBasicBlock()->getName());
+              "Scheduling-Units Graph for " + MF.getFunction()->getName() + 
+              ":" + BB->getBasicBlock()->getName());
   else
     ViewGraph(this, "dag." + MF.getFunction()->getName(), false,
               "Scheduling-Units Graph for " + MF.getFunction()->getName());

@@ -375,13 +375,13 @@ void LTOCodeGenerator::applyScopeRestrictions()
                                         e = mergedModule->end(); f != e; ++f) {
                 if ( !f->isDeclaration() 
                   && _mustPreserveSymbols.count(mangler.getMangledName(f)) )
-                    mustPreserveList.push_back(::strdup(f->getName().c_str()));
+                  mustPreserveList.push_back(::strdup(f->getNameStr().c_str()));
             }
             for (Module::global_iterator v = mergedModule->global_begin(), 
                                  e = mergedModule->global_end(); v !=  e; ++v) {
                 if ( !v->isDeclaration()
                   && _mustPreserveSymbols.count(mangler.getMangledName(v)) )
-                    mustPreserveList.push_back(::strdup(v->getName().c_str()));
+                  mustPreserveList.push_back(::strdup(v->getNameStr().c_str()));
             }
             passes.add(createInternalizePass(mustPreserveList));
         }

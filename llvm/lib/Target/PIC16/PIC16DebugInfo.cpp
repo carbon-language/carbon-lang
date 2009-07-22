@@ -327,7 +327,7 @@ void PIC16DbgInfo::EmitCompositeTypeDecls(Module &M) {
     // Structures and union declaration's debug info has llvm.dbg.composite
     // in its name.
     // FIXME: Checking and relying on llvm.dbg.composite name is not a good idea.
-    if(I->getName().find("llvm.dbg.composite") != std::string::npos) {
+    if(I->getNameStr().find("llvm.dbg.composite") != std::string::npos) {
       GlobalVariable *GV = cast<GlobalVariable >(I);
       DICompositeType CTy(GV);
       if (CTy.getTag() == dwarf::DW_TAG_union_type ||

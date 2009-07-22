@@ -146,7 +146,7 @@ std::string Mangler::getMangledName(const GlobalValue *GV, const char *Suffix,
       GV->hasLinkerPrivateLinkage() ? Mangler::LinkerPrivate : Mangler::Default;
 
   if (GV->hasName())
-    return makeNameProper(GV->getName() + Suffix, PrefixTy);
+    return makeNameProper(GV->getNameStr() + Suffix, PrefixTy);
   
   // Get the ID for the global, assigning a new one if we haven't got one
   // already.
