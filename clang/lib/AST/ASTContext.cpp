@@ -908,12 +908,14 @@ const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D) {
   assert(D && "Cannot get layout of forward declarations!");
 
   // Look up this layout, if already laid out, return what we have.
-  const ASTRecordLayout *&Entry = ASTRecordLayouts[D];
+  // Note that we can't save a reference to the entry because this function
+  // is recursive.
+  const ASTRecordLayout *Entry = ASTRecordLayouts[D];
   if (Entry) return *Entry;
 
   const ASTRecordLayout *NewEntry = 
     ASTRecordLayoutBuilder::ComputeLayout(*this, D);
-  Entry = NewEntry;
+  ASTRecordLayouts[D] = NewEntry;
   
   return *NewEntry;
 }
