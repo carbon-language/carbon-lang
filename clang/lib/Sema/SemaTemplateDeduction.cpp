@@ -341,6 +341,14 @@ DeduceTemplateArguments(ASTContext &Context,
         = Param->getAsTemplateTypeParmType()) {
     unsigned Index = TemplateTypeParm->getIndex();
 
+    // If the argument type is an array type, move the qualifiers up to the
+    // top level, so they can be matched with the qualifiers on the parameter.
+    // FIXME: address spaces, ObjC GC qualifiers
+    QualType ArgElementType = Arg;
+    while (const ArrayType *ArgArray = ArgElementType->getAs<ArrayType>())
+      ArgElementType = ArgArray->getElementType();
+    Arg = Arg.getWithAdditionalQualifiers(ArgElementType.getCVRQualifiers());
+                                          
     // The argument type can not be less qualified than the parameter
     // type.
     if (Param.isMoreQualifiedThan(Arg) && !(TDF & TDF_IgnoreQualifiers)) {

@@ -758,6 +758,7 @@ QualType TemplateTypeInstantiator::Instantiate(QualType T) const {
   //   which case the cv-qualifiers are ignored.
   // 
   // The same rule applies to function types.
+  // FIXME: what about address-space and Objective-C GC qualifiers?
   if (!Result.isNull() && T.getCVRQualifiers() &&
       !Result->isFunctionType() && !Result->isReferenceType())
     Result = Result.getWithAdditionalQualifiers(T.getCVRQualifiers());

@@ -32,6 +32,35 @@ struct is_lvalue_reference<T&> {
 int lvalue_ref0[is_lvalue_reference<int>::value? -1 : 1];
 int lvalue_ref1[is_lvalue_reference<const int&>::value? 1 : -1];
 
+template<typename T>
+struct is_const {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_const<const T> {
+  static const bool value = true;
+};
+
+int is_const0[is_const<int>::value? -1 : 1];
+int is_const1[is_const<const int>::value? 1 : -1];
+int is_const2[is_const<const volatile int>::value? 1 : -1];
+
+template<typename T>
+struct is_volatile {
+  static const bool value = false;
+};
+
+template<typename T>
+struct is_volatile<volatile T> {
+  static const bool value = true;
+};
+
+int is_volatile0[is_volatile<int>::value? -1 : 1];
+int is_volatile1[is_volatile<volatile int>::value? 1 : -1];
+int is_volatile2[is_volatile<const volatile int>::value? 1 : -1];
+int is_volatile3[is_volatile<volatile char[3]>::value? 1 : -1];
+                 
 template<typename T, typename U>
 struct is_same {
   static const bool value = false;
