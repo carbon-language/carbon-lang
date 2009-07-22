@@ -297,12 +297,51 @@ class CXXRecordDecl : public RecordDecl {
   /// pure virtual function, (that can come from a base class).
   bool Abstract : 1;
   
-  /// HasTrivialConstructor - True when this class has a trivial constructor
+  /// HasTrivialConstructor - True when this class has a trivial constructor.
+  ///
+  /// C++ [class.ctor]p5.  A constructor is trivial if it is an
+  /// implicitly-declared default constructor and if:
+  /// * its class has no virtual functions and no virtual base classes, and
+  /// * all the direct base classes of its class have trivial constructors, and
+  /// * for all the nonstatic data members of its class that are of class type
+  ///   (or array thereof), each such class has a trivial constructor.
   bool HasTrivialConstructor : 1;
   
-  /// HasTrivialDestructor - True when this class has a trivial destructor
-  bool HasTrivialDestructor : 1;
+  /// HasTrivialCopyConstructor - True when this class has a trivial copy
+  /// constructor.
+  ///
+  /// C++ [class.copy]p6.  A copy constructor for class X is trivial
+  /// if it is implicitly declared and if
+  /// * class X has no virtual functions and no virtual base classes, and
+  /// * each direct base class of X has a trivial copy constructor, and
+  /// * for all the nonstatic data members of X that are of class type (or
+  ///   array thereof), each such class type has a trivial copy constructor;
+  /// otherwise the copy constructor is non-trivial.
+  bool HasTrivialCopyConstructor : 1;
+
+  /// HasTrivialCopyAssignment - True when this class has a trivial copy
+  /// assignment operator.
+  ///
+  /// C++ [class.copy]p11.  A copy assignment operator for class X is
+  /// trivial if it is implicitly declared and if
+  /// * class X has no virtual functions and no virtual base classes, and
+  /// * each direct base class of X has a trivial copy assignment operator, and
+  /// * for all the nonstatic data members of X that are of class type (or
+  ///   array thereof), each such class type has a trivial copy assignment
+  ///   operator;
+  /// otherwise the copy assignment operator is non-trivial.
+  bool HasTrivialCopyAssignment : 1;
   
+  /// HasTrivialDestructor - True when this class has a trivial destructor.
+  ///
+  /// C++ [class.dtor]p3.  A destructor is trivial if it is an
+  /// implicitly-declared destructor and if:
+  /// * all of the direct base classes of its class have trivial destructors
+  ///   and
+  /// * for all of the non-static data members of its class that are of class
+  ///   type (or array thereof), each such class has a trivial destructor.
+  bool HasTrivialDestructor : 1;
+
   /// Bases - Base classes of this class.
   /// FIXME: This is wasted space for a union.
   CXXBaseSpecifier *Bases;
@@ -342,11 +381,11 @@ protected:
 
 public:
   /// base_class_iterator - Iterator that traverses the base classes
-  /// of a clas.
+  /// of a class.
   typedef CXXBaseSpecifier*       base_class_iterator;
 
   /// base_class_const_iterator - Iterator that traverses the base
-  /// classes of a clas.
+  /// classes of a class.
   typedef const CXXBaseSpecifier* base_class_const_iterator;
 
   static CXXRecordDecl *Create(ASTContext &C, TagKind TK, DeclContext *DC,
@@ -378,6 +417,28 @@ public:
   base_class_const_iterator vbases_begin() const { return VBases; }
   base_class_iterator       vbases_end()         { return VBases + NumVBases; }
   base_class_const_iterator vbases_end()   const { return VBases + NumVBases; }
+
+  /// Iterator access to method members.  The method iterator visits
+  /// all method members of the class, including non-instance methods,
+  /// special methods, etc.
+  typedef specific_decl_iterator<CXXMethodDecl> method_iterator;
+  
+  method_iterator method_begin() const {
+    return method_iterator(decls_begin());
+  }
+  method_iterator method_end() const {
+    return method_iterator(decls_end());
+  }
+
+  /// Iterator access to constructor members.
+  typedef specific_decl_iterator<CXXConstructorDecl> ctor_iterator;
+  
+  ctor_iterator ctor_begin() const {
+    return ctor_iterator(decls_begin());
+  }
+  ctor_iterator ctor_end() const {
+    return ctor_iterator(decls_end());
+  }
 
   /// hasConstCopyConstructor - Determines whether this class has a
   /// copy constructor that accepts a const-qualified argument.
@@ -487,6 +548,22 @@ public:
   // (C++ [class.ctor]p5)
   void setHasTrivialConstructor(bool TC) { HasTrivialConstructor = TC; }
   
+  // hasTrivialCopyConstructor - Whether this class has a trivial copy
+  // constructor (C++ [class.copy]p6)
+  bool hasTrivialCopyConstructor() const { return HasTrivialCopyConstructor; }
+  
+  // setHasTrivialCopyConstructor - Set whether this class has a trivial
+  // copy constructor (C++ [class.copy]p6)
+  void setHasTrivialCopyConstructor(bool TC) { HasTrivialCopyConstructor = TC; }
+
+  // hasTrivialCopyAssignment - Whether this class has a trivial copy
+  // assignment operator (C++ [class.copy]p11)
+  bool hasTrivialCopyAssignment() const { return HasTrivialCopyAssignment; }
+  
+  // setHasTrivialCopyAssignment - Set whether this class has a
+  // trivial copy assignment operator (C++ [class.copy]p11)
+  void setHasTrivialCopyAssignment(bool TC) { HasTrivialCopyAssignment = TC; }
+
   // hasTrivialDestructor - Whether this class has a trivial destructor
   // (C++ [class.dtor]p3)
   bool hasTrivialDestructor() const { return HasTrivialDestructor; }

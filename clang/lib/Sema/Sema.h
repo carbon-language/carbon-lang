@@ -541,6 +541,14 @@ public:
                             SourceLocation TSSL,
                             AccessSpecifier AS, NamedDecl *PrevDecl,
                             Declarator *D = 0);
+
+  enum CXXSpecialMember {
+    CXXDefaultConstructor = 0,
+    CXXCopyConstructor = 1,
+    CXXCopyAssignment = 2,
+    CXXDestructor = 3
+  };
+  void DiagnoseNontrivial(const RecordType* Record, CXXSpecialMember mem);
   
   virtual DeclPtrTy ActOnIvar(Scope *S, SourceLocation DeclStart,
                               DeclPtrTy IntfDecl,

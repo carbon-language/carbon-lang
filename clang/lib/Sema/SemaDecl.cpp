@@ -2265,6 +2265,8 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       CurClass->setPOD(false);
       CurClass->setPolymorphic(true);
       CurClass->setHasTrivialConstructor(false);
+      CurClass->setHasTrivialCopyConstructor(false);
+      CurClass->setHasTrivialCopyAssignment(false);
     }
   }
 
@@ -2505,6 +2507,7 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
       
       // C++ [class.dtor]p3: A destructor is trivial if it is an implicitly-
       // declared destructor.
+      // FIXME: C++0x: don't do this for "= default" destructors
       Record->setHasTrivialDestructor(false);
     } else if (CXXConversionDecl *Conversion 
                = dyn_cast<CXXConversionDecl>(NewFD))
@@ -4085,6 +4088,57 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
     NewFD->setInvalidDecl();
   }
 
+  if (getLangOptions().CPlusPlus) {
+    QualType EltTy = T;
+    while (const ArrayType *AT = Context.getAsArrayType(EltTy))
+      EltTy = AT->getElementType();
+
+    if (const RecordType *RT = EltTy->getAsRecordType()) {
+      CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
+
+      if (!RDecl->hasTrivialConstructor())
+        cast<CXXRecordDecl>(Record)->setHasTrivialConstructor(false);
+      if (!RDecl->hasTrivialCopyConstructor())
+        cast<CXXRecordDecl>(Record)->setHasTrivialCopyConstructor(false);
+      if (!RDecl->hasTrivialCopyAssignment())
+        cast<CXXRecordDecl>(Record)->setHasTrivialCopyAssignment(false);
+      if (!RDecl->hasTrivialDestructor())
+        cast<CXXRecordDecl>(Record)->setHasTrivialDestructor(false);
+
+      // C++ 9.5p1: An object of a class with a non-trivial
+      // constructor, a non-trivial copy constructor, a non-trivial
+      // destructor, or a non-trivial copy assignment operator
+      // cannot be a member of a union, nor can an array of such
+      // objects.
+      // TODO: C++0x alters this restriction significantly.
+      if (Record->isUnion()) {
+        // We check for copy constructors before constructors
+        // because otherwise we'll never get complaints about
+        // copy constructors.
+
+        const CXXSpecialMember invalid = (CXXSpecialMember) -1;
+
+        CXXSpecialMember member;
+        if (!RDecl->hasTrivialCopyConstructor())
+          member = CXXCopyConstructor;
+        else if (!RDecl->hasTrivialConstructor())
+          member = CXXDefaultConstructor;
+        else if (!RDecl->hasTrivialCopyAssignment())
+          member = CXXCopyAssignment;
+        else if (!RDecl->hasTrivialDestructor())
+          member = CXXDestructor;
+        else
+          member = invalid;
+
+        if (member != invalid) {
+          Diag(Loc, diag::err_illegal_union_member) << Name << member;
+          DiagnoseNontrivial(RT, member);
+          NewFD->setInvalidDecl();
+        }
+      }
+    }
+  }
+
   if (getLangOptions().CPlusPlus && !T->isPODType())
     cast<CXXRecordDecl>(Record)->setPOD(false);
 
@@ -4111,6 +4165,133 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   return NewFD;
+}
+
+/// DiagnoseNontrivial - Given that a class has a non-trivial
+/// special member, figure out why.
+void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
+  QualType QT(T, 0U);
+  CXXRecordDecl* RD = cast<CXXRecordDecl>(T->getDecl());
+
+  // Check whether the member was user-declared.
+  switch (member) {
+  case CXXDefaultConstructor:
+    if (RD->hasUserDeclaredConstructor()) {
+      typedef CXXRecordDecl::ctor_iterator ctor_iter;
+      for (ctor_iter ci = RD->ctor_begin(), ce = RD->ctor_end(); ci != ce; ++ci)
+        if (!ci->isImplicitlyDefined(Context)) {
+          SourceLocation CtorLoc = ci->getLocation();
+          Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
+          return;
+        }
+
+      assert(0 && "found no user-declared constructors");
+      return;
+    }
+    break;
+
+  case CXXCopyConstructor:
+    if (RD->hasUserDeclaredCopyConstructor()) {
+      SourceLocation CtorLoc =
+        RD->getCopyConstructor(Context, 0)->getLocation();
+      Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
+      return;
+    }
+    break;
+
+  case CXXCopyAssignment:
+    if (RD->hasUserDeclaredCopyAssignment()) {
+      // FIXME: this should use the location of the copy
+      // assignment, not the type.
+      SourceLocation TyLoc = RD->getSourceRange().getBegin();
+      Diag(TyLoc, diag::note_nontrivial_user_defined) << QT << member;
+      return;
+    }
+    break;
+
+  case CXXDestructor:
+    if (RD->hasUserDeclaredDestructor()) {
+      SourceLocation DtorLoc = RD->getDestructor(Context)->getLocation();
+      Diag(DtorLoc, diag::note_nontrivial_user_defined) << QT << member;
+      return;
+    }
+    break;
+  }
+
+  typedef CXXRecordDecl::base_class_iterator base_iter;
+
+  // Virtual bases and members inhibit trivial copying/construction,
+  // but not trivial destruction.
+  if (member != CXXDestructor) {
+    // Check for virtual bases.  vbases includes indirect virtual bases,
+    // so we just iterate through the direct bases.
+    for (base_iter bi = RD->bases_begin(), be = RD->bases_end(); bi != be; ++bi)
+      if (bi->isVirtual()) {
+        SourceLocation BaseLoc = bi->getSourceRange().getBegin();
+        Diag(BaseLoc, diag::note_nontrivial_has_virtual) << QT << 1;
+        return;
+      }
+
+    // Check for virtual methods.
+    typedef CXXRecordDecl::method_iterator meth_iter;
+    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+         ++mi) {
+      if (mi->isVirtual()) {
+        SourceLocation MLoc = mi->getSourceRange().getBegin();
+        Diag(MLoc, diag::note_nontrivial_has_virtual) << QT << 0;
+        return;
+      }
+    }
+  }
+  
+  bool (CXXRecordDecl::*hasTrivial)() const;
+  switch (member) {
+  case CXXDefaultConstructor:
+    hasTrivial = &CXXRecordDecl::hasTrivialConstructor; break;
+  case CXXCopyConstructor:
+    hasTrivial = &CXXRecordDecl::hasTrivialCopyConstructor; break;
+  case CXXCopyAssignment:
+    hasTrivial = &CXXRecordDecl::hasTrivialCopyAssignment; break;
+  case CXXDestructor:
+    hasTrivial = &CXXRecordDecl::hasTrivialDestructor; break;
+  default:
+    assert(0 && "unexpected special member"); return;
+  }
+
+  // Check for nontrivial bases (and recurse).
+  for (base_iter bi = RD->bases_begin(), be = RD->bases_end(); bi != be; ++bi) {
+    const RecordType *BaseRT = bi->getType()->getAsRecordType();
+    assert(BaseRT);
+    CXXRecordDecl *BaseRecTy = cast<CXXRecordDecl>(BaseRT->getDecl());
+    if (!(BaseRecTy->*hasTrivial)()) {
+      SourceLocation BaseLoc = bi->getSourceRange().getBegin();
+      Diag(BaseLoc, diag::note_nontrivial_has_nontrivial) << QT << 1 << member;
+      DiagnoseNontrivial(BaseRT, member);
+      return;
+    }
+  }
+  
+  // Check for nontrivial members (and recurse).
+  typedef RecordDecl::field_iterator field_iter;
+  for (field_iter fi = RD->field_begin(), fe = RD->field_end(); fi != fe;
+       ++fi) {
+    QualType EltTy = (*fi)->getType();
+    while (const ArrayType *AT = Context.getAsArrayType(EltTy))
+      EltTy = AT->getElementType();
+
+    if (const RecordType *EltRT = EltTy->getAsRecordType()) {
+      CXXRecordDecl* EltRD = cast<CXXRecordDecl>(EltRT->getDecl());
+
+      if (!(EltRD->*hasTrivial)()) {
+        SourceLocation FLoc = (*fi)->getLocation();
+        Diag(FLoc, diag::note_nontrivial_has_nontrivial) << QT << 0 << member;
+        DiagnoseNontrivial(EltRT, member);
+        return;
+      }
+    }
+  }
+
+  assert(0 && "found no explanation for non-trivial member");
 }
 
 /// TranslateIvarVisibility - Translate visibility from a token ID to an 

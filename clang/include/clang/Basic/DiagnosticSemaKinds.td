@@ -339,6 +339,18 @@ def err_implicit_object_parameter_init : Error<
   "cannot initialize object parameter of type %0 with an expression "
   "of type %1">;
 
+def err_illegal_union_member : Error<
+  "union member %0 has a non-trivial %select{constructor|"
+  "copy constructor|copy assignment operator|destructor}1">;
+def note_nontrivial_has_virtual : Note<
+  "because type %0 has a virtual %select{member function|base class}1">;
+def note_nontrivial_has_nontrivial : Note<
+  "because type %0 has a %select{member|base class}1 with a non-trivial "
+  "%select{constructor|copy constructor|copy assignment operator|destructor}2">;
+def note_nontrivial_user_defined : Note<
+  "because type %0 has a user-declared %select{constructor|copy constructor|"
+  "copy assignment operator|destructor}1">;
+
 def err_different_return_type_for_overriding_virtual_function : Error<
   "virtual function %0 has a different return type (%1) than the "
   "function it overrides (which has return type %2)">;

@@ -400,19 +400,40 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
     // C++ [class.ctor]p5:
     //   A constructor is trivial if its class has no virtual base classes.
     Class->setHasTrivialConstructor(false);
+
+    // C++ [class.copy]p6:
+    //   A copy constructor is trivial if its class has no virtual base classes.
+    Class->setHasTrivialCopyConstructor(false);
+
+    // C++ [class.copy]p11:
+    //   A copy assignment operator is trivial if its class has no virtual
+    //   base classes.
+    Class->setHasTrivialCopyAssignment(false);
   } else {
     // C++ [class.ctor]p5:
     //   A constructor is trivial if all the direct base classes of its 
     //   class have trivial constructors.
-    Class->setHasTrivialConstructor(cast<CXXRecordDecl>(BaseDecl)->
-                                    hasTrivialConstructor());
+    if (!cast<CXXRecordDecl>(BaseDecl)->hasTrivialConstructor())
+      Class->setHasTrivialConstructor(false);
+
+    // C++ [class.copy]p6:
+    //   A copy constructor is trivial if all the direct base classes of its
+    //   class have trivial copy constructors.
+    if (!cast<CXXRecordDecl>(BaseDecl)->hasTrivialCopyConstructor())
+      Class->setHasTrivialCopyConstructor(false);
+
+    // C++ [class.copy]p11:
+    //   A copy assignment operator is trivial if all the direct base classes
+    //   of its class have trivial copy assignment operators.
+    if (!cast<CXXRecordDecl>(BaseDecl)->hasTrivialCopyAssignment())
+      Class->setHasTrivialCopyAssignment(false);
   }
 
   // C++ [class.ctor]p3:
   //   A destructor is trivial if all the direct base classes of its class
   //   have trivial destructors.
-  Class->setHasTrivialDestructor(cast<CXXRecordDecl>(BaseDecl)->
-                                 hasTrivialDestructor());
+  if (!cast<CXXRecordDecl>(BaseDecl)->hasTrivialDestructor())
+    Class->setHasTrivialDestructor(false);
   
   // Create the base specifier.
   // FIXME: Allocate via ASTContext?
@@ -1154,30 +1175,6 @@ void Sema::ActOnFinishCXXMemberSpecification(Scope* S, SourceLocation RLoc,
   if (RD->isAbstract()) 
     AbstractClassUsageDiagnoser(*this, RD);
     
-  if (RD->hasTrivialConstructor() || RD->hasTrivialDestructor()) {
-    for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
-         i != e; ++i) {
-      // All the nonstatic data members must have trivial constructors.
-      QualType FTy = i->getType();
-      while (const ArrayType *AT = Context.getAsArrayType(FTy))
-        FTy = AT->getElementType();
-      
-      if (const RecordType *RT = FTy->getAsRecordType()) {
-        CXXRecordDecl *FieldRD = cast<CXXRecordDecl>(RT->getDecl());
-        
-        if (!FieldRD->hasTrivialConstructor())
-          RD->setHasTrivialConstructor(false);
-        if (!FieldRD->hasTrivialDestructor())
-          RD->setHasTrivialDestructor(false);
-        
-        // If RD has neither a trivial constructor nor a trivial destructor
-        // we don't need to continue checking.
-        if (!RD->hasTrivialConstructor() && !RD->hasTrivialDestructor())
-          break;
-      }
-    }
-  }
-      
   if (!RD->isDependentType())
     AddImplicitlyDeclaredMembersToClass(RD);
 }
@@ -1213,6 +1210,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                  /*isImplicitlyDeclared=*/true);
     DefaultCon->setAccess(AS_public);
     DefaultCon->setImplicit();
+    DefaultCon->setTrivial(ClassDecl->hasTrivialConstructor());
     ClassDecl->addDecl(DefaultCon);
   }
 
@@ -1283,6 +1281,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                    /*isImplicitlyDeclared=*/true);
     CopyConstructor->setAccess(AS_public);
     CopyConstructor->setImplicit();
+    CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
 
     // Add the parameter to the constructor.
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
@@ -1359,6 +1358,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                             /*isStatic=*/false, /*isInline=*/true);
     CopyAssignment->setAccess(AS_public);
     CopyAssignment->setImplicit();
+    CopyAssignment->setTrivial(ClassDecl->hasTrivialCopyAssignment());
 
     // Add the parameter to the operator.
     ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyAssignment,
@@ -1388,6 +1388,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
                                   /*isImplicitlyDeclared=*/true);
     Destructor->setAccess(AS_public);
     Destructor->setImplicit();
+    Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
     ClassDecl->addDecl(Destructor);
   }
 }

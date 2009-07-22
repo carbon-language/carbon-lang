@@ -30,7 +30,8 @@ CXXRecordDecl::CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
     UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredCopyAssignment(false), UserDeclaredDestructor(false),
     Aggregate(true), PlainOldData(true), Polymorphic(false), Abstract(false),
-    HasTrivialConstructor(true), HasTrivialDestructor(true),
+    HasTrivialConstructor(true), HasTrivialCopyConstructor(true),
+    HasTrivialCopyAssignment(true), HasTrivialDestructor(true),
     Bases(0), NumBases(0), VBases(0), NumVBases(0),
     Conversions(DC, DeclarationName()),
     TemplateOrInstantiation() { }
@@ -123,7 +124,7 @@ CXXRecordDecl::setBases(ASTContext &C,
   }
   if (vbaseCount > 0) {
     // build AST for inhireted, direct or indirect, virtual bases.
-    this->VBases = new(C) CXXBaseSpecifier [vbaseCount];
+    this->VBases = new (C) CXXBaseSpecifier [vbaseCount];
     this->NumVBases = vbaseCount;
     for (int i = 0; i < vbaseCount; i++) {
       QualType QT = UniqueVbases[i]->getType();
@@ -225,12 +226,19 @@ CXXRecordDecl::addedConstructor(ASTContext &Context,
   // C++ [class.ctor]p5:
   //   A constructor is trivial if it is an implicitly-declared default
   //   constructor.
+  // FIXME: C++0x: don't do this for "= default" default constructors.
   HasTrivialConstructor = false;
     
   // Note when we have a user-declared copy constructor, which will
   // suppress the implicit declaration of a copy constructor.
-  if (ConDecl->isCopyConstructor(Context))
+  if (ConDecl->isCopyConstructor(Context)) {
     UserDeclaredCopyConstructor = true;
+
+    // C++ [class.copy]p6:
+    //   A copy constructor is trivial if it is implicitly declared.
+    // FIXME: C++0x: don't do this for "= default" copy constructors.
+    HasTrivialCopyConstructor = false;
+  }
 }
 
 void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
@@ -253,6 +261,11 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   // This is a copy assignment operator.
   // Suppress the implicit declaration of a copy constructor.
   UserDeclaredCopyAssignment = true;
+
+  // C++ [class.copy]p11:
+  //   A copy assignment operator is trivial if it is implicitly declared.
+  // FIXME: C++0x: don't do this for "= default" copy operators.
+  HasTrivialCopyAssignment = false;
 
   // C++ [class]p4:
   //   A POD-struct is an aggregate class that [...] has no user-defined copy

@@ -673,6 +673,7 @@ private:
   bool HasInheritedPrototype : 1;
   bool HasWrittenPrototype : 1;
   bool IsDeleted : 1;
+  bool IsTrivial : 1; // sunk from CXXMethodDecl
 
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
@@ -712,8 +713,8 @@ protected:
       ParamInfo(0), Body(),
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false), 
-      HasWrittenPrototype(true), IsDeleted(false), TypeSpecStartLoc(TSSL),
-      EndRangeLoc(L), TemplateOrSpecialization() {}
+      HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
+      TypeSpecStartLoc(TSSL), EndRangeLoc(L), TemplateOrSpecialization() {}
 
   virtual ~FunctionDecl() {}
   virtual void Destroy(ASTContext& C);
@@ -781,6 +782,13 @@ public:
   /// abstract.
   bool isPure() const { return IsPure; }
   void setPure(bool P = true) { IsPure = P; }
+
+  /// Whether this function is "trivial" in some specialized C++ senses.
+  /// Can only be true for default constructors, copy constructors,
+  /// copy assignment operators, and destructors.  Not meaningful until
+  /// the class has been fully built by Sema.
+  bool isTrivial() const { return IsTrivial; }
+  void setTrivial(bool IT) { IsTrivial = IT; }
 
   /// \brief Whether this function has a prototype, either because one
   /// was explicitly written or because it was "inherited" by merging
