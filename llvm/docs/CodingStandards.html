@@ -41,8 +41,10 @@
           <li><a href="#hl_dontinclude">#include as Little as Possible</a></li>
           <li><a href="#hl_privateheaders">Keep "internal" Headers
               Private</a></li>
-          <li><a href="#ll_iostream"><tt>#include &lt;iostream&gt;</tt> is
-              <em>forbidden</em></a></li>
+          <li><a href="#hl_earlyexit">Use Early Exits and 'continue' to Simplify
+              Code</a></li>
+          <li><a href="#hl_predicateloops">Turn Predicate Loops into Predicate
+              Functions</a></li>
         </ol></li>
       <li><a href="#micro">The Low Level Issues</a>
         <ol>
@@ -52,9 +54,20 @@
               classes in headers</a></li>
           <li><a href="#ll_end">Don't evaluate end() every time through a
               loop</a></li>
-          <li><a href="#ll_preincrement">Prefer Preincrement</a></li>
+          <li><a href="#ll_iostream"><tt>#include &lt;iostream&gt;</tt> is
+              <em>forbidden</em></a></li>
           <li><a href="#ll_avoidendl">Avoid <tt>std::endl</tt></a></li>
         </ol></li>
+        
+      <li><a href="#nano">Microscopic Details</a>
+        <ol>
+          <li><a href="#micro_spaceparen">Spaces Before Parentheses</a></li>
+          <li><a href="#micro_preincrement">Prefer Preincrement</a></li>
+          <li><a href="#micro_namespaceindent">Namespace Indentation</a></li>
+          <li><a href="#micro_anonns">Anonymous Namespaces</a></li>
+        </ol></li>
+
+        
     </ol></li>
   <li><a href="#seealso">See Also</a></li>
 </ol>
@@ -419,6 +432,7 @@ declare the symbol.  This can lead to problems at link time.</p>
 <div class="doc_subsection">
   <a name="macro">The High Level Issues</a>
 </div>
+<!-- ======================================================================= -->
 
 
 <!-- _______________________________________________________________________ -->
@@ -504,34 +518,174 @@ class itself... just make them private (or protected), and all is well.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ll_iostream"><tt>#include &lt;iostream&gt;</tt> is forbidden</a>
+  <a name="hl_earlyexit">Use Early Exits and 'continue' to Simplify Code</a>
 </div>
 
 <div class="doc_text">
 
-<p>The use of <tt>#include &lt;iostream&gt;</tt> in library files is
-hereby <b><em>forbidden</em></b>. The primary reason for doing this is to
-support clients using LLVM libraries as part of larger systems. In particular,
-we statically link LLVM into some dynamic libraries. Even if LLVM isn't used,
-the static c'tors are run whenever an application start up that uses the dynamic
-library. There are two problems with this:</p>
+<p>When reading code, keep in mind how much state and how many previous
+decisions have to be remembered by the reader to understand a block of code.
+Aim to reduce indentation where possible when it doesn't make it more difficult
+to understand the code.  One great way to do this is by making use of early
+exits and the 'continue' keyword in long loops.  As an example of using an early
+exit from a function, consider this "bad" code:</p>
 
-<ol>
-  <li>The time to run the static c'tors impacts startup time of
-      applications&mdash;a critical time for GUI apps.</li>
-  <li>The static c'tors cause the app to pull many extra pages of memory off the
-      disk: both the code for the static c'tors in each <tt>.o</tt> file and the
-      small amount of data that gets touched. In addition, touched/dirty pages
-      put more pressure on the VM system on low-memory machines.</li>
-</ol>
+<div class="doc_code">
+<pre>
+Value *DoSomething(Instruction *I) {
+  if (!isa&lt;TerminatorInst&gt;(I) &amp;&amp;
+      I-&gt;hasOneUse() &amp;&amp; SomeOtherThing(I)) {
+    ... some long code ....
+  }
+  
+  return 0;
+}
+</pre>
+</div>
 
-<p>Note that using the other stream headers (<tt>&lt;sstream&gt;</tt> for
-example) is allowed normally, it is just <tt>&lt;iostream&gt;</tt> that is
-causing problems.</p>
+<p>This code has several problems if the body of the 'if' is large.  When you're
+looking at the top of the function, it isn't immediately clear that this
+<em>only</em> does interesting things with non-terminator instructions, and only
+applies to things with the other predicates.  Second, it is relatively difficult
+to describe (in comments) why these predicates are important because the if
+statement makes it difficult to lay out the comments.  Third, when you're deep
+within the body of the code, it is indented an extra level.   Finally, when
+reading the top of the function, it isn't clear what the result is if the
+predicate isn't true, you have to read to the end of the function to know that
+it returns null.</p>
 
-<p>The preferred replacement for stream functionality is the
-<tt>llvm::raw_ostream</tt> class (for writing to output streams of various
-sorts) and the <tt>llvm::MemoryBuffer</tt> API (for reading in files).</p>
+<p>It is much preferred to format the code like this:</p>
+
+<div class="doc_code">
+<pre>
+Value *DoSomething(Instruction *I) {
+  // Terminators never need 'something' done to them because, ... 
+  if (isa&lt;TerminatorInst&gt;(I))
+    return 0;
+
+  // We conservatively avoid transforming instructions with multiple uses
+  // because goats like cheese.
+  if (!I-&gt;hasOneUse())
+    return 0;
+
+  // This is really just here for example.
+  if (!SomeOtherThing(I))
+    return 0;
+    
+  ... some long code ....
+}
+</pre>
+</div>
+
+<p>This fixes these problems.  A similar problem frequently happens in for
+loops.  A silly example is something like this:</p>
+
+<div class="doc_code">
+<pre>
+  for (BasicBlock::iterator II = BB-&gt;begin(), E = BB-&gt;end(); II != E; ++II) {
+    if (BinaryOperator *BO = dyn_cast&lt;BinaryOperator&gt;(II)) {
+      Value *LHS = BO-&gt;getOperand(0);
+      Value *RHS = BO-&gt;getOperand(1);
+      if (LHS != RHS) {
+        ...
+      }
+    }
+  }
+</pre>
+</div>
+
+<p>When you have very very small loops, this sort of structure is fine, but if
+it exceeds more than 10-15 lines, it becomes difficult for people to read and
+understand at a glance.
+The problem with this sort of code is that it gets very nested very quickly,
+meaning that the reader of the code has to keep a lot of context in their brain
+to remember what is going immediately on in the loop, because they don't know
+if/when the if conditions will have elses etc.  It is strongly preferred to
+structure the loop like this:</p>
+
+<div class="doc_code">
+<pre>
+  for (BasicBlock::iterator II = BB-&gt;begin(), E = BB-&gt;end(); II != E; ++II) {
+    BinaryOperator *BO = dyn_cast&lt;BinaryOperator&gt;(II);
+    if (!BO) continue;
+    
+    Value *LHS = BO-&gt;getOperand(0);
+    Value *RHS = BO-&gt;getOperand(1);
+    if (LHS == RHS) continue;
+  }
+</pre>
+</div>
+
+<p>This has all the benefits of using early exits from functions: it reduces
+nesting of the loop, it makes it easier to describe why the conditions are true,
+and it makes it obvious to the reader that there is no "else" coming up that
+they have to push context into their brain for.  If a loop is large, this can
+be a big understandability win.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="hl_predicateloops">Turn Predicate Loops into Predicate Functions</a>
+</div>
+
+<div class="doc_text">
+
+<p>It is very common to write inline functions that just compute a boolean
+   value.  There are a number of ways that people commonly write these, but an
+   example of this sort of thing is:</p>
+   
+<div class="doc_code">
+<pre>
+  <b>bool FoundFoo = false;</b>
+  for (unsigned i = 0, e = BarList.size(); i != e; ++i)
+    if (BarList[i]-&gt;isFoo()) {
+      <b>FoundFoo = true;</b>
+      break;
+    }
+    
+  <b>if (FoundFoo) {</b>
+    ...
+  }
+</pre>
+</div>
+
+<p>This sort of code is awkward to write, and is almost always a bad sign.
+Instead of this sort of loop, we strongly prefer to use a predicate function
+(which may be <a href="#micro_anonns">static</a>) that uses
+<a href="#hl_earlyexit">early exits</a> to compute the predicate.  Code like
+this would be preferred:
+</p>
+
+
+<div class="doc_code">
+<pre>
+/// ListContainsFoo - Return true if the specified list has an element that is
+/// a foo.
+static bool ListContainsFoo(const std::vector&lt;Bar*&gt; &amp;List) {
+  for (unsigned i = 0, e = List.size(); i != e; ++i)
+    if (List[i]-&gt;isFoo())
+      return true;
+  return false;
+}
+...
+
+  <b>if (ListContainsFoo(BarList)) {</b>
+    ...
+  }
+</pre>
+</div>
+
+<p>There are many reasons for doing this: it reduces indentation and factors out
+code which can often be shared by other code that checks for the same predicate.
+More importantly, it <em>forces you to pick a name</em> for the function, and
+forces you to write a comment for it.  In this silly example, this doesn't add
+much value.  However, if the condition is complex, this can make it a lot easier
+for the reader to understand the code that queries for this predicate.  Instead
+of being faced with the in-line details of we check to see if the BarList
+contains a foo, we can trust the function name and continue reading with better
+locality.</p>
 
 </div>
 
@@ -540,6 +694,7 @@ sorts) and the <tt>llvm::MemoryBuffer</tt> API (for reading in files).</p>
 <div class="doc_subsection">
   <a name="micro">The Low Level Issues</a>
 </div>
+<!-- ======================================================================= -->
 
 
 <!-- _______________________________________________________________________ -->
@@ -726,26 +881,39 @@ prefer it.</p>
 
 </div>
 
-
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="ll_preincrement">Prefer Preincrement</a>
+  <a name="ll_iostream"><tt>#include &lt;iostream&gt;</tt> is forbidden</a>
 </div>
 
 <div class="doc_text">
 
-<p>Hard fast rule: Preincrement (<tt>++X</tt>) may be no slower than
-postincrement (<tt>X++</tt>) and could very well be a lot faster than it.  Use
-preincrementation whenever possible.</p>
+<p>The use of <tt>#include &lt;iostream&gt;</tt> in library files is
+hereby <b><em>forbidden</em></b>. The primary reason for doing this is to
+support clients using LLVM libraries as part of larger systems. In particular,
+we statically link LLVM into some dynamic libraries. Even if LLVM isn't used,
+the static c'tors are run whenever an application start up that uses the dynamic
+library. There are two problems with this:</p>
 
-<p>The semantics of postincrement include making a copy of the value being
-incremented, returning it, and then preincrementing the "work value".  For
-primitive types, this isn't a big deal... but for iterators, it can be a huge
-issue (for example, some iterators contains stack and set objects in them...
-copying an iterator could invoke the copy ctor's of these as well).  In general,
-get in the habit of always using preincrement, and you won't have a problem.</p>
+<ol>
+  <li>The time to run the static c'tors impacts startup time of
+      applications&mdash;a critical time for GUI apps.</li>
+  <li>The static c'tors cause the app to pull many extra pages of memory off the
+      disk: both the code for the static c'tors in each <tt>.o</tt> file and the
+      small amount of data that gets touched. In addition, touched/dirty pages
+      put more pressure on the VM system on low-memory machines.</li>
+</ol>
+
+<p>Note that using the other stream headers (<tt>&lt;sstream&gt;</tt> for
+example) is allowed normally, it is just <tt>&lt;iostream&gt;</tt> that is
+causing problems.</p>
+
+<p>The preferred replacement for stream functionality is the
+<tt>llvm::raw_ostream</tt> class (for writing to output streams of various
+sorts) and the <tt>llvm::MemoryBuffer</tt> API (for reading in files).</p>
 
 </div>
+
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
@@ -769,6 +937,261 @@ std::cout &lt;&lt; '\n' &lt;&lt; std::flush;
 it's better to use a literal <tt>'\n'</tt>.</p>
 
 </div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="nano">Microscopic Details</a>
+</div>
+<!-- ======================================================================= -->
+
+<p>This section describes preferred low-level formatting guidelines along with
+reasoning on why we prefer them.</p>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="micro_spaceparen">Spaces Before Parentheses</a>
+</div>
+
+<div class="doc_text">
+
+<p>We prefer to put a space before a parentheses only in control flow
+statements, but not in normal function call expressions and function-like
+macros.  For example, this is good:</p>
+
+<div class="doc_code">
+<pre>
+  <b>if (</b>x) ...
+  <b>for (</b>i = 0; i != 100; ++i) ...
+  <b>while (</b>llvm_rocks) ...
+
+  <b>somefunc(</b>42);
+  <b><a href="#ll_assert">assert</a>(</b>3 != 4 &amp;&amp; "laws of math are failing me");
+  
+  a = <b>foo(</b>42, 92) + <b>bar(</b>x);
+  </pre>
+</div>
+
+<p>... and this is bad:</p>
+
+<div class="doc_code">
+<pre>
+  <b>if(</b>x) ...
+  <b>for(</b>i = 0; i != 100; ++i) ...
+  <b>while(</b>llvm_rocks) ...
+
+  <b>somefunc (</b>42);
+  <b><a href="#ll_assert">assert</a> (</b>3 != 4 &amp;&amp; "laws of math are failing me");
+  
+  a = <b>foo (</b>42, 92) + <b>bar (</b>x);
+</pre>
+</div>
+
+<p>The reason for doing this is not completely arbitrary.  This style makes
+   control flow operators stand out more, and makes expressions flow better. The
+   function call operator binds very tightly as a postfix operator.  Putting
+   a space after a function name (as in the last example) makes it appear that
+   the code might bind the arguments of the left-hand-side of a binary operator
+   with the argument list of a function and the name of the right side.  More
+   specifically, it is easy to misread the "a" example as:</p>
+   
+<div class="doc_code">
+<pre>
+  a = foo <b>(</b>(42, 92) + bar<b>)</b> (x);
+</pre>
+</div>
+
+<p>... when skimming through the code.  By avoiding a space in a function, we
+avoid this misinterpretation.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="micro_preincrement">Prefer Preincrement</a>
+</div>
+
+<div class="doc_text">
+
+<p>Hard fast rule: Preincrement (<tt>++X</tt>) may be no slower than
+postincrement (<tt>X++</tt>) and could very well be a lot faster than it.  Use
+preincrementation whenever possible.</p>
+
+<p>The semantics of postincrement include making a copy of the value being
+incremented, returning it, and then preincrementing the "work value".  For
+primitive types, this isn't a big deal... but for iterators, it can be a huge
+issue (for example, some iterators contains stack and set objects in them...
+copying an iterator could invoke the copy ctor's of these as well).  In general,
+get in the habit of always using preincrement, and you won't have a problem.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="micro_namespaceindent">Namespace Indentation</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+In general, we strive to reduce indentation where ever possible.  This is useful
+because we want code to <a href="#scf_codewidth">fit into 80 columns</a> without
+wrapping horribly, but also because it makes it easier to understand the code.
+Namespaces are a funny thing: they are often large, and we often desire to put
+lots of stuff into them (so they can be large).  Other times they are tiny,
+because they just hold an enum or something similar.  In order to balance this,
+we use different approaches for small versus large namespaces.  
+</p>
+
+<p>
+If a namespace definition is small and <em>easily</em> fits on a screen (say,
+less than 35 lines of code), then you should indent its body.  Here's an
+example:
+</p>
+
+<div class="doc_code">
+<pre>
+/// SomeCrazyThing - This namespace contains flags for ...
+namespace SomeCrazyThing {
+  enum foo {
+    /// X - This is the X flag, which is ...
+    X = 1, 
+    
+    /// Y - This is the Y flag, which is ...
+    Y = 2,
+    
+    /// Z - This is the Z flag, which is ...
+    Z = 4,
+    
+    /// ALL_FLAGS - This is the union of all flags.
+    ALL_FLAGS = 7
+  };
+}
+</pre>
+</div>
+
+<p>Since the body is small, indenting adds value because it makes it very clear
+where the namespace starts and ends, and it is easy to take the whole thing in
+in one "gulp" when reading the code.  If the blob of code in the namespace is
+larger (as it typically is in a header in the llvm or clang namespaces), do not
+indent the code, and add a comment indicating what namespace is being closed.
+For example:</p>
+
+<div class="doc_code">
+<pre>
+namespace llvm {
+namespace knowledge {
+
+/// Grokable - This class represents things that Smith can have an intimate
+/// understanding of and contains the data associated with it.
+class Grokable {
+...
+public:
+  explicit Grokable() { ... }
+  virtual ~Grokable() = 0;
+  
+  ...
+
+};
+
+} // end namespace knowledge
+} // end namespace llvm
+</pre>
+</div>
+
+<p>Because the class is large, we don't expect that the reader can easily
+understand the entire concept in a glance, and the end of the file (where the
+namespaces end) may be a long ways away from the place they open.  As such,
+indenting the contents of the namespace doesn't add any value, and detracts from
+the readability of the class.  In these cases it is best to <em>not</em> indent
+the contents of the namespace.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="micro_anonns">Anonymous Namespaces</a>
+</div>
+
+<div class="doc_text">
+
+<p>A common topic after talking about namespaces is anonymous namespaces.
+Anonymous namespaces are a great language feature that tells the C++ compiler
+that the contents of the namespace are only visible within the current
+translation unit, allowing more aggressive optimization and eliminating the
+possibility of symbol name collisions.  Anonymous namespaces are to C++ as 
+"static" is to C functions and global variables.  While "static" is available
+in C++, anonymous namespaces are more general: they can make entire classes
+private to a file.</p>
+
+<p>The problem with anonymous namespaces is that they naturally want to
+encourage indentation of their body, and they reduce locality of reference: if
+you see a random function definition in a C++ file, it is easy to see if it is
+marked static, but seeing if it is in an anonymous namespace requires scanning
+a big chunk of the file.</p>
+
+<p>Because of this, we have a simple guideline: make anonymous namespaces as
+small as possible, and only use them for class declarations.  For example, this
+is good:</p>
+
+<div class="doc_code">
+<pre>
+<b>namespace {</b>
+  class StringSort {
+  ...
+  public:
+    StringSort(...)
+    bool operator&lt;(const char *RHS) const;
+  };
+<b>} // end anonymous namespace</b>
+
+static void Helper() { 
+  ... 
+}
+
+bool StringSort::operator&lt;(const char *RHS) const {
+  ...
+}
+
+</pre>
+</div>
+
+<p>This is bad:</p>
+
+
+<div class="doc_code">
+<pre>
+<b>namespace {</b>
+class StringSort {
+...
+public:
+  StringSort(...)
+  bool operator&lt;(const char *RHS) const;
+};
+
+void Helper() { 
+  ... 
+}
+
+bool StringSort::operator&lt;(const char *RHS) const {
+  ...
+}
+
+<b>} // end anonymous namespace</b>
+
+</pre>
+</div>
+
+
+<p>This is bad specifically because if you're looking at "Helper" in the middle
+of a large C++ file, that you have no immediate way to tell if it is local to
+the file.  When it is marked static explicitly, this is immediately obvious.
+Also, there is no reason to enclose the definition of "operator&lt;" in the
+namespace since it was declared there.
+</p>
+
+</div>
+
 
 
 <!-- *********************************************************************** -->
