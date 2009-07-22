@@ -206,6 +206,18 @@ unsigned DIArray::getNumElements() const {
   return C->getNumOperands();
 }
 
+/// replaceAllUsesWith - Replace all uses of debug info referenced by
+/// this descriptor. After this completes, the current debug info value
+/// is erased.
+void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
+  if (isNull())
+    return;
+
+  assert (D.isNull() && "Can not replace with null");
+  getGV()->replaceAllUsesWith(D.getGV());
+  getGV()->eraseFromParent();
+}
+
 /// Verify - Verify that a compile unit is well formed.
 bool DICompileUnit::Verify() const {
   if (isNull()) 
