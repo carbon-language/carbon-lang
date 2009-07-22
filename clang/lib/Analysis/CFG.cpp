@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/PrettyPrinter.h"
@@ -26,18 +27,6 @@
 using namespace clang;
 
 namespace {
-
-// SaveAndRestore - A utility class that uses RIIA to save and restore
-//  the value of a variable.
-template<typename T>
-struct VISIBILITY_HIDDEN SaveAndRestore {
-  SaveAndRestore(T& x) : X(x), old_value(x) {}
-  ~SaveAndRestore() { X = old_value; }
-  T get() { return old_value; }
-
-  T& X;
-  T old_value;
-};
 
 static SourceLocation GetEndLoc(Decl* D) {
   if (VarDecl* VD = dyn_cast<VarDecl>(D))
