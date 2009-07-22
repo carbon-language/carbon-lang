@@ -155,6 +155,9 @@ static bool isLiveInButUnusedBefore(unsigned Reg, MachineInstr *MI,
   SmallPtrSet<MachineInstr*, 4> UsesInMBB;
   for (MachineRegisterInfo::use_iterator UI = MRI->use_begin(Reg),
          UE = MRI->use_end(); UI != UE; ++UI) {
+    MachineOperand &UseMO = UI.getOperand();
+    if (UseMO.isReg() && UseMO.isUndef())
+      continue;
     MachineInstr *UseMI = &*UI;
     if (UseMI->getParent() == MBB)
       UsesInMBB.insert(UseMI);
