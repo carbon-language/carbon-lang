@@ -45,87 +45,46 @@ public:
               MaxPostStmtKind = PostLValueKind };
 
 private:
-  enum { TwoPointers = 0x1, Custom = 0x2, Mask = 0x3 };
-  
-  std::pair<uintptr_t,uintptr_t> Data;
+  std::pair<const void *, const void *> Data;
+  Kind K;
   const void *Tag;
   
 protected:
   ProgramPoint(const void* P, Kind k, const void *tag = 0)
-    : Data(reinterpret_cast<uintptr_t>(P),
-           (uintptr_t) k), Tag(tag) {}
+    : Data(P, NULL), K(k), Tag(tag) {}
     
-  ProgramPoint(const void* P1, const void* P2, const void *tag = 0)
-    : Data(reinterpret_cast<uintptr_t>(P1) | TwoPointers,
-           reinterpret_cast<uintptr_t>(P2)), Tag(tag) {}
-
-  ProgramPoint(const void* P1, const void* P2, bool, const void *tag = 0)
-    : Data(reinterpret_cast<uintptr_t>(P1) | Custom,
-           reinterpret_cast<uintptr_t>(P2)), Tag(tag) {}
+  ProgramPoint(const void* P1, const void* P2, Kind k, const void *tag = 0)
+    : Data(P1, P2), K(k), Tag(tag) {}
 
 protected:
-  void* getData1NoMask() const {
-    Kind k = getKind(); k = k;
-    assert(k == BlockEntranceKind || k == BlockExitKind);
-    return reinterpret_cast<void*>(Data.first);
-  }
-  
-  void* getData1() const {
-    Kind k = getKind(); k = k;
-    assert(k == BlockEdgeKind ||(k >= MinPostStmtKind && k <= MaxPostStmtKind));
-    return reinterpret_cast<void*>(Data.first & ~Mask);
-  }
-
-  void* getData2() const { 
-    Kind k = getKind(); k = k;
-    assert(k == BlockEdgeKind || k == PostStmtCustomKind);
-    return reinterpret_cast<void*>(Data.second);
-  }
-  
+  const void* getData1() const { return Data.first; }
+  const void* getData2() const { return Data.second; }
   const void *getTag() const { return Tag; }
     
 public:    
-  Kind getKind() const {
-    switch (Data.first & Mask) {
-      case TwoPointers: return BlockEdgeKind;
-      case Custom: return PostStmtCustomKind;
-      default: return (Kind) Data.second;
-    }
-  }
+  Kind getKind() const { return K; }
 
   // For use with DenseMap.  This hash is probably slow.
   unsigned getHashValue() const {
     llvm::FoldingSetNodeID ID;
-    ID.AddPointer(reinterpret_cast<void*>(Data.first));
-    ID.AddPointer(reinterpret_cast<void*>(Data.second));
-    ID.AddPointer(Tag);
+    Profile(ID);
     return ID.ComputeHash();
   }
   
   static bool classof(const ProgramPoint*) { return true; }
 
   bool operator==(const ProgramPoint & RHS) const {
-    return Data == RHS.Data && Tag == RHS.Tag;
+    return K == RHS.K && Data == RHS.Data && Tag == RHS.Tag;
   }
 
   bool operator!=(const ProgramPoint& RHS) const {
-    return Data != RHS.Data || Tag != RHS.Tag;
+    return K != RHS.K || Data != RHS.Data || Tag != RHS.Tag;
   }
     
-  bool operator<(const ProgramPoint& RHS) const {
-    return Data < RHS.Data && Tag < RHS.Tag;
-  }
-  
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    ID.AddPointer(reinterpret_cast<void*>(Data.first));
-    if (getKind() != PostStmtCustomKind)
-      ID.AddPointer(reinterpret_cast<void*>(Data.second));
-    else {
-      const std::pair<const void*, const void*> *P = 
-        reinterpret_cast<std::pair<const void*, const void*>*>(Data.second);
-      ID.AddPointer(P->first);
-      ID.AddPointer(P->second);
-    }
+    ID.AddInteger((unsigned) K);
+    ID.AddPointer(Data.first);
+    ID.AddPointer(Data.second);
     ID.AddPointer(Tag);
   }
 };
@@ -136,11 +95,11 @@ public:
     : ProgramPoint(B, BlockEntranceKind, tag) {}
     
   CFGBlock* getBlock() const {
-    return reinterpret_cast<CFGBlock*>(getData1NoMask());
+    return const_cast<CFGBlock*>(reinterpret_cast<const CFGBlock*>(getData1()));
   }
   
   Stmt* getFirstStmt() const {
-    CFGBlock* B = getBlock();
+    const CFGBlock* B = getBlock();
     return B->empty() ? NULL : B->front();
   }
 
@@ -154,11 +113,11 @@ public:
   BlockExit(const CFGBlock* B) : ProgramPoint(B, BlockExitKind) {}
   
   CFGBlock* getBlock() const {
-    return reinterpret_cast<CFGBlock*>(getData1NoMask());
+    return const_cast<CFGBlock*>(reinterpret_cast<const CFGBlock*>(getData1()));
   }
 
   Stmt* getLastStmt() const {
-    CFGBlock* B = getBlock();
+    const CFGBlock* B = getBlock();
     return B->empty() ? NULL : B->back();
   }
   
@@ -176,16 +135,17 @@ protected:
   PostStmt(const Stmt* S, Kind k,const void *tag = 0)
     : ProgramPoint(S, k, tag) {}
 
-  PostStmt(const Stmt* S, const void* data, bool, const void *tag =0)
-    : ProgramPoint(S, data, true, tag) {}
+  PostStmt(const Stmt* S, const void* data, Kind k, const void *tag =0)
+    : ProgramPoint(S, data, k, tag) {}
   
 public:
   PostStmt(const Stmt* S, const void *tag = 0)
     : ProgramPoint(S, PostStmtKind, tag) {}
 
+      
   Stmt* getStmt() const { return (Stmt*) getData1(); }
   
-  template<typename T>
+  template <typename T>
   T* getStmtAs() const { return llvm::dyn_cast<T>(getStmt()); }
 
   static bool classof(const ProgramPoint* Location) {
@@ -208,12 +168,11 @@ class PostStmtCustom : public PostStmt {
 public:
   PostStmtCustom(const Stmt* S,
                  const std::pair<const void*, const void*>* TaggedData)
-    : PostStmt(S, TaggedData, true) {
-    assert(getKind() == PostStmtCustomKind);
-  }
+    : PostStmt(S, TaggedData, PostStmtCustomKind) {}
 
   const std::pair<const void*, const void*>& getTaggedPair() const {
-    return *reinterpret_cast<std::pair<const void*, const void*>*>(getData2());
+    return
+      *reinterpret_cast<const std::pair<const void*, const void*>*>(getData2());
   }
   
   const void* getTag() const { return getTaggedPair().first; }
@@ -298,14 +257,14 @@ public:
 class BlockEdge : public ProgramPoint {
 public:
   BlockEdge(const CFGBlock* B1, const CFGBlock* B2)
-    : ProgramPoint(B1, B2) {}
+    : ProgramPoint(B1, B2, BlockEdgeKind) {}
     
   CFGBlock* getSrc() const {
-    return static_cast<CFGBlock*>(getData1());
+    return const_cast<CFGBlock*>(static_cast<const CFGBlock*>(getData1()));
   }
     
   CFGBlock* getDst() const {
-    return static_cast<CFGBlock*>(getData2());
+    return const_cast<CFGBlock*>(static_cast<const CFGBlock*>(getData2()));
   }
   
   static bool classof(const ProgramPoint* Location) {
