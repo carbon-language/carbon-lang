@@ -95,6 +95,11 @@ typedef u_int64_t uint64_t;
 #include <stdlib.h>
 #include <stddef.h>
 #include <sys/types.h>
+#ifdef __cplusplus
+#include <cmath>
+#else
+#include <math.h>
+#endif
 typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 typedef signed int int32_t;
