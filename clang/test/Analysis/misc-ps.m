@@ -459,3 +459,14 @@ void PR4594() {
   char **foo = buf;
   *foo = "test";
 }
+
+// Test invalidation logic where an integer is casted to an array with a
+// different sign and then invalidated.
+void test_invalidate_cast_int() {
+  void test_invalidate_cast_int_aux(unsigned *i);
+  signed i;  
+  test_invalidate_cast_int_aux((unsigned*) &i);
+  if (i < 0)
+    return;
+}
+

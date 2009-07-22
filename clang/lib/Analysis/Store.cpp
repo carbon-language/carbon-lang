@@ -258,6 +258,13 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
   const TypedRegion *TR = cast<TypedRegion>(R);
   QualType T = TR->getValueType(Ctx);
 
+  // FIXME: The code causes a crash when using RegionStore on the test case
+  // 'test_invalidate_cast_int' (misc-ps.m).  Consider removing it
+  // permanently.  Region casts are probably not too strict to handle
+  // the transient interpretation of memory.  Instead we can use the QualType
+  // passed to 'Retrieve' and friends to determine the most current
+  // interpretation of memory when it is actually used.
+#if 0
   // If the region is cast to another type, use that type.  
   if (const QualType *CastTy = getCastType(state, R)) {
     assert(!(*CastTy)->isObjCObjectPointerType());
@@ -270,6 +277,7 @@ const GRState *StoreManager::InvalidateRegion(const GRState *state,
     if (!(Loc::IsLocType(T) && !Loc::IsLocType(NewT)))
       T = NewT;
   }
+#endif
   
   if (Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType())) {
     SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);
