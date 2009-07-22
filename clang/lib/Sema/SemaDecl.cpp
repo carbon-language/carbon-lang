@@ -1854,7 +1854,7 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
       = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
                                                 D.getCXXScopeSpec(),
-                        (TemplateParameterList**)TemplateParamLists.release(),
+                        (TemplateParameterList**)TemplateParamLists.get(),
                                                  TemplateParamLists.size())) {
     if (TemplateParams->size() > 0) {
       // There is no such thing as a variable template.
@@ -2229,7 +2229,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
         = MatchTemplateParametersToScopeSpecifier(
                                   D.getDeclSpec().getSourceRange().getBegin(),
                                   D.getCXXScopeSpec(),
-                        (TemplateParameterList**)TemplateParamLists.release(),
+                           (TemplateParameterList**)TemplateParamLists.get(),
                                                   TemplateParamLists.size())) {
     if (TemplateParams->size() > 0) {
       // This is a function template
@@ -2241,6 +2241,9 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else {
       // FIXME: Handle function template specializations
     }
+          
+    // FIXME: Free this memory properly.
+    TemplateParamLists.release();
   }        
   
   // C++ [dcl.fct.spec]p5:
