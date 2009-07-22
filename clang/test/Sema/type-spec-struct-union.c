@@ -57,7 +57,7 @@ struct bar_baz {
   } mode;
   int             nowrap;
 };
-int 
+void
 wizbiz_quxPoof(z)
   z_foop       z;
 {

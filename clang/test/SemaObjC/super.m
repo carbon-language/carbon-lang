@@ -21,6 +21,7 @@
 
 + classMethod {
   [super cMethod]; // expected-warning{{method '+cMethod' not found (return type defaults to 'id')}}
+  return 0;
 }
 @end
 

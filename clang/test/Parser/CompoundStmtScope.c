@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-int foo() {
+void foo() {
   {
     typedef float X;
   }

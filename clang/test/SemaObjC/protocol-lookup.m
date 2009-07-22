@@ -44,6 +44,7 @@
 	[_foo release];
 	[_bar release];
 	[super dealloc];
+	return 0;
 }
 
 @end

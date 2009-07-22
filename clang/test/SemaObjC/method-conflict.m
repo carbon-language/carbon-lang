@@ -47,7 +47,9 @@ typedef NSUInteger XDSourceLanguage;
 
 + appendVisibility: (id <XDUMLNamedElement>) element withSpecification: (XDSCDisplaySpecification *) displaySpec to: (NSMutableAttributedString *) attributedString
 {
+  return 0;
 }
-+ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec { 
++ (NSUInteger) compartmentsForClassifier: (id <XDSCClassifier>) classifier withSpecification: (XDSCDisplaySpecification *) displaySpec {
+  return 0;
 }
 @end 

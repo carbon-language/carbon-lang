@@ -8,10 +8,10 @@ float test2241[2] = {
 
 
 // Testcase derived from PR2692
-static char *f (char * (*g) (char **, int), char **p, ...) {
-    char *s;
-    va_list v;                              // expected-error {{identifier}}
-    s = g (p, __builtin_va_arg(v, int));    // expected-error {{identifier}}
+static void f (char * (*g) (char **, int), char **p, ...) {
+  char *s;
+  va_list v;                              // expected-error {{identifier}}
+  s = g (p, __builtin_va_arg(v, int));    // expected-error {{identifier}}
 }
 
 
@@ -20,7 +20,7 @@ static char *f (char * (*g) (char **, int), char **p, ...) {
 
 
 // rdar://6094870
-int test(int a) {
+void test(int a) {
   struct { int i; } x;
   
   if (x.hello)   // expected-error {{no member named 'hello'}}
@@ -61,7 +61,7 @@ struct S A = {
 };
 
 // rdar://6248081
-int test6248081() { 
+void test6248081() { 
   [10]  // expected-error {{expected expression}}
 }
 

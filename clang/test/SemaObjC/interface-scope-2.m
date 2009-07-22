@@ -83,6 +83,7 @@ typedef struct __LoreStuffNode {} LoreStuffNode;
 - init {
   LoreStuffNode *node;
   node = &(_historyStuff[1]);
+  return 0;
 }
 @end
 
@@ -108,6 +109,7 @@ _nfttFlags;
   if (self != ((void *)0)) {
     (void)memset(&_nfttFlags, 0, sizeof(struct _OingoBoingoContraptionPeonFlags));
   }
+  return 0;
 }
 @end
 

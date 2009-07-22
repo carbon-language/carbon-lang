@@ -29,6 +29,7 @@ static NSMutableArray * recentCompletions = ((void *)0);
             [(id)item setPriority:[item priority] / [PBXCodeAssistant factorForRecentCompletion:[item name]]];
         }
     }
+    return 0;
 }
 @end
 

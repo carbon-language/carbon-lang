@@ -35,8 +35,8 @@ extern NSString *const NSWillBecomeMultiThreadedNotification;
 
 @implementation SenTestTool
 + (void) initialize {}
-+(SenTestTool *) sharedInstance {}
--(int) run {}
++(SenTestTool *) sharedInstance { return 0; }
+-(int) run { return 0; }
 +(int) run {
   return[[self sharedInstance] run];
 }
@@ -57,6 +57,7 @@ extern NSString *const NSWillBecomeMultiThreadedNotification;
 - whatever {
   id obj = [[XX alloc] init];
   [[obj class] classMethod];
+  return 0;
 }
 
 @end

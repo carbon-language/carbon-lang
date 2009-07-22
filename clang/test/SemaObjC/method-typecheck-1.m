@@ -8,8 +8,8 @@
 
 @implementation A 
 -(void) setMoo: (float) x {}	//  expected-warning {{conflicting parameter types in implementation of 'setMoo:': 'int' vs 'float'}}
-- (char) setMoo1: (int) x {}	//  expected-warning {{conflicting return type in implementation of 'setMoo1:': 'int' vs 'char'}}
-- (int) setOk : (int) x : (double) d {}
+- (char) setMoo1: (int) x { return 0; }	//  expected-warning {{conflicting return type in implementation of 'setMoo1:': 'int' vs 'char'}}
+- (int) setOk : (int) x : (double) d { return 0; }
 @end
 
 
@@ -20,7 +20,7 @@
 
 @implementation C 
 +(float) cMoo:   // expected-warning {{conflicting return type in implementation of 'cMoo:': 'void' vs 'float'}}
-   (float) x {}	//  expected-warning {{conflicting parameter types in implementation of 'cMoo:': 'int' vs 'float'}}
+   (float) x { return 0; }	//  expected-warning {{conflicting parameter types in implementation of 'cMoo:': 'int' vs 'float'}}
 @end
 
 
@@ -31,7 +31,6 @@
 
 @implementation A(CAT) 
 -(float) setCat:  // expected-warning {{conflicting return type in implementation of 'setCat:': 'void' vs 'float'}}
-(float) x {}	//  expected-warning {{conflicting parameter types in implementation of 'setCat:': 'int' vs 'float'}}
-+ (int) cCat: (int) x {}	//  expected-warning {{conflicting return type in implementation of 'cCat:': 'void' vs 'int'}}
+(float) x { return 0; }	//  expected-warning {{conflicting parameter types in implementation of 'setCat:': 'int' vs 'float'}}
++ (int) cCat: (int) x { return 0; }	//  expected-warning {{conflicting return type in implementation of 'cCat:': 'void' vs 'int'}}
 @end
-

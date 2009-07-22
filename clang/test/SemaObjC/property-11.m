@@ -29,6 +29,7 @@
   o = x.foo;
   [x setFoo:o];
   x.foo = o;
+  return 0;
 }
 
 @end

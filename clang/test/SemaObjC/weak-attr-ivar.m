@@ -45,8 +45,7 @@ typedef enum { Foo_HUH_NONE } FooHUHCode;
 }
 @property(copy) NSString *author;
 - (BOOL) isInteresting;
-@end  NSString *FooHUHCodeToString(FooHUHCode HUH) {
-}
+@end  NSString *FooHUHCodeToString(FooHUHCode HUH) { return 0; }
 @interface FooHUHCodeToStringTransformer: NSValueTransformer {
 }
 @end  @implementation FooPlaypenEntry  @synthesize author = _author;
@@ -62,12 +61,14 @@ typedef enum { Foo_HUH_NONE } FooHUHCode;
       }
     }
   }
+  return 0;
 }
 - (FooHUHCode) HUH {
   if (_HUH == Foo_HUH_NONE) {
     if (_mostInterestingChild)
       return [_mostInterestingChild HUH];
   }
+  return 0;
 }
 @end
 

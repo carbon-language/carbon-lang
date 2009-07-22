@@ -8,6 +8,7 @@ int foo() {
     return X;
   } else {
     do_something(X); // expected-warning{{'X' is always zero in this context}}
+    return 0;
   }
 }
 

@@ -70,6 +70,7 @@ extern NSString * const XCActiveSelectionLevel;
 
 - (NSTextStorage *)contents {
  [_contents setDelegate:self]; // expected-warning {{incompatible type sending 'SKTText *', expected 'id<NSTextStorageDelegate>'}}
+ return 0;
 }
 
 @end

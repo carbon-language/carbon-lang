@@ -55,10 +55,11 @@ NSSize minimumSize;
 
 @implementation OrganizerTabView
 @dynamic tabHeaderView, headerRect, minimumSize;
--(CGFloat) tabAreaThickness {}
+-(CGFloat) tabAreaThickness { return 0; }
 -(NSRectEdge) rectEdgeForTabs { 
   NSRect dummy, result = {};
   NSDivideRect(self.bounds, &result, &dummy, self.tabAreaThickness, self.rectEdgeForTabs);
+  return 0;
 }
 @end
 

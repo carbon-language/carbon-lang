@@ -35,14 +35,16 @@ typedef struct _IBInset {} IBInset;
 @interface NSView (NSView_IBViewProtocol) <IBViewProtocol>  - (NSRect)layoutRect; @end
 typedef enum { NSProTextFieldSquareBezel = 0, NSProTextFieldRoundedBezel = 1, NSProTextFieldDisplayBezel = 2 } MKModuleReusePolicy;
 @implementation NSProBox(IBAdditions)
--(NSString *)inspectorClassName {}
+-(NSString *)inspectorClassName { return 0; }
 -(IBInset)ibShadowInset {
   if ([self boxType] == NSBoxSeparator) {
     return [super ibShadowInset];
   }
+  while (1) {}
 }
 -(NSSize)minimumFrameSizeFromKnobPosition:(IBKnobPosition)knobPosition {
   if ([self boxType] != NSBoxSeparator)
     return [super minimumFrameSizeFromKnobPosition:knobPosition];
+  while (1) {}
 }
 @end

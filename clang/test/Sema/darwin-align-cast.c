@@ -19,5 +19,6 @@ ssize_t sendFileDescriptor(int fd, void *data, size_t nbytes, int sendfd) {
   union {
     char control[(((__darwin_size_t)((char *)(sizeof(struct cmsghdr)) + (sizeof(__darwin_size_t) - 1)) &~ (sizeof(__darwin_size_t) - 1)) + ((__darwin_size_t)((char *)(sizeof(int)) + (sizeof(__darwin_size_t) - 1)) &~ (sizeof(__darwin_size_t) - 1)))];
   } control_un;
+  return 0;
 }
 

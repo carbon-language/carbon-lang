@@ -17,6 +17,7 @@ typedef struct objc_class *Class;
 
 - instanceMethod {
   [[self class] classMethod];
+  return 0;
 }
 
 @end

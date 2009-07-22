@@ -34,7 +34,7 @@ void test7() {
 
 // atomics.
 
-unsigned char test9(short v) {
+void test9(short v) {
   unsigned i, old;
   
   old = __sync_fetch_and_add();  // expected-error {{too few arguments to function call}}

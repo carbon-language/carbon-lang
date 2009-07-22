@@ -10,5 +10,5 @@
 
 @implementation INTF
 - (id<P>)IMeth { return [(id<P>)self Meth: (id<P>)0]; }
-- (id<P>) Meth : (id<P>) Arg {}
+- (id<P>) Meth : (id<P>) Arg { return 0; }
 @end

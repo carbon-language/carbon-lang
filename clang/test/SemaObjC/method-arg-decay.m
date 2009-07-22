@@ -87,6 +87,7 @@ extern NSMutableArray *XCFindPossibleKeyModules(PBXModule *module, BOOL useExpos
       PBXModule *obj = [XCFindPossibleKeyModules(pModule, (BOOL)0) objectOfType:type     matchingFunction:comparator usingData:data];
     }
   }
+  return 0;
 }
 - (BOOL)buffer:(char *)buf containsAnyPrompts:(char *[])prompts
 {

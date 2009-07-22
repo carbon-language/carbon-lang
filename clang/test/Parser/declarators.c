@@ -18,7 +18,7 @@ int *A;
 
 struct str;
 
-int test2(int *P, int A) {
+void test2(int *P, int A) {
   struct str;
 
   // Hard case for array decl, not Array[*].
@@ -26,11 +26,11 @@ int test2(int *P, int A) {
 }
 
 typedef int atype;
-int test3(x, 
-          atype         /* expected-error {{unexpected type name 'atype': expected identifier}} */
-         ) int x, atype; {}
+void test3(x, 
+           atype         /* expected-error {{unexpected type name 'atype': expected identifier}} */
+          ) int x, atype; {}
 
-int test4(x, x) int x; {} /* expected-error {{redefinition of parameter 'x'}} */
+void test4(x, x) int x; {} /* expected-error {{redefinition of parameter 'x'}} */
 
 
 // PR3031

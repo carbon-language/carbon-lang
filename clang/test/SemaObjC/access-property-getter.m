@@ -31,5 +31,6 @@
 - (id)harvestPredictivelyProcessedOutputFiles
 {
      _outputStream.release;
+     return 0;
 }
 @end

@@ -9,7 +9,7 @@
 {
         return 0;
 }
-- (id) allKeys {}
+- (id) allKeys { return 0; }
 @end
 
 @interface MyList (BasicTest)

@@ -54,7 +54,7 @@ typedef void (*Func)(C); // expected-error {{parameter type 'C' is an abstract c
 void t6(Func);
 
 class F {
-    F a() { } // expected-error {{return type 'F' is an abstract class}}
+    F a() { while (1) {} } // expected-error {{return type 'F' is an abstract class}}
     
     class D {
         void f(F c); // expected-error {{parameter type 'F' is an abstract class}}

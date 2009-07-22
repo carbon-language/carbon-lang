@@ -8,9 +8,7 @@
 
 @implementation SSyncCEList
 
-- (id) list
-{
-}
+- (id) list { return 0; }
 @end
 
 @interface SSyncConflictList : SSyncCEList

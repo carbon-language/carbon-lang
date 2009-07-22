@@ -3,7 +3,7 @@
 @interface PBXTrackableTaskManager @end
 
 @implementation PBXTrackableTaskManager
-- (id) init {}
+- (id) init { return 0; }
 - (void) unregisterTask:(id) task {
   @synchronized (self) {
   id taskID = [task taskIdentifier];  // expected-warning {{method '-taskIdentifier' not found (return type defaults to 'id')}}

@@ -4,7 +4,7 @@ struct make1 {
   typedef T __attribute__((ext_vector_type(Length))) type; 
 };
 
-int test_make1() {
+void test_make1() {
   make1<int, 5>::type x;
   x.x = 4;
 }

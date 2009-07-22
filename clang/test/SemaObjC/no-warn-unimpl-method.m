@@ -38,5 +38,5 @@
         - (void)forwardInvocation:(NSInvocation *)anInvocation
         {
         }
-	- (id) init {}        
+	- (id) init { return 0; }
 @end

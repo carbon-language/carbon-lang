@@ -26,7 +26,7 @@
 @end
 
 @implementation B1
--foo {};
+-foo { return 0; };
 @end
 
 // Interface conforms to a protocol whose methods are provided by an
