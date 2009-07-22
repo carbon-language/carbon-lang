@@ -265,7 +265,7 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
           EnumerateOperandType(Elem);
       }
     }
-  } else if (const MDString *MDS = dyn_cast<MDString>(V))
+  } else if (dyn_cast<MDString>(V))
     EnumerateValue(V);
 }
 
