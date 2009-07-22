@@ -124,3 +124,17 @@ void test7(int4 *ap, int4 *bp, int c) {
   cmp = a == b;
   cmp = a != b;
 }
+
+void test8(float4 *ap, float4 *bp, int c) {
+  float4 a = *ap;
+  float4 b = *bp;
+
+  // Vector comparisons.
+  int4 cmp;
+  cmp = a < b;
+  cmp = a <= b;
+  cmp = a < b;
+  cmp = a >= b;
+  cmp = a == b;
+  cmp = a != b;
+}

@@ -1215,7 +1215,7 @@ Value *ScalarExprEmitter::EmitCompare(const BinaryOperator *E,unsigned UICmpOpc,
     Value *LHS = Visit(E->getLHS());
     Value *RHS = Visit(E->getRHS());
     
-    if (LHS->getType()->isFloatingPoint()) {
+    if (LHS->getType()->isFPOrFPVector()) {
       Result = Builder.CreateFCmp((llvm::CmpInst::Predicate)FCmpOpc,
                                   LHS, RHS, "cmp");
     } else if (LHSTy->isSignedIntegerType()) {
