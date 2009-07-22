@@ -361,7 +361,8 @@ DeduceTemplateArguments(ASTContext &Context,
     assert(TemplateTypeParm->getDepth() == 0 && "Can't deduce with depth > 0");
 	  
     unsigned Quals = Arg.getCVRQualifiers() & ~Param.getCVRQualifiers();
-    QualType DeducedType = Arg.getQualifiedType(Quals);
+    QualType DeducedType 
+      = Context.getCanonicalType(Arg.getQualifiedType(Quals));
 
     if (Deduced[Index].isNull())
       Deduced[Index] = TemplateArgument(SourceLocation(), DeducedType);

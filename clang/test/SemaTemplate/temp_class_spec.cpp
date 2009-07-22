@@ -136,6 +136,24 @@ struct get_array_size<T[N]> {
 int array_size0[get_array_size<int[12]>::value == 12? 1 : -1];
 
 template<typename T>
+struct remove_extent {
+  typedef T type;
+};
+
+template<typename T>
+struct remove_extent<T[]> { 
+  typedef T type;
+};
+
+template<typename T, unsigned N>
+struct remove_extent<T[N]> { 
+  typedef T type;
+};
+
+int remove_extent0[is_same<remove_extent<int[][5]>::type, int[5]>::value? 1 : -1];
+int remove_extent1[is_same<remove_extent<const int[][5]>::type, const int[5]>::value? 1 : -1];
+
+template<typename T>
 struct is_unary_function {
   static const bool value = false;
 };
