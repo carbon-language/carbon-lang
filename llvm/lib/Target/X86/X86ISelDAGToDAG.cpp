@@ -180,8 +180,9 @@ namespace {
     bool MatchSegmentBaseAddress(SDValue N, X86ISelAddressMode &AM);
     bool MatchLoad(SDValue N, X86ISelAddressMode &AM);
     bool MatchWrapper(SDValue N, X86ISelAddressMode &AM);
-    bool MatchAddress(SDValue N, X86ISelAddressMode &AM,
-                      unsigned Depth = 0);
+    bool MatchAddress(SDValue N, X86ISelAddressMode &AM);
+    bool MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
+                                 unsigned Depth);
     bool MatchAddressBase(SDValue N, X86ISelAddressMode &AM);
     bool SelectAddr(SDValue Op, SDValue N, SDValue &Base,
                     SDValue &Scale, SDValue &Index, SDValue &Disp,
@@ -788,8 +789,24 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
 /// MatchAddress - Add the specified node to the specified addressing mode,
 /// returning true if it cannot be done.  This just pattern matches for the
 /// addressing mode.
-bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
-                                   unsigned Depth) {
+bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM) {
+  if (MatchAddressRecursively(N, AM, 0))
+    return true;
+
+  // Post-processing: Convert lea(,%reg,2) to lea(%reg,%reg), which has
+  // a smaller encoding and avoids a scaled-index.
+  if (AM.Scale == 2 &&
+      AM.BaseType == X86ISelAddressMode::RegBase &&
+      AM.Base.Reg.getNode() == 0) {
+    AM.Base.Reg = AM.IndexReg;
+    AM.Scale = 1;
+  }
+
+  return false;
+}
+
+bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
+                                              unsigned Depth) {
   bool is64Bit = Subtarget->is64Bit();
   DebugLoc dl = N.getDebugLoc();
   DOUT << "MatchAddress: "; DEBUG(AM.dump());
@@ -859,6 +876,10 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
     if (ConstantSDNode
           *CN = dyn_cast<ConstantSDNode>(N.getNode()->getOperand(1))) {
       unsigned Val = CN->getZExtValue();
+      // Note that we handle x<<1 as (,x,2) rather than (x,x) here so
+      // that the base operand remains free for further matching. If
+      // the base doesn't end up getting used, a post-processing step
+      // in MatchAddress turns (,x,2) into (x,x), which is cheaper.
       if (Val == 1 || Val == 2 || Val == 3) {
         AM.Scale = 1 << Val;
         SDValue ShVal = N.getNode()->getOperand(0);
@@ -938,7 +959,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
 
     // Test if the LHS of the sub can be folded.
     X86ISelAddressMode Backup = AM;
-    if (MatchAddress(N.getNode()->getOperand(0), AM, Depth+1)) {
+    if (MatchAddressRecursively(N.getNode()->getOperand(0), AM, Depth+1)) {
       AM = Backup;
       break;
     }
@@ -1000,12 +1021,12 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
 
   case ISD::ADD: {
     X86ISelAddressMode Backup = AM;
-    if (!MatchAddress(N.getNode()->getOperand(0), AM, Depth+1) &&
-        !MatchAddress(N.getNode()->getOperand(1), AM, Depth+1))
+    if (!MatchAddressRecursively(N.getNode()->getOperand(0), AM, Depth+1) &&
+        !MatchAddressRecursively(N.getNode()->getOperand(1), AM, Depth+1))
       return false;
     AM = Backup;
-    if (!MatchAddress(N.getNode()->getOperand(1), AM, Depth+1) &&
-        !MatchAddress(N.getNode()->getOperand(0), AM, Depth+1))
+    if (!MatchAddressRecursively(N.getNode()->getOperand(1), AM, Depth+1) &&
+        !MatchAddressRecursively(N.getNode()->getOperand(0), AM, Depth+1))
       return false;
     AM = Backup;
 
@@ -1029,7 +1050,7 @@ bool X86DAGToDAGISel::MatchAddress(SDValue N, X86ISelAddressMode &AM,
       X86ISelAddressMode Backup = AM;
       uint64_t Offset = CN->getSExtValue();
       // Start with the LHS as an addr mode.
-      if (!MatchAddress(N.getOperand(0), AM, Depth+1) &&
+      if (!MatchAddressRecursively(N.getOperand(0), AM, Depth+1) &&
           // Address could not have picked a GV address for the displacement.
           AM.GV == NULL &&
           // On x86-64, the resultant disp must fit in 32-bits.
