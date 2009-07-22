@@ -2603,6 +2603,7 @@ Instruction</a> </div>
   &lt;result&gt; = add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;          <i>; yields {ty}:result</i>
   &lt;result&gt; = signed add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
   &lt;result&gt; = unsigned add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt; <i>; yields {ty}:result</i>
+  &lt;result&gt; = unsigned signed add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt; <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2623,7 +2624,7 @@ Instruction</a> </div>
    is appropriate for both signed and unsigned integers.</p>
 
 <p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
-   the behavior of the <tt>add</tt> is undefined if signed and/or unsigned
+   the result value of the <tt>add</tt> is undefined if signed and/or unsigned
    overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
@@ -2675,6 +2676,7 @@ Instruction</a> </div>
   &lt;result&gt; = sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;            <i>; yields {ty}:result</i>
   &lt;result&gt; = signed sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {ty}:result</i>
   &lt;result&gt; = unsigned sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = unsigned signed sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2701,7 +2703,7 @@ Instruction</a> </div>
    is appropriate for both signed and unsigned integers.</p>
 
 <p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
-   the behavior of the <tt>sub</tt> is undefined if signed and/or unsigned
+   the result value of the <tt>sub</tt> is undefined if signed and/or unsigned
    overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
@@ -2760,6 +2762,7 @@ Instruction</a> </div>
   &lt;result&gt; = mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;            <i>; yields {ty}:result</i>
   &lt;result&gt; = signed mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {ty}:result</i>
   &lt;result&gt; = unsigned mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = unsigned signed mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2785,7 +2788,7 @@ Instruction</a> </div>
    product.</p>
 
 <p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
-   the behavior of the <tt>mul</tt> is undefined if signed and/or unsigned
+   the result value of the <tt>mul</tt> is undefined if signed and/or unsigned
    overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
@@ -2890,8 +2893,9 @@ Instruction</a> </div>
    undefined behavior; this is a rare case, but can occur, for example, by doing
    a 32-bit division of -2147483648 by -1.</p>
 
-<p>If the <tt>exact</tt> keyword is present, the result of the <tt>sdiv</tt>
-   is undefined if the result would be rounded or if overflow occurs.</p>
+<p>If the <tt>exact</tt> keyword is present, the result value of the
+   <tt>sdiv</tt> is undefined if the result would be rounded or if overflow
+   would occur.</p>
 
 <h5>Example:</h5>
 <pre>
