@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s 
 
-void abort();
+void abort() __attribute__((noreturn));
 
 class Okay {
   int a_;
