@@ -84,7 +84,7 @@ def AddrModeT1_1  : AddrMode<7>;
 def AddrModeT1_2  : AddrMode<8>;
 def AddrModeT1_4  : AddrMode<9>;
 def AddrModeT1_s  : AddrMode<10>;
-def AddrModeT2_i12: AddrMode<12>;
+def AddrModeT2_i12: AddrMode<11>;
 def AddrModeT2_i8 : AddrMode<12>;
 def AddrModeT2_so : AddrMode<13>;
 def AddrModeT2_pc : AddrMode<14>;
