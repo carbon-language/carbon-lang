@@ -430,7 +430,10 @@ namespace {
     } else {
       name = getTypePrefix(val->getType());
     }
-    name += (val->hasName() ? val->getName() : utostr(uniqueNum++));
+    if (val->hasName())
+      name += val->getName();
+    else
+      name += utostr(uniqueNum++);
     sanitize(name);
     NameSet::iterator NI = UsedNames.find(name);
     if (NI != UsedNames.end())

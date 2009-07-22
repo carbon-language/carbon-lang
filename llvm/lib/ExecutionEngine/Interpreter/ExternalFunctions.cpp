@@ -103,8 +103,8 @@ static ExFunc lookupFunction(const Function *F) {
   if (FnPtr == 0)
     FnPtr = FuncNames["lle_X_"+F->getName()];
   if (FnPtr == 0)  // Try calling a generic function... if it exists...
-    FnPtr = (ExFunc)(intptr_t)sys::DynamicLibrary::SearchForAddressOfSymbol(
-            ("lle_X_"+F->getName()).c_str());
+    FnPtr = (ExFunc)(intptr_t)
+      sys::DynamicLibrary::SearchForAddressOfSymbol("lle_X_"+F->getName());
   if (FnPtr != 0)
     ExportedFunctions->insert(std::make_pair(F, FnPtr));  // Cache for later
   return FnPtr;

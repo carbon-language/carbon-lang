@@ -1924,7 +1924,7 @@ bool CWriter::doInitialization(Module &M) {
         Out << " __HIDDEN__";
       
       if (I->hasName() && I->getName()[0] == 1)
-        Out << " LLVM_ASM(\"" << I->getName().c_str()+1 << "\")";
+        Out << " LLVM_ASM(\"" << I->getName().substr(1) << "\")";
           
       Out << ";\n";
     }
