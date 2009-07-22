@@ -260,9 +260,8 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
     case SectionKind::SmallData:
     case SectionKind::SmallBSS:
       Flags |= SectionFlags::Writeable;
-      // FALLS THROUGH
+      break;
     case SectionKind::SmallROData:
-      Flags |= SectionFlags::Small;
       break;
     default:
       llvm_unreachable("Unexpected section kind!");

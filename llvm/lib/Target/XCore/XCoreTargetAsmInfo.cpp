@@ -25,10 +25,9 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
   SupportsDebugInformation = true;
   TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
-  DataSection = getNamedSection("\t.dp.data", SectionFlags::Writeable |
-                                SectionFlags::Small);
+  DataSection = getNamedSection("\t.dp.data", SectionFlags::Writeable);
   BSSSection_  = getNamedSection("\t.dp.bss", SectionFlags::Writeable |
-                                 SectionFlags::BSS | SectionFlags::Small);
+                                 SectionFlags::BSS);
 
   // TLS globals are lowered in the backend to arrays indexed by the current
   // thread id. After lowering they require no special handling by the linker
@@ -36,14 +35,10 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   TLSDataSection = DataSection;
   TLSBSSSection = BSSSection_;
 
-  if (TM.getSubtargetImpl()->isXS1A()) {
-    ReadOnlySection = getNamedSection("\t.dp.rodata", SectionFlags::None |
-                                      SectionFlags::Writeable |
-                                      SectionFlags::Small);
-  } else {
-    ReadOnlySection = getNamedSection("\t.cp.rodata", SectionFlags::None |
-                                      SectionFlags::Small);
-  }
+  if (TM.getSubtargetImpl()->isXS1A())
+    ReadOnlySection = getNamedSection("\t.dp.rodata", SectionFlags::Writeable);
+  else
+    ReadOnlySection = getNamedSection("\t.cp.rodata", SectionFlags::None);
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";
   Data64bitsDirective = 0;

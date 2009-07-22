@@ -207,8 +207,6 @@ std::string ELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
     Flags += 'S';
   if (flags & SectionFlags::TLS)
     Flags += 'T';
-  if (flags & SectionFlags::Small)
-    Flags += 's';
 
   Flags += "\",";
 

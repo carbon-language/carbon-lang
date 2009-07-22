@@ -45,14 +45,6 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
 
 }
 
-unsigned MipsTargetAsmInfo::
-SectionFlagsForGlobal(const GlobalValue *GV, const char* Name) const {
-  unsigned Flags = ELFTargetAsmInfo::SectionFlagsForGlobal(GV, Name);
-  // Mask out Small Section flag bit, Mips doesnt support 's' section symbol
-  // for its small sections.
-  return (Flags & (~SectionFlags::Small));
-}
-
 SectionKind::Kind MipsTargetAsmInfo::
 SectionKindForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind K = ELFTargetAsmInfo::SectionKindForGlobal(GV);
