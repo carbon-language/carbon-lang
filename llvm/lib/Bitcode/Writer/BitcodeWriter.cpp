@@ -483,13 +483,13 @@ static uint64_t GetOptimizationFlags(const Value *V) {
        if (!StartedMetadataBlock)  {
         Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
 
-         // Abbrev for CST_CODE_STRING.
-         BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-         Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_STRING));
+        // Abbrev for METADATA_STRING.
+        BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+        Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_STRING));
         Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-         Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
-         MDSAbbrev = Stream.EmitAbbrev(Abbv);
-         StartedMetadataBlock = true;
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+        MDSAbbrev = Stream.EmitAbbrev(Abbv);
+        StartedMetadataBlock = true;
        }
 
       SmallVector<unsigned, 64> StrVals;
