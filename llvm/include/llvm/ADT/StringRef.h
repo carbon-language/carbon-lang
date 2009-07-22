@@ -26,7 +26,7 @@ namespace llvm {
   class StringRef {
   public:
     typedef const char *iterator;
-    static const size_t npos = std::string::npos;
+    static const size_t npos = ~size_t(0);
 
   private:
     /// The start of the string, in an external buffer.
