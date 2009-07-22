@@ -101,7 +101,7 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
   case DeclSpec::TST_unspecified:
     // "<proto1,proto2>" is an objc qualified ID with a missing id.
     if (DeclSpec::ProtocolQualifierListTy PQ = DS.getProtocolQualifiers()) {
-      Result = Context.getObjCObjectPointerType(QualType(), 
+      Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy, 
                                                 (ObjCProtocolDecl**)PQ,
                                                 DS.getNumProtocolQualifiers());
       break;
@@ -220,14 +220,14 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
                                               DS.getNumProtocolQualifiers());
       else if (Result->isObjCIdType())
         // id<protocol-list>
-        Result = Context.getObjCObjectPointerType(QualType(), 
+        Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinIdTy, 
                         (ObjCProtocolDecl**)PQ, DS.getNumProtocolQualifiers());
       else if (Result->isObjCClassType()) {
         if (DeclLoc.isInvalid())
           DeclLoc = DS.getSourceRange().getBegin();
         // Class<protocol-list>
-        Diag(DeclLoc, diag::err_qualified_class_unsupported)
-          << DS.getSourceRange();
+        Result = Context.getObjCObjectPointerType(Context.ObjCBuiltinClassTy, 
+                        (ObjCProtocolDecl**)PQ, DS.getNumProtocolQualifiers());
       } else {
         if (DeclLoc.isInvalid())
           DeclLoc = DS.getSourceRange().getBegin();

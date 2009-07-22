@@ -512,8 +512,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   }
 
   // Handle messages to id.  
-  if (ReceiverCType == Context.getCanonicalType(Context.getObjCIdType()) ||
-      ReceiverCType->isBlockPointerType() ||
+  if (ReceiverCType->isObjCIdType() || ReceiverCType->isBlockPointerType() ||
       Context.isObjCNSObjectType(RExpr->getType())) {
     ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(
                                Sel, SourceRange(lbrac,rbrac));
@@ -528,7 +527,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
   }
   
   // Handle messages to Class.
-  if (ReceiverCType == Context.getCanonicalType(Context.getObjCClassType())) {
+  if (ReceiverCType->isObjCClassType() || 
+      ReceiverCType->isObjCQualifiedClassType()) {
     ObjCMethodDecl *Method = 0;
     
     if (ObjCMethodDecl *CurMeth = getCurMethodDecl()) {
@@ -538,6 +538,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(ExprTy *receiver, Selector Sel,
         
         if (!Method)
           Method = LookupPrivateClassMethod(Sel, ClassDecl);
+          
+        // FIXME: if we still haven't found a method, we need to look in 
+        // protocols (if we have qualifiers).
       }
       if (Method && DiagnoseUseOfDecl(Method, receiverLoc))
         return true;

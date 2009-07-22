@@ -1742,9 +1742,6 @@ static void SortAndUniqueProtocols(ObjCProtocolDecl **&Protocols,
 QualType ASTContext::getObjCObjectPointerType(QualType InterfaceT,
                                               ObjCProtocolDecl **Protocols, 
                                               unsigned NumProtocols) {
-  if (InterfaceT.isNull()) 
-    InterfaceT = ObjCBuiltinIdTy;
-    
   // Sort the protocol list alphabetically to canonicalize it.
   if (NumProtocols)
     SortAndUniqueProtocols(Protocols, NumProtocols);

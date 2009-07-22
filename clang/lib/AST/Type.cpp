@@ -1603,7 +1603,7 @@ void ObjCObjectPointerType::getAsStringInternal(std::string &InnerString,
   
   if (isObjCIdType() || isObjCQualifiedIdType())
     ObjCQIString = "id";
-  else if (isObjCClassType())
+  else if (isObjCClassType() || isObjCQualifiedClassType())
     ObjCQIString = "Class";
   else
     ObjCQIString = getInterfaceDecl()->getNameAsString();

@@ -40,8 +40,8 @@ id objc_getClass(const char *s);
 {
    int i = [(id <Func>)self class_func0];
    i += [(id <Func>)super class_func0];    // expected-error {{cannot cast 'super' (it isn't an expression)}}
-   i += [(Class <Func>)self class_func0];  // expected-error {{protocol qualified 'Class' is unsupported}}
-   return i + [(Class <Func>)super class_func0]; // expected-error {{protocol qualified 'Class' is unsupported}} // expected-error {{cannot cast 'super' (it isn't an expression)}}
+   i += [(Class <Func>)self class_func0];  // 
+   return i + [(Class <Func>)super class_func0]; // // expected-error {{cannot cast 'super' (it isn't an expression)}}
 }
 + (int) class_func3
 {

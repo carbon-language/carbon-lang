@@ -23,7 +23,7 @@ id objc_getClass(const char *s);
 @interface Derived2: Object <Func>
 @end
 
-static void doSomething(Class <Func> unsupportedObjectType) { // expected-error {{protocol qualified 'Class' is unsupported}}
+static void doSomething(Class <Func> unsupportedObjectType) {
   [unsupportedObjectType class_func0];
 }
 

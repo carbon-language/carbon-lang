@@ -402,6 +402,7 @@ public:
   bool isObjCInterfaceType() const;             // NSString or NSString<foo>
   bool isObjCQualifiedInterfaceType() const;    // NSString<foo>
   bool isObjCQualifiedIdType() const;           // id<foo>
+  bool isObjCQualifiedClassType() const;        // Class<foo>
   bool isObjCIdType() const;                    // id
   bool isObjCClassType() const;                 // Class
   bool isObjCBuiltinType() const;               // 'id' or 'Class'
@@ -1950,7 +1951,7 @@ public:
            Protocols.size(); 
   }
   /// isObjCQualifiedClassType - true for "Class <p>".
-  bool isQualifiedClassType() const {
+  bool isObjCQualifiedClassType() const {
     return getPointeeType()->isSpecificBuiltinType(BuiltinType::ObjCClass) && 
            Protocols.size();
   }
@@ -2135,6 +2136,11 @@ inline bool Type::isObjCInterfaceType() const {
 inline bool Type::isObjCQualifiedIdType() const {
   if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
     return OPT->isObjCQualifiedIdType();
+  return false;
+}
+inline bool Type::isObjCQualifiedClassType() const {
+  if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
+    return OPT->isObjCQualifiedClassType();
   return false;
 }
 inline bool Type::isObjCIdType() const {

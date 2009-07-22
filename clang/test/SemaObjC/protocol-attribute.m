@@ -3,7 +3,7 @@
 __attribute ((unavailable))
 @protocol FwProto; // expected-note{{marked unavailable}}
 
-Class <FwProto> cFw = 0;  // expected-warning {{'FwProto' is unavailable}} expected-error{{protocol qualified 'Class' is unsupported}}
+Class <FwProto> cFw = 0;  // expected-warning {{'FwProto' is unavailable}}
 
 
 __attribute ((deprecated)) @protocol MyProto1
@@ -31,7 +31,7 @@ __attribute ((deprecated)) @protocol MyProto1
 
 
 
-Class <MyProto1> clsP1 = 0;  // expected-warning {{'MyProto1' is deprecated}} expected-error{{protocol qualified 'Class' is unsupported}}
+Class <MyProto1> clsP1 = 0;  // expected-warning {{'MyProto1' is deprecated}}
 
 @protocol FwProto @end // expected-note{{marked unavailable}}
 
