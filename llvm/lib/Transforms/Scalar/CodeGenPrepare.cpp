@@ -518,7 +518,7 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
       BasicBlock::iterator InsertPt = UserBB->getFirstNonPHI();
 
       InsertedCmp =
-        CmpInst::Create(*DefBB->getContext(), CI->getOpcode(), 
+        CmpInst::Create(DefBB->getContext(), CI->getOpcode(), 
                         CI->getPredicate(),  CI->getOperand(0),
                         CI->getOperand(1), "", InsertPt);
       MadeChange = true;
@@ -559,6 +559,8 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
                                         const Type *AccessTy,
                                         DenseMap<Value*,Value*> &SunkAddrs) {
+  LLVMContext &Context = MemoryInst->getContext();
+
   // Figure out what addressing mode will be built up for this operation.
   SmallVector<Instruction*, 16> AddrModeInsts;
   ExtAddrMode AddrMode = AddressingModeMatcher::Match(Addr, AccessTy,MemoryInst,
@@ -615,7 +617,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
         V = new SExtInst(V, IntPtrTy, "sunkaddr", InsertPt);
       }
       if (AddrMode.Scale != 1)
-        V = BinaryOperator::CreateMul(V, Context->getConstantInt(IntPtrTy,
+        V = BinaryOperator::CreateMul(V, Context.getConstantInt(IntPtrTy,
                                                                 AddrMode.Scale),
                                       "sunkaddr", InsertPt);
       Result = V;
@@ -647,7 +649,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
     // Add in the Base Offset if present.
     if (AddrMode.BaseOffs) {
-      Value *V = Context->getConstantInt(IntPtrTy, AddrMode.BaseOffs);
+      Value *V = Context.getConstantInt(IntPtrTy, AddrMode.BaseOffs);
       if (Result)
         Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
       else
@@ -655,7 +657,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     }
 
     if (Result == 0)
-      SunkAddr = Context->getNullValue(Addr->getType());
+      SunkAddr = Context.getNullValue(Addr->getType());
     else
       SunkAddr = new IntToPtrInst(Result, Addr->getType(), "sunkaddr",InsertPt);
   }

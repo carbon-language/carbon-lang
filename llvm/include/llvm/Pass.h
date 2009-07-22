@@ -48,7 +48,6 @@ class ImmutablePass;
 class PMStack;
 class AnalysisResolver;
 class PMDataManager;
-class LLVMContext;
 
 // AnalysisID - Use the PassInfo to identify a pass...
 typedef const PassInfo* AnalysisID;
@@ -77,9 +76,6 @@ class Pass {
 
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
-  
-protected:
-  LLVMContext *Context;
   
 public:
   explicit Pass(intptr_t pid) : Resolver(0), PassID(pid) {
@@ -281,11 +277,8 @@ public:
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
   ///
-  virtual bool doInitialization(Module &M) {
-    Context = &M.getContext();
-    return false;
-  }
-
+  virtual bool doInitialization(Module &M) { return false; }
+  
   /// runOnFunction - Virtual method overriden by subclasses to do the
   /// per-function processing of the pass.
   ///
@@ -336,10 +329,7 @@ public:
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
   ///
-  virtual bool doInitialization(Module &M) { 
-    Context = &M.getContext();
-    return false;
-  }
+  virtual bool doInitialization(Module &M) { return false; }
 
   /// doInitialization - Virtual method overridden by BasicBlockPass subclasses
   /// to do any necessary per-function initialization.

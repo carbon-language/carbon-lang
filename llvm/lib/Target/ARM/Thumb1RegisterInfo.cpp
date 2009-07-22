@@ -59,7 +59,7 @@ void Thumb1RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
   MachineFunction &MF = *MBB.getParent();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   Constant *C =
-             MF.getFunction()->getContext()->getConstantInt(Type::Int32Ty, Val);
+             MF.getFunction()->getContext().getConstantInt(Type::Int32Ty, Val);
   unsigned Idx = ConstantPool->getConstantPoolIndex(C, 4);
 
   BuildMI(MBB, MBBI, dl, TII.get(ARM::tLDRcp))

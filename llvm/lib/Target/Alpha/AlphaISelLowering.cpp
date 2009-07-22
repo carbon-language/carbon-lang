@@ -238,7 +238,7 @@ SDValue AlphaTargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, *DAG.getContext());
 
   CCInfo.AnalyzeCallOperands(TheCall, CC_Alpha);
 
@@ -356,7 +356,7 @@ AlphaTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs,
-                 DAG.getContext());
+                 *DAG.getContext());
 
   CCInfo.AnalyzeCallResult(TheCall, RetCC_Alpha);
   SmallVector<SDValue, 8> ResultVals;

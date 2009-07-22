@@ -87,13 +87,10 @@ Pass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
 // This function is always successful.
 //
 bool LowerAllocations::doInitialization(Module &M) {
-  // Ensure context initialization.
-  BasicBlockPass::doInitialization(M);
-
-  const Type *BPTy = Context->getPointerTypeUnqual(Type::Int8Ty);
+  const Type *BPTy = M.getContext().getPointerTypeUnqual(Type::Int8Ty);
   // Prototype malloc as "char* malloc(...)", because we don't know in
   // doInitialization whether size_t is int or long.
-  FunctionType *FT = Context->getFunctionType(BPTy, true);
+  FunctionType *FT = M.getContext().getFunctionType(BPTy, true);
   MallocFunc = M.getOrInsertFunction("malloc", FT);
   FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, BPTy, (Type *)0);
   return true;
@@ -105,6 +102,8 @@ bool LowerAllocations::doInitialization(Module &M) {
 bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   bool Changed = false;
   assert(MallocFunc && FreeFunc && "Pass not initialized!");
+
+  LLVMContext &Context = BB.getContext();
 
   BasicBlock::InstListType &BBIL = BB.getInstList();
 
@@ -119,12 +118,12 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // malloc(type) becomes i8 *malloc(size)
       Value *MallocArg;
       if (LowerMallocArgToInteger)
-        MallocArg = Context->getConstantInt(Type::Int64Ty,
+        MallocArg = Context.getConstantInt(Type::Int64Ty,
                                      TD.getTypeAllocSize(AllocTy));
       else
-        MallocArg = Context->getConstantExprSizeOf(AllocTy);
+        MallocArg = Context.getConstantExprSizeOf(AllocTy);
       MallocArg =
-           Context->getConstantExprTruncOrBitCast(cast<Constant>(MallocArg), 
+           Context.getConstantExprTruncOrBitCast(cast<Constant>(MallocArg), 
                                                   IntPtrTy);
 
       if (MI->isArrayAllocation()) {
@@ -133,8 +132,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
           MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
         } else if (Constant *CO = dyn_cast<Constant>(MI->getOperand(0))) {
           CO =
-              Context->getConstantExprIntegerCast(CO, IntPtrTy, false /*ZExt*/);
-          MallocArg = Context->getConstantExprMul(CO, 
+              Context.getConstantExprIntegerCast(CO, IntPtrTy, false /*ZExt*/);
+          MallocArg = Context.getConstantExprMul(CO, 
                                                   cast<Constant>(MallocArg));
         } else {
           Value *Scale = MI->getOperand(0);
@@ -157,7 +156,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       if (MCall->getType() != Type::VoidTy)
         MCast = new BitCastInst(MCall, MI->getType(), "", I);
       else
-        MCast = Context->getNullValue(MI->getType());
+        MCast = Context.getNullValue(MI->getType());
 
       // Replace all uses of the old malloc inst with the cast inst
       MI->replaceAllUsesWith(MCast);
@@ -167,7 +166,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
     } else if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
       Value *PtrCast = 
         new BitCastInst(FI->getOperand(0),
-                        Context->getPointerTypeUnqual(Type::Int8Ty), "", I);
+                        Context.getPointerTypeUnqual(Type::Int8Ty), "", I);
 
       // Insert a call to the free function...
       CallInst::Create(FreeFunc, PtrCast, "", I)->setTailCall();

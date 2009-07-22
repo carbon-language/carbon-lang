@@ -927,7 +927,7 @@ HoistTerminator:
     return true;
 
   // Okay, it is safe to hoist the terminator.
-  Instruction *NT = I1->clone(*BB1->getContext());
+  Instruction *NT = I1->clone(BB1->getContext());
   BIParent->getInstList().insert(BI, NT);
   if (NT->getType() != Type::VoidTy) {
     I1->replaceAllUsesWith(NT);
@@ -1167,7 +1167,7 @@ static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
 /// ultimate destination.
 static bool FoldCondBranchOnPHI(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
-  LLVMContext *Context = BB->getContext();
+  LLVMContext &Context = BB->getContext();
   PHINode *PN = dyn_cast<PHINode>(BI->getCondition());
   // NOTE: we currently cannot transform this case if the PHI node is used
   // outside of the block.
@@ -1220,7 +1220,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
           TranslateMap[PN] = PN->getIncomingValueForBlock(PredBB);
         } else {
           // Clone the instruction.
-          Instruction *N = BBI->clone(*Context);
+          Instruction *N = BBI->clone(Context);
           if (BBI->hasName()) N->setName(BBI->getName()+".c");
           
           // Update operands due to translation.
@@ -1265,7 +1265,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
 /// FoldTwoEntryPHINode - Given a BB that starts with the specified two-entry
 /// PHI node, see if we can eliminate it.
 static bool FoldTwoEntryPHINode(PHINode *PN) {
-  LLVMContext *Context = PN->getParent()->getContext();
+  LLVMContext &Context = PN->getParent()->getContext();
   
   // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
   // statement", which has a very simple dominance structure.  Basically, we
@@ -1304,7 +1304,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
       if (PN->getIncomingValue(0) != PN)
         PN->replaceAllUsesWith(PN->getIncomingValue(0));
       else
-        PN->replaceAllUsesWith(Context->getUndef(PN->getType()));
+        PN->replaceAllUsesWith(Context.getUndef(PN->getType()));
     } else if (!DominatesMergePoint(PN->getIncomingValue(0), BB,
                                     &AggressiveInsts) ||
                !DominatesMergePoint(PN->getIncomingValue(1), BB,
@@ -1559,7 +1559,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     // If we need to invert the condition in the pred block to match, do so now.
     if (InvertPredCond) {
       Value *NewCond =
-        BinaryOperator::CreateNot(*BI->getParent()->getContext(), 
+        BinaryOperator::CreateNot(BI->getParent()->getContext(), 
                                   PBI->getCondition(), 
                                   PBI->getCondition()->getName()+".not", PBI);
       PBI->setCondition(NewCond);
@@ -1571,7 +1571,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
     
     // Clone Cond into the predecessor basic block, and or/and the
     // two conditions together.
-    Instruction *New = Cond->clone(*BB->getContext());
+    Instruction *New = Cond->clone(BB->getContext());
     PredBlock->getInstList().insert(PBI, New);
     New->takeName(Cond);
     Cond->setName(New->getName()+".old");
@@ -1599,7 +1599,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
 static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   assert(PBI->isConditional() && BI->isConditional());
   BasicBlock *BB = BI->getParent();
-  LLVMContext *Context = BB->getContext();
+  LLVMContext &Context = BB->getContext();
   
   // If this block ends with a branch instruction, and if there is a
   // predecessor that ends on a branch of the same condition, make 
@@ -1611,7 +1611,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     if (BB->getSinglePredecessor()) {
       // Turn this into a branch on constant.
       bool CondIsTrue = PBI->getSuccessor(0) == BB;
-      BI->setCondition(Context->getConstantInt(Type::Int1Ty, CondIsTrue));
+      BI->setCondition(Context.getConstantInt(Type::Int1Ty, CondIsTrue));
       return true;  // Nuke the branch on constant.
     }
     
@@ -1631,7 +1631,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
             PBI->getCondition() == BI->getCondition() &&
             PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
           bool CondIsTrue = PBI->getSuccessor(0) == BB;
-          NewPN->addIncoming(Context->getConstantInt(Type::Int1Ty, 
+          NewPN->addIncoming(Context.getConstantInt(Type::Int1Ty, 
                                               CondIsTrue), *PI);
         } else {
           NewPN->addIncoming(BI->getCondition(), *PI);
@@ -1716,12 +1716,12 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   // Make sure we get to CommonDest on True&True directions.
   Value *PBICond = PBI->getCondition();
   if (PBIOp)
-    PBICond = BinaryOperator::CreateNot(*Context, PBICond,
+    PBICond = BinaryOperator::CreateNot(Context, PBICond,
                                         PBICond->getName()+".not",
                                         PBI);
   Value *BICond = BI->getCondition();
   if (BIOp)
-    BICond = BinaryOperator::CreateNot(*Context, BICond,
+    BICond = BinaryOperator::CreateNot(Context, BICond,
                                        BICond->getName()+".not",
                                        PBI);
   // Merge the conditions.
@@ -1831,7 +1831,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                << "INTO UNCOND BRANCH PRED: " << *Pred;
           Instruction *UncondBranch = Pred->getTerminator();
           // Clone the return and add it to the end of the predecessor.
-          Instruction *NewRet = RI->clone(*BB->getContext());
+          Instruction *NewRet = RI->clone(BB->getContext());
           Pred->getInstList().push_back(NewRet);
 
           BasicBlock::iterator BBI = RI;

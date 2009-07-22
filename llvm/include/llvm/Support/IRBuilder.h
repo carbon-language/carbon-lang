@@ -51,22 +51,22 @@ public:
   IRBuilder(LLVMContext &C) : Context(C), Folder(C) { ClearInsertionPoint(); }
   
   explicit IRBuilder(BasicBlock *TheBB, const T& F)
-      : Context(*TheBB->getParent()->getContext()), Folder(F) {
+      : Context(TheBB->getContext()), Folder(F) {
     SetInsertPoint(TheBB);
   }
   
   explicit IRBuilder(BasicBlock *TheBB)
-      : Context(*TheBB->getParent()->getContext()), Folder(Context) {
+      : Context(TheBB->getContext()), Folder(Context) {
     SetInsertPoint(TheBB);
   }
   
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F)
-      : Context(*TheBB->getParent()->getContext()), Folder(F) {
+      : Context(TheBB->getContext()), Folder(F) {
     SetInsertPoint(TheBB, IP);
   }
   
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP)
-      : Context(*TheBB->getParent()->getContext()), Folder(Context) {
+      : Context(TheBB->getContext()), Folder(Context) {
     SetInsertPoint(TheBB, IP);
   }
 

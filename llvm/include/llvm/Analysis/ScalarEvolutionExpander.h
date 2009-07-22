@@ -38,8 +38,8 @@ namespace llvm {
     friend struct SCEVVisitor<SCEVExpander, Value*>;
   public:
     explicit SCEVExpander(ScalarEvolution &se)
-      : SE(se), Builder(*se.getContext(),
-                        TargetFolder(se.TD, *se.getContext())) {}
+      : SE(se), Builder(se.getContext(),
+                        TargetFolder(se.TD, se.getContext())) {}
 
     /// clear - Erase the contents of the InsertedExpressions map so that users
     /// trying to expand the same expression into multiple BasicBlocks or
@@ -61,7 +61,7 @@ namespace llvm {
     }
 
   private:
-    LLVMContext *getContext() const { return SE.getContext(); }
+    LLVMContext &getContext() const { return SE.getContext(); }
     
     /// InsertBinop - Insert the specified binary operator, doing a small amount
     /// of work to avoid inserting an obviously redundant operation.

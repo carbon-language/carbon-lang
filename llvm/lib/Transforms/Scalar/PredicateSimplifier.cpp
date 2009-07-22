@@ -1664,7 +1664,7 @@ namespace {
         TopBB(TopBB),
         TopInst(NULL),
         modified(modified),
-        Context(TopBB->getContext())
+        Context(&TopBB->getContext())
     {
       assert(Top && "VRPSolver created for unreachable basic block.");
     }
@@ -1681,7 +1681,7 @@ namespace {
         TopBB(TopInst->getParent()),
         TopInst(TopInst),
         modified(modified),
-        Context(TopInst->getParent()->getContext())
+        Context(&TopInst->getContext())
     {
       assert(Top && "VRPSolver created for unreachable basic block.");
       assert(Top->getBlock() == TopInst->getParent() && "Context mismatch.");
@@ -2267,6 +2267,7 @@ namespace {
 
     std::vector<DomTreeDFS::Node *> WorkList;
 
+    LLVMContext *Context;
   public:
     static char ID; // Pass identification, replacement for typeid
     PredicateSimplifier() : FunctionPass(&ID) {}
@@ -2402,6 +2403,7 @@ namespace {
     DominatorTree *DT = &getAnalysis<DominatorTree>();
     DTDFS = new DomTreeDFS(DT);
     TargetData *TD = &getAnalysis<TargetData>();
+    Context = &F.getContext();
 
     DOUT << "Entering Function: " << F.getName() << "\n";
 
@@ -2447,7 +2449,7 @@ namespace {
       return;
     }
 
-    LLVMContext *Context = BI.getParent()->getContext();
+    LLVMContext *Context = &BI.getContext();
 
     for (DomTreeDFS::Node::iterator I = DTNode->begin(), E = DTNode->end();
          I != E; ++I) {
@@ -2505,7 +2507,7 @@ namespace {
 
   void PredicateSimplifier::Forwards::visitAllocaInst(AllocaInst &AI) {
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &AI);
-    VRP.add(AI.getParent()->getContext()->getNullValue(AI.getType()),
+    VRP.add(AI.getContext().getNullValue(AI.getType()),
             &AI, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2516,7 +2518,7 @@ namespace {
     if (isa<Constant>(Ptr)) return;
 
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &LI);
-    VRP.add(LI.getParent()->getContext()->getNullValue(Ptr->getType()),
+    VRP.add(LI.getContext().getNullValue(Ptr->getType()),
             Ptr, ICmpInst::ICMP_NE);
     VRP.solve();
   }
@@ -2526,14 +2528,14 @@ namespace {
     if (isa<Constant>(Ptr)) return;
 
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &SI);
-    VRP.add(SI.getParent()->getContext()->getNullValue(Ptr->getType()),
+    VRP.add(SI.getContext().getNullValue(Ptr->getType()),
             Ptr, ICmpInst::ICMP_NE);
     VRP.solve();
   }
 
   void PredicateSimplifier::Forwards::visitSExtInst(SExtInst &SI) {
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &SI);
-    LLVMContext *Context = SI.getParent()->getContext();
+    LLVMContext *Context = &SI.getContext();
     uint32_t SrcBitWidth = cast<IntegerType>(SI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(SI.getDestTy())->getBitWidth();
     APInt Min(APInt::getHighBitsSet(DstBitWidth, DstBitWidth-SrcBitWidth+1));
@@ -2545,7 +2547,7 @@ namespace {
 
   void PredicateSimplifier::Forwards::visitZExtInst(ZExtInst &ZI) {
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &ZI);
-    LLVMContext *Context = ZI.getParent()->getContext();
+    LLVMContext *Context = &ZI.getContext();
     uint32_t SrcBitWidth = cast<IntegerType>(ZI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(ZI.getDestTy())->getBitWidth();
     APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth));
@@ -2564,7 +2566,7 @@ namespace {
       case Instruction::SDiv: {
         Value *Divisor = BO.getOperand(1);
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &BO);
-        VRP.add(BO.getParent()->getContext()->getNullValue(Divisor->getType()), 
+        VRP.add(BO.getContext().getNullValue(Divisor->getType()), 
                 Divisor, ICmpInst::ICMP_NE);
         VRP.solve();
         break;
@@ -2638,7 +2640,7 @@ namespace {
 
     Pred = IC.getPredicate();
 
-    LLVMContext *Context = IC.getParent()->getContext();
+    LLVMContext *Context = &IC.getContext();
 
     if (ConstantInt *Op1 = dyn_cast<ConstantInt>(IC.getOperand(1))) {
       ConstantInt *NextVal = 0;

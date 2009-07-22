@@ -187,7 +187,7 @@ bool SROA::performPromotion(Function &F) {
 
     if (Allocas.empty()) break;
 
-    PromoteMemToReg(Allocas, DT, DF, Context);
+    PromoteMemToReg(Allocas, DT, DF, F.getContext());
     NumPromoted += Allocas.size();
     Changed = true;
   }
@@ -243,7 +243,7 @@ bool SROA::performScalarRepl(Function &F) {
       DOUT << "  memcpy = " << *TheCopy;
       Constant *TheSrc = cast<Constant>(TheCopy->getOperand(2));
       AI->replaceAllUsesWith(
-                        Context->getConstantExprBitCast(TheSrc, AI->getType()));
+                  F.getContext().getConstantExprBitCast(TheSrc, AI->getType()));
       TheCopy->eraseFromParent();  // Don't mutate the global.
       AI->eraseFromParent();
       ++NumGlobals;
@@ -308,7 +308,7 @@ bool SROA::performScalarRepl(Function &F) {
         DOUT << "CONVERT TO SCALAR INTEGER: " << *AI << "\n";
         
         // Create and insert the integer alloca.
-        const Type *NewTy = Context->getIntegerType(AllocaSize*8);
+        const Type *NewTy = F.getContext().getIntegerType(AllocaSize*8);
         NewAI = new AllocaInst(NewTy, 0, "", AI->getParent()->begin());
         ConvertUsesToScalar(AI, NewAI, 0);
       }
@@ -331,6 +331,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
                                std::vector<AllocationInst*> &WorkList) {
   DOUT << "Found inst to SROA: " << *AI;
   SmallVector<AllocaInst*, 32> ElementAllocas;
+  LLVMContext &Context = AI->getContext();
   if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
     ElementAllocas.reserve(ST->getNumContainedTypes());
     for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
@@ -372,7 +373,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
     //   %insert = insertvalue { i32, i32 } %insert.0, i32 %load.1, 1 
     // (Also works for arrays instead of structs)
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      Value *Insert = Context->getUndef(LI->getType());
+      Value *Insert = Context.getUndef(LI->getType());
       for (unsigned i = 0, e = ElementAllocas.size(); i != e; ++i) {
         Value *Load = new LoadInst(ElementAllocas[i], "load", LI);
         Insert = InsertValueInst::Create(Insert, Load, i, "insert", LI);
@@ -419,7 +420,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
       // expanded itself once the worklist is rerun.
       //
       SmallVector<Value*, 8> NewArgs;
-      NewArgs.push_back(Context->getNullValue(Type::Int32Ty));
+      NewArgs.push_back(Context.getNullValue(Type::Int32Ty));
       NewArgs.append(GEPI->op_begin()+3, GEPI->op_end());
       RepValue = GetElementPtrInst::Create(AllocaToUse, NewArgs.begin(),
                                            NewArgs.end(), "", GEPI);
@@ -513,6 +514,7 @@ static bool AllUsersAreLoads(Value *Ptr) {
 ///
 void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
                                  AllocaInfo &Info) {
+  LLVMContext &Context = User->getContext();
   if (BitCastInst *C = dyn_cast<BitCastInst>(User))
     return isSafeUseOfBitCastedAllocation(C, AI, Info);
 
@@ -532,7 +534,7 @@ void SROA::isSafeUseOfAllocation(Instruction *User, AllocationInst *AI,
 
   // The GEP is not safe to transform if not of the form "GEP <ptr>, 0, <cst>".
   if (I == E ||
-      I.getOperand() != Context->getNullValue(I.getOperand()->getType())) {
+      I.getOperand() != Context.getNullValue(I.getOperand()->getType())) {
     return MarkUnsafe(Info);
   }
 
@@ -728,6 +730,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   // that doesn't have anything to do with the alloca that we are promoting. For
   // memset, this Value* stays null.
   Value *OtherPtr = 0;
+  LLVMContext &Context = MI->getContext();
   unsigned MemAlignment = MI->getAlignment();
   if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI)) { // memmove/memcopy
     if (BCInst == MTI->getRawDest())
@@ -765,7 +768,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
   const Type *BytePtrTy = MI->getRawDest()->getType();
   bool SROADest = MI->getRawDest() == BCInst;
   
-  Constant *Zero = Context->getNullValue(Type::Int32Ty);
+  Constant *Zero = Context.getNullValue(Type::Int32Ty);
 
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // If this is a memcpy/memmove, emit a GEP of the other element address.
@@ -773,7 +776,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
     unsigned OtherEltAlign = MemAlignment;
     
     if (OtherPtr) {
-      Value *Idx[2] = { Zero, Context->getConstantInt(Type::Int32Ty, i) };
+      Value *Idx[2] = { Zero, Context.getConstantInt(Type::Int32Ty, i) };
       OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
                                            OtherPtr->getNameStr()+"."+utostr(i),
                                            MI);
@@ -820,7 +823,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
       Constant *StoreVal;
       if (ConstantInt *CI = dyn_cast<ConstantInt>(MI->getOperand(2))) {
         if (CI->isZero()) {
-          StoreVal = Context->getNullValue(EltTy);  // 0.0, null, 0, <0,0>
+          StoreVal = Context.getNullValue(EltTy);  // 0.0, null, 0, <0,0>
         } else {
           // If EltTy is a vector type, get the element type.
           const Type *ValTy = EltTy->getScalarType();
@@ -836,18 +839,18 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
           }
           
           // Convert the integer value to the appropriate type.
-          StoreVal = Context->getConstantInt(TotalVal);
+          StoreVal = Context.getConstantInt(TotalVal);
           if (isa<PointerType>(ValTy))
-            StoreVal = Context->getConstantExprIntToPtr(StoreVal, ValTy);
+            StoreVal = Context.getConstantExprIntToPtr(StoreVal, ValTy);
           else if (ValTy->isFloatingPoint())
-            StoreVal = Context->getConstantExprBitCast(StoreVal, ValTy);
+            StoreVal = Context.getConstantExprBitCast(StoreVal, ValTy);
           assert(StoreVal->getType() == ValTy && "Type mismatch!");
           
           // If the requested value was a vector constant, create it.
           if (EltTy != ValTy) {
             unsigned NumElts = cast<VectorType>(ValTy)->getNumElements();
             SmallVector<Constant*, 16> Elts(NumElts, StoreVal);
-            StoreVal = Context->getConstantVector(&Elts[0], NumElts);
+            StoreVal = Context.getConstantVector(&Elts[0], NumElts);
           }
         }
         new StoreInst(StoreVal, EltPtr, MI);
@@ -873,15 +876,15 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
       Value *Ops[] = {
         SROADest ? EltPtr : OtherElt,  // Dest ptr
         SROADest ? OtherElt : EltPtr,  // Src ptr
-        Context->getConstantInt(MI->getOperand(3)->getType(), EltSize), // Size
-        Context->getConstantInt(Type::Int32Ty, OtherEltAlign)  // Align
+        Context.getConstantInt(MI->getOperand(3)->getType(), EltSize), // Size
+        Context.getConstantInt(Type::Int32Ty, OtherEltAlign)  // Align
       };
       CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
     } else {
       assert(isa<MemSetInst>(MI));
       Value *Ops[] = {
         EltPtr, MI->getOperand(2),  // Dest, Value,
-        Context->getConstantInt(MI->getOperand(3)->getType(), EltSize), // Size
+        Context.getConstantInt(MI->getOperand(3)->getType(), EltSize), // Size
         Zero  // Align
       };
       CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
@@ -898,6 +901,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
                                          SmallVector<AllocaInst*, 32> &NewElts){
   // Extract each element out of the integer according to its structure offset
   // and store the element value to the individual alloca.
+  LLVMContext &Context = SI->getContext();
   Value *SrcVal = SI->getOperand(0);
   const Type *AllocaEltTy = AI->getType()->getElementType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
@@ -911,7 +915,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
   // Handle tail padding by extending the operand
   if (TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
     SrcVal = new ZExtInst(SrcVal,
-                          Context->getIntegerType(AllocaSizeBits), "", SI);
+                          Context.getIntegerType(AllocaSizeBits), "", SI);
 
   DOUT << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI;
 
@@ -930,7 +934,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       
       Value *EltVal = SrcVal;
       if (Shift) {
-        Value *ShiftVal = Context->getConstantInt(EltVal->getType(), Shift);
+        Value *ShiftVal = Context.getConstantInt(EltVal->getType(), Shift);
         EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
                                             "sroa.store.elt", SI);
       }
@@ -943,7 +947,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       
       if (FieldSizeBits != AllocaSizeBits)
         EltVal = new TruncInst(EltVal,
-                               Context->getIntegerType(FieldSizeBits), "", SI);
+                               Context.getIntegerType(FieldSizeBits), "", SI);
       Value *DestField = NewElts[i];
       if (EltVal->getType() == FieldTy) {
         // Storing to an integer field of this size, just do it.
@@ -953,7 +957,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       } else {
         // Otherwise, bitcast the dest pointer (for aggregates).
         DestField = new BitCastInst(DestField,
-                              Context->getPointerTypeUnqual(EltVal->getType()),
+                              Context.getPointerTypeUnqual(EltVal->getType()),
                                     "", SI);
       }
       new StoreInst(EltVal, DestField, SI);
@@ -978,7 +982,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       
       Value *EltVal = SrcVal;
       if (Shift) {
-        Value *ShiftVal = Context->getConstantInt(EltVal->getType(), Shift);
+        Value *ShiftVal = Context.getConstantInt(EltVal->getType(), Shift);
         EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
                                             "sroa.store.elt", SI);
       }
@@ -986,7 +990,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       // Truncate down to an integer of the right size.
       if (ElementSizeBits != AllocaSizeBits)
         EltVal = new TruncInst(EltVal, 
-                               Context->getIntegerType(ElementSizeBits),"",SI);
+                               Context.getIntegerType(ElementSizeBits),"",SI);
       Value *DestField = NewElts[i];
       if (EltVal->getType() == ArrayEltTy) {
         // Storing to an integer field of this size, just do it.
@@ -996,7 +1000,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       } else {
         // Otherwise, bitcast the dest pointer (for aggregates).
         DestField = new BitCastInst(DestField,
-                              Context->getPointerTypeUnqual(EltVal->getType()),
+                              Context.getPointerTypeUnqual(EltVal->getType()),
                                     "", SI);
       }
       new StoreInst(EltVal, DestField, SI);
@@ -1039,9 +1043,11 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
     const Type *ArrayEltTy = cast<ArrayType>(AllocaEltTy)->getElementType();
     ArrayEltBitOffset = TD->getTypeAllocSizeInBits(ArrayEltTy);
   }    
-    
-  Value *ResultVal =
-                 Context->getNullValue(Context->getIntegerType(AllocaSizeBits));
+  
+  LLVMContext &Context = LI->getContext();
+  
+  Value *ResultVal = 
+    Context.getNullValue(Context.getIntegerType(AllocaSizeBits));
   
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // Load the value from the alloca.  If the NewElt is an aggregate, cast
@@ -1054,11 +1060,11 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
     // Ignore zero sized fields like {}, they obviously contain no data.
     if (FieldSizeBits == 0) continue;
     
-    const IntegerType *FieldIntTy = Context->getIntegerType(FieldSizeBits);
+    const IntegerType *FieldIntTy = Context.getIntegerType(FieldSizeBits);
     if (!isa<IntegerType>(FieldTy) && !FieldTy->isFloatingPoint() &&
         !isa<VectorType>(FieldTy))
       SrcField = new BitCastInst(SrcField,
-                                 Context->getPointerTypeUnqual(FieldIntTy),
+                                 Context.getPointerTypeUnqual(FieldIntTy),
                                  "", LI);
     SrcField = new LoadInst(SrcField, "sroa.load.elt", LI);
 
@@ -1083,7 +1089,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
       Shift = AllocaSizeBits-Shift-FieldIntTy->getBitWidth();
     
     if (Shift) {
-      Value *ShiftVal = Context->getConstantInt(SrcField->getType(), Shift);
+      Value *ShiftVal = Context.getConstantInt(SrcField->getType(), Shift);
       SrcField = BinaryOperator::CreateShl(SrcField, ShiftVal, "", LI);
     }
 
@@ -1186,8 +1192,10 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
   if (isa<ConstantInt>(I.getOperand()))
     return;
 
+  LLVMContext &Context = GEPI->getContext();
+
   if (NumElements == 1) {
-    GEPI->setOperand(2, Context->getNullValue(Type::Int32Ty));
+    GEPI->setOperand(2, Context.getNullValue(Type::Int32Ty));
     return;
   } 
     
@@ -1195,16 +1203,16 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
   // All users of the GEP must be loads.  At each use of the GEP, insert
   // two loads of the appropriate indexed GEP and select between them.
   Value *IsOne = new ICmpInst(GEPI, ICmpInst::ICMP_NE, I.getOperand(), 
-                              Context->getNullValue(I.getOperand()->getType()),
+                              Context.getNullValue(I.getOperand()->getType()),
                               "isone");
   // Insert the new GEP instructions, which are properly indexed.
   SmallVector<Value*, 8> Indices(GEPI->op_begin()+1, GEPI->op_end());
-  Indices[1] = Context->getNullValue(Type::Int32Ty);
+  Indices[1] = Context.getNullValue(Type::Int32Ty);
   Value *ZeroIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
                                              Indices.begin(),
                                              Indices.end(),
                                              GEPI->getName()+".0", GEPI);
-  Indices[1] = Context->getConstantInt(Type::Int32Ty, 1);
+  Indices[1] = Context.getConstantInt(Type::Int32Ty, 1);
   Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
                                             Indices.begin(),
                                             Indices.end(),
@@ -1262,7 +1270,7 @@ void SROA::CleanupAllocaUsers(AllocationInst *AI) {
 ///      and stores would mutate the memory.
 static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
                         unsigned AllocaSize, const TargetData &TD,
-                        LLVMContext *Context) {
+                        LLVMContext &Context) {
   // If this could be contributing to a vector, analyze it.
   if (VecTy != Type::VoidTy) { // either null or a vector type.
 
@@ -1290,7 +1298,7 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
            cast<VectorType>(VecTy)->getElementType()
                  ->getPrimitiveSizeInBits()/8 == EltSize)) {
         if (VecTy == 0)
-          VecTy = Context->getVectorType(In, AllocaSize/EltSize);
+          VecTy = In->getContext().getVectorType(In, AllocaSize/EltSize);
         return;
       }
     }
@@ -1321,7 +1329,8 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       // Don't break volatile loads.
       if (LI->isVolatile())
         return false;
-      MergeInType(LI->getType(), Offset, VecTy, AllocaSize, *TD, Context);
+      MergeInType(LI->getType(), Offset, VecTy,
+                  AllocaSize, *TD, V->getContext());
       SawVec |= isa<VectorType>(LI->getType());
       continue;
     }
@@ -1330,7 +1339,7 @@ bool SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial, const Type *&VecTy,
       // Storing the pointer, not into the value?
       if (SI->getOperand(0) == V || SI->isVolatile()) return 0;
       MergeInType(SI->getOperand(0)->getType(), Offset,
-                  VecTy, AllocaSize, *TD, Context);
+                  VecTy, AllocaSize, *TD, V->getContext());
       SawVec |= isa<VectorType>(SI->getOperand(0)->getType());
       continue;
     }
@@ -1459,7 +1468,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
             APVal |= APVal << 8;
         
         Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
-        Value *New = ConvertScalar_InsertValue(Context->getConstantInt(APVal),
+        Value *New = ConvertScalar_InsertValue(
+                                      User->getContext().getConstantInt(APVal),
                                                Old, Offset, Builder);
         Builder.CreateStore(New, NewAI);
       }
@@ -1531,6 +1541,8 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   if (FromVal->getType() == ToType && Offset == 0)
     return FromVal;
 
+  LLVMContext &Context = FromVal->getContext();
+
   // If the result alloca is a vector type, this is either an element
   // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(FromVal->getType())) {
@@ -1546,7 +1558,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
     }
     // Return the element extracted out of it.
     Value *V = Builder.CreateExtractElement(FromVal,
-                                    Context->getConstantInt(Type::Int32Ty,Elt),
+                                    Context.getConstantInt(Type::Int32Ty,Elt),
                                             "tmp");
     if (V->getType() != ToType)
       V = Builder.CreateBitCast(V, ToType, "tmp");
@@ -1557,7 +1569,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // use insertvalue's to form the FCA.
   if (const StructType *ST = dyn_cast<StructType>(ToType)) {
     const StructLayout &Layout = *TD->getStructLayout(ST);
-    Value *Res = Context->getUndef(ST);
+    Value *Res = Context.getUndef(ST);
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
       Value *Elt = ConvertScalar_ExtractValue(FromVal, ST->getElementType(i),
                                         Offset+Layout.getElementOffsetInBits(i),
@@ -1569,7 +1581,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   
   if (const ArrayType *AT = dyn_cast<ArrayType>(ToType)) {
     uint64_t EltSize = TD->getTypeAllocSizeInBits(AT->getElementType());
-    Value *Res = Context->getUndef(AT);
+    Value *Res = Context.getUndef(AT);
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
       Value *Elt = ConvertScalar_ExtractValue(FromVal, AT->getElementType(),
                                               Offset+i*EltSize, Builder);
@@ -1599,21 +1611,21 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // only some bits are used.
   if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
     FromVal = Builder.CreateLShr(FromVal,
-                                 Context->getConstantInt(FromVal->getType(),
+                                 Context.getConstantInt(FromVal->getType(),
                                                            ShAmt), "tmp");
   else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
     FromVal = Builder.CreateShl(FromVal, 
-                                Context->getConstantInt(FromVal->getType(),
+                                Context.getConstantInt(FromVal->getType(),
                                                           -ShAmt), "tmp");
 
   // Finally, unconditionally truncate the integer to the right width.
   unsigned LIBitWidth = TD->getTypeSizeInBits(ToType);
   if (LIBitWidth < NTy->getBitWidth())
     FromVal =
-      Builder.CreateTrunc(FromVal, Context->getIntegerType(LIBitWidth), "tmp");
+      Builder.CreateTrunc(FromVal, Context.getIntegerType(LIBitWidth), "tmp");
   else if (LIBitWidth > NTy->getBitWidth())
     FromVal =
-       Builder.CreateZExt(FromVal, Context->getIntegerType(LIBitWidth), "tmp");
+       Builder.CreateZExt(FromVal, Context.getIntegerType(LIBitWidth), "tmp");
 
   // If the result is an integer, this is a trunc or bitcast.
   if (isa<IntegerType>(ToType)) {
@@ -1645,6 +1657,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   // Convert the stored type to the actual type, shift it left to insert
   // then 'or' into place.
   const Type *AllocaType = Old->getType();
+  LLVMContext &Context = Old->getContext();
 
   if (const VectorType *VTy = dyn_cast<VectorType>(AllocaType)) {
     uint64_t VecSize = TD->getTypeAllocSizeInBits(VTy);
@@ -1664,7 +1677,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
       SV = Builder.CreateBitCast(SV, VTy->getElementType(), "tmp");
     
     SV = Builder.CreateInsertElement(Old, SV, 
-                                   Context->getConstantInt(Type::Int32Ty, Elt),
+                                   Context.getConstantInt(Type::Int32Ty, Elt),
                                      "tmp");
     return SV;
   }
@@ -1697,7 +1710,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
   unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
   if (SV->getType()->isFloatingPoint() || isa<VectorType>(SV->getType()))
-    SV = Builder.CreateBitCast(SV, Context->getIntegerType(SrcWidth), "tmp");
+    SV = Builder.CreateBitCast(SV, Context.getIntegerType(SrcWidth), "tmp");
   else if (isa<PointerType>(SV->getType()))
     SV = Builder.CreatePtrToInt(SV, TD->getIntPtrType(), "tmp");
 
@@ -1732,11 +1745,11 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   // only some bits in the structure are set.
   APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
   if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
-    SV = Builder.CreateShl(SV, Context->getConstantInt(SV->getType(),
+    SV = Builder.CreateShl(SV, Context.getConstantInt(SV->getType(),
                            ShAmt), "tmp");
     Mask <<= ShAmt;
   } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
-    SV = Builder.CreateLShr(SV, Context->getConstantInt(SV->getType(),
+    SV = Builder.CreateLShr(SV, Context.getConstantInt(SV->getType(),
                             -ShAmt), "tmp");
     Mask = Mask.lshr(-ShAmt);
   }
@@ -1745,7 +1758,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   // in the new bits.
   if (SrcWidth != DestWidth) {
     assert(DestWidth > SrcWidth);
-    Old = Builder.CreateAnd(Old, Context->getConstantInt(~Mask), "mask");
+    Old = Builder.CreateAnd(Old, Context.getConstantInt(~Mask), "mask");
     SV = Builder.CreateOr(Old, SV, "ins");
   }
   return SV;

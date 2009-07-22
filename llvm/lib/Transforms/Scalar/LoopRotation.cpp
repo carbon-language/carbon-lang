@@ -238,7 +238,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
     // This is not a PHI instruction. Insert its clone into original pre-header.
     // If this instruction is using a value from same basic block then
     // update it to use value from cloned instruction.
-    Instruction *C = In->clone(*Context);
+    Instruction *C = In->clone(In->getContext());
     C->setName(In->getName());
     OrigPreHeader->getInstList().push_back(C);
 

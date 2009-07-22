@@ -797,7 +797,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction* orig,
   // If the block is unreachable, just return undef, since this path
   // can't actually occur at runtime.
   if (!DT->isReachableFromEntry(BB))
-    return Phis[BB] = Context->getUndef(orig->getType());
+    return Phis[BB] = BB->getContext().getUndef(orig->getType());
   
   if (BasicBlock *Pred = BB->getSinglePredecessor()) {
     Value *ret = GetValueForBlock(Pred, orig, Phis);
@@ -985,7 +985,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     // Loading the allocation -> undef.
     if (isa<AllocationInst>(DepInst)) {
       ValuesPerBlock.push_back(std::make_pair(DepBB, 
-                                            Context->getUndef(LI->getType())));
+                                DepBB->getContext().getUndef(LI->getType())));
       continue;
     }
   
@@ -1272,7 +1272,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   // undef value.  This can happen when loading for a fresh allocation with no
   // intervening stores, for example.
   if (isa<AllocationInst>(DepInst)) {
-    L->replaceAllUsesWith(Context->getUndef(L->getType()));
+    L->replaceAllUsesWith(DepInst->getContext().getUndef(L->getType()));
     toErase.push_back(L);
     NumGVNLoad++;
     return true;
@@ -1384,9 +1384,9 @@ bool GVN::processInstruction(Instruction *I,
     BasicBlock* falseSucc = BI->getSuccessor(1);
     
     if (trueSucc->getSinglePredecessor())
-      localAvail[trueSucc]->table[condVN] = Context->getTrue();
+      localAvail[trueSucc]->table[condVN] = trueSucc->getContext().getTrue();
     if (falseSucc->getSinglePredecessor())
-      localAvail[falseSucc]->table[condVN] = Context->getFalse();
+      localAvail[falseSucc]->table[condVN] = trueSucc->getContext().getFalse();
 
     return false;
     
@@ -1628,7 +1628,7 @@ bool GVN::performPRE(Function& F) {
       // will be available in the predecessor by the time we need them.  Any
       // that weren't original present will have been instantiated earlier
       // in this loop.
-      Instruction* PREInstr = CurInst->clone(*Context);
+      Instruction* PREInstr = CurInst->clone(CurInst->getContext());
       bool success = true;
       for (unsigned i = 0, e = CurInst->getNumOperands(); i != e; ++i) {
         Value *Op = PREInstr->getOperand(i);

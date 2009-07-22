@@ -309,7 +309,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
                           const Value *V2, unsigned V2Size) {
-  Context = &V1->getType()->getContext();
+  LLVMContext &Context = V1->getType()->getContext();
 
   // Strip off any constant expression casts if they exist
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V1))
@@ -395,13 +395,13 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     // the base pointers.
     while (isGEP(GEP1->getOperand(0)) &&
            GEP1->getOperand(1) ==
-           Context->getNullValue(GEP1->getOperand(1)->getType()))
+           Context.getNullValue(GEP1->getOperand(1)->getType()))
       GEP1 = cast<User>(GEP1->getOperand(0));
     const Value *BasePtr1 = GEP1->getOperand(0);
 
     while (isGEP(GEP2->getOperand(0)) &&
            GEP2->getOperand(1) ==
-           Context->getNullValue(GEP2->getOperand(1)->getType()))
+           Context.getNullValue(GEP2->getOperand(1)->getType()))
       GEP2 = cast<User>(GEP2->getOperand(0));
     const Value *BasePtr2 = GEP2->getOperand(0);
 
@@ -481,7 +481,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
             for (unsigned i = 0; i != GEPOperands.size(); ++i)
               if (!isa<ConstantInt>(GEPOperands[i]))
                 GEPOperands[i] =
-                  Context->getNullValue(GEPOperands[i]->getType());
+                  Context.getNullValue(GEPOperands[i]->getType());
             int64_t Offset =
               getTargetData().getIndexedOffset(BasePtr->getType(),
                                                &GEPOperands[0],
@@ -499,16 +499,16 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
 
 // This function is used to determine if the indices of two GEP instructions are
 // equal. V1 and V2 are the indices.
-static bool IndexOperandsEqual(Value *V1, Value *V2, LLVMContext *Context) {
+static bool IndexOperandsEqual(Value *V1, Value *V2, LLVMContext &Context) {
   if (V1->getType() == V2->getType())
     return V1 == V2;
   if (Constant *C1 = dyn_cast<Constant>(V1))
     if (Constant *C2 = dyn_cast<Constant>(V2)) {
       // Sign extend the constants to long types, if necessary
       if (C1->getType() != Type::Int64Ty)
-        C1 = Context->getConstantExprSExt(C1, Type::Int64Ty);
+        C1 = Context.getConstantExprSExt(C1, Type::Int64Ty);
       if (C2->getType() != Type::Int64Ty) 
-        C2 = Context->getConstantExprSExt(C2, Type::Int64Ty);
+        C2 = Context.getConstantExprSExt(C2, Type::Int64Ty);
       return C1 == C2;
     }
   return false;
@@ -529,7 +529,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
 
   const PointerType *GEPPointerTy = cast<PointerType>(BasePtr1Ty);
 
-  Context = &GEPPointerTy->getContext();
+  LLVMContext &Context = GEPPointerTy->getContext();
 
   // Find the (possibly empty) initial sequence of equal values... which are not
   // necessarily constants.
@@ -604,9 +604,9 @@ BasicAliasAnalysis::CheckGEPInstructions(
           if (G1OC->getType() != G2OC->getType()) {
             // Sign extend both operands to long.
             if (G1OC->getType() != Type::Int64Ty)
-              G1OC = Context->getConstantExprSExt(G1OC, Type::Int64Ty);
+              G1OC = Context.getConstantExprSExt(G1OC, Type::Int64Ty);
             if (G2OC->getType() != Type::Int64Ty) 
-              G2OC = Context->getConstantExprSExt(G2OC, Type::Int64Ty);
+              G2OC = Context.getConstantExprSExt(G2OC, Type::Int64Ty);
             GEP1Ops[FirstConstantOper] = G1OC;
             GEP2Ops[FirstConstantOper] = G2OC;
           }
@@ -693,7 +693,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
           // TargetData::getIndexedOffset.
           for (i = 0; i != MaxOperands; ++i)
             if (!isa<ConstantInt>(GEP1Ops[i]))
-              GEP1Ops[i] = Context->getNullValue(GEP1Ops[i]->getType());
+              GEP1Ops[i] = Context.getNullValue(GEP1Ops[i]->getType());
           // Okay, now get the offset.  This is the relative offset for the full
           // instruction.
           const TargetData &TD = getTargetData();
@@ -738,7 +738,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
   const Type *ZeroIdxTy = GEPPointerTy;
   for (unsigned i = 0; i != FirstConstantOper; ++i) {
     if (!isa<StructType>(ZeroIdxTy))
-      GEP1Ops[i] = GEP2Ops[i] = Context->getNullValue(Type::Int32Ty);
+      GEP1Ops[i] = GEP2Ops[i] = Context.getNullValue(Type::Int32Ty);
 
     if (const CompositeType *CT = dyn_cast<CompositeType>(ZeroIdxTy))
       ZeroIdxTy = CT->getTypeAtIndex(GEP1Ops[i]);
@@ -753,7 +753,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
     // If they are equal, use a zero index...
     if (Op1 == Op2 && BasePtr1Ty == BasePtr2Ty) {
       if (!isa<ConstantInt>(Op1))
-        GEP1Ops[i] = GEP2Ops[i] = Context->getNullValue(Op1->getType());
+        GEP1Ops[i] = GEP2Ops[i] = Context.getNullValue(Op1->getType());
       // Otherwise, just keep the constants we have.
     } else {
       if (Op1) {
@@ -780,10 +780,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
             GEP1Ops[i] =
-                  Context->getConstantInt(Type::Int64Ty,AT->getNumElements()-1);
+                  Context.getConstantInt(Type::Int64Ty,AT->getNumElements()-1);
           else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty))
             GEP1Ops[i] = 
-                  Context->getConstantInt(Type::Int64Ty,VT->getNumElements()-1);
+                  Context.getConstantInt(Type::Int64Ty,VT->getNumElements()-1);
         }
       }
 
@@ -798,7 +798,7 @@ BasicAliasAnalysis::CheckGEPInstructions(
               return MayAlias;  // Be conservative with out-of-range accesses
           }
         } else {  // Conservatively assume the minimum value for this index
-          GEP2Ops[i] = Context->getNullValue(Op2->getType());
+          GEP2Ops[i] = Context.getNullValue(Op2->getType());
         }
       }
     }

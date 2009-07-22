@@ -21,7 +21,7 @@
 using namespace llvm;
 
 CCState::CCState(unsigned CC, bool isVarArg, const TargetMachine &tm,
-                 SmallVector<CCValAssign, 16> &locs, LLVMContext *C)
+                 SmallVector<CCValAssign, 16> &locs, LLVMContext &C)
   : CallingConv(CC), IsVarArg(isVarArg), TM(tm),
     TRI(*TM.getRegisterInfo()), Locs(locs), Context(C) {
   // No stack is used.

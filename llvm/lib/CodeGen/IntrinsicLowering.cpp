@@ -320,7 +320,7 @@ static void ReplaceFPIntrinsicWithCall(CallInst *CI, const char *Fname,
 
 void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   IRBuilder<> Builder(CI->getParent(), CI);
-  LLVMContext *Context = CI->getParent()->getContext();
+  LLVMContext &Context = CI->getContext();
 
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
@@ -346,7 +346,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   }
   case Intrinsic::sigsetjmp:
      if (CI->getType() != Type::VoidTy)
-       CI->replaceAllUsesWith(Context->getNullValue(CI->getType()));
+       CI->replaceAllUsesWith(Context.getNullValue(CI->getType()));
      break;
 
   case Intrinsic::longjmp: {
@@ -362,15 +362,15 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::ctpop:
-    CI->replaceAllUsesWith(LowerCTPOP(*Context, CI->getOperand(1), CI));
+    CI->replaceAllUsesWith(LowerCTPOP(Context, CI->getOperand(1), CI));
     break;
 
   case Intrinsic::bswap:
-    CI->replaceAllUsesWith(LowerBSWAP(*Context, CI->getOperand(1), CI));
+    CI->replaceAllUsesWith(LowerBSWAP(Context, CI->getOperand(1), CI));
     break;
     
   case Intrinsic::ctlz:
-    CI->replaceAllUsesWith(LowerCTLZ(*Context, CI->getOperand(1), CI));
+    CI->replaceAllUsesWith(LowerCTLZ(Context, CI->getOperand(1), CI));
     break;
 
   case Intrinsic::cttz: {
@@ -378,9 +378,9 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     Value *Src = CI->getOperand(1);
     Value *NotSrc = Builder.CreateNot(Src);
     NotSrc->setName(Src->getName() + ".not");
-    Value *SrcM1 = Context->getConstantInt(Src->getType(), 1);
+    Value *SrcM1 = Context.getConstantInt(Src->getType(), 1);
     SrcM1 = Builder.CreateSub(Src, SrcM1);
-    Src = LowerCTPOP(*Context, Builder.CreateAnd(NotSrc, SrcM1), CI);
+    Src = LowerCTPOP(Context, Builder.CreateAnd(NotSrc, SrcM1), CI);
     CI->replaceAllUsesWith(Src);
     break;
   }
@@ -393,7 +393,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                "save" : "restore") << " intrinsic.\n";
     Warned = true;
     if (Callee->getIntrinsicID() == Intrinsic::stacksave)
-      CI->replaceAllUsesWith(Context->getNullValue(CI->getType()));
+      CI->replaceAllUsesWith(Context.getNullValue(CI->getType()));
     break;
   }
     
@@ -414,7 +414,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::readcyclecounter: {
     cerr << "WARNING: this target does not support the llvm.readcyclecoun"
          << "ter intrinsic.  It is being lowered to a constant 0\n";
-    CI->replaceAllUsesWith(Context->getConstantInt(Type::Int64Ty, 0));
+    CI->replaceAllUsesWith(Context.getConstantInt(Type::Int64Ty, 0));
     break;
   }
 
@@ -428,13 +428,13 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::eh_exception:
   case Intrinsic::eh_selector_i32:
   case Intrinsic::eh_selector_i64:
-    CI->replaceAllUsesWith(Context->getNullValue(CI->getType()));
+    CI->replaceAllUsesWith(Context.getNullValue(CI->getType()));
     break;
 
   case Intrinsic::eh_typeid_for_i32:
   case Intrinsic::eh_typeid_for_i64:
     // Return something different to eh_selector.
-    CI->replaceAllUsesWith(Context->getConstantInt(CI->getType(), 1));
+    CI->replaceAllUsesWith(Context.getConstantInt(CI->getType(), 1));
     break;
 
   case Intrinsic::var_annotation:
@@ -506,7 +506,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::flt_rounds:
      // Lower to "round to the nearest"
      if (CI->getType() != Type::VoidTy)
-       CI->replaceAllUsesWith(Context->getConstantInt(CI->getType(), 1));
+       CI->replaceAllUsesWith(Context.getConstantInt(CI->getType(), 1));
      break;
   }
 

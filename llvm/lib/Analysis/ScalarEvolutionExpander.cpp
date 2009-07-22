@@ -55,7 +55,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
 
   // FIXME: keep track of the cast instruction.
   if (Constant *C = dyn_cast<Constant>(V))
-    return getContext()->getConstantExprCast(Op, C, Ty);
+    return getContext().getConstantExprCast(Op, C, Ty);
   
   if (Argument *A = dyn_cast<Argument>(V)) {
     // Check to see if there is already a cast!
@@ -126,7 +126,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
   // Fold a binop with constant operands.
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
-      return getContext()->getConstantExpr(Opcode, CLHS, CRHS);
+      return getContext().getConstantExpr(Opcode, CLHS, CRHS);
 
   // Do a quick scan to see if we have this binop nearby.  If so, reuse it.
   unsigned ScanLimit = 6;
@@ -167,7 +167,7 @@ static bool FactorOutConstant(const SCEV *&S,
   // For a Constant, check for a multiple of the given factor.
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
     ConstantInt *CI =
-      SE.getContext()->getConstantInt(C->getValue()->getValue().sdiv(Factor));
+      SE.getContext().getConstantInt(C->getValue()->getValue().sdiv(Factor));
     // If the quotient is zero and the remainder is non-zero, reject
     // the value at this scale. It will be considered for subsequent
     // smaller scales.
@@ -285,7 +285,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     Ops = NewOps;
     AnyNonZeroIndices |= !ScaledOps.empty();
     Value *Scaled = ScaledOps.empty() ?
-                    getContext()->getNullValue(Ty) :
+                    getContext().getNullValue(Ty) :
                     expandCodeFor(SE.getAddExpr(ScaledOps), Ty);
     GepIndices.push_back(Scaled);
 
@@ -299,7 +299,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
             if (FullOffset < SL.getSizeInBytes()) {
               unsigned ElIdx = SL.getElementContainingOffset(FullOffset);
               GepIndices.push_back(
-                            getContext()->getConstantInt(Type::Int32Ty, ElIdx));
+                            getContext().getConstantInt(Type::Int32Ty, ElIdx));
               ElTy = STy->getTypeAtIndex(ElIdx);
               Ops[0] =
                 SE.getConstant(Ty, FullOffset - SL.getElementOffset(ElIdx));
@@ -328,7 +328,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     // Fold a GEP with constant operands.
     if (Constant *CLHS = dyn_cast<Constant>(V))
       if (Constant *CRHS = dyn_cast<Constant>(Idx))
-        return getContext()->getConstantExprGetElementPtr(CLHS, &CRHS, 1);
+        return getContext().getConstantExprGetElementPtr(CLHS, &CRHS, 1);
 
     // Do a quick scan to see if we have this GEP nearby.  If so, reuse it.
     unsigned ScanLimit = 6;
@@ -400,7 +400,7 @@ Value *SCEVExpander::visitMulExpr(const SCEVMulExpr *S) {
 
   // -1 * ...  --->  0 - ...
   if (FirstOp == 1)
-    V = InsertBinop(Instruction::Sub, getContext()->getNullValue(Ty), V);
+    V = InsertBinop(Instruction::Sub, getContext().getNullValue(Ty), V);
   return V;
 }
 
@@ -412,7 +412,7 @@ Value *SCEVExpander::visitUDivExpr(const SCEVUDivExpr *S) {
     const APInt &RHS = SC->getValue()->getValue();
     if (RHS.isPowerOf2())
       return InsertBinop(Instruction::LShr, LHS,
-                         getContext()->getConstantInt(Ty, RHS.logBase2()));
+                         getContext().getConstantInt(Ty, RHS.logBase2()));
   }
 
   Value *RHS = expandCodeFor(S->getRHS(), Ty);
@@ -522,7 +522,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     BasicBlock *Preheader = L->getLoopPreheader();
     PHINode *PN = PHINode::Create(Ty, "indvar", Header->begin());
     InsertedValues.insert(PN);
-    PN->addIncoming(getContext()->getNullValue(Ty), Preheader);
+    PN->addIncoming(getContext().getNullValue(Ty), Preheader);
 
     pred_iterator HPI = pred_begin(Header);
     assert(HPI != pred_end(Header) && "Loop with zero preds???");
@@ -532,7 +532,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
     // Insert a unit add instruction right before the terminator corresponding
     // to the back-edge.
-    Constant *One = getContext()->getConstantInt(Ty, 1);
+    Constant *One = getContext().getConstantInt(Ty, 1);
     Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
                                                  (*HPI)->getTerminator());
     InsertedValues.insert(Add);

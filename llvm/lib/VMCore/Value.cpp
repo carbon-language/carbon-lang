@@ -386,6 +386,8 @@ Value *Value::DoPHITranslation(const BasicBlock *CurBB,
   return this;
 }
 
+LLVMContext &Value::getContext() const { return VTy->getContext(); }
+
 //===----------------------------------------------------------------------===//
 //                             ValueHandleBase Class
 //===----------------------------------------------------------------------===//

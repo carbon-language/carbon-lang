@@ -230,7 +230,8 @@ Function *SRETPromotion::cloneFunctionBody(Function *F,
     AttributesVec.push_back(AttributeWithIndex::get(~0, attrs));
 
 
-  FunctionType *NFTy = Context->getFunctionType(STy, Params, FTy->isVarArg());
+  FunctionType *NFTy =
+    F->getContext().getFunctionType(STy, Params, FTy->isVarArg());
   Function *NF = Function::Create(NFTy, F->getLinkage());
   NF->takeName(F);
   NF->copyAttributesFrom(F);

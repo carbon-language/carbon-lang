@@ -102,8 +102,6 @@ bool InternalizePass::runOnModule(Module &M) {
   CallGraph *CG = getAnalysisIfAvailable<CallGraph>();
   CallGraphNode *ExternalNode = CG ? CG->getExternalCallingNode() : 0;
   
-  Context = &M.getContext();
-
   if (ExternalNames.empty()) {
     // Return if we're not in 'all but main' mode and have no external api
     if (!AllButMain)

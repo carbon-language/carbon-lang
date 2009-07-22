@@ -645,8 +645,7 @@ public:
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
     const std::string &NameStr = ""  ///< Name of the instruction
-  ) : CmpInst(InsertBefore->getParent()->getContext()->
-                makeCmpResultType(LHS->getType()),
+  ) : CmpInst(InsertBefore->getContext().makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
@@ -667,7 +666,7 @@ public:
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
     const std::string &NameStr = ""  ///< Name of the instruction
-  ) : CmpInst(InsertAtEnd.getContext()->makeCmpResultType(LHS->getType()),
+  ) : CmpInst(InsertAtEnd.getContext().makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr,
               &InsertAtEnd) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
@@ -821,8 +820,7 @@ public:
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
     const std::string &NameStr = ""  ///< Name of the instruction
-  ) : CmpInst(InsertBefore->getParent()->getContext()->
-                makeCmpResultType(LHS->getType()),
+  ) : CmpInst(InsertBefore->getContext().makeCmpResultType(LHS->getType()),
               Instruction::FCmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
@@ -841,7 +839,7 @@ public:
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
     const std::string &NameStr = ""  ///< Name of the instruction
-  ) : CmpInst(InsertAtEnd.getContext()->makeCmpResultType(LHS->getType()),
+  ) : CmpInst(InsertAtEnd.getContext().makeCmpResultType(LHS->getType()),
               Instruction::FCmp, pred, LHS, RHS, NameStr,
               &InsertAtEnd) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&

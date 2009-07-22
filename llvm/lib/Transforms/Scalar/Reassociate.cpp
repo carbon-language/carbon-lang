@@ -200,8 +200,8 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
 ///
 static Instruction *LowerNegateToMultiply(Instruction *Neg,
                               std::map<AssertingVH<>, unsigned> &ValueRankMap,
-                              LLVMContext *Context) {
-  Constant *Cst = Context->getAllOnesValue(Neg->getType());
+                              LLVMContext &Context) {
+  Constant *Cst = Neg->getContext().getAllOnesValue(Neg->getType());
 
   Instruction *Res = BinaryOperator::CreateMul(Neg->getOperand(1), Cst, "",Neg);
   ValueRankMap.erase(Neg);
@@ -256,6 +256,7 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
                                     std::vector<ValueEntry> &Ops) {
   Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
   unsigned Opcode = I->getOpcode();
+  LLVMContext &Context = I->getContext();
 
   // First step, linearize the expression if it is in ((A+B)+(C+D)) form.
   BinaryOperator *LHSBO = isReassociableOp(LHS, Opcode);
@@ -284,8 +285,8 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
       Ops.push_back(ValueEntry(getRank(RHS), RHS));
       
       // Clear the leaves out.
-      I->setOperand(0, Context->getUndef(I->getType()));
-      I->setOperand(1, Context->getUndef(I->getType()));
+      I->setOperand(0, Context.getUndef(I->getType()));
+      I->setOperand(1, Context.getUndef(I->getType()));
       return;
     } else {
       // Turn X+(Y+Z) -> (Y+Z)+X
@@ -320,7 +321,7 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
   Ops.push_back(ValueEntry(getRank(RHS), RHS));
   
   // Clear the RHS leaf out.
-  I->setOperand(1, Context->getUndef(I->getType()));
+  I->setOperand(1, Context.getUndef(I->getType()));
 }
 
 // RewriteExprTree - Now that the operands for this expression tree are
@@ -373,7 +374,7 @@ void Reassociate::RewriteExprTree(BinaryOperator *I,
 // version of the value is returned, and BI is left pointing at the instruction
 // that should be processed next by the reassociation pass.
 //
-static Value *NegateValue(LLVMContext *Context, Value *V, Instruction *BI) {
+static Value *NegateValue(LLVMContext &Context, Value *V, Instruction *BI) {
   // We are trying to expose opportunity for reassociation.  One of the things
   // that we want to do to achieve this is to push a negation as deep into an
   // expression chain as possible, to expose the add instructions.  In practice,
@@ -402,12 +403,12 @@ static Value *NegateValue(LLVMContext *Context, Value *V, Instruction *BI) {
   // Insert a 'neg' instruction that subtracts the value from zero to get the
   // negation.
   //
-  return BinaryOperator::CreateNeg(*Context, V, V->getName() + ".neg", BI);
+  return BinaryOperator::CreateNeg(Context, V, V->getName() + ".neg", BI);
 }
 
 /// ShouldBreakUpSubtract - Return true if we should break up this subtract of
 /// X-Y into (X + -Y).
-static bool ShouldBreakUpSubtract(LLVMContext *Context, Instruction *Sub) {
+static bool ShouldBreakUpSubtract(LLVMContext &Context, Instruction *Sub) {
   // If this is a negation, we can't split it up!
   if (BinaryOperator::isNeg(Sub))
     return false;
@@ -431,7 +432,7 @@ static bool ShouldBreakUpSubtract(LLVMContext *Context, Instruction *Sub) {
 /// BreakUpSubtract - If we have (X-Y), and if either X is an add, or if this is
 /// only used by an add, transform this into (X+(0-Y)) to promote better
 /// reassociation.
-static Instruction *BreakUpSubtract(LLVMContext *Context, Instruction *Sub,
+static Instruction *BreakUpSubtract(LLVMContext &Context, Instruction *Sub,
                               std::map<AssertingVH<>, unsigned> &ValueRankMap) {
   // Convert a subtract into an add and a neg instruction... so that sub
   // instructions can be commuted with other add instructions...
@@ -458,16 +459,16 @@ static Instruction *BreakUpSubtract(LLVMContext *Context, Instruction *Sub,
 /// reassociation.
 static Instruction *ConvertShiftToMul(Instruction *Shl, 
                               std::map<AssertingVH<>, unsigned> &ValueRankMap,
-                              LLVMContext *Context) {
+                              LLVMContext &Context) {
   // If an operand of this shift is a reassociable multiply, or if the shift
   // is used by a reassociable multiply or add, turn into a multiply.
   if (isReassociableOp(Shl->getOperand(0), Instruction::Mul) ||
       (Shl->hasOneUse() && 
        (isReassociableOp(Shl->use_back(), Instruction::Mul) ||
         isReassociableOp(Shl->use_back(), Instruction::Add)))) {
-    Constant *MulCst = Context->getConstantInt(Shl->getType(), 1);
+    Constant *MulCst = Context.getConstantInt(Shl->getType(), 1);
     MulCst =
-        Context->getConstantExprShl(MulCst, cast<Constant>(Shl->getOperand(1)));
+        Context.getConstantExprShl(MulCst, cast<Constant>(Shl->getOperand(1)));
     
     Instruction *Mul = BinaryOperator::CreateMul(Shl->getOperand(0), MulCst,
                                                  "", Shl);
@@ -562,12 +563,14 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
   bool IterateOptimization = false;
   if (Ops.size() == 1) return Ops[0].Op;
 
+  LLVMContext &Context = I->getContext();
+
   unsigned Opcode = I->getOpcode();
   
   if (Constant *V1 = dyn_cast<Constant>(Ops[Ops.size()-2].Op))
     if (Constant *V2 = dyn_cast<Constant>(Ops.back().Op)) {
       Ops.pop_back();
-      Ops.back().Op = Context->getConstantExpr(Opcode, V1, V2);
+      Ops.back().Op = Context.getConstantExpr(Opcode, V1, V2);
       return OptimizeExpression(I, Ops);
     }
 
@@ -623,10 +626,10 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
         if (FoundX != i) {
           if (Opcode == Instruction::And) {   // ...&X&~X = 0
             ++NumAnnihil;
-            return Context->getNullValue(X->getType());
+            return Context.getNullValue(X->getType());
           } else if (Opcode == Instruction::Or) {   // ...|X|~X = -1
             ++NumAnnihil;
-            return Context->getAllOnesValue(X->getType());
+            return Context.getAllOnesValue(X->getType());
           }
         }
       }
@@ -645,7 +648,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
           assert(Opcode == Instruction::Xor);
           if (e == 2) {
             ++NumAnnihil;
-            return Context->getNullValue(Ops[0].Op->getType());
+            return Context.getNullValue(Ops[0].Op->getType());
           }
           // ... X^X -> ...
           Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
@@ -670,7 +673,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
           // Remove X and -X from the operand list.
           if (Ops.size() == 2) {
             ++NumAnnihil;
-            return Context->getNullValue(X->getType());
+            return Context.getNullValue(X->getType());
           } else {
             Ops.erase(Ops.begin()+i);
             if (i < FoundX)
@@ -781,6 +784,8 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
 /// ReassociateBB - Inspect all of the instructions in this basic block,
 /// reassociating them as we go.
 void Reassociate::ReassociateBB(BasicBlock *BB) {
+  LLVMContext &Context = BB->getContext();
+  
   for (BasicBlock::iterator BBI = BB->begin(); BBI != BB->end(); ) {
     Instruction *BI = BBI++;
     if (BI->getOpcode() == Instruction::Shl &&

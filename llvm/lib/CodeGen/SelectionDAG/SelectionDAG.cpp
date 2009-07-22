@@ -816,7 +816,7 @@ void SelectionDAG::init(MachineFunction &mf, MachineModuleInfo *mmi,
   MF = &mf;
   MMI = mmi;
   DW = dw;
-  Context = mf.getFunction()->getContext();  
+  Context = &mf.getFunction()->getContext();  
 }
 
 SelectionDAG::~SelectionDAG() {

@@ -435,7 +435,8 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
          << "' folding condition to '" << BranchDir << "': "
          << *BB->getTerminator();
     ++NumFolds;
-    DestBI->setCondition(Context->getConstantInt(Type::Int1Ty, BranchDir));
+    DestBI->setCondition(BB->getContext().getConstantInt(Type::Int1Ty, 
+                                                         BranchDir));
     ConstantFoldTerminator(BB);
     return true;
   }
@@ -564,7 +565,8 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     
     // If the returned value is the load itself, replace with an undef. This can
     // only happen in dead loops.
-    if (AvailableVal == LI) AvailableVal = Context->getUndef(LI->getType());
+    if (AvailableVal == LI) AvailableVal = 
+                            AvailableVal->getContext().getUndef(LI->getType());
     LI->replaceAllUsesWith(AvailableVal);
     LI->eraseFromParent();
     return true;
@@ -718,7 +720,7 @@ bool JumpThreading::ProcessJumpOnPHI(PHINode *PN) {
   // Next, figure out which successor we are threading to.
   BasicBlock *SuccBB;
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
-    SuccBB = BI->getSuccessor(PredCst == Context->getFalse());
+    SuccBB = BI->getSuccessor(PredCst == PredBB->getContext().getFalse());
   else {
     SwitchInst *SI = cast<SwitchInst>(BB->getTerminator());
     SuccBB = SI->getSuccessor(SI->findCaseValue(PredCst));
@@ -756,7 +758,7 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   // We can only do the simplification for phi nodes of 'false' with AND or
   // 'true' with OR.  See if we have any entries in the phi for this.
   unsigned PredNo = ~0U;
-  ConstantInt *PredCst = Context->getConstantInt(Type::Int1Ty, !isAnd);
+  ConstantInt *PredCst = V->getContext().getConstantInt(Type::Int1Ty, !isAnd);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == PredCst) {
       PredNo = i;
@@ -795,15 +797,15 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
 /// result can not be determined, a null pointer is returned.
 static Constant *GetResultOfComparison(CmpInst::Predicate pred,
                                        Value *LHS, Value *RHS,
-                                       LLVMContext *Context) {
+                                       LLVMContext &Context) {
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
-      return Context->getConstantExprCompare(pred, CLHS, CRHS);
+      return Context.getConstantExprCompare(pred, CLHS, CRHS);
 
   if (LHS == RHS)
     if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType()))
       return ICmpInst::isTrueWhenEqual(pred) ? 
-                 Context->getTrue() : Context->getFalse();
+                 Context.getTrue() : Context.getFalse();
 
   return 0;
 }
@@ -829,7 +831,7 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
     PredVal = PN->getIncomingValue(i);
     
     Constant *Res = GetResultOfComparison(Cmp->getPredicate(), PredVal,
-                                          RHS, Context);
+                                          RHS, Cmp->getContext());
     if (!Res) {
       PredVal = 0;
       continue;
@@ -931,7 +933,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
   // Clone the non-phi instructions of BB into NewBB, keeping track of the
   // mapping and using it to remap operands in the cloned instructions.
   for (; !isa<TerminatorInst>(BI); ++BI) {
-    Instruction *New = BI->clone(*Context);
+    Instruction *New = BI->clone(BI->getContext());
     New->setName(BI->getNameStart());
     NewBB->getInstList().push_back(New);
     ValueMapping[BI] = New;

@@ -88,7 +88,7 @@ private:
 public:
   /// getContext - Get the context in which this basic block lives,
   /// or null if it is not currently attached to a function.
-  LLVMContext *getContext() const;
+  LLVMContext &getContext() const;
   
   /// Instruction iterators...
   typedef InstListType::iterator                              iterator;

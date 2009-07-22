@@ -1385,7 +1385,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG, TargetMachine &TM) {
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
   DebugLoc dl = Op.getDebugLoc();
-  CCState CCInfo(CC, isVarArg, TM, RVLocs, DAG.getContext());
+  CCState CCInfo(CC, isVarArg, TM, RVLocs, *DAG.getContext());
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_SPU);
 
   // If this is the first return lowered for this function, add the regs to the

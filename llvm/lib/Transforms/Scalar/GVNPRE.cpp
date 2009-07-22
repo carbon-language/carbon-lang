@@ -800,6 +800,8 @@ void GVNPRE::val_replace(ValueNumberedSet& s, Value* v) {
 Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
   if (V == 0)
     return 0;
+    
+  LLVMContext &Context = V->getContext();
   
   // Unary Operations
   if (CastInst* U = dyn_cast<CastInst>(V)) {
@@ -862,7 +864,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
                                         newOp1, newOp2,
                                         BO->getName()+".expr");
       else if (CmpInst* C = dyn_cast<CmpInst>(U))
-        newVal = CmpInst::Create(*Context, C->getOpcode(),
+        newVal = CmpInst::Create(Context, C->getOpcode(),
                                  C->getPredicate(),
                                  newOp1, newOp2,
                                  C->getName()+".expr");
@@ -1594,6 +1596,7 @@ void GVNPRE::buildsets(Function& F) {
 void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                            DenseMap<BasicBlock*, Value*>& avail,
                     std::map<BasicBlock*, ValueNumberedSet>& new_sets) {
+  LLVMContext &Context = e->getContext();
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
     Value* e2 = avail[*PI];
     if (!availableOut[*PI].test(VN.lookup(e2))) {
@@ -1680,7 +1683,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
                                         BO->getName()+".gvnpre",
                                         (*PI)->getTerminator());
       else if (CmpInst* C = dyn_cast<CmpInst>(U))
-        newVal = CmpInst::Create(*Context, C->getOpcode(),
+        newVal = CmpInst::Create(Context, C->getOpcode(),
                                  C->getPredicate(), s1, s2,
                                  C->getName()+".gvnpre", 
                                  (*PI)->getTerminator());

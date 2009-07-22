@@ -142,19 +142,19 @@ class CCState {
   const TargetMachine &TM;
   const TargetRegisterInfo &TRI;
   SmallVector<CCValAssign, 16> &Locs;
-  LLVMContext *Context;
+  LLVMContext &Context;
   
   unsigned StackOffset;
   SmallVector<uint32_t, 16> UsedRegs;
 public:
   CCState(unsigned CC, bool isVarArg, const TargetMachine &TM,
-          SmallVector<CCValAssign, 16> &locs, LLVMContext *C);
+          SmallVector<CCValAssign, 16> &locs, LLVMContext &C);
   
   void addLoc(const CCValAssign &V) {
     Locs.push_back(V);
   }
   
-  LLVMContext *getContext() const { return Context; }
+  LLVMContext &getContext() const { return Context; }
   const TargetMachine &getTarget() const { return TM; }
   unsigned getCallingConv() const { return CallingConv; }
   bool isVarArg() const { return IsVarArg; }

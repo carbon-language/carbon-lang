@@ -85,7 +85,8 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     InstCombiner() : FunctionPass(&ID) {}
 
-    LLVMContext *getContext() { return Context; }
+    LLVMContext *Context;
+    LLVMContext *getContext() const { return Context; }
 
     /// AddToWorkList - Add the specified instruction to the worklist if it
     /// isn't already in it.
@@ -11557,7 +11558,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
           if (GV->isConstant() && GV->hasDefinitiveInitializer())
             if (Constant *V = 
                ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE, 
-                                                      Context))
+                                                      *Context))
               return ReplaceInstUsesWith(LI, V);
         if (CE->getOperand(0)->isNullValue()) {
           // Insert a new store to null instruction before the load to indicate
@@ -13082,6 +13083,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
 
 bool InstCombiner::runOnFunction(Function &F) {
   MustPreserveLCSSA = mustPreserveAnalysisID(LCSSAID);
+  Context = &F.getContext();
   
   bool EverMadeChange = false;
 

@@ -368,7 +368,7 @@ namespace llvm {
     static char ID; // Pass identification, replacement for typeid
     ScalarEvolution();
 
-    LLVMContext *getContext() const { return Context; }
+    LLVMContext &getContext() const { return F->getContext(); }
 
     /// isSCEVable - Test if values of the given type are analyzable within
     /// the SCEV framework. This primarily includes integer types, and it

@@ -37,7 +37,6 @@ public:
 
   // Initialization and finalization hooks.
   virtual bool doInitialization(Loop *L, LPPassManager &LPM) {
-    Context = L->getHeader()->getContext();
     return false;
   }
 

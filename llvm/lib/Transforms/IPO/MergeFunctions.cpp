@@ -520,7 +520,7 @@ static void AliasGToF(Function *F, Function *G) {
 
   GlobalAlias *GA = new GlobalAlias(
     G->getType(), G->getLinkage(), "",
-    F->getContext()->getConstantExprBitCast(F, G->getType()), G->getParent());
+    F->getContext().getConstantExprBitCast(F, G->getType()), G->getParent());
   F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
   GA->takeName(G);
   GA->setVisibility(G->getVisibility());
@@ -615,8 +615,6 @@ static bool fold(std::vector<Function *> &FnVec, unsigned i, unsigned j) {
 
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
-
-  Context = &M.getContext();
 
   std::map<unsigned long, std::vector<Function *> > FnMap;
 

@@ -824,7 +824,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
                                  SmallVector<unsigned, 10> &Idxs,
                                  unsigned IdxSkip,
-                                 LLVMContext *Context,
+                                 LLVMContext &Context,
                                  Instruction *InsertBefore) {
   const llvm::StructType *STy = llvm::dyn_cast<llvm::StructType>(IndexedType);
   if (STy) {
@@ -882,13 +882,13 @@ Value *BuildSubAggregate(Value *From, Value* To, const Type *IndexedType,
 //
 // All inserted insertvalue instructions are inserted before InsertBefore
 Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
-                         const unsigned *idx_end, LLVMContext *Context,
+                         const unsigned *idx_end, LLVMContext &Context,
                          Instruction *InsertBefore) {
   assert(InsertBefore && "Must have someplace to insert!");
   const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
                                                              idx_begin,
                                                              idx_end);
-  Value *To = Context->getUndef(IndexedType);
+  Value *To = Context.getUndef(IndexedType);
   SmallVector<unsigned, 10> Idxs(idx_begin, idx_end);
   unsigned IdxSkip = Idxs.size();
 
@@ -903,7 +903,7 @@ Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
 /// If InsertBefore is not null, this function will duplicate (modified)
 /// insertvalues when a part of a nested struct is extracted.
 Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
-                         const unsigned *idx_end, LLVMContext *Context,
+                         const unsigned *idx_end, LLVMContext &Context,
                          Instruction *InsertBefore) {
   // Nothing to index? Just return V then (this is useful at the end of our
   // recursion)
@@ -917,11 +917,11 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
   const CompositeType *PTy = cast<CompositeType>(V->getType());
 
   if (isa<UndefValue>(V))
-    return Context->getUndef(ExtractValueInst::getIndexedType(PTy,
+    return Context.getUndef(ExtractValueInst::getIndexedType(PTy,
                                                               idx_begin,
                                                               idx_end));
   else if (isa<ConstantAggregateZero>(V))
-    return Context->getNullValue(ExtractValueInst::getIndexedType(PTy, 
+    return Context.getNullValue(ExtractValueInst::getIndexedType(PTy, 
                                                                   idx_begin,
                                                                   idx_end));
   else if (Constant *C = dyn_cast<Constant>(V)) {

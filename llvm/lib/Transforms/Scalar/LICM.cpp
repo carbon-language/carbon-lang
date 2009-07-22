@@ -475,6 +475,8 @@ void LICM::sink(Instruction &I) {
   ++NumSunk;
   Changed = true;
 
+  LLVMContext &Context = I.getContext();
+
   // The case where there is only a single exit node of this loop is common
   // enough that we handle it as a special (more efficient) case.  It is more
   // efficient to handle because there are no PHI nodes that need to be placed.
@@ -483,7 +485,7 @@ void LICM::sink(Instruction &I) {
       // Instruction is not used, just delete it.
       CurAST->deleteValue(&I);
       if (!I.use_empty())  // If I has users in unreachable blocks, eliminate.
-        I.replaceAllUsesWith(Context->getUndef(I.getType()));
+        I.replaceAllUsesWith(Context.getUndef(I.getType()));
       I.eraseFromParent();
     } else {
       // Move the instruction to the start of the exit block, after any PHI
@@ -497,7 +499,7 @@ void LICM::sink(Instruction &I) {
     // The instruction is actually dead if there ARE NO exit blocks.
     CurAST->deleteValue(&I);
     if (!I.use_empty())  // If I has users in unreachable blocks, eliminate.
-      I.replaceAllUsesWith(Context->getUndef(I.getType()));
+      I.replaceAllUsesWith(Context.getUndef(I.getType()));
     I.eraseFromParent();
   } else {
     // Otherwise, if we have multiple exits, use the PromoteMem2Reg function to
@@ -570,7 +572,7 @@ void LICM::sink(Instruction &I) {
             ExitBlock->getInstList().insert(InsertPt, &I);
             New = &I;
           } else {
-            New = I.clone(*Context);
+            New = I.clone(Context);
             CurAST->copyValue(&I, New);
             if (!I.getName().empty())
               New->setName(I.getName()+".le");
@@ -768,7 +770,7 @@ void LICM::PromoteValuesInLoop() {
   PromotedAllocas.reserve(PromotedValues.size());
   for (unsigned i = 0, e = PromotedValues.size(); i != e; ++i)
     PromotedAllocas.push_back(PromotedValues[i].first);
-  PromoteMemToReg(PromotedAllocas, *DT, *DF, Context, CurAST);
+  PromoteMemToReg(PromotedAllocas, *DT, *DF, Preheader->getContext(), CurAST);
 }
 
 /// FindPromotableValuesInLoop - Check the current loop for stores to definite

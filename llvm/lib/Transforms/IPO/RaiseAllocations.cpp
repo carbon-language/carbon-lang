@@ -70,8 +70,8 @@ ModulePass *llvm::createRaiseAllocationsPass() {
 // function into the appropriate instruction.
 //
 void RaiseAllocations::doInitialization(Module &M) {
-  Context = &M.getContext();
-
+  LLVMContext &Context = M.getContext();
+  
   // Get Malloc and free prototypes if they exist!
   MallocFunc = M.getFunction("malloc");
   if (MallocFunc) {
@@ -79,7 +79,7 @@ void RaiseAllocations::doInitialization(Module &M) {
 
     // Get the expected prototype for malloc
     const FunctionType *Malloc1Type = 
-      Context->getFunctionType(Context->getPointerTypeUnqual(Type::Int8Ty),
+      Context.getFunctionType(Context.getPointerTypeUnqual(Type::Int8Ty),
                       std::vector<const Type*>(1, Type::Int64Ty), false);
 
     // Chck to see if we got the expected malloc
@@ -87,14 +87,14 @@ void RaiseAllocations::doInitialization(Module &M) {
       // Check to see if the prototype is wrong, giving us i8*(i32) * malloc
       // This handles the common declaration of: 'void *malloc(unsigned);'
       const FunctionType *Malloc2Type = 
-        Context->getFunctionType(Context->getPointerTypeUnqual(Type::Int8Ty),
+        Context.getFunctionType(Context.getPointerTypeUnqual(Type::Int8Ty),
                           std::vector<const Type*>(1, Type::Int32Ty), false);
       if (TyWeHave != Malloc2Type) {
         // Check to see if the prototype is missing, giving us 
         // i8*(...) * malloc
         // This handles the common declaration of: 'void *malloc();'
         const FunctionType *Malloc3Type = 
-          Context->getFunctionType(Context->getPointerTypeUnqual(Type::Int8Ty), 
+          Context.getFunctionType(Context.getPointerTypeUnqual(Type::Int8Ty), 
                                     true);
         if (TyWeHave != Malloc3Type)
           // Give up
@@ -108,21 +108,21 @@ void RaiseAllocations::doInitialization(Module &M) {
     const FunctionType* TyWeHave = FreeFunc->getFunctionType();
     
     // Get the expected prototype for void free(i8*)
-    const FunctionType *Free1Type = Context->getFunctionType(Type::VoidTy,
-      std::vector<const Type*>(1, Context->getPointerTypeUnqual(Type::Int8Ty)), 
+    const FunctionType *Free1Type = Context.getFunctionType(Type::VoidTy,
+      std::vector<const Type*>(1, Context.getPointerTypeUnqual(Type::Int8Ty)), 
                                false);
 
     if (TyWeHave != Free1Type) {
       // Check to see if the prototype was forgotten, giving us 
       // void (...) * free
       // This handles the common forward declaration of: 'void free();'
-      const FunctionType* Free2Type = Context->getFunctionType(Type::VoidTy, 
+      const FunctionType* Free2Type = Context.getFunctionType(Type::VoidTy, 
                                                                true);
 
       if (TyWeHave != Free2Type) {
         // One last try, check to see if we can find free as 
         // int (...)* free.  This handles the case where NOTHING was declared.
-        const FunctionType* Free3Type = Context->getFunctionType(Type::Int32Ty,
+        const FunctionType* Free3Type = Context.getFunctionType(Type::Int32Ty,
                                                                  true);
         
         if (TyWeHave != Free3Type) {
@@ -143,6 +143,8 @@ void RaiseAllocations::doInitialization(Module &M) {
 bool RaiseAllocations::runOnModule(Module &M) {
   // Find the malloc/free prototypes...
   doInitialization(M);
+  
+  LLVMContext &Context = M.getContext();
 
   bool Changed = false;
 
@@ -222,7 +224,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
           Value *Source = *CS.arg_begin();
           if (!isa<PointerType>(Source->getType()))
             Source = new IntToPtrInst(Source,           
-                                   Context->getPointerTypeUnqual(Type::Int8Ty), 
+                                   Context.getPointerTypeUnqual(Type::Int8Ty), 
                                       "FreePtrCast", I);
           new FreeInst(Source, I);
 
@@ -233,7 +235,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
 
           // Delete the old call site
           if (I->getType() != Type::VoidTy)
-            I->replaceAllUsesWith(Context->getUndef(I->getType()));
+            I->replaceAllUsesWith(Context.getUndef(I->getType()));
           I->eraseFromParent();
           Changed = true;
           ++NumRaised;

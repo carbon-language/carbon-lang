@@ -305,7 +305,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
   // keeping track of the mapping...
   //
   for (; BI != DestBlock->end(); ++BI) {
-    Instruction *New = BI->clone(*Context);
+    Instruction *New = BI->clone(BI->getContext());
     New->setName(BI->getName());
     SourceBlock->getInstList().push_back(New);
     ValueMapping[BI] = New;
@@ -359,7 +359,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
       Instruction *Inst = BI++;
       if (isInstructionTriviallyDead(Inst))
         Inst->eraseFromParent();
-      else if (Constant *C = ConstantFoldInstruction(Inst, Context)) {
+      else if (Constant *C = ConstantFoldInstruction(Inst, BI->getContext())) {
         Inst->replaceAllUsesWith(C);
         Inst->eraseFromParent();
       }

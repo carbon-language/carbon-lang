@@ -1049,7 +1049,7 @@ SDValue X86TargetLowering::LowerRET(SDValue Op, SelectionDAG &DAG) {
   SmallVector<CCValAssign, 16> RVLocs;
   unsigned CC = DAG.getMachineFunction().getFunction()->getCallingConv();
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs, DAG.getContext());
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs, *DAG.getContext());
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_X86);
 
   // If this is the first return lowered for this function, add the regs to the
@@ -1176,7 +1176,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   bool isVarArg = TheCall->isVarArg();
   bool Is64Bit = Subtarget->is64Bit();
   CCState CCInfo(CallingConv, isVarArg, getTargetMachine(),
-                 RVLocs, DAG.getContext());
+                 RVLocs, *DAG.getContext());
   CCInfo.AnalyzeCallResult(TheCall, RetCC_X86);
 
   SmallVector<SDValue, 8> ResultVals;
@@ -1385,7 +1385,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG) {
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Op.getNode(), CCAssignFnForNode(CC));
 
   SmallVector<SDValue, 8> ArgValues;
@@ -1680,7 +1680,7 @@ SDValue X86TargetLowering::LowerCALL(SDValue Op, SelectionDAG &DAG) {
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeCallOperands(TheCall, CCAssignFnForNode(CC));
 
   // Get a count of how many bytes are to be pushed on the stack.

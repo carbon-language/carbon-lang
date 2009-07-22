@@ -30,8 +30,8 @@ ValueSymbolTable *BasicBlock::getValueSymbolTable() {
   return 0;
 }
 
-LLVMContext *BasicBlock::getContext() const {
-  return Parent ? Parent->getContext() : 0;
+LLVMContext &BasicBlock::getContext() const {
+  return getType()->getContext();
 }
 
 // Explicit instantiation of SymbolTableListTraits since some of the methods
@@ -203,7 +203,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
           PN->replaceAllUsesWith(PN->getOperand(0));
         else
           // We are left with an infinite loop with no entries: kill the PHI.
-          PN->replaceAllUsesWith(getContext()->getUndef(PN->getType()));
+          PN->replaceAllUsesWith(getContext().getUndef(PN->getType()));
         getInstList().pop_front();    // Remove the PHI node
       }
 

@@ -65,7 +65,7 @@ public:
     Caller = CI->getParent()->getParent();
     this->TD = &TD;
     if (CI->getCalledFunction())
-      Context = CI->getCalledFunction()->getContext();
+      Context = &CI->getCalledFunction()->getContext();
     return CallOptimizer(CI->getCalledFunction(), CI, B);
   }
 
@@ -1639,7 +1639,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
   
   const TargetData &TD = getAnalysis<TargetData>();
   
-  IRBuilder<> Builder(*Context);
+  IRBuilder<> Builder(F.getContext());
 
   bool Changed = false;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
@@ -1730,8 +1730,6 @@ void SimplifyLibCalls::setDoesNotAlias(Function &F, unsigned n) {
 /// doInitialization - Add attributes to well-known functions.
 ///
 bool SimplifyLibCalls::doInitialization(Module &M) {
-  Context = &M.getContext();
-  
   Modified = false;
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     Function &F = *I;

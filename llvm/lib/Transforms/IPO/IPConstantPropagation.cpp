@@ -56,8 +56,6 @@ bool IPCP::runOnModule(Module &M) {
   bool Changed = false;
   bool LocalChange = true;
 
-  Context = &M.getContext();
-
   // FIXME: instead of using smart algorithms, we just iterate until we stop
   // making changes.
   while (LocalChange) {
@@ -136,7 +134,7 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
       continue;
   
     Value *V = ArgumentConstants[i].first;
-    if (V == 0) V = Context->getUndef(AI->getType());
+    if (V == 0) V = F.getContext().getUndef(AI->getType());
     AI->replaceAllUsesWith(V);
     ++NumArgumentsProped;
     MadeChange = true;
@@ -161,15 +159,17 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   // propagate information about its results into callers.
   if (F.mayBeOverridden())
     return false;
+    
+  LLVMContext &Context = F.getContext();
   
   // Check to see if this function returns a constant.
   SmallVector<Value *,4> RetVals;
   const StructType *STy = dyn_cast<StructType>(F.getReturnType());
   if (STy)
     for (unsigned i = 0, e = STy->getNumElements(); i < e; ++i) 
-      RetVals.push_back(Context->getUndef(STy->getElementType(i)));
+      RetVals.push_back(Context.getUndef(STy->getElementType(i)));
   else
-    RetVals.push_back(Context->getUndef(F.getReturnType()));
+    RetVals.push_back(Context.getUndef(F.getReturnType()));
 
   unsigned NumNonConstant = 0;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)

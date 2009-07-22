@@ -272,7 +272,7 @@ bool X86FastISel::X86FastEmitStore(MVT VT, Value *Val,
                                    const X86AddressMode &AM) {
   // Handle 'null' like i32/i64 0.
   if (isa<ConstantPointerNull>(Val))
-    Val = Context->getNullValue(TD.getIntPtrType());
+    Val = Val->getContext().getNullValue(TD.getIntPtrType());
   
   // If this is a store of a simple constant, fold the constant into the store.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
@@ -672,7 +672,7 @@ bool X86FastISel::X86FastEmitCompare(Value *Op0, Value *Op1, MVT VT) {
   
   // Handle 'null' like i32/i64 0.
   if (isa<ConstantPointerNull>(Op1))
-    Op1 = Context->getNullValue(TD.getIntPtrType());
+    Op1 = Op0->getContext().getNullValue(TD.getIntPtrType());
   
   // We have two options: compare with register or immediate.  If the RHS of
   // the compare is an immediate that we can fold into this compare, use

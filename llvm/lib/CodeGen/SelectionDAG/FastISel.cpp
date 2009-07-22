@@ -92,7 +92,7 @@ unsigned FastISel::getRegForValue(Value *V) {
   } else if (isa<ConstantPointerNull>(V)) {
     // Translate this as an integer zero so that it can be
     // local-CSE'd with actual integer zeros.
-    Reg = getRegForValue(Context->getNullValue(TD.getIntPtrType()));
+    Reg = getRegForValue(V->getContext().getNullValue(TD.getIntPtrType()));
   } else if (ConstantFP *CF = dyn_cast<ConstantFP>(V)) {
     Reg = FastEmit_f(VT, VT, ISD::ConstantFP, CF);
 
@@ -108,7 +108,8 @@ unsigned FastISel::getRegForValue(Value *V) {
       if (isExact) {
         APInt IntVal(IntBitWidth, 2, x);
 
-        unsigned IntegerReg = getRegForValue(Context->getConstantInt(IntVal));
+        unsigned IntegerReg =
+          getRegForValue(V->getContext().getConstantInt(IntVal));
         if (IntegerReg != 0)
           Reg = FastEmit_r(IntVT.getSimpleVT(), VT, ISD::SINT_TO_FP, IntegerReg);
       }
@@ -480,7 +481,7 @@ bool FastISel::SelectCall(User *I) {
         UpdateValueMap(I, ResultReg);
       } else {
         unsigned ResultReg =
-          getRegForValue(Context->getNullValue(I->getType()));
+          getRegForValue(I->getContext().getNullValue(I->getType()));
         UpdateValueMap(I, ResultReg);
       }
       return true;
@@ -753,8 +754,7 @@ FastISel::FastISel(MachineFunction &mf,
     TM(MF.getTarget()),
     TD(*TM.getTargetData()),
     TII(*TM.getInstrInfo()),
-    TLI(*TM.getTargetLowering()),
-    Context(mf.getFunction()->getContext()) {
+    TLI(*TM.getTargetLowering()) {
 }
 
 FastISel::~FastISel() {}

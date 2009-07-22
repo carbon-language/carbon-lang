@@ -645,7 +645,7 @@ void SCCPSolver::visitReturnInst(ReturnInst &I) {
       DenseMap<std::pair<Function*, unsigned>, LatticeVal>::iterator
         It = TrackedMultipleRetVals.find(std::make_pair(F, i));
       if (It == TrackedMultipleRetVals.end()) break;
-      if (Value *Val = FindInsertedValue(I.getOperand(0), i, Context))
+      if (Value *Val = FindInsertedValue(I.getOperand(0), i, I.getContext()))
         mergeInValue(It->second, F, getValueState(Val));
     }
   }
@@ -1162,7 +1162,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
       if (GV->isConstant() && GV->hasDefinitiveInitializer())
         if (Constant *V =
              ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE,
-                                                    Context)) {
+                                                    *Context)) {
           markConstant(IV, &I, V);
           return;
         }
@@ -1537,7 +1537,7 @@ FunctionPass *llvm::createSCCPPass() {
 bool SCCP::runOnFunction(Function &F) {
   DOUT << "SCCP on function '" << F.getNameStart() << "'\n";
   SCCPSolver Solver;
-  Solver.setContext(Context);
+  Solver.setContext(&F.getContext());
 
   // Mark the first block of the function as being executable.
   Solver.MarkBlockExecutable(F.begin());
@@ -1577,7 +1577,7 @@ bool SCCP::runOnFunction(Function &F) {
         Instruction *I = Insts.back();
         Insts.pop_back();
         if (!I->use_empty())
-          I->replaceAllUsesWith(Context->getUndef(I->getType()));
+          I->replaceAllUsesWith(F.getContext().getUndef(I->getType()));
         BB->getInstList().erase(I);
         MadeChanges = true;
         ++NumInstRemoved;
@@ -1597,7 +1597,7 @@ bool SCCP::runOnFunction(Function &F) {
           continue;
         
         Constant *Const = IV.isConstant()
-          ? IV.getConstant() : Context->getUndef(Inst->getType());
+          ? IV.getConstant() : F.getContext().getUndef(Inst->getType());
         DOUT << "  Constant: " << *Const << " = " << *Inst;
 
         // Replaces all of the uses of a variable with uses of the constant.
@@ -1662,7 +1662,7 @@ static bool AddressIsTaken(GlobalValue *GV) {
 }
 
 bool IPSCCP::runOnModule(Module &M) {
-  Context = &M.getContext();
+  LLVMContext *Context = &M.getContext();
   
   SCCPSolver Solver;
   Solver.setContext(Context);

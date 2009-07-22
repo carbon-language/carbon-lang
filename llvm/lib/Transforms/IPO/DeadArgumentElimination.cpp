@@ -196,8 +196,10 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but doesn't have isVarArg set.
   const FunctionType *FTy = Fn.getFunctionType();
+  LLVMContext &Context = FTy->getContext();
+  
   std::vector<const Type*> Params(FTy->param_begin(), FTy->param_end());
-  FunctionType *NFTy = Context->getFunctionType(FTy->getReturnType(),
+  FunctionType *NFTy = Context.getFunctionType(FTy->getReturnType(),
                                                 Params, false);
   unsigned NumArgs = Params.size();
 
@@ -598,6 +600,9 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   const Type *RetTy = FTy->getReturnType();
   const Type *NRetTy = NULL;
   unsigned RetCount = NumRetVals(F);
+  
+  LLVMContext &Context = RetTy->getContext();
+  
   // -1 means unused, other numbers are the new index
   SmallVector<int, 5> NewRetIdxs(RetCount, -1);
   std::vector<const Type*> RetTypes;
@@ -635,7 +640,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       // something and {} into void.
       // Make the new struct packed if we used to return a packed struct
       // already.
-      NRetTy = Context->getStructType(RetTypes, STy->isPacked());
+      NRetTy = Context.getStructType(RetTypes, STy->isPacked());
     else if (RetTypes.size() == 1)
       // One return type? Just a simple value then, but only if we didn't use to
       // return a struct with that simple value before.
@@ -703,7 +708,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   }
 
   // Create the new function type based on the recomputed parameters.
-  FunctionType *NFTy = Context->getFunctionType(NRetTy, Params,
+  FunctionType *NFTy = Context.getFunctionType(NRetTy, Params,
                                                 FTy->isVarArg());
 
   // No change?
@@ -753,7 +758,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       }
 
     if (ExtraArgHack)
-      Args.push_back(Context->getUndef(Type::Int32Ty));
+      Args.push_back(Context.getUndef(Type::Int32Ty));
 
     // Push any varargs arguments on the list. Don't forget their attributes.
     for (CallSite::arg_iterator E = CS.arg_end(); I != E; ++I, ++i) {
@@ -792,7 +797,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       } else if (New->getType() == Type::VoidTy) {
         // Our return value has uses, but they will get removed later on.
         // Replace by null for now.
-        Call->replaceAllUsesWith(Context->getNullValue(Call->getType()));
+        Call->replaceAllUsesWith(Context.getNullValue(Call->getType()));
       } else {
         assert(isa<StructType>(RetTy) &&
                "Return type changed, but not into a void. The old return type"
@@ -809,7 +814,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // extract/insertvalue chaining and let instcombine clean that up.
         //
         // Start out building up our return value from undef
-        Value *RetVal = Context->getUndef(RetTy);
+        Value *RetVal = Context.getUndef(RetTy);
         for (unsigned i = 0; i != RetCount; ++i)
           if (NewRetIdxs[i] != -1) {
             Value *V;
@@ -855,7 +860,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     } else {
       // If this argument is dead, replace any uses of it with null constants
       // (these are guaranteed to become unused later on).
-      I->replaceAllUsesWith(Context->getNullValue(I->getType()));
+      I->replaceAllUsesWith(Context.getNullValue(I->getType()));
     }
 
   // If we change the return value of the function we must rewrite any return
@@ -876,7 +881,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           // clean that up.
           Value *OldRet = RI->getOperand(0);
           // Start out building up our return value from undef
-          RetVal = Context->getUndef(NRetTy);
+          RetVal = Context.getUndef(NRetTy);
           for (unsigned i = 0; i != RetCount; ++i)
             if (NewRetIdxs[i] != -1) {
               ExtractValueInst *EV = ExtractValueInst::Create(OldRet, i,
@@ -908,7 +913,6 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
 bool DAE::runOnModule(Module &M) {
   bool Changed = false;
-  Context = &M.getContext();
 
   // First pass: Do a simple check to see if any functions can have their "..."
   // removed.  We can do this if they never call va_start.  This loop cannot be

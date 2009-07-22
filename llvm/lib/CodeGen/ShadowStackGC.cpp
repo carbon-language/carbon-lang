@@ -62,10 +62,10 @@ namespace {
     Constant *GetFrameMap(Function &F);
     const Type* GetConcreteStackEntryType(Function &F);
     void CollectRoots(Function &F);
-    static GetElementPtrInst *CreateGEP(LLVMContext *Context, 
+    static GetElementPtrInst *CreateGEP(LLVMContext &Context, 
                                         IRBuilder<> &B, Value *BasePtr,
                                         int Idx1, const char *Name);
-    static GetElementPtrInst *CreateGEP(LLVMContext *Context,
+    static GetElementPtrInst *CreateGEP(LLVMContext &Context,
                                         IRBuilder<> &B, Value *BasePtr,
                                         int Idx1, int Idx2, const char *Name);
   };
@@ -95,7 +95,7 @@ namespace {
 
   public:
     EscapeEnumerator(Function &F, const char *N = "cleanup")
-      : F(F), CleanupBBName(N), State(0), Builder(*F.getContext()) {}
+      : F(F), CleanupBBName(N), State(0), Builder(F.getContext()) {}
 
     IRBuilder<> *Next() {
       switch (State) {
@@ -188,7 +188,7 @@ ShadowStackGC::ShadowStackGC() : Head(0), StackEntryTy(0) {
 
 Constant *ShadowStackGC::GetFrameMap(Function &F) {
   // doInitialization creates the abstract type of this value.
-  LLVMContext *Context = F.getContext();
+  LLVMContext &Context = F.getContext();
 
   Type *VoidPtr = PointerType::getUnqual(Type::Int8Ty);
 
@@ -203,17 +203,17 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
   }
 
   Constant *BaseElts[] = {
-    Context->getConstantInt(Type::Int32Ty, Roots.size(), false),
-    Context->getConstantInt(Type::Int32Ty, NumMeta, false),
+    Context.getConstantInt(Type::Int32Ty, Roots.size(), false),
+    Context.getConstantInt(Type::Int32Ty, NumMeta, false),
   };
 
   Constant *DescriptorElts[] = {
-    Context->getConstantStruct(BaseElts, 2),
-    Context->getConstantArray(Context->getArrayType(VoidPtr, NumMeta),
+    Context.getConstantStruct(BaseElts, 2),
+    Context.getConstantArray(Context.getArrayType(VoidPtr, NumMeta),
                        Metadata.begin(), NumMeta)
   };
 
-  Constant *FrameMap = Context->getConstantStruct(DescriptorElts, 2);
+  Constant *FrameMap = Context.getConstantStruct(DescriptorElts, 2);
 
   std::string TypeName("gc_map.");
   TypeName += utostr(NumMeta);
@@ -236,9 +236,9 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
                                     GlobalVariable::InternalLinkage,
                                     FrameMap, "__gc_" + F.getName());
 
-  Constant *GEPIndices[2] = { Context->getConstantInt(Type::Int32Ty, 0),
-                              Context->getConstantInt(Type::Int32Ty, 0) };
-  return Context->getConstantExprGetElementPtr(GV, GEPIndices, 2);
+  Constant *GEPIndices[2] = { Context.getConstantInt(Type::Int32Ty, 0),
+                              Context.getConstantInt(Type::Int32Ty, 0) };
+  return Context.getConstantExprGetElementPtr(GV, GEPIndices, 2);
 }
 
 const Type* ShadowStackGC::GetConcreteStackEntryType(Function &F) {
@@ -340,11 +340,11 @@ void ShadowStackGC::CollectRoots(Function &F) {
 }
 
 GetElementPtrInst *
-ShadowStackGC::CreateGEP(LLVMContext *Context, IRBuilder<> &B, Value *BasePtr,
+ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
                          int Idx, int Idx2, const char *Name) {
-  Value *Indices[] = { Context->getConstantInt(Type::Int32Ty, 0),
-                       Context->getConstantInt(Type::Int32Ty, Idx),
-                       Context->getConstantInt(Type::Int32Ty, Idx2) };
+  Value *Indices[] = { Context.getConstantInt(Type::Int32Ty, 0),
+                       Context.getConstantInt(Type::Int32Ty, Idx),
+                       Context.getConstantInt(Type::Int32Ty, Idx2) };
   Value* Val = B.CreateGEP(BasePtr, Indices, Indices + 3, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
@@ -353,10 +353,10 @@ ShadowStackGC::CreateGEP(LLVMContext *Context, IRBuilder<> &B, Value *BasePtr,
 }
 
 GetElementPtrInst *
-ShadowStackGC::CreateGEP(LLVMContext *Context, IRBuilder<> &B, Value *BasePtr,
+ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
                          int Idx, const char *Name) {
-  Value *Indices[] = { Context->getConstantInt(Type::Int32Ty, 0),
-                       Context->getConstantInt(Type::Int32Ty, Idx) };
+  Value *Indices[] = { Context.getConstantInt(Type::Int32Ty, 0),
+                       Context.getConstantInt(Type::Int32Ty, Idx) };
   Value *Val = B.CreateGEP(BasePtr, Indices, Indices + 2, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
@@ -366,7 +366,7 @@ ShadowStackGC::CreateGEP(LLVMContext *Context, IRBuilder<> &B, Value *BasePtr,
 
 /// runOnFunction - Insert code to maintain the shadow stack.
 bool ShadowStackGC::performCustomLowering(Function &F) {
-  LLVMContext *Context = F.getContext();
+  LLVMContext &Context = F.getContext();
   
   // Find calls to llvm.gcroot.
   CollectRoots(F);

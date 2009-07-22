@@ -51,7 +51,7 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
     // contained within it must dominate their uses, that all uses will
     // eventually be removed (they are themselves dead).
     if (!I.use_empty())
-      I.replaceAllUsesWith(BB->getContext()->getUndef(I.getType()));
+      I.replaceAllUsesWith(BB->getContext().getUndef(I.getType()));
     BB->getInstList().pop_back();
   }
   
@@ -71,7 +71,7 @@ void llvm::FoldSingleEntryPHINodes(BasicBlock *BB) {
     if (PN->getIncomingValue(0) != PN)
       PN->replaceAllUsesWith(PN->getIncomingValue(0));
     else
-      PN->replaceAllUsesWith(BB->getContext()->getUndef(PN->getType()));
+      PN->replaceAllUsesWith(BB->getContext().getUndef(PN->getType()));
     PN->eraseFromParent();
   }
 }
@@ -252,7 +252,7 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
 
       // Create a value to return... if the function doesn't return null...
       if (BB->getParent()->getReturnType() != Type::VoidTy)
-        RetVal = TI->getParent()->getContext()->getNullValue(
+        RetVal = TI->getContext().getNullValue(
                    BB->getParent()->getReturnType());
 
       // Create the return...
@@ -387,7 +387,7 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   if (NumPreds == 0) {
     // Insert dummy values as the incoming value.
     for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I)
-      cast<PHINode>(I)->addIncoming(BB->getContext()->getUndef(I->getType()), 
+      cast<PHINode>(I)->addIncoming(BB->getContext().getUndef(I->getType()), 
                                     NewBB);
     return NewBB;
   }
@@ -618,7 +618,7 @@ void llvm::CopyPrecedingStopPoint(Instruction *I,
   if (I != I->getParent()->begin()) {
     BasicBlock::iterator BBI = I;  --BBI;
     if (DbgStopPointInst *DSPI = dyn_cast<DbgStopPointInst>(BBI)) {
-      CallInst *newDSPI = DSPI->clone(*I->getParent()->getContext());
+      CallInst *newDSPI = DSPI->clone(I->getContext());
       newDSPI->insertBefore(InsertPos);
     }
   }

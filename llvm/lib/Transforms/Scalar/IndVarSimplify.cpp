@@ -292,7 +292,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L,
       if (NumPreds != 1) {
         // Clone the PHI and delete the original one. This lets IVUsers and
         // any other maps purge the original user from their records.
-        PHINode *NewPN = PN->clone(*Context);
+        PHINode *NewPN = PN->clone(PN->getContext());
         NewPN->takeName(PN);
         NewPN->insertBefore(PN);
         PN->replaceAllUsesWith(NewPN);
@@ -713,21 +713,23 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   }
   if (NewPred == CmpInst::BAD_ICMP_PREDICATE) return;
 
+  LLVMContext &Context = PH->getContext();
+
   // Insert new integer induction variable.
   PHINode *NewPHI = PHINode::Create(Type::Int32Ty,
                                     PH->getName()+".int", PH);
-  NewPHI->addIncoming(Context->getConstantInt(Type::Int32Ty, newInitValue),
+  NewPHI->addIncoming(Context.getConstantInt(Type::Int32Ty, newInitValue),
                       PH->getIncomingBlock(IncomingEdge));
 
   Value *NewAdd = BinaryOperator::CreateAdd(NewPHI,
-                                          Context->getConstantInt(Type::Int32Ty,
+                                          Context.getConstantInt(Type::Int32Ty,
                                                              newIncrValue),
                                             Incr->getName()+".int", Incr);
   NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
 
   // The back edge is edge 1 of newPHI, whatever it may have been in the
   // original PHI.
-  ConstantInt *NewEV = Context->getConstantInt(Type::Int32Ty, intEV);
+  ConstantInt *NewEV = Context.getConstantInt(Type::Int32Ty, intEV);
   Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(1) : NewEV);
   Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(1));
   ICmpInst *NewEC = new ICmpInst(EC->getParent()->getTerminator(),
@@ -743,7 +745,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   RecursivelyDeleteTriviallyDeadInstructions(EC);
 
   // Delete old, floating point, increment instruction.
-  Incr->replaceAllUsesWith(Context->getUndef(Incr->getType()));
+  Incr->replaceAllUsesWith(Context.getUndef(Incr->getType()));
   RecursivelyDeleteTriviallyDeadInstructions(Incr);
 
   // Replace floating induction variable, if it isn't already deleted.

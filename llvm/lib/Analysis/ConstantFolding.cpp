@@ -95,7 +95,7 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
 /// otherwise TD is null.
 static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
                                            Constant *Op1, const TargetData *TD,
-                                           LLVMContext *Context){
+                                           LLVMContext &Context){
   // SROA
   
   // Fold (and 0xffffffff00000000, (shl x, 32)) -> shl.
@@ -113,7 +113,7 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
       if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *TD) &&
           GV1 == GV2) {
         // (&GV+C1) - (&GV+C2) -> C1-C2, pointer arithmetic cannot overflow.
-        return Context->getConstantInt(Op0->getType(), Offs1-Offs2);
+        return Context.getConstantInt(Op0->getType(), Offs1-Offs2);
       }
   }
     
@@ -124,7 +124,7 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
 /// constant expression, do so.
 static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
                                          const Type *ResultTy,
-                                         LLVMContext *Context,
+                                         LLVMContext &Context,
                                          const TargetData *TD) {
   Constant *Ptr = Ops[0];
   if (!TD || !cast<PointerType>(Ptr->getType())->getElementType()->isSized())
@@ -151,14 +151,14 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   
   uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
                                          (Value**)Ops+1, NumOps-1);
-  Constant *C = Context->getConstantInt(TD->getIntPtrType(), Offset+BasePtr);
-  return Context->getConstantExprIntToPtr(C, ResultTy);
+  Constant *C = Context.getConstantInt(TD->getIntPtrType(), Offset+BasePtr);
+  return Context.getConstantExprIntToPtr(C, ResultTy);
 }
 
 /// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
 /// targetdata.  Return 0 if unfoldable.
 static Constant *FoldBitCast(Constant *C, const Type *DestTy,
-                             const TargetData &TD, LLVMContext *Context) {
+                             const TargetData &TD, LLVMContext &Context) {
   // If this is a bitcast from constant vector -> vector, fold it.
   if (ConstantVector *CV = dyn_cast<ConstantVector>(C)) {
     if (const VectorType *DestVTy = dyn_cast<VectorType>(DestTy)) {
@@ -184,24 +184,24 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
       if (DstEltTy->isFloatingPoint()) {
         // Fold to an vector of integers with same size as our FP type.
         unsigned FPWidth = DstEltTy->getPrimitiveSizeInBits();
-        const Type *DestIVTy = Context->getVectorType(
-                                   Context->getIntegerType(FPWidth), NumDstElt);
+        const Type *DestIVTy = Context.getVectorType(
+                                   Context.getIntegerType(FPWidth), NumDstElt);
         // Recursively handle this integer conversion, if possible.
         C = FoldBitCast(C, DestIVTy, TD, Context);
         if (!C) return 0;
         
         // Finally, VMCore can handle this now that #elts line up.
-        return Context->getConstantExprBitCast(C, DestTy);
+        return Context.getConstantExprBitCast(C, DestTy);
       }
       
       // Okay, we know the destination is integer, if the input is FP, convert
       // it to integer first.
       if (SrcEltTy->isFloatingPoint()) {
         unsigned FPWidth = SrcEltTy->getPrimitiveSizeInBits();
-        const Type *SrcIVTy = Context->getVectorType(
-                                   Context->getIntegerType(FPWidth), NumSrcElt);
+        const Type *SrcIVTy = Context.getVectorType(
+                                   Context.getIntegerType(FPWidth), NumSrcElt);
         // Ask VMCore to do the conversion now that #elts line up.
-        C = Context->getConstantExprBitCast(C, SrcIVTy);
+        C = Context.getConstantExprBitCast(C, SrcIVTy);
         CV = dyn_cast<ConstantVector>(C);
         if (!CV) return 0;  // If VMCore wasn't able to fold it, bail out.
       }
@@ -215,7 +215,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
       SmallVector<Constant*, 32> Result;
       if (NumDstElt < NumSrcElt) {
         // Handle: bitcast (<4 x i32> <i32 0, i32 1, i32 2, i32 3> to <2 x i64>)
-        Constant *Zero = Context->getNullValue(DstEltTy);
+        Constant *Zero = Context.getNullValue(DstEltTy);
         unsigned Ratio = NumSrcElt/NumDstElt;
         unsigned SrcBitSize = SrcEltTy->getPrimitiveSizeInBits();
         unsigned SrcElt = 0;
@@ -228,15 +228,15 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
             if (!Src) return 0;  // Reject constantexpr elements.
             
             // Zero extend the element to the right size.
-            Src = Context->getConstantExprZExt(Src, Elt->getType());
+            Src = Context.getConstantExprZExt(Src, Elt->getType());
             
             // Shift it to the right place, depending on endianness.
-            Src = Context->getConstantExprShl(Src, 
-                             Context->getConstantInt(Src->getType(), ShiftAmt));
+            Src = Context.getConstantExprShl(Src, 
+                             Context.getConstantInt(Src->getType(), ShiftAmt));
             ShiftAmt += isLittleEndian ? SrcBitSize : -SrcBitSize;
             
             // Mix it in.
-            Elt = Context->getConstantExprOr(Elt, Src);
+            Elt = Context.getConstantExprOr(Elt, Src);
           }
           Result.push_back(Elt);
         }
@@ -254,17 +254,17 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
           for (unsigned j = 0; j != Ratio; ++j) {
             // Shift the piece of the value into the right place, depending on
             // endianness.
-            Constant *Elt = Context->getConstantExprLShr(Src, 
-                            Context->getConstantInt(Src->getType(), ShiftAmt));
+            Constant *Elt = Context.getConstantExprLShr(Src, 
+                            Context.getConstantInt(Src->getType(), ShiftAmt));
             ShiftAmt += isLittleEndian ? DstBitSize : -DstBitSize;
 
             // Truncate and remember this piece.
-            Result.push_back(Context->getConstantExprTrunc(Elt, DstEltTy));
+            Result.push_back(Context.getConstantExprTrunc(Elt, DstEltTy));
           }
         }
       }
       
-      return Context->getConstantVector(Result.data(), Result.size());
+      return Context.getConstantVector(Result.data(), Result.size());
     }
   }
   
@@ -282,11 +282,11 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
 /// is returned.  Note that this function can only fail when attempting to fold
 /// instructions like loads and stores, which have no constant expression form.
 ///
-Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext *Context,
+Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext &Context,
                                         const TargetData *TD) {
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (PN->getNumIncomingValues() == 0)
-      return Context->getUndef(PN->getType());
+      return Context.getUndef(PN->getType());
 
     Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
     if (Result == 0) return 0;
@@ -322,7 +322,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext *Context,
 /// using the specified TargetData.  If successful, the constant result is
 /// result is returned, if not, null is returned.
 Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
-                                               LLVMContext *Context,
+                                               LLVMContext &Context,
                                                const TargetData *TD) {
   SmallVector<Constant*, 8> Ops;
   for (User::op_iterator i = CE->op_begin(), e = CE->op_end(); i != e; ++i)
@@ -345,7 +345,7 @@ Constant *llvm::ConstantFoldConstantExpression(ConstantExpr *CE,
 ///
 Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy, 
                                          Constant* const* Ops, unsigned NumOps,
-                                         LLVMContext *Context,
+                                         LLVMContext &Context,
                                          const TargetData *TD) {
   // Handle easy binops first.
   if (Instruction::isBinaryOp(Opcode)) {
@@ -354,7 +354,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                                                   Context))
         return C;
     
-    return Context->getConstantExpr(Opcode, Ops[0], Ops[1]);
+    return Context.getConstantExpr(Opcode, Ops[0], Ops[1]);
   }
   
   switch (Opcode) {
@@ -376,15 +376,15 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
         unsigned InWidth = Input->getType()->getScalarSizeInBits();
         if (TD->getPointerSizeInBits() < InWidth) {
           Constant *Mask = 
-            Context->getConstantInt(APInt::getLowBitsSet(InWidth,
+            Context.getConstantInt(APInt::getLowBitsSet(InWidth,
                                                   TD->getPointerSizeInBits()));
-          Input = Context->getConstantExprAnd(Input, Mask);
+          Input = Context.getConstantExprAnd(Input, Mask);
         }
         // Do a zext or trunc to get to the dest size.
-        return Context->getConstantExprIntegerCast(Input, DestTy, false);
+        return Context.getConstantExprIntegerCast(Input, DestTy, false);
       }
     }
-    return Context->getConstantExprCast(Opcode, Ops[0], DestTy);
+    return Context.getConstantExprCast(Opcode, Ops[0], DestTy);
   case Instruction::IntToPtr:
     // If the input is a ptrtoint, turn the pair into a ptr to ptr bitcast if
     // the int size is >= the ptr size.  This requires knowing the width of a
@@ -396,7 +396,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
         if (CE->getOpcode() == Instruction::PtrToInt) {
           Constant *Input = CE->getOperand(0);
           Constant *C = FoldBitCast(Input, DestTy, *TD, Context);
-          return C ? C : Context->getConstantExprBitCast(Input, DestTy);
+          return C ? C : Context.getConstantExprBitCast(Input, DestTy);
         }
         // If there's a constant offset added to the integer value before
         // it is casted back to a pointer, see if the expression can be
@@ -419,18 +419,18 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                       if (ElemIdx.ult(APInt(ElemIdx.getBitWidth(),
                                             AT->getNumElements()))) {
                         Constant *Index[] = {
-                          Context->getNullValue(CE->getType()),
-                          Context->getConstantInt(ElemIdx)
+                          Context.getNullValue(CE->getType()),
+                          Context.getConstantInt(ElemIdx)
                         };
                         return
-                        Context->getConstantExprGetElementPtr(GV, &Index[0], 2);
+                        Context.getConstantExprGetElementPtr(GV, &Index[0], 2);
                       }
                     }
                   }
                 }
       }
     }
-    return Context->getConstantExprCast(Opcode, Ops[0], DestTy);
+    return Context.getConstantExprCast(Opcode, Ops[0], DestTy);
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
@@ -440,25 +440,25 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
   case Instruction::SIToFP:
   case Instruction::FPToUI:
   case Instruction::FPToSI:
-      return Context->getConstantExprCast(Opcode, Ops[0], DestTy);
+      return Context.getConstantExprCast(Opcode, Ops[0], DestTy);
   case Instruction::BitCast:
     if (TD)
       if (Constant *C = FoldBitCast(Ops[0], DestTy, *TD, Context))
         return C;
-    return Context->getConstantExprBitCast(Ops[0], DestTy);
+    return Context.getConstantExprBitCast(Ops[0], DestTy);
   case Instruction::Select:
-    return Context->getConstantExprSelect(Ops[0], Ops[1], Ops[2]);
+    return Context.getConstantExprSelect(Ops[0], Ops[1], Ops[2]);
   case Instruction::ExtractElement:
-    return Context->getConstantExprExtractElement(Ops[0], Ops[1]);
+    return Context.getConstantExprExtractElement(Ops[0], Ops[1]);
   case Instruction::InsertElement:
-    return Context->getConstantExprInsertElement(Ops[0], Ops[1], Ops[2]);
+    return Context.getConstantExprInsertElement(Ops[0], Ops[1], Ops[2]);
   case Instruction::ShuffleVector:
-    return Context->getConstantExprShuffleVector(Ops[0], Ops[1], Ops[2]);
+    return Context.getConstantExprShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
     if (Constant *C = SymbolicallyEvaluateGEP(Ops, NumOps, DestTy, Context, TD))
       return C;
     
-    return Context->getConstantExprGetElementPtr(Ops[0], Ops+1, NumOps-1);
+    return Context.getConstantExprGetElementPtr(Ops[0], Ops+1, NumOps-1);
   }
 }
 
@@ -469,7 +469,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
 Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
                                                 Constant*const * Ops, 
                                                 unsigned NumOps,
-                                                LLVMContext *Context,
+                                                LLVMContext &Context,
                                                 const TargetData *TD) {
   // fold: icmp (inttoptr x), null         -> icmp x, 0
   // fold: icmp (ptrtoint x), 0            -> icmp x, null
@@ -484,9 +484,9 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       if (CE0->getOpcode() == Instruction::IntToPtr) {
         // Convert the integer value to the right size to ensure we get the
         // proper extension or truncation.
-        Constant *C = Context->getConstantExprIntegerCast(CE0->getOperand(0),
+        Constant *C = Context.getConstantExprIntegerCast(CE0->getOperand(0),
                                                    IntPtrTy, false);
-        Constant *NewOps[] = { C, Context->getNullValue(C->getType()) };
+        Constant *NewOps[] = { C, Context.getNullValue(C->getType()) };
         return ConstantFoldCompareInstOperands(Predicate, NewOps, 2,
                                                Context, TD);
       }
@@ -496,7 +496,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       if (CE0->getOpcode() == Instruction::PtrToInt && 
           CE0->getType() == IntPtrTy) {
         Constant *C = CE0->getOperand(0);
-        Constant *NewOps[] = { C, Context->getNullValue(C->getType()) };
+        Constant *NewOps[] = { C, Context.getNullValue(C->getType()) };
         // FIXME!
         return ConstantFoldCompareInstOperands(Predicate, NewOps, 2,
                                                Context, TD);
@@ -510,9 +510,9 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
         if (CE0->getOpcode() == Instruction::IntToPtr) {
           // Convert the integer value to the right size to ensure we get the
           // proper extension or truncation.
-          Constant *C0 = Context->getConstantExprIntegerCast(CE0->getOperand(0),
+          Constant *C0 = Context.getConstantExprIntegerCast(CE0->getOperand(0),
                                                       IntPtrTy, false);
-          Constant *C1 = Context->getConstantExprIntegerCast(CE1->getOperand(0),
+          Constant *C1 = Context.getConstantExprIntegerCast(CE1->getOperand(0),
                                                       IntPtrTy, false);
           Constant *NewOps[] = { C0, C1 };
           return ConstantFoldCompareInstOperands(Predicate, NewOps, 2, 
@@ -533,7 +533,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       }
     }
   }
-  return Context->getConstantExprCompare(Predicate, Ops[0], Ops[1]);
+  return Context.getConstantExprCompare(Predicate, Ops[0], Ops[1]);
 }
 
 
@@ -542,8 +542,8 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
 /// constant expression, or null if something is funny and we can't decide.
 Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C, 
                                                        ConstantExpr *CE,
-                                                       LLVMContext *Context) {
-  if (CE->getOperand(1) != Context->getNullValue(CE->getOperand(1)->getType()))
+                                                       LLVMContext &Context) {
+  if (CE->getOperand(1) != Context.getNullValue(CE->getOperand(1)->getType()))
     return 0;  // Do not allow stepping over the value!
   
   // Loop over all of the operands, tracking down which value we are
@@ -558,9 +558,9 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
       if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
         C = CS->getOperand(El);
       } else if (isa<ConstantAggregateZero>(C)) {
-        C = Context->getNullValue(STy->getElementType(El));
+        C = Context.getNullValue(STy->getElementType(El));
       } else if (isa<UndefValue>(C)) {
-        C = Context->getUndef(STy->getElementType(El));
+        C = Context.getUndef(STy->getElementType(El));
       } else {
         return 0;
       }
@@ -571,9 +571,9 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
         if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
           C = CA->getOperand(CI->getZExtValue());
         else if (isa<ConstantAggregateZero>(C))
-          C = Context->getNullValue(ATy->getElementType());
+          C = Context.getNullValue(ATy->getElementType());
         else if (isa<UndefValue>(C))
-          C = Context->getUndef(ATy->getElementType());
+          C = Context.getUndef(ATy->getElementType());
         else
           return 0;
       } else if (const VectorType *PTy = dyn_cast<VectorType>(*I)) {
@@ -582,9 +582,9 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
         if (ConstantVector *CP = dyn_cast<ConstantVector>(C))
           C = CP->getOperand(CI->getZExtValue());
         else if (isa<ConstantAggregateZero>(C))
-          C = Context->getNullValue(PTy->getElementType());
+          C = Context.getNullValue(PTy->getElementType());
         else if (isa<UndefValue>(C))
-          C = Context->getUndef(PTy->getElementType());
+          C = Context.getUndef(PTy->getElementType());
         else
           return 0;
       } else {
@@ -679,7 +679,7 @@ llvm::canConstantFoldCallTo(const Function *F) {
 }
 
 static Constant *ConstantFoldFP(double (*NativeFP)(double), double V, 
-                                const Type *Ty, LLVMContext *Context) {
+                                const Type *Ty, LLVMContext &Context) {
   errno = 0;
   V = NativeFP(V);
   if (errno != 0) {
@@ -688,9 +688,9 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
   }
   
   if (Ty == Type::FloatTy)
-    return Context->getConstantFP(APFloat((float)V));
+    return Context.getConstantFP(APFloat((float)V));
   if (Ty == Type::DoubleTy)
-    return Context->getConstantFP(APFloat(V));
+    return Context.getConstantFP(APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
 }
@@ -698,7 +698,7 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
 static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
                                       double V, double W,
                                       const Type *Ty,
-                                      LLVMContext *Context) {
+                                      LLVMContext &Context) {
   errno = 0;
   V = NativeFP(V, W);
   if (errno != 0) {
@@ -707,9 +707,9 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
   }
   
   if (Ty == Type::FloatTy)
-    return Context->getConstantFP(APFloat((float)V));
+    return Context.getConstantFP(APFloat((float)V));
   if (Ty == Type::DoubleTy)
-    return Context->getConstantFP(APFloat(V));
+    return Context.getConstantFP(APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
 }
@@ -721,7 +721,7 @@ Constant *
 llvm::ConstantFoldCall(Function *F, 
                        Constant* const* Operands, unsigned NumOperands) {
   if (!F->hasName()) return 0;
-  LLVMContext *Context = F->getContext();
+  LLVMContext &Context = F->getContext();
   const char *Str = F->getNameStart();
   unsigned Len = F->getNameLen();
   
@@ -775,7 +775,7 @@ llvm::ConstantFoldCall(Function *F,
           if (V >= -0.0)
             return ConstantFoldFP(sqrt, V, Ty, Context);
           else // Undefined
-            return Context->getNullValue(Ty);
+            return Context.getNullValue(Ty);
         }
         break;
       case 's':
@@ -801,13 +801,13 @@ llvm::ConstantFoldCall(Function *F,
       }
     } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
       if (Len > 11 && !memcmp(Str, "llvm.bswap", 10))
-        return Context->getConstantInt(Op->getValue().byteSwap());
+        return Context.getConstantInt(Op->getValue().byteSwap());
       else if (Len > 11 && !memcmp(Str, "llvm.ctpop", 10))
-        return Context->getConstantInt(Ty, Op->getValue().countPopulation());
+        return Context.getConstantInt(Ty, Op->getValue().countPopulation());
       else if (Len > 10 && !memcmp(Str, "llvm.cttz", 9))
-        return Context->getConstantInt(Ty, Op->getValue().countTrailingZeros());
+        return Context.getConstantInt(Ty, Op->getValue().countTrailingZeros());
       else if (Len > 10 && !memcmp(Str, "llvm.ctlz", 9))
-        return Context->getConstantInt(Ty, Op->getValue().countLeadingZeros());
+        return Context.getConstantInt(Ty, Op->getValue().countLeadingZeros());
     }
   } else if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
@@ -830,10 +830,10 @@ llvm::ConstantFoldCall(Function *F,
         }
       } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
         if (!strcmp(Str, "llvm.powi.f32")) {
-          return Context->getConstantFP(APFloat((float)std::pow((float)Op1V,
+          return Context.getConstantFP(APFloat((float)std::pow((float)Op1V,
                                                  (int)Op2C->getZExtValue())));
         } else if (!strcmp(Str, "llvm.powi.f64")) {
-          return Context->getConstantFP(APFloat((double)std::pow((double)Op1V,
+          return Context.getConstantFP(APFloat((double)std::pow((double)Op1V,
                                                  (int)Op2C->getZExtValue())));
         }
       }

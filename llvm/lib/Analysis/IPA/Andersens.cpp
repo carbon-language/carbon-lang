@@ -693,7 +693,7 @@ void Andersens::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
       // If the object in the points-to set is the null object, then the null
       // pointer is a must alias.
       if (Pointee == &GraphNodes[NullObject])
-        RetVals.push_back(Context->getNullValue(P->getType()));
+        RetVals.push_back(P->getContext().getNullValue(P->getType()));
     }
   }
   AliasAnalysis::getMustAliases(P, RetVals);

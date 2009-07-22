@@ -314,7 +314,7 @@ bool DwarfEHPrepare::PromoteStackTemporaries() {
   if (ExceptionValueVar && DT && DF && isAllocaPromotable(ExceptionValueVar)) {
     // Turn the exception temporary into registers and phi nodes if possible.
     std::vector<AllocaInst*> Allocas(1, ExceptionValueVar);
-    PromoteMemToReg(Allocas, *DT, *DF, Context);
+    PromoteMemToReg(Allocas, *DT, *DF, ExceptionValueVar->getContext());
     return true;
   }
   return false;
@@ -355,7 +355,7 @@ Instruction *DwarfEHPrepare::CreateValueLoad(BasicBlock *BB) {
   // Create the temporary if we didn't already.
   if (!ExceptionValueVar) {
     ExceptionValueVar = new AllocaInst(
-                                    Context->getPointerTypeUnqual(Type::Int8Ty),
+                           BB->getContext().getPointerTypeUnqual(Type::Int8Ty),
                                        "eh.value", F->begin()->begin());
     ++NumStackTempsIntroduced;
   }

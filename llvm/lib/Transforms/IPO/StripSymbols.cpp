@@ -369,7 +369,6 @@ bool StripDebugInfo(Module &M) {
 }
 
 bool StripSymbols::runOnModule(Module &M) {
-  Context = &M.getContext();
   bool Changed = false;
   Changed |= StripDebugInfo(M);
   if (!OnlyDebugInfo)

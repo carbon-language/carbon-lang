@@ -183,7 +183,7 @@ namespace {
     ///
     AliasSetTracker *AST;
     
-    LLVMContext *Context;
+    LLVMContext &Context;
 
     /// AllocaLookup - Reverse mapping of Allocas.
     ///
@@ -216,7 +216,7 @@ namespace {
   public:
     PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
                    DominanceFrontier &df, AliasSetTracker *ast,
-                   LLVMContext *C)
+                   LLVMContext &C)
       : Allocas(A), DT(dt), DF(df), AST(ast), Context(C) {}
 
     void run();
@@ -449,7 +449,7 @@ void PromoteMem2Reg::run() {
   //
   RenamePassData::ValVector Values(Allocas.size());
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
-    Values[i] = Context->getUndef(Allocas[i]->getAllocatedType());
+    Values[i] = Context.getUndef(Allocas[i]->getAllocatedType());
 
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
@@ -476,7 +476,7 @@ void PromoteMem2Reg::run() {
     // Just delete the users now.
     //
     if (!A->use_empty())
-      A->replaceAllUsesWith(Context->getUndef(A->getType()));
+      A->replaceAllUsesWith(Context.getUndef(A->getType()));
     if (AST) AST->deleteValue(A);
     A->eraseFromParent();
   }
@@ -562,7 +562,7 @@ void PromoteMem2Reg::run() {
     BasicBlock::iterator BBI = BB->begin();
     while ((SomePHI = dyn_cast<PHINode>(BBI++)) &&
            SomePHI->getNumIncomingValues() == NumBadPreds) {
-      Value *UndefVal = Context->getUndef(SomePHI->getType());
+      Value *UndefVal = Context.getUndef(SomePHI->getType());
       for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
         SomePHI->addIncoming(UndefVal, Preds[pred]);
     }
@@ -808,7 +808,7 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
   if (StoresByIndex.empty()) {
     for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;) 
       if (LoadInst *LI = dyn_cast<LoadInst>(*UI++)) {
-        LI->replaceAllUsesWith(Context->getUndef(LI->getType()));
+        LI->replaceAllUsesWith(Context.getUndef(LI->getType()));
         if (AST && isa<PointerType>(LI->getType()))
           AST->deleteValue(LI);
         LBI.deleteValue(LI);
@@ -999,7 +999,7 @@ NextIteration:
 ///
 void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                            DominatorTree &DT, DominanceFrontier &DF,
-                           LLVMContext *Context, AliasSetTracker *AST) {
+                           LLVMContext &Context, AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
 

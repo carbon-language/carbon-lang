@@ -35,7 +35,7 @@ class TargetFolder {
   /// Fold - Fold the constant using target specific information.
   Constant *Fold(Constant *C) const {
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
-      if (Constant *CF = ConstantFoldConstantExpression(CE, &Context, TD))
+      if (Constant *CF = ConstantFoldConstantExpression(CE, Context, TD))
         return CF;
     return C;
   }

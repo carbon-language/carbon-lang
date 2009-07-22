@@ -192,13 +192,13 @@ const SCEV *ScalarEvolution::getConstant(ConstantInt *V) {
 }
 
 const SCEV *ScalarEvolution::getConstant(const APInt& Val) {
-  return getConstant(Context->getConstantInt(Val));
+  return getConstant(getContext().getConstantInt(Val));
 }
 
 const SCEV *
 ScalarEvolution::getConstant(const Type *Ty, uint64_t V, bool isSigned) {
   return getConstant(
-    Context->getConstantInt(cast<IntegerType>(Ty), V, isSigned));
+    getContext().getConstantInt(cast<IntegerType>(Ty), V, isSigned));
 }
 
 const Type *SCEVConstant::getType() const { return V->getType(); }
@@ -1518,7 +1518,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops) {
     ++Idx;
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      ConstantInt *Fold = Context->getConstantInt(LHSC->getValue()->getValue() *
+      ConstantInt *Fold = getContext().getConstantInt(LHSC->getValue()->getValue() *
                                            RHSC->getValue()->getValue());
       Ops[0] = getConstant(Fold);
       Ops.erase(Ops.begin()+1);  // Erase the folded element
@@ -1740,7 +1740,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
     if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
-      return getConstant(cast<ConstantInt>(Context->getConstantExprUDiv(LHSCV,
+      return getConstant(cast<ConstantInt>(getContext().getConstantExprUDiv(LHSCV,
                                                                  RHSCV)));
     }
   }
@@ -1869,7 +1869,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
     assert(Idx < Ops.size());
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      ConstantInt *Fold = Context->getConstantInt(
+      ConstantInt *Fold = getContext().getConstantInt(
                               APIntOps::smax(LHSC->getValue()->getValue(),
                                              RHSC->getValue()->getValue()));
       Ops[0] = getConstant(Fold);
@@ -1966,7 +1966,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
     assert(Idx < Ops.size());
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
       // We found two constants, fold them together!
-      ConstantInt *Fold = Context->getConstantInt(
+      ConstantInt *Fold = getContext().getConstantInt(
                               APIntOps::umax(LHSC->getValue()->getValue(),
                                              RHSC->getValue()->getValue()));
       Ops[0] = getConstant(Fold);
@@ -2133,7 +2133,7 @@ const SCEV *ScalarEvolution::getSCEV(Value *V) {
 /// specified signed integer value and return a SCEV for the constant.
 const SCEV *ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
   const IntegerType *ITy = cast<IntegerType>(getEffectiveSCEVType(Ty));
-  return getConstant(Context->getConstantInt(ITy, Val));
+  return getConstant(getContext().getConstantInt(ITy, Val));
 }
 
 /// getNegativeSCEV - Return a SCEV corresponding to -V = -1*V
@@ -2141,24 +2141,24 @@ const SCEV *ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
 const SCEV *ScalarEvolution::getNegativeSCEV(const SCEV *V) {
   if (const SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
     return getConstant(
-               cast<ConstantInt>(Context->getConstantExprNeg(VC->getValue())));
+               cast<ConstantInt>(getContext().getConstantExprNeg(VC->getValue())));
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
   return getMulExpr(V,
-                  getConstant(cast<ConstantInt>(Context->getAllOnesValue(Ty))));
+                  getConstant(cast<ConstantInt>(getContext().getAllOnesValue(Ty))));
 }
 
 /// getNotSCEV - Return a SCEV corresponding to ~V = -1-V
 const SCEV *ScalarEvolution::getNotSCEV(const SCEV *V) {
   if (const SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
     return getConstant(
-                cast<ConstantInt>(Context->getConstantExprNot(VC->getValue())));
+                cast<ConstantInt>(getContext().getConstantExprNot(VC->getValue())));
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
   const SCEV *AllOnes =
-                   getConstant(cast<ConstantInt>(Context->getAllOnesValue(Ty)));
+                   getConstant(cast<ConstantInt>(getContext().getAllOnesValue(Ty)));
   return getMinusSCEV(AllOnes, V);
 }
 
@@ -2896,7 +2896,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // Turn shift left of a constant amount into a multiply.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
       uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-      Constant *X = Context->getConstantInt(
+      Constant *X = getContext().getConstantInt(
         APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
       return getMulExpr(getSCEV(U->getOperand(0)), getSCEV(X));
     }
@@ -2906,7 +2906,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     // Turn logical shift right of a constant into a unsigned divide.
     if (ConstantInt *SA = dyn_cast<ConstantInt>(U->getOperand(1))) {
       uint32_t BitWidth = cast<IntegerType>(V->getType())->getBitWidth();
-      Constant *X = Context->getConstantInt(
+      Constant *X = getContext().getConstantInt(
         APInt(BitWidth, 1).shl(SA->getLimitedValue(BitWidth)));
       return getUDivExpr(getSCEV(U->getOperand(0)), getSCEV(X));
     }
@@ -3477,7 +3477,7 @@ EvaluateConstantChrecAtConstant(const SCEVAddRecExpr *AddRec, ConstantInt *C,
 /// the addressed element of the initializer or null if the index expression is
 /// invalid.
 static Constant *
-GetAddressedElementFromGlobal(LLVMContext *Context, GlobalVariable *GV,
+GetAddressedElementFromGlobal(LLVMContext &Context, GlobalVariable *GV,
                               const std::vector<ConstantInt*> &Indices) {
   Constant *Init = GV->getInitializer();
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
@@ -3491,10 +3491,10 @@ GetAddressedElementFromGlobal(LLVMContext *Context, GlobalVariable *GV,
     } else if (isa<ConstantAggregateZero>(Init)) {
       if (const StructType *STy = dyn_cast<StructType>(Init->getType())) {
         assert(Idx < STy->getNumElements() && "Bad struct index!");
-        Init = Context->getNullValue(STy->getElementType(Idx));
+        Init = Context.getNullValue(STy->getElementType(Idx));
       } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Init->getType())) {
         if (Idx >= ATy->getNumElements()) return 0;  // Bogus program
-        Init = Context->getNullValue(ATy->getElementType());
+        Init = Context.getNullValue(ATy->getElementType());
       } else {
         llvm_unreachable("Unknown constant aggregate type!");
       }
@@ -3558,14 +3558,14 @@ ScalarEvolution::ComputeLoadConstantCompareBackedgeTakenCount(
 
   unsigned MaxSteps = MaxBruteForceIterations;
   for (unsigned IterationNum = 0; IterationNum != MaxSteps; ++IterationNum) {
-    ConstantInt *ItCst = Context->getConstantInt(
+    ConstantInt *ItCst = getContext().getConstantInt(
                            cast<IntegerType>(IdxExpr->getType()), IterationNum);
     ConstantInt *Val = EvaluateConstantChrecAtConstant(IdxExpr, ItCst, *this);
 
     // Form the GEP offset.
     Indexes[VarIdxNum] = Val;
 
-    Constant *Result = GetAddressedElementFromGlobal(Context, GV, Indexes);
+    Constant *Result = GetAddressedElementFromGlobal(getContext(), GV, Indexes);
     if (Result == 0) break;  // Cannot compute!
 
     // Evaluate the condition for this iteration.
@@ -3649,7 +3649,7 @@ static Constant *EvaluateExpression(Value *V, Constant *PHIVal) {
   if (Constant *C = dyn_cast<Constant>(V)) return C;
   if (GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
   Instruction *I = cast<Instruction>(V);
-  LLVMContext *Context = I->getParent()->getContext();
+  LLVMContext &Context = I->getParent()->getContext();
 
   std::vector<Constant*> Operands;
   Operands.resize(I->getNumOperands());
@@ -3869,10 +3869,11 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
         if (const CmpInst *CI = dyn_cast<CmpInst>(I))
           C = ConstantFoldCompareInstOperands(CI->getPredicate(),
                                               &Operands[0], Operands.size(),
-                                              Context);
+                                              getContext());
         else
           C = ConstantFoldInstOperands(I->getOpcode(), I->getType(),
-                                       &Operands[0], Operands.size(), Context);
+                                       &Operands[0], Operands.size(), 
+                                       getContext());
         Pair.first->second = C;
         return getSCEV(C);
       }
@@ -4068,12 +4069,12 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
       return std::make_pair(CNC, CNC);
     }
 
-    LLVMContext *Context = SE.getContext();
+    LLVMContext &Context = SE.getContext();
 
     ConstantInt *Solution1 =
-      Context->getConstantInt((NegB + SqrtVal).sdiv(TwoA));
+      Context.getConstantInt((NegB + SqrtVal).sdiv(TwoA));
     ConstantInt *Solution2 =
-      Context->getConstantInt((NegB - SqrtVal).sdiv(TwoA));
+      Context.getConstantInt((NegB - SqrtVal).sdiv(TwoA));
 
     return std::make_pair(SE.getConstant(Solution1),
                           SE.getConstant(Solution2));
@@ -4141,7 +4142,7 @@ const SCEV *ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 #endif
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(Context->getConstantExprICmp(ICmpInst::ICMP_ULT,
+          dyn_cast<ConstantInt>(getContext().getConstantExprICmp(ICmpInst::ICMP_ULT,
                                    R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
@@ -4681,7 +4682,7 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
 
   // Check Add for unsigned overflow.
   // TODO: More sophisticated things could be done here.
-  const Type *WideTy = Context->getIntegerType(getTypeSizeInBits(Ty) + 1);
+  const Type *WideTy = getContext().getIntegerType(getTypeSizeInBits(Ty) + 1);
   const SCEV *EDiff = getZeroExtendExpr(Diff, WideTy);
   const SCEV *ERoundUp = getZeroExtendExpr(RoundUp, WideTy);
   const SCEV *OperandExtendedAdd = getAddExpr(EDiff, ERoundUp);
@@ -4835,7 +4836,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 
     // The exit value should be (End+A)/A.
     APInt ExitVal = (End + A).udiv(A);
-    ConstantInt *ExitValue = SE.getContext()->getConstantInt(ExitVal);
+    ConstantInt *ExitValue = SE.getContext().getConstantInt(ExitVal);
 
     // Evaluate at the exit value.  If we really did fall out of the valid
     // range, then we computed our trip count, otherwise wrap around or other
@@ -4847,7 +4848,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     // Ensure that the previous value is in the range.  This is a sanity check.
     assert(Range.contains(
            EvaluateConstantChrecAtConstant(this,
-           SE.getContext()->getConstantInt(ExitVal - One), SE)->getValue()) &&
+           SE.getContext().getConstantInt(ExitVal - One), SE)->getValue()) &&
            "Linear scev computation is off in a bad way!");
     return SE.getConstant(ExitValue);
   } else if (isQuadratic()) {
@@ -4868,7 +4869,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
           dyn_cast<ConstantInt>(
-                       SE.getContext()->getConstantExprICmp(ICmpInst::ICMP_ULT,
+                       SE.getContext().getConstantExprICmp(ICmpInst::ICMP_ULT,
                          R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
@@ -4882,7 +4883,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
         if (Range.contains(R1Val->getValue())) {
           // The next iteration must be out of the range...
           ConstantInt *NextVal =
-                 SE.getContext()->getConstantInt(R1->getValue()->getValue()+1);
+                 SE.getContext().getConstantInt(R1->getValue()->getValue()+1);
 
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal, SE);
           if (!Range.contains(R1Val->getValue()))
@@ -4893,7 +4894,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
         // If R1 was not in the range, then it is a good return value.  Make
         // sure that R1-1 WAS in the range though, just in case.
         ConstantInt *NextVal =
-                 SE.getContext()->getConstantInt(R1->getValue()->getValue()-1);
+                 SE.getContext().getConstantInt(R1->getValue()->getValue()-1);
         R1Val = EvaluateConstantChrecAtConstant(this, NextVal, SE);
         if (Range.contains(R1Val->getValue()))
           return R1;

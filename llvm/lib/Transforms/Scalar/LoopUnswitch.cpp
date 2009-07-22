@@ -216,6 +216,7 @@ bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
 /// and profitable.
 bool LoopUnswitch::processCurrentLoop() {
   bool Changed = false;
+  LLVMContext &Context = currentLoop->getHeader()->getContext();
 
   // Loop over all of the basic blocks in the loop.  If we find an interior
   // block that is branching on a loop-invariant condition, we can unswitch this
@@ -233,7 +234,7 @@ bool LoopUnswitch::processCurrentLoop() {
         Value *LoopCond = FindLIVLoopCondition(BI->getCondition(), 
                                                currentLoop, Changed);
         if (LoopCond && UnswitchIfProfitable(LoopCond, 
-                                             Context->getTrue())) {
+                                             Context.getTrue())) {
           ++NumBranches;
           return true;
         }
@@ -263,7 +264,7 @@ bool LoopUnswitch::processCurrentLoop() {
         Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), 
                                                currentLoop, Changed);
         if (LoopCond && UnswitchIfProfitable(LoopCond, 
-                                             Context->getTrue())) {
+                                             Context.getTrue())) {
           ++NumSelects;
           return true;
         }
@@ -337,6 +338,7 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
                                        BasicBlock **LoopExit) {
   BasicBlock *Header = currentLoop->getHeader();
   TerminatorInst *HeaderTerm = Header->getTerminator();
+  LLVMContext &Context = Header->getContext();
   
   BasicBlock *LoopExitBB = 0;
   if (BranchInst *BI = dyn_cast<BranchInst>(HeaderTerm)) {
@@ -351,10 +353,10 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
     // this.
     if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop, 
                                              BI->getSuccessor(0)))) {
-      if (Val) *Val = Context->getTrue();
+      if (Val) *Val = Context.getTrue();
     } else if ((LoopExitBB = isTrivialLoopExitBlock(currentLoop, 
                                                     BI->getSuccessor(1)))) {
-      if (Val) *Val = Context->getFalse();
+      if (Val) *Val = Context.getFalse();
     }
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(HeaderTerm)) {
     // If this isn't a switch on Cond, we can't handle it.
@@ -510,7 +512,7 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
   Value *BranchVal = LIC;
   if (!isa<ConstantInt>(Val) || Val->getType() != Type::Int1Ty)
     BranchVal = new ICmpInst(InsertPt, ICmpInst::ICMP_EQ, LIC, Val, "tmp");
-  else if (Val != Context->getTrue())
+  else if (Val != Val->getContext().getTrue())
     // We want to enter the new loop when the condition is true.
     std::swap(TrueDest, FalseDest);
 
@@ -818,7 +820,7 @@ void LoopUnswitch::RemoveBlockIfDead(BasicBlock *BB,
     // Anything that uses the instructions in this basic block should have their
     // uses replaced with undefs.
     if (!I->use_empty())
-      I->replaceAllUsesWith(Context->getUndef(I->getType()));
+      I->replaceAllUsesWith(I->getContext().getUndef(I->getType()));
   }
   
   // If this is the edge to the header block for a loop, remove the loop and
@@ -899,6 +901,8 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
   // selects, switches.
   std::vector<User*> Users(LIC->use_begin(), LIC->use_end());
   std::vector<Instruction*> Worklist;
+  LLVMContext &Context = Val->getContext();
+
 
   // If we know that LIC == Val, or that LIC == NotVal, just replace uses of LIC
   // in the loop with the appropriate one directly.
@@ -907,7 +911,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     if (IsEqual)
       Replacement = Val;
     else
-      Replacement = Context->getConstantInt(Type::Int1Ty, 
+      Replacement = Context.getConstantInt(Type::Int1Ty, 
                                      !cast<ConstantInt>(Val)->getZExtValue());
     
     for (unsigned i = 0, e = Users.size(); i != e; ++i)
@@ -947,7 +951,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
               
               Instruction* OldTerm = Old->getTerminator();
               BranchInst::Create(Split, SISucc,
-                                 Context->getTrue(), OldTerm);
+                                 Context.getTrue(), OldTerm);
 
               LPM->deleteSimpleAnalysisValue(Old->getTerminator(), L);
               Old->getTerminator()->eraseFromParent();
@@ -988,7 +992,7 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
     Worklist.pop_back();
     
     // Simple constant folding.
-    if (Constant *C = ConstantFoldInstruction(I, Context)) {
+    if (Constant *C = ConstantFoldInstruction(I, I->getContext())) {
       ReplaceUsesOfWith(I, C, Worklist, L, LPM);
       continue;
     }

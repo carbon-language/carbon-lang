@@ -162,7 +162,7 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewNode);
 
-  ICmpInst* Comp = new ICmpInst(*Default->getContext(), ICmpInst::ICMP_SLT,
+  ICmpInst* Comp = new ICmpInst(Default->getContext(), ICmpInst::ICMP_SLT,
                                 Val, Pivot.Low, "Pivot");
   NewNode->getInstList().push_back(Comp);
   BranchInst::Create(LBranch, RBranch, Comp, NewNode);
@@ -180,6 +180,7 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                                       BasicBlock* Default)
 {
   Function* F = OrigBlock->getParent();
+  LLVMContext &Context = F->getContext();
   BasicBlock* NewLeaf = BasicBlock::Create("LeafBlock");
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewLeaf);
@@ -202,11 +203,11 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                           "SwitchLeaf");      
     } else {
       // Emit V-Lo <=u Hi-Lo
-      Constant* NegLo = Context->getConstantExprNeg(Leaf.Low);
+      Constant* NegLo = Context.getConstantExprNeg(Leaf.Low);
       Instruction* Add = BinaryOperator::CreateAdd(Val, NegLo,
                                                    Val->getName()+".off",
                                                    NewLeaf);
-      Constant *UpperBound = Context->getConstantExprAdd(NegLo, Leaf.High);
+      Constant *UpperBound = Context.getConstantExprAdd(NegLo, Leaf.High);
       Comp = new ICmpInst(*NewLeaf, ICmpInst::ICMP_ULE, Add, UpperBound,
                           "SwitchLeaf");
     }

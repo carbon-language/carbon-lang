@@ -60,7 +60,6 @@ protected:
   const TargetData &TD;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
-  LLVMContext *Context;
 
 public:
   /// startNewBlock - Set the current block to which generated machine

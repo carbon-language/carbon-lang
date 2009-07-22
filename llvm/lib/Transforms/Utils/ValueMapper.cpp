@@ -23,7 +23,7 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
-Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
+Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext &Context) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
   
@@ -55,7 +55,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
             Values.push_back(cast<Constant>(MapValue(*i, VM, Context)));
-          return VM[V] = Context->getConstantArray(CA->getType(), Values);
+          return VM[V] = Context.getConstantArray(CA->getType(), Values);
         }
       }
       return VM[V] = C;
@@ -75,7 +75,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
             Values.push_back(cast<Constant>(MapValue(*i, VM, Context)));
-          return VM[V] = Context->getConstantStruct(CS->getType(), Values);
+          return VM[V] = Context.getConstantStruct(CS->getType(), Values);
         }
       }
       return VM[V] = C;
@@ -100,7 +100,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
             Values.push_back(cast<Constant>(MapValue(*i, VM, Context)));
-          return VM[V] = Context->getConstantVector(Values);
+          return VM[V] = Context.getConstantVector(Values);
         }
       }
       return VM[V] = C;
@@ -121,7 +121,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext *Context) {
           Values.push_back(MV);
           for (++i; i != e; ++i)
             Values.push_back(MapValue(*i, VM, Context));
-          return VM[V] = Context->getMDNode(Values.data(), Values.size());
+          return VM[V] = Context.getMDNode(Values.data(), Values.size());
         }
       }
       return VM[V] = C;

@@ -43,7 +43,7 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
   // Loop over all instructions, and copy them over.
   for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
        II != IE; ++II) {
-    Instruction *NewInst = II->clone(*BB->getContext());
+    Instruction *NewInst = II->clone(BB->getContext());
     if (II->hasName())
       NewInst->setName(II->getName()+NameSuffix);
     NewBB->getInstList().push_back(NewInst);
@@ -152,7 +152,7 @@ Function *llvm::CloneFunction(const Function *F,
 
   // Create a new function type...
   FunctionType *FTy =
-     F->getContext()->getFunctionType(F->getFunctionType()->getReturnType(),
+     F->getContext().getFunctionType(F->getFunctionType()->getReturnType(),
                                     ArgTypes, F->getFunctionType()->isVarArg());
 
   // Create the new function...
@@ -249,7 +249,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
         continue;
     }
       
-    Instruction *NewInst = II->clone(*BB->getContext());
+    Instruction *NewInst = II->clone(BB->getContext());
     if (II->hasName())
       NewInst->setName(II->getName()+NameSuffix);
     NewBB->getInstList().push_back(NewInst);
@@ -297,7 +297,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   }
   
   if (!TerminatorDone) {
-    Instruction *NewInst = OldTI->clone(*BB->getContext());
+    Instruction *NewInst = OldTI->clone(BB->getContext());
     if (OldTI->hasName())
       NewInst->setName(OldTI->getName()+NameSuffix);
     NewBB->getInstList().push_back(NewInst);
@@ -325,7 +325,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
 /// mapping its operands through ValueMap if they are available.
 Constant *PruningFunctionCloner::
 ConstantFoldMappedInstruction(const Instruction *I) {
-  LLVMContext *Context = I->getParent()->getContext();
+  LLVMContext &Context = I->getContext();
   
   SmallVector<Constant*, 8> Ops;
   for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -367,7 +367,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      ClonedCodeInfo *CodeInfo,
                                      const TargetData *TD) {
   assert(NameSuffix && "NameSuffix cannot be null!");
-  LLVMContext *Context = OldFunc->getContext();
+  LLVMContext &Context = OldFunc->getContext();
   
 #ifndef NDEBUG
   for (Function::const_arg_iterator II = OldFunc->arg_begin(), 
@@ -490,7 +490,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       BasicBlock::iterator I = NewBB->begin();
       BasicBlock::const_iterator OldI = OldBB->begin();
       while ((PN = dyn_cast<PHINode>(I++))) {
-        Value *NV = OldFunc->getContext()->getUndef(PN->getType());
+        Value *NV = OldFunc->getContext().getUndef(PN->getType());
         PN->replaceAllUsesWith(NV);
         assert(ValueMap[OldI] == PN && "ValueMap mismatch");
         ValueMap[OldI] = NV;

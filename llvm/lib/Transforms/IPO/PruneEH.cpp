@@ -243,7 +243,7 @@ void PruneEH::DeleteBasicBlock(BasicBlock *BB) {
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(I))
       CGN->removeCallEdgeFor(II);
     if (!I->use_empty())
-      I->replaceAllUsesWith(Context->getUndef(I->getType()));
+      I->replaceAllUsesWith(BB->getContext().getUndef(I->getType()));
   }
 
   // Get the list of successors of this block.

@@ -294,15 +294,15 @@ static bool isUsedOutsideLoop(Value *V, Loop *L) {
 
 // Return V+1
 static Value *getPlusOne(Value *V, bool Sign, Instruction *InsertPt, 
-                         LLVMContext *Context) {
-  Constant *One = Context->getConstantInt(V->getType(), 1, Sign);
+                         LLVMContext &Context) {
+  Constant *One = Context.getConstantInt(V->getType(), 1, Sign);
   return BinaryOperator::CreateAdd(V, One, "lsp", InsertPt);
 }
 
 // Return V-1
 static Value *getMinusOne(Value *V, bool Sign, Instruction *InsertPt,
-                          LLVMContext *Context) {
-  Constant *One = Context->getConstantInt(V->getType(), 1, Sign);
+                          LLVMContext &Context) {
+  Constant *One = Context.getConstantInt(V->getType(), 1, Sign);
   return BinaryOperator::CreateSub(V, One, "lsp", InsertPt);
 }
 
@@ -492,6 +492,8 @@ bool LoopIndexSplit::restrictLoopBound(ICmpInst &Op) {
     EBR->setSuccessor(0, EBR->getSuccessor(1));
     EBR->setSuccessor(1, T);
   }
+
+  LLVMContext &Context = Op.getContext();
 
   // New upper and lower bounds.
   Value *NLB = NULL;
@@ -878,6 +880,8 @@ bool LoopIndexSplit::splitLoop() {
   // loop may not be split safely.
   BasicBlock *ExitingBlock = ExitCondition->getParent();
   if (!cleanBlock(ExitingBlock)) return false;
+
+  LLVMContext &Context = Header->getContext();
 
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I) {

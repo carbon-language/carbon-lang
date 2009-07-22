@@ -44,7 +44,6 @@ namespace {
         return false;  // Nothing to extract
       }
       
-      Context = &M.getContext();
       
       if (deleteStuff)
         return deleteGV();
@@ -87,6 +86,8 @@ namespace {
     }
 
     bool isolateGV(Module &M) {
+      LLVMContext &Context = M.getContext();
+      
       // Mark all globals internal
       // FIXME: what should we do with private linkage?
       for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
@@ -102,14 +103,14 @@ namespace {
       // by putting them in the used array
       {
         std::vector<Constant *> AUGs;
-        const Type *SBP= Context->getPointerTypeUnqual(Type::Int8Ty);
+        const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
         for (std::vector<GlobalValue*>::iterator GI = Named.begin(), 
                GE = Named.end(); GI != GE; ++GI) {
           (*GI)->setLinkage(GlobalValue::ExternalLinkage);
-          AUGs.push_back(Context->getConstantExprBitCast(*GI, SBP));
+          AUGs.push_back(Context.getConstantExprBitCast(*GI, SBP));
         }
-        ArrayType *AT = Context->getArrayType(SBP, AUGs.size());
-        Constant *Init = Context->getConstantArray(AT, AUGs);
+        ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
+        Constant *Init = Context.getConstantArray(AT, AUGs);
         GlobalValue *gv = new GlobalVariable(M, AT, false, 
                                              GlobalValue::AppendingLinkage, 
                                              Init, "llvm.used");

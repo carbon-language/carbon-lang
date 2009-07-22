@@ -40,6 +40,7 @@ typedef StringMapEntry<Value*> ValueName;
 class raw_ostream;
 class AssemblyAnnotationWriter;
 class ValueHandleBase;
+class LLVMContext;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -100,6 +101,9 @@ public:
   /// All values are typed, get the type of this value.
   ///
   inline const Type *getType() const { return VTy; }
+
+  /// All values hold a context through their type.
+  LLVMContext &getContext() const;
 
   // All values can potentially be named...
   inline bool hasName() const { return Name != 0; }

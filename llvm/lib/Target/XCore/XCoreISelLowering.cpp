@@ -648,7 +648,7 @@ LowerCCCCallTo(SDValue Op, SelectionDAG &DAG, unsigned CC)
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, *DAG.getContext());
 
   // The ABI dictates there should be one stack slot available to the callee
   // on function entry (for saving lr).
@@ -775,7 +775,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallingConv, isVarArg, getTargetMachine(),
-                 RVLocs, DAG.getContext());
+                 RVLocs, *DAG.getContext());
 
   CCInfo.AnalyzeCallResult(TheCall, RetCC_XCore);
   SmallVector<SDValue, 8> ResultVals;
@@ -831,7 +831,7 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, DAG.getContext());
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs, *DAG.getContext());
 
   CCInfo.AnalyzeFormalArguments(Op.getNode(), CC_XCore);
 
@@ -948,7 +948,7 @@ LowerRET(SDValue Op, SelectionDAG &DAG)
   DebugLoc dl = Op.getDebugLoc();
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs, DAG.getContext());
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs, *DAG.getContext());
 
   // Analize return values of ISD::RET
   CCInfo.AnalyzeReturn(Op.getNode(), RetCC_XCore);

@@ -36,7 +36,7 @@ STATISTIC(NumMemSetInfer, "Number of memsets inferred");
 /// true for all i8 values obviously, but is also true for i32 0, i32 -1,
 /// i16 0xF0F0, double 0.0 etc.  If the value can't be handled with a repeated
 /// byte store (e.g. i16 0x1234), return null.
-static Value *isBytewiseValue(Value *V, LLVMContext* Context) {
+static Value *isBytewiseValue(Value *V, LLVMContext& Context) {
   // All byte-wide stores are splatable, even of arbitrary variables.
   if (V->getType() == Type::Int8Ty) return V;
   
@@ -44,9 +44,9 @@ static Value *isBytewiseValue(Value *V, LLVMContext* Context) {
   // corresponding integer value is "byteable".  An important case is 0.0. 
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
     if (CFP->getType() == Type::FloatTy)
-      V = Context->getConstantExprBitCast(CFP, Type::Int32Ty);
+      V = Context.getConstantExprBitCast(CFP, Type::Int32Ty);
     if (CFP->getType() == Type::DoubleTy)
-      V = Context->getConstantExprBitCast(CFP, Type::Int64Ty);
+      V = Context.getConstantExprBitCast(CFP, Type::Int64Ty);
     // Don't handle long double formats, which have strange constraints.
   }
   
@@ -69,7 +69,7 @@ static Value *isBytewiseValue(Value *V, LLVMContext* Context) {
         if (Val != Val2)
           return 0;
       }
-      return Context->getConstantInt(Val);
+      return Context.getConstantInt(Val);
     }
   }
   
@@ -346,7 +346,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
   // Ensure that the value being stored is something that can be memset'able a
   // byte at a time like "0" or "-1" or any width, as well as things like
   // 0xA0A0A0A0 and 0.0.
-  Value *ByteVal = isBytewiseValue(SI->getOperand(0), Context);
+  Value *ByteVal = isBytewiseValue(SI->getOperand(0), SI->getContext());
   if (!ByteVal)
     return false;
 
@@ -385,7 +385,8 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     if (NextStore->isVolatile()) break;
     
     // Check to see if this stored value is of the same byte-splattable value.
-    if (ByteVal != isBytewiseValue(NextStore->getOperand(0), Context))
+    if (ByteVal != isBytewiseValue(NextStore->getOperand(0), 
+                                   NextStore->getContext()))
       break;
 
     // Check to see if this store is to a constant offset from the start ptr.
@@ -439,15 +440,17 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     StartPtr = Range.StartPtr;
   
     // Cast the start ptr to be i8* as memset requires.
-    const Type *i8Ptr = Context->getPointerTypeUnqual(Type::Int8Ty);
+    const Type *i8Ptr = SI->getContext().getPointerTypeUnqual(Type::Int8Ty);
     if (StartPtr->getType() != i8Ptr)
       StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getNameStart(),
                                  InsertPt);
   
     Value *Ops[] = {
       StartPtr, ByteVal,   // Start, value
-      Context->getConstantInt(Type::Int64Ty, Range.End-Range.Start),  // size
-      Context->getConstantInt(Type::Int32Ty, Range.Alignment)   // align
+      // size
+      SI->getContext().getConstantInt(Type::Int64Ty, Range.End-Range.Start),
+      // align
+      SI->getContext().getConstantInt(Type::Int32Ty, Range.Alignment)
     };
     Value *C = CallInst::Create(MemSetF, Ops, Ops+4, "", InsertPt);
     DEBUG(cerr << "Replace stores:\n";

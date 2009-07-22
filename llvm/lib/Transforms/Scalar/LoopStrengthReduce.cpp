@@ -1576,7 +1576,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEV *const &Stride,
   BasicBlock *LatchBlock = L->getLoopLatch();
   Instruction *IVIncInsertPt = LatchBlock->getTerminator();
 
-  Value *CommonBaseV = Context->getNullValue(ReplacedTy);
+  LLVMContext &Context = Preheader->getContext();
+
+  Value *CommonBaseV = Context.getNullValue(ReplacedTy);
 
   const SCEV *RewriteFactor = SE->getIntegerSCEV(0, ReplacedTy);
   IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
@@ -1859,6 +1861,8 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   const SCEVConstant *SC = dyn_cast<SCEVConstant>(*CondStride);
   if (!SC) return Cond;
 
+  LLVMContext &Context = Cond->getContext();
+
   ICmpInst::Predicate Predicate = Cond->getPredicate();
   int64_t CmpSSInt = SC->getValue()->getSExtValue();
   unsigned BitWidth = SE->getTypeSizeInBits((*CondStride)->getType());
@@ -1942,7 +1946,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       NewCmpTy = NewCmpLHS->getType();
       NewTyBits = SE->getTypeSizeInBits(NewCmpTy);
-      const Type *NewCmpIntTy = Context->getIntegerType(NewTyBits);
+      const Type *NewCmpIntTy = Context.getIntegerType(NewTyBits);
       if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
         // Check if it is possible to rewrite it using
         // an iv / stride of a smaller integer type.
@@ -1987,10 +1991,10 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       NewStride = &IU->StrideOrder[i];
       if (!isa<PointerType>(NewCmpTy))
-        NewCmpRHS = Context->getConstantInt(NewCmpTy, NewCmpVal);
+        NewCmpRHS = Context.getConstantInt(NewCmpTy, NewCmpVal);
       else {
-        Constant *CI = Context->getConstantInt(NewCmpIntTy, NewCmpVal);
-        NewCmpRHS = Context->getConstantExprIntToPtr(CI, NewCmpTy);
+        Constant *CI = Context.getConstantInt(NewCmpIntTy, NewCmpVal);
+        NewCmpRHS = Context.getConstantExprIntToPtr(CI, NewCmpTy);
       }
       NewOffset = TyBits == NewTyBits
         ? SE->getMulExpr(CondUse->getOffset(),
@@ -2171,6 +2175,8 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
   const SCEV *BackedgeTakenCount = SE->getBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     return;
+    
+  LLVMContext &Context = L->getHeader()->getContext();
 
   for (unsigned Stride = 0, e = IU->StrideOrder.size(); Stride != e;
        ++Stride) {
@@ -2233,7 +2239,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
         
       ConstantInt *Init = dyn_cast<ConstantInt>(PH->getIncomingValue(Entry));
       if (!Init) continue;
-      Constant *NewInit = Context->getConstantFP(DestTy, Init->getZExtValue());
+      Constant *NewInit = Context.getConstantFP(DestTy, Init->getZExtValue());
 
       BinaryOperator *Incr = 
         dyn_cast<BinaryOperator>(PH->getIncomingValue(Latch));
@@ -2257,7 +2263,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
 
       /* create new increment. '++d' in above example. */
-      Constant *CFP = Context->getConstantFP(DestTy, C->getZExtValue());
+      Constant *CFP = Context.getConstantFP(DestTy, C->getZExtValue());
       BinaryOperator *NewIncr = 
         BinaryOperator::Create(Incr->getOpcode() == Instruction::Add ?
                                  Instruction::FAdd : Instruction::FSub,
@@ -2293,6 +2299,8 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
   // one register value.
   BasicBlock *LatchBlock = L->getLoopLatch();
   BasicBlock *ExitingBlock = L->getExitingBlock();
+  LLVMContext &Context = LatchBlock->getContext();
+  
   if (!ExitingBlock)
     // Multiple exits, just look at the exit in the latch block if there is one.
     ExitingBlock = LatchBlock;
@@ -2382,7 +2390,7 @@ void LoopStrengthReduce::OptimizeLoopTermCond(Loop *L) {
       Cond->moveBefore(TermBr);
     } else {
       // Otherwise, clone the terminating condition and insert into the loopend.
-      Cond = cast<ICmpInst>(Cond->clone(*Context));
+      Cond = cast<ICmpInst>(Cond->clone(Context));
       Cond->setName(L->getHeader()->getName() + ".termcond");
       LatchBlock->getInstList().insert(TermBr, Cond);
       
@@ -2423,6 +2431,8 @@ void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
   BasicBlock *ExitingBlock = L->getExitingBlock();
   if (!ExitingBlock)
     return; // More than one block exiting!
+
+  LLVMContext &Context = ExitingBlock->getContext();
 
   // Okay, we've computed the exiting block.  See what condition causes us to
   // exit.
@@ -2496,7 +2506,7 @@ void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
   Value *startVal = phi->getIncomingValue(inBlock);
   Value *endVal = Cond->getOperand(1);
   // FIXME check for case where both are constant
-  Constant* Zero = Context->getConstantInt(Cond->getOperand(1)->getType(), 0);
+  Constant* Zero = Context.getConstantInt(Cond->getOperand(1)->getType(), 0);
   BinaryOperator *NewStartVal = 
     BinaryOperator::Create(Instruction::Sub, endVal, startVal,
                            "tmp", PreInsertPt);
