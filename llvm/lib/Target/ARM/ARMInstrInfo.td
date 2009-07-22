@@ -558,19 +558,20 @@ def PICSTRB : AXI2stb<(outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 def LEApcrel : AXI1<0x0, (outs GPR:$dst), (ins i32imm:$label, pred:$p), Pseudo,
-                   !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
-                                         "${:private}PCRELL${:uid}+8))\n"),
-                              !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                         "add$p $dst, pc, #PCRELV${:uid}")),
+            !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, ($label-(",
+                                  "${:private}PCRELL${:uid}+8))\n"),
+                       !strconcat("${:private}PCRELL${:uid}:\n\t",
+                                  "add$p $dst, pc, #${:private}PCRELV${:uid}")),
                    []>;
 
 def LEApcrelJT : AXI1<0x0, (outs GPR:$dst),
                            (ins i32imm:$label, i32imm:$id, pred:$p),
           Pseudo,
-          !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
-                                         "${:private}PCRELL${:uid}+8))\n"),
-                              !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                         "add$p $dst, pc, #PCRELV${:uid}")),
+   !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, "
+                         "(${label}_${id:no_hash}-(",
+                                  "${:private}PCRELL${:uid}+8))\n"),
+                       !strconcat("${:private}PCRELL${:uid}:\n\t",
+                                  "add$p $dst, pc, #${:private}PCRELV${:uid}")),
                    []> {
     let Inst{25} = 1;
 }

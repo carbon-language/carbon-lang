@@ -450,18 +450,19 @@ def t2PICADD : T2XI<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp),
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 def t2LEApcrel : T2XI<(outs GPR:$dst), (ins i32imm:$label, pred:$p),
-                   !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
+                   !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, ($label-(",
                                          "${:private}PCRELL${:uid}+8))\n"),
                               !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                         "add$p $dst, pc, #PCRELV${:uid}")),
+                                         "add$p $dst, pc, #${:private}PCRELV${:uid}")),
                    []>;
 
 def t2LEApcrelJT : T2XI<(outs GPR:$dst),
                        (ins i32imm:$label, i32imm:$id, pred:$p),
-          !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
-                                         "${:private}PCRELL${:uid}+8))\n"),
-                              !strconcat("${:private}PCRELL${:uid}:\n\t",
-                                         "add$p $dst, pc, #PCRELV${:uid}")),
+   !strconcat(!strconcat(".set ${:private}PCRELV${:uid},"
+                         " (${label}_${id:no_hash}-(",
+                                  "${:private}PCRELL${:uid}+8))\n"),
+                       !strconcat("${:private}PCRELL${:uid}:\n\t",
+                                  "add$p $dst, pc, #${:private}PCRELV${:uid}")),
                    []>;
 
 // ADD rd, sp, #so_imm

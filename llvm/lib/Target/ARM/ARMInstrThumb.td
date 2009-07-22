@@ -554,16 +554,17 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
 // assembler.
 let Defs = [CPSR] in {
 def tLEApcrel : T1Ix2<(outs tGPR:$dst), (ins i32imm:$label),
-                    !strconcat(!strconcat(".set PCRELV${:uid}, ($label-(",
-                                          "${:private}PCRELL${:uid}+4))\n"),
-                               !strconcat("\tmovs $dst, #PCRELV${:uid}\n",
-                                  "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
+               !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, ($label-(",
+                                     "${:private}PCRELL${:uid}+4))\n"),
+                          !strconcat("\tmovs $dst, #${:private}PCRELV${:uid}\n",
+                             "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
                     []>;
 
 def tLEApcrelJT : T1Ix2<(outs tGPR:$dst), (ins i32imm:$label, i32imm:$id),
-          !strconcat(!strconcat(".set PCRELV${:uid}, (${label}_${id:no_hash}-(",
+          !strconcat(!strconcat(".set ${:private}PCRELV${:uid},"
+                                " (${label}_${id:no_hash}-(",
                                          "${:private}PCRELL${:uid}+4))\n"),
-                     !strconcat("\tmovs $dst, #PCRELV${:uid}\n",
+                     !strconcat("\tmovs $dst, #${:private}PCRELV${:uid}\n",
                                 "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
                     []>;
 }

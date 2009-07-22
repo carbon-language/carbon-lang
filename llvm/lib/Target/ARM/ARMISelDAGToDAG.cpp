@@ -954,7 +954,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
           break;
         SDValue V = Op.getOperand(0);
         ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, ShImm);
-        SDValue ShImmOp = CurDAG->getConstant(ShImm, MVT::i32);
+        SDValue ShImmOp = CurDAG->getTargetConstant(ShImm, MVT::i32);
         SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
         if (Subtarget->isThumb()) {
           SDValue Ops[] = { V, V, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
@@ -970,7 +970,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
           break;
         SDValue V = Op.getOperand(0);
         ShImm = ARM_AM::getSORegOpc(ARM_AM::lsl, ShImm);
-        SDValue ShImmOp = CurDAG->getConstant(ShImm, MVT::i32);
+        SDValue ShImmOp = CurDAG->getTargetConstant(ShImm, MVT::i32);
         SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
         if (Subtarget->isThumb()) {
           SDValue Ops[] = { V, V, ShImmOp, getAL(CurDAG), Reg0 };
