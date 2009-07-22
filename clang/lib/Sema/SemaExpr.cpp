@@ -1703,6 +1703,8 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
     // build a built-in operation.
   }
 
+  Input.release();
+  Input = Arg;
   return CreateBuiltinUnaryOp(OpLoc, Opc, move(Input));
 }
 
