@@ -61,12 +61,10 @@ protected:
 
 public:
   /// getRegisterNumbering - Given the enum value for some register, e.g.
-  /// ARM::LR, return the number that it corresponds to (e.g. 14).
-  static unsigned getRegisterNumbering(unsigned RegEnum);
-
-  /// Same as previous getRegisterNumbering except it returns true in isSPVFP
-  /// if the register is a single precision VFP register.
-  static unsigned getRegisterNumbering(unsigned RegEnum, bool &isSPVFP);
+  /// ARM::LR, return the number that it corresponds to (e.g. 14). It
+  /// also returns true in isSPVFP if the register is a single precision
+  /// VFP register.
+  static unsigned getRegisterNumbering(unsigned RegEnum, bool *isSPVFP = 0);
 
   /// Code Generation virtual methods...
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;

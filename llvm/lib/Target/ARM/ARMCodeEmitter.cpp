@@ -1205,7 +1205,7 @@ static unsigned encodeVFPRd(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegD = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
   bool isSPVFP = false;
-  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, isSPVFP);
+  RegD = ARMRegisterInfo::getRegisterNumbering(RegD, &isSPVFP);
   if (!isSPVFP)
     Binary |=   RegD               << ARMII::RegRdShift;
   else {
@@ -1219,7 +1219,7 @@ static unsigned encodeVFPRn(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegN = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
   bool isSPVFP = false;
-  RegN = ARMRegisterInfo::getRegisterNumbering(RegN, isSPVFP);
+  RegN = ARMRegisterInfo::getRegisterNumbering(RegN, &isSPVFP);
   if (!isSPVFP)
     Binary |=   RegN               << ARMII::RegRnShift;
   else {
@@ -1233,7 +1233,7 @@ static unsigned encodeVFPRm(const MachineInstr &MI, unsigned OpIdx) {
   unsigned RegM = MI.getOperand(OpIdx).getReg();
   unsigned Binary = 0;
   bool isSPVFP = false;
-  RegM = ARMRegisterInfo::getRegisterNumbering(RegM, isSPVFP);
+  RegM = ARMRegisterInfo::getRegisterNumbering(RegM, &isSPVFP);
   if (!isSPVFP)
     Binary |=   RegM;
   else {
