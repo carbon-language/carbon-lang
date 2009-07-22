@@ -127,6 +127,7 @@ def Most : DiagGroup<"most", [
     Implicit,
     MismatchedTags,
     MultiChar,
+    ReturnType,
     Switch,
     Trigraphs,
     Uninitialized,
