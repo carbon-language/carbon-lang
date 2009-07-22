@@ -29,6 +29,13 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
                                 SectionFlags::Small);
   BSSSection_  = getNamedSection("\t.dp.bss", SectionFlags::Writeable |
                                  SectionFlags::BSS | SectionFlags::Small);
+
+  // TLS globals are lowered in the backend to arrays indexed by the current
+  // thread id. After lowering they require no special handling by the linker
+  // and can be placed in the standard data / bss sections.
+  TLSDataSection = DataSection;
+  TLSBSSSection = BSSSection_;
+
   if (TM.getSubtargetImpl()->isXS1A()) {
     ReadOnlySection = getNamedSection("\t.dp.rodata", SectionFlags::None |
                                       SectionFlags::Writeable |
