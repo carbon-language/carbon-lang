@@ -43,30 +43,8 @@ public:
   unsigned size() const { return Last - Start; }
   unsigned capacity() const { return End - Start; }
 
-  void push_back(const T& value) {
-    if (Last == End) {
-      unsigned NewCapacity = capacity() * 2;
-      if (NewCapacity == 0)
-        NewCapacity = 4;
-
-      T* NewStart = (T*)malloc(sizeof(T) * NewCapacity);
-
-      unsigned Size = size();
-      for (unsigned I = 0; I != Size; ++I)
-        new (NewStart + I) T(Start[I]);
-
-      // FIXME: destruct old values
-      free(Start);
-
-      Start = NewStart;
-      Last = Start + Size;
-      End = Start + NewCapacity;
-    }
-
-    new (Last) T(value);
-    ++Last;
-  }
-
+  void push_back(const T& value);
+  
   void pop_back() {
     // FIXME: destruct old value
     --Last;
@@ -107,6 +85,31 @@ public:
 public:
   T* Start, *Last, *End;
 };
+
+template<typename T>
+void dynarray<T>::push_back(const T& value) {
+  if (Last == End) {
+    unsigned NewCapacity = capacity() * 2;
+    if (NewCapacity == 0)
+      NewCapacity = 4;
+    
+    T* NewStart = (T*)malloc(sizeof(T) * NewCapacity);
+    
+    unsigned Size = size();
+    for (unsigned I = 0; I != Size; ++I)
+      new (NewStart + I) T(Start[I]);
+    
+    // FIXME: destruct old values
+    free(Start);
+    
+    Start = NewStart;
+    Last = Start + Size;
+    End = Start + NewCapacity;
+  }
+  
+  new (Last) T(value);
+  ++Last;
+}
 
 struct Point { 
   Point() { x = y = z = 0.0; }
