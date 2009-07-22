@@ -547,19 +547,7 @@ const Type *MachineConstantPoolEntry::getType() const {
 unsigned MachineConstantPoolEntry::getRelocationInfo() const {
   if (isMachineConstantPoolEntry())
     return Val.MachineCPVal->getRelocationInfo();
-  
-  // FIXME: This API sucks.
-  
-  // If no relocations, return 0.
-  if (!Val.ConstVal->ContainsRelocations())
-    return 0;
-
-  // If it contains no global relocations, return 1.
-  if (!Val.ConstVal->ContainsRelocations(Reloc::Global))
-    return 1;
-
-  // Otherwise, it has general relocations.
-  return 2;
+  return Val.ConstVal->getRelocationInfo();
 }
 
 MachineConstantPool::~MachineConstantPool() {

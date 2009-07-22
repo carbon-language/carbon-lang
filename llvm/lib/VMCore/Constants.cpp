@@ -101,33 +101,34 @@ bool Constant::canTrap() const {
   }
 }
 
-/// ContainsRelocations - Return true if the constant value contains relocations
-/// which cannot be resolved at compile time. Kind argument is used to filter
-/// only 'interesting' sorts of relocations.
-bool Constant::ContainsRelocations(unsigned Kind) const {
+
+/// getRelocationInfo - This method classifies the entry according to
+/// whether or not it may generate a relocation entry.  This must be
+/// conservative, so if it might codegen to a relocatable entry, it should say
+/// so.  The return values are:
+/// 
+///  0: This constant pool entry is guaranteed to never have a relocation
+///     applied to it (because it holds a simple constant like '4').
+///  1: This entry has relocations, but the entries are guaranteed to be
+///     resolvable by the static linker, so the dynamic linker will never see
+///     them.
+///  2: This entry may have arbitrary relocations.
+///
+/// FIXME: This really should not be in VMCore.
+unsigned Constant::getRelocationInfo() const {
   if (const GlobalValue* GV = dyn_cast<GlobalValue>(this)) {
-    bool isLocal = GV->hasLocalLinkage();
-    if ((Kind & Reloc::Local) && isLocal) {
-      // Global has local linkage and 'local' kind of relocations are
-      // requested
-      return true;
-    }
-
-    if ((Kind & Reloc::Global) && !isLocal) {
-      // Global has non-local linkage and 'global' kind of relocations are
-      // requested
-      return true;
-    }
-
-    return false;
+    if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
+      return 1;  // Local to this file/library.
+    return 2;    // Global reference.
   }
-
+  
+  unsigned Result = 0;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (getOperand(i)->ContainsRelocations(Kind))
-      return true;
-
-  return false;
+    Result = std::max(Result, getOperand(i)->getRelocationInfo());
+  
+  return Result;
 }
+
 
 /// getVectorElements - This method, which is only valid on constant of vector
 /// type, returns the elements of the vector in the specified smallvector.

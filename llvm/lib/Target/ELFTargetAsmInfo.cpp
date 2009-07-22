@@ -54,20 +54,20 @@ ELFTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
 
   // Decide, whether we need data.rel stuff
   const GlobalVariable* GVar = dyn_cast<GlobalVariable>(GV);
-  if (GVar->hasInitializer()) {
+  if (GVar->hasInitializer() && TM.getRelocationModel() != Reloc::Static) {
     Constant *C = GVar->getInitializer();
     bool isConstant = GVar->isConstant();
     
-    
     // By default - all relocations in PIC mode would force symbol to be
     // placed in r/w section.
-    if (TM.getRelocationModel() != Reloc::Static &&
-        C->ContainsRelocations(Reloc::LocalOrGlobal))
-      return (C->ContainsRelocations(Reloc::Global) ?
-              (isConstant ?
-               SectionKind::DataRelRO : SectionKind::DataRel) :
-              (isConstant ?
-               SectionKind::DataRelROLocal : SectionKind::DataRelLocal));
+    switch (C->getRelocationInfo()) {
+    default: break;
+    case 1:
+      return isConstant ? SectionKind::DataRelROLocal :
+                          SectionKind::DataRelLocal;
+    case 2:
+      return isConstant ? SectionKind::DataRelRO : SectionKind::DataRel;
+    }
   }
 
   return Kind;

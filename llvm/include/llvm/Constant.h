@@ -20,20 +20,6 @@ namespace llvm {
   template<typename T> class SmallVectorImpl;
   class LLVMContext;
 
-  /// If object contains references to other objects, then relocations are
-  /// usually required for emission of such object (especially in PIC mode). One
-  /// usually distinguishes local and global relocations. Local relocations are
-  /// made wrt objects in the same module and these objects have local (internal
-  /// or private) linkage. Global relocations are made wrt externally visible
-  /// objects. In most cases local relocations can be resolved via so-called
-  /// 'pre-link' technique.
-  namespace Reloc {
-    const unsigned None   = 0;
-    const unsigned Local  = 1 << 0; ///< Local relocations are required
-    const unsigned Global = 1 << 1; ///< Global relocations are required
-    const unsigned LocalOrGlobal = Local | Global;
-  }
-
 /// This is an important base class in LLVM. It provides the common facilities
 /// of all constant values in an LLVM program. A constant is a value that is
 /// immutable at runtime. Functions are constants because their address is
@@ -73,12 +59,21 @@ public:
   /// true for things like constant expressions that could divide by zero.
   bool canTrap() const;
 
-  /// ContainsRelocations - Return true if the constant value contains
-  /// relocations which cannot be resolved at compile time. Note that answer is
-  /// not exclusive: there can be possibility that relocations of other kind are
-  /// required as well.
-  bool ContainsRelocations(unsigned Kind = Reloc::LocalOrGlobal) const;
-
+  /// getRelocationInfo - This method classifies the entry according to
+  /// whether or not it may generate a relocation entry.  This must be
+  /// conservative, so if it might codegen to a relocatable entry, it should say
+  /// so.  The return values are:
+  /// 
+  ///  0: This constant pool entry is guaranteed to never have a relocation
+  ///     applied to it (because it holds a simple constant like '4').
+  ///  1: This entry has relocations, but the entries are guaranteed to be
+  ///     resolvable by the static linker, so the dynamic linker will never see
+  ///     them.
+  ///  2: This entry may have arbitrary relocations.
+  ///
+  /// FIXME: This really should not be in VMCore.
+  unsigned getRelocationInfo() const;
+  
   // Specialize get/setOperand for Constants as their operands are always
   // constants as well.
   Constant *getOperand(unsigned i) {

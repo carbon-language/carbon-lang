@@ -202,13 +202,13 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
 
   if (isSuitableForBSS(GVar)) {
     // Variable can be easily put to BSS section.
-    return (isThreadLocal ? SectionKind::ThreadBSS : SectionKind::BSS);
+    return isThreadLocal ? SectionKind::ThreadBSS : SectionKind::BSS;
   } else if (GVar->isConstant() && !isThreadLocal) {
     // Now we know, that variable has initializer and it is constant. We need to
     // check its initializer to decide, which section to output it into. Also
     // note, there is no thread-local r/o section.
     Constant *C = GVar->getInitializer();
-    if (C->ContainsRelocations(Reloc::LocalOrGlobal)) {
+    if (C->getRelocationInfo() != 0) {
       // Decide whether it is still possible to put symbol into r/o section.
       if (TM.getRelocationModel() != Reloc::Static)
         return SectionKind::Data;
