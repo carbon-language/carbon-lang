@@ -267,7 +267,7 @@ def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
       ARM::D4,  ARM::D5,  ARM::D6,  ARM::D7, 
       ARM::D8,  ARM::D9,  ARM::D10, ARM::D11, 
       ARM::D12, ARM::D13, ARM::D14, ARM::D15,
-      ARM::D16, ARM::D17, ARM::D18, ARM::D15,
+      ARM::D16, ARM::D17, ARM::D18, ARM::D19,
       ARM::D20, ARM::D21, ARM::D22, ARM::D23,
       ARM::D24, ARM::D25, ARM::D26, ARM::D27,
       ARM::D28, ARM::D29, ARM::D30, ARM::D31 };
