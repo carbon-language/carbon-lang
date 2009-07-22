@@ -44,7 +44,6 @@ namespace llvm {
 
       void getAnalysisUsage(AnalysisUsage &AU) const;
 
-      /// runOnMachineFunction - pass entry point
       bool runOnFunction(Function&);
 
       void createSSI(SmallVectorImpl<Instruction *> &value);
