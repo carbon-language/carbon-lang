@@ -1080,6 +1080,7 @@ Sema::OwningExprResult Sema::ActOnTemplateIdExpr(TemplateTy TemplateD,
   // Translate the parser's template argument list in our AST format.
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
   translateTemplateArguments(TemplateArgsIn, TemplateArgLocs, TemplateArgs);
+  TemplateArgsIn.release();
   
   return BuildTemplateIdExpr(Template, TemplateNameLoc, LAngleLoc,
                              TemplateArgs.data(), TemplateArgs.size(),

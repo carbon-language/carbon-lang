@@ -131,10 +131,9 @@ CXXRecordDecl::setBases(ASTContext &C,
       CXXRecordDecl *VBaseClassDecl
         = cast<CXXRecordDecl>(QT->getAsRecordType()->getDecl());
       this->VBases[i] = 
-        *new (C) CXXBaseSpecifier(
-                          VBaseClassDecl->getSourceRange(), true,
-                          VBaseClassDecl->getTagKind() == RecordDecl::TK_class,
-                          UniqueVbases[i]->getAccessSpecifier(), QT);
+        CXXBaseSpecifier(VBaseClassDecl->getSourceRange(), true,
+                         VBaseClassDecl->getTagKind() == RecordDecl::TK_class,
+                         UniqueVbases[i]->getAccessSpecifier(), QT);
     }
   }
 }

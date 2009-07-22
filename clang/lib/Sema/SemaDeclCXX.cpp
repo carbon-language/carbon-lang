@@ -497,7 +497,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
 
       // Delete the duplicate base class specifier; we're going to
       // overwrite its pointer later.
-      delete Bases[idx];
+      Context.Deallocate(Bases[idx]);
 
       Invalid = true;
     } else {
@@ -513,7 +513,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
   // Delete the remaining (good) base class specifiers, since their
   // data has been copied into the CXXRecordDecl.
   for (unsigned idx = 0; idx < NumGoodBases; ++idx)
-    delete Bases[idx];
+    Context.Deallocate(Bases[idx]);
 
   return Invalid;
 }
