@@ -2527,7 +2527,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
 /// 'i' or 'I' instead if encoding a struct field, or a pointer!
 ///
 void ASTContext::getLegacyIntegralTypeEncoding (QualType &PointeeTy) const {
-  if (dyn_cast<TypedefType>(PointeeTy.getTypePtr())) {
+  if (isa<TypedefType>(PointeeTy.getTypePtr())) {
     if (const BuiltinType *BT = PointeeTy->getAsBuiltinType()) {
       if (BT->getKind() == BuiltinType::ULong &&
           ((const_cast<ASTContext *>(this))->getIntWidth(PointeeTy) == 32))
@@ -2617,7 +2617,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     // pointee gets emitted _before_ the '^'.  The read-only qualifier of
     // the pointer itself gets ignored, _unless_ we are looking at a typedef!
     // Also, do not emit the 'r' for anything but the outermost type! 
-    if (dyn_cast<TypedefType>(T.getTypePtr())) {
+    if (isa<TypedefType>(T.getTypePtr())) {
       if (OutermostType && T.isConstQualified()) {
         isReadOnly = true;
         S += 'r';

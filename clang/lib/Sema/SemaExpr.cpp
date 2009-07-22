@@ -1495,7 +1495,7 @@ bool Sema::CheckAlignOfExpr(Expr *E, SourceLocation OpLoc,
   // Alignment of a field access is always okay, so long as it isn't a
   // bit-field.
   if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
-    if (dyn_cast<FieldDecl>(ME->getMemberDecl()))
+    if (isa<FieldDecl>(ME->getMemberDecl()))
       return false;
 
   return CheckSizeOfAlignOfOperand(E->getType(), OpLoc, ExprRange, false);
