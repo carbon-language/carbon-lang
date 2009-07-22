@@ -35,6 +35,12 @@ public:
 
   virtual const GRState *AssumeInBound(const GRState *state, SVal Idx, 
                                        SVal UpperBound, bool Assumption) = 0;
+  
+  std::pair<const GRState*, const GRState*> AssumeDual(const GRState *state,
+                                                       SVal Cond) {
+    return std::make_pair(Assume(state, Cond, true),
+                          Assume(state, Cond, false));    
+  }
 
   virtual const llvm::APSInt* getSymVal(const GRState *state,
                                         SymbolRef sym) const = 0;
