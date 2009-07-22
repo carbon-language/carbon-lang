@@ -518,8 +518,10 @@ let isBranch = 1, isTerminator = 1 in
   class IBr<bits<8> opcode, dag ins, string asm, list<dag> pattern> :
         I<opcode, RawFrm, (outs), ins, asm, pattern>;
 
-let isBranch = 1, isBarrier = 1 in
+let isBranch = 1, isBarrier = 1 in {
   def JMP : IBr<0xE9, (ins brtarget:$dst), "jmp\t$dst", [(br bb:$dst)]>;
+  def JMP8 : IBr<0xEB, (ins brtarget8:$dst), "jmp\t$dst", []>;
+}
 
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
