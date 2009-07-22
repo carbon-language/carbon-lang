@@ -1703,12 +1703,7 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
     // build a built-in operation.
   }
 
-  QualType result = CheckIncrementDecrementOperand(Arg, OpLoc,
-                                                 Opc == UnaryOperator::PostInc);
-  if (result.isNull())
-    return ExprError();
-  Input.release();
-  return Owned(new (Context) UnaryOperator(Arg, Opc, result, OpLoc));
+  return CreateBuiltinUnaryOp(OpLoc, Opc, move(Input));
 }
 
 Action::OwningExprResult
@@ -5014,16 +5009,17 @@ Action::OwningExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   Expr *Input = (Expr *)InputArg.get();
   QualType resultType;
   switch (Opc) {
-  case UnaryOperator::PostInc:
-  case UnaryOperator::PostDec:
   case UnaryOperator::OffsetOf:
     assert(false && "Invalid unary operator");
     break;
 
   case UnaryOperator::PreInc:
   case UnaryOperator::PreDec:
+  case UnaryOperator::PostInc:
+  case UnaryOperator::PostDec:
     resultType = CheckIncrementDecrementOperand(Input, OpLoc,
-                                                Opc == UnaryOperator::PreInc);
+                                                Opc == UnaryOperator::PreInc ||
+                                                Opc == UnaryOperator::PostInc);
     break;
   case UnaryOperator::AddrOf:
     resultType = CheckAddressOfOperand(Input, OpLoc);
