@@ -15,32 +15,9 @@
 #ifndef LLVM_CLANG_ANALYSIS_GREXPRENGINE_BUILDERS
 #define LLVM_CLANG_ANALYSIS_GREXPRENGINE_BUILDERS
 #include "clang/Analysis/PathSensitive/GRExprEngine.h"
+#include "clang/Analysis/Support/SaveAndRestore.h"
 
 namespace clang {
-  
-
-// SaveAndRestore - A utility class that uses RAII to save and restore
-//  the value of a variable.
-template<typename T>
-struct SaveAndRestore {
-  SaveAndRestore(T& x) : X(x), old_value(x) {}
-  ~SaveAndRestore() { X = old_value; }
-  T get() { return old_value; }
-private:  
-  T& X;
-  T old_value;
-};
-
-// SaveOr - Similar to SaveAndRestore.  Operates only on bools; the old
-//  value of a variable is saved, and during the dstor the old value is
-//  or'ed with the new value.
-struct SaveOr {
-  SaveOr(bool& x) : X(x), old_value(x) { x = false; }
-  ~SaveOr() { X |= old_value; }
-private:
-  bool& X;
-  const bool old_value;
-};
 
 class GRStmtNodeBuilderRef {
   GRExprEngine::NodeSet &Dst;
