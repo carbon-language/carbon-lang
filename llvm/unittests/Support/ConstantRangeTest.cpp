@@ -133,10 +133,10 @@ TEST_F(ConstantRangeTest, GetMinsAndMaxes) {
   EXPECT_EQ(Some.getSignedMax(), APInt(16, 0xaa9));
   EXPECT_EQ(Wrap.getSignedMax(), APInt(16, INT16_MAX));
 
-  EXPECT_EQ(Full.getSignedMin(), APInt(16, INT16_MIN));
+  EXPECT_EQ(Full.getSignedMin(), APInt(16, (uint64_t)INT16_MIN));
   EXPECT_EQ(One.getSignedMin(), APInt(16, 0xa));
   EXPECT_EQ(Some.getSignedMin(), APInt(16, 0xa));
-  EXPECT_EQ(Wrap.getSignedMin(), APInt(16, INT16_MIN));
+  EXPECT_EQ(Wrap.getSignedMin(), APInt(16, (uint64_t)INT16_MIN));
 
   // Found by Klee
   EXPECT_EQ(ConstantRange(APInt(4, 7), APInt(4, 0)).getSignedMax(),
@@ -178,7 +178,7 @@ TEST_F(ConstantRangeTest, SExt) {
   ConstantRange SOne = One.signExtend(20);
   ConstantRange SSome = Some.signExtend(20);
   ConstantRange SWrap = Wrap.signExtend(20);
-  EXPECT_EQ(SFull, ConstantRange(APInt(20, INT16_MIN, true),
+  EXPECT_EQ(SFull, ConstantRange(APInt(20, (uint64_t)INT16_MIN, true),
                                  APInt(20, INT16_MAX + 1, true)));
   EXPECT_TRUE(SEmpty.isEmptySet());
   EXPECT_EQ(SOne, ConstantRange(APInt(One.getLower()).sext(20),
@@ -321,10 +321,10 @@ TEST_F(ConstantRangeTest, SMax) {
   EXPECT_EQ(Empty.smax(One), Empty);
   EXPECT_EQ(Some.smax(Some), Some);
   EXPECT_EQ(Some.smax(Wrap), ConstantRange(APInt(16, 0xa),
-                                           APInt(16, INT16_MIN)));
+                                           APInt(16, (uint64_t)INT16_MIN)));
   EXPECT_EQ(Some.smax(One), Some);
   EXPECT_EQ(Wrap.smax(One), ConstantRange(APInt(16, 0xa),
-                                          APInt(16, INT16_MIN)));
+                                          APInt(16, (uint64_t)INT16_MIN)));
   EXPECT_EQ(One.smax(One), One);
 }
 
