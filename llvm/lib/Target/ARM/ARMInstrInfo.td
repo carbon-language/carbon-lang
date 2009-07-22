@@ -598,8 +598,10 @@ let isReturn = 1, isTerminator = 1, mayLoad = 1 in
 
 // On non-Darwin platforms R9 is callee-saved.
 let isCall = 1, Itinerary = IIC_Br,
-  Defs = [R0, R1, R2, R3, R12, LR,
-          D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
+  Defs = [R0,  R1,  R2,  R3,  R12, LR,
+          D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
+          D16, D17, D18, D19, D20, D21, D22, D23,
+          D24, D25, D26, D27, D28, D29, D31, D31, CPSR] in {
   def BL  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 "bl ${func:call}",
                 [(ARMcall tglobaladdr:$func)]>, Requires<[IsNotDarwin]>;
@@ -629,8 +631,10 @@ let isCall = 1, Itinerary = IIC_Br,
 
 // On Darwin R9 is call-clobbered.
 let isCall = 1, Itinerary = IIC_Br,
-  Defs = [R0, R1, R2, R3, R9, R12, LR,
-          D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
+  Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR,
+          D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
+          D16, D17, D18, D19, D20, D21, D22, D23,
+          D24, D25, D26, D27, D28, D29, D31, D31, CPSR] in {
   def BLr9  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 "bl ${func:call}",
                 [(ARMcall tglobaladdr:$func)]>, Requires<[IsDarwin]>;
@@ -1385,8 +1389,10 @@ let isCall = 1,
 //   doing so, we also cause the prologue/epilogue code to actively preserve
 //   all of the callee-saved resgisters, which is exactly what we want.
 let Defs = 
-  [ R0, R1, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, LR,
-    D0, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15 ] in {
+  [ R0,  R1,  R3,  R4,  R5,  R6,  R7,  R8,  R9,  R10, R11, R12, LR,
+    D0,  D2,  D3,  D4,  D5,  D6,  D7,  D8,  D9,  D10, D11, D12, D13, D14, D15,
+    D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D31,
+    D31 ] in {
   def Int_eh_sjlj_setjmp : XI<(outs), (ins GPR:$src),
                                AddrModeNone, SizeSpecial, IndexModeNone, Pseudo,
                                "add r0, pc, #4\n\t"

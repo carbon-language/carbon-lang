@@ -1071,8 +1071,10 @@ let isReturn = 1, isTerminator = 1, mayLoad = 1 in
 
 // On non-Darwin platforms R9 is callee-saved.
 let isCall = 1,
-  Defs = [R0, R1, R2, R3, R12, LR,
-          D0, D1, D2, D3, D4, D5, D6, D7, CPSR] in {
+  Defs = [R0,  R1,  R2,  R3,  R12, LR,
+          D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
+          D16, D17, D18, D19, D20, D21, D22, D23,
+          D24, D25, D26, D27, D28, D29, D31, D31, CPSR] in {
 def t2BL  : T2XI<(outs), (ins i32imm:$func, variable_ops),
                  "bl ${func:call}",
                   [(ARMcall tglobaladdr:$func)]>, Requires<[IsNotDarwin]>;
