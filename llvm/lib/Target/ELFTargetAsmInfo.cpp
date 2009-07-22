@@ -157,7 +157,8 @@ ELFTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
   
   if (SecName)
     return getNamedSection(SecName,
-                           SectionFlags::setEntitySize(SectionFlags::Mergeable,
+                           SectionFlags::setEntitySize(SectionFlags::Mergeable|
+                                                       SectionFlags::Small,
                                                        Size));
   
   return getReadOnlySection();  // .rodata
