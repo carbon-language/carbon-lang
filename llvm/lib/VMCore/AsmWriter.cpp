@@ -1063,13 +1063,6 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
     return;
   }
   
-  if (const MDString *S = dyn_cast<MDString>(CV)) {
-    Out << "!\"";
-    PrintEscapedString(S->begin(), S->size(), Out);
-    Out << '"';
-    return;
-  }
-
   if (const MDNode *Node = dyn_cast<MDNode>(CV)) {
     Out << "!" << Machine->getMetadataSlot(Node);
     return;
@@ -1138,7 +1131,16 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     Out << '"';
     return;
   }
-  
+
+  if (const MDString *MDS = dyn_cast<MDString>(V)) {
+    TypePrinter.print(MDS->getType(), Out);
+    Out << ' ';
+    Out << "!\"";
+    PrintEscapedString(MDS->begin(), MDS->size(), Out);
+    Out << '"';
+    return;
+  }
+
   char Prefix = '%';
   int Slot;
   if (Machine) {
@@ -1973,6 +1975,13 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     SlotTracker SlotTable(GV->getParent());
     AssemblyWriter W(OS, SlotTable, GV->getParent(), AAW);
     W.write(GV);
+  } else if (const MDString *MDS = dyn_cast<MDString>(this)) {
+    TypePrinting TypePrinter;
+    TypePrinter.print(MDS->getType(), OS);
+    OS << ' ';
+    OS << "!\"";
+    PrintEscapedString(MDS->begin(), MDS->size(), OS);
+    OS << '"';
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
     SlotTracker SlotTable(N);
     TypePrinting TypePrinter;

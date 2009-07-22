@@ -699,6 +699,56 @@ bool BitcodeReader::ParseValueSymbolTable() {
   }
 }
 
+bool BitcodeReader::ParseMetadata() {
+  unsigned NextValueNo = ValueList.size();
+
+  if (Stream.EnterSubBlock(bitc::METADATA_BLOCK_ID))
+    return Error("Malformed block record");
+  
+  SmallVector<uint64_t, 64> Record;
+  
+  // Read all the records.
+  while (1) {
+    unsigned Code = Stream.ReadCode();
+    if (Code == bitc::END_BLOCK) {
+      if (Stream.ReadBlockEnd())
+        return Error("Error at end of PARAMATTR block");
+      return false;
+    }
+    
+    if (Code == bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      Stream.ReadSubBlockID();
+      if (Stream.SkipBlock())
+        return Error("Malformed block record");
+      continue;
+    }
+    
+    if (Code == bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
+      continue;
+    }
+    
+    // Read a record.
+    Record.clear();
+    switch (Stream.ReadRecord(Code, Record)) {
+    default:  // Default behavior: ignore.
+      break;
+    case bitc::METADATA_STRING: {
+      unsigned MDStringLength = Record.size();
+      SmallString<8> String;
+      String.resize(MDStringLength);
+      for (unsigned i = 0; i != MDStringLength; ++i)
+        String[i] = Record[i];
+      Value *V = 
+        Context.getMDString(String.c_str(), String.c_str() + MDStringLength);
+      ValueList.AssignValue(V, NextValueNo++);
+      break;
+    }
+    }
+  }
+}
+
 /// DecodeSignRotatedValue - Decode a signed value stored with the sign bit in
 /// the LSB for dense VBR encoding.
 static uint64_t DecodeSignRotatedValue(uint64_t V) {
@@ -1028,15 +1078,6 @@ bool BitcodeReader::ParseConstants() {
                          AsmStr, ConstrStr, HasSideEffects);
       break;
     }
-    case bitc::CST_CODE_MDSTRING: {
-      unsigned MDStringLength = Record.size();
-      SmallString<8> String;
-      String.resize(MDStringLength);
-      for (unsigned i = 0; i != MDStringLength; ++i)
-        String[i] = Record[i];
-      V = Context.getMDString(String.c_str(), String.c_str() + MDStringLength);
-      break;
-    }
     case bitc::CST_CODE_MDNODE: {
       if (Record.empty() || Record.size() % 2 == 1)
         return Error("Invalid CST_MDNODE record");
@@ -1169,6 +1210,10 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
         break;
       case bitc::CONSTANTS_BLOCK_ID:
         if (ParseConstants() || ResolveGlobalAndAliasInits())
+          return true;
+        break;
+      case bitc::METADATA_BLOCK_ID:
+        if (ParseMetadata())
           return true;
         break;
       case bitc::FUNCTION_BLOCK_ID:

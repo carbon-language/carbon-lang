@@ -473,6 +473,42 @@ static uint64_t GetOptimizationFlags(const Value *V) {
   return Flags;
 }
 
+ static void WriteModuleMetadata(const ValueEnumerator &VE,
+                                 BitstreamWriter &Stream) {
+   const ValueEnumerator::ValueList &Vals = VE.getValues();
+   bool StartedMetadataBlock = false;
+   unsigned MDSAbbrev = 0;
+   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
+     if (const MDString *MDS = dyn_cast<MDString>(Vals[i].first)) {
+       if (!StartedMetadataBlock)  {
+        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+
+         // Abbrev for CST_CODE_STRING.
+         BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+         Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_STRING));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+         Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+         MDSAbbrev = Stream.EmitAbbrev(Abbv);
+         StartedMetadataBlock = true;
+       }
+
+      SmallVector<unsigned, 64> StrVals;
+      StrVals.clear();
+       // Code: [strchar x N]
+       const char *StrBegin = MDS->begin();
+       for (unsigned i = 0, e = MDS->size(); i != e; ++i)
+        StrVals.push_back(StrBegin[i]);
+    
+       // Emit the finished record.
+      Stream.EmitRecord(bitc::METADATA_STRING, StrVals, MDSAbbrev);
+     }
+   }
+
+   if (StartedMetadataBlock)
+     Stream.ExitBlock();    
+}
+
+
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
                            const ValueEnumerator &VE,
                            BitstreamWriter &Stream, bool isGlobal) {
@@ -484,8 +520,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   unsigned String8Abbrev = 0;
   unsigned CString7Abbrev = 0;
   unsigned CString6Abbrev = 0;
-  unsigned MDString8Abbrev = 0;
-  unsigned MDString6Abbrev = 0;
   // If this is a constant pool for the module, emit module-specific abbrevs.
   if (isGlobal) {
     // Abbrev for CST_CODE_AGGREGATE.
@@ -513,19 +547,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
     Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
     CString6Abbrev = Stream.EmitAbbrev(Abbv);
-
-    // Abbrev for CST_CODE_MDSTRING.
-    Abbv = new BitCodeAbbrev();
-    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_MDSTRING));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
-    MDString8Abbrev = Stream.EmitAbbrev(Abbv);
-    // Abbrev for CST_CODE_MDSTRING.
-    Abbv = new BitCodeAbbrev();
-    Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_MDSTRING));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-    Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Char6));
-    MDString6Abbrev = Stream.EmitAbbrev(Abbv);
   }  
   
   SmallVector<uint64_t, 64> Record;
@@ -534,6 +555,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   const Type *LastTy = 0;
   for (unsigned i = FirstVal; i != LastVal; ++i) {
     const Value *V = Vals[i].first;
+    if (isa<MDString>(V))
+      continue;
     // If we need to switch types, do so now.
     if (V->getType() != LastTy) {
       LastTy = V->getType();
@@ -712,16 +735,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         Record.push_back(VE.getValueID(C->getOperand(1)));
         Record.push_back(CE->getPredicate());
         break;
-      }
-    } else if (const MDString *S = dyn_cast<MDString>(C)) {
-      Code = bitc::CST_CODE_MDSTRING;
-      AbbrevToUse = MDString6Abbrev;
-      for (unsigned i = 0, e = S->size(); i != e; ++i) {
-        char V = S->begin()[i];
-        Record.push_back(V);
-
-        if (!BitCodeAbbrevOp::isChar6(V))
-          AbbrevToUse = MDString8Abbrev;
       }
     } else if (const MDNode *N = dyn_cast<MDNode>(C)) {
       Code = bitc::CST_CODE_MDNODE;
@@ -1328,7 +1341,10 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit top-level description of module, including target triple, inline asm,
   // descriptors for global variables, and function prototype info.
   WriteModuleInfo(M, VE, Stream);
-  
+
+  // Emit metadata.
+  WriteModuleMetadata(VE, Stream);
+
   // Emit constants.
   WriteModuleConstants(VE, Stream);
   

@@ -42,7 +42,8 @@ namespace llvm {
       t_Null, t_Undef, t_Zero,    // No value.
       t_EmptyArray,               // No value:  []
       t_Constant,                 // Value in ConstantVal.
-      t_InlineAsm                 // Value in StrVal/StrVal2/UIntVal.
+      t_InlineAsm,                // Value in StrVal/StrVal2/UIntVal.
+      t_Metadata                  // Value in MetadataVal.
     } Kind;
     
     LLParser::LocTy Loc;
@@ -51,6 +52,7 @@ namespace llvm {
     APSInt APSIntVal;
     APFloat APFloatVal;
     Constant *ConstantVal;
+    MetadataBase *MetadataVal;
     ValID() : APFloatVal(0.0) {}
   };
 }
@@ -368,7 +370,7 @@ bool LLParser::ParseNamedGlobal() {
 
 // MDString:
 //   ::= '!' STRINGCONSTANT
-bool LLParser::ParseMDString(Constant *&MDS) {
+bool LLParser::ParseMDString(MetadataBase *&MDS) {
   std::string Str;
   if (ParseStringConstant(Str)) return true;
   MDS = Context.getMDString(Str.data(), Str.data() + Str.size());
@@ -1694,7 +1696,8 @@ bool LLParser::ParseValID(ValID &ID) {
 
     // MDString:
     //   ::= '!' STRINGCONSTANT
-    if (ParseMDString(ID.ConstantVal)) return true;
+    if (ParseMDString(ID.MetadataVal)) return true;
+    ID.Kind = ValID::t_Metadata;
     return false;
   }
   case lltok::APSInt:
@@ -2107,7 +2110,9 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     return Error(ID.Loc, "functions are not values, refer to them as pointers");
   
   switch (ID.Kind) {
-  default: llvm_unreachable("Unknown ValID!");
+  default: llvm_unreachable("Unknown ValID!");    
+  case ValID::t_Metadata:
+    return Error(ID.Loc, "invalid use of metadata");
   case ValID::t_LocalID:
   case ValID::t_LocalName:
     return Error(ID.Loc, "invalid use of function-local name");
@@ -2224,6 +2229,8 @@ bool LLParser::ConvertValIDToValue(const Type *Ty, ValID &ID, Value *&V,
       return Error(ID.Loc, "invalid type for inline asm constraint string");
     V = InlineAsm::get(FTy, ID.StrVal, ID.StrVal2, ID.UIntVal);
     return false;
+  } else if (ID.Kind == ValID::t_Metadata) {
+    V = ID.MetadataVal;
   } else {
     Constant *C;
     if (ConvertGlobalValIDToValue(Ty, ID, C)) return true;
@@ -3451,9 +3458,23 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
       Lex.Lex();
       V = 0;
     } else {
-      Constant *C;
-      if (ParseGlobalTypeAndValue(C)) return true;
-      V = C;
+      PATypeHolder Ty(Type::VoidTy);
+      if (ParseType(Ty)) return true;
+      if (Lex.getKind() == lltok::Metadata) {
+        Lex.Lex();
+        Constant *Node = 0;
+        if (!ParseMDNode(Node))
+          V = Node;
+        else {
+          MetadataBase *MDS = 0;
+          if (ParseMDString(MDS)) return true;
+          V = MDS;
+        }
+      } else {
+        Constant *C;
+        if (ParseGlobalValue(Ty, C)) return true;
+        V = C;
+      }
     }
     Elts.push_back(V);
   } while (EatIfPresent(lltok::comma));

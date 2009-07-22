@@ -1,11 +1,13 @@
 ; RUN: llvm-as < %s | llvm-dis | not grep undef
 
-declare i8 @llvm.something(metadata %a)
+declare i8 @llvm.something(metadata %a, i32 %b, metadata %c)
 
-@llvm.foo = internal constant metadata !{i17 123, null, metadata !"foobar"}
+;; Simple MDNode
+!21 = metadata !{i17 123, null, metadata !"foobar"}
 
 define void @foo() {
-  %x = call i8 @llvm.something(metadata !{metadata !"f\00oa", i42 123})
+  ;; Intrinsic using MDNode and MDString
+  %x = call i8 @llvm.something(metadata !21, i32 42, metadata !"bar")
   ret void
 }
 

@@ -715,58 +715,6 @@ public:
     return V->getValueID() == UndefValueVal;
   }
 };
-
-//===----------------------------------------------------------------------===//
-/// MDString - a single uniqued string.
-/// These are used to efficiently contain a byte sequence for metadata.
-///
-class MDString : public Constant {
-  MDString(const MDString &);            // DO NOT IMPLEMENT
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-  MDString(const char *begin, const char *end);
-
-  const char *StrBegin, *StrEnd;
-  friend class LLVMContextImpl;
-protected:
-  // allocate space for exactly zero operands
-  void *operator new(size_t s) {
-    return User::operator new(s, 0);
-  }
-public:
-  /// size() - The length of this string.
-  ///
-  intptr_t size() const { return StrEnd - StrBegin; }
-
-  /// begin() - Pointer to the first byte of the string.
-  ///
-  const char *begin() const { return StrBegin; }
-
-  /// end() - Pointer to one byte past the end of the string.
-  ///
-  const char *end() const { return StrEnd; }
-
-  /// getType() specialization - Type is always MetadataTy.
-  ///
-  inline const Type *getType() const {
-    return Type::MetadataTy;
-  }
-
-  /// isNullValue - Return true if this is the value that would be returned by
-  /// getNullValue.  This always returns false because getNullValue will never
-  /// produce metadata.
-  virtual bool isNullValue() const {
-    return false;
-  }
-
-  virtual void destroyConstant();
-
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MDString *) { return true; }
-  static bool classof(const Value *V) {
-    return V->getValueID() == MDStringVal;
-  }
-};
-
 } // End llvm namespace
 
 #endif

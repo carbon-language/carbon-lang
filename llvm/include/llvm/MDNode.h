@@ -31,6 +31,65 @@
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
+// MetadataBase  - A base class for MDNode and MDString.
+class MetadataBase : public Value {
+public:
+  MetadataBase(const Type *Ty, unsigned scid)
+    : Value(Ty, scid) {}
+
+  /// getType() specialization - Type is always MetadataTy.
+  ///
+  inline const Type *getType() const {
+    return Type::MetadataTy;
+  }
+
+  /// isNullValue - Return true if this is the value that would be returned by
+  /// getNullValue.  This always returns false because getNullValue will never
+  /// produce metadata.
+  virtual bool isNullValue() const {
+    return false;
+  }
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const MDString *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueID() == MDStringVal;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// MDString - a single uniqued string.
+/// These are used to efficiently contain a byte sequence for metadata.
+///
+class MDString : public MetadataBase {
+  MDString(const MDString &);            // DO NOT IMPLEMENT
+
+  const char *StrBegin, *StrEnd;
+  friend class LLVMContextImpl;
+
+public:
+  MDString(const char *begin, const char *end)
+    : MetadataBase(Type::MetadataTy, Value::MDStringVal),
+      StrBegin(begin), StrEnd(end) {}
+
+  intptr_t size() const { return StrEnd - StrBegin; }
+
+  /// begin() - Pointer to the first byte of the string.
+  ///
+  const char *begin() const { return StrBegin; }
+
+  /// end() - Pointer to one byte past the end of the string.
+  ///
+  const char *end() const { return StrEnd; }
+
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const MDString *) { return true; }
+  static bool classof(const Value *V) {
+    return V->getValueID() == MDStringVal;
+  }
+};
+
+//===----------------------------------------------------------------------===//
 /// MDNode - a tuple of other values.
 /// These contain a list of the Constants that represent the metadata. The
 /// operand list is always empty, query the element list instead.

@@ -210,6 +210,7 @@ private:
   bool RememberAndSkipFunctionBody();
   bool ParseFunctionBody(Function *F);
   bool ResolveGlobalAndAliasInits();
+  bool ParseMetadata();
 };
   
 } // End llvm namespace

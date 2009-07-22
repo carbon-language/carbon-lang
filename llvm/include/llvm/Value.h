@@ -219,8 +219,8 @@ public:
     ConstantStructVal,        // This is an instance of ConstantStruct
     ConstantVectorVal,        // This is an instance of ConstantVector
     ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
-    MDStringVal,              // This is an instance of MDString
     MDNodeVal,                // This is an instance of MDNode
+    MDStringVal,              // This is an instance of MDString
     InlineAsmVal,             // This is an instance of InlineAsm
     PseudoSourceValueVal,     // This is an instance of PseudoSourceValue
     InstructionVal,           // This is an instance of Instruction

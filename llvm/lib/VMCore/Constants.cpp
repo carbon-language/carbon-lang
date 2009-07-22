@@ -1323,18 +1323,6 @@ void UndefValue::destroyConstant() {
   destroyConstantImpl();
 }
 
-//---- MDString::get() implementation
-//
-
-MDString::MDString(const char *begin, const char *end)
-  : Constant(Type::MetadataTy, MDStringVal, 0, 0),
-    StrBegin(begin), StrEnd(end) {}
-
-void MDString::destroyConstant() {
-  getType()->getContext().erase(this);
-  destroyConstantImpl();
-}
-
 //---- MDNode::get() implementation
 //
 

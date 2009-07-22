@@ -28,6 +28,7 @@ namespace llvm {
   class Instruction;
   class Constant;
   class GlobalValue;
+  class MetadataBase;
   class MDString;
   class MDNode;
   struct ValID;
@@ -147,7 +148,7 @@ namespace llvm {
                      bool HasLinkage, unsigned Visibility);
     bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility);
     bool ParseStandaloneMetadata();
-    bool ParseMDString(Constant *&S);
+    bool ParseMDString(MetadataBase *&S);
     bool ParseMDNode(Constant *&N);
 
     // Type Parsing.

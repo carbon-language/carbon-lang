@@ -18,6 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
 #include "llvm/Module.h"
+#include "llvm/MDNode.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -140,7 +141,9 @@ static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
   } else if (Argument *A = dyn_cast<Argument>(V)) {
     if (Function *P = A->getParent()) 
       ST = &P->getValueSymbolTable();
-  } else {
+  } else if (isa<MDString>(V))
+    return true;
+  else {
     assert(isa<Constant>(V) && "Unknown value type!");
     return true;  // no name is setable for this.
   }

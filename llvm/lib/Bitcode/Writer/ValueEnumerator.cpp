@@ -259,10 +259,14 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
       EnumerateOperandType(C->getOperand(i));
 
     if (const MDNode *N = dyn_cast<MDNode>(V)) {
-      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i)
-        EnumerateOperandType(N->getElement(i));
+      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
+        Value *Elem = N->getElement(i);
+        if (Elem)
+          EnumerateOperandType(Elem);
+      }
     }
-  }
+  } else if (const MDString *MDS = dyn_cast<MDString>(V))
+    EnumerateValue(V);
 }
 
 void ValueEnumerator::EnumerateAttributes(const AttrListPtr &PAL) {
