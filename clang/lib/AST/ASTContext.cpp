@@ -2655,8 +2655,19 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         S += '*';
         return;
       }
+    } else if (const RecordType *RTy = PointeeTy->getAsRecordType()) {
+      // GCC binary compat: Need to convert "struct objc_class *" to "#".
+      if (RTy->getDecl()->getIdentifier() == &Idents.get("objc_class")) {
+        S += '#';
+        return;
+      }
+      // GCC binary compat: Need to convert "struct objc_object *" to "@".
+      if (RTy->getDecl()->getIdentifier() == &Idents.get("objc_object")) {
+        S += '@';
+        return;
+      }
+      // fall through...
     }
-    
     S += '^';
     getLegacyIntegralTypeEncoding(PointeeTy);
 
