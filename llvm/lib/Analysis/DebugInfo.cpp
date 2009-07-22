@@ -213,7 +213,7 @@ void DIDerivedType::replaceAllUsesWith(DIDescriptor &D) {
   if (isNull())
     return;
 
-  assert (D.isNull() && "Can not replace with null");
+  assert (!D.isNull() && "Can not replace with null");
   getGV()->replaceAllUsesWith(D.getGV());
   getGV()->eraseFromParent();
 }
