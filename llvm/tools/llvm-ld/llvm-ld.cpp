@@ -49,6 +49,10 @@ static cl::opt<std::string> OutputFilename("o", cl::init("a.out"),
   cl::desc("Override output filename"),
   cl::value_desc("filename"));
 
+static cl::opt<std::string> BitcodeOutputFilename("b", cl::init(""),
+  cl::desc("Override bitcode output filename"),
+  cl::value_desc("filename"));
+
 static cl::opt<bool> Verbose("v",
   cl::desc("Print information about actions taken"));
 
@@ -458,7 +462,7 @@ static void EmitShellScript(char **argv) {
     if (!FullLibraryPath.isEmpty())
       Out2 << "    -load=" << FullLibraryPath.toString() << " \\\n";
   }
-  Out2 << "    $0.bc ${1+\"$@\"}\n";
+  Out2 << "    "  << BitcodeOutputFilename << " ${1+\"$@\"}\n";
   Out2.close();
 }
 
@@ -573,10 +577,14 @@ int main(int argc, char **argv, char **envp) {
 #endif
 
     // Generate the bitcode for the optimized module.
-    std::string RealBitcodeOutput = OutputFilename;
+    // If -b wasn't specified, use the name specified
+    // with -o to construct BitcodeOutputFilename.
+    if (BitcodeOutputFilename.empty()) {
+      BitcodeOutputFilename = OutputFilename;
+      if (!LinkAsLibrary) BitcodeOutputFilename += ".bc";
+    }
 
-    if (!LinkAsLibrary) RealBitcodeOutput += ".bc";
-    GenerateBitcode(Composite.get(), RealBitcodeOutput);
+    GenerateBitcode(Composite.get(), BitcodeOutputFilename);
 
     // If we are not linking a library, generate either a native executable
     // or a JIT shell script, depending upon what the user wants.
@@ -601,12 +609,12 @@ int main(int argc, char **argv, char **envp) {
 
           const char* args[4];
           args[0] = I->c_str();
-          args[1] = RealBitcodeOutput.c_str();
+          args[1] = BitcodeOutputFilename.c_str();
           args[2] = tmp_output.c_str();
           args[3] = 0;
           if (0 == sys::Program::ExecuteAndWait(prog, args, 0,0,0,0, &ErrMsg)) {
             if (tmp_output.isBitcodeFile() || tmp_output.isBitcodeFile()) {
-              sys::Path target(RealBitcodeOutput);
+              sys::Path target(BitcodeOutputFilename);
               target.eraseFromDisk();
               if (tmp_output.renamePathOnDisk(target, &ErrMsg))
                 PrintAndExit(ErrMsg, 2);
@@ -642,7 +650,7 @@ int main(int argc, char **argv, char **envp) {
 
         // Generate an assembly language file for the bitcode.
         std::string ErrMsg;
-        if (0 != GenerateAssembly(AssemblyFile.toString(), RealBitcodeOutput,
+        if (0 != GenerateAssembly(AssemblyFile.toString(), BitcodeOutputFilename,
             llc, ErrMsg))
           PrintAndExit(ErrMsg);
 
@@ -672,7 +680,7 @@ int main(int argc, char **argv, char **envp) {
         // Generate an assembly language file for the bitcode.
         std::string ErrMsg;
         if (0 != GenerateCFile(
-            CFile.toString(), RealBitcodeOutput, llc, ErrMsg))
+            CFile.toString(), BitcodeOutputFilename, llc, ErrMsg))
           PrintAndExit(ErrMsg);
 
         if (0 != GenerateNative(OutputFilename, CFile.toString(), 
@@ -692,10 +700,10 @@ int main(int argc, char **argv, char **envp) {
         PrintAndExit(ErrMsg);
 
       // Make the bitcode file readable and directly executable in LLEE as well
-      if (sys::Path(RealBitcodeOutput).makeExecutableOnDisk(&ErrMsg))
+      if (sys::Path(BitcodeOutputFilename).makeExecutableOnDisk(&ErrMsg))
         PrintAndExit(ErrMsg);
 
-      if (sys::Path(RealBitcodeOutput).makeReadableOnDisk(&ErrMsg))
+      if (sys::Path(BitcodeOutputFilename).makeReadableOnDisk(&ErrMsg))
         PrintAndExit(ErrMsg);
     }
   } catch (const std::string& msg) {
