@@ -27,20 +27,21 @@ namespace clang {
     
 class ProgramPoint {
 public:
-  enum Kind { BlockEdgeKind = 0x0,
-              BlockEntranceKind = 0x1,
-              BlockExitKind = 0x2, 
-              // Keep the following four together and in this order.
-              PostStmtKind = 0x3,
-              PostLocationChecksSucceedKind = 0x4,
-              PostOutOfBoundsCheckFailedKind = 0x5,
-              PostNullCheckFailedKind = 0x6,
-              PostUndefLocationCheckFailedKind = 0x7,
-              PostLoadKind = 0x8,
-              PostStoreKind = 0x9,
-              PostPurgeDeadSymbolsKind = 0x10,
-              PostStmtCustomKind = 0x11,
-              PostLValueKind = 0x12,
+  enum Kind { BlockEdgeKind,
+              BlockEntranceKind,
+              BlockExitKind,
+              PreStmtKind,
+              // Keep the following together and in this order.
+              PostStmtKind,
+              PostLocationChecksSucceedKind,
+              PostOutOfBoundsCheckFailedKind,
+              PostNullCheckFailedKind,
+              PostUndefLocationCheckFailedKind,
+              PostLoadKind,
+              PostStoreKind,
+              PostPurgeDeadSymbolsKind,
+              PostStmtCustomKind,
+              PostLValueKind,
               MinPostStmtKind = PostStmtKind,
               MaxPostStmtKind = PostLValueKind };
 
@@ -130,9 +131,25 @@ public:
   }
 };
 
+class PreStmt : public ProgramPoint {
+public:
+  PreStmt(const Stmt *S, const void *tag, const Stmt *SubStmt = 0)
+    : ProgramPoint(S, SubStmt, PreStmtKind, tag) {}
+
+  const Stmt *getStmt() const { return (const Stmt*) getData1(); }
+  const Stmt *getSubStmt() const { return (const Stmt*) getData2(); }  
+
+  template <typename T>
+  const T* getStmtAs() const { return llvm::dyn_cast<T>(getStmt()); }
+    
+  static bool classof(const ProgramPoint* Location) {
+    return Location->getKind() == PreStmtKind;
+  }
+};
+
 class PostStmt : public ProgramPoint {
 protected:
-  PostStmt(const Stmt* S, Kind k,const void *tag = 0)
+  PostStmt(const Stmt* S, Kind k, const void *tag = 0)
     : ProgramPoint(S, k, tag) {}
 
   PostStmt(const Stmt* S, const void* data, Kind k, const void *tag =0)
