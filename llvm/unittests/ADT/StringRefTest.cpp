@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
@@ -66,6 +67,11 @@ TEST(StringRefTest, Utilities) {
   EXPECT_TRUE(Str.startswith("he"));
   EXPECT_FALSE(Str.startswith("helloworld"));
   EXPECT_FALSE(Str.startswith("hi"));
+
+  std::string Storage;
+  raw_string_ostream OS(Storage);
+  OS << StringRef("hello");
+  EXPECT_EQ("hello", OS.str());
 }
 
 } // end anonymous namespace

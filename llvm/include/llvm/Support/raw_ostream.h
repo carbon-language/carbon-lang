@@ -15,6 +15,7 @@
 #define LLVM_SUPPORT_RAW_OSTREAM_H
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <cstring>
 #include <string>
@@ -151,18 +152,24 @@ public:
     return *this;
   }
 
-  raw_ostream &operator<<(const char *Str) {
-    // Inline fast path, particulary for constant strings where a
-    // sufficiently smart compiler will simplify strlen.
-
-    size_t Size = strlen(Str);
+  raw_ostream &operator<<(const StringRef &Str) {
+    // Inline fast path, particularly for strings with a known length.
+    size_t Size = Str.size();
 
     // Make sure we can use the fast path.
     if (OutBufCur+Size > OutBufEnd)
-      return write(Str, Size);
+      return write(Str.data(), Size);
 
-    memcpy(OutBufCur, Str, Size);
+    memcpy(OutBufCur, Str.data(), Size);
     OutBufCur += Size;
+    return *this;
+  }
+
+  raw_ostream &operator<<(const char *Str) {
+    // Inline fast path, particulary for constant strings where a sufficiently
+    // smart compiler will simplify strlen.
+
+    this->operator<<(StringRef(Str));
     return *this;
   }
 
