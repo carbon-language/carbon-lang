@@ -28,7 +28,8 @@
 using namespace llvm;
 
 TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
-: TM(tm) {
+  : TM(tm) 
+{
   BSSSection = "\t.bss";
   BSSSection_ = 0;
   ReadOnlySection = 0;
@@ -303,7 +304,7 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
     return getNamedSection(GV->getSection().c_str(), Flags);
   }
-  
+
   // Use default section depending on the 'type' of global
   return SelectSectionForGlobal(GV);
 }
@@ -347,35 +348,35 @@ std::string
 TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
                                       SectionKind::Kind Kind) const {
   switch (Kind) {
-   case SectionKind::Text:
+  case SectionKind::Text:
     return ".gnu.linkonce.t." + GV->getName();
-   case SectionKind::Data:
+  case SectionKind::Data:
     return ".gnu.linkonce.d." + GV->getName();
-   case SectionKind::DataRel:
+  case SectionKind::DataRel:
     return ".gnu.linkonce.d.rel" + GV->getName();
-   case SectionKind::DataRelLocal:
+  case SectionKind::DataRelLocal:
     return ".gnu.linkonce.d.rel.local" + GV->getName();
-   case SectionKind::DataRelRO:
+  case SectionKind::DataRelRO:
     return ".gnu.linkonce.d.rel.ro" + GV->getName();
-   case SectionKind::DataRelROLocal:
+  case SectionKind::DataRelROLocal:
     return ".gnu.linkonce.d.rel.ro.local" + GV->getName();
-   case SectionKind::SmallData:
+  case SectionKind::SmallData:
     return ".gnu.linkonce.s." + GV->getName();
-   case SectionKind::BSS:
+  case SectionKind::BSS:
     return ".gnu.linkonce.b." + GV->getName();
-   case SectionKind::SmallBSS:
+  case SectionKind::SmallBSS:
     return ".gnu.linkonce.sb." + GV->getName();
-   case SectionKind::ROData:
-   case SectionKind::RODataMergeConst:
-   case SectionKind::RODataMergeStr:
+  case SectionKind::ROData:
+  case SectionKind::RODataMergeConst:
+  case SectionKind::RODataMergeStr:
     return ".gnu.linkonce.r." + GV->getName();
-   case SectionKind::SmallROData:
+  case SectionKind::SmallROData:
     return ".gnu.linkonce.s2." + GV->getName();
-   case SectionKind::ThreadData:
+  case SectionKind::ThreadData:
     return ".gnu.linkonce.td." + GV->getName();
-   case SectionKind::ThreadBSS:
+  case SectionKind::ThreadBSS:
     return ".gnu.linkonce.tb." + GV->getName();
-   default:
+  default:
     llvm_unreachable("Unknown section kind");
   }
   return NULL;
