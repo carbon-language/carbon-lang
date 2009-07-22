@@ -464,7 +464,7 @@ void LiveIntervals::scaleNumbering(int factor) {
   i2miMap_.resize(highestSlot + 1);
   for (Mi2IndexMap::iterator MI = mi2iMap_.begin(), ME = mi2iMap_.end();
        MI != ME; ++MI) {
-    i2miMap_[MI->second] = MI->first;
+    i2miMap_[MI->second] = const_cast<MachineInstr *>(MI->first);
   }
 
 }
