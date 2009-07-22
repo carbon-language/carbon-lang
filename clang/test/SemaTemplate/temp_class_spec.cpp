@@ -94,7 +94,20 @@ struct remove_reference<T&> {
 
 int remove_ref0[is_same<remove_reference<int>::type, int>::value? 1 : -1];
 int remove_ref1[is_same<remove_reference<int&>::type, int>::value? 1 : -1];
-                
+
+template<typename T>
+struct remove_const {
+  typedef T type;
+};
+
+template<typename T>
+struct remove_const<const T> {
+  typedef T type;
+};
+
+int remove_const0[is_same<remove_const<const int>::type, int>::value? 1 : -1];
+int remove_const1[is_same<remove_const<const int[3]>::type, int[3]>::value? 1 : -1];
+
 template<typename T>
 struct is_incomplete_array {
   static const bool value = false;

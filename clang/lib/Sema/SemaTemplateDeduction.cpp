@@ -283,6 +283,57 @@ DeduceTemplateArguments(ASTContext &Context,
   return Sema::TDK_Success;
 }
 
+/// \brief Returns a completely-unqualified array type, capturing the 
+/// qualifiers in CVRQuals.
+///
+/// \param Context the AST context in which the array type was built.
+///
+/// \param T a canonical type that may be an array type.
+///
+/// \param CVRQuals will receive the set of const/volatile/restrict qualifiers
+/// that were applied to the element type of the array.
+///
+/// \returns if \p T is an array type, the completely unqualified array type
+/// that corresponds to T. Otherwise, returns T.
+static QualType getUnqualifiedArrayType(ASTContext &Context, QualType T,
+                                        unsigned &CVRQuals) {
+  assert(T->isCanonical() && "Only operates on canonical types");
+  if (!isa<ArrayType>(T)) {
+    CVRQuals = T.getCVRQualifiers();
+    return T.getUnqualifiedType();
+  }
+  
+  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(T)) {
+    QualType Elt = getUnqualifiedArrayType(Context, CAT->getElementType(),
+                                           CVRQuals);
+    if (Elt == CAT->getElementType())
+      return T;
+
+    return Context.getConstantArrayType(Elt, CAT->getSize(), 
+                                        CAT->getSizeModifier(), 0);
+  }
+  
+  if (const IncompleteArrayType *IAT = dyn_cast<IncompleteArrayType>(T)) {
+    QualType Elt = getUnqualifiedArrayType(Context, IAT->getElementType(),
+                                           CVRQuals);
+    if (Elt == IAT->getElementType())
+      return T;
+    
+    return Context.getIncompleteArrayType(Elt, IAT->getSizeModifier(), 0);
+  }
+  
+  const DependentSizedArrayType *DSAT = cast<DependentSizedArrayType>(T);
+  QualType Elt = getUnqualifiedArrayType(Context, DSAT->getElementType(),
+                                         CVRQuals);
+  if (Elt == DSAT->getElementType())
+    return T;
+  
+  // FIXME: Clone expression!
+  return Context.getDependentSizedArrayType(Elt, DSAT->getSizeExpr(),
+                                            DSAT->getSizeModifier(), 0,
+                                            SourceRange());
+}
+
 /// \brief Deduce the template arguments by comparing the parameter type and
 /// the argument type (C++ [temp.deduct.type]).
 ///
@@ -340,14 +391,19 @@ DeduceTemplateArguments(ASTContext &Context,
   if (const TemplateTypeParmType *TemplateTypeParm 
         = Param->getAsTemplateTypeParmType()) {
     unsigned Index = TemplateTypeParm->getIndex();
-
+    bool RecanonicalizeArg = false;
+    
     // If the argument type is an array type, move the qualifiers up to the
     // top level, so they can be matched with the qualifiers on the parameter.
     // FIXME: address spaces, ObjC GC qualifiers
-    QualType ArgElementType = Arg;
-    while (const ArrayType *ArgArray = ArgElementType->getAs<ArrayType>())
-      ArgElementType = ArgArray->getElementType();
-    Arg = Arg.getWithAdditionalQualifiers(ArgElementType.getCVRQualifiers());
+    if (isa<ArrayType>(Arg)) {
+      unsigned CVRQuals = 0;
+      Arg = getUnqualifiedArrayType(Context, Arg, CVRQuals);
+      if (CVRQuals) {
+        Arg = Arg.getWithAdditionalQualifiers(CVRQuals);
+        RecanonicalizeArg = true;
+      }
+    }
                                           
     // The argument type can not be less qualified than the parameter
     // type.
@@ -361,9 +417,10 @@ DeduceTemplateArguments(ASTContext &Context,
     assert(TemplateTypeParm->getDepth() == 0 && "Can't deduce with depth > 0");
 	  
     unsigned Quals = Arg.getCVRQualifiers() & ~Param.getCVRQualifiers();
-    QualType DeducedType 
-      = Context.getCanonicalType(Arg.getQualifiedType(Quals));
-
+    QualType DeducedType = Arg.getQualifiedType(Quals);
+    if (RecanonicalizeArg)
+      DeducedType = Context.getCanonicalType(DeducedType);
+    
     if (Deduced[Index].isNull())
       Deduced[Index] = TemplateArgument(SourceLocation(), DeducedType);
     else {
