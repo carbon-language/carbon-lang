@@ -567,74 +567,69 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(getDeclContext());
-  // FIXME. We probably don't need to use AllToInit. But it is cleaner.
   llvm::SmallVector<CXXBaseOrMemberInitializer*, 32> AllToInit;
+  llvm::DenseMap<const void *, CXXBaseOrMemberInitializer*> AllBaseFields;
+  
+  for (unsigned i = 0; i < NumInitializers; i++) {
+    CXXBaseOrMemberInitializer *Member = Initializers[i];
+    const void * Key = Member->isBaseInitializer() ?
+      reinterpret_cast<const void *>(
+                                   Member->getBaseClass()->getAsRecordType()) :
+      reinterpret_cast<const void *>(Member->getMember());
+    AllBaseFields[Key] = Member;
+  }
+    
   // Push virtual bases before others.
   for (CXXRecordDecl::base_class_iterator VBase =
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
-    const Type * T = VBase->getType()->getAsRecordType();
-    unsigned int i = 0;
-    for (i = 0; i < NumInitializers; i++) {
-      CXXBaseOrMemberInitializer *Member = Initializers[i];
-      if (Member->isBaseInitializer() &&
-          Member->getBaseClass()->getAsRecordType() == T) {
-        AllToInit.push_back(Member);
-        break;
-      }
-    }
-    if (i == NumInitializers) {
+    const void *Key = reinterpret_cast<const void *>(
+                                          VBase->getType()->getAsRecordType());
+    if (AllBaseFields[Key])
+      AllToInit.push_back(AllBaseFields[Key]);
+    else {
       CXXBaseOrMemberInitializer *Member = 
-        new (C) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
-                                           SourceLocation());
+      new (C) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
+                                         SourceLocation());
       AllToInit.push_back(Member);
     }
   }
+  
   for (CXXRecordDecl::base_class_iterator Base =
        ClassDecl->bases_begin(),
        E = ClassDecl->bases_end(); Base != E; ++Base) {
     // Virtuals are in the virtual base list and already constructed.
     if (Base->isVirtual())
       continue;
-    const Type * T = Base->getType()->getAsRecordType();
-    unsigned int i = 0;
-    for (i = 0; i < NumInitializers; i++) {
-      CXXBaseOrMemberInitializer *Member = Initializers[i];
-      if (Member->isBaseInitializer() && 
-          Member->getBaseClass()->getAsRecordType() == T) {
-        AllToInit.push_back(Member);
-        break;
-      }
-    }
-    if (i == NumInitializers) {
+    const void *Key = reinterpret_cast<const void *>(
+                                          Base->getType()->getAsRecordType());
+    if (AllBaseFields[Key])
+      AllToInit.push_back(AllBaseFields[Key]);
+    else {
       CXXBaseOrMemberInitializer *Member = 
-        new (C) CXXBaseOrMemberInitializer(Base->getType(), 0, 0, 
-                                           SourceLocation());
+      new (C) CXXBaseOrMemberInitializer(Base->getType(), 0, 0,
+                                         SourceLocation());
       AllToInit.push_back(Member);
     }
   }
+  
   // non-static data members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); Field != E; ++Field) {
-    unsigned int i = 0;
-    for (i = 0; i < NumInitializers; i++) {
-      CXXBaseOrMemberInitializer *Member = Initializers[i];
-      if (Member->isMemberInitializer() && Member->getMember() == (*Field)) {
-        AllToInit.push_back(Member);
-        break;
-      }
+    const void * Key = reinterpret_cast<const void *>(*Field);
+    if (AllBaseFields[Key]) {
+      AllToInit.push_back(AllBaseFields[Key]);
+      continue;
     }
-    if (i == NumInitializers) {
-      QualType FieldType = C.getCanonicalType((*Field)->getType());
-      while (const ArrayType *AT = C.getAsArrayType(FieldType))
-        FieldType = AT->getElementType();
+    QualType FieldType = C.getCanonicalType((*Field)->getType());
+    while (const ArrayType *AT = C.getAsArrayType(FieldType))
+      FieldType = AT->getElementType();
       
-      if (FieldType->getAsRecordType()) {
-        CXXBaseOrMemberInitializer *Member = 
-          new (C) CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
-          AllToInit.push_back(Member);
-      }      
-    }
+    if (FieldType->getAsRecordType()) {
+      CXXBaseOrMemberInitializer *Member = 
+        new (C) CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
+      AllToInit.push_back(Member);
+    } 
   }
   
   NumInitializers = AllToInit.size();
