@@ -503,23 +503,7 @@ void LiveInterval::join(LiveInterval &Other, const int *LHSValNoAssignments,
     InsertPos = addRangeFrom(*I, InsertPos);
   }
 
-  // If either of these intervals was spilled, the weight is the
-  // weight of the non-spilled interval.  This can only happen with
-  // iterative coalescers.
-
-  if (weight == HUGE_VALF && !TargetRegisterInfo::isPhysicalRegister(reg)) {
-    // Remove this assert if you have an iterative coalescer
-    assert(0 && "Joining to spilled interval");
-    weight = Other.weight;
-  }
-  else if (Other.weight != HUGE_VALF) {
-    weight += Other.weight;
-  }
-  else {
-    // Remove this assert if you have an iterative coalescer
-    assert(0 && "Joining from spilled interval");
-  }
-  // Otherwise the weight stays the same
+  ComputeJoinedWeight(Other);
 
   // Update regalloc hint if currently there isn't one.
   if (TargetRegisterInfo::isVirtualRegister(reg) &&
@@ -807,6 +791,29 @@ unsigned LiveInterval::getSize() const {
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     Sum += I->end - I->start;
   return Sum;
+}
+
+/// ComputeJoinedWeight - Set the weight of a live interval Joined
+/// after Other has been merged into it.
+void LiveInterval::ComputeJoinedWeight(const LiveInterval &Other) {
+  // If either of these intervals was spilled, the weight is the
+  // weight of the non-spilled interval.  This can only happen with
+  // iterative coalescers.
+
+  if (weight == HUGE_VALF &&
+      !TargetRegisterInfo::isPhysicalRegister(reg)) {
+    // Remove this assert if you have an iterative coalescer
+    assert(0 && "Joining to spilled interval");
+    weight = Other.weight;
+  }
+  else if (Other.weight != HUGE_VALF) {
+    weight += Other.weight;
+  }
+  else {
+    // Otherwise the weight stays the same
+    // Remove this assert if you have an iterative coalescer
+    assert(0 && "Joining from spilled interval");
+  }
 }
 
 std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {

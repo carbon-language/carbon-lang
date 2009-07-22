@@ -572,6 +572,10 @@ namespace llvm {
     ///
     unsigned getSize() const;
 
+    /// ComputeJoinedWeight - Set the weight of a live interval after
+    /// Other has been merged into it.
+    void ComputeJoinedWeight(const LiveInterval &Other);
+
     bool operator<(const LiveInterval& other) const {
       return beginNumber() < other.beginNumber();
     }
