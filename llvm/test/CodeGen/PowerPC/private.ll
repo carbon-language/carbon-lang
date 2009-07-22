@@ -1,7 +1,7 @@
 ; Test to make sure that the 'private' is used correctly.
 ;
-; RUN: llvm-as < %s | llc -mtriple=powerpc-unknown-linux-gnu | FileCheck %s -check-prefix=LINUX
-; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin | FileCheck %s -check-prefix=DARWIN
+; RUN: llvm-as < %s | llc -mtriple=powerpc-unknown-linux-gnu -march=ppc32 | FileCheck %s -check-prefix=LINUX
+; RUN: llvm-as < %s | llc -mtriple=powerpc-apple-darwin -march=ppc32 | FileCheck %s -check-prefix=DARWIN
 
 define private void @foo() nounwind {
         ret void
