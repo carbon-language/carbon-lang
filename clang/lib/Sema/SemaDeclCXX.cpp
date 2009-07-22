@@ -359,7 +359,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   }
 
   if (BaseType->isDependentType())
-    return new CXXBaseSpecifier(SpecifierRange, Virtual, 
+    return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual, 
                                 Class->getTagKind() == RecordDecl::TK_class,
                                 Access, BaseType);
 
@@ -416,7 +416,7 @@ Sema::CheckBaseSpecifier(CXXRecordDecl *Class,
   
   // Create the base specifier.
   // FIXME: Allocate via ASTContext?
-  return new CXXBaseSpecifier(SpecifierRange, Virtual, 
+  return new (Context) CXXBaseSpecifier(SpecifierRange, Virtual, 
                               Class->getTagKind() == RecordDecl::TK_class, 
                               Access, BaseType);
 }
@@ -697,8 +697,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
 
     if (Member) {
       // FIXME: Perform direct initialization of the member.
-      return new CXXBaseOrMemberInitializer(Member, (Expr **)Args, NumArgs, 
-                                            IdLoc);
+      return new (Context) CXXBaseOrMemberInitializer(Member, (Expr **)Args, 
+                                                      NumArgs, IdLoc);
     }
   }
   // It didn't name a member, so see if it names a class.
@@ -770,8 +770,8 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     << SourceRange(IdLoc, RParenLoc);
     
 
-  return new CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, NumArgs, 
-                                        IdLoc);
+  return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, 
+                                                  NumArgs, IdLoc);
 }
 
 static void *GetKeyForTopLevelField(FieldDecl *Field) {

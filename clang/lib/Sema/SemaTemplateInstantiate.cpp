@@ -821,8 +821,7 @@ Sema::InstantiateBaseSpecifiers(CXXRecordDecl *Instantiation,
          Base = Pattern->bases_begin(), BaseEnd = Pattern->bases_end();
        Base != BaseEnd; ++Base) {
     if (!Base->getType()->isDependentType()) {
-      // FIXME: Allocate via ASTContext
-      InstantiatedBases.push_back(new CXXBaseSpecifier(*Base));
+      InstantiatedBases.push_back(new (Context) CXXBaseSpecifier(*Base));
       continue;
     }
 

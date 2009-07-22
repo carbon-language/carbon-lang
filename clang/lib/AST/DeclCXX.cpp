@@ -51,6 +51,7 @@ CXXRecordDecl::~CXXRecordDecl() {
 
 void CXXRecordDecl::Destroy(ASTContext &C) {
   C.Deallocate(Bases);
+  C.Deallocate(VBases);
   this->RecordDecl::Destroy(C);
 }
 
@@ -129,7 +130,7 @@ CXXRecordDecl::setBases(ASTContext &C,
       CXXRecordDecl *VBaseClassDecl
         = cast<CXXRecordDecl>(QT->getAsRecordType()->getDecl());
       this->VBases[i] = 
-        *new CXXBaseSpecifier(
+        *new (C) CXXBaseSpecifier(
                           VBaseClassDecl->getSourceRange(), true,
                           VBaseClassDecl->getTagKind() == RecordDecl::TK_class,
                           UniqueVbases[i]->getAccessSpecifier(), QT);
@@ -571,7 +572,8 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     }
     if (i == NumInitializers) {
       CXXBaseOrMemberInitializer *Member = 
-        new CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,SourceLocation());
+        new (C) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
+                                           SourceLocation());
       AllToInit.push_back(Member);
     }
   }
@@ -593,7 +595,8 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     }
     if (i == NumInitializers) {
       CXXBaseOrMemberInitializer *Member = 
-        new CXXBaseOrMemberInitializer(Base->getType(), 0, 0, SourceLocation());
+        new (C) CXXBaseOrMemberInitializer(Base->getType(), 0, 0, 
+                                           SourceLocation());
       AllToInit.push_back(Member);
     }
   }
@@ -615,7 +618,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       
       if (FieldType->getAsRecordType()) {
         CXXBaseOrMemberInitializer *Member = 
-          new CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
+          new (C) CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
           AllToInit.push_back(Member);
       }      
     }
