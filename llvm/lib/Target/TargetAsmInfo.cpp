@@ -329,12 +329,19 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   return getDataSection();
 }
 
-// Lame default implementation. Calculate the section name for machine const.
-const Section*
-TargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
+/// getSectionForMergableConstant - Given a mergable constant with the
+/// specified size and relocation information, return a section that it
+/// should be placed in.
+const Section *
+TargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
+                                             unsigned ReloInfo) const {
   // FIXME: Support data.rel stuff someday
+  // Lame default implementation. Calculate the section name for machine const.
   return getDataSection();
 }
+
+
+
 
 std::string
 TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,

@@ -595,6 +595,14 @@ namespace llvm {
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
 
+    
+    /// getSectionForMergableConstant - Given a mergable constant with the
+    /// specified size and relocation information, return a section that it
+    /// should be placed in.
+    virtual const Section *
+    getSectionForMergableConstant(uint64_t Size, unsigned ReloInfo) const;
+
+    
     /// SectionKindForGlobal - This hook allows the target to select proper
     /// section kind used for global emission.
 // FIXME: Eliminate this.
@@ -623,7 +631,6 @@ namespace llvm {
 
 // FIXME: Eliminate this.
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
-    virtual const Section* SelectSectionForMachineConst(const Type *Ty) const;
 
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.

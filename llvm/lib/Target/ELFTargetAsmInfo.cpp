@@ -138,29 +138,37 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   return NULL;
 }
 
-const Section*
-ELFTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
-  // FIXME: Support data.rel stuff someday
-  return MergeableConstSection(Ty);
+/// getSectionForMergableConstant - Given a mergable constant with the
+/// specified size and relocation information, return a section that it
+/// should be placed in.
+const Section *
+ELFTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
+                                                unsigned ReloInfo) const {
+  // FIXME: IF this global requires a relocation, can we really put it in
+  // rodata???  This should check ReloInfo like darwin.
+  
+  const char *SecName = 0;
+  switch (Size) {
+  default: break;
+  case 4:  SecName = ".rodata.cst4"; break;
+  case 8:  SecName = ".rodata.cst8"; break;
+  case 16: SecName = ".rodata.cst16"; break;
+  }
+  
+  if (SecName)
+    return getNamedSection(SecName,
+                           SectionFlags::setEntitySize(SectionFlags::Mergeable|
+                                                       SectionFlags::Small,
+                                                       Size));
+  
+  return getReadOnlySection();  // .rodata
 }
+
 
 const Section*
 ELFTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   const TargetData *TD = TM.getTargetData();
-
-  // FIXME: string here is temporary, until stuff will fully land in.
-  // We cannot use {Four,Eight,Sixteen}ByteConstantSection here, since it's
-  // currently directly used by asmprinter.
-  unsigned Size = TD->getTypeAllocSize(Ty);
-  if (Size == 4 || Size == 8 || Size == 16) {
-    std::string Name =  ".rodata.cst" + utostr(Size);
-
-    return getNamedSection(Name.c_str(),
-                           SectionFlags::setEntitySize(SectionFlags::Mergeable,
-                                                       Size));
-  }
-
-  return getReadOnlySection();
+  return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
 }
 
 const Section*

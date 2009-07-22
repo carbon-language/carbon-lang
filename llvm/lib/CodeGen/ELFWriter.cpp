@@ -155,8 +155,10 @@ ELFSection &ELFWriter::getJumpTableSection() {
 
 // Get a constant pool section based on the section name returned by TAI
 ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
+  uint64_t Size = TM.getTargetData()->getTypeAllocSize(CPE.getType());
+  
   std::string CstPoolName =
-    TAI->SelectSectionForMachineConst(CPE.getType())->getName();
+    TAI->getSectionForMergableConstant(Size,CPE.getRelocationInfo())->getName();
   return getSection(CstPoolName,
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,

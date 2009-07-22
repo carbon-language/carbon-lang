@@ -29,7 +29,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
   : TargetAsmInfo(TM) {
 
   CStringSection_ = getUnnamedSection("\t.cstring",
-                                SectionFlags::Mergeable | SectionFlags::Strings);
+                                SectionFlags::Mergeable |SectionFlags::Strings);
   FourByteConstantSection = getUnnamedSection("\t.literal4\n",
                                               SectionFlags::Mergeable);
   EightByteConstantSection = getUnnamedSection("\t.literal8\n",
@@ -182,28 +182,30 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
 const Section*
 DarwinTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
   const TargetData *TD = TM.getTargetData();
-
-  unsigned Size = TD->getTypeAllocSize(Ty);
-  if (Size == 4)
-    return FourByteConstantSection;
-  else if (Size == 8)
-    return EightByteConstantSection;
-  else if (Size == 16 && SixteenByteConstantSection)
-    return SixteenByteConstantSection;
-
-  return getReadOnlySection();
+  return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
 }
 
-const Section*
-DarwinTargetAsmInfo::SelectSectionForMachineConst(const Type *Ty) const {
-  const Section* S = MergeableConstSection(Ty);
-
-  // Handle weird special case, when compiling PIC stuff.
-  if (S == getReadOnlySection() &&
-      TM.getRelocationModel() != Reloc::Static)
+const Section *
+DarwinTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
+                                                   unsigned ReloInfo) const {
+  // If this constant requires a relocation, we have to put it in the data
+  // segment, not in the text segment.
+  if (ReloInfo != 0)
     return ConstDataSection;
-
-  return S;
+  
+  switch (Size) {
+  default: break;
+  case 4:
+    return FourByteConstantSection;
+  case 8:
+    return EightByteConstantSection;
+  case 16:
+    if (SixteenByteConstantSection)
+      return SixteenByteConstantSection;
+    break;
+  }
+  
+  return ReadOnlySection;  // .const
 }
 
 std::string
