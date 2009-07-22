@@ -856,9 +856,9 @@ static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
   if (const OverflowingBinaryOperator *OBO =
         dyn_cast<OverflowingBinaryOperator>(U)) {
     if (OBO->hasNoUnsignedOverflow())
-      Out << "unsigned ";
+      Out << "nuw ";
     if (OBO->hasNoSignedOverflow())
-      Out << "signed ";
+      Out << "nsw ";
   } else if (const SDivOperator *Div = dyn_cast<SDivOperator>(U)) {
     if (Div->isExact())
       Out << "exact ";

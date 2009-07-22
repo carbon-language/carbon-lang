@@ -2,39 +2,39 @@
 
 @addr = external global i64
 
-define i64 @add_signed(i64 %x, i64 %y) {
-; CHECK: %z = signed add i64 %x, %y
-	%z = signed add i64 %x, %y
-	ret i64 %z
-}
-
-define i64 @sub_signed(i64 %x, i64 %y) {
-; CHECK: %z = signed sub i64 %x, %y
-	%z = signed sub i64 %x, %y
-	ret i64 %z
-}
-
-define i64 @mul_signed(i64 %x, i64 %y) {
-; CHECK: %z = signed mul i64 %x, %y
-	%z = signed mul i64 %x, %y
-	ret i64 %z
-}
-
 define i64 @add_unsigned(i64 %x, i64 %y) {
-; CHECK: %z = unsigned add i64 %x, %y
-	%z = unsigned add i64 %x, %y
+; CHECK: %z = nuw add i64 %x, %y
+	%z = nuw add i64 %x, %y
 	ret i64 %z
 }
 
 define i64 @sub_unsigned(i64 %x, i64 %y) {
-; CHECK: %z = unsigned sub i64 %x, %y
-	%z = unsigned sub i64 %x, %y
+; CHECK: %z = nuw sub i64 %x, %y
+	%z = nuw sub i64 %x, %y
 	ret i64 %z
 }
 
 define i64 @mul_unsigned(i64 %x, i64 %y) {
-; CHECK: %z = unsigned mul i64 %x, %y
-	%z = unsigned mul i64 %x, %y
+; CHECK: %z = nuw mul i64 %x, %y
+	%z = nuw mul i64 %x, %y
+	ret i64 %z
+}
+
+define i64 @add_signed(i64 %x, i64 %y) {
+; CHECK: %z = nsw add i64 %x, %y
+	%z = nsw add i64 %x, %y
+	ret i64 %z
+}
+
+define i64 @sub_signed(i64 %x, i64 %y) {
+; CHECK: %z = nsw sub i64 %x, %y
+	%z = nsw sub i64 %x, %y
+	ret i64 %z
+}
+
+define i64 @mul_signed(i64 %x, i64 %y) {
+; CHECK: %z = nsw mul i64 %x, %y
+	%z = nsw mul i64 %x, %y
 	ret i64 %z
 }
 
@@ -57,38 +57,38 @@ define i64 @mul_plain(i64 %x, i64 %y) {
 }
 
 define i64 @add_both(i64 %x, i64 %y) {
-; CHECK: %z = unsigned signed add i64 %x, %y
-	%z = unsigned signed add i64 %x, %y
+; CHECK: %z = nuw nsw add i64 %x, %y
+	%z = nuw nsw add i64 %x, %y
 	ret i64 %z
 }
 
 define i64 @sub_both(i64 %x, i64 %y) {
-; CHECK: %z = unsigned signed sub i64 %x, %y
-	%z = unsigned signed sub i64 %x, %y
+; CHECK: %z = nuw nsw sub i64 %x, %y
+	%z = nuw nsw sub i64 %x, %y
 	ret i64 %z
 }
 
 define i64 @mul_both(i64 %x, i64 %y) {
-; CHECK: %z = unsigned signed mul i64 %x, %y
-	%z = unsigned signed mul i64 %x, %y
+; CHECK: %z = nuw nsw mul i64 %x, %y
+	%z = nuw nsw mul i64 %x, %y
 	ret i64 %z
 }
 
 define i64 @add_both_reversed(i64 %x, i64 %y) {
-; CHECK: %z = unsigned signed add i64 %x, %y
-	%z = signed unsigned add i64 %x, %y
+; CHECK: %z = nuw nsw add i64 %x, %y
+	%z = nsw nuw add i64 %x, %y
 	ret i64 %z
 }
 
 define i64 @sub_both_reversed(i64 %x, i64 %y) {
-; CHECK: %z = unsigned signed sub i64 %x, %y
-	%z = signed unsigned sub i64 %x, %y
+; CHECK: %z = nuw nsw sub i64 %x, %y
+	%z = nsw nuw sub i64 %x, %y
 	ret i64 %z
 }
 
 define i64 @mul_both_reversed(i64 %x, i64 %y) {
-; CHECK: %z = unsigned signed mul i64 %x, %y
-	%z = signed unsigned mul i64 %x, %y
+; CHECK: %z = nuw nsw mul i64 %x, %y
+	%z = nsw nuw mul i64 %x, %y
 	ret i64 %z
 }
 
@@ -105,18 +105,18 @@ define i64 @sdiv_plain(i64 %x, i64 %y) {
 }
 
 define i64 @add_both_ce() {
-; CHECK: ret i64 unsigned signed add (i64 ptrtoint (i64* @addr to i64), i64 91)
-	ret i64 signed unsigned add (i64 ptrtoint (i64* @addr to i64), i64 91)
+; CHECK: ret i64 nuw nsw add (i64 ptrtoint (i64* @addr to i64), i64 91)
+	ret i64 nsw nuw add (i64 ptrtoint (i64* @addr to i64), i64 91)
 }
 
 define i64 @sub_both_ce() {
-; CHECK: ret i64 unsigned signed sub (i64 ptrtoint (i64* @addr to i64), i64 91)
-	ret i64 signed unsigned sub (i64 ptrtoint (i64* @addr to i64), i64 91)
+; CHECK: ret i64 nuw nsw sub (i64 ptrtoint (i64* @addr to i64), i64 91)
+	ret i64 nsw nuw sub (i64 ptrtoint (i64* @addr to i64), i64 91)
 }
 
 define i64 @mul_both_ce() {
-; CHECK: ret i64 unsigned signed mul (i64 ptrtoint (i64* @addr to i64), i64 91)
-	ret i64 unsigned signed mul (i64 ptrtoint (i64* @addr to i64), i64 91)
+; CHECK: ret i64 nuw nsw mul (i64 ptrtoint (i64* @addr to i64), i64 91)
+	ret i64 nuw nsw mul (i64 ptrtoint (i64* @addr to i64), i64 91)
 }
 
 define i64 @sdiv_exact_ce() {

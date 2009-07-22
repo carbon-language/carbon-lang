@@ -2601,9 +2601,9 @@ Instruction</a> </div>
 <h5>Syntax:</h5>
 <pre>
   &lt;result&gt; = add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;          <i>; yields {ty}:result</i>
-  &lt;result&gt; = signed add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
-  &lt;result&gt; = unsigned add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt; <i>; yields {ty}:result</i>
-  &lt;result&gt; = unsigned signed add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt; <i>; yields {ty}:result</i>
+  &lt;result&gt; = nuw add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;      <i>; yields {ty}:result</i>
+  &lt;result&gt; = nsw add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;      <i>; yields {ty}:result</i>
+  &lt;result&gt; = nuw nsw add &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;  <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2623,9 +2623,10 @@ Instruction</a> </div>
 <p>Because LLVM integers use a two's complement representation, this instruction
    is appropriate for both signed and unsigned integers.</p>
 
-<p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
-   the result value of the <tt>add</tt> is undefined if signed and/or unsigned
-   overflow, respectively, occurs.</p>
+<p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
+   and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
+   <tt>nsw</tt> keywords are present, the result value of the <tt>add</tt>
+   is undefined if unsigned and/or signed overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2673,10 +2674,10 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;            <i>; yields {ty}:result</i>
-  &lt;result&gt; = signed sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {ty}:result</i>
-  &lt;result&gt; = unsigned sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
-  &lt;result&gt; = unsigned signed sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;          <i>; yields {ty}:result</i>
+  &lt;result&gt; = nuw sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;      <i>; yields {ty}:result</i>
+  &lt;result&gt; = nsw sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;      <i>; yields {ty}:result</i>
+  &lt;result&gt; = nuw nsw sub &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;  <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2702,9 +2703,10 @@ Instruction</a> </div>
 <p>Because LLVM integers use a two's complement representation, this instruction
    is appropriate for both signed and unsigned integers.</p>
 
-<p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
-   the result value of the <tt>sub</tt> is undefined if signed and/or unsigned
-   overflow, respectively, occurs.</p>
+<p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
+   and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
+   <tt>nsw</tt> keywords are present, the result value of the <tt>sub</tt>
+   is undefined if unsigned and/or signed overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>
@@ -2759,10 +2761,10 @@ Instruction</a> </div>
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;            <i>; yields {ty}:result</i>
-  &lt;result&gt; = signed mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;     <i>; yields {ty}:result</i>
-  &lt;result&gt; = unsigned mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
-  &lt;result&gt; = unsigned signed mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;   <i>; yields {ty}:result</i>
+  &lt;result&gt; = mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;          <i>; yields {ty}:result</i>
+  &lt;result&gt; = nuw mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;      <i>; yields {ty}:result</i>
+  &lt;result&gt; = nsw mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;      <i>; yields {ty}:result</i>
+  &lt;result&gt; = nuw nsw mul &lt;ty&gt; &lt;op1&gt;, &lt;op2&gt;  <i>; yields {ty}:result</i>
 </pre>
 
 <h5>Overview:</h5>
@@ -2787,9 +2789,10 @@ Instruction</a> </div>
    be sign-extended or zero-extended as appropriate to the width of the full
    product.</p>
 
-<p>If the <tt>signed</tt> and/or <tt>unsigned</tt> keywords are present,
-   the result value of the <tt>mul</tt> is undefined if signed and/or unsigned
-   overflow, respectively, occurs.</p>
+<p><tt>nuw</tt> and <tt>nsw</tt> stand for &quot;No Unsigned Wrap&quot;
+   and &quot;No Signed Wrap&quot;, respectively. If the <tt>nuw</tt> and/or
+   <tt>nsw</tt> keywords are present, the result value of the <tt>mul</tt>
+   is undefined if unsigned and/or signed overflow, respectively, occurs.</p>
 
 <h5>Example:</h5>
 <pre>

@@ -2045,26 +2045,9 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.Kind = ValID::t_Constant;
     return false;
   }
-  case lltok::kw_signed: {
+  case lltok::kw_nuw: {
     Lex.Lex();
-    bool AlsoUnsigned = EatIfPresent(lltok::kw_unsigned);
-    if (Lex.getKind() != lltok::kw_add &&
-        Lex.getKind() != lltok::kw_sub &&
-        Lex.getKind() != lltok::kw_mul)
-      return TokError("expected 'add', 'sub', or 'mul'");
-    bool Result = LLParser::ParseValID(ID);
-    if (!Result) {
-      cast<OverflowingBinaryOperator>(ID.ConstantVal)
-        ->setHasNoSignedOverflow(true);
-      if (AlsoUnsigned)
-        cast<OverflowingBinaryOperator>(ID.ConstantVal)
-          ->setHasNoUnsignedOverflow(true);
-    }
-    return Result;
-  }
-  case lltok::kw_unsigned: {
-    Lex.Lex();
-    bool AlsoSigned = EatIfPresent(lltok::kw_signed);
+    bool AlsoSigned = EatIfPresent(lltok::kw_nsw);
     if (Lex.getKind() != lltok::kw_add &&
         Lex.getKind() != lltok::kw_sub &&
         Lex.getKind() != lltok::kw_mul)
@@ -2076,6 +2059,23 @@ bool LLParser::ParseValID(ValID &ID) {
       if (AlsoSigned)
         cast<OverflowingBinaryOperator>(ID.ConstantVal)
           ->setHasNoSignedOverflow(true);
+    }
+    return Result;
+  }
+  case lltok::kw_nsw: {
+    Lex.Lex();
+    bool AlsoUnsigned = EatIfPresent(lltok::kw_nuw);
+    if (Lex.getKind() != lltok::kw_add &&
+        Lex.getKind() != lltok::kw_sub &&
+        Lex.getKind() != lltok::kw_mul)
+      return TokError("expected 'add', 'sub', or 'mul'");
+    bool Result = LLParser::ParseValID(ID);
+    if (!Result) {
+      cast<OverflowingBinaryOperator>(ID.ConstantVal)
+        ->setHasNoSignedOverflow(true);
+      if (AlsoUnsigned)
+        cast<OverflowingBinaryOperator>(ID.ConstantVal)
+          ->setHasNoUnsignedOverflow(true);
     }
     return Result;
   }
@@ -2609,8 +2609,8 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
       return ParseStore(Inst, PFS, true);
     else
       return TokError("expected 'load' or 'store'");
-  case lltok::kw_signed: {
-    bool AlsoUnsigned = EatIfPresent(lltok::kw_unsigned);
+  case lltok::kw_nuw: {
+    bool AlsoSigned = EatIfPresent(lltok::kw_nsw);
     if (Lex.getKind() == lltok::kw_add ||
         Lex.getKind() == lltok::kw_sub ||
         Lex.getKind() == lltok::kw_mul) {
@@ -2618,16 +2618,16 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
       KeywordVal = Lex.getUIntVal();
       bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 0);
       if (!Result) {
-        cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedOverflow(true);
-        if (AlsoUnsigned)
-          cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedOverflow(true);
+        cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedOverflow(true);
+        if (AlsoSigned)
+          cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedOverflow(true);
       }
       return Result;
     }
     return TokError("expected 'add', 'sub', or 'mul'");
   }
-  case lltok::kw_unsigned: {
-    bool AlsoSigned = EatIfPresent(lltok::kw_signed);
+  case lltok::kw_nsw: {
+    bool AlsoUnsigned = EatIfPresent(lltok::kw_nuw);
     if (Lex.getKind() == lltok::kw_add ||
         Lex.getKind() == lltok::kw_sub ||
         Lex.getKind() == lltok::kw_mul) {
@@ -2635,9 +2635,9 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
       KeywordVal = Lex.getUIntVal();
       bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 1);
       if (!Result) {
-        cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedOverflow(true);
-        if (AlsoSigned)
-          cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedOverflow(true);
+        cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedOverflow(true);
+        if (AlsoUnsigned)
+          cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedOverflow(true);
       }
       return Result;
     }
