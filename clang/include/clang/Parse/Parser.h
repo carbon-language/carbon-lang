@@ -1147,6 +1147,8 @@ private:
   void ParseCXXClassMemberDeclaration(AccessSpecifier AS);
   void ParseConstructorInitializer(DeclPtrTy ConstructorDecl);
   MemInitResult ParseMemInitializer(DeclPtrTy ConstructorDecl);
+  void HandleMemberFunctionDefaultArgs(Declarator& DeclaratorInfo,
+                                       DeclPtrTy ThisDecl);
 
   //===--------------------------------------------------------------------===//
   // C++ 10: Derived classes [class.derived]

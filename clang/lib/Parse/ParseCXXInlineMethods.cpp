@@ -29,6 +29,8 @@ Parser::ParseCXXInlineMethodDef(AccessSpecifier AS, Declarator &D) {
 
   DeclPtrTy FnD = Actions.ActOnCXXMemberDeclarator(CurScope, AS, D, 0, 0);
 
+  HandleMemberFunctionDefaultArgs(D, FnD);
+
   // Consume the tokens and store them for later parsing.
 
   getCurrentClass().MethodDefs.push_back(LexedMethod(FnD));
