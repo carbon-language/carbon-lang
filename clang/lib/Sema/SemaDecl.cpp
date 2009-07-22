@@ -1520,7 +1520,9 @@ Sema::HandleDeclarator(Scope *S, Declarator &D,
                                   move(TemplateParamLists),
                                   IsFunctionDefinition, Redeclaration);
   } else {
-    New = ActOnVariableDeclarator(S, D, DC, R, PrevDecl, Redeclaration);
+    New = ActOnVariableDeclarator(S, D, DC, R, PrevDecl, 
+                                  move(TemplateParamLists),
+                                  Redeclaration);
   }
 
   if (New == 0)
@@ -1772,6 +1774,7 @@ isOutOfScopePreviousDeclaration(NamedDecl *PrevDecl, DeclContext *DC,
 NamedDecl*
 Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                               QualType R,NamedDecl* PrevDecl,
+                              MultiTemplateParamsArg TemplateParamLists,
                               bool &Redeclaration) {
   DeclarationName Name = GetNameForDeclarator(D);
 
@@ -1840,7 +1843,36 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     }
   }
         
-    
+  // Check that we can declare a template here.
+  if (TemplateParamLists.size() && 
+      CheckTemplateDeclScope(S, TemplateParamLists))
+    return 0;
+  
+  // Match up the template parameter lists with the scope specifier, then
+  // determine whether we have a template or a template specialization.
+  if (TemplateParameterList *TemplateParams
+      = MatchTemplateParametersToScopeSpecifier(
+                                  D.getDeclSpec().getSourceRange().getBegin(),
+                                                D.getCXXScopeSpec(),
+                        (TemplateParameterList**)TemplateParamLists.release(),
+                                                 TemplateParamLists.size())) {
+    if (TemplateParams->size() > 0) {
+      // There is no such thing as a variable template.
+      Diag(D.getIdentifierLoc(), diag::err_template_variable)
+        << II
+        << SourceRange(TemplateParams->getTemplateLoc(),
+                       TemplateParams->getRAngleLoc());
+      return 0;
+    } else {
+      // There is an extraneous 'template<>' for this variable. Complain
+      // about it, but allow the declaration of the variable.
+      Diag(TemplateParams->getTemplateLoc(), diag::err_template_variable)
+        << II
+        << SourceRange(TemplateParams->getTemplateLoc(),
+                       TemplateParams->getRAngleLoc());          
+    }
+  }        
+  
   // The variable can not 
   NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
                           II, R, SC, 
@@ -2209,8 +2241,7 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else {
       // FIXME: Handle function template specializations
     }
-  }
-        
+  }        
   
   // C++ [dcl.fct.spec]p5:
   //   The virtual specifier shall only be used in declarations of

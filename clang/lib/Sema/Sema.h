@@ -443,6 +443,7 @@ public:
                                     bool &Redeclaration);
   NamedDecl* ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      QualType R, NamedDecl* PrevDecl,
+                                     MultiTemplateParamsArg TemplateParamLists,
                                      bool &Redeclaration);
   void CheckVariableDeclaration(VarDecl *NewVD, NamedDecl *PrevDecl,
                                 bool &Redeclaration);
