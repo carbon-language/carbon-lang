@@ -16,10 +16,12 @@
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Analysis/CFG.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/StmtObjc.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"
@@ -30,6 +32,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 #include <functional>
+#include <queue>
 using namespace clang;
 
 /// getDeclName - Return a pretty name for the specified decl if possible, or
@@ -1009,6 +1012,114 @@ void Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
 
   // Keep a chain of previous declarations.
   New->setPreviousDeclaration(Old);
+}
+
+Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
+  llvm::OwningPtr<CFG> cfg (CFG::buildCFG(Root, &Context));
+  
+  // FIXME: They should never return 0, fix that, delete this code.
+  if (cfg == 0)
+    return NeverFallThrough;
+  // The CFG leaves in dead things, run a simple mark and sweep on it
+  // to weed out the trivially dead things.
+  std::queue<CFGBlock*> workq;
+  llvm::OwningArrayPtr<char> live(new char[cfg->getNumBlockIDs()]);
+  // Prep work queue
+  workq.push(&cfg->getEntry());
+  // Solve
+  while (!workq.empty()) {
+    CFGBlock *item = workq.front();
+    workq.pop();
+    live[item->getBlockID()] = 1;
+    CFGBlock::succ_iterator i;
+    for (i=item->succ_begin(); i != item->succ_end(); ++i) {
+      if ((*i) && ! live[(*i)->getBlockID()]) {
+        live[(*i)->getBlockID()] = 1;
+        workq.push(*i);
+      }
+    }
+  }
+
+  CFGBlock::succ_iterator i;
+  bool HasLiveReturn = false;
+  bool HasFakeEdge = false;
+  bool HasPlainEdge = false;
+  for (i=cfg->getExit().pred_begin(); i != cfg->getExit().pred_end(); ++i) {
+    if (!live[(*i)->getBlockID()])
+      continue;
+    if ((*i)->size() == 0) {
+      // A labeled empty statement, or the entry block...
+      HasPlainEdge = true;
+      continue;
+    }
+    Stmt *S = (**i)[(*i)->size()-1];
+    if (isa<ReturnStmt>(S)) {
+      HasLiveReturn = true;
+      continue;
+    }
+    if (isa<ObjCAtThrowStmt>(S)) {
+      HasFakeEdge = true;
+      continue;
+    }
+    if (isa<CXXThrowExpr>(S)) {
+      HasFakeEdge = true;
+      continue;
+    }
+    bool NoReturnEdge = false;
+    if (CallExpr *C = dyn_cast<CallExpr>(S))
+      {
+        Expr *CEE = C->getCallee()->IgnoreParenCasts();
+        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
+          if (FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
+            if (FD->hasAttr<NoReturnAttr>()) {
+              NoReturnEdge = true;
+              HasFakeEdge = true;
+            }
+          }
+        }
+      }
+    if (NoReturnEdge == false)
+      HasPlainEdge = true;
+  }
+  if (HasPlainEdge) {
+    if (HasFakeEdge|HasLiveReturn)
+      return MaybeFallThrough;
+    // This says never for calls to functions that are not marked noreturn, that
+    // don't return.  For people that don't like this, we encourage marking the
+    // functions as noreturn.
+    return AlwaysFallThrough;
+  }
+  return NeverFallThrough;
+}
+
+/// CheckFallThroughForFunctionDef - Check that we don't fall off the end of a
+/// function that should return a value.
+///
+/// \returns Never iff we can never alter control flow (we always fall off the
+/// end of the statement, Conditional iff we might or might not alter
+/// control-flow and Always iff we always alter control flow (we never fall off
+/// the end of the statement).
+void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
+  // FIXME: Would be nice if we had a better way to control cascding errors, but
+  // for now, avoid them.
+  if (getDiagnostics().hasErrorOccurred())
+    return;
+  if (Diags.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function)
+      == Diagnostic::Ignored)
+    return;
+  // FIXME: Funtion try block
+  if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
+    switch (CheckFallThrough(Body)) {
+    case MaybeFallThrough:
+      Diag(Compound->getRBracLoc(), diag::warn_maybe_falloff_nonvoid_function);
+      break;
+    case AlwaysFallThrough:
+      Diag(Compound->getRBracLoc(), diag::warn_falloff_nonvoid_function);
+      break;
+    case NeverFallThrough:
+      break;
+    }
+  }
 }
 
 /// CheckParmsForFunctionDef - Check that the parameters of the given
@@ -3246,6 +3357,10 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   Stmt *Body = BodyArg.takeAs<Stmt>();
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
     FD->setBody(Body);
+    if (!FD->getResultType()->isVoidType()
+        // C and C++ allow for main to automagically return 0.
+        && !FD->isMain())
+      CheckFallThroughForFunctionDef(FD, Body);
     
     if (!FD->isInvalidDecl())
       DiagnoseUnusedParameters(FD->param_begin(), FD->param_end());
@@ -3260,6 +3375,8 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     assert(MD == getCurMethodDecl() && "Method parsing confused");
     MD->setBody(Body);
+    if (!MD->getResultType()->isVoidType())
+      CheckFallThroughForFunctionDef(MD, Body);
     MD->setEndLoc(Body->getLocEnd());
     
     if (!MD->isInvalidDecl())

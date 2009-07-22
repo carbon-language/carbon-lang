@@ -104,6 +104,13 @@ def err_thread_non_global : Error<
 def err_thread_unsupported : Error<
   "thread-local storage is unsupported for the current target">;
 
+def warn_maybe_falloff_nonvoid_function : Warning<
+  "control may reach end of non-void function">,
+  InGroup<ReturnType>;
+def warn_falloff_nonvoid_function : Warning<
+  "control reaches end of non-void function">,
+  InGroup<ReturnType>;
+
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<
   "implicitly declaring C library function '%0' with type %1">;

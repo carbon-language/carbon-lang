@@ -801,10 +801,14 @@ public:
                                       SourceLocation MemberLoc,
                                       IdentifierInfo &Member);
                
-  /// Helpers for dealing with function parameters.
+  /// Helpers for dealing with functions.
+  void CheckFallThroughForFunctionDef(Decl *D, Stmt *Body);
   bool CheckParmsForFunctionDef(FunctionDecl *FD);
   void CheckCXXDefaultArguments(FunctionDecl *FD);
   void CheckExtraCXXDefaultArguments(Declarator &D);
+  enum ControlFlowKind { NeverFallThrough = 0, MaybeFallThrough = 1,
+                         AlwaysFallThrough = 2 };
+  ControlFlowKind CheckFallThrough(Stmt *);
 
   Scope *getNonFieldDeclScope(Scope *S);
 
