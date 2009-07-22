@@ -733,10 +733,11 @@ def note_template_param_prev_default_arg : Note<
   "previous default template argument defined here">;
 def err_template_param_default_arg_missing : Error<
   "template parameter missing a default argument">;
-
+  
 def err_template_variable : Error<"variable %0 declared as a template">;
 def err_template_variable_noparams : Error<
   "extraneous 'template<>' in declaration of variable %0">;
+
 // C++ Template Argument Lists
 def err_template_arg_list_different_arity : Error<
   "%select{too few|too many}0 template arguments for "

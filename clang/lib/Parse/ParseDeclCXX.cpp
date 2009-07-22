@@ -673,15 +673,6 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  TemplateParams? TemplateParams->size() : 0));
     }
     TemplateId->Destroy();
-  } else if (TemplateParams && TK != Action::TK_Reference) {
-    // Class template declaration or definition.
-    TagOrTempResult = Actions.ActOnClassTemplate(CurScope, TagType, TK, 
-                                                 StartLoc, SS, Name, NameLoc, 
-                                                 Attr,
-                       Action::MultiTemplateParamsArg(Actions, 
-                                                      &(*TemplateParams)[0],
-                                                      TemplateParams->size()),
-                                                 AS);
   } else if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
              TK == Action::TK_Declaration) {
     // Explicit instantiation of a member of a class template
@@ -702,7 +693,11 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
     // Declaration or definition of a class type
     TagOrTempResult = Actions.ActOnTag(CurScope, TagType, TK, StartLoc, SS, 
-                                       Name, NameLoc, Attr, AS, Owned);
+                                       Name, NameLoc, Attr, AS,
+                                  Action::MultiTemplateParamsArg(Actions, 
+                                    TemplateParams? &(*TemplateParams)[0] : 0,
+                                    TemplateParams? TemplateParams->size() : 0),
+                                       Owned);
   }
 
   // Parse the optional base clause (C++ only).

@@ -96,9 +96,15 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     // Parse the '<' template-parameter-list '>'
     SourceLocation LAngleLoc, RAngleLoc;
     TemplateParameterList TemplateParams;
-    ParseTemplateParameters(ParamLists.size(), TemplateParams, LAngleLoc, 
-                            RAngleLoc);
-
+    if (ParseTemplateParameters(ParamLists.size(), TemplateParams, LAngleLoc, 
+                                RAngleLoc)) {
+      // Skip until the semi-colon or a }.
+      SkipUntil(tok::r_brace, true, true);
+      if (Tok.is(tok::semi))
+        ConsumeToken();
+      return DeclPtrTy();      
+    }
+      
     if (!TemplateParams.empty())
       isSpecialiation = false;
 
@@ -219,6 +225,8 @@ Parser::ParseSingleDeclarationAfterTemplate(
 /// The template parameter we parse will be added to this list. LAngleLoc and
 /// RAngleLoc will receive the positions of the '<' and '>', respectively, 
 /// that enclose this template parameter list.
+///
+/// \returns true if an error occurred, false otherwise.
 bool Parser::ParseTemplateParameters(unsigned Depth,
                                      TemplateParameterList &TemplateParams,
                                      SourceLocation &LAngleLoc,
@@ -226,7 +234,7 @@ bool Parser::ParseTemplateParameters(unsigned Depth,
   // Get the template parameter list.
   if(!Tok.is(tok::less)) {
     Diag(Tok.getLocation(), diag::err_expected_less_after) << "template";
-    return false;
+    return true;
   }
   LAngleLoc = ConsumeToken();
   
@@ -236,11 +244,11 @@ bool Parser::ParseTemplateParameters(unsigned Depth,
   else if(ParseTemplateParameterList(Depth, TemplateParams)) {
     if(!Tok.is(tok::greater)) {
       Diag(Tok.getLocation(), diag::err_expected_greater);
-      return false;
+      return true;
     }
     RAngleLoc = ConsumeToken();
   }
-  return true;
+  return false;
 }
 
 /// ParseTemplateParameterList - Parse a template parameter list. If
@@ -392,8 +400,8 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
   SourceLocation LAngleLoc, RAngleLoc;
   {
     ParseScope TemplateParmScope(this, Scope::TemplateParamScope);
-    if(!ParseTemplateParameters(Depth + 1, TemplateParams, LAngleLoc,
-                                RAngleLoc)) {
+    if(ParseTemplateParameters(Depth + 1, TemplateParams, LAngleLoc,
+                               RAngleLoc)) {
       return DeclPtrTy();
     }
   }

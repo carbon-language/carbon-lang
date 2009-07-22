@@ -522,6 +522,7 @@ public:
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
+                             MultiTemplateParamsArg TemplateParameterLists,
                              bool &OwnedDecl);
   
   virtual void ActOnDefs(Scope *S, DeclPtrTy TagD, SourceLocation DeclStart,

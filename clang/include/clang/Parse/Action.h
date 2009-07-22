@@ -422,6 +422,18 @@ public:
                              bool &OwnedDecl) {
     // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
     // is (struct/union/enum/class).
+    return ActOnTag(S, TagSpec, TK, KWLoc, SS, Name, NameLoc, Attr, AS,
+                    MultiTemplateParamsArg(*this, 0, 0), OwnedDecl);
+  }
+
+  virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
+                             SourceLocation KWLoc, const CXXScopeSpec &SS,
+                             IdentifierInfo *Name, SourceLocation NameLoc,
+                             AttributeList *Attr, AccessSpecifier AS,
+                             MultiTemplateParamsArg TemplateParameterLists,
+                             bool &OwnedDecl) {
+    // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
+    // is (struct/union/enum/class).
     return DeclPtrTy();
   }
   

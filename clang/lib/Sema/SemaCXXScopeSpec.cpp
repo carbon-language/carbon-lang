@@ -213,7 +213,7 @@ bool Sema::RequireCompleteDeclContext(const CXXScopeSpec &SS) {
   if (!SS.isSet() || SS.isInvalid())
     return false;
   
-  DeclContext *DC = computeDeclContext(SS);
+  DeclContext *DC = computeDeclContext(SS, true);
   if (TagDecl *Tag = dyn_cast<TagDecl>(DC)) {
     // If we're currently defining this type, then lookup into the
     // type is okay: don't complain that it isn't complete yet.

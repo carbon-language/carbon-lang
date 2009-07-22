@@ -1866,14 +1866,14 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
     } else {
       // There is an extraneous 'template<>' for this variable. Complain
       // about it, but allow the declaration of the variable.
-      Diag(TemplateParams->getTemplateLoc(), diag::err_template_variable)
+      Diag(TemplateParams->getTemplateLoc(), 
+           diag::err_template_variable_noparams)
         << II
         << SourceRange(TemplateParams->getTemplateLoc(),
                        TemplateParams->getRAngleLoc());          
     }
   }        
   
-  // The variable can not 
   NewVD = VarDecl::Create(Context, DC, D.getIdentifierLoc(), 
                           II, R, SC, 
                           // FIXME: Move to DeclGroup...
@@ -3522,6 +3522,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                                SourceLocation KWLoc, const CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,
+                               MultiTemplateParamsArg TemplateParameterLists,
                                bool &OwnedDecl) {
   // If this is not a definition, it must have a name.
   assert((Name != 0 || TK == TK_Definition) &&
@@ -3536,6 +3537,28 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
   case DeclSpec::TST_class:  Kind = TagDecl::TK_class; break;
   case DeclSpec::TST_enum:   Kind = TagDecl::TK_enum; break;
   }
+  
+  if (TK != TK_Reference) {
+    if (TemplateParameterList *TemplateParams
+          = MatchTemplateParametersToScopeSpecifier(KWLoc, SS,
+                        (TemplateParameterList**)TemplateParameterLists.get(),
+                                              TemplateParameterLists.size())) {
+      if (TemplateParams->size() > 0) {
+        // This is a declaration or definition of a class template (which may
+        // be a member of another template).
+        OwnedDecl = false;
+        DeclResult Result = ActOnClassTemplate(S, TagSpec, TK, KWLoc,
+                                               SS, Name, NameLoc, Attr,
+                                               move(TemplateParameterLists),
+                                               AS);
+        return Result.get();
+      } else {
+        // FIXME: diagnose the extraneous 'template<>', once we recover
+        // slightly better in ParseTemplate.cpp from bogus template
+        // parameters.
+      }
+    }        
+  }  
   
   DeclContext *SearchDC = CurContext;
   DeclContext *DC = CurContext;

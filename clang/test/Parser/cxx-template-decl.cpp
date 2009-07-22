@@ -3,12 +3,8 @@
 // Errors
 export class foo { };   // expected-error {{expected template}}
 template  x;            // expected-error {{C++ requires a type specifier for all declarations}}
-export template x;      // expected-error {{expected '<' after 'template'}} \
-                        // expected-note {{exported templates are unsupported}} \
-// expected-error {{C++ requires a type specifier for all declarations}} \
-// expected-error {{declared as a template}}
-// See Sema::ParsedFreeStandingDeclSpec about the double diagnostic. This is
-// because ParseNonTypeTemplateParameter starts parsing a DeclSpec.
+export template x;      // expected-error {{expected '<' after 'template'}}
+export template<class T> class x0; // expected-note {{exported templates are unsupported}}
 template < ;            // expected-error {{parse error}} expected-error {{declaration does not declare anything}}
 template <template X> struct Err1; // expected-error {{expected '<' after 'template'}}
 template <template <typename> > struct Err2;       // expected-error {{expected 'class' before '>'}}
