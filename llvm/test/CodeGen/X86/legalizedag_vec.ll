@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -mattr=sse2 -disable-mmx -o %t -f
-; RUN: grep divdi3  %t | count 2
+; RUN: grep {call.*divdi3}  %t | count 2
 
 
 ; Test case for r63760 where we generate a legalization assert that an illegal
