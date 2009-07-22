@@ -40,7 +40,7 @@ BugReporterContext::~BugReporterContext() {
 // Helper routines for walking the ExplodedGraph and fetching statements.
 //===----------------------------------------------------------------------===//
 
-static inline Stmt* GetStmt(ProgramPoint P) {
+static inline const Stmt* GetStmt(ProgramPoint P) {
   if (const PostStmt* PS = dyn_cast<PostStmt>(&P))
     return PS->getStmt();
   else if (const BlockEdge* BE = dyn_cast<BlockEdge>(&P))
@@ -59,17 +59,17 @@ GetSuccessorNode(const ExplodedNode<GRState>* N) {
   return N->succ_empty() ? NULL : *(N->succ_begin());
 }
 
-static Stmt* GetPreviousStmt(const ExplodedNode<GRState>* N) {
+static const Stmt* GetPreviousStmt(const ExplodedNode<GRState>* N) {
   for (N = GetPredecessorNode(N); N; N = GetPredecessorNode(N))
-    if (Stmt *S = GetStmt(N->getLocation()))
+    if (const Stmt *S = GetStmt(N->getLocation()))
       return S;
   
   return 0;
 }
 
-static Stmt* GetNextStmt(const ExplodedNode<GRState>* N) {
+static const Stmt* GetNextStmt(const ExplodedNode<GRState>* N) {
   for (N = GetSuccessorNode(N); N; N = GetSuccessorNode(N))
-    if (Stmt *S = GetStmt(N->getLocation())) {
+    if (const Stmt *S = GetStmt(N->getLocation())) {
       // Check if the statement is '?' or '&&'/'||'.  These are "merges",
       // not actual statement points.
       switch (S->getStmtClass()) {
@@ -90,15 +90,17 @@ static Stmt* GetNextStmt(const ExplodedNode<GRState>* N) {
   return 0;
 }
 
-static inline Stmt* GetCurrentOrPreviousStmt(const ExplodedNode<GRState>* N) {  
-  if (Stmt *S = GetStmt(N->getLocation()))
+static inline const Stmt*
+GetCurrentOrPreviousStmt(const ExplodedNode<GRState>* N) {  
+  if (const Stmt *S = GetStmt(N->getLocation()))
     return S;
   
   return GetPreviousStmt(N);
 }
         
-static inline Stmt* GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {  
-  if (Stmt *S = GetStmt(N->getLocation()))
+static inline const Stmt*
+GetCurrentOrNextStmt(const ExplodedNode<GRState>* N) {  
+  if (const Stmt *S = GetStmt(N->getLocation()))
     return S;
           
   return GetNextStmt(N);
@@ -179,7 +181,7 @@ public:
 
 PathDiagnosticLocation
 PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode<GRState>* N) {
-  if (Stmt *S = GetNextStmt(N))
+  if (const Stmt *S = GetNextStmt(N))
     return PathDiagnosticLocation(S, getSourceManager());
 
   return FullSourceLoc(getCodeDecl().getBodyRBrace(), getSourceManager());
@@ -330,7 +332,7 @@ GetMostRecentVarDeclBinding(const ExplodedNode<GRState>* N,
     if (!isa<PostStmt>(P))
       continue;
     
-    DeclRefExpr* DR = dyn_cast<DeclRefExpr>(cast<PostStmt>(P).getStmt());
+    const DeclRefExpr* DR = dyn_cast<DeclRefExpr>(cast<PostStmt>(P).getStmt());
     
     if (!DR)
       continue;
@@ -340,7 +342,7 @@ GetMostRecentVarDeclBinding(const ExplodedNode<GRState>* N,
     if (X != Y)
       continue;
     
-    VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
+    const VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl());
     
     if (!VD)
       continue;
@@ -457,13 +459,13 @@ class VISIBILITY_HIDDEN ScanNotableSymbols
   
   llvm::SmallSet<SymbolRef, 10> AlreadyProcessed;
   const ExplodedNode<GRState>* N;
-  Stmt* S;
+  const Stmt* S;
   GRBugReporter& BR;
   PathDiagnostic& PD;
   
 public:
-  ScanNotableSymbols(const ExplodedNode<GRState>* n, Stmt* s, GRBugReporter& br,
-                     PathDiagnostic& pd)
+  ScanNotableSymbols(const ExplodedNode<GRState>* n, const Stmt* s,
+                     GRBugReporter& br, PathDiagnostic& pd)
   : N(n), S(s), BR(br), PD(pd) {}
   
   bool HandleBinding(StoreManager& SMgr, Store store,
@@ -523,7 +525,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           
         case Stmt::GotoStmtClass:
         case Stmt::IndirectGotoStmtClass: {          
-          Stmt* S = GetNextStmt(N);
+          const Stmt* S = GetNextStmt(N);
           
           if (!S)
             continue;
@@ -1199,14 +1201,15 @@ void BugType::FlushReports(BugReporter &BR) {}
 BugReport::~BugReport() {}
 RangedBugReport::~RangedBugReport() {}
 
-Stmt* BugReport::getStmt(BugReporter& BR) const {  
+const Stmt* BugReport::getStmt(BugReporter& BR) const {  
   ProgramPoint ProgP = EndNode->getLocation();  
-  Stmt *S = NULL;
+  const Stmt *S = NULL;
   
   if (BlockEntrance* BE = dyn_cast<BlockEntrance>(&ProgP)) {
     if (BE->getBlock() == &BR.getCFG()->getExit()) S = GetPreviousStmt(EndNode);
   }
-  if (!S) S = GetStmt(ProgP);  
+  if (!S)
+    S = GetStmt(ProgP);  
   
   return S;  
 }
@@ -1215,7 +1218,7 @@ PathDiagnosticPiece*
 BugReport::getEndPath(BugReporterContext& BRC,
                       const ExplodedNode<GRState>* EndPathNode) {
   
-  Stmt* S = getStmt(BRC.getBugReporter());
+  const Stmt* S = getStmt(BRC.getBugReporter());
   
   if (!S)
     return NULL;
@@ -1238,7 +1241,7 @@ BugReport::getEndPath(BugReporterContext& BRC,
 void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
                           const SourceRange*& end) {  
   
-  if (Expr* E = dyn_cast_or_null<Expr>(getStmt(BR))) {
+  if (const Expr* E = dyn_cast_or_null<Expr>(getStmt(BR))) {
     R = E->getSourceRange();
     assert(R.isValid());
     beg = &R;
@@ -1250,9 +1253,9 @@ void BugReport::getRanges(BugReporter& BR, const SourceRange*& beg,
 
 SourceLocation BugReport::getLocation() const {  
   if (EndNode)
-    if (Stmt* S = GetCurrentOrPreviousStmt(EndNode)) {
+    if (const Stmt* S = GetCurrentOrPreviousStmt(EndNode)) {
       // For member expressions, return the location of the '.' or '->'.
-      if (MemberExpr* ME = dyn_cast<MemberExpr>(S))
+      if (const MemberExpr* ME = dyn_cast<MemberExpr>(S))
         return ME->getMemberLoc();
 
       return S->getLocStart();

@@ -146,12 +146,12 @@ public:
                    ExplodedNodeImpl* Pred);
   
   ExplodedNodeImpl*
-  generateNodeImpl(Stmt* S, const void* State, ExplodedNodeImpl* Pred,
+  generateNodeImpl(const Stmt* S, const void* State, ExplodedNodeImpl* Pred,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0);
 
   ExplodedNodeImpl*
-  generateNodeImpl(Stmt* S, const void* State,
+  generateNodeImpl(const Stmt* S, const void* State,
                    ProgramPoint::Kind K = ProgramPoint::PostStmtKind,
                    const void *tag = 0) {
     ExplodedNodeImpl* N = getLastNode();
@@ -160,7 +160,7 @@ public:
   }
   
   ExplodedNodeImpl*
-  generateNodeImpl(Stmt* S, const void* State, const void *tag = 0) {
+  generateNodeImpl(const Stmt* S, const void* State, const void *tag = 0) {
     ExplodedNodeImpl* N = getLastNode();
     assert (N && "Predecessor of new node is infeasible.");
     return generateNodeImpl(S, State, N, ProgramPoint::PostStmtKind, tag);
@@ -211,24 +211,24 @@ public:
     return static_cast<NodeTy*>(NB.generateNodeImpl(PP, St, Pred));
   }
   
-  NodeTy* generateNode(Stmt* S, const StateTy* St, NodeTy* Pred,
+  NodeTy* generateNode(const Stmt* S, const StateTy* St, NodeTy* Pred,
                        ProgramPoint::Kind K) {
     HasGeneratedNode = true;
     if (PurgingDeadSymbols) K = ProgramPoint::PostPurgeDeadSymbolsKind;      
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, Pred, K, Tag));
   }
   
-  NodeTy* generateNode(Stmt* S, const StateTy* St, NodeTy* Pred) {
+  NodeTy* generateNode(const Stmt* S, const StateTy* St, NodeTy* Pred) {
     return generateNode(S, St, Pred, PointKind);
   }
   
-  NodeTy* generateNode(Stmt* S, const StateTy* St, ProgramPoint::Kind K) {
+  NodeTy* generateNode(const Stmt* S, const StateTy* St, ProgramPoint::Kind K) {
     HasGeneratedNode = true;
     if (PurgingDeadSymbols) K = ProgramPoint::PostPurgeDeadSymbolsKind;      
     return static_cast<NodeTy*>(NB.generateNodeImpl(S, St, K, Tag));
   }
   
-  NodeTy* generateNode(Stmt* S, const StateTy* St) {
+  NodeTy* generateNode(const Stmt* S, const StateTy* St) {
     return generateNode(S, St, PointKind);
   }
 

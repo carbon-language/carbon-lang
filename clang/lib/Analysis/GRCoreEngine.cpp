@@ -390,7 +390,7 @@ void GRStmtNodeBuilderImpl::GenerateAutoTransition(ExplodedNodeImpl* N) {
     Eng.WList->Enqueue(Succ, B, Idx+1);
 }
 
-static inline PostStmt GetPostLoc(Stmt* S, ProgramPoint::Kind K,
+static inline PostStmt GetPostLoc(const Stmt* S, ProgramPoint::Kind K,
                                   const void *tag) {
   switch (K) {
     default:
@@ -426,7 +426,7 @@ static inline PostStmt GetPostLoc(Stmt* S, ProgramPoint::Kind K,
 }
 
 ExplodedNodeImpl*
-GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, const void* State,
+GRStmtNodeBuilderImpl::generateNodeImpl(const Stmt* S, const void* State,
                                         ExplodedNodeImpl* Pred,
                                         ProgramPoint::Kind K,
                                         const void *tag) {

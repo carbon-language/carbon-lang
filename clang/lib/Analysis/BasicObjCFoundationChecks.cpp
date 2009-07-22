@@ -63,10 +63,10 @@ class VISIBILITY_HIDDEN BasicObjCFoundationChecks : public GRSimpleAPICheck {
   ASTContext &Ctx;
       
   bool isNSString(const ObjCInterfaceType *T, const char* suffix);
-  bool AuditNSString(NodeTy* N, ObjCMessageExpr* ME);
+  bool AuditNSString(NodeTy* N, const ObjCMessageExpr* ME);
       
-  void Warn(NodeTy* N, Expr* E, const std::string& s);  
-  void WarnNilArg(NodeTy* N, Expr* E);
+  void Warn(NodeTy* N, const Expr* E, const std::string& s);  
+  void WarnNilArg(NodeTy* N, const Expr* E);
   
   bool CheckNilArg(NodeTy* N, unsigned Arg);
 
@@ -77,7 +77,7 @@ public:
   bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
   
 private:  
-  void WarnNilArg(NodeTy* N, ObjCMessageExpr* ME, unsigned Arg) {    
+  void WarnNilArg(NodeTy* N, const ObjCMessageExpr* ME, unsigned Arg) {    
     std::string sbuf;
     llvm::raw_string_ostream os(sbuf);
     os << "Argument to '" << GetReceiverNameType(ME) << "' method '"
@@ -106,7 +106,7 @@ clang::CreateBasicObjCFoundationChecks(ASTContext& Ctx, BugReporter& BR) {
 bool BasicObjCFoundationChecks::Audit(ExplodedNode<GRState>* N,
                                       GRStateManager&) {
   
-  ObjCMessageExpr* ME =
+  const ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
 
   const ObjCInterfaceType *ReceiverType = GetReceiverType(ME);
@@ -140,10 +140,10 @@ static inline bool isNil(SVal X) {
 //===----------------------------------------------------------------------===//
 
 bool BasicObjCFoundationChecks::CheckNilArg(NodeTy* N, unsigned Arg) {
-  ObjCMessageExpr* ME =
+  const ObjCMessageExpr* ME =
     cast<ObjCMessageExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   
-  Expr * E = ME->getArg(Arg);
+  const Expr * E = ME->getArg(Arg);
   
   if (isNil(N->getState()->getSVal(E))) {
     WarnNilArg(N, ME, Arg);
@@ -163,7 +163,7 @@ bool BasicObjCFoundationChecks::isNSString(const ObjCInterfaceType *T,
 }
 
 bool BasicObjCFoundationChecks::AuditNSString(NodeTy* N, 
-                                              ObjCMessageExpr* ME) {
+                                              const ObjCMessageExpr* ME) {
   
   Selector S = ME->getSelector();
   
@@ -257,7 +257,7 @@ public:
   bool Audit(ExplodedNode<GRState>* N, GRStateManager&);
   
 private:
-  void AddError(const TypedRegion* R, Expr* Ex, ExplodedNode<GRState> *N,
+  void AddError(const TypedRegion* R, const Expr* Ex, ExplodedNode<GRState> *N,
                 uint64_t SourceSize, uint64_t TargetSize, uint64_t NumberKind);  
 };
 } // end anonymous namespace
@@ -356,8 +356,9 @@ static const char* GetCFNumberTypeStr(uint64_t i) {
 #endif
 
 bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){  
-  CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
-  Expr* Callee = CE->getCallee();  
+  const CallExpr* CE =
+    cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
+  const Expr* Callee = CE->getCallee();  
   SVal CallV = N->getState()->getSVal(Callee);  
   const FunctionDecl* FD = CallV.getAsFunctionDecl();
 
@@ -423,7 +424,7 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   return SourceSize < TargetSize;
 }
 
-void AuditCFNumberCreate::AddError(const TypedRegion* R, Expr* Ex,
+void AuditCFNumberCreate::AddError(const TypedRegion* R, const Expr* Ex,
                                    ExplodedNode<GRState> *N,
                                    uint64_t SourceSize, uint64_t TargetSize,
                                    uint64_t NumberKind) {
@@ -486,7 +487,7 @@ public:
 
 
 bool AuditCFRetainRelease::Audit(ExplodedNode<GRState>* N, GRStateManager&) {
-  CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
+  const CallExpr* CE = cast<CallExpr>(cast<PostStmt>(N->getLocation()).getStmt());
   
   // If the CallExpr doesn't have exactly 1 argument just give up checking.
   if (CE->getNumArgs() != 1)

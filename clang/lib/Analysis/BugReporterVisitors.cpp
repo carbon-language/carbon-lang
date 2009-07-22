@@ -200,7 +200,7 @@ public:
     }
     
     // FIXME: Refactor this into BugReporterContext.
-    Stmt *S = 0;      
+    const Stmt *S = 0;      
     ProgramPoint P = N->getLocation();
     
     if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
@@ -266,7 +266,7 @@ public:
         return NULL;
       
       // FIXME: Refactor this into BugReporterContext.
-      Stmt *S = 0;      
+      const Stmt *S = 0;      
       ProgramPoint P = N->getLocation();
       
       if (BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {

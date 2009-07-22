@@ -120,7 +120,7 @@ public:
       std::string sbuf;
       llvm::raw_string_ostream os(sbuf);
       PostStmt P = cast<PostStmt>((*I)->getLocation());
-      ObjCMessageExpr *ME = cast<ObjCMessageExpr>(P.getStmt());
+      const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(P.getStmt());
       os << "The receiver in the message expression is 'nil' and results in the"
             " returned value (of type '"
          << ME->getType().getAsString()
@@ -153,7 +153,7 @@ public:
       std::string sbuf;
       llvm::raw_string_ostream os(sbuf);
       PostStmt P = cast<PostStmt>((*I)->getLocation());
-      ObjCMessageExpr *ME = cast<ObjCMessageExpr>(P.getStmt());
+      const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(P.getStmt());
       os << "The receiver in the message expression is 'nil' and results in the"
       " returned value (of type '"
       << ME->getType().getAsString()
@@ -305,8 +305,8 @@ public:
       // Generate a report for this bug.
       BuiltinBugReport *report = new BuiltinBugReport(*this, desc.c_str(), *I);
       ExplodedNode<GRState>* N = *I;
-      Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
-      Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
+      const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+      const Expr* E = cast<ObjCMessageExpr>(S)->getReceiver();
       assert (E && "Receiver cannot be NULL");
       report->addRange(E->getSourceRange());
       BR.EmitReport(report);
@@ -330,9 +330,9 @@ public:
          End = Eng.ret_stackaddr_end(); I!=End; ++I) {
 
       ExplodedNode<GRState>* N = *I;
-      Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
-      Expr* E = cast<ReturnStmt>(S)->getRetValue();
-      assert (E && "Return expression cannot be NULL");
+      const Stmt *S = cast<PostStmt>(N->getLocation()).getStmt();
+      const Expr* E = cast<ReturnStmt>(S)->getRetValue();
+      assert(E && "Return expression cannot be NULL");
       
       // Get the value associated with E.
       loc::MemRegionVal V = cast<loc::MemRegionVal>(N->getState()->getSVal(E));
@@ -493,7 +493,7 @@ public:
       // undefined size.
       GRExprEngine::NodeTy* N = *I;
       PostStmt PS = cast<PostStmt>(N->getLocation());      
-      DeclStmt *DS = cast<DeclStmt>(PS.getStmt());
+      const DeclStmt *DS = cast<DeclStmt>(PS.getStmt());
       VarDecl* VD = cast<VarDecl>(*DS->decl_begin());
       QualType T = Eng.getContext().getCanonicalType(VD->getType());
       VariableArrayType* VT = cast<VariableArrayType>(T);

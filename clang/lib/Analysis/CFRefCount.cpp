@@ -2298,9 +2298,9 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   // This is the allocation site since the previous node had no bindings
   // for this symbol.
   if (!PrevT) {
-    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+    const Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
     
-    if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+    if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Get the name of the callee (if it is available).
       SVal X = CurrSt->getSValAsScalarOrLoc(CE->getCallee());
       if (const FunctionDecl* FD = X.getAsFunctionDecl())
@@ -2347,14 +2347,14 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
         TF.getSummaryOfNode(BRC.getNodeResolver().getOriginalNode(N))) {
     // We only have summaries attached to nodes after evaluating CallExpr and
     // ObjCMessageExprs.
-    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+    const Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
     
-    if (CallExpr *CE = dyn_cast<CallExpr>(S)) {
+    if (const CallExpr *CE = dyn_cast<CallExpr>(S)) {
       // Iterate through the parameter expressions and see if the symbol
       // was ever passed as an argument.
       unsigned i = 0;
       
-      for (CallExpr::arg_iterator AI=CE->arg_begin(), AE=CE->arg_end();
+      for (CallExpr::const_arg_iterator AI=CE->arg_begin(), AE=CE->arg_end();
            AI!=AE; ++AI, ++i) {
         
         // Retrieve the value of the argument.  Is it the symbol
@@ -2366,8 +2366,8 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
         AEffects.push_back(Summ->getArg(i));
       }
     }
-    else if (ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {      
-      if (Expr *receiver = ME->getReceiver())
+    else if (const ObjCMessageExpr *ME = dyn_cast<ObjCMessageExpr>(S)) {      
+      if (const Expr *receiver = ME->getReceiver())
         if (CurrSt->getSValAsScalarOrLoc(receiver).getAsLocSymbol() == Sym) {
           // The symbol we are tracking is the receiver.
           AEffects.push_back(Summ->getReceiverEffect());
@@ -2395,7 +2395,7 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
     // Specially handle CFMakeCollectable and friends.
     if (contains(AEffects, MakeCollectable)) {
       // Get the name of the function.
-      Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+      const Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
       SVal X = CurrSt->getSValAsScalarOrLoc(cast<CallExpr>(S)->getCallee());
       const FunctionDecl* FD = X.getAsFunctionDecl();
       const std::string& FName = FD->getNameAsString();
@@ -2499,14 +2499,15 @@ PathDiagnosticPiece* CFRefReport::VisitNode(const ExplodedNode<GRState>* N,
   if (os.str().empty())
     return 0; // We have nothing to say!
 
-  Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+  const Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
   PathDiagnosticLocation Pos(S, BRC.getSourceManager());
   PathDiagnosticPiece* P = new PathDiagnosticEventPiece(Pos, os.str());
   
   // Add the range by scanning the children of the statement for any bindings
   // to Sym.
-  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
-    if (Expr* Exp = dyn_cast_or_null<Expr>(*I))
+  for (Stmt::const_child_iterator I = S->child_begin(), E = S->child_end(); 
+       I!=E; ++I)
+    if (const Expr* Exp = dyn_cast_or_null<Expr>(*I))
       if (CurrSt->getSValAsScalarOrLoc(Exp).getAsLocSymbol() == Sym) {
         P->addRange(Exp->getSourceRange());
         break;
@@ -2602,7 +2603,7 @@ CFRefLeakReport::getEndPath(BugReporterContext& BRC,
   
   // Get the allocate site.  
   assert(AllocNode);
-  Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
+  const Stmt* FirstStmt = cast<PostStmt>(AllocNode->getLocation()).getStmt();
   
   SourceManager& SMgr = BRC.getSourceManager();
   unsigned AllocLine =SMgr.getInstantiationLineNumber(FirstStmt->getLocStart());

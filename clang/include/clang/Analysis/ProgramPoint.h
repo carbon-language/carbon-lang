@@ -130,40 +130,47 @@ public:
     return Location->getKind() == BlockExitKind;
   }
 };
-
-class PreStmt : public ProgramPoint {
+  
+class StmtPoint : public ProgramPoint {
 public:
-  PreStmt(const Stmt *S, const void *tag, const Stmt *SubStmt = 0)
-    : ProgramPoint(S, SubStmt, PreStmtKind, tag) {}
-
+  StmtPoint(const Stmt *S, const void *p2, Kind k, const void *tag)
+  : ProgramPoint(S, p2, k, tag) {}
+  
   const Stmt *getStmt() const { return (const Stmt*) getData1(); }
-  const Stmt *getSubStmt() const { return (const Stmt*) getData2(); }  
-
+  
   template <typename T>
   const T* getStmtAs() const { return llvm::dyn_cast<T>(getStmt()); }
-    
+  
+  static bool classof(const ProgramPoint* Location) {
+    unsigned k = Location->getKind();
+    return k >= PreStmtKind && k <= MaxPostStmtKind;
+  }
+};  
+
+  
+class PreStmt : public StmtPoint {
+public:
+  PreStmt(const Stmt *S, const void *tag, const Stmt *SubStmt = 0)
+    : StmtPoint(S, SubStmt, PreStmtKind, tag) {}
+
+  const Stmt *getSubStmt() const { return (const Stmt*) getData2(); }  
+
   static bool classof(const ProgramPoint* Location) {
     return Location->getKind() == PreStmtKind;
   }
 };
 
-class PostStmt : public ProgramPoint {
+class PostStmt : public StmtPoint {
 protected:
   PostStmt(const Stmt* S, Kind k, const void *tag = 0)
-    : ProgramPoint(S, k, tag) {}
+    : StmtPoint(S, NULL, k, tag) {}
 
   PostStmt(const Stmt* S, const void* data, Kind k, const void *tag =0)
-    : ProgramPoint(S, data, k, tag) {}
+    : StmtPoint(S, data, k, tag) {}
   
 public:
-  PostStmt(const Stmt* S, const void *tag = 0)
-    : ProgramPoint(S, PostStmtKind, tag) {}
-
-      
-  Stmt* getStmt() const { return (Stmt*) getData1(); }
-  
-  template <typename T>
-  T* getStmtAs() const { return llvm::dyn_cast<T>(getStmt()); }
+  explicit PostStmt(const Stmt* S, const void *tag = 0)
+    : StmtPoint(S, NULL, PostStmtKind, tag) {}
 
   static bool classof(const ProgramPoint* Location) {
     unsigned k = Location->getKind();

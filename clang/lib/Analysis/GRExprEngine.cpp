@@ -89,7 +89,7 @@ public:
       isSink |= (*I)->Audit(N, VMgr);
     
     // Next handle the auditors that accept only specific statements.
-    Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
+    const Stmt* S = cast<PostStmt>(N->getLocation()).getStmt();
     void* key = reinterpret_cast<void*>((uintptr_t) S->getStmtClass());
     MapTy::iterator MI = M.find(key);
     if (MI != M.end()) {    
@@ -3096,9 +3096,8 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
         break;
         
       default: {
-        if (isa<PostStmt>(Loc)) {
-          const PostStmt& L = cast<PostStmt>(Loc);        
-          Stmt* S = L.getStmt();
+        if (StmtPoint *L = dyn_cast<StmtPoint>(&Loc)) {
+          const Stmt* S = L->getStmt();
           SourceLocation SLoc = S->getLocStart();
 
           Out << S->getStmtClassName() << ' ' << (void*) S << ' ';        
@@ -3113,7 +3112,9 @@ struct VISIBILITY_HIDDEN DOTGraphTraits<GRExprEngine::NodeTy*> :
               << "\\l";
           }
           
-          if (isa<PostLoad>(Loc))
+          if (isa<PreStmt>(Loc))
+            Out << "\\lPreStmt\\l;";          
+          else if (isa<PostLoad>(Loc))
             Out << "\\lPostLoad\\l;";
           else if (isa<PostStore>(Loc))
             Out << "\\lPostStore\\l";

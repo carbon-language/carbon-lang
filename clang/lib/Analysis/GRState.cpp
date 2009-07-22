@@ -324,7 +324,7 @@ bool GRState::scanReachableSymbols(SVal val, SymbolVisitor& visitor) const {
 // Queries.
 //===----------------------------------------------------------------------===//
 
-bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
+bool GRStateManager::isEqual(const GRState* state, const Expr* Ex,
                              const llvm::APSInt& Y) {
   
   SVal V = state->getSVal(Ex);
@@ -341,7 +341,7 @@ bool GRStateManager::isEqual(const GRState* state, Expr* Ex,
   return false;
 }
   
-bool GRStateManager::isEqual(const GRState* state, Expr* Ex, uint64_t x) {
+bool GRStateManager::isEqual(const GRState* state, const Expr* Ex, uint64_t x) {
   return isEqual(state, Ex, getBasicVals().getValue(x, Ex->getType()));
 }
 
