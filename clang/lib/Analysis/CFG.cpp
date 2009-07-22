@@ -99,6 +99,7 @@ private:
   CFGBlock *VisitCompoundStmt(CompoundStmt *C);
   CFGBlock *VisitConditionalOperator(ConditionalOperator *C);
   CFGBlock *VisitContinueStmt(ContinueStmt *C);
+  CFGBlock *VisitCXXThrowExpr(CXXThrowExpr *T);
   CFGBlock *VisitDeclStmt(DeclStmt *DS);
   CFGBlock *VisitDeclSubExpr(Decl* D);
   CFGBlock *VisitDefaultStmt(DefaultStmt *D);
@@ -319,6 +320,9 @@ tryAgain:
     case Stmt::ObjCAtCatchStmtClass:
       return VisitObjCAtCatchStmt(cast<ObjCAtCatchStmt>(S));   
       
+  case Stmt::CXXThrowExprClass:
+    return VisitCXXThrowExpr(cast<CXXThrowExpr>(S));
+
     case Stmt::ObjCAtSynchronizedStmtClass:
       return VisitObjCAtSynchronizedStmt(cast<ObjCAtSynchronizedStmt>(S));
       
@@ -1260,6 +1264,23 @@ CFGBlock* CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt* S) {
   // Add the statement to the block.  This may create new blocks if S contains
   // control-flow (short-circuit operations).
   return VisitStmt(S, true);
+}
+
+CFGBlock* CFGBuilder::VisitCXXThrowExpr(CXXThrowExpr* T) {
+  // If we were in the middle of a block we stop processing that block and
+  // reverse its statements.
+  if (Block && !FinishBlock(Block))
+    return 0;
+
+  // Create the new block.
+  Block = createBlock(false);
+
+  // The Exit block is the only successor.
+  Block->addSuccessor(&cfg->getExit());
+
+  // Add the statement to the block.  This may create new blocks if S contains
+  // control-flow (short-circuit operations).
+  return VisitStmt(T, true);
 }
 
 CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
