@@ -503,6 +503,11 @@ public:
     if (N && !static_cast<ExplodedNodeImpl*>(N)->isSink()) Impl.insert(N);
   }
   
+  ExplodedNodeSet& operator=(const ExplodedNodeSet &X) {
+    Impl = X.Impl;
+    return *this;
+  }
+  
   typedef typename ImplTy::iterator       iterator;
   typedef typename ImplTy::const_iterator const_iterator;
 
