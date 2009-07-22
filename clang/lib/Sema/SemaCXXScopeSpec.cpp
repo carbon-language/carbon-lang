@@ -17,6 +17,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 /// \brief Compute the DeclContext that is associated with the given
@@ -48,7 +49,7 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
     if (EnteringContext) {
       // We are entering the context of the nested name specifier, so try to
       // match the nested name specifier to either a primary class template
-      // or a class template partial specialization
+      // or a class template partial specialization.
       if (const TemplateSpecializationType *SpecType
             = dyn_cast_or_null<TemplateSpecializationType>(NNS->getAsType())) {
         if (ClassTemplateDecl *ClassTemplate 
@@ -64,6 +65,17 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
           // FIXME: Class template partial specializations
         }
       }
+      
+      std::string NNSString;
+      {
+        llvm::raw_string_ostream OS(NNSString);
+        NNS->print(OS, Context.PrintingPolicy);
+      }
+      
+      // FIXME: Allow us to pass a nested-name-specifier to Diag?
+      Diag(SS.getRange().getBegin(), 
+           diag::err_template_qualified_declarator_no_match)
+        << NNSString << SS.getRange();
     }
     
     return 0;

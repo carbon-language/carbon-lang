@@ -793,7 +793,7 @@ def err_template_arg_not_pointer_to_member_form : Error<
 def err_template_arg_extra_parens : Error<
   "non-type template argument cannot be surrounded by parentheses">;
 
-// C++ class template specialization
+// C++ class template specializations and out-of-line definitions
 def err_template_spec_needs_header : Error<
   "template specialization requires 'template<>'">;
 def err_template_spec_needs_template_parameters : Error<
@@ -802,6 +802,9 @@ def err_template_spec_needs_template_parameters : Error<
 def err_template_spec_extra_headers : Error<
   "extraneous template parameter list in template specialization or "
   "out-of-line template definition">;
+def err_template_qualified_declarator_no_match : Error<
+  "nested name specifier '%0' for declaration does not refer to a class "
+  "template or class template partial specialization">;
 def err_template_spec_decl_out_of_scope_global : Error<
   "class template %select{|partial }0specialization of %1 must occur in the "
   "global scope">;
