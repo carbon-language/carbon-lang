@@ -49,7 +49,7 @@ class DirectoryLookup;
 ///
 class Preprocessor {
   Diagnostic        *Diags;
-  const LangOptions &Features;
+  LangOptions        Features;
   TargetInfo        &Target;
   FileManager       &FileMgr;
   SourceManager     &SourceMgr;
