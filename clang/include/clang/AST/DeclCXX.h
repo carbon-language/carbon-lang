@@ -890,6 +890,12 @@ public:
 /// };
 /// @endcode
 class CXXDestructorDecl : public CXXMethodDecl {
+  enum KindOfObjectToDestroy {
+    VBASE = 0x1,
+    DRCTNONVBASE = 0x2,
+    ANYBASE = 0x3
+  };
+
   /// ImplicitlyDefined - Whether this destructor was implicitly
   /// defined by the compiler. When false, the destructor was defined
   /// by the user. In C++03, this flag will have the same value as
@@ -900,7 +906,10 @@ class CXXDestructorDecl : public CXXMethodDecl {
   
   /// Support for base and member destruction.
   /// BaseOrMemberDestructions - The arguments used to destruct the base 
-  /// or member.
+  /// or member. Each uintptr_t value represents one of base classes (either
+  /// virtual or direct non-virtual base), or non-static data member
+  /// to be destroyed. The low two bits encode the kind of object
+  /// being destroyed.
   uintptr_t *BaseOrMemberDestructions;
   unsigned NumBaseOrMemberDestructions;
   
@@ -975,21 +984,21 @@ public:
   
   /// isVbaseToDestroy - returns true, if object is virtual base.
   bool isVbaseToDestroy(uintptr_t Vbase) const {
-    return (Vbase & 0x1) != 0;
+    return (Vbase & VBASE) != 0;
   }
   /// isDirectNonVBaseToDestroy - returns true, if object is direct non-virtual
   /// base.
   bool isDirectNonVBaseToDestroy(uintptr_t DrctNonVbase) const {
-    return (DrctNonVbase & 0x2) != 0;
+    return (DrctNonVbase & DRCTNONVBASE) != 0;
   }
   /// isAnyBaseToDestroy - returns true, if object is any base (virtual or 
   /// direct non-virtual)
   bool isAnyBaseToDestroy(uintptr_t AnyBase) const {
-    return (AnyBase & 0x3) != 0;
+    return (AnyBase & ANYBASE) != 0;
   }
   /// isMemberToDestroy - returns true if object is a non-static data member.
   bool isMemberToDestroy(uintptr_t Member) const {
-    return (Member & 0x3)  == 0;
+    return (Member & ANYBASE)  == 0;
   }
   /// getAnyBaseClassToDestroy - Get the type for the given base class object.
   Type *getAnyBaseClassToDestroy(uintptr_t Base) const {

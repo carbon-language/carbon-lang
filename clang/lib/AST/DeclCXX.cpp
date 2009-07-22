@@ -498,7 +498,7 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
     uintptr_t Member = 
-      reinterpret_cast<uintptr_t>(VBase->getType().getTypePtr()) | 0x1;
+      reinterpret_cast<uintptr_t>(VBase->getType().getTypePtr()) | VBASE;
     AllToDestruct.push_back(Member);
   }
   for (CXXRecordDecl::base_class_iterator Base =
@@ -513,7 +513,7 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
       continue;
     
     uintptr_t Member = 
-      reinterpret_cast<uintptr_t>(Base->getType().getTypePtr()) | 0x2;
+      reinterpret_cast<uintptr_t>(Base->getType().getTypePtr()) | DRCTNONVBASE;
     AllToDestruct.push_back(Member);
   }
   
