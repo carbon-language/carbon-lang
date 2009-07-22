@@ -45,7 +45,6 @@ namespace llvm {
     getSectionForMergableConstant(uint64_t Size, unsigned ReloInfo) const;
     
   private:
-    const Section* MergeableConstSection(const Type *Ty) const;
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
   };
 }

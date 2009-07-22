@@ -121,8 +121,11 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
         return getReadOnlySection();
       case SectionKind::RODataMergeStr:
         return MergeableStringSection(GVar);
-      case SectionKind::RODataMergeConst:
-        return MergeableConstSection(GVar->getInitializer()->getType());
+      case SectionKind::RODataMergeConst: {
+        const Type *Ty = GVar->getInitializer()->getType();
+        const TargetData *TD = TM.getTargetData();
+        return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
+      }
       case SectionKind::ThreadData:
         // ELF targets usually support TLS stuff
         return TLSDataSection;
@@ -164,12 +167,6 @@ ELFTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
   return getReadOnlySection();  // .rodata
 }
 
-
-const Section*
-ELFTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
-  const TargetData *TD = TM.getTargetData();
-  return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
-}
 
 const Section*
 ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {

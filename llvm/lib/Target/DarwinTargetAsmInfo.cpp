@@ -131,31 +131,33 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   bool isNonStatic = TM.getRelocationModel() != Reloc::Static;
 
   switch (Kind) {
-   case SectionKind::Text:
+  case SectionKind::Text:
     if (isWeak)
       return TextCoalSection;
     else
       return TextSection;
-   case SectionKind::Data:
-   case SectionKind::ThreadData:
-   case SectionKind::BSS:
-   case SectionKind::ThreadBSS:
+  case SectionKind::Data:
+  case SectionKind::ThreadData:
+  case SectionKind::BSS:
+  case SectionKind::ThreadBSS:
     if (cast<GlobalVariable>(GV)->isConstant())
       return (isWeak ? ConstDataCoalSection : ConstDataSection);
     else
       return (isWeak ? DataCoalSection : DataSection);
-   case SectionKind::ROData:
+  case SectionKind::ROData:
     return (isWeak ? ConstDataCoalSection :
             (isNonStatic ? ConstDataSection : getReadOnlySection()));
-   case SectionKind::RODataMergeStr:
+  case SectionKind::RODataMergeStr:
     return (isWeak ?
             ConstTextCoalSection :
             MergeableStringSection(cast<GlobalVariable>(GV)));
-   case SectionKind::RODataMergeConst:
+  case SectionKind::RODataMergeConst: {
     if (isWeak) return ConstDataCoalSection;
-    return MergeableConstSection(cast<GlobalVariable>(GV)
-                                 ->getInitializer()->getType());
-   default:
+    const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
+    const TargetData *TD = TM.getTargetData();
+    return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
+  }
+  default:
     llvm_unreachable("Unsuported section kind for global");
   }
 
@@ -177,12 +179,6 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   }
 
   return getReadOnlySection();
-}
-
-const Section*
-DarwinTargetAsmInfo::MergeableConstSection(const Type *Ty) const {
-  const TargetData *TD = TM.getTargetData();
-  return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
 }
 
 const Section *
