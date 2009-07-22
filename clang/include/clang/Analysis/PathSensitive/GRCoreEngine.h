@@ -142,7 +142,8 @@ public:
   }  
     
   ExplodedNodeImpl*
-  generateNodeImpl(PostStmt PP, const void* State, ExplodedNodeImpl* Pred);
+  generateNodeImpl(const ProgramPoint &PP, const void* State,
+                   ExplodedNodeImpl* Pred);
   
   ExplodedNodeImpl*
   generateNodeImpl(Stmt* S, const void* State, ExplodedNodeImpl* Pred,

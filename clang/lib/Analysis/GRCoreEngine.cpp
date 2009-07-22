@@ -430,11 +430,14 @@ GRStmtNodeBuilderImpl::generateNodeImpl(Stmt* S, const void* State,
                                         ExplodedNodeImpl* Pred,
                                         ProgramPoint::Kind K,
                                         const void *tag) {
-  return generateNodeImpl(GetPostLoc(S, K, tag), State, Pred); 
+  return K == ProgramPoint::PreStmtKind
+         ? generateNodeImpl(PreStmt(S, tag), State, Pred)
+         : generateNodeImpl(GetPostLoc(S, K, tag), State, Pred); 
 }
 
 ExplodedNodeImpl*
-GRStmtNodeBuilderImpl::generateNodeImpl(PostStmt Loc, const void* State,
+GRStmtNodeBuilderImpl::generateNodeImpl(const ProgramPoint &Loc,
+                                        const void* State,
                                         ExplodedNodeImpl* Pred) {
   bool IsNew;
   ExplodedNodeImpl* N = Eng.G->getNodeImpl(Loc, State, &IsNew);
