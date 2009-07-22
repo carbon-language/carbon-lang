@@ -27,6 +27,9 @@
 
 using namespace clang;
 
+#define USE_REGION_CASTS 0
+#define HEAP_UNDEFINED 0
+
 // Actual Store type.
 typedef llvm::ImmutableMap<const MemRegion*, SVal> RegionBindingsTy;
 
@@ -679,10 +682,13 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     case MemRegion::SymbolicRegionKind: {
       const SymbolicRegion *SR = cast<SymbolicRegion>(MR);
       QualType T;
+#if USE_REGION_CASTS
       // If the SymbolicRegion was cast to another type, use that type.
       if (const QualType *t = state->get<RegionCasts>(SR))
         T = *t;
-      else {
+      else 
+#endif
+      {
         // Otherwise use the symbol's type.
         SymbolRef Sym = SR->getSymbol();
         T = Sym->getType(getContext());
@@ -867,8 +873,11 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // the value it had upon its creation and/or entry to the analyzed
   // function/method.  These are either symbolic values or 'undefined'.
 
-
+#if HEAP_UNDEFINED
   if (R->hasHeapOrStackStorage()) {
+#else
+  if (R->hasStackStorage()) {
+#endif
     // All stack variables are considered to have undefined values
     // upon creation.  All heap allocated blocks are considered to
     // have undefined values as well unless they are explicitly bound
@@ -876,12 +885,14 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
     return SValuator::CastResult(state, UndefinedVal());
   }
 
+#if USE_REGION_CASTS
   // If the region is already cast to another type, use that type to create the
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R)) {
     QualType T = *p;
     RTy = T->getAsPointerType()->getPointeeType();
   }
+#endif
 
   // All other values are symbolic.
   return SValuator::CastResult(state,
@@ -924,19 +935,24 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   if (const SVal *V = B.lookup(superR)) {
     if (SymbolRef parentSym = V->getAsSymbol())
       return ValMgr.getDerivedRegionValueSymbolVal(parentSym, R);
+
+    if (V->isUnknownOrUndef())
+      return *V;
     
     // Other cases: give up.
     return UnknownVal();
   }
   
+#if 0
   if (R->hasHeapStorage()) {
-    // FIXME: If the region has heap storage and we know nothing special
-    // about its bindings, should we instead return UnknownVal?  Seems like
-    // we should only return UndefinedVal in the cases where we know the value
-    // will be undefined.
+      // FIXME: If the region has heap storage and we know nothing special
+      // about its bindings, should we instead return UnknownVal?  Seems like
+      // we should only return UndefinedVal in the cases where we know the value
+      // will be undefined.
     return UndefinedVal();
   }
-
+#endif
+  
   if (R->hasStackStorage() && !R->hasParametersStorage()) {
     // Currently we don't reason specially about Clang-style vectors.  Check
     // if superR is a vector and if so return Unknown.
@@ -950,10 +966,12 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
 
   QualType Ty = R->getValueType(getContext());
 
+#if USE_REGION_CASTS
   // If the region is already cast to another type, use that type to create the
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R))
     Ty = (*p)->getAsPointerType()->getPointeeType();
+#endif
 
   return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
 }
@@ -981,19 +999,23 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
     assert(0 && "Unknown default value");
   }
 
+#if HEAP_UNDEFINED
   // FIXME: Is this correct?  Should it be UnknownVal?
   if (R->hasHeapStorage())
     return UndefinedVal();
+#endif
   
   if (R->hasStackStorage() && !R->hasParametersStorage())
     return UndefinedVal();
 
+#if USE_REGION_CASTS
   // If the region is already cast to another type, use that type to create the
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R)) {
     QualType tmp = *p;
     Ty = tmp->getAsPointerType()->getPointeeType();
   }
+#endif
 
   // All other values are symbolic.
   return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
@@ -1047,7 +1069,8 @@ SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state,
                                             const TypedRegion *R) {
   
   QualType valTy = R->getValueType(getContext());
-  
+
+#if USE_REGION_CASTS
   // If the region is already cast to another type, use that type to create the
   // symbol value.
   if (const QualType *ty = state->get<RegionCasts>(R)) {
@@ -1058,6 +1081,7 @@ SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state,
         valTy = castTy;
     }
   }
+#endif
   
   // All other values are symbolic.
   return ValMgr.getRegionValueSymbolValOrUnknown(R, valTy);
