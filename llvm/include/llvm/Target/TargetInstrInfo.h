@@ -470,6 +470,10 @@ public:
     return true;
   }
 
+  /// isDeadInstruction - Return true if the instruction is considered dead.
+  /// This allows some late codegen passes to delete them.
+  virtual bool isDeadInstruction(const MachineInstr *MI) const = 0;
+
   /// GetInstSize - Returns the size of the specified Instruction.
   /// 
   virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const {
@@ -501,6 +505,8 @@ public:
                              MachineBasicBlock::iterator MI,
                              unsigned DestReg, unsigned SubReg,
                              const MachineInstr *Orig) const;
+  virtual bool isDeadInstruction(const MachineInstr *MI) const;
+
   virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const;
 };
 
