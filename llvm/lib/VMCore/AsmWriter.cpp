@@ -1133,8 +1133,6 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
   }
 
   if (const MDString *MDS = dyn_cast<MDString>(V)) {
-    TypePrinter.print(MDS->getType(), Out);
-    Out << ' ';
     Out << "!\"";
     PrintEscapedString(MDS->begin(), MDS->size(), Out);
     Out << '"';
