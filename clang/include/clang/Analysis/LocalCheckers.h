@@ -48,6 +48,9 @@ void CheckObjCUnusedIvar(ObjCImplementationDecl* D, BugReporter& BR);
   
 void RegisterAppleChecks(GRExprEngine& Eng);
   
+void CheckSecuritySyntaxOnly(Decl *D, BugReporter &BR);
+
+  
 } // end namespace clang
 
 #endif

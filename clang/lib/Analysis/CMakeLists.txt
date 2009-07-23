@@ -15,6 +15,7 @@ add_clang_library(clangAnalysis
   CheckObjCDealloc.cpp
   CheckObjCInstMethSignature.cpp
   CheckObjCUnusedIVars.cpp
+  CheckSecuritySyntaxOnly.cpp
   Environment.cpp
   ExplodedGraph.cpp
   GRBlockCounter.cpp

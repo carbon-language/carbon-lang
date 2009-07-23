@@ -492,6 +492,11 @@ static void ActionCFGView(AnalysisManager& mgr) {
   }
 }
 
+static void ActionSecuritySyntacticChecks(AnalysisManager &mgr) {
+  BugReporter BR(mgr);  
+  CheckSecuritySyntaxOnly(mgr.getCodeDecl(), BR);
+}
+
 static void ActionWarnObjCDealloc(AnalysisManager& mgr) {
   if (mgr.getLangOptions().getGCMode() == LangOptions::GCOnly)
     return;
