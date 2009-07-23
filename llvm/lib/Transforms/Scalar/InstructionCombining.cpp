@@ -3948,6 +3948,13 @@ Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
         return new FCmpInst(*Context, FCmpInst::FCMP_ORD, 
                             LHS->getOperand(0), RHS->getOperand(0));
       }
+    
+    // Handle vector zeros.  This occurs because the canonical form of
+    // "fcmp ord x,x" is "fcmp ord x, 0".
+    if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
+        isa<ConstantAggregateZero>(RHS->getOperand(1)))
+      return new FCmpInst(*Context, FCmpInst::FCMP_ORD, 
+                          LHS->getOperand(0), RHS->getOperand(0));
     return 0;
   }
   
@@ -4242,7 +4249,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind ?
         const Type *SrcTy = Op0C->getOperand(0)->getType();
-        if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
+        if (SrcTy == Op1C->getOperand(0)->getType() &&
+            SrcTy->isIntOrIntVector() &&
             // Only do this if the casts both really cause code to be generated.
             ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
                               I.getType(), TD) &&
@@ -4901,7 +4909,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         if (!isa<ICmpInst>(Op0C->getOperand(0)) ||
             !isa<ICmpInst>(Op1C->getOperand(0))) {
           const Type *SrcTy = Op0C->getOperand(0)->getType();
-          if (SrcTy == Op1C->getOperand(0)->getType() && SrcTy->isInteger() &&
+          if (SrcTy == Op1C->getOperand(0)->getType() &&
+              SrcTy->isIntOrIntVector() &&
               // Only do this if the casts both really cause code to be
               // generated.
               ValueRequiresCast(Op0C->getOpcode(), Op0C->getOperand(0), 
@@ -4937,6 +4946,15 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             return new FCmpInst(*Context, FCmpInst::FCMP_UNO, 
                                 LHS->getOperand(0), RHS->getOperand(0));
           }
+        
+        // Handle vector zeros.  This occurs because the canonical form of
+        // "fcmp uno x,x" is "fcmp uno x, 0".
+        if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
+            isa<ConstantAggregateZero>(RHS->getOperand(1)))
+          return new FCmpInst(*Context, FCmpInst::FCMP_UNO, 
+                              LHS->getOperand(0), RHS->getOperand(0));
+        
+        
       } else {
         Value *Op0LHS, *Op0RHS, *Op1LHS, *Op1RHS;
         FCmpInst::Predicate Op0CC, Op1CC;
