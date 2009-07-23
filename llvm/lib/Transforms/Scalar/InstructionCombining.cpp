@@ -192,6 +192,7 @@ namespace {
     Instruction *FoldAndOfFCmps(Instruction &I, FCmpInst *LHS, FCmpInst *RHS);
     Instruction *visitAnd(BinaryOperator &I);
     Instruction *FoldOrOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
+    Instruction *FoldOrOfFCmps(Instruction &I, FCmpInst *LHS, FCmpInst *RHS);
     Instruction *FoldOrWithConstants(BinaryOperator &I, Value *Op,
                                      Value *A, Value *B, Value *C);
     Instruction *visitOr (BinaryOperator &I);
@@ -4639,6 +4640,72 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
   return 0;
 }
 
+Instruction *InstCombiner::FoldOrOfFCmps(Instruction &I, FCmpInst *LHS,
+                                         FCmpInst *RHS) {
+  if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
+      RHS->getPredicate() == FCmpInst::FCMP_UNO && 
+      LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType()) {
+    if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
+      if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
+        // If either of the constants are nans, then the whole thing returns
+        // true.
+        if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
+          return ReplaceInstUsesWith(I, Context->getTrue());
+        
+        // Otherwise, no need to compare the two constants, compare the
+        // rest.
+        return new FCmpInst(*Context, FCmpInst::FCMP_UNO, 
+                            LHS->getOperand(0), RHS->getOperand(0));
+      }
+    
+    // Handle vector zeros.  This occurs because the canonical form of
+    // "fcmp uno x,x" is "fcmp uno x, 0".
+    if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
+        isa<ConstantAggregateZero>(RHS->getOperand(1)))
+      return new FCmpInst(*Context, FCmpInst::FCMP_UNO, 
+                          LHS->getOperand(0), RHS->getOperand(0));
+    
+    return 0;
+  }
+  
+  Value *Op0LHS = LHS->getOperand(0), *Op0RHS = LHS->getOperand(1);
+  Value *Op1LHS = RHS->getOperand(0), *Op1RHS = RHS->getOperand(1);
+  FCmpInst::Predicate Op0CC = LHS->getPredicate(), Op1CC = RHS->getPredicate();
+  
+  if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
+    // Swap RHS operands to match LHS.
+    Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
+    std::swap(Op1LHS, Op1RHS);
+  }
+  if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
+    // Simplify (fcmp cc0 x, y) | (fcmp cc1 x, y).
+    if (Op0CC == Op1CC)
+      return new FCmpInst(*Context, (FCmpInst::Predicate)Op0CC,
+                          Op0LHS, Op0RHS);
+    if (Op0CC == FCmpInst::FCMP_TRUE || Op1CC == FCmpInst::FCMP_TRUE)
+      return ReplaceInstUsesWith(I, Context->getTrue());
+    if (Op0CC == FCmpInst::FCMP_FALSE)
+      return ReplaceInstUsesWith(I, RHS);
+    if (Op1CC == FCmpInst::FCMP_FALSE)
+      return ReplaceInstUsesWith(I, LHS);
+    bool Op0Ordered;
+    bool Op1Ordered;
+    unsigned Op0Pred = getFCmpCode(Op0CC, Op0Ordered);
+    unsigned Op1Pred = getFCmpCode(Op1CC, Op1Ordered);
+    if (Op0Ordered == Op1Ordered) {
+      // If both are ordered or unordered, return a new fcmp with
+      // or'ed predicates.
+      Value *RV = getFCmpValue(Op0Ordered, Op0Pred|Op1Pred,
+                               Op0LHS, Op0RHS, Context);
+      if (Instruction *I = dyn_cast<Instruction>(RV))
+        return I;
+      // Otherwise, it's a constant boolean value...
+      return ReplaceInstUsesWith(I, RV);
+    }
+  }
+  return 0;
+}
+
 /// FoldOrWithConstants - This helper function folds:
 ///
 ///     ((A | B) & C1) | (B & C2)
@@ -4930,73 +4997,9 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     
   // (fcmp uno x, c) | (fcmp uno y, c)  -> (fcmp uno x, y)
   if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0))) {
-    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1))) {
-      if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
-          RHS->getPredicate() == FCmpInst::FCMP_UNO && 
-          LHS->getOperand(0)->getType() == RHS->getOperand(0)->getType()) {
-        if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
-          if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
-            // If either of the constants are nans, then the whole thing returns
-            // true.
-            if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
-              return ReplaceInstUsesWith(I, Context->getTrue());
-            
-            // Otherwise, no need to compare the two constants, compare the
-            // rest.
-            return new FCmpInst(*Context, FCmpInst::FCMP_UNO, 
-                                LHS->getOperand(0), RHS->getOperand(0));
-          }
-        
-        // Handle vector zeros.  This occurs because the canonical form of
-        // "fcmp uno x,x" is "fcmp uno x, 0".
-        if (isa<ConstantAggregateZero>(LHS->getOperand(1)) &&
-            isa<ConstantAggregateZero>(RHS->getOperand(1)))
-          return new FCmpInst(*Context, FCmpInst::FCMP_UNO, 
-                              LHS->getOperand(0), RHS->getOperand(0));
-        
-        
-      } else {
-        Value *Op0LHS, *Op0RHS, *Op1LHS, *Op1RHS;
-        FCmpInst::Predicate Op0CC, Op1CC;
-        if (match(Op0, m_FCmp(Op0CC, m_Value(Op0LHS),
-                  m_Value(Op0RHS)), *Context) &&
-            match(Op1, m_FCmp(Op1CC, m_Value(Op1LHS),
-                  m_Value(Op1RHS)), *Context)) {
-          if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
-            // Swap RHS operands to match LHS.
-            Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
-            std::swap(Op1LHS, Op1RHS);
-          }
-          if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
-            // Simplify (fcmp cc0 x, y) | (fcmp cc1 x, y).
-            if (Op0CC == Op1CC)
-              return new FCmpInst(*Context, (FCmpInst::Predicate)Op0CC,
-                                  Op0LHS, Op0RHS);
-            else if (Op0CC == FCmpInst::FCMP_TRUE ||
-                     Op1CC == FCmpInst::FCMP_TRUE)
-              return ReplaceInstUsesWith(I, Context->getTrue());
-            else if (Op0CC == FCmpInst::FCMP_FALSE)
-              return ReplaceInstUsesWith(I, Op1);
-            else if (Op1CC == FCmpInst::FCMP_FALSE)
-              return ReplaceInstUsesWith(I, Op0);
-            bool Op0Ordered;
-            bool Op1Ordered;
-            unsigned Op0Pred = getFCmpCode(Op0CC, Op0Ordered);
-            unsigned Op1Pred = getFCmpCode(Op1CC, Op1Ordered);
-            if (Op0Ordered == Op1Ordered) {
-              // If both are ordered or unordered, return a new fcmp with
-              // or'ed predicates.
-              Value *RV = getFCmpValue(Op0Ordered, Op0Pred|Op1Pred,
-                                       Op0LHS, Op0RHS, Context);
-              if (Instruction *I = dyn_cast<Instruction>(RV))
-                return I;
-              // Otherwise, it's a constant boolean value...
-              return ReplaceInstUsesWith(I, RV);
-            }
-          }
-        }
-      }
-    }
+    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1)))
+      if (Instruction *Res = FoldOrOfFCmps(I, LHS, RHS))
+        return Res;
   }
 
   return Changed ? &I : 0;
