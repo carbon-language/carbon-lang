@@ -33,10 +33,11 @@ namespace llvm {
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode and MDString.
 class MetadataBase : public Value {
-public:
+protected:
   MetadataBase(const Type *Ty, unsigned scid)
     : Value(Ty, scid) {}
 
+public:
   /// getType() specialization - Type is always MetadataTy.
   ///
   inline const Type *getType() const {
@@ -63,15 +64,15 @@ public:
 ///
 class MDString : public MetadataBase {
   MDString(const MDString &);            // DO NOT IMPLEMENT
-
   const char *StrBegin, *StrEnd;
   friend class LLVMContextImpl;
 
-public:
-  MDString(const char *begin, const char *end)
+protected:
+  explicit MDString(const char *begin, const char *end)
     : MetadataBase(Type::MetadataTy, Value::MDStringVal),
       StrBegin(begin), StrEnd(end) {}
 
+public:
   intptr_t size() const { return StrEnd - StrBegin; }
 
   /// begin() - Pointer to the first byte of the string.
