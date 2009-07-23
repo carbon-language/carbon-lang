@@ -58,7 +58,7 @@ public:
   Decl *getDecl(ASTContext &AST);
 
   /// \brief Get a printable name for debugging purpose.
-  std::string getPrintableName();
+  std::string getPrintableName() const;
 
   /// \brief Get an Entity associated with the given Decl.
   /// \returns Null if an Entity cannot refer to this Decl.

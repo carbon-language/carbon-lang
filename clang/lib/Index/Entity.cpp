@@ -156,7 +156,7 @@ Decl *Entity::getDecl(ASTContext &AST) {
   return Val.get<EntityImpl *>()->getDecl(AST);
 }
 
-std::string Entity::getPrintableName() {
+std::string Entity::getPrintableName() const {
   if (isInvalid())
     return "<< Invalid >>";
   
