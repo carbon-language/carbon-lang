@@ -1215,16 +1215,15 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
       StringLength = ToPtr-&ToBuf[0];
       str.assign((char *)&ToBuf[0], StringLength*2);// Twice as many UTF8 chars.
       isUTF16 = true;
-    } else if (Result == sourceIllegal) {
+    } else {
+      assert(Result == sourceIllegal && "UTF-8 to UTF-16 conversion failed");
       // FIXME: Have Sema::CheckObjCString() validate the UTF-8 string.
-      str.assign(Literal->getStrData(), Literal->getByteLength());
-      StringLength = str.length();
-    } else
-      assert(Result == conversionOK && "UTF-8 to UTF-16 conversion failed");
-    
+      StringLength = Literal->getByteLength();
+      str.assign(Literal->getStrData(), StringLength);
+    }
   } else {
-    str.assign(Literal->getStrData(), Literal->getByteLength());
-    StringLength = str.length();
+    StringLength = Literal->getByteLength();
+    str.assign(Literal->getStrData(), StringLength);
   }
   llvm::Constant *&Entry = CFConstantStringMap[str];
   
