@@ -489,8 +489,11 @@ def ADJCALLSTACKUP32   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
 }
 
 // Nop
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1 in {
   def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
+  def NOOPL : I<0x1f, MRM0m, (outs), (ins i32mem:$zero),
+                "nopl\t$zero", []>, TB;
+}
 
 // PIC base
 let neverHasSideEffects = 1, isNotDuplicable = 1, Uses = [ESP] in
