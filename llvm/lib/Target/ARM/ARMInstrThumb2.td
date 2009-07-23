@@ -648,21 +648,6 @@ def t2STRB_POST : T2Iidxldst<(outs GPR:$base_wb),
               (post_truncsti8 GPR:$src, GPR:$base, t2am_imm8_offset:$offset))]>;
 
 
-// Address computation and loads and stores in PIC mode.
-let isNotDuplicable = 1, AddedComplexity = 10 in {
-let canFoldAsLoad = 1 in
-def t2PICLDR   : T2I_picld<"ldr",  UnOpFrag<(load node:$Src)>>;
-
-def t2PICLDRH  : T2I_picld<"ldrh", UnOpFrag<(zextloadi16 node:$Src)>>;
-def t2PICLDRB  : T2I_picld<"ldrb", UnOpFrag<(zextloadi8 node:$Src)>>;
-def t2PICLDRSH : T2I_picld<"ldrsh", UnOpFrag<(sextloadi16 node:$Src)>>;
-def t2PICLDRSB : T2I_picld<"ldrsb", UnOpFrag<(sextloadi8 node:$Src)>>;
-
-def t2PICSTR   : T2I_picst<"str", BinOpFrag<(store node:$LHS, node:$RHS)>>;
-def t2PICSTRH  : T2I_picst<"strh", BinOpFrag<(truncstorei16 node:$LHS, node:$RHS)>>;
-def t2PICSTRB  : T2I_picst<"strb", BinOpFrag<(truncstorei8 node:$LHS, node:$RHS)>>;
-} // isNotDuplicable = 1, AddedComplexity = 10
-
 // FIXME: ldrd / strd pre / post variants
 
 //===----------------------------------------------------------------------===//
