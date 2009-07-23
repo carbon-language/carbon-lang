@@ -243,15 +243,18 @@ public:
     Types.push_back(C->getType());
     unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
     unsigned TotalSize = CGM.getTargetData().getTypeAllocSize(Ty);
-    while (CurSize < TotalSize) {
-      Elts.push_back(VMContext.getNullValue(llvm::Type::Int8Ty));
-      Types.push_back(llvm::Type::Int8Ty);
-      CurSize++;
+
+    assert(CurSize <= TotalSize && "Union size mismatch!");
+    if (unsigned NumPadBytes = TotalSize - CurSize) {
+      const llvm::Type *Ty = llvm::Type::Int8Ty;
+      if (NumPadBytes > 1)
+        Ty = VMContext.getArrayType(Ty, NumPadBytes);
+
+      Elts.push_back(VMContext.getNullValue(Ty));
+      Types.push_back(Ty);
     }
 
-    // This always generates a packed struct
-    // FIXME: Try to generate an unpacked struct when we can
-    llvm::StructType* STy = VMContext.getStructType(Types, true);
+    llvm::StructType* STy = VMContext.getStructType(Types, false);
     return VMContext.getConstantStruct(STy, Elts);
   }
 
