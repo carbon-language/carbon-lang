@@ -46,13 +46,10 @@ Driver::Driver(const char *_Name, const char *_Dir,
     DefaultImageName(_DefaultImageName),
     Host(0),
     CCCIsCXX(false), CCCEcho(false), CCCPrintBindings(false),
-    CCCGenericGCCName("gcc"), CCCUseClang(true), CCCUseClangCXX(false), 
+    CCCGenericGCCName("gcc"), CCCUseClang(true), CCCUseClangCXX(true), 
     CCCUseClangCPP(true), CCCUsePCH(true),
     SuppressMissingInputWarning(false)
 {
-  // Only use clang on i386 and x86_64 by default.
-  CCCClangArchs.insert("i386");
-  CCCClangArchs.insert("x86_64");
 }
 
 Driver::~Driver() {
@@ -144,6 +141,8 @@ Compilation *Driver::BuildCompilation(int argc, const char **argv) {
 
     } else if (!strcmp(Opt, "clang-cxx")) {
       CCCUseClangCXX = true;
+    } else if (!strcmp(Opt, "no-clang-cxx")) {
+      CCCUseClangCXX = false;
     } else if (!strcmp(Opt, "pch-is-pch")) {
       CCCUsePCH = true;
     } else if (!strcmp(Opt, "pch-is-pth")) {

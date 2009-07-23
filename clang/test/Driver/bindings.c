@@ -30,7 +30,7 @@
 // RUN: grep '"clang", inputs: \[".*bindings.c"\], output: (nothing)' %t &&
 // RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-bindings -ccc-no-clang -fsyntax-only %s 2> %t &&
 // RUN: grep '"gcc::Compile", inputs: \[".*bindings.c"\], output: (nothing)' %t &&
-// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-bindings -fsyntax-only -x c++ %s 2> %t &&
+// RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-bindings -ccc-no-clang-cxx -fsyntax-only -x c++ %s 2> %t &&
 // RUN: grep '"gcc::Compile", inputs: \[".*bindings.c"\], output: (nothing)' %t &&
 // RUN: clang -ccc-host-triple i386-unknown-unknown -ccc-print-bindings -ccc-clang-cxx -fsyntax-only -x c++ %s 2> %t &&
 // RUN: grep '"clang", inputs: \[".*bindings.c"\], output: (nothing)' %t &&
@@ -44,7 +44,7 @@
 
 // RUN: clang -ccc-host-triple powerpc-unknown-unknown -ccc-print-bindings -ccc-clang-archs "" %s -S 2> %t &&
 // RUN: grep '"clang", inputs: \[".*bindings.c"\], output: "bindings.s"' %t &&
-// RUN: clang -ccc-host-triple powerpc-unknown-unknown -ccc-print-bindings %s -S 2> %t &&
+// RUN: clang -ccc-host-triple powerpc-unknown-unknown -ccc-print-bindings -ccc-clang-archs "i386" %s -S 2> %t &&
 // RUN: grep '"gcc::Compile", inputs: \[".*bindings.c"\], output: "bindings.s"' %t &&
 
 // Darwin bindings
