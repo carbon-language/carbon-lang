@@ -182,6 +182,10 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     TII->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC);
   }
 
+  // Record PHI def.
+  //assert(!hasPHIDef(DestReg) && "Vreg has multiple phi-defs?"); 
+  //PHIDefs[DestReg] = &MBB;
+
   // Update live variable information if there is any.
   LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>();
   if (LV) {
@@ -223,6 +227,13 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     assert(TargetRegisterInfo::isVirtualRegister(SrcReg) &&
            "Machine PHI Operands must all be virtual registers!");
 
+    // Get the MachineBasicBlock equivalent of the BasicBlock that is the source
+    // path the PHI.
+    MachineBasicBlock &opBlock = *MPhi->getOperand(i*2+2).getMBB();
+
+    // Record the kill.
+    //PHIKills[SrcReg].insert(&opBlock);
+
     // If source is defined by an implicit def, there is no need to insert a
     // copy.
     MachineInstr *DefMI = MRI->getVRegDef(SrcReg);
@@ -230,10 +241,6 @@ void llvm::PHIElimination::LowerAtomicPHINode(
       ImpDefs.insert(DefMI);
       continue;
     }
-
-    // Get the MachineBasicBlock equivalent of the BasicBlock that is the source
-    // path the PHI.
-    MachineBasicBlock &opBlock = *MPhi->getOperand(i*2+2).getMBB();
 
     // Check to make sure we haven't already emitted the copy for this block.
     // This can happen because PHI nodes may have multiple entries for the same
