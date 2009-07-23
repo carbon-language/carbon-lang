@@ -24,6 +24,7 @@ namespace llvm {
   class BasicBlock;
   class Function;
   class Module;
+  class StringRef;
   
 /// This class provides a symbol table of name/value pairs. It is essentially
 /// a std::map<std::string,Value*> but has a controlled interface provided by
@@ -62,12 +63,11 @@ public:
 /// @{
 public:
 
-  /// This method finds the value with the given \p name in the
+  /// This method finds the value with the given \p Name in the
   /// the symbol table. 
-  /// @returns the value associated with the \p name
+  /// @returns the value associated with the \p Name
   /// @brief Lookup a named Value.
-  Value *lookup(const std::string &name) const;
-  Value *lookup(const char *NameBegin, const char *NameEnd) const;
+  Value *lookup(const StringRef &Name) const { return vmap.lookup(Name); }
 
   /// @returns true iff the symbol table is empty
   /// @brief Determine if the symbol table is empty
@@ -110,7 +110,7 @@ private:
   /// createValueName - This method attempts to create a value name and insert
   /// it into the symbol table with the specified name.  If it conflicts, it
   /// auto-renames the name and returns that instead.
-  ValueName *createValueName(const char *NameStart, unsigned NameLen, Value *V);
+  ValueName *createValueName(const StringRef &Name, Value *V);
   
   /// This method removes a value from the symbol table.  It leaves the
   /// ValueName attached to the value, but it is no longer inserted in the

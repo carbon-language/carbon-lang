@@ -548,8 +548,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     // Check to see if may have to link the global with the global, alias or
     // function.
     if (SGV->hasName() && !SGV->hasLocalLinkage())
-      DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SGV->getNameStart(),
-                                                        SGV->getNameEnd()));
+      DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SGV->getNameRef()));
 
     // If we found a global with the same name in the dest module, but it has
     // internal linkage, we are really not doing any linkage here.
@@ -942,8 +941,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     // Check to see if may have to link the function with the global, alias or
     // function.
     if (SF->hasName() && !SF->hasLocalLinkage())
-      DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SF->getNameStart(),
-                                                        SF->getNameEnd()));
+      DGV = cast_or_null<GlobalValue>(DestSymTab.lookup(SF->getNameRef()));
 
     // If we found a global with the same name in the dest module, but it has
     // internal linkage, we are really not doing any linkage here.

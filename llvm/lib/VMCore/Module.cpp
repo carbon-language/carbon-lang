@@ -118,7 +118,7 @@ GlobalValue *Module::getNamedValue(const std::string &Name) const {
 }
 
 GlobalValue *Module::getNamedValue(const char *Name) const {
-  llvm::Value *V = getValueSymbolTable().lookup(Name, Name+strlen(Name));
+  llvm::Value *V = getValueSymbolTable().lookup(Name);
   return cast_or_null<GlobalValue>(V);
 }
 

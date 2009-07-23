@@ -30,24 +30,6 @@ ValueSymbolTable::~ValueSymbolTable() {
 #endif
 }
 
-// lookup a value - Returns null on failure...
-//
-Value *ValueSymbolTable::lookup(const std::string &Name) const {
-  const_iterator VI = vmap.find(Name);
-  if (VI != vmap.end())                   // We found the symbol
-    return VI->getValue();
-  return 0;
-}
-
-Value *ValueSymbolTable::lookup(const char *NameBegin,
-                                const char *NameEnd) const {
-  // FIXME: ValueSymbolTable should move to a StringRef based API.
-  const_iterator VI = vmap.find(StringRef(NameBegin, NameEnd - NameBegin));
-  if (VI != vmap.end())                   // We found the symbol
-    return VI->getValue();
-  return 0;
-}
-
 // Insert a value into the symbol table with the specified name...
 //
 void ValueSymbolTable::reinsertValue(Value* V) {
@@ -93,10 +75,9 @@ void ValueSymbolTable::removeValueName(ValueName *V) {
 /// createValueName - This method attempts to create a value name and insert
 /// it into the symbol table with the specified name.  If it conflicts, it
 /// auto-renames the name and returns that instead.
-ValueName *ValueSymbolTable::createValueName(const char *NameStart,
-                                             unsigned NameLen, Value *V) {
+ValueName *ValueSymbolTable::createValueName(const StringRef &Name, Value *V) {
   // In the common case, the name is not already in the symbol table.
-  ValueName &Entry = vmap.GetOrCreateValue(StringRef(NameStart, NameLen));
+  ValueName &Entry = vmap.GetOrCreateValue(Name);
   if (Entry.getValue() == 0) {
     Entry.setValue(V);
     //DEBUG(DOUT << " Inserted value: " << Entry.getKeyData() << ": "
@@ -105,11 +86,11 @@ ValueName *ValueSymbolTable::createValueName(const char *NameStart,
   }
   
   // Otherwise, there is a naming conflict.  Rename this value.
-  SmallString<128> UniqueName(NameStart, NameStart+NameLen);
+  SmallString<128> UniqueName(Name.begin(), Name.end());
   
   while (1) {
     // Trim any suffix off.
-    UniqueName.resize(NameLen);
+    UniqueName.resize(Name.size());
     UniqueName.append_uint_32(++LastUnique);
     
     // Try insert the vmap entry with this suffix.
