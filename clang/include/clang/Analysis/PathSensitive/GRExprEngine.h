@@ -585,6 +585,9 @@ protected:
                                      ObjCMessageExpr::arg_iterator E,
                                      NodeTy* Pred, NodeSet& Dst);
   
+  void VisitObjCMessageExprDispatchCheckers(ObjCMessageExpr* ME, NodeTy* Pred,
+                                            NodeSet& Dst);
+  
   void VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME, NodeTy* Pred,
                                           NodeSet& Dst);
   

@@ -1855,12 +1855,12 @@ void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
       Visit(Receiver, Pred, Tmp);
       
       for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
-        VisitObjCMessageExprDispatchHelper(ME, *NI, Dst);
+        VisitObjCMessageExprDispatchCheckers(ME, *NI, Dst);
       
       return;
     }
     
-    VisitObjCMessageExprDispatchHelper(ME, Pred, Dst);
+    VisitObjCMessageExprDispatchCheckers(ME, Pred, Dst);
     return;
   }
   
@@ -1871,6 +1871,19 @@ void GRExprEngine::VisitObjCMessageExprArgHelper(ObjCMessageExpr* ME,
   
   for (NodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI != NE; ++NI)
     VisitObjCMessageExprArgHelper(ME, AI, AE, *NI, Dst);
+}
+
+void GRExprEngine::VisitObjCMessageExprDispatchCheckers(ObjCMessageExpr* ME,
+                                                        NodeTy* Pred,
+                                                        NodeSet& Dst) {
+  NodeSet Src;
+  Src.Add(Pred);
+  NodeSet DstTmp;
+  // Perform the previsit of the ObjCMessageExpr, storing the results in DstTmp.
+  CheckerVisit(ME, Src, DstTmp, true);
+  
+  for (NodeSet::iterator NI = DstTmp.begin(), NE = DstTmp.end(); NI != NE; ++NI)
+    VisitObjCMessageExprDispatchHelper(ME, *NI, Dst);
 }
 
 void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
@@ -2043,7 +2056,7 @@ void GRExprEngine::VisitObjCMessageExprDispatchHelper(ObjCMessageExpr* ME,
       return;
     }    
   }
-  
+
   // Check if we raise an exception.  For now treat these as sinks.  Eventually
   // we will want to handle exceptions properly.
   
