@@ -177,7 +177,9 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
       DI->EmitFunctionStart(CGM.getMangledName(FD), RetTy, CurFn, Builder);
     } else {
       // Just use LLVM function name.
-      DI->EmitFunctionStart(Fn->getName().c_str(), 
+      
+      // FIXME: Remove unnecessary conversion to std::string when API settles.
+      DI->EmitFunctionStart(std::string(Fn->getName()).c_str(), 
                             RetTy, CurFn, Builder);
     }
   }
