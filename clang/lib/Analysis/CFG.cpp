@@ -135,6 +135,20 @@ private:
   bool FinishBlock(CFGBlock* B);
   CFGBlock *addStmt(Stmt *S) { return Visit(S, true); }
   
+  /// TryEvaluateBool - Try and evaluate the Stmt and return 0 or 1
+  /// if we can evaluate to a known value, otherwise return -1.
+  int TryEvaluateBool(Expr *S) {
+    Expr::EvalResult Result;
+    if (S->Evaluate(Result, *Context)
+        && Result.Val.isInt()) {
+      if (Result.Val.getInt().getBoolValue())
+        return true;
+      else
+        return false;
+    }
+    return -1;
+  }
+
   bool badCFG;
 };
 
@@ -391,20 +405,6 @@ CFGBlock *CFGBuilder::VisitAddrLabelExpr(AddrLabelExpr *A, bool alwaysAdd) {
   
 CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
   if (B->isLogicalOp()) { // && or ||
-
-    // See if this is a known constant.
-    bool KnownTrue = false;
-    bool KnownFalse = false;
-    Expr::EvalResult Result;
-    if (B->getLHS()->Evaluate(Result, *Context)
-        && Result.Val.isInt()) {
-      if ((B->getOpcode() == BinaryOperator::LAnd)
-          == Result.Val.getInt().getBoolValue())
-        KnownTrue = true;
-      else
-        KnownFalse = true;
-    }
-
     CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
     ConfluenceBlock->appendStmt(B);
     
@@ -422,23 +422,28 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
     if (!FinishBlock(RHSBlock))
       return 0;
     
+    // See if this is a known constant.
+    int KnownVal = TryEvaluateBool(B->getLHS());
+    if (KnownVal != -1 && (B->getOpcode() == BinaryOperator::LOr))
+      KnownVal = !KnownVal;
+
     // Now link the LHSBlock with RHSBlock.
     if (B->getOpcode() == BinaryOperator::LOr) {
-      if (KnownTrue)
+      if (KnownVal == true)
         LHSBlock->addSuccessor(0);
       else
         LHSBlock->addSuccessor(ConfluenceBlock);
-      if (KnownFalse)
+      if (KnownVal == false)
         LHSBlock->addSuccessor(0);
       else
         LHSBlock->addSuccessor(RHSBlock);
     } else {
       assert (B->getOpcode() == BinaryOperator::LAnd);
-      if (KnownFalse)
+      if (KnownVal == false)
         LHSBlock->addSuccessor(0);
       else
         LHSBlock->addSuccessor(RHSBlock);
-      if (KnownTrue)
+      if (KnownVal == true)
         LHSBlock->addSuccessor(0);
       else
         LHSBlock->addSuccessor(ConfluenceBlock);
@@ -514,18 +519,6 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, bool alwaysAdd) {
 }
 
 CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
-  // See if this is a known constant.
-  bool KnownTrue = false;
-  bool KnownFalse = false;
-  Expr::EvalResult Result;
-  if (C->getCond()->Evaluate(Result, *Context)
-      && Result.Val.isInt()) {
-    if (Result.Val.getInt().getBoolValue())
-      KnownTrue = true;
-    else
-      KnownFalse = true;
-  }
-
   CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
   ConfluenceBlock->appendStmt(C);
   if (!FinishBlock(ConfluenceBlock))
@@ -544,11 +537,13 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
     return 0;
   
   Block = createBlock(false);
-  if (KnownFalse)
+  // See if this is a known constant.
+  int KnownVal = TryEvaluateBool(C->getCond());
+  if (KnownVal == false)
     Block->addSuccessor(0);
   else
     Block->addSuccessor(LHSBlock);
-  if (KnownTrue)
+  if (KnownVal == true)
     Block->addSuccessor(0);
   else
     Block->addSuccessor(RHSBlock);
@@ -568,18 +563,6 @@ CFGBlock* CFGBuilder::VisitCompoundStmt(CompoundStmt* C) {
 }
   
 CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
-  // See if this is a known constant.
-  bool KnownTrue = false;
-  bool KnownFalse = false;
-  Expr::EvalResult Result;
-  if (C->getCond()->Evaluate(Result, *Context)
-      && Result.Val.isInt()) {
-    if (Result.Val.getInt().getBoolValue())
-      KnownTrue = true;
-    else
-      KnownFalse = true;
-  }
-
   // Create the confluence block that will "merge" the results of the ternary
   // expression.
   CFGBlock* ConfluenceBlock = Block ? Block : createBlock();
@@ -610,13 +593,15 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
   // Create the block that will contain the condition.
   Block = createBlock(false);
   
+  // See if this is a known constant.
+  int KnownVal = TryEvaluateBool(C->getCond());
   if (LHSBlock) {
-    if (KnownFalse)
+    if (KnownVal == false)
       Block->addSuccessor(0);
     else
       Block->addSuccessor(LHSBlock);
   } else {
-    if (KnownFalse) {
+    if (KnownVal == false) {
       // If we know the condition is false, add NULL as the successor for
       // the block containing the condition.  In this case, the confluence
       // block will have just one predecessor.
@@ -636,7 +621,7 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
     }
   }
   
-  if (KnownTrue)
+  if (KnownVal == true)
     Block->addSuccessor(0);
   else
     Block->addSuccessor(RHSBlock);
@@ -712,18 +697,6 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(Decl* D) {
 }
 
 CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
-  // See if this is a known constant.
-  bool KnownTrue = false;
-  bool KnownFalse = false;
-  Expr::EvalResult Result;
-  if (I->getCond()->Evaluate(Result, *Context)
-      && Result.Val.isInt()) {
-    if (Result.Val.getInt().getBoolValue())
-      KnownTrue = true;
-    else
-      KnownFalse = true;
-  }
-
   // We may see an if statement in the middle of a basic block, or it may be the
   // first statement we are processing.  In either case, we create a new basic
   // block.  First, we create the blocks for the then...else statements, and
@@ -786,12 +759,15 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   // Set the terminator of the new block to the If statement.
   Block->setTerminator(I);
 
+  // See if this is a known constant.
+  int KnownVal = TryEvaluateBool(I->getCond());
+
   // Now add the successors.
-  if (KnownFalse)
+  if (KnownVal == false)
     Block->addSuccessor(0);
   else
     Block->addSuccessor(ThenBlock);
-  if (KnownTrue)
+  if (KnownVal == true)
     Block->addSuccessor(0);
   else
     Block->addSuccessor(ElseBlock);
@@ -874,20 +850,6 @@ CFGBlock* CFGBuilder::VisitGotoStmt(GotoStmt* G) {
 }
 
 CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
-  // See if this is a known constant.
-  bool KnownTrue = false;
-  bool KnownFalse = false;
-  Expr::EvalResult Result;
-  if (F->getCond() && F->getCond()->Evaluate(Result, *Context)
-      && Result.Val.isInt()) {
-    if (Result.Val.getInt().getBoolValue())
-      KnownTrue = true;
-    else
-      KnownFalse = true;
-  }
-  if (F->getCond() == 0)
-    KnownTrue = true;
-
   CFGBlock* LoopSuccessor = NULL;
 
   // "for" is a control-flow statement.  Thus we stop processing the current
@@ -922,6 +884,11 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   // The condition block is the implicit successor for the loop body as well as
   // any code above the loop.
   Succ = EntryConditionBlock;
+
+  // See if this is a known constant.
+  int KnownVal = true;
+  if (F->getCond())
+    KnownVal = TryEvaluateBool(F->getCond());
 
   // Now create the loop body.
   {
@@ -974,7 +941,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
         return 0;
     }
 
-    if (KnownFalse)
+    if (KnownVal == false)
       ExitConditionBlock->addSuccessor(0);
     else {
       // This new body block is a successor to our "exit" condition block.
@@ -982,7 +949,7 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
     }
   }
 
-  if (KnownTrue)
+  if (KnownVal == true)
     ExitConditionBlock->addSuccessor(0);
   else {
     // Link up the condition block with the code that follows the loop.  (the
@@ -1132,18 +1099,6 @@ CFGBlock* CFGBuilder::VisitObjCAtTryStmt(ObjCAtTryStmt* S) {
 }
 
 CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
-  // See if this is a known constant.
-  bool KnownTrue = false;
-  bool KnownFalse = false;
-  Expr::EvalResult Result;
-  if (W->getCond()->Evaluate(Result, *Context)
-      && Result.Val.isInt()) {
-    if (Result.Val.getInt().getBoolValue())
-      KnownTrue = true;
-    else
-      KnownFalse = true;
-  }
-
   CFGBlock* LoopSuccessor = NULL;
 
   // "while" is a control-flow statement.  Thus we stop processing the current
@@ -1181,6 +1136,9 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   // any code above the loop.
   Succ = EntryConditionBlock;
 
+  // See if this is a known constant.
+  int KnownVal = TryEvaluateBool(W->getCond());
+
   // Process the loop body.
   {
     assert(W->getBody());
@@ -1214,7 +1172,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
         return 0;
     }
 
-    if (KnownFalse)
+    if (KnownVal == false)
       ExitConditionBlock->addSuccessor(0);
     else {
       // Add the loop body entry as a successor to the condition.
@@ -1222,7 +1180,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
     }
   }
 
-  if (KnownTrue)
+  if (KnownVal == true)
     ExitConditionBlock->addSuccessor(0);
   else {
     // Link up the condition block with the code that follows the loop.  (the
@@ -1284,18 +1242,6 @@ CFGBlock* CFGBuilder::VisitCXXThrowExpr(CXXThrowExpr* T) {
 }
 
 CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
-  // See if this is a known constant.
-  bool KnownTrue = false;
-  bool KnownFalse = false;
-  Expr::EvalResult Result;
-  if (D->getCond()->Evaluate(Result, *Context)
-      && Result.Val.isInt()) {
-    if (Result.Val.getInt().getBoolValue())
-      KnownTrue = true;
-    else
-      KnownFalse = true;
-  }
-
   CFGBlock* LoopSuccessor = NULL;
 
   // "do...while" is a control-flow statement.  Thus we stop processing the
@@ -1329,6 +1275,9 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
 
   // The condition block is the implicit successor for the loop body.
   Succ = EntryConditionBlock;
+
+  // See if this is a known constant.
+  int KnownVal = TryEvaluateBool(D->getCond());
 
   // Process the loop body.
   CFGBlock* BodyBlock = NULL;
@@ -1369,7 +1318,7 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
     CFGBlock *LoopBackBlock = createBlock();
     LoopBackBlock->setLoopTarget(D);
 
-    if (KnownFalse)
+    if (KnownVal == false)
       ExitConditionBlock->addSuccessor(0);
     else {
       // Add the loop body entry as a successor to the condition.
@@ -1377,7 +1326,7 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
     }
   }
 
-  if (KnownTrue)
+  if (KnownVal == true)
     ExitConditionBlock->addSuccessor(0);
   else {
     // Link up the condition block with the code that follows the loop.  (the
