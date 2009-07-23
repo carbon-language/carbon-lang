@@ -15,6 +15,7 @@
 #include "llvm/Support/Recycler.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
+#include <cstring>
 
 namespace llvm {
 
