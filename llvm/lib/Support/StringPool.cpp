@@ -13,6 +13,7 @@
 
 #include "llvm/Support/StringPool.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/ADT/StringRef.h"
 
 using namespace llvm;
 
@@ -22,12 +23,12 @@ StringPool::~StringPool() {
   assert(InternTable.empty() && "PooledStringPtr leaked!");
 }
 
-PooledStringPtr StringPool::intern(const char *Begin, const char *End) {
-  table_t::iterator I = InternTable.find(Begin, End);
+PooledStringPtr StringPool::intern(const StringRef &Key) {
+  table_t::iterator I = InternTable.find(Key);
   if (I != InternTable.end())
     return PooledStringPtr(&*I);
   
-  entry_t *S = entry_t::Create(Begin, End);
+  entry_t *S = entry_t::Create(Key.begin(), Key.end());
   S->getValue().Pool = this;
   InternTable.insert(S);
   

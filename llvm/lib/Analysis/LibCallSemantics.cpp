@@ -59,7 +59,7 @@ const LibCallFunctionInfo *LibCallInfo::getFunctionInfo(Function *F) const {
   // Look up this function in the string map.
   const char *ValueName = F->getNameStart();
   StringMap<const LibCallFunctionInfo*>::iterator I =
-  Map->find(ValueName, ValueName+F->getNameLen());
+    Map->find(StringRef(ValueName, F->getNameLen()));
   return I != Map->end() ? I->second : 0;
 }
 

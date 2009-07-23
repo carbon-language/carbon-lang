@@ -1,4 +1,4 @@
-//===-- StringPool.h - Interned string pool -------------------------------===//
+//===-- StringPool.h - Interned string pool ---------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -64,12 +64,7 @@ namespace llvm {
     /// intern - Adds a string to the pool and returns a reference-counted
     /// pointer to it. No additional memory is allocated if the string already
     /// exists in the pool.
-    PooledStringPtr intern(const char *Begin, const char *End);
-
-    /// intern - Adds a null-terminated string to the pool and returns a
-    /// reference-counted pointer to it. No additional memory is allocated if
-    /// the string already exists in the pool.
-    inline PooledStringPtr intern(const char *Str);
+    PooledStringPtr intern(const StringRef &Str);
 
     /// empty - Checks whether the pool is empty. Returns true if so.
     ///
@@ -138,10 +133,6 @@ namespace llvm {
     inline bool operator==(const PooledStringPtr &That) { return S == That.S; }
     inline bool operator!=(const PooledStringPtr &That) { return S != That.S; }
   };
-
-  PooledStringPtr StringPool::intern(const char *Str) {
-    return intern(Str, Str + strlen(Str));
-  }
 
 } // End llvm namespace
 

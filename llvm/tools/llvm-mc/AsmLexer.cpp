@@ -107,8 +107,9 @@ asmtok::TokKind AsmLexer::LexIdentifier() {
          *CurPtr == '.' || *CurPtr == '@')
     ++CurPtr;
   // Unique string.
-  CurStrVal =
-    getSS(TheStringSet).GetOrCreateValue(TokStart, CurPtr, 0).getKeyData();
+  CurStrVal = getSS(TheStringSet).GetOrCreateValue(StringRef(TokStart, 
+                                                             CurPtr - TokStart),
+                                                   0).getKeyData();
   return asmtok::Identifier;
 }
 
@@ -121,8 +122,9 @@ asmtok::TokKind AsmLexer::LexPercent() {
     ++CurPtr;
   
   // Unique string.
-  CurStrVal =
-    getSS(TheStringSet).GetOrCreateValue(TokStart, CurPtr, 0).getKeyData();
+  CurStrVal = getSS(TheStringSet).GetOrCreateValue(StringRef(TokStart, 
+                                                             CurPtr - TokStart),
+                                                   0).getKeyData();
   return asmtok::Register;
 }
 
@@ -249,8 +251,9 @@ asmtok::TokKind AsmLexer::LexQuote() {
   }
   
   // Unique string, include quotes for now.
-  CurStrVal =
-    getSS(TheStringSet).GetOrCreateValue(TokStart, CurPtr, 0).getKeyData();
+  CurStrVal = getSS(TheStringSet).GetOrCreateValue(StringRef(TokStart, 
+                                                             CurPtr - TokStart),
+                                                   0).getKeyData();
   return asmtok::String;
 }
 

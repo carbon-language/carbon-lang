@@ -22,7 +22,7 @@ protected:
   static const char testKey[];
   static const uint32_t testValue;
   static const char* testKeyFirst;
-  static const char* testKeyLast;
+  static size_t testKeyLength;
   static const std::string testKeyStr;
 
   void assertEmptyMap() {
@@ -35,10 +35,11 @@ protected:
 
     // Lookup tests
     EXPECT_EQ(0u, testMap.count(testKey));
-    EXPECT_EQ(0u, testMap.count(testKeyFirst, testKeyLast));
+    EXPECT_EQ(0u, testMap.count(StringRef(testKeyFirst, testKeyLength)));
     EXPECT_EQ(0u, testMap.count(testKeyStr));
     EXPECT_TRUE(testMap.find(testKey) == testMap.end());
-    EXPECT_TRUE(testMap.find(testKeyFirst, testKeyLast) == testMap.end());
+    EXPECT_TRUE(testMap.find(StringRef(testKeyFirst, testKeyLength)) == 
+                testMap.end());
     EXPECT_TRUE(testMap.find(testKeyStr) == testMap.end());
   }
 
@@ -57,10 +58,11 @@ protected:
 
     // Lookup tests
     EXPECT_EQ(1u, testMap.count(testKey));
-    EXPECT_EQ(1u, testMap.count(testKeyFirst, testKeyLast));
+    EXPECT_EQ(1u, testMap.count(StringRef(testKeyFirst, testKeyLength)));
     EXPECT_EQ(1u, testMap.count(testKeyStr));
     EXPECT_TRUE(testMap.find(testKey) == testMap.begin());
-    EXPECT_TRUE(testMap.find(testKeyFirst, testKeyLast) == testMap.begin());
+    EXPECT_TRUE(testMap.find(StringRef(testKeyFirst, testKeyLength)) == 
+                testMap.begin());
     EXPECT_TRUE(testMap.find(testKeyStr) == testMap.begin());
   }
 };
@@ -68,7 +70,7 @@ protected:
 const char StringMapTest::testKey[] = "key";
 const uint32_t StringMapTest::testValue = 1u;
 const char* StringMapTest::testKeyFirst = testKey;
-const char* StringMapTest::testKeyLast = testKey + sizeof(testKey) - 1;
+size_t StringMapTest::testKeyLength = sizeof(testKey) - 1;
 const std::string StringMapTest::testKeyStr(testKey);
 
 // Empty map tests.
@@ -90,10 +92,10 @@ TEST_F(StringMapTest, ConstEmptyMapTest) {
 
   // Lookup tests
   EXPECT_EQ(0u, constTestMap.count(testKey));
-  EXPECT_EQ(0u, constTestMap.count(testKeyFirst, testKeyLast));
+  EXPECT_EQ(0u, constTestMap.count(StringRef(testKeyFirst, testKeyLength)));
   EXPECT_EQ(0u, constTestMap.count(testKeyStr));
   EXPECT_TRUE(constTestMap.find(testKey) == constTestMap.end());
-  EXPECT_TRUE(constTestMap.find(testKeyFirst, testKeyLast) ==
+  EXPECT_TRUE(constTestMap.find(StringRef(testKeyFirst, testKeyLength)) ==
               constTestMap.end());
   EXPECT_TRUE(constTestMap.find(testKeyStr) == constTestMap.end());
 }
@@ -186,7 +188,7 @@ namespace {
 TEST_F(StringMapTest, StringMapEntryTest) {
   StringMap<uint32_t>::value_type* entry =
       StringMap<uint32_t>::value_type::Create(
-          testKeyFirst, testKeyLast, 1u);
+          testKeyFirst, testKeyFirst + testKeyLength, 1u);
   EXPECT_STREQ(testKey, entry->first());
   EXPECT_EQ(1u, entry->second);
 }
@@ -196,7 +198,8 @@ TEST_F(StringMapTest, InsertTest) {
   SCOPED_TRACE("InsertTest");
   testMap.insert(
       StringMap<uint32_t>::value_type::Create(
-          testKeyFirst, testKeyLast, testMap.getAllocator(), 1u));
+          testKeyFirst, testKeyFirst + testKeyLength, 
+          testMap.getAllocator(), 1u));
   assertSingleItemMap();
 }
 

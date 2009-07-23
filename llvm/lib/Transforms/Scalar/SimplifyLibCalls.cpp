@@ -1657,7 +1657,7 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
       // Ignore unknown calls.
       const char *CalleeName = Callee->getNameStart();
       StringMap<LibCallOptimization*>::iterator OMI =
-        Optimizations.find(CalleeName, CalleeName+Callee->getNameLen());
+        Optimizations.find(StringRef(CalleeName, Callee->getNameLen()));
       if (OMI == Optimizations.end()) continue;
       
       // Set the builder to the instruction after the call.

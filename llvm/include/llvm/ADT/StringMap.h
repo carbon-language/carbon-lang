@@ -14,6 +14,7 @@
 #ifndef LLVM_ADT_STRINGMAP_H
 #define LLVM_ADT_STRINGMAP_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include <cstring>
 #include <string>
@@ -95,12 +96,12 @@ protected:
   /// specified bucket will be non-null.  Otherwise, it will be null.  In either
   /// case, the FullHashValue field of the bucket will be set to the hash value
   /// of the string.
-  unsigned LookupBucketFor(const char *KeyStart, const char *KeyEnd);
+  unsigned LookupBucketFor(const StringRef &Key);
 
   /// FindKey - Look up the bucket that contains the specified key. If it exists
   /// in the map, return the bucket number of the key.  Otherwise return -1.
   /// This does not modify the map.
-  int FindKey(const char *KeyStart, const char *KeyEnd) const;
+  int FindKey(const StringRef &Key) const;
 
   /// RemoveKey - Remove the specified StringMapEntry from the table, but do not
   /// delete it.  This aborts if the value isn't in the table.
@@ -108,7 +109,7 @@ protected:
 
   /// RemoveKey - Remove the StringMapEntry for the specified key from the
   /// table, returning it.  If the key is not in the table, this returns null.
-  StringMapEntryBase *RemoveKey(const char *KeyStart, const char *KeyEnd);
+  StringMapEntryBase *RemoveKey(const StringRef &Key);
 private:
   void init(unsigned Size);
 public:
@@ -135,6 +136,10 @@ public:
     : StringMapEntryBase(strLen), second() {}
   StringMapEntry(unsigned strLen, const ValueTy &V)
     : StringMapEntryBase(strLen), second(V) {}
+
+  StringRef getKey() const { 
+    return StringRef(getKeyData(), getKeyLength()); 
+  }
 
   const ValueTy &getValue() const { return second; }
   ValueTy &getValue() { return second; }
@@ -277,75 +282,40 @@ public:
     return const_iterator(TheTable+NumBuckets, true);
   }
 
-  iterator find(const char *KeyStart, const char *KeyEnd) {
-    int Bucket = FindKey(KeyStart, KeyEnd);
+  iterator find(const StringRef &Key) {
+    int Bucket = FindKey(Key);
     if (Bucket == -1) return end();
     return iterator(TheTable+Bucket);
   }
-  iterator find(const char *Key) {
-    return find(Key, Key + strlen(Key));
-  }
-  iterator find(const std::string &Key) {
-    return find(Key.data(), Key.data() + Key.size());
-  }
 
-  const_iterator find(const char *KeyStart, const char *KeyEnd) const {
-    int Bucket = FindKey(KeyStart, KeyEnd);
+  const_iterator find(const StringRef &Key) const {
+    int Bucket = FindKey(Key);
     if (Bucket == -1) return end();
     return const_iterator(TheTable+Bucket);
-  }
-  const_iterator find(const char *Key) const {
-    return find(Key, Key + strlen(Key));
-  }
-  const_iterator find(const std::string &Key) const {
-    return find(Key.data(), Key.data() + Key.size());
   }
 
    /// lookup - Return the entry for the specified key, or a default
   /// constructed value if no such entry exists.
-  ValueTy lookup(const char *KeyStart, const char *KeyEnd) const {
-    const_iterator it = find(KeyStart, KeyEnd);
-    if (it != end())
-      return it->second;
-    return ValueTy();
-  }
-  ValueTy lookup(const char *Key) const {
-    const_iterator it = find(Key);
-    if (it != end())
-      return it->second;
-    return ValueTy();
-  }
-  ValueTy lookup(const std::string &Key) const {
+  ValueTy lookup(const StringRef &Key) const {
     const_iterator it = find(Key);
     if (it != end())
       return it->second;
     return ValueTy();
   }
 
-  ValueTy& operator[](const char *Key) {
-    return GetOrCreateValue(Key, Key + strlen(Key)).getValue();
-  }
-  ValueTy& operator[](const std::string &Key) {
-    return GetOrCreateValue(Key.data(), Key.data() + Key.size()).getValue();
+  ValueTy& operator[](const StringRef &Key) {
+    return GetOrCreateValue(Key).getValue();
   }
 
-  size_type count(const char *KeyStart, const char *KeyEnd) const {
-    return find(KeyStart, KeyEnd) == end() ? 0 : 1;
-  }
-  size_type count(const char *Key) const {
-    return count(Key, Key + strlen(Key));
-  }
-  size_type count(const std::string &Key) const {
-    return count(Key.data(), Key.data() + Key.size());
+  size_type count(const StringRef &Key) const {
+    return find(Key) == end() ? 0 : 1;
   }
 
   /// insert - Insert the specified key/value pair into the map.  If the key
   /// already exists in the map, return false and ignore the request, otherwise
   /// insert it and return true.
   bool insert(MapEntryTy *KeyValue) {
-    unsigned BucketNo =
-      LookupBucketFor(KeyValue->getKeyData(),
-                      KeyValue->getKeyData()+KeyValue->getKeyLength());
+    unsigned BucketNo = LookupBucketFor(KeyValue->getKey());
     ItemBucket &Bucket = TheTable[BucketNo];
     if (Bucket.Item && Bucket.Item != getTombstoneVal())
       return false;  // Already exists in map.
@@ -380,15 +350,15 @@ public:
   /// exists, return it.  Otherwise, default construct a value, insert it, and
   /// return.
   template <typename InitTy>
-  StringMapEntry<ValueTy> &GetOrCreateValue(const char *KeyStart,
-                                            const char *KeyEnd,
+  StringMapEntry<ValueTy> &GetOrCreateValue(const StringRef &Key,
                                             InitTy Val) {
-    unsigned BucketNo = LookupBucketFor(KeyStart, KeyEnd);
+    unsigned BucketNo = LookupBucketFor(Key);
     ItemBucket &Bucket = TheTable[BucketNo];
     if (Bucket.Item && Bucket.Item != getTombstoneVal())
       return *static_cast<MapEntryTy*>(Bucket.Item);
 
-    MapEntryTy *NewItem = MapEntryTy::Create(KeyStart, KeyEnd, Allocator, Val);
+    MapEntryTy *NewItem =
+      MapEntryTy::Create(Key.begin(), Key.end(), Allocator, Val);
 
     if (Bucket.Item == getTombstoneVal())
       --NumTombstones;
@@ -403,9 +373,20 @@ public:
     return *NewItem;
   }
 
+  StringMapEntry<ValueTy> &GetOrCreateValue(const StringRef &Key) {
+    return GetOrCreateValue(Key, ValueTy());
+  }
+
+  template <typename InitTy>
+  StringMapEntry<ValueTy> &GetOrCreateValue(const char *KeyStart,
+                                            const char *KeyEnd,
+                                            InitTy Val) {
+    return GetOrCreateValue(StringRef(KeyStart, KeyEnd - KeyStart), Val);
+  }
+
   StringMapEntry<ValueTy> &GetOrCreateValue(const char *KeyStart,
                                             const char *KeyEnd) {
-    return GetOrCreateValue(KeyStart, KeyEnd, ValueTy());
+    return GetOrCreateValue(StringRef(KeyStart, KeyEnd - KeyStart));
   }
 
   /// remove - Remove the specified key/value pair from the map, but do not
@@ -420,14 +401,7 @@ public:
     V.Destroy(Allocator);
   }
 
-  bool erase(const char *Key) {
-    iterator I = find(Key);
-    if (I == end()) return false;
-    erase(I);
-    return true;
-  }
-
-  bool erase(const std::string &Key) {
+  bool erase(const StringRef &Key) {
     iterator I = find(Key);
     if (I == end()) return false;
     erase(I);

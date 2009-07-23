@@ -397,7 +397,7 @@ MDString *LLVMContextImpl::getMDString(const char *StrBegin,
                                        unsigned StrLength) {
   sys::SmartScopedWriter<true> Writer(ConstantsLock);
   StringMapEntry<MDString *> &Entry = 
-    MDStringCache.GetOrCreateValue(StrBegin, StrBegin + StrLength);
+    MDStringCache.GetOrCreateValue(StringRef(StrBegin, StrLength));
   MDString *&S = Entry.getValue();
   if (!S) S = new MDString(Entry.getKeyData(),
                            Entry.getKeyLength());
@@ -460,8 +460,8 @@ Constant *LLVMContextImpl::getConstantArray(const ArrayType *Ty,
 
 void LLVMContextImpl::erase(MDString *M) {
   sys::SmartScopedWriter<true> Writer(ConstantsLock);
-  MDStringCache.erase(MDStringCache.find(M->StrBegin, 
-                                         M->StrBegin + M->length()));
+  MDStringCache.erase(MDStringCache.find(StringRef(M->StrBegin, 
+                                                   M->length())));
 }
 
 void LLVMContextImpl::erase(MDNode *M) {

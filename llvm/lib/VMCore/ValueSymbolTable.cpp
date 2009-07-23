@@ -33,7 +33,7 @@ ValueSymbolTable::~ValueSymbolTable() {
 // lookup a value - Returns null on failure...
 //
 Value *ValueSymbolTable::lookup(const std::string &Name) const {
-  const_iterator VI = vmap.find(Name.data(), Name.data() + Name.size());
+  const_iterator VI = vmap.find(Name);
   if (VI != vmap.end())                   // We found the symbol
     return VI->getValue();
   return 0;
@@ -41,7 +41,8 @@ Value *ValueSymbolTable::lookup(const std::string &Name) const {
 
 Value *ValueSymbolTable::lookup(const char *NameBegin,
                                 const char *NameEnd) const {
-  const_iterator VI = vmap.find(NameBegin, NameEnd);
+  // FIXME: ValueSymbolTable should move to a StringRef based API.
+  const_iterator VI = vmap.find(StringRef(NameBegin, NameEnd - NameBegin));
   if (VI != vmap.end())                   // We found the symbol
     return VI->getValue();
   return 0;
@@ -71,8 +72,8 @@ void ValueSymbolTable::reinsertValue(Value* V) {
     UniqueName.append_uint_32(++LastUnique);
     // Try insert the vmap entry with this suffix.
     ValueName &NewName =
-      vmap.GetOrCreateValue(UniqueName.data(),
-                            UniqueName.data() + UniqueName.size());
+      vmap.GetOrCreateValue(StringRef(UniqueName.data(),
+                                      UniqueName.size()));
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
@@ -95,7 +96,7 @@ void ValueSymbolTable::removeValueName(ValueName *V) {
 ValueName *ValueSymbolTable::createValueName(const char *NameStart,
                                              unsigned NameLen, Value *V) {
   // In the common case, the name is not already in the symbol table.
-  ValueName &Entry = vmap.GetOrCreateValue(NameStart, NameStart+NameLen);
+  ValueName &Entry = vmap.GetOrCreateValue(StringRef(NameStart, NameLen));
   if (Entry.getValue() == 0) {
     Entry.setValue(V);
     //DEBUG(DOUT << " Inserted value: " << Entry.getKeyData() << ": "
@@ -113,8 +114,8 @@ ValueName *ValueSymbolTable::createValueName(const char *NameStart,
     
     // Try insert the vmap entry with this suffix.
     ValueName &NewName =
-      vmap.GetOrCreateValue(UniqueName.data(),
-                            UniqueName.data() + UniqueName.size());
+      vmap.GetOrCreateValue(StringRef(UniqueName.data(),
+                                      UniqueName.size()));
     if (NewName.getValue() == 0) {
       // Newly inserted name.  Success!
       NewName.setValue(V);

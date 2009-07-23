@@ -379,7 +379,7 @@ void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler,
 
 void LTOModule::addAsmGlobalSymbol(const char *name) {
     // only add new define if not already defined
-    if ( _defines.count(name, &name[strlen(name)+1]) == 0 ) 
+    if ( _defines.count(name) == 0 ) 
         return;
         
     // string is owned by _defines
@@ -507,8 +507,7 @@ void LTOModule::lazyParseSymbols()
                                                 it != _undefines.end(); ++it) {
             // if this symbol also has a definition, then don't make an undefine
             // because it is a tentative definition
-            if ( _defines.count(it->getKeyData(), it->getKeyData()+
-                                                  it->getKeyLength()) == 0 ) {
+            if ( _defines.count(it->getKey())) {
               NameAndAttributes info = it->getValue();
               _symbols.push_back(info);
             }

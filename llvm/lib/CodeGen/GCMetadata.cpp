@@ -75,20 +75,17 @@ GCModuleInfo::~GCModuleInfo() {
 
 GCStrategy *GCModuleInfo::getOrCreateStrategy(const Module *M,
                                               const std::string &Name) {
-  const char *Start = Name.c_str();
-  
-  strategy_map_type::iterator NMI =
-    StrategyMap.find(Start, Start + Name.size());
+  strategy_map_type::iterator NMI = StrategyMap.find(Name);
   if (NMI != StrategyMap.end())
     return NMI->getValue();
   
   for (GCRegistry::iterator I = GCRegistry::begin(),
                             E = GCRegistry::end(); I != E; ++I) {
-    if (strcmp(Start, I->getName()) == 0) {
+    if (Name == I->getName()) {
       GCStrategy *S = I->instantiate();
       S->M = M;
       S->Name = Name;
-      StrategyMap.GetOrCreateValue(Start, Start + Name.size()).setValue(S);
+      StrategyMap.GetOrCreateValue(Name).setValue(S);
       StrategyList.push_back(S);
       return S;
     }
