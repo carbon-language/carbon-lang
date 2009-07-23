@@ -45,14 +45,14 @@ static inline bool IsMemRefInstr(const Value *V) {
   return I && (I->mayReadFromMemory() || I->mayWriteToMemory());
 }
 
-static void GetMemRefInstrs(
-    const Loop *L, SmallVectorImpl<Instruction*> &memrefs) {
+static void GetMemRefInstrs(const Loop *L,
+                            SmallVectorImpl<Instruction*> &Memrefs) {
   for (Loop::block_iterator b = L->block_begin(), be = L->block_end();
       b != be; ++b)
     for (BasicBlock::iterator i = (*b)->begin(), ie = (*b)->end();
         i != ie; ++i)
       if (IsMemRefInstr(i))
-        memrefs.push_back(i);
+        Memrefs.push_back(i);
 }
 
 static bool IsLoadOrStoreInst(Value *I) {
@@ -73,25 +73,25 @@ static Value *GetPointerOperand(Value *I) {
 //                             Dependence Testing
 //===----------------------------------------------------------------------===//
 
-bool LoopDependenceAnalysis::isDependencePair(const Value *x,
-                                              const Value *y) const {
-  return IsMemRefInstr(x) &&
-         IsMemRefInstr(y) &&
-         (cast<const Instruction>(x)->mayWriteToMemory() ||
-          cast<const Instruction>(y)->mayWriteToMemory());
+bool LoopDependenceAnalysis::isDependencePair(const Value *A,
+                                              const Value *B) const {
+  return IsMemRefInstr(A) &&
+         IsMemRefInstr(B) &&
+         (cast<const Instruction>(A)->mayWriteToMemory() ||
+          cast<const Instruction>(B)->mayWriteToMemory());
 }
 
-bool LoopDependenceAnalysis::depends(Value *src, Value *dst) {
-  assert(isDependencePair(src, dst) && "Values form no dependence pair!");
-  DOUT << "== LDA test ==\n" << *src << *dst;
+bool LoopDependenceAnalysis::depends(Value *Src, Value *Dst) {
+  assert(isDependencePair(Src, Dst) && "Values form no dependence pair!");
+  DOUT << "== LDA test ==\n" << *Src << *Dst;
 
   // We only analyse loads and stores; for possible memory accesses by e.g.
   // free, call, or invoke instructions we conservatively assume dependence.
-  if (!IsLoadOrStoreInst(src) || !IsLoadOrStoreInst(dst))
+  if (!IsLoadOrStoreInst(Src) || !IsLoadOrStoreInst(Dst))
     return true;
 
-  Value *srcPtr = GetPointerOperand(src);
-  Value *dstPtr = GetPointerOperand(dst);
+  Value *srcPtr = GetPointerOperand(Src);
+  Value *dstPtr = GetPointerOperand(Dst);
   const Value *srcObj = srcPtr->getUnderlyingObject();
   const Value *dstObj = dstPtr->getUnderlyingObject();
   AliasAnalysis::AliasResult alias = AA->alias(
@@ -130,8 +130,8 @@ void LoopDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredTransitive<ScalarEvolution>();
 }
 
-static void PrintLoopInfo(
-    raw_ostream &OS, LoopDependenceAnalysis *LDA, const Loop *L) {
+static void PrintLoopInfo(raw_ostream &OS,
+                          LoopDependenceAnalysis *LDA, const Loop *L) {
   if (!L->empty()) return; // ignore non-innermost loops
 
   SmallVector<Instruction*, 8> memrefs;
@@ -144,7 +144,7 @@ static void PrintLoopInfo(
   OS << "  Load/store instructions: " << memrefs.size() << "\n";
   for (SmallVector<Instruction*, 8>::const_iterator x = memrefs.begin(),
       end = memrefs.end(); x != end; ++x)
-    OS << "\t" << (x - memrefs.begin()) << ": " << **x;
+    OS << "\t" << (x - memrefs.begin()) << ": " << **x << "\n";
 
   OS << "  Pairwise dependence results:\n";
   for (SmallVector<Instruction*, 8>::const_iterator x = memrefs.begin(),

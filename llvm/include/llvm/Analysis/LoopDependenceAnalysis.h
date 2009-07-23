@@ -26,37 +26,37 @@
 
 namespace llvm {
 
-  class AliasAnalysis;
-  class AnalysisUsage;
-  class ScalarEvolution;
-  class Value;
+class AliasAnalysis;
+class AnalysisUsage;
+class ScalarEvolution;
+class Value;
 
-  class LoopDependenceAnalysis : public LoopPass {
-    Loop *L;
-    AliasAnalysis *AA;
-    ScalarEvolution *SE;
+class LoopDependenceAnalysis : public LoopPass {
+  Loop *L;
+  AliasAnalysis *AA;
+  ScalarEvolution *SE;
 
-  public:
-    static char ID; // Class identification, replacement for typeinfo
-    LoopDependenceAnalysis() : LoopPass(&ID) {}
+public:
+  static char ID; // Class identification, replacement for typeinfo
+  LoopDependenceAnalysis() : LoopPass(&ID) {}
 
-    /// TODO: docs
-    bool isDependencePair(const Value*, const Value*) const;
-    bool depends(Value*, Value*);
+  /// TODO: docs
+  bool isDependencePair(const Value*, const Value*) const;
+  bool depends(Value*, Value*);
 
-    bool runOnLoop(Loop*, LPPassManager&);
+  bool runOnLoop(Loop*, LPPassManager&);
 
-    virtual void getAnalysisUsage(AnalysisUsage&) const;
+  virtual void getAnalysisUsage(AnalysisUsage&) const;
 
-    void print(raw_ostream&, const Module* = 0) const;
-    virtual void print(std::ostream&, const Module* = 0) const;
-  }; // class LoopDependenceAnalysis
+  void print(raw_ostream&, const Module* = 0) const;
+  virtual void print(std::ostream&, const Module* = 0) const;
+}; // class LoopDependenceAnalysis
 
 
-  // createLoopDependenceAnalysisPass - This creates an instance of the
-  // LoopDependenceAnalysis pass.
-  //
-  LoopPass *createLoopDependenceAnalysisPass();
+// createLoopDependenceAnalysisPass - This creates an instance of the
+// LoopDependenceAnalysis pass.
+//
+LoopPass *createLoopDependenceAnalysisPass();
 
 } // namespace llvm
 
