@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-int test() {
+void test() {
   void *vp;
   int *ip;
   char *cp;
@@ -15,4 +15,3 @@ int test() {
   if (sint < ip) {} // expected-warning {{comparison between pointer and integer ('int' and 'int *')}}
   if (ip == cp) {} // expected-warning {{comparison of distinct pointer types ('int *' and 'char *')}}
 }
-
