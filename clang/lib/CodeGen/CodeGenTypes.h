@@ -113,13 +113,15 @@ class CodeGenTypes {
   llvm::FoldingSet<CGFunctionInfo> FunctionInfos;
 
 public:
-  class BitFieldInfo {
-  public:
-    explicit BitFieldInfo(unsigned short B, unsigned short S)
-      : Begin(B), Size(S) {}
+  struct BitFieldInfo {
+    BitFieldInfo(unsigned FieldNo, 
+                 unsigned Start, 
+                 unsigned Size)
+      : FieldNo(FieldNo), Start(Start), Size(Size) {}
 
-    unsigned short Begin;
-    unsigned short Size;
+    unsigned FieldNo;
+    unsigned Start;
+    unsigned Size;
   };
 
 private:
@@ -188,10 +190,11 @@ public:
   
 public:  // These are internal details of CGT that shouldn't be used externally.
   /// addFieldInfo - Assign field number to field FD.
-  void addFieldInfo(const FieldDecl *FD, unsigned No);
+  void addFieldInfo(const FieldDecl *FD, unsigned FieldNo);
 
   /// addBitFieldInfo - Assign a start bit and a size to field FD.
-  void addBitFieldInfo(const FieldDecl *FD, unsigned Begin, unsigned Size);
+  void addBitFieldInfo(const FieldDecl *FD, unsigned FieldNo,
+                       unsigned Start, unsigned Size);
 
   /// getBitFieldInfo - Return the BitFieldInfo  that corresponds to the field
   /// FD.

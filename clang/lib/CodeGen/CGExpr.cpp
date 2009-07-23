@@ -1026,7 +1026,8 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
                                               FieldDecl* Field,
                                               unsigned CVRQualifiers) {
-   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
+  CodeGenTypes::BitFieldInfo Info = CGM.getTypes().getBitFieldInfo(Field);
+
   // FIXME: CodeGenTypes should expose a method to get the appropriate type for
   // FieldTy (the appropriate type is ABI-dependent).
   const llvm::Type *FieldTy = 
@@ -1037,13 +1038,12 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
   BaseValue = Builder.CreateBitCast(BaseValue,
                                     VMContext.getPointerType(FieldTy, AS),
                                     "tmp");
-  llvm::Value *V = Builder.CreateGEP(BaseValue,
-                            VMContext.getConstantInt(llvm::Type::Int32Ty, idx),
-                              "tmp");
   
-  CodeGenTypes::BitFieldInfo bitFieldInfo = 
-    CGM.getTypes().getBitFieldInfo(Field);
-  return LValue::MakeBitfield(V, bitFieldInfo.Begin, bitFieldInfo.Size,
+  llvm::Value *Idx = 
+    VMContext.getConstantInt(llvm::Type::Int32Ty, Info.FieldNo);
+  llvm::Value *V = Builder.CreateGEP(BaseValue, Idx, "tmp");
+  
+  return LValue::MakeBitfield(V, Info.Start, Info.Size,
                               Field->getType()->isSignedIntegerType(),
                             Field->getType().getCVRQualifiers()|CVRQualifiers);
 }

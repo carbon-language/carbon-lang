@@ -85,8 +85,8 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   const llvm::Type *Ty = Types.ConvertTypeForMemRecursive(D->getType());
   uint64_t TypeSizeInBits = getTypeSizeInBytes(Ty) * 8;
   
-  LLVMFields.push_back(LLVMFieldInfo(D, FieldOffset / TypeSizeInBits));
-  LLVMBitFields.push_back(LLVMBitFieldInfo(D, FieldOffset % TypeSizeInBits, 
+  LLVMBitFields.push_back(LLVMBitFieldInfo(D, FieldOffset / TypeSizeInBits,
+                                           FieldOffset % TypeSizeInBits, 
                                            FieldSize));
   
   AppendBytes(NumBytesToAppend);
@@ -190,13 +190,13 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   // Now add our field.
   if (FD) {
     AppendField(0, Size, Ty);
-    Types.addFieldInfo(FD, 0);
     
     if (FD->isBitField()) {
       uint64_t FieldSize = 
         FD->getBitWidth()->EvaluateAsInt(Types.getContext()).getZExtValue();
-      Types.addBitFieldInfo(FD, 0, FieldSize);
-    }
+      Types.addBitFieldInfo(FD, 0, 0, FieldSize);
+    } else
+      Types.addFieldInfo(FD, 0);
   }
   
   // Append tail padding.
@@ -324,7 +324,7 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
   for (unsigned i = 0, e = Builder.LLVMBitFields.size(); i != e; ++i) {
     const LLVMBitFieldInfo &Info = Builder.LLVMBitFields[i];
     
-    Types.addBitFieldInfo(Info.FD, Info.Start, Info.Size);
+    Types.addBitFieldInfo(Info.FD, Info.FieldNo, Info.Start, Info.Size);
   }
   
   return new CGRecordLayout(Ty, llvm::SmallSet<unsigned, 8>());

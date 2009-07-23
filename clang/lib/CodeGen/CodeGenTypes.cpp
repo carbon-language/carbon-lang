@@ -494,6 +494,8 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
 /// getLLVMFieldNo - Return llvm::StructType element number
 /// that corresponds to the field FD.
 unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
+  assert(!FD->isBitField() && "Don't use getLLVMFieldNo on bit fields!");
+  
   llvm::DenseMap<const FieldDecl*, unsigned>::iterator I = FieldInfo.find(FD);
   assert (I != FieldInfo.end()  && "Unable to find field info");
   return I->second;
@@ -513,9 +515,9 @@ CodeGenTypes::BitFieldInfo CodeGenTypes::getBitFieldInfo(const FieldDecl *FD) {
 }
 
 /// addBitFieldInfo - Assign a start bit and a size to field FD.
-void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned Begin,
-                                   unsigned Size) {
-  BitFields.insert(std::make_pair(FD, BitFieldInfo(Begin, Size)));
+void CodeGenTypes::addBitFieldInfo(const FieldDecl *FD, unsigned FieldNo,
+                                   unsigned Start, unsigned Size) {
+  BitFields.insert(std::make_pair(FD, BitFieldInfo(FieldNo, Start, Size)));
 }
 
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
@@ -559,8 +561,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       // Bitfield field info is different from other field info;
       // it actually ignores the underlying LLVM struct because
       // there isn't any convenient mapping.
-      CGT.addFieldInfo(*Field, offset / size);
-      CGT.addBitFieldInfo(*Field, offset % size, BitFieldSize);
+      CGT.addBitFieldInfo(*Field, offset / size, offset % size, BitFieldSize);
     } else {
       // Put the element into the struct. This would be simpler
       // if we didn't bother, but it seems a bit too strange to
@@ -603,8 +604,7 @@ void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
       uint64_t BitFieldSize =  
         BitWidth->EvaluateAsInt(CGT.getContext()).getZExtValue();
 
-      CGT.addFieldInfo(*Field, 0);
-      CGT.addBitFieldInfo(*Field, offset, BitFieldSize);
+      CGT.addBitFieldInfo(*Field, 0, offset, BitFieldSize);
     } else {
       CGT.addFieldInfo(*Field, 0);
     }

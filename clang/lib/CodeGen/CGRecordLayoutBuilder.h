@@ -66,11 +66,13 @@ class CGRecordLayoutBuilder {
 
   /// LLVMBitFieldInfo - Holds location and size information about a bit field.
   struct LLVMBitFieldInfo {
-    LLVMBitFieldInfo(const FieldDecl *FD, unsigned Start, unsigned Size)
-      : FD(FD), Start(Start), Size(Size) { }
+    LLVMBitFieldInfo(const FieldDecl *FD, unsigned FieldNo, unsigned Start, 
+                     unsigned Size)
+      : FD(FD), FieldNo(FieldNo), Start(Start), Size(Size) { }
     
     const FieldDecl *FD;
     
+    unsigned FieldNo;
     unsigned Start;
     unsigned Size;
   };

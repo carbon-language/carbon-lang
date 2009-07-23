@@ -139,16 +139,16 @@ public:
     const llvm::Type* Ty = CI->getType();
     const llvm::TargetData &TD = CGM.getTypes().getTargetData();
     unsigned size = TD.getTypeAllocSizeInBits(Ty);
-    unsigned fieldOffset = CGM.getTypes().getLLVMFieldNo(Field) * size;
-    CodeGenTypes::BitFieldInfo bitFieldInfo =
-        CGM.getTypes().getBitFieldInfo(Field);
-    fieldOffset += bitFieldInfo.Begin;
+    CodeGenTypes::BitFieldInfo Info = CGM.getTypes().getBitFieldInfo(Field);
+    unsigned FieldOffset = Info.FieldNo * size;
+        
+    FieldOffset += Info.Start;
 
     // Find where to start the insertion
     // FIXME: This is O(n^2) in the number of bit-fields!
     // FIXME: This won't work if the struct isn't completely packed!
     unsigned offset = 0, i = 0;
-    while (offset < (fieldOffset & -8))
+    while (offset < (FieldOffset & -8))
       offset += TD.getTypeAllocSizeInBits(Elts[i++]->getType());
 
     // Advance over 0 sized elements (must terminate in bounds since
@@ -160,15 +160,15 @@ public:
     // FIXME: This should never occur, but currently it can because initializer
     // constants are cast to bool, and because clang is not enforcing bitfield
     // width limits.
-    if (bitFieldInfo.Size > V.getBitWidth())
-      V.zext(bitFieldInfo.Size);
+    if (Info.Size > V.getBitWidth())
+      V.zext(Info.Size);
 
     // Insert the bits into the struct
     // FIXME: This algorthm is only correct on X86!
     // FIXME: THis algorthm assumes bit-fields only have byte-size elements!
-    unsigned bitsToInsert = bitFieldInfo.Size;
-    unsigned curBits = std::min(8 - (fieldOffset & 7), bitsToInsert);
-    unsigned byte = V.getLoBits(curBits).getZExtValue() << (fieldOffset & 7);
+    unsigned bitsToInsert = Info.Size;
+    unsigned curBits = std::min(8 - (FieldOffset & 7), bitsToInsert);
+    unsigned byte = V.getLoBits(curBits).getZExtValue() << (FieldOffset & 7);
     do {
       llvm::Constant* byteC =
         VMContext.getConstantInt(llvm::Type::Int8Ty, byte);
