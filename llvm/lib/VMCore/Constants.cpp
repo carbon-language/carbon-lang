@@ -1327,19 +1327,14 @@ void UndefValue::destroyConstant() {
 //
 
 MDNode::MDNode(Value*const* Vals, unsigned NumVals)
-  : Constant(Type::MetadataTy, MDNodeVal, 0, 0) {
+  : MetadataBase(Type::MetadataTy, Value::MDNodeVal) {
   for (unsigned i = 0; i != NumVals; ++i)
-    Node.push_back(ElementVH(Vals[i], this));
+    Node.push_back(WeakVH(Vals[i]));
 }
 
 void MDNode::Profile(FoldingSetNodeID &ID) const {
   for (const_elem_iterator I = elem_begin(), E = elem_end(); I != E; ++I)
     ID.AddPointer(*I);
-}
-
-void MDNode::destroyConstant() {
-  getType()->getContext().erase(this);
-  destroyConstantImpl();
 }
 
 //---- ConstantExpr::get() implementations...
@@ -2315,6 +2310,4 @@ void MDNode::replaceElement(Value *From, Value *To) {
   assert(Replacement != this && "I didn't contain From!");
 
   uncheckedReplaceAllUsesWith(Replacement);
-
-  destroyConstant();
 }

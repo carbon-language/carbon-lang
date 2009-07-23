@@ -734,6 +734,23 @@ bool BitcodeReader::ParseMetadata() {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: ignore.
       break;
+    case bitc::METADATA_NODE: {
+      if (Record.empty() || Record.size() % 2 == 1)
+        return Error("Invalid METADATA_NODE record");
+      
+      unsigned Size = Record.size();
+      SmallVector<Value*, 8> Elts;
+      for (unsigned i = 0; i != Size; i += 2) {
+        const Type *Ty = getTypeByID(Record[i], false);
+        if (Ty != Type::VoidTy)
+          Elts.push_back(ValueList.getValueFwdRef(Record[i+1], Ty));
+        else
+          Elts.push_back(NULL);
+      }
+      Value *V = Context.getMDNode(&Elts[0], Elts.size());
+      ValueList.AssignValue(V, NextValueNo++);
+      break;
+    }
     case bitc::METADATA_STRING: {
       unsigned MDStringLength = Record.size();
       SmallString<8> String;
@@ -1076,22 +1093,6 @@ bool BitcodeReader::ParseConstants() {
       const PointerType *PTy = cast<PointerType>(CurTy);
       V = InlineAsm::get(cast<FunctionType>(PTy->getElementType()),
                          AsmStr, ConstrStr, HasSideEffects);
-      break;
-    }
-    case bitc::CST_CODE_MDNODE: {
-      if (Record.empty() || Record.size() % 2 == 1)
-        return Error("Invalid CST_MDNODE record");
-      
-      unsigned Size = Record.size();
-      SmallVector<Value*, 8> Elts;
-      for (unsigned i = 0; i != Size; i += 2) {
-        const Type *Ty = getTypeByID(Record[i], false);
-        if (Ty != Type::VoidTy)
-          Elts.push_back(ValueList.getValueFwdRef(Record[i+1], Ty));
-        else
-          Elts.push_back(NULL);
-      }
-      V = Context.getMDNode(&Elts[0], Elts.size());
       break;
     }
     }

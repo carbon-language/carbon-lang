@@ -379,20 +379,20 @@ bool LLParser::ParseMDString(MetadataBase *&MDS) {
 
 // MDNode:
 //   ::= '!' MDNodeNumber
-bool LLParser::ParseMDNode(Constant *&Node) {
+bool LLParser::ParseMDNode(MetadataBase *&Node) {
   // !{ ..., !42, ... }
   unsigned MID = 0;
   if (ParseUInt32(MID))  return true;
   
   // Check existing MDNode.
-  std::map<unsigned, Constant *>::iterator I = MetadataCache.find(MID);
+  std::map<unsigned, MetadataBase *>::iterator I = MetadataCache.find(MID);
   if (I != MetadataCache.end()) {
     Node = I->second;
     return false;
   }
 
   // Check known forward references.
-  std::map<unsigned, std::pair<Constant *, LocTy> >::iterator
+  std::map<unsigned, std::pair<MetadataBase *, LocTy> >::iterator
     FI = ForwardRefMDNodes.find(MID);
   if (FI != ForwardRefMDNodes.end()) {
     Node = FI->second.first;
@@ -427,15 +427,24 @@ bool LLParser::ParseStandaloneMetadata() {
   if (ParseType(Ty, TyLoc))
     return true;
   
-  Constant *Init = 0;
-  if (ParseGlobalValue(Ty, Init))
-      return true;
+  if (Lex.getKind() != lltok::Metadata)
+    return TokError("Expected metadata here");
 
+  Lex.Lex();
+  if (Lex.getKind() != lltok::lbrace)
+    return TokError("Expected '{' here");
+
+  SmallVector<Value *, 16> Elts;
+  if (ParseMDNodeVector(Elts) 
+      || ParseToken(lltok::rbrace, "exected end of metadata node"))
+    return true;
+
+  MDNode *Init = Context.getMDNode(Elts.data(), Elts.size());
   MetadataCache[MetadataID] = Init;
-  std::map<unsigned, std::pair<Constant *, LocTy> >::iterator
+  std::map<unsigned, std::pair<MetadataBase *, LocTy> >::iterator
     FI = ForwardRefMDNodes.find(MetadataID);
   if (FI != ForwardRefMDNodes.end()) {
-    Constant *FwdNode = FI->second.first;
+    MDNode *FwdNode = cast<MDNode>(FI->second.first);
     FwdNode->replaceAllUsesWith(Init);
     ForwardRefMDNodes.erase(FI);
   }
@@ -1677,7 +1686,7 @@ bool LLParser::ParseValID(ValID &ID) {
     ID.Kind = ValID::t_LocalName;
     break;
   case lltok::Metadata: {  // !{...} MDNode, !"foo" MDString
-    ID.Kind = ValID::t_Constant;
+    ID.Kind = ValID::t_Metadata;
     Lex.Lex();
     if (Lex.getKind() == lltok::lbrace) {
       SmallVector<Value*, 16> Elts;
@@ -1685,13 +1694,13 @@ bool LLParser::ParseValID(ValID &ID) {
           ParseToken(lltok::rbrace, "expected end of metadata node"))
         return true;
 
-      ID.ConstantVal = Context.getMDNode(Elts.data(), Elts.size());
+      ID.MetadataVal = Context.getMDNode(Elts.data(), Elts.size());
       return false;
     }
 
     // Standalone metadata reference
     // !{ ..., !42, ... }
-    if (!ParseMDNode(ID.ConstantVal))
+    if (!ParseMDNode(ID.MetadataVal))
       return false;
 
     // MDString:
@@ -3462,7 +3471,7 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
       if (ParseType(Ty)) return true;
       if (Lex.getKind() == lltok::Metadata) {
         Lex.Lex();
-        Constant *Node = 0;
+        MetadataBase *Node = 0;
         if (!ParseMDNode(Node))
           V = Node;
         else {

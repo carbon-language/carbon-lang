@@ -227,7 +227,7 @@ public:
     
     // Markers:
     ConstantFirstVal = FunctionVal,
-    ConstantLastVal  = MDNodeVal
+    ConstantLastVal  = ConstantPointerNullVal
   };
 
   /// getValueID - Return an ID for the concrete type of this object.  This is

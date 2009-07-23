@@ -1132,6 +1132,11 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     return;
   }
 
+  if (const MDNode *N = dyn_cast<MDNode>(V)) {
+    Out << '!' << Machine->getMetadataSlot(N);
+    return;
+  }
+
   if (const MDString *MDS = dyn_cast<MDString>(V)) {
     Out << "!\"";
     PrintEscapedString(MDS->begin(), MDS->size(), Out);

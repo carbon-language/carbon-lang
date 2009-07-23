@@ -420,7 +420,7 @@ MDNode *LLVMContextImpl::getMDNode(Value*const* Vals, unsigned NumVals) {
     N = MDNodeSet.FindNodeOrInsertPos(ID, InsertPoint);
     if (!N) {
       // InsertPoint will have been set by the FindNodeOrInsertPos call.
-      N = new(0) MDNode(Vals, NumVals);
+      N = new MDNode(Vals, NumVals);
       MDNodeSet.InsertNode(N, InsertPoint);
     }
   }

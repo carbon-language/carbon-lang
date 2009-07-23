@@ -204,21 +204,23 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       Values.push_back(std::make_pair(V, 1U));
       ValueMap[V] = Values.size();
       return;
-    } else if (const MDNode *N = dyn_cast<MDNode>(C)) {
-      for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
-           I != E; ++I) {
-        if (*I)
-          EnumerateValue(*I);
-        else
-          EnumerateType(Type::VoidTy);
-      }
-
-      Values.push_back(std::make_pair(V, 1U));
-      ValueMap[V] = Values.size();
-      return;
     }
   }
-  
+
+  if (const MDNode *N = dyn_cast<MDNode>(V)) {
+    Values.push_back(std::make_pair(V, 1U));
+    ValueMap[V] = Values.size();
+    ValueID = Values.size();
+    for (MDNode::const_elem_iterator I = N->elem_begin(), E = N->elem_end();
+         I != E; ++I) {
+      if (*I)
+        EnumerateValue(*I);
+      else
+        EnumerateType(Type::VoidTy);
+    }
+    return;
+  }
+
   // Add the value.
   Values.push_back(std::make_pair(V, 1U));
   ValueID = Values.size();
@@ -265,7 +267,7 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
           EnumerateOperandType(Elem);
       }
     }
-  } else if (isa<MDString>(V))
+  } else if (isa<MDString>(V) || isa<MDNode>(V))
     EnumerateValue(V);
 }
 

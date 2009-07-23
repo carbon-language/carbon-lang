@@ -195,7 +195,6 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::CST_CODE_CE_CMP:        return "CE_CMP";
     case bitc::CST_CODE_INLINEASM:     return "INLINEASM";
     case bitc::CST_CODE_CE_SHUFVEC_EX: return "CE_SHUFVEC_EX";
-    case bitc::CST_CODE_MDNODE:        return "MDNODE";
     }        
   case bitc::FUNCTION_BLOCK_ID:
     switch (CodeID) {
@@ -248,6 +247,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     switch(CodeID) {
     default:return 0;
     case bitc::METADATA_STRING:      return "MDSTRING";
+    case bitc::METADATA_NODE:        return "MDNODE";
     }
   }
 }

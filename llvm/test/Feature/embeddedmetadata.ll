@@ -11,3 +11,10 @@ define void @foo() {
   ret void
 }
 
+;; Test forward reference
+declare i8 @llvm.f2(metadata %a)
+define void @f2() {
+  %x = call i8 @llvm.f2(metadata !2)
+  ret void
+}
+!2 = metadata !{i32 420}

@@ -101,25 +101,6 @@ TEST(MDNodeTest, Simple) {
                oss2.str().c_str());
 }
 
-TEST(MDNodeTest, RAUW) {
-  Constant *C = getGlobalContext().getConstantInt(Type::Int32Ty, 1);
-  Instruction *I = new BitCastInst(C, Type::Int32Ty);
-
-  Value *const V1 = I;
-  MDNode *n1 = getGlobalContext().getMDNode(&V1, 1);
-  WeakVH wn1 = n1;
-
-  Value *const V2 = C;
-  MDNode *n2 = getGlobalContext().getMDNode(&V2, 1);
-  WeakVH wn2 = n2;
-
-  EXPECT_NE(wn1, wn2);
-
-  I->replaceAllUsesWith(C);
-
-  EXPECT_EQ(wn1, wn2);
-}
-
 TEST(MDNodeTest, Delete) {
   Constant *C = getGlobalContext().getConstantInt(Type::Int32Ty, 1);
   Instruction *I = new BitCastInst(C, Type::Int32Ty);

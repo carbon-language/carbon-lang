@@ -53,7 +53,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MDString *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueID() == MDStringVal;
+    return V->getValueID() == MDStringVal || V->getValueID() == MDNodeVal;
   }
 };
 
@@ -91,53 +91,22 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// MDNode - a tuple of other values.
-/// These contain a list of the Constants that represent the metadata. The
-/// operand list is always empty, query the element list instead.
+/// These contain a list of the values that represent the metadata. 
 ///
-/// This class will attempt to keep track of values as they are modified. When
-/// a value is replaced the element will be replaced with it, and when the
-/// value is deleted the element is set to a null pointer. In order to preserve
-/// structural equivalence while the elements mutate, the MDNode may call
-/// replaceAllUsesWith on itself. Because of this, users of MDNode must use a
-/// WeakVH or CallbackVH to hold the node pointer if there is a chance that one
-/// of the elements held by the node may change.
-///
-class MDNode : public Constant, public FoldingSetNode {
+class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);      // DO NOT IMPLEMENT
 
   friend class LLVMContextImpl;
 
-  friend class ElementVH;
-  struct ElementVH : public CallbackVH {
-    MDNode *OwningNode;
-
-    ElementVH(Value *V, MDNode *Parent)
-      : CallbackVH(V), OwningNode(Parent) {}
-
-    ~ElementVH() {}
-
-    /// deleted - Set this entry in the MDNode to 'null'. This will reallocate
-    /// the MDNode.
-    virtual void deleted() {
-      OwningNode->replaceElement(this->operator Value*(), 0);
-    }
-
-    /// allUsesReplacedWith - Modify the MDNode by replacing this entry with
-    /// new_value. This will reallocate the MDNode.
-    virtual void allUsesReplacedWith(Value *new_value) {
-      OwningNode->replaceElement(this->operator Value*(), new_value);
-    }
-  };
-
   void replaceElement(Value *From, Value *To);
 
-  SmallVector<ElementVH, 4> Node;
-  typedef SmallVectorImpl<ElementVH>::iterator elem_iterator;
+  SmallVector<WeakVH, 4> Node;
+  typedef SmallVectorImpl<WeakVH>::iterator elem_iterator;
 
 protected:
   explicit MDNode(Value*const* Vals, unsigned NumVals);
 public:
-  typedef SmallVectorImpl<ElementVH>::const_iterator const_elem_iterator;
+  typedef SmallVectorImpl<WeakVH>::const_iterator const_elem_iterator;
 
   Value *getElement(unsigned i) const {
     return Node[i];
@@ -176,7 +145,6 @@ public:
   /// duplicates
   void Profile(FoldingSetNodeID &ID) const;
 
-  virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
     llvm_unreachable("This should never be called because MDNodes have no ops");
   }

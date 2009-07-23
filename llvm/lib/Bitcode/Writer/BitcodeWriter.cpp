@@ -478,8 +478,26 @@ static uint64_t GetOptimizationFlags(const Value *V) {
    const ValueEnumerator::ValueList &Vals = VE.getValues();
    bool StartedMetadataBlock = false;
    unsigned MDSAbbrev = 0;
+   SmallVector<uint64_t, 64> Record;
    for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
-     if (const MDString *MDS = dyn_cast<MDString>(Vals[i].first)) {
+
+     if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first)) {
+       if (!StartedMetadataBlock) {
+         Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+         StartedMetadataBlock = true;
+       }
+      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
+        if (N->getElement(i)) {
+          Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
+          Record.push_back(VE.getValueID(N->getElement(i)));
+        } else {
+          Record.push_back(VE.getTypeID(Type::VoidTy));
+          Record.push_back(0);
+        }
+      }
+      Stream.EmitRecord(bitc::METADATA_NODE, Record, 0);
+      Record.clear();
+     } else if (const MDString *MDS = dyn_cast<MDString>(Vals[i].first)) {
        if (!StartedMetadataBlock)  {
         Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
 
@@ -492,15 +510,14 @@ static uint64_t GetOptimizationFlags(const Value *V) {
         StartedMetadataBlock = true;
        }
 
-      SmallVector<unsigned, 64> StrVals;
-      StrVals.clear();
        // Code: [strchar x N]
        const char *StrBegin = MDS->begin();
        for (unsigned i = 0, e = MDS->size(); i != e; ++i)
-        StrVals.push_back(StrBegin[i]);
+        Record.push_back(StrBegin[i]);
     
        // Emit the finished record.
-      Stream.EmitRecord(bitc::METADATA_STRING, StrVals, MDSAbbrev);
+      Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);
+      Record.clear();
      }
    }
 
@@ -555,7 +572,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   const Type *LastTy = 0;
   for (unsigned i = FirstVal; i != LastVal; ++i) {
     const Value *V = Vals[i].first;
-    if (isa<MDString>(V))
+    if (isa<MDString>(V) || isa<MDNode>(V))
       continue;
     // If we need to switch types, do so now.
     if (V->getType() != LastTy) {
@@ -735,17 +752,6 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         Record.push_back(VE.getValueID(C->getOperand(1)));
         Record.push_back(CE->getPredicate());
         break;
-      }
-    } else if (const MDNode *N = dyn_cast<MDNode>(C)) {
-      Code = bitc::CST_CODE_MDNODE;
-      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
-        if (N->getElement(i)) {
-          Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
-          Record.push_back(VE.getValueID(N->getElement(i)));
-        } else {
-          Record.push_back(VE.getTypeID(Type::VoidTy));
-          Record.push_back(0);
-        }
       }
     } else {
       llvm_unreachable("Unknown constant!");
@@ -1342,12 +1348,12 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // descriptors for global variables, and function prototype info.
   WriteModuleInfo(M, VE, Stream);
 
+  // Emit constants.
+  WriteModuleConstants(VE, Stream);
+
   // Emit metadata.
   WriteModuleMetadata(VE, Stream);
 
-  // Emit constants.
-  WriteModuleConstants(VE, Stream);
-  
   // Emit function bodies.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (!I->isDeclaration())
