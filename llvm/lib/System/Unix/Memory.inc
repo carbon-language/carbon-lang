@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Unix.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/System/Process.h"
 
 #ifdef HAVE_SYS_MMAN_H
@@ -28,12 +29,12 @@
 /// is very OS specific.
 ///
 llvm::sys::MemoryBlock 
-llvm::sys::Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock,
+llvm::sys::Memory::AllocateRWX(size_t NumBytes, const MemoryBlock* NearBlock,
                                std::string *ErrMsg) {
   if (NumBytes == 0) return MemoryBlock();
 
-  unsigned pageSize = Process::GetPageSize();
-  unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
+  size_t pageSize = Process::GetPageSize();
+  size_t NumPages = (NumBytes+pageSize-1)/pageSize;
 
   int fd = -1;
 #ifdef NEED_DEV_ZERO_FOR_MMAP

@@ -11,10 +11,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/GlobalValue.h"
+#define DEBUG_TYPE "jit"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/GlobalValue.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Memory.h"
 #include <map>
 #include <vector>
@@ -25,6 +31,7 @@
 #include <cstring>
 using namespace llvm;
 
+STATISTIC(NumSlabs, "Number of slabs of memory allocated by the JIT");
 
 JITMemoryManager::~JITMemoryManager() {}
 
@@ -141,7 +148,7 @@ FreeRangeHeader *FreeRangeHeader::AllocateBlock() {
 /// FreeRangeHeader to allocate from.
 FreeRangeHeader *MemoryRangeHeader::FreeBlock(FreeRangeHeader *FreeList) {
   MemoryRangeHeader *FollowingBlock = &getBlockAfter();
-  assert(ThisAllocated && "This block is already allocated!");
+  assert(ThisAllocated && "This block is already free!");
   assert(FollowingBlock->PrevAllocated && "Flags out of sync!");
   
   FreeRangeHeader *FreeListToReturn = FreeList;
@@ -244,70 +251,157 @@ TrimAllocationToSize(FreeRangeHeader *FreeList, uint64_t NewSize) {
 // Memory Block Implementation.
 //===----------------------------------------------------------------------===//
 
-namespace {  
+namespace {
+
+  class DefaultJITMemoryManager;
+
+  class JITSlabAllocator : public SlabAllocator {
+    DefaultJITMemoryManager &JMM;
+  public:
+    JITSlabAllocator(DefaultJITMemoryManager &jmm) : JMM(jmm) { }
+    virtual ~JITSlabAllocator() { }
+    virtual MemSlab *Allocate(size_t Size);
+    virtual void Deallocate(MemSlab *Slab);
+  };
+
   /// DefaultJITMemoryManager - Manage memory for the JIT code generation.
   /// This splits a large block of MAP_NORESERVE'd memory into two
   /// sections, one for function stubs, one for the functions themselves.  We
   /// have to do this because we may need to emit a function stub while in the
   /// middle of emitting a function, and we don't know how large the function we
   /// are emitting is.
-  class VISIBILITY_HIDDEN DefaultJITMemoryManager : public JITMemoryManager {
-    bool PoisonMemory;  // Whether to poison freed memory.
+  class DefaultJITMemoryManager : public JITMemoryManager {
 
-    std::vector<sys::MemoryBlock> Blocks; // Memory blocks allocated by the JIT
-    FreeRangeHeader *FreeMemoryList;      // Circular list of free blocks.
-    
+    // Whether to poison freed memory.
+    bool PoisonMemory;
+
+    /// LastSlab - This points to the last slab allocated and is used as the
+    /// NearBlock parameter to AllocateRWX so that we can attempt to lay out all
+    /// stubs, data, and code contiguously in memory.  In general, however, this
+    /// is not possible because the NearBlock parameter is ignored on Windows
+    /// platforms and even on Unix it works on a best-effort pasis.
+    sys::MemoryBlock LastSlab;
+
+    // Memory slabs allocated by the JIT.  We refer to them as slabs so we don't
+    // confuse them with the blocks of memory descibed above.
+    std::vector<sys::MemoryBlock> CodeSlabs;
+    JITSlabAllocator BumpSlabAllocator;
+    BumpPtrAllocator StubAllocator;
+    BumpPtrAllocator DataAllocator;
+
+    // Circular list of free blocks.
+    FreeRangeHeader *FreeMemoryList;
+
     // When emitting code into a memory block, this is the block.
     MemoryRangeHeader *CurBlock;
-    
-    uint8_t *CurStubPtr, *StubBase;
-    uint8_t *CurGlobalPtr, *GlobalEnd;
+
     uint8_t *GOTBase;     // Target Specific reserved memory
     void *DlsymTable;     // Stub external symbol information
 
-    // Centralize memory block allocation.
-    sys::MemoryBlock getNewMemoryBlock(unsigned size);
-    
     std::map<const Function*, MemoryRangeHeader*> FunctionBlocks;
     std::map<const Function*, MemoryRangeHeader*> TableBlocks;
   public:
     DefaultJITMemoryManager();
     ~DefaultJITMemoryManager();
 
+    /// allocateNewSlab - Allocates a new MemoryBlock and remembers it as the
+    /// last slab it allocated, so that subsequent allocations follow it.
+    sys::MemoryBlock allocateNewSlab(size_t size);
+
+    /// DefaultCodeSlabSize - When we have to go map more memory, we allocate at
+    /// least this much unless more is requested.
+    static const size_t DefaultCodeSlabSize;
+
+    /// DefaultSlabSize - Allocate data into slabs of this size unless we get
+    /// an allocation above SizeThreshold.
+    static const size_t DefaultSlabSize;
+
+    /// DefaultSizeThreshold - For any allocation larger than this threshold, we
+    /// should allocate a separate slab.
+    static const size_t DefaultSizeThreshold;
+
     void AllocateGOT();
     void SetDlsymTable(void *);
-    
-    uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
-                          unsigned Alignment);
-    
+
+    // Testing methods.
+    virtual bool CheckInvariants(std::string &ErrorStr);
+    size_t GetDefaultCodeSlabSize() { return DefaultCodeSlabSize; }
+    size_t GetDefaultDataSlabSize() { return DefaultSlabSize; }
+    size_t GetDefaultStubSlabSize() { return DefaultSlabSize; }
+    unsigned GetNumCodeSlabs() { return CodeSlabs.size(); }
+    unsigned GetNumDataSlabs() { return DataAllocator.GetNumSlabs(); }
+    unsigned GetNumStubSlabs() { return StubAllocator.GetNumSlabs(); }
+
     /// startFunctionBody - When a function starts, allocate a block of free
     /// executable memory, returning a pointer to it and its actual size.
     uint8_t *startFunctionBody(const Function *F, uintptr_t &ActualSize) {
-      
+
       FreeRangeHeader* candidateBlock = FreeMemoryList;
       FreeRangeHeader* head = FreeMemoryList;
       FreeRangeHeader* iter = head->Next;
 
       uintptr_t largest = candidateBlock->BlockSize;
-      
+
       // Search for the largest free block
       while (iter != head) {
-          if (iter->BlockSize > largest) {
-              largest = iter->BlockSize;
-              candidateBlock = iter;
-          }
-          iter = iter->Next;
+        if (iter->BlockSize > largest) {
+          largest = iter->BlockSize;
+          candidateBlock = iter;
+        }
+        iter = iter->Next;
       }
-      
+
+      // If this block isn't big enough for the allocation desired, allocate
+      // another block of memory and add it to the free list.
+      if (largest - sizeof(MemoryRangeHeader) < ActualSize) {
+        DOUT << "JIT: Allocating another slab of memory for function.";
+        candidateBlock = allocateNewCodeSlab((size_t)ActualSize);
+      }
+
       // Select this candidate block for allocation
       CurBlock = candidateBlock;
 
       // Allocate the entire memory block.
       FreeMemoryList = candidateBlock->AllocateBlock();
-      ActualSize = CurBlock->BlockSize-sizeof(MemoryRangeHeader);
-      return (uint8_t *)(CurBlock+1);
+      ActualSize = CurBlock->BlockSize - sizeof(MemoryRangeHeader);
+      return (uint8_t *)(CurBlock + 1);
     }
-    
+
+    /// allocateNewCodeSlab - Helper method to allocate a new slab of code
+    /// memory from the OS and add it to the free list.  Returns the new
+    /// FreeRangeHeader at the base of the slab.
+    FreeRangeHeader *allocateNewCodeSlab(size_t MinSize) {
+      // If the user needs at least MinSize free memory, then we account for
+      // two MemoryRangeHeaders: the one in the user's block, and the one at the
+      // end of the slab.
+      size_t PaddedMin = MinSize + 2 * sizeof(MemoryRangeHeader);
+      size_t SlabSize = std::max(DefaultCodeSlabSize, PaddedMin);
+      sys::MemoryBlock B = allocateNewSlab(SlabSize);
+      CodeSlabs.push_back(B);
+      char *MemBase = (char*)(B.base());
+
+      // Put a tiny allocated block at the end of the memory chunk, so when
+      // FreeBlock calls getBlockAfter it doesn't fall off the end.
+      MemoryRangeHeader *EndBlock =
+          (MemoryRangeHeader*)(MemBase + B.size()) - 1;
+      EndBlock->ThisAllocated = 1;
+      EndBlock->PrevAllocated = 0;
+      EndBlock->BlockSize = sizeof(MemoryRangeHeader);
+
+      // Start out with a vast new block of free memory.
+      FreeRangeHeader *NewBlock = (FreeRangeHeader*)MemBase;
+      NewBlock->ThisAllocated = 0;
+      // Make sure getFreeBlockBefore doesn't look into unmapped memory.
+      NewBlock->PrevAllocated = 1;
+      NewBlock->BlockSize = (uintptr_t)EndBlock - (uintptr_t)NewBlock;
+      NewBlock->SetEndOfBlockSizeMarker();
+      NewBlock->AddToFreeList(FreeMemoryList);
+
+      assert(NewBlock->BlockSize - sizeof(MemoryRangeHeader) >= MinSize &&
+             "The block was too small!");
+      return NewBlock;
+    }
+
     /// endFunctionBody - The function F is now allocated, and takes the memory
     /// in the range [FunctionStart,FunctionEnd).
     void endFunctionBody(const Function *F, uint8_t *FunctionStart,
@@ -323,7 +417,8 @@ namespace {
       FreeMemoryList =CurBlock->TrimAllocationToSize(FreeMemoryList, BlockSize);
     }
 
-    /// allocateSpace - Allocate a memory block of the given size.
+    /// allocateSpace - Allocate a memory block of the given size.  This method
+    /// cannot be called between calls to startFunctionBody and endFunctionBody.
     uint8_t *allocateSpace(intptr_t Size, unsigned Alignment) {
       CurBlock = FreeMemoryList;
       FreeMemoryList = FreeMemoryList->AllocateBlock();
@@ -340,27 +435,15 @@ namespace {
       return result;
     }
 
-    /// allocateGlobal - Allocate memory for a global.  Unlike allocateSpace,
-    /// this method does not touch the current block and can be called at any
-    /// time.
+    /// allocateStub - Allocate memory for a function stub.
+    uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
+                          unsigned Alignment) {
+      return (uint8_t*)StubAllocator.Allocate(StubSize, Alignment);
+    }
+
+    /// allocateGlobal - Allocate memory for a global.
     uint8_t *allocateGlobal(uintptr_t Size, unsigned Alignment) {
-      uint8_t *Result = CurGlobalPtr;
-
-      // Align the pointer.
-      if (Alignment == 0) Alignment = 1;
-      Result = (uint8_t*)(((uintptr_t)Result + Alignment-1) &
-                          ~(uintptr_t)(Alignment-1));
-
-      // Move the current global pointer forward.
-      CurGlobalPtr += Result - CurGlobalPtr + Size;
-
-      // Check for overflow.
-      if (CurGlobalPtr > GlobalEnd) {
-        // FIXME: Allocate more memory.
-        llvm_report_error("JIT ran out of memory for globals!");
-      }
-
-      return Result;
+      return (uint8_t*)DataAllocator.Allocate(Size, Alignment);
     }
 
     /// startExceptionTable - Use startFunctionBody to allocate memory for the 
@@ -437,15 +520,15 @@ namespace {
     /// the code pages may need permissions changed.
     void setMemoryWritable(void)
     {
-      for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
-        sys::Memory::setWritable(Blocks[i]);
+      for (unsigned i = 0, e = CodeSlabs.size(); i != e; ++i)
+        sys::Memory::setWritable(CodeSlabs[i]);
     }
     /// setMemoryExecutable - When code generation is done and we're ready to
     /// start execution, the code pages may need permissions changed.
     void setMemoryExecutable(void)
     {
-      for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
-        sys::Memory::setExecutable(Blocks[i]);
+      for (unsigned i = 0, e = CodeSlabs.size(); i != e; ++i)
+        sys::Memory::setExecutable(CodeSlabs[i]);
     }
 
     /// setPoisonMemory - Controls whether we write garbage over freed memory.
@@ -456,28 +539,35 @@ namespace {
   };
 }
 
-DefaultJITMemoryManager::DefaultJITMemoryManager() {
+MemSlab *JITSlabAllocator::Allocate(size_t Size) {
+  sys::MemoryBlock B = JMM.allocateNewSlab(Size);
+  MemSlab *Slab = (MemSlab*)B.base();
+  Slab->Size = B.size();
+  Slab->NextPtr = 0;
+  return Slab;
+}
+
+void JITSlabAllocator::Deallocate(MemSlab *Slab) {
+  sys::MemoryBlock B(Slab, Slab->Size);
+  sys::Memory::ReleaseRWX(B);
+}
+
+DefaultJITMemoryManager::DefaultJITMemoryManager()
+  : LastSlab(0, 0),
+    BumpSlabAllocator(*this),
+    StubAllocator(DefaultSlabSize, DefaultSizeThreshold, BumpSlabAllocator),
+    DataAllocator(DefaultSlabSize, DefaultSizeThreshold, BumpSlabAllocator) {
+
 #ifdef NDEBUG
-  PoisonMemory = true;
-#else
   PoisonMemory = false;
-#endif
-
-  // Allocate a 16M block of memory for functions.
-#if defined(__APPLE__) && defined(__arm__)
-  sys::MemoryBlock MemBlock = getNewMemoryBlock(4 << 20);
 #else
-  sys::MemoryBlock MemBlock = getNewMemoryBlock(16 << 20);
+  PoisonMemory = true;
 #endif
 
-  uint8_t *MemBase = static_cast<uint8_t*>(MemBlock.base());
-
-  // Allocate stubs backwards to the base, globals forward from the stubs, and
-  // functions forward after globals.
-  StubBase   = MemBase;
-  CurStubPtr = MemBase + 512*1024; // Use 512k for stubs, working backwards.
-  CurGlobalPtr = CurStubPtr;       // Use 2M for globals, working forwards.
-  GlobalEnd = CurGlobalPtr + 2*1024*1024;
+  // Allocate space for code.
+  sys::MemoryBlock MemBlock = allocateNewSlab(DefaultCodeSlabSize);
+  CodeSlabs.push_back(MemBlock);
+  uint8_t *MemBase = (uint8_t*)MemBlock.base();
 
   // We set up the memory chunk with 4 mem regions, like this:
   //  [ START
@@ -494,7 +584,7 @@ DefaultJITMemoryManager::DefaultJITMemoryManager() {
   MemoryRangeHeader *Mem3 = (MemoryRangeHeader*)(MemBase+MemBlock.size())-1;
   Mem3->ThisAllocated = 1;
   Mem3->PrevAllocated = 0;
-  Mem3->BlockSize     = 0;
+  Mem3->BlockSize     = sizeof(MemoryRangeHeader);
   
   /// Add a tiny free region so that the free list always has one entry.
   FreeRangeHeader *Mem2 = 
@@ -510,12 +600,12 @@ DefaultJITMemoryManager::DefaultJITMemoryManager() {
   MemoryRangeHeader *Mem1 = (MemoryRangeHeader*)Mem2-1;
   Mem1->ThisAllocated = 1;
   Mem1->PrevAllocated = 0;
-  Mem1->BlockSize     = (char*)Mem2 - (char*)Mem1;
+  Mem1->BlockSize     = sizeof(MemoryRangeHeader);
   
   // Add a FreeRangeHeader to the start of the function body region, indicating
   // that the space is free.  Mark the previous block allocated so we never look
   // at it.
-  FreeRangeHeader *Mem0 = (FreeRangeHeader*)GlobalEnd;
+  FreeRangeHeader *Mem0 = (FreeRangeHeader*)MemBase;
   Mem0->ThisAllocated = 0;
   Mem0->PrevAllocated = 1;
   Mem0->BlockSize = (char*)Mem1-(char*)Mem0;
@@ -540,40 +630,124 @@ void DefaultJITMemoryManager::SetDlsymTable(void *ptr) {
 }
 
 DefaultJITMemoryManager::~DefaultJITMemoryManager() {
-  for (unsigned i = 0, e = Blocks.size(); i != e; ++i)
-    sys::Memory::ReleaseRWX(Blocks[i]);
-  
+  for (unsigned i = 0, e = CodeSlabs.size(); i != e; ++i)
+    sys::Memory::ReleaseRWX(CodeSlabs[i]);
+
   delete[] GOTBase;
-  Blocks.clear();
 }
 
-uint8_t *DefaultJITMemoryManager::allocateStub(const GlobalValue* F,
-                                                     unsigned StubSize,
-                                                     unsigned Alignment) {
-  CurStubPtr -= StubSize;
-  CurStubPtr = (uint8_t*)(((intptr_t)CurStubPtr) &
-                          ~(intptr_t)(Alignment-1));
-  if (CurStubPtr < StubBase) {
-    // FIXME: allocate a new block
-    llvm_report_error("JIT ran out of memory for function stubs!");
-  }
-  return CurStubPtr;
-}
-
-sys::MemoryBlock DefaultJITMemoryManager::getNewMemoryBlock(unsigned size) {
+sys::MemoryBlock DefaultJITMemoryManager::allocateNewSlab(size_t size) {
   // Allocate a new block close to the last one.
-  const sys::MemoryBlock *BOld = Blocks.empty() ? 0 : &Blocks.back();
   std::string ErrMsg;
-  sys::MemoryBlock B = sys::Memory::AllocateRWX(size, BOld, &ErrMsg);
+  sys::MemoryBlock *LastSlabPtr = LastSlab.base() ? &LastSlab : 0;
+  sys::MemoryBlock B = sys::Memory::AllocateRWX(size, LastSlabPtr, &ErrMsg);
   if (B.base() == 0) {
     llvm_report_error("Allocation failed when allocating new memory in the"
                       " JIT\n" + ErrMsg);
   }
-  Blocks.push_back(B);
+  LastSlab = B;
+  ++NumSlabs;
   return B;
 }
 
+/// CheckInvariants - For testing only.  Return "" if all internal invariants
+/// are preserved, and a helpful error message otherwise.  For free and
+/// allocated blocks, make sure that adding BlockSize gives a valid block.
+/// For free blocks, make sure they're in the free list and that their end of
+/// block size marker is correct.  This function should return an error before
+/// accessing bad memory.  This function is defined here instead of in
+/// JITMemoryManagerTest.cpp so that we don't have to expose all of the
+/// implementation details of DefaultJITMemoryManager.
+bool DefaultJITMemoryManager::CheckInvariants(std::string &ErrorStr) {
+  raw_string_ostream Err(ErrorStr);
+
+  // Construct a the set of FreeRangeHeader pointers so we can query it
+  // efficiently.
+  llvm::SmallPtrSet<MemoryRangeHeader*, 16> FreeHdrSet;
+  FreeRangeHeader* FreeHead = FreeMemoryList;
+  FreeRangeHeader* FreeRange = FreeHead;
+
+  do {
+    // Check that the free range pointer is in the blocks we've allocated.
+    bool Found = false;
+    for (std::vector<sys::MemoryBlock>::iterator I = CodeSlabs.begin(),
+         E = CodeSlabs.end(); I != E && !Found; ++I) {
+      char *Start = (char*)I->base();
+      char *End = Start + I->size();
+      Found = (Start <= (char*)FreeRange && (char*)FreeRange < End);
+    }
+    if (!Found) {
+      Err << "Corrupt free list; points to " << FreeRange;
+      return false;
+    }
+
+    if (FreeRange->Next->Prev != FreeRange) {
+      Err << "Next and Prev pointers do not match.";
+      return false;
+    }
+
+    // Otherwise, add it to the set.
+    FreeHdrSet.insert(FreeRange);
+    FreeRange = FreeRange->Next;
+  } while (FreeRange != FreeHead);
+
+  // Go over each block, and look at each MemoryRangeHeader.
+  for (std::vector<sys::MemoryBlock>::iterator I = CodeSlabs.begin(),
+       E = CodeSlabs.end(); I != E; ++I) {
+    char *Start = (char*)I->base();
+    char *End = Start + I->size();
+
+    // Check each memory range.
+    for (MemoryRangeHeader *Hdr = (MemoryRangeHeader*)Start, *LastHdr = NULL;
+         Start <= (char*)Hdr && (char*)Hdr < End;
+         Hdr = &Hdr->getBlockAfter()) {
+      if (Hdr->ThisAllocated == 0) {
+        // Check that this range is in the free list.
+        if (!FreeHdrSet.count(Hdr)) {
+          Err << "Found free header at " << Hdr << " that is not in free list.";
+          return false;
+        }
+
+        // Now make sure the size marker at the end of the block is correct.
+        uintptr_t *Marker = ((uintptr_t*)&Hdr->getBlockAfter()) - 1;
+        if (!(Start <= (char*)Marker && (char*)Marker < End)) {
+          Err << "Block size in header points out of current MemoryBlock.";
+          return false;
+        }
+        if (Hdr->BlockSize != *Marker) {
+          Err << "End of block size marker (" << *Marker << ") "
+              << "and BlockSize (" << Hdr->BlockSize << ") don't match.";
+          return false;
+        }
+      }
+
+      if (LastHdr && LastHdr->ThisAllocated != Hdr->PrevAllocated) {
+        Err << "Hdr->PrevAllocated (" << Hdr->PrevAllocated << ") != "
+            << "LastHdr->ThisAllocated (" << LastHdr->ThisAllocated << ")";
+        return false;
+      } else if (!LastHdr && !Hdr->PrevAllocated) {
+        Err << "The first header should have PrevAllocated true.";
+        return false;
+      }
+
+      // Remember the last header.
+      LastHdr = Hdr;
+    }
+  }
+
+  // All invariants are preserved.
+  return true;
+}
 
 JITMemoryManager *JITMemoryManager::CreateDefaultMemManager() {
   return new DefaultJITMemoryManager();
 }
+
+// Allocate memory for code in 512K slabs.
+const size_t DefaultJITMemoryManager::DefaultCodeSlabSize = 512 * 1024;
+
+// Allocate globals and stubs in slabs of 64K.  (probably 16 pages)
+const size_t DefaultJITMemoryManager::DefaultSlabSize = 64 * 1024;
+
+// Waste at most 16K at the end of each bump slab.  (probably 4 pages)
+const size_t DefaultJITMemoryManager::DefaultSizeThreshold = 16 * 1024;
