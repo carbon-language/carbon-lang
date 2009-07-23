@@ -16,6 +16,7 @@
 
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 #include <iosfwd>
 #include <string>
@@ -129,7 +130,7 @@ public:
   /// construct a string, they are very expensive and should be avoided.
   std::string getName() const { return getNameStr(); }
   std::string getNameStr() const;
-
+  StringRef getNameRef() const;
 
   void setName(const std::string &name);
   void setName(const char *Name, unsigned NameLen);

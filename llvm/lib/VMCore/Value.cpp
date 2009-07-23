@@ -178,6 +178,11 @@ std::string Value::getNameStr() const {
                      Name->getKeyData()+Name->getKeyLength());
 }
 
+StringRef Value::getNameRef() const {
+  if (Name == 0) return StringRef();
+  return StringRef(Name->getKeyData(), Name->getKeyLength());
+}
+
 void Value::setName(const std::string &name) {
   setName(&name[0], name.size());
 }
@@ -238,7 +243,7 @@ void Value::setName(const char *NameStr, unsigned NameLen) {
   }
 
   // Name is changing to something new.
-  Name = ST->createValueName(NameStr, NameLen, this);
+  Name = ST->createValueName(StringRef(NameStr, NameLen), this);
 }
 
 
