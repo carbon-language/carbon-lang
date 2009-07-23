@@ -1407,11 +1407,13 @@ emitEpilogue(MachineFunction &MF,
           AFI->getDPRCalleeSavedAreaOffset()||
           hasFP(MF)) {
         if (NumBytes)
-          BuildMI(MBB, MBBI, dl, TII.get(getOpcode(ARMII::SUBri)), ARM::SP).addReg(FramePtr)
+          BuildMI(MBB, MBBI, dl, TII.get(getOpcode(ARMII::SUBri)), ARM::SP)
+            .addReg(FramePtr)
             .addImm(NumBytes)
             .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
         else
-          BuildMI(MBB, MBBI, dl, TII.get(getOpcode(ARMII::MOVr)), ARM::SP).addReg(FramePtr)
+          BuildMI(MBB, MBBI, dl, TII.get(getOpcode(ARMII::MOVr)), ARM::SP)
+            .addReg(FramePtr)
             .addImm((unsigned)ARMCC::AL).addReg(0).addReg(0);
       }
     } else if (NumBytes) {
