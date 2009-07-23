@@ -189,6 +189,7 @@ namespace {
     Instruction *visitSDiv(BinaryOperator &I);
     Instruction *visitFDiv(BinaryOperator &I);
     Instruction *FoldAndOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
+    Instruction *FoldAndOfFCmps(Instruction &I, FCmpInst *LHS, FCmpInst *RHS);
     Instruction *visitAnd(BinaryOperator &I);
     Instruction *FoldOrOfICmps(Instruction &I, ICmpInst *LHS, ICmpInst *RHS);
     Instruction *FoldOrWithConstants(BinaryOperator &I, Value *Op,
@@ -3932,6 +3933,75 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
   return 0;
 }
 
+Instruction *InstCombiner::FoldAndOfFCmps(Instruction &I, FCmpInst *LHS,
+                                          FCmpInst *RHS) {
+  
+  if (LHS->getPredicate() == FCmpInst::FCMP_ORD &&
+      RHS->getPredicate() == FCmpInst::FCMP_ORD) {
+    // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
+    if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
+      if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
+        // If either of the constants are nans, then the whole thing returns
+        // false.
+        if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
+          return ReplaceInstUsesWith(I, Context->getFalse());
+        return new FCmpInst(*Context, FCmpInst::FCMP_ORD, 
+                            LHS->getOperand(0), RHS->getOperand(0));
+      }
+    return 0;
+  }
+  
+  Value *Op0LHS = LHS->getOperand(0), *Op0RHS = LHS->getOperand(1);
+  Value *Op1LHS = RHS->getOperand(0), *Op1RHS = RHS->getOperand(1);
+  FCmpInst::Predicate Op0CC = LHS->getPredicate(), Op1CC = RHS->getPredicate();
+  
+  
+  if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
+    // Swap RHS operands to match LHS.
+    Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
+    std::swap(Op1LHS, Op1RHS);
+  }
+  
+  if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
+    // Simplify (fcmp cc0 x, y) & (fcmp cc1 x, y).
+    if (Op0CC == Op1CC)
+      return new FCmpInst(*Context, (FCmpInst::Predicate)Op0CC, Op0LHS, Op0RHS);
+    
+    if (Op0CC == FCmpInst::FCMP_FALSE || Op1CC == FCmpInst::FCMP_FALSE)
+      return ReplaceInstUsesWith(I, Context->getFalse());
+    if (Op0CC == FCmpInst::FCMP_TRUE)
+      return ReplaceInstUsesWith(I, RHS);
+    if (Op1CC == FCmpInst::FCMP_TRUE)
+      return ReplaceInstUsesWith(I, LHS);
+    
+    bool Op0Ordered;
+    bool Op1Ordered;
+    unsigned Op0Pred = getFCmpCode(Op0CC, Op0Ordered);
+    unsigned Op1Pred = getFCmpCode(Op1CC, Op1Ordered);
+    if (Op1Pred == 0) {
+      std::swap(LHS, RHS);
+      std::swap(Op0Pred, Op1Pred);
+      std::swap(Op0Ordered, Op1Ordered);
+    }
+    if (Op0Pred == 0) {
+      // uno && ueq -> uno && (uno || eq) -> ueq
+      // ord && olt -> ord && (ord && lt) -> olt
+      if (Op0Ordered == Op1Ordered)
+        return ReplaceInstUsesWith(I, RHS);
+      
+      // uno && oeq -> uno && (ord && eq) -> false
+      // uno && ord -> false
+      if (!Op0Ordered)
+        return ReplaceInstUsesWith(I, Context->getFalse());
+      // ord && ueq -> ord && (uno || eq) -> oeq
+      return cast<Instruction>(getFCmpValue(true, Op1Pred,
+                                            Op0LHS, Op0RHS, Context));
+    }
+  }
+
+  return 0;
+}
+
 
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
@@ -4203,69 +4273,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
   // If and'ing two fcmp, try combine them into one.
   if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0))) {
-    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1))) {
-      if (LHS->getPredicate() == FCmpInst::FCMP_ORD &&
-          RHS->getPredicate() == FCmpInst::FCMP_ORD) {
-        // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
-        if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
-          if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
-            // If either of the constants are nans, then the whole thing returns
-            // false.
-            if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
-              return ReplaceInstUsesWith(I, Context->getFalse());
-            return new FCmpInst(*Context, FCmpInst::FCMP_ORD, 
-                                LHS->getOperand(0), RHS->getOperand(0));
-          }
-      } else {
-        Value *Op0LHS, *Op0RHS, *Op1LHS, *Op1RHS;
-        FCmpInst::Predicate Op0CC, Op1CC;
-        if (match(Op0, m_FCmp(Op0CC, m_Value(Op0LHS),
-                  m_Value(Op0RHS)), *Context) &&
-            match(Op1, m_FCmp(Op1CC, m_Value(Op1LHS),
-                  m_Value(Op1RHS)), *Context)) {
-          if (Op0LHS == Op1RHS && Op0RHS == Op1LHS) {
-            // Swap RHS operands to match LHS.
-            Op1CC = FCmpInst::getSwappedPredicate(Op1CC);
-            std::swap(Op1LHS, Op1RHS);
-          }
-          if (Op0LHS == Op1LHS && Op0RHS == Op1RHS) {
-            // Simplify (fcmp cc0 x, y) & (fcmp cc1 x, y).
-            if (Op0CC == Op1CC)
-              return new FCmpInst(*Context, (FCmpInst::Predicate)Op0CC,
-                                  Op0LHS, Op0RHS);
-            else if (Op0CC == FCmpInst::FCMP_FALSE ||
-                     Op1CC == FCmpInst::FCMP_FALSE)
-              return ReplaceInstUsesWith(I, Context->getFalse());
-            else if (Op0CC == FCmpInst::FCMP_TRUE)
-              return ReplaceInstUsesWith(I, Op1);
-            else if (Op1CC == FCmpInst::FCMP_TRUE)
-              return ReplaceInstUsesWith(I, Op0);
-            bool Op0Ordered;
-            bool Op1Ordered;
-            unsigned Op0Pred = getFCmpCode(Op0CC, Op0Ordered);
-            unsigned Op1Pred = getFCmpCode(Op1CC, Op1Ordered);
-            if (Op1Pred == 0) {
-              std::swap(Op0, Op1);
-              std::swap(Op0Pred, Op1Pred);
-              std::swap(Op0Ordered, Op1Ordered);
-            }
-            if (Op0Pred == 0) {
-              // uno && ueq -> uno && (uno || eq) -> ueq
-              // ord && olt -> ord && (ord && lt) -> olt
-              if (Op0Ordered == Op1Ordered)
-                return ReplaceInstUsesWith(I, Op1);
-              // uno && oeq -> uno && (ord && eq) -> false
-              // uno && ord -> false
-              if (!Op0Ordered)
-                return ReplaceInstUsesWith(I, Context->getFalse());
-              // ord && ueq -> ord && (uno || eq) -> oeq
-              return cast<Instruction>(getFCmpValue(true, Op1Pred,
-                                                    Op0LHS, Op0RHS, Context));
-            }
-          }
-        }
-      }
-    }
+    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1)))
+      if (Instruction *Res = FoldAndOfFCmps(I, LHS, RHS))
+        return Res;
   }
 
   return Changed ? &I : 0;
