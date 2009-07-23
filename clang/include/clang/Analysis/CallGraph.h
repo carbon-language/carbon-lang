@@ -63,11 +63,14 @@ class CallGraph {
   /// CallerCtx maps a caller to its ASTContext.
   llvm::DenseMap<CallGraphNode *, ASTContext *> CallerCtx;
 
-  /// Entry node of the call graph.
-  // FIXME: find the entry of the graph.
-  CallGraphNode *Entry;
+  /// Root node is the 'main' function or 0.
+  CallGraphNode *Root;
+
+  /// ExternalCallingNode has edges to all external functions.
+  CallGraphNode *ExternalCallingNode;
 
 public:
+  CallGraph();
   ~CallGraph();
 
   typedef FunctionMapTy::iterator iterator;
@@ -78,7 +81,9 @@ public:
   const_iterator begin() const { return FunctionMap.begin(); }
   const_iterator end()   const { return FunctionMap.end();   }
 
-  CallGraphNode *getEntry() { return Entry; }
+  CallGraphNode *getRoot() { return Root; }
+
+  CallGraphNode *getExternalCallingNode() { return ExternalCallingNode; }
 
   void addTU(ASTUnit &AST);
 
@@ -106,7 +111,7 @@ template <> struct GraphTraits<clang::CallGraph> {
   typedef mapped_iterator<NodeType::iterator, CGNDerefFun> ChildIteratorType;
 
   static NodeType *getEntryNode(GraphType *CG) {
-    return CG->getEntry();
+    return CG->getExternalCallingNode();
   }
 
   static ChildIteratorType child_begin(NodeType *N) {

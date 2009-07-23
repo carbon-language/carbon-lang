@@ -65,5 +65,5 @@ int main(int argc, char **argv) {
   for (unsigned i = 0, e = TUnits.size(); i != e; ++i)
     CG->addTU(*(TUnits[i]->AST));
 
-  CG->dump();
+  CG->ViewCallGraph();
 }

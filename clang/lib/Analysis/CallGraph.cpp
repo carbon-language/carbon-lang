@@ -58,6 +58,10 @@ void CGBuilder::VisitCallExpr(CallExpr *CE) {
   }
 }
 
+CallGraph::CallGraph() : Root(0) {
+  ExternalCallingNode = getOrInsertFunction(Entity());
+}
+
 CallGraph::~CallGraph() {
   if (!FunctionMap.empty()) {
     for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
@@ -80,6 +84,14 @@ void CallGraph::addTU(ASTUnit &AST) {
         Entity Ent = Entity::get(FD, Prog);
         CallGraphNode *Node = getOrInsertFunction(Ent);
         CallerCtx[Node] = &Ctx;
+
+        // If this function has external linkage, anything could call it.
+        if (FD->isGlobal())
+          ExternalCallingNode->addCallee(idx::ASTLocation(), Node);
+
+        // Set root node to 'main' function.
+        if (FD->getNameAsString() == "main")
+          Root = Node;
         
         CGBuilder builder(*this, FD, Ent, Node);
         builder.Visit(FD->getBody());
