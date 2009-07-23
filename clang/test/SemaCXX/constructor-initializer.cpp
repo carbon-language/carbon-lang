@@ -96,3 +96,23 @@ struct Current : Derived {
                            INT::NonExisting()  {} // expected-error {{expected a class or namespace}} \
 						  // expected-error {{member initializer 'NonExisting' does not name a non-static data member or}}
 };
+
+                        // FIXME. This is bad message!
+struct M { 		// expected-note {{candidate function}}	\
+                        // expected-note {{candidate function}}
+  M(int i, int j);	// expected-note {{candidate function}} \
+			// // expected-note {{candidate function}}
+};
+
+struct N : M  {
+  N() : M(1), 	// expected-error {{no matching constructor for initialization of 'M'}}
+        m1(100) {  } // expected-error {{no matching constructor for initialization of 'm1'}}
+  M m1;
+};
+
+struct P : M  { // expected-error {{default constructor for 'struct M' is missing in initialization of base class}}
+  P()  {  }
+  M m; // expected-error {{default constructor for 'struct M' is missing in initialization of mamber}}
+};
+
+

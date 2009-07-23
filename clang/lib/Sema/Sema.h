@@ -1482,6 +1482,11 @@ public:
                                const FunctionProtoType *Proto,
                                Expr **Args, unsigned NumArgs,
                                SourceLocation RParenLoc);
+  void BuildBaseOrMemberInitializers(ASTContext &C,
+                                 CXXConstructorDecl *Constructor,
+                                 CXXBaseOrMemberInitializer **Initializers,
+                                 unsigned NumInitializers
+                                 );
 
   /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.
   /// This provides the location of the left/right parens and a list of comma

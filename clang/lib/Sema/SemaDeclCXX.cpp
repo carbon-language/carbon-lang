@@ -810,6 +810,26 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
                                                   NumArgs, C, IdLoc);
 }
 
+void
+Sema::BuildBaseOrMemberInitializers(ASTContext &C,
+                                 CXXConstructorDecl *Constructor,
+                                 CXXBaseOrMemberInitializer **Initializers,
+                                 unsigned NumInitializers
+                                 ) {
+  llvm::SmallVector<CXXBaseSpecifier *, 4>Bases;
+  llvm::SmallVector<FieldDecl *, 4>Members;
+  
+  Constructor->setBaseOrMemberInitializers(C, 
+                                           Initializers, NumInitializers,
+                                           Bases, Members);
+  for (unsigned int i = 0; i < Bases.size(); i++)
+    Diag(Bases[i]->getSourceRange().getBegin(), 
+         diag::err_missing_default_constructor) << 0 << Bases[i]->getType();
+  for (unsigned int i = 0; i < Members.size(); i++)
+    Diag(Members[i]->getLocation(), diag::err_missing_default_constructor) 
+          << 1 << Members[i]->getType();
+}
+
 static void *GetKeyForTopLevelField(FieldDecl *Field) {
   // For anonymous unions, use the class declaration as the key.
   if (const RecordType *RT = Field->getType()->getAsRecordType()) {
@@ -872,11 +892,11 @@ void Sema::ActOnMemInitializers(DeclPtrTy ConstructorDecl,
       << 0;
     err = true;
   }
-  if (!err) {
-    Constructor->setBaseOrMemberInitializers(Context, 
-                    reinterpret_cast<CXXBaseOrMemberInitializer **>(MemInits), 
-                    NumMemInits);
-  }
+  if (!err)
+    BuildBaseOrMemberInitializers(Context, Constructor,
+                      reinterpret_cast<CXXBaseOrMemberInitializer **>(MemInits), 
+                      NumMemInits);
+  
   if (!err && (Diags.getDiagnosticLevel(diag::warn_base_initialized)
                != Diagnostic::Ignored ||
                Diags.getDiagnosticLevel(diag::warn_field_initialized)
@@ -960,8 +980,9 @@ void Sema::ActOnDefaultCtorInitializers(DeclPtrTy CDtorDecl) {
   
   if (CXXConstructorDecl *Constructor 
       = dyn_cast<CXXConstructorDecl>(CDtorDecl.getAs<Decl>()))
-    Constructor->setBaseOrMemberInitializers(Context, 
-                                           (CXXBaseOrMemberInitializer **)0, 0);
+    BuildBaseOrMemberInitializers(Context,
+                                     Constructor,
+                                     (CXXBaseOrMemberInitializer **)0, 0);
 }
 
 namespace {

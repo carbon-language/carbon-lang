@@ -736,7 +736,7 @@ class CXXBaseOrMemberInitializer {
   Expr **Args;
   unsigned NumArgs;
   
-  /// CtorToCall - For a base or mamber needing a constructor for their
+  /// CtorToCall - For a base or member needing a constructor for their
   /// initialization, this is the constructor to call.
   CXXConstructorDecl *CtorToCall;
   
@@ -923,8 +923,10 @@ public:
   }
   
   void setBaseOrMemberInitializers(ASTContext &C,
-                                   CXXBaseOrMemberInitializer **Initializers,
-                                   unsigned NumInitializers);
+                              CXXBaseOrMemberInitializer **Initializers,
+                              unsigned NumInitializers,
+                              llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,
+                              llvm::SmallVectorImpl<FieldDecl *>&Members);
   
   /// isDefaultConstructor - Whether this constructor is a default
   /// constructor (C++ [class.ctor]p5), which can be used to

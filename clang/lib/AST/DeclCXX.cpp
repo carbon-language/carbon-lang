@@ -564,9 +564,11 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
 
 void
 CXXConstructorDecl::setBaseOrMemberInitializers(
-                                    ASTContext &C,
-                                    CXXBaseOrMemberInitializer **Initializers,
-                                    unsigned NumInitializers) {
+                                ASTContext &C,
+                                CXXBaseOrMemberInitializer **Initializers,
+                                unsigned NumInitializers,
+                                llvm::SmallVectorImpl<CXXBaseSpecifier *>& Bases,          
+                                llvm::SmallVectorImpl<FieldDecl *>&Fields) {
   // We need to build the initializer AST according to order of construction
   // and not what user specified in the Initializers list.
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(getDeclContext());
@@ -594,7 +596,9 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       CXXRecordDecl *VBaseDecl = 
         cast<CXXRecordDecl>(VBase->getType()->getAsRecordType()->getDecl());
       assert(VBaseDecl && "setBaseOrMemberInitializers - VBaseDecl null");
-      // FIXME. Issue error if default ctor is missing.
+      if (!VBaseDecl->getDefaultConstructor(C) && 
+          !VBase->getType()->isDependentType())
+        Bases.push_back(VBase);
       CXXBaseOrMemberInitializer *Member = 
         new (C) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
                                            VBaseDecl->getDefaultConstructor(C),
@@ -617,7 +621,9 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       CXXRecordDecl *BaseDecl = 
         cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
       assert(BaseDecl && "setBaseOrMemberInitializers - BaseDecl null");
-      // FIXME. Issue error if default ctor is missing.
+      if (!BaseDecl->getDefaultConstructor(C) && 
+          !Base->getType()->isDependentType())
+        Bases.push_back(Base);
       CXXBaseOrMemberInitializer *Member = 
       new (C) CXXBaseOrMemberInitializer(Base->getType(), 0, 0,
                                          BaseDecl->getDefaultConstructor(C),
@@ -643,7 +649,8 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       if (CXXRecordDecl *FieldClassDecl = 
             dyn_cast<CXXRecordDecl>(FieldType->getAsRecordType()->getDecl()))
         Ctor = FieldClassDecl->getDefaultConstructor(C);
-      // FIXME. Issue error if default ctor is missing.
+      if (!Ctor && !FieldType->isDependentType())
+        Fields.push_back(*Field);
       CXXBaseOrMemberInitializer *Member = 
         new (C) CXXBaseOrMemberInitializer((*Field), 0, 0,
                                            Ctor,
