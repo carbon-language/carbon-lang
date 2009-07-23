@@ -2,6 +2,7 @@
 class A { 
   int m;
    A() : A::m(17) { } // expected-error {{member initializer 'm' does not name a non-static data member or base class}}
+   A(int);
 };
 
 class B : public A { 

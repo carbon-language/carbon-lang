@@ -717,9 +717,17 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     // FIXME: Handle members of an anonymous union.
 
     if (Member) {
+      CXXConstructorDecl *C = 0;
+      QualType FieldType = Member->getType();
+      if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+        FieldType = Array->getElementType();
+      if (!FieldType->isDependentType() && FieldType->getAsRecordType())
+        C = PerformInitializationByConstructor(
+              FieldType, (Expr **)Args, NumArgs, IdLoc, 
+              SourceRange(IdLoc, RParenLoc), Member->getDeclName(), IK_Direct);
       // FIXME: Perform direct initialization of the member.
       return new (Context) CXXBaseOrMemberInitializer(Member, (Expr **)Args, 
-                                                      NumArgs, IdLoc);
+                                                      NumArgs, C, IdLoc);
     }
   }
   // It didn't name a member, so see if it names a class.
@@ -789,10 +797,17 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
     return Diag(IdLoc, diag::err_not_direct_base_or_virtual)
     << BaseType << ClassDecl->getNameAsCString()
     << SourceRange(IdLoc, RParenLoc);
-    
-
-  return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, 
-                                                  NumArgs, IdLoc);
+  DeclarationName Name 
+    = Context.DeclarationNames.getCXXConstructorName(
+        Context.getCanonicalType(BaseType));
+  CXXConstructorDecl *C = 0;
+  if (!BaseType->isDependentType())
+    C = PerformInitializationByConstructor(BaseType, (Expr **)Args, NumArgs, IdLoc, 
+                                       SourceRange(IdLoc, RParenLoc), Name,
+                                       IK_Direct);
+  
+  return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args,
+                                                  NumArgs, C, IdLoc);
 }
 
 static void *GetKeyForTopLevelField(FieldDecl *Field) {

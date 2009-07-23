@@ -380,6 +380,7 @@ QualType CXXMethodDecl::getThisType(ASTContext &C) const {
 
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
+                           CXXConstructorDecl *C,
                            SourceLocation L) 
   : Args(0), NumArgs(0), IdLoc(L) {
   BaseOrMember = reinterpret_cast<uintptr_t>(BaseType.getTypePtr());
@@ -392,10 +393,12 @@ CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
     for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
       this->Args[Idx] = Args[Idx];
   }
+  CtorToCall = C;
 }
 
 CXXBaseOrMemberInitializer::
 CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
+                           CXXConstructorDecl *C,
                            SourceLocation L)
   : Args(0), NumArgs(0), IdLoc(L) {
   BaseOrMember = reinterpret_cast<uintptr_t>(Member);
@@ -407,6 +410,7 @@ CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
     for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
       this->Args[Idx] = Args[Idx];
   }
+  CtorToCall = C;
 }
 
 CXXBaseOrMemberInitializer::~CXXBaseOrMemberInitializer() {
@@ -587,9 +591,14 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     if (AllBaseFields[Key])
       AllToInit.push_back(AllBaseFields[Key]);
     else {
+      CXXRecordDecl *VBaseDecl = 
+        cast<CXXRecordDecl>(VBase->getType()->getAsRecordType()->getDecl());
+      assert(VBaseDecl && "setBaseOrMemberInitializers - VBaseDecl null");
+      // FIXME. Issue error if default ctor is missing.
       CXXBaseOrMemberInitializer *Member = 
-      new (C) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
-                                         SourceLocation());
+        new (C) CXXBaseOrMemberInitializer(VBase->getType(), 0, 0,
+                                           VBaseDecl->getDefaultConstructor(C),
+                                           SourceLocation());
       AllToInit.push_back(Member);
     }
   }
@@ -605,8 +614,13 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     if (AllBaseFields[Key])
       AllToInit.push_back(AllBaseFields[Key]);
     else {
+      CXXRecordDecl *BaseDecl = 
+        cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+      assert(BaseDecl && "setBaseOrMemberInitializers - BaseDecl null");
+      // FIXME. Issue error if default ctor is missing.
       CXXBaseOrMemberInitializer *Member = 
       new (C) CXXBaseOrMemberInitializer(Base->getType(), 0, 0,
+                                         BaseDecl->getDefaultConstructor(C),
                                          SourceLocation());
       AllToInit.push_back(Member);
     }
@@ -625,8 +639,15 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       FieldType = AT->getElementType();
       
     if (FieldType->getAsRecordType()) {
+      CXXConstructorDecl *Ctor = 0;
+      if (CXXRecordDecl *FieldClassDecl = 
+            dyn_cast<CXXRecordDecl>(FieldType->getAsRecordType()->getDecl()))
+        Ctor = FieldClassDecl->getDefaultConstructor(C);
+      // FIXME. Issue error if default ctor is missing.
       CXXBaseOrMemberInitializer *Member = 
-        new (C) CXXBaseOrMemberInitializer((*Field), 0, 0, SourceLocation());
+        new (C) CXXBaseOrMemberInitializer((*Field), 0, 0,
+                                           Ctor,
+                                           SourceLocation());
       AllToInit.push_back(Member);
     } 
   }

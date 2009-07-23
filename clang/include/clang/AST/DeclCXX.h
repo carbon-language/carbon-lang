@@ -736,6 +736,10 @@ class CXXBaseOrMemberInitializer {
   Expr **Args;
   unsigned NumArgs;
   
+  /// CtorToCall - For a base or mamber needing a constructor for their
+  /// initialization, this is the constructor to call.
+  CXXConstructorDecl *CtorToCall;
+  
   /// IdLoc - Location of the id in ctor-initializer list.
   SourceLocation IdLoc;
 
@@ -743,11 +747,13 @@ public:
   /// CXXBaseOrMemberInitializer - Creates a new base-class initializer.
   explicit 
   CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
+                             CXXConstructorDecl *C,
                              SourceLocation L);
 
   /// CXXBaseOrMemberInitializer - Creates a new member initializer.
   explicit 
   CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
+                             CXXConstructorDecl *C,
                              SourceLocation L);
 
   /// ~CXXBaseOrMemberInitializer - Destroy the base or member initializer.
@@ -805,6 +811,8 @@ public:
       return 0;
   }
 
+  CXXConstructorDecl *getConstructor() const { return CtorToCall; }
+  
   SourceLocation getSourceLocation() const { return IdLoc; }
   
   /// begin() - Retrieve an iterator to the first initializer argument.
