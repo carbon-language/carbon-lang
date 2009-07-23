@@ -738,6 +738,7 @@ public:
   bool isIncrementDecrementOp() const { return Opc>=PostInc && Opc<=PreDec; }
   bool isOffsetOfOp() const { return Opc == OffsetOf; }
   static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
+  bool isArithmeticOp() const { return isArithmeticOp(Opc); } 
   
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"
