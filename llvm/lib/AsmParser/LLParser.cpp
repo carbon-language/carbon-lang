@@ -3110,7 +3110,7 @@ bool LLParser::ParseInsertElement(Instruction *&Inst, PerFunctionState &PFS) {
     return true;
   
   if (!InsertElementInst::isValidOperands(Op0, Op1, Op2))
-    return Error(Loc, "invalid extractelement operands");
+    return Error(Loc, "invalid insertelement operands");
   
   Inst = InsertElementInst::Create(Op0, Op1, Op2);
   return false;
