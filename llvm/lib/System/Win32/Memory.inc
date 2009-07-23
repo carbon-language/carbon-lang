@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Win32.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/System/Process.h"
 
 namespace llvm {
@@ -24,13 +23,13 @@ using namespace sys;
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
-MemoryBlock Memory::AllocateRWX(size_t NumBytes,
+MemoryBlock Memory::AllocateRWX(unsigned NumBytes,
                                 const MemoryBlock *NearBlock,
                                 std::string *ErrMsg) {
   if (NumBytes == 0) return MemoryBlock();
 
-  static const size_t pageSize = Process::GetPageSize();
-  size_t NumPages = (NumBytes+pageSize-1)/pageSize;
+  static const long pageSize = Process::GetPageSize();
+  unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
 
   //FIXME: support NearBlock if ever needed on Win64.
 

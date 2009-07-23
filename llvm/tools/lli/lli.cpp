@@ -136,6 +136,9 @@ int main(int argc, char **argv, char * const *envp) {
   builder.setEngineKind(ForceInterpreter
                         ? EngineKind::Interpreter
                         : EngineKind::JIT);
+  // FIXME: Don't allocate GVs with code once the JIT because smarter about
+  // memory management.
+  builder.setAllocateGVsWithCode(true);
 
   // If we are supposed to override the target triple, do so now.
   if (!TargetTriple.empty())

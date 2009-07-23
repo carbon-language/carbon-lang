@@ -14,7 +14,6 @@
 #ifndef LLVM_SYSTEM_MEMORY_H
 #define LLVM_SYSTEM_MEMORY_H
 
-#include "llvm/Support/DataTypes.h"
 #include <string>
 
 namespace llvm {
@@ -27,13 +26,11 @@ namespace sys {
   /// @brief Memory block abstraction.
   class MemoryBlock {
   public:
-    MemoryBlock() { }
-    MemoryBlock(void *addr, size_t size) : Address(addr), Size(size) { }
     void *base() const { return Address; }
-    size_t size() const { return Size; }
+    unsigned size() const { return Size; }
   private:
     void *Address;    ///< Address of first byte of memory area
-    size_t Size;      ///< Size, in bytes of the memory area
+    unsigned Size;    ///< Size, in bytes of the memory area
     friend class Memory;
   };
 
@@ -53,7 +50,7 @@ namespace sys {
     /// a null memory block and fills in *ErrMsg.
     /// 
     /// @brief Allocate Read/Write/Execute memory.
-    static MemoryBlock AllocateRWX(size_t NumBytes,
+    static MemoryBlock AllocateRWX(unsigned NumBytes,
                                    const MemoryBlock *NearBlock,
                                    std::string *ErrMsg = 0);
 
