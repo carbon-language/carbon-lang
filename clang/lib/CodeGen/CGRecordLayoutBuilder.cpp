@@ -168,8 +168,8 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     
     const llvm::Type *FieldTy = 
       Types.ConvertTypeForMemRecursive(Field->getType());
-    unsigned FieldAlign = Types.getTargetData().getTypeAllocSize(FieldTy);
-    uint64_t FieldSize = Types.getTargetData().getABITypeAlignment(FieldTy);
+    unsigned FieldAlign = Types.getTargetData().getABITypeAlignment(FieldTy);
+    uint64_t FieldSize = Types.getTargetData().getTypeAllocSize(FieldTy);
     
     if (FieldAlign < Align)
       continue;
