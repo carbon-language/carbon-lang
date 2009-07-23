@@ -16,6 +16,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 
+#include "llvm/Support/GraphWriter.h"
+
 using namespace clang;
 using namespace idx;
 
@@ -110,4 +112,23 @@ void CallGraph::print(llvm::raw_ostream &os) {
 
 void CallGraph::dump() {
   print(llvm::errs());
+}
+
+void CallGraph::ViewCallGraph() const {
+  llvm::ViewGraph(*this, "CallGraph");
+}
+
+namespace llvm {
+
+template <> 
+struct DOTGraphTraits<CallGraph> : public DefaultDOTGraphTraits {
+
+  static std::string getNodeLabel(const CallGraphNode *Node, 
+                                  const CallGraph &CG, bool ShortNames) {
+    return Node->getName();
+    
+  }
+
+};
+
 }

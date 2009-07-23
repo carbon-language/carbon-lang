@@ -19,7 +19,10 @@
 #include "clang/Index/Program.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/STLExtras.h"
 #include <vector>
+#include <map>
 
 namespace clang {
 
@@ -45,20 +48,24 @@ public:
 
   bool hasCallee() const { return begin() != end(); }
 
-  std::string getName() { return F.getPrintableName(); }
+  std::string getName() const { return F.getPrintableName(); }
 };
 
 class CallGraph {
   /// Program manages all Entities.
   idx::Program Prog;
 
-  typedef llvm::DenseMap<idx::Entity, CallGraphNode *> FunctionMapTy;
+  typedef std::map<idx::Entity, CallGraphNode *> FunctionMapTy;
 
   /// FunctionMap owns all CallGraphNodes.
   FunctionMapTy FunctionMap;
 
   /// CallerCtx maps a caller to its ASTContext.
   llvm::DenseMap<CallGraphNode *, ASTContext *> CallerCtx;
+
+  /// Entry node of the call graph.
+  // FIXME: find the entry of the graph.
+  CallGraphNode *Entry;
 
 public:
   ~CallGraph();
@@ -71,6 +78,8 @@ public:
   const_iterator begin() const { return FunctionMap.begin(); }
   const_iterator end()   const { return FunctionMap.end();   }
 
+  CallGraphNode *getEntry() { return Entry; }
+
   void addTU(ASTUnit &AST);
 
   idx::Program &getProgram() { return Prog; }
@@ -79,8 +88,51 @@ public:
 
   void print(llvm::raw_ostream &os);
   void dump();
+
+  void ViewCallGraph() const;
 };
 
-}
+} // end clang namespace
+
+namespace llvm {
+
+template <> struct GraphTraits<clang::CallGraph> {
+  typedef clang::CallGraph GraphType;
+  typedef clang::CallGraphNode NodeType;
+
+  typedef std::pair<clang::idx::ASTLocation, NodeType*> CGNPairTy;
+  typedef std::pointer_to_unary_function<CGNPairTy, NodeType*> CGNDerefFun;
+
+  typedef mapped_iterator<NodeType::iterator, CGNDerefFun> ChildIteratorType;
+
+  static NodeType *getEntryNode(GraphType *CG) {
+    return CG->getEntry();
+  }
+
+  static ChildIteratorType child_begin(NodeType *N) {
+    return map_iterator(N->begin(), CGNDerefFun(CGNDeref));
+  }
+  static ChildIteratorType child_end(NodeType *N) {
+    return map_iterator(N->end(), CGNDerefFun(CGNDeref));
+  }
+
+  typedef std::pair<clang::idx::Entity, NodeType*> PairTy;
+  typedef std::pointer_to_unary_function<PairTy, NodeType*> DerefFun;
+
+  typedef mapped_iterator<GraphType::const_iterator, DerefFun> nodes_iterator;
+
+  static nodes_iterator nodes_begin(const GraphType &CG) {
+    return map_iterator(CG.begin(), DerefFun(CGDeref));
+  }
+  static nodes_iterator nodes_end(const GraphType &CG) {
+    return map_iterator(CG.end(), DerefFun(CGDeref));
+  }
+
+  static NodeType *CGNDeref(CGNPairTy P) { return P.second; }
+
+  static NodeType *CGDeref(PairTy P) { return P.second; }
+};
+
+} // end llvm namespace
 
 #endif
