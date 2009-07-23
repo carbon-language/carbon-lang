@@ -1226,11 +1226,10 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
     str.assign(Literal->getStrData(), Literal->getByteLength());
     StringLength = str.length();
   }
-  llvm::StringMapEntry<llvm::Constant *> &Entry = 
-    CFConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
+  llvm::Constant *&Entry = CFConstantStringMap[str];
   
-  if (llvm::Constant *C = Entry.getValue())
-    return C;
+  if (Entry)
+    return Entry;
   
   llvm::Constant *Zero = getLLVMContext().getNullValue(llvm::Type::Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
@@ -1320,7 +1319,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
                                 "_unnamed_cfstring_");
   if (const char *Sect = getContext().Target.getCFStringSection())
     GV->setSection(Sect);
-  Entry.setValue(GV);
+  Entry = GV;
   
   return GV;
 }
