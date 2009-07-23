@@ -21,3 +21,11 @@ void test_float_condition() {
   for (FooType x = 100000001.0f; x <= 100000010.0f; x++ ) {} // expected-warning{{Variable 'x' with floating point type 'FooType'}}
 }
 
+// <rdar://problem/6335715> rule request: gets() buffer overflow
+// Part of recommendation: 300-BSI (buildsecurityin.us-cert.gov)
+char* gets(char *buf);
+
+void test_gets() {
+  char buff[1024];
+  gets(buff); // expected-warning{{Call to function 'gets' is extremely insecure as it can always result in a buffer overflow}}
+}

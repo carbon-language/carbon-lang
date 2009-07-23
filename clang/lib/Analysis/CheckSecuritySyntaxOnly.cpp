@@ -21,20 +21,38 @@ using namespace clang;
 
 namespace {
 class VISIBILITY_HIDDEN WalkAST : public StmtVisitor<WalkAST> {
-  BugReporter &BR;
+  BugReporter &BR;  
+  IdentifierInfo *II_gets;  
 public:
-  WalkAST(BugReporter &br) : BR(br) {}
+  WalkAST(BugReporter &br) : BR(br),
+    II_gets(0) {}
   
   // Statement visitor methods.
+  void VisitCallExpr(CallExpr *CE);
   void VisitForStmt(ForStmt *S);
   void VisitStmt(Stmt *S) { VisitChildren(S); }
 
   void VisitChildren(Stmt *S);
   
+  // Helpers.
+  IdentifierInfo *GetIdentifier(IdentifierInfo *& II, const char *str);
+    
   // Checker-specific methods.
   void CheckLoopConditionForFloat(const ForStmt *FS);
+  void CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD);
 };
 } // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// Helper methods.
+//===----------------------------------------------------------------------===//
+
+IdentifierInfo *WalkAST::GetIdentifier(IdentifierInfo *& II, const char *str) {
+  if (!II)
+    II = &BR.getContext().Idents.get(str);
+  
+  return II;  
+}
 
 //===----------------------------------------------------------------------===//
 // AST walking.
@@ -44,6 +62,15 @@ void WalkAST::VisitChildren(Stmt *S) {
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
     if (Stmt *child = *I)
       Visit(child);
+}
+
+void WalkAST::VisitCallExpr(CallExpr *CE) {
+  if (const FunctionDecl *FD = CE->getDirectCallee()) {
+    CheckCall_gets(CE, FD);    
+  }
+  
+  // Recurse and check children.
+  VisitChildren(CE);
 }
 
 void WalkAST::VisitForStmt(ForStmt *FS) {
@@ -159,6 +186,41 @@ void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
   const char *bugType = "Floating point variable used as loop counter";
   BR.EmitBasicReport(bugType, "Security", os.str().c_str(),
                      FS->getLocStart(), ranges.data(), ranges.size());
+}
+
+//===----------------------------------------------------------------------===//
+// Check: Any use of 'gets' is insecure.
+// Originally: <rdar://problem/6335715>
+// Implements (part of): 300-BSI (buildsecurityin.us-cert.gov)
+//===----------------------------------------------------------------------===//
+
+void WalkAST::CheckCall_gets(const CallExpr *CE, const FunctionDecl *FD) {
+  if (FD->getIdentifier() != GetIdentifier(II_gets, "gets"))
+    return;
+  
+  const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(FD->getType());
+  if (!FTP)
+    return;
+  
+  // Verify that the function takes a single argument.
+  if (FTP->getNumArgs() != 1)
+    return;
+
+  // Is the argument a 'char*'?
+  const PointerType *PT = dyn_cast<PointerType>(FTP->getArgType(0));
+  if (!PT)
+    return;
+  
+  if (PT->getPointeeType().getUnqualifiedType() != BR.getContext().CharTy)
+    return;
+  
+  // Issue a warning.
+  SourceRange R = CE->getCallee()->getSourceRange();
+  BR.EmitBasicReport("Potential buffer overflow in call to 'gets'",
+                     "Security",
+                     "Call to function 'gets' is extremely insecure as it can "
+                     "always result in a buffer overflow",
+                     CE->getLocStart(), &R, 1);
 }
 
 //===----------------------------------------------------------------------===//
