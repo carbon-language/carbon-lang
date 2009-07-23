@@ -56,6 +56,9 @@ public:
   const ASTContext &getASTContext() const { return *Ctx.get(); }
         ASTContext &getASTContext()       { return *Ctx.get(); }
 
+  const Diagnostic &getDiagnostic() const { return *Diags.get(); }
+        Diagnostic &getDiagnostic()       { return *Diags.get(); }
+
   /// \brief Create a ASTUnit from a PCH file.
   ///
   /// \param Filename PCH filename
