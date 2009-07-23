@@ -1193,6 +1193,7 @@ static void appendFieldAndPadding(CodeGenModule &CGM,
 static llvm::StringMapEntry<llvm::Constant*> &
 GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
                          const StringLiteral *Literal,
+                         bool TargetIsLSB,
                          bool &IsUTF16,
                          unsigned &StringLength) {
   unsigned NumBytes = Literal->getByteLength();
@@ -1223,15 +1224,28 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
                                                 StringLength));
   }
 
-  // FIXME: Storing UTF-16 in a C string is a hack to test Unicode strings
-  // without doing more surgery to this routine. Since we aren't explicitly
-  // checking for endianness here, it's also a bug (when generating code for
-  // a target that doesn't match the host endianness). Modeling this as an
-  // i16 array is likely the cleanest solution.
+  // ConvertUTF8toUTF16 returns the length in ToPtr.
   StringLength = ToPtr - &ToBuf[0];
+
+  // Render the UTF-16 string into a byte array and convert to the target byte
+  // order.
+  //
+  // FIXME: This isn't something we should need to do here.
+  llvm::SmallString<128> AsBytes;
+  AsBytes.reserve(StringLength * 2);
+  for (unsigned i = 0; i != StringLength; ++i) {
+    unsigned short Val = ToBuf[i];
+    if (TargetIsLSB) {
+      AsBytes.push_back(Val & 0xFF);
+      AsBytes.push_back(Val >> 8);
+    } else {
+      AsBytes.push_back(Val >> 8);
+      AsBytes.push_back(Val & 0xFF);
+    }
+  }
+
   IsUTF16 = true;
-  return Map.GetOrCreateValue(llvm::StringRef((char *)&ToBuf[0], 
-                                              StringLength * 2));
+  return Map.GetOrCreateValue(llvm::StringRef(AsBytes.data(), AsBytes.size()));
 }
 
 llvm::Constant *
@@ -1239,8 +1253,9 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
   bool isUTF16 = false;
   llvm::StringMapEntry<llvm::Constant*> &Entry =
-    GetConstantCFStringEntry(CFConstantStringMap, Literal, isUTF16, 
-                             StringLength);
+    GetConstantCFStringEntry(CFConstantStringMap, Literal, 
+                             getTargetData().isLittleEndian(),
+                             isUTF16, StringLength);
   
   if (llvm::Constant *C = Entry.getValue())
     return C;
