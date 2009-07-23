@@ -552,22 +552,11 @@ let usesCustomDAGSchedInserter = 1 in  // Expanded by the scheduler.
 
 // tLEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
-let Defs = [CPSR] in {
-def tLEApcrel : T1Ix2<(outs tGPR:$dst), (ins i32imm:$label),
-               !strconcat(!strconcat(".set ${:private}PCRELV${:uid}, ($label-(",
-                                     "${:private}PCRELL${:uid}+4))\n"),
-                          !strconcat("\tmovs $dst, #${:private}PCRELV${:uid}\n",
-                             "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
-                    []>;
+def tLEApcrel : T1I<(outs tGPR:$dst), (ins i32imm:$label),
+                    "adr $dst, #$label", []>;
 
-def tLEApcrelJT : T1Ix2<(outs tGPR:$dst), (ins i32imm:$label, i32imm:$id),
-          !strconcat(!strconcat(".set ${:private}PCRELV${:uid},"
-                                " (${label}_${id:no_hash}-(",
-                                         "${:private}PCRELL${:uid}+4))\n"),
-                     !strconcat("\tmovs $dst, #${:private}PCRELV${:uid}\n",
-                                "${:private}PCRELL${:uid}:\n\tadd $dst, pc")),
-                    []>;
-}
+def tLEApcrelJT : T1I<(outs tGPR:$dst), (ins i32imm:$label, i32imm:$id),
+                      "adr $dst, #${label}_${id:no_hash}", []>;
 
 //===----------------------------------------------------------------------===//
 // TLS Instructions
