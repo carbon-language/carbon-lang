@@ -222,14 +222,13 @@ void PIC16AsmPrinter::EmitFunctionDecls(Module &M) {
  // Emit declarations for external functions.
   O <<"\n"<<TAI->getCommentString() << "Function Declarations - BEGIN." <<"\n";
   for (Module::iterator I = M.begin(), E = M.end(); I != E; I++) {
+    if (I->isIntrinsic())
+      continue;
+
     std::string Name = Mang->getMangledName(I);
     if (Name.compare("@abort") == 0)
       continue;
     
-    // If it is llvm intrinsic call then don't emit
-    if (Name.find("llvm.") != std::string::npos)
-      continue;
-
     if (!I->isDeclaration() && !I->hasExternalLinkage())
       continue;
 
