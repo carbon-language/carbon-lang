@@ -51,6 +51,7 @@ using namespace llvm;
 
 STATISTIC(NumBytes, "Number of bytes of machine code compiled");
 STATISTIC(NumRelos, "Number of relocations applied");
+STATISTIC(NumRetries, "Number of retries with more memory");
 static JIT *TheJIT = 0;
 
 
@@ -425,6 +426,12 @@ namespace {
     // save BufferBegin/BufferEnd/CurBufferPtr here.
     uint8_t *SavedBufferBegin, *SavedBufferEnd, *SavedCurBufferPtr;
 
+    // When reattempting to JIT a function after running out of space, we store
+    // the estimated size of the function we're trying to JIT here, so we can
+    // ask the memory manager for at least this much space.  When we
+    // successfully emit the function, we reset this back to zero.
+    uintptr_t SizeEstimate;
+
     /// Relocations - These are the relocations that the function needs, as
     /// emitted.
     std::vector<MachineRelocation> Relocations;
@@ -496,7 +503,8 @@ namespace {
     DebugLocTuple PrevDLT;
 
   public:
-    JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit), CurFn(0) {
+    JITEmitter(JIT &jit, JITMemoryManager *JMM)
+        : SizeEstimate(0), Resolver(jit), CurFn(0) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
@@ -561,9 +569,14 @@ namespace {
       return MBBLocations[MBB->getNumber()];
     }
 
+    /// retryWithMoreMemory - Log a retry and deallocate all memory for the
+    /// given function.  Increase the minimum allocation size so that we get
+    /// more memory next time.
+    void retryWithMoreMemory(MachineFunction &F);
+
     /// deallocateMemForFunction - Deallocate all memory for the specified
     /// function body.
-    void deallocateMemForFunction(Function *F);
+    void deallocateMemForFunction(const Function *F);
 
     /// AddStubToCurrentFunction - Mark the current function being JIT'd as
     /// using the stub at the specified address. Allows
@@ -925,6 +938,9 @@ void JITEmitter::startFunction(MachineFunction &F) {
     // previously allocated.
     ActualSize += GetSizeOfGlobalsInBytes(F);
     DOUT << "JIT: ActualSize after globals " << ActualSize << "\n";
+  } else if (SizeEstimate > 0) {
+    // SizeEstimate will be non-zero on reallocation attempts.
+    ActualSize = SizeEstimate;
   }
 
   BufferBegin = CurBufferPtr = MemMgr->startFunctionBody(F.getFunction(),
@@ -949,12 +965,15 @@ void JITEmitter::startFunction(MachineFunction &F) {
 
 bool JITEmitter::finishFunction(MachineFunction &F) {
   if (CurBufferPtr == BufferEnd) {
-    // FIXME: Allocate more space, then try again.
-    llvm_report_error("JIT: Ran out of space for generated machine code!");
+    // We must call endFunctionBody before retrying, because
+    // deallocateMemForFunction requires it.
+    MemMgr->endFunctionBody(F.getFunction(), BufferBegin, CurBufferPtr);
+    retryWithMoreMemory(F);
+    return true;
   }
-  
+
   emitJumpTableInfo(F.getJumpTableInfo());
-  
+
   // FnStart is the start of the text, not the start of the constant pool and
   // other per-function data.
   uint8_t *FnStart =
@@ -1045,8 +1064,12 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   MemMgr->endFunctionBody(F.getFunction(), BufferBegin, CurBufferPtr);
 
   if (CurBufferPtr == BufferEnd) {
-    // FIXME: Allocate more space, then try again.
-    llvm_report_error("JIT: Ran out of space for generated machine code!");
+    retryWithMoreMemory(F);
+    return true;
+  } else {
+    // Now that we've succeeded in emitting the function, reset the
+    // SizeEstimate back down to zero.
+    SizeEstimate = 0;
   }
 
   BufferBegin = CurBufferPtr = 0;
@@ -1131,9 +1154,19 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   return false;
 }
 
+void JITEmitter::retryWithMoreMemory(MachineFunction &F) {
+  DOUT << "JIT: Ran out of space for native code.  Reattempting.\n";
+  Relocations.clear();  // Clear the old relocations or we'll reapply them.
+  ConstPoolAddresses.clear();
+  ++NumRetries;
+  deallocateMemForFunction(F.getFunction());
+  // Try again with at least twice as much free space.
+  SizeEstimate = (uintptr_t)(2 * (BufferEnd - BufferBegin));
+}
+
 /// deallocateMemForFunction - Deallocate all memory for the specified
 /// function body.  Also drop any references the function has to stubs.
-void JITEmitter::deallocateMemForFunction(Function *F) {
+void JITEmitter::deallocateMemForFunction(const Function *F) {
   MemMgr->deallocateMemForFunction(F);
 
   // If the function did not reference any stubs, return.
