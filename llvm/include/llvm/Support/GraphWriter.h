@@ -233,7 +233,7 @@ public:
 
       for (unsigned i = 0; i != NumEdgeSources; ++i) {
         if (i) O << "|";
-        O << "<g" << i << ">";
+        O << "<s" << i << ">";
         if (EdgeSourceLabels) O << (*EdgeSourceLabels)[i];
       }
       O << "}}";
