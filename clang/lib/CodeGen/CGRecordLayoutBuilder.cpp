@@ -88,10 +88,8 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   
   AppendBytes(NumBytesToAppend);
   
-  if (!NumBytesToAppend)
-    BitsAvailableInLastField -= FieldSize;
-  else
-    BitsAvailableInLastField = NumBytesToAppend * 8 - FieldSize;
+  BitsAvailableInLastField = 
+    getNextFieldOffsetInBytes() * 8 - (FieldOffset + FieldSize);
 }
 
 bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
