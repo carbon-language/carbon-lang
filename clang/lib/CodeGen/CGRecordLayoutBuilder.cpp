@@ -160,6 +160,15 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
     assert(Layout.getFieldOffset(FieldNo) == 0 && 
           "Union field offset did not start at the beginning of record!");
+
+    if (Field->isBitField()) {
+      uint64_t FieldSize = 
+        Field->getBitWidth()->EvaluateAsInt(Types.getContext()).getZExtValue();
+    
+      // Ignore zero sized bit fields.
+      if (FieldSize == 0)
+        continue;
+    }
     
     const llvm::Type *FieldTy = 
       Types.ConvertTypeForMemRecursive(Field->getType());
