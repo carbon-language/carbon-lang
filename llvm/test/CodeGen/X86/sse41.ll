@@ -84,3 +84,26 @@ entry:
 declare <4 x i32> @llvm.x86.sse41.pmovsxbd(<16 x i8>) nounwind readnone
 declare <4 x i32> @llvm.x86.sse41.pmovsxwd(<8 x i16>) nounwind readnone
 declare <2 x i64> @llvm.x86.sse41.pmovzxbq(<16 x i8>) nounwind readnone
+
+
+
+
+define i32 @extractps_1(<4 x float> %v) nounwind {
+  %s = extractelement <4 x float> %v, i32 3
+  %i = bitcast float %s to i32
+  ret i32 %i
+
+; X32: _extractps_1:  
+; X32:	  extractps	$3, %xmm0, %eax
+
+; X64: _extractps_1:  
+; X64:	  extractps	$3, %xmm0, %eax
+}
+define i32 @extractps_2(<4 x float> %v) nounwind {
+  %t = bitcast <4 x float> %v to <4 x i32>
+  %s = extractelement <4 x i32> %t, i32 3
+  ret i32 %s
+
+; X64: _extractps_2:
+; X64:	  extractps	$3, %xmm0, %eax
+}
