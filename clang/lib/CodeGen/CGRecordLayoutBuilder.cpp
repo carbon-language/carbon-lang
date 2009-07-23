@@ -146,7 +146,6 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
   
-  const FieldDecl *FD = 0;
   const llvm::Type *Ty = 0;
   uint64_t Size = 0;
   unsigned Align = 0;
@@ -164,7 +163,11 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
       // Ignore zero sized bit fields.
       if (FieldSize == 0)
         continue;
-    }
+      
+      // Add the bit field info.
+      Types.addBitFieldInfo(*Field, 0, 0, FieldSize);
+    } else
+      Types.addFieldInfo(*Field, 0);
     
     const llvm::Type *FieldTy = 
       Types.ConvertTypeForMemRecursive(Field->getType());
@@ -178,21 +181,12 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
       Ty = FieldTy;
       Align = FieldAlign;
       Size = FieldSize;
-      FD = *Field;
     }
   }
   
   // Now add our field.
-  if (FD) {
+  if (Ty)
     AppendField(0, Size, Ty);
-    
-    if (FD->isBitField()) {
-      uint64_t FieldSize = 
-        FD->getBitWidth()->EvaluateAsInt(Types.getContext()).getZExtValue();
-      Types.addBitFieldInfo(FD, 0, 0, FieldSize);
-    } else
-      Types.addFieldInfo(FD, 0);
-  }
   
   // Append tail padding.
   if (Layout.getSize() / 8 > Size)
