@@ -3023,43 +3023,219 @@ static bool areCompatVectorTypes(const VectorType *LHS,
          LHS->getNumElements() == RHS->getNumElements();
 }
 
+//===----------------------------------------------------------------------===//
+// ObjCQualifiedIdTypesAreCompatible - Compatibility testing for qualified id's.
+//===----------------------------------------------------------------------===//
+
+/// ProtocolCompatibleWithProtocol - return 'true' if 'lProto' is in the
+/// inheritance hierarchy of 'rProto'.
+static bool ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
+                                           ObjCProtocolDecl *rProto) {
+  if (lProto == rProto)
+    return true;
+  for (ObjCProtocolDecl::protocol_iterator PI = rProto->protocol_begin(),
+       E = rProto->protocol_end(); PI != E; ++PI)
+    if (ProtocolCompatibleWithProtocol(lProto, *PI))
+      return true;
+  return false;
+}
+
+/// ClassImplementsProtocol - Checks that 'lProto' protocol
+/// has been implemented in IDecl class, its super class or categories (if
+/// lookupCategory is true). 
+static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
+                                    ObjCInterfaceDecl *IDecl, 
+                                    bool lookupCategory,
+                                    bool RHSIsQualifiedID = false) {
+  
+  // 1st, look up the class.
+  const ObjCList<ObjCProtocolDecl> &Protocols =
+    IDecl->getReferencedProtocols();
+
+  for (ObjCList<ObjCProtocolDecl>::iterator PI = Protocols.begin(),
+       E = Protocols.end(); PI != E; ++PI) {
+    if (ProtocolCompatibleWithProtocol(lProto, *PI))
+      return true;
+    // This is dubious and is added to be compatible with gcc.  In gcc, it is
+    // also allowed assigning a protocol-qualified 'id' type to a LHS object
+    // when protocol in qualified LHS is in list of protocols in the rhs 'id'
+    // object. This IMO, should be a bug.
+    // FIXME: Treat this as an extension, and flag this as an error when GCC
+    // extensions are not enabled.
+    if (RHSIsQualifiedID && ProtocolCompatibleWithProtocol(*PI, lProto))
+      return true;
+  }
+  
+  // 2nd, look up the category.
+  if (lookupCategory)
+    for (ObjCCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
+         CDecl = CDecl->getNextClassCategory()) {
+      for (ObjCCategoryDecl::protocol_iterator PI = CDecl->protocol_begin(),
+           E = CDecl->protocol_end(); PI != E; ++PI)
+        if (ProtocolCompatibleWithProtocol(lProto, *PI))
+          return true;
+    }
+  
+  // 3rd, look up the super class(s)
+  if (IDecl->getSuperClass())
+    return 
+      ClassImplementsProtocol(lProto, IDecl->getSuperClass(), lookupCategory,
+                              RHSIsQualifiedID);
+  
+  return false;
+}
+
+/// QualifiedIdConformsQualifiedId - compare id<p,...> with id<p1,...>
+/// return true if lhs's protocols conform to rhs's protocol; false
+/// otherwise.
+bool ASTContext::QualifiedIdConformsQualifiedId(QualType lhs, QualType rhs) {
+  if (lhs->isObjCQualifiedIdType() && rhs->isObjCQualifiedIdType())
+    return ObjCQualifiedIdTypesAreCompatible(lhs, rhs, false);
+  return false;
+}
+
+/// ObjCQualifiedIdTypesAreCompatible - We know that one of lhs/rhs is an
+/// ObjCQualifiedIDType.
+bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, QualType rhs,
+                                                   bool compare) {
+  // Allow id<P..> and an 'id' or void* type in all cases.
+  if (lhs->isVoidPointerType() || 
+      lhs->isObjCIdType() || lhs->isObjCClassType())
+    return true;
+  else if (rhs->isVoidPointerType() || 
+           rhs->isObjCIdType() || rhs->isObjCClassType())
+    return true;
+
+  if (const ObjCObjectPointerType *lhsQID = lhs->getAsObjCQualifiedIdType()) {
+    const ObjCObjectPointerType *rhsOPT = rhs->getAsObjCObjectPointerType();
+    
+    if (!rhsOPT) return false;
+    
+    if (rhsOPT->qual_empty()) {
+      // If the RHS is a unqualified interface pointer "NSString*", 
+      // make sure we check the class hierarchy.
+      if (ObjCInterfaceDecl *rhsID = rhsOPT->getInterfaceDecl()) {
+        for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
+             E = lhsQID->qual_end(); I != E; ++I) {
+          // when comparing an id<P> on lhs with a static type on rhs,
+          // see if static class implements all of id's protocols, directly or
+          // through its super class and categories.
+          if (!ClassImplementsProtocol(*I, rhsID, true))
+            return false;
+        }
+      }
+      // If there are no qualifiers and no interface, we have an 'id'.
+      return true;
+    }
+    // Both the right and left sides have qualifiers.    
+    for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
+         E = lhsQID->qual_end(); I != E; ++I) {
+      ObjCProtocolDecl *lhsProto = *I;
+      bool match = false;
+
+      // when comparing an id<P> on lhs with a static type on rhs,
+      // see if static class implements all of id's protocols, directly or
+      // through its super class and categories.
+      for (ObjCObjectPointerType::qual_iterator J = rhsOPT->qual_begin(),
+           E = rhsOPT->qual_end(); J != E; ++J) {
+        ObjCProtocolDecl *rhsProto = *J;
+        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+            (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
+          match = true;
+          break;
+        }
+      }
+      // If the RHS is a qualified interface pointer "NSString<P>*", 
+      // make sure we check the class hierarchy.
+      if (ObjCInterfaceDecl *rhsID = rhsOPT->getInterfaceDecl()) {
+        for (ObjCObjectPointerType::qual_iterator I = lhsQID->qual_begin(),
+             E = lhsQID->qual_end(); I != E; ++I) {
+          // when comparing an id<P> on lhs with a static type on rhs,
+          // see if static class implements all of id's protocols, directly or
+          // through its super class and categories.
+          if (ClassImplementsProtocol(*I, rhsID, true)) {
+            match = true;
+            break;
+          }
+        }
+      }
+      if (!match)
+        return false;
+    }
+    
+    return true;
+  }
+  
+  const ObjCObjectPointerType *rhsQID = rhs->getAsObjCQualifiedIdType();
+  assert(rhsQID && "One of the LHS/RHS should be id<x>");
+
+  if (const ObjCObjectPointerType *lhsOPT = 
+        lhs->getAsObjCInterfacePointerType()) {
+    if (lhsOPT->qual_empty()) {
+      bool match = false;
+      if (ObjCInterfaceDecl *lhsID = lhsOPT->getInterfaceDecl()) {
+        for (ObjCObjectPointerType::qual_iterator I = rhsQID->qual_begin(),
+             E = rhsQID->qual_end(); I != E; ++I) {
+          // when comparing an id<P> on lhs with a static type on rhs,
+          // see if static class implements all of id's protocols, directly or
+          // through its super class and categories.
+          if (ClassImplementsProtocol(*I, lhsID, true)) {
+            match = true;
+            break;
+          }
+        }
+        if (!match)
+          return false;
+      }
+      return true;
+    }
+    // Both the right and left sides have qualifiers.    
+    for (ObjCObjectPointerType::qual_iterator I = lhsOPT->qual_begin(),
+         E = lhsOPT->qual_end(); I != E; ++I) {
+      ObjCProtocolDecl *lhsProto = *I;
+      bool match = false;
+
+      // when comparing an id<P> on lhs with a static type on rhs,
+      // see if static class implements all of id's protocols, directly or
+      // through its super class and categories.
+      for (ObjCObjectPointerType::qual_iterator J = rhsQID->qual_begin(),
+           E = rhsQID->qual_end(); J != E; ++J) {
+        ObjCProtocolDecl *rhsProto = *J;
+        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+            (compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto))) {
+          match = true;
+          break;
+        }
+      }
+      if (!match)
+        return false;
+    }
+    return true;
+  }
+  return false;
+}
+
 /// canAssignObjCInterfaces - Return true if the two interface types are
 /// compatible for assignment from RHS to LHS.  This handles validation of any
 /// protocol qualifiers on the LHS or RHS.
 ///
-/// FIXME: Move the following to ObjCObjectPointerType/ObjCInterfaceType.
 bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
                                          const ObjCObjectPointerType *RHSOPT) {
   // If either type represents the built-in 'id' or 'Class' types, return true.
   if (LHSOPT->isObjCBuiltinType() || RHSOPT->isObjCBuiltinType())
     return true;
 
+  if (LHSOPT->isObjCQualifiedIdType() || RHSOPT->isObjCQualifiedIdType())
+    return ObjCQualifiedIdTypesAreCompatible(QualType(LHSOPT,0), 
+                                             QualType(RHSOPT,0), 
+                                             false);
+
   const ObjCInterfaceType* LHS = LHSOPT->getInterfaceType();
   const ObjCInterfaceType* RHS = RHSOPT->getInterfaceType();
-  if (!LHS || !RHS) {
-    // We have qualified builtin types.
-    // Both the right and left sides have qualifiers.    
-    for (ObjCObjectPointerType::qual_iterator I = LHSOPT->qual_begin(),
-         E = LHSOPT->qual_end(); I != E; ++I) {
-      bool RHSImplementsProtocol = false;
-
-      // when comparing an id<P> on lhs with a static type on rhs,
-      // see if static class implements all of id's protocols, directly or
-      // through its super class and categories.
-      for (ObjCObjectPointerType::qual_iterator J = RHSOPT->qual_begin(),
-           E = RHSOPT->qual_end(); J != E; ++J) {
-        if ((*J)->lookupProtocolNamed((*I)->getIdentifier())) {
-          RHSImplementsProtocol = true;
-          break;
-        }
-      }
-      if (!RHSImplementsProtocol)
-        return false;
-    }
-    // The RHS implements all protocols listed on the LHS.
-    return true;
-  }
-  return canAssignObjCInterfaces(LHS, RHS);
+  if (LHS && RHS) // We have 2 user-defined types.
+    return canAssignObjCInterfaces(LHS, RHS);
+    
+  return false;
 }
 
 bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
@@ -3087,7 +3263,7 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCInterfaceType *LHS,
     // If the RHS doesn't implement the protocol on the left, the types
     // are incompatible.
     for (ObjCInterfaceType::qual_iterator RHSPI = RHS->qual_begin(),
-                                                  RHSPE = RHS->qual_end();
+                                          RHSPE = RHS->qual_end();
          RHSPI != RHSPE; RHSPI++) {
       if ((*RHSPI)->lookupProtocolNamed((*LHSPI)->getIdentifier())) {
         RHSImplementsProtocol = true;
@@ -3441,10 +3617,6 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
     return QualType();
   }
   case Type::ObjCObjectPointer: {
-    // FIXME: Incorporate tests from Sema::ObjCQualifiedIdTypesAreCompatible().
-    if (LHS->isObjCQualifiedIdType() && RHS->isObjCQualifiedIdType())
-      return QualType();
-
     if (canAssignObjCInterfaces(LHS->getAsObjCObjectPointerType(), 
                                 RHS->getAsObjCObjectPointerType()))
       return LHS;

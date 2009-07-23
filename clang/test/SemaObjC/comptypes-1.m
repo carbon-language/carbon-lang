@@ -66,9 +66,7 @@ int main()
 
   /* Any comparison between 'MyClass *' and anything which is not an 'id'
      must generate a warning.  */
-  /* FIXME: GCC considers this a warning ("comparison of distinct pointer types"). */
-  /* There is a corresponding FIXME in ASTContext::mergeTypes() */
-  if (obj_p == obj_c) foo() ;
+  if (obj_p == obj_c) foo() ; // expected-warning {{comparison of distinct pointer types ('id<MyProtocol>' and 'MyClass *')}}
 
   if (obj_c == obj_cp) foo() ; // expected-warning {{comparison of distinct pointer types ('MyClass *' and 'MyOtherClass *')}} 
   if (obj_cp == obj_c) foo() ; // expected-warning {{comparison of distinct pointer types ('MyOtherClass *' and 'MyClass *')}}

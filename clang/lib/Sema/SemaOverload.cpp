@@ -1020,7 +1020,8 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
     // Conversions with Objective-C's id<...>.
     if ((FromObjCPtr->isObjCQualifiedIdType() || 
          ToObjCPtr->isObjCQualifiedIdType()) &&
-        ObjCQualifiedIdTypesAreCompatible(ToType, FromType, /*compare=*/false)) {
+        Context.ObjCQualifiedIdTypesAreCompatible(ToType, FromType, 
+                                                  /*compare=*/false)) {
       ConvertedType = ToType;
       return true;
     }

@@ -758,6 +758,9 @@ public:
     assert(SelStructType && "isObjCSelType used before 'SEL' type is built");
     return T->getAsStructureType() == SelStructType;
   }
+  bool QualifiedIdConformsQualifiedId(QualType LHS, QualType RHS);
+  bool ObjCQualifiedIdTypesAreCompatible(QualType LHS, QualType RHS,
+                                         bool ForCompare);
 
   // Check the safety of assignment from LHS to RHS
   bool canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,

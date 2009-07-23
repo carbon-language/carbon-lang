@@ -3171,7 +3171,7 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
       compositeType = RHSTy;
     } else if ((LHSTy->isObjCQualifiedIdType() || 
                 RHSTy->isObjCQualifiedIdType()) &&
-                ObjCQualifiedIdTypesAreCompatible(LHSTy, RHSTy, true)) {
+                Context.ObjCQualifiedIdTypesAreCompatible(LHSTy, RHSTy, true)) {
       // Need to handle "id<xx>" explicitly. 
       // GCC allows qualified id and any Objective-C type to devolve to
       // id. Currently localizing to here until clear this should be
@@ -3436,17 +3436,6 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return Compatible;
     return Incompatible;
   }
-  // FIXME: Look into removing. With ObjCObjectPointerType, I don't see a need.
-  if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType()) {
-    if (ObjCQualifiedIdTypesAreCompatible(lhsType, rhsType, false))
-      return Compatible;
-    // Relax integer conversions like we do for pointers below.
-    if (rhsType->isIntegerType())
-      return IntToPointer;
-    if (lhsType->isIntegerType())
-      return PointerToInt;
-    return IncompatibleObjCQualifiedId;
-  }
   // Allow scalar to ExtVector assignments, and assignments of an ExtVector type
   // to the same ExtVector type.
   if (lhsType->isExtVectorType()) {
@@ -3528,6 +3517,8 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
         return Compatible;
       if (Context.typesAreCompatible(lhsType, rhsType))
         return Compatible;
+      if (lhsType->isObjCQualifiedIdType() || rhsType->isObjCQualifiedIdType())
+        return IncompatibleObjCQualifiedId;
       return IncompatiblePointer;
     }
     if (const PointerType *RHSPT = rhsType->getAsPointerType()) {

@@ -1201,7 +1201,6 @@ public:
                            bool &IncompleteImpl);
   void WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethod,
                                    ObjCMethodDecl *IntfMethod);
-  bool QualifiedIdConformsQualifiedId(QualType LHS, QualType RHS);
 
   NamespaceDecl *GetStdNamespace();
   
@@ -3197,9 +3196,6 @@ public:
                                           unsigned NewWidth, bool NewSign,
                                           SourceLocation Loc, unsigned DiagID);
   
-  bool ObjCQualifiedIdTypesAreCompatible(QualType LHS, QualType RHS,
-                                         bool ForCompare);
-
   /// Checks that the Objective-C declaration is declared in the global scope.
   /// Emits an error and marks the declaration as invalid if it's not declared
   /// in the global scope.

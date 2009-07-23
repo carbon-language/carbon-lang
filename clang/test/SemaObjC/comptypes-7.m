@@ -28,7 +28,7 @@ int main()
   obj = j; // expected-warning {{incompatible pointer types assigning 'int *', expected 'id'}}
 
   obj_p = i; // expected-warning {{incompatible integer to pointer conversion assigning 'int', expected 'id<MyProtocol>'}}
-  obj_p = j; // expected-warning {{incompatible type assigning 'int *', expected 'id<MyProtocol>'}}
+  obj_p = j; // expected-warning {{incompatible pointer types assigning 'int *', expected 'id<MyProtocol>'}}
   
   obj_c = i; // expected-warning {{incompatible integer to pointer conversion assigning 'int', expected 'MyClass *'}}
   obj_c = j; // expected-warning {{incompatible pointer types assigning 'int *', expected 'MyClass *'}}
@@ -42,7 +42,7 @@ int main()
   i = obj_C; // expected-warning {{incompatible pointer to integer conversion assigning 'Class', expected 'int'}}
   
   j = obj;   // expected-warning {{incompatible pointer types assigning 'id', expected 'int *'}}
-  j = obj_p; // expected-warning {{incompatible type assigning 'id<MyProtocol>', expected 'int *'}}
+  j = obj_p; // expected-warning {{incompatible pointer types assigning 'id<MyProtocol>', expected 'int *'}}
   j = obj_c; // expected-warning {{incompatible pointer types assigning 'MyClass *', expected 'int *'}}
   j = obj_C; // expected-warning {{incompatible pointer types assigning 'Class', expected 'int *'}}
   

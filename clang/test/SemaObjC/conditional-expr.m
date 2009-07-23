@@ -27,9 +27,8 @@
 @implementation DTFilterOutputStream2 // expected-warning {{incomplete implementation}} expected-warning {{method definition for 'nextOutputStream' not found}}
 - (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
   id <DTOutputStreams> nextOutputStream = [self nextOutputStream];
-  // GCC warns about both of these.
   self = nextOutputStream; // expected-warning {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream2 *'}}
-  return nextOutputStream ? nextOutputStream : self;
+  return nextOutputStream ? nextOutputStream : self; // expected-warning {{incompatible operand types ('id<DTOutputStreams>' and 'DTFilterOutputStream2 *')}}
 }
 @end
 
@@ -37,9 +36,8 @@
 @implementation DTFilterOutputStream3 // expected-warning {{cannot find interface declaration for 'DTFilterOutputStream3'}}
 - (id)initWithNextOutputStream:(id <DTOutputStreams>) outputStream {
   id <DTOutputStreams> nextOutputStream = [self nextOutputStream]; // expected-warning {{method '-nextOutputStream' not found (return type defaults to 'id')}}
-  // GCC warns about both of these as well (no errors).
   self = nextOutputStream; // expected-warning {{incompatible type assigning 'id<DTOutputStreams>', expected 'DTFilterOutputStream3 *'}}
-  return nextOutputStream ? nextOutputStream : self;
+  return nextOutputStream ? nextOutputStream : self; // expected-warning {{incompatible operand types ('id<DTOutputStreams>' and 'DTFilterOutputStream3 *')}}
 }
 @end
 
@@ -86,7 +84,7 @@ void f4(int cond, id x, B *y) {
 }
 
 void f5(int cond, id<P0> x, C *y) {
-  (cond ? x : y).intProp = 1; // expected-error {{property 'intProp' not found on object of type 'C *'}}
+  (cond ? x : y).intProp = 1; // expected-warning {{incompatible operand types ('id<P0>' and 'C *')}} expected-error {{property 'intProp' not found on object of type 'id'}}
 }
 
 void f6(int cond, C *x, D *y) {

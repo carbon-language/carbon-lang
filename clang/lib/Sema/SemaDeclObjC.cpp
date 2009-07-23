@@ -369,7 +369,7 @@ Sema::DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
   if (!Context.typesAreCompatible(LHSType, RHSType)) {
     // FIXME: Incorporate this test with typesAreCompatible.
     if (LHSType->isObjCQualifiedIdType() && RHSType->isObjCQualifiedIdType())
-      if (ObjCQualifiedIdTypesAreCompatible(LHSType, RHSType, false))
+      if (Context.ObjCQualifiedIdTypesAreCompatible(LHSType, RHSType, false))
         return;
     Diag(Property->getLocation(), diag::warn_property_types_are_incompatible)
       << Property->getType() << SuperProperty->getType() << inheritedName;
@@ -804,8 +804,8 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
                                        ObjCMethodDecl *IntfMethodDecl) {
   if (!Context.typesAreCompatible(IntfMethodDecl->getResultType(),
                                   ImpMethodDecl->getResultType()) &&
-      !QualifiedIdConformsQualifiedId(IntfMethodDecl->getResultType(),
-                                      ImpMethodDecl->getResultType())) {
+      !Context.QualifiedIdConformsQualifiedId(IntfMethodDecl->getResultType(),
+                                              ImpMethodDecl->getResultType())) {
     Diag(ImpMethodDecl->getLocation(), diag::warn_conflicting_ret_types) 
       << ImpMethodDecl->getDeclName() << IntfMethodDecl->getResultType()
       << ImpMethodDecl->getResultType();
@@ -816,7 +816,8 @@ void Sema::WarnConflictingTypedMethods(ObjCMethodDecl *ImpMethodDecl,
        IF = IntfMethodDecl->param_begin(), EM = ImpMethodDecl->param_end();
        IM != EM; ++IM, ++IF) {
     if (Context.typesAreCompatible((*IF)->getType(), (*IM)->getType()) ||
-        QualifiedIdConformsQualifiedId((*IF)->getType(), (*IM)->getType()))
+        Context.QualifiedIdConformsQualifiedId((*IF)->getType(), 
+                                               (*IM)->getType()))
       continue;
     
     Diag((*IM)->getLocation(), diag::warn_conflicting_param_types) 
