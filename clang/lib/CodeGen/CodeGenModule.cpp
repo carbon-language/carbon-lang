@@ -1190,45 +1190,60 @@ static void appendFieldAndPadding(CodeGenModule &CGM,
   }
 }
 
-llvm::Constant *CodeGenModule::
-GetAddrOfConstantCFString(const StringLiteral *Literal) {
-  std::string str;
-  unsigned StringLength = 0;
-  
-  bool isUTF16 = false;
-  if (Literal->containsNonAsciiOrNull()) {
-    // Convert from UTF-8 to UTF-16.
-    llvm::SmallVector<UTF16, 128> ToBuf(Literal->getByteLength());
-    const UTF8 *FromPtr = (UTF8 *)Literal->getStrData();
-    UTF16 *ToPtr = &ToBuf[0];
-        
-    ConversionResult Result;
-    Result = ConvertUTF8toUTF16(&FromPtr, FromPtr+Literal->getByteLength(),
-                                &ToPtr, ToPtr+Literal->getByteLength(),
-                                strictConversion);
-    if (Result == conversionOK) {
-      // FIXME: Storing UTF-16 in a C string is a hack to test Unicode strings
-      // without doing more surgery to this routine. Since we aren't explicitly
-      // checking for endianness here, it's also a bug (when generating code for
-      // a target that doesn't match the host endianness). Modeling this as an
-      // i16 array is likely the cleanest solution.
-      StringLength = ToPtr-&ToBuf[0];
-      str.assign((char *)&ToBuf[0], StringLength*2);// Twice as many UTF8 chars.
-      isUTF16 = true;
-    } else {
-      assert(Result == sourceIllegal && "UTF-8 to UTF-16 conversion failed");
-      // FIXME: Have Sema::CheckObjCString() validate the UTF-8 string.
-      StringLength = Literal->getByteLength();
-      str.assign(Literal->getStrData(), StringLength);
-    }
-  } else {
-    StringLength = Literal->getByteLength();
-    str.assign(Literal->getStrData(), StringLength);
+static llvm::StringMapEntry<llvm::Constant*> &
+GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
+                         const StringLiteral *Literal,
+                         bool &IsUTF16,
+                         unsigned &StringLength) {
+  unsigned NumBytes = Literal->getByteLength();
+
+  // Check for simple case.
+  if (!Literal->containsNonAsciiOrNull()) {
+    StringLength = NumBytes;
+    return Map.GetOrCreateValue(llvm::StringRef(Literal->getStrData(), 
+                                                StringLength));
   }
-  llvm::Constant *&Entry = CFConstantStringMap[str];
+
+  // Otherwise, convert the UTF8 literals into a byte string.
+  llvm::SmallVector<UTF16, 128> ToBuf(NumBytes);
+  const UTF8 *FromPtr = (UTF8 *)Literal->getStrData();
+  UTF16 *ToPtr = &ToBuf[0];
+        
+  ConversionResult Result = ConvertUTF8toUTF16(&FromPtr, FromPtr + NumBytes, 
+                                               &ToPtr, ToPtr + NumBytes,
+                                               strictConversion);
   
-  if (Entry)
-    return Entry;
+  // Check for conversion failure.
+  if (Result != conversionOK) {
+    // FIXME: Have Sema::CheckObjCString() validate the UTF-8 string and remove
+    // this duplicate code.
+    assert(Result == sourceIllegal && "UTF-8 to UTF-16 conversion failed");
+    StringLength = NumBytes;
+    return Map.GetOrCreateValue(llvm::StringRef(Literal->getStrData(), 
+                                                StringLength));
+  }
+
+  // FIXME: Storing UTF-16 in a C string is a hack to test Unicode strings
+  // without doing more surgery to this routine. Since we aren't explicitly
+  // checking for endianness here, it's also a bug (when generating code for
+  // a target that doesn't match the host endianness). Modeling this as an
+  // i16 array is likely the cleanest solution.
+  StringLength = ToPtr - &ToBuf[0];
+  IsUTF16 = true;
+  return Map.GetOrCreateValue(llvm::StringRef((char *)&ToBuf[0], 
+                                              StringLength * 2));
+}
+
+llvm::Constant *
+CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
+  unsigned StringLength = 0;
+  bool isUTF16 = false;
+  llvm::StringMapEntry<llvm::Constant*> &Entry =
+    GetConstantCFStringEntry(CFConstantStringMap, Literal, isUTF16, 
+                             StringLength);
+  
+  if (llvm::Constant *C = Entry.getValue())
+    return C;
   
   llvm::Constant *Zero = getLLVMContext().getNullValue(llvm::Type::Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
@@ -1271,7 +1286,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
   // String pointer.
   CurField = NextField;
   NextField = *Field++;
-  llvm::Constant *C = VMContext.getConstantArray(str);
+  llvm::Constant *C = VMContext.getConstantArray(Entry.getKey().str());
 
   const char *Sect, *Prefix;
   bool isConstant;
@@ -1318,7 +1333,7 @@ GetAddrOfConstantCFString(const StringLiteral *Literal) {
                                 "_unnamed_cfstring_");
   if (const char *Sect = getContext().Target.getCFStringSection())
     GV->setSection(Sect);
-  Entry = GV;
+  Entry.setValue(GV);
   
   return GV;
 }
