@@ -3462,7 +3462,7 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts) {
   assert(Lex.getKind() == lltok::lbrace);
   Lex.Lex();
   do {
-    Value *V;
+    Value *V = 0;
     if (Lex.getKind() == lltok::kw_null) {
       Lex.Lex();
       V = 0;
