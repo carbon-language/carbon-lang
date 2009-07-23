@@ -50,6 +50,8 @@ void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
 bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   MRI = &Fn.getRegInfo();
 
+  PHIDefs.clear();
+  PHIKills.clear();
   analyzePHINodes(Fn);
 
   bool Changed = false;
@@ -183,8 +185,8 @@ void llvm::PHIElimination::LowerAtomicPHINode(
   }
 
   // Record PHI def.
-  //assert(!hasPHIDef(DestReg) && "Vreg has multiple phi-defs?"); 
-  //PHIDefs[DestReg] = &MBB;
+  assert(!hasPHIDef(DestReg) && "Vreg has multiple phi-defs?"); 
+  PHIDefs[DestReg] = &MBB;
 
   // Update live variable information if there is any.
   LiveVariables *LV = getAnalysisIfAvailable<LiveVariables>();
@@ -232,7 +234,7 @@ void llvm::PHIElimination::LowerAtomicPHINode(
     MachineBasicBlock &opBlock = *MPhi->getOperand(i*2+2).getMBB();
 
     // Record the kill.
-    //PHIKills[SrcReg].insert(&opBlock);
+    PHIKills[SrcReg].insert(&opBlock);
 
     // If source is defined by an implicit def, there is no need to insert a
     // copy.
