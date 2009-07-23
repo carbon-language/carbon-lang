@@ -30,6 +30,12 @@ unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {
   return 0;
 }
 
+unsigned
+Thumb1InstrInfo::unsignedOffsetOpcodeToSigned(unsigned opcode,
+                                              unsigned *NumBits) const {
+  return 0;
+}
+
 unsigned Thumb1InstrInfo::getOpcode(ARMII::Op Op) const {
   switch (Op) {
   case ARMII::ADDri: return ARM::tADDi8;

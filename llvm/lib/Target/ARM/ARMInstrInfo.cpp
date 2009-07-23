@@ -30,6 +30,11 @@ ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
 }
 
 unsigned ARMInstrInfo::
+unsignedOffsetOpcodeToSigned(unsigned opcode, unsigned *NumBits) const {
+  return 0;
+}
+
+unsigned ARMInstrInfo::
 getUnindexedOpcode(unsigned Opc) const {
   switch (Opc) {
   default: break;

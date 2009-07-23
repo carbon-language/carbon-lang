@@ -59,6 +59,13 @@ protected:
   // Return the opcode that implements 'Op', or 0 if no opcode
   unsigned getOpcode(int Op) const;
 
+  // If 'opcode' is an instruction with an unsigned offset that also
+  // has a version with a signed offset, return the opcode for the
+  // version with the signed offset. In 'NumBits' return the number of
+  // bits for the signed offset.
+  unsigned unsignedOffsetOpcodeToSigned(unsigned opcode,
+                                        unsigned *NumBits) const;
+
 public:
   /// getRegisterNumbering - Given the enum value for some register, e.g.
   /// ARM::LR, return the number that it corresponds to (e.g. 14). It

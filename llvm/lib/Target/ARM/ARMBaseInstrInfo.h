@@ -215,6 +215,13 @@ public:
   // Return the opcode that implements 'Op', or 0 if no opcode
   virtual unsigned getOpcode(ARMII::Op Op) const =0;
 
+  // If 'opcode' is an instruction with an unsigned offset that also
+  // has a version with a signed offset, return the opcode for the
+  // version with the signed offset. In 'NumBits' return the number of
+  // bits for the signed offset.
+  virtual unsigned unsignedOffsetOpcodeToSigned(unsigned opcode,
+                                                unsigned *NumBits) const = 0;
+
   // Return true if the block does not fall through.
   virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const =0;
 

@@ -142,6 +142,11 @@ getOpcode(int Op) const {
   return TII.getOpcode((ARMII::Op)Op);
 }
 
+unsigned ARMBaseRegisterInfo::
+unsignedOffsetOpcodeToSigned(unsigned opcode, unsigned *NumBits) const {
+  return TII.unsignedOffsetOpcodeToSigned(opcode, NumBits);
+}
+
 const unsigned*
 ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs[] = {
@@ -1109,6 +1114,8 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
     int InstrOffs = 0;
     unsigned NumBits = 0;
     unsigned Scale = 1;
+    bool encodedOffset = true;
+    bool HandlesNeg = true;
     switch (AddrMode) {
     case ARMII::AddrMode2: {
       ImmIdx = i+2;
@@ -1139,17 +1146,21 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
       ImmIdx = i+1;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
       NumBits = 12;
+      encodedOffset = false;
+      HandlesNeg = false;
       break;
     }
     case ARMII::AddrModeT2_i8: {
       ImmIdx = i+1;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
       NumBits = 8;
+      encodedOffset = false;
       break;
     }
     case ARMII::AddrModeT2_so: {
       ImmIdx = i+2;
       InstrOffs = MI.getOperand(ImmIdx).getImm();
+      encodedOffset = false;
       break;
     }
     default:
@@ -1160,29 +1171,55 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset += InstrOffs * Scale;
     assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
     if (Offset < 0) {
+      // For addrmodes that cannot handle negative offsets, convert to
+      // an opcode that can, or set NumBits == 0 to avoid folding
+      // address computation
+      if (!HandlesNeg) {
+        unsigned usop = unsignedOffsetOpcodeToSigned(Opcode, &NumBits);
+        if (usop != 0) {
+          MI.setDesc(TII.get(usop));
+          HandlesNeg = true;
+          Opcode = usop;
+        }
+        else {
+          NumBits = 0;
+        }
+      }
+
       Offset = -Offset;
       isSub = true;
     }
 
-    // Common case: small offset, fits into instruction.
-    MachineOperand &ImmOp = MI.getOperand(ImmIdx);
-    int ImmedOffset = Offset / Scale;
-    unsigned Mask = (1 << NumBits) - 1;
-    if ((unsigned)Offset <= Mask * Scale) {
-      // Replace the FrameIndex with sp
-      MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      if (isSub)
-        ImmedOffset |= 1 << NumBits;
+    // Attempt to fold address comp. if opcode has offset bits
+    if (NumBits > 0) {
+      // Common case: small offset, fits into instruction.
+      MachineOperand &ImmOp = MI.getOperand(ImmIdx);
+      int ImmedOffset = Offset / Scale;
+      unsigned Mask = (1 << NumBits) - 1;
+      if ((unsigned)Offset <= Mask * Scale) {
+        // Replace the FrameIndex with sp
+        MI.getOperand(i).ChangeToRegister(FrameReg, false);
+        if (isSub) {
+          if (encodedOffset)
+            ImmedOffset |= 1 << NumBits;
+          else
+            ImmedOffset = -ImmedOffset;
+        }
+        ImmOp.ChangeToImmediate(ImmedOffset);
+        return;
+      }
+      
+      // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
+      ImmedOffset = ImmedOffset & Mask;
+      if (isSub) {
+          if (encodedOffset)
+            ImmedOffset |= 1 << NumBits;
+          else
+            ImmedOffset = -ImmedOffset;
+      }
       ImmOp.ChangeToImmediate(ImmedOffset);
-      return;
+      Offset &= ~(Mask*Scale);
     }
-
-    // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
-    ImmedOffset = ImmedOffset & Mask;
-    if (isSub)
-      ImmedOffset |= 1 << NumBits;
-    ImmOp.ChangeToImmediate(ImmedOffset);
-    Offset &= ~(Mask*Scale);
   }
 
   // If we get here, the immediate doesn't fit into the instruction.  We folded
