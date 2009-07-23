@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetData.h"
 
 #include "CGCall.h"
+#include "CGRecordLayoutBuilder.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -456,21 +457,30 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
     ResultType = llvm::StructType::get(std::vector<const llvm::Type*>());
   } else {
     // Layout fields.
-    RecordOrganizer RO(*this, *RD);
+    CGRecordLayout *Layout = 
+      CGRecordLayoutBuilder::ComputeLayout(*this, RD);
     
-    if (TD->isStruct() || TD->isClass())
-      RO.layoutStructFields(Context.getASTRecordLayout(RD));
-    else {
-      assert(TD->isUnion() && "unknown tag decl kind!");
-      RO.layoutUnionFields(Context.getASTRecordLayout(RD));
+    if (!Layout) {
+      // Layout fields.
+      RecordOrganizer RO(*this, *RD);
+
+      if (TD->isStruct() || TD->isClass())
+        RO.layoutStructFields(Context.getASTRecordLayout(RD));
+      else {
+        assert(TD->isUnion() && "unknown tag decl kind!");
+        RO.layoutUnionFields(Context.getASTRecordLayout(RD));
+      }
+      
+      Layout = new CGRecordLayout(RO.getLLVMType(), 
+                                  RO.getPaddingFields());
     }
     
     // Get llvm::StructType.
     const Type *Key = 
       Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
-    CGRecordLayouts[Key] = new CGRecordLayout(RO.getLLVMType(), 
-                                              RO.getPaddingFields());
-    ResultType = RO.getLLVMType();
+    
+    CGRecordLayouts[Key] = Layout;
+    ResultType = Layout->getLLVMType();
   }
   
   // Refine our Opaque type to ResultType.  This can invalidate ResultType, so

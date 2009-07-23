@@ -43,6 +43,7 @@
 		1ABC36940C7A4BDC006DB0AB /* CGBuiltin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */; };
 		1ADF47AF0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */; };
 		1AFEF4070F8A6B2300476F2B /* clang-cc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFEF4050F8A6B2300476F2B /* clang-cc.cpp */; };
+		1AFF8AE31012BFC900D248DA /* CGRecordLayoutBuilder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */; };
 		3507E4C20E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */; };
 		352246E70F5C6BE000D0D279 /* HTMLDiagnostics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */; };
 		352246E80F5C6BE000D0D279 /* InitHeaderSearch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */; };
@@ -368,6 +369,8 @@
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = lib/CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1ADF47AE0F782C3200E48A8A /* SemaTemplateInstantiateDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = SemaTemplateInstantiateDecl.cpp; path = lib/Sema/SemaTemplateInstantiateDecl.cpp; sourceTree = "<group>"; tabWidth = 2; };
 		1AFEF4050F8A6B2300476F2B /* clang-cc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = "clang-cc.cpp"; path = "tools/clang-cc/clang-cc.cpp"; sourceTree = "<group>"; tabWidth = 2; };
+		1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = CGRecordLayoutBuilder.cpp; path = lib/CodeGen/CGRecordLayoutBuilder.cpp; sourceTree = "<group>"; tabWidth = 2; };
+		1AFF8AE21012BFC900D248DA /* CGRecordLayoutBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.c.h; name = CGRecordLayoutBuilder.h; path = lib/CodeGen/CGRecordLayoutBuilder.h; sourceTree = "<group>"; tabWidth = 2; };
 		3507E4C10E27FE2D00FB7B57 /* CheckObjCInstMethSignature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CheckObjCInstMethSignature.cpp; path = lib/Analysis/CheckObjCInstMethSignature.cpp; sourceTree = "<group>"; };
 		352246E10F5C6BE000D0D279 /* HTMLDiagnostics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLDiagnostics.cpp; path = lib/Frontend/HTMLDiagnostics.cpp; sourceTree = "<group>"; };
 		352246E20F5C6BE000D0D279 /* InitHeaderSearch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InitHeaderSearch.cpp; path = lib/Frontend/InitHeaderSearch.cpp; sourceTree = "<group>"; };
@@ -1110,6 +1113,8 @@
 				DE38CD4E0D794CF900A273B6 /* CGObjCRuntime.h */,
 				DE38CD4F0D794D0100A273B6 /* CGObjCGNU.cpp */,
 				3552E7580E520DD7003A8CA5 /* CGObjCMac.cpp */,
+				1AFF8AE11012BFC900D248DA /* CGRecordLayoutBuilder.cpp */,
+				1AFF8AE21012BFC900D248DA /* CGRecordLayoutBuilder.h */,
 				DE4772F90C10EAE5002239E8 /* CGStmt.cpp */,
 				35475B230E7997680000BFE4 /* CGValue.h */,
 				DE928B800C0A615B00231DA4 /* CodeGenFunction.h */,
@@ -1697,6 +1702,7 @@
 				1A14D3A70FD78A3F00DA2835 /* DeclPrinter.cpp in Sources */,
 				DE37252E0FE481AD00CF2CC2 /* Builtins.cpp in Sources */,
 				1AA1D91810125DE30078DEBC /* RecordLayoutBuilder.cpp in Sources */,
+				1AFF8AE31012BFC900D248DA /* CGRecordLayoutBuilder.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

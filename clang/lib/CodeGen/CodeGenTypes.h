@@ -52,14 +52,15 @@ namespace CodeGen {
   class CGRecordLayout {
     CGRecordLayout(); // DO NOT IMPLEMENT
   public:
-    CGRecordLayout(llvm::Type *T, llvm::SmallSet<unsigned, 8> &PF) 
+    CGRecordLayout(const llvm::Type *T, 
+                   const llvm::SmallSet<unsigned, 8> &PF) 
       : STy(T), PaddingFields(PF) {
       // FIXME : Collect info about fields that requires adjustments 
       // (i.e. fields that do not directly map to llvm struct fields.)
     }
 
     /// getLLVMType - Return llvm type associated with this record.
-    llvm::Type *getLLVMType() const {
+    const llvm::Type *getLLVMType() const {
       return STy;
     }
 
@@ -72,7 +73,7 @@ namespace CodeGen {
     }
 
   private:
-    llvm::Type *STy;
+    const llvm::Type *STy;
     llvm::SmallSet<unsigned, 8> PaddingFields;
   };
   
