@@ -81,36 +81,73 @@ bool LoopDependenceAnalysis::isDependencePair(const Value *A,
           cast<const Instruction>(B)->mayWriteToMemory());
 }
 
-bool LoopDependenceAnalysis::depends(Value *Src, Value *Dst) {
-  assert(isDependencePair(Src, Dst) && "Values form no dependence pair!");
-  DOUT << "== LDA test ==\n" << *Src << *Dst;
+bool LoopDependenceAnalysis::findOrInsertDependencePair(Value *X,
+                                                        Value *Y,
+                                                        DependencePair *&P) {
+  void *insertPos = 0;
+  FoldingSetNodeID id;
+  id.AddPointer(X);
+  id.AddPointer(Y);
 
-  // We only analyse loads and stores; for possible memory accesses by e.g.
-  // free, call, or invoke instructions we conservatively assume dependence.
-  if (!IsLoadOrStoreInst(Src) || !IsLoadOrStoreInst(Dst))
-    return true;
+  P = Pairs.FindNodeOrInsertPos(id, insertPos);
+  if (P) return true;
 
-  Value *srcPtr = GetPointerOperand(Src);
-  Value *dstPtr = GetPointerOperand(Dst);
-  const Value *srcObj = srcPtr->getUnderlyingObject();
-  const Value *dstObj = dstPtr->getUnderlyingObject();
+  P = PairAllocator.Allocate<DependencePair>();
+  new (P) DependencePair(id, X, Y);
+  Pairs.InsertNode(P, insertPos);
+  return false;
+}
+
+void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
+  DOUT << "Analysing:\n" << *P->A << "\n" << *P->B << "\n";
+
+  // Our default answer: we don't know anything, i.e. we failed to analyse this
+  // pair to get a more specific answer (dependent, independent).
+  P->Result = Unknown;
+
+  // We only analyse loads and stores but no possible memory accesses by e.g.
+  // free, call, or invoke instructions.
+  if (!IsLoadOrStoreInst(P->A) || !IsLoadOrStoreInst(P->B)) {
+    DOUT << "--> [?] no load/store\n";
+    return;
+  }
+
+  Value *aptr = GetPointerOperand(P->A);
+  Value *bptr = GetPointerOperand(P->B);
+  const Value *aobj = aptr->getUnderlyingObject();
+  const Value *bobj = bptr->getUnderlyingObject();
   AliasAnalysis::AliasResult alias = AA->alias(
-      srcObj, AA->getTargetData().getTypeStoreSize(srcObj->getType()),
-      dstObj, AA->getTargetData().getTypeStoreSize(dstObj->getType()));
+      aobj, AA->getTargetData().getTypeStoreSize(aobj->getType()),
+      bobj, AA->getTargetData().getTypeStoreSize(bobj->getType()));
 
-  // If we don't know whether or not the two objects alias, assume dependence.
-  if (alias == AliasAnalysis::MayAlias)
-    return true;
+  // We can not analyse objects if we do not know about their aliasing.
+  if (alias == AliasAnalysis::MayAlias) {
+    DOUT << "---> [?] may alias\n";
+    return;
+  }
 
   // If the objects noalias, they are distinct, accesses are independent.
-  if (alias == AliasAnalysis::NoAlias)
-    return false;
+  if (alias == AliasAnalysis::NoAlias) {
+    DOUT << "---> [I] no alias\n";
+    P->Result = Independent;
+    return;
+  }
 
   // TODO: the underlying objects MustAlias, test for dependence
 
-  // We couldn't establish a more precise result, so we have to conservatively
-  // assume full dependence.
-  return true;
+  DOUT << "---> [?] cannot analyse\n";
+  return;
+}
+
+bool LoopDependenceAnalysis::depends(Value *A, Value *B) {
+  assert(isDependencePair(A, B) && "Values form no dependence pair!");
+
+  DependencePair *p;
+  if (!findOrInsertDependencePair(A, B, p)) {
+    // The pair is not cached, so analyse it.
+    analysePair(p);
+  }
+  return p->Result != Independent;
 }
 
 //===----------------------------------------------------------------------===//
@@ -122,6 +159,11 @@ bool LoopDependenceAnalysis::runOnLoop(Loop *L, LPPassManager &) {
   AA = &getAnalysis<AliasAnalysis>();
   SE = &getAnalysis<ScalarEvolution>();
   return false;
+}
+
+void LoopDependenceAnalysis::releaseMemory() {
+  Pairs.clear();
+  PairAllocator.Reset();
 }
 
 void LoopDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
