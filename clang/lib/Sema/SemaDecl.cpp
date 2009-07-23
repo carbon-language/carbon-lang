@@ -21,7 +21,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtCXX.h"
-#include "clang/AST/StmtObjc.h"
+#include "clang/AST/StmtObjC.h"
 #include "clang/Parse/DeclSpec.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"
