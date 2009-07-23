@@ -33,16 +33,13 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
   }
   
   if (const PackedAttr* PA = D->getAttr<PackedAttr>())
-    StructPacking = PA->getAlignment();
+    Packed = PA->getAlignment();
 
   if (LayoutFields(D))
     return;
   
-  assert(!StructPacking && 
-         "FIXME: Were not able to lay out a struct with #pragma pack!");
-  
   // We weren't able to layout the struct. Try again with a packed struct
-  StructPacking = 1;
+  Packed = true;
   AlignmentAsLLVMStruct = 1;
   FieldTypes.clear();
   FieldInfos.clear();
@@ -99,21 +96,21 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
 
 bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
                                         uint64_t FieldOffset) {
-  unsigned FieldPacking = StructPacking;
+  bool FieldPacked = Packed;
   
   // FIXME: Should this override struct packing? Probably we want to
   // take the minimum?
   if (const PackedAttr *PA = D->getAttr<PackedAttr>())
-    FieldPacking = PA->getAlignment();
+    FieldPacked = PA->getAlignment();
 
   // If the field is packed, then we need a packed struct.
-  if (!StructPacking && FieldPacking)
+  if (!Packed && FieldPacked)
     return false;
 
   if (D->isBitField()) {
     // We must use packed structs for unnamed bit fields since they
     // don't affect the struct alignment.
-    if (!StructPacking && !D->getDeclName())
+    if (!Packed && !D->getDeclName())
       return false;
     
     LayoutBitField(D, FieldOffset);
@@ -126,7 +123,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   if (const AlignedAttr *PA = D->getAttr<AlignedAttr>()) {
     unsigned FieldAlign = PA->getAlignment();
    
-    if (!StructPacking && getTypeAlignment(Ty) > FieldAlign)
+    if (!Packed && getTypeAlignment(Ty) > FieldAlign)
       return false;
   }
    
@@ -213,7 +210,7 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   for (RecordDecl::field_iterator Field = D->field_begin(), 
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
     if (!LayoutField(*Field, Layout.getFieldOffset(FieldNo))) {
-      assert(!StructPacking && 
+      assert(!Packed && 
              "Could not layout fields even with a packed LLVM struct!");
       return false;
     }
@@ -286,10 +283,8 @@ uint64_t CGRecordLayoutBuilder::getNextFieldOffsetInBytes() const {
 }
 
 unsigned CGRecordLayoutBuilder::getTypeAlignment(const llvm::Type *Ty) const {
-  if (StructPacking) {
-    assert(StructPacking == 1 && "FIXME: What if StructPacking is not 1 here");
+  if (Packed)
     return 1;
-  }
   
   return Types.getTargetData().getABITypeAlignment(Ty);
 }
@@ -310,7 +305,7 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
   
   // FIXME: Use a VMContext.
   const llvm::Type *Ty = llvm::StructType::get(Builder.FieldTypes,
-                                               Builder.StructPacking);
+                                               Builder.Packed);
   
   // Add all the field numbers.
   for (unsigned i = 0, e = Builder.LLVMFields.size(); i != e; ++i) {

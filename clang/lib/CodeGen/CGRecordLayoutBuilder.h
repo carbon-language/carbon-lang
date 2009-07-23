@@ -33,10 +33,8 @@ namespace CodeGen {
 class CGRecordLayoutBuilder {  
   CodeGenTypes &Types;
   
-  /// StructPacking - Will be 0 if this struct is not packed. If it is packed,
-  /// it will have the packing alignment in bits.
-  /// 
-  unsigned StructPacking;
+  /// Packed - Whether the resulting LLVM struct will be packed or not.
+  bool Packed;
 
   /// AlignmentAsLLVMStruct - Will contain the maximum alignment of all the
   /// LLVM types.
@@ -79,7 +77,7 @@ class CGRecordLayoutBuilder {
   llvm::SmallVector<LLVMBitFieldInfo, 16> LLVMBitFields;
   
   CGRecordLayoutBuilder(CodeGenTypes &Types) 
-    : Types(Types), StructPacking(0), AlignmentAsLLVMStruct(1)
+    : Types(Types), Packed(false), AlignmentAsLLVMStruct(1)
     , BitsAvailableInLastField(0) { }
 
   /// Layout - Will layout a RecordDecl.
