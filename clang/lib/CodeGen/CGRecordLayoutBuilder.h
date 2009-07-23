@@ -83,6 +83,9 @@ class CGRecordLayoutBuilder {
   /// Layout - Will layout a RecordDecl.
   void Layout(const RecordDecl *D);
 
+  /// LayoutUnion - Will layout a union RecordDecl.
+  void LayoutUnion(const RecordDecl *D);
+  
   /// LayoutField - try to layout all fields in the record decl.
   /// Returns false if the operation failed because the struct is not packed.
   bool LayoutFields(const RecordDecl *D);

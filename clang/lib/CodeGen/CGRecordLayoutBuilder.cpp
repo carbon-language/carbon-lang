@@ -27,6 +27,11 @@ using namespace clang;
 using namespace CodeGen;
 
 void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
+  if (D->isUnion()) {
+    LayoutUnion(D);
+    return;
+  }
+  
   if (const PackedAttr* PA = D->getAttr<PackedAttr>())
     StructPacking = PA->getAlignment();
 
@@ -141,11 +146,49 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   return true;
 }
 
+void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
+  assert(D->isUnion() && "Can't call LayoutUnion on a non-union record!");
+  
+  const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
+  
+  const llvm::Type *Ty = 0;
+  uint64_t Size = 0;
+  unsigned Align = 0;
+  
+  unsigned FieldNo = 0;
+  for (RecordDecl::field_iterator Field = D->field_begin(), 
+       FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
+    assert(Layout.getFieldOffset(FieldNo) == 0 && 
+          "Union field offset did not start at the beginning of record!");
+    
+    const llvm::Type *FieldTy = 
+      Types.ConvertTypeForMemRecursive(Field->getType());
+    unsigned FieldAlign = Types.getTargetData().getTypeAllocSize(FieldTy);
+    uint64_t FieldSize = Types.getTargetData().getABITypeAlignment(FieldTy);
+    
+    if (FieldAlign < Align)
+      continue;
+    
+    if (FieldAlign > Align || FieldSize > Size) {
+      Ty = FieldTy;
+      Align = FieldAlign;
+      Size = FieldSize;
+    }
+  }
+  
+  // Now add our field.
+  if (Ty)
+    AppendField(0, Size, Ty);
+  
+  // Append tail padding.
+  if (Layout.getSize() / 8 > Size)
+    AppendPadding(Layout.getSize() / 8, Align);
+}
+
 bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   assert(!D->isUnion() && "Can't call LayoutFields on a union!");
   
-  const ASTRecordLayout &Layout = 
-    Types.getContext().getASTRecordLayout(D);
+  const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
   
   unsigned FieldNo = 0;
   for (RecordDecl::field_iterator Field = D->field_begin(), 
@@ -241,9 +284,6 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
                                      const RecordDecl *D) {
   CGRecordLayoutBuilder Builder(Types);
   
-  if (D->isUnion())
-    return 0;
-
   Builder.Layout(D);
   
   // FIXME: Once this works well enough, enable it.
