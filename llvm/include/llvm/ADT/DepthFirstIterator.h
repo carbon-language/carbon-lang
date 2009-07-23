@@ -36,6 +36,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include <set>
 #include <vector>
 
@@ -68,27 +69,60 @@ class df_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t>,
 
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
+  typedef PointerIntPair<NodeType*, 1>   PointerIntTy;
 
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is node pointer, second is the 'next child' to visit
-  std::vector<std::pair<NodeType *, ChildItTy> > VisitStack;
+  // if the int in PointerIntTy is 0, the 'next child' to visit is invalid
+  std::vector<std::pair<PointerIntTy, ChildItTy> > VisitStack;
 private:
   inline df_iterator(NodeType *Node) {
     this->Visited.insert(Node);
-    VisitStack.push_back(std::make_pair(Node, GT::child_begin(Node)));
+    VisitStack.push_back(std::make_pair(PointerIntTy(Node, 0), 
+                                        GT::child_begin(Node)));
   }
-  inline df_iterator() { /* End is when stack is empty */ }
-
+  inline df_iterator() { 
+    // End is when stack is empty 
+  }
   inline df_iterator(NodeType *Node, SetType &S)
     : df_iterator_storage<SetType, ExtStorage>(S) {
     if (!S.count(Node)) {
+      VisitStack.push_back(std::make_pair(PointerIntTy(Node, 0), 
+                                          GT::child_begin(Node)));
       this->Visited.insert(Node);
-      VisitStack.push_back(std::make_pair(Node, GT::child_begin(Node)));
     }
   }
   inline df_iterator(SetType &S)
     : df_iterator_storage<SetType, ExtStorage>(S) {
     // End is when stack is empty
+  }
+
+  inline void toNext() {
+    do {
+      std::pair<PointerIntTy, ChildItTy> &Top = VisitStack.back();
+      NodeType *Node = Top.first.getPointer();
+      ChildItTy &It  = Top.second;
+      if (!Top.first.getInt()) {
+        // now retrieve the real begin of the children before we dive in
+        It = GT::child_begin(Node);
+        Top.first.setInt(1);
+      }
+
+      while (It != GT::child_end(Node)) {
+        NodeType *Next = *It++;
+        // Has our next sibling been visited?
+        if (Next && !this->Visited.count(Next)) {  
+          // No, do it now.
+          this->Visited.insert(Next);
+          VisitStack.push_back(std::make_pair(PointerIntTy(Next, 0), 
+                                              GT::child_begin(Next)));
+          return;
+        }
+      }
+
+      // Oops, ran out of successors... go up a level on the stack.
+      VisitStack.pop_back();
+    } while (!VisitStack.empty());
   }
 
 public:
@@ -114,7 +148,7 @@ public:
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
   inline pointer operator*() const {
-    return VisitStack.back().first;
+    return VisitStack.back().first.getPointer();
   }
 
   // This is a nonstandard operator-> that dereferences the pointer an extra
@@ -124,24 +158,16 @@ public:
   inline NodeType *operator->() const { return operator*(); }
 
   inline _Self& operator++() {   // Preincrement
-    do {
-      std::pair<NodeType *, ChildItTy> &Top = VisitStack.back();
-      NodeType *Node = Top.first;
-      ChildItTy &It  = Top.second;
+    toNext();
+    return *this;
+  }
 
-      while (It != GT::child_end(Node)) {
-        NodeType *Next = *It++;
-        if (!this->Visited.count(Next)) {  // Has our next sibling been visited?
-          // No, do it now.
-          this->Visited.insert(Next);
-          VisitStack.push_back(std::make_pair(Next, GT::child_begin(Next)));
-          return *this;
-        }
-      }
-
-      // Oops, ran out of successors... go up a level on the stack.
-      VisitStack.pop_back();
-    } while (!VisitStack.empty());
+  // skips all children of the current node and traverses to next node
+  //
+  inline _Self& skipChildren() {  
+    VisitStack.pop_back();
+    if (!VisitStack.empty())
+      toNext();
     return *this;
   }
 
