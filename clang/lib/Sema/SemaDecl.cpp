@@ -28,6 +28,7 @@
 // FIXME: layering (ideally, Sema shouldn't be dependent on Lex API's)
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h" 
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -1023,18 +1024,18 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
   // The CFG leaves in dead things, run a simple mark and sweep on it
   // to weed out the trivially dead things.
   std::queue<CFGBlock*> workq;
-  llvm::OwningArrayPtr<char> live(new char[cfg->getNumBlockIDs()]);
+  llvm::BitVector live(cfg->getNumBlockIDs());
   // Prep work queue
   workq.push(&cfg->getEntry());
   // Solve
   while (!workq.empty()) {
     CFGBlock *item = workq.front();
     workq.pop();
-    live[item->getBlockID()] = 1;
+    live.set(item->getBlockID());
     CFGBlock::succ_iterator i;
     for (i=item->succ_begin(); i != item->succ_end(); ++i) {
       if ((*i) && ! live[(*i)->getBlockID()]) {
-        live[(*i)->getBlockID()] = 1;
+        live.set((*i)->getBlockID());
         workq.push(*i);
       }
     }
