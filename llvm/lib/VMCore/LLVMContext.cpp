@@ -551,12 +551,12 @@ MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
 }
 
 // MDString accessors
-MDString* LLVMContext::getMDString(const char *StrBegin, const char *StrEnd) {
-  return pImpl->getMDString(StrBegin, StrEnd);
+MDString* LLVMContext::getMDString(const char *StrBegin, unsigned StrLength) {
+  return pImpl->getMDString(StrBegin, StrLength);
 }
 
 MDString* LLVMContext::getMDString(const std::string &Str) {
-  return getMDString(Str.data(), Str.data()+Str.size());
+  return getMDString(Str.data(), Str.size());
 }
 
 // FunctionType accessors

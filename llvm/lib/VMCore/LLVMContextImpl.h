@@ -133,7 +133,7 @@ public:
   
   ConstantFP *getConstantFP(const APFloat &V);
   
-  MDString *getMDString(const char *StrBegin, const char *StrEnd);
+  MDString *getMDString(const char *StrBegin, unsigned StrLength);
   
   MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
   

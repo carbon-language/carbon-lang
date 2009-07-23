@@ -232,7 +232,7 @@ public:
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
   
   // MDString accessors
-  MDString* getMDString(const char *StrBegin, const char *StrEnd);
+  MDString* getMDString(const char *StrBegin, unsigned Length);
   MDString* getMDString(const std::string &Str);
   
   // FunctionType accessors

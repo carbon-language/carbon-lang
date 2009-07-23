@@ -394,13 +394,13 @@ ConstantFP *LLVMContextImpl::getConstantFP(const APFloat &V) {
 }
 
 MDString *LLVMContextImpl::getMDString(const char *StrBegin,
-                                       const char *StrEnd) {
+                                       unsigned StrLength) {
   sys::SmartScopedWriter<true> Writer(ConstantsLock);
-  StringMapEntry<MDString *> &Entry = MDStringCache.GetOrCreateValue(
-                                        StrBegin, StrEnd);
+  StringMapEntry<MDString *> &Entry = 
+    MDStringCache.GetOrCreateValue(StrBegin, StrBegin + StrLength);
   MDString *&S = Entry.getValue();
   if (!S) S = new MDString(Entry.getKeyData(),
-                           Entry.getKeyData() + Entry.getKeyLength());
+                           Entry.getKeyLength());
 
   return S;
 }
@@ -460,7 +460,8 @@ Constant *LLVMContextImpl::getConstantArray(const ArrayType *Ty,
 
 void LLVMContextImpl::erase(MDString *M) {
   sys::SmartScopedWriter<true> Writer(ConstantsLock);
-  MDStringCache.erase(MDStringCache.find(M->StrBegin, M->StrEnd));
+  MDStringCache.erase(MDStringCache.find(M->StrBegin, 
+                                         M->StrBegin + M->length()));
 }
 
 void LLVMContextImpl::erase(MDNode *M) {

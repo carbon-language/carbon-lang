@@ -512,7 +512,7 @@ static uint64_t GetOptimizationFlags(const Value *V) {
 
        // Code: [strchar x N]
        const char *StrBegin = MDS->begin();
-       for (unsigned i = 0, e = MDS->size(); i != e; ++i)
+       for (unsigned i = 0, e = MDS->length(); i != e; ++i)
         Record.push_back(StrBegin[i]);
     
        // Emit the finished record.

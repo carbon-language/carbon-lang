@@ -64,16 +64,17 @@ public:
 ///
 class MDString : public MetadataBase {
   MDString(const MDString &);            // DO NOT IMPLEMENT
-  const char *StrBegin, *StrEnd;
+  const char *StrBegin;
+  unsigned StrLength;
   friend class LLVMContextImpl;
 
 protected:
-  explicit MDString(const char *begin, const char *end)
+  explicit MDString(const char *begin, unsigned l)
     : MetadataBase(Type::MetadataTy, Value::MDStringVal),
-      StrBegin(begin), StrEnd(end) {}
+      StrBegin(begin), StrLength(l) {}
 
 public:
-  intptr_t size() const { return StrEnd - StrBegin; }
+  unsigned length() const { return StrLength; }
 
   /// begin() - Pointer to the first byte of the string.
   ///
@@ -81,7 +82,7 @@ public:
 
   /// end() - Pointer to one byte past the end of the string.
   ///
-  const char *end() const { return StrEnd; }
+  const char *end() const { return StrBegin + length(); }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const MDString *) { return true; }

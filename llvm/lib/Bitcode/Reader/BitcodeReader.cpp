@@ -758,7 +758,7 @@ bool BitcodeReader::ParseMetadata() {
       for (unsigned i = 0; i != MDStringLength; ++i)
         String[i] = Record[i];
       Value *V = 
-        Context.getMDString(String.c_str(), String.c_str() + MDStringLength);
+        Context.getMDString(String.c_str(), MDStringLength);
       ValueList.AssignValue(V, NextValueNo++);
       break;
     }

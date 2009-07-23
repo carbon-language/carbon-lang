@@ -373,7 +373,7 @@ bool LLParser::ParseNamedGlobal() {
 bool LLParser::ParseMDString(MetadataBase *&MDS) {
   std::string Str;
   if (ParseStringConstant(Str)) return true;
-  MDS = Context.getMDString(Str.data(), Str.data() + Str.size());
+  MDS = Context.getMDString(Str.data(), Str.size());
   return false;
 }
 

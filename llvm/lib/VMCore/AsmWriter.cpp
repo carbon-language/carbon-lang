@@ -1139,7 +1139,7 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
 
   if (const MDString *MDS = dyn_cast<MDString>(V)) {
     Out << "!\"";
-    PrintEscapedString(MDS->begin(), MDS->size(), Out);
+    PrintEscapedString(MDS->begin(), MDS->length(), Out);
     Out << '"';
     return;
   }
@@ -1983,7 +1983,7 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     TypePrinter.print(MDS->getType(), OS);
     OS << ' ';
     OS << "!\"";
-    PrintEscapedString(MDS->begin(), MDS->size(), OS);
+    PrintEscapedString(MDS->begin(), MDS->length(), OS);
     OS << '"';
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
     SlotTracker SlotTable(N);
