@@ -344,13 +344,10 @@ class ConstantStruct : public Constant {
   friend struct ConstantCreator<ConstantStruct, StructType,
                                     std::vector<Constant*> >;
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
+  friend class LLVMContextImpl;
 protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
 public:
-  /// get() - Static factory methods - Return objects of the specified value
-  ///
-  static Constant *get(const StructType *T, const std::vector<Constant*> &V);
-  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

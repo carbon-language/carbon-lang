@@ -275,10 +275,13 @@ public:
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
   void erase(ConstantArray *Z);
+  void erase(ConstantStruct *S);
   
   // RAUW helpers
   Constant *replaceUsesOfWithOnConstant(ConstantArray *CA,
                                              Value *From, Value *To, Use *U);
+  Constant *replaceUsesOfWithOnConstant(ConstantStruct *CS, Value *From,
+                                        Value *To, Use *U);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

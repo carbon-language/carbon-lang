@@ -146,7 +146,7 @@ ConstantPointerNull* LLVMContext::getConstantPointerNull(const PointerType* T) {
 // ConstantStruct accessors.
 Constant* LLVMContext::getConstantStruct(const StructType* T,
                                          const std::vector<Constant*>& V) {
-  return ConstantStruct::get(T, V);
+  return pImpl->getConstantStruct(T, V);
 }
 
 Constant* LLVMContext::getConstantStruct(const std::vector<Constant*>& V,
@@ -658,7 +658,16 @@ void LLVMContext::erase(ConstantArray *C) {
   pImpl->erase(C);
 }
 
+void LLVMContext::erase(ConstantStruct *S) {
+  pImpl->erase(S);
+}
+
 Constant *LLVMContext::replaceUsesOfWithOnConstant(ConstantArray *CA,
                                                Value *From, Value *To, Use *U) {
   return pImpl->replaceUsesOfWithOnConstant(CA, From, To, U);
+}
+
+Constant *LLVMContext::replaceUsesOfWithOnConstant(ConstantStruct *CS,
+                                               Value *From, Value *To, Use *U) {
+  return pImpl->replaceUsesOfWithOnConstant(CS, From, To, U);
 }

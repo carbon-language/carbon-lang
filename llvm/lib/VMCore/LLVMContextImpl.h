@@ -27,6 +27,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringMap.h"
 #include <map>
+#include <vector>
 
 template<class ValType, class TypeClass, class ConstantClass,
          bool HasLargeKey = false  /*true for arrays and structs*/ >
@@ -117,6 +118,10 @@ class LLVMContextImpl {
     ConstantArray, true /*largekey*/> ArrayConstantsTy;
   ArrayConstantsTy *ArrayConstants;
   
+  typedef ValueMap<std::vector<Constant*>, StructType,
+                   ConstantStruct, true /*largekey*/> StructConstantsTy;
+  StructConstantsTy *StructConstants;
+  
   LLVMContext &Context;
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
@@ -142,6 +147,9 @@ public:
   Constant *getConstantArray(const ArrayType *Ty,
                              const std::vector<Constant*> &V);
   
+  Constant *getConstantStruct(const StructType *Ty, 
+                              const std::vector<Constant*> &V);
+  
   ConstantInt *getTrue() {
     if (TheTrueVal)
       return TheTrueVal;
@@ -160,11 +168,14 @@ public:
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
   void erase(ConstantArray *C);
+  void erase(ConstantStruct *S);
   
   // RAUW helpers
   
   Constant *replaceUsesOfWithOnConstant(ConstantArray *CA, Value *From,
                                              Value *To, Use *U);
+  Constant *replaceUsesOfWithOnConstant(ConstantStruct *CS, Value *From,
+                                        Value *To, Use *U);
 };
 
 }
