@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/FormattedStream.h"
+#include <algorithm>
+
 using namespace llvm;
 
 /// ComputeColumn - Examine the current output and figure out which
@@ -44,9 +46,17 @@ void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) {
   if (NewCol < Column || num < MinPad)
     num = MinPad;
 
-  // TODO: Write a whole string at a time.
-  while (num-- > 0)
-    write(' ');
+  // Keep a buffer of spaces handy to speed up processing.
+  static char Spaces[MAX_COLUMN_PAD];
+  static bool Initialized = false;
+  if (!Initialized) {
+    std::fill_n(Spaces, MAX_COLUMN_PAD, ' '),
+    Initialized = true;
+  }
+
+  assert(num < MAX_COLUMN_PAD && "Unexpectedly large column padding");
+
+  write(Spaces, num);
 }
 
 /// fouts() - This returns a reference to a formatted_raw_ostream for
