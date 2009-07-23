@@ -1587,6 +1587,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   bool Owned = false;
   DeclPtrTy TagDecl = Actions.ActOnTag(CurScope, DeclSpec::TST_enum, TK,
                                        StartLoc, SS, Name, NameLoc, Attr, AS,
+                                       Action::MultiTemplateParamsArg(Actions),
                                        Owned);
   
   if (Tok.is(tok::l_brace))

@@ -197,6 +197,7 @@ namespace {
                                SourceLocation KWLoc, const CXXScopeSpec &SS,
                                IdentifierInfo *Name, SourceLocation NameLoc,
                                AttributeList *Attr, AccessSpecifier AS,
+                               MultiTemplateParamsArg TemplateParamLists,
                                bool &Owned) {
       // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
       // is (struct/union/enum/class).

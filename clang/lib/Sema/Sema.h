@@ -2084,13 +2084,12 @@ public:
                                           TemplateParameterList **ParamLists,
                                           unsigned NumParamLists);
                                                 
-  virtual DeclResult
-  ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
-                     SourceLocation KWLoc, const CXXScopeSpec &SS,
-                     IdentifierInfo *Name, SourceLocation NameLoc,
-                     AttributeList *Attr,
-                     MultiTemplateParamsArg TemplateParameterLists,
-                     AccessSpecifier AS);
+  DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
+                                SourceLocation KWLoc, const CXXScopeSpec &SS,
+                                IdentifierInfo *Name, SourceLocation NameLoc,
+                                AttributeList *Attr,
+                                MultiTemplateParamsArg TemplateParameterLists,
+                                AccessSpecifier AS);
 
   QualType CheckTemplateIdType(TemplateName Template,
                                SourceLocation TemplateLoc,

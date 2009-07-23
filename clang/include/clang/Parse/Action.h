@@ -415,25 +415,53 @@ public:
     TK_Declaration, // Fwd decl of a tag:   'struct foo;'
     TK_Definition   // Definition of a tag: 'struct foo { int X; } Y;'
   };
-  virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
-                             SourceLocation KWLoc, const CXXScopeSpec &SS,
-                             IdentifierInfo *Name, SourceLocation NameLoc,
-                             AttributeList *Attr, AccessSpecifier AS,
-                             bool &OwnedDecl) {
-    // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
-    // is (struct/union/enum/class).
-    return ActOnTag(S, TagSpec, TK, KWLoc, SS, Name, NameLoc, Attr, AS,
-                    MultiTemplateParamsArg(*this, 0, 0), OwnedDecl);
-  }
 
+  /// \brief The parser has encountered a tag (e.g., "class X") that should be
+  /// turned into a declaration by the action module.
+  ///
+  /// \param S the scope in which this tag occurs.
+  ///
+  /// \param TagSpec an instance of DeclSpec::TST, indicating what kind of tag 
+  /// this is (struct/union/enum/class).
+  ///
+  /// \param TK the kind of tag we have encountered, which can be a reference
+  /// to a (possibly pre-existing) tag, a declaration of that tag, or the
+  /// beginning of a definition of that tag.
+  ///
+  /// \param KWLoc the location of the "struct", "class", "union", or "enum" 
+  /// keyword.
+  ///
+  /// \param SS C++ scope specifier that precedes the name of the tag, e.g.,
+  /// the "std::" in "class std::type_info".
+  ///
+  /// \param Name the name of the tag, e.g., "X" in "struct X". This parameter
+  /// may be NULL, to indicate an anonymous class/struct/union/enum type.
+  ///
+  /// \param NameLoc the location of the name of the tag.
+  ///
+  /// \param Attr the set of attributes that appertain to the tag.
+  ///
+  /// \param AS when this tag occurs within a C++ class, provides the 
+  /// current access specifier (AS_public, AS_private, AS_protected). 
+  /// Otherwise, it will be AS_none.
+  ///
+  /// \param TemplateParameterLists the set of C++ template parameter lists 
+  /// that apply to this tag, if the tag is a declaration or definition (see 
+  /// the \p TK parameter). The action module is responsible for determining,
+  /// based on the template parameter lists and the scope specifier, whether
+  /// the declared tag is a class template or not.
+  ///
+  /// \param OwnedDecl the callee should set this flag true when the returned
+  /// declaration is "owned" by this reference. Ownership is handled entirely
+  /// by the action module.
+  ///
+  /// \returns the declaration to which this tag refers.
   virtual DeclPtrTy ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
                              SourceLocation KWLoc, const CXXScopeSpec &SS,
                              IdentifierInfo *Name, SourceLocation NameLoc,
                              AttributeList *Attr, AccessSpecifier AS,
                              MultiTemplateParamsArg TemplateParameterLists,
                              bool &OwnedDecl) {
-    // TagType is an instance of DeclSpec::TST, indicating what kind of tag this
-    // is (struct/union/enum/class).
     return DeclPtrTy();
   }
   
@@ -1367,18 +1395,6 @@ public:
                              DeclPtrTy *Params, unsigned NumParams,
                              SourceLocation RAngleLoc) {
     return 0;
-  }
-
-  /// \brief Process the declaration or definition of a class template
-  /// with the given template parameter lists.
-  virtual DeclResult
-  ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
-                     SourceLocation KWLoc, const CXXScopeSpec &SS,
-                     IdentifierInfo *Name, SourceLocation NameLoc,
-                     AttributeList *Attr,
-                     MultiTemplateParamsArg TemplateParameterLists,
-                     AccessSpecifier AS) {
-    return DeclResult();
   }
 
   /// \brief Form a type from a template and a list of template

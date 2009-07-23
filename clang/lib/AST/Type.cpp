@@ -65,8 +65,9 @@ void DependentSizedArrayType::Destroy(ASTContext& C) {
 }
 
 void DependentSizedExtVectorType::Destroy(ASTContext& C) {
-  if (SizeExpr)
-    SizeExpr->Destroy(C);
+  // FIXME: Deallocate size expression, once we're cloning properly.
+//  if (SizeExpr)
+//    SizeExpr->Destroy(C);
   this->~DependentSizedExtVectorType();
   C.Deallocate(this);
 }

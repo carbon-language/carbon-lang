@@ -409,7 +409,7 @@ Sema::ActOnTemplateParameterList(unsigned Depth,
 }
 
 Sema::DeclResult
-Sema::ActOnClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
+Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagKind TK,
                          SourceLocation KWLoc, const CXXScopeSpec &SS,
                          IdentifierInfo *Name, SourceLocation NameLoc,
                          AttributeList *Attr,
@@ -2491,7 +2491,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
         << (TK == TK_Definition)
         << CodeModificationHint::CreateRemoval(SourceRange(LAngleLoc, 
                                                            RAngleLoc));
-      return ActOnClassTemplate(S, TagSpec, TK, KWLoc, SS,
+      return CheckClassTemplate(S, TagSpec, TK, KWLoc, SS,
                                 ClassTemplate->getIdentifier(),
                                 TemplateNameLoc,
                                 Attr,

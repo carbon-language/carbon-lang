@@ -3665,7 +3665,7 @@ Sema::DeclPtrTy Sema::ActOnTag(Scope *S, unsigned TagSpec, TagKind TK,
         // This is a declaration or definition of a class template (which may
         // be a member of another template).
         OwnedDecl = false;
-        DeclResult Result = ActOnClassTemplate(S, TagSpec, TK, KWLoc,
+        DeclResult Result = CheckClassTemplate(S, TagSpec, TK, KWLoc,
                                                SS, Name, NameLoc, Attr,
                                                move(TemplateParameterLists),
                                                AS);
