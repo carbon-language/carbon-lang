@@ -1021,8 +1021,8 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
   // FIXME: They should never return 0, fix that, delete this code.
   if (cfg == 0)
     return NeverFallThrough;
-  // The CFG leaves in dead things, run a simple mark and sweep on it
-  // to weed out the trivially dead things.
+  // The CFG leaves in dead things, and we don't want to dead code paths to
+  // confuse us, so we mark all live things first.
   std::queue<CFGBlock*> workq;
   llvm::BitVector live(cfg->getNumBlockIDs());
   // Prep work queue
@@ -1032,28 +1032,36 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
     CFGBlock *item = workq.front();
     workq.pop();
     live.set(item->getBlockID());
-    CFGBlock::succ_iterator i;
-    for (i=item->succ_begin(); i != item->succ_end(); ++i) {
-      if ((*i) && ! live[(*i)->getBlockID()]) {
-        live.set((*i)->getBlockID());
-        workq.push(*i);
+    for (CFGBlock::succ_iterator I=item->succ_begin(),
+           E=item->succ_end();
+         I != E;
+         ++I) {
+      if ((*I) && !live[(*I)->getBlockID()]) {
+        live.set((*I)->getBlockID());
+        workq.push(*I);
       }
     }
   }
 
-  CFGBlock::succ_iterator i;
+  // Now we know what is live, we check the live precessors of the exit block
+  // and look for fall through paths, being careful to ignore normal returns,
+  // and exceptional paths.
   bool HasLiveReturn = false;
   bool HasFakeEdge = false;
   bool HasPlainEdge = false;
-  for (i=cfg->getExit().pred_begin(); i != cfg->getExit().pred_end(); ++i) {
-    if (!live[(*i)->getBlockID()])
+  for (CFGBlock::succ_iterator I=cfg->getExit().pred_begin(),
+         E = cfg->getExit().pred_end();
+       I != E;
+       ++I) {
+    CFGBlock& B = **I;
+    if (!live[B.getBlockID()])
       continue;
-    if ((*i)->size() == 0) {
+    if (B.size() == 0) {
       // A labeled empty statement, or the entry block...
       HasPlainEdge = true;
       continue;
     }
-    Stmt *S = (**i)[(*i)->size()-1];
+    Stmt *S = B[B.size()-1];
     if (isa<ReturnStmt>(S)) {
       HasLiveReturn = true;
       continue;
@@ -1067,42 +1075,45 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
       continue;
     }
     bool NoReturnEdge = false;
-    if (CallExpr *C = dyn_cast<CallExpr>(S))
-      {
-        Expr *CEE = C->getCallee()->IgnoreParenCasts();
-        if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
-          if (FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
-            if (FD->hasAttr<NoReturnAttr>()) {
-              NoReturnEdge = true;
-              HasFakeEdge = true;
-            }
+    if (CallExpr *C = dyn_cast<CallExpr>(S)) {
+      Expr *CEE = C->getCallee()->IgnoreParenCasts();
+      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
+        if (FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
+          if (FD->hasAttr<NoReturnAttr>()) {
+            NoReturnEdge = true;
+            HasFakeEdge = true;
           }
         }
       }
+    }
+    // FIXME: Add noreturn message sends.
     if (NoReturnEdge == false)
       HasPlainEdge = true;
   }
-  if (HasPlainEdge) {
-    if (HasFakeEdge|HasLiveReturn)
-      return MaybeFallThrough;
-    // This says never for calls to functions that are not marked noreturn, that
-    // don't return.  For people that don't like this, we encourage marking the
-    // functions as noreturn.
-    return AlwaysFallThrough;
-  }
-  return NeverFallThrough;
+  if (!HasPlainEdge)
+    return NeverFallThrough;
+  if (HasFakeEdge || HasLiveReturn)
+    return MaybeFallThrough;
+  // This says AlwaysFallThrough for calls to functions that are not marked
+  // noreturn, that don't return.  If people would like this warning to be more
+  // accurate, such functions should be marked as noreturn.
+  return AlwaysFallThrough;
 }
 
 /// CheckFallThroughForFunctionDef - Check that we don't fall off the end of a
 /// function that should return a value.
 ///
-/// \returns Never iff we can never alter control flow (we always fall off the
-/// end of the statement, Conditional iff we might or might not alter
-/// control-flow and Always iff we always alter control flow (we never fall off
-/// the end of the statement).
+/// \returns AlwaysFallThrough iff we always fall off the end of the statement,
+/// MaybeFallThrough iff we might or might not fall off the end and
+/// NeverFallThrough iff we never fall off the end of the statement.  We assume
+/// that functions not marked noreturn will return.
 void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
-  // FIXME: Would be nice if we had a better way to control cascding errors, but
-  // for now, avoid them.
+  // FIXME: Would be nice if we had a better way to control cascading errors,
+  // but for now, avoid them.  The problem is that when Parse sees:
+  //   int foo() { return a; }
+  // The return is eaten and the Sema code sees just:
+  //   int foo() { }
+  // which this code would then warn about.
   if (getDiagnostics().hasErrorOccurred())
     return;
   if (Diags.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function)
