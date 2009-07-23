@@ -4244,9 +4244,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   }
 
   if (getLangOptions().CPlusPlus) {
-    QualType EltTy = T;
-    while (const ArrayType *AT = Context.getAsArrayType(EltTy))
-      EltTy = AT->getElementType();
+    QualType EltTy = Context.getBaseElementType(T);
 
     if (const RecordType *RT = EltTy->getAsRecordType()) {
       CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
@@ -4430,10 +4428,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   typedef RecordDecl::field_iterator field_iter;
   for (field_iter fi = RD->field_begin(), fe = RD->field_end(); fi != fe;
        ++fi) {
-    QualType EltTy = (*fi)->getType();
-    while (const ArrayType *AT = Context.getAsArrayType(EltTy))
-      EltTy = AT->getElementType();
-
+    QualType EltTy = Context.getBaseElementType((*fi)->getType());
     if (const RecordType *EltRT = EltTy->getAsRecordType()) {
       CXXRecordDecl* EltRD = cast<CXXRecordDecl>(EltRT->getDecl());
 

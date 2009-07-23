@@ -815,6 +815,8 @@ Parser::OwningExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw___is_polymorphic:
   case tok::kw___is_abstract:
   case tok::kw___has_trivial_constructor:
+  case tok::kw___has_trivial_copy:
+  case tok::kw___has_trivial_assign:
   case tok::kw___has_trivial_destructor:
     return ParseUnaryTypeTrait();
 

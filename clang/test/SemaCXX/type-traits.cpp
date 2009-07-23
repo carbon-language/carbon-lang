@@ -22,6 +22,7 @@ struct HasRef { int i; int& ref; HasRef() : i(0), ref(i) {} };
 struct HasNonPOD { NonPOD np; };
 struct HasVirt { virtual void Virt() {}; };
 typedef Derives NonPODAr[10];
+typedef HasVirt VirtAr[10];
 
 void is_pod()
 {
@@ -108,4 +109,96 @@ void is_polymorphic()
   int t16[F(__is_polymorphic(Derives))];
   int t17[F(__is_polymorphic(ClassType))];
   int t18[F(__is_polymorphic(Enum))];
+}
+
+typedef Int& IntRef;
+typedef const IntAr ConstIntAr;
+typedef ConstIntAr ConstIntArAr[4];
+
+struct HasCopy {
+  HasCopy(HasCopy& cp);
+};
+
+void has_trivial_default_constructor() {
+  int t01[T(__has_trivial_constructor(Int))];
+  int t02[T(__has_trivial_constructor(IntAr))];
+  int t03[T(__has_trivial_constructor(Union))];
+  int t04[T(__has_trivial_constructor(UnionAr))];
+  int t05[T(__has_trivial_constructor(POD))];
+  int t06[T(__has_trivial_constructor(Derives))];
+  int t07[T(__has_trivial_constructor(ConstIntAr))];
+  int t08[T(__has_trivial_constructor(ConstIntArAr))];
+  int t09[T(__has_trivial_constructor(HasDest))];
+  int t10[T(__has_trivial_constructor(HasPriv))];
+  int t11[F(__has_trivial_constructor(HasCons))];
+  int t12[F(__has_trivial_constructor(HasRef))];
+  int t13[F(__has_trivial_constructor(HasCopy))];
+  int t14[F(__has_trivial_constructor(IntRef))];
+  int t15[T(__has_trivial_constructor(HasAssign))];
+  int t16[T(__has_trivial_constructor(const Int))];
+  int t17[T(__has_trivial_constructor(NonPODAr))];
+  int t18[F(__has_trivial_constructor(VirtAr))];
+}
+
+void has_trivial_copy_constructor() {
+  int t01[T(__has_trivial_copy(Int))];
+  int t02[T(__has_trivial_copy(IntAr))];
+  int t03[T(__has_trivial_copy(Union))];
+  int t04[T(__has_trivial_copy(UnionAr))];
+  int t05[T(__has_trivial_copy(POD))];
+  int t06[T(__has_trivial_copy(Derives))];
+  int t07[T(__has_trivial_copy(ConstIntAr))];
+  int t08[T(__has_trivial_copy(ConstIntArAr))];
+  int t09[T(__has_trivial_copy(HasDest))];
+  int t10[T(__has_trivial_copy(HasPriv))];
+  int t11[T(__has_trivial_copy(HasCons))];
+  int t12[T(__has_trivial_copy(HasRef))];
+  int t13[F(__has_trivial_copy(HasCopy))];
+  int t14[T(__has_trivial_copy(IntRef))];
+  int t15[T(__has_trivial_copy(HasAssign))];
+  int t16[T(__has_trivial_copy(const Int))];
+  int t17[F(__has_trivial_copy(NonPODAr))];
+  int t18[F(__has_trivial_copy(VirtAr))];
+}
+
+void has_trivial_copy_assignment() {
+  int t01[T(__has_trivial_assign(Int))];
+  int t02[T(__has_trivial_assign(IntAr))];
+  int t03[T(__has_trivial_assign(Union))];
+  int t04[T(__has_trivial_assign(UnionAr))];
+  int t05[T(__has_trivial_assign(POD))];
+  int t06[T(__has_trivial_assign(Derives))];
+  int t07[F(__has_trivial_assign(ConstIntAr))];
+  int t08[F(__has_trivial_assign(ConstIntArAr))];
+  int t09[T(__has_trivial_assign(HasDest))];
+  int t10[T(__has_trivial_assign(HasPriv))];
+  int t11[T(__has_trivial_assign(HasCons))];
+  int t12[T(__has_trivial_assign(HasRef))];
+  int t13[T(__has_trivial_assign(HasCopy))];
+  int t14[F(__has_trivial_assign(IntRef))];
+  int t15[F(__has_trivial_assign(HasAssign))];
+  int t16[F(__has_trivial_assign(const Int))];
+  int t17[F(__has_trivial_assign(NonPODAr))];
+  int t18[F(__has_trivial_assign(VirtAr))];
+}
+
+void has_trivial_destructor() {
+  int t01[T(__has_trivial_destructor(Int))];
+  int t02[T(__has_trivial_destructor(IntAr))];
+  int t03[T(__has_trivial_destructor(Union))];
+  int t04[T(__has_trivial_destructor(UnionAr))];
+  int t05[T(__has_trivial_destructor(POD))];
+  int t06[T(__has_trivial_destructor(Derives))];
+  int t07[T(__has_trivial_destructor(ConstIntAr))];
+  int t08[T(__has_trivial_destructor(ConstIntArAr))];
+  int t09[F(__has_trivial_destructor(HasDest))];
+  int t10[T(__has_trivial_destructor(HasPriv))];
+  int t11[T(__has_trivial_destructor(HasCons))];
+  int t12[T(__has_trivial_destructor(HasRef))];
+  int t13[T(__has_trivial_destructor(HasCopy))];
+  int t14[T(__has_trivial_destructor(IntRef))];
+  int t15[T(__has_trivial_destructor(HasAssign))];
+  int t16[T(__has_trivial_destructor(const Int))];
+  int t17[T(__has_trivial_destructor(NonPODAr))];
+  int t18[T(__has_trivial_destructor(VirtAr))];
 }

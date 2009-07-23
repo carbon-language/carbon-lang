@@ -213,7 +213,7 @@ Stmt::child_iterator TemplateIdRefExpr::child_end() {
   return Stmt::child_iterator();
 }
 
-bool UnaryTypeTraitExpr::EvaluateTrait() const {
+bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
   switch(UTT) {
   default: assert(false && "Unknown type trait or not implemented");
   case UTT_IsPOD: return QueriedType->isPODType();
@@ -236,11 +236,58 @@ bool UnaryTypeTraitExpr::EvaluateTrait() const {
       return cast<CXXRecordDecl>(RT->getDecl())->isAbstract();
     return false;
   case UTT_HasTrivialConstructor:
-    if (const RecordType *RT = QueriedType->getAsRecordType())
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    //   If __is_pod (type) is true then the trait is true, else if type is
+    //   a cv class or union type (or array thereof) with a trivial default
+    //   constructor ([class.ctor]) then the trait is true, else it is false.
+    if (QueriedType->isPODType())
+      return true;
+    if (const RecordType *RT =
+          C.getBaseElementType(QueriedType)->getAsRecordType())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialConstructor();
     return false;
-  case UTT_HasTrivialDestructor:
+  case UTT_HasTrivialCopy:
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    //   If __is_pod (type) is true or type is a reference type then
+    //   the trait is true, else if type is a cv class or union type
+    //   with a trivial copy constructor ([class.copy]) then the trait
+    //   is true, else it is false.
+    if (QueriedType->isPODType() || QueriedType->isReferenceType())
+      return true;
     if (const RecordType *RT = QueriedType->getAsRecordType())
+      return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyConstructor();
+    return false;
+  case UTT_HasTrivialAssign:
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    //   If type is const qualified or is a reference type then the
+    //   trait is false. Otherwise if __is_pod (type) is true then the
+    //   trait is true, else if type is a cv class or union type with
+    //   a trivial copy assignment ([class.copy]) then the trait is
+    //   true, else it is false.
+    // Note: the const and reference restrictions are interesting,
+    // given that const and reference members don't prevent a class
+    // from having a trivial copy assignment operator (but do cause
+    // errors if the copy assignment operator is actually used, q.v.
+    // [class.copy]p12).
+
+    if (C.getBaseElementType(QueriedType).isConstQualified())
+      return false;
+    if (QueriedType->isPODType())
+      return true;
+    if (const RecordType *RT = QueriedType->getAsRecordType())
+      return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyAssignment();
+    return false;
+  case UTT_HasTrivialDestructor:
+    // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
+    //   If __is_pod (type) is true or type is a reference type
+    //   then the trait is true, else if type is a cv class or union
+    //   type (or array thereof) with a trivial destructor
+    //   ([class.dtor]) then the trait is true, else it is
+    //   false.
+    if (QueriedType->isPODType() || QueriedType->isReferenceType())
+      return true;
+    if (const RecordType *RT =
+          C.getBaseElementType(QueriedType)->getAsRecordType())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor();
     return false;
   }

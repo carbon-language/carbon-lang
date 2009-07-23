@@ -537,14 +537,11 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
   // non-static data members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); Field != E; ++Field) {
-    QualType FieldType = C.getCanonicalType((*Field)->getType());
-    while (const ArrayType *AT = C.getAsArrayType(FieldType))
-      FieldType = AT->getElementType();
+    QualType FieldType = C.getBaseElementType((*Field)->getType());
     
-    if (FieldType->getAsRecordType()) {
+    if (const RecordType* RT = FieldType->getAsRecordType()) {
       // Skip over virtual bases which have trivial destructors.
-      CXXRecordDecl *BaseClassDecl
-        = cast<CXXRecordDecl>(FieldType->getAsRecordType()->getDecl());
+      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
       if (BaseClassDecl->hasTrivialDestructor())
         continue;
       uintptr_t Member = reinterpret_cast<uintptr_t>(*Field);
@@ -640,16 +637,12 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
       AllToInit.push_back(AllBaseFields[Key]);
       continue;
     }
-    QualType FieldType = C.getCanonicalType((*Field)->getType());
-    while (const ArrayType *AT = C.getAsArrayType(FieldType))
-      FieldType = AT->getElementType();
-      
-    if (FieldType->getAsRecordType()) {
-      CXXConstructorDecl *Ctor = 0;
-      if (CXXRecordDecl *FieldClassDecl = 
-            dyn_cast<CXXRecordDecl>(FieldType->getAsRecordType()->getDecl()))
-        Ctor = FieldClassDecl->getDefaultConstructor(C);
-      if (!Ctor && !FieldType->isDependentType())
+
+    QualType FT = C.getBaseElementType((*Field)->getType());
+    if (const RecordType* RT = FT->getAsRecordType()) {
+      CXXConstructorDecl *Ctor =
+        cast<CXXRecordDecl>(RT->getDecl())->getDefaultConstructor(C);
+      if (!Ctor && !FT->isDependentType())
         Fields.push_back(*Field);
       CXXBaseOrMemberInitializer *Member = 
         new (C) CXXBaseOrMemberInitializer((*Field), 0, 0,

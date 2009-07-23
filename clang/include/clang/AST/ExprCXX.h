@@ -913,7 +913,7 @@ public:
 
   QualType getQueriedType() const { return QueriedType; }
 
-  bool EvaluateTrait() const;
+  bool EvaluateTrait(ASTContext&) const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnaryTypeTraitExprClass;

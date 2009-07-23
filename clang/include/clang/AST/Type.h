@@ -564,6 +564,39 @@ public:
 };
 
 
+/// QualifierSet - This class is used to collect qualifiers.
+class QualifierSet {
+public:
+  QualifierSet() :
+    CVRMask(0), AddressSpace(0), GCAttrType(QualType::GCNone) {
+  }
+
+  /// Collect any qualifiers on the given type and return an
+  /// unqualified type.
+  const Type *strip(QualType QT) {
+    CVRMask |= QT.getCVRQualifiers();
+    return strip(QT.getTypePtr());
+  }
+
+  /// Collect any qualifiers on the given type and return an
+  /// unqualified type.
+  const Type *strip(const Type* T);
+
+  /// Apply the collected qualifiers to the given type.
+  QualType apply(QualType QT, ASTContext& C);
+
+  /// Apply the collected qualifiers to the given type.
+  QualType apply(const Type* T, ASTContext& C) {
+    return apply(QualType(T, 0), C);
+  }
+  
+private:
+  unsigned CVRMask;
+  unsigned AddressSpace;
+  QualType::GCAttrTypes GCAttrType;
+};
+
+
 /// BuiltinType - This class is used for builtin types like 'int'.  Builtin
 /// types are always canonical and have a literal name field.
 class BuiltinType : public Type {

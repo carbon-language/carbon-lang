@@ -2107,6 +2107,18 @@ QualType ASTContext::getArrayDecayedType(QualType Ty) {
   return PtrTy.getQualifiedType(PrettyArrayType->getIndexTypeQualifier());
 }
 
+QualType ASTContext::getBaseElementType(QualType QT) {
+  QualifierSet qualifiers;
+  while (true) {
+    const Type *UT = qualifiers.strip(QT);
+    if (const ArrayType *AT = getAsArrayType(QualType(UT,0))) {
+      QT = AT->getElementType();
+    }else {
+      return qualifiers.apply(QT, *this);
+    }
+  }
+}
+
 QualType ASTContext::getBaseElementType(const VariableArrayType *VAT) {
   QualType ElemTy = VAT->getElementType();
   

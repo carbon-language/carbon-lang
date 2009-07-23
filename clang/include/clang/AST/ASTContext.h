@@ -708,6 +708,10 @@ public:
   /// getBaseElementType - Returns the innermost element type of a variable
   /// length array type. For example, will return "int" for int[m][n]
   QualType getBaseElementType(const VariableArrayType *VAT);
+
+  /// getBaseElementType - Returns the innermost element type of a type
+  /// (which needn't actually be an array type).
+  QualType getBaseElementType(QualType QT);
   
   /// getArrayDecayedType - Return the properly qualified result of decaying the
   /// specified array type to a pointer.  This operation is non-trivial when

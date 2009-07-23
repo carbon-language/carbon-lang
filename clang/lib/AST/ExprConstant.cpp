@@ -735,7 +735,7 @@ public:
   }
 
   bool VisitUnaryTypeTraitExpr(const UnaryTypeTraitExpr *E) {
-    return Success(E->EvaluateTrait(), E);
+    return Success(E->EvaluateTrait(Info.Ctx), E);
   }
 
   bool VisitChooseExpr(const ChooseExpr *E) {
