@@ -104,6 +104,50 @@ define i32 @extractps_2(<4 x float> %v) nounwind {
   %s = extractelement <4 x i32> %t, i32 3
   ret i32 %s
 
+; X32: _extractps_2:
+; X32:	  extractps	$3, %xmm0, %eax
+
 ; X64: _extractps_2:
 ; X64:	  extractps	$3, %xmm0, %eax
 }
+
+
+; The non-store form of extractps puts its result into a GPR.
+; This makes it suitable for an extract from a <4 x float> that
+; is bitcasted to i32, but unsuitable for much of anything else.
+
+define float @ext_1(<4 x float> %v) nounwind {
+  %s = extractelement <4 x float> %v, i32 3
+  %t = fadd float %s, 1.0
+  ret float %t
+
+; X32: _ext_1:
+; X32:	  pshufd	$3, %xmm0, %xmm0
+; X32:	  addss	LCPI8_0, %xmm0
+
+; X64: _ext_1:
+; X64:	  pshufd	$3, %xmm0, %xmm0
+; X64:	  addss	LCPI8_0(%rip), %xmm0
+}
+define float @ext_2(<4 x float> %v) nounwind {
+  %s = extractelement <4 x float> %v, i32 3
+  ret float %s
+
+; X32: _ext_2:
+; X32:	  pshufd	$3, %xmm0, %xmm0
+
+; X64: _ext_2:
+; X64:	  pshufd	$3, %xmm0, %xmm0
+}
+define i32 @ext_3(<4 x i32> %v) nounwind {
+  %i = extractelement <4 x i32> %v, i32 3
+  ret i32 %i
+
+; X32: _ext_3:
+; X32:	  pextrd	$3, %xmm0, %eax
+
+; X64: _ext_3:
+; X64:	  pextrd	$3, %xmm0, %eax
+}
+
+
