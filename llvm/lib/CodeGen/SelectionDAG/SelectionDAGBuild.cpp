@@ -5431,9 +5431,13 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   // multiply on 64-bit targets.
   // FIXME: Malloc inst should go away: PR715.
   uint64_t ElementSize = TD->getTypeAllocSize(I.getType()->getElementType());
-  if (ElementSize != 1)
+  if (ElementSize != 1) {
+    // Src is always 32-bits, make sure the constant fits.
+    assert(Src.getValueType() == MVT::i32);
+    ElementSize = (uint32_t)ElementSize;
     Src = DAG.getNode(ISD::MUL, getCurDebugLoc(), Src.getValueType(),
                       Src, DAG.getConstant(ElementSize, Src.getValueType()));
+  }
   
   MVT IntPtr = TLI.getPointerTy();
 
