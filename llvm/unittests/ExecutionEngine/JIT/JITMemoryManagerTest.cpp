@@ -187,11 +187,11 @@ TEST(JITMemoryManagerTest, TestSmallGlobalInts) {
   EXPECT_EQ(0xffffffffU, *c);
   EXPECT_EQ(0U, *d);
   *c = 0U;
-  *d = 0xffffffffffffffffU;
+  *d = 0xffffffffffffffffULL;
   EXPECT_EQ(0U, *a);
   EXPECT_EQ(0U, *b);
   EXPECT_EQ(0U, *c);
-  EXPECT_EQ(0xffffffffffffffffU, *d);
+  EXPECT_EQ(0xffffffffffffffffULL, *d);
 
   // Make sure we didn't allocate any extra slabs for this tiny amount of data.
   EXPECT_EQ(1U, MemMgr->GetNumDataSlabs());
@@ -217,11 +217,11 @@ TEST(JITMemoryManagerTest, TestLargeGlobalArray) {
   memset(a, 0x1, 8);
   memset(g, 0x2, Size);
   memset(b, 0x3, 8);
-  EXPECT_EQ(0x0101010101010101U, *a);
+  EXPECT_EQ(0x0101010101010101ULL, *a);
   // Just check the edges.
   EXPECT_EQ(0x02U, g[0]);
   EXPECT_EQ(0x02U, g[Size - 1]);
-  EXPECT_EQ(0x0303030303030303U, *b);
+  EXPECT_EQ(0x0303030303030303ULL, *b);
 
   // Check the number of slabs.
   EXPECT_EQ(2U, MemMgr->GetNumDataSlabs());
