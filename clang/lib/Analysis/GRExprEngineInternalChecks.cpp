@@ -544,6 +544,7 @@ class VISIBILITY_HIDDEN CheckAttrNonNull :
   
 public:
   CheckAttrNonNull() : BT(0) {}
+  ~CheckAttrNonNull() {}
 
   const void *getTag() {
     static int x = 0;

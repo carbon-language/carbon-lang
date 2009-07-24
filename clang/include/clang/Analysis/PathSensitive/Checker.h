@@ -92,6 +92,7 @@ private:
   }
   
 public:
+  virtual ~Checker() {}
   virtual void _PreVisit(CheckerContext &C, const Stmt *stmt) = 0;
   virtual const void *getTag() = 0;
 };
