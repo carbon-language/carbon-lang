@@ -459,6 +459,15 @@ namespace llvm {
       return SE.getAddExpr(this, getStepRecurrence(SE));
     }
 
+    bool hasNoUnsignedOverflow() const { return SubclassData & (1 << 0); }
+    void setHasNoUnsignedOverflow(bool B) {
+      SubclassData = (SubclassData & ~(1 << 0)) | (B << 0);
+    }
+    bool hasNoSignedOverflow() const { return SubclassData & (1 << 1); }
+    void setHasNoSignedOverflow(bool B) {
+      SubclassData = (SubclassData & ~(1 << 1)) | (B << 1);
+    }
+
     virtual void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
