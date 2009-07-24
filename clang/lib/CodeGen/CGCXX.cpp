@@ -432,13 +432,22 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       QualType FieldType = getContext().getCanonicalType((Field)->getType());
       assert(!getContext().getAsArrayType(FieldType) 
              && "FIXME. Field arrays initialization unsupported");
-      assert(!FieldType->getAsRecordType() 
-             && "FIXME. Field class initialization unsupported");
+
       llvm::Value *LoadOfThis = LoadCXXThis();
       LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
+      if (FieldType->getAsRecordType()) {
+        
+          assert(Member->getConstructor() && 
+                 "EmitCtorPrologue - no constructor to initialize member");
+          EmitCXXConstructorCall(Member->getConstructor(),
+                                 Ctor_Complete, LHS.getAddress(),
+                                 Member->const_arg_begin(), 
+                                 Member->const_arg_end());
+        continue;
+      }
       
       assert(Member->getNumArgs() == 1 && "Initializer count must be 1 only");
-      Expr *RhsExpr = *Member->begin();
+      Expr *RhsExpr = *Member->arg_begin();
       llvm::Value *RHS = EmitScalarExpr(RhsExpr, true);
       if (LHS.isBitfield())
         EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, FieldType, 0);

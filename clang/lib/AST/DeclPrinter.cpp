@@ -346,7 +346,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           CXXBaseOrMemberInitializer * BMInitializer = (*B);
           if (B != CDecl->init_begin())
             Out << ", ";
-          bool hasArguments = (BMInitializer->begin() != BMInitializer->end());
+          bool hasArguments = (BMInitializer->arg_begin() != 
+                               BMInitializer->arg_end());
           if (BMInitializer->isMemberInitializer()) {
             FieldDecl *FD = BMInitializer->getMember();
             Out <<  FD->getNameAsString();
@@ -360,12 +361,12 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           }
           if (hasArguments) {
             Out << "(";
-            for (CXXBaseOrMemberInitializer::arg_const_iterator BE = 
-                 BMInitializer->begin(), EE =  BMInitializer->end(); 
-                 BE != EE; BE++) {
-              if (BE != BMInitializer->begin())
+            for (CXXBaseOrMemberInitializer::const_arg_iterator BE = 
+                 BMInitializer->const_arg_begin(), 
+                 EE =  BMInitializer->const_arg_end(); BE != EE; ++BE) {
+              if (BE != BMInitializer->const_arg_begin())
                 Out<< ", ";
-              Expr *Exp = (*BE);
+              const Expr *Exp = (*BE);
               Exp->printPretty(Out, Context, 0, Policy, Indentation);
             }
             Out << ")";

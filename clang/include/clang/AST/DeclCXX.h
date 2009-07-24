@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_DECLCXX_H
 #define LLVM_CLANG_AST_DECLCXX_H
 
+#include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -733,7 +734,7 @@ class CXXBaseOrMemberInitializer {
   uintptr_t BaseOrMember;
 
   /// Args - The arguments used to initialize the base or member.
-  Expr **Args;
+  Stmt **Args;
   unsigned NumArgs;
   
   /// CtorToCall - For a base or member needing a constructor for their
@@ -761,11 +762,11 @@ public:
 
   /// arg_iterator - Iterates through the member initialization
   /// arguments.
-  typedef Expr **arg_iterator;
+  typedef ExprIterator arg_iterator;
 
   /// arg_const_iterator - Iterates through the member initialization
   /// arguments.
-  typedef Expr * const * arg_const_iterator;
+  typedef ConstExprIterator const_arg_iterator;
 
   /// getBaseOrMember - get the generic 'member' representing either the field
   /// or a base class.
@@ -811,19 +812,19 @@ public:
       return 0;
   }
 
-  CXXConstructorDecl *getConstructor() const { return CtorToCall; }
+  const CXXConstructorDecl *getConstructor() const { return CtorToCall; }
   
   SourceLocation getSourceLocation() const { return IdLoc; }
   
-  /// begin() - Retrieve an iterator to the first initializer argument.
-  arg_iterator       begin()       { return Args; }
-  /// begin() - Retrieve an iterator to the first initializer argument.
-  arg_const_iterator begin() const { return Args; }
+  /// arg_begin() - Retrieve an iterator to the first initializer argument.
+  arg_iterator       arg_begin()       { return Args; }
+  /// arg_begin() - Retrieve an iterator to the first initializer argument.
+  const_arg_iterator const_arg_begin() const { return Args; }
 
-  /// end() - Retrieve an iterator past the last initializer argument.
-  arg_iterator       end()       { return Args + NumArgs; }
-  /// end() - Retrieve an iterator past the last initializer argument.
-  arg_const_iterator end() const { return Args + NumArgs; }
+  /// arg_end() - Retrieve an iterator past the last initializer argument.
+  arg_iterator       arg_end()       { return Args + NumArgs; }
+  /// arg_end() - Retrieve an iterator past the last initializer argument.
+  const_arg_iterator const_arg_end() const { return Args + NumArgs; }
 
   /// getNumArgs - Determine the number of arguments used to
   /// initialize the member or base.

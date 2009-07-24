@@ -389,7 +389,8 @@ CXXBaseOrMemberInitializer(QualType BaseType, Expr **Args, unsigned NumArgs,
   
   if (NumArgs > 0) {
     this->NumArgs = NumArgs;
-    this->Args = new Expr*[NumArgs];
+    // FIXME. Allocation via Context
+    this->Args = new Stmt*[NumArgs];
     for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
       this->Args[Idx] = Args[Idx];
   }
@@ -406,7 +407,7 @@ CXXBaseOrMemberInitializer(FieldDecl *Member, Expr **Args, unsigned NumArgs,
 
   if (NumArgs > 0) {
     this->NumArgs = NumArgs;
-    this->Args = new Expr*[NumArgs];
+    this->Args = new Stmt*[NumArgs];
     for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
       this->Args[Idx] = Args[Idx];
   }
