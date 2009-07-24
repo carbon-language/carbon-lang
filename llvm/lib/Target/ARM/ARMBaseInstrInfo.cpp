@@ -513,12 +513,20 @@ unsigned
 ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                       int &FrameIndex) const {
   unsigned oc = MI->getOpcode();
-  if (oc == getOpcode(ARMII::LDR)) {
+  if (oc == getOpcode(ARMII::LDRrr)) {
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isReg() &&
         MI->getOperand(3).isImm() &&
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+  }
+  else if (oc == getOpcode(ARMII::LDRri)) {
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
+        MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -540,12 +548,20 @@ unsigned
 ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                      int &FrameIndex) const {
   unsigned oc = MI->getOpcode();
-  if (oc == getOpcode(ARMII::STR)) {
+  if (oc == getOpcode(ARMII::STRrr)) {
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isReg() &&
         MI->getOperand(3).isImm() &&
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
+      FrameIndex = MI->getOperand(1).getIndex();
+      return MI->getOperand(0).getReg();
+    }
+  }
+  else if (oc == getOpcode(ARMII::STRri)) {
+    if (MI->getOperand(1).isFI() &&
+        MI->getOperand(2).isImm() &&
+        MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
@@ -602,7 +618,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (RC == ARM::GPRRegisterClass) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::STR)))
+    AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::STRrr)))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addReg(0).addImm(0));
   } else if (RC == ARM::DPRRegisterClass) {
@@ -626,7 +642,10 @@ ARMBaseInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   unsigned Opc = 0;
   if (RC == ARM::GPRRegisterClass) {
-    Opc = getOpcode(ARMII::STR);
+    if ((Addr.size() > 1) && Addr[1].isImm())
+      Opc = getOpcode(ARMII::STRri);
+    else
+      Opc = getOpcode(ARMII::STRrr);
   } else if (RC == ARM::DPRRegisterClass) {
     Opc = getOpcode(ARMII::FSTD);
   } else {
@@ -651,7 +670,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (RC == ARM::GPRRegisterClass) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::LDR)), DestReg)
+    AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::LDRrr)), DestReg)
                    .addFrameIndex(FI).addReg(0).addImm(0));
   } else if (RC == ARM::DPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::FLDD)), DestReg)
@@ -671,7 +690,10 @@ loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   unsigned Opc = 0;
   if (RC == ARM::GPRRegisterClass) {
-    Opc = getOpcode(ARMII::LDR);
+    if ((Addr.size() > 1) && Addr[1].isImm())
+      Opc = getOpcode(ARMII::LDRri);
+    else
+      Opc = getOpcode(ARMII::LDRrr);
   } else if (RC == ARM::DPRRegisterClass) {
       Opc = getOpcode(ARMII::FLDD);
   } else {
@@ -704,14 +726,14 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
         unsigned SrcReg = MI->getOperand(1).getReg();
         bool isKill = MI->getOperand(1).isKill();
         bool isUndef = MI->getOperand(1).isUndef();
-        NewMI = BuildMI(MF, MI->getDebugLoc(), get(getOpcode(ARMII::STR)))
+        NewMI = BuildMI(MF, MI->getDebugLoc(), get(getOpcode(ARMII::STRrr)))
           .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
           .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
       } else {          // move -> load
         unsigned DstReg = MI->getOperand(0).getReg();
         bool isDead = MI->getOperand(0).isDead();
         bool isUndef = MI->getOperand(0).isUndef();
-        NewMI = BuildMI(MF, MI->getDebugLoc(), get(getOpcode(ARMII::LDR)))
+        NewMI = BuildMI(MF, MI->getDebugLoc(), get(getOpcode(ARMII::LDRrr)))
           .addReg(DstReg,
                   RegState::Define |
                   getDeadRegState(isDead) |

@@ -628,7 +628,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDValue Op, SDValue N,
       if (N.getOpcode() == ISD::SUB)
         RHSC = -RHSC;
 
-      if ((RHSC >= -255) && (RHSC <= 255)) { // sign + 8 bits.
+      if ((RHSC >= -255) && (RHSC <= 0)) { // 8 bits (always negative)
         Base   = N.getOperand(0);
         OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
         return true;

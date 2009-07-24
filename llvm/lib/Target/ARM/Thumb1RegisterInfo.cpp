@@ -387,6 +387,15 @@ static void removeOperands(MachineInstr &MI, unsigned i) {
     MI.RemoveOperand(Op);
 }
 
+int Thumb1RegisterInfo::
+rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                  unsigned FrameReg, int Offset) const 
+{
+  // if/when eliminateFrameIndex() conforms with ARMBaseRegisterInfo
+  // version then can pull out Thumb1 specific parts here
+  return 0;
+}
+
 void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                              int SPAdj, RegScavenger *RS) const{
   unsigned i = 0;

@@ -30,11 +30,6 @@ ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
 }
 
 unsigned ARMInstrInfo::
-unsignedOffsetOpcodeToSigned(unsigned opcode, unsigned *NumBits) const {
-  return 0;
-}
-
-unsigned ARMInstrInfo::
 getUnindexedOpcode(unsigned Opc) const {
   switch (Opc) {
   default: break;
@@ -85,9 +80,11 @@ getOpcode(ARMII::Op Op) const {
   case ARMII::FLDS: return ARM::FLDS;
   case ARMII::FSTD: return ARM::FSTD;
   case ARMII::FSTS: return ARM::FSTS;
-  case ARMII::LDR: return ARM::LDR;
+  case ARMII::LDRrr: return ARM::LDR;
+  case ARMII::LDRri: return 0;
   case ARMII::MOVr: return ARM::MOVr;
-  case ARMII::STR: return ARM::STR;
+  case ARMII::STRrr: return ARM::STR;
+  case ARMII::STRri: return 0;
   case ARMII::SUBri: return ARM::SUBri;
   case ARMII::SUBrs: return ARM::SUBrs;
   case ARMII::SUBrr: return ARM::SUBrr;

@@ -48,9 +48,11 @@ unsigned Thumb2InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::FLDS: return ARM::FLDS;
   case ARMII::FSTD: return ARM::FSTD;
   case ARMII::FSTS: return ARM::FSTS;
-  case ARMII::LDR: return ARM::LDR;   // FIXME
+  case ARMII::LDRrr: return ARM::t2LDRs;
+  case ARMII::LDRri: return ARM::t2LDRi12;
   case ARMII::MOVr: return ARM::t2MOVr;
-  case ARMII::STR: return ARM::STR;   // FIXME
+  case ARMII::STRrr: return ARM::t2STRs;
+  case ARMII::STRri: return ARM::t2STRi12;
   case ARMII::SUBri: return ARM::t2SUBri;
   case ARMII::SUBrs: return ARM::t2SUBrs;
   case ARMII::SUBrr: return ARM::t2SUBrr;
@@ -86,29 +88,6 @@ Thumb2InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   }
 
   return false;
-}
-
-unsigned
-Thumb2InstrInfo::unsignedOffsetOpcodeToSigned(unsigned opcode,
-                                              unsigned *NumBits) const
-{
-  if (NumBits != NULL)
-    *NumBits = 8;
-
-  switch (opcode) {
-  case ARM::t2LDRi12:   return ARM::t2LDRi8;
-  case ARM::t2LDRHi12:  return ARM::t2LDRHi8;
-  case ARM::t2LDRBi12:  return ARM::t2LDRBi8;
-  case ARM::t2LDRSHi12: return ARM::t2LDRSHi8;
-  case ARM::t2LDRSBi12: return ARM::t2LDRSBi8;
-  case ARM::t2STRi12:   return ARM::t2STRi8;
-  case ARM::t2STRBi12:  return ARM::t2STRBi8;
-  case ARM::t2STRHi12:  return ARM::t2STRHi8;
-  default:
-    break;
-  }
-
-  return 0;
 }
 
 bool

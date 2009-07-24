@@ -142,11 +142,6 @@ getOpcode(int Op) const {
   return TII.getOpcode((ARMII::Op)Op);
 }
 
-unsigned ARMBaseRegisterInfo::
-unsignedOffsetOpcodeToSigned(unsigned opcode, unsigned *NumBits) const {
-  return TII.unsignedOffsetOpcodeToSigned(opcode, NumBits);
-}
-
 const unsigned*
 ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   static const unsigned CalleeSavedRegs[] = {
@@ -1031,9 +1026,126 @@ unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
   return Reg;
 }
 
+int ARMBaseRegisterInfo::
+rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                  unsigned FrameReg, int Offset) const 
+{
+  unsigned Opcode = MI.getOpcode();
+  const TargetInstrDesc &Desc = MI.getDesc();
+  unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
+  bool isSub = false;
+  
+  // Memory operands in inline assembly always use AddrMode2.
+  if (Opcode == ARM::INLINEASM)
+    AddrMode = ARMII::AddrMode2;
+  
+  if (Opcode == getOpcode(ARMII::ADDri)) {
+    Offset += MI.getOperand(FrameRegIdx+1).getImm();
+    if (Offset == 0) {
+      // Turn it into a move.
+      MI.setDesc(TII.get(getOpcode(ARMII::MOVr)));
+      MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
+      MI.RemoveOperand(FrameRegIdx+1);
+      return 0;
+    } else if (Offset < 0) {
+      Offset = -Offset;
+      isSub = true;
+      MI.setDesc(TII.get(getOpcode(ARMII::SUBri)));
+    }
+
+    // Common case: small offset, fits into instruction.
+    if (ARM_AM::getSOImmVal(Offset) != -1) {
+      // Replace the FrameIndex with sp / fp
+      MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
+      MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Offset);
+      return 0;
+    }
+
+    // Otherwise, pull as much of the immedidate into this ADDri/SUBri
+    // as possible.
+    unsigned RotAmt = ARM_AM::getSOImmValRotate(Offset);
+    unsigned ThisImmVal = Offset & ARM_AM::rotr32(0xFF, RotAmt);
+
+    // We will handle these bits from offset, clear them.
+    Offset &= ~ThisImmVal;
+
+    // Get the properly encoded SOImmVal field.
+    assert(ARM_AM::getSOImmVal(ThisImmVal) != -1 &&
+           "Bit extraction didn't work?");
+    MI.getOperand(FrameRegIdx+1).ChangeToImmediate(ThisImmVal);
+ } else {
+    unsigned ImmIdx = 0;
+    int InstrOffs = 0;
+    unsigned NumBits = 0;
+    unsigned Scale = 1;
+    switch (AddrMode) {
+    case ARMII::AddrMode2: {
+      ImmIdx = FrameRegIdx+2;
+      InstrOffs = ARM_AM::getAM2Offset(MI.getOperand(ImmIdx).getImm());
+      if (ARM_AM::getAM2Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+        InstrOffs *= -1;
+      NumBits = 12;
+      break;
+    }
+    case ARMII::AddrMode3: {
+      ImmIdx = FrameRegIdx+2;
+      InstrOffs = ARM_AM::getAM3Offset(MI.getOperand(ImmIdx).getImm());
+      if (ARM_AM::getAM3Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+        InstrOffs *= -1;
+      NumBits = 8;
+      break;
+    }
+    case ARMII::AddrMode5: {
+      ImmIdx = FrameRegIdx+1;
+      InstrOffs = ARM_AM::getAM5Offset(MI.getOperand(ImmIdx).getImm());
+      if (ARM_AM::getAM5Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+        InstrOffs *= -1;
+      NumBits = 8;
+      Scale = 4;
+      break;
+    }
+    default:
+      llvm_unreachable("Unsupported addressing mode!");
+      break;
+    }
+
+    Offset += InstrOffs * Scale;
+    assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
+    if (Offset < 0) {
+      Offset = -Offset;
+      isSub = true;
+    }
+
+    // Attempt to fold address comp. if opcode has offset bits
+    if (NumBits > 0) {
+      // Common case: small offset, fits into instruction.
+      MachineOperand &ImmOp = MI.getOperand(ImmIdx);
+      int ImmedOffset = Offset / Scale;
+      unsigned Mask = (1 << NumBits) - 1;
+      if ((unsigned)Offset <= Mask * Scale) {
+        // Replace the FrameIndex with sp
+        MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
+        if (isSub)
+          ImmedOffset |= 1 << NumBits;
+        ImmOp.ChangeToImmediate(ImmedOffset);
+        return 0;
+      }
+      
+      // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
+      ImmedOffset = ImmedOffset & Mask;
+      if (isSub)
+        ImmedOffset |= 1 << NumBits;
+      ImmOp.ChangeToImmediate(ImmedOffset);
+      Offset &= ~(Mask*Scale);
+    }
+  }
+
+  return (isSub) ? -Offset : Offset;
+}
+
 void ARMBaseRegisterInfo::
 eliminateFrameIndex(MachineBasicBlock::iterator II,
-                    int SPAdj, RegScavenger *RS) const{
+                    int SPAdj, RegScavenger *RS) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
@@ -1065,162 +1177,10 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
     Offset -= AFI->getFramePtrSpillOffset();
   }
 
-  unsigned Opcode = MI.getOpcode();
-  const TargetInstrDesc &Desc = MI.getDesc();
-  unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
-  bool isSub = false;
-
-  // Memory operands in inline assembly always use AddrMode2.
-  if (Opcode == ARM::INLINEASM)
-    AddrMode = ARMII::AddrMode2;
-
-  if (Opcode == getOpcode(ARMII::ADDri)) {
-    Offset += MI.getOperand(i+1).getImm();
-    if (Offset == 0) {
-      // Turn it into a move.
-      MI.setDesc(TII.get(getOpcode(ARMII::MOVr)));
-      MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      MI.RemoveOperand(i+1);
-      return;
-    } else if (Offset < 0) {
-      Offset = -Offset;
-      isSub = true;
-      MI.setDesc(TII.get(getOpcode(ARMII::SUBri)));
-    }
-
-    // Common case: small offset, fits into instruction.
-    if (ARM_AM::getSOImmVal(Offset) != -1) {
-      // Replace the FrameIndex with sp / fp
-      MI.getOperand(i).ChangeToRegister(FrameReg, false);
-      MI.getOperand(i+1).ChangeToImmediate(Offset);
-      return;
-    }
-
-    // Otherwise, we fallback to common code below to form the imm offset with
-    // a sequence of ADDri instructions.  First though, pull as much of the imm
-    // into this ADDri as possible.
-    unsigned RotAmt = ARM_AM::getSOImmValRotate(Offset);
-    unsigned ThisImmVal = Offset & ARM_AM::rotr32(0xFF, RotAmt);
-
-    // We will handle these bits from offset, clear them.
-    Offset &= ~ThisImmVal;
-
-    // Get the properly encoded SOImmVal field.
-    assert(ARM_AM::getSOImmVal(ThisImmVal) != -1 &&
-           "Bit extraction didn't work?");
-    MI.getOperand(i+1).ChangeToImmediate(ThisImmVal);
-  } else {
-    unsigned ImmIdx = 0;
-    int InstrOffs = 0;
-    unsigned NumBits = 0;
-    unsigned Scale = 1;
-    bool encodedOffset = true;
-    bool HandlesNeg = true;
-    switch (AddrMode) {
-    case ARMII::AddrMode2: {
-      ImmIdx = i+2;
-      InstrOffs = ARM_AM::getAM2Offset(MI.getOperand(ImmIdx).getImm());
-      if (ARM_AM::getAM2Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
-        InstrOffs *= -1;
-      NumBits = 12;
-      break;
-    }
-    case ARMII::AddrMode3: {
-      ImmIdx = i+2;
-      InstrOffs = ARM_AM::getAM3Offset(MI.getOperand(ImmIdx).getImm());
-      if (ARM_AM::getAM3Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
-        InstrOffs *= -1;
-      NumBits = 8;
-      break;
-    }
-    case ARMII::AddrMode5: {
-      ImmIdx = i+1;
-      InstrOffs = ARM_AM::getAM5Offset(MI.getOperand(ImmIdx).getImm());
-      if (ARM_AM::getAM5Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
-        InstrOffs *= -1;
-      NumBits = 8;
-      Scale = 4;
-      break;
-    }
-    case ARMII::AddrModeT2_i12: {
-      ImmIdx = i+1;
-      InstrOffs = MI.getOperand(ImmIdx).getImm();
-      NumBits = 12;
-      encodedOffset = false;
-      HandlesNeg = false;
-      break;
-    }
-    case ARMII::AddrModeT2_i8: {
-      ImmIdx = i+1;
-      InstrOffs = MI.getOperand(ImmIdx).getImm();
-      NumBits = 8;
-      encodedOffset = false;
-      break;
-    }
-    case ARMII::AddrModeT2_so: {
-      ImmIdx = i+2;
-      InstrOffs = MI.getOperand(ImmIdx).getImm();
-      encodedOffset = false;
-      break;
-    }
-    default:
-      llvm_unreachable("Unsupported addressing mode!");
-      break;
-    }
-
-    Offset += InstrOffs * Scale;
-    assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
-    if (Offset < 0) {
-      // For addrmodes that cannot handle negative offsets, convert to
-      // an opcode that can, or set NumBits == 0 to avoid folding
-      // address computation
-      if (!HandlesNeg) {
-        unsigned usop = unsignedOffsetOpcodeToSigned(Opcode, &NumBits);
-        if (usop != 0) {
-          MI.setDesc(TII.get(usop));
-          HandlesNeg = true;
-          Opcode = usop;
-        }
-        else {
-          NumBits = 0;
-        }
-      }
-
-      Offset = -Offset;
-      isSub = true;
-    }
-
-    // Attempt to fold address comp. if opcode has offset bits
-    if (NumBits > 0) {
-      // Common case: small offset, fits into instruction.
-      MachineOperand &ImmOp = MI.getOperand(ImmIdx);
-      int ImmedOffset = Offset / Scale;
-      unsigned Mask = (1 << NumBits) - 1;
-      if ((unsigned)Offset <= Mask * Scale) {
-        // Replace the FrameIndex with sp
-        MI.getOperand(i).ChangeToRegister(FrameReg, false);
-        if (isSub) {
-          if (encodedOffset)
-            ImmedOffset |= 1 << NumBits;
-          else
-            ImmedOffset = -ImmedOffset;
-        }
-        ImmOp.ChangeToImmediate(ImmedOffset);
-        return;
-      }
-      
-      // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
-      ImmedOffset = ImmedOffset & Mask;
-      if (isSub) {
-          if (encodedOffset)
-            ImmedOffset |= 1 << NumBits;
-          else
-            ImmedOffset = -ImmedOffset;
-      }
-      ImmOp.ChangeToImmediate(ImmedOffset);
-      Offset &= ~(Mask*Scale);
-    }
-  }
+  // modify MI as necessary to handle as much of 'Offset' as possible
+  Offset = rewriteFrameIndex(MI, i, FrameReg, Offset);
+  if (Offset == 0)
+    return;
 
   // If we get here, the immediate doesn't fit into the instruction.  We folded
   // as much as possible above, handle the rest, providing a register that is
@@ -1240,7 +1200,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
     ? ARMCC::AL : (ARMCC::CondCodes)MI.getOperand(PIdx).getImm();
   unsigned PredReg = (PIdx == -1) ? 0 : MI.getOperand(PIdx+1).getReg();
   emitARMRegPlusImmediate(MBB, II, ScratchReg, FrameReg,
-                          isSub ? -Offset : Offset, Pred, PredReg, TII, dl);
+                          Offset, Pred, PredReg, TII, dl);
   MI.getOperand(i).ChangeToRegister(ScratchReg, false, false, true);
 }
 
@@ -1249,10 +1209,11 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
 /// 3: fp area, 0: don't care).
 static void movePastCSLoadStoreOps(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator &MBBI,
-                                   int Opc, unsigned Area,
+                                   int Opc1, int Opc2, unsigned Area,
                                    const ARMSubtarget &STI) {
   while (MBBI != MBB.end() &&
-         MBBI->getOpcode() == Opc && MBBI->getOperand(1).isFI()) {
+         ((MBBI->getOpcode() == Opc1) || (MBBI->getOpcode() == Opc2)) &&
+         MBBI->getOperand(1).isFI()) {
     if (Area != 0) {
       bool Done = false;
       unsigned Category = 0;
@@ -1342,7 +1303,8 @@ emitPrologue(MachineFunction &MF) const {
 
   // Build the new SUBri to adjust SP for integer callee-save spill area 1.
   emitSPUpdate(MBB, MBBI, TII, dl, -GPRCS1Size);
-  movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::STR), 1, STI);
+  movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::STRrr),
+                         getOpcode(ARMII::STRri), 1, STI);
 
   // Darwin ABI requires FP to point to the stack slot that contains the
   // previous FP.
@@ -1357,7 +1319,8 @@ emitPrologue(MachineFunction &MF) const {
   emitSPUpdate(MBB, MBBI, TII, dl, -GPRCS2Size);
 
   // Build the new SUBri to adjust SP for FP callee-save spill area.
-  movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::STR), 2, STI);
+  movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::STRrr),
+                         getOpcode(ARMII::STRri), 2, STI);
   emitSPUpdate(MBB, MBBI, TII, dl, -DPRCSSize);
 
   // Determine starting offsets of spill areas.
@@ -1372,7 +1335,7 @@ emitPrologue(MachineFunction &MF) const {
   NumBytes = DPRCSOffset;
   if (NumBytes) {
     // Insert it after all the callee-save spills.
-    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::FSTD), 3, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::FSTD), 0, 3, STI);
     emitSPUpdate(MBB, MBBI, TII, dl, -NumBytes);
   }
 
@@ -1397,7 +1360,8 @@ static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII, 
                         const unsigned *CSRegs) {
   return ((MI->getOpcode() == (int)TII.getOpcode(ARMII::FLDD) ||
-           MI->getOpcode() == (int)TII.getOpcode(ARMII::LDR)) &&
+           MI->getOpcode() == (int)TII.getOpcode(ARMII::LDRrr) ||
+           MI->getOpcode() == (int)TII.getOpcode(ARMII::LDRri)) &&
           MI->getOperand(1).isFI() &&
           isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs));
 }
@@ -1458,15 +1422,17 @@ emitEpilogue(MachineFunction &MF,
     }
 
     // Move SP to start of integer callee save spill area 2.
-    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::FLDD), 3, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::FLDD), 0, 3, STI);
     emitSPUpdate(MBB, MBBI, TII, dl, AFI->getDPRCalleeSavedAreaSize());
 
     // Move SP to start of integer callee save spill area 1.
-    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::LDR), 2, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::LDRrr),
+                           getOpcode(ARMII::LDRri), 2, STI);
     emitSPUpdate(MBB, MBBI, TII, dl, AFI->getGPRCalleeSavedArea2Size());
 
     // Move SP to SP upon entry to the function.
-    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::LDR), 1, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::LDRrr),
+                           getOpcode(ARMII::LDRri), 1, STI);
     emitSPUpdate(MBB, MBBI, TII, dl, AFI->getGPRCalleeSavedArea1Size());
   }
 

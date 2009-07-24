@@ -30,12 +30,6 @@ unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {
   return 0;
 }
 
-unsigned
-Thumb1InstrInfo::unsignedOffsetOpcodeToSigned(unsigned opcode,
-                                              unsigned *NumBits) const {
-  return 0;
-}
-
 unsigned Thumb1InstrInfo::getOpcode(ARMII::Op Op) const {
   switch (Op) {
   case ARMII::ADDri: return ARM::tADDi8;
@@ -53,9 +47,11 @@ unsigned Thumb1InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::FLDS: return 0;
   case ARMII::FSTD: return 0;
   case ARMII::FSTS: return 0;
-  case ARMII::LDR: return ARM::tLDR;
+  case ARMII::LDRrr: return ARM::tLDR;
+  case ARMII::LDRri: return 0;
   case ARMII::MOVr: return ARM::tMOVr;
-  case ARMII::STR: return ARM::tSTR;
+  case ARMII::STRrr: return ARM::tSTR;
+  case ARMII::STRri: return 0;
   case ARMII::SUBri: return ARM::tSUBi8;
   case ARMII::SUBrs: return 0;
   case ARMII::SUBrr: return ARM::tSUBrr;
