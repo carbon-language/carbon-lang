@@ -42,12 +42,6 @@ unsigned Thumb2InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::BR_JTm: return ARM::t2BR_JTm;
   case ARMII::BR_JTadd: return ARM::t2BR_JTadd;
   case ARMII::BX_RET: return ARM::tBX_RET;
-  case ARMII::FCPYS: return ARM::FCPYS;
-  case ARMII::FCPYD: return ARM::FCPYD;
-  case ARMII::FLDD: return ARM::FLDD;
-  case ARMII::FLDS: return ARM::FLDS;
-  case ARMII::FSTD: return ARM::FSTD;
-  case ARMII::FSTS: return ARM::FSTS;
   case ARMII::LDRrr: return ARM::t2LDRs;
   case ARMII::LDRri: return ARM::t2LDRi12;
   case ARMII::MOVr: return ARM::t2MOVr;
@@ -56,8 +50,6 @@ unsigned Thumb2InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::SUBri: return ARM::t2SUBri;
   case ARMII::SUBrs: return ARM::t2SUBrs;
   case ARMII::SUBrr: return ARM::t2SUBrr;
-  case ARMII::VMOVD: return ARM::VMOVD;
-  case ARMII::VMOVQ: return ARM::VMOVQ;
   default:
     break;
   }

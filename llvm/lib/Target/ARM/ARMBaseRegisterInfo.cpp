@@ -1335,7 +1335,7 @@ emitPrologue(MachineFunction &MF) const {
   NumBytes = DPRCSOffset;
   if (NumBytes) {
     // Insert it after all the callee-save spills.
-    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::FSTD), 0, 3, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::FSTD, 0, 3, STI);
     emitSPUpdate(MBB, MBBI, TII, dl, -NumBytes);
   }
 
@@ -1359,7 +1359,7 @@ static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
 static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII, 
                         const unsigned *CSRegs) {
-  return ((MI->getOpcode() == (int)TII.getOpcode(ARMII::FLDD) ||
+  return ((MI->getOpcode() == (int)ARM::FLDD ||
            MI->getOpcode() == (int)TII.getOpcode(ARMII::LDRrr) ||
            MI->getOpcode() == (int)TII.getOpcode(ARMII::LDRri)) &&
           MI->getOperand(1).isFI() &&
@@ -1422,7 +1422,7 @@ emitEpilogue(MachineFunction &MF,
     }
 
     // Move SP to start of integer callee save spill area 2.
-    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::FLDD), 0, 3, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::FLDD, 0, 3, STI);
     emitSPUpdate(MBB, MBBI, TII, dl, AFI->getDPRCalleeSavedAreaSize());
 
     // Move SP to start of integer callee save spill area 1.

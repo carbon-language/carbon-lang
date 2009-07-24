@@ -41,12 +41,6 @@ unsigned Thumb1InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::BR_JTm: return 0;
   case ARMII::BR_JTadd: return 0;
   case ARMII::BX_RET: return ARM::tBX_RET;
-  case ARMII::FCPYS: return 0;
-  case ARMII::FCPYD: return 0;
-  case ARMII::FLDD: return 0;
-  case ARMII::FLDS: return 0;
-  case ARMII::FSTD: return 0;
-  case ARMII::FSTS: return 0;
   case ARMII::LDRrr: return ARM::tLDR;
   case ARMII::LDRri: return 0;
   case ARMII::MOVr: return ARM::tMOVr;
@@ -55,8 +49,6 @@ unsigned Thumb1InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::SUBri: return ARM::tSUBi8;
   case ARMII::SUBrs: return 0;
   case ARMII::SUBrr: return ARM::tSUBrr;
-  case ARMII::VMOVD: return 0;
-  case ARMII::VMOVQ: return 0;
   default:
     break;
   }

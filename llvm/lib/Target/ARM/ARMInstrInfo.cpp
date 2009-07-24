@@ -74,12 +74,6 @@ getOpcode(ARMII::Op Op) const {
   case ARMII::BR_JTm: return ARM::BR_JTm;
   case ARMII::BR_JTadd: return ARM::BR_JTadd;
   case ARMII::BX_RET: return ARM::BX_RET;
-  case ARMII::FCPYS: return ARM::FCPYS;
-  case ARMII::FCPYD: return ARM::FCPYD;
-  case ARMII::FLDD: return ARM::FLDD;
-  case ARMII::FLDS: return ARM::FLDS;
-  case ARMII::FSTD: return ARM::FSTD;
-  case ARMII::FSTS: return ARM::FSTS;
   case ARMII::LDRrr: return ARM::LDR;
   case ARMII::LDRri: return 0;
   case ARMII::MOVr: return ARM::MOVr;
@@ -88,8 +82,6 @@ getOpcode(ARMII::Op Op) const {
   case ARMII::SUBri: return ARM::SUBri;
   case ARMII::SUBrs: return ARM::SUBrs;
   case ARMII::SUBrr: return ARM::SUBrr;
-  case ARMII::VMOVD: return ARM::VMOVD;
-  case ARMII::VMOVQ: return ARM::VMOVQ;
   default:
     break;
   }

@@ -171,12 +171,6 @@ namespace ARMII {
     BR_JTm,
     BR_JTadd,
     BX_RET,
-    FCPYS,
-    FCPYD,
-    FLDD,
-    FLDS,
-    FSTD,
-    FSTS,
     LDRrr,
     LDRri,
     MOVr,
@@ -184,9 +178,7 @@ namespace ARMII {
     STRri,
     SUBri,
     SUBrs,
-    SUBrr,
-    VMOVD,
-    VMOVQ
+    SUBrr
   };
 }
 
