@@ -3042,10 +3042,14 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
   for (unsigned i = 0, e = RecFields.size(); i != e; ++i) {
     FieldDecl *Field = RecFields[i];
     uint64_t FieldOffset;
-    if (RD)
-      FieldOffset = 
-        Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
-    else
+    if (RD) {
+      if (Field->isBitField()) {
+        CodeGenTypes::BitFieldInfo Info = CGM.getTypes().getBitFieldInfo(Field);
+        FieldOffset = Layout->getElementOffset(Info.FieldNo);
+      } else 
+        FieldOffset = 
+          Layout->getElementOffset(CGM.getTypes().getLLVMFieldNo(Field));
+    } else
       FieldOffset = ComputeIvarBaseOffset(CGM, OI, cast<ObjCIvarDecl>(Field));
 
     // Skip over unnamed or bitfields
