@@ -2017,10 +2017,11 @@ bool LLParser::ParseValID(ValID &ID) {
         return Error(ID.Loc, "getelementptr requires pointer operand");
       
       if (!GetElementPtrInst::getIndexedType(Elts[0]->getType(),
-                                             (Value**)&Elts[1], Elts.size()-1))
+                                             (Value**)(Elts.data() + 1),
+                                             Elts.size() - 1))
         return Error(ID.Loc, "invalid indices for getelementptr");
       ID.ConstantVal = Context.getConstantExprGetElementPtr(Elts[0],
-                                                      &Elts[1], Elts.size()-1);
+                                              Elts.data() + 1, Elts.size() - 1);
     } else if (Opc == Instruction::Select) {
       if (Elts.size() != 3)
         return Error(ID.Loc, "expected three operands to select");
