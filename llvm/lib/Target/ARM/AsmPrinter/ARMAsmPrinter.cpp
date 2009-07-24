@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
@@ -921,10 +922,10 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
   bool UseSet= TAI->getSetDirective() && TM.getRelocationModel() == Reloc::PIC_;
-  std::set<MachineBasicBlock*> JTSets;
+  SmallPtrSet<MachineBasicBlock*, 8> JTSets;
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
-    if (UseSet && JTSets.insert(MBB).second)
+    if (UseSet && JTSets.insert(MBB))
       printPICJumpTableSetLabel(JTI, MO2.getImm(), MBB);
 
     O << JTEntryDirective << ' ';
@@ -938,8 +939,9 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
       if (!TAI->getJumpTableDirective()) 
         O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
           << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
-    } else
+    } else {
       printBasicBlockLabel(MBB, false, false, false);
+    }
     if (i != e-1)
       O << '\n';
   }
