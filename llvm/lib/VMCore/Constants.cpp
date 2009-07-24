@@ -107,22 +107,23 @@ bool Constant::canTrap() const {
 /// conservative, so if it might codegen to a relocatable entry, it should say
 /// so.  The return values are:
 /// 
-///  0: This constant pool entry is guaranteed to never have a relocation
-///     applied to it (because it holds a simple constant like '4').
-///  1: This entry has relocations, but the entries are guaranteed to be
-///     resolvable by the static linker, so the dynamic linker will never see
-///     them.
-///  2: This entry may have arbitrary relocations.
+///  NoRelocation: This constant pool entry is guaranteed to never have a
+///     relocation applied to it (because it holds a simple constant like
+///     '4').
+///  LocalRelocation: This entry has relocations, but the entries are
+///     guaranteed to be resolvable by the static linker, so the dynamic
+///     linker will never see them.
+///  GlobalRelocations: This entry may have arbitrary relocations.
 ///
 /// FIXME: This really should not be in VMCore.
-unsigned Constant::getRelocationInfo() const {
-  if (const GlobalValue* GV = dyn_cast<GlobalValue>(this)) {
+Constant::PossibleRelocationsTy Constant::getRelocationInfo() const {
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
     if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())
-      return 1;  // Local to this file/library.
-    return 2;    // Global reference.
+      return LocalRelocation;  // Local to this file/library.
+    return GlobalRelocations;    // Global reference.
   }
   
-  unsigned Result = 0;
+  PossibleRelocationsTy Result = NoRelocation;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     Result = std::max(Result, getOperand(i)->getRelocationInfo());
   

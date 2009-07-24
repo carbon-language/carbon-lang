@@ -62,10 +62,10 @@ ELFTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     // placed in r/w section.
     switch (C->getRelocationInfo()) {
     default: break;
-    case 1:
+    case Constant::LocalRelocation:
       return isConstant ? SectionKind::DataRelROLocal :
                           SectionKind::DataRelLocal;
-    case 2:
+    case Constant::GlobalRelocations:
       return isConstant ? SectionKind::DataRelRO : SectionKind::DataRel;
     }
   }

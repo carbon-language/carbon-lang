@@ -59,20 +59,27 @@ public:
   /// true for things like constant expressions that could divide by zero.
   bool canTrap() const;
 
+  enum PossibleRelocationsTy {
+    NoRelocation = 0,
+    LocalRelocation = 1,
+    GlobalRelocations = 2
+  };
+  
   /// getRelocationInfo - This method classifies the entry according to
   /// whether or not it may generate a relocation entry.  This must be
   /// conservative, so if it might codegen to a relocatable entry, it should say
   /// so.  The return values are:
   /// 
-  ///  0: This constant pool entry is guaranteed to never have a relocation
-  ///     applied to it (because it holds a simple constant like '4').
-  ///  1: This entry has relocations, but the entries are guaranteed to be
-  ///     resolvable by the static linker, so the dynamic linker will never see
-  ///     them.
-  ///  2: This entry may have arbitrary relocations.
+  ///  NoRelocation: This constant pool entry is guaranteed to never have a
+  ///     relocation applied to it (because it holds a simple constant like
+  ///     '4').
+  ///  LocalRelocation: This entry has relocations, but the entries are
+  ///     guaranteed to be resolvable by the static linker, so the dynamic
+  ///     linker will never see them.
+  ///  GlobalRelocations: This entry may have arbitrary relocations.
   ///
   /// FIXME: This really should not be in VMCore.
-  unsigned getRelocationInfo() const;
+  PossibleRelocationsTy getRelocationInfo() const;
   
   // Specialize get/setOperand for Constants as their operands are always
   // constants as well.
