@@ -1641,11 +1641,16 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
         case ISD::SETUGT:
         case ISD::SETUGE:
         case ISD::SETULT:
-        case ISD::SETULE:
-          return DAG.getSetCC(dl, VT, N0.getOperand(0),
-                          DAG.getConstant(APInt(C1).trunc(InSize),
-                                          N0.getOperand(0).getValueType()),
-                          Cond);
+        case ISD::SETULE: {
+          MVT newVT = N0.getOperand(0).getValueType();
+          if (DCI.isBeforeLegalizeOps() ||
+              (isOperationLegal(ISD::SETCC, newVT) &&
+               getCondCodeAction(Cond, newVT)==Legal))
+            return DAG.getSetCC(dl, VT, N0.getOperand(0),
+                                DAG.getConstant(APInt(C1).trunc(InSize), newVT),
+                                Cond);
+          break;
+        }
         default:
           break;   // todo, be more careful with signed comparisons
         }

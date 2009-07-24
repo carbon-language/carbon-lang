@@ -802,7 +802,7 @@ SDValue DAGCombiner::combine(SDNode *N) {
 
       // Expose the DAG combiner to the target combiner impls.
       TargetLowering::DAGCombinerInfo
-        DagCombineInfo(DAG, Level == Unrestricted, false, this);
+        DagCombineInfo(DAG, !LegalTypes, !LegalOperations, false, this);
 
       RV = TLI.PerformDAGCombine(N, DagCombineInfo);
     }
@@ -6005,7 +6005,7 @@ SDValue DAGCombiner::SimplifySetCC(MVT VT, SDValue N0,
                                    SDValue N1, ISD::CondCode Cond,
                                    DebugLoc DL, bool foldBooleans) {
   TargetLowering::DAGCombinerInfo
-    DagCombineInfo(DAG, Level == Unrestricted, false, this);
+    DagCombineInfo(DAG, !LegalTypes, !LegalOperations, false, this);
   return TLI.SimplifySetCC(VT, N0, N1, Cond, foldBooleans, DagCombineInfo, DL);
 }
 

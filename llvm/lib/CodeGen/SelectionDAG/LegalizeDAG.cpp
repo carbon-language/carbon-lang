@@ -3086,12 +3086,14 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node,
     break;
   }
   case ISD::SETCC: {
-    if (NVT.isInteger())
-      llvm_unreachable("Cannot promote Legal Integer SETCC yet");
-    else {
-      Tmp1 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(0));
-      Tmp2 = DAG.getNode(ISD::FP_EXTEND, dl, NVT, Node->getOperand(1));
+    unsigned ExtOp = ISD::FP_EXTEND;
+    if (NVT.isInteger()) {
+      ISD::CondCode CCCode =
+        cast<CondCodeSDNode>(Node->getOperand(2))->get();
+      ExtOp = isSignedIntSetCC(CCCode) ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
     }
+    Tmp1 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(0));
+    Tmp2 = DAG.getNode(ExtOp, dl, NVT, Node->getOperand(1));
     Results.push_back(DAG.getNode(ISD::SETCC, dl, Node->getValueType(0),
                                   Tmp1, Tmp2, Node->getOperand(2)));
     break;

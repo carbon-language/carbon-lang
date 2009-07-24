@@ -797,14 +797,17 @@ public:
   struct DAGCombinerInfo {
     void *DC;  // The DAG Combiner object.
     bool BeforeLegalize;
+    bool BeforeLegalizeOps;
     bool CalledByLegalizer;
   public:
     SelectionDAG &DAG;
     
-    DAGCombinerInfo(SelectionDAG &dag, bool bl, bool cl, void *dc)
-      : DC(dc), BeforeLegalize(bl), CalledByLegalizer(cl), DAG(dag) {}
+    DAGCombinerInfo(SelectionDAG &dag, bool bl, bool blo, bool cl, void *dc)
+      : DC(dc), BeforeLegalize(bl), BeforeLegalizeOps(blo),
+        CalledByLegalizer(cl), DAG(dag) {}
     
     bool isBeforeLegalize() const { return BeforeLegalize; }
+    bool isBeforeLegalizeOps() const { return BeforeLegalizeOps; }
     bool isCalledByLegalizer() const { return CalledByLegalizer; }
     
     void AddToWorklist(SDNode *N);
