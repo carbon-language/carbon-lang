@@ -148,6 +148,7 @@ my %AnalysesDefaultEnabled = (
   # Do not enable the missing -dealloc check by default.
   #  '-warn-objc-missing-dealloc' => 1,
   '-warn-objc-unused-ivars' => 1,
+  '-warn-security-syntactic' => 1
 );
 
 ##----------------------------------------------------------------------------##
