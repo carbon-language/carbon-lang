@@ -78,11 +78,13 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
   if (GV->isWeakForLinker()) {
-    // FIXME: Use mangler interface (PR4584).
-    std::string Name = getSectionPrefixForUniqueGlobal(Kind)+GV->getName();
-    unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
-    return getNamedSection(Name.c_str(), Flags);
-  } 
+    if (const char *Prefix = getSectionPrefixForUniqueGlobal(Kind)) {
+      // FIXME: Use mangler interface (PR4584).
+      std::string Name = Prefix+GV->getName();
+      unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
+      return getNamedSection(Name.c_str(), Flags);
+    }
+  }
   
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
@@ -94,36 +96,36 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     case Function::ExternalLinkage:
       return TextSection;
     }
-  } else {
-    const GlobalVariable *GVar = cast<GlobalVariable>(GV);
-    switch (Kind) {
-    default: llvm_unreachable("Unsuported section kind for global");
-    case SectionKind::Data:
-    case SectionKind::DataRel:
-      return DataRelSection;
-    case SectionKind::DataRelLocal:
-      return DataRelLocalSection;
-    case SectionKind::DataRelRO:
-      return DataRelROSection;
-    case SectionKind::DataRelROLocal:
-      return DataRelROLocalSection;
-    case SectionKind::BSS:
-      return getBSSSection_();
-    case SectionKind::ROData:
-      return getReadOnlySection();
-    case SectionKind::RODataMergeStr:
-      return MergeableStringSection(GVar);
-    case SectionKind::RODataMergeConst: {
-      const Type *Ty = GVar->getInitializer()->getType();
-      const TargetData *TD = TM.getTargetData();
-      return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
-    }
-    case SectionKind::ThreadData:
-      // ELF targets usually support TLS stuff
-      return TLSDataSection;
-    case SectionKind::ThreadBSS:
-      return TLSBSSSection;
-    }
+  }
+  
+  const GlobalVariable *GVar = cast<GlobalVariable>(GV);
+  switch (Kind) {
+  default: llvm_unreachable("Unsuported section kind for global");
+  case SectionKind::Data:
+  case SectionKind::DataRel:
+    return DataRelSection;
+  case SectionKind::DataRelLocal:
+    return DataRelLocalSection;
+  case SectionKind::DataRelRO:
+    return DataRelROSection;
+  case SectionKind::DataRelROLocal:
+    return DataRelROLocalSection;
+  case SectionKind::BSS:
+    return getBSSSection_();
+  case SectionKind::ROData:
+    return getReadOnlySection();
+  case SectionKind::RODataMergeStr:
+    return MergeableStringSection(GVar);
+  case SectionKind::RODataMergeConst: {
+    const Type *Ty = GVar->getInitializer()->getType();
+    const TargetData *TD = TM.getTargetData();
+    return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
+  }
+  case SectionKind::ThreadData:
+    // ELF targets usually support TLS stuff
+    return TLSDataSection;
+  case SectionKind::ThreadBSS:
+    return TLSBSSSection;
   }
 }
 
