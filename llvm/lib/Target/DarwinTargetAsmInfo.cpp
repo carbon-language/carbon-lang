@@ -125,8 +125,8 @@ bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
 }
 
 const Section*
-DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind Kind = SectionKindForGlobal(GV);
+DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
+                                            SectionKind::Kind Kind) const {
   bool isWeak = GV->isWeakForLinker();
   bool isNonStatic = TM.getRelocationModel() != Reloc::Static;
 

@@ -186,14 +186,15 @@ PIC16TargetAsmInfo::getSectionForAuto(const GlobalVariable *GV) const {
 // Override default implementation to put the true globals into
 // multiple data sections if required.
 const Section*
-PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
+PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1,
+                                           SectionKind::Kind Kind) const {
   // We select the section based on the initializer here, so it really
   // has to be a GlobalVariable.
   const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1); 
   if (!GV)
-    return TargetAsmInfo::SelectSectionForGlobal(GV1);
+    return TargetAsmInfo::SelectSectionForGlobal(GV1, Kind);
 
-  // Record Exteranl Var Decls.
+  // Record External Var Decls.
   if (GV->isDeclaration()) {
     ExternalVarDecls->Items.push_back(GV);
     return ExternalVarDecls->S_;
@@ -225,7 +226,7 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
     return getROSectionForGlobal(GV);
 
   // Else let the default implementation take care of it.
-  return TargetAsmInfo::SelectSectionForGlobal(GV);
+  return TargetAsmInfo::SelectSectionForGlobal(GV, Kind);
 }
 
 PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {

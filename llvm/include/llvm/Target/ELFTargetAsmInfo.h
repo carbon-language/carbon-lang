@@ -38,7 +38,8 @@ namespace llvm {
     virtual unsigned getFlagsForNamedSection(const char *Section) const;
     
     SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV) const;
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
+    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
+                                                  SectionKind::Kind Kind) const;
     virtual std::string printSectionFlags(unsigned flags) const;
 
     const Section* DataRelSection;

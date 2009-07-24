@@ -619,7 +619,8 @@ namespace llvm {
     virtual std::string printSectionFlags(unsigned flags) const { return ""; }
 
 // FIXME: Eliminate this.
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
+    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
+                                                  SectionKind::Kind Kind) const;
 
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.

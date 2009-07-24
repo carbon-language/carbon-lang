@@ -300,14 +300,13 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   }
   
   // Use default section depending on the 'type' of global
-  return SelectSectionForGlobal(GV);
+  return SelectSectionForGlobal(GV, Kind);
 }
 
 // Lame default implementation. Calculate the section name for global.
 const Section*
-TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind Kind = SectionKindForGlobal(GV);
-
+TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
+                                      SectionKind::Kind Kind) const {
   if (Kind == SectionKind::Text)
     return getTextSection();
   

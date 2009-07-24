@@ -74,9 +74,8 @@ ELFTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
 }
 
 const Section*
-ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind Kind = SectionKindForGlobal(GV);
-
+ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
+                                         SectionKind::Kind Kind) const {
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
     default: llvm_unreachable("Unknown linkage type!");
