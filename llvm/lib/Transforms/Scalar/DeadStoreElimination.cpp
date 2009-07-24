@@ -118,7 +118,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     // If this is a store-store dependence, then the previous store is dead so
     // long as this store is at least as big as it.
     if (StoreInst *DepStore = dyn_cast<StoreInst>(InstDep.getInst()))
-      if (!TD ||
+      if (TD &&
           TD->getTypeStoreSize(DepStore->getOperand(0)->getType()) <=
           TD->getTypeStoreSize(SI->getOperand(0)->getType())) {
         // Delete the store and now-dead instructions that feed it.
