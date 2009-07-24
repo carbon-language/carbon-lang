@@ -158,21 +158,6 @@ namespace llvm {
     /// jump tables).
     const Section *ReadOnlySection;       // Defaults to NULL
 
-    /// SmallDataSection - This is the directive that is emitted to switch to a
-    /// small data section.
-    ///
-    const Section *SmallDataSection;      // Defaults to NULL
-
-    /// SmallBSSSection - This is the directive that is emitted to switch to a
-    /// small bss section.
-    ///
-    const Section *SmallBSSSection;       // Defaults to NULL
-
-    /// SmallRODataSection - This is the directive that is emitted to switch to 
-    /// a small read-only data section.
-    ///
-    const Section *SmallRODataSection;    // Defaults to NULL
-
     /// TLSDataSection - Section directive for Thread Local data.
     ///
     const Section *TLSDataSection;        // Defaults to ".tdata".
@@ -659,15 +644,6 @@ namespace llvm {
     }
     const Section *getReadOnlySection() const {
       return ReadOnlySection;
-    }
-    const Section *getSmallDataSection() const {
-      return SmallDataSection;
-    }
-    const Section *getSmallBSSSection() const {
-      return SmallBSSSection;
-    }
-    const Section *getSmallRODataSection() const {
-      return SmallRODataSection;
     }
     const Section *getTLSDataSection() const {
       return TLSDataSection;

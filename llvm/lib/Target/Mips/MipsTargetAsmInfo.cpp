@@ -17,8 +17,8 @@
 
 using namespace llvm;
 
-MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
-  ELFTargetAsmInfo(TM) {
+MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM)
+  : ELFTargetAsmInfo(TM) {
 
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
@@ -32,13 +32,8 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   BSSSection                  = "\t.section\t.bss";
   CStringSection              = ".rodata.str";
 
-  if (!TM.getSubtarget<MipsSubtarget>().hasABICall()) {
+  if (!TM.getSubtarget<MipsSubtarget>().hasABICall())
     JumpTableDirective = "\t.word\t";
-    SmallDataSection = getNamedSection("\t.sdata", SectionFlags::Writeable);
-    SmallBSSSection = getNamedSection("\t.sbss",
-                                      SectionFlags::Writeable |
-                                      SectionFlags::BSS);
-  } else {
+  else
     JumpTableDirective = "\t.gpword\t";
-  }
 }

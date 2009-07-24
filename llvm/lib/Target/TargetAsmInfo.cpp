@@ -33,9 +33,6 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
   BSSSection = "\t.bss";
   BSSSection_ = 0;
   ReadOnlySection = 0;
-  SmallDataSection = 0;
-  SmallBSSSection = 0;
-  SmallRODataSection = 0;
   TLSDataSection = 0;
   TLSBSSSection = 0;
   ZeroFillDirective = 0;
