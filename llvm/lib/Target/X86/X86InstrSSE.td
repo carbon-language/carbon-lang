@@ -51,7 +51,7 @@ def X86pinsrw  : SDNode<"X86ISD::PINSRW",
                                       SDTCisVT<2, i32>, SDTCisPtrTy<3>]>>;
 def X86insrtps : SDNode<"X86ISD::INSERTPS", 
                  SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisSameAs<0,1>,
-                                      SDTCisVT<2, f32>, SDTCisPtrTy<3>]>>;
+                                      SDTCisVT<2, v4f32>, SDTCisPtrTy<3>]>>;
 def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
                  SDTypeProfile<1, 1, [SDTCisSameAs<0,1>]>>;
 def X86vzload  : SDNode<"X86ISD::VZEXT_LOAD", SDTLoad,
@@ -3596,31 +3596,27 @@ defm PINSRD      : SS41I_insert32<0x22, "pinsrd">;
 // in the target vector.
 let Constraints = "$src1 = $dst" in {
   multiclass SS41I_insertf32<bits<8> opc, string OpcodeStr> {
-    def match_rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
-                   (ins VR128:$src1, FR32:$src2, i32i8imm:$src3),
+    def rr : SS4AIi8<opc, MRMSrcReg, (outs VR128:$dst),
+                   (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
                    !strconcat(OpcodeStr, 
                     "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set VR128:$dst, 
-                     (X86insrtps VR128:$src1, FR32:$src2, imm:$src3))]>, OpSize;
-    def match_rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
+                     (X86insrtps VR128:$src1, VR128:$src2, imm:$src3))]>, OpSize;
+    def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
                    (ins VR128:$src1, f32mem:$src2, i32i8imm:$src3),
                    !strconcat(OpcodeStr,
                     "\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
                    [(set VR128:$dst, 
-                     (X86insrtps VR128:$src1, (loadf32 addr:$src2),
+                     (X86insrtps VR128:$src1,
+                                (v4f32 (scalar_to_vector (loadf32 addr:$src2))),
                                  imm:$src3))]>, OpSize;
   }
 }
 
-let Constraints = "$src1 = $dst" in {
-  def INSERTPSrr : SS4AIi8<0x21, MRMSrcReg, (outs VR128:$dst),
-                          (ins VR128:$src1, VR128:$src2, i32i8imm:$src3),
-                          "insertps\t{$src3, $src2, $dst|$dst, $src2, $src3}",
-                    [(set VR128:$dst, (int_x86_sse41_insertps VR128:$src1, 
-                                                    VR128:$src2, imm:$src3))]>;
-}
-
 defm INSERTPS    : SS41I_insertf32<0x21, "insertps">;
+
+def : Pat<(int_x86_sse41_insertps VR128:$src1, VR128:$src2, imm:$src3),
+          (INSERTPSrr VR128:$src1, VR128:$src2, imm:$src3)>;
 
 let Defs = [EFLAGS] in {
 def PTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),

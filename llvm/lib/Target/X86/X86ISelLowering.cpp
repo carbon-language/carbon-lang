@@ -4383,11 +4383,12 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG){
     // Bits [3:0] of the constant are the zero mask.  The DAG Combiner may
     //   combine either bitwise AND or insert of float 0.0 to set these bits.
     N2 = DAG.getIntPtrConstant(cast<ConstantSDNode>(N2)->getZExtValue() << 4);
+    // Create this as a scalar to vector..
+    N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4f32, N1);
     return DAG.getNode(X86ISD::INSERTPS, dl, VT, N0, N1, N2);
-  } else if (EVT == MVT::i32) {
-    // InsertPS works with constant index.
-    if (isa<ConstantSDNode>(N2))
-      return Op;
+  } else if (EVT == MVT::i32 && isa<ConstantSDNode>(N2)) {
+    // PINSR* works with constant index.
+    return Op;
   }
   return SDValue();
 }
