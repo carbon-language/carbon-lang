@@ -123,6 +123,8 @@ namespace llvm {
 
     const std::string& getName() const { return Name; }
     unsigned getFlags() const { return Flags; }
+    
+    bool hasFlag(unsigned F) const { return (Flags & F) != 0; }
   };
 
   /// TargetAsmInfo - This class is intended to be used as a base class for asm

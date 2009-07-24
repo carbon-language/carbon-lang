@@ -798,9 +798,8 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   SwitchToSection(TheSection);
 
   if (C->isNullValue() && !GVar->hasSection() &&
-      !(Subtarget->isTargetDarwin() &&
-        TAI->SectionKindForGlobal(GVar) == SectionKind::RODataMergeStr)) {
-    // FIXME: This seems to be pretty darwin-specific
+      // Don't put things that should go in the cstring section into "comm".
+      !TheSection->hasFlag(SectionFlags::Strings)) {
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = TAI->getZeroFillDirective()) {
         O << "\t.globl " << name << '\n';

@@ -1103,9 +1103,8 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   SwitchToSection(TheSection);
 
   if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal() &&
-      !(isDarwin && TheSection->getFlags() == SectionKind::RODataMergeStr)) {
-    // FIXME: This seems to be pretty darwin-specific
-
+      // Don't put things that should go in the cstring section into "comm".
+      !TheSection->hasFlag(SectionFlags::Strings)) {
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = TAI->getZeroFillDirective()) {
         O << "\t.globl\t" << name << "\n";
