@@ -224,30 +224,6 @@ static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
   return Flags;
 }
 
-static unsigned GetSectionFlagsForNamedELFSection(const char *Name) {
-  unsigned Flags = 0;
-  // Some lame default implementation based on some magic section names.
-  if (strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
-      strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
-      strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
-      strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
-    Flags |= SectionFlags::BSS;
-  else if (strcmp(Name, ".tdata") == 0 ||
-           strncmp(Name, ".tdata.", 7) == 0 ||
-           strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
-           strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
-    Flags |= SectionFlags::TLS;
-  else if (strcmp(Name, ".tbss") == 0 ||
-           strncmp(Name, ".tbss.", 6) == 0 ||
-           strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
-           strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
-    Flags |= SectionFlags::BSS | SectionFlags::TLS;
-  
-  return Flags;
-}
-
-
-
 SectionKind::Kind
 TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   // Early exit - functions should be always in text sections.
@@ -298,7 +274,7 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     // If the target has magic semantics for certain section names, make sure to
     // pick up the flags.  This allows the user to write things with attribute
     // section and still get the appropriate section flags printed.
-    Flags |= GetSectionFlagsForNamedELFSection(GV->getSection().c_str());
+    Flags |= getFlagsForNamedSection(GV->getSection().c_str());
     
     return getNamedSection(GV->getSection().c_str(), Flags);
   }

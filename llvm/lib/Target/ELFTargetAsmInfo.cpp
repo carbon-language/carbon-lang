@@ -145,6 +145,33 @@ ELFTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
   return getReadOnlySection();  // .rodata
 }
 
+/// getFlagsForNamedSection - If this target wants to be able to infer
+/// section flags based on the name of the section specified for a global
+/// variable, it can implement this.
+unsigned ELFTargetAsmInfo::getFlagsForNamedSection(const char *Name) const {
+  unsigned Flags = 0;
+  if (Name[0] != '.') return 0;
+  
+  // Some lame default implementation based on some magic section names.
+  if (strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
+      strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
+      strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
+      strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
+    Flags |= SectionFlags::BSS;
+  else if (strcmp(Name, ".tdata") == 0 ||
+           strncmp(Name, ".tdata.", 7) == 0 ||
+           strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
+           strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
+    Flags |= SectionFlags::TLS;
+  else if (strcmp(Name, ".tbss") == 0 ||
+           strncmp(Name, ".tbss.", 6) == 0 ||
+           strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
+           strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
+    Flags |= SectionFlags::BSS | SectionFlags::TLS;
+  
+  return Flags;
+}
+
 
 const Section*
 ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
