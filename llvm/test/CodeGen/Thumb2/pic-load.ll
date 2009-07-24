@@ -8,7 +8,7 @@
 define hidden arm_apcscc i32 @atexit(void ()* %func) nounwind {
 entry:
 ; CHECK: atexit:
-; CHECK: add r1, pc
+; CHECK: add r1, r1, pc
 	%r = alloca %struct.one_atexit_routine, align 4		; <%struct.one_atexit_routine*> [#uses=3]
 	%0 = getelementptr %struct.one_atexit_routine* %r, i32 0, i32 0, i32 0		; <void ()**> [#uses=1]
 	store void ()* %func, void ()** %0, align 4
