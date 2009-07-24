@@ -948,10 +948,10 @@ it's better to use a literal <tt>'\n'</tt>.</p>
 
 <p>LLVM includes a lightweight, simple, and efficient stream implementation
 in <tt>llvm/Support/raw_ostream.h</tt> which provides all of the common features
-of <tt>std::iostream</tt>.  All new code should use <tt>raw_ostream</tt> instead
-of <tt>iostream</tt>.</p>
+of <tt>std::ostream</tt>.  All new code should use <tt>raw_ostream</tt> instead
+of <tt>ostream</tt>.</p>
 
-<p>Unlike <tt>std::iostream</tt>, <tt>raw_ostream</tt> is not a template and can
+<p>Unlike <tt>std::ostream</tt>, <tt>raw_ostream</tt> is not a template and can
 be forward declared as <tt>class raw_ostream</tt>.  Public headers should
 generally not include the <tt>raw_ostream</tt> header, but use forward
 declarations and constant references to <tt>raw_ostream</tt> instances.</p>
