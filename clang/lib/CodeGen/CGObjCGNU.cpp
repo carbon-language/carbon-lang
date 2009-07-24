@@ -142,7 +142,7 @@ public:
   virtual llvm::Function *ModuleInitFunction();
   virtual llvm::Function *GetPropertyGetFunction();
   virtual llvm::Function *GetPropertySetFunction();
-  virtual llvm::Function *EnumerationMutationFunction();
+  virtual llvm::Constant *EnumerationMutationFunction();
   
   virtual void EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                          const Stmt &S);
@@ -1243,11 +1243,15 @@ llvm::Function *CGObjCGNU::GetPropertySetFunction() {
 				"objc_setProperty"));
 }
 
-llvm::Function *CGObjCGNU::EnumerationMutationFunction() {
-  std::vector<const llvm::Type*> Params(1, IdTy);
-  return cast<llvm::Function>(CGM.CreateRuntimeFunction(
-        VMContext.getFunctionType(llvm::Type::VoidTy, Params, true),
-        "objc_enumerationMutation"));
+llvm::Constant *CGObjCGNU::EnumerationMutationFunction() {
+  CodeGen::CodeGenTypes &Types = CGM.getTypes();
+  ASTContext &Ctx = CGM.getContext();
+  // void objc_enumerationMutation (id)
+  llvm::SmallVector<QualType,16> Params;
+  Params.push_back(Ctx.getObjCIdType());
+  const llvm::FunctionType *FTy =
+    Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
+  return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
 }
 
 void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,

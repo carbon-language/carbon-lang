@@ -325,8 +325,7 @@ public:
     ASTContext &Ctx = CGM.getContext();
     // void objc_enumerationMutation (id)
     llvm::SmallVector<QualType,16> Params;
-    QualType IdType = Ctx.getObjCIdType();
-    Params.push_back(IdType);
+    Params.push_back(Ctx.getObjCIdType());
     const llvm::FunctionType *FTy =
       Types.GetFunctionType(Types.getFunctionInfo(Ctx.VoidTy, Params), false);
     return CGM.CreateRuntimeFunction(FTy, "objc_enumerationMutation");
