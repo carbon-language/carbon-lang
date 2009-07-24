@@ -1077,9 +1077,9 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar)) {
     if (Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() == Reloc::Static) {
-      if (GVar->getName() == "llvm.global_ctors")
+      if (GVar->isName("llvm.global_ctors"))
         O << ".reference .constructors_used\n";
-      else if (GVar->getName() == "llvm.global_dtors")
+      else if (GVar->isName("llvm.global_dtors"))
         O << ".reference .destructors_used\n";
     }
     return;
@@ -1098,14 +1098,15 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   if (Subtarget->isTargetELF())
     O << "\t.type " << name << ",%object\n";
+  
+  const Section *TheSection = TAI->SectionForGlobal(GVar);
+  SwitchToSection(TheSection);
 
   if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal() &&
-      !(isDarwin &&
-        TAI->SectionKindForGlobal(GVar) == SectionKind::RODataMergeStr)) {
+      !(isDarwin && TheSection->getFlags() == SectionKind::RODataMergeStr)) {
     // FIXME: This seems to be pretty darwin-specific
 
     if (GVar->hasExternalLinkage()) {
-      SwitchToSection(TAI->SectionForGlobal(GVar));
       if (const char *Directive = TAI->getZeroFillDirective()) {
         O << "\t.globl\t" << name << "\n";
         O << Directive << "__DATA, __common, " << name << ", "
@@ -1147,7 +1148,6 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
             O << ',' << (TAI->getAlignmentIsInBytes() ? (1 << Align) : Align);
         }
       } else {
-        SwitchToSection(TAI->SectionForGlobal(GVar));
         if (GVar->hasLocalLinkage())
           O << "\t.local\t" << name << "\n";
         O << TAI->getCOMMDirective()  << name << "," << Size;
@@ -1162,14 +1162,13 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       return;
     }
   }
-
-  SwitchToSection(TAI->SectionForGlobal(GVar));
+  
   switch (GVar->getLinkage()) {
-   case GlobalValue::CommonLinkage:
-   case GlobalValue::LinkOnceAnyLinkage:
-   case GlobalValue::LinkOnceODRLinkage:
-   case GlobalValue::WeakAnyLinkage:
-   case GlobalValue::WeakODRLinkage:
+  case GlobalValue::CommonLinkage:
+  case GlobalValue::LinkOnceAnyLinkage:
+  case GlobalValue::LinkOnceODRLinkage:
+  case GlobalValue::WeakAnyLinkage:
+  case GlobalValue::WeakODRLinkage:
     if (isDarwin) {
       O << "\t.globl " << name << "\n"
         << "\t.weak_definition " << name << "\n";
@@ -1177,17 +1176,17 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
       O << "\t.weak " << name << "\n";
     }
     break;
-   case GlobalValue::AppendingLinkage:
-    // FIXME: appending linkage variables should go into a section of
-    // their name or something.  For now, just emit them as external.
-   case GlobalValue::ExternalLinkage:
+  case GlobalValue::AppendingLinkage:
+  // FIXME: appending linkage variables should go into a section of
+  // their name or something.  For now, just emit them as external.
+  case GlobalValue::ExternalLinkage:
     O << "\t.globl " << name << "\n";
-    // FALL THROUGH
-   case GlobalValue::PrivateLinkage:
-   case GlobalValue::LinkerPrivateLinkage:
-   case GlobalValue::InternalLinkage:
     break;
-   default:
+  case GlobalValue::PrivateLinkage:
+  case GlobalValue::LinkerPrivateLinkage:
+  case GlobalValue::InternalLinkage:
+    break;
+  default:
     llvm_unreachable("Unknown linkage type!");
   }
 

@@ -773,9 +773,9 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar)) {
     if (Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() == Reloc::Static) {
-      if (GVar->getName() == "llvm.global_ctors")
+      if (GVar->isName("llvm.global_ctors"))
         O << ".reference .constructors_used\n";
-      else if (GVar->getName() == "llvm.global_dtors")
+      else if (GVar->isName("llvm.global_dtors"))
         O << ".reference .destructors_used\n";
     }
     return;
@@ -794,11 +794,12 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type\t" << name << ",@object\n";
 
-  SwitchToSection(TAI->SectionForGlobal(GVar));
+  const Section *TheSection = TAI->SectionForGlobal(GVar);
+  SwitchToSection(TheSection);
 
   if (C->isNullValue() && !GVar->hasSection() &&
       !(Subtarget->isTargetDarwin() &&
-        TAI->SectionKindForGlobal(GVar) == SectionKind::RODataMergeStr)) {
+        TheSection->getFlags() == SectionKind::RODataMergeStr)) {
     // FIXME: This seems to be pretty darwin-specific
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = TAI->getZeroFillDirective()) {

@@ -874,9 +874,9 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (EmitSpecialLLVMGlobal(GVar)) {
     if (TM.getRelocationModel() == Reloc::Static) {
-      if (GVar->getName() == "llvm.global_ctors")
+      if (GVar->isName("llvm.global_ctors"))
         O << ".reference .constructors_used\n";
-      else if (GVar->getName() == "llvm.global_dtors")
+      else if (GVar->isName("llvm.global_dtors"))
         O << ".reference .destructors_used\n";
     }
     return;
@@ -890,13 +890,14 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  SwitchToSection(TAI->SectionForGlobal(GVar));
+  const Section *TheSection = TAI->SectionForGlobal(GVar);
+  SwitchToSection(TheSection);
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
       (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
        GVar->isWeakForLinker()) &&
-      TAI->SectionKindForGlobal(GVar) != SectionKind::RODataMergeStr) {
+      TheSection->getFlags() != SectionKind::RODataMergeStr) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     if (GVar->hasExternalLinkage()) {

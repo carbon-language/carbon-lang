@@ -222,7 +222,7 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   }
 
   // Variable either is not constant or thread-local - output to data section.
-  return (isThreadLocal ? SectionKind::ThreadData : SectionKind::Data);
+  return isThreadLocal ? SectionKind::ThreadData : SectionKind::Data;
 }
 
 unsigned
