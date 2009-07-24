@@ -376,7 +376,7 @@ ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   llvm::Value *NextVal;
   if (isa<llvm::IntegerType>(InVal.first->getType())) {
     uint64_t AmountVal = isInc ? 1 : -1;
-    NextVal = VMContext.getConstantInt(InVal.first->getType(), AmountVal, true);
+    NextVal = llvm::ConstantInt::get(InVal.first->getType(), AmountVal, true);
     
     // Add the inc/dec to the real part.
     NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");

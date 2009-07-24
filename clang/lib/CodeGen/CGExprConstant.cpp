@@ -315,7 +315,7 @@ public:
     unsigned byte = V.getLoBits(curBits).getZExtValue() << (FieldOffset & 7);
     do {
       llvm::Constant* byteC =
-        VMContext.getConstantInt(llvm::Type::Int8Ty, byte);
+        llvm::ConstantInt::get(llvm::Type::Int8Ty, byte);
       Elts[i] = VMContext.getConstantExprOr(Elts[i], byteC);
       ++i;
       V = V.lshr(curBits);
@@ -591,7 +591,7 @@ public:
     case Expr::AddrLabelExprClass: {
       assert(CGF && "Invalid address of label expression outside function.");
       unsigned id = CGF->GetIDForAddrOfLabel(cast<AddrLabelExpr>(E)->getLabel());
-      llvm::Constant *C = VMContext.getConstantInt(llvm::Type::Int32Ty, id);
+      llvm::Constant *C = llvm::ConstantInt::get(llvm::Type::Int32Ty, id);
       return VMContext.getConstantExprIntToPtr(C, ConvertType(E->getType()));
     }
     case Expr::CallExprClass: {
@@ -643,7 +643,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     case APValue::LValue: {
       const llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
       llvm::Constant *Offset = 
-        VMContext.getConstantInt(llvm::Type::Int64Ty, 
+        llvm::ConstantInt::get(llvm::Type::Int64Ty, 
                                Result.Val.getLValueOffset());
       
       llvm::Constant *C;
@@ -681,7 +681,8 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       }
     }
     case APValue::Int: {
-      llvm::Constant *C = VMContext.getConstantInt(Result.Val.getInt());
+      llvm::Constant *C = llvm::ConstantInt::get(VMContext, 
+                                                 Result.Val.getInt());
       
       if (C->getType() == llvm::Type::Int1Ty) {
         const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
@@ -692,8 +693,10 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
     case APValue::ComplexInt: {
       llvm::Constant *Complex[2];
       
-      Complex[0] = VMContext.getConstantInt(Result.Val.getComplexIntReal());
-      Complex[1] = VMContext.getConstantInt(Result.Val.getComplexIntImag());
+      Complex[0] = llvm::ConstantInt::get(VMContext,
+                                          Result.Val.getComplexIntReal());
+      Complex[1] = llvm::ConstantInt::get(VMContext, 
+                                          Result.Val.getComplexIntImag());
       
       return VMContext.getConstantStruct(Complex, 2);
     }
@@ -714,7 +717,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       for (unsigned i = 0; i != NumElts; ++i) {
         APValue &Elt = Result.Val.getVectorElt(i);
         if (Elt.isInt())
-          Inits.push_back(VMContext.getConstantInt(Elt.getInt()));
+          Inits.push_back(llvm::ConstantInt::get(VMContext, Elt.getInt()));
         else
           Inits.push_back(VMContext.getConstantFP(Elt.getFloat()));
       }

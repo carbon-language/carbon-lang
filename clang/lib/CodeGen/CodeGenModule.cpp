@@ -211,7 +211,7 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
   for (CtorList::const_iterator I = Fns.begin(), E = Fns.end(); I != E; ++I) {
     std::vector<llvm::Constant*> S;
     S.push_back(
-      VMContext.getConstantInt(llvm::Type::Int32Ty, I->second, false));
+      llvm::ConstantInt::get(llvm::Type::Int32Ty, I->second, false));
     S.push_back(VMContext.getConstantExprBitCast(I->first, CtorPFTy));
     Ctors.push_back(VMContext.getConstantStruct(CtorStructTy, S));
   }
@@ -505,7 +505,7 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
     VMContext.getConstantExprBitCast(GV, SBP),
     VMContext.getConstantExprBitCast(annoGV, SBP),
     VMContext.getConstantExprBitCast(unitGV, SBP),
-    VMContext.getConstantInt(llvm::Type::Int32Ty, LineNo)
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, LineNo)
   };
   return VMContext.getConstantStruct(Fields, 4, false);
 }
@@ -1294,8 +1294,8 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   NextField = *Field++;
   const llvm::Type *Ty = getTypes().ConvertType(getContext().UnsignedIntTy);
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        isUTF16 ? VMContext.getConstantInt(Ty, 0x07d0)
-                                : VMContext.getConstantInt(Ty, 0x07C8), 
+                        isUTF16 ? llvm::ConstantInt::get(Ty, 0x07d0)
+                                : llvm::ConstantInt::get(Ty, 0x07C8), 
                         CFRD, STy);
     
   // String pointer.
@@ -1339,7 +1339,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   NextField = 0;
   Ty = getTypes().ConvertType(getContext().LongTy);
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        VMContext.getConstantInt(Ty, StringLength), CFRD, STy);
+                        llvm::ConstantInt::get(Ty, StringLength), CFRD, STy);
   
   // The struct.
   C = VMContext.getConstantStruct(STy, Fields);

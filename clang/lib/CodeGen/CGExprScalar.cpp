@@ -109,16 +109,16 @@ public:
 
   // Leaves.
   Value *VisitIntegerLiteral(const IntegerLiteral *E) {
-    return VMContext.getConstantInt(E->getValue());
+    return llvm::ConstantInt::get(VMContext, E->getValue());
   }
   Value *VisitFloatingLiteral(const FloatingLiteral *E) {
     return VMContext.getConstantFP(E->getValue());
   }
   Value *VisitCharacterLiteral(const CharacterLiteral *E) {
-    return VMContext.getConstantInt(ConvertType(E->getType()), E->getValue());
+    return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
   Value *VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
-    return VMContext.getConstantInt(ConvertType(E->getType()), E->getValue());
+    return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
   Value *VisitCXXZeroInitValueExpr(const CXXZeroInitValueExpr *E) {
     return VMContext.getNullValue(ConvertType(E->getType()));
@@ -127,14 +127,14 @@ public:
     return VMContext.getNullValue(ConvertType(E->getType()));
   }
   Value *VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
-    return VMContext.getConstantInt(ConvertType(E->getType()),
+    return llvm::ConstantInt::get(ConvertType(E->getType()),
                                   CGF.getContext().typesAreCompatible(
                                     E->getArgType1(), E->getArgType2()));
   }
   Value *VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E);
   Value *VisitAddrLabelExpr(const AddrLabelExpr *E) {
     llvm::Value *V = 
-      VMContext.getConstantInt(llvm::Type::Int32Ty,
+      llvm::ConstantInt::get(llvm::Type::Int32Ty,
                              CGF.GetIDForAddrOfLabel(E->getLabel()));
     
     return Builder.CreateIntToPtr(V, ConvertType(E->getType()));
@@ -143,7 +143,7 @@ public:
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {
     if (const EnumConstantDecl *EC = dyn_cast<EnumConstantDecl>(E->getDecl()))
-      return VMContext.getConstantInt(EC->getInitVal());
+      return llvm::ConstantInt::get(VMContext, EC->getInitVal());
     return EmitLoadOfLValue(E);
   }
   Value *VisitObjCSelectorExpr(ObjCSelectorExpr *E) { 
@@ -206,13 +206,13 @@ public:
     unsigned i;
     for (i = 0; i < NumInitElements; ++i) {
       Value *NewV = Visit(E->getInit(i));
-      Value *Idx = VMContext.getConstantInt(llvm::Type::Int32Ty, i);
+      Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       V = Builder.CreateInsertElement(V, NewV, Idx);
     }
     
     // Emit remaining default initializers
     for (/* Do not initialize i*/; i < NumVectorElements; ++i) {
-      Value *Idx = VMContext.getConstantInt(llvm::Type::Int32Ty, i);
+      Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       llvm::Value *NewV = VMContext.getNullValue(ElementType);
       V = Builder.CreateInsertElement(V, NewV, Idx);
     }
@@ -467,14 +467,14 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
     // Insert the element in element zero of an undef vector
     llvm::Value *UnV = VMContext.getUndef(DstTy);
-    llvm::Value *Idx = VMContext.getConstantInt(llvm::Type::Int32Ty, 0);
+    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
     UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
 
     // Splat the element across to all elements
     llvm::SmallVector<llvm::Constant*, 16> Args;
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
     for (unsigned i = 0; i < NumElements; i++)
-      Args.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, 0));
+      Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
     
     llvm::Constant *Mask = VMContext.getConstantVector(&Args[0], NumElements);
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
@@ -689,7 +689,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
   if (const llvm::PointerType *PT = 
          dyn_cast<llvm::PointerType>(InVal->getType())) {
     llvm::Constant *Inc =
-      VMContext.getConstantInt(llvm::Type::Int32Ty, AmountVal);
+      llvm::ConstantInt::get(llvm::Type::Int32Ty, AmountVal);
     if (!isa<llvm::FunctionType>(PT->getElementType())) {
       QualType PTEE = ValTy->getPointeeType();
       if (const ObjCInterfaceType *OIT = 
@@ -698,7 +698,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
         int size = CGF.getContext().getTypeSize(OIT) / 8;
         if (!isInc)
           size = -size;
-        Inc = VMContext.getConstantInt(Inc->getType(), size);
+        Inc = llvm::ConstantInt::get(Inc->getType(), size);
         const llvm::Type *i8Ty = 
           VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
         InVal = Builder.CreateBitCast(InVal, i8Ty);
@@ -725,7 +725,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     // Decrement does not have this property.
     NextVal = VMContext.getTrue();
   } else if (isa<llvm::IntegerType>(InVal->getType())) {
-    NextVal = VMContext.getConstantInt(InVal->getType(), AmountVal);
+    NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
     NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
   } else {
     // Add the inc/dec to the real part.
@@ -810,7 +810,7 @@ ScalarExprEmitter::VisitSizeOfAlignOfExpr(const SizeOfAlignOfExpr *E) {
   // constant folding logic so we don't have to duplicate it here.
   Expr::EvalResult Result;
   E->Evaluate(Result, CGF.getContext());
-  return VMContext.getConstantInt(Result.Val.getInt());
+  return llvm::ConstantInt::get(VMContext, Result.Val.getInt());
 }
 
 Value *ScalarExprEmitter::VisitUnaryReal(const UnaryOperator *E) {
@@ -989,8 +989,8 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   llvm::Value *handlerResult = Builder.CreateCall4(handlerFunction,
       Builder.CreateSExt(Ops.LHS, llvm::Type::Int64Ty),
       Builder.CreateSExt(Ops.RHS, llvm::Type::Int64Ty),
-      VMContext.getConstantInt(llvm::Type::Int8Ty, OpID),
-      VMContext.getConstantInt(llvm::Type::Int8Ty, 
+      llvm::ConstantInt::get(llvm::Type::Int8Ty, OpID),
+      llvm::ConstantInt::get(llvm::Type::Int8Ty, 
         cast<llvm::IntegerType>(opTy)->getBitWidth()));
 
   handlerResult = Builder.CreateTrunc(handlerResult, opTy);
@@ -1058,7 +1058,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   // type.
   if (const ObjCInterfaceType *OIT = dyn_cast<ObjCInterfaceType>(ElementType)) {
     llvm::Value *InterfaceSize = 
-      VMContext.getConstantInt(Idx->getType(),
+      llvm::ConstantInt::get(Idx->getType(),
                              CGF.getContext().getTypeSize(OIT) / 8);
     Idx = Builder.CreateMul(Idx, InterfaceSize);
     const llvm::Type *i8Ty = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
@@ -1123,7 +1123,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     if (const ObjCInterfaceType *OIT = 
         dyn_cast<ObjCInterfaceType>(LHSElementType)) {
       llvm::Value *InterfaceSize = 
-        VMContext.getConstantInt(Idx->getType(),
+        llvm::ConstantInt::get(Idx->getType(),
                                CGF.getContext().getTypeSize(OIT) / 8);
       Idx = Builder.CreateMul(Idx, InterfaceSize);
       const llvm::Type *i8Ty = 
@@ -1174,12 +1174,12 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     // better code. See PR2247.
     if (llvm::isPowerOf2_64(ElementSize)) {
       Value *ShAmt =
-        VMContext.getConstantInt(ResultType, llvm::Log2_64(ElementSize));
+        llvm::ConstantInt::get(ResultType, llvm::Log2_64(ElementSize));
       return Builder.CreateAShr(BytesBetween, ShAmt, "sub.ptr.shr");
     }
     
     // Otherwise, do a full sdiv.
-    Value *BytesPerElt = VMContext.getConstantInt(ResultType, ElementSize);
+    Value *BytesPerElt = llvm::ConstantInt::get(ResultType, ElementSize);
     return Builder.CreateSDiv(BytesBetween, BytesPerElt, "sub.ptr.div");
   }
 }
@@ -1351,7 +1351,7 @@ Value *ScalarExprEmitter::VisitBinLOr(const BinaryOperator *E) {
     
     // 1 || RHS: If it is safe, just elide the RHS, and return 1.
     if (!CGF.ContainsLabel(E->getRHS()))
-      return VMContext.getConstantInt(CGF.LLVMIntTy, 1);
+      return llvm::ConstantInt::get(CGF.LLVMIntTy, 1);
   }
   
   llvm::BasicBlock *ContBlock = CGF.createBasicBlock("lor.end");
@@ -1591,7 +1591,7 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
     int n = va_arg(va, int);
     assert(n >= 0 && n < (int)NumElements * 2 && 
            "Vector shuffle index out of bounds!");
-    Args.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, n));
+    Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, n));
   }
   
   const char *Name = va_arg(va, const char *);
@@ -1609,7 +1609,7 @@ llvm::Value *CodeGenFunction::EmitVector(llvm::Value * const *Vals,
   
   for (unsigned i = 0, e = NumVals; i != e; ++i) {
     llvm::Value *Val = isSplat ? Vals[0] : Vals[i];
-    llvm::Value *Idx = VMContext.getConstantInt(llvm::Type::Int32Ty, i);
+    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
     Vec = Builder.CreateInsertElement(Vec, Val, Idx, "tmp");
   }
   

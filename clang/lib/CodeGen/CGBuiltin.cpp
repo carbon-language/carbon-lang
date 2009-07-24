@@ -63,7 +63,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   Expr::EvalResult Result;
   if (E->Evaluate(Result, CGM.getContext())) {
     if (Result.Val.isInt())
-      return RValue::get(VMContext.getConstantInt(Result.Val.getInt()));
+      return RValue::get(llvm::ConstantInt::get(VMContext, 
+                                                Result.Val.getInt()));
     else if (Result.Val.isFloat())
       return RValue::get(VMContext.getConstantFP(Result.Val.getFloat()));
   }
@@ -150,7 +151,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
         
     const llvm::Type *ResultType = ConvertType(E->getType());
     Value *Tmp = Builder.CreateAdd(Builder.CreateCall(F, ArgValue, "tmp"), 
-                                   VMContext.getConstantInt(ArgType, 1), "tmp");
+                                   llvm::ConstantInt::get(ArgType, 1), "tmp");
     Value *Zero = VMContext.getNullValue(ArgType);
     Value *IsZero = Builder.CreateICmpEQ(ArgValue, Zero, "iszero");
     Value *Result = Builder.CreateSelect(IsZero, Zero, Tmp, "ffs");
@@ -169,7 +170,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     
     const llvm::Type *ResultType = ConvertType(E->getType());
     Value *Tmp = Builder.CreateCall(F, ArgValue, "tmp");
-    Value *Result = Builder.CreateAnd(Tmp, VMContext.getConstantInt(ArgType, 1), 
+    Value *Result = Builder.CreateAnd(Tmp, llvm::ConstantInt::get(ArgType, 1), 
                                       "tmp");
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, "cast");
@@ -207,15 +208,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     //    bool UseSubObject = TypeArg.getZExtValue() & 1;
     bool UseMinimum = TypeArg.getZExtValue() & 2;
     return RValue::get(
-      VMContext.getConstantInt(ResType, UseMinimum ? 0 : -1LL));
+      llvm::ConstantInt::get(ResType, UseMinimum ? 0 : -1LL));
   }
   case Builtin::BI__builtin_prefetch: {
     Value *Locality, *RW, *Address = EmitScalarExpr(E->getArg(0));
     // FIXME: Technically these constants should of type 'int', yes?
     RW = (E->getNumArgs() > 1) ? EmitScalarExpr(E->getArg(1)) : 
-      VMContext.getConstantInt(llvm::Type::Int32Ty, 0);
+      llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
     Locality = (E->getNumArgs() > 2) ? EmitScalarExpr(E->getArg(2)) : 
-      VMContext.getConstantInt(llvm::Type::Int32Ty, 3);
+      llvm::ConstantInt::get(llvm::Type::Int32Ty, 3);
     Value *F = CGM.getIntrinsic(Intrinsic::prefetch, 0, 0);
     return RValue::get(Builder.CreateCall3(F, Address, RW, Locality));
   }
@@ -280,9 +281,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_bzero: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Builder.CreateCall4(CGM.getMemSetFn(), Address,
-                        VMContext.getConstantInt(llvm::Type::Int8Ty, 0),
+                        llvm::ConstantInt::get(llvm::Type::Int8Ty, 0),
                         EmitScalarExpr(E->getArg(1)),
-                        VMContext.getConstantInt(llvm::Type::Int32Ty, 1));
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
     return RValue::get(Address);
   }
   case Builtin::BI__builtin_memcpy: {
@@ -290,7 +291,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Builder.CreateCall4(CGM.getMemCpyFn(), Address,
                         EmitScalarExpr(E->getArg(1)),
                         EmitScalarExpr(E->getArg(2)),
-                        VMContext.getConstantInt(llvm::Type::Int32Ty, 1));
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
     return RValue::get(Address);
   }
   case Builtin::BI__builtin_memmove: {
@@ -298,7 +299,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Builder.CreateCall4(CGM.getMemMoveFn(), Address,
                         EmitScalarExpr(E->getArg(1)),
                         EmitScalarExpr(E->getArg(2)),
-                        VMContext.getConstantInt(llvm::Type::Int32Ty, 1));
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
     return RValue::get(Address);
   }
   case Builtin::BI__builtin_memset: {
@@ -307,7 +308,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                         Builder.CreateTrunc(EmitScalarExpr(E->getArg(1)),
                                             llvm::Type::Int8Ty),
                         EmitScalarExpr(E->getArg(2)),
-                        VMContext.getConstantInt(llvm::Type::Int32Ty, 1));
+                        llvm::ConstantInt::get(llvm::Type::Int32Ty, 1));
     return RValue::get(Address);
   }
   case Builtin::BI__builtin_return_address: {
@@ -513,8 +514,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
   case Builtin::BI__sync_synchronize: {
     Value *C[5];
-    C[0] = C[1] = C[2] = C[3] = VMContext.getConstantInt(llvm::Type::Int1Ty, 1);
-    C[4] = VMContext.getConstantInt(llvm::Type::Int1Ty, 0);
+    C[0] = C[1] = C[2] = C[3] = llvm::ConstantInt::get(llvm::Type::Int1Ty, 1);
+    C[4] = llvm::ConstantInt::get(llvm::Type::Int1Ty, 0);
     Builder.CreateCall(CGM.getIntrinsic(Intrinsic::memory_barrier), C, C + 5);
     return RValue::get(0);
   }
@@ -637,7 +638,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_psrlwi128: {
     Ops[1] = Builder.CreateZExt(Ops[1], llvm::Type::Int64Ty, "zext");
     const llvm::Type *Ty = VMContext.getVectorType(llvm::Type::Int64Ty, 2);
-    llvm::Value *Zero = VMContext.getConstantInt(llvm::Type::Int32Ty, 0);
+    llvm::Value *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
     Ops[1] = Builder.CreateInsertElement(VMContext.getUndef(Ty),
                                          Ops[1], Zero, "insert");
     Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "bitcast");
@@ -744,7 +745,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_ldmxcsr: {
     llvm::Type *PtrTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
-    Value *One = VMContext.getConstantInt(llvm::Type::Int32Ty, 1);
+    Value *One = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(llvm::Type::Int32Ty, One, "tmp");
     Builder.CreateStore(Ops[0], Tmp);
     return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_ldmxcsr),
@@ -752,7 +753,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_stmxcsr: {
     llvm::Type *PtrTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
-    Value *One = VMContext.getConstantInt(llvm::Type::Int32Ty, 1);
+    Value *One = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(llvm::Type::Int32Ty, One, "tmp");
     One = Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
                              Builder.CreateBitCast(Tmp, PtrTy));
@@ -777,7 +778,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     
     // extract (0, 1)
     unsigned Index = BuiltinID == X86::BI__builtin_ia32_storelps ? 0 : 1;
-    llvm::Value *Idx = VMContext.getConstantInt(llvm::Type::Int32Ty, Index);
+    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, Index);
     Ops[1] = Builder.CreateExtractElement(Ops[1], Idx, "extract");
 
     // cast pointer to i64 & store

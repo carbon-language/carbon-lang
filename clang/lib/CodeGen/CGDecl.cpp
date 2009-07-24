@@ -405,19 +405,19 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     int isa = 0;
     if (flag&BLOCK_FIELD_IS_WEAK)
       isa = 1;
-    V = VMContext.getConstantInt(llvm::Type::Int32Ty, isa);
+    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, isa);
     V = Builder.CreateIntToPtr(V, PtrToInt8Ty, "isa");
     Builder.CreateStore(V, isa_field);
 
     V = Builder.CreateBitCast(DeclPtr, PtrToInt8Ty, "forwarding");
     Builder.CreateStore(V, forwarding_field);
 
-    V = VMContext.getConstantInt(llvm::Type::Int32Ty, flags);
+    V = llvm::ConstantInt::get(llvm::Type::Int32Ty, flags);
     Builder.CreateStore(V, flags_field);
 
     const llvm::Type *V1;
     V1 = cast<llvm::PointerType>(DeclPtr->getType())->getElementType();
-    V = VMContext.getConstantInt(llvm::Type::Int32Ty,
+    V = llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                (CGM.getTargetData().getTypeStoreSizeInBits(V1)
                                 / 8));
     Builder.CreateStore(V, size_field);

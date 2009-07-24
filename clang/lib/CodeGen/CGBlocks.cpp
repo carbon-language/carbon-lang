@@ -32,14 +32,14 @@ BuildDescriptorBlockDecl(bool BlockHasCopyDispose, uint64_t Size,
   llvm::LLVMContext &VMContext = CGM.getLLVMContext();
 
   // reserved
-  C = VMContext.getConstantInt(UnsignedLongTy, 0);
+  C = llvm::ConstantInt::get(UnsignedLongTy, 0);
   Elts.push_back(C);
 
   // Size
   // FIXME: What is the right way to say this doesn't fit?  We should give
   // a user diagnostic in that case.  Better fix would be to change the
   // API to size_t.
-  C = VMContext.getConstantInt(UnsignedLongTy, Size);
+  C = llvm::ConstantInt::get(UnsignedLongTy, Size);
   Elts.push_back(C);
 
   if (BlockHasCopyDispose) {
@@ -148,11 +148,11 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
     // __flags
     const llvm::IntegerType *IntTy = cast<llvm::IntegerType>(
       CGM.getTypes().ConvertType(CGM.getContext().IntTy));
-    C = VMContext.getConstantInt(IntTy, flags);
+    C = llvm::ConstantInt::get(IntTy, flags);
     Elts[1] = C;
 
     // __reserved
-    C = VMContext.getConstantInt(IntTy, 0);
+    C = llvm::ConstantInt::get(IntTy, 0);
     Elts[2] = C;
 
     if (subBlockDeclRefDecls.size() == 0) {
@@ -161,7 +161,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
       // Optimize to being a global block.
       Elts[0] = CGM.getNSConcreteGlobalBlock();
-      Elts[1] = VMContext.getConstantInt(IntTy, flags|BLOCK_IS_GLOBAL);
+      Elts[1] = llvm::ConstantInt::get(IntTy, flags|BLOCK_IS_GLOBAL);
 
       C = VMContext.getConstantStruct(Elts);
 
@@ -267,7 +267,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
             llvm::Value *BlockLiteral = LoadBlockStruct();
 
             Loc = Builder.CreateGEP(BlockLiteral,
-                                  VMContext.getConstantInt(llvm::Type::Int64Ty,
+                                  llvm::ConstantInt::get(llvm::Type::Int64Ty,
                                                            offset),
                                     "block.literal");
             Ty = VMContext.getPointerType(Ty, 0);
@@ -455,7 +455,7 @@ llvm::Value *CodeGenFunction::GetAddrOfBlockDecl(const BlockDeclRefExpr *E) {
 
   llvm::Value *BlockLiteral = LoadBlockStruct();
   llvm::Value *V = Builder.CreateGEP(BlockLiteral,
-                                  VMContext.getConstantInt(llvm::Type::Int64Ty,
+                                  llvm::ConstantInt::get(llvm::Type::Int64Ty,
                                                             offset),
                                      "block.literal");
   if (E->isByRef()) {
@@ -510,7 +510,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
   uint64_t BlockLiteralSize =
     TheTargetData.getTypeStoreSizeInBits(getGenericBlockLiteralType()) / 8;
   DescriptorFields[1] =
-                      VMContext.getConstantInt(UnsignedLongTy,BlockLiteralSize);
+                      llvm::ConstantInt::get(UnsignedLongTy,BlockLiteralSize);
 
   llvm::Constant *DescriptorStruct =
     VMContext.getConstantStruct(&DescriptorFields[0], 2);
@@ -542,7 +542,7 @@ BlockModule::GetAddrOfGlobalBlock(const BlockExpr *BE, const char * n) {
 
   // Flags
   LiteralFields[1] =
-    VMContext.getConstantInt(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_DESCRIPTOR);
+    llvm::ConstantInt::get(IntTy, BLOCK_IS_GLOBAL | BLOCK_HAS_DESCRIPTOR);
 
   // Reserved
   LiteralFields[2] = getModule().getContext().getNullValue(IntTy);
@@ -777,7 +777,7 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
         llvm::Value *Dstv = Builder.CreateStructGEP(DstObj, index);
         Dstv = Builder.CreateBitCast(Dstv, PtrToInt8Ty);
 
-        llvm::Value *N = VMContext.getConstantInt(llvm::Type::Int32Ty, flag);
+        llvm::Value *N = llvm::ConstantInt::get(llvm::Type::Int32Ty, flag);
         llvm::Value *F = getBlockObjectAssign();
         Builder.CreateCall3(F, Dstv, Srcv, N);
       }
@@ -928,7 +928,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
   
   flag |= BLOCK_BYREF_CALLER;
 
-  llvm::Value *N = VMContext.getConstantInt(llvm::Type::Int32Ty, flag);
+  llvm::Value *N = llvm::ConstantInt::get(llvm::Type::Int32Ty, flag);
   llvm::Value *F = getBlockObjectAssign();
   Builder.CreateCall3(F, DstObj, SrcObj, N);
 
@@ -1054,7 +1054,7 @@ void BlockFunction::BuildBlockRelease(llvm::Value *V, int flag) {
   llvm::Value *F = getBlockObjectDispose();
   llvm::Value *N;
   V = Builder.CreateBitCast(V, PtrToInt8Ty);
-  N = VMContext.getConstantInt(llvm::Type::Int32Ty, flag);
+  N = llvm::ConstantInt::get(llvm::Type::Int32Ty, flag);
   Builder.CreateCall2(F, V, N);
 }
 

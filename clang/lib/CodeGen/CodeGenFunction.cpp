@@ -420,8 +420,8 @@ void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
   Builder.CreateCall4(CGM.getMemSetFn(), DestPtr,
                       getLLVMContext().getNullValue(llvm::Type::Int8Ty),
                       // TypeInfo.first describes size in bits.
-                      VMContext.getConstantInt(IntPtr, TypeInfo.first/8),
-                      VMContext.getConstantInt(llvm::Type::Int32Ty, 
+                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
                                              TypeInfo.second/8));
 }
 
@@ -447,7 +447,7 @@ void CodeGenFunction::EmitIndirectSwitches() {
     I->setSuccessor(0, Default);
     for (std::map<const LabelStmt*,unsigned>::iterator LI = LabelIDs.begin(), 
            LE = LabelIDs.end(); LI != LE; ++LI) {
-      I->addCase(VMContext.getConstantInt(llvm::Type::Int32Ty,
+      I->addCase(llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                         LI->second), 
                  getBasicBlockForLabel(LI->first));
     }
@@ -481,7 +481,7 @@ llvm::Value *CodeGenFunction::EmitVLASize(QualType Ty) {
       if (ElemTy->isVariableArrayType())
         ElemSize = EmitVLASize(ElemTy);
       else {
-        ElemSize = VMContext.getConstantInt(SizeTy,
+        ElemSize = llvm::ConstantInt::get(SizeTy,
                                           getContext().getTypeSize(ElemTy) / 8);
       }
     
@@ -600,13 +600,13 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
         
         // Check if we already have a destination for this block.
         if (Dest == SI->getDefaultDest())
-          ID = VMContext.getConstantInt(llvm::Type::Int32Ty, 0);
+          ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
         else {
           ID = SI->findCaseDest(Dest);
           if (!ID) {
             // No code found, get a new unique one by using the number of
             // switch successors.
-            ID = VMContext.getConstantInt(llvm::Type::Int32Ty, 
+            ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
                                         SI->getNumSuccessors());
             SI->addCase(ID, Dest);
           }
@@ -623,7 +623,7 @@ CodeGenFunction::CleanupBlockInfo CodeGenFunction::PopCleanupBlock()
         llvm::BasicBlock *CleanupPad = createBasicBlock("cleanup.pad", CurFn);
 
         // Create a unique case ID.
-        llvm::ConstantInt *ID = VMContext.getConstantInt(llvm::Type::Int32Ty, 
+        llvm::ConstantInt *ID = llvm::ConstantInt::get(llvm::Type::Int32Ty, 
                                                        SI->getNumSuccessors());
 
         // Store the jump destination before the branch instruction.

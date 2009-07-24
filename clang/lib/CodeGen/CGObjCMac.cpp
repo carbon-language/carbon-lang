@@ -1378,8 +1378,8 @@ static llvm::Constant *getConstantGEP(llvm::LLVMContext &VMContext,
                                       unsigned idx0,
                                       unsigned idx1) {
   llvm::Value *Idxs[] = {
-    VMContext.getConstantInt(llvm::Type::Int32Ty, idx0),
-    VMContext.getConstantInt(llvm::Type::Int32Ty, idx1)
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, idx0),
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, idx1)
   };
   return VMContext.getConstantExprGetElementPtr(C, Idxs, 2);
 }
@@ -1711,7 +1711,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
   uint64_t Size = 
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.ProtocolExtensionTy);
   std::vector<llvm::Constant*> Values(4);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[1] = 
     EmitMethodDescList("\01L_OBJC_PROTOCOL_INSTANCE_METHODS_OPT_" 
                            + PD->getNameAsString(),
@@ -1766,7 +1766,7 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
   std::vector<llvm::Constant*> Values(3);
   // This field is only used by the runtime.
   Values[0] = VMContext.getNullValue(ObjCTypes.ProtocolListPtrTy);
-  Values[1] = VMContext.getConstantInt(ObjCTypes.LongTy,
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.LongTy,
                                        ProtocolRefs.size() - 1);
   Values[2] = 
     VMContext.getConstantArray(VMContext.getArrayType(ObjCTypes.ProtocolPtrTy, 
@@ -1813,8 +1813,8 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
   unsigned PropertySize = 
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.PropertyTy);
   std::vector<llvm::Constant*> Values(3);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, PropertySize);
-  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, Properties.size());
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, PropertySize);
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Properties.size());
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.PropertyTy, 
                                              Properties.size());
   Values[2] = VMContext.getConstantArray(AT, Properties);
@@ -1854,7 +1854,7 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
     return VMContext.getNullValue(ObjCTypes.MethodDescriptionListPtrTy);
 
   std::vector<llvm::Constant*> Values(2);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Methods.size());
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Methods.size());
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodDescriptionTy, 
                                              Methods.size());
   Values[1] = VMContext.getConstantArray(AT, Methods);
@@ -1922,7 +1922,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   } else {
     Values[4] = VMContext.getNullValue(ObjCTypes.ProtocolListPtrTy);
   }
-  Values[5] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
+  Values[5] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
 
   // If there is no category @interface then there can be no properties.
   if (Category) {
@@ -2033,9 +2033,9 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   }
   Values[ 2] = GetClassName(ID->getIdentifier());
   // Version is always 0.
-  Values[ 3] = VMContext.getConstantInt(ObjCTypes.LongTy, 0);
-  Values[ 4] = VMContext.getConstantInt(ObjCTypes.LongTy, Flags);
-  Values[ 5] = VMContext.getConstantInt(ObjCTypes.LongTy, Size);
+  Values[ 3] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
+  Values[ 4] = llvm::ConstantInt::get(ObjCTypes.LongTy, Flags);
+  Values[ 5] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
   Values[ 6] = EmitIvarList(ID, false);
   Values[ 7] = 
     EmitMethodList("\01L_OBJC_INSTANCE_METHODS_" + ID->getNameAsString(),
@@ -2085,9 +2085,9 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   }
   Values[ 2] = GetClassName(ID->getIdentifier());
   // Version is always 0.
-  Values[ 3] = VMContext.getConstantInt(ObjCTypes.LongTy, 0);
-  Values[ 4] = VMContext.getConstantInt(ObjCTypes.LongTy, Flags);
-  Values[ 5] = VMContext.getConstantInt(ObjCTypes.LongTy, Size);
+  Values[ 3] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
+  Values[ 4] = llvm::ConstantInt::get(ObjCTypes.LongTy, Flags);
+  Values[ 5] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
   Values[ 6] = EmitIvarList(ID, true);
   Values[ 7] = 
     EmitMethodList("\01L_OBJC_CLASS_METHODS_" + ID->getNameAsString(),
@@ -2163,7 +2163,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.ClassExtensionTy);
 
   std::vector<llvm::Constant*> Values(3);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[1] = BuildIvarLayout(ID, false);
   Values[2] = EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                                ID, ID->getClassInterface(), ObjCTypes);
@@ -2216,7 +2216,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
       continue;    
     Ivar[0] = GetMethodVarName(IVD->getIdentifier());
     Ivar[1] = GetMethodVarType(IVD);
-    Ivar[2] = VMContext.getConstantInt(ObjCTypes.IntTy, 
+    Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 
                                      ComputeIvarBaseOffset(CGM, OID, IVD));
     Ivars.push_back(VMContext.getConstantStruct(ObjCTypes.IvarTy, Ivar));
   }
@@ -2226,7 +2226,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     return VMContext.getNullValue(ObjCTypes.IvarListPtrTy);
 
   std::vector<llvm::Constant*> Values(2);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Ivars.size());
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Ivars.size());
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.IvarTy,
                                              Ivars.size());
   Values[1] = VMContext.getConstantArray(AT, Ivars);
@@ -2286,7 +2286,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
 
   std::vector<llvm::Constant*> Values(3);
   Values[0] = VMContext.getNullValue(ObjCTypes.Int8PtrTy);
-  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, Methods.size());
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Methods.size());
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodTy,
                                              Methods.size());
   Values[2] = VMContext.getConstantArray(AT, Methods);
@@ -2784,7 +2784,7 @@ void CGObjCMac::EmitGCMemmoveCollectable(CodeGen::CodeGenFunction &CGF,
                                                unsigned long size) {
   SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
   DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
-  llvm::Value *N = VMContext.getConstantInt(ObjCTypes.LongTy, size);
+  llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
   CGF.Builder.CreateCall3(ObjCTypes.GcMemmoveCollectableFn(),
                           DestPtr, SrcPtr, N);
   return;
@@ -2806,7 +2806,7 @@ llvm::Value *CGObjCMac::EmitIvarOffset(CodeGen::CodeGenFunction &CGF,
                                        const ObjCInterfaceDecl *Interface,
                                        const ObjCIvarDecl *Ivar) {
   uint64_t Offset = ComputeIvarBaseOffset(CGM, Interface, Ivar);
-  return VMContext.getConstantInt(
+  return llvm::ConstantInt::get(
                             CGM.getTypes().ConvertType(CGM.getContext().LongTy),
                             Offset);
 }
@@ -2848,8 +2848,8 @@ void CGObjCMac::EmitImageInfo() {
 
   // Emitted as int[2];
   llvm::Constant *values[2] = {
-    VMContext.getConstantInt(llvm::Type::Int32Ty, version),
-    VMContext.getConstantInt(llvm::Type::Int32Ty, flags)
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, version),
+    llvm::ConstantInt::get(llvm::Type::Int32Ty, flags)
   };
   llvm::ArrayType *AT = VMContext.getArrayType(llvm::Type::Int32Ty, 2);  
 
@@ -2882,8 +2882,8 @@ void CGObjCMac::EmitModuleInfo() {
   uint64_t Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.ModuleTy);
   
   std::vector<llvm::Constant*> Values(4);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.LongTy, ModuleVersion);
-  Values[1] = VMContext.getConstantInt(ObjCTypes.LongTy, Size);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, ModuleVersion);
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.LongTy, Size);
   // This used to be the filename, now it is unused. <rdr://4327263>
   Values[2] = GetClassName(&CGM.getContext().Idents.get(""));
   Values[3] = EmitModuleSymbols();
@@ -2902,10 +2902,10 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
     return VMContext.getNullValue(ObjCTypes.SymtabPtrTy);
 
   std::vector<llvm::Constant*> Values(5);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.LongTy, 0);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.LongTy, 0);
   Values[1] = VMContext.getNullValue(ObjCTypes.SelectorPtrTy);
-  Values[2] = VMContext.getConstantInt(ObjCTypes.ShortTy, NumClasses);
-  Values[3] = VMContext.getConstantInt(ObjCTypes.ShortTy, NumCategories);
+  Values[2] = llvm::ConstantInt::get(ObjCTypes.ShortTy, NumClasses);
+  Values[3] = llvm::ConstantInt::get(ObjCTypes.ShortTy, NumCategories);
 
   // The runtime expects exactly the list of defined classes followed
   // by the list of defined categories, in a single array.
@@ -4106,14 +4106,14 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
   //  static int L_OBJC_IMAGE_INFO[2] = { 0, flags };
   // FIXME. flags can be 0 | 1 | 2 | 6. For now just use 0
   std::vector<llvm::Constant*> Values(2);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, 0);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, 0);
   unsigned int flags = 0;
   // FIXME: Fix and continue?
   if (CGM.getLangOptions().getGCMode() != LangOptions::NonGC)
     flags |= eImageInfo_GarbageCollected;
   if (CGM.getLangOptions().getGCMode() == LangOptions::GCOnly)
     flags |= eImageInfo_GCOnly;
-  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, flags);
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
   llvm::Constant* Init = VMContext.getConstantArray(
                                     VMContext.getArrayType(ObjCTypes.IntTy, 2),
                                       Values);   
@@ -4195,9 +4195,9 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
                                                 const ObjCImplementationDecl *ID) {
   std::string ClassName = ID->getNameAsString();
   std::vector<llvm::Constant*> Values(10); // 11 for 64bit targets!
-  Values[ 0] = VMContext.getConstantInt(ObjCTypes.IntTy, flags);
-  Values[ 1] = VMContext.getConstantInt(ObjCTypes.IntTy, InstanceStart);
-  Values[ 2] = VMContext.getConstantInt(ObjCTypes.IntTy, InstanceSize);
+  Values[ 0] = llvm::ConstantInt::get(ObjCTypes.IntTy, flags);
+  Values[ 1] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceStart);
+  Values[ 2] = llvm::ConstantInt::get(ObjCTypes.IntTy, InstanceSize);
   // FIXME. For 64bit targets add 0 here.
   Values[ 3] = (flags & CLS_META) ? GetIvarLayoutName(0, ObjCTypes) 
                                   : BuildIvarLayout(ID, true); 
@@ -4591,9 +4591,9 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
   std::vector<llvm::Constant*> Values(3);
   // sizeof(struct _objc_method)
   unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.MethodTy);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   // method_count
-  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, Methods.size());
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Methods.size());
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodTy,
                                              Methods.size());
   Values[2] = VMContext.getConstantArray(AT, Methods);
@@ -4641,7 +4641,7 @@ llvm::Constant * CGObjCNonFragileABIMac::EmitIvarOffsetVar(
                                               const ObjCIvarDecl *Ivar,
                                               unsigned long int Offset) {
   llvm::GlobalVariable *IvarOffsetGV = ObjCIvarOffsetVariable(ID, Ivar);
-  IvarOffsetGV->setInitializer(VMContext.getConstantInt(ObjCTypes.LongTy, 
+  IvarOffsetGV->setInitializer(llvm::ConstantInt::get(ObjCTypes.LongTy, 
                                                       Offset));
   IvarOffsetGV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(ObjCTypes.LongTy));
@@ -4704,13 +4704,13 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     unsigned Align = CGM.getContext().getPreferredTypeAlign(
                        IVD->getType().getTypePtr()) >> 3;
     Align = llvm::Log2_32(Align);
-    Ivar[3] = VMContext.getConstantInt(ObjCTypes.IntTy, Align);
+    Ivar[3] = llvm::ConstantInt::get(ObjCTypes.IntTy, Align);
     // NOTE. Size of a bitfield does not match gcc's, because of the
     // way bitfields are treated special in each. But I am told that
     // 'size' for bitfield ivars is ignored by the runtime so it does
     // not matter.  If it matters, there is enough info to get the
     // bitfield right!
-    Ivar[4] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
+    Ivar[4] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
     Ivars.push_back(VMContext.getConstantStruct(ObjCTypes.IvarnfABITy, Ivar));
   }
   // Return null for empty list.
@@ -4718,8 +4718,8 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     return VMContext.getNullValue(ObjCTypes.IvarListnfABIPtrTy);
   std::vector<llvm::Constant*> Values(3);
   unsigned Size = CGM.getTargetData().getTypeAllocSize(ObjCTypes.IvarnfABITy);
-  Values[0] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
-  Values[1] = VMContext.getConstantInt(ObjCTypes.IntTy, Ivars.size());
+  Values[0] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
+  Values[1] = llvm::ConstantInt::get(ObjCTypes.IntTy, Ivars.size());
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.IvarnfABITy,
                                              Ivars.size());
   Values[2] = VMContext.getConstantArray(AT, Ivars);
@@ -4838,7 +4838,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
                                0, PD, ObjCTypes);
   uint32_t Size = 
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.ProtocolnfABITy);
-  Values[8] = VMContext.getConstantInt(ObjCTypes.IntTy, Size);
+  Values[8] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[9] = VMContext.getNullValue(ObjCTypes.IntTy);
   llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ProtocolnfABITy,
                                                    Values);
@@ -4910,7 +4910,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
   
   std::vector<llvm::Constant*> Values(2);
   Values[0] =
-    VMContext.getConstantInt(ObjCTypes.LongTy, ProtocolRefs.size() - 1);
+    llvm::ConstantInt::get(ObjCTypes.LongTy, ProtocolRefs.size() - 1);
   Values[1] = 
     VMContext.getConstantArray(
       VMContext.getArrayType(ObjCTypes.ProtocolnfABIPtrTy,
@@ -5319,7 +5319,7 @@ void CGObjCNonFragileABIMac::EmitGCMemmoveCollectable(
                                          unsigned long size) {
   SrcPtr = CGF.Builder.CreateBitCast(SrcPtr, ObjCTypes.Int8PtrTy);
   DestPtr = CGF.Builder.CreateBitCast(DestPtr, ObjCTypes.Int8PtrTy);
-  llvm::Value *N = VMContext.getConstantInt(ObjCTypes.LongTy, size);
+  llvm::Value *N = llvm::ConstantInt::get(ObjCTypes.LongTy, size);
   CGF.Builder.CreateCall3(ObjCTypes.GcMemmoveCollectableFn(),
                           DestPtr, SrcPtr, N);
   return;
@@ -5482,7 +5482,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
 
   // We use a cleanup unless there was already a catch all.
   if (!HasCatchAll) {
-    SelectorArgs.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty, 0));
+    SelectorArgs.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
     Handlers.push_back(std::make_pair((const ParmVarDecl*) 0, (const Stmt*) 0));
   }
     
@@ -5552,7 +5552,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       llvm::SmallVector<llvm::Value*, 8> Args;
       Args.push_back(Exc);
       Args.push_back(ObjCTypes.getEHPersonalityPtr());
-      Args.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty,
+      Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                             0));
       CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
       CGF.Builder.CreateStore(Exc, RethrowPtr);
@@ -5584,7 +5584,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
       Args.clear();
       Args.push_back(Exc);
       Args.push_back(ObjCTypes.getEHPersonalityPtr());
-      Args.push_back(VMContext.getConstantInt(llvm::Type::Int32Ty,
+      Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                             0));
       CGF.Builder.CreateCall(llvm_eh_selector_i64, Args.begin(), Args.end());
       CGF.Builder.CreateStore(Exc, RethrowPtr);
@@ -5697,7 +5697,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                         llvm::GlobalValue::ExternalLinkage,
                                         0, VTableName);
 
-  llvm::Value *VTableIdx = VMContext.getConstantInt(llvm::Type::Int32Ty, 2);
+  llvm::Value *VTableIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, 2);
 
   std::vector<llvm::Constant*> Values(3);
   Values[0] = VMContext.getConstantExprGetElementPtr(VTableGV, &VTableIdx, 1);

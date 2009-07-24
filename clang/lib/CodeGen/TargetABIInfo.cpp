@@ -440,7 +440,7 @@ llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, 4);
   llvm::Value *NextAddr =
     Builder.CreateGEP(Addr,
-                      VMContext.getConstantInt(llvm::Type::Int32Ty, Offset),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset),
                       "ap.next");
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
 
@@ -1062,11 +1062,11 @@ static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
     // shouldn't ever matter in practice.
 
     // overflow_arg_area = (overflow_arg_area + 15) & ~15;
-    llvm::Value *Offset = VMContext.getConstantInt(llvm::Type::Int32Ty, 15);
+    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty, 15);
     overflow_arg_area = CGF.Builder.CreateGEP(overflow_arg_area, Offset);
     llvm::Value *AsInt = CGF.Builder.CreatePtrToInt(overflow_arg_area,
                                                     llvm::Type::Int64Ty);
-    llvm::Value *Mask = VMContext.getConstantInt(llvm::Type::Int64Ty, ~15LL);
+    llvm::Value *Mask = llvm::ConstantInt::get(llvm::Type::Int64Ty, ~15LL);
     overflow_arg_area =
       CGF.Builder.CreateIntToPtr(CGF.Builder.CreateAnd(AsInt, Mask),
                                  overflow_arg_area->getType(),
@@ -1085,7 +1085,7 @@ static llvm::Value *EmitVAArgFromMemory(llvm::Value *VAListAddr,
   // an 8 byte boundary.
 
   uint64_t SizeInBytes = (CGF.getContext().getTypeSize(Ty) + 7) / 8;
-  llvm::Value *Offset = VMContext.getConstantInt(llvm::Type::Int32Ty,
+  llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                                (SizeInBytes + 7)  & ~7);
   overflow_arg_area = CGF.Builder.CreateGEP(overflow_arg_area, Offset,
                                             "overflow_arg_area.next");
@@ -1134,7 +1134,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     gp_offset = CGF.Builder.CreateLoad(gp_offset_p, "gp_offset");
     InRegs =
       CGF.Builder.CreateICmpULE(gp_offset,
-                                VMContext.getConstantInt(llvm::Type::Int32Ty,
+                                llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                                        48 - neededInt * 8),
                                 "fits_in_gp");
   }
@@ -1144,7 +1144,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     fp_offset = CGF.Builder.CreateLoad(fp_offset_p, "fp_offset");
     llvm::Value *FitsInFP =
       CGF.Builder.CreateICmpULE(fp_offset,
-                                VMContext.getConstantInt(llvm::Type::Int32Ty,
+                                llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                                        176 - neededSSE * 16),
                                 "fits_in_fp");
     InRegs = InRegs ? CGF.Builder.CreateAnd(InRegs, FitsInFP) : FitsInFP;
@@ -1213,7 +1213,7 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
       llvm::Value *RegAddrLo = CGF.Builder.CreateGEP(RegAddr, fp_offset);
       llvm::Value *RegAddrHi =
         CGF.Builder.CreateGEP(RegAddrLo,
-                            VMContext.getConstantInt(llvm::Type::Int32Ty, 16));
+                            llvm::ConstantInt::get(llvm::Type::Int32Ty, 16));
       const llvm::Type *DblPtrTy =
         VMContext.getPointerTypeUnqual(llvm::Type::DoubleTy);
       const llvm::StructType *ST = VMContext.getStructType(llvm::Type::DoubleTy,
@@ -1235,13 +1235,13 @@ llvm::Value *X86_64ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   // l->gp_offset = l->gp_offset + num_gp * 8
   // l->fp_offset = l->fp_offset + num_fp * 16.
   if (neededInt) {
-    llvm::Value *Offset = VMContext.getConstantInt(llvm::Type::Int32Ty,
+    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                                  neededInt * 8);
     CGF.Builder.CreateStore(CGF.Builder.CreateAdd(gp_offset, Offset),
                             gp_offset_p);
   }
   if (neededSSE) {
-    llvm::Value *Offset = VMContext.getConstantInt(llvm::Type::Int32Ty,
+    llvm::Value *Offset = llvm::ConstantInt::get(llvm::Type::Int32Ty,
                                                  neededSSE * 16);
     CGF.Builder.CreateStore(CGF.Builder.CreateAdd(fp_offset, Offset),
                             fp_offset_p);
@@ -1399,7 +1399,7 @@ llvm::Value *ARMABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, 4);
   llvm::Value *NextAddr =
     Builder.CreateGEP(Addr,
-                      VMContext.getConstantInt(llvm::Type::Int32Ty, Offset),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset),
                       "ap.next");
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
 

@@ -70,7 +70,7 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
     EmitAggExpr(Init, GV, D.getType().isVolatileQualified());
   }
     
-  Builder.CreateStore(VMContext.getConstantInt(llvm::Type::Int8Ty, 1),
+  Builder.CreateStore(llvm::ConstantInt::get(llvm::Type::Int8Ty, 1),
                       Builder.CreateBitCast(GuardV, PtrTy));
                       
   EmitBlock(EndBlock);
@@ -203,7 +203,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // The allocation size is the first argument.
   QualType SizeTy = getContext().getSizeType();
   llvm::Value *AllocSize = 
-    VMContext.getConstantInt(ConvertType(SizeTy), 
+    llvm::ConstantInt::get(ConvertType(SizeTy), 
                            getContext().getTypeSize(AllocType) / 8);
 
   NewArgs.push_back(std::make_pair(RValue::get(AllocSize), SizeTy));

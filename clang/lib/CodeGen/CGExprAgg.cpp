@@ -570,7 +570,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   Builder.CreateCall4(CGM.getMemCpyFn(),
                       DestPtr, SrcPtr,
                       // TypeInfo.first describes size in bits.
-                      VMContext.getConstantInt(IntPtr, TypeInfo.first/8),
-                      VMContext.getConstantInt(llvm::Type::Int32Ty, 
+                      llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
+                      llvm::ConstantInt::get(llvm::Type::Int32Ty, 
                                              TypeInfo.second/8));
 }
