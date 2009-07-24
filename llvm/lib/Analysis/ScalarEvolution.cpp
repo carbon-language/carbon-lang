@@ -1761,7 +1761,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
 /// getAddRecExpr - Get an add recurrence expression for the specified loop.
 /// Simplify the expression as much as possible.
 const SCEV *ScalarEvolution::getAddRecExpr(const SCEV *Start,
-                               const SCEV *Step, const Loop *L) {
+                                           const SCEV *Step, const Loop *L) {
   SmallVector<const SCEV *, 4> Operands;
   Operands.push_back(Start);
   if (const SCEVAddRecExpr *StepChrec = dyn_cast<SCEVAddRecExpr>(Step))
