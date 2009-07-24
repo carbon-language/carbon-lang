@@ -232,33 +232,72 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
     return SectionKind::Text;
 
   bool isThreadLocal = GVar->isThreadLocal();
-  assert(GVar && "Invalid global value for section selection");
 
-  if (isSuitableForBSS(GVar)) {
-    // Variable can be easily put to BSS section.
+  // Variable can be easily put to BSS section.
+  if (isSuitableForBSS(GVar))
     return isThreadLocal ? SectionKind::ThreadBSS : SectionKind::BSS;
-  } else if (GVar->isConstant() && !isThreadLocal) {
-    // Now we know, that variable has initializer and it is constant. We need to
-    // check its initializer to decide, which section to output it into. Also
-    // note, there is no thread-local r/o section.
-    Constant *C = GVar->getInitializer();
-    if (C->getRelocationInfo() != 0) {
-      // Decide whether it is still possible to put symbol into r/o section.
-      if (TM.getRelocationModel() != Reloc::Static)
-        return SectionKind::Data;
-      else
-        return SectionKind::ROData;
-    } else {
-      // Check, if initializer is a null-terminated string
+
+  // If this is thread-local, put it in the general "thread_data" section.
+  if (isThreadLocal)
+    return SectionKind::ThreadData;
+  
+  Constant *C = GVar->getInitializer();
+  
+  // If the global is marked constant, we can put it into a mergable section,
+  // a mergable string section, or general .data if it contains relocations.
+  if (GVar->isConstant()) {
+    // If the initializer for the global contains something that requires a
+    // relocation, then we may have to drop this into a wriable data section
+    // even though it is marked const.
+    switch (C->getRelocationInfo()) {
+    default: llvm_unreachable("unknown relocation info kind");
+    case Constant::NoRelocation:
+      // If initializer is a null-terminated string, put it in a "cstring"
+      // section if the target has it.
       if (isConstantString(C))
         return SectionKind::RODataMergeStr;
-      else
-        return SectionKind::RODataMergeConst;
+      
+      // Otherwise, just drop it into a mergable constant section.
+      return SectionKind::RODataMergeConst;
+      
+    case Constant::LocalRelocation:
+      // In static relocation model, the linker will resolve all addresses, so
+      // the relocation entries will actually be constants by the time the app
+      // starts up.
+      if (TM.getRelocationModel() == Reloc::Static)
+        return SectionKind::ROData;
+              
+      // Otherwise, the dynamic linker needs to fix it up, put it in the
+      // writable data.rel.local section.
+      return SectionKind::DataRelROLocal;
+              
+    case Constant::GlobalRelocations:
+      // In static relocation model, the linker will resolve all addresses, so
+      // the relocation entries will actually be constants by the time the app
+      // starts up.
+      if (TM.getRelocationModel() == Reloc::Static)
+        return SectionKind::ROData;
+      
+      // Otherwise, the dynamic linker needs to fix it up, put it in the
+      // writable data.rel section.
+      return SectionKind::DataRelRO;
     }
   }
 
-  // Variable either is not constant or thread-local - output to data section.
-  return isThreadLocal ? SectionKind::ThreadData : SectionKind::Data;
+  // Okay, this isn't a constant.  If the initializer for the global is going
+  // to require a runtime relocation by the dynamic linker, put it into a more
+  // specific section to improve startup time of the app.  This coalesces these
+  // globals together onto fewer pages, improving the locality of the dynamic
+  // linker.
+  if (TM.getRelocationModel() == Reloc::Static)
+    return SectionKind::Data;
+
+  switch (C->getRelocationInfo()) {
+  default: llvm_unreachable("unknown relocation info kind");
+  case Constant::NoRelocation:      return SectionKind::Data;
+  case Constant::LocalRelocation:   return SectionKind::DataRelLocal;
+  case Constant::GlobalRelocations: return SectionKind::DataRel;
+  }
 }
 
 

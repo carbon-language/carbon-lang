@@ -271,10 +271,14 @@ getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
   default: llvm_unreachable("Unknown section kind");
   case SectionKind::Text:             return ".text$linkonce";
   case SectionKind::Data:
+  case SectionKind::DataRelLocal:
+  case SectionKind::DataRel:
   case SectionKind::BSS:
   case SectionKind::ThreadData:
   case SectionKind::ThreadBSS:        return ".data$linkonce";
   case SectionKind::ROData:
+  case SectionKind::DataRelRO:
+  case SectionKind::DataRelROLocal:
   case SectionKind::RODataMergeConst:
   case SectionKind::RODataMergeStr:   return ".rdata$linkonce";
   }

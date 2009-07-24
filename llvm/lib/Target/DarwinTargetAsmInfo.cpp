@@ -131,19 +131,24 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   bool isNonStatic = TM.getRelocationModel() != Reloc::Static;
 
   switch (Kind) {
+  case SectionKind::ThreadData:
+  case SectionKind::ThreadBSS:
+    llvm_unreachable("Darwin doesn't support TLS");
   case SectionKind::Text:
     if (isWeak)
       return TextCoalSection;
     return TextSection;
   case SectionKind::Data:
-  case SectionKind::ThreadData:
+  case SectionKind::DataRelLocal:
+  case SectionKind::DataRel:
   case SectionKind::BSS:
-  case SectionKind::ThreadBSS:
     if (cast<GlobalVariable>(GV)->isConstant())
       return isWeak ? ConstDataCoalSection : ConstDataSection;
     return isWeak ? DataCoalSection : DataSection;
 
   case SectionKind::ROData:
+  case SectionKind::DataRelRO:
+  case SectionKind::DataRelROLocal:
     return (isWeak ? ConstDataCoalSection :
             (isNonStatic ? ConstDataSection : getReadOnlySection()));
   case SectionKind::RODataMergeStr:

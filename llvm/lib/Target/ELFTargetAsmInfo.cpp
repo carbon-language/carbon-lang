@@ -45,33 +45,6 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
                                           SectionFlags::Writeable);
 }
 
-SectionKind::Kind
-ELFTargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind Kind = TargetAsmInfo::SectionKindForGlobal(GV);
-
-  if (Kind != SectionKind::Data)
-    return Kind;
-
-  // Decide, whether we need data.rel stuff
-  const GlobalVariable* GVar = dyn_cast<GlobalVariable>(GV);
-  if (GVar->hasInitializer() && TM.getRelocationModel() != Reloc::Static) {
-    Constant *C = GVar->getInitializer();
-    bool isConstant = GVar->isConstant();
-    
-    // By default - all relocations in PIC mode would force symbol to be
-    // placed in r/w section.
-    switch (C->getRelocationInfo()) {
-    default: break;
-    case Constant::LocalRelocation:
-      return isConstant ? SectionKind::DataRelROLocal :
-                          SectionKind::DataRelLocal;
-    case Constant::GlobalRelocations:
-      return isConstant ? SectionKind::DataRelRO : SectionKind::DataRel;
-    }
-  }
-
-  return Kind;
-}
 
 const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
@@ -91,6 +64,8 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   const GlobalVariable *GVar = cast<GlobalVariable>(GV);
   switch (Kind) {
   default: llvm_unreachable("Unsuported section kind for global");
+  case SectionKind::BSS:
+    return getBSSSection_();
   case SectionKind::Data:
   case SectionKind::DataRel:
     return DataRelSection;
@@ -100,8 +75,6 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
     return DataRelROSection;
   case SectionKind::DataRelROLocal:
     return DataRelROLocalSection;
-  case SectionKind::BSS:
-    return getBSSSection_();
   case SectionKind::ROData:
     return getReadOnlySection();
   case SectionKind::RODataMergeStr:
