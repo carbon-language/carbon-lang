@@ -1015,6 +1015,13 @@ void Sema::MergeVarDecl(VarDecl *New, Decl *OldD) {
   New->setPreviousDeclaration(Old);
 }
 
+/// CheckFallThrough - Check that we don't fall off the end of a
+/// Statement that should return a value.
+///
+/// \returns AlwaysFallThrough iff we always fall off the end of the statement,
+/// MaybeFallThrough iff we might or might not fall off the end and
+/// NeverFallThrough iff we never fall off the end of the statement.  We assume
+/// that functions not marked noreturn will return.
 Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
   llvm::OwningPtr<CFG> cfg (CFG::buildCFG(Root, &Context));
   
@@ -1101,12 +1108,9 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
 }
 
 /// CheckFallThroughForFunctionDef - Check that we don't fall off the end of a
-/// function that should return a value.
-///
-/// \returns AlwaysFallThrough iff we always fall off the end of the statement,
-/// MaybeFallThrough iff we might or might not fall off the end and
-/// NeverFallThrough iff we never fall off the end of the statement.  We assume
-/// that functions not marked noreturn will return.
+/// function that should return a value.  Check that we don't fall off the end
+/// of a noreturn function.  We assume that functions not marked noreturn will
+/// return.
 void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
   // FIXME: Would be nice if we had a better way to control cascading errors,
   // but for now, avoid them.  The problem is that when Parse sees:
@@ -1116,17 +1120,39 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
   // which this code would then warn about.
   if (getDiagnostics().hasErrorOccurred())
     return;
-  if (Diags.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function)
-      == Diagnostic::Ignored)
+  bool ReturnsVoid = false;
+  bool HasNoReturn = false;
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    if (FD->getResultType()->isVoidType())
+      ReturnsVoid = true;
+    if (FD->hasAttr<NoReturnAttr>())
+      HasNoReturn = true;
+  } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
+    if (MD->getResultType()->isVoidType())
+      ReturnsVoid = true;
+    if (MD->hasAttr<NoReturnAttr>())
+      HasNoReturn = true;
+  }
+    
+  if ((Diags.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function)
+       == Diagnostic::Ignored || ReturnsVoid)
+      && (Diags.getDiagnosticLevel(diag::warn_noreturn_function_has_return_expr)
+          == Diagnostic::Ignored || !HasNoReturn))
     return;
   // FIXME: Funtion try block
   if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
     switch (CheckFallThrough(Body)) {
     case MaybeFallThrough:
-      Diag(Compound->getRBracLoc(), diag::warn_maybe_falloff_nonvoid_function);
+      if (HasNoReturn)
+        Diag(Compound->getRBracLoc(), diag::warn_falloff_noreturn_function);
+      else if (!ReturnsVoid)
+        Diag(Compound->getRBracLoc(),diag::warn_maybe_falloff_nonvoid_function);
       break;
     case AlwaysFallThrough:
-      Diag(Compound->getRBracLoc(), diag::warn_falloff_nonvoid_function);
+      if (HasNoReturn)
+        Diag(Compound->getRBracLoc(), diag::warn_falloff_noreturn_function);
+      else if (!ReturnsVoid)
+        Diag(Compound->getRBracLoc(), diag::warn_falloff_nonvoid_function);
       break;
     case NeverFallThrough:
       break;
@@ -3369,9 +3395,8 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   Stmt *Body = BodyArg.takeAs<Stmt>();
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
     FD->setBody(Body);
-    if (!FD->getResultType()->isVoidType()
-        // C and C++ allow for main to automagically return 0.
-        && !FD->isMain())
+    if (!FD->isMain())
+      // C and C++ allow for main to automagically return 0.
       CheckFallThroughForFunctionDef(FD, Body);
     
     if (!FD->isInvalidDecl())
@@ -3387,8 +3412,7 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   } else if (ObjCMethodDecl *MD = dyn_cast_or_null<ObjCMethodDecl>(dcl)) {
     assert(MD == getCurMethodDecl() && "Method parsing confused");
     MD->setBody(Body);
-    if (!MD->getResultType()->isVoidType())
-      CheckFallThroughForFunctionDef(MD, Body);
+    CheckFallThroughForFunctionDef(MD, Body);
     MD->setEndLoc(Body->getLocEnd());
     
     if (!MD->isInvalidDecl())

@@ -1917,6 +1917,9 @@ def ext_return_has_void_expr : Extension<
 def warn_noreturn_function_has_return_expr : Warning<
   "function %0 declared 'noreturn' should not return">, DefaultError,
   InGroup<DiagGroup<"invalid-noreturn">>;
+def warn_falloff_noreturn_function : Warning<
+  "function declared 'noreturn' should not return">, DefaultError,
+  InGroup<DiagGroup<"invalid-noreturn">>;
 def err_noreturn_block_has_return_expr : Error<
   "block declared 'noreturn' should not return">;
 def err_block_on_nonlocal : Error<

@@ -17,7 +17,7 @@
 // RUN: grep '@t16 = extern_weak global i32' %t &&
 
 void t1() __attribute__((noreturn));
-void t1() {}
+void t1() { while (1) {} }
 
 void t2() __attribute__((nothrow));
 void t2() {}
@@ -33,7 +33,7 @@ int t5 __attribute__((weak)) = 2;
 int t6 __attribute__((visibility("protected")));
 
 void t7() __attribute__((noreturn, nothrow));
-void t7() {}
+void t7() { while (1) {} }
 
 void __t8() {}
 void t9() __attribute__((weak, alias("__t8")));
