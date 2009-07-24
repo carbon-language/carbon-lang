@@ -49,6 +49,8 @@ public:
   bool hasCallee() const { return begin() != end(); }
 
   std::string getName() const { return F.getPrintableName(); }
+
+  Decl *getDecl(ASTContext &Ctx) const { return F.getDecl(Ctx); }
 };
 
 class CallGraph {
@@ -90,6 +92,8 @@ public:
   idx::Program &getProgram() { return Prog; }
 
   CallGraphNode *getOrInsertFunction(idx::Entity F);
+
+  Decl *getDecl(CallGraphNode *Node);
 
   void print(llvm::raw_ostream &os);
   void dump();

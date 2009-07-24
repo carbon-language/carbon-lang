@@ -108,6 +108,13 @@ CallGraphNode *CallGraph::getOrInsertFunction(Entity F) {
   return Node = new CallGraphNode(F);
 }
 
+Decl *CallGraph::getDecl(CallGraphNode *Node) {
+  // Get the function's context.
+  ASTContext *Ctx = CallerCtx[Node];
+
+  return Node->getDecl(*Ctx);
+}
+
 void CallGraph::print(llvm::raw_ostream &os) {
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (I->second->hasCallee()) {
