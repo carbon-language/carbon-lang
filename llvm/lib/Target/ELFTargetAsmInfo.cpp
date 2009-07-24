@@ -79,20 +79,20 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
 
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
-     default: llvm_unreachable("Unknown linkage type!");
-     case Function::PrivateLinkage:
-     case Function::LinkerPrivateLinkage:
-     case Function::InternalLinkage:
-     case Function::DLLExportLinkage:
-     case Function::ExternalLinkage:
-      return TextSection;
-     case Function::WeakAnyLinkage:
-     case Function::WeakODRLinkage:
-     case Function::LinkOnceAnyLinkage:
-     case Function::LinkOnceODRLinkage:
-      std::string Name = UniqueSectionForGlobal(GV, Kind);
-      unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
-      return getNamedSection(Name.c_str(), Flags);
+      default: llvm_unreachable("Unknown linkage type!");
+      case Function::PrivateLinkage:
+      case Function::LinkerPrivateLinkage:
+      case Function::InternalLinkage:
+      case Function::DLLExportLinkage:
+      case Function::ExternalLinkage:
+        return TextSection;
+      case Function::WeakAnyLinkage:
+      case Function::WeakODRLinkage:
+      case Function::LinkOnceAnyLinkage:
+      case Function::LinkOnceODRLinkage:
+        std::string Name = UniqueSectionForGlobal(GV, Kind);
+        unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
+        return getNamedSection(Name.c_str(), Flags);
     }
   } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
     if (GVar->isWeakForLinker()) {
