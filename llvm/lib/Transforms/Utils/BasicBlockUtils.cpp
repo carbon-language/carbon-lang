@@ -540,7 +540,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
   unsigned AccessSize = 0;
   if (AA) {
     const Type *AccessTy = cast<PointerType>(Ptr->getType())->getElementType();
-    AccessSize = AA->getTargetData().getTypeStoreSizeInBits(AccessTy);
+    AccessSize = AA->getTargetData().getTypeStoreSize(AccessTy);
   }
   
   while (ScanFrom != ScanBB->begin()) {
