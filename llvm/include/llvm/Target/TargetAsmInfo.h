@@ -579,6 +579,16 @@ namespace llvm {
     getSectionForMergableConstant(uint64_t Size, unsigned ReloInfo) const;
 
     
+    /// getSectionPrefixForUniqueGlobal - Return a string that we should prepend
+    /// onto a global's name in order to get the unique section name for the
+    /// global.  This is important for globals that need to be merged across
+    /// translation units.
+    virtual const char *
+    getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const;
+    
+    
+    
+    
     /// SectionKindForGlobal - This hook allows the target to select proper
     /// section kind used for global emission.
 // FIXME: Eliminate this.
@@ -596,11 +606,6 @@ namespace llvm {
     /// global with all necessary flags and marks.
 // FIXME: Eliminate this.
     virtual const Section* SectionForGlobal(const GlobalValue *GV) const;
-
-    // Helper methods for SectionForGlobal
-// FIXME: Eliminate this.
-    virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
-                                               SectionKind::Kind kind) const;
 
     const std::string &getSectionFlags(unsigned Flags) const;
     virtual std::string printSectionFlags(unsigned flags) const { return ""; }

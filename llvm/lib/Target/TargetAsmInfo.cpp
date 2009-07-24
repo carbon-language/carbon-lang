@@ -305,7 +305,8 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
   if (GV->isWeakForLinker()) {
-    std::string Name = UniqueSectionForGlobal(GV, Kind);
+    // FIXME: Use mangler interface (PR4584).
+    std::string Name = getSectionPrefixForUniqueGlobal(Kind)+GV->getName();
     unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
     return getNamedSection(Name.c_str(), Flags);
   } else {
@@ -334,34 +335,22 @@ TargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
 
 
 
-std::string
-TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
-                                      SectionKind::Kind Kind) const {
+const char *
+TargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
   switch (Kind) {
-  case SectionKind::Text:
-    return ".gnu.linkonce.t." + GV->getNameStr();
-  case SectionKind::Data:
-    return ".gnu.linkonce.d." + GV->getNameStr();
-  case SectionKind::DataRel:
-    return ".gnu.linkonce.d.rel" + GV->getNameStr();
-  case SectionKind::DataRelLocal:
-    return ".gnu.linkonce.d.rel.local" + GV->getNameStr();
-  case SectionKind::DataRelRO:
-    return ".gnu.linkonce.d.rel.ro" + GV->getNameStr();
-  case SectionKind::DataRelROLocal:
-    return ".gnu.linkonce.d.rel.ro.local" + GV->getNameStr();
-  case SectionKind::BSS:
-    return ".gnu.linkonce.b." + GV->getNameStr();
+  default: llvm_unreachable("Unknown section kind");
+  case SectionKind::Text:             return ".gnu.linkonce.t.";
+  case SectionKind::Data:             return ".gnu.linkonce.d.";
+  case SectionKind::DataRel:          return ".gnu.linkonce.d.rel.";
+  case SectionKind::DataRelLocal:     return ".gnu.linkonce.d.rel.local.";
+  case SectionKind::DataRelRO:        return ".gnu.linkonce.d.rel.ro.";
+  case SectionKind::DataRelROLocal:   return ".gnu.linkonce.d.rel.ro.local.";
+  case SectionKind::BSS:              return ".gnu.linkonce.b.";
   case SectionKind::ROData:
   case SectionKind::RODataMergeConst:
-  case SectionKind::RODataMergeStr:
-    return ".gnu.linkonce.r." + GV->getNameStr();
-  case SectionKind::ThreadData:
-    return ".gnu.linkonce.td." + GV->getNameStr();
-  case SectionKind::ThreadBSS:
-    return ".gnu.linkonce.tb." + GV->getNameStr();
-  default:
-    llvm_unreachable("Unknown section kind");
+  case SectionKind::RODataMergeStr:   return ".gnu.linkonce.r.";
+  case SectionKind::ThreadData:       return ".gnu.linkonce.td.";
+  case SectionKind::ThreadBSS:        return ".gnu.linkonce.tb.";
   }
   return NULL;
 }

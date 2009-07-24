@@ -35,8 +35,6 @@ namespace llvm {
 
     explicit DarwinTargetAsmInfo(const TargetMachine &TM);
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
-    virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
-                                               SectionKind::Kind kind) const;
     virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
                                       Mangler *Mang) const;
 

@@ -256,33 +256,27 @@ X86COFFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
       Format |= DW_EH_PE_indirect;
 
     return (Format | DW_EH_PE_pcrel);
-  } else {
-    if (is64Bit &&
-        (CM == CodeModel::Small ||
-         (CM == CodeModel::Medium && Reason != DwarfEncoding::Data)))
-      return DW_EH_PE_udata4;
-    else
-      return DW_EH_PE_absptr;
   }
+  
+  if (is64Bit &&
+      (CM == CodeModel::Small ||
+       (CM == CodeModel::Medium && Reason != DwarfEncoding::Data)))
+    return DW_EH_PE_udata4;
+  return DW_EH_PE_absptr;
 }
 
-std::string
-X86COFFTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
-                                             SectionKind::Kind kind) const {
-  switch (kind) {
-   case SectionKind::Text:
-    return ".text$linkonce" + GV->getName();
-   case SectionKind::Data:
-   case SectionKind::BSS:
-   case SectionKind::ThreadData:
-   case SectionKind::ThreadBSS:
-    return ".data$linkonce" + GV->getName();
-   case SectionKind::ROData:
-   case SectionKind::RODataMergeConst:
-   case SectionKind::RODataMergeStr:
-    return ".rdata$linkonce" + GV->getName();
-   default:
-    llvm_unreachable("Unknown section kind");
+const char *X86COFFTargetAsmInfo::
+getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
+  switch (Kind) {
+  default: llvm_unreachable("Unknown section kind");
+  case SectionKind::Text:             return ".text$linkonce";
+  case SectionKind::Data:
+  case SectionKind::BSS:
+  case SectionKind::ThreadData:
+  case SectionKind::ThreadBSS:        return ".data$linkonce";
+  case SectionKind::ROData:
+  case SectionKind::RODataMergeConst:
+  case SectionKind::RODataMergeStr:   return ".rdata$linkonce";
   }
   return NULL;
 }

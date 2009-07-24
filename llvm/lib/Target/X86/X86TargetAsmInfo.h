@@ -53,8 +53,8 @@ namespace llvm {
     explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM);
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
-    virtual std::string UniqueSectionForGlobal(const GlobalValue* GV,
-                                               SectionKind::Kind kind) const;
+    virtual const char *
+    getSectionPrefixForUniqueGlobal(SectionKind::Kind kind) const;
     virtual std::string printSectionFlags(unsigned flags) const;
   };
 

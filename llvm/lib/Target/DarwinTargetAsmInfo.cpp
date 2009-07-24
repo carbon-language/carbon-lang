@@ -204,9 +204,3 @@ DarwinTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
   return ReadOnlySection;  // .const
 }
 
-std::string
-DarwinTargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
-                                               SectionKind::Kind kind) const {
-  llvm_unreachable("Darwin does not use unique sections");
-  return "";
-}
