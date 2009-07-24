@@ -61,19 +61,17 @@ bool
 Thumb2InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
 
-  // FIXME
   switch (MBB.back().getOpcode()) {
   case ARM::t2LDM_RET:
   case ARM::t2B:        // Uncond branch.
   case ARM::t2BR_JTr:   // Jumptable branch.
   case ARM::t2BR_JTm:   // Jumptable branch through mem.
   case ARM::t2BR_JTadd: // Jumptable branch add to pc.
-    return true;
+  case ARM::tBR_JTr:    // Jumptable branch (16-bit version).
   case ARM::tBX_RET:
   case ARM::tBX_RET_vararg:
   case ARM::tPOP_RET:
   case ARM::tB:
-  case ARM::tBR_JTr:
     return true;
   default:
     break;
