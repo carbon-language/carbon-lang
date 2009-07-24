@@ -37,6 +37,14 @@ static std::vector<Constant*> getValType(ConstantStruct *CS) {
   return Elements;
 }
 
+static std::vector<Constant*> getValType(ConstantVector *CP) {
+  std::vector<Constant*> Elements;
+  Elements.reserve(CP->getNumOperands());
+  for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+    Elements.push_back(CP->getOperand(i));
+  return Elements;
+}
+
 namespace llvm {
 template<typename T, typename Alloc>
 struct VISIBILITY_HIDDEN ConstantTraits< std::vector<T, Alloc> > {
@@ -102,6 +110,20 @@ struct ConvertConstantType<ConstantStruct, StructType> {
     Constant *New = NewTy->getContext().getConstantStruct(NewTy, C);
     assert(New != OldC && "Didn't replace constant??");
 
+    OldC->uncheckedReplaceAllUsesWith(New);
+    OldC->destroyConstant();    // This constant is now dead, destroy it.
+  }
+};
+
+template<>
+struct ConvertConstantType<ConstantVector, VectorType> {
+  static void convert(ConstantVector *OldC, const VectorType *NewTy) {
+    // Make everyone now use a constant of the new type...
+    std::vector<Constant*> C;
+    for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
+      C.push_back(cast<Constant>(OldC->getOperand(i)));
+    Constant *New = OldC->getContext().getConstantVector(NewTy, C);
+    assert(New != OldC && "Didn't replace constant??");
     OldC->uncheckedReplaceAllUsesWith(New);
     OldC->destroyConstant();    // This constant is now dead, destroy it.
   }
@@ -348,12 +370,14 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C) :
   AggZeroConstants = new ValueMap<char, Type, ConstantAggregateZero>();
   ArrayConstants = new ArrayConstantsTy();
   StructConstants = new StructConstantsTy();
+  VectorConstants = new VectorConstantsTy();
 }
 
 LLVMContextImpl::~LLVMContextImpl() {
   delete AggZeroConstants;
   delete ArrayConstants;
   delete StructConstants;
+  delete VectorConstants;
 }
 
 // Get a ConstantInt from an APInt. Note that the value stored in the DenseMap 
@@ -492,6 +516,32 @@ Constant *LLVMContextImpl::getConstantStruct(const StructType *Ty,
   return Context.getConstantAggregateZero(Ty);
 }
 
+Constant *LLVMContextImpl::getConstantVector(const VectorType *Ty,
+                              const std::vector<Constant*> &V) {
+  assert(!V.empty() && "Vectors can't be empty");
+  // If this is an all-undef or alll-zero vector, return a
+  // ConstantAggregateZero or UndefValue.
+  Constant *C = V[0];
+  bool isZero = C->isNullValue();
+  bool isUndef = isa<UndefValue>(C);
+
+  if (isZero || isUndef) {
+    for (unsigned i = 1, e = V.size(); i != e; ++i)
+      if (V[i] != C) {
+        isZero = isUndef = false;
+        break;
+      }
+  }
+  
+  if (isZero)
+    return Context.getConstantAggregateZero(Ty);
+  if (isUndef)
+    return Context.getUndef(Ty);
+    
+  // Implicitly locked.
+  return VectorConstants->getOrCreate(Ty, V);
+}
+
 // *** erase methods ***
 
 void LLVMContextImpl::erase(MDString *M) {
@@ -515,6 +565,10 @@ void LLVMContextImpl::erase(ConstantArray *C) {
 
 void LLVMContextImpl::erase(ConstantStruct *S) {
   StructConstants->remove(S);
+}
+
+void LLVMContextImpl::erase(ConstantVector *V) {
+  VectorConstants->remove(V);
 }
 
 // *** RAUW helpers ***

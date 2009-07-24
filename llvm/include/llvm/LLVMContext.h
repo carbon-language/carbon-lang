@@ -276,6 +276,7 @@ public:
   void erase(ConstantAggregateZero *Z);
   void erase(ConstantArray *Z);
   void erase(ConstantStruct *S);
+  void erase(ConstantVector *V);
   
   // RAUW helpers
   Constant *replaceUsesOfWithOnConstant(ConstantArray *CA,

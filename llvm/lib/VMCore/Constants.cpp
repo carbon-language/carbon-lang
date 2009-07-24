@@ -1107,66 +1107,11 @@ void ConstantStruct::destroyConstant() {
   destroyConstantImpl();
 }
 
-//---- ConstantVector::get() implementation...
-//
-namespace llvm {
-  template<>
-  struct ConvertConstantType<ConstantVector, VectorType> {
-    static void convert(ConstantVector *OldC, const VectorType *NewTy) {
-      // Make everyone now use a constant of the new type...
-      std::vector<Constant*> C;
-      for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
-        C.push_back(cast<Constant>(OldC->getOperand(i)));
-      Constant *New = ConstantVector::get(NewTy, C);
-      assert(New != OldC && "Didn't replace constant??");
-      OldC->uncheckedReplaceAllUsesWith(New);
-      OldC->destroyConstant();    // This constant is now dead, destroy it.
-    }
-  };
-}
-
-static std::vector<Constant*> getValType(ConstantVector *CP) {
-  std::vector<Constant*> Elements;
-  Elements.reserve(CP->getNumOperands());
-  for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
-    Elements.push_back(CP->getOperand(i));
-  return Elements;
-}
-
-static ManagedStatic<ValueMap<std::vector<Constant*>, VectorType,
-                              ConstantVector> > VectorConstants;
-
-Constant *ConstantVector::get(const VectorType *Ty,
-                              const std::vector<Constant*> &V) {
-  assert(!V.empty() && "Vectors can't be empty");
-  // If this is an all-undef or alll-zero vector, return a
-  // ConstantAggregateZero or UndefValue.
-  Constant *C = V[0];
-  bool isZero = C->isNullValue();
-  bool isUndef = isa<UndefValue>(C);
-
-  if (isZero || isUndef) {
-    for (unsigned i = 1, e = V.size(); i != e; ++i)
-      if (V[i] != C) {
-        isZero = isUndef = false;
-        break;
-      }
-  }
-  
-  if (isZero)
-    return Ty->getContext().getConstantAggregateZero(Ty);
-  if (isUndef)
-    return UndefValue::get(Ty);
-    
-  // Implicitly locked.
-  return VectorConstants->getOrCreate(Ty, V);
-}
-
 // destroyConstant - Remove the constant from the constant table...
 //
 void ConstantVector::destroyConstant() {
   // Implicitly locked.
-  VectorConstants->remove(this);
+  getType()->getContext().erase(this);
   destroyConstantImpl();
 }
 
@@ -2099,7 +2044,8 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Values.push_back(Val);
   }
   
-  Constant *Replacement = ConstantVector::get(getType(), Values);
+  Constant *Replacement =
+    getType()->getContext().getConstantVector(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.

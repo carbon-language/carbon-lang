@@ -390,9 +390,6 @@ class ConstantVector : public Constant {
 protected:
   ConstantVector(const VectorType *T, const std::vector<Constant*> &Val);
 public:
-  /// get() - Static factory methods - Return objects of the specified value
-  static Constant *get(const VectorType *T, const std::vector<Constant*> &);
-  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

@@ -122,6 +122,10 @@ class LLVMContextImpl {
                    ConstantStruct, true /*largekey*/> StructConstantsTy;
   StructConstantsTy *StructConstants;
   
+  typedef ValueMap<std::vector<Constant*>, VectorType,
+                   ConstantVector> VectorConstantsTy;
+  VectorConstantsTy *VectorConstants;
+  
   LLVMContext &Context;
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
@@ -150,6 +154,9 @@ public:
   Constant *getConstantStruct(const StructType *Ty, 
                               const std::vector<Constant*> &V);
   
+  Constant *getConstantVector(const VectorType *Ty,
+                              const std::vector<Constant*> &V);
+  
   ConstantInt *getTrue() {
     if (TheTrueVal)
       return TheTrueVal;
@@ -169,6 +176,7 @@ public:
   void erase(ConstantAggregateZero *Z);
   void erase(ConstantArray *C);
   void erase(ConstantStruct *S);
+  void erase(ConstantVector *V);
   
   // RAUW helpers
   

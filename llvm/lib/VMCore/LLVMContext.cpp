@@ -531,7 +531,7 @@ ConstantFP* LLVMContext::getConstantFPNegativeZero(const Type* Ty) {
 // ConstantVector accessors.
 Constant* LLVMContext::getConstantVector(const VectorType* T,
                             const std::vector<Constant*>& V) {
-  return ConstantVector::get(T, V);
+  return pImpl->getConstantVector(T, V);
 }
 
 Constant* LLVMContext::getConstantVector(const std::vector<Constant*>& V) {
@@ -660,6 +660,10 @@ void LLVMContext::erase(ConstantArray *C) {
 
 void LLVMContext::erase(ConstantStruct *S) {
   pImpl->erase(S);
+}
+
+void LLVMContext::erase(ConstantVector *V) {
+  pImpl->erase(V);
 }
 
 Constant *LLVMContext::replaceUsesOfWithOnConstant(ConstantArray *CA,
