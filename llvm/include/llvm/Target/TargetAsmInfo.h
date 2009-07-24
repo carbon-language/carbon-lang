@@ -608,12 +608,6 @@ namespace llvm {
       return 0;
     }
     
-    /// SectionKindForGlobal - This hook allows the target to select proper
-    /// section kind used for global emission.
-// FIXME: Eliminate this.
-    SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV) const;
-
-
     const std::string &getSectionFlags(unsigned Flags) const;
     virtual std::string printSectionFlags(unsigned flags) const { return ""; }
 

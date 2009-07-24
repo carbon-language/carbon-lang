@@ -27,9 +27,7 @@
 #include <cstring>
 using namespace llvm;
 
-TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm)
-  : TM(tm) 
-{
+TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   BSSSection = "\t.bss";
   BSSSection_ = 0;
   ReadOnlySection = 0;
@@ -162,9 +160,6 @@ unsigned TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 }
 
 static bool isSuitableForBSS(const GlobalVariable *GV) {
-  if (!GV->hasInitializer())
-    return true;
-
   // Leave constant zeros in readonly constant sections, so they can be shared
   Constant *C = GV->getInitializer();
   return (C->isNullValue() && !GV->isConstant() && !NoZerosInBSS);
@@ -178,12 +173,10 @@ static bool isConstantString(const Constant *C) {
     return true;
 
   // Another possibility: [1 x i8] zeroinitializer
-  if (isa<ConstantAggregateZero>(C)) {
-    if (const ArrayType *Ty = dyn_cast<ArrayType>(C->getType())) {
+  if (isa<ConstantAggregateZero>(C))
+    if (const ArrayType *Ty = dyn_cast<ArrayType>(C->getType()))
       return (Ty->getElementType() == Type::Int8Ty &&
               Ty->getNumElements() == 1);
-    }
-  }
 
   return false;
 }
@@ -224,8 +217,8 @@ static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
   return Flags;
 }
 
-SectionKind::Kind
-TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
+static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
+                                              Reloc::Model ReloModel) {
   // Early exit - functions should be always in text sections.
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   if (GVar == 0)
@@ -264,7 +257,7 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
       // In static relocation model, the linker will resolve all addresses, so
       // the relocation entries will actually be constants by the time the app
       // starts up.
-      if (TM.getRelocationModel() == Reloc::Static)
+      if (ReloModel == Reloc::Static)
         return SectionKind::ROData;
               
       // Otherwise, the dynamic linker needs to fix it up, put it in the
@@ -275,7 +268,7 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
       // In static relocation model, the linker will resolve all addresses, so
       // the relocation entries will actually be constants by the time the app
       // starts up.
-      if (TM.getRelocationModel() == Reloc::Static)
+      if (ReloModel == Reloc::Static)
         return SectionKind::ROData;
       
       // Otherwise, the dynamic linker needs to fix it up, put it in the
@@ -289,7 +282,7 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   // specific section to improve startup time of the app.  This coalesces these
   // globals together onto fewer pages, improving the locality of the dynamic
   // linker.
-  if (TM.getRelocationModel() == Reloc::Static)
+  if (ReloModel == Reloc::Static)
     return SectionKind::Data;
 
   switch (C->getRelocationInfo()) {
@@ -302,11 +295,10 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
 
 
 const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind Kind = SectionKindForGlobal(GV);
+  SectionKind::Kind Kind = SectionKindForGlobal(GV, TM.getRelocationModel());
 
   // Select section name.
   if (GV->hasSection()) {
-    
     // If the target has special section hacks for specifically named globals,
     // return them now.
     if (const Section *TS = getSpecialCasedSectionGlobals(GV, Kind))
