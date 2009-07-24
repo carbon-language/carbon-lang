@@ -68,7 +68,6 @@ namespace {
     JumpThreading() : FunctionPass(&ID) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
     }
 
     bool runOnFunction(Function &F);
@@ -100,7 +99,7 @@ FunctionPass *llvm::createJumpThreadingPass() { return new JumpThreading(); }
 ///
 bool JumpThreading::runOnFunction(Function &F) {
   DOUT << "Jump threading on function '" << F.getNameStart() << "'\n";
-  TD = &getAnalysis<TargetData>();
+  TD = getAnalysisIfAvailable<TargetData>();
   
   FindLoopHeaders(F);
   

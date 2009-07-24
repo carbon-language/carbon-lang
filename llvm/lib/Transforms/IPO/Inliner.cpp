@@ -45,7 +45,6 @@ Inliner::Inliner(void *ID, int Threshold)
 /// the call graph.  If the derived class implements this method, it should
 /// always explicitly call the implementation here.
 void Inliner::getAnalysisUsage(AnalysisUsage &Info) const {
-  Info.addRequired<TargetData>();
   CallGraphSCCPass::getAnalysisUsage(Info);
 }
 
@@ -53,11 +52,11 @@ void Inliner::getAnalysisUsage(AnalysisUsage &Info) const {
 // do so and update the CallGraph for this operation.
 bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
                                  const SmallPtrSet<Function*, 8> &SCCFunctions,
-                                 const TargetData &TD) {
+                                 const TargetData *TD) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
-  if (!InlineFunction(CS, &CG, &TD)) return false;
+  if (!InlineFunction(CS, &CG, TD)) return false;
 
   // If the inlined function had a higher stack protection level than the
   // calling function, then bump up the caller's stack protection level.
@@ -127,7 +126,7 @@ bool Inliner::shouldInline(CallSite CS) {
 
 bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   CallGraph &CG = getAnalysis<CallGraph>();
-  TargetData &TD = getAnalysis<TargetData>();
+  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
 
   SmallPtrSet<Function*, 8> SCCFunctions;
   DOUT << "Inliner visiting SCC:";

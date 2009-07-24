@@ -39,7 +39,6 @@ namespace {
     bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
     }
 
     Instruction *
@@ -123,7 +122,7 @@ SimplifyHalfPowrLibCalls::InlineHalfPowrs(const std::vector<Instruction *> &Half
 /// runOnFunction - Top level algorithm.
 ///
 bool SimplifyHalfPowrLibCalls::runOnFunction(Function &F) {
-  TD = &getAnalysis<TargetData>();
+  TD = getAnalysisIfAvailable<TargetData>();
   
   bool Changed = false;
   std::vector<Instruction *> HalfPowrs;

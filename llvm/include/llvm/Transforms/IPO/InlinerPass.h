@@ -19,11 +19,11 @@
 
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Transforms/Utils/InlineCost.h"
-#include "llvm/Target/TargetData.h"
 
 
 namespace llvm {
   class CallSite;
+  class TargetData;
 
 /// Inliner - This class contains all of the helper code which is used to
 /// perform the inlining operations that do not depend on the policy.
@@ -48,7 +48,7 @@ struct Inliner : public CallGraphSCCPass {
   // InlineCallIfPossible
   bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
                             const SmallPtrSet<Function*, 8> &SCCFunctions,
-                            const TargetData &TD);
+                            const TargetData *TD);
 
   /// This method returns the value specified by the -inline-threshold value,
   /// specified on the command line.  This is typically not directly needed.
