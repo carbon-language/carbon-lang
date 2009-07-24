@@ -739,6 +739,11 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
   // representing anonymous unions/structs
   OS << Node->getMemberDecl()->getNameAsString();
 }
+void StmtPrinter::VisitObjCIsaExpr(ObjCIsaExpr *Node) {
+  PrintExpr(Node->getBase());
+  OS << (Node->isArrow() ? "->isa" : ".isa");
+}
+
 void StmtPrinter::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
   PrintExpr(Node->getBase());
   OS << ".";

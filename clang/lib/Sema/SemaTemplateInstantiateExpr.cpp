@@ -1341,6 +1341,12 @@ TemplateExprInstantiator::VisitObjCSuperExpr(ObjCSuperExpr *E) {
 }
 
 Sema::OwningExprResult 
+TemplateExprInstantiator::VisitObjCIsaExpr(ObjCIsaExpr *E) { 
+  assert(false && "FIXME: Template instantiations for ObjC expressions");
+  return SemaRef.ExprError();
+}
+
+Sema::OwningExprResult 
 Sema::InstantiateExpr(Expr *E, const TemplateArgumentList &TemplateArgs) {
   if (!E)
     return Owned((Expr *)0);

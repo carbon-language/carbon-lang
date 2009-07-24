@@ -141,6 +141,7 @@ EXPR(ObjCIvarRefExpr      , Expr)
 EXPR(ObjCPropertyRefExpr  , Expr)
 EXPR(ObjCKVCRefExpr       , Expr)
 EXPR(ObjCSuperExpr        , Expr)
+EXPR(ObjCIsaExpr          , Expr)
 
 // Clang Extensions.
 EXPR(ShuffleVectorExpr    , Expr)

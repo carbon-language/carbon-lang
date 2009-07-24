@@ -1878,6 +1878,10 @@ Stmt::child_iterator ObjCKVCRefExpr::child_end() { return &Base+1; }
 Stmt::child_iterator ObjCSuperExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator ObjCSuperExpr::child_end() { return child_iterator(); }
 
+// ObjCIsaExpr
+Stmt::child_iterator ObjCIsaExpr::child_begin() { return &Base; }
+Stmt::child_iterator ObjCIsaExpr::child_end() { return &Base+1; }
+
 // PredefinedExpr
 Stmt::child_iterator PredefinedExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator PredefinedExpr::child_end() { return child_iterator(); }

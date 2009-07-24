@@ -104,6 +104,7 @@ namespace {
     unsigned VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
     unsigned VisitObjCMessageExpr(ObjCMessageExpr *E);
     unsigned VisitObjCSuperExpr(ObjCSuperExpr *E);
+    unsigned VisitObjCIsaExpr(ObjCIsaExpr *E);
     
     unsigned VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
     unsigned VisitObjCAtCatchStmt(ObjCAtCatchStmt *);
@@ -444,6 +445,14 @@ unsigned PCHStmtReader::VisitMemberExpr(MemberExpr *E) {
   E->setBase(cast<Expr>(StmtStack.back()));
   E->setMemberDecl(cast<NamedDecl>(Reader.GetDecl(Record[Idx++])));
   E->setMemberLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
+  E->setArrow(Record[Idx++]);
+  return 1;
+}
+
+unsigned PCHStmtReader::VisitObjCIsaExpr(ObjCIsaExpr *E) {
+  VisitExpr(E);
+  E->setBase(cast<Expr>(StmtStack.back()));
+  E->setIsaMemberLoc(SourceLocation::getFromRawEncoding(Record[Idx++]));
   E->setArrow(Record[Idx++]);
   return 1;
 }
@@ -1105,6 +1114,9 @@ Stmt *PCHReader::ReadStmt(llvm::BitstreamCursor &Cursor) {
       break;
     case pch::EXPR_OBJC_SUPER_EXPR:
       S = new (Context) ObjCSuperExpr(Empty);
+      break;
+    case pch::EXPR_OBJC_ISA:
+      S = new (Context) ObjCIsaExpr(Empty);
       break;
     case pch::STMT_OBJC_FOR_COLLECTION:
       S = new (Context) ObjCForCollectionStmt(Empty);

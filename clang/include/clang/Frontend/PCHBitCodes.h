@@ -638,7 +638,9 @@ namespace clang {
       EXPR_OBJC_MESSAGE_EXPR,
       /// \brief An ObjCSuperExpr record.
       EXPR_OBJC_SUPER_EXPR,
-
+      /// \brief An ObjCIsa Expr record.
+      EXPR_OBJC_ISA,
+      
       /// \brief An ObjCForCollectionStmt record.      
       STMT_OBJC_FOR_COLLECTION,
       /// \brief An ObjCAtCatchStmt record.      

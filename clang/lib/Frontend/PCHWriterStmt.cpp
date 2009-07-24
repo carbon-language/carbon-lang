@@ -97,6 +97,7 @@ namespace {
     void VisitObjCKVCRefExpr(ObjCKVCRefExpr *E);
     void VisitObjCMessageExpr(ObjCMessageExpr *E);
     void VisitObjCSuperExpr(ObjCSuperExpr *E);
+    void VisitObjCIsaExpr(ObjCIsaExpr *E);
     
     // Objective-C Statements    
     void VisitObjCForCollectionStmt(ObjCForCollectionStmt *);
@@ -414,6 +415,14 @@ void PCHStmtWriter::VisitMemberExpr(MemberExpr *E) {
   Writer.AddSourceLocation(E->getMemberLoc(), Record);
   Record.push_back(E->isArrow());
   Code = pch::EXPR_MEMBER;
+}
+
+void PCHStmtWriter::VisitObjCIsaExpr(ObjCIsaExpr *E) {
+  VisitExpr(E);
+  Writer.WriteSubStmt(E->getBase());
+  Writer.AddSourceLocation(E->getIsaMemberLoc(), Record);
+  Record.push_back(E->isArrow());
+  Code = pch::EXPR_OBJC_ISA;
 }
 
 void PCHStmtWriter::VisitCastExpr(CastExpr *E) {

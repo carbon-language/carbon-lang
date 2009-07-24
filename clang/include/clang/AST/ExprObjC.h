@@ -496,6 +496,51 @@ public:
   virtual child_iterator child_end();
 };
 
+/// ObjCIsaExpr - Represent X->isa and X.isa (similiar in spirit to MemberExpr).
+class ObjCIsaExpr : public Expr {
+  /// Base - the expression for the base object pointer.
+  Stmt *Base;
+  
+  /// IsaMemberLoc - This is the location of the 'isa'.
+  SourceLocation IsaMemberLoc;
+  
+  /// IsArrow - True if this is "X->F", false if this is "X.F".
+  bool IsArrow;
+public:
+  ObjCIsaExpr(Expr *base, bool isarrow, SourceLocation l, QualType ty) 
+    : Expr(ObjCIsaExprClass, ty),
+      Base(base), IsaMemberLoc(l), IsArrow(isarrow) {}
+      
+  /// \brief Build an empty expression.
+  explicit ObjCIsaExpr(EmptyShell Empty) : Expr(ObjCIsaExprClass, Empty) { }
+      
+  void setBase(Expr *E) { Base = E; }
+  Expr *getBase() const { return cast<Expr>(Base); }
+  
+  bool isArrow() const { return IsArrow; }
+  void setArrow(bool A) { IsArrow = A; }
+
+  /// getMemberLoc - Return the location of the "member", in X->F, it is the
+  /// location of 'F'.
+  SourceLocation getIsaMemberLoc() const { return IsaMemberLoc; }
+  void setIsaMemberLoc(SourceLocation L) { IsaMemberLoc = L; }
+
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(getBase()->getLocStart(), IsaMemberLoc);
+  }
+  
+  virtual SourceLocation getExprLoc() const { return IsaMemberLoc; }
+
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjCIsaExprClass; 
+  }
+  static bool classof(const ObjCIsaExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 }  // end namespace clang
 
 #endif

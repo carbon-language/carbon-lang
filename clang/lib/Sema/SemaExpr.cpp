@@ -2283,7 +2283,6 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     const ObjCObjectPointerType *OPT = BaseType->getAsObjCObjectPointerType();
     const ObjCInterfaceType *IFaceT = 
       OPT ? OPT->getInterfaceType() : BaseType->getAsObjCInterfaceType();
-    
     if (IFaceT) {
       ObjCInterfaceDecl *IDecl = IFaceT->getDecl();
       ObjCInterfaceDecl *ClassDeclared;
@@ -2340,7 +2339,11 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
                          << IDecl->getDeclName() << &Member
                          << BaseExpr->getSourceRange());
     }
-    // We don't have an interface. FIXME: deal with ObjC builtin 'id' type.
+    // We have an 'id' type. Rather than fall through, we check if this
+    // is a reference to 'isa'.
+    if (&Member == &Context.Idents.get("isa"))
+      return Owned(new (Context) ObjCIsaExpr(BaseExpr, true, MemberLoc,
+                                             Context.getObjCIdType()));
   }
   // Handle properties on 'id' and qualified "id".
   if (OpKind == tok::period && (BaseType->isObjCIdType() || 
@@ -2472,6 +2475,13 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       << &Member << BaseType);
   }
   
+  // Handle the following exceptional case (*Obj).isa.
+  if (OpKind == tok::period && 
+      BaseType->isSpecificBuiltinType(BuiltinType::ObjCId) &&
+      &Member == &Context.Idents.get("isa"))
+    return Owned(new (Context) ObjCIsaExpr(BaseExpr, false, MemberLoc,
+                                           Context.getObjCIdType()));
+
   // Handle 'field access' to vectors, such as 'V.xx'.
   if (BaseType->isExtVectorType()) {
     QualType ret = CheckExtVectorComponent(BaseType, OpLoc, Member, MemberLoc);
