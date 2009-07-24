@@ -188,13 +188,12 @@ static bool isConstantString(const Constant *C) {
   return false;
 }
 
-unsigned
-TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
-                                     const char *Name) const {
+static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
+                                      SectionKind::Kind Kind,
+                                      const char *Name = 0) {
   unsigned Flags = SectionFlags::None;
 
   // Decode flags from global itself.
-  SectionKind::Kind Kind = SectionKindForGlobal(GV);
   switch (Kind) {
   case SectionKind::Text:
     Flags |= SectionFlags::Code;
@@ -292,7 +291,8 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   // Select section name
   if (GV->hasSection()) {
     // Honour section already set, if any.
-    unsigned Flags = SectionFlagsForGlobal(GV, GV->getSection().c_str());
+    unsigned Flags = SectionFlagsForGlobal(GV, SectionKindForGlobal(GV),
+                                           GV->getSection().c_str());
     return getNamedSection(GV->getSection().c_str(), Flags);
   }
 
@@ -303,7 +303,7 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
           getSectionPrefixForUniqueGlobal(SectionKindForGlobal(GV))) {
       // FIXME: Use mangler interface (PR4584).
       std::string Name = Prefix+GV->getNameStr();
-      unsigned Flags = SectionFlagsForGlobal(GV);
+      unsigned Flags = SectionFlagsForGlobal(GV, SectionKindForGlobal(GV));
       return getNamedSection(Name.c_str(), Flags);
     }
   }
