@@ -98,7 +98,8 @@ struct Current : Derived {
 };
 
                         // FIXME. This is bad message!
-struct M { 
+struct M { 		// expected-note {{candidate function}}	\
+			 // expected-note {{candidate function}}
   M(int i, int j);	// expected-note {{candidate function}} \
 			// // expected-note {{candidate function}}
 };
