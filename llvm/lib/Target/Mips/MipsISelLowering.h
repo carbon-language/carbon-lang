@@ -91,8 +91,6 @@ namespace llvm {
     // Lower Operand helpers
     SDNode *LowerCallResult(SDValue Chain, SDValue InFlag, CallSDNode *TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);
-    bool IsGlobalInSmallSection(GlobalValue *GV); 
-    bool IsInSmallSection(unsigned Size); 
 
     // Lower Operand specifics
     SDValue LowerANDOR(SDValue Op, SelectionDAG &DAG);
