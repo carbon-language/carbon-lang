@@ -1082,20 +1082,20 @@ def t2B   : T2XI<(outs), (ins brtarget:$target),
 
 let isNotDuplicable = 1, isIndirectBranch = 1 in {
 def t2BR_JTr : T2JTI<(outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
-                     "mov pc, $target \n$jt",
+                     "mov pc, $target \n\t.align\t2\n$jt",
                      [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>;
 
 def t2BR_JTm : 
     T2JTI<(outs),
           (ins t2addrmode_so_reg:$target, jtblock_operand:$jt, i32imm:$id),
-          "ldr pc, $target \n$jt",
+          "ldr pc, $target \n\t.align\t2\n$jt",
           [(ARMbrjt (i32 (load t2addrmode_so_reg:$target)), tjumptable:$jt,
              imm:$id)]>;
 
 def t2BR_JTadd : 
     T2JTI<(outs),
           (ins GPR:$target, GPR:$idx, jtblock_operand:$jt, i32imm:$id),
-          "add pc, $target, $idx \n$jt",
+          "add pc, $target, $idx \n\t.align\t2\n$jt",
           [(ARMbrjt (add GPR:$target, GPR:$idx), tjumptable:$jt, imm:$id)]>;
 } // isNotDuplicate, isIndirectBranch
 } // isBranch, isTerminator, isBarrier

@@ -433,23 +433,27 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     }
     break;
   }
-  case ARMII::Size8Bytes: return 8;          // Arm instruction x 2.
-  case ARMII::Size4Bytes: return 4;          // Arm instruction.
-  case ARMII::Size2Bytes: return 2;          // Thumb instruction.
+  case ARMII::Size8Bytes: return 8;          // ARM instruction x 2.
+  case ARMII::Size4Bytes: return 4;          // ARM / Thumb2 instruction.
+  case ARMII::Size2Bytes: return 2;          // Thumb1 instruction.
   case ARMII::SizeSpecial: {
+    bool IsThumb1JT = false;
     switch (MI->getOpcode()) {
     case ARM::CONSTPOOL_ENTRY:
       // If this machine instr is a constant pool entry, its size is recorded as
       // operand #2.
       return MI->getOperand(2).getImm();
-    case ARM::Int_eh_sjlj_setjmp: return 12;
+    case ARM::Int_eh_sjlj_setjmp:
+      return 12;
+    case ARM::tBR_JTr:
+      IsThumb1JT = true;
+      // Fallthrough
     case ARM::BR_JTr:
     case ARM::BR_JTm:
     case ARM::BR_JTadd:
     case ARM::t2BR_JTr:
     case ARM::t2BR_JTm:
-    case ARM::t2BR_JTadd:
-    case ARM::tBR_JTr: {
+    case ARM::t2BR_JTadd: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
       unsigned NumOps = TID.getNumOperands();
@@ -466,8 +470,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       // FIXME: If we know the size of the function is less than (1 << 16) *2
       // bytes, we can use 16-bit entries instead. Then there won't be an
       // alignment issue.
-      return getNumJTEntries(JT, JTI) * 4 +
-        ((MI->getOpcode()==ARM::tBR_JTr) ? 2 : 4);
+      return getNumJTEntries(JT, JTI) * 4 + (IsThumb1JT ? 2 : 4);
     }
     default:
       // Otherwise, pseudo-instruction sizes are zero.
