@@ -780,10 +780,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
             GEP1Ops[i] =
-                  Context.getConstantInt(Type::Int64Ty,AT->getNumElements()-1);
+                  ConstantInt::get(Type::Int64Ty,AT->getNumElements()-1);
           else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty))
             GEP1Ops[i] = 
-                  Context.getConstantInt(Type::Int64Ty,VT->getNumElements()-1);
+                  ConstantInt::get(Type::Int64Ty,VT->getNumElements()-1);
         }
       }
 

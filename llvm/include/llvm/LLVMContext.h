@@ -53,6 +53,8 @@ class Use;
 /// to have one context per thread.
 class LLVMContext {
   LLVMContextImpl* pImpl;
+  
+  friend class ConstantInt;
 public:
   LLVMContext();
   ~LLVMContext();
@@ -71,36 +73,6 @@ public:
   // ConstantInt accessors
   ConstantInt* getTrue();
   ConstantInt* getFalse();
-  
-  /// If Ty is a vector type, return a Constant with a splat of the given
-  /// value. Otherwise return a ConstantInt for the given value.
-  Constant* getConstantInt(const Type* Ty, uint64_t V,
-                              bool isSigned = false);
-                              
-  /// Return a ConstantInt with the specified integer value for the specified
-  /// type. If the type is wider than 64 bits, the value will be zero-extended
-  /// to fit the type, unless isSigned is true, in which case the value will
-  /// be interpreted as a 64-bit signed integer and sign-extended to fit
-  /// the type.
-  /// @brief Get a ConstantInt for a specific value.
-  ConstantInt* getConstantInt(const IntegerType* Ty, uint64_t V,
-                              bool isSigned = false);
-
-  /// Return a ConstantInt with the specified value for the specified type. The
-  /// value V will be canonicalized to a an unsigned APInt. Accessing it with
-  /// either getSExtValue() or getZExtValue() will yield a correctly sized and
-  /// signed value for the type Ty.
-  /// @brief Get a ConstantInt for a specific signed value.
-  ConstantInt* getConstantIntSigned(const IntegerType* Ty, int64_t V);
-  Constant *getConstantIntSigned(const Type *Ty, int64_t V);
-  
-  /// Return a ConstantInt with the specified value and an implied Type. The
-  /// type is the integer type that corresponds to the bit width of the value.
-  ConstantInt* getConstantInt(const APInt& V);
-  
-  /// If Ty is a vector type, return a Constant with a splat of the given
-  /// value. Otherwise return a ConstantInt for the given value.
-  Constant* getConstantInt(const Type* Ty, const APInt& V);
   
   // ConstantPointerNull accessors
   ConstantPointerNull* getConstantPointerNull(const PointerType* T);

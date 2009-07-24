@@ -383,8 +383,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
     new BitCastInst(Inst->getOperand(1), SBPTy, "SBJmpBuf", Inst);
   std::vector<Value*> Args = 
     make_vector<Value*>(GetSetJmpMap(Func), BufPtr,
-                        Inst->getContext().getConstantInt(Type::Int32Ty,
-                                         SetJmpIDMap[Func]++), 0);
+                        ConstantInt::get(Type::Int32Ty,SetJmpIDMap[Func]++), 0);
   CallInst::Create(AddSJToMap, Args.begin(), Args.end(), "", Inst);
 
   // We are guaranteed that there are no values live across basic blocks
@@ -434,9 +433,8 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
 
   // Add the case for this setjmp's number...
   SwitchValuePair SVP = GetSJSwitch(Func, GetRethrowBB(Func));
-  SVP.first->addCase(Inst->getContext().getConstantInt(Type::Int32Ty,
-                                             SetJmpIDMap[Func] - 1),
-                                             SetJmpContBlock);
+  SVP.first->addCase(ConstantInt::get(Type::Int32Ty, SetJmpIDMap[Func] - 1),
+                     SetJmpContBlock);
 
   // Value coming from the handling of the exception.
   PHI->addIncoming(SVP.second, SVP.second->getParent());

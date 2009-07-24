@@ -718,18 +718,18 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   // Insert new integer induction variable.
   PHINode *NewPHI = PHINode::Create(Type::Int32Ty,
                                     PH->getName()+".int", PH);
-  NewPHI->addIncoming(Context.getConstantInt(Type::Int32Ty, newInitValue),
+  NewPHI->addIncoming(ConstantInt::get(Type::Int32Ty, newInitValue),
                       PH->getIncomingBlock(IncomingEdge));
 
   Value *NewAdd = BinaryOperator::CreateAdd(NewPHI,
-                                          Context.getConstantInt(Type::Int32Ty,
+                                          ConstantInt::get(Type::Int32Ty,
                                                              newIncrValue),
                                             Incr->getName()+".int", Incr);
   NewPHI->addIncoming(NewAdd, PH->getIncomingBlock(BackEdge));
 
   // The back edge is edge 1 of newPHI, whatever it may have been in the
   // original PHI.
-  ConstantInt *NewEV = Context.getConstantInt(Type::Int32Ty, intEV);
+  ConstantInt *NewEV = ConstantInt::get(Type::Int32Ty, intEV);
   Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(1) : NewEV);
   Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(1));
   ICmpInst *NewEC = new ICmpInst(EC->getParent()->getTerminator(),

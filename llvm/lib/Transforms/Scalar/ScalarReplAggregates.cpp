@@ -776,7 +776,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
     unsigned OtherEltAlign = MemAlignment;
     
     if (OtherPtr) {
-      Value *Idx[2] = { Zero, Context.getConstantInt(Type::Int32Ty, i) };
+      Value *Idx[2] = { Zero, ConstantInt::get(Type::Int32Ty, i) };
       OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
                                            OtherPtr->getNameStr()+"."+utostr(i),
                                            MI);
@@ -839,7 +839,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
           }
           
           // Convert the integer value to the appropriate type.
-          StoreVal = Context.getConstantInt(TotalVal);
+          StoreVal = ConstantInt::get(Context, TotalVal);
           if (isa<PointerType>(ValTy))
             StoreVal = Context.getConstantExprIntToPtr(StoreVal, ValTy);
           else if (ValTy->isFloatingPoint())
@@ -876,15 +876,15 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
       Value *Ops[] = {
         SROADest ? EltPtr : OtherElt,  // Dest ptr
         SROADest ? OtherElt : EltPtr,  // Src ptr
-        Context.getConstantInt(MI->getOperand(3)->getType(), EltSize), // Size
-        Context.getConstantInt(Type::Int32Ty, OtherEltAlign)  // Align
+        ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
+        ConstantInt::get(Type::Int32Ty, OtherEltAlign)  // Align
       };
       CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
     } else {
       assert(isa<MemSetInst>(MI));
       Value *Ops[] = {
         EltPtr, MI->getOperand(2),  // Dest, Value,
-        Context.getConstantInt(MI->getOperand(3)->getType(), EltSize), // Size
+        ConstantInt::get(MI->getOperand(3)->getType(), EltSize), // Size
         Zero  // Align
       };
       CallInst::Create(TheFn, Ops, Ops + 4, "", MI);
@@ -934,7 +934,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       
       Value *EltVal = SrcVal;
       if (Shift) {
-        Value *ShiftVal = Context.getConstantInt(EltVal->getType(), Shift);
+        Value *ShiftVal = ConstantInt::get(EltVal->getType(), Shift);
         EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
                                             "sroa.store.elt", SI);
       }
@@ -982,7 +982,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       
       Value *EltVal = SrcVal;
       if (Shift) {
-        Value *ShiftVal = Context.getConstantInt(EltVal->getType(), Shift);
+        Value *ShiftVal = ConstantInt::get(EltVal->getType(), Shift);
         EltVal = BinaryOperator::CreateLShr(EltVal, ShiftVal,
                                             "sroa.store.elt", SI);
       }
@@ -1089,7 +1089,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
       Shift = AllocaSizeBits-Shift-FieldIntTy->getBitWidth();
     
     if (Shift) {
-      Value *ShiftVal = Context.getConstantInt(SrcField->getType(), Shift);
+      Value *ShiftVal = ConstantInt::get(SrcField->getType(), Shift);
       SrcField = BinaryOperator::CreateShl(SrcField, ShiftVal, "", LI);
     }
 
@@ -1212,7 +1212,7 @@ void SROA::CleanupGEP(GetElementPtrInst *GEPI) {
                                              Indices.begin(),
                                              Indices.end(),
                                              GEPI->getName()+".0", GEPI);
-  Indices[1] = Context.getConstantInt(Type::Int32Ty, 1);
+  Indices[1] = ConstantInt::get(Type::Int32Ty, 1);
   Value *OneIdx = GetElementPtrInst::Create(GEPI->getOperand(0),
                                             Indices.begin(),
                                             Indices.end(),
@@ -1469,7 +1469,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
         
         Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
         Value *New = ConvertScalar_InsertValue(
-                                      User->getContext().getConstantInt(APVal),
+                                    ConstantInt::get(User->getContext(), APVal),
                                                Old, Offset, Builder);
         Builder.CreateStore(New, NewAI);
       }
@@ -1558,7 +1558,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
     }
     // Return the element extracted out of it.
     Value *V = Builder.CreateExtractElement(FromVal,
-                                    Context.getConstantInt(Type::Int32Ty,Elt),
+                                    ConstantInt::get(Type::Int32Ty,Elt),
                                             "tmp");
     if (V->getType() != ToType)
       V = Builder.CreateBitCast(V, ToType, "tmp");
@@ -1611,11 +1611,11 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // only some bits are used.
   if (ShAmt > 0 && (unsigned)ShAmt < NTy->getBitWidth())
     FromVal = Builder.CreateLShr(FromVal,
-                                 Context.getConstantInt(FromVal->getType(),
+                                 ConstantInt::get(FromVal->getType(),
                                                            ShAmt), "tmp");
   else if (ShAmt < 0 && (unsigned)-ShAmt < NTy->getBitWidth())
     FromVal = Builder.CreateShl(FromVal, 
-                                Context.getConstantInt(FromVal->getType(),
+                                ConstantInt::get(FromVal->getType(),
                                                           -ShAmt), "tmp");
 
   // Finally, unconditionally truncate the integer to the right width.
@@ -1677,7 +1677,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
       SV = Builder.CreateBitCast(SV, VTy->getElementType(), "tmp");
     
     SV = Builder.CreateInsertElement(Old, SV, 
-                                   Context.getConstantInt(Type::Int32Ty, Elt),
+                                   ConstantInt::get(Type::Int32Ty, Elt),
                                      "tmp");
     return SV;
   }
@@ -1745,11 +1745,11 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   // only some bits in the structure are set.
   APInt Mask(APInt::getLowBitsSet(DestWidth, SrcWidth));
   if (ShAmt > 0 && (unsigned)ShAmt < DestWidth) {
-    SV = Builder.CreateShl(SV, Context.getConstantInt(SV->getType(),
+    SV = Builder.CreateShl(SV, ConstantInt::get(SV->getType(),
                            ShAmt), "tmp");
     Mask <<= ShAmt;
   } else if (ShAmt < 0 && (unsigned)-ShAmt < DestWidth) {
-    SV = Builder.CreateLShr(SV, Context.getConstantInt(SV->getType(),
+    SV = Builder.CreateLShr(SV, ConstantInt::get(SV->getType(),
                             -ShAmt), "tmp");
     Mask = Mask.lshr(-ShAmt);
   }
@@ -1758,7 +1758,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   // in the new bits.
   if (SrcWidth != DestWidth) {
     assert(DestWidth > SrcWidth);
-    Old = Builder.CreateAnd(Old, Context.getConstantInt(~Mask), "mask");
+    Old = Builder.CreateAnd(Old, ConstantInt::get(Context, ~Mask), "mask");
     SV = Builder.CreateOr(Old, SV, "ins");
   }
   return SV;

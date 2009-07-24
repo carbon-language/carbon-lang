@@ -272,7 +272,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                          AllocaInst *InvokeNum,
                                          SwitchInst *CatchSwitch) {
   LLVMContext &Context = II->getContext();
-  ConstantInt *InvokeNoC = Context.getConstantInt(Type::Int32Ty, InvokeNo);
+  ConstantInt *InvokeNoC = ConstantInt::get(Type::Int32Ty, InvokeNo);
 
   // If the unwind edge has phi nodes, split the edge.
   if (isa<PHINode>(II->getUnwindDest()->begin())) {
@@ -483,7 +483,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
     std::vector<Value*> Idx;
     Idx.push_back(Context.getNullValue(Type::Int32Ty));
-    Idx.push_back(Context.getConstantInt(Type::Int32Ty, 1));
+    Idx.push_back(ConstantInt::get(Type::Int32Ty, 1));
     OldJmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
                                              "OldBuf",
                                               EntryBB->getTerminator());
@@ -504,7 +504,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // executing.  For normal calls it contains zero.
     AllocaInst *InvokeNum = new AllocaInst(Type::Int32Ty, 0,
                                            "invokenum",EntryBB->begin());
-    new StoreInst(Context.getConstantInt(Type::Int32Ty, 0), InvokeNum, true,
+    new StoreInst(ConstantInt::get(Type::Int32Ty, 0), InvokeNum, true,
                   EntryBB->getTerminator());
 
     // Insert a load in the Catch block, and a switch on its value.  By default,
@@ -523,7 +523,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     BasicBlock *ContBlock = EntryBB->splitBasicBlock(EntryBB->getTerminator(),
                                                      "setjmp.cont");
 
-    Idx[1] = Context.getConstantInt(Type::Int32Ty, 0);
+    Idx[1] = ConstantInt::get(Type::Int32Ty, 0);
     Value *JmpBufPtr = GetElementPtrInst::Create(JmpBuf, Idx.begin(), Idx.end(),
                                                  "TheJmpBuf",
                                                  EntryBB->getTerminator());
@@ -577,12 +577,12 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   // Get a pointer to the jmpbuf and longjmp.
   std::vector<Value*> Idx;
   Idx.push_back(Context.getNullValue(Type::Int32Ty));
-  Idx.push_back(Context.getConstantInt(Type::Int32Ty, 0));
+  Idx.push_back(ConstantInt::get(Type::Int32Ty, 0));
   Idx[0] = GetElementPtrInst::Create(BufPtr, Idx.begin(), Idx.end(), "JmpBuf",
                                      UnwindBlock);
   Idx[0] = new BitCastInst(Idx[0], PointerType::getUnqual(Type::Int8Ty),
                            "tmp", UnwindBlock);
-  Idx[1] = Context.getConstantInt(Type::Int32Ty, 1);
+  Idx[1] = ConstantInt::get(Type::Int32Ty, 1);
   CallInst::Create(LongJmpFn, Idx.begin(), Idx.end(), "", UnwindBlock);
   new UnreachableInst(UnwindBlock);
 

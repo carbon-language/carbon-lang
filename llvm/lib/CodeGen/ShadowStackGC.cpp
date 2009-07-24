@@ -203,8 +203,8 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
   }
 
   Constant *BaseElts[] = {
-    Context.getConstantInt(Type::Int32Ty, Roots.size(), false),
-    Context.getConstantInt(Type::Int32Ty, NumMeta, false),
+    ConstantInt::get(Type::Int32Ty, Roots.size(), false),
+    ConstantInt::get(Type::Int32Ty, NumMeta, false),
   };
 
   Constant *DescriptorElts[] = {
@@ -236,8 +236,8 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
                                     GlobalVariable::InternalLinkage,
                                     FrameMap, "__gc_" + F.getName());
 
-  Constant *GEPIndices[2] = { Context.getConstantInt(Type::Int32Ty, 0),
-                              Context.getConstantInt(Type::Int32Ty, 0) };
+  Constant *GEPIndices[2] = { ConstantInt::get(Type::Int32Ty, 0),
+                              ConstantInt::get(Type::Int32Ty, 0) };
   return Context.getConstantExprGetElementPtr(GV, GEPIndices, 2);
 }
 
@@ -342,9 +342,9 @@ void ShadowStackGC::CollectRoots(Function &F) {
 GetElementPtrInst *
 ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
                          int Idx, int Idx2, const char *Name) {
-  Value *Indices[] = { Context.getConstantInt(Type::Int32Ty, 0),
-                       Context.getConstantInt(Type::Int32Ty, Idx),
-                       Context.getConstantInt(Type::Int32Ty, Idx2) };
+  Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
+                       ConstantInt::get(Type::Int32Ty, Idx),
+                       ConstantInt::get(Type::Int32Ty, Idx2) };
   Value* Val = B.CreateGEP(BasePtr, Indices, Indices + 3, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");
@@ -355,8 +355,8 @@ ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
 GetElementPtrInst *
 ShadowStackGC::CreateGEP(LLVMContext &Context, IRBuilder<> &B, Value *BasePtr,
                          int Idx, const char *Name) {
-  Value *Indices[] = { Context.getConstantInt(Type::Int32Ty, 0),
-                       Context.getConstantInt(Type::Int32Ty, Idx) };
+  Value *Indices[] = { ConstantInt::get(Type::Int32Ty, 0),
+                       ConstantInt::get(Type::Int32Ty, Idx) };
   Value *Val = B.CreateGEP(BasePtr, Indices, Indices + 2, Name);
 
   assert(isa<GetElementPtrInst>(Val) && "Unexpected folded constant");

@@ -197,7 +197,7 @@ static void getBackEdges(Function& F, T& BackEdges);
   
 GlobalRandomCounter::GlobalRandomCounter(Module& M, const IntegerType* t,
                                          uint64_t resetval) : T(t) {
-  ConstantInt* Init = M.getContext().getConstantInt(T, resetval); 
+  ConstantInt* Init = ConstantInt::get(T, resetval); 
   ResetValue = Init;
   Counter = new GlobalVariable(M, T, false, GlobalValue::InternalLinkage,
                                Init, "RandomSteeringCounter");
@@ -209,16 +209,15 @@ void GlobalRandomCounter::PrepFunction(Function* F) {}
 
 void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
   BranchInst* t = cast<BranchInst>(bb->getTerminator());
-  LLVMContext &Context = bb->getContext();
   
   //decrement counter
   LoadInst* l = new LoadInst(Counter, "counter", t);
   
   ICmpInst* s = new ICmpInst(t, ICmpInst::ICMP_EQ, l,
-                             Context.getConstantInt(T, 0), 
+                             ConstantInt::get(T, 0), 
                              "countercc");
 
-  Value* nv = BinaryOperator::CreateSub(l, Context.getConstantInt(T, 1),
+  Value* nv = BinaryOperator::CreateSub(l, ConstantInt::get(T, 1),
                                         "counternew", t);
   new StoreInst(nv, Counter, t);
   t->setCondition(s);
@@ -236,7 +235,7 @@ void GlobalRandomCounter::ProcessChoicePoint(BasicBlock* bb) {
 GlobalRandomCounterOpt::GlobalRandomCounterOpt(Module& M, const IntegerType* t,
                                                uint64_t resetval) 
   : AI(0), T(t) {
-  ConstantInt* Init = M.getContext().getConstantInt(T, resetval);
+  ConstantInt* Init = ConstantInt::get(T, resetval);
   ResetValue  = Init;
   Counter = new GlobalVariable(M, T, false, GlobalValue::InternalLinkage,
                                Init, "RandomSteeringCounter");
@@ -283,16 +282,15 @@ void GlobalRandomCounterOpt::PrepFunction(Function* F) {
 
 void GlobalRandomCounterOpt::ProcessChoicePoint(BasicBlock* bb) {
   BranchInst* t = cast<BranchInst>(bb->getTerminator());
-  LLVMContext &Context = bb->getContext();
   
   //decrement counter
   LoadInst* l = new LoadInst(AI, "counter", t);
   
   ICmpInst* s = new ICmpInst(t, ICmpInst::ICMP_EQ, l,
-                             Context.getConstantInt(T, 0), 
+                             ConstantInt::get(T, 0), 
                              "countercc");
 
-  Value* nv = BinaryOperator::CreateSub(l, Context.getConstantInt(T, 1),
+  Value* nv = BinaryOperator::CreateSub(l, ConstantInt::get(T, 1),
                                         "counternew", t);
   new StoreInst(nv, AI, t);
   t->setCondition(s);
@@ -318,15 +316,14 @@ void CycleCounter::PrepFunction(Function* F) {}
 
 void CycleCounter::ProcessChoicePoint(BasicBlock* bb) {
   BranchInst* t = cast<BranchInst>(bb->getTerminator());
-  LLVMContext &Context = bb->getContext();
   
   CallInst* c = CallInst::Create(F, "rdcc", t);
   BinaryOperator* b = 
-    BinaryOperator::CreateAnd(c, Context.getConstantInt(Type::Int64Ty, rm),
+    BinaryOperator::CreateAnd(c, ConstantInt::get(Type::Int64Ty, rm),
                               "mrdcc", t);
   
   ICmpInst *s = new ICmpInst(t, ICmpInst::ICMP_EQ, b,
-                             Context.getConstantInt(Type::Int64Ty, 0), 
+                             ConstantInt::get(Type::Int64Ty, 0), 
                              "mrdccc");
 
   t->setCondition(s);
@@ -353,7 +350,7 @@ void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNu
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
   Indices[0] = BB->getContext().getNullValue(Type::Int32Ty);
-  Indices[1] = BB->getContext().getConstantInt(Type::Int32Ty, CounterNum);
+  Indices[1] = ConstantInt::get(Type::Int32Ty, CounterNum);
   Constant *ElementPtr = 
     BB->getContext().getConstantExprGetElementPtr(CounterArray,
                                                         &Indices[0], 2);
@@ -362,7 +359,7 @@ void RSProfilers_std::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNu
   Value *OldVal = new LoadInst(ElementPtr, "OldCounter", InsertPos);
   profcode.insert(OldVal);
   Value *NewVal = BinaryOperator::CreateAdd(OldVal,
-                              BB->getContext().getConstantInt(Type::Int32Ty, 1),
+                              ConstantInt::get(Type::Int32Ty, 1),
                                             "NewCounter", InsertPos);
   profcode.insert(NewVal);
   profcode.insert(new StoreInst(NewVal, ElementPtr, InsertPos));
@@ -483,7 +480,7 @@ void ProfilerRS::ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F) 
   //b:
   BranchInst::Create(cast<BasicBlock>(Translate(dst)), bbC);
   BranchInst::Create(dst, cast<BasicBlock>(Translate(dst)), 
-                     F.getContext().getConstantInt(Type::Int1Ty, true), bbCp);
+                     ConstantInt::get(Type::Int1Ty, true), bbCp);
   //c:
   {
     TerminatorInst* iB = src->getTerminator();
@@ -540,8 +537,7 @@ bool ProfilerRS::runOnFunction(Function& F) {
     ReplaceInstWithInst(T, BranchInst::Create(T->getSuccessor(0),
                                               cast<BasicBlock>(
                                                 Translate(T->getSuccessor(0))),
-                                    F.getContext().getConstantInt(Type::Int1Ty,
-                                                               true)));
+                                    ConstantInt::get(Type::Int1Ty, true)));
     
     //do whatever is needed now that the function is duplicated
     c->PrepFunction(&F);

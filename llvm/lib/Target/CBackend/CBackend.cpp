@@ -3500,7 +3500,7 @@ void CWriter::visitStoreInst(StoreInst &I) {
     if (!ITy->isPowerOf2ByteWidth())
       // We have a bit width that doesn't match an even power-of-2 byte
       // size. Consequently we must & the value with the type's bit mask
-      BitMask = I.getContext().getConstantInt(ITy, ITy->getBitMask());
+      BitMask = ConstantInt::get(ITy, ITy->getBitMask());
   if (BitMask)
     Out << "((";
   writeOperand(Operand);

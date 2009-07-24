@@ -877,8 +877,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
                !ARM_AM::isSOImmTwoPartVal(Val));     // two instrs.
     if (UseCP) {
       SDValue CPIdx =
-        CurDAG->getTargetConstantPool(
-                       CurDAG->getContext()->getConstantInt(Type::Int32Ty, Val),
+        CurDAG->getTargetConstantPool(ConstantInt::get(Type::Int32Ty, Val),
                                       TLI.getPointerTy());
 
       SDNode *ResNode;

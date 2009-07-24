@@ -365,8 +365,7 @@ LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty) {
 
 LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
                           int SignExtend) {
-  return wrap(getGlobalContext().getConstantInt(unwrap<IntegerType>(IntTy), N,
-                                                 SignExtend != 0));
+  return wrap(ConstantInt::get(unwrap<IntegerType>(IntTy), N, SignExtend != 0));
 }
 
 static const fltSemantics &SemanticsForType(Type *Ty) {

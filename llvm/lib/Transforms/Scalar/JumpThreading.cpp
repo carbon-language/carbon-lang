@@ -434,8 +434,7 @@ bool JumpThreading::ProcessBranchOnDuplicateCond(BasicBlock *PredBB,
          << "' folding condition to '" << BranchDir << "': "
          << *BB->getTerminator();
     ++NumFolds;
-    DestBI->setCondition(BB->getContext().getConstantInt(Type::Int1Ty, 
-                                                         BranchDir));
+    DestBI->setCondition(ConstantInt::get(Type::Int1Ty, BranchDir));
     ConstantFoldTerminator(BB);
     return true;
   }
@@ -757,7 +756,7 @@ bool JumpThreading::ProcessBranchOnLogical(Value *V, BasicBlock *BB,
   // We can only do the simplification for phi nodes of 'false' with AND or
   // 'true' with OR.  See if we have any entries in the phi for this.
   unsigned PredNo = ~0U;
-  ConstantInt *PredCst = V->getContext().getConstantInt(Type::Int1Ty, !isAnd);
+  ConstantInt *PredCst = ConstantInt::get(Type::Int1Ty, !isAnd);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == PredCst) {
       PredNo = i;

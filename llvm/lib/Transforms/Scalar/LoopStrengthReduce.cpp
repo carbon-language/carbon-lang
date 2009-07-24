@@ -1991,9 +1991,9 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       NewStride = &IU->StrideOrder[i];
       if (!isa<PointerType>(NewCmpTy))
-        NewCmpRHS = Context.getConstantInt(NewCmpTy, NewCmpVal);
+        NewCmpRHS = ConstantInt::get(NewCmpTy, NewCmpVal);
       else {
-        Constant *CI = Context.getConstantInt(NewCmpIntTy, NewCmpVal);
+        Constant *CI = ConstantInt::get(NewCmpIntTy, NewCmpVal);
         NewCmpRHS = Context.getConstantExprIntToPtr(CI, NewCmpTy);
       }
       NewOffset = TyBits == NewTyBits
@@ -2432,8 +2432,6 @@ void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
   if (!ExitingBlock)
     return; // More than one block exiting!
 
-  LLVMContext &Context = ExitingBlock->getContext();
-
   // Okay, we've computed the exiting block.  See what condition causes us to
   // exit.
   //
@@ -2506,7 +2504,7 @@ void LoopStrengthReduce::OptimizeLoopCountIV(Loop *L) {
   Value *startVal = phi->getIncomingValue(inBlock);
   Value *endVal = Cond->getOperand(1);
   // FIXME check for case where both are constant
-  Constant* Zero = Context.getConstantInt(Cond->getOperand(1)->getType(), 0);
+  Constant* Zero = ConstantInt::get(Cond->getOperand(1)->getType(), 0);
   BinaryOperator *NewStartVal = 
     BinaryOperator::Create(Instruction::Sub, endVal, startVal,
                            "tmp", PreInsertPt);

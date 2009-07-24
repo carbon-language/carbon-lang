@@ -1169,7 +1169,8 @@ namespace {
         Value *V = VN.value(n); // XXX: redesign worklist.
         const Type *Ty = V->getType();
         if (Ty->isInteger()) {
-          addToWorklist(V, Context->getConstantInt(*I), ICmpInst::ICMP_EQ, VRP);
+          addToWorklist(V, ConstantInt::get(*Context, *I),
+                        ICmpInst::ICMP_EQ, VRP);
           return;
         } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
           assert(*I == 0 && "Pointer is null but not zero?");
@@ -1783,7 +1784,7 @@ namespace {
             if (ConstantInt *CI = dyn_cast<ConstantInt>(Canonical)) {
               if (ConstantInt *Arg = dyn_cast<ConstantInt>(LHS)) {
                 add(RHS,
-                    Context->getConstantInt(CI->getValue() ^ Arg->getValue()),
+                  ConstantInt::get(*Context, CI->getValue() ^ Arg->getValue()),
                     ICmpInst::ICMP_EQ, NewContext);
               }
             }
@@ -1895,7 +1896,7 @@ namespace {
         assert(!Ty->isFPOrFPVector() && "Float in work queue!");
 
         Constant *Zero = Context->getNullValue(Ty);
-        Constant *One = Context->getConstantInt(Ty, 1);
+        Constant *One = ConstantInt::get(Ty, 1);
         ConstantInt *AllOnes = cast<ConstantInt>(Context->getAllOnesValue(Ty));
 
         switch (Opcode) {
@@ -2535,23 +2536,23 @@ namespace {
 
   void PredicateSimplifier::Forwards::visitSExtInst(SExtInst &SI) {
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &SI);
-    LLVMContext *Context = &SI.getContext();
+    LLVMContext &Context = SI.getContext();
     uint32_t SrcBitWidth = cast<IntegerType>(SI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(SI.getDestTy())->getBitWidth();
     APInt Min(APInt::getHighBitsSet(DstBitWidth, DstBitWidth-SrcBitWidth+1));
     APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth-1));
-    VRP.add(Context->getConstantInt(Min), &SI, ICmpInst::ICMP_SLE);
-    VRP.add(Context->getConstantInt(Max), &SI, ICmpInst::ICMP_SGE);
+    VRP.add(ConstantInt::get(Context, Min), &SI, ICmpInst::ICMP_SLE);
+    VRP.add(ConstantInt::get(Context, Max), &SI, ICmpInst::ICMP_SGE);
     VRP.solve();
   }
 
   void PredicateSimplifier::Forwards::visitZExtInst(ZExtInst &ZI) {
     VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, &ZI);
-    LLVMContext *Context = &ZI.getContext();
+    LLVMContext &Context = ZI.getContext();
     uint32_t SrcBitWidth = cast<IntegerType>(ZI.getSrcTy())->getBitWidth();
     uint32_t DstBitWidth = cast<IntegerType>(ZI.getDestTy())->getBitWidth();
     APInt Max(APInt::getLowBitsSet(DstBitWidth, SrcBitWidth));
-    VRP.add(Context->getConstantInt(Max), &ZI, ICmpInst::ICMP_UGE);
+    VRP.add(ConstantInt::get(Context, Max), &ZI, ICmpInst::ICMP_UGE);
     VRP.solve();
   }
 
@@ -2640,7 +2641,7 @@ namespace {
 
     Pred = IC.getPredicate();
 
-    LLVMContext *Context = &IC.getContext();
+    LLVMContext &Context = IC.getContext();
 
     if (ConstantInt *Op1 = dyn_cast<ConstantInt>(IC.getOperand(1))) {
       ConstantInt *NextVal = 0;
@@ -2649,12 +2650,12 @@ namespace {
         case ICmpInst::ICMP_SLT:
         case ICmpInst::ICMP_ULT:
           if (Op1->getValue() != 0)
-            NextVal = Context->getConstantInt(Op1->getValue()-1);
+            NextVal = ConstantInt::get(Context, Op1->getValue()-1);
          break;
         case ICmpInst::ICMP_SGT:
         case ICmpInst::ICMP_UGT:
           if (!Op1->getValue().isAllOnesValue())
-            NextVal = Context->getConstantInt(Op1->getValue()+1);
+            NextVal = ConstantInt::get(Context, Op1->getValue()+1);
          break;
       }
 

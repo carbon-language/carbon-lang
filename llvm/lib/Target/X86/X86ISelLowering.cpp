@@ -4889,10 +4889,10 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG) {
 
   // Build some magic constants.
   std::vector<Constant*> CV0;
-  CV0.push_back(Context->getConstantInt(APInt(32, 0x45300000)));
-  CV0.push_back(Context->getConstantInt(APInt(32, 0x43300000)));
-  CV0.push_back(Context->getConstantInt(APInt(32, 0)));
-  CV0.push_back(Context->getConstantInt(APInt(32, 0)));
+  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x45300000)));
+  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x43300000)));
+  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
+  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
   Constant *C0 = Context->getConstantVector(CV0);
   SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 16);
 

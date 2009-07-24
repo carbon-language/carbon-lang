@@ -39,8 +39,7 @@ Function *makeReturnGlobal(std::string Name, GlobalVariable *G, Module *M) {
   IRBuilder<> builder(Entry);
   Value *Load = builder.CreateLoad(G);
   const Type *GTy = G->getType()->getElementType();
-  Value *Add = builder.CreateAdd(Load,
-    getGlobalContext().getConstantInt(GTy, 1LL));
+  Value *Add = builder.CreateAdd(Load, ConstantInt::get(GTy, 1LL));
   builder.CreateStore(Add, G);
   builder.CreateRet(Add);
   return F;

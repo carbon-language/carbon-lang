@@ -69,7 +69,7 @@ static Value *isBytewiseValue(Value *V, LLVMContext& Context) {
         if (Val != Val2)
           return 0;
       }
-      return Context.getConstantInt(Val);
+      return ConstantInt::get(Context, Val);
     }
   }
   
@@ -448,9 +448,9 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     Value *Ops[] = {
       StartPtr, ByteVal,   // Start, value
       // size
-      SI->getContext().getConstantInt(Type::Int64Ty, Range.End-Range.Start),
+      ConstantInt::get(Type::Int64Ty, Range.End-Range.Start),
       // align
-      SI->getContext().getConstantInt(Type::Int32Ty, Range.Alignment)
+      ConstantInt::get(Type::Int32Ty, Range.Alignment)
     };
     Value *C = CallInst::Create(MemSetF, Ops, Ops+4, "", InsertPt);
     DEBUG(cerr << "Replace stores:\n";

@@ -69,7 +69,7 @@ TEST(MDNodeTest, Simple) {
 
   MDString *s1 = getGlobalContext().getMDString(&x[0], 3);
   MDString *s2 = getGlobalContext().getMDString(&y[0], 3);
-  ConstantInt *CI = getGlobalContext().getConstantInt(APInt(8, 0));
+  ConstantInt *CI = ConstantInt::get(getGlobalContext(), APInt(8, 0));
 
   std::vector<Value *> V;
   V.push_back(s1);
@@ -102,7 +102,7 @@ TEST(MDNodeTest, Simple) {
 }
 
 TEST(MDNodeTest, Delete) {
-  Constant *C = getGlobalContext().getConstantInt(Type::Int32Ty, 1);
+  Constant *C = ConstantInt::get(Type::Int32Ty, 1);
   Instruction *I = new BitCastInst(C, Type::Int32Ty);
 
   Value *const V = I;

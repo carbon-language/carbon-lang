@@ -271,20 +271,20 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                                   Context.getPointerTypeUnqual(Type::DoubleTy),
                                       "upgraded.", CI);
         Value *Load = new LoadInst(Addr, "upgraded.", false, 8, CI);
-        Value *Idx = Context.getConstantInt(Type::Int32Ty, 0);
+        Value *Idx = ConstantInt::get(Type::Int32Ty, 0);
         Op1 = InsertElementInst::Create(Op1, Load, Idx, "upgraded.", CI);
 
         if (isLoadH) {
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 0));
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 2));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 0));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
         } else {
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 2));
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 1));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
         }
         Value *Mask = Context.getConstantVector(Idxs);
         SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
       } else if (isMovL) {
-        Constant *Zero = Context.getConstantInt(Type::Int32Ty, 0);
+        Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
         Idxs.push_back(Zero);
         Idxs.push_back(Zero);
         Idxs.push_back(Zero);
@@ -292,32 +292,32 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Value *ZeroV = Context.getConstantVector(Idxs);
 
         Idxs.clear(); 
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 4));
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 5));
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 2));
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 3));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 4));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 5));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
         Value *Mask = Context.getConstantVector(Idxs);
         SI = new ShuffleVectorInst(ZeroV, Op0, Mask, "upgraded.", CI);
       } else if (isMovSD ||
                  isUnpckhPD || isUnpcklPD || isPunpckhQPD || isPunpcklQPD) {
         Value *Op1 = CI->getOperand(2);
         if (isMovSD) {
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 2));
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 1));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
         } else if (isUnpckhPD || isPunpckhQPD) {
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 1));
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 3));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
         } else {
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 0));
-          Idxs.push_back(Context.getConstantInt(Type::Int32Ty, 2));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 0));
+          Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
         }
         Value *Mask = Context.getConstantVector(Idxs);
         SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
       } else if (isShufPD) {
         Value *Op1 = CI->getOperand(2);
         unsigned MaskVal = cast<ConstantInt>(CI->getOperand(3))->getZExtValue();
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty, MaskVal & 1));
-        Idxs.push_back(Context.getConstantInt(Type::Int32Ty,
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty, MaskVal & 1));
+        Idxs.push_back(ConstantInt::get(Type::Int32Ty,
                                                ((MaskVal >> 1) & 1)+2));
         Value *Mask = Context.getConstantVector(Idxs);
         SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);

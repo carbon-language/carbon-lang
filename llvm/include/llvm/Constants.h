@@ -57,6 +57,35 @@ protected:
     return User::operator new(s, 0);
   }
 public:
+  /// If Ty is a vector type, return a Constant with a splat of the given
+  /// value. Otherwise return a ConstantInt for the given value.
+  static Constant* get(const Type* Ty, uint64_t V, bool isSigned = false);
+                              
+  /// Return a ConstantInt with the specified integer value for the specified
+  /// type. If the type is wider than 64 bits, the value will be zero-extended
+  /// to fit the type, unless isSigned is true, in which case the value will
+  /// be interpreted as a 64-bit signed integer and sign-extended to fit
+  /// the type.
+  /// @brief Get a ConstantInt for a specific value.
+  static ConstantInt* get(const IntegerType* Ty, uint64_t V,
+                          bool isSigned = false);
+
+  /// Return a ConstantInt with the specified value for the specified type. The
+  /// value V will be canonicalized to a an unsigned APInt. Accessing it with
+  /// either getSExtValue() or getZExtValue() will yield a correctly sized and
+  /// signed value for the type Ty.
+  /// @brief Get a ConstantInt for a specific signed value.
+  static ConstantInt* getSigned(const IntegerType* Ty, int64_t V);
+  static Constant *getSigned(const Type *Ty, int64_t V);
+  
+  /// Return a ConstantInt with the specified value and an implied Type. The
+  /// type is the integer type that corresponds to the bit width of the value.
+  static ConstantInt* get(LLVMContext &Context, const APInt& V);
+  
+  /// If Ty is a vector type, return a Constant with a splat of the given
+  /// value. Otherwise return a ConstantInt for the given value.
+  static Constant* get(const Type* Ty, const APInt& V);
+  
   /// Return the constant as an APInt value reference. This allows clients to
   /// obtain a copy of the value, with all its precision in tact.
   /// @brief Return the constant's value.

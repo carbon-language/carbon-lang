@@ -113,7 +113,7 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
       if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *TD) &&
           GV1 == GV2) {
         // (&GV+C1) - (&GV+C2) -> C1-C2, pointer arithmetic cannot overflow.
-        return Context.getConstantInt(Op0->getType(), Offs1-Offs2);
+        return ConstantInt::get(Op0->getType(), Offs1-Offs2);
       }
   }
     
@@ -151,7 +151,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   
   uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
                                          (Value**)Ops+1, NumOps-1);
-  Constant *C = Context.getConstantInt(TD->getIntPtrType(), Offset+BasePtr);
+  Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset+BasePtr);
   return Context.getConstantExprIntToPtr(C, ResultTy);
 }
 
@@ -232,7 +232,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
             
             // Shift it to the right place, depending on endianness.
             Src = Context.getConstantExprShl(Src, 
-                             Context.getConstantInt(Src->getType(), ShiftAmt));
+                             ConstantInt::get(Src->getType(), ShiftAmt));
             ShiftAmt += isLittleEndian ? SrcBitSize : -SrcBitSize;
             
             // Mix it in.
@@ -255,7 +255,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
             // Shift the piece of the value into the right place, depending on
             // endianness.
             Constant *Elt = Context.getConstantExprLShr(Src, 
-                            Context.getConstantInt(Src->getType(), ShiftAmt));
+                            ConstantInt::get(Src->getType(), ShiftAmt));
             ShiftAmt += isLittleEndian ? DstBitSize : -DstBitSize;
 
             // Truncate and remember this piece.
@@ -376,7 +376,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
         unsigned InWidth = Input->getType()->getScalarSizeInBits();
         if (TD->getPointerSizeInBits() < InWidth) {
           Constant *Mask = 
-            Context.getConstantInt(APInt::getLowBitsSet(InWidth,
+            ConstantInt::get(Context, APInt::getLowBitsSet(InWidth,
                                                   TD->getPointerSizeInBits()));
           Input = Context.getConstantExprAnd(Input, Mask);
         }
@@ -420,7 +420,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                                             AT->getNumElements()))) {
                         Constant *Index[] = {
                           Context.getNullValue(CE->getType()),
-                          Context.getConstantInt(ElemIdx)
+                          ConstantInt::get(Context, ElemIdx)
                         };
                         return
                         Context.getConstantExprGetElementPtr(GV, &Index[0], 2);
@@ -801,13 +801,13 @@ llvm::ConstantFoldCall(Function *F,
       }
     } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
       if (Len > 11 && !memcmp(Str, "llvm.bswap", 10))
-        return Context.getConstantInt(Op->getValue().byteSwap());
+        return ConstantInt::get(Context, Op->getValue().byteSwap());
       else if (Len > 11 && !memcmp(Str, "llvm.ctpop", 10))
-        return Context.getConstantInt(Ty, Op->getValue().countPopulation());
+        return ConstantInt::get(Ty, Op->getValue().countPopulation());
       else if (Len > 10 && !memcmp(Str, "llvm.cttz", 9))
-        return Context.getConstantInt(Ty, Op->getValue().countTrailingZeros());
+        return ConstantInt::get(Ty, Op->getValue().countTrailingZeros());
       else if (Len > 10 && !memcmp(Str, "llvm.ctlz", 9))
-        return Context.getConstantInt(Ty, Op->getValue().countLeadingZeros());
+        return ConstantInt::get(Ty, Op->getValue().countLeadingZeros());
     }
   } else if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {

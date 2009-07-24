@@ -55,7 +55,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     // pass null.
     Args[2] = Context.getConstantPointerNull(UIntPtr);
   }
-  Args[3] = Context.getConstantInt(Type::Int32Ty, NumElements);
+  Args[3] = ConstantInt::get(Type::Int32Ty, NumElements);
 
   Instruction *InitCall = CallInst::Create(InitFn, Args.begin(), Args.end(),
                                            "newargc", InsertPos);
@@ -111,7 +111,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
   // Create the getelementptr constant expression
   std::vector<Constant*> Indices(2);
   Indices[0] = Context.getNullValue(Type::Int32Ty);
-  Indices[1] = Context.getConstantInt(Type::Int32Ty, CounterNum);
+  Indices[1] = ConstantInt::get(Type::Int32Ty, CounterNum);
   Constant *ElementPtr = 
     Context.getConstantExprGetElementPtr(CounterArray, &Indices[0],
                                           Indices.size());
@@ -119,7 +119,7 @@ void llvm::IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
   // Load, increment and store the value back.
   Value *OldVal = new LoadInst(ElementPtr, "OldFuncCounter", InsertPos);
   Value *NewVal = BinaryOperator::Create(Instruction::Add, OldVal,
-                                      Context.getConstantInt(Type::Int32Ty, 1),
+                                      ConstantInt::get(Type::Int32Ty, 1),
                                          "NewFuncCounter", InsertPos);
   new StoreInst(NewVal, ElementPtr, InsertPos);
 }

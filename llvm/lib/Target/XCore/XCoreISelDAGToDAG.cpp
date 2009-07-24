@@ -174,8 +174,7 @@ SDNode *XCoreDAGToDAGISel::Select(SDValue Op) {
         else if (! Predicate_immU16(N)) {
           unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
           SDValue CPIdx =
-            CurDAG->getTargetConstantPool(
-                       CurDAG->getContext()->getConstantInt(Type::Int32Ty, Val),
+            CurDAG->getTargetConstantPool(ConstantInt::get(Type::Int32Ty, Val),
                                           TLI.getPointerTy());
           return CurDAG->getTargetNode(XCore::LDWCP_lru6, dl, MVT::i32, 
                                        MVT::Other, CPIdx, 

@@ -704,7 +704,7 @@ void BranchInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 
 static Value *getAISize(LLVMContext &Context, Value *Amt) {
   if (!Amt)
-    Amt = Context.getConstantInt(Type::Int32Ty, 1);
+    Amt = ConstantInt::get(Type::Int32Ty, 1);
   else {
     assert(!isa<BasicBlock>(Amt) &&
            "Passed basic block into allocation size parameter! Use other ctor");

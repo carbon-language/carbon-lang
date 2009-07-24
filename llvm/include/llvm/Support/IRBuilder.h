@@ -370,7 +370,7 @@ public:
     return Insert(GetElementPtrInst::Create(Ptr, Idx), Name);
   }
   Value *CreateConstGEP1_32(Value *Ptr, unsigned Idx0, const char *Name = "") {
-    Value *Idx = Context.getConstantInt(Type::Int32Ty, Idx0);
+    Value *Idx = ConstantInt::get(Type::Int32Ty, Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateGetElementPtr(PC, &Idx, 1);
@@ -380,8 +380,8 @@ public:
   Value *CreateConstGEP2_32(Value *Ptr, unsigned Idx0, unsigned Idx1, 
                     const char *Name = "") {
     Value *Idxs[] = {
-      Context.getConstantInt(Type::Int32Ty, Idx0),
-      Context.getConstantInt(Type::Int32Ty, Idx1)
+      ConstantInt::get(Type::Int32Ty, Idx0),
+      ConstantInt::get(Type::Int32Ty, Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
@@ -390,7 +390,7 @@ public:
     return Insert(GetElementPtrInst::Create(Ptr, Idxs, Idxs+2), Name);    
   }
   Value *CreateConstGEP1_64(Value *Ptr, uint64_t Idx0, const char *Name = "") {
-    Value *Idx = Context.getConstantInt(Type::Int64Ty, Idx0);
+    Value *Idx = ConstantInt::get(Type::Int64Ty, Idx0);
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
       return Folder.CreateGetElementPtr(PC, &Idx, 1);
@@ -400,8 +400,8 @@ public:
   Value *CreateConstGEP2_64(Value *Ptr, uint64_t Idx0, uint64_t Idx1, 
                     const char *Name = "") {
     Value *Idxs[] = {
-      Context.getConstantInt(Type::Int64Ty, Idx0),
-      Context.getConstantInt(Type::Int64Ty, Idx1)
+      ConstantInt::get(Type::Int64Ty, Idx0),
+      ConstantInt::get(Type::Int64Ty, Idx1)
     };
 
     if (Constant *PC = dyn_cast<Constant>(Ptr))
@@ -428,7 +428,7 @@ public:
   }
   Value *CreateGlobalStringPtr(const char *Str = "", const char *Name = "") {
     Value *gv = CreateGlobalString(Str, Name);
-    Value *zero = Context.getConstantInt(Type::Int32Ty, 0);
+    Value *zero = ConstantInt::get(Type::Int32Ty, 0);
     Value *Args[] = { zero, zero };
     return CreateGEP(gv, Args, Args+2, Name);
   }

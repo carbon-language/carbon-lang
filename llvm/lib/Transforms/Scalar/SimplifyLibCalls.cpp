@@ -157,7 +157,7 @@ Value *LibCallOptimization::EmitMemCpy(Value *Dst, Value *Src, Value *Len,
   Tys[0] = Len->getType();
   Value *MemCpy = Intrinsic::getDeclaration(M, IID, Tys, 1);
   return B.CreateCall4(MemCpy, CastToCStr(Dst, B), CastToCStr(Src, B), Len,
-                       Context->getConstantInt(Type::Int32Ty, Align));
+                       ConstantInt::get(Type::Int32Ty, Align));
 }
 
 /// EmitMemChr - Emit a call to the memchr function.  This assumes that Ptr is
@@ -213,7 +213,7 @@ Value *LibCallOptimization::EmitMemSet(Value *Dst, Value *Val,
  const Type *Tys[1];
  Tys[0] = Len->getType();
  Value *MemSet = Intrinsic::getDeclaration(M, IID, Tys, 1);
- Value *Align = Context->getConstantInt(Type::Int32Ty, 1);
+ Value *Align = ConstantInt::get(Type::Int32Ty, 1);
  return B.CreateCall4(MemSet, CastToCStr(Dst, B), Val, Len, Align);
 }
 
@@ -346,7 +346,7 @@ void LibCallOptimization::EmitFWrite(Value *Ptr, Value *Size, Value *File,
                                TD->getIntPtrType(), TD->getIntPtrType(),
                                File->getType(), NULL);
   CallInst *CI = B.CreateCall4(F, CastToCStr(Ptr, B), Size,
-                        Context->getConstantInt(TD->getIntPtrType(), 1), File);
+                        ConstantInt::get(TD->getIntPtrType(), 1), File);
 
   if (const Function *Fn = dyn_cast<Function>(F->stripPointerCasts()))
     CI->setCallingConv(Fn->getCallingConv());
@@ -580,7 +580,7 @@ struct VISIBILITY_HIDDEN StrCatOpt : public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
     EmitMemCpy(CpyDst, Src,
-               Context->getConstantInt(TD->getIntPtrType(), Len+1), 1, B);
+               ConstantInt::get(TD->getIntPtrType(), Len+1), 1, B);
   }
 };
 
@@ -652,7 +652,7 @@ struct VISIBILITY_HIDDEN StrChrOpt : public LibCallOptimization {
         return 0;
       
       return EmitMemChr(SrcStr, CI->getOperand(2), // include nul.
-                        Context->getConstantInt(TD->getIntPtrType(), Len), B);
+                        ConstantInt::get(TD->getIntPtrType(), Len), B);
     }
 
     // Otherwise, the character is a constant, see if the first argument is
@@ -677,7 +677,7 @@ struct VISIBILITY_HIDDEN StrChrOpt : public LibCallOptimization {
     }
     
     // strchr(s+n,c)  -> gep(s+n+i,c)
-    Value *Idx = Context->getConstantInt(Type::Int64Ty, i);
+    Value *Idx = ConstantInt::get(Type::Int64Ty, i);
     return B.CreateGEP(SrcStr, Idx, "strchr");
   }
 };
@@ -696,7 +696,7 @@ struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
     
     Value *Str1P = CI->getOperand(1), *Str2P = CI->getOperand(2);
     if (Str1P == Str2P)      // strcmp(x,x)  -> 0
-      return Context->getConstantInt(CI->getType(), 0);
+      return ConstantInt::get(CI->getType(), 0);
     
     std::string Str1, Str2;
     bool HasStr1 = GetConstantStringInfo(Str1P, Str1);
@@ -710,7 +710,7 @@ struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
     
     // strcmp(x, y)  -> cnst  (if both x and y are constant strings)
     if (HasStr1 && HasStr2)
-      return Context->getConstantInt(CI->getType(), 
+      return ConstantInt::get(CI->getType(), 
                                      strcmp(Str1.c_str(),Str2.c_str()));
 
     // strcmp(P, "x") -> memcmp(P, "x", 2)
@@ -718,7 +718,7 @@ struct VISIBILITY_HIDDEN StrCmpOpt : public LibCallOptimization {
     uint64_t Len2 = GetStringLength(Str2P);
     if (Len1 && Len2) {
       return EmitMemCmp(Str1P, Str2P,
-                        Context->getConstantInt(TD->getIntPtrType(),
+                        ConstantInt::get(TD->getIntPtrType(),
                         std::min(Len1, Len2)), B);
     }
 
@@ -741,7 +741,7 @@ struct VISIBILITY_HIDDEN StrNCmpOpt : public LibCallOptimization {
     
     Value *Str1P = CI->getOperand(1), *Str2P = CI->getOperand(2);
     if (Str1P == Str2P)      // strncmp(x,x,n)  -> 0
-      return Context->getConstantInt(CI->getType(), 0);
+      return ConstantInt::get(CI->getType(), 0);
     
     // Get the length argument if it is constant.
     uint64_t Length;
@@ -751,7 +751,7 @@ struct VISIBILITY_HIDDEN StrNCmpOpt : public LibCallOptimization {
       return 0;
     
     if (Length == 0) // strncmp(x,y,0)   -> 0
-      return Context->getConstantInt(CI->getType(), 0);
+      return ConstantInt::get(CI->getType(), 0);
     
     std::string Str1, Str2;
     bool HasStr1 = GetConstantStringInfo(Str1P, Str1);
@@ -765,7 +765,7 @@ struct VISIBILITY_HIDDEN StrNCmpOpt : public LibCallOptimization {
     
     // strncmp(x, y)  -> cnst  (if both x and y are constant strings)
     if (HasStr1 && HasStr2)
-      return Context->getConstantInt(CI->getType(),
+      return ConstantInt::get(CI->getType(),
                               strncmp(Str1.c_str(), Str2.c_str(), Length));
     return 0;
   }
@@ -795,7 +795,7 @@ struct VISIBILITY_HIDDEN StrCpyOpt : public LibCallOptimization {
     // We have enough information to now generate the memcpy call to do the
     // concatenation for us.  Make a memcpy to copy the nul byte with align = 1.
     EmitMemCpy(Dst, Src,
-               Context->getConstantInt(TD->getIntPtrType(), Len), 1, B);
+               ConstantInt::get(TD->getIntPtrType(), Len), 1, B);
     return Dst;
   }
 };
@@ -823,7 +823,7 @@ struct VISIBILITY_HIDDEN StrNCpyOpt : public LibCallOptimization {
 
     if (SrcLen == 0) {
       // strncpy(x, "", y) -> memset(x, '\0', y, 1)
-      EmitMemSet(Dst, Context->getConstantInt(Type::Int8Ty, '\0'), LenOp, B);
+      EmitMemSet(Dst, ConstantInt::get(Type::Int8Ty, '\0'), LenOp, B);
       return Dst;
     }
 
@@ -840,7 +840,7 @@ struct VISIBILITY_HIDDEN StrNCpyOpt : public LibCallOptimization {
 
     // strncpy(x, s, c) -> memcpy(x, s, c, 1) [s and c are constant]
     EmitMemCpy(Dst, Src,
-               Context->getConstantInt(TD->getIntPtrType(), Len), 1, B);
+               ConstantInt::get(TD->getIntPtrType(), Len), 1, B);
 
     return Dst;
   }
@@ -861,7 +861,7 @@ struct VISIBILITY_HIDDEN StrLenOpt : public LibCallOptimization {
 
     // Constant folding: strlen("xyz") -> 3
     if (uint64_t Len = GetStringLength(Src))
-      return Context->getConstantInt(CI->getType(), Len-1);
+      return ConstantInt::get(CI->getType(), Len-1);
 
     // Handle strlen(p) != 0.
     if (!IsOnlyUsedInZeroEqualityComparison(CI)) return 0;
@@ -980,7 +980,7 @@ struct VISIBILITY_HIDDEN MemMoveOpt : public LibCallOptimization {
     Value *Dst = CastToCStr(CI->getOperand(1), B);
     Value *Src = CastToCStr(CI->getOperand(2), B);
     Value *Size = CI->getOperand(3);
-    Value *Align = Context->getConstantInt(Type::Int32Ty, 1);
+    Value *Align = ConstantInt::get(Type::Int32Ty, 1);
     B.CreateCall4(MemMove, Dst, Src, Size, Align);
     return CI->getOperand(1);
   }
@@ -1154,7 +1154,7 @@ struct VISIBILITY_HIDDEN FFSOpt : public LibCallOptimization {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
       if (CI->getValue() == 0)  // ffs(0) -> 0.
         return Context->getNullValue(CI->getType());
-      return Context->getConstantInt(Type::Int32Ty, // ffs(c) -> cttz(c)+1
+      return ConstantInt::get(Type::Int32Ty, // ffs(c) -> cttz(c)+1
                               CI->getValue().countTrailingZeros()+1);
     }
     
@@ -1163,11 +1163,11 @@ struct VISIBILITY_HIDDEN FFSOpt : public LibCallOptimization {
     Value *F = Intrinsic::getDeclaration(Callee->getParent(),
                                          Intrinsic::cttz, &ArgType, 1);
     Value *V = B.CreateCall(F, Op, "cttz");
-    V = B.CreateAdd(V, Context->getConstantInt(V->getType(), 1), "tmp");
+    V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1), "tmp");
     V = B.CreateIntCast(V, Type::Int32Ty, false, "tmp");
     
     Value *Cond = B.CreateICmpNE(Op, Context->getNullValue(ArgType), "tmp");
-    return B.CreateSelect(Cond, V, Context->getConstantInt(Type::Int32Ty, 0));
+    return B.CreateSelect(Cond, V, ConstantInt::get(Type::Int32Ty, 0));
   }
 };
 
@@ -1184,9 +1184,9 @@ struct VISIBILITY_HIDDEN IsDigitOpt : public LibCallOptimization {
     
     // isdigit(c) -> (c-'0') <u 10
     Value *Op = CI->getOperand(1);
-    Op = B.CreateSub(Op, Context->getConstantInt(Type::Int32Ty, '0'), 
+    Op = B.CreateSub(Op, ConstantInt::get(Type::Int32Ty, '0'), 
                      "isdigittmp");
-    Op = B.CreateICmpULT(Op, Context->getConstantInt(Type::Int32Ty, 10), 
+    Op = B.CreateICmpULT(Op, ConstantInt::get(Type::Int32Ty, 10), 
                          "isdigit");
     return B.CreateZExt(Op, CI->getType());
   }
@@ -1205,7 +1205,7 @@ struct VISIBILITY_HIDDEN IsAsciiOpt : public LibCallOptimization {
     
     // isascii(c) -> c <u 128
     Value *Op = CI->getOperand(1);
-    Op = B.CreateICmpULT(Op, Context->getConstantInt(Type::Int32Ty, 128),
+    Op = B.CreateICmpULT(Op, ConstantInt::get(Type::Int32Ty, 128),
                          "isascii");
     return B.CreateZExt(Op, CI->getType());
   }
@@ -1246,7 +1246,7 @@ struct VISIBILITY_HIDDEN ToAsciiOpt : public LibCallOptimization {
     
     // isascii(c) -> c & 0x7f
     return B.CreateAnd(CI->getOperand(1),
-                       Context->getConstantInt(CI->getType(),0x7F));
+                       ConstantInt::get(CI->getType(),0x7F));
   }
 };
 
@@ -1274,13 +1274,13 @@ struct VISIBILITY_HIDDEN PrintFOpt : public LibCallOptimization {
     // Empty format string -> noop.
     if (FormatStr.empty())  // Tolerate printf's declared void.
       return CI->use_empty() ? (Value*)CI : 
-                               Context->getConstantInt(CI->getType(), 0);
+                               ConstantInt::get(CI->getType(), 0);
     
     // printf("x") -> putchar('x'), even for '%'.
     if (FormatStr.size() == 1) {
-      EmitPutChar(Context->getConstantInt(Type::Int32Ty, FormatStr[0]), B);
+      EmitPutChar(ConstantInt::get(Type::Int32Ty, FormatStr[0]), B);
       return CI->use_empty() ? (Value*)CI : 
-                               Context->getConstantInt(CI->getType(), 1);
+                               ConstantInt::get(CI->getType(), 1);
     }
     
     // printf("foo\n") --> puts("foo")
@@ -1294,7 +1294,7 @@ struct VISIBILITY_HIDDEN PrintFOpt : public LibCallOptimization {
                              GlobalVariable::InternalLinkage, C, "str");
       EmitPutS(C, B);
       return CI->use_empty() ? (Value*)CI : 
-                    Context->getConstantInt(CI->getType(), FormatStr.size()+1);
+                    ConstantInt::get(CI->getType(), FormatStr.size()+1);
     }
     
     // Optimize specific format strings.
@@ -1303,7 +1303,7 @@ struct VISIBILITY_HIDDEN PrintFOpt : public LibCallOptimization {
         isa<IntegerType>(CI->getOperand(2)->getType())) {
       EmitPutChar(CI->getOperand(2), B);
       return CI->use_empty() ? (Value*)CI : 
-                               Context->getConstantInt(CI->getType(), 1);
+                               ConstantInt::get(CI->getType(), 1);
     }
     
     // printf("%s\n", str) --> puts(str)
@@ -1344,8 +1344,8 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
       
       // sprintf(str, fmt) -> llvm.memcpy(str, fmt, strlen(fmt)+1, 1)
       EmitMemCpy(CI->getOperand(1), CI->getOperand(2), // Copy the nul byte.
-          Context->getConstantInt(TD->getIntPtrType(), FormatStr.size()+1),1,B);
-      return Context->getConstantInt(CI->getType(), FormatStr.size());
+          ConstantInt::get(TD->getIntPtrType(), FormatStr.size()+1),1,B);
+      return ConstantInt::get(CI->getType(), FormatStr.size());
     }
     
     // The remaining optimizations require the format string to be "%s" or "%c"
@@ -1360,10 +1360,10 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
       Value *V = B.CreateTrunc(CI->getOperand(3), Type::Int8Ty, "char");
       Value *Ptr = CastToCStr(CI->getOperand(1), B);
       B.CreateStore(V, Ptr);
-      Ptr = B.CreateGEP(Ptr, Context->getConstantInt(Type::Int32Ty, 1), "nul");
+      Ptr = B.CreateGEP(Ptr, ConstantInt::get(Type::Int32Ty, 1), "nul");
       B.CreateStore(Context->getNullValue(Type::Int8Ty), Ptr);
       
-      return Context->getConstantInt(CI->getType(), 1);
+      return ConstantInt::get(CI->getType(), 1);
     }
     
     if (FormatStr[1] == 's') {
@@ -1372,7 +1372,7 @@ struct VISIBILITY_HIDDEN SPrintFOpt : public LibCallOptimization {
 
       Value *Len = EmitStrLen(CI->getOperand(3), B);
       Value *IncLen = B.CreateAdd(Len,
-                                  Context->getConstantInt(Len->getType(), 1),
+                                  ConstantInt::get(Len->getType(), 1),
                                   "leninc");
       EmitMemCpy(CI->getOperand(1), CI->getOperand(3), IncLen, 1, B);
       
@@ -1405,13 +1405,13 @@ struct VISIBILITY_HIDDEN FWriteOpt : public LibCallOptimization {
     
     // If this is writing zero records, remove the call (it's a noop).
     if (Bytes == 0)
-      return Context->getConstantInt(CI->getType(), 0);
+      return ConstantInt::get(CI->getType(), 0);
     
     // If this is writing one byte, turn it into fputc.
     if (Bytes == 1) {  // fwrite(S,1,1,F) -> fputc(S[0],F)
       Value *Char = B.CreateLoad(CastToCStr(CI->getOperand(1), B), "char");
       EmitFPutC(Char, CI->getOperand(4), B);
-      return Context->getConstantInt(CI->getType(), 1);
+      return ConstantInt::get(CI->getType(), 1);
     }
 
     return 0;
@@ -1434,7 +1434,7 @@ struct VISIBILITY_HIDDEN FPutsOpt : public LibCallOptimization {
     uint64_t Len = GetStringLength(CI->getOperand(1));
     if (!Len) return 0;
     EmitFWrite(CI->getOperand(1),
-               Context->getConstantInt(TD->getIntPtrType(), Len-1),
+               ConstantInt::get(TD->getIntPtrType(), Len-1),
                CI->getOperand(2), B);
     return CI;  // Known to have no uses (see above).
   }
@@ -1463,10 +1463,10 @@ struct VISIBILITY_HIDDEN FPrintFOpt : public LibCallOptimization {
         if (FormatStr[i] == '%')  // Could handle %% -> % if we cared.
           return 0; // We found a format specifier.
       
-      EmitFWrite(CI->getOperand(2), Context->getConstantInt(TD->getIntPtrType(),
+      EmitFWrite(CI->getOperand(2), ConstantInt::get(TD->getIntPtrType(),
                                                      FormatStr.size()),
                  CI->getOperand(1), B);
-      return Context->getConstantInt(CI->getType(), FormatStr.size());
+      return ConstantInt::get(CI->getType(), FormatStr.size());
     }
     
     // The remaining optimizations require the format string to be "%s" or "%c"
@@ -1479,7 +1479,7 @@ struct VISIBILITY_HIDDEN FPrintFOpt : public LibCallOptimization {
       // fprintf(F, "%c", chr) --> *(i8*)dst = chr
       if (!isa<IntegerType>(CI->getOperand(3)->getType())) return 0;
       EmitFPutC(CI->getOperand(3), CI->getOperand(1), B);
-      return Context->getConstantInt(CI->getType(), 1);
+      return ConstantInt::get(CI->getType(), 1);
     }
     
     if (FormatStr[1] == 's') {

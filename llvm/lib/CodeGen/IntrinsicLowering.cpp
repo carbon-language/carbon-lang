@@ -159,27 +159,27 @@ static Value *LowerBSWAP(LLVMContext &Context, Value *V, Instruction *IP) {
   switch(BitSize) {
   default: llvm_unreachable("Unhandled type size of value to byteswap!");
   case 16: {
-    Value *Tmp1 = Builder.CreateShl(V, Context.getConstantInt(V->getType(), 8),
+    Value *Tmp1 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 8),
                                     "bswap.2");
-    Value *Tmp2 = Builder.CreateLShr(V, Context.getConstantInt(V->getType(), 8),
+    Value *Tmp2 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 8),
                                      "bswap.1");
     V = Builder.CreateOr(Tmp1, Tmp2, "bswap.i16");
     break;
   }
   case 32: {
-    Value *Tmp4 = Builder.CreateShl(V, Context.getConstantInt(V->getType(), 24),
+    Value *Tmp4 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 24),
                                     "bswap.4");
-    Value *Tmp3 = Builder.CreateShl(V, Context.getConstantInt(V->getType(), 8),
+    Value *Tmp3 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 8),
                                     "bswap.3");
-    Value *Tmp2 = Builder.CreateLShr(V, Context.getConstantInt(V->getType(), 8),
+    Value *Tmp2 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 8),
                                      "bswap.2");
-    Value *Tmp1 = Builder.CreateLShr(V,Context.getConstantInt(V->getType(), 24),
+    Value *Tmp1 = Builder.CreateLShr(V,ConstantInt::get(V->getType(), 24),
                                      "bswap.1");
     Tmp3 = Builder.CreateAnd(Tmp3,
-                             Context.getConstantInt(Type::Int32Ty, 0xFF0000),
+                             ConstantInt::get(Type::Int32Ty, 0xFF0000),
                              "bswap.and3");
     Tmp2 = Builder.CreateAnd(Tmp2,
-                             Context.getConstantInt(Type::Int32Ty, 0xFF00),
+                             ConstantInt::get(Type::Int32Ty, 0xFF00),
                              "bswap.and2");
     Tmp4 = Builder.CreateOr(Tmp4, Tmp3, "bswap.or1");
     Tmp2 = Builder.CreateOr(Tmp2, Tmp1, "bswap.or2");
@@ -187,44 +187,44 @@ static Value *LowerBSWAP(LLVMContext &Context, Value *V, Instruction *IP) {
     break;
   }
   case 64: {
-    Value *Tmp8 = Builder.CreateShl(V, Context.getConstantInt(V->getType(), 56),
+    Value *Tmp8 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 56),
                                     "bswap.8");
-    Value *Tmp7 = Builder.CreateShl(V, Context.getConstantInt(V->getType(), 40),
+    Value *Tmp7 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 40),
                                     "bswap.7");
-    Value *Tmp6 = Builder.CreateShl(V, Context.getConstantInt(V->getType(), 24),
+    Value *Tmp6 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 24),
                                     "bswap.6");
-    Value *Tmp5 = Builder.CreateShl(V, Context.getConstantInt(V->getType(), 8),
+    Value *Tmp5 = Builder.CreateShl(V, ConstantInt::get(V->getType(), 8),
                                     "bswap.5");
-    Value* Tmp4 = Builder.CreateLShr(V, Context.getConstantInt(V->getType(), 8),
+    Value* Tmp4 = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 8),
                                      "bswap.4");
     Value* Tmp3 = Builder.CreateLShr(V, 
-                                     Context.getConstantInt(V->getType(), 24),
+                                     ConstantInt::get(V->getType(), 24),
                                      "bswap.3");
     Value* Tmp2 = Builder.CreateLShr(V, 
-                                     Context.getConstantInt(V->getType(), 40),
+                                     ConstantInt::get(V->getType(), 40),
                                      "bswap.2");
     Value* Tmp1 = Builder.CreateLShr(V, 
-                                     Context.getConstantInt(V->getType(), 56),
+                                     ConstantInt::get(V->getType(), 56),
                                      "bswap.1");
     Tmp7 = Builder.CreateAnd(Tmp7,
-                             Context.getConstantInt(Type::Int64Ty,
+                             ConstantInt::get(Type::Int64Ty,
                                               0xFF000000000000ULL),
                              "bswap.and7");
     Tmp6 = Builder.CreateAnd(Tmp6,
-                             Context.getConstantInt(Type::Int64Ty,
+                             ConstantInt::get(Type::Int64Ty,
                                               0xFF0000000000ULL),
                              "bswap.and6");
     Tmp5 = Builder.CreateAnd(Tmp5,
-                        Context.getConstantInt(Type::Int64Ty, 0xFF00000000ULL),
+                        ConstantInt::get(Type::Int64Ty, 0xFF00000000ULL),
                              "bswap.and5");
     Tmp4 = Builder.CreateAnd(Tmp4,
-                        Context.getConstantInt(Type::Int64Ty, 0xFF000000ULL),
+                        ConstantInt::get(Type::Int64Ty, 0xFF000000ULL),
                              "bswap.and4");
     Tmp3 = Builder.CreateAnd(Tmp3,
-                             Context.getConstantInt(Type::Int64Ty, 0xFF0000ULL),
+                             ConstantInt::get(Type::Int64Ty, 0xFF0000ULL),
                              "bswap.and3");
     Tmp2 = Builder.CreateAnd(Tmp2,
-                             Context.getConstantInt(Type::Int64Ty, 0xFF00ULL),
+                             ConstantInt::get(Type::Int64Ty, 0xFF00ULL),
                              "bswap.and2");
     Tmp8 = Builder.CreateOr(Tmp8, Tmp7, "bswap.or1");
     Tmp6 = Builder.CreateOr(Tmp6, Tmp5, "bswap.or2");
@@ -254,23 +254,23 @@ static Value *LowerCTPOP(LLVMContext &Context, Value *V, Instruction *IP) {
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   unsigned WordSize = (BitSize + 63) / 64;
-  Value *Count = Context.getConstantInt(V->getType(), 0);
+  Value *Count = ConstantInt::get(V->getType(), 0);
 
   for (unsigned n = 0; n < WordSize; ++n) {
     Value *PartValue = V;
     for (unsigned i = 1, ct = 0; i < (BitSize>64 ? 64 : BitSize); 
          i <<= 1, ++ct) {
-      Value *MaskCst = Context.getConstantInt(V->getType(), MaskValues[ct]);
+      Value *MaskCst = ConstantInt::get(V->getType(), MaskValues[ct]);
       Value *LHS = Builder.CreateAnd(PartValue, MaskCst, "cppop.and1");
       Value *VShift = Builder.CreateLShr(PartValue,
-                                        Context.getConstantInt(V->getType(), i),
+                                        ConstantInt::get(V->getType(), i),
                                          "ctpop.sh");
       Value *RHS = Builder.CreateAnd(VShift, MaskCst, "cppop.and2");
       PartValue = Builder.CreateAdd(LHS, RHS, "ctpop.step");
     }
     Count = Builder.CreateAdd(PartValue, Count, "ctpop.part");
     if (BitSize > 64) {
-      V = Builder.CreateLShr(V, Context.getConstantInt(V->getType(), 64),
+      V = Builder.CreateLShr(V, ConstantInt::get(V->getType(), 64),
                              "ctpop.part.sh");
       BitSize -= 64;
     }
@@ -287,7 +287,7 @@ static Value *LowerCTLZ(LLVMContext &Context, Value *V, Instruction *IP) {
 
   unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1; i < BitSize; i <<= 1) {
-    Value *ShVal = Context.getConstantInt(V->getType(), i);
+    Value *ShVal = ConstantInt::get(V->getType(), i);
     ShVal = Builder.CreateLShr(V, ShVal, "ctlz.sh");
     V = Builder.CreateOr(V, ShVal, "ctlz.step");
   }
@@ -378,7 +378,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     Value *Src = CI->getOperand(1);
     Value *NotSrc = Builder.CreateNot(Src);
     NotSrc->setName(Src->getName() + ".not");
-    Value *SrcM1 = Context.getConstantInt(Src->getType(), 1);
+    Value *SrcM1 = ConstantInt::get(Src->getType(), 1);
     SrcM1 = Builder.CreateSub(Src, SrcM1);
     Src = LowerCTPOP(Context, Builder.CreateAnd(NotSrc, SrcM1), CI);
     CI->replaceAllUsesWith(Src);
@@ -414,7 +414,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::readcyclecounter: {
     cerr << "WARNING: this target does not support the llvm.readcyclecoun"
          << "ter intrinsic.  It is being lowered to a constant 0\n";
-    CI->replaceAllUsesWith(Context.getConstantInt(Type::Int64Ty, 0));
+    CI->replaceAllUsesWith(ConstantInt::get(Type::Int64Ty, 0));
     break;
   }
 
@@ -434,7 +434,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::eh_typeid_for_i32:
   case Intrinsic::eh_typeid_for_i64:
     // Return something different to eh_selector.
-    CI->replaceAllUsesWith(Context.getConstantInt(CI->getType(), 1));
+    CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), 1));
     break;
 
   case Intrinsic::var_annotation:
@@ -506,7 +506,7 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::flt_rounds:
      // Lower to "round to the nearest"
      if (CI->getType() != Type::VoidTy)
-       CI->replaceAllUsesWith(Context.getConstantInt(CI->getType(), 1));
+       CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), 1));
      break;
   }
 

@@ -487,7 +487,7 @@ GenericValue JIT::runFunction(Function *F,
     switch (ArgTy->getTypeID()) {
     default: llvm_unreachable("Unknown argument type for function call!");
     case Type::IntegerTyID:
-        C = Context.getConstantInt(AV.IntVal);
+        C = ConstantInt::get(F->getContext(), AV.IntVal);
         break;
     case Type::FloatTyID:
         C = Context.getConstantFP(APFloat(AV.FloatVal));
@@ -503,9 +503,9 @@ GenericValue JIT::runFunction(Function *F,
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);
       if (sizeof(void*) == 4)
-        C = Context.getConstantInt(Type::Int32Ty, (int)(intptr_t)ArgPtr);
+        C = ConstantInt::get(Type::Int32Ty, (int)(intptr_t)ArgPtr);
       else
-        C = Context.getConstantInt(Type::Int64Ty, (intptr_t)ArgPtr);
+        C = ConstantInt::get(Type::Int64Ty, (intptr_t)ArgPtr);
       // Cast the integer to pointer
       C = Context.getConstantExprIntToPtr(C, ArgTy);
       break;

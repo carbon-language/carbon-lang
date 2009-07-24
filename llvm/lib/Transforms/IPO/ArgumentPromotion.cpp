@@ -638,9 +638,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
         // Emit a GEP and load for each element of the struct.
         const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
         const StructType *STy = cast<StructType>(AgTy);
-        Value *Idxs[2] = { Context.getConstantInt(Type::Int32Ty, 0), 0 };
+        Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), 0 };
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-          Idxs[1] = Context.getConstantInt(Type::Int32Ty, i);
+          Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
           Value *Idx = GetElementPtrInst::Create(*AI, Idxs, Idxs+2,
                                                  (*AI)->getName()+"."+utostr(i),
                                                  Call);
@@ -665,7 +665,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
               // Use i32 to index structs, and i64 for others (pointers/arrays).
               // This satisfies GEP constraints.
               const Type *IdxTy = (isa<StructType>(ElTy) ? Type::Int32Ty : Type::Int64Ty);
-              Ops.push_back(Context.getConstantInt(IdxTy, *II));
+              Ops.push_back(ConstantInt::get(IdxTy, *II));
               // Keep track of the type we're currently indexing
               ElTy = cast<CompositeType>(ElTy)->getTypeAtIndex(*II);
             }
@@ -758,10 +758,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
       const Type *AgTy = cast<PointerType>(I->getType())->getElementType();
       Value *TheAlloca = new AllocaInst(AgTy, 0, "", InsertPt);
       const StructType *STy = cast<StructType>(AgTy);
-      Value *Idxs[2] = { Context.getConstantInt(Type::Int32Ty, 0), 0 };
+      Value *Idxs[2] = { ConstantInt::get(Type::Int32Ty, 0), 0 };
 
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-        Idxs[1] = Context.getConstantInt(Type::Int32Ty, i);
+        Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
         Value *Idx = 
           GetElementPtrInst::Create(TheAlloca, Idxs, Idxs+2,
                                     TheAlloca->getName()+"."+utostr(i), 

@@ -2138,7 +2138,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
     if (!isa<IntegerType>(Ty))
       return Error(ID.Loc, "integer constant must have integer type");
     ID.APSIntVal.extOrTrunc(Ty->getPrimitiveSizeInBits());
-    V = Context.getConstantInt(ID.APSIntVal);
+    V = ConstantInt::get(Context, ID.APSIntVal);
     return false;
   case ValID::t_APFloat:
     if (!Ty->isFloatingPoint() ||

@@ -171,7 +171,7 @@ static Constant *FoldBitCast(LLVMContext &Context,
   // Handle ConstantFP input.
   if (const ConstantFP *FP = dyn_cast<ConstantFP>(V))
     // FP -> Integral.
-    return Context.getConstantInt(FP->getValueAPF().bitcastToAPInt());
+    return ConstantInt::get(Context, FP->getValueAPF().bitcastToAPInt());
 
   return 0;
 }
@@ -258,7 +258,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
       (void) V.convertToInteger(x, DestBitWidth, opc==Instruction::FPToSI,
                                 APFloat::rmTowardZero, &ignored);
       APInt Val(DestBitWidth, 2, x);
-      return Context.getConstantInt(Val);
+      return ConstantInt::get(Context, Val);
     }
     return 0; // Can't fold.
   case Instruction::IntToPtr:   //always treated as unsigned
@@ -267,7 +267,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     return 0;                   // Other pointer types cannot be casted
   case Instruction::PtrToInt:   // always treated as unsigned
     if (V->isNullValue())       // is it a null pointer value?
-      return Context.getConstantInt(DestTy, 0);
+      return ConstantInt::get(DestTy, 0);
     return 0;                   // Other pointer types cannot be casted
   case Instruction::UIToFP:
   case Instruction::SIToFP:
@@ -287,7 +287,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.zext(BitWidth);
-      return Context.getConstantInt(Result);
+      return ConstantInt::get(Context, Result);
     }
     return 0;
   case Instruction::SExt:
@@ -295,7 +295,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.sext(BitWidth);
-      return Context.getConstantInt(Result);
+      return ConstantInt::get(Context, Result);
     }
     return 0;
   case Instruction::Trunc:
@@ -303,7 +303,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
       uint32_t BitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       APInt Result(CI->getValue());
       Result.trunc(BitWidth);
-      return Context.getConstantInt(Result);
+      return ConstantInt::get(Context, Result);
     }
     return 0;
   case Instruction::BitCast:
@@ -721,51 +721,51 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
       default:
         break;
       case Instruction::Add:     
-        return Context.getConstantInt(C1V + C2V);
+        return ConstantInt::get(Context, C1V + C2V);
       case Instruction::Sub:     
-        return Context.getConstantInt(C1V - C2V);
+        return ConstantInt::get(Context, C1V - C2V);
       case Instruction::Mul:     
-        return Context.getConstantInt(C1V * C2V);
+        return ConstantInt::get(Context, C1V * C2V);
       case Instruction::UDiv:
         assert(!CI2->isNullValue() && "Div by zero handled above");
-        return Context.getConstantInt(C1V.udiv(C2V));
+        return ConstantInt::get(Context, C1V.udiv(C2V));
       case Instruction::SDiv:
         assert(!CI2->isNullValue() && "Div by zero handled above");
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
           return Context.getUndef(CI1->getType());   // MIN_INT / -1 -> undef
-        return Context.getConstantInt(C1V.sdiv(C2V));
+        return ConstantInt::get(Context, C1V.sdiv(C2V));
       case Instruction::URem:
         assert(!CI2->isNullValue() && "Div by zero handled above");
-        return Context.getConstantInt(C1V.urem(C2V));
+        return ConstantInt::get(Context, C1V.urem(C2V));
       case Instruction::SRem:
         assert(!CI2->isNullValue() && "Div by zero handled above");
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
           return Context.getUndef(CI1->getType());   // MIN_INT % -1 -> undef
-        return Context.getConstantInt(C1V.srem(C2V));
+        return ConstantInt::get(Context, C1V.srem(C2V));
       case Instruction::And:
-        return Context.getConstantInt(C1V & C2V);
+        return ConstantInt::get(Context, C1V & C2V);
       case Instruction::Or:
-        return Context.getConstantInt(C1V | C2V);
+        return ConstantInt::get(Context, C1V | C2V);
       case Instruction::Xor:
-        return Context.getConstantInt(C1V ^ C2V);
+        return ConstantInt::get(Context, C1V ^ C2V);
       case Instruction::Shl: {
         uint32_t shiftAmt = C2V.getZExtValue();
         if (shiftAmt < C1V.getBitWidth())
-          return Context.getConstantInt(C1V.shl(shiftAmt));
+          return ConstantInt::get(Context, C1V.shl(shiftAmt));
         else
           return Context.getUndef(C1->getType()); // too big shift is undef
       }
       case Instruction::LShr: {
         uint32_t shiftAmt = C2V.getZExtValue();
         if (shiftAmt < C1V.getBitWidth())
-          return Context.getConstantInt(C1V.lshr(shiftAmt));
+          return ConstantInt::get(Context, C1V.lshr(shiftAmt));
         else
           return Context.getUndef(C1->getType()); // too big shift is undef
       }
       case Instruction::AShr: {
         uint32_t shiftAmt = C2V.getZExtValue();
         if (shiftAmt < C1V.getBitWidth())
-          return Context.getConstantInt(C1V.ashr(shiftAmt));
+          return ConstantInt::get(Context, C1V.ashr(shiftAmt));
         else
           return Context.getUndef(C1->getType()); // too big shift is undef
       }
@@ -1420,25 +1420,25 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     switch (pred) {
     default: llvm_unreachable("Invalid ICmp Predicate"); return 0;
     case ICmpInst::ICMP_EQ:
-      return Context.getConstantInt(Type::Int1Ty, V1 == V2);
+      return ConstantInt::get(Type::Int1Ty, V1 == V2);
     case ICmpInst::ICMP_NE: 
-      return Context.getConstantInt(Type::Int1Ty, V1 != V2);
+      return ConstantInt::get(Type::Int1Ty, V1 != V2);
     case ICmpInst::ICMP_SLT:
-      return Context.getConstantInt(Type::Int1Ty, V1.slt(V2));
+      return ConstantInt::get(Type::Int1Ty, V1.slt(V2));
     case ICmpInst::ICMP_SGT:
-      return Context.getConstantInt(Type::Int1Ty, V1.sgt(V2));
+      return ConstantInt::get(Type::Int1Ty, V1.sgt(V2));
     case ICmpInst::ICMP_SLE:
-      return Context.getConstantInt(Type::Int1Ty, V1.sle(V2));
+      return ConstantInt::get(Type::Int1Ty, V1.sle(V2));
     case ICmpInst::ICMP_SGE:
-      return Context.getConstantInt(Type::Int1Ty, V1.sge(V2));
+      return ConstantInt::get(Type::Int1Ty, V1.sge(V2));
     case ICmpInst::ICMP_ULT:
-      return Context.getConstantInt(Type::Int1Ty, V1.ult(V2));
+      return ConstantInt::get(Type::Int1Ty, V1.ult(V2));
     case ICmpInst::ICMP_UGT:
-      return Context.getConstantInt(Type::Int1Ty, V1.ugt(V2));
+      return ConstantInt::get(Type::Int1Ty, V1.ugt(V2));
     case ICmpInst::ICMP_ULE:
-      return Context.getConstantInt(Type::Int1Ty, V1.ule(V2));
+      return ConstantInt::get(Type::Int1Ty, V1.ule(V2));
     case ICmpInst::ICMP_UGE:
-      return Context.getConstantInt(Type::Int1Ty, V1.uge(V2));
+      return ConstantInt::get(Type::Int1Ty, V1.uge(V2));
     }
   } else if (isa<ConstantFP>(C1) && isa<ConstantFP>(C2)) {
     APFloat C1V = cast<ConstantFP>(C1)->getValueAPF();
@@ -1449,38 +1449,38 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     case FCmpInst::FCMP_FALSE: return Context.getFalse();
     case FCmpInst::FCMP_TRUE:  return Context.getTrue();
     case FCmpInst::FCMP_UNO:
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpUnordered);
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered);
     case FCmpInst::FCMP_ORD:
-      return Context.getConstantInt(Type::Int1Ty, R!=APFloat::cmpUnordered);
+      return ConstantInt::get(Type::Int1Ty, R!=APFloat::cmpUnordered);
     case FCmpInst::FCMP_UEQ:
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpUnordered ||
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered ||
                                             R==APFloat::cmpEqual);
     case FCmpInst::FCMP_OEQ:   
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpEqual);
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpEqual);
     case FCmpInst::FCMP_UNE:
-      return Context.getConstantInt(Type::Int1Ty, R!=APFloat::cmpEqual);
+      return ConstantInt::get(Type::Int1Ty, R!=APFloat::cmpEqual);
     case FCmpInst::FCMP_ONE:   
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpLessThan ||
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpLessThan ||
                                             R==APFloat::cmpGreaterThan);
     case FCmpInst::FCMP_ULT: 
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpUnordered ||
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered ||
                                             R==APFloat::cmpLessThan);
     case FCmpInst::FCMP_OLT:   
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpLessThan);
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpLessThan);
     case FCmpInst::FCMP_UGT:
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpUnordered ||
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpUnordered ||
                                             R==APFloat::cmpGreaterThan);
     case FCmpInst::FCMP_OGT:
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpGreaterThan);
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpGreaterThan);
     case FCmpInst::FCMP_ULE:
-      return Context.getConstantInt(Type::Int1Ty, R!=APFloat::cmpGreaterThan);
+      return ConstantInt::get(Type::Int1Ty, R!=APFloat::cmpGreaterThan);
     case FCmpInst::FCMP_OLE: 
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpLessThan ||
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpLessThan ||
                                             R==APFloat::cmpEqual);
     case FCmpInst::FCMP_UGE:
-      return Context.getConstantInt(Type::Int1Ty, R!=APFloat::cmpLessThan);
+      return ConstantInt::get(Type::Int1Ty, R!=APFloat::cmpLessThan);
     case FCmpInst::FCMP_OGE: 
-      return Context.getConstantInt(Type::Int1Ty, R==APFloat::cmpGreaterThan ||
+      return ConstantInt::get(Type::Int1Ty, R==APFloat::cmpGreaterThan ||
                                             R==APFloat::cmpEqual);
     }
   } else if (isa<VectorType>(C1->getType())) {
@@ -1555,7 +1555,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     
     // If we evaluated the result, return it now.
     if (Result != -1)
-      return Context.getConstantInt(Type::Int1Ty, Result);
+      return ConstantInt::get(Type::Int1Ty, Result);
 
   } else {
     // Evaluate the relation between the two constants, per the predicate.
@@ -1632,7 +1632,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
     
     // If we evaluated the result, return it now.
     if (Result != -1)
-      return Context.getConstantInt(Type::Int1Ty, Result);
+      return ConstantInt::get(Type::Int1Ty, Result);
     
     if (!isa<ConstantExpr>(C1) && isa<ConstantExpr>(C2)) {
       // If C2 is a constant expr and C1 isn't, flip them around and fold the

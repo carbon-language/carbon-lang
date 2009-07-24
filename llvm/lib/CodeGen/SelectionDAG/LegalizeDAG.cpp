@@ -2038,7 +2038,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
   }
   if (TLI.isLittleEndian()) FF <<= 32;
-  Constant *FudgeFactor = DAG.getContext()->getConstantInt(Type::Int64Ty, FF);
+  Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
 
   SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();

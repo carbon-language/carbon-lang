@@ -488,7 +488,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
     const StructLayout &Layout = *TD.getStructLayout(STy);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
-                                    Context.getConstantInt(Type::Int32Ty, i),
+                                    ConstantInt::get(Type::Int32Ty, i),
                                     Context);
       assert(In && "Couldn't get element of initializer?");
       GlobalVariable *NGV = new GlobalVariable(Context,
@@ -523,7 +523,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
     unsigned EltAlign = TD.getABITypeAlignment(STy->getElementType());
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
       Constant *In = getAggregateConstantElement(Init,
-                                    Context.getConstantInt(Type::Int32Ty, i),
+                                    ConstantInt::get(Type::Int32Ty, i),
                                     Context);
       assert(In && "Couldn't get element of initializer?");
 
@@ -1508,7 +1508,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
       if (const ArrayType *AT = dyn_cast<ArrayType>(MI->getAllocatedType())) {
         MallocInst *NewMI = 
           new MallocInst(AllocSTy, 
-                  Context.getConstantInt(Type::Int32Ty, AT->getNumElements()),
+                  ConstantInt::get(Type::Int32Ty, AT->getNumElements()),
                          "", MI);
         NewMI->takeName(MI);
         Value *Cast = new BitCastInst(NewMI, MI->getType(), "tmp", MI);
@@ -1605,7 +1605,7 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal,
       // Only do this if we weren't storing a loaded value.
       Value *StoreVal;
       if (StoringOther || SI->getOperand(0) == InitVal)
-        StoreVal = Context.getConstantInt(Type::Int1Ty, StoringOther);
+        StoreVal = ConstantInt::get(Type::Int1Ty, StoringOther);
       else {
         // Otherwise, we are storing a previously loaded copy.  To do this,
         // change the copy from copying the original value to just copying the
@@ -1947,7 +1947,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
                                           LLVMContext &Context) {
   // If we made a change, reassemble the initializer list.
   std::vector<Constant*> CSVals;
-  CSVals.push_back(Context.getConstantInt(Type::Int32Ty, 65535));
+  CSVals.push_back(ConstantInt::get(Type::Int32Ty, 65535));
   CSVals.push_back(0);
   
   // Create the new init list.
@@ -1959,7 +1959,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
       const Type *FTy = Context.getFunctionType(Type::VoidTy, false);
       const PointerType *PFTy = Context.getPointerTypeUnqual(FTy);
       CSVals[1] = Context.getNullValue(PFTy);
-      CSVals[0] = Context.getConstantInt(Type::Int32Ty, 2147483647);
+      CSVals[0] = ConstantInt::get(Type::Int32Ty, 2147483647);
     }
     CAList.push_back(Context.getConstantStruct(CSVals));
   }

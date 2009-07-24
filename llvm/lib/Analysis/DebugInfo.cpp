@@ -482,7 +482,7 @@ Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
   assert((TAG & LLVMDebugVersionMask) == 0 &&
          "Tag too large for debug encoding!");
-  return VMContext.getConstantInt(Type::Int32Ty, TAG | LLVMDebugVersion);
+  return ConstantInt::get(Type::Int32Ty, TAG | LLVMDebugVersion);
 }
 
 Constant *DIFactory::GetStringConstant(const std::string &String) {
@@ -541,8 +541,8 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
 DISubrange DIFactory::GetOrCreateSubrange(int64_t Lo, int64_t Hi) {
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_subrange_type),
-    VMContext.getConstantInt(Type::Int64Ty, Lo),
-    VMContext.getConstantInt(Type::Int64Ty, Hi)
+    ConstantInt::get(Type::Int64Ty, Lo),
+    ConstantInt::get(Type::Int64Ty, Hi)
   };
   
   Constant *Init = VMContext.getConstantStruct(Elts, 
@@ -577,14 +577,14 @@ DICompileUnit DIFactory::CreateCompileUnit(unsigned LangID,
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_compile_unit),
     VMContext.getNullValue(EmptyStructPtr),
-    VMContext.getConstantInt(Type::Int32Ty, LangID),
+    ConstantInt::get(Type::Int32Ty, LangID),
     GetStringConstant(Filename),
     GetStringConstant(Directory),
     GetStringConstant(Producer),
-    VMContext.getConstantInt(Type::Int1Ty, isMain),
-    VMContext.getConstantInt(Type::Int1Ty, isOptimized),
+    ConstantInt::get(Type::Int1Ty, isMain),
+    ConstantInt::get(Type::Int1Ty, isOptimized),
     GetStringConstant(Flags),
-    VMContext.getConstantInt(Type::Int32Ty, RunTimeVer)
+    ConstantInt::get(Type::Int32Ty, RunTimeVer)
   };
   
   Constant *Init = VMContext.getConstantStruct(Elts,
@@ -603,7 +603,7 @@ DIEnumerator DIFactory::CreateEnumerator(const std::string &Name, uint64_t Val){
   Constant *Elts[] = {
     GetTagConstant(dwarf::DW_TAG_enumerator),
     GetStringConstant(Name),
-    VMContext.getConstantInt(Type::Int64Ty, Val)
+    ConstantInt::get(Type::Int64Ty, Val)
   };
   
   Constant *Init = VMContext.getConstantStruct(Elts,
@@ -632,12 +632,12 @@ DIBasicType DIFactory::CreateBasicType(DIDescriptor Context,
     getCastToEmpty(Context),
     GetStringConstant(Name),
     getCastToEmpty(CompileUnit),
-    VMContext.getConstantInt(Type::Int32Ty, LineNumber),
-    VMContext.getConstantInt(Type::Int64Ty, SizeInBits),
-    VMContext.getConstantInt(Type::Int64Ty, AlignInBits),
-    VMContext.getConstantInt(Type::Int64Ty, OffsetInBits),
-    VMContext.getConstantInt(Type::Int32Ty, Flags),
-    VMContext.getConstantInt(Type::Int32Ty, Encoding)
+    ConstantInt::get(Type::Int32Ty, LineNumber),
+    ConstantInt::get(Type::Int64Ty, SizeInBits),
+    ConstantInt::get(Type::Int64Ty, AlignInBits),
+    ConstantInt::get(Type::Int64Ty, OffsetInBits),
+    ConstantInt::get(Type::Int32Ty, Flags),
+    ConstantInt::get(Type::Int32Ty, Encoding)
   };
   
   Constant *Init = VMContext.getConstantStruct(Elts,
@@ -668,11 +668,11 @@ DIDerivedType DIFactory::CreateDerivedType(unsigned Tag,
     getCastToEmpty(Context),
     GetStringConstant(Name),
     getCastToEmpty(CompileUnit),
-    VMContext.getConstantInt(Type::Int32Ty, LineNumber),
-    VMContext.getConstantInt(Type::Int64Ty, SizeInBits),
-    VMContext.getConstantInt(Type::Int64Ty, AlignInBits),
-    VMContext.getConstantInt(Type::Int64Ty, OffsetInBits),
-    VMContext.getConstantInt(Type::Int32Ty, Flags),
+    ConstantInt::get(Type::Int32Ty, LineNumber),
+    ConstantInt::get(Type::Int64Ty, SizeInBits),
+    ConstantInt::get(Type::Int64Ty, AlignInBits),
+    ConstantInt::get(Type::Int64Ty, OffsetInBits),
+    ConstantInt::get(Type::Int32Ty, Flags),
     getCastToEmpty(DerivedFrom)
   };
   
@@ -706,14 +706,14 @@ DICompositeType DIFactory::CreateCompositeType(unsigned Tag,
     getCastToEmpty(Context),
     GetStringConstant(Name),
     getCastToEmpty(CompileUnit),
-    VMContext.getConstantInt(Type::Int32Ty, LineNumber),
-    VMContext.getConstantInt(Type::Int64Ty, SizeInBits),
-    VMContext.getConstantInt(Type::Int64Ty, AlignInBits),
-    VMContext.getConstantInt(Type::Int64Ty, OffsetInBits),
-    VMContext.getConstantInt(Type::Int32Ty, Flags),
+    ConstantInt::get(Type::Int32Ty, LineNumber),
+    ConstantInt::get(Type::Int64Ty, SizeInBits),
+    ConstantInt::get(Type::Int64Ty, AlignInBits),
+    ConstantInt::get(Type::Int64Ty, OffsetInBits),
+    ConstantInt::get(Type::Int32Ty, Flags),
     getCastToEmpty(DerivedFrom),
     getCastToEmpty(Elements),
-    VMContext.getConstantInt(Type::Int32Ty, RuntimeLang)
+    ConstantInt::get(Type::Int32Ty, RuntimeLang)
   };
   
   Constant *Init = VMContext.getConstantStruct(Elts,
@@ -748,10 +748,10 @@ DISubprogram DIFactory::CreateSubprogram(DIDescriptor Context,
     GetStringConstant(DisplayName),
     GetStringConstant(LinkageName),
     getCastToEmpty(CompileUnit),
-    VMContext.getConstantInt(Type::Int32Ty, LineNo),
+    ConstantInt::get(Type::Int32Ty, LineNo),
     getCastToEmpty(Type),
-    VMContext.getConstantInt(Type::Int1Ty, isLocalToUnit),
-    VMContext.getConstantInt(Type::Int1Ty, isDefinition)
+    ConstantInt::get(Type::Int1Ty, isLocalToUnit),
+    ConstantInt::get(Type::Int1Ty, isDefinition)
   };
   
   Constant *Init = VMContext.getConstantStruct(Elts,
@@ -781,10 +781,10 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
     GetStringConstant(DisplayName),
     GetStringConstant(LinkageName),
     getCastToEmpty(CompileUnit),
-    VMContext.getConstantInt(Type::Int32Ty, LineNo),
+    ConstantInt::get(Type::Int32Ty, LineNo),
     getCastToEmpty(Type),
-    VMContext.getConstantInt(Type::Int1Ty, isLocalToUnit),
-    VMContext.getConstantInt(Type::Int1Ty, isDefinition),
+    ConstantInt::get(Type::Int1Ty, isLocalToUnit),
+    ConstantInt::get(Type::Int1Ty, isDefinition),
     VMContext.getConstantExprBitCast(Val, EmptyStructPtr)
   };
   
@@ -810,7 +810,7 @@ DIVariable DIFactory::CreateVariable(unsigned Tag, DIDescriptor Context,
     getCastToEmpty(Context),
     GetStringConstant(Name),
     getCastToEmpty(CompileUnit),
-    VMContext.getConstantInt(Type::Int32Ty, LineNo),
+    ConstantInt::get(Type::Int32Ty, LineNo),
     getCastToEmpty(Type)
   };
   
@@ -862,8 +862,8 @@ void DIFactory::InsertStopPoint(DICompileUnit CU, unsigned LineNo,
   
   // Invoke llvm.dbg.stoppoint
   Value *Args[] = {
-    VMContext.getConstantInt(llvm::Type::Int32Ty, LineNo),
-    VMContext.getConstantInt(llvm::Type::Int32Ty, ColNo),
+    ConstantInt::get(llvm::Type::Int32Ty, LineNo),
+    ConstantInt::get(llvm::Type::Int32Ty, ColNo),
     getCastToEmpty(CU)
   };
   CallInst::Create(StopPointFn, Args, Args+3, "", BB);

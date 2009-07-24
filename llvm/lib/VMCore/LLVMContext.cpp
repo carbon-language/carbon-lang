@@ -39,7 +39,7 @@ static const uint64_t zero[2] = {0, 0};
 Constant* LLVMContext::getNullValue(const Type* Ty) {
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID:
-    return getConstantInt(Ty, 0);
+    return ConstantInt::get(Ty, 0);
   case Type::FloatTyID:
     return getConstantFP(APFloat(APInt(32, 0)));
   case Type::DoubleTyID:
@@ -65,7 +65,7 @@ Constant* LLVMContext::getNullValue(const Type* Ty) {
 
 Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
   if (const IntegerType* ITy = dyn_cast<IntegerType>(Ty))
-    return getConstantInt(APInt::getAllOnesValue(ITy->getBitWidth()));
+    return ConstantInt::get(*this, APInt::getAllOnesValue(ITy->getBitWidth()));
   
   std::vector<Constant*> Elts;
   const VectorType* VTy = cast<VectorType>(Ty);
@@ -90,51 +90,6 @@ ConstantInt* LLVMContext::getFalse() {
   assert(this && "Context not initialized!");
   assert(pImpl && "Context not initialized!");
   return pImpl->getFalse();
-}
-
-Constant* LLVMContext::getConstantInt(const Type* Ty, uint64_t V,
-                                         bool isSigned) {
-  Constant *C = getConstantInt(cast<IntegerType>(Ty->getScalarType()),
-                               V, isSigned);
-
-  // For vectors, broadcast the value.
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return
-      getConstantVector(std::vector<Constant *>(VTy->getNumElements(), C));
-
-  return C;
-}
-
-
-ConstantInt* LLVMContext::getConstantInt(const IntegerType* Ty, uint64_t V,
-                                         bool isSigned) {
-  return getConstantInt(APInt(Ty->getBitWidth(), V, isSigned));
-}
-
-ConstantInt* LLVMContext::getConstantIntSigned(const IntegerType* Ty,
-                                               int64_t V) {
-  return getConstantInt(Ty, V, true);
-}
-
-Constant *LLVMContext::getConstantIntSigned(const Type *Ty, int64_t V) {
-  return getConstantInt(Ty, V, true);
-}
-
-ConstantInt* LLVMContext::getConstantInt(const APInt& V) {
-  return pImpl->getConstantInt(V);
-}
-
-Constant* LLVMContext::getConstantInt(const Type* Ty, const APInt& V) {
-  ConstantInt *C = getConstantInt(V);
-  assert(C->getType() == Ty->getScalarType() &&
-         "ConstantInt type doesn't match the type implied by its value!");
-
-  // For vectors, broadcast the value.
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return
-      getConstantVector(std::vector<Constant *>(VTy->getNumElements(), C));
-
-  return C;
 }
 
 // ConstantPointerNull accessors.
@@ -194,11 +149,11 @@ Constant* LLVMContext::getConstantArray(const std::string& Str,
                                         bool AddNull) {
   std::vector<Constant*> ElementVals;
   for (unsigned i = 0; i < Str.length(); ++i)
-    ElementVals.push_back(getConstantInt(Type::Int8Ty, Str[i]));
+    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, Str[i]));
 
   // Add a null terminator to the string...
   if (AddNull) {
-    ElementVals.push_back(getConstantInt(Type::Int8Ty, 0));
+    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, 0));
   }
 
   ArrayType *ATy = getArrayType(Type::Int8Ty, ElementVals.size());
@@ -302,8 +257,8 @@ Constant* LLVMContext::getConstantExprAlignOf(const Type* Ty) {
   // alignof is implemented as: (i64) gep ({i8,Ty}*)null, 0, 1
   const Type *AligningTy = getStructType(Type::Int8Ty, Ty, NULL);
   Constant *NullPtr = getNullValue(AligningTy->getPointerTo());
-  Constant *Zero = getConstantInt(Type::Int32Ty, 0);
-  Constant *One = getConstantInt(Type::Int32Ty, 1);
+  Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
+  Constant *One = ConstantInt::get(Type::Int32Ty, 1);
   Constant *Indices[2] = { Zero, One };
   Constant *GEP = getConstantExprGetElementPtr(NullPtr, Indices, 2);
   return getConstantExprCast(Instruction::PtrToInt, GEP, Type::Int32Ty);
@@ -463,7 +418,7 @@ Constant* LLVMContext::getConstantExprInsertValue(Constant* Agg, Constant* Val,
 
 Constant* LLVMContext::getConstantExprSizeOf(const Type* Ty) {
   // sizeof is implemented as: (i64) gep (Ty*)null, 1
-  Constant *GEPIdx = getConstantInt(Type::Int32Ty, 1);
+  Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
   Constant *GEP = getConstantExprGetElementPtr(
                             getNullValue(getPointerTypeUnqual(Ty)), &GEPIdx, 1);
   return getConstantExprCast(Instruction::PtrToInt, GEP, Type::Int64Ty);

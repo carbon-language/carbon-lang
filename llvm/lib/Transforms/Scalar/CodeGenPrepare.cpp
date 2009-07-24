@@ -617,7 +617,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
         V = new SExtInst(V, IntPtrTy, "sunkaddr", InsertPt);
       }
       if (AddrMode.Scale != 1)
-        V = BinaryOperator::CreateMul(V, Context.getConstantInt(IntPtrTy,
+        V = BinaryOperator::CreateMul(V, ConstantInt::get(IntPtrTy,
                                                                 AddrMode.Scale),
                                       "sunkaddr", InsertPt);
       Result = V;
@@ -649,7 +649,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
     // Add in the Base Offset if present.
     if (AddrMode.BaseOffs) {
-      Value *V = Context.getConstantInt(IntPtrTy, AddrMode.BaseOffs);
+      Value *V = ConstantInt::get(IntPtrTy, AddrMode.BaseOffs);
       if (Result)
         Result = BinaryOperator::CreateAdd(Result, V, "sunkaddr", InsertPt);
       else

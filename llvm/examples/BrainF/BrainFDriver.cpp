@@ -80,7 +80,7 @@ void addMainFunction(Module *mod) {
   }
 
   //ret i32 0
-  ReturnInst::Create(getGlobalContext().getConstantInt(APInt(32, 0)), bb);
+  ReturnInst::Create(ConstantInt::get(getGlobalContext(), APInt(32, 0)), bb);
 }
 
 int main(int argc, char **argv) {

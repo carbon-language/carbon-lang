@@ -167,7 +167,7 @@ static bool FactorOutConstant(const SCEV *&S,
   // For a Constant, check for a multiple of the given factor.
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
     ConstantInt *CI =
-      SE.getContext().getConstantInt(C->getValue()->getValue().sdiv(Factor));
+      ConstantInt::get(SE.getContext(), C->getValue()->getValue().sdiv(Factor));
     // If the quotient is zero and the remainder is non-zero, reject
     // the value at this scale. It will be considered for subsequent
     // smaller scales.
@@ -298,8 +298,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
             uint64_t FullOffset = C->getValue()->getZExtValue();
             if (FullOffset < SL.getSizeInBytes()) {
               unsigned ElIdx = SL.getElementContainingOffset(FullOffset);
-              GepIndices.push_back(
-                            getContext().getConstantInt(Type::Int32Ty, ElIdx));
+              GepIndices.push_back(ConstantInt::get(Type::Int32Ty, ElIdx));
               ElTy = STy->getTypeAtIndex(ElIdx);
               Ops[0] =
                 SE.getConstant(Ty, FullOffset - SL.getElementOffset(ElIdx));
@@ -412,7 +411,7 @@ Value *SCEVExpander::visitUDivExpr(const SCEVUDivExpr *S) {
     const APInt &RHS = SC->getValue()->getValue();
     if (RHS.isPowerOf2())
       return InsertBinop(Instruction::LShr, LHS,
-                         getContext().getConstantInt(Ty, RHS.logBase2()));
+                         ConstantInt::get(Ty, RHS.logBase2()));
   }
 
   Value *RHS = expandCodeFor(S->getRHS(), Ty);
@@ -532,7 +531,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
 
     // Insert a unit add instruction right before the terminator corresponding
     // to the back-edge.
-    Constant *One = getContext().getConstantInt(Ty, 1);
+    Constant *One = ConstantInt::get(Ty, 1);
     Instruction *Add = BinaryOperator::CreateAdd(PN, One, "indvar.next",
                                                  (*HPI)->getTerminator());
     InsertedValues.insert(Add);

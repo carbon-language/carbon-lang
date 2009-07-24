@@ -911,7 +911,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     if (IsEqual)
       Replacement = Val;
     else
-      Replacement = Context.getConstantInt(Type::Int1Ty, 
+      Replacement = ConstantInt::get(Type::Int1Ty, 
                                      !cast<ConstantInt>(Val)->getZExtValue());
     
     for (unsigned i = 0, e = Users.size(); i != e; ++i)

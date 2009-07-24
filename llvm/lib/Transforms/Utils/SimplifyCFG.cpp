@@ -1611,7 +1611,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
     if (BB->getSinglePredecessor()) {
       // Turn this into a branch on constant.
       bool CondIsTrue = PBI->getSuccessor(0) == BB;
-      BI->setCondition(Context.getConstantInt(Type::Int1Ty, CondIsTrue));
+      BI->setCondition(ConstantInt::get(Type::Int1Ty, CondIsTrue));
       return true;  // Nuke the branch on constant.
     }
     
@@ -1631,7 +1631,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
             PBI->getCondition() == BI->getCondition() &&
             PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
           bool CondIsTrue = PBI->getSuccessor(0) == BB;
-          NewPN->addIncoming(Context.getConstantInt(Type::Int1Ty, 
+          NewPN->addIncoming(ConstantInt::get(Type::Int1Ty, 
                                               CondIsTrue), *PI);
         } else {
           NewPN->addIncoming(BI->getCondition(), *PI);

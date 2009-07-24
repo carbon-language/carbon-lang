@@ -306,7 +306,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     if (AggregateArgs) {
       Value *Idx[2];
       Idx[0] = Context.getNullValue(Type::Int32Ty);
-      Idx[1] = Context.getConstantInt(Type::Int32Ty, i);
+      Idx[1] = ConstantInt::get(Type::Int32Ty, i);
       TerminatorInst *TI = newFunction->begin()->getTerminator();
       GetElementPtrInst *GEP = 
         GetElementPtrInst::Create(AI, Idx, Idx+2, 
@@ -396,7 +396,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     for (unsigned i = 0, e = inputs.size(); i != e; ++i) {
       Value *Idx[2];
       Idx[0] = Context.getNullValue(Type::Int32Ty);
-      Idx[1] = Context.getConstantInt(Type::Int32Ty, i);
+      Idx[1] = ConstantInt::get(Type::Int32Ty, i);
       GetElementPtrInst *GEP =
         GetElementPtrInst::Create(Struct, Idx, Idx + 2,
                                   "gep_" + StructValues[i]->getName());
@@ -422,7 +422,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     if (AggregateArgs) {
       Value *Idx[2];
       Idx[0] = Context.getNullValue(Type::Int32Ty);
-      Idx[1] = Context.getConstantInt(Type::Int32Ty, FirstOut + i);
+      Idx[1] = ConstantInt::get(Type::Int32Ty, FirstOut + i);
       GetElementPtrInst *GEP
         = GetElementPtrInst::Create(Struct, Idx, Idx + 2,
                                     "gep_reload_" + outputs[i]->getName());
@@ -474,17 +474,17 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
           case 0:
           case 1: break;  // No value needed.
           case 2:         // Conditional branch, return a bool
-            brVal = Context.getConstantInt(Type::Int1Ty, !SuccNum);
+            brVal = ConstantInt::get(Type::Int1Ty, !SuccNum);
             break;
           default:
-            brVal = Context.getConstantInt(Type::Int16Ty, SuccNum);
+            brVal = ConstantInt::get(Type::Int16Ty, SuccNum);
             break;
           }
 
           ReturnInst *NTRet = ReturnInst::Create(brVal, NewTarget);
 
           // Update the switch instruction.
-          TheSwitch->addCase(Context.getConstantInt(Type::Int16Ty, SuccNum),
+          TheSwitch->addCase(ConstantInt::get(Type::Int16Ty, SuccNum),
                              OldTarget);
 
           // Restore values just before we exit
@@ -523,7 +523,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
               if (AggregateArgs) {
                 Value *Idx[2];
                 Idx[0] = Context.getNullValue(Type::Int32Ty);
-                Idx[1] = Context.getConstantInt(Type::Int32Ty,FirstOut+out);
+                Idx[1] = ConstantInt::get(Type::Int32Ty,FirstOut+out);
                 GetElementPtrInst *GEP =
                   GetElementPtrInst::Create(OAI, Idx, Idx + 2,
                                             "gep_" + outputs[out]->getName(),

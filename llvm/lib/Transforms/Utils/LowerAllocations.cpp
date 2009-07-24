@@ -118,7 +118,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // malloc(type) becomes i8 *malloc(size)
       Value *MallocArg;
       if (LowerMallocArgToInteger)
-        MallocArg = Context.getConstantInt(Type::Int64Ty,
+        MallocArg = ConstantInt::get(Type::Int64Ty,
                                      TD.getTypeAllocSize(AllocTy));
       else
         MallocArg = Context.getConstantExprSizeOf(AllocTy);

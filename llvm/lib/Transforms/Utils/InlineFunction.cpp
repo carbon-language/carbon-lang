@@ -324,14 +324,14 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
         if (TD == 0)
           Size = Context.getConstantExprSizeOf(AggTy);
         else
-          Size = Context.getConstantInt(Type::Int64Ty,
+          Size = ConstantInt::get(Type::Int64Ty,
                                          TD->getTypeStoreSize(AggTy));
 
         // Always generate a memcpy of alignment 1 here because we don't know
         // the alignment of the src pointer.  Other optimizations can infer
         // better alignment.
         Value *CallArgs[] = {
-          DestCast, SrcCast, Size, Context.getConstantInt(Type::Int32Ty, 1)
+          DestCast, SrcCast, Size, ConstantInt::get(Type::Int32Ty, 1)
         };
         CallInst *TheMemCpy =
           CallInst::Create(MemCpyFn, CallArgs, CallArgs+4, "", TheCall);

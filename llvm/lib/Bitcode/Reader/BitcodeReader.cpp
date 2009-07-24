@@ -877,7 +877,7 @@ bool BitcodeReader::ParseConstants() {
     case bitc::CST_CODE_INTEGER:   // INTEGER: [intval]
       if (!isa<IntegerType>(CurTy) || Record.empty())
         return Error("Invalid CST_INTEGER record");
-      V = Context.getConstantInt(CurTy, DecodeSignRotatedValue(Record[0]));
+      V = ConstantInt::get(CurTy, DecodeSignRotatedValue(Record[0]));
       break;
     case bitc::CST_CODE_WIDE_INTEGER: {// WIDE_INTEGER: [n x intval]
       if (!isa<IntegerType>(CurTy) || Record.empty())
@@ -888,8 +888,9 @@ bool BitcodeReader::ParseConstants() {
       Words.resize(NumWords);
       for (unsigned i = 0; i != NumWords; ++i)
         Words[i] = DecodeSignRotatedValue(Record[i]);
-      V = Context.getConstantInt(APInt(cast<IntegerType>(CurTy)->getBitWidth(),
-                                 NumWords, &Words[0]));
+      V = ConstantInt::get(Context, 
+                           APInt(cast<IntegerType>(CurTy)->getBitWidth(),
+                           NumWords, &Words[0]));
       break;
     }
     case bitc::CST_CODE_FLOAT: {    // FLOAT: [fpval]
@@ -951,7 +952,7 @@ bool BitcodeReader::ParseConstants() {
       unsigned Size = Record.size();
       std::vector<Constant*> Elts;
       for (unsigned i = 0; i != Size; ++i)
-        Elts.push_back(Context.getConstantInt(EltTy, Record[i]));
+        Elts.push_back(ConstantInt::get(EltTy, Record[i]));
       V = Context.getConstantArray(ATy, Elts);
       break;
     }
@@ -965,7 +966,7 @@ bool BitcodeReader::ParseConstants() {
       unsigned Size = Record.size();
       std::vector<Constant*> Elts;
       for (unsigned i = 0; i != Size; ++i)
-        Elts.push_back(Context.getConstantInt(EltTy, Record[i]));
+        Elts.push_back(ConstantInt::get(EltTy, Record[i]));
       Elts.push_back(Context.getNullValue(EltTy));
       V = Context.getConstantArray(ATy, Elts);
       break;

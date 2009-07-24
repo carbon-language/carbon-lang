@@ -466,7 +466,7 @@ static Instruction *ConvertShiftToMul(Instruction *Shl,
       (Shl->hasOneUse() && 
        (isReassociableOp(Shl->use_back(), Instruction::Mul) ||
         isReassociableOp(Shl->use_back(), Instruction::Add)))) {
-    Constant *MulCst = Context.getConstantInt(Shl->getType(), 1);
+    Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
     MulCst =
         Context.getConstantExprShl(MulCst, cast<Constant>(Shl->getOperand(1)));
     

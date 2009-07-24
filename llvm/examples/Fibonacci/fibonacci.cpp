@@ -47,8 +47,8 @@ static Function *CreateFibFunction(Module *M, LLVMContext &Context) {
   BasicBlock *BB = BasicBlock::Create("EntryBlock", FibF);
 
   // Get pointers to the constants.
-  Value *One = Context.getConstantInt(Type::Int32Ty, 1);
-  Value *Two = Context.getConstantInt(Type::Int32Ty, 2);
+  Value *One = ConstantInt::get(Type::Int32Ty, 1);
+  Value *Two = ConstantInt::get(Type::Int32Ty, 2);
 
   // Get pointer to the integer argument of the add1 function...
   Argument *ArgX = FibF->arg_begin();   // Get the arg.
