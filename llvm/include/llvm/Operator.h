@@ -101,6 +101,57 @@ public:
   }
 };
 
+/// AddOperator - Utility class for integer addition operators.
+///
+class AddOperator : public OverflowingBinaryOperator {
+public:
+  static inline bool classof(const AddOperator *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Add;
+  }
+  static inline bool classof(const ConstantExpr *CE) {
+    return CE->getOpcode() == Instruction::Add;
+  }
+  static inline bool classof(const Value *V) {
+    return (isa<Instruction>(V) && classof(cast<Instruction>(V))) ||
+           (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
+  }
+};
+
+/// SubOperator - Utility class for integer subtraction operators.
+///
+class SubOperator : public OverflowingBinaryOperator {
+public:
+  static inline bool classof(const SubOperator *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Sub;
+  }
+  static inline bool classof(const ConstantExpr *CE) {
+    return CE->getOpcode() == Instruction::Sub;
+  }
+  static inline bool classof(const Value *V) {
+    return (isa<Instruction>(V) && classof(cast<Instruction>(V))) ||
+           (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
+  }
+};
+
+/// MulOperator - Utility class for integer multiplication operators.
+///
+class MulOperator : public OverflowingBinaryOperator {
+public:
+  static inline bool classof(const MulOperator *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Mul;
+  }
+  static inline bool classof(const ConstantExpr *CE) {
+    return CE->getOpcode() == Instruction::Mul;
+  }
+  static inline bool classof(const Value *V) {
+    return (isa<Instruction>(V) && classof(cast<Instruction>(V))) ||
+           (isa<ConstantExpr>(V) && classof(cast<ConstantExpr>(V)));
+  }
+};
+
 /// SDivOperator - An Operator with opcode Instruction::SDiv.
 ///
 class SDivOperator : public Operator {
