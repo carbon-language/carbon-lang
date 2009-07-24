@@ -25,6 +25,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/Passes.h"
+using namespace MSIL;
 
 namespace {
   // TargetMachine for the MSIL 
