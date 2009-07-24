@@ -57,6 +57,7 @@
           <li><a href="#ll_iostream"><tt>#include &lt;iostream&gt;</tt> is
               <em>forbidden</em></a></li>
           <li><a href="#ll_avoidendl">Avoid <tt>std::endl</tt></a></li>
+          <li><a href="#ll_raw_ostream">Use <tt>raw_ostream</tt></a</li>
         </ol></li>
         
       <li><a href="#nano">Microscopic Details</a>
@@ -907,9 +908,9 @@ library. There are two problems with this:</p>
 example) is allowed normally, it is just <tt>&lt;iostream&gt;</tt> that is
 causing problems.</p>
 
-<p>The preferred replacement for stream functionality is the
-<tt>llvm::raw_ostream</tt> class (for writing to output streams of various
-sorts) and the <tt>llvm::MemoryBuffer</tt> API (for reading in files).</p>
+<p>In addition, new code should always
+use <a href="#ll_raw_ostream"><tt>raw_ostream</tt></a> or
+the <tt>llvm::MemoryBuffer</tt> API (for reading in files).</p>
 
 </div>
 
@@ -934,6 +935,26 @@ std::cout &lt;&lt; '\n' &lt;&lt; std::flush;
 
 <p>Most of the time, you probably have no reason to flush the output stream, so
 it's better to use a literal <tt>'\n'</tt>.</p>
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="ll_raw_ostream">Use <tt>raw_ostream</tt></a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM includes a lightweight, simple, and efficient stream implementation
+in <tt>llvm/Support/raw_ostream.h</tt> which provides all of the common features
+of <tt>std::iostream</tt>.  All new code should use <tt>raw_ostream</tt> instead
+of <tt>iostream</tt>.</p>
+
+<p>Unlike <tt>std::iostream</tt>, <tt>raw_ostream</tt> is not a template and can
+be forward declared as <tt>class raw_ostream</tt>.  Public headers should
+generally not include the <tt>raw_ostream</tt> header, but use forward
+declarations and constant references to <tt>raw_ostream</tt> instances.</p>
 
 </div>
 
