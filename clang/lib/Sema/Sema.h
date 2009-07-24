@@ -2732,7 +2732,10 @@ public:
   void InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                      FunctionDecl *Function,
                                      bool Recursive = false);
-  void InstantiateVariableDefinition(VarDecl *Var);
+  void InstantiateStaticDataMemberDefinition(
+                                          SourceLocation PointOfInstantiation,
+                                             VarDecl *Var,
+                                             bool Recursive = false);
 
   NamedDecl *InstantiateCurrentDeclRef(NamedDecl *D);
     

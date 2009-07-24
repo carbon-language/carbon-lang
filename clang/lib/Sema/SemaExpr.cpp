@@ -5780,10 +5780,17 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
   }
   
   if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    (void)Var;
-    // FIXME: implicit template instantiation
+    // Implicit instantiation of static data members of class templates.
+    // FIXME: distinguish between implicit instantiations (which we need to
+    // actually instantiate) and explicit specializations.
+    if (Var->isStaticDataMember() && 
+        Var->getInstantiatedFromStaticDataMember())
+      PendingImplicitInstantiations.push_back(std::make_pair(Var, Loc));
+    
     // FIXME: keep track of references to static data?
+
     D->setUsed(true);
-  }
+    return;
+}
 }
 

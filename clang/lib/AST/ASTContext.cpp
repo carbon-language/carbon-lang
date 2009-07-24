@@ -220,6 +220,25 @@ void ASTContext::InitBuiltinTypes() {
   InitBuiltinType(NullPtrTy,           BuiltinType::NullPtr);
 }
 
+VarDecl *ASTContext::getInstantiatedFromStaticDataMember(VarDecl *Var) {
+  assert(Var->isStaticDataMember() && "Not a static data member");
+  llvm::DenseMap<VarDecl *, VarDecl *>::iterator Pos
+    = InstantiatedFromStaticDataMember.find(Var);
+  if (Pos == InstantiatedFromStaticDataMember.end())
+    return 0;
+  
+  return Pos->second;
+}
+
+void 
+ASTContext::setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl) {
+  assert(Inst->isStaticDataMember() && "Not a static data member");
+  assert(Tmpl->isStaticDataMember() && "Not a static data member");
+  assert(!InstantiatedFromStaticDataMember[Inst] &&
+         "Already noted what static data member was instantiated from");
+  InstantiatedFromStaticDataMember[Inst] = Tmpl;
+}
+
 namespace {
   class BeforeInTranslationUnit 
     : std::binary_function<SourceRange, SourceRange, bool> {

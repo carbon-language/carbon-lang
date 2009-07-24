@@ -189,8 +189,7 @@ void Sema::PrintInstantiationStack() {
                      DiagID)
           << Context.getTypeDeclType(Record)
           << Active->InstantiationRange;
-      } else {
-        FunctionDecl *Function = cast<FunctionDecl>(D);
+      } else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
         unsigned DiagID;
         if (Function->getPrimaryTemplate())
           DiagID = diag::note_function_template_spec_here;
@@ -199,6 +198,11 @@ void Sema::PrintInstantiationStack() {
         Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr), 
                      DiagID)
           << Function
+          << Active->InstantiationRange;
+      } else {
+        Diags.Report(FullSourceLoc(Active->PointOfInstantiation, SourceMgr),
+                     diag::note_template_static_data_member_def_here)
+          << cast<VarDecl>(D)
           << Active->InstantiationRange;
       }
       break;
@@ -1059,9 +1063,8 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
       if (!Function->getBody())
         InstantiateFunctionDefinition(PointOfInstantiation, Function);
     } else if (VarDecl *Var = dyn_cast<VarDecl>(*D)) {
-      const VarDecl *Def = 0;
-      if (!Var->getDefinition(Def))
-        InstantiateVariableDefinition(Var);
+      if (Var->isStaticDataMember())
+        InstantiateStaticDataMemberDefinition(PointOfInstantiation, Var);
     } else if (CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(*D)) {
       if (!Record->isInjectedClassName() && !Record->getDefinition(Context)) {
         assert(Record->getInstantiatedFromMemberClass() && 

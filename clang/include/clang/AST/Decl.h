@@ -477,6 +477,11 @@ public:
     return getDeclContext()->isRecord();
   }
 
+  /// \brief If this variable is an instantiated static data member of a
+  /// class template specialization, returns the templated static data member 
+  /// from which it was instantiated.
+  VarDecl *getInstantiatedFromStaticDataMember(); 
+  
   /// isFileVarDecl - Returns true for file scoped variable declaration.
   bool isFileVarDecl() const {
     if (getKind() != Decl::Var)
@@ -486,6 +491,9 @@ public:
       if (isa<TranslationUnitDecl>(Ctx) || isa<NamespaceDecl>(Ctx) )
         return true;
     }
+    if (isStaticDataMember() && isOutOfLine())
+      return true;
+    
     return false;
   }
 

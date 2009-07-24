@@ -120,12 +120,24 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
   Var->setCXXDirectInitializer(D->hasCXXDirectInitializer());
   Var->setDeclaredInCondition(D->isDeclaredInCondition());
  
+  // If we are instantiating a static data member defined 
+  // out-of-line, the instantiation will have the same lexical
+  // context (which will be a namespace scope) as the template.
+  if (D->isOutOfLine())
+    Var->setLexicalDeclContext(D->getLexicalDeclContext());
+  
   // FIXME: In theory, we could have a previous declaration for variables that
   // are not static data members.
   bool Redeclaration = false;
   SemaRef.CheckVariableDeclaration(Var, 0, Redeclaration);
-  Owner->addDecl(Var);
-
+  
+  if (D->isOutOfLine()) {
+    D->getLexicalDeclContext()->addDecl(Var);
+    Owner->makeDeclVisibleInContext(Var);
+  } else {
+    Owner->addDecl(Var);
+  }
+  
   if (D->getInit()) {
     OwningExprResult Init 
       = SemaRef.InstantiateExpr(D->getInit(), TemplateArgs);
@@ -138,6 +150,11 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     // FIXME: Call ActOnUninitializedDecl? (Not always)
   }
 
+  // Link instantiations of static data members back to the template from
+  // which they were instantiated.
+  if (Var->isStaticDataMember())
+    SemaRef.Context.setInstantiatedFromStaticDataMember(Var, D);
+    
   return Var;
 }
 
@@ -374,6 +391,12 @@ Decl *TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D) {
                             D->isInline());
   Method->setInstantiationOfMemberFunction(D);
 
+  // If we are instantiating a member function defined 
+  // out-of-line, the instantiation will have the same lexical
+  // context (which will be a namespace scope) as the template.
+  if (D->isOutOfLine())
+    Method->setLexicalDeclContext(D->getLexicalDeclContext());
+  
   // Attach the parameters
   for (unsigned P = 0; P < Params.size(); ++P)
     Params[P]->setOwningFunction(Method);
@@ -773,9 +796,103 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 /// \brief Instantiate the definition of the given variable from its
 /// template.
 ///
-/// \param Var the already-instantiated declaration of a variable.
-void Sema::InstantiateVariableDefinition(VarDecl *Var) {
-  // FIXME: Implement this!
+/// \param PointOfInstantiation the point at which the instantiation was
+/// required. Note that this is not precisely a "point of instantiation"
+/// for the function, but it's close.
+///
+/// \param Var the already-instantiated declaration of a static member
+/// variable of a class template specialization.
+///
+/// \param Recursive if true, recursively instantiates any functions that
+/// are required by this instantiation.
+void Sema::InstantiateStaticDataMemberDefinition(
+                                          SourceLocation PointOfInstantiation,
+                                                 VarDecl *Var,
+                                                 bool Recursive) {
+  if (Var->isInvalidDecl())
+    return;
+  
+  // Find the out-of-line definition of this static data member.
+  // FIXME: Do we have to look for specializations separately?
+  VarDecl *Def = Var->getInstantiatedFromStaticDataMember();
+  bool FoundOutOfLineDef = false;
+  assert(Def && "This data member was not instantiated from a template?");
+  assert(Def->isStaticDataMember() && "Not a static data member?"); 
+  for (VarDecl::redecl_iterator RD = Def->redecls_begin(), 
+                             RDEnd = Def->redecls_end();
+       RD != RDEnd; ++RD) {
+    if (RD->getLexicalDeclContext()->isFileContext()) {
+      Def = *RD;
+      FoundOutOfLineDef = true;
+    }
+  }
+  
+  if (!FoundOutOfLineDef) {
+    // We did not find an out-of-line definition of this static data member,
+    // so we won't perform any instantiation. Rather, we rely on the user to
+    // instantiate this definition (or provide a specialization for it) in 
+    // another translation unit. 
+    return;
+  }
+
+  InstantiatingTemplate Inst(*this, PointOfInstantiation, Var);
+  if (Inst)
+    return;
+  
+  // If we're performing recursive template instantiation, create our own
+  // queue of pending implicit instantiations that we will instantiate later,
+  // while we're still within our own instantiation context.
+  std::deque<PendingImplicitInstantiation> SavedPendingImplicitInstantiations;
+  if (Recursive)
+    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+    
+  // Enter the scope of this instantiation. We don't use
+  // PushDeclContext because we don't have a scope.
+  DeclContext *PreviousContext = CurContext;
+  CurContext = Var->getDeclContext();
+  
+#if 0
+  // Instantiate the initializer of this static data member.
+  OwningExprResult Init 
+    = InstantiateExpr(Def->getInit(), getTemplateInstantiationArgs(Var));
+  if (Init.isInvalid()) {
+    // If instantiation of the initializer failed, mark the declaration invalid
+    // and don't instantiate anything else that was triggered by this 
+    // instantiation.
+    Var->setInvalidDecl();
+
+    // Restore the set of pending implicit instantiations.
+    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+    
+    return;
+  } 
+  
+  // Type-check the initializer.
+  if (Init.get())
+    AddInitializerToDecl(DeclPtrTy::make(Var), move(Init),
+                         Def->hasCXXDirectInitializer());
+  else 
+    ActOnUninitializedDecl(DeclPtrTy::make(Var), false);
+#else
+  Var = cast_or_null<VarDecl>(InstantiateDecl(Def, Var->getDeclContext(),
+                                          getTemplateInstantiationArgs(Var)));
+#endif
+  
+  CurContext = PreviousContext;
+
+  if (Var) {
+    DeclGroupRef DG(Var);
+    Consumer.HandleTopLevelDecl(DG);
+  }
+  
+  if (Recursive) {
+    // Instantiate any pending implicit instantiations found during the
+    // instantiation of this template. 
+    PerformPendingImplicitInstantiations();
+    
+    // Restore the set of pending implicit instantiations.
+    PendingImplicitInstantiations.swap(SavedPendingImplicitInstantiations);
+  }  
 }
 
 static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
@@ -794,6 +911,11 @@ static bool isInstantiationOf(ASTContext &Ctx, NamedDecl *D, Decl *Other) {
     return Enum->getInstantiatedFromMemberEnum()->getCanonicalDecl()
              == D->getCanonicalDecl();
 
+  if (VarDecl *Var = dyn_cast<VarDecl>(Other))
+    if (Var->isStaticDataMember())
+      return Var->getInstantiatedFromStaticDataMember()->getCanonicalDecl()
+               == D->getCanonicalDecl();
+      
   // FIXME: How can we find instantiations of anonymous unions?
 
   return D->getDeclName() && isa<NamedDecl>(Other) &&
@@ -912,10 +1034,16 @@ void Sema::PerformPendingImplicitInstantiations() {
     PendingImplicitInstantiation Inst = PendingImplicitInstantiations.front();
     PendingImplicitInstantiations.pop_front();
     
-    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first))
+    // Instantiate function definitions
+    if (FunctionDecl *Function = dyn_cast<FunctionDecl>(Inst.first)) {
       if (!Function->getBody())
         InstantiateFunctionDefinition(/*FIXME:*/Inst.second, Function, true);
+      continue;
+    }
     
-    // FIXME: instantiate static member variables
+    // Instantiate static data member definitions.
+    VarDecl *Var = cast<VarDecl>(Inst.first);
+    assert(Var->isStaticDataMember() && "Not a static data member?");
+    InstantiateStaticDataMemberDefinition(/*FIXME:*/Inst.second, Var, true);
   }
 }

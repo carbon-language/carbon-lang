@@ -341,6 +341,10 @@ SourceRange VarDecl::getSourceRange() const {
   return SourceRange(getLocation(), getLocation());
 }
 
+VarDecl *VarDecl::getInstantiatedFromStaticDataMember() {
+  return getASTContext().getInstantiatedFromStaticDataMember(this);
+}
+
 bool VarDecl::isTentativeDefinition(ASTContext &Context) const {
   if (!isFileVarDecl() || Context.getLangOptions().CPlusPlus)
     return false;

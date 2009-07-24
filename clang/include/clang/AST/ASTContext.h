@@ -136,6 +136,32 @@ class ASTContext {
   /// wasting space in the Decl class.
   llvm::DenseMap<const Decl*, Attr*> DeclAttrs;
   
+  /// \brief Keeps track of the static data member templates from which
+  /// static data members of class template specializations were instantiated.
+  ///
+  /// This data structure stores the mapping from instantiations of static
+  /// data members to the static data member representations within the
+  /// class template from which they were instantiated. 
+  ///
+  /// Given the following example:
+  ///
+  /// \code
+  /// template<typename T>
+  /// struct X {
+  ///   static T value;
+  /// };
+  ///
+  /// template<typename T>
+  ///   T X<T>::value = T(17);
+  ///
+  /// int *x = &X<int>::value;
+  /// \endcode
+  ///
+  /// This mapping will contain an entry that maps from the VarDecl for 
+  /// X<int>::value to the corresponding VarDecl for X<T>::value (within the
+  /// class template X). 
+  llvm::DenseMap<VarDecl *, VarDecl *> InstantiatedFromStaticDataMember;
+  
   TranslationUnitDecl *TUDecl;
 
   /// SourceMgr - The associated SourceManager object.
@@ -192,6 +218,15 @@ public:
   
   /// \brief Erase the attributes corresponding to the given declaration.
   void eraseDeclAttrs(const Decl *D) { DeclAttrs.erase(D); }
+  
+  /// \brief If this variable is an instantiated static data member of a
+  /// class template specialization, returns the templated static data member 
+  /// from which it was instantiated.
+  VarDecl *getInstantiatedFromStaticDataMember(VarDecl *Var);
+  
+  /// \brief Note that the static data member \p Inst is an instantiation of
+  /// the static data member template \p Tmpl of a class template.
+  void setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl);  
   
   TranslationUnitDecl *getTranslationUnitDecl() const { return TUDecl; }
 
