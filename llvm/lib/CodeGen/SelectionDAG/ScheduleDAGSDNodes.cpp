@@ -276,19 +276,19 @@ unsigned ScheduleDAGSDNodes::ComputeMemOperandsEnd(SDNode *Node) {
 
 void ScheduleDAGSDNodes::dumpNode(const SUnit *SU) const {
   if (!SU->getNode()) {
-    cerr << "PHYS REG COPY\n";
+    errs() << "PHYS REG COPY\n";
     return;
   }
 
   SU->getNode()->dump(DAG);
-  cerr << "\n";
+  errs() << "\n";
   SmallVector<SDNode *, 4> FlaggedNodes;
   for (SDNode *N = SU->getNode()->getFlaggedNode(); N; N = N->getFlaggedNode())
     FlaggedNodes.push_back(N);
   while (!FlaggedNodes.empty()) {
-    cerr << "    ";
+    errs() << "    ";
     FlaggedNodes.back()->dump(DAG);
-    cerr << "\n";
+    errs() << "\n";
     FlaggedNodes.pop_back();
   }
 }

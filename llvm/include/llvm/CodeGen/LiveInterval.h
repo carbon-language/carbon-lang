@@ -32,6 +32,7 @@ namespace llvm {
   class MachineInstr;
   class MachineRegisterInfo;
   class TargetRegisterInfo;
+  class raw_ostream;
 
   /// VNInfo - Value Number Information.
   /// This class holds information about a machine level values, including
@@ -192,12 +193,15 @@ namespace llvm {
     void dump() const;
     void print(std::ostream &os) const;
     void print(std::ostream *os) const { if (os) print(*os); }
+    void print(raw_ostream &os) const;
+    void print(raw_ostream *os) const { if (os) print(*os); }
 
   private:
     LiveRange(); // DO NOT IMPLEMENT
   };
 
   std::ostream& operator<<(std::ostream& os, const LiveRange &LR);
+  raw_ostream& operator<<(raw_ostream& os, const LiveRange &LR);
 
 
   inline bool operator<(unsigned V, const LiveRange &LR) {
@@ -584,6 +588,10 @@ namespace llvm {
     void print(std::ostream *OS, const TargetRegisterInfo *TRI = 0) const {
       if (OS) print(*OS, TRI);
     }
+    void print(raw_ostream &OS, const TargetRegisterInfo *TRI = 0) const;
+    void print(raw_ostream *OS, const TargetRegisterInfo *TRI = 0) const {
+      if (OS) print(*OS, TRI);
+    }
     void dump() const;
 
   private:
@@ -596,6 +604,10 @@ namespace llvm {
   };
 
   inline std::ostream &operator<<(std::ostream &OS, const LiveInterval &LI) {
+    LI.print(OS);
+    return OS;
+  }
+  inline raw_ostream &operator<<(raw_ostream &OS, const LiveInterval &LI) {
     LI.print(OS);
     return OS;
   }

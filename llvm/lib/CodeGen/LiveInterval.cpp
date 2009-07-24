@@ -24,6 +24,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
 #include <ostream>
@@ -819,12 +820,21 @@ void LiveInterval::ComputeJoinedWeight(const LiveInterval &Other) {
 std::ostream& llvm::operator<<(std::ostream& os, const LiveRange &LR) {
   return os << '[' << LR.start << ',' << LR.end << ':' << LR.valno->id << ")";
 }
+raw_ostream& llvm::operator<<(raw_ostream& os, const LiveRange &LR) {
+  return os << '[' << LR.start << ',' << LR.end << ':' << LR.valno->id << ")";
+}
 
 void LiveRange::dump() const {
   cerr << *this << "\n";
 }
 
 void LiveInterval::print(std::ostream &OS,
+                         const TargetRegisterInfo *TRI) const {
+  raw_os_ostream RawOS(OS);
+  print(RawOS, TRI);
+}
+
+void LiveInterval::print(raw_ostream &OS,
                          const TargetRegisterInfo *TRI) const {
   if (isStackSlot())
     OS << "SS#" << getStackSlotIndex();
@@ -888,5 +898,8 @@ void LiveInterval::dump() const {
 
 
 void LiveRange::print(std::ostream &os) const {
+  os << *this;
+}
+void LiveRange::print(raw_ostream &os) const {
   os << *this;
 }

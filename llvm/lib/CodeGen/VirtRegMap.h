@@ -34,6 +34,7 @@ namespace llvm {
   class MachineRegisterInfo;
   class TargetInstrInfo;
   class TargetRegisterInfo;
+  class raw_ostream;
 
   class VirtRegMap : public MachineFunctionPass {
   public:
@@ -483,6 +484,8 @@ namespace llvm {
 
     void print(std::ostream &OS, const Module* M = 0) const;
     void print(std::ostream *OS) const { if (OS) print(*OS); }
+    void print(raw_ostream &OS, const Module* M = 0) const;
+    void print(raw_ostream *OS) const { if (OS) print(*OS); }
     void dump() const;
   };
 
@@ -491,6 +494,14 @@ namespace llvm {
     return OS;
   }
   inline std::ostream &operator<<(std::ostream &OS, const VirtRegMap &VRM) {
+    VRM.print(OS);
+    return OS;
+  }
+  inline raw_ostream *operator<<(raw_ostream *OS, const VirtRegMap &VRM) {
+    VRM.print(OS);
+    return OS;
+  }
+  inline raw_ostream &operator<<(raw_ostream &OS, const VirtRegMap &VRM) {
     VRM.print(OS);
     return OS;
   }

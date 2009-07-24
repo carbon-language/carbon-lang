@@ -30,6 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -259,6 +260,11 @@ bool VirtRegMap::FindUnusedRegisters(LiveIntervals* LIs) {
 }
 
 void VirtRegMap::print(std::ostream &OS, const Module* M) const {
+  raw_os_ostream RawOS(OS);
+  print(RawOS, M);
+}
+
+void VirtRegMap::print(raw_ostream &OS, const Module* M) const {
   const TargetRegisterInfo* TRI = MF->getTarget().getRegisterInfo();
 
   OS << "********** REGISTER MAP **********\n";

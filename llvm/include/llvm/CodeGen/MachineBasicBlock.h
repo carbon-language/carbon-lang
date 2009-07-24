@@ -21,6 +21,7 @@ namespace llvm {
 
 class BasicBlock;
 class MachineFunction;
+class raw_ostream;
 
 template <>
 struct ilist_traits<MachineInstr> : public ilist_default_traits<MachineInstr> {
@@ -311,6 +312,8 @@ public:
   void dump() const;
   void print(std::ostream &OS) const;
   void print(std::ostream *OS) const { if (OS) print(*OS); }
+  void print(raw_ostream &OS) const;
+  void print(raw_ostream *OS) const { if (OS) print(*OS); }
 
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
   /// level, unless they're not in a MachineFunction yet, in which case this
@@ -339,6 +342,7 @@ private:   // Methods used to maintain doubly linked list of blocks...
 };
 
 std::ostream& operator<<(std::ostream &OS, const MachineBasicBlock &MBB);
+raw_ostream& operator<<(raw_ostream &OS, const MachineBasicBlock &MBB);
 
 //===--------------------------------------------------------------------===//
 // GraphTraits specializations for machine basic block graphs (machine-CFGs)

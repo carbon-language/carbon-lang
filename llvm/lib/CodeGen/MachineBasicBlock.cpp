@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -32,6 +33,10 @@ MachineBasicBlock::~MachineBasicBlock() {
 }
 
 std::ostream& llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
+  MBB.print(OS);
+  return OS;
+}
+raw_ostream& llvm::operator<<(raw_ostream &OS, const MachineBasicBlock &MBB) {
   MBB.print(OS);
   return OS;
 }
@@ -137,7 +142,7 @@ void MachineBasicBlock::dump() const {
   print(*cerr.stream());
 }
 
-static inline void OutputReg(std::ostream &os, unsigned RegNo,
+static inline void OutputReg(raw_ostream &os, unsigned RegNo,
                              const TargetRegisterInfo *TRI = 0) {
   if (!RegNo || TargetRegisterInfo::isPhysicalRegister(RegNo)) {
     if (TRI)
@@ -149,6 +154,11 @@ static inline void OutputReg(std::ostream &os, unsigned RegNo,
 }
 
 void MachineBasicBlock::print(std::ostream &OS) const {
+  raw_os_ostream RawOS(OS);
+  print(RawOS);
+}
+
+void MachineBasicBlock::print(raw_ostream &OS) const {
   const MachineFunction *MF = getParent();
   if(!MF) {
     OS << "Can't print out MachineBasicBlock because parent MachineFunction"
