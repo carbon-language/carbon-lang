@@ -50,15 +50,22 @@ namespace llvm {
   /// directly.
   ///
   class SCEV : public FastFoldingSetNode {
-    const unsigned SCEVType;      // The SCEV baseclass this node corresponds to
+    // The SCEV baseclass this node corresponds to
+    const unsigned short SCEVType;
 
+  protected:
+    /// SubclassData - This field is initialized to zero and may be used in
+    /// subclasses to store miscelaneous information.
+    unsigned short SubclassData;
+
+  private:
     SCEV(const SCEV &);            // DO NOT IMPLEMENT
     void operator=(const SCEV &);  // DO NOT IMPLEMENT
   protected:
     virtual ~SCEV();
   public:
     explicit SCEV(const FoldingSetNodeID &ID, unsigned SCEVTy) :
-      FastFoldingSetNode(ID), SCEVType(SCEVTy) {}
+      FastFoldingSetNode(ID), SCEVType(SCEVTy), SubclassData(0) {}
 
     unsigned getSCEVType() const { return SCEVType; }
 
