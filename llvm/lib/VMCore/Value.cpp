@@ -68,9 +68,9 @@ Value::~Value() {
   // a <badref>
   //
   if (!use_empty()) {
-    cerr << "While deleting: " << *VTy << " %" << getNameStr() << "\n";
+    errs() << "While deleting: " << *VTy << " %" << getNameStr() << "\n";
     for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
-      cerr << "Use still stuck around after Def is destroyed:"
+      errs() << "Use still stuck around after Def is destroyed:"
            << **I << "\n";
   }
 #endif
@@ -509,8 +509,8 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
     switch (ThisNode->getKind()) {
     case Assert:
 #ifndef NDEBUG      // Only in -g mode...
-      cerr << "While deleting: " << *V->getType() << " %" << V->getNameStr()
-           << "\n";
+      errs() << "While deleting: " << *V->getType() << " %" << V->getNameStr()
+             << "\n";
 #endif
       llvm_unreachable("An asserting value handle still pointed to this"
                        " value!");

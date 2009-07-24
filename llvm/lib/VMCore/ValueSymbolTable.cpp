@@ -17,15 +17,16 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 // Class destructor
 ValueSymbolTable::~ValueSymbolTable() {
 #ifndef NDEBUG   // Only do this in -g mode...
   for (iterator VI = vmap.begin(), VE = vmap.end(); VI != VE; ++VI)
-    cerr << "Value still in symbol table! Type = '"
-         << VI->getValue()->getType()->getDescription() << "' Name = '"
-         << VI->getKeyData() << "'\n";
+    errs() << "Value still in symbol table! Type = '"
+           << VI->getValue()->getType()->getDescription() << "' Name = '"
+           << VI->getKeyData() << "'\n";
   assert(vmap.empty() && "Values remain in symbol table!");
 #endif
 }
