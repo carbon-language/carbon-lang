@@ -125,8 +125,8 @@ namespace llvm {
     }
 
     /// Construct a twine from explicit values.
-    explicit Twine(const void *_LHS, unsigned _LHSKind,
-                   const void *_RHS, unsigned _RHSKind)
+    explicit Twine(const void *_LHS, NodeKind _LHSKind,
+                   const void *_RHS, NodeKind _RHSKind)
       : LHS(_LHS), RHS(_RHS), LHSKind(_LHSKind), RHSKind(_RHSKind) {
       assert(isValid() && "Invalid twine!");
     }
