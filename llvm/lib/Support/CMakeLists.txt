@@ -31,6 +31,7 @@ add_llvm_library(LLVMSupport
   TargetRegistry.cpp
   Timer.cpp
   Triple.cpp
+  Twine.cpp
   raw_ostream.cpp
   )
 
