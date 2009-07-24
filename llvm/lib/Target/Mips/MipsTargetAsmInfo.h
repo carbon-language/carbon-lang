@@ -29,13 +29,6 @@ namespace llvm {
   struct MipsTargetAsmInfo : public ELFTargetAsmInfo {
     explicit MipsTargetAsmInfo(const MipsTargetMachine &TM);
 
-    /// SectionKindForGlobal - This hook allows the target to select proper
-    /// section kind used for global emission.
-    virtual SectionKind::Kind
-    SectionKindForGlobal(const GlobalValue *GV) const;
-
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV) const;
-
     private:
       const MipsSubtarget *Subtarget;
   };

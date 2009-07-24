@@ -20,8 +20,6 @@ using namespace llvm;
 MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   ELFTargetAsmInfo(TM) {
 
-  Subtarget = &TM.getSubtarget<MipsSubtarget>();
-
   AlignmentIsInBytes          = false;
   COMMDirectiveTakesAlignment = true;
   Data16bitsDirective         = "\t.half\t";
@@ -34,57 +32,13 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM):
   BSSSection                  = "\t.section\t.bss";
   CStringSection              = ".rodata.str";
 
-  if (!Subtarget->hasABICall()) {
+  if (!TM.getSubtarget<MipsSubtarget>().hasABICall()) {
     JumpTableDirective = "\t.word\t";
     SmallDataSection = getNamedSection("\t.sdata", SectionFlags::Writeable);
     SmallBSSSection = getNamedSection("\t.sbss",
                                       SectionFlags::Writeable |
                                       SectionFlags::BSS);
-  } else
+  } else {
     JumpTableDirective = "\t.gpword\t";
-
-}
-
-SectionKind::Kind MipsTargetAsmInfo::
-SectionKindForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind K = ELFTargetAsmInfo::SectionKindForGlobal(GV);
-
-  if (Subtarget->hasABICall())
-    return K;
-
-  if (K != SectionKind::Data && K != SectionKind::BSS &&
-      K != SectionKind::RODataMergeConst)
-    return K;
-
-  if (isa<GlobalVariable>(GV)) {
-    const TargetData *TD = TM.getTargetData();
-    unsigned Size = TD->getTypeAllocSize(GV->getType()->getElementType());
-    unsigned Threshold = Subtarget->getSSectionThreshold();
-
-    if (Size > 0 && Size <= Threshold) {
-      if (K == SectionKind::BSS)
-        return SectionKind::SmallBSS;
-      else
-        return SectionKind::SmallData;
-    }
   }
-
-  return K;
-}
-
-const Section* MipsTargetAsmInfo::
-SelectSectionForGlobal(const GlobalValue *GV) const {
-  SectionKind::Kind K = SectionKindForGlobal(GV);
-  const GlobalVariable *GVA = dyn_cast<GlobalVariable>(GV);
-
-  if (GVA && (!GVA->isWeakForLinker()))
-    switch (K) {
-      case SectionKind::SmallData:
-        return getSmallDataSection();
-      case SectionKind::SmallBSS:
-        return getSmallBSSSection();
-      default: break;
-    }
-
-  return ELFTargetAsmInfo::SelectSectionForGlobal(GV);
 }

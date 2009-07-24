@@ -102,8 +102,6 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
     } else {
       switch (Kind) {
       case SectionKind::Data:
-      case SectionKind::SmallData:
-        return DataSection;
       case SectionKind::DataRel:
         return DataRelSection;
       case SectionKind::DataRelLocal:
@@ -113,11 +111,8 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
       case SectionKind::DataRelROLocal:
         return DataRelROLocalSection;
       case SectionKind::BSS:
-      case SectionKind::SmallBSS:
-        // ELF targets usually have BSS sections
         return getBSSSection_();
       case SectionKind::ROData:
-      case SectionKind::SmallROData:
         return getReadOnlySection();
       case SectionKind::RODataMergeStr:
         return MergeableStringSection(GVar);

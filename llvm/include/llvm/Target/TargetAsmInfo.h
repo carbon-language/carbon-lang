@@ -50,12 +50,6 @@ namespace llvm {
       RODataMergeStr,   ///< Readonly data section: nul-terminated strings.
       RODataMergeConst, ///< Readonly data section: fixed-length constants.
       
-      /// Small sections - These sections contains "short" data, and should be
-      /// placed "near" the GP.
-      SmallData,        ///< Small data section
-      SmallBSS,         ///< Small bss section
-      SmallROData,      ///< Small readonly section
-      
       /// Thread local data.
       ThreadData,       ///< Initialized TLS data objects
       ThreadBSS         ///< Uninitialized TLS data objects
@@ -64,13 +58,11 @@ namespace llvm {
     static inline bool isReadOnly(Kind K) {
       return (K == SectionKind::ROData ||
               K == SectionKind::RODataMergeConst ||
-              K == SectionKind::RODataMergeStr ||
-              K == SectionKind::SmallROData);
+              K == SectionKind::RODataMergeStr);
     }
 
     static inline bool isBSS(Kind K) {
-      return (K == SectionKind::BSS ||
-              K == SectionKind::SmallBSS);
+      return K == SectionKind::BSS;
     }
   }
 

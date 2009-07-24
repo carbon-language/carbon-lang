@@ -257,12 +257,6 @@ TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
     case SectionKind::RODataMergeConst:
       // No additional flags here
       break;
-    case SectionKind::SmallData:
-    case SectionKind::SmallBSS:
-      Flags |= SectionFlags::Writeable;
-      break;
-    case SectionKind::SmallROData:
-      break;
     default:
       llvm_unreachable("Unexpected section kind!");
     }
@@ -359,18 +353,12 @@ TargetAsmInfo::UniqueSectionForGlobal(const GlobalValue* GV,
     return ".gnu.linkonce.d.rel.ro" + GV->getNameStr();
   case SectionKind::DataRelROLocal:
     return ".gnu.linkonce.d.rel.ro.local" + GV->getNameStr();
-  case SectionKind::SmallData:
-    return ".gnu.linkonce.s." + GV->getNameStr();
   case SectionKind::BSS:
     return ".gnu.linkonce.b." + GV->getNameStr();
-  case SectionKind::SmallBSS:
-    return ".gnu.linkonce.sb." + GV->getNameStr();
   case SectionKind::ROData:
   case SectionKind::RODataMergeConst:
   case SectionKind::RODataMergeStr:
     return ".gnu.linkonce.r." + GV->getNameStr();
-  case SectionKind::SmallROData:
-    return ".gnu.linkonce.s2." + GV->getNameStr();
   case SectionKind::ThreadData:
     return ".gnu.linkonce.td." + GV->getNameStr();
   case SectionKind::ThreadBSS:
