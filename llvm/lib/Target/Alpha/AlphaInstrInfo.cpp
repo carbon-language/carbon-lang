@@ -204,28 +204,6 @@ AlphaInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     llvm_unreachable("Unhandled register class");
 }
 
-void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                       bool isKill,
-                                       SmallVectorImpl<MachineOperand> &Addr,
-                                       const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = 0;
-  if (RC == Alpha::F4RCRegisterClass)
-    Opc = Alpha::STS;
-  else if (RC == Alpha::F8RCRegisterClass)
-    Opc = Alpha::STT;
-  else if (RC == Alpha::GPRCRegisterClass)
-    Opc = Alpha::STQ;
-  else
-    llvm_unreachable("Unhandled register class");
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  MachineInstrBuilder MIB = 
-    BuildMI(MF, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill));
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  NewMIs.push_back(MIB);
-}
-
 void
 AlphaInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
@@ -247,27 +225,6 @@ AlphaInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     llvm_unreachable("Unhandled register class");
-}
-
-void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                        SmallVectorImpl<MachineOperand> &Addr,
-                                        const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = 0;
-  if (RC == Alpha::F4RCRegisterClass)
-    Opc = Alpha::LDS;
-  else if (RC == Alpha::F8RCRegisterClass)
-    Opc = Alpha::LDT;
-  else if (RC == Alpha::GPRCRegisterClass)
-    Opc = Alpha::LDQ;
-  else
-    llvm_unreachable("Unhandled register class");
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  MachineInstrBuilder MIB = 
-    BuildMI(MF, DL, get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  NewMIs.push_back(MIB);
 }
 
 MachineInstr *AlphaInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,

@@ -284,18 +284,6 @@ public:
     assert(0 && "Target didn't implement TargetInstrInfo::storeRegToStackSlot!");
   }
 
-  /// storeRegToAddr - Store the specified register of the given register class
-  /// to the specified address. The store instruction is to be added to the
-  /// given machine basic block before the specified machine instruction. If
-  /// isKill is true, the register operand is the last use and must be marked
-  /// kill.
-  virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
-                              SmallVectorImpl<MachineOperand> &Addr,
-                              const TargetRegisterClass *RC,
-                              SmallVectorImpl<MachineInstr*> &NewMIs) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::storeRegToAddr!");
-  }
-
   /// loadRegFromStackSlot - Load the specified register of the given register
   /// class from the specified stack frame index. The load instruction is to be
   /// added to the given machine basic block before the specified machine
@@ -305,16 +293,6 @@ public:
                                     unsigned DestReg, int FrameIndex,
                                     const TargetRegisterClass *RC) const {
     assert(0 && "Target didn't implement TargetInstrInfo::loadRegFromStackSlot!");
-  }
-
-  /// loadRegFromAddr - Load the specified register of the given register class
-  /// class from the specified address. The load instruction is to be added to
-  /// the given machine basic block before the specified machine instruction.
-  virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                               SmallVectorImpl<MachineOperand> &Addr,
-                               const TargetRegisterClass *RC,
-                               SmallVectorImpl<MachineInstr*> &NewMIs) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::loadRegFromAddr!");
   }
   
   /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee

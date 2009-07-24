@@ -631,35 +631,6 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
 }
 
-void 
-ARMBaseInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                 bool isKill,
-                                 SmallVectorImpl<MachineOperand> &Addr,
-                                 const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const{
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  unsigned Opc = 0;
-  if (RC == ARM::GPRRegisterClass) {
-    if ((Addr.size() > 1) && Addr[1].isImm())
-      Opc = getOpcode(ARMII::STRri);
-    else
-      Opc = getOpcode(ARMII::STRrr);
-  } else if (RC == ARM::DPRRegisterClass) {
-    Opc = ARM::FSTD;
-  } else {
-    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
-    Opc = ARM::FSTS;
-  }
-
-  MachineInstrBuilder MIB =
-    BuildMI(MF, DL, get(Opc)).addReg(SrcReg, getKillRegState(isKill));
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  AddDefaultPred(MIB);
-  NewMIs.push_back(MIB);
-  return;
-}
-
 void ARMBaseInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
@@ -678,33 +649,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FLDS), DestReg)
                    .addFrameIndex(FI).addImm(0));
   }
-}
-
-void ARMBaseInstrInfo::
-loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                SmallVectorImpl<MachineOperand> &Addr,
-                const TargetRegisterClass *RC,
-                SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  unsigned Opc = 0;
-  if (RC == ARM::GPRRegisterClass) {
-    if ((Addr.size() > 1) && Addr[1].isImm())
-      Opc = getOpcode(ARMII::LDRri);
-    else
-      Opc = getOpcode(ARMII::LDRrr);
-  } else if (RC == ARM::DPRRegisterClass) {
-    Opc = ARM::FLDD;
-  } else {
-    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
-    Opc = ARM::FLDS;
-  }
-
-  MachineInstrBuilder MIB =  BuildMI(MF, DL, get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  AddDefaultPred(MIB);
-  NewMIs.push_back(MIB);
-  return;
 }
 
 MachineInstr *ARMBaseInstrInfo::

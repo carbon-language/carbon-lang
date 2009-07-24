@@ -164,29 +164,6 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     llvm_unreachable("Can't store this register to stack slot");
 }
 
-void SparcInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                    bool isKill,
-                                    SmallVectorImpl<MachineOperand> &Addr,
-                                    const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = 0;
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  if (RC == SP::IntRegsRegisterClass)
-    Opc = SP::STri;
-  else if (RC == SP::FPRegsRegisterClass)
-    Opc = SP::STFri;
-  else if (RC == SP::DFPRegsRegisterClass)
-    Opc = SP::STDFri;
-  else
-    llvm_unreachable("Can't load this register");
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  MIB.addReg(SrcReg, getKillRegState(isKill));
-  NewMIs.push_back(MIB);
-  return;
-}
-
 void SparcInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
@@ -202,27 +179,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, DL, get(SP::LDDFri), DestReg).addFrameIndex(FI).addImm(0);
   else
     llvm_unreachable("Can't load this register from stack slot");
-}
-
-void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                     SmallVectorImpl<MachineOperand> &Addr,
-                                     const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = 0;
-  if (RC == SP::IntRegsRegisterClass)
-    Opc = SP::LDri;
-  else if (RC == SP::FPRegsRegisterClass)
-    Opc = SP::LDFri;
-  else if (RC == SP::DFPRegsRegisterClass)
-    Opc = SP::LDDFri;
-  else
-    llvm_unreachable("Can't load this register");
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  NewMIs.push_back(MIB);
-  return;
 }
 
 MachineInstr *SparcInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,

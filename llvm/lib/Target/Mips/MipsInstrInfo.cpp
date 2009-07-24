@@ -209,29 +209,6 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
           .addImm(0).addFrameIndex(FI);
 }
 
-void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-  bool isKill, SmallVectorImpl<MachineOperand> &Addr, 
-  const TargetRegisterClass *RC, SmallVectorImpl<MachineInstr*> &NewMIs) const 
-{
-  unsigned Opc;
-  if (RC == Mips::CPURegsRegisterClass) 
-    Opc = Mips::SW;
-  else if (RC == Mips::FGR32RegisterClass)
-    Opc = Mips::SWC1;
-  else {
-    assert(RC == Mips::AFGR64RegisterClass);
-    Opc = Mips::SDC1;
-  }
-  
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
-    .addReg(SrcReg, getKillRegState(isKill));
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  NewMIs.push_back(MIB);
-  return;
-}
-
 void MipsInstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
@@ -250,28 +227,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
   BuildMI(MBB, I, DL, get(Opc), DestReg).addImm(0).addFrameIndex(FI);
-}
-
-void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                    SmallVectorImpl<MachineOperand> &Addr,
-                                    const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc;
-  if (RC == Mips::CPURegsRegisterClass) 
-    Opc = Mips::LW;
-  else if (RC == Mips::FGR32RegisterClass)
-    Opc = Mips::LWC1;
-  else {
-    assert(RC == Mips::AFGR64RegisterClass);
-    Opc = Mips::LDC1;
-  }
-
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  NewMIs.push_back(MIB);
-  return;
 }
 
 MachineInstr *MipsInstrInfo::

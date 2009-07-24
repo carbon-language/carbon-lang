@@ -403,14 +403,6 @@ void XCoreInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     .addImm(0);
 }
 
-void XCoreInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                            bool isKill, SmallVectorImpl<MachineOperand> &Addr,
-                            const TargetRegisterClass *RC,
-                            SmallVectorImpl<MachineInstr*> &NewMIs) const
-{
-  llvm_unreachable("unimplemented");
-}
-
 void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator I,
                                           unsigned DestReg, int FrameIndex,
@@ -421,14 +413,6 @@ void XCoreInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   BuildMI(MBB, I, DL, get(XCore::LDWFI), DestReg)
     .addFrameIndex(FrameIndex)
     .addImm(0);
-}
-
-void XCoreInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                              SmallVectorImpl<MachineOperand> &Addr,
-                              const TargetRegisterClass *RC,
-                              SmallVectorImpl<MachineInstr*> &NewMIs) const
-{
-  llvm_unreachable("unimplemented");
 }
 
 bool XCoreInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,

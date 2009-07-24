@@ -323,41 +323,6 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                     .addReg(SrcReg, getKillRegState(isKill)), FrameIdx);
 }
 
-void SPUInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                  bool isKill,
-                                  SmallVectorImpl<MachineOperand> &Addr,
-                                  const TargetRegisterClass *RC,
-                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  llvm_report_error("storeRegToAddr() invoked!");
-
-  if (Addr[0].isFI()) {
-    /* do what storeRegToStackSlot does here */
-  } else {
-    unsigned Opc = 0;
-    if (RC == SPU::GPRCRegisterClass) {
-      /* Opc = PPC::STW; */
-    } else if (RC == SPU::R16CRegisterClass) {
-      /* Opc = PPC::STD; */
-    } else if (RC == SPU::R32CRegisterClass) {
-      /* Opc = PPC::STFD; */
-    } else if (RC == SPU::R32FPRegisterClass) {
-      /* Opc = PPC::STFD; */
-    } else if (RC == SPU::R64FPRegisterClass) {
-      /* Opc = PPC::STFS; */
-    } else if (RC == SPU::VECREGRegisterClass) {
-      /* Opc = PPC::STVX; */
-    } else {
-      llvm_unreachable("Unknown regclass!");
-    }
-    DebugLoc DL = DebugLoc::getUnknownLoc();
-    MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
-      .addReg(SrcReg, getKillRegState(isKill));
-    for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-      MIB.addOperand(Addr[i]);
-    NewMIs.push_back(MIB);
-  }
-}
-
 void
 SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
@@ -389,45 +354,6 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (MI != MBB.end()) DL = MI->getDebugLoc();
   addFrameReference(BuildMI(MBB, MI, DL, get(opc), DestReg), FrameIdx);
-}
-
-/*!
-  \note We are really pessimistic here about what kind of a load we're doing.
- */
-void SPUInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                   SmallVectorImpl<MachineOperand> &Addr,
-                                   const TargetRegisterClass *RC,
-                                   SmallVectorImpl<MachineInstr*> &NewMIs)
-    const {
-  llvm_report_error("loadRegToAddr() invoked!");
-
-  if (Addr[0].isFI()) {
-    /* do what loadRegFromStackSlot does here... */
-  } else {
-    unsigned Opc = 0;
-    if (RC == SPU::R8CRegisterClass) {
-      /* do brilliance here */
-    } else if (RC == SPU::R16CRegisterClass) {
-      /* Opc = PPC::LWZ; */
-    } else if (RC == SPU::R32CRegisterClass) {
-      /* Opc = PPC::LD; */
-    } else if (RC == SPU::R32FPRegisterClass) {
-      /* Opc = PPC::LFD; */
-    } else if (RC == SPU::R64FPRegisterClass) {
-      /* Opc = PPC::LFS; */
-    } else if (RC == SPU::VECREGRegisterClass) {
-      /* Opc = PPC::LVX; */
-    } else if (RC == SPU::GPRCRegisterClass) {
-      /* Opc = something else! */
-    } else {
-      llvm_unreachable("Unknown regclass!");
-    }
-    DebugLoc DL = DebugLoc::getUnknownLoc();
-    MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
-    for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-      MIB.addOperand(Addr[i]);
-    NewMIs.push_back(MIB);
-  }
 }
 
 //! Return true if the specified load or store can be folded

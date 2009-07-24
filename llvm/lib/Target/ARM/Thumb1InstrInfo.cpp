@@ -205,28 +205,6 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   }
 }
 
-void Thumb1InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                     bool isKill,
-                                     SmallVectorImpl<MachineOperand> &Addr,
-                                     const TargetRegisterClass *RC,
-                                     SmallVectorImpl<MachineInstr*> &NewMIs) const{
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  unsigned Opc = 0;
-
-  assert(RC == ARM::GPRRegisterClass && "Unknown regclass!");
-  if (RC == ARM::GPRRegisterClass) {
-    Opc = Addr[0].isFI() ? ARM::tSpill : ARM::tSTR;
-  }
-
-  MachineInstrBuilder MIB =
-    BuildMI(MF, DL,  get(Opc)).addReg(SrcReg, getKillRegState(isKill));
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  AddDefaultPred(MIB);
-  NewMIs.push_back(MIB);
-  return;
-}
-
 void Thumb1InstrInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
@@ -240,26 +218,6 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tRestore), DestReg)
                    .addFrameIndex(FI).addImm(0));
   }
-}
-
-void Thumb1InstrInfo::
-loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                SmallVectorImpl<MachineOperand> &Addr,
-                const TargetRegisterClass *RC,
-                SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  unsigned Opc = 0;
-
-  if (RC == ARM::GPRRegisterClass) {
-    Opc = Addr[0].isFI() ? ARM::tRestore : ARM::tLDR;
-  }
-
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  AddDefaultPred(MIB);
-  NewMIs.push_back(MIB);
-  return;
 }
 
 bool Thumb1InstrInfo::

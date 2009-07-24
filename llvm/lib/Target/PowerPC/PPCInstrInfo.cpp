@@ -510,44 +510,6 @@ PPCInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     MBB.insert(MI, NewMIs[i]);
 }
 
-void PPCInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                  bool isKill,
-                                  SmallVectorImpl<MachineOperand> &Addr,
-                                  const TargetRegisterClass *RC,
-                                  SmallVectorImpl<MachineInstr*> &NewMIs) const{
-  if (Addr[0].isFI()) {
-    if (StoreRegToStackSlot(MF, SrcReg, isKill,
-                            Addr[0].getIndex(), RC, NewMIs)) {
-      PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
-      FuncInfo->setSpillsCR();
-    }
-
-    return;
-  }
-
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  unsigned Opc = 0;
-  if (RC == PPC::GPRCRegisterClass) {
-    Opc = PPC::STW;
-  } else if (RC == PPC::G8RCRegisterClass) {
-    Opc = PPC::STD;
-  } else if (RC == PPC::F8RCRegisterClass) {
-    Opc = PPC::STFD;
-  } else if (RC == PPC::F4RCRegisterClass) {
-    Opc = PPC::STFS;
-  } else if (RC == PPC::VRRCRegisterClass) {
-    Opc = PPC::STVX;
-  } else {
-    llvm_unreachable("Unknown regclass!");
-  }
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc))
-    .addReg(SrcReg, getKillRegState(isKill));
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  NewMIs.push_back(MIB);
-  return;
-}
-
 void
 PPCInstrInfo::LoadRegFromStackSlot(MachineFunction &MF, DebugLoc DL,
                                    unsigned DestReg, int FrameIdx,
@@ -650,40 +612,6 @@ PPCInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   LoadRegFromStackSlot(MF, DL, DestReg, FrameIdx, RC, NewMIs);
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);
-}
-
-void PPCInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                   SmallVectorImpl<MachineOperand> &Addr,
-                                   const TargetRegisterClass *RC,
-                                   SmallVectorImpl<MachineInstr*> &NewMIs)const{
-  if (Addr[0].isFI()) {
-    LoadRegFromStackSlot(MF, DebugLoc::getUnknownLoc(),
-                         DestReg, Addr[0].getIndex(), RC, NewMIs);
-    return;
-  }
-
-  unsigned Opc = 0;
-  if (RC == PPC::GPRCRegisterClass) {
-    assert(DestReg != PPC::LR && "Can't handle this yet!");
-    Opc = PPC::LWZ;
-  } else if (RC == PPC::G8RCRegisterClass) {
-    assert(DestReg != PPC::LR8 && "Can't handle this yet!");
-    Opc = PPC::LD;
-  } else if (RC == PPC::F8RCRegisterClass) {
-    Opc = PPC::LFD;
-  } else if (RC == PPC::F4RCRegisterClass) {
-    Opc = PPC::LFS;
-  } else if (RC == PPC::VRRCRegisterClass) {
-    Opc = PPC::LVX;
-  } else {
-    llvm_unreachable("Unknown regclass!");
-  }
-  DebugLoc DL = DebugLoc::getUnknownLoc();
-  MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
-  NewMIs.push_back(MIB);
-  return;
 }
 
 /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
