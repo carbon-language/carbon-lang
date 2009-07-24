@@ -134,16 +134,15 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   case SectionKind::Text:
     if (isWeak)
       return TextCoalSection;
-    else
-      return TextSection;
+    return TextSection;
   case SectionKind::Data:
   case SectionKind::ThreadData:
   case SectionKind::BSS:
   case SectionKind::ThreadBSS:
     if (cast<GlobalVariable>(GV)->isConstant())
-      return (isWeak ? ConstDataCoalSection : ConstDataSection);
-    else
-      return (isWeak ? DataCoalSection : DataSection);
+      return isWeak ? ConstDataCoalSection : ConstDataSection;
+    return isWeak ? DataCoalSection : DataSection;
+
   case SectionKind::ROData:
     return (isWeak ? ConstDataCoalSection :
             (isNonStatic ? ConstDataSection : getReadOnlySection()));

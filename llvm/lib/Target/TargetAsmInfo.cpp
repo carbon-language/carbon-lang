@@ -295,6 +295,18 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     return getNamedSection(GV->getSection().c_str(), Flags);
   }
 
+  // If this global is linkonce/weak and the target handles this by emitting it
+  // into a 'uniqued' section name, create and return the section now.
+  if (GV->isWeakForLinker()) {
+    if (const char *Prefix =
+          getSectionPrefixForUniqueGlobal(SectionKindForGlobal(GV))) {
+      // FIXME: Use mangler interface (PR4584).
+      std::string Name = Prefix+GV->getName();
+      unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
+      return getNamedSection(Name.c_str(), Flags);
+    }
+  }
+  
   // Use default section depending on the 'type' of global
   return SelectSectionForGlobal(GV);
 }
@@ -304,19 +316,16 @@ const Section*
 TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
-  if (GV->isWeakForLinker()) {
-    // FIXME: Use mangler interface (PR4584).
-    std::string Name = getSectionPrefixForUniqueGlobal(Kind)+GV->getName();
-    unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
-    return getNamedSection(Name.c_str(), Flags);
-  } else {
-    if (Kind == SectionKind::Text)
-      return getTextSection();
-    else if (isBSS(Kind) && getBSSSection_())
-      return getBSSSection_();
-    else if (getReadOnlySection() && SectionKind::isReadOnly(Kind))
-      return getReadOnlySection();
-  }
+  if (Kind == SectionKind::Text)
+    return getTextSection();
+  
+  if (isBSS(Kind))
+    if (const Section *S = getBSSSection_())
+      return S;
+  
+  if (SectionKind::isReadOnly(Kind))
+    if (const Section *S = getReadOnlySection())
+      return S;
 
   return getDataSection();
 }
@@ -352,7 +361,6 @@ TargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
   case SectionKind::ThreadData:       return ".gnu.linkonce.td.";
   case SectionKind::ThreadBSS:        return ".gnu.linkonce.tb.";
   }
-  return NULL;
 }
 
 const Section *TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags,

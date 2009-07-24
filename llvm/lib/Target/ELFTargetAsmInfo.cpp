@@ -77,15 +77,6 @@ const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
-  if (GV->isWeakForLinker()) {
-    if (const char *Prefix = getSectionPrefixForUniqueGlobal(Kind)) {
-      // FIXME: Use mangler interface (PR4584).
-      std::string Name = Prefix+GV->getName();
-      unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
-      return getNamedSection(Name.c_str(), Flags);
-    }
-  }
-  
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
     default: llvm_unreachable("Unknown linkage type!");
