@@ -150,4 +150,35 @@ define i32 @ext_3(<4 x i32> %v) nounwind {
 ; X64:	  pextrd	$3, %xmm0, %eax
 }
 
+define <4 x float> @insertps_1(<4 x float> %t1, <4 x float> %t2) nounwind {
+        %tmp1 = call <4 x float> @llvm.x86.sse41.insertps(<4 x float> %t1, <4 x float> %t2, i32 1) nounwind readnone
+        ret <4 x float> %tmp1
+; X32: _insertps_1:
+; X32:    insertps  $1, %xmm1, %xmm0
 
+; X64: _insertps_1:
+; X64:    insertps  $1, %xmm1, %xmm0
+}
+
+declare <4 x float> @llvm.x86.sse41.insertps(<4 x float>, <4 x float>, i32) nounwind readnone
+
+define <4 x float> @insertps_2(<4 x float> %t1, float %t2) nounwind {
+        %tmp1 = insertelement <4 x float> %t1, float %t2, i32 0
+        ret <4 x float> %tmp1
+; X32: _insertps_2:
+; X32:    insertps  $0, 4(%esp), %xmm0
+
+; X64: _insertps_2:
+; X64:    insertps  $0, %xmm1, %xmm0        
+}
+
+define <4 x float> @insertps_3(<4 x float> %t1, <4 x float> %t2) nounwind {
+        %tmp2 = extractelement <4 x float> %t2, i32 0
+        %tmp1 = insertelement <4 x float> %t1, float %tmp2, i32 0
+        ret <4 x float> %tmp1
+; X32: _insertps_3:
+; X32:    insertps  $0, %xmm1, %xmm0        
+
+; X64: _insertps_3:
+; X64:    insertps  $0, %xmm1, %xmm0        
+}
