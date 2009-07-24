@@ -23,11 +23,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
-#include <ostream>
 using namespace llvm;
 
 // An example for liveAt():
@@ -825,7 +824,7 @@ raw_ostream& llvm::operator<<(raw_ostream& os, const LiveRange &LR) {
 }
 
 void LiveRange::dump() const {
-  cerr << *this << "\n";
+  errs() << *this << "\n";
 }
 
 void LiveInterval::print(std::ostream &OS,
@@ -893,7 +892,7 @@ void LiveInterval::print(raw_ostream &OS,
 }
 
 void LiveInterval::dump() const {
-  cerr << *this << "\n";
+  errs() << *this << "\n";
 }
 
 
