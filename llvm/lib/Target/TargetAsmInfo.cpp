@@ -189,8 +189,7 @@ static bool isConstantString(const Constant *C) {
 }
 
 static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
-                                      SectionKind::Kind Kind,
-                                      const char *Name = 0) {
+                                      SectionKind::Kind Kind) {
   unsigned Flags = SectionFlags::None;
 
   // Decode flags from global itself.
@@ -222,28 +221,28 @@ static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
   if (GV->isWeakForLinker())
     Flags |= SectionFlags::Linkonce;
 
-  // Add flags from sections, if any.
-  if (Name && *Name != '\0') {
-    Flags |= SectionFlags::Named;
+  return Flags;
+}
 
-    // Some lame default implementation based on some magic section names.
-    if (strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
-        strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
-        strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
-        strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
-      Flags |= SectionFlags::BSS;
-    else if (strcmp(Name, ".tdata") == 0 ||
-             strncmp(Name, ".tdata.", 7) == 0 ||
-             strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
-             strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
-      Flags |= SectionFlags::TLS;
-    else if (strcmp(Name, ".tbss") == 0 ||
-             strncmp(Name, ".tbss.", 6) == 0 ||
-             strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
-             strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
-      Flags |= SectionFlags::BSS | SectionFlags::TLS;
-  }
-
+static unsigned GetSectionFlagsForNamedELFSection(const char *Name) {
+  unsigned Flags = 0;
+  // Some lame default implementation based on some magic section names.
+  if (strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
+      strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
+      strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
+      strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
+    Flags |= SectionFlags::BSS;
+  else if (strcmp(Name, ".tdata") == 0 ||
+           strncmp(Name, ".tdata.", 7) == 0 ||
+           strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
+           strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
+    Flags |= SectionFlags::TLS;
+  else if (strcmp(Name, ".tbss") == 0 ||
+           strncmp(Name, ".tbss.", 6) == 0 ||
+           strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
+           strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
+    Flags |= SectionFlags::BSS | SectionFlags::TLS;
+  
   return Flags;
 }
 
@@ -291,8 +290,16 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   // Select section name
   if (GV->hasSection()) {
     // Honour section already set, if any.
-    unsigned Flags = SectionFlagsForGlobal(GV, SectionKindForGlobal(GV),
-                                           GV->getSection().c_str());
+    unsigned Flags = SectionFlagsForGlobal(GV, SectionKindForGlobal(GV));
+
+    // This is an explicitly named section.
+    Flags |= SectionFlags::Named;
+    
+    // If the target has magic semantics for certain section names, make sure to
+    // pick up the flags.  This allows the user to write things with attribute
+    // section and still get the appropriate section flags printed.
+    Flags |= GetSectionFlagsForNamedELFSection(GV->getSection().c_str());
+    
     return getNamedSection(GV->getSection().c_str(), Flags);
   }
 
