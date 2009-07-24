@@ -161,8 +161,7 @@ immediateOffsetOpcode(unsigned opcode)
 
 bool Thumb2RegisterInfo::
 requiresRegisterScavenging(const MachineFunction &MF) const {
-  // FIXME
-  return false;
+  return true;
 }
 
 int Thumb2RegisterInfo::
