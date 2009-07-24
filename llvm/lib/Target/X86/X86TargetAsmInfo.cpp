@@ -45,8 +45,8 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
 
   AlignmentIsInBytes = false;
   TextAlignFillValue = 0x90;
-    
-    
+
+
   if (!is64Bit)
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
   ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
@@ -64,7 +64,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   // Leopard and above support aligned common symbols.
   COMMDirectiveTakesAlignment = (Subtarget->getDarwinVers() >= 9);
   HasDotTypeDotSizeDirective = false;
-    
+
   if (is64Bit) {
     PersonalityPrefix = "";
     PersonalitySuffix = "+4@GOTPCREL";

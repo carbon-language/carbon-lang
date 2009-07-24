@@ -310,7 +310,7 @@ PIC16TargetAsmInfo::CreateBSSSectionForGlobal(const GlobalVariable *GV,
       }
     }
   } else {
-    std::string Prefix = GV->getName() + "." + Addr + ".";
+    std::string Prefix = GV->getNameStr() + "." + Addr + ".";
     Name = PAN::getUdataSectionName(BSSSections.size(), Prefix) + " " + Addr;
   }
   
@@ -361,7 +361,7 @@ PIC16TargetAsmInfo::CreateIDATASectionForGlobal(const GlobalVariable *GV,
       }
     }
   } else {
-    std::string Prefix = GV->getName() + "." + Addr + ".";
+    std::string Prefix = GV->getNameStr() + "." + Addr + ".";
     Name = PAN::getIdataSectionName(IDATASections.size(), Prefix) + " " + Addr;
   }
 
@@ -399,7 +399,7 @@ PIC16TargetAsmInfo::CreateROSectionForGlobal(const GlobalVariable *GV,
       }
     }
   } else {
-    std::string Prefix = GV->getName() + "." + Addr + ".";
+    std::string Prefix = GV->getNameStr() + "." + Addr + ".";
     Name = PAN::getRomdataSectionName(ROSections.size(), Prefix) + " " + Addr;
   }
 

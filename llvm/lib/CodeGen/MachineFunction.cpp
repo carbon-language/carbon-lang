@@ -304,7 +304,7 @@ namespace llvm {
   template<>
   struct DOTGraphTraits<const MachineFunction*> : public DefaultDOTGraphTraits {
     static std::string getGraphName(const MachineFunction *F) {
-      return "CFG for '" + F->getFunction()->getName() + "' function";
+      return "CFG for '" + F->getFunction()->getNameStr() + "' function";
     }
 
     static std::string getNodeLabel(const MachineBasicBlock *Node,
@@ -312,7 +312,7 @@ namespace llvm {
                                     bool ShortNames) {
       if (ShortNames && Node->getBasicBlock() &&
           !Node->getBasicBlock()->getName().empty())
-        return Node->getBasicBlock()->getName() + ":";
+        return Node->getBasicBlock()->getNameStr() + ":";
 
       std::ostringstream Out;
       if (ShortNames) {
@@ -339,7 +339,7 @@ namespace llvm {
 void MachineFunction::viewCFG() const
 {
 #ifndef NDEBUG
-  ViewGraph(this, "mf" + getFunction()->getName());
+  ViewGraph(this, "mf" + getFunction()->getNameStr());
 #else
   cerr << "SelectionDAG::viewGraph is only available in debug builds on "
        << "systems with Graphviz or gv!\n";
@@ -349,7 +349,7 @@ void MachineFunction::viewCFG() const
 void MachineFunction::viewCFGOnly() const
 {
 #ifndef NDEBUG
-  ViewGraph(this, "mf" + getFunction()->getName(), true);
+  ViewGraph(this, "mf" + getFunction()->getNameStr(), true);
 #else
   cerr << "SelectionDAG::viewGraph is only available in debug builds on "
        << "systems with Graphviz or gv!\n";

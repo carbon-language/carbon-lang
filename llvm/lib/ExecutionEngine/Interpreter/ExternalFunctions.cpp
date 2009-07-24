@@ -96,15 +96,15 @@ static ExFunc lookupFunction(const Function *F) {
   const FunctionType *FT = F->getFunctionType();
   for (unsigned i = 0, e = FT->getNumContainedTypes(); i != e; ++i)
     ExtName += getTypeID(FT->getContainedType(i));
-  ExtName += "_" + F->getName();
+  ExtName + "_" + F->getNameStr();
 
   sys::ScopedLock Writer(*FunctionsLock);
   ExFunc FnPtr = FuncNames[ExtName];
   if (FnPtr == 0)
-    FnPtr = FuncNames["lle_X_"+F->getName()];
+    FnPtr = FuncNames["lle_X_" + F->getNameStr()];
   if (FnPtr == 0)  // Try calling a generic function... if it exists...
     FnPtr = (ExFunc)(intptr_t)
-      sys::DynamicLibrary::SearchForAddressOfSymbol("lle_X_"+F->getName());
+      sys::DynamicLibrary::SearchForAddressOfSymbol("lle_X_"+F->getNameStr());
   if (FnPtr != 0)
     ExportedFunctions->insert(std::make_pair(F, FnPtr));  // Cache for later
   return FnPtr;

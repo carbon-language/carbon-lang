@@ -138,8 +138,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 void SelectionDAG::viewGraph(const std::string &Title) {
 // This code is only for debugging!
 #ifndef NDEBUG
-  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getName(), false,
-            Title);
+  ViewGraph(this, "dag." + getMachineFunction().getFunction()->getNameStr(), 
+            false, Title);
 #else
   cerr << "SelectionDAG::viewGraph is only available in debug builds on "
        << "systems with Graphviz or gv!\n";

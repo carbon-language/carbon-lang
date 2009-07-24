@@ -117,7 +117,7 @@ void PIC16DbgInfo::PopulateStructOrUnionTypeInfo (DIType Ty,
   CTy.getName(TagName);
   // UniqueSuffix is .number where number is obtained from
   // llvm.dbg.composite<number>.
-  std::string UniqueSuffix = "." + Ty.getGV()->getName().substr(18);
+  std::string UniqueSuffix = "." + Ty.getGV()->getNameStr().substr(18);
   TagName += UniqueSuffix;
   unsigned short size = CTy.getSizeInBits()/8;
   // 7th and 8th byte represent size.
@@ -446,7 +446,7 @@ void PIC16DbgInfo::EmitVarDebugInfo(Module &M) {
     bool HasAux = false;
     int Aux[PIC16Dbg::AuxSize] = { 0 };
     std::string TagName = "";
-    std::string VarName = TAI->getGlobalPrefix()+DIGV.getGlobal()->getName();
+    std::string VarName = TAI->getGlobalPrefix()+DIGV.getGlobal()->getNameStr();
     PopulateDebugInfo(Ty, TypeNo, HasAux, Aux, TagName);
     // Emit debug info only if type information is availaible.
     if (TypeNo != PIC16Dbg::T_NULL) {

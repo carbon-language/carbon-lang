@@ -307,11 +307,11 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
       Value *Idx[2];
       Idx[0] = Context.getNullValue(Type::Int32Ty);
       Idx[1] = Context.getConstantInt(Type::Int32Ty, i);
-      std::string GEPname = "gep_" + inputs[i]->getName();
       TerminatorInst *TI = newFunction->begin()->getTerminator();
-      GetElementPtrInst *GEP = GetElementPtrInst::Create(AI, Idx, Idx+2, 
-                                                         GEPname, TI);
-      RewriteVal = new LoadInst(GEP, "load" + GEPname, TI);
+      GetElementPtrInst *GEP = 
+        GetElementPtrInst::Create(AI, Idx, Idx+2, 
+                                  "gep_" + inputs[i]->getName(), TI);
+      RewriteVal = new LoadInst(GEP, "loadgep_" + inputs[i]->getName(), TI);
     } else
       RewriteVal = AI++;
 

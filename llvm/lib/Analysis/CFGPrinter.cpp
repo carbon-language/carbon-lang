@@ -35,14 +35,14 @@ namespace llvm {
 template<>
 struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
   static std::string getGraphName(const Function *F) {
-    return "CFG for '" + F->getName() + "' function";
+    return "CFG for '" + F->getNameStr() + "' function";
   }
 
   static std::string getNodeLabel(const BasicBlock *Node,
                                   const Function *Graph,
                                   bool ShortNames) {
     if (ShortNames && !Node->getName().empty())
-      return Node->getName() + ":";
+      return Node->getNameStr() + ":";
 
     std::ostringstream Out;
     if (ShortNames) {
@@ -136,7 +136,7 @@ namespace {
     explicit CFGPrinter(void *pid) : FunctionPass(pid) {}
 
     virtual bool runOnFunction(Function &F) {
-      std::string Filename = "cfg." + F.getName() + ".dot";
+      std::string Filename = "cfg." + F.getNameStr() + ".dot";
       cerr << "Writing '" << Filename << "'...";
       std::ofstream File(Filename.c_str());
 
@@ -166,7 +166,7 @@ namespace {
     CFGOnlyPrinter() : FunctionPass(&ID) {}
     explicit CFGOnlyPrinter(void *pid) : FunctionPass(pid) {}
     virtual bool runOnFunction(Function &F) {
-      std::string Filename = "cfg." + F.getName() + ".dot";
+      std::string Filename = "cfg." + F.getNameStr() + ".dot";
       cerr << "Writing '" << Filename << "'...";
       std::ofstream File(Filename.c_str());
 
@@ -196,7 +196,7 @@ P2("dot-cfg-only",
 /// being a 'dot' and 'gv' program in your path.
 ///
 void Function::viewCFG() const {
-  ViewGraph(this, "cfg" + getName());
+  ViewGraph(this, "cfg" + getNameStr());
 }
 
 /// viewCFGOnly - This function is meant for use from the debugger.  It works
@@ -205,7 +205,7 @@ void Function::viewCFG() const {
 /// his can make the graph smaller.
 ///
 void Function::viewCFGOnly() const {
-  ViewGraph(this, "cfg" + getName(), true);
+  ViewGraph(this, "cfg" + getNameStr(), true);
 }
 
 FunctionPass *llvm::createCFGPrinterPass () {

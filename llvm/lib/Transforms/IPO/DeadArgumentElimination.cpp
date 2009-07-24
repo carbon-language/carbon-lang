@@ -73,7 +73,7 @@ namespace {
 
       std::string getDescription() const {
         return std::string((IsArg ? "Argument #" : "Return value #")) 
-               + utostr(Idx) + " of function " + F->getName();
+               + utostr(Idx) + " of function " + F->getNameStr();
       }
     };
 
