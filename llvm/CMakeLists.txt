@@ -52,7 +52,6 @@ set(LLVM_ALL_TARGETS
   CBackend
   CellSPU
   CppBackend
-  IA64
   Mips
   MSIL
   MSP430

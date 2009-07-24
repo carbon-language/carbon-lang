@@ -1,5 +1,5 @@
 // RUN: %llvmgcc %s -S -emit-llvm -o - | grep llvm.atomic
-// XFAIL: sparc-sun-solaris2|arm|ia64
+// XFAIL: sparc-sun-solaris2|arm
 // Feature currently implemented only for x86, alpha, powerpc.
 
 int* foo(int** a, int* b, int* c) {

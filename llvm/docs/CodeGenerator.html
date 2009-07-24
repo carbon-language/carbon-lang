@@ -1380,9 +1380,9 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
    for <tt>RegisterClass</tt>, the last parameter of which is a list of
    registers. Just commenting some out is one simple way to avoid them being
    used. A more polite way is to explicitly exclude some registers from
-   the <i>allocation order</i>. See the definition of the <tt>GR</tt> register
-   class in <tt>lib/Target/IA64/IA64RegisterInfo.td</tt> for an example of this
-   (e.g., <tt>numReservedRegs</tt> registers are hidden.)</p>
+   the <i>allocation order</i>. See the definition of the <tt>GR8</tt> register
+   class in <tt>lib/Target/X86/X86RegisterInfo.td</tt> for an example of this.
+   </p>
 
 <p>Virtual registers are also denoted by integer numbers. Contrary to physical
    registers, different virtual registers never share the same number. The

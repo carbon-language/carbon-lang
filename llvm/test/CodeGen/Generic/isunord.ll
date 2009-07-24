@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc
-; XFAIL: ia64
 
 declare i1 @llvm.isunordered.f64(double, double)
 

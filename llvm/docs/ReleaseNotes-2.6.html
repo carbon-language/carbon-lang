@@ -491,7 +491,6 @@ and 64-bit modes.</li>
     support is available for native builds with Visual C++).</li>
 <li>Sun UltraSPARC workstations running Solaris 10.</li>
 <li>Alpha-based machines running Debian GNU/Linux.</li>
-<li>Itanium-based (IA64) machines running Linux and HP-UX.</li>
 </ul>
 
 <p>The core LLVM infrastructure uses GNU autoconf to adapt itself
@@ -540,7 +539,7 @@ components, please contact us on the <a
 href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">LLVMdev list</a>.</p>
 
 <ul>
-<li>The MSIL, IA64, Alpha, SPU, MIPS, and PIC16 backends are experimental.</li>
+<li>The MSIL, Alpha, SPU, MIPS, and PIC16 backends are experimental.</li>
 <li>The <tt>llc</tt> "<tt>-filetype=asm</tt>" (the default) is the only
     supported value for this option.</li>
 </ul>
@@ -650,21 +649,6 @@ programs compiled with LLVM.  Please use more recent versions of QEMU.</li>
 appropriate nops inserted to ensure restartability.</li>
 
 </ul>
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="ia64-be">Known problems with the IA64 back-end</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-<li>The Itanium backend is highly experimental and has a number of known
-    issues.  We are looking for a maintainer for the Itanium backend.  If you
-    are interested, please contact the LLVMdev mailing list.</li>
-</ul>
-
 </div>
 
 <!-- ======================================================================= -->

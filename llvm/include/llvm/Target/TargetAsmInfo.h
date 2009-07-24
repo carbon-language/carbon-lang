@@ -265,10 +265,6 @@ namespace llvm {
 
     /// FunctionAddrPrefix/Suffix - If these are nonempty, these strings
     /// will enclose any GlobalVariable that points to a function.
-    /// For example, this is used by the IA64 backend to materialize
-    /// function descriptors, by decorating the ".data8" object with the
-    /// @verbatim @fptr( ) @endverbatim
-    /// link-relocation operator.
     ///
     const char *FunctionAddrPrefix;       // Defaults to ""
     const char *FunctionAddrSuffix;       // Defaults to ""

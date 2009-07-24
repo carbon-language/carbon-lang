@@ -149,7 +149,7 @@ http://gcc.gnu.org/ml/gcc-patches/2006-02/msg00133.html
 
 Implement Newton-Rhapson method for improving estimate instructions to the
 correct accuracy, and implementing divide as multiply by reciprocal when it has
-more than one use.  Itanium will want this too.
+more than one use.  Itanium would want this too.
 
 ===-------------------------------------------------------------------------===
 

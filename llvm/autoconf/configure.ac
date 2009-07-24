@@ -221,7 +221,6 @@ AC_CACHE_CHECK([target architecture],[llvm_cv_target_arch],
   sparc*-*)               llvm_cv_target_arch="Sparc" ;;
   powerpc*-*)             llvm_cv_target_arch="PowerPC" ;;
   alpha*-*)               llvm_cv_target_arch="Alpha" ;;
-  ia64-*)                 llvm_cv_target_arch="IA64" ;;
   arm*-*)                 llvm_cv_target_arch="ARM" ;;
   mips-*)                 llvm_cv_target_arch="Mips" ;;
   pic16-*)                llvm_cv_target_arch="PIC16" ;;
@@ -347,7 +346,6 @@ else
     PowerPC) AC_SUBST(TARGET_HAS_JIT,1) ;;
     x86_64)  AC_SUBST(TARGET_HAS_JIT,1) ;;
     Alpha)   AC_SUBST(TARGET_HAS_JIT,1) ;;
-    IA64)    AC_SUBST(TARGET_HAS_JIT,0) ;;
     ARM)     AC_SUBST(TARGET_HAS_JIT,0) ;;
     Mips)    AC_SUBST(TARGET_HAS_JIT,0) ;;
     PIC16)   AC_SUBST(TARGET_HAS_JIT,0) ;;
@@ -403,7 +401,7 @@ AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU PIC16 XCore MSP430 SystemZ CBackend MSIL CppBackend" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha ARM Mips CellSPU PIC16 XCore MSP430 SystemZ CBackend MSIL CppBackend" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
@@ -411,7 +409,6 @@ case "$enableval" in
       Sparc)   TARGETS_TO_BUILD="Sparc" ;;
       PowerPC) TARGETS_TO_BUILD="PowerPC" ;;
       Alpha)   TARGETS_TO_BUILD="Alpha" ;;
-      IA64)    TARGETS_TO_BUILD="IA64" ;;
       ARM)     TARGETS_TO_BUILD="ARM" ;;
       Mips)    TARGETS_TO_BUILD="Mips" ;;
       CellSPU|SPU) TARGETS_TO_BUILD="CellSPU" ;;
@@ -429,7 +426,6 @@ case "$enableval" in
         sparc)   TARGETS_TO_BUILD="Sparc $TARGETS_TO_BUILD" ;;
         powerpc) TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD" ;;
         alpha)   TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD" ;;
-        ia64)    TARGETS_TO_BUILD="IA64 $TARGETS_TO_BUILD" ;;
         arm)     TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         mips)    TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
