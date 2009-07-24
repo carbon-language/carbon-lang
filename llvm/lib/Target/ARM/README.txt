@@ -541,3 +541,8 @@ while ARMConstantIslandPass only need to worry about LDR (literal).
 //===---------------------------------------------------------------------===//
 
 We need to fix constant isel for ARMv6t2 to use MOVT.
+
+//===---------------------------------------------------------------------===//
+
+Constant island pass should make use of full range SoImm values for LEApcrel.
+Be careful though as the last attempt caused infinite looping on lencod.

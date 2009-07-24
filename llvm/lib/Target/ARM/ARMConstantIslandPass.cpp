@@ -696,13 +696,11 @@ bool ARMConstantIslands::OffsetIsInRange(unsigned UserOffset,
     // User before the Trial.
     if (TrialOffset - UserOffset <= MaxDisp)
       return true;
-    if (IsSoImm && ARM_AM::getSOImmVal(TrialOffset - UserOffset) != -1)
-      return true;
+    // FIXME: Make use full range of soimm values.
   } else if (NegativeOK) {
     if (UserOffset - TrialOffset <= MaxDisp)
       return true;
-    if (IsSoImm && ARM_AM::getSOImmVal(~(TrialOffset - UserOffset)) != -1)
-      return true;
+    // FIXME: Make use full range of soimm values.
   }
   return false;
 }
