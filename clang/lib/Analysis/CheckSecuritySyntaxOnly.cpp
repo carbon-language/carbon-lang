@@ -143,15 +143,17 @@ void WalkAST::CheckLoopConditionForFloat(const ForStmt *FS) {
   if (!B)
     return;
   
-  // The actual error condition.
-  if (!((B->isRelationalOp() || B->isEqualityOp()) &&
-        ((B->getLHS()->getType()->isFloatingType() ||
-          B->getRHS()->getType()->isFloatingType()))))
+  // Is this a comparison?
+  if (!(B->isRelationalOp() || B->isEqualityOp()))
     return;
-  
+      
   // Are we comparing variables?
   const DeclRefExpr *drLHS = dyn_cast<DeclRefExpr>(B->getLHS()->IgnoreParens());
   const DeclRefExpr *drRHS = dyn_cast<DeclRefExpr>(B->getRHS()->IgnoreParens());
+  
+  // Does at least one of the variables have a floating point type?
+  drLHS = drLHS && drLHS->getType()->isFloatingType() ? drLHS : NULL;
+  drRHS = drRHS && drRHS->getType()->isFloatingType() ? drRHS : NULL;
   
   if (!drLHS && !drRHS)
     return;
