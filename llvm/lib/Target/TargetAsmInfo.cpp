@@ -251,10 +251,10 @@ static unsigned GetSectionFlagsForNamedELFSection(const char *Name) {
 SectionKind::Kind
 TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   // Early exit - functions should be always in text sections.
-  if (isa<Function>(GV))
+  const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
+  if (GVar == 0)
     return SectionKind::Text;
 
-  const GlobalVariable* GVar = dyn_cast<GlobalVariable>(GV);
   bool isThreadLocal = GVar->isThreadLocal();
   assert(GVar && "Invalid global value for section selection");
 
@@ -308,9 +308,10 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   if (GV->isWeakForLinker()) {
     if (const char *Prefix =
           getSectionPrefixForUniqueGlobal(SectionKindForGlobal(GV))) {
+      unsigned Flags = SectionFlagsForGlobal(GV, SectionKindForGlobal(GV));
+
       // FIXME: Use mangler interface (PR4584).
       std::string Name = Prefix+GV->getNameStr();
-      unsigned Flags = SectionFlagsForGlobal(GV, SectionKindForGlobal(GV));
       return getNamedSection(Name.c_str(), Flags);
     }
   }
