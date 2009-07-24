@@ -341,7 +341,7 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   if (Kind == SectionKind::Text)
     return getTextSection();
   
-  if (isBSS(Kind))
+  if (Kind == SectionKind::BSS)
     if (const Section *S = getBSSSection_())
       return S;
   

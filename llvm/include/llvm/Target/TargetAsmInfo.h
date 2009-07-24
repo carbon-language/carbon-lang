@@ -57,12 +57,10 @@ namespace llvm {
 
     static inline bool isReadOnly(Kind K) {
       return (K == SectionKind::ROData ||
+              K == SectionKind::DataRelRO ||
+              K == SectionKind::DataRelROLocal ||
               K == SectionKind::RODataMergeConst ||
               K == SectionKind::RODataMergeStr);
-    }
-
-    static inline bool isBSS(Kind K) {
-      return K == SectionKind::BSS;
     }
   }
 
@@ -601,7 +599,8 @@ namespace llvm {
     
     /// getSpecialCasedSectionGlobals - Allow the target to completely override
     /// section assignment of a global.
-    /// FIXME: ELIMINATE
+    /// FIXME: ELIMINATE this by making PIC16 implement ADDRESS with
+    /// getFlagsForNamedSection.
     virtual const Section *
     getSpecialCasedSectionGlobals(const GlobalValue *GV,
                                   SectionKind::Kind Kind) const{
