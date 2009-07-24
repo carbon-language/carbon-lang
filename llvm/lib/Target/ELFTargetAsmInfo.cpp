@@ -77,65 +77,54 @@ const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV) const {
   SectionKind::Kind Kind = SectionKindForGlobal(GV);
 
+  if (GV->isWeakForLinker()) {
+    // FIXME: Use mangler interface (PR4584).
+    std::string Name = getSectionPrefixForUniqueGlobal(Kind)+GV->getName();
+    unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
+    return getNamedSection(Name.c_str(), Flags);
+  } 
+  
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
-      default: llvm_unreachable("Unknown linkage type!");
-      case Function::PrivateLinkage:
-      case Function::LinkerPrivateLinkage:
-      case Function::InternalLinkage:
-      case Function::DLLExportLinkage:
-      case Function::ExternalLinkage:
-        return TextSection;
-      case Function::WeakAnyLinkage:
-      case Function::WeakODRLinkage:
-      case Function::LinkOnceAnyLinkage:
-      case Function::LinkOnceODRLinkage:
-        // FIXME: Use mangler interface (PR4584).
-        std::string Name = getSectionPrefixForUniqueGlobal(Kind)+GV->getName();
-        unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
-        return getNamedSection(Name.c_str(), Flags);
+    default: llvm_unreachable("Unknown linkage type!");
+    case Function::PrivateLinkage:
+    case Function::LinkerPrivateLinkage:
+    case Function::InternalLinkage:
+    case Function::DLLExportLinkage:
+    case Function::ExternalLinkage:
+      return TextSection;
     }
-  } else if (const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV)) {
-    if (GVar->isWeakForLinker()) {
-      // FIXME: Use mangler interface (PR4584).
-      std::string Name = getSectionPrefixForUniqueGlobal(Kind)+GV->getName();
-      unsigned Flags = SectionFlagsForGlobal(GVar, Name.c_str());
-      return getNamedSection(Name.c_str(), Flags);
-    } else {
-      switch (Kind) {
-      case SectionKind::Data:
-      case SectionKind::DataRel:
-        return DataRelSection;
-      case SectionKind::DataRelLocal:
-        return DataRelLocalSection;
-      case SectionKind::DataRelRO:
-        return DataRelROSection;
-      case SectionKind::DataRelROLocal:
-        return DataRelROLocalSection;
-      case SectionKind::BSS:
-        return getBSSSection_();
-      case SectionKind::ROData:
-        return getReadOnlySection();
-      case SectionKind::RODataMergeStr:
-        return MergeableStringSection(GVar);
-      case SectionKind::RODataMergeConst: {
-        const Type *Ty = GVar->getInitializer()->getType();
-        const TargetData *TD = TM.getTargetData();
-        return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
-      }
-      case SectionKind::ThreadData:
-        // ELF targets usually support TLS stuff
-        return TLSDataSection;
-      case SectionKind::ThreadBSS:
-        return TLSBSSSection;
-      default:
-        llvm_unreachable("Unsuported section kind for global");
-      }
+  } else {
+    const GlobalVariable *GVar = cast<GlobalVariable>(GV);
+    switch (Kind) {
+    default: llvm_unreachable("Unsuported section kind for global");
+    case SectionKind::Data:
+    case SectionKind::DataRel:
+      return DataRelSection;
+    case SectionKind::DataRelLocal:
+      return DataRelLocalSection;
+    case SectionKind::DataRelRO:
+      return DataRelROSection;
+    case SectionKind::DataRelROLocal:
+      return DataRelROLocalSection;
+    case SectionKind::BSS:
+      return getBSSSection_();
+    case SectionKind::ROData:
+      return getReadOnlySection();
+    case SectionKind::RODataMergeStr:
+      return MergeableStringSection(GVar);
+    case SectionKind::RODataMergeConst: {
+      const Type *Ty = GVar->getInitializer()->getType();
+      const TargetData *TD = TM.getTargetData();
+      return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
     }
-  } else
-    llvm_unreachable("Unsupported global");
-
-  return NULL;
+    case SectionKind::ThreadData:
+      // ELF targets usually support TLS stuff
+      return TLSDataSection;
+    case SectionKind::ThreadBSS:
+      return TLSBSSSection;
+    }
+  }
 }
 
 /// getSectionForMergableConstant - Given a mergable constant with the
