@@ -443,7 +443,7 @@ multiclass T2I_bin_rrot<string opc, PatFrag opnode> {
 
 let isNotDuplicable = 1 in
 def t2PICADD : T2XI<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp),
-                    "$cp:\n\tadd $dst, pc",
+                    "$cp:\n\tadd $dst, $lhs, pc",
                     [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;
 
 
