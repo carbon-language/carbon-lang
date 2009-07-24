@@ -79,6 +79,9 @@ namespace llvm {
     const unsigned Linkonce   = 1 << 7;  ///< Section is linkonce
     const unsigned TypeFlags  = 0xFF;
     // Some gap for future flags
+    
+    /// Named - True if this section should be printed with ".section <name>",
+    /// false if the section name is something like ".const".
     const unsigned Named      = 1 << 23; ///< Section is named
     const unsigned EntitySize = 0xFF << 24; ///< Entity size for mergeable stuff
 
@@ -114,14 +117,13 @@ namespace llvm {
 
     std::string Name;
     unsigned Flags;
-    explicit Section(unsigned F = SectionFlags::Invalid):Flags(F) { }
+    explicit Section(unsigned F = SectionFlags::Invalid) : Flags(F) { }
 
   public:
     
-    bool isNamed() const { return Flags & SectionFlags::Named; }
     unsigned getEntitySize() const { return (Flags >> 24) & 0xFF; }
 
-    const std::string& getName() const { return Name; }
+    const std::string &getName() const { return Name; }
     unsigned getFlags() const { return Flags; }
     
     bool hasFlag(unsigned F) const { return (Flags & F) != 0; }
