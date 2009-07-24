@@ -208,7 +208,7 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 
   // Append tail padding if necessary.
   if (Layout.getSize() / 8 > getNextFieldOffsetInBytes())
-    AppendPadding(Layout.getSize() / 8, AlignmentAsLLVMStruct);
+    AppendPadding(getNextFieldOffsetInBytes(), AlignmentAsLLVMStruct);
   
   return true;
 }
@@ -290,7 +290,7 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
   CGRecordLayoutBuilder Builder(Types);
   
   Builder.Layout(D);
-  
+
   // FIXME: Once this works well enough, enable it.
   return 0;
   

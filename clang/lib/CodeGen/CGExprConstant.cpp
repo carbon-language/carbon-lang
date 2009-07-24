@@ -16,6 +16,7 @@
 #include "CGObjCRuntime.h"
 #include "clang/AST/APValue.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Builtins.h"
 #include "llvm/Constants.h"
@@ -27,6 +28,149 @@ using namespace clang;
 using namespace CodeGen;
 
 namespace  {
+
+class VISIBILITY_HIDDEN ConstStructBuilder {
+  CodeGenModule &CGM;
+  CodeGenFunction *CGF;
+
+  bool Packed;  
+  unsigned NextFieldOffsetInBytes;
+  
+  std::vector<llvm::Constant *> Elements;
+
+  ConstStructBuilder(CodeGenModule &CGM, CodeGenFunction *CGF)
+    : CGM(CGM), CGF(CGF), Packed(false), NextFieldOffsetInBytes(0) { }
+
+  bool AppendField(const FieldDecl *Field, uint64_t FieldOffset, 
+                   const Expr *InitExpr) {
+    uint64_t FieldOffsetInBytes = FieldOffset / 8;
+    
+    assert(NextFieldOffsetInBytes <= FieldOffsetInBytes 
+           && "Field offset mismatch!");
+    
+    // Emit the field.
+    llvm::Constant *C = CGM.EmitConstantExpr(InitExpr, Field->getType(), CGF);
+    if (!C)
+      return false;
+
+    unsigned FieldAlignment = getAlignment(C);
+    
+    // Round up the field offset to the alignment of the field type.
+    uint64_t AlignedNextFieldOffsetInBytes = 
+      llvm::RoundUpToAlignment(NextFieldOffsetInBytes, FieldAlignment);
+    
+    if (AlignedNextFieldOffsetInBytes > FieldOffsetInBytes) {
+      // FIXME: Must convert the struct to a packed struct.
+      return false;
+    }
+
+    if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
+      // We need to append padding.
+      AppendPadding(FieldOffsetInBytes - AlignedNextFieldOffsetInBytes);
+      
+      assert(NextFieldOffsetInBytes == FieldOffsetInBytes &&
+             "Did not add enough padding!");
+      
+      AlignedNextFieldOffsetInBytes = NextFieldOffsetInBytes;
+    }
+    
+    // Add the field.
+    Elements.push_back(C);
+    NextFieldOffsetInBytes = AlignedNextFieldOffsetInBytes + getSizeInBytes(C);
+
+    return true;
+  }
+  
+  void AppendPadding(uint64_t NumBytes) {
+    if (!NumBytes)
+      return;
+
+    const llvm::Type *Ty = llvm::Type::Int8Ty;
+    if (NumBytes > 1) 
+      Ty = CGM.getLLVMContext().getArrayType(Ty, NumBytes);
+
+    llvm::Constant *C = CGM.getLLVMContext().getNullValue(Ty);
+    Elements.push_back(C);
+    assert(getAlignment(C) == 1 && "Padding must have 1 byte alignment!");
+    
+    NextFieldOffsetInBytes += getSizeInBytes(C);
+  }
+
+  void AppendTailPadding(uint64_t RecordSize) {
+    assert(RecordSize % 8 == 0 && "Invalid record size!");
+
+    uint64_t RecordSizeInBytes = RecordSize / 8;
+    assert(NextFieldOffsetInBytes <= RecordSizeInBytes && "Size mismatch!");
+    
+    unsigned NumPadBytes = RecordSizeInBytes - NextFieldOffsetInBytes;
+    AppendPadding(NumPadBytes);
+  }
+  
+  bool Build(const InitListExpr *ILE) {
+    RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
+    const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
+    
+    unsigned FieldNo = 0;
+    unsigned ElementNo = 0;
+    for (RecordDecl::field_iterator Field = RD->field_begin(), 
+         FieldEnd = RD->field_end(); 
+         ElementNo < ILE->getNumInits() && Field != FieldEnd;
+         ++Field, ++FieldNo) {
+      if (Field->isBitField()) {
+        if (!Field->getIdentifier())
+          continue;
+        
+        // FIXME: Bitfield support.
+        return false;
+      } else {
+        if (!AppendField(*Field, Layout.getFieldOffset(FieldNo),
+                         ILE->getInit(ElementNo)))
+          return false;
+      }
+      
+      ElementNo++;
+    }
+    
+    // Append tail padding if necessary.
+    AppendTailPadding(Layout.getSize());
+    
+    assert(Layout.getSize() / 8 == NextFieldOffsetInBytes && 
+           "Tail padding mismatch!");
+
+    return true;
+  }
+  
+  unsigned getAlignment(const llvm::Constant *C) const {
+    if (Packed)
+      return 1;
+    
+    return CGM.getTargetData().getABITypeAlignment(C->getType());
+  }
+  
+  uint64_t getSizeInBytes(const llvm::Constant *C) const {
+    return CGM.getTargetData().getTypeAllocSize(C->getType());
+  }
+  
+public:
+  static llvm::Constant *BuildStruct(CodeGenModule &CGM, CodeGenFunction *CGF,
+                                     const InitListExpr *ILE) {
+    ConstStructBuilder Builder(CGM, CGF);
+    
+    // FIXME: Use this when it works well enough.
+    return 0;
+    
+    if (!Builder.Build(ILE))
+      return 0;
+    
+    llvm::Constant *Result = 
+      CGM.getLLVMContext().getConstantStruct(Builder.Elements, Builder.Packed);
+
+    assert(Builder.NextFieldOffsetInBytes == Builder.getSizeInBytes(Result));
+
+    return 0;
+  }
+};
+  
 class VISIBILITY_HIDDEN ConstExprEmitter : 
   public StmtVisitor<ConstExprEmitter, llvm::Constant*> {
   CodeGenModule &CGM;
@@ -186,6 +330,8 @@ public:
   }
 
   llvm::Constant *EmitStructInitialization(InitListExpr *ILE) {
+    ConstStructBuilder::BuildStruct(CGM, CGF, ILE);
+    
     const llvm::StructType *SType =
         cast<llvm::StructType>(ConvertType(ILE->getType()));
     RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
