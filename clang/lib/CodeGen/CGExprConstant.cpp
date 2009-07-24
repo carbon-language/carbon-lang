@@ -167,7 +167,7 @@ public:
 
     assert(Builder.NextFieldOffsetInBytes == Builder.getSizeInBytes(Result));
 
-    return 0;
+    return Result;
   }
 };
   
