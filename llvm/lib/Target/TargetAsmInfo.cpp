@@ -188,6 +188,68 @@ static bool isConstantString(const Constant *C) {
   return false;
 }
 
+unsigned
+TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
+                                     const char *Name) const {
+  unsigned Flags = SectionFlags::None;
+
+  // Decode flags from global itself.
+  SectionKind::Kind Kind = SectionKindForGlobal(GV);
+  switch (Kind) {
+  case SectionKind::Text:
+    Flags |= SectionFlags::Code;
+    break;
+  case SectionKind::ThreadData:
+  case SectionKind::ThreadBSS:
+    Flags |= SectionFlags::TLS;
+    // FALLS THROUGH
+  case SectionKind::Data:
+  case SectionKind::DataRel:
+  case SectionKind::DataRelLocal:
+  case SectionKind::DataRelRO:
+  case SectionKind::DataRelROLocal:
+  case SectionKind::BSS:
+    Flags |= SectionFlags::Writeable;
+    break;
+  case SectionKind::ROData:
+  case SectionKind::RODataMergeStr:
+  case SectionKind::RODataMergeConst:
+    // No additional flags here
+    break;
+  default:
+    llvm_unreachable("Unexpected section kind!");
+  }
+
+  if (GV->isWeakForLinker())
+    Flags |= SectionFlags::Linkonce;
+
+  // Add flags from sections, if any.
+  if (Name && *Name != '\0') {
+    Flags |= SectionFlags::Named;
+
+    // Some lame default implementation based on some magic section names.
+    if (strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
+        strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
+        strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
+        strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
+      Flags |= SectionFlags::BSS;
+    else if (strcmp(Name, ".tdata") == 0 ||
+             strncmp(Name, ".tdata.", 7) == 0 ||
+             strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
+             strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
+      Flags |= SectionFlags::TLS;
+    else if (strcmp(Name, ".tbss") == 0 ||
+             strncmp(Name, ".tbss.", 6) == 0 ||
+             strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
+             strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
+      Flags |= SectionFlags::BSS | SectionFlags::TLS;
+  }
+
+  return Flags;
+}
+
+
+
 SectionKind::Kind
 TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   // Early exit - functions should be always in text sections.
@@ -225,67 +287,6 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
   return isThreadLocal ? SectionKind::ThreadData : SectionKind::Data;
 }
 
-unsigned
-TargetAsmInfo::SectionFlagsForGlobal(const GlobalValue *GV,
-                                     const char* Name) const {
-  unsigned Flags = SectionFlags::None;
-
-  // Decode flags from global itself.
-  if (GV) {
-    SectionKind::Kind Kind = SectionKindForGlobal(GV);
-    switch (Kind) {
-    case SectionKind::Text:
-      Flags |= SectionFlags::Code;
-      break;
-    case SectionKind::ThreadData:
-    case SectionKind::ThreadBSS:
-      Flags |= SectionFlags::TLS;
-      // FALLS THROUGH
-    case SectionKind::Data:
-    case SectionKind::DataRel:
-    case SectionKind::DataRelLocal:
-    case SectionKind::DataRelRO:
-    case SectionKind::DataRelROLocal:
-    case SectionKind::BSS:
-      Flags |= SectionFlags::Writeable;
-      break;
-    case SectionKind::ROData:
-    case SectionKind::RODataMergeStr:
-    case SectionKind::RODataMergeConst:
-      // No additional flags here
-      break;
-    default:
-      llvm_unreachable("Unexpected section kind!");
-    }
-
-    if (GV->isWeakForLinker())
-      Flags |= SectionFlags::Linkonce;
-  }
-
-  // Add flags from sections, if any.
-  if (Name && *Name) {
-    Flags |= SectionFlags::Named;
-
-    // Some lame default implementation based on some magic section names.
-    if (strncmp(Name, ".gnu.linkonce.b.", 16) == 0 ||
-        strncmp(Name, ".llvm.linkonce.b.", 17) == 0 ||
-        strncmp(Name, ".gnu.linkonce.sb.", 17) == 0 ||
-        strncmp(Name, ".llvm.linkonce.sb.", 18) == 0)
-      Flags |= SectionFlags::BSS;
-    else if (strcmp(Name, ".tdata") == 0 ||
-             strncmp(Name, ".tdata.", 7) == 0 ||
-             strncmp(Name, ".gnu.linkonce.td.", 17) == 0 ||
-             strncmp(Name, ".llvm.linkonce.td.", 18) == 0)
-      Flags |= SectionFlags::TLS;
-    else if (strcmp(Name, ".tbss") == 0 ||
-             strncmp(Name, ".tbss.", 6) == 0 ||
-             strncmp(Name, ".gnu.linkonce.tb.", 17) == 0 ||
-             strncmp(Name, ".llvm.linkonce.tb.", 18) == 0)
-      Flags |= SectionFlags::BSS | SectionFlags::TLS;
-  }
-
-  return Flags;
-}
 
 const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   // Select section name
