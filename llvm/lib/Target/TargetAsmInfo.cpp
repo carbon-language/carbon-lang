@@ -301,7 +301,7 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     if (const char *Prefix =
           getSectionPrefixForUniqueGlobal(SectionKindForGlobal(GV))) {
       // FIXME: Use mangler interface (PR4584).
-      std::string Name = Prefix+GV->getName();
+      std::string Name = Prefix+GV->getNameStr();
       unsigned Flags = SectionFlagsForGlobal(GV, Name.c_str());
       return getNamedSection(Name.c_str(), Flags);
     }
