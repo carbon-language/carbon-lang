@@ -132,11 +132,9 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   // Append padding if necessary.
   AppendPadding(FieldOffsetInBytes, Ty);
   
-  uint64_t FieldSizeInBytes = getTypeSizeInBytes(Ty);
-
   // Now append the field.
   LLVMFields.push_back(LLVMFieldInfo(D, FieldTypes.size()));
-  AppendField(FieldOffsetInBytes, FieldSizeInBytes, Ty);
+  AppendField(FieldOffsetInBytes, Ty);
   
   return true;
 }
@@ -186,7 +184,7 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
   
   // Now add our field.
   if (Ty)
-    AppendField(0, Size, Ty);
+    AppendField(0, Ty);
   
   // Append tail padding.
   if (Layout.getSize() / 8 > Size)
@@ -216,11 +214,12 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
 }
 
 void CGRecordLayoutBuilder::AppendField(uint64_t FieldOffsetInBytes, 
-                                        uint64_t FieldSizeInBytes,
                                         const llvm::Type *FieldTy) {
   AlignmentAsLLVMStruct = std::max(AlignmentAsLLVMStruct,
                                    getTypeAlignment(FieldTy));
-                                   
+
+  uint64_t FieldSizeInBytes = getTypeSizeInBytes(FieldTy);
+
   FieldTypes.push_back(FieldTy);
   FieldInfos.push_back(FieldInfo(FieldOffsetInBytes, FieldSizeInBytes));
 
@@ -263,7 +262,7 @@ void CGRecordLayoutBuilder::AppendBytes(uint64_t NumBytes) {
   }
   
   // Append the padding field
-  AppendField(getNextFieldOffsetInBytes(), NumBytes, Ty);
+  AppendField(getNextFieldOffsetInBytes(), Ty);
 }
 
 uint64_t CGRecordLayoutBuilder::getNextFieldOffsetInBytes() const {

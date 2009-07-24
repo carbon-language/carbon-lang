@@ -97,9 +97,8 @@ class CGRecordLayoutBuilder {
   /// LayoutBitField - layout a single bit field.
   void LayoutBitField(const FieldDecl *D, uint64_t FieldOffset);
 
-  /// AppendField - Appends a field with the given offset size and type.
-  void AppendField(uint64_t FieldOffsetInBytes, uint64_t FieldSizeInBytes,
-                   const llvm::Type *FieldTy);
+  /// AppendField - Appends a field with the given offset and type.
+  void AppendField(uint64_t FieldOffsetInBytes, const llvm::Type *FieldTy);
 
   /// AppendPadding - Appends enough padding bytes so that the total struct
   /// size matches the alignment of the passed in type.
