@@ -247,7 +247,6 @@ PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
 // which have a section name or address.
 const Section* 
 PIC16TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
-  const Section* S;
   // If GV has a sectin name or section address create that section now.
   if (GV->hasSection()) {
     std::string SectName = GV->getSection();
@@ -256,15 +255,12 @@ PIC16TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     std::string AddrStr = "Address=";
     if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
       std::string SectAddr = SectName.substr(AddrStr.length());
-      S = CreateSectionForGlobal(GV, SectAddr);
-    } else {
-      S = CreateSectionForGlobal(GV);
-    } 
-  } else {
-    // Use section depending on the 'type' of variable
-    S = SelectSectionForGlobal(GV);
+      return CreateSectionForGlobal(GV, SectAddr);
+    }
   }
-  return S;
+  
+  // Use section depending on the 'type' of variable
+  return SelectSectionForGlobal(GV);
 }
 
 // Create a new section for global variable. If Addr is given then create
