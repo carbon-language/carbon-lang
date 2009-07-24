@@ -135,6 +135,11 @@ private:
   bool FinishBlock(CFGBlock* B);
   CFGBlock *addStmt(Stmt *S) { return Visit(S, true); }
   
+  
+  /// TryResult - a class representing a variant over the values
+  ///  'true', 'false', or 'unknown'.  This is returned by TryEvaluateBool,
+  ///  and is used by the CFGBuilder to decide if a branch condition
+  ///  can be decided up front during CFG construction.
   class TryResult {
     int X;
   public:
@@ -155,7 +160,7 @@ private:
   TryResult TryEvaluateBool(Expr *S) {
     Expr::EvalResult Result;
     if (S->Evaluate(Result, *Context) && Result.Val.isInt())
-      return Result.Val.getInt().getBoolValue() ? true : false;
+      return Result.Val.getInt().getBoolValue();
 
     return TryResult();
   }
