@@ -257,8 +257,8 @@ namespace llvm {
     /// rounding up, to get the number of times the backedge is executed. Return
     /// CouldNotCompute if an intermediate computation overflows.
     const SCEV *getBECount(const SCEV *Start,
-                          const SCEV *End,
-                          const SCEV *Step);
+                           const SCEV *End,
+                           const SCEV *Step);
 
     /// getBackedgeTakenInfo - Return the BackedgeTakenInfo for the given
     /// loop, lazily computing new values if the loop hasn't been analyzed
@@ -405,7 +405,7 @@ namespace llvm {
       return getAddExpr(Ops);
     }
     const SCEV *getAddExpr(const SCEV *Op0, const SCEV *Op1,
-                          const SCEV *Op2) {
+                           const SCEV *Op2) {
       SmallVector<const SCEV *, 3> Ops;
       Ops.push_back(Op0);
       Ops.push_back(Op1);
@@ -421,11 +421,11 @@ namespace llvm {
     }
     const SCEV *getUDivExpr(const SCEV *LHS, const SCEV *RHS);
     const SCEV *getAddRecExpr(const SCEV *Start, const SCEV *Step,
-                             const Loop *L);
+                              const Loop *L);
     const SCEV *getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
-                             const Loop *L);
+                              const Loop *L);
     const SCEV *getAddRecExpr(const SmallVectorImpl<const SCEV *> &Operands,
-                             const Loop *L) {
+                              const Loop *L) {
       SmallVector<const SCEV *, 4> NewOp(Operands.begin(), Operands.end());
       return getAddRecExpr(NewOp, L);
     }
@@ -449,7 +449,7 @@ namespace llvm {
     /// getMinusSCEV - Return LHS-RHS.
     ///
     const SCEV *getMinusSCEV(const SCEV *LHS,
-                            const SCEV *RHS);
+                             const SCEV *RHS);
 
     /// getTruncateOrZeroExtend - Return a SCEV corresponding to a conversion
     /// of the input value to the specified type.  If the type must be
@@ -490,7 +490,7 @@ namespace llvm {
     /// the types using zero-extension, and then perform a umax operation
     /// with them.
     const SCEV *getUMaxFromMismatchedTypes(const SCEV *LHS,
-                                          const SCEV *RHS);
+                                           const SCEV *RHS);
 
     /// getUMinFromMismatchedTypes - Promote the operands to the wider of
     /// the types using zero-extension, and then perform a umin operation
