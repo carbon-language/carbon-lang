@@ -55,7 +55,7 @@ public:
   Entity() { }
 
   /// \brief Find the Decl that can be referred to by this entity.
-  Decl *getDecl(ASTContext &AST);
+  Decl *getDecl(ASTContext &AST) const;
 
   /// \brief Get a printable name for debugging purpose.
   std::string getPrintableName() const;

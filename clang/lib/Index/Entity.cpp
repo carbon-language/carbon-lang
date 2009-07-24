@@ -145,7 +145,7 @@ std::string EntityImpl::getPrintableName() {
 Entity::Entity(Decl *D) : Val(D->getCanonicalDecl()) { }
 
 /// \brief Find the Decl that can be referred to by this entity.
-Decl *Entity::getDecl(ASTContext &AST) {
+Decl *Entity::getDecl(ASTContext &AST) const {
   if (isInvalid())
     return 0;
   
