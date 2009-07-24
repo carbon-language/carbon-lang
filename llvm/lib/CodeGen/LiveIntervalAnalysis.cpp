@@ -594,9 +594,9 @@ bool LiveIntervals::conflictsWithPhysRegRef(LiveInterval &li,
 
 void LiveIntervals::printRegName(unsigned reg) const {
   if (TargetRegisterInfo::isPhysicalRegister(reg))
-    cerr << tri_->getName(reg);
+    errs() << tri_->getName(reg);
   else
-    cerr << "%reg" << reg;
+    errs() << "%reg" << reg;
 }
 
 void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,

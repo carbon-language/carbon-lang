@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include <climits>
 using namespace llvm;
 
@@ -40,7 +41,7 @@ void ScheduleDAG::dumpSchedule() const {
     if (SUnit *SU = Sequence[i])
       SU->dump(this);
     else
-      cerr << "**** NOOP ****\n";
+      errs() << "**** NOOP ****\n";
   }
 }
 
@@ -256,56 +257,56 @@ void SUnit::ComputeHeight() {
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
 /// a group of nodes flagged together.
 void SUnit::dump(const ScheduleDAG *G) const {
-  cerr << "SU(" << NodeNum << "): ";
+  errs() << "SU(" << NodeNum << "): ";
   G->dumpNode(this);
 }
 
 void SUnit::dumpAll(const ScheduleDAG *G) const {
   dump(G);
 
-  cerr << "  # preds left       : " << NumPredsLeft << "\n";
-  cerr << "  # succs left       : " << NumSuccsLeft << "\n";
-  cerr << "  Latency            : " << Latency << "\n";
-  cerr << "  Depth              : " << Depth << "\n";
-  cerr << "  Height             : " << Height << "\n";
+  errs() << "  # preds left       : " << NumPredsLeft << "\n";
+  errs() << "  # succs left       : " << NumSuccsLeft << "\n";
+  errs() << "  Latency            : " << Latency << "\n";
+  errs() << "  Depth              : " << Depth << "\n";
+  errs() << "  Height             : " << Height << "\n";
 
   if (Preds.size() != 0) {
-    cerr << "  Predecessors:\n";
+    errs() << "  Predecessors:\n";
     for (SUnit::const_succ_iterator I = Preds.begin(), E = Preds.end();
          I != E; ++I) {
-      cerr << "   ";
+      errs() << "   ";
       switch (I->getKind()) {
-      case SDep::Data:        cerr << "val "; break;
-      case SDep::Anti:        cerr << "anti"; break;
-      case SDep::Output:      cerr << "out "; break;
-      case SDep::Order:       cerr << "ch  "; break;
+      case SDep::Data:        errs() << "val "; break;
+      case SDep::Anti:        errs() << "anti"; break;
+      case SDep::Output:      errs() << "out "; break;
+      case SDep::Order:       errs() << "ch  "; break;
       }
-      cerr << "#";
-      cerr << I->getSUnit() << " - SU(" << I->getSUnit()->NodeNum << ")";
+      errs() << "#";
+      errs() << I->getSUnit() << " - SU(" << I->getSUnit()->NodeNum << ")";
       if (I->isArtificial())
-        cerr << " *";
-      cerr << "\n";
+        errs() << " *";
+      errs() << "\n";
     }
   }
   if (Succs.size() != 0) {
-    cerr << "  Successors:\n";
+    errs() << "  Successors:\n";
     for (SUnit::const_succ_iterator I = Succs.begin(), E = Succs.end();
          I != E; ++I) {
-      cerr << "   ";
+      errs() << "   ";
       switch (I->getKind()) {
-      case SDep::Data:        cerr << "val "; break;
-      case SDep::Anti:        cerr << "anti"; break;
-      case SDep::Output:      cerr << "out "; break;
-      case SDep::Order:       cerr << "ch  "; break;
+      case SDep::Data:        errs() << "val "; break;
+      case SDep::Anti:        errs() << "anti"; break;
+      case SDep::Output:      errs() << "out "; break;
+      case SDep::Order:       errs() << "ch  "; break;
       }
-      cerr << "#";
-      cerr << I->getSUnit() << " - SU(" << I->getSUnit()->NodeNum << ")";
+      errs() << "#";
+      errs() << I->getSUnit() << " - SU(" << I->getSUnit()->NodeNum << ")";
       if (I->isArtificial())
-        cerr << " *";
-      cerr << "\n";
+        errs() << " *";
+      errs() << "\n";
     }
   }
-  cerr << "\n";
+  errs() << "\n";
 }
 
 #ifndef NDEBUG
@@ -323,35 +324,35 @@ void ScheduleDAG::VerifySchedule(bool isBottomUp) {
         continue;
       }
       if (!AnyNotSched)
-        cerr << "*** Scheduling failed! ***\n";
+        errs() << "*** Scheduling failed! ***\n";
       SUnits[i].dump(this);
-      cerr << "has not been scheduled!\n";
+      errs() << "has not been scheduled!\n";
       AnyNotSched = true;
     }
     if (SUnits[i].isScheduled &&
         (isBottomUp ? SUnits[i].getHeight() : SUnits[i].getHeight()) >
           unsigned(INT_MAX)) {
       if (!AnyNotSched)
-        cerr << "*** Scheduling failed! ***\n";
+        errs() << "*** Scheduling failed! ***\n";
       SUnits[i].dump(this);
-      cerr << "has an unexpected "
+      errs() << "has an unexpected "
            << (isBottomUp ? "Height" : "Depth") << " value!\n";
       AnyNotSched = true;
     }
     if (isBottomUp) {
       if (SUnits[i].NumSuccsLeft != 0) {
         if (!AnyNotSched)
-          cerr << "*** Scheduling failed! ***\n";
+          errs() << "*** Scheduling failed! ***\n";
         SUnits[i].dump(this);
-        cerr << "has successors left!\n";
+        errs() << "has successors left!\n";
         AnyNotSched = true;
       }
     } else {
       if (SUnits[i].NumPredsLeft != 0) {
         if (!AnyNotSched)
-          cerr << "*** Scheduling failed! ***\n";
+          errs() << "*** Scheduling failed! ***\n";
         SUnits[i].dump(this);
-        cerr << "has predecessors left!\n";
+        errs() << "has predecessors left!\n";
         AnyNotSched = true;
       }
     }
