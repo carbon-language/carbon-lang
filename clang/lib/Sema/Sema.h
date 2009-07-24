@@ -455,6 +455,7 @@ public:
   void CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
                                 bool &Redeclaration, 
                                 bool &OverloadableAttrRequired);
+  void CheckMain(FunctionDecl *FD);
   virtual DeclPtrTy ActOnParamDeclarator(Scope *S, Declarator &D);
   virtual void ActOnParamDefaultArgument(DeclPtrTy param,
                                          SourceLocation EqualLoc,

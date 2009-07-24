@@ -2635,6 +2635,8 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
     return NewFD->setInvalidDecl();
   }
 
+  if (NewFD->isMain()) CheckMain(NewFD);
+
   // Semantic checking for this function declaration (in isolation).
   if (getLangOptions().CPlusPlus) {
     // C++-specific checks.
@@ -2762,6 +2764,10 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
   // during delayed parsing anyway.
   if (getLangOptions().CPlusPlus && !CurContext->isRecord())
     CheckCXXDefaultArguments(NewFD);
+}
+
+void Sema::CheckMain(FunctionDecl* FD) {
+  // FIXME: implement.
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {
