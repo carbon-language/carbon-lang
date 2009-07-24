@@ -23,7 +23,6 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/raw_ostream.h"
 #include <iosfwd>
 
 namespace llvm {
@@ -32,6 +31,7 @@ class AliasAnalysis;
 class AnalysisUsage;
 class ScalarEvolution;
 class Value;
+class raw_ostream;
 
 class LoopDependenceAnalysis : public LoopPass {
   AliasAnalysis *AA;
