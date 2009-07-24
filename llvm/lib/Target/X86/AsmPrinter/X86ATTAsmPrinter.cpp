@@ -799,7 +799,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && !GVar->hasSection() &&
       !(Subtarget->isTargetDarwin() &&
-        TheSection->getFlags() == SectionKind::RODataMergeStr)) {
+        TAI->SectionKindForGlobal(GVar) == SectionKind::RODataMergeStr)) {
     // FIXME: This seems to be pretty darwin-specific
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = TAI->getZeroFillDirective()) {
