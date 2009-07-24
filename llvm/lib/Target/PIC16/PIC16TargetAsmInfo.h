@@ -75,8 +75,8 @@ namespace llvm {
     const Section *CreateROSectionForGlobal(const GlobalVariable *GV,
                                             std::string Addr = "") const;
     virtual const Section *SelectSectionForGlobal(const GlobalValue *GV) const;
-    const Section * CreateSectionForGlobal(const GlobalValue *GV,
-                                           std::string Addr = "") const;
+    const Section *CreateSectionForGlobal(const GlobalVariable *GV,
+                                          const std::string &Addr = "") const;
   public:
     void SetSectionForGVs(Module &M);
     const std::vector<PIC16Section*> &getBSSSections() const {

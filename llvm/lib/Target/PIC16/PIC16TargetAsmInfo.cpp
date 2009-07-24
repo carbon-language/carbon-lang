@@ -249,13 +249,15 @@ const Section*
 PIC16TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   // If GV has a sectin name or section address create that section now.
   if (GV->hasSection()) {
-    std::string SectName = GV->getSection();
-    // If address for a variable is specified, get the address and create
-    // section.
-    std::string AddrStr = "Address=";
-    if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
-      std::string SectAddr = SectName.substr(AddrStr.length());
-      return CreateSectionForGlobal(GV, SectAddr);
+    if (const GlobalVariable *GVar = cast<GlobalVariable>(GV)) {
+      std::string SectName = GVar->getSection();
+      // If address for a variable is specified, get the address and create
+      // section.
+      std::string AddrStr = "Address=";
+      if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
+        std::string SectAddr = SectName.substr(AddrStr.length());
+        return CreateSectionForGlobal(GVar, SectAddr);
+      }
     }
   }
   
@@ -266,13 +268,8 @@ PIC16TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 // Create a new section for global variable. If Addr is given then create
 // section at that address else create by name.
 const Section *
-PIC16TargetAsmInfo::CreateSectionForGlobal(const GlobalValue *GV1,
-                                           std::string Addr) const {
-  const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1);
-
-  if (!GV)
-    return TargetAsmInfo::SectionForGlobal(GV1);
-
+PIC16TargetAsmInfo::CreateSectionForGlobal(const GlobalVariable *GV,
+                                           const std::string &Addr) const {
   // See if this is an uninitialized global.
   const Constant *C = GV->getInitializer();
   if (C->isNullValue())
