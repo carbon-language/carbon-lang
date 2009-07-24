@@ -12,7 +12,7 @@
 // Callbacks can be registered for these errors through this API.
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Threading.h"
@@ -35,16 +35,25 @@ void llvm_remove_error_handler(void) {
   ErrorHandler = 0;
 }
 
+void llvm_report_error(const char *reason) {
+  llvm_report_error(Twine(reason));
+}
+
 void llvm_report_error(const std::string &reason) {
+  llvm_report_error(Twine(reason));
+}
+
+void llvm_report_error(const Twine &reason) {
   if (!ErrorHandler) {
     errs() << "LLVM ERROR: " << reason << "\n";
   } else {
-    ErrorHandler(reason);
+    ErrorHandler(reason.str());
   }
   exit(1);
 }
 
-void llvm_unreachable_internal(const char *msg, const char *file, unsigned line) {
+void llvm_unreachable_internal(const char *msg, const char *file, 
+                               unsigned line) {
   if (msg)
     errs() << msg << "\n";
   errs() << "UNREACHABLE executed";

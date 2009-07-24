@@ -19,6 +19,8 @@
 #include <string>
 
 namespace llvm {
+  class Twine;
+
   /// An error handler callback.
   typedef void (*llvm_error_handler_t)(const std::string& reason);
 
@@ -44,7 +46,9 @@ namespace llvm {
   /// standard error, followed by a newline.
   /// After the error handler is called this function will call exit(1), it 
   /// does not return.
+  void llvm_report_error(const char *reason) NORETURN;
   void llvm_report_error(const std::string &reason) NORETURN;
+  void llvm_report_error(const Twine &reason) NORETURN;
 
   /// This function calls abort(), and prints the optional message to stderr.
   /// Use the llvm_unreachable macro (that adds location info), instead of
