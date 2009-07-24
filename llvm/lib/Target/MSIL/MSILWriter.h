@@ -35,7 +35,7 @@ namespace llvm {
   extern Target TheMSILTarget;
 }
 
-namespace {
+namespace MSIL {
 
   class MSILModule : public ModulePass {
     Module *ModulePtr;
