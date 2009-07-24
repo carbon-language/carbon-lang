@@ -203,15 +203,13 @@ PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1) const {
 
   // First, if this is an automatic variable for a function, get the section
   // name for it and return.
-  const std::string name = GV->getName();
-  if (PAN::isLocalName(name)) {
+  std::string name = GV->getName();
+  if (PAN::isLocalName(name))
     return getSectionForAuto(GV);
-  }
 
   // Record Exteranl Var Defs.
-  if (GV->hasExternalLinkage() || GV->hasCommonLinkage()) {
+  if (GV->hasExternalLinkage() || GV->hasCommonLinkage())
     ExternalVarDefs->Items.push_back(GV);
-  }
 
   // See if this is an uninitialized global.
   const Constant *C = GV->getInitializer();
@@ -243,10 +241,12 @@ PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
   delete ExternalVarDefs;
 }
 
-// Override the default implementation. Create PIC16sections for variables 
-// which have a section name or address.
-const Section* 
-PIC16TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
+
+/// getSpecialCasedSectionGlobals - Allow the target to completely override
+/// section assignment of a global.
+const Section *
+PIC16TargetAsmInfo::getSpecialCasedSectionGlobals(const GlobalValue *GV,
+                                                  SectionKind::Kind Kind) const{
   // If GV has a sectin name or section address create that section now.
   if (GV->hasSection()) {
     if (const GlobalVariable *GVar = cast<GlobalVariable>(GV)) {
@@ -260,9 +260,8 @@ PIC16TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
       }
     }
   }
-  
-  // Use section depending on the 'type' of variable
-  return SelectSectionForGlobal(GV);
+
+  return 0;
 }
 
 // Create a new section for global variable. If Addr is given then create

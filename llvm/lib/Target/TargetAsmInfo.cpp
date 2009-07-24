@@ -263,10 +263,18 @@ TargetAsmInfo::SectionKindForGlobal(const GlobalValue *GV) const {
 
 
 const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
-  // Select section name
+  SectionKind::Kind Kind = SectionKindForGlobal(GV);
+
+  // Select section name.
   if (GV->hasSection()) {
+    
+    // If the target has special section hacks for specifically named globals,
+    // return them now.
+    if (const Section *TS = getSpecialCasedSectionGlobals(GV, Kind))
+      return TS;
+    
     // Honour section already set, if any.
-    unsigned Flags = SectionFlagsForGlobal(GV, SectionKindForGlobal(GV));
+    unsigned Flags = SectionFlagsForGlobal(GV, Kind);
 
     // This is an explicitly named section.
     Flags |= SectionFlags::Named;
@@ -282,9 +290,8 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
   if (GV->isWeakForLinker()) {
-    if (const char *Prefix =
-          getSectionPrefixForUniqueGlobal(SectionKindForGlobal(GV))) {
-      unsigned Flags = SectionFlagsForGlobal(GV, SectionKindForGlobal(GV));
+    if (const char *Prefix = getSectionPrefixForUniqueGlobal(Kind)) {
+      unsigned Flags = SectionFlagsForGlobal(GV, Kind);
 
       // FIXME: Use mangler interface (PR4584).
       std::string Name = Prefix+GV->getNameStr();

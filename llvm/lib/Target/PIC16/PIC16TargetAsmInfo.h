@@ -91,7 +91,13 @@ namespace llvm {
     const std::vector<PIC16Section*> &getROSections() const {
       return ROSections;
     }
-    virtual const Section *SectionForGlobal(const GlobalValue *GV) const;
+    
+    /// getSpecialCasedSectionGlobals - Allow the target to completely override
+    /// section assignment of a global.
+    virtual const Section *
+    getSpecialCasedSectionGlobals(const GlobalValue *GV,
+                                  SectionKind::Kind Kind) const;
+    
   };
 
 } // namespace llvm

@@ -594,6 +594,19 @@ namespace llvm {
       return 0;
     }
     
+    /// SectionForGlobal - This hooks returns proper section name for given
+    /// global with all necessary flags and marks.
+    // FIXME: MOVE TO TARGETLOWERING.
+    const Section* SectionForGlobal(const GlobalValue *GV) const;
+    
+    /// getSpecialCasedSectionGlobals - Allow the target to completely override
+    /// section assignment of a global.
+    /// FIXME: ELIMINATE
+    virtual const Section *
+    getSpecialCasedSectionGlobals(const GlobalValue *GV,
+                                  SectionKind::Kind Kind) const{
+      return 0;
+    }
     
     /// SectionKindForGlobal - This hook allows the target to select proper
     /// section kind used for global emission.
@@ -601,10 +614,6 @@ namespace llvm {
     virtual SectionKind::Kind
     SectionKindForGlobal(const GlobalValue *GV) const;
 
-    /// SectionForGlobal - This hooks returns proper section name for given
-    /// global with all necessary flags and marks.
-// FIXME: Eliminate this.
-    virtual const Section* SectionForGlobal(const GlobalValue *GV) const;
 
     const std::string &getSectionFlags(unsigned Flags) const;
     virtual std::string printSectionFlags(unsigned flags) const { return ""; }
