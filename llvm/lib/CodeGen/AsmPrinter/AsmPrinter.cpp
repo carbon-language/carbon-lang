@@ -382,16 +382,17 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
 
   const char* JumpTableDataSection = TAI->getJumpTableDataSection();
   const Function *F = MF.getFunction();
-  unsigned SectionFlags = TAI->SectionFlagsForGlobal(F);
+  const Section *FuncSection = TAI->SectionForGlobal(F);
+  
   bool JTInDiffSection = false;
   if ((IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) ||
       !JumpTableDataSection ||
-      SectionFlags & SectionFlags::Linkonce) {
+      FuncSection->hasFlag(SectionFlags::Linkonce)) {
     // In PIC mode, we need to emit the jump table to the same section as the
     // function body itself, otherwise the label differences won't make sense.
     // We should also do if the section name is NULL or function is declared in
     // discardable section.
-    SwitchToSection(TAI->SectionForGlobal(F));
+    SwitchToSection(FuncSection);
   } else {
     SwitchToDataSection(JumpTableDataSection);
     JTInDiffSection = true;
