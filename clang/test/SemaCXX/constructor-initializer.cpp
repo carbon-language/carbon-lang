@@ -98,8 +98,7 @@ struct Current : Derived {
 };
 
                         // FIXME. This is bad message!
-struct M { 		// expected-note {{candidate function}}	\
-                        // expected-note {{candidate function}}
+struct M { 
   M(int i, int j);	// expected-note {{candidate function}} \
 			// // expected-note {{candidate function}}
 };
@@ -115,4 +114,11 @@ struct P : M  { // expected-error {{default constructor for 'struct M' is missin
   M m; // expected-error {{default constructor for 'struct M' is missing in initialization of mamber}}
 };
 
+struct Q {
+  Q() : f1(1,2),	// expected-error {{Too many arguments for member initializer 'f1'}}
+        pf(0.0)  { }   // expected-error {{incompatible type passing 'double', expected 'float *'}}
+  float f1;
+
+  float *pf;
+};
 

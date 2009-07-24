@@ -725,6 +725,15 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
         C = PerformInitializationByConstructor(
               FieldType, (Expr **)Args, NumArgs, IdLoc, 
               SourceRange(IdLoc, RParenLoc), Member->getDeclName(), IK_Direct);
+      else if (NumArgs != 1)
+        return Diag(IdLoc, diag::err_mem_initializer_mismatch) 
+                    << MemberOrBase << SourceRange(IdLoc, RParenLoc);
+      else {
+        Expr * NewExp = (Expr*)Args[0];
+        if (PerformCopyInitialization(NewExp, FieldType, "passing"))
+          return true;
+        Args[0] = NewExp;
+      }
       // FIXME: Perform direct initialization of the member.
       return new (Context) CXXBaseOrMemberInitializer(Member, (Expr **)Args, 
                                                       NumArgs, C, IdLoc);

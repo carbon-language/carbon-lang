@@ -1664,6 +1664,8 @@ def error_multiple_base_initialization : Error <
 def err_mem_init_not_member_or_class : Error<
   "member initializer %0 does not name a non-static data member or base "
   "class">;
+def err_mem_initializer_mismatch : Error<
+  "Too many arguments for member initializer %0">;
 
 def warn_field_initialized : Warning<
   "member '%0' will be initialized after">,
