@@ -135,18 +135,29 @@ private:
   bool FinishBlock(CFGBlock* B);
   CFGBlock *addStmt(Stmt *S) { return Visit(S, true); }
   
+  class TryResult {
+    int X;
+  public:
+    TryResult(bool b) : X(b ? 1 : 0) {}
+    TryResult() : X(-1) {}
+    
+    bool isTrue() const { return X == 1; }
+    bool isFalse() const { return X == 0; }
+    bool isKnown() const { return X >= 0; }
+    void negate() {
+      assert(isKnown());
+      X ^= 0x1;
+    }
+  };
+    
   /// TryEvaluateBool - Try and evaluate the Stmt and return 0 or 1
   /// if we can evaluate to a known value, otherwise return -1.
-  int TryEvaluateBool(Expr *S) {
+  TryResult TryEvaluateBool(Expr *S) {
     Expr::EvalResult Result;
-    if (S->Evaluate(Result, *Context)
-        && Result.Val.isInt()) {
-      if (Result.Val.getInt().getBoolValue())
-        return true;
-      else
-        return false;
-    }
-    return -1;
+    if (S->Evaluate(Result, *Context) && Result.Val.isInt())
+      return Result.Val.getInt().getBoolValue() ? true : false;
+
+    return TryResult();
   }
 
   bool badCFG;
@@ -423,30 +434,18 @@ CFGBlock *CFGBuilder::VisitBinaryOperator(BinaryOperator *B, bool alwaysAdd) {
       return 0;
     
     // See if this is a known constant.
-    int KnownVal = TryEvaluateBool(B->getLHS());
-    if (KnownVal != -1 && (B->getOpcode() == BinaryOperator::LOr))
-      KnownVal = !KnownVal;
+    TryResult KnownVal = TryEvaluateBool(B->getLHS());
+    if (KnownVal.isKnown() && (B->getOpcode() == BinaryOperator::LOr))
+      KnownVal.negate();
 
     // Now link the LHSBlock with RHSBlock.
     if (B->getOpcode() == BinaryOperator::LOr) {
-      if (KnownVal == true)
-        LHSBlock->addSuccessor(0);
-      else
-        LHSBlock->addSuccessor(ConfluenceBlock);
-      if (KnownVal == false)
-        LHSBlock->addSuccessor(0);
-      else
-        LHSBlock->addSuccessor(RHSBlock);
-    } else {
+      LHSBlock->addSuccessor(KnownVal.isTrue() ? NULL : ConfluenceBlock);
+      LHSBlock->addSuccessor(KnownVal.isFalse() ? NULL : RHSBlock);
+    } else {      
       assert (B->getOpcode() == BinaryOperator::LAnd);
-      if (KnownVal == false)
-        LHSBlock->addSuccessor(0);
-      else
-        LHSBlock->addSuccessor(RHSBlock);
-      if (KnownVal == true)
-        LHSBlock->addSuccessor(0);
-      else
-        LHSBlock->addSuccessor(ConfluenceBlock);
+      LHSBlock->addSuccessor(KnownVal.isFalse() ? NULL : RHSBlock);
+      LHSBlock->addSuccessor(KnownVal.isTrue() ? NULL : ConfluenceBlock);
     }
     
     // Generate the blocks for evaluating the LHS.
@@ -538,15 +537,9 @@ CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {
   
   Block = createBlock(false);
   // See if this is a known constant.
-  int KnownVal = TryEvaluateBool(C->getCond());
-  if (KnownVal == false)
-    Block->addSuccessor(0);
-  else
-    Block->addSuccessor(LHSBlock);
-  if (KnownVal == true)
-    Block->addSuccessor(0);
-  else
-    Block->addSuccessor(RHSBlock);
+  const TryResult& KnownVal = TryEvaluateBool(C->getCond());
+  Block->addSuccessor(KnownVal.isFalse() ? NULL : LHSBlock);
+  Block->addSuccessor(KnownVal.isTrue() ? NULL : RHSBlock);
   Block->setTerminator(C);
   return addStmt(C->getCond());  
 }
@@ -594,19 +587,16 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
   Block = createBlock(false);
   
   // See if this is a known constant.
-  int KnownVal = TryEvaluateBool(C->getCond());
+  const TryResult& KnownVal = TryEvaluateBool(C->getCond());
   if (LHSBlock) {
-    if (KnownVal == false)
-      Block->addSuccessor(0);
-    else
-      Block->addSuccessor(LHSBlock);
+    Block->addSuccessor(KnownVal.isFalse() ? NULL : LHSBlock);
   } else {
-    if (KnownVal == false) {
+    if (KnownVal.isFalse()) {
       // If we know the condition is false, add NULL as the successor for
       // the block containing the condition.  In this case, the confluence
       // block will have just one predecessor.
       Block->addSuccessor(0);
-      assert (ConfluenceBlock->pred_size() == 1);
+      assert(ConfluenceBlock->pred_size() == 1);
     } else {
       // If we have no LHS expression, add the ConfluenceBlock as a direct
       // successor for the block containing the condition.  Moreover, we need to
@@ -615,17 +605,13 @@ CFGBlock *CFGBuilder::VisitConditionalOperator(ConditionalOperator *C) {
       // want the first predecessor to the the block containing the expression
       // for the case when the ternary expression evaluates to true.
       Block->addSuccessor(ConfluenceBlock);
-      assert (ConfluenceBlock->pred_size() == 2);
+      assert(ConfluenceBlock->pred_size() == 2);
       std::reverse(ConfluenceBlock->pred_begin(),
                    ConfluenceBlock->pred_end());
     }
   }
   
-  if (KnownVal == true)
-    Block->addSuccessor(0);
-  else
-    Block->addSuccessor(RHSBlock);
-  
+  Block->addSuccessor(KnownVal.isTrue() ? NULL : RHSBlock);  
   Block->setTerminator(C);
   return addStmt(C->getCond());
 }
@@ -760,17 +746,11 @@ CFGBlock* CFGBuilder::VisitIfStmt(IfStmt* I) {
   Block->setTerminator(I);
 
   // See if this is a known constant.
-  int KnownVal = TryEvaluateBool(I->getCond());
+  const TryResult &KnownVal = TryEvaluateBool(I->getCond());
 
   // Now add the successors.
-  if (KnownVal == false)
-    Block->addSuccessor(0);
-  else
-    Block->addSuccessor(ThenBlock);
-  if (KnownVal == true)
-    Block->addSuccessor(0);
-  else
-    Block->addSuccessor(ElseBlock);
+  Block->addSuccessor(KnownVal.isFalse() ? NULL : ThenBlock);
+  Block->addSuccessor(KnownVal.isTrue()? NULL : ElseBlock);
 
   // Add the condition as the last statement in the new block.  This may create
   // new blocks as the condition may contain control-flow.  Any newly created
@@ -886,7 +866,8 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
   Succ = EntryConditionBlock;
 
   // See if this is a known constant.
-  int KnownVal = true;
+  TryResult KnownVal(true);
+  
   if (F->getCond())
     KnownVal = TryEvaluateBool(F->getCond());
 
@@ -936,26 +917,16 @@ CFGBlock* CFGBuilder::VisitForStmt(ForStmt* F) {
 
     if (!BodyBlock)
       BodyBlock = EntryConditionBlock; // can happen for "for (...;...; ) ;"
-    else if (Block) {
-      if (!FinishBlock(BodyBlock))
-        return 0;
-    }
+    else if (Block && !FinishBlock(BodyBlock))
+      return 0;
 
-    if (KnownVal == false)
-      ExitConditionBlock->addSuccessor(0);
-    else {
-      // This new body block is a successor to our "exit" condition block.
-      ExitConditionBlock->addSuccessor(BodyBlock);
-    }
+    // This new body block is a successor to our "exit" condition block.
+    ExitConditionBlock->addSuccessor(KnownVal.isFalse() ? NULL : BodyBlock);
   }
 
-  if (KnownVal == true)
-    ExitConditionBlock->addSuccessor(0);
-  else {
-    // Link up the condition block with the code that follows the loop.  (the
-    // false branch).
-    ExitConditionBlock->addSuccessor(LoopSuccessor);
-  }
+  // Link up the condition block with the code that follows the loop.  (the
+  // false branch).
+  ExitConditionBlock->addSuccessor(KnownVal.isTrue() ? NULL : LoopSuccessor);
 
   // If the loop contains initialization, create a new block for those
   // statements.  This block can also contain statements that precede the loop.
@@ -1137,7 +1108,7 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
   Succ = EntryConditionBlock;
 
   // See if this is a known constant.
-  int KnownVal = TryEvaluateBool(W->getCond());
+  const TryResult& KnownVal = TryEvaluateBool(W->getCond());
 
   // Process the loop body.
   {
@@ -1172,21 +1143,13 @@ CFGBlock* CFGBuilder::VisitWhileStmt(WhileStmt* W) {
         return 0;
     }
 
-    if (KnownVal == false)
-      ExitConditionBlock->addSuccessor(0);
-    else {
-      // Add the loop body entry as a successor to the condition.
-      ExitConditionBlock->addSuccessor(BodyBlock);
-    }
+    // Add the loop body entry as a successor to the condition.
+    ExitConditionBlock->addSuccessor(KnownVal.isFalse() ? NULL : BodyBlock);
   }
 
-  if (KnownVal == true)
-    ExitConditionBlock->addSuccessor(0);
-  else {
-    // Link up the condition block with the code that follows the loop.  (the
-    // false branch).
-    ExitConditionBlock->addSuccessor(LoopSuccessor);
-  }
+  // Link up the condition block with the code that follows the loop.  (the
+  // false branch).
+  ExitConditionBlock->addSuccessor(KnownVal.isTrue() ? NULL : LoopSuccessor);
 
   // There can be no more statements in the condition block since we loop back
   // to this block.  NULL out Block to force lazy creation of another block.
@@ -1277,7 +1240,7 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
   Succ = EntryConditionBlock;
 
   // See if this is a known constant.
-  int KnownVal = TryEvaluateBool(D->getCond());
+  const TryResult &KnownVal = TryEvaluateBool(D->getCond());
 
   // Process the loop body.
   CFGBlock* BodyBlock = NULL;
@@ -1318,21 +1281,13 @@ CFGBlock *CFGBuilder::VisitDoStmt(DoStmt* D) {
     CFGBlock *LoopBackBlock = createBlock();
     LoopBackBlock->setLoopTarget(D);
 
-    if (KnownVal == false)
-      ExitConditionBlock->addSuccessor(0);
-    else {
-      // Add the loop body entry as a successor to the condition.
-      ExitConditionBlock->addSuccessor(LoopBackBlock);
-    }
+    // Add the loop body entry as a successor to the condition.
+    ExitConditionBlock->addSuccessor(KnownVal.isFalse() ? NULL : LoopBackBlock);
   }
 
-  if (KnownVal == true)
-    ExitConditionBlock->addSuccessor(0);
-  else {
-    // Link up the condition block with the code that follows the loop.  (the
-    // false branch).
-    ExitConditionBlock->addSuccessor(LoopSuccessor);
-  }
+  // Link up the condition block with the code that follows the loop.
+  // (the false branch).
+  ExitConditionBlock->addSuccessor(KnownVal.isTrue() ? NULL : LoopSuccessor);
 
   // There can be no more statements in the body block(s) since we loop back to
   // the body.  NULL out Block to force lazy creation of another block.
