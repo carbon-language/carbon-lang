@@ -57,6 +57,35 @@ def mkdir_p(path):
             if e.errno != errno.EEXIST:
                 raise
 
+def executeScript(script, commands, cwd):
+    # Write script file
+    f = open(script,'w')
+    if kSystemName == 'Windows':
+        f.write('\nif %ERRORLEVEL% NEQ 0 EXIT\n'.join(commands))
+    else:
+        f.write(' &&\n'.join(commands))
+    f.write('\n')
+    f.close()
+
+    if kSystemName == 'Windows':
+        command = ['cmd','/c', script]
+    else:
+        command = ['/bin/sh', script]
+
+    p = subprocess.Popen(command, cwd=cwd,
+                         stdin=subprocess.PIPE,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE,
+                         env=kChildEnv)
+    out,err = p.communicate()
+    exitCode = p.wait()
+
+    # Detect Ctrl-C in subprocess.
+    if exitCode == -signal.SIGINT:
+        raise KeyboardInterrupt
+
+    return out, err, exitCode
+
 import StringIO
 def runOneTest(testPath, tmpBase, clang, clangcc):
     # Make paths absolute.
@@ -119,37 +148,8 @@ def runOneTest(testPath, tmpBase, clang, clangcc):
         # Strip off '&&'
         scriptLines[i] = ln[:-2]
 
-    # Write script file
-    f = open(script,'w')
-    if kSystemName == 'Windows':
-        f.write('\nif %ERRORLEVEL% NEQ 0 EXIT\n'.join(scriptLines))
-    else:
-        f.write(' &&\n'.join(scriptLines))
-    f.write('\n')
-    f.close()
-
-    p = None
-    try:
-        if kSystemName == 'Windows':
-            command = ['cmd','/c', script]
-        else:
-            command = ['/bin/sh', script]
-        
-        p = subprocess.Popen(command,
-                             cwd=os.path.dirname(testPath),
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE,
-                             env=kChildEnv)
-        out,err = p.communicate()
-        exitCode = p.wait()
-
-        # Detect Ctrl-C in subprocess.
-        if exitCode == -signal.SIGINT:
-            raise KeyboardInterrupt
-    except KeyboardInterrupt:
-        raise
-
+    out, err, exitCode = executeScript(script, scriptLines, 
+                                       cwd=os.path.dirname(testPath))
     if xfailLines:
         ok = exitCode != 0
         status = (TestStatus.XPass, TestStatus.XFail)[ok]
