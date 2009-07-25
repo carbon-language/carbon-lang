@@ -31,7 +31,9 @@ namespace llvm {
     };
   }
 
-  namespace SectionKind {
+  /// SectionKind - This is a simple POD value that classifies the properties of
+  /// a section.
+  struct SectionKind {
     enum Kind {
       Unknown = 0,      ///< Custom section.
       Text,             ///< Text section.
@@ -53,9 +55,12 @@ namespace llvm {
       /// Thread local data.
       ThreadData,       ///< Initialized TLS data objects
       ThreadBSS         ///< Uninitialized TLS data objects
-    };
+    } K; // This is private.
+    
+    // FIXME: Eliminate.
+    Kind getKind() const { return K; }
 
-    static inline bool isReadOnly(Kind K) {
+    bool isReadOnly() const {
       return (K == SectionKind::ROData ||
               K == SectionKind::DataRelRO ||
               K == SectionKind::DataRelROLocal ||
@@ -63,20 +68,20 @@ namespace llvm {
               K == SectionKind::RODataMergeStr);
     }
 
-    static inline bool isBSS(Kind K) {
+    bool isBSS() const {
       return K == BSS || K == ThreadBSS;
     }
     
-    static inline bool isTLS(Kind K) {
+    bool isTLS() const {
       return K == ThreadData || K == ThreadBSS;
     }
     
-    static inline bool isCode(Kind K) {
+    bool isCode() const {
       return K == Text;
     }
     
-    static inline bool isWritable(Kind K) {
-      return isTLS(K) ||
+    bool isWritable() const {
+      return isTLS() ||
              K == SectionKind::Data ||
              K == SectionKind::DataRel ||
              K == SectionKind::DataRelLocal ||
@@ -84,7 +89,24 @@ namespace llvm {
              K == SectionKind::DataRelROLocal ||
              K == SectionKind::BSS;
     }
-  }
+    
+    static SectionKind get(Kind K) {
+      SectionKind Res = { K };
+      return Res;
+    }
+    static SectionKind getText()             { return get(Text); }
+    static SectionKind getBSS()              { return get(BSS); }
+    static SectionKind getData()             { return get(Data); }
+    static SectionKind getDataRel()          { return get(DataRel); }
+    static SectionKind getDataRelLocal()     { return get(DataRelLocal); }
+    static SectionKind getROData()           { return get(ROData); }
+    static SectionKind getDataRelRO()        { return get(DataRelRO); }
+    static SectionKind getDataRelROLocal()   { return get(DataRelROLocal); }
+    static SectionKind getRODataMergeStr()   { return get(RODataMergeStr); }
+    static SectionKind getRODataMergeConst() { return get(RODataMergeConst); }
+    static SectionKind getThreadData()       { return get(ThreadData); }
+    static SectionKind getThreadBSS()        { return get(ThreadBSS); }
+};
 
   namespace SectionFlags {
     const unsigned Invalid    = -1U;
@@ -109,8 +131,9 @@ namespace llvm {
       return (Flags >> 24) & 0xFF;
     }
 
+    // FIXME: Why does this return a value?
     static inline unsigned setEntitySize(unsigned Flags, unsigned Size) {
-      return ((Flags & ~EntitySize) | ((Size & 0xFF) << 24));
+      return (Flags & ~EntitySize) | ((Size & 0xFF) << 24);
     }
 
     struct KeyInfo {
@@ -604,7 +627,7 @@ namespace llvm {
     /// global.  This is important for globals that need to be merged across
     /// translation units.
     virtual const char *
-    getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
+    getSectionPrefixForUniqueGlobal(SectionKind Kind) const {
       return 0;
     }
     
@@ -628,7 +651,7 @@ namespace llvm {
     /// getFlagsForNamedSection.
     virtual const Section *
     getSpecialCasedSectionGlobals(const GlobalValue *GV,
-                                  SectionKind::Kind Kind) const{
+                                  SectionKind Kind) const {
       return 0;
     }
     
@@ -637,7 +660,7 @@ namespace llvm {
 
 // FIXME: Eliminate this.
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
-                                                  SectionKind::Kind Kind) const;
+                                                  SectionKind Kind) const;
 
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.

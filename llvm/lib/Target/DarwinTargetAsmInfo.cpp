@@ -126,12 +126,12 @@ bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
 
 const Section*
 DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind::Kind Kind) const {
+                                            SectionKind Kind) const {
   // FIXME: Use sectionflags:linkonce instead of isWeakForLinker() here.
   bool isWeak = GV->isWeakForLinker();
   bool isNonStatic = TM.getRelocationModel() != Reloc::Static;
 
-  switch (Kind) {
+  switch (Kind.getKind()) {
   case SectionKind::ThreadData:
   case SectionKind::ThreadBSS:
     llvm_unreachable("Darwin doesn't support TLS");

@@ -266,22 +266,12 @@ X86COFFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 }
 
 const char *X86COFFTargetAsmInfo::
-getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
-  switch (Kind) {
-  default: llvm_unreachable("Unknown section kind");
-  case SectionKind::Text:             return ".text$linkonce";
-  case SectionKind::Data:
-  case SectionKind::DataRelLocal:
-  case SectionKind::DataRel:
-  case SectionKind::BSS:
-  case SectionKind::ThreadData:
-  case SectionKind::ThreadBSS:        return ".data$linkonce";
-  case SectionKind::ROData:
-  case SectionKind::DataRelRO:
-  case SectionKind::DataRelROLocal:
-  case SectionKind::RODataMergeConst:
-  case SectionKind::RODataMergeStr:   return ".rdata$linkonce";
-  }
+getSectionPrefixForUniqueGlobal(SectionKind Kind) const {
+  if (Kind.isCode())
+    return ".text$linkonce";
+  if (Kind.isWritable())
+    return ".data$linkonce";
+  return ".rdata$linkonce";
 }
 
 std::string X86COFFTargetAsmInfo::printSectionFlags(unsigned flags) const {

@@ -75,7 +75,7 @@ namespace llvm {
     const Section *CreateROSectionForGlobal(const GlobalVariable *GV,
                                             std::string Addr = "") const;
     virtual const Section *SelectSectionForGlobal(const GlobalValue *GV,
-                                                  SectionKind::Kind Kind) const;
+                                                  SectionKind Kind) const;
     const Section *CreateSectionForGlobal(const GlobalVariable *GV,
                                           const std::string &Addr = "") const;
   public:
@@ -97,7 +97,7 @@ namespace llvm {
     /// section assignment of a global.
     virtual const Section *
     getSpecialCasedSectionGlobals(const GlobalValue *GV,
-                                  SectionKind::Kind Kind) const;
+                                  SectionKind Kind) const;
     
   };
 

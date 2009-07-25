@@ -187,7 +187,7 @@ PIC16TargetAsmInfo::getSectionForAuto(const GlobalVariable *GV) const {
 // multiple data sections if required.
 const Section*
 PIC16TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV1,
-                                           SectionKind::Kind Kind) const {
+                                           SectionKind Kind) const {
   // We select the section based on the initializer here, so it really
   // has to be a GlobalVariable.
   const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1); 
@@ -247,7 +247,7 @@ PIC16TargetAsmInfo::~PIC16TargetAsmInfo() {
 /// section assignment of a global.
 const Section *
 PIC16TargetAsmInfo::getSpecialCasedSectionGlobals(const GlobalValue *GV,
-                                                  SectionKind::Kind Kind) const{
+                                                  SectionKind Kind) const {
   // If GV has a sectin name or section address create that section now.
   if (GV->hasSection()) {
     if (const GlobalVariable *GVar = cast<GlobalVariable>(GV)) {

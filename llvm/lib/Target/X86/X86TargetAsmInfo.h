@@ -54,7 +54,7 @@ namespace llvm {
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
     virtual const char *
-    getSectionPrefixForUniqueGlobal(SectionKind::Kind kind) const;
+    getSectionPrefixForUniqueGlobal(SectionKind kind) const;
     virtual std::string printSectionFlags(unsigned flags) const;
   };
 

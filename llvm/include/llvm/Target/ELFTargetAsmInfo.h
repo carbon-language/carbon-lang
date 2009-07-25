@@ -37,10 +37,10 @@ namespace llvm {
     /// ".tbss" gets the TLS bit set etc.
     virtual unsigned getFlagsForNamedSection(const char *Section) const;
     
-    const char *getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const;
+    const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) const;
     
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
-                                                  SectionKind::Kind Kind) const;
+                                                  SectionKind Kind) const;
     virtual std::string printSectionFlags(unsigned flags) const;
 
     const Section* DataRelSection;

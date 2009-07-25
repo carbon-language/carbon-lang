@@ -48,7 +48,7 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
 
 const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
-                                         SectionKind::Kind Kind) const {
+                                         SectionKind Kind) const {
   if (const Function *F = dyn_cast<Function>(GV)) {
     switch (F->getLinkage()) {
     default: llvm_unreachable("Unknown linkage type!");
@@ -62,7 +62,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   }
   
   const GlobalVariable *GVar = cast<GlobalVariable>(GV);
-  switch (Kind) {
+  switch (Kind.getKind()) {
   default: llvm_unreachable("Unsuported section kind for global");
   case SectionKind::BSS:
     return getBSSSection_();
@@ -147,8 +147,8 @@ unsigned ELFTargetAsmInfo::getFlagsForNamedSection(const char *Name) const {
 
 
 const char *
-ELFTargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const{
-  switch (Kind) {
+ELFTargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind Kind) const{
+  switch (Kind.getKind()) {
   default: llvm_unreachable("Unknown section kind");
   case SectionKind::Text:             return ".gnu.linkonce.t.";
   case SectionKind::Data:             return ".gnu.linkonce.d.";
