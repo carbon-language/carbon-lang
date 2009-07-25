@@ -34,6 +34,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
   CodeGenFunction *CGF;
 
   bool Packed;  
+
   unsigned NextFieldOffsetInBytes;
   
   std::vector<llvm::Constant *> Elements;
@@ -131,12 +132,24 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
       ElementNo++;
     }
     
+    uint64_t LayoutSizeInBytes = Layout.getSize() / 8;
+    
+    if (NextFieldOffsetInBytes > LayoutSizeInBytes) {
+      // If the struct is bigger than the size of the record type,
+      // we must have a flexible array member at the end.
+      assert(RD->hasFlexibleArrayMember() &&
+             "Must have flexible array member if struct is bigger than type!");
+      
+      // No tail padding is necessary.
+      return true;
+    }
+    
     // Append tail padding if necessary.
     AppendTailPadding(Layout.getSize());
-    
+      
     assert(Layout.getSize() / 8 == NextFieldOffsetInBytes && 
            "Tail padding mismatch!");
-
+    
     return true;
   }
   
@@ -156,16 +169,15 @@ public:
                                      const InitListExpr *ILE) {
     ConstStructBuilder Builder(CGM, CGF);
     
-    // FIXME: Use this when it works well enough.
-    return 0;
-    
     if (!Builder.Build(ILE))
       return 0;
     
     llvm::Constant *Result = 
       CGM.getLLVMContext().getConstantStruct(Builder.Elements, Builder.Packed);
 
-    assert(Builder.NextFieldOffsetInBytes == Builder.getSizeInBytes(Result));
+    assert(llvm::RoundUpToAlignment(Builder.NextFieldOffsetInBytes,
+                                    Builder.getAlignment(Result)) == 
+           Builder.getSizeInBytes(Result) && "Size mismatch!");
 
     return Result;
   }
@@ -330,6 +342,7 @@ public:
   }
 
   llvm::Constant *EmitStructInitialization(InitListExpr *ILE) {
+    // FIXME: Use the returned struct when the builder works well enough.
     ConstStructBuilder::BuildStruct(CGM, CGF, ILE);
     
     const llvm::StructType *SType =
