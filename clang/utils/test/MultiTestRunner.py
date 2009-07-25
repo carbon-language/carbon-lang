@@ -23,29 +23,21 @@ kTestFileExtensions = set(['.mi','.i','.c','.cpp','.m','.mm','.ll'])
 
 def getTests(inputs):
     for path in inputs:
-        # Always use absolte paths.
-        path = os.path.abspath(path)
         if not os.path.exists(path):
             print >>sys.stderr,"WARNING: Invalid test \"%s\""%(path,)
             continue
         
-        if os.path.isdir(path):
-            for dirpath,dirnames,filenames in os.walk(path):
-                dotTests = os.path.join(dirpath,'.tests')
-                if os.path.exists(dotTests):
-                    for ln in open(dotTests):
-                        if ln.strip():
-                            yield os.path.join(dirpath,ln.strip())
-                else:
-                    # FIXME: This doesn't belong here
-                    if 'Output' in dirnames:
-                        dirnames.remove('Output')
-                    for f in filenames:
-                        base,ext = os.path.splitext(f)
-                        if ext in kTestFileExtensions:
-                            yield os.path.join(dirpath,f)
-        else:
+        if not os.path.isdir(path):
             yield path
+
+        for dirpath,dirnames,filenames in os.walk(path):
+            # FIXME: This doesn't belong here
+            if 'Output' in dirnames:
+                dirnames.remove('Output')
+            for f in filenames:
+                base,ext = os.path.splitext(f)
+                if ext in kTestFileExtensions:
+                    yield os.path.join(dirpath,f)
 
 class TestingProgressDisplay:
     def __init__(self, opts, numTests, progressBar=None):
@@ -92,22 +84,21 @@ class TestingProgressDisplay:
             else:
                 sys.stdout.write('\n')
 
-        extra = ''
-        if tr.code==TestStatus.Invalid:
-            extra = ' - (Invalid test)'
-        elif tr.failed():
-            extra = ' - %s'%(TestStatus.getName(tr.code).upper(),)
-        print '%*d/%*d - %s%s'%(self.digits, index+1, self.digits, 
-                              self.numTests, tr.path, extra)
+        status = TestStatus.getName(tr.code).upper()
+        print '%s: %s (%*d of %*d)' % (status, tr.path, 
+                                       self.digits, index+1, 
+                                       self.digits, self.numTests)
 
         if tr.failed() and self.opts.showOutput:
-            TestRunner.cat(tr.testResults, sys.stdout)
+            print "%s TEST '%s' FAILED %s" % ('*'*20, tr.path, '*'*20)
+            print tr.output
+            print "*" * 20
 
 class TestResult:
-    def __init__(self, path, code, testResults, elapsed):
+    def __init__(self, path, code, output, elapsed):
         self.path = path
         self.code = code
-        self.testResults = testResults
+        self.output = output
         self.elapsed = elapsed
 
     def failed(self):
@@ -153,13 +144,8 @@ class Tester(threading.Thread):
                 break
             self.runTest(item)
 
-    def runTest(self, (path,index)):
-        command = path
+    def runTest(self, (path, index)):
         base = TestRunner.getTestOutputBase('Output', path)
-        output = base + '.out'
-        testname = path
-        testresults = base + '.testresults'
-        TestRunner.mkdir_p(os.path.dirname(testresults))
         numTests = len(self.provider.tests)
         digits = len(str(numTests))
         code = None
@@ -170,9 +156,8 @@ class Tester(threading.Thread):
                 code = None
             else:
                 startTime = time.time()
-                code = TestRunner.runOneTest(path, command, output, testname, 
-                                             opts.clang, opts.clangcc,
-                                             output=open(testresults,'w'))
+                code, output = TestRunner.runOneTest(path, base, 
+                                                     opts.clang, opts.clangcc)
                 elapsed = time.time() - startTime
         except KeyboardInterrupt:
             # This is a sad hack. Unfortunately subprocess goes
@@ -180,8 +165,7 @@ class Tester(threading.Thread):
             print 'Ctrl-C detected, goodbye.'
             os.kill(0,9)
 
-        self.provider.setResult(index, TestResult(path, code, testresults, 
-                                                  elapsed))
+        self.provider.setResult(index, TestResult(path, code, output, elapsed))
 
 def detectCPUs():
     """

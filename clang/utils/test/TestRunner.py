@@ -57,54 +57,29 @@ def mkdir_p(path):
             if e.errno != errno.EEXIST:
                 raise
 
-def remove(path):
-    try:
-        os.remove(path)
-    except OSError:
-        pass
-
-def cat(path, output):
-    f = open(path)
-    output.writelines(f)
-    f.close()
-
-def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
-               output=sys.stdout):
-    OUTPUT = os.path.abspath(OUTPUT)
+import StringIO
+def runOneTest(testPath, tmpBase, clang, clangcc):
+    # Make paths absolute.
+    tmpBase = os.path.abspath(tmpBase)
+    testPath = os.path.abspath(testPath)
 
     # Create the output directory if it does not already exist.
-    mkdir_p(os.path.dirname(OUTPUT))
 
-    scriptFile = FILENAME
-            
-    # Verify the script contains a run line.
-    for ln in open(scriptFile):
-        if 'RUN:' in ln:
-            break
-    else:
-        print >>output, "******************** TEST '%s' HAS NO RUN LINE! ********************"%(TESTNAME,)
-        output.flush()
-        return TestStatus.Fail
-
-    FILENAME = os.path.abspath(FILENAME)
-    SCRIPT = OUTPUT + '.script'
+    mkdir_p(os.path.dirname(tmpBase))
+    script = tmpBase + '.script'
     if kSystemName == 'Windows':
-        SCRIPT += '.bat'
-    TEMPOUTPUT = OUTPUT + '.tmp'
+        script += '.bat'
 
-    substitutions = [('%s',SUBST),
-                     ('%S',os.path.dirname(SUBST)),
-                     ('%llvmgcc','llvm-gcc -emit-llvm -w'),
-                     ('%llvmgxx','llvm-g++ -emit-llvm -w'),
-                     ('%prcontext','prcontext.tcl'),
-                     ('%t',TEMPOUTPUT),
-                     (' clang ', ' ' + CLANG + ' '),
-                     (' clang-cc ', ' ' + CLANGCC + ' ')]
+    substitutions = [('%s', testPath),
+                     ('%S', os.path.dirname(testPath)),
+                     ('%t', tmpBase + '.tmp'),
+                     (' clang ', ' ' + clang + ' '),
+                     (' clang-cc ', ' ' + clangcc + ' ')]
 
     # Collect the test lines from the script.
     scriptLines = []
     xfailLines = []
-    for ln in open(scriptFile):
+    for ln in open(testPath):
         if 'RUN:' in ln:
             # Isolate the command to run.
             index = ln.index('RUN:')
@@ -117,6 +92,10 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         
         # FIXME: Support something like END, in case we need to process large
         # files.
+
+    # Verify the script contains a run line.
+    if not scriptLines:
+        return (TestStatus.Fail, "Test has no run line!")
     
     # Apply substitutions to the script.
     def processLine(ln):
@@ -133,19 +112,15 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         ln = scriptLines[i]
 
         if not ln.endswith('&&'):
-            print >>output, "MISSING \'&&\': %s" % ln
-            print >>output, "FOLLOWED BY   : %s" % scriptLines[i + 1]
-            return TestStatus.Fail
+            return (TestStatus.Fail, 
+                    "MISSING \'&&\': %s\n" +
+                    "FOLLOWED BY   : %s\n" % (ln,scriptLines[i + 1]))
     
         # Strip off '&&'
         scriptLines[i] = ln[:-2]
 
-    if xfailLines:
-        print >>output, "XFAILED '%s':"%(TESTNAME,)
-        output.writelines(xfailLines)
-
     # Write script file
-    f = open(SCRIPT,'w')
+    f = open(script,'w')
     if kSystemName == 'Windows':
         f.write('\nif %ERRORLEVEL% NEQ 0 EXIT\n'.join(scriptLines))
     else:
@@ -153,52 +128,53 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
     f.write('\n')
     f.close()
 
-    outputFile = open(OUTPUT,'w')
     p = None
     try:
         if kSystemName == 'Windows':
-            command = ['cmd','/c', SCRIPT]
+            command = ['cmd','/c', script]
         else:
-            command = ['/bin/sh', SCRIPT]
+            command = ['/bin/sh', script]
         
         p = subprocess.Popen(command,
-                             cwd=os.path.dirname(FILENAME),
+                             cwd=os.path.dirname(testPath),
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
                              env=kChildEnv)
         out,err = p.communicate()
-        outputFile.write(out)
-        outputFile.write(err)
-        SCRIPT_STATUS = p.wait()
+        exitCode = p.wait()
 
         # Detect Ctrl-C in subprocess.
-        if SCRIPT_STATUS == -signal.SIGINT:
+        if exitCode == -signal.SIGINT:
             raise KeyboardInterrupt
     except KeyboardInterrupt:
         raise
-    outputFile.close()
 
     if xfailLines:
-        SCRIPT_STATUS = not SCRIPT_STATUS
-
-    if SCRIPT_STATUS:
-        print >>output, "******************** TEST '%s' FAILED! ********************"%(TESTNAME,)
-        print >>output, "Command: "
-        output.writelines(scriptLines)
-        print >>output, "Incorrect Output:"
-        cat(OUTPUT, output)
-        print >>output, "******************** TEST '%s' FAILED! ********************"%(TESTNAME,)
-        output.flush()
-        if xfailLines:
-            return TestStatus.XPass
-        else:
-            return TestStatus.Fail
-
-    if xfailLines:
-        return TestStatus.XFail
+        ok = exitCode != 0
+        status = (TestStatus.XPass, TestStatus.XFail)[ok]
     else:
-        return TestStatus.Pass
+        ok = exitCode == 0
+        status = (TestStatus.Fail, TestStatus.Pass)[ok]
+
+    if ok:
+        return (status,'')
+
+    output = StringIO.StringIO()
+    print >>output, "Script:"
+    print >>output, "--"
+    print >>output, '\n'.join(scriptLines)
+    print >>output, "--"
+    print >>output, "Exit Code: %r" % exitCode
+    print >>output, "Command Output (stdout):"
+    print >>output, "--"
+    output.write(out)
+    print >>output, "--"
+    print >>output, "Command Output (stderr):"
+    print >>output, "--"
+    output.write(err)
+    print >>output, "--"
+    return (status, output.getvalue())
 
 def capture(args):
     p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -304,14 +280,17 @@ def main():
         opts.clangcc = inferClangCC(opts.clang)
 
     for path in args:
-        command = path
-        output = getTestOutputBase('Output', path) + '.out'
-        testname = path
+        base = getTestOutputBase('Output', path) + '.out'
         
-        res = runOneTest(path, command, output, testname, 
-                         opts.clang, opts.clangcc)
+        status,output = runOneTest(path, base, opts.clang, opts.clangcc)
+        print '%s: %s' % (TestStatus.getName(status).upper(), path)
+        if status == TestStatus.Fail or status == TestStatus.XPass:
+            print "%s TEST '%s' FAILED %s" % ('*'*20, path, '*'*20)
+            sys.stdout.write(output)
+            print "*" * 20
+            sys.exit(1)
 
-    sys.exit(res == TestStatus.Fail or res == TestStatus.XPass)
+    sys.exit(0)
 
 if __name__=='__main__':
     main()
