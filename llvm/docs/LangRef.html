@@ -3907,7 +3907,7 @@ int *foo(struct ST *s) {
 %RT = <a href="#namedtypes">type</a> { i8 , [10 x [20 x i32]], i8  }
 %ST = <a href="#namedtypes">type</a> { i32, double, %RT }
 
-define i32* %foo(%ST* %s) {
+define i32* @foo(%ST* %s) {
 entry:
   %reg = getelementptr %ST* %s, i32 1, i32 2, i32 1, i32 5, i32 13
   ret i32* %reg
@@ -3931,7 +3931,7 @@ entry:
    the given testcase is equivalent to:</p>
 
 <pre>
-  define i32* %foo(%ST* %s) {
+  define i32* @foo(%ST* %s) {
     %t1 = getelementptr %ST* %s, i32 1                        <i>; yields %ST*:%t1</i>
     %t2 = getelementptr %ST* %t1, i32 0, i32 2                <i>; yields %RT*:%t2</i>
     %t3 = getelementptr %RT* %t2, i32 0, i32 1                <i>; yields [10 x [20 x i32]]*:%t3</i>
