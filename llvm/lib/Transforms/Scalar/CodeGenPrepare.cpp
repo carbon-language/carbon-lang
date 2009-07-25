@@ -37,6 +37,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
@@ -578,7 +579,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
 
   // If all the instructions matched are already in this BB, don't do anything.
   if (!AnyNonLocal) {
-    DEBUG(cerr << "CGP: Found      local addrmode: " << AddrMode << "\n");
+    DEBUG(errs() << "CGP: Found      local addrmode: " << AddrMode << "\n");
     return false;
   }
 
@@ -593,13 +594,13 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   // computation.
   Value *&SunkAddr = SunkAddrs[Addr];
   if (SunkAddr) {
-    DEBUG(cerr << "CGP: Reusing nonlocal addrmode: " << AddrMode << " for "
-               << *MemoryInst);
+    DEBUG(errs() << "CGP: Reusing nonlocal addrmode: " << AddrMode << " for "
+                 << *MemoryInst);
     if (SunkAddr->getType() != Addr->getType())
       SunkAddr = new BitCastInst(SunkAddr, Addr->getType(), "tmp", InsertPt);
   } else {
-    DEBUG(cerr << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
-               << *MemoryInst);
+    DEBUG(errs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
+                 << *MemoryInst);
     const Type *IntPtrTy = TLI->getTargetData()->getIntPtrType();
 
     Value *Result = 0;

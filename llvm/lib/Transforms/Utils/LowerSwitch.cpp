@@ -122,14 +122,6 @@ static raw_ostream& operator<<(raw_ostream &O,
   return O << "]";
 }
 
-static OStream& operator<<(OStream &O, const LowerSwitch::CaseVector &C) {
-  if (O.stream()) {
-    raw_os_ostream OS(*O.stream());
-    OS << C;
-  }
-  return O;
-}
-
 // switchConvert - Convert the switch statement into a binary lookup of
 // the case values. The function recursively builds this tree.
 //
@@ -144,9 +136,9 @@ BasicBlock* LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
 
   unsigned Mid = Size / 2;
   std::vector<CaseRange> LHS(Begin, Begin + Mid);
-  DOUT << "LHS: " << LHS << "\n";
+  DEBUG(errs() << "LHS: " << LHS << "\n");
   std::vector<CaseRange> RHS(Begin + Mid, End);
-  DOUT << "RHS: " << RHS << "\n";
+  DEBUG(errs() << "RHS: " << RHS << "\n");
 
   CaseRange& Pivot = *(Begin + Mid);
   DEBUG(errs() << "Pivot ==> " 
@@ -314,9 +306,9 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   CaseVector Cases;
   unsigned numCmps = Clusterify(Cases, SI);
 
-  DOUT << "Clusterify finished. Total clusters: " << Cases.size()
-       << ". Total compares: " << numCmps << "\n";
-  DOUT << "Cases: " << Cases << "\n";
+  DEBUG(errs() << "Clusterify finished. Total clusters: " << Cases.size()
+               << ". Total compares: " << numCmps << "\n");
+  DEBUG(errs() << "Cases: " << Cases << "\n");
   
   BasicBlock* SwitchBlock = switchConvert(Cases.begin(), Cases.end(), Val,
                                           OrigBlock, NewDefault);

@@ -19,17 +19,18 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
-void ExtAddrMode::print(OStream &OS) const {
+void ExtAddrMode::print(raw_ostream &OS) const {
   bool NeedPlus = false;
   OS << "[";
   if (BaseGV) {
     OS << (NeedPlus ? " + " : "")
        << "GV:";
-    WriteAsOperand(*OS.stream(), BaseGV, /*PrintType=*/false);
+    WriteAsOperand(OS, BaseGV, /*PrintType=*/false);
     NeedPlus = true;
   }
 
@@ -39,13 +40,13 @@ void ExtAddrMode::print(OStream &OS) const {
   if (BaseReg) {
     OS << (NeedPlus ? " + " : "")
        << "Base:";
-    WriteAsOperand(*OS.stream(), BaseReg, /*PrintType=*/false);
+    WriteAsOperand(OS, BaseReg, /*PrintType=*/false);
     NeedPlus = true;
   }
   if (Scale) {
     OS << (NeedPlus ? " + " : "")
        << Scale << "*";
-    WriteAsOperand(*OS.stream(), ScaledReg, /*PrintType=*/false);
+    WriteAsOperand(OS, ScaledReg, /*PrintType=*/false);
     NeedPlus = true;
   }
 
@@ -53,7 +54,7 @@ void ExtAddrMode::print(OStream &OS) const {
 }
 
 void ExtAddrMode::dump() const {
-  print(cerr);
+  print(errs());
   cerr << '\n';
 }
 

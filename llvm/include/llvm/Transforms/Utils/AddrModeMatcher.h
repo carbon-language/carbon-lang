@@ -20,7 +20,6 @@
 #define LLVM_TRANSFORMS_UTILS_ADDRMODEMATCHER_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
@@ -30,18 +29,19 @@ class Instruction;
 class Value;
 class Type;
 class User;
-  
+class raw_ostream;
+
 /// ExtAddrMode - This is an extended version of TargetLowering::AddrMode
 /// which holds actual Value*'s for register values.
 struct ExtAddrMode : public TargetLowering::AddrMode {
   Value *BaseReg;
   Value *ScaledReg;
   ExtAddrMode() : BaseReg(0), ScaledReg(0) {}
-  void print(OStream &OS) const;
+  void print(raw_ostream &OS) const;
   void dump() const;
 };
 
-static inline OStream &operator<<(OStream &OS, const ExtAddrMode &AM) {
+static inline raw_ostream &operator<<(raw_ostream &OS, const ExtAddrMode &AM) {
   AM.print(OS);
   return OS;
 }
