@@ -904,7 +904,7 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                                 unsigned NumArgs, bool isVariadic,
                                 unsigned TypeQuals, bool hasExceptionSpec,
                                 bool anyExceptionSpec, unsigned NumExceptions,
-                                exception_iterator Exs) {
+                                exception_iterator Exs, bool NoReturn) {
   ID.AddPointer(Result.getAsOpaquePtr());
   for (unsigned i = 0; i != NumArgs; ++i)
     ID.AddPointer(ArgTys[i].getAsOpaquePtr());
@@ -916,12 +916,13 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
     for(unsigned i = 0; i != NumExceptions; ++i)
       ID.AddPointer(Exs[i].getAsOpaquePtr());
   }
+  ID.AddInteger(NoReturn);
 }
 
 void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic(),
           getTypeQuals(), hasExceptionSpec(), hasAnyExceptionSpec(),
-          getNumExceptions(), exception_begin());
+          getNumExceptions(), exception_begin(), getNoReturnAttr());
 }
 
 void ObjCObjectPointerType::Profile(llvm::FoldingSetNodeID &ID,
@@ -1082,7 +1083,7 @@ const Type *QualifierSet::strip(const Type* T) {
     if (EQT->getObjCGCAttr())
       GCAttrType = EQT->getObjCGCAttr();
     return EQT->getBaseType();
-  }else {
+  } else {
     // Use the sugared type unless desugaring found extra qualifiers.
     return (DT.getCVRQualifiers() ? DT.getTypePtr() : T);
   }
@@ -1413,6 +1414,8 @@ void FunctionNoProtoType::getAsStringInternal(std::string &S, const PrintingPoli
     S = "(" + S + ")";
   
   S += "()";
+  if (getNoReturnAttr())
+    S += " __attribute__((noreturn))";
   getResultType().getAsStringInternal(S, Policy);
 }
 
@@ -1442,6 +1445,8 @@ void FunctionProtoType::getAsStringInternal(std::string &S, const PrintingPolicy
   }
   
   S += ")";
+  if (getNoReturnAttr())
+    S += " __attribute__((noreturn))";
   getResultType().getAsStringInternal(S, Policy);
 }
 

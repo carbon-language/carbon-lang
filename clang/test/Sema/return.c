@@ -158,6 +158,7 @@ int test26() {
 } // expected-warning {{control reaches end of non-void function}}
 
 int j;
+void (*fptr)() __attribute__((noreturn));
 int test27() {
   switch (j) {
   case 1:
@@ -177,6 +178,9 @@ int test27() {
     return 1;
   case 5:
     while (1) { return 1; }
+    break;
+  case 6:
+    fptr();
     break;
   default:
     return 1;

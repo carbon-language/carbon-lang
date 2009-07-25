@@ -135,7 +135,7 @@ class ASTContext {
   /// Since so few decls have attrs, we keep them in a hash map instead of
   /// wasting space in the Decl class.
   llvm::DenseMap<const Decl*, Attr*> DeclAttrs;
-  
+
   /// \brief Keeps track of the static data member templates from which
   /// static data members of class template specializations were instantiated.
   ///
@@ -218,7 +218,7 @@ public:
   
   /// \brief Erase the attributes corresponding to the given declaration.
   void eraseDeclAttrs(const Decl *D) { DeclAttrs.erase(D); }
-  
+
   /// \brief If this variable is an instantiated static data member of a
   /// class template specialization, returns the templated static data member 
   /// from which it was instantiated.
@@ -286,6 +286,10 @@ public:
   /// objc gc qualified type. The retulting type has a union of the qualifiers
   /// from T and the gc attribute.
   QualType getObjCGCQualType(QualType T, QualType::GCAttrTypes gcAttr);
+  
+  /// getNoReturnType - Add the noreturn attribute to the given type which must
+  /// be a FunctionType or a pointer to an allowable type or a BlockPointer.
+  QualType getNoReturnType(QualType T);
   
   /// getComplexType - Return the uniqued reference to the type for a complex
   /// number with the specified element type.
@@ -375,7 +379,7 @@ public:
 
   /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
   ///
-  QualType getFunctionNoProtoType(QualType ResultTy);
+  QualType getFunctionNoProtoType(QualType ResultTy, bool NoReturn = false);
 
   /// getFunctionType - Return a normal function type with a typed argument
   /// list.  isVariadic indicates whether the argument list includes '...'.
@@ -383,7 +387,8 @@ public:
                            unsigned NumArgs, bool isVariadic,
                            unsigned TypeQuals, bool hasExceptionSpec = false,
                            bool hasAnyExceptionSpec = false,
-                           unsigned NumExs = 0, const QualType *ExArray = 0);
+                           unsigned NumExs = 0, const QualType *ExArray = 0,
+                           bool NoReturn = false);
 
   /// getTypeDeclType - Return the unique reference to the type for
   /// the specified type declaration.

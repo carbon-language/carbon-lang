@@ -501,25 +501,29 @@ CFGBlock *CFGBuilder::VisitBreakStmt(BreakStmt *B) {
   
 CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, bool alwaysAdd) {
   // If this is a call to a no-return function, this stops the block here.
-  if (FunctionDecl *FD = C->getDirectCallee()) {
-    
-    if (!FD->hasAttr<NoReturnAttr>())
-      return VisitStmt(C, alwaysAdd);
-    
-    if (Block && !FinishBlock(Block))
-      return 0;
-    
-    // Create new block with no successor for the remaining pieces.
-    Block = createBlock(false);
-    Block->appendStmt(C);
-    
-    // Wire this to the exit block directly.
-    Block->addSuccessor(&cfg->getExit());
-    
-    return VisitChildren(C);
+  bool NoReturn = false;
+  if (C->getCallee()->getType().getNoReturnAttr()) {
+    NoReturn = true;
   }
+
+  if (FunctionDecl *FD = C->getDirectCallee())
+    if (FD->hasAttr<NoReturnAttr>())
+      NoReturn = true;
+
+  if (!NoReturn)
+    return VisitStmt(C, alwaysAdd);
+    
+  if (Block && !FinishBlock(Block))
+    return 0;
+    
+  // Create new block with no successor for the remaining pieces.
+  Block = createBlock(false);
+  Block->appendStmt(C);
+
+  // Wire this to the exit block directly.
+  Block->addSuccessor(&cfg->getExit());
   
-  return VisitStmt(C, alwaysAdd);
+  return VisitChildren(C);
 }
 
 CFGBlock *CFGBuilder::VisitChooseExpr(ChooseExpr *C) {

@@ -215,6 +215,9 @@ public:
   bool isObjCGCStrong() const {
     return getObjCGCAttr() == Strong;
   }
+
+  /// getNoReturnAttr() - Return the noreturn attribute of this type.
+  bool getNoReturnAttr() const;
 };
 
 } // end clang.
@@ -545,7 +548,7 @@ public:
   Type *getBaseType() const { return BaseType; }
   QualType::GCAttrTypes getObjCGCAttr() const { return GCAttrType; }
   unsigned getAddressSpace() const { return AddressSpace; }
-  
+
   virtual void getAsStringInternal(std::string &InnerString, 
                                    const PrintingPolicy &Policy) const;
   
@@ -1344,19 +1347,25 @@ class FunctionType : public Type {
   /// cv-qualifier-seq, [...], are part of the function type.
   ///
   unsigned TypeQuals : 3;
+
+  /// NoReturn - Indicates if the function type is attribute noreturn.
+  unsigned NoReturn : 1;
   
   // The type returned by the function.
   QualType ResultType;
 protected:
   FunctionType(TypeClass tc, QualType res, bool SubclassInfo,
-               unsigned typeQuals, QualType Canonical, bool Dependent)
+               unsigned typeQuals, QualType Canonical, bool Dependent,
+               bool noReturn = false)
     : Type(tc, Canonical, Dependent),
-      SubClassData(SubclassInfo), TypeQuals(typeQuals), ResultType(res) {}
+      SubClassData(SubclassInfo), TypeQuals(typeQuals), NoReturn(noReturn),
+      ResultType(res) {}
   bool getSubClassData() const { return SubClassData; }
   unsigned getTypeQuals() const { return TypeQuals; }
 public:
   
   QualType getResultType() const { return ResultType; }
+  bool getNoReturnAttr() const { return NoReturn; }
 
   
   static bool classof(const Type *T) {
@@ -1369,9 +1378,10 @@ public:
 /// FunctionNoProtoType - Represents a K&R-style 'int foo()' function, which has
 /// no information available about its arguments.
 class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
-  FunctionNoProtoType(QualType Result, QualType Canonical)
+  FunctionNoProtoType(QualType Result, QualType Canonical,
+                      bool NoReturn = false)
     : FunctionType(FunctionNoProto, Result, false, 0, Canonical, 
-                   /*Dependent=*/false) {}
+                   /*Dependent=*/false, NoReturn) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
   // No additional state past what FunctionType provides.
@@ -1380,9 +1390,11 @@ public:
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getResultType());
+    Profile(ID, getResultType(), getNoReturnAttr());
   }
-  static void Profile(llvm::FoldingSetNodeID &ID, QualType ResultType) {
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType ResultType,
+                      bool NoReturn) {
+    ID.AddInteger(NoReturn);
     ID.AddPointer(ResultType.getAsOpaquePtr());
   }
   
@@ -1411,10 +1423,10 @@ class FunctionProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionProtoType(QualType Result, const QualType *ArgArray, unsigned numArgs,
                     bool isVariadic, unsigned typeQuals, bool hasExs,
                     bool hasAnyExs, const QualType *ExArray,
-                    unsigned numExs, QualType Canonical)
+                    unsigned numExs, QualType Canonical, bool NoReturn)
     : FunctionType(FunctionProto, Result, isVariadic, typeQuals, Canonical,
                    (Result->isDependentType() || 
-                    hasAnyDependentType(ArgArray, numArgs))),
+                    hasAnyDependentType(ArgArray, numArgs)), NoReturn),
       NumArgs(numArgs), NumExceptions(numExs), HasExceptionSpec(hasExs),
       AnyExceptionSpec(hasAnyExs) {
     // Fill in the trailing argument array.
@@ -1497,7 +1509,8 @@ public:
                       arg_type_iterator ArgTys, unsigned NumArgs,
                       bool isVariadic, unsigned TypeQuals,
                       bool hasExceptionSpec, bool anyExceptionSpec,
-                      unsigned NumExceptions, exception_iterator Exs);
+                      unsigned NumExceptions, exception_iterator Exs,
+                      bool NoReturn);
 };
 
 
@@ -2067,6 +2080,18 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
   if (const ObjCObjectPointerType *PT = CT->getAsObjCObjectPointerType())
     return PT->getPointeeType().getObjCGCAttr(); 
   return GCNone;
+}
+
+/// getNoReturnAttr - Return the noreturn attribute of this type.
+inline bool QualType::getNoReturnAttr() const {
+  QualType CT = getTypePtr()->getCanonicalTypeInternal();
+  if (const PointerType *PT = getTypePtr()->getAsPointerType()) {
+    if (const FunctionType *FT = PT->getPointeeType()->getAsFunctionType())
+      return FT->getNoReturnAttr();
+  } else if (const FunctionType *FT = getTypePtr()->getAsFunctionType())
+    return FT->getNoReturnAttr();
+
+  return false;
 }
   
 /// isMoreQualifiedThan - Determine whether this type is more

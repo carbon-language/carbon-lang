@@ -965,7 +965,7 @@ QualType ASTContext::getAddrSpaceQualType(QualType T, unsigned AddressSpace) {
   
   // Check if we've already instantiated this type.
   llvm::FoldingSetNodeID ID;
-  ExtQualType::Profile(ID, TypeNode, AddressSpace, GCAttr);      
+  ExtQualType::Profile(ID, TypeNode, AddressSpace, GCAttr);
   void *InsertPos = 0;
   if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(EXTQy, CVRQuals);
@@ -1007,17 +1007,17 @@ QualType ASTContext::getObjCGCQualType(QualType T,
   unsigned AddressSpace = 0;
   
   if (ExtQualType *EQT = dyn_cast<ExtQualType>(TypeNode)) {
-    // If this type already has an address space specified, it cannot get
+    // If this type already has an ObjCGC specified, it cannot get
     // another one.
     assert(EQT->getObjCGCAttr() == QualType::GCNone &&
-           "Type cannot be in multiple addr spaces!");
+           "Type cannot have multiple ObjCGCs!");
     AddressSpace = EQT->getAddressSpace();
     TypeNode = EQT->getBaseType();
   }
   
   // Check if we've already instantiated an gc qual'd type of this type.
   llvm::FoldingSetNodeID ID;
-  ExtQualType::Profile(ID, TypeNode, AddressSpace, GCAttr);      
+  ExtQualType::Profile(ID, TypeNode, AddressSpace, GCAttr);
   void *InsertPos = 0;
   if (ExtQualType *EXTQy = ExtQualTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(EXTQy, CVRQuals);
@@ -1039,6 +1039,30 @@ QualType ASTContext::getObjCGCQualType(QualType T,
   ExtQualTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, CVRQuals);
+}
+
+QualType ASTContext::getNoReturnType(QualType T) {
+  if (T->isPointerType()) {
+    QualType Pointee = T->getAsPointerType()->getPointeeType();
+    QualType ResultType = getNoReturnType(Pointee);
+    return getPointerType(ResultType);
+  }
+  if (T->isBlockPointerType()) {
+    QualType Pointee = T->getAsBlockPointerType()->getPointeeType();
+    QualType ResultType = getNoReturnType(Pointee);
+    return getBlockPointerType(ResultType);
+  }    
+  if (!T->isFunctionType())
+    assert(0 && "can't noreturn qualify non-pointer to function or block type");
+  
+  if (const FunctionNoProtoType *F = dyn_cast<FunctionNoProtoType>(T)) {
+    return getFunctionNoProtoType(F->getResultType(), true);
+  }
+  const FunctionProtoType *F = cast<FunctionProtoType>(T);
+  return getFunctionType(F->getResultType(), F->arg_type_begin(),
+                         F->getNumArgs(), F->isVariadic(), F->getTypeQuals(),
+                         F->hasExceptionSpec(), F->hasAnyExceptionSpec(),
+                         F->getNumExceptions(), F->exception_begin(), true);
 }
 
 /// getComplexType - Return the uniqued reference to the type for a complex
@@ -1474,11 +1498,11 @@ QualType ASTContext::getDependentSizedExtVectorType(QualType vecType,
 
 /// getFunctionNoProtoType - Return a K&R style C function type like 'int()'.
 ///
-QualType ASTContext::getFunctionNoProtoType(QualType ResultTy) {
+QualType ASTContext::getFunctionNoProtoType(QualType ResultTy, bool NoReturn) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
-  FunctionNoProtoType::Profile(ID, ResultTy);
+  FunctionNoProtoType::Profile(ID, ResultTy, NoReturn);
   
   void *InsertPos = 0;
   if (FunctionNoProtoType *FT = 
@@ -1487,7 +1511,7 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy) {
   
   QualType Canonical;
   if (!ResultTy->isCanonical()) {
-    Canonical = getFunctionNoProtoType(getCanonicalType(ResultTy));
+    Canonical = getFunctionNoProtoType(getCanonicalType(ResultTy), NoReturn);
     
     // Get the new insert position for the node we care about.
     FunctionNoProtoType *NewIP =
@@ -1495,7 +1519,8 @@ QualType ASTContext::getFunctionNoProtoType(QualType ResultTy) {
     assert(NewIP == 0 && "Shouldn't be in the map!"); NewIP = NewIP;
   }
   
-  FunctionNoProtoType *New =new(*this,8)FunctionNoProtoType(ResultTy,Canonical);
+  FunctionNoProtoType *New
+    = new (*this,8) FunctionNoProtoType(ResultTy, Canonical, NoReturn);
   Types.push_back(New);
   FunctionNoProtoTypes.InsertNode(New, InsertPos);
   return QualType(New, 0);
@@ -1507,13 +1532,13 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                      unsigned NumArgs, bool isVariadic,
                                      unsigned TypeQuals, bool hasExceptionSpec,
                                      bool hasAnyExceptionSpec, unsigned NumExs,
-                                     const QualType *ExArray) {
+                                     const QualType *ExArray, bool NoReturn) {
   // Unique functions, to guarantee there is only one function of a particular
   // structure.
   llvm::FoldingSetNodeID ID;
   FunctionProtoType::Profile(ID, ResultTy, ArgArray, NumArgs, isVariadic,
                              TypeQuals, hasExceptionSpec, hasAnyExceptionSpec,
-                             NumExs, ExArray);
+                             NumExs, ExArray, NoReturn);
 
   void *InsertPos = 0;
   if (FunctionProtoType *FTP = 
@@ -1539,7 +1564,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
 
     Canonical = getFunctionType(getCanonicalType(ResultTy),
                                 CanonicalArgs.data(), NumArgs,
-                                isVariadic, TypeQuals);
+                                isVariadic, TypeQuals, NoReturn);
 
     // Get the new insert position for the node we care about.
     FunctionProtoType *NewIP =
@@ -1556,7 +1581,7 @@ QualType ASTContext::getFunctionType(QualType ResultTy,const QualType *ArgArray,
                                  NumExs*sizeof(QualType), 8);
   new (FTP) FunctionProtoType(ResultTy, ArgArray, NumArgs, isVariadic,
                               TypeQuals, hasExceptionSpec, hasAnyExceptionSpec,
-                              ExArray, NumExs, Canonical);
+                              ExArray, NumExs, Canonical, NoReturn);
   Types.push_back(FTP);
   FunctionProtoTypes.InsertNode(FTP, InsertPos);
   return QualType(FTP, 0);
@@ -3344,7 +3369,12 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     allLTypes = false;
   if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType()))
     allRTypes = false;
-
+  bool NoReturn = lbase->getNoReturnAttr() || rbase->getNoReturnAttr();
+  if (NoReturn != lbase->getNoReturnAttr())
+    allLTypes = false;
+  if (NoReturn != rbase->getNoReturnAttr())
+    allRTypes = false;
+    
   if (lproto && rproto) { // two C99 style function prototypes
     assert(!lproto->hasExceptionSpec() && !rproto->hasExceptionSpec() &&
            "C++ shouldn't be here");
@@ -3378,7 +3408,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     if (allLTypes) return lhs;
     if (allRTypes) return rhs;
     return getFunctionType(retType, types.begin(), types.size(),
-                           lproto->isVariadic(), lproto->getTypeQuals());
+                           lproto->isVariadic(), lproto->getTypeQuals(),
+                           NoReturn);
   }
 
   if (lproto) allRTypes = false;
@@ -3405,12 +3436,12 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     if (allRTypes) return rhs;
     return getFunctionType(retType, proto->arg_type_begin(),
                            proto->getNumArgs(), lproto->isVariadic(),
-                           lproto->getTypeQuals());
+                           lproto->getTypeQuals(), NoReturn);
   }
 
   if (allLTypes) return lhs;
   if (allRTypes) return rhs;
-  return getFunctionNoProtoType(retType);
+  return getFunctionNoProtoType(retType, NoReturn);
 }
 
 QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {

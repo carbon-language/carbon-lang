@@ -1084,7 +1084,10 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
     bool NoReturnEdge = false;
     if (CallExpr *C = dyn_cast<CallExpr>(S)) {
       Expr *CEE = C->getCallee()->IgnoreParenCasts();
-      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
+      if (CEE->getType().getNoReturnAttr()) {
+        NoReturnEdge = true;
+        HasFakeEdge = true;
+      } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CEE)) {
         if (FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
           if (FD->hasAttr<NoReturnAttr>()) {
             NoReturnEdge = true;

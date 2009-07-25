@@ -1506,6 +1506,22 @@ static void HandleObjCGCTypeAttribute(QualType &Type,
   Type = S.Context.getObjCGCQualType(Type, GCAttr);
 }
 
+/// HandleNoReturnTypeAttribute - Process the noreturn attribute on the
+/// specified type.  The attribute contains 0 arguments.
+static void HandleNoReturnTypeAttribute(QualType &Type, 
+                                        const AttributeList &Attr, Sema &S) {
+  if (Attr.getNumArgs() != 0)
+    return;
+
+  // We only apply this to a pointer to function or a pointer to block.
+  if (!Type->isFunctionPointerType()
+      && !Type->isBlockPointerType()
+      && !Type->isFunctionType())
+    return;
+
+  Type = S.Context.getNoReturnType(Type);
+}
+
 void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
@@ -1521,6 +1537,9 @@ void Sema::ProcessTypeAttributeList(QualType &Result, const AttributeList *AL) {
       break;
     case AttributeList::AT_objc_gc:
       HandleObjCGCTypeAttribute(Result, *AL, *this);
+      break;
+    case AttributeList::AT_noreturn:
+      HandleNoReturnTypeAttribute(Result, *AL, *this);
       break;
     }
   }
