@@ -20,6 +20,7 @@
 #include <cstring>
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ilist.h"
+#include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
