@@ -333,13 +333,14 @@ public:
   }
 
   // Get the local instance/class method declared in this interface.
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const;
-  ObjCMethodDecl *getClassMethod(Selector Sel) const;
-  ObjCIvarDecl *getIvarDecl(IdentifierInfo *Id) const;
-
-  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const {
-    return isInstance ? getInstanceMethod(Sel) : getClassMethod(Sel);
+  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const;
+  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
+    return getMethod(Sel, true/*isInstance*/);
   }
+  ObjCMethodDecl *getClassMethod(Selector Sel) const {
+    return getMethod(Sel, false/*isInstance*/);
+  }
+  ObjCIvarDecl *getIvarDecl(IdentifierInfo *Id) const;
     
   ObjCPropertyDecl *FindPropertyDeclaration(IdentifierInfo *PropertyId) const;
 
