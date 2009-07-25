@@ -85,6 +85,10 @@ option</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
     </ul></li>
+    <li><a href="#ds_string">String-like containers</a>
+    <ul>
+       <!-- todo -->
+    </ul></li>
     <li><a href="#ds_bit">BitVector-like containers</a>
     <ul>
       <li><a href="#dss_bitvector">A dense bitvector</a></li>
@@ -833,6 +837,10 @@ access the container.  Based on that, you should use:</p>
     iteration, but do not support efficient look-up based on a key.
 </li>
 
+<li>a <a href="#ds_string">string</a> container is a specialized sequential
+    container or reference structure that is used for character or byte
+    arrays.</li>
+
 <li>a <a href="#ds_bit">bit</a> container provides an efficient way to store and
     perform set operations on sets of numeric id's, while automatically
     eliminating duplicates.  Bit containers require a maximum of 1 bit for each
@@ -1501,6 +1509,20 @@ never use hash_set and unordered_set because they are generally very expensive
 <p>std::multimap is useful if you want to map a key to multiple values, but has
 all the drawbacks of std::map.  A sorted vector or some other approach is almost
 always better.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ds_string">String-like containers</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+TODO: const char* vs stringref vs smallstring vs std::string.  Describe twine,
+xref to #string_apis.
+</p>
 
 </div>
 
