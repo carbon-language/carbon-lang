@@ -291,7 +291,8 @@ namespace llvm {
                                                 BasicBlock *FBB);
 
     /// ComputeLoadConstantCompareBackedgeTakenCount - Given an exit condition
-    /// of 'icmp op load X, cst', try to see if we can compute the trip count.
+    /// of 'icmp op load X, cst', try to see if we can compute the
+    /// backedge-taken count.
     const SCEV *
       ComputeLoadConstantCompareBackedgeTakenCount(LoadInst *LI,
                                                    Constant *RHS,
@@ -302,7 +303,7 @@ namespace llvm {
     /// a constant number of times (the condition evolves only from constants),
     /// try to evaluate a few iterations of the loop until we get the exit
     /// condition gets a value of ExitWhen (true or false).  If we cannot
-    /// evaluate the trip count of the loop, return CouldNotCompute.
+    /// evaluate the backedge-taken count of the loop, return CouldNotCompute.
     const SCEV *ComputeBackedgeTakenCountExhaustively(const Loop *L,
                                                       Value *Cond,
                                                       bool ExitWhen);
