@@ -225,7 +225,7 @@ extern const PassInfo *const LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
 //
-// LowerAllocations - Turn malloc and free instructions into %malloc and %free
+// LowerAllocations - Turn malloc and free instructions into @malloc and @free
 // calls.
 //
 //   AU.addRequiredID(LowerAllocationsID);
