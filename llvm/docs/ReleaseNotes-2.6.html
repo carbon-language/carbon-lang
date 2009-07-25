@@ -460,11 +460,34 @@ API changes are:</p>
 <li><tt>SCEVHandle</tt> no longer exists, because reference counting is no
 longer done for <tt>SCEV*</tt> objects, instead <tt>const SCEV*</tt> should be
 used.</li>
+
 <li>Many APIs, notably <tt>llvm::Value</tt>, now use the <tt>StringRef</tt>
 and <tt>Twine</tt> classes instead of passing <tt>const char*</tt>
 or <tt>std::string</tt>, as described in
 the <a href="ProgrammersManual.html#string_apis">Programmer's Manual</a>. Most
-clients should be uneffected by this transition.</li>
+clients should be unaffected by this transition, unless they are used to <tt>Value::getName()</tt> returning a string. Here are some tips on updating to 2.6:
+  <ul>
+    <li><tt>getNameStr()</tt> is still available, and matches the old
+      behavior. Replacing <tt>getName()</tt> calls with this is an safe option,
+      although more efficient alternatives are now possible.</li>
+
+    <li>If you were just relying on <tt>getName()</tt> being able to be sent to
+      a <tt>std::ostream</tt>, consider migrating
+      to <tt>llvm::raw_ostream</tt>.</li>
+      
+    <li>If you were using <tt>getName().c_str()</tt> to get a <tt>const
+        char*</tt> pointer to the name, you can use <tt>getName().data()</tt>.
+        Note that this string (as before), may not be the entire name if the
+        name containts embedded null characters.</li>
+
+    <li>If you were using operator plus on the result of <tt>getName()</tt> and
+      treating the result as an <tt>std::string</tt>, you can either
+      uses <tt>Twine::str</tt> to get the result as an <tt>std::string</tt>, or
+      could move to a <tt>Twine</tt> based design.</li>
+  </ul>
+</li>
+
+
 <li>llvm-dis now fails if output file exists, instead of dumping to stdout.
 FIXME: describe any other tool changes due to the raw_fd_ostream change.  FIXME:
 This is not an API change, maybe there should be a tool changes section?</li>
