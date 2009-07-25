@@ -1,3 +1,6 @@
+// RUN: clang-cc -fsyntax-only -verify %s
+// XFAIL
+
 template<typename T> struct Member0 {
   void f(T t) {
     t;

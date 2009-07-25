@@ -33,10 +33,9 @@ class TestStatus:
     XFail = 1
     Fail = 2
     XPass = 3
-    NoRunLine = 4 
-    Invalid = 5
+    Invalid = 4
 
-    kNames = ['Pass','XFail','Fail','XPass','NoRunLine','Invalid']
+    kNames = ['Pass','XFail','Fail','XPass','Invalid']
     @staticmethod
     def getName(code): 
         return TestStatus.kNames[code]
@@ -106,7 +105,7 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
     else:
         print >>output, "******************** TEST '%s' HAS NO RUN LINE! ********************"%(TESTNAME,)
         output.flush()
-        return TestStatus.NoRunLine
+        return TestStatus.Fail
 
     FILENAME = os.path.abspath(FILENAME)
     SCRIPT = OUTPUT + '.script'

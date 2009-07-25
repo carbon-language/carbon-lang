@@ -1,3 +1,5 @@
+// RUN: clang-cc -fsyntax-only -verify %s
+
 class X {
 public:
   typedef int I;

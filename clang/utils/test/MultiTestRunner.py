@@ -95,8 +95,6 @@ class TestingProgressDisplay:
         extra = ''
         if tr.code==TestStatus.Invalid:
             extra = ' - (Invalid test)'
-        elif tr.code==TestStatus.NoRunLine:
-            extra = ' - (No RUN line)'
         elif tr.failed():
             extra = ' - %s'%(TestStatus.getName(tr.code).upper(),)
         print '%*d/%*d - %s%s'%(self.digits, index+1, self.digits, 
