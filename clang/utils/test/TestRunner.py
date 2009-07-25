@@ -122,23 +122,46 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
                      ('%t',TEMPOUTPUT),
                      (' clang ', ' ' + CLANG + ' '),
                      (' clang-cc ', ' ' + CLANGCC + ' ')]
+
+    # Collect the test lines from the script.
     scriptLines = []
     xfailLines = []
     for ln in open(scriptFile):
         if 'RUN:' in ln:
-            # Isolate run parameters
+            # Isolate the command to run.
             index = ln.index('RUN:')
             ln = ln[index+4:]
-
-            # Apply substitutions
-            for a,b in substitutions:
-                ln = ln.replace(a,b)
-
-            if useDGCompat:
-                ln = re.sub(r'\{(.*)\}', r'"\1"', ln)
-            scriptLines.append(ln)
+            
+            # Strip whitespace and append.
+            scriptLines.append(ln.strip())
         elif 'XFAIL' in ln:
             xfailLines.append(ln)
+        
+        # FIXME: Support something like END, in case we need to process large
+        # files.
+
+    # Validate interior lines for '&&', a lovely historical artifact.
+    for i in range(len(scriptLines) - 1):
+        ln = scriptLines[i]
+
+        if not ln.endswith('&&'):
+            print >>output, "MISSING \'&&\': %s" % ln
+            print >>output, "FOLLOWED BY   : %s" % scriptLines[i + 1]
+            return TestStatus.Fail
+    
+        # Strip off '&&'
+        scriptLines[i] = ln[:-2]
+    
+    # Apply substitutions to the script.
+    def processLine(ln):
+        # Apply substitutions
+        for a,b in substitutions:
+            ln = ln.replace(a,b)
+
+        if useDGCompat:
+            ln = re.sub(r'\{(.*)\}', r'"\1"', ln)
+        return ln
+    scriptLines = map(processLine, scriptLines)
     
     if xfailLines:
         print >>output, "XFAILED '%s':"%(TESTNAME,)
@@ -146,7 +169,7 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
 
     # Write script file
     f = open(SCRIPT,'w')
-    f.write(''.join(scriptLines))
+    f.write(' &&\n'.join(scriptLines))
     f.close()
 
     outputFile = open(OUTPUT,'w')

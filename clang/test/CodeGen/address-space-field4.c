@@ -1,5 +1,5 @@
 // RUN: clang-cc -emit-llvm < %s -o %t &&
-// RUN: grep addrspace\(2\) %t | count 4
+// RUN: grep addrspace\(2\) %t | count 4 &&
 // RUN: grep addrspace\(3\) %t | count 4
 
 // Check the load and store are using the correct address space to access

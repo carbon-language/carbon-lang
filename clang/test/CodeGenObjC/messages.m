@@ -3,7 +3,7 @@
 // RUN: clang-cc -fgnu-runtime --emit-llvm -o %t %s &&
 // RUN: grep "objc_msg_lookup" %t | count 6 &&
 // RUN: clang-cc -fgnu-runtime -fobjc-sender-dependent-dispatch --emit-llvm -o %t %s &&
-// RUN: grep "objc_msg_lookup_sender" %t | count 6
+// RUN: grep "objc_msg_lookup_sender" %t | count 6 &&
 // RUN: true
 
 typedef struct {

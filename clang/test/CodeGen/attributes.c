@@ -12,7 +12,7 @@
 // RUN: grep '@t11().*section "SECT"' %t &&
 // RUN: grep '@t12 =.*section "SECT"' %t &&
 // RUN: grep '@t13 =.*section "SECT"' %t &&
-// RUN: grep '@t14.x =.*section "SECT"' %t
+// RUN: grep '@t14.x =.*section "SECT"' %t &&
 // RUN: grep 'declare extern_weak i32 @t15()' %t &&
 // RUN: grep '@t16 = extern_weak global i32' %t &&
 

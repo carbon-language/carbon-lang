@@ -1,7 +1,7 @@
 // Test the GNU comma swallowing extension.
 // RUN: clang-cc %s -E | grep 'foo{A, }' && 
 // RUN: clang-cc %s -E | grep 'fo2{A,}' && 
-// RUN: clang-cc %s -E | grep '{foo}'
+// RUN: clang-cc %s -E | grep '{foo}' &&
 
 #define X(Y) foo{A, Y}
 X()

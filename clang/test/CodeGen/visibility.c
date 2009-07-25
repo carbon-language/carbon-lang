@@ -15,7 +15,7 @@
 // RUN: grep 'define internal void @f_deferred()' %t &&
 // RUN: grep 'define protected i32 @f_def()' %t &&
 // RUN: clang-cc -triple i386-unknown-unknown -fvisibility=hidden -emit-llvm -o %t %s &&
-// RUN: grep '@g_com = common hidden global i32 0' %t &&a
+// RUN: grep '@g_com = common hidden global i32 0' %t &&
 // RUN: grep '@g_def = hidden global i32 0' %t &&
 // RUN: grep '@g_ext = external global i32' %t &&
 // RUN: grep '@g_deferred = internal global' %t &&
