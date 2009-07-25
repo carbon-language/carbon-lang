@@ -293,8 +293,13 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
   }
 }
 
-
+/// SectionForGlobal - This method computes the appropriate section to emit
+/// the specified global variable or function definition.  This should not
+/// be passed external (or available externally) globals.
 const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
+  assert(!GV->isDeclaration() && !GV->hasAvailableExternallyLinkage() &&
+         "Can only be used for global definitions");
+  
   SectionKind::Kind Kind = SectionKindForGlobal(GV, TM.getRelocationModel());
 
   // Select section name.

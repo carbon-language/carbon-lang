@@ -592,9 +592,10 @@ namespace llvm {
       return 0;
     }
     
-    /// SectionForGlobal - This hooks returns proper section name for given
-    /// global with all necessary flags and marks.
-    // FIXME: MOVE TO TARGETLOWERING.
+    /// SectionForGlobal - This method computes the appropriate section to emit
+    /// the specified global variable or function definition.  This should not
+    /// be passed external (or available externally) globals.
+    // FIXME: MOVE TO ASMPRINTER.
     const Section* SectionForGlobal(const GlobalValue *GV) const;
     
     /// getSpecialCasedSectionGlobals - Allow the target to completely override
