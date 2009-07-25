@@ -501,8 +501,13 @@ public:
 
   // Lookup a method. First, we search locally. If a method isn't
   // found, we search referenced protocols and class categories.
-  ObjCMethodDecl *lookupInstanceMethod(Selector Sel);
-  ObjCMethodDecl *lookupClassMethod(Selector Sel);
+  ObjCMethodDecl *lookupMethod(Selector Sel, bool isInstance) const;
+  ObjCMethodDecl *lookupInstanceMethod(Selector Sel) const {
+    return lookupMethod(Sel, true/*isInstance*/);
+  }
+  ObjCMethodDecl *lookupClassMethod(Selector Sel) const {
+    return lookupMethod(Sel, false/*isInstance*/);
+  }
   ObjCInterfaceDecl *lookupInheritedClass(const IdentifierInfo *ICName);
 
   // Location information, modeled after the Stmt API.
