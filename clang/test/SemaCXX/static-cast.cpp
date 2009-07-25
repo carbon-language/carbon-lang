@@ -1,11 +1,11 @@
-// RUN: clang-cc -fsyntax-only -verify %s
+// RUN: clang-cc -fsyntax-only -verify -faccess-control %s
 
 struct A {};
 struct B : public A {};             // Single public base.
 struct C1 : public virtual B {};    // Single virtual base.
 struct C2 : public virtual B {};
 struct D : public C1, public C2 {}; // Diamond
-struct E : private A {};            // Single private base.
+struct E : private A {};            // Single private base. expected-note 2 {{'private' inheritance specifier here}}
 struct F : public C1 {};            // Single path to B with virtual.
 struct G1 : public B {};
 struct G2 : public B {};
@@ -13,6 +13,11 @@ struct H : public G1, public G2 {}; // Ambiguous path to B.
 
 enum Enum { En1, En2 };
 enum Onom { On1, On2 };
+
+struct Co1 { operator int(); };
+struct Co2 { Co2(int); };
+struct Co3 { };
+struct Co4 { Co4(Co3); operator Co3(); };
 
 // Explicit implicits
 void t_529_2()
@@ -45,7 +50,9 @@ void t_529_2()
   (void)static_cast<int B::*>((int A::*)0);
   (void)static_cast<void (B::*)()>((void (A::*)())0);
 
-  // TODO: User-defined conversions
+  (void)static_cast<int>(Co1());
+  (void)static_cast<Co2>(1);
+  (void)static_cast<Co3>(static_cast<Co4>(Co3()));
 
   // Bad code below
 
@@ -80,11 +87,10 @@ void t_529_5_8()
   (void)static_cast<D&>(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct D &' via virtual base 'struct B'}}
   (void)static_cast<B*>((const A*)0); // expected-error {{static_cast from 'struct A const *' to 'struct B *' casts away constness}}
   (void)static_cast<B&>(*((const A*)0)); // expected-error {{static_cast from 'struct A const' to 'struct B &' casts away constness}}
-  // Accessibility is not yet tested
-  //(void)static_cast<E*>((A*)0); // {{static_cast from 'struct A *' to 'struct E *' is not allowed}}
-  //(void)static_cast<E&>(*((A*)0)); // {{static_cast from 'struct A' to 'struct E &' is not allowed}}
-  (void)static_cast<H*>((A*)0); // expected-error {{ambiguous static_cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
-  (void)static_cast<H&>(*((A*)0)); // expected-error {{ambiguous static_cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
+  (void)static_cast<E*>((A*)0); // expected-error {{cannot cast 'struct A' to 'struct E' due to inaccessible}}
+  (void)static_cast<E&>(*((A*)0)); // expected-error {{cannot cast 'struct A' to 'struct E' due to inaccessible}}
+  (void)static_cast<H*>((A*)0); // expected-error {{ambiguous cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
+  (void)static_cast<H&>(*((A*)0)); // expected-error {{ambiguous cast from base 'struct A' to derived 'struct H':\n    struct A -> struct B -> struct G1 -> struct H\n    struct A -> struct B -> struct G2 -> struct H}}
   (void)static_cast<E*>((B*)0); // expected-error {{static_cast from 'struct B *' to 'struct E *' is not allowed}}
   (void)static_cast<E&>(*((B*)0)); // expected-error {{non-const lvalue reference to type 'struct E' cannot be initialized with a value of type 'struct B'}}
 

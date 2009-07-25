@@ -5,9 +5,9 @@ void f() {
   int x, *px;
   
   // Type id.
-  (T())x;    // expected-error {{used type 'T ()'}}
-  (T())+x;   // expected-error {{used type 'T ()'}}
-  (T())*px;  // expected-error {{used type 'T ()'}}
+  (T())x;    // expected-error {{cast from 'int' to 'T ()'}}
+  (T())+x;   // expected-error {{cast from 'int' to 'T ()'}}
+  (T())*px;  // expected-error {{cast from 'int' to 'T ()'}}
   
   // Expression.
   x = (T());

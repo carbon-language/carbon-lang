@@ -2919,14 +2919,15 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
 
 /// CheckCastTypes - Check type constraints for casting between types.
 bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
+  if (getLangOptions().CPlusPlus)
+    return CXXCheckCStyleCast(TyR, castType, castExpr);
+
   UsualUnaryConversions(castExpr);
 
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
   if (castType->isVoidType()) {
     // Cast to void allows any expr type.
-  } else if (castType->isDependentType() || castExpr->isTypeDependent()) {
-    // We can't check any more until template instantiation time.
   } else if (!castType->isScalarType() && !castType->isVectorType()) {
     if (Context.getCanonicalType(castType).getUnqualifiedType() ==
         Context.getCanonicalType(castExpr->getType().getUnqualifiedType()) &&
@@ -3040,7 +3041,8 @@ Sema::ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
   if (CheckCastTypes(SourceRange(LParenLoc, RParenLoc), castType, castExpr))
     return ExprError();
-  return Owned(new (Context) CStyleCastExpr(castType, castExpr, castType,
+  return Owned(new (Context) CStyleCastExpr(castType.getNonReferenceType(),
+                                            castExpr, castType,
                                             LParenLoc, RParenLoc));
 }
 

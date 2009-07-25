@@ -1,6 +1,6 @@
 // RUN: clang-cc -fsyntax-only -verify %s
 
-struct A { int x; };
+struct A { int x; }; // expected-note 2 {{candidate}}
 
 class Base { 
 public:
@@ -23,7 +23,7 @@ struct Constructible {
 template<typename T, typename U>
 struct CStyleCast0 {
   void f(T t) {
-    (void)((U)t); // FIXME:ugly expected-error{{operand}}
+    (void)((U)t); // expected-error{{C-style cast from 'struct A' to 'int'}}
   }
 };
 
@@ -36,7 +36,7 @@ template struct CStyleCast0<A, int>; // expected-note{{instantiation}}
 template<typename T, typename U>
 struct StaticCast0 {
   void f(T t) {
-    (void)static_cast<U>(t); // expected-error{{static_cast}}
+    (void)static_cast<U>(t); // expected-error{{initialization of 'struct A'}}
   }
 };
 
@@ -89,7 +89,7 @@ template struct ConstCast0<int const *, float *>; // expected-note{{instantiatio
 template<typename T, typename U>
 struct FunctionalCast1 {
   void f(T t) {
-    (void)U(t); // FIXME:ugly expected-error{{operand}}
+    (void)U(t); // expected-error{{C-style cast from 'struct A' to 'int'}}
   }
 };
 

@@ -1395,36 +1395,46 @@ def note_property_impl_required : Note<
 
 
 // C++ casts
-def err_bad_cxx_cast_generic : Error<"%0 from %2 to %1 is not allowed">;
-def err_bad_cxx_cast_rvalue : Error<"%0 from rvalue to reference type %1">;
+// These messages adhere to the TryCast pattern: %0 is an int specifying the
+// cast type, %1 is the source type, %2 is the destination type.
+def err_bad_cxx_cast_generic : Error<
+  "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"
+  "functional-style cast}0 from %1 to %2 is not allowed">;
+def err_bad_cxx_cast_rvalue : Error<
+  "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"
+  "functional-style cast}0 from rvalue to reference type %2">;
 def err_bad_cxx_cast_const_away : Error<
-  "%0 from %2 to %1 casts away constness">;
+  "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"
+  "functional-style cast}0 from %1 to %2 casts away constness">;
 def err_bad_const_cast_dest : Error<
-  "const_cast to %0, which is not a reference, pointer-to-object, "
-  "or pointer-to-data-member">;
-
-def err_bad_reinterpret_cast_same_type : Error<
-  "source and destination type of reinterpret_cast are not distinct">;
-def ext_reinterpret_cast_fn_obj : Extension<
-  "reinterpret_cast between pointer-to-function and pointer-to-object is "
-  "an extension">;
-
+  "%select{const_cast||||C-style cast|functional-style cast}0 to %2, "
+  "which is not a reference, pointer-to-object, or pointer-to-data-member">;
+def ext_cast_fn_obj : Extension<
+  "cast between pointer-to-function and pointer-to-object is an extension">;
 def err_bad_reinterpret_cast_small_int : Error<
-  "cast from pointer to smaller type %0 loses information">;
+  "cast from pointer to smaller type %2 loses information">;
+def err_bad_lvalue_to_rvalue_cast : Error<
+  "cannot cast from lvalue of type %1 to rvalue reference type %2; types are "
+  "not compatible">;
+def err_bad_static_cast_pointer_nonpointer : Error<
+  "cannot cast from type %1 to pointer type %2">;
+def err_bad_static_cast_member_pointer_nonmp : Error<
+  "cannot cast from type %1 to member pointer type %2">;
+
+// These messages don't adhere to the pattern.
+// FIXME: Display the path somehow better.
+def err_ambiguous_base_to_derived_cast : Error<
+  "ambiguous cast from base %0 to derived %1:%2">;
+def err_static_downcast_via_virtual : Error<
+  "cannot cast %0 to %1 via virtual base %2">;
+def err_downcast_from_inaccessible_base : Error<
+  "cannot cast %1 to %0 due to inaccessible conversion path">;
 def err_bad_dynamic_cast_not_ref_or_ptr : Error<
   "%0 is not a reference or pointer">;
 def err_bad_dynamic_cast_not_class : Error<"%0 is not a class">;
 def err_bad_dynamic_cast_incomplete : Error<"%0 is an incomplete type">;
 def err_bad_dynamic_cast_not_ptr : Error<"%0 is not a pointer">;
 def err_bad_dynamic_cast_not_polymorphic : Error<"%0 is not polymorphic">;
-// FIXME: Display the path somehow better.
-def err_ambiguous_base_to_derived_cast : Error<
-  "ambiguous static_cast from base %0 to derived %1:%2">;
-def err_static_downcast_via_virtual : Error<
-  "cannot cast %0 to %1 via virtual base %2">;
-def err_bad_lvalue_to_rvalue_cast : Error<
-  "cannot cast from lvalue of type %0 to rvalue reference to %1; types are "
-  "not compatible">;
 
 // Other C++ expressions
 def err_need_header_before_typeid : Error<

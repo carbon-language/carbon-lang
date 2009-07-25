@@ -50,7 +50,7 @@ void foo5()
 void foo6() 
 { 
   (void)(int(1)); //expression 
-  (void)(int())1; // expected-error{{used type}}
+  (void)(int())1; // expected-error{{to 'int ()'}}
 } 
 
 // [dcl.ambig.res]p7:

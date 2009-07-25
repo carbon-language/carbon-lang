@@ -1136,7 +1136,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
 
 /// CheckPointerConversion - Check the pointer conversion from the
 /// expression From to the type ToType. This routine checks for
-/// ambiguous (FIXME: or inaccessible) derived-to-base pointer
+/// ambiguous or inaccessible derived-to-base pointer
 /// conversions for which IsPointerConversion has already returned
 /// true. It returns true and produces a diagnostic if there was an
 /// error, or returns false otherwise.

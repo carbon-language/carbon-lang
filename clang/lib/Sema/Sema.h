@@ -3169,9 +3169,10 @@ public:
                           bool AllowExplicit = false,
                           bool ForceRValue = false);
 
-  /// CheckCastTypes - Check type constraints for casting between types.
+  /// CheckCastTypes - Check type constraints for casting between types under
+  /// C semantics.
   bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr);
-  
+
   // CheckVectorCast - check type constraints for vectors. 
   // Since vectors are an extension, there are no C standard reference for this.
   // We allow casting between vectors and integer datatypes of the same size.
@@ -3184,7 +3185,11 @@ public:
   // or vectors and the element type of that vector.
   // returns true if the cast is invalid
   bool CheckExtVectorCast(SourceRange R, QualType VectorTy, QualType Ty);
-  
+
+  /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
+  /// cast under C++ semantics.
+  bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr);
+
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send. 
   /// \param Method - May be null.
   /// \param [out] ReturnType - The return type of the send.
@@ -3196,7 +3201,7 @@ public:
 
   /// CheckCXXBooleanCondition - Returns true if conversion to bool is invalid.
   bool CheckCXXBooleanCondition(Expr *&CondExpr);
-                    
+
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit
   /// the specified diagnostic.
