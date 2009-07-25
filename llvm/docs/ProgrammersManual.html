@@ -440,16 +440,16 @@ and <tt>Twine</tt> classes)</a>
 <div class="doc_text">
 
 <p>Although LLVM generally does not do much string manipulation, we do have
-several important APIs which take string.  Several important examples are the
+several important APIs which take strings.  Two important examples are the
 Value class -- which has names for instructions, functions, etc. -- and the
 StringMap class which is used extensively in LLVM and Clang.</p>
 
 <p>These are generic classes, and they need to be able to accept strings which
 may have embedded null characters.  Therefore, they cannot simply take
-a <tt>const char *</tt>, and taking a <tt>const std::string&</tt> requires
+a <tt>const char *</tt>, and taking a <tt>const std::string&amp;</tt> requires
 clients to perform a heap allocation which is usually unnecessary.  Instead,
-many LLVM APIs use a <tt>const StringRef&</tt> or a <tt>const Twine&</tt> for
-passing strings efficiently.</p>
+many LLVM APIs use a <tt>const StringRef&amp;</tt> or a <tt>const 
+Twine&amp;</tt> for passing strings efficiently.</p>
 
 </div>
 
@@ -464,11 +464,12 @@ passing strings efficiently.</p>
 (a character array and a length) and supports the common operations available
 on <tt>std:string</tt>, but does not require heap allocation.</p>
 
-It can be implicitly constructed using either a C style null-terminated string
-or an <tt>std::string</tt>, or explicitly with a character pointer and length.
+<p>It can be implicitly constructed using a C style null-terminated string,
+an <tt>std::string</tt>, or explicitly with a character pointer and length.
 For example, the <tt>StringRef</tt> find function is declared as:</p>
+
 <div class="doc_code">
-  iterator find(const StringRef &Key);
+  iterator find(const StringRef &amp;Key);
 </div>
 
 <p>and clients can call it using any one of:</p>
@@ -489,7 +490,7 @@ for more information.</p>
 
 <p>You should rarely use the <tt>StringRef</tt> class directly, because it contains
 pointers to external memory it is not generally safe to store an instance of the
-class (since the external storage may be freed).</p>
+class (unless you know that the external storage will not be freed).</p>
 
 </div>
 
