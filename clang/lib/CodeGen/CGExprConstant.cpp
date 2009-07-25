@@ -61,13 +61,50 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
       llvm::RoundUpToAlignment(NextFieldOffsetInBytes, FieldAlignment);
     
     if (AlignedNextFieldOffsetInBytes > FieldOffsetInBytes) {
-      // FIXME: Must convert the struct to a packed struct.
-      return false;
+      std::vector<llvm::Constant *> PackedElements;
+      
+      assert(!Packed && "Alignment is wrong even with a packed struct!");
+      
+      // Convert the struct to a packed struct.
+      uint64_t ElementOffsetInBytes = 0;
+      
+      for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
+        llvm::Constant *C = Elements[i];
+        
+        unsigned ElementAlign = 
+          CGM.getTargetData().getABITypeAlignment(C->getType());
+        uint64_t AlignedElementOffsetInBytes = 
+          llvm::RoundUpToAlignment(ElementOffsetInBytes, ElementAlign);
+        
+        if (AlignedElementOffsetInBytes > ElementOffsetInBytes) {
+          // We need some padding.
+          uint64_t NumBytes = 
+            AlignedElementOffsetInBytes - ElementOffsetInBytes;
+          
+          const llvm::Type *Ty = llvm::Type::Int8Ty;
+          if (NumBytes > 1) 
+            Ty = CGM.getLLVMContext().getArrayType(Ty, NumBytes);
+          
+          llvm::Constant *Padding = CGM.getLLVMContext().getNullValue(Ty);
+          PackedElements.push_back(Padding);
+          ElementOffsetInBytes += getSizeInBytes(Padding);
+        }
+        
+        PackedElements.push_back(C);
+        ElementOffsetInBytes += getSizeInBytes(C);
+      }
+
+      assert(ElementOffsetInBytes == NextFieldOffsetInBytes &&
+             "Packing the struct changed its size!");
+
+      Elements = PackedElements;
+      Packed = true;
+      AlignedNextFieldOffsetInBytes = NextFieldOffsetInBytes;
     }
 
     if (AlignedNextFieldOffsetInBytes < FieldOffsetInBytes) {
       // We need to append padding.
-      AppendPadding(FieldOffsetInBytes - AlignedNextFieldOffsetInBytes);
+      AppendPadding(FieldOffsetInBytes - NextFieldOffsetInBytes);
       
       assert(NextFieldOffsetInBytes == FieldOffsetInBytes &&
              "Did not add enough padding!");
