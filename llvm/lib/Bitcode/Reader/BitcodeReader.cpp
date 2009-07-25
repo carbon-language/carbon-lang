@@ -1666,7 +1666,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Vec) ||
           getValue(Record, OpNum, Type::Int32Ty, Idx))
         return Error("Invalid EXTRACTELT record");
-      I = new ExtractElementInst(Vec, Idx);
+      I = ExtractElementInst::Create(Vec, Idx);
       break;
     }
       

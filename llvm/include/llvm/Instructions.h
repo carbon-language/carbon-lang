@@ -1270,15 +1270,25 @@ class ExtractElementInst : public Instruction {
     Op<1>() = EE.Op<1>();
   }
 
-public:
-  // allocate space for exactly two operands
-  void *operator new(size_t s) {
-    return User::operator new(s, 2); // FIXME: "unsigned Idx" forms of ctor?
-  }
   ExtractElementInst(Value *Vec, Value *Idx, const std::string &NameStr = "",
                      Instruction *InsertBefore = 0);
   ExtractElementInst(Value *Vec, Value *Idx, const std::string &NameStr,
                      BasicBlock *InsertAtEnd);
+public:
+  static ExtractElementInst *Create(const ExtractElementInst &EE) {
+    return new(EE.getNumOperands()) ExtractElementInst(EE);
+  }
+
+  static ExtractElementInst *Create(Value *Vec, Value *Idx,
+                                   const std::string &NameStr = "",
+                                   Instruction *InsertBefore = 0) {
+    return new(2) ExtractElementInst(Vec, Idx, NameStr, InsertBefore);
+  }
+  static ExtractElementInst *Create(Value *Vec, Value *Idx,
+                                   const std::string &NameStr,
+                                   BasicBlock *InsertAtEnd) {
+    return new(2) ExtractElementInst(Vec, Idx, NameStr, InsertAtEnd);
+  }
 
   /// isValidOperands - Return true if an extractelement instruction can be
   /// formed with the specified operands.

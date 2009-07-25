@@ -2982,7 +2982,7 @@ VAArgInst *VAArgInst::clone(LLVMContext&) const {
 }
 
 ExtractElementInst *ExtractElementInst::clone(LLVMContext&) const {
-  return new ExtractElementInst(*this);
+  return ExtractElementInst::Create(*this);
 }
 
 InsertElementInst *InsertElementInst::clone(LLVMContext&) const {

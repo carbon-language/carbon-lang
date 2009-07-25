@@ -1734,9 +1734,9 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           Value *LHS = II->getOperand(1);
           Value *RHS = II->getOperand(2);
           // Extract the element as scalars.
-          LHS = InsertNewInstBefore(new ExtractElementInst(LHS, 
+          LHS = InsertNewInstBefore(ExtractElementInst::Create(LHS, 
             ConstantInt::get(Type::Int32Ty, 0U, false), "tmp"), *II);
-          RHS = InsertNewInstBefore(new ExtractElementInst(RHS,
+          RHS = InsertNewInstBefore(ExtractElementInst::Create(RHS,
             ConstantInt::get(Type::Int32Ty, 0U, false), "tmp"), *II);
           
           switch (II->getIntrinsicID()) {
@@ -9012,7 +9012,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     if (SrcVTy->getNumElements() == 1) {
       if (!isa<VectorType>(DestTy)) {
         Instruction *Elem =
-            new ExtractElementInst(Src, Context->getNullValue(Type::Int32Ty));
+          ExtractElementInst::Create(Src, Context->getNullValue(Type::Int32Ty));
         InsertNewInstBefore(Elem, CI);
         return CastInst::Create(Instruction::BitCast, Elem, DestTy);
       }
@@ -9956,7 +9956,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           
           if (ExtractedElts[Idx] == 0) {
             Instruction *Elt = 
-              new ExtractElementInst(Idx < 16 ? Op0 : Op1, 
+              ExtractElementInst::Create(Idx < 16 ? Op0 : Op1, 
                   ConstantInt::get(Type::Int32Ty, Idx&15, false), "tmp");
             InsertNewInstBefore(Elt, CI);
             ExtractedElts[Idx] = Elt;
@@ -12419,10 +12419,10 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         bool isConstantElt = isa<ConstantInt>(EI.getOperand(1));
         if (CheapToScalarize(BO, isConstantElt)) {
           ExtractElementInst *newEI0 = 
-            new ExtractElementInst(BO->getOperand(0), EI.getOperand(1),
+            ExtractElementInst::Create(BO->getOperand(0), EI.getOperand(1),
                                    EI.getName()+".lhs");
           ExtractElementInst *newEI1 =
-            new ExtractElementInst(BO->getOperand(1), EI.getOperand(1),
+            ExtractElementInst::Create(BO->getOperand(1), EI.getOperand(1),
                                    EI.getName()+".rhs");
           InsertNewInstBefore(newEI0, EI);
           InsertNewInstBefore(newEI1, EI);
@@ -12468,7 +12468,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         } else {
           return ReplaceInstUsesWith(EI, Context->getUndef(EI.getType()));
         }
-        return new ExtractElementInst(Src,
+        return ExtractElementInst::Create(Src,
                          ConstantInt::get(Type::Int32Ty, SrcIdx, false));
       }
     }

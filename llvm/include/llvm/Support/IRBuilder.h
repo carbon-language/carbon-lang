@@ -641,7 +641,7 @@ public:
     if (Constant *VC = dyn_cast<Constant>(Vec))
       if (Constant *IC = dyn_cast<Constant>(Idx))
         return Folder.CreateExtractElement(VC, IC);
-    return Insert(new ExtractElementInst(Vec, Idx), Name);
+    return Insert(ExtractElementInst::Create(Vec, Idx), Name);
   }
 
   Value *CreateInsertElement(Value *Vec, Value *NewElt, Value *Idx,

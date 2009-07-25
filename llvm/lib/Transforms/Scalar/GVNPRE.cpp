@@ -869,7 +869,7 @@ Value* GVNPRE::phi_translate(Value* V, BasicBlock* pred, BasicBlock* succ) {
                                  newOp1, newOp2,
                                  C->getName()+".expr");
       else if (ExtractElementInst* E = dyn_cast<ExtractElementInst>(U))
-        newVal = new ExtractElementInst(newOp1, newOp2, E->getName()+".expr");
+        newVal = ExtractElementInst::Create(newOp1, newOp2, E->getName()+".expr");
       
       uint32_t v = VN.lookup_or_add(newVal);
       
@@ -1694,7 +1694,7 @@ void GVNPRE::insertion_pre(Value* e, BasicBlock* BB,
         newVal = InsertElementInst::Create(s1, s2, s3, S->getName()+".gvnpre",
                                            (*PI)->getTerminator());
       else if (ExtractElementInst* S = dyn_cast<ExtractElementInst>(U))
-        newVal = new ExtractElementInst(s1, s2, S->getName()+".gvnpre",
+        newVal = ExtractElementInst::Create(s1, s2, S->getName()+".gvnpre",
                                         (*PI)->getTerminator());
       else if (SelectInst* S = dyn_cast<SelectInst>(U))
         newVal = SelectInst::Create(s1, s2, s3, S->getName()+".gvnpre",

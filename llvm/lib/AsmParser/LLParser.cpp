@@ -3103,7 +3103,7 @@ bool LLParser::ParseExtractElement(Instruction *&Inst, PerFunctionState &PFS) {
   if (!ExtractElementInst::isValidOperands(Op0, Op1))
     return Error(Loc, "invalid extractelement operands");
   
-  Inst = new ExtractElementInst(Op0, Op1);
+  Inst = ExtractElementInst::Create(Op0, Op1);
   return false;
 }
 
