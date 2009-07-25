@@ -852,7 +852,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction* orig,
     if (I->second == PN)
       I->second = v;
 
-  DEBUG(cerr << "GVN removed: " << *PN);
+  DEBUG(errs() << "GVN removed: " << *PN);
   MD->removeInstruction(PN);
   PN->eraseFromParent();
   DEBUG(verifyRemoved(PN));
@@ -946,7 +946,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   SmallVector<MemoryDependenceAnalysis::NonLocalDepEntry, 64> Deps; 
   MD->getNonLocalPointerDependency(LI->getOperand(0), true, LI->getParent(),
                                    Deps);
-  //DEBUG(cerr << "INVESTIGATING NONLOCAL LOAD: " << Deps.size() << *LI);
+  //DEBUG(errs() << "INVESTIGATING NONLOCAL LOAD: " << Deps.size() << *LI);
   
   // If we had to process more than one hundred blocks to find the
   // dependencies, this load isn't worth worrying about.  Optimizing
@@ -958,9 +958,9 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // clobber in the current block.  Reject this early.
   if (Deps.size() == 1 && Deps[0].second.isClobber()) {
     DEBUG(
-      DOUT << "GVN: non-local load ";
-      WriteAsOperand(*DOUT.stream(), LI);
-      DOUT << " is clobbered by " << *Deps[0].second.getInst();
+      errs() << "GVN: non-local load ";
+      WriteAsOperand(errs(), LI);
+      errs() << " is clobbered by " << *Deps[0].second.getInst();
     );
     return false;
   }
@@ -1029,7 +1029,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     for (SmallPtrSet<Instruction*, 4>::iterator I = p.begin(), E = p.end();
          I != E; ++I) {
       if ((*I)->getParent() == LI->getParent()) {
-        DEBUG(cerr << "GVN REMOVING NONLOCAL LOAD #1: " << *LI);
+        DEBUG(errs() << "GVN REMOVING NONLOCAL LOAD #1: " << *LI);
         LI->replaceAllUsesWith(*I);
         if (isa<PointerType>((*I)->getType()))
           MD->invalidateCachedPointerInfo(*I);
@@ -1041,7 +1041,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
       ValuesPerBlock.push_back(std::make_pair((*I)->getParent(), *I));
     }
     
-    DEBUG(cerr << "GVN REMOVING NONLOCAL LOAD: " << *LI);
+    DEBUG(errs() << "GVN REMOVING NONLOCAL LOAD: " << *LI);
     
     DenseMap<BasicBlock*, Value*> BlockReplValues;
     BlockReplValues.insert(ValuesPerBlock.begin(), ValuesPerBlock.end());
@@ -1184,7 +1184,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // Okay, we can eliminate this load by inserting a reload in the predecessor
   // and using PHI construction to get the value in the other predecessors, do
   // it.
-  DEBUG(cerr << "GVN REMOVING PRE LOAD: " << *LI);
+  DEBUG(errs() << "GVN REMOVING PRE LOAD: " << *LI);
   
   Value *NewLoad = new LoadInst(LoadPtr, LI->getName()+".pre", false,
                                 LI->getAlignment(),
@@ -1226,10 +1226,10 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   if (dep.isClobber()) {
     DEBUG(
       // fast print dep, using operator<< on instruction would be too slow
-      DOUT << "GVN: load ";
-      WriteAsOperand(*DOUT.stream(), L);
+      errs() << "GVN: load ";
+      WriteAsOperand(errs(), L);
       Instruction *I = dep.getInst();
-      DOUT << " is clobbered by " << *I;
+      errs() << " is clobbered by " << *I;
     );
     return false;
   }
@@ -1477,7 +1477,7 @@ bool GVN::runOnFunction(Function& F) {
   unsigned Iteration = 0;
   
   while (shouldContinue) {
-    DEBUG(cerr << "GVN iteration: " << Iteration << "\n");
+    DEBUG(errs() << "GVN iteration: " << Iteration << "\n");
     shouldContinue = iterateOnFunction(F);
     changed |= shouldContinue;
     ++Iteration;
@@ -1525,7 +1525,7 @@ bool GVN::processBlock(BasicBlock* BB) {
 
     for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
          E = toErase.end(); I != E; ++I) {
-      DEBUG(cerr << "GVN removed: " << **I);
+      DEBUG(errs() << "GVN removed: " << **I);
       MD->removeInstruction(*I);
       (*I)->eraseFromParent();
       DEBUG(verifyRemoved(*I));
@@ -1678,7 +1678,7 @@ bool GVN::performPRE(Function& F) {
         MD->invalidateCachedPointerInfo(Phi);
       VN.erase(CurInst);
       
-      DEBUG(cerr << "GVN PRE removed: " << *CurInst);
+      DEBUG(errs() << "GVN PRE removed: " << *CurInst);
       MD->removeInstruction(CurInst);
       CurInst->eraseFromParent();
       DEBUG(verifyRemoved(CurInst));

@@ -34,7 +34,6 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/Streams.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
@@ -577,7 +576,7 @@ static SlotTracker *createSlotTracker(const Value *V) {
 }
 
 #if 0
-#define ST_DEBUG(X) cerr << X
+#define ST_DEBUG(X) errs() << X
 #else
 #define ST_DEBUG(X)
 #endif

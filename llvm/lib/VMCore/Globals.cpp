@@ -21,7 +21,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
-#include "llvm/Support/Streams.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

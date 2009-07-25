@@ -21,6 +21,7 @@
 #include "LegalizeTypes.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -32,7 +33,7 @@ using namespace llvm;
 /// may also have invalid operands or may have other results that need
 /// expansion, we just know that (at least) one result needs promotion.
 void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
-  DEBUG(cerr << "Promote integer result: "; N->dump(&DAG); cerr << "\n");
+  DEBUG(errs() << "Promote integer result: "; N->dump(&DAG); errs() << "\n");
   SDValue Res = SDValue();
 
   // See if the target wants to custom expand this node.
@@ -42,8 +43,8 @@ void DAGTypeLegalizer::PromoteIntegerResult(SDNode *N, unsigned ResNo) {
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    cerr << "PromoteIntegerResult #" << ResNo << ": ";
-    N->dump(&DAG); cerr << "\n";
+    errs() << "PromoteIntegerResult #" << ResNo << ": ";
+    N->dump(&DAG); errs() << "\n";
 #endif
     llvm_unreachable("Do not know how to promote this operator!");
   case ISD::AssertSext:  Res = PromoteIntRes_AssertSext(N); break;
@@ -598,7 +599,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_XMULO(SDNode *N, unsigned ResNo) {
 /// result types of the node are known to be legal, but other operands of the
 /// node may need promotion or expansion as well as the specified one.
 bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
-  DEBUG(cerr << "Promote integer operand: "; N->dump(&DAG); cerr << "\n");
+  DEBUG(errs() << "Promote integer operand: "; N->dump(&DAG); errs() << "\n");
   SDValue Res = SDValue();
 
   if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
@@ -607,8 +608,8 @@ bool DAGTypeLegalizer::PromoteIntegerOperand(SDNode *N, unsigned OpNo) {
   switch (N->getOpcode()) {
     default:
   #ifndef NDEBUG
-    cerr << "PromoteIntegerOperand Op #" << OpNo << ": ";
-    N->dump(&DAG); cerr << "\n";
+    errs() << "PromoteIntegerOperand Op #" << OpNo << ": ";
+    N->dump(&DAG); errs() << "\n";
   #endif
     llvm_unreachable("Do not know how to promote this operator's operand!");
 
@@ -909,7 +910,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_ZERO_EXTEND(SDNode *N) {
 /// have invalid operands or may have other results that need promotion, we just
 /// know that (at least) one result needs expansion.
 void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
-  DEBUG(cerr << "Expand integer result: "; N->dump(&DAG); cerr << "\n");
+  DEBUG(errs() << "Expand integer result: "; N->dump(&DAG); errs() << "\n");
   SDValue Lo, Hi;
   Lo = Hi = SDValue();
 
@@ -920,8 +921,8 @@ void DAGTypeLegalizer::ExpandIntegerResult(SDNode *N, unsigned ResNo) {
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
-    cerr << "ExpandIntegerResult #" << ResNo << ": ";
-    N->dump(&DAG); cerr << "\n";
+    errs() << "ExpandIntegerResult #" << ResNo << ": ";
+    N->dump(&DAG); errs() << "\n";
 #endif
     llvm_unreachable("Do not know how to expand the result of this operator!");
 
@@ -1956,7 +1957,7 @@ void DAGTypeLegalizer::ExpandIntRes_ZERO_EXTEND(SDNode *N,
 /// result types of the node are known to be legal, but other operands of the
 /// node may need promotion or expansion as well as the specified one.
 bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
-  DEBUG(cerr << "Expand integer operand: "; N->dump(&DAG); cerr << "\n");
+  DEBUG(errs() << "Expand integer operand: "; N->dump(&DAG); errs() << "\n");
   SDValue Res = SDValue();
 
   if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
@@ -1965,8 +1966,8 @@ bool DAGTypeLegalizer::ExpandIntegerOperand(SDNode *N, unsigned OpNo) {
   switch (N->getOpcode()) {
   default:
   #ifndef NDEBUG
-    cerr << "ExpandIntegerOperand Op #" << OpNo << ": ";
-    N->dump(&DAG); cerr << "\n";
+    errs() << "ExpandIntegerOperand Op #" << OpNo << ": ";
+    N->dump(&DAG); errs() << "\n";
   #endif
     llvm_unreachable("Do not know how to expand this operator's operand!");
 
