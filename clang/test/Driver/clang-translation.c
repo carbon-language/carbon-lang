@@ -7,7 +7,7 @@
 // RUN: grep '"--unwind-tables=0"' %t.log &&
 // RUN: grep '"--fmath-errno=1"' %t.log &&
 // RUN: grep '"-Os"' %t.log &&
-// RUN: grep '"-o" .*clang-translation\.c\.out\.tmp\.s' %t.log &&
+// RUN: grep '"-o" .*clang-translation.*' %t.log &&
 // RUN: grep '"--asm-verbose"' %t.log &&
 // RUN: clang -ccc-host-triple i386-apple-darwin9 -### -S %s -o %t.s 2> %t.log
 // RUN: grep '"--mcpu=yonah"' %t.log &&
