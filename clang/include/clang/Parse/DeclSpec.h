@@ -1062,6 +1062,15 @@ public:
   const AttributeList *getAttributes() const { return AttrList; }
   AttributeList *getAttributes() { return AttrList; }
 
+  /// hasAttributes - do we contain any attributes?
+  bool hasAttributes() const {
+    if (getAttributes() || getDeclSpec().getAttributes()) return true;
+    for (unsigned i = 0, e = getNumTypeObjects(); i != e; ++i)
+      if (getTypeObject(i).getAttrs())
+        return true;
+    return false;
+  }
+
   void setAsmLabel(ActionBase::ExprTy *E) { AsmLabel = E; }
   ActionBase::ExprTy *getAsmLabel() const { return AsmLabel; }
 

@@ -2085,6 +2085,15 @@ Sema::ActOnVariableDeclarator(Scope* S, Declarator& D, DeclContext* DC,
 
   CheckVariableDeclaration(NewVD, PrevDecl, Redeclaration);
 
+  // attributes declared post-definition are currently ignored
+  if (PrevDecl) {
+    const VarDecl *Def = 0, *PrevVD = dyn_cast<VarDecl>(PrevDecl);
+    if (PrevVD->getDefinition(Def) && D.hasAttributes()) {
+      Diag(NewVD->getLocation(), diag::warn_attribute_precede_definition);
+      Diag(Def->getLocation(), diag::note_previous_definition);
+    }
+  }
+
   // If this is a locally-scoped extern C variable, update the map of
   // such variables.
   if (CurContext->isFunctionOrMethod() && NewVD->isExternC(Context) &&
@@ -2582,6 +2591,16 @@ Sema::ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // FIXME: This needs to happen before we merge declarations. Then,
   // let attribute merging cope with attribute conflicts.
   ProcessDeclAttributes(S, NewFD, D);
+
+  // attributes declared post-definition are currently ignored
+  if (PrevDecl) {
+    const FunctionDecl *Def, *PrevFD = dyn_cast<FunctionDecl>(PrevDecl);
+    if (PrevFD && PrevFD->getBody(Def) && D.hasAttributes()) {
+      Diag(NewFD->getLocation(), diag::warn_attribute_precede_definition);
+      Diag(Def->getLocation(), diag::note_previous_definition);
+    }
+  }
+
   AddKnownFunctionAttributes(NewFD);
 
   if (OverloadableAttrRequired && !NewFD->getAttr<OverloadableAttr>()) {
