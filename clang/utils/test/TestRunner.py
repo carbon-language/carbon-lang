@@ -132,13 +132,26 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
             index = ln.index('RUN:')
             ln = ln[index+4:]
             
-            # Strip whitespace and append.
-            scriptLines.append(ln.strip())
+            # Strip trailing newline.
+            scriptLines.append(ln)
         elif 'XFAIL' in ln:
             xfailLines.append(ln)
         
         # FIXME: Support something like END, in case we need to process large
         # files.
+    
+    # Apply substitutions to the script.
+    def processLine(ln):
+        # Apply substitutions
+        for a,b in substitutions:
+            ln = ln.replace(a,b)
+
+        if useDGCompat:
+            ln = re.sub(r'\{(.*)\}', r'"\1"', ln)
+
+        # Strip the trailing newline and any extra whitespace.
+        return ln.strip()
+    scriptLines = map(processLine, scriptLines)    
 
     # Validate interior lines for '&&', a lovely historical artifact.
     for i in range(len(scriptLines) - 1):
@@ -151,18 +164,7 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
     
         # Strip off '&&'
         scriptLines[i] = ln[:-2]
-    
-    # Apply substitutions to the script.
-    def processLine(ln):
-        # Apply substitutions
-        for a,b in substitutions:
-            ln = ln.replace(a,b)
 
-        if useDGCompat:
-            ln = re.sub(r'\{(.*)\}', r'"\1"', ln)
-        return ln
-    scriptLines = map(processLine, scriptLines)
-    
     if xfailLines:
         print >>output, "XFAILED '%s':"%(TESTNAME,)
         output.writelines(xfailLines)
