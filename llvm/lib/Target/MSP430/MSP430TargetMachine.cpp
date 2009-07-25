@@ -18,19 +18,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetMachineRegistry.h"
-
 using namespace llvm;
-
-// Register the targets
-static RegisterTarget<MSP430TargetMachine>
-X(TheMSP430Target, "msp430", "MSP430 [experimental]");
-
-// Force static initialization.
-extern "C" void LLVMInitializeMSP430Target() { 
-  TargetRegistry::RegisterAsmPrinter(TheMSP430Target,
-                                     &createMSP430CodePrinterPass);
-}
 
 MSP430TargetMachine::MSP430TargetMachine(const Target &T,
                                          const Module &M,

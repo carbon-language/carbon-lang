@@ -42,14 +42,6 @@ FunctionPass *createX86FloatingPointStackifierPass();
 ///
 FunctionPass *createX87FPRegKillInserterPass();
 
-/// createX86CodePrinterPass - Returns a pass that prints the X86
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.
-///
-FunctionPass *createX86CodePrinterPass(formatted_raw_ostream &o,
-                                       TargetMachine &tm,
-                                       bool Verbose);
-
 /// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
 /// to the specified MCE object.
 

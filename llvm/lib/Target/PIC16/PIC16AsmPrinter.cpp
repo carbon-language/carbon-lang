@@ -24,6 +24,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/Target/TargetRegistry.h"
 
 using namespace llvm;
 
@@ -105,17 +106,6 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   DbgInfo.EndFunction(MF);
 
   return false;  // we didn't modify anything.
-}
-
-/// createPIC16CodePrinterPass - Returns a pass that prints the PIC16
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createPIC16CodePrinterPass(formatted_raw_ostream &o,
-                                               TargetMachine &tm,
-                                               bool verbose) {
-  return new PIC16AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
 }
 
 
@@ -435,3 +425,11 @@ void PIC16AsmPrinter::EmitRemainingAutos() {
   }
 }
 
+
+extern "C" void LLVMInitializePIC16Target() { 
+  // Register the targets
+  RegisterTargetMachine<PIC16TargetMachine> A(ThePIC16Target);  
+  RegisterTargetMachine<CooperTargetMachine> B(TheCooperTarget);
+  RegisterAsmPrinter<PIC16AsmPrinter> C(ThePIC16Target);
+  RegisterAsmPrinter<PIC16AsmPrinter> D(TheCooperTarget);
+}

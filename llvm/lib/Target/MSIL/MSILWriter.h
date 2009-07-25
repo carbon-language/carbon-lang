@@ -26,7 +26,6 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Support/Mangler.h"
 #include <ios>
 using namespace llvm;

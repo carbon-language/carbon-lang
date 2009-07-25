@@ -87,16 +87,6 @@ namespace {
 
 #include "MipsGenAsmWriter.inc"
 
-/// createMipsCodePrinterPass - Returns a pass that prints the MIPS
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-FunctionPass *llvm::createMipsCodePrinterPass(formatted_raw_ostream &o,
-                                              TargetMachine &tm,
-                                              bool verbose) {
-  return new MipsAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
-
 //===----------------------------------------------------------------------===//
 //
 //  Mips Asm Directives
@@ -560,8 +550,6 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
 // Force static initialization.
 extern "C" void LLVMInitializeMipsAsmPrinter() { 
-  TargetRegistry::RegisterAsmPrinter(TheMipsTarget, createMipsCodePrinterPass);
-
-  TargetRegistry::RegisterAsmPrinter(TheMipselTarget, 
-                                     createMipsCodePrinterPass);
+  RegisterAsmPrinter<MipsAsmPrinter> X(TheMipsTarget);
+  RegisterAsmPrinter<MipsAsmPrinter> Y(TheMipselTarget);
 }

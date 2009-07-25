@@ -24,9 +24,6 @@ namespace llvm {
 
   FunctionPass *createMSP430ISelDag(MSP430TargetMachine &TM,
                                     CodeGenOpt::Level OptLevel);
-  FunctionPass *createMSP430CodePrinterPass(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
-                                            bool verbose);
 
   extern Target TheMSP430Target;
 

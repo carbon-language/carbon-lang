@@ -1,4 +1,4 @@
-//===-- MSP430AsmPrinter.cpp - MSP430 LLVM assembly writer ------------------===//
+//===-- MSP430AsmPrinter.cpp - MSP430 LLVM assembly writer ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/FormattedStream.h"
@@ -71,17 +72,6 @@ namespace {
 } // end of anonymous namespace
 
 #include "MSP430GenAsmWriter.inc"
-
-/// createMSP430CodePrinterPass - Returns a pass that prints the MSP430
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createMSP430CodePrinterPass(formatted_raw_ostream &o,
-                                                TargetMachine &tm,
-                                                bool verbose) {
-  return new MSP430AsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
 
 
 void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
@@ -254,4 +244,10 @@ void MSP430AsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum) {
    O << 'l';
    break;
   }
+}
+
+extern "C" void LLVMInitializeMSP430Target() { 
+  // Register the target.
+  RegisterTargetMachine<MSP430TargetMachine> X(TheMSP430Target);
+  RegisterAsmPrinter<MSP430AsmPrinter> Y(TheMSP430Target);
 }

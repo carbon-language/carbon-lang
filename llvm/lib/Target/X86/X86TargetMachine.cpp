@@ -20,19 +20,13 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-// Register the target.
-static RegisterTarget<X86_32TargetMachine>
-X(TheX86_32Target, "x86",    "32-bit X86: Pentium-Pro and above");
-
-static RegisterTarget<X86_64TargetMachine>
-Y(TheX86_64Target, "x86-64", "64-bit X86: EM64T and AMD64");
-
-// Force static initialization.
 extern "C" void LLVMInitializeX86Target() { 
-  
+  // Register the target.
+  RegisterTargetMachine<X86_32TargetMachine> X(TheX86_32Target);
+  RegisterTargetMachine<X86_64TargetMachine> Y(TheX86_64Target);
 }
 
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {

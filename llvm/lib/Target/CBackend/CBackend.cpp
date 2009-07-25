@@ -32,7 +32,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
@@ -50,11 +49,10 @@
 #include <sstream>
 using namespace llvm;
 
-// Register the target.
-static RegisterTarget<CTargetMachine> X(TheCBackendTarget, "c", "C backend");
-
-// Force static initialization.
-extern "C" void LLVMInitializeCBackendTarget() { }
+extern "C" void LLVMInitializeCBackendTarget() { 
+  // Register the target.
+  RegisterTargetMachine<CTargetMachine> X(TheCBackendTarget);
+}
 
 namespace {
   /// CBackendNameAllUsedStructsAndMergeFunctions - This pass inserts names for

@@ -15,14 +15,13 @@
 #include "Sparc.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-// Register the target.
-static RegisterTarget<SparcTargetMachine> X(TheSparcTarget, "sparc", "SPARC");
-
-// Force static initialization.
-extern "C" void LLVMInitializeSparcTarget() { }
+extern "C" void LLVMInitializeSparcTarget() {
+  // Register the target.
+  RegisterTargetMachine<SparcTargetMachine> X(TheSparcTarget);
+}
 
 const TargetAsmInfo *SparcTargetMachine::createTargetAsmInfo() const {
   // FIXME: Handle Solaris subtarget someday :)

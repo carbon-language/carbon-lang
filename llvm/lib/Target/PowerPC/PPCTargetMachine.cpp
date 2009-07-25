@@ -16,20 +16,16 @@
 #include "PPCTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
 
-// Register the targets
-static RegisterTarget<PPC32TargetMachine>
-X(ThePPC32Target, "ppc32", "PowerPC 32");
-
-static RegisterTarget<PPC64TargetMachine>
-Y(ThePPC64Target, "ppc64", "PowerPC 64");
-
-// Force static initialization.
-extern "C" void LLVMInitializePowerPCTarget() { }
+extern "C" void LLVMInitializePowerPCTarget() {
+  // Register the targets
+  RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);  
+  RegisterTargetMachine<PPC64TargetMachine> B(ThePPC64Target);
+}
 
 const TargetAsmInfo *PPCTargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isDarwin())

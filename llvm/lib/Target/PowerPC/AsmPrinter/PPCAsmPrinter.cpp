@@ -1075,7 +1075,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 /// for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
 ///
-FunctionPass *llvm::createPPCAsmPrinterPass(formatted_raw_ostream &o,
+static FunctionPass *createPPCAsmPrinterPass(formatted_raw_ostream &o,
                                             TargetMachine &tm,
                                             bool verbose) {
   const PPCSubtarget *Subtarget = &tm.getSubtarget<PPCSubtarget>();

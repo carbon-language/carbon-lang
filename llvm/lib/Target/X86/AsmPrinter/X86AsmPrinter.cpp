@@ -25,9 +25,9 @@ using namespace llvm;
 /// for a MachineFunction to the given output stream, using the given target
 /// machine description.
 ///
-FunctionPass *llvm::createX86CodePrinterPass(formatted_raw_ostream &o,
-                                             TargetMachine &tm,
-                                             bool verbose) {
+static FunctionPass *createX86CodePrinterPass(formatted_raw_ostream &o,
+                                              TargetMachine &tm,
+                                              bool verbose) {
   const X86Subtarget *Subtarget = &tm.getSubtarget<X86Subtarget>();
 
   if (Subtarget->isFlavorIntel())

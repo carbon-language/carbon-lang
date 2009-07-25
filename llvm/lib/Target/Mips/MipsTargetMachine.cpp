@@ -16,17 +16,14 @@
 #include "MipsTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-// Register the target.
-static RegisterTarget<MipsTargetMachine>    X(TheMipsTarget, "mips", "Mips");
-
-static RegisterTarget<MipselTargetMachine>  Y(TheMipselTarget, "mipsel", 
-                                              "Mipsel");
-
-// Force static initialization.
-extern "C" void LLVMInitializeMipsTarget() { }
+extern "C" void LLVMInitializeMipsTarget() {
+  // Register the target.
+  RegisterTargetMachine<MipsTargetMachine> X(TheMipsTarget);
+  RegisterTargetMachine<MipselTargetMachine> Y(TheMipselTarget);
+}
 
 const TargetAsmInfo *MipsTargetMachine::
 createTargetAsmInfo() const 

@@ -16,17 +16,15 @@
 #include "AlphaTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Target/TargetRegistry.h"
 
 using namespace llvm;
 
-// Register the targets
-static RegisterTarget<AlphaTargetMachine> X(TheAlphaTarget, "alpha", 
-                                            "Alpha [experimental]");
-
-// Force static initialization.
-extern "C" void LLVMInitializeAlphaTarget() { }
+extern "C" void LLVMInitializeAlphaTarget() { 
+  // Register the target.
+  RegisterTargetMachine<AlphaTargetMachine> X(TheAlphaTarget);
+}
 
 const TargetAsmInfo *AlphaTargetMachine::createTargetAsmInfo() const {
   return new AlphaTargetAsmInfo(*this);

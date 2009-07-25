@@ -76,17 +76,6 @@ namespace {
 
 #include "SparcGenAsmWriter.inc"
 
-/// createSparcCodePrinterPass - Returns a pass that prints the SPARC
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createSparcCodePrinterPass(formatted_raw_ostream &o,
-                                               TargetMachine &tm,
-                                               bool verbose) {
-  return new SparcAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
-
 
 /// runOnMachineFunction - This uses the printInstruction()
 /// method to print assembly for each instruction.
@@ -336,6 +325,5 @@ bool SparcAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
 // Force static initialization.
 extern "C" void LLVMInitializeSparcAsmPrinter() { 
-  TargetRegistry::RegisterAsmPrinter(TheSparcTarget, 
-                                     createSparcCodePrinterPass);
+  RegisterAsmPrinter<SparcAsmPrinter> X(TheSparcTarget);
 }

@@ -22,6 +22,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/Passes.h"
@@ -48,10 +49,10 @@ namespace {
   };
 }
 
-static RegisterTarget<MSILTarget> X(TheMSILTarget, "msil", "MSIL backend");
-
-// Force static initialization.
-extern "C" void LLVMInitializeMSILTarget() { }
+extern "C" void LLVMInitializeMSILTarget() {
+  // Register the target.
+  RegisterTargetMachine<MSILTarget> X(TheMSILTarget);
+}
 
 bool MSILModule::runOnModule(Module &M) {
   ModulePtr = &M;

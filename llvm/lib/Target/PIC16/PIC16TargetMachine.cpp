@@ -18,24 +18,8 @@
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 
 using namespace llvm;
-
-// Register the targets
-static RegisterTarget<PIC16TargetMachine> 
-X(ThePIC16Target, "pic16", "PIC16 14-bit [experimental].");
-
-static RegisterTarget<CooperTargetMachine> 
-Y(TheCooperTarget, "cooper", "PIC16 Cooper [experimental].");
-
-// Force static initialization.
-extern "C" void LLVMInitializePIC16Target() { 
-  TargetRegistry::RegisterAsmPrinter(ThePIC16Target,
-                                     &createPIC16CodePrinterPass);
-  TargetRegistry::RegisterAsmPrinter(TheCooperTarget,
-                                     &createPIC16CodePrinterPass);
-}
 
 // PIC16TargetMachine - Traditional PIC16 Machine.
 PIC16TargetMachine::PIC16TargetMachine(const Target &T, const Module &M, 

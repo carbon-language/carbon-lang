@@ -78,17 +78,6 @@ namespace {
 
 #include "SystemZGenAsmWriter.inc"
 
-/// createSystemZCodePrinterPass - Returns a pass that prints the SystemZ
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createSystemZCodePrinterPass(formatted_raw_ostream &o,
-                                                 TargetMachine &tm,
-                                                 bool verbose) {
-  return new SystemZAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
-
 void SystemZAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   unsigned FnAlign = MF.getAlignment();
   const Function *F = MF.getFunction();
@@ -403,6 +392,5 @@ void SystemZAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
 // Force static initialization.
 extern "C" void LLVMInitializeSystemZAsmPrinter() {
-  TargetRegistry::RegisterAsmPrinter(TheSystemZTarget,
-                                     createSystemZCodePrinterPass);
+  RegisterAsmPrinter<SystemZAsmPrinter> X(TheSystemZTarget);
 }

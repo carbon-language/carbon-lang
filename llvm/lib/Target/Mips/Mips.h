@@ -25,9 +25,6 @@ namespace llvm {
 
   FunctionPass *createMipsISelDag(MipsTargetMachine &TM);
   FunctionPass *createMipsDelaySlotFillerPass(MipsTargetMachine &TM);
-  FunctionPass *createMipsCodePrinterPass(formatted_raw_ostream &OS, 
-                                          TargetMachine &TM,
-                                          bool Verbose);
 
   extern Target TheMipsTarget;
   extern Target TheMipselTarget;

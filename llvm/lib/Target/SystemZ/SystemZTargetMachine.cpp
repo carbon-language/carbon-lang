@@ -1,4 +1,4 @@
-//===-- SystemZTargetMachine.cpp - Define TargetMachine for SystemZ -----------===//
+//===-- SystemZTargetMachine.cpp - Define TargetMachine for SystemZ -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,19 +15,12 @@
 #include "SystemZ.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineRegistry.h"
+#include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-namespace {
-  // Register the target.
-  RegisterTarget<SystemZTargetMachine> X(TheSystemZTarget,
-                                         "systemz",
-                                         "SystemZ [experimental]");
-}
-
-// Force static initialization.
 extern "C" void LLVMInitializeSystemZTarget() {
-
+  // Register the target.
+  RegisterTargetMachine<SystemZTargetMachine> X(TheSystemZTarget);
 }
 
 const TargetAsmInfo *SystemZTargetMachine::createTargetAsmInfo() const {

@@ -24,9 +24,6 @@ namespace llvm {
   class formatted_raw_ostream;
 
   FunctionPass *createXCoreISelDag(XCoreTargetMachine &TM);
-  FunctionPass *createXCoreCodePrinterPass(formatted_raw_ostream &OS,
-                                           TargetMachine &TM,
-                                           bool Verbose);
 
   extern Target TheXCoreTarget;
 

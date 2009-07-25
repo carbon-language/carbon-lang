@@ -25,9 +25,6 @@ namespace llvm {
   class formatted_raw_ostream;
 
   FunctionPass *createSparcISelDag(SparcTargetMachine &TM);
-  FunctionPass *createSparcCodePrinterPass(formatted_raw_ostream &OS,
-                                           TargetMachine &TM,
-                                           bool Verbose);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
   FunctionPass *createSparcFPMoverPass(TargetMachine &TM);
 

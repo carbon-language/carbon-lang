@@ -56,14 +56,8 @@ bool X86ATTAsmParser::ParseInstruction(MCAsmParser &AP, const char *Name,
   return MatchInstruction(Name, Operands, Inst);
 }
 
-namespace {
-  TargetAsmParser *createAsmParser(const Target &T) {
-    return new X86ATTAsmParser(T);
-  }
-}
-
 // Force static initialization.
 extern "C" void LLVMInitializeX86AsmParser() {
-  TargetRegistry::RegisterAsmParser(TheX86_32Target, &createAsmParser);
-  TargetRegistry::RegisterAsmParser(TheX86_64Target, &createAsmParser);
+  RegisterAsmParser<X86ATTAsmParser> X(TheX86_32Target);
+  RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
 }

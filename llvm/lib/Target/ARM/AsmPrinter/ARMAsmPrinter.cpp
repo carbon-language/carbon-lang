@@ -1304,19 +1304,8 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
   return AsmPrinter::doFinalization(M);
 }
 
-/// createARMCodePrinterPass - Returns a pass that prints the ARM
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createARMCodePrinterPass(formatted_raw_ostream &o,
-                                             TargetMachine &tm,
-                                             bool verbose) {
-  return new ARMAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
-
 // Force static initialization.
 extern "C" void LLVMInitializeARMAsmPrinter() { 
-  TargetRegistry::RegisterAsmPrinter(TheARMTarget, createARMCodePrinterPass);
-  TargetRegistry::RegisterAsmPrinter(TheThumbTarget, createARMCodePrinterPass);
+  RegisterAsmPrinter<ARMAsmPrinter> X(TheARMTarget);
+  RegisterAsmPrinter<ARMAsmPrinter> Y(TheThumbTarget);
 }

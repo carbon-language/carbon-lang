@@ -24,9 +24,6 @@ namespace llvm {
   class formatted_raw_ostream;
 
   FunctionPass *createSPUISelDag(SPUTargetMachine &TM);
-  FunctionPass *createSPUAsmPrinterPass(formatted_raw_ostream &o,
-                                        TargetMachine &tm,
-                                        bool verbose);
 
   /*--== Utility functions/predicates/etc used all over the place: --==*/
   //! Predicate test for a signed 10-bit value

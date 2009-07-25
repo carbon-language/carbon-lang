@@ -584,17 +584,7 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   O << '\n';
 }
 
-/// createSPUCodePrinterPass - Returns a pass that prints the Cell SPU
-/// assembly code for a MachineFunction to the given output stream, in a format
-/// that the Linux SPU assembler can deal with.
-///
-FunctionPass *llvm::createSPUAsmPrinterPass(formatted_raw_ostream &o,
-                                            TargetMachine &tm,
-                                            bool verbose) {
-  return new LinuxAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
-
 // Force static initialization.
 extern "C" void LLVMInitializeCellSPUAsmPrinter() { 
-  TargetRegistry::RegisterAsmPrinter(TheCellSPUTarget, createSPUAsmPrinterPass);
+  RegisterAsmPrinter<LinuxAsmPrinter> X(TheCellSPUTarget);
 }

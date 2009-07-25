@@ -46,9 +46,6 @@ namespace llvm {
 
   FunctionPass *createSystemZISelDag(SystemZTargetMachine &TM,
                                     CodeGenOpt::Level OptLevel);
-  FunctionPass *createSystemZCodePrinterPass(formatted_raw_ostream &o,
-                                             TargetMachine &tm,
-                                             bool verbose);
 
   extern Target TheSystemZTarget;
 

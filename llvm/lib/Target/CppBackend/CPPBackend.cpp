@@ -23,7 +23,6 @@
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/TypeSymbolTable.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -31,6 +30,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <set>
@@ -72,11 +72,10 @@ static cl::opt<std::string> NameToGenerate("cppfor", cl::Optional,
   cl::desc("Specify the name of the thing to generate"),
   cl::init("!bad!"));
 
-// Register the target.
-static RegisterTarget<CPPTargetMachine> X(TheCppBackendTarget, "cpp", "C++ backend");
-
-// Force static initialization.
-extern "C" void LLVMInitializeCppBackendTarget() { }
+extern "C" void LLVMInitializeCppBackendTarget() {
+  // Register the target.
+  RegisterTargetMachine<CPPTargetMachine> X(TheCppBackendTarget);
+}
 
 namespace {
   typedef std::vector<const Type*> TypeList;

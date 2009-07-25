@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -90,17 +91,6 @@ namespace {
 } // end of anonymous namespace
 
 #include "XCoreGenAsmWriter.inc"
-
-/// createXCoreCodePrinterPass - Returns a pass that prints the XCore
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createXCoreCodePrinterPass(formatted_raw_ostream &o,
-                                               TargetMachine &tm,
-                                               bool verbose) {
-  return new XCoreAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
 
 void XCoreAsmPrinter::
 emitGlobalDirective(const std::string &name)
@@ -387,3 +377,9 @@ bool XCoreAsmPrinter::doInitialization(Module &M) {
 }
 
 
+
+// Force static initialization.
+extern "C" void LLVMInitializeXCoreTarget() { 
+  RegisterTargetMachine<XCoreTargetMachine> X(TheXCoreTarget);
+  RegisterAsmPrinter<XCoreAsmPrinter> Y(TheXCoreTarget);
+}

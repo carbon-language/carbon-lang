@@ -19,6 +19,9 @@
 #ifndef LLVM_TARGET_TARGETREGISTRY_H
 #define LLVM_TARGET_TARGETREGISTRY_H
 
+// FIXME: We shouldn't need this header, but we need it until there is a
+// different interface to get the TargetAsmInfo.
+#include "llvm/Target/TargetMachine.h"
 #include <string>
 #include <cassert>
 
@@ -276,6 +279,98 @@ namespace llvm {
     }
 
     /// @}
+  };
+
+
+  //===--------------------------------------------------------------------===//
+
+  /// RegisterTarget - Helper template for registering a target, for use in the
+  /// target's initialization function. Usage:
+  ///
+  ///
+  /// Target TheFooTarget; // The global target instance.
+  ///
+  /// namespace {
+  ///   struct FooInfo {
+  ///     static unsigned getJITMatchQuality() { ... }
+  ///     static unsigned getTripleMatchQuality(const std::string &) { ... }
+  ///     static unsigned getModuleMatchQuality(const Module &) { ... }
+  ///   };
+  /// }
+  ///
+  /// extern "C" void LLVMInitializeFooTargetInfo() {
+  ///   RegisterTarget<FooAsmPrinter> X(TheFooTarget, "foo", "Foo description");
+  /// }
+  template<class TargetInfoImpl>
+  struct RegisterTarget {
+    RegisterTarget(Target &T, const char *Name, const char *Desc) {
+      TargetRegistry::RegisterTarget(T, Name, Desc,
+                                     &TargetInfoImpl::getTripleMatchQuality,
+                                     &TargetInfoImpl::getModuleMatchQuality,
+                                     &TargetInfoImpl::getJITMatchQuality);
+    }
+  };
+
+  /// RegisterTargetMachine - Helper template for registering a target machine
+  /// implementation, for use in the target machine initialization
+  /// function. Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooTarget() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterTargetMachine<FooTargetMachine> X(TheFooTarget);
+  /// }
+  template<class TargetMachineImpl>
+  struct RegisterTargetMachine {
+    RegisterTargetMachine(Target &T) {
+      TargetRegistry::RegisterTargetMachine(T, &Allocator);
+    }
+
+  private:
+    static TargetMachine *Allocator(const Target &T, const Module &M,
+                                    const std::string &FS) {
+      return new TargetMachineImpl(T, M, FS);
+    }
+  };
+
+  /// RegisterAsmPrinter - Helper template for registering a target specific
+  /// assembly printer, for use in the target machine initialization
+  /// function. Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooAsmPrinter() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterAsmPrinter<FooAsmPrinter> X(TheFooTarget);
+  /// }
+  template<class AsmPrinterImpl>
+  struct RegisterAsmPrinter {
+    RegisterAsmPrinter(Target &T) {
+      TargetRegistry::RegisterAsmPrinter(T, &Allocator);
+    }
+
+  private:
+    static FunctionPass *Allocator(formatted_raw_ostream &OS,
+                                   TargetMachine &TM,
+                                   bool Verbose) {
+      return new AsmPrinterImpl(OS, TM, TM.getTargetAsmInfo(), Verbose);
+    }
+  };
+
+  /// RegisterAsmParser - Helper template for registering a target specific asm
+  /// parser, for use in the target machine initialization function. Usage:
+  ///
+  /// extern "C" void LLVMInitializeFooAsmPrinter() {
+  ///   extern Target TheFooTarget;
+  ///   RegisterAsmPrinter<FooAsmPrinter> X(TheFooTarget);
+  /// }
+  template<class AsmParserImpl>
+  struct RegisterAsmParser {
+    RegisterAsmParser(Target &T) {
+      TargetRegistry::RegisterAsmParser(T, &Allocator);
+    }
+
+  private:
+    static TargetAsmParser *Allocator(const Target &T) {
+      return new AsmParserImpl(T);
+    }
   };
 
 }

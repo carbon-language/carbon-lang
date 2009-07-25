@@ -63,17 +63,6 @@ namespace {
   };
 } // end of anonymous namespace
 
-/// createAlphaCodePrinterPass - Returns a pass that prints the Alpha
-/// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
-///
-FunctionPass *llvm::createAlphaCodePrinterPass(formatted_raw_ostream &o,
-                                               TargetMachine &tm,
-                                               bool verbose) {
-  return new AlphaAsmPrinter(o, tm, tm.getTargetAsmInfo(), verbose);
-}
-
 #include "AlphaGenAsmWriter.inc"
 
 void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
@@ -288,6 +277,5 @@ bool AlphaAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 
 // Force static initialization.
 extern "C" void LLVMInitializeAlphaAsmPrinter() { 
-  TargetRegistry::RegisterAsmPrinter(TheAlphaTarget,
-                                     createAlphaCodePrinterPass);
+  RegisterAsmPrinter<AlphaAsmPrinter> X(TheAlphaTarget);
 }

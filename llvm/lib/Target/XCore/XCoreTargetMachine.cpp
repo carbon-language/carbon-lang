@@ -15,19 +15,7 @@
 #include "XCore.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
-
-namespace {
-  // Register the target.
-  RegisterTarget<XCoreTargetMachine> X(TheXCoreTarget, "xcore", "XCore");
-}
-
-// Force static initialization.
-extern "C" void LLVMInitializeXCoreTarget() { 
-  TargetRegistry::RegisterAsmPrinter(TheXCoreTarget,
-                                     &createXCoreCodePrinterPass);
-}
 
 const TargetAsmInfo *XCoreTargetMachine::createTargetAsmInfo() const {
   return new XCoreTargetAsmInfo(*this);
