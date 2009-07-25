@@ -14,14 +14,6 @@ using namespace llvm;
 
 Target llvm::ThePPC32Target;
 
-static unsigned PPC32_JITMatchQuality() {
-#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
-  if (sizeof(void*) == 4)
-    return 10;
-#endif
-  return 0;
-}
-
 static unsigned PPC32_TripleMatchQuality(const std::string &TT) {
   // We strongly match "powerpc-*".
   if (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "powerpc-")
@@ -45,18 +37,10 @@ static unsigned PPC32_ModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
   
-  return PPC32_JITMatchQuality()/2;
+  return 0;
 }
 
 Target llvm::ThePPC64Target;
-
-static unsigned PPC64_JITMatchQuality() {
-#if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER) || defined(__PPC__)
-  if (sizeof(void*) == 8)
-    return 10;
-#endif
-  return 0;
-}
 
 static unsigned PPC64_TripleMatchQuality(const std::string &TT) {
   // We strongly match "powerpc64-*".
@@ -81,7 +65,7 @@ static unsigned PPC64_ModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
   
-  return PPC64_JITMatchQuality()/2;
+  return 0;
 }
 
 extern "C" void LLVMInitializePowerPCTargetInfo() { 
@@ -89,11 +73,11 @@ extern "C" void LLVMInitializePowerPCTargetInfo() {
                                   "PowerPC 32",
                                   &PPC32_TripleMatchQuality,
                                   &PPC32_ModuleMatchQuality,
-                                  &PPC32_JITMatchQuality);
+                                 /*HasJIT=*/true);
 
   TargetRegistry::RegisterTarget(ThePPC64Target, "ppc64",
                                   "PowerPC 64",
                                   &PPC64_TripleMatchQuality,
                                   &PPC64_ModuleMatchQuality,
-                                  &PPC64_JITMatchQuality);
+                                 /*HasJIT=*/true);
 }

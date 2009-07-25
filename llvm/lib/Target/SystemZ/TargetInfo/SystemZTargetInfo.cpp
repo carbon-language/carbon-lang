@@ -1,4 +1,4 @@
-//===-- SystemZTargetInfo.cpp - SystemZ Target Implementation -----------------===//
+//===-- SystemZTargetInfo.cpp - SystemZ Target Implementation -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,10 +13,6 @@
 using namespace llvm;
 
 Target llvm::TheSystemZTarget;
-
-static unsigned SystemZ_JITMatchQuality() {
-  return 0;
-}
 
 static unsigned SystemZ_TripleMatchQuality(const std::string &TT) {
   // We strongly match s390x
@@ -40,6 +36,5 @@ extern "C" void LLVMInitializeSystemZTargetInfo() {
   TargetRegistry::RegisterTarget(TheSystemZTarget, "systemz",
                                  "SystemZ",
                                  &SystemZ_TripleMatchQuality,
-                                 &SystemZ_ModuleMatchQuality,
-                                 &SystemZ_JITMatchQuality);
+                                 &SystemZ_ModuleMatchQuality);
 }

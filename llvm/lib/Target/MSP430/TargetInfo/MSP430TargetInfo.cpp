@@ -14,10 +14,6 @@ using namespace llvm;
 
 Target llvm::TheMSP430Target;
 
-static unsigned MSP430_JITMatchQuality() {
-  return 0;
-}
-
 static unsigned MSP430_TripleMatchQuality(const std::string &TT) {
   // We strongly match msp430
   if (TT.size() >= 6 && TT[0] == 'm' && TT[1] == 's' && TT[2] == 'p' &&
@@ -42,6 +38,5 @@ extern "C" void LLVMInitializeMSP430TargetInfo() {
   TargetRegistry::RegisterTarget(TheMSP430Target, "msp430",    
                                   "MSP430 [experimental]",
                                   &MSP430_TripleMatchQuality,
-                                  &MSP430_ModuleMatchQuality,
-                                  &MSP430_JITMatchQuality);
+                                  &MSP430_ModuleMatchQuality);
 }

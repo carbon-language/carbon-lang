@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/System/Host.h"
 #include <cassert>
 using namespace llvm;
 
@@ -77,9 +78,18 @@ TargetRegistry::getClosestStaticTargetForModule(const Module &M,
     }
   }
 
+  // FIXME: This is a hack to ignore super weak matches like msil, etc. and look
+  // by host instead. They will be found again via the triple.
+  if (Best && BestQuality == 1)    
+    Best = EquallyBest = 0;
+
+  // If that failed, try looking up the host triple.
+  if (!Best)
+    Best = getClosestStaticTargetForTriple(sys::getHostTriple(), Error);
+
   if (!Best) {
     Error = "No available targets are compatible with this module";
-    return 0;
+    return Best;
   }
 
   // Otherwise, take the best target, but make sure we don't have two equally
@@ -95,6 +105,8 @@ TargetRegistry::getClosestStaticTargetForModule(const Module &M,
 
 const Target *
 TargetRegistry::getClosestTargetForJIT(std::string &Error) {
+  std::string Triple = sys::getHostTriple();
+
   // Provide special warning when no targets are initialized.
   if (begin() == end()) {
     Error = "No JIT is available for this host (no targets are registered)";
@@ -104,7 +116,10 @@ TargetRegistry::getClosestTargetForJIT(std::string &Error) {
   const Target *Best = 0, *EquallyBest = 0;
   unsigned BestQuality = 0;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
-    if (unsigned Qual = it->JITMatchQualityFn()) {
+    if (!it->hasJIT())
+      continue;
+
+    if (unsigned Qual = it->TripleMatchQualityFn(Triple)) {
       if (!Best || Qual > BestQuality) {
         Best = &*it;
         EquallyBest = 0;
@@ -128,8 +143,8 @@ void TargetRegistry::RegisterTarget(Target &T,
                                     const char *ShortDesc,
                                     Target::TripleMatchQualityFnTy TQualityFn,
                                     Target::ModuleMatchQualityFnTy MQualityFn,
-                                    Target::JITMatchQualityFnTy JITQualityFn) {
-  assert(Name && ShortDesc && TQualityFn && MQualityFn && JITQualityFn &&
+                                    bool HasJIT) {
+  assert(Name && ShortDesc && TQualityFn && MQualityFn &&
          "Missing required target information!");
 
   // Check if this target has already been initialized, we allow this as a
@@ -145,6 +160,6 @@ void TargetRegistry::RegisterTarget(Target &T,
   T.ShortDesc = ShortDesc;
   T.TripleMatchQualityFn = TQualityFn;
   T.ModuleMatchQualityFn = MQualityFn;
-  T.JITMatchQualityFn = JITQualityFn;
+  T.HasJIT = HasJIT;
 }
 

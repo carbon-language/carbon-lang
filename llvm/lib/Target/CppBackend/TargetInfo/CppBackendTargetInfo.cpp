@@ -14,10 +14,6 @@ using namespace llvm;
 
 Target llvm::TheCppBackendTarget;
 
-static unsigned CppBackend_JITMatchQuality() {
-  return 0;
-}
-
 static unsigned CppBackend_TripleMatchQuality(const std::string &TT) {
   // This class always works, but shouldn't be the default in most cases.
   return 1;
@@ -32,6 +28,5 @@ extern "C" void LLVMInitializeCppBackendTargetInfo() {
   TargetRegistry::RegisterTarget(TheCppBackendTarget, "cpp",    
                                   "C++ backend",
                                   &CppBackend_TripleMatchQuality,
-                                  &CppBackend_ModuleMatchQuality,
-                                  &CppBackend_JITMatchQuality);
+                                  &CppBackend_ModuleMatchQuality);
 }

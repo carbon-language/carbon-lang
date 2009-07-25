@@ -14,10 +14,6 @@ using namespace llvm;
 
 Target llvm::TheMipsTarget;
 
-static unsigned Mips_JITMatchQuality() {
-  return 0;
-}
-
 static unsigned Mips_TripleMatchQuality(const std::string &TT) {
   // We strongly match "mips*-*".
   if (TT.size() >= 5 && std::string(TT.begin(), TT.begin()+5) == "mips-")
@@ -42,10 +38,6 @@ static unsigned Mips_ModuleMatchQuality(const Module &M) {
 }
 
 Target llvm::TheMipselTarget;
-
-static unsigned Mipsel_JITMatchQuality() {
-  return 0;
-}
 
 static unsigned Mipsel_TripleMatchQuality(const std::string &TT) {
   // We strongly match "mips*el-*".
@@ -77,12 +69,10 @@ extern "C" void LLVMInitializeMipsTargetInfo() {
   TargetRegistry::RegisterTarget(TheMipsTarget, "mips",
                                   "Mips",
                                   &Mips_TripleMatchQuality,
-                                  &Mips_ModuleMatchQuality,
-                                  &Mips_JITMatchQuality);
+                                  &Mips_ModuleMatchQuality);
 
   TargetRegistry::RegisterTarget(TheMipselTarget, "mipsel",
                                   "Mipsel",
                                   &Mipsel_TripleMatchQuality,
-                                  &Mipsel_ModuleMatchQuality,
-                                  &Mipsel_JITMatchQuality);
+                                  &Mipsel_ModuleMatchQuality);
 }

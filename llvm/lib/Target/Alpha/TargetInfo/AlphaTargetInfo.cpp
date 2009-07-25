@@ -14,14 +14,6 @@ using namespace llvm;
 
 llvm::Target llvm::TheAlphaTarget;
 
-static unsigned Alpha_JITMatchQuality() {
-#ifdef __alpha
-  return 10;
-#else
-  return 0;
-#endif
-}
-
 static unsigned Alpha_TripleMatchQuality(const std::string &TT) {
   // We strongly match "alpha*".
   if (TT.size() >= 5 && TT[0] == 'a' && TT[1] == 'l' && TT[2] == 'p' &&
@@ -46,7 +38,7 @@ static unsigned Alpha_ModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
 
-  return Alpha_JITMatchQuality()/2;
+  return 0;
 }
 
 extern "C" void LLVMInitializeAlphaTargetInfo() { 
@@ -54,5 +46,5 @@ extern "C" void LLVMInitializeAlphaTargetInfo() {
                                   "Alpha [experimental]",
                                   &Alpha_TripleMatchQuality,
                                   &Alpha_ModuleMatchQuality,
-                                  &Alpha_JITMatchQuality);
+                                  /*HasJIT=*/true);
 }

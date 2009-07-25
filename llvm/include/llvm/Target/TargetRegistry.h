@@ -68,15 +68,14 @@ namespace llvm {
     /// of a module.
     ModuleMatchQualityFnTy ModuleMatchQualityFn;
 
-    /// JITMatchQualityFn - The target function for rating the match quality
-    /// with the host.
-    JITMatchQualityFnTy JITMatchQualityFn;
-
     /// Name - The target name.
     const char *Name;
 
     /// ShortDesc - A short description of the target.
     const char *ShortDesc;
+
+    /// HasJIT - Whether this target supports the JIT.
+    bool HasJIT;
 
     /// TargetMachineCtorFn - Construction function for this target's
     /// TargetMachine, if registered.
@@ -100,9 +99,7 @@ namespace llvm {
     /// getShortDescription - Get a short description of the target.
     const char *getShortDescription() const { return ShortDesc; }
 
-    /// getJITMatchQuality - Get the quality of this targets match for use as a
-    /// JIT.
-    unsigned getJITMatchQuality() const { return JITMatchQualityFn(); }
+    bool hasJIT() const { return HasJIT; }
 
     /// hasTargetMachine - Check if this target supports code generation.
     bool hasTargetMachine() const { return TargetMachineCtorFn != 0; }
@@ -224,14 +221,14 @@ namespace llvm {
     /// this target.
     /// @param MQualityFn - The module match quality computation function for
     /// this target.
-    /// @param JITMatchQualityFn - The JIT match quality computation function
-    /// for this target.
+    /// @param HasJIT - Whether the target supports JIT code
+    /// generation.
     static void RegisterTarget(Target &T,
                                const char *Name,
                                const char *ShortDesc,
                                Target::TripleMatchQualityFnTy TQualityFn,
                                Target::ModuleMatchQualityFnTy MQualityFn,
-                               Target::JITMatchQualityFnTy JITQualityFn);
+                               bool HasJIT = false);
                                
     /// RegisterTargetMachine - Register a TargetMachine implementation for the
     /// given target.
@@ -292,6 +289,8 @@ namespace llvm {
   ///
   /// namespace {
   ///   struct FooInfo {
+  ///     static const bool HasJIT = ...;
+  ///
   ///     static unsigned getJITMatchQuality() { ... }
   ///     static unsigned getTripleMatchQuality(const std::string &) { ... }
   ///     static unsigned getModuleMatchQuality(const Module &) { ... }
@@ -307,7 +306,7 @@ namespace llvm {
       TargetRegistry::RegisterTarget(T, Name, Desc,
                                      &TargetInfoImpl::getTripleMatchQuality,
                                      &TargetInfoImpl::getModuleMatchQuality,
-                                     &TargetInfoImpl::getJITMatchQuality);
+                                     TargetInfoImpl::HasJIT);
     }
   };
 

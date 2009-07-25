@@ -14,13 +14,6 @@ using namespace llvm;
 
 Target llvm::TheARMTarget;
 
-static unsigned ARM_JITMatchQuality() {
-#if defined(__arm__)
-  return 10;
-#endif
-  return 0;
-}
-
 static unsigned ARM_TripleMatchQuality(const std::string &TT) {
   // Match arm-foo-bar, as well as things like armv5blah-*
   if (TT.size() >= 4 &&
@@ -45,17 +38,10 @@ static unsigned ARM_ModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
 
-  return ARM_JITMatchQuality()/2;
+  return 0;
 }
 
 Target llvm::TheThumbTarget;
-
-static unsigned Thumb_JITMatchQuality() {
-#if defined(__thumb__)
-  return 10;
-#endif
-  return 0;
-}
 
 static unsigned Thumb_TripleMatchQuality(const std::string &TT) {
   // Match thumb-foo-bar, as well as things like thumbv5blah-*
@@ -81,7 +67,7 @@ static unsigned Thumb_ModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
 
-  return Thumb_JITMatchQuality()/2;
+  return 0;
 }
 
 extern "C" void LLVMInitializeARMTargetInfo() { 
@@ -89,11 +75,11 @@ extern "C" void LLVMInitializeARMTargetInfo() {
                                   "ARM",
                                   &ARM_TripleMatchQuality,
                                   &ARM_ModuleMatchQuality,
-                                  &ARM_JITMatchQuality);
+                                 /*HasJIT=*/true);
 
   TargetRegistry::RegisterTarget(TheThumbTarget, "thumb",    
                                   "Thumb",
                                   &Thumb_TripleMatchQuality,
                                   &Thumb_ModuleMatchQuality,
-                                  &Thumb_JITMatchQuality);
+                                 /*HasJIT=*/true);
 }

@@ -14,10 +14,6 @@ using namespace llvm;
 
 Target llvm::TheSparcTarget;
 
-static unsigned Sparc_JITMatchQuality() {
-  return 0;
-}
-
 static unsigned Sparc_TripleMatchQuality(const std::string &TT) {
   if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "sparc-")
     return 20;
@@ -57,6 +53,5 @@ extern "C" void LLVMInitializeSparcTargetInfo() {
   TargetRegistry::RegisterTarget(TheSparcTarget, "sparc",
                                   "Sparc",
                                   &Sparc_TripleMatchQuality,
-                                  &Sparc_ModuleMatchQuality,
-                                  &Sparc_JITMatchQuality);
+                                  &Sparc_ModuleMatchQuality);
 }

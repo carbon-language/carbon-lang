@@ -14,10 +14,6 @@ using namespace llvm;
 
 Target llvm::TheCellSPUTarget;
 
-static unsigned CellSPU_JITMatchQuality() {
-  return 0;
-}
-
 static unsigned CellSPU_TripleMatchQuality(const std::string &TT) {
   // We strongly match "spu-*" or "cellspu-*".
   if ((TT.size() == 3 && std::string(TT.begin(), TT.begin()+3) == "spu") ||
@@ -44,6 +40,5 @@ extern "C" void LLVMInitializeCellSPUTargetInfo() {
   TargetRegistry::RegisterTarget(TheCellSPUTarget, "cellspu",
                                   "STI CBEA Cell SPU [experimental]",
                                   &CellSPU_TripleMatchQuality,
-                                  &CellSPU_ModuleMatchQuality,
-                                  &CellSPU_JITMatchQuality);
+                                  &CellSPU_ModuleMatchQuality);
 }

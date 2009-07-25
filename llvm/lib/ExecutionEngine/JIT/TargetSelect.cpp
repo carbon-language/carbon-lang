@@ -65,7 +65,7 @@ TargetMachine *JIT::selectTarget(ModuleProvider *MP, std::string *ErrorStr) {
       return 0;
     }        
 
-    if (TheTarget->getJITMatchQuality() == 0) {
+    if (!TheTarget->hasJIT()) {
       cerr << "WARNING: This target JIT is not designed for the host you are"
            << " running.  If bad things happen, please choose a different "
            << "-march switch.\n";

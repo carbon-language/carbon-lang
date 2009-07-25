@@ -14,10 +14,6 @@ using namespace llvm;
 
 Target llvm::TheMSILTarget;
 
-static unsigned MSIL_JITMatchQuality() {
-  return 0;
-}
-
 static unsigned MSIL_TripleMatchQuality(const std::string &TT) {
   // This class always works, but shouldn't be the default in most cases.
   return 1;
@@ -32,6 +28,5 @@ extern "C" void LLVMInitializeMSILTargetInfo() {
   TargetRegistry::RegisterTarget(TheMSILTarget, "msil",    
                                   "MSIL backend",
                                   &MSIL_TripleMatchQuality,
-                                  &MSIL_ModuleMatchQuality,
-                                  &MSIL_JITMatchQuality);
+                                  &MSIL_ModuleMatchQuality);
 }

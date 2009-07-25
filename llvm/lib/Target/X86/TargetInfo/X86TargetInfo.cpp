@@ -14,13 +14,6 @@ using namespace llvm;
 
 Target llvm::TheX86_32Target;
 
-static unsigned X86_32_JITMatchQuality() {
-#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)
-  return 10;
-#endif
-  return 0;
-}
-
 static unsigned X86_32_TripleMatchQuality(const std::string &TT) {
   // We strongly match "i[3-9]86-*".
   if (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
@@ -45,17 +38,10 @@ static unsigned X86_32_ModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
 
-  return X86_32_JITMatchQuality()/2;
+  return 0;
 }
 
 Target llvm::TheX86_64Target;
-
-static unsigned X86_64_JITMatchQuality() {
-#if defined(__x86_64__) || defined(_M_AMD64)
-  return 10;
-#endif
-  return 0;
-}
 
 static unsigned X86_64_TripleMatchQuality(const std::string &TT) {
   // We strongly match "x86_64-*".
@@ -81,7 +67,7 @@ static unsigned X86_64_ModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
 
-  return X86_64_JITMatchQuality()/2;
+  return 0;
 }
 
 extern "C" void LLVMInitializeX86TargetInfo() { 
@@ -89,11 +75,11 @@ extern "C" void LLVMInitializeX86TargetInfo() {
                                   "32-bit X86: Pentium-Pro and above",
                                   &X86_32_TripleMatchQuality,
                                   &X86_32_ModuleMatchQuality,
-                                  &X86_32_JITMatchQuality);
+                                  /*HasJIT=*/true);
 
   TargetRegistry::RegisterTarget(TheX86_64Target, "x86-64",    
                                   "64-bit X86: EM64T and AMD64",
                                   &X86_64_TripleMatchQuality,
                                   &X86_64_ModuleMatchQuality,
-                                  &X86_64_JITMatchQuality);
+                                  /*HasJIT=*/true);
 }
