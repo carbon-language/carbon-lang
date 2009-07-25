@@ -78,7 +78,7 @@ public:
   /// whether an output error has been encountered.
   bool has_error() const {
     return Error;
-  };
+  }
 
   /// clear_error - Set the flag read by has_error() to false. If the error
   /// flag is set at the time when this raw_ostream's destructor is called,
@@ -86,7 +86,7 @@ public:
   /// after handling the error to avoid this behavior.
   void clear_error() {
     Error = false;
-  };
+  }
 
   //===--------------------------------------------------------------------===//
   // Configuration Interface
