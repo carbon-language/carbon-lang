@@ -326,6 +326,11 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 
       // FIXME: Use mangler interface (PR4584).
       std::string Name = Prefix+GV->getNameStr();
+      
+      // Pick up the flags for the uniquing section.
+      // FIXME: HACK.
+      Flags |= getFlagsForNamedSection(Name.c_str());
+
       return getNamedSection(Name.c_str(), Flags);
     }
   }
