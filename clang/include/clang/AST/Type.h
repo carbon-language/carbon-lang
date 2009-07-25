@@ -216,7 +216,8 @@ public:
     return getObjCGCAttr() == Strong;
   }
 
-  /// getNoReturnAttr() - Return the noreturn attribute of this type.
+  /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
+  /// false otherwise.
   bool getNoReturnAttr() const;
 };
 
@@ -2082,7 +2083,8 @@ inline QualType::GCAttrTypes QualType::getObjCGCAttr() const {
   return GCNone;
 }
 
-/// getNoReturnAttr - Return the noreturn attribute of this type.
+  /// getNoReturnAttr - Returns true if the type has the noreturn attribute,
+  /// false otherwise.
 inline bool QualType::getNoReturnAttr() const {
   QualType CT = getTypePtr()->getCanonicalTypeInternal();
   if (const PointerType *PT = getTypePtr()->getAsPointerType()) {
