@@ -491,6 +491,7 @@ def pagesel :
 
 
 // Return insn.
+let isTerminator = 1, isBarrier = 1, isReturn = 1 in
 def Return : 
   ControlFormat<0, (outs), (ins), "return", [(ret)]>;
 
