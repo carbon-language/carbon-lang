@@ -21,30 +21,31 @@
 
 namespace llvm {
 
-class LLVMContextImpl;
+class APFloat;
+class APInt;
+class ArrayType;
 class Constant;
-class ConstantInt;
-class ConstantPointerNull;
-class ConstantStruct;
 class ConstantAggregateZero;
 class ConstantArray;
 class ConstantFP;
+class ConstantInt;
+class ConstantPointerNull;
+class ConstantStruct;
 class ConstantVector;
-class UndefValue;
+class FunctionType;
+class IntegerType;
+class LLVMContextImpl;
 class MDNode;
 class MDString;
-class IntegerType;
-class PointerType;
-class StructType;
-class ArrayType;
-class VectorType;
 class OpaqueType;
-class FunctionType;
+class PointerType;
+class StringRef;
+class StructType;
 class Type;
-class APInt;
-class APFloat;
-class Value;
+class UndefValue;
 class Use;
+class Value;
+class VectorType;
 
 /// This is an important class for using LLVM in a threaded context.  It
 /// (opaquely) owns and manages the core "global" data of LLVM's core 
@@ -100,7 +101,7 @@ public:
   /// of the array by one (you've been warned).  However, in some situations 
   /// this is not desired so if AddNull==false then the string is copied without
   /// null termination.
-  Constant* getConstantArray(const std::string& Initializer,
+  Constant* getConstantArray(const StringRef &Initializer,
                              bool AddNull = true);
                              
   // ConstantExpr accessors
@@ -204,8 +205,7 @@ public:
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
   
   // MDString accessors
-  MDString* getMDString(const char *StrBegin, unsigned Length);
-  MDString* getMDString(const std::string &Str);
+  MDString* getMDString(const StringRef &Str);
   
   // FunctionType accessors
   FunctionType* getFunctionType(const Type* Result, bool isVarArg);

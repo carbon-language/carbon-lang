@@ -65,8 +65,8 @@ class Linker {
     /// name \p progname. \p progname will also be used for error messages.
     /// @brief Construct with empty module
     Linker(
-        const std::string& progname, ///< name of tool running linker
-        const std::string& modulename, ///< name of linker's end-result module
+        const StringRef& progname, ///< name of tool running linker
+        const StringRef& modulename, ///< name of linker's end-result module
         LLVMContext& C, ///< Context for global info
         unsigned Flags = 0  ///< ControlFlags (one or more |'d together)
     );
@@ -74,7 +74,7 @@ class Linker {
     /// Construct the Linker with a previously defined module, \p aModule. Use
     /// \p progname for the name of the program in error messages.
     /// @brief Construct with existing module
-    Linker(const std::string& progname, Module* aModule, unsigned Flags = 0);
+    Linker(const StringRef& progname, Module* aModule, unsigned Flags = 0);
 
     /// Destruct the Linker.
     /// @brief Destructor
@@ -116,7 +116,7 @@ class Linker {
     /// the Quiet control flag is not set, the error string will have already
     /// been printed to std::cerr.
     /// @brief Get the text of the last error that occurred.
-    const std::string& getLastError() const { return Error; }
+    const std::string &getLastError() const { return Error; }
 
   /// @}
   /// @name Mutators
@@ -214,7 +214,7 @@ class Linker {
     /// @returns true if an error occurs, false otherwise
     /// @brief Link one library into the module
     bool LinkInLibrary (
-      const std::string& Library, ///< The library to link in
+      const StringRef &Library, ///< The library to link in
       bool& is_native             ///< Indicates if lib a native library
     );
 
@@ -267,7 +267,7 @@ class Linker {
     /// will be empty (i.e. sys::Path::isEmpty() will return true).
     /// @returns A sys::Path to the found library
     /// @brief Find a library from its short name.
-    sys::Path FindLib(const std::string &Filename);
+    sys::Path FindLib(const StringRef &Filename);
 
   /// @}
   /// @name Implementation
@@ -277,9 +277,9 @@ class Linker {
     /// Module it contains (wrapped in an auto_ptr), or 0 if an error occurs.
     std::auto_ptr<Module> LoadObject(const sys::Path& FN);
 
-    bool warning(const std::string& message);
-    bool error(const std::string& message);
-    void verbose(const std::string& message);
+    bool warning(const StringRef &message);
+    bool error(const StringRef &message);
+    void verbose(const StringRef &message);
 
   /// @}
   /// @name Data

@@ -55,14 +55,14 @@ public:
   /// incrementing an integer and appending it to the name, if necessary
   /// @returns the unique name
   /// @brief Get a unique name for a type
-  std::string getUniqueName(const std::string &BaseName) const;
+  std::string getUniqueName(const StringRef &BaseName) const;
 
   /// This method finds the type with the given \p name in the type map
   /// and returns it.
   /// @returns null if the name is not found, otherwise the Type
   /// associated with the \p name.
   /// @brief Lookup a type by name.
-  Type* lookup(const std::string& name) const;
+  Type *lookup(const StringRef &name) const;
 
   /// @returns true iff the symbol table is empty.
   /// @brief Determine if the symbol table is empty
@@ -102,7 +102,7 @@ public:
   /// a many-to-one mapping between names and types. This method allows a type
   /// with an existing entry in the symbol table to get a new name.
   /// @brief Insert a type under a new name.
-  void insert(const std::string &Name, const Type *Typ);
+  void insert(const StringRef &Name, const Type *Typ);
 
   /// Remove a type at the specified position in the symbol table.
   /// @returns the removed Type.

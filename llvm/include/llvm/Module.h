@@ -131,7 +131,7 @@ private:
 public:
   /// The Module constructor. Note that there is no default constructor. You
   /// must provide a name for the module upon construction.
-  explicit Module(const std::string &ModuleID, LLVMContext& C);
+  explicit Module(const StringRef &ModuleID, LLVMContext& C);
   /// The module destructor. This will dropAllReferences.
   ~Module();
 
@@ -146,7 +146,7 @@ public:
   /// Get the data layout string for the module's target platform.  This encodes
   /// the type sizes and alignments expected by this module.
   /// @returns the data layout as a string
-  const std::string& getDataLayout() const { return DataLayout; }
+  const std::string &getDataLayout() const { return DataLayout; }
 
   /// Get the target triple which is a string describing the target host.
   /// @returns a string containing the target triple.
@@ -173,20 +173,20 @@ public:
 public:
 
   /// Set the module identifier.
-  void setModuleIdentifier(const std::string &ID) { ModuleID = ID; }
+  void setModuleIdentifier(const StringRef &ID) { ModuleID = ID; }
 
   /// Set the data layout
-  void setDataLayout(const std::string& DL) { DataLayout = DL; }
+  void setDataLayout(const StringRef &DL) { DataLayout = DL; }
 
   /// Set the target triple.
-  void setTargetTriple(const std::string &T) { TargetTriple = T; }
+  void setTargetTriple(const StringRef &T) { TargetTriple = T; }
 
   /// Set the module-scope inline assembly blocks.
-  void setModuleInlineAsm(const std::string &Asm) { GlobalScopeAsm = Asm; }
+  void setModuleInlineAsm(const StringRef &Asm) { GlobalScopeAsm = Asm; }
 
   /// Append to the module-scope inline assembly blocks, automatically
   /// appending a newline to the end.
-  void appendModuleInlineAsm(const std::string &Asm) {
+  void appendModuleInlineAsm(const StringRef &Asm) {
     GlobalScopeAsm += Asm;
     GlobalScopeAsm += '\n';
   }
@@ -198,8 +198,7 @@ public:
   /// getNamedValue - Return the first global value in the module with
   /// the specified name, of arbitrary type.  This method returns null
   /// if a global with the specified name is not found.
-  GlobalValue *getNamedValue(const std::string &Name) const;
-  GlobalValue *getNamedValue(const char *Name) const;
+  GlobalValue *getNamedValue(const StringRef &Name) const;
 
 /// @}
 /// @name Function Accessors
@@ -214,10 +213,10 @@ public:
   ///      the existing function.
   ///   4. Finally, the function exists but has the wrong prototype: return the
   ///      function with a constantexpr cast to the right prototype.
-  Constant *getOrInsertFunction(const std::string &Name, const FunctionType *T,
+  Constant *getOrInsertFunction(const StringRef &Name, const FunctionType *T,
                                 AttrListPtr AttributeList);
 
-  Constant *getOrInsertFunction(const std::string &Name, const FunctionType *T);
+  Constant *getOrInsertFunction(const StringRef &Name, const FunctionType *T);
 
   /// getOrInsertFunction - Look up the specified function in the module symbol
   /// table.  If it does not exist, add a prototype for the function and return
@@ -226,21 +225,20 @@ public:
   /// named function has a different type.  This version of the method takes a
   /// null terminated list of function arguments, which makes it easier for
   /// clients to use.
-  Constant *getOrInsertFunction(const std::string &Name,
+  Constant *getOrInsertFunction(const StringRef &Name,
                                 AttrListPtr AttributeList,
                                 const Type *RetTy, ...)  END_WITH_NULL;
 
-  Constant *getOrInsertFunction(const std::string &Name, const Type *RetTy, ...)
+  Constant *getOrInsertFunction(const StringRef &Name, const Type *RetTy, ...)
     END_WITH_NULL;
 
-  Constant *getOrInsertTargetIntrinsic(const std::string &Name,
+  Constant *getOrInsertTargetIntrinsic(const StringRef &Name,
                                        const FunctionType *Ty,
                                        AttrListPtr AttributeList);
   
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.
-  Function *getFunction(const std::string &Name) const;
-  Function *getFunction(const char *Name) const;
+  Function *getFunction(const StringRef &Name) const;
 
 /// @}
 /// @name Global Variable Accessors
@@ -250,13 +248,13 @@ public:
   /// symbol table.  If it does not exist, return null. If AllowInternal is set
   /// to true, this function will return types that have InternalLinkage. By
   /// default, these types are not returned.
-  GlobalVariable *getGlobalVariable(const std::string &Name,
+  GlobalVariable *getGlobalVariable(const StringRef &Name,
                                     bool AllowInternal = false) const;
 
   /// getNamedGlobal - Return the first global variable in the module with the
   /// specified name, of arbitrary type.  This method returns null if a global
   /// with the specified name is not found.
-  GlobalVariable *getNamedGlobal(const std::string &Name) const {
+  GlobalVariable *getNamedGlobal(const StringRef &Name) const {
     return getGlobalVariable(Name, true);
   }
 
@@ -267,7 +265,7 @@ public:
   ///      with a constantexpr cast to the right type.
   ///   3. Finally, if the existing global is the correct delclaration, return
   ///      the existing global.
-  Constant *getOrInsertGlobal(const std::string &Name, const Type *Ty);
+  Constant *getOrInsertGlobal(const StringRef &Name, const Type *Ty);
 
 /// @}
 /// @name Global Alias Accessors
@@ -276,7 +274,7 @@ public:
   /// getNamedAlias - Return the first global alias in the module with the
   /// specified name, of arbitrary type.  This method returns null if a global
   /// with the specified name is not found.
-  GlobalAlias *getNamedAlias(const std::string &Name) const;
+  GlobalAlias *getNamedAlias(const StringRef &Name) const;
 
 /// @}
 /// @name Type Accessors
@@ -285,7 +283,7 @@ public:
   /// addTypeName - Insert an entry in the symbol table mapping Str to Type.  If
   /// there is already an entry for this name, true is returned and the symbol
   /// table is not modified.
-  bool addTypeName(const std::string &Name, const Type *Ty);
+  bool addTypeName(const StringRef &Name, const Type *Ty);
 
   /// getTypeName - If there is at least one entry in the symbol table for the
   /// specified type, return it.
@@ -293,7 +291,7 @@ public:
 
   /// getTypeByName - Return the type with the specified name in this module, or
   /// null if there is none by that name.
-  const Type *getTypeByName(const std::string &Name) const;
+  const Type *getTypeByName(const StringRef &Name) const;
 
 /// @}
 /// @name Direct access to the globals list, functions list, and symbol table
@@ -372,9 +370,9 @@ public:
   /// @brief Returns the number of items in the list of libraries.
   inline size_t       lib_size()  const { return LibraryList.size();  }
   /// @brief Add a library to the list of dependent libraries
-  void addLibrary(const std::string& Lib);
+  void addLibrary(const StringRef &Lib);
   /// @brief Remove a library from the list of dependent libraries
-  void removeLibrary(const std::string& Lib);
+  void removeLibrary(const StringRef &Lib);
   /// @brief Get all the libraries
   inline const LibraryListType& getLibraries() const { return LibraryList; }
 

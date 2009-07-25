@@ -145,10 +145,10 @@ Constant* LLVMContext::getConstantArray(const ArrayType* T,
 /// Otherwise, the length parameter specifies how much of the string to use 
 /// and it won't be null terminated.
 ///
-Constant* LLVMContext::getConstantArray(const std::string& Str,
+Constant* LLVMContext::getConstantArray(const StringRef &Str,
                                         bool AddNull) {
   std::vector<Constant*> ElementVals;
-  for (unsigned i = 0; i < Str.length(); ++i)
+  for (unsigned i = 0; i < Str.size(); ++i)
     ElementVals.push_back(ConstantInt::get(Type::Int8Ty, Str[i]));
 
   // Add a null terminator to the string...
@@ -506,12 +506,8 @@ MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
 }
 
 // MDString accessors
-MDString* LLVMContext::getMDString(const char *StrBegin, unsigned StrLength) {
-  return pImpl->getMDString(StrBegin, StrLength);
-}
-
-MDString* LLVMContext::getMDString(const std::string &Str) {
-  return getMDString(Str.data(), Str.size());
+MDString* LLVMContext::getMDString(const StringRef &Str) {
+  return pImpl->getMDString(Str.data(), Str.size());
 }
 
 // FunctionType accessors

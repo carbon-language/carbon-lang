@@ -187,7 +187,7 @@ void GlobalVariable::copyAttributesFrom(const GlobalValue *Src) {
 //===----------------------------------------------------------------------===//
 
 GlobalAlias::GlobalAlias(const Type *Ty, LinkageTypes Link,
-                         const std::string &Name, Constant* aliasee,
+                         const Twine &Name, Constant* aliasee,
                          Module *ParentModule)
   : GlobalValue(Ty, Value::GlobalAliasVal, &Op<0>(), 1, Link, Name) {
   LeakDetector::addGarbageObject(this);

@@ -23,9 +23,9 @@ namespace {
 // MDString objects, even with the same string pointer and nulls in the string.
 TEST(MDStringTest, CreateDifferent) {
   char x[3] = { 'f', 0, 'A' };
-  MDString *s1 = getGlobalContext().getMDString(&x[0], 3);
+  MDString *s1 = getGlobalContext().getMDString(StringRef(&x[0], 3));
   x[2] = 'B';
-  MDString *s2 = getGlobalContext().getMDString(&x[0], 3);
+  MDString *s2 = getGlobalContext().getMDString(StringRef(&x[0], 3));
   EXPECT_NE(s1, s2);
 }
 
@@ -35,8 +35,8 @@ TEST(MDStringTest, CreateSame) {
   char x[4] = { 'a', 'b', 'c', 'X' };
   char y[4] = { 'a', 'b', 'c', 'Y' };
 
-  MDString *s1 = getGlobalContext().getMDString(&x[0], 3);
-  MDString *s2 = getGlobalContext().getMDString(&y[0], 3);
+  MDString *s1 = getGlobalContext().getMDString(StringRef(&x[0], 3));
+  MDString *s2 = getGlobalContext().getMDString(StringRef(&y[0], 3));
   EXPECT_EQ(s1, s2);
 }
 
@@ -44,7 +44,7 @@ TEST(MDStringTest, CreateSame) {
 TEST(MDStringTest, PrintingSimple) {
   char *str = new char[13];
   strncpy(str, "testing 1 2 3", 13);
-  MDString *s = getGlobalContext().getMDString(str, 13);
+  MDString *s = getGlobalContext().getMDString(StringRef(str, 13));
   strncpy(str, "aaaaaaaaaaaaa", 13);
   delete[] str;
 
@@ -56,7 +56,7 @@ TEST(MDStringTest, PrintingSimple) {
 // Test printing of MDString with non-printable characters.
 TEST(MDStringTest, PrintingComplex) {
   char str[5] = {0, '\n', '"', '\\', -1};
-  MDString *s = getGlobalContext().getMDString(str+0, 5);
+  MDString *s = getGlobalContext().getMDString(StringRef(str+0, 5));
   std::ostringstream oss;
   s->print(oss);
   EXPECT_STREQ("metadata !\"\\00\\0A\\22\\5C\\FF\"", oss.str().c_str());
@@ -67,8 +67,8 @@ TEST(MDNodeTest, Simple) {
   char x[3] = { 'a', 'b', 'c' };
   char y[3] = { '1', '2', '3' };
 
-  MDString *s1 = getGlobalContext().getMDString(&x[0], 3);
-  MDString *s2 = getGlobalContext().getMDString(&y[0], 3);
+  MDString *s1 = getGlobalContext().getMDString(StringRef(&x[0], 3));
+  MDString *s2 = getGlobalContext().getMDString(StringRef(&y[0], 3));
   ConstantInt *CI = ConstantInt::get(getGlobalContext(), APInt(8, 0));
 
   std::vector<Value *> V;

@@ -14,6 +14,7 @@
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/RWMutex.h"
@@ -34,7 +35,7 @@ TypeSymbolTable::~TypeSymbolTable() {
   }
 }
 
-std::string TypeSymbolTable::getUniqueName(const std::string &BaseName) const {
+std::string TypeSymbolTable::getUniqueName(const StringRef &BaseName) const {
   std::string TryName = BaseName;
   
   sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
@@ -43,12 +44,12 @@ std::string TypeSymbolTable::getUniqueName(const std::string &BaseName) const {
 
   // See if the name exists
   while (tmap.find(TryName) != End)            // Loop until we find a free
-    TryName = BaseName + utostr(++LastUnique); // name in the symbol table
+    TryName = BaseName.str() + utostr(++LastUnique); // name in the symbol table
   return TryName;
 }
 
 // lookup a type by name - returns null on failure
-Type* TypeSymbolTable::lookup(const std::string& Name) const {
+Type* TypeSymbolTable::lookup(const StringRef &Name) const {
   sys::SmartScopedReader<true> Reader(*TypeSymbolTableLock);
   
   const_iterator TI = tmap.find(Name);
@@ -90,12 +91,12 @@ Type* TypeSymbolTable::remove(iterator Entry) {
 
 
 // insert - Insert a type into the symbol table with the specified name...
-void TypeSymbolTable::insert(const std::string& Name, const Type* T) {
+void TypeSymbolTable::insert(const StringRef &Name, const Type* T) {
   assert(T && "Can't insert null type into symbol table!");
 
   TypeSymbolTableLock->writer_acquire();
 
-  if (tmap.insert(make_pair(Name, T)).second) {
+  if (tmap.insert(std::make_pair(Name, T)).second) {
     // Type inserted fine with no conflict.
     
 #if DEBUG_SYMBOL_TABLE

@@ -16,10 +16,10 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-Linker::Linker(const std::string& progname, const std::string& modname,
+Linker::Linker(const StringRef &progname, const StringRef &modname,
                LLVMContext& C, unsigned flags): 
   Context(C),
   Composite(new Module(modname, C)),
@@ -28,7 +28,7 @@ Linker::Linker(const std::string& progname, const std::string& modname,
   Error(),
   ProgramName(progname) { }
 
-Linker::Linker(const std::string& progname, Module* aModule, unsigned flags) : 
+Linker::Linker(const StringRef &progname, Module* aModule, unsigned flags) : 
   Context(aModule->getContext()),
   Composite(aModule),
   LibPaths(),
@@ -41,25 +41,25 @@ Linker::~Linker() {
 }
 
 bool
-Linker::error(const std::string& message) {
+Linker::error(const StringRef &message) {
   Error = message;
   if (!(Flags&QuietErrors))
-    cerr << ProgramName << ": error: " << message << "\n";
+    errs() << ProgramName << ": error: " << message << "\n";
   return true;
 }
 
 bool
-Linker::warning(const std::string& message) {
+Linker::warning(const StringRef &message) {
   Error = message;
   if (!(Flags&QuietWarnings))
-    cerr << ProgramName << ": warning: " << message << "\n";
+    errs() << ProgramName << ": warning: " << message << "\n";
   return false;
 }
 
 void
-Linker::verbose(const std::string& message) {
+Linker::verbose(const StringRef &message) {
   if (Flags&Verbose)
-    cerr << "  " << message << "\n";
+    errs() << "  " << message << "\n";
 }
 
 void
@@ -117,13 +117,13 @@ Linker::LoadObject(const sys::Path &FN) {
 
 // IsLibrary - Determine if "Name" is a library in "Directory". Return
 // a non-empty sys::Path if its found, an empty one otherwise.
-static inline sys::Path IsLibrary(const std::string& Name,
-                                  const sys::Path& Directory) {
+static inline sys::Path IsLibrary(const StringRef &Name,
+                                  const sys::Path &Directory) {
 
   sys::Path FullPath(Directory);
 
   // Try the libX.a form
-  FullPath.appendComponent("lib" + Name);
+  FullPath.appendComponent(("lib" + Name).str());
   FullPath.appendSuffix("a");
   if (FullPath.isArchive())
     return FullPath;
@@ -156,7 +156,7 @@ static inline sys::Path IsLibrary(const std::string& Name,
 /// Path if no matching file can be found.
 ///
 sys::Path
-Linker::FindLib(const std::string &Filename) {
+Linker::FindLib(const StringRef &Filename) {
   // Determine if the pathname can be found as it stands.
   sys::Path FilePath(Filename);
   if (FilePath.canRead() &&
@@ -167,7 +167,7 @@ Linker::FindLib(const std::string &Filename) {
   // there.
   for (unsigned Index = 0; Index != LibPaths.size(); ++Index) {
     sys::Path Directory(LibPaths[Index]);
-    sys::Path FullPath = IsLibrary(Filename,Directory);
+    sys::Path FullPath = IsLibrary(Filename, Directory);
     if (!FullPath.isEmpty())
       return FullPath;
   }

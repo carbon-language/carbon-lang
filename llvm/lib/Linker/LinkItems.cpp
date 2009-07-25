@@ -70,12 +70,12 @@ Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
 
 /// LinkInLibrary - links one library into the HeadModule.
 ///
-bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
+bool Linker::LinkInLibrary(const StringRef &Lib, bool& is_native) {
   is_native = false;
   // Determine where this library lives.
   sys::Path Pathname = FindLib(Lib);
   if (Pathname.isEmpty())
-    return error("Cannot find library '" + Lib + "'");
+    return error("Cannot find library '" + Lib.str() + "'");
 
   // If its an archive, try to link it in
   std::string Magic;
@@ -83,7 +83,7 @@ bool Linker::LinkInLibrary(const std::string& Lib, bool& is_native) {
   switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
     default: llvm_unreachable("Bad file type identification");
     case sys::Unknown_FileType:
-      return warning("Supposed library '" + Lib + "' isn't a library.");
+      return warning("Supposed library '" + Lib.str() + "' isn't a library.");
 
     case sys::Bitcode_FileType:
       // LLVM ".so" file.

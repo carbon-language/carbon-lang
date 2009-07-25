@@ -32,15 +32,15 @@ class InlineAsm : public Value {
   std::string AsmString, Constraints;
   bool HasSideEffects;
   
-  InlineAsm(const FunctionType *Ty, const std::string &AsmString,
-            const std::string &Constraints, bool hasSideEffects);
+  InlineAsm(const FunctionType *Ty, const StringRef &AsmString,
+            const StringRef &Constraints, bool hasSideEffects);
   virtual ~InlineAsm();
 public:
 
   /// InlineAsm::get - Return the the specified uniqued inline asm string.
   ///
-  static InlineAsm *get(const FunctionType *Ty, const std::string &AsmString,
-                        const std::string &Constraints, bool hasSideEffects);
+  static InlineAsm *get(const FunctionType *Ty, const StringRef &AsmString,
+                        const StringRef &Constraints, bool hasSideEffects);
   
   bool hasSideEffects() const { return HasSideEffects; }
   
@@ -61,7 +61,7 @@ public:
   /// the specified constraint string is legal for the type.  This returns true
   /// if legal, false if not.
   ///
-  static bool Verify(const FunctionType *Ty, const std::string &Constraints);
+  static bool Verify(const FunctionType *Ty, const StringRef &Constraints);
 
   // Constraint String Parsing 
   enum ConstraintPrefix {
@@ -106,7 +106,7 @@ public:
     /// Parse - Analyze the specified string (e.g. "=*&{eax}") and fill in the
     /// fields in this structure.  If the constraint string is not understood,
     /// return true, otherwise return false.
-    bool Parse(const std::string &Str, 
+    bool Parse(const StringRef &Str, 
                std::vector<InlineAsm::ConstraintInfo> &ConstraintsSoFar);
   };
   
@@ -114,7 +114,7 @@ public:
   /// constraints and their prefixes.  If this returns an empty vector, and if
   /// the constraint string itself isn't empty, there was an error parsing.
   static std::vector<ConstraintInfo> 
-    ParseConstraints(const std::string &ConstraintString);
+    ParseConstraints(const StringRef &ConstraintString);
   
   /// ParseConstraints - Parse the constraints of this inlineasm object, 
   /// returning them the same way that ParseConstraints(str) does.
