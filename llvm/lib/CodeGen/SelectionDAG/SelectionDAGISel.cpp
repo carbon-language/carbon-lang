@@ -50,6 +50,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -318,7 +319,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   else
     GFI = 0;
   RegInfo = &MF->getRegInfo();
-  DOUT << "\n\n\n=== " << Fn.getName() << "\n";
+  DEBUG(errs() << "\n\n\n=== " << Fn.getName() << "\n");
 
   MachineModuleInfo *MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   DwarfWriter *DW = getAnalysisIfAvailable<DwarfWriter>();

@@ -29,6 +29,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1287,9 +1288,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       DstSubRC = DstRC->getSubRegisterRegClass(DstSubIdx);
     assert(DstSubRC && "Illegal subregister index");
     if (!DstSubRC->contains(SrcSubReg)) {
-      DOUT << "\tIncompatible destination regclass: "
-           << tri_->getName(SrcSubReg) << " not in " << DstSubRC->getName()
-           << ".\n";
+      DEBUG(errs() << "\tIncompatible destination regclass: "
+            << tri_->getName(SrcSubReg) << " not in " << DstSubRC->getName()
+            << ".\n");
       return false;             // Not coalescable.
     }
   }
@@ -1304,9 +1305,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       SrcSubRC = SrcRC->getSubRegisterRegClass(SrcSubIdx);
     assert(SrcSubRC && "Illegal subregister index");
     if (!SrcSubRC->contains(DstReg)) {
-      DOUT << "\tIncompatible source regclass: "
-           << tri_->getName(DstSubReg) << " not in " << SrcSubRC->getName()
-           << ".\n";
+      DEBUG(errs() << "\tIncompatible source regclass: "
+            << tri_->getName(DstSubReg) << " not in " << SrcSubRC->getName()
+            << ".\n");
       return false;             // Not coalescable.
     }
   }
@@ -1459,9 +1460,9 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
     } else if (!SrcIsPhys && !DstIsPhys) {
       NewRC = getCommonSubClass(SrcRC, DstRC);
       if (!NewRC) {
-        DOUT << "\tDisjoint regclasses: "
-             << SrcRC->getName() << ", "
-             << DstRC->getName() << ".\n";
+        DEBUG(errs() << "\tDisjoint regclasses: "
+              << SrcRC->getName() << ", "
+              << DstRC->getName() << ".\n");
         return false;           // Not coalescable.
       }
       if (DstRC->getSize() > SrcRC->getSize())
@@ -2311,7 +2312,7 @@ bool CopyRecSort::operator()(CopyRec left, CopyRec right) const {
 
 void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
                                                std::vector<CopyRec> &TryAgain) {
-  DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
+  DEBUG(errs() << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
 
   std::vector<CopyRec> VirtCopies;
   std::vector<CopyRec> PhysCopies;
@@ -2566,9 +2567,9 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   li_ = &getAnalysis<LiveIntervals>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
 
-  DOUT << "********** SIMPLE REGISTER COALESCING **********\n"
-       << "********** Function: "
-       << ((Value*)mf_->getFunction())->getName() << '\n';
+  DEBUG(errs() << "********** SIMPLE REGISTER COALESCING **********\n"
+        << "********** Function: "
+        << ((Value*)mf_->getFunction())->getName() << '\n');
 
   allocatableRegs_ = tri_->getAllocatableSet(fn);
   for (TargetRegisterInfo::regclass_iterator I = tri_->regclass_begin(),

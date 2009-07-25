@@ -158,7 +158,7 @@ void PEI::initShrinkWrappingInfo() {
   // via --shrink-wrap-func=<funcname>.
 #ifndef NDEBUG
   if (ShrinkWrapFunc != "") {
-    std::string MFName = MF->getFunction()->getName();
+    std::string MFName = MF->getFunction()->getNameStr();
     ShrinkWrapThisFunction = (MFName == ShrinkWrapFunc);
   }
 #endif
@@ -185,8 +185,8 @@ void PEI::placeCSRSpillsAndRestores(MachineFunction &Fn) {
   initShrinkWrappingInfo();
 
   DEBUG(if (ShrinkWrapThisFunction) {
-      DOUT << "Place CSR spills/restores for "
-           << MF->getFunction()->getName() << "\n";
+      errs() << "Place CSR spills/restores for "
+             << MF->getFunction()->getName() << "\n";
     });
 
   if (calculateSets(Fn))
@@ -357,8 +357,8 @@ bool PEI::calculateSets(MachineFunction &Fn) {
   // If no CSRs used, we are done.
   if (CSI.empty()) {
     DEBUG(if (ShrinkWrapThisFunction)
-            DOUT << "DISABLED: " << Fn.getFunction()->getName()
-                 << ": uses no callee-saved registers\n");
+            errs() << "DISABLED: " << Fn.getFunction()->getName()
+                   << ": uses no callee-saved registers\n");
     return false;
   }
 
@@ -377,8 +377,8 @@ bool PEI::calculateSets(MachineFunction &Fn) {
   // implementation to functions with <= 500 MBBs.
   if (Fn.size() > 500) {
     DEBUG(if (ShrinkWrapThisFunction)
-            DOUT << "DISABLED: " << Fn.getFunction()->getName()
-                 << ": too large (" << Fn.size() << " MBBs)\n");
+            errs() << "DISABLED: " << Fn.getFunction()->getName()
+                   << ": too large (" << Fn.size() << " MBBs)\n");
     ShrinkWrapThisFunction = false;
   }
 
@@ -459,7 +459,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
   }
 
   if (allCSRUsesInEntryBlock) {
-    DEBUG(DOUT << "DISABLED: " << Fn.getFunction()->getName()
+    DEBUG(errs() << "DISABLED: " << Fn.getFunction()->getName()
           << ": all CSRs used in EntryBlock\n");
     ShrinkWrapThisFunction = false;
   } else {
@@ -471,7 +471,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
         allCSRsUsedInEntryFanout = false;
     }
     if (allCSRsUsedInEntryFanout) {
-      DEBUG(DOUT << "DISABLED: " << Fn.getFunction()->getName()
+      DEBUG(errs() << "DISABLED: " << Fn.getFunction()->getName()
             << ": all CSRs used in imm successors of EntryBlock\n");
       ShrinkWrapThisFunction = false;
     }
@@ -498,7 +498,7 @@ bool PEI::calculateSets(MachineFunction &Fn) {
       if (dominatesExitNodes) {
         CSRUsedInChokePoints |= CSRUsed[MBB];
         if (CSRUsedInChokePoints == UsedCSRegs) {
-          DEBUG(DOUT << "DISABLED: " << Fn.getFunction()->getName()
+          DEBUG(errs() << "DISABLED: " << Fn.getFunction()->getName()
                 << ": all CSRs used in choke point(s) at "
                 << getBasicBlockName(MBB) << "\n");
           ShrinkWrapThisFunction = false;
@@ -514,16 +514,16 @@ bool PEI::calculateSets(MachineFunction &Fn) {
     return false;
 
   DEBUG({
-      DOUT << "ENABLED: " << Fn.getFunction()->getName();
+      errs() << "ENABLED: " << Fn.getFunction()->getName();
       if (HasFastExitPath)
-        DOUT << " (fast exit path)";
-      DOUT << "\n";
+        errs() << " (fast exit path)";
+      errs() << "\n";
       if (ShrinkWrapDebugging >= BasicInfo) {
-        DOUT << "------------------------------"
+        errs() << "------------------------------"
              << "-----------------------------\n";
-        DOUT << "UsedCSRegs = " << stringifyCSRegSet(UsedCSRegs) << "\n";
+        errs() << "UsedCSRegs = " << stringifyCSRegSet(UsedCSRegs) << "\n";
         if (ShrinkWrapDebugging >= Details) {
-          DOUT << "------------------------------"
+          errs() << "------------------------------"
                << "-----------------------------\n";
           dumpAllUsed();
         }
@@ -596,7 +596,7 @@ bool PEI::addUsesForMEMERegion(MachineBasicBlock* MBB,
       addedUses = true;
       blks.push_back(SUCC);
       DEBUG(if (ShrinkWrapDebugging >= Iterations)
-              DOUT << getBasicBlockName(MBB)
+              errs() << getBasicBlockName(MBB)
                    << "(" << stringifyCSRegSet(prop) << ")->"
                    << "successor " << getBasicBlockName(SUCC) << "\n");
     }
@@ -612,7 +612,7 @@ bool PEI::addUsesForMEMERegion(MachineBasicBlock* MBB,
       addedUses = true;
       blks.push_back(PRED);
       DEBUG(if (ShrinkWrapDebugging >= Iterations)
-              DOUT << getBasicBlockName(MBB)
+              errs() << getBasicBlockName(MBB)
                    << "(" << stringifyCSRegSet(prop) << ")->"
                    << "predecessor " << getBasicBlockName(PRED) << "\n");
     }
@@ -650,7 +650,7 @@ bool PEI::addUsesForTopLevelLoops(SmallVector<MachineBasicBlock*, 4>& blks) {
         CSRUsed[EXB] |= loopSpills;
         addedUses = true;
         DEBUG(if (ShrinkWrapDebugging >= Iterations)
-                DOUT << "LOOP " << getBasicBlockName(MBB)
+                errs() << "LOOP " << getBasicBlockName(MBB)
                      << "(" << stringifyCSRegSet(loopSpills) << ")->"
                      << getBasicBlockName(EXB) << "\n");
         if (EXB->succ_size() > 1 || EXB->pred_size() > 1)
@@ -717,7 +717,7 @@ bool PEI::calcSpillPlacements(MachineBasicBlock* MBB,
     blks.push_back(MBB);
 
   DEBUG(if (! CSRSave[MBB].empty() && ShrinkWrapDebugging >= Iterations)
-          DOUT << "SAVE[" << getBasicBlockName(MBB) << "] = "
+          errs() << "SAVE[" << getBasicBlockName(MBB) << "] = "
                << stringifyCSRegSet(CSRSave[MBB]) << "\n");
 
   return placedSpills;
@@ -778,7 +778,7 @@ bool PEI::calcRestorePlacements(MachineBasicBlock* MBB,
     blks.push_back(MBB);
 
   DEBUG(if (! CSRRestore[MBB].empty() && ShrinkWrapDebugging >= Iterations)
-          DOUT << "RESTORE[" << getBasicBlockName(MBB) << "] = "
+          errs() << "RESTORE[" << getBasicBlockName(MBB) << "] = "
                << stringifyCSRegSet(CSRRestore[MBB]) << "\n");
 
   return placedRestores;
@@ -802,7 +802,7 @@ void PEI::placeSpillsAndRestores(MachineFunction &Fn) {
     ++iterations;
 
     DEBUG(if (ShrinkWrapDebugging >= Iterations)
-            DOUT << "iter " << iterations
+            errs() << "iter " << iterations
                  << " --------------------------------------------------\n");
 
     // Calculate CSR{Save,Restore} sets using Antic, Avail on the MCFG,
@@ -852,15 +852,15 @@ void PEI::placeSpillsAndRestores(MachineFunction &Fn) {
   unsigned numSRReducedThisFunc = notSpilledInEntryBlock.count();
   numSRReduced += numSRReducedThisFunc;
   DEBUG(if (ShrinkWrapDebugging >= BasicInfo) {
-      DOUT << "-----------------------------------------------------------\n";
-      DOUT << "total iterations = " << iterations << " ( "
+      errs() << "-----------------------------------------------------------\n";
+      errs() << "total iterations = " << iterations << " ( "
            << Fn.getFunction()->getName()
            << " " << numSRReducedThisFunc
            << " " << Fn.size()
            << " )\n";
-      DOUT << "-----------------------------------------------------------\n";
+      errs() << "-----------------------------------------------------------\n";
       dumpSRSets();
-      DOUT << "-----------------------------------------------------------\n";
+      errs() << "-----------------------------------------------------------\n";
       if (numSRReducedThisFunc)
         verifySpillRestorePlacement();
     });
@@ -893,7 +893,7 @@ void PEI::findFastExitPath() {
     // Check the immediate successors.
     if (isReturnBlock(SUCC)) {
       if (ShrinkWrapDebugging >= BasicInfo)
-        DOUT << "Fast exit path: " << getBasicBlockName(EntryBlock)
+        errs() << "Fast exit path: " << getBasicBlockName(EntryBlock)
              << "->" << getBasicBlockName(SUCC) << "\n";
       break;
     }
@@ -911,7 +911,7 @@ void PEI::findFastExitPath() {
     }
     if (HasFastExitPath) {
       if (ShrinkWrapDebugging >= BasicInfo)
-        DOUT << "Fast exit path: " << getBasicBlockName(EntryBlock)
+        errs() << "Fast exit path: " << getBasicBlockName(EntryBlock)
              << "->" << exitPath << "\n";
       break;
     }
@@ -977,11 +977,11 @@ void PEI::verifySpillRestorePlacement() {
       if (isReturnBlock(SBB) || SBB->succ_size() == 0) {
         if (restored != spilled) {
           CSRegSet notRestored = (spilled - restored);
-          DOUT << MF->getFunction()->getName() << ": "
-               << stringifyCSRegSet(notRestored)
-               << " spilled at " << getBasicBlockName(MBB)
-               << " are never restored on path to return "
-               << getBasicBlockName(SBB) << "\n";
+          DEBUG(errs() << MF->getFunction()->getName() << ": "
+                << stringifyCSRegSet(notRestored)
+                << " spilled at " << getBasicBlockName(MBB)
+                << " are never restored on path to return "
+                << getBasicBlockName(SBB) << "\n");
         }
         restored.clear();
       }
@@ -1025,23 +1025,24 @@ void PEI::verifySpillRestorePlacement() {
     }
     if (spilled != restored) {
       CSRegSet notSpilled = (restored - spilled);
-      DOUT << MF->getFunction()->getName() << ": "
-           << stringifyCSRegSet(notSpilled)
-           << " restored at " << getBasicBlockName(MBB)
-           << " are never spilled\n";
+      DEBUG(errs() << MF->getFunction()->getName() << ": "
+            << stringifyCSRegSet(notSpilled)
+            << " restored at " << getBasicBlockName(MBB)
+            << " are never spilled\n");
     }
   }
 }
 
 // Debugging print methods.
 std::string PEI::getBasicBlockName(const MachineBasicBlock* MBB) {
+  if (!MBB)
+    return "";
+
+  if (MBB->getBasicBlock())
+    return MBB->getBasicBlock()->getNameStr();
+
   std::ostringstream name;
-  if (MBB) {
-    if (MBB->getBasicBlock())
-      name << MBB->getBasicBlock()->getName();
-    else
-      name << "_MBB_" << MBB->getNumber();
-  }
+  name << "_MBB_" << MBB->getNumber();
   return name.str();
 }
 

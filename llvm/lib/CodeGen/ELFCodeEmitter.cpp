@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 //===----------------------------------------------------------------------===//
 //                       ELFCodeEmitter Implementation
@@ -35,7 +36,8 @@ namespace llvm {
 /// startFunction - This callback is invoked when a new machine function is
 /// about to be emitted.
 void ELFCodeEmitter::startFunction(MachineFunction &MF) {
-  DOUT << "processing function: " << MF.getFunction()->getName() << "\n";
+  DEBUG(errs() << "processing function: " 
+        << MF.getFunction()->getName() << "\n");
 
   // Get the ELF Section that this function belongs in.
   ES = &EW.getTextSection();

@@ -11,6 +11,7 @@
 #include "VirtRegRewriter.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -58,7 +59,8 @@ struct VISIBILITY_HIDDEN TrivialRewriter : public VirtRegRewriter {
   bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM,
                             LiveIntervals* LIs) {
     DOUT << "********** REWRITE MACHINE CODE **********\n";
-    DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
+    DEBUG(errs() << "********** Function: " 
+          << MF.getFunction()->getName() << '\n');
     MachineRegisterInfo *mri = &MF.getRegInfo();
 
     bool changed = false;
@@ -883,8 +885,8 @@ public:
     TRI = MF.getTarget().getRegisterInfo();
     TII = MF.getTarget().getInstrInfo();
     AllocatableRegs = TRI->getAllocatableSet(MF);
-    DOUT << "\n**** Local spiller rewriting function '"
-         << MF.getFunction()->getName() << "':\n";
+    DEBUG(errs() << "\n**** Local spiller rewriting function '"
+          << MF.getFunction()->getName() << "':\n");
     DOUT << "**** Machine Instrs (NOTE! Does not include spills and reloads!)"
             " ****\n";
     DEBUG(MF.dump());
@@ -1412,8 +1414,8 @@ private:
                   AvailableSpills &Spills, BitVector &RegKills,
                   std::vector<MachineOperand*> &KillOps) {
 
-    DOUT << "\n**** Local spiller rewriting MBB '"
-         << MBB.getBasicBlock()->getName() << "':\n";
+    DEBUG(errs() << "\n**** Local spiller rewriting MBB '"
+          << MBB.getBasicBlock()->getName() << "':\n");
 
     MachineFunction &MF = *MBB.getParent();
     

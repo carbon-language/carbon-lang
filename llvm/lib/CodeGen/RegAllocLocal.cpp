@@ -714,7 +714,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   MachineBasicBlock::iterator MII = MBB.begin();
   
   DEBUG(const BasicBlock *LBB = MBB.getBasicBlock();
-        if (LBB) DOUT << "\nStarting RegAlloc of BB: " << LBB->getName());
+        if (LBB) errs() << "\nStarting RegAlloc of BB: " << LBB->getName());
 
   // Add live-in registers as active.
   for (MachineBasicBlock::livein_iterator I = MBB.livein_begin(),

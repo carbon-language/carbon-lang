@@ -55,6 +55,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -10269,8 +10270,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   // If we are removing arguments to the function, emit an obnoxious warning...
   if (FT->getNumParams() < NumActualArgs) {
     if (!FT->isVarArg()) {
-      cerr << "WARNING: While resolving call to function '"
-           << Callee->getName() << "' arguments were dropped!\n";
+      errs() << "WARNING: While resolving call to function '"
+             << Callee->getName() << "' arguments were dropped!\n";
     } else {
       // Add all of the arguments in their promoted form to the arg list...
       for (unsigned i = FT->getNumParams(); i != NumActualArgs; ++i, ++AI) {
@@ -12940,8 +12941,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
   bool Changed = false;
   TD = getAnalysisIfAvailable<TargetData>();
   
-  DEBUG(DOUT << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
-             << F.getNameStr() << "\n");
+  DEBUG(errs() << "\n\nINSTCOMBINE ITERATION #" << Iteration << " on "
+        << F.getNameStr() << "\n");
 
   {
     // Do a depth-first traversal of the function, populate the worklist with

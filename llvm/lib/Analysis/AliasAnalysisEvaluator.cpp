@@ -29,7 +29,7 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include <set>
 #include <sstream>
 using namespace llvm;
@@ -89,10 +89,10 @@ static void PrintResults(const char *Msg, bool P, const Value *V1, const Value *
     WriteAsOperand(s2, V2, true, M);
     std::string o1(s1.str()), o2(s2.str());
     if (o2 < o1)
-        std::swap(o1, o2);
-    cerr << "  " << Msg << ":\t"
-         << o1 << ", "
-         << o2 << "\n";
+      std::swap(o1, o2);
+    errs() << "  " << Msg << ":\t"
+           << o1 << ", "
+           << o2 << "\n";
   }
 }
 
@@ -100,9 +100,9 @@ static inline void
 PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
                    Module *M) {
   if (P) {
-    cerr << "  " << Msg << ":  Ptr: ";
-    WriteAsOperand(*cerr.stream(), Ptr, true, M);
-    cerr << "\t<->" << *I;
+    errs() << "  " << Msg << ":  Ptr: ";
+    WriteAsOperand(errs(), Ptr, true, M);
+    errs() << "\t<->" << *I;
   }
 }
 
@@ -136,8 +136,8 @@ bool AAEval::runOnFunction(Function &F) {
 
   if (PrintNoAlias || PrintMayAlias || PrintMustAlias ||
       PrintNoModRef || PrintMod || PrintRef || PrintModRef)
-    cerr << "Function: " << F.getName() << ": " << Pointers.size()
-         << " pointers, " << CallSites.size() << " call sites\n";
+    errs() << "Function: " << F.getName() << ": " << Pointers.size()
+           << " pointers, " << CallSites.size() << " call sites\n";
 
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
   for (std::set<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
@@ -162,7 +162,7 @@ bool AAEval::runOnFunction(Function &F) {
         PrintResults("MustAlias", PrintMustAlias, *I1, *I2, F.getParent());
         ++MustAlias; break;
       default:
-        cerr << "Unknown alias query result!\n";
+        errs() << "Unknown alias query result!\n";
       }
     }
   }
@@ -192,7 +192,7 @@ bool AAEval::runOnFunction(Function &F) {
         PrintModRefResults("  ModRef", PrintModRef, I, *V, F.getParent());
         ++ModRef; break;
       default:
-        cerr << "Unknown alias query result!\n";
+        errs() << "Unknown alias query result!\n";
       }
     }
   }
@@ -201,45 +201,45 @@ bool AAEval::runOnFunction(Function &F) {
 }
 
 static void PrintPercent(unsigned Num, unsigned Sum) {
-  cerr << "(" << Num*100ULL/Sum << "."
-            << ((Num*1000ULL/Sum) % 10) << "%)\n";
+  errs() << "(" << Num*100ULL/Sum << "."
+         << ((Num*1000ULL/Sum) % 10) << "%)\n";
 }
 
 bool AAEval::doFinalization(Module &M) {
   unsigned AliasSum = NoAlias + MayAlias + MustAlias;
-  cerr << "===== Alias Analysis Evaluator Report =====\n";
+  errs() << "===== Alias Analysis Evaluator Report =====\n";
   if (AliasSum == 0) {
-    cerr << "  Alias Analysis Evaluator Summary: No pointers!\n";
+    errs() << "  Alias Analysis Evaluator Summary: No pointers!\n";
   } else {
-    cerr << "  " << AliasSum << " Total Alias Queries Performed\n";
-    cerr << "  " << NoAlias << " no alias responses ";
+    errs() << "  " << AliasSum << " Total Alias Queries Performed\n";
+    errs() << "  " << NoAlias << " no alias responses ";
     PrintPercent(NoAlias, AliasSum);
-    cerr << "  " << MayAlias << " may alias responses ";
+    errs() << "  " << MayAlias << " may alias responses ";
     PrintPercent(MayAlias, AliasSum);
-    cerr << "  " << MustAlias << " must alias responses ";
+    errs() << "  " << MustAlias << " must alias responses ";
     PrintPercent(MustAlias, AliasSum);
-    cerr << "  Alias Analysis Evaluator Pointer Alias Summary: "
-         << NoAlias*100/AliasSum  << "%/" << MayAlias*100/AliasSum << "%/"
-         << MustAlias*100/AliasSum << "%\n";
+    errs() << "  Alias Analysis Evaluator Pointer Alias Summary: "
+           << NoAlias*100/AliasSum  << "%/" << MayAlias*100/AliasSum << "%/"
+           << MustAlias*100/AliasSum << "%\n";
   }
 
   // Display the summary for mod/ref analysis
   unsigned ModRefSum = NoModRef + Mod + Ref + ModRef;
   if (ModRefSum == 0) {
-    cerr << "  Alias Analysis Mod/Ref Evaluator Summary: no mod/ref!\n";
+    errs() << "  Alias Analysis Mod/Ref Evaluator Summary: no mod/ref!\n";
   } else {
-    cerr << "  " << ModRefSum << " Total ModRef Queries Performed\n";
-    cerr << "  " << NoModRef << " no mod/ref responses ";
+    errs() << "  " << ModRefSum << " Total ModRef Queries Performed\n";
+    errs() << "  " << NoModRef << " no mod/ref responses ";
     PrintPercent(NoModRef, ModRefSum);
-    cerr << "  " << Mod << " mod responses ";
+    errs() << "  " << Mod << " mod responses ";
     PrintPercent(Mod, ModRefSum);
-    cerr << "  " << Ref << " ref responses ";
+    errs() << "  " << Ref << " ref responses ";
     PrintPercent(Ref, ModRefSum);
-    cerr << "  " << ModRef << " mod & ref responses ";
+    errs() << "  " << ModRef << " mod & ref responses ";
     PrintPercent(ModRef, ModRefSum);
-    cerr << "  Alias Analysis Evaluator Mod/Ref Summary: "
-         << NoModRef*100/ModRefSum  << "%/" << Mod*100/ModRefSum << "%/"
-         << Ref*100/ModRefSum << "%/" << ModRef*100/ModRefSum << "%\n";
+    errs() << "  Alias Analysis Evaluator Mod/Ref Summary: "
+           << NoModRef*100/ModRefSum  << "%/" << Mod*100/ModRefSum << "%/"
+           << Ref*100/ModRefSum << "%/" << ModRef*100/ModRefSum << "%\n";
   }
 
   return false;

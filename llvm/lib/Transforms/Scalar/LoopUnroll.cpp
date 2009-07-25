@@ -20,6 +20,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/UnrollLoop.h"
 #include <climits>
 
@@ -118,8 +119,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   LoopInfo *LI = &getAnalysis<LoopInfo>();
 
   BasicBlock *Header = L->getHeader();
-  DOUT << "Loop Unroll: F[" << Header->getParent()->getName()
-       << "] Loop %" << Header->getName() << "\n";
+  DEBUG(errs() << "Loop Unroll: F[" << Header->getParent()->getName()
+        << "] Loop %" << Header->getName() << "\n");
 
   // Find trip count
   unsigned TripCount = L->getSmallConstantTripCount();

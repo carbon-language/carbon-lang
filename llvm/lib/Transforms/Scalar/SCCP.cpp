@@ -37,6 +37,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -281,11 +282,11 @@ private:
   // work list so that the users of the instruction are updated later.
   inline void markOverdefined(LatticeVal &IV, Value *V) {
     if (IV.markOverdefined()) {
-      DEBUG(DOUT << "markOverdefined: ";
+      DEBUG(errs() << "markOverdefined: ";
             if (Function *F = dyn_cast<Function>(V))
-              DOUT << "Function '" << F->getName() << "'\n";
+              errs() << "Function '" << F->getName() << "'\n";
             else
-              DOUT << *V);
+              errs() << *V);
       // Only instructions go on the work list
       OverdefinedInstWorkList.push_back(V);
     }

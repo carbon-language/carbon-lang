@@ -204,7 +204,8 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   JTI->Initialize(MF, IsPIC);
 
   do {
-    DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";
+    DEBUG(errs() << "JITTing function '" 
+          << MF.getFunction()->getName() << "'\n");
     MCE.startFunction(MF);
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
          MBB != E; ++MBB) {
@@ -438,15 +439,15 @@ void Emitter<CodeEmitter>::emitConstPoolInstruction(const MachineInstr &MI) {
   } else {
     Constant *CV = MCPE.Val.ConstVal;
 
-#ifndef NDEBUG
-    DOUT << "  ** Constant pool #" << CPI << " @ "
-         << (void*)MCE.getCurrentPCValue() << " ";
-    if (const Function *F = dyn_cast<Function>(CV))
-      DOUT << F->getName();
-    else
-      DOUT << *CV;
-    DOUT << '\n';
-#endif
+    DEBUG({
+        errs() << "  ** Constant pool #" << CPI << " @ "
+               << (void*)MCE.getCurrentPCValue() << " ";
+        if (const Function *F = dyn_cast<Function>(CV))
+          errs() << F->getName();
+        else
+          errs() << *CV;
+        errs() << '\n';
+      });
 
     if (GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
       emitGlobalAddress(GV, ARM::reloc_arm_absolute, isa<Function>(GV));

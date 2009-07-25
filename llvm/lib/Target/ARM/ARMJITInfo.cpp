@@ -23,6 +23,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Memory.h"
 #include <cstdlib>
 using namespace llvm;
@@ -159,12 +160,12 @@ void *ARMJITInfo::emitFunctionStub(const Function* F, void *Fn,
       if (!LazyPtr) {
         // In PIC mode, the function stub is loading a lazy-ptr.
         LazyPtr= (intptr_t)emitGlobalValueIndirectSym((GlobalValue*)F, Fn, JCE);
-        if (F)
-          DOUT << "JIT: Indirect symbol emitted at [" << LazyPtr << "] for GV '"
-               << F->getName() << "'\n";
-        else
-          DOUT << "JIT: Stub emitted at [" << LazyPtr
-               << "] for external function at '" << Fn << "'\n";
+        DEBUG(if (F)
+                errs() << "JIT: Indirect symbol emitted at [" << LazyPtr 
+                       << "] for GV '" << F->getName() << "'\n";
+              else
+                errs() << "JIT: Stub emitted at [" << LazyPtr
+                       << "] for external function at '" << Fn << "'\n");
       }
       JCE.startGVStub(F, 16, 4);
       intptr_t Addr = (intptr_t)JCE.getCurrentPCValue();

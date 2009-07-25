@@ -191,7 +191,8 @@ void XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int StackSize = MF.getFrameInfo()->getStackSize();
 
   #ifndef NDEBUG
-  DOUT << "\nFunction         : " << MF.getFunction()->getName() << "\n";
+  DEBUG(errs() << "\nFunction         : " 
+        << MF.getFunction()->getName() << "\n");
   DOUT << "<--------->\n";
   MI.print(DOUT);
   DOUT << "FrameIndex         : " << FrameIndex << "\n";

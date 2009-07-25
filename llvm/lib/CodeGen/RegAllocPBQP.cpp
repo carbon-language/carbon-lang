@@ -42,6 +42,7 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include <limits>
@@ -804,7 +805,8 @@ bool PBQPRegAlloc::runOnMachineFunction(MachineFunction &MF) {
 
   vrm = &getAnalysis<VirtRegMap>();
 
-  DOUT << "PBQP Register Allocating for " << mf->getFunction()->getName() << "\n";
+  DEBUG(errs() << "PBQP Register Allocating for " 
+        << mf->getFunction()->getName() << "\n");
 
   // Allocator main loop:
   //

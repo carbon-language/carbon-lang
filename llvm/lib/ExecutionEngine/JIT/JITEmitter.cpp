@@ -223,8 +223,8 @@ void *JITResolver::getFunctionStub(Function *F) {
     TheJIT->updateGlobalMapping(F, Stub);
   }
 
-  DOUT << "JIT: Stub emitted at [" << Stub << "] for function '"
-       << F->getName() << "'\n";
+  DEBUG(errs() << "JIT: Stub emitted at [" << Stub << "] for function '"
+        << F->getName() << "'\n");
 
   // Finally, keep track of the stub-to-Function mapping so that the
   // JITCompilerFn knows which function to compile!
@@ -253,8 +253,8 @@ void *JITResolver::getGlobalValueIndirectSym(GlobalValue *GV, void *GVAddress) {
   IndirectSym = TheJIT->getJITInfo().emitGlobalValueIndirectSym(GV, GVAddress,
                                                      *TheJIT->getCodeEmitter());
 
-  DOUT << "JIT: Indirect symbol emitted at [" << IndirectSym << "] for GV '"
-       << GV->getName() << "'\n";
+  DEBUG(errs() << "JIT: Indirect symbol emitted at [" << IndirectSym 
+        << "] for GV '" << GV->getName() << "'\n");
 
   return IndirectSym;
 }
@@ -387,9 +387,9 @@ void *JITResolver::JITCompilerFn(void *Stub) {
     // it needs to call.
     //JR.state.getStubToFunctionMap(locked).erase(I);
 
-    DOUT << "JIT: Lazily resolving function '" << F->getName()
-         << "' In stub ptr = " << Stub << " actual ptr = "
-         << ActualPtr << "\n";
+    DEBUG(errs() << "JIT: Lazily resolving function '" << F->getName()
+          << "' In stub ptr = " << Stub << " actual ptr = "
+          << ActualPtr << "\n");
 
     Result = TheJIT->getPointerToFunction(F);
   }
@@ -898,8 +898,8 @@ unsigned JITEmitter::GetSizeOfGlobalsInBytes(MachineFunction &MF) {
 }
 
 void JITEmitter::startFunction(MachineFunction &F) {
-  DOUT << "JIT: Starting CodeGen of Function "
-       << F.getFunction()->getName() << "\n";
+  DEBUG(errs() << "JIT: Starting CodeGen of Function "
+        << F.getFunction()->getName() << "\n");
 
   uintptr_t ActualSize = 0;
   // Set the memory writable, if it's not already
@@ -1081,10 +1081,10 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   TheJIT->NotifyFunctionEmitted(*F.getFunction(), FnStart, FnEnd-FnStart,
                                 EmissionDetails);
 
-  DOUT << "JIT: Finished CodeGen of [" << (void*)FnStart
-       << "] Function: " << F.getFunction()->getName()
-       << ": " << (FnEnd-FnStart) << " bytes of text, "
-       << Relocations.size() << " relocations\n";
+  DEBUG(errs() << "JIT: Finished CodeGen of [" << (void*)FnStart
+        << "] Function: " << F.getFunction()->getName()
+        << ": " << (FnEnd-FnStart) << " bytes of text, "
+        << Relocations.size() << " relocations\n");
 
   Relocations.clear();
   ConstPoolAddresses.clear();

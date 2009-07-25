@@ -33,7 +33,7 @@ Module *Trace::getModule() const {
 ///
 void Trace::print(std::ostream &O) const {
   Function *F = getFunction ();
-  O << "; Trace from function " << F->getName() << ", blocks:\n";
+  O << "; Trace from function " << F->getNameStr() << ", blocks:\n";
   for (const_iterator i = begin(), e = end(); i != e; ++i) {
     O << "; ";
     WriteAsOperand(O, *i, true, getModule());

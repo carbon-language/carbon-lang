@@ -790,7 +790,7 @@ void MSILWriter::printFunctionCall(const Value* FnVal,
   else if (const InvokeInst* Invoke = dyn_cast<InvokeInst>(Inst))
     Name = getConvModopt(Invoke->getCallingConv());
   else {
-    cerr << "Instruction = " << Inst->getName() << '\n';
+    errs() << "Instruction = " << Inst->getName() << '\n';
     llvm_unreachable("Need \"Invoke\" or \"Call\" instruction only");
   }
   if (const Function* F = dyn_cast<Function>(FnVal)) {
@@ -838,7 +838,7 @@ void MSILWriter::printIntrinsicCall(const IntrinsicInst* Inst) {
     printSimpleInstruction("cpobj","[mscorlib]System.ArgIterator");
     break;        
   default:
-    cerr << "Intrinsic ID = " << Inst->getIntrinsicID() << '\n';
+    errs() << "Intrinsic ID = " << Inst->getIntrinsicID() << '\n';
     llvm_unreachable("Invalid intrinsic function");
   }
 }
@@ -902,7 +902,7 @@ void MSILWriter::printICmpInstruction(unsigned Predicate, const Value* Left,
     printBinaryInstruction("cgt",Left,Right);
     break;
   default:
-    cerr << "Predicate = " << Predicate << '\n';
+    errs() << "Predicate = " << Predicate << '\n';
     llvm_unreachable("Invalid icmp predicate");
   }
 }
@@ -1209,7 +1209,7 @@ void MSILWriter::printInstruction(const Instruction* Inst) {
     printVAArgInstruction(cast<VAArgInst>(Inst));
     break;
   default:
-    cerr << "Instruction = " << Inst->getName() << '\n';
+    errs() << "Instruction = " << Inst->getName() << '\n';
     llvm_unreachable("Unsupported instruction");
   }
 }
@@ -1397,7 +1397,7 @@ void MSILWriter::printConstantExpr(const ConstantExpr* CE) {
     printBinaryInstruction("shr",left,right);
     break;
   default:
-    cerr << "Expression = " << *CE << "\n";
+    errs() << "Expression = " << *CE << "\n";
     llvm_unreachable("Invalid constant expression");
   }
 }
@@ -1431,7 +1431,7 @@ void MSILWriter::printStaticInitializerList() {
         postfix = "stind."+postfix;
         printSimpleInstruction(postfix.c_str());
       } else {
-        cerr << "Constant = " << *I->constant << '\n';
+        errs() << "Constant = " << *I->constant << '\n';
         llvm_unreachable("Invalid static initializer");
       }
     }
@@ -1495,7 +1495,7 @@ unsigned int MSILWriter::getBitWidth(const Type* Ty) {
   case 64:
     return N;
   default:
-    cerr << "Bits = " << N << '\n';
+    errs() << "Bits = " << N << '\n';
     llvm_unreachable("Unsupported integer width");
   }
   return 0; // Not reached
@@ -1557,7 +1557,7 @@ void MSILWriter::printStaticConstant(const Constant* C, uint64_t& Offset) {
     }
     break;
   default:
-    cerr << "TypeID = " << Ty->getTypeID() << '\n';
+    errs() << "TypeID = " << Ty->getTypeID() << '\n';
     llvm_unreachable("Invalid type in printStaticConstant()");
   }
   // Increase offset.
@@ -1580,7 +1580,7 @@ void MSILWriter::printStaticInitializer(const Constant* C,
     Out << getTypeName(C->getType());
     break;
   default:
-    cerr << "Type = " << *C << "\n";
+    errs() << "Type = " << *C << "\n";
     llvm_unreachable("Invalid constant type");
   }
   // Print initializer

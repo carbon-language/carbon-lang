@@ -46,6 +46,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;
@@ -449,9 +450,9 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val){
     // FIXME: this should estimate growth by the amount of code shared by the
     // resultant unswitched loops.
     //
-    DOUT << "NOT unswitching loop %"
-         << currentLoop->getHeader()->getName() << ", cost too high: "
-         << currentLoop->getBlocks().size() << "\n";
+    DEBUG(errs() << "NOT unswitching loop %"
+          << currentLoop->getHeader()->getName() << ", cost too high: "
+          << currentLoop->getBlocks().size() << "\n");
     return false;
   }
 
@@ -528,10 +529,10 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
 void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, 
                                             Constant *Val, 
                                             BasicBlock *ExitBlock) {
-  DOUT << "loop-unswitch: Trivial-Unswitch loop %"
-       << loopHeader->getName() << " [" << L->getBlocks().size()
-       << " blocks] in Function " << L->getHeader()->getParent()->getName()
-       << " on cond: " << *Val << " == " << *Cond << "\n";
+  DEBUG(errs() << "loop-unswitch: Trivial-Unswitch loop %"
+        << loopHeader->getName() << " [" << L->getBlocks().size()
+        << " blocks] in Function " << L->getHeader()->getParent()->getName()
+        << " on cond: " << *Val << " == " << *Cond << "\n");
   
   // First step, split the preheader, so that we know that there is a safe place
   // to insert the conditional branch.  We will change loopPreheader to have a
@@ -623,10 +624,10 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
 void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val, 
                                                Loop *L) {
   Function *F = loopHeader->getParent();
-  DOUT << "loop-unswitch: Unswitching loop %"
-       << loopHeader->getName() << " [" << L->getBlocks().size()
-       << " blocks] in Function " << F->getName()
-       << " when '" << *Val << "' == " << *LIC << "\n";
+  DEBUG(errs() << "loop-unswitch: Unswitching loop %"
+        << loopHeader->getName() << " [" << L->getBlocks().size()
+        << " blocks] in Function " << F->getName()
+        << " when '" << *Val << "' == " << *LIC << "\n");
 
   LoopBlocks.clear();
   NewBlocks.clear();
@@ -1058,8 +1059,8 @@ void LoopUnswitch::SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L) {
         if (!SinglePred) continue;  // Nothing to do.
         assert(SinglePred == Pred && "CFG broken");
 
-        DOUT << "Merging blocks: " << Pred->getName() << " <- " 
-             << Succ->getName() << "\n";
+        DEBUG(errs() << "Merging blocks: " << Pred->getName() << " <- " 
+              << Succ->getName() << "\n");
         
         // Resolve any single entry PHI nodes in Succ.
         while (PHINode *PN = dyn_cast<PHINode>(Succ->begin()))

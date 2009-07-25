@@ -24,6 +24,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
 using namespace llvm;
@@ -71,7 +72,8 @@ bool Inliner::InlineCallIfPossible(CallSite CS, CallGraph &CG,
   if (Callee->use_empty() && (Callee->hasLocalLinkage() ||
                               Callee->hasAvailableExternallyLinkage()) &&
       !SCCFunctions.count(Callee)) {
-    DOUT << "    -> Deleting dead function: " << Callee->getName() << "\n";
+    DEBUG(errs() << "    -> Deleting dead function: " 
+          << Callee->getName() << "\n");
     CallGraphNode *CalleeNode = CG[Callee];
 
     // Remove any call graph edges from the callee to its callees.
@@ -133,7 +135,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();
     if (F) SCCFunctions.insert(F);
-    DOUT << " " << (F ? F->getName() : "INDIRECTNODE");
+    DEBUG(errs() << " " << (F ? F->getName() : "INDIRECTNODE"));
   }
 
   // Scan through and identify all call sites ahead of time so that we only

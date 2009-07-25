@@ -228,8 +228,8 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   if (!TII) return false;
 
-  DOUT << "\nIfcvt: function (" << ++FnNum <<  ") \'"
-       << MF.getFunction()->getName() << "\'";
+  DEBUG(errs() << "\nIfcvt: function (" << ++FnNum <<  ") \'"
+        << MF.getFunction()->getName() << "\'");
 
   if (FnNum < IfCvtFnStart || (IfCvtFnStop != -1 && FnNum > IfCvtFnStop)) {
     DOUT << " skipped\n";

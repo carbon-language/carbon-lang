@@ -41,12 +41,13 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Support/Compiler.h"
 #include <set>
 using namespace llvm;
 
@@ -145,9 +146,9 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
       const Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
       if (const StructType *STy = dyn_cast<StructType>(AgTy)) {
         if (maxElements > 0 && STy->getNumElements() > maxElements) {
-          DOUT << "argpromotion disable promoting argument '"
-               << PtrArg->getName() << "' because it would require adding more "
-               << "than " << maxElements << " arguments to the function.\n";
+          DEBUG(errs() << "argpromotion disable promoting argument '"
+                << PtrArg->getName() << "' because it would require adding more"
+                << " than " << maxElements << " arguments to the function.\n");
         } else {
           // If all the elements are single-value types, we can promote it.
           bool AllSimple = true;
@@ -410,9 +411,9 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg, bool isByVal) const {
     // to do.
     if (ToPromote.find(Operands) == ToPromote.end()) {
       if (maxElements > 0 && ToPromote.size() == maxElements) {
-        DOUT << "argpromotion not promoting argument '"
-             << Arg->getName() << "' because it would require adding more "
-             << "than " << maxElements << " arguments to the function.\n";
+        DEBUG(errs() << "argpromotion not promoting argument '"
+              << Arg->getName() << "' because it would require adding more "
+              << "than " << maxElements << " arguments to the function.\n");
         // We limit aggregate promotion to only promoting up to a fixed number
         // of elements of the aggregate.
         return false;
@@ -795,8 +796,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
         LI->replaceAllUsesWith(I2);
         AA.replaceWithNewValue(LI, I2);
         LI->eraseFromParent();
-        DOUT << "*** Promoted load of argument '" << I->getName()
-             << "' in function '" << F->getName() << "'\n";
+        DEBUG(errs() << "*** Promoted load of argument '" << I->getName()
+              << "' in function '" << F->getName() << "'\n");
       } else {
         GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->use_back());
         IndicesVector Operands;
@@ -822,8 +823,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
         NewName += ".val";
         TheArg->setName(NewName);
 
-        DOUT << "*** Promoted agg argument '" << TheArg->getName()
-             << "' of function '" << NF->getName() << "'\n";
+        DEBUG(errs() << "*** Promoted agg argument '" << TheArg->getName()
+              << "' of function '" << NF->getName() << "'\n");
 
         // All of the uses must be load instructions.  Replace them all with
         // the argument specified by ArgNo.

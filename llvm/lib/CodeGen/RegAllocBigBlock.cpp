@@ -615,7 +615,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
   const TargetInstrInfo &TII = *TM->getInstrInfo();
   
   DEBUG(const BasicBlock *LBB = MBB.getBasicBlock();
-        if (LBB) DOUT << "\nStarting RegAlloc of BB: " << LBB->getName());
+        if (LBB) errs() << "\nStarting RegAlloc of BB: " << LBB->getName());
 
   // If this is the first basic block in the machine function, add live-in
   // registers as active.

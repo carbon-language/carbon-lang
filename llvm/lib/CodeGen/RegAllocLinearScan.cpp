@@ -37,6 +37,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <set>
 #include <queue>
@@ -484,7 +485,8 @@ void RALinScan::linearScan()
 {
   // linear scan algorithm
   DOUT << "********** LINEAR SCAN **********\n";
-  DOUT << "********** Function: " << mf_->getFunction()->getName() << '\n';
+  DEBUG(errs() << "********** Function: " 
+        << mf_->getFunction()->getName() << '\n');
 
   DEBUG(printIntervals("fixed", fixed_.begin(), fixed_.end()));
 

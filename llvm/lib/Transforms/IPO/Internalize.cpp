@@ -21,6 +21,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 #include <fstream>
 #include <set>
@@ -131,7 +132,7 @@ bool InternalizePass::runOnModule(Module &M) {
       if (ExternalNode) ExternalNode->removeOneAbstractEdgeTo((*CG)[I]);
       Changed = true;
       ++NumFunctions;
-      DOUT << "Internalizing func " << I->getName() << "\n";
+      DEBUG(errs() << "Internalizing func " << I->getName() << "\n");
     }
 
   // Never internalize the llvm.used symbol.  It is used to implement
@@ -160,7 +161,7 @@ bool InternalizePass::runOnModule(Module &M) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
       ++NumGlobals;
-      DOUT << "Internalized gvar " << I->getName() << "\n";
+      DEBUG(errs() << "Internalized gvar " << I->getName() << "\n");
     }
 
   // Mark all aliases that are not in the api as internal as well.
@@ -171,7 +172,7 @@ bool InternalizePass::runOnModule(Module &M) {
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
       ++NumAliases;
-      DOUT << "Internalized alias " << I->getName() << "\n";
+      DEBUG(errs() << "Internalized alias " << I->getName() << "\n");
     }
 
   return Changed;

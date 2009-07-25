@@ -29,6 +29,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -426,7 +427,7 @@ void DAE::SurveyFunction(Function &F) {
     return;
   }
 
-  DOUT << "DAE - Inspecting callers for fn: " << F.getName() << "\n";
+  DEBUG(errs() << "DAE - Inspecting callers for fn: " << F.getName() << "\n");
   // Keep track of the number of live retvals, so we can skip checks once all
   // of them turn out to be live.
   unsigned NumLiveRetVals = 0;
@@ -489,7 +490,7 @@ void DAE::SurveyFunction(Function &F) {
   for (unsigned i = 0; i != RetCount; ++i)
     MarkValue(CreateRet(&F, i), RetValLiveness[i], MaybeLiveRetUses[i]);
 
-  DOUT << "DAE - Inspecting args for fn: " << F.getName() << "\n";
+  DEBUG(errs() << "DAE - Inspecting args for fn: " << F.getName() << "\n");
 
   // Now, check all of our arguments.
   unsigned i = 0;
@@ -531,7 +532,7 @@ void DAE::MarkValue(const RetOrArg &RA, Liveness L,
 /// mark any values that are used as this function's parameters or by its return
 /// values (according to Uses) live as well.
 void DAE::MarkLive(const Function &F) {
-    DOUT << "DAE - Intrinsically live fn: " << F.getName() << "\n";
+  DEBUG(errs() << "DAE - Intrinsically live fn: " << F.getName() << "\n");
     // Mark the function as live.
     LiveFunctions.insert(&F);
     // Mark all arguments as live.

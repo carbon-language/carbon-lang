@@ -45,6 +45,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "RSProfiling.h"
 #include <set>
@@ -643,7 +644,7 @@ static void getBackEdges(Function& F, T& BackEdges) {
   std::map<BasicBlock*, int> finish;
   int time = 0;
   recBackEdge(&F.getEntryBlock(), BackEdges, color, depth, finish, time);
-  DOUT << F.getName() << " " << BackEdges.size() << "\n";
+  DEBUG(errs() << F.getName() << " " << BackEdges.size() << "\n");
 }
 
 

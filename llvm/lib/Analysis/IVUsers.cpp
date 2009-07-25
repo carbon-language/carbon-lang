@@ -129,8 +129,8 @@ static bool getSCEVStartAndStride(const SCEV *&SH, Loop *L, Loop *UseLoop,
     if (!AddRecStride->dominates(Preheader, DT))
       return false;
 
-    DOUT << "[" << L->getHeader()->getName()
-         << "] Variable stride: " << *AddRec << "\n";
+    DEBUG(errs() << "[" << L->getHeader()->getName()
+                 << "] Variable stride: " << *AddRec << "\n");
   }
 
   Stride = AddRecStride;

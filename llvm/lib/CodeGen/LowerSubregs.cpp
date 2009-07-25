@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 namespace {
@@ -271,7 +272,8 @@ bool LowerSubregsInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   bool MadeChange = false;
 
   DOUT << "********** LOWERING SUBREG INSTRS **********\n";
-  DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
+  DEBUG(errs() << "********** Function: " 
+        << MF.getFunction()->getName() << '\n');
 
   for (MachineFunction::iterator mbbi = MF.begin(), mbbe = MF.end();
        mbbi != mbbe; ++mbbi) {

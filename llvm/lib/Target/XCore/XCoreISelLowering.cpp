@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/VectorExtras.h"
 #include <queue>
 #include <set>
@@ -282,8 +283,8 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG)
   const Type *Ty = cast<PointerType>(GV->getType())->getElementType();
   if (!Ty->isSized() || isZeroLengthArray(Ty)) {
 #ifndef NDEBUG
-    cerr << "Size of thread local object " << GVar->getName()
-        << " is unknown\n";
+    errs() << "Size of thread local object " << GVar->getName()
+           << " is unknown\n";
 #endif
     llvm_unreachable(0);
   }
@@ -852,8 +853,8 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
       default:
         {
 #ifndef NDEBUG
-          cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-               << RegVT.getSimpleVT() << "\n";
+          errs() << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+                 << RegVT.getSimpleVT() << "\n";
 #endif
           llvm_unreachable(0);
         }
@@ -869,9 +870,9 @@ LowerCCCArguments(SDValue Op, SelectionDAG &DAG)
       // Load the argument to a virtual register
       unsigned ObjSize = VA.getLocVT().getSizeInBits()/8;
       if (ObjSize > StackSlotSize) {
-        cerr << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
-             << VA.getLocVT().getSimpleVT()
-             << "\n";
+        errs() << "LowerFORMAL_ARGUMENTS Unhandled argument type: "
+               << VA.getLocVT().getSimpleVT()
+               << "\n";
       }
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(ObjSize,

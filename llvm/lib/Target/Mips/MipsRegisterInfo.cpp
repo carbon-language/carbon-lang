@@ -32,6 +32,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 
@@ -362,7 +363,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   }
 
   #ifndef NDEBUG
-  DOUT << "\nFunction : " << MF.getFunction()->getName() << "\n";
+  DEBUG(errs() << "\nFunction : " << MF.getFunction()->getName() << "\n");
   DOUT << "<--------->\n";
   MI.print(DOUT);
   #endif

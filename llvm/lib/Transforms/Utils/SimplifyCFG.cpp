@@ -22,6 +22,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1289,8 +1290,8 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
     if (NumPhis > 2)
       return false;
   
-  DOUT << "FOUND IF CONDITION!  " << *IfCond << "  T: "
-       << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n";
+  DEBUG(errs() << "FOUND IF CONDITION!  " << *IfCond << "  T: "
+        << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
   
   // Loop over the PHI's seeing if we can promote them all to select
   // instructions.  While we are at it, keep track of the instructions

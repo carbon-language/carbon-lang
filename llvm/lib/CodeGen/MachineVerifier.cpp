@@ -237,7 +237,7 @@ MachineVerifier::report(const char *msg, const MachineFunction *MF)
   if (!foundErrors++)
     MF->print(OS);
   *OS << "*** Bad machine code: " << msg << " ***\n"
-      << "- function:    " << MF->getFunction()->getName() << "\n";
+      << "- function:    " << MF->getFunction()->getNameStr() << "\n";
 }
 
 void
@@ -245,7 +245,7 @@ MachineVerifier::report(const char *msg, const MachineBasicBlock *MBB)
 {
   assert(MBB);
   report(msg, MBB->getParent());
-  *OS << "- basic block: " << MBB->getBasicBlock()->getName()
+  *OS << "- basic block: " << MBB->getBasicBlock()->getNameStr()
       << " " << (void*)MBB
       << " (#" << MBB->getNumber() << ")\n";
 }

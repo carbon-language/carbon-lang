@@ -54,6 +54,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <vector>
 using namespace llvm;
@@ -642,9 +643,9 @@ bool MergeFunctions::runOnModule(Module &M) {
         for (int j = i + 1; j != e; ++j) {
           bool isEqual = equals(FnVec[i], FnVec[j]);
 
-          DOUT << "  " << FnVec[i]->getName()
-               << (isEqual ? " == " : " != ")
-               << FnVec[j]->getName() << "\n";
+          DEBUG(errs() << "  " << FnVec[i]->getName()
+                << (isEqual ? " == " : " != ")
+                << FnVec[j]->getName() << "\n");
 
           if (isEqual) {
             if (fold(FnVec, i, j)) {

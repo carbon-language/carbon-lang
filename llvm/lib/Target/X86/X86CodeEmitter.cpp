@@ -32,6 +32,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -130,7 +131,8 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
   
   do {
-    DOUT << "JITTing function '" << MF.getFunction()->getName() << "'\n";
+    DEBUG(errs() << "JITTing function '" 
+          << MF.getFunction()->getName() << "'\n");
     MCE.startFunction(MF);
     for (MachineFunction::iterator MBB = MF.begin(), E = MF.end(); 
          MBB != E; ++MBB) {
@@ -813,7 +815,7 @@ void Emitter<CodeEmitter>::emitInstruction(
 
   if (!Desc->isVariadic() && CurOp != NumOps) {
 #ifndef NDEBUG
-    cerr << "Cannot encode: " << MI << "\n";
+    errs() << "Cannot encode: " << MI << "\n";
 #endif
     llvm_unreachable(0);
   }

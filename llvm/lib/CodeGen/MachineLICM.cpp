@@ -33,6 +33,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 
@@ -355,14 +356,14 @@ void MachineLICM::Hoist(MachineInstr &MI) {
   // Now move the instructions to the predecessor, inserting it before any
   // terminator instructions.
   DEBUG({
-      DOUT << "Hoisting " << MI;
+      errs() << "Hoisting " << MI;
       if (CurPreheader->getBasicBlock())
-        DOUT << " to MachineBasicBlock "
-             << CurPreheader->getBasicBlock()->getName();
+        errs() << " to MachineBasicBlock "
+               << CurPreheader->getBasicBlock()->getName();
       if (MI.getParent()->getBasicBlock())
-        DOUT << " from MachineBasicBlock "
-             << MI.getParent()->getBasicBlock()->getName();
-      DOUT << "\n";
+        errs() << " from MachineBasicBlock "
+               << MI.getParent()->getBasicBlock()->getName();
+      errs() << "\n";
     });
 
   // Look for opportunity to CSE the hoisted instruction.

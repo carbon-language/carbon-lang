@@ -48,6 +48,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include <algorithm>
@@ -604,7 +605,7 @@ void LICM::sink(Instruction &I) {
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
 void LICM::hoist(Instruction &I) {
-  DOUT << "LICM hoisting to " << Preheader->getName() << ": " << I;
+  DEBUG(errs() << "LICM hoisting to " << Preheader->getName() << ": " << I);
 
   // Remove the instruction from its current basic block... but don't delete the
   // instruction.

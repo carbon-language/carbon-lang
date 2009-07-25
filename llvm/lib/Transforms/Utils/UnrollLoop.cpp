@@ -25,6 +25,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -153,11 +154,11 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, LoopInfo* LI, LPPassManager* LPM)
   }
 
   if (CompletelyUnroll) {
-    DOUT << "COMPLETELY UNROLLING loop %" << Header->getName()
-         << " with trip count " << TripCount << "!\n";
+    DEBUG(errs() << "COMPLETELY UNROLLING loop %" << Header->getName()
+          << " with trip count " << TripCount << "!\n");
   } else {
-    DOUT << "UNROLLING loop %" << Header->getName()
-         << " by " << Count;
+    DEBUG(errs() << "UNROLLING loop %" << Header->getName()
+          << " by " << Count);
     if (TripMultiple == 0 || BreakoutTrip != TripMultiple) {
       DOUT << " with a breakout at trip " << BreakoutTrip;
     } else if (TripMultiple != 1) {

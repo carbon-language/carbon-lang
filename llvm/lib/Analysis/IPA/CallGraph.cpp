@@ -75,7 +75,7 @@ public:
   virtual void print(std::ostream &o, const Module *M) const {
     o << "CallGraph Root is: ";
     if (Function *F = getRoot()->getFunction())
-      o << F->getName() << "\n";
+      o << F->getNameStr() << "\n";
     else
       o << "<<null function: 0x" << getRoot() << ">>\n";
     
@@ -244,13 +244,13 @@ CallGraphNode *CallGraph::getOrInsertFunction(const Function *F) {
 
 void CallGraphNode::print(std::ostream &OS) const {
   if (Function *F = getFunction())
-    OS << "Call graph node for function: '" << F->getName() <<"'\n";
+    OS << "Call graph node for function: '" << F->getNameStr() <<"'\n";
   else
     OS << "Call graph node <<null function: 0x" << this << ">>:\n";
 
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     if (Function *FI = I->second->getFunction())
-      OS << "  Calls function '" << FI->getName() <<"'\n";
+      OS << "  Calls function '" << FI->getNameStr() <<"'\n";
   else
     OS << "  Calls external node\n";
   OS << "\n";

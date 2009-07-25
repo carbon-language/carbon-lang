@@ -97,6 +97,7 @@
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
@@ -290,7 +291,7 @@ namespace {
       for (int i = 0; i < depth; ++i) { os << " "; }
       os << "[" << depth << "] ";
 
-      os << N->getBlock()->getName() << " (" << N->getDFSNumIn()
+      os << N->getBlock()->getNameStr() << " (" << N->getDFSNumIn()
          << ", " << N->getDFSNumOut() << ")\n";
 
       for (Node::iterator I = N->begin(), E = N->end(); I != E; ++I)
@@ -1298,7 +1299,7 @@ namespace {
            E = DeadBlocks.end(); I != E; ++I) {
         BasicBlock *BB = *I;
 
-        DOUT << "unreachable block: " << BB->getName() << "\n";
+        DEBUG(errs() << "unreachable block: " << BB->getName() << "\n");
 
         for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
              SI != SE; ++SI) {
@@ -1385,9 +1386,11 @@ namespace {
     bool makeEqual(Value *V1, Value *V2) {
       DOUT << "makeEqual(" << *V1 << ", " << *V2 << ")\n";
       DOUT << "context is ";
-      if (TopInst) DOUT << "I: " << *TopInst << "\n";
-      else DOUT << "BB: " << TopBB->getName()
-                << "(" << Top->getDFSNumIn() << ")\n";
+      DEBUG(if (TopInst) 
+              errs() << "I: " << *TopInst << "\n";
+            else 
+              errs() << "BB: " << TopBB->getName()
+                     << "(" << Top->getDFSNumIn() << ")\n");
 
       assert(V1->getType() == V2->getType() &&
              "Can't make two values with different types equal.");
@@ -2143,14 +2146,16 @@ namespace {
         assert(O.LHS == VN.canonicalize(O.LHS, Top) && "Canonicalize isn't.");
         assert(O.RHS == VN.canonicalize(O.RHS, Top) && "Canonicalize isn't.");
 
-        DOUT << "solving " << *O.LHS << " " << O.Op << " " << *O.RHS;
-        if (O.ContextInst) DOUT << " context inst: " << *O.ContextInst;
-        else DOUT << " context block: " << O.ContextBB->getName();
-        DOUT << "\n";
+        DEBUG(errs() << "solving " << *O.LHS << " " << O.Op << " " << *O.RHS;
+              if (O.ContextInst) 
+                errs() << " context inst: " << *O.ContextInst;
+              else
+                errs() << " context block: " << O.ContextBB->getName();
+              errs() << "\n";
 
-        DEBUG(VN.dump());
-        DEBUG(IG.dump());
-        DEBUG(VR.dump());
+              VN.dump();
+              IG.dump();
+              VR.dump(););
 
         // If they're both Constant, skip it. Check for contradiction and mark
         // the BB as unreachable if so.
@@ -2336,8 +2341,8 @@ namespace {
     // Visits each instruction in the basic block.
     void visitBasicBlock(DomTreeDFS::Node *Node) {
       BasicBlock *BB = Node->getBlock();
-      DOUT << "Entering Basic Block: " << BB->getName()
-           << " (" << Node->getDFSNumIn() << ")\n";
+      DEBUG(errs() << "Entering Basic Block: " << BB->getName()
+            << " (" << Node->getDFSNumIn() << ")\n");
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
         visitInstruction(I++, Node);
       }
@@ -2406,7 +2411,7 @@ namespace {
     TargetData *TD = &getAnalysis<TargetData>();
     Context = &F.getContext();
 
-    DOUT << "Entering Function: " << F.getName() << "\n";
+    DEBUG(errs() << "Entering Function: " << F.getName() << "\n");
 
     modified = false;
     DomTreeDFS::Node *Root = DTDFS->getRootNode();
@@ -2455,11 +2460,12 @@ namespace {
     for (DomTreeDFS::Node::iterator I = DTNode->begin(), E = DTNode->end();
          I != E; ++I) {
       BasicBlock *Dest = (*I)->getBlock();
-      DOUT << "Branch thinking about %" << Dest->getName()
-           << "(" << PS->DTDFS->getNodeForBlock(Dest)->getDFSNumIn() << ")\n";
+      DEBUG(errs() << "Branch thinking about %" << Dest->getName()
+            << "(" << PS->DTDFS->getNodeForBlock(Dest)->getDFSNumIn() << ")\n");
 
       if (Dest == TrueDest) {
-        DOUT << "(" << DTNode->getBlock()->getName() << ") true set:\n";
+        DEBUG(errs() << "(" << DTNode->getBlock()->getName() 
+              << ") true set:\n");
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, Dest);
         VRP.add(Context->getTrue(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
@@ -2467,7 +2473,8 @@ namespace {
         DEBUG(IG.dump());
         DEBUG(VR.dump());
       } else if (Dest == FalseDest) {
-        DOUT << "(" << DTNode->getBlock()->getName() << ") false set:\n";
+        DEBUG(errs() << "(" << DTNode->getBlock()->getName() 
+              << ") false set:\n");
         VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, Dest);
         VRP.add(Context->getFalse(), Condition, ICmpInst::ICMP_EQ);
         VRP.solve();
@@ -2489,8 +2496,8 @@ namespace {
     for (DomTreeDFS::Node::iterator I = DTNode->begin(), E = DTNode->end();
          I != E; ++I) {
       BasicBlock *BB = (*I)->getBlock();
-      DOUT << "Switch thinking about BB %" << BB->getName()
-           << "(" << PS->DTDFS->getNodeForBlock(BB)->getDFSNumIn() << ")\n";
+      DEBUG(errs() << "Switch thinking about BB %" << BB->getName()
+            << "(" << PS->DTDFS->getNodeForBlock(BB)->getDFSNumIn() << ")\n");
 
       VRPSolver VRP(VN, IG, UB, VR, PS->DTDFS, PS->modified, BB);
       if (BB == SI.getDefaultDest()) {

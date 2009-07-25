@@ -747,7 +747,8 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   bool MadeChange = false;
 
   DOUT << "********** REWRITING TWO-ADDR INSTRS **********\n";
-  DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
+  DEBUG(errs() << "********** Function: " 
+        << MF.getFunction()->getName() << '\n');
 
   // ReMatRegs - Keep track of the registers whose def's are remat'ed.
   BitVector ReMatRegs;

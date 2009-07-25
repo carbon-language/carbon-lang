@@ -38,6 +38,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <cstdio>
@@ -1155,15 +1156,15 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
   // non-PHI instruction in this block, we don't know how to recompute it above.
   if (Instruction *LPInst = dyn_cast<Instruction>(LoadPtr))
     if (!DT->dominates(LPInst->getParent(), UnavailablePred)) {
-      DEBUG(cerr << "COULDN'T PRE LOAD BECAUSE PTR IS UNAVAILABLE IN PRED: "
-                 << *LPInst << *LI << "\n");
+      DEBUG(errs() << "COULDN'T PRE LOAD BECAUSE PTR IS UNAVAILABLE IN PRED: "
+                   << *LPInst << *LI << "\n");
       return false;
     }
   
   // We don't currently handle critical edges :(
   if (UnavailablePred->getTerminator()->getNumSuccessors() != 1) {
-    DEBUG(cerr << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
-                << UnavailablePred->getName() << "': " << *LI);
+    DEBUG(errs() << "COULD NOT PRE LOAD BECAUSE OF CRITICAL EDGE '"
+                 << UnavailablePred->getName() << "': " << *LI);
     return false;
   }
 

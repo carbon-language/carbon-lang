@@ -31,6 +31,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -2351,9 +2352,9 @@ static bool EvaluateStaticConstructor(Function *F) {
                                        CallStack, MutatedMemory, AllocaTmps);
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
-    DOUT << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
-         << F->getName() << "' to " << MutatedMemory.size()
-         << " stores.\n";
+    DEBUG(errs() << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
+          << F->getName() << "' to " << MutatedMemory.size()
+          << " stores.\n");
     for (DenseMap<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
          E = MutatedMemory.end(); I != E; ++I)
       CommitValueTo(I->second, I->first, F->getContext());

@@ -503,7 +503,7 @@ void LiveIntervals::print(std::ostream &O, const Module* ) const {
   O << "********** MACHINEINSTRS **********\n";
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
-    O << ((Value*)mbbi->getBasicBlock())->getName() << ":\n";
+    O << ((Value*)mbbi->getBasicBlock())->getNameStr() << ":\n";
     for (MachineBasicBlock::iterator mii = mbbi->begin(),
            mie = mbbi->end(); mii != mie; ++mii) {
       O << getInstructionIndex(mii) << '\t' << *mii;
@@ -985,9 +985,9 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 /// which a variable is live
 void LiveIntervals::computeIntervals() { 
 
-  DOUT << "********** COMPUTING LIVE INTERVALS **********\n"
-       << "********** Function: "
-       << ((Value*)mf_->getFunction())->getName() << '\n';
+  DEBUG(errs() << "********** COMPUTING LIVE INTERVALS **********\n"
+        << "********** Function: "
+        << ((Value*)mf_->getFunction())->getName() << '\n');
 
   SmallVector<unsigned, 8> UndefUses;
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
@@ -995,7 +995,7 @@ void LiveIntervals::computeIntervals() {
     MachineBasicBlock *MBB = MBBI;
     // Track the index of the current machine instr.
     unsigned MIIndex = getMBBStartIdx(MBB);
-    DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
+    DEBUG(errs() << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
 
     MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
 
