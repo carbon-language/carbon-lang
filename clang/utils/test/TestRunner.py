@@ -16,7 +16,9 @@
 #
 
 import errno
+import hashlib
 import os
+import platform
 import re
 import signal
 import subprocess
@@ -26,6 +28,8 @@ import sys
 #
 # FIXME: Find a better place for this hack.
 os.environ['COLUMNS'] = '0'
+
+kSystemName = platform.system()
 
 class TestStatus:
     Pass = 0 
@@ -109,6 +113,8 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
 
     FILENAME = os.path.abspath(FILENAME)
     SCRIPT = OUTPUT + '.script'
+    if kSystemName == 'Windows':
+        SCRIPT += '.bat'
     TEMPOUTPUT = OUTPUT + '.tmp'
 
     substitutions = [('%s',SUBST),
@@ -149,7 +155,12 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
     outputFile = open(OUTPUT,'w')
     p = None
     try:
-        p = subprocess.Popen(["/bin/sh",SCRIPT],
+        if kSystemName == 'Windows':
+            command = ['cmd','/c', SCRIPT]
+        else:
+            command = ['/bin/sh', SCRIPT]
+        
+        p = subprocess.Popen(command,
                              cwd=os.path.dirname(FILENAME),
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
@@ -170,7 +181,10 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         SCRIPT_STATUS = not SCRIPT_STATUS
 
     if useValgrind:
-        VG_OUTPUT = capture(['/bin/sh','-c','cat %s.*'%(VG_OUTPUT)])
+        if kSystemName == 'Windows':
+            raise NotImplementedError,'Cannot run valgrind on windows'
+        else:
+            VG_OUTPUT = capture(['/bin/sh','-c','cat %s.*'%(VG_OUTPUT)])
         VG_STATUS = len(VG_OUTPUT)
     else:
         VG_STATUS = 0
@@ -200,16 +214,30 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         return TestStatus.Pass
 
 def capture(args):
-    p = subprocess.Popen(args, stdout=subprocess.PIPE)
+    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out,_ = p.communicate()
     return out
 
 def which(command):
+    # Check for absolute match first.
+    if os.path.exists(command):
+        return command
+
     # Would be nice if Python had a lib function for this.
-    res = capture(['which',command])
-    res = res.strip()
-    if res and os.path.exists(res):
-        return res
+    paths = os.environ.get('PATH')
+    if not paths:
+        paths = os.defpath
+
+    # Get suffixes to search.
+    pathext = os.environ.get('PATHEXT', '').split(os.pathsep)
+
+    # Search the paths...
+    for path in paths.split(os.pathsep):
+        for ext in pathext:
+            p = os.path.join(path, command + ext)
+            if os.path.exists(p):
+                return p
+
     return None
 
 def inferClang():
@@ -240,7 +268,11 @@ def inferClangCC(clang):
 
     # Otherwise try adding -cc since we expect to be looking in a build
     # directory.
-    clangcc = which(clang + '-cc')
+    if clang.endswith('.exe'):
+        clangccName = clang[:-4] + '-cc.exe'
+    else:
+        clangccName = clang + '-cc'
+    clangcc = which(clangccName)
     if not clangcc:
         # Otherwise ask clang.
         res = capture([clang, '-print-prog-name=clang-cc'])
