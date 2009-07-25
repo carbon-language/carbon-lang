@@ -1165,18 +1165,17 @@ void Emitter<CodeEmitter>::emitMiscBranchInstruction(const MachineInstr &MI) {
   const TargetInstrDesc &TID = MI.getDesc();
 
   // Handle jump tables.
-  if (TID.Opcode == ARM::BR_JTr || TID.Opcode == ARM::BR_JTadd ||
-      TID.Opcode == ARM::t2BR_JTr || TID.Opcode == ARM::t2BR_JTadd) {
+  if (TID.Opcode == ARM::BR_JTr || TID.Opcode == ARM::BR_JTadd) {
     // First emit a ldr pc, [] instruction.
     emitDataProcessingInstruction(MI, ARM::PC);
 
     // Then emit the inline jump table.
     unsigned JTIndex =
-      (TID.Opcode == ARM::BR_JTr || TID.Opcode == ARM::t2BR_JTr)
+      (TID.Opcode == ARM::BR_JTr)
       ? MI.getOperand(1).getIndex() : MI.getOperand(2).getIndex();
     emitInlineJumpTable(JTIndex);
     return;
-  } else if (TID.Opcode == ARM::BR_JTm || TID.Opcode == ARM::t2BR_JTm) {
+  } else if (TID.Opcode == ARM::BR_JTm) {
     // First emit a ldr pc, [] instruction.
     emitLoadStoreInstruction(MI, ARM::PC);
 
