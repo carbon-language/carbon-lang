@@ -5,9 +5,9 @@ MultiTestRunner - Harness for running multiple tests in the simple clang style.
 
 TODO
 --
- - Fix Ctrl-c issues
- - Use a timeout
- - Detect signalled failures (abort)
+ - Use configuration file for clang specific stuff
+ - Use a timeout / ulimit
+ - Detect signaled failures (abort)
  - Better support for finding tests
 """
 
@@ -172,8 +172,6 @@ class Tester(threading.Thread):
                 startTime = time.time()
                 code = TestRunner.runOneTest(path, command, output, testname, 
                                              opts.clang, opts.clangcc,
-                                             useDGCompat=opts.useDGCompat,
-                                             useScript=opts.testScript,
                                              output=open(testresults,'w'))
                 elapsed = time.time() - startTime
         except KeyboardInterrupt:
@@ -222,12 +220,6 @@ def main():
     parser.add_option("", "--vg", dest="useValgrind",
                       help="Run tests under valgrind",
                       action="store_true", default=False)
-    parser.add_option("", "--dg", dest="useDGCompat",
-                      help="Use llvm dejagnu compatibility mode",
-                      action="store_true", default=False)
-    parser.add_option("", "--script", dest="testScript",
-                      help="Default script to use",
-                      action="store", default=None)
     parser.add_option("-v", "--verbose", dest="showOutput",
                       help="Show all test output",
                       action="store_true", default=False)

@@ -69,29 +69,13 @@ def cat(path, output):
     f.close()
 
 def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
-               useDGCompat=False,
-               useScript=None, 
                output=sys.stdout):
     OUTPUT = os.path.abspath(OUTPUT)
 
     # Create the output directory if it does not already exist.
     mkdir_p(os.path.dirname(OUTPUT))
 
-    # FIXME
-    #ulimit -t 40
-
-    # FIXME: Load script once
-    # FIXME: Support "short" script syntax
-
-    if useScript:
-        scriptFile = useScript
-    else:
-        # See if we have a per-dir test script.
-        dirScriptFile = os.path.join(os.path.dirname(FILENAME), 'test.script')
-        if os.path.exists(dirScriptFile):
-            scriptFile = dirScriptFile
-        else:
-            scriptFile = FILENAME
+    scriptFile = FILENAME
             
     # Verify the script contains a run line.
     for ln in open(scriptFile):
@@ -139,9 +123,6 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         # Apply substitutions
         for a,b in substitutions:
             ln = ln.replace(a,b)
-
-        if useDGCompat:
-            ln = re.sub(r'\{(.*)\}', r'"\1"', ln)
 
         # Strip the trailing newline and any extra whitespace.
         return ln.strip()
@@ -205,10 +186,7 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
         print >>output, "******************** TEST '%s' FAILED! ********************"%(TESTNAME,)
         print >>output, "Command: "
         output.writelines(scriptLines)
-        if not SCRIPT_STATUS:
-            print >>output, "Output:"
-        else:
-            print >>output, "Incorrect Output:"
+        print >>output, "Incorrect Output:"
         cat(OUTPUT, output)
         print >>output, "******************** TEST '%s' FAILED! ********************"%(TESTNAME,)
         output.flush()
@@ -315,9 +293,6 @@ def main():
     parser.add_option("", "--clang-cc", dest="clangcc",
                       help="Program to use as \"clang-cc\"",
                       action="store", default=None)
-    parser.add_option("", "--dg", dest="useDGCompat",
-                      help="Use llvm dejagnu compatibility mode",
-                      action="store_true", default=False)
     (opts, args) = parser.parse_args()
 
     if not args:
@@ -334,9 +309,7 @@ def main():
         testname = path
         
         res = runOneTest(path, command, output, testname, 
-                         opts.clang, opts.clangcc,
-                         useDGCompat=opts.useDGCompat,
-                         useScript=os.getenv("TEST_SCRIPT"))
+                         opts.clang, opts.clangcc)
 
     sys.exit(res == TestStatus.Fail or res == TestStatus.XPass)
 
