@@ -923,10 +923,10 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
                        getTruncateOrZeroExtend(Step, Start->getType()));
           Add = getAddExpr(Start, UMul);
           OperandExtendedAdd =
-            getAddExpr(getZeroExtendExpr(Start, WideTy),
+            getAddExpr(getSignExtendExpr(Start, WideTy),
                        getMulExpr(getZeroExtendExpr(CastedMaxBECount, WideTy),
                                   getZeroExtendExpr(Step, WideTy)));
-          if (getZeroExtendExpr(Add, WideTy) == OperandExtendedAdd)
+          if (getSignExtendExpr(Add, WideTy) == OperandExtendedAdd)
             // Return the expression with the addrec on the outside.
             return getAddRecExpr(getSignExtendExpr(Start, Ty),
                                  getZeroExtendExpr(Step, Ty),
