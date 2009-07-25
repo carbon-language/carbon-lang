@@ -308,7 +308,7 @@ def inferClangCC(clang):
     return clangcc
     
 def getTestOutputBase(dir, testpath):
-    """getTestOutputPath(dir, testpath) - Get the full path for temporary files
+    """getTestOutputBase(dir, testpath) - Get the full path for temporary files
     corresponding to the given test path."""
 
     # Form the output base out of the test parent directory name and the test
@@ -345,7 +345,7 @@ def main():
 
     for path in args:
         command = path
-        output = getTestOutputPath('Output', path) + '.out'
+        output = getTestOutputBase('Output', path) + '.out'
         testname = path
         
         res = runOneTest(path, command, output, testname, 

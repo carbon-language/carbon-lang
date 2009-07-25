@@ -23,6 +23,8 @@ kTestFileExtensions = set(['.mi','.i','.c','.cpp','.m','.mm','.ll'])
 
 def getTests(inputs):
     for path in inputs:
+        # Always use absolte paths.
+        path = os.path.abspath(path)
         if not os.path.exists(path):
             print >>sys.stderr,"WARNING: Invalid test \"%s\""%(path,)
             continue
