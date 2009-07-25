@@ -448,7 +448,7 @@ tool) is run with the '<tt>-debug</tt>' command line argument:</p>
 
 <div class="doc_code">
 <pre>
-DOUT &lt;&lt; "I am here!\n";
+DEBUG(errs() &lt;&lt; "I am here!\n");
 </pre>
 </div>
 
@@ -493,16 +493,16 @@ option as follows:</p>
 
 <div class="doc_code">
 <pre>
-DOUT &lt;&lt; "No debug type\n";
 #undef  DEBUG_TYPE
+DEBUG(errs() &lt;&lt; "No debug type\n");
 #define DEBUG_TYPE "foo"
-DOUT &lt;&lt; "'foo' debug type\n";
+DEBUG(errs() &lt;&lt; "'foo' debug type\n");
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE "bar"
-DOUT &lt;&lt; "'bar' debug type\n";
+DEBUG(errs() &lt;&lt; "'bar' debug type\n"));
 #undef  DEBUG_TYPE
 #define DEBUG_TYPE ""
-DOUT &lt;&lt; "No debug type (2)\n";
+DEBUG(errs() &lt;&lt; "No debug type (2)\n");
 </pre>
 </div>
 
