@@ -75,7 +75,7 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
 
   // PPC/Linux normally uses named section for BSS.
   BSSSection_  = getNamedSection("\t.bss",
-                                 SectionFlags::Writeable | SectionFlags::BSS,
+                                 SectionFlags::Writable | SectionFlags::BSS,
                                  /* Override */ true);
 
   // Debug Information

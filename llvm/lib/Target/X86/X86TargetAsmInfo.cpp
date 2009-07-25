@@ -282,7 +282,6 @@ getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
   case SectionKind::RODataMergeConst:
   case SectionKind::RODataMergeStr:   return ".rdata$linkonce";
   }
-  return NULL;
 }
 
 std::string X86COFFTargetAsmInfo::printSectionFlags(unsigned flags) const {
@@ -290,7 +289,7 @@ std::string X86COFFTargetAsmInfo::printSectionFlags(unsigned flags) const {
 
   if (flags & SectionFlags::Code)
     Flags += 'x';
-  if (flags & SectionFlags::Writeable)
+  if (flags & SectionFlags::Writable)
     Flags += 'w';
 
   Flags += "\"";
@@ -322,7 +321,7 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   AlignmentIsInBytes = true;
 
   TextSection = getUnnamedSection("_text", SectionFlags::Code);
-  DataSection = getUnnamedSection("_data", SectionFlags::Writeable);
+  DataSection = getUnnamedSection("_data", SectionFlags::Writable);
 
   JumpTableDataSection = NULL;
   SwitchToSectionDirective = "";

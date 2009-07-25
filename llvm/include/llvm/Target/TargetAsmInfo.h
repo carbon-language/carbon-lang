@@ -62,13 +62,35 @@ namespace llvm {
               K == SectionKind::RODataMergeConst ||
               K == SectionKind::RODataMergeStr);
     }
+
+    static inline bool isBSS(Kind K) {
+      return K == BSS || K == ThreadBSS;
+    }
+    
+    static inline bool isTLS(Kind K) {
+      return K == ThreadData || K == ThreadBSS;
+    }
+    
+    static inline bool isCode(Kind K) {
+      return K == Text;
+    }
+    
+    static inline bool isWritable(Kind K) {
+      return isTLS(K) ||
+             K == SectionKind::Data ||
+             K == SectionKind::DataRel ||
+             K == SectionKind::DataRelLocal ||
+             K == SectionKind::DataRelRO ||
+             K == SectionKind::DataRelROLocal ||
+             K == SectionKind::BSS;
+    }
   }
 
   namespace SectionFlags {
     const unsigned Invalid    = -1U;
     const unsigned None       = 0;
     const unsigned Code       = 1 << 0;  ///< Section contains code
-    const unsigned Writeable  = 1 << 1;  ///< Section is writeable
+    const unsigned Writable   = 1 << 1;  ///< Section is writable
     const unsigned BSS        = 1 << 2;  ///< Section contains only zeroes
     const unsigned Mergeable  = 1 << 3;  ///< Section contains mergeable data
     const unsigned Strings    = 1 << 4;  ///< Section contains C-type strings
@@ -582,7 +604,9 @@ namespace llvm {
     /// global.  This is important for globals that need to be merged across
     /// translation units.
     virtual const char *
-    getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const;
+    getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
+      return 0;
+    }
     
     /// getFlagsForNamedSection - If this target wants to be able to infer
     /// section flags based on the name of the section specified for a global

@@ -222,7 +222,7 @@ unsigned ELFWriter::getElfSectionFlags(unsigned Flags) {
 
   if (Flags & SectionFlags::Code)
     ElfSectionFlags |= ELFSection::SHF_EXECINSTR;
-  if (Flags & SectionFlags::Writeable)
+  if (Flags & SectionFlags::Writable)
     ElfSectionFlags |= ELFSection::SHF_WRITE;
   if (Flags & SectionFlags::Mergeable)
     ElfSectionFlags |= ELFSection::SHF_MERGE;

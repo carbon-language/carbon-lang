@@ -25,8 +25,8 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
   SupportsDebugInformation = true;
   TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
-  DataSection = getNamedSection("\t.dp.data", SectionFlags::Writeable);
-  BSSSection_  = getNamedSection("\t.dp.bss", SectionFlags::Writeable |
+  DataSection = getNamedSection("\t.dp.data", SectionFlags::Writable);
+  BSSSection_  = getNamedSection("\t.dp.bss", SectionFlags::Writable |
                                  SectionFlags::BSS);
 
   // TLS globals are lowered in the backend to arrays indexed by the current
@@ -36,7 +36,7 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   TLSBSSSection = BSSSection_;
 
   if (TM.getSubtargetImpl()->isXS1A())
-    ReadOnlySection = getNamedSection("\t.dp.rodata", SectionFlags::Writeable);
+    ReadOnlySection = getNamedSection("\t.dp.rodata", SectionFlags::Writable);
   else
     ReadOnlySection = getNamedSection("\t.cp.rodata", SectionFlags::None);
   Data16bitsDirective = "\t.short\t";

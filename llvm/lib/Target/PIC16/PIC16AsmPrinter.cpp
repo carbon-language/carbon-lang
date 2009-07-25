@@ -292,7 +292,7 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   const char *SectionName = PAN::getFrameSectionName(CurrentFnName).c_str();
 
   const Section *fPDataSection = TAI->getNamedSection(SectionName,
-                                                      SectionFlags::Writeable);
+                                                      SectionFlags::Writable);
   SwitchToSection(fPDataSection);
   
   // Emit function frame label

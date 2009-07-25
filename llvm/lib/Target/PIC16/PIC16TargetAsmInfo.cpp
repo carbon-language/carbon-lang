@@ -38,9 +38,9 @@ PIC16TargetAsmInfo(const PIC16TargetMachine &TM)
   AsciiDirective = " dt ";
   AscizDirective = NULL;
   BSSSection_  = getNamedSection("udata.# UDATA",
-                              SectionFlags::Writeable | SectionFlags::BSS);
+                              SectionFlags::Writable | SectionFlags::BSS);
   ReadOnlySection = getNamedSection("romdata.# ROMDATA", SectionFlags::None);
-  DataSection = getNamedSection("idata.# IDATA", SectionFlags::Writeable);
+  DataSection = getNamedSection("idata.# IDATA", SectionFlags::Writable);
   SwitchToSectionDirective = "";
   // Need because otherwise a .text symbol is emitted by DwarfWriter
   // in BeginModule, and gpasm cribbs for that .text symbol.

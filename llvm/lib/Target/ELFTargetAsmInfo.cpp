@@ -29,20 +29,20 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
   : TargetAsmInfo(TM) {
 
   BSSSection_  = getUnnamedSection("\t.bss",
-                                   SectionFlags::Writeable | SectionFlags::BSS);
+                                   SectionFlags::Writable | SectionFlags::BSS);
   ReadOnlySection = getNamedSection("\t.rodata", SectionFlags::None);
   TLSDataSection = getNamedSection("\t.tdata",
-                                   SectionFlags::Writeable | SectionFlags::TLS);
+                                   SectionFlags::Writable | SectionFlags::TLS);
   TLSBSSSection = getNamedSection("\t.tbss",
-                SectionFlags::Writeable | SectionFlags::TLS | SectionFlags::BSS);
+                SectionFlags::Writable | SectionFlags::TLS | SectionFlags::BSS);
 
-  DataRelSection = getNamedSection("\t.data.rel", SectionFlags::Writeable);
+  DataRelSection = getNamedSection("\t.data.rel", SectionFlags::Writable);
   DataRelLocalSection = getNamedSection("\t.data.rel.local",
-                                        SectionFlags::Writeable);
+                                        SectionFlags::Writable);
   DataRelROSection = getNamedSection("\t.data.rel.ro",
-                                     SectionFlags::Writeable);
+                                     SectionFlags::Writable);
   DataRelROLocalSection = getNamedSection("\t.data.rel.ro.local",
-                                          SectionFlags::Writeable);
+                                          SectionFlags::Writable);
 }
 
 
@@ -145,6 +145,28 @@ unsigned ELFTargetAsmInfo::getFlagsForNamedSection(const char *Name) const {
 }
 
 
+
+const char *
+ELFTargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const{
+  switch (Kind) {
+  default: llvm_unreachable("Unknown section kind");
+  case SectionKind::Text:             return ".gnu.linkonce.t.";
+  case SectionKind::Data:             return ".gnu.linkonce.d.";
+  case SectionKind::DataRel:          return ".gnu.linkonce.d.rel.";
+  case SectionKind::DataRelLocal:     return ".gnu.linkonce.d.rel.local.";
+  case SectionKind::DataRelRO:        return ".gnu.linkonce.d.rel.ro.";
+  case SectionKind::DataRelROLocal:   return ".gnu.linkonce.d.rel.ro.local.";
+  case SectionKind::BSS:              return ".gnu.linkonce.b.";
+  case SectionKind::ROData:
+  case SectionKind::RODataMergeConst:
+  case SectionKind::RODataMergeStr:   return ".gnu.linkonce.r.";
+  case SectionKind::ThreadData:       return ".gnu.linkonce.td.";
+  case SectionKind::ThreadBSS:        return ".gnu.linkonce.tb.";
+  }
+}
+
+
+
 const Section*
 ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   const TargetData *TD = TM.getTargetData();
@@ -177,7 +199,7 @@ std::string ELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
     Flags += 'a';
   if (flags & SectionFlags::Code)
     Flags += 'x';
-  if (flags & SectionFlags::Writeable)
+  if (flags & SectionFlags::Writable)
     Flags += 'w';
   if (flags & SectionFlags::Mergeable)
     Flags += 'M';

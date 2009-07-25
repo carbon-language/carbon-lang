@@ -36,7 +36,7 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
   // BSS section needs to be emitted as ".section"
   BSSSection = "\t.section\t.bss";
   BSSSection_ = getUnnamedSection("\t.section\t.bss",
-                                  SectionFlags::Writeable | SectionFlags::BSS,
+                                  SectionFlags::Writable | SectionFlags::BSS,
                                   true);
 
   SupportsDebugInformation = true;

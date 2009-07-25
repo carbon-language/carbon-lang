@@ -43,12 +43,6 @@ namespace llvm {
     virtual const Section *
     getSectionForMergableConstant(uint64_t Size, unsigned ReloInfo) const;
     
-    virtual const char *
-    getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
-      // Darwin doesn't use uniqued sections for weak symbols.
-      return 0;
-    }
-
   private:
     const Section* MergeableStringSection(const GlobalVariable *GV) const;
   };

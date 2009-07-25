@@ -122,7 +122,7 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   DwarfExceptionSection = ".gcc_except_table";
   AsmTransCBE = 0;
   TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
-  DataSection = getUnnamedSection("\t.data", SectionFlags::Writeable);
+  DataSection = getUnnamedSection("\t.data", SectionFlags::Writable);
 }
 
 TargetAsmInfo::~TargetAsmInfo() {
@@ -160,9 +160,22 @@ unsigned TargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 }
 
 static bool isSuitableForBSS(const GlobalVariable *GV) {
-  // Leave constant zeros in readonly constant sections, so they can be shared
   Constant *C = GV->getInitializer();
-  return (C->isNullValue() && !GV->isConstant() && !NoZerosInBSS);
+  
+  // Must have zero initializer.
+  if (!C->isNullValue())
+    return false;
+  
+  // Leave constant zeros in readonly constant sections, so they can be shared.
+  if (GV->isConstant())
+    return false;
+  
+  // If the global has an explicit section specified, don't put it in BSS.
+  if (!GV->getSection().empty())
+    return false;
+  
+  // Otherwise, put it in BSS unless the target really doesn't want us to.
+  return !NoZerosInBSS;
 }
 
 static bool isConstantString(const Constant *C) {
@@ -183,36 +196,18 @@ static bool isConstantString(const Constant *C) {
 
 static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
                                       SectionKind::Kind Kind) {
+  // Decode flags from global and section kind.
   unsigned Flags = SectionFlags::None;
-
-  // Decode flags from global itself.
-  switch (Kind) {
-  case SectionKind::Text:
-    Flags |= SectionFlags::Code;
-    break;
-  case SectionKind::ThreadData:
-  case SectionKind::ThreadBSS:
-    Flags |= SectionFlags::TLS;
-    // FALLS THROUGH
-  case SectionKind::Data:
-  case SectionKind::DataRel:
-  case SectionKind::DataRelLocal:
-  case SectionKind::DataRelRO:
-  case SectionKind::DataRelROLocal:
-  case SectionKind::BSS:
-    Flags |= SectionFlags::Writeable;
-    break;
-  case SectionKind::ROData:
-  case SectionKind::RODataMergeStr:
-  case SectionKind::RODataMergeConst:
-    // No additional flags here
-    break;
-  default:
-    llvm_unreachable("Unexpected section kind!");
-  }
-
   if (GV->isWeakForLinker())
     Flags |= SectionFlags::Linkonce;
+  if (SectionKind::isBSS(Kind))
+    Flags |= SectionFlags::BSS;
+  if (SectionKind::isTLS(Kind))
+    Flags |= SectionFlags::TLS;
+  if (SectionKind::isCode(Kind))
+    Flags |= SectionFlags::Code;
+  if (SectionKind::isWritable(Kind))
+    Flags |= SectionFlags::Writable;
 
   return Flags;
 }
@@ -331,11 +326,6 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 
       // FIXME: Use mangler interface (PR4584).
       std::string Name = Prefix+GV->getNameStr();
-      
-      // Pick up the flags for the uniquing section.
-      // FIXME: HACK.
-      Flags |= getFlagsForNamedSection(Name.c_str());
-
       return getNamedSection(Name.c_str(), Flags);
     }
   }
@@ -348,10 +338,10 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 const Section*
 TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                       SectionKind::Kind Kind) const {
-  if (Kind == SectionKind::Text)
+  if (SectionKind::isCode(Kind))
     return getTextSection();
   
-  if (Kind == SectionKind::BSS)
+  if (SectionKind::isBSS(SectionKind::BSS))
     if (const Section *S = getBSSSection_())
       return S;
   
@@ -373,27 +363,6 @@ TargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
   return getDataSection();
 }
 
-
-
-
-const char *
-TargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind::Kind Kind) const {
-  switch (Kind) {
-  default: llvm_unreachable("Unknown section kind");
-  case SectionKind::Text:             return ".gnu.linkonce.t.";
-  case SectionKind::Data:             return ".gnu.linkonce.d.";
-  case SectionKind::DataRel:          return ".gnu.linkonce.d.rel.";
-  case SectionKind::DataRelLocal:     return ".gnu.linkonce.d.rel.local.";
-  case SectionKind::DataRelRO:        return ".gnu.linkonce.d.rel.ro.";
-  case SectionKind::DataRelROLocal:   return ".gnu.linkonce.d.rel.ro.local.";
-  case SectionKind::BSS:              return ".gnu.linkonce.b.";
-  case SectionKind::ROData:
-  case SectionKind::RODataMergeConst:
-  case SectionKind::RODataMergeStr:   return ".gnu.linkonce.r.";
-  case SectionKind::ThreadData:       return ".gnu.linkonce.td.";
-  case SectionKind::ThreadBSS:        return ".gnu.linkonce.tb.";
-  }
-}
 
 const Section *TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags,
                                               bool Override) const {

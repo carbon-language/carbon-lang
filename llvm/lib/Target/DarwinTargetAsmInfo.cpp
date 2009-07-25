@@ -50,7 +50,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
                                          SectionFlags::None);
   ConstDataSection = getUnnamedSection(".const_data", SectionFlags::None);
   DataCoalSection = getNamedSection("\t__DATA,__datacoal_nt,coalesced",
-                                    SectionFlags::Writeable);
+                                    SectionFlags::Writable);
     
   
   // Common settings for all Darwin targets.
@@ -127,6 +127,7 @@ bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
 const Section*
 DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                             SectionKind::Kind Kind) const {
+  // FIXME: Use sectionflags:linkonce instead of isWeakForLinker() here.
   bool isWeak = GV->isWeakForLinker();
   bool isNonStatic = TM.getRelocationModel() != Reloc::Static;
 

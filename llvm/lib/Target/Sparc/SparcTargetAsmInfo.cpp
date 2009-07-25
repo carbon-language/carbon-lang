@@ -28,7 +28,7 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
 
   // Sparc normally uses named section for BSS.
   BSSSection_  = getNamedSection("\t.bss",
-                                 SectionFlags::Writeable | SectionFlags::BSS,
+                                 SectionFlags::Writable | SectionFlags::BSS,
                                  /* Override */ true);
 }
 
@@ -41,7 +41,7 @@ std::string SparcELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
     Flags += ",#alloc";
   if (flags & SectionFlags::Code)
     Flags += ",#execinstr";
-  if (flags & SectionFlags::Writeable)
+  if (flags & SectionFlags::Writable)
     Flags += ",#write";
   if (flags & SectionFlags::TLS)
     Flags += ",#tls";
