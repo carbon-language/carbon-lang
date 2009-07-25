@@ -52,10 +52,8 @@ namespace llvm {
 
     virtual const Type *getType() const;
 
-    const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                 const SCEV *Conc,
-                                                 ScalarEvolution &SE) const {
-      return this;
+    virtual bool hasOperand(const SCEV *) const {
+      return false;
     }
 
     bool dominates(BasicBlock *BB, DominatorTree *DT) const {
@@ -94,6 +92,10 @@ namespace llvm {
       return Op->hasComputableLoopEvolution(L);
     }
 
+    virtual bool hasOperand(const SCEV *O) const {
+      return Op == O || Op->hasOperand(O);
+    }
+
     virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -116,15 +118,6 @@ namespace llvm {
                      const SCEV *op, const Type *ty);
 
   public:
-    const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                 const SCEV *Conc,
-                                                 ScalarEvolution &SE) const {
-      const SCEV *H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-      if (H == Op)
-        return this;
-      return SE.getTruncateExpr(H, Ty);
-    }
-
     virtual void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -145,15 +138,6 @@ namespace llvm {
                        const SCEV *op, const Type *ty);
 
   public:
-    const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                 const SCEV *Conc,
-                                                 ScalarEvolution &SE) const {
-      const SCEV *H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-      if (H == Op)
-        return this;
-      return SE.getZeroExtendExpr(H, Ty);
-    }
-
     virtual void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -174,15 +158,6 @@ namespace llvm {
                        const SCEV *op, const Type *ty);
 
   public:
-    const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                 const SCEV *Conc,
-                                                 ScalarEvolution &SE) const {
-      const SCEV *H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-      if (H == Op)
-        return this;
-      return SE.getSignExtendExpr(H, Ty);
-    }
-
     virtual void print(raw_ostream &OS) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -240,6 +215,13 @@ namespace llvm {
       return HasVarying;
     }
 
+    virtual bool hasOperand(const SCEV *O) const {
+      for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+        if (O == getOperand(i) || getOperand(i)->hasOperand(O))
+          return true;
+      return false;
+    }
+
     bool dominates(BasicBlock *BB, DominatorTree *DT) const;
 
     virtual const Type *getType() const { return getOperand(0)->getType(); }
@@ -267,10 +249,6 @@ namespace llvm {
       : SCEVNAryExpr(ID, T, ops) {}
 
   public:
-    const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                 const SCEV *Conc,
-                                                 ScalarEvolution &SE) const;
-
     virtual const char *getOperationStr() const = 0;
 
     virtual void print(raw_ostream &OS) const;
@@ -353,15 +331,8 @@ namespace llvm {
              RHS->hasComputableLoopEvolution(L);
     }
 
-    const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                 const SCEV *Conc,
-                                                 ScalarEvolution &SE) const {
-      const SCEV *L = LHS->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-      const SCEV *R = RHS->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-      if (L == LHS && R == RHS)
-        return this;
-      else
-        return SE.getUDivExpr(L, R);
+    virtual bool hasOperand(const SCEV *O) const {
+      return O == LHS || O == RHS || LHS->hasOperand(O) || RHS->hasOperand(O);
     }
 
     bool dominates(BasicBlock *BB, DominatorTree *DT) const;
@@ -449,14 +420,10 @@ namespace llvm {
     const SCEV *getNumIterationsInRange(ConstantRange Range,
                                        ScalarEvolution &SE) const;
 
-    const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                 const SCEV *Conc,
-                                                 ScalarEvolution &SE) const;
-
     /// getPostIncExpr - Return an expression representing the value of
     /// this expression one iteration of the loop ahead.
-    const SCEV *getPostIncExpr(ScalarEvolution &SE) const {
-      return SE.getAddExpr(this, getStepRecurrence(SE));
+    const SCEVAddRecExpr *getPostIncExpr(ScalarEvolution &SE) const {
+      return cast<SCEVAddRecExpr>(SE.getAddExpr(this, getStepRecurrence(SE)));
     }
 
     bool hasNoUnsignedOverflow() const { return SubclassData & (1 << 0); }
@@ -542,11 +509,8 @@ namespace llvm {
       return false; // not computable
     }
 
-    const SCEV *replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                 const SCEV *Conc,
-                                                 ScalarEvolution &SE) const {
-      if (&*Sym == this) return Conc;
-      return this;
+    virtual bool hasOperand(const SCEV *) const {
+      return false;
     }
 
     bool dominates(BasicBlock *BB, DominatorTree *DT) const;

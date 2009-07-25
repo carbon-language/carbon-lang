@@ -96,15 +96,9 @@ namespace llvm {
     ///
     bool isAllOnesValue() const;
 
-    /// replaceSymbolicValuesWithConcrete - If this SCEV internally references
-    /// the symbolic value "Sym", construct and return a new SCEV that produces
-    /// the same value, but which uses the concrete value Conc instead of the
-    /// symbolic value.  If this SCEV does not use the symbolic value, it
-    /// returns itself.
-    virtual const SCEV *
-    replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                      const SCEV *Conc,
-                                      ScalarEvolution &SE) const = 0;
+    /// hasOperand - Test whether this SCEV has Op as a direct or
+    /// indirect operand.
+    virtual bool hasOperand(const SCEV *Op) const = 0;
 
     /// dominates - Return true if elements that makes up this SCEV dominates
     /// the specified basic block.
@@ -145,10 +139,7 @@ namespace llvm {
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;
     virtual void print(raw_ostream &OS) const;
-    virtual const SCEV *
-    replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                      const SCEV *Conc,
-                                      ScalarEvolution &SE) const;
+    virtual bool hasOperand(const SCEV *Op) const;
 
     virtual bool dominates(BasicBlock *BB, DominatorTree *DT) const {
       return true;
@@ -252,13 +243,11 @@ namespace llvm {
     /// SCEVs.
     const SCEV *createNodeForGEP(Operator *GEP);
 
-    /// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value
-    /// for the specified instruction and replaces any references to the
-    /// symbolic value SymName with the specified value.  This is used during
-    /// PHI resolution.
-    void ReplaceSymbolicValueWithConcrete(Instruction *I,
-                                          const SCEV *SymName,
-                                          const SCEV *NewVal);
+    /// ForgetSymbolicValue - This looks up computed SCEV values for all
+    /// instructions that depend on the given instruction and removes them from
+    /// the Scalars map if they reference SymName. This is used during PHI
+    /// resolution.
+    void ForgetSymbolicName(Instruction *I, const SCEV *SymName);
 
     /// getBECount - Subtract the end and start values and divide by the step,
     /// rounding up, to get the number of times the backedge is executed. Return

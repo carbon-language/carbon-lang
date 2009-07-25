@@ -163,12 +163,9 @@ bool SCEVCouldNotCompute::hasComputableLoopEvolution(const Loop *L) const {
   return false;
 }
 
-const SCEV *
-SCEVCouldNotCompute::replaceSymbolicValuesWithConcrete(
-                                                    const SCEV *Sym,
-                                                    const SCEV *Conc,
-                                                    ScalarEvolution &SE) const {
-  return this;
+bool SCEVCouldNotCompute::hasOperand(const SCEV *) const {
+  llvm_unreachable("Attempt to use a SCEVCouldNotCompute object!");
+  return false;
 }
 
 void SCEVCouldNotCompute::print(raw_ostream &OS) const {
@@ -260,39 +257,6 @@ void SCEVCommutativeExpr::print(raw_ostream &OS) const {
   OS << ")";
 }
 
-const SCEV *
-SCEVCommutativeExpr::replaceSymbolicValuesWithConcrete(
-                                                    const SCEV *Sym,
-                                                    const SCEV *Conc,
-                                                    ScalarEvolution &SE) const {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    const SCEV *H =
-      getOperand(i)->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-    if (H != getOperand(i)) {
-      SmallVector<const SCEV *, 8> NewOps;
-      NewOps.reserve(getNumOperands());
-      for (unsigned j = 0; j != i; ++j)
-        NewOps.push_back(getOperand(j));
-      NewOps.push_back(H);
-      for (++i; i != e; ++i)
-        NewOps.push_back(getOperand(i)->
-                         replaceSymbolicValuesWithConcrete(Sym, Conc, SE));
-
-      if (isa<SCEVAddExpr>(this))
-        return SE.getAddExpr(NewOps);
-      else if (isa<SCEVMulExpr>(this))
-        return SE.getMulExpr(NewOps);
-      else if (isa<SCEVSMaxExpr>(this))
-        return SE.getSMaxExpr(NewOps);
-      else if (isa<SCEVUMaxExpr>(this))
-        return SE.getUMaxExpr(NewOps);
-      else
-        llvm_unreachable("Unknown commutative expr!");
-    }
-  }
-  return this;
-}
-
 bool SCEVNAryExpr::dominates(BasicBlock *BB, DominatorTree *DT) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (!getOperand(i)->dominates(BB, DT))
@@ -317,30 +281,6 @@ const Type *SCEVUDivExpr::getType() const {
   // a pointer type than the RHS, so use the RHS' type here.
   return RHS->getType();
 }
-
-const SCEV *
-SCEVAddRecExpr::replaceSymbolicValuesWithConcrete(const SCEV *Sym,
-                                                  const SCEV *Conc,
-                                                  ScalarEvolution &SE) const {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    const SCEV *H =
-      getOperand(i)->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
-    if (H != getOperand(i)) {
-      SmallVector<const SCEV *, 8> NewOps;
-      NewOps.reserve(getNumOperands());
-      for (unsigned j = 0; j != i; ++j)
-        NewOps.push_back(getOperand(j));
-      NewOps.push_back(H);
-      for (++i; i != e; ++i)
-        NewOps.push_back(getOperand(i)->
-                         replaceSymbolicValuesWithConcrete(Sym, Conc, SE));
-
-      return SE.getAddRecExpr(NewOps, L);
-    }
-  }
-  return this;
-}
-
 
 bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
   // Add recurrences are never invariant in the function-body (null loop).
@@ -2301,28 +2241,53 @@ const SCEV *ScalarEvolution::getUMinFromMismatchedTypes(const SCEV *LHS,
   return getUMinExpr(PromotedLHS, PromotedRHS);
 }
 
-/// ReplaceSymbolicValueWithConcrete - This looks up the computed SCEV value for
-/// the specified instruction and replaces any references to the symbolic value
-/// SymName with the specified value.  This is used during PHI resolution.
+/// PushDefUseChildren - Push users of the given Instruction
+/// onto the given Worklist.
+static void
+PushDefUseChildren(Instruction *I,
+                   SmallVectorImpl<Instruction *> &Worklist) {
+  // Push the def-use children onto the Worklist stack.
+  for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
+       UI != UE; ++UI)
+    Worklist.push_back(cast<Instruction>(UI));
+}
+
+/// ForgetSymbolicValue - This looks up computed SCEV values for all
+/// instructions that depend on the given instruction and removes them from
+/// the Scalars map if they reference SymName. This is used during PHI
+/// resolution.
 void
-ScalarEvolution::ReplaceSymbolicValueWithConcrete(Instruction *I,
-                                                  const SCEV *SymName,
-                                                  const SCEV *NewVal) {
-  std::map<SCEVCallbackVH, const SCEV *>::iterator SI =
-    Scalars.find(SCEVCallbackVH(I, this));
-  if (SI == Scalars.end()) return;
+ScalarEvolution::ForgetSymbolicName(Instruction *I, const SCEV *SymName) {
+  SmallVector<Instruction *, 16> Worklist;
+  PushDefUseChildren(I, Worklist);
 
-  const SCEV *NV =
-    SI->second->replaceSymbolicValuesWithConcrete(SymName, NewVal, *this);
-  if (NV == SI->second) return;  // No change.
+  SmallPtrSet<Instruction *, 8> Visited;
+  Visited.insert(I);
+  while (!Worklist.empty()) {
+    Instruction *I = Worklist.pop_back_val();
+    if (!Visited.insert(I)) continue;
 
-  SI->second = NV;       // Update the scalars map!
+    std::map<SCEVCallbackVH, const SCEV*>::iterator It =
+      Scalars.find(static_cast<Value *>(I));
+    if (It != Scalars.end()) {
+      // Short-circuit the def-use traversal if the symbolic name
+      // ceases to appear in expressions.
+      if (!It->second->hasOperand(SymName))
+        continue;
 
-  // Any instruction values that use this instruction might also need to be
-  // updated!
-  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
-       UI != E; ++UI)
-    ReplaceSymbolicValueWithConcrete(cast<Instruction>(*UI), SymName, NewVal);
+      // SCEVUnknown for a PHI either means that it has an unrecognized
+      // structure, or it's a PHI that's in the progress of being computed
+      // by createNodeForPHI.  In the former case, additional loop trip
+      // count information isn't going to change anything. In the later
+      // case, createNodeForPHI will perform the necessary updates on its
+      // own when it gets to that point.
+      if (!isa<PHINode>(I) || !isa<SCEVUnknown>(It->second))
+        Scalars.erase(It);
+      ValuesAtScopes.erase(I);
+    }
+
+    PushDefUseChildren(I, Worklist);
+  }
 }
 
 /// createNodeForPHI - PHI nodes have two cases.  Either the PHI node exists in
@@ -2345,7 +2310,8 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
 
         // Using this symbolic name for the PHI, analyze the value coming around
         // the back-edge.
-        const SCEV *BEValue = getSCEV(PN->getIncomingValue(BackEdge));
+        Value *BEValueV = PN->getIncomingValue(BackEdge);
+        const SCEV *BEValue = getSCEV(BEValueV);
 
         // NOTE: If BEValue is loop invariant, we know that the PHI node just
         // has a special value for the first iteration of the loop.
@@ -2382,11 +2348,10 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                 getAddRecExpr(StartVal, Accum, L);
 
               // Okay, for the entire analysis of this edge we assumed the PHI
-              // to be symbolic.  We now need to go back and update all of the
-              // entries for the scalars that use the PHI (except for the PHI
-              // itself) to use the new analyzed value instead of the "symbolic"
-              // value.
-              ReplaceSymbolicValueWithConcrete(PN, SymbolicName, PHISCEV);
+              // to be symbolic.  We now need to go back and purge all of the
+              // entries for the scalars that use the symbolic expression.
+              ForgetSymbolicName(PN, SymbolicName);
+              Scalars[SCEVCallbackVH(PN, this)] = PHISCEV;
               return PHISCEV;
             }
           }
@@ -2408,11 +2373,10 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                  getAddRecExpr(StartVal, AddRec->getOperand(1), L);
 
               // Okay, for the entire analysis of this edge we assumed the PHI
-              // to be symbolic.  We now need to go back and update all of the
-              // entries for the scalars that use the PHI (except for the PHI
-              // itself) to use the new analyzed value instead of the "symbolic"
-              // value.
-              ReplaceSymbolicValueWithConcrete(PN, SymbolicName, PHISCEV);
+              // to be symbolic.  We now need to go back and purge all of the
+              // entries for the scalars that use the symbolic expression.
+              ForgetSymbolicName(PN, SymbolicName);
+              Scalars[SCEVCallbackVH(PN, this)] = PHISCEV;
               return PHISCEV;
             }
           }
@@ -3056,17 +3020,6 @@ PushLoopPHIs(const Loop *L, SmallVectorImpl<Instruction *> &Worklist) {
   for (BasicBlock::iterator I = Header->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I)
     Worklist.push_back(PN);
-}
-
-/// PushDefUseChildren - Push users of the given Instruction
-/// onto the given Worklist.
-static void
-PushDefUseChildren(Instruction *I,
-                   SmallVectorImpl<Instruction *> &Worklist) {
-  // Push the def-use children onto the Worklist stack.
-  for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
-       UI != UE; ++UI)
-    Worklist.push_back(cast<Instruction>(UI));
 }
 
 const ScalarEvolution::BackedgeTakenInfo &
