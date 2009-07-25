@@ -252,9 +252,11 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // ...likewise if it ends with a branch table followed by an unconditional
   // branch. The branch folder can create these, and we must get rid of them for
   // correctness of Thumb constant islands.
-  if (((SecondLastOpc == getOpcode(ARMII::BR_JTr)) || 
-       (SecondLastOpc == getOpcode(ARMII::BR_JTm)) ||
-       (SecondLastOpc == getOpcode(ARMII::BR_JTadd))) &&
+  if ((SecondLastOpc == ARM::BR_JTr || 
+       SecondLastOpc == ARM::BR_JTm ||
+       SecondLastOpc == ARM::BR_JTadd ||
+       SecondLastOpc == ARM::tBR_JTr ||
+       SecondLastOpc == ARM::t2BR_JT) &&
       (LastOpc == getOpcode(ARMII::B))) {
     I = LastInst;
     if (AllowModify)
@@ -451,9 +453,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     case ARM::BR_JTr:
     case ARM::BR_JTm:
     case ARM::BR_JTadd:
-    case ARM::t2BR_JTr:
-    case ARM::t2BR_JTm:
-    case ARM::t2BR_JTadd: {
+    case ARM::t2BR_JT: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
       unsigned NumOps = TID.getNumOperands();

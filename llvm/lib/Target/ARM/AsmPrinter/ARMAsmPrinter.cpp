@@ -160,6 +160,7 @@ namespace {
     void printCPInstOperand(const MachineInstr *MI, int OpNum,
                             const char *Modifier);
     void printJTBlockOperand(const MachineInstr *MI, int OpNum);
+    void printJT2BlockOperand(const MachineInstr *MI, int OpNum);
 
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                  unsigned AsmVariant, const char *ExtraCode);
@@ -907,6 +908,8 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNum,
 }
 
 void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
+  assert(!Subtarget->isThumb2() && "Thumb2 should use double-jump jumptables!");
+
   const MachineOperand &MO1 = MI->getOperand(OpNum);
   const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
   unsigned JTI = MO1.getIndex();
@@ -922,23 +925,13 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
   bool UseSet= TAI->getSetDirective() && TM.getRelocationModel() == Reloc::PIC_;
-  bool NeedBit0 = Subtarget->isTargetDarwin() && Subtarget->isThumb2();
   SmallPtrSet<MachineBasicBlock*, 8> JTSets;
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
-    if (UseSet && JTSets.insert(MBB)) {
-      // FIXME: Temporary workaround for an assembler bug. The assembler isn't
-      // setting the bit zero to 1 even though it is a thumb address.
-      if (NeedBit0) {
-        O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
-          << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm()
-          << "_set_" << MBB->getNumber() << ",(";
-        printBasicBlockLabel(MBB, false, false, false);
-        O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
-          << '_' << JTI << '_' << MO2.getImm() << "+1)\n";
-      } else
-        printPICJumpTableSetLabel(JTI, MO2.getImm(), MBB);
-    }
+    bool isNew = JTSets.insert(MBB);
+
+    if (UseSet && isNew)
+      printPICJumpTableSetLabel(JTI, MO2.getImm(), MBB);
 
     O << JTEntryDirective << ' ';
     if (UseSet)
@@ -952,14 +945,28 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNum) {
         O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
           << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
     } else {
-      // FIXME: Temporary workaround for an assembler bug. The assembler isn't
-      // setting the bit zero to 1 even though it is a thumb address.
-      if (NeedBit0)
-        O << '(';
       printBasicBlockLabel(MBB, false, false, false);
-      if (NeedBit0)
-        O << "+1)";
     }
+    if (i != e-1)
+      O << '\n';
+  }
+}
+
+void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
+  const MachineOperand &MO1 = MI->getOperand(OpNum);
+  const MachineOperand &MO2 = MI->getOperand(OpNum+1); // Unique Id
+  unsigned JTI = MO1.getIndex();
+  O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+    << '_' << JTI << '_' << MO2.getImm() << ":\n";
+
+  const MachineFunction *MF = MI->getParent()->getParent();
+  const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
+  const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
+  const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
+  for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
+    MachineBasicBlock *MBB = JTBBs[i];
+    O << "\tb.w ";
+    printBasicBlockLabel(MBB, false, false, false);
     if (i != e-1)
       O << '\n';
   }

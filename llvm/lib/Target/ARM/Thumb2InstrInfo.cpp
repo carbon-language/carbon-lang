@@ -38,9 +38,6 @@ unsigned Thumb2InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::ADDrr: return ARM::t2ADDrr;
   case ARMII::B: return ARM::t2B;
   case ARMII::Bcc: return ARM::t2Bcc;
-  case ARMII::BR_JTr: return ARM::t2BR_JTr;
-  case ARMII::BR_JTm: return ARM::t2BR_JTm;
-  case ARMII::BR_JTadd: return ARM::t2BR_JTadd;
   case ARMII::BX_RET: return ARM::tBX_RET;
   case ARMII::LDRrr: return ARM::t2LDRs;
   case ARMII::LDRri: return ARM::t2LDRi12;
@@ -64,9 +61,7 @@ Thumb2InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   switch (MBB.back().getOpcode()) {
   case ARM::t2LDM_RET:
   case ARM::t2B:        // Uncond branch.
-  case ARM::t2BR_JTr:   // Jumptable branch.
-  case ARM::t2BR_JTm:   // Jumptable branch through mem.
-  case ARM::t2BR_JTadd: // Jumptable branch add to pc.
+  case ARM::t2BR_JT:    // Jumptable branch.
   case ARM::tBR_JTr:    // Jumptable branch (16-bit version).
   case ARM::tBX_RET:
   case ARM::tBX_RET_vararg:

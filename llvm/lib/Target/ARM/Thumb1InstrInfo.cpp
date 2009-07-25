@@ -37,9 +37,6 @@ unsigned Thumb1InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::ADDrr: return ARM::tADDrr;
   case ARMII::B: return ARM::tB;
   case ARMII::Bcc: return ARM::tBcc;
-  case ARMII::BR_JTr: return ARM::tBR_JTr;
-  case ARMII::BR_JTm: return 0;
-  case ARMII::BR_JTadd: return 0;
   case ARMII::BX_RET: return ARM::tBX_RET;
   case ARMII::LDRrr: return ARM::tLDR;
   case ARMII::LDRri: return 0;

@@ -402,6 +402,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::tCALL:         return "ARMISD::tCALL";
   case ARMISD::BRCOND:        return "ARMISD::BRCOND";
   case ARMISD::BR_JT:         return "ARMISD::BR_JT";
+  case ARMISD::BR2_JT:        return "ARMISD::BR2_JT";
   case ARMISD::RET_FLAG:      return "ARMISD::RET_FLAG";
   case ARMISD::PIC_ADD:       return "ARMISD::PIC_ADD";
   case ARMISD::CMP:           return "ARMISD::CMP";
@@ -1704,15 +1705,27 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) {
   SDValue UId = DAG.getConstant(AFI->createJumpTableUId(), PTy);
   SDValue JTI = DAG.getTargetJumpTable(JT->getIndex(), PTy);
   Table = DAG.getNode(ARMISD::WrapperJT, dl, MVT::i32, JTI, UId);
+  if (Subtarget->isThumb2()) {
+    // Thumb2 uses a two-level jump. That is, it jumps into the jump table
+    // which does another jump to the destination. This also makes it easier
+    // to translate it to TBB / TBH later.
+    // FIXME: This might not work if the function is extremely large.
+    return DAG.getNode(ARMISD::BR2_JT, dl, MVT::Other, Chain, Table, Index,
+                       JTI, UId);
+  }
+
   Index = DAG.getNode(ISD::MUL, dl, PTy, Index, DAG.getConstant(4, PTy));
   SDValue Addr = DAG.getNode(ISD::ADD, dl, PTy, Index, Table);
-  bool isPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
-  Addr = DAG.getLoad(isPIC ? (MVT)MVT::i32 : PTy, dl,
-                     Chain, Addr, NULL, 0);
-  Chain = Addr.getValue(1);
-  if (isPIC)
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+    Addr = DAG.getLoad((MVT)MVT::i32, dl, Chain, Addr, NULL, 0);
+    Chain = Addr.getValue(1);
     Addr = DAG.getNode(ISD::ADD, dl, PTy, Addr, Table);
-  return DAG.getNode(ARMISD::BR_JT, dl, MVT::Other, Chain, Addr, JTI, UId);
+    return DAG.getNode(ARMISD::BR_JT, dl, MVT::Other, Chain, Addr, JTI, UId);
+  } else {
+    Addr = DAG.getLoad(PTy, dl, Chain, Addr, NULL, 0);
+    Chain = Addr.getValue(1);
+    return DAG.getNode(ARMISD::BR_JT, dl, MVT::Other, Chain, Addr, JTI, UId);
+  }
 }
 
 static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {

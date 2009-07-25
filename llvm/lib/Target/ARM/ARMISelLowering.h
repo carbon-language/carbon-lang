@@ -40,6 +40,7 @@ namespace llvm {
       tCALL,        // Thumb function call.
       BRCOND,       // Conditional branch.
       BR_JT,        // Jumptable branch.
+      BR2_JT,       // Jumptable branch (2 level - jumptable entry is a jump).
       RET_FLAG,     // Return with a flag operand.
 
       PIC_ADD,      // Add with a PC operand and a PIC label.

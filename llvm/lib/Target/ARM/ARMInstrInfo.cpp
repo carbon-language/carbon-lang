@@ -70,9 +70,6 @@ getOpcode(ARMII::Op Op) const {
   case ARMII::ADDrr: return ARM::ADDrr;
   case ARMII::B: return ARM::B;
   case ARMII::Bcc: return ARM::Bcc;
-  case ARMII::BR_JTr: return ARM::BR_JTr;
-  case ARMII::BR_JTm: return ARM::BR_JTm;
-  case ARMII::BR_JTadd: return ARM::BR_JTadd;
   case ARMII::BX_RET: return ARM::BX_RET;
   case ARMII::LDRrr: return ARM::LDR;
   case ARMII::LDRri: return 0;
