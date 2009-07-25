@@ -575,21 +575,19 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   
   for (unsigned i = 0; i < NumInitializers; i++) {
     CXXBaseOrMemberInitializer *Member = Initializers[i];
-    const void * Key = Member->isBaseInitializer() ?
-      reinterpret_cast<const void *>(
-                                   Member->getBaseClass()->getAsRecordType()) :
-      reinterpret_cast<const void *>(Member->getMember());
-    AllBaseFields[Key] = Member;
+    if (Member->isBaseInitializer())
+      AllBaseFields[Member->getBaseClass()->getAsRecordType()] = Member;
+    else
+     AllBaseFields[Member->getMember()] = Member;
   }
     
   // Push virtual bases before others.
   for (CXXRecordDecl::base_class_iterator VBase =
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
-    const void *Key = reinterpret_cast<const void *>(
-                                          VBase->getType()->getAsRecordType());
-    if (AllBaseFields[Key])
-      AllToInit.push_back(AllBaseFields[Key]);
+    if (CXXBaseOrMemberInitializer *Value = 
+        AllBaseFields.lookup(VBase->getType()->getAsRecordType()))
+      AllToInit.push_back(Value);
     else {
       CXXRecordDecl *VBaseDecl = 
         cast<CXXRecordDecl>(VBase->getType()->getAsRecordType()->getDecl());
@@ -611,10 +609,9 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     // Virtuals are in the virtual base list and already constructed.
     if (Base->isVirtual())
       continue;
-    const void *Key = reinterpret_cast<const void *>(
-                                          Base->getType()->getAsRecordType());
-    if (AllBaseFields[Key])
-      AllToInit.push_back(AllBaseFields[Key]);
+    if (CXXBaseOrMemberInitializer *Value = 
+        AllBaseFields.lookup(Base->getType()->getAsRecordType()))
+      AllToInit.push_back(Value);
     else {
       CXXRecordDecl *BaseDecl = 
         cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
@@ -633,9 +630,8 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   // non-static data members.
   for (CXXRecordDecl::field_iterator Field = ClassDecl->field_begin(),
        E = ClassDecl->field_end(); Field != E; ++Field) {
-    const void * Key = reinterpret_cast<const void *>(*Field);
-    if (AllBaseFields[Key]) {
-      AllToInit.push_back(AllBaseFields[Key]);
+    if (CXXBaseOrMemberInitializer *Value = AllBaseFields.lookup(*Field)) {
+      AllToInit.push_back(Value);
       continue;
     }
 
