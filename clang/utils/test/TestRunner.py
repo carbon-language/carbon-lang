@@ -16,7 +16,6 @@
 #
 
 import errno
-import hashlib
 import os
 import platform
 import re
@@ -286,6 +285,16 @@ def inferClangCC(clang):
         
     return clangcc
     
+def getTestOutputBase(dir, testpath):
+    """getTestOutputPath(dir, testpath) - Get the full path for temporary files
+    corresponding to the given test path."""
+
+    # Form the output base out of the test parent directory name and the test
+    # name. FIXME: Find a better way to organize test results.
+    return os.path.join(dir, 
+                        os.path.basename(os.path.dirname(testpath)),
+                        os.path.basename(testpath))
+                      
 def main():
     global options
     from optparse import OptionParser
@@ -314,9 +323,7 @@ def main():
 
     for path in args:
         command = path
-        # Use hand concatentation here because we want to override
-        # absolute paths.
-        output = 'Output/' + path + '.out'
+        output = getTestOutputPath('Output', path) + '.out'
         testname = path
         
         res = runOneTest(path, command, output, testname, 

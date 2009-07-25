@@ -155,11 +155,10 @@ class Tester(threading.Thread):
 
     def runTest(self, (path,index)):
         command = path
-        # Use hand concatentation here because we want to override
-        # absolute paths.
-        output = 'Output/' + path + '.out'
+        base = TestRunner.getTestOutputBase('Output', path)
+        output = base + '.out'
         testname = path
-        testresults = 'Output/' + path + '.testresults'
+        testresults = base + '.testresults'
         TestRunner.mkdir_p(os.path.dirname(testresults))
         numTests = len(self.provider.tests)
         digits = len(str(numTests))
