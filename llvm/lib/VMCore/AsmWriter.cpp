@@ -66,21 +66,14 @@ static const Module *getModuleFromVal(const Value *V) {
 
 // PrintEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
-static void PrintEscapedString(const char *Str, unsigned Length,
-                               raw_ostream &Out) {
-  for (unsigned i = 0; i != Length; ++i) {
-    unsigned char C = Str[i];
+static void PrintEscapedString(const StringRef &Name, raw_ostream &Out) {
+  for (unsigned i = 0, e = Name.size(); i != e; ++i) {
+    unsigned char C = Name[i];
     if (isprint(C) && C != '\\' && C != '"')
       Out << C;
     else
       Out << '\\' << hexdigit(C >> 4) << hexdigit(C & 0x0F);
   }
-}
-
-// PrintEscapedString - Print each character of the specified string, escaping
-// it if it is not printable or if it is an escape char.
-static void PrintEscapedString(const std::string &Str, raw_ostream &Out) {
-  PrintEscapedString(Str.c_str(), Str.size(), Out);
 }
 
 enum PrefixType {
@@ -93,9 +86,9 @@ enum PrefixType {
 /// PrintLLVMName - Turn the specified name into an 'LLVM name', which is either
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
-static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
-                          unsigned NameLen, PrefixType Prefix) {
-  assert(NameStr && "Cannot get empty name!");
+static void PrintLLVMName(raw_ostream &OS, const StringRef &Name,
+                          PrefixType Prefix) {
+  assert(Name.data() && "Cannot get empty name!");
   switch (Prefix) {
   default: llvm_unreachable("Bad prefix!");
   case NoPrefix: break;
@@ -105,10 +98,10 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
   }
   
   // Scan the name to see if it needs quotes first.
-  bool NeedsQuotes = isdigit(NameStr[0]);
+  bool NeedsQuotes = isdigit(Name[0]);
   if (!NeedsQuotes) {
-    for (unsigned i = 0; i != NameLen; ++i) {
-      char C = NameStr[i];
+    for (unsigned i = 0, e = Name.size(); i != e; ++i) {
+      char C = Name[i];
       if (!isalnum(C) && C != '-' && C != '.' && C != '_') {
         NeedsQuotes = true;
         break;
@@ -118,14 +111,14 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
   
   // If we didn't need any quotes, just write out the name in one blast.
   if (!NeedsQuotes) {
-    OS.write(NameStr, NameLen);
+    OS << Name;
     return;
   }
   
   // Okay, we need quotes.  Output the quotes and escape any scary characters as
   // needed.
   OS << '"';
-  PrintEscapedString(NameStr, NameLen, OS);
+  PrintEscapedString(Name, OS);
   OS << '"';
 }
 
@@ -133,7 +126,7 @@ static void PrintLLVMName(raw_ostream &OS, const char *NameStr,
 /// prefixed with % (if the string only contains simple characters) or is
 /// surrounded with ""'s (if it has special chars in it).  Print it out.
 static void PrintLLVMName(raw_ostream &OS, const Value *V) {
-  PrintLLVMName(OS, V->getNameStart(), V->getNameLen(),
+  PrintLLVMName(OS, V->getName(), 
                 isa<GlobalValue>(V) ? GlobalPrefix : LocalPrefix);
 }
 
@@ -433,7 +426,7 @@ static void AddModuleTypesToPrinter(TypePrinting &TP,
     // Get the name as a string and insert it into TypeNames.
     std::string NameStr;
     raw_string_ostream NameOS(NameStr);
-    PrintLLVMName(NameOS, TI->first.c_str(), TI->first.length(), LocalPrefix);
+    PrintLLVMName(NameOS, TI->first, LocalPrefix);
     TP.addTypeName(Ty, NameOS.str());
   }
   
@@ -1138,7 +1131,7 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
 
   if (const MDString *MDS = dyn_cast<MDString>(V)) {
     Out << "!\"";
-    PrintEscapedString(MDS->begin(), MDS->length(), Out);
+    PrintEscapedString(MDS->getString(), Out);
     Out << '"';
     return;
   }
@@ -1474,7 +1467,7 @@ void AssemblyWriter::printTypeSymbolTable(const TypeSymbolTable &ST) {
   for (TypeSymbolTable::const_iterator TI = ST.begin(), TE = ST.end();
        TI != TE; ++TI) {
     Out << '\t';
-    PrintLLVMName(Out, &TI->first[0], TI->first.size(), LocalPrefix);
+    PrintLLVMName(Out, TI->first, LocalPrefix);
     Out << " = type ";
 
     // Make sure we print out at least one level of the type structure, so
@@ -1605,7 +1598,7 @@ void AssemblyWriter::printArgument(const Argument *Arg,
 void AssemblyWriter::printBasicBlock(const BasicBlock *BB) {
   if (BB->hasName()) {              // Print out the label if it exists...
     Out << "\n";
-    PrintLLVMName(Out, BB->getNameStart(), BB->getNameLen(), LabelPrefix);
+    PrintLLVMName(Out, BB->getName(), LabelPrefix);
     Out << ':';
   } else if (!BB->use_empty()) {      // Don't print block # of no uses...
     Out << "\n; <label>:";
@@ -1982,7 +1975,7 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     TypePrinter.print(MDS->getType(), OS);
     OS << ' ';
     OS << "!\"";
-    PrintEscapedString(MDS->begin(), MDS->length(), OS);
+    PrintEscapedString(MDS->getString(), OS);
     OS << '"';
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
     SlotTracker SlotTable(N);

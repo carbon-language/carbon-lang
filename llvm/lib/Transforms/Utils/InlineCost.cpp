@@ -125,7 +125,7 @@ void InlineCostAnalyzer::FunctionInfo::analyzeFunction(Function *F) {
         // probably won't do this in callers.
         if (Function *F = CS.getCalledFunction())
           if (F->isDeclaration() && 
-              (F->isName("setjmp") || F->isName("_setjmp"))) {
+              (F->getName() == "setjmp" || F->getName() == "_setjmp")) {
             NeverInline = true;
             return;
           }

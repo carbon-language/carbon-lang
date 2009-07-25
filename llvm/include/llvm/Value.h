@@ -118,10 +118,6 @@ public:
   /// getNameEnd - Return a pointer to the end of the name.
   const char *getNameEnd() const { return getNameStart() + getNameLen(); }
   
-  /// isName - Return true if this value has the name specified by the provided
-  /// nul terminated string.
-  bool isName(const char *N) const;
-  
   /// getNameLen - Return the length of the string, correctly handling nul
   /// characters embedded into them.
   unsigned getNameLen() const;
@@ -131,7 +127,6 @@ public:
   /// construct a string, they are very expensive and should be avoided.
   StringRef getName() const { return StringRef(getNameStart(), getNameLen()); }
   std::string getNameStr() const;
-  StringRef getNameRef() const;
 
   void setName(const Twine &Name);
   void setName(const char *Name, unsigned NameLen);

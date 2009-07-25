@@ -241,23 +241,23 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     bool isMovSD = false, isShufPD = false;
     bool isUnpckhPD = false, isUnpcklPD = false;
     bool isPunpckhQPD = false, isPunpcklQPD = false;
-    if (strcmp(F->getNameStart(), "llvm.x86.sse2.loadh.pd") == 0)
+    if (F->getName() == "llvm.x86.sse2.loadh.pd")
       isLoadH = true;
-    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.loadl.pd") == 0)
+    else if (F->getName() == "llvm.x86.sse2.loadl.pd")
       isLoadL = true;
-    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.movl.dq") == 0)
+    else if (F->getName() == "llvm.x86.sse2.movl.dq")
       isMovL = true;
-    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.movs.d") == 0)
+    else if (F->getName() == "llvm.x86.sse2.movs.d")
       isMovSD = true;
-    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.shuf.pd") == 0)
+    else if (F->getName() == "llvm.x86.sse2.shuf.pd")
       isShufPD = true;
-    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.unpckh.pd") == 0)
+    else if (F->getName() == "llvm.x86.sse2.unpckh.pd")
       isUnpckhPD = true;
-    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.unpckl.pd") == 0)
+    else if (F->getName() == "llvm.x86.sse2.unpckl.pd")
       isUnpcklPD = true;
-    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.punpckh.qdq") == 0)
+    else if (F->getName() ==  "llvm.x86.sse2.punpckh.qdq")
       isPunpckhQPD = true;
-    else if (strcmp(F->getNameStart(), "llvm.x86.sse2.punpckl.qdq") == 0)
+    else if (F->getName() ==  "llvm.x86.sse2.punpckl.qdq")
       isPunpcklQPD = true;
 
     if (isLoadH || isLoadL || isMovL || isMovSD || isShufPD ||

@@ -188,8 +188,7 @@ Constant *LLVMContextImpl::getConstantVector(const VectorType *Ty,
 
 void LLVMContextImpl::erase(MDString *M) {
   sys::SmartScopedWriter<true> Writer(ConstantsLock);
-  MDStringCache.erase(MDStringCache.find(StringRef(M->StrBegin, 
-                                                   M->length())));
+  MDStringCache.erase(MDStringCache.find(M->getString()));
 }
 
 void LLVMContextImpl::erase(MDNode *M) {

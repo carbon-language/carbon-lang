@@ -512,7 +512,7 @@ struct VISIBILITY_HIDDEN ExitOpt : public LibCallOptimization {
 
     // Verify the caller is main, and that the result type of main matches the
     // argument type of exit.
-    if (!Caller->isName("main") || !Caller->hasExternalLinkage() ||
+    if (Caller->getName() != "main" || !Caller->hasExternalLinkage() ||
         Caller->getReturnType() != CI->getOperand(1)->getType())
       return 0;
 

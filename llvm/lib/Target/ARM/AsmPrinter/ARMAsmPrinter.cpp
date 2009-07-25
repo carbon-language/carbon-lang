@@ -1104,9 +1104,9 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (EmitSpecialLLVMGlobal(GVar)) {
     if (Subtarget->isTargetDarwin() &&
         TM.getRelocationModel() == Reloc::Static) {
-      if (GVar->isName("llvm.global_ctors"))
+      if (GVar->getName() == "llvm.global_ctors")
         O << ".reference .constructors_used\n";
-      else if (GVar->isName("llvm.global_dtors"))
+      else if (GVar->getName() == "llvm.global_dtors")
         O << ".reference .destructors_used\n";
     }
     return;

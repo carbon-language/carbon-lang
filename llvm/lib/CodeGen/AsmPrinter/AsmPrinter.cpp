@@ -477,7 +477,7 @@ void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
 /// special global used by LLVM.  If so, emit it and return true, otherwise
 /// do nothing and return false.
 bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
-  if (GV->isName("llvm.used")) {
+  if (GV->getName() == "llvm.used") {
     if (TAI->getUsedDirective() != 0)    // No need to emit this at all.
       EmitLLVMUsedList(GV->getInitializer());
     return true;

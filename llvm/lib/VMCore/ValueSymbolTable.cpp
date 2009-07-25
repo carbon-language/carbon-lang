@@ -43,7 +43,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
   }
   
   // Otherwise, there is a naming conflict.  Rename this value.
-  SmallString<128> UniqueName(V->getNameStart(), V->getNameEnd());
+  SmallString<128> UniqueName(V->getName().begin(), V->getName().end());
 
   // The name is too already used, just free it so we can allocate a new name.
   V->Name->Destroy();

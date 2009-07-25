@@ -874,9 +874,9 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   // Check to see if this is a special global used by LLVM, if so, emit it.
   if (EmitSpecialLLVMGlobal(GVar)) {
     if (TM.getRelocationModel() == Reloc::Static) {
-      if (GVar->isName("llvm.global_ctors"))
+      if (GVar->getName() == "llvm.global_ctors")
         O << ".reference .constructors_used\n";
-      else if (GVar->isName("llvm.global_dtors"))
+      else if (GVar->getName() == "llvm.global_dtors")
         O << ".reference .destructors_used\n";
     }
     return;

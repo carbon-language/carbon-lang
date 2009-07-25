@@ -165,23 +165,11 @@ unsigned Value::getNameLen() const {
   return Name ? Name->getKeyLength() : 0;
 }
 
-/// isName - Return true if this value has the name specified by the provided
-/// nul terminated string.
-bool Value::isName(const char *N) const {
-  unsigned InLen = strlen(N);
-  return InLen == getNameLen() && memcmp(getNameStart(), N, InLen) == 0;
-}
-
 
 std::string Value::getNameStr() const {
   if (Name == 0) return "";
   return std::string(Name->getKeyData(),
                      Name->getKeyData()+Name->getKeyLength());
-}
-
-StringRef Value::getNameRef() const {
-  if (Name == 0) return StringRef();
-  return StringRef(Name->getKeyData(), Name->getKeyLength());
 }
 
 void Value::setName(const Twine &Name) {
