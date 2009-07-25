@@ -83,7 +83,7 @@ private:
   /// is automatically inserted at either the end of the function (if
   /// InsertBefore is null), or before the specified basic block.
   ///
-  explicit BasicBlock(const std::string &Name = "", Function *Parent = 0,
+  explicit BasicBlock(const Twine &Name = "", Function *Parent = 0,
                       BasicBlock *InsertBefore = 0);
 public:
   /// getContext - Get the context in which this basic block lives,
@@ -97,7 +97,7 @@ public:
   /// Create - Creates a new BasicBlock. If the Parent parameter is specified,
   /// the basic block is automatically inserted at either the end of the
   /// function (if InsertBefore is 0), or before the specified basic block.
-  static BasicBlock *Create(const std::string &Name = "", Function *Parent = 0,
+  static BasicBlock *Create(const Twine &Name = "", Function *Parent = 0,
                             BasicBlock *InsertBefore = 0) {
     return new BasicBlock(Name, Parent, InsertBefore);
   }
@@ -232,7 +232,7 @@ public:
   /// cause a degenerate basic block to be formed, having a terminator inside of
   /// the basic block).
   ///
-  BasicBlock *splitBasicBlock(iterator I, const std::string &BBName = "");
+  BasicBlock *splitBasicBlock(iterator I, const Twine &BBName = "");
 };
 
 } // End llvm namespace

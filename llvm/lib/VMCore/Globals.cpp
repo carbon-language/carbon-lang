@@ -96,7 +96,7 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
 
 GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
                                bool constant, LinkageTypes Link,
-                               Constant *InitVal, const std::string &Name,
+                               Constant *InitVal, const Twine &Name,
                                bool ThreadLocal, unsigned AddressSpace)
   : GlobalValue(Context.getPointerType(Ty, AddressSpace), 
                 Value::GlobalVariableVal,
@@ -114,7 +114,7 @@ GlobalVariable::GlobalVariable(LLVMContext &Context, const Type *Ty,
 
 GlobalVariable::GlobalVariable(Module &M, const Type *Ty, bool constant,
                                LinkageTypes Link, Constant *InitVal,
-                               const std::string &Name,
+                               const Twine &Name,
                                GlobalVariable *Before, bool ThreadLocal,
                                unsigned AddressSpace)
   : GlobalValue(M.getContext().getPointerType(Ty, AddressSpace), 

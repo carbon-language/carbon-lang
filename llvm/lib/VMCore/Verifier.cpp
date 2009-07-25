@@ -304,10 +304,10 @@ namespace {
     // CheckFailed - A check failed, so print out the condition and the message
     // that failed.  This provides a nice place to put a breakpoint if you want
     // to see why something is not correct.
-    void CheckFailed(const std::string &Message,
+    void CheckFailed(const Twine &Message,
                      const Value *V1 = 0, const Value *V2 = 0,
                      const Value *V3 = 0, const Value *V4 = 0) {
-      msgs << Message << "\n";
+      msgs << Message.str() << "\n";
       WriteValue(V1);
       WriteValue(V2);
       WriteValue(V3);
@@ -315,9 +315,9 @@ namespace {
       Broken = true;
     }
 
-    void CheckFailed( const std::string& Message, const Value* V1,
-                      const Type* T2, const Value* V3 = 0 ) {
-      msgs << Message << "\n";
+    void CheckFailed(const Twine &Message, const Value* V1,
+                     const Type* T2, const Value* V3 = 0) {
+      msgs << Message.str() << "\n";
       WriteValue(V1);
       WriteType(T2);
       WriteValue(V3);

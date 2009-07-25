@@ -29,6 +29,12 @@
     <ul>
       <li><a href="#isa">The <tt>isa&lt;&gt;</tt>, <tt>cast&lt;&gt;</tt>
 and <tt>dyn_cast&lt;&gt;</tt> templates</a> </li>
+      <li><a href="#string_apis">Passing strings (the <tt>StringRef</tt>
+and <tt>Twine</tt> classes)</li>
+        <ul>
+          <li><a href="#StringRef">The <tt>StringRef</tt> class</a> </li>
+          <li><a href="#Twine">The <tt>Twine</tt> class</a> </li>
+        </ul>
       <li><a href="#DEBUG">The <tt>DEBUG()</tt> macro and <tt>-debug</tt>
 option</a>
         <ul>
@@ -423,6 +429,106 @@ to. Describing this is currently outside the scope of this document, but there
 are lots of examples in the LLVM source base.</p>
 
 </div>
+
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="string_apis">Passing strings (the <tt>StringRef</tt>
+and <tt>Twine</tt> classes)</a>
+</div>
+
+<div class="doc_text">
+
+<p>Although LLVM generally does not do much string manipulation, we do have
+several important APIs which take string.  Several important examples are the
+Value class -- which has names for instructions, functions, etc. -- and the
+StringMap class which is used extensively in LLVM and Clang.</p>
+
+<p>These are generic classes, and they need to be able to accept strings which
+may have embedded null characters.  Therefore, they cannot simply take
+a <tt>const char *</tt>, and taking a <tt>const std::string&</tt> requires
+clients to perform a heap allocation which is usually unnecessary.  Instead,
+many LLVM APIs use a <tt>const StringRef&</tt> or a <tt>const Twine&</tt> for
+passing strings efficiently.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="StringRef">The <tt>StringRef</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>StringRef</tt> data type represents a reference to a constant string
+(a character array and a length) and supports the common operations available
+on <tt>std:string</tt>, but does not require heap allocation.</p>
+
+It can be implicitly constructed using either a C style null-terminated string
+or an <tt>std::string</tt>, or explicitly with a character pointer and length.
+For example, the <tt>StringRef</tt> find function is declared as:</p>
+<div class="doc_code">
+  iterator find(const StringRef &Key);
+</div>
+
+<p>and clients can call it using any one of:</p>
+
+<div class="doc_code">
+<pre>
+  Map.find("foo");                 <i>// Lookup "foo"</i>
+  Map.find(std::string("bar"));    <i>// Lookup "bar"</i>
+  Map.find(StringRef("\0baz", 4)); <i>// Lookup "\0baz"</i>
+</pre>
+</div>
+
+<p>Similarly, APIs which need to return a string may return a <tt>StringRef</tt>
+instance, which can be used directly or converted to an <tt>std::string</tt>
+using the <tt>str</tt> member function.  See 
+"<tt><a href="/doxygen/classllvm_1_1StringRef_8h-source.html">llvm/ADT/StringRef.h</a></tt>"
+for more information.</p>
+
+<p>You should rarely use the <tt>StringRef</tt> class directly, because it contains
+pointers to external memory it is not generally safe to store an instance of the
+class (since the external storage may be freed).</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="Twine">The <tt>Twine</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>Twine</tt> class is an efficient way for APIs to accept concatenated
+strings.  For example, a common LLVM paradigm is to name one instruction based on
+the name of another instruction with a suffix, for example:</p>
+
+<div class="doc_code">
+<pre>
+    New = CmpInst::Create(<i>...</i>, SO->getName() + ".cmp");
+</pre>
+</div>
+
+<p>The <tt>Twine</tt> class is effectively a
+lightweight <a href="http://en.wikipedia.org/wiki/Rope_(computer_science)">rope</a>
+which points to temporary (stack allocated) objects.  Twines can be implicitly
+constructed as the result of the plus operator applied to strings (i.e., a C
+strings, an <tt>std::string</tt>, or a <tt>StringRef</tt>).  The twine delays the
+actual concatentation of strings until it is actually required, at which point
+it can be efficiently rendered directly into a character array.  This avoids
+unnecessary heap allocation involved in constructing the temporary results of
+string concatenation. See
+"<tt><a href="/doxygen/classllvm_1_1Twine_8h-source.html">llvm/ADT/Twine.h</a></tt>"
+for more information.</p></tt>
+
+<p>As with a <tt>StringRef</tt>, <tt>Twine</tt> objects point to external memory
+and should almost never be stored or mentioned directly.  They are intended
+solely for use when defining a function which should be able to efficiently
+accept concatenated strings.</p>
+
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">

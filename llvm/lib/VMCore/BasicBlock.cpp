@@ -39,7 +39,7 @@ LLVMContext &BasicBlock::getContext() const {
 template class SymbolTableListTraits<Instruction, BasicBlock>;
 
 
-BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
+BasicBlock::BasicBlock(const Twine &Name, Function *NewParent,
                        BasicBlock *InsertBefore)
   : Value(Type::LabelTy, Value::BasicBlockVal), Parent(0) {
 
@@ -240,7 +240,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
 /// cause a degenerate basic block to be formed, having a terminator inside of
 /// the basic block).
 ///
-BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
+BasicBlock *BasicBlock::splitBasicBlock(iterator I, const Twine &BBName) {
   assert(getTerminator() && "Can't use splitBasicBlock on degenerate BB!");
   assert(I != InstList.end() &&
          "Trying to get me to create degenerate basic block!");

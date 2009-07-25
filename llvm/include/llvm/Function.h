@@ -114,11 +114,11 @@ private:
   /// the module.
   ///
   Function(const FunctionType *Ty, LinkageTypes Linkage,
-           const std::string &N = "", Module *M = 0);
+           const Twine &N = "", Module *M = 0);
 
 public:
   static Function *Create(const FunctionType *Ty, LinkageTypes Linkage,
-                          const std::string &N = "", Module *M = 0) {
+                          const Twine &N = "", Module *M = 0) {
     return new(0) Function(Ty, Linkage, N, M);
   }
 

@@ -20,6 +20,7 @@
 #include "llvm/Module.h"
 #include "llvm/MDNode.h"
 #include "llvm/ValueSymbolTable.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LeakDetector.h"
@@ -183,8 +184,10 @@ StringRef Value::getNameRef() const {
   return StringRef(Name->getKeyData(), Name->getKeyLength());
 }
 
-void Value::setName(const std::string &name) {
-  setName(&name[0], name.size());
+void Value::setName(const Twine &Name) {
+  SmallString<32> NameData;
+  Name.toVector(NameData);
+  setName(NameData.begin(), NameData.size());
 }
 
 void Value::setName(const char *Name) {

@@ -17,6 +17,7 @@
 #include "llvm/AbstractTypeUser.h"
 #include "llvm/Use.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
 #include <iosfwd>
 #include <string>
@@ -128,11 +129,11 @@ public:
   /// getName()/getNameStr() - Return the name of the specified value, 
   /// *constructing a string* to hold it.  Because these are guaranteed to
   /// construct a string, they are very expensive and should be avoided.
-  std::string getName() const { return getNameStr(); }
+  StringRef getName() const { return StringRef(getNameStart(), getNameLen()); }
   std::string getNameStr() const;
   StringRef getNameRef() const;
 
-  void setName(const std::string &name);
+  void setName(const Twine &Name);
   void setName(const char *Name, unsigned NameLen);
   void setName(const char *Name);  // Takes a null-terminated string.
 

@@ -36,7 +36,7 @@ template class SymbolTableListTraits<BasicBlock, Function>;
 // Argument Implementation
 //===----------------------------------------------------------------------===//
 
-Argument::Argument(const Type *Ty, const std::string &Name, Function *Par)
+Argument::Argument(const Type *Ty, const Twine &Name, Function *Par)
   : Value(Ty, Value::ArgumentVal) {
   Parent = 0;
 
@@ -144,7 +144,7 @@ void Function::eraseFromParent() {
 //===----------------------------------------------------------------------===//
 
 Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
-                   const std::string &name, Module *ParentModule)
+                   const Twine &name, Module *ParentModule)
   : GlobalValue(PointerType::getUnqual(Ty), 
                 Value::FunctionVal, 0, 0, Linkage, name) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&

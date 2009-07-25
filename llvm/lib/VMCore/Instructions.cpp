@@ -351,7 +351,7 @@ void CallInst::init(Value *Func) {
   assert(FTy->getNumParams() == 0 && "Calling a function with bad signature");
 }
 
-CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
+CallInst::CallInst(Value *Func, Value* Actual, const Twine &Name,
                    Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
@@ -362,7 +362,7 @@ CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
   setName(Name);
 }
 
-CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
+CallInst::CallInst(Value *Func, Value* Actual, const Twine &Name,
                    BasicBlock  *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
@@ -372,7 +372,7 @@ CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
   init(Func, Actual);
   setName(Name);
 }
-CallInst::CallInst(Value *Func, const std::string &Name,
+CallInst::CallInst(Value *Func, const Twine &Name,
                    Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
@@ -383,7 +383,7 @@ CallInst::CallInst(Value *Func, const std::string &Name,
   setName(Name);
 }
 
-CallInst::CallInst(Value *Func, const std::string &Name,
+CallInst::CallInst(Value *Func, const Twine &Name,
                    BasicBlock *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                    ->getElementType())->getReturnType(),
@@ -714,7 +714,7 @@ static Value *getAISize(LLVMContext &Context, Value *Amt) {
 }
 
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
-                               unsigned Align, const std::string &Name,
+                               unsigned Align, const Twine &Name,
                                Instruction *InsertBefore)
   : UnaryInstruction(Ty->getContext().getPointerTypeUnqual(Ty), iTy,
                      getAISize(Ty->getContext(), ArraySize), InsertBefore) {
@@ -724,7 +724,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
 }
 
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
-                               unsigned Align, const std::string &Name,
+                               unsigned Align, const Twine &Name,
                                BasicBlock *InsertAtEnd)
   : UnaryInstruction(Ty->getContext().getPointerTypeUnqual(Ty), iTy,
                      getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
@@ -806,7 +806,7 @@ void LoadInst::AssertOK() {
          "Ptr must have pointer type.");
 }
 
-LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertBef) {
   setVolatile(false);
@@ -815,7 +815,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBef)
   setName(Name);
 }
 
-LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertAE) {
   setVolatile(false);
@@ -824,7 +824,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAE)
   setName(Name);
 }
 
-LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
                    Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertBef) {
@@ -834,7 +834,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
   setName(Name);
 }
 
-LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile, 
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile, 
                    unsigned Align, Instruction *InsertBef)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertBef) {
@@ -844,7 +844,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
   setName(Name);
 }
 
-LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile, 
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile, 
                    unsigned Align, BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertAE) {
@@ -854,7 +854,7 @@ LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
   setName(Name);
 }
 
-LoadInst::LoadInst(Value *Ptr, const std::string &Name, bool isVolatile,
+LoadInst::LoadInst(Value *Ptr, const Twine &Name, bool isVolatile,
                    BasicBlock *InsertAE)
   : UnaryInstruction(cast<PointerType>(Ptr->getType())->getElementType(),
                      Load, Ptr, InsertAE) {
@@ -1013,7 +1013,7 @@ static unsigned retrieveAddrSpace(const Value *Val) {
 }
 
 void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
-                             const std::string &Name) {
+                             const Twine &Name) {
   assert(NumOperands == 1+NumIdx && "NumOperands not initialized?");
   Use *OL = OperandList;
   OL[0] = Ptr;
@@ -1024,7 +1024,7 @@ void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx,
   setName(Name);
 }
 
-void GetElementPtrInst::init(Value *Ptr, Value *Idx, const std::string &Name) {
+void GetElementPtrInst::init(Value *Ptr, Value *Idx, const Twine &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
   Use *OL = OperandList;
   OL[0] = Ptr;
@@ -1045,7 +1045,7 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
-                                     const std::string &Name, Instruction *InBe)
+                                     const Twine &Name, Instruction *InBe)
   : Instruction(Ptr->getType()->getContext().getPointerType(
       checkType(getIndexedType(Ptr->getType(),Idx)), retrieveAddrSpace(Ptr)),
                 GetElementPtr,
@@ -1055,7 +1055,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 }
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
-                                     const std::string &Name, BasicBlock *IAE)
+                                     const Twine &Name, BasicBlock *IAE)
   : Instruction(Ptr->getType()->getContext().getPointerType(
             checkType(getIndexedType(Ptr->getType(),Idx)),  
                 retrieveAddrSpace(Ptr)),
@@ -1164,7 +1164,7 @@ bool GetElementPtrInst::hasAllConstantIndices() const {
 //===----------------------------------------------------------------------===//
 
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
-                                       const std::string &Name,
+                                       const Twine &Name,
                                        Instruction *InsertBef)
   : Instruction(cast<VectorType>(Val->getType())->getElementType(),
                 ExtractElement,
@@ -1178,7 +1178,7 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 }
 
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
-                                       const std::string &Name,
+                                       const Twine &Name,
                                        BasicBlock *InsertAE)
   : Instruction(cast<VectorType>(Val->getType())->getElementType(),
                 ExtractElement,
@@ -1212,7 +1212,7 @@ InsertElementInst::InsertElementInst(const InsertElementInst &IE)
   Op<2>() = IE.Op<2>();
 }
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
-                                     const std::string &Name,
+                                     const Twine &Name,
                                      Instruction *InsertBef)
   : Instruction(Vec->getType(), InsertElement,
                 OperandTraits<InsertElementInst>::op_begin(this),
@@ -1226,7 +1226,7 @@ InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
 }
 
 InsertElementInst::InsertElementInst(Value *Vec, Value *Elt, Value *Index,
-                                     const std::string &Name,
+                                     const Twine &Name,
                                      BasicBlock *InsertAE)
   : Instruction(Vec->getType(), InsertElement,
                 OperandTraits<InsertElementInst>::op_begin(this),
@@ -1268,7 +1268,7 @@ ShuffleVectorInst::ShuffleVectorInst(const ShuffleVectorInst &SV)
 }
 
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
-                                     const std::string &Name,
+                                     const Twine &Name,
                                      Instruction *InsertBefore)
 : Instruction(V1->getType()->getContext().getVectorType(
                               cast<VectorType>(V1->getType())->getElementType(),
@@ -1286,7 +1286,7 @@ ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
 }
 
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
-                                     const std::string &Name,
+                                     const Twine &Name,
                                      BasicBlock *InsertAtEnd)
   : Instruction(V1->getType(), ShuffleVector,
                 OperandTraits<ShuffleVectorInst>::op_begin(this),
@@ -1333,7 +1333,7 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
 //===----------------------------------------------------------------------===//
 
 void InsertValueInst::init(Value *Agg, Value *Val, const unsigned *Idx, 
-                           unsigned NumIdx, const std::string &Name) {
+                           unsigned NumIdx, const Twine &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
   Op<0>() = Agg;
   Op<1>() = Val;
@@ -1343,7 +1343,7 @@ void InsertValueInst::init(Value *Agg, Value *Val, const unsigned *Idx,
 }
 
 void InsertValueInst::init(Value *Agg, Value *Val, unsigned Idx, 
-                           const std::string &Name) {
+                           const Twine &Name) {
   assert(NumOperands == 2 && "NumOperands not initialized?");
   Op<0>() = Agg;
   Op<1>() = Val;
@@ -1363,7 +1363,7 @@ InsertValueInst::InsertValueInst(const InsertValueInst &IVI)
 InsertValueInst::InsertValueInst(Value *Agg,
                                  Value *Val,
                                  unsigned Idx, 
-                                 const std::string &Name,
+                                 const Twine &Name,
                                  Instruction *InsertBefore)
   : Instruction(Agg->getType(), InsertValue,
                 OperandTraits<InsertValueInst>::op_begin(this),
@@ -1374,7 +1374,7 @@ InsertValueInst::InsertValueInst(Value *Agg,
 InsertValueInst::InsertValueInst(Value *Agg,
                                  Value *Val,
                                  unsigned Idx, 
-                                 const std::string &Name,
+                                 const Twine &Name,
                                  BasicBlock *InsertAtEnd)
   : Instruction(Agg->getType(), InsertValue,
                 OperandTraits<InsertValueInst>::op_begin(this),
@@ -1387,14 +1387,14 @@ InsertValueInst::InsertValueInst(Value *Agg,
 //===----------------------------------------------------------------------===//
 
 void ExtractValueInst::init(const unsigned *Idx, unsigned NumIdx,
-                            const std::string &Name) {
+                            const Twine &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
 
   Indices.insert(Indices.end(), Idx, Idx + NumIdx);
   setName(Name);
 }
 
-void ExtractValueInst::init(unsigned Idx, const std::string &Name) {
+void ExtractValueInst::init(unsigned Idx, const Twine &Name) {
   assert(NumOperands == 1 && "NumOperands not initialized?");
 
   Indices.push_back(Idx);
@@ -1457,7 +1457,7 @@ static BinaryOperator::BinaryOps AdjustIType(BinaryOperator::BinaryOps iType,
 }
 
 BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
-                               const Type *Ty, const std::string &Name,
+                               const Type *Ty, const Twine &Name,
                                Instruction *InsertBefore)
   : Instruction(Ty, AdjustIType(iType, Ty),
                 OperandTraits<BinaryOperator>::op_begin(this),
@@ -1470,7 +1470,7 @@ BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2,
 }
 
 BinaryOperator::BinaryOperator(BinaryOps iType, Value *S1, Value *S2, 
-                               const Type *Ty, const std::string &Name,
+                               const Type *Ty, const Twine &Name,
                                BasicBlock *InsertAtEnd)
   : Instruction(Ty, AdjustIType(iType, Ty),
                 OperandTraits<BinaryOperator>::op_begin(this),
@@ -1559,7 +1559,7 @@ void BinaryOperator::init(BinaryOps iType) {
 }
 
 BinaryOperator *BinaryOperator::Create(BinaryOps Op, Value *S1, Value *S2,
-                                       const std::string &Name,
+                                       const Twine &Name,
                                        Instruction *InsertBefore) {
   assert(S1->getType() == S2->getType() &&
          "Cannot create binary operator with two operands of differing type!");
@@ -1567,7 +1567,7 @@ BinaryOperator *BinaryOperator::Create(BinaryOps Op, Value *S1, Value *S2,
 }
 
 BinaryOperator *BinaryOperator::Create(BinaryOps Op, Value *S1, Value *S2,
-                                       const std::string &Name,
+                                       const Twine &Name,
                                        BasicBlock *InsertAtEnd) {
   BinaryOperator *Res = Create(Op, S1, S2, Name);
   InsertAtEnd->getInstList().push_back(Res);
@@ -1575,7 +1575,7 @@ BinaryOperator *BinaryOperator::Create(BinaryOps Op, Value *S1, Value *S2,
 }
 
 BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
-                                          Value *Op, const std::string &Name,
+                                          Value *Op, const Twine &Name,
                                           Instruction *InsertBefore) {
   Value *zero = Context.getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::Sub,
@@ -1584,7 +1584,7 @@ BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
 }
 
 BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context, 
-                                          Value *Op, const std::string &Name,
+                                          Value *Op, const Twine &Name,
                                           BasicBlock *InsertAtEnd) {
   Value *zero = Context.getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::Sub,
@@ -1593,7 +1593,7 @@ BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
 }
 
 BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
-                                           Value *Op, const std::string &Name,
+                                           Value *Op, const Twine &Name,
                                            Instruction *InsertBefore) {
   Value *zero = Context.getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::FSub,
@@ -1602,7 +1602,7 @@ BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
 }
 
 BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
-                                           Value *Op, const std::string &Name,
+                                           Value *Op, const Twine &Name,
                                            BasicBlock *InsertAtEnd) {
   Value *zero = Context.getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::FSub,
@@ -1611,7 +1611,7 @@ BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
 }
 
 BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
-                                          Value *Op, const std::string &Name,
+                                          Value *Op, const Twine &Name,
                                           Instruction *InsertBefore) {
   Constant *C;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
@@ -1627,7 +1627,7 @@ BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
 }
 
 BinaryOperator *BinaryOperator::CreateNot(LLVMContext &Context,
-                                          Value *Op, const std::string &Name,
+                                          Value *Op, const Twine &Name,
                                           BasicBlock *InsertAtEnd) {
   Constant *AllOnes;
   if (const VectorType *PTy = dyn_cast<VectorType>(Op->getType())) {
@@ -1952,7 +1952,7 @@ unsigned CastInst::isEliminableCastPair(
 }
 
 CastInst *CastInst::Create(Instruction::CastOps op, Value *S, const Type *Ty, 
-  const std::string &Name, Instruction *InsertBefore) {
+  const Twine &Name, Instruction *InsertBefore) {
   // Construct and return the appropriate CastInst subclass
   switch (op) {
     case Trunc:    return new TruncInst    (S, Ty, Name, InsertBefore);
@@ -1974,7 +1974,7 @@ CastInst *CastInst::Create(Instruction::CastOps op, Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::Create(Instruction::CastOps op, Value *S, const Type *Ty,
-  const std::string &Name, BasicBlock *InsertAtEnd) {
+  const Twine &Name, BasicBlock *InsertAtEnd) {
   // Construct and return the appropriate CastInst subclass
   switch (op) {
     case Trunc:    return new TruncInst    (S, Ty, Name, InsertAtEnd);
@@ -1996,7 +1996,7 @@ CastInst *CastInst::Create(Instruction::CastOps op, Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::CreateZExtOrBitCast(Value *S, const Type *Ty, 
-                                        const std::string &Name,
+                                        const Twine &Name,
                                         Instruction *InsertBefore) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return Create(Instruction::BitCast, S, Ty, Name, InsertBefore);
@@ -2004,7 +2004,7 @@ CastInst *CastInst::CreateZExtOrBitCast(Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::CreateZExtOrBitCast(Value *S, const Type *Ty, 
-                                        const std::string &Name,
+                                        const Twine &Name,
                                         BasicBlock *InsertAtEnd) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return Create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
@@ -2012,7 +2012,7 @@ CastInst *CastInst::CreateZExtOrBitCast(Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::CreateSExtOrBitCast(Value *S, const Type *Ty, 
-                                        const std::string &Name,
+                                        const Twine &Name,
                                         Instruction *InsertBefore) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return Create(Instruction::BitCast, S, Ty, Name, InsertBefore);
@@ -2020,7 +2020,7 @@ CastInst *CastInst::CreateSExtOrBitCast(Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::CreateSExtOrBitCast(Value *S, const Type *Ty, 
-                                        const std::string &Name,
+                                        const Twine &Name,
                                         BasicBlock *InsertAtEnd) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return Create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
@@ -2028,7 +2028,7 @@ CastInst *CastInst::CreateSExtOrBitCast(Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
-                                         const std::string &Name,
+                                         const Twine &Name,
                                          Instruction *InsertBefore) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return Create(Instruction::BitCast, S, Ty, Name, InsertBefore);
@@ -2036,7 +2036,7 @@ CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
-                                         const std::string &Name, 
+                                         const Twine &Name, 
                                          BasicBlock *InsertAtEnd) {
   if (S->getType()->getScalarSizeInBits() == Ty->getScalarSizeInBits())
     return Create(Instruction::BitCast, S, Ty, Name, InsertAtEnd);
@@ -2044,7 +2044,7 @@ CastInst *CastInst::CreateTruncOrBitCast(Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
-                                      const std::string &Name,
+                                      const Twine &Name,
                                       BasicBlock *InsertAtEnd) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
   assert((Ty->isInteger() || isa<PointerType>(Ty)) &&
@@ -2057,7 +2057,7 @@ CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
 
 /// @brief Create a BitCast or a PtrToInt cast instruction
 CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty, 
-                                      const std::string &Name, 
+                                      const Twine &Name, 
                                       Instruction *InsertBefore) {
   assert(isa<PointerType>(S->getType()) && "Invalid cast");
   assert((Ty->isInteger() || isa<PointerType>(Ty)) &&
@@ -2069,7 +2069,7 @@ CastInst *CastInst::CreatePointerCast(Value *S, const Type *Ty,
 }
 
 CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty, 
-                                      bool isSigned, const std::string &Name,
+                                      bool isSigned, const Twine &Name,
                                       Instruction *InsertBefore) {
   assert(C->getType()->isInteger() && Ty->isInteger() && "Invalid cast");
   unsigned SrcBits = C->getType()->getScalarSizeInBits();
@@ -2082,7 +2082,7 @@ CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty,
 }
 
 CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty, 
-                                      bool isSigned, const std::string &Name,
+                                      bool isSigned, const Twine &Name,
                                       BasicBlock *InsertAtEnd) {
   assert(C->getType()->isIntOrIntVector() && Ty->isIntOrIntVector() &&
          "Invalid cast");
@@ -2096,7 +2096,7 @@ CastInst *CastInst::CreateIntegerCast(Value *C, const Type *Ty,
 }
 
 CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty, 
-                                 const std::string &Name, 
+                                 const Twine &Name, 
                                  Instruction *InsertBefore) {
   assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
          "Invalid cast");
@@ -2109,7 +2109,7 @@ CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty,
 }
 
 CastInst *CastInst::CreateFPCast(Value *C, const Type *Ty, 
-                                 const std::string &Name, 
+                                 const Twine &Name, 
                                  BasicBlock *InsertAtEnd) {
   assert(C->getType()->isFPOrFPVector() && Ty->isFPOrFPVector() &&
          "Invalid cast");
@@ -2353,144 +2353,144 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
 }
 
 TruncInst::TruncInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, Trunc, S, Name, InsertBefore) {
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal Trunc");
 }
 
 TruncInst::TruncInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, Trunc, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal Trunc");
 }
 
 ZExtInst::ZExtInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 )  : CastInst(Ty, ZExt, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal ZExt");
 }
 
 ZExtInst::ZExtInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 )  : CastInst(Ty, ZExt, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal ZExt");
 }
 SExtInst::SExtInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, SExt, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal SExt");
 }
 
 SExtInst::SExtInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 )  : CastInst(Ty, SExt, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal SExt");
 }
 
 FPTruncInst::FPTruncInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPTrunc, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPTrunc");
 }
 
 FPTruncInst::FPTruncInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPTrunc, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPTrunc");
 }
 
 FPExtInst::FPExtInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPExt, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPExt");
 }
 
 FPExtInst::FPExtInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPExt, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPExt");
 }
 
 UIToFPInst::UIToFPInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, UIToFP, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal UIToFP");
 }
 
 UIToFPInst::UIToFPInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, UIToFP, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal UIToFP");
 }
 
 SIToFPInst::SIToFPInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, SIToFP, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal SIToFP");
 }
 
 SIToFPInst::SIToFPInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, SIToFP, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal SIToFP");
 }
 
 FPToUIInst::FPToUIInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPToUI, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToUI");
 }
 
 FPToUIInst::FPToUIInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPToUI, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToUI");
 }
 
 FPToSIInst::FPToSIInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, FPToSI, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToSI");
 }
 
 FPToSIInst::FPToSIInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, FPToSI, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal FPToSI");
 }
 
 PtrToIntInst::PtrToIntInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, PtrToInt, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal PtrToInt");
 }
 
 PtrToIntInst::PtrToIntInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, PtrToInt, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal PtrToInt");
 }
 
 IntToPtrInst::IntToPtrInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, IntToPtr, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal IntToPtr");
 }
 
 IntToPtrInst::IntToPtrInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, IntToPtr, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal IntToPtr");
 }
 
 BitCastInst::BitCastInst(
-  Value *S, const Type *Ty, const std::string &Name, Instruction *InsertBefore
+  Value *S, const Type *Ty, const Twine &Name, Instruction *InsertBefore
 ) : CastInst(Ty, BitCast, S, Name, InsertBefore) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal BitCast");
 }
 
 BitCastInst::BitCastInst(
-  Value *S, const Type *Ty, const std::string &Name, BasicBlock *InsertAtEnd
+  Value *S, const Type *Ty, const Twine &Name, BasicBlock *InsertAtEnd
 ) : CastInst(Ty, BitCast, S, Name, InsertAtEnd) { 
   assert(castIsValid(getOpcode(), S, Ty) && "Illegal BitCast");
 }
@@ -2500,7 +2500,7 @@ BitCastInst::BitCastInst(
 //===----------------------------------------------------------------------===//
 
 CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
-                 Value *LHS, Value *RHS, const std::string &Name,
+                 Value *LHS, Value *RHS, const Twine &Name,
                  Instruction *InsertBefore)
   : Instruction(ty, op,
                 OperandTraits<CmpInst>::op_begin(this),
@@ -2513,7 +2513,7 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
 }
 
 CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
-                 Value *LHS, Value *RHS, const std::string &Name,
+                 Value *LHS, Value *RHS, const Twine &Name,
                  BasicBlock *InsertAtEnd)
   : Instruction(ty, op,
                 OperandTraits<CmpInst>::op_begin(this),
@@ -2528,7 +2528,7 @@ CmpInst::CmpInst(const Type *ty, OtherOps op, unsigned short predicate,
 CmpInst *
 CmpInst::Create(LLVMContext &Context, OtherOps Op, unsigned short predicate,
                 Value *S1, Value *S2, 
-                const std::string &Name, Instruction *InsertBefore) {
+                const Twine &Name, Instruction *InsertBefore) {
   if (Op == Instruction::ICmp) {
     if (InsertBefore)
       return new ICmpInst(InsertBefore, CmpInst::Predicate(predicate),
@@ -2548,7 +2548,7 @@ CmpInst::Create(LLVMContext &Context, OtherOps Op, unsigned short predicate,
 
 CmpInst *
 CmpInst::Create(OtherOps Op, unsigned short predicate, Value *S1, Value *S2, 
-                const std::string &Name, BasicBlock *InsertAtEnd) {
+                const Twine &Name, BasicBlock *InsertAtEnd) {
   if (Op == Instruction::ICmp) {
     return new ICmpInst(*InsertAtEnd, CmpInst::Predicate(predicate),
                         S1, S2, Name);

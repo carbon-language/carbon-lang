@@ -144,9 +144,9 @@ class BinaryOperator : public Instruction {
 protected:
   void init(BinaryOps iType);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
-                 const std::string &Name, Instruction *InsertBefore);
+                 const Twine &Name, Instruction *InsertBefore);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
-                 const std::string &Name, BasicBlock *InsertAtEnd);
+                 const Twine &Name, BasicBlock *InsertAtEnd);
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {
@@ -162,7 +162,7 @@ public:
   /// Instruction is allowed to be a dereferenced end iterator.
   ///
   static BinaryOperator *Create(BinaryOps Op, Value *S1, Value *S2,
-                                const std::string &Name = "",
+                                const Twine &Name = "",
                                 Instruction *InsertBefore = 0);
 
   /// Create() - Construct a binary instruction, given the opcode and the two
@@ -170,27 +170,26 @@ public:
   /// BasicBlock specified.
   ///
   static BinaryOperator *Create(BinaryOps Op, Value *S1, Value *S2,
-                                const std::string &Name,
-                                BasicBlock *InsertAtEnd);
+                                const Twine &Name, BasicBlock *InsertAtEnd);
 
   /// Create* - These methods just forward to Create, and are useful when you
   /// statically know what type of instruction you're going to create.  These
   /// helpers just save some typing.
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
   static BinaryOperator *Create##OPC(Value *V1, Value *V2, \
-                                     const std::string &Name = "") {\
+                                     const Twine &Name = "") {\
     return Create(Instruction::OPC, V1, V2, Name);\
   }
 #include "llvm/Instruction.def"
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
   static BinaryOperator *Create##OPC(Value *V1, Value *V2, \
-                                     const std::string &Name, BasicBlock *BB) {\
+                                     const Twine &Name, BasicBlock *BB) {\
     return Create(Instruction::OPC, V1, V2, Name, BB);\
   }
 #include "llvm/Instruction.def"
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
   static BinaryOperator *Create##OPC(Value *V1, Value *V2, \
-                                     const std::string &Name, Instruction *I) {\
+                                     const Twine &Name, Instruction *I) {\
     return Create(Instruction::OPC, V1, V2, Name, I);\
   }
 #include "llvm/Instruction.def"
@@ -203,22 +202,22 @@ public:
   ///     instructions out of SUB and XOR instructions.
   ///
   static BinaryOperator *CreateNeg(LLVMContext &Context,
-                                   Value *Op, const std::string &Name = "",
+                                   Value *Op, const Twine &Name = "",
                                    Instruction *InsertBefore = 0);
   static BinaryOperator *CreateNeg(LLVMContext &Context,
-                                   Value *Op, const std::string &Name,
+                                   Value *Op, const Twine &Name,
                                    BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateFNeg(LLVMContext &Context, 
-                                    Value *Op, const std::string &Name = "",
+                                    Value *Op, const Twine &Name = "",
                                     Instruction *InsertBefore = 0);
   static BinaryOperator *CreateFNeg(LLVMContext &Context,
-                                    Value *Op, const std::string &Name,
+                                    Value *Op, const Twine &Name,
                                     BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateNot(LLVMContext &Context,
-                                   Value *Op, const std::string &Name = "",
+                                   Value *Op, const Twine &Name = "",
                                    Instruction *InsertBefore = 0);
   static BinaryOperator *CreateNot(LLVMContext &Context,
-                                   Value *Op, const std::string &Name,
+                                   Value *Op, const Twine &Name,
                                    BasicBlock *InsertAtEnd);
 
   /// isNeg, isFNeg, isNot - Check if the given Value is a
@@ -288,13 +287,13 @@ class CastInst : public UnaryInstruction {
 protected:
   /// @brief Constructor with insert-before-instruction semantics for subclasses
   CastInst(const Type *Ty, unsigned iType, Value *S,
-           const std::string &NameStr = "", Instruction *InsertBefore = 0)
+           const Twine &NameStr = "", Instruction *InsertBefore = 0)
     : UnaryInstruction(Ty, iType, S, InsertBefore) {
     setName(NameStr);
   }
   /// @brief Constructor with insert-at-end-of-block semantics for subclasses
   CastInst(const Type *Ty, unsigned iType, Value *S,
-           const std::string &NameStr, BasicBlock *InsertAtEnd)
+           const Twine &NameStr, BasicBlock *InsertAtEnd)
     : UnaryInstruction(Ty, iType, S, InsertAtEnd) {
     setName(NameStr);
   }
@@ -309,7 +308,7 @@ public:
     Instruction::CastOps,    ///< The opcode of the cast instruction
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
-    const std::string &Name = "", ///< Name for the instruction
+    const Twine &Name = "", ///< Name for the instruction
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
   /// Provides a way to construct any of the CastInst subclasses using an
@@ -322,7 +321,7 @@ public:
     Instruction::CastOps,    ///< The opcode for the cast instruction
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
-    const std::string &Name, ///< The name for the instruction
+    const Twine &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
@@ -330,7 +329,7 @@ public:
   static CastInst *CreateZExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
-    const std::string &Name = "", ///< Name for the instruction
+    const Twine &Name = "", ///< Name for the instruction
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
@@ -338,7 +337,7 @@ public:
   static CastInst *CreateZExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
-    const std::string &Name, ///< The name for the instruction
+    const Twine &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
@@ -346,7 +345,7 @@ public:
   static CastInst *CreateSExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
-    const std::string &Name = "", ///< Name for the instruction
+    const Twine &Name = "", ///< Name for the instruction
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
@@ -354,7 +353,7 @@ public:
   static CastInst *CreateSExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
-    const std::string &Name, ///< The name for the instruction
+    const Twine &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
@@ -362,7 +361,7 @@ public:
   static CastInst *CreatePointerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
-    const std::string &Name, ///< The name for the instruction
+    const Twine &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
@@ -370,7 +369,7 @@ public:
   static CastInst *CreatePointerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
-    const std::string &Name = "", ///< Name for the instruction
+    const Twine &Name = "", ///< Name for the instruction
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
@@ -379,7 +378,7 @@ public:
     Value *S,                ///< The pointer value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
     bool isSigned,           ///< Whether to regard S as signed or not
-    const std::string &Name = "", ///< Name for the instruction
+    const Twine &Name = "", ///< Name for the instruction
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
@@ -388,7 +387,7 @@ public:
     Value *S,                ///< The integer value to be casted (operand 0)
     const Type *Ty,          ///< The integer type to which operand is casted
     bool isSigned,           ///< Whether to regard S as signed or not
-    const std::string &Name, ///< The name for the instruction
+    const Twine &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
@@ -396,7 +395,7 @@ public:
   static CastInst *CreateFPCast(
     Value *S,                ///< The floating point value to be casted
     const Type *Ty,          ///< The floating point type to cast to
-    const std::string &Name = "", ///< Name for the instruction
+    const Twine &Name = "", ///< Name for the instruction
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
@@ -404,7 +403,7 @@ public:
   static CastInst *CreateFPCast(
     Value *S,                ///< The floating point value to be casted
     const Type *Ty,          ///< The floating point type to cast to
-    const std::string &Name, ///< The name for the instruction
+    const Twine &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
@@ -412,7 +411,7 @@ public:
   static CastInst *CreateTruncOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which cast should be made
-    const std::string &Name = "", ///< Name for the instruction
+    const Twine &Name = "", ///< Name for the instruction
     Instruction *InsertBefore = 0 ///< Place to insert the instruction
   );
 
@@ -420,7 +419,7 @@ public:
   static CastInst *CreateTruncOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     const Type *Ty,          ///< The type to which operand is casted
-    const std::string &Name, ///< The name for the instruction
+    const Twine &Name, ///< The name for the instruction
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
@@ -520,11 +519,11 @@ class CmpInst: public Instruction {
   CmpInst(); // do not implement
 protected:
   CmpInst(const Type *ty, Instruction::OtherOps op, unsigned short pred,
-          Value *LHS, Value *RHS, const std::string &Name = "",
+          Value *LHS, Value *RHS, const Twine &Name = "",
           Instruction *InsertBefore = 0);
 
   CmpInst(const Type *ty, Instruction::OtherOps op, unsigned short pred,
-          Value *LHS, Value *RHS, const std::string &Name,
+          Value *LHS, Value *RHS, const Twine &Name,
           BasicBlock *InsertAtEnd);
 
 public:
@@ -579,7 +578,7 @@ public:
   /// @brief Create a CmpInst
   static CmpInst *Create(LLVMContext &Context, OtherOps Op,
                          unsigned short predicate, Value *S1,
-                         Value *S2, const std::string &Name = "",
+                         Value *S2, const Twine &Name = "",
                          Instruction *InsertBefore = 0);
 
   /// Construct a compare instruction, given the opcode, the predicate and the
@@ -587,8 +586,7 @@ public:
   /// the BasicBlock specified.
   /// @brief Create a CmpInst
   static CmpInst *Create(OtherOps Op, unsigned short predicate, Value *S1,
-                         Value *S2, const std::string &Name,
-                         BasicBlock *InsertAtEnd);
+                         Value *S2, const Twine &Name, BasicBlock *InsertAtEnd);
 
   /// @brief Get the opcode casted to the right type
   OtherOps getOpcode() const {

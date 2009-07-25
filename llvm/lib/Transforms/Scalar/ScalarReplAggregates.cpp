@@ -1443,7 +1443,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
     
     if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
       assert(SI->getOperand(0) != Ptr && "Consistency error!");
-      Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
+      // FIXME: Remove once builder has Twine API.
+      Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").str().c_str());
       Value *New = ConvertScalar_InsertValue(SI->getOperand(0), Old, Offset,
                                              Builder);
       Builder.CreateStore(New, NewAI);
@@ -1467,7 +1468,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, uint64_t Offset) {
           for (unsigned i = 1; i != NumBytes; ++i)
             APVal |= APVal << 8;
         
-        Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").c_str());
+        // FIXME: Remove once builder has Twine API.
+        Value *Old = Builder.CreateLoad(NewAI, (NewAI->getName()+".in").str().c_str());
         Value *New = ConvertScalar_InsertValue(
                                     ConstantInt::get(User->getContext(), APVal),
                                                Old, Offset, Builder);

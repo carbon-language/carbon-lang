@@ -34,8 +34,8 @@ using namespace llvm;
 
 // Error - Simple wrapper function to conditionally assign to E and return true.
 // This just makes error return conditions a little bit simpler...
-static inline bool Error(std::string *E, const std::string &Message) {
-  if (E) *E = Message;
+static inline bool Error(std::string *E, const Twine &Message) {
+  if (E) *E = Message.str();
   return true;
 }
 
