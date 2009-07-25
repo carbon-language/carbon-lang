@@ -571,6 +571,30 @@ public:
     CVRMask(0), AddressSpace(0), GCAttrType(QualType::GCNone) {
   }
 
+  void removeConst() { removeCVR(QualType::Const); }
+  void removeVolatile() { removeCVR(QualType::Volatile); }
+  void removeRestrict() { removeCVR(QualType::Restrict); }
+  void removeCVR(unsigned mask) { CVRMask &= ~mask; }
+  void removeAddressSpace() { AddressSpace = 0; }
+  void removeGCAttrType() { GCAttrType = QualType::GCNone; }
+
+  void addConst() { addCVR(QualType::Const); }
+  void addVolatile() { addCVR(QualType::Volatile); }
+  void addRestrict() { addCVR(QualType::Restrict); }
+  void addCVR(unsigned mask) { CVRMask |= mask; }
+  void addAddressSpace(unsigned space) {
+    assert(space);
+    AddressSpace = space;
+  }
+  void addGCAttrType(QualType::GCAttrTypes type) {
+    assert(type);
+    GCAttrType = type;
+  }
+
+  bool empty() {
+    return !CVRMask && !AddressSpace && !GCAttrType;
+  }
+
   /// Collect any qualifiers on the given type and return an
   /// unqualified type.
   const Type *strip(QualType QT) {
