@@ -172,7 +172,6 @@ class Tester(threading.Thread):
                 startTime = time.time()
                 code = TestRunner.runOneTest(path, command, output, testname, 
                                              opts.clang, opts.clangcc,
-                                             useValgrind=opts.useValgrind,
                                              useDGCompat=opts.useDGCompat,
                                              useScript=opts.testScript,
                                              output=open(testresults,'w'))
@@ -267,6 +266,9 @@ def main():
 
     if not args:
         parser.error('No inputs specified')
+    if opts.useValgrind:
+        parser.error('Support for running with valgrind is '
+                     'temporarily disabled')
 
     if opts.clang is None:
         opts.clang = TestRunner.inferClang()
