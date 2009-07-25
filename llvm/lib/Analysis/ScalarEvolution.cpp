@@ -14,9 +14,8 @@
 // There are several aspects to this library.  First is the representation of
 // scalar expressions, which are represented as subclasses of the SCEV class.
 // These classes are used to represent certain types of subexpressions that we
-// can handle.  These classes are reference counted, managed by the const SCEV *
-// class.  We only create one SCEV of a particular shape, so pointer-comparisons
-// for equality are legal.
+// can handle. We only create one SCEV of a particular shape, so
+// pointer-comparisons for equality are legal.
 //
 // One important aspect of the SCEV objects is that they are never cyclic, even
 // if there is a cycle in the dataflow for an expression (ie, a PHI node).  If
