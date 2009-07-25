@@ -9116,7 +9116,7 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
 
     // Fold this by inserting a select from the input values.
     SelectInst *NewSI = SelectInst::Create(SI.getCondition(), TI->getOperand(0),
-                                           FI->getOperand(0), SI.getName()+".v");
+                                          FI->getOperand(0), SI.getName()+".v");
     InsertNewInstBefore(NewSI, SI);
     return CastInst::Create(Instruction::CastOps(TI->getOpcode()), NewSI, 
                             TI->getType());
@@ -9332,7 +9332,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
           Value *Sh = ConstantInt::get(In->getType(),
                                        In->getType()->getScalarSizeInBits()-1);
           In = InsertNewInstBefore(BinaryOperator::CreateAShr(In, Sh,
-                                                          In->getName()+".lobit"),
+                                                        In->getName()+".lobit"),
                                    *ICI);
           if (In->getType() != SI.getType())
             In = CastInst::CreateIntegerCast(In, SI.getType(),
@@ -10300,7 +10300,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (NewRetTy == Type::VoidTy)
     Caller->setName("");   // Void type should not have a name.
 
-  const AttrListPtr &NewCallerPAL = AttrListPtr::get(attrVec.begin(),attrVec.end());
+  const AttrListPtr &NewCallerPAL = AttrListPtr::get(attrVec.begin(),
+                                                     attrVec.end());
 
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
@@ -10469,7 +10470,8 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
         NestF->getType() == Context->getPointerTypeUnqual(NewFTy) ?
         NestF : Context->getConstantExprBitCast(NestF, 
                                          Context->getPointerTypeUnqual(NewFTy));
-      const AttrListPtr &NewPAL = AttrListPtr::get(NewAttrs.begin(),NewAttrs.end());
+      const AttrListPtr &NewPAL = AttrListPtr::get(NewAttrs.begin(),
+                                                   NewAttrs.end());
 
       Instruction *NewCaller;
       if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
@@ -11042,7 +11044,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           *i = Op;
           MadeChange = true;
         }
-      } else if (TD->getTypeSizeInBits(Op->getType()) < TD->getPointerSizeInBits()) {
+      } else if (TD->getTypeSizeInBits(Op->getType()) 
+                  < TD->getPointerSizeInBits()) {
         if (Constant *C = dyn_cast<Constant>(Op)) {
           *i = Context->getConstantExprSExt(C, TD->getIntPtrType());
           MadeChange = true;
