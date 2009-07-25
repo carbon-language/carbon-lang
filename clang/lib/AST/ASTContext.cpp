@@ -1042,15 +1042,21 @@ QualType ASTContext::getObjCGCQualType(QualType T,
 }
 
 QualType ASTContext::getNoReturnType(QualType T) {
+  QualifierSet qs;
+  qs.strip(T);
   if (T->isPointerType()) {
     QualType Pointee = T->getAsPointerType()->getPointeeType();
     QualType ResultType = getNoReturnType(Pointee);
-    return getPointerType(ResultType);
+    ResultType = getPointerType(ResultType);
+    ResultType.setCVRQualifiers(T.getCVRQualifiers());
+    return qs.apply(ResultType, *this);
   }
   if (T->isBlockPointerType()) {
     QualType Pointee = T->getAsBlockPointerType()->getPointeeType();
     QualType ResultType = getNoReturnType(Pointee);
-    return getBlockPointerType(ResultType);
+    ResultType = getBlockPointerType(ResultType);
+    ResultType.setCVRQualifiers(T.getCVRQualifiers());
+    return qs.apply(ResultType, *this);
   }    
   if (!T->isFunctionType())
     assert(0 && "can't noreturn qualify non-pointer to function or block type");
@@ -2157,7 +2163,7 @@ QualType ASTContext::getBaseElementType(QualType QT) {
     const Type *UT = qualifiers.strip(QT);
     if (const ArrayType *AT = getAsArrayType(QualType(UT,0))) {
       QT = AT->getElementType();
-    }else {
+    } else {
       return qualifiers.apply(QT, *this);
     }
   }
@@ -3369,6 +3375,7 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     allLTypes = false;
   if (getCanonicalType(retType) != getCanonicalType(rbase->getResultType()))
     allRTypes = false;
+  // FIXME: double check this
   bool NoReturn = lbase->getNoReturnAttr() || rbase->getNoReturnAttr();
   if (NoReturn != lbase->getNoReturnAttr())
     allLTypes = false;
