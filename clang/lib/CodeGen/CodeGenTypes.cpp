@@ -14,6 +14,7 @@
 #include "CodeGenTypes.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "llvm/DerivedTypes.h"
@@ -545,8 +546,13 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   uint64_t llvmSize = 0;
   // FIXME: Make this a SmallVector
   std::vector<const llvm::Type*> LLVMFields;
-
+  
   unsigned curField = 0;
+  // Adjust by number of bases.
+  // FIXME. This will probably change when virtual bases are supported.
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(&RD))
+    curField += CXXRD->getNumBases();
+    
   for (RecordDecl::field_iterator Field = RD.field_begin(),
                                FieldEnd = RD.field_end();
        Field != FieldEnd; ++Field) {

@@ -17,6 +17,7 @@
 #include "CodeGenModule.h"
 #include "Mangle.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/RecordLayout.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -418,13 +419,40 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
-  for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(), 
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
+  assert(ClassDecl->vbases_begin() == ClassDecl->vbases_end()
+         && "FIXME. virtual base initialization unsupported");
+  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
+  llvm::Type *I8Ptr = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+  unsigned FieldNo = 0;
+  for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
        E = CD->init_end();
        B != E; ++B) {
     CXXBaseOrMemberInitializer *Member = (*B);
     if (Member->isBaseInitializer()) {
-      // FIXME. Added base initialilzers here.
-      assert(false && "FIXME. base initialization unsupported");
+      uint64_t Offset = Layout.getFieldOffset(FieldNo++) / 8;
+      assert(Member->getConstructor() && 
+             "EmitCtorPrologue - no constructor to initialize base class");
+      llvm::Value *LoadOfThis = LoadCXXThis();
+      llvm::LLVMContext &VMContext = getLLVMContext();
+      llvm::Value *V;
+      if (Offset > 0) {
+        llvm::Value *OffsetVal = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                                        Offset);
+        V = Builder.CreateBitCast(LoadOfThis, I8Ptr);
+        V = Builder.CreateGEP(V, OffsetVal, "add.ptr");
+      }
+      else
+        V = Builder.CreateBitCast(LoadOfThis, I8Ptr);
+
+      const llvm::Type *BasePtr = 
+        ConvertType(QualType(Member->getBaseClass(), 0));
+      BasePtr = VMContext.getPointerTypeUnqual(BasePtr);
+      V = Builder.CreateBitCast(V, BasePtr);
+      EmitCXXConstructorCall(Member->getConstructor(),
+                             Ctor_Complete, V,
+                             Member->const_arg_begin(), 
+                             Member->const_arg_end());
     }
     else {
       // non-static data member initilaizers.

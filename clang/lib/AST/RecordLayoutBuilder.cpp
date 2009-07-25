@@ -53,6 +53,9 @@ void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
   // Round up the current record size to the base's alignment boundary.
   Size = (Size + (BaseAlign-1)) & ~(BaseAlign-1);
 
+  // Non-virtual base class has offset too.
+  FieldOffsets.push_back(Size);
+
   // Reserve space for this base.
   Size += BaseSize;
   
