@@ -185,7 +185,7 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
     std::cout << std::setw(3) << i+1 << ". " 
       << std::setw(5) << FunctionCounts[i].second << "/"
       << TotalExecutions << " "
-      << FunctionCounts[i].first->getName() << "\n";
+      << FunctionCounts[i].first->getNameStr() << "\n";
   }
 
   std::set<Function*> FunctionsToPrint;
@@ -219,8 +219,8 @@ bool ProfileInfoPrinterPass::runOnModule(Module &M) {
         << Counts[i].second/(double)TotalExecutions*100 << "% "
         << std::setw(5) << Counts[i].second << "/"
         << TotalExecutions << "\t"
-        << F->getName() << "() - "
-        << Counts[i].first->getName() << "\n";
+        << F->getNameStr() << "() - "
+        << Counts[i].first->getNameStr() << "\n";
       FunctionsToPrint.insert(F);
     }
 
