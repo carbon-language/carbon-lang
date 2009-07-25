@@ -88,7 +88,7 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
        SrcRC == ARM::tGPRRegisterClass) ||
       (DestRC == ARM::tGPRRegisterClass &&
        SrcRC == ARM::GPRRegisterClass)) {
-    AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::MOVr)),
+    AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2MOVr),
                                         DestReg).addReg(SrcReg)));
     return true;
   }

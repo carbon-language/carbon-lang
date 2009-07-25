@@ -180,7 +180,7 @@ rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     Offset += MI.getOperand(FrameRegIdx+1).getImm();
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setDesc(TII.get(getOpcode(ARMII::MOVr)));
+      MI.setDesc(TII.get(ARM::t2MOVr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(FrameRegIdx+1);
       return 0;
