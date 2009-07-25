@@ -23,10 +23,8 @@ import signal
 import subprocess
 import sys
 
-# Increase determinism for things that use the terminal width.
-#
-# FIXME: Find a better place for this hack.
-os.environ['COLUMNS'] = '0'
+# Increase determinism by explicitly choosing the environment.
+kChildEnv = { 'PATH' : os.environ.get('PATH','') }
 
 kSystemName = platform.system()
 
@@ -163,7 +161,8 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
                              cwd=os.path.dirname(FILENAME),
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             env=kChildEnv)
         out,err = p.communicate()
         outputFile.write(out)
         outputFile.write(err)
