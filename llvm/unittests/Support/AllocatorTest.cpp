@@ -10,6 +10,7 @@
 #include "llvm/Support/Allocator.h"
 
 #include "gtest/gtest.h"
+#include <cstdlib>
 
 using namespace llvm;
 
@@ -90,6 +91,53 @@ TEST(AllocatorTest, TestOverflow) {
   // If we dont't allocate a new slab, then we will have overflowed.
   Alloc.Allocate(1, 0);
   EXPECT_EQ(2U, Alloc.GetNumSlabs());
+}
+
+// Mock slab allocator that returns slabs aligned on 4096 bytes.  There is no
+// easy portable way to do this, so this is kind of a hack.
+class MockSlabAllocator : public SlabAllocator {
+  MemSlab *LastSlab;
+
+public:
+  virtual ~MockSlabAllocator() { }
+
+  virtual MemSlab *Allocate(size_t Size) {
+    // Allocate space for the alignment, the slab, and a void* that goes right
+    // before the slab.
+    size_t Alignment = 4096;
+    void *MemBase = malloc(Size + Alignment - 1 + sizeof(void*));
+
+    // Make the slab.
+    MemSlab *Slab = (MemSlab*)(((uintptr_t)MemBase + Alignment - 1) &
+                               ~(uintptr_t)(Alignment - 1));
+    Slab->Size = Size;
+    Slab->NextPtr = 0;
+
+    // Hold a pointer to the base so we can free the whole malloced block.
+    ((void**)Slab)[-1] = MemBase;
+
+    LastSlab = Slab;
+    return Slab;
+  }
+
+  virtual void Deallocate(MemSlab *Slab) {
+    free(((void**)Slab)[-1]);
+  }
+
+  MemSlab *GetLastSlab() {
+    return LastSlab;
+  }
+};
+
+// Allocate a large-ish block with a really large alignment so that the
+// allocator will think that it has space, but after it does the alignment it
+// will not.
+TEST(AllocatorTest, TestBigAlignment) {
+  MockSlabAllocator SlabAlloc;
+  BumpPtrAllocator Alloc(4096, 4096, SlabAlloc);
+  uintptr_t Ptr = (uintptr_t)Alloc.Allocate(3000, 2048);
+  MemSlab *Slab = SlabAlloc.GetLastSlab();
+  EXPECT_LE(Ptr + 3000, ((uintptr_t)Slab) + Slab->Size);
 }
 
 }  // anonymous namespace

@@ -95,8 +95,8 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
   }
 
   // If Size is really big, allocate a separate slab for it.
-  if (Size > SizeThreshold) {
-    size_t PaddedSize = Size + sizeof(MemSlab) + Alignment - 1;
+  size_t PaddedSize = Size + sizeof(MemSlab) + Alignment - 1;
+  if (PaddedSize > SizeThreshold) {
     MemSlab *NewSlab = Allocator.Allocate(PaddedSize);
 
     // Put the new slab after the current slab, since we are not allocating
