@@ -109,8 +109,6 @@ PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
 bool AAEval::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
-  const TargetData &TD = AA.getTargetData();
-
   std::set<Value *> Pointers;
   std::set<CallSite> CallSites;
 
@@ -142,14 +140,14 @@ bool AAEval::runOnFunction(Function &F) {
   // iterate over the worklist, and run the full (n^2)/2 disambiguations
   for (std::set<Value *>::iterator I1 = Pointers.begin(), E = Pointers.end();
        I1 != E; ++I1) {
-    unsigned I1Size = 0;
+    unsigned I1Size = ~0u;
     const Type *I1ElTy = cast<PointerType>((*I1)->getType())->getElementType();
-    if (I1ElTy->isSized()) I1Size = TD.getTypeStoreSize(I1ElTy);
+    if (I1ElTy->isSized()) I1Size = AA.getTypeStoreSize(I1ElTy);
 
     for (std::set<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2) {
-      unsigned I2Size = 0;
+      unsigned I2Size = ~0u;
       const Type *I2ElTy =cast<PointerType>((*I2)->getType())->getElementType();
-      if (I2ElTy->isSized()) I2Size = TD.getTypeStoreSize(I2ElTy);
+      if (I2ElTy->isSized()) I2Size = AA.getTypeStoreSize(I2ElTy);
 
       switch (AA.alias(*I1, I1Size, *I2, I2Size)) {
       case AliasAnalysis::NoAlias:
@@ -174,9 +172,9 @@ bool AAEval::runOnFunction(Function &F) {
 
     for (std::set<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
          V != Ve; ++V) {
-      unsigned Size = 0;
+      unsigned Size = ~0u;
       const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
-      if (ElTy->isSized()) Size = TD.getTypeStoreSize(ElTy);
+      if (ElTy->isSized()) Size = AA.getTypeStoreSize(ElTy);
 
       switch (AA.getModRefInfo(*C, *V, Size)) {
       case AliasAnalysis::NoModRef:

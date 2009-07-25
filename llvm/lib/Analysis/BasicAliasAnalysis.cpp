@@ -141,11 +141,10 @@ namespace {
     explicit NoAA(void *PID) : ImmutablePass(PID) { }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<TargetData>();
     }
 
     virtual void initializePass() {
-      TD = &getAnalysis<TargetData>();
+      TD = getAnalysisIfAvailable<TargetData>();
     }
 
     virtual AliasResult alias(const Value *V1, unsigned V1Size,
@@ -354,10 +353,10 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   
   // If the size of one access is larger than the entire object on the other
   // side, then we know such behavior is undefined and can assume no alias.
-  const TargetData &TD = getTargetData();
-  if ((V1Size != ~0U && isObjectSmallerThan(O2, V1Size, TD)) ||
-      (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, TD)))
-    return NoAlias;
+  if (TD)
+    if ((V1Size != ~0U && isObjectSmallerThan(O2, V1Size, *TD)) ||
+        (V2Size != ~0U && isObjectSmallerThan(O1, V2Size, *TD)))
+      return NoAlias;
   
   // If one pointer is the result of a call/invoke and the other is a
   // non-escaping local object, then we know the object couldn't escape to a
@@ -476,16 +475,16 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
           // the size of the argument... build an index vector that is equal to
           // the arguments provided, except substitute 0's for any variable
           // indexes we find...
-          if (cast<PointerType>(
+          if (TD && cast<PointerType>(
                 BasePtr->getType())->getElementType()->isSized()) {
             for (unsigned i = 0; i != GEPOperands.size(); ++i)
               if (!isa<ConstantInt>(GEPOperands[i]))
                 GEPOperands[i] =
                   Context.getNullValue(GEPOperands[i]->getType());
             int64_t Offset =
-              getTargetData().getIndexedOffset(BasePtr->getType(),
-                                               &GEPOperands[0],
-                                               GEPOperands.size());
+              TD->getIndexedOffset(BasePtr->getType(),
+                                   &GEPOperands[0],
+                                   GEPOperands.size());
 
             if (Offset >= (int64_t)V2Size || Offset <= -(int64_t)V1Size)
               return NoAlias;
@@ -677,6 +676,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
   // However, one GEP may have more operands than the other.  If this is the
   // case, there may still be hope.  Check this now.
   if (FirstConstantOper == MinOperands) {
+    // Without TargetData, we won't know what the offsets are.
+    if (!TD)
+      return MayAlias;
+
     // Make GEP1Ops be the longer one if there is a longer one.
     if (NumGEP1Ops < NumGEP2Ops) {
       std::swap(GEP1Ops, GEP2Ops);
@@ -696,13 +699,12 @@ BasicAliasAnalysis::CheckGEPInstructions(
               GEP1Ops[i] = Context.getNullValue(GEP1Ops[i]->getType());
           // Okay, now get the offset.  This is the relative offset for the full
           // instruction.
-          const TargetData &TD = getTargetData();
-          int64_t Offset1 = TD.getIndexedOffset(GEPPointerTy, GEP1Ops,
-                                                NumGEP1Ops);
+          int64_t Offset1 = TD->getIndexedOffset(GEPPointerTy, GEP1Ops,
+                                                 NumGEP1Ops);
 
           // Now check without any constants at the end.
-          int64_t Offset2 = TD.getIndexedOffset(GEPPointerTy, GEP1Ops,
-                                                MinOperands);
+          int64_t Offset2 = TD->getIndexedOffset(GEPPointerTy, GEP1Ops,
+                                                 MinOperands);
 
           // Make sure we compare the absolute difference.
           if (Offset1 > Offset2)
@@ -818,11 +820,11 @@ BasicAliasAnalysis::CheckGEPInstructions(
     }
   }
 
-  if (GEPPointerTy->getElementType()->isSized()) {
+  if (TD && GEPPointerTy->getElementType()->isSized()) {
     int64_t Offset1 =
-      getTargetData().getIndexedOffset(GEPPointerTy, GEP1Ops, NumGEP1Ops);
+      TD->getIndexedOffset(GEPPointerTy, GEP1Ops, NumGEP1Ops);
     int64_t Offset2 = 
-      getTargetData().getIndexedOffset(GEPPointerTy, GEP2Ops, NumGEP2Ops);
+      TD->getIndexedOffset(GEPPointerTy, GEP2Ops, NumGEP2Ops);
     assert(Offset1 != Offset2 &&
            "There is at least one different constant here!");
     

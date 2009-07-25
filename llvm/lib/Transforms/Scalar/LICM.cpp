@@ -390,7 +390,7 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
     // Don't hoist loads which have may-aliased stores in loop.
     unsigned Size = 0;
     if (LI->getType()->isSized())
-      Size = AA->getTargetData().getTypeStoreSize(LI->getType());
+      Size = AA->getTypeStoreSize(LI->getType());
     return !pointerInvalidatedByLoop(LI->getOperand(0), Size);
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Handle obvious cases efficiently.

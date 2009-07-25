@@ -119,8 +119,8 @@ void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
   const Value *aobj = aptr->getUnderlyingObject();
   const Value *bobj = bptr->getUnderlyingObject();
   AliasAnalysis::AliasResult alias = AA->alias(
-      aobj, AA->getTargetData().getTypeStoreSize(aobj->getType()),
-      bobj, AA->getTargetData().getTypeStoreSize(bobj->getType()));
+      aobj, AA->getTypeStoreSize(aobj->getType()),
+      bobj, AA->getTypeStoreSize(bobj->getType()));
 
   // We can not analyse objects if we do not know about their aliasing.
   if (alias == AliasAnalysis::MayAlias) {

@@ -88,7 +88,7 @@ AliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(LoadInst *L, Value *P, unsigned Size) {
-  return alias(L->getOperand(0), TD->getTypeStoreSize(L->getType()),
+  return alias(L->getOperand(0), getTypeStoreSize(L->getType()),
                P, Size) ? Ref : NoModRef;
 }
 
@@ -97,7 +97,7 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
   // If the stored address cannot alias the pointer in question, then the
   // pointer cannot be modified by the store.
   if (!alias(S->getOperand(1),
-             TD->getTypeStoreSize(S->getOperand(0)->getType()), P, Size))
+             getTypeStoreSize(S->getOperand(0)->getType()), P, Size))
     return NoModRef;
 
   // If the pointer is a pointer to constant memory, then it could not have been
@@ -177,16 +177,21 @@ AliasAnalysis::~AliasAnalysis() {}
 /// AliasAnalysis interface before any other methods are called.
 ///
 void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
-  TD = &P->getAnalysis<TargetData>();
+  TD = P->getAnalysisIfAvailable<TargetData>();
   AA = &P->getAnalysis<AliasAnalysis>();
 }
 
 // getAnalysisUsage - All alias analysis implementations should invoke this
-// directly (using AliasAnalysis::getAnalysisUsage(AU)) to make sure that
-// TargetData is required by the pass.
+// directly (using AliasAnalysis::getAnalysisUsage(AU)).
 void AliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<TargetData>();            // All AA's need TargetData.
   AU.addRequired<AliasAnalysis>();         // All AA's chain
+}
+
+/// getTypeStoreSize - Return the TargetData store size for the given type,
+/// if known, or a conservative value otherwise.
+///
+unsigned AliasAnalysis::getTypeStoreSize(const Type *Ty) {
+  return TD ? TD->getTypeStoreSize(Ty) : ~0u;
 }
 
 /// canBasicBlockModify - Return true if it is possible for execution of the

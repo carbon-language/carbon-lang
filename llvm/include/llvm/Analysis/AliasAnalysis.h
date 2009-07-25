@@ -56,8 +56,7 @@ protected:
   void InitializeAliasAnalysis(Pass *P);
 
   /// getAnalysisUsage - All alias analysis implementations should invoke this
-  /// directly (using AliasAnalysis::getAnalysisUsage(AU)) to make sure that
-  /// TargetData is required by the pass.
+  /// directly (using AliasAnalysis::getAnalysisUsage(AU)).
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 public:
@@ -65,11 +64,15 @@ public:
   AliasAnalysis() : TD(0), AA(0) {}
   virtual ~AliasAnalysis();  // We want to be subclassed
 
-  /// getTargetData - Every alias analysis implementation depends on the size of
-  /// data items in the current Target.  This provides a uniform way to handle
-  /// it.
+  /// getTargetData - Return a pointer to the current TargetData object, or
+  /// null if no TargetData object is available.
   ///
-  const TargetData &getTargetData() const { return *TD; }
+  const TargetData *getTargetData() const { return TD; }
+
+  /// getTypeStoreSize - Return the TargetData store size for the given type,
+  /// if known, or a conservative value otherwise.
+  ///
+  unsigned getTypeStoreSize(const Type *Ty);
 
   //===--------------------------------------------------------------------===//
   /// Alias Queries...
