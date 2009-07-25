@@ -24,7 +24,9 @@ import subprocess
 import sys
 
 # Increase determinism by explicitly choosing the environment.
-kChildEnv = { 'PATH' : os.environ.get('PATH','') }
+kChildEnv = {}
+for var in ('PATH', 'SYSTEMROOT'):
+    kChildEnv[var] = os.environ.get(var, '')
 
 kSystemName = platform.system()
 
@@ -170,7 +172,11 @@ def runOneTest(FILENAME, SUBST, OUTPUT, TESTNAME, CLANG, CLANGCC,
 
     # Write script file
     f = open(SCRIPT,'w')
-    f.write(' &&\n'.join(scriptLines))
+    if kSystemName == 'Windows':
+        f.write('\nif %ERRORLEVEL% NEQ 0 EXIT\n'.join(scriptLines))
+        f.write('\n')
+    else:
+        f.write(' &&\n'.join(scriptLines))
     f.close()
 
     outputFile = open(OUTPUT,'w')
