@@ -959,7 +959,8 @@ void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
     assert(ARM_AM::getSOImmVal(ThisVal) != -1 && "Bit extraction didn't work?");
 
     // Build the new ADD / SUB.
-    BuildMI(MBB, MBBI, dl, TII.get(TII.getOpcode(isSub ? ARMII::SUBri : ARMII::ADDri)), DestReg)
+    unsigned Opc = TII.getOpcode(isSub ? ARMII::SUBri : ARMII::ADDri);
+    BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
       .addReg(BaseReg, RegState::Kill).addImm(ThisVal)
       .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
     BaseReg = DestReg;
