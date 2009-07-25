@@ -101,7 +101,7 @@ bool LoopDependenceAnalysis::findOrInsertDependencePair(Value *X,
 }
 
 void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
-  DOUT << "Analysing:\n" << *P->A << "\n" << *P->B << "\n";
+  DEBUG(errs() << "Analysing:\n" << *P->A << "\n" << *P->B << "\n");
 
   // Our default answer: we don't know anything, i.e. we failed to analyse this
   // pair to get a more specific answer (dependent, independent).
@@ -110,7 +110,7 @@ void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
   // We only analyse loads and stores but no possible memory accesses by e.g.
   // free, call, or invoke instructions.
   if (!IsLoadOrStoreInst(P->A) || !IsLoadOrStoreInst(P->B)) {
-    DOUT << "--> [?] no load/store\n";
+    DEBUG(errs() << "--> [?] no load/store\n");
     return;
   }
 
@@ -124,20 +124,20 @@ void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
 
   // We can not analyse objects if we do not know about their aliasing.
   if (alias == AliasAnalysis::MayAlias) {
-    DOUT << "---> [?] may alias\n";
+    DEBUG(errs() << "---> [?] may alias\n");
     return;
   }
 
   // If the objects noalias, they are distinct, accesses are independent.
   if (alias == AliasAnalysis::NoAlias) {
-    DOUT << "---> [I] no alias\n";
+    DEBUG(errs() << "---> [I] no alias\n");
     P->Result = Independent;
     return;
   }
 
   // TODO: the underlying objects MustAlias, test for dependence
 
-  DOUT << "---> [?] cannot analyse\n";
+  DEBUG(errs() << "---> [?] cannot analyse\n");
   return;
 }
 
