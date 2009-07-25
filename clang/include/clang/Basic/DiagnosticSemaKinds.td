@@ -126,6 +126,19 @@ def err_builtin_definition : Error<"definition of builtin function %0">;
 def err_types_compatible_p_in_cplusplus : Error<
   "__builtin_types_compatible_p is not valid in C++">;
 
+/// main()
+// static/inline main() are not errors in C, just in C++.
+def warn_unusual_main_decl : Warning<"'main' should not be declared "
+    "%select{static|inline|static or inline}0">;
+def err_unusual_main_decl : Error<"'main' is not allowed to be declared "
+    "%select{static|inline|static or inline}0">;
+def err_main_returns_nonint : Error<"'main' must return 'int'">;
+def err_main_surplus_args : Error<"%0 is too many arguments for 'main': "
+    "must be 0, 2, or 3">;
+def warn_main_one_arg : Warning<"one-argument 'main' is usually a mistake">;
+def err_main_arg_wrong : Error<"%select{first|second|third}0 argument of "
+    "'main' should be of type %1">;
+
 /// parser diagnostics
 def ext_typedef_without_a_name : ExtWarn<"typedef requires a name">;
 def err_statically_allocated_object : Error<

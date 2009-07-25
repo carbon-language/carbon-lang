@@ -2767,7 +2767,85 @@ void Sema::CheckFunctionDeclaration(FunctionDecl *NewFD, NamedDecl *&PrevDecl,
 }
 
 void Sema::CheckMain(FunctionDecl* FD) {
-  // FIXME: implement.
+  // C++ [basic.start.main]p3:  A program that declares main to be inline
+  //   or static is ill-formed.
+  // C99 6.7.4p4:  In a hosted environment, the inline function specifier
+  //   shall not appear in a declaration of main.
+  // static main is not an error under C99, but we should warn about it.
+  bool isInline = FD->isInline();
+  bool isStatic = FD->getStorageClass() == FunctionDecl::Static;
+  if (isInline || isStatic) {
+    unsigned diagID = diag::warn_unusual_main_decl;
+    if (isInline || getLangOptions().CPlusPlus)
+      diagID = diag::err_unusual_main_decl;
+
+    int which = isStatic + (isInline << 1) - 1;
+    Diag(FD->getLocation(), diagID) << which;
+  }
+
+  QualType T = FD->getType();
+  assert(T->isFunctionType() && "function decl is not of function type");
+  const FunctionType* FT = T->getAsFunctionType();
+  
+  if (!Context.hasSameUnqualifiedType(FT->getResultType(), Context.IntTy)) {
+    // TODO: add a replacement fixit to turn the return type into 'int'.
+    Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint);
+    FD->setInvalidDecl(true);
+  }
+
+  // Treat protoless main() as nullary.
+  if (isa<FunctionNoProtoType>(FT)) return;
+
+  const FunctionProtoType* FTP = cast<const FunctionProtoType>(FT);
+  unsigned nparams = FTP->getNumArgs();
+  assert(FD->getNumParams() == nparams);
+
+  if (nparams > 3) {
+    Diag(FD->getLocation(), diag::err_main_surplus_args) << nparams;
+    FD->setInvalidDecl(true);
+    nparams = 3;
+  }
+
+  // FIXME: a lot of the following diagnostics would be improved
+  // if we had some location information about types.
+
+  QualType CharPP =
+    Context.getPointerType(Context.getPointerType(Context.CharTy));
+  QualType Expected[] = { Context.IntTy, CharPP, CharPP };
+
+  for (unsigned i = 0; i < nparams; ++i) {
+    QualType AT = FTP->getArgType(i);
+
+    bool mismatch = true;
+
+    if (Context.hasSameUnqualifiedType(AT, Expected[i]))
+      mismatch = false;
+    else if (Expected[i] == CharPP) {
+      // As an extension, the following forms are okay:
+      //   char const **
+      //   char const * const *
+      //   char * const *
+
+      QualifierSet qs;
+      const PointerType* PT;
+      if ((PT = qs.strip(AT)->getAsPointerType()) &&
+          (PT = qs.strip(PT->getPointeeType())->getAsPointerType()) &&
+          (QualType(qs.strip(PT->getPointeeType()), 0) == Context.CharTy)) {
+        qs.removeConst();
+        mismatch = !qs.empty();
+      }
+    }
+
+    if (mismatch) {
+      Diag(FD->getLocation(), diag::err_main_arg_wrong) << i << Expected[i];
+      // TODO: suggest replacing given type with expected type
+      FD->setInvalidDecl(true);
+    }
+  }
+
+  if (nparams == 1 && !FD->isInvalidDecl()) {
+    Diag(FD->getLocation(), diag::warn_main_one_arg);
+  }
 }
 
 bool Sema::CheckForConstantInitializer(Expr *Init, QualType DclT) {

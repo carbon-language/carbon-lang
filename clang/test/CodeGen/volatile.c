@@ -38,7 +38,7 @@ volatile extv4 vVE;
 
 volatile struct {int x;} aggFct(void);
 
-void main() {
+int main() {
   int i;
 
   // load

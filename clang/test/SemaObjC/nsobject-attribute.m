@@ -26,7 +26,7 @@ id getProperty(id self) {
 @synthesize x=x;
 @end
 
-int main(char *argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     HandTested *to;
     to.x = tmp;  // setter
     if (tmp != to.x)

@@ -22,7 +22,7 @@ void test() {
   ^(int x, ...){return 5;}(arg, arg);   // Explicit varargs, ok.
 }
 
-int main(int argc) {
+int main(int argc, char** argv) {
   ^(int argCount) {
     argCount = 3;
   }(argc);
