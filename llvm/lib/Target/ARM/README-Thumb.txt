@@ -248,3 +248,9 @@ Make use of hi register variants of cmp: tCMPhir / tCMPZhir.
 Thumb1 immediate field sometimes keep pre-scaled values. See
 Thumb1RegisterInfo::eliminateFrameIndex. This is inconsistent from ARM and
 Thumb2.
+
+//===---------------------------------------------------------------------===//
+
+Rather than having tBR_JTr print a ".align 2" and constant island pass pad it,
+add a target specific ALIGN instruction instead. That way, GetInstSizeInBytes
+won't have to over-estimate. It can also be used for loop alignment pass.
