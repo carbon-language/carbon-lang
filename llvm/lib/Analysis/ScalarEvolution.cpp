@@ -734,6 +734,13 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
       unsigned BitWidth = getTypeSizeInBits(AR->getType());
       const Loop *L = AR->getLoop();
 
+      // If we have special knowledge that this addrec won't overflow,
+      // we don't need to do any further analysis.
+      if (AR->hasNoUnsignedOverflow())
+        return getAddRecExpr(getZeroExtendExpr(Start, Ty),
+                             getZeroExtendExpr(Step, Ty),
+                             L);
+
       // Check whether the backedge-taken count is SCEVCouldNotCompute.
       // Note that this serves two purposes: It filters out loops that are
       // simply not analyzable, and it covers the case where this code is
@@ -865,6 +872,13 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
       const SCEV *Step = AR->getStepRecurrence(*this);
       unsigned BitWidth = getTypeSizeInBits(AR->getType());
       const Loop *L = AR->getLoop();
+
+      // If we have special knowledge that this addrec won't overflow,
+      // we don't need to do any further analysis.
+      if (AR->hasNoSignedOverflow())
+        return getAddRecExpr(getSignExtendExpr(Start, Ty),
+                             getSignExtendExpr(Step, Ty),
+                             L);
 
       // Check whether the backedge-taken count is SCEVCouldNotCompute.
       // Note that this serves two purposes: It filters out loops that are
@@ -2344,8 +2358,29 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
                  cast<SCEVAddRecExpr>(Accum)->getLoop() == L)) {
               const SCEV *StartVal =
                 getSCEV(PN->getIncomingValue(IncomingEdge));
-              const SCEV *PHISCEV =
-                getAddRecExpr(StartVal, Accum, L);
+              const SCEVAddRecExpr *PHISCEV =
+                cast<SCEVAddRecExpr>(getAddRecExpr(StartVal, Accum, L));
+
+              // If the increment doesn't overflow, then neither the addrec nor the
+              // post-increment will overflow.
+              if (const AddOperator *OBO = dyn_cast<AddOperator>(BEValueV))
+                if (OBO->getOperand(0) == PN &&
+                    getSCEV(OBO->getOperand(1)) ==
+                      PHISCEV->getStepRecurrence(*this)) {
+                  const SCEVAddRecExpr *PostInc = PHISCEV->getPostIncExpr(*this);
+                  if (OBO->hasNoUnsignedOverflow()) {
+                    const_cast<SCEVAddRecExpr *>(PHISCEV)
+                      ->setHasNoUnsignedOverflow(true);
+                    const_cast<SCEVAddRecExpr *>(PostInc)
+                      ->setHasNoUnsignedOverflow(true);
+                  }
+                  if (OBO->hasNoSignedOverflow()) {
+                    const_cast<SCEVAddRecExpr *>(PHISCEV)
+                      ->setHasNoSignedOverflow(true);
+                    const_cast<SCEVAddRecExpr *>(PostInc)
+                      ->setHasNoSignedOverflow(true);
+                  }
+                }
 
               // Okay, for the entire analysis of this edge we assumed the PHI
               // to be symbolic.  We now need to go back and purge all of the
