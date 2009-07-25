@@ -464,30 +464,17 @@ ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
   return NULL;
 }
 
-// lookupInstanceMethod - Lookup a instance method in the protocol and protocols
+// lookupMethod - Lookup a instance/class method in the protocol and protocols
 // it inherited.
-ObjCMethodDecl *ObjCProtocolDecl::lookupInstanceMethod(Selector Sel) {
+ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
+                                               bool isInstance) const {
   ObjCMethodDecl *MethodDecl = NULL;
   
-  if ((MethodDecl = getInstanceMethod(Sel)))
+  if ((MethodDecl = getMethod(Sel, isInstance)))
     return MethodDecl;
   
   for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
-    if ((MethodDecl = (*I)->lookupInstanceMethod(Sel)))
-      return MethodDecl;
-  return NULL;
-}
-
-// lookupInstanceMethod - Lookup a class method in the protocol and protocols
-// it inherited.
-ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(Selector Sel) {
-  ObjCMethodDecl *MethodDecl = NULL;
-  
-  if ((MethodDecl = getClassMethod(Sel)))
-    return MethodDecl;
-  
-  for (protocol_iterator I = protocol_begin(), E = protocol_end(); I != E; ++I)
-    if ((MethodDecl = (*I)->lookupClassMethod(Sel)))
+    if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
       return MethodDecl;
   return NULL;
 }
