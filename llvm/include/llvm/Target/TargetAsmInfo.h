@@ -181,23 +181,6 @@ namespace llvm {
       SectionKind Res = { K };
       return Res;
     }
-    static SectionKind getText()             { return get(Text); }
-    static SectionKind getReadOnly()         { return get(ReadOnly); }
-    static SectionKind getMergableCString()  { return get(MergableCString); }
-    static SectionKind getMergableConst()    { return get(MergableConst); }
-    static SectionKind getMergableConst4()   { return get(MergableConst4); }
-    static SectionKind getMergableConst8()   { return get(MergableConst8); }
-    static SectionKind getMergableConst16()  { return get(MergableConst16); }
-    static SectionKind getThreadBSS()        { return get(ThreadBSS); }
-    static SectionKind getThreadData()       { return get(ThreadData); }
-    static SectionKind getBSS()              { return get(BSS); }
-    static SectionKind getDataRel()          { return get(DataRel); }
-    static SectionKind getDataRelLocal()     { return get(DataRelLocal); }
-    static SectionKind getDataNoRel()        { return get(DataNoRel); }
-    static SectionKind getReadOnlyWithRel()  { return get(ReadOnlyWithRel); }
-    static SectionKind getReadOnlyWithRelLocal() {
-      return get(ReadOnlyWithRelLocal);
-    }
   };
 
   namespace SectionFlags {
