@@ -60,9 +60,7 @@ namespace llvm {
     Kind getKind() const { return K; }
 
     bool isReadOnly() const {
-      return K == ROData ||
-             K == DataRelRO        || K == DataRelROLocal ||
-             K == RODataMergeConst || K == RODataMergeStr;
+      return K == ROData || K == RODataMergeConst || K == RODataMergeStr;
     }
     
     /// isReadOnlyWithDynamicInit - Return true if this data is readonly, but
