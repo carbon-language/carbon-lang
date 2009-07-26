@@ -710,8 +710,7 @@ namespace llvm {
     /// getSectionForMergableConstant - Given a mergable constant with the
     /// specified size and relocation information, return a section that it
     /// should be placed in.
-    virtual const Section *
-    getSectionForMergableConstant(uint64_t Size, unsigned ReloInfo) const;
+    virtual const Section *getSectionForMergableConstant(SectionKind Kind)const;
 
     
     /// getSectionPrefixForUniqueGlobal - Return a string that we should prepend

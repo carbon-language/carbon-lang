@@ -188,25 +188,18 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
 }
 
 const Section *
-DarwinTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
-                                                   unsigned ReloInfo) const {
+DarwinTargetAsmInfo::getSectionForMergableConstant(SectionKind Kind) const {
   // If this constant requires a relocation, we have to put it in the data
   // segment, not in the text segment.
-  if (ReloInfo != 0)
+  if (Kind.isDataRel())
     return ConstDataSection;
   
-  switch (Size) {
-  default: break;
-  case 4:
+  if (Kind.isMergableConst4())
     return FourByteConstantSection;
-  case 8:
+  if (Kind.isMergableConst8())
     return EightByteConstantSection;
-  case 16:
-    if (SixteenByteConstantSection)
-      return SixteenByteConstantSection;
-    break;
-  }
-  
+  if (Kind.isMergableConst16() && SixteenByteConstantSection)
+    return SixteenByteConstantSection;
   return ReadOnlySection;  // .const
 }
 

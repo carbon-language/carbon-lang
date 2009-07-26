@@ -29,7 +29,7 @@ namespace llvm {
     /// specified size and relocation information, return a section that it
     /// should be placed in.
     virtual const Section *
-    getSectionForMergableConstant(uint64_t Size, unsigned ReloInfo) const;
+    getSectionForMergableConstant(SectionKind Kind) const;
     
     /// getFlagsForNamedSection - If this target wants to be able to infer
     /// section flags based on the name of the section specified for a global

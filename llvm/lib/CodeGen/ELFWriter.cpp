@@ -29,7 +29,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "elfwriter"
-
 #include "ELF.h"
 #include "ELFWriter.h"
 #include "ELFCodeEmitter.h"
@@ -155,10 +154,21 @@ ELFSection &ELFWriter::getJumpTableSection() {
 
 // Get a constant pool section based on the section name returned by TAI
 ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
-  uint64_t Size = TM.getTargetData()->getTypeAllocSize(CPE.getType());
+  SectionKind Kind;
+  switch (CPE.getRelocationInfo()) {
+  default: llvm_unreachable("Unknown section kind");
+  case 2: Kind = SectionKind::getReadOnlyWithRel(); break;
+  case 1: Kind = SectionKind::getReadOnlyWithRelLocal(); break;
+  case 0:
+    switch (TM.getTargetData()->getTypeAllocSize(CPE.getType())) {
+    case 4:   Kind = SectionKind::getMergableConst4(); break;
+    case 8:   Kind = SectionKind::getMergableConst8(); break;
+    case 16:  Kind = SectionKind::getMergableConst16(); break;
+    default:  Kind = SectionKind::getMergableConst(); break;
+    }
+  }
   
-  std::string CstPoolName =
-    TAI->getSectionForMergableConstant(Size,CPE.getRelocationInfo())->getName();
+  std::string CstPoolName = TAI->getSectionForMergableConstant(Kind)->getName();
   return getSection(CstPoolName,
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,

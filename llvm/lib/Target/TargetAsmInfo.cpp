@@ -372,9 +372,8 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
 /// specified size and relocation information, return a section that it
 /// should be placed in.
 const Section *
-TargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
-                                             unsigned ReloInfo) const {
-  if (ReloInfo == 0)
+TargetAsmInfo::getSectionForMergableConstant(SectionKind Kind) const {
+  if (Kind.isReadOnly())
     if (const Section *S = getReadOnlySection())
       return S;
   

@@ -301,17 +301,28 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   const std::vector<MachineConstantPoolEntry> &CP = MCP->getConstants();
   if (CP.empty()) return;
 
-  const TargetData &TD = *TM.getTargetData();
-  
   // Calculate sections for constant pool entries. We collect entries to go into
   // the same section together to reduce amount of section switch statements.
   SmallVector<SectionCPs, 4> CPSections;
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     const MachineConstantPoolEntry &CPE = CP[i];
     unsigned Align = CPE.getAlignment();
-    uint64_t Size = TD.getTypeAllocSize(CPE.getType());
-    const Section *S =
-      TAI->getSectionForMergableConstant(Size, CPE.getRelocationInfo());
+    
+    SectionKind Kind;
+    switch (CPE.getRelocationInfo()) {
+    default: llvm_unreachable("Unknown section kind");
+    case 2: Kind = SectionKind::getReadOnlyWithRel(); break;
+    case 1: Kind = SectionKind::getReadOnlyWithRelLocal(); break;
+    case 0:
+      switch (TM.getTargetData()->getTypeAllocSize(CPE.getType())) {
+      case 4:   Kind = SectionKind::getMergableConst4(); break;
+      case 8:   Kind = SectionKind::getMergableConst8(); break;
+      case 16:  Kind = SectionKind::getMergableConst16(); break;
+      default:  Kind = SectionKind::getMergableConst(); break;
+      }
+    }
+
+    const Section *S = TAI->getSectionForMergableConstant(Kind);
     
     // The number of sections are small, just do a linear search from the
     // last section to the first.

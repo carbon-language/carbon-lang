@@ -92,21 +92,8 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
 /// specified size and relocation information, return a section that it
 /// should be placed in.
 const Section *
-ELFTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
-                                                unsigned ReloInfo) const {
-  // If this constant pool entry has relocations, stick it into a relocatable
-  // section.
-  if (ReloInfo == 2)
-    return DataRelROSection;
-  if (ReloInfo == 1)
-    return DataRelROLocalSection;
-  
-  switch (Size) {
-  default: return ReadOnlySection;   // .rodata
-  case 4:  return MergableConst4Section;
-  case 8:  return MergableConst8Section;
-  case 16: return MergableConst16Section;
-  }
+ELFTargetAsmInfo::getSectionForMergableConstant(SectionKind Kind) const {
+  return SelectSectionForGlobal(0, Kind);
 }
 
 /// getFlagsForNamedSection - If this target wants to be able to infer
