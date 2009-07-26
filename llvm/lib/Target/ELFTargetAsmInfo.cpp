@@ -43,6 +43,13 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
                                      SectionFlags::Writable);
   DataRelROLocalSection = getNamedSection("\t.data.rel.ro.local",
                                           SectionFlags::Writable);
+    
+  MergableConst4Section = getNamedSection(".rodata.cst4",
+                  SectionFlags::setEntitySize(SectionFlags::Mergeable, 4));
+  MergableConst8Section = getNamedSection(".rodata.cst8",
+                  SectionFlags::setEntitySize(SectionFlags::Mergeable, 8));
+  MergableConst16Section = getNamedSection(".rodata.cst16",
+                  SectionFlags::setEntitySize(SectionFlags::Mergeable, 16));
 }
 
 
@@ -54,10 +61,15 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
     return MergeableStringSection(cast<GlobalVariable>(GV));
   
   if (Kind.isMergableConst()) {
-    const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
-    const TargetData *TD = TM.getTargetData();
-    return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
+    if (Kind.isMergableConst4())
+      return MergableConst4Section;
+    if (Kind.isMergableConst8())
+      return MergableConst8Section;
+    if (Kind.isMergableConst16())
+      return MergableConst16Section;
+    return ReadOnlySection;  // .const
   }
+  
   if (Kind.isReadOnly())             return getReadOnlySection();
   
   
@@ -89,21 +101,12 @@ ELFTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
   if (ReloInfo == 1)
     return DataRelROLocalSection;
   
-  
-  const char *SecName = 0;
   switch (Size) {
-  default: break;
-  case 4:  SecName = ".rodata.cst4"; break;
-  case 8:  SecName = ".rodata.cst8"; break;
-  case 16: SecName = ".rodata.cst16"; break;
+  default: return ReadOnlySection;   // .rodata
+  case 4:  return MergableConst4Section;
+  case 8:  return MergableConst8Section;
+  case 16: return MergableConst16Section;
   }
-  
-  if (SecName)
-    return getNamedSection(SecName,
-                           SectionFlags::setEntitySize(SectionFlags::Mergeable,
-                                                       Size));
-  
-  return getReadOnlySection();  // .rodata
 }
 
 /// getFlagsForNamedSection - If this target wants to be able to infer

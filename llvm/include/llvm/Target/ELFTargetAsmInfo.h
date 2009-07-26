@@ -43,13 +43,17 @@ namespace llvm {
                                                   SectionKind Kind) const;
     virtual std::string printSectionFlags(unsigned flags) const;
 
-    const Section* DataRelSection;
-    const Section* DataRelLocalSection;
-    const Section* DataRelROSection;
-    const Section* DataRelROLocalSection;
-    
+    const Section *DataRelSection;
+    const Section *DataRelLocalSection;
+    const Section *DataRelROSection;
+    const Section *DataRelROLocalSection;
+
+    const Section *MergableConst4Section;
+    const Section *MergableConst8Section;
+    const Section *MergableConst16Section;
+
   private:
-    const Section* MergeableStringSection(const GlobalVariable *GV) const;
+    const Section *MergeableStringSection(const GlobalVariable *GV) const;
   };
 }
 
