@@ -114,18 +114,22 @@ public:
   /// getNameStart - Return a pointer to a null terminated string for this name.
   /// Note that names can have null characters within the string as well as at
   /// their end.  This always returns a non-null pointer.
-  const char *getNameStart() const;
+  const char *getNameStart() const { return getName().begin(); }
   /// getNameEnd - Return a pointer to the end of the name.
-  const char *getNameEnd() const { return getNameStart() + getNameLen(); }
+  const char *getNameEnd() const { return getName().end(); }
   
   /// getNameLen - Return the length of the string, correctly handling nul
   /// characters embedded into them.
-  unsigned getNameLen() const;
+  unsigned getNameLen() const { return getName().size(); }
 
-  /// getName()/getNameStr() - Return the name of the specified value, 
-  /// *constructing a string* to hold it.  Because these are guaranteed to
-  /// construct a string, they are very expensive and should be avoided.
-  StringRef getName() const { return StringRef(getNameStart(), getNameLen()); }
+  /// getName() - Return a constant reference to the value's name. This is cheap
+  /// and guaranteed to return the same reference as long as the value is not
+  /// modified.
+  StringRef getName() const;
+
+  /// getNameStr() - Return the name of the specified value, *constructing a
+  /// string* to hold it.  This is guaranteed to construct a string and is very
+  /// expensive, clients should use getName() unless necessary.
   std::string getNameStr() const;
 
   /// setName() - Change the name of the value, choosing a new unique name if

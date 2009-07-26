@@ -151,20 +151,10 @@ static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
   return false;
 }
 
-/// getNameStart - Return a pointer to a null terminated string for this name.
-/// Note that names can have null characters within the string as well as at
-/// their end.  This always returns a non-null pointer.
-const char *Value::getNameStart() const {
-  if (Name == 0) return "";
-  return Name->getKeyData();
+StringRef Value::getName() const {
+  if (!Name) return StringRef();
+  return Name->getKey();
 }
-
-/// getNameLen - Return the length of the string, correctly handling nul
-/// characters embedded into them.
-unsigned Value::getNameLen() const {
-  return Name ? Name->getKeyLength() : 0;
-}
-
 
 std::string Value::getNameStr() const {
   return getName().str();
