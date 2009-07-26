@@ -25,11 +25,11 @@ namespace llvm {
   struct ELFTargetAsmInfo: public TargetAsmInfo {
     explicit ELFTargetAsmInfo(const TargetMachine &TM);
 
-    /// getSectionForMergableConstant - Given a mergable constant with the
+    /// getSectionForMergeableConstant - Given a mergeable constant with the
     /// specified size and relocation information, return a section that it
     /// should be placed in.
     virtual const Section *
-    getSectionForMergableConstant(SectionKind Kind) const;
+    getSectionForMergeableConstant(SectionKind Kind) const;
     
     /// getFlagsForNamedSection - If this target wants to be able to infer
     /// section flags based on the name of the section specified for a global
@@ -48,9 +48,9 @@ namespace llvm {
     const Section *DataRelROSection;
     const Section *DataRelROLocalSection;
 
-    const Section *MergableConst4Section;
-    const Section *MergableConst8Section;
-    const Section *MergableConst16Section;
+    const Section *MergeableConst4Section;
+    const Section *MergeableConst8Section;
+    const Section *MergeableConst16Section;
 
   private:
     const Section *MergeableStringSection(const GlobalVariable *GV) const;

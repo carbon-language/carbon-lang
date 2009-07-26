@@ -144,21 +144,21 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   }
   
   // FIXME: Alignment check should be handled by section classifier.
-  if (Kind.isMergableCString())
+  if (Kind.isMergeableCString())
     return MergeableStringSection(cast<GlobalVariable>(GV));
   
-  if (Kind.isMergableConst()) {
-    if (Kind.isMergableConst4())
+  if (Kind.isMergeableConst()) {
+    if (Kind.isMergeableConst4())
       return FourByteConstantSection;
-    if (Kind.isMergableConst8())
+    if (Kind.isMergeableConst8())
       return EightByteConstantSection;
-    if (Kind.isMergableConst16() && SixteenByteConstantSection)
+    if (Kind.isMergeableConst16() && SixteenByteConstantSection)
       return SixteenByteConstantSection;
     return ReadOnlySection;  // .const
   }
   
   // FIXME: ROData -> const in -static mode that is relocatable but they happen
-  // by the static linker.  Why not mergable?
+  // by the static linker.  Why not mergeable?
   if (Kind.isReadOnly())
     return getReadOnlySection();
 
@@ -188,17 +188,17 @@ DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
 }
 
 const Section *
-DarwinTargetAsmInfo::getSectionForMergableConstant(SectionKind Kind) const {
+DarwinTargetAsmInfo::getSectionForMergeableConstant(SectionKind Kind) const {
   // If this constant requires a relocation, we have to put it in the data
   // segment, not in the text segment.
   if (Kind.isDataRel())
     return ConstDataSection;
   
-  if (Kind.isMergableConst4())
+  if (Kind.isMergeableConst4())
     return FourByteConstantSection;
-  if (Kind.isMergableConst8())
+  if (Kind.isMergeableConst8())
     return EightByteConstantSection;
-  if (Kind.isMergableConst16() && SixteenByteConstantSection)
+  if (Kind.isMergeableConst16() && SixteenByteConstantSection)
     return SixteenByteConstantSection;
   return ReadOnlySection;  // .const
 }

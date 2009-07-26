@@ -44,11 +44,11 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
   DataRelROLocalSection = getNamedSection("\t.data.rel.ro.local",
                                           SectionFlags::Writable);
     
-  MergableConst4Section = getNamedSection(".rodata.cst4",
+  MergeableConst4Section = getNamedSection(".rodata.cst4",
                   SectionFlags::setEntitySize(SectionFlags::Mergeable, 4));
-  MergableConst8Section = getNamedSection(".rodata.cst8",
+  MergeableConst8Section = getNamedSection(".rodata.cst8",
                   SectionFlags::setEntitySize(SectionFlags::Mergeable, 8));
-  MergableConst16Section = getNamedSection(".rodata.cst16",
+  MergeableConst16Section = getNamedSection(".rodata.cst16",
                   SectionFlags::setEntitySize(SectionFlags::Mergeable, 16));
 }
 
@@ -57,16 +57,16 @@ const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                          SectionKind Kind) const {
   if (Kind.isText()) return TextSection;
-  if (Kind.isMergableCString())
+  if (Kind.isMergeableCString())
     return MergeableStringSection(cast<GlobalVariable>(GV));
   
-  if (Kind.isMergableConst()) {
-    if (Kind.isMergableConst4())
-      return MergableConst4Section;
-    if (Kind.isMergableConst8())
-      return MergableConst8Section;
-    if (Kind.isMergableConst16())
-      return MergableConst16Section;
+  if (Kind.isMergeableConst()) {
+    if (Kind.isMergeableConst4())
+      return MergeableConst4Section;
+    if (Kind.isMergeableConst8())
+      return MergeableConst8Section;
+    if (Kind.isMergeableConst16())
+      return MergeableConst16Section;
     return ReadOnlySection;  // .const
   }
   
@@ -88,11 +88,11 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   return DataRelROSection;
 }
 
-/// getSectionForMergableConstant - Given a mergable constant with the
+/// getSectionForMergeableConstant - Given a Mergeable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.
 const Section *
-ELFTargetAsmInfo::getSectionForMergableConstant(SectionKind Kind) const {
+ELFTargetAsmInfo::getSectionForMergeableConstant(SectionKind Kind) const {
   return SelectSectionForGlobal(0, Kind);
 }
 

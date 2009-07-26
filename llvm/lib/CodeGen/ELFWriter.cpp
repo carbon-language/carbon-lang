@@ -161,15 +161,14 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
   case 1: Kind = SectionKind::get(SectionKind::ReadOnlyWithRelLocal); break;
   case 0:
     switch (TM.getTargetData()->getTypeAllocSize(CPE.getType())) {
-    case 4:   Kind = SectionKind::get(SectionKind::MergableConst4); break;
-    case 8:   Kind = SectionKind::get(SectionKind::MergableConst8); break;
-    case 16:  Kind = SectionKind::get(SectionKind::MergableConst16); break;
-    default:  Kind = SectionKind::get(SectionKind::MergableConst); break;
+    case 4:   Kind = SectionKind::get(SectionKind::MergeableConst4); break;
+    case 8:   Kind = SectionKind::get(SectionKind::MergeableConst8); break;
+    case 16:  Kind = SectionKind::get(SectionKind::MergeableConst16); break;
+    default:  Kind = SectionKind::get(SectionKind::MergeableConst); break;
     }
   }
   
-  std::string CstPoolName = TAI->getSectionForMergableConstant(Kind)->getName();
-  return getSection(CstPoolName,
+  return getSection(TAI->getSectionForMergeableConstant(Kind)->getName(),
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,
                     CPE.getAlignment());

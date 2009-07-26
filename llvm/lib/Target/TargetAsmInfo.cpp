@@ -211,7 +211,7 @@ static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
     Flags |= SectionFlags::TLS;
   if (Kind.isText())
     Flags |= SectionFlags::Code;
-  if (Kind.isWritable())
+  if (Kind.isWriteable())
     Flags |= SectionFlags::Writable;
 
   return Flags;
@@ -252,16 +252,16 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
       // If initializer is a null-terminated string, put it in a "cstring"
       // section if the target has it.
       if (isConstantString(C))
-        return SectionKind::get(SectionKind::MergableCString);
+        return SectionKind::get(SectionKind::MergeableCString);
       
       // Otherwise, just drop it into a mergable constant section.  If we have
       // a section for this size, use it, otherwise use the arbitrary sized
       // mergable section.
       switch (TM.getTargetData()->getTypeAllocSize(C->getType())) {
-      case 4:  return SectionKind::get(SectionKind::MergableConst4);
-      case 8:  return SectionKind::get(SectionKind::MergableConst8);
-      case 16: return SectionKind::get(SectionKind::MergableConst16);
-      default: return SectionKind::get(SectionKind::MergableConst);
+      case 4:  return SectionKind::get(SectionKind::MergeableConst4);
+      case 8:  return SectionKind::get(SectionKind::MergeableConst8);
+      case 16: return SectionKind::get(SectionKind::MergeableConst16);
+      default: return SectionKind::get(SectionKind::MergeableConst);
       }
       
     case Constant::LocalRelocation:
@@ -377,7 +377,7 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
 /// specified size and relocation information, return a section that it
 /// should be placed in.
 const Section *
-TargetAsmInfo::getSectionForMergableConstant(SectionKind Kind) const {
+TargetAsmInfo::getSectionForMergeableConstant(SectionKind Kind) const {
   if (Kind.isReadOnly())
     if (const Section *S = getReadOnlySection())
       return S;

@@ -269,7 +269,7 @@ const char *X86COFFTargetAsmInfo::
 getSectionPrefixForUniqueGlobal(SectionKind Kind) const {
   if (Kind.isText())
     return ".text$linkonce";
-  if (Kind.isWritable())
+  if (Kind.isWriteable())
     return ".data$linkonce";
   return ".rdata$linkonce";
 }

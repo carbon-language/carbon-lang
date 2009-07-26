@@ -45,38 +45,38 @@ namespace llvm {
       
       /// ReadOnly - Data that is never written to at program runtime by the
       /// program or the dynamic linker.  Things in the top-level readonly
-      /// SectionKind are not mergable.
+      /// SectionKind are not mergeable.
       ReadOnly,
 
-          /// MergableCString - This is a special section for nul-terminated
+          /// MergeableCString - This is a special section for nul-terminated
           /// strings.  The linker can unique the C strings, knowing their
           /// semantics.  Because it uniques based on the nul terminators, the
           /// compiler can't put strings in this section that have embeded nuls
           /// in them.
-          MergableCString,
+          MergeableCString,
       
-          /// MergableConst - These are sections for merging fixed-length
+          /// MergeableConst - These are sections for merging fixed-length
           /// constants together.  For example, this can be used to unique
           /// constant pool entries etc.
-          MergableConst,
+          MergeableConst,
       
-              /// MergableConst4 - This is a section used by 4-byte constants,
+              /// MergeableConst4 - This is a section used by 4-byte constants,
               /// for example, floats.
-              MergableConst4,
+              MergeableConst4,
       
-              /// MergableConst8 - This is a section used by 8-byte constants,
+              /// MergeableConst8 - This is a section used by 8-byte constants,
               /// for example, doubles.
-              MergableConst8,
+              MergeableConst8,
 
-              /// MergableConst16 - This is a section used by 16-byte constants,
+              /// MergeableConst16 - This is a section used by 16-byte constants,
               /// for example, vectors.
-              MergableConst16,
+              MergeableConst16,
       
-      /// Writable - This is the base of all segments that need to be written
+      /// Writeable - This is the base of all segments that need to be written
       /// to during program runtime.
       
          /// ThreadLocal - This is the base of all TLS segments.  All TLS
-         /// objects must be writable, otherwise there is no reason for them to
+         /// objects must be writeable, otherwise there is no reason for them to
          /// be thread local!
       
              /// ThreadBSS - Zero-initialized TLS data objects.
@@ -85,10 +85,10 @@ namespace llvm {
              /// ThreadData - Initialized TLS data objects.
              ThreadData,
       
-         /// GlobalWritableData - Writable data that is global (not thread
+         /// GlobalWriteableData - Writeable data that is global (not thread
          /// local).
       
-             /// BSS - Zero initialized writable data.
+             /// BSS - Zero initialized writeable data.
              BSS,
 
              /// DataRel - This is the most general form of data that is written
@@ -96,54 +96,59 @@ namespace llvm {
              /// globals.
              DataRel,
 
-                 /// DataRelLocal - This is writable data that has a non-zero
+                 /// DataRelLocal - This is writeable data that has a non-zero
                  /// initializer and has relocations in it, but all of the
                  /// relocations are known to be within the final linked image
                  /// the global is linked into.
                  DataRelLocal,
 
-                     /// DataNoRel - This is writable data that has a non-zero
+                     /// DataNoRel - This is writeable data that has a non-zero
                      /// initializer, but whose initializer is known to have no
                      /// relocations.
                      DataNoRel,
 
              /// ReadOnlyWithRel - These are global variables that are never
              /// written to by the program, but that have relocations, so they
-             /// must be stuck in a writable section so that the dynamic linker
+             /// must be stuck in a writeable section so that the dynamic linker
              /// can write to them.  If it chooses to, the dynamic linker can
              /// mark the pages these globals end up on as read-only after it is
              /// done with its relocation phase.
              ReadOnlyWithRel,
       
                  /// ReadOnlyWithRelLocal - This is data that is readonly by the
-                 /// program, but must be writable so that the dynamic linker
+                 /// program, but must be writeable so that the dynamic linker
                  /// can perform relocations in it.  This is used when we know
                  /// that all the relocations are to globals in this final
                  /// linked image.
                  ReadOnlyWithRelLocal
       
-    } K : 8; // This is private.
+    };
+    
+    //private:
+    Kind K : 8; // This is private.
+    
+    //public:
     
     bool isText() const {
       return K == Text;
     }
     
     bool isReadOnly() const {
-      return K == ReadOnly || K == MergableCString || isMergableConst();
+      return K == ReadOnly || K == MergeableCString || isMergeableConst();
     }
 
-    bool isMergableCString() const { return K == MergableCString; }
-    bool isMergableConst() const {
-      return K == MergableConst || K == MergableConst4 ||
-             K == MergableConst8 || K == MergableConst16;
+    bool isMergeableCString() const { return K == MergeableCString; }
+    bool isMergeableConst() const {
+      return K == MergeableConst || K == MergeableConst4 ||
+             K == MergeableConst8 || K == MergeableConst16;
     }
     
-    bool isMergableConst4() const { return K == MergableConst4; }
-    bool isMergableConst8() const { return K == MergableConst8; }
-    bool isMergableConst16() const { return K == MergableConst16; }
+    bool isMergeableConst4() const { return K == MergeableConst4; }
+    bool isMergeableConst8() const { return K == MergeableConst8; }
+    bool isMergeableConst16() const { return K == MergeableConst16; }
     
-    bool isWritable() const {
-      return isThreadLocal() || isGlobalWritableData();
+    bool isWriteable() const {
+      return isThreadLocal() || isGlobalWriteableData();
     }
     
     bool isThreadLocal() const {
@@ -153,7 +158,7 @@ namespace llvm {
     bool isThreadBSS() const { return K == ThreadBSS; } 
     bool isThreadData() const { return K == ThreadData; } 
 
-    bool isGlobalWritableData() const {
+    bool isGlobalWriteableData() const {
       return isBSS() || isDataRel() || isReadOnlyWithRel();
     }
     
@@ -187,7 +192,7 @@ namespace llvm {
     const unsigned Invalid    = -1U;
     const unsigned None       = 0;
     const unsigned Code       = 1 << 0;  ///< Section contains code
-    const unsigned Writable   = 1 << 1;  ///< Section is writable
+    const unsigned Writable   = 1 << 1;  ///< Section is writeable
     const unsigned BSS        = 1 << 2;  ///< Section contains only zeroes
     const unsigned Mergeable  = 1 << 3;  ///< Section contains mergeable data
     const unsigned Strings    = 1 << 4;  ///< Section contains C-type strings
@@ -690,10 +695,10 @@ namespace llvm {
                                            bool Global) const;
 
     
-    /// getSectionForMergableConstant - Given a mergable constant with the
+    /// getSectionForMergeableConstant - Given a Mergeable constant with the
     /// specified size and relocation information, return a section that it
     /// should be placed in.
-    virtual const Section *getSectionForMergableConstant(SectionKind Kind)const;
+    virtual const Section *getSectionForMergeableConstant(SectionKind Kind)const;
 
     
     /// getSectionPrefixForUniqueGlobal - Return a string that we should prepend

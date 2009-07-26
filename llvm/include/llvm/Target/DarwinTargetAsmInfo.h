@@ -40,7 +40,8 @@ namespace llvm {
                                       Mangler *Mang) const;
 
     
-    virtual const Section *getSectionForMergableConstant(SectionKind Kind)const;
+    virtual const Section *
+    getSectionForMergeableConstant(SectionKind Kind) const;
     
   private:
     const Section* MergeableStringSection(const GlobalVariable *GV) const;

@@ -315,14 +315,14 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     case 1: Kind = SectionKind::get(SectionKind::ReadOnlyWithRelLocal); break;
     case 0:
       switch (TM.getTargetData()->getTypeAllocSize(CPE.getType())) {
-      case 4:   Kind = SectionKind::get(SectionKind::MergableConst4); break;
-      case 8:   Kind = SectionKind::get(SectionKind::MergableConst8); break;
-      case 16:  Kind = SectionKind::get(SectionKind::MergableConst16); break;
-      default:  Kind = SectionKind::get(SectionKind::MergableConst); break;
+      case 4:   Kind = SectionKind::get(SectionKind::MergeableConst4); break;
+      case 8:   Kind = SectionKind::get(SectionKind::MergeableConst8); break;
+      case 16:  Kind = SectionKind::get(SectionKind::MergeableConst16); break;
+      default:  Kind = SectionKind::get(SectionKind::MergeableConst); break;
       }
     }
 
-    const Section *S = TAI->getSectionForMergableConstant(Kind);
+    const Section *S = TAI->getSectionForMergeableConstant(Kind);
     
     // The number of sections are small, just do a linear search from the
     // last section to the first.
