@@ -135,10 +135,10 @@ void Path::makeAbsolute() {
 
   if (0 == RetLength) {
     // FIXME: Report the error GetLastError()
-    llvm_report_error("Unable to make absolute path!");
+    assert(0 && "Unable to make absolute path!");
   } else if (RetLength > MAX_PATH) {
     // FIXME: Report too small buffer (needed RetLength bytes).
-    llvm_report_error("Unable to make absolute path!");
+    assert(0 && "Unable to make absolute path!");
   } else {
     path = FullPath;
   }
