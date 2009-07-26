@@ -49,6 +49,7 @@ public:
     thumb,   // thumb, thumbv.*
     x86,     // i[3-9]86
     x86_64,  // amd64, x86_64
+    xcore,   // xcore
 
     InvalidArch
   };

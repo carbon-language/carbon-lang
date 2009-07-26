@@ -27,13 +27,14 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case mips:    return "mips";
   case mipsel:  return "mipsel";
   case msp430:  return "msp430";
+  case ppc64:   return "powerpc64";
+  case ppc:     return "powerpc";
   case sparc:   return "sparc";
   case systemz: return "s390x";
   case thumb:   return "thumb";
   case x86:     return "i386";
   case x86_64:  return "x86_64";
-  case ppc:     return "powerpc";
-  case ppc64:   return "powerpc64";
+  case xcore:   return "xcore";
   }
 
   return "<invalid>";
