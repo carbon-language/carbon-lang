@@ -19,14 +19,8 @@ static unsigned MSIL_TripleMatchQuality(const std::string &TT) {
   return 1;
 }
 
-static unsigned MSIL_ModuleMatchQuality(const Module &M) {
-  // This class always works, but shouldn't be the default in most cases.
-  return 1;
-}
-
 extern "C" void LLVMInitializeMSILTargetInfo() { 
   TargetRegistry::RegisterTarget(TheMSILTarget, "msil",    
                                   "MSIL backend",
-                                  &MSIL_TripleMatchQuality,
-                                  &MSIL_ModuleMatchQuality);
+                                  &MSIL_TripleMatchQuality);
 }

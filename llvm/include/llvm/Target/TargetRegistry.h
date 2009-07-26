@@ -43,8 +43,6 @@ namespace llvm {
   class Target {
   private:
     typedef unsigned (*TripleMatchQualityFnTy)(const std::string &TT);
-    typedef unsigned (*ModuleMatchQualityFnTy)(const Module &M);
-    typedef unsigned (*JITMatchQualityFnTy)();
 
     typedef TargetMachine *(*TargetMachineCtorTy)(const Target &,
                                                   const Module &, 
@@ -63,10 +61,6 @@ namespace llvm {
     /// TripleMatchQualityFn - The target function for rating the match quality
     /// of a triple.
     TripleMatchQualityFnTy TripleMatchQualityFn;
-
-    /// ModuleMatchQualityFn - The target function for rating the match quality
-    /// of a module.
-    ModuleMatchQualityFnTy ModuleMatchQualityFn;
 
     /// Name - The target name.
     const char *Name;
@@ -222,15 +216,12 @@ namespace llvm {
     /// string. 
     /// @param TQualityFn - The triple match quality computation function for
     /// this target.
-    /// @param MQualityFn - The module match quality computation function for
-    /// this target.
     /// @param HasJIT - Whether the target supports JIT code
     /// generation.
     static void RegisterTarget(Target &T,
                                const char *Name,
                                const char *ShortDesc,
                                Target::TripleMatchQualityFnTy TQualityFn,
-                               Target::ModuleMatchQualityFnTy MQualityFn,
                                bool HasJIT = false);
                                
     /// RegisterTargetMachine - Register a TargetMachine implementation for the
@@ -294,9 +285,7 @@ namespace llvm {
   ///   struct FooInfo {
   ///     static const bool HasJIT = ...;
   ///
-  ///     static unsigned getJITMatchQuality() { ... }
   ///     static unsigned getTripleMatchQuality(const std::string &) { ... }
-  ///     static unsigned getModuleMatchQuality(const Module &) { ... }
   ///   };
   /// }
   ///
@@ -308,7 +297,6 @@ namespace llvm {
     RegisterTarget(Target &T, const char *Name, const char *Desc) {
       TargetRegistry::RegisterTarget(T, Name, Desc,
                                      &TargetInfoImpl::getTripleMatchQuality,
-                                     &TargetInfoImpl::getModuleMatchQuality,
                                      TargetInfoImpl::HasJIT);
     }
   };

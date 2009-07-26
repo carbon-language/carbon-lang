@@ -25,20 +25,8 @@ static unsigned CellSPU_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned CellSPU_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = CellSPU_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // Otherwise if the target triple is non-empty, we don't match.
-  if (!M.getTargetTriple().empty()) return 0;
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeCellSPUTargetInfo() { 
   TargetRegistry::RegisterTarget(TheCellSPUTarget, "cellspu",
                                   "STI CBEA Cell SPU [experimental]",
-                                  &CellSPU_TripleMatchQuality,
-                                  &CellSPU_ModuleMatchQuality);
+                                  &CellSPU_TripleMatchQuality);
 }

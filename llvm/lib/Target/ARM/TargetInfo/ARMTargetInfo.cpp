@@ -23,24 +23,6 @@ static unsigned ARM_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned ARM_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = ARM_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // Otherwise if the target triple is non-empty, we don't match.
-  if (!M.getTargetTriple().empty()) return 0;
-
-  if (M.getEndianness()  == Module::LittleEndian &&
-      M.getPointerSize() == Module::Pointer32)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return 0;
-}
-
 Target llvm::TheThumbTarget;
 
 static unsigned Thumb_TripleMatchQuality(const std::string &TT) {
@@ -52,34 +34,14 @@ static unsigned Thumb_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned Thumb_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = Thumb_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // Otherwise if the target triple is non-empty, we don't match.
-  if (!M.getTargetTriple().empty()) return 0;
-
-  if (M.getEndianness()  == Module::LittleEndian &&
-      M.getPointerSize() == Module::Pointer32)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeARMTargetInfo() { 
   TargetRegistry::RegisterTarget(TheARMTarget, "arm",    
                                   "ARM",
                                   &ARM_TripleMatchQuality,
-                                  &ARM_ModuleMatchQuality,
                                  /*HasJIT=*/true);
 
   TargetRegistry::RegisterTarget(TheThumbTarget, "thumb",    
                                   "Thumb",
                                   &Thumb_TripleMatchQuality,
-                                  &Thumb_ModuleMatchQuality,
                                  /*HasJIT=*/true);
 }

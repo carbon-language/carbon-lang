@@ -23,18 +23,8 @@ static unsigned SystemZ_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned SystemZ_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = SystemZ_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // Otherwise we don't match.
-  return 0;
-}
-
 extern "C" void LLVMInitializeSystemZTargetInfo() {
   TargetRegistry::RegisterTarget(TheSystemZTarget, "systemz",
                                  "SystemZ",
-                                 &SystemZ_TripleMatchQuality,
-                                 &SystemZ_ModuleMatchQuality);
+                                 &SystemZ_TripleMatchQuality);
 }

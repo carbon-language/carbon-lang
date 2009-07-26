@@ -21,18 +21,8 @@ static unsigned XCore_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned XCore_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = XCore_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // Otherwise we don't match.
-  return 0;
-}
-
 extern "C" void LLVMInitializeXCoreTargetInfo() { 
   TargetRegistry::RegisterTarget(TheXCoreTarget, "xcore",
                                   "XCore",
-                                  &XCore_TripleMatchQuality,
-                                  &XCore_ModuleMatchQuality);
+                                  &XCore_TripleMatchQuality);
 }

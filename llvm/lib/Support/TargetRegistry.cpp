@@ -74,9 +74,8 @@ void TargetRegistry::RegisterTarget(Target &T,
                                     const char *Name,
                                     const char *ShortDesc,
                                     Target::TripleMatchQualityFnTy TQualityFn,
-                                    Target::ModuleMatchQualityFnTy MQualityFn,
                                     bool HasJIT) {
-  assert(Name && ShortDesc && TQualityFn && MQualityFn &&
+  assert(Name && ShortDesc && TQualityFn &&
          "Missing required target information!");
 
   // Check if this target has already been initialized, we allow this as a
@@ -91,7 +90,6 @@ void TargetRegistry::RegisterTarget(Target &T,
   T.Name = Name;
   T.ShortDesc = ShortDesc;
   T.TripleMatchQualityFn = TQualityFn;
-  T.ModuleMatchQualityFn = MQualityFn;
   T.HasJIT = HasJIT;
 }
 

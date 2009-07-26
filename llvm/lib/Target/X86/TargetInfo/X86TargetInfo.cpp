@@ -23,24 +23,6 @@ static unsigned X86_32_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned X86_32_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = X86_32_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // If the target triple is something non-X86, we don't match.
-  if (!M.getTargetTriple().empty()) return 0;
-
-  if (M.getEndianness()  == Module::LittleEndian &&
-      M.getPointerSize() == Module::Pointer32)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return 0;
-}
-
 Target llvm::TheX86_64Target;
 
 static unsigned X86_64_TripleMatchQuality(const std::string &TT) {
@@ -52,34 +34,14 @@ static unsigned X86_64_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned X86_64_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = X86_64_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // If the target triple is something non-X86-64, we don't match.
-  if (!M.getTargetTriple().empty()) return 0;
-
-  if (M.getEndianness()  == Module::LittleEndian &&
-      M.getPointerSize() == Module::Pointer64)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeX86TargetInfo() { 
   TargetRegistry::RegisterTarget(TheX86_32Target, "x86",    
                                   "32-bit X86: Pentium-Pro and above",
                                   &X86_32_TripleMatchQuality,
-                                  &X86_32_ModuleMatchQuality,
                                   /*HasJIT=*/true);
 
   TargetRegistry::RegisterTarget(TheX86_64Target, "x86-64",    
                                   "64-bit X86: EM64T and AMD64",
                                   &X86_64_TripleMatchQuality,
-                                  &X86_64_ModuleMatchQuality,
                                   /*HasJIT=*/true);
 }

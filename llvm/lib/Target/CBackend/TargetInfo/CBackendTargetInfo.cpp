@@ -20,15 +20,8 @@ static unsigned CBackend_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned CBackend_ModuleMatchQuality(const Module &M) {
-  // This class always works, but must be requested explicitly on 
-  // llc command line.
-  return 0;
-}
-
 extern "C" void LLVMInitializeCBackendTargetInfo() { 
   TargetRegistry::RegisterTarget(TheCBackendTarget, "c",
                                   "C backend",
-                                  &CBackend_TripleMatchQuality,
-                                  &CBackend_ModuleMatchQuality);
+                                  &CBackend_TripleMatchQuality);
 }

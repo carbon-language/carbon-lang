@@ -26,17 +26,6 @@ static unsigned Mips_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned Mips_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = Mips_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // Otherwise if the target triple is non-empty, we don't match.
-  if (!M.getTargetTriple().empty()) return 0;
-
-  return 0;
-}
-
 Target llvm::TheMipselTarget;
 
 static unsigned Mipsel_TripleMatchQuality(const std::string &TT) {
@@ -54,25 +43,12 @@ static unsigned Mipsel_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned Mipsel_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = Mipsel_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // Otherwise if the target triple is non-empty, we don't match.
-  if (!M.getTargetTriple().empty()) return 0;
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeMipsTargetInfo() { 
   TargetRegistry::RegisterTarget(TheMipsTarget, "mips",
                                   "Mips",
-                                  &Mips_TripleMatchQuality,
-                                  &Mips_ModuleMatchQuality);
+                                  &Mips_TripleMatchQuality);
 
   TargetRegistry::RegisterTarget(TheMipselTarget, "mipsel",
                                   "Mipsel",
-                                  &Mipsel_TripleMatchQuality,
-                                  &Mipsel_ModuleMatchQuality);
+                                  &Mipsel_TripleMatchQuality);
 }

@@ -19,14 +19,8 @@ static unsigned CppBackend_TripleMatchQuality(const std::string &TT) {
   return 1;
 }
 
-static unsigned CppBackend_ModuleMatchQuality(const Module &M) {
-  // This class always works, but shouldn't be the default in most cases.
-  return 1;
-}
-
 extern "C" void LLVMInitializeCppBackendTargetInfo() { 
   TargetRegistry::RegisterTarget(TheCppBackendTarget, "cpp",    
                                   "C++ backend",
-                                  &CppBackend_TripleMatchQuality,
-                                  &CppBackend_ModuleMatchQuality);
+                                  &CppBackend_TripleMatchQuality);
 }

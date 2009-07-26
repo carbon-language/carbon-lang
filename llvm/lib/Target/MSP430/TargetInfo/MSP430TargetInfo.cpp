@@ -23,20 +23,8 @@ static unsigned MSP430_TripleMatchQuality(const std::string &TT) {
   return 0;
 }
 
-static unsigned MSP430_ModuleMatchQuality(const Module &M) {
-  // Check for a triple match.
-  if (unsigned Q = MSP430_TripleMatchQuality(M.getTargetTriple()))
-    return Q;
-
-  // Otherwise if the target triple is non-empty, we don't match.
-  if (!M.getTargetTriple().empty()) return 0;
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeMSP430TargetInfo() { 
   TargetRegistry::RegisterTarget(TheMSP430Target, "msp430",    
                                   "MSP430 [experimental]",
-                                  &MSP430_TripleMatchQuality,
-                                  &MSP430_ModuleMatchQuality);
+                                  &MSP430_TripleMatchQuality);
 }
