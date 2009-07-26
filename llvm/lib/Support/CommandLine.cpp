@@ -1144,19 +1144,22 @@ public:
         cout << "\n";
         cout << "  Registered Targets:\n";
 
+        std::vector<std::pair<std::string, const Target*> > Targets;
         size_t Width = 0;
         for (TargetRegistry::iterator it = TargetRegistry::begin(), 
-               ie = TargetRegistry::end(); it != ie; ++it)
+               ie = TargetRegistry::end(); it != ie; ++it) {
+          Targets.push_back(std::make_pair(it->getName(), &*it));
           Width = std::max(Width, ::strlen(it->getName()));
-
-        unsigned NumTargets = 0;
-        for (TargetRegistry::iterator it = TargetRegistry::begin(), 
-               ie = TargetRegistry::end(); it != ie; ++it, ++NumTargets) {
-          cout << "    " << it->getName()
-               << std::string(Width - ::strlen(it->getName()), ' ') << " - "
-               << it->getShortDescription() << "\n";
         }
-        if (!NumTargets)
+        std::sort(Targets.begin(), Targets.end());
+
+        for (unsigned i = 0, e = Targets.size(); i != e; ++i) {
+          const Target *T = Targets[i].second;
+          cout << "    " << T->getName()
+               << std::string(Width - ::strlen(T->getName()), ' ') << " - "
+               << T->getShortDescription() << "\n";
+        }
+        if (Targets.empty())
           cout << "    (none)\n";
   }
   void operator=(bool OptionWasSpecified) {
