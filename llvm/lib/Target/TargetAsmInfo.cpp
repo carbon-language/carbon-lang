@@ -220,23 +220,24 @@ static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
 static SectionKind SectionKindForGlobal(const GlobalValue *GV,
                                         const TargetMachine &TM) {
   Reloc::Model ReloModel = TM.getRelocationModel();
+  bool isWeak = GV->isWeakForLinker();
   
   // Early exit - functions should be always in text sections.
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   if (GVar == 0)
-    return SectionKind::get(SectionKind::Text);
+    return SectionKind::get(SectionKind::Text, isWeak);
 
   
   // Handle thread-local data first.
   if (GVar->isThreadLocal()) {
     if (isSuitableForBSS(GVar))
-      return SectionKind::get(SectionKind::ThreadBSS);
-    return SectionKind::get(SectionKind::ThreadData);;
+      return SectionKind::get(SectionKind::ThreadBSS, isWeak);
+    return SectionKind::get(SectionKind::ThreadData, isWeak);
   }
 
   // Variable can be easily put to BSS section.
   if (isSuitableForBSS(GVar))
-    return SectionKind::get(SectionKind::BSS);
+    return SectionKind::get(SectionKind::BSS, isWeak);
 
   Constant *C = GVar->getInitializer();
   
@@ -252,16 +253,16 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
       // If initializer is a null-terminated string, put it in a "cstring"
       // section if the target has it.
       if (isConstantString(C))
-        return SectionKind::get(SectionKind::MergeableCString);
+        return SectionKind::get(SectionKind::MergeableCString, isWeak);
       
       // Otherwise, just drop it into a mergable constant section.  If we have
       // a section for this size, use it, otherwise use the arbitrary sized
       // mergable section.
       switch (TM.getTargetData()->getTypeAllocSize(C->getType())) {
-      case 4:  return SectionKind::get(SectionKind::MergeableConst4);
-      case 8:  return SectionKind::get(SectionKind::MergeableConst8);
-      case 16: return SectionKind::get(SectionKind::MergeableConst16);
-      default: return SectionKind::get(SectionKind::MergeableConst);
+      case 4:  return SectionKind::get(SectionKind::MergeableConst4, isWeak);
+      case 8:  return SectionKind::get(SectionKind::MergeableConst8, isWeak);
+      case 16: return SectionKind::get(SectionKind::MergeableConst16, isWeak);
+      default: return SectionKind::get(SectionKind::MergeableConst, isWeak);
       }
       
     case Constant::LocalRelocation:
@@ -269,22 +270,22 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
       // the relocation entries will actually be constants by the time the app
       // starts up.
       if (ReloModel == Reloc::Static)
-        return SectionKind::get(SectionKind::ReadOnly);
+        return SectionKind::get(SectionKind::ReadOnly, isWeak);
               
       // Otherwise, the dynamic linker needs to fix it up, put it in the
       // writable data.rel.local section.
-      return SectionKind::get(SectionKind::ReadOnlyWithRelLocal);
+      return SectionKind::get(SectionKind::ReadOnlyWithRelLocal, isWeak);
               
     case Constant::GlobalRelocations:
       // In static relocation model, the linker will resolve all addresses, so
       // the relocation entries will actually be constants by the time the app
       // starts up.
       if (ReloModel == Reloc::Static)
-        return SectionKind::get(SectionKind::ReadOnly);
+        return SectionKind::get(SectionKind::ReadOnly, isWeak);
       
       // Otherwise, the dynamic linker needs to fix it up, put it in the
       // writable data.rel section.
-      return SectionKind::get(SectionKind::ReadOnlyWithRel);
+      return SectionKind::get(SectionKind::ReadOnlyWithRel, isWeak);
     }
   }
 
@@ -294,16 +295,16 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
   // globals together onto fewer pages, improving the locality of the dynamic
   // linker.
   if (ReloModel == Reloc::Static)
-    return SectionKind::get(SectionKind::DataNoRel);
+    return SectionKind::get(SectionKind::DataNoRel, isWeak);
 
   switch (C->getRelocationInfo()) {
   default: llvm_unreachable("unknown relocation info kind");
   case Constant::NoRelocation:
-    return SectionKind::get(SectionKind::DataNoRel);
+    return SectionKind::get(SectionKind::DataNoRel, isWeak);
   case Constant::LocalRelocation:
-    return SectionKind::get(SectionKind::DataRelLocal);
+    return SectionKind::get(SectionKind::DataRelLocal, isWeak);
   case Constant::GlobalRelocations:
-    return SectionKind::get(SectionKind::DataRel);
+    return SectionKind::get(SectionKind::DataRel, isWeak);
   }
 }
 

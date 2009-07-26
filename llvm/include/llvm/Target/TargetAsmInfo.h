@@ -125,13 +125,16 @@ namespace llvm {
     };
     
   private:
-    Kind K : 8;
+    Kind K : 7;
     
+    /// Weak - This is true if the referenced symbol is weak (i.e. linkonce,
+    /// weak, weak_odr, etc).  This is orthogonal from the categorization.
+    bool Weak : 1;
   public:
     
-    bool isText() const {
-      return K == Text;
-    }
+    bool isWeak() const { return Weak; }
+    
+    bool isText() const { return K == Text; }
     
     bool isReadOnly() const {
       return K == ReadOnly || K == MergeableCString || isMergeableConst();
@@ -182,9 +185,10 @@ namespace llvm {
       return K == ReadOnlyWithRelLocal;
     }
     
-    static SectionKind get(Kind K) {
+    static SectionKind get(Kind K, bool isWeak) {
       SectionKind Res;
       Res.K = K;
+      Res.Weak = isWeak;
       return Res;
     }
   };

@@ -157,14 +157,16 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
   SectionKind Kind;
   switch (CPE.getRelocationInfo()) {
   default: llvm_unreachable("Unknown section kind");
-  case 2: Kind = SectionKind::get(SectionKind::ReadOnlyWithRel); break;
-  case 1: Kind = SectionKind::get(SectionKind::ReadOnlyWithRelLocal); break;
+  case 2: Kind = SectionKind::get(SectionKind::ReadOnlyWithRel,false); break;
+  case 1:
+    Kind = SectionKind::get(SectionKind::ReadOnlyWithRelLocal,false);
+    break;
   case 0:
     switch (TM.getTargetData()->getTypeAllocSize(CPE.getType())) {
-    case 4:   Kind = SectionKind::get(SectionKind::MergeableConst4); break;
-    case 8:   Kind = SectionKind::get(SectionKind::MergeableConst8); break;
-    case 16:  Kind = SectionKind::get(SectionKind::MergeableConst16); break;
-    default:  Kind = SectionKind::get(SectionKind::MergeableConst); break;
+    case 4:  Kind = SectionKind::get(SectionKind::MergeableConst4,false); break;
+    case 8:  Kind = SectionKind::get(SectionKind::MergeableConst8,false); break;
+    case 16: Kind = SectionKind::get(SectionKind::MergeableConst16,false);break;
+    default: Kind = SectionKind::get(SectionKind::MergeableConst,false); break;
     }
   }
   
