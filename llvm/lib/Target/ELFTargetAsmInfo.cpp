@@ -81,8 +81,13 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
 const Section *
 ELFTargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
                                                 unsigned ReloInfo) const {
-  // FIXME: IF this global requires a relocation, can we really put it in
-  // rodata???  This should check ReloInfo like darwin.
+  // If this constant pool entry has relocations, stick it into a relocatable
+  // section.
+  if (ReloInfo == 2)
+    return DataRelROSection;
+  if (ReloInfo == 1)
+    return DataRelROLocalSection;
+  
   
   const char *SecName = 0;
   switch (Size) {
