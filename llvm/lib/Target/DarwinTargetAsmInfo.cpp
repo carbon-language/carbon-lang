@@ -129,15 +129,12 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                             SectionKind Kind) const {
   assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
   
-  // FIXME: Use sectionflags:linkonce instead of isWeakForLinker() here.
-  bool isWeak = GV->isWeakForLinker();
-
   if (Kind.isText())
-    return isWeak ? TextCoalSection : TextSection;
+    return Kind.isWeak() ? TextCoalSection : TextSection;
   
   // If this is weak/linkonce, put this in a coalescable section, either in text
   // or data depending on if it is writable.
-  if (isWeak) {
+  if (Kind.isWeak()) {
     if (Kind.isReadOnly())
       return ConstTextCoalSection;
     return DataCoalSection;
