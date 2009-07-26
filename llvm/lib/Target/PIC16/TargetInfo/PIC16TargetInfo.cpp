@@ -12,24 +12,10 @@
 #include "llvm/Target/TargetRegistry.h"
 using namespace llvm;
 
-Target llvm::ThePIC16Target;
-
-static unsigned PIC16_TripleMatchQuality(const std::string &TT) {
-  return 0;
-}
-
-Target llvm::TheCooperTarget;
-
-static unsigned Cooper_TripleMatchQuality(const std::string &TT) {
-  return 0;
-}
+Target llvm::ThePIC16Target, llvm::TheCooperTarget;
 
 extern "C" void LLVMInitializePIC16TargetInfo() { 
-  TargetRegistry::RegisterTarget(ThePIC16Target, "pic16",
-                                  "PIC16 14-bit [experimental]",
-                                  &PIC16_TripleMatchQuality);
+  RegisterTarget<> X(ThePIC16Target, "pic16", "PIC16 14-bit [experimental]");
 
-  TargetRegistry::RegisterTarget(TheCooperTarget, "cooper",    
-                                  "PIC16 Cooper [experimental]",
-                                  &Cooper_TripleMatchQuality);
+  RegisterTarget<> Y(TheCooperTarget, "cooper", "PIC16 Cooper [experimental]");
 }

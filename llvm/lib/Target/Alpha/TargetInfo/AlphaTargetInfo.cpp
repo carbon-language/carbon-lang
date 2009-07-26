@@ -14,18 +14,7 @@ using namespace llvm;
 
 llvm::Target llvm::TheAlphaTarget;
 
-static unsigned Alpha_TripleMatchQuality(const std::string &TT) {
-  // We strongly match "alpha*".
-  if (TT.size() >= 5 && TT[0] == 'a' && TT[1] == 'l' && TT[2] == 'p' &&
-      TT[3] == 'h' && TT[4] == 'a')
-    return 20;
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeAlphaTargetInfo() { 
-  TargetRegistry::RegisterTarget(TheAlphaTarget, "alpha",
-                                  "Alpha [experimental]",
-                                  &Alpha_TripleMatchQuality,
-                                  /*HasJIT=*/true);
+  RegisterTarget<Triple::alpha, /*HasJIT=*/true>
+    X(TheAlphaTarget, "alpha", "Alpha [experimental]");
 }

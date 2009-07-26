@@ -14,17 +14,7 @@ using namespace llvm;
 
 Target llvm::TheMSP430Target;
 
-static unsigned MSP430_TripleMatchQuality(const std::string &TT) {
-  // We strongly match msp430
-  if (TT.size() >= 6 && TT[0] == 'm' && TT[1] == 's' && TT[2] == 'p' &&
-      TT[3] == '4' &&  TT[4] == '3' && TT[5] == '0')
-    return 20;
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeMSP430TargetInfo() { 
-  TargetRegistry::RegisterTarget(TheMSP430Target, "msp430",    
-                                  "MSP430 [experimental]",
-                                  &MSP430_TripleMatchQuality);
+  RegisterTarget<Triple::msp430> 
+    X(TheMSP430Target, "msp430", "MSP430 [experimental]");
 }

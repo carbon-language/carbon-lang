@@ -14,19 +14,7 @@ using namespace llvm;
 
 Target llvm::TheCellSPUTarget;
 
-static unsigned CellSPU_TripleMatchQuality(const std::string &TT) {
-  // We strongly match "spu-*" or "cellspu-*".
-  if ((TT.size() == 3 && std::string(TT.begin(), TT.begin()+3) == "spu") ||
-      (TT.size() == 7 && std::string(TT.begin(), TT.begin()+7) == "cellspu") ||
-      (TT.size() >= 4 && std::string(TT.begin(), TT.begin()+4) == "spu-") ||
-      (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "cellspu-"))
-    return 20;
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeCellSPUTargetInfo() { 
-  TargetRegistry::RegisterTarget(TheCellSPUTarget, "cellspu",
-                                  "STI CBEA Cell SPU [experimental]",
-                                  &CellSPU_TripleMatchQuality);
+  RegisterTarget<Triple::cellspu> 
+    X(TheCellSPUTarget, "cellspu", "STI CBEA Cell SPU [experimental]");
 }

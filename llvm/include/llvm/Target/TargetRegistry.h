@@ -19,6 +19,7 @@
 #ifndef LLVM_TARGET_TARGETREGISTRY_H
 #define LLVM_TARGET_TARGETREGISTRY_H
 
+#include "llvm/ADT/Triple.h"
 // FIXME: We shouldn't need this header, but we need it until there is a
 // different interface to get the TargetAsmInfo.
 #include "llvm/Target/TargetMachine.h"
@@ -281,23 +282,22 @@ namespace llvm {
   ///
   /// Target TheFooTarget; // The global target instance.
   ///
-  /// namespace {
-  ///   struct FooInfo {
-  ///     static const bool HasJIT = ...;
-  ///
-  ///     static unsigned getTripleMatchQuality(const std::string &) { ... }
-  ///   };
-  /// }
-  ///
   /// extern "C" void LLVMInitializeFooTargetInfo() {
-  ///   RegisterTarget<FooAsmPrinter> X(TheFooTarget, "foo", "Foo description");
+  ///   RegisterTarget<Triple::foo> X(TheFooTarget, "foo", "Foo description");
   /// }
-  template<class TargetInfoImpl>
+  template<Triple::ArchType TargetArchType = Triple::InvalidArch,
+           bool HasJIT = false>
   struct RegisterTarget {
     RegisterTarget(Target &T, const char *Name, const char *Desc) {
       TargetRegistry::RegisterTarget(T, Name, Desc,
-                                     &TargetInfoImpl::getTripleMatchQuality,
-                                     TargetInfoImpl::HasJIT);
+                                     &getTripleMatchQuality,
+                                     HasJIT);
+    }
+
+    static unsigned getTripleMatchQuality(const std::string &TT) {
+      if (Triple(TT.c_str()).getArch() == TargetArchType)
+        return 20;
+      return 0;
     }
   };
 

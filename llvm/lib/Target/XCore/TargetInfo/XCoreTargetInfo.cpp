@@ -14,15 +14,6 @@ using namespace llvm;
 
 Target llvm::TheXCoreTarget;
 
-static unsigned XCore_TripleMatchQuality(const std::string &TT) {
-  if (TT.size() >= 6 && std::string(TT.begin(), TT.begin()+6) == "xcore-")
-    return 20;
-
-  return 0;
-}
-
 extern "C" void LLVMInitializeXCoreTargetInfo() { 
-  TargetRegistry::RegisterTarget(TheXCoreTarget, "xcore",
-                                  "XCore",
-                                  &XCore_TripleMatchQuality);
+  RegisterTarget<Triple::xcore> X(TheXCoreTarget, "xcore", "XCore");
 }

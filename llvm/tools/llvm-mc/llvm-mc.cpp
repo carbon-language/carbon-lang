@@ -39,7 +39,7 @@ IncludeDirs("I", cl::desc("Directory of include files"),
             cl::value_desc("directory"), cl::Prefix);
 
 static cl::opt<std::string>
-Triple("triple", cl::desc("Target triple to assemble for,"
+TripleName("triple", cl::desc("Target triple to assemble for,"
                           "see -version for available targets"),
        cl::init(LLVM_HOSTTRIPLE));
 
@@ -147,12 +147,12 @@ static int AssembleInput(const char *ProgName) {
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget =
-    TargetRegistry::lookupTarget(Triple, 
+    TargetRegistry::lookupTarget(TripleName, 
                                  /*FallbackToHost=*/true,
                                  /*RequireJIT=*/false,
                                  Error);
   if (TheTarget == 0) {
-    errs() << ProgName << ": error: unable to get target for '" << Triple
+    errs() << ProgName << ": error: unable to get target for '" << TripleName
            << "', see --version and --triple.\n";
     return 1;
   }

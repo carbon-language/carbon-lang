@@ -14,14 +14,6 @@ using namespace llvm;
 
 Target llvm::TheCBackendTarget;
 
-static unsigned CBackend_TripleMatchQuality(const std::string &TT) {
-  // This class always works, but must be requested explicitly on 
-  // llc command line.
-  return 0;
-}
-
 extern "C" void LLVMInitializeCBackendTargetInfo() { 
-  TargetRegistry::RegisterTarget(TheCBackendTarget, "c",
-                                  "C backend",
-                                  &CBackend_TripleMatchQuality);
+  RegisterTarget<> X(TheCBackendTarget, "c", "C backend");
 }
