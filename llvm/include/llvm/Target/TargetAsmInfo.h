@@ -125,14 +125,19 @@ namespace llvm {
     };
     
   private:
-    Kind K : 7;
+    Kind K : 6;
     
     /// Weak - This is true if the referenced symbol is weak (i.e. linkonce,
     /// weak, weak_odr, etc).  This is orthogonal from the categorization.
     bool Weak : 1;
+    
+    /// ExplicitSection - This is true if the global had a section explicitly
+    /// specified on it.
+    bool ExplicitSection : 1;
   public:
     
     bool isWeak() const { return Weak; }
+    bool hasExplicitSection() const { return ExplicitSection; }
     
     bool isText() const { return K == Text; }
     
@@ -185,10 +190,12 @@ namespace llvm {
       return K == ReadOnlyWithRelLocal;
     }
     
-    static SectionKind get(Kind K, bool isWeak) {
+    static SectionKind get(Kind K, bool isWeak,
+                           bool hasExplicitSection = false) {
       SectionKind Res;
       Res.K = K;
       Res.Weak = isWeak;
+      Res.ExplicitSection = hasExplicitSection;
       return Res;
     }
   };
