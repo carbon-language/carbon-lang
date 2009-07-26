@@ -145,9 +145,10 @@ LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
     if ( !m )
         return NULL;
     // find machine architecture for this module
-    const Target* march = 
-      TargetRegistry::getClosestStaticTargetForModule(*m, errMsg);
-
+    const Target* march = TargetRegistry::lookupTarget(m->getTargetTriple(), 
+                                                       /*FallbackToHost=*/true,
+                                                       /*RequireJIT=*/false,
+                                                       errMsg);
     if ( march == NULL ) 
         return NULL;
 

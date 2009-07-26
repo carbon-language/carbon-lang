@@ -147,7 +147,10 @@ static int AssembleInput(const char *ProgName) {
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget =
-    TargetRegistry::getClosestStaticTargetForTriple(Triple, Error);
+    TargetRegistry::lookupTarget(Triple, 
+                                 /*FallbackToHost=*/true,
+                                 /*RequireJIT=*/false,
+                                 Error);
   if (TheTarget == 0) {
     errs() << ProgName << ": error: unable to get target for '" << Triple
            << "', see --version and --triple.\n";

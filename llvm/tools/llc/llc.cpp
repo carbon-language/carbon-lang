@@ -252,7 +252,10 @@ int main(int argc, char **argv) {
     }        
   } else {
     std::string Err;
-    TheTarget = TargetRegistry::getClosestStaticTargetForModule(mod, Err);
+    TheTarget = TargetRegistry::lookupTarget(mod.getTargetTriple(), 
+                                             /*FallbackToHost=*/true,
+                                             /*RequireJIT=*/false,
+                                             Err);
     if (TheTarget == 0) {
       errs() << argv[0] << ": error auto-selecting target for module '"
              << Err << "'.  Please use the -march option to explicitly "

@@ -183,24 +183,27 @@ namespace llvm {
 
     static iterator end() { return iterator(); }
 
-    /// getClosestStaticTargetForTriple - Given a target triple, pick the most
-    /// capable target for that triple.
-    static const Target *getClosestStaticTargetForTriple(const std::string &TT,
-                                                         std::string &Error);
-
-    /// getClosestStaticTargetForModule - Given an LLVM module, pick the best
-    /// target that is compatible with the module.  If no close target can be
-    /// found, this returns null and sets the Error string to a reason.
-    static const Target *getClosestStaticTargetForModule(const Module &M,
-                                                        std::string &Error);
+    /// lookupTarget - Lookup a target based on a target triple.
+    ///
+    /// \param Triple - The triple to use for finding a target.
+    /// \param FallbackToHost - If true and no target is found for the given
+    /// \arg Triple, then the host's triple will be used.
+    /// \param RequireJIT - Require the target to support JIT compilation.
+    /// \param Error - On failure, an error string describing why no target was
+    /// found.
+    static const Target *lookupTarget(const std::string &Triple,
+                                      bool FallbackToHost,
+                                      bool RequireJIT,
+                                      std::string &Error);
 
     /// getClosestTargetForJIT - Pick the best target that is compatible with
     /// the current host.  If no close target can be found, this returns null
     /// and sets the Error string to a reason.
-    //
-    // FIXME: Do we still need this interface, clients can always look for the
-    // match for the host triple.
-    static const Target *getClosestTargetForJIT(std::string &Error);
+    ///
+    /// Mainted for compatibility through 2.6.
+    static const Target *getClosestTargetForJIT(std::string &Error) {
+      return lookupTarget("", true, true, Error);
+    }
 
     /// @}
     /// @name Target Registration

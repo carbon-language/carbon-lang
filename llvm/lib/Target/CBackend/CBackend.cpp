@@ -3185,7 +3185,10 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
   if (!TAsm) {
     std::string E;
     const Target *Match =
-      TargetRegistry::getClosestStaticTargetForModule(*TheModule, E);
+      TargetRegistry::lookupTarget(TheModule->getTargetTriple(), 
+                                   /*FallbackToHost=*/true,
+                                   /*RequireJIT=*/false,
+                                   E);
     if (Match) {
       // Per platform Target Machines don't exist, so create it;
       // this must be done only once.
