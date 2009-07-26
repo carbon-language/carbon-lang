@@ -204,11 +204,11 @@ static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
   unsigned Flags = SectionFlags::None;
   if (GV->isWeakForLinker())
     Flags |= SectionFlags::Linkonce;
-  if (Kind.isBSS())
+  if (Kind.isBSS() || Kind.isThreadBSS())
     Flags |= SectionFlags::BSS;
-  if (Kind.isTLS())
+  if (Kind.isThreadLocal())
     Flags |= SectionFlags::TLS;
-  if (Kind.isCode())
+  if (Kind.isText())
     Flags |= SectionFlags::Code;
   if (Kind.isWritable())
     Flags |= SectionFlags::Writable;
@@ -247,32 +247,32 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
       // If initializer is a null-terminated string, put it in a "cstring"
       // section if the target has it.
       if (isConstantString(C))
-        return SectionKind::getRODataMergeStr();
+        return SectionKind::getMergableCString();
       
       // Otherwise, just drop it into a mergable constant section.
-      return SectionKind::getRODataMergeConst();
+      return SectionKind::getMergableConst();
       
     case Constant::LocalRelocation:
       // In static relocation model, the linker will resolve all addresses, so
       // the relocation entries will actually be constants by the time the app
       // starts up.
       if (ReloModel == Reloc::Static)
-        return SectionKind::getROData();
+        return SectionKind::getReadOnly();
               
       // Otherwise, the dynamic linker needs to fix it up, put it in the
       // writable data.rel.local section.
-      return SectionKind::getDataRelROLocal();
+      return SectionKind::getReadOnlyWithRelLocal();
               
     case Constant::GlobalRelocations:
       // In static relocation model, the linker will resolve all addresses, so
       // the relocation entries will actually be constants by the time the app
       // starts up.
       if (ReloModel == Reloc::Static)
-        return SectionKind::getROData();
+        return SectionKind::getReadOnly();
       
       // Otherwise, the dynamic linker needs to fix it up, put it in the
       // writable data.rel section.
-      return SectionKind::getDataRelRO();
+      return SectionKind::getReadOnlyWithRel();
     }
   }
 
@@ -282,11 +282,11 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
   // globals together onto fewer pages, improving the locality of the dynamic
   // linker.
   if (ReloModel == Reloc::Static)
-    return SectionKind::getData();
+    return SectionKind::getDataNoRel();
 
   switch (C->getRelocationInfo()) {
   default: llvm_unreachable("unknown relocation info kind");
-  case Constant::NoRelocation:      return SectionKind::getData();
+  case Constant::NoRelocation:      return SectionKind::getDataNoRel();
   case Constant::LocalRelocation:   return SectionKind::getDataRelLocal();
   case Constant::GlobalRelocations: return SectionKind::getDataRel();
   }
@@ -342,7 +342,9 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 const Section*
 TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                       SectionKind Kind) const {
-  if (Kind.isCode())
+  assert(!Kind.isThreadLocal() && "Doesn't support TLS");
+  
+  if (Kind.isText())
     return getTextSection();
   
   if (Kind.isBSS())

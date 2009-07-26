@@ -49,28 +49,30 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
 const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                          SectionKind Kind) const {
-  switch (Kind.getKind()) {
-  default: llvm_unreachable("Unknown section kind");
-  case SectionKind::Text:           return TextSection;
-  case SectionKind::BSS:            return getBSSSection_();
-  case SectionKind::Data:           return DataSection;
-  case SectionKind::DataRel:        return DataRelSection;
-  case SectionKind::DataRelLocal:   return DataRelLocalSection;
-  case SectionKind::DataRelRO:      return DataRelROSection;
-  case SectionKind::DataRelROLocal: return DataRelROLocalSection;
-  case SectionKind::ROData:         return getReadOnlySection();
-  case SectionKind::RODataMergeStr:
+  if (Kind.isText()) return TextSection;
+  if (Kind.isMergableCString())
     return MergeableStringSection(cast<GlobalVariable>(GV));
-  case SectionKind::RODataMergeConst: {
+  if (Kind.isMergableConst()) {
     const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
     const TargetData *TD = TM.getTargetData();
     return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
   }
-  case SectionKind::ThreadData:
-    return TLSDataSection;
-  case SectionKind::ThreadBSS:
-    return TLSBSSSection;
-  }
+  if (Kind.isReadOnly())             return getReadOnlySection();
+  
+  
+  if (Kind.isThreadData())           return TLSDataSection;
+  if (Kind.isThreadBSS())            return TLSBSSSection;
+
+  if (Kind.isBSS())                  return getBSSSection_();
+  
+  
+  if (Kind.isDataNoRel())            return DataSection;
+  if (Kind.isDataRelLocal())         return DataRelLocalSection;
+  if (Kind.isDataRel())              return DataRelSection;
+  if (Kind.isReadOnlyWithRelLocal()) return DataRelROLocalSection;
+  
+  assert(Kind.isReadOnlyWithRel() && "Unknown section kind");
+  return DataRelROSection;
 }
 
 /// getSectionForMergableConstant - Given a mergable constant with the
@@ -129,21 +131,20 @@ unsigned ELFTargetAsmInfo::getFlagsForNamedSection(const char *Name) const {
 
 const char *
 ELFTargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind Kind) const{
-  switch (Kind.getKind()) {
-  default: llvm_unreachable("Unknown section kind");
-  case SectionKind::Text:             return ".gnu.linkonce.t.";
-  case SectionKind::Data:             return ".gnu.linkonce.d.";
-  case SectionKind::DataRel:          return ".gnu.linkonce.d.rel.";
-  case SectionKind::DataRelLocal:     return ".gnu.linkonce.d.rel.local.";
-  case SectionKind::DataRelRO:        return ".gnu.linkonce.d.rel.ro.";
-  case SectionKind::DataRelROLocal:   return ".gnu.linkonce.d.rel.ro.local.";
-  case SectionKind::BSS:              return ".gnu.linkonce.b.";
-  case SectionKind::ROData:
-  case SectionKind::RODataMergeConst:
-  case SectionKind::RODataMergeStr:   return ".gnu.linkonce.r.";
-  case SectionKind::ThreadData:       return ".gnu.linkonce.td.";
-  case SectionKind::ThreadBSS:        return ".gnu.linkonce.tb.";
-  }
+  if (Kind.isText())                 return ".gnu.linkonce.t.";
+  if (Kind.isReadOnly())             return ".gnu.linkonce.r.";
+  
+  if (Kind.isThreadData())           return ".gnu.linkonce.td.";
+  if (Kind.isThreadBSS())            return ".gnu.linkonce.tb.";
+
+  if (Kind.isBSS())                  return ".gnu.linkonce.b.";
+  if (Kind.isDataNoRel())            return ".gnu.linkonce.d.";
+  if (Kind.isDataRelLocal())         return ".gnu.linkonce.d.rel.local.";
+  if (Kind.isDataRel())              return ".gnu.linkonce.d.rel.";
+  if (Kind.isReadOnlyWithRelLocal()) return ".gnu.linkonce.d.rel.ro.local.";
+  
+  assert(Kind.isReadOnlyWithRel() && "Unknown section kind");
+  return ".gnu.linkonce.d.rel.ro.";
 }
 
 

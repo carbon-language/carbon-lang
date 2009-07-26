@@ -127,12 +127,12 @@ bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
 const Section*
 DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                             SectionKind Kind) const {
-  assert(!Kind.isTLS() && "Darwin doesn't support TLS");
+  assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
   
   // FIXME: Use sectionflags:linkonce instead of isWeakForLinker() here.
   bool isWeak = GV->isWeakForLinker();
 
-  if (Kind.isCode())
+  if (Kind.isText())
     return isWeak ? TextCoalSection : TextSection;
   
   // If this is weak/linkonce, put this in a coalescable section, either in text
@@ -144,24 +144,24 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   }
   
   // FIXME: Alignment check should be handled by section classifier.
-  if (Kind.isMergableString())
+  if (Kind.isMergableCString())
     return MergeableStringSection(cast<GlobalVariable>(GV));
   
-  if (Kind.isMergableConstant()) {
+  if (Kind.isMergableConst()) {
     const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
     const TargetData *TD = TM.getTargetData();
     return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
   }
-
-  // If this is marked const, put it into a const section.  But if the dynamic
-  // linker needs to write to it, put it in the data segment.
-  if (Kind.isReadOnlyWithDynamicInit())
-    return ConstDataSection;
   
   // FIXME: ROData -> const in -static mode that is relocatable but they happen
   // by the static linker.  Why not mergable?
   if (Kind.isReadOnly())
     return getReadOnlySection();
+
+  // If this is marked const, put it into a const section.  But if the dynamic
+  // linker needs to write to it, put it in the data segment.
+  if (Kind.isReadOnlyWithRel())
+    return ConstDataSection;
   
   // Otherwise, just drop the variable in the normal data section.
   return DataSection;

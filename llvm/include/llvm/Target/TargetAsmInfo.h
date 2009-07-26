@@ -32,66 +32,131 @@ namespace llvm {
   }
 
   /// SectionKind - This is a simple POD value that classifies the properties of
-  /// a section.
+  /// a section.  A global variable is classified into the deepest possible
+  /// classification, and then the target maps them onto their sections based on
+  /// what capabilities they have.
+  ///
+  /// The comments below describe these as if they were an inheritance hierarchy
+  /// in order to explain the predicates below.
   struct SectionKind {
     enum Kind {
-      Text,             ///< Text section.
-      BSS,              ///< BSS section.
-
-      Data,             ///< Data section.
-      DataRel,          ///< Data that has relocations.
-      DataRelLocal,     ///< Data that only has local relocations.
-
-      // Readonly data.
-      ROData,           ///< Readonly data section.
-      DataRelRO,        ///< Readonly data with non-local relocations.
-      DataRelROLocal,   ///< Readonly data with local relocations only.
+      /// Text - Text section, used for functions and other executable code.
+      Text,
       
-      /// Mergable sections.
-      RODataMergeStr,   ///< Readonly data section: nul-terminated strings.
-      RODataMergeConst, ///< Readonly data section: fixed-length constants.
+      /// ReadOnly - Data that is never written to at program runtime by the
+      /// program or the dynamic linker.  Things in the top-level readonly
+      /// SectionKind are not mergable.
+      ReadOnly,
+
+          /// MergableCString - This is a special section for nul-terminated
+          /// strings.  The linker can unique the C strings, knowing their
+          /// semantics.  Because it uniques based on the nul terminators, the
+          /// compiler can't put strings in this section that have embeded nuls
+          /// in them.
+          MergableCString,
       
-      /// Thread local data.
-      ThreadData,       ///< Initialized TLS data objects
-      ThreadBSS         ///< Uninitialized TLS data objects
+          /// MergableConst - These are sections for merging fixed-length
+          /// constants together.  For example, this can be used to unique
+          /// constant pool entries etc.
+          MergableConst,
+      
+      
+      /// Writable - This is the base of all segments that need to be written
+      /// to during program runtime.
+      
+         /// ThreadLocal - This is the base of all TLS segments.  All TLS
+         /// objects must be writable, otherwise there is no reason for them to
+         /// be thread local!
+      
+             /// ThreadBSS - Zero-initialized TLS data objects.
+             ThreadBSS,
+      
+             /// ThreadData - Initialized TLS data objects.
+             ThreadData,
+      
+         /// GlobalWritableData - Writable data that is global (not thread
+         /// local).
+      
+             /// BSS - Zero initialized writable data.
+             BSS,
+
+             /// DataRel - This is the most general form of data that is written
+             /// to by the program, it can have random relocations to arbitrary
+             /// globals.
+             DataRel,
+
+                 /// DataRelLocal - This is writable data that has a non-zero
+                 /// initializer and has relocations in it, but all of the
+                 /// relocations are known to be within the final linked image
+                 /// the global is linked into.
+                 DataRelLocal,
+
+                     /// DataNoRel - This is writable data that has a non-zero
+                     /// initializer, but whose initializer is known to have no
+                     /// relocations.
+                     DataNoRel,
+
+             /// ReadOnlyWithRel - These are global variables that are never
+             /// written to by the program, but that have relocations, so they
+             /// must be stuck in a writable section so that the dynamic linker
+             /// can write to them.  If it chooses to, the dynamic linker can
+             /// mark the pages these globals end up on as read-only after it is
+             /// done with its relocation phase.
+             ReadOnlyWithRel,
+      
+                 /// ReadOnlyWithRelLocal - This is data that is readonly by the
+                 /// program, but must be writable so that the dynamic linker
+                 /// can perform relocations in it.  This is used when we know
+                 /// that all the relocations are to globals in this final
+                 /// linked image.
+                 ReadOnlyWithRelLocal
+      
     } K : 8; // This is private.
     
-    // FIXME: Eliminate.
-    Kind getKind() const { return K; }
-
-    bool isReadOnly() const {
-      return K == ROData || K == RODataMergeConst || K == RODataMergeStr;
-    }
-    
-    /// isReadOnlyWithDynamicInit - Return true if this data is readonly, but
-    /// the dynamic linker has to write to it to apply relocations.
-    bool isReadOnlyWithDynamicInit() const {
-      return K == DataRelRO || K == DataRelROLocal;
-    }
-
-    bool isBSS() const {
-      return K == BSS || K == ThreadBSS;
-    }
-    
-    bool isTLS() const {
-      return K == ThreadData || K == ThreadBSS;
-    }
-    
-    bool isCode() const {
+    bool isText() const {
       return K == Text;
     }
     
+    bool isReadOnly() const {
+      return K == ReadOnly || K == MergableCString || K == MergableConst;
+    }
+
+    bool isMergableCString() const { return K == MergableCString; }
+    bool isMergableConst() const { return K == MergableConst; }
+    
     bool isWritable() const {
-      return isTLS() ||
-             K == Data ||
-             K == DataRel   || K == DataRelLocal ||
-             K == DataRelRO || K == DataRelROLocal ||
-             K == BSS;
+      return isThreadLocal() || isGlobalWritableData();
     }
     
-    bool isMergableString() const { return K == RODataMergeStr; }
-    bool isMergableConstant() const {
-      return K == RODataMergeStr || K == RODataMergeConst;
+    bool isThreadLocal() const {
+      return K == ThreadData || K == ThreadBSS;
+    }
+    
+    bool isThreadBSS() const { return K == ThreadBSS; } 
+    bool isThreadData() const { return K == ThreadData; } 
+
+    bool isGlobalWritableData() const {
+      return isBSS() || isDataRel() || isReadOnlyWithRel();
+    }
+    
+    bool isBSS() const { return K == BSS; }
+    
+    bool isDataRel() const {
+      return K == DataRel || K == DataRelLocal || K == DataNoRel;
+    }
+    
+    bool isDataRelLocal() const {
+      return K == DataRelLocal || K == DataNoRel;
+    }
+
+    bool isDataNoRel() const { return K == DataNoRel; }
+    
+    bool isReadOnlyWithRel() const {
+      return K == ReadOnlyWithRel || K == ReadOnlyWithRelLocal;
+    }
+
+    bool isReadOnlyWithRelLocal() const {
+      return K == ReadOnlyWithRelLocal;
     }
     
     static SectionKind get(Kind K) {
@@ -99,17 +164,19 @@ namespace llvm {
       return Res;
     }
     static SectionKind getText()             { return get(Text); }
+    static SectionKind getReadOnly()         { return get(ReadOnly); }
+    static SectionKind getMergableCString()  { return get(MergableCString); }
+    static SectionKind getMergableConst()    { return get(MergableConst); }
+    static SectionKind getThreadBSS()        { return get(ThreadBSS); }
+    static SectionKind getThreadData()       { return get(ThreadData); }
     static SectionKind getBSS()              { return get(BSS); }
-    static SectionKind getData()             { return get(Data); }
     static SectionKind getDataRel()          { return get(DataRel); }
     static SectionKind getDataRelLocal()     { return get(DataRelLocal); }
-    static SectionKind getROData()           { return get(ROData); }
-    static SectionKind getDataRelRO()        { return get(DataRelRO); }
-    static SectionKind getDataRelROLocal()   { return get(DataRelROLocal); }
-    static SectionKind getRODataMergeStr()   { return get(RODataMergeStr); }
-    static SectionKind getRODataMergeConst() { return get(RODataMergeConst); }
-    static SectionKind getThreadData()       { return get(ThreadData); }
-    static SectionKind getThreadBSS()        { return get(ThreadBSS); }
+    static SectionKind getDataNoRel()        { return get(DataNoRel); }
+    static SectionKind getReadOnlyWithRel()  { return get(ReadOnlyWithRel); }
+    static SectionKind getReadOnlyWithRelLocal() {
+      return get(ReadOnlyWithRelLocal);
+    }
   };
 
   namespace SectionFlags {

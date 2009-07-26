@@ -267,7 +267,7 @@ X86COFFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 
 const char *X86COFFTargetAsmInfo::
 getSectionPrefixForUniqueGlobal(SectionKind Kind) const {
-  if (Kind.isCode())
+  if (Kind.isText())
     return ".text$linkonce";
   if (Kind.isWritable())
     return ".data$linkonce";
