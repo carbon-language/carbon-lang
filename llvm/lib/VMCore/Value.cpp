@@ -167,19 +167,13 @@ unsigned Value::getNameLen() const {
 
 
 std::string Value::getNameStr() const {
-  if (Name == 0) return "";
-  return std::string(Name->getKeyData(),
-                     Name->getKeyData()+Name->getKeyLength());
+  return getName().str();
 }
 
 void Value::setName(const Twine &Name) {
   SmallString<32> NameData;
   Name.toVector(NameData);
   setName(NameData.begin(), NameData.size());
-}
-
-void Value::setName(const char *Name) {
-  setName(Name, Name ? strlen(Name) : 0);
 }
 
 void Value::setName(const char *NameStr, unsigned NameLen) {

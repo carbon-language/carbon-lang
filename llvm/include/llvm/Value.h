@@ -130,7 +130,6 @@ public:
 
   void setName(const Twine &Name);
   void setName(const char *Name, unsigned NameLen);
-  void setName(const char *Name);  // Takes a null-terminated string.
 
   
   /// takeName - transfer the name from V to this value, setting V's name to
