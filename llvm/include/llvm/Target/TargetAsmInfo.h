@@ -65,6 +65,12 @@ namespace llvm {
              K == DataRelRO        || K == DataRelROLocal ||
              K == RODataMergeConst || K == RODataMergeStr;
     }
+    
+    /// isReadOnlyWithDynamicInit - Return true if this data is readonly, but
+    /// the dynamic linker has to write to it to apply relocations.
+    bool isReadOnlyWithDynamicInit() const {
+      return K == DataRelRO || K == DataRelROLocal;
+    }
 
     bool isBSS() const {
       return K == BSS || K == ThreadBSS;
@@ -87,6 +93,9 @@ namespace llvm {
     }
     
     bool isMergableString() const { return K == RODataMergeStr; }
+    bool isMergableConstant() const {
+      return K == RODataMergeStr || K == RODataMergeConst;
+    }
     
     static SectionKind get(Kind K) {
       SectionKind Res = { K };

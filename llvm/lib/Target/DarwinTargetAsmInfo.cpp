@@ -39,7 +39,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
   // there, if needed.
   SixteenByteConstantSection = 0;
 
-  ReadOnlySection = getUnnamedSection("\t.const\n", SectionFlags::None);
+  ReadOnlySection = getUnnamedSection("\t.const", SectionFlags::None);
 
   TextCoalSection =
     getNamedSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
@@ -48,7 +48,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
                                          SectionFlags::None);
   ConstDataCoalSection = getNamedSection("\t__DATA,__const_coal,coalesced",
                                          SectionFlags::None);
-  ConstDataSection = getUnnamedSection(".const_data", SectionFlags::None);
+  ConstDataSection = getUnnamedSection("\t.const_data", SectionFlags::None);
   DataCoalSection = getNamedSection("\t__DATA,__datacoal_nt,coalesced",
                                     SectionFlags::Writable);
     
@@ -75,7 +75,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
     
   // Sections:
   CStringSection = "\t.cstring";
-  JumpTableDataSection = "\t.const\n";
+  JumpTableDataSection = "\t.const";
   BSSSection = 0;
 
   if (TM.getRelocationModel() == Reloc::Static) {
@@ -131,7 +131,6 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   
   // FIXME: Use sectionflags:linkonce instead of isWeakForLinker() here.
   bool isWeak = GV->isWeakForLinker();
-  bool isNonStatic = TM.getRelocationModel() != Reloc::Static;
 
   if (Kind.isCode())
     return isWeak ? TextCoalSection : TextSection;
@@ -148,30 +147,24 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   if (Kind.isMergableString())
     return MergeableStringSection(cast<GlobalVariable>(GV));
   
-  switch (Kind.getKind()) {
-  case SectionKind::Data:
-  case SectionKind::DataRelLocal:
-  case SectionKind::DataRel:
-  case SectionKind::BSS:
-    if (cast<GlobalVariable>(GV)->isConstant())
-      return ConstDataSection;
-    return DataSection;
-
-  case SectionKind::ROData:
-  case SectionKind::DataRelRO:
-  case SectionKind::DataRelROLocal:
-    return isNonStatic ? ConstDataSection : getReadOnlySection();
-  case SectionKind::RODataMergeConst: {
+  if (Kind.isMergableConstant()) {
     const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
     const TargetData *TD = TM.getTargetData();
     return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
   }
-  default:
-    llvm_unreachable("Unsuported section kind for global");
-  }
 
-  // FIXME: Do we have any extra special weird cases?
-  return NULL;
+  // If this is marked const, put it into a const section.  But if the dynamic
+  // linker needs to write to it, put it in the data segment.
+  if (Kind.isReadOnlyWithDynamicInit())
+    return ConstDataSection;
+  
+  // FIXME: ROData -> const in -static mode that is relocatable but they happen
+  // by the static linker.  Why not mergable?
+  if (Kind.isReadOnly())
+    return getReadOnlySection();
+  
+  // Otherwise, just drop the variable in the normal data section.
+  return DataSection;
 }
 
 const Section*
