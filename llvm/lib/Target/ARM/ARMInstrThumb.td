@@ -427,11 +427,11 @@ def tMOVSr      : T1I<(outs tGPR:$dst), (ins tGPR:$src),
                        "movs $dst, $src", []>;
 
 // FIXME: Make these predicable.
-def tMOVhir2lor : T1I<(outs tGPR:$dst), (ins GPR:$src),
+def tMOVgpr2tgpr : T1I<(outs tGPR:$dst), (ins GPR:$src),
                        "mov $dst, $src\t@ hir2lor", []>;
-def tMOVlor2hir : T1I<(outs GPR:$dst), (ins tGPR:$src),
+def tMOVtgpr2gpr : T1I<(outs GPR:$dst), (ins tGPR:$src),
                        "mov $dst, $src\t@ lor2hir", []>;
-def tMOVhir2hir : T1I<(outs GPR:$dst), (ins GPR:$src),
+def tMOVgpr2gpr  : T1I<(outs GPR:$dst), (ins GPR:$src),
                        "mov $dst, $src\t@ hir2hir", []>;
 } // neverHasSideEffects
 

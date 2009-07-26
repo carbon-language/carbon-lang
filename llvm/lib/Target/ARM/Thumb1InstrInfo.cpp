@@ -81,9 +81,9 @@ bool Thumb1InstrInfo::isMoveInstr(const MachineInstr &MI,
   default:
     return false;
   case ARM::tMOVr:
-  case ARM::tMOVhir2lor:
-  case ARM::tMOVlor2hir:
-  case ARM::tMOVhir2hir:
+  case ARM::tMOVgpr2tgpr:
+  case ARM::tMOVtgpr2gpr:
+  case ARM::tMOVgpr2gpr:
     assert(MI.getDesc().getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
@@ -136,15 +136,15 @@ bool Thumb1InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   if (DestRC == ARM::GPRRegisterClass) {
     if (SrcRC == ARM::GPRRegisterClass) {
-      BuildMI(MBB, I, DL, get(ARM::tMOVhir2hir), DestReg).addReg(SrcReg);
+      BuildMI(MBB, I, DL, get(ARM::tMOVgpr2gpr), DestReg).addReg(SrcReg);
       return true;
     } else if (SrcRC == ARM::tGPRRegisterClass) {
-      BuildMI(MBB, I, DL, get(ARM::tMOVlor2hir), DestReg).addReg(SrcReg);
+      BuildMI(MBB, I, DL, get(ARM::tMOVtgpr2gpr), DestReg).addReg(SrcReg);
       return true;
     }
   } else if (DestRC == ARM::tGPRRegisterClass) {
     if (SrcRC == ARM::GPRRegisterClass) {
-      BuildMI(MBB, I, DL, get(ARM::tMOVhir2lor), DestReg).addReg(SrcReg);
+      BuildMI(MBB, I, DL, get(ARM::tMOVgpr2tgpr), DestReg).addReg(SrcReg);
       return true;
     } else if (SrcRC == ARM::tGPRRegisterClass) {
       BuildMI(MBB, I, DL, get(ARM::tMOVr), DestReg).addReg(SrcReg);
@@ -165,9 +165,9 @@ canFoldMemoryOperand(const MachineInstr *MI,
   switch (Opc) {
   default: break;
   case ARM::tMOVr:
-  case ARM::tMOVlor2hir:
-  case ARM::tMOVhir2lor:
-  case ARM::tMOVhir2hir: {
+  case ARM::tMOVtgpr2gpr:
+  case ARM::tMOVgpr2tgpr:
+  case ARM::tMOVgpr2gpr: {
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
       if (RI.isPhysicalRegister(SrcReg) && !isARMLowRegister(SrcReg))
@@ -279,9 +279,9 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   switch (Opc) {
   default: break;
   case ARM::tMOVr:
-  case ARM::tMOVlor2hir:
-  case ARM::tMOVhir2lor:
-  case ARM::tMOVhir2hir: {
+  case ARM::tMOVtgpr2gpr:
+  case ARM::tMOVgpr2tgpr:
+  case ARM::tMOVgpr2gpr: {
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
       bool isKill = MI->getOperand(1).isKill();

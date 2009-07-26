@@ -935,7 +935,7 @@ SDNode *ARMDAGToDAGISel::Select(SDValue Op) {
       std::swap(LHSR, RHSR);
     }
     if (RHSR && RHSR->getReg() == ARM::SP) {
-      SDValue Val = SDValue(CurDAG->getTargetNode(ARM::tMOVlor2hir, dl,
+      SDValue Val = SDValue(CurDAG->getTargetNode(ARM::tMOVtgpr2gpr, dl,
                                                   Op.getValueType(), N0, N0),0);
       return CurDAG->SelectNodeTo(N, ARM::tADDhirr, Op.getValueType(), Val, N1);
     }

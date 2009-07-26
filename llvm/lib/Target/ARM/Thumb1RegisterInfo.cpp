@@ -127,7 +127,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     if (DestReg == ARM::SP) {
       assert(BaseReg == ARM::SP && "Unexpected!");
       LdReg = ARM::R3;
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::R12)
         .addReg(ARM::R3, RegState::Kill);
     }
 
@@ -155,7 +155,7 @@ void emitThumbRegPlusImmInReg(MachineBasicBlock &MBB,
     AddDefaultPred(MIB);
 
     if (DestReg == ARM::SP)
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVhir2lor), ARM::R3)
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVgpr2tgpr), ARM::R3)
         .addReg(ARM::R12, RegState::Kill);
 }
 
@@ -450,7 +450,7 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setDesc(TII.get(ARM::tMOVhir2lor));
+      MI.setDesc(TII.get(ARM::tMOVgpr2tgpr));
       MI.getOperand(i).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(i+1);
       return;
@@ -608,12 +608,12 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     unsigned TmpReg = ARM::R3;
     bool UseRR = false;
     if (ValReg == ARM::R3) {
-      BuildMI(MBB, II, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
+      BuildMI(MBB, II, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::R12)
         .addReg(ARM::R2, RegState::Kill);
       TmpReg = ARM::R2;
     }
     if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
-      BuildMI(MBB, II, dl, TII.get(ARM::tMOVlor2hir), ARM::R12)
+      BuildMI(MBB, II, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::R12)
         .addReg(ARM::R3, RegState::Kill);
     if (Opcode == ARM::tSpill) {
       if (FrameReg == ARM::SP)
@@ -635,10 +635,10 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
     MachineBasicBlock::iterator NII = next(II);
     if (ValReg == ARM::R3)
-      BuildMI(MBB, NII, dl, TII.get(ARM::tMOVhir2lor), ARM::R2)
+      BuildMI(MBB, NII, dl, TII.get(ARM::tMOVgpr2tgpr), ARM::R2)
         .addReg(ARM::R12, RegState::Kill);
     if (TmpReg == ARM::R3 && AFI->isR3LiveIn())
-      BuildMI(MBB, NII, dl, TII.get(ARM::tMOVhir2lor), ARM::R3)
+      BuildMI(MBB, NII, dl, TII.get(ARM::tMOVgpr2tgpr), ARM::R3)
         .addReg(ARM::R12, RegState::Kill);
   } else
     assert(false && "Unexpected opcode!");
@@ -813,7 +813,7 @@ void Thumb1RegisterInfo::emitEpilogue(MachineFunction &MF,
         emitThumbRegPlusImmediate(MBB, MBBI, ARM::SP, FramePtr, -NumBytes,
                                   TII, *this, dl);
       else
-        BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVlor2hir), ARM::SP)
+        BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVtgpr2gpr), ARM::SP)
           .addReg(FramePtr);
     } else {
       if (MBBI->getOpcode() == ARM::tBX_RET &&
