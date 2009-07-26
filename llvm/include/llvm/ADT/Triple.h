@@ -10,9 +10,12 @@
 #ifndef LLVM_ADT_TRIPLE_H
 #define LLVM_ADT_TRIPLE_H
 
+#include "llvm/ADT/StringRef.h"
 #include <string>
 
 namespace llvm {
+class StringRef;
+class Twine;
 
 /// Triple - Helper class for working with target triples.
 ///
@@ -121,28 +124,25 @@ public:
 
   const std::string &getTriple() const { return Data; }
 
-  // FIXME: Invent a lightweight string representation for these to
-  // use.
-
   /// getArchName - Get the architecture (first) component of the
   /// triple.
-  std::string getArchName() const;
+  StringRef getArchName() const;
 
   /// getVendorName - Get the vendor (second) component of the triple.
-  std::string getVendorName() const;
+  StringRef getVendorName() const;
 
   /// getOSName - Get the operating system (third) component of the
   /// triple.
-  std::string getOSName() const;
+  StringRef getOSName() const;
 
   /// getEnvironmentName - Get the optional environment (fourth)
   /// component of the triple, or "" if empty.
-  std::string getEnvironmentName() const;
+  StringRef getEnvironmentName() const;
 
   /// getOSAndEnvironmentName - Get the operating system and optional
   /// environment components as a single string (separated by a '-'
   /// if the environment component is present).
-  std::string getOSAndEnvironmentName() const;
+  StringRef getOSAndEnvironmentName() const;
 
   /// @}
   /// @name Mutators
@@ -161,27 +161,27 @@ public:
   void setOS(OSType Kind);
 
   /// setTriple - Set all components to the new triple \arg Str.
-  void setTriple(const std::string &Str);
+  void setTriple(const Twine &Str);
 
   /// setArchName - Set the architecture (first) component of the
   /// triple by name.
-  void setArchName(const std::string &Str);
+  void setArchName(const StringRef &Str);
 
   /// setVendorName - Set the vendor (second) component of the triple
   /// by name.
-  void setVendorName(const std::string &Str);
+  void setVendorName(const StringRef &Str);
 
   /// setOSName - Set the operating system (third) component of the
   /// triple by name.
-  void setOSName(const std::string &Str);
+  void setOSName(const StringRef &Str);
 
   /// setEnvironmentName - Set the optional environment (fourth)
   /// component of the triple by name.
-  void setEnvironmentName(const std::string &Str);
+  void setEnvironmentName(const StringRef &Str);
 
   /// setOSAndEnvironmentName - Set the operating system and optional
   /// environment components with a single string.
-  void setOSAndEnvironmentName(const std::string &Str);
+  void setOSAndEnvironmentName(const StringRef &Str);
 
   /// @}
   /// @name Static helpers for IDs.

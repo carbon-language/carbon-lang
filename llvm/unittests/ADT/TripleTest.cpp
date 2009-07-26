@@ -18,58 +18,58 @@ TEST(TripleTest, BasicParsing) {
   Triple T;
 
   T = Triple("");
-  EXPECT_EQ("", T.getArchName());
-  EXPECT_EQ("", T.getVendorName());
-  EXPECT_EQ("", T.getOSName());
-  EXPECT_EQ("", T.getEnvironmentName());
+  EXPECT_EQ("", T.getArchName().str());
+  EXPECT_EQ("", T.getVendorName().str());
+  EXPECT_EQ("", T.getOSName().str());
+  EXPECT_EQ("", T.getEnvironmentName().str());
 
   T = Triple("-");
-  EXPECT_EQ("", T.getArchName());
-  EXPECT_EQ("", T.getVendorName());
-  EXPECT_EQ("", T.getOSName());
-  EXPECT_EQ("", T.getEnvironmentName());
+  EXPECT_EQ("", T.getArchName().str());
+  EXPECT_EQ("", T.getVendorName().str());
+  EXPECT_EQ("", T.getOSName().str());
+  EXPECT_EQ("", T.getEnvironmentName().str());
 
   T = Triple("--");
-  EXPECT_EQ("", T.getArchName());
-  EXPECT_EQ("", T.getVendorName());
-  EXPECT_EQ("", T.getOSName());
-  EXPECT_EQ("", T.getEnvironmentName());
+  EXPECT_EQ("", T.getArchName().str());
+  EXPECT_EQ("", T.getVendorName().str());
+  EXPECT_EQ("", T.getOSName().str());
+  EXPECT_EQ("", T.getEnvironmentName().str());
 
   T = Triple("---");
-  EXPECT_EQ("", T.getArchName());
-  EXPECT_EQ("", T.getVendorName());
-  EXPECT_EQ("", T.getOSName());
-  EXPECT_EQ("", T.getEnvironmentName());
+  EXPECT_EQ("", T.getArchName().str());
+  EXPECT_EQ("", T.getVendorName().str());
+  EXPECT_EQ("", T.getOSName().str());
+  EXPECT_EQ("", T.getEnvironmentName().str());
 
   T = Triple("----");
-  EXPECT_EQ("", T.getArchName());
-  EXPECT_EQ("", T.getVendorName());
-  EXPECT_EQ("", T.getOSName());
-  EXPECT_EQ("-", T.getEnvironmentName());
+  EXPECT_EQ("", T.getArchName().str());
+  EXPECT_EQ("", T.getVendorName().str());
+  EXPECT_EQ("", T.getOSName().str());
+  EXPECT_EQ("-", T.getEnvironmentName().str());
 
   T = Triple("a");
-  EXPECT_EQ("a", T.getArchName());
-  EXPECT_EQ("", T.getVendorName());
-  EXPECT_EQ("", T.getOSName());
-  EXPECT_EQ("", T.getEnvironmentName());
+  EXPECT_EQ("a", T.getArchName().str());
+  EXPECT_EQ("", T.getVendorName().str());
+  EXPECT_EQ("", T.getOSName().str());
+  EXPECT_EQ("", T.getEnvironmentName().str());
 
   T = Triple("a-b");
-  EXPECT_EQ("a", T.getArchName());
-  EXPECT_EQ("b", T.getVendorName());
-  EXPECT_EQ("", T.getOSName());
-  EXPECT_EQ("", T.getEnvironmentName());
+  EXPECT_EQ("a", T.getArchName().str());
+  EXPECT_EQ("b", T.getVendorName().str());
+  EXPECT_EQ("", T.getOSName().str());
+  EXPECT_EQ("", T.getEnvironmentName().str());
 
   T = Triple("a-b-c");
-  EXPECT_EQ("a", T.getArchName());
-  EXPECT_EQ("b", T.getVendorName());
-  EXPECT_EQ("c", T.getOSName());
-  EXPECT_EQ("", T.getEnvironmentName());
+  EXPECT_EQ("a", T.getArchName().str());
+  EXPECT_EQ("b", T.getVendorName().str());
+  EXPECT_EQ("c", T.getOSName().str());
+  EXPECT_EQ("", T.getEnvironmentName().str());
 
   T = Triple("a-b-c-d");
-  EXPECT_EQ("a", T.getArchName());
-  EXPECT_EQ("b", T.getVendorName());
-  EXPECT_EQ("c", T.getOSName());
-  EXPECT_EQ("d", T.getEnvironmentName());
+  EXPECT_EQ("a", T.getArchName().str());
+  EXPECT_EQ("b", T.getVendorName().str());
+  EXPECT_EQ("c", T.getOSName().str());
+  EXPECT_EQ("d", T.getEnvironmentName().str());
 }
 
 TEST(TripleTest, ParsedIDs) {

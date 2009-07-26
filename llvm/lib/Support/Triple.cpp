@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Triple.h"
+
+#include "llvm/ADT/Twine.h"
 #include <cassert>
 #include <cstring>
 using namespace llvm;
@@ -60,7 +62,7 @@ const char *Triple::getOSTypeName(OSType Kind) {
 void Triple::Parse() const {
   assert(!isInitialized() && "Invalid parse call.");
 
-  std::string ArchName = getArchName();
+  StringRef ArchName = getArchName();
   if (ArchName.size() == 4 && ArchName[0] == 'i' && 
       ArchName[2] == '8' && ArchName[3] == '6')
     Arch = x86;
@@ -73,7 +75,7 @@ void Triple::Parse() const {
   else
     Arch = UnknownArch;
 
-  std::string VendorName = getVendorName();
+  StringRef VendorName = getVendorName();
   if (VendorName == "apple")
     Vendor = Apple;
   else if (VendorName == "pc")
@@ -81,20 +83,20 @@ void Triple::Parse() const {
   else
     Vendor = UnknownVendor;
 
-  std::string OSName = getOSName();
-  if (memcmp(&OSName[0], "auroraux", 8) == 0)
+  StringRef OSName = getOSName();
+  if (OSName.startswith("auroraux"))
     OS = AuroraUX;
-  else if (memcmp(&OSName[0], "darwin", 6) == 0)
+  else if (OSName.startswith("darwin"))
     OS = Darwin;
-  else if (memcmp(&OSName[0], "dragonfly", 9) == 0)
+  else if (OSName.startswith("dragonfly"))
     OS = DragonFly;
-  else if (memcmp(&OSName[0], "freebsd", 7) == 0)
+  else if (OSName.startswith("freebsd"))
     OS = FreeBSD;
-  else if (memcmp(&OSName[0], "linux", 5) == 0)
+  else if (OSName.startswith("linux"))
     OS = Linux;
-  else if (memcmp(&OSName[0], "netbsd", 6) == 0)
+  else if (OSName.startswith("netbsd"))
     OS = NetBSD;
-  else if (memcmp(&OSName[0], "openbsd", 7) == 0)
+  else if (OSName.startswith("openbsd"))
     OS = OpenBSD;
   else
     OS = UnknownOS;
@@ -102,59 +104,34 @@ void Triple::Parse() const {
   assert(isInitialized() && "Failed to initialize!");
 }
 
-static std::string extract(const std::string &A,
-                           std::string::size_type begin,
-                           std::string::size_type end) {
-  if (begin == std::string::npos)
-    return "";
-  if (end == std::string::npos)
-    return A.substr(begin);
-  return A.substr(begin, end - begin);
+StringRef Triple::getArchName() const {
+  return StringRef(Data).split('-').first;           // Isolate first component
 }
 
-static std::string extract1(const std::string &A,
-                           std::string::size_type begin,
-                           std::string::size_type end) {
-  if (begin == std::string::npos || begin == end)
-    return "";
-  return extract(A, begin + 1, end);
+StringRef Triple::getVendorName() const {
+  StringRef Tmp = StringRef(Data).split('-').second; // Strip first component
+  return Tmp.split('-').first;                       // Isolate second component
 }
 
-std::string Triple::getArchName() const {
-  std::string Tmp = Data;
-  return extract(Tmp, 0, Tmp.find('-'));
+StringRef Triple::getOSName() const {
+  StringRef Tmp = StringRef(Data).split('-').second; // Strip first component
+  Tmp = Tmp.split('-').second;                       // Strip second component
+  return Tmp.split('-').first;                       // Isolate third component
 }
 
-std::string Triple::getVendorName() const {
-  std::string Tmp = Data;
-  Tmp = extract1(Tmp, Tmp.find('-'), std::string::npos);
-  return extract(Tmp, 0, Tmp.find('-'));
+StringRef Triple::getEnvironmentName() const {
+  StringRef Tmp = StringRef(Data).split('-').second; // Strip first component
+  Tmp = Tmp.split('-').second;                       // Strip second component
+  return Tmp.split('-').second;                      // Strip third component
 }
 
-std::string Triple::getOSName() const {
-  std::string Tmp = Data;
-  Tmp = extract1(Tmp, Tmp.find('-'), std::string::npos);
-  Tmp = extract1(Tmp, Tmp.find('-'), std::string::npos);
-  return extract(Tmp, 0, Tmp.find('-'));
+StringRef Triple::getOSAndEnvironmentName() const {
+  StringRef Tmp = StringRef(Data).split('-').second; // Strip first component
+  return Tmp.split('-').second;                      // Strip second component
 }
 
-std::string Triple::getEnvironmentName() const {
-  std::string Tmp = Data;
-  Tmp = extract1(Tmp, Tmp.find('-'), std::string::npos);
-  Tmp = extract1(Tmp, Tmp.find('-'), std::string::npos);
-  Tmp = extract1(Tmp, Tmp.find('-'), std::string::npos);
-  return extract(Tmp, 0, std::string::npos);
-}
-
-std::string Triple::getOSAndEnvironmentName() const {
-  std::string Tmp = Data;
-  Tmp = extract1(Tmp, Tmp.find('-'), std::string::npos);
-  Tmp = extract1(Tmp, Tmp.find('-'), std::string::npos);
-  return extract(Tmp, 0, std::string::npos);
-}
-
-void Triple::setTriple(const std::string &Str) {
-  Data = Str;
+void Triple::setTriple(const Twine &Str) {
+  Data = Str.str();
   Arch = InvalidArch;
 }
 
@@ -170,15 +147,15 @@ void Triple::setOS(OSType Kind) {
   setOSName(getOSTypeName(Kind));
 }
 
-void Triple::setArchName(const std::string &Str) {
+void Triple::setArchName(const StringRef &Str) {
   setTriple(Str + "-" + getVendorName() + "-" + getOSAndEnvironmentName());
 }
 
-void Triple::setVendorName(const std::string &Str) {
+void Triple::setVendorName(const StringRef &Str) {
   setTriple(getArchName() + "-" + Str + "-" + getOSAndEnvironmentName());
 }
 
-void Triple::setOSName(const std::string &Str) {
+void Triple::setOSName(const StringRef &Str) {
   if (hasEnvironment())
     setTriple(getArchName() + "-" + getVendorName() + "-" + Str +
               "-" + getEnvironmentName());
@@ -186,11 +163,11 @@ void Triple::setOSName(const std::string &Str) {
     setTriple(getArchName() + "-" + getVendorName() + "-" + Str);
 }
 
-void Triple::setEnvironmentName(const std::string &Str) {
+void Triple::setEnvironmentName(const StringRef &Str) {
   setTriple(getArchName() + "-" + getVendorName() + "-" + getOSName() + 
             "-" + Str);
 }
 
-void Triple::setOSAndEnvironmentName(const std::string &Str) {
+void Triple::setOSAndEnvironmentName(const StringRef &Str) {
   setTriple(getArchName() + "-" + getVendorName() + "-" + Str);
 }
