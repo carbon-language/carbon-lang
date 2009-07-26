@@ -127,37 +127,41 @@ bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
 const Section*
 DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                             SectionKind Kind) const {
+  assert(!Kind.isTLS() && "Darwin doesn't support TLS");
+  
   // FIXME: Use sectionflags:linkonce instead of isWeakForLinker() here.
   bool isWeak = GV->isWeakForLinker();
   bool isNonStatic = TM.getRelocationModel() != Reloc::Static;
 
+  if (Kind.isCode())
+    return isWeak ? TextCoalSection : TextSection;
+  
+  // If this is weak/linkonce, put this in a coalescable section, either in text
+  // or data depending on if it is writable.
+  if (isWeak) {
+    if (Kind.isReadOnly())
+      return ConstTextCoalSection;
+    return DataCoalSection;
+  }
+  
+  // FIXME: Alignment check should be handled by section classifier.
+  if (Kind.isMergableString())
+    return MergeableStringSection(cast<GlobalVariable>(GV));
+  
   switch (Kind.getKind()) {
-  case SectionKind::ThreadData:
-  case SectionKind::ThreadBSS:
-    llvm_unreachable("Darwin doesn't support TLS");
-  case SectionKind::Text:
-    if (isWeak)
-      return TextCoalSection;
-    return TextSection;
   case SectionKind::Data:
   case SectionKind::DataRelLocal:
   case SectionKind::DataRel:
   case SectionKind::BSS:
     if (cast<GlobalVariable>(GV)->isConstant())
-      return isWeak ? ConstDataCoalSection : ConstDataSection;
-    return isWeak ? DataCoalSection : DataSection;
+      return ConstDataSection;
+    return DataSection;
 
   case SectionKind::ROData:
   case SectionKind::DataRelRO:
   case SectionKind::DataRelROLocal:
-    return (isWeak ? ConstDataCoalSection :
-            (isNonStatic ? ConstDataSection : getReadOnlySection()));
-  case SectionKind::RODataMergeStr:
-    return (isWeak ?
-            ConstTextCoalSection :
-            MergeableStringSection(cast<GlobalVariable>(GV)));
+    return isNonStatic ? ConstDataSection : getReadOnlySection();
   case SectionKind::RODataMergeConst: {
-    if (isWeak) return ConstDataCoalSection;
     const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
     const TargetData *TD = TM.getTargetData();
     return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
