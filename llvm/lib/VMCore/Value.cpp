@@ -177,7 +177,10 @@ void Value::setName(const Twine &NewName) {
   const char *NameStr = NameData.data();
   unsigned NameLen = NameData.size();
 
-  if (NameLen == 0 && !hasName()) return;
+  // Name isn't changing?
+  if (getName() == StringRef(NameStr, NameLen))
+    return;
+
   assert(getType() != Type::VoidTy && "Cannot assign a name to void values!");
   
   // Get the symbol table to update for this object.
@@ -193,13 +196,8 @@ void Value::setName(const Twine &NewName) {
       return;
     }
     
-    if (Name) {
-      // Name isn't changing?
-      if (NameLen == Name->getKeyLength() &&
-          !memcmp(Name->getKeyData(), NameStr, NameLen))
-        return;
+    if (Name)
       Name->Destroy();
-    }
     
     // NOTE: Could optimize for the case the name is shrinking to not deallocate
     // then reallocated.
@@ -213,11 +211,6 @@ void Value::setName(const Twine &NewName) {
   // NOTE: Could optimize for the case the name is shrinking to not deallocate
   // then reallocated.
   if (hasName()) {
-    // Name isn't changing?
-    if (NameLen == Name->getKeyLength() &&
-        !memcmp(Name->getKeyData(), NameStr, NameLen))
-      return;
-
     // Remove old name.
     ST->removeValueName(Name);
     Name->Destroy();
