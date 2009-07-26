@@ -36,10 +36,19 @@ public:
   enum ArchType {
     UnknownArch,
     
-    x86,    // i?86
-    ppc,    // powerpc
-    ppc64,  // powerpc64
-    x86_64, // amd64, x86_64
+    alpha,   // alpha
+    arm,     // arm, armv.*
+    cellspu, // spu, cellspu
+    mips,    // mips, mipsallegrex
+    mipsel,  // mipsel, mipsallegrexel, psp
+    msp430,  // msp430
+    ppc,     // powerpc
+    ppc64,   // powerpc64
+    sparc,   // sparc
+    systemz, // s390x
+    thumb,   // thumb, thumbv.*
+    x86,     // i[3-9]86
+    x86_64,  // amd64, x86_64
 
     InvalidArch
   };
@@ -53,12 +62,15 @@ public:
     UnknownOS,
 
     AuroraUX,
+    Cygwin,
     Darwin,
     DragonFly,
     FreeBSD,
     Linux,
+    MinGW32,
     NetBSD,
-    OpenBSD
+    OpenBSD,
+    Win32
   };
   
 private:
