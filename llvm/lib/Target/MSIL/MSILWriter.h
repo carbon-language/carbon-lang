@@ -27,14 +27,9 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
-#include <ios>
-using namespace llvm;
 
 namespace llvm {
   extern Target TheMSILTarget;
-}
-
-namespace MSIL {
 
   class MSILModule : public ModulePass {
     Module *ModulePtr;
@@ -60,7 +55,7 @@ namespace MSIL {
 
   };
 
-  class MSILWriter  : public FunctionPass {
+  class MSILWriter : public FunctionPass {
     struct StaticInitializer {
       const Constant* constant;
       uint64_t offset;

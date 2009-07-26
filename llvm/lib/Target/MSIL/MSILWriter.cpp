@@ -26,9 +26,9 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/Passes.h"
-using namespace MSIL;
+using namespace llvm;
 
-namespace {
+namespace llvm {
   // TargetMachine for the MSIL 
   struct VISIBILITY_HIDDEN MSILTarget : public TargetMachine {
     const TargetData DataLayout;       // Calculates type size & alignment
