@@ -27,11 +27,6 @@ struct Thumb2RegisterInfo : public ARMBaseRegisterInfo {
 public:
   Thumb2RegisterInfo(const ARMBaseInstrInfo &tii, const ARMSubtarget &STI);
 
-  // rewrite MI to access 'Offset' bytes from the FP. Return the offset that
-  // could not be handled directly in MI.
-  int rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                        unsigned FrameReg, int Offset) const;
-
   /// emitLoadConstPool - Emits a load from constpool to materialize the
   /// specified immediate.
   void emitLoadConstPool(MachineBasicBlock &MBB,
@@ -42,6 +37,19 @@ public:
                          unsigned PredReg = 0) const;
 
   bool requiresRegisterScavenging(const MachineFunction &MF) const;
+
+  // rewrite MI to access 'Offset' bytes from the FP. Return the offset that
+  // could not be handled directly in MI.
+  virtual int
+  rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                    unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc,
+                    unsigned FrameReg, int Offset) const;
+
+  void eliminateFrameIndex(MachineBasicBlock::iterator II,
+                           int SPAdj, RegScavenger *RS = NULL) const {
+    ARMBaseRegisterInfo::eliminateFrameIndexImpl(II, ARM::t2MOVr, ARM::t2ADDri,
+                                                 ARM::t2SUBri, SPAdj, RS);
+  }
 };
 }
 

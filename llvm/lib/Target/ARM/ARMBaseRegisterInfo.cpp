@@ -1028,6 +1028,7 @@ unsigned findScratchRegister(RegScavenger *RS, const TargetRegisterClass *RC,
 
 int ARMBaseRegisterInfo::
 rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                  unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc,
                   unsigned FrameReg, int Offset) const 
 {
   unsigned Opcode = MI.getOpcode();
@@ -1039,18 +1040,18 @@ rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   if (Opcode == ARM::INLINEASM)
     AddrMode = ARMII::AddrMode2;
   
-  if (Opcode == getOpcode(ARMII::ADDri)) {
+  if (Opcode == ADDriOpc) {
     Offset += MI.getOperand(FrameRegIdx+1).getImm();
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setDesc(TII.get(getOpcode(ARMII::MOVr)));
+      MI.setDesc(TII.get(MOVOpc));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(FrameRegIdx+1);
       return 0;
     } else if (Offset < 0) {
       Offset = -Offset;
       isSub = true;
-      MI.setDesc(TII.get(getOpcode(ARMII::SUBri)));
+      MI.setDesc(TII.get(SUBriOpc));
     }
 
     // Common case: small offset, fits into instruction.
@@ -1144,7 +1145,8 @@ rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
 }
 
 void ARMBaseRegisterInfo::
-eliminateFrameIndex(MachineBasicBlock::iterator II,
+eliminateFrameIndexImpl(MachineBasicBlock::iterator II,
+                    unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc,
                     int SPAdj, RegScavenger *RS) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
@@ -1178,7 +1180,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // modify MI as necessary to handle as much of 'Offset' as possible
-  Offset = rewriteFrameIndex(MI, i, FrameReg, Offset);
+  Offset = rewriteFrameIndex(MI, i, MOVOpc,ADDriOpc,SUBriOpc, FrameReg, Offset);
   if (Offset == 0)
     return;
 

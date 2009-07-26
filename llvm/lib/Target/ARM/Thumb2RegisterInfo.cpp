@@ -165,6 +165,7 @@ requiresRegisterScavenging(const MachineFunction &MF) const {
 
 int Thumb2RegisterInfo::
 rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                  unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc,
                   unsigned FrameReg, int Offset) const 
 {
   unsigned Opcode = MI.getOpcode();
@@ -176,18 +177,18 @@ rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
   if (Opcode == ARM::INLINEASM)
     AddrMode = ARMII::AddrModeT2_i12; // FIXME. mode for thumb2?
   
-  if (Opcode == getOpcode(ARMII::ADDri)) {
+  if (Opcode == ADDriOpc) {
     Offset += MI.getOperand(FrameRegIdx+1).getImm();
     if (Offset == 0) {
       // Turn it into a move.
-      MI.setDesc(TII.get(ARM::t2MOVr));
+      MI.setDesc(TII.get(MOVOpc));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       MI.RemoveOperand(FrameRegIdx+1);
       return 0;
     } else if (Offset < 0) {
       Offset = -Offset;
       isSub = true;
-      MI.setDesc(TII.get(getOpcode(ARMII::SUBri)));
+      MI.setDesc(TII.get(SUBriOpc));
     }
 
     // Common case: small offset, fits into instruction.
@@ -231,7 +232,7 @@ rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     if ((AddrMode != ARMII::AddrModeT2_i8) &&
         (AddrMode != ARMII::AddrModeT2_i12)) {
       return ARMBaseRegisterInfo::rewriteFrameIndex(MI, FrameRegIdx,
-                                                    FrameReg, Offset);
+                     ARM::t2MOVr, ARM::t2ADDri, ARM::t2SUBri, FrameReg, Offset);
     }
     
     unsigned NumBits = 0;

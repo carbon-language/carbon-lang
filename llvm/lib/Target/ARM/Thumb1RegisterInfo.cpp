@@ -388,6 +388,7 @@ static void removeOperands(MachineInstr &MI, unsigned i) {
 
 int Thumb1RegisterInfo::
 rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                  unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc,
                   unsigned FrameReg, int Offset) const 
 {
   // if/when eliminateFrameIndex() conforms with ARMBaseRegisterInfo
