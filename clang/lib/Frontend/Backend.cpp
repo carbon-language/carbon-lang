@@ -205,8 +205,9 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     bool Fast = CompileOpts.OptimizationLevel == 0;
 
     // Create the TargetMachine for generating code.
+    std::string Triple = TheModule->getTargetTriple();
     const llvm::Target *TheTarget = 
-      TargetRegistry::getClosestStaticTargetForModule(*TheModule, Error);
+      TargetRegistry::getClosestStaticTargetForTriple(Triple, Error);
     if (!TheTarget) {
       Error = std::string("Unable to get target machine: ") + Error;
       return false;
