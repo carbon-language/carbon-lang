@@ -491,8 +491,15 @@ clients should be unaffected by this transition, unless they are used to <tt>Val
 </li>
 
 <li>The registration interfaces for backend Targets has changed (what was
-previously TargetMachineRegistry). FIXME: Complete this section, explain client
-changes, point to documentation on new backend interface.</li>
+previously TargetMachineRegistry). For backend authors, see the <a href="WritingAnLLVMBackend.html#TargetRegistration">Writing An LLVM Backend</a> guide. For clients, the notable API changes are:
+  <ul>
+    <li><tt>TargetMachineRegistry</tt> has been renamed
+      to <tt>TargetRegistry</tt>.</li>
+
+    <li>Clients should move to using the <tt>TargetRegistry::lookupTarget()</tt>
+      function to find targets.</li>
+  </ul>
+</li>
 
 <li>llvm-dis now fails if output file exists, instead of dumping to stdout.
 FIXME: describe any other tool changes due to the raw_fd_ostream change.  FIXME:

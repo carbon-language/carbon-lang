@@ -22,6 +22,7 @@
     <li><a href="#Preliminaries">Preliminaries</a></li>
   </ul>
   <li><a href="#TargetMachine">Target Machine</a></li>
+  <li><a href="#TargetRegistration">Target Registration</a></li>
   <li><a href="#RegisterSet">Register Set and Register Classes</a>
   <ul>
     <li><a href="#RegisterDef">Defining a Register</a></li>
@@ -422,20 +423,61 @@ SparcTargetMachine::SparcTargetMachine(const Module &amp;M, const std::string &a
     alignment, and then ABI preferred alignment.</li>
 </ul>
 
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="TargetRegistration">Target Registration</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
 <p>
-You must also register your target using the <tt>RegisterTarget</tt>
-template. (See the <tt>TargetMachineRegistry</tt> class.) For example,
-in <tt>SparcTargetMachine.cpp</tt>, the target is registered with:
+You must also register your target with the <tt>TargetRegistry</tt>, which is
+what other LLVM tools use to be able to lookup and use your target at
+runtime. The <tt>TargetRegistry</tt> can be used directly, but for most targets
+there are helper templates which should take care of the work for you.</p>
+
+<p>
+All targets should declare a global <tt>Target</tt> object which is used to
+represent the target during registration. Then, in the target's TargetInfo
+library, the target should define that object and use
+the <tt>RegisterTarget</tt> template to register the target. For example, the Sparc registration code looks like this:
 </p>
 
 <div class="doc_code">
 <pre>
-namespace {
-  // Register the target.
-  RegisterTarget&lt;SparcTargetMachine&gt;X("sparc", "SPARC");
+Target llvm::TheSparcTarget;
+
+extern "C" void LLVMInitializeSparcTargetInfo() { 
+  RegisterTarget<Triple::sparc, /*HasJIT=*/false> 
+    X(TheSparcTarget, "sparc", "Sparc");
 }
 </pre>
 </div>
+
+<p>
+This allows the <tt>TargetRegistry</tt> to look up the target by name or by
+target triple. In addition, most targets will also register additional features
+which are available in separate libraries. These registration steps are
+separate, because some clients may wish to only link in some parts of the target
+-- the JIT code generator does not require the use of the assembler printer, for
+example. Here is an example of registering the Sparc assembly printer:
+</p>
+
+<div class="doc_code">
+<pre>
+extern "C" void LLVMInitializeSparcAsmPrinter() { 
+  RegisterAsmPrinter<SparcAsmPrinter> X(TheSparcTarget);
+}
+</pre>
+</div>
+
+<p>
+For more information, see
+"<a href="/doxygen/TargetRegistry_8h-source.html">llvm/Target/TargetRegistry.h</a>".
+</p>
 
 </div>
 
