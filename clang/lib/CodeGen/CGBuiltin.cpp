@@ -81,7 +81,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
     if (ArgValue->getType() != DestType)
       ArgValue = Builder.CreateBitCast(ArgValue, DestType, 
-                                       ArgValue->getNameStart());
+                                       ArgValue->getName().data());
 
     Intrinsic::ID inst = (BuiltinID == Builtin::BI__builtin_va_end) ? 
       Intrinsic::vaend : Intrinsic::vastart;
