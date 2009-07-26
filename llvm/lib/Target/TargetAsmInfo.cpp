@@ -364,8 +364,10 @@ TargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
 const Section *
 TargetAsmInfo::getSectionForMergableConstant(uint64_t Size,
                                              unsigned ReloInfo) const {
-  // FIXME: Support data.rel stuff someday
-  // Lame default implementation. Calculate the section name for machine const.
+  if (ReloInfo == 0)
+    if (const Section *S = getReadOnlySection())
+      return S;
+  
   return getDataSection();
 }
 
