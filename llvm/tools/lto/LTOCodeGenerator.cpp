@@ -77,9 +77,8 @@ LTOCodeGenerator::LTOCodeGenerator()
       _codeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC),
       _nativeObjectFile(NULL), _gccPath(NULL), _assemblerPath(NULL)
 {
-  InitializeAllTargets();
-  InitializeAllAsmPrinters();
-
+    InitializeAllTargets();
+    InitializeAllAsmPrinters();
 }
 
 LTOCodeGenerator::~LTOCodeGenerator()
@@ -398,7 +397,7 @@ void LTOCodeGenerator::applyScopeRestrictions()
 bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
                                             std::string& errMsg)
 {
-    if (  this->determineTarget(errMsg) ) 
+    if ( this->determineTarget(errMsg) ) 
         return true;
 
     // mark which symbols can not be internalized 
@@ -472,6 +471,9 @@ bool LTOCodeGenerator::generateAssemblyCode(formatted_raw_ostream& out,
         codeGenPasses->run(*it);
 
     codeGenPasses->doFinalization();
+
+    out.flush();
+
     return false; // success
 }
 

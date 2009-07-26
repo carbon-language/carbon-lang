@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetSelect.h"
 
 using namespace llvm;
 
@@ -125,6 +126,8 @@ LTOModule* LTOModule::makeLTOModule(const void* mem, size_t length,
 /// subtarget. It would be better if we could encode this information into the
 /// IR. See <rdar://5972456>.
 std::string getFeatureString(const char *TargetTriple) {
+  InitializeAllTargets();
+
   SubtargetFeatures Features;
 
   if (strncmp(TargetTriple, "powerpc-apple-", 14) == 0) {
@@ -140,6 +143,8 @@ std::string getFeatureString(const char *TargetTriple) {
 LTOModule* LTOModule::makeLTOModule(MemoryBuffer* buffer,
                                     std::string& errMsg)
 {
+    InitializeAllTargets();
+
     // parse bitcode buffer
     OwningPtr<Module> m(ParseBitcodeFile(buffer, getGlobalContext(), &errMsg));
     if ( !m )
@@ -422,7 +427,7 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
 
 
 
-// Find exeternal symbols referenced by VALUE. This is a recursive function.
+// Find external symbols referenced by VALUE. This is a recursive function.
 void LTOModule::findExternalRefs(Value* value, Mangler &mangler) {
 
     if (GlobalValue* gv = dyn_cast<GlobalValue>(value)) {
@@ -508,7 +513,7 @@ void LTOModule::lazyParseSymbols()
                                                 it != _undefines.end(); ++it) {
             // if this symbol also has a definition, then don't make an undefine
             // because it is a tentative definition
-            if ( _defines.count(it->getKey())) {
+            if ( _defines.count(it->getKey()) == 0 ) {
               NameAndAttributes info = it->getValue();
               _symbols.push_back(info);
             }
