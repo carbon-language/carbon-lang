@@ -49,17 +49,8 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
 const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                          SectionKind Kind) const {
-  if (const Function *F = dyn_cast<Function>(GV)) {
-    switch (F->getLinkage()) {
-    default: llvm_unreachable("Unknown linkage type!");
-    case Function::PrivateLinkage:
-    case Function::LinkerPrivateLinkage:
-    case Function::InternalLinkage:
-    case Function::DLLExportLinkage:
-    case Function::ExternalLinkage:
-      return TextSection;
-    }
-  }
+  if (isa<Function>(GV))
+    return TextSection;
   
   const GlobalVariable *GVar = cast<GlobalVariable>(GV);
   switch (Kind.getKind()) {
