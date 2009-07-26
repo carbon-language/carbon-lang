@@ -10,6 +10,7 @@
 #ifndef LLVM_ADT_STRINGREF_H
 #define LLVM_ADT_STRINGREF_H
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <string>
@@ -120,11 +121,11 @@ namespace llvm {
     /// @name Utility Functions
     /// @{
 
-    /// substr - Return a reference to a substring of this object.
+    /// substr - Return a reference to the substring from [Start, Start + N).
     ///
     /// \param Start - The index of the starting character in the substring; if
-    /// the index is greater than the length of the string then the empty
-    /// substring will be returned.
+    /// the index is npos or greater than the length of the string then the
+    /// empty substring will be returned.
     ///
     /// \param N - The number of characters to included in the substring. If N
     /// exceeds the number of characters remaining in the string, the string
@@ -132,6 +133,40 @@ namespace llvm {
     StringRef substr(size_t Start, size_t N = npos) const {
       Start = std::min(Start, Length);
       return StringRef(Data + Start, std::min(N, Length - Start));
+    }
+
+    /// slice - Return a reference to the substring from [Start, End).
+    ///
+    /// \param Start - The index of the starting character in the substring; if
+    /// the index is npos or greater than the length of the string then the
+    /// empty substring will be returned.
+    ///
+    /// \param End - The index following the last character to include in the
+    /// substring. If this is npos, or less than \arg Start, or exceeds the
+    /// number of characters remaining in the string, the string suffix
+    /// (starting with \arg Start) will be returned.
+    StringRef slice(size_t Start, size_t End) const {
+      Start = std::min(Start, Length);
+      End = std::min(std::max(Start, End), Length);
+      return StringRef(Data + Start, End - Start);
+    }
+
+    /// split - Split into two substrings around the first occurence of a
+    /// separator character.
+    ///
+    /// If \arg Separator is in the string, then the result is a pair (LHS, RHS)
+    /// such that (*this == LHS + Separator + RHS) is true and RHS is
+    /// maximal. If \arg Separator is not in the string, then the result is a
+    /// pair (LHS, RHS) where (*this == LHS) and (RHS == "").
+    ///
+    /// \param Separator - The character to split on.
+    /// \return - The split substrings.
+    std::pair<StringRef, StringRef> split(char Separator) const {
+      iterator it = std::find(begin(), end(), Separator);
+      if (it == end())
+        return std::make_pair(*this, StringRef());
+      return std::make_pair(StringRef(begin(), it - begin()),
+                            StringRef(it + 1, end() - (it + 1)));
     }
 
     /// startswith - Check if this string starts with the given \arg Prefix.

@@ -64,6 +64,21 @@ TEST(StringRefTest, Utilities) {
   EXPECT_TRUE(Str.substr(0, 100) == "hello");
   EXPECT_TRUE(Str.substr(4, 10) == "o");
 
+  EXPECT_TRUE(Str.slice(2, 3) == "l");
+  EXPECT_TRUE(Str.slice(1, 4) == "ell");
+  EXPECT_TRUE(Str.slice(2, 100) == "llo");
+  EXPECT_TRUE(Str.slice(2, 1) == "");
+  EXPECT_TRUE(Str.slice(10, 20) == "");
+
+  EXPECT_TRUE(Str.split('X') == std::make_pair(StringRef("hello"), 
+                                               StringRef("")));
+  EXPECT_TRUE(Str.split('e') == std::make_pair(StringRef("h"), 
+                                               StringRef("llo")));
+  EXPECT_TRUE(Str.split('h') == std::make_pair(StringRef(""), 
+                                               StringRef("ello")));
+  EXPECT_TRUE(Str.split('o') == std::make_pair(StringRef("hell"), 
+                                               StringRef("")));
+
   EXPECT_TRUE(Str.startswith("he"));
   EXPECT_FALSE(Str.startswith("helloworld"));
   EXPECT_FALSE(Str.startswith("hi"));
