@@ -199,11 +199,10 @@ static bool isConstantString(const Constant *C) {
   return false;
 }
 
-static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
-                                      SectionKind Kind) {
+static unsigned SectionFlagsForGlobal(SectionKind Kind) {
   // Decode flags from global and section kind.
   unsigned Flags = SectionFlags::None;
-  if (GV->isWeakForLinker())
+  if (Kind.isWeak())
     Flags |= SectionFlags::Linkonce;
   if (Kind.isBSS() || Kind.isThreadBSS())
     Flags |= SectionFlags::BSS;
@@ -328,7 +327,7 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
       return TS;
     
     // Honour section already set, if any.
-    unsigned Flags = SectionFlagsForGlobal(GV, Kind);
+    unsigned Flags = SectionFlagsForGlobal(Kind);
 
     // This is an explicitly named section.
     Flags |= SectionFlags::Named;
@@ -343,9 +342,9 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
-  if (GV->isWeakForLinker()) {
+  if (Kind.isWeak()) {
     if (const char *Prefix = getSectionPrefixForUniqueGlobal(Kind)) {
-      unsigned Flags = SectionFlagsForGlobal(GV, Kind);
+      unsigned Flags = SectionFlagsForGlobal(Kind);
 
       // FIXME: Use mangler interface (PR4584).
       std::string Name = Prefix+GV->getNameStr();
