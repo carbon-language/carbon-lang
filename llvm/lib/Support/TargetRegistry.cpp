@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Module.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/System/Host.h"
 #include <cassert>
