@@ -170,13 +170,13 @@ std::string Value::getNameStr() const {
   return getName().str();
 }
 
-void Value::setName(const Twine &Name) {
+void Value::setName(const Twine &NewName) {
   SmallString<32> NameData;
-  Name.toVector(NameData);
-  setName(NameData.begin(), NameData.size());
-}
+  NewName.toVector(NameData);
 
-void Value::setName(const char *NameStr, unsigned NameLen) {
+  const char *NameStr = NameData.data();
+  unsigned NameLen = NameData.size();
+
   if (NameLen == 0 && !hasName()) return;
   assert(getType() != Type::VoidTy && "Cannot assign a name to void values!");
   
@@ -242,7 +242,7 @@ void Value::takeName(Value *V) {
     if (getSymTab(this, ST)) {
       // We can't set a name on this value, but we need to clear V's name if
       // it has one.
-      if (V->hasName()) V->setName(0, 0);
+      if (V->hasName()) V->setName("");
       return;  // Cannot set a name on this value (e.g. constant).
     }
     
@@ -262,7 +262,7 @@ void Value::takeName(Value *V) {
   if (!ST) {
     if (getSymTab(this, ST)) {
       // Clear V's name.
-      V->setName(0, 0);
+      V->setName("");
       return;  // Cannot set a name on this value (e.g. constant).
     }
   }

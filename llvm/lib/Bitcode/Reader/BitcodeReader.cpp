@@ -680,7 +680,7 @@ bool BitcodeReader::ParseValueSymbolTable() {
         return Error("Invalid Value ID in VST_ENTRY record");
       Value *V = ValueList[ValueID];
       
-      V->setName(&ValueName[0], ValueName.size());
+      V->setName(StringRef(ValueName.data(), ValueName.size()));
       ValueName.clear();
       break;
     }
@@ -691,7 +691,7 @@ bool BitcodeReader::ParseValueSymbolTable() {
       if (BB == 0)
         return Error("Invalid BB ID in VST_BBENTRY record");
       
-      BB->setName(&ValueName[0], ValueName.size());
+      BB->setName(StringRef(ValueName.data(), ValueName.size()));
       ValueName.clear();
       break;
     }

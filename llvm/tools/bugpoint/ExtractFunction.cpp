@@ -269,8 +269,8 @@ llvm::SplitFunctionsOutOfModule(Module *M,
     I->setLinkage(GlobalValue::ExternalLinkage);
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I) {
-    if (I->hasName() && *I->getNameStart() == '\01')
-      I->setName(I->getNameStart()+1, I->getNameLen()-1);
+    if (I->hasName() && I->getName()[0] == '\01')
+      I->setName(I->getName().substr(1));
     I->setLinkage(GlobalValue::ExternalLinkage);
   }
 

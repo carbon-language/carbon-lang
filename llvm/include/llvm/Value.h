@@ -128,8 +128,11 @@ public:
   StringRef getName() const { return StringRef(getNameStart(), getNameLen()); }
   std::string getNameStr() const;
 
+  /// setName() - Change the name of the value, choosing a new unique name if
+  /// the provided name is taken.
+  ///
+  /// \arg Name - The new name; or "" if the value's name should be removed.
   void setName(const Twine &Name);
-  void setName(const char *Name, unsigned NameLen);
 
   
   /// takeName - transfer the name from V to this value, setting V's name to
