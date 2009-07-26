@@ -1518,321 +1518,321 @@ TargetLowering::SimplifySetCC(MVT VT, SDValue N0, SDValue N1,
   case ISD::SETTRUE2:  return DAG.getConstant(1, VT);
   }
 
+  if (isa<ConstantSDNode>(N0.getNode())) {
+    // Ensure that the constant occurs on the RHS, and fold constant
+    // comparisons.
+    return DAG.getSetCC(dl, VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
+  }
+
   if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode())) {
     const APInt &C1 = N1C->getAPIntValue();
-    if (isa<ConstantSDNode>(N0.getNode())) {
-      return DAG.FoldSetCC(VT, N0, N1, Cond, dl);
-    } else {
-      // If the LHS is '(srl (ctlz x), 5)', the RHS is 0/1, and this is an
-      // equality comparison, then we're just comparing whether X itself is
-      // zero.
-      if (N0.getOpcode() == ISD::SRL && (C1 == 0 || C1 == 1) &&
-          N0.getOperand(0).getOpcode() == ISD::CTLZ &&
-          N0.getOperand(1).getOpcode() == ISD::Constant) {
-        unsigned ShAmt = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
-        if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
-            ShAmt == Log2_32(N0.getValueType().getSizeInBits())) {
-          if ((C1 == 0) == (Cond == ISD::SETEQ)) {
-            // (srl (ctlz x), 5) == 0  -> X != 0
-            // (srl (ctlz x), 5) != 1  -> X != 0
-            Cond = ISD::SETNE;
-          } else {
-            // (srl (ctlz x), 5) != 0  -> X == 0
-            // (srl (ctlz x), 5) == 1  -> X == 0
-            Cond = ISD::SETEQ;
-          }
-          SDValue Zero = DAG.getConstant(0, N0.getValueType());
-          return DAG.getSetCC(dl, VT, N0.getOperand(0).getOperand(0),
-                              Zero, Cond);
-        }
-      }
 
-      // If the LHS is '(and load, const)', the RHS is 0,
-      // the test is for equality or unsigned, and all 1 bits of the const are
-      // in the same partial word, see if we can shorten the load.
-      if (DCI.isBeforeLegalize() &&
-          N0.getOpcode() == ISD::AND && C1 == 0 &&
-          N0.getNode()->hasOneUse() &&
-          isa<LoadSDNode>(N0.getOperand(0)) &&
-          N0.getOperand(0).getNode()->hasOneUse() &&
-          isa<ConstantSDNode>(N0.getOperand(1))) {
-        LoadSDNode *Lod = cast<LoadSDNode>(N0.getOperand(0));
-        uint64_t bestMask = 0;
-        unsigned bestWidth = 0, bestOffset = 0;
-        if (!Lod->isVolatile() && Lod->isUnindexed() &&
-            // FIXME: This uses getZExtValue() below so it only works on i64 and
-            // below.
-            N0.getValueType().getSizeInBits() <= 64) {
-          unsigned origWidth = N0.getValueType().getSizeInBits();
-          // We can narrow (e.g.) 16-bit extending loads on 32-bit target to 
-          // 8 bits, but have to be careful...
-          if (Lod->getExtensionType() != ISD::NON_EXTLOAD)
-            origWidth = Lod->getMemoryVT().getSizeInBits();
-          uint64_t Mask =cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
-          for (unsigned width = origWidth / 2; width>=8; width /= 2) {
-            uint64_t newMask = (1ULL << width) - 1;
-            for (unsigned offset=0; offset<origWidth/width; offset++) {
-              if ((newMask & Mask) == Mask) {
-                if (!TD->isLittleEndian())
-                  bestOffset = (origWidth/width - offset - 1) * (width/8);
-                else
-                  bestOffset = (uint64_t)offset * (width/8);
-                bestMask = Mask >> (offset * (width/8) * 8);
-                bestWidth = width;
-                break;
-              }
-              newMask = newMask << width;
+    // If the LHS is '(srl (ctlz x), 5)', the RHS is 0/1, and this is an
+    // equality comparison, then we're just comparing whether X itself is
+    // zero.
+    if (N0.getOpcode() == ISD::SRL && (C1 == 0 || C1 == 1) &&
+        N0.getOperand(0).getOpcode() == ISD::CTLZ &&
+        N0.getOperand(1).getOpcode() == ISD::Constant) {
+      unsigned ShAmt = cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+      if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+          ShAmt == Log2_32(N0.getValueType().getSizeInBits())) {
+        if ((C1 == 0) == (Cond == ISD::SETEQ)) {
+          // (srl (ctlz x), 5) == 0  -> X != 0
+          // (srl (ctlz x), 5) != 1  -> X != 0
+          Cond = ISD::SETNE;
+        } else {
+          // (srl (ctlz x), 5) != 0  -> X == 0
+          // (srl (ctlz x), 5) == 1  -> X == 0
+          Cond = ISD::SETEQ;
+        }
+        SDValue Zero = DAG.getConstant(0, N0.getValueType());
+        return DAG.getSetCC(dl, VT, N0.getOperand(0).getOperand(0),
+                            Zero, Cond);
+      }
+    }
+
+    // If the LHS is '(and load, const)', the RHS is 0,
+    // the test is for equality or unsigned, and all 1 bits of the const are
+    // in the same partial word, see if we can shorten the load.
+    if (DCI.isBeforeLegalize() &&
+        N0.getOpcode() == ISD::AND && C1 == 0 &&
+        N0.getNode()->hasOneUse() &&
+        isa<LoadSDNode>(N0.getOperand(0)) &&
+        N0.getOperand(0).getNode()->hasOneUse() &&
+        isa<ConstantSDNode>(N0.getOperand(1))) {
+      LoadSDNode *Lod = cast<LoadSDNode>(N0.getOperand(0));
+      uint64_t bestMask = 0;
+      unsigned bestWidth = 0, bestOffset = 0;
+      if (!Lod->isVolatile() && Lod->isUnindexed() &&
+          // FIXME: This uses getZExtValue() below so it only works on i64 and
+          // below.
+          N0.getValueType().getSizeInBits() <= 64) {
+        unsigned origWidth = N0.getValueType().getSizeInBits();
+        // We can narrow (e.g.) 16-bit extending loads on 32-bit target to 
+        // 8 bits, but have to be careful...
+        if (Lod->getExtensionType() != ISD::NON_EXTLOAD)
+          origWidth = Lod->getMemoryVT().getSizeInBits();
+        uint64_t Mask =cast<ConstantSDNode>(N0.getOperand(1))->getZExtValue();
+        for (unsigned width = origWidth / 2; width>=8; width /= 2) {
+          uint64_t newMask = (1ULL << width) - 1;
+          for (unsigned offset=0; offset<origWidth/width; offset++) {
+            if ((newMask & Mask) == Mask) {
+              if (!TD->isLittleEndian())
+                bestOffset = (origWidth/width - offset - 1) * (width/8);
+              else
+                bestOffset = (uint64_t)offset * (width/8);
+              bestMask = Mask >> (offset * (width/8) * 8);
+              bestWidth = width;
+              break;
             }
-          }
-        }
-        if (bestWidth) {
-          MVT newVT = MVT::getIntegerVT(bestWidth);
-          if (newVT.isRound()) {
-            MVT PtrType = Lod->getOperand(1).getValueType();
-            SDValue Ptr = Lod->getBasePtr();
-            if (bestOffset != 0)
-              Ptr = DAG.getNode(ISD::ADD, dl, PtrType, Lod->getBasePtr(),
-                                DAG.getConstant(bestOffset, PtrType));
-            unsigned NewAlign = MinAlign(Lod->getAlignment(), bestOffset);
-            SDValue NewLoad = DAG.getLoad(newVT, dl, Lod->getChain(), Ptr,
-                                          Lod->getSrcValue(), 
-                                          Lod->getSrcValueOffset() + bestOffset,
-                                          false, NewAlign);
-            return DAG.getSetCC(dl, VT, 
-                                DAG.getNode(ISD::AND, dl, newVT, NewLoad,
-                                            DAG.getConstant(bestMask, newVT)),
-                                DAG.getConstant(0LL, newVT), Cond);
+            newMask = newMask << width;
           }
         }
       }
-
-      // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
-      if (N0.getOpcode() == ISD::ZERO_EXTEND) {
-        unsigned InSize = N0.getOperand(0).getValueType().getSizeInBits();
-
-        // If the comparison constant has bits in the upper part, the
-        // zero-extended value could never match.
-        if (C1.intersects(APInt::getHighBitsSet(C1.getBitWidth(),
-                                                C1.getBitWidth() - InSize))) {
-          switch (Cond) {
-          case ISD::SETUGT:
-          case ISD::SETUGE:
-          case ISD::SETEQ: return DAG.getConstant(0, VT);
-          case ISD::SETULT:
-          case ISD::SETULE:
-          case ISD::SETNE: return DAG.getConstant(1, VT);
-          case ISD::SETGT:
-          case ISD::SETGE:
-            // True if the sign bit of C1 is set.
-            return DAG.getConstant(C1.isNegative(), VT);
-          case ISD::SETLT:
-          case ISD::SETLE:
-            // True if the sign bit of C1 isn't set.
-            return DAG.getConstant(C1.isNonNegative(), VT);
-          default:
-            break;
-          }
+      if (bestWidth) {
+        MVT newVT = MVT::getIntegerVT(bestWidth);
+        if (newVT.isRound()) {
+          MVT PtrType = Lod->getOperand(1).getValueType();
+          SDValue Ptr = Lod->getBasePtr();
+          if (bestOffset != 0)
+            Ptr = DAG.getNode(ISD::ADD, dl, PtrType, Lod->getBasePtr(),
+                              DAG.getConstant(bestOffset, PtrType));
+          unsigned NewAlign = MinAlign(Lod->getAlignment(), bestOffset);
+          SDValue NewLoad = DAG.getLoad(newVT, dl, Lod->getChain(), Ptr,
+                                        Lod->getSrcValue(), 
+                                        Lod->getSrcValueOffset() + bestOffset,
+                                        false, NewAlign);
+          return DAG.getSetCC(dl, VT, 
+                              DAG.getNode(ISD::AND, dl, newVT, NewLoad,
+                                          DAG.getConstant(bestMask, newVT)),
+                              DAG.getConstant(0LL, newVT), Cond);
         }
+      }
+    }
 
-        // Otherwise, we can perform the comparison with the low bits.
+    // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
+    if (N0.getOpcode() == ISD::ZERO_EXTEND) {
+      unsigned InSize = N0.getOperand(0).getValueType().getSizeInBits();
+
+      // If the comparison constant has bits in the upper part, the
+      // zero-extended value could never match.
+      if (C1.intersects(APInt::getHighBitsSet(C1.getBitWidth(),
+                                              C1.getBitWidth() - InSize))) {
         switch (Cond) {
-        case ISD::SETEQ:
-        case ISD::SETNE:
         case ISD::SETUGT:
         case ISD::SETUGE:
+        case ISD::SETEQ: return DAG.getConstant(0, VT);
         case ISD::SETULT:
-        case ISD::SETULE: {
-          MVT newVT = N0.getOperand(0).getValueType();
-          if (DCI.isBeforeLegalizeOps() ||
-              (isOperationLegal(ISD::SETCC, newVT) &&
-               getCondCodeAction(Cond, newVT)==Legal))
-            return DAG.getSetCC(dl, VT, N0.getOperand(0),
-                                DAG.getConstant(APInt(C1).trunc(InSize), newVT),
-                                Cond);
+        case ISD::SETULE:
+        case ISD::SETNE: return DAG.getConstant(1, VT);
+        case ISD::SETGT:
+        case ISD::SETGE:
+          // True if the sign bit of C1 is set.
+          return DAG.getConstant(C1.isNegative(), VT);
+        case ISD::SETLT:
+        case ISD::SETLE:
+          // True if the sign bit of C1 isn't set.
+          return DAG.getConstant(C1.isNonNegative(), VT);
+        default:
           break;
         }
-        default:
-          break;   // todo, be more careful with signed comparisons
-        }
-      } else if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
-                 (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
-        MVT ExtSrcTy = cast<VTSDNode>(N0.getOperand(1))->getVT();
-        unsigned ExtSrcTyBits = ExtSrcTy.getSizeInBits();
-        MVT ExtDstTy = N0.getValueType();
-        unsigned ExtDstTyBits = ExtDstTy.getSizeInBits();
+      }
 
-        // If the extended part has any inconsistent bits, it cannot ever
-        // compare equal.  In other words, they have to be all ones or all
-        // zeros.
-        APInt ExtBits =
-          APInt::getHighBitsSet(ExtDstTyBits, ExtDstTyBits - ExtSrcTyBits);
-        if ((C1 & ExtBits) != 0 && (C1 & ExtBits) != ExtBits)
-          return DAG.getConstant(Cond == ISD::SETNE, VT);
+      // Otherwise, we can perform the comparison with the low bits.
+      switch (Cond) {
+      case ISD::SETEQ:
+      case ISD::SETNE:
+      case ISD::SETUGT:
+      case ISD::SETUGE:
+      case ISD::SETULT:
+      case ISD::SETULE: {
+        MVT newVT = N0.getOperand(0).getValueType();
+        if (DCI.isBeforeLegalizeOps() ||
+            (isOperationLegal(ISD::SETCC, newVT) &&
+              getCondCodeAction(Cond, newVT)==Legal))
+          return DAG.getSetCC(dl, VT, N0.getOperand(0),
+                              DAG.getConstant(APInt(C1).trunc(InSize), newVT),
+                              Cond);
+        break;
+      }
+      default:
+        break;   // todo, be more careful with signed comparisons
+      }
+    } else if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
+                (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
+      MVT ExtSrcTy = cast<VTSDNode>(N0.getOperand(1))->getVT();
+      unsigned ExtSrcTyBits = ExtSrcTy.getSizeInBits();
+      MVT ExtDstTy = N0.getValueType();
+      unsigned ExtDstTyBits = ExtDstTy.getSizeInBits();
+
+      // If the extended part has any inconsistent bits, it cannot ever
+      // compare equal.  In other words, they have to be all ones or all
+      // zeros.
+      APInt ExtBits =
+        APInt::getHighBitsSet(ExtDstTyBits, ExtDstTyBits - ExtSrcTyBits);
+      if ((C1 & ExtBits) != 0 && (C1 & ExtBits) != ExtBits)
+        return DAG.getConstant(Cond == ISD::SETNE, VT);
+      
+      SDValue ZextOp;
+      MVT Op0Ty = N0.getOperand(0).getValueType();
+      if (Op0Ty == ExtSrcTy) {
+        ZextOp = N0.getOperand(0);
+      } else {
+        APInt Imm = APInt::getLowBitsSet(ExtDstTyBits, ExtSrcTyBits);
+        ZextOp = DAG.getNode(ISD::AND, dl, Op0Ty, N0.getOperand(0),
+                              DAG.getConstant(Imm, Op0Ty));
+      }
+      if (!DCI.isCalledByLegalizer())
+        DCI.AddToWorklist(ZextOp.getNode());
+      // Otherwise, make this a use of a zext.
+      return DAG.getSetCC(dl, VT, ZextOp, 
+                          DAG.getConstant(C1 & APInt::getLowBitsSet(
+                                                              ExtDstTyBits,
+                                                              ExtSrcTyBits), 
+                                          ExtDstTy),
+                          Cond);
+    } else if ((N1C->isNullValue() || N1C->getAPIntValue() == 1) &&
+                (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
+      
+      // SETCC (SETCC), [0|1], [EQ|NE]  -> SETCC
+      if (N0.getOpcode() == ISD::SETCC) {
+        bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (N1C->getZExtValue() != 1);
+        if (TrueWhenTrue)
+          return N0;
         
-        SDValue ZextOp;
-        MVT Op0Ty = N0.getOperand(0).getValueType();
-        if (Op0Ty == ExtSrcTy) {
-          ZextOp = N0.getOperand(0);
-        } else {
-          APInt Imm = APInt::getLowBitsSet(ExtDstTyBits, ExtSrcTyBits);
-          ZextOp = DAG.getNode(ISD::AND, dl, Op0Ty, N0.getOperand(0),
-                               DAG.getConstant(Imm, Op0Ty));
-        }
-        if (!DCI.isCalledByLegalizer())
-          DCI.AddToWorklist(ZextOp.getNode());
-        // Otherwise, make this a use of a zext.
-        return DAG.getSetCC(dl, VT, ZextOp, 
-                            DAG.getConstant(C1 & APInt::getLowBitsSet(
-                                                               ExtDstTyBits,
-                                                               ExtSrcTyBits), 
-                                            ExtDstTy),
-                            Cond);
-      } else if ((N1C->isNullValue() || N1C->getAPIntValue() == 1) &&
-                 (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
-        
-        // SETCC (SETCC), [0|1], [EQ|NE]  -> SETCC
-        if (N0.getOpcode() == ISD::SETCC) {
-          bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (N1C->getZExtValue() != 1);
-          if (TrueWhenTrue)
-            return N0;
-          
-          // Invert the condition.
-          ISD::CondCode CC = cast<CondCodeSDNode>(N0.getOperand(2))->get();
-          CC = ISD::getSetCCInverse(CC, 
-                                   N0.getOperand(0).getValueType().isInteger());
-          return DAG.getSetCC(dl, VT, N0.getOperand(0), N0.getOperand(1), CC);
-        }
-        
-        if ((N0.getOpcode() == ISD::XOR ||
-             (N0.getOpcode() == ISD::AND && 
-              N0.getOperand(0).getOpcode() == ISD::XOR &&
-              N0.getOperand(1) == N0.getOperand(0).getOperand(1))) &&
-            isa<ConstantSDNode>(N0.getOperand(1)) &&
-            cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue() == 1) {
-          // If this is (X^1) == 0/1, swap the RHS and eliminate the xor.  We
-          // can only do this if the top bits are known zero.
-          unsigned BitWidth = N0.getValueSizeInBits();
-          if (DAG.MaskedValueIsZero(N0,
-                                    APInt::getHighBitsSet(BitWidth,
-                                                          BitWidth-1))) {
-            // Okay, get the un-inverted input value.
-            SDValue Val;
-            if (N0.getOpcode() == ISD::XOR)
-              Val = N0.getOperand(0);
-            else {
-              assert(N0.getOpcode() == ISD::AND && 
-                     N0.getOperand(0).getOpcode() == ISD::XOR);
-              // ((X^1)&1)^1 -> X & 1
-              Val = DAG.getNode(ISD::AND, dl, N0.getValueType(),
-                                N0.getOperand(0).getOperand(0),
-                                N0.getOperand(1));
-            }
-            return DAG.getSetCC(dl, VT, Val, N1,
-                                Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
-          }
-        }
+        // Invert the condition.
+        ISD::CondCode CC = cast<CondCodeSDNode>(N0.getOperand(2))->get();
+        CC = ISD::getSetCCInverse(CC, 
+                                  N0.getOperand(0).getValueType().isInteger());
+        return DAG.getSetCC(dl, VT, N0.getOperand(0), N0.getOperand(1), CC);
       }
       
-      APInt MinVal, MaxVal;
-      unsigned OperandBitSize = N1C->getValueType(0).getSizeInBits();
-      if (ISD::isSignedIntSetCC(Cond)) {
-        MinVal = APInt::getSignedMinValue(OperandBitSize);
-        MaxVal = APInt::getSignedMaxValue(OperandBitSize);
-      } else {
-        MinVal = APInt::getMinValue(OperandBitSize);
-        MaxVal = APInt::getMaxValue(OperandBitSize);
+      if ((N0.getOpcode() == ISD::XOR ||
+            (N0.getOpcode() == ISD::AND && 
+            N0.getOperand(0).getOpcode() == ISD::XOR &&
+            N0.getOperand(1) == N0.getOperand(0).getOperand(1))) &&
+          isa<ConstantSDNode>(N0.getOperand(1)) &&
+          cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue() == 1) {
+        // If this is (X^1) == 0/1, swap the RHS and eliminate the xor.  We
+        // can only do this if the top bits are known zero.
+        unsigned BitWidth = N0.getValueSizeInBits();
+        if (DAG.MaskedValueIsZero(N0,
+                                  APInt::getHighBitsSet(BitWidth,
+                                                        BitWidth-1))) {
+          // Okay, get the un-inverted input value.
+          SDValue Val;
+          if (N0.getOpcode() == ISD::XOR)
+            Val = N0.getOperand(0);
+          else {
+            assert(N0.getOpcode() == ISD::AND && 
+                    N0.getOperand(0).getOpcode() == ISD::XOR);
+            // ((X^1)&1)^1 -> X & 1
+            Val = DAG.getNode(ISD::AND, dl, N0.getValueType(),
+                              N0.getOperand(0).getOperand(0),
+                              N0.getOperand(1));
+          }
+          return DAG.getSetCC(dl, VT, Val, N1,
+                              Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
+        }
       }
+    }
+    
+    APInt MinVal, MaxVal;
+    unsigned OperandBitSize = N1C->getValueType(0).getSizeInBits();
+    if (ISD::isSignedIntSetCC(Cond)) {
+      MinVal = APInt::getSignedMinValue(OperandBitSize);
+      MaxVal = APInt::getSignedMaxValue(OperandBitSize);
+    } else {
+      MinVal = APInt::getMinValue(OperandBitSize);
+      MaxVal = APInt::getMaxValue(OperandBitSize);
+    }
 
-      // Canonicalize GE/LE comparisons to use GT/LT comparisons.
-      if (Cond == ISD::SETGE || Cond == ISD::SETUGE) {
-        if (C1 == MinVal) return DAG.getConstant(1, VT);   // X >= MIN --> true
-        // X >= C0 --> X > (C0-1)
-        return DAG.getSetCC(dl, VT, N0, 
-                            DAG.getConstant(C1-1, N1.getValueType()),
-                            (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT);
-      }
+    // Canonicalize GE/LE comparisons to use GT/LT comparisons.
+    if (Cond == ISD::SETGE || Cond == ISD::SETUGE) {
+      if (C1 == MinVal) return DAG.getConstant(1, VT);   // X >= MIN --> true
+      // X >= C0 --> X > (C0-1)
+      return DAG.getSetCC(dl, VT, N0, 
+                          DAG.getConstant(C1-1, N1.getValueType()),
+                          (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT);
+    }
 
-      if (Cond == ISD::SETLE || Cond == ISD::SETULE) {
-        if (C1 == MaxVal) return DAG.getConstant(1, VT);   // X <= MAX --> true
-        // X <= C0 --> X < (C0+1)
-        return DAG.getSetCC(dl, VT, N0, 
-                            DAG.getConstant(C1+1, N1.getValueType()),
-                            (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT);
-      }
+    if (Cond == ISD::SETLE || Cond == ISD::SETULE) {
+      if (C1 == MaxVal) return DAG.getConstant(1, VT);   // X <= MAX --> true
+      // X <= C0 --> X < (C0+1)
+      return DAG.getSetCC(dl, VT, N0, 
+                          DAG.getConstant(C1+1, N1.getValueType()),
+                          (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT);
+    }
 
-      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MinVal)
-        return DAG.getConstant(0, VT);      // X < MIN --> false
-      if ((Cond == ISD::SETGE || Cond == ISD::SETUGE) && C1 == MinVal)
-        return DAG.getConstant(1, VT);      // X >= MIN --> true
-      if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MaxVal)
-        return DAG.getConstant(0, VT);      // X > MAX --> false
-      if ((Cond == ISD::SETLE || Cond == ISD::SETULE) && C1 == MaxVal)
-        return DAG.getConstant(1, VT);      // X <= MAX --> true
+    if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MinVal)
+      return DAG.getConstant(0, VT);      // X < MIN --> false
+    if ((Cond == ISD::SETGE || Cond == ISD::SETUGE) && C1 == MinVal)
+      return DAG.getConstant(1, VT);      // X >= MIN --> true
+    if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MaxVal)
+      return DAG.getConstant(0, VT);      // X > MAX --> false
+    if ((Cond == ISD::SETLE || Cond == ISD::SETULE) && C1 == MaxVal)
+      return DAG.getConstant(1, VT);      // X <= MAX --> true
 
-      // Canonicalize setgt X, Min --> setne X, Min
-      if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MinVal)
-        return DAG.getSetCC(dl, VT, N0, N1, ISD::SETNE);
-      // Canonicalize setlt X, Max --> setne X, Max
-      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MaxVal)
-        return DAG.getSetCC(dl, VT, N0, N1, ISD::SETNE);
+    // Canonicalize setgt X, Min --> setne X, Min
+    if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MinVal)
+      return DAG.getSetCC(dl, VT, N0, N1, ISD::SETNE);
+    // Canonicalize setlt X, Max --> setne X, Max
+    if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MaxVal)
+      return DAG.getSetCC(dl, VT, N0, N1, ISD::SETNE);
 
-      // If we have setult X, 1, turn it into seteq X, 0
-      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MinVal+1)
-        return DAG.getSetCC(dl, VT, N0, 
-                            DAG.getConstant(MinVal, N0.getValueType()), 
-                            ISD::SETEQ);
-      // If we have setugt X, Max-1, turn it into seteq X, Max
-      else if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MaxVal-1)
-        return DAG.getSetCC(dl, VT, N0, 
-                            DAG.getConstant(MaxVal, N0.getValueType()),
-                            ISD::SETEQ);
+    // If we have setult X, 1, turn it into seteq X, 0
+    if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MinVal+1)
+      return DAG.getSetCC(dl, VT, N0, 
+                          DAG.getConstant(MinVal, N0.getValueType()), 
+                          ISD::SETEQ);
+    // If we have setugt X, Max-1, turn it into seteq X, Max
+    else if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MaxVal-1)
+      return DAG.getSetCC(dl, VT, N0, 
+                          DAG.getConstant(MaxVal, N0.getValueType()),
+                          ISD::SETEQ);
 
-      // If we have "setcc X, C0", check to see if we can shrink the immediate
-      // by changing cc.
+    // If we have "setcc X, C0", check to see if we can shrink the immediate
+    // by changing cc.
 
-      // SETUGT X, SINTMAX  -> SETLT X, 0
-      if (Cond == ISD::SETUGT && 
-          C1 == APInt::getSignedMaxValue(OperandBitSize))
-        return DAG.getSetCC(dl, VT, N0, 
-                            DAG.getConstant(0, N1.getValueType()),
-                            ISD::SETLT);
+    // SETUGT X, SINTMAX  -> SETLT X, 0
+    if (Cond == ISD::SETUGT && 
+        C1 == APInt::getSignedMaxValue(OperandBitSize))
+      return DAG.getSetCC(dl, VT, N0, 
+                          DAG.getConstant(0, N1.getValueType()),
+                          ISD::SETLT);
 
-      // SETULT X, SINTMIN  -> SETGT X, -1
-      if (Cond == ISD::SETULT &&
-          C1 == APInt::getSignedMinValue(OperandBitSize)) {
-        SDValue ConstMinusOne =
-            DAG.getConstant(APInt::getAllOnesValue(OperandBitSize),
-                            N1.getValueType());
-        return DAG.getSetCC(dl, VT, N0, ConstMinusOne, ISD::SETGT);
-      }
+    // SETULT X, SINTMIN  -> SETGT X, -1
+    if (Cond == ISD::SETULT &&
+        C1 == APInt::getSignedMinValue(OperandBitSize)) {
+      SDValue ConstMinusOne =
+          DAG.getConstant(APInt::getAllOnesValue(OperandBitSize),
+                          N1.getValueType());
+      return DAG.getSetCC(dl, VT, N0, ConstMinusOne, ISD::SETGT);
+    }
 
-      // Fold bit comparisons when we can.
-      if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
-          VT == N0.getValueType() && N0.getOpcode() == ISD::AND)
-        if (ConstantSDNode *AndRHS =
-                    dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
-          MVT ShiftTy = DCI.isBeforeLegalize() ?
-            getPointerTy() : getShiftAmountTy();
-          if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
-            // Perform the xform if the AND RHS is a single bit.
-            if (isPowerOf2_64(AndRHS->getZExtValue())) {
-              return DAG.getNode(ISD::SRL, dl, VT, N0,
-                                 DAG.getConstant(Log2_64(AndRHS->getZExtValue()),
-                                                 ShiftTy));
-            }
-          } else if (Cond == ISD::SETEQ && C1 == AndRHS->getZExtValue()) {
-            // (X & 8) == 8  -->  (X & 8) >> 3
-            // Perform the xform if C1 is a single bit.
-            if (C1.isPowerOf2()) {
-              return DAG.getNode(ISD::SRL, dl, VT, N0,
-                                 DAG.getConstant(C1.logBase2(), ShiftTy));
-            }
+    // Fold bit comparisons when we can.
+    if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+        VT == N0.getValueType() && N0.getOpcode() == ISD::AND)
+      if (ConstantSDNode *AndRHS =
+                  dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+        MVT ShiftTy = DCI.isBeforeLegalize() ?
+          getPointerTy() : getShiftAmountTy();
+        if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
+          // Perform the xform if the AND RHS is a single bit.
+          if (isPowerOf2_64(AndRHS->getZExtValue())) {
+            return DAG.getNode(ISD::SRL, dl, VT, N0,
+                                DAG.getConstant(Log2_64(AndRHS->getZExtValue()),
+                                                ShiftTy));
+          }
+        } else if (Cond == ISD::SETEQ && C1 == AndRHS->getZExtValue()) {
+          // (X & 8) == 8  -->  (X & 8) >> 3
+          // Perform the xform if C1 is a single bit.
+          if (C1.isPowerOf2()) {
+            return DAG.getNode(ISD::SRL, dl, VT, N0,
+                                DAG.getConstant(C1.logBase2(), ShiftTy));
           }
         }
-    }
-  } else if (isa<ConstantSDNode>(N0.getNode())) {
-      // Ensure that the constant occurs on the RHS.
-    return DAG.getSetCC(dl, VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
+      }
   }
 
   if (isa<ConstantFPSDNode>(N0.getNode())) {
