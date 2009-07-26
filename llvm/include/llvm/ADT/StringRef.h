@@ -81,7 +81,7 @@ namespace llvm {
     /// compare() in when the relative ordering of inequal strings isn't needed.
     bool equals(const StringRef &RHS) const {
       return (Length == RHS.Length && 
-              memcmp(Data, RHS.Data, Length) == 0);
+              memcmp(Data, RHS.Data, RHS.Length) == 0);
     }
 
     /// compare - Compare two strings; the result is -1, 0, or 1 if this string
