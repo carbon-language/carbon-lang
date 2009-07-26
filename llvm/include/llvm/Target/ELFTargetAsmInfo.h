@@ -41,7 +41,8 @@ namespace llvm {
     
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
                                                   SectionKind Kind) const;
-    virtual std::string printSectionFlags(unsigned flags) const;
+    virtual void getSectionFlags(unsigned Flags,
+                                 SmallVectorImpl<char> &Str) const;
 
     const Section *DataRelSection;
     const Section *DataRelLocalSection;

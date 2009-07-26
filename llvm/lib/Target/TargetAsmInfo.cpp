@@ -416,19 +416,6 @@ TargetAsmInfo::getUnnamedSection(const char *Directive, unsigned Flags,
   return &S;
 }
 
-const std::string&
-TargetAsmInfo::getSectionFlags(unsigned Flags) const {
-  SectionFlags::FlagsStringsMapType::iterator I = FlagsStrings.find(Flags);
-
-  // We didn't print these flags yet, print and save them to map. This reduces
-  // amount of heap trashing due to std::string construction / concatenation.
-  if (I == FlagsStrings.end())
-    I = FlagsStrings.insert(std::make_pair(Flags,
-                                           printSectionFlags(Flags))).first;
-
-  return I->second;
-}
-
 unsigned TargetAsmInfo::getULEB128Size(unsigned Value) {
   unsigned Size = 0;
   do {

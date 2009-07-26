@@ -135,12 +135,16 @@ void AsmPrinter::SwitchToSection(const Section* NS) {
     // If section is named we need to switch into it via special '.section'
     // directive and also append funky flags. Otherwise - section name is just
     // some magic assembler directive.
-    if (NS->hasFlag(SectionFlags::Named))
+    if (NS->hasFlag(SectionFlags::Named)) {
       O << TAI->getSwitchToSectionDirective()
-        << CurrentSection
-        << TAI->getSectionFlags(NS->getFlags());
-    else
+        << CurrentSection;
+      
+      SmallString<32> FlagsStr;
+      TAI->getSectionFlags(NS->getFlags(), FlagsStr);
+      O << FlagsStr.c_str();
+    } else {
       O << CurrentSection;
+    }
     O << TAI->getDataSectionStartSuffix() << '\n';
   }
 

@@ -168,38 +168,44 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
   return getReadOnlySection();
 }
 
-std::string ELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
-  std::string Flags = ",\"";
+void ELFTargetAsmInfo::getSectionFlags(unsigned Flags,
+                                       SmallVectorImpl<char> &Str) const {
+  Str.push_back(',');
+  Str.push_back('"');
+  
+  if (!(Flags & SectionFlags::Debug))
+    Str.push_back('a');
+  if (Flags & SectionFlags::Code)
+    Str.push_back('x');
+  if (Flags & SectionFlags::Writable)
+    Str.push_back('w');
+  if (Flags & SectionFlags::Mergeable)
+    Str.push_back('M');
+  if (Flags & SectionFlags::Strings)
+    Str.push_back('S');
+  if (Flags & SectionFlags::TLS)
+    Str.push_back('T');
 
-  if (!(flags & SectionFlags::Debug))
-    Flags += 'a';
-  if (flags & SectionFlags::Code)
-    Flags += 'x';
-  if (flags & SectionFlags::Writable)
-    Flags += 'w';
-  if (flags & SectionFlags::Mergeable)
-    Flags += 'M';
-  if (flags & SectionFlags::Strings)
-    Flags += 'S';
-  if (flags & SectionFlags::TLS)
-    Flags += 'T';
-
-  Flags += "\",";
+  Str.push_back('"');
+  Str.push_back(',');
 
   // If comment string is '@', e.g. as on ARM - use '%' instead
   if (strcmp(CommentString, "@") == 0)
-    Flags += '%';
+    Str.push_back('%');
   else
-    Flags += '@';
+    Str.push_back('@');
 
-  // FIXME: There can be exceptions here
-  if (flags & SectionFlags::BSS)
-    Flags += "nobits";
+  const char *KindStr;
+  if (Flags & SectionFlags::BSS)
+    KindStr = "nobits";
   else
-    Flags += "progbits";
+    KindStr = "progbits";
+  
+  Str.append(KindStr, KindStr+strlen(KindStr));
 
-  if (unsigned entitySize = SectionFlags::getEntitySize(flags))
-    Flags += "," + utostr(entitySize);
-
-  return Flags;
+  if (unsigned entitySize = SectionFlags::getEntitySize(Flags)) {
+    Str.push_back(',');
+    std::string Size = utostr(entitySize);
+    Str.append(Size.begin(), Size.end());
+  }
 }

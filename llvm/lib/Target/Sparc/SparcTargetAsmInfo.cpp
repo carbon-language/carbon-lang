@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcTargetAsmInfo.h"
-
+#include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
 SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
@@ -32,19 +32,22 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
                                  /* Override */ true);
 }
 
-std::string SparcELFTargetAsmInfo::printSectionFlags(unsigned flags) const {
-  if (flags & SectionFlags::Mergeable)
-    return ELFTargetAsmInfo::printSectionFlags(flags);
 
-  std::string Flags;
-  if (!(flags & SectionFlags::Debug))
-    Flags += ",#alloc";
-  if (flags & SectionFlags::Code)
-    Flags += ",#execinstr";
-  if (flags & SectionFlags::Writable)
-    Flags += ",#write";
-  if (flags & SectionFlags::TLS)
-    Flags += ",#tls";
+void SparcELFTargetAsmInfo::getSectionFlags(unsigned Flags,
+                                            SmallVectorImpl<char> &Str) const {
+  if (Flags & SectionFlags::Mergeable)
+    return ELFTargetAsmInfo::getSectionFlags(Flags, Str);
 
-  return Flags;
+  // FIXME: Inefficient.
+  std::string Res;
+  if (!(Flags & SectionFlags::Debug))
+    Res += ",#alloc";
+  if (Flags & SectionFlags::Code)
+    Res += ",#execinstr";
+  if (Flags & SectionFlags::Writable)
+    Res += ",#write";
+  if (Flags & SectionFlags::TLS)
+    Res += ",#tls";
+
+  Str.append(Res.begin(), Res.end());
 }

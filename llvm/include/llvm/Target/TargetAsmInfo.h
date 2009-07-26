@@ -16,12 +16,13 @@
 #ifndef LLVM_TARGET_ASM_INFO_H
 #define LLVM_TARGET_ASM_INFO_H
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
 
 namespace llvm {
+  template <typename T> class SmallVectorImpl;
+  
   // DWARF encoding query type
   namespace DwarfEncoding {
     enum Target {
@@ -235,8 +236,6 @@ namespace llvm {
       static bool isEqual(unsigned LHS, unsigned RHS) { return LHS == RHS; }
       static bool isPod() { return true; }
     };
-
-    typedef DenseMap<unsigned, std::string, KeyInfo> FlagsStringsMapType;
   }
 
   class TargetMachine;
@@ -269,7 +268,6 @@ namespace llvm {
   class TargetAsmInfo {
   private:
     mutable StringMap<Section> Sections;
-    mutable SectionFlags::FlagsStringsMapType FlagsStrings;
   protected:
     /// TM - The current TargetMachine.
     const TargetMachine &TM;
@@ -746,8 +744,11 @@ namespace llvm {
       return 0;
     }
     
-    const std::string &getSectionFlags(unsigned Flags) const;
-    virtual std::string printSectionFlags(unsigned flags) const { return ""; }
+    /// Turn the specified flags into a string that can be printed to the
+    /// assembly file.
+    virtual void getSectionFlags(unsigned Flags,
+                                 SmallVectorImpl<char> &Str) const {
+    }
 
 // FIXME: Eliminate this.
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,

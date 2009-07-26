@@ -274,17 +274,18 @@ getSectionPrefixForUniqueGlobal(SectionKind Kind) const {
   return ".rdata$linkonce";
 }
 
-std::string X86COFFTargetAsmInfo::printSectionFlags(unsigned flags) const {
-  std::string Flags = ",\"";
 
-  if (flags & SectionFlags::Code)
-    Flags += 'x';
-  if (flags & SectionFlags::Writable)
-    Flags += 'w';
+void X86COFFTargetAsmInfo::getSectionFlags(unsigned Flags,
+                                           SmallVectorImpl<char> &Str) const {
+  // FIXME: Inefficient.
+  std::string Res = ",\"";
+  if (Flags & SectionFlags::Code)
+    Res += 'x';
+  if (Flags & SectionFlags::Writable)
+    Res += 'w';
+  Res += "\"";
 
-  Flags += "\"";
-
-  return Flags;
+  Str.append(Res.begin(), Res.end());
 }
 
 X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):

@@ -55,7 +55,9 @@ namespace llvm {
                                            bool Global) const;
     virtual const char *
     getSectionPrefixForUniqueGlobal(SectionKind kind) const;
-    virtual std::string printSectionFlags(unsigned flags) const;
+    
+    virtual void getSectionFlags(unsigned Flags,
+                                 SmallVectorImpl<char> &Str) const;
   };
 
   struct X86WinTargetAsmInfo : public X86GenericTargetAsmInfo {
