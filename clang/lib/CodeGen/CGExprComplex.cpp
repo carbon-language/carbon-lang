@@ -261,8 +261,8 @@ public:
 /// load the real and imaginary pieces, returning them as Real/Imag.
 ComplexPairTy ComplexExprEmitter::EmitLoadOfComplex(llvm::Value *SrcPtr,
                                                     bool isVolatile) {
-  llvm::SmallString<64> Name(SrcPtr->getNameStart(),
-                             SrcPtr->getNameStart()+SrcPtr->getNameLen());
+  llvm::SmallString<64> Name(SrcPtr->getName().begin(),
+                             SrcPtr->getName().end());
   
   llvm::Value *Real=0, *Imag=0;
 
