@@ -49,34 +49,24 @@ ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
 const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                          SectionKind Kind) const {
-  if (isa<Function>(GV))
-    return TextSection;
-  
-  const GlobalVariable *GVar = cast<GlobalVariable>(GV);
   switch (Kind.getKind()) {
-  default: llvm_unreachable("Unsuported section kind for global");
-  case SectionKind::BSS:
-    return getBSSSection_();
-  case SectionKind::Data:
-  case SectionKind::DataRel:
-    return DataRelSection;
-  case SectionKind::DataRelLocal:
-    return DataRelLocalSection;
-  case SectionKind::DataRelRO:
-    return DataRelROSection;
-  case SectionKind::DataRelROLocal:
-    return DataRelROLocalSection;
-  case SectionKind::ROData:
-    return getReadOnlySection();
+  default: llvm_unreachable("Unknown section kind");
+  case SectionKind::Text:           return TextSection;
+  case SectionKind::BSS:            return getBSSSection_();
+  case SectionKind::Data:           return DataSection;
+  case SectionKind::DataRel:        return DataRelSection;
+  case SectionKind::DataRelLocal:   return DataRelLocalSection;
+  case SectionKind::DataRelRO:      return DataRelROSection;
+  case SectionKind::DataRelROLocal: return DataRelROLocalSection;
+  case SectionKind::ROData:         return getReadOnlySection();
   case SectionKind::RODataMergeStr:
-    return MergeableStringSection(GVar);
+    return MergeableStringSection(cast<GlobalVariable>(GV));
   case SectionKind::RODataMergeConst: {
-    const Type *Ty = GVar->getInitializer()->getType();
+    const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
     const TargetData *TD = TM.getTargetData();
     return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
   }
   case SectionKind::ThreadData:
-    // ELF targets usually support TLS stuff
     return TLSDataSection;
   case SectionKind::ThreadBSS:
     return TLSBSSSection;

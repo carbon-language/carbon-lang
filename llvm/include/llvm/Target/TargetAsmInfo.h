@@ -55,7 +55,7 @@ namespace llvm {
       /// Thread local data.
       ThreadData,       ///< Initialized TLS data objects
       ThreadBSS         ///< Uninitialized TLS data objects
-    } K; // This is private.
+    } K : 8; // This is private.
     
     // FIXME: Eliminate.
     Kind getKind() const { return K; }

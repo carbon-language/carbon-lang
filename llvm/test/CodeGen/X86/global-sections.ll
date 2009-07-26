@@ -39,4 +39,19 @@
 
 ; DARWIN: .const
 ; DARWIN: _G4:
-;	.long	34
+; DARWIN:     .long 34
+
+
+; int G5 = 47;
+@G5 = global i32 47
+
+; LINUX: .data
+; LINUX: .globl G5
+; LINUX: G5:
+; LINUX:    .long 47
+
+; DARWIN: .data
+; DARWIN: .globl _G5
+; DARWIN: _G5:
+; DARWIN:    .long 47
+
