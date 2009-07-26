@@ -152,7 +152,10 @@ static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
 }
 
 StringRef Value::getName() const {
-  if (!Name) return StringRef();
+  // Make sure the empty string is still a C string. For historical reasons,
+  // some clients want to call .data() on the result and expect it to be null
+  // terminated.
+  if (!Name) return StringRef("", 0);
   return Name->getKey();
 }
 
