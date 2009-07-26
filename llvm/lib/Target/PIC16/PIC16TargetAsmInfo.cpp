@@ -258,6 +258,9 @@ PIC16TargetAsmInfo::getSpecialCasedSectionGlobals(const GlobalValue *GV,
       if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
         std::string SectAddr = SectName.substr(AddrStr.length());
         return CreateSectionForGlobal(GVar, SectAddr);
+      } else {
+        // Create the section specified with section attribute. 
+        return CreateSectionForGlobal(GVar);
       }
     }
   }
