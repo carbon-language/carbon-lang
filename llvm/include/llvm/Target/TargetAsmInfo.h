@@ -124,10 +124,10 @@ namespace llvm {
       
     };
     
-    //private:
-    Kind K : 8; // This is private.
+  private:
+    Kind K : 8;
     
-    //public:
+  public:
     
     bool isText() const {
       return K == Text;
@@ -183,7 +183,8 @@ namespace llvm {
     }
     
     static SectionKind get(Kind K) {
-      SectionKind Res = { K };
+      SectionKind Res;
+      Res.K = K;
       return Res;
     }
   };
