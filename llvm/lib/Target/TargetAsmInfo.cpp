@@ -19,6 +19,7 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Dwarf.h"
@@ -217,7 +218,9 @@ static unsigned SectionFlagsForGlobal(const GlobalValue *GV,
 }
 
 static SectionKind SectionKindForGlobal(const GlobalValue *GV,
-                                        Reloc::Model ReloModel) {
+                                        const TargetMachine &TM) {
+  Reloc::Model ReloModel = TM.getRelocationModel();
+  
   // Early exit - functions should be always in text sections.
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
   if (GVar == 0)
@@ -249,8 +252,15 @@ static SectionKind SectionKindForGlobal(const GlobalValue *GV,
       if (isConstantString(C))
         return SectionKind::getMergableCString();
       
-      // Otherwise, just drop it into a mergable constant section.
-      return SectionKind::getMergableConst();
+      // Otherwise, just drop it into a mergable constant section.  If we have
+      // a section for this size, use it, otherwise use the arbitrary sized
+      // mergable section.
+      switch (TM.getTargetData()->getTypeAllocSize(C->getType())) {
+      case 4:  return SectionKind::getMergableConst4();
+      case 8:  return SectionKind::getMergableConst8();
+      case 16: return SectionKind::getMergableConst16();
+      default: return SectionKind::getMergableConst();
+      }
       
     case Constant::LocalRelocation:
       // In static relocation model, the linker will resolve all addresses, so
@@ -299,7 +309,7 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
   assert(!GV->isDeclaration() && !GV->hasAvailableExternallyLinkage() &&
          "Can only be used for global definitions");
   
-  SectionKind Kind = SectionKindForGlobal(GV, TM.getRelocationModel());
+  SectionKind Kind = SectionKindForGlobal(GV, TM);
 
   // Select section name.
   if (GV->hasSection()) {

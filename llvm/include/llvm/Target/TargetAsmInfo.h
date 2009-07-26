@@ -60,6 +60,17 @@ namespace llvm {
           /// constant pool entries etc.
           MergableConst,
       
+              /// MergableConst4 - This is a section used by 4-byte constants,
+              /// for example, floats.
+              MergableConst4,
+      
+              /// MergableConst8 - This is a section used by 8-byte constants,
+              /// for example, doubles.
+              MergableConst8,
+
+              /// MergableConst16 - This is a section used by 16-byte constants,
+              /// for example, vectors.
+              MergableConst16,
       
       /// Writable - This is the base of all segments that need to be written
       /// to during program runtime.
@@ -118,11 +129,18 @@ namespace llvm {
     }
     
     bool isReadOnly() const {
-      return K == ReadOnly || K == MergableCString || K == MergableConst;
+      return K == ReadOnly || K == MergableCString || isMergableConst();
     }
 
     bool isMergableCString() const { return K == MergableCString; }
-    bool isMergableConst() const { return K == MergableConst; }
+    bool isMergableConst() const {
+      return K == MergableConst || K == MergableConst4 ||
+             K == MergableConst8 || K == MergableConst16;
+    }
+    
+    bool isMergableConst4() const { return K == MergableConst4; }
+    bool isMergableConst8() const { return K == MergableConst8; }
+    bool isMergableConst16() const { return K == MergableConst16; }
     
     bool isWritable() const {
       return isThreadLocal() || isGlobalWritableData();
@@ -167,6 +185,9 @@ namespace llvm {
     static SectionKind getReadOnly()         { return get(ReadOnly); }
     static SectionKind getMergableCString()  { return get(MergableCString); }
     static SectionKind getMergableConst()    { return get(MergableConst); }
+    static SectionKind getMergableConst4()   { return get(MergableConst4); }
+    static SectionKind getMergableConst8()   { return get(MergableConst8); }
+    static SectionKind getMergableConst16()  { return get(MergableConst16); }
     static SectionKind getThreadBSS()        { return get(ThreadBSS); }
     static SectionKind getThreadData()       { return get(ThreadData); }
     static SectionKind getBSS()              { return get(BSS); }

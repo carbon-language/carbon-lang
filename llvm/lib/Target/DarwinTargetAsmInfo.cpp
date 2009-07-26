@@ -148,9 +148,13 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
     return MergeableStringSection(cast<GlobalVariable>(GV));
   
   if (Kind.isMergableConst()) {
-    const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
-    const TargetData *TD = TM.getTargetData();
-    return getSectionForMergableConstant(TD->getTypeAllocSize(Ty), 0);
+    if (Kind.isMergableConst4())
+      return FourByteConstantSection;
+    if (Kind.isMergableConst8())
+      return EightByteConstantSection;
+    if (Kind.isMergableConst16() && SixteenByteConstantSection)
+      return SixteenByteConstantSection;
+    return ReadOnlySection;  // .const
   }
   
   // FIXME: ROData -> const in -static mode that is relocatable but they happen

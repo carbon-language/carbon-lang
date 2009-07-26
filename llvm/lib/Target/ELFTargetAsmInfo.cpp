@@ -52,6 +52,7 @@ ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
   if (Kind.isText()) return TextSection;
   if (Kind.isMergableCString())
     return MergeableStringSection(cast<GlobalVariable>(GV));
+  
   if (Kind.isMergableConst()) {
     const Type *Ty = cast<GlobalVariable>(GV)->getInitializer()->getType();
     const TargetData *TD = TM.getTargetData();
@@ -131,8 +132,6 @@ unsigned ELFTargetAsmInfo::getFlagsForNamedSection(const char *Name) const {
   
   return Flags;
 }
-
-
 
 const char *
 ELFTargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind Kind) const{
