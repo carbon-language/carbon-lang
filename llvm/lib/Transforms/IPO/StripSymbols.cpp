@@ -139,7 +139,7 @@ static void StripSymtab(ValueSymbolTable &ST, bool PreserveDbgInfo) {
     Value *V = VI->getValue();
     ++VI;
     if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasLocalLinkage()) {
-      if (!PreserveDbgInfo || strncmp(V->getNameStart(), "llvm.dbg", 8))
+      if (!PreserveDbgInfo || !V->getName().startswith("llvm.dbg"))
         // Set name to "", removing from symbol table!
         V->setName("");
     }
@@ -181,13 +181,13 @@ bool StripSymbolNames(Module &M, bool PreserveDbgInfo) {
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I) {
     if (I->hasLocalLinkage() && llvmUsedValues.count(I) == 0)
-      if (!PreserveDbgInfo || strncmp(I->getNameStart(), "llvm.dbg", 8))
+      if (!PreserveDbgInfo || !I->getName().startswith("llvm.dbg"))
         I->setName("");     // Internal symbols can't participate in linkage
   }
   
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     if (I->hasLocalLinkage() && llvmUsedValues.count(I) == 0)
-      if (!PreserveDbgInfo || strncmp(I->getNameStart(), "llvm.dbg", 8))
+      if (!PreserveDbgInfo || !I->getName().startswith("llvm.dbg"))
         I->setName("");     // Internal symbols can't participate in linkage
     StripSymtab(I->getValueSymbolTable(), PreserveDbgInfo);
   }
@@ -231,7 +231,7 @@ bool StripDebugInfo(Module &M) {
     GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
     if (!GV) continue;
     if (!GV->use_empty() && llvmUsedValues.count(I) == 0) {
-      if (strncmp(GV->getNameStart(), "llvm.dbg", 8) == 0) {
+      if (GV->getName().startswith("llvm.dbg")) {
         GV->replaceAllUsesWith(M.getContext().getUndef(GV->getType()));
       }
     }
@@ -410,8 +410,7 @@ bool StripDebugDeclare::runOnModule(Module &M) {
        I != E; ++I) {
     GlobalVariable *GV = dyn_cast<GlobalVariable>(I);
     if (!GV) continue;
-    if (GV->use_empty() && GV->hasName() 
-        && strncmp(GV->getNameStart(), "llvm.dbg.global_variable", 24) == 0)
+    if (GV->use_empty() && GV->getName().startswith("llvm.dbg.global_variable"))
       DeadConstants.push_back(GV);
   }
 

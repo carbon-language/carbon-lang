@@ -110,19 +110,6 @@ public:
   // All values can potentially be named...
   inline bool hasName() const { return Name != 0; }
   ValueName *getValueName() const { return Name; }
-
-  /// getNameStart - Return a pointer to a null terminated string for this name.
-  /// Note that names can have null characters within the string as well as at
-  /// their end.  This always returns a non-null pointer.
-  const char *getNameStart() const { 
-    if (!Name) return "";
-    return getName().begin(); 
-  }
-  /// getNameEnd - Return a pointer to the end of the name.
-  const char *getNameEnd() const { 
-    if (!Name) return "";
-    return getName().end(); 
-  }
   
   /// getName() - Return a constant reference to the value's name. This is cheap
   /// and guaranteed to return the same reference as long as the value is not

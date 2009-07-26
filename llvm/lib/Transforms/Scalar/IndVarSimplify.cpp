@@ -733,7 +733,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   Value *LHS = (EVIndex == 1 ? NewPHI->getIncomingValue(1) : NewEV);
   Value *RHS = (EVIndex == 1 ? NewEV : NewPHI->getIncomingValue(1));
   ICmpInst *NewEC = new ICmpInst(EC->getParent()->getTerminator(),
-                                 NewPred, LHS, RHS, EC->getNameStart());
+                                 NewPred, LHS, RHS, EC->getName());
 
   // In the following deltions, PH may become dead and may be deleted.
   // Use a WeakVH to observe whether this happens.

@@ -107,13 +107,13 @@ static debug_line_info LineStartToOProfileFormat(
 void OProfileJITEventListener::NotifyFunctionEmitted(
     const Function &F, void *FnStart, size_t FnSize,
     const EmittedFunctionDetails &Details) {
-  const char *const FnName = F.getNameStart();
-  assert(FnName != 0 && FnStart != 0 && "Bad symbol to add");
-  if (op_write_native_code(Agent, FnName,
+  assert(F.hasName() && FnStart != 0 && "Bad symbol to add");
+  if (op_write_native_code(Agent, F.getName().data(),
                            reinterpret_cast<uint64_t>(FnStart),
                            FnStart, FnSize) == -1) {
-    DOUT << "Failed to tell OProfile about native function " << FnName
-         << " at [" << FnStart << "-" << ((char*)FnStart + FnSize) << "]\n";
+    DEBUG(errs() << "Failed to tell OProfile about native function " 
+          << Fn.getName() << " at [" 
+          << FnStart << "-" << ((char*)FnStart + FnSize) << "]\n");
     return;
   }
 
@@ -139,9 +139,10 @@ void OProfileJITEventListener::NotifyFunctionEmitted(
   if (!LineInfo.empty()) {
     if (op_write_debug_line_info(Agent, FnStart,
                                  LineInfo.size(), &*LineInfo.begin()) == -1) {
-      DOUT << "Failed to tell OProfile about line numbers for native function "
-           << FnName << " at [" << FnStart << "-" << ((char*)FnStart + FnSize)
-           << "]\n";
+      DEBUG(errs() 
+            << "Failed to tell OProfile about line numbers for native function "
+            << F.getName() << " at [" 
+            << FnStart << "-" << ((char*)FnStart + FnSize) << "]\n");
     }
   }
 }

@@ -1611,7 +1611,7 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
     O << ':';
   if (printComment && MBB->getBasicBlock())
     O << '\t' << TAI->getCommentString() << ' '
-      << MBB->getBasicBlock()->getNameStart();
+      << MBB->getBasicBlock()->getNameStr();
 }
 
 /// printPICJumpTableSetLabel - This method prints a set label for the

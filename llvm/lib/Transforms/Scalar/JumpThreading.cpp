@@ -858,7 +858,7 @@ bool JumpThreading::ProcessBranchOnCompare(CmpInst *Cmp, BasicBlock *BB) {
   // See if the cost of duplicating this block is low enough.
   unsigned JumpThreadCost = getJumpThreadDuplicationCost(BB);
   if (JumpThreadCost > Threshold) {
-    DEBUG(errs() << "  Not threading BB '" << BB->getNameStart()
+    DEBUG(errs() << "  Not threading BB '" << BB->getName()
           << "' - Cost is too high: " << JumpThreadCost << "\n");
     return false;
   }
@@ -900,7 +900,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
 
   // And finally, do it!
   DEBUG(errs() << "  Threading edge from '" << PredBB->getName() << "' to '"
-        << SuccBB->getNameStart() << "' with cost: " << JumpThreadCost
+        << SuccBB->getName() << "' with cost: " << JumpThreadCost
         << ", across block:\n    "
         << *BB << "\n");
   
@@ -933,7 +933,7 @@ bool JumpThreading::ThreadEdge(BasicBlock *BB, BasicBlock *PredBB,
   // mapping and using it to remap operands in the cloned instructions.
   for (; !isa<TerminatorInst>(BI); ++BI) {
     Instruction *New = BI->clone(BI->getContext());
-    New->setName(BI->getNameStart());
+    New->setName(BI->getName());
     NewBB->getInstList().push_back(New);
     ValueMapping[BI] = New;
    

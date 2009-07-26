@@ -41,6 +41,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 using namespace llvm;
@@ -2523,11 +2524,9 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   Changed = false;
 
   if (!IU->IVUsesByStride.empty()) {
-#ifndef NDEBUG
-    DOUT << "\nLSR on \"" << L->getHeader()->getParent()->getNameStart()
-         << "\" ";
-    DEBUG(L->dump());
-#endif
+    DEBUG(errs() << "\nLSR on \"" << L->getHeader()->getParent()->getName()
+          << "\" ";
+          L->dump());
 
     // Sort the StrideOrder so we process larger strides first.
     std::stable_sort(IU->StrideOrder.begin(), IU->StrideOrder.end(),

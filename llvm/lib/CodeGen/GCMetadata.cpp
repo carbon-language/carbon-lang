@@ -153,12 +153,12 @@ bool Printer::runOnFunction(Function &F) {
   if (!F.hasGC()) {
     GCFunctionInfo *FD = &getAnalysis<GCModuleInfo>().getFunctionInfo(F);
     
-    OS << "GC roots for " << FD->getFunction().getNameStart() << ":\n";
+    OS << "GC roots for " << FD->getFunction().getNameStr() << ":\n";
     for (GCFunctionInfo::roots_iterator RI = FD->roots_begin(),
                                         RE = FD->roots_end(); RI != RE; ++RI)
       OS << "\t" << RI->Num << "\t" << RI->StackOffset << "[sp]\n";
     
-    OS << "GC safe points for " << FD->getFunction().getNameStart() << ":\n";
+    OS << "GC safe points for " << FD->getFunction().getNameStr() << ":\n";
     for (GCFunctionInfo::iterator PI = FD->begin(),
                                   PE = FD->end(); PI != PE; ++PI) {
       

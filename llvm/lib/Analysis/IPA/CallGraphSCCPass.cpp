@@ -109,7 +109,7 @@ bool CGPassManager::runOnModule(Module &M) {
         for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
           Function *F = SCC[i]->getFunction();
           if (F) {
-            dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getNameStart());
+            dumpPassInfo(P, EXECUTION_MSG, ON_FUNCTION_MSG, F->getName());
             Changed |= FPP->runOnFunction(*F);
           }
         }

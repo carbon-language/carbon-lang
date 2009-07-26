@@ -1120,9 +1120,8 @@ void DwarfDebug::ConstructFunctionDbgScope(DbgScope *RootScope,
 /// ConstructDefaultDbgScope - Construct a default scope for the subprogram.
 ///
 void DwarfDebug::ConstructDefaultDbgScope(MachineFunction *MF) {
-  const char *FnName = MF->getFunction()->getNameStart();
   StringMap<DIE*> &Globals = ModuleCU->getGlobals();
-  StringMap<DIE*>::iterator GI = Globals.find(FnName);
+  StringMap<DIE*>::iterator GI = Globals.find(MF->getFunction()->getName());
   if (GI != Globals.end()) {
     DIE *SPDie = GI->second;
     

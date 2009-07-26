@@ -620,8 +620,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           NewRetIdxs[i] = RetTypes.size() - 1;
         } else {
           ++NumRetValsEliminated;
-          DOUT << "DAE - Removing return value " << i << " from "
-               << F->getNameStart() << "\n";
+          DEBUG(errs() << "DAE - Removing return value " << i << " from "
+                << F->getName() << "\n");
         }
       }
     else
@@ -630,8 +630,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         RetTypes.push_back(RetTy);
         NewRetIdxs[0] = 0;
       } else {
-        DOUT << "DAE - Removing return value from " << F->getNameStart()
-             << "\n";
+        DEBUG(errs() << "DAE - Removing return value from " << F->getName()
+              << "\n");
         ++NumRetValsEliminated;
       }
     if (RetTypes.size() > 1)
@@ -685,8 +685,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         AttributesVec.push_back(AttributeWithIndex::get(Params.size(), Attrs));
     } else {
       ++NumArgumentsEliminated;
-      DOUT << "DAE - Removing argument " << i << " (" << I->getNameStart()
-           << ") from " << F->getNameStart() << "\n";
+      DEBUG(errs() << "DAE - Removing argument " << i << " (" << I->getName()
+            << ") from " << F->getName() << "\n");
     }
   }
 

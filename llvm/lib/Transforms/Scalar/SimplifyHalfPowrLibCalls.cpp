@@ -135,8 +135,7 @@ bool SimplifyHalfPowrLibCalls::runOnFunction(Function &F) {
         Function *Callee = CI->getCalledFunction();
         if (Callee && Callee->hasExternalLinkage()) {
           // Look for calls with well-known names.
-          const char *CalleeName = Callee->getNameStart();
-          if (strcmp(CalleeName, "__half_powrf4") == 0)
+          if (Callee->getName() == "__half_powrf4")
             IsHalfPowr = true;
         }
       }

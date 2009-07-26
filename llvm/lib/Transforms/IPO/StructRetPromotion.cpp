@@ -35,6 +35,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
 STATISTIC(NumRejectedSRETUses , "Number of sret rejected due to unexpected uses");
@@ -90,7 +91,8 @@ bool SRETPromotion::PromoteReturn(CallGraphNode *CGN) {
   if (F->arg_size() == 0 || !F->hasStructRetAttr() || F->doesNotReturn())
     return false;
 
-  DOUT << "SretPromotion: Looking at sret function " << F->getNameStart() << "\n";
+  DEBUG(errs() << "SretPromotion: Looking at sret function " 
+        << F->getName() << "\n");
 
   assert (F->getReturnType() == Type::VoidTy && "Invalid function return type");
   Function::arg_iterator AI = F->arg_begin();

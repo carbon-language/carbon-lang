@@ -5537,7 +5537,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
     // computation crosses zero.
     if (VariableIdx->getType()->getPrimitiveSizeInBits() > IntPtrWidth)
       VariableIdx = new TruncInst(VariableIdx, TD.getIntPtrType(),
-                                  VariableIdx->getNameStart(), &I);
+                                  VariableIdx->getName(), &I);
     return VariableIdx;
   }
   
@@ -5561,7 +5561,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
   if (VariableIdx->getType() != IntPtrTy)
     VariableIdx = CastInst::CreateIntegerCast(VariableIdx, IntPtrTy,
                                               true /*SExt*/, 
-                                              VariableIdx->getNameStart(), &I);
+                                              VariableIdx->getName(), &I);
   Constant *OffsetVal = ConstantInt::get(IntPtrTy, NewOffs);
   return BinaryOperator::CreateAdd(VariableIdx, OffsetVal, "offset", &I);
 }

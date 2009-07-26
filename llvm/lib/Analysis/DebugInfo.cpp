@@ -329,7 +329,7 @@ bool DISubprogram::describes(const Function *F) {
   getLinkageName(Name);
   if (Name.empty())
     getName(Name);
-  if (!Name.empty() && (strcmp(Name.c_str(), F->getNameStart()) == false))
+  if (F->getName() == Name)
     return true;
   return false;
 }
@@ -1057,7 +1057,7 @@ namespace llvm {
     for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
        GVI != E; GVI++) {
       GlobalVariable *GV = GVI;
-      if (GV->hasName() && strncmp(GV->getNameStart(), "llvm.dbg", 8) == 0
+      if (GV->hasName() && GV->getName().startswith("llvm.dbg")
           && GV->isConstant() && GV->hasInitializer()) {
         DICompileUnit C(GV);
         if (C.isNull() == false) {

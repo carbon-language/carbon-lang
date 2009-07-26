@@ -84,8 +84,7 @@ JITEventListener *createMacOSJITEventListener() {
 void MacOSJITEventListener::NotifyFunctionEmitted(
     const Function &F, void *FnStart, size_t FnSize,
     const EmittedFunctionDetails &) {
-  const char *const FnName = F.getNameStart();
-  assert(FnName != 0 && FnStart != 0 && "Bad symbol to add");
+  assert(F.hasName() && FnStart != 0 && "Bad symbol to add");
   JITSymbolTable **SymTabPtrPtr = 0;
   SymTabPtrPtr = &__jitSymbolTable;
 
@@ -120,7 +119,7 @@ void MacOSJITEventListener::NotifyFunctionEmitted(
 
   // Otherwise, we have enough space, just tack it onto the end of the array.
   JITSymbolEntry &Entry = SymTabPtr->Symbols[SymTabPtr->NumSymbols];
-  Entry.FnName = strdup(FnName);
+  Entry.FnName = strdup(F.getName().data());
   Entry.FnStart = FnStart;
   Entry.FnSize = FnSize;
   ++SymTabPtr->NumSymbols;

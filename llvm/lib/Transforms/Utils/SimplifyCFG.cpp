@@ -86,8 +86,8 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
 static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
 
-  DOUT << "Looking to fold " << BB->getNameStart() << " into " 
-       << Succ->getNameStart() << "\n";
+  DEBUG(errs() << "Looking to fold " << BB->getName() << " into " 
+        << Succ->getName() << "\n");
   // Shortcut, if there is only a single predecessor it must be BB and merging
   // is always safe
   if (Succ->getSinglePredecessor()) return true;
@@ -128,10 +128,10 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
             PI != PE; PI++) {
         if (BBPN->getIncomingValueForBlock(*PI) 
               != PN->getIncomingValueForBlock(*PI)) {
-          DOUT << "Can't fold, phi node " << *PN->getNameStart() << " in " 
-               << Succ->getNameStart() << " is conflicting with " 
-               << BBPN->getNameStart() << " with regard to common predecessor "
-               << (*PI)->getNameStart() << "\n";
+          DEBUG(errs() << "Can't fold, phi node " << PN->getName() << " in " 
+                << Succ->getName() << " is conflicting with " 
+                << BBPN->getName() << " with regard to common predecessor "
+                << (*PI)->getName() << "\n");
           return false;
         }
       }
@@ -146,9 +146,9 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
         // one for BB, in which case this phi node will not prevent the merging
         // of the block.
         if (Val != PN->getIncomingValueForBlock(*PI)) {
-          DOUT << "Can't fold, phi node " << *PN->getNameStart() << " in " 
-          << Succ->getNameStart() << " is conflicting with regard to common "
-          << "predecessor " << (*PI)->getNameStart() << "\n";
+          DEBUG(errs() << "Can't fold, phi node " << PN->getName() << " in " 
+                << Succ->getName() << " is conflicting with regard to common "
+                << "predecessor " << (*PI)->getName() << "\n");
           return false;
         }
       }
@@ -166,9 +166,9 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     for (BlockSet::iterator PI = CommonPreds.begin(), PE = CommonPreds.end();
           PI != PE; PI++)
       if (PN->getIncomingValueForBlock(*PI) != PN) {
-        DOUT << "Can't fold, phi node " << *PN->getNameStart() << " in " 
-             << BB->getNameStart() << " is conflicting with regard to common "
-             << "predecessor " << (*PI)->getNameStart() << "\n";
+        DEBUG(errs() << "Can't fold, phi node " << PN->getName() << " in " 
+              << BB->getName() << " is conflicting with regard to common "
+              << "predecessor " << (*PI)->getName() << "\n");
         return false;
       }
   }

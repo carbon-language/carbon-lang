@@ -327,7 +327,7 @@ void LTOModule::addDefinedSymbol(GlobalValue* def, Mangler &mangler,
                                  bool isFunction)
 {    
     // ignore all llvm.* symbols
-    if ( strncmp(def->getNameStart(), "llvm.", 5) == 0 )
+    if (def->getName().startswith("llvm."))
         return;
 
     // string is owned by _defines
@@ -397,7 +397,7 @@ void LTOModule::addAsmGlobalSymbol(const char *name) {
 void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
 {   
     // ignore all llvm.* symbols
-    if ( strncmp(decl->getNameStart(), "llvm.", 5) == 0 )
+    if (decl->getName().startswith("llvm."))
         return;
 
     // ignore all aliases
