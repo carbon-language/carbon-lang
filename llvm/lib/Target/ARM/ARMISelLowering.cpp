@@ -2188,6 +2188,30 @@ SDValue ARM::getVMOVImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
                      SplatBitSize, DAG);
 }
 
+/// isVREVMask - Check if a vector shuffle corresponds to a VREV
+/// instruction with the specified blocksize.  (The order of the elements
+/// within each block of the vector is reversed.)
+bool ARM::isVREVMask(ShuffleVectorSDNode *N, unsigned BlockSize) {
+  assert((BlockSize==16 || BlockSize==32 || BlockSize==64) &&
+         "Only possible block sizes for VREV are: 16, 32, 64");
+
+  MVT VT = N->getValueType(0);
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned EltSz = VT.getVectorElementType().getSizeInBits();
+  unsigned BlockElts = N->getMaskElt(0) + 1;
+
+  if (BlockSize <= EltSz || BlockSize != BlockElts * EltSz)
+    return false;
+
+  for (unsigned i = 0; i < NumElts; ++i) {
+    if ((unsigned) N->getMaskElt(i) !=
+        (i - i%BlockElts) + (BlockElts - 1 - i%BlockElts))
+      return false;
+  }
+
+  return true;
+}
+
 static SDValue BuildSplat(SDValue Val, MVT VT, SelectionDAG &DAG, DebugLoc dl) {
   // Canonicalize all-zeros and all-ones vectors.
   ConstantSDNode *ConstVal = dyn_cast<ConstantSDNode>(Val.getNode());

@@ -125,6 +125,11 @@ namespace llvm {
     /// return the constant being splatted.  The ByteSize field indicates the
     /// number of bytes of each element [1248].
     SDValue getVMOVImm(SDNode *N, unsigned ByteSize, SelectionDAG &DAG);
+
+    /// isVREVMask - Check if a vector shuffle corresponds to a VREV
+    /// instruction with the specified blocksize.  (The order of the elements
+    /// within each block of the vector is reversed.)
+    bool isVREVMask(ShuffleVectorSDNode *N, unsigned blocksize);
   }
 
   //===--------------------------------------------------------------------===//
