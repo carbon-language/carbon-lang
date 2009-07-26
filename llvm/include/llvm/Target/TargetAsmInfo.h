@@ -61,11 +61,9 @@ namespace llvm {
     Kind getKind() const { return K; }
 
     bool isReadOnly() const {
-      return (K == SectionKind::ROData ||
-              K == SectionKind::DataRelRO ||
-              K == SectionKind::DataRelROLocal ||
-              K == SectionKind::RODataMergeConst ||
-              K == SectionKind::RODataMergeStr);
+      return K == ROData ||
+             K == DataRelRO        || K == DataRelROLocal ||
+             K == RODataMergeConst || K == RODataMergeStr;
     }
 
     bool isBSS() const {
@@ -82,13 +80,13 @@ namespace llvm {
     
     bool isWritable() const {
       return isTLS() ||
-             K == SectionKind::Data ||
-             K == SectionKind::DataRel ||
-             K == SectionKind::DataRelLocal ||
-             K == SectionKind::DataRelRO ||
-             K == SectionKind::DataRelROLocal ||
-             K == SectionKind::BSS;
+             K == Data ||
+             K == DataRel   || K == DataRelLocal ||
+             K == DataRelRO || K == DataRelROLocal ||
+             K == BSS;
     }
+    
+    bool isMergableString() const { return K == RODataMergeStr; }
     
     static SectionKind get(Kind K) {
       SectionKind Res = { K };
@@ -106,7 +104,7 @@ namespace llvm {
     static SectionKind getRODataMergeConst() { return get(RODataMergeConst); }
     static SectionKind getThreadData()       { return get(ThreadData); }
     static SectionKind getThreadBSS()        { return get(ThreadBSS); }
-};
+  };
 
   namespace SectionFlags {
     const unsigned Invalid    = -1U;
