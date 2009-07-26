@@ -1127,7 +1127,7 @@ struct VISIBILITY_HIDDEN UnaryDoubleFPOpt : public LibCallOptimization {
 
     // floor((double)floatval) -> (double)floorf(floatval)
     Value *V = Cast->getOperand(0);
-    V = EmitUnaryFloatFnCall(V, Callee->getNameStart(), B);
+    V = EmitUnaryFloatFnCall(V, Callee->getName().data(), B);
     return B.CreateFPExt(V, Type::DoubleTy);
   }
 };
@@ -1736,40 +1736,39 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
     if (!F.isDeclaration())
       continue;
 
-    unsigned NameLen = F.getNameLen();
-    if (!NameLen)
+    if (!F.hasName())
       continue;
 
     const FunctionType *FTy = F.getFunctionType();
 
-    const char *NameStr = F.getNameStart();
-    switch (NameStr[0]) {
+    StringRef Name = F.getName();
+    switch (Name[0]) {
       case 's':
-        if (NameLen == 6 && !strcmp(NameStr, "strlen")) {
+        if (Name == "strlen") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 6 && !strcmp(NameStr, "strcpy")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "stpcpy")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "strcat")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "strtol")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "strtod")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "strtof")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strtoul")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strtoll")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strtold")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strncat")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strncpy")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "strtoull"))) {
+        } else if (Name == "strcpy" ||
+                   Name == "stpcpy" ||
+                   Name == "strcat" ||
+                   Name == "strtol" ||
+                   Name == "strtod" ||
+                   Name == "strtof" ||
+                   Name == "strtoul" ||
+                   Name == "strtoll" ||
+                   Name == "strtold" ||
+                   Name == "strncat" ||
+                   Name == "strncpy" ||
+                   Name == "strtoull") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 7 && !strcmp(NameStr, "strxfrm")) {
+        } else if (Name == "strxfrm") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -1777,13 +1776,13 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 6 && !strcmp(NameStr, "strcmp")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "strspn")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strncmp")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strcspn")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strcoll")) ||
-                   (NameLen == 10 && !strcmp(NameStr, "strcasecmp")) ||
-                   (NameLen == 11 && !strcmp(NameStr, "strncasecmp"))) {
+        } else if (Name == "strcmp" ||
+                   Name == "strspn" ||
+                   Name == "strncmp" ||
+                   Name ==" strcspn" ||
+                   Name == "strcoll" ||
+                   Name == "strcasecmp" ||
+                   Name == "strncasecmp") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -1792,31 +1791,31 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 6 && !strcmp(NameStr, "strstr")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strpbrk"))) {
+        } else if (Name == "strstr" ||
+                   Name == "strpbrk") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 6 && !strcmp(NameStr, "strtok")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "strtok_r"))) {
+        } else if (Name == "strtok" ||
+                   Name == "strtok_r") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "scanf")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "setbuf")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "setvbuf"))) {
+        } else if (Name == "scanf" ||
+                   Name == "setbuf" ||
+                   Name == "setvbuf") {
           if (FTy->getNumParams() < 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 6 && !strcmp(NameStr, "strdup")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "strndup"))) {
+        } else if (Name == "strdup" ||
+                   Name == "strndup") {
           if (FTy->getNumParams() < 1 ||
               !isa<PointerType>(FTy->getReturnType()) ||
               !isa<PointerType>(FTy->getParamType(0)))
@@ -1824,10 +1823,10 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 4 && !strcmp(NameStr, "stat")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "sscanf")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "sprintf")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "statvfs"))) {
+        } else if (Name == "stat" ||
+                   Name == "sscanf" ||
+                   Name == "sprintf" ||
+                   Name == "statvfs") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -1835,7 +1834,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 8 && !strcmp(NameStr, "snprintf")) {
+        } else if (Name == "snprintf") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(2)))
@@ -1843,7 +1842,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 3);
-        } else if (NameLen == 9 && !strcmp(NameStr, "setitimer")) {
+        } else if (Name == "setitimer") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(1)) ||
               !isa<PointerType>(FTy->getParamType(2)))
@@ -1851,7 +1850,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
           setDoesNotCapture(F, 3);
-        } else if (NameLen == 6 && !strcmp(NameStr, "system")) {
+        } else if (Name == "system") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -1860,7 +1859,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'm':
-        if (NameLen == 6 && !strcmp(NameStr, "memcmp")) {
+        if (Name == "memcmp") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -1869,29 +1868,29 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 6 && !strcmp(NameStr, "memchr")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "memrchr"))) {
+        } else if (Name == "memchr" ||
+                   Name == "memrchr") {
           if (FTy->getNumParams() != 3)
             continue;
           setOnlyReadsMemory(F);
           setDoesNotThrow(F);
-        } else if ((NameLen == 4 && !strcmp(NameStr, "modf")) ||
-                   (NameLen == 5 && !strcmp(NameStr, "modff")) ||
-                   (NameLen == 5 && !strcmp(NameStr, "modfl")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "memcpy")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "memccpy")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "memmove"))) {
+        } else if (Name == "modf" ||
+                   Name == "modff" ||
+                   Name == "modfl" ||
+                   Name == "memcpy" ||
+                   Name == "memccpy" ||
+                   Name == "memmove") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 8 && !strcmp(NameStr, "memalign")) {
+        } else if (Name == "memalign") {
           if (!isa<PointerType>(FTy->getReturnType()))
             continue;
           setDoesNotAlias(F, 0);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "mkdir")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "mktime"))) {
+        } else if (Name == "mkdir" ||
+                   Name == "mktime") {
           if (FTy->getNumParams() == 0 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -1900,7 +1899,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'r':
-        if (NameLen == 7 && !strcmp(NameStr, "realloc")) {
+        if (Name == "realloc") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getReturnType()))
@@ -1908,23 +1907,23 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 1);
-        } else if (NameLen == 4 && !strcmp(NameStr, "read")) {
+        } else if (Name == "read") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           // May throw; "read" is a valid pthread cancellation point.
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "rmdir")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "rewind")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "remove")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "realpath"))) {
+        } else if (Name == "rmdir" ||
+                   Name == "rewind" ||
+                   Name == "remove" ||
+                   Name == "realpath") {
           if (FTy->getNumParams() < 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 6 && !strcmp(NameStr, "rename")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "readlink"))) {
+        } else if (Name == "rename" ||
+                   Name == "readlink") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -1935,7 +1934,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'w':
-        if (NameLen == 5 && !strcmp(NameStr, "write")) {
+        if (Name == "write") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
@@ -1944,7 +1943,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'b':
-        if (NameLen == 5 && !strcmp(NameStr, "bcopy")) {
+        if (Name == "bcopy") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -1952,7 +1951,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 4 && !strcmp(NameStr, "bcmp")) {
+        } else if (Name == "bcmp") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -1961,7 +1960,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setOnlyReadsMemory(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 5 && !strcmp(NameStr, "bzero")) {
+        } else if (Name == "bzero") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -1970,17 +1969,17 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'c':
-        if (NameLen == 6 && !strcmp(NameStr, "calloc")) {
+        if (Name == "calloc") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getReturnType()))
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "chmod")) ||
-                   (NameLen == 5 && !strcmp(NameStr, "chown")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "ctermid")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "clearerr")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "closedir"))) {
+        } else if (Name == "chmod" ||
+                   Name == "chown" ||
+                   Name == "ctermid" ||
+                   Name == "clearerr" ||
+                   Name == "closedir") {
           if (FTy->getNumParams() == 0 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -1989,17 +1988,17 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'a':
-        if ((NameLen == 4 && !strcmp(NameStr, "atoi")) ||
-            (NameLen == 4 && !strcmp(NameStr, "atol")) ||
-            (NameLen == 4 && !strcmp(NameStr, "atof")) ||
-            (NameLen == 5 && !strcmp(NameStr, "atoll"))) {
+        if (Name == "atoi" ||
+            Name == "atol" ||
+            Name == "atof" ||
+            Name == "atoll") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setOnlyReadsMemory(F);
           setDoesNotCapture(F, 1);
-        } else if (NameLen == 6 && !strcmp(NameStr, "access")) {
+        } else if (Name == "access") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -2008,7 +2007,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'f':
-        if (NameLen == 5 && !strcmp(NameStr, "fopen")) {
+        if (Name == "fopen") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getReturnType()) ||
               !isa<PointerType>(FTy->getParamType(0)) ||
@@ -2018,7 +2017,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 6 && !strcmp(NameStr, "fdopen")) {
+        } else if (Name == "fdopen") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getReturnType()) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -2026,52 +2025,52 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 4 && !strcmp(NameStr, "feof")) ||
-                   (NameLen == 4 && !strcmp(NameStr, "free")) ||
-                   (NameLen == 5 && !strcmp(NameStr, "fseek")) ||
-                   (NameLen == 5 && !strcmp(NameStr, "ftell")) ||
-                   (NameLen == 5 && !strcmp(NameStr, "fgetc")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "fseeko")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "ftello")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "fileno")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "fflush")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "fclose")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "fsetpos")) ||
-                   (NameLen == 9 && !strcmp(NameStr, "flockfile")) ||
-                   (NameLen == 11 && !strcmp(NameStr, "funlockfile")) ||
-                   (NameLen == 12 && !strcmp(NameStr, "ftrylockfile"))) {
+        } else if (Name == "feof" ||
+                   Name == "free" ||
+                   Name == "fseek" ||
+                   Name == "ftell" ||
+                   Name == "fgetc" ||
+                   Name == "fseeko" ||
+                   Name == "ftello" ||
+                   Name == "fileno" ||
+                   Name == "fflush" ||
+                   Name == "fclose" ||
+                   Name == "fsetpos" ||
+                   Name == "flockfile" ||
+                   Name == "funlockfile" ||
+                   Name == "ftrylockfile") {
           if (FTy->getNumParams() == 0 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if (NameLen == 6 && !strcmp(NameStr, "ferror")) {
+        } else if (Name == "ferror") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setOnlyReadsMemory(F);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "fputc")) ||
-                   (NameLen == 5 && !strcmp(NameStr, "fstat")) ||
-                   (NameLen == 5 && !strcmp(NameStr, "frexp")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "frexpf")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "frexpl")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "fstatvfs"))) {
+        } else if (Name == "fputc" ||
+                   Name == "fstat" ||
+                   Name == "frexp" ||
+                   Name == "frexpf" ||
+                   Name == "frexpl" ||
+                   Name == "fstatvfs") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 5 && !strcmp(NameStr, "fgets")) {
+        } else if (Name == "fgets") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(2)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 3);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "fread")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "fwrite"))) {
+        } else if (Name == "fread" ||
+                   Name == "fwrite") {
           if (FTy->getNumParams() != 4 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(3)))
@@ -2079,10 +2078,10 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 4);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "fputs")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "fscanf")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "fprintf")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "fgetpos"))) {
+        } else if (Name == "fputs" ||
+                   Name == "fscanf" ||
+                   Name == "fprintf" ||
+                   Name == "fgetpos") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -2093,31 +2092,31 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'g':
-        if ((NameLen == 4 && !strcmp(NameStr, "getc")) ||
-            (NameLen == 10 && !strcmp(NameStr, "getlogin_r")) ||
-            (NameLen == 13 && !strcmp(NameStr, "getc_unlocked"))) {
+        if (Name == "getc" ||
+            Name == "getlogin_r" ||
+            Name == "getc_unlocked") {
           if (FTy->getNumParams() == 0 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if (NameLen == 6 && !strcmp(NameStr, "getenv")) {
+        } else if (Name == "getenv") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setOnlyReadsMemory(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 4 && !strcmp(NameStr, "gets")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "getchar"))) {
+        } else if (Name == "gets" ||
+                   Name == "getchar") {
           setDoesNotThrow(F);
-        } else if (NameLen == 9 && !strcmp(NameStr, "getitimer")) {
+        } else if (Name == "getitimer") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 8 && !strcmp(NameStr, "getpwnam")) {
+        } else if (Name == "getpwnam") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -2126,22 +2125,22 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'u':
-        if (NameLen == 6 && !strcmp(NameStr, "ungetc")) {
+        if (Name == "ungetc") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "uname")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "unlink")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "unsetenv"))) {
+        } else if (Name == "uname" ||
+                   Name == "unlink" ||
+                   Name == "unsetenv") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "utime")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "utimes"))) {
+        } else if (Name == "utime" ||
+                   Name == "utimes") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -2152,30 +2151,30 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'p':
-        if (NameLen == 4 && !strcmp(NameStr, "putc")) {
+        if (Name == "putc") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 4 && !strcmp(NameStr, "puts")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "printf")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "perror"))) {
+        } else if (Name == "puts" ||
+                   Name == "printf" ||
+                   Name == "perror") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 5 && !strcmp(NameStr, "pread")) ||
-                   (NameLen == 6 && !strcmp(NameStr, "pwrite"))) {
+        } else if (Name == "pread" ||
+                   Name == "pwrite") {
           if (FTy->getNumParams() != 4 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           // May throw; these are valid pthread cancellation points.
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 7 && !strcmp(NameStr, "putchar")) {
+        } else if (Name == "putchar") {
           setDoesNotThrow(F);
-        } else if (NameLen == 5 && !strcmp(NameStr, "popen")) {
+        } else if (Name == "popen") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getReturnType()) ||
               !isa<PointerType>(FTy->getParamType(0)) ||
@@ -2185,7 +2184,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 6 && !strcmp(NameStr, "pclose")) {
+        } else if (Name == "pclose") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -2194,14 +2193,14 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'v':
-        if (NameLen == 6 && !strcmp(NameStr, "vscanf")) {
+        if (Name == "vscanf") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 7 && !strcmp(NameStr, "vsscanf")) ||
-                   (NameLen == 7 && !strcmp(NameStr, "vfscanf"))) {
+        } else if (Name == "vsscanf" ||
+                   Name == "vfscanf") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(1)) ||
               !isa<PointerType>(FTy->getParamType(2)))
@@ -2209,19 +2208,19 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 6 && !strcmp(NameStr, "valloc")) {
+        } else if (Name == "valloc") {
           if (!isa<PointerType>(FTy->getReturnType()))
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
-        } else if (NameLen == 7 && !strcmp(NameStr, "vprintf")) {
+        } else if (Name == "vprintf") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 8 && !strcmp(NameStr, "vfprintf")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "vsprintf"))) {
+        } else if (Name == "vfprintf" ||
+                   Name == "vsprintf") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -2229,7 +2228,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 9 && !strcmp(NameStr, "vsnprintf")) {
+        } else if (Name == "vsnprintf") {
           if (FTy->getNumParams() != 4 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(2)))
@@ -2240,13 +2239,13 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'o':
-        if (NameLen == 4 && !strcmp(NameStr, "open")) {
+        if (Name == "open") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           // May throw; "open" is a valid pthread cancellation point.
           setDoesNotCapture(F, 1);
-        } else if (NameLen == 7 && !strcmp(NameStr, "opendir")) {
+        } else if (Name == "opendir") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getReturnType()) ||
               !isa<PointerType>(FTy->getParamType(0)))
@@ -2257,12 +2256,12 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 't':
-        if (NameLen == 7 && !strcmp(NameStr, "tmpfile")) {
+        if (Name == "tmpfile") {
           if (!isa<PointerType>(FTy->getReturnType()))
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
-        } else if (NameLen == 5 && !strcmp(NameStr, "times")) {
+        } else if (Name == "times") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -2271,21 +2270,21 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'h':
-        if ((NameLen == 5 && !strcmp(NameStr, "htonl")) ||
-            (NameLen == 5 && !strcmp(NameStr, "htons"))) {
+        if (Name == "htonl" ||
+            Name == "htons") {
           setDoesNotThrow(F);
           setDoesNotAccessMemory(F);
         }
         break;
       case 'n':
-        if ((NameLen == 5 && !strcmp(NameStr, "ntohl")) ||
-            (NameLen == 5 && !strcmp(NameStr, "ntohs"))) {
+        if (Name == "ntohl" ||
+            Name == "ntohs") {
           setDoesNotThrow(F);
           setDoesNotAccessMemory(F);
         }
         break;
       case 'l':
-        if (NameLen == 5 && !strcmp(NameStr, "lstat")) {
+        if (Name == "lstat") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -2293,7 +2292,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 6 && !strcmp(NameStr, "lchown")) {
+        } else if (Name == "lchown") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
@@ -2302,7 +2301,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 'q':
-        if (NameLen == 5 && !strcmp(NameStr, "qsort")) {
+        if (Name == "qsort") {
           if (FTy->getNumParams() != 4 ||
               !isa<PointerType>(FTy->getParamType(3)))
             continue;
@@ -2311,8 +2310,8 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case '_':
-        if ((NameLen == 8 && !strcmp(NameStr, "__strdup")) ||
-            (NameLen == 9 && !strcmp(NameStr, "__strndup"))) {
+        if (Name == "__strdup" ||
+            Name == "__strndup") {
           if (FTy->getNumParams() < 1 ||
               !isa<PointerType>(FTy->getReturnType()) ||
               !isa<PointerType>(FTy->getParamType(0)))
@@ -2320,19 +2319,19 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 1);
-        } else if (NameLen == 10 && !strcmp(NameStr, "__strtok_r")) {
+        } else if (Name == "__strtok_r") {
           if (FTy->getNumParams() != 3 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 8 && !strcmp(NameStr, "_IO_getc")) {
+        } else if (Name == "_IO_getc") {
           if (FTy->getNumParams() != 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if (NameLen == 8 && !strcmp(NameStr, "_IO_putc")) {
+        } else if (Name == "_IO_putc") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
@@ -2341,16 +2340,16 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
         }
         break;
       case 1:
-        if (NameLen == 15 && !strcmp(NameStr, "\1__isoc99_scanf")) {
+        if (Name == "\1__isoc99_scanf") {
           if (FTy->getNumParams() < 1 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if ((NameLen == 7 && !strcmp(NameStr, "\1stat64")) ||
-                   (NameLen == 8 && !strcmp(NameStr, "\1lstat64")) ||
-                   (NameLen == 10 && !strcmp(NameStr, "\1statvfs64")) ||
-                   (NameLen == 16 && !strcmp(NameStr, "\1__isoc99_sscanf"))) {
+        } else if (Name == "\1stat64" ||
+                   Name == "\1lstat64" ||
+                   Name == "\1statvfs64" ||
+                   Name == "\1__isoc99_sscanf") {
           if (FTy->getNumParams() < 1 ||
               !isa<PointerType>(FTy->getParamType(0)) ||
               !isa<PointerType>(FTy->getParamType(1)))
@@ -2358,7 +2357,7 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 8 && !strcmp(NameStr, "\1fopen64")) {
+        } else if (Name == "\1fopen64") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getReturnType()) ||
               !isa<PointerType>(FTy->getParamType(0)) ||
@@ -2368,26 +2367,26 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
           setDoesNotAlias(F, 0);
           setDoesNotCapture(F, 1);
           setDoesNotCapture(F, 2);
-        } else if ((NameLen == 9 && !strcmp(NameStr, "\1fseeko64")) ||
-                   (NameLen == 9 && !strcmp(NameStr, "\1ftello64"))) {
+        } else if (Name == "\1fseeko64" ||
+                   Name == "\1ftello64") {
           if (FTy->getNumParams() == 0 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 1);
-        } else if (NameLen == 10 && !strcmp(NameStr, "\1tmpfile64")) {
+        } else if (Name == "\1tmpfile64") {
           if (!isa<PointerType>(FTy->getReturnType()))
             continue;
           setDoesNotThrow(F);
           setDoesNotAlias(F, 0);
-        } else if ((NameLen == 8 && !strcmp(NameStr, "\1fstat64")) ||
-                   (NameLen == 11 && !strcmp(NameStr, "\1fstatvfs64"))) {
+        } else if (Name == "\1fstat64" ||
+                   Name == "\1fstatvfs64") {
           if (FTy->getNumParams() != 2 ||
               !isa<PointerType>(FTy->getParamType(1)))
             continue;
           setDoesNotThrow(F);
           setDoesNotCapture(F, 2);
-        } else if (NameLen == 7 && !strcmp(NameStr, "\1open64")) {
+        } else if (Name == "\1open64") {
           if (FTy->getNumParams() < 2 ||
               !isa<PointerType>(FTy->getParamType(0)))
             continue;

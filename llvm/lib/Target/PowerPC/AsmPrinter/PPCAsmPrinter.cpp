@@ -652,11 +652,12 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
 /// PrintUnmangledNameSafely - Print out the printable characters in the name.
 /// Don't print things like \\n or \\0.
-static void PrintUnmangledNameSafely(const Value *V, formatted_raw_ostream &OS) {
-  for (const char *Name = V->getNameStart(), *E = Name+V->getNameLen();
-       Name != E; ++Name)
-    if (isprint(*Name))
-      OS << *Name;
+static void PrintUnmangledNameSafely(const Value *V, 
+                                     formatted_raw_ostream &OS) {
+  for (StringRef::iterator it = V->getName().begin(), 
+         ie = V->getName().end(); it != ie; ++it)
+    if (isprint(*it))
+      OS << *it;
 }
 
 void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {

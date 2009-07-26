@@ -186,7 +186,7 @@ public:
   /// MarkBlockExecutable - This method can be used by clients to mark all of
   /// the blocks that are known to be intrinsically live in the processed unit.
   void MarkBlockExecutable(BasicBlock *BB) {
-    DOUT << "Marking Block Executable: " << BB->getNameStart() << "\n";
+    DEBUG(errs() << "Marking Block Executable: " << BB->getName() << "\n");
     BBExecutable.insert(BB);   // Basic block is executable!
     BBWorkList.push_back(BB);  // Add the block to the work list!
   }
@@ -262,14 +262,14 @@ private:
   //
   inline void markConstant(LatticeVal &IV, Value *V, Constant *C) {
     if (IV.markConstant(C)) {
-      DOUT << "markConstant: " << *C << ": " << *V;
+      DEBUG(errs() << "markConstant: " << *C << ": " << *V);
       InstWorkList.push_back(V);
     }
   }
   
   inline void markForcedConstant(LatticeVal &IV, Value *V, Constant *C) {
     IV.markForcedConstant(C);
-    DOUT << "markForcedConstant: " << *C << ": " << *V;
+    DEBUG(errs() << "markForcedConstant: " << *C << ": " << *V);
     InstWorkList.push_back(V);
   }
   
@@ -339,8 +339,8 @@ private:
       return;  // This edge is already known to be executable!
 
     if (BBExecutable.count(Dest)) {
-      DOUT << "Marking Edge Executable: " << Source->getNameStart()
-           << " -> " << Dest->getNameStart() << "\n";
+      DEBUG(errs() << "Marking Edge Executable: " << Source->getName()
+            << " -> " << Dest->getName() << "\n");
 
       // The destination is already executable, but we just made an edge
       // feasible that wasn't before.  Revisit the PHI nodes in the block
@@ -1278,7 +1278,7 @@ void SCCPSolver::Solve() {
       Value *I = OverdefinedInstWorkList.back();
       OverdefinedInstWorkList.pop_back();
 
-      DOUT << "\nPopped off OI-WL: " << *I;
+      DEBUG(errs() << "\nPopped off OI-WL: " << *I);
 
       // "I" got into the work list because it either made the transition from
       // bottom to constant
@@ -1296,7 +1296,7 @@ void SCCPSolver::Solve() {
       Value *I = InstWorkList.back();
       InstWorkList.pop_back();
 
-      DOUT << "\nPopped off I-WL: " << *I;
+      DEBUG(errs() << "\nPopped off I-WL: " << *I);
 
       // "I" got into the work list because it either made the transition from
       // bottom to constant
@@ -1316,7 +1316,7 @@ void SCCPSolver::Solve() {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
 
-      DOUT << "\nPopped off BBWL: " << *BB;
+      DEBUG(errs() << "\nPopped off BBWL: " << *BB);
 
       // Notify all instructions in this basic block that they are newly
       // executable.
@@ -1536,7 +1536,7 @@ FunctionPass *llvm::createSCCPPass() {
 // and return true if the function was modified.
 //
 bool SCCP::runOnFunction(Function &F) {
-  DOUT << "SCCP on function '" << F.getNameStart() << "'\n";
+  DEBUG(errs() << "SCCP on function '" << F.getName() << "'\n");
   SCCPSolver Solver;
   Solver.setContext(&F.getContext());
 
@@ -1551,7 +1551,7 @@ bool SCCP::runOnFunction(Function &F) {
   bool ResolvedUndefs = true;
   while (ResolvedUndefs) {
     Solver.Solve();
-    DOUT << "RESOLVING UNDEFs\n";
+    DEBUG(errs() << "RESOLVING UNDEFs\n");
     ResolvedUndefs = Solver.ResolvedUndefsIn(F);
   }
 
@@ -1566,7 +1566,7 @@ bool SCCP::runOnFunction(Function &F) {
 
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (!Solver.isBlockExecutable(BB)) {
-      DOUT << "  BasicBlock Dead:" << *BB;
+      DEBUG(errs() << "  BasicBlock Dead:" << *BB);
       ++NumDeadBlocks;
 
       // Delete the instructions backwards, as it has a reduced likelihood of
@@ -1599,7 +1599,7 @@ bool SCCP::runOnFunction(Function &F) {
         
         Constant *Const = IV.isConstant()
           ? IV.getConstant() : F.getContext().getUndef(Inst->getType());
-        DOUT << "  Constant: " << *Const << " = " << *Inst;
+        DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
 
         // Replaces all of the uses of a variable with uses of the constant.
         Inst->replaceAllUsesWith(Const);
@@ -1695,7 +1695,7 @@ bool IPSCCP::runOnModule(Module &M) {
   while (ResolvedUndefs) {
     Solver.Solve();
 
-    DOUT << "RESOLVING UNDEFS\n";
+    DEBUG(errs() << "RESOLVING UNDEFS\n");
     ResolvedUndefs = false;
     for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
       ResolvedUndefs |= Solver.ResolvedUndefsIn(*F);
@@ -1718,7 +1718,7 @@ bool IPSCCP::runOnModule(Module &M) {
         if (IV.isConstant() || IV.isUndefined()) {
           Constant *CST = IV.isConstant() ?
             IV.getConstant() : Context->getUndef(AI->getType());
-          DOUT << "***  Arg " << *AI << " = " << *CST <<"\n";
+          DEBUG(errs() << "***  Arg " << *AI << " = " << *CST <<"\n");
 
           // Replaces all of the uses of a variable with uses of the
           // constant.
@@ -1729,7 +1729,7 @@ bool IPSCCP::runOnModule(Module &M) {
 
     for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
       if (!Solver.isBlockExecutable(BB)) {
-        DOUT << "  BasicBlock Dead:" << *BB;
+        DEBUG(errs() << "  BasicBlock Dead:" << *BB);
         ++IPNumDeadBlocks;
 
         // Delete the instructions backwards, as it has a reduced likelihood of
@@ -1774,7 +1774,7 @@ bool IPSCCP::runOnModule(Module &M) {
           
           Constant *Const = IV.isConstant()
             ? IV.getConstant() : Context->getUndef(Inst->getType());
-          DOUT << "  Constant: " << *Const << " = " << *Inst;
+          DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
 
           // Replaces all of the uses of a variable with uses of the
           // constant.
@@ -1858,7 +1858,7 @@ bool IPSCCP::runOnModule(Module &M) {
     GlobalVariable *GV = I->first;
     assert(!I->second.isOverdefined() &&
            "Overdefined values should have been taken out of the map!");
-    DOUT << "Found that GV '" << GV->getNameStart() << "' is constant!\n";
+    DEBUG(errs() << "Found that GV '" << GV->getName() << "' is constant!\n");
     while (!GV->use_empty()) {
       StoreInst *SI = cast<StoreInst>(GV->use_back());
       SI->eraseFromParent();

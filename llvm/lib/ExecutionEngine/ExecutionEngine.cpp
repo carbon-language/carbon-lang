@@ -120,7 +120,8 @@ Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
 void ExecutionEngine::addGlobalMapping(const GlobalValue *GV, void *Addr) {
   MutexGuard locked(lock);
 
-  DOUT << "JIT: Map \'" << GV->getNameStart() << "\' to [" << Addr << "]\n";  
+  DEBUG(errs() << "JIT: Map \'" << GV->getName() 
+        << "\' to [" << Addr << "]\n";);
   void *&CurVal = state.getGlobalAddressMap(locked)[GV];
   assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
   CurVal = Addr;

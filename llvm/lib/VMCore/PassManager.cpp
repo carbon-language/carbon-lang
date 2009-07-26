@@ -135,7 +135,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::cerr << std::string(Offset*2, ' ') << "BasicBlockPass Manager\n";
+    llvm::errs() << std::string(Offset*2, ' ') << "BasicBlockPass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
       BP->dumpPassStructure(Offset + 1);
@@ -275,7 +275,7 @@ public:
 
   // Print passes managed by this manager
   void dumpPassStructure(unsigned Offset) {
-    llvm::cerr << std::string(Offset*2, ' ') << "ModulePass Manager\n";
+    llvm::errs() << std::string(Offset*2, ' ') << "ModulePass Manager\n";
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
       MP->dumpPassStructure(Offset + 1);
@@ -604,11 +604,11 @@ void PMTopLevelManager::dumpArguments() const {
   if (PassDebugging < Arguments)
     return;
 
-  cerr << "Pass Arguments: ";
+  errs() << "Pass Arguments: ";
   for (SmallVector<PMDataManager *, 8>::const_iterator I = PassManagers.begin(),
          E = PassManagers.end(); I != E; ++I)
     (*I)->dumpPassArguments();
-  cerr << "\n";
+  errs() << "\n";
 }
 
 void PMTopLevelManager::initializeAllAnalysisInfo() {
@@ -718,11 +718,11 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
   DominatorTree OtherDT;
   OtherDT.getBase().recalculate(F);
   if (DT->compare(OtherDT)) {
-    cerr << "Dominator Information for " << F.getNameStart() << "\n";
-    cerr << "Pass '" << P.getPassName() << "'\n";
-    cerr << "----- Valid -----\n";
+    errs() << "Dominator Information for " << F.getName() << "\n";
+    errs() << "Pass '" << P.getPassName() << "'\n";
+    errs() << "----- Valid -----\n";
     OtherDT.dump();
-    cerr << "----- Invalid -----\n";
+    errs() << "----- Invalid -----\n";
     DT->dump();
     llvm_unreachable("Invalid dominator info");
   }
@@ -735,11 +735,11 @@ void PMDataManager::verifyDomInfo(Pass &P, Function &F) {
   std::vector<BasicBlock*> DTRoots = DT->getRoots();
   OtherDF.calculate(*DT, DT->getNode(DTRoots[0]));
   if (DF->compare(OtherDF)) {
-    cerr << "Dominator Information for " << F.getNameStart() << "\n";
-    cerr << "Pass '" << P.getPassName() << "'\n";
-    cerr << "----- Valid -----\n";
+    errs() << "Dominator Information for " << F.getName() << "\n";
+    errs() << "Pass '" << P.getPassName() << "'\n";
+    errs() << "----- Valid -----\n";
     OtherDF.dump();
-    cerr << "----- Invalid -----\n";
+    errs() << "----- Invalid -----\n";
     DF->dump();
     llvm_unreachable("Invalid dominator info");
   }
@@ -761,8 +761,8 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
       // Remove this analysis
       if (PassDebugging >= Details) {
         Pass *S = Info->second;
-        cerr << " -- '" <<  P->getPassName() << "' is not preserving '";
-        cerr << S->getPassName() << "'\n";
+        errs() << " -- '" <<  P->getPassName() << "' is not preserving '";
+        errs() << S->getPassName() << "'\n";
       }
       AvailableAnalysis.erase(Info);
     }
@@ -789,7 +789,7 @@ void PMDataManager::removeNotPreservedAnalysis(Pass *P) {
 }
 
 /// Remove analysis passes that are not used any longer
-void PMDataManager::removeDeadPasses(Pass *P, const char *Msg,
+void PMDataManager::removeDeadPasses(Pass *P, const StringRef &Msg,
                                      enum PassDebuggingString DBG_STR) {
 
   SmallVector<Pass *, 12> DeadPasses;
@@ -801,9 +801,9 @@ void PMDataManager::removeDeadPasses(Pass *P, const char *Msg,
   TPM->collectLastUses(DeadPasses, P);
 
   if (PassDebugging >= Details && !DeadPasses.empty()) {
-    cerr << " -*- '" <<  P->getPassName();
-    cerr << "' is the last user of following pass instances.";
-    cerr << " Free these instances\n";
+    errs() << " -*- '" <<  P->getPassName();
+    errs() << "' is the last user of following pass instances.";
+    errs() << " Free these instances\n";
   }
 
   for (SmallVector<Pass *, 12>::iterator I = DeadPasses.begin(),
@@ -995,7 +995,7 @@ void PMDataManager::dumpLastUses(Pass *P, unsigned Offset) const{
   
   for (SmallVector<Pass *, 12>::iterator I = LUses.begin(),
          E = LUses.end(); I != E; ++I) {
-    llvm::cerr << "--" << std::string(Offset*2, ' ');
+    llvm::errs() << "--" << std::string(Offset*2, ' ');
     (*I)->dumpPassStructure(0);
   }
 }
@@ -1008,44 +1008,44 @@ void PMDataManager::dumpPassArguments() const {
     else
       if (const PassInfo *PI = (*I)->getPassInfo())
         if (!PI->isAnalysisGroup())
-          cerr << " -" << PI->getPassArgument();
+          errs() << " -" << PI->getPassArgument();
   }
 }
 
 void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
                                  enum PassDebuggingString S2,
-                                 const char *Msg) {
+                                 const StringRef &Msg) {
   if (PassDebugging < Executions)
     return;
-  cerr << (void*)this << std::string(getDepth()*2+1, ' ');
+  errs() << (void*)this << std::string(getDepth()*2+1, ' ');
   switch (S1) {
   case EXECUTION_MSG:
-    cerr << "Executing Pass '" << P->getPassName();
+    errs() << "Executing Pass '" << P->getPassName();
     break;
   case MODIFICATION_MSG:
-    cerr << "Made Modification '" << P->getPassName();
+    errs() << "Made Modification '" << P->getPassName();
     break;
   case FREEING_MSG:
-    cerr << " Freeing Pass '" << P->getPassName();
+    errs() << " Freeing Pass '" << P->getPassName();
     break;
   default:
     break;
   }
   switch (S2) {
   case ON_BASICBLOCK_MSG:
-    cerr << "' on BasicBlock '" << Msg << "'...\n";
+    errs() << "' on BasicBlock '" << Msg << "'...\n";
     break;
   case ON_FUNCTION_MSG:
-    cerr << "' on Function '" << Msg << "'...\n";
+    errs() << "' on Function '" << Msg << "'...\n";
     break;
   case ON_MODULE_MSG:
-    cerr << "' on Module '"  << Msg << "'...\n";
+    errs() << "' on Module '"  << Msg << "'...\n";
     break;
   case ON_LOOP_MSG:
-    cerr << "' on Loop " << Msg << "'...\n";
+    errs() << "' on Loop " << Msg << "'...\n";
     break;
   case ON_CG_MSG:
-    cerr << "' on Call Graph " << Msg << "'...\n";
+    errs() << "' on Call Graph " << Msg << "'...\n";
     break;
   default:
     break;
@@ -1070,17 +1070,17 @@ void PMDataManager::dumpPreservedSet(const Pass *P) const {
   dumpAnalysisUsage("Preserved", P, analysisUsage.getPreservedSet());
 }
 
-void PMDataManager::dumpAnalysisUsage(const char *Msg, const Pass *P,
+void PMDataManager::dumpAnalysisUsage(const StringRef &Msg, const Pass *P,
                                    const AnalysisUsage::VectorType &Set) const {
   assert(PassDebugging >= Details);
   if (Set.empty())
     return;
-  cerr << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
+  errs() << (void*)P << std::string(getDepth()*2+3, ' ') << Msg << " Analyses:";
   for (unsigned i = 0; i != Set.size(); ++i) {
-    if (i) cerr << ",";
-    cerr << " " << Set[i]->getPassName();
+    if (i) errs() << ",";
+    errs() << " " << Set[i]->getPassName();
   }
-  cerr << "\n";
+  errs() << "\n";
 }
 
 /// Add RequiredPass into list of lower level passes required by pass P.
@@ -1103,8 +1103,8 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   // checks whether any lower level manager will be able to provide this 
   // analysis info on demand or not.
 #ifndef NDEBUG
-  cerr << "Unable to schedule '" << RequiredPass->getPassName();
-  cerr << "' required by '" << P->getPassName() << "'\n";
+  errs() << "Unable to schedule '" << RequiredPass->getPassName();
+  errs() << "' required by '" << P->getPassName() << "'\n";
 #endif
   llvm_unreachable("Unable to schedule pass");
 }
@@ -1144,7 +1144,7 @@ bool BBPassManager::runOnFunction(Function &F) {
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
 
-      dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, I->getNameStart());
+      dumpPassInfo(BP, EXECUTION_MSG, ON_BASICBLOCK_MSG, I->getName());
       dumpRequiredSet(BP);
 
       initializeAnalysisImpl(BP);
@@ -1160,13 +1160,13 @@ bool BBPassManager::runOnFunction(Function &F) {
 
       if (Changed) 
         dumpPassInfo(BP, MODIFICATION_MSG, ON_BASICBLOCK_MSG,
-                     I->getNameStart());
+                     I->getName());
       dumpPreservedSet(BP);
 
       verifyPreservedAnalysis(BP);
       removeNotPreservedAnalysis(BP);
       recordAvailableAnalysis(BP);
-      removeDeadPasses(BP, I->getNameStart(), ON_BASICBLOCK_MSG);
+      removeDeadPasses(BP, I->getName(), ON_BASICBLOCK_MSG);
     }
 
   return Changed |= doFinalization(F);
@@ -1336,7 +1336,7 @@ bool FunctionPassManagerImpl::run(Function &F) {
 char FPPassManager::ID = 0;
 /// Print passes managed by this manager
 void FPPassManager::dumpPassStructure(unsigned Offset) {
-  llvm::cerr << std::string(Offset*2, ' ') << "FunctionPass Manager\n";
+  llvm::errs() << std::string(Offset*2, ' ') << "FunctionPass Manager\n";
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
     FP->dumpPassStructure(Offset + 1);
@@ -1360,7 +1360,7 @@ bool FPPassManager::runOnFunction(Function &F) {
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
 
-    dumpPassInfo(FP, EXECUTION_MSG, ON_FUNCTION_MSG, F.getNameStart());
+    dumpPassInfo(FP, EXECUTION_MSG, ON_FUNCTION_MSG, F.getName());
     dumpRequiredSet(FP);
 
     initializeAnalysisImpl(FP);
@@ -1374,13 +1374,13 @@ bool FPPassManager::runOnFunction(Function &F) {
     }
 
     if (Changed) 
-      dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getNameStart());
+      dumpPassInfo(FP, MODIFICATION_MSG, ON_FUNCTION_MSG, F.getName());
     dumpPreservedSet(FP);
 
     verifyPreservedAnalysis(FP);
     removeNotPreservedAnalysis(FP);
     recordAvailableAnalysis(FP);
-    removeDeadPasses(FP, F.getNameStart(), ON_FUNCTION_MSG);
+    removeDeadPasses(FP, F.getName(), ON_FUNCTION_MSG);
 
     // If dominator information is available then verify the info if requested.
     verifyDomInfo(*FP, F);

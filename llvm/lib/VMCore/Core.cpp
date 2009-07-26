@@ -306,7 +306,7 @@ LLVMTypeRef LLVMTypeOf(LLVMValueRef Val) {
 }
 
 const char *LLVMGetValueName(LLVMValueRef Val) {
-  return unwrap(Val)->getNameStart();
+  return unwrap(Val)->getName().data();
 }
 
 void LLVMSetValueName(LLVMValueRef Val, const char *Name) {
