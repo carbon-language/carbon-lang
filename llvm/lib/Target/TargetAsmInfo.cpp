@@ -389,12 +389,12 @@ TargetAsmInfo::getSectionForMergeableConstant(SectionKind Kind) const {
 }
 
 
-const Section *TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags,
-                                              bool Override) const {
+const Section *TargetAsmInfo::getNamedSection(const char *Name,
+                                              unsigned Flags) const {
   Section &S = Sections[Name];
 
   // This is newly-created section, set it up properly.
-  if (S.Flags == SectionFlags::Invalid || Override) {
+  if (S.Name.empty()) {
     S.Flags = Flags | SectionFlags::Named;
     S.Name = Name;
   }
@@ -403,12 +403,11 @@ const Section *TargetAsmInfo::getNamedSection(const char *Name, unsigned Flags,
 }
 
 const Section*
-TargetAsmInfo::getUnnamedSection(const char *Directive, unsigned Flags,
-                                 bool Override) const {
+TargetAsmInfo::getUnnamedSection(const char *Directive, unsigned Flags) const {
   Section& S = Sections[Directive];
 
   // This is newly-created section, set it up properly.
-  if (S.Flags == SectionFlags::Invalid || Override) {
+  if (S.Name.empty()) {
     S.Flags = Flags & ~SectionFlags::Named;
     S.Name = Directive;
   }

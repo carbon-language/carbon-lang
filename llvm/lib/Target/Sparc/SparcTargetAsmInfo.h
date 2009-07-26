@@ -14,7 +14,6 @@
 #ifndef SPARCTARGETASMINFO_H
 #define SPARCTARGETASMINFO_H
 
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/ELFTargetAsmInfo.h"
 
 namespace llvm {

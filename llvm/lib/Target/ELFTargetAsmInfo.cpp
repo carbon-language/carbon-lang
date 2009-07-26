@@ -22,14 +22,13 @@
 #include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
-
 using namespace llvm;
 
 ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
   : TargetAsmInfo(TM) {
 
-  BSSSection_  = getUnnamedSection("\t.bss",
-                                   SectionFlags::Writable | SectionFlags::BSS);
+  BSSSection_ = getUnnamedSection("\t.bss",
+                                  SectionFlags::Writable | SectionFlags::BSS);
   ReadOnlySection = getNamedSection("\t.rodata", SectionFlags::None);
   TLSDataSection = getNamedSection("\t.tdata",
                                    SectionFlags::Writable | SectionFlags::TLS);

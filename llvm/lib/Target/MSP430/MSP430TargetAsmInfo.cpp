@@ -12,11 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "MSP430TargetAsmInfo.h"
-#include "MSP430TargetMachine.h"
-
 using namespace llvm;
 
-MSP430TargetAsmInfo::MSP430TargetAsmInfo(const MSP430TargetMachine &TM)
+MSP430TargetAsmInfo::MSP430TargetAsmInfo(const TargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
   AlignmentIsInBytes = false;
+    
+  BSSSection_ = getUnnamedSection("\t.bss",
+                                  SectionFlags::Writable | SectionFlags::BSS);
 }

@@ -27,4 +27,7 @@ SystemZTargetAsmInfo::SystemZTargetAsmInfo(const SystemZTargetMachine &TM)
   PCSymbol = ".";
 
   NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
+    
+  BSSSection_ = getUnnamedSection("\t.bss",
+                                  SectionFlags::Writable | SectionFlags::BSS);
 }

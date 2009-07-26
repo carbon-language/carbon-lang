@@ -50,13 +50,11 @@ PPCDarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 }
 
 const char *
-PPCDarwinTargetAsmInfo::getEHGlobalPrefix() const
-{
+PPCDarwinTargetAsmInfo::getEHGlobalPrefix() const {
   const PPCSubtarget* Subtarget = &TM.getSubtarget<PPCSubtarget>();
   if (Subtarget->getDarwinVers() > 9)
     return PrivateGlobalPrefix;
-  else
-    return "";
+  return "";
 }
 
 PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
@@ -74,9 +72,8 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   BSSSection = "\t.section\t\".sbss\",\"aw\",@nobits";
 
   // PPC/Linux normally uses named section for BSS.
-  BSSSection_  = getNamedSection("\t.bss",
-                                 SectionFlags::Writable | SectionFlags::BSS,
-                                 /* Override */ true);
+  BSSSection_ = getNamedSection("\t.bss",
+                                SectionFlags::Writable | SectionFlags::BSS);
 
   // Debug Information
   AbsoluteDebugSectionOffsets = true;

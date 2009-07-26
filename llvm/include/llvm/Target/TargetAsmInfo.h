@@ -254,7 +254,6 @@ namespace llvm {
     explicit Section(unsigned F = SectionFlags::Invalid) : Flags(F) { }
 
   public:
-    
     unsigned getEntitySize() const { return (Flags >> 24) & 0xFF; }
 
     const std::string &getName() const { return Name; }
@@ -679,11 +678,9 @@ namespace llvm {
     virtual ~TargetAsmInfo();
 
     const Section* getNamedSection(const char *Name,
-                                   unsigned Flags = SectionFlags::None,
-                                   bool Override = false) const;
+                                   unsigned Flags = SectionFlags::None) const;
     const Section* getUnnamedSection(const char *Directive,
-                                     unsigned Flags = SectionFlags::None,
-                                     bool Override = false) const;
+                                     unsigned Flags = SectionFlags::None) const;
 
     /// Measure the specified inline asm to determine an approximation of its
     /// length.

@@ -13,8 +13,6 @@
 
 #include "MipsTargetAsmInfo.h"
 #include "MipsTargetMachine.h"
-#include "llvm/GlobalVariable.h"
-
 using namespace llvm;
 
 MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM)
@@ -32,6 +30,9 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM)
   BSSSection                  = "\t.section\t.bss";
   CStringSection              = ".rodata.str";
 
+  BSSSection_ = getUnnamedSection("\t.bss",
+                                  SectionFlags::Writable | SectionFlags::BSS);
+    
   if (!TM.getSubtarget<MipsSubtarget>().hasABICall())
     JumpTableDirective = "\t.word\t";
   else

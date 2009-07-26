@@ -23,7 +23,7 @@ namespace llvm {
   class Type;
 
   struct ELFTargetAsmInfo: public TargetAsmInfo {
-    explicit ELFTargetAsmInfo(const TargetMachine &TM);
+    ELFTargetAsmInfo(const TargetMachine &TM);
 
     /// getSectionForMergeableConstant - Given a mergeable constant with the
     /// specified size and relocation information, return a section that it

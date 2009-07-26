@@ -128,6 +128,9 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   // Set up DWARF directives
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
+  BSSSection_ = getUnnamedSection("\t.bss",
+                                  SectionFlags::Writable | SectionFlags::BSS);
+
   // Debug Information
   AbsoluteDebugSectionOffsets = true;
   SupportsDebugInformation = true;

@@ -15,8 +15,8 @@
 #include "llvm/ADT/SmallVector.h"
 using namespace llvm;
 
-SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
-  ELFTargetAsmInfo(TM) {
+SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM)
+  : ELFTargetAsmInfo(TM) {
   Data16bitsDirective = "\t.half\t";
   Data32bitsDirective = "\t.word\t";
   Data64bitsDirective = 0;  // .xword is only supported by V9.
@@ -27,9 +27,8 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM):
   CStringSection=".rodata.str";
 
   // Sparc normally uses named section for BSS.
-  BSSSection_  = getNamedSection("\t.bss",
-                                 SectionFlags::Writable | SectionFlags::BSS,
-                                 /* Override */ true);
+  BSSSection_ = getNamedSection("\t.bss",
+                                SectionFlags::Writable | SectionFlags::BSS);
 }
 
 

@@ -59,6 +59,9 @@ ARMELFTargetAsmInfo::ARMELFTargetAsmInfo(const ARMBaseTargetMachine &TM):
   ARMTargetAsmInfo<ELFTargetAsmInfo>(TM) {
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
 
+  BSSSection_ = getUnnamedSection("\t.bss",
+                                  SectionFlags::Writable | SectionFlags::BSS);
+
   NeedsSet = false;
   HasLEB128 = true;
   AbsoluteDebugSectionOffsets = true;
