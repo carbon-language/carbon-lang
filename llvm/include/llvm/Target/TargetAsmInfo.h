@@ -35,7 +35,6 @@ namespace llvm {
   /// a section.
   struct SectionKind {
     enum Kind {
-      Unknown = 0,      ///< Custom section.
       Text,             ///< Text section.
       BSS,              ///< BSS section.
 
