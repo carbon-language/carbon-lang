@@ -800,15 +800,11 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
   if (const CallInst *CI = dyn_cast<CallInst>(I))
     if (const Function *F = CI->getCalledFunction()) {
       if (F->isDeclaration()) {
-        switch (F->getNameLen()) {
-        case 3:  // abs(x) != -0.0
-          if (!strcmp(F->getNameStart(), "abs")) return true;
-          break;
-        case 4:  // abs[lf](x) != -0.0
-          if (!strcmp(F->getNameStart(), "absf")) return true;
-          if (!strcmp(F->getNameStart(), "absl")) return true;
-          break;
-        }
+        // abs(x) != -0.0
+        if (F->getName() == "abs") return true;
+        // abs[lf](x) != -0.0
+        if (F->getName() == "absf") return true;
+        if (F->getName() == "absl") return true;
       }
     }
   

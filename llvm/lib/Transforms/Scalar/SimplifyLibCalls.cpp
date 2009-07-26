@@ -31,6 +31,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Config/config.h"
 using namespace llvm;
 
@@ -1655,20 +1656,18 @@ bool SimplifyLibCalls::runOnFunction(Function &F) {
         continue;
       
       // Ignore unknown calls.
-      const char *CalleeName = Callee->getNameStart();
-      StringMap<LibCallOptimization*>::iterator OMI =
-        Optimizations.find(StringRef(CalleeName, Callee->getNameLen()));
-      if (OMI == Optimizations.end()) continue;
+      LibCallOptimization *LCO = Optimizations.lookup(Callee->getName());
+      if (!LCO) continue;
       
       // Set the builder to the instruction after the call.
       Builder.SetInsertPoint(BB, I);
       
       // Try to optimize this call.
-      Value *Result = OMI->second->OptimizeCall(CI, TD, Builder);
+      Value *Result = LCO->OptimizeCall(CI, TD, Builder);
       if (Result == 0) continue;
 
-      DEBUG(DOUT << "SimplifyLibCalls simplified: " << *CI;
-            DOUT << "  into: " << *Result << "\n");
+      DEBUG(errs() << "SimplifyLibCalls simplified: " << *CI;
+            errs() << "  into: " << *Result << "\n");
       
       // Something changed!
       Changed = true;

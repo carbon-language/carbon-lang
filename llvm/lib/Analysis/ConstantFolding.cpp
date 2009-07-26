@@ -617,64 +617,31 @@ llvm::canConstantFoldCallTo(const Function *F) {
   }
 
   if (!F->hasName()) return false;
-  const char *Str = F->getNameStart();
-  unsigned Len = F->getNameLen();
+  StringRef Name = F->getName();
   
   // In these cases, the check of the length is required.  We don't want to
   // return true for a name like "cos\0blah" which strcmp would return equal to
   // "cos", but has length 8.
-  switch (Str[0]) {
+  switch (Name[0]) {
   default: return false;
   case 'a':
-    if (Len == 4)
-      return !strcmp(Str, "acos") || !strcmp(Str, "asin") ||
-             !strcmp(Str, "atan");
-    else if (Len == 5)
-      return !strcmp(Str, "atan2");
-    return false;
+    return Name == "acos" || Name == "asin" || 
+      Name == "atan" || Name == "atan2";
   case 'c':
-    if (Len == 3)
-      return !strcmp(Str, "cos");
-    else if (Len == 4)
-      return !strcmp(Str, "ceil") || !strcmp(Str, "cosf") ||
-             !strcmp(Str, "cosh");
-    return false;
+    return Name == "cos" || Name == "ceil" || Name == "cosf" || Name == "cosh";
   case 'e':
-    if (Len == 3)
-      return !strcmp(Str, "exp");
-    return false;
+    return Name == "exp";
   case 'f':
-    if (Len == 4)
-      return !strcmp(Str, "fabs") || !strcmp(Str, "fmod");
-    else if (Len == 5)
-      return !strcmp(Str, "floor");
-    return false;
-    break;
+    return Name == "fabs" || Name == "fmod" || Name == "floor";
   case 'l':
-    if (Len == 3 && !strcmp(Str, "log"))
-      return true;
-    if (Len == 5 && !strcmp(Str, "log10"))
-      return true;
-    return false;
+    return Name == "log" || Name == "log10";
   case 'p':
-    if (Len == 3 && !strcmp(Str, "pow"))
-      return true;
-    return false;
+    return Name == "pow";
   case 's':
-    if (Len == 3)
-      return !strcmp(Str, "sin");
-    if (Len == 4)
-      return !strcmp(Str, "sinh") || !strcmp(Str, "sqrt") ||
-             !strcmp(Str, "sinf");
-    if (Len == 5)
-      return !strcmp(Str, "sqrtf");
-    return false;
+    return Name == "sin" || Name == "sinh" || Name == "sqrt" ||
+      Name == "sinf" || Name == "sqrtf";
   case 't':
-    if (Len == 3 && !strcmp(Str, "tan"))
-      return true;
-    else if (Len == 4 && !strcmp(Str, "tanh"))
-      return true;
-    return false;
+    return Name == "tan" || Name == "tanh";
   }
 }
 
@@ -722,8 +689,7 @@ llvm::ConstantFoldCall(Function *F,
                        Constant* const* Operands, unsigned NumOperands) {
   if (!F->hasName()) return 0;
   LLVMContext &Context = F->getContext();
-  const char *Str = F->getNameStart();
-  unsigned Len = F->getNameLen();
+  StringRef Name = F->getName();
   
   const Type *Ty = F->getReturnType();
   if (NumOperands == 1) {
@@ -736,42 +702,42 @@ llvm::ConstantFoldCall(Function *F,
       /// f(arg).  Long double not supported yet.
       double V = Ty==Type::FloatTy ? (double)Op->getValueAPF().convertToFloat():
                                      Op->getValueAPF().convertToDouble();
-      switch (Str[0]) {
+      switch (Name[0]) {
       case 'a':
-        if (Len == 4 && !strcmp(Str, "acos"))
+        if (Name == "acos")
           return ConstantFoldFP(acos, V, Ty, Context);
-        else if (Len == 4 && !strcmp(Str, "asin"))
+        else if (Name == "asin")
           return ConstantFoldFP(asin, V, Ty, Context);
-        else if (Len == 4 && !strcmp(Str, "atan"))
+        else if (Name == "atan")
           return ConstantFoldFP(atan, V, Ty, Context);
         break;
       case 'c':
-        if (Len == 4 && !strcmp(Str, "ceil"))
+        if (Name == "ceil")
           return ConstantFoldFP(ceil, V, Ty, Context);
-        else if (Len == 3 && !strcmp(Str, "cos"))
+        else if (Name == "cos")
           return ConstantFoldFP(cos, V, Ty, Context);
-        else if (Len == 4 && !strcmp(Str, "cosh"))
+        else if (Name == "cosh")
           return ConstantFoldFP(cosh, V, Ty, Context);
-        else if (Len == 4 && !strcmp(Str, "cosf"))
+        else if (Name == "cosf")
           return ConstantFoldFP(cos, V, Ty, Context);
         break;
       case 'e':
-        if (Len == 3 && !strcmp(Str, "exp"))
+        if (Name == "exp")
           return ConstantFoldFP(exp, V, Ty, Context);
         break;
       case 'f':
-        if (Len == 4 && !strcmp(Str, "fabs"))
+        if (Name == "fabs")
           return ConstantFoldFP(fabs, V, Ty, Context);
-        else if (Len == 5 && !strcmp(Str, "floor"))
+        else if (Name == "floor")
           return ConstantFoldFP(floor, V, Ty, Context);
         break;
       case 'l':
-        if (Len == 3 && !strcmp(Str, "log") && V > 0)
+        if (Name == "log" && V > 0)
           return ConstantFoldFP(log, V, Ty, Context);
-        else if (Len == 5 && !strcmp(Str, "log10") && V > 0)
+        else if (Name == "log10" && V > 0)
           return ConstantFoldFP(log10, V, Ty, Context);
-        else if (!strcmp(Str, "llvm.sqrt.f32") ||
-                 !strcmp(Str, "llvm.sqrt.f64")) {
+        else if (Name == "llvm.sqrt.f32" ||
+                 Name == "llvm.sqrt.f64") {
           if (V >= -0.0)
             return ConstantFoldFP(sqrt, V, Ty, Context);
           else // Undefined
@@ -779,34 +745,34 @@ llvm::ConstantFoldCall(Function *F,
         }
         break;
       case 's':
-        if (Len == 3 && !strcmp(Str, "sin"))
+        if (Name == "sin")
           return ConstantFoldFP(sin, V, Ty, Context);
-        else if (Len == 4 && !strcmp(Str, "sinh"))
+        else if (Name == "sinh")
           return ConstantFoldFP(sinh, V, Ty, Context);
-        else if (Len == 4 && !strcmp(Str, "sqrt") && V >= 0)
+        else if (Name == "sqrt" && V >= 0)
           return ConstantFoldFP(sqrt, V, Ty, Context);
-        else if (Len == 5 && !strcmp(Str, "sqrtf") && V >= 0)
+        else if (Name == "sqrtf" && V >= 0)
           return ConstantFoldFP(sqrt, V, Ty, Context);
-        else if (Len == 4 && !strcmp(Str, "sinf"))
+        else if (Name == "sinf")
           return ConstantFoldFP(sin, V, Ty, Context);
         break;
       case 't':
-        if (Len == 3 && !strcmp(Str, "tan"))
+        if (Name == "tan")
           return ConstantFoldFP(tan, V, Ty, Context);
-        else if (Len == 4 && !strcmp(Str, "tanh"))
+        else if (Name == "tanh")
           return ConstantFoldFP(tanh, V, Ty, Context);
         break;
       default:
         break;
       }
     } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
-      if (Len > 11 && !memcmp(Str, "llvm.bswap", 10))
+      if (Name.startswith("llvm.bswap"))
         return ConstantInt::get(Context, Op->getValue().byteSwap());
-      else if (Len > 11 && !memcmp(Str, "llvm.ctpop", 10))
+      else if (Name.startswith("llvm.ctpop"))
         return ConstantInt::get(Ty, Op->getValue().countPopulation());
-      else if (Len > 10 && !memcmp(Str, "llvm.cttz", 9))
+      else if (Name.startswith("llvm.cttz"))
         return ConstantInt::get(Ty, Op->getValue().countTrailingZeros());
-      else if (Len > 10 && !memcmp(Str, "llvm.ctlz", 9))
+      else if (Name.startswith("llvm.ctlz"))
         return ConstantInt::get(Ty, Op->getValue().countLeadingZeros());
     }
   } else if (NumOperands == 2) {
@@ -821,18 +787,18 @@ llvm::ConstantFoldCall(Function *F,
                       (double)Op2->getValueAPF().convertToFloat():
                       Op2->getValueAPF().convertToDouble();
 
-        if (Len == 3 && !strcmp(Str, "pow")) {
+        if (Name == "pow") {
           return ConstantFoldBinaryFP(pow, Op1V, Op2V, Ty, Context);
-        } else if (Len == 4 && !strcmp(Str, "fmod")) {
+        } else if (Name == "fmod") {
           return ConstantFoldBinaryFP(fmod, Op1V, Op2V, Ty, Context);
-        } else if (Len == 5 && !strcmp(Str, "atan2")) {
+        } else if (Name == "atan2") {
           return ConstantFoldBinaryFP(atan2, Op1V, Op2V, Ty, Context);
         }
       } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
-        if (!strcmp(Str, "llvm.powi.f32")) {
+        if (Name == "llvm.powi.f32") {
           return Context.getConstantFP(APFloat((float)std::pow((float)Op1V,
                                                  (int)Op2C->getZExtValue())));
-        } else if (!strcmp(Str, "llvm.powi.f64")) {
+        } else if (Name == "llvm.powi.f64") {
           return Context.getConstantFP(APFloat((double)std::pow((double)Op1V,
                                                  (int)Op2C->getZExtValue())));
         }

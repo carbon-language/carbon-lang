@@ -4439,12 +4439,9 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
 
     // Check for well-known libc/libm calls.  If the function is internal, it
     // can't be a library call.
-    unsigned NameLen = F->getNameLen();
-    if (!F->hasLocalLinkage() && NameLen) {
-      const char *NameStr = F->getNameStart();
-      if (NameStr[0] == 'c' &&
-          ((NameLen == 8 && !strcmp(NameStr, "copysign")) ||
-           (NameLen == 9 && !strcmp(NameStr, "copysignf")))) {
+    if (!F->hasLocalLinkage() && F->hasName()) {
+      StringRef Name = F->getName();
+      if (Name == "copysign" || Name == "copysignf") {
         if (I.getNumOperands() == 3 &&   // Basic sanity checks.
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType() &&
@@ -4455,10 +4452,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
                                    LHS.getValueType(), LHS, RHS));
           return;
         }
-      } else if (NameStr[0] == 'f' &&
-                 ((NameLen == 4 && !strcmp(NameStr, "fabs")) ||
-                  (NameLen == 5 && !strcmp(NameStr, "fabsf")) ||
-                  (NameLen == 5 && !strcmp(NameStr, "fabsl")))) {
+      } else if (Name == "fabs" || Name == "fabsf" || Name == "fabsl") {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType()) {
@@ -4467,10 +4461,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if (NameStr[0] == 's' &&
-                 ((NameLen == 3 && !strcmp(NameStr, "sin")) ||
-                  (NameLen == 4 && !strcmp(NameStr, "sinf")) ||
-                  (NameLen == 4 && !strcmp(NameStr, "sinl")))) {
+      } else if (Name == "sin" || Name == "sinf" || Name == "sinl") {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType()) {
@@ -4479,10 +4470,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
                                    Tmp.getValueType(), Tmp));
           return;
         }
-      } else if (NameStr[0] == 'c' &&
-                 ((NameLen == 3 && !strcmp(NameStr, "cos")) ||
-                  (NameLen == 4 && !strcmp(NameStr, "cosf")) ||
-                  (NameLen == 4 && !strcmp(NameStr, "cosl")))) {
+      } else if (Name == "cos" || Name == "cosf" || Name == "cosl") {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType()) {

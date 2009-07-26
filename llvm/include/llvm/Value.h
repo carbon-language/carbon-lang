@@ -124,10 +124,6 @@ public:
     return getName().end(); 
   }
   
-  /// getNameLen - Return the length of the string, correctly handling nul
-  /// characters embedded into them.
-  unsigned getNameLen() const { return getName().size(); }
-
   /// getName() - Return a constant reference to the value's name. This is cheap
   /// and guaranteed to return the same reference as long as the value is not
   /// modified.
