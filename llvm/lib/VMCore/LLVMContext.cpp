@@ -419,6 +419,7 @@ Constant* LLVMContext::getConstantExprInsertValue(Constant* Agg, Constant* Val,
 
 Constant* LLVMContext::getConstantExprSizeOf(const Type* Ty) {
   // sizeof is implemented as: (i64) gep (Ty*)null, 1
+  // Note that a non-inbounds gep is used, as null isn't within any object.
   Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
   Constant *GEP = getConstantExprGetElementPtr(
                             getNullValue(getPointerTypeUnqual(Ty)), &GEPIdx, 1);
