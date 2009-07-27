@@ -436,7 +436,7 @@ bool LLParser::ParseStandaloneMetadata() {
 
   SmallVector<Value *, 16> Elts;
   if (ParseMDNodeVector(Elts) 
-      || ParseToken(lltok::rbrace, "exected end of metadata node"))
+      || ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
   MDNode *Init = Context.getMDNode(Elts.data(), Elts.size());
