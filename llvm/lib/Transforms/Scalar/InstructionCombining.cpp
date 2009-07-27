@@ -2354,7 +2354,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
     // X + 0 --> X
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
-      if (CFP->isExactlyValue(Context->getConstantFPNegativeZero
+      if (CFP->isExactlyValue(ConstantFP::getNegativeZero
                               (I.getType())->getValueAPF()))
         return ReplaceInstUsesWith(I, LHS);
     }
@@ -8779,7 +8779,7 @@ static Constant *FitsInFPType(ConstantFP *CFP, const fltSemantics &Sem,
   APFloat F = CFP->getValueAPF();
   (void)F.convert(Sem, APFloat::rmNearestTiesToEven, &losesInfo);
   if (!losesInfo)
-    return Context->getConstantFP(F);
+    return ConstantFP::get(*Context, F);
   return 0;
 }
 

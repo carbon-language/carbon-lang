@@ -457,10 +457,9 @@ class LLVMContextImpl {
   LLVMContextImpl(const LLVMContextImpl&);
   
   friend class ConstantInt;
+  friend class ConstantFP;
 public:
   LLVMContextImpl(LLVMContext &C);
-  
-  ConstantFP *getConstantFP(const APFloat &V);
   
   MDString *getMDString(const char *StrBegin, unsigned StrLength);
   

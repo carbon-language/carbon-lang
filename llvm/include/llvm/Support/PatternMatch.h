@@ -506,7 +506,7 @@ struct neg_match {
   }
 private:
   bool matchIfNeg(Value *LHS, Value *RHS, LLVMContext &Context) {
-    return LHS == Context.getZeroValueForNegation(LHS->getType()) &&
+    return LHS == ConstantFP::getZeroValueForNegation(LHS->getType()) &&
            L.match(RHS, Context);
   }
 };
@@ -535,7 +535,7 @@ struct fneg_match {
   }
 private:
   bool matchIfFNeg(Value *LHS, Value *RHS, LLVMContext &Context) {
-    return LHS == Context.getZeroValueForNegation(LHS->getType()) &&
+    return LHS == ConstantFP::getZeroValueForNegation(LHS->getType()) &&
            L.match(RHS, Context);
   }
 };

@@ -56,6 +56,7 @@ class LLVMContext {
   LLVMContextImpl* pImpl;
   
   friend class ConstantInt;
+  friend class ConstantFP;
 public:
   LLVMContext();
   ~LLVMContext();
@@ -179,21 +180,6 @@ public:
   /// independent way (Note: the return type is an i64).
   ///
   Constant* getConstantExprSizeOf(const Type* Ty);
-  
-  /// Floating point negation must be implemented with f(x) = -0.0 - x. This
-  /// method returns the negative zero constant for floating point or vector
-  /// floating point types; for all other types, it returns the null value.
-  Constant* getZeroValueForNegation(const Type* Ty);
-  
-  // ConstantFP accessors
-  ConstantFP* getConstantFP(const APFloat& V);
-  
-  /// get() - This returns a ConstantFP, or a vector containing a splat of a
-  /// ConstantFP, for the specified value in the specified type.  This should
-  /// only be used for simple constant values like 2.0/1.0 etc, that are
-  /// known-valid both as host double and as the target format.
-  Constant* getConstantFP(const Type* Ty, double V);
-  ConstantFP* getConstantFPNegativeZero(const Type* Ty);
   
   // ConstantVector accessors
   Constant* getConstantVector(const VectorType* T,

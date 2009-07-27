@@ -364,7 +364,7 @@ Value *IfExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   CondV = Builder.CreateFCmpONE(CondV, 
-                                getGlobalContext().getConstantFP(APFloat(0.0)),
+                              ConstantFP::get(getGlobalContext(), APFloat(0.0)),
                                 "ifcond");
 </pre>
 </div>
@@ -796,7 +796,7 @@ references to it will naturally find it in the symbol table.</p>
     if (StepVal == 0) return 0;
   } else {
     // If not specified, use 1.0.
-    StepVal = getGlobalContext().getConstantFP(APFloat(1.0));
+    StepVal = ConstantFP::get(getGlobalContext(), APFloat(1.0));
   }
   
   Value *NextVar = Builder.CreateAdd(Variable, StepVal, "nextvar");
@@ -815,7 +815,7 @@ will be the value of the loop variable on the next iteration of the loop.</p>
   
   // Convert condition to a bool by comparing equal to 0.0.
   EndCond = Builder.CreateFCmpONE(EndCond, 
-                                  getGlobalContext().getConstantFP(APFloat(0.0)),
+                              ConstantFP::get(getGlobalContext(), APFloat(0.0)),
                                   "loopcond");
 </pre>
 </div>
@@ -1360,7 +1360,7 @@ static FunctionPassManager *TheFPM;
 Value *ErrorV(const char *Str) { Error(Str); return 0; }
 
 Value *NumberExprAST::Codegen() {
-  return getGlobalContext().getConstantFP(APFloat(Val));
+  return ConstantFP::get(getGlobalContext(), APFloat(Val));
 }
 
 Value *VariableExprAST::Codegen() {
@@ -1411,7 +1411,7 @@ Value *IfExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   CondV = Builder.CreateFCmpONE(CondV, 
-                                getGlobalContext().getConstantFP(APFloat(0.0)),
+                              ConstantFP::get(getGlobalContext(), APFloat(0.0)),
                                 "ifcond");
   
   Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();
@@ -1510,7 +1510,7 @@ Value *ForExprAST::Codegen() {
     if (StepVal == 0) return 0;
   } else {
     // If not specified, use 1.0.
-    StepVal = getGlobalContext().getConstantFP(APFloat(1.0));
+    StepVal = ConstantFP::get(getGlobalContext(), APFloat(1.0));
   }
   
   Value *NextVar = Builder.CreateAdd(Variable, StepVal, "nextvar");
@@ -1521,7 +1521,7 @@ Value *ForExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   EndCond = Builder.CreateFCmpONE(EndCond, 
-                                  getGlobalContext().getConstantFP(APFloat(0.0)),
+                              ConstantFP::get(getGlobalContext(), APFloat(0.0)),
                                   "loopcond");
   
   // Create the "after loop" block and insert it.

@@ -655,9 +655,9 @@ static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
   }
   
   if (Ty == Type::FloatTy)
-    return Context.getConstantFP(APFloat((float)V));
+    return ConstantFP::get(Context, APFloat((float)V));
   if (Ty == Type::DoubleTy)
-    return Context.getConstantFP(APFloat(V));
+    return ConstantFP::get(Context, APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
 }
@@ -674,9 +674,9 @@ static Constant *ConstantFoldBinaryFP(double (*NativeFP)(double, double),
   }
   
   if (Ty == Type::FloatTy)
-    return Context.getConstantFP(APFloat((float)V));
+    return ConstantFP::get(Context, APFloat((float)V));
   if (Ty == Type::DoubleTy)
-    return Context.getConstantFP(APFloat(V));
+    return ConstantFP::get(Context, APFloat(V));
   llvm_unreachable("Can only constant fold float/double");
   return 0; // dummy return to suppress warning
 }
@@ -796,10 +796,10 @@ llvm::ConstantFoldCall(Function *F,
         }
       } else if (ConstantInt *Op2C = dyn_cast<ConstantInt>(Operands[1])) {
         if (Name == "llvm.powi.f32") {
-          return Context.getConstantFP(APFloat((float)std::pow((float)Op1V,
+          return ConstantFP::get(Context, APFloat((float)std::pow((float)Op1V,
                                                  (int)Op2C->getZExtValue())));
         } else if (Name == "llvm.powi.f64") {
-          return Context.getConstantFP(APFloat((double)std::pow((double)Op1V,
+          return ConstantFP::get(Context, APFloat((double)std::pow((double)Op1V,
                                                  (int)Op2C->getZExtValue())));
         }
       }

@@ -41,15 +41,16 @@ Constant* LLVMContext::getNullValue(const Type* Ty) {
   case Type::IntegerTyID:
     return ConstantInt::get(Ty, 0);
   case Type::FloatTyID:
-    return getConstantFP(APFloat(APInt(32, 0)));
+    return ConstantFP::get(Ty->getContext(), APFloat(APInt(32, 0)));
   case Type::DoubleTyID:
-    return getConstantFP(APFloat(APInt(64, 0)));
+    return ConstantFP::get(Ty->getContext(), APFloat(APInt(64, 0)));
   case Type::X86_FP80TyID:
-    return getConstantFP(APFloat(APInt(80, 2, zero)));
+    return ConstantFP::get(Ty->getContext(), APFloat(APInt(80, 2, zero)));
   case Type::FP128TyID:
-    return getConstantFP(APFloat(APInt(128, 2, zero), true));
+    return ConstantFP::get(Ty->getContext(),
+                           APFloat(APInt(128, 2, zero), true));
   case Type::PPC_FP128TyID:
-    return getConstantFP(APFloat(APInt(128, 2, zero)));
+    return ConstantFP::get(Ty->getContext(), APFloat(APInt(128, 2, zero)));
   case Type::PointerTyID:
     return getConstantPointerNull(cast<PointerType>(Ty));
   case Type::StructTyID:
@@ -276,7 +277,7 @@ Constant* LLVMContext::getConstantExprNeg(Constant* C) {
   assert(C->getType()->isIntOrIntVector() &&
          "Cannot NEG a nonintegral value!");
   return getConstantExpr(Instruction::Sub,
-             getZeroValueForNegation(C->getType()),
+             ConstantFP::getZeroValueForNegation(C->getType()),
              C);
 }
 
@@ -284,7 +285,7 @@ Constant* LLVMContext::getConstantExprFNeg(Constant* C) {
   assert(C->getType()->isFPOrFPVector() &&
          "Cannot FNEG a non-floating-point value!");
   return getConstantExpr(Instruction::FSub,
-             getZeroValueForNegation(C->getType()),
+             ConstantFP::getZeroValueForNegation(C->getType()),
              C);
 }
 
@@ -423,65 +424,6 @@ Constant* LLVMContext::getConstantExprSizeOf(const Type* Ty) {
                             getNullValue(getPointerTypeUnqual(Ty)), &GEPIdx, 1);
   return getConstantExprCast(Instruction::PtrToInt, GEP, Type::Int64Ty);
 }
-
-Constant* LLVMContext::getZeroValueForNegation(const Type* Ty) {
-  if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
-    if (PTy->getElementType()->isFloatingPoint()) {
-      std::vector<Constant*> zeros(PTy->getNumElements(),
-                           getConstantFPNegativeZero(PTy->getElementType()));
-      return getConstantVector(PTy, zeros);
-    }
-
-  if (Ty->isFloatingPoint()) 
-    return getConstantFPNegativeZero(Ty);
-
-  return getNullValue(Ty);
-}
-
-
-// ConstantFP accessors.
-ConstantFP* LLVMContext::getConstantFP(const APFloat& V) {
-  return pImpl->getConstantFP(V);
-}
-
-static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
-  if (Ty == Type::FloatTy)
-    return &APFloat::IEEEsingle;
-  if (Ty == Type::DoubleTy)
-    return &APFloat::IEEEdouble;
-  if (Ty == Type::X86_FP80Ty)
-    return &APFloat::x87DoubleExtended;
-  else if (Ty == Type::FP128Ty)
-    return &APFloat::IEEEquad;
-  
-  assert(Ty == Type::PPC_FP128Ty && "Unknown FP format");
-  return &APFloat::PPCDoubleDouble;
-}
-
-/// get() - This returns a constant fp for the specified value in the
-/// specified type.  This should only be used for simple constant values like
-/// 2.0/1.0 etc, that are known-valid both as double and as the target format.
-Constant* LLVMContext::getConstantFP(const Type* Ty, double V) {
-  APFloat FV(V);
-  bool ignored;
-  FV.convert(*TypeToFloatSemantics(Ty->getScalarType()),
-             APFloat::rmNearestTiesToEven, &ignored);
-  Constant *C = getConstantFP(FV);
-
-  // For vectors, broadcast the value.
-  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return
-      getConstantVector(std::vector<Constant *>(VTy->getNumElements(), C));
-
-  return C;
-}
-
-ConstantFP* LLVMContext::getConstantFPNegativeZero(const Type* Ty) {
-  APFloat apf = cast <ConstantFP>(getNullValue(Ty))->getValueAPF();
-  apf.changeSign();
-  return getConstantFP(apf);
-}
-
 
 // ConstantVector accessors.
 Constant* LLVMContext::getConstantVector(const VectorType* T,

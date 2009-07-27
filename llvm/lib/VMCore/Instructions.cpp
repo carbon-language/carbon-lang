@@ -1577,7 +1577,7 @@ BinaryOperator *BinaryOperator::Create(BinaryOps Op, Value *S1, Value *S2,
 BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
                                           Value *Op, const Twine &Name,
                                           Instruction *InsertBefore) {
-  Value *zero = Context.getZeroValueForNegation(Op->getType());
+  Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::Sub,
                             zero, Op,
                             Op->getType(), Name, InsertBefore);
@@ -1586,7 +1586,7 @@ BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
 BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context, 
                                           Value *Op, const Twine &Name,
                                           BasicBlock *InsertAtEnd) {
-  Value *zero = Context.getZeroValueForNegation(Op->getType());
+  Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::Sub,
                             zero, Op,
                             Op->getType(), Name, InsertAtEnd);
@@ -1595,7 +1595,7 @@ BinaryOperator *BinaryOperator::CreateNeg(LLVMContext &Context,
 BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
                                            Value *Op, const Twine &Name,
                                            Instruction *InsertBefore) {
-  Value *zero = Context.getZeroValueForNegation(Op->getType());
+  Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::FSub,
                             zero, Op,
                             Op->getType(), Name, InsertBefore);
@@ -1604,7 +1604,7 @@ BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
 BinaryOperator *BinaryOperator::CreateFNeg(LLVMContext &Context,
                                            Value *Op, const Twine &Name,
                                            BasicBlock *InsertAtEnd) {
-  Value *zero = Context.getZeroValueForNegation(Op->getType());
+  Value *zero = ConstantFP::getZeroValueForNegation(Op->getType());
   return new BinaryOperator(Instruction::FSub,
                             zero, Op,
                             Op->getType(), Name, InsertAtEnd);

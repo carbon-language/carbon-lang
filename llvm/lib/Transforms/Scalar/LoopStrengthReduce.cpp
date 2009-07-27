@@ -2177,8 +2177,6 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
   if (isa<SCEVCouldNotCompute>(BackedgeTakenCount))
     return;
     
-  LLVMContext &Context = L->getHeader()->getContext();
-
   for (unsigned Stride = 0, e = IU->StrideOrder.size(); Stride != e;
        ++Stride) {
     std::map<const SCEV *, IVUsersOfOneStride *>::iterator SI =
@@ -2240,7 +2238,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
         
       ConstantInt *Init = dyn_cast<ConstantInt>(PH->getIncomingValue(Entry));
       if (!Init) continue;
-      Constant *NewInit = Context.getConstantFP(DestTy, Init->getZExtValue());
+      Constant *NewInit = ConstantFP::get(DestTy, Init->getZExtValue());
 
       BinaryOperator *Incr = 
         dyn_cast<BinaryOperator>(PH->getIncomingValue(Latch));
@@ -2264,7 +2262,7 @@ void LoopStrengthReduce::OptimizeShadowIV(Loop *L) {
       PHINode *NewPH = PHINode::Create(DestTy, "IV.S.", PH);
 
       /* create new increment. '++d' in above example. */
-      Constant *CFP = Context.getConstantFP(DestTy, C->getZExtValue());
+      Constant *CFP = ConstantFP::get(DestTy, C->getZExtValue());
       BinaryOperator *NewIncr = 
         BinaryOperator::Create(Incr->getOpcode() == Instruction::Add ?
                                  Instruction::FAdd : Instruction::FSub,

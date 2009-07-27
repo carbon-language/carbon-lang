@@ -50,7 +50,6 @@ class ConstantInt : public Constant {
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(const IntegerType *Ty, const APInt& V);
   APInt Val;
-  friend class LLVMContextImpl;
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
@@ -238,6 +237,19 @@ protected:
     return User::operator new(s, 0);
   }
 public:
+  /// Floating point negation must be implemented with f(x) = -0.0 - x. This
+  /// method returns the negative zero constant for floating point or vector
+  /// floating point types; for all other types, it returns the null value.
+  static Constant* getZeroValueForNegation(const Type* Ty);
+  
+  /// get() - This returns a ConstantFP, or a vector containing a splat of a
+  /// ConstantFP, for the specified value in the specified type.  This should
+  /// only be used for simple constant values like 2.0/1.0 etc, that are
+  /// known-valid both as host double and as the target format.
+  static Constant* get(const Type* Ty, double V);
+  static ConstantFP* get(LLVMContext &Context, const APFloat& V);
+  static ConstantFP* getNegativeZero(const Type* Ty);
+  
   /// isValueValidForType - return true if Ty is big enough to represent V.
   static bool isValueValidForType(const Type *Ty, const APFloat& V);
   inline const APFloat& getValueAPF() const { return Val; }

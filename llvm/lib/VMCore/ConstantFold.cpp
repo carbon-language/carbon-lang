@@ -161,7 +161,7 @@ static Constant *FoldBitCast(LLVMContext &Context,
       return V;
 
     if (DestTy->isFloatingPoint())
-      return Context.getConstantFP(APFloat(CI->getValue(),
+      return ConstantFP::get(Context, APFloat(CI->getValue(),
                                      DestTy != Type::PPC_FP128Ty));
 
     // Otherwise, can't fold this (vector?)
@@ -245,7 +245,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
                   DestTy == Type::FP128Ty ? APFloat::IEEEquad :
                   APFloat::Bogus,
                   APFloat::rmNearestTiesToEven, &ignored);
-      return Context.getConstantFP(Val);
+      return ConstantFP::get(Context, Val);
     }
     return 0; // Can't fold.
   case Instruction::FPToUI: 
@@ -279,7 +279,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
       (void)apf.convertFromAPInt(api, 
                                  opc==Instruction::SIToFP,
                                  APFloat::rmNearestTiesToEven);
-      return Context.getConstantFP(apf);
+      return ConstantFP::get(Context, apf);
     }
     return 0;
   case Instruction::ZExt:
@@ -795,19 +795,19 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
         break;
       case Instruction::FAdd:
         (void)C3V.add(C2V, APFloat::rmNearestTiesToEven);
-        return Context.getConstantFP(C3V);
+        return ConstantFP::get(Context, C3V);
       case Instruction::FSub:
         (void)C3V.subtract(C2V, APFloat::rmNearestTiesToEven);
-        return Context.getConstantFP(C3V);
+        return ConstantFP::get(Context, C3V);
       case Instruction::FMul:
         (void)C3V.multiply(C2V, APFloat::rmNearestTiesToEven);
-        return Context.getConstantFP(C3V);
+        return ConstantFP::get(Context, C3V);
       case Instruction::FDiv:
         (void)C3V.divide(C2V, APFloat::rmNearestTiesToEven);
-        return Context.getConstantFP(C3V);
+        return ConstantFP::get(Context, C3V);
       case Instruction::FRem:
         (void)C3V.mod(C2V, APFloat::rmNearestTiesToEven);
-        return Context.getConstantFP(C3V);
+        return ConstantFP::get(Context, C3V);
       }
     }
   } else if (const VectorType *VTy = dyn_cast<VectorType>(C1->getType())) {

@@ -49,41 +49,6 @@ static std::vector<Constant*> getValType(ConstantVector *CP) {
 LLVMContextImpl::LLVMContextImpl(LLVMContext &C) :
     Context(C), TheTrueVal(0), TheFalseVal(0) { }
 
-
-ConstantFP *LLVMContextImpl::getConstantFP(const APFloat &V) {
-  DenseMapAPFloatKeyInfo::KeyTy Key(V);
-  
-  ConstantsLock.reader_acquire();
-  ConstantFP *&Slot = FPConstants[Key];
-  ConstantsLock.reader_release();
-    
-  if (!Slot) {
-    sys::SmartScopedWriter<true> Writer(ConstantsLock);
-    ConstantFP *&NewSlot = FPConstants[Key];
-    if (!NewSlot) {
-      const Type *Ty;
-      if (&V.getSemantics() == &APFloat::IEEEsingle)
-        Ty = Type::FloatTy;
-      else if (&V.getSemantics() == &APFloat::IEEEdouble)
-        Ty = Type::DoubleTy;
-      else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
-        Ty = Type::X86_FP80Ty;
-      else if (&V.getSemantics() == &APFloat::IEEEquad)
-        Ty = Type::FP128Ty;
-      else {
-        assert(&V.getSemantics() == &APFloat::PPCDoubleDouble && 
-               "Unknown FP format");
-        Ty = Type::PPC_FP128Ty;
-      }
-      NewSlot = new ConstantFP(Ty, V);
-    }
-    
-    return NewSlot;
-  }
-  
-  return Slot;
-}
-
 MDString *LLVMContextImpl::getMDString(const char *StrBegin,
                                        unsigned StrLength) {
   sys::SmartScopedWriter<true> Writer(ConstantsLock);

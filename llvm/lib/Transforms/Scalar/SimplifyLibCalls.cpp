@@ -1035,7 +1035,7 @@ struct VISIBILITY_HIDDEN PowOpt : public LibCallOptimization {
     if (Op2C == 0) return 0;
     
     if (Op2C->getValueAPF().isZero())  // pow(x, 0.0) -> 1.0
-      return Context->getConstantFP(CI->getType(), 1.0);
+      return ConstantFP::get(CI->getType(), 1.0);
     
     if (Op2C->isExactlyValue(0.5)) {
       // FIXME: This is not safe for -0.0 and -inf.  This can only be done when
@@ -1055,7 +1055,7 @@ struct VISIBILITY_HIDDEN PowOpt : public LibCallOptimization {
     if (Op2C->isExactlyValue(2.0))  // pow(x, 2.0) -> x*x
       return B.CreateFMul(Op1, Op1, "pow2");
     if (Op2C->isExactlyValue(-1.0)) // pow(x, -1.0) -> 1.0/x
-      return B.CreateFDiv(Context->getConstantFP(CI->getType(), 1.0),
+      return B.CreateFDiv(ConstantFP::get(CI->getType(), 1.0),
                           Op1, "powrecip");
     return 0;
   }
@@ -1094,7 +1094,7 @@ struct VISIBILITY_HIDDEN Exp2Opt : public LibCallOptimization {
       else
         Name = "ldexpl";
 
-      Constant *One = Context->getConstantFP(APFloat(1.0f));
+      Constant *One = ConstantFP::get(*Context, APFloat(1.0f));
       if (Op->getType() != Type::FloatTy)
         One = Context->getConstantExprFPExtend(One, Op->getType());
 

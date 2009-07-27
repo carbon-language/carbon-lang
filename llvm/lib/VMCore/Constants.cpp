@@ -258,6 +258,87 @@ static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
 }
 #endif
 
+/// get() - This returns a constant fp for the specified value in the
+/// specified type.  This should only be used for simple constant values like
+/// 2.0/1.0 etc, that are known-valid both as double and as the target format.
+Constant* ConstantFP::get(const Type* Ty, double V) {
+  LLVMContext &Context = Ty->getContext();
+  
+  APFloat FV(V);
+  bool ignored;
+  FV.convert(*TypeToFloatSemantics(Ty->getScalarType()),
+             APFloat::rmNearestTiesToEven, &ignored);
+  Constant *C = get(Context, FV);
+
+  // For vectors, broadcast the value.
+  if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
+    return Context.getConstantVector(
+      std::vector<Constant *>(VTy->getNumElements(), C));
+
+  return C;
+}
+
+ConstantFP* ConstantFP::getNegativeZero(const Type* Ty) {
+  LLVMContext &Context = Ty->getContext();
+  APFloat apf = cast <ConstantFP>(Context.getNullValue(Ty))->getValueAPF();
+  apf.changeSign();
+  return get(Context, apf);
+}
+
+
+Constant* ConstantFP::getZeroValueForNegation(const Type* Ty) {
+  LLVMContext &Context = Ty->getContext();
+  if (const VectorType *PTy = dyn_cast<VectorType>(Ty))
+    if (PTy->getElementType()->isFloatingPoint()) {
+      std::vector<Constant*> zeros(PTy->getNumElements(),
+                           getNegativeZero(PTy->getElementType()));
+      return Context.getConstantVector(PTy, zeros);
+    }
+
+  if (Ty->isFloatingPoint()) 
+    return getNegativeZero(Ty);
+
+  return Context.getNullValue(Ty);
+}
+
+
+// ConstantFP accessors.
+ConstantFP* ConstantFP::get(LLVMContext &Context, const APFloat& V) {
+  DenseMapAPFloatKeyInfo::KeyTy Key(V);
+  
+  LLVMContextImpl* pImpl = Context.pImpl;
+  
+  pImpl->ConstantsLock.reader_acquire();
+  ConstantFP *&Slot = pImpl->FPConstants[Key];
+  pImpl->ConstantsLock.reader_release();
+    
+  if (!Slot) {
+    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
+    ConstantFP *&NewSlot = pImpl->FPConstants[Key];
+    if (!NewSlot) {
+      const Type *Ty;
+      if (&V.getSemantics() == &APFloat::IEEEsingle)
+        Ty = Type::FloatTy;
+      else if (&V.getSemantics() == &APFloat::IEEEdouble)
+        Ty = Type::DoubleTy;
+      else if (&V.getSemantics() == &APFloat::x87DoubleExtended)
+        Ty = Type::X86_FP80Ty;
+      else if (&V.getSemantics() == &APFloat::IEEEquad)
+        Ty = Type::FP128Ty;
+      else {
+        assert(&V.getSemantics() == &APFloat::PPCDoubleDouble && 
+               "Unknown FP format");
+        Ty = Type::PPC_FP128Ty;
+      }
+      NewSlot = new ConstantFP(Ty, V);
+    }
+    
+    return NewSlot;
+  }
+  
+  return Slot;
+}
+
 ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
   : Constant(Ty, ConstantFPVal, 0, 0), Val(V) {
   assert(&V.getSemantics() == TypeToFloatSemantics(Ty) &&

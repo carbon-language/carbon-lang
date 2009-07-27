@@ -2143,7 +2143,7 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
       ID.APFloatVal.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven,
                             &Ignored);
     }
-    V = Context.getConstantFP(ID.APFloatVal);
+    V = ConstantFP::get(Context, ID.APFloatVal);
       
     if (V->getType() != Ty)
       return Error(ID.Loc, "floating point constant does not have type '" +

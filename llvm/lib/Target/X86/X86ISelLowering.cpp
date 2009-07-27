@@ -4898,9 +4898,9 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG) {
 
   std::vector<Constant*> CV1;
   CV1.push_back(
-    Context->getConstantFP(APFloat(APInt(64, 0x4530000000000000ULL))));
+    ConstantFP::get(*Context, APFloat(APInt(64, 0x4530000000000000ULL))));
   CV1.push_back(
-    Context->getConstantFP(APFloat(APInt(64, 0x4330000000000000ULL))));
+    ConstantFP::get(*Context, APFloat(APInt(64, 0x4330000000000000ULL))));
   Constant *C1 = Context->getConstantVector(CV1);
   SDValue CPIdx1 = DAG.getConstantPool(C1, getPointerTy(), 16);
 
@@ -5113,11 +5113,11 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) {
     EltVT = VT.getVectorElementType();
   std::vector<Constant*> CV;
   if (EltVT == MVT::f64) {
-    Constant *C = Context->getConstantFP(APFloat(APInt(64, ~(1ULL << 63))));
+    Constant *C = ConstantFP::get(*Context, APFloat(APInt(64, ~(1ULL << 63))));
     CV.push_back(C);
     CV.push_back(C);
   } else {
-    Constant *C = Context->getConstantFP(APFloat(APInt(32, ~(1U << 31))));
+    Constant *C = ConstantFP::get(*Context, APFloat(APInt(32, ~(1U << 31))));
     CV.push_back(C);
     CV.push_back(C);
     CV.push_back(C);
@@ -5143,11 +5143,11 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) {
   }
   std::vector<Constant*> CV;
   if (EltVT == MVT::f64) {
-    Constant *C = Context->getConstantFP(APFloat(APInt(64, 1ULL << 63)));
+    Constant *C = ConstantFP::get(*Context, APFloat(APInt(64, 1ULL << 63)));
     CV.push_back(C);
     CV.push_back(C);
   } else {
-    Constant *C = Context->getConstantFP(APFloat(APInt(32, 1U << 31)));
+    Constant *C = ConstantFP::get(*Context, APFloat(APInt(32, 1U << 31)));
     CV.push_back(C);
     CV.push_back(C);
     CV.push_back(C);
@@ -5194,13 +5194,13 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   // First get the sign bit of second operand.
   std::vector<Constant*> CV;
   if (SrcVT == MVT::f64) {
-    CV.push_back(Context->getConstantFP(APFloat(APInt(64, 1ULL << 63))));
-    CV.push_back(Context->getConstantFP(APFloat(APInt(64, 0))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(64, 1ULL << 63))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(64, 0))));
   } else {
-    CV.push_back(Context->getConstantFP(APFloat(APInt(32, 1U << 31))));
-    CV.push_back(Context->getConstantFP(APFloat(APInt(32, 0))));
-    CV.push_back(Context->getConstantFP(APFloat(APInt(32, 0))));
-    CV.push_back(Context->getConstantFP(APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 1U << 31))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
   }
   Constant *C = Context->getConstantVector(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
@@ -5223,13 +5223,13 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
   // Clear first operand sign bit.
   CV.clear();
   if (VT == MVT::f64) {
-    CV.push_back(Context->getConstantFP(APFloat(APInt(64, ~(1ULL << 63)))));
-    CV.push_back(Context->getConstantFP(APFloat(APInt(64, 0))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(64, ~(1ULL << 63)))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(64, 0))));
   } else {
-    CV.push_back(Context->getConstantFP(APFloat(APInt(32, ~(1U << 31)))));
-    CV.push_back(Context->getConstantFP(APFloat(APInt(32, 0))));
-    CV.push_back(Context->getConstantFP(APFloat(APInt(32, 0))));
-    CV.push_back(Context->getConstantFP(APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, ~(1U << 31)))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
+    CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
   }
   C = Context->getConstantVector(CV);
   CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);

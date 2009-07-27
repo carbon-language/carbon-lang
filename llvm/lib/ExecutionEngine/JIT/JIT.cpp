@@ -490,15 +490,15 @@ GenericValue JIT::runFunction(Function *F,
         C = ConstantInt::get(F->getContext(), AV.IntVal);
         break;
     case Type::FloatTyID:
-        C = Context.getConstantFP(APFloat(AV.FloatVal));
+        C = ConstantFP::get(F->getContext(), APFloat(AV.FloatVal));
         break;
     case Type::DoubleTyID:
-        C = Context.getConstantFP(APFloat(AV.DoubleVal));
+        C = ConstantFP::get(F->getContext(), APFloat(AV.DoubleVal));
         break;
     case Type::PPC_FP128TyID:
     case Type::X86_FP80TyID:
     case Type::FP128TyID:
-        C = Context.getConstantFP(APFloat(AV.IntVal));
+        C = ConstantFP::get(F->getContext(), APFloat(AV.IntVal));
         break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);

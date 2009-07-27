@@ -623,7 +623,7 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
 
 
 Value *NumberExprAST::Codegen() {
-  return getGlobalContext().getConstantFP(APFloat(Val));
+  return ConstantFP::get(getGlobalContext(), APFloat(Val));
 }
 
 Value *VariableExprAST::Codegen() {
@@ -716,7 +716,7 @@ Value *IfExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   CondV = Builder.CreateFCmpONE(CondV, 
-                                getGlobalContext().getConstantFP(APFloat(0.0)),
+                              ConstantFP::get(getGlobalContext(), APFloat(0.0)),
                                 "ifcond");
   
   Function *TheFunction = Builder.GetInsertBlock()->getParent();
@@ -821,7 +821,7 @@ Value *ForExprAST::Codegen() {
     if (StepVal == 0) return 0;
   } else {
     // If not specified, use 1.0.
-    StepVal = getGlobalContext().getConstantFP(APFloat(1.0));
+    StepVal = ConstantFP::get(getGlobalContext(), APFloat(1.0));
   }
   
   // Compute the end condition.
@@ -836,7 +836,7 @@ Value *ForExprAST::Codegen() {
   
   // Convert condition to a bool by comparing equal to 0.0.
   EndCond = Builder.CreateFCmpONE(EndCond, 
-                                getGlobalContext().getConstantFP(APFloat(0.0)),
+                              ConstantFP::get(getGlobalContext(), APFloat(0.0)),
                                   "loopcond");
   
   // Create the "after loop" block and insert it.
@@ -879,7 +879,7 @@ Value *VarExprAST::Codegen() {
       InitVal = Init->Codegen();
       if (InitVal == 0) return 0;
     } else { // If not specified, use 0.0.
-      InitVal = getGlobalContext().getConstantFP(APFloat(0.0));
+      InitVal = ConstantFP::get(getGlobalContext(), APFloat(0.0));
     }
     
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);

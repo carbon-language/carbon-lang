@@ -388,11 +388,11 @@ LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N) {
   bool ignored;
   APN.convert(SemanticsForType(unwrap(RealTy)), APFloat::rmNearestTiesToEven,
               &ignored);
-  return wrap(getGlobalContext().getConstantFP(APN));
+  return wrap(ConstantFP::get(getGlobalContext(), APN));
 }
 
 LLVMValueRef LLVMConstRealOfString(LLVMTypeRef RealTy, const char *Text) {
-  return wrap(getGlobalContext().getConstantFP(
+  return wrap(ConstantFP::get(getGlobalContext(),
                               APFloat(SemanticsForType(unwrap(RealTy)), Text)));
 }
 
