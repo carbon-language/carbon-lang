@@ -57,7 +57,7 @@ namespace {
 
     virtual void AbortAssembly(const char *AbortReason = NULL);
 
-    virtual void EmitBytes(const char *Data, unsigned Length);
+    virtual void EmitBytes(const StringRef &Data);
 
     virtual void EmitValue(const MCValue &Value, unsigned Size);
 
@@ -208,9 +208,9 @@ void MCAsmStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
   OS << '\n';
 }
 
-void MCAsmStreamer::EmitBytes(const char *Data, unsigned Length) {
+void MCAsmStreamer::EmitBytes(const StringRef &Data) {
   assert(CurSection && "Cannot emit contents before setting section!");
-  for (unsigned i = 0; i != Length; ++i)
+  for (unsigned i = 0, e = Data.size(); i != e; ++i)
     OS << ".byte " << (unsigned) Data[i] << '\n';
 }
 

@@ -313,7 +313,7 @@ bool AsmParser::ParseStatement() {
   
   // If we have an identifier, handle it as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
-  const char *IDVal = Lexer.getCurStrVal();
+  StringRef IDVal = Lexer.getCurStrVal();
   
   // Consume the identifier, see what is after it.
   switch (Lexer.Lex()) {
@@ -353,194 +353,194 @@ bool AsmParser::ParseStatement() {
   // Otherwise, we have a normal instruction or directive.  
   if (IDVal[0] == '.') {
     // FIXME: This should be driven based on a hash lookup and callback.
-    if (!strcmp(IDVal, ".section"))
+    if (IDVal == ".section")
       return ParseDirectiveDarwinSection();
-    if (!strcmp(IDVal, ".text"))
+    if (IDVal == ".text")
       // FIXME: This changes behavior based on the -static flag to the
       // assembler.
       return ParseDirectiveSectionSwitch("__TEXT,__text",
                                          "regular,pure_instructions");
-    if (!strcmp(IDVal, ".const"))
+    if (IDVal == ".const")
       return ParseDirectiveSectionSwitch("__TEXT,__const");
-    if (!strcmp(IDVal, ".static_const"))
+    if (IDVal == ".static_const")
       return ParseDirectiveSectionSwitch("__TEXT,__static_const");
-    if (!strcmp(IDVal, ".cstring"))
+    if (IDVal == ".cstring")
       return ParseDirectiveSectionSwitch("__TEXT,__cstring", 
                                          "cstring_literals");
-    if (!strcmp(IDVal, ".literal4"))
+    if (IDVal == ".literal4")
       return ParseDirectiveSectionSwitch("__TEXT,__literal4", "4byte_literals");
-    if (!strcmp(IDVal, ".literal8"))
+    if (IDVal == ".literal8")
       return ParseDirectiveSectionSwitch("__TEXT,__literal8", "8byte_literals");
-    if (!strcmp(IDVal, ".literal16"))
+    if (IDVal == ".literal16")
       return ParseDirectiveSectionSwitch("__TEXT,__literal16",
                                          "16byte_literals");
-    if (!strcmp(IDVal, ".constructor"))
+    if (IDVal == ".constructor")
       return ParseDirectiveSectionSwitch("__TEXT,__constructor");
-    if (!strcmp(IDVal, ".destructor"))
+    if (IDVal == ".destructor")
       return ParseDirectiveSectionSwitch("__TEXT,__destructor");
-    if (!strcmp(IDVal, ".fvmlib_init0"))
+    if (IDVal == ".fvmlib_init0")
       return ParseDirectiveSectionSwitch("__TEXT,__fvmlib_init0");
-    if (!strcmp(IDVal, ".fvmlib_init1"))
+    if (IDVal == ".fvmlib_init1")
       return ParseDirectiveSectionSwitch("__TEXT,__fvmlib_init1");
-    if (!strcmp(IDVal, ".symbol_stub")) // FIXME: Different on PPC.
+    if (IDVal == ".symbol_stub") // FIXME: Different on PPC.
       return ParseDirectiveSectionSwitch("__IMPORT,__jump_table,symbol_stubs",
                                     "self_modifying_code+pure_instructions,5");
     // FIXME: .picsymbol_stub on PPC.
-    if (!strcmp(IDVal, ".data"))
+    if (IDVal == ".data")
       return ParseDirectiveSectionSwitch("__DATA,__data");
-    if (!strcmp(IDVal, ".static_data"))
+    if (IDVal == ".static_data")
       return ParseDirectiveSectionSwitch("__DATA,__static_data");
-    if (!strcmp(IDVal, ".non_lazy_symbol_pointer"))
+    if (IDVal == ".non_lazy_symbol_pointer")
       return ParseDirectiveSectionSwitch("__DATA,__nl_symbol_pointer",
                                          "non_lazy_symbol_pointers");
-    if (!strcmp(IDVal, ".lazy_symbol_pointer"))
+    if (IDVal == ".lazy_symbol_pointer")
       return ParseDirectiveSectionSwitch("__DATA,__la_symbol_pointer",
                                          "lazy_symbol_pointers");
-    if (!strcmp(IDVal, ".dyld"))
+    if (IDVal == ".dyld")
       return ParseDirectiveSectionSwitch("__DATA,__dyld");
-    if (!strcmp(IDVal, ".mod_init_func"))
+    if (IDVal == ".mod_init_func")
       return ParseDirectiveSectionSwitch("__DATA,__mod_init_func",
                                          "mod_init_funcs");
-    if (!strcmp(IDVal, ".mod_term_func"))
+    if (IDVal == ".mod_term_func")
       return ParseDirectiveSectionSwitch("__DATA,__mod_term_func",
                                          "mod_term_funcs");
-    if (!strcmp(IDVal, ".const_data"))
+    if (IDVal == ".const_data")
       return ParseDirectiveSectionSwitch("__DATA,__const", "regular");
     
     
     // FIXME: Verify attributes on sections.
-    if (!strcmp(IDVal, ".objc_class"))
+    if (IDVal == ".objc_class")
       return ParseDirectiveSectionSwitch("__OBJC,__class");
-    if (!strcmp(IDVal, ".objc_meta_class"))
+    if (IDVal == ".objc_meta_class")
       return ParseDirectiveSectionSwitch("__OBJC,__meta_class");
-    if (!strcmp(IDVal, ".objc_cat_cls_meth"))
+    if (IDVal == ".objc_cat_cls_meth")
       return ParseDirectiveSectionSwitch("__OBJC,__cat_cls_meth");
-    if (!strcmp(IDVal, ".objc_cat_inst_meth"))
+    if (IDVal == ".objc_cat_inst_meth")
       return ParseDirectiveSectionSwitch("__OBJC,__cat_inst_meth");
-    if (!strcmp(IDVal, ".objc_protocol"))
+    if (IDVal == ".objc_protocol")
       return ParseDirectiveSectionSwitch("__OBJC,__protocol");
-    if (!strcmp(IDVal, ".objc_string_object"))
+    if (IDVal == ".objc_string_object")
       return ParseDirectiveSectionSwitch("__OBJC,__string_object");
-    if (!strcmp(IDVal, ".objc_cls_meth"))
+    if (IDVal == ".objc_cls_meth")
       return ParseDirectiveSectionSwitch("__OBJC,__cls_meth");
-    if (!strcmp(IDVal, ".objc_inst_meth"))
+    if (IDVal == ".objc_inst_meth")
       return ParseDirectiveSectionSwitch("__OBJC,__inst_meth");
-    if (!strcmp(IDVal, ".objc_cls_refs"))
+    if (IDVal == ".objc_cls_refs")
       return ParseDirectiveSectionSwitch("__OBJC,__cls_refs");
-    if (!strcmp(IDVal, ".objc_message_refs"))
+    if (IDVal == ".objc_message_refs")
       return ParseDirectiveSectionSwitch("__OBJC,__message_refs");
-    if (!strcmp(IDVal, ".objc_symbols"))
+    if (IDVal == ".objc_symbols")
       return ParseDirectiveSectionSwitch("__OBJC,__symbols");
-    if (!strcmp(IDVal, ".objc_category"))
+    if (IDVal == ".objc_category")
       return ParseDirectiveSectionSwitch("__OBJC,__category");
-    if (!strcmp(IDVal, ".objc_class_vars"))
+    if (IDVal == ".objc_class_vars")
       return ParseDirectiveSectionSwitch("__OBJC,__class_vars");
-    if (!strcmp(IDVal, ".objc_instance_vars"))
+    if (IDVal == ".objc_instance_vars")
       return ParseDirectiveSectionSwitch("__OBJC,__instance_vars");
-    if (!strcmp(IDVal, ".objc_module_info"))
+    if (IDVal == ".objc_module_info")
       return ParseDirectiveSectionSwitch("__OBJC,__module_info");
-    if (!strcmp(IDVal, ".objc_class_names"))
+    if (IDVal == ".objc_class_names")
       return ParseDirectiveSectionSwitch("__TEXT,__cstring","cstring_literals");
-    if (!strcmp(IDVal, ".objc_meth_var_types"))
+    if (IDVal == ".objc_meth_var_types")
       return ParseDirectiveSectionSwitch("__TEXT,__cstring","cstring_literals");
-    if (!strcmp(IDVal, ".objc_meth_var_names"))
+    if (IDVal == ".objc_meth_var_names")
       return ParseDirectiveSectionSwitch("__TEXT,__cstring","cstring_literals");
-    if (!strcmp(IDVal, ".objc_selector_strs"))
+    if (IDVal == ".objc_selector_strs")
       return ParseDirectiveSectionSwitch("__OBJC,__selector_strs");
     
     // Assembler features
-    if (!strcmp(IDVal, ".set"))
+    if (IDVal == ".set")
       return ParseDirectiveSet();
 
     // Data directives
 
-    if (!strcmp(IDVal, ".ascii"))
+    if (IDVal == ".ascii")
       return ParseDirectiveAscii(false);
-    if (!strcmp(IDVal, ".asciz"))
+    if (IDVal == ".asciz")
       return ParseDirectiveAscii(true);
 
     // FIXME: Target hooks for size? Also for "word", "hword".
-    if (!strcmp(IDVal, ".byte"))
+    if (IDVal == ".byte")
       return ParseDirectiveValue(1);
-    if (!strcmp(IDVal, ".short"))
+    if (IDVal == ".short")
       return ParseDirectiveValue(2);
-    if (!strcmp(IDVal, ".long"))
+    if (IDVal == ".long")
       return ParseDirectiveValue(4);
-    if (!strcmp(IDVal, ".quad"))
+    if (IDVal == ".quad")
       return ParseDirectiveValue(8);
 
     // FIXME: Target hooks for IsPow2.
-    if (!strcmp(IDVal, ".align"))
+    if (IDVal == ".align")
       return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/1);
-    if (!strcmp(IDVal, ".align32"))
+    if (IDVal == ".align32")
       return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/4);
-    if (!strcmp(IDVal, ".balign"))
+    if (IDVal == ".balign")
       return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/1);
-    if (!strcmp(IDVal, ".balignw"))
+    if (IDVal == ".balignw")
       return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/2);
-    if (!strcmp(IDVal, ".balignl"))
+    if (IDVal == ".balignl")
       return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/4);
-    if (!strcmp(IDVal, ".p2align"))
+    if (IDVal == ".p2align")
       return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/1);
-    if (!strcmp(IDVal, ".p2alignw"))
+    if (IDVal == ".p2alignw")
       return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/2);
-    if (!strcmp(IDVal, ".p2alignl"))
+    if (IDVal == ".p2alignl")
       return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/4);
 
-    if (!strcmp(IDVal, ".org"))
+    if (IDVal == ".org")
       return ParseDirectiveOrg();
 
-    if (!strcmp(IDVal, ".fill"))
+    if (IDVal == ".fill")
       return ParseDirectiveFill();
-    if (!strcmp(IDVal, ".space"))
+    if (IDVal == ".space")
       return ParseDirectiveSpace();
 
     // Symbol attribute directives
-    if (!strcmp(IDVal, ".globl") || !strcmp(IDVal, ".global"))
+    if (IDVal == ".globl" || IDVal == ".global")
       return ParseDirectiveSymbolAttribute(MCStreamer::Global);
-    if (!strcmp(IDVal, ".hidden"))
+    if (IDVal == ".hidden")
       return ParseDirectiveSymbolAttribute(MCStreamer::Hidden);
-    if (!strcmp(IDVal, ".indirect_symbol"))
+    if (IDVal == ".indirect_symbol")
       return ParseDirectiveSymbolAttribute(MCStreamer::IndirectSymbol);
-    if (!strcmp(IDVal, ".internal"))
+    if (IDVal == ".internal")
       return ParseDirectiveSymbolAttribute(MCStreamer::Internal);
-    if (!strcmp(IDVal, ".lazy_reference"))
+    if (IDVal == ".lazy_reference")
       return ParseDirectiveSymbolAttribute(MCStreamer::LazyReference);
-    if (!strcmp(IDVal, ".no_dead_strip"))
+    if (IDVal == ".no_dead_strip")
       return ParseDirectiveSymbolAttribute(MCStreamer::NoDeadStrip);
-    if (!strcmp(IDVal, ".private_extern"))
+    if (IDVal == ".private_extern")
       return ParseDirectiveSymbolAttribute(MCStreamer::PrivateExtern);
-    if (!strcmp(IDVal, ".protected"))
+    if (IDVal == ".protected")
       return ParseDirectiveSymbolAttribute(MCStreamer::Protected);
-    if (!strcmp(IDVal, ".reference"))
+    if (IDVal == ".reference")
       return ParseDirectiveSymbolAttribute(MCStreamer::Reference);
-    if (!strcmp(IDVal, ".weak"))
+    if (IDVal == ".weak")
       return ParseDirectiveSymbolAttribute(MCStreamer::Weak);
-    if (!strcmp(IDVal, ".weak_definition"))
+    if (IDVal == ".weak_definition")
       return ParseDirectiveSymbolAttribute(MCStreamer::WeakDefinition);
-    if (!strcmp(IDVal, ".weak_reference"))
+    if (IDVal == ".weak_reference")
       return ParseDirectiveSymbolAttribute(MCStreamer::WeakReference);
 
-    if (!strcmp(IDVal, ".comm"))
+    if (IDVal == ".comm")
       return ParseDirectiveComm(/*IsLocal=*/false);
-    if (!strcmp(IDVal, ".lcomm"))
+    if (IDVal == ".lcomm")
       return ParseDirectiveComm(/*IsLocal=*/true);
-    if (!strcmp(IDVal, ".zerofill"))
+    if (IDVal == ".zerofill")
       return ParseDirectiveDarwinZerofill();
-    if (!strcmp(IDVal, ".desc"))
+    if (IDVal == ".desc")
       return ParseDirectiveDarwinSymbolDesc();
-    if (!strcmp(IDVal, ".lsym"))
+    if (IDVal == ".lsym")
       return ParseDirectiveDarwinLsym();
 
-    if (!strcmp(IDVal, ".subsections_via_symbols"))
+    if (IDVal == ".subsections_via_symbols")
       return ParseDirectiveDarwinSubsectionsViaSymbols();
-    if (!strcmp(IDVal, ".abort"))
+    if (IDVal == ".abort")
       return ParseDirectiveAbort();
-    if (!strcmp(IDVal, ".include"))
+    if (IDVal == ".include")
       return ParseDirectiveInclude();
-    if (!strcmp(IDVal, ".dump"))
+    if (IDVal == ".dump")
       return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsDump=*/true);
-    if (!strcmp(IDVal, ".load"))
+    if (IDVal == ".load")
       return ParseDirectiveDarwinDumpOrLoad(IDLoc, /*IsLoad=*/false);
 
     Warning(IDLoc, "ignoring directive for now");
@@ -566,7 +566,7 @@ bool AsmParser::ParseStatement() {
   return false;
 }
 
-bool AsmParser::ParseAssignment(const char *Name, bool IsDotSet) {
+bool AsmParser::ParseAssignment(const StringRef &Name, bool IsDotSet) {
   // FIXME: Use better location, we should use proper tokens.
   SMLoc EqualLoc = Lexer.getLoc();
 
@@ -605,7 +605,7 @@ bool AsmParser::ParseDirectiveSet() {
   if (Lexer.isNot(asmtok::Identifier))
     return TokError("expected identifier after '.set' directive");
 
-  const char *Name = Lexer.getCurStrVal();
+  StringRef Name = Lexer.getCurStrVal();
   
   if (Lexer.Lex() != asmtok::Comma)
     return TokError("unexpected token in '.set'");
@@ -632,7 +632,7 @@ bool AsmParser::ParseDirectiveDarwinSection() {
     if (Lexer.isNot(asmtok::Identifier))
       return TokError("expected identifier in '.section' directive");
     Section += ',';
-    Section += Lexer.getCurStrVal();
+    Section += Lexer.getCurStrVal().str();
     Lexer.Lex();
   }
   
@@ -671,10 +671,10 @@ bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
       // FIXME: This shouldn't use a const char* + strlen, the string could have
       // embedded nulls.
       // FIXME: Should have accessor for getting string contents.
-      const char *Str = Lexer.getCurStrVal();
-      Out.EmitBytes(Str + 1, strlen(Str) - 2);
+      StringRef Str = Lexer.getCurStrVal();
+      Out.EmitBytes(Str.substr(1, Str.size() - 2));
       if (ZeroTerminated)
-        Out.EmitBytes("\0", 1);
+        Out.EmitBytes(StringRef("\0", 1));
       
       Lexer.Lex();
       
@@ -1026,7 +1026,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   if (Lexer.isNot(asmtok::Identifier))
     return TokError("expected section name after comma in '.zerofill' "
                     "directive");
-  Section += Lexer.getCurStrVal();
+  Section += Lexer.getCurStrVal().str();
   Lexer.Lex();
 
   // FIXME: we will need to tell GetSection() that this is to be created with or
@@ -1117,7 +1117,7 @@ bool AsmParser::ParseDirectiveDarwinSubsectionsViaSymbols() {
 /// ParseDirectiveAbort
 ///  ::= .abort [ "abort_string" ]
 bool AsmParser::ParseDirectiveAbort() {
-  const char *Str = NULL;
+  StringRef Str = "";
   if (Lexer.isNot(asmtok::EndOfStatement)) {
     if (Lexer.isNot(asmtok::String))
       return TokError("expected string in '.abort' directive");
@@ -1132,7 +1132,8 @@ bool AsmParser::ParseDirectiveAbort() {
   
   Lexer.Lex();
 
-  Out.AbortAssembly(Str);
+  // FIXME: Handle here.
+  Out.AbortAssembly(Str.str().c_str());
 
   return false;
 }

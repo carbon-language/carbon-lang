@@ -14,6 +14,7 @@
 #ifndef ASMLEXER_H
 #define ASMLEXER_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmLexer.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
@@ -84,8 +85,13 @@ public:
   asmtok::TokKind getKind() const { return CurKind; }
   bool is(asmtok::TokKind K) const { return CurKind == K; }
   bool isNot(asmtok::TokKind K) const { return CurKind != K; }
-  
-  const char *getCurStrVal() const {
+
+  /// getCurStrVal - Get the string for the current token, this includes all
+  /// characters (for example, the quotes on strings) in the token.
+  ///
+  /// The returned StringRef points into the source manager's memory buffer, and
+  /// is safe to store across calls to Lex().
+  StringRef getCurStrVal() const {
     assert((CurKind == asmtok::Identifier || CurKind == asmtok::Register ||
             CurKind == asmtok::String) &&
            "This token doesn't have a string value");

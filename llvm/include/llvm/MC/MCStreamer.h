@@ -22,6 +22,7 @@ namespace llvm {
   class MCInst;
   class MCSection;
   class MCSymbol;
+  class StringRef;
   class raw_ostream;
 
   /// MCStreamer - Streaming machine code generation interface.  This interface
@@ -166,12 +167,11 @@ namespace llvm {
     /// @name Generating Data
     /// @{
 
-    /// EmitBytes - Emit @param Length bytes starting at @param Data into the
-    /// output.
+    /// EmitBytes - Emit the bytes in @param Data into the output.
     ///
     /// This is used to implement assembler directives such as .byte, .ascii,
     /// etc.
-    virtual void EmitBytes(const char *Data, unsigned Length) = 0;
+    virtual void EmitBytes(const StringRef &Data) = 0;
 
     /// EmitValue - Emit the expression @param Value into the output as a native
     /// integer of the given @param Size bytes.

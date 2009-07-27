@@ -13,6 +13,7 @@
 namespace llvm {
 class MCAsmParser;
 class MCInst;
+class StringRef;
 class Target;
 
 /// TargetAsmParser - Generic interface to target specific assembly parsers.
@@ -42,7 +43,7 @@ public:
   /// \param Name - The instruction name.
   /// \param Inst [out] - On success, the parsed instruction.
   /// \return True on failure.
-  virtual bool ParseInstruction(MCAsmParser &AP, const char *Name, 
+  virtual bool ParseInstruction(MCAsmParser &AP, const StringRef &Name, 
                                 MCInst &Inst) = 0;
 };
 

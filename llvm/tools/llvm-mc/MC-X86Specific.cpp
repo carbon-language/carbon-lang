@@ -235,7 +235,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
 
 /// MatchX86Inst - Convert a parsed instruction name and operand list into a
 /// concrete instruction.
-static bool MatchX86Inst(const char *Name, 
+static bool MatchX86Inst(const StringRef &Name, 
                          llvm::SmallVector<AsmParser::X86Operand, 3> &Operands,
                          MCInst &Inst) {
   return false;
@@ -243,7 +243,7 @@ static bool MatchX86Inst(const char *Name,
 
 /// ParseX86InstOperands - Parse the operands of an X86 instruction and return
 /// them as the operands of an MCInst.
-bool AsmParser::ParseX86InstOperands(const char *InstName, MCInst &Inst) {
+bool AsmParser::ParseX86InstOperands(const StringRef &InstName, MCInst &Inst) {
   llvm::SmallVector<X86Operand, 3> Operands;
 
   if (Lexer.isNot(asmtok::EndOfStatement)) {

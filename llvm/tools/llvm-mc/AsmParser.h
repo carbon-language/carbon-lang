@@ -58,7 +58,7 @@ private:
   
   void EatToEndOfStatement();
   
-  bool ParseAssignment(const char *Name, bool IsDotSet);
+  bool ParseAssignment(const StringRef &Name, bool IsDotSet);
 
   /// ParseExpression - Parse a general assembly expression.
   ///
@@ -97,7 +97,7 @@ private:
   bool ParseParenExpr(AsmExpr *&Res);
   
   // X86 specific.
-  bool ParseX86InstOperands(const char *InstName, MCInst &Inst);
+  bool ParseX86InstOperands(const StringRef &InstName, MCInst &Inst);
   bool ParseX86Operand(X86Operand &Op);
   bool ParseX86MemOperand(X86Operand &Op);
   bool ParseX86Register(X86Operand &Op);

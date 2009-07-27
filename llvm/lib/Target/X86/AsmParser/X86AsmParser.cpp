@@ -21,14 +21,14 @@ namespace {
   class X86ATTAsmParser : public TargetAsmParser {
     bool ParseOperand(X86Operand &Op);
     
-    bool MatchInstruction(const char *Name, 
+    bool MatchInstruction(const StringRef &Name, 
                           llvm::SmallVector<X86Operand, 3> &Operands,
                           MCInst &Inst);
 
   public:
     explicit X86ATTAsmParser(const Target &);
     
-    virtual bool ParseInstruction(MCAsmParser &AP, const char *Name, 
+    virtual bool ParseInstruction(MCAsmParser &AP, const StringRef &Name, 
                                   MCInst &Inst);
   };
 }
@@ -43,13 +43,13 @@ bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {
 }
 
 bool 
-X86ATTAsmParser::MatchInstruction(const char *Name, 
+X86ATTAsmParser::MatchInstruction(const StringRef &Name, 
                                   llvm::SmallVector<X86Operand, 3> &Operands,
                                   MCInst &Inst) {
   return false;
 }
 
-bool X86ATTAsmParser::ParseInstruction(MCAsmParser &AP, const char *Name, 
+bool X86ATTAsmParser::ParseInstruction(MCAsmParser &AP, const StringRef &Name, 
                                        MCInst &Inst) {
   llvm::SmallVector<X86Operand, 3> Operands;
   
