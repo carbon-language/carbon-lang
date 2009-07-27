@@ -291,7 +291,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
         NewC = Context.getConstantArray(UserCA->getType(), &NewOps[0],
                                         NewOps.size());
       } else if (ConstantStruct *UserCS = dyn_cast<ConstantStruct>(UserC)) {
-        NewC = Context.getConstantStruct(&NewOps[0], NewOps.size(),
+        NewC = ConstantStruct::get(&NewOps[0], NewOps.size(),
                                          UserCS->getType()->isPacked());
       } else if (isa<ConstantVector>(UserC)) {
         NewC = Context.getConstantVector(&NewOps[0], NewOps.size());
@@ -925,7 +925,7 @@ bool BitcodeReader::ParseConstants() {
         for (unsigned i = 0; i != Size; ++i)
           Elts.push_back(ValueList.getConstantFwdRef(Record[i],
                                                      STy->getElementType(i)));
-        V = Context.getConstantStruct(STy, Elts);
+        V = ConstantStruct::get(STy, Elts);
       } else if (const ArrayType *ATy = dyn_cast<ArrayType>(CurTy)) {
         const Type *EltTy = ATy->getElementType();
         for (unsigned i = 0; i != Size; ++i)

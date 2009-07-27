@@ -187,7 +187,7 @@ static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
     std::vector<Constant*> Elts;
     Elts.push_back(ConstantInt::get(Type::Int32Ty, TorList[i].second));
     Elts.push_back(TorList[i].first);
-    ArrayElts.push_back(Context.getConstantStruct(Elts));
+    ArrayElts.push_back(ConstantStruct::get(Elts));
   }
   return Context.getConstantArray(Context.getArrayType(ArrayElts[0]->getType(), 
                                            ArrayElts.size()),

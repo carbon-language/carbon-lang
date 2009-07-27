@@ -376,7 +376,7 @@ static Value *RemapOperand(const Value *In,
         Operands[i] =cast<Constant>(RemapOperand(CPS->getOperand(i), ValueMap,
                                                  Context));
       Result =
-         Context.getConstantStruct(cast<StructType>(CPS->getType()), Operands);
+         ConstantStruct::get(cast<StructType>(CPS->getType()), Operands);
     } else if (isa<ConstantPointerNull>(CPV) || isa<UndefValue>(CPV)) {
       Result = const_cast<Constant*>(CPV);
     } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CPV)) {

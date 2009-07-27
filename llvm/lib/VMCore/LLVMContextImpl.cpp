@@ -29,14 +29,6 @@ static std::vector<Constant*> getValType(ConstantArray *CA) {
   return Elements;
 }
 
-static std::vector<Constant*> getValType(ConstantStruct *CS) {
-  std::vector<Constant*> Elements;
-  Elements.reserve(CS->getNumOperands());
-  for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
-    Elements.push_back(cast<Constant>(CS->getOperand(i)));
-  return Elements;
-}
-
 static std::vector<Constant*> getValType(ConstantVector *CP) {
   std::vector<Constant*> Elements;
   Elements.reserve(CP->getNumOperands());
@@ -112,17 +104,6 @@ Constant *LLVMContextImpl::getConstantArray(const ArrayType *Ty,
   return Context.getConstantAggregateZero(Ty);
 }
 
-Constant *LLVMContextImpl::getConstantStruct(const StructType *Ty,
-                              const std::vector<Constant*> &V) {
-  // Create a ConstantAggregateZero value if all elements are zeros...
-  for (unsigned i = 0, e = V.size(); i != e; ++i)
-    if (!V[i]->isNullValue())
-      // Implicitly locked.
-      return StructConstants.getOrCreate(Ty, V);
-
-  return Context.getConstantAggregateZero(Ty);
-}
-
 Constant *LLVMContextImpl::getConstantVector(const VectorType *Ty,
                               const std::vector<Constant*> &V) {
   assert(!V.empty() && "Vectors can't be empty");
@@ -167,10 +148,6 @@ void LLVMContextImpl::erase(ConstantAggregateZero *Z) {
 
 void LLVMContextImpl::erase(ConstantArray *C) {
   ArrayConstants.remove(C);
-}
-
-void LLVMContextImpl::erase(ConstantStruct *S) {
-  StructConstants.remove(S);
 }
 
 void LLVMContextImpl::erase(ConstantVector *V) {
@@ -253,70 +230,6 @@ Constant *LLVMContextImpl::replaceUsesOfWithOnConstant(ConstantArray *CA,
       return 0;
     }
   }
-  
-  return Replacement;
-}
-
-Constant *LLVMContextImpl::replaceUsesOfWithOnConstant(ConstantStruct *CS,
-                                               Value *From, Value *To, Use *U) {
-  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
-  Constant *ToC = cast<Constant>(To);
-
-  unsigned OperandToUpdate = U - CS->OperandList;
-  assert(CS->getOperand(OperandToUpdate) == From &&
-         "ReplaceAllUsesWith broken!");
-
-  std::pair<StructConstantsTy::MapKey, Constant*> Lookup;
-  Lookup.first.first = CS->getType();
-  Lookup.second = CS;
-  std::vector<Constant*> &Values = Lookup.first.second;
-  Values.reserve(CS->getNumOperands());  // Build replacement struct.
-  
-  
-  // Fill values with the modified operands of the constant struct.  Also, 
-  // compute whether this turns into an all-zeros struct.
-  bool isAllZeros = false;
-  if (!ToC->isNullValue()) {
-    for (Use *O = CS->OperandList, *E = CS->OperandList + CS->getNumOperands(); 
-         O != E; ++O)
-      Values.push_back(cast<Constant>(O->get()));
-  } else {
-    isAllZeros = true;
-    for (Use *O = CS->OperandList, *E = CS->OperandList + CS->getNumOperands(); 
-         O != E; ++O) {
-      Constant *Val = cast<Constant>(O->get());
-      Values.push_back(Val);
-      if (isAllZeros) isAllZeros = Val->isNullValue();
-    }
-  }
-  Values[OperandToUpdate] = ToC;
-  
-  Constant *Replacement = 0;
-  if (isAllZeros) {
-    Replacement = Context.getConstantAggregateZero(CS->getType());
-  } else {
-    // Check to see if we have this array type already.
-    sys::SmartScopedWriter<true> Writer(ConstantsLock);
-    bool Exists;
-    StructConstantsTy::MapTy::iterator I =
-      StructConstants.InsertOrGetItem(Lookup, Exists);
-    
-    if (Exists) {
-      Replacement = I->second;
-    } else {
-      // Okay, the new shape doesn't exist in the system yet.  Instead of
-      // creating a new constant struct, inserting it, replaceallusesof'ing the
-      // old with the new, then deleting the old... just update the current one
-      // in place!
-      StructConstants.MoveConstantToNewSlot(CS, I);
-      
-      // Update to the new value.
-      CS->setOperand(OperandToUpdate, ToC);
-      return 0;
-    }
-  }
-  
-  assert(Replacement != CS && "I didn't contain From!");
   
   return Replacement;
 }

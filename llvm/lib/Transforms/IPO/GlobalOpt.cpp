@@ -1962,7 +1962,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
       CSVals[1] = Context.getNullValue(PFTy);
       CSVals[0] = ConstantInt::get(Type::Int32Ty, 2147483647);
     }
-    CAList.push_back(Context.getConstantStruct(CSVals));
+    CAList.push_back(ConstantStruct::get(CSVals));
   }
   
   // Create the array initializer.
@@ -2070,7 +2070,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     Elts[Idx] = EvaluateStoreInto(Elts[Idx], Val, Addr, OpNo+1, Context);
     
     // Return the modified struct.
-    return Context.getConstantStruct(&Elts[0], Elts.size(), STy->isPacked());
+    return ConstantStruct::get(&Elts[0], Elts.size(), STy->isPacked());
   } else {
     ConstantInt *CI = cast<ConstantInt>(Addr->getOperand(OpNo));
     const ArrayType *ATy = cast<ArrayType>(Init->getType());

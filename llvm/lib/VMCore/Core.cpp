@@ -416,8 +416,7 @@ LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
 
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              int Packed) {
-  return wrap(getGlobalContext().getConstantStruct(
-                                  unwrap<Constant>(ConstantVals, Count),
+  return wrap(ConstantStruct::get(unwrap<Constant>(ConstantVals, Count),
                                   Count, Packed != 0));
 }
 

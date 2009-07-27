@@ -397,6 +397,33 @@ ConstantStruct::ConstantStruct(const StructType *T,
   }
 }
 
+// ConstantStruct accessors.
+Constant* ConstantStruct::get(const StructType* T,
+                              const std::vector<Constant*>& V) {
+  LLVMContextImpl* pImpl = T->getContext().pImpl;
+  
+  // Create a ConstantAggregateZero value if all elements are zeros...
+  for (unsigned i = 0, e = V.size(); i != e; ++i)
+    if (!V[i]->isNullValue())
+      // Implicitly locked.
+      return pImpl->StructConstants.getOrCreate(T, V);
+
+  return T->getContext().getConstantAggregateZero(T);
+}
+
+Constant* ConstantStruct::get(const std::vector<Constant*>& V, bool packed) {
+  std::vector<const Type*> StructEls;
+  StructEls.reserve(V.size());
+  for (unsigned i = 0, e = V.size(); i != e; ++i)
+    StructEls.push_back(V[i]->getType());
+  return get(StructType::get(StructEls, packed), V);
+}
+
+Constant* ConstantStruct::get(Constant* const *Vals, unsigned NumVals,
+                              bool Packed) {
+  // FIXME: make this the primary ctor method.
+  return get(std::vector<Constant*>(Vals, Vals+NumVals), Packed);
+}
 
 ConstantVector::ConstantVector(const VectorType *T,
                                const std::vector<Constant*> &V)
@@ -981,7 +1008,7 @@ namespace llvm {
 //
 void ConstantStruct::destroyConstant() {
   // Implicitly locked.
-  getType()->getContext().erase(this);
+  getType()->getContext().pImpl->StructConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1897,11 +1924,74 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   destroyConstant();
 }
 
+static std::vector<Constant*> getValType(ConstantStruct *CS) {
+  std::vector<Constant*> Elements;
+  Elements.reserve(CS->getNumOperands());
+  for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
+    Elements.push_back(cast<Constant>(CS->getOperand(i)));
+  return Elements;
+}
+
 void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  Use *U) {
-  Constant* Replacement =
-    getType()->getContext().replaceUsesOfWithOnConstant(this, From, To, U);
-  if (!Replacement) return;
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  Constant *ToC = cast<Constant>(To);
+
+  unsigned OperandToUpdate = U-OperandList;
+  assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
+
+  std::pair<LLVMContextImpl::StructConstantsTy::MapKey, Constant*> Lookup;
+  Lookup.first.first = getType();
+  Lookup.second = this;
+  std::vector<Constant*> &Values = Lookup.first.second;
+  Values.reserve(getNumOperands());  // Build replacement struct.
+  
+  
+  // Fill values with the modified operands of the constant struct.  Also, 
+  // compute whether this turns into an all-zeros struct.
+  bool isAllZeros = false;
+  if (!ToC->isNullValue()) {
+    for (Use *O = OperandList, *E = OperandList + getNumOperands(); O != E; ++O)
+      Values.push_back(cast<Constant>(O->get()));
+  } else {
+    isAllZeros = true;
+    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
+      Constant *Val = cast<Constant>(O->get());
+      Values.push_back(Val);
+      if (isAllZeros) isAllZeros = Val->isNullValue();
+    }
+  }
+  Values[OperandToUpdate] = ToC;
+  
+  LLVMContext &Context = getType()->getContext();
+  LLVMContextImpl *pImpl = Context.pImpl;
+  
+  Constant *Replacement = 0;
+  if (isAllZeros) {
+    Replacement = Context.getConstantAggregateZero(getType());
+  } else {
+    // Check to see if we have this array type already.
+    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
+    bool Exists;
+    LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
+      pImpl->StructConstants.InsertOrGetItem(Lookup, Exists);
+    
+    if (Exists) {
+      Replacement = I->second;
+    } else {
+      // Okay, the new shape doesn't exist in the system yet.  Instead of
+      // creating a new constant struct, inserting it, replaceallusesof'ing the
+      // old with the new, then deleting the old... just update the current one
+      // in place!
+      pImpl->StructConstants.MoveConstantToNewSlot(this, I);
+      
+      // Update to the new value.
+      setOperand(OperandToUpdate, ToC);
+      return;
+    }
+  }
+  
+  assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
   uncheckedReplaceAllUsesWith(Replacement);

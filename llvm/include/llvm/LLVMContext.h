@@ -57,6 +57,7 @@ class LLVMContext {
   
   friend class ConstantInt;
   friend class ConstantFP;
+  friend class ConstantStruct;
 public:
   LLVMContext();
   ~LLVMContext();
@@ -78,14 +79,6 @@ public:
   
   // ConstantPointerNull accessors
   ConstantPointerNull* getConstantPointerNull(const PointerType* T);
-  
-  // ConstantStruct accessors
-  Constant* getConstantStruct(const StructType* T,
-                              const std::vector<Constant*>& V);
-  Constant* getConstantStruct(const std::vector<Constant*>& V,
-                              bool Packed = false);
-  Constant* getConstantStruct(Constant* const *Vals, unsigned NumVals,
-                              bool Packed = false);
                               
   // ConstantAggregateZero accessors
   ConstantAggregateZero* getConstantAggregateZero(const Type* Ty);
@@ -233,14 +226,11 @@ public:
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
   void erase(ConstantArray *Z);
-  void erase(ConstantStruct *S);
   void erase(ConstantVector *V);
   
   // RAUW helpers
   Constant *replaceUsesOfWithOnConstant(ConstantArray *CA,
                                              Value *From, Value *To, Use *U);
-  Constant *replaceUsesOfWithOnConstant(ConstantStruct *CS, Value *From,
-                                        Value *To, Use *U);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

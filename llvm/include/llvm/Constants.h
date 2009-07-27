@@ -385,10 +385,15 @@ class ConstantStruct : public Constant {
   friend struct ConstantCreator<ConstantStruct, StructType,
                                     std::vector<Constant*> >;
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
-  friend class LLVMContextImpl;
 protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
 public:
+  // ConstantStruct accessors
+  static Constant* get(const StructType* T, const std::vector<Constant*>& V);
+  static Constant* get(const std::vector<Constant*>& V, bool Packed = false);
+  static Constant* get(Constant* const *Vals, unsigned NumVals,
+                       bool Packed = false);
+  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

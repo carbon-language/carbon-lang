@@ -102,7 +102,7 @@ struct ConvertConstantType<ConstantStruct, StructType> {
     std::vector<Constant*> C;
     for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
       C.push_back(cast<Constant>(OldC->getOperand(i)));
-    Constant *New = NewTy->getContext().getConstantStruct(NewTy, C);
+    Constant *New = ConstantStruct::get(NewTy, C);
     assert(New != OldC && "Didn't replace constant??");
 
     OldC->uncheckedReplaceAllUsesWith(New);
@@ -458,6 +458,7 @@ class LLVMContextImpl {
   
   friend class ConstantInt;
   friend class ConstantFP;
+  friend class ConstantStruct;
 public:
   LLVMContextImpl(LLVMContext &C);
   
@@ -469,9 +470,6 @@ public:
   
   Constant *getConstantArray(const ArrayType *Ty,
                              const std::vector<Constant*> &V);
-  
-  Constant *getConstantStruct(const StructType *Ty, 
-                              const std::vector<Constant*> &V);
   
   Constant *getConstantVector(const VectorType *Ty,
                               const std::vector<Constant*> &V);
@@ -494,15 +492,12 @@ public:
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
   void erase(ConstantArray *C);
-  void erase(ConstantStruct *S);
   void erase(ConstantVector *V);
   
   // RAUW helpers
   
   Constant *replaceUsesOfWithOnConstant(ConstantArray *CA, Value *From,
                                              Value *To, Use *U);
-  Constant *replaceUsesOfWithOnConstant(ConstantStruct *CS, Value *From,
-                                        Value *To, Use *U);
 };
 
 }

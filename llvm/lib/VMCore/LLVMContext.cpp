@@ -98,29 +98,6 @@ ConstantPointerNull* LLVMContext::getConstantPointerNull(const PointerType* T) {
   return ConstantPointerNull::get(T);
 }
 
-
-// ConstantStruct accessors.
-Constant* LLVMContext::getConstantStruct(const StructType* T,
-                                         const std::vector<Constant*>& V) {
-  return pImpl->getConstantStruct(T, V);
-}
-
-Constant* LLVMContext::getConstantStruct(const std::vector<Constant*>& V,
-                                         bool packed) {
-  std::vector<const Type*> StructEls;
-  StructEls.reserve(V.size());
-  for (unsigned i = 0, e = V.size(); i != e; ++i)
-    StructEls.push_back(V[i]->getType());
-  return getConstantStruct(getStructType(StructEls, packed), V);
-}
-
-Constant* LLVMContext::getConstantStruct(Constant* const *Vals,
-                                         unsigned NumVals, bool Packed) {
-  // FIXME: make this the primary ctor method.
-  return getConstantStruct(std::vector<Constant*>(Vals, Vals+NumVals), Packed);
-}
-
-
 // ConstantAggregateZero accessors.
 ConstantAggregateZero* LLVMContext::getConstantAggregateZero(const Type* Ty) {
   return pImpl->getConstantAggregateZero(Ty);
@@ -552,10 +529,6 @@ void LLVMContext::erase(ConstantArray *C) {
   pImpl->erase(C);
 }
 
-void LLVMContext::erase(ConstantStruct *S) {
-  pImpl->erase(S);
-}
-
 void LLVMContext::erase(ConstantVector *V) {
   pImpl->erase(V);
 }
@@ -563,9 +536,4 @@ void LLVMContext::erase(ConstantVector *V) {
 Constant *LLVMContext::replaceUsesOfWithOnConstant(ConstantArray *CA,
                                                Value *From, Value *To, Use *U) {
   return pImpl->replaceUsesOfWithOnConstant(CA, From, To, U);
-}
-
-Constant *LLVMContext::replaceUsesOfWithOnConstant(ConstantStruct *CS,
-                                               Value *From, Value *To, Use *U) {
-  return pImpl->replaceUsesOfWithOnConstant(CS, From, To, U);
 }
