@@ -16,6 +16,29 @@ add_llvm_library(LLVMSystem
   ThreadLocal.cpp
   Threading.cpp
   TimeValue.cpp
+  Unix/Alarm.inc
+  Unix/Host.inc
+  Unix/Memory.inc
+  Unix/Mutex.inc
+  Unix/Path.inc
+  Unix/Process.inc
+  Unix/Program.inc
+  Unix/RWMutex.inc
+  Unix/Signals.inc
+  Unix/ThreadLocal.inc
+  Unix/TimeValue.inc
+  Win32/Alarm.inc
+  Win32/DynamicLibrary.inc
+  Win32/Host.inc
+  Win32/Memory.inc
+  Win32/Mutex.inc
+  Win32/Path.inc
+  Win32/Process.inc
+  Win32/Program.inc
+  Win32/RWMutex.inc
+  Win32/Signals.inc
+  Win32/ThreadLocal.inc
+  Win32/TimeValue.inc
   )
 
 if( BUILD_SHARED_LIBS AND NOT WIN32 )
