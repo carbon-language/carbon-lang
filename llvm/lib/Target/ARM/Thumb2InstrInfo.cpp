@@ -39,10 +39,8 @@ unsigned Thumb2InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::B: return ARM::t2B;
   case ARMII::Bcc: return ARM::t2Bcc;
   case ARMII::BX_RET: return ARM::tBX_RET;
-  case ARMII::LDRrr: return ARM::t2LDRs;
   case ARMII::LDRri: return ARM::t2LDRi12;
   case ARMII::MOVr: return ARM::t2MOVr;
-  case ARMII::STRrr: return ARM::t2STRs;
   case ARMII::STRri: return ARM::t2STRi12;
   case ARMII::SUBri: return ARM::t2SUBri;
   case ARMII::SUBrs: return ARM::t2SUBrs;
@@ -101,4 +99,37 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   // Handle SPR, DPR, and QPR copies.
   return ARMBaseInstrInfo::copyRegToReg(MBB, I, DestReg, SrcReg, DestRC, SrcRC);
+}
+
+void Thumb2InstrInfo::
+storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                    unsigned SrcReg, bool isKill, int FI,
+                    const TargetRegisterClass *RC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
+
+  if (RC == ARM::GPRRegisterClass) {
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2STRi12))
+                   .addReg(SrcReg, getKillRegState(isKill))
+                   .addFrameIndex(FI).addImm(0));
+    return;
+  }
+
+  ARMBaseInstrInfo::storeRegToStackSlot(MBB, I, SrcReg, isKill, FI, RC);
+}
+
+void Thumb2InstrInfo::
+loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                     unsigned DestReg, int FI,
+                     const TargetRegisterClass *RC) const {
+  DebugLoc DL = DebugLoc::getUnknownLoc();
+  if (I != MBB.end()) DL = I->getDebugLoc();
+
+  if (RC == ARM::GPRRegisterClass) {
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2LDRi12), DestReg)
+                   .addFrameIndex(FI).addImm(0));
+    return;
+  }
+
+  ARMBaseInstrInfo::loadRegFromStackSlot(MBB, I, DestReg, FI, RC);
 }

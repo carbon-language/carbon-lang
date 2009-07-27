@@ -168,10 +168,8 @@ namespace ARMII {
     B,
     Bcc,
     BX_RET,
-    LDRrr,
     LDRri,
     MOVr,
-    STRrr,
     STRri,
     SUBri,
     SUBrs,
@@ -271,6 +269,7 @@ public:
                             unsigned DestReg, unsigned SrcReg,
                             const TargetRegisterClass *DestRC,
                             const TargetRegisterClass *SrcRC) const;
+
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MBBI,
                                    unsigned SrcReg, bool isKill, int FrameIndex,

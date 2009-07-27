@@ -636,7 +636,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (RC == ARM::GPRRegisterClass) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::STRrr)))
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::STR))
                    .addReg(SrcReg, getKillRegState(isKill))
                    .addFrameIndex(FI).addReg(0).addImm(0));
   } else if (RC == ARM::DPRRegisterClass) {
@@ -659,7 +659,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   if (I != MBB.end()) DL = I->getDebugLoc();
 
   if (RC == ARM::GPRRegisterClass) {
-    AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::LDRrr)), DestReg)
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::LDR), DestReg)
                    .addFrameIndex(FI).addReg(0).addImm(0));
   } else if (RC == ARM::DPRRegisterClass) {
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FLDD), DestReg)
@@ -679,7 +679,7 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
   MachineInstr *NewMI = NULL;
-  if (Opc == getOpcode(ARMII::MOVr)) {
+  if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) {
     // If it is updating CPSR, then it cannot be folded.
     if (MI->getOperand(4).getReg() != ARM::CPSR) {
       unsigned Pred = MI->getOperand(2).getImm();
@@ -688,19 +688,32 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
         unsigned SrcReg = MI->getOperand(1).getReg();
         bool isKill = MI->getOperand(1).isKill();
         bool isUndef = MI->getOperand(1).isUndef();
-        NewMI = BuildMI(MF, MI->getDebugLoc(), get(getOpcode(ARMII::STRrr)))
-          .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
-          .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+        if (Opc == ARM::MOVr)
+          NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::STR))
+            .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
+            .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+        else // ARM::t2MOVr
+          NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::t2STRi12))
+            .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
+            .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
       } else {          // move -> load
         unsigned DstReg = MI->getOperand(0).getReg();
         bool isDead = MI->getOperand(0).isDead();
         bool isUndef = MI->getOperand(0).isUndef();
-        NewMI = BuildMI(MF, MI->getDebugLoc(), get(getOpcode(ARMII::LDRrr)))
-          .addReg(DstReg,
-                  RegState::Define |
-                  getDeadRegState(isDead) |
-                  getUndefRegState(isUndef))
-          .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+        if (Opc == ARM::MOVr)
+          NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::LDR))
+            .addReg(DstReg,
+                    RegState::Define |
+                    getDeadRegState(isDead) |
+                    getUndefRegState(isUndef))
+            .addFrameIndex(FI).addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+        else // ARM::t2MOVr
+          NewMI = BuildMI(MF, MI->getDebugLoc(), get(ARM::t2LDRi12))
+            .addReg(DstReg,
+                    RegState::Define |
+                    getDeadRegState(isDead) |
+                    getUndefRegState(isUndef))
+            .addFrameIndex(FI).addImm(0).addImm(Pred).addReg(PredReg);
       }
     }
   }
@@ -767,7 +780,7 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   if (Ops.size() != 1) return false;
 
   unsigned Opc = MI->getOpcode();
-  if (Opc == getOpcode(ARMII::MOVr)) {
+  if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) {
     // If it is updating CPSR, then it cannot be folded.
     return MI->getOperand(4).getReg() != ARM::CPSR;
   } else if (Opc == ARM::FCPYS || Opc == ARM::FCPYD) {

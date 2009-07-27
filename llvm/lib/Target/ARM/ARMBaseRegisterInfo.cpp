@@ -1305,8 +1305,7 @@ emitPrologue(MachineFunction &MF) const {
 
   // Build the new SUBri to adjust SP for integer callee-save spill area 1.
   emitSPUpdate(MBB, MBBI, TII, dl, -GPRCS1Size);
-  movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::STRrr),
-                         getOpcode(ARMII::STRri), 1, STI);
+  movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, ARM::t2STRi12, 1, STI);
 
   // Darwin ABI requires FP to point to the stack slot that contains the
   // previous FP.
@@ -1321,8 +1320,7 @@ emitPrologue(MachineFunction &MF) const {
   emitSPUpdate(MBB, MBBI, TII, dl, -GPRCS2Size);
 
   // Build the new SUBri to adjust SP for FP callee-save spill area.
-  movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::STRrr),
-                         getOpcode(ARMII::STRri), 2, STI);
+  movePastCSLoadStoreOps(MBB, MBBI, ARM::STR, ARM::t2STRi12, 2, STI);
   emitSPUpdate(MBB, MBBI, TII, dl, -DPRCSSize);
 
   // Determine starting offsets of spill areas.
@@ -1362,8 +1360,8 @@ static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII, 
                         const unsigned *CSRegs) {
   return ((MI->getOpcode() == (int)ARM::FLDD ||
-           MI->getOpcode() == (int)TII.getOpcode(ARMII::LDRrr) ||
-           MI->getOpcode() == (int)TII.getOpcode(ARMII::LDRri)) &&
+           MI->getOpcode() == (int)ARM::LDR ||
+           MI->getOpcode() == (int)ARM::t2LDRi12) &&
           MI->getOperand(1).isFI() &&
           isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs));
 }
@@ -1428,13 +1426,11 @@ emitEpilogue(MachineFunction &MF,
     emitSPUpdate(MBB, MBBI, TII, dl, AFI->getDPRCalleeSavedAreaSize());
 
     // Move SP to start of integer callee save spill area 1.
-    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::LDRrr),
-                           getOpcode(ARMII::LDRri), 2, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, ARM::t2LDRi12, 2, STI);
     emitSPUpdate(MBB, MBBI, TII, dl, AFI->getGPRCalleeSavedArea2Size());
 
     // Move SP to SP upon entry to the function.
-    movePastCSLoadStoreOps(MBB, MBBI, getOpcode(ARMII::LDRrr),
-                           getOpcode(ARMII::LDRri), 1, STI);
+    movePastCSLoadStoreOps(MBB, MBBI, ARM::LDR, ARM::t2LDRi12, 1, STI);
     emitSPUpdate(MBB, MBBI, TII, dl, AFI->getGPRCalleeSavedArea1Size());
   }
 
