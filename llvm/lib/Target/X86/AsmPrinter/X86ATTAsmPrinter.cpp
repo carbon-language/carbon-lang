@@ -751,18 +751,6 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   printInstruction(MI);
 }
 
-/// doInitialization
-bool X86ATTAsmPrinter::doInitialization(Module &M) {
-  if (NewAsmPrinter) {
-    Context = new MCContext();
-    // FIXME: Send this to "O" instead of outs().  For now, we force it to
-    // stdout to make it easy to compare.
-    Streamer = createAsmStreamer(*Context, outs());
-  }
-  
-  return AsmPrinter::doInitialization(M);
-}
-
 void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   const TargetData *TD = TM.getTargetData();
 
@@ -988,18 +976,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
   }
   
   // Do common shutdown.
-  bool Changed = AsmPrinter::doFinalization(M);
-  
-  if (NewAsmPrinter) {
-    Streamer->Finish();
-    
-    delete Streamer;
-    delete Context;
-    Streamer = 0;
-    Context = 0;
-  }
-  
-  return Changed;
+  return AsmPrinter::doFinalization(M);
 }
 
 // Include the auto-generated portion of the assembly writer.

@@ -22,6 +22,8 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Analysis/DebugInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -47,6 +49,10 @@ AsmPrinter::AsmPrinter(formatted_raw_ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T, bool VDef)
   : MachineFunctionPass(&ID), FunctionNumber(0), O(o),
     TM(tm), TAI(T), TRI(tm.getRegisterInfo()),
+
+    OutContext(*new MCContext()),
+    OutStreamer(*createAsmStreamer(OutContext, O)),
+
     IsInTextSection(false), LastMI(0), LastFn(0), Counter(~0U),
     PrevDLT(0, ~0U, ~0U) {
   DW = 0; MMI = 0;
@@ -61,6 +67,9 @@ AsmPrinter::~AsmPrinter() {
   for (gcp_iterator I = GCMetadataPrinters.begin(),
                     E = GCMetadataPrinters.end(); I != E; ++I)
     delete I->second;
+  
+  delete &OutStreamer;
+  delete &OutContext;
 }
 
 /// SwitchToTextSection - Switch to the specified text section of the executable
@@ -270,6 +279,8 @@ bool AsmPrinter::doFinalization(Module &M) {
 
   delete Mang; Mang = 0;
   DW = 0; MMI = 0;
+  
+  OutStreamer.Finish();
   return false;
 }
 

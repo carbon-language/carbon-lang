@@ -33,6 +33,8 @@ namespace llvm {
   class MachineConstantPoolValue;
   class MachineModuleInfo;
   class MCInst;
+  class MCContext;
+  class MCStreamer;
   class DwarfWriter;
   class Mangler;
   class Section;
@@ -81,6 +83,17 @@ namespace llvm {
     ///
     const TargetRegisterInfo *TRI;
 
+    /// OutContext - This is the context for the output file that we are
+    /// streaming.  This owns all of the global MC-related objects for the
+    /// generated translation unit.
+    MCContext &OutContext;
+    
+    /// OutStreamer - This is the MCStreamer object for the file we are
+    /// generating.  This contains the transient state for the current
+    /// translation unit that we are generating (such as the current section
+    /// etc).
+    MCStreamer &OutStreamer;
+    
     /// The current machine function.
     const MachineFunction *MF;
 
