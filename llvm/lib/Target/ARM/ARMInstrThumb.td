@@ -575,31 +575,31 @@ let isCall = 1,
 //
 
 // Add with carry
-def : TPat<(addc   tGPR:$lhs, imm0_7:$rhs),
-           (tADDi3 tGPR:$lhs, imm0_7:$rhs)>;
-def : TPat<(addc   tGPR:$lhs, imm8_255:$rhs),
-           (tADDi3 tGPR:$lhs, imm8_255:$rhs)>;
-def : TPat<(addc   tGPR:$lhs, tGPR:$rhs),
-           (tADDrr tGPR:$lhs, tGPR:$rhs)>;
+def : T1Pat<(addc   tGPR:$lhs, imm0_7:$rhs),
+            (tADDi3 tGPR:$lhs, imm0_7:$rhs)>;
+def : T1Pat<(addc   tGPR:$lhs, imm8_255:$rhs),
+            (tADDi3 tGPR:$lhs, imm8_255:$rhs)>;
+def : T1Pat<(addc   tGPR:$lhs, tGPR:$rhs),
+            (tADDrr tGPR:$lhs, tGPR:$rhs)>;
 
 // Subtract with carry
-def : TPat<(addc   tGPR:$lhs, imm0_7_neg:$rhs),
-           (tSUBi3 tGPR:$lhs, imm0_7_neg:$rhs)>;
-def : TPat<(addc   tGPR:$lhs, imm8_255_neg:$rhs),
-           (tSUBi8 tGPR:$lhs, imm8_255_neg:$rhs)>;
-def : TPat<(subc   tGPR:$lhs, tGPR:$rhs),
-           (tSUBrr tGPR:$lhs, tGPR:$rhs)>;
+def : T1Pat<(addc   tGPR:$lhs, imm0_7_neg:$rhs),
+            (tSUBi3 tGPR:$lhs, imm0_7_neg:$rhs)>;
+def : T1Pat<(addc   tGPR:$lhs, imm8_255_neg:$rhs),
+            (tSUBi8 tGPR:$lhs, imm8_255_neg:$rhs)>;
+def : T1Pat<(subc   tGPR:$lhs, tGPR:$rhs),
+            (tSUBrr tGPR:$lhs, tGPR:$rhs)>;
 
 // ConstantPool, GlobalAddress
-def : TPat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
-def : TPat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
+def : T1Pat<(ARMWrapper  tglobaladdr :$dst), (tLEApcrel tglobaladdr :$dst)>;
+def : T1Pat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
 
 // JumpTable
-def : TPat<(ARMWrapperJT tjumptable:$dst, imm:$id),
-           (tLEApcrelJT tjumptable:$dst, imm:$id)>;
+def : T1Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
+            (tLEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // Direct calls
-def : TPat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>;
+def : T1Pat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>;
 def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>;
 
 // Indirect calls to ARM routines

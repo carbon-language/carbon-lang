@@ -816,15 +816,6 @@ class TIx2<dag oops, dag iops, string asm, list<dag> pattern>
 class TJTI<dag oops, dag iops, string asm, list<dag> pattern>
   : ThumbI<oops, iops, AddrModeNone, SizeSpecial, asm, "", pattern>;
 
-// TPat - Same as Pat<>, but requires that the compiler be in Thumb mode.
-class TPat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb];
-}
-
-class Tv5Pat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb, HasV5T];
-}
-
 // Thumb1 only
 class Thumb1I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
              string asm, string cstr, list<dag> pattern>
@@ -893,10 +884,6 @@ class T1pI4<dag oops, dag iops, string opc, string asm, list<dag> pattern>
   : Thumb1pI<oops, iops, AddrModeT1_4, Size2Bytes, opc, asm, "", pattern>;
 class T1pIs<dag oops, dag iops, string opc, string asm, list<dag> pattern>
   : Thumb1pI<oops, iops, AddrModeT1_s, Size2Bytes, opc, asm, "", pattern>;
-
-class T1Pat<dag pattern, dag result> : Pat<pattern, result> {
-  list<Predicate> Predicates = [IsThumb1Only];
-}
 
 // Thumb2I - Thumb2 instruction. Almost all Thumb2 instructions are predicable.
 class Thumb2I<dag oops, dag iops, AddrMode am, SizeFlagVal sz,
@@ -967,6 +954,15 @@ class T2Iidxldst<dag oops, dag iops, AddrMode am, IndexMode im,
   list<Predicate> Predicates = [IsThumb2];
 }
 
+// Tv5Pat - Same as Pat<>, but requires V5T Thumb mode.
+class Tv5Pat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsThumb1Only, HasV5T];
+}
+
+// T1Pat - Same as Pat<>, but requires that the compiler be in Thumb1 mode.
+class T1Pat<dag pattern, dag result> : Pat<pattern, result> {
+  list<Predicate> Predicates = [IsThumb1Only];
+}
 
 // T2Pat - Same as Pat<>, but requires that the compiler be in Thumb2 mode.
 class T2Pat<dag pattern, dag result> : Pat<pattern, result> {
