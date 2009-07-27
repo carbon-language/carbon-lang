@@ -24,8 +24,6 @@ set(CLANG_TEST_DIRECTORIES
 include(FindPythonInterp)
 if(PYTHONINTERP_FOUND)
   get_target_property(LLVM_TOOLS_PATH clang RUNTIME_OUTPUT_DIRECTORY)
-  set(TESTING_EXTRA_PATHS
-      "${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}:${LLVM_SOURCE_DIR}/test/Scripts")
   set(CLANG_TEST_EXTRA_ARGS)
   if (MSVC OR XCODE)
     set(CLANG_TEST_EXTRA_ARGS "--no-progress-bar")
@@ -35,7 +33,8 @@ if(PYTHONINTERP_FOUND)
    add_custom_target(clang-test-${testdir} 
       ${PYTHON_EXECUTABLE} 
       ${LLVM_SOURCE_DIR}/tools/clang/utils/test/MultiTestRunner.py
-     "--path=${TESTING_EXTRA_PATHS}"
+      "--path=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}"
+      "--path=${LLVM_SOURCE_DIR}/test/Scripts"
       -s ${CLANG_TEST_EXTRA_ARGS}
       --clang=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang
       --clang-cc=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang-cc
@@ -49,7 +48,8 @@ if(PYTHONINTERP_FOUND)
   add_custom_target(clang-test
     ${PYTHON_EXECUTABLE} 
     ${LLVM_SOURCE_DIR}/tools/clang/utils/test/MultiTestRunner.py
-    "--path=${TESTING_EXTRA_PATHS}"
+    "--path=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}"
+    "--path=${LLVM_SOURCE_DIR}/test/Scripts"
     -s ${CLANG_TEST_EXTRA_ARGS}
     --clang=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang
     --clang-cc=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}/clang-cc
