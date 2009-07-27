@@ -66,21 +66,21 @@ public:
 ///
 class OverflowingBinaryOperator : public Operator {
 public:
-  /// hasNoSignedOverflow - Test whether this operation is known to never
-  /// undergo signed overflow.
-  bool hasNoSignedOverflow() const {
-    return SubclassOptionalData & (1 << 0);
-  }
-  void setHasNoSignedOverflow(bool B) {
-    SubclassOptionalData = (SubclassOptionalData & ~(1 << 0)) | (B << 0);
-  }
-
   /// hasNoUnsignedOverflow - Test whether this operation is known to never
   /// undergo unsigned overflow.
   bool hasNoUnsignedOverflow() const {
-    return SubclassOptionalData & (1 << 1);
+    return SubclassOptionalData & (1 << 0);
   }
   void setHasNoUnsignedOverflow(bool B) {
+    SubclassOptionalData = (SubclassOptionalData & ~(1 << 0)) | (B << 0);
+  }
+
+  /// hasNoSignedOverflow - Test whether this operation is known to never
+  /// undergo signed overflow.
+  bool hasNoSignedOverflow() const {
+    return SubclassOptionalData & (1 << 1);
+  }
+  void setHasNoSignedOverflow(bool B) {
     SubclassOptionalData = (SubclassOptionalData & ~(1 << 1)) | (B << 1);
   }
 
