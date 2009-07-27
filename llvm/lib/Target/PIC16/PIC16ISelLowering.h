@@ -84,6 +84,7 @@ namespace llvm {
     virtual MVT getSetCCResultType(MVT ValType) const;
     SDValue LowerFORMAL_ARGUMENTS(SDValue Op, SelectionDAG &DAG);
     SDValue LowerShift(SDValue Op, SelectionDAG &DAG);
+    SDValue LowerMUL(SDValue Op, SelectionDAG &DAG);
     SDValue LowerADD(SDValue Op, SelectionDAG &DAG);
     SDValue LowerSUB(SDValue Op, SelectionDAG &DAG);
     SDValue LowerBinOp(SDValue Op, SelectionDAG &DAG);

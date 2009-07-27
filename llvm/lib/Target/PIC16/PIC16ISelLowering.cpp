@@ -928,6 +928,19 @@ SDValue PIC16TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) {
   return Call;
 }
 
+SDValue PIC16TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) {
+  // We should have handled larger operands in type legalizer itself.
+  assert (Op.getValueType() == MVT::i8 && "illegal multiply to lower");
+
+  SDNode *N = Op.getNode();
+  SmallVector<SDValue, 2> Ops(2);
+  Ops[0] = N->getOperand(0);
+  Ops[1] = N->getOperand(1);
+  SDValue Call = MakePIC16Libcall(PIC16ISD::MUL_I8, N->getValueType(0), 
+                                  &Ops[0], 2, true, DAG, N->getDebugLoc());
+  return Call;
+}
+
 void
 PIC16TargetLowering::LowerOperationWrapper(SDNode *N,
                                            SmallVectorImpl<SDValue>&Results,
@@ -975,6 +988,8 @@ SDValue PIC16TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) {
       return ExpandLoad(Op.getNode(), DAG);
     case ISD::STORE:
       return ExpandStore(Op.getNode(), DAG);
+    case ISD::MUL:
+      return LowerMUL(Op, DAG);
     case ISD::SHL:
     case ISD::SRA:
     case ISD::SRL:
