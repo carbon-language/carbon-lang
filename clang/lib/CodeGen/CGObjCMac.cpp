@@ -5464,18 +5464,17 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                        llvm::GlobalValue::ExternalLinkage,
                                        0, "OBJC_EHTYPE_id");
           SelectorArgs.push_back(IDEHType);
-          HasCatchAll = true;
-          break;
         } 
-
-        // All other types should be Objective-C interface pointer types.
-        const ObjCObjectPointerType *PT = 
-          CatchDecl->getType()->getAsObjCObjectPointerType();
-        assert(PT && "Invalid @catch type.");
-        const ObjCInterfaceType *IT = PT->getInterfaceType();
-        assert(IT && "Invalid @catch type.");
-        llvm::Value *EHType = GetInterfaceEHType(IT->getDecl(), false);
-        SelectorArgs.push_back(EHType);
+        else {
+          // All other types should be Objective-C interface pointer types.
+          const ObjCObjectPointerType *PT = 
+            CatchDecl->getType()->getAsObjCObjectPointerType();
+          assert(PT && "Invalid @catch type.");
+          const ObjCInterfaceType *IT = PT->getInterfaceType();
+          assert(IT && "Invalid @catch type.");
+          llvm::Value *EHType = GetInterfaceEHType(IT->getDecl(), false);
+          SelectorArgs.push_back(EHType);
+        }
       }
     }
   }
