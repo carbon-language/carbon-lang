@@ -490,16 +490,21 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
                               unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
   SrcSubIdx = DstSubIdx = 0; // No sub-registers.
 
-  unsigned oc = MI.getOpcode();
-  if (oc == ARM::FCPYS ||
-      oc == ARM::FCPYD ||
-      oc == ARM::VMOVD ||
-      oc == ARM::VMOVQ) {
+  switch (MI.getOpcode()) {
+  case ARM::FCPYS:
+  case ARM::FCPYD:
+  case ARM::VMOVD:
+  case  ARM::VMOVQ: {
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
     return true;
   }
-  else if (oc == getOpcode(ARMII::MOVr)) {
+  case ARM::MOVr:
+  case ARM::tMOVr:
+  case ARM::tMOVgpr2tgpr:
+  case ARM::tMOVtgpr2gpr:
+  case ARM::tMOVgpr2gpr:
+  case ARM::t2MOVr: {
     assert(MI.getDesc().getNumOperands() >= 2 &&
            MI.getOperand(0).isReg() &&
            MI.getOperand(1).isReg() &&
@@ -507,6 +512,7 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
     SrcReg = MI.getOperand(1).getReg();
     DstReg = MI.getOperand(0).getReg();
     return true;
+  }
   }
 
   return false;

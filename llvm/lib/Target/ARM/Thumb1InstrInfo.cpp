@@ -71,29 +71,6 @@ Thumb1InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   return false;
 }
 
-bool Thumb1InstrInfo::isMoveInstr(const MachineInstr &MI,
-                                  unsigned &SrcReg, unsigned &DstReg,
-                                  unsigned& SrcSubIdx, unsigned& DstSubIdx) const {
-  SrcSubIdx = DstSubIdx = 0; // No sub-registers.
-
-  unsigned oc = MI.getOpcode();
-  switch (oc) {
-  default:
-    return false;
-  case ARM::tMOVr:
-  case ARM::tMOVgpr2tgpr:
-  case ARM::tMOVtgpr2gpr:
-  case ARM::tMOVgpr2gpr:
-    assert(MI.getDesc().getNumOperands() >= 2 &&
-           MI.getOperand(0).isReg() &&
-           MI.getOperand(1).isReg() &&
-           "Invalid Thumb MOV instruction");
-    SrcReg = MI.getOperand(1).getReg();
-    DstReg = MI.getOperand(0).getReg();
-    return true;
-  }
-}
-
 unsigned Thumb1InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                               int &FrameIndex) const {
   switch (MI->getOpcode()) {
