@@ -37,7 +37,7 @@
 ; _Complex long long const G4 = 34;
 @G4 = constant {i64,i64} { i64 34, i64 0 }
 
-; DARWIN: .const
+; DARWIN: .literal16
 ; DARWIN: _G4:
 ; DARWIN:     .long 34
 
