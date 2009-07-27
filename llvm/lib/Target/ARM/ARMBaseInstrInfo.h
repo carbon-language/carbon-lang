@@ -165,9 +165,7 @@ namespace ARMII {
     ADDri,
     ADDrs,
     ADDrr,
-    LDRri,
     MOVr,
-    STRri,
     SUBri,
     SUBrs,
     SUBrr

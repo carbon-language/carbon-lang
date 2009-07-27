@@ -36,9 +36,7 @@ unsigned Thumb2InstrInfo::getOpcode(ARMII::Op Op) const {
   case ARMII::ADDri: return ARM::t2ADDri;
   case ARMII::ADDrs: return ARM::t2ADDrs;
   case ARMII::ADDrr: return ARM::t2ADDrr;
-  case ARMII::LDRri: return ARM::t2LDRi12;
   case ARMII::MOVr: return ARM::t2MOVr;
-  case ARMII::STRri: return ARM::t2STRi12;
   case ARMII::SUBri: return ARM::t2SUBri;
   case ARMII::SUBrs: return ARM::t2SUBrs;
   case ARMII::SUBrr: return ARM::t2SUBrr;
