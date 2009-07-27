@@ -29,28 +29,29 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
   : TargetAsmInfo(TM) {
 
   CStringSection_ = getUnnamedSection("\t.cstring",
-                                SectionFlags::Mergeable |SectionFlags::Strings);
+                                      SectionKind::MergeableCString);
   FourByteConstantSection = getUnnamedSection("\t.literal4\n",
-                                              SectionFlags::Mergeable);
+                                              SectionKind::MergeableConst4);
   EightByteConstantSection = getUnnamedSection("\t.literal8\n",
-                                               SectionFlags::Mergeable);
+                                               SectionKind::MergeableConst8);
 
   // Note: 16-byte constant section is subtarget specific and should be provided
   // there, if needed.
   SixteenByteConstantSection = 0;
 
-  ReadOnlySection = getUnnamedSection("\t.const", SectionFlags::None);
+  ReadOnlySection = getUnnamedSection("\t.const", SectionKind::ReadOnly);
 
   TextCoalSection =
     getNamedSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
-                    SectionFlags::Code);
+                    SectionKind::Text);
   ConstTextCoalSection = getNamedSection("\t__TEXT,__const_coal,coalesced",
-                                         SectionFlags::None);
+                                         SectionKind::Text);
   ConstDataCoalSection = getNamedSection("\t__DATA,__const_coal,coalesced",
-                                         SectionFlags::None);
-  ConstDataSection = getUnnamedSection("\t.const_data", SectionFlags::None);
+                                         SectionKind::Text);
+  ConstDataSection = getUnnamedSection("\t.const_data",
+                                       SectionKind::ReadOnlyWithRel);
   DataCoalSection = getNamedSection("\t__DATA,__datacoal_nt,coalesced",
-                                    SectionFlags::Writable);
+                                    SectionKind::DataRel);
     
   
   // Common settings for all Darwin targets.

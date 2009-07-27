@@ -34,6 +34,7 @@ namespace llvm {
   class TargetAsmInfo;
   class TargetELFWriterInfo;
   class raw_ostream;
+  class SectionKind;
 
   typedef std::vector<ELFSym*>::iterator ELFSymIter;
   typedef std::vector<ELFSection*>::iterator ELFSectionIter;
@@ -209,7 +210,7 @@ namespace llvm {
     unsigned getGlobalELFBinding(const GlobalValue *GV);
     unsigned getGlobalELFType(const GlobalValue *GV);
     unsigned getGlobalELFVisibility(const GlobalValue *GV);
-    unsigned getElfSectionFlags(unsigned Flags);
+    unsigned getElfSectionFlags(SectionKind Kind);
 
     // setGlobalSymLookup - Set global value 'GV' with 'Index' in the lookup map
     void setGlobalSymLookup(const GlobalValue *GV, unsigned Index) {

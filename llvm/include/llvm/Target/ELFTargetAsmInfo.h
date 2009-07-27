@@ -31,19 +31,16 @@ namespace llvm {
     virtual const Section *
     getSectionForMergeableConstant(SectionKind Kind) const;
     
-    /// getFlagsForNamedSection - If this target wants to be able to infer
-    /// section flags based on the name of the section specified for a global
-    /// variable, it can implement this.  This is used on ELF systems so that
-    /// ".tbss" gets the TLS bit set etc.
-    virtual unsigned getFlagsForNamedSection(const char *Section) const;
+    virtual SectionKind::Kind getKindForNamedSection(const char *Section,
+                                                     SectionKind::Kind K) const;
+    void getSectionFlagsAsString(SectionKind Kind,
+                                 SmallVectorImpl<char> &Str) const;
     
     const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) const;
     
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
                                                   SectionKind Kind) const;
-    virtual void getSectionFlags(unsigned Flags,
-                                 SmallVectorImpl<char> &Str) const;
-
+    
     const Section *DataRelSection;
     const Section *DataRelLocalSection;
     const Section *DataRelROSection;

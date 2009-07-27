@@ -56,8 +56,8 @@ namespace llvm {
     virtual const char *
     getSectionPrefixForUniqueGlobal(SectionKind kind) const;
     
-    virtual void getSectionFlags(unsigned Flags,
-                                 SmallVectorImpl<char> &Str) const;
+    virtual void getSectionFlagsAsString(SectionKind Kind,
+                                         SmallVectorImpl<char> &Str) const;
   };
 
   struct X86WinTargetAsmInfo : public X86GenericTargetAsmInfo {

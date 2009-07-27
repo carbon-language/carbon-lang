@@ -117,8 +117,8 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
 
 /// SwitchToSection - Switch to the specified section of the executable if we
 /// are not already in it!
-void AsmPrinter::SwitchToSection(const Section* NS) {
-  const std::string& NewSection = NS->getName();
+void AsmPrinter::SwitchToSection(const Section *NS) {
+  const std::string &NewSection = NS->getName();
 
   // If we're already in this section, we're done.
   if (CurrentSection == NewSection) return;
@@ -135,20 +135,20 @@ void AsmPrinter::SwitchToSection(const Section* NS) {
     // If section is named we need to switch into it via special '.section'
     // directive and also append funky flags. Otherwise - section name is just
     // some magic assembler directive.
-    if (NS->hasFlag(SectionFlags::Named)) {
-      O << TAI->getSwitchToSectionDirective()
-        << CurrentSection;
-      
+    if (NS->getKind().hasExplicitSection()) {
       SmallString<32> FlagsStr;
-      TAI->getSectionFlags(NS->getFlags(), FlagsStr);
-      O << FlagsStr.c_str();
+      TAI->getSectionFlagsAsString(NS->getKind(), FlagsStr);
+
+      O << TAI->getSwitchToSectionDirective()
+        << CurrentSection
+        << FlagsStr.c_str();
     } else {
       O << CurrentSection;
     }
     O << TAI->getDataSectionStartSuffix() << '\n';
   }
 
-  IsInTextSection = (NS->getFlags() & SectionFlags::Code);
+  IsInTextSection = NS->getKind().isText();
 }
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -404,7 +404,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   bool JTInDiffSection = false;
   if ((IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) ||
       !JumpTableDataSection ||
-      FuncSection->hasFlag(SectionFlags::Linkonce)) {
+      FuncSection->getKind().isWeak()) {
     // In PIC mode, we need to emit the jump table to the same section as the
     // function body itself, otherwise the label differences won't make sense.
     // We should also do if the section name is NULL or function is declared in

@@ -1130,9 +1130,10 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   const Section *TheSection = TAI->SectionForGlobal(GVar);
   SwitchToSection(TheSection);
 
+  // FIXME: get this stuff from section kind flags.
   if (C->isNullValue() && !GVar->hasSection() && !GVar->isThreadLocal() &&
       // Don't put things that should go in the cstring section into "comm".
-      !TheSection->hasFlag(SectionFlags::Strings)) {
+      !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = TAI->getZeroFillDirective()) {
         O << "\t.globl\t" << name << "\n";

@@ -899,7 +899,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
       (GVar->hasLocalLinkage() || GVar->hasExternalLinkage() ||
        GVar->isWeakForLinker()) &&
       // Don't put things that should go in the cstring section into "comm".
-      !TheSection->hasFlag(SectionFlags::Strings)) {
+      !TheSection->getKind().isMergeableCString()) {
     if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
     if (GVar->hasExternalLinkage()) {

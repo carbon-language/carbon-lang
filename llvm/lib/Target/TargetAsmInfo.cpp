@@ -122,8 +122,8 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   DwarfEHFrameSection = ".eh_frame";
   DwarfExceptionSection = ".gcc_except_table";
   AsmTransCBE = 0;
-  TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
-  DataSection = getUnnamedSection("\t.data", SectionFlags::Writable);
+  TextSection = getUnnamedSection("\t.text", SectionKind::Text);
+  DataSection = getUnnamedSection("\t.data", SectionKind::DataRel);
 }
 
 TargetAsmInfo::~TargetAsmInfo() {
@@ -197,23 +197,6 @@ static bool isConstantString(const Constant *C) {
               Ty->getNumElements() == 1);
 
   return false;
-}
-
-static unsigned SectionFlagsForGlobal(SectionKind Kind) {
-  // Decode flags from global and section kind.
-  unsigned Flags = SectionFlags::None;
-  if (Kind.isWeak())
-    Flags |= SectionFlags::Linkonce;
-  if (Kind.isBSS() || Kind.isThreadBSS())
-    Flags |= SectionFlags::BSS;
-  if (Kind.isThreadLocal())
-    Flags |= SectionFlags::TLS;
-  if (Kind.isText())
-    Flags |= SectionFlags::Code;
-  if (Kind.isWriteable())
-    Flags |= SectionFlags::Writable;
-
-  return Flags;
 }
 
 static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
@@ -326,29 +309,21 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     if (const Section *TS = getSpecialCasedSectionGlobals(GV, Kind))
       return TS;
     
-    // Honour section already set, if any.
-    unsigned Flags = SectionFlagsForGlobal(Kind);
-
-    // This is an explicitly named section.
-    Flags |= SectionFlags::Named;
-    
     // If the target has magic semantics for certain section names, make sure to
     // pick up the flags.  This allows the user to write things with attribute
     // section and still get the appropriate section flags printed.
-    Flags |= getFlagsForNamedSection(GV->getSection().c_str());
+    GVKind = getKindForNamedSection(GV->getSection().c_str(), GVKind);
     
-    return getNamedSection(GV->getSection().c_str(), Flags);
+    return getNamedSection(GV->getSection().c_str(), GVKind);
   }
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
   if (Kind.isWeak()) {
     if (const char *Prefix = getSectionPrefixForUniqueGlobal(Kind)) {
-      unsigned Flags = SectionFlagsForGlobal(Kind);
-
       // FIXME: Use mangler interface (PR4584).
       std::string Name = Prefix+GV->getNameStr();
-      return getNamedSection(Name.c_str(), Flags);
+      return getNamedSection(Name.c_str(), GVKind);
     }
   }
   
@@ -390,12 +365,12 @@ TargetAsmInfo::getSectionForMergeableConstant(SectionKind Kind) const {
 
 
 const Section *TargetAsmInfo::getNamedSection(const char *Name,
-                                              unsigned Flags) const {
+                                              SectionKind::Kind Kind) const {
   Section &S = Sections[Name];
 
   // This is newly-created section, set it up properly.
   if (S.Name.empty()) {
-    S.Flags = Flags | SectionFlags::Named;
+    S.Kind = SectionKind::get(Kind, false /*weak*/, true /*Named*/);
     S.Name = Name;
   }
 
@@ -403,12 +378,13 @@ const Section *TargetAsmInfo::getNamedSection(const char *Name,
 }
 
 const Section*
-TargetAsmInfo::getUnnamedSection(const char *Directive, unsigned Flags) const {
+TargetAsmInfo::getUnnamedSection(const char *Directive,
+                                 SectionKind::Kind Kind) const {
   Section& S = Sections[Directive];
 
   // This is newly-created section, set it up properly.
   if (S.Name.empty()) {
-    S.Flags = Flags & ~SectionFlags::Named;
+    S.Kind = SectionKind::get(Kind, false /*weak*/, false /*Named*/);
     S.Name = Directive;
   }
 

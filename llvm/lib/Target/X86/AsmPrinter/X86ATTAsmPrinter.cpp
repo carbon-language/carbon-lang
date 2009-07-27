@@ -799,7 +799,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   if (C->isNullValue() && !GVar->hasSection() &&
       // Don't put things that should go in the cstring section into "comm".
-      !TheSection->hasFlag(SectionFlags::Strings)) {
+      !TheSection->getKind().isMergeableCString()) {
     if (GVar->hasExternalLinkage()) {
       if (const char *Directive = TAI->getZeroFillDirective()) {
         O << "\t.globl " << name << '\n';

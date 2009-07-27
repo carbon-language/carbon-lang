@@ -228,18 +228,18 @@ unsigned ELFWriter::getGlobalELFType(const GlobalValue *GV) {
 
 // getElfSectionFlags - Get the ELF Section Header flags based
 // on the flags defined in ELFTargetAsmInfo.
-unsigned ELFWriter::getElfSectionFlags(unsigned Flags) {
+unsigned ELFWriter::getElfSectionFlags(SectionKind Kind) {
   unsigned ElfSectionFlags = ELFSection::SHF_ALLOC;
 
-  if (Flags & SectionFlags::Code)
+  if (Kind.isText())
     ElfSectionFlags |= ELFSection::SHF_EXECINSTR;
-  if (Flags & SectionFlags::Writable)
+  if (Kind.isWriteable())
     ElfSectionFlags |= ELFSection::SHF_WRITE;
-  if (Flags & SectionFlags::Mergeable)
+  if (Kind.isMergeableConst())
     ElfSectionFlags |= ELFSection::SHF_MERGE;
-  if (Flags & SectionFlags::TLS)
+  if (Kind.isThreadLocal())
     ElfSectionFlags |= ELFSection::SHF_TLS;
-  if (Flags & SectionFlags::Strings)
+  if (Kind.isMergeableCString())
     ElfSectionFlags |= ELFSection::SHF_STRINGS;
 
   return ElfSectionFlags;
@@ -293,7 +293,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
 
     // Get ELF section from TAI
     const Section *S = TAI->SectionForGlobal(GV);
-    unsigned SectionFlags = getElfSectionFlags(S->getFlags());
+    unsigned SectionFlags = getElfSectionFlags(S->getKind());
 
     // The symbol align should update the section alignment if needed
     const TargetData *TD = TM.getTargetData();

@@ -24,10 +24,9 @@ using namespace llvm;
 XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
   SupportsDebugInformation = true;
-  TextSection = getUnnamedSection("\t.text", SectionFlags::Code);
-  DataSection = getNamedSection("\t.dp.data", SectionFlags::Writable);
-  BSSSection_  = getNamedSection("\t.dp.bss", SectionFlags::Writable |
-                                 SectionFlags::BSS);
+  TextSection = getUnnamedSection("\t.text", SectionKind::Text);
+  DataSection = getNamedSection("\t.dp.data", SectionKind::DataRel);
+  BSSSection_  = getNamedSection("\t.dp.bss", SectionKind::BSS);
 
   // TLS globals are lowered in the backend to arrays indexed by the current
   // thread id. After lowering they require no special handling by the linker
@@ -36,9 +35,10 @@ XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
   TLSBSSSection = BSSSection_;
 
   if (TM.getSubtargetImpl()->isXS1A())
-    ReadOnlySection = getNamedSection("\t.dp.rodata", SectionFlags::Writable);
+    // FIXME: Why is this writable???
+    ReadOnlySection = getNamedSection("\t.dp.rodata", SectionKind::DataRel);
   else
-    ReadOnlySection = getNamedSection("\t.cp.rodata", SectionFlags::None);
+    ReadOnlySection = getNamedSection("\t.cp.rodata", SectionKind::ReadOnly);
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";
   Data64bitsDirective = 0;

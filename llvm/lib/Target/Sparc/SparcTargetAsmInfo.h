@@ -24,8 +24,8 @@ namespace llvm {
   struct SparcELFTargetAsmInfo : public ELFTargetAsmInfo {
     explicit SparcELFTargetAsmInfo(const TargetMachine &TM);
 
-    virtual void getSectionFlags(unsigned Flags,
-                                 SmallVectorImpl<char> &Str) const;
+    virtual void getSectionFlagsAsString(SectionKind Kind,
+                                         SmallVectorImpl<char> &Str) const;
 
   };
 

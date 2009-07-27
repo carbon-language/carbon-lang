@@ -22,6 +22,9 @@
 
 namespace llvm {
   template <typename T> class SmallVectorImpl;
+  class TargetMachine;
+  class GlobalValue;
+  class Mangler;
   
   // DWARF encoding query type
   namespace DwarfEncoding {
@@ -39,8 +42,12 @@ namespace llvm {
   ///
   /// The comments below describe these as if they were an inheritance hierarchy
   /// in order to explain the predicates below.
-  struct SectionKind {
+  class SectionKind {
+  public:
     enum Kind {
+      /// Metadata - Debug info sections or other metadata.
+      Metadata,
+      
       /// Text - Text section, used for functions and other executable code.
       Text,
       
@@ -140,6 +147,8 @@ namespace llvm {
     bool isWeak() const { return Weak; }
     bool hasExplicitSection() const { return ExplicitSection; }
     
+    
+    bool isMetadata() const { return K == Metadata; }
     bool isText() const { return K == Text; }
     
     bool isReadOnly() const {
@@ -191,7 +200,7 @@ namespace llvm {
       return K == ReadOnlyWithRelLocal;
     }
     
-    static SectionKind get(Kind K, bool isWeak,
+    static SectionKind get(Kind K, bool isWeak = false,
                            bool hasExplicitSection = false) {
       SectionKind Res;
       Res.K = K;
@@ -201,65 +210,18 @@ namespace llvm {
     }
   };
 
-  namespace SectionFlags {
-    const unsigned Invalid    = -1U;
-    const unsigned None       = 0;
-    const unsigned Code       = 1 << 0;  ///< Section contains code
-    const unsigned Writable   = 1 << 1;  ///< Section is writeable
-    const unsigned BSS        = 1 << 2;  ///< Section contains only zeroes
-    const unsigned Mergeable  = 1 << 3;  ///< Section contains mergeable data
-    const unsigned Strings    = 1 << 4;  ///< Section contains C-type strings
-    const unsigned TLS        = 1 << 5;  ///< Section contains thread-local data
-    const unsigned Debug      = 1 << 6;  ///< Section contains debug data
-    const unsigned Linkonce   = 1 << 7;  ///< Section is linkonce
-    const unsigned TypeFlags  = 0xFF;
-    // Some gap for future flags
-    
-    /// Named - True if this section should be printed with ".section <name>",
-    /// false if the section name is something like ".const".
-    const unsigned Named      = 1 << 23; ///< Section is named
-    const unsigned EntitySize = 0xFF << 24; ///< Entity size for mergeable stuff
-
-    static inline unsigned getEntitySize(unsigned Flags) {
-      return (Flags >> 24) & 0xFF;
-    }
-
-    // FIXME: Why does this return a value?
-    static inline unsigned setEntitySize(unsigned Flags, unsigned Size) {
-      return (Flags & ~EntitySize) | ((Size & 0xFF) << 24);
-    }
-
-    struct KeyInfo {
-      static inline unsigned getEmptyKey() { return Invalid; }
-      static inline unsigned getTombstoneKey() { return Invalid - 1; }
-      static unsigned getHashValue(const unsigned &Key) { return Key; }
-      static bool isEqual(unsigned LHS, unsigned RHS) { return LHS == RHS; }
-      static bool isPod() { return true; }
-    };
-  }
-
-  class TargetMachine;
-  class CallInst;
-  class GlobalValue;
-  class Type;
-  class Mangler;
-
   class Section {
     friend class TargetAsmInfo;
     friend class StringMapEntry<Section>;
     friend class StringMap<Section>;
 
     std::string Name;
-    unsigned Flags;
-    explicit Section(unsigned F = SectionFlags::Invalid) : Flags(F) { }
+    SectionKind Kind;
+    explicit Section() { }
 
   public:
-    unsigned getEntitySize() const { return (Flags >> 24) & 0xFF; }
-
     const std::string &getName() const { return Name; }
-    unsigned getFlags() const { return Flags; }
-    
-    bool hasFlag(unsigned F) const { return (Flags & F) != 0; }
+    SectionKind getKind() const { return Kind; }
   };
 
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
@@ -678,9 +640,9 @@ namespace llvm {
     virtual ~TargetAsmInfo();
 
     const Section* getNamedSection(const char *Name,
-                                   unsigned Flags = SectionFlags::None) const;
+                                   SectionKind::Kind K) const;
     const Section* getUnnamedSection(const char *Directive,
-                                     unsigned Flags = SectionFlags::None) const;
+                                     SectionKind::Kind K) const;
 
     /// Measure the specified inline asm to determine an approximation of its
     /// length.
@@ -717,12 +679,13 @@ namespace llvm {
       return 0;
     }
     
-    /// getFlagsForNamedSection - If this target wants to be able to infer
+    /// getKindForNamedSection - If this target wants to be able to override
     /// section flags based on the name of the section specified for a global
     /// variable, it can implement this.  This is used on ELF systems so that
     /// ".tbss" gets the TLS bit set etc.
-    virtual unsigned getFlagsForNamedSection(const char *Section) const {
-      return 0;
+    virtual SectionKind::Kind getKindForNamedSection(const char *Section,
+                                                     SectionKind::Kind K) const{
+      return K;
     }
     
     /// SectionForGlobal - This method computes the appropriate section to emit
@@ -741,10 +704,11 @@ namespace llvm {
       return 0;
     }
     
-    /// Turn the specified flags into a string that can be printed to the
-    /// assembly file.
-    virtual void getSectionFlags(unsigned Flags,
-                                 SmallVectorImpl<char> &Str) const {
+    /// getSectionFlagsAsString - Turn the flags in the specified SectionKind
+    /// into a string that can be printed to the assembly file after the
+    /// ".section foo" part of a section directive.
+    virtual void getSectionFlagsAsString(SectionKind Kind,
+                                         SmallVectorImpl<char> &Str) const {
     }
 
 // FIXME: Eliminate this.

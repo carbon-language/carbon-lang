@@ -58,7 +58,7 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
   // FIXME: Why don't we always use this section?
   if (is64Bit)
     SixteenByteConstantSection = getUnnamedSection("\t.literal16\n",
-                                                   SectionFlags::Mergeable);
+                                                 SectionKind::MergeableConst16);
   LCOMMDirective = "\t.lcomm\t";
 
   // Leopard and above support aligned common symbols.
@@ -128,8 +128,7 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   // Set up DWARF directives
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
-  BSSSection_ = getUnnamedSection("\t.bss",
-                                  SectionFlags::Writable | SectionFlags::BSS);
+  BSSSection_ = getUnnamedSection("\t.bss", SectionKind::BSS);
 
   // Debug Information
   AbsoluteDebugSectionOffsets = true;
@@ -278,13 +277,14 @@ getSectionPrefixForUniqueGlobal(SectionKind Kind) const {
 }
 
 
-void X86COFFTargetAsmInfo::getSectionFlags(unsigned Flags,
-                                           SmallVectorImpl<char> &Str) const {
+
+void X86COFFTargetAsmInfo::getSectionFlagsAsString(SectionKind Kind,
+                                            SmallVectorImpl<char> &Str) const {
   // FIXME: Inefficient.
   std::string Res = ",\"";
-  if (Flags & SectionFlags::Code)
+  if (Kind.isText())
     Res += 'x';
-  if (Flags & SectionFlags::Writable)
+  if (Kind.isWriteable())
     Res += 'w';
   Res += "\"";
 
@@ -314,8 +314,8 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
 
   AlignmentIsInBytes = true;
 
-  TextSection = getUnnamedSection("_text", SectionFlags::Code);
-  DataSection = getUnnamedSection("_data", SectionFlags::Writable);
+  TextSection = getUnnamedSection("_text", SectionKind::Text);
+  DataSection = getUnnamedSection("_data", SectionKind::DataRel);
 
   JumpTableDataSection = NULL;
   SwitchToSectionDirective = "";

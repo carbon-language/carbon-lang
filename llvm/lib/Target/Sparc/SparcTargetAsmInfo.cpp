@@ -27,25 +27,24 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM)
   CStringSection=".rodata.str";
 
   // Sparc normally uses named section for BSS.
-  BSSSection_ = getNamedSection("\t.bss",
-                                SectionFlags::Writable | SectionFlags::BSS);
+  BSSSection_ = getNamedSection("\t.bss", SectionKind::BSS);
 }
 
 
-void SparcELFTargetAsmInfo::getSectionFlags(unsigned Flags,
+void SparcELFTargetAsmInfo::getSectionFlagsAsString(SectionKind Kind,
                                             SmallVectorImpl<char> &Str) const {
-  if (Flags & SectionFlags::Mergeable)
-    return ELFTargetAsmInfo::getSectionFlags(Flags, Str);
+  if (Kind.isMergeableConst() || Kind.isMergeableCString())
+    return ELFTargetAsmInfo::getSectionFlagsAsString(Kind, Str);
 
   // FIXME: Inefficient.
   std::string Res;
-  if (!(Flags & SectionFlags::Debug))
+  if (!Kind.isMetadata())
     Res += ",#alloc";
-  if (Flags & SectionFlags::Code)
+  if (Kind.isText())
     Res += ",#execinstr";
-  if (Flags & SectionFlags::Writable)
+  if (Kind.isWriteable())
     Res += ",#write";
-  if (Flags & SectionFlags::TLS)
+  if (Kind.isThreadLocal())
     Res += ",#tls";
 
   Str.append(Res.begin(), Res.end());
