@@ -153,11 +153,11 @@ multiclass T2I_un_irs<string opc, PatFrag opnode, bit Cheap = 0, bit ReMat = 0>{
    }
    // register
    def r : T2I<(outs GPR:$dst), (ins GPR:$src),
-               opc, " $dst, $src",
+               opc, ".w $dst, $src",
                 [(set GPR:$dst, (opnode GPR:$src))]>;
    // shifted register
    def s : T2I<(outs GPR:$dst), (ins t2_so_reg:$src),
-               opc, " $dst, $src",
+               opc, ".w $dst, $src",
                [(set GPR:$dst, (opnode t2_so_reg:$src))]>;
 }
 
@@ -171,13 +171,13 @@ multiclass T2I_bin_irs<string opc, PatFrag opnode, bit Commutable = 0> {
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>;
    // register
    def rr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]> {
      let isCommutable = Commutable;
    }
    // shifted register
    def rs : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
 
@@ -187,7 +187,7 @@ multiclass T2I_bin_irs<string opc, PatFrag opnode, bit Commutable = 0> {
 multiclass T2I_rbin_is<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs),
-                opc, " $dst, $rhs, $lhs",
+                opc, ".w $dst, $rhs, $lhs",
                 [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
    // shifted register
    def rs : T2I<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs),
@@ -201,17 +201,17 @@ let Defs = [CPSR] in {
 multiclass T2I_bin_s_irs<string opc, PatFrag opnode, bit Commutable = 0> {
    // shifted imm
    def ri : T2I<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs),
-                !strconcat(opc, "s"), " $dst, $lhs, $rhs",
+                !strconcat(opc, "s"), ".w $dst, $lhs, $rhs",
                 [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>;
    // register
    def rr : T2I<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-                !strconcat(opc, "s"), " $dst, $lhs, $rhs",
+                !strconcat(opc, "s"), ".w $dst, $lhs, $rhs",
                 [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]> {
      let isCommutable = Commutable;
    }
    // shifted register
    def rs : T2I<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs),
-                !strconcat(opc, "s"), " $dst, $lhs, $rhs",
+                !strconcat(opc, "s"), ".w $dst, $lhs, $rhs",
                 [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
 }
@@ -221,7 +221,7 @@ multiclass T2I_bin_s_irs<string opc, PatFrag opnode, bit Commutable = 0> {
 multiclass T2I_bin_ii12rs<string opc, PatFrag opnode, bit Commutable = 0> {
    // shifted imm
    def ri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>;
    // 12-bit imm
    def ri12 : T2sI<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
@@ -229,13 +229,13 @@ multiclass T2I_bin_ii12rs<string opc, PatFrag opnode, bit Commutable = 0> {
                    [(set GPR:$dst, (opnode GPR:$lhs, imm0_4095:$rhs))]>;
    // register
    def rr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]> {
      let isCommutable = Commutable;
    }
    // shifted register
    def rs : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
 
@@ -251,14 +251,14 @@ multiclass T2I_adde_sube_irs<string opc, PatFrag opnode, bit Commutable = 0> {
                  Requires<[IsThumb2, CarryDefIsUnused]>;
    // register
    def rr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>,
                  Requires<[IsThumb2, CarryDefIsUnused]> {
      let isCommutable = Commutable;
    }
    // shifted register
    def rs : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>,
                  Requires<[IsThumb2, CarryDefIsUnused]>;
    // Carry setting variants
@@ -271,7 +271,7 @@ multiclass T2I_adde_sube_irs<string opc, PatFrag opnode, bit Commutable = 0> {
                   }
    // register
    def Srr : T2XI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-                  !strconcat(opc, "s $dst, $lhs, $rhs"),
+                  !strconcat(opc, "s.w $dst, $lhs, $rhs"),
                   [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>,
                   Requires<[IsThumb2, CarryDefIsUsed]> {
                     let Defs = [CPSR];
@@ -279,7 +279,7 @@ multiclass T2I_adde_sube_irs<string opc, PatFrag opnode, bit Commutable = 0> {
    }
    // shifted register
    def Srs : T2XI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs),
-                  !strconcat(opc, "s $dst, $lhs, $rhs"),
+                  !strconcat(opc, "s.w $dst, $lhs, $rhs"),
                   [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>,
                   Requires<[IsThumb2, CarryDefIsUsed]> {
                     let Defs = [CPSR];
@@ -319,14 +319,12 @@ multiclass T2I_rsc_is<string opc, PatFrag opnode> {
 }
 }
 
-/// T2I_rbin_s_is - Same as T2I_bin_s_irs except the order of operands are
-/// reversed. It doesn't define the 'rr' form since it's handled by its
-/// T2I_bin_s_irs counterpart.
+/// T2I_rbin_s_is - Same as T2I_rbin_is except sets 's' bit.
 let Defs = [CPSR] in {
 multiclass T2I_rbin_s_is<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs, cc_out:$s),
-                 !strconcat(opc, "${s} $dst, $rhs, $lhs"),
+                 !strconcat(opc, "${s}.w $dst, $rhs, $lhs"),
                  [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>;
    // shifted register
    def rs : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs, cc_out:$s),
@@ -340,11 +338,11 @@ multiclass T2I_rbin_s_is<string opc, PatFrag opnode> {
 multiclass T2I_sh_ir<string opc, PatFrag opnode> {
    // 5-bit imm
    def ri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, i32imm:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, imm1_31:$rhs))]>;
    // register
    def rr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-                 opc, " $dst, $lhs, $rhs",
+                 opc, ".w $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]>;
 }
 
@@ -355,15 +353,15 @@ let Defs = [CPSR] in {
 multiclass T2I_cmp_is<string opc, PatFrag opnode> {
    // shifted imm
    def ri : T2I<(outs), (ins GPR:$lhs, t2_so_imm:$rhs),
-                opc, " $lhs, $rhs",
+                opc, ".w $lhs, $rhs",
                 [(opnode GPR:$lhs, t2_so_imm:$rhs)]>;
    // register
    def rr : T2I<(outs), (ins GPR:$lhs, GPR:$rhs),
-                opc, " $lhs, $rhs",
+                opc, ".w $lhs, $rhs",
                 [(opnode GPR:$lhs, GPR:$rhs)]>;
    // shifted register
    def rs : T2I<(outs), (ins GPR:$lhs, t2_so_reg:$rhs),
-                opc, " $lhs, $rhs",
+                opc, ".w $lhs, $rhs",
                 [(opnode GPR:$lhs, t2_so_reg:$rhs)]>;
 }
 }
@@ -371,29 +369,29 @@ multiclass T2I_cmp_is<string opc, PatFrag opnode> {
 /// T2I_ld - Defines a set of (op r, {imm12|imm8|so_reg}) load patterns.
 multiclass T2I_ld<string opc, PatFrag opnode> {
   def i12 : T2Ii12<(outs GPR:$dst), (ins t2addrmode_imm12:$addr),
-                   opc, " $dst, $addr",
+                   opc, ".w $dst, $addr",
                    [(set GPR:$dst, (opnode t2addrmode_imm12:$addr))]>;
   def i8  : T2Ii8 <(outs GPR:$dst), (ins t2addrmode_imm8:$addr),
                    opc, " $dst, $addr",
                    [(set GPR:$dst, (opnode t2addrmode_imm8:$addr))]>;
   def s   : T2Iso <(outs GPR:$dst), (ins t2addrmode_so_reg:$addr),
-                   opc, " $dst, $addr",
+                   opc, ".w $dst, $addr",
                    [(set GPR:$dst, (opnode t2addrmode_so_reg:$addr))]>;
   def pci : T2Ipc <(outs GPR:$dst), (ins i32imm:$addr),
-                   opc, " $dst, $addr",
+                   opc, ".w $dst, $addr",
                    [(set GPR:$dst, (opnode (ARMWrapper tconstpool:$addr)))]>;
 }
 
 /// T2I_st - Defines a set of (op r, {imm12|imm8|so_reg}) store patterns.
 multiclass T2I_st<string opc, PatFrag opnode> {
   def i12 : T2Ii12<(outs), (ins GPR:$src, t2addrmode_imm12:$addr),
-                   opc, " $src, $addr",
+                   opc, ".w $src, $addr",
                    [(opnode GPR:$src, t2addrmode_imm12:$addr)]>;
   def i8  : T2Ii8 <(outs), (ins GPR:$src, t2addrmode_imm8:$addr),
                    opc, " $src, $addr",
                    [(opnode GPR:$src, t2addrmode_imm8:$addr)]>;
   def s   : T2Iso <(outs), (ins GPR:$src, t2addrmode_so_reg:$addr),
-                   opc, " $src, $addr",
+                   opc, ".w $src, $addr",
                    [(opnode GPR:$src, t2addrmode_so_reg:$addr)]>;
 }
 
@@ -414,10 +412,10 @@ class T2I_picst<string opc, PatFrag opnode> :
 /// register and one whose operand is a register rotated by 8/16/24.
 multiclass T2I_unary_rrot<string opc, PatFrag opnode> {
   def r     : T2I<(outs GPR:$dst), (ins GPR:$Src),
-                  opc, " $dst, $Src",
+                  opc, ".w $dst, $Src",
                  [(set GPR:$dst, (opnode GPR:$Src))]>;
   def r_rot : T2I<(outs GPR:$dst), (ins GPR:$Src, i32imm:$rot),
-                  opc, " $dst, $Src, ror $rot",
+                  opc, ".w $dst, $Src, ror $rot",
                  [(set GPR:$dst, (opnode (rotr GPR:$Src, rot_imm:$rot)))]>;
 }
 
@@ -443,22 +441,22 @@ multiclass T2I_bin_rrot<string opc, PatFrag opnode> {
 
 let isNotDuplicable = 1 in
 def t2PICADD : T2XI<(outs GPR:$dst), (ins GPR:$lhs, pclabel:$cp),
-                    "$cp:\n\tadd $dst, $lhs, pc",
+                    "$cp:\n\tadd.w $dst, $lhs, pc",
                     [(set GPR:$dst, (ARMpic_add GPR:$lhs, imm:$cp))]>;
 
 
 // LEApcrel - Load a pc-relative address into a register without offending the
 // assembler.
 def t2LEApcrel : T2XI<(outs GPR:$dst), (ins i32imm:$label, pred:$p),
-                      "adr$p $dst, #$label", []>;
+                      "adr$p.w $dst, #$label", []>;
 
 def t2LEApcrelJT : T2XI<(outs GPR:$dst),
                         (ins i32imm:$label, i32imm:$id, pred:$p),
-                        "adr$p $dst, #${label}_${id:no_hash}", []>;
+                        "adr$p.w $dst, #${label}_${id:no_hash}", []>;
 
 // ADD rd, sp, #so_imm
 def t2ADDrSPi : T2XI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
-                     "add $dst, $sp, $imm",
+                     "add.w $dst, $sp, $imm",
                      []>;
 
 // ADD rd, sp, #imm12
@@ -657,12 +655,12 @@ def t2STRB_POST : T2Iidxldst<(outs GPR:$base_wb),
 let mayLoad = 1 in
 def t2LDM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$dst1, variable_ops),
-                 "ldm${addr:submode}${p} $addr, $dst1", []>;
+                 "ldm${addr:submode}${p}.w $addr, $dst1", []>;
 
 let mayStore = 1 in
 def t2STM : T2XI<(outs),
                  (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
-                 "stm${addr:submode}${p} $addr, $src1", []>;
+                 "stm${addr:submode}${p}.w $addr, $src1", []>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions.
@@ -670,11 +668,11 @@ def t2STM : T2XI<(outs),
 
 let neverHasSideEffects = 1 in
 def t2MOVr : T2sI<(outs GPR:$dst), (ins GPR:$src),
-                   "mov", " $dst, $src", []>;
+                   "mov", ".w $dst, $src", []>;
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def t2MOVi : T2sI<(outs GPR:$dst), (ins t2_so_imm:$src),
-                   "mov", " $dst, $src",
+                   "mov", ".w $dst, $src",
                    [(set GPR:$dst, t2_so_imm:$src)]>;
 
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
@@ -928,11 +926,11 @@ def t2CLZ : T2I<(outs GPR:$dst), (ins GPR:$src),
                 [(set GPR:$dst, (ctlz GPR:$src))]>;
 
 def t2REV : T2I<(outs GPR:$dst), (ins GPR:$src),
-                "rev", " $dst, $src",
+                "rev", ".w $dst, $src",
                 [(set GPR:$dst, (bswap GPR:$src))]>;
 
 def t2REV16 : T2I<(outs GPR:$dst), (ins GPR:$src),
-                "rev16", " $dst, $src",
+                "rev16", ".w $dst, $src",
                 [(set GPR:$dst,
                     (or (and (srl GPR:$src, (i32 8)), 0xFF),
                         (or (and (shl GPR:$src, (i32 8)), 0xFF00),
@@ -940,7 +938,7 @@ def t2REV16 : T2I<(outs GPR:$dst), (ins GPR:$src),
                                 (and (shl GPR:$src, (i32 8)), 0xFF000000)))))]>;
 
 def t2REVSH : T2I<(outs GPR:$dst), (ins GPR:$src),
-                 "revsh", " $dst, $src",
+                 "revsh", ".w $dst, $src",
                  [(set GPR:$dst,
                     (sext_inreg
                       (or (srl (and GPR:$src, 0xFFFF), (i32 8)),
@@ -1077,14 +1075,14 @@ def t2BLXr9 : T2XI<(outs), (ins GPR:$func, variable_ops),
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 let isPredicable = 1 in
 def t2B   : T2XI<(outs), (ins brtarget:$target),
-                 "b $target",
+                 "b.w $target",
                  [(br bb:$target)]>;
 
 let isNotDuplicable = 1, isIndirectBranch = 1 in
 def t2BR_JT :
     T2JTI<(outs),
           (ins GPR:$base, GPR:$idx, jt2block_operand:$jt, i32imm:$id),
-          "add pc, $base, $idx, lsl #2\n$jt",
+          "add.w pc, $base, $idx, lsl #2\n$jt",
           [(ARMbr2jt GPR:$base, GPR:$idx, tjumptable:$jt, imm:$id)]>;
 } // isBranch, isTerminator, isBarrier
 
@@ -1092,7 +1090,7 @@ def t2BR_JT :
 // a two-value operand where a dag node expects two operands. :(
 let isBranch = 1, isTerminator = 1 in
 def t2Bcc : T2I<(outs), (ins brtarget:$target), 
-                "b", " $target",
+                "b", ".w $target",
                 [/*(ARMbrcond bb:$target, imm:$cc)*/]>;
 
 

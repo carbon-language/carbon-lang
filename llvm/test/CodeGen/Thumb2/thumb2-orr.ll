@@ -1,8 +1,8 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\W*r\[0-9\]*,\\W*r\[0-9\]*,\\W*r\[0-9\]*$} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*lsl\\W*#5$} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*lsr\\W*#6$} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*asr\\W*#7$} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*ror\\W*#8$} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\.w\\W*r\[0-9\]*,\\W*r\[0-9\]*,\\W*r\[0-9\]*$} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\.w\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*lsl\\W*#5$} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\.w\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*lsr\\W*#6$} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\.w\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*asr\\W*#7$} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orr\\.w\\W*r\[0-9\],\\W*r\[0-9\],\\W*r\[0-9\],\\W*ror\\W*#8$} | count 1
 
 define i32 @f1(i32 %a, i32 %b) {
     %tmp2 = or i32 %a, %b

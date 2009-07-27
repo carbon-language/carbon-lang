@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "subs r" | count 2
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "adc r"
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "sbc r"  | count 2
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "subs\\.w r" | count 2
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "adc\\.w r"
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep "sbc\\.w r"  | count 2
 
 define i64 @f1(i64 %a, i64 %b) {
 entry:

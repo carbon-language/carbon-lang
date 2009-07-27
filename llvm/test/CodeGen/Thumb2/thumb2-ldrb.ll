@@ -1,8 +1,9 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {ldrb r0} | count 7
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mov | grep 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | not grep mvn
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep ldrb | grep lsl
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep lsr | not grep ldrb
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {ldrb\\.w r0} | count 5
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {ldrb r0} | count 2
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep mov\\.w | grep 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | not grep mvn\\.w
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep ldrb\\.w | grep lsl
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep lsr\\.w | not grep ldrb
 
 define i8 @f1(i8* %v) {
 entry:

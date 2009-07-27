@@ -1,9 +1,9 @@
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\W*r\[0-9\],\\W*\\\[r\[0-9\]*\\\]$} | count 1
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*#+4092\\\]$} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\.w\\W*r\[0-9\],\\W*\\\[r\[0-9\]*\\\]$} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\.w\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*#+4092\\\]$} | count 1
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*#-128\\\]$} | count 2
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | not grep {strb\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*#+4096\\\]$}
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*+r\[0-9\]*\\\]$} | count 3
-; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*+r\[0-9\]*,\\Wlsl #2\\\]$} | count 1
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | not grep {strb\\.w\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*#+4096\\\]$}
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\.w\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*+r\[0-9\]*\\\]$} | count 3
+; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {strb\\.w\\W*r\[0-9\],\\W*\\\[r\[0-9\]*,\\W*+r\[0-9\]*,\\Wlsl #2\\\]$} | count 1
 
 define i8 @f1(i8 %a, i8* %v) {
         store i8 %a, i8* %v
