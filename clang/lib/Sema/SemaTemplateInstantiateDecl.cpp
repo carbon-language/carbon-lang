@@ -146,9 +146,8 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     else
       SemaRef.AddInitializerToDecl(Sema::DeclPtrTy::make(Var), move(Init),
                                    D->hasCXXDirectInitializer());
-  } else {
-    // FIXME: Call ActOnUninitializedDecl? (Not always)
-  }
+  } else if (!Var->isStaticDataMember() || Var->isOutOfLine())
+    SemaRef.ActOnUninitializedDecl(Sema::DeclPtrTy::make(Var), false);
 
   // Link instantiations of static data members back to the template from
   // which they were instantiated.

@@ -16,3 +16,25 @@ class Y {
 };
 
 Y<float> fy; // expected-note{{in instantiation of template class 'class Y<float>' requested here}}
+
+
+// out-of-line static member variables
+
+template<typename T>
+struct Z {
+  static T value;
+};
+
+template<typename T>
+T Z<T>::value; // expected-error{{no matching constructor}}
+
+struct DefCon {};
+
+struct NoDefCon { 
+  NoDefCon(const NoDefCon&);
+};
+
+void test() {
+  DefCon &DC = Z<DefCon>::value;
+  NoDefCon &NDC = Z<NoDefCon>::value; // expected-note{{instantiation}}
+}
