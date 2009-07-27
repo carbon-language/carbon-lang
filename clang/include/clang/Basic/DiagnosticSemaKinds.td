@@ -361,7 +361,7 @@ def err_implicit_object_parameter_init : Error<
 
 def err_missing_default_constructor : Error<
   "default constructor for %1 is missing in initialization of "
-  "%select{base class|mamber}0">;
+  "%select{base class|member}0">;
 def err_illegal_union_member : Error<
   "union member %0 has a non-trivial %select{constructor|"
   "copy constructor|copy assignment operator|destructor}1">;
