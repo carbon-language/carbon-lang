@@ -453,36 +453,27 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   const llvm::Type *ResultType;
   const RecordDecl *RD = cast<const RecordDecl>(TD);
 
-  // There isn't any extra information for empty structures/unions.
-  if (RD->field_empty()) {
-    ResultType = llvm::StructType::get(std::vector<const llvm::Type*>());
-  } else {
+  // Layout fields.
+  CGRecordLayout *Layout = 
+    CGRecordLayoutBuilder::ComputeLayout(*this, RD);
+    
+  if (!Layout) {
     // Layout fields.
-    CGRecordLayout *Layout = 
-      CGRecordLayoutBuilder::ComputeLayout(*this, RD);
-    
-    if (!Layout) {
-      // Layout fields.
-      RecordOrganizer RO(*this, *RD);
+    RecordOrganizer RO(*this, *RD);
 
-      if (TD->isStruct() || TD->isClass())
-        RO.layoutStructFields(Context.getASTRecordLayout(RD));
-      else {
-        assert(TD->isUnion() && "unknown tag decl kind!");
-        RO.layoutUnionFields(Context.getASTRecordLayout(RD));
-      }
-      
-      Layout = new CGRecordLayout(RO.getLLVMType(), 
-                                  RO.getPaddingFields());
+    if (TD->isStruct() || TD->isClass())
+      RO.layoutStructFields(Context.getASTRecordLayout(RD));
+    else {
+      assert(TD->isUnion() && "unknown tag decl kind!");
+      RO.layoutUnionFields(Context.getASTRecordLayout(RD));
     }
-    
-    // Get llvm::StructType.
-    const Type *Key = 
-      Context.getTagDeclType(const_cast<TagDecl*>(TD)).getTypePtr();
-    
-    CGRecordLayouts[Key] = Layout;
-    ResultType = Layout->getLLVMType();
+      
+    Layout = new CGRecordLayout(RO.getLLVMType(), 
+                                RO.getPaddingFields());
   }
+    
+  CGRecordLayouts[Key] = Layout;
+  ResultType = Layout->getLLVMType();
   
   // Refine our Opaque type to ResultType.  This can invalidate ResultType, so
   // make sure to read the result out of the holder.
