@@ -301,9 +301,6 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
   
   Builder.Layout(D);
 
-  // FIXME: Once this works well enough, enable it.
-  return 0;
-  
   const llvm::Type *Ty = llvm::StructType::get(Builder.FieldTypes,
                                                Builder.Packed);
   
