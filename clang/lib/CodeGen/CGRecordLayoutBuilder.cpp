@@ -88,6 +88,8 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   
   AppendBytes(NumBytesToAppend);
   
+  AlignmentAsLLVMStruct = std::max(AlignmentAsLLVMStruct, getTypeAlignment(Ty));
+
   BitsAvailableInLastField = 
     getNextFieldOffsetInBytes() * 8 - (FieldOffset + FieldSize);
 }
@@ -207,11 +209,21 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   }
 
   // Append tail padding if necessary.
-  if (Layout.getSize() / 8 > getNextFieldOffsetInBytes())
-    AppendPadding(getNextFieldOffsetInBytes(), AlignmentAsLLVMStruct);
+  AppendTailPadding(Layout.getSize());
   
   return true;
 }
+
+void CGRecordLayoutBuilder::AppendTailPadding(uint64_t RecordSize) {
+  assert(RecordSize % 8 == 0 && "Invalid record size!");
+  
+  uint64_t RecordSizeInBytes = RecordSize / 8;
+  assert(getNextFieldOffsetInBytes() <= RecordSizeInBytes && "Size mismatch!");
+  
+  unsigned NumPadBytes = RecordSizeInBytes - getNextFieldOffsetInBytes();
+  AppendBytes(NumPadBytes);
+}
+
 
 void CGRecordLayoutBuilder::AppendField(uint64_t FieldOffsetInBytes, 
                                         const llvm::Type *FieldTy) {
@@ -256,10 +268,8 @@ void CGRecordLayoutBuilder::AppendBytes(uint64_t NumBytes) {
     return;
   
   const llvm::Type *Ty = llvm::Type::Int8Ty;
-  if (NumBytes > 1) {
-    // FIXME: Use a VMContext.
+  if (NumBytes > 1)
     Ty = llvm::ArrayType::get(Ty, NumBytes);
-  }
   
   // Append the padding field
   AppendField(getNextFieldOffsetInBytes(), Ty);
@@ -294,7 +304,6 @@ CGRecordLayoutBuilder::ComputeLayout(CodeGenTypes &Types,
   // FIXME: Once this works well enough, enable it.
   return 0;
   
-  // FIXME: Use a VMContext.
   const llvm::Type *Ty = llvm::StructType::get(Builder.FieldTypes,
                                                Builder.Packed);
   

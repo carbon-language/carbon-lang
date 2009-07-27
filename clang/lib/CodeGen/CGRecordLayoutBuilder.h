@@ -111,6 +111,10 @@ class CGRecordLayoutBuilder {
   /// AppendBytes - Append a given number of bytes to the record.
   void AppendBytes(uint64_t NumBytes);
 
+  /// AppendTailPadding - Append enough tail padding so that the type will have
+  /// the passed size.
+  void AppendTailPadding(uint64_t RecordSize);
+  
   /// getNextFieldOffsetInBytes - returns where the next field offset is.
   uint64_t getNextFieldOffsetInBytes() const;
   
