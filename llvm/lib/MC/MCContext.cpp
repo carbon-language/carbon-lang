@@ -21,7 +21,7 @@ MCContext::MCContext()
 MCContext::~MCContext() {
 }
 
-MCSection *MCContext::GetSection(const char *Name) {
+MCSection *MCContext::GetSection(const StringRef &Name) {
   MCSection *&Entry = Sections[Name];
   
   if (!Entry)
@@ -30,7 +30,7 @@ MCSection *MCContext::GetSection(const char *Name) {
   return Entry;
 }
 
-MCSymbol *MCContext::CreateSymbol(const char *Name) {
+MCSymbol *MCContext::CreateSymbol(const StringRef &Name) {
   assert(Name[0] != '\0' && "Normal symbols cannot be unnamed!");
 
   // Create and bind the symbol, and ensure that names are unique.
@@ -39,7 +39,7 @@ MCSymbol *MCContext::CreateSymbol(const char *Name) {
   return Entry = new (*this) MCSymbol(Name, false);
 }
 
-MCSymbol *MCContext::GetOrCreateSymbol(const char *Name) {
+MCSymbol *MCContext::GetOrCreateSymbol(const StringRef &Name) {
   MCSymbol *&Entry = Symbols[Name];
   if (Entry) return Entry;
 
@@ -47,9 +47,9 @@ MCSymbol *MCContext::GetOrCreateSymbol(const char *Name) {
 }
 
 
-MCSymbol *MCContext::CreateTemporarySymbol(const char *Name) {
+MCSymbol *MCContext::CreateTemporarySymbol(const StringRef &Name) {
   // If unnamed, just create a symbol.
-  if (Name[0] == '\0')
+  if (Name.empty())
     new (*this) MCSymbol("", true);
     
   // Otherwise create as usual.
@@ -58,7 +58,7 @@ MCSymbol *MCContext::CreateTemporarySymbol(const char *Name) {
   return Entry = new (*this) MCSymbol(Name, true);
 }
 
-MCSymbol *MCContext::LookupSymbol(const char *Name) const {
+MCSymbol *MCContext::LookupSymbol(const StringRef &Name) const {
   return Symbols.lookup(Name);
 }
 

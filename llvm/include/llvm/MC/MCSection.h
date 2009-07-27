@@ -15,6 +15,7 @@
 #define LLVM_MC_MCSECTION_H
 
 #include <string>
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 
@@ -25,7 +26,7 @@ namespace llvm {
     std::string Name;
   private:
     friend class MCContext;
-    MCSection(const char *_Name) : Name(_Name) {}
+    MCSection(const StringRef &_Name) : Name(_Name) {}
     
     MCSection(const MCSection&);      // DO NOT IMPLEMENT
     void operator=(const MCSection&); // DO NOT IMPLEMENT

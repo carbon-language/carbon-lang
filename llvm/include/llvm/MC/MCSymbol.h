@@ -15,6 +15,7 @@
 #define LLVM_MC_MCSYMBOL_H
 
 #include <string>
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
   class MCSection;
@@ -46,7 +47,7 @@ namespace llvm {
 
   private:  // MCContext creates and uniques these.
     friend class MCContext;
-    MCSymbol(const char *_Name, bool _IsTemporary) 
+    MCSymbol(const StringRef &_Name, bool _IsTemporary) 
       : Name(_Name), Section(0), IsTemporary(_IsTemporary), IsExternal(false) {}
     
     MCSymbol(const MCSymbol&);       // DO NOT IMPLEMENT

@@ -18,6 +18,7 @@ namespace llvm {
   class MCValue;
   class MCSection;
   class MCSymbol;
+  class StringRef;
 
   /// MCContext - Context object for machine code objects.
   class MCContext {
@@ -46,19 +47,19 @@ namespace llvm {
     ~MCContext();
 
     /// GetSection - Get or create a new section with the given @param Name.
-    MCSection *GetSection(const char *Name);
+    MCSection *GetSection(const StringRef &Name);
     
     /// CreateSymbol - Create a new symbol with the specified @param Name.
     ///
     /// @param Name - The symbol name, which must be unique across all symbols.
-    MCSymbol *CreateSymbol(const char *Name);
+    MCSymbol *CreateSymbol(const StringRef &Name);
 
     /// GetOrCreateSymbol - Lookup the symbol inside with the specified
     /// @param Name.  If it exists, return it.  If not, create a forward
     /// reference and return it.
     ///
     /// @param Name - The symbol name, which must be unique across all symbols.
-    MCSymbol *GetOrCreateSymbol(const char *Name);
+    MCSymbol *GetOrCreateSymbol(const StringRef &Name);
     
     /// CreateTemporarySymbol - Create a new temporary symbol with the specified
     /// @param Name.
@@ -66,10 +67,10 @@ namespace llvm {
     /// @param Name - The symbol name, for debugging purposes only, temporary
     /// symbols do not surive assembly. If non-empty the name must be unique
     /// across all symbols.
-    MCSymbol *CreateTemporarySymbol(const char *Name = "");
+    MCSymbol *CreateTemporarySymbol(const StringRef &Name = "");
 
     /// LookupSymbol - Get the symbol for @param Name, or null.
-    MCSymbol *LookupSymbol(const char *Name) const;
+    MCSymbol *LookupSymbol(const StringRef &Name) const;
 
     /// ClearSymbolValue - Erase a value binding for @param Symbol, if one
     /// exists.
