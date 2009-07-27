@@ -247,7 +247,9 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
     case Constant::LocalRelocation:
       // In static relocation model, the linker will resolve all addresses, so
       // the relocation entries will actually be constants by the time the app
-      // starts up.
+      // starts up.  However, we can't put this into a mergable section, because
+      // the linker doesn't take relocations into consideration when it tries to
+      // merge entries in the section.
       if (ReloModel == Reloc::Static)
         return SectionKind::ReadOnly;
               
@@ -258,7 +260,9 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
     case Constant::GlobalRelocations:
       // In static relocation model, the linker will resolve all addresses, so
       // the relocation entries will actually be constants by the time the app
-      // starts up.
+      // starts up.  However, we can't put this into a mergable section, because
+      // the linker doesn't take relocations into consideration when it tries to
+      // merge entries in the section.
       if (ReloModel == Reloc::Static)
         return SectionKind::ReadOnly;
       
