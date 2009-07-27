@@ -301,6 +301,11 @@ private:
     return Opc == ARM::Bcc || Opc == ARM::tBcc || Opc == ARM::t2Bcc;
   }
 
+  bool isJumpTableBranchOpcode(int Opc) const {
+    return Opc == ARM::BR_JTr || Opc == ARM::BR_JTm || Opc == ARM::BR_JTadd ||
+      Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT;
+  }
+
   int getMatchingCondBranchOpcode(int Opc) const;
 };
 }

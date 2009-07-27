@@ -251,11 +251,7 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // ...likewise if it ends with a branch table followed by an unconditional
   // branch. The branch folder can create these, and we must get rid of them for
   // correctness of Thumb constant islands.
-  if ((SecondLastOpc == ARM::BR_JTr || 
-       SecondLastOpc == ARM::BR_JTm ||
-       SecondLastOpc == ARM::BR_JTadd ||
-       SecondLastOpc == ARM::tBR_JTr ||
-       SecondLastOpc == ARM::t2BR_JT) &&
+  if (isJumpTableBranchOpcode(SecondLastOpc) &&
       isUncondBranchOpcode(LastOpc)) {
     I = LastInst;
     if (AllowModify)
