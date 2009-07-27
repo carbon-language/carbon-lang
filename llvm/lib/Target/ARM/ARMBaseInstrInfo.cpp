@@ -681,7 +681,7 @@ foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   MachineInstr *NewMI = NULL;
   if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) {
     // If it is updating CPSR, then it cannot be folded.
-    if (MI->getOperand(4).getReg() != ARM::CPSR) {
+    if (MI->getOperand(4).getReg() != ARM::CPSR || MI->getOperand(4).isDead()) {
       unsigned Pred = MI->getOperand(2).getImm();
       unsigned PredReg = MI->getOperand(3).getReg();
       if (OpNum == 0) { // move -> store
@@ -771,6 +771,7 @@ ARMBaseInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                         MachineInstr* MI,
                                         const SmallVectorImpl<unsigned> &Ops,
                                         MachineInstr* LoadMI) const {
+  // FIXME
   return 0;
 }
 
@@ -782,7 +783,7 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::MOVr || Opc == ARM::t2MOVr) {
     // If it is updating CPSR, then it cannot be folded.
-    return MI->getOperand(4).getReg() != ARM::CPSR;
+    return MI->getOperand(4).getReg() != ARM::CPSR ||MI->getOperand(4).isDead();
   } else if (Opc == ARM::FCPYS || Opc == ARM::FCPYD) {
     return true;
   } else if (Opc == ARM::VMOVD || Opc == ARM::VMOVQ) {
