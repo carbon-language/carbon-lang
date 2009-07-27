@@ -1652,7 +1652,7 @@ llvm::Constant *CGObjCMac::GetOrEmitProtocol(const ObjCProtocolDecl *PD) {
                             + PD->getNameAsString(),
                        "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                        ClassMethods);
-  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ProtocolTy,
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
                                                    Values);
   
   if (Entry) {
@@ -1732,7 +1732,7 @@ CGObjCMac::EmitProtocolExtension(const ObjCProtocolDecl *PD,
     return VMContext.getNullValue(ObjCTypes.ProtocolExtensionPtrTy);
 
   llvm::Constant *Init = 
-    VMContext.getConstantStruct(ObjCTypes.ProtocolExtensionTy, Values);
+    llvm::ConstantStruct::get(ObjCTypes.ProtocolExtensionTy, Values);
 
   // No special section, but goes in llvm.used
   return CreateMetadataVar("\01L_OBJC_PROTOCOLEXT_" + PD->getNameAsString(),
@@ -1773,7 +1773,7 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
                                                   ProtocolRefs.size()), 
                              ProtocolRefs);
   
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
   llvm::GlobalVariable *GV = 
     CreateMetadataVar(Name, Init, "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                       4, false);
@@ -1802,7 +1802,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
     const ObjCPropertyDecl *PD = *I;
     Prop[0] = GetPropertyName(PD->getIdentifier());
     Prop[1] = GetPropertyTypeString(PD, Container);
-    Properties.push_back(VMContext.getConstantStruct(ObjCTypes.PropertyTy,
+    Properties.push_back(llvm::ConstantStruct::get(ObjCTypes.PropertyTy,
                                                    Prop));
   }
 
@@ -1818,7 +1818,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.PropertyTy, 
                                              Properties.size());
   Values[2] = VMContext.getConstantArray(AT, Properties);
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
   llvm::GlobalVariable *GV = 
     CreateMetadataVar(Name, Init, 
@@ -1842,7 +1842,7 @@ CGObjCMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
           VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
                                            ObjCTypes.SelectorPtrTy);
   Desc[1] = GetMethodVarType(MD);
-  return VMContext.getConstantStruct(ObjCTypes.MethodDescriptionTy,
+  return llvm::ConstantStruct::get(ObjCTypes.MethodDescriptionTy,
                                    Desc);
 }
 
@@ -1858,7 +1858,7 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodDescriptionTy, 
                                              Methods.size());
   Values[1] = VMContext.getConstantArray(AT, Methods);
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
   llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
   return VMContext.getConstantExprBitCast(GV, 
@@ -1932,7 +1932,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     Values[6] = VMContext.getNullValue(ObjCTypes.PropertyListPtrTy);
   }
   
-  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.CategoryTy,
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.CategoryTy,
                                                    Values);
 
   llvm::GlobalVariable *GV = 
@@ -2046,7 +2046,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
   Values[ 9] = Protocols;
   Values[10] = BuildIvarLayout(ID, true); 
   Values[11] = EmitClassExtension(ID);
-  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ClassTy,
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
 
   llvm::GlobalVariable *GV = 
@@ -2100,7 +2100,7 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   Values[10] = VMContext.getNullValue(ObjCTypes.Int8PtrTy);
   // The class extension is always unused for metaclasses.
   Values[11] = VMContext.getNullValue(ObjCTypes.ClassExtensionPtrTy);
-  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ClassTy,
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassTy,
                                                    Values);
 
   std::string Name("\01L_OBJC_METACLASS_");
@@ -2173,7 +2173,7 @@ CGObjCMac::EmitClassExtension(const ObjCImplementationDecl *ID) {
     return VMContext.getNullValue(ObjCTypes.ClassExtensionPtrTy);
 
   llvm::Constant *Init = 
-    VMContext.getConstantStruct(ObjCTypes.ClassExtensionTy, Values);
+    llvm::ConstantStruct::get(ObjCTypes.ClassExtensionTy, Values);
   return CreateMetadataVar("\01L_OBJC_CLASSEXT_" + ID->getNameAsString(),
                            Init, "__OBJC,__class_ext,regular,no_dead_strip", 
                            4, true);
@@ -2218,7 +2218,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
     Ivar[1] = GetMethodVarType(IVD);
     Ivar[2] = llvm::ConstantInt::get(ObjCTypes.IntTy, 
                                      ComputeIvarBaseOffset(CGM, OID, IVD));
-    Ivars.push_back(VMContext.getConstantStruct(ObjCTypes.IvarTy, Ivar));
+    Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarTy, Ivar));
   }
 
   // Return null for empty list.
@@ -2230,7 +2230,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.IvarTy,
                                              Ivars.size());
   Values[1] = VMContext.getConstantArray(AT, Ivars);
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
   llvm::GlobalVariable *GV;
   if (ForClass)
@@ -2274,7 +2274,7 @@ llvm::Constant *CGObjCMac::GetMethodConstant(const ObjCMethodDecl *MD) {
                                    ObjCTypes.SelectorPtrTy);
   Method[1] = GetMethodVarType(MD);
   Method[2] = VMContext.getConstantExprBitCast(Fn, ObjCTypes.Int8PtrTy);
-  return VMContext.getConstantStruct(ObjCTypes.MethodTy, Method);
+  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
 }
 
 llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
@@ -2290,7 +2290,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodTy,
                                              Methods.size());
   Values[2] = VMContext.getConstantArray(AT, Methods);
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
   llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
   return VMContext.getConstantExprBitCast(GV,
@@ -2888,7 +2888,7 @@ void CGObjCMac::EmitModuleInfo() {
   Values[2] = GetClassName(&CGM.getContext().Idents.get(""));
   Values[3] = EmitModuleSymbols();
   CreateMetadataVar("\01L_OBJC_MODULES", 
-                    VMContext.getConstantStruct(ObjCTypes.ModuleTy, Values),
+                    llvm::ConstantStruct::get(ObjCTypes.ModuleTy, Values),
                     "__OBJC,__module_info,regular,no_dead_strip",
                     4, true);
 }
@@ -2923,7 +2923,7 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
                                                   NumClasses + NumCategories),
                              Symbols);
 
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);  
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);  
 
   llvm::GlobalVariable *GV =
     CreateMetadataVar("\01L_OBJC_SYMBOLS", Init,
@@ -3474,7 +3474,7 @@ void CGObjCMac::FinishModule() {
     Values[3] = Values[4] =
       VMContext.getNullValue(ObjCTypes.MethodDescriptionListPtrTy);
     I->second->setLinkage(llvm::GlobalValue::InternalLinkage);
-    I->second->setInitializer(VMContext.getConstantStruct(ObjCTypes.ProtocolTy,
+    I->second->setInitializer(llvm::ConstantStruct::get(ObjCTypes.ProtocolTy,
                                                         Values));
     CGM.AddUsedGlobal(I->second);
   }
@@ -4258,7 +4258,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
       EmitPropertyList(
                        "\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                        ID, ID->getClassInterface(), ObjCTypes);
-  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ClassRonfABITy,
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
                                                    Values);
   llvm::GlobalVariable *CLASS_RO_GV =
   new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.ClassRonfABITy, false,
@@ -4298,7 +4298,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassMetaData(
   Values[2] = ObjCEmptyCacheVar;  // &ObjCEmptyCacheVar
   Values[3] = ObjCEmptyVtableVar; // &ObjCEmptyVtableVar
   Values[4] = ClassRoGV;                 // &CLASS_RO_GV
-  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ClassnfABITy, 
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassnfABITy, 
                                                    Values);
   llvm::GlobalVariable *GV = GetClassGlobal(ClassName);
   GV->setInitializer(Init);
@@ -4535,7 +4535,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   }
     
   llvm::Constant *Init = 
-    VMContext.getConstantStruct(ObjCTypes.CategorynfABITy, 
+    llvm::ConstantStruct::get(ObjCTypes.CategorynfABITy, 
                               Values);
   llvm::GlobalVariable *GCATV
     = new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.CategorynfABITy, 
@@ -4570,7 +4570,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetMethodConstant(
                                      ObjCTypes.SelectorPtrTy);
   Method[1] = GetMethodVarType(MD);
   Method[2] = VMContext.getConstantExprBitCast(Fn, ObjCTypes.Int8PtrTy);
-  return VMContext.getConstantStruct(ObjCTypes.MethodTy, Method);
+  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
 }
 
 /// EmitMethodList - Build meta-data for method declarations
@@ -4597,7 +4597,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.MethodTy,
                                              Methods.size());
   Values[2] = VMContext.getConstantArray(AT, Methods);
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
   
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
@@ -4711,7 +4711,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
     // not matter.  If it matters, there is enough info to get the
     // bitfield right!
     Ivar[4] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
-    Ivars.push_back(VMContext.getConstantStruct(ObjCTypes.IvarnfABITy, Ivar));
+    Ivars.push_back(llvm::ConstantStruct::get(ObjCTypes.IvarnfABITy, Ivar));
   }
   // Return null for empty list.
   if (Ivars.empty())
@@ -4723,7 +4723,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   llvm::ArrayType *AT = VMContext.getArrayType(ObjCTypes.IvarnfABITy,
                                              Ivars.size());
   Values[2] = VMContext.getConstantArray(AT, Ivars);
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
   const char *Prefix = "\01l_OBJC_$_INSTANCE_VARIABLES_";
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
@@ -4840,7 +4840,7 @@ llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocol(
     CGM.getTargetData().getTypeAllocSize(ObjCTypes.ProtocolnfABITy);
   Values[8] = llvm::ConstantInt::get(ObjCTypes.IntTy, Size);
   Values[9] = VMContext.getNullValue(ObjCTypes.IntTy);
-  llvm::Constant *Init = VMContext.getConstantStruct(ObjCTypes.ProtocolnfABITy,
+  llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ProtocolnfABITy,
                                                    Values);
   
   if (Entry) {
@@ -4917,7 +4917,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
                              ProtocolRefs.size()), 
                              ProtocolRefs);
   
-  llvm::Constant *Init = VMContext.getConstantStruct(Values);
+  llvm::Constant *Init = llvm::ConstantStruct::get(Values);
   GV = new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
                                 llvm::GlobalValue::InternalLinkage,
                                 Init,
@@ -4946,7 +4946,7 @@ CGObjCNonFragileABIMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
   Desc[1] = GetMethodVarType(MD);
   // Protocol methods have no implementation. So, this entry is always NULL.
   Desc[2] = VMContext.getNullValue(ObjCTypes.Int8PtrTy);
-  return VMContext.getConstantStruct(ObjCTypes.MethodTy, Desc);
+  return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Desc);
 }
 
 /// EmitObjCValueForIvar - Code Gen for nonfragile ivar reference.
@@ -5060,7 +5060,7 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
     std::vector<llvm::Constant*> Values(2);
     Values[0] = Fn;
     Values[1] = GetMethodVarName(Sel);
-    llvm::Constant *Init = VMContext.getConstantStruct(Values);
+    llvm::Constant *Init = llvm::ConstantStruct::get(Values);
     GV =  new llvm::GlobalVariable(CGM.getModule(), Init->getType(), false,
                                    llvm::GlobalValue::WeakAnyLinkage,
                                    Init,
@@ -5704,7 +5704,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
   Values[1] = GetClassName(ID->getIdentifier());
   Values[2] = GetClassGlobal(ClassName);
   llvm::Constant *Init =
-    VMContext.getConstantStruct(ObjCTypes.EHTypeTy, Values);
+    llvm::ConstantStruct::get(ObjCTypes.EHTypeTy, Values);
 
   if (Entry) {
     Entry->setInitializer(Init);

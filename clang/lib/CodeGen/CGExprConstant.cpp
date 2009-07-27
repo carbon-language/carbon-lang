@@ -337,7 +337,7 @@ public:
       return 0;
     
     llvm::Constant *Result = 
-      CGM.getLLVMContext().getConstantStruct(Builder.Elements, Builder.Packed);
+      llvm::ConstantStruct::get(Builder.Elements, Builder.Packed);
 
     assert(llvm::RoundUpToAlignment(Builder.NextFieldOffsetInBytes,
                                     Builder.getAlignment(Result)) == 
@@ -435,7 +435,7 @@ public:
       for (unsigned i = 0; i < Elts.size(); ++i)
         Types.push_back(Elts[i]->getType());
       const llvm::StructType *SType = VMContext.getStructType(Types, true);
-      return VMContext.getConstantStruct(SType, Elts);
+      return llvm::ConstantStruct::get(SType, Elts);
     }
 
     return VMContext.getConstantArray(AType, Elts);    
@@ -552,7 +552,7 @@ public:
       SType = VMContext.getStructType(Types, true);
     }
 
-    return VMContext.getConstantStruct(SType, Elts);
+    return llvm::ConstantStruct::get(SType, Elts);
   }
 
   llvm::Constant *EmitUnion(llvm::Constant *C, const llvm::Type *Ty) {
@@ -579,7 +579,7 @@ public:
     }
 
     llvm::StructType* STy = VMContext.getStructType(Types, false);
-    return VMContext.getConstantStruct(STy, Elts);
+    return llvm::ConstantStruct::get(STy, Elts);
   }
 
   llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
@@ -876,7 +876,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       Complex[1] = llvm::ConstantInt::get(VMContext, 
                                           Result.Val.getComplexIntImag());
       
-      return VMContext.getConstantStruct(Complex, 2);
+      return llvm::ConstantStruct::get(Complex, 2);
     }
     case APValue::Float:
       return llvm::ConstantFP::get(VMContext, Result.Val.getFloat());
@@ -888,7 +888,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       Complex[1] = llvm::ConstantFP::get(VMContext,
                                          Result.Val.getComplexFloatImag());
       
-      return VMContext.getConstantStruct(Complex, 2);
+      return llvm::ConstantStruct::get(Complex, 2);
     }
     case APValue::Vector: {
       llvm::SmallVector<llvm::Constant *, 4> Inits;

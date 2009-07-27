@@ -298,7 +298,7 @@ llvm::Constant *CGObjCGNU::MakeConstantString(const std::string &Str,
 }
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::StructType *Ty,
     std::vector<llvm::Constant*> &V, const std::string &Name) {
-  llvm::Constant *C = VMContext.getConstantStruct(Ty, V);
+  llvm::Constant *C = llvm::ConstantStruct::get(Ty, V);
   return new llvm::GlobalVariable(TheModule, Ty, false,
       llvm::GlobalValue::InternalLinkage, C, Name);
 }
@@ -514,7 +514,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
       Method = VMContext.getConstantExprBitCast(Method,
           VMContext.getPointerTypeUnqual(IMPTy));
       Elements.push_back(Method);
-      Methods.push_back(VMContext.getConstantStruct(ObjCMethodTy, Elements));
+      Methods.push_back(llvm::ConstantStruct::get(ObjCMethodTy, Elements));
     }
   }
 
@@ -568,7 +568,7 @@ llvm::Constant *CGObjCGNU::GenerateIvarList(
     Elements.push_back( VMContext.getConstantExprGetElementPtr(IvarTypes[i],
           Zeros, 2));
     Elements.push_back(IvarOffsets[i]);
-    Ivars.push_back(VMContext.getConstantStruct(ObjCIvarTy, Elements));
+    Ivars.push_back(llvm::ConstantStruct::get(ObjCIvarTy, Elements));
   }
 
   // Array of method structures
@@ -656,7 +656,7 @@ llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
           Zeros, 2)); 
     Elements.push_back(
           VMContext.getConstantExprGetElementPtr(MethodTypes[i], Zeros, 2));
-    Methods.push_back(VMContext.getConstantStruct(ObjCMethodDescTy, Elements));
+    Methods.push_back(llvm::ConstantStruct::get(ObjCMethodDescTy, Elements));
   }
   llvm::ArrayType *ObjCMethodArrayTy = VMContext.getArrayType(ObjCMethodDescTy,
       MethodNames.size());
@@ -1070,7 +1070,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     Elements.push_back(MakeConstantString(iter->first.first, ".objc_sel_name"));
     Elements.push_back(MakeConstantString(iter->first.second,
                                           ".objc_sel_types"));
-    Selectors.push_back(VMContext.getConstantStruct(SelStructTy, Elements));
+    Selectors.push_back(llvm::ConstantStruct::get(SelStructTy, Elements));
     Elements.clear();
   }
   for (llvm::StringMap<llvm::GlobalAlias*>::iterator
@@ -1079,12 +1079,12 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     Elements.push_back(
         MakeConstantString(iter->getKeyData(), ".objc_sel_name"));
     Elements.push_back(NULLPtr);
-    Selectors.push_back(VMContext.getConstantStruct(SelStructTy, Elements));
+    Selectors.push_back(llvm::ConstantStruct::get(SelStructTy, Elements));
     Elements.clear();
   }
   Elements.push_back(NULLPtr);
   Elements.push_back(NULLPtr);
-  Selectors.push_back(VMContext.getConstantStruct(SelStructTy, Elements));
+  Selectors.push_back(llvm::ConstantStruct::get(SelStructTy, Elements));
   Elements.clear();
   // Number of static selectors
   Elements.push_back(llvm::ConstantInt::get(LongTy, Selectors.size() ));

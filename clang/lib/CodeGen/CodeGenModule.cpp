@@ -213,7 +213,7 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
     S.push_back(
       llvm::ConstantInt::get(llvm::Type::Int32Ty, I->second, false));
     S.push_back(VMContext.getConstantExprBitCast(I->first, CtorPFTy));
-    Ctors.push_back(VMContext.getConstantStruct(CtorStructTy, S));
+    Ctors.push_back(llvm::ConstantStruct::get(CtorStructTy, S));
   }
 
   if (!Ctors.empty()) {
@@ -507,7 +507,7 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
     VMContext.getConstantExprBitCast(unitGV, SBP),
     llvm::ConstantInt::get(llvm::Type::Int32Ty, LineNo)
   };
-  return VMContext.getConstantStruct(Fields, 4, false);
+  return llvm::ConstantStruct::get(Fields, 4, false);
 }
 
 bool CodeGenModule::MayDeferGeneration(const ValueDecl *Global) {
@@ -1342,7 +1342,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
                         llvm::ConstantInt::get(Ty, StringLength), CFRD, STy);
   
   // The struct.
-  C = VMContext.getConstantStruct(STy, Fields);
+  C = llvm::ConstantStruct::get(STy, Fields);
   GV = new llvm::GlobalVariable(getModule(), C->getType(), true, 
                                 llvm::GlobalVariable::PrivateLinkage, C, 
                                 "_unnamed_cfstring_");
