@@ -188,5 +188,6 @@ int test27() {
   done: ;
 }
 
+// PR4624
 void test28() __attribute__((noreturn));
 void test28(x) { while (1) { } }
