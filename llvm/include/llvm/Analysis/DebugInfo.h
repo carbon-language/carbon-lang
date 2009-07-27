@@ -213,9 +213,15 @@ namespace llvm {
     // carry this is just plain insane.
     uint64_t getOffsetInBits() const    { return getUInt64Field(7); }
     unsigned getFlags() const           { return getUnsignedField(8); }
-    bool isPrivate() const              { return (getFlags() & FlagPrivate) != 0; }
-    bool isProtected() const            { return (getFlags() & FlagProtected) != 0; }
-    bool isForwardDecl() const          { return (getFlags() & FlagFwdDecl) != 0; }
+    bool isPrivate() const              { return 
+        (getFlags() & FlagPrivate) != 0; 
+    }
+    bool isProtected() const            { 
+      return (getFlags() & FlagProtected) != 0; 
+    }
+    bool isForwardDecl() const          {
+        return (getFlags() & FlagFwdDecl) != 0; 
+    }
 
     /// dump - print type.
     void dump() const;
@@ -552,8 +558,9 @@ namespace llvm {
   /// Find the debug info descriptor corresponding to this global variable.
   Value *findDbgGlobalDeclare(GlobalVariable *V);
 
-  bool getLocationInfo(const Value *V, std::string &DisplayName, std::string &Type, 
-                       unsigned &LineNo, std::string &File, std::string &Dir); 
+  bool getLocationInfo(const Value *V, std::string &DisplayName, 
+                       std::string &Type, unsigned &LineNo, std::string &File,
+                       std::string &Dir); 
 
   /// CollectDebugInfoAnchors - Collect debugging information anchors.
   void CollectDebugInfoAnchors(Module &M,
