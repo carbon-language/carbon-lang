@@ -17,12 +17,12 @@ namespace llvm {
   protected:
     explicit COFFTargetAsmInfo(const TargetMachine &TM);
   public:
-
-    virtual const char *
-    getSectionPrefixForUniqueGlobal(SectionKind kind) const;
-    
     virtual void getSectionFlagsAsString(SectionKind Kind,
                                          SmallVectorImpl<char> &Str) const;
+    
+    virtual const Section *
+    SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind) const;
+      
   };
 }
 

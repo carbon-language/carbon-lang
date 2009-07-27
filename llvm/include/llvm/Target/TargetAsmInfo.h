@@ -144,6 +144,9 @@ namespace llvm {
     bool ExplicitSection : 1;
   public:
     
+    // FIXME: REMOVE.
+    Kind getKind() const { return K; }
+    
     bool isWeak() const { return Weak; }
     bool hasExplicitSection() const { return ExplicitSection; }
     
@@ -668,15 +671,6 @@ namespace llvm {
     /// should be placed in.
     virtual const Section *getSectionForMergeableConstant(SectionKind Kind)const;
 
-    
-    /// getSectionPrefixForUniqueGlobal - Return a string that we should prepend
-    /// onto a global's name in order to get the unique section name for the
-    /// global.  This is important for globals that need to be merged across
-    /// translation units.
-    virtual const char *
-    getSectionPrefixForUniqueGlobal(SectionKind Kind) const {
-      return 0;
-    }
     
     /// getKindForNamedSection - If this target wants to be able to override
     /// section flags based on the name of the section specified for a global

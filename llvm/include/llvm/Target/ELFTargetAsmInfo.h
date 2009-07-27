@@ -33,8 +33,6 @@ namespace llvm {
     void getSectionFlagsAsString(SectionKind Kind,
                                  SmallVectorImpl<char> &Str) const;
     
-    const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) const;
-    
     virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
                                                   SectionKind Kind) const;
     

@@ -319,15 +319,6 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     return getOrCreateSection(GV->getSection().c_str(), false, GVKind);
   }
 
-  // If this global is linkonce/weak and the target handles this by emitting it
-  // into a 'uniqued' section name, create and return the section now.
-  if (Kind.isWeak()) {
-    if (const char *Prefix = getSectionPrefixForUniqueGlobal(Kind)) {
-      // FIXME: Use mangler interface (PR4584).
-      std::string Name = Prefix+GV->getNameStr();
-      return getOrCreateSection(Name.c_str(), false, GVKind);
-    }
-  }
   
   // Use default section depending on the 'type' of global
   return SelectSectionForGlobal(GV, Kind);
