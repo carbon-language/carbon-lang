@@ -112,7 +112,7 @@ struct N : M  {
 
 struct P : M  { // expected-error {{default constructor for 'struct M' is missing in initialization of base class}}
   P()  {  }
-  M m; // expected-error {{default constructor for 'struct M' is missing in initialization of mamber}}
+  M m; // expected-error {{default constructor for 'struct M' is missing in initialization of member}}
 };
 
 struct Q {
