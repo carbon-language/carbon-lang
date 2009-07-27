@@ -237,13 +237,13 @@
 #cmakedefine HAVE_MEMORY_H ${HAVE_MEMORY_H}
 
 /* Define to 1 if you have the `mkdtemp' function. */
-#undef HAVE_MKDTEMP
+#cmakedefine HAVE_MKDTEMP ${HAVE_MKDTEMP}
 
 /* Define to 1 if you have the `mkstemp' function. */
-#undef HAVE_MKSTEMP
+#cmakedefine HAVE_MKSTEMP ${HAVE_MKSTEMP}
 
 /* Define to 1 if you have the `mktemp' function. */
-#undef HAVE_MKTEMP
+#cmakedefine HAVE_MKTEMP ${HAVE_MKTEMP}
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
