@@ -299,7 +299,7 @@ namespace llvm {
                                                    const Loop *L,
                                                    ICmpInst::Predicate p);
 
-    /// ComputeBackedgeTakenCountExhaustively - If the trip is known to execute
+    /// ComputeBackedgeTakenCountExhaustively - If the loop is known to execute
     /// a constant number of times (the condition evolves only from constants),
     /// try to evaluate a few iterations of the loop until we get the exit
     /// condition gets a value of ExitWhen (true or false).  If we cannot
