@@ -233,7 +233,7 @@ ConstVal::= Types "[" ^ ConstVector ^ "]"
  | Types FPVAL ;
 
 ConstExpr::= CastOps "(" ^ ConstVal to Types ^ ")"
- | getelementptr "(" ^ ConstVal IndexList ^ ")"
+ | getelementptr OptInBounds "(" ^ ConstVal IndexList ^ ")"
  | select "(" ^ ConstVal ^ "," ConstVal ^ "," ConstVal ^ ")"
  | ArithmeticOps "(" ^ ConstVal ^ "," ConstVal ^ ")"
  | LogicalOps "(" ^ ConstVal ^ "," ConstVal ^ ")"
@@ -397,6 +397,7 @@ OptExact ::= - exact | _ ;
 OptNSW ::= - nsw | _ ;
 OptNUW ::= - nuw | _ ;
 OptNW  ::= OptNUW OptNSW ;
+OptInBounds  ::= - inbounds | _ ;
 
 MemoryInst ::= malloc Types OptCAlign
  | malloc Types ^ "," INTTYPE ValueRef OptCAlign
@@ -406,6 +407,6 @@ MemoryInst ::= malloc Types OptCAlign
  | OptVolatile load Types ValueRef OptCAlign
  | OptVolatile store ResolvedVal ^ "," Types ValueRef OptCAlign
  | getresult Types ValueRef ^ "," EUINT64VAL
- | getelementptr Types ValueRef IndexList
+ | getelementptr OptInBounds Types ValueRef IndexList
  | extractvalue Types ValueRef ^ ConstantIndexList 
  | insertvalue Types ValueRef ^ "," Types ValueRef ^ ConstantIndexList ;
