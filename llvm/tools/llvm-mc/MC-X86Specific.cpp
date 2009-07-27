@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AsmParser.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/SourceMgr.h"
 using namespace llvm;

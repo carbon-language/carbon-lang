@@ -14,6 +14,7 @@
 #include "AsmParser.h"
 
 #include "AsmExpr.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
@@ -23,12 +24,12 @@
 #include "llvm/Target/TargetAsmParser.h"
 using namespace llvm;
 
-void AsmParser::Warning(SMLoc L, const char *Msg) {
-  Lexer.PrintMessage(L, Msg, "warning");
+void AsmParser::Warning(SMLoc L, const Twine &Msg) {
+  Lexer.PrintMessage(L, Msg.str(), "warning");
 }
 
-bool AsmParser::Error(SMLoc L, const char *Msg) {
-  Lexer.PrintMessage(L, Msg, "error");
+bool AsmParser::Error(SMLoc L, const Twine &Msg) {
+  Lexer.PrintMessage(L, Msg.str(), "error");
   return true;
 }
 
@@ -1117,6 +1118,9 @@ bool AsmParser::ParseDirectiveDarwinSubsectionsViaSymbols() {
 /// ParseDirectiveAbort
 ///  ::= .abort [ "abort_string" ]
 bool AsmParser::ParseDirectiveAbort() {
+  // FIXME: Use loc from directive.
+  SMLoc Loc = Lexer.getLoc();
+
   StringRef Str = "";
   if (Lexer.isNot(asmtok::EndOfStatement)) {
     if (Lexer.isNot(asmtok::String))
@@ -1133,7 +1137,10 @@ bool AsmParser::ParseDirectiveAbort() {
   Lexer.Lex();
 
   // FIXME: Handle here.
-  Out.AbortAssembly(Str.str().c_str());
+  if (Str.empty())
+    Error(Loc, ".abort detected. Assembly stopping.");
+  else
+    Error(Loc, ".abort '" + Str + "' detected. Assembly stopping.");
 
   return false;
 }

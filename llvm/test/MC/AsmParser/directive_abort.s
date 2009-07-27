@@ -1,8 +1,6 @@
-# RUN: llvm-mc -triple i386-unknown-unknown %s | FileCheck %s
+# RUN: llvm-mc -triple i386-unknown-unknown %s 2> %t
+# RUN: FileCheck -input-file %t %s
 
-# CHECK: TEST0:
 # CHECK: .abort "please stop assembing"
-# CHECK: .abort
 TEST0:  
 	.abort       "please stop assembing"
-.abort

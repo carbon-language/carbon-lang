@@ -25,6 +25,7 @@ class MCInst;
 class MCStreamer;
 class MCValue;
 class TargetAsmParser;
+class Twine;
 
 class AsmParser : MCAsmParser {
 public:
@@ -52,8 +53,8 @@ public:
 private:
   bool ParseStatement();
 
-  void Warning(SMLoc L, const char *Msg);
-  bool Error(SMLoc L, const char *Msg);
+  void Warning(SMLoc L, const Twine &Msg);
+  bool Error(SMLoc L, const Twine &Msg);
   bool TokError(const char *Msg);
   
   void EatToEndOfStatement();

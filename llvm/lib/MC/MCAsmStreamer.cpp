@@ -55,8 +55,6 @@ namespace {
     virtual void EmitZerofill(MCSection *Section, MCSymbol *Symbol = NULL,
                               unsigned Size = 0, unsigned Pow2Alignment = 0);
 
-    virtual void AbortAssembly(const char *AbortReason = NULL);
-
     virtual void EmitBytes(const StringRef &Data);
 
     virtual void EmitValue(const MCValue &Value, unsigned Size);
@@ -130,14 +128,6 @@ void MCAsmStreamer::EmitAssemblerFlag(AssemblerFlag Flag) {
   case SubsectionsViaSymbols: OS << ".subsections_via_symbols"; break;
   }
   OS << '\n';
-}
-
-void MCAsmStreamer::AbortAssembly(const char *AbortReason) {
-  OS << ".abort";
-  if (AbortReason != NULL)
-    OS << ' ' << AbortReason;
-  OS << '\n';
-  
 }
 
 void MCAsmStreamer::EmitAssignment(MCSymbol *Symbol, const MCValue &Value,
