@@ -335,6 +335,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     }
 
     Proto += ")";
+    if (D->hasAttr<NoReturnAttr>())
+      Proto += " __attribute((noreturn))";
     if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D)) {
       if (CDecl->getNumBaseOrMemberInitializers() > 0) {
         Proto += " : ";

@@ -196,3 +196,9 @@ void exit(int);
 int test29() {
   exit(1);
 }
+
+#include <setjmp.h>
+jmp_buf test30_j;
+int test30() {
+  longjmp(test30_j, 1);
+}
