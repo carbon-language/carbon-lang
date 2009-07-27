@@ -242,7 +242,6 @@ Constant* ConstantInt::get(const Type* Ty, const APInt& V) {
 //                                ConstantFP
 //===----------------------------------------------------------------------===//
 
-#ifndef NDEBUG 
 static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
   if (Ty == Type::FloatTy)
     return &APFloat::IEEEsingle;
@@ -256,7 +255,6 @@ static const fltSemantics *TypeToFloatSemantics(const Type *Ty) {
   assert(Ty == Type::PPC_FP128Ty && "Unknown FP format");
   return &APFloat::PPCDoubleDouble;
 }
-#endif
 
 /// get() - This returns a constant fp for the specified value in the
 /// specified type.  This should only be used for simple constant values like
