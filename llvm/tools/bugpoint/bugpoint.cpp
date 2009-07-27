@@ -113,7 +113,7 @@ int main(int argc, char **argv) {
   }
       
   if (StandardLinkOpts)
-    createStandardLTOPasses(&PM, /*Internalize=*/false, 
+    createStandardLTOPasses(&PM, /*Internalize=*/true,
                             /*RunInliner=*/true,
                             /*VerifyEach=*/false);
 
