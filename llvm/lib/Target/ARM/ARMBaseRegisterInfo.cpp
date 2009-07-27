@@ -1370,7 +1370,7 @@ void ARMBaseRegisterInfo::
 emitEpilogue(MachineFunction &MF,
              MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  assert(MBBI->getOpcode() == (int)getOpcode(ARMII::BX_RET) &&
+  assert(MBBI->getDesc().isReturn() &&
          "Can only insert epilog into returning blocks");
   DebugLoc dl = MBBI->getDebugLoc();
   MachineFrameInfo *MFI = MF.getFrameInfo();

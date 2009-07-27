@@ -165,9 +165,6 @@ namespace ARMII {
     ADDri,
     ADDrs,
     ADDrr,
-    B,
-    Bcc,
-    BX_RET,
     LDRri,
     MOVr,
     STRri,
@@ -193,9 +190,11 @@ const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB) {
 }
 
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {
+  const ARMSubtarget &STI;
+
 protected:
   // Can be only subclassed.
-  explicit ARMBaseInstrInfo(const ARMSubtarget &STI);
+  explicit ARMBaseInstrInfo(const ARMSubtarget &sti);
 public:
   // Return the non-pre/post incrementing version of 'Opc'. Return 0
   // if there is not such an opcode.
@@ -292,6 +291,17 @@ public:
                                               MachineInstr* MI,
                                               const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const;
+
+private:
+  bool isUncondBranchOpcode(int Opc) const {
+    return Opc == ARM::B || Opc == ARM::tB || Opc == ARM::t2B;
+  }
+
+  bool isCondBranchOpcode(int Opc) const {
+    return Opc == ARM::Bcc || Opc == ARM::tBcc || Opc == ARM::t2Bcc;
+  }
+
+  int getMatchingCondBranchOpcode(int Opc) const;
 };
 }
 

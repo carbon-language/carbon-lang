@@ -30,8 +30,9 @@ static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
-ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget &STI)
-  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)) {
+ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget &sti)
+  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
+    STI(sti) {
 }
 
 MachineInstr *
@@ -206,11 +207,11 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // If there is only one terminator instruction, process it.
   unsigned LastOpc = LastInst->getOpcode();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
-    if (LastOpc == getOpcode(ARMII::B)) {
+    if (isUncondBranchOpcode(LastOpc)) {
       TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
-    if (LastOpc == getOpcode(ARMII::Bcc)) {
+    if (isCondBranchOpcode(LastOpc)) {
       // Block ends with fall-through condbranch.
       TBB = LastInst->getOperand(0).getMBB();
       Cond.push_back(LastInst->getOperand(1));
@@ -227,10 +228,9 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   if (SecondLastInst && I != MBB.begin() && isUnpredicatedTerminator(--I))
     return true;
 
-  // If the block ends with ARMII::B and a ARMII::Bcc, handle it.
+  // If the block ends with a B and a Bcc, handle it.
   unsigned SecondLastOpc = SecondLastInst->getOpcode();
-  if ((SecondLastOpc == getOpcode(ARMII::Bcc)) && 
-      (LastOpc == getOpcode(ARMII::B))) {
+  if (isCondBranchOpcode(SecondLastOpc) && isUncondBranchOpcode(LastOpc)) {
     TBB =  SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(SecondLastInst->getOperand(1));
     Cond.push_back(SecondLastInst->getOperand(2));
@@ -240,8 +240,7 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
 
   // If the block ends with two unconditional branches, handle it.  The second
   // one is not executed, so remove it.
-  if ((SecondLastOpc == getOpcode(ARMII::B)) && 
-      (LastOpc == getOpcode(ARMII::B))) {
+  if (isUncondBranchOpcode(SecondLastOpc) && isUncondBranchOpcode(LastOpc)) {
     TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
     if (AllowModify)
@@ -257,7 +256,7 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
        SecondLastOpc == ARM::BR_JTadd ||
        SecondLastOpc == ARM::tBR_JTr ||
        SecondLastOpc == ARM::t2BR_JT) &&
-      (LastOpc == getOpcode(ARMII::B))) {
+      isUncondBranchOpcode(LastOpc)) {
     I = LastInst;
     if (AllowModify)
       I->eraseFromParent();
@@ -270,13 +269,11 @@ ARMBaseInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
 
 
 unsigned ARMBaseInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
-  int BOpc   = getOpcode(ARMII::B);
-  int BccOpc = getOpcode(ARMII::Bcc);
-
   MachineBasicBlock::iterator I = MBB.end();
   if (I == MBB.begin()) return 0;
   --I;
-  if (I->getOpcode() != BOpc && I->getOpcode() != BccOpc)
+  if (!isUncondBranchOpcode(I->getOpcode()) &&
+      !isCondBranchOpcode(I->getOpcode()))
     return 0;
 
   // Remove the branch.
@@ -286,7 +283,7 @@ unsigned ARMBaseInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
   if (I == MBB.begin()) return 1;
   --I;
-  if (I->getOpcode() != BccOpc)
+  if (!isCondBranchOpcode(I->getOpcode()))
     return 1;
 
   // Remove the branch.
@@ -300,8 +297,10 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                              const SmallVectorImpl<MachineOperand> &Cond) const {
   // FIXME this should probably have a DebugLoc argument
   DebugLoc dl = DebugLoc::getUnknownLoc();
-  int BOpc   = getOpcode(ARMII::B);
-  int BccOpc = getOpcode(ARMII::Bcc);
+  int BOpc   = !STI.isThumb()
+    ? ARM::B : (STI.isThumb2() ? ARM::t2B : ARM::tB);
+  int BccOpc = !STI.isThumb()
+    ? ARM::Bcc : (STI.isThumb2() ? ARM::t2Bcc : ARM::tBcc);
 
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
@@ -335,8 +334,8 @@ bool ARMBaseInstrInfo::
 PredicateInstruction(MachineInstr *MI,
                      const SmallVectorImpl<MachineOperand> &Pred) const {
   unsigned Opc = MI->getOpcode();
-  if (Opc == getOpcode(ARMII::B)) {
-    MI->setDesc(get(getOpcode(ARMII::Bcc)));
+  if (isUncondBranchOpcode(Opc)) {
+    MI->setDesc(get(getMatchingCondBranchOpcode(Opc)));
     MI->addOperand(MachineOperand::CreateImm(Pred[0].getImm()));
     MI->addOperand(MachineOperand::CreateReg(Pred[1].getReg(), false));
     return true;
@@ -792,3 +791,16 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
 
   return false;
 }
+
+int ARMBaseInstrInfo::getMatchingCondBranchOpcode(int Opc) const {
+  if (Opc == ARM::B)
+    return ARM::Bcc;
+  else if (Opc == ARM::tB)
+    return ARM::tBcc;
+  else if (Opc == ARM::t2B)
+      return ARM::t2Bcc;
+
+  llvm_unreachable("Unknown unconditional branch opcode!");
+  return 0;
+}
+
