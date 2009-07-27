@@ -122,8 +122,6 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   DwarfEHFrameSection = ".eh_frame";
   DwarfExceptionSection = ".gcc_except_table";
   AsmTransCBE = 0;
-  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
 }
 
 TargetAsmInfo::~TargetAsmInfo() {
