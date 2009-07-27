@@ -114,6 +114,12 @@ public:
   /// getName() - Return a constant reference to the value's name. This is cheap
   /// and guaranteed to return the same reference as long as the value is not
   /// modified.
+  ///
+  /// This is currently guaranteed to return a StringRef for which data() points
+  /// to a valid null terminated string. This usage is deprecated, however, and
+  /// clients should not rely on it. If such behavior is needed, clients should
+  /// use getNameStr() or switch to an interface that does not depend on null
+  /// termination.
   StringRef getName() const;
 
   /// getNameStr() - Return the name of the specified value, *constructing a
