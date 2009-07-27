@@ -76,12 +76,11 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, const Module &M,
 
 const TargetAsmInfo *ARMBaseTargetMachine::createTargetAsmInfo() const {
   switch (Subtarget.TargetType) {
-   case ARMSubtarget::isDarwin:
+  default: llvm_unreachable("Unknown ARM subtarget kind");
+  case ARMSubtarget::isDarwin:
     return new ARMDarwinTargetAsmInfo(*this);
-   case ARMSubtarget::isELF:
+  case ARMSubtarget::isELF:
     return new ARMELFTargetAsmInfo(*this);
-   default:
-    return new ARMGenericTargetAsmInfo(*this);
   }
 }
 

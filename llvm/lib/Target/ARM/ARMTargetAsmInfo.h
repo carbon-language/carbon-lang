@@ -46,8 +46,6 @@ namespace llvm {
     unsigned countString(const char *p) const;
   };
 
-  typedef ARMTargetAsmInfo<TargetAsmInfo> ARMGenericTargetAsmInfo;
-
   EXTERN_TEMPLATE_INSTANTIATION(class ARMTargetAsmInfo<TargetAsmInfo>);
 
   struct ARMDarwinTargetAsmInfo : public ARMTargetAsmInfo<DarwinTargetAsmInfo> {
