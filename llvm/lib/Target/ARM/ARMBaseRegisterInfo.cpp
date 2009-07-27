@@ -1367,8 +1367,10 @@ static bool isCSRestore(MachineInstr *MI,
 }
 
 void ARMBaseRegisterInfo::
-emitEpilogue(MachineFunction &MF,
-             MachineBasicBlock &MBB) const {
+emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const {
+  assert(!STI.isThumb1Only &&
+         "This emitEpilogue should not be executed for Thumb1!");
+
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   assert(MBBI->getDesc().isReturn() &&
          "Can only insert epilog into returning blocks");
