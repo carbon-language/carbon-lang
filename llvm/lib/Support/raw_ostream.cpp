@@ -45,6 +45,11 @@
 using namespace llvm;
 
 raw_ostream::~raw_ostream() {
+  // raw_ostream's subclasses should take care to flush the buffer
+  // in their destructors.
+  assert(OutBufCur == OutBufStart &&
+         "raw_ostream destructor called with non-empty buffer!");
+
   delete [] OutBufStart;
 
   // If there are any pending errors, report them now. Clients wishing
