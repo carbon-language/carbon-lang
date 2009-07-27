@@ -612,7 +612,7 @@ ARMBaseInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 
   if (DestRC == ARM::GPRRegisterClass)
-    AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(getOpcode(ARMII::MOVr)),
+    AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::MOVr),
                                         DestReg).addReg(SrcReg)));
   else if (DestRC == ARM::SPRRegisterClass)
     AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::FCPYS), DestReg)

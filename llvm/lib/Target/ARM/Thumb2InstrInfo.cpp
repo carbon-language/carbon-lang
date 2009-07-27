@@ -84,14 +84,21 @@ Thumb2InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   DebugLoc DL = DebugLoc::getUnknownLoc();
   if (I != MBB.end()) DL = I->getDebugLoc();
 
-  if ((DestRC == ARM::GPRRegisterClass &&
-       SrcRC == ARM::tGPRRegisterClass) ||
-      (DestRC == ARM::tGPRRegisterClass &&
-       SrcRC == ARM::GPRRegisterClass)) {
+  if (DestRC == ARM::GPRRegisterClass &&
+      SrcRC == ARM::GPRRegisterClass) {
     AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::t2MOVr),
                                         DestReg).addReg(SrcReg)));
     return true;
+  } else if (DestRC == ARM::GPRRegisterClass &&
+      SrcRC == ARM::tGPRRegisterClass) {
+    BuildMI(MBB, I, DL, get(ARM::tMOVtgpr2gpr), DestReg).addReg(SrcReg);
+    return true;
+  } else if (DestRC == ARM::tGPRRegisterClass &&
+             SrcRC == ARM::GPRRegisterClass) {
+    BuildMI(MBB, I, DL, get(ARM::tMOVgpr2tgpr), DestReg).addReg(SrcReg);
+    return true;
   }
 
+  // Handle SPR, DPR, and QPR copies.
   return ARMBaseInstrInfo::copyRegToReg(MBB, I, DestReg, SrcReg, DestRC, SrcRC);
 }
