@@ -125,7 +125,7 @@ namespace llvm {
       return Sym;
     }
 
-    // getSectionSym - Returns a elf symbol to represent an elf section
+    // getFileSym - Returns a elf symbol to represent the module identifier
     static ELFSym *getFileSym() {
       ELFSym *Sym = new ELFSym();
       Sym->setBind(STB_LOCAL);
