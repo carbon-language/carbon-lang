@@ -506,9 +506,10 @@ public:
   }
 
   llvm::Constant *EmitStructInitialization(InitListExpr *ILE) {
-    // FIXME: Use the returned struct when the builder works well enough.
-    ConstStructBuilder::BuildStruct(CGM, CGF, ILE);
-    
+    return ConstStructBuilder::BuildStruct(CGM, CGF, ILE);
+
+    // FIXME: Remove the old struct builder once we're sure that the new one
+    // works well enough!
     const llvm::StructType *SType =
         cast<llvm::StructType>(ConvertType(ILE->getType()));
     RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();

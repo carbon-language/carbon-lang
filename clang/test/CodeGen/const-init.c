@@ -59,7 +59,7 @@ long g11() {
 static char g12_tmp;
 long g12 = (long) &g12_tmp;
 
-// RUN: grep '@g13 = global \[1 x .struct.g13_s0\] \[.struct.g13_s0 <{ i32 ptrtoint (i8\* @g12_tmp to i32) }>\]' %t &&
+// RUN: grep '@g13 = global %. <{ %. { i32 ptrtoint (i8\* @g12_tmp to i32) } }>' %t &&
 struct g13_s0 {
    long a;
 };
@@ -85,7 +85,7 @@ void g18(void) {
   static int *p[] = { &g19 };
 }
 
-// RUN: grep '@g20.l0 = internal global .struct.g20_s1 <{ .struct.g20_s0\* null, .struct.g20_s0\*\* getelementptr (.struct.g20_s1\* @g20.l0, i32 0, i32 0) }>'  %t &&
+// RUN: grep '@g20.l0 = internal global %. { .struct.g20_s0\* null, .struct.g20_s0\*\* getelementptr (.struct.g20_s1\* bitcast (%.\* @g20.l0 to .struct.g20_s1\*), i32 0, i32 0) }' %t &&
 
 struct g20_s0;
 struct g20_s1 {
