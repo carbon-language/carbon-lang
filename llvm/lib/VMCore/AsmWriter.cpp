@@ -585,7 +585,7 @@ SlotTracker::SlotTracker(const Module *M)
 // function provided to be added to the slot table.
 SlotTracker::SlotTracker(const Function *F)
   : TheModule(F ? F->getParent() : 0), TheFunction(F), FunctionProcessed(false),
-    TheMDNode(0), mNext(0), fNext(0) {
+    TheMDNode(0), mNext(0), fNext(0), mdnNext(0) {
 }
 
 // Constructor to handle single MDNode.
