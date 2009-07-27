@@ -19,10 +19,8 @@
 
 namespace llvm {
   class GlobalValue;
-  class GlobalVariable;
-  class Type;
 
-  struct ELFTargetAsmInfo: public TargetAsmInfo {
+  struct ELFTargetAsmInfo : public TargetAsmInfo {
     ELFTargetAsmInfo(const TargetMachine &TM);
 
     /// getSectionForMergeableConstant - Given a mergeable constant with the
@@ -49,9 +47,6 @@ namespace llvm {
     const Section *MergeableConst4Section;
     const Section *MergeableConst8Section;
     const Section *MergeableConst16Section;
-
-  private:
-    const Section *MergeableStringSection(const GlobalVariable *GV) const;
   };
 }
 

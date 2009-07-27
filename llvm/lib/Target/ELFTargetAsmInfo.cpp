@@ -58,8 +58,30 @@ const Section*
 ELFTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
                                          SectionKind Kind) const {
   if (Kind.isText()) return TextSection;
-  if (Kind.isMergeableCString())
-    return MergeableStringSection(cast<GlobalVariable>(GV));
+  if (Kind.isMergeableCString()) {
+    const TargetData *TD = TM.getTargetData();
+    Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+    const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
+    
+    unsigned Size = TD->getTypeAllocSize(Ty);
+    if (Size <= 16) {
+      assert(getCStringSection() && "Should have string section prefix");
+      
+      // We also need alignment here.
+      // FIXME: this is getting the alignment of the character, not the
+      // alignment of the string!!
+      unsigned Align = TD->getPrefTypeAlignment(Ty);
+      if (Align < Size)
+        Align = Size;
+      
+      std::string Name = getCStringSection() + utostr(Size) + '.' +
+                         utostr(Align);
+      return getOrCreateSection(Name.c_str(), false,
+                                SectionKind::MergeableCString);
+    }
+    
+    return getReadOnlySection();
+  }
   
   if (Kind.isMergeableConst()) {
     if (Kind.isMergeableConst4())
@@ -144,32 +166,6 @@ ELFTargetAsmInfo::getSectionPrefixForUniqueGlobal(SectionKind Kind) const{
   return ".gnu.linkonce.d.rel.ro.";
 }
 
-
-
-const Section*
-ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
-  const TargetData *TD = TM.getTargetData();
-  Constant *C = cast<GlobalVariable>(GV)->getInitializer();
-  const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
-
-  unsigned Size = TD->getTypeAllocSize(Ty);
-  if (Size <= 16) {
-    assert(getCStringSection() && "Should have string section prefix");
-
-    // We also need alignment here.
-    // FIXME: this is getting the alignment of the character, not the alignment
-    // of the string!!
-    unsigned Align = TD->getPrefTypeAlignment(Ty);
-    if (Align < Size)
-      Align = Size;
-
-    std::string Name = getCStringSection() + utostr(Size) + '.' + utostr(Align);
-    return getOrCreateSection(Name.c_str(), false,
-                              SectionKind::MergeableCString);
-  }
-
-  return getReadOnlySection();
-}
 
 void ELFTargetAsmInfo::getSectionFlagsAsString(SectionKind Kind,
                                              SmallVectorImpl<char> &Str) const {
