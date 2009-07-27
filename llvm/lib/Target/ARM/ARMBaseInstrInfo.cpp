@@ -39,6 +39,8 @@ MachineInstr *
 ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                                         MachineBasicBlock::iterator &MBBI,
                                         LiveVariables *LV) const {
+  // FIXME: Thumb2 support.
+
   if (!EnableARM3Addr)
     return NULL;
 
@@ -88,22 +90,19 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         // add more than 1 instruction. Abandon!
         return NULL;
       UpdateMI = BuildMI(MF, MI->getDebugLoc(),
-                         get(isSub ? getOpcode(ARMII::SUBri) :
-                             getOpcode(ARMII::ADDri)), WBReg)
+                         get(isSub ? ARM::SUBri : ARM::ADDri), WBReg)
         .addReg(BaseReg).addImm(Amt)
         .addImm(Pred).addReg(0).addReg(0);
     } else if (Amt != 0) {
       ARM_AM::ShiftOpc ShOpc = ARM_AM::getAM2ShiftOpc(OffImm);
       unsigned SOOpc = ARM_AM::getSORegOpc(ShOpc, Amt);
       UpdateMI = BuildMI(MF, MI->getDebugLoc(),
-                         get(isSub ? getOpcode(ARMII::SUBrs) :
-                             getOpcode(ARMII::ADDrs)), WBReg)
+                         get(isSub ? ARM::SUBrs : ARM::ADDrs), WBReg)
         .addReg(BaseReg).addReg(OffReg).addReg(0).addImm(SOOpc)
         .addImm(Pred).addReg(0).addReg(0);
     } else
       UpdateMI = BuildMI(MF, MI->getDebugLoc(),
-                         get(isSub ? getOpcode(ARMII::SUBrr) :
-                             getOpcode(ARMII::ADDrr)), WBReg)
+                         get(isSub ? ARM::SUBrr : ARM::ADDrr), WBReg)
         .addReg(BaseReg).addReg(OffReg)
         .addImm(Pred).addReg(0).addReg(0);
     break;
@@ -114,14 +113,12 @@ ARMBaseInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (OffReg == 0)
       // Immediate is 8-bits. It's guaranteed to fit in a so_imm operand.
       UpdateMI = BuildMI(MF, MI->getDebugLoc(),
-                         get(isSub ? getOpcode(ARMII::SUBri) : 
-                             getOpcode(ARMII::ADDri)), WBReg)
+                         get(isSub ? ARM::SUBri : ARM::ADDri), WBReg)
         .addReg(BaseReg).addImm(Amt)
         .addImm(Pred).addReg(0).addReg(0);
     else
       UpdateMI = BuildMI(MF, MI->getDebugLoc(),
-                         get(isSub ? getOpcode(ARMII::SUBrr) :
-                             getOpcode(ARMII::ADDrr)), WBReg)
+                         get(isSub ? ARM::SUBrr : ARM::ADDrr), WBReg)
         .addReg(BaseReg).addReg(OffReg)
         .addImm(Pred).addReg(0).addReg(0);
     break;
