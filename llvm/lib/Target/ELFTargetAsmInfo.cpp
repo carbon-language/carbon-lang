@@ -26,6 +26,9 @@ using namespace llvm;
 
 ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
   : TargetAsmInfo(TM) {
+    
+  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
+  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
   ReadOnlySection =
     getOrCreateSection("\t.rodata", false, SectionKind::ReadOnly);
   TLSDataSection =

@@ -27,6 +27,8 @@ using namespace llvm;
 
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) 
   : TargetAsmInfo(TM) {
+  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
+  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
 
   CStringSection_ = getOrCreateSection("\t.cstring", true,
                                        SectionKind::MergeableCString);
@@ -50,7 +52,6 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
                                         SectionKind::ReadOnlyWithRel);
   DataCoalSection = getOrCreateSection("\t__DATA,__datacoal_nt,coalesced",
                                        false, SectionKind::DataRel);
-    
   
   // Common settings for all Darwin targets.
   // Syntax:
