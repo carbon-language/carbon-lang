@@ -20,7 +20,7 @@ namespace llvm {
 class MemoryObject {
 public:
   /// Destructor      - Override as necessary.
-  ~MemoryObject() {
+  virtual ~MemoryObject() {
   }
   
   /// getBase         - Returns the lowest valid address in the region.
