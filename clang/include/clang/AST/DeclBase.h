@@ -453,7 +453,6 @@ public:
 ///   TagDecl
 ///   ObjCMethodDecl
 ///   ObjCContainerDecl
-///   ObjCImpl
 ///   LinkageSpecDecl
 ///   BlockDecl
 ///

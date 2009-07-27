@@ -587,28 +587,6 @@ FindPropertyImplDecl(IdentifierInfo *Id) const {
   return 0;
 }
 
-// getMethod - This method returns an instance/class method by looking in
-// the class implementation. Unlike interfaces, we don't look outside the
-// implementation.
-ObjCMethodDecl *ObjCImplDecl::getMethod(Selector Sel, bool isInstance) const {
-  // Since instance & class methods can have the same name, the loop below
-  // ensures we get the correct method.
-  //
-  // @interface Whatever
-  // - (int) class_method;
-  // + (float) class_method;
-  // @end
-  //
-  lookup_const_iterator Meth, MethEnd;
-  for (llvm::tie(Meth, MethEnd) = lookup(Sel);
-       Meth != MethEnd; ++Meth) {
-    ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(*Meth);
-    if (MD && MD->isInstanceMethod() == isInstance)
-      return MD;
-  }
-  return 0;
-}
-
 //===----------------------------------------------------------------------===//
 // ObjCImplementationDecl
 //===----------------------------------------------------------------------===//

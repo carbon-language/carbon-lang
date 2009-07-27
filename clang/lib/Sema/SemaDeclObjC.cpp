@@ -1555,12 +1555,12 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclPtrTy classDecl,
     CDecl->setAtEndLoc(AtEndLoc);
   }
   if (ObjCImplementationDecl *IC=dyn_cast<ObjCImplementationDecl>(ClassDecl)) {
-    IC->setLocEnd(AtEndLoc);
+    IC->setAtEndLoc(AtEndLoc);
     if (ObjCInterfaceDecl* IDecl = IC->getClassInterface())
       ImplMethodsVsClassMethods(IC, IDecl);
   } else if (ObjCCategoryImplDecl* CatImplClass = 
                                    dyn_cast<ObjCCategoryImplDecl>(ClassDecl)) {
-    CatImplClass->setLocEnd(AtEndLoc);
+    CatImplClass->setAtEndLoc(AtEndLoc);
     
     // Find category interface decl and then check that all methods declared
     // in this interface are implemented in the category @implementation.

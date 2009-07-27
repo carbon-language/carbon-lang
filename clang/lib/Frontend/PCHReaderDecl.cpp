@@ -304,10 +304,9 @@ void PCHDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
 }
 
 void PCHDeclReader::VisitObjCImplDecl(ObjCImplDecl *D) {
-  VisitNamedDecl(D);
+  VisitObjCContainerDecl(D);
   D->setClassInterface(
               cast_or_null<ObjCInterfaceDecl>(Reader.GetDecl(Record[Idx++])));
-  D->setLocEnd(SourceLocation::getFromRawEncoding(Record[Idx++]));
 }
 
 void PCHDeclReader::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {

@@ -280,9 +280,8 @@ struct ObjCMethodList {
 };
 
 /// ObjCContainerDecl - Represents a container for method declarations.
-/// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl, and
-/// ObjCProtocolDecl. 
-/// FIXME: Use for ObjC implementation decls.
+/// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl,
+/// ObjCProtocolDecl, and ObjCImplDecl. 
 ///
 class ObjCContainerDecl : public NamedDecl, public DeclContext {
   SourceLocation AtEndLoc; // marks the end of the method container.
@@ -839,19 +838,16 @@ public:
   static bool classof(const ObjCCategoryDecl *D) { return true; }
 };
 
-class ObjCImplDecl : public NamedDecl, public DeclContext {
+class ObjCImplDecl : public ObjCContainerDecl {
   /// Class interface for this category implementation
   ObjCInterfaceDecl *ClassInterface;
-  
-  SourceLocation EndLoc;  
   
 protected:
   ObjCImplDecl(Kind DK, DeclContext *DC, SourceLocation L,
                ObjCInterfaceDecl *classInterface)
-    : NamedDecl(DK, DC, L, 
-                classInterface? classInterface->getDeclName() 
-                              : DeclarationName()), 
-      DeclContext(DK), ClassInterface(classInterface) {}
+    : ObjCContainerDecl(DK, DC, L, 
+                        classInterface? classInterface->getIdentifier() : 0), 
+      ClassInterface(classInterface) {}
   
 public:
   virtual ~ObjCImplDecl() {}
@@ -871,15 +867,6 @@ public:
     addDecl(method); 
   }
   
-  // Get the local instance/class method declared in this interface.
-  ObjCMethodDecl *getMethod(Selector Sel, bool isInstance) const;
-  ObjCMethodDecl *getInstanceMethod(Selector Sel) const {
-    return getMethod(Sel, true/*isInstance*/);
-  }
-  ObjCMethodDecl *getClassMethod(Selector Sel) const {
-    return getMethod(Sel, false/*isInstance*/);
-  }
-  
   void addPropertyImplementation(ObjCPropertyImplDecl *property);
   
   ObjCPropertyImplDecl *FindPropertyImplDecl(IdentifierInfo *propertyId) const;
@@ -894,44 +881,10 @@ public:
     return propimpl_iterator(decls_end());
   }
 
-  typedef filtered_decl_iterator<ObjCMethodDecl, 
-                                 &ObjCMethodDecl::isInstanceMethod> 
-    instmeth_iterator;
-  instmeth_iterator instmeth_begin() const {
-    return instmeth_iterator(decls_begin());
-  }
-  instmeth_iterator instmeth_end() const {
-    return instmeth_iterator(decls_end());
-  }
-
-  typedef filtered_decl_iterator<ObjCMethodDecl, 
-                                 &ObjCMethodDecl::isClassMethod> 
-    classmeth_iterator;
-  classmeth_iterator classmeth_begin() const {
-    return classmeth_iterator(decls_begin());
-  }
-  classmeth_iterator classmeth_end() const {
-    return classmeth_iterator(decls_end());
-  }
-
-  // Location information, modeled after the Stmt API. 
-  virtual SourceRange getSourceRange() const { 
-    return SourceRange(getLocation(), EndLoc); 
-  }
-  SourceLocation getLocStart() const { return getLocation(); }
-  SourceLocation getLocEnd() const { return EndLoc; }
-  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
-
   static bool classof(const Decl *D) {
     return D->getKind() >= ObjCImplFirst && D->getKind() <= ObjCImplLast;
   }
   static bool classof(const ObjCImplDecl *D) { return true; }
-  static DeclContext *castToDeclContext(const ObjCImplDecl *D) {
-    return static_cast<DeclContext *>(const_cast<ObjCImplDecl*>(D));
-  }
-  static ObjCImplDecl *castFromDeclContext(const DeclContext *DC) {
-    return static_cast<ObjCImplDecl *>(const_cast<DeclContext*>(DC));
-  }
 };
   
 /// ObjCCategoryImplDecl - An object of this class encapsulates a category 
