@@ -199,6 +199,10 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   const ASTRecordLayout &Layout = Types.getContext().getASTRecordLayout(D);
   
   unsigned FieldNo = 0;
+  // FIXME. This will probably change when virtual bases are supported.
+  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(D))
+    FieldNo += CXXRD->getNumBases();
+
   for (RecordDecl::field_iterator Field = D->field_begin(), 
        FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
     if (!LayoutField(*Field, Layout.getFieldOffset(FieldNo))) {

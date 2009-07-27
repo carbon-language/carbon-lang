@@ -723,6 +723,10 @@ void X86_64ABIInfo::classify(QualType Ty,
     // Reset Lo class, this will be recomputed.
     Current = NoClass;
     unsigned idx = 0;
+    // FIXME. This will probably change when virtual bases are supported.
+    if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
+      idx += CXXRD->getNumBases();
+
     for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
            i != e; ++i, ++idx) {
       uint64_t Offset = OffsetBase + Layout.getFieldOffset(idx);
