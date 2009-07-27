@@ -130,8 +130,12 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
       return false;
     
     if (FieldOffset > NextFieldOffsetInBytes * 8) {
-      // FIXME: Add padding.
-      return false;
+      // We need to add padding.
+      uint64_t NumBytes = 
+        llvm::RoundUpToAlignment(FieldOffset - 
+                                 NextFieldOffsetInBytes * 8, 8) / 8;
+      
+      AppendPadding(NumBytes);
     }
 
     uint64_t FieldSize = 
@@ -151,22 +155,68 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
       FieldValue.trunc(FieldSize);
 
     if (FieldOffset < NextFieldOffsetInBytes * 8) {
-      // FIXME: Part of the bitfield should go into the previous byte.
-      return false;
+      // Either part of the field or the entire field can go into the previous
+      // byte.
+      assert(!Elements.empty() && "Elements can't be empty!");
+      
+      unsigned BitsInPreviousByte = 
+        NextFieldOffsetInBytes * 8 - FieldOffset;
+      
+      bool FitsCompletelyInPreviousByte = 
+        BitsInPreviousByte >= FieldValue.getBitWidth();
+      
+      llvm::APInt Tmp = FieldValue;
+      
+      if (!FitsCompletelyInPreviousByte) {
+        unsigned NewFieldWidth = FieldSize - BitsInPreviousByte;
+        
+        if (CGM.getTargetData().isBigEndian()) {
+          Tmp = Tmp.lshr(NewFieldWidth);
+          Tmp.trunc(BitsInPreviousByte);
+
+          // We want the remaining high bits.
+          FieldValue.trunc(NewFieldWidth);
+        } else {
+          Tmp.trunc(BitsInPreviousByte);
+
+          // We want the remaining low bits.
+          FieldValue = FieldValue.lshr(BitsInPreviousByte);
+          FieldValue.trunc(NewFieldWidth);
+        }
+      }
+      
+      Tmp.zext(8);
+      if (CGM.getTargetData().isBigEndian()) {
+        if (FitsCompletelyInPreviousByte)
+          Tmp = Tmp.shl(BitsInPreviousByte - FieldValue.getBitWidth());
+      } else {
+        Tmp = Tmp.shl(8 - BitsInPreviousByte);
+      }
+
+      // Or in the bits that go into the previous byte.
+      Tmp |= cast<llvm::ConstantInt>(Elements.back())->getValue();
+      Elements.back() = llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp);
+      
+      if (FitsCompletelyInPreviousByte)
+        return true;
     }
     
     while (FieldValue.getBitWidth() > 8) {
       llvm::APInt Tmp;
       
       if (CGM.getTargetData().isBigEndian()) {
-        // We want the low bits.
-        Tmp = FieldValue.getLoBits(8);
-      } else {
         // We want the high bits.
-        Tmp = FieldValue.getHiBits(8);
+        Tmp = FieldValue;
+        Tmp = Tmp.lshr(Tmp.getBitWidth() - 8);
+        Tmp.trunc(8);
+      } else {
+        // We want the low bits.
+        Tmp = FieldValue;
+        Tmp.trunc(8);
+        
+        FieldValue = FieldValue.lshr(8);
       }
       
-      Tmp.trunc(8);
       Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp));
       NextFieldOffsetInBytes++;
       
