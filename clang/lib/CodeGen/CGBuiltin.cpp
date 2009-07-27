@@ -66,7 +66,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       return RValue::get(llvm::ConstantInt::get(VMContext, 
                                                 Result.Val.getInt()));
     else if (Result.Val.isFloat())
-      return RValue::get(VMContext.getConstantFP(Result.Val.getFloat()));
+      return RValue::get(ConstantFP::get(VMContext, Result.Val.getFloat()));
   }
       
   switch (BuiltinID) {

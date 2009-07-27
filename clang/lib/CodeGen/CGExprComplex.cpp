@@ -367,8 +367,6 @@ ComplexPairTy ComplexExprEmitter::EmitCast(Expr *Op, QualType DestTy) {
 
 ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
                                                      bool isInc, bool isPre) {
-  llvm::LLVMContext &VMContext = CGF.getLLVMContext();
-
   LValue LV = CGF.EmitLValue(E->getSubExpr());
   ComplexPairTy InVal = EmitLoadOfComplex(LV.getAddress(),
                                           LV.isVolatileQualified());
@@ -386,7 +384,7 @@ ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     llvm::APFloat FVal(CGF.getContext().getFloatTypeSemantics(ElemTy), 1);
     if (!isInc)
       FVal.changeSign();
-    NextVal = VMContext.getConstantFP(FVal);
+    NextVal = llvm::ConstantFP::get(CGF.getLLVMContext(), FVal);
     
     // Add the inc/dec to the real part.
     NextVal = Builder.CreateFAdd(InVal.first, NextVal, isInc ? "inc" : "dec");

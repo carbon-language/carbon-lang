@@ -112,7 +112,7 @@ public:
     return llvm::ConstantInt::get(VMContext, E->getValue());
   }
   Value *VisitFloatingLiteral(const FloatingLiteral *E) {
-    return VMContext.getConstantFP(E->getValue());
+    return llvm::ConstantFP::get(VMContext, E->getValue());
   }
   Value *VisitCharacterLiteral(const CharacterLiteral *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
@@ -731,16 +731,18 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     // Add the inc/dec to the real part.
     if (InVal->getType() == llvm::Type::FloatTy)
       NextVal = 
-        VMContext.getConstantFP(llvm::APFloat(static_cast<float>(AmountVal)));
+        llvm::ConstantFP::get(VMContext, 
+                              llvm::APFloat(static_cast<float>(AmountVal)));
     else if (InVal->getType() == llvm::Type::DoubleTy)
       NextVal = 
-        VMContext.getConstantFP(llvm::APFloat(static_cast<double>(AmountVal)));
+        llvm::ConstantFP::get(VMContext,
+                              llvm::APFloat(static_cast<double>(AmountVal)));
     else {
       llvm::APFloat F(static_cast<float>(AmountVal));
       bool ignored;
       F.convert(CGF.Target.getLongDoubleFormat(), llvm::APFloat::rmTowardZero,
                 &ignored);
-      NextVal = VMContext.getConstantFP(F);
+      NextVal = llvm::ConstantFP::get(VMContext, F);
     }
     NextVal = Builder.CreateFAdd(InVal, NextVal, isInc ? "inc" : "dec");
   }

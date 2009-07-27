@@ -879,12 +879,14 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       return VMContext.getConstantStruct(Complex, 2);
     }
     case APValue::Float:
-      return VMContext.getConstantFP(Result.Val.getFloat());
+      return llvm::ConstantFP::get(VMContext, Result.Val.getFloat());
     case APValue::ComplexFloat: {
       llvm::Constant *Complex[2];
       
-      Complex[0] = VMContext.getConstantFP(Result.Val.getComplexFloatReal());
-      Complex[1] = VMContext.getConstantFP(Result.Val.getComplexFloatImag());
+      Complex[0] = llvm::ConstantFP::get(VMContext, 
+                                         Result.Val.getComplexFloatReal());
+      Complex[1] = llvm::ConstantFP::get(VMContext,
+                                         Result.Val.getComplexFloatImag());
       
       return VMContext.getConstantStruct(Complex, 2);
     }
@@ -897,7 +899,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         if (Elt.isInt())
           Inits.push_back(llvm::ConstantInt::get(VMContext, Elt.getInt()));
         else
-          Inits.push_back(VMContext.getConstantFP(Elt.getFloat()));
+          Inits.push_back(llvm::ConstantFP::get(VMContext, Elt.getFloat()));
       }
       return VMContext.getConstantVector(&Inits[0], Inits.size());
     }
