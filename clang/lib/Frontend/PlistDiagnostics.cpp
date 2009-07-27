@@ -37,12 +37,16 @@ namespace {
     std::vector<const PathDiagnostic*> BatchedDiags;
     const std::string OutputFile;
     const LangOptions &LangOpts;
+    llvm::OwningPtr<PathDiagnosticClientFactory> PF;
+    llvm::OwningPtr<PathDiagnosticClient> SubPDC;
+    llvm::SmallVector<std::string, 1> FilesMade;
   public:
-    PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts);
+    PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,
+                     PathDiagnosticClientFactory *pf);
     ~PlistDiagnostics();
     void HandlePathDiagnostic(const PathDiagnostic* D);
     
-    PathGenerationScheme getGenerationScheme() const { return Extensive; }
+    PathGenerationScheme getGenerationScheme() const;
     bool supportsLogicalOpControlFlow() const { return true; }
     bool supportsAllBlockEdges() const { return true; }
     virtual bool useVerboseDescription() const { return false; }
@@ -50,13 +54,27 @@ namespace {
 } // end anonymous namespace
 
 PlistDiagnostics::PlistDiagnostics(const std::string& output,
-                                   const LangOptions &LO)
-  : OutputFile(output), LangOpts(LO) {}
+                                   const LangOptions &LO,
+                                   PathDiagnosticClientFactory *pf)
+  : OutputFile(output), LangOpts(LO), PF(pf) {
+    
+  if (PF)
+    SubPDC.reset(PF->createPathDiagnosticClient(&FilesMade));
+}
 
 PathDiagnosticClient*
 clang::CreatePlistDiagnosticClient(const std::string& s,
-                                   Preprocessor *PP, PreprocessorFactory*) {
-  return new PlistDiagnostics(s, PP->getLangOptions());
+                                   Preprocessor *PP, PreprocessorFactory*,
+                                   PathDiagnosticClientFactory *PF) {
+  return new PlistDiagnostics(s, PP->getLangOptions(), PF);
+}
+
+PathDiagnosticClient::PathGenerationScheme
+PlistDiagnostics::getGenerationScheme() const {
+  if (const PathDiagnosticClient *PD = SubPDC.get())
+    return PD->getGenerationScheme();
+  
+  return Extensive;
 }
 
 static void AddFID(FIDMap &FIDs, llvm::SmallVectorImpl<FileID> &V,
@@ -358,9 +376,9 @@ PlistDiagnostics::~PlistDiagnostics() {
     // Create an owning smart pointer for 'D' just so that we auto-free it
     // when we exit this method.
     llvm::OwningPtr<PathDiagnostic> OwnedD(const_cast<PathDiagnostic*>(D));
-
+    
     o << "   <array>\n";
-  
+
     for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I)
       ReportDiag(o, *I, FM, *SM, LangOpts);
     
@@ -377,6 +395,24 @@ PlistDiagnostics::~PlistDiagnostics() {
     // Output the location of the bug.
     o << "  <key>location</key>\n";
     EmitLocation(o, *SM, LangOpts, D->getLocation(), FM, 2);
+    
+    // Output the diagnostic to the sub-diagnostic client, if any.
+    if (PF) {
+      if (!SubPDC.get())
+        SubPDC.reset(PF->createPathDiagnosticClient(&FilesMade));
+      
+      FilesMade.clear();
+      SubPDC->HandlePathDiagnostic(OwnedD.take());      
+      SubPDC.reset(0);
+      
+      if (!FilesMade.empty()) {
+        o << "  <key>" << PF->getName() << "_files</key>\n";
+        o << "  <array>\n";
+        for (size_t i = 0, n = FilesMade.size(); i < n ; ++i)
+          o << "   <string>" << FilesMade[i] << "</string>\n";
+        o << "  </array>\n";        
+      }
+    }
     
     // Close up the entry.
     o << "  </dict>\n";

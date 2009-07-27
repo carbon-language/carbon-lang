@@ -69,6 +69,7 @@ ANALYSIS_CONSTRAINTS(RangeConstraints, "range", "Use constraint tracking of conc
 
 ANALYSIS_DIAGNOSTICS(HTML,  "html",  "Output analysis results using HTML",   CreateHTMLDiagnosticClient, false)
 ANALYSIS_DIAGNOSTICS(PLIST, "plist", "Output analysis results using Plists", CreatePlistDiagnosticClient, true)
+ANALYSIS_DIAGNOSTICS(PLIST_HTML, "plist-html", "Output analysis results using HTML wrapped with Plists", CreatePlistHTMLDiagnosticClient, true)
 
 #undef ANALYSIS
 #undef ANALYSIS_STORE

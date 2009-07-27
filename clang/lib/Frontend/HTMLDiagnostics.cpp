@@ -39,9 +39,11 @@ class VISIBILITY_HIDDEN HTMLDiagnostics : public PathDiagnosticClient {
   llvm::sys::Path Directory, FilePrefix;
   bool createdDir, noDir;
   Preprocessor* PP;
-  std::vector<const PathDiagnostic*> BatchedDiags;  
+  std::vector<const PathDiagnostic*> BatchedDiags;
+  llvm::SmallVectorImpl<std::string> *FilesMade;  
 public:
-  HTMLDiagnostics(const std::string& prefix, Preprocessor* pp);
+  HTMLDiagnostics(const std::string& prefix, Preprocessor* pp,
+                  llvm::SmallVectorImpl<std::string> *filesMade = 0);
 
   virtual ~HTMLDiagnostics();
   
@@ -65,9 +67,10 @@ public:
   
 } // end anonymous namespace
 
-HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp)
+HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp,
+                                 llvm::SmallVectorImpl<std::string>* filesMade)
   : Directory(prefix), FilePrefix(prefix), createdDir(false), noDir(false),
-    PP(pp) {
+    PP(pp), FilesMade(filesMade) {
   
   // All html files begin with "report" 
   FilePrefix.appendComponent("report");
@@ -75,8 +78,43 @@ HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix, Preprocessor* pp)
 
 PathDiagnosticClient*
 clang::CreateHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP,
-                                  PreprocessorFactory*) {
-  return new HTMLDiagnostics(prefix, PP);
+                                  PreprocessorFactory*,
+                                  llvm::SmallVectorImpl<std::string>* FilesMade)
+{
+  return new HTMLDiagnostics(prefix, PP, FilesMade);
+}
+
+//===----------------------------------------------------------------------===//
+// Factory for HTMLDiagnosticClients
+//===----------------------------------------------------------------------===//
+
+namespace {
+class VISIBILITY_HIDDEN HTMLDiagnosticsFactory
+  : public PathDiagnosticClientFactory {
+
+  std::string Prefix;
+  Preprocessor *PP;
+public:
+  HTMLDiagnosticsFactory(const std::string& prefix, Preprocessor* pp)
+    : Prefix(prefix), PP(pp) {}
+
+  virtual ~HTMLDiagnosticsFactory() {}
+    
+  const char *getName() const { return "HTMLDiagnostics"; }
+    
+  PathDiagnosticClient*
+  createPathDiagnosticClient(llvm::SmallVectorImpl<std::string> *FilesMade) {
+
+  return new HTMLDiagnostics(Prefix, PP, FilesMade);
+  }
+};
+} // end anonymous namespace
+
+PathDiagnosticClientFactory*
+clang::CreateHTMLDiagnosticClientFactory(const std::string& prefix,
+                                         Preprocessor* PP,
+                                         PreprocessorFactory*) {
+  return new HTMLDiagnosticsFactory(prefix, PP);
 }
 
 //===----------------------------------------------------------------------===//
@@ -317,12 +355,14 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D) {
       llvm::cerr << "warning: could not create file '" << F.toString() << "'\n";
       return;
     }
+
+    if (FilesMade)
+      FilesMade->push_back(H.getLast());
   }
   
   // Emit the HTML to disk.
-
   for (RewriteBuffer::iterator I = Buf->begin(), E = Buf->end(); I!=E; ++I)
-      os << *I;
+      os << *I;  
 }
 
 void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,

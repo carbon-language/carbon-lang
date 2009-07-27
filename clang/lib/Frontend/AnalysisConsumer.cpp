@@ -50,6 +50,19 @@ namespace {
 } // end anonymous namespace
 
 //===----------------------------------------------------------------------===//
+// Special PathDiagnosticClients.
+//===----------------------------------------------------------------------===//
+
+static PathDiagnosticClient*
+CreatePlistHTMLDiagnosticClient(const std::string& prefix, Preprocessor* PP,
+                            PreprocessorFactory* PPF) {
+  llvm::sys::Path F(prefix);  
+  PathDiagnosticClientFactory *PF = 
+    CreateHTMLDiagnosticClientFactory(F.getDirname(), PP, PPF);
+  return CreatePlistDiagnosticClient(prefix, PP, PPF, PF);
+}
+
+//===----------------------------------------------------------------------===//
 // AnalysisConsumer declaration.
 //===----------------------------------------------------------------------===//
 
