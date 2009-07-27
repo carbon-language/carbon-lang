@@ -18,5 +18,5 @@ MSP430TargetAsmInfo::MSP430TargetAsmInfo(const TargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
   AlignmentIsInBytes = false;
     
-  BSSSection_ = getUnnamedSection("\t.bss", SectionKind::BSS);
+  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
 }

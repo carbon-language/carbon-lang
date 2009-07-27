@@ -28,30 +28,30 @@ using namespace llvm;
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) 
   : TargetAsmInfo(TM) {
 
-  CStringSection_ = getUnnamedSection("\t.cstring",
-                                      SectionKind::MergeableCString);
-  FourByteConstantSection = getUnnamedSection("\t.literal4\n",
-                                              SectionKind::MergeableConst4);
-  EightByteConstantSection = getUnnamedSection("\t.literal8\n",
-                                               SectionKind::MergeableConst8);
+  CStringSection_ = getOrCreateSection("\t.cstring", true,
+                                       SectionKind::MergeableCString);
+  FourByteConstantSection = getOrCreateSection("\t.literal4\n", true,
+                                               SectionKind::MergeableConst4);
+  EightByteConstantSection = getOrCreateSection("\t.literal8\n", true,
+                                                SectionKind::MergeableConst8);
 
   // Note: 16-byte constant section is subtarget specific and should be provided
   // there, if needed.
   SixteenByteConstantSection = 0;
 
-  ReadOnlySection = getUnnamedSection("\t.const", SectionKind::ReadOnly);
+  ReadOnlySection = getOrCreateSection("\t.const", true, SectionKind::ReadOnly);
 
   TextCoalSection =
-    getNamedSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
-                    SectionKind::Text);
-  ConstTextCoalSection = getNamedSection("\t__TEXT,__const_coal,coalesced",
-                                         SectionKind::Text);
-  ConstDataCoalSection = getNamedSection("\t__DATA,__const_coal,coalesced",
-                                         SectionKind::Text);
-  ConstDataSection = getUnnamedSection("\t.const_data",
-                                       SectionKind::ReadOnlyWithRel);
-  DataCoalSection = getNamedSection("\t__DATA,__datacoal_nt,coalesced",
-                                    SectionKind::DataRel);
+    getOrCreateSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
+                       false, SectionKind::Text);
+  ConstTextCoalSection = getOrCreateSection("\t__TEXT,__const_coal,coalesced",
+                                            false, SectionKind::Text);
+  ConstDataCoalSection = getOrCreateSection("\t__DATA,__const_coal,coalesced",
+                                            false, SectionKind::Text);
+  ConstDataSection = getOrCreateSection("\t.const_data", true,
+                                        SectionKind::ReadOnlyWithRel);
+  DataCoalSection = getOrCreateSection("\t__DATA,__datacoal_nt,coalesced",
+                                       false, SectionKind::DataRel);
     
   
   // Common settings for all Darwin targets.

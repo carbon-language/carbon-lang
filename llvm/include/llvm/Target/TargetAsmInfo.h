@@ -639,10 +639,9 @@ namespace llvm {
     explicit TargetAsmInfo(const TargetMachine &TM);
     virtual ~TargetAsmInfo();
 
-    const Section* getNamedSection(const char *Name,
-                                   SectionKind::Kind K) const;
-    const Section* getUnnamedSection(const char *Directive,
-                                     SectionKind::Kind K) const;
+    const Section *getOrCreateSection(const char *Name,
+                                      bool isDirective,
+                                      SectionKind::Kind K) const;
 
     /// Measure the specified inline asm to determine an approximation of its
     /// length.

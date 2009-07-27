@@ -26,25 +26,28 @@ using namespace llvm;
 
 ELFTargetAsmInfo::ELFTargetAsmInfo(const TargetMachine &TM)
   : TargetAsmInfo(TM) {
+  ReadOnlySection =
+    getOrCreateSection("\t.rodata", false, SectionKind::ReadOnly);
+  TLSDataSection =
+    getOrCreateSection("\t.tdata", false, SectionKind::ThreadData);
+  TLSBSSSection = getOrCreateSection("\t.tbss", false, SectionKind::ThreadBSS);
 
-  ReadOnlySection = getNamedSection("\t.rodata", SectionKind::ReadOnly);
-  TLSDataSection = getNamedSection("\t.tdata", SectionKind::ThreadData);
-  TLSBSSSection = getNamedSection("\t.tbss", SectionKind::ThreadBSS);
-
-  DataRelSection = getNamedSection("\t.data.rel", SectionKind::DataRel);
-  DataRelLocalSection = getNamedSection("\t.data.rel.local",
-                                        SectionKind::DataRelLocal);
-  DataRelROSection = getNamedSection("\t.data.rel.ro",
-                                     SectionKind::ReadOnlyWithRel);
-  DataRelROLocalSection = getNamedSection("\t.data.rel.ro.local",
-                                          SectionKind::ReadOnlyWithRelLocal);
+  DataRelSection = getOrCreateSection("\t.data.rel", false,
+                                      SectionKind::DataRel);
+  DataRelLocalSection = getOrCreateSection("\t.data.rel.local", false,
+                                           SectionKind::DataRelLocal);
+  DataRelROSection = getOrCreateSection("\t.data.rel.ro", false,
+                                        SectionKind::ReadOnlyWithRel);
+  DataRelROLocalSection =
+    getOrCreateSection("\t.data.rel.ro.local", false,
+                       SectionKind::ReadOnlyWithRelLocal);
     
-  MergeableConst4Section = getNamedSection(".rodata.cst4",
-                                           SectionKind::MergeableConst4);
-  MergeableConst8Section = getNamedSection(".rodata.cst8",
-                                           SectionKind::MergeableConst8);
-  MergeableConst16Section = getNamedSection(".rodata.cst16",
-                                            SectionKind::MergeableConst16);
+  MergeableConst4Section = getOrCreateSection(".rodata.cst4", false,
+                                              SectionKind::MergeableConst4);
+  MergeableConst8Section = getOrCreateSection(".rodata.cst8", false,
+                                              SectionKind::MergeableConst8);
+  MergeableConst16Section = getOrCreateSection(".rodata.cst16", false,
+                                               SectionKind::MergeableConst16);
 }
 
 
@@ -158,7 +161,8 @@ ELFTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
       Align = Size;
 
     std::string Name = getCStringSection() + utostr(Size) + '.' + utostr(Align);
-    return getNamedSection(Name.c_str(), SectionKind::MergeableCString);
+    return getOrCreateSection(Name.c_str(), false,
+                              SectionKind::MergeableCString);
   }
 
   return getReadOnlySection();

@@ -57,8 +57,8 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     ConstantPoolSection = "\t.const\n";
   // FIXME: Why don't we always use this section?
   if (is64Bit)
-    SixteenByteConstantSection = getUnnamedSection("\t.literal16\n",
-                                                 SectionKind::MergeableConst16);
+    SixteenByteConstantSection = 
+      getOrCreateSection("\t.literal16\n", true, SectionKind::MergeableConst16);
   LCOMMDirective = "\t.lcomm\t";
 
   // Leopard and above support aligned common symbols.
@@ -100,23 +100,20 @@ X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                               bool Global) const {
   if (Reason == DwarfEncoding::Functions && Global)
     return (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
-  else if (Reason == DwarfEncoding::CodeLabels || !Global)
+  if (Reason == DwarfEncoding::CodeLabels || !Global)
     return DW_EH_PE_pcrel;
-  else
-    return DW_EH_PE_absptr;
+  return DW_EH_PE_absptr;
 }
 
 const char *
-X86DarwinTargetAsmInfo::getEHGlobalPrefix() const
-{
+X86DarwinTargetAsmInfo::getEHGlobalPrefix() const {
   const X86Subtarget* Subtarget = &TM.getSubtarget<X86Subtarget>();
   if (Subtarget->getDarwinVers() > 9)
     return PrivateGlobalPrefix;
-  else
-    return "";
+  return "";
 }
 
-X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
+X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   X86TargetAsmInfo<ELFTargetAsmInfo>(TM) {
 
   CStringSection = ".rodata.str";
@@ -128,7 +125,7 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM):
   // Set up DWARF directives
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
-  BSSSection_ = getUnnamedSection("\t.bss", SectionKind::BSS);
+  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
 
   // Debug Information
   AbsoluteDebugSectionOffsets = true;
@@ -314,8 +311,8 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
 
   AlignmentIsInBytes = true;
 
-  TextSection = getUnnamedSection("_text", SectionKind::Text);
-  DataSection = getUnnamedSection("_data", SectionKind::DataRel);
+  TextSection = getOrCreateSection("_text", true, SectionKind::Text);
+  DataSection = getOrCreateSection("_data", true, SectionKind::DataRel);
 
   JumpTableDataSection = NULL;
   SwitchToSectionDirective = "";

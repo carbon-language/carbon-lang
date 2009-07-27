@@ -62,7 +62,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const char *codeSection = PAN::getCodeSectionName(CurrentFnName).c_str();
  
   const Section *fCodeSection = 
-    TAI->getNamedSection(codeSection, SectionKind::Text);
+    TAI->getOrCreateSection(codeSection, false, SectionKind::Text);
   // Start the Code Section.
   O <<  "\n";
   SwitchToSection(fCodeSection);
@@ -292,7 +292,7 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   const char *SectionName = PAN::getFrameSectionName(CurrentFnName).c_str();
 
   const Section *fPDataSection =
-    TAI->getNamedSection(SectionName, SectionKind::DataRel);
+    TAI->getOrCreateSection(SectionName, false, SectionKind::DataRel);
   SwitchToSection(fPDataSection);
   
   // Emit function frame label

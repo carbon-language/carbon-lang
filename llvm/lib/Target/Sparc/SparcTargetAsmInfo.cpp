@@ -27,7 +27,7 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM)
   CStringSection=".rodata.str";
 
   // Sparc normally uses named section for BSS.
-  BSSSection_ = getNamedSection("\t.bss", SectionKind::BSS);
+  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
 }
 
 

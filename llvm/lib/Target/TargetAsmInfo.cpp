@@ -122,8 +122,8 @@ TargetAsmInfo::TargetAsmInfo(const TargetMachine &tm) : TM(tm) {
   DwarfEHFrameSection = ".eh_frame";
   DwarfExceptionSection = ".gcc_except_table";
   AsmTransCBE = 0;
-  TextSection = getUnnamedSection("\t.text", SectionKind::Text);
-  DataSection = getUnnamedSection("\t.data", SectionKind::DataRel);
+  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
+  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
 }
 
 TargetAsmInfo::~TargetAsmInfo() {
@@ -314,7 +314,7 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     // section and still get the appropriate section flags printed.
     GVKind = getKindForNamedSection(GV->getSection().c_str(), GVKind);
     
-    return getNamedSection(GV->getSection().c_str(), GVKind);
+    return getOrCreateSection(GV->getSection().c_str(), false, GVKind);
   }
 
   // If this global is linkonce/weak and the target handles this by emitting it
@@ -323,7 +323,7 @@ const Section *TargetAsmInfo::SectionForGlobal(const GlobalValue *GV) const {
     if (const char *Prefix = getSectionPrefixForUniqueGlobal(Kind)) {
       // FIXME: Use mangler interface (PR4584).
       std::string Name = Prefix+GV->getNameStr();
-      return getNamedSection(Name.c_str(), GVKind);
+      return getOrCreateSection(Name.c_str(), false, GVKind);
     }
   }
   
@@ -364,28 +364,15 @@ TargetAsmInfo::getSectionForMergeableConstant(SectionKind Kind) const {
 }
 
 
-const Section *TargetAsmInfo::getNamedSection(const char *Name,
-                                              SectionKind::Kind Kind) const {
+const Section *TargetAsmInfo::getOrCreateSection(const char *Name,
+                                                 bool isDirective,
+                                                 SectionKind::Kind Kind) const {
   Section &S = Sections[Name];
 
   // This is newly-created section, set it up properly.
   if (S.Name.empty()) {
-    S.Kind = SectionKind::get(Kind, false /*weak*/, true /*Named*/);
+    S.Kind = SectionKind::get(Kind, false /*weak*/, !isDirective);
     S.Name = Name;
-  }
-
-  return &S;
-}
-
-const Section*
-TargetAsmInfo::getUnnamedSection(const char *Directive,
-                                 SectionKind::Kind Kind) const {
-  Section& S = Sections[Directive];
-
-  // This is newly-created section, set it up properly.
-  if (S.Name.empty()) {
-    S.Kind = SectionKind::get(Kind, false /*weak*/, false /*Named*/);
-    S.Name = Directive;
   }
 
   return &S;

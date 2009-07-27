@@ -28,5 +28,5 @@ SystemZTargetAsmInfo::SystemZTargetAsmInfo(const SystemZTargetMachine &TM)
 
   NonexecutableStackDirective = "\t.section\t.note.GNU-stack,\"\",@progbits";
     
-  BSSSection_ = getUnnamedSection("\t.bss", SectionKind::BSS);
+  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
 }

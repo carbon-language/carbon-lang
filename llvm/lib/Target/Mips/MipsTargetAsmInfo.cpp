@@ -30,7 +30,7 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM)
   BSSSection                  = "\t.section\t.bss";
   CStringSection              = ".rodata.str";
 
-  BSSSection_ = getUnnamedSection("\t.bss", SectionKind::BSS);
+  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
     
   if (!TM.getSubtarget<MipsSubtarget>().hasABICall())
     JumpTableDirective = "\t.word\t";

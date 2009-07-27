@@ -71,7 +71,7 @@ PPCLinuxTargetAsmInfo::PPCLinuxTargetAsmInfo(const PPCTargetMachine &TM) :
   BSSSection = "\t.section\t\".sbss\",\"aw\",@nobits";
 
   // PPC/Linux normally uses named section for BSS.
-  BSSSection_ = getNamedSection("\t.bss", SectionKind::BSS);
+  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
 
   // Debug Information
   AbsoluteDebugSectionOffsets = true;
