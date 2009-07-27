@@ -491,6 +491,7 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
   SrcSubIdx = DstSubIdx = 0; // No sub-registers.
 
   switch (MI.getOpcode()) {
+  default: break;
   case ARM::FCPYS:
   case ARM::FCPYD:
   case ARM::VMOVD:
@@ -521,8 +522,10 @@ ARMBaseInstrInfo::isMoveInstr(const MachineInstr &MI,
 unsigned 
 ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
                                       int &FrameIndex) const {
-  unsigned oc = MI->getOpcode();
-  if (oc == getOpcode(ARMII::LDRrr)) {
+  switch (MI->getOpcode()) {
+  default: break;
+  case ARM::LDR:
+  case ARM::t2LDRs:  // FIXME: don't use t2LDRs to access frame.
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isReg() &&
         MI->getOperand(3).isImm() &&
@@ -531,22 +534,25 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
-  }
-  else if (oc == getOpcode(ARMII::LDRri)) {
+    break;
+  case ARM::t2LDRi12:
+  case ARM::tRestore:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
-  }
-  else if (oc == ARM::FLDD || oc == ARM::FLDS) {
+    break;
+  case ARM::FLDD:
+  case ARM::FLDS:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
+    break;
   }
 
   return 0;
@@ -555,8 +561,10 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
 unsigned
 ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
                                      int &FrameIndex) const {
-  unsigned oc = MI->getOpcode();
-  if (oc == getOpcode(ARMII::STRrr)) {
+  switch (MI->getOpcode()) {
+  default: break;
+  case ARM::STR:
+  case ARM::t2STRs: // FIXME: don't use t2STRs to access frame.
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isReg() &&
         MI->getOperand(3).isImm() &&
@@ -565,22 +573,25 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
-  }
-  else if (oc == getOpcode(ARMII::STRri)) {
+    break;
+  case ARM::t2STRi12:
+  case ARM::tSpill:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
-  }
-  else if (oc == ARM::FSTD || oc == ARM::FSTS) {
+    break;
+  case ARM::FSTD:
+  case  ARM::FSTS:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(2).isImm() &&
         MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
+    break;
   }
 
   return 0;

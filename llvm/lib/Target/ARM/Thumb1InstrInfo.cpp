@@ -71,38 +71,6 @@ Thumb1InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   return false;
 }
 
-unsigned Thumb1InstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
-                                              int &FrameIndex) const {
-  switch (MI->getOpcode()) {
-  default: break;
-  case ARM::tRestore:
-    if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-  }
-  return 0;
-}
-
-unsigned Thumb1InstrInfo::isStoreToStackSlot(const MachineInstr *MI,
-                                             int &FrameIndex) const {
-  switch (MI->getOpcode()) {
-  default: break;
-  case ARM::tSpill:
-    if (MI->getOperand(1).isFI() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getIndex();
-      return MI->getOperand(0).getReg();
-    }
-    break;
-  }
-  return 0;
-}
-
 bool Thumb1InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I,
                                    unsigned DestReg, unsigned SrcReg,

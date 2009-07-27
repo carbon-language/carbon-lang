@@ -50,11 +50,6 @@ public:
                                    MachineBasicBlock::iterator MI,
                                    const std::vector<CalleeSavedInfo> &CSI) const;
 
-  unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                                       int &FrameIndex) const;
-  unsigned isStoreToStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const;
-
   bool copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator I,
                             unsigned DestReg, unsigned SrcReg,
