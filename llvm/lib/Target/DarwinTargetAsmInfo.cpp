@@ -34,10 +34,8 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM)
                                                SectionKind::MergeableConst4);
   EightByteConstantSection = getOrCreateSection("\t.literal8\n", true,
                                                 SectionKind::MergeableConst8);
-
-  // Note: 16-byte constant section is subtarget specific and should be provided
-  // there, if needed.
-  SixteenByteConstantSection = 0;
+  SixteenByteConstantSection = 
+    getOrCreateSection("\t.literal16\n", true, SectionKind::MergeableConst16);
 
   ReadOnlySection = getOrCreateSection("\t.const", true, SectionKind::ReadOnly);
 
@@ -150,7 +148,7 @@ DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
       return FourByteConstantSection;
     if (Kind.isMergeableConst8())
       return EightByteConstantSection;
-    if (Kind.isMergeableConst16() && SixteenByteConstantSection)
+    if (Kind.isMergeableConst16())
       return SixteenByteConstantSection;
     return ReadOnlySection;  // .const
   }
@@ -196,7 +194,7 @@ DarwinTargetAsmInfo::getSectionForMergeableConstant(SectionKind Kind) const {
     return FourByteConstantSection;
   if (Kind.isMergeableConst8())
     return EightByteConstantSection;
-  if (Kind.isMergeableConst16() && SixteenByteConstantSection)
+  if (Kind.isMergeableConst16())
     return SixteenByteConstantSection;
   return ReadOnlySection;  // .const
 }

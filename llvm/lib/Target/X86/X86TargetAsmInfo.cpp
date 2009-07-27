@@ -55,10 +55,6 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
     ConstantPoolSection = "\t.const_data";
   else
     ConstantPoolSection = "\t.const\n";
-  // FIXME: Why don't we always use this section?
-  if (is64Bit)
-    SixteenByteConstantSection = 
-      getOrCreateSection("\t.literal16\n", true, SectionKind::MergeableConst16);
   LCOMMDirective = "\t.lcomm\t";
 
   // Leopard and above support aligned common symbols.
