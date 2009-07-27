@@ -514,6 +514,9 @@ bool ELFWriter::doFinalization(Module &M) {
   if (TAI->getNonexecutableStackDirective())
     getNonExecStackSection();
 
+  // Emit module name
+  SymbolList.push_back(ELFSym::getFileSym());
+
   // Emit a symbol for each section created until now, skip null section
   for (unsigned i = 1, e = SectionList.size(); i < e; ++i) {
     ELFSection &ES = *SectionList[i];
@@ -524,7 +527,7 @@ bool ELFWriter::doFinalization(Module &M) {
   }
 
   // Emit string table
-  EmitStringTable();
+  EmitStringTable(M.getModuleIdentifier());
 
   // Emit the symbol table now, if non-empty.
   EmitSymbolTable();
@@ -709,7 +712,7 @@ void ELFWriter::EmitSectionHeader(BinaryObject &SHdrTab,
 
 /// EmitStringTable - If the current symbol table is non-empty, emit the string
 /// table for it
-void ELFWriter::EmitStringTable() {
+void ELFWriter::EmitStringTable(const std::string &ModuleName) {
   if (!SymbolList.size()) return;  // Empty symbol table.
   ELFSection &StrTab = getStringTableSection();
 
@@ -721,12 +724,14 @@ void ELFWriter::EmitStringTable() {
   for (ELFSymIter I=SymbolList.begin(), E=SymbolList.end(); I != E; ++I) {
     ELFSym &Sym = *(*I);
 
-    // Use the name mangler to uniquify the LLVM symbol.
     std::string Name;
     if (Sym.isGlobalValue())
+      // Use the name mangler to uniquify the LLVM symbol.
       Name.append(Mang->getMangledName(Sym.getGlobalValue()));
     else if (Sym.isExternalSym())
       Name.append(Sym.getExternalSymbol());
+    else if (Sym.isFileType())
+      Name.append(ModuleName);
 
     if (Name.empty()) {
       Sym.NameIdx = 0;

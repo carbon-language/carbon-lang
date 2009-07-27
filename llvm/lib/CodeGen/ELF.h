@@ -59,10 +59,10 @@ namespace llvm {
 
     // ELF symbols are related to llvm ones by being one of the two llvm
     // types, for the other ones (section, file, func) a null pointer is
-    // assumed.
+    // assumed by default.
     union {
       const GlobalValue *GV;  // If this is a pointer to a GV
-      const char *Ext;  // If this is a pointer to a named symbol
+      const char *Ext;        // If this is a pointer to a named symbol
     } Source;
 
     // Describes from which source type this ELF symbol comes from,
@@ -118,9 +118,20 @@ namespace llvm {
     // getSectionSym - Returns a elf symbol to represent an elf section
     static ELFSym *getSectionSym() {
       ELFSym *Sym = new ELFSym();
-      Sym->setBind(ELFSym::STB_LOCAL);
-      Sym->setType(ELFSym::STT_SECTION);
-      Sym->setVisibility(ELFSym::STV_DEFAULT);
+      Sym->setBind(STB_LOCAL);
+      Sym->setType(STT_SECTION);
+      Sym->setVisibility(STV_DEFAULT);
+      Sym->SourceType = isOther;
+      return Sym;
+    }
+
+    // getSectionSym - Returns a elf symbol to represent an elf section
+    static ELFSym *getFileSym() {
+      ELFSym *Sym = new ELFSym();
+      Sym->setBind(STB_LOCAL);
+      Sym->setType(STT_FILE);
+      Sym->setVisibility(STV_DEFAULT);
+      Sym->SectionIdx = 0xfff1;  // ELFSection::SHN_ABS;
       Sym->SourceType = isOther;
       return Sym;
     }
@@ -164,6 +175,7 @@ namespace llvm {
     unsigned getBind() const { return (Info >> 4) & 0xf; }
     unsigned getType() const { return Info & 0xf; }
     bool isLocalBind() const { return getBind() == STB_LOCAL; }
+    bool isFileType() const { return getType() == STT_FILE; }
 
     void setBind(unsigned X) {
       assert(X == (X & 0xF) && "Bind value out of range!");

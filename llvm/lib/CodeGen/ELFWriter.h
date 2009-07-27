@@ -250,7 +250,7 @@ namespace llvm {
     void EmitSectionTableStringTable();
     void EmitSymbol(BinaryObject &SymbolTable, ELFSym &Sym);
     void EmitSymbolTable();
-    void EmitStringTable();
+    void EmitStringTable(const std::string &ModuleName);
     void OutputSectionsAndSectionTable();
     void RelocateField(BinaryObject &BO, uint32_t Offset, int64_t Value,
                        unsigned Size);
