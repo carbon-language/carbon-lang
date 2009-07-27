@@ -3705,8 +3705,8 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     if (!FD->getAttr<FormatAttr>())
       FD->addAttr(::new (Context) FormatAttr("printf", 2,
                                              Name->isStr("vasprintf") ? 0 : 3));
-  } else if (Name->isStr("longjmp") &&
-             !FD->hasAttr<NoReturnAttr>())
+  } else if ((Name->isStr("longjmp") || Name->isStr("_longjmp"))
+             && !FD->hasAttr<NoReturnAttr>())
     FD->addAttr(::new (Context) NoReturnAttr());
 }
 

@@ -200,5 +200,8 @@ int test29() {
 #include <setjmp.h>
 jmp_buf test30_j;
 int test30() {
-  longjmp(test30_j, 1);
+  if (j)
+    longjmp(test30_j, 1);
+  else
+    _longjmp(test30_j, 1);
 }
