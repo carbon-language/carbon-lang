@@ -420,6 +420,7 @@ class raw_null_ostream : public raw_ostream {
 
 public:
   explicit raw_null_ostream() {}
+  ~raw_null_ostream();
 };
 
 } // end llvm namespace

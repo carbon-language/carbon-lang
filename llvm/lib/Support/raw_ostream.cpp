@@ -438,6 +438,15 @@ uint64_t raw_svector_ostream::tell() {
 //  raw_null_ostream
 //===----------------------------------------------------------------------===//
 
+raw_null_ostream::~raw_null_ostream() {
+#ifndef NDEBUG
+  // ~raw_ostream asserts that the buffer is empty. This isn't necessary
+  // with raw_null_ostream, but it's better to have raw_null_ostream follow
+  // the rules than to change the rules just for raw_null_ostream.
+  flush();
+#endif
+}
+
 void raw_null_ostream::write_impl(const char *Ptr, size_t Size) {
 }
 
