@@ -18,7 +18,6 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
-  class GlobalValue;
 
   struct ELFTargetAsmInfo : public TargetAsmInfo {
     ELFTargetAsmInfo(const TargetMachine &TM);

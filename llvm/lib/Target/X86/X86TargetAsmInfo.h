@@ -16,8 +16,9 @@
 
 #include "X86TargetMachine.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/ELFTargetAsmInfo.h"
+#include "llvm/Target/COFFTargetAsmInfo.h"
 #include "llvm/Target/DarwinTargetAsmInfo.h"
+#include "llvm/Target/ELFTargetAsmInfo.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
@@ -49,16 +50,13 @@ namespace llvm {
                                            bool Global) const;
   };
 
-  struct X86COFFTargetAsmInfo : public X86GenericTargetAsmInfo {
-    explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM);
+  struct X86COFFTargetAsmInfo : public X86TargetAsmInfo<COFFTargetAsmInfo> {
+    explicit X86COFFTargetAsmInfo(const X86TargetMachine &TM) :
+      X86TargetAsmInfo<COFFTargetAsmInfo>(TM) {}
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
-    virtual const char *
-    getSectionPrefixForUniqueGlobal(SectionKind kind) const;
-    
-    virtual void getSectionFlagsAsString(SectionKind Kind,
-                                         SmallVectorImpl<char> &Str) const;
   };
+  
 
   struct X86WinTargetAsmInfo : public X86GenericTargetAsmInfo {
     explicit X86WinTargetAsmInfo(const X86TargetMachine &TM);
