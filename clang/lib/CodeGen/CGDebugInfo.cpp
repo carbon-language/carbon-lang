@@ -543,7 +543,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // its members.  Finally, we create a descriptor for the complete type (which
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
-  llvm::DIType FwdDecl =
+  llvm::DICompositeType FwdDecl =
     DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, 0, 0, 0, 0,
                                      llvm::DIType(), llvm::DIArray(),
                                      RuntimeLang);
@@ -631,15 +631,14 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   uint64_t Size = M->getContext().getTypeSize(Ty);
   uint64_t Align = M->getContext().getTypeAlign(Ty);
   
-  llvm::DIType RealDecl =
+  llvm::DICompositeType RealDecl =
     DebugFactory.CreateCompositeType(Tag, Unit, Name, DefUnit, Line, Size,
                                      Align, 0, 0, llvm::DIType(), Elements,
                                      RuntimeLang);
 
   // Now that we have a real decl for the struct, replace anything using the
   // old decl with the new one.  This will recursively update the debug info.
-  FwdDecl.getGV()->replaceAllUsesWith(RealDecl.getGV());
-  FwdDecl.getGV()->eraseFromParent();
+  FwdDecl.replaceAllUsesWith(RealDecl);
 
   // Update TypeCache.
   TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RealDecl;  
