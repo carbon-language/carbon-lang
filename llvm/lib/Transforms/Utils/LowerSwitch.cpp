@@ -309,6 +309,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   DEBUG(errs() << "Clusterify finished. Total clusters: " << Cases.size()
                << ". Total compares: " << numCmps << "\n");
   DEBUG(errs() << "Cases: " << Cases << "\n");
+  (void)numCmps;
   
   BasicBlock* SwitchBlock = switchConvert(Cases.begin(), Cases.end(), Val,
                                           OrigBlock, NewDefault);

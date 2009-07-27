@@ -1308,6 +1308,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec &TheCopy, bool &Again) {
       DEBUG(errs() << "\tIncompatible source regclass: "
             << tri_->getName(DstSubReg) << " not in " << SrcSubRC->getName()
             << ".\n");
+      (void)DstSubReg;
       return false;             // Not coalescable.
     }
   }

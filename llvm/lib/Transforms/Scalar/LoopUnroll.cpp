@@ -121,6 +121,7 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   BasicBlock *Header = L->getHeader();
   DEBUG(errs() << "Loop Unroll: F[" << Header->getParent()->getName()
         << "] Loop %" << Header->getName() << "\n");
+  (void)Header;
 
   // Find trip count
   unsigned TripCount = L->getSmallConstantTripCount();
