@@ -3676,6 +3676,9 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
       if (!FD->getAttr<ConstAttr>())
         FD->addAttr(::new (Context) ConstAttr());
     }
+
+    if (Context.BuiltinInfo.isNoReturn(BuiltinID))
+      FD->addAttr(::new (Context) NoReturnAttr());
   }
 
   IdentifierInfo *Name = FD->getIdentifier();

@@ -54,6 +54,7 @@
 // of the function.  These must be kept in sync with the predicates in the
 // Builtin::Context class.  Currently we have:
 //  n -> nothrow
+//  r -> noreturn
 //  c -> const
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
 //  f -> this is a libc/libm function without the '__builtin_' prefix. It can
@@ -335,6 +336,9 @@ BUILTIN(__sync_fetch_and_umax, "UiUi*Ui", "n")
 // C99 library functions
 // C99 stdlib.h
 LIBBUILTIN(calloc, "v*zz",        "f",     "stdlib.h")
+LIBBUILTIN(exit, "vi",            "fr",    "stdlib.h")
+LIBBUILTIN(_Exit, "vi",           "fr",    "stdlib.h")
+LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h")
 LIBBUILTIN(malloc, "v*z",         "f",     "stdlib.h")
 LIBBUILTIN(realloc, "v*v*z",      "f",     "stdlib.h")
 // C99 string.h

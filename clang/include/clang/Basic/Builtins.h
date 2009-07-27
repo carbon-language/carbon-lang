@@ -90,6 +90,11 @@ public:
     return strchr(GetRecord(ID).Attributes, 'n') != 0;
   }
   
+  /// isNoReturn - Return true if we know this builtin never returns.
+  bool isNoReturn(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'r') != 0;
+  }
+  
   /// isLibFunction - Return true if this is a builtin for a libc/libm function,
   /// with a "__builtin_" prefix (e.g. __builtin_abs).
   bool isLibFunction(unsigned ID) const {

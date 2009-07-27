@@ -191,3 +191,8 @@ int test27() {
 // PR4624
 void test28() __attribute__((noreturn));
 void test28(x) { while (1) { } }
+
+void exit(int);
+int test29() {
+  exit(1);
+}
