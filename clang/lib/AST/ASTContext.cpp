@@ -3442,8 +3442,8 @@ QualType ASTContext::mergeFunctionTypes(QualType lhs, QualType rhs) {
     if (allLTypes) return lhs;
     if (allRTypes) return rhs;
     return getFunctionType(retType, proto->arg_type_begin(),
-                           proto->getNumArgs(), lproto->isVariadic(),
-                           lproto->getTypeQuals(), NoReturn);
+                           proto->getNumArgs(), proto->isVariadic(),
+                           proto->getTypeQuals(), NoReturn);
   }
 
   if (allLTypes) return lhs;
