@@ -1954,9 +1954,27 @@ bool LLParser::ParseValID(ValID &ID) {
   case lltok::kw_urem:
   case lltok::kw_srem:
   case lltok::kw_frem: {
+    bool NUW = false;
+    bool NSW = false;
+    bool Exact = false;
     unsigned Opc = Lex.getUIntVal();
     Constant *Val0, *Val1;
     Lex.Lex();
+    LocTy ModifierLoc = Lex.getLoc();
+    if (Opc == Instruction::Add ||
+        Opc == Instruction::Sub ||
+        Opc == Instruction::Mul) {
+      if (EatIfPresent(lltok::kw_nuw))
+        NUW = true;
+      if (EatIfPresent(lltok::kw_nsw)) {
+        NSW = true;
+        if (EatIfPresent(lltok::kw_nuw))
+          NUW = true;
+      }
+    } else if (Opc == Instruction::SDiv) {
+      if (EatIfPresent(lltok::kw_exact))
+        Exact = true;
+    }
     if (ParseToken(lltok::lparen, "expected '(' in binary constantexpr") ||
         ParseGlobalTypeAndValue(Val0) ||
         ParseToken(lltok::comma, "expected comma in binary constantexpr") ||
@@ -1965,10 +1983,25 @@ bool LLParser::ParseValID(ValID &ID) {
       return true;
     if (Val0->getType() != Val1->getType())
       return Error(ID.Loc, "operands of constexpr must have same type");
+    if (!Val0->getType()->isIntOrIntVector()) {
+      if (NUW)
+        return Error(ModifierLoc, "nuw only applies to integer operations");
+      if (NSW)
+        return Error(ModifierLoc, "nsw only applies to integer operations");
+    }
+    // API compatibility: Accept either integer or floating-point types with
+    // add, sub, and mul.
     if (!Val0->getType()->isIntOrIntVector() &&
         !Val0->getType()->isFPOrFPVector())
       return Error(ID.Loc,"constexpr requires integer, fp, or vector operands");
-    ID.ConstantVal = Context.getConstantExpr(Opc, Val0, Val1);
+    Constant *C = Context.getConstantExpr(Opc, Val0, Val1);
+    if (NUW)
+      cast<OverflowingBinaryOperator>(C)->setHasNoUnsignedOverflow(true);
+    if (NSW)
+      cast<OverflowingBinaryOperator>(C)->setHasNoSignedOverflow(true);
+    if (Exact)
+      cast<SDivOperator>(C)->setIsExact(true);
+    ID.ConstantVal = C;
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -2054,49 +2087,6 @@ bool LLParser::ParseValID(ValID &ID) {
     
     ID.Kind = ValID::t_Constant;
     return false;
-  }
-  case lltok::kw_nuw: {
-    Lex.Lex();
-    bool AlsoSigned = EatIfPresent(lltok::kw_nsw);
-    if (Lex.getKind() != lltok::kw_add &&
-        Lex.getKind() != lltok::kw_sub &&
-        Lex.getKind() != lltok::kw_mul)
-      return TokError("expected 'add', 'sub', or 'mul'");
-    bool Result = LLParser::ParseValID(ID);
-    if (!Result) {
-      cast<OverflowingBinaryOperator>(ID.ConstantVal)
-        ->setHasNoUnsignedOverflow(true);
-      if (AlsoSigned)
-        cast<OverflowingBinaryOperator>(ID.ConstantVal)
-          ->setHasNoSignedOverflow(true);
-    }
-    return Result;
-  }
-  case lltok::kw_nsw: {
-    Lex.Lex();
-    bool AlsoUnsigned = EatIfPresent(lltok::kw_nuw);
-    if (Lex.getKind() != lltok::kw_add &&
-        Lex.getKind() != lltok::kw_sub &&
-        Lex.getKind() != lltok::kw_mul)
-      return TokError("expected 'add', 'sub', or 'mul'");
-    bool Result = LLParser::ParseValID(ID);
-    if (!Result) {
-      cast<OverflowingBinaryOperator>(ID.ConstantVal)
-        ->setHasNoSignedOverflow(true);
-      if (AlsoUnsigned)
-        cast<OverflowingBinaryOperator>(ID.ConstantVal)
-          ->setHasNoUnsignedOverflow(true);
-    }
-    return Result;
-  }
-  case lltok::kw_exact: {
-    Lex.Lex();
-    if (Lex.getKind() != lltok::kw_sdiv)
-      return TokError("expected 'sdiv'");
-    bool Result = LLParser::ParseValID(ID);
-    if (!Result)
-      cast<SDivOperator>(ID.ConstantVal)->setIsExact(true);
-    return Result;
   }
   }
   
@@ -2563,15 +2553,49 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   // Binary Operators.
   case lltok::kw_add:
   case lltok::kw_sub:
-  case lltok::kw_mul:
+  case lltok::kw_mul: {
+    bool NUW = false;
+    bool NSW = false;
+    LocTy ModifierLoc = Lex.getLoc();
+    if (EatIfPresent(lltok::kw_nuw))
+      NUW = true;
+    if (EatIfPresent(lltok::kw_nsw)) {
+      NSW = true;
+      if (EatIfPresent(lltok::kw_nuw))
+        NUW = true;
+    }
     // API compatibility: Accept either integer or floating-point types.
-    return ParseArithmetic(Inst, PFS, KeywordVal, 0);
+    bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 0);
+    if (!Result) {
+      if (!Inst->getType()->isIntOrIntVector()) {
+        if (NUW)
+          return Error(ModifierLoc, "nuw only applies to integer operations");
+        if (NSW)
+          return Error(ModifierLoc, "nsw only applies to integer operations");
+      }
+      if (NUW)
+        cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedOverflow(true);
+      if (NSW)
+        cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedOverflow(true);
+    }
+    return Result;
+  }
   case lltok::kw_fadd:
   case lltok::kw_fsub:
   case lltok::kw_fmul:    return ParseArithmetic(Inst, PFS, KeywordVal, 2);
 
+  case lltok::kw_sdiv: {
+    bool Exact = false;
+    if (EatIfPresent(lltok::kw_exact))
+      Exact = true;
+    bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 1);
+    if (!Result)
+      if (Exact)
+        cast<SDivOperator>(Inst)->setIsExact(true);
+    return Result;
+  }
+
   case lltok::kw_udiv:
-  case lltok::kw_sdiv:
   case lltok::kw_urem:
   case lltok::kw_srem:   return ParseArithmetic(Inst, PFS, KeywordVal, 1);
   case lltok::kw_fdiv:
@@ -2619,50 +2643,6 @@ bool LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
       return ParseStore(Inst, PFS, true);
     else
       return TokError("expected 'load' or 'store'");
-  case lltok::kw_nuw: {
-    bool AlsoSigned = EatIfPresent(lltok::kw_nsw);
-    if (Lex.getKind() == lltok::kw_add ||
-        Lex.getKind() == lltok::kw_sub ||
-        Lex.getKind() == lltok::kw_mul) {
-      Lex.Lex();
-      KeywordVal = Lex.getUIntVal();
-      bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 0);
-      if (!Result) {
-        cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedOverflow(true);
-        if (AlsoSigned)
-          cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedOverflow(true);
-      }
-      return Result;
-    }
-    return TokError("expected 'add', 'sub', or 'mul'");
-  }
-  case lltok::kw_nsw: {
-    bool AlsoUnsigned = EatIfPresent(lltok::kw_nuw);
-    if (Lex.getKind() == lltok::kw_add ||
-        Lex.getKind() == lltok::kw_sub ||
-        Lex.getKind() == lltok::kw_mul) {
-      Lex.Lex();
-      KeywordVal = Lex.getUIntVal();
-      bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 1);
-      if (!Result) {
-        cast<OverflowingBinaryOperator>(Inst)->setHasNoSignedOverflow(true);
-        if (AlsoUnsigned)
-          cast<OverflowingBinaryOperator>(Inst)->setHasNoUnsignedOverflow(true);
-      }
-      return Result;
-    }
-    return TokError("expected 'add', 'sub', or 'mul'");
-  }
-  case lltok::kw_exact:
-    if (Lex.getKind() == lltok::kw_sdiv) {
-      Lex.Lex();
-      KeywordVal = Lex.getUIntVal();
-      bool Result = ParseArithmetic(Inst, PFS, KeywordVal, 1);
-      if (!Result)
-        cast<SDivOperator>(Inst)->setIsExact(true);
-      return Result;
-    }
-    return TokError("expected 'udiv'");
   case lltok::kw_getresult:     return ParseGetResult(Inst, PFS);
   case lltok::kw_getelementptr: return ParseGetElementPtr(Inst, PFS);
   case lltok::kw_extractvalue:  return ParseExtractValue(Inst, PFS);

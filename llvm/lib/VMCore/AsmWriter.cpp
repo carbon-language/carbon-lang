@@ -848,12 +848,12 @@ static void WriteOptimizationInfo(raw_ostream &Out, const User *U) {
   if (const OverflowingBinaryOperator *OBO =
         dyn_cast<OverflowingBinaryOperator>(U)) {
     if (OBO->hasNoUnsignedOverflow())
-      Out << "nuw ";
+      Out << " nuw";
     if (OBO->hasNoSignedOverflow())
-      Out << "nsw ";
+      Out << " nsw";
   } else if (const SDivOperator *Div = dyn_cast<SDivOperator>(U)) {
     if (Div->isExact())
-      Out << "exact ";
+      Out << " exact";
   }
 }
 
@@ -1061,8 +1061,8 @@ static void WriteConstantInt(raw_ostream &Out, const Constant *CV,
   }
 
   if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
-    WriteOptimizationInfo(Out, CE);
     Out << CE->getOpcodeName();
+    WriteOptimizationInfo(Out, CE);
     if (CE->isCompare())
       Out << ' ' << getPredicateText(CE->getPredicate());
     Out << " (";
@@ -1694,11 +1694,11 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << "tail ";
   }
 
-  // Print out optimization information.
-  WriteOptimizationInfo(Out, &I);
-
   // Print out the opcode...
   Out << I.getOpcodeName();
+
+  // Print out optimization information.
+  WriteOptimizationInfo(Out, &I);
 
   // Print out the compare instruction predicates
   if (const CmpInst *CI = dyn_cast<CmpInst>(&I))

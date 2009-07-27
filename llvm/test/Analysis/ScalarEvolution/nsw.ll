@@ -22,7 +22,7 @@ bb:		; preds = %bb1, %bb.nph
 	%tmp6 = sext i32 %i.01 to i64		; <i64> [#uses=1]
 	%tmp7 = getelementptr double* %p, i64 %tmp6		; <double*> [#uses=1]
 	store double %tmp5, double* %tmp7, align 8
-	%tmp8 = nsw add i32 %i.01, 1		; <i32> [#uses=2]
+	%tmp8 = add nsw i32 %i.01, 1		; <i32> [#uses=2]
 	br label %bb1
 
 bb1:		; preds = %bb
