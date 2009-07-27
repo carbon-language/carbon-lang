@@ -54,6 +54,7 @@ namespace lltok {
     kw_nuw,
     kw_nsw,
     kw_exact,
+    kw_inbounds,
     kw_align,
     kw_addrspace,
     kw_section,

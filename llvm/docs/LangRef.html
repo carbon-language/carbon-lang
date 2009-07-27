@@ -2091,6 +2091,7 @@ Classifications</a> </div>
       instruction</a>.</dd>
 
   <dt><b><tt>getelementptr ( CSTPTR, IDX0, IDX1, ... )</tt></b></dt>
+  <dt><b><tt>getelementptr inbounds ( CSTPTR, IDX0, IDX1, ... )</tt></b></dt>
   <dd>Perform the <a href="#i_getelementptr">getelementptr operation</a> on
       constants.  As with the <a href="#i_getelementptr">getelementptr</a>
       instruction, the index list may have zero or more indexes, which are
@@ -3902,6 +3903,7 @@ Instruction</a> </div>
 <h5>Syntax:</h5>
 <pre>
   &lt;result&gt; = getelementptr &lt;pty&gt;* &lt;ptrval&gt;{, &lt;ty&gt; &lt;idx&gt;}*
+  &lt;result&gt; = getelementptr inbounds &lt;pty&gt;* &lt;ptrval&gt;{, &lt;ty&gt; &lt;idx&gt;}*
 </pre>
 
 <h5>Overview:</h5>
@@ -3989,6 +3991,20 @@ entry:
     ret i32* %t5
   }
 </pre>
+
+<p>If the <tt>inbounds</tt> keyword is present, the result value of the
+   <tt>getelementptr</tt> is undefined if the base pointer is not pointing
+   into an allocated object, or if any of the addresses formed by successive
+   addition of the offsets implied by the indices to the base address is
+   outside of the allocated object into which the base pointer points.</p>
+
+<p>If the <tt>inbounds</tt> keyword is not present, the offsets are added to
+   the base address with silently-wrapping two's complement arithmetic, and
+   the result value of the <tt>getelementptr</tt> may be outside the object
+   pointed to by the base pointer. The result value may not necessarily be
+   used to access memory though, even if it happens to point into allocated
+   storage. See the <a href="#pointeraliasing">Pointer Aliasing Rules</a>
+   section for more information.</p>
 
 <p>The getelementptr instruction is often confusing.  For some more insight into
    how it works, see <a href="GetElementPtr.html">the getelementptr FAQ</a>.</p>

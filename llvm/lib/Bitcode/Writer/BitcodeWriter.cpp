@@ -706,6 +706,8 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         break;
       case Instruction::GetElementPtr:
         Code = bitc::CST_CODE_CE_GEP;
+        if (cast<GEPOperator>(C)->isInBounds())
+          Code = bitc::CST_CODE_CE_INBOUNDS_GEP;
         for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i) {
           Record.push_back(VE.getTypeID(C->getOperand(i)->getType()));
           Record.push_back(VE.getValueID(C->getOperand(i)));
@@ -829,6 +831,8 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
 
   case Instruction::GetElementPtr:
     Code = bitc::FUNC_CODE_INST_GEP;
+    if (cast<GEPOperator>(&I)->isInBounds())
+      Code = bitc::FUNC_CODE_INST_INBOUNDS_GEP;
     for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
       PushValueAndType(I.getOperand(i), InstID, Vals, VE);
     break;

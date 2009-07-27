@@ -997,6 +997,7 @@ bool BitcodeReader::ParseConstants() {
       }
       break;
     }  
+    case bitc::CST_CODE_CE_INBOUNDS_GEP:
     case bitc::CST_CODE_CE_GEP: {  // CE_GEP:        [n x operands]
       if (Record.size() & 1) return Error("Invalid CE_GEP record");
       SmallVector<Constant*, 16> Elts;
@@ -1007,6 +1008,8 @@ bool BitcodeReader::ParseConstants() {
       }
       V = Context.getConstantExprGetElementPtr(Elts[0], &Elts[1], 
                                                Elts.size()-1);
+      if (BitCode == bitc::CST_CODE_CE_INBOUNDS_GEP)
+        cast<GEPOperator>(V)->setIsInBounds(true);
       break;
     }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
@@ -1556,6 +1559,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = CastInst::Create((Instruction::CastOps)Opc, Op, ResTy);
       break;
     }
+    case bitc::FUNC_CODE_INST_INBOUNDS_GEP:
     case bitc::FUNC_CODE_INST_GEP: { // GEP: [n x operands]
       unsigned OpNum = 0;
       Value *BasePtr;
@@ -1571,6 +1575,8 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       }
 
       I = GetElementPtrInst::Create(BasePtr, GEPIdx.begin(), GEPIdx.end());
+      if (BitCode == bitc::FUNC_CODE_INST_INBOUNDS_GEP)
+        cast<GEPOperator>(I)->setIsInBounds(true);
       break;
     }
       

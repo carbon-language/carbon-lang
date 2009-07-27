@@ -132,7 +132,8 @@ namespace bitc {
     CST_CODE_CE_SHUFFLEVEC = 16,  // CE_SHUFFLEVEC: [opval, opval, opval]
     CST_CODE_CE_CMP        = 17,  // CE_CMP:        [opty, opval, opval, pred]
     CST_CODE_INLINEASM     = 18,  // INLINEASM:     [sideeffect,asmstr,conststr]
-    CST_CODE_CE_SHUFVEC_EX = 19   // SHUFVEC_EX:    [opty, opval, opval, opval]
+    CST_CODE_CE_SHUFVEC_EX = 19,  // SHUFVEC_EX:    [opty, opval, opval, opval]
+    CST_CODE_CE_INBOUNDS_GEP = 20 // INBOUNDS_GEP:  [n x operands]
   };
 
   /// CastOpcodes - These are values used in the bitcode files to encode which
@@ -229,7 +230,8 @@ namespace bitc {
     // support legacy vicmp/vfcmp instructions.
     FUNC_CODE_INST_CMP2        = 28, // CMP2:       [opty, opval, opval, pred]
     // new select on i1 or [N x i1]
-    FUNC_CODE_INST_VSELECT     = 29  // VSELECT:    [ty,opval,opval,predty,pred]
+    FUNC_CODE_INST_VSELECT     = 29, // VSELECT:    [ty,opval,opval,predty,pred]
+    FUNC_CODE_INST_INBOUNDS_GEP = 30 // INBOUNDS_GEP: [n x operands]
   };
 } // End bitc namespace
 } // End llvm namespace

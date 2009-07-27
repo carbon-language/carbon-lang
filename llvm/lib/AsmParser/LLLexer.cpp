@@ -504,6 +504,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(nuw);
   KEYWORD(nsw);
   KEYWORD(exact);
+  KEYWORD(inbounds);
   KEYWORD(align);
   KEYWORD(addrspace);
   KEYWORD(section);

@@ -181,6 +181,15 @@ public:
 
 class GEPOperator : public Operator {
 public:
+  /// isInBounds - Test whether this is an inbounds GEP, as defined
+  /// by LangRef.html.
+  bool isInBounds() const {
+    return SubclassOptionalData & (1 << 0);
+  }
+  void setIsInBounds(bool B) {
+    SubclassOptionalData = (SubclassOptionalData & ~(1 << 0)) | (B << 0);
+  }
+
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
   inline op_iterator       idx_end()         { return op_end(); }

@@ -457,7 +457,7 @@ bool LLParser::ParseStandaloneMetadata() {
 /// Aliasee
 ///   ::= TypeAndValue
 ///   ::= 'bitcast' '(' TypeAndValue 'to' Type ')'
-///   ::= 'getelementptr' '(' ... ')'
+///   ::= 'getelementptr' 'inbounds'? '(' ... ')'
 ///
 /// Everything through visibility has already been parsed.
 ///
@@ -2039,7 +2039,11 @@ bool LLParser::ParseValID(ValID &ID) {
   case lltok::kw_select: {
     unsigned Opc = Lex.getUIntVal();
     SmallVector<Constant*, 16> Elts;
+    bool InBounds = false;
     Lex.Lex();
+    if (Opc == Instruction::GetElementPtr)
+      if (EatIfPresent(lltok::kw_inbounds))
+        InBounds = true;
     if (ParseToken(lltok::lparen, "expected '(' in constantexpr") ||
         ParseGlobalValueVector(Elts) ||
         ParseToken(lltok::rparen, "expected ')' in constantexpr"))
@@ -2055,6 +2059,8 @@ bool LLParser::ParseValID(ValID &ID) {
         return Error(ID.Loc, "invalid indices for getelementptr");
       ID.ConstantVal = Context.getConstantExprGetElementPtr(Elts[0],
                                               Elts.data() + 1, Elts.size() - 1);
+      if (InBounds)
+        cast<GEPOperator>(ID.ConstantVal)->setIsInBounds(true);
     } else if (Opc == Instruction::Select) {
       if (Elts.size() != 3)
         return Error(ID.Loc, "expected three operands to select");
@@ -3368,9 +3374,14 @@ bool LLParser::ParseGetResult(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParseGetElementPtr
-///   ::= 'getelementptr' TypeAndValue (',' TypeAndValue)*
+///   ::= 'getelementptr' 'inbounds'? TypeAndValue (',' TypeAndValue)*
 bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Ptr, *Val; LocTy Loc, EltLoc;
+  bool InBounds = false;
+
+  if (EatIfPresent(lltok::kw_inbounds))
+    InBounds = true;
+
   if (ParseTypeAndValue(Ptr, Loc, PFS)) return true;
   
   if (!isa<PointerType>(Ptr->getType()))
@@ -3388,6 +3399,8 @@ bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
                                          Indices.begin(), Indices.end()))
     return Error(Loc, "invalid getelementptr indices");
   Inst = GetElementPtrInst::Create(Ptr, Indices.begin(), Indices.end());
+  if (InBounds)
+    cast<GEPOperator>(Inst)->setIsInBounds(true);
   return false;
 }
 
