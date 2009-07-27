@@ -144,6 +144,21 @@ bool ELFWriter::doInitialization(Module &M) {
   return false;
 }
 
+// addGlobalSymbol - Add a global to be processed and to the
+// global symbol lookup, use a zero index for non private symbols
+// because the table index will be determined later.
+void ELFWriter::addGlobalSymbol(const GlobalValue *GV) {
+  PendingGlobals.insert(GV);
+}
+
+// addExternalSymbol - Add the external to be processed and to the
+// external symbol lookup, use a zero index because the symbol
+// table index will be determined later
+void ELFWriter::addExternalSymbol(const char *External) {
+  PendingExternals.insert(External);
+  ExtSymLookup[External] = 0;
+}
+
 // Get jump table section on the section name returned by TAI
 ELFSection &ELFWriter::getJumpTableSection() {
   unsigned Align = TM.getTargetData()->getPointerABIAlignment();
@@ -169,7 +184,7 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
     default: Kind = SectionKind::get(SectionKind::MergeableConst,false); break;
     }
   }
-  
+
   return getSection(TAI->getSectionForMergeableConstant(Kind)->getName(),
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,
@@ -278,12 +293,18 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
   if (GblSymLookup.find(GV) != GblSymLookup.end())
     return;
 
+  // If the global is a function already emited in the text section
+  // just add it to the global symbol lookup with a zero index to be
+  // patched up later.
+  if (isa<Function>(GV) && !GV->isDeclaration()) {
+    GblSymLookup[GV] = 0;
+    return;
+  }
+
   // Handle ELF Bind, Visibility and Type for the current symbol
   unsigned SymBind = getGlobalELFBinding(GV);
-  ELFSym *GblSym = new ELFSym(GV);
-  GblSym->setBind(SymBind);
-  GblSym->setVisibility(getGlobalELFVisibility(GV));
-  GblSym->setType(getGlobalELFType(GV));
+  ELFSym *GblSym = ELFSym::getGV(GV, SymBind, getGlobalELFType(GV),
+                                 getGlobalELFVisibility(GV));
 
   if (isELFUndefSym(GV)) {
     GblSym->SectionIdx = ELFSection::SHN_UNDEF;
@@ -341,16 +362,18 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     }
   }
 
-  // Private symbols must never go to the symbol table.
-  unsigned SymIdx = 0;
   if (GV->hasPrivateLinkage()) {
+    // For a private symbols, keep track of the index inside the
+    // private list since it will never go to the symbol table and
+    // won't be patched up later.
     PrivateSyms.push_back(GblSym);
-    SymIdx = PrivateSyms.size()-1;
+    GblSymLookup[GV] = PrivateSyms.size()-1;
   } else {
+    // Non private symbol are left with zero indices until they are patched
+    // up during the symbol table emition (where the indicies are created).
     SymbolList.push_back(GblSym);
+    GblSymLookup[GV] = 0;
   }
-
-  setGlobalSymLookup(GV, SymIdx);
 }
 
 void ELFWriter::EmitGlobalConstantStruct(const ConstantStruct *CVS,
@@ -478,9 +501,14 @@ bool ELFWriter::doFinalization(Module &M) {
     EmitGlobal(I);
 
   // Emit all pending globals
-  for (SetVector<GlobalValue*>::const_iterator I = PendingGlobals.begin(),
-       E = PendingGlobals.end(); I != E; ++I)
+  for (PendingGblsIter I = PendingGlobals.begin(), E = PendingGlobals.end();
+       I != E; ++I)
     EmitGlobal(*I);
+
+  // Emit all pending externals
+  for (PendingExtsIter I = PendingExternals.begin(), E = PendingExternals.end();
+       I != E; ++I)
+    SymbolList.push_back(ELFSym::getExtSym(*I));
 
   // Emit non-executable stack note
   if (TAI->getNonexecutableStackDirective())
@@ -489,12 +517,8 @@ bool ELFWriter::doFinalization(Module &M) {
   // Emit a symbol for each section created until now, skip null section
   for (unsigned i = 1, e = SectionList.size(); i < e; ++i) {
     ELFSection &ES = *SectionList[i];
-    ELFSym *SectionSym = new ELFSym(0);
+    ELFSym *SectionSym = ELFSym::getSectionSym();
     SectionSym->SectionIdx = ES.SectionIdx;
-    SectionSym->Size = 0;
-    SectionSym->setBind(ELFSym::STB_LOCAL);
-    SectionSym->setType(ELFSym::STT_SECTION);
-    SectionSym->setVisibility(ELFSym::STV_DEFAULT);
     SymbolList.push_back(SectionSym);
     ES.Sym = SymbolList.back();
   }
@@ -589,6 +613,10 @@ void ELFWriter::EmitRelocations() {
         } else {
           Addend = TEW->getDefaultAddendForRelTy(RelType);
         }
+      } else if (MR.isExternalSymbol()) {
+        const char *ExtSym = MR.getExternalSymbol();
+        SymIdx = ExtSymLookup[ExtSym];
+        Addend = TEW->getDefaultAddendForRelTy(RelType);
       } else {
         // Get the symbol index for the section symbol
         unsigned SectionIdx = MR.getConstantVal();
@@ -695,7 +723,10 @@ void ELFWriter::EmitStringTable() {
 
     // Use the name mangler to uniquify the LLVM symbol.
     std::string Name;
-    if (Sym.GV) Name.append(Mang->getMangledName(Sym.GV));
+    if (Sym.isGlobalValue())
+      Name.append(Mang->getMangledName(Sym.getGlobalValue()));
+    else if (Sym.isExternalSym())
+      Name.append(Sym.getExternalSymbol());
 
     if (Name.empty()) {
       Sym.NameIdx = 0;
@@ -755,7 +786,7 @@ void ELFWriter::EmitSymbolTable() {
   SymTab.EntSize = TEW->getSymTabEntrySize();
 
   // The first entry in the symtab is the null symbol
-  SymbolList.insert(SymbolList.begin(), new ELFSym(0));
+  SymbolList.insert(SymbolList.begin(), new ELFSym());
 
   // Reorder the symbol table with local symbols first!
   unsigned FirstNonLocalSymbol = SortSymbols();
@@ -767,8 +798,11 @@ void ELFWriter::EmitSymbolTable() {
     // Emit symbol to the symbol table
     EmitSymbol(SymTab, Sym);
 
-    // Record the symbol table index for each global value
-    if (Sym.GV) setGlobalSymLookup(Sym.GV, i);
+    // Record the symbol table index for each symbol
+    if (Sym.isGlobalValue())
+      GblSymLookup[Sym.getGlobalValue()] = i;
+    else if (Sym.isExternalSym())
+      ExtSymLookup[Sym.getExternalSymbol()] = i;
 
     // Keep track on the symbol index into the symbol table
     Sym.SymTabIdx = i;

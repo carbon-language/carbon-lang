@@ -56,9 +56,74 @@ namespace llvm {
   /// added to logical symbol table for the module.  This is eventually
   /// turned into a real symbol table in the file.
   struct ELFSym {
-    // The global value this symbol matches. This should be null if the symbol
-    // is not a global value.
-    const GlobalValue *GV;
+
+    // ELF symbols are related to llvm ones by being one of the two llvm
+    // types, for the other ones (section, file, func) a null pointer is
+    // assumed.
+    union {
+      const GlobalValue *GV;  // If this is a pointer to a GV
+      const char *Ext;  // If this is a pointer to a named symbol
+    } Source;
+
+    // Describes from which source type this ELF symbol comes from,
+    // they can be GlobalValue, ExternalSymbol or neither.
+    enum {
+      isGV,      // The Source.GV field is valid.
+      isExtSym,  // The Source.ExtSym field is valid.
+      isOther    // Not a GlobalValue or External Symbol
+    };
+    unsigned SourceType;
+
+    bool isGlobalValue() { return SourceType == isGV; }
+    bool isExternalSym() { return SourceType == isExtSym; }
+
+    // getGlobalValue - If this is a global value which originated the
+    // elf symbol, return a reference to it.
+    const GlobalValue *getGlobalValue() {
+      assert(SourceType == isGV && "This is not a global value");
+      return Source.GV;
+    };
+
+    // getExternalSym - If this is an external symbol which originated the
+    // elf symbol, return a reference to it.
+    const char *getExternalSymbol() {
+      assert(SourceType == isExtSym && "This is not an external symbol");
+      return Source.Ext;
+    };
+
+    // getGV - From a global value return a elf symbol to represent it
+    static ELFSym *getGV(const GlobalValue *GV, unsigned Bind,
+                         unsigned Type, unsigned Visibility) {
+      ELFSym *Sym = new ELFSym();
+      Sym->Source.GV = GV;
+      Sym->setBind(Bind);
+      Sym->setType(Type);
+      Sym->setVisibility(Visibility);
+      Sym->SourceType = isGV;
+      return Sym;
+    }
+
+    // getExtSym - Create and return an elf symbol to represent an
+    // external symbol
+    static ELFSym *getExtSym(const char *Ext) {
+      ELFSym *Sym = new ELFSym();
+      Sym->Source.Ext = Ext;
+      Sym->setBind(STB_GLOBAL);
+      Sym->setType(STT_NOTYPE);
+      Sym->setVisibility(STV_DEFAULT);
+      Sym->SourceType = isExtSym;
+      return Sym;
+    }
+
+    // getSectionSym - Returns a elf symbol to represent an elf section
+    static ELFSym *getSectionSym() {
+      ELFSym *Sym = new ELFSym();
+      Sym->setBind(ELFSym::STB_LOCAL);
+      Sym->setType(ELFSym::STT_SECTION);
+      Sym->setVisibility(ELFSym::STV_DEFAULT);
+      Sym->SourceType = isOther;
+      return Sym;
+    }
 
     // ELF specific fields
     unsigned NameIdx;         // Index in .strtab of name, once emitted.
@@ -92,9 +157,9 @@ namespace llvm {
       STV_PROTECTED = 3 // Visible in other components but not preemptable
     };
 
-    ELFSym(const GlobalValue *gv) : GV(gv), NameIdx(0), Value(0),
-                                    Size(0), Info(0), Other(STV_DEFAULT),
-                                    SectionIdx(0), SymTabIdx(0) {}
+    ELFSym() : SourceType(isOther), NameIdx(0), Value(0),
+               Size(0), Info(0), Other(STV_DEFAULT), SectionIdx(0),
+               SymTabIdx(0) {}
 
     unsigned getBind() const { return (Info >> 4) & 0xf; }
     unsigned getType() const { return Info & 0xf; }

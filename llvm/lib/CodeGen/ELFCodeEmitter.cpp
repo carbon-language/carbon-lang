@@ -69,16 +69,11 @@ void ELFCodeEmitter::startFunction(MachineFunction &MF) {
 bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
   // Add a symbol to represent the function.
   const Function *F = MF.getFunction();
-  ELFSym *FnSym = new ELFSym(F);
-  FnSym->setType(ELFSym::STT_FUNC);
-  FnSym->setBind(EW.getGlobalELFBinding(F));
-  FnSym->setVisibility(EW.getGlobalELFVisibility(F));
+  ELFSym *FnSym = ELFSym::getGV(F, EW.getGlobalELFBinding(F), ELFSym::STT_FUNC,
+                                EW.getGlobalELFVisibility(F));
   FnSym->SectionIdx = ES->SectionIdx;
   FnSym->Size = ES->getCurrentPCOffset()-FnStartOff;
-
-  // keep track of the emitted function leaving its symbol index as zero
-  // to be patched up later when emitting the symbol table
-  EW.setGlobalSymLookup(F, 0);
+  EW.addGlobalSymbol(F);
 
   // Offset from start of Section
   FnSym->Value = FnStartOff;
@@ -108,7 +103,9 @@ bool ELFCodeEmitter::finishFunction(MachineFunction &MF) {
     MachineRelocation &MR = Relocations[i];
     intptr_t Addr;
     if (MR.isGlobalValue()) {
-      EW.PendingGlobals.insert(MR.getGlobalValue());
+      EW.addGlobalSymbol(MR.getGlobalValue());
+    } else if (MR.isExternalSymbol()) {
+      EW.addExternalSymbol(MR.getExternalSymbol());
     } else if (MR.isBasicBlock()) {
       Addr = getMachineBasicBlockAddress(MR.getBasicBlock());
       MR.setConstantVal(ES->SectionIdx);

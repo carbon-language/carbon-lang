@@ -38,6 +38,8 @@ namespace llvm {
 
   typedef std::vector<ELFSym*>::iterator ELFSymIter;
   typedef std::vector<ELFSection*>::iterator ELFSectionIter;
+  typedef SetVector<const GlobalValue*>::const_iterator PendingGblsIter;
+  typedef SetVector<const char *>::const_iterator PendingExtsIter;
 
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
@@ -108,10 +110,21 @@ namespace llvm {
     /// the SectionList. Used to quickly gather the Section Index from TAI names
     std::map<std::string, ELFSection*> SectionLookup;
 
+    /// PendingGlobals - Globals not processed as symbols yet.
+    SetVector<const GlobalValue*> PendingGlobals;
+
     /// GblSymLookup - This is a mapping from global value to a symbol index
     /// in the symbol table or private symbols list. This is useful since reloc
-    /// symbol references must be quickly mapped to their indices on the lists
+    /// symbol references must be quickly mapped to their indices on the lists.
     std::map<const GlobalValue*, uint32_t> GblSymLookup;
+
+    /// PendingExternals - Externals not processed as symbols yet.
+    SetVector<const char *> PendingExternals;
+
+    /// ExtSymLookup - This is a mapping from externals to a symbol index
+    /// in the symbol table list. This is useful since reloc symbol references
+    /// must be quickly mapped to their symbol table indices.
+    std::map<const char *, uint32_t> ExtSymLookup;
 
     /// SymbolList - This is the list of symbols emitted to the symbol table.
     /// When the SymbolList is finally built, local symbols must be placed in
@@ -121,11 +134,6 @@ namespace llvm {
     /// PrivateSyms - Record private symbols, every symbol here must never be
     /// present in the SymbolList.
     std::vector<ELFSym*> PrivateSyms;
-
-    /// PendingGlobals - List of externally defined symbols that we have been
-    /// asked to emit, but have not seen a reference to.  When a reference
-    /// is seen, the symbol will move from this list to the SymbolList.
-    SetVector<GlobalValue*> PendingGlobals;
 
     // Remove tab from section name prefix. This is necessary becase TAI
     // sometimes return a section name prefixed with elf unused chars. This is
@@ -212,10 +220,15 @@ namespace llvm {
     unsigned getGlobalELFVisibility(const GlobalValue *GV);
     unsigned getElfSectionFlags(SectionKind Kind);
 
-    // setGlobalSymLookup - Set global value 'GV' with 'Index' in the lookup map
-    void setGlobalSymLookup(const GlobalValue *GV, unsigned Index) {
-      GblSymLookup[GV] = Index;
-    }
+    // addGlobalSymbol - Add a global to be processed and to the
+    // global symbol lookup, use a zero index for non private symbols
+    // because the table index will be determined later.
+    void addGlobalSymbol(const GlobalValue *GV);
+
+    // addExternalSymbol - Add the external to be processed and to the
+    // external symbol lookup, use a zero index because the symbol
+    // table index will be determined later
+    void addExternalSymbol(const char *External);
 
     // As we complete the ELF file, we need to update fields in the ELF header
     // (e.g. the location of the section table).  These members keep track of
