@@ -16,11 +16,9 @@
 #ifndef LLVM_CODEGEN_ASMPRINTER_H
 #define LLVM_CODEGEN_ASMPRINTER_H
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Support/DataTypes.h"
 #include "llvm/Target/TargetMachine.h"
-#include <set>
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
   class GCStrategy;
