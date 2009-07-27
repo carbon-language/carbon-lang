@@ -236,7 +236,7 @@ def main():
                       action="store_true", default=False)
     parser.add_option("", "--path", dest="path",
                       help="Additional paths to add to testing environment",
-                      action="store", type=str, default=None)
+                      action="append", type=str, default=[])
                       
     (opts, args) = parser.parse_args()
 
@@ -245,6 +245,10 @@ def main():
     if opts.useValgrind:
         parser.error('Support for running with valgrind is '
                      'temporarily disabled')
+
+    # FIXME: Move into configuration object.
+    TestRunner.kChildEnv["PATH"] = os.pathsep.join(opts.path + 
+                                                   [TestRunner.kChildEnv['PATH']])
 
     if opts.clang is None:
         opts.clang = TestRunner.inferClang()
@@ -266,9 +270,7 @@ def main():
         random.shuffle(tests)
     if opts.maxTests is not None:
         tests = tests[:opts.maxTests]
-    if opts.path is not None:
-        os.environ["PATH"] = opts.path + ":" + os.environ["PATH"];
-    
+        
     extra = ''
     if len(tests) != len(allTests):
         extra = ' of %d'%(len(allTests),)

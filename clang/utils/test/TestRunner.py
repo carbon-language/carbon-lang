@@ -142,8 +142,8 @@ def runOneTest(testPath, tmpBase, clang, clangcc):
 
         if not ln.endswith('&&'):
             return (TestStatus.Fail, 
-                    "MISSING \'&&\': %s\n" +
-                    "FOLLOWED BY   : %s\n" % (ln,scriptLines[i + 1]))
+                    ("MISSING \'&&\': %s\n"  +
+                     "FOLLOWED BY   : %s\n") % (ln, scriptLines[i + 1]))
     
         # Strip off '&&'
         scriptLines[i] = ln[:-2]
@@ -182,12 +182,14 @@ def capture(args):
     return out
 
 def which(command):
+    # FIXME: Take configuration object.
+
     # Check for absolute match first.
     if os.path.exists(command):
         return command
 
     # Would be nice if Python had a lib function for this.
-    paths = os.environ.get('PATH')
+    paths = kChildEnv['PATH']
     if not paths:
         paths = os.defpath
 

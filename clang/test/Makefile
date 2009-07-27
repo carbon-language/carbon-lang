@@ -20,7 +20,10 @@ endif
 
 all::
 	@ echo '--- Running clang tests for $(TARGET_TRIPLE) ---'
-	@ PATH=$(ToolDir):$(LLVM_SRC_ROOT)/test/Scripts:$$PATH $(PROJ_SRC_DIR)/../utils/test/MultiTestRunner.py $(TESTARGS) $(TESTDIRS) $(VGARG)
+	@ $(PROJ_SRC_DIR)/../utils/test/MultiTestRunner.py \
+	  --path $(ToolDir) \
+	  --path $(LLVM_SRC_ROOT)/test/Scripts \
+	  $(TESTARGS) $(TESTDIRS) $(VGARG)
 
 clean::
 	@ rm -rf Output/
