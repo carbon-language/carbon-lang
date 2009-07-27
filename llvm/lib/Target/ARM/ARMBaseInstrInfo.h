@@ -163,12 +163,8 @@ namespace ARMII {
   ///
   enum Op {
     ADDri,
-    ADDrs,
-    ADDrr,
     MOVr,
-    SUBri,
-    SUBrs,
-    SUBrr
+    SUBri
   };
 }
 

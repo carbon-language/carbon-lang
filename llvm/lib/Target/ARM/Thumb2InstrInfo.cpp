@@ -34,12 +34,8 @@ unsigned Thumb2InstrInfo::getUnindexedOpcode(unsigned Opc) const {
 unsigned Thumb2InstrInfo::getOpcode(ARMII::Op Op) const {
   switch (Op) {
   case ARMII::ADDri: return ARM::t2ADDri;
-  case ARMII::ADDrs: return ARM::t2ADDrs;
-  case ARMII::ADDrr: return ARM::t2ADDrr;
   case ARMII::MOVr: return ARM::t2MOVr;
   case ARMII::SUBri: return ARM::t2SUBri;
-  case ARMII::SUBrs: return ARM::t2SUBrs;
-  case ARMII::SUBrr: return ARM::t2SUBrr;
   default:
     break;
   }

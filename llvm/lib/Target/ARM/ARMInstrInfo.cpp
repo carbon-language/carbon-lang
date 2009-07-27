@@ -66,12 +66,8 @@ unsigned ARMInstrInfo::
 getOpcode(ARMII::Op Op) const {
   switch (Op) {
   case ARMII::ADDri: return ARM::ADDri;
-  case ARMII::ADDrs: return ARM::ADDrs;
-  case ARMII::ADDrr: return ARM::ADDrr;
   case ARMII::MOVr: return ARM::MOVr;
   case ARMII::SUBri: return ARM::SUBri;
-  case ARMII::SUBrs: return ARM::SUBrs;
-  case ARMII::SUBrr: return ARM::SUBrr;
   default:
     break;
   }
