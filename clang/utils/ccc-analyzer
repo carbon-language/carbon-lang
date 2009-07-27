@@ -584,7 +584,7 @@ if ($Action eq 'compile' or $Action eq 'link') {
 
     if (defined $OutputFormat) {
       push @AnalyzeArgs, "-analyzer-output=" . $OutputFormat;
-      if ($OutputFormat eq "plist") {
+      if ($OutputFormat =~ /plist/) {
         # Change "Output" to be a file.
         my ($h, $f) = tempfile("report-XXXXXX", SUFFIX => ".plist",
                                DIR => $HtmlDir);

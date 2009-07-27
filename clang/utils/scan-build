@@ -1167,7 +1167,12 @@ while (@ARGV) {
     $OutputFormat = "plist";
     next;
   }
-  
+  if ($arg eq "-plist-html") {
+    shift @ARGV;
+    $OutputFormat = "plist-html";
+    next;
+  }
+
   DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
   
   last;
@@ -1253,25 +1258,27 @@ if (defined $OutputFormat) {
 # Run the build.
 my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 
-if (defined $OutputFormat and $OutputFormat eq "plist") {
-  Diag "Analysis run complete.\n";
-  Diag "Analysis results (plist files) deposited in '$HtmlDir'\n";
-}
-else {
-  # Postprocess the HTML directory.
-  my $NumBugs = Postprocess($HtmlDir, $BaseDir);
+if (defined $OutputFormat) {
+  if ($OutputFormat =~ /html/) {
+    # Postprocess the HTML directory.
+    my $NumBugs = Postprocess($HtmlDir, $BaseDir);
 
-  if ($ViewResults and -r "$HtmlDir/index.html") {
-    Diag "Analysis run complete.\n";
-    Diag "Viewing analysis results in '$HtmlDir' using scan-view.\n";
-    my $ScanView = Cwd::realpath("$RealBin/scan-view");
-    if (! -x $ScanView) { $ScanView = "scan-view"; }
-    exec $ScanView, "$HtmlDir";
+    if ($ViewResults and -r "$HtmlDir/index.html") {
+      Diag "Analysis run complete.\n";
+      Diag "Viewing analysis results in '$HtmlDir' using scan-view.\n";
+      my $ScanView = Cwd::realpath("$RealBin/scan-view");
+      if (! -x $ScanView) { $ScanView = "scan-view"; }
+      exec $ScanView, "$HtmlDir";
+    }
+
+    if ($ExitStatusFoundBugs) {
+      exit 1 if ($NumBugs > 0);
+      exit 0;
+    }
   }
-
-  if ($ExitStatusFoundBugs) {
-    exit 1 if ($NumBugs > 0);
-    exit 0;
+  elsif ($OutputFormat =~ /plist/) {
+    Diag "Analysis run complete.\n";
+    Diag "Analysis results (plist files) deposited in '$HtmlDir'\n";
   }
 }
 
