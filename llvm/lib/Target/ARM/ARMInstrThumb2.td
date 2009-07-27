@@ -164,22 +164,28 @@ multiclass T2I_un_irs<string opc, PatFrag opnode, bit Cheap = 0, bit ReMat = 0>{
 /// T2I_bin_irs - Defines a set of (op reg, {so_imm|r|so_reg}) patterns for a
 //  binary operation that produces a value. These are predicable and can be
 /// changed to modify CPSR.
-multiclass T2I_bin_irs<string opc, PatFrag opnode, bit Commutable = 0> {
+multiclass T2I_bin_irs<string opc, PatFrag opnode, 
+                       bit Commutable = 0, string wide =""> {
    // shifted imm
    def ri : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_imm:$rhs),
                  opc, " $dst, $lhs, $rhs",
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_imm:$rhs))]>;
    // register
    def rr : T2sI<(outs GPR:$dst), (ins GPR:$lhs, GPR:$rhs),
-                 opc, ".w $dst, $lhs, $rhs",
+                 opc, !strconcat(wide, " $dst, $lhs, $rhs"),
                  [(set GPR:$dst, (opnode GPR:$lhs, GPR:$rhs))]> {
      let isCommutable = Commutable;
    }
    // shifted register
    def rs : T2sI<(outs GPR:$dst), (ins GPR:$lhs, t2_so_reg:$rhs),
-                 opc, ".w $dst, $lhs, $rhs",
+                 opc, !strconcat(wide, " $dst, $lhs, $rhs"),
                  [(set GPR:$dst, (opnode GPR:$lhs, t2_so_reg:$rhs))]>;
 }
+
+/// T2I_bin_w_irs - Same as T2I_bin_irs except these operations need
+//  the ".w" prefix to indicate that they are wide.
+multiclass T2I_bin_w_irs<string opc, PatFrag opnode, bit Commutable = 0> :
+    T2I_bin_irs<opc, opnode, Commutable, ".w">;
 
 /// T2I_rbin_is - Same as T2I_bin_irs except the order of operands are
 /// reversed. It doesn't define the 'rr' form since it's handled by its
@@ -731,11 +737,11 @@ def t2MOVrx : T2sI<(outs GPR:$dst), (ins GPR:$src),
 //  Bitwise Instructions.
 //
 
-defm t2AND  : T2I_bin_irs<"and", BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
-defm t2ORR  : T2I_bin_irs<"orr", BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
-defm t2EOR  : T2I_bin_irs<"eor", BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
+defm t2AND  : T2I_bin_w_irs<"and", BinOpFrag<(and node:$LHS, node:$RHS)>, 1>;
+defm t2ORR  : T2I_bin_w_irs<"orr", BinOpFrag<(or  node:$LHS, node:$RHS)>, 1>;
+defm t2EOR  : T2I_bin_w_irs<"eor", BinOpFrag<(xor node:$LHS, node:$RHS)>, 1>;
 
-defm t2BIC  : T2I_bin_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
+defm t2BIC  : T2I_bin_w_irs<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 let Constraints = "$src = $dst" in
 def t2BFC : T2I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
