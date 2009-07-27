@@ -191,6 +191,9 @@ X86ELFTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
 X86COFFTargetAsmInfo::X86COFFTargetAsmInfo(const X86TargetMachine &TM):
   X86GenericTargetAsmInfo(TM) {
 
+  TextSection = getOrCreateSection("_text", true, SectionKind::Text);
+  DataSection = getOrCreateSection("_data", true, SectionKind::DataRel);
+
   GlobalPrefix = "_";
   LCOMMDirective = "\t.lcomm\t";
   COMMDirectiveTakesAlignment = false;
