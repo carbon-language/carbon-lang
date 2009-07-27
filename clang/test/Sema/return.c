@@ -205,3 +205,6 @@ int test30() {
   else
     _longjmp(test30_j, 1);
 }
+
+typedef void test31_t(int status);
+void test31(test31_t *callback __attribute__((noreturn)));

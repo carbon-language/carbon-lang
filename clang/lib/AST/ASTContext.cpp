@@ -1061,10 +1061,10 @@ QualType ASTContext::getNoReturnType(QualType T) {
   if (!T->isFunctionType())
     assert(0 && "can't noreturn qualify non-pointer to function or block type");
   
-  if (const FunctionNoProtoType *F = dyn_cast<FunctionNoProtoType>(T)) {
+  if (const FunctionNoProtoType *F = T->getAsFunctionNoProtoType()) {
     return getFunctionNoProtoType(F->getResultType(), true);
   }
-  const FunctionProtoType *F = cast<FunctionProtoType>(T);
+  const FunctionProtoType *F = T->getAsFunctionProtoType();
   return getFunctionType(F->getResultType(), F->arg_type_begin(),
                          F->getNumArgs(), F->isVariadic(), F->getTypeQuals(),
                          F->hasExceptionSpec(), F->hasAnyExceptionSpec(),
