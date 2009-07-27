@@ -119,6 +119,82 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
     return true;
   }
   
+  bool AppendBitField(const FieldDecl *Field, uint64_t FieldOffset, 
+                      const Expr *InitExpr) {
+    llvm::ConstantInt *CI = 
+      cast_or_null<llvm::ConstantInt>(CGM.EmitConstantExpr(InitExpr, 
+                                                           Field->getType(), 
+                                                           CGF));
+    // FIXME: Can this ever happen?
+    if (!CI)
+      return false;
+    
+    if (FieldOffset > NextFieldOffsetInBytes * 8) {
+      // FIXME: Add padding.
+      return false;
+    }
+
+    uint64_t FieldSize = 
+      Field->getBitWidth()->EvaluateAsInt(CGM.getContext()).getZExtValue();
+
+    llvm::APInt FieldValue = CI->getValue();
+    
+    // Promote the size of FieldValue if necessary
+    // FIXME: This should never occur, but currently it can because initializer
+    // constants are cast to bool, and because clang is not enforcing bitfield
+    // width limits.
+    if (FieldSize > FieldValue.getBitWidth())
+      FieldValue.zext(FieldSize);
+    
+    // Truncate the size of FieldValue to the bit field size.
+    if (FieldSize < FieldValue.getBitWidth())
+      FieldValue.trunc(FieldSize);
+
+    if (FieldOffset < NextFieldOffsetInBytes * 8) {
+      // FIXME: Part of the bitfield should go into the previous byte.
+      return false;
+    }
+    
+    while (FieldValue.getBitWidth() > 8) {
+      llvm::APInt Tmp;
+      
+      if (CGM.getTargetData().isBigEndian()) {
+        // We want the low bits.
+        Tmp = FieldValue.getLoBits(8);
+      } else {
+        // We want the high bits.
+        Tmp = FieldValue.getHiBits(8);
+      }
+      
+      Tmp.trunc(8);
+      Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(), Tmp));
+      NextFieldOffsetInBytes++;
+      
+      FieldValue.trunc(FieldValue.getBitWidth() - 8);
+    }
+
+    assert(FieldValue.getBitWidth() > 0 &&
+           "Should have at least one bit left!");
+    assert(FieldValue.getBitWidth() <= 8 &&
+           "Should not have more than a byte left!");
+
+    if (FieldValue.getBitWidth() < 8) {
+      if (CGM.getTargetData().isBigEndian()) {
+        unsigned BitWidth = FieldValue.getBitWidth();
+      
+        FieldValue.zext(8);
+        FieldValue = FieldValue << (8 - BitWidth);
+      } else 
+        FieldValue.zext(8);
+    }
+
+    // Append the last element.
+    Elements.push_back(llvm::ConstantInt::get(CGM.getLLVMContext(),
+                                              FieldValue));
+    NextFieldOffsetInBytes++;
+    return true;
+  }
+  
   void AppendPadding(uint64_t NumBytes) {
     if (!NumBytes)
       return;
@@ -158,8 +234,9 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
         if (!Field->getIdentifier())
           continue;
         
-        // FIXME: Bitfield support.
-        return false;
+        if (!AppendBitField(*Field, Layout.getFieldOffset(FieldNo),
+                            ILE->getInit(ElementNo)))
+          return false;
       } else {
         if (!AppendField(*Field, Layout.getFieldOffset(FieldNo),
                          ILE->getInit(ElementNo)))
