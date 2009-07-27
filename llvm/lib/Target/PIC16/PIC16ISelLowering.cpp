@@ -1573,11 +1573,20 @@ SDValue PIC16TargetLowering::LowerSUB(SDValue Op, SelectionDAG &DAG) {
   SDValue NewVal = ConvertToMemOperand (Op.getOperand(0), DAG, dl);
 
   SDVTList Tys = DAG.getVTList(MVT::i8, MVT::Flag);
-  if (Op.getOpcode() == ISD::SUBE)
-    return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1),
-                       Op.getOperand(2));
-  else
-    return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1));
+  switch (Op.getOpcode()) {
+    case ISD::SUBE:
+      return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1),
+                         Op.getOperand(2));
+      break;
+    case ISD::SUBC:
+      return DAG.getNode(Op.getOpcode(), dl, Tys, NewVal, Op.getOperand(1));
+      break;
+    case ISD::SUB:
+      return DAG.getNode(Op.getOpcode(), dl, MVT::i8, NewVal, Op.getOperand(1));
+      break;
+    default:
+      assert (0 && "Opcode unknown."); 
+  }
 }
 
 void PIC16TargetLowering::InitReservedFrameCount(const Function *F) {
