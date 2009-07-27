@@ -287,38 +287,6 @@ multiclass T2I_adde_sube_irs<string opc, PatFrag opnode, bit Commutable = 0> {
 }
 }
 
-/// T2I_rsc_is - Same as T2I_adde_sube_irs except the order of operands are
-/// reversed. It doesn't define the 'rr' form since it's handled by its
-/// T2I_adde_sube_irs counterpart.
-let Defs = [CPSR], Uses = [CPSR] in {
-multiclass T2I_rsc_is<string opc, PatFrag opnode> {
-   // shifted imm
-   def ri : T2sI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs),
-                 opc, " $dst, $rhs, $lhs",
-                 [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>,
-                 Requires<[IsThumb2, CarryDefIsUnused]>;
-   // shifted register
-   def rs : T2sI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs),
-                 opc, " $dst, $rhs, $lhs",
-                 [(set GPR:$dst, (opnode t2_so_reg:$lhs, GPR:$rhs))]>,
-                 Requires<[IsThumb2, CarryDefIsUnused]>;
-   // shifted imm
-   def Sri : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_imm:$lhs),
-                 !strconcat(opc, "s $dst, $rhs, $lhs"),
-                 [(set GPR:$dst, (opnode t2_so_imm:$lhs, GPR:$rhs))]>,
-                 Requires<[IsThumb2, CarryDefIsUsed]> {
-                   let Defs = [CPSR];
-   }
-   // shifted register
-   def Srs : T2XI<(outs GPR:$dst), (ins GPR:$rhs, t2_so_reg:$lhs),
-                 !strconcat(opc, "s $dst, $rhs, $lhs"),
-                 [(set GPR:$dst, (opnode t2_so_reg:$lhs, GPR:$rhs))]>,
-                 Requires<[IsThumb2, CarryDefIsUsed]> {
-                   let Defs = [CPSR];
-   }
-}
-}
-
 /// T2I_rbin_s_is - Same as T2I_rbin_is except sets 's' bit.
 let Defs = [CPSR] in {
 multiclass T2I_rbin_s_is<string opc, PatFrag opnode> {
@@ -735,10 +703,9 @@ defm t2SUBS : T2I_bin_s_irs <"sub",  BinOpFrag<(subc node:$LHS, node:$RHS)>>;
 defm t2ADC  : T2I_adde_sube_irs<"adc",BinOpFrag<(adde node:$LHS, node:$RHS)>,1>;
 defm t2SBC  : T2I_adde_sube_irs<"sbc",BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
-// RSB, RSC
+// RSB
 defm t2RSB  : T2I_rbin_is   <"rsb", BinOpFrag<(sub  node:$LHS, node:$RHS)>>;
 defm t2RSBS : T2I_rbin_s_is <"rsb", BinOpFrag<(subc node:$LHS, node:$RHS)>>;
-defm t2RSC  : T2I_rsc_is    <"rsc", BinOpFrag<(sube node:$LHS, node:$RHS)>>;
 
 // (sub X, imm) gets canonicalized to (add X, -imm).  Match this form.
 def : T2Pat<(add       GPR:$src, t2_so_imm_neg:$imm),
