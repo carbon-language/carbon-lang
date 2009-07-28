@@ -1469,6 +1469,23 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
     return;
   }
 
+  // Bounds checking.
+  if (addrSpace.isSigned()) {
+    if (addrSpace.isNegative()) {
+      S.Diag(Attr.getLoc(), diag::err_attribute_address_space_negative)
+        << ASArgExpr->getSourceRange();
+      return;
+    }
+    addrSpace.setIsSigned(false);
+  }
+  llvm::APSInt max(addrSpace.getBitWidth());
+  max = QualType::MaxAddressSpace;
+  if (addrSpace > max) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_address_space_too_high)
+      << QualType::MaxAddressSpace << ASArgExpr->getSourceRange();
+    return;
+  }
+
   unsigned ASIdx = static_cast<unsigned>(addrSpace.getZExtValue()); 
   Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
 }

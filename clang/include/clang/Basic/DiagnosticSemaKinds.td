@@ -512,6 +512,10 @@ def err_ext_vector_component_name_illegal : Error<
   "illegal vector component name '%0'">;
 def err_attribute_address_space_not_int : Error<
   "address space attribute requires an integer constant">;
+def err_attribute_address_space_negative : Error<
+  "address space is negative">;
+def err_attribute_address_space_too_high : Error<
+  "address space is larger than the maximum supported (%0)">;
 def err_attribute_address_multiple_qualifiers : Error<
   "multiple address spaces specified for type">;
 def err_implicit_pointer_address_space_cast : Error<

@@ -15,6 +15,12 @@ void foo(_AS3 float *a) {
   _AS1 int array[5];  // expected-error {{automatic variable qualified with an address space}}
   _AS1 int arrarr[5][5]; // expected-error {{automatic variable qualified with an address space}}
 
+  __attribute__((address_space(-1))) int *_boundsA; // expected-error {{address space is negative}}
+  __attribute__((address_space(0xFFFFFF))) int *_boundsB;
+  __attribute__((address_space(0x1000000))) int *_boundsC; // expected-error {{address space is larger than the maximum supported}}
+  // chosen specifically to overflow 32 bits and come out reasonable
+  __attribute__((address_space(4294967500))) int *_boundsD; // expected-error {{address space is larger than the maximum supported}}
+
   *a = 5.0f;
 }
 

@@ -97,6 +97,9 @@ public:
     Weak,
     Strong
   };
+
+  // 24 bits should be enough for anyone.
+  static const unsigned MaxAddressSpace = 0xffffffu;
   
   QualType() {}
   
@@ -569,6 +572,10 @@ public:
 
 
 /// QualifierSet - This class is used to collect qualifiers.
+/// Clang supports five independent qualifiers:
+/// * C99: const, volatile, and restrict
+/// * Embedded C (TR18037): address spaces
+/// * Objective C: the GC attributes (none, weak, or strong)
 class QualifierSet {
 public:
   QualifierSet() : Mask(0) {}
@@ -653,7 +660,7 @@ private:
   static const uint32_t GCAttrShift = 3;
   static const uint32_t AddressSpaceMask = ~(CVRMask | GCAttrMask);
   static const uint32_t AddressSpaceShift = 5;
-  static const unsigned MaxAddressSpace = ~0u >> AddressSpaceShift;
+  static const unsigned MaxAddressSpace = QualType::MaxAddressSpace;
 };
 
 
