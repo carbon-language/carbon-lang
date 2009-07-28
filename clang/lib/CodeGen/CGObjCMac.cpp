@@ -3489,6 +3489,7 @@ void CGObjCMac::FinishModule() {
   if (!CGM.getModule().getModuleInlineAsm().empty())
     s << "\n";
   
+  // FIXME: This produces non-determinstic output.
   for (std::set<IdentifierInfo*>::iterator I = LazySymbols.begin(),
          e = LazySymbols.end(); I != e; ++I) {
     s << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
@@ -4255,8 +4256,7 @@ llvm::GlobalVariable * CGObjCNonFragileABIMac::BuildClassRoTInitializer(
     Values[ 9] = VMContext.getNullValue(ObjCTypes.PropertyListPtrTy);
   else
     Values[ 9] = 
-      EmitPropertyList(
-                       "\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
+      EmitPropertyList("\01l_OBJC_$_PROP_LIST_" + ID->getNameAsString(),
                        ID, ID->getClassInterface(), ObjCTypes);
   llvm::Constant *Init = llvm::ConstantStruct::get(ObjCTypes.ClassRonfABITy,
                                                    Values);
