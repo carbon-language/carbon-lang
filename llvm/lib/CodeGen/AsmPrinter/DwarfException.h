@@ -141,6 +141,8 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
     unsigned Action;
   };
 
+  /// ComputeActionsTable - Compute the actions table and gather the first
+  /// action index for each landing pad site.
   unsigned ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LP,
                                SmallVectorImpl<ActionEntry> &Actions,
                                SmallVectorImpl<unsigned> &FirstActions);

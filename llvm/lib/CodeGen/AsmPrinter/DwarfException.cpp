@@ -284,8 +284,8 @@ bool DwarfException::PadLT(const LandingPadInfo *L, const LandingPadInfo *R) {
   return LSize < RSize;
 }
 
-// ComputeActionsTable - Compute the actions table and gather the first action
-// index for each landing pad site.
+/// ComputeActionsTable - Compute the actions table and gather the first action
+/// index for each landing pad site.
 unsigned
 DwarfException::ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*>
                                       &LandingPads,
