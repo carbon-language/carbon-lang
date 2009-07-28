@@ -213,7 +213,7 @@ namespace {
     Instruction *FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
                                 ConstantInt *DivRHS);
 
-    Instruction *FoldGEPICmp(User *GEPLHS, Value *RHS,
+    Instruction *FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
                              ICmpInst::Predicate Cond, Instruction &I);
     Instruction *FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                      BinaryOperator &I);
@@ -5559,20 +5559,19 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
 
 /// FoldGEPICmp - Fold comparisons between a GEP instruction and something
 /// else.  At this point we know that the GEP is on the LHS of the comparison.
-Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
+Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
                                        ICmpInst::Predicate Cond,
                                        Instruction &I) {
-  assert(isa<GEPOperator>(GEPLHS) && "LHS is not a getelementptr!");
-
   // Look through bitcasts.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(RHS))
     RHS = BCI->getOperand(0);
 
   Value *PtrBase = GEPLHS->getOperand(0);
-  if (TD && PtrBase == RHS) {
+  if (TD && PtrBase == RHS && GEPLHS->isInBounds()) {
     // ((gep Ptr, OFFSET) cmp Ptr)   ---> (OFFSET cmp 0).
     // This transformation (ignoring the base and scales) is valid because we
-    // know pointers can't overflow.  See if we can output an optimized form.
+    // know pointers can't overflow since the gep is inbounds.  See if we can
+    // output an optimized form.
     Value *Offset = EvaluateGEPOffsetExpression(GEPLHS, I, *this);
     
     // If not, synthesize the offset the hard way.
@@ -5580,7 +5579,7 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
       Offset = EmitGEPOffset(GEPLHS, I, *this);
     return new ICmpInst(*Context, ICmpInst::getSignedPredicate(Cond), Offset,
                         Context->getNullValue(Offset->getType()));
-  } else if (User *GEPRHS = dyn_cast<GEPOperator>(RHS)) {
+  } else if (GEPOperator *GEPRHS = dyn_cast<GEPOperator>(RHS)) {
     // If the base pointers are different, but the indices are the same, just
     // compare the base pointer.
     if (PtrBase != GEPRHS->getOperand(0)) {
@@ -6345,10 +6344,10 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   }
 
   // If we can optimize a 'icmp GEP, P' or 'icmp P, GEP', do so now.
-  if (User *GEP = dyn_cast<GEPOperator>(Op0))
+  if (GEPOperator *GEP = dyn_cast<GEPOperator>(Op0))
     if (Instruction *NI = FoldGEPICmp(GEP, Op1, I.getPredicate(), I))
       return NI;
-  if (User *GEP = dyn_cast<GEPOperator>(Op1))
+  if (GEPOperator *GEP = dyn_cast<GEPOperator>(Op1))
     if (Instruction *NI = FoldGEPICmp(GEP, Op0,
                            ICmpInst::getSwappedPredicate(I.getPredicate()), I))
       return NI;
@@ -8252,6 +8251,8 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
                                                         NewIndices.end(), "");
           InsertNewInstBefore(NGEP, CI);
           NGEP->takeName(GEP);
+          if (cast<GEPOperator>(GEP)->isInBounds())
+            cast<GEPOperator>(NGEP)->setIsInBounds(true);
           
           if (isa<BitCastInst>(CI))
             return new BitCastInst(NGEP, CI.getType());
@@ -8981,8 +8982,11 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
     // If we found a path from the src to dest, create the getelementptr now.
     if (SrcElTy == DstElTy) {
       SmallVector<Value*, 8> Idxs(NumZeros+1, ZeroUInt);
-      return GetElementPtrInst::Create(Src, Idxs.begin(), Idxs.end(), "", 
-                                       ((Instruction*) NULL));
+      Instruction *GEP = GetElementPtrInst::Create(Src,
+                                                   Idxs.begin(), Idxs.end(), "",
+                                                   ((Instruction*) NULL));
+      cast<GEPOperator>(GEP)->setIsInBounds(true);
+      return GEP;
     }
   }
 
@@ -10663,8 +10667,12 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
   }
   
   Value *Base = FixedOperands[0];
-  return GetElementPtrInst::Create(Base, FixedOperands.begin()+1,
-                                   FixedOperands.end());
+  GetElementPtrInst *GEP =
+    GetElementPtrInst::Create(Base, FixedOperands.begin()+1,
+                              FixedOperands.end());
+  if (cast<GEPOperator>(FirstInst)->isInBounds())
+    cast<GEPOperator>(GEP)->setIsInBounds(true);
+  return GEP;
 }
 
 
@@ -11055,8 +11063,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // getelementptr instructions into a single instruction.
   //
   SmallVector<Value*, 8> SrcGEPOperands;
-  if (User *Src = dyn_cast<GEPOperator>(PtrOp))
+  bool BothInBounds = cast<GEPOperator>(&GEP)->isInBounds();
+  if (GEPOperator *Src = dyn_cast<GEPOperator>(PtrOp)) {
     SrcGEPOperands.append(Src->op_begin(), Src->op_end());
+    if (!Src->isInBounds())
+      BothInBounds = false;
+  }
 
   if (!SrcGEPOperands.empty()) {
     // Note that if our source is a gep chain itself that we wait for that
@@ -11140,9 +11152,15 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Indices.insert(Indices.end(), GEP.idx_begin()+1, GEP.idx_end());
     }
 
-    if (!Indices.empty())
-      return GetElementPtrInst::Create(SrcGEPOperands[0], Indices.begin(),
-                                       Indices.end(), GEP.getName());
+    if (!Indices.empty()) {
+      GetElementPtrInst *NewGEP = GetElementPtrInst::Create(SrcGEPOperands[0],
+                                                            Indices.begin(),
+                                                            Indices.end(),
+                                                            GEP.getName());
+      if (BothInBounds)
+        cast<GEPOperator>(NewGEP)->setIsInBounds(true);
+      return NewGEP;
+    }
 
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(PtrOp)) {
     // GEP of global variable.  If all of the indices for this GEP are
@@ -11180,8 +11198,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         if (CATy->getElementType() == XTy->getElementType()) {
           // -> GEP i8* X, ...
           SmallVector<Value*, 8> Indices(GEP.idx_begin()+1, GEP.idx_end());
-          return GetElementPtrInst::Create(X, Indices.begin(), Indices.end(),
-                                           GEP.getName());
+          GetElementPtrInst *NewGEP =
+            GetElementPtrInst::Create(X, Indices.begin(), Indices.end(),
+                                      GEP.getName());
+          if (cast<GEPOperator>(&GEP)->isInBounds())
+            cast<GEPOperator>(NewGEP)->setIsInBounds(true);
+          return NewGEP;
         } else if (const ArrayType *XATy =
                  dyn_cast<ArrayType>(XTy->getElementType())) {
           // GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ... ?
@@ -11208,8 +11230,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Value *Idx[2];
         Idx[0] = Context->getNullValue(Type::Int32Ty);
         Idx[1] = GEP.getOperand(1);
-        Value *V = InsertNewInstBefore(
-               GetElementPtrInst::Create(X, Idx, Idx + 2, GEP.getName()), GEP);
+        GetElementPtrInst *NewGEP =
+          GetElementPtrInst::Create(X, Idx, Idx + 2, GEP.getName());
+        if (cast<GEPOperator>(&GEP)->isInBounds())
+          cast<GEPOperator>(NewGEP)->setIsInBounds(true);
+        Value *V = InsertNewInstBefore(NewGEP, GEP);
         // V and GEP are both pointer types --> BitCast
         return new BitCastInst(V, GEP.getType());
       }
@@ -11271,6 +11296,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           Idx[1] = NewIdx;
           Instruction *NewGEP =
             GetElementPtrInst::Create(X, Idx, Idx + 2, GEP.getName());
+          if (cast<GEPOperator>(&GEP)->isInBounds())
+            cast<GEPOperator>(NewGEP)->setIsInBounds(true);
           NewGEP = InsertNewInstBefore(NewGEP, GEP);
           // The NewGEP must be pointer typed, so must the old one -> BitCast
           return new BitCastInst(NewGEP, GEP.getType());
@@ -11323,6 +11350,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
            GetElementPtrInst::Create(BCI->getOperand(0), NewIndices.begin(),
                                      NewIndices.end());
         if (NGEP->getType() == GEP.getType()) return NGEP;
+        if (cast<GEPOperator>(&GEP)->isInBounds())
+          cast<GEPOperator>(NGEP)->setIsInBounds(true);
         InsertNewInstBefore(NGEP, GEP);
         NGEP->takeName(&GEP);
         return new BitCastInst(NGEP, GEP.getType());
@@ -11366,6 +11395,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       Idx[1] = NullIdx;
       Value *V = GetElementPtrInst::Create(New, Idx, Idx + 2,
                                            New->getName()+".sub", It);
+      cast<GEPOperator>(V)->setIsInBounds(true);
 
       // Now make everything use the getelementptr instead of the original
       // allocation.
@@ -11745,6 +11775,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
       CastOp = IC.InsertNewInstBefore(
               GetElementPtrInst::Create(CastOp, NewGEPIndices.begin(),
                                         NewGEPIndices.end()), SI);
+    cast<GEPOperator>(CastOp)->setIsInBounds(true);
   }
   
   if (Constant *C = dyn_cast<Constant>(SIOp0))
@@ -12428,6 +12459,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
                                   Context->getPointerType(EI.getType(), AS),EI);
         GetElementPtrInst *GEP =
           GetElementPtrInst::Create(Ptr, EI.getOperand(1), I->getName()+".gep");
+        cast<GEPOperator>(GEP)->setIsInBounds(true);
         InsertNewInstBefore(GEP, EI);
         return new LoadInst(GEP);
       }

@@ -349,7 +349,9 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     return GEP;
   }
 
-  // Insert a pretty getelementptr.
+  // Insert a pretty getelementptr. Note that this GEP is not marked inbounds,
+  // because ScalarEvolution may have changed the address arithmetic to
+  // compute a value which is beyond the end of the allocated object.
   Value *GEP = Builder.CreateGEP(V,
                                  GepIndices.begin(),
                                  GepIndices.end(),
