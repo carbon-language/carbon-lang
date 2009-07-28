@@ -41,8 +41,8 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
   // We weren't able to layout the struct. Try again with a packed struct
   Packed = true;
   AlignmentAsLLVMStruct = 1;
+  NextFieldOffsetInBytes = 0;
   FieldTypes.clear();
-  FieldInfos.clear();
   LLVMFields.clear();
   LLVMBitFields.clear();
   
@@ -57,12 +57,12 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   if (FieldSize == 0)
     return;
 
-  uint64_t NextFieldOffset = getNextFieldOffsetInBytes() * 8;
+  uint64_t NextFieldOffset = NextFieldOffsetInBytes * 8;
   unsigned NumBytesToAppend;
   
   if (FieldOffset < NextFieldOffset) {
     assert(BitsAvailableInLastField && "Bitfield size mismatch!");
-    assert(!FieldInfos.empty() && "Field infos can't be empty!");
+    assert(NextFieldOffsetInBytes && "Must have laid out at least one byte!");
     
     // The bitfield begins in the previous bit-field.
     NumBytesToAppend = 
@@ -91,7 +91,7 @@ void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
   AlignmentAsLLVMStruct = std::max(AlignmentAsLLVMStruct, getTypeAlignment(Ty));
 
   BitsAvailableInLastField = 
-    getNextFieldOffsetInBytes() * 8 - (FieldOffset + FieldSize);
+    NextFieldOffsetInBytes * 8 - (FieldOffset + FieldSize);
 }
 
 bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
@@ -222,12 +222,11 @@ void CGRecordLayoutBuilder::AppendTailPadding(uint64_t RecordSize) {
   assert(RecordSize % 8 == 0 && "Invalid record size!");
   
   uint64_t RecordSizeInBytes = RecordSize / 8;
-  assert(getNextFieldOffsetInBytes() <= RecordSizeInBytes && "Size mismatch!");
+  assert(NextFieldOffsetInBytes <= RecordSizeInBytes && "Size mismatch!");
   
-  unsigned NumPadBytes = RecordSizeInBytes - getNextFieldOffsetInBytes();
+  unsigned NumPadBytes = RecordSizeInBytes - NextFieldOffsetInBytes;
   AppendBytes(NumPadBytes);
 }
-
 
 void CGRecordLayoutBuilder::AppendField(uint64_t FieldOffsetInBytes, 
                                         const llvm::Type *FieldTy) {
@@ -237,8 +236,8 @@ void CGRecordLayoutBuilder::AppendField(uint64_t FieldOffsetInBytes,
   uint64_t FieldSizeInBytes = getTypeSizeInBytes(FieldTy);
 
   FieldTypes.push_back(FieldTy);
-  FieldInfos.push_back(FieldInfo(FieldOffsetInBytes, FieldSizeInBytes));
 
+  NextFieldOffsetInBytes = FieldOffsetInBytes + FieldSizeInBytes;
   BitsAvailableInLastField = 0;
 }
 
@@ -250,7 +249,6 @@ CGRecordLayoutBuilder::AppendPadding(uint64_t FieldOffsetInBytes,
 
 void CGRecordLayoutBuilder::AppendPadding(uint64_t FieldOffsetInBytes, 
                                           unsigned FieldAlignment) {
-  uint64_t NextFieldOffsetInBytes = getNextFieldOffsetInBytes();
   assert(NextFieldOffsetInBytes <= FieldOffsetInBytes &&
          "Incorrect field layout!");
   
@@ -276,15 +274,7 @@ void CGRecordLayoutBuilder::AppendBytes(uint64_t NumBytes) {
     Ty = llvm::ArrayType::get(Ty, NumBytes);
   
   // Append the padding field
-  AppendField(getNextFieldOffsetInBytes(), Ty);
-}
-
-uint64_t CGRecordLayoutBuilder::getNextFieldOffsetInBytes() const {
-  if (FieldInfos.empty())
-    return 0;
-  
-  const FieldInfo &LastInfo = FieldInfos.back();
-  return LastInfo.OffsetInBytes + LastInfo.SizeInBytes;
+  AppendField(NextFieldOffsetInBytes, Ty);
 }
 
 unsigned CGRecordLayoutBuilder::getTypeAlignment(const llvm::Type *Ty) const {

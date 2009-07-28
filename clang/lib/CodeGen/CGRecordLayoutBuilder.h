@@ -43,21 +43,13 @@ class CGRecordLayoutBuilder {
   /// BitsAvailableInLastField - If a bit field spans only part of a LLVM field,
   /// this will have the number of bits still available in the field.
   char BitsAvailableInLastField;
+
+  /// NextFieldOffsetInBytes - Holds the next field offset in bytes.
+  uint64_t NextFieldOffsetInBytes;
   
   /// FieldTypes - Holds the LLVM types that the struct is created from.
   std::vector<const llvm::Type *> FieldTypes;
   
-  /// FieldInfo - Holds size and offset information about a field.
-  /// FIXME: I think we can get rid of this.
-  struct FieldInfo {
-    FieldInfo(uint64_t OffsetInBytes, uint64_t SizeInBytes)
-      : OffsetInBytes(OffsetInBytes), SizeInBytes(SizeInBytes) { }
-    
-    const uint64_t OffsetInBytes;
-    const uint64_t SizeInBytes;
-  };
-  llvm::SmallVector<FieldInfo, 16> FieldInfos;
-
   /// LLVMFieldInfo - Holds a field and its corresponding LLVM field number.
   typedef std::pair<const FieldDecl *, unsigned> LLVMFieldInfo;
   llvm::SmallVector<LLVMFieldInfo, 16> LLVMFields;
@@ -78,7 +70,7 @@ class CGRecordLayoutBuilder {
   
   CGRecordLayoutBuilder(CodeGenTypes &Types) 
     : Types(Types), Packed(false), AlignmentAsLLVMStruct(1)
-    , BitsAvailableInLastField(0) { }
+    , BitsAvailableInLastField(0), NextFieldOffsetInBytes(0) { }
 
   /// Layout - Will layout a RecordDecl.
   void Layout(const RecordDecl *D);
@@ -114,9 +106,6 @@ class CGRecordLayoutBuilder {
   /// AppendTailPadding - Append enough tail padding so that the type will have
   /// the passed size.
   void AppendTailPadding(uint64_t RecordSize);
-  
-  /// getNextFieldOffsetInBytes - returns where the next field offset is.
-  uint64_t getNextFieldOffsetInBytes() const;
   
   unsigned getTypeAlignment(const llvm::Type *Ty) const;
   uint64_t getTypeSizeInBytes(const llvm::Type *Ty) const;
