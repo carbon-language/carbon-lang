@@ -81,7 +81,7 @@ struct AsmParser::X86Operand {
 };
 
 bool AsmParser::ParseX86Register(X86Operand &Op) {
-  assert(Lexer.getKind() == asmtok::Register && "Invalid token kind!");
+  assert(Lexer.getKind() == AsmToken::Register && "Invalid token kind!");
 
   // FIXME: Decode register number.
   Op = X86Operand::CreateReg(123);
@@ -94,11 +94,11 @@ bool AsmParser::ParseX86Operand(X86Operand &Op) {
   switch (Lexer.getKind()) {
   default:
     return ParseX86MemOperand(Op);
-  case asmtok::Register:
+  case AsmToken::Register:
     // FIXME: if a segment register, this could either be just the seg reg, or
     // the start of a memory operand.
     return ParseX86Register(Op);
-  case asmtok::Dollar: {
+  case AsmToken::Dollar: {
     // $42 -> immediate.
     Lexer.Lex();
     MCValue Val;
@@ -107,10 +107,10 @@ bool AsmParser::ParseX86Operand(X86Operand &Op) {
     Op = X86Operand::CreateImm(Val);
     return false;
   }
-  case asmtok::Star: {
+  case AsmToken::Star: {
     Lexer.Lex(); // Eat the star.
     
-    if (Lexer.is(asmtok::Register)) {
+    if (Lexer.is(AsmToken::Register)) {
       if (ParseX86Register(Op))
         return true;
     } else if (ParseX86MemOperand(Op))
@@ -132,12 +132,12 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   // only way to do this without lookahead is to eat the ( and see what is after
   // it.
   MCValue Disp = MCValue::get(0, 0, 0);
-  if (Lexer.isNot(asmtok::LParen)) {
+  if (Lexer.isNot(AsmToken::LParen)) {
     if (ParseRelocatableExpression(Disp)) return true;
     
     // After parsing the base expression we could either have a parenthesized
     // memory address or not.  If not, return now.  If so, eat the (.
-    if (Lexer.isNot(asmtok::LParen)) {
+    if (Lexer.isNot(AsmToken::LParen)) {
       Op = X86Operand::CreateMem(SegReg, Disp, 0, 0, 0);
       return false;
     }
@@ -149,7 +149,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
     // so we have to eat the ( to see beyond it.
     Lexer.Lex(); // Eat the '('.
     
-    if (Lexer.is(asmtok::Register) || Lexer.is(asmtok::Comma)) {
+    if (Lexer.is(AsmToken::Register) || Lexer.is(AsmToken::Comma)) {
       // Nothing to do here, fall into the code below with the '(' part of the
       // memory operand consumed.
     } else {
@@ -159,7 +159,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
       
       // After parsing the base expression we could either have a parenthesized
       // memory address or not.  If not, return now.  If so, eat the (.
-      if (Lexer.isNot(asmtok::LParen)) {
+      if (Lexer.isNot(AsmToken::LParen)) {
         Op = X86Operand::CreateMem(SegReg, Disp, 0, 0, 0);
         return false;
       }
@@ -173,13 +173,13 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   // the rest of the memory operand.
   unsigned BaseReg = 0, IndexReg = 0, Scale = 0;
   
-  if (Lexer.is(asmtok::Register)) {
+  if (Lexer.is(AsmToken::Register)) {
     if (ParseX86Register(Op))
       return true;
     BaseReg = Op.getReg();
   }
   
-  if (Lexer.is(asmtok::Comma)) {
+  if (Lexer.is(AsmToken::Comma)) {
     Lexer.Lex(); // Eat the comma.
 
     // Following the comma we should have either an index register, or a scale
@@ -188,20 +188,20 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
     //
     // Not that even though it would be completely consistent to support syntax
     // like "1(%eax,,1)", the assembler doesn't.
-    if (Lexer.is(asmtok::Register)) {
+    if (Lexer.is(AsmToken::Register)) {
       if (ParseX86Register(Op))
         return true;
       IndexReg = Op.getReg();
       Scale = 1;      // If not specified, the scale defaults to 1.
     
-      if (Lexer.isNot(asmtok::RParen)) {
+      if (Lexer.isNot(AsmToken::RParen)) {
         // Parse the scale amount:
         //  ::= ',' [scale-expression]
-        if (Lexer.isNot(asmtok::Comma))
+        if (Lexer.isNot(AsmToken::Comma))
           return true;
         Lexer.Lex(); // Eat the comma.
 
-        if (Lexer.isNot(asmtok::RParen)) {
+        if (Lexer.isNot(AsmToken::RParen)) {
           int64_t ScaleVal;
           if (ParseAbsoluteExpression(ScaleVal))
             return true;
@@ -212,7 +212,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
           Scale = (unsigned)ScaleVal;
         }
       }
-    } else if (Lexer.isNot(asmtok::RParen)) {
+    } else if (Lexer.isNot(AsmToken::RParen)) {
       // Otherwise we have the unsupported form of a scale amount without an
       // index.
       SMLoc Loc = Lexer.getLoc();
@@ -226,7 +226,7 @@ bool AsmParser::ParseX86MemOperand(X86Operand &Op) {
   }
   
   // Ok, we've eaten the memory operand, verify we have a ')' and eat it too.
-  if (Lexer.isNot(asmtok::RParen))
+  if (Lexer.isNot(AsmToken::RParen))
     return TokError("unexpected token in memory operand");
   Lexer.Lex(); // Eat the ')'.
   
@@ -247,13 +247,13 @@ static bool MatchX86Inst(const StringRef &Name,
 bool AsmParser::ParseX86InstOperands(const StringRef &InstName, MCInst &Inst) {
   llvm::SmallVector<X86Operand, 3> Operands;
 
-  if (Lexer.isNot(asmtok::EndOfStatement)) {
+  if (Lexer.isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
     Operands.push_back(X86Operand());
     if (ParseX86Operand(Operands.back()))
       return true;
     
-    while (Lexer.is(asmtok::Comma)) {
+    while (Lexer.is(AsmToken::Comma)) {
       Lexer.Lex();  // Eat the comma.
       
       // Parse and remember the operand.

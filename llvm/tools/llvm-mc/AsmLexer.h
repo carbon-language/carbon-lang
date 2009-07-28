@@ -25,8 +25,9 @@ class MemoryBuffer;
 class SourceMgr;
 class SMLoc;
 
-namespace asmtok {
-  enum TokKind {
+/// AsmToken - Target independent representation for an assembler token.
+struct AsmToken {
+  enum TokenKind {
     // Markers
     Eof, Error,
 
@@ -36,7 +37,7 @@ namespace asmtok {
     String,
     
     // Integer values.
-    IntVal,
+    Integer,
     
     // No-value.
     EndOfStatement,
@@ -51,11 +52,8 @@ namespace asmtok {
     Less, LessEqual, LessLess, LessGreater,
     Greater, GreaterEqual, GreaterGreater
   };
-}
 
-/// AsmToken - Target independent representation for an assembler token.
-struct AsmToken {
-  asmtok::TokKind Kind;
+  TokenKind Kind;
 
   /// A reference to the entire token contents; this is always a pointer into
   /// a memory buffer owned by the source manager.
@@ -65,19 +63,22 @@ struct AsmToken {
 
 public:
   AsmToken() {}
-  AsmToken(asmtok::TokKind _Kind, const StringRef &_Str, int64_t _IntVal = 0)
+  AsmToken(TokenKind _Kind, const StringRef &_Str, int64_t _IntVal = 0)
     : Kind(_Kind), Str(_Str), IntVal(_IntVal) {}
 
-  asmtok::TokKind getKind() const { return Kind; }
-  bool is(asmtok::TokKind K) const { return Kind == K; }
-  bool isNot(asmtok::TokKind K) const { return Kind != K; }
+  TokenKind getKind() const { return Kind; }
+  bool is(TokenKind K) const { return Kind == K; }
+  bool isNot(TokenKind K) const { return Kind != K; }
 
   SMLoc getLoc() const;
 
   StringRef getString() const { return Str; }
 
+  // FIXME: Don't compute this in advance, it makes every token larger, and is
+  // also not generally what we want (it is nicer for recovery etc. to lex 123br
+  // as a single token, then diagnose as an invalid number).
   int64_t getIntVal() const { 
-    assert(Kind == asmtok::IntVal && "This token isn't an integer");
+    assert(Kind == Integer && "This token isn't an integer");
     return IntVal; 
   }
 };
@@ -104,13 +105,13 @@ public:
   AsmLexer(SourceMgr &SrcMgr);
   ~AsmLexer();
   
-  asmtok::TokKind Lex() {
+  AsmToken::TokenKind Lex() {
     return CurTok = LexToken(), getKind();
   }
   
-  asmtok::TokKind getKind() const { return CurTok.getKind(); }
-  bool is(asmtok::TokKind K) const { return CurTok.is(K); }
-  bool isNot(asmtok::TokKind K) const { return CurTok.isNot(K); }
+  AsmToken::TokenKind getKind() const { return CurTok.getKind(); }
+  bool is(AsmToken::TokenKind K) const { return CurTok.is(K); }
+  bool isNot(AsmToken::TokenKind K) const { return CurTok.isNot(K); }
 
   /// getCurStrVal - Get the string for the current token, this includes all
   /// characters (for example, the quotes on strings) in the token.
@@ -125,6 +126,8 @@ public:
   }
   
   SMLoc getLoc() const;
+
+  const AsmToken &getTok() const;
   
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);

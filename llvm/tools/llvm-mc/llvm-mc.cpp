@@ -83,58 +83,58 @@ static int AsLexInput(const char *ProgName) {
   
   bool Error = false;
   
-  asmtok::TokKind Tok = Lexer.Lex();
-  while (Tok != asmtok::Eof) {
+  AsmToken::TokenKind Tok = Lexer.Lex();
+  while (Tok != AsmToken::Eof) {
     switch (Tok) {
     default:
       Lexer.PrintMessage(Lexer.getLoc(), "unknown token", "warning");
       Error = true;
       break;
-    case asmtok::Error:
+    case AsmToken::Error:
       Error = true; // error already printed.
       break;
-    case asmtok::Identifier:
+    case AsmToken::Identifier:
       outs() << "identifier: " << Lexer.getCurStrVal() << '\n';
       break;
-    case asmtok::Register:
+    case AsmToken::Register:
       outs() << "register: " << Lexer.getCurStrVal() << '\n';
       break;
-    case asmtok::String:
+    case AsmToken::String:
       outs() << "string: " << Lexer.getCurStrVal() << '\n';
       break;
-    case asmtok::IntVal:
+    case AsmToken::Integer:
       outs() << "int: " << Lexer.getCurIntVal() << '\n';
       break;
 
-    case asmtok::Amp:            outs() << "Amp\n"; break;
-    case asmtok::AmpAmp:         outs() << "AmpAmp\n"; break;
-    case asmtok::Caret:          outs() << "Caret\n"; break;
-    case asmtok::Colon:          outs() << "Colon\n"; break;
-    case asmtok::Comma:          outs() << "Comma\n"; break;
-    case asmtok::Dollar:         outs() << "Dollar\n"; break;
-    case asmtok::EndOfStatement: outs() << "EndOfStatement\n"; break;
-    case asmtok::Eof:            outs() << "Eof\n"; break;
-    case asmtok::Equal:          outs() << "Equal\n"; break;
-    case asmtok::EqualEqual:     outs() << "EqualEqual\n"; break;
-    case asmtok::Exclaim:        outs() << "Exclaim\n"; break;
-    case asmtok::ExclaimEqual:   outs() << "ExclaimEqual\n"; break;
-    case asmtok::Greater:        outs() << "Greater\n"; break;
-    case asmtok::GreaterEqual:   outs() << "GreaterEqual\n"; break;
-    case asmtok::GreaterGreater: outs() << "GreaterGreater\n"; break;
-    case asmtok::LParen:         outs() << "LParen\n"; break;
-    case asmtok::Less:           outs() << "Less\n"; break;
-    case asmtok::LessEqual:      outs() << "LessEqual\n"; break;
-    case asmtok::LessGreater:    outs() << "LessGreater\n"; break;
-    case asmtok::LessLess:       outs() << "LessLess\n"; break;
-    case asmtok::Minus:          outs() << "Minus\n"; break;
-    case asmtok::Percent:        outs() << "Percent\n"; break;
-    case asmtok::Pipe:           outs() << "Pipe\n"; break;
-    case asmtok::PipePipe:       outs() << "PipePipe\n"; break;
-    case asmtok::Plus:           outs() << "Plus\n"; break;
-    case asmtok::RParen:         outs() << "RParen\n"; break;
-    case asmtok::Slash:          outs() << "Slash\n"; break;
-    case asmtok::Star:           outs() << "Star\n"; break;
-    case asmtok::Tilde:          outs() << "Tilde\n"; break;
+    case AsmToken::Amp:            outs() << "Amp\n"; break;
+    case AsmToken::AmpAmp:         outs() << "AmpAmp\n"; break;
+    case AsmToken::Caret:          outs() << "Caret\n"; break;
+    case AsmToken::Colon:          outs() << "Colon\n"; break;
+    case AsmToken::Comma:          outs() << "Comma\n"; break;
+    case AsmToken::Dollar:         outs() << "Dollar\n"; break;
+    case AsmToken::EndOfStatement: outs() << "EndOfStatement\n"; break;
+    case AsmToken::Eof:            outs() << "Eof\n"; break;
+    case AsmToken::Equal:          outs() << "Equal\n"; break;
+    case AsmToken::EqualEqual:     outs() << "EqualEqual\n"; break;
+    case AsmToken::Exclaim:        outs() << "Exclaim\n"; break;
+    case AsmToken::ExclaimEqual:   outs() << "ExclaimEqual\n"; break;
+    case AsmToken::Greater:        outs() << "Greater\n"; break;
+    case AsmToken::GreaterEqual:   outs() << "GreaterEqual\n"; break;
+    case AsmToken::GreaterGreater: outs() << "GreaterGreater\n"; break;
+    case AsmToken::LParen:         outs() << "LParen\n"; break;
+    case AsmToken::Less:           outs() << "Less\n"; break;
+    case AsmToken::LessEqual:      outs() << "LessEqual\n"; break;
+    case AsmToken::LessGreater:    outs() << "LessGreater\n"; break;
+    case AsmToken::LessLess:       outs() << "LessLess\n"; break;
+    case AsmToken::Minus:          outs() << "Minus\n"; break;
+    case AsmToken::Percent:        outs() << "Percent\n"; break;
+    case AsmToken::Pipe:           outs() << "Pipe\n"; break;
+    case AsmToken::PipePipe:       outs() << "PipePipe\n"; break;
+    case AsmToken::Plus:           outs() << "Plus\n"; break;
+    case AsmToken::RParen:         outs() << "RParen\n"; break;
+    case AsmToken::Slash:          outs() << "Slash\n"; break;
+    case AsmToken::Star:           outs() << "Star\n"; break;
+    case AsmToken::Tilde:          outs() << "Tilde\n"; break;
     }
     
     Tok = Lexer.Lex();
