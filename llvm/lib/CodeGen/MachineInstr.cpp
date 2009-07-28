@@ -889,7 +889,7 @@ bool MachineInstr::isSafeToMove(const TargetInstrInfo *TII,
   // load.
   if (TID->mayLoad() && !TII->isInvariantLoad(this))
     // Otherwise, this is a real load.  If there is a store between the load and
-    // end of block, or if the laod is volatile, we can't move it.
+    // end of block, or if the load is volatile, we can't move it.
     return !SawStore && !hasVolatileMemoryRef();
 
   return true;
