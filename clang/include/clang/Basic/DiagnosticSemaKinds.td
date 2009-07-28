@@ -114,6 +114,12 @@ def err_maybe_falloff_nonvoid_block : Error<
   "control may reach end of non-void block">;
 def err_falloff_nonvoid_block : Error<
   "control reaches end of non-void block">;
+def warn_suggest_noreturn_function : Warning<
+  "function could be attribute 'noreturn'">,
+  InGroup<DiagGroup<"missing-noreturn">>, DefaultIgnore;
+def warn_suggest_noreturn_block : Warning<
+  "block could be attribute 'noreturn'">,
+  InGroup<DiagGroup<"missing-noreturn">>, DefaultIgnore;
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<

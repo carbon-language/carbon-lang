@@ -1149,10 +1149,13 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
       HasNoReturn = true;
   }
     
+  // Short circuit for compilation speed.
   if ((Diags.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function)
        == Diagnostic::Ignored || ReturnsVoid)
       && (Diags.getDiagnosticLevel(diag::warn_noreturn_function_has_return_expr)
-          == Diagnostic::Ignored || !HasNoReturn))
+          == Diagnostic::Ignored || !HasNoReturn)
+      && (Diags.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
+          == Diagnostic::Ignored || !ReturnsVoid))
     return;
   // FIXME: Funtion try block
   if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
@@ -1170,6 +1173,8 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
         Diag(Compound->getRBracLoc(), diag::warn_falloff_nonvoid_function);
       break;
     case NeverFallThrough:
+      if (ReturnsVoid)
+        Diag(Compound->getLBracLoc(), diag::warn_suggest_noreturn_function);
       break;
     }
   }
@@ -1197,7 +1202,11 @@ void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
       HasNoReturn = true;
   }
     
-  if (ReturnsVoid && !HasNoReturn)
+  // Short circuit for compilation speed.
+  if (ReturnsVoid
+      && !HasNoReturn
+      && (Diags.getDiagnosticLevel(diag::warn_suggest_noreturn_block)
+          == Diagnostic::Ignored || !ReturnsVoid))
     return;
   // FIXME: Funtion try block
   if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
@@ -1215,6 +1224,8 @@ void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
         Diag(Compound->getRBracLoc(), diag::err_falloff_nonvoid_block);
       break;
     case NeverFallThrough:
+      if (ReturnsVoid)
+        Diag(Compound->getLBracLoc(), diag::warn_suggest_noreturn_block);
       break;
     }
   }

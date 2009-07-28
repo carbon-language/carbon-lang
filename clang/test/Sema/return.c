@@ -208,3 +208,13 @@ int test30() {
 
 typedef void test31_t(int status);
 void test31(test31_t *callback __attribute__((noreturn)));
+
+void test32() {
+  ^ (void) { while (1) { } }();
+  ^ (void) { if (j) while (1) { } }();
+  while (1) { }
+}
+
+void test33() {
+  if (j) while (1) { }
+}
