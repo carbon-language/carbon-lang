@@ -18,6 +18,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "lda"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopDependenceAnalysis.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -29,6 +30,12 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetData.h"
 using namespace llvm;
+
+STATISTIC(NumAnswered,    "Number of dependence queries answered");
+STATISTIC(NumAnalysed,    "Number of distinct dependence pairs analysed");
+STATISTIC(NumDependent,   "Number of pairs with dependent accesses");
+STATISTIC(NumIndependent, "Number of pairs with independent accesses");
+STATISTIC(NumUnknown,     "Number of pairs with unknown accesses");
 
 LoopPass *llvm::createLoopDependenceAnalysisPass() {
   return new LoopDependenceAnalysis();
@@ -148,11 +155,18 @@ void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
 
 bool LoopDependenceAnalysis::depends(Value *A, Value *B) {
   assert(isDependencePair(A, B) && "Values form no dependence pair!");
+  ++NumAnswered;
 
   DependencePair *p;
   if (!findOrInsertDependencePair(A, B, p)) {
     // The pair is not cached, so analyse it.
+    ++NumAnalysed;
     analysePair(p);
+    switch (p->Result) {
+    case Dependent:   ++NumDependent;   break;
+    case Independent: ++NumIndependent; break;
+    case Unknown:     ++NumUnknown;     break;
+    }
   }
   return p->Result != Independent;
 }
