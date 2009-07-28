@@ -36,7 +36,7 @@ PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
 : AsmPrinter(O, TM, T, V), DbgInfo(O, T) {
   PTLI = static_cast<const PIC16TargetLowering*>(TM.getTargetLowering());
   PTAI = static_cast<const PIC16TargetAsmInfo*>(T);
-  PTOF = static_cast<const PIC16TargetObjectFile*>(&PTLI->getObjFileLowering());
+  PTOF = (PIC16TargetObjectFile*)&PTLI->getObjFileLowering();
 }
 
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
