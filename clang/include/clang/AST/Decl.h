@@ -682,6 +682,7 @@ private:
   bool HasWrittenPrototype : 1;
   bool IsDeleted : 1;
   bool IsTrivial : 1; // sunk from CXXMethodDecl
+  bool HasImplicitReturnZero : 1;
 
   // Move to DeclGroup when it is implemented.
   SourceLocation TypeSpecStartLoc;
@@ -722,6 +723,7 @@ protected:
       SClass(S), IsInline(isInline), C99InlineDefinition(false), 
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false), 
       HasWrittenPrototype(true), IsDeleted(false), IsTrivial(false),
+      HasImplicitReturnZero(false),
       TypeSpecStartLoc(TSSL), EndRangeLoc(L), TemplateOrSpecialization() {}
 
   virtual ~FunctionDecl() {}
@@ -797,6 +799,12 @@ public:
   /// the class has been fully built by Sema.
   bool isTrivial() const { return IsTrivial; }
   void setTrivial(bool IT) { IsTrivial = IT; }
+
+  /// Whether falling off this function implicitly returns null/zero.
+  /// If a more specific implicit return value is required, front-ends
+  /// should synthesize the appropriate return statements.
+  bool hasImplicitReturnZero() const { return HasImplicitReturnZero; }
+  void setHasImplicitReturnZero(bool IRZ) { HasImplicitReturnZero = IRZ; }
 
   /// \brief Whether this function has a prototype, either because one
   /// was explicitly written or because it was "inherited" by merging

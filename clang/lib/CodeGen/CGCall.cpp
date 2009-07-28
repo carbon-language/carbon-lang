@@ -505,6 +505,19 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
                                          llvm::Function *Fn,
                                          const FunctionArgList &Args) {
+  // If this is an implicit-return-zero function, go ahead and
+  // initialize the return value.  TODO: it might be nice to have
+  // a more general mechanism for this that didn't require synthesized
+  // return statements.
+  if (const FunctionDecl* FD = dyn_cast<FunctionDecl>(CurFuncDecl)) {
+    if (FD->hasImplicitReturnZero()) {
+      QualType RetTy = FD->getResultType().getUnqualifiedType();
+      const llvm::Type* LLVMTy = CGM.getTypes().ConvertType(RetTy);
+      llvm::Constant* Zero = CGM.getLLVMContext().getNullValue(LLVMTy);
+      Builder.CreateStore(Zero, ReturnValue);
+    }
+  }
+
   // FIXME: We no longer need the types from FunctionArgList; lift up and
   // simplify.
 

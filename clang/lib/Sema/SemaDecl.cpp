@@ -3501,8 +3501,11 @@ Sema::DeclPtrTy Sema::ActOnFinishFunctionBody(DeclPtrTy D, StmtArg BodyArg,
   Stmt *Body = BodyArg.takeAs<Stmt>();
   if (FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(dcl)) {
     FD->setBody(Body);
-    if (!FD->isMain())
+    if (FD->isMain())
       // C and C++ allow for main to automagically return 0.
+      // Implements C++ [basic.start.main]p5 and C99 5.1.2.2.3.
+      FD->setHasImplicitReturnZero(true);
+    else
       CheckFallThroughForFunctionDef(FD, Body);
     
     if (!FD->isInvalidDecl())
