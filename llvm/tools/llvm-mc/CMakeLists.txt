@@ -5,5 +5,4 @@ add_llvm_tool(llvm-mc
   AsmExpr.cpp
   AsmLexer.cpp
   AsmParser.cpp
-  MC-X86Specific.cpp
   )
