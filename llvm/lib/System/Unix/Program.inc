@@ -45,9 +45,9 @@ Program::FindProgramByName(const std::string& progName) {
   Path temp;
   if (!temp.set(progName)) // invalid name
     return Path();
-  // FIXME: have to check for absolute filename - we cannot assume anything
-  // about "." being in $PATH
-  if (temp.canExecute()) // already executable as is
+  // Use the given path verbatim if it contains any slashes; this matches
+  // the behavior of sh(1) and friends.
+  if (progName.find('/') != std::string::npos && temp.canExecute())
     return temp;
 
   // At this point, the file name is valid and its not executable
