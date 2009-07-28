@@ -38,7 +38,8 @@ public:
         return;
 #define PREVISIT(NAME) \
 case Stmt::NAME ## Class:\
-static_cast<ImplClass*>(this)->PreVisit ## NAME(C, static_cast<const NAME*>(S));
+static_cast<ImplClass*>(this)->PreVisit ## NAME(C,static_cast<const NAME*>(S));\
+break;
 #include "clang/Analysis/PathSensitive/CheckerVisitor.def"
     }
   }
