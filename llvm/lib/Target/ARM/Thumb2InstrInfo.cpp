@@ -415,7 +415,7 @@ int llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     }
       
     // Otherwise, offset doesn't fit. Pull in what we can to simplify
-    ImmedOffset = Offset & Mask;
+    ImmedOffset = ImmedOffset & Mask;
     if (isSub) {
       if (AddrMode == ARMII::AddrMode5)
         // FIXME: Not consistent.
