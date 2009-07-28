@@ -27,7 +27,7 @@ class MCValue;
 class TargetAsmParser;
 class Twine;
 
-class AsmParser : MCAsmParser {
+class AsmParser : public MCAsmParser {
 public:
   struct X86Operand;
 
@@ -35,18 +35,18 @@ private:
   AsmLexer Lexer;
   MCContext &Ctx;
   MCStreamer &Out;
-  TargetAsmParser &TargetParser;
+  TargetAsmParser *TargetParser;
   
 public:
-  AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out, 
-            TargetAsmParser &_TargetParser)
-    : Lexer(_SM), Ctx(_Ctx), Out(_Out), TargetParser(_TargetParser) {}
+  AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out)
+    : Lexer(_SM), Ctx(_Ctx), Out(_Out), TargetParser(0) {}
   ~AsmParser() {}
-  
+
   bool Run();
   
 public:
-  TargetAsmParser &getTargetParser() const { return TargetParser; }
+  TargetAsmParser &getTargetParser() const { return *TargetParser; }
+  void setTargetParser(TargetAsmParser &P) { TargetParser = &P; }
 
   virtual MCAsmLexer &getLexer() { return Lexer; }
 

@@ -28,6 +28,7 @@
 
 namespace llvm {
   class FunctionPass;
+  class MCAsmParser;
   class Module;
   class TargetAsmParser;
   class TargetMachine;
@@ -51,7 +52,8 @@ namespace llvm {
     typedef FunctionPass *(*AsmPrinterCtorTy)(formatted_raw_ostream &,
                                               TargetMachine &,
                                               bool);
-    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &);
+    typedef TargetAsmParser *(*AsmParserCtorTy)(const Target &,
+                                                MCAsmParser &);
 
     friend struct TargetRegistry;
 
@@ -123,10 +125,13 @@ namespace llvm {
     }
 
     /// createAsmParser - Create a target specific assembly parser.
-    TargetAsmParser *createAsmParser() const {
+    ///
+    /// \arg Parser - The target independent parser implementation to use for
+    /// parsing and lexing.
+    TargetAsmParser *createAsmParser(MCAsmParser &Parser) const {
       if (!AsmParserCtorFn)
         return 0;
-      return AsmParserCtorFn(*this);
+      return AsmParserCtorFn(*this, Parser);
     }
   };
 
@@ -344,12 +349,13 @@ namespace llvm {
     }
   };
 
-  /// RegisterAsmParser - Helper template for registering a target specific asm
-  /// parser, for use in the target machine initialization function. Usage:
+  /// RegisterAsmParser - Helper template for registering a target specific
+  /// assembly parser, for use in the target machine initialization
+  /// function. Usage:
   ///
-  /// extern "C" void LLVMInitializeFooAsmPrinter() {
+  /// extern "C" void LLVMInitializeFooAsmParser() {
   ///   extern Target TheFooTarget;
-  ///   RegisterAsmPrinter<FooAsmPrinter> X(TheFooTarget);
+  ///   RegisterAsmParser<FooAsmParser> X(TheFooTarget);
   /// }
   template<class AsmParserImpl>
   struct RegisterAsmParser {
@@ -358,8 +364,8 @@ namespace llvm {
     }
 
   private:
-    static TargetAsmParser *Allocator(const Target &T) {
-      return new AsmParserImpl(T);
+    static TargetAsmParser *Allocator(const Target &T, MCAsmParser &P) {
+      return new AsmParserImpl(T, P);
     }
   };
 

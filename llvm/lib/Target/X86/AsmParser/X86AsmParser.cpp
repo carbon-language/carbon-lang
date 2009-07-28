@@ -9,6 +9,7 @@
 
 #include "X86.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/MC/MCAsmLexer.h"
 #include "llvm/MC/MCAsmParser.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetAsmParser.h"
@@ -19,23 +20,24 @@ namespace {
   };
 
   class X86ATTAsmParser : public TargetAsmParser {
+    MCAsmParser &Parser;
+
+  private:
     bool ParseOperand(X86Operand &Op);
     
     bool MatchInstruction(const StringRef &Name, 
                           llvm::SmallVector<X86Operand, 3> &Operands,
                           MCInst &Inst);
 
+    MCAsmLexer &getLexer() const { return Parser.getLexer(); }
+
   public:
-    explicit X86ATTAsmParser(const Target &);
+    X86ATTAsmParser(const Target &T, MCAsmParser &_Parser)
+      : TargetAsmParser(T), Parser(_Parser) {}
     
     virtual bool ParseInstruction(MCAsmParser &AP, const StringRef &Name, 
                                   MCInst &Inst);
   };
-}
-
-X86ATTAsmParser::X86ATTAsmParser(const Target &T) 
-  : TargetAsmParser(T)
-{
 }
 
 bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {

@@ -22,6 +22,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Target/TargetAsmParser.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetSelect.h"
 #include "AsmParser.h"
@@ -140,7 +141,8 @@ static int AsLexInput(const char *ProgName) {
   return Error;
 }
 
-static int AssembleInput(const char *ProgName) {
+static TargetAsmParser *GetTargetAsmParser(const char *ProgName,
+                                           MCAsmParser &Parser) {
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget =
@@ -151,23 +153,24 @@ static int AssembleInput(const char *ProgName) {
   if (TheTarget == 0) {
     errs() << ProgName << ": error: unable to get target for '" << TripleName
            << "', see --version and --triple.\n";
-    return 1;
+    return 0;
   }
 
-  TargetAsmParser *TAP = TheTarget->createAsmParser();
-  if (!TAP) {
-    errs() << ProgName 
-           << ": error: this target does not support assembly parsing.\n";
-    return 1;    
-  }
+  if (TargetAsmParser *TAP = TheTarget->createAsmParser(Parser))
+    return TAP;
+    
+  errs() << ProgName 
+         << ": error: this target does not support assembly parsing.\n";
+  return 0;
+}
 
-  std::string ErrorMessage;
-  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename,
-                                                      &ErrorMessage);
+static int AssembleInput(const char *ProgName) {
+  std::string Error;
+  MemoryBuffer *Buffer = MemoryBuffer::getFileOrSTDIN(InputFilename, &Error);
   if (Buffer == 0) {
     errs() << ProgName << ": ";
-    if (ErrorMessage.size())
-      errs() << ErrorMessage << "\n";
+    if (Error.size())
+      errs() << Error << "\n";
     else
       errs() << "input file didn't read correctly.\n";
     return 1;
@@ -189,7 +192,10 @@ static int AssembleInput(const char *ProgName) {
   Str.get()->SwitchSection(Ctx.GetSection("__TEXT,__text,"
                                           "regular,pure_instructions"));
 
-  AsmParser Parser(SrcMgr, Ctx, *Str.get(), *TAP);
+  AsmParser Parser(SrcMgr, Ctx, *Str.get());
+  OwningPtr<TargetAsmParser> TAP(GetTargetAsmParser(ProgName, Parser));
+  if (!TAP)
+    return 1;
   return Parser.Run();
 }  
 
