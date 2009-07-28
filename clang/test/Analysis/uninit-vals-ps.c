@@ -102,3 +102,25 @@ int pr_4630(char *a, int y) {
   }
 }
 
+// PR 4631 - False positive with union initializer
+//  Previously the analyzer didn't examine the compound initializers of unions,
+//  resulting in some false positives for initializers with side-effects.
+union u_4631 { int a; };
+struct s_4631 { int a; };
+int pr4631_f2(int *p);
+int pr4631_f3(void *q);
+int pr4631_f1(void)
+{
+  int x;
+  union u_4631 m = { pr4631_f2(&x) };
+  pr4631_f3(&m); // tell analyzer that we use m
+  return x;  // no-warning
+}
+int pr4631_f1_b(void)
+{
+  int x;
+  struct s_4631 m = { pr4631_f2(&x) };
+  pr4631_f3(&m); // tell analyzer that we use m
+  return x;  // no-warning
+}
+

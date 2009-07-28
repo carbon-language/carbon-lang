@@ -2228,7 +2228,8 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
   QualType T = getContext().getCanonicalType(E->getType());
   unsigned NumInitElements = E->getNumInits();  
 
-  if (T->isArrayType() || T->isStructureType()) {
+  if (T->isArrayType() || T->isStructureType() ||
+      T->isUnionType() || T->isVectorType()) {
 
     llvm::ImmutableList<SVal> StartVals = getBasicVals().getEmptySValList();
     
@@ -2283,13 +2284,6 @@ void GRExprEngine::VisitInitListExpr(InitListExpr* E, NodeTy* Pred,
     return;
   }
 
-  if (T->isUnionType() || T->isVectorType()) {
-    // FIXME: to be implemented.
-    // Note: That vectors can return true for T->isIntegerType()
-    MakeNode(Dst, E, Pred, state);
-    return;
-  }
-  
   if (Loc::IsLocType(T) || T->isIntegerType()) {
     assert (E->getNumInits() == 1);
     NodeSet Tmp;
