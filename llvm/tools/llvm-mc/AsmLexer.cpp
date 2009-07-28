@@ -24,7 +24,6 @@ AsmLexer::AsmLexer(SourceMgr &SM) : SrcMgr(SM)  {
   CurBuffer = 0;
   CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
   CurPtr = CurBuf->getBufferStart();
-  CurTok = AsmToken(AsmToken::Error, StringRef(CurPtr, 0));
   TokStart = 0;
 }
 

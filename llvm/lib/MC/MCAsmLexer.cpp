@@ -11,7 +11,7 @@
 
 using namespace llvm;
 
-MCAsmLexer::MCAsmLexer() {
+MCAsmLexer::MCAsmLexer() : CurTok(AsmToken::Error, StringRef()) {
 }
 
 MCAsmLexer::~MCAsmLexer() {
