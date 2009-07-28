@@ -918,6 +918,8 @@ public:
     return Id; 
   }
   void setIdentifier(IdentifierInfo *II) { Id = II; }
+  
+  ObjCCategoryDecl *getCategoryClass() const;
 
   /// getNameAsCString - Get the name of identifier for the class
   /// interface associated with this implementation as a C string

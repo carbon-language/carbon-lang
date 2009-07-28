@@ -233,9 +233,15 @@ ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
     if (ObjCCategoryImplDecl *ImplD = Ctx.getObjCImplementation(CD))
       Redecl = ImplD->getMethod(getSelector(), isInstanceMethod());
 
-  } else if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(CtxD)) {
+  } else if (ObjCImplementationDecl *ImplD =
+               dyn_cast<ObjCImplementationDecl>(CtxD)) {
     if (ObjCInterfaceDecl *IFD = ImplD->getClassInterface())
       Redecl = IFD->getMethod(getSelector(), isInstanceMethod());
+
+  } else if (ObjCCategoryImplDecl *CImplD =
+               dyn_cast<ObjCCategoryImplDecl>(CtxD)) {
+    if (ObjCCategoryDecl *CatD = CImplD->getCategoryClass())
+      Redecl = CatD->getMethod(getSelector(), isInstanceMethod());
   }
 
   return Redecl ? Redecl : this;
@@ -530,6 +536,10 @@ ObjCCategoryImplDecl::Create(ASTContext &C, DeclContext *DC,
                              SourceLocation L,IdentifierInfo *Id,
                              ObjCInterfaceDecl *ClassInterface) {
   return new (C) ObjCCategoryImplDecl(DC, L, Id, ClassInterface);
+}
+
+ObjCCategoryDecl *ObjCCategoryImplDecl::getCategoryClass() const {
+  return getClassInterface()->FindCategoryDeclaration(getIdentifier());
 }
 
 
