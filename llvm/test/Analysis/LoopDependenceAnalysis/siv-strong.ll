@@ -3,8 +3,8 @@
 @x = common global [256 x i32] zeroinitializer, align 4
 @y = common global [256 x i32] zeroinitializer, align 4
 
-; for (i = 0; i < 256; i++)
-;   x[i] = x[i] + y[i]
+;; for (i = 0; i < 256; i++)
+;;   x[i] = x[i] + y[i]
 
 define void @f1(...) nounwind {
 entry:
@@ -28,8 +28,8 @@ for.end:
   ret void
 }
 
-; for (i = 0; i < 256; i++)
-;   x[i+1] = x[i] + y[i]
+;; for (i = 0; i < 256; i++)
+;;   x[i+1] = x[i] + y[i]
 
 define void @f2(...) nounwind {
 entry:
@@ -54,8 +54,8 @@ for.end:
   ret void
 }
 
-; for (i = 0; i < 10; i++)
-;   x[i+20] = x[i] + y[i]
+;; for (i = 0; i < 10; i++)
+;;   x[i+20] = x[i] + y[i]
 
 define void @f3(...) nounwind {
 entry:

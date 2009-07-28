@@ -2,7 +2,7 @@
 
 @x = common global [256 x i32] zeroinitializer, align 4
 
-; x[5] = x[6]
+;; x[5] = x[6]
 
 define void @f1(...) nounwind {
 entry:
@@ -21,7 +21,7 @@ for.end:
   ret void
 }
 
-; x[c] = x[c+1] // with c being a loop-invariant constant
+;; x[c] = x[c+1] // with c being a loop-invariant constant
 
 define void @f2(i64 %c0) nounwind {
 entry:

@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | opt -disable-output -analyze -lda | FileCheck %s
 
-; x[5] = x[6] // with x being a pointer passed as argument
+;; x[5] = x[6] // with x being a pointer passed as argument
 
 define void @f1(i32* nocapture %xptr) nounwind {
 entry:
@@ -21,7 +21,7 @@ for.end:
   ret void
 }
 
-; x[5] = x[6] // with x being an array on the stack
+;; x[5] = x[6] // with x being an array on the stack
 
 define void @foo(...) nounwind {
 entry:
