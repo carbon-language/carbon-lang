@@ -130,10 +130,10 @@ class ASTContext {
   /// \brief The type for the C FILE type.
   TypeDecl *FILEDecl;
   
-  /// \brief The type for the C FILE type.
+  /// \brief The type for the C jmp_buf type.
   TypeDecl *jmp_bufDecl;
   
-  /// \brief The type for the C FILE type.
+  /// \brief The type for the C sigjmp_buf type.
   TypeDecl *sigjmp_bufDecl;
   
   /// \brief Keeps track of all declaration attributes. 
