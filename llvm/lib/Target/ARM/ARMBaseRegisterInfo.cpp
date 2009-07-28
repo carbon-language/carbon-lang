@@ -464,24 +464,23 @@ static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
 static unsigned estimateRSStackSizeLimit(MachineFunction &MF,
                                          const ARMBaseInstrInfo &TII) {
   unsigned Limit = (1 << 12) - 1;
-  for (MachineFunction::iterator BB = MF.begin(),E = MF.end();BB != E; ++BB) {
-    for (MachineBasicBlock::iterator I= BB->begin(); I != BB->end(); ++I) {
-      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-        if (I->getOperand(i).isFI()) {
-          unsigned Opcode = I->getOpcode();
-          const TargetInstrDesc &Desc = TII.get(Opcode);
-          unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
-          if (AddrMode == ARMII::AddrMode3 ||
-              AddrMode == ARMII::AddrModeT2_i8) {
-            return (1 << 8) - 1;
-          } else if (AddrMode == ARMII::AddrMode5 ||
-                     AddrMode == ARMII::AddrModeT2_i8s4) {
-            unsigned ThisLimit = ((1 << 8) - 1) * 4;
-            if (ThisLimit < Limit)
-              Limit = ThisLimit;
-          }
-          break; // At most one FI per instruction
-        }
+  for (MachineFunction::iterator BB = MF.begin(),E = MF.end(); BB != E; ++BB) {
+    for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
+         I != E; ++I) {
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
+        if (!I->getOperand(i).isFI()) continue;
+        
+        const TargetInstrDesc &Desc = TII.get(I->getOpcode());
+        unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
+        if (AddrMode == ARMII::AddrMode3 ||
+            AddrMode == ARMII::AddrModeT2_i8)
+          return (1 << 8) - 1;
+        
+        if (AddrMode == ARMII::AddrMode5 ||
+            AddrMode == ARMII::AddrModeT2_i8s4)
+          Limit = std::min(Limit, ((1U << 8) - 1) * 4);
+        break; // At most one FI per instruction
+      }
     }
   }
 
