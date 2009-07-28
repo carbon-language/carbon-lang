@@ -173,7 +173,9 @@ public:
                                 bool isVariadic = false,
                                 bool isSynthesized = false,
                                 ImplementationControl impControl = None);
-  
+
+  virtual ObjCMethodDecl *getCanonicalDecl();
+
   ObjCDeclQualifier getObjCDeclQualifier() const {
     return ObjCDeclQualifier(objcDeclQualifier);
   }

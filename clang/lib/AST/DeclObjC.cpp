@@ -247,6 +247,26 @@ ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
   return Redecl ? Redecl : this;
 }
 
+ObjCMethodDecl *ObjCMethodDecl::getCanonicalDecl() {
+  Decl *CtxD = cast<Decl>(getDeclContext());
+
+  if (ObjCImplementationDecl *ImplD = dyn_cast<ObjCImplementationDecl>(CtxD)) {
+    if (ObjCInterfaceDecl *IFD = ImplD->getClassInterface())
+      if (ObjCMethodDecl *MD = IFD->getMethod(getSelector(),
+                                              isInstanceMethod()))
+        return MD;
+
+  } else if (ObjCCategoryImplDecl *CImplD =
+               dyn_cast<ObjCCategoryImplDecl>(CtxD)) {
+    if (ObjCCategoryDecl *CatD = CImplD->getCategoryClass())
+      if (ObjCMethodDecl *MD = CatD->getMethod(getSelector(),
+                                               isInstanceMethod()))
+        return MD;
+  }
+
+  return this;
+}
+
 void ObjCMethodDecl::createImplicitParams(ASTContext &Context, 
                                           const ObjCInterfaceDecl *OID) {
   QualType selfTy;
