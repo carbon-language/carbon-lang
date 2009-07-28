@@ -23,6 +23,7 @@ add_clang_library(clangAST
   StmtDumper.cpp
   StmtIterator.cpp
   StmtPrinter.cpp
+  StmtProfile.cpp
   StmtViz.cpp
   TemplateName.cpp
   Type.cpp

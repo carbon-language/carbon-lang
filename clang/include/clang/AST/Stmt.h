@@ -26,6 +26,10 @@
 #include <string>
 using llvm::dyn_cast_or_null;
 
+namespace llvm {
+  class FoldingSetNodeID;
+}
+
 namespace clang {
   class ASTContext;
   class Expr;
@@ -227,6 +231,21 @@ public:
   const_child_iterator child_end() const {
     return const_child_iterator(const_cast<Stmt*>(this)->child_end());
   }
+
+  /// \brief Produce a unique representation of the given statement.
+  ///
+  /// \brief ID once the profiling operation is complete, will contain
+  /// the unique representation of the given statement.
+  ///
+  /// \brief Context the AST context in which the statement resides
+  ///
+  /// \brief Canonical whether the profile should be based on the canonical
+  /// representation of this statement (e.g., where non-type template
+  /// parameters are identified by index/level rather than their 
+  /// declaration pointers) or the exact representation of the statement as
+  /// written in the source.
+  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+               bool Canonical);
 };
 
 /// DeclStmt - Adaptor class for mixing declarations with statements and

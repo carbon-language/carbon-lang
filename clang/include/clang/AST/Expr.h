@@ -1687,7 +1687,7 @@ public:
                     SourceLocation RP) : 
     Expr(ShuffleVectorExprClass, Type), BuiltinLoc(BLoc),
     RParenLoc(RP), NumExprs(nexpr) {
-      
+      // FIXME: Allocate in ASTContext!
     SubExprs = new Stmt*[nexpr];
     for (unsigned i = 0; i < nexpr; i++)
       SubExprs[i] = args[i];
@@ -1915,6 +1915,7 @@ public:
 /// return NULL, indicating that the current initializer list also
 /// serves as its syntactic form.
 class InitListExpr : public Expr {
+  // FIXME: Eliminate this vector in favor of ASTContext allocation
   std::vector<Stmt *> InitExprs;
   SourceLocation LBraceLoc, RBraceLoc;
   
