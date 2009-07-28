@@ -527,18 +527,27 @@ void DwarfException::EmitExceptionTable() {
   // Emit the header.
   Asm->EmitInt8(dwarf::DW_EH_PE_omit);
   Asm->EOL("LPStart format (DW_EH_PE_omit)");
-  Asm->EmitInt8(TAI->PreferredEHDataFormat(DwarfEncoding::Data, true));
-  Asm->EOL("TType format (DW_EH_PE_absptr)");
-  Asm->EmitULEB128Bytes(TypeOffset);
-  Asm->EOL("TType base offset");
+
+  if (!TypeInfos.empty() || !FilterIds.empty()) {
+    Asm->EmitInt8(TAI->PreferredEHDataFormat(DwarfEncoding::Data, true));
+    // FIXME: The comment here should correspond with what PreferredEHDataFormat
+    // returned.
+    Asm->EOL("TType format (DW_EH_PE_xxxxx)");
+    Asm->EmitULEB128Bytes(TypeOffset);
+    Asm->EOL("TType base offset");
+  } else {
+    Asm->EmitInt8(dwarf::DW_EH_PE_omit);
+    Asm->EOL("TType format (DW_EH_PE_omit)");
+  }
+
   Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
   Asm->EOL("Call site format (DW_EH_PE_udata4)");
   Asm->EmitULEB128Bytes(SizeSites);
   Asm->EOL("Call-site table length");
 
   // Emit the landing pad site information.
-  for (unsigned i = 0; i < CallSites.size(); ++i) {
-    CallSiteEntry &S = CallSites[i];
+  for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
+    const CallSiteEntry &S = CallSites[i];
     const char *BeginTag;
     unsigned BeginNumber;
 
