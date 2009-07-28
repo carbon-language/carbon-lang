@@ -375,6 +375,54 @@ ConstantArray::ConstantArray(const ArrayType *T,
   }
 }
 
+Constant *ConstantArray::get(const ArrayType *Ty, 
+                             const std::vector<Constant*> &V) {
+  LLVMContextImpl *pImpl = Ty->getContext().pImpl;
+  // If this is an all-zero array, return a ConstantAggregateZero object
+  if (!V.empty()) {
+    Constant *C = V[0];
+    if (!C->isNullValue()) {
+      // Implicitly locked.
+      return pImpl->ArrayConstants.getOrCreate(Ty, V);
+    }
+    for (unsigned i = 1, e = V.size(); i != e; ++i)
+      if (V[i] != C) {
+        // Implicitly locked.
+        return pImpl->ArrayConstants.getOrCreate(Ty, V);
+      }
+  }
+  
+  return Ty->getContext().getConstantAggregateZero(Ty);
+}
+
+
+Constant* ConstantArray::get(const ArrayType* T, Constant* const* Vals,
+                             unsigned NumVals) {
+  // FIXME: make this the primary ctor method.
+  return get(T, std::vector<Constant*>(Vals, Vals+NumVals));
+}
+
+/// ConstantArray::get(const string&) - Return an array that is initialized to
+/// contain the specified string.  If length is zero then a null terminator is 
+/// added to the specified string so that it may be used in a natural way. 
+/// Otherwise, the length parameter specifies how much of the string to use 
+/// and it won't be null terminated.
+///
+Constant* ConstantArray::get(const StringRef &Str, bool AddNull) {
+  std::vector<Constant*> ElementVals;
+  for (unsigned i = 0; i < Str.size(); ++i)
+    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, Str[i]));
+
+  // Add a null terminator to the string...
+  if (AddNull) {
+    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, 0));
+  }
+
+  ArrayType *ATy = ArrayType::get(Type::Int8Ty, ElementVals.size());
+  return get(ATy, ElementVals);
+}
+
+
 
 ConstantStruct::ConstantStruct(const StructType *T,
                                const std::vector<Constant*> &V)
@@ -943,7 +991,7 @@ void ConstantAggregateZero::destroyConstant() {
 ///
 void ConstantArray::destroyConstant() {
   // Implicitly locked.
-  getType()->getContext().erase(this);
+  getType()->getContext().pImpl->ArrayConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -1907,12 +1955,91 @@ const char *ConstantExpr::getOpcodeName() const {
 /// single invocation handles all 1000 uses.  Handling them one at a time would
 /// work, but would be really slow because it would have to unique each updated
 /// array instance.
+
+static std::vector<Constant*> getValType(ConstantArray *CA) {
+  std::vector<Constant*> Elements;
+  Elements.reserve(CA->getNumOperands());
+  for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+    Elements.push_back(cast<Constant>(CA->getOperand(i)));
+  return Elements;
+}
+
+
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 Use *U) {
-  Constant *Replacement =
-    getType()->getContext().replaceUsesOfWithOnConstant(this, From, To, U);
- 
-  if (!Replacement) return;
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  Constant *ToC = cast<Constant>(To);
+
+  LLVMContext &Context = getType()->getContext();
+  LLVMContextImpl *pImpl = Context.pImpl;
+
+  std::pair<LLVMContextImpl::ArrayConstantsTy::MapKey, Constant*> Lookup;
+  Lookup.first.first = getType();
+  Lookup.second = this;
+
+  std::vector<Constant*> &Values = Lookup.first.second;
+  Values.reserve(getNumOperands());  // Build replacement array.
+
+  // Fill values with the modified operands of the constant array.  Also, 
+  // compute whether this turns into an all-zeros array.
+  bool isAllZeros = false;
+  unsigned NumUpdated = 0;
+  if (!ToC->isNullValue()) {
+    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
+      Constant *Val = cast<Constant>(O->get());
+      if (Val == From) {
+        Val = ToC;
+        ++NumUpdated;
+      }
+      Values.push_back(Val);
+    }
+  } else {
+    isAllZeros = true;
+    for (Use *O = OperandList, *E = OperandList+getNumOperands();O != E; ++O) {
+      Constant *Val = cast<Constant>(O->get());
+      if (Val == From) {
+        Val = ToC;
+        ++NumUpdated;
+      }
+      Values.push_back(Val);
+      if (isAllZeros) isAllZeros = Val->isNullValue();
+    }
+  }
+  
+  Constant *Replacement = 0;
+  if (isAllZeros) {
+    Replacement = Context.getConstantAggregateZero(getType());
+  } else {
+    // Check to see if we have this array type already.
+    sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
+    bool Exists;
+    LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
+      pImpl->ArrayConstants.InsertOrGetItem(Lookup, Exists);
+    
+    if (Exists) {
+      Replacement = I->second;
+    } else {
+      // Okay, the new shape doesn't exist in the system yet.  Instead of
+      // creating a new constant array, inserting it, replaceallusesof'ing the
+      // old with the new, then deleting the old... just update the current one
+      // in place!
+      pImpl->ArrayConstants.MoveConstantToNewSlot(this, I);
+      
+      // Update to the new value.  Optimize for the case when we have a single
+      // operand that we're changing, but handle bulk updates efficiently.
+      if (NumUpdated == 1) {
+        unsigned OperandToUpdate = U - OperandList;
+        assert(getOperand(OperandToUpdate) == From &&
+               "ReplaceAllUsesWith broken!");
+        setOperand(OperandToUpdate, ToC);
+      } else {
+        for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+          if (getOperand(i) == From)
+            setOperand(i, ToC);
+      }
+      return;
+    }
+  }
  
   // Otherwise, I do need to replace this with an existing value.
   assert(Replacement != this && "I didn't contain From!");

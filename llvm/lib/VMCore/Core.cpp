@@ -402,13 +402,13 @@ LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
                              int DontNullTerminate) {
   /* Inverted the sense of AddNull because ', 0)' is a
      better mnemonic for null termination than ', 1)'. */
-  return wrap(getGlobalContext().getConstantArray(std::string(Str, Length),
+  return wrap(ConstantArray::get(std::string(Str, Length),
                                  DontNullTerminate == 0));
 }
 
 LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length) {
-  return wrap(getGlobalContext().getConstantArray(
+  return wrap(ConstantArray::get(
                     getGlobalContext().getArrayType(unwrap(ElementTy), Length),
                                  unwrap<Constant>(ConstantVals, Length),
                                  Length));

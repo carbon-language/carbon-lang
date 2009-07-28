@@ -413,7 +413,7 @@ public:
     return CreateConstGEP2_32(Ptr, 0, Idx, Name);
   }
   Value *CreateGlobalString(const char *Str = "", const char *Name = "") {
-    Constant *StrConstant = Context.getConstantArray(Str, true);
+    Constant *StrConstant = ConstantArray::get(Str, true);
     Module &M = *BB->getParent()->getParent();
     GlobalVariable *gv = new GlobalVariable(M,
                                             StrConstant->getType(),

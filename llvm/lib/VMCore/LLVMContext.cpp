@@ -103,42 +103,6 @@ ConstantAggregateZero* LLVMContext::getConstantAggregateZero(const Type* Ty) {
   return pImpl->getConstantAggregateZero(Ty);
 }
 
-
-// ConstantArray accessors.
-Constant* LLVMContext::getConstantArray(const ArrayType* T,
-                                        const std::vector<Constant*>& V) {
-  return pImpl->getConstantArray(T, V);
-}
-
-Constant* LLVMContext::getConstantArray(const ArrayType* T,
-                                        Constant* const* Vals,
-                                        unsigned NumVals) {
-  // FIXME: make this the primary ctor method.
-  return getConstantArray(T, std::vector<Constant*>(Vals, Vals+NumVals));
-}
-
-/// ConstantArray::get(const string&) - Return an array that is initialized to
-/// contain the specified string.  If length is zero then a null terminator is 
-/// added to the specified string so that it may be used in a natural way. 
-/// Otherwise, the length parameter specifies how much of the string to use 
-/// and it won't be null terminated.
-///
-Constant* LLVMContext::getConstantArray(const StringRef &Str,
-                                        bool AddNull) {
-  std::vector<Constant*> ElementVals;
-  for (unsigned i = 0; i < Str.size(); ++i)
-    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, Str[i]));
-
-  // Add a null terminator to the string...
-  if (AddNull) {
-    ElementVals.push_back(ConstantInt::get(Type::Int8Ty, 0));
-  }
-
-  ArrayType *ATy = getArrayType(Type::Int8Ty, ElementVals.size());
-  return getConstantArray(ATy, ElementVals);
-}
-
-
 // ConstantExpr accessors.
 Constant* LLVMContext::getConstantExpr(unsigned Opcode, Constant* C1,
                                        Constant* C2) {
@@ -525,15 +489,6 @@ void LLVMContext::erase(ConstantAggregateZero *Z) {
   pImpl->erase(Z);
 }
 
-void LLVMContext::erase(ConstantArray *C) {
-  pImpl->erase(C);
-}
-
 void LLVMContext::erase(ConstantVector *V) {
   pImpl->erase(V);
-}
-
-Constant *LLVMContext::replaceUsesOfWithOnConstant(ConstantArray *CA,
-                                               Value *From, Value *To, Use *U) {
-  return pImpl->replaceUsesOfWithOnConstant(CA, From, To, U);
 }

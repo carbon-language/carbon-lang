@@ -110,7 +110,7 @@ namespace {
           AUGs.push_back(Context.getConstantExprBitCast(*GI, SBP));
         }
         ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
-        Constant *Init = Context.getConstantArray(AT, AUGs);
+        Constant *Init = ConstantArray::get(AT, AUGs);
         GlobalValue *gv = new GlobalVariable(M, AT, false, 
                                              GlobalValue::AppendingLinkage, 
                                              Init, "llvm.used");

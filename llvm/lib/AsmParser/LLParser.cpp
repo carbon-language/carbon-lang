@@ -1811,13 +1811,13 @@ bool LLParser::ParseValID(ValID &ID) {
                      " is not of type '" +Elts[0]->getType()->getDescription());
     }
     
-    ID.ConstantVal = Context.getConstantArray(ATy, Elts.data(), Elts.size());
+    ID.ConstantVal = ConstantArray::get(ATy, Elts.data(), Elts.size());
     ID.Kind = ValID::t_Constant;
     return false;
   }
   case lltok::kw_c:  // c "foo"
     Lex.Lex();
-    ID.ConstantVal = Context.getConstantArray(Lex.getStrVal(), false);
+    ID.ConstantVal = ConstantArray::get(Lex.getStrVal(), false);
     if (ParseToken(lltok::StringConstant, "expected string")) return true;
     ID.Kind = ValID::t_Constant;
     return false;

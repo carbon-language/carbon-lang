@@ -209,7 +209,7 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
 
   Constant *DescriptorElts[] = {
     ConstantStruct::get(BaseElts, 2),
-    Context.getConstantArray(Context.getArrayType(VoidPtr, NumMeta),
+    ConstantArray::get(Context.getArrayType(VoidPtr, NumMeta),
                        Metadata.begin(), NumMeta)
   };
 

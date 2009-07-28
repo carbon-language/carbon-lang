@@ -58,6 +58,7 @@ class LLVMContext {
   friend class ConstantInt;
   friend class ConstantFP;
   friend class ConstantStruct;
+  friend class ConstantArray;
 public:
   LLVMContext();
   ~LLVMContext();
@@ -82,21 +83,6 @@ public:
                               
   // ConstantAggregateZero accessors
   ConstantAggregateZero* getConstantAggregateZero(const Type* Ty);
-  
-  // ConstantArray accessors
-  Constant* getConstantArray(const ArrayType* T,
-                             const std::vector<Constant*>& V);
-  Constant* getConstantArray(const ArrayType* T, Constant* const* Vals,
-                             unsigned NumVals);
-                             
-  /// This method constructs a ConstantArray and initializes it with a text
-  /// string. The default behavior (AddNull==true) causes a null terminator to
-  /// be placed at the end of the array. This effectively increases the length
-  /// of the array by one (you've been warned).  However, in some situations 
-  /// this is not desired so if AddNull==false then the string is copied without
-  /// null termination.
-  Constant* getConstantArray(const StringRef &Initializer,
-                             bool AddNull = true);
                              
   // ConstantExpr accessors
   Constant* getConstantExpr(unsigned Opcode, Constant* C1, Constant* C2);
@@ -225,12 +211,7 @@ public:
   void erase(MDString *M);
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
-  void erase(ConstantArray *Z);
   void erase(ConstantVector *V);
-  
-  // RAUW helpers
-  Constant *replaceUsesOfWithOnConstant(ConstantArray *CA,
-                                             Value *From, Value *To, Use *U);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

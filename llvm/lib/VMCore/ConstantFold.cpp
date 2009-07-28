@@ -521,7 +521,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(LLVMContext &Context,
     if (isa<StructType>(AggTy))
       return ConstantStruct::get(Ops);
     else
-      return Context.getConstantArray(cast<ArrayType>(AggTy), Ops);
+      return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
   }
   if (isa<ConstantAggregateZero>(Agg)) {
     // Insertion of constant into aggregate zero
@@ -550,7 +550,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(LLVMContext &Context,
     if (isa<StructType>(AggTy))
       return ConstantStruct::get(Ops);
     else
-      return Context.getConstantArray(cast<ArrayType>(AggTy), Ops);
+      return ConstantArray::get(cast<ArrayType>(AggTy), Ops);
   }
   if (isa<ConstantStruct>(Agg) || isa<ConstantArray>(Agg)) {
     // Insertion of constant into aggregate constant
@@ -567,7 +567,7 @@ Constant *llvm::ConstantFoldInsertValueInstruction(LLVMContext &Context,
     if (isa<StructType>(Agg->getType()))
       C = ConstantStruct::get(Ops);
     else
-      C = Context.getConstantArray(cast<ArrayType>(Agg->getType()), Ops);
+      C = ConstantArray::get(cast<ArrayType>(Agg->getType()), Ops);
     return C;
   }
 

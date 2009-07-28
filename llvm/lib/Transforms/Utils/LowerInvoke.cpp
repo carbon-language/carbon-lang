@@ -183,7 +183,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
     // The abort message for expensive EH support tells the user that the
     // program 'unwound' without an 'invoke' instruction.
     Constant *Msg =
-      Context.getConstantArray("ERROR: Exception thrown, but not caught!\n");
+      ConstantArray::get("ERROR: Exception thrown, but not caught!\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
 
     GlobalVariable *MsgGV = new GlobalVariable(*M, Msg->getType(), true,
@@ -195,7 +195,7 @@ void LowerInvoke::createAbortMessage(Module *M) {
     // The abort message for cheap EH support tells the user that EH is not
     // enabled.
     Constant *Msg =
-      Context.getConstantArray("Exception handler needed, but not enabled."      
+      ConstantArray::get("Exception handler needed, but not enabled."      
                         "Recompile program with -enable-correct-eh-support.\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
 

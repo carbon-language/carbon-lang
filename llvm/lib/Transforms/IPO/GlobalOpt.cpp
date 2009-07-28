@@ -1968,7 +1968,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   // Create the array initializer.
   const Type *StructTy =
     cast<ArrayType>(GCL->getType()->getElementType())->getElementType();
-  Constant *CA = Context.getConstantArray(ArrayType::get(StructTy, 
+  Constant *CA = ConstantArray::get(ArrayType::get(StructTy, 
                                            CAList.size()), CAList);
   
   // If we didn't change the number of elements, don't create a new GV.
@@ -2094,7 +2094,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     assert(CI->getZExtValue() < ATy->getNumElements());
     Elts[CI->getZExtValue()] =
       EvaluateStoreInto(Elts[CI->getZExtValue()], Val, Addr, OpNo+1, Context);
-    return Context.getConstantArray(ATy, Elts);
+    return ConstantArray::get(ATy, Elts);
   }    
 }
 

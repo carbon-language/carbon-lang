@@ -288,7 +288,7 @@ void BitcodeReaderValueList::ResolveConstantForwardRefs() {
       // Make the new constant.
       Constant *NewC;
       if (ConstantArray *UserCA = dyn_cast<ConstantArray>(UserC)) {
-        NewC = Context.getConstantArray(UserCA->getType(), &NewOps[0],
+        NewC = ConstantArray::get(UserCA->getType(), &NewOps[0],
                                         NewOps.size());
       } else if (ConstantStruct *UserCS = dyn_cast<ConstantStruct>(UserC)) {
         NewC = ConstantStruct::get(&NewOps[0], NewOps.size(),
@@ -930,7 +930,7 @@ bool BitcodeReader::ParseConstants() {
         const Type *EltTy = ATy->getElementType();
         for (unsigned i = 0; i != Size; ++i)
           Elts.push_back(ValueList.getConstantFwdRef(Record[i], EltTy));
-        V = Context.getConstantArray(ATy, Elts);
+        V = ConstantArray::get(ATy, Elts);
       } else if (const VectorType *VTy = dyn_cast<VectorType>(CurTy)) {
         const Type *EltTy = VTy->getElementType();
         for (unsigned i = 0; i != Size; ++i)
@@ -952,7 +952,7 @@ bool BitcodeReader::ParseConstants() {
       std::vector<Constant*> Elts;
       for (unsigned i = 0; i != Size; ++i)
         Elts.push_back(ConstantInt::get(EltTy, Record[i]));
-      V = Context.getConstantArray(ATy, Elts);
+      V = ConstantArray::get(ATy, Elts);
       break;
     }
     case bitc::CST_CODE_CSTRING: { // CSTRING: [values]
@@ -967,7 +967,7 @@ bool BitcodeReader::ParseConstants() {
       for (unsigned i = 0; i != Size; ++i)
         Elts.push_back(ConstantInt::get(EltTy, Record[i]));
       Elts.push_back(Context.getNullValue(EltTy));
-      V = Context.getConstantArray(ATy, Elts);
+      V = ConstantArray::get(ATy, Elts);
       break;
     }
     case bitc::CST_CODE_CE_BINOP: {  // CE_BINOP: [opcode, opval, opval]

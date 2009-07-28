@@ -327,10 +327,22 @@ class ConstantArray : public Constant {
   friend struct ConstantCreator<ConstantArray, ArrayType,
                                     std::vector<Constant*> >;
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
-  friend class LLVMContextImpl;
 protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
 public:
+  // ConstantArray accessors
+  static Constant* get(const ArrayType* T, const std::vector<Constant*>& V);
+  static Constant* get(const ArrayType* T, Constant* const* Vals, 
+                       unsigned NumVals);
+                             
+  /// This method constructs a ConstantArray and initializes it with a text
+  /// string. The default behavior (AddNull==true) causes a null terminator to
+  /// be placed at the end of the array. This effectively increases the length
+  /// of the array by one (you've been warned).  However, in some situations 
+  /// this is not desired so if AddNull==false then the string is copied without
+  /// null termination.
+  static Constant* get(const StringRef &Initializer, bool AddNull = true);
+  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

@@ -56,7 +56,7 @@ Value *llvm::MapValue(const Value *V, ValueMapTy &VM, LLVMContext &Context) {
           Values.push_back(cast<Constant>(MV));
           for (++i; i != e; ++i)
             Values.push_back(cast<Constant>(MapValue(*i, VM, Context)));
-          return VM[V] = Context.getConstantArray(CA->getType(), Values);
+          return VM[V] = ConstantArray::get(CA->getType(), Values);
         }
       }
       return VM[V] = C;

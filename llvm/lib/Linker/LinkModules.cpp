@@ -369,7 +369,7 @@ static Value *RemapOperand(const Value *In,
         Operands[i] =cast<Constant>(RemapOperand(CPA->getOperand(i), ValueMap, 
                                                  Context));
       Result =
-          Context.getConstantArray(cast<ArrayType>(CPA->getType()), Operands);
+          ConstantArray::get(cast<ArrayType>(CPA->getType()), Operands);
     } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(CPV)) {
       std::vector<Constant*> Operands(CPS->getNumOperands());
       for (unsigned i = 0, e = CPS->getNumOperands(); i != e; ++i)
@@ -1186,7 +1186,7 @@ static bool LinkAppendingVars(Module *M,
         for (unsigned i = 0, e = T2->getNumElements(); i != e; ++i)
           Inits.push_back(CV);
       }
-      NG->setInitializer(Context.getConstantArray(NewType, Inits));
+      NG->setInitializer(ConstantArray::get(NewType, Inits));
       Inits.clear();
 
       // Replace any uses of the two global variables with uses of the new

@@ -499,7 +499,7 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
     return Slot = VMContext.getConstantPointerNull(DestTy);
 
   // Construct string as an llvm constant.
-  Constant *ConstStr = VMContext.getConstantArray(String);
+  Constant *ConstStr = ConstantArray::get(String);
     
   // Otherwise create and return a new string global.
   GlobalVariable *StrGV = new GlobalVariable(M, ConstStr->getType(), true,
@@ -521,7 +521,7 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
   for (unsigned i = 0; i != NumTys; ++i)
     Elts.push_back(getCastToEmpty(Tys[i]));
   
-  Constant *Init = VMContext.getConstantArray(VMContext.getArrayType(EmptyStructPtr,
+  Constant *Init = ConstantArray::get(VMContext.getArrayType(EmptyStructPtr,
                                                      Elts.size()),
                                       Elts.data(), Elts.size());
   // If we already have this array, just return the uniqued version.
