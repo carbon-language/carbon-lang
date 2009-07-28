@@ -27,32 +27,7 @@ using namespace llvm;
 
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const TargetMachine &TM) 
   : TargetAsmInfo(TM) {
-  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
-
-  CStringSection_ = getOrCreateSection("\t.cstring", true,
-                                       SectionKind::MergeableCString);
-  FourByteConstantSection = getOrCreateSection("\t.literal4\n", true,
-                                               SectionKind::MergeableConst4);
-  EightByteConstantSection = getOrCreateSection("\t.literal8\n", true,
-                                                SectionKind::MergeableConst8);
-  SixteenByteConstantSection = 
-    getOrCreateSection("\t.literal16\n", true, SectionKind::MergeableConst16);
-
-  ReadOnlySection = getOrCreateSection("\t.const", true, SectionKind::ReadOnly);
-
-  TextCoalSection =
-    getOrCreateSection("\t__TEXT,__textcoal_nt,coalesced,pure_instructions",
-                       false, SectionKind::Text);
-  ConstTextCoalSection = getOrCreateSection("\t__TEXT,__const_coal,coalesced",
-                                            false, SectionKind::Text);
-  ConstDataCoalSection = getOrCreateSection("\t__DATA,__const_coal,coalesced",
-                                            false, SectionKind::Text);
-  ConstDataSection = getOrCreateSection("\t.const_data", true,
-                                        SectionKind::ReadOnlyWithRel);
-  DataCoalSection = getOrCreateSection("\t__DATA,__datacoal_nt,coalesced",
-                                       false, SectionKind::DataRel);
-  
+ 
   // Common settings for all Darwin targets.
   // Syntax:
   GlobalPrefix = "_";
@@ -122,81 +97,5 @@ bool DarwinTargetAsmInfo::emitUsedDirectiveFor(const GlobalValue* GV,
   }
 
   return true;
-}
-
-const Section*
-DarwinTargetAsmInfo::SelectSectionForGlobal(const GlobalValue *GV,
-                                            SectionKind Kind) const {
-  assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
-  
-  if (Kind.isText())
-    return Kind.isWeak() ? TextCoalSection : TextSection;
-  
-  // If this is weak/linkonce, put this in a coalescable section, either in text
-  // or data depending on if it is writable.
-  if (Kind.isWeak()) {
-    if (Kind.isReadOnly())
-      return ConstTextCoalSection;
-    return DataCoalSection;
-  }
-  
-  // FIXME: Alignment check should be handled by section classifier.
-  if (Kind.isMergeableCString())
-    return MergeableStringSection(cast<GlobalVariable>(GV));
-  
-  if (Kind.isMergeableConst()) {
-    if (Kind.isMergeableConst4())
-      return FourByteConstantSection;
-    if (Kind.isMergeableConst8())
-      return EightByteConstantSection;
-    if (Kind.isMergeableConst16())
-      return SixteenByteConstantSection;
-    return ReadOnlySection;  // .const
-  }
-  
-  // FIXME: ROData -> const in -static mode that is relocatable but they happen
-  // by the static linker.  Why not mergeable?
-  if (Kind.isReadOnly())
-    return getReadOnlySection();
-
-  // If this is marked const, put it into a const section.  But if the dynamic
-  // linker needs to write to it, put it in the data segment.
-  if (Kind.isReadOnlyWithRel())
-    return ConstDataSection;
-  
-  // Otherwise, just drop the variable in the normal data section.
-  return DataSection;
-}
-
-const Section*
-DarwinTargetAsmInfo::MergeableStringSection(const GlobalVariable *GV) const {
-  const TargetData *TD = TM.getTargetData();
-  Constant *C = cast<GlobalVariable>(GV)->getInitializer();
-  const Type *Ty = cast<ArrayType>(C->getType())->getElementType();
-
-  unsigned Size = TD->getTypeAllocSize(Ty);
-  if (Size) {
-    unsigned Align = TD->getPreferredAlignment(GV);
-    if (Align <= 32)
-      return getCStringSection_();
-  }
-
-  return getReadOnlySection();
-}
-
-const Section *
-DarwinTargetAsmInfo::getSectionForMergeableConstant(SectionKind Kind) const {
-  // If this constant requires a relocation, we have to put it in the data
-  // segment, not in the text segment.
-  if (Kind.isDataRel())
-    return ConstDataSection;
-  
-  if (Kind.isMergeableConst4())
-    return FourByteConstantSection;
-  if (Kind.isMergeableConst8())
-    return EightByteConstantSection;
-  if (Kind.isMergeableConst16())
-    return SixteenByteConstantSection;
-  return ReadOnlySection;  // .const
 }
 

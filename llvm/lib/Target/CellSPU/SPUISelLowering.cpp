@@ -15,8 +15,9 @@
 #include "SPUISelLowering.h"
 #include "SPUTargetMachine.h"
 #include "SPUFrameInfo.h"
-#include "llvm/ADT/APInt.h"
-#include "llvm/ADT/VectorExtras.h"
+#include "llvm/Constants.h"
+#include "llvm/Function.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/CallingConv.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -24,15 +25,13 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/Constants.h"
-#include "llvm/Function.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetOptions.h"
+#include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetOptions.h"
-
 #include <map>
 
 using namespace llvm;
@@ -125,9 +124,8 @@ namespace {
 }
 
 SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
-  : TargetLowering(TM),
-    SPUTM(TM)
-{
+  : TargetLowering(TM, new TargetLoweringObjectFileELF()),
+    SPUTM(TM) {
   // Fold away setcc operations if possible.
   setPow2DivIsCheap();
 

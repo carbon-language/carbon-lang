@@ -36,6 +36,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -50,8 +51,23 @@ DisableMMX("disable-mmx", cl::Hidden, cl::desc("Disable use of MMX"));
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, MVT VT, SDValue V1,
                        SDValue V2);
 
+static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
+  switch (TM.getSubtarget<X86Subtarget>().TargetType) {
+  default: llvm_unreachable("unknown subtarget type");
+  case X86Subtarget::isDarwin:
+    return new TargetLoweringObjectFileMachO();
+  case X86Subtarget::isELF:
+    return new TargetLoweringObjectFileELF();
+  case X86Subtarget::isMingw:
+  case X86Subtarget::isCygwin:
+  case X86Subtarget::isWindows:
+    return new TargetLoweringObjectFileCOFF();
+  }
+  
+}
+
 X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
-  : TargetLowering(TM) {
+  : TargetLowering(TM, createTLOF(TM)) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
   X86ScalarSSEf64 = Subtarget->hasSSE2();
   X86ScalarSSEf32 = Subtarget->hasSSE1();

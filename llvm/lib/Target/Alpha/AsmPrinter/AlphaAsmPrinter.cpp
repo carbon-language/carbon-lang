@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Compiler.h"
@@ -138,7 +139,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
 
   EmitAlignment(MF.getAlignment(), F);
   switch (F->getLinkage()) {
@@ -214,7 +215,7 @@ void AlphaAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
   // 0: Switch to section
-  SwitchToSection(TAI->SectionForGlobal(GVar));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
 
   // 1: Check visibility
   printVisibility(name, GVar->getVisibility());

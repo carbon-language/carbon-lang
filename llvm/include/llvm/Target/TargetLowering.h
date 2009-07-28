@@ -54,6 +54,7 @@ namespace llvm {
   class TargetMachine;
   class TargetRegisterClass;
   class TargetSubtarget;
+  class TargetLoweringObjectFile;
   class Value;
 
   // FIXME: should this be here?
@@ -77,6 +78,8 @@ namespace llvm {
 /// target-specific constructs to SelectionDAG operators.
 ///
 class TargetLowering {
+  TargetLowering(const TargetLowering&);  // DO NOT IMPLEMENT
+  void operator=(const TargetLowering&);  // DO NOT IMPLEMENT
 public:
   /// LegalizeAction - This enum indicates whether operations are valid for a
   /// target, and if not, what action should be used to make them valid.
@@ -98,11 +101,13 @@ public:
     SchedulingForRegPressure       // Scheduling for lowest register pressure.
   };
 
-  explicit TargetLowering(TargetMachine &TM);
+  /// NOTE: The constructor takes ownership of TLOF.
+  explicit TargetLowering(TargetMachine &TM, TargetLoweringObjectFile *TLOF);
   virtual ~TargetLowering();
 
   TargetMachine &getTargetMachine() const { return TM; }
   const TargetData *getTargetData() const { return TD; }
+  const TargetLoweringObjectFile &getObjFileLowering() const { return TLOF; }
 
   bool isBigEndian() const { return !IsLittleEndian; }
   bool isLittleEndian() const { return IsLittleEndian; }
@@ -1475,6 +1480,7 @@ public:
 private:
   TargetMachine &TM;
   const TargetData *TD;
+  TargetLoweringObjectFile &TLOF;
 
   /// PointerTy - The type to use for pointers, usually i32 or i64.
   ///

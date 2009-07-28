@@ -31,13 +31,15 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/VectorExtras.h"
 using namespace llvm;
 
 MSP430TargetLowering::MSP430TargetLowering(MSP430TargetMachine &tm) :
-  TargetLowering(tm), Subtarget(*tm.getSubtargetImpl()), TM(tm) {
+  TargetLowering(tm, new TargetLoweringObjectFileELF()),
+  Subtarget(*tm.getSubtargetImpl()), TM(tm) {
 
   // Set up the register classes.
   addRegisterClass(MVT::i8,  MSP430::GR8RegisterClass);

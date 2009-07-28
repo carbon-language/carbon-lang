@@ -16,6 +16,7 @@
 #include "XCoreISelLowering.h"
 #include "XCoreMachineFunctionInfo.h"
 #include "XCore.h"
+#include "XCoreTargetObjectFile.h"
 #include "XCoreTargetMachine.h"
 #include "XCoreSubtarget.h"
 #include "llvm/DerivedTypes.h"
@@ -55,7 +56,8 @@ getTargetNodeName(unsigned Opcode) const
 }
 
 XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
-  : TargetLowering(XTM),
+  : TargetLowering(XTM,
+                   new XCoreTargetObjectFile(XTM.getSubtargetImpl()->isXS1A())),
     TM(XTM),
     Subtarget(*XTM.getSubtargetImpl()) {
 

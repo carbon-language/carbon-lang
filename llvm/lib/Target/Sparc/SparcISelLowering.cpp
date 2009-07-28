@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
@@ -548,9 +549,31 @@ static SPCC::CondCodes FPCondCCodeToFCC(ISD::CondCode CC) {
   }
 }
 
+class TargetLoweringObjectFileSparc : public TargetLoweringObjectFileELF {
+public:
+  void getSectionFlagsAsString(SectionKind Kind,
+                               SmallVectorImpl<char> &Str) const {
+    if (Kind.isMergeableConst() || Kind.isMergeableCString())
+      return TargetLoweringObjectFileELF::getSectionFlagsAsString(Kind, Str);
+    
+    // FIXME: Inefficient.
+    std::string Res;
+    if (!Kind.isMetadata())
+      Res += ",#alloc";
+    if (Kind.isText())
+      Res += ",#execinstr";
+    if (Kind.isWriteable())
+      Res += ",#write";
+    if (Kind.isThreadLocal())
+      Res += ",#tls";
+    
+    Str.append(Res.begin(), Res.end());
+  }
+};
+
 
 SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
-  : TargetLowering(TM) {
+  : TargetLowering(TM, new TargetLoweringObjectFileSparc()) {
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, SP::IntRegsRegisterClass);

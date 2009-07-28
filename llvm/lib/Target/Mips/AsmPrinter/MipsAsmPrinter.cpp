@@ -31,6 +31,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLoweringObjectFile.h" 
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -211,12 +212,10 @@ emitCurrentABIString(void)
 }  
 
 /// Emit the directives used by GAS on the start of functions
-void MipsAsmPrinter::
-emitFunctionStart(MachineFunction &MF)
-{
+void MipsAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
 
   // 2 bits aligned
   EmitAlignment(MF.getAlignment(), F);
@@ -485,7 +484,7 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   printVisibility(name, GVar->getVisibility());
 
-  SwitchToSection(TAI->SectionForGlobal(GVar));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&

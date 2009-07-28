@@ -31,6 +31,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
@@ -56,8 +57,15 @@ static cl::opt<bool> EnablePPCPreinc("enable-ppc-preinc",
 cl::desc("enable preincrement load/store generation on PPC (experimental)"),
                                      cl::Hidden);
 
+static TargetLoweringObjectFile *CreateTLOF(const PPCTargetMachine &TM) {
+  if (TM.getSubtargetImpl()->isDarwin())
+    return new TargetLoweringObjectFileMachO();
+  return new TargetLoweringObjectFileELF(false, true);
+}
+
+
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
-  : TargetLowering(TM), PPCSubTarget(*TM.getSubtargetImpl()) {
+  : TargetLowering(TM, CreateTLOF(TM)), PPCSubTarget(*TM.getSubtargetImpl()) {
 
   setPow2DivIsCheap();
 

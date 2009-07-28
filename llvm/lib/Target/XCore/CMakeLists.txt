@@ -20,4 +20,5 @@ add_llvm_target(XCore
   XCoreSubtarget.cpp
   XCoreTargetAsmInfo.cpp
   XCoreTargetMachine.cpp
+  XCoreTargetObjectFile.cpp
   )

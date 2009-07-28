@@ -33,10 +33,6 @@ SPULinuxTargetAsmInfo::SPULinuxTargetAsmInfo(const SPUTargetMachine &TM) :
   HasLEB128 = true;
   HasDotLocAndDotFile = true;
 
-  // BSS section needs to be emitted as ".section"
-  BSSSection = "\t.section\t.bss";
-  BSSSection_ = getOrCreateSection("\t.bss", false, SectionKind::BSS);
-
   SupportsDebugInformation = true;
   NeedsSet = true;
   DwarfAbbrevSection =  "\t.section        .debug_abbrev,\"\",@progbits";

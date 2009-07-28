@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
@@ -77,7 +78,7 @@ namespace {
 void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
 
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
 
   unsigned FnAlign = MF.getAlignment();
   EmitAlignment(FnAlign, F);

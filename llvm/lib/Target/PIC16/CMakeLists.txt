@@ -21,4 +21,5 @@ add_llvm_target(PIC16
   PIC16Subtarget.cpp
   PIC16TargetAsmInfo.cpp
   PIC16TargetMachine.cpp
+  PIC16TargetObjectFile.cpp
   )

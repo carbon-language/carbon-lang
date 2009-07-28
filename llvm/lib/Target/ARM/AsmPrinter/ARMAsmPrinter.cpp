@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -1127,7 +1128,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type " << name << ",%object\n";
   
-  const Section *TheSection = TAI->SectionForGlobal(GVar);
+  const Section *TheSection = getObjFileLowering().SectionForGlobal(GVar, TM);
   SwitchToSection(TheSection);
 
   // FIXME: get this stuff from section kind flags.
@@ -1154,7 +1155,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           O << TAI->getCOMMDirective()  << name << "," << Size
             << ',' << Align;
         } else {
-          SwitchToSection(TAI->SectionForGlobal(GVar));
+          SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
           O << "\t.globl " << name << '\n'
             << TAI->getWeakDefDirective() << name << '\n';
           EmitAlignment(Align, GVar);
@@ -1285,7 +1286,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     }
 
     if (!HiddenGVNonLazyPtrs.empty()) {
-      SwitchToSection(TAI->getDataSection());
+      SwitchToSection(getObjFileLowering().getDataSection());
       for (StringMap<std::string>::iterator I = HiddenGVNonLazyPtrs.begin(),
              E = HiddenGVNonLazyPtrs.end(); I != E; ++I) {
         EmitAlignment(2);

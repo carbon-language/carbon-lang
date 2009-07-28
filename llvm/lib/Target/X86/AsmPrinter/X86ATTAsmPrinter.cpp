@@ -37,6 +37,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -166,7 +167,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   if (Subtarget->isTargetCygMing())
     DecorateCygMingName(CurrentFnName, F);
 
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
@@ -782,7 +783,7 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type\t" << name << ",@object\n";
 
-  const Section *TheSection = TAI->SectionForGlobal(GVar);
+  const Section *TheSection = getObjFileLowering().SectionForGlobal(GVar, TM);
   SwitchToSection(TheSection);
 
   if (C->isNullValue() && !GVar->hasSection() &&
@@ -931,7 +932,7 @@ bool X86ATTAsmPrinter::doFinalization(Module &M) {
     }
 
     if (!HiddenGVStubs.empty()) {
-      SwitchToSection(TAI->getDataSection());
+      SwitchToSection(getObjFileLowering().getDataSection());
       EmitAlignment(2);
       for (StringMap<std::string>::iterator I = HiddenGVStubs.begin(),
            E = HiddenGVStubs.end(); I != E; ++I)

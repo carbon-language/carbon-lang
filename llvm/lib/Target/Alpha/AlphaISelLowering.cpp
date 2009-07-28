@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -29,6 +30,17 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+
+class TargetLoweringObjectFileAlpha : public TargetLoweringObjectFile {
+public:
+  TargetLoweringObjectFileAlpha() {
+    TextSection = getOrCreateSection("_text", true, SectionKind::Text);
+    DataSection = getOrCreateSection("_data", true, SectionKind::DataRel);
+  }
+};
+  
+  
 
 /// AddLiveIn - This helper function adds the specified physical register to the
 /// MachineFunction as a live in value.  It also creates a corresponding virtual
@@ -41,7 +53,8 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
   return VReg;
 }
 
-AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM) {
+AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM)
+  : TargetLowering(TM, new TargetLoweringObjectFileAlpha()) {
   // Set up the TargetLowering object.
   //I am having problems with shr n i8 1
   setShiftAmountType(MVT::i64);

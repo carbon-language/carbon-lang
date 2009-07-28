@@ -17,9 +17,10 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/System/Path.h"
 #include "llvm/Target/TargetAsmInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
 static TimerGroup &getDwarfTimerGroup() {
@@ -1328,7 +1329,7 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
   MMI->setDebugInfoAvailability(true);
 
   // Prime section data.
-  SectionMap.insert(TAI->getTextSection());
+  SectionMap.insert(Asm->getObjFileLowering().getTextSection());
 
   // Print out .file directives to specify files for .loc directives. These are
   // printed out early so that they precede any .loc directives.
@@ -1363,9 +1364,9 @@ void DwarfDebug::EndModule() {
     DebugTimer->startTimer();
 
   // Standard sections final addresses.
-  Asm->SwitchToSection(TAI->getTextSection());
+  Asm->SwitchToSection(Asm->getObjFileLowering().getTextSection());
   EmitLabel("text_end", 0);
-  Asm->SwitchToSection(TAI->getDataSection());
+  Asm->SwitchToSection(Asm->getObjFileLowering().getDataSection());
   EmitLabel("data_end", 0);
 
   // End text sections.
@@ -1893,9 +1894,9 @@ void DwarfDebug::EmitInitial() {
   Asm->SwitchToDataSection(TAI->getDwarfRangesSection());
   EmitLabel("section_ranges", 0);
 
-  Asm->SwitchToSection(TAI->getTextSection());
+  Asm->SwitchToSection(Asm->getObjFileLowering().getTextSection());
   EmitLabel("text_begin", 0);
-  Asm->SwitchToSection(TAI->getDataSection());
+  Asm->SwitchToSection(Asm->getObjFileLowering().getDataSection());
   EmitLabel("data_begin", 0);
 }
 

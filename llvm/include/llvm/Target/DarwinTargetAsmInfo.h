@@ -24,27 +24,9 @@ namespace llvm {
   class Mangler;
 
   struct DarwinTargetAsmInfo : public TargetAsmInfo {
-    const Section* TextCoalSection;
-    const Section* ConstTextCoalSection;
-    const Section* ConstDataCoalSection;
-    const Section* ConstDataSection;
-    const Section* DataCoalSection;
-    const Section* FourByteConstantSection;
-    const Section* EightByteConstantSection;
-    const Section* SixteenByteConstantSection;
-
     explicit DarwinTargetAsmInfo(const TargetMachine &TM);
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
-                                                  SectionKind Kind) const;
     virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
                                       Mangler *Mang) const;
-
-    
-    virtual const Section *
-    getSectionForMergeableConstant(SectionKind Kind) const;
-    
-  private:
-    const Section* MergeableStringSection(const GlobalVariable *GV) const;
   };
 }
 

@@ -18,13 +18,9 @@
 
 namespace llvm {
 
-  // Forward declarations.
-  class XCoreTargetMachine;
-  class XCoreSubtarget;
-
   class XCoreTargetAsmInfo : public ELFTargetAsmInfo {
   public:
-    explicit XCoreTargetAsmInfo(const XCoreTargetMachine &TM);
+    explicit XCoreTargetAsmInfo(const TargetMachine &TM);
   };
 
 } // namespace llvm

@@ -25,10 +25,19 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Target/TargetRegistry.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 
 using namespace llvm;
 
 #include "PIC16GenAsmWriter.inc"
+
+PIC16AsmPrinter::PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
+                                 const TargetAsmInfo *T, bool V)
+: AsmPrinter(O, TM, T, V), DbgInfo(O, T) {
+  PTLI = static_cast<const PIC16TargetLowering*>(TM.getTargetLowering());
+  PTAI = static_cast<const PIC16TargetAsmInfo*>(T);
+  PTOF = static_cast<const PIC16TargetObjectFile*>(&PTLI->getObjFileLowering());
+}
 
 bool PIC16AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   printInstruction(MI);
@@ -59,10 +68,12 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   EmitAutos(CurrentFnName);
 
   // Now emit the instructions of function in its code section.
-  const char *codeSection = PAN::getCodeSectionName(CurrentFnName).c_str();
+  std::string T = PAN::getCodeSectionName(CurrentFnName);
+  const char *codeSection = T.c_str();
  
   const Section *fCodeSection = 
-    TAI->getOrCreateSection(codeSection, false, SectionKind::Text);
+    getObjFileLowering().getOrCreateSection(codeSection, false, 
+                                            SectionKind::Text);
   // Start the Code Section.
   O <<  "\n";
   SwitchToSection(fCodeSection);
@@ -211,9 +222,8 @@ bool PIC16AsmPrinter::doInitialization(Module &M) {
 
   // Set the section names for all globals.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I) {
-    I->setSection(TAI->SectionForGlobal(I)->getName());
-  }
+       I != E; ++I)
+    I->setSection(getObjFileLowering().SectionForGlobal(I, TM)->getName());
 
   DbgInfo.BeginModule(M);
   EmitFunctionDecls(M);
@@ -256,7 +266,7 @@ void PIC16AsmPrinter::EmitFunctionDecls(Module &M) {
 
 // Emit variables imported from other Modules.
 void PIC16AsmPrinter::EmitUndefinedVars(Module &M) {
-  std::vector<const GlobalVariable*> Items = PTAI->ExternalVarDecls->Items;
+  std::vector<const GlobalVariable*> Items = PTOF->ExternalVarDecls->Items;
   if (!Items.size()) return;
 
   O << "\n" << TAI->getCommentString() << "Imported Variables - BEGIN" << "\n";
@@ -268,7 +278,7 @@ void PIC16AsmPrinter::EmitUndefinedVars(Module &M) {
 
 // Emit variables defined in this module and are available to other modules.
 void PIC16AsmPrinter::EmitDefinedVars(Module &M) {
-  std::vector<const GlobalVariable*> Items = PTAI->ExternalVarDefs->Items;
+  std::vector<const GlobalVariable*> Items = PTOF->ExternalVarDefs->Items;
   if (!Items.size()) return;
 
   O << "\n" << TAI->getCommentString() << "Exported Variables - BEGIN" << "\n";
@@ -281,12 +291,12 @@ void PIC16AsmPrinter::EmitDefinedVars(Module &M) {
 // Emit initialized data placed in ROM.
 void PIC16AsmPrinter::EmitRomData(Module &M) {
   // Print ROM Data section.
-  const std::vector<PIC16Section*> &ROSections = PTAI->ROSections;
+  const std::vector<PIC16Section*> &ROSections = PTOF->ROSections;
   for (unsigned i = 0; i < ROSections.size(); i++) {
     const std::vector<const GlobalVariable*> &Items = ROSections[i]->Items;
     if (!Items.size()) continue;
     O << "\n";
-    SwitchToSection(PTAI->ROSections[i]->S_);
+    SwitchToSection(PTOF->ROSections[i]->S_);
     for (unsigned j = 0; j < Items.size(); j++) {
       O << Mang->getMangledName(Items[j]);
       Constant *C = Items[j]->getInitializer();
@@ -310,10 +320,12 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   const TargetData *TD = TM.getTargetData();
   // Emit the data section name.
   O << "\n"; 
-  const char *SectionName = PAN::getFrameSectionName(CurrentFnName).c_str();
+  std::string T = PAN::getFrameSectionName(CurrentFnName);
+  const char *SectionName = T.c_str();
 
   const Section *fPDataSection =
-    TAI->getOrCreateSection(SectionName, false, SectionKind::DataRel);
+    getObjFileLowering().getOrCreateSection(SectionName, false,
+                                            SectionKind::DataRel);
   SwitchToSection(fPDataSection);
   
   // Emit function frame label
@@ -352,7 +364,7 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
 void PIC16AsmPrinter::EmitIData(Module &M) {
 
   // Print all IDATA sections.
-  const std::vector<PIC16Section*> &IDATASections = PTAI->IDATASections;
+  const std::vector<PIC16Section*> &IDATASections = PTOF->IDATASections;
   for (unsigned i = 0; i < IDATASections.size(); i++) {
     O << "\n";
     if (IDATASections[i]->S_->getName().find("llvm.") != std::string::npos)
@@ -373,7 +385,7 @@ void PIC16AsmPrinter::EmitUData(Module &M) {
   const TargetData *TD = TM.getTargetData();
 
   // Print all BSS sections.
-  const std::vector<PIC16Section*> &BSSSections = PTAI->BSSSections;
+  const std::vector<PIC16Section*> &BSSSections = PTOF->BSSSections;
   for (unsigned i = 0; i < BSSSections.size(); i++) {
     O << "\n";
     SwitchToSection(BSSSections[i]->S_);
@@ -395,7 +407,7 @@ void PIC16AsmPrinter::EmitAutos(std::string FunctName) {
 
   // Now print Autos section for this function.
   std::string SectionName = PAN::getAutosSectionName(FunctName);
-  const std::vector<PIC16Section*> &AutosSections = PTAI->AutosSections;
+  const std::vector<PIC16Section*> &AutosSections = PTOF->AutosSections;
   for (unsigned i = 0; i < AutosSections.size(); i++) {
     O << "\n";
     if (AutosSections[i]->S_->getName() == SectionName) { 
@@ -422,7 +434,7 @@ void PIC16AsmPrinter::EmitRemainingAutos() {
   const TargetData *TD = TM.getTargetData();
 
   // Now print Autos section for this function.
-  std::vector <PIC16Section *>AutosSections = PTAI->AutosSections;
+  std::vector <PIC16Section *>AutosSections = PTOF->AutosSections;
   for (unsigned i = 0; i < AutosSections.size(); i++) {
     
     // if the section is already printed then don't print again

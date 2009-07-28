@@ -11,12 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetSubtarget.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtarget.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -440,8 +441,9 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
   CCs[RTLIB::O_F64] = ISD::SETEQ;
 }
 
-TargetLowering::TargetLowering(TargetMachine &tm)
-  : TM(tm), TD(TM.getTargetData()) {
+/// NOTE: The constructor takes ownership of TLOF.
+TargetLowering::TargetLowering(TargetMachine &tm,TargetLoweringObjectFile *tlof)
+  : TM(tm), TD(TM.getTargetData()), TLOF(*tlof) {
   // All operations default to being supported.
   memset(OpActions, 0, sizeof(OpActions));
   memset(LoadExtActions, 0, sizeof(LoadExtActions));
@@ -522,7 +524,9 @@ TargetLowering::TargetLowering(TargetMachine &tm)
     setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
 }
 
-TargetLowering::~TargetLowering() {}
+TargetLowering::~TargetLowering() {
+  delete &TLOF;
+}
 
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.

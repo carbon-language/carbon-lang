@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -71,6 +72,11 @@ AsmPrinter::~AsmPrinter() {
   delete &OutStreamer;
   delete &OutContext;
 }
+
+const TargetLoweringObjectFile &AsmPrinter::getObjFileLowering() const {
+  return TM.getTargetLowering()->getObjFileLowering();
+}
+
 
 /// SwitchToTextSection - Switch to the specified text section of the executable
 /// if we are not already in it!
@@ -146,7 +152,8 @@ void AsmPrinter::SwitchToSection(const Section *NS) {
     // some magic assembler directive.
     if (NS->getKind().hasExplicitSection()) {
       SmallString<32> FlagsStr;
-      TAI->getSectionFlagsAsString(NS->getKind(), FlagsStr);
+      
+      getObjFileLowering().getSectionFlagsAsString(NS->getKind(), FlagsStr);
 
       O << TAI->getSwitchToSectionDirective()
         << CurrentSection
@@ -240,9 +247,6 @@ bool AsmPrinter::doFinalization(Module &M) {
   }
 
   if (TAI->getSetDirective()) {
-    if (!M.alias_empty())
-      SwitchToSection(TAI->getTextSection());
-
     O << '\n';
     for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
          I != E; ++I) {
@@ -339,7 +343,7 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     }
     }
 
-    const Section *S = TAI->getSectionForMergeableConstant(Kind);
+    const Section *S =getObjFileLowering().getSectionForMergeableConstant(Kind);
     
     // The number of sections are small, just do a linear search from the
     // last section to the first.
@@ -410,8 +414,9 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
 
   const char* JumpTableDataSection = TAI->getJumpTableDataSection();
   const Function *F = MF.getFunction();
-  const Section *FuncSection = TAI->SectionForGlobal(F);
   
+  const Section *FuncSection = getObjFileLowering().SectionForGlobal(F, TM);
+
   bool JTInDiffSection = false;
   if ((IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) ||
       !JumpTableDataSection ||

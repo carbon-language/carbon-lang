@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
@@ -133,7 +134,7 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
 
   const TargetData *TD = TM.getTargetData();
   
-  SwitchToSection(TAI->SectionForGlobal(GV));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GV, TM));
   
   std::string name = Mang->getMangledName(GV);
   Constant *C = GV->getInitializer();
@@ -204,7 +205,7 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
 
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
   
   // Mark the start of the function
   O << "\t.cc_top " << CurrentFnName << ".function," << CurrentFnName << "\n";

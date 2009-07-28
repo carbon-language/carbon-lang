@@ -20,8 +20,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
-
 using namespace llvm;
 
 namespace {
@@ -64,10 +64,10 @@ static void EmitCamlGlobal(const Module &M, raw_ostream &OS, AsmPrinter &AP,
 
 void OcamlGCMetadataPrinter::beginAssembly(raw_ostream &OS, AsmPrinter &AP,
                                            const TargetAsmInfo &TAI) {
-  AP.SwitchToSection(TAI.getTextSection());
+  AP.SwitchToSection(AP.getObjFileLowering().getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_begin");
 
-  AP.SwitchToSection(TAI.getDataSection());
+  AP.SwitchToSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "data_begin");
 }
 
@@ -99,16 +99,16 @@ void OcamlGCMetadataPrinter::finishAssembly(raw_ostream &OS, AsmPrinter &AP,
     AddressAlignLog = 3;
   }
 
-  AP.SwitchToSection(TAI.getTextSection());
+  AP.SwitchToSection(AP.getObjFileLowering().getTextSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "code_end");
 
-  AP.SwitchToSection(TAI.getDataSection());
+  AP.SwitchToSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "data_end");
 
   OS << AddressDirective << 0; // FIXME: Why does ocaml emit this??
   AP.EOL();
 
-  AP.SwitchToSection(TAI.getDataSection());
+  AP.SwitchToSection(AP.getObjFileLowering().getDataSection());
   EmitCamlGlobal(getModule(), OS, AP, TAI, "frametable");
 
   for (iterator I = begin(), IE = end(); I != IE; ++I) {

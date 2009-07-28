@@ -214,15 +214,12 @@ namespace llvm {
   };
 
   class Section {
-    friend class TargetAsmInfo;
-    friend class StringMapEntry<Section>;
-    friend class StringMap<Section>;
+  public:
 
     std::string Name;
     SectionKind Kind;
-    explicit Section() { }
 
-  public:
+    explicit Section() { }
     const std::string &getName() const { return Name; }
     SectionKind getKind() const { return Kind; }
   };
@@ -230,8 +227,6 @@ namespace llvm {
   /// TargetAsmInfo - This class is intended to be used as a base class for asm
   /// properties and features specific to the target.
   class TargetAsmInfo {
-  private:
-    mutable StringMap<Section> Sections;
   protected:
     /// TM - The current TargetMachine.
     const TargetMachine &TM;
@@ -240,33 +235,11 @@ namespace llvm {
     // Properties to be set by the target writer, used to configure asm printer.
     //
 
-    /// TextSection - Section directive for standard text.
-    ///
-    const Section *TextSection;           // Defaults to ".text".
-
-    /// DataSection - Section directive for standard data.
-    ///
-    const Section *DataSection;           // Defaults to ".data".
-
     /// BSSSection - Section directive for uninitialized data.  Null if this
     /// target doesn't support a BSS section.
     ///
+/// FIXME: REMOVE.
     const char *BSSSection;               // Default to ".bss".
-    const Section *BSSSection_;
-
-    /// ReadOnlySection - This is the directive that is emitted to switch to a
-    /// read-only section for constant data (e.g. data declared const,
-    /// jump tables).
-    const Section *ReadOnlySection;       // Defaults to NULL
-
-    /// TLSDataSection - Section directive for Thread Local data.
-    ///
-    const Section *TLSDataSection;        // Defaults to ".tdata".
-
-    /// TLSBSSSection - Section directive for Thread Local uninitialized data.
-    /// Null if this target doesn't support a BSS section.
-    ///
-    const Section *TLSBSSSection;         // Defaults to ".tbss".
 
     /// ZeroFillDirective - Directive for emitting a global to the ZeroFill
     /// section on this target.  Null if this target doesn't support zerofill.
@@ -456,8 +429,8 @@ namespace llvm {
     /// cstring constants (null terminated string that does not contain any
     /// other null bytes) on this target. This is commonly supported as
     /// ".cstring".
+/// FIXME: REMOVE.
     const char *CStringSection;           // Defaults to NULL
-    const Section *CStringSection_;
 
     /// StaticCtorsSection - This is the directive that is emitted to switch to
     /// a section to emit the static constructor list.
@@ -642,10 +615,6 @@ namespace llvm {
     explicit TargetAsmInfo(const TargetMachine &TM);
     virtual ~TargetAsmInfo();
 
-    const Section *getOrCreateSection(const char *Name,
-                                      bool isDirective,
-                                      SectionKind::Kind K) const;
-
     /// Measure the specified inline asm to determine an approximation of its
     /// length.
     virtual unsigned getInlineAsmLength(const char *Str) const;
@@ -665,48 +634,6 @@ namespace llvm {
     virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                            bool Global) const;
 
-    
-    /// getSectionForMergeableConstant - Given a Mergeable constant with the
-    /// specified size and relocation information, return a section that it
-    /// should be placed in.
-    virtual const Section *getSectionForMergeableConstant(SectionKind Kind)const;
-
-    
-    /// getKindForNamedSection - If this target wants to be able to override
-    /// section flags based on the name of the section specified for a global
-    /// variable, it can implement this.  This is used on ELF systems so that
-    /// ".tbss" gets the TLS bit set etc.
-    virtual SectionKind::Kind getKindForNamedSection(const char *Section,
-                                                     SectionKind::Kind K) const{
-      return K;
-    }
-    
-    /// SectionForGlobal - This method computes the appropriate section to emit
-    /// the specified global variable or function definition.  This should not
-    /// be passed external (or available externally) globals.
-    // FIXME: MOVE TO ASMPRINTER.
-    const Section* SectionForGlobal(const GlobalValue *GV) const;
-    
-    /// getSpecialCasedSectionGlobals - Allow the target to completely override
-    /// section assignment of a global.
-    /// FIXME: ELIMINATE this by making PIC16 implement ADDRESS with
-    /// getFlagsForNamedSection.
-    virtual const Section *
-    getSpecialCasedSectionGlobals(const GlobalValue *GV,
-                                  SectionKind Kind) const {
-      return 0;
-    }
-    
-    /// getSectionFlagsAsString - Turn the flags in the specified SectionKind
-    /// into a string that can be printed to the assembly file after the
-    /// ".section foo" part of a section directive.
-    virtual void getSectionFlagsAsString(SectionKind Kind,
-                                         SmallVectorImpl<char> &Str) const {
-    }
-
-// FIXME: Eliminate this.
-    virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
-                                                  SectionKind Kind) const;
 
     /// getSLEB128Size - Compute the number of bytes required for a signed
     /// leb128 value.
@@ -734,26 +661,8 @@ namespace llvm {
 
     // Accessors.
     //
-    const Section *getTextSection() const {
-      return TextSection;
-    }
-    const Section *getDataSection() const {
-      return DataSection;
-    }
     const char *getBSSSection() const {
       return BSSSection;
-    }
-    const Section *getBSSSection_() const {
-      return BSSSection_;
-    }
-    const Section *getReadOnlySection() const {
-      return ReadOnlySection;
-    }
-    const Section *getTLSDataSection() const {
-      return TLSDataSection;
-    }
-    const Section *getTLSBSSSection() const {
-      return TLSBSSSection;
     }
     const char *getZeroFillDirective() const {
       return ZeroFillDirective;
@@ -868,9 +777,6 @@ namespace llvm {
     }
     const char *getCStringSection() const {
       return CStringSection;
-    }
-    const Section *getCStringSection_() const {
-      return CStringSection_;
     }
     const char *getStaticCtorsSection() const {
       return StaticCtorsSection;

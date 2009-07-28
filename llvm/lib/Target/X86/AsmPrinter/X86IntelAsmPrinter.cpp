@@ -29,6 +29,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -513,7 +514,7 @@ void X86IntelAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
     O << "\tpublic " << name << "\n";
     // FALL THROUGH
   case GlobalValue::InternalLinkage:
-    SwitchToSection(TAI->getDataSection());
+    SwitchToSection(getObjFileLowering().getDataSection());
     break;
   default:
     llvm_unreachable("Unknown linkage type!");

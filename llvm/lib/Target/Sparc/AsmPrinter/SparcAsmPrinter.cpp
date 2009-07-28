@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -95,7 +96,7 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out the label for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
   EmitAlignment(MF.getAlignment(), F);
   O << "\t.globl\t" << CurrentFnName << '\n';
 
@@ -229,7 +230,7 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   printVisibility(name, GVar->getVisibility());
 
-  SwitchToSection(TAI->SectionForGlobal(GVar));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&

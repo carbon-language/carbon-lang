@@ -40,6 +40,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetOptions.h"
@@ -590,7 +591,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -639,7 +640,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
 
   // Emit post-function debug information.
   DW->EndFunction(&MF);
@@ -681,7 +682,7 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  SwitchToSection(TAI->SectionForGlobal(GVar));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
@@ -762,7 +763,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(TAI->SectionForGlobal(F));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -861,7 +862,7 @@ bool PPCDarwinAsmPrinter::doInitialization(Module &M) {
     SwitchToTextSection("\t.section __TEXT,__symbol_stub1,symbol_stubs,"
                         "pure_instructions,16");
   }
-  SwitchToSection(TAI->getTextSection());
+  SwitchToSection(getObjFileLowering().getTextSection());
 
   return Result;
 }
@@ -891,7 +892,7 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  const Section *TheSection = TAI->SectionForGlobal(GVar);
+  const Section *TheSection = getObjFileLowering().SectionForGlobal(GVar, TM);
   SwitchToSection(TheSection);
 
   if (C->isNullValue() && /* FIXME: Verify correct */
@@ -1051,7 +1052,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
   }
 
   if (!HiddenGVStubs.empty()) {
-    SwitchToSection(TAI->getDataSection());
+    SwitchToSection(getObjFileLowering().getDataSection());
     EmitAlignment(isPPC64 ? 3 : 2);
     for (StringMap<std::string>::iterator I = HiddenGVStubs.begin(),
          E = HiddenGVStubs.end(); I != E; ++I) {

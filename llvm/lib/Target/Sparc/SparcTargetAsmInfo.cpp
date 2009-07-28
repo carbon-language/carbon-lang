@@ -25,27 +25,6 @@ SparcELFTargetAsmInfo::SparcELFTargetAsmInfo(const TargetMachine &TM)
   ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
   COMMDirectiveTakesAlignment = true;
   CStringSection=".rodata.str";
-
-  // Sparc normally uses named section for BSS.
-  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
 }
 
 
-void SparcELFTargetAsmInfo::getSectionFlagsAsString(SectionKind Kind,
-                                            SmallVectorImpl<char> &Str) const {
-  if (Kind.isMergeableConst() || Kind.isMergeableCString())
-    return ELFTargetAsmInfo::getSectionFlagsAsString(Kind, Str);
-
-  // FIXME: Inefficient.
-  std::string Res;
-  if (!Kind.isMetadata())
-    Res += ",#alloc";
-  if (Kind.isText())
-    Res += ",#execinstr";
-  if (Kind.isWriteable())
-    Res += ",#write";
-  if (Kind.isThreadLocal())
-    Res += ",#tls";
-
-  Str.append(Res.begin(), Res.end());
-}

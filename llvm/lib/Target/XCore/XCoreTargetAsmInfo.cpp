@@ -1,4 +1,4 @@
-//===-- XCoreTargetAsmInfo.cpp - XCore asm properties -----------*- C++ -*-===//
+//===-- XCoreTargetAsmInfo.cpp - XCore asm properties ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,41 +6,13 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file contains the declarations of the XCoreTargetAsmInfo properties.
-// We use the small section flag for the CP relative and DP relative
-// flags. If a section is small and writable then it is DP relative. If a
-// section is small and not writable then it is CP relative.
-//
-//===----------------------------------------------------------------------===//
 
 #include "XCoreTargetAsmInfo.h"
-#include "XCoreTargetMachine.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/ADT/StringExtras.h"
-
 using namespace llvm;
 
-XCoreTargetAsmInfo::XCoreTargetAsmInfo(const XCoreTargetMachine &TM)
+XCoreTargetAsmInfo::XCoreTargetAsmInfo(const TargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
   SupportsDebugInformation = true;
-  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("\t.dp.data", false, SectionKind::DataRel);
-  BSSSection_ = getOrCreateSection("\t.dp.bss", false, SectionKind::BSS);
-
-  // TLS globals are lowered in the backend to arrays indexed by the current
-  // thread id. After lowering they require no special handling by the linker
-  // and can be placed in the standard data / bss sections.
-  TLSDataSection = DataSection;
-  TLSBSSSection = BSSSection_;
-
-  if (TM.getSubtargetImpl()->isXS1A())
-    // FIXME: Why is this writable???
-    ReadOnlySection = getOrCreateSection("\t.dp.rodata", false,
-                                         SectionKind::DataRel);
-  else
-    ReadOnlySection = getOrCreateSection("\t.cp.rodata", false,
-                                         SectionKind::ReadOnly);
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";
   Data64bitsDirective = 0;

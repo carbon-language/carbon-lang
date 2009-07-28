@@ -30,15 +30,13 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
-const char *MipsTargetLowering::
-getTargetNodeName(unsigned Opcode) const 
-{
-  switch (Opcode) 
-  {
+const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
     case MipsISD::JmpLink    : return "MipsISD::JmpLink";
     case MipsISD::Hi         : return "MipsISD::Hi";
     case MipsISD::Lo         : return "MipsISD::Lo";
@@ -55,8 +53,8 @@ getTargetNodeName(unsigned Opcode) const
 }
 
 MipsTargetLowering::
-MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM) 
-{
+MipsTargetLowering(MipsTargetMachine &TM)
+  : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
   Subtarget = &TM.getSubtarget<MipsSubtarget>();
 
   // Mips does not have i1 type, so use i32 for

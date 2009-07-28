@@ -18,6 +18,7 @@
 #include "PIC16.h"
 #include "PIC16TargetMachine.h"
 #include "PIC16DebugInfo.h"
+#include "PIC16TargetObjectFile.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "PIC16TargetAsmInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
@@ -28,13 +29,10 @@
 #include <string>
 
 namespace llvm {
-  struct VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
+  class VISIBILITY_HIDDEN PIC16AsmPrinter : public AsmPrinter {
+  public:
     explicit PIC16AsmPrinter(formatted_raw_ostream &O, TargetMachine &TM,
-                             const TargetAsmInfo *T, bool V)
-      : AsmPrinter(O, TM, T, V), DbgInfo(O, T) {
-      PTLI = static_cast<const PIC16TargetLowering *> (TM.getTargetLowering());
-      PTAI = static_cast<const PIC16TargetAsmInfo *> (T);
-    }
+                             const TargetAsmInfo *T, bool V);
   private:
     virtual const char *getPassName() const {
       return "PIC16 Assembly Printer";
@@ -66,6 +64,7 @@ namespace llvm {
     }
     
   private:
+    PIC16TargetObjectFile *PTOF;
     PIC16TargetLowering *PTLI;
     PIC16DbgInfo DbgInfo;
     const PIC16TargetAsmInfo *PTAI;

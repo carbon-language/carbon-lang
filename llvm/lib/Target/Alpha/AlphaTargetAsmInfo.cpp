@@ -23,7 +23,4 @@ AlphaTargetAsmInfo::AlphaTargetAsmInfo(const AlphaTargetMachine &TM)
   JumpTableDirective = ".gprel32";
   JumpTableDataSection = "\t.section .rodata\n";
   WeakRefDirective = "\t.weak\t";
-    
-  TextSection = getOrCreateSection("_text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("_data", true, SectionKind::DataRel);
 }

@@ -32,20 +32,18 @@ extern "C" void LLVMInitializeX86Target() {
 const TargetAsmInfo *X86TargetMachine::createTargetAsmInfo() const {
   if (Subtarget.isFlavorIntel())
     return new X86WinTargetAsmInfo(*this);
-  else
-    switch (Subtarget.TargetType) {
-     case X86Subtarget::isDarwin:
-      return new X86DarwinTargetAsmInfo(*this);
-     case X86Subtarget::isELF:
-      return new X86ELFTargetAsmInfo(*this);
-     case X86Subtarget::isMingw:
-     case X86Subtarget::isCygwin:
-      return new X86COFFTargetAsmInfo(*this);
-     case X86Subtarget::isWindows:
-      return new X86WinTargetAsmInfo(*this);
-     default:
-      return new X86GenericTargetAsmInfo(*this);
-    }
+  switch (Subtarget.TargetType) {
+  default: llvm_unreachable("unknown subtarget type");
+  case X86Subtarget::isDarwin:
+    return new X86DarwinTargetAsmInfo(*this);
+  case X86Subtarget::isELF:
+    return new X86ELFTargetAsmInfo(*this);
+  case X86Subtarget::isMingw:
+  case X86Subtarget::isCygwin:
+    return new X86COFFTargetAsmInfo(*this);
+  case X86Subtarget::isWindows:
+    return new X86WinTargetAsmInfo(*this);
+  }
 }
 
 X86_32TargetMachine::X86_32TargetMachine(const Target &T, const Module &M, 

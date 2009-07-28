@@ -33,8 +33,6 @@ namespace llvm {
     }
   };
 
-  typedef X86TargetAsmInfo<TargetAsmInfo> X86GenericTargetAsmInfo;
-
   EXTERN_TEMPLATE_INSTANTIATION(class X86TargetAsmInfo<TargetAsmInfo>);
 
   struct X86DarwinTargetAsmInfo : public X86TargetAsmInfo<DarwinTargetAsmInfo> {
@@ -58,7 +56,7 @@ namespace llvm {
   };
   
 
-  struct X86WinTargetAsmInfo : public X86GenericTargetAsmInfo {
+  struct X86WinTargetAsmInfo : public X86TargetAsmInfo<TargetAsmInfo> {
     explicit X86WinTargetAsmInfo(const X86TargetMachine &TM);
   };
 

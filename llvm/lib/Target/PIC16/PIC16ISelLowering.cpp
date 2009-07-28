@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "pic16-lower"
-
 #include "PIC16ISelLowering.h"
+#include "PIC16TargetObjectFile.h"
 #include "PIC16TargetMachine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalValue.h"
@@ -123,7 +123,7 @@ static const char *getIntrinsicName(unsigned opcode) {
 
 // PIC16TargetLowering Constructor.
 PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
-  : TargetLowering(TM), TmpSize(0) {
+  : TargetLowering(TM, new PIC16TargetObjectFile(TM)), TmpSize(0) {
  
   Subtarget = &TM.getSubtarget<PIC16Subtarget>();
 

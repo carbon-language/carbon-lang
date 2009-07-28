@@ -16,15 +16,9 @@ namespace llvm {
   class COFFTargetAsmInfo : public TargetAsmInfo {
   protected:
     explicit COFFTargetAsmInfo(const TargetMachine &TM);
-  public:
-    virtual void getSectionFlagsAsString(SectionKind Kind,
-                                         SmallVectorImpl<char> &Str) const;
-    
-    virtual const Section *
-    SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind) const;
       
   };
 }
 
 
-#endif // LLVM_ELF_TARGET_ASM_INFO_H
+#endif // LLVM_COFF_TARGET_ASM_INFO_H

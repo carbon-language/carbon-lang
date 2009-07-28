@@ -121,8 +121,6 @@ X86ELFTargetAsmInfo::X86ELFTargetAsmInfo(const X86TargetMachine &TM) :
   // Set up DWARF directives
   HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
 
-  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
-
   // Debug Information
   AbsoluteDebugSectionOffsets = true;
   SupportsDebugInformation = true;
@@ -251,9 +249,6 @@ X86WinTargetAsmInfo::X86WinTargetAsmInfo(const X86TargetMachine &TM):
   HasSingleParameterDotFile = false;
 
   AlignmentIsInBytes = true;
-
-  TextSection = getOrCreateSection("_text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("_data", true, SectionKind::DataRel);
 
   JumpTableDataSection = NULL;
   SwitchToSectionDirective = "";

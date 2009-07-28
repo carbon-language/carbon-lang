@@ -17,6 +17,4 @@ using namespace llvm;
 MSP430TargetAsmInfo::MSP430TargetAsmInfo(const TargetMachine &TM)
   : ELFTargetAsmInfo(TM) {
   AlignmentIsInBytes = false;
-    
-  BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
 }

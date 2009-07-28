@@ -39,6 +39,7 @@ namespace llvm {
   class Mangler;
   class Section;
   class TargetAsmInfo;
+  class TargetLoweringObjectFile;
   class Type;
   class formatted_raw_ostream;
 
@@ -74,6 +75,9 @@ namespace llvm {
     /// Target machine description.
     ///
     TargetMachine &TM;
+    
+    /// getObjFileLowering - Return information about object file lowering.
+    const TargetLoweringObjectFile &getObjFileLowering() const;
     
     /// Target Asm Printer information.
     ///

@@ -45,6 +45,8 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetELFWriterInfo.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/Streams.h"
@@ -185,7 +187,10 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
     }
   }
 
-  return getSection(TAI->getSectionForMergeableConstant(Kind)->getName(),
+  const TargetLoweringObjectFile &TLOF =
+    TM.getTargetLowering()->getObjFileLowering();
+  
+  return getSection(TLOF.getSectionForMergeableConstant(Kind)->getName(),
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,
                     CPE.getAlignment());
@@ -312,8 +317,11 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     assert(isa<GlobalVariable>(GV) && "GV not a global variable!");
     const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
 
+    const TargetLoweringObjectFile &TLOF =
+      TM.getTargetLowering()->getObjFileLowering();
+
     // Get ELF section from TAI
-    const Section *S = TAI->SectionForGlobal(GV);
+    const Section *S = TLOF.SectionForGlobal(GV, TM);
     unsigned SectionFlags = getElfSectionFlags(S->getKind());
 
     // The symbol align should update the section alignment if needed

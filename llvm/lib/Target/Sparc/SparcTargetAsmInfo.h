@@ -23,10 +23,6 @@ namespace llvm {
 
   struct SparcELFTargetAsmInfo : public ELFTargetAsmInfo {
     explicit SparcELFTargetAsmInfo(const TargetMachine &TM);
-
-    virtual void getSectionFlagsAsString(SectionKind Kind,
-                                         SmallVectorImpl<char> &Str) const;
-
   };
 
 } // namespace llvm
