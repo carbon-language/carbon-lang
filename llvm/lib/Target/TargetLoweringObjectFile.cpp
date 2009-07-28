@@ -412,7 +412,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   
   if (Kind.isText()) return TextSection;
   if (Kind.isMergeableCString()) {
-    Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+    //Constant *C = cast<GlobalVariable>(GV)->getInitializer();
     
     // FIXME: This is completely wrong.  Why is it comparing the size of the
     // character type to 1?
