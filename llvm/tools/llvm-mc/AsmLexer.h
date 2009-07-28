@@ -59,13 +59,11 @@ class AsmLexer : public MCAsmLexer {
   
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
-  // A llvm::StringSet<>, which provides uniqued and null-terminated strings.
-  void *TheStringSet;
   
   // Information about the current token.
   const char *TokStart;
   asmtok::TokKind CurKind;
-  const char *CurStrVal;  // This is valid for Identifier.
+  StringRef CurStrVal;  // This is valid for Identifier.
   int64_t CurIntVal;
   
   /// CurBuffer - This is the current buffer index we're lexing from as managed

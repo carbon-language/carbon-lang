@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "AsmLexer.h"
-#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Config/config.h"  // for strtoull.
@@ -21,21 +20,14 @@
 #include <cstdlib>
 using namespace llvm;
 
-static StringSet<> &getSS(void *TheSS) {
-  return *(StringSet<>*)TheSS;
-}
-
 AsmLexer::AsmLexer(SourceMgr &SM) : SrcMgr(SM) {
   CurBuffer = 0;
   CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
   CurPtr = CurBuf->getBufferStart();
   TokStart = 0;
-  
-  TheStringSet = new StringSet<>();
 }
 
 AsmLexer::~AsmLexer() {
-  delete &getSS(TheStringSet);
 }
 
 SMLoc AsmLexer::getLoc() const {
@@ -107,9 +99,7 @@ asmtok::TokKind AsmLexer::LexIdentifier() {
          *CurPtr == '.' || *CurPtr == '@')
     ++CurPtr;
   // Unique string.
-  CurStrVal = getSS(TheStringSet).GetOrCreateValue(StringRef(TokStart, 
-                                                             CurPtr - TokStart),
-                                                   0).getKeyData();
+  CurStrVal = StringRef(TokStart, CurPtr - TokStart);
   return asmtok::Identifier;
 }
 
@@ -122,9 +112,7 @@ asmtok::TokKind AsmLexer::LexPercent() {
     ++CurPtr;
   
   // Unique string.
-  CurStrVal = getSS(TheStringSet).GetOrCreateValue(StringRef(TokStart, 
-                                                             CurPtr - TokStart),
-                                                   0).getKeyData();
+  CurStrVal = StringRef(TokStart, CurPtr - TokStart);
   return asmtok::Register;
 }
 
@@ -251,9 +239,7 @@ asmtok::TokKind AsmLexer::LexQuote() {
   }
   
   // Unique string, include quotes for now.
-  CurStrVal = getSS(TheStringSet).GetOrCreateValue(StringRef(TokStart, 
-                                                             CurPtr - TokStart),
-                                                   0).getKeyData();
+  CurStrVal = StringRef(TokStart, CurPtr - TokStart);
   return asmtok::String;
 }
 
