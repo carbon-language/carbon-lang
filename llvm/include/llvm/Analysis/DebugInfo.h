@@ -21,6 +21,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Dwarf.h"
 
 namespace llvm {
@@ -609,6 +610,58 @@ namespace llvm {
   /// isInlinedFnEnd - Return true if REI is ending an inlined function.
   bool isInlinedFnEnd(DbgRegionEndInst &REI, const Function *CurrentFn);
 
+  /// DebugInfoEnumrator - This object collects DebugInfo from
+  /// the module.
+  class DebugInfoEnumerator {
+
+  public:
+    /// EnumerateModule - Enumerate entire module and collect debug info
+    /// anchors.
+    void enumerateModule(Module &M);
+    
+  private:
+    /// enumerateType - Enumerate DIType.
+    /// for a type.
+    void enumerateType(DIType DT);
+
+    /// enumerateSubprogram - Enumberate DISubprogram.
+    void enumerateSubprogram(DISubprogram SP);
+
+    /// enumerateStopPoint - Enumerate DbgStopPointInst.
+    void enumerateStopPoint(DbgStopPointInst *SPI);
+
+    /// enumerateFuncStart - Enumberate DbgFuncStartInst.
+    void enumerateFuncStart(DbgFuncStartInst *FSI);
+
+    /// addCompileUnit - Add compile unit into CUs.
+    bool addCompileUnit(DICompileUnit CU);
+    
+    /// addGlobalVariable - Add global variable into GVs.
+    bool addGlobalVariable(DIGlobalVariable DIG);
+
+    // addSubprogram - Add subprgoram into SPs.
+    bool addSubprogram(DISubprogram SP);
+
+  public:
+    typedef SmallVector<GlobalVariable *, 8>::iterator iterator;
+    iterator compile_unit_begin()    { return CUs.begin(); }
+    iterator compile_unit_end()      { return CUs.end(); }
+    iterator subprogram_begin()      { return SPs.begin(); }
+    iterator subprogram_end()        { return SPs.end(); }
+    iterator global_variable_begin() { return GVs.begin(); }
+    iterator global_variable_end()   { return GVs.end(); }
+
+    unsigned compile_unit_count()    { return CUs.size(); }
+    unsigned global_variable_count() { return GVs.size(); }
+    unsigned subprogram_count()      { return SPs.size(); }
+
+  private:
+    SmallVector<GlobalVariable *, 8> CUs;  // Compile Units
+    SmallVector<GlobalVariable *, 8> SPs;  // Subprograms
+    SmallVector<GlobalVariable *, 8> GVs;  // Global Variables;
+    SmallPtrSet<GlobalVariable *, 64> NodesSeen;
+    
+  };
 } // end namespace llvm
 
 #endif

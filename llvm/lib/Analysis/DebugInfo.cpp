@@ -105,6 +105,7 @@ DIDescriptor::getStringField(unsigned Elt, std::string &Result) const {
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
   if (DbgGV == 0) return 0;
+  if (!DbgGV->hasInitializer()) return 0;
 
   Constant *C = DbgGV->getInitializer();
   if (C == 0 || Elt >= C->getNumOperands())
@@ -902,6 +903,122 @@ void DIFactory::InsertDeclare(Value *Storage, DIVariable D, BasicBlock *BB) {
 
   Value *Args[] = { Storage, getCastToEmpty(D) };
   CallInst::Create(DeclareFn, Args, Args+2, "", BB);
+}
+
+//===----------------------------------------------------------------------===//
+// DebugInfoEnumerator implementations.
+//===----------------------------------------------------------------------===//
+
+/// enumerateModule - Enumerate entire module and collect debug info.
+void DebugInfoEnumerator::enumerateModule(Module &M) {
+  
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
+      for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
+           ++BI) {
+        if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(BI))
+          enumerateStopPoint(SPI);
+        else if (DbgFuncStartInst *FSI = dyn_cast<DbgFuncStartInst>(BI))
+          enumerateFuncStart(FSI);
+      }
+  
+  for (Module::global_iterator GVI = M.global_begin(), GVE = M.global_end();
+       GVI != GVE; ++GVI) {
+    GlobalVariable *GV = GVI;
+    if (!GV->hasName() || !GV->isConstant() 
+        || strcmp(GV->getName().data(), "llvm.dbg.global_variable")
+        || !GV->hasInitializer())
+      continue;
+    DIGlobalVariable DIG(GV);
+    if (addGlobalVariable(DIG)) {
+      addCompileUnit(DIG.getCompileUnit());
+      enumerateType(DIG.getType());
+    }
+  }
+}
+    
+/// enumerateType - Enumerate DIType.
+void DebugInfoEnumerator::enumerateType(DIType DT) {
+  if (DT.isNull())
+    return;
+  if (!NodesSeen.insert(DT.getGV()))
+    return;
+
+  addCompileUnit(DT.getCompileUnit());
+  if (DT.isCompositeType(DT.getTag())) {
+    DICompositeType DCT(DT.getGV());
+    enumerateType(DCT.getTypeDerivedFrom());
+    DIArray DA = DCT.getTypeArray();
+    if (!DA.isNull())
+      for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
+        DIDescriptor D = DA.getElement(i);
+        DIType TypeE = DIType(D.getGV());
+        if (!TypeE.isNull())
+          enumerateType(TypeE);
+        else 
+          enumerateSubprogram(DISubprogram(D.getGV()));
+      }
+  } else if (DT.isDerivedType(DT.getTag())) {
+    DIDerivedType DDT(DT.getGV());
+    if (!DDT.isNull()) 
+      enumerateType(DDT.getTypeDerivedFrom());
+  }
+}
+
+/// enumerateSubprogram - Enumberate DISubprogram.
+void DebugInfoEnumerator::enumerateSubprogram(DISubprogram SP) {
+  if (!addSubprogram(SP))
+    return;
+  addCompileUnit(SP.getCompileUnit());
+  enumerateType(SP.getType());
+}
+
+/// enumerateStopPoint - Enumerate DbgStopPointInst.
+void DebugInfoEnumerator::enumerateStopPoint(DbgStopPointInst *SPI) {
+  GlobalVariable *Context = dyn_cast<GlobalVariable>(SPI->getContext());
+  addCompileUnit(DICompileUnit(Context));
+}
+
+/// enumerateFuncStart - Enumberate DbgFuncStartInst.
+void DebugInfoEnumerator::enumerateFuncStart(DbgFuncStartInst *FSI) {
+  GlobalVariable *SP = dyn_cast<GlobalVariable>(FSI->getSubprogram());
+  enumerateSubprogram(DISubprogram(SP));
+}
+
+/// addCompileUnit - Add compile unit into CUs.
+bool DebugInfoEnumerator::addCompileUnit(DICompileUnit CU) {
+  if (CU.isNull())
+    return false;
+
+  if (!NodesSeen.insert(CU.getGV()))
+    return false;
+
+  CUs.push_back(CU.getGV());
+  return true;
+}
+    
+/// addGlobalVariable - Add global variable into GVs.
+bool DebugInfoEnumerator::addGlobalVariable(DIGlobalVariable DIG) {
+  if (DIG.isNull())
+    return false;
+
+  if (!NodesSeen.insert(DIG.getGV()))
+    return false;
+
+  GVs.push_back(DIG.getGV());
+  return true;
+}
+
+// addSubprogram - Add subprgoram into SPs.
+bool DebugInfoEnumerator::addSubprogram(DISubprogram SP) {
+  if (SP.isNull())
+    return false;
+  
+  if (!NodesSeen.insert(SP.getGV()))
+    return false;
+
+  SPs.push_back(SP.getGV());
+  return true;
 }
 
 namespace llvm {
