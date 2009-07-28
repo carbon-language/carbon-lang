@@ -48,40 +48,31 @@ public:
   TargetAsmParser &getTargetParser() const { return *TargetParser; }
   void setTargetParser(TargetAsmParser &P) { TargetParser = &P; }
 
+  /// @name MCAsmParser Interface
+  /// {
+
   virtual MCAsmLexer &getLexer() { return Lexer; }
+
+  virtual void Warning(SMLoc L, const Twine &Meg);
+
+  virtual bool Error(SMLoc L, const Twine &Msg);
+
+  virtual bool ParseExpression(AsmExpr *&Res);
+
+  virtual bool ParseAbsoluteExpression(int64_t &Res);
+
+  virtual bool ParseRelocatableExpression(MCValue &Res);
+
+  /// }
 
 private:
   bool ParseStatement();
 
-  void Warning(SMLoc L, const Twine &Msg);
-  bool Error(SMLoc L, const Twine &Msg);
   bool TokError(const char *Msg);
   
   void EatToEndOfStatement();
   
   bool ParseAssignment(const StringRef &Name, bool IsDotSet);
-
-  /// ParseExpression - Parse a general assembly expression.
-  ///
-  /// @param Res - The resulting expression. The pointer value is null on error.
-  /// @result - False on success.
-  bool ParseExpression(AsmExpr *&Res);
-
-  /// ParseAbsoluteExpression - Parse an expression which must evaluate to an
-  /// absolute value.
-  ///
-  /// @param Res - The value of the absolute expression. The result is undefined
-  /// on error.
-  /// @result - False on success.
-  bool ParseAbsoluteExpression(int64_t &Res);
-
-  /// ParseRelocatableExpression - Parse an expression which must be
-  /// relocatable.
-  ///
-  /// @param Res - The relocatable expression value. The result is undefined on
-  /// error.  
-  /// @result - False on success.
-  bool ParseRelocatableExpression(MCValue &Res);
 
   /// ParseParenRelocatableExpression - Parse an expression which must be
   /// relocatable, assuming that an initial '(' has already been consumed.
