@@ -623,7 +623,7 @@ namespace llvm {
     /// not to emit the UsedDirective for some symbols in llvm.used.
 // FIXME: REMOVE this (rdar://7071300)
     virtual bool emitUsedDirectiveFor(const GlobalValue *GV,
-                                      Mangler *Mang) const {
+                                      Mangler *) const {
       return (GV!=0);
     }
 
