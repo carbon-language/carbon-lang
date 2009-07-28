@@ -1,4 +1,4 @@
-//===-- llvm/Metadata.h - Constant class subclass definitions ---*- C++ -*-===//
+//===-- llvm/Metadata.h - Metadata definitions ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,13 +8,8 @@
 //===----------------------------------------------------------------------===//
 //
 /// @file
-/// This file contains the declarations for the subclasses of Constant, 
-/// which represent the different flavors of constant values that live in LLVM.
-/// Note that Constants are immutable (once created they never change) and are 
-/// fully shared by structural equivalence.  This means that two structurally
-/// equivalent constants will always have the same address.  Constant's are
-/// created on demand as needed and never deleted: thus clients don't have to
-/// worry about the lifetime of the objects.
+/// This file contains the declarations for metadata subclasses.
+/// They represent the different flavors of metadata that live in LLVM.
 //
 //===----------------------------------------------------------------------===//
 

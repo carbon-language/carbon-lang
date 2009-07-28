@@ -24,7 +24,7 @@
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/TypeSymbolTable.h"

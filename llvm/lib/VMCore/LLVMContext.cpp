@@ -16,7 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "LLVMContextImpl.h"
 #include <cstdarg>

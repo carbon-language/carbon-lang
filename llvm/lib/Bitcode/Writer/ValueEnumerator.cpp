@@ -14,7 +14,7 @@
 #include "ValueEnumerator.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"

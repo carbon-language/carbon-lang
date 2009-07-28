@@ -21,7 +21,7 @@
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"

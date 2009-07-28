@@ -18,7 +18,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
 #include "llvm/Module.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"

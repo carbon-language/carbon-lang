@@ -19,7 +19,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Instruction.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;

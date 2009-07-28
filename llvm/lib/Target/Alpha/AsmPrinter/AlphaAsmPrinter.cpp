@@ -17,7 +17,7 @@
 #include "AlphaInstrInfo.h"
 #include "AlphaTargetMachine.h"
 #include "llvm/Module.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"

@@ -16,7 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 using namespace llvm;
 
 static char getValType(ConstantAggregateZero *CPZ) { return 0; }

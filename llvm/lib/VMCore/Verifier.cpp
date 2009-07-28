@@ -45,7 +45,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/IntrinsicInst.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/Pass.h"
