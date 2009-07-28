@@ -84,6 +84,11 @@ static const Stmt* GetNextStmt(const ExplodedNode<GRState>* N) {
         default:
           break;
       }
+      
+      // Some expressions don't have locations.
+      if (S->getLocStart().isInvalid())
+        continue;
+      
       return S;
     }
   
