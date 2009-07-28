@@ -616,7 +616,7 @@ public:
     // If we reach here all of the arguments passed the nonnull check.
     // If 'state' has been updated generated a new node.
     if (state != originalState)
-      C.generateNode(CE, state);
+      C.addTransition(C.generateNode(CE, state));
   }
 };
 } // end anonymous namespace

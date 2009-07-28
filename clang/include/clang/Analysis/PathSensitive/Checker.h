@@ -72,6 +72,10 @@ public:
     return B.generateNode(S, state, Pred);
   }
   
+  void addTransition(ExplodedNode<GRState> *node) {
+    Dst.Add(node);
+  }
+  
   void EmitReport(BugReport *R) {
     Eng.getBugReporter().EmitReport(R);
   }

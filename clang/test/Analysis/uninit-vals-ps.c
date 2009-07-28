@@ -84,3 +84,21 @@ CFStringRef rdar_6451816(CFNumberRef nr) {
   return CFStringConvertEncodingToIANACharSetName(encoding); // no-warning
 }
 
+// PR 4630 - false warning with nonnull attribute
+//  This false positive (due to a regression) caused the analyzer to falsely
+//  flag a "return of uninitialized value" warning in the first branch due to
+//  the nonnull attribute.
+void pr_4630_aux(char *x, int *y) __attribute__ ((nonnull (1)));
+void pr_4630_aux_2(char *x, int *y);
+int pr_4630(char *a, int y) {
+  int x;
+  if (y) {
+    pr_4630_aux(a, &x);
+    return x;   // no-warning
+  }
+  else {
+    pr_4630_aux_2(a, &x);
+    return x;   // no-warning
+  }
+}
+
