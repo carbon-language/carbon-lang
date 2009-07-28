@@ -284,51 +284,44 @@ bool DwarfException::PadLT(const LandingPadInfo *L, const LandingPadInfo *R) {
   return LSize < RSize;
 }
 
-void DwarfException::EmitExceptionTable() {
-  const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+// ComputeActionsTable - Compute the actions table and gather the first action
+// index for each landing pad site.
+unsigned
+DwarfException::ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*>
+                                      &LandingPads,
+                                    SmallVectorImpl<ActionEntry> &Actions,
+                                    SmallVectorImpl<unsigned> &FirstActions) {
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
-  const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
-  if (PadInfos.empty()) return;
 
-  // Sort the landing pads in order of their type ids.  This is used to fold
-  // duplicate actions.
-  SmallVector<const LandingPadInfo *, 64> LandingPads;
-  LandingPads.reserve(PadInfos.size());
-  for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
-    LandingPads.push_back(&PadInfos[i]);
-  std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
-
-  // Negative type ids index into FilterIds, positive type ids index into
-  // TypeInfos.  The value written for a positive type id is just the type id
-  // itself.  For a negative type id, however, the value written is the
+  // Negative type IDs index into FilterIds. Positive type IDs index into
+  // TypeInfos.  The value written for a positive type ID is just the type ID
+  // itself.  For a negative type ID, however, the value written is the
   // (negative) byte offset of the corresponding FilterIds entry.  The byte
-  // offset is usually equal to the type id, because the FilterIds entries are
-  // written using a variable width encoding which outputs one byte per entry as
-  // long as the value written is not too large, but can differ.  This kind of
-  // complication does not occur for positive type ids because type infos are
+  // offset is usually equal to the type ID (because the FilterIds entries are
+  // written using a variable width encoding, which outputs one byte per entry
+  // as long as the value written is not too large) but can differ.  This kind
+  // of complication does not occur for positive type IDs because type infos are
   // output using a fixed width encoding.  FilterOffsets[i] holds the byte
   // offset corresponding to FilterIds[i].
   SmallVector<int, 16> FilterOffsets;
   FilterOffsets.reserve(FilterIds.size());
   int Offset = -1;
-  for(std::vector<unsigned>::const_iterator I = FilterIds.begin(),
-        E = FilterIds.end(); I != E; ++I) {
+  for(std::vector<unsigned>::const_iterator
+        I = FilterIds.begin(), E = FilterIds.end(); I != E; ++I) {
     FilterOffsets.push_back(Offset);
     Offset -= TargetAsmInfo::getULEB128Size(*I);
   }
 
-  // Compute the actions table and gather the first action index for each
-  // landing pad site.
-  SmallVector<ActionEntry, 32> Actions;
-  SmallVector<unsigned, 64> FirstActions;
   FirstActions.reserve(LandingPads.size());
 
   int FirstAction = 0;
   unsigned SizeActions = 0;
-  for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-    const LandingPadInfo *LP = LandingPads[i];
-    const std::vector<int> &TypeIds = LP->TypeIds;
-    const unsigned NumShared = i ? SharedTypeIds(LP, LandingPads[i-1]) : 0;
+  const LandingPadInfo *PrevLPI = 0;
+  for (SmallVector<const LandingPadInfo *, 64>::const_iterator
+         I = LandingPads.begin(), E = LandingPads.end(); I != E; ++I) {
+    const LandingPadInfo *LPI = *I;
+    const std::vector<int> &TypeIds = LPI->TypeIds;
+    const unsigned NumShared = PrevLPI ? SharedTypeIds(LPI, PrevLPI) : 0;
     unsigned SizeSiteActions = 0;
 
     if (NumShared < TypeIds.size()) {
@@ -336,7 +329,7 @@ void DwarfException::EmitExceptionTable() {
       ActionEntry *PrevAction = 0;
 
       if (NumShared) {
-        const unsigned SizePrevIds = LandingPads[i-1]->TypeIds.size();
+        const unsigned SizePrevIds = PrevLPI->TypeIds.size();
         assert(Actions.size());
         PrevAction = &Actions.back();
         SizeAction = TargetAsmInfo::getSLEB128Size(PrevAction->NextAction) +
@@ -351,9 +344,9 @@ void DwarfException::EmitExceptionTable() {
       }
 
       // Compute the actions.
-      for (unsigned I = NumShared, M = TypeIds.size(); I != M; ++I) {
-        int TypeID = TypeIds[I];
-        assert(-1-TypeID < (int)FilterOffsets.size() && "Unknown filter id!");
+      for (unsigned J = NumShared, M = TypeIds.size(); J != M; ++J) {
+        int TypeID = TypeIds[J];
+        assert(-1 - TypeID < (int)FilterOffsets.size() && "Unknown filter id!");
         int ValueForTypeID = TypeID < 0 ? FilterOffsets[-1 - TypeID] : TypeID;
         unsigned SizeTypeID = TargetAsmInfo::getSLEB128Size(ValueForTypeID);
 
@@ -363,7 +356,6 @@ void DwarfException::EmitExceptionTable() {
 
         ActionEntry Action = {ValueForTypeID, NextAction, PrevAction};
         Actions.push_back(Action);
-
         PrevAction = &Actions.back();
       }
 
@@ -375,7 +367,32 @@ void DwarfException::EmitExceptionTable() {
 
     // Compute this sites contribution to size.
     SizeActions += SizeSiteActions;
+
+    PrevLPI = LPI;
   }
+
+  return SizeActions;
+}
+
+void DwarfException::EmitExceptionTable() {
+  const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
+  const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
+  if (PadInfos.empty()) return;
+
+  // Sort the landing pads in order of their type ids.  This is used to fold
+  // duplicate actions.
+  SmallVector<const LandingPadInfo *, 64> LandingPads;
+  LandingPads.reserve(PadInfos.size());
+  for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
+    LandingPads.push_back(&PadInfos[i]);
+  std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
+
+  // Compute the actions table and gather the first action index for each
+  // landing pad site.
+  SmallVector<ActionEntry, 32> Actions;
+  SmallVector<unsigned, 64> FirstActions;
+  unsigned SizeActions = ComputeActionsTable(LandingPads, Actions, FirstActions);
 
   // Compute the call-site table.  The entry for an invoke has a try-range
   // containing the call, a non-zero landing pad and an appropriate action.  The
@@ -384,7 +401,6 @@ void DwarfException::EmitExceptionTable() {
   // must not be contained in the try-range of any entry - they form gaps in the
   // table.  Entries must be ordered by try-range address.
   SmallVector<CallSiteEntry, 64> CallSites;
-
   RangeMapType PadMap;
 
   // Invokes and nounwind calls have entries in PadMap (due to being bracketed

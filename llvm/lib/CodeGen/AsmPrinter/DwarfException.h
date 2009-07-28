@@ -113,13 +113,6 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
     static bool isPod() { return true; }
   };
 
-  /// ActionEntry - Structure describing an entry in the actions table.
-  struct ActionEntry {
-    int ValueForTypeID; // The value to write - may not be equal to the type id.
-    int NextAction;
-    struct ActionEntry *Previous;
-  };
-
   /// PadRange - Structure holding a try-range and the associated landing pad.
   struct PadRange {
     // The index of the landing pad.
@@ -130,16 +123,27 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
 
   typedef DenseMap<unsigned, PadRange, KeyInfo> RangeMapType;
 
+  /// ActionEntry - Structure describing an entry in the actions table.
+  struct ActionEntry {
+    int ValueForTypeID; // The value to write - may not be equal to the type id.
+    int NextAction;
+    struct ActionEntry *Previous;
+  };
+
   /// CallSiteEntry - Structure describing an entry in the call-site table.
   struct CallSiteEntry {
     // The 'try-range' is BeginLabel .. EndLabel.
     unsigned BeginLabel; // zero indicates the start of the function.
     unsigned EndLabel;   // zero indicates the end of the function.
+
     // The landing pad starts at PadLabel.
     unsigned PadLabel;   // zero indicates that there is no landing pad.
     unsigned Action;
   };
 
+  unsigned ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LP,
+                               SmallVectorImpl<ActionEntry> &Actions,
+                               SmallVectorImpl<unsigned> &FirstActions);
   void EmitExceptionTable();
 
 public:
