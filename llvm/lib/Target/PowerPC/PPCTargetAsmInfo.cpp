@@ -41,12 +41,14 @@ PPCDarwinTargetAsmInfo::PPCDarwinTargetAsmInfo(const PPCTargetMachine &TM) :
 unsigned
 PPCDarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                               bool Global) const {
-  if (Reason == DwarfEncoding::Functions && Global)
-    return (DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
-  else if (Reason == DwarfEncoding::CodeLabels || !Global)
+  if ((Reason == DwarfEncoding::Data || Reason == DwarfEncoding::Functions)
+      && Global)
+    return DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4;
+
+  if (Reason == DwarfEncoding::CodeLabels || !Global)
     return DW_EH_PE_pcrel;
-  else
-    return DW_EH_PE_absptr;
+
+  return DW_EH_PE_absptr;
 }
 
 const char *PPCDarwinTargetAsmInfo::getEHGlobalPrefix() const {
