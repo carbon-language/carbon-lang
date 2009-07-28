@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
@@ -32,69 +34,10 @@ namespace {
                  bool Canonical) 
       : ID(ID), Context(Context), Canonical(Canonical) { }
     
-    // FIXME: Use StmtNodes.def to declare all VisitXXX functions
-    
     void VisitStmt(Stmt *S);
-    void VisitExpr(Expr *S);
-    void VisitDeclRefExpr(DeclRefExpr *S);
-    void VisitPredefinedExpr(PredefinedExpr *S);
-    void VisitIntegerLiteral(IntegerLiteral *S);
-    void VisitCharacterLiteral(CharacterLiteral *S);
-    void VisitFloatingLiteral(FloatingLiteral *S);
-    void VisitImaginaryLiteral(ImaginaryLiteral *S);
-    void VisitStringLiteral(StringLiteral *S);
-    void VisitParenExpr(ParenExpr *S);
-    void VisitUnaryOperator(UnaryOperator *S);
-    void VisitSizeOfAlignOfExpr(SizeOfAlignOfExpr *S);
-    void VisitArraySubscriptExpr(ArraySubscriptExpr *S);
-    void VisitCallExpr(CallExpr *S);
-    void VisitMemberExpr(MemberExpr *S);
-    void VisitCompoundLiteralExpr(CompoundLiteralExpr *S);
-    void VisitCastExpr(CastExpr *S);
-    void VisitImplicitCastExpr(ImplicitCastExpr *S);
-    void VisitExplicitCastExpr(ExplicitCastExpr *S);
-    void VisitCStyleCastExpr(CStyleCastExpr *S);
-    void VisitBinaryOperator(BinaryOperator *S);
-    void VisitCompoundAssignOperator(CompoundAssignOperator *S);                    
-    void VisitConditionalOperator(ConditionalOperator *S);
-    void VisitAddrLabelExpr(AddrLabelExpr *S);
-    void VisitStmtExpr(StmtExpr *S);
-    void VisitTypesCompatibleExpr(TypesCompatibleExpr *S);
-    void VisitShuffleVectorExpr(ShuffleVectorExpr *S);
-    void VisitChooseExpr(ChooseExpr *S);
-    void VisitGNUNullExpr(GNUNullExpr *S);
-    void VisitInitListExpr(InitListExpr *S);
-    void VisitDesignatedInitExpr(DesignatedInitExpr *S);
-    void VisitImplicitValueInitExpr(ImplicitValueInitExpr *S);
-    void VisitExtVectorElementExpr(ExtVectorElementExpr *S);
-    void VisitBlockExpr(BlockExpr *S);
-    void VisitBlockDeclRefExpr(BlockDeclRefExpr *S);
-    void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *S);
-    void VisitCXXMemberCallExpr(CXXMemberCallExpr *S);
-    void VisitCXXNamedCastExpr(CXXNamedCastExpr *S);
-    void VisitCXXStaticCastExpr(CXXStaticCastExpr *S);
-    void VisitCXXDynamicCastExpr(CXXDynamicCastExpr *S);
-    void VisitCXXReinterpretCastExpr(CXXReinterpretCastExpr *S);
-    void VisitCXXConstCastExpr(CXXConstCastExpr *S);
-    void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *S);
-    void VisitCXXTypeidExpr(CXXTypeidExpr *S);
-    void VisitCXXThisExpr(CXXThisExpr *S);
-    void VisitCXXThrowExpr(CXXThrowExpr *S);
-    void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *S);
-    void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *S);
-    void VisitCXXConstructExpr(CXXConstructExpr *S);
-    void VisitCXXFunctionalCastExpr(CXXFunctionalCastExpr *S);
-    void VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *S);
-    void VisitCXXZeroInitValueExpr(CXXZeroInitValueExpr *S);
-    void VisitCXXConditionDeclExpr(CXXConditionDeclExpr *S);
-    void VisitCXXNewExpr(CXXNewExpr *S);
-    void VisitCXXDeleteExpr(CXXDeleteExpr *S);
-    void VisitUnresolvedFunctionNameExpr(UnresolvedFunctionNameExpr *S);
-    void VisitUnaryTypeTraitExpr(UnaryTypeTraitExpr *S);
-    void VisitQualifiedDeclRefExpr(QualifiedDeclRefExpr *S);
-    void VisitUnresolvedDeclRefExpr(UnresolvedDeclRefExpr *S);
-    void VisitTemplateIdRefExpr(TemplateIdRefExpr *S);
-    // FIXME: pick up at CXXExprWithTemporaries, handle Objective-C expressions
+#define STMT(Node, Base)
+#define EXPR(Node, Base) void Visit##Node(Node *S);
+#include "clang/AST/StmtNodes.def"
     
     /// \brief Visit a declaration that is referenced within an expression
     /// or statement.
@@ -461,6 +404,79 @@ void StmtProfiler::VisitTemplateIdRefExpr(TemplateIdRefExpr *S) {
   VisitNestedNameSpecifier(S->getQualifier());
   VisitTemplateName(S->getTemplateName());
   VisitTemplateArguments(S->getTemplateArgs(), S->getNumTemplateArgs());
+}
+
+void StmtProfiler::VisitCXXExprWithTemporaries(CXXExprWithTemporaries *S) {
+  VisitExpr(S);
+  ID.AddBoolean(S->shouldDestroyTemporaries());
+  for (unsigned I = 0, N = S->getNumTemporaries(); I != N; ++I)
+    VisitDecl(
+      const_cast<CXXDestructorDecl *>(S->getTemporary(I)->getDestructor()));
+}
+
+void 
+StmtProfiler::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *S) {
+  VisitExpr(S);
+  VisitType(S->getTypeAsWritten());
+}
+
+void StmtProfiler::VisitCXXUnresolvedMemberExpr(CXXUnresolvedMemberExpr *S) {
+  VisitExpr(S);
+  ID.AddBoolean(S->isArrow());
+  VisitName(S->getMember());
+}
+
+void StmtProfiler::VisitObjCStringLiteral(ObjCStringLiteral *S) {
+  VisitExpr(S);
+}
+
+void StmtProfiler::VisitObjCEncodeExpr(ObjCEncodeExpr *S) {
+  VisitExpr(S);
+  VisitType(S->getEncodedType());
+}
+
+void StmtProfiler::VisitObjCSelectorExpr(ObjCSelectorExpr *S) {
+  VisitExpr(S);
+  VisitName(S->getSelector());
+}
+
+void StmtProfiler::VisitObjCProtocolExpr(ObjCProtocolExpr *S) {
+  VisitExpr(S);
+  VisitDecl(S->getProtocol());
+}
+
+void StmtProfiler::VisitObjCIvarRefExpr(ObjCIvarRefExpr *S) {
+  VisitExpr(S);
+  VisitDecl(S->getDecl());
+  ID.AddBoolean(S->isArrow());
+  ID.AddBoolean(S->isFreeIvar());
+}
+
+void StmtProfiler::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *S) {
+  VisitExpr(S);
+  VisitDecl(S->getProperty());
+}
+
+void StmtProfiler::VisitObjCKVCRefExpr(ObjCKVCRefExpr *S) {
+  VisitExpr(S);
+  VisitDecl(S->getGetterMethod());
+  VisitDecl(S->getSetterMethod());
+  VisitDecl(S->getClassProp());
+}
+
+void StmtProfiler::VisitObjCMessageExpr(ObjCMessageExpr *S) {
+  VisitExpr(S);
+  VisitName(S->getSelector());
+  VisitDecl(S->getMethodDecl());
+}
+
+void StmtProfiler::VisitObjCSuperExpr(ObjCSuperExpr *S) {
+  VisitExpr(S);
+}
+
+void StmtProfiler::VisitObjCIsaExpr(ObjCIsaExpr *S) {
+  VisitExpr(S);
+  ID.AddBoolean(S->isArrow());
 }
 
 void StmtProfiler::VisitType(QualType T) {
