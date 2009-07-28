@@ -384,7 +384,7 @@ static Value *RemapOperand(const Value *In,
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
         Operands[i] = cast<Constant>(RemapOperand(CP->getOperand(i), ValueMap,
                                      Context));
-      Result = Context.getConstantVector(Operands);
+      Result = ConstantVector::get(Operands);
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
       std::vector<Constant*> Ops;
       for (unsigned i = 0, e = CE->getNumOperands(); i != e; ++i)

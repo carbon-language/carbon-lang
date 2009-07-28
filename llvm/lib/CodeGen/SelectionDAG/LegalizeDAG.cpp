@@ -1849,7 +1849,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         CV.push_back(Context->getUndef(OpNTy));
       }
     }
-    Constant *CP = Context->getConstantVector(CV);
+    Constant *CP = ConstantVector::get(CV);
     SDValue CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
     unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     return DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,

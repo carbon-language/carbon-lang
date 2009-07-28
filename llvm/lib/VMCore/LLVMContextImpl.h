@@ -117,7 +117,7 @@ struct ConvertConstantType<ConstantVector, VectorType> {
     std::vector<Constant*> C;
     for (unsigned i = 0, e = OldC->getNumOperands(); i != e; ++i)
       C.push_back(cast<Constant>(OldC->getOperand(i)));
-    Constant *New = OldC->getContext().getConstantVector(NewTy, C);
+    Constant *New = ConstantVector::get(NewTy, C);
     assert(New != OldC && "Didn't replace constant??");
     OldC->uncheckedReplaceAllUsesWith(New);
     OldC->destroyConstant();    // This constant is now dead, destroy it.
@@ -460,6 +460,7 @@ class LLVMContextImpl {
   friend class ConstantFP;
   friend class ConstantStruct;
   friend class ConstantArray;
+  friend class ConstantVector;
 public:
   LLVMContextImpl(LLVMContext &C);
   
@@ -468,9 +469,6 @@ public:
   MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
   
   ConstantAggregateZero *getConstantAggregateZero(const Type *Ty);
-  
-  Constant *getConstantVector(const VectorType *Ty,
-                              const std::vector<Constant*> &V);
   
   ConstantInt *getTrue() {
     if (TheTrueVal)

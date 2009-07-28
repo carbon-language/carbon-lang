@@ -1777,7 +1777,7 @@ bool LLParser::ParseValID(ValID &ID) {
                      "vector element #" + utostr(i) +
                     " is not of type '" + Elts[0]->getType()->getDescription());
     
-    ID.ConstantVal = Context.getConstantVector(Elts.data(), Elts.size());
+    ID.ConstantVal = ConstantVector::get(Elts.data(), Elts.size());
     ID.Kind = ValID::t_Constant;
     return false;
   }

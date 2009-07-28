@@ -1458,7 +1458,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       }
 
     // If we changed the constant, return it.
-    Constant *NewCP = Context->getConstantVector(Elts);
+    Constant *NewCP = ConstantVector::get(Elts);
     return NewCP != CP ? NewCP : 0;
   } else if (isa<ConstantAggregateZero>(V)) {
     // Simplify the CAZ to a ConstantVector where the non-demanded elements are
@@ -1478,7 +1478,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       Elts.push_back(Elt);
     }
     UndefElts = DemandedElts ^ EltMask;
-    return Context->getConstantVector(Elts);
+    return ConstantVector::get(Elts);
   }
   
   // Limit search depth.
@@ -1597,7 +1597,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           Elts.push_back(ConstantInt::get(Type::Int32Ty,
                                           Shuffle->getMaskValue(i)));
       }
-      I->setOperand(2, Context->getConstantVector(Elts));
+      I->setOperand(2, ConstantVector::get(Elts));
       MadeChange = true;
     }
     break;
@@ -2926,7 +2926,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
     if (const VectorType *Ty = dyn_cast<VectorType>(I.getType())) {
       Constant *CI = ConstantInt::get(Ty->getElementType(), 1);
       std::vector<Constant*> Elts(Ty->getNumElements(), CI);
-      return ReplaceInstUsesWith(I, Context->getConstantVector(Elts));
+      return ReplaceInstUsesWith(I, ConstantVector::get(Elts));
     }
 
     Constant *CI = ConstantInt::get(I.getType(), 1);
@@ -3259,7 +3259,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
         }
       }
 
-      Constant *NewRHSV = Context->getConstantVector(Elts);
+      Constant *NewRHSV = ConstantVector::get(Elts);
       if (NewRHSV != RHSV) {
         AddUsesToWorkList(I);
         I.setOperand(1, NewRHSV);
@@ -12689,7 +12689,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         Mask[InsertedIdx] = 
                            ConstantInt::get(Type::Int32Ty, ExtractedIdx);
         return new ShuffleVectorInst(EI->getOperand(0), VecOp,
-                                     Context->getConstantVector(Mask));
+                                     ConstantVector::get(Mask));
       }
       
       // If this insertelement isn't used by some other insertelement, turn it
@@ -12701,7 +12701,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         if (RHS == 0) RHS = Context->getUndef(LHS->getType());
         // We now have a shuffle of LHS, RHS, Mask.
         return new ShuffleVectorInst(LHS, RHS,
-                                     Context->getConstantVector(Mask));
+                                     ConstantVector::get(Mask));
       }
     }
   }
@@ -12766,7 +12766,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     }
     SVI.setOperand(0, SVI.getOperand(1));
     SVI.setOperand(1, Context->getUndef(RHS->getType()));
-    SVI.setOperand(2, Context->getConstantVector(Elts));
+    SVI.setOperand(2, ConstantVector::get(Elts));
     LHS = SVI.getOperand(0);
     RHS = SVI.getOperand(1);
     MadeChange = true;
@@ -12823,7 +12823,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         }
         return new ShuffleVectorInst(LHSSVI->getOperand(0),
                                      LHSSVI->getOperand(1),
-                                     Context->getConstantVector(Elts));
+                                     ConstantVector::get(Elts));
       }
     }
   }

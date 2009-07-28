@@ -206,7 +206,7 @@ Constant* ConstantInt::get(const Type* Ty, uint64_t V, bool isSigned) {
 
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return Ty->getContext().getConstantVector(
+    return ConstantVector::get(
       std::vector<Constant *>(VTy->getNumElements(), C));
 
   return C;
@@ -232,7 +232,7 @@ Constant* ConstantInt::get(const Type* Ty, const APInt& V) {
 
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return Ty->getContext().getConstantVector(
+    return ConstantVector::get(
       std::vector<Constant *>(VTy->getNumElements(), C));
 
   return C;
@@ -270,7 +270,7 @@ Constant* ConstantFP::get(const Type* Ty, double V) {
 
   // For vectors, broadcast the value.
   if (const VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return Context.getConstantVector(
+    return ConstantVector::get(
       std::vector<Constant *>(VTy->getNumElements(), C));
 
   return C;
@@ -290,7 +290,7 @@ Constant* ConstantFP::getZeroValueForNegation(const Type* Ty) {
     if (PTy->getElementType()->isFloatingPoint()) {
       std::vector<Constant*> zeros(PTy->getNumElements(),
                            getNegativeZero(PTy->getElementType()));
-      return Context.getConstantVector(PTy, zeros);
+      return ConstantVector::get(PTy, zeros);
     }
 
   if (Ty->isFloatingPoint()) 
@@ -488,6 +488,46 @@ ConstantVector::ConstantVector(const VectorType *T,
            "Initializer for vector element doesn't match vector element type!");
     *OL = C;
   }
+}
+
+// ConstantVector accessors.
+Constant* ConstantVector::get(const VectorType* T,
+                              const std::vector<Constant*>& V) {
+   assert(!V.empty() && "Vectors can't be empty");
+   LLVMContext &Context = T->getContext();
+   LLVMContextImpl *pImpl = Context.pImpl;
+   
+  // If this is an all-undef or alll-zero vector, return a
+  // ConstantAggregateZero or UndefValue.
+  Constant *C = V[0];
+  bool isZero = C->isNullValue();
+  bool isUndef = isa<UndefValue>(C);
+
+  if (isZero || isUndef) {
+    for (unsigned i = 1, e = V.size(); i != e; ++i)
+      if (V[i] != C) {
+        isZero = isUndef = false;
+        break;
+      }
+  }
+  
+  if (isZero)
+    return Context.getConstantAggregateZero(T);
+  if (isUndef)
+    return Context.getUndef(T);
+    
+  // Implicitly locked.
+  return pImpl->VectorConstants.getOrCreate(T, V);
+}
+
+Constant* ConstantVector::get(const std::vector<Constant*>& V) {
+  assert(!V.empty() && "Cannot infer type if V is empty");
+  return get(VectorType::get(V.front()->getType(),V.size()), V);
+}
+
+Constant* ConstantVector::get(Constant* const* Vals, unsigned NumVals) {
+  // FIXME: make this the primary ctor method.
+  return get(std::vector<Constant*>(Vals, Vals+NumVals));
 }
 
 
@@ -1064,7 +1104,7 @@ void ConstantStruct::destroyConstant() {
 //
 void ConstantVector::destroyConstant() {
   // Implicitly locked.
-  getType()->getContext().erase(this);
+  getType()->getContext().pImpl->VectorConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -2127,6 +2167,14 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   destroyConstant();
 }
 
+static std::vector<Constant*> getValType(ConstantVector *CP) {
+  std::vector<Constant*> Elements;
+  Elements.reserve(CP->getNumOperands());
+  for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+    Elements.push_back(CP->getOperand(i));
+  return Elements;
+}
+
 void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
@@ -2139,8 +2187,7 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Values.push_back(Val);
   }
   
-  Constant *Replacement =
-    getType()->getContext().getConstantVector(getType(), Values);
+  Constant *Replacement = get(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.

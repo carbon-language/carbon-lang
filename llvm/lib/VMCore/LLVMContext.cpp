@@ -72,7 +72,7 @@ Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
   const VectorType* VTy = cast<VectorType>(Ty);
   Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));
   assert(Elts[0] && "Not a vector integer type!");
-  return cast<ConstantVector>(getConstantVector(Elts));
+  return cast<ConstantVector>(ConstantVector::get(Elts));
 }
 
 // UndefValue accessors.
@@ -367,23 +367,6 @@ Constant* LLVMContext::getConstantExprSizeOf(const Type* Ty) {
   return getConstantExprCast(Instruction::PtrToInt, GEP, Type::Int64Ty);
 }
 
-// ConstantVector accessors.
-Constant* LLVMContext::getConstantVector(const VectorType* T,
-                            const std::vector<Constant*>& V) {
-  return pImpl->getConstantVector(T, V);
-}
-
-Constant* LLVMContext::getConstantVector(const std::vector<Constant*>& V) {
-  assert(!V.empty() && "Cannot infer type if V is empty");
-  return getConstantVector(getVectorType(V.front()->getType(),V.size()), V);
-}
-
-Constant* LLVMContext::getConstantVector(Constant* const* Vals,
-                                         unsigned NumVals) {
-  // FIXME: make this the primary ctor method.
-  return getConstantVector(std::vector<Constant*>(Vals, Vals+NumVals));
-}
-
 // MDNode accessors
 MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
   return pImpl->getMDNode(Vals, NumVals);
@@ -487,8 +470,4 @@ void LLVMContext::erase(MDNode *M) {
 
 void LLVMContext::erase(ConstantAggregateZero *Z) {
   pImpl->erase(Z);
-}
-
-void LLVMContext::erase(ConstantVector *V) {
-  pImpl->erase(V);
 }

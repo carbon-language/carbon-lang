@@ -2149,7 +2149,7 @@ void SelectionDAGLowering::visitFSub(User &I) {
       const Type *ElTy = DestTy->getElementType();
       unsigned VL = DestTy->getNumElements();
       std::vector<Constant*> NZ(VL, ConstantFP::getNegativeZero(ElTy));
-      Constant *CNZ = DAG.getContext()->getConstantVector(&NZ[0], NZ.size());
+      Constant *CNZ = ConstantVector::get(&NZ[0], NZ.size());
       if (CV == CNZ) {
         SDValue Op2 = getValue(I.getOperand(1));
         setValue(&I, DAG.getNode(ISD::FNEG, getCurDebugLoc(),

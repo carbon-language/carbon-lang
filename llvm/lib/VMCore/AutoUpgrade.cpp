@@ -281,7 +281,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, 1));
         }
-        Value *Mask = Context.getConstantVector(Idxs);
+        Value *Mask = ConstantVector::get(Idxs);
         SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
       } else if (isMovL) {
         Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
@@ -289,14 +289,14 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Idxs.push_back(Zero);
         Idxs.push_back(Zero);
         Idxs.push_back(Zero);
-        Value *ZeroV = Context.getConstantVector(Idxs);
+        Value *ZeroV = ConstantVector::get(Idxs);
 
         Idxs.clear(); 
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, 4));
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, 5));
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
-        Value *Mask = Context.getConstantVector(Idxs);
+        Value *Mask = ConstantVector::get(Idxs);
         SI = new ShuffleVectorInst(ZeroV, Op0, Mask, "upgraded.", CI);
       } else if (isMovSD ||
                  isUnpckhPD || isUnpcklPD || isPunpckhQPD || isPunpcklQPD) {
@@ -311,7 +311,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, 0));
           Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
         }
-        Value *Mask = Context.getConstantVector(Idxs);
+        Value *Mask = ConstantVector::get(Idxs);
         SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
       } else if (isShufPD) {
         Value *Op1 = CI->getOperand(2);
@@ -319,7 +319,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Idxs.push_back(ConstantInt::get(Type::Int32Ty, MaskVal & 1));
         Idxs.push_back(ConstantInt::get(Type::Int32Ty,
                                                ((MaskVal >> 1) & 1)+2));
-        Value *Mask = Context.getConstantVector(Idxs);
+        Value *Mask = ConstantVector::get(Idxs);
         SI = new ShuffleVectorInst(Op0, Op1, Mask, "upgraded.", CI);
       }
 

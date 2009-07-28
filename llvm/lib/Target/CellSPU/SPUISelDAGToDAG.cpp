@@ -306,7 +306,7 @@ namespace {
         CV.push_back(const_cast<ConstantInt *> (V->getConstantIntValue()));
       }
 
-      Constant *CP = CurDAG->getContext()->getConstantVector(CV);
+      Constant *CP = ConstantVector::get(CV);
       SDValue CPIdx = CurDAG->getConstantPool(CP, SPUtli.getPointerTy());
       unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
       SDValue CGPoolOffset =

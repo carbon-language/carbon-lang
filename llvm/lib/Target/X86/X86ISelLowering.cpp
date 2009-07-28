@@ -4909,7 +4909,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG) {
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x43300000)));
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
   CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
-  Constant *C0 = Context->getConstantVector(CV0);
+  Constant *C0 = ConstantVector::get(CV0);
   SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 16);
 
   std::vector<Constant*> CV1;
@@ -4917,7 +4917,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG) {
     ConstantFP::get(*Context, APFloat(APInt(64, 0x4530000000000000ULL))));
   CV1.push_back(
     ConstantFP::get(*Context, APFloat(APInt(64, 0x4330000000000000ULL))));
-  Constant *C1 = Context->getConstantVector(CV1);
+  Constant *C1 = ConstantVector::get(CV1);
   SDValue CPIdx1 = DAG.getConstantPool(C1, getPointerTy(), 16);
 
   SDValue XR1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v4i32,
@@ -5139,7 +5139,7 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) {
     CV.push_back(C);
     CV.push_back(C);
   }
-  Constant *C = Context->getConstantVector(CV);
+  Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                                PseudoSourceValue::getConstantPool(), 0,
@@ -5169,7 +5169,7 @@ SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) {
     CV.push_back(C);
     CV.push_back(C);
   }
-  Constant *C = Context->getConstantVector(CV);
+  Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                                PseudoSourceValue::getConstantPool(), 0,
@@ -5218,7 +5218,7 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
     CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
     CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
   }
-  Constant *C = Context->getConstantVector(CV);
+  Constant *C = ConstantVector::get(CV);
   SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask1 = DAG.getLoad(SrcVT, dl, DAG.getEntryNode(), CPIdx,
                                 PseudoSourceValue::getConstantPool(), 0,
@@ -5247,7 +5247,7 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) {
     CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
     CV.push_back(ConstantFP::get(*Context, APFloat(APInt(32, 0))));
   }
-  C = Context->getConstantVector(CV);
+  C = ConstantVector::get(CV);
   CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
   SDValue Mask2 = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                                 PseudoSourceValue::getConstantPool(), 0,

@@ -59,6 +59,7 @@ class LLVMContext {
   friend class ConstantFP;
   friend class ConstantStruct;
   friend class ConstantArray;
+  friend class ConstantVector;
 public:
   LLVMContext();
   ~LLVMContext();
@@ -160,12 +161,6 @@ public:
   ///
   Constant* getConstantExprSizeOf(const Type* Ty);
   
-  // ConstantVector accessors
-  Constant* getConstantVector(const VectorType* T,
-                              const std::vector<Constant*>& V);
-  Constant* getConstantVector(const std::vector<Constant*>& V);
-  Constant* getConstantVector(Constant* const* Vals, unsigned NumVals);
-  
   // MDNode accessors
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
   
@@ -211,7 +206,6 @@ public:
   void erase(MDString *M);
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
-  void erase(ConstantVector *V);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

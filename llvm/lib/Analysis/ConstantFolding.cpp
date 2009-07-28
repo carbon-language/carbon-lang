@@ -264,7 +264,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
         }
       }
       
-      return Context.getConstantVector(Result.data(), Result.size());
+      return ConstantVector::get(Result.data(), Result.size());
     }
   }
   

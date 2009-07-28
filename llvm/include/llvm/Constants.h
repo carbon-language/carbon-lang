@@ -448,6 +448,11 @@ class ConstantVector : public Constant {
 protected:
   ConstantVector(const VectorType *T, const std::vector<Constant*> &Val);
 public:
+  // ConstantVector accessors
+  static Constant* get(const VectorType* T, const std::vector<Constant*>& V);
+  static Constant* get(const std::vector<Constant*>& V);
+  static Constant* get(Constant* const* Vals, unsigned NumVals);
+  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

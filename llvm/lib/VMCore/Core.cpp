@@ -421,7 +421,7 @@ LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
 }
 
 LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
-  return wrap(getGlobalContext().getConstantVector(
+  return wrap(ConstantVector::get(
                             unwrap<Constant>(ScalarConstantVals, Size), Size));
 }
 

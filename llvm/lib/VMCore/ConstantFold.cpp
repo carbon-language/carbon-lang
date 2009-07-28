@@ -63,7 +63,7 @@ static Constant *BitCastConstantVector(LLVMContext &Context, ConstantVector *CV,
   for (unsigned i = 0; i != NumElts; ++i)
     Result.push_back(Context.getConstantExprBitCast(CV->getOperand(i),
                                                     DstEltTy));
-  return Context.getConstantVector(Result);
+  return ConstantVector::get(Result);
 }
 
 /// This function determines which opcode to use to fold two constant cast 
@@ -145,7 +145,7 @@ static Constant *FoldBitCast(LLVMContext &Context,
     // can only be handled by Analysis/ConstantFolding.cpp).
     if (isa<ConstantInt>(V) || isa<ConstantFP>(V))
       return Context.getConstantExprBitCast(
-                                     Context.getConstantVector(&V, 1), DestPTy);
+                                     ConstantVector::get(&V, 1), DestPTy);
   }
   
   // Finally, implement bitcast folding now.   The code below doesn't handle
@@ -228,7 +228,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
       for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
         res.push_back(Context.getConstantExprCast(opc,
                                             CV->getOperand(i), DstEltTy));
-      return Context.getConstantVector(DestVecTy, res);
+      return ConstantVector::get(DestVecTy, res);
     }
 
   // We actually have to do a cast now. Perform the cast according to the
@@ -374,7 +374,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(LLVMContext &Context,
         (idxVal == i) ? Elt : Context.getUndef(Elt->getType());
       Ops.push_back(const_cast<Constant*>(Op));
     }
-    return Context.getConstantVector(Ops);
+    return ConstantVector::get(Ops);
   }
   if (isa<ConstantAggregateZero>(Val)) {
     // Insertion of scalar constant into vector aggregate zero
@@ -392,7 +392,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(LLVMContext &Context,
         (idxVal == i) ? Elt : Context.getNullValue(Elt->getType());
       Ops.push_back(const_cast<Constant*>(Op));
     }
-    return Context.getConstantVector(Ops);
+    return ConstantVector::get(Ops);
   }
   if (const ConstantVector *CVal = dyn_cast<ConstantVector>(Val)) {
     // Insertion of scalar constant into vector constant
@@ -403,7 +403,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(LLVMContext &Context,
         (idxVal == i) ? Elt : cast<Constant>(CVal->getOperand(i));
       Ops.push_back(const_cast<Constant*>(Op));
     }
-    return Context.getConstantVector(Ops);
+    return ConstantVector::get(Ops);
   }
 
   return 0;
@@ -459,7 +459,7 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(LLVMContext &Context,
     Result.push_back(InElt);
   }
 
-  return Context.getConstantVector(&Result[0], Result.size());
+  return ConstantVector::get(&Result[0], Result.size());
 }
 
 Constant *llvm::ConstantFoldExtractValueInstruction(LLVMContext &Context,
@@ -829,7 +829,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprAdd(const_cast<Constant*>(C1),
                                                    const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::FAdd:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -837,7 +837,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprFAdd(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::Sub:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -845,7 +845,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprSub(const_cast<Constant*>(C1),
                                                    const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::FSub:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -853,7 +853,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprFSub(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::Mul:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -861,7 +861,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprMul(const_cast<Constant*>(C1),
                                                    const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::FMul:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -869,7 +869,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprFMul(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::UDiv:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -877,7 +877,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprUDiv(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::SDiv:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -885,7 +885,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprSDiv(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::FDiv:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -893,7 +893,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprFDiv(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::URem:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -901,7 +901,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprURem(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::SRem:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -909,7 +909,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprSRem(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::FRem:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -917,7 +917,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprFRem(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::And: 
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -925,7 +925,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprAnd(const_cast<Constant*>(C1),
                                                    const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::Or:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -933,7 +933,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprOr(const_cast<Constant*>(C1),
                                                   const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::Xor:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -941,7 +941,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprXor(const_cast<Constant*>(C1),
                                                    const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::LShr:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -949,7 +949,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprLShr(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::AShr:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -957,7 +957,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprAShr(const_cast<Constant*>(C1),
                                                     const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       case Instruction::Shl:
         for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
           C1 = CP1 ? CP1->getOperand(i) : Context.getNullValue(EltTy);
@@ -965,7 +965,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
           Res.push_back(Context.getConstantExprShl(const_cast<Constant*>(C1),
                                                    const_cast<Constant*>(C2)));
         }
-        return Context.getConstantVector(Res);
+        return ConstantVector::get(Res);
       }
     }
   }
@@ -1496,7 +1496,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
       ResElts.push_back(
                     Context.getConstantExprCompare(pred, C1Elts[i], C2Elts[i]));
     }
-    return Context.getConstantVector(&ResElts[0], ResElts.size());
+    return ConstantVector::get(&ResElts[0], ResElts.size());
   }
 
   if (C1->getType()->isFloatingPoint()) {
