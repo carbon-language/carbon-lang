@@ -29,3 +29,16 @@ struct D : C {
 };
 
 SA(3, sizeof(D) == 8);
+
+struct __attribute__((packed)) E {
+  char b;
+  int a;
+};
+
+SA(4, sizeof(E) == 5);
+
+struct __attribute__((packed)) F : E {
+  char d;
+};
+
+SA(5, sizeof(F) == 6);
