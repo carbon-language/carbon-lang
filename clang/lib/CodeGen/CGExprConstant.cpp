@@ -646,7 +646,7 @@ public:
     for (; i < NumElements; ++i)
       Elts.push_back(VMContext.getNullValue(ElemTy));
 
-    return VMContext.getConstantVector(VType, Elts);    
+    return llvm::ConstantVector::get(VType, Elts);    
   }
   
   llvm::Constant *VisitImplicitValueInitExpr(ImplicitValueInitExpr* E) {
@@ -901,7 +901,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         else
           Inits.push_back(llvm::ConstantFP::get(VMContext, Elt.getFloat()));
       }
-      return VMContext.getConstantVector(&Inits[0], Inits.size());
+      return llvm::ConstantVector::get(&Inits[0], Inits.size());
     }
     }
   }

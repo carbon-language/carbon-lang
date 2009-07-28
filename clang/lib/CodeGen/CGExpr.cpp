@@ -410,7 +410,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
     Mask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, InIdx));
   }
   
-  llvm::Value *MaskV = VMContext.getConstantVector(&Mask[0], Mask.size());
+  llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
   Vec = Builder.CreateShuffleVector(Vec,
                                     VMContext.getUndef(Vec->getType()),
                                     MaskV, "tmp");
@@ -615,7 +615,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
         Mask[InIdx] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       }
     
-      llvm::Value *MaskV = VMContext.getConstantVector(&Mask[0], Mask.size());
+      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
       Vec = Builder.CreateShuffleVector(SrcVal,
                                         VMContext.getUndef(Vec->getType()),
                                         MaskV, "tmp");
@@ -631,7 +631,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
         ExtMask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, i));
       for (; i != NumDstElts; ++i)
         ExtMask.push_back(VMContext.getUndef(llvm::Type::Int32Ty));
-      llvm::Value *ExtMaskV = VMContext.getConstantVector(&ExtMask[0],
+      llvm::Value *ExtMaskV = llvm::ConstantVector::get(&ExtMask[0],
                                                         ExtMask.size());
       llvm::Value *ExtSrcVal = 
         Builder.CreateShuffleVector(SrcVal,
@@ -647,7 +647,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
         unsigned Idx = getAccessedFieldNo(i, Elts);
         Mask[Idx] = llvm::ConstantInt::get(llvm::Type::Int32Ty, i+NumDstElts);
       }
-      llvm::Value *MaskV = VMContext.getConstantVector(&Mask[0], Mask.size());
+      llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
       Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV, "tmp");
     }
     else {
@@ -932,7 +932,7 @@ llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
     CElts.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, Elts[i]));
 
-  return VMContext.getConstantVector(&CElts[0], CElts.size());
+  return llvm::ConstantVector::get(&CElts[0], CElts.size());
 }
 
 LValue CodeGenFunction::
@@ -972,7 +972,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
     else
       CElts.push_back(BaseElts->getOperand(Indices[i]));
   }
-  llvm::Constant *CV = VMContext.getConstantVector(&CElts[0], CElts.size());
+  llvm::Constant *CV = llvm::ConstantVector::get(&CElts[0], CElts.size());
   return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV,
                                   Base.getQualifiers());
 }

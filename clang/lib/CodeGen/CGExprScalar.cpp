@@ -476,7 +476,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     for (unsigned i = 0; i < NumElements; i++)
       Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, 0));
     
-    llvm::Constant *Mask = VMContext.getConstantVector(&Args[0], NumElements);
+    llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
     llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
     return Yay;
   }
@@ -555,7 +555,7 @@ Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
   }
   Value* V1 = CGF.EmitScalarExpr(E->getExpr(0));
   Value* V2 = CGF.EmitScalarExpr(E->getExpr(1));
-  Value* SV = VMContext.getConstantVector(indices.begin(), indices.size());
+  Value* SV = llvm::ConstantVector::get(indices.begin(), indices.size());
   return Builder.CreateShuffleVector(V1, V2, SV, "shuffle");
 }
 
@@ -1599,7 +1599,7 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
   const char *Name = va_arg(va, const char *);
   va_end(va);
   
-  llvm::Constant *Mask = VMContext.getConstantVector(&Args[0], NumElements);
+  llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
   
   return Builder.CreateShuffleVector(V1, V2, Mask, Name);
 }
