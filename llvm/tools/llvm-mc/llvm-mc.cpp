@@ -196,6 +196,7 @@ static int AssembleInput(const char *ProgName) {
   OwningPtr<TargetAsmParser> TAP(GetTargetAsmParser(ProgName, Parser));
   if (!TAP)
     return 1;
+  Parser.setTargetParser(*TAP.get());
   return Parser.Run();
 }  
 

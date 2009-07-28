@@ -28,9 +28,6 @@ class TargetAsmParser;
 class Twine;
 
 class AsmParser : public MCAsmParser {
-public:
-  struct X86Operand;
-
 private:  
   AsmLexer Lexer;
   MCContext &Ctx;
@@ -87,12 +84,6 @@ private:
   bool ParsePrimaryExpr(AsmExpr *&Res);
   bool ParseBinOpRHS(unsigned Precedence, AsmExpr *&Res);
   bool ParseParenExpr(AsmExpr *&Res);
-  
-  // X86 specific.
-  bool ParseX86InstOperands(const StringRef &InstName, MCInst &Inst);
-  bool ParseX86Operand(X86Operand &Op);
-  bool ParseX86MemOperand(X86Operand &Op);
-  bool ParseX86Register(X86Operand &Op);
   
   // Directive Parsing.
   bool ParseDirectiveDarwinSection(); // Darwin specific ".section".

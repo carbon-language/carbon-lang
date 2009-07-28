@@ -43,8 +43,7 @@ public:
   /// \param Name - The instruction name.
   /// \param Inst [out] - On success, the parsed instruction.
   /// \return True on failure.
-  virtual bool ParseInstruction(MCAsmParser &AP, const StringRef &Name, 
-                                MCInst &Inst) = 0;
+  virtual bool ParseInstruction(const StringRef &Name, MCInst &Inst) = 0;
 };
 
 } // End llvm namespace
