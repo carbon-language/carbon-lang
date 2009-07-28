@@ -51,8 +51,8 @@ public:
   // rewrite MI to access 'Offset' bytes from the FP. Return the offset that
   // could not be handled directly in MI.
   int rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                        unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc,
-                        unsigned FrameReg, int Offset) const;
+                        unsigned FrameReg, int Offset,
+                        unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;

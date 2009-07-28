@@ -31,8 +31,7 @@ EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
 ARMBaseInstrInfo::ARMBaseInstrInfo(const ARMSubtarget &sti)
-  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
-    STI(sti) {
+  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)) {
 }
 
 MachineInstr *
@@ -290,10 +289,12 @@ ARMBaseInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                              const SmallVectorImpl<MachineOperand> &Cond) const {
   // FIXME this should probably have a DebugLoc argument
   DebugLoc dl = DebugLoc::getUnknownLoc();
-  int BOpc   = !STI.isThumb()
-    ? ARM::B : (STI.isThumb2() ? ARM::t2B : ARM::tB);
-  int BccOpc = !STI.isThumb()
-    ? ARM::Bcc : (STI.isThumb2() ? ARM::t2Bcc : ARM::tBcc);
+
+  ARMFunctionInfo *AFI = MBB.getParent()->getInfo<ARMFunctionInfo>();
+  int BOpc   = !AFI->isThumbFunction()
+    ? ARM::B : (AFI->isThumb2Function() ? ARM::t2B : ARM::tB);
+  int BccOpc = !AFI->isThumbFunction()
+    ? ARM::Bcc : (AFI->isThumb2Function() ? ARM::t2Bcc : ARM::tBcc);
 
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
@@ -785,7 +786,7 @@ ARMBaseInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,
   return false;
 }
 
-int ARMBaseInstrInfo::getMatchingCondBranchOpcode(int Opc) const {
+int llvm::getMatchingCondBranchOpcode(int Opc) {
   if (Opc == ARM::B)
     return ARM::Bcc;
   else if (Opc == ARM::tB)
@@ -797,3 +798,146 @@ int ARMBaseInstrInfo::getMatchingCondBranchOpcode(int Opc) const {
   return 0;
 }
 
+
+void llvm::emitARMRegPlusImmediate(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator &MBBI, DebugLoc dl,
+                               unsigned DestReg, unsigned BaseReg, int NumBytes,
+                               ARMCC::CondCodes Pred, unsigned PredReg,
+                               const ARMBaseInstrInfo &TII) {
+  bool isSub = NumBytes < 0;
+  if (isSub) NumBytes = -NumBytes;
+
+  while (NumBytes) {
+    unsigned RotAmt = ARM_AM::getSOImmValRotate(NumBytes);
+    unsigned ThisVal = NumBytes & ARM_AM::rotr32(0xFF, RotAmt);
+    assert(ThisVal && "Didn't extract field correctly");
+
+    // We will handle these bits from offset, clear them.
+    NumBytes &= ~ThisVal;
+
+    assert(ARM_AM::getSOImmVal(ThisVal) != -1 && "Bit extraction didn't work?");
+
+    // Build the new ADD / SUB.
+    unsigned Opc = isSub ? ARM::SUBri : ARM::ADDri;
+    BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg)
+      .addReg(BaseReg, RegState::Kill).addImm(ThisVal)
+      .addImm((unsigned)Pred).addReg(PredReg).addReg(0);
+    BaseReg = DestReg;
+  }
+}
+
+int llvm::rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                               unsigned FrameReg, int Offset,
+                               const ARMBaseInstrInfo &TII) {
+  unsigned Opcode = MI.getOpcode();
+  const TargetInstrDesc &Desc = MI.getDesc();
+  unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
+  bool isSub = false;
+  
+  // Memory operands in inline assembly always use AddrMode2.
+  if (Opcode == ARM::INLINEASM)
+    AddrMode = ARMII::AddrMode2;
+  
+  if (Opcode == ARM::ADDri) {
+    Offset += MI.getOperand(FrameRegIdx+1).getImm();
+    if (Offset == 0) {
+      // Turn it into a move.
+      MI.setDesc(TII.get(ARM::MOVr));
+      MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
+      MI.RemoveOperand(FrameRegIdx+1);
+      return 0;
+    } else if (Offset < 0) {
+      Offset = -Offset;
+      isSub = true;
+      MI.setDesc(TII.get(ARM::SUBri));
+    }
+
+    // Common case: small offset, fits into instruction.
+    if (ARM_AM::getSOImmVal(Offset) != -1) {
+      // Replace the FrameIndex with sp / fp
+      MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
+      MI.getOperand(FrameRegIdx+1).ChangeToImmediate(Offset);
+      return 0;
+    }
+
+    // Otherwise, pull as much of the immedidate into this ADDri/SUBri
+    // as possible.
+    unsigned RotAmt = ARM_AM::getSOImmValRotate(Offset);
+    unsigned ThisImmVal = Offset & ARM_AM::rotr32(0xFF, RotAmt);
+
+    // We will handle these bits from offset, clear them.
+    Offset &= ~ThisImmVal;
+
+    // Get the properly encoded SOImmVal field.
+    assert(ARM_AM::getSOImmVal(ThisImmVal) != -1 &&
+           "Bit extraction didn't work?");
+    MI.getOperand(FrameRegIdx+1).ChangeToImmediate(ThisImmVal);
+ } else {
+    unsigned ImmIdx = 0;
+    int InstrOffs = 0;
+    unsigned NumBits = 0;
+    unsigned Scale = 1;
+    switch (AddrMode) {
+    case ARMII::AddrMode2: {
+      ImmIdx = FrameRegIdx+2;
+      InstrOffs = ARM_AM::getAM2Offset(MI.getOperand(ImmIdx).getImm());
+      if (ARM_AM::getAM2Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+        InstrOffs *= -1;
+      NumBits = 12;
+      break;
+    }
+    case ARMII::AddrMode3: {
+      ImmIdx = FrameRegIdx+2;
+      InstrOffs = ARM_AM::getAM3Offset(MI.getOperand(ImmIdx).getImm());
+      if (ARM_AM::getAM3Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+        InstrOffs *= -1;
+      NumBits = 8;
+      break;
+    }
+    case ARMII::AddrMode5: {
+      ImmIdx = FrameRegIdx+1;
+      InstrOffs = ARM_AM::getAM5Offset(MI.getOperand(ImmIdx).getImm());
+      if (ARM_AM::getAM5Op(MI.getOperand(ImmIdx).getImm()) == ARM_AM::sub)
+        InstrOffs *= -1;
+      NumBits = 8;
+      Scale = 4;
+      break;
+    }
+    default:
+      llvm_unreachable("Unsupported addressing mode!");
+      break;
+    }
+
+    Offset += InstrOffs * Scale;
+    assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
+    if (Offset < 0) {
+      Offset = -Offset;
+      isSub = true;
+    }
+
+    // Attempt to fold address comp. if opcode has offset bits
+    if (NumBits > 0) {
+      // Common case: small offset, fits into instruction.
+      MachineOperand &ImmOp = MI.getOperand(ImmIdx);
+      int ImmedOffset = Offset / Scale;
+      unsigned Mask = (1 << NumBits) - 1;
+      if ((unsigned)Offset <= Mask * Scale) {
+        // Replace the FrameIndex with sp
+        MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
+        if (isSub)
+          ImmedOffset |= 1 << NumBits;
+        ImmOp.ChangeToImmediate(ImmedOffset);
+        return 0;
+      }
+      
+      // Otherwise, it didn't fit. Pull in what we can to simplify the immed.
+      ImmedOffset = ImmedOffset & Mask;
+      if (isSub)
+        ImmedOffset |= 1 << NumBits;
+      ImmOp.ChangeToImmediate(ImmedOffset);
+      Offset &= ~(Mask*Scale);
+    }
+  }
+
+  return (isSub) ? -Offset : Offset;
+}

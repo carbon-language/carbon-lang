@@ -30,18 +30,6 @@ unsigned Thumb1InstrInfo::getUnindexedOpcode(unsigned Opc) const {
   return 0;
 }
 
-unsigned Thumb1InstrInfo::getOpcode(ARMII::Op Op) const {
-  switch (Op) {
-  case ARMII::ADDri: return ARM::tADDi8;
-  case ARMII::MOVr: return ARM::tMOVr;
-  case ARMII::SUBri: return ARM::tSUBi8;
-  default:
-    break;
-  }
-
-  return 0;
-}
-
 bool
 Thumb1InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;

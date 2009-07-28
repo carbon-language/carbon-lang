@@ -31,9 +31,6 @@ public:
   // if there is not such an opcode.
   unsigned getUnindexedOpcode(unsigned Opc) const;
 
-  // Return the opcode that implements 'Op', or 0 if no opcode
-  unsigned getOpcode(ARMII::Op Op) const;
-
   // Return true if the block does not fall through.
   bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const;
 

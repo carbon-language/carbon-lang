@@ -62,19 +62,6 @@ getUnindexedOpcode(unsigned Opc) const {
   return 0;
 }
 
-unsigned ARMInstrInfo::
-getOpcode(ARMII::Op Op) const {
-  switch (Op) {
-  case ARMII::ADDri: return ARM::ADDri;
-  case ARMII::MOVr: return ARM::MOVr;
-  case ARMII::SUBri: return ARM::SUBri;
-  default:
-    break;
-  }
-
-  return 0;
-}
-
 bool ARMInstrInfo::
 BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;

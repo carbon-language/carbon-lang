@@ -274,6 +274,7 @@ namespace ARM_AM {
     return V >> getThumbImmValShift(V);
   }
 
+
   /// getT2SOImmValSplat - Return the 12-bit encoded representation
   /// if the specified value can be obtained by splatting the low 8 bits
   /// into every other byte or every byte of a 32-bit value. i.e.,
@@ -283,7 +284,7 @@ namespace ARM_AM {
   ///     abcdefgh abcdefgh abcdefgh abcdefgh    control = 3
   /// Return -1 if none of the above apply.
   /// See ARM Reference Manual A6.3.2.
-  static inline int getT2SOImmValSplat(unsigned V) {
+  static inline int getT2SOImmValSplatVal(unsigned V) {
     unsigned u, Vs, Imm;
     // control = 0
     if ((V & 0xffffff00) == 0) 
@@ -307,11 +308,11 @@ namespace ARM_AM {
     return -1;
   }
 
-  /// getT2SOImmValRotate - Return the 12-bit encoded representation if the
+  /// getT2SOImmValRotateVal - Return the 12-bit encoded representation if the
   /// specified value is a rotated 8-bit value. Return -1 if no rotation
   /// encoding is possible.
   /// See ARM Reference Manual A6.3.2.
-  static inline int getT2SOImmValRotate (unsigned V) {
+  static inline int getT2SOImmValRotateVal(unsigned V) {
     unsigned RotAmt = CountLeadingZeros_32(V);
     if (RotAmt >= 24)
       return -1;
@@ -329,12 +330,12 @@ namespace ARM_AM {
   /// See ARM Reference Manual A6.3.2.
   static inline int getT2SOImmVal(unsigned Arg) {
     // If 'Arg' is an 8-bit splat, then get the encoded value.
-    int Splat = getT2SOImmValSplat(Arg);
+    int Splat = getT2SOImmValSplatVal(Arg);
     if (Splat != -1)
       return Splat;
     
     // If 'Arg' can be handled with a single shifter_op return the value.
-    int Rot = getT2SOImmValRotate(Arg);
+    int Rot = getT2SOImmValRotateVal(Arg);
     if (Rot != -1)
       return Rot;
 

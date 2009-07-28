@@ -428,21 +428,6 @@ def t2LEApcrelJT : T2XI<(outs GPR:$dst),
                         (ins i32imm:$label, i32imm:$id, pred:$p),
                         "adr$p.w $dst, #${label}_${id:no_hash}", []>;
 
-// ADD rd, sp, #so_imm
-def t2ADDrSPi : T2XI<(outs GPR:$dst), (ins GPR:$sp, t2_so_imm:$imm),
-                     "add.w $dst, $sp, $imm",
-                     []>;
-
-// ADD rd, sp, #imm12
-def t2ADDrSPi12 : T2XI<(outs GPR:$dst), (ins GPR:$sp, i32imm:$imm),
-                       "addw $dst, $sp, $imm",
-                       []>;
-
-def t2ADDrSPs : T2XI<(outs GPR:$dst), (ins GPR:$sp, t2_so_reg:$rhs),
-                     "addw $dst, $sp, $rhs",
-                     []>;
-
-
 //===----------------------------------------------------------------------===//
 //  Load / store Instructions.
 //

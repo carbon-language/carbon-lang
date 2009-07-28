@@ -126,27 +126,11 @@ public:
                                              MachineBasicBlock &MBB,
                                              MachineBasicBlock::iterator I) const;
 
-  // rewrite MI to access 'Offset' bytes from the FP. Return the offset that
-  // could not be handled directly in MI.
-  virtual int
-  rewriteFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
-                    unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc,
-                    unsigned FrameReg, int Offset) const;
-
-  virtual void
-  eliminateFrameIndex(MachineBasicBlock::iterator II,
-                      int SPAdj, RegScavenger *RS = NULL) const {
-    eliminateFrameIndexImpl(II, ARM::MOVr, ARM::ADDri, ARM::SUBri, SPAdj, RS);
-  }
+  virtual void eliminateFrameIndex(MachineBasicBlock::iterator II,
+                                   int SPAdj, RegScavenger *RS = NULL) const;
 
   virtual void emitPrologue(MachineFunction &MF) const;
   virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-
-protected:
-  void
-  eliminateFrameIndexImpl(MachineBasicBlock::iterator II,
-                          unsigned MOVOpc, unsigned ADDriOpc, unsigned SUBriOpc,
-                          int SPAdj, RegScavenger *RS = NULL) const;
 
 private:
   unsigned getRegisterPairEven(unsigned Reg, const MachineFunction &MF) const;

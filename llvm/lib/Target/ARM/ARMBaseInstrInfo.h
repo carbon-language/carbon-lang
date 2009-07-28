@@ -155,37 +155,9 @@ namespace ARMII {
     I_BitShift     = 25,
     CondShift      = 28
   };
-
-  /// ARMII::Op - Holds all of the instruction types required by
-  /// target specific instruction and register code.  ARMBaseInstrInfo
-  /// and subclasses should return a specific opcode that implements
-  /// the instruction type.
-  ///
-  enum Op {
-    ADDri,
-    MOVr,
-    SUBri
-  };
-}
-
-static inline
-const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
-  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
-}
-
-static inline
-const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
-  return MIB.addReg(0);
-}
-
-static inline
-const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB) {
-  return MIB.addReg(ARM::CPSR);
 }
 
 class ARMBaseInstrInfo : public TargetInstrInfoImpl {
-  const ARMSubtarget &STI;
-
 protected:
   // Can be only subclassed.
   explicit ARMBaseInstrInfo(const ARMSubtarget &sti);
@@ -193,9 +165,6 @@ public:
   // Return the non-pre/post incrementing version of 'Opc'. Return 0
   // if there is not such an opcode.
   virtual unsigned getUnindexedOpcode(unsigned Opc) const =0;
-
-  // Return the opcode that implements 'Op', or 0 if no opcode
-  virtual unsigned getOpcode(ARMII::Op Op) const =0;
 
   // Return true if the block does not fall through.
   virtual bool BlockHasNoFallThrough(const MachineBasicBlock &MBB) const =0;
@@ -286,22 +255,68 @@ public:
                                               const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const;
 
-private:
-  bool isUncondBranchOpcode(int Opc) const {
-    return Opc == ARM::B || Opc == ARM::tB || Opc == ARM::t2B;
-  }
-
-  bool isCondBranchOpcode(int Opc) const {
-    return Opc == ARM::Bcc || Opc == ARM::tBcc || Opc == ARM::t2Bcc;
-  }
-
-  bool isJumpTableBranchOpcode(int Opc) const {
-    return Opc == ARM::BR_JTr || Opc == ARM::BR_JTm || Opc == ARM::BR_JTadd ||
-      Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT;
-  }
-
-  int getMatchingCondBranchOpcode(int Opc) const;
 };
+
+static inline
+const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
+  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
 }
+
+static inline
+const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
+  return MIB.addReg(0);
+}
+
+static inline
+const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB) {
+  return MIB.addReg(ARM::CPSR);
+}
+
+static inline
+bool isUncondBranchOpcode(int Opc) {
+  return Opc == ARM::B || Opc == ARM::tB || Opc == ARM::t2B;
+}
+
+static inline
+bool isCondBranchOpcode(int Opc) {
+  return Opc == ARM::Bcc || Opc == ARM::tBcc || Opc == ARM::t2Bcc;
+}
+
+static inline
+bool isJumpTableBranchOpcode(int Opc) {
+  return Opc == ARM::BR_JTr || Opc == ARM::BR_JTm || Opc == ARM::BR_JTadd ||
+    Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT;
+}
+
+int getMatchingCondBranchOpcode(int Opc);
+
+/// emitARMRegPlusImmediate / emitT2RegPlusImmediate - Emits a series of
+/// instructions to materializea destreg = basereg + immediate in ARM / Thumb2
+/// code.
+void emitARMRegPlusImmediate(MachineBasicBlock &MBB,
+                             MachineBasicBlock::iterator &MBBI, DebugLoc dl,
+                             unsigned DestReg, unsigned BaseReg, int NumBytes,
+                             ARMCC::CondCodes Pred, unsigned PredReg,
+                             const ARMBaseInstrInfo &TII);
+
+void emitT2RegPlusImmediate(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator &MBBI, DebugLoc dl,
+                            unsigned DestReg, unsigned BaseReg, int NumBytes,
+                            ARMCC::CondCodes Pred, unsigned PredReg,
+                            const ARMBaseInstrInfo &TII);
+
+
+/// rewriteARMFrameIndex / rewriteT2FrameIndex - 
+/// Rewrite MI to access 'Offset' bytes from the FP. Return the offset that
+/// could not be handled directly in MI.
+int rewriteARMFrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                               unsigned FrameReg, int Offset,
+                               const ARMBaseInstrInfo &TII);
+
+int rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
+                        unsigned FrameReg, int Offset,
+                        const ARMBaseInstrInfo &TII);
+
+} // End llvm namespace
 
 #endif
