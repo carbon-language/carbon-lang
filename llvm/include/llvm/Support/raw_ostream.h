@@ -242,6 +242,10 @@ protected:
   /// been encountered.
   void error_detected() { Error = true; }
 
+  typedef char * iterator;
+  iterator begin(void) { return OutBufStart; }
+  iterator end(void) { return OutBufCur; }
+
   //===--------------------------------------------------------------------===//
   // Private Interface
   //===--------------------------------------------------------------------===//
