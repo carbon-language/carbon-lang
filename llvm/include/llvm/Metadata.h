@@ -95,8 +95,6 @@ class MDNode : public MetadataBase, public FoldingSetNode {
 
   friend class LLVMContextImpl;
 
-  void replaceElement(Value *From, Value *To);
-
   SmallVector<WeakVH, 4> Node;
   typedef SmallVectorImpl<WeakVH>::iterator elem_iterator;
 
