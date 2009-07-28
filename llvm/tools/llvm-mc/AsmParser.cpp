@@ -99,7 +99,7 @@ bool AsmParser::ParsePrimaryExpr(AsmExpr *&Res) {
   case AsmToken::Identifier: {
     // This is a label, this should be parsed as part of an expression, to
     // handle things like LFOO+4.
-    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+    MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
 
     // If this is use of an undefined symbol then mark it external.
     if (!Sym->getSection() && !Ctx.GetSymbolValue(Sym))
@@ -110,7 +110,7 @@ bool AsmParser::ParsePrimaryExpr(AsmExpr *&Res) {
     return false;
   }
   case AsmToken::Integer:
-    Res = new AsmConstantExpr(Lexer.getCurIntVal());
+    Res = new AsmConstantExpr(Lexer.getTok().getIntVal());
     Lexer.Lex(); // Eat identifier.
     return false;
   case AsmToken::LParen:
@@ -313,8 +313,9 @@ bool AsmParser::ParseStatement() {
   }
   
   // If we have an identifier, handle it as the key symbol.
-  SMLoc IDLoc = Lexer.getLoc();
-  StringRef IDVal = Lexer.getCurStrVal();
+  AsmToken ID = Lexer.getTok();
+  SMLoc IDLoc = ID.getLoc();
+  StringRef IDVal = ID.getString();
   
   // Consume the identifier, see what is after it.
   switch (Lexer.Lex()) {
@@ -606,7 +607,7 @@ bool AsmParser::ParseDirectiveSet() {
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected identifier after '.set' directive");
 
-  StringRef Name = Lexer.getCurStrVal();
+  StringRef Name = Lexer.getTok().getString();
   
   if (Lexer.Lex() != AsmToken::Comma)
     return TokError("unexpected token in '.set'");
@@ -623,7 +624,7 @@ bool AsmParser::ParseDirectiveDarwinSection() {
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected identifier after '.section' directive");
   
-  std::string Section = Lexer.getCurStrVal();
+  std::string Section = Lexer.getTok().getString();
   Lexer.Lex();
   
   // Accept a comma separated list of modifiers.
@@ -633,7 +634,7 @@ bool AsmParser::ParseDirectiveDarwinSection() {
     if (Lexer.isNot(AsmToken::Identifier))
       return TokError("expected identifier in '.section' directive");
     Section += ',';
-    Section += Lexer.getCurStrVal().str();
+    Section += Lexer.getTok().getString().str();
     Lexer.Lex();
   }
   
@@ -672,7 +673,7 @@ bool AsmParser::ParseDirectiveAscii(bool ZeroTerminated) {
       // FIXME: This shouldn't use a const char* + strlen, the string could have
       // embedded nulls.
       // FIXME: Should have accessor for getting string contents.
-      StringRef Str = Lexer.getCurStrVal();
+      StringRef Str = Lexer.getTok().getString();
       Out.EmitBytes(Str.substr(1, Str.size() - 2));
       if (ZeroTerminated)
         Out.EmitBytes(StringRef("\0", 1));
@@ -900,7 +901,7 @@ bool AsmParser::ParseDirectiveSymbolAttribute(MCStreamer::SymbolAttr Attr) {
       if (Lexer.isNot(AsmToken::Identifier))
         return TokError("expected identifier in directive");
       
-      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+      MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
       Lexer.Lex();
 
       // If this is use of an undefined symbol then mark it external.
@@ -930,7 +931,7 @@ bool AsmParser::ParseDirectiveDarwinSymbolDesc() {
   
   // handle the identifier as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
   Lexer.Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -961,7 +962,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
   
   // handle the identifier as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
   Lexer.Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -1016,7 +1017,7 @@ bool AsmParser::ParseDirectiveComm(bool IsLocal) {
 bool AsmParser::ParseDirectiveDarwinZerofill() {
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected segment name after '.zerofill' directive");
-  std::string Section = Lexer.getCurStrVal();
+  std::string Section = Lexer.getTok().getString();
   Lexer.Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -1027,7 +1028,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   if (Lexer.isNot(AsmToken::Identifier))
     return TokError("expected section name after comma in '.zerofill' "
                     "directive");
-  Section += Lexer.getCurStrVal().str();
+  Section += Lexer.getTok().getString().str();
   Lexer.Lex();
 
   // FIXME: we will need to tell GetSection() that this is to be created with or
@@ -1055,7 +1056,7 @@ bool AsmParser::ParseDirectiveDarwinZerofill() {
   
   // handle the identifier as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
   Lexer.Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -1126,7 +1127,7 @@ bool AsmParser::ParseDirectiveAbort() {
     if (Lexer.isNot(AsmToken::String))
       return TokError("expected string in '.abort' directive");
     
-    Str = Lexer.getCurStrVal();
+    Str = Lexer.getTok().getString();
 
     Lexer.Lex();
   }
@@ -1153,7 +1154,7 @@ bool AsmParser::ParseDirectiveDarwinLsym() {
   
   // handle the identifier as the key symbol.
   SMLoc IDLoc = Lexer.getLoc();
-  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getCurStrVal());
+  MCSymbol *Sym = Ctx.GetOrCreateSymbol(Lexer.getTok().getString());
   Lexer.Lex();
 
   if (Lexer.isNot(AsmToken::Comma))
@@ -1181,7 +1182,7 @@ bool AsmParser::ParseDirectiveInclude() {
   if (Lexer.isNot(AsmToken::String))
     return TokError("expected string in '.include' directive");
   
-  std::string Filename = Lexer.getCurStrVal();
+  std::string Filename = Lexer.getTok().getString();
   SMLoc IncludeLoc = Lexer.getLoc();
   Lexer.Lex();
 
@@ -1209,8 +1210,6 @@ bool AsmParser::ParseDirectiveDarwinDumpOrLoad(SMLoc IDLoc, bool IsDump) {
   if (Lexer.isNot(AsmToken::String))
     return TokError("expected string in '.dump' or '.load' directive");
   
-  Lexer.getCurStrVal();
-
   Lexer.Lex();
 
   if (Lexer.isNot(AsmToken::EndOfStatement))

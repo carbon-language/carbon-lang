@@ -72,6 +72,11 @@ public:
 
   SMLoc getLoc() const;
 
+  /// getString - Get the string for the current token, this includes all
+  /// characters (for example, the quotes on strings) in the token.
+  ///
+  /// The returned StringRef points into the source manager's memory buffer, and
+  /// is safe to store across calls to Lex().
   StringRef getString() const { return Str; }
 
   // FIXME: Don't compute this in advance, it makes every token larger, and is
@@ -113,21 +118,10 @@ public:
   bool is(AsmToken::TokenKind K) const { return CurTok.is(K); }
   bool isNot(AsmToken::TokenKind K) const { return CurTok.isNot(K); }
 
-  /// getCurStrVal - Get the string for the current token, this includes all
-  /// characters (for example, the quotes on strings) in the token.
-  ///
-  /// The returned StringRef points into the source manager's memory buffer, and
-  /// is safe to store across calls to Lex().
-  StringRef getCurStrVal() const {
-    return CurTok.getString();
-  }
-  int64_t getCurIntVal() const {
-    return CurTok.getIntVal();
-  }
-  
   SMLoc getLoc() const;
-
-  const AsmToken &getTok() const;
+  
+  /// getTok - Return a reference to the current (last) lexed token.
+  const AsmToken &getTok() const { return CurTok; }
   
   /// EnterIncludeFile - Enter the specified file. This returns true on failure.
   bool EnterIncludeFile(const std::string &Filename);

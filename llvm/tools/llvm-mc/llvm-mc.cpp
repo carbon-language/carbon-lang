@@ -94,16 +94,16 @@ static int AsLexInput(const char *ProgName) {
       Error = true; // error already printed.
       break;
     case AsmToken::Identifier:
-      outs() << "identifier: " << Lexer.getCurStrVal() << '\n';
+      outs() << "identifier: " << Lexer.getTok().getString() << '\n';
       break;
     case AsmToken::Register:
-      outs() << "register: " << Lexer.getCurStrVal() << '\n';
+      outs() << "register: " << Lexer.getTok().getString() << '\n';
       break;
     case AsmToken::String:
-      outs() << "string: " << Lexer.getCurStrVal() << '\n';
+      outs() << "string: " << Lexer.getTok().getString() << '\n';
       break;
     case AsmToken::Integer:
-      outs() << "int: " << Lexer.getCurIntVal() << '\n';
+      outs() << "int: " << Lexer.getTok().getString() << '\n';
       break;
 
     case AsmToken::Amp:            outs() << "Amp\n"; break;
