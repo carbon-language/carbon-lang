@@ -354,7 +354,7 @@ getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str) const {
     Str.push_back('@');
   
   const char *KindStr;
-  if (Kind.isBSS())
+  if (Kind.isBSS() || Kind.isThreadBSS())
     KindStr = "nobits";
   else
     KindStr = "progbits";
