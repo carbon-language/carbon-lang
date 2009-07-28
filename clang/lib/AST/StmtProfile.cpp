@@ -35,8 +35,8 @@ namespace {
       : ID(ID), Context(Context), Canonical(Canonical) { }
     
     void VisitStmt(Stmt *S);
-#define STMT(Node, Base)
-#define EXPR(Node, Base) void Visit##Node(Node *S);
+    
+#define STMT(Node, Base) void Visit##Node(Node *S);
 #include "clang/AST/StmtNodes.def"
     
     /// \brief Visit a declaration that is referenced within an expression
@@ -69,6 +69,131 @@ void StmtProfiler::VisitStmt(Stmt *S) {
   for (Stmt::child_iterator C = S->child_begin(), CEnd = S->child_end();
        C != CEnd; ++C)
     Visit(*C);
+}
+
+void StmtProfiler::VisitDeclStmt(DeclStmt *S) {
+  VisitStmt(S);
+  for (DeclStmt::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+       D != DEnd; ++D)
+    VisitDecl(*D);
+}
+
+void StmtProfiler::VisitNullStmt(NullStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitCompoundStmt(CompoundStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitSwitchCase(SwitchCase *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitCaseStmt(CaseStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitDefaultStmt(DefaultStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitLabelStmt(LabelStmt *S) {
+  VisitStmt(S);
+  VisitName(S->getID());
+}
+
+void StmtProfiler::VisitIfStmt(IfStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitWhileStmt(WhileStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitDoStmt(DoStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitForStmt(ForStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitGotoStmt(GotoStmt *S) {
+  VisitStmt(S);
+  VisitName(S->getLabel()->getID());
+}
+
+void StmtProfiler::VisitIndirectGotoStmt(IndirectGotoStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitContinueStmt(ContinueStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitBreakStmt(BreakStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitReturnStmt(ReturnStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitAsmStmt(AsmStmt *S) {
+  VisitStmt(S);
+  ID.AddBoolean(S->isVolatile());
+  ID.AddBoolean(S->isSimple());
+  VisitStringLiteral(S->getAsmString());
+  ID.AddInteger(S->getNumOutputs());
+  for (unsigned I = 0, N = S->getNumOutputs(); I != N; ++I) {
+    ID.AddString(S->getOutputName(I));
+    VisitStringLiteral(S->getOutputConstraintLiteral(I));
+  }
+  ID.AddInteger(S->getNumInputs());
+  for (unsigned I = 0, N = S->getNumInputs(); I != N; ++I) {
+    ID.AddString(S->getInputName(I));
+    VisitStringLiteral(S->getInputConstraintLiteral(I));
+  }
+  ID.AddInteger(S->getNumClobbers());
+  for (unsigned I = 0, N = S->getNumClobbers(); I != N; ++I)
+    VisitStringLiteral(S->getClobber(I));
+}
+
+void StmtProfiler::VisitCXXCatchStmt(CXXCatchStmt *S) {
+  VisitStmt(S);
+  VisitType(S->getCaughtType());
+}
+
+void StmtProfiler::VisitCXXTryStmt(CXXTryStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitObjCAtCatchStmt(ObjCAtCatchStmt *S) {
+  VisitStmt(S);
+  ID.AddBoolean(S->hasEllipsis());
+  if (S->getCatchParamDecl())
+    VisitType(S->getCatchParamDecl()->getType());
+}
+
+void StmtProfiler::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitObjCAtTryStmt(ObjCAtTryStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
+  VisitStmt(S);
+}
+
+void StmtProfiler::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
+  VisitStmt(S);
 }
 
 void StmtProfiler::VisitExpr(Expr *S) {
@@ -195,7 +320,7 @@ void StmtProfiler::VisitConditionalOperator(ConditionalOperator *S) {
 
 void StmtProfiler::VisitAddrLabelExpr(AddrLabelExpr *S) {
   VisitExpr(S);
-  ID.AddPointer(S->getLabel());
+  VisitName(S->getLabel()->getID());
 }
 
 void StmtProfiler::VisitStmtExpr(StmtExpr *S) {
