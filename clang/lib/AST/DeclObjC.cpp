@@ -286,12 +286,10 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
     return ID;
   if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(getDeclContext()))
     return CD->getClassInterface();
-  if (ObjCImplementationDecl *IMD = 
-      dyn_cast<ObjCImplementationDecl>(getDeclContext()))
+  if (ObjCImplDecl *IMD = dyn_cast<ObjCImplDecl>(getDeclContext()))
     return IMD->getClassInterface();
-  if (ObjCCategoryImplDecl *CID = 
-      dyn_cast<ObjCCategoryImplDecl>(getDeclContext()))
-    return CID->getClassInterface();
+
+  assert(!isa<ObjCProtocolDecl>(getDeclContext()) && "It's a protocol method");
   assert(false && "unknown method context");
   return 0;
 }
