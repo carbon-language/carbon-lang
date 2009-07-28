@@ -27,43 +27,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-namespace {
-  /// RecordOrganizer - This helper class, used by CGRecordLayout, layouts 
-  /// structs and unions. It manages transient information used during layout.
-  /// FIXME : Handle field aligments. Handle packed structs.
-  class RecordOrganizer {
-  public:
-    explicit RecordOrganizer(CodeGenTypes &Types, const RecordDecl& Record) : 
-      CGT(Types), RD(Record), STy(NULL) {}
-
-    /// layoutStructFields - Do the actual work and lay out all fields. Create
-    /// corresponding llvm struct type.  This should be invoked only after
-    /// all fields are added.
-    void layoutStructFields(const ASTRecordLayout &RL);
-
-    /// layoutUnionFields - Do the actual work and lay out all fields. Create
-    /// corresponding llvm struct type.  This should be invoked only after
-    /// all fields are added.
-    void layoutUnionFields(const ASTRecordLayout &RL);
-
-    /// getLLVMType - Return associated llvm struct type. This may be NULL
-    /// if fields are not laid out.
-    llvm::Type *getLLVMType() const {
-      return STy;
-    }
-
-    llvm::SmallSet<unsigned, 8> &getPaddingFields() {
-      return PaddingFields;
-    }
-
-  private:
-    CodeGenTypes &CGT;
-    const RecordDecl& RD;
-    llvm::Type *STy;
-    llvm::SmallSet<unsigned, 8> PaddingFields;
-  };
-}
-
 CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
                            const llvm::TargetData &TD)
   : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD),
@@ -472,21 +435,6 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
   CGRecordLayout *Layout = 
     CGRecordLayoutBuilder::ComputeLayout(*this, RD);
     
-  if (!Layout) {
-    // Layout fields.
-    RecordOrganizer RO(*this, *RD);
-
-    if (TD->isStruct() || TD->isClass())
-      RO.layoutStructFields(Context.getASTRecordLayout(RD));
-    else {
-      assert(TD->isUnion() && "unknown tag decl kind!");
-      RO.layoutUnionFields(Context.getASTRecordLayout(RD));
-    }
-      
-    Layout = new CGRecordLayout(RO.getLLVMType(), 
-                                RO.getPaddingFields());
-  }
-    
   CGRecordLayouts[Key] = Layout;
   ResultType = Layout->getLLVMType();
   
@@ -537,103 +485,4 @@ CodeGenTypes::getCGRecordLayout(const TagDecl *TD) const {
   assert (I != CGRecordLayouts.end() 
           && "Unable to find record layout information for type");
   return I->second;
-}
-
-/// layoutStructFields - Do the actual work and lay out all fields. Create
-/// corresponding llvm struct type.
-/// Note that this doesn't actually try to do struct layout; it depends on
-/// the layout built by the AST.  (We have to do struct layout to do Sema,
-/// and there's no point to duplicating the work.)
-void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
-  // FIXME: This code currently always generates packed structures.
-  // Unpacked structures are more readable, and sometimes more efficient!
-  // (But note that any changes here are likely to impact CGExprConstant,
-  // which makes some messy assumptions.)
-  uint64_t llvmSize = 0;
-  // FIXME: Make this a SmallVector
-  std::vector<const llvm::Type*> LLVMFields;
-  
-  unsigned curField = 0;
-  // Adjust by number of bases.
-  // FIXME. This will probably change when virtual bases are supported.
-  if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(&RD))
-    curField += CXXRD->getNumBases();
-    
-  for (RecordDecl::field_iterator Field = RD.field_begin(),
-                               FieldEnd = RD.field_end();
-       Field != FieldEnd; ++Field) {
-    uint64_t offset = RL.getFieldOffset(curField);
-    const llvm::Type *Ty = CGT.ConvertTypeForMemRecursive(Field->getType());
-    uint64_t size = CGT.getTargetData().getTypeAllocSizeInBits(Ty);
-
-    if (Field->isBitField()) {
-      uint64_t BitFieldSize =
-          Field->getBitWidth()->EvaluateAsInt(CGT.getContext()).getZExtValue();
-
-      // Bitfield field info is different from other field info;
-      // it actually ignores the underlying LLVM struct because
-      // there isn't any convenient mapping.
-      CGT.addBitFieldInfo(*Field, offset / size, offset % size, BitFieldSize);
-    } else {
-      // Put the element into the struct. This would be simpler
-      // if we didn't bother, but it seems a bit too strange to
-      // allocate all structs as i8 arrays.
-      while (llvmSize < offset) {
-        LLVMFields.push_back(llvm::Type::Int8Ty);
-        llvmSize += 8;
-      }
-
-      llvmSize += size;
-      CGT.addFieldInfo(*Field, LLVMFields.size());
-      LLVMFields.push_back(Ty);
-    }
-    ++curField;
-  }
-
-  while (llvmSize < RL.getSize()) {
-    LLVMFields.push_back(llvm::Type::Int8Ty);
-    llvmSize += 8;
-  }
-
-  STy = llvm::StructType::get(LLVMFields, true);
-  assert(CGT.getTargetData().getTypeAllocSizeInBits(STy) == RL.getSize());
-}
-
-/// layoutUnionFields - Do the actual work and lay out all fields. Create
-/// corresponding llvm struct type.  This should be invoked only after
-/// all fields are added.
-void RecordOrganizer::layoutUnionFields(const ASTRecordLayout &RL) {
-  unsigned curField = 0;
-  for (RecordDecl::field_iterator Field = RD.field_begin(),
-                               FieldEnd = RD.field_end();
-       Field != FieldEnd; ++Field) {
-    // The offset should usually be zero, but bitfields could be strange
-    uint64_t offset = RL.getFieldOffset(curField);
-    CGT.ConvertTypeRecursive(Field->getType());
-
-    if (Field->isBitField()) {
-      Expr *BitWidth = Field->getBitWidth();
-      uint64_t BitFieldSize =  
-        BitWidth->EvaluateAsInt(CGT.getContext()).getZExtValue();
-
-      CGT.addBitFieldInfo(*Field, 0, offset, BitFieldSize);
-    } else {
-      CGT.addFieldInfo(*Field, 0);
-    }
-    ++curField;
-  }
-
-  // This looks stupid, but it is correct in the sense that
-  // it works no matter how complicated the sizes and alignments
-  // of the union elements are. The natural alignment
-  // of the result doesn't matter because anyone allocating
-  // structures should be aligning them appropriately anyway.
-  // FIXME: We can be a bit more intuitive in a lot of cases.
-  // FIXME: Make this a struct type to work around PR2399; the
-  // C backend doesn't like structs using array types.
-  std::vector<const llvm::Type*> LLVMFields;
-  LLVMFields.push_back(llvm::ArrayType::get(llvm::Type::Int8Ty,
-                                            RL.getSize() / 8));
-  STy = llvm::StructType::get(LLVMFields, true);
-  assert(CGT.getTargetData().getTypeAllocSizeInBits(STy) == RL.getSize());
 }
