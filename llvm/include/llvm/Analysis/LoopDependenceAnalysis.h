@@ -62,7 +62,7 @@ class LoopDependenceAnalysis : public LoopPass {
   bool findOrInsertDependencePair(Value*, Value*, DependencePair*&);
 
   /// TODO: doc
-  void analysePair(DependencePair *P) const;
+  DependenceResult analysePair(DependencePair *P) const;
 
 public:
   static char ID; // Class identification, replacement for typeinfo

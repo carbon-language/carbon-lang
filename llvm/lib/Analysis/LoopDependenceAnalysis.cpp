@@ -116,18 +116,15 @@ bool LoopDependenceAnalysis::findOrInsertDependencePair(Value *A,
   return false;
 }
 
-void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
+LoopDependenceAnalysis::DependenceResult
+LoopDependenceAnalysis::analysePair(DependencePair *P) const {
   DEBUG(errs() << "Analysing:\n" << *P->A << "\n" << *P->B << "\n");
-
-  // Our default answer: we don't know anything, i.e. we failed to analyse this
-  // pair to get a more specific answer (dependent, independent).
-  P->Result = Unknown;
 
   // We only analyse loads and stores but no possible memory accesses by e.g.
   // free, call, or invoke instructions.
   if (!IsLoadOrStoreInst(P->A) || !IsLoadOrStoreInst(P->B)) {
     DEBUG(errs() << "--> [?] no load/store\n");
-    return;
+    return Unknown;
   }
 
   Value *aPtr = GetPointerOperand(P->A);
@@ -137,20 +134,20 @@ void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
   case AliasAnalysis::MayAlias:
     // We can not analyse objects if we do not know about their aliasing.
     DEBUG(errs() << "---> [?] may alias\n");
-    return;
+    return Unknown;
 
   case AliasAnalysis::NoAlias:
     // If the objects noalias, they are distinct, accesses are independent.
     DEBUG(errs() << "---> [I] no alias\n");
-    P->Result = Independent;
-    return;
+    return Independent;
 
   case AliasAnalysis::MustAlias:
     break; // The underlying objects alias, test accesses for dependence.
   }
 
+  // We failed to analyse this pair to get a more specific answer.
   DEBUG(errs() << "---> [?] cannot analyse\n");
-  return;
+  return Unknown;
 }
 
 bool LoopDependenceAnalysis::depends(Value *A, Value *B) {
@@ -161,8 +158,7 @@ bool LoopDependenceAnalysis::depends(Value *A, Value *B) {
   if (!findOrInsertDependencePair(A, B, p)) {
     // The pair is not cached, so analyse it.
     ++NumAnalysed;
-    analysePair(p);
-    switch (p->Result) {
+    switch (p->Result = analysePair(p)) {
     case Dependent:   ++NumDependent;   break;
     case Independent: ++NumIndependent; break;
     case Unknown:     ++NumUnknown;     break;
