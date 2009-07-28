@@ -31,7 +31,7 @@ class VISIBILITY_HIDDEN PIC16DAGToDAGISel : public SelectionDAGISel {
 
   /// PIC16Lowering - This object fully describes how to lower LLVM code to an
   /// PIC16-specific SelectionDAG.
-  PIC16TargetLowering PIC16Lowering;
+  PIC16TargetLowering &PIC16Lowering;
 
 public:
   explicit PIC16DAGToDAGISel(PIC16TargetMachine &tm) : 
