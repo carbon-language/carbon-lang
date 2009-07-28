@@ -589,9 +589,8 @@ public:
 
   enum GetBuiltinTypeError {
     GE_None,              //< No error
-    GE_Missing_FILE,      //< Missing the FILE type from <stdio.h>
-    GE_Missing_jmp_buf,   //< Missing the jmp_buf type from <setjmp.h>
-    GE_Missing_sigjmp_buf //< Missing the sigjmp_buf type from <setjmp.h>
+    GE_Missing_stdio,     //< Missing a type from <stdio.h>
+    GE_Missing_setjmp     //< Missing a type from <setjmp.h>
   };
   
   /// GetBuiltinType - Return the type for the specified builtin.

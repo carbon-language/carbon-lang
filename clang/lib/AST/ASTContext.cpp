@@ -3976,22 +3976,18 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
   case 'P':
     Type = Context.getFILEType();
     if (Type.isNull()) {
-      Error = ASTContext::GE_Missing_FILE;
+      Error = ASTContext::GE_Missing_stdio;
       return QualType();
     }
     break;
   case 'J':
-    if (Signed) {
+    if (Signed)
       Type = Context.getsigjmp_bufType();
-      if (Type.isNull()) {
-        Error = ASTContext::GE_Missing_sigjmp_buf;
-        return QualType();
-      }
-      break;
-    }
-    Type = Context.getjmp_bufType();
+    else
+      Type = Context.getjmp_bufType();
+
     if (Type.isNull()) {
-      Error = ASTContext::GE_Missing_jmp_buf;
+      Error = ASTContext::GE_Missing_setjmp;
       return QualType();
     }
     break;
