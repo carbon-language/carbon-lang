@@ -1075,13 +1075,13 @@ TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
 
 const Type *QualifierSet::strip(const Type* T) {
   QualType DT = T->getDesugaredType();
-  CVRMask |= DT.getCVRQualifiers();
+  addCVR(DT.getCVRQualifiers());
   
   if (const ExtQualType* EQT = dyn_cast<ExtQualType>(DT)) {
     if (EQT->getAddressSpace())
-      AddressSpace = EQT->getAddressSpace();
+      addAddressSpace(EQT->getAddressSpace());
     if (EQT->getObjCGCAttr())
-      GCAttrType = EQT->getObjCGCAttr();
+      addObjCGCAttrType(EQT->getObjCGCAttr());
     return EQT->getBaseType();
   } else {
     // Use the sugared type unless desugaring found extra qualifiers.
@@ -1090,9 +1090,9 @@ const Type *QualifierSet::strip(const Type* T) {
 }
 
 QualType QualifierSet::apply(QualType QT, ASTContext& C) {
-  QT = QT.getWithAdditionalQualifiers(CVRMask);
-  if (GCAttrType) QT = C.getObjCGCQualType(QT, GCAttrType);
-  if (AddressSpace) QT = C.getAddrSpaceQualType(QT, AddressSpace);
+  QT = QT.getWithAdditionalQualifiers(getCVRMask());
+  if (hasObjCGCAttrType()) QT = C.getObjCGCQualType(QT, getObjCGCAttrType());
+  if (hasAddressSpace()) QT = C.getAddrSpaceQualType(QT, getAddressSpace());
   return QT;
 }
 

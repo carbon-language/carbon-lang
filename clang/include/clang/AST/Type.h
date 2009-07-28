@@ -571,38 +571,51 @@ public:
 /// QualifierSet - This class is used to collect qualifiers.
 class QualifierSet {
 public:
-  QualifierSet() :
-    CVRMask(0), AddressSpace(0), GCAttrType(QualType::GCNone) {
-  }
+  QualifierSet() : Mask(0) {}
 
   void removeConst() { removeCVR(QualType::Const); }
   void removeVolatile() { removeCVR(QualType::Volatile); }
   void removeRestrict() { removeCVR(QualType::Restrict); }
-  void removeCVR(unsigned mask) { CVRMask &= ~mask; }
-  void removeAddressSpace() { AddressSpace = 0; }
-  void removeGCAttrType() { GCAttrType = QualType::GCNone; }
+  void removeCVR(unsigned mask) { Mask &= ~mask; }
+  void removeAddressSpace() { setAddressSpace(0); }
+  void removeObjCGCAttrType() { setGCAttrType(QualType::GCNone); }
 
   void addConst() { addCVR(QualType::Const); }
   void addVolatile() { addCVR(QualType::Volatile); }
   void addRestrict() { addCVR(QualType::Restrict); }
-  void addCVR(unsigned mask) { CVRMask |= mask; }
+  void addCVR(unsigned mask) { Mask |= mask; }
   void addAddressSpace(unsigned space) {
     assert(space);
-    AddressSpace = space;
+    setAddressSpace(space);
   }
-  void addGCAttrType(QualType::GCAttrTypes type) {
+  void addObjCGCAttrType(QualType::GCAttrTypes type) {
     assert(type);
-    GCAttrType = type;
+    setGCAttrType(type);
   }
 
+  bool hasConst() const { return Mask & QualType::Const; }
+  bool hasVolatile() const { return Mask & QualType::Volatile; }
+  bool hasRestrict() const { return Mask & QualType::Restrict; }
+  unsigned getCVRMask() const { return Mask & CVRMask; }
+
+  bool hasObjCGCAttrType() const { return Mask & GCAttrMask; }
+  QualType::GCAttrTypes getObjCGCAttrType() const {
+    return QualType::GCAttrTypes((Mask & GCAttrMask) >> GCAttrShift);
+  }
+
+  bool hasAddressSpace() const { return Mask & AddressSpaceMask; }
+  unsigned getAddressSpace() const { return Mask >> AddressSpaceShift; }
+
+  /// empty() - Return true if there are no qualifiers collected
+  /// in this set.
   bool empty() {
-    return !CVRMask && !AddressSpace && !GCAttrType;
+    return (Mask == 0);
   }
 
   /// Collect any qualifiers on the given type and return an
   /// unqualified type.
   const Type *strip(QualType QT) {
-    CVRMask |= QT.getCVRQualifiers();
+    Mask |= QT.getCVRQualifiers();
     return strip(QT.getTypePtr());
   }
 
@@ -617,11 +630,30 @@ public:
   QualType apply(const Type* T, ASTContext& C) {
     return apply(QualType(T, 0), C);
   }
+
+  bool operator==(QualifierSet& Other) { return Mask == Other.Mask; }
   
 private:
-  unsigned CVRMask;
-  unsigned AddressSpace;
-  QualType::GCAttrTypes GCAttrType;
+  void setAddressSpace(unsigned space) {
+    assert(space <= MaxAddressSpace);
+    Mask = (Mask & ~AddressSpaceMask)
+         | (((uint32_t) space) << AddressSpaceShift);
+  }
+
+  void setGCAttrType(QualType::GCAttrTypes type) {
+    Mask = (Mask & ~GCAttrMask) | (type << GCAttrShift);
+  }
+
+  // bits:     |0 1 2|3 .. 4|5  ..  31|
+  //           |C R V|GCAttr|AddrSpace|
+  uint32_t Mask;
+
+  static const uint32_t CVRMask = 0x07;
+  static const uint32_t GCAttrMask = 0x18;
+  static const uint32_t GCAttrShift = 3;
+  static const uint32_t AddressSpaceMask = ~(CVRMask | GCAttrMask);
+  static const uint32_t AddressSpaceShift = 5;
+  static const unsigned MaxAddressSpace = ~0u >> AddressSpaceShift;
 };
 
 
