@@ -431,12 +431,12 @@ Path::isDirectory() const {
 
 bool
 Path::canRead() const {
-  return 0 == access(path.c_str(), F_OK | R_OK );
+  return 0 == access(path.c_str(), R_OK);
 }
 
 bool
 Path::canWrite() const {
-  return 0 == access(path.c_str(), F_OK | W_OK );
+  return 0 == access(path.c_str(), W_OK);
 }
 
 bool
