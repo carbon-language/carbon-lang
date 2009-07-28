@@ -36,6 +36,8 @@
 //  A -> "reference" to __builtin_va_list
 //  V -> Vector, following num elements and a base type.
 //  P -> FILE
+//  J -> jmp_buf
+//  SJ -> sigjmp_buf
 //  . -> "...".  This may only occur at the end of the function list.
 //
 // Types maybe prefixed with the following modifiers:
@@ -338,7 +340,6 @@ BUILTIN(__sync_fetch_and_umax, "UiUi*Ui", "n")
 LIBBUILTIN(calloc, "v*zz",        "f",     "stdlib.h")
 LIBBUILTIN(exit, "vi",            "fr",    "stdlib.h")
 LIBBUILTIN(_Exit, "vi",           "fr",    "stdlib.h")
-LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h")
 LIBBUILTIN(malloc, "v*z",         "f",     "stdlib.h")
 LIBBUILTIN(realloc, "v*v*z",      "f",     "stdlib.h")
 // C99 string.h
@@ -369,6 +370,8 @@ LIBBUILTIN(vprintf, "icC*a",      "fP:0:", "stdio.h")
 LIBBUILTIN(vfprintf, "i.",        "fP:1:", "stdio.h")
 LIBBUILTIN(vsnprintf, "ic*zcC*a", "fP:2:", "stdio.h")
 LIBBUILTIN(vsprintf, "ic*cC*a",   "fP:1:", "stdio.h")
+// C99
+LIBBUILTIN(longjmp, "vJi",        "fr",    "setjmp.h")
 
 // Non-C library functions
 // FIXME: Non-C-standard stuff shouldn't be builtins in non-GNU mode!
@@ -381,6 +384,11 @@ LIBBUILTIN(strndup, "c*cC*z",     "f",     "string.h")
 // POSIX strings.h
 LIBBUILTIN(index, "c*cC*i",       "f",     "strings.h")
 LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h")
+// POSIX unistd.h
+LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h")
+// POSIX setjmp.h
+LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h")
+LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h")
 
 // FIXME: This type isn't very correct, it should be
 //   id objc_msgSend(id, SEL)

@@ -38,8 +38,8 @@ ASTContext::ASTContext(const LangOptions& LOpts, SourceManager &SM,
                        Builtin::Context &builtins,
                        bool FreeMem, unsigned size_reserve) : 
   GlobalNestedNameSpecifier(0), CFConstantStringTypeDecl(0), 
-  ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0),
-  SourceMgr(SM), LangOpts(LOpts), 
+  ObjCFastEnumerationStateTypeDecl(0), FILEDecl(0), jmp_bufDecl(0),
+  sigjmp_bufDecl(0), SourceMgr(SM), LangOpts(LOpts), 
   LoadedExternalComments(false), FreeMemory(FreeMem), Target(t), 
   Idents(idents), Selectors(sels),
   BuiltinInfo(builtins), ExternalSource(0), PrintingPolicy(LOpts) {  
@@ -3911,6 +3911,25 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
       return QualType();
     } else {
       break;
+    }
+  }
+  case 'J': {
+    if (Signed) {
+      Type = Context.getsigjmp_bufType();
+      if (Type.isNull()) {
+        Error = ASTContext::GE_Missing_sigjmp_buf;
+        return QualType();
+      } else {
+        break;
+      }
+    } else {
+      Type = Context.getjmp_bufType();
+      if (Type.isNull()) {
+        Error = ASTContext::GE_Missing_jmp_buf;
+        return QualType();
+      } else {
+        break;
+      }
     }
   }
   }

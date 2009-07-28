@@ -1840,6 +1840,8 @@ void PCHWriter::WritePCH(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   AddTypeRef(Context.getRawCFConstantStringType(), Record);
   AddTypeRef(Context.getRawObjCFastEnumerationStateType(), Record);
   AddTypeRef(Context.getFILEType(), Record);
+  AddTypeRef(Context.getjmp_bufType(), Record);
+  AddTypeRef(Context.getsigjmp_bufType(), Record);
   Stream.EmitRecord(pch::SPECIAL_TYPES, Record);
   
   // Keep writing types and declarations until all types and

@@ -130,6 +130,12 @@ class ASTContext {
   /// \brief The type for the C FILE type.
   TypeDecl *FILEDecl;
   
+  /// \brief The type for the C FILE type.
+  TypeDecl *jmp_bufDecl;
+  
+  /// \brief The type for the C FILE type.
+  TypeDecl *sigjmp_bufDecl;
+  
   /// \brief Keeps track of all declaration attributes. 
   ///
   /// Since so few decls have attrs, we keep them in a hash map instead of
@@ -499,6 +505,28 @@ public:
       return getTypeDeclType(FILEDecl);
     return QualType();
   }
+
+  /// \brief Set the type for the C jmp_buf type.
+  void setjmp_bufDecl(TypeDecl *jmp_bufDecl)
+    { this->jmp_bufDecl = jmp_bufDecl; }
+  
+  /// \brief Retrieve the C jmp_buf type.
+  QualType getjmp_bufType() { 
+    if (jmp_bufDecl) 
+      return getTypeDeclType(jmp_bufDecl);
+    return QualType();
+  }
+
+  /// \brief Set the type for the C sigjmp_buf type.
+  void setsigjmp_bufDecl(TypeDecl *sigjmp_bufDecl)
+    { this->sigjmp_bufDecl = sigjmp_bufDecl; }
+  
+  /// \brief Retrieve the C sigjmp_buf type.
+  QualType getsigjmp_bufType() { 
+    if (sigjmp_bufDecl) 
+      return getTypeDeclType(sigjmp_bufDecl);
+    return QualType();
+  }
                        
   /// getObjCEncodingForType - Emit the ObjC type encoding for the
   /// given type into \arg S. If \arg NameFields is specified then
@@ -558,8 +586,10 @@ public:
                                         const IdentifierInfo *Name);
 
   enum GetBuiltinTypeError {
-    GE_None,        //< No error
-    GE_Missing_FILE //< Missing the FILE type from <stdio.h>
+    GE_None,              //< No error
+    GE_Missing_FILE,      //< Missing the FILE type from <stdio.h>
+    GE_Missing_jmp_buf,   //< Missing the jmp_buf type from <setjmp.h>
+    GE_Missing_sigjmp_buf //< Missing the sigjmp_buf type from <setjmp.h>
   };
   
   /// GetBuiltinType - Return the type for the specified builtin.

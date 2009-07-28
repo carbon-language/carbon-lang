@@ -1540,6 +1540,28 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
       Context->setFILEDecl(Tag->getDecl());
     }
   }
+  if (unsigned Jmp_buf = SpecialTypes[pch::SPECIAL_TYPE_jmp_buf]) {
+    QualType Jmp_bufType = GetType(Jmp_buf);
+    assert(!Jmp_bufType.isNull() && "jmp_bug type is NULL");
+    if (const TypedefType *Typedef = Jmp_bufType->getAsTypedefType())
+      Context->setjmp_bufDecl(Typedef->getDecl());
+    else {
+      const TagType *Tag = Jmp_bufType->getAsTagType();
+      assert(Tag && "Invalid jmp_bug type in PCH file");
+      Context->setjmp_bufDecl(Tag->getDecl());
+    }
+  }
+  if (unsigned Sigjmp_buf = SpecialTypes[pch::SPECIAL_TYPE_sigjmp_buf]) {
+    QualType Sigjmp_bufType = GetType(Sigjmp_buf);
+    assert(!Sigjmp_bufType.isNull() && "sigjmp_buf type is NULL");
+    if (const TypedefType *Typedef = Sigjmp_bufType->getAsTypedefType())
+      Context->setsigjmp_bufDecl(Typedef->getDecl());
+    else {
+      const TagType *Tag = Sigjmp_bufType->getAsTagType();
+      assert(Tag && "Invalid sigjmp_buf type in PCH file");
+      Context->setsigjmp_bufDecl(Tag->getDecl());
+    }
+  }
 }
 
 /// \brief Retrieve the name of the original source file name

@@ -453,6 +453,18 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
       Diag(Loc, diag::err_implicit_decl_requires_stdio)
         << Context.BuiltinInfo.GetName(BID);
     return 0;
+
+  case ASTContext::GE_Missing_jmp_buf:
+    if (ForRedeclaration)
+      Diag(Loc, diag::err_implicit_decl_requires_setjmp)
+        << Context.BuiltinInfo.GetName(BID);
+    return 0;
+
+  case ASTContext::GE_Missing_sigjmp_buf:
+    if (ForRedeclaration)
+      Diag(Loc, diag::err_implicit_decl_requires_setjmp)
+        << Context.BuiltinInfo.GetName(BID);
+    return 0;
   }
 
   if (!ForRedeclaration && Context.BuiltinInfo.isPredefinedLibFunction(BID)) {
@@ -1851,10 +1863,15 @@ Sema::ActOnTypedefDeclarator(Scope* S, Declarator& D, DeclContext* DC,
   // If this is the C FILE type, notify the AST context.
   if (IdentifierInfo *II = NewTD->getIdentifier())
     if (!NewTD->isInvalidDecl() &&
-        NewTD->getDeclContext()->getLookupContext()->isTranslationUnit() &&        
-        II->isStr("FILE"))
-      Context.setFILEDecl(NewTD);
-  
+        NewTD->getDeclContext()->getLookupContext()->isTranslationUnit()) {
+      if (II->isStr("FILE"))
+        Context.setFILEDecl(NewTD);
+      else if (II->isStr("jmp_buf"))
+        Context.setjmp_bufDecl(NewTD);
+      else if (II->isStr("sigjmp_buf"))
+        Context.setsigjmp_bufDecl(NewTD);
+    }
+
   return NewTD;
 }
 
@@ -3711,9 +3728,7 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     if (!FD->getAttr<FormatAttr>())
       FD->addAttr(::new (Context) FormatAttr("printf", 2,
                                              Name->isStr("vasprintf") ? 0 : 3));
-  } else if ((Name->isStr("longjmp") || Name->isStr("_longjmp"))
-             && !FD->hasAttr<NoReturnAttr>())
-    FD->addAttr(::new (Context) NoReturnAttr());
+  }
 }
 
 TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T) {
@@ -4148,7 +4163,7 @@ CreateNewDecl:
   // If this is the C FILE type, notify the AST context.
   if (IdentifierInfo *II = New->getIdentifier())
     if (!New->isInvalidDecl() &&
-        New->getDeclContext()->getLookupContext()->isTranslationUnit() &&        
+        New->getDeclContext()->getLookupContext()->isTranslationUnit() &&
         II->isStr("FILE"))
       Context.setFILEDecl(New);
   

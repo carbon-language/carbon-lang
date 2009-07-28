@@ -423,7 +423,11 @@ namespace clang {
       /// \brief Objective-C fast enumeration state type
       SPECIAL_TYPE_OBJC_FAST_ENUMERATION_STATE = 6,
       /// \brief C FILE typedef type
-      SPECIAL_TYPE_FILE                        = 7
+      SPECIAL_TYPE_FILE                        = 7,
+      /// \brief C jmp_buf typedef type
+      SPECIAL_TYPE_jmp_buf                     = 8,
+      /// \brief C sigjmp_buf typedef type
+      SPECIAL_TYPE_sigjmp_buf                  = 9
     };
 
     /// \brief Record codes for each kind of declaration.
