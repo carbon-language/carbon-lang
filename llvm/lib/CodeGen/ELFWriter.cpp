@@ -143,6 +143,11 @@ bool ELFWriter::doInitialization(Module &M) {
   // Add the null section, which is required to be first in the file.
   getNullSection();
 
+  // The first entry in the symtab is the null symbol and the second
+  // is a local symbol containing the module/file name
+  SymbolList.push_back(new ELFSym());
+  SymbolList.push_back(ELFSym::getFileSym());
+
   return false;
 }
 
@@ -189,7 +194,7 @@ ELFSection &ELFWriter::getConstantPoolSection(MachineConstantPoolEntry &CPE) {
 
   const TargetLoweringObjectFile &TLOF =
     TM.getTargetLowering()->getObjFileLowering();
-  
+
   return getSection(TLOF.getSectionForMergeableConstant(Kind)->getName(),
                     ELFSection::SHT_PROGBITS,
                     ELFSection::SHF_MERGE | ELFSection::SHF_ALLOC,
@@ -320,7 +325,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
     const TargetLoweringObjectFile &TLOF =
       TM.getTargetLowering()->getObjFileLowering();
 
-    // Get ELF section from TAI
+    // Get the ELF section where this global belongs from TLOF
     const Section *S = TLOF.SectionForGlobal(GV, TM);
     unsigned SectionFlags = getElfSectionFlags(S->getKind());
 
@@ -521,9 +526,6 @@ bool ELFWriter::doFinalization(Module &M) {
   // Emit non-executable stack note
   if (TAI->getNonexecutableStackDirective())
     getNonExecStackSection();
-
-  // Emit module name
-  SymbolList.push_back(ELFSym::getFileSym());
 
   // Emit a symbol for each section created until now, skip null section
   for (unsigned i = 1, e = SectionList.size(); i < e; ++i) {
@@ -797,9 +799,6 @@ void ELFWriter::EmitSymbolTable() {
 
   // Size of each symtab entry.
   SymTab.EntSize = TEW->getSymTabEntrySize();
-
-  // The first entry in the symtab is the null symbol
-  SymbolList.insert(SymbolList.begin(), new ELFSym());
 
   // Reorder the symbol table with local symbols first!
   unsigned FirstNonLocalSymbol = SortSymbols();
