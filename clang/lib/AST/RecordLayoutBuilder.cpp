@@ -22,7 +22,7 @@ using namespace clang;
 
 ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx) 
   : Ctx(Ctx), Size(0), Alignment(8), StructPacking(0), NextOffset(0),
-  IsUnion(false) {}
+  IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8) {}
 
 void 
 ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
@@ -44,14 +44,15 @@ void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
     assert(BaseInfo.getDataSize() > 0 && 
            "FIXME: Handle empty classes.");
   
-  // FIXME: Should get the non-virtual alignment of the base.
-  unsigned BaseAlign = BaseInfo.getAlignment();
-  
-  // FIXME: Should get the non-virtual size of the base.
-  uint64_t BaseSize = BaseInfo.getDataSize();
+  unsigned BaseAlign = BaseInfo.getNonVirtualAlign();
+  uint64_t BaseSize = BaseInfo.getNonVirtualSize();
   
   // Round up the current record size to the base's alignment boundary.
   Size = (Size + (BaseAlign-1)) & ~(BaseAlign-1);
+
+  // Add base class offsets.
+  Bases.push_back(RD);
+  BaseOffsets.push_back(Size);
 
   // Non-virtual base class has offset too.
   FieldOffsets.push_back(Size);
@@ -80,6 +81,9 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
     LayoutNonVirtualBases(cast<CXXRecordDecl>(D));
 
   LayoutFields(D);
+  
+  NonVirtualSize = Size;
+  NonVirtualAlignment = Alignment;
   
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
@@ -238,22 +242,33 @@ ASTRecordLayoutBuilder::ComputeLayout(ASTContext &Ctx,
 
   Builder.Layout(D);
 
-  bool IsPODForThePurposeOfLayout;
-  if (!Ctx.getLangOptions().CPlusPlus) {
-    // In C, all record types are POD.
-    IsPODForThePurposeOfLayout = true;
-  } else {
-    // FIXME: This is not always correct. See the part about bitfields at
-    // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
-    IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
-  }
+  if (!isa<CXXRecordDecl>(D))
+    return new ASTRecordLayout(Builder.Size, Builder.Alignment, Builder.Size,
+                               Builder.FieldOffsets.data(), 
+                               Builder.FieldOffsets.size());
   
+  // FIXME: This is not always correct. See the part about bitfields at
+  // http://www.codesourcery.com/public/cxx-abi/abi.html#POD for more info.
+  // FIXME: IsPODForThePurposeOfLayout should be stored in the record layout.
+  bool IsPODForThePurposeOfLayout = cast<CXXRecordDecl>(D)->isPOD();
+  
+  assert(Builder.Bases.size() == Builder.BaseOffsets.size() && 
+         "Base offsets vector must be same size as bases vector!");
+
+  // FIXME: This should be done in FinalizeLayout.
   uint64_t DataSize = 
     IsPODForThePurposeOfLayout ? Builder.Size : Builder.NextOffset;
+  uint64_t NonVirtualSize = 
+    IsPODForThePurposeOfLayout ? DataSize : Builder.NonVirtualSize;
   
   return new ASTRecordLayout(Builder.Size, Builder.Alignment, DataSize,
                              Builder.FieldOffsets.data(), 
-                             Builder.FieldOffsets.size());
+                             Builder.FieldOffsets.size(),
+                             NonVirtualSize,
+                             Builder.NonVirtualAlignment,
+                             Builder.Bases.data(),
+                             Builder.BaseOffsets.data(),
+                             Builder.Bases.size());
 }
 
 const ASTRecordLayout *

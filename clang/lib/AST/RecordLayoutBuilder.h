@@ -26,12 +26,17 @@ class ASTRecordLayoutBuilder {
   ASTContext &Ctx;
 
   uint64_t Size;
-  uint64_t Alignment;
+  unsigned Alignment;
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
   
   unsigned StructPacking;
   unsigned NextOffset;
   bool IsUnion;
+  
+  uint64_t NonVirtualSize;
+  unsigned NonVirtualAlignment;
+  llvm::SmallVector<const CXXRecordDecl *, 4> Bases;
+  llvm::SmallVector<uint64_t, 4> BaseOffsets;
   
   ASTRecordLayoutBuilder(ASTContext &Ctx);
   
