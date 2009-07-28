@@ -440,8 +440,22 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   // pointer type.
   if (isa<llvm::PointerType>(DstTy)) {
     // The source value may be an integer, or a pointer.
-    if (isa<llvm::PointerType>(Src->getType()))
+    if (isa<llvm::PointerType>(Src->getType())) {
+      // Some heavy lifting for derived to base conversion.
+      if (const PointerType *PT = SrcType->getAsPointerType()) {
+        QualType SrcClassTy = PT->getPointeeType();
+        if (const RecordType *RT = SrcClassTy->getAsRecordType())
+          if (CXXRecordDecl *ClassDecl =
+              dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+            QualType DstClassType = DstType->getPointeeType();
+            if (const RecordType *DRT = DstClassType->getAsRecordType())
+              if (CXXRecordDecl *BaseClassDecl = 
+                    dyn_cast<CXXRecordDecl>(DRT->getDecl()))
+                Src = CGF.AddressCXXOfBaseClass(Src, ClassDecl, BaseClassDecl);
+          }
+      }
       return Builder.CreateBitCast(Src, DstTy, "conv");
+    }
     assert(SrcType->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
     // First, convert to the correct width so that we control the kind of
     // extension.
