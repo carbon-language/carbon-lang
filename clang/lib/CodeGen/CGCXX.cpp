@@ -155,6 +155,42 @@ llvm::Value *CodeGenFunction::LoadCXXThis() {
   return Builder.CreateLoad(LocalDeclMap[CXXThisDecl], "this");
 }
 
+llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
+                                                CXXRecordDecl *ClassDecl, 
+                                                CXXRecordDecl *BaseClassDecl) {
+  if (ClassDecl == BaseClassDecl)
+    return BaseValue;
+  
+  // Accessing a member of the base class. Must add delata to
+  // the load of 'this'.
+  // FIXME. Once type layout is complete, this will probably change.
+  const ASTRecordLayout &Layout = 
+  getContext().getASTRecordLayout(ClassDecl);
+  llvm::Type *I8Ptr = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+  unsigned Idx = 0;
+  for (CXXRecordDecl::base_class_const_iterator i = 
+         ClassDecl->bases_begin(),
+         e = ClassDecl->bases_end(); i != e; ++i, ++Idx) {
+    if (!i->isVirtual()) {
+        const CXXRecordDecl *Base =
+        cast<CXXRecordDecl>(i->getType()->getAsRecordType()->getDecl());
+        if (Base == BaseClassDecl)
+          break;
+    }
+  }
+  uint64_t Offset = Layout.getFieldOffset(Idx) / 8;
+  llvm::Value *OffsetVal = llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset);
+  BaseValue = Builder.CreateBitCast(BaseValue, I8Ptr);
+  BaseValue = Builder.CreateGEP(BaseValue, OffsetVal, "add.ptr");
+  QualType BTy = 
+    getContext().getCanonicalType(
+                                  getContext().getTypeDeclType(BaseClassDecl));
+  const llvm::Type *BasePtr = ConvertType(BTy);
+  BasePtr = VMContext.getPointerTypeUnqual(BasePtr);
+  BaseValue = Builder.CreateBitCast(BaseValue, BasePtr);
+  return BaseValue;
+}
+
 void
 CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D, 
                                         CXXCtorType Type, 

@@ -35,6 +35,9 @@ struct N : M , P, Q {
 	      MPR();
 	      PPR();
               QPR();
+	      printf("iQ = %d\n", iQ);
+	      printf("iP = %d\n", iP);
+              printf("iM = %d\n", iM);
             }
   float ld;
   float ff;

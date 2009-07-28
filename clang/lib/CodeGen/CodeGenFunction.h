@@ -528,6 +528,14 @@ public:
   /// generating code for an C++ member function.
   llvm::Value *LoadCXXThis();
   
+  /// AddressCXXOfBaseClass - This function will add the necessary delta
+  /// to the load of 'this' and returns address of the base class.
+  // FIXME. This currently only does a derived to non-virtual base conversion. 
+  // Other kinds of conversions will come later.
+  llvm::Value *AddressCXXOfBaseClass(llvm::Value *ThisValue,
+                                     CXXRecordDecl *ClassDecl, 
+                                     CXXRecordDecl *BaseClassDecl);
+  
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type, 
                               llvm::Value *This,
                               CallExpr::const_arg_iterator ArgBeg,

@@ -993,6 +993,16 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     if (PTy->getPointeeType()->isUnionType())
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
+    if (CXXThisExpr *ThisExpr = dyn_cast<CXXThisExpr>(BaseExpr)) {
+      QualType ClassTy = ThisExpr->getType();
+      ClassTy = ClassTy->getPointeeType();
+      CXXRecordDecl *ClassDecl =
+        cast<CXXRecordDecl>(ClassTy->getAsRecordType()->getDecl());
+      FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());
+      CXXRecordDecl *BaseClassDecl = 
+        cast<CXXRecordDecl>(Field->getDeclContext());
+      BaseValue = AddressCXXOfBaseClass(BaseValue, ClassDecl, BaseClassDecl);
+    }
   } else if (isa<ObjCPropertyRefExpr>(BaseExpr) ||
              isa<ObjCKVCRefExpr>(BaseExpr)) {
     RValue RV = EmitObjCPropertyGet(BaseExpr);
