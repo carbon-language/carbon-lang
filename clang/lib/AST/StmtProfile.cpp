@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Stmt::Profile method, which builds a unique bit
-// representation that identifiers a statement/expression.
+// representation that identifies a statement/expression.
 //
 //===----------------------------------------------------------------------===//
 #include "clang/AST/ASTContext.h"
