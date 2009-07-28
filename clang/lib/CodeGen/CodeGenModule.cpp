@@ -220,7 +220,7 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
     llvm::ArrayType *AT = VMContext.getArrayType(CtorStructTy, Ctors.size());
     new llvm::GlobalVariable(TheModule, AT, false,
                              llvm::GlobalValue::AppendingLinkage,
-                             VMContext.getConstantArray(AT, Ctors),
+                             llvm::ConstantArray::get(AT, Ctors),
                              GlobalName);
   }
 }
@@ -231,7 +231,7 @@ void CodeGenModule::EmitAnnotations() {
 
   // Create a new global variable for the ConstantStruct in the Module.
   llvm::Constant *Array =
-  VMContext.getConstantArray(VMContext.getArrayType(Annotations[0]->getType(),
+  llvm::ConstantArray::get(VMContext.getArrayType(Annotations[0]->getType(),
                                                 Annotations.size()),
                            Annotations);
   llvm::GlobalValue *gv = 
@@ -436,7 +436,7 @@ void CodeGenModule::EmitLLVMUsed() {
   llvm::GlobalVariable *GV = 
     new llvm::GlobalVariable(getModule(), ATy, false, 
                              llvm::GlobalValue::AppendingLinkage,
-                             VMContext.getConstantArray(ATy, UsedArray),
+                             llvm::ConstantArray::get(ATy, UsedArray),
                              "llvm.used");
 
   GV->setSection("llvm.metadata");
@@ -484,8 +484,8 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
   // get [N x i8] constants for the annotation string, and the filename string
   // which are the 2nd and 3rd elements of the global annotation structure.
   const llvm::Type *SBP = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
-  llvm::Constant *anno = VMContext.getConstantArray(AA->getAnnotation(), true);
-  llvm::Constant *unit = VMContext.getConstantArray(M->getModuleIdentifier(),
+  llvm::Constant *anno = llvm::ConstantArray::get(AA->getAnnotation(), true);
+  llvm::Constant *unit = llvm::ConstantArray::get(M->getModuleIdentifier(),
                                                   true);
 
   // Get the two global values corresponding to the ConstantArrays we just
@@ -1301,7 +1301,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   // String pointer.
   CurField = NextField;
   NextField = *Field++;
-  llvm::Constant *C = VMContext.getConstantArray(Entry.getKey().str());
+  llvm::Constant *C = llvm::ConstantArray::get(Entry.getKey().str());
 
   const char *Sect, *Prefix;
   bool isConstant;
@@ -1400,7 +1400,7 @@ static llvm::Constant *GenerateStringLiteral(const std::string &str,
                                              CodeGenModule &CGM,
                                              const char *GlobalName) {
   // Create Constant for this string literal. Don't add a '\0'.
-  llvm::Constant *C = CGM.getLLVMContext().getConstantArray(str, false);
+  llvm::Constant *C = llvm::ConstantArray::get(str, false);
   
   // Create a global variable for this string
   return new llvm::GlobalVariable(CGM.getModule(), C->getType(), constant, 

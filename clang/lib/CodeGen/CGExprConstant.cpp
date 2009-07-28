@@ -438,7 +438,7 @@ public:
       return llvm::ConstantStruct::get(SType, Elts);
     }
 
-    return VMContext.getConstantArray(AType, Elts);    
+    return llvm::ConstantArray::get(AType, Elts);    
   }
 
   void InsertBitfieldIntoStruct(std::vector<llvm::Constant*>& Elts,
@@ -610,7 +610,7 @@ public:
       InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(0));
       const llvm::ArrayType *RetTy =
           VMContext.getArrayType(NV->getType(), NumElts);
-      return VMContext.getConstantArray(RetTy, Elts);
+      return llvm::ConstantArray::get(RetTy, Elts);
     }
 
     llvm::Constant *InitElem;
@@ -687,7 +687,7 @@ public:
     // This must be a string initializing an array in a static initializer.
     // Don't emit it as the address of the string, emit the string data itself
     // as an inline array.
-    return VMContext.getConstantArray(CGM.GetStringForStringLiteral(E), false);
+    return llvm::ConstantArray::get(CGM.GetStringForStringLiteral(E), false);
   }
 
   llvm::Constant *VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
@@ -701,7 +701,7 @@ public:
     // Resize the string to the right size, adding zeros at the end, or
     // truncating as needed.
     Str.resize(CAT->getSize().getZExtValue(), '\0');
-    return VMContext.getConstantArray(Str, false);
+    return llvm::ConstantArray::get(Str, false);
   }
     
   llvm::Constant *VisitUnaryExtension(const UnaryOperator *E) {
