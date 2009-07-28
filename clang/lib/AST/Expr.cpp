@@ -249,7 +249,7 @@ void CallExpr::setNumArgs(ASTContext& C, unsigned NumArgs) {
   }
 
   // Otherwise, we are growing the # arguments.  New an bigger argument array.
-  Stmt **NewSubExprs = new Stmt*[NumArgs+1];
+  Stmt **NewSubExprs = new (C) Stmt*[NumArgs+1];
   // Copy over args.
   for (unsigned i = 0; i != getNumArgs()+ARGS_START; ++i)
     NewSubExprs[i] = SubExprs[i];
