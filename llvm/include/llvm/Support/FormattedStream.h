@@ -49,13 +49,13 @@ namespace llvm
     ///
     bool DeleteStream;
 
-    /// Column - The current output column of the stream.  The column
-    /// scheme is zero-based.
+    /// ColumnFlushed - The current output column of the data that's
+    /// been flushed.  The column scheme is zero-based.
     ///
-    unsigned Column;
+    unsigned ColumnFlushed;
 
     virtual void write_impl(const char *Ptr, size_t Size) {
-      ComputeColumn(Ptr, Size);
+      ComputeColumn(ColumnFlushed);
       TheStream->write(Ptr, Size);
     }
 
@@ -67,10 +67,10 @@ namespace llvm
       return TheStream->tell() - TheStream->GetNumBytesInBuffer();
     }
 
-    /// ComputeColumn - Examine the current output and figure out
-    /// which column we end up in after output.
+    /// ComputeColumn - Examine the current buffer and figure out
+    /// which column we're in.
     ///
-    void ComputeColumn(const char *Ptr, size_t Size);
+    void ComputeColumn(unsigned &Column);
 
   public:
     /// formatted_raw_ostream - Open the specified file for
@@ -84,11 +84,11 @@ namespace llvm
     /// underneath it.
     ///
     formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
-      : raw_ostream(), TheStream(0), DeleteStream(false), Column(0) {
+      : raw_ostream(), TheStream(0), DeleteStream(false), ColumnFlushed(0) {
       setStream(Stream, Delete);
     }
     explicit formatted_raw_ostream()
-      : raw_ostream(), TheStream(0), DeleteStream(false), Column(0) {}
+      : raw_ostream(), TheStream(0), DeleteStream(false), ColumnFlushed(0) {}
 
     ~formatted_raw_ostream() {
       if (DeleteStream)
