@@ -387,9 +387,6 @@ LIBBUILTIN(rindex, "c*cC*i",      "f",     "strings.h")
 // but we need new type letters for that.
 LIBBUILTIN(objc_msgSend, "v*.",   "f",     "objc/message.h")
 
-// FIXME: asprintf and vasprintf aren't C99 functions. Should they be
-// target-specific builtins, perhaps? 
-
 // Builtin math library functions
 LIBBUILTIN(pow, "ddd", "fe", "math.h")
 LIBBUILTIN(powl, "LdLdLd", "fe", "math.h")

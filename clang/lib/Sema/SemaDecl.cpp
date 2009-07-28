@@ -3695,6 +3695,7 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
     return;
 
   if (Name->isStr("NSLog") || Name->isStr("NSLogv")) {
+    // FIXME: NSLog and NSLogv should be target specific
     if (const FormatAttr *Format = FD->getAttr<FormatAttr>()) {
       // FIXME: We known better than our headers.
       const_cast<FormatAttr *>(Format)->setType("printf");
@@ -3702,6 +3703,8 @@ void Sema::AddKnownFunctionAttributes(FunctionDecl *FD) {
       FD->addAttr(::new (Context) FormatAttr("printf", 1,
                                              Name->isStr("NSLogv") ? 0 : 2));
   } else if (Name->isStr("asprintf") || Name->isStr("vasprintf")) {
+    // FIXME: asprintf and vasprintf aren't C99 functions. Should they be
+    // target-specific builtins, perhaps? 
     if (!FD->getAttr<FormatAttr>())
       FD->addAttr(::new (Context) FormatAttr("printf", 2,
                                              Name->isStr("vasprintf") ? 0 : 3));
