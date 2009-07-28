@@ -168,15 +168,22 @@ llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
   getContext().getASTRecordLayout(ClassDecl);
   llvm::Type *I8Ptr = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
   unsigned Idx = 0;
+  bool DerivedToBaseConversion = false;
   for (CXXRecordDecl::base_class_const_iterator i = 
          ClassDecl->bases_begin(),
          e = ClassDecl->bases_end(); i != e; ++i, ++Idx) {
     if (!i->isVirtual()) {
         const CXXRecordDecl *Base =
         cast<CXXRecordDecl>(i->getType()->getAsRecordType()->getDecl());
-        if (Base == BaseClassDecl)
-          break;
+      if (Base == BaseClassDecl) {
+        DerivedToBaseConversion = true;
+        break;
+      }
     }
+  }
+  if (!DerivedToBaseConversion) {
+    assert(false && "FIXME - Only derived to imm. base convesion is supported");
+    return BaseValue;
   }
   uint64_t Offset = Layout.getFieldOffset(Idx) / 8;
   llvm::Value *OffsetVal = llvm::ConstantInt::get(llvm::Type::Int32Ty, Offset);
