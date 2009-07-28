@@ -715,8 +715,17 @@ defm t2ASR  : T2I_sh_ir<"asr", BinOpFrag<(sra  node:$LHS, node:$RHS)>>;
 defm t2ROR  : T2I_sh_ir<"ror", BinOpFrag<(rotr node:$LHS, node:$RHS)>>;
 
 def t2MOVrx : T2sI<(outs GPR:$dst), (ins GPR:$src),
-                   "mov", " $dst, $src, rrx",
+                   "rrx", " $dst, $src",
                    [(set GPR:$dst, (ARMrrx GPR:$src))]>;
+
+let Defs = [CPSR] in {
+def t2MOVsrl_flag : T2XI<(outs GPR:$dst), (ins GPR:$src),
+                         "lsrs.w $dst, $src, #1",
+                         [(set GPR:$dst, (ARMsrl_flag GPR:$src))]>;
+def t2MOVsra_flag : T2XI<(outs GPR:$dst), (ins GPR:$src),
+                         "asrs.w $dst, $src, #1",
+                         [(set GPR:$dst, (ARMsra_flag GPR:$src))]>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Bitwise Instructions.
