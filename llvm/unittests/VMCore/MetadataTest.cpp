@@ -10,7 +10,7 @@
 #include "gtest/gtest.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/MDNode.h"
+#include "llvm/Metadata.h"
 #include "llvm/Type.h"
 #include "llvm/Support/ValueHandle.h"
 #include <sstream>
