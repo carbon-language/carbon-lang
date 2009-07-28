@@ -628,16 +628,6 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST,
   return 0;
 }
 
-/// dyn_castGetElementPtr - If this is a getelementptr instruction or constant
-/// expression, return it.
-static User *dyn_castGetElementPtr(Value *V) {
-  if (isa<GetElementPtrInst>(V)) return cast<User>(V);
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
-    if (CE->getOpcode() == Instruction::GetElementPtr)
-      return cast<User>(V);
-  return false;
-}
-
 /// AddOne - Add one to a ConstantInt
 static Constant *AddOne(Constant *C, LLVMContext *Context) {
   return Context->getConstantExprAdd(C, 
@@ -5572,7 +5562,7 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, Instruction &I,
 Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
                                        ICmpInst::Predicate Cond,
                                        Instruction &I) {
-  assert(dyn_castGetElementPtr(GEPLHS) && "LHS is not a getelementptr!");
+  assert(isa<GEPOperator>(GEPLHS) && "LHS is not a getelementptr!");
 
   // Look through bitcasts.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(RHS))
@@ -5590,7 +5580,7 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
       Offset = EmitGEPOffset(GEPLHS, I, *this);
     return new ICmpInst(*Context, ICmpInst::getSignedPredicate(Cond), Offset,
                         Context->getNullValue(Offset->getType()));
-  } else if (User *GEPRHS = dyn_castGetElementPtr(RHS)) {
+  } else if (User *GEPRHS = dyn_cast<GEPOperator>(RHS)) {
     // If the base pointers are different, but the indices are the same, just
     // compare the base pointer.
     if (PtrBase != GEPRHS->getOperand(0)) {
@@ -6355,10 +6345,10 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   }
 
   // If we can optimize a 'icmp GEP, P' or 'icmp P, GEP', do so now.
-  if (User *GEP = dyn_castGetElementPtr(Op0))
+  if (User *GEP = dyn_cast<GEPOperator>(Op0))
     if (Instruction *NI = FoldGEPICmp(GEP, Op1, I.getPredicate(), I))
       return NI;
-  if (User *GEP = dyn_castGetElementPtr(Op1))
+  if (User *GEP = dyn_cast<GEPOperator>(Op1))
     if (Instruction *NI = FoldGEPICmp(GEP, Op0,
                            ICmpInst::getSwappedPredicate(I.getPredicate()), I))
       return NI;
@@ -11065,7 +11055,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // getelementptr instructions into a single instruction.
   //
   SmallVector<Value*, 8> SrcGEPOperands;
-  if (User *Src = dyn_castGetElementPtr(PtrOp))
+  if (User *Src = dyn_cast<GEPOperator>(PtrOp))
     SrcGEPOperands.append(Src->op_begin(), Src->op_end());
 
   if (!SrcGEPOperands.empty()) {
