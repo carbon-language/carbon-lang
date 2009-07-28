@@ -1669,26 +1669,53 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgument *Args,
                                           unsigned NumArgs,
                                           QualType Canon) {
-  if (!Canon.isNull())
+  if (Canon.isNull()) {
+    // Build the canonical template specialization type, since no type
+    // was provided.
+    TemplateName CanonTemplate = getCanonicalTemplateName(Template);
+    llvm::SmallVector<TemplateArgument, 4> CanonArgs;
+    CanonArgs.reserve(NumArgs);
+    for (unsigned I = 0; I != NumArgs; ++I)
+      CanonArgs.push_back(getCanonicalTemplateArgument(Args[I]));
+
+    // Determine whether this canonical template specialization type already
+    // exists.
+    llvm::FoldingSetNodeID ID;
+    TemplateSpecializationType::Profile(ID, CanonTemplate, 
+                                        CanonArgs.data(), NumArgs);
+
+    void *InsertPos = 0;
+    TemplateSpecializationType *Spec
+      = TemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
+    
+    if (!Spec) {
+      // Allocate a new canonical template specialization type.
+      void *Mem = Allocate((sizeof(TemplateSpecializationType) + 
+                            sizeof(TemplateArgument) * NumArgs),
+                           8);
+      Spec = new (Mem) TemplateSpecializationType(CanonTemplate, 
+                                                  CanonArgs.data(), NumArgs,
+                                                  QualType());
+      Types.push_back(Spec);
+      TemplateSpecializationTypes.InsertNode(Spec, InsertPos);      
+    }
+    
+    Canon = QualType(Spec, 0);
+    assert(Canon->isDependentType() && 
+           "Non-dependent template-id type must have a canonical type");
+  } else
     Canon = getCanonicalType(Canon);
 
-  llvm::FoldingSetNodeID ID;
-  TemplateSpecializationType::Profile(ID, Template, Args, NumArgs);
-
-  void *InsertPos = 0;
-  TemplateSpecializationType *Spec
-    = TemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
-
-  if (Spec)
-    return QualType(Spec, 0);
-  
+  // Allocate the (non-canonical) template specialization type, but don't
+  // try to unique it: these types typically have location information that
+  // we don't unique and don't want to lose.
   void *Mem = Allocate((sizeof(TemplateSpecializationType) + 
                         sizeof(TemplateArgument) * NumArgs),
                        8);
-  Spec = new (Mem) TemplateSpecializationType(Template, Args, NumArgs, Canon);
+  TemplateSpecializationType *Spec 
+    = new (Mem) TemplateSpecializationType(Template, Args, NumArgs, Canon);
+  
   Types.push_back(Spec);
-  TemplateSpecializationTypes.InsertNode(Spec, InsertPos);
-
   return QualType(Spec, 0);  
 }
 
@@ -2011,6 +2038,49 @@ TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
   DependentTemplateName *DTN = Name.getAsDependentTemplateName();
   assert(DTN && "Non-dependent template names must refer to template decls.");
   return DTN->CanonicalTemplateName;
+}
+
+TemplateArgument 
+ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) {
+  switch (Arg.getKind()) {
+    case TemplateArgument::Null:
+      return Arg;
+      
+    case TemplateArgument::Expression:
+      // FIXME: Build canonical expression?
+      return Arg;
+      
+    case TemplateArgument::Declaration:
+      return TemplateArgument(SourceLocation(),
+                              Arg.getAsDecl()->getCanonicalDecl());
+      
+    case TemplateArgument::Integral:
+      return TemplateArgument(SourceLocation(),
+                              *Arg.getAsIntegral(),
+                              getCanonicalType(Arg.getIntegralType()));
+      
+    case TemplateArgument::Type:
+      return TemplateArgument(SourceLocation(),
+                              getCanonicalType(Arg.getAsType()));
+      
+    case TemplateArgument::Pack: {
+      // FIXME: Allocate in ASTContext
+      TemplateArgument *CanonArgs = new TemplateArgument[Arg.pack_size()];
+      unsigned Idx = 0;
+      for (TemplateArgument::pack_iterator A = Arg.pack_begin(), 
+                                        AEnd = Arg.pack_end();
+           A != AEnd; (void)++A, ++Idx)
+        CanonArgs[Idx] = getCanonicalTemplateArgument(*A);
+      
+      TemplateArgument Result;
+      Result.setArgumentPack(CanonArgs, Arg.pack_size(), false);
+      return Result;
+    }
+  }
+
+  // Silence GCC warning
+  assert(false && "Unhandled template argument kind");
+  return TemplateArgument();
 }
 
 NestedNameSpecifier *

@@ -171,52 +171,32 @@ QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
   // better to fix that redundancy.
 
   TemplateParameterList *Params = getTemplateParameters();
-
   llvm::SmallVector<TemplateArgument, 16> TemplateArgs;
-  llvm::SmallVector<TemplateArgument, 16> CanonTemplateArgs;
   TemplateArgs.reserve(Params->size());
-  CanonTemplateArgs.reserve(Params->size());
-
-  for (TemplateParameterList::iterator 
-         Param = Params->begin(), ParamEnd = Params->end(); 
+  for (TemplateParameterList::iterator Param = Params->begin(), 
+                                    ParamEnd = Params->end(); 
        Param != ParamEnd; ++Param) {
     if (isa<TemplateTypeParmDecl>(*Param)) {
       QualType ParamType = Context.getTypeDeclType(cast<TypeDecl>(*Param));
       TemplateArgs.push_back(TemplateArgument((*Param)->getLocation(), 
                                               ParamType));
-      CanonTemplateArgs.push_back(
-                         TemplateArgument((*Param)->getLocation(),
-                                          Context.getCanonicalType(ParamType)));
     } else if (NonTypeTemplateParmDecl *NTTP = 
                  dyn_cast<NonTypeTemplateParmDecl>(*Param)) {
-      // FIXME: Build canonical expression, too!
       Expr *E = new (Context) DeclRefExpr(NTTP, NTTP->getType(),
                                           NTTP->getLocation(),
                                           NTTP->getType()->isDependentType(),
                                           /*Value-dependent=*/true);
       TemplateArgs.push_back(TemplateArgument(E));
-      CanonTemplateArgs.push_back(TemplateArgument(E));
     } else { 
       TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*Param);
       TemplateArgs.push_back(TemplateArgument(TTP->getLocation(), TTP));
-      CanonTemplateArgs.push_back(TemplateArgument(TTP->getLocation(), 
-                                                   TTP->getCanonicalDecl()));
     }
   }
 
-  // FIXME: I should really move the "build-the-canonical-type" logic
-  // into ASTContext::getTemplateSpecializationType.
-  TemplateName Name = TemplateName(this);
-  QualType CanonType = Context.getTemplateSpecializationType(
-                                       Context.getCanonicalTemplateName(Name),
-                                             &CanonTemplateArgs[0],
-                                             CanonTemplateArgs.size());
-
   CommonPtr->InjectedClassNameType
-    = Context.getTemplateSpecializationType(Name,
+    = Context.getTemplateSpecializationType(TemplateName(this),
                                             &TemplateArgs[0],
-                                            TemplateArgs.size(),
-                                            CanonType);
+                                            TemplateArgs.size());
   return CommonPtr->InjectedClassNameType;
 }
 
@@ -290,6 +270,7 @@ void TemplateArgument::setArgumentPack(TemplateArgument *args, unsigned NumArgs,
     return;
   }
   
+  // FIXME: Allocate in ASTContext
   Args.Args = new TemplateArgument[NumArgs];
   for (unsigned I = 0; I != Args.NumArgs; ++I)
     Args.Args[I] = args[I];

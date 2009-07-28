@@ -874,67 +874,6 @@ translateTemplateArguments(ASTTemplateArgsPtr &TemplateArgsIn,
   }
 }
 
-/// \brief Build a canonical version of a template argument list. 
-///
-/// This function builds a canonical version of the given template
-/// argument list, where each of the template arguments has been
-/// converted into its canonical form. This routine is typically used
-/// to canonicalize a template argument list when the template name
-/// itself is dependent. When the template name refers to an actual
-/// template declaration, Sema::CheckTemplateArgumentList should be
-/// used to check and canonicalize the template arguments.
-///
-/// \param TemplateArgs The incoming template arguments.
-///
-/// \param NumTemplateArgs The number of template arguments in \p
-/// TemplateArgs.
-///
-/// \param Canonical A vector to be filled with the canonical versions
-/// of the template arguments.
-///
-/// \param Context The ASTContext in which the template arguments live.
-static void CanonicalizeTemplateArguments(const TemplateArgument *TemplateArgs,
-                                          unsigned NumTemplateArgs,
-                            llvm::SmallVectorImpl<TemplateArgument> &Canonical,
-                                          ASTContext &Context) {
-  Canonical.reserve(NumTemplateArgs);
-  for (unsigned Idx = 0; Idx < NumTemplateArgs; ++Idx) {
-    switch (TemplateArgs[Idx].getKind()) {
-    case TemplateArgument::Null:
-      assert(false && "Should never see a NULL template argument here");
-      break;
-        
-    case TemplateArgument::Expression:
-      // FIXME: Build canonical expression (!)
-      Canonical.push_back(TemplateArgs[Idx]);
-      break;
-
-    case TemplateArgument::Declaration:
-      Canonical.push_back(
-                 TemplateArgument(SourceLocation(),
-                            TemplateArgs[Idx].getAsDecl()->getCanonicalDecl()));
-      break;
-
-    case TemplateArgument::Integral:
-      Canonical.push_back(TemplateArgument(SourceLocation(),
-                                           *TemplateArgs[Idx].getAsIntegral(),
-                                        TemplateArgs[Idx].getIntegralType()));
-      break;
-
-    case TemplateArgument::Type: {
-      QualType CanonType 
-        = Context.getCanonicalType(TemplateArgs[Idx].getAsType());
-      Canonical.push_back(TemplateArgument(SourceLocation(), CanonType));
-      break;
-    }
-    
-    case TemplateArgument::Pack:
-      assert(0 && "FIXME: Implement!");
-      break;
-    }
-  }
-}
-
 QualType Sema::CheckTemplateIdType(TemplateName Name,
                                    SourceLocation TemplateLoc,
                                    SourceLocation LAngleLoc,
@@ -945,22 +884,8 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
   if (!Template) {
     // The template name does not resolve to a template, so we just
     // build a dependent template-id type.
-
-    // Canonicalize the template arguments to build the canonical
-    // template-id type.
-    llvm::SmallVector<TemplateArgument, 16> CanonicalTemplateArgs;
-    CanonicalizeTemplateArguments(TemplateArgs, NumTemplateArgs,
-                                  CanonicalTemplateArgs, Context);
-
-    TemplateName CanonName = Context.getCanonicalTemplateName(Name);
-    QualType CanonType
-      = Context.getTemplateSpecializationType(CanonName, 
-                                              &CanonicalTemplateArgs[0],
-                                              CanonicalTemplateArgs.size());
-
-    // Build the dependent template-id type.
     return Context.getTemplateSpecializationType(Name, TemplateArgs,
-                                                 NumTemplateArgs, CanonType);
+                                                 NumTemplateArgs);
   }
 
   // Check that the template argument list is well-formed for this
@@ -992,6 +917,12 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     CanonType = Context.getTemplateSpecializationType(CanonName, 
                                                    Converted.getFlatArguments(),
                                                    Converted.flatSize());
+    
+    // FIXME: CanonType is not actually the canonical type, and unfortunately
+    // it is a TemplateTypeSpecializationType that we will never use again.
+    // In the future, we need to teach getTemplateSpecializationType to only
+    // build the canonical type and return that to us.
+    CanonType = Context.getCanonicalType(CanonType);
   } else if (ClassTemplateDecl *ClassTemplate 
                = dyn_cast<ClassTemplateDecl>(Template)) {
     // Find the class template specialization declaration that

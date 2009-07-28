@@ -760,6 +760,13 @@ public:
   /// types, values, and templates.
   TemplateName getCanonicalTemplateName(TemplateName Name);
 
+  /// \brief Retrieve the "canonical" template argument.
+  ///
+  /// The canonical template argument is the simplest template argument 
+  /// (which may be a type, value, expression, or declaration) that 
+  /// expresses the value of the argument.
+  TemplateArgument getCanonicalTemplateArgument(const TemplateArgument &Arg);
+  
   /// Type Query functions.  If the type is an instance of the specified class,
   /// return the Type pointer for the underlying maximally pretty type.  This
   /// is a member of ASTContext because this may need to do some amount of
