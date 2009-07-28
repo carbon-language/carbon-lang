@@ -43,4 +43,11 @@ void nowarn(unsigned char* a, unsigned char* b)
 {
   unsigned char c = 1;
   *a |= c, *b += c;
+
+
+  // PR4633
+  int y, x;
+  ((void)0), y = x;
 }
+
+

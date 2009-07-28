@@ -593,11 +593,10 @@ bool Expr::isUnusedResultAWarning(SourceLocation &Loc, SourceRange &R1,
     return true;
   }
   case CStyleCastExprClass:
-    // If this is a cast to void, check the operand.  Otherwise, the result of
-    // the cast is unused.
+    // If this is an explicit cast to void, allow it.  People do this when they
+    // think they know what they're doing :).
     if (getType()->isVoidType())
-      return cast<CastExpr>(this)->getSubExpr()
-               ->isUnusedResultAWarning(Loc, R1, R2);
+      return false;
     Loc = cast<CStyleCastExpr>(this)->getLParenLoc();
     R1 = cast<CStyleCastExpr>(this)->getSubExpr()->getSourceRange();
     return true;
