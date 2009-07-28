@@ -409,7 +409,7 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
     if (isa<GlobalAlias>(decl))
         return;
 
-    const char* name = mangler.getMangledName(decl).c_str();
+    std::string name = mangler.getMangledName(decl);
 
     // we already have the symbol
     if (_undefines.find(name) != _undefines.end())
@@ -417,7 +417,7 @@ void LTOModule::addPotentialUndefinedSymbol(GlobalValue* decl, Mangler &mangler)
 
     NameAndAttributes info;
     // string is owned by _undefines
-    info.name = ::strdup(name);
+    info.name = ::strdup(name.c_str());
     if (decl->hasExternalWeakLinkage())
       info.attributes = LTO_SYMBOL_DEFINITION_WEAKUNDEF;
     else
