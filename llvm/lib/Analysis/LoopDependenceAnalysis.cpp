@@ -50,9 +50,9 @@ static inline bool IsMemRefInstr(const Value *V) {
 static void GetMemRefInstrs(const Loop *L,
                             SmallVectorImpl<Instruction*> &Memrefs) {
   for (Loop::block_iterator b = L->block_begin(), be = L->block_end();
-      b != be; ++b)
+       b != be; ++b)
     for (BasicBlock::iterator i = (*b)->begin(), ie = (*b)->end();
-        i != ie; ++i)
+         i != ie; ++i)
       if (IsMemRefInstr(i))
         Memrefs.push_back(i);
 }
@@ -71,6 +71,15 @@ static Value *GetPointerOperand(Value *I) {
   return 0;
 }
 
+static AliasAnalysis::AliasResult UnderlyingObjectsAlias(AliasAnalysis *AA,
+                                                         const Value *A,
+                                                         const Value *B) {
+  const Value *aObj = A->getUnderlyingObject();
+  const Value *bObj = B->getUnderlyingObject();
+  return AA->alias(aObj, AA->getTypeStoreSize(aObj->getType()),
+                   bObj, AA->getTypeStoreSize(bObj->getType()));
+}
+
 //===----------------------------------------------------------------------===//
 //                             Dependence Testing
 //===----------------------------------------------------------------------===//
@@ -83,19 +92,19 @@ bool LoopDependenceAnalysis::isDependencePair(const Value *A,
           cast<const Instruction>(B)->mayWriteToMemory());
 }
 
-bool LoopDependenceAnalysis::findOrInsertDependencePair(Value *X,
-                                                        Value *Y,
+bool LoopDependenceAnalysis::findOrInsertDependencePair(Value *A,
+                                                        Value *B,
                                                         DependencePair *&P) {
   void *insertPos = 0;
   FoldingSetNodeID id;
-  id.AddPointer(X);
-  id.AddPointer(Y);
+  id.AddPointer(A);
+  id.AddPointer(B);
 
   P = Pairs.FindNodeOrInsertPos(id, insertPos);
   if (P) return true;
 
   P = PairAllocator.Allocate<DependencePair>();
-  new (P) DependencePair(id, X, Y);
+  new (P) DependencePair(id, A, B);
   Pairs.InsertNode(P, insertPos);
   return false;
 }
@@ -114,28 +123,24 @@ void LoopDependenceAnalysis::analysePair(DependencePair *P) const {
     return;
   }
 
-  Value *aptr = GetPointerOperand(P->A);
-  Value *bptr = GetPointerOperand(P->B);
-  const Value *aobj = aptr->getUnderlyingObject();
-  const Value *bobj = bptr->getUnderlyingObject();
-  AliasAnalysis::AliasResult alias = AA->alias(
-      aobj, AA->getTypeStoreSize(aobj->getType()),
-      bobj, AA->getTypeStoreSize(bobj->getType()));
+  Value *aPtr = GetPointerOperand(P->A);
+  Value *bPtr = GetPointerOperand(P->B);
 
-  // We can not analyse objects if we do not know about their aliasing.
-  if (alias == AliasAnalysis::MayAlias) {
+  switch (UnderlyingObjectsAlias(AA, aPtr, bPtr)) {
+  case AliasAnalysis::MayAlias:
+    // We can not analyse objects if we do not know about their aliasing.
     DEBUG(errs() << "---> [?] may alias\n");
     return;
-  }
 
-  // If the objects noalias, they are distinct, accesses are independent.
-  if (alias == AliasAnalysis::NoAlias) {
+  case AliasAnalysis::NoAlias:
+    // If the objects noalias, they are distinct, accesses are independent.
     DEBUG(errs() << "---> [I] no alias\n");
     P->Result = Independent;
     return;
-  }
 
-  // TODO: the underlying objects MustAlias, test for dependence
+  case AliasAnalysis::MustAlias:
+    break; // The underlying objects alias, test accesses for dependence.
+  }
 
   DEBUG(errs() << "---> [?] cannot analyse\n");
   return;
@@ -187,14 +192,14 @@ static void PrintLoopInfo(raw_ostream &OS,
 
   OS << "  Load/store instructions: " << memrefs.size() << "\n";
   for (SmallVector<Instruction*, 8>::const_iterator x = memrefs.begin(),
-      end = memrefs.end(); x != end; ++x)
+       end = memrefs.end(); x != end; ++x)
     OS << "\t" << (x - memrefs.begin()) << ": " << **x << "\n";
 
   OS << "  Pairwise dependence results:\n";
   for (SmallVector<Instruction*, 8>::const_iterator x = memrefs.begin(),
-      end = memrefs.end(); x != end; ++x)
+       end = memrefs.end(); x != end; ++x)
     for (SmallVector<Instruction*, 8>::const_iterator y = x + 1;
-        y != end; ++y)
+         y != end; ++y)
       if (LDA->isDependencePair(*x, *y))
         OS << "\t" << (x - memrefs.begin()) << "," << (y - memrefs.begin())
            << ": " << (LDA->depends(*x, *y) ? "dependent" : "independent")
