@@ -198,7 +198,7 @@ let isBranch = 1, isTerminator = 1 in {
 
   def tBR_JTr : T1JTI<(outs),
                       (ins tGPR:$target, jtblock_operand:$jt, i32imm:$id),
-                      "mov pc, $target \n\t.align\t2\n$jt",
+                      "mov pc, $target\n\t.align\t2\n$jt",
                       [(ARMbrjt tGPR:$target, tjumptable:$jt, imm:$id)]>;
   }
 }

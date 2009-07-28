@@ -4,7 +4,7 @@
 define void @bar(i32 %n.u) {
 entry:
 ; CHECK: bar:
-; CHECK: add.w pc
+; CHECK: mov pc
 ; CHECK: b.w LBB1_2
 
     switch i32 %n.u, label %bb12 [i32 1, label %bb i32 2, label %bb6 i32 4, label %bb7 i32 5, label %bb8 i32 6, label %bb10 i32 7, label %bb1 i32 8, label %bb3 i32 9, label %bb4 i32 10, label %bb9 i32 11, label %bb2 i32 12, label %bb5 i32 13, label %bb11 ]

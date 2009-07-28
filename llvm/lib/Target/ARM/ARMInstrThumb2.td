@@ -1050,10 +1050,9 @@ def t2B   : T2XI<(outs), (ins brtarget:$target),
 
 let isNotDuplicable = 1, isIndirectBranch = 1 in
 def t2BR_JT :
-    T2JTI<(outs),
-          (ins GPR:$base, GPR:$idx, jt2block_operand:$jt, i32imm:$id),
-          "add.w pc, $base, $idx, lsl #2\n$jt",
-          [(ARMbr2jt GPR:$base, GPR:$idx, tjumptable:$jt, imm:$id)]>;
+    T2JTI<(outs), (ins GPR:$target, jt2block_operand:$jt, i32imm:$id),
+          "mov pc, $target\n$jt",
+          [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>;
 } // isBranch, isTerminator, isBarrier
 
 // FIXME: should be able to write a pattern for ARMBrcond, but can't use
