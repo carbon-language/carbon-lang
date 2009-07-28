@@ -533,8 +533,8 @@ public:
   // FIXME. This currently only does a derived to non-virtual base conversion. 
   // Other kinds of conversions will come later.
   llvm::Value *AddressCXXOfBaseClass(llvm::Value *ThisValue,
-                                     CXXRecordDecl *ClassDecl, 
-                                     CXXRecordDecl *BaseClassDecl);
+                                     const CXXRecordDecl *ClassDecl, 
+                                     const CXXRecordDecl *BaseClassDecl);
   
   void EmitCXXConstructorCall(const CXXConstructorDecl *D, CXXCtorType Type, 
                               llvm::Value *This,

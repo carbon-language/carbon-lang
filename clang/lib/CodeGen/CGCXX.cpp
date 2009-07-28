@@ -156,8 +156,8 @@ llvm::Value *CodeGenFunction::LoadCXXThis() {
 }
 
 llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
-                                                CXXRecordDecl *ClassDecl, 
-                                                CXXRecordDecl *BaseClassDecl) {
+                                          const CXXRecordDecl *ClassDecl, 
+                                          const CXXRecordDecl *BaseClassDecl) {
   if (ClassDecl == BaseClassDecl)
     return BaseValue;
   
@@ -184,7 +184,7 @@ llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
   BaseValue = Builder.CreateGEP(BaseValue, OffsetVal, "add.ptr");
   QualType BTy = 
     getContext().getCanonicalType(
-                                  getContext().getTypeDeclType(BaseClassDecl));
+      getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClassDecl)));
   const llvm::Type *BasePtr = ConvertType(BTy);
   BasePtr = VMContext.getPointerTypeUnqual(BasePtr);
   BaseValue = Builder.CreateBitCast(BaseValue, BasePtr);
@@ -458,33 +458,18 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   assert(ClassDecl->vbases_begin() == ClassDecl->vbases_end()
          && "FIXME. virtual base initialization unsupported");
-  const ASTRecordLayout &Layout = getContext().getASTRecordLayout(ClassDecl);
-  llvm::Type *I8Ptr = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
-  unsigned FieldNo = 0;
+  
   for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
        E = CD->init_end();
        B != E; ++B) {
     CXXBaseOrMemberInitializer *Member = (*B);
     if (Member->isBaseInitializer()) {
-      uint64_t Offset = Layout.getFieldOffset(FieldNo++) / 8;
-      assert(Member->getConstructor() && 
-             "EmitCtorPrologue - no constructor to initialize base class");
       llvm::Value *LoadOfThis = LoadCXXThis();
-      llvm::LLVMContext &VMContext = getLLVMContext();
-      llvm::Value *V;
-      if (Offset > 0) {
-        llvm::Value *OffsetVal = llvm::ConstantInt::get(llvm::Type::Int32Ty,
-                                                        Offset);
-        V = Builder.CreateBitCast(LoadOfThis, I8Ptr);
-        V = Builder.CreateGEP(V, OffsetVal, "add.ptr");
-      }
-      else
-        V = Builder.CreateBitCast(LoadOfThis, I8Ptr);
-
-      const llvm::Type *BasePtr = 
-        ConvertType(QualType(Member->getBaseClass(), 0));
-      BasePtr = VMContext.getPointerTypeUnqual(BasePtr);
-      V = Builder.CreateBitCast(V, BasePtr);
+      Type *BaseType = Member->getBaseClass();
+      CXXRecordDecl *BaseClassDecl = 
+        cast<CXXRecordDecl>(BaseType->getAsRecordType()->getDecl());
+      llvm::Value *V = AddressCXXOfBaseClass(LoadOfThis, ClassDecl, 
+                                             BaseClassDecl);
       EmitCXXConstructorCall(Member->getConstructor(),
                              Ctor_Complete, V,
                              Member->const_arg_begin(), 
