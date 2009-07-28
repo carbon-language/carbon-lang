@@ -53,6 +53,35 @@ namespace asmtok {
   };
 }
 
+/// AsmToken - Target independent representation for an assembler token.
+struct AsmToken {
+  asmtok::TokKind Kind;
+
+  /// A reference to the entire token contents; this is always a pointer into
+  /// a memory buffer owned by the source manager.
+  StringRef Str;
+
+  int64_t IntVal;
+
+public:
+  AsmToken() {}
+  AsmToken(asmtok::TokKind _Kind, const StringRef &_Str, int64_t _IntVal = 0)
+    : Kind(_Kind), Str(_Str), IntVal(_IntVal) {}
+
+  asmtok::TokKind getKind() const { return Kind; }
+  bool is(asmtok::TokKind K) const { return Kind == K; }
+  bool isNot(asmtok::TokKind K) const { return Kind != K; }
+
+  SMLoc getLoc() const;
+
+  StringRef getString() const { return Str; }
+
+  int64_t getIntVal() const { 
+    assert(Kind == asmtok::IntVal && "This token isn't an integer");
+    return IntVal; 
+  }
+};
+
 /// AsmLexer - Lexer class for assembly files.
 class AsmLexer : public MCAsmLexer {
   SourceMgr &SrcMgr;
@@ -60,14 +89,13 @@ class AsmLexer : public MCAsmLexer {
   const char *CurPtr;
   const MemoryBuffer *CurBuf;
   
-  // Information about the current token.
   const char *TokStart;
-  asmtok::TokKind CurKind;
-  StringRef CurStrVal;  // This is valid for Identifier.
-  int64_t CurIntVal;
+
+  /// The current token.
+  AsmToken CurTok;
   
-  /// CurBuffer - This is the current buffer index we're lexing from as managed
-  /// by the SourceMgr object.
+  /// This is the current buffer index we're lexing from as managed by the
+  /// SourceMgr object.
   int CurBuffer;
   
   void operator=(const AsmLexer&); // DO NOT IMPLEMENT
@@ -77,12 +105,12 @@ public:
   ~AsmLexer();
   
   asmtok::TokKind Lex() {
-    return CurKind = LexToken();
+    return CurTok = LexToken(), getKind();
   }
   
-  asmtok::TokKind getKind() const { return CurKind; }
-  bool is(asmtok::TokKind K) const { return CurKind == K; }
-  bool isNot(asmtok::TokKind K) const { return CurKind != K; }
+  asmtok::TokKind getKind() const { return CurTok.getKind(); }
+  bool is(asmtok::TokKind K) const { return CurTok.is(K); }
+  bool isNot(asmtok::TokKind K) const { return CurTok.isNot(K); }
 
   /// getCurStrVal - Get the string for the current token, this includes all
   /// characters (for example, the quotes on strings) in the token.
@@ -90,14 +118,10 @@ public:
   /// The returned StringRef points into the source manager's memory buffer, and
   /// is safe to store across calls to Lex().
   StringRef getCurStrVal() const {
-    assert((CurKind == asmtok::Identifier || CurKind == asmtok::Register ||
-            CurKind == asmtok::String) &&
-           "This token doesn't have a string value");
-    return CurStrVal;
+    return CurTok.getString();
   }
   int64_t getCurIntVal() const {
-    assert(CurKind == asmtok::IntVal && "This token isn't an integer");
-    return CurIntVal;
+    return CurTok.getIntVal();
   }
   
   SMLoc getLoc() const;
@@ -109,16 +133,16 @@ public:
   
 private:
   int getNextChar();
-  asmtok::TokKind ReturnError(const char *Loc, const std::string &Msg);
+  AsmToken ReturnError(const char *Loc, const std::string &Msg);
 
   /// LexToken - Read the next token and return its code.
-  asmtok::TokKind LexToken();
-  asmtok::TokKind LexIdentifier();
-  asmtok::TokKind LexPercent();
-  asmtok::TokKind LexSlash();
-  asmtok::TokKind LexLineComment();
-  asmtok::TokKind LexDigit();
-  asmtok::TokKind LexQuote();
+  AsmToken LexToken();
+  AsmToken LexIdentifier();
+  AsmToken LexPercent();
+  AsmToken LexSlash();
+  AsmToken LexLineComment();
+  AsmToken LexDigit();
+  AsmToken LexQuote();
 };
   
 } // end namespace llvm
