@@ -12,6 +12,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -47,10 +48,14 @@ RewriterOpt("rewriter",
                        clEnumValEnd),
             cl::init(local));
 
+cl::opt<bool>
+ScheduleSpills("schedule-spills",
+               cl::desc("Schedule spill code"),
+               cl::init(false));
+
 VirtRegRewriter::~VirtRegRewriter() {}
 
 
- 
 /// This class is intended for use with the new spilling framework only. It
 /// rewrites vreg def/uses to use the assigned preg, but does not insert any
 /// spill code.
@@ -61,6 +66,10 @@ struct VISIBILITY_HIDDEN TrivialRewriter : public VirtRegRewriter {
     DOUT << "********** REWRITE MACHINE CODE **********\n";
     DEBUG(errs() << "********** Function: " 
           << MF.getFunction()->getName() << '\n');
+    DOUT << "**** Machine Instrs"
+         << "(NOTE! Does not include spills and reloads!) ****\n";
+    DEBUG(MF.dump());
+
     MachineRegisterInfo *mri = &MF.getRegInfo();
 
     bool changed = false;
@@ -82,6 +91,10 @@ struct VISIBILITY_HIDDEN TrivialRewriter : public VirtRegRewriter {
         }
       }
     }
+
+    
+    DOUT << "**** Post Machine Instrs ****\n";
+    DEBUG(MF.dump());
     
     return changed;
   }
@@ -214,6 +227,76 @@ public:
 
 // ************************************************************************ //
 
+// Given a location where a reload of a spilled register or a remat of
+// a constant is to be inserted, attempt to find a safe location to
+// insert the load at an earlier point in the basic-block, to hide
+// latency of the load and to avoid address-generation interlock
+// issues.
+static MachineBasicBlock::iterator
+ComputeReloadLoc(MachineBasicBlock::iterator const InsertLoc,
+                 MachineBasicBlock::iterator const Begin,
+                 unsigned PhysReg,
+                 const TargetRegisterInfo *TRI,
+                 bool DoReMat,
+                 int SSorRMId,
+                 const TargetInstrInfo *TII,
+                 const MachineFunction &MF)
+{
+  if (!ScheduleSpills)
+    return InsertLoc;
+
+  // Spill backscheduling is of primary interest to addresses, so
+  // don't do anything if the register isn't in the register class
+  // used for pointers.
+
+  const TargetLowering *TL = MF.getTarget().getTargetLowering();
+
+  if (!TL->isTypeLegal(TL->getPointerTy()))
+    // Believe it or not, this is true on PIC16.
+    return InsertLoc;
+
+  const TargetRegisterClass *ptrRegClass =
+    TL->getRegClassFor(TL->getPointerTy());
+  if (!ptrRegClass->contains(PhysReg))
+    return InsertLoc;
+
+  // Scan upwards through the preceding instructions. If an instruction doesn't
+  // reference the stack slot or the register we're loading, we can
+  // backschedule the reload up past it.
+  MachineBasicBlock::iterator NewInsertLoc = InsertLoc;
+  while (NewInsertLoc != Begin) {
+    MachineBasicBlock::iterator Prev = prior(NewInsertLoc);
+    for (unsigned i = 0; i < Prev->getNumOperands(); ++i) {
+      MachineOperand &Op = Prev->getOperand(i);
+      if (!DoReMat && Op.isFI() && Op.getIndex() == SSorRMId)
+        goto stop;
+    }
+    if (Prev->findRegisterUseOperandIdx(PhysReg) != -1 ||
+        Prev->findRegisterDefOperand(PhysReg))
+      goto stop;
+    for (const unsigned *Alias = TRI->getAliasSet(PhysReg); *Alias; ++Alias)
+      if (Prev->findRegisterUseOperandIdx(*Alias) != -1 ||
+          Prev->findRegisterDefOperand(*Alias))
+        goto stop;
+    NewInsertLoc = Prev;
+  }
+stop:;
+
+  // If we made it to the beginning of the block, turn around and move back
+  // down just past any existing reloads. They're likely to be reloads/remats
+  // for instructions earlier than what our current reload/remat is for, so
+  // they should be scheduled earlier.
+  if (NewInsertLoc == Begin) {
+    int FrameIdx;
+    while (InsertLoc != NewInsertLoc &&
+           (TII->isLoadFromStackSlot(NewInsertLoc, FrameIdx) ||
+            TII->isTriviallyReMaterializable(NewInsertLoc)))
+      ++NewInsertLoc;
+  }
+
+  return NewInsertLoc;
+}
+ 
 // ReusedOp - For each reused operand, we keep track of a bit of information,
 // in case we need to rollback upon processing a new operand.  See comments
 // below.
@@ -717,14 +800,23 @@ unsigned ReuseInfo::GetRegForReload(const TargetRegisterClass *RC,
         unsigned NewPhysReg = GetRegForReload(RC, NewOp.AssignedPhysReg,
                                               MF, MI, Spills, MaybeDeadStores,
                                               Rejected, RegKills, KillOps, VRM);
-        
-        MachineBasicBlock::iterator MII = MI;
-        if (NewOp.StackSlotOrReMat > VirtRegMap::MAX_STACK_SLOT) {
-          ReMaterialize(*MBB, MII, NewPhysReg, NewOp.VirtReg, TII, TRI,VRM);
-        } else {
-          TII->loadRegFromStackSlot(*MBB, MII, NewPhysReg,
+
+        bool DoReMat = NewOp.StackSlotOrReMat > VirtRegMap::MAX_STACK_SLOT;
+        int SSorRMId = DoReMat
+          ? VRM.getReMatId(NewOp.VirtReg) : NewOp.StackSlotOrReMat;
+
+        // Back-schedule reloads and remats.
+        MachineBasicBlock::iterator InsertLoc =
+          ComputeReloadLoc(MI, MBB->begin(), PhysReg, TRI,
+                           DoReMat, SSorRMId, TII, MF);
+
+        if (DoReMat) {
+          ReMaterialize(*MBB, InsertLoc, NewPhysReg, NewOp.VirtReg, TII,
+                        TRI, VRM);
+        } else { 
+          TII->loadRegFromStackSlot(*MBB, InsertLoc, NewPhysReg,
                                     NewOp.StackSlotOrReMat, AliasRC);
-          MachineInstr *LoadMI = prior(MII);
+          MachineInstr *LoadMI = prior(InsertLoc);
           VRM.addSpillSlotUse(NewOp.StackSlotOrReMat, LoadMI);
           // Any stores to this stack slot are not dead anymore.
           MaybeDeadStores[NewOp.StackSlotOrReMat] = NULL;            
@@ -739,9 +831,8 @@ unsigned ReuseInfo::GetRegForReload(const TargetRegisterClass *RC,
         MI->getOperand(NewOp.Operand).setSubReg(0);
 
         Spills.addAvailable(NewOp.StackSlotOrReMat, NewPhysReg);
-        --MII;
-        UpdateKills(*MII, TRI, RegKills, KillOps);
-        DOUT << '\t' << *MII;
+        UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
+        DOUT << '\t' << *prior(InsertLoc);
         
         DOUT << "Reuse undone!\n";
         --NumReused;
@@ -1002,6 +1093,10 @@ private:
     // then unfold these instructions.
     if (!FoldsStackSlotModRef(*NextMII, SS, PhysReg, TII, TRI, VRM))
       return false;
+
+    // Back-schedule reloads and remats.
+    MachineBasicBlock::iterator InsertLoc =
+      ComputeReloadLoc(MII, MBB.begin(), PhysReg, TRI, false, SS, TII, MF);
 
     // Load from SS to the spare physical register.
     TII->loadRegFromStackSlot(MBB, MII, PhysReg, SS, RC);
@@ -1469,8 +1564,15 @@ private:
           TII->storeRegToStackSlot(MBB, MII, PhysReg, true, SS, RC);
           MachineInstr *StoreMI = prior(MII);
           VRM.addSpillSlotUse(SS, StoreMI);
-          TII->loadRegFromStackSlot(MBB, next(MII), PhysReg, SS, RC);
-          MachineInstr *LoadMI = next(MII);
+
+          // Back-schedule reloads and remats.
+          MachineBasicBlock::iterator InsertLoc =
+            ComputeReloadLoc(next(MII), MBB.begin(), PhysReg, TRI, false,
+                             SS, TII, MF);
+
+          TII->loadRegFromStackSlot(MBB, InsertLoc, PhysReg, SS, RC);
+
+          MachineInstr *LoadMI = prior(InsertLoc);
           VRM.addSpillSlotUse(SS, LoadMI);
           ++NumPSpills;
         }
@@ -1527,7 +1629,13 @@ private:
 
             // If the reloaded / remat value is available in another register,
             // copy it to the desired register.
-            TII->copyRegToReg(MBB, &MI, Phys, InReg, RC, RC);
+
+            // Back-schedule reloads and remats.
+            MachineBasicBlock::iterator InsertLoc =
+              ComputeReloadLoc(MII, MBB.begin(), Phys, TRI, DoReMat,
+                               SSorRMId, TII, MF);
+
+            TII->copyRegToReg(MBB, InsertLoc, Phys, InReg, RC, RC);
 
             // This invalidates Phys.
             Spills.ClobberPhysReg(Phys);
@@ -1535,7 +1643,7 @@ private:
             Spills.addAvailable(SSorRMId, Phys);
 
             // Mark is killed.
-            MachineInstr *CopyMI = prior(MII);
+            MachineInstr *CopyMI = prior(InsertLoc);
             MachineOperand *KillOpnd = CopyMI->findRegisterUseOperand(InReg);
             KillOpnd->setIsKill();
             UpdateKills(*CopyMI, TRI, RegKills, KillOps);
@@ -1545,12 +1653,17 @@ private:
             continue;
           }
 
+          // Back-schedule reloads and remats.
+          MachineBasicBlock::iterator InsertLoc =
+            ComputeReloadLoc(MII, MBB.begin(), Phys, TRI, DoReMat,
+                             SSorRMId, TII, MF);
+
           if (VRM.isReMaterialized(VirtReg)) {
-            ReMaterialize(MBB, MII, Phys, VirtReg, TII, TRI, VRM);
+            ReMaterialize(MBB, InsertLoc, Phys, VirtReg, TII, TRI, VRM);
           } else {
             const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
-            TII->loadRegFromStackSlot(MBB, &MI, Phys, SSorRMId, RC);
-            MachineInstr *LoadMI = prior(MII);
+            TII->loadRegFromStackSlot(MBB, InsertLoc, Phys, SSorRMId, RC);
+            MachineInstr *LoadMI = prior(InsertLoc);
             VRM.addSpillSlotUse(SSorRMId, LoadMI);
             ++NumLoads;
           }
@@ -1560,7 +1673,7 @@ private:
           // Remember it's available.
           Spills.addAvailable(SSorRMId, Phys);
 
-          UpdateKills(*prior(MII), TRI, RegKills, KillOps);
+          UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
           DOUT << '\t' << *prior(MII);
         }
       }
@@ -1798,9 +1911,15 @@ private:
           const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
           RegInfo->setPhysRegUsed(DesignatedReg);
           ReusedOperands.markClobbered(DesignatedReg);
-          TII->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC, RC);
 
-          MachineInstr *CopyMI = prior(MII);
+          // Back-schedule reloads and remats.
+          MachineBasicBlock::iterator InsertLoc =
+            ComputeReloadLoc(&MI, MBB.begin(), PhysReg, TRI, DoReMat,
+                             SSorRMId, TII, MF);
+
+          TII->copyRegToReg(MBB, InsertLoc, DesignatedReg, PhysReg, RC, RC);
+
+          MachineInstr *CopyMI = prior(InsertLoc);
           UpdateKills(*CopyMI, TRI, RegKills, KillOps);
 
           // This invalidates DesignatedReg.
@@ -1833,12 +1952,17 @@ private:
         if (AvoidReload)
           ++NumAvoided;
         else {
+          // Back-schedule reloads and remats.
+          MachineBasicBlock::iterator InsertLoc =
+            ComputeReloadLoc(MII, MBB.begin(), PhysReg, TRI, DoReMat,
+                             SSorRMId, TII, MF);
+
           if (DoReMat) {
-            ReMaterialize(MBB, MII, PhysReg, VirtReg, TII, TRI, VRM);
+            ReMaterialize(MBB, InsertLoc, PhysReg, VirtReg, TII, TRI, VRM);
           } else {
             const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
-            TII->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);
-            MachineInstr *LoadMI = prior(MII);
+            TII->loadRegFromStackSlot(MBB, InsertLoc, PhysReg, SSorRMId, RC);
+            MachineInstr *LoadMI = prior(InsertLoc);
             VRM.addSpillSlotUse(SSorRMId, LoadMI);
             ++NumLoads;
           }
@@ -1857,8 +1981,8 @@ private:
             KilledMIRegs.insert(VirtReg);
           }
 
-          UpdateKills(*prior(MII), TRI, RegKills, KillOps);
-          DOUT << '\t' << *prior(MII);
+          UpdateKills(*prior(InsertLoc), TRI, RegKills, KillOps);
+          DOUT << '\t' << *prior(InsertLoc);
         }
         unsigned RReg = SubIdx ? TRI->getSubReg(PhysReg, SubIdx) : PhysReg;
         MI.getOperand(i).setReg(RReg);
