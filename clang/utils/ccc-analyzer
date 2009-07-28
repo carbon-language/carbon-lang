@@ -61,18 +61,12 @@ sub ProcessClangFailure {
     $prefix = "clang_attribute_ignored";
   }
 
-  # Generate the preprocessed file with cc (i.e., gcc).
+  # Generate the preprocessed file with Clang.
   my ($PPH, $PPFile) = tempfile( $prefix . "_XXXXXX",
                                  SUFFIX => GetPPExt($Lang),
                                  DIR => $Dir);
-
-  system $CC, @$Args, "-E", "-o", $PPFile;
+  system $ClangCC, @$Args, "-E", "-o", $PPFile;
   close ($PPH);
-
-  # Generate the preprocessed file with clang.
-  my $PPFile_Clang = $PPFile;
-  $PPFile_Clang =~ s/[.](.+)$/.clang.$1/;  
-  system $ClangCC, @$Args, "-E", "-o", "$PPFile_Clang";
   
   # Create the info file.
   open (OUT, ">", "$PPFile.info.txt") or die "Cannot open $PPFile.info.txt\n";
