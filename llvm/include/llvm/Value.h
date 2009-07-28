@@ -116,10 +116,10 @@ public:
   /// modified.
   ///
   /// This is currently guaranteed to return a StringRef for which data() points
-  /// to a valid null terminated string. This usage is deprecated, however, and
-  /// clients should not rely on it. If such behavior is needed, clients should
-  /// use getNameStr() or switch to an interface that does not depend on null
-  /// termination.
+  /// to a valid null terminated string. The use of StringRef.data() is 
+  /// deprecated here, however, and clients should not rely on it. If such 
+  /// behavior is needed, clients should use expensive getNameStr(), or switch 
+  /// to an interface that does not depend on null termination.
   StringRef getName() const;
 
   /// getNameStr() - Return the name of the specified value, *constructing a
