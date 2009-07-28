@@ -505,9 +505,14 @@ void Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       // r0 = -imm (this is then translated into a series of instructons)
       // r0 = add r0, sp
       emitThumbConstant(MBB, II, DestReg, Offset, TII, *this, dl);
+
       MI.setDesc(TII.get(ARM::tADDhirr));
       MI.getOperand(i).ChangeToRegister(DestReg, false, false, true);
       MI.getOperand(i+1).ChangeToRegister(FrameReg, false);
+      if (Opcode == ARM::tADDi3) {
+        MachineInstrBuilder MIB(&MI);
+        AddDefaultPred(MIB);
+      }
     }
     return;
   } else {
