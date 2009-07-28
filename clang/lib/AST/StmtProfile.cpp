@@ -272,21 +272,6 @@ void StmtProfiler::VisitCompoundLiteralExpr(CompoundLiteralExpr *S) {
   ID.AddBoolean(S->isFileScope());
 }
 
-void StmtProfiler::VisitDecl(Decl *D) {
-  if (Canonical) {
-    if (NonTypeTemplateParmDecl *NTTP 
-          = dyn_cast_or_null<NonTypeTemplateParmDecl>(D)) {
-      ID.AddInteger(NTTP->getDepth());
-      ID.AddInteger(NTTP->getIndex());
-      return;
-    }
-
-    // FIXME: Other template template parameters?
-  }
-  
-  ID.AddPointer(D? D->getCanonicalDecl() : 0);
-}
-
 void StmtProfiler::VisitCastExpr(CastExpr *S) {
   VisitExpr(S);
 }
@@ -604,16 +589,24 @@ void StmtProfiler::VisitObjCIsaExpr(ObjCIsaExpr *S) {
   ID.AddBoolean(S->isArrow());
 }
 
-void StmtProfiler::VisitType(QualType T) {
+void StmtProfiler::VisitDecl(Decl *D) {
   if (Canonical) {
-    if (const TemplateTypeParmType *TTP = T->getAs<TemplateTypeParmType>()) {
-      ID.AddInteger(TTP->getDepth());
-      ID.AddInteger(TTP->getIndex());
+    if (NonTypeTemplateParmDecl *NTTP 
+        = dyn_cast_or_null<NonTypeTemplateParmDecl>(D)) {
+      ID.AddInteger(NTTP->getDepth());
+      ID.AddInteger(NTTP->getIndex());
       return;
     }
     
-    T = Context.getCanonicalType(T);
+    // FIXME: Template template parameters?
   }
+  
+  ID.AddPointer(D? D->getCanonicalDecl() : 0);
+}
+
+void StmtProfiler::VisitType(QualType T) {
+  if (Canonical)
+    T = Context.getCanonicalType(T);
   
   ID.AddPointer(T.getAsOpaquePtr());
 }
