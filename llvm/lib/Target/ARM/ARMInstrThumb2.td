@@ -714,8 +714,9 @@ defm t2LSR  : T2I_sh_ir<"lsr", BinOpFrag<(srl  node:$LHS, node:$RHS)>>;
 defm t2ASR  : T2I_sh_ir<"asr", BinOpFrag<(sra  node:$LHS, node:$RHS)>>;
 defm t2ROR  : T2I_sh_ir<"ror", BinOpFrag<(rotr node:$LHS, node:$RHS)>>;
 
+// FIXME should be "rrx $dst,$src" once <rdar://problem/7098328> is fixed
 def t2MOVrx : T2sI<(outs GPR:$dst), (ins GPR:$src),
-                   "rrx", " $dst, $src",
+                   "mov", ".w $dst, $src, rrx",
                    [(set GPR:$dst, (ARMrrx GPR:$src))]>;
 
 let Defs = [CPSR] in {
