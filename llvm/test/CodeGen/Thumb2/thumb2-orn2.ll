@@ -1,3 +1,4 @@
+; XFAIL: *
 ; RUN: llvm-as < %s | llc -march=thumb -mattr=+thumb2 | grep {orn\\W*r\[0-9\]*,\\W*r\[0-9\]*,\\W*#\[0-9\]*} | grep {#187\\|#11141290\\|#3422604288\\|#1114112} | count 4
 
 ; 0x000000bb = 187

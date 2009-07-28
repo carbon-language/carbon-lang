@@ -745,7 +745,8 @@ def t2BFC : T2I<(outs GPR:$dst), (ins GPR:$src, bf_inv_mask_imm:$imm),
 
 // FIXME: A8.6.18  BFI - Bitfield insert (Encoding T1)
 
-defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;
+// FIXME workaround for <rdar://problem/7096522> 
+//defm t2ORN  : T2I_bin_irs<"orn", BinOpFrag<(or  node:$LHS, (not node:$RHS))>>;
 
 // Prefer over of t2EORri ra, rb, -1 because mvn has 16-bit version
 let AddedComplexity = 1 in
@@ -755,8 +756,9 @@ defm t2MVN  : T2I_un_irs  <"mvn", UnOpFrag<(not node:$Src)>, 1, 1>;
 def : T2Pat<(and     GPR:$src, t2_so_imm_not:$imm),
             (t2BICri GPR:$src, t2_so_imm_not:$imm)>;
 
-def : T2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
-            (t2ORNri GPR:$src, t2_so_imm_not:$imm)>;
+// FIXME workaround for <rdar://problem/7096522> 
+//def : T2Pat<(or      GPR:$src, t2_so_imm_not:$imm),
+//            (t2ORNri GPR:$src, t2_so_imm_not:$imm)>;
 
 def : T2Pat<(t2_so_imm_not:$src),
             (t2MVNi t2_so_imm_not:$src)>;
