@@ -520,14 +520,14 @@ void DwarfException::EmitExceptionTable() {
   for (unsigned i = 0; i != SizeAlign; ++i) {
     Asm->EmitInt8(0);
     Asm->EOL("Padding");
-    }
+  }
 
   EmitLabel("exception", SubprogramCount);
 
   // Emit the header.
   Asm->EmitInt8(dwarf::DW_EH_PE_omit);
   Asm->EOL("LPStart format (DW_EH_PE_omit)");
-  Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
+  Asm->EmitInt8(TAI->PreferredEHDataFormat(DwarfEncoding::Data, true));
   Asm->EOL("TType format (DW_EH_PE_absptr)");
   Asm->EmitULEB128Bytes(TypeOffset);
   Asm->EOL("TType base offset");
