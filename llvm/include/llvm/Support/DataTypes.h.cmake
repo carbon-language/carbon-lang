@@ -30,6 +30,12 @@
 // FIXME: UGLY HACK (Added by Kevin)
 #define HAVE_UINT64_T 1
 
+#ifdef __cplusplus
+#include <cmath>
+#else
+#include <math.h>
+#endif
+
 #ifndef _MSC_VER
 
 // Note that this header's correct operation depends on __STDC_LIMIT_MACROS
@@ -56,12 +62,6 @@
 
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
-#endif
-
-#ifdef __cplusplus
-#include <cmath>
-#else
-#include <math.h>
 #endif
 
 #ifdef _AIX
