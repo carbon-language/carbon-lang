@@ -507,8 +507,9 @@ public:
   }
 
   /// \brief Set the type for the C jmp_buf type.
-  void setjmp_bufDecl(TypeDecl *jmp_bufDecl)
-    { this->jmp_bufDecl = jmp_bufDecl; }
+  void setjmp_bufDecl(TypeDecl *jmp_bufDecl) {
+    this->jmp_bufDecl = jmp_bufDecl;
+  }
   
   /// \brief Retrieve the C jmp_buf type.
   QualType getjmp_bufType() { 
@@ -518,8 +519,9 @@ public:
   }
 
   /// \brief Set the type for the C sigjmp_buf type.
-  void setsigjmp_bufDecl(TypeDecl *sigjmp_bufDecl)
-    { this->sigjmp_bufDecl = sigjmp_bufDecl; }
+  void setsigjmp_bufDecl(TypeDecl *sigjmp_bufDecl) {
+    this->sigjmp_bufDecl = sigjmp_bufDecl;
+  }
   
   /// \brief Retrieve the C sigjmp_buf type.
   QualType getsigjmp_bufType() { 

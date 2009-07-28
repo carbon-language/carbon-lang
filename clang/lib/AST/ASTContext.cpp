@@ -3978,27 +3978,23 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     if (Type.isNull()) {
       Error = ASTContext::GE_Missing_FILE;
       return QualType();
-    } else {
-      break;
     }
+    break;
   case 'J':
     if (Signed) {
       Type = Context.getsigjmp_bufType();
       if (Type.isNull()) {
         Error = ASTContext::GE_Missing_sigjmp_buf;
         return QualType();
-      } else {
-        break;
       }
-    } else {
-      Type = Context.getjmp_bufType();
-      if (Type.isNull()) {
-        Error = ASTContext::GE_Missing_jmp_buf;
-        return QualType();
-      } else {
-        break;
-      }
+      break;
     }
+    Type = Context.getjmp_bufType();
+    if (Type.isNull()) {
+      Error = ASTContext::GE_Missing_jmp_buf;
+      return QualType();
+    }
+    break;
   }
   
   if (!AllowTypeModifiers)
