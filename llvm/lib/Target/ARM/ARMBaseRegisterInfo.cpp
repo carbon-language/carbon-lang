@@ -439,6 +439,7 @@ bool ARMBaseRegisterInfo::hasFP(const MachineFunction &MF) const {
           MFI->isFrameAddressTaken());
 }
 
+/// estimateStackSize - Estimate and return the size of the frame.
 static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
   const MachineFrameInfo *FFI = MF.getFrameInfo();
   int Offset = 0;
@@ -455,6 +456,36 @@ static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
     Offset = (Offset+Align-1)/Align*Align;
   }
   return (unsigned)Offset;
+}
+
+/// estimateRSStackSizeLimit - Look at each instruction that references stack
+/// frames and return the stack size limit beyond which some of these
+/// instructions will require scratch register during their expansion later.
+static unsigned estimateRSStackSizeLimit(MachineFunction &MF,
+                                         const ARMBaseInstrInfo &TII) {
+  unsigned Limit = (1 << 12) - 1;
+  for (MachineFunction::iterator BB = MF.begin(),E = MF.end();BB != E; ++BB) {
+    for (MachineBasicBlock::iterator I= BB->begin(); I != BB->end(); ++I) {
+      for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
+        if (I->getOperand(i).isFI()) {
+          unsigned Opcode = I->getOpcode();
+          const TargetInstrDesc &Desc = TII.get(Opcode);
+          unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
+          if (AddrMode == ARMII::AddrMode3 ||
+              AddrMode == ARMII::AddrModeT2_i8) {
+            return (1 << 8) - 1;
+          } else if (AddrMode == ARMII::AddrMode5 ||
+                     AddrMode == ARMII::AddrModeT2_i8s4) {
+            unsigned ThisLimit = ((1 << 8) - 1) * 4;
+            if (ThisLimit < Limit)
+              Limit = ThisLimit;
+          }
+          break; // At most one FI per instruction
+        }
+    }
+  }
+
+  return Limit;
 }
 
 void
@@ -609,27 +640,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // register scavenging.
     if (RS && !ExtraCSSpill && !AFI->isThumb1OnlyFunction()) {
       MachineFrameInfo  *MFI = MF.getFrameInfo();
-      unsigned Size = estimateStackSize(MF, MFI);
-      unsigned Limit = (1 << 12) - 1;
-      for (MachineFunction::iterator BB = MF.begin(),E = MF.end();BB != E; ++BB)
-        for (MachineBasicBlock::iterator I= BB->begin(); I != BB->end(); ++I) {
-          for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-            if (I->getOperand(i).isFI()) {
-              unsigned Opcode = I->getOpcode();
-              const TargetInstrDesc &Desc = TII.get(Opcode);
-              unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
-              if (AddrMode == ARMII::AddrMode3) {
-                Limit = (1 << 8) - 1;
-                goto DoneEstimating;
-              } else if (AddrMode == ARMII::AddrMode5) {
-                unsigned ThisLimit = ((1 << 8) - 1) * 4;
-                if (ThisLimit < Limit)
-                  Limit = ThisLimit;
-              }
-            }
-        }
-    DoneEstimating:
-      if (Size >= Limit) {
+      if (estimateStackSize(MF, MFI) >= estimateRSStackSizeLimit(MF, TII)) {
         // If any non-reserved CS register isn't spilled, just spill one or two
         // extra. That should take care of it!
         unsigned NumExtras = TargetAlign / 4;
