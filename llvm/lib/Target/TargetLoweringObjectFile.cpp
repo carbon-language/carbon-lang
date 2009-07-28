@@ -486,7 +486,7 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 //===----------------------------------------------------------------------===//
 
 TargetLoweringObjectFileMachO::
-TargetLoweringObjectFileMachO() {
+TargetLoweringObjectFileMachO(const TargetMachine &TM) {
   TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
   DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
   
@@ -496,8 +496,15 @@ TargetLoweringObjectFileMachO() {
                                                SectionKind::MergeableConst4);
   EightByteConstantSection = getOrCreateSection("\t.literal8\n", true,
                                                 SectionKind::MergeableConst8);
-  SixteenByteConstantSection = 
-  getOrCreateSection("\t.literal16\n", true, SectionKind::MergeableConst16);
+  
+  // ld_classic doesn't support .literal16 in 32-bit mode, and ld64 falls back
+  // to using it in -static mode.
+  if (TM.getRelocationModel() != Reloc::Static &&
+      TM.getTargetData()->getPointerSize() == 32)
+    SixteenByteConstantSection = 
+      getOrCreateSection("\t.literal16\n", true, SectionKind::MergeableConst16);
+  else
+    SixteenByteConstantSection = 0;
   
   ReadOnlySection = getOrCreateSection("\t.const", true, SectionKind::ReadOnly);
   
@@ -551,7 +558,7 @@ TargetLoweringObjectFileMachO::SelectSectionForGlobal(const GlobalValue *GV,
       return FourByteConstantSection;
     if (Kind.isMergeableConst8())
       return EightByteConstantSection;
-    if (Kind.isMergeableConst16())
+    if (Kind.isMergeableConst16() && SixteenByteConstantSection)
       return SixteenByteConstantSection;
     return ReadOnlySection;  // .const
   }
@@ -582,7 +589,7 @@ getSectionForMergeableConstant(SectionKind Kind) const {
     return FourByteConstantSection;
   if (Kind.isMergeableConst8())
     return EightByteConstantSection;
-  if (Kind.isMergeableConst16())
+  if (Kind.isMergeableConst16() && SixteenByteConstantSection)
     return SixteenByteConstantSection;
   return ReadOnlySection;  // .const
 }

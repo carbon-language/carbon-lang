@@ -160,7 +160,7 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const Section *EightByteConstantSection;
   const Section *SixteenByteConstantSection;
 public:
-  TargetLoweringObjectFileMachO();
+  TargetLoweringObjectFileMachO(const TargetMachine &TM);
   virtual const Section *SelectSectionForGlobal(const GlobalValue *GV,
                                                 SectionKind Kind,
                                                 const TargetMachine &TM) const;
