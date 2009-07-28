@@ -318,7 +318,7 @@ bool AsmParser::ParseStatement() {
   StringRef IDVal = ID.getString();
   
   // Consume the identifier, see what is after it.
-  switch (Lexer.Lex()) {
+  switch (Lexer.Lex().getKind()) {
   case AsmToken::Colon: {
     // identifier ':'   -> Label.
     Lexer.Lex();
@@ -609,7 +609,7 @@ bool AsmParser::ParseDirectiveSet() {
 
   StringRef Name = Lexer.getTok().getString();
   
-  if (Lexer.Lex() != AsmToken::Comma)
+  if (Lexer.Lex().isNot(AsmToken::Comma))
     return TokError("unexpected token in '.set'");
   Lexer.Lex();
 

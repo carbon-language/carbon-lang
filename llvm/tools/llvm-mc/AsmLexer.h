@@ -110,8 +110,8 @@ public:
   AsmLexer(SourceMgr &SrcMgr);
   ~AsmLexer();
   
-  AsmToken::TokenKind Lex() {
-    return CurTok = LexToken(), getKind();
+  const AsmToken &Lex() {
+    return CurTok = LexToken();
   }
   
   AsmToken::TokenKind getKind() const { return CurTok.getKind(); }

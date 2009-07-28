@@ -83,9 +83,8 @@ static int AsLexInput(const char *ProgName) {
   
   bool Error = false;
   
-  AsmToken::TokenKind Tok = Lexer.Lex();
-  while (Tok != AsmToken::Eof) {
-    switch (Tok) {
+  while (Lexer.Lex().isNot(AsmToken::Eof)) {
+    switch (Lexer.getKind()) {
     default:
       Lexer.PrintMessage(Lexer.getLoc(), "unknown token", "warning");
       Error = true;
@@ -136,8 +135,6 @@ static int AsLexInput(const char *ProgName) {
     case AsmToken::Star:           outs() << "Star\n"; break;
     case AsmToken::Tilde:          outs() << "Tilde\n"; break;
     }
-    
-    Tok = Lexer.Lex();
   }
   
   return Error;
