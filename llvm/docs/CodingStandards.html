@@ -43,6 +43,8 @@
               Private</a></li>
           <li><a href="#hl_earlyexit">Use Early Exits and 'continue' to Simplify
               Code</a></li>
+          <li><a href="#hl_else_after_return">Don't use "else" after a
+              return</a></li>
           <li><a href="#hl_predicateloops">Turn Predicate Loops into Predicate
               Functions</a></li>
         </ol></li>
@@ -624,6 +626,88 @@ be a big understandability win.</p>
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="hl_else_after_return">Don't use "else" after a return</a>
+</div>
+
+<div class="doc_text">
+
+<p>For similar reasons above (reduction of indentation and easier reading),
+   please do not use "else" or "else if" after something that interrupts
+   control flow like return, break, continue, goto, etc.  For example, this is
+   "bad":</p>
+   
+<div class="doc_code">
+<pre>
+  case 'J': {
+    if (Signed) {
+      Type = Context.getsigjmp_bufType();
+      if (Type.isNull()) {
+        Error = ASTContext::GE_Missing_sigjmp_buf;
+        return QualType();
+      } else {
+        break;
+      }
+    } else {
+      Type = Context.getjmp_bufType();
+      if (Type.isNull()) {
+        Error = ASTContext::GE_Missing_jmp_buf;
+        return QualType();
+      } else {
+        break;
+      }
+    }
+  }
+  }
+</pre>
+</div>
+
+<p>It is better to write this something like:</p>
+
+<div class="doc_code">
+<pre>
+  case 'J':
+    if (Signed) {
+      Type = Context.getsigjmp_bufType();
+      if (Type.isNull()) {
+        Error = ASTContext::GE_Missing_sigjmp_buf;
+        return QualType();
+      }
+    } else {
+      Type = Context.getjmp_bufType();
+      if (Type.isNull()) {
+        Error = ASTContext::GE_Missing_jmp_buf;
+        return QualType();
+      }
+    }
+    break;
+</pre>
+</div>
+
+<p>Or better yet (in this case), as:</p>
+
+<div class="doc_code">
+<pre>
+  case 'J':
+    if (Signed)
+      Type = Context.getsigjmp_bufType();
+    else
+      Type = Context.getjmp_bufType();
+    
+    if (Type.isNull()) {
+      Error = Signed ? ASTContext::GE_Missing_sigjmp_buf :
+                       ASTContext::GE_Missing_jmp_buf;
+      return QualType();
+    }
+    break;
+</pre>
+</div>
+
+<p>The idea is to reduce indentation and the amount of code you have to keep
+   track of when reading the code.</p>
+              
+</div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
