@@ -3894,7 +3894,6 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     break;
   case 'V': {
     char *End;
-    
     unsigned NumElements = strtoul(Str, &End, 10);
     assert(End != Str && "Missing vector size");
     
@@ -3904,7 +3903,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     Type = Context.getVectorType(ElementType, NumElements);
     break;
   }
-  case 'P': {
+  case 'P':
     Type = Context.getFILEType();
     if (Type.isNull()) {
       Error = ASTContext::GE_Missing_FILE;
@@ -3912,8 +3911,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
     } else {
       break;
     }
-  }
-  case 'J': {
+  case 'J':
     if (Signed) {
       Type = Context.getsigjmp_bufType();
       if (Type.isNull()) {
@@ -3931,7 +3929,6 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context,
         break;
       }
     }
-  }
   }
   
   if (!AllowTypeModifiers)
