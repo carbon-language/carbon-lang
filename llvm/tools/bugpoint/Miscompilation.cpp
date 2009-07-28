@@ -37,6 +37,10 @@ namespace {
     DisableLoopExtraction("disable-loop-extraction", 
         cl::desc("Don't extract loops when searching for miscompilations"),
         cl::init(false));
+  static llvm::cl::opt<bool> 
+    DisableBlockExtraction("disable-block-extraction", 
+        cl::desc("Don't extract blocks when searching for miscompilations"),
+        cl::init(false));
 
   class ReduceMiscompilingPasses : public ListReducer<const PassInfo*> {
     BugDriver &BD;
@@ -556,7 +560,7 @@ DebugAMiscompilation(BugDriver &BD,
     outs() << '\n';
   }
 
-  if (!BugpointIsInterrupted &&
+  if (!BugpointIsInterrupted && !DisableBlockExtraction && 
       ExtractBlocks(BD, TestFn, MiscompiledFunctions)) {
     // Okay, we extracted some blocks and the problem still appears.  See if we
     // can eliminate some of the created functions from being candidates.
