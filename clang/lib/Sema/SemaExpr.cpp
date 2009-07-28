@@ -5490,12 +5490,15 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   for (unsigned i = 0, e = BSI->Params.size(); i != e; ++i)
     ArgTypes.push_back(BSI->Params[i]->getType());
 
+  bool NoReturn = BSI->TheDecl->getAttr<NoReturnAttr>();
   QualType BlockTy;
   if (!BSI->hasPrototype)
-    BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0);
+    BlockTy = Context.getFunctionType(RetTy, 0, 0, false, 0, false, false, 0, 0,
+                                      NoReturn);
   else
     BlockTy = Context.getFunctionType(RetTy, ArgTypes.data(), ArgTypes.size(),
-                                      BSI->isVariadic, 0);
+                                      BSI->isVariadic, 0, false, false, 0, 0,
+                                      NoReturn);
 
   // FIXME: Check that return/parameter types are complete/non-abstract
   DiagnoseUnusedParameters(BSI->Params.begin(), BSI->Params.end());
@@ -5507,6 +5510,7 @@ Sema::OwningExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
   CurFunctionNeedsScopeChecking = BSI->SavedFunctionNeedsScopeChecking;
   
   BSI->TheDecl->setBody(body.takeAs<CompoundStmt>());
+  CheckFallThroughForBlock(BlockTy, BSI->TheDecl->getBody());
   return Owned(new (Context) BlockExpr(BSI->TheDecl, BlockTy,
                                        BSI->hasBlockDeclRefExprs));
 }

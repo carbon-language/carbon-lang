@@ -1124,8 +1124,8 @@ Sema::ControlFlowKind Sema::CheckFallThrough(Stmt *Root) {
 
 /// CheckFallThroughForFunctionDef - Check that we don't fall off the end of a
 /// function that should return a value.  Check that we don't fall off the end
-/// of a noreturn function.  We assume that functions not marked noreturn will
-/// return.
+/// of a noreturn function.  We assume that functions and blocks not marked
+/// noreturn will return.
 void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
   // FIXME: Would be nice if we had a better way to control cascading errors,
   // but for now, avoid them.  The problem is that when Parse sees:
@@ -1168,6 +1168,51 @@ void Sema::CheckFallThroughForFunctionDef(Decl *D, Stmt *Body) {
         Diag(Compound->getRBracLoc(), diag::warn_falloff_noreturn_function);
       else if (!ReturnsVoid)
         Diag(Compound->getRBracLoc(), diag::warn_falloff_nonvoid_function);
+      break;
+    case NeverFallThrough:
+      break;
+    }
+  }
+}
+
+/// CheckFallThroughForBlock - Check that we don't fall off the end of a block
+/// that should return a value.  Check that we don't fall off the end of a
+/// noreturn block.  We assume that functions and blocks not marked noreturn
+/// will return.
+void Sema::CheckFallThroughForBlock(QualType BlockTy, Stmt *Body) {
+  // FIXME: Would be nice if we had a better way to control cascading errors,
+  // but for now, avoid them.  The problem is that when Parse sees:
+  //   int foo() { return a; }
+  // The return is eaten and the Sema code sees just:
+  //   int foo() { }
+  // which this code would then warn about.
+  if (getDiagnostics().hasErrorOccurred())
+    return;
+  bool ReturnsVoid = false;
+  bool HasNoReturn = false;
+  if (const FunctionType *FT = BlockTy->getPointeeType()->getAsFunctionType()) {
+    if (FT->getResultType()->isVoidType())
+      ReturnsVoid = true;
+    if (FT->getNoReturnAttr())
+      HasNoReturn = true;
+  }
+    
+  if (ReturnsVoid && !HasNoReturn)
+    return;
+  // FIXME: Funtion try block
+  if (CompoundStmt *Compound = dyn_cast<CompoundStmt>(Body)) {
+    switch (CheckFallThrough(Body)) {
+    case MaybeFallThrough:
+      if (HasNoReturn)
+        Diag(Compound->getRBracLoc(), diag::err_noreturn_block_has_return_expr);
+      else if (!ReturnsVoid)
+        Diag(Compound->getRBracLoc(), diag::err_maybe_falloff_nonvoid_block);
+      break;
+    case AlwaysFallThrough:
+      if (HasNoReturn)
+        Diag(Compound->getRBracLoc(), diag::err_noreturn_block_has_return_expr);
+      else if (!ReturnsVoid)
+        Diag(Compound->getRBracLoc(), diag::err_falloff_nonvoid_block);
       break;
     case NeverFallThrough:
       break;

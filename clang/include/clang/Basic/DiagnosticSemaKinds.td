@@ -110,6 +110,10 @@ def warn_maybe_falloff_nonvoid_function : Warning<
 def warn_falloff_nonvoid_function : Warning<
   "control reaches end of non-void function">,
   InGroup<ReturnType>;
+def err_maybe_falloff_nonvoid_block : Error<
+  "control may reach end of non-void block">;
+def err_falloff_nonvoid_block : Error<
+  "control reaches end of non-void block">;
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<

@@ -802,8 +802,9 @@ public:
                                       SourceLocation MemberLoc,
                                       IdentifierInfo &Member);
                
-  /// Helpers for dealing with functions.
+  /// Helpers for dealing with blocks and functions.
   void CheckFallThroughForFunctionDef(Decl *D, Stmt *Body);
+  void CheckFallThroughForBlock(QualType BlockTy, Stmt *Body);
   bool CheckParmsForFunctionDef(FunctionDecl *FD);
   void CheckCXXDefaultArguments(FunctionDecl *FD);
   void CheckExtraCXXDefaultArguments(Declarator &D);
