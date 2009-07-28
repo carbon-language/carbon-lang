@@ -317,7 +317,7 @@ DwarfException::ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*>
   int FirstAction = 0;
   unsigned SizeActions = 0;
   const LandingPadInfo *PrevLPI = 0;
-  for (SmallVector<const LandingPadInfo *, 64>::const_iterator
+  for (SmallVectorImpl<const LandingPadInfo *>::const_iterator
          I = LandingPads.begin(), E = LandingPads.end(); I != E; ++I) {
     const LandingPadInfo *LPI = *I;
     const std::vector<int> &TypeIds = LPI->TypeIds;
@@ -384,8 +384,10 @@ void DwarfException::EmitExceptionTable() {
   // duplicate actions.
   SmallVector<const LandingPadInfo *, 64> LandingPads;
   LandingPads.reserve(PadInfos.size());
+
   for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
     LandingPads.push_back(&PadInfos[i]);
+
   std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
 
   // Compute the actions table and gather the first action index for each
@@ -394,18 +396,10 @@ void DwarfException::EmitExceptionTable() {
   SmallVector<unsigned, 64> FirstActions;
   unsigned SizeActions = ComputeActionsTable(LandingPads, Actions, FirstActions);
 
-  // Compute the call-site table.  The entry for an invoke has a try-range
-  // containing the call, a non-zero landing pad and an appropriate action.  The
-  // entry for an ordinary call has a try-range containing the call and zero for
-  // the landing pad and the action.  Calls marked 'nounwind' have no entry and
-  // must not be contained in the try-range of any entry - they form gaps in the
-  // table.  Entries must be ordered by try-range address.
-  SmallVector<CallSiteEntry, 64> CallSites;
-  RangeMapType PadMap;
-
   // Invokes and nounwind calls have entries in PadMap (due to being bracketed
   // by try-range labels when lowered).  Ordinary calls do not, so appropriate
   // try-ranges for them need be deduced.
+  RangeMapType PadMap;
   for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
     const LandingPadInfo *LandingPad = LandingPads[i];
     for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
@@ -416,6 +410,14 @@ void DwarfException::EmitExceptionTable() {
     }
   }
 
+  // Compute the call-site table.  The entry for an invoke has a try-range
+  // containing the call, a non-zero landing pad and an appropriate action.  The
+  // entry for an ordinary call has a try-range containing the call and zero for
+  // the landing pad and the action.  Calls marked 'nounwind' have no entry and
+  // must not be contained in the try-range of any entry - they form gaps in the
+  // table.  Entries must be ordered by try-range address.
+  SmallVector<CallSiteEntry, 64> CallSites;
+
   // The end label of the previous invoke or nounwind try-range.
   unsigned LastLabel = 0;
 
@@ -423,7 +425,7 @@ void DwarfException::EmitExceptionTable() {
   // an ordinary call) between the end of the previous try-range and now.
   bool SawPotentiallyThrowing = false;
 
-  // Whether the last callsite entry was for an invoke.
+  // Whether the last CallSite entry was for an invoke.
   bool PreviousIsInvoke = false;
 
   // Visit all instructions in order of address.
@@ -451,7 +453,6 @@ void DwarfException::EmitExceptionTable() {
 
       PadRange P = L->second;
       const LandingPadInfo *LandingPad = LandingPads[P.PadIndex];
-
       assert(BeginLabel == LandingPad->BeginLabels[P.RangeIndex] &&
              "Inconsistent landing pad map!");
 
@@ -562,8 +563,9 @@ void DwarfException::EmitExceptionTable() {
   Asm->EOL("Call-site table length");
 
   // Emit the landing pad site information.
-  for (unsigned i = 0, e = CallSites.size(); i < e; ++i) {
-    const CallSiteEntry &S = CallSites[i];
+  for (SmallVectorImpl<CallSiteEntry>::const_iterator
+         I = CallSites.begin(), E = CallSites.end(); I != E; ++I) {
+    const CallSiteEntry &S = *I;
     const char *BeginTag;
     unsigned BeginNumber;
 
@@ -600,9 +602,9 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the actions.
-  for (unsigned I = 0, N = Actions.size(); I != N; ++I) {
-    ActionEntry &Action = Actions[I];
-
+  for (SmallVectorImpl<ActionEntry>::const_iterator
+         I = Actions.begin(), E = Actions.end(); I != E; ++I) {
+    const ActionEntry &Action = *I;
     Asm->EmitSLEB128Bytes(Action.ValueForTypeID);
     Asm->EOL("TypeInfo index");
     Asm->EmitSLEB128Bytes(Action.NextAction);
@@ -610,8 +612,9 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the type ids.
-  for (unsigned M = TypeInfos.size(); M; --M) {
-    GlobalVariable *GV = TypeInfos[M - 1];
+  for (std::vector<GlobalVariable *>::const_reverse_iterator
+         I = TypeInfos.rbegin(), E = TypeInfos.rend(); I != E; ++I) {
+    GlobalVariable *GV = *I;
     PrintRelDirective();
 
     if (GV) {
@@ -625,8 +628,9 @@ void DwarfException::EmitExceptionTable() {
   }
 
   // Emit the filter typeids.
-  for (unsigned j = 0, M = FilterIds.size(); j < M; ++j) {
-    unsigned TypeID = FilterIds[j];
+  for (std::vector<unsigned>::const_iterator
+         I = FilterIds.begin(), E = FilterIds.end(); I < E; ++I) {
+    unsigned TypeID = *I;
     Asm->EmitULEB128Bytes(TypeID);
     Asm->EOL("Filter TypeInfo index");
   }
