@@ -1544,9 +1544,9 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
         return false;
       }
     } else {
-      if (Ty != FTy->getParamType(Match - 1)) {
+      if (Ty != FTy->getParamType(Match - NumRets)) {
         CheckFailed(IntrinsicParam(ArgNo, NumRets) + " does not "
-                    "match parameter %" + utostr(Match - 1) + ".", F);
+                    "match parameter %" + utostr(Match - NumRets) + ".", F);
         return false;
       }
     }
