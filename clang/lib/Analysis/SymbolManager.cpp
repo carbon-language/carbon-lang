@@ -187,7 +187,7 @@ QualType SymbolRegionValue::getType(ASTContext& C) const {
 SymbolManager::~SymbolManager() {}
 
 bool SymbolManager::canSymbolicate(QualType T) {
-  return Loc::IsLocType(T) || T->isIntegerType();  
+  return Loc::IsLocType(T) || (T->isIntegerType() && T->isScalarType());
 }
 
 void SymbolReaper::markLive(SymbolRef sym) {
