@@ -2,6 +2,7 @@
 // print line numbers in asm.
 // RUN: %llvmgcc -S -O0 -g %s -o - | llvm-as | \
 // RUN:    llc --disable-fp-elim -f -O0 -relocation-model=pic | grep {# SrcLine 25}
+// XFAIL: *
 
 #include <stdlib.h>
 
