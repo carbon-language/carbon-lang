@@ -57,12 +57,14 @@ using namespace idx;
 class TUnit : public TranslationUnit {
 public:
   TUnit(ASTUnit *ast, const std::string &filename)
-    : AST(ast), Filename(filename) { }
+    : AST(ast), Filename(filename), DeclRefMap(ast->getASTContext()) { }
   
   virtual ASTContext &getASTContext() { return AST->getASTContext(); }
+  virtual DeclReferenceMap &getDeclReferenceMap() { return DeclRefMap; }
   
   llvm::OwningPtr<ASTUnit> AST;
   std::string Filename;
+  DeclReferenceMap DeclRefMap;
 };
 
 static llvm::cl::list<ParsedSourceLocation>

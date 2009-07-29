@@ -18,12 +18,14 @@ namespace clang {
   class ASTContext;
 
 namespace idx {
+  class DeclReferenceMap;
 
 /// \brief Abstract interface for a translation unit.
 class TranslationUnit {
 public:
   virtual ~TranslationUnit();
   virtual ASTContext &getASTContext() = 0;
+  virtual DeclReferenceMap &getDeclReferenceMap() = 0;
 };
 
 } // namespace idx
