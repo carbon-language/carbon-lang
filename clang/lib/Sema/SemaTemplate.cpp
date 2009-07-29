@@ -65,18 +65,44 @@ TemplateNameKind Sema::isTemplateName(const IdentifierInfo &II, Scope *S,
           TNK = TNK_Type_template;
         }
       }
-    }
-
-    // FIXME: What follows is a slightly less gross hack than what used to 
-    // follow.
-    if (OverloadedFunctionDecl *Ovl 
-          = dyn_cast<OverloadedFunctionDecl>(IIDecl)) {
+    } else if (OverloadedFunctionDecl *Ovl 
+                 = dyn_cast<OverloadedFunctionDecl>(IIDecl)) {
       for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
                                                   FEnd = Ovl->function_end();
            F != FEnd; ++F) {
-        if (isa<FunctionTemplateDecl>(*F)) {
-          TemplateResult = TemplateTy::make(Ovl);
-          return TNK_Function_template;
+        if (FunctionTemplateDecl *FuncTmpl 
+              = dyn_cast<FunctionTemplateDecl>(*F)) {
+          // We've found a function template. Determine whether there are
+          // any other function templates we need to bundle together in an
+          // OverloadedFunctionDecl
+          for (++F; F != FEnd; ++F) {
+            if (isa<FunctionTemplateDecl>(*F))
+              break;
+          }
+          
+          if (F != FEnd) {
+            // Build an overloaded function decl containing only the
+            // function templates in Ovl.
+            OverloadedFunctionDecl *OvlTemplate 
+              = OverloadedFunctionDecl::Create(Context,
+                                               Ovl->getDeclContext(),
+                                               Ovl->getDeclName());
+            OvlTemplate->addOverload(FuncTmpl);
+            OvlTemplate->addOverload(*F);
+            for (++F; F != FEnd; ++F) {
+              if (isa<FunctionTemplateDecl>(*F))
+                OvlTemplate->addOverload(*F);
+            }
+            
+            // FIXME: HACK! We need TemplateName to be able to refer to
+            // sets of overloaded function templates.
+            TemplateResult = TemplateTy::make(OvlTemplate);
+            return TNK_Function_template;
+          }
+          
+          TNK = TNK_Function_template;
+          Template = FuncTmpl;
+          break;
         }
       }
     }
