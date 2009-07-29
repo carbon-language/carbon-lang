@@ -1317,8 +1317,10 @@ void BugReporter::FlushReports() {
       FlushReport(EQ);
     }
     
-    // Delete the BugType object.  This will also delete the equivalence
-    // classes.
+    // Delete the BugType object.  
+
+    // FIXME: this will *not* delete the BugReportEquivClasses, since FoldingSet
+    // only deletes the buckets, not the nodes themselves.
     delete BT;
   }
 
