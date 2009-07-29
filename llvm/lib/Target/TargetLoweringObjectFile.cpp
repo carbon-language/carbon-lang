@@ -420,8 +420,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
     unsigned Align = 
       TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV));
     
-    std::string Name = CStringSection_->getName() + utostr(Size) + '.' +
-    utostr(Align);
+    std::string Name = CStringSection_->getName() + "1." + utostr(Align);
     return getOrCreateSection(Name.c_str(), false,
                               SectionKind::MergeableCString);
   }
