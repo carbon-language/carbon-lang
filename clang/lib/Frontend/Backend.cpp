@@ -200,7 +200,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
   if (Action == Backend_EmitBC) {
     getPerModulePasses()->add(createBitcodeWriterPass(*AsmOutStream));
   } else if (Action == Backend_EmitLL) {
-    getPerModulePasses()->add(createPrintModulePass(&FormattedOutStream));
+    getPerModulePasses()->add(createPrintModulePass(AsmOutStream));
   } else {
     bool Fast = CompileOpts.OptimizationLevel == 0;
 
