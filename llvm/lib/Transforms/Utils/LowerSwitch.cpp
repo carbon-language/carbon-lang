@@ -177,7 +177,6 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                                       BasicBlock* Default)
 {
   Function* F = OrigBlock->getParent();
-  LLVMContext &Context = F->getContext();
   BasicBlock* NewLeaf = BasicBlock::Create("LeafBlock");
   Function::iterator FI = OrigBlock;
   F->getBasicBlockList().insert(++FI, NewLeaf);

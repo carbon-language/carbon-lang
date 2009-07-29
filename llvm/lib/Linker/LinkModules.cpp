@@ -537,7 +537,6 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
                     std::multimap<std::string, GlobalVariable *> &AppendingVars,
                         std::string *Err) {
   ValueSymbolTable &DestSymTab = Dest->getValueSymbolTable();
-  LLVMContext &Context = Dest->getContext();
 
   // Loop over all of the globals in the src module, mapping them over as we go
   for (Module::const_global_iterator I = Src->global_begin(),
@@ -724,8 +723,6 @@ CalculateAliasLinkage(const GlobalValue *SGV, const GlobalValue *DGV) {
 static bool LinkAlias(Module *Dest, const Module *Src,
                       std::map<const Value*, Value*> &ValueMap,
                       std::string *Err) {
-  LLVMContext &Context = Dest->getContext();
-
   // Loop over all alias in the src module
   for (Module::const_alias_iterator I = Src->alias_begin(),
          E = Src->alias_end(); I != E; ++I) {
@@ -931,7 +928,6 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                                std::map<const Value*, Value*> &ValueMap,
                                std::string *Err) {
   ValueSymbolTable &DestSymTab = Dest->getValueSymbolTable();
-  LLVMContext &Context = Dest->getContext();
 
   // Loop over all of the functions in the src module, mapping them over
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {

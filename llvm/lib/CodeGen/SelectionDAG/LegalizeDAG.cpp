@@ -337,7 +337,6 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
                                 SelectionDAG &DAG, const TargetLowering &TLI) {
   bool Extend = false;
   DebugLoc dl = CFP->getDebugLoc();
-  LLVMContext *Context = DAG.getContext();
 
   // If a FP immediate is precise when represented as a float and if the
   // target can do an extending load from float to double, we put it into
