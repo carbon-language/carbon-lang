@@ -304,6 +304,7 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
     const RecPair &ArgTypes = I->first;
     const std::vector<Record*> &RetTys = ArgTypes.first;
     const std::vector<Record*> &ParamTys = ArgTypes.second;
+    std::vector<unsigned> OverloadedTypeIndices;
 
     OS << "    VerifyIntrinsicPrototype(ID, IF, " << RetTys.size() << ", "
        << ParamTys.size();
@@ -315,6 +316,9 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
 
       if (ArgType->isSubClassOf("LLVMMatchType")) {
         unsigned Number = ArgType->getValueAsInt("Number");
+        assert(Number < OverloadedTypeIndices.size() &&
+               "Invalid matching number!");
+        Number = OverloadedTypeIndices[Number];
         if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
           OS << "~(ExtendedElementVectorType | " << Number << ")";
         else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
@@ -324,6 +328,9 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
       } else {
         MVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
         OS << getEnumName(VT);
+
+        if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny)
+          OverloadedTypeIndices.push_back(j);
 
         if (VT == MVT::isVoid && j != 0 && j != je - 1)
           throw "Var arg type not last argument";
@@ -337,6 +344,9 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
 
       if (ArgType->isSubClassOf("LLVMMatchType")) {
         unsigned Number = ArgType->getValueAsInt("Number");
+        assert(Number < OverloadedTypeIndices.size() &&
+               "Invalid matching number!");
+        Number = OverloadedTypeIndices[Number];
         if (ArgType->isSubClassOf("LLVMExtendedElementVectorType"))
           OS << "~(ExtendedElementVectorType | " << Number << ")";
         else if (ArgType->isSubClassOf("LLVMTruncatedElementVectorType"))
@@ -346,6 +356,9 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
       } else {
         MVT::SimpleValueType VT = getValueType(ArgType->getValueAsDef("VT"));
         OS << getEnumName(VT);
+
+        if (VT == MVT::iAny || VT == MVT::fAny || VT == MVT::iPTRAny)
+          OverloadedTypeIndices.push_back(j + RetTys.size());
 
         if (VT == MVT::isVoid && j != 0 && j != je - 1)
           throw "Var arg type not last argument";
