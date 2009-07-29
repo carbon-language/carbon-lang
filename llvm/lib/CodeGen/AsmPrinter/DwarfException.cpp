@@ -269,8 +269,6 @@ unsigned DwarfException::
 ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
                     SmallVectorImpl<ActionEntry> &Actions,
                     SmallVectorImpl<unsigned> &FirstActions) {
-  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
-
   // Negative type IDs index into FilterIds. Positive type IDs index into
   // TypeInfos.  The value written for a positive type ID is just the type ID
   // itself.  For a negative type ID, however, the value written is the
@@ -281,11 +279,14 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
   // of complication does not occur for positive type IDs because type infos are
   // output using a fixed width encoding.  FilterOffsets[i] holds the byte
   // offset corresponding to FilterIds[i].
+
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
   SmallVector<int, 16> FilterOffsets;
   FilterOffsets.reserve(FilterIds.size());
   int Offset = -1;
-  for(std::vector<unsigned>::const_iterator
-        I = FilterIds.begin(), E = FilterIds.end(); I != E; ++I) {
+
+  for (std::vector<unsigned>::const_iterator
+         I = FilterIds.begin(), E = FilterIds.end(); I != E; ++I) {
     FilterOffsets.push_back(Offset);
     Offset -= TargetAsmInfo::getULEB128Size(*I);
   }
@@ -295,6 +296,7 @@ ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
   int FirstAction = 0;
   unsigned SizeActions = 0;
   const LandingPadInfo *PrevLPI = 0;
+
   for (SmallVectorImpl<const LandingPadInfo *>::const_iterator
          I = LandingPads.begin(), E = LandingPads.end(); I != E; ++I) {
     const LandingPadInfo *LPI = *I;
@@ -568,6 +570,8 @@ void DwarfException::EmitExceptionTable() {
 #else
   Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
   Asm->EOL("TType format (DW_EH_PE_absptr)");
+  Asm->EmitULEB128Bytes(TypeOffset);
+  Asm->EOL("TType base offset");
 #endif
 
   Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
