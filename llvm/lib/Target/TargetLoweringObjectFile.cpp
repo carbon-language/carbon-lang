@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
@@ -407,9 +408,8 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // into a 'uniqued' section name, create and return the section now.
   if (Kind.isWeak()) {
     const char *Prefix = getSectionPrefixForUniqueGlobal(Kind);
-    // FIXME: Use mangler interface (PR4584).
-    std::string Name = Prefix+GV->getNameStr();
-    return getOrCreateSection(Name.c_str(), false, Kind.getKind());
+    std::string Name = Mang->makeNameProper(GV->getNameStr());
+    return getOrCreateSection((Prefix+Name).c_str(), false, Kind.getKind());
   }
   
   if (Kind.isText()) return TextSection;

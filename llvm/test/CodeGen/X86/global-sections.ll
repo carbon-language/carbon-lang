@@ -55,3 +55,16 @@
 ; DARWIN: _G5:
 ; DARWIN:    .long 47
 
+
+; PR4584
+@"foo bar" = linkonce global i32 42
+
+; LINUX: .type	foo_20_bar,@object
+; LINUX:.section	.gnu.linkonce.d.foo_20_bar,"aw",@progbits
+; LINUX: .weak	foo_20_bar
+; LINUX: foo_20_bar:
+
+; DARWIN: .section		__DATA,__datacoal_nt,coalesced
+; DARWIN: .globl	"_foo bar"
+; DARWIN:	.weak_definition "_foo bar"
+; DARWIN: "_foo bar":
