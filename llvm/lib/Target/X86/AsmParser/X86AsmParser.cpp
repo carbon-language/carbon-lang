@@ -26,7 +26,7 @@ class X86ATTAsmParser : public TargetAsmParser {
 
 private:
   bool MatchInstruction(const StringRef &Name,
-                        llvm::SmallVector<X86Operand, 3> &Operands,
+                        SmallVectorImpl<X86Operand> &Operands,
                         MCInst &Inst);
 
   MCAsmParser &getParser() const { return Parser; }
@@ -290,13 +290,13 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
 
 bool
 X86ATTAsmParser::MatchInstruction(const StringRef &Name,
-                                  llvm::SmallVector<X86Operand, 3> &Operands,
+                                  SmallVectorImpl<X86Operand> &Operands,
                                   MCInst &Inst) {
   return false;
 }
 
 bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
-  llvm::SmallVector<X86Operand, 3> Operands;
+  SmallVector<X86Operand, 3> Operands;
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
