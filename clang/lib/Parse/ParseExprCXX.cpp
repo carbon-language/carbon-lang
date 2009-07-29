@@ -516,6 +516,10 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   // Match the ')'.
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
+  // TypeRep could be null, if it references an invalid typedef.
+  if (!TypeRep)
+    return ExprError();
+
   assert((Exprs.size() == 0 || Exprs.size()-1 == CommaLocs.size())&&
          "Unexpected number of commas!");
   return Actions.ActOnCXXTypeConstructExpr(DS.getSourceRange(), TypeRep,

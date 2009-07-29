@@ -3171,8 +3171,9 @@ public:
                           bool ForceRValue = false);
 
   /// CheckCastTypes - Check type constraints for casting between types under
-  /// C semantics.
-  bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr);
+  /// C semantics, or forward to CXXCheckCStyleCast in C++.
+  bool CheckCastTypes(SourceRange TyRange, QualType CastTy, Expr *&CastExpr,
+                      bool FunctionalStyle = false);
 
   // CheckVectorCast - check type constraints for vectors. 
   // Since vectors are an extension, there are no C standard reference for this.
@@ -3189,7 +3190,8 @@ public:
 
   /// CXXCheckCStyleCast - Check constraints of a C-style or function-style
   /// cast under C++ semantics.
-  bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr);
+  bool CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
+                          bool FunctionalStyle);
 
   /// CheckMessageArgumentTypes - Check types in an Obj-C message send. 
   /// \param Method - May be null.

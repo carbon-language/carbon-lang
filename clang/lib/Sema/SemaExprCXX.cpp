@@ -203,7 +203,7 @@ Sema::ActOnCXXTypeConstructExpr(SourceRange TypeRange, TypeTy *TypeRep,
   // corresponding cast expression.
   //
   if (NumExprs == 1) {
-    if (CheckCastTypes(TypeRange, Ty, Exprs[0]))
+    if (CheckCastTypes(TypeRange, Ty, Exprs[0], /*functional-style*/true))
       return ExprError();
     exprs.release();
     return Owned(new (Context) CXXFunctionalCastExpr(Ty.getNonReferenceType(),

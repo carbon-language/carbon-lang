@@ -2918,9 +2918,10 @@ Sema::ActOnInitList(SourceLocation LBraceLoc, MultiExprArg initlist,
 }
 
 /// CheckCastTypes - Check type constraints for casting between types.
-bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr) {
+bool Sema::CheckCastTypes(SourceRange TyR, QualType castType, Expr *&castExpr,
+                          bool FunctionalStyle) {
   if (getLangOptions().CPlusPlus)
-    return CXXCheckCStyleCast(TyR, castType, castExpr);
+    return CXXCheckCStyleCast(TyR, castType, castExpr, FunctionalStyle);
 
   UsualUnaryConversions(castExpr);
 

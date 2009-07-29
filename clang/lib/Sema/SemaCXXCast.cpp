@@ -999,7 +999,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
 }
 
 
-bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr)
+bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr,
+                              bool FunctionalStyle)
 {
   // This test is outside everything else because it's the only case where
   // a non-lvalue-reference target type does not lead to decay.
@@ -1036,9 +1037,8 @@ bool Sema::CXXCheckCStyleCast(SourceRange R, QualType CastTy, Expr *&CastExpr)
     }
   }
 
-  // FIXME: Differentiate functional-style and C-style cast.
   if (tcr != TC_Success && msg != 0)
-    Diag(R.getBegin(), msg) << CT_CStyle
+    Diag(R.getBegin(), msg) << (FunctionalStyle ? CT_Functional : CT_CStyle)
       << CastExpr->getType() << CastTy << R;
 
   return tcr != TC_Success;

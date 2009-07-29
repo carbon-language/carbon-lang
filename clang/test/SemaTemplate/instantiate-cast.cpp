@@ -89,7 +89,7 @@ template struct ConstCast0<int const *, float *>; // expected-note{{instantiatio
 template<typename T, typename U>
 struct FunctionalCast1 {
   void f(T t) {
-    (void)U(t); // expected-error{{C-style cast from 'struct A' to 'int'}}
+    (void)U(t); // expected-error{{functional-style cast from 'struct A' to 'int'}}
   }
 };
 
