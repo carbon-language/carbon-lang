@@ -30,6 +30,18 @@ TEST(TwineTest, Construction) {
   EXPECT_EQ("hi", Twine(StringRef("hithere", 2)).str());
 }
 
+TEST(TwineTest, Numbers) {
+  EXPECT_EQ("123", Twine::utostr(123).str());
+  EXPECT_EQ("-123", Twine::itostr(-123).str());
+  EXPECT_EQ("123", Twine::utostr(123).str());
+  EXPECT_EQ("-123", Twine::itostr(-123).str());
+  EXPECT_EQ("123", Twine::utostr((char) 123).str());
+  EXPECT_EQ("-123", Twine::itostr((char) -123).str());
+
+  EXPECT_EQ("7B", Twine::utohexstr(123).str());
+  EXPECT_EQ("FFFFFFFFFFFFFF85", Twine::itohexstr(-123).str());
+}
+
 TEST(TwineTest, Concat) {
   // Check verse repr, since we care about the actual representation not just
   // the result.

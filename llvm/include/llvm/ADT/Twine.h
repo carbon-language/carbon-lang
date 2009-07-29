@@ -86,6 +86,9 @@ namespace llvm {
       /// The empty string.
       EmptyKind,
 
+      /// A pointer to a Twine instance.
+      TwineKind,
+
       /// A pointer to a C string instance.
       CStringKind,
 
@@ -95,8 +98,16 @@ namespace llvm {
       /// A pointer to a StringRef instance.
       StringRefKind,
 
-      /// A pointer to a Twine instance.
-      TwineKind
+      /// A pointer to a uint64_t value, to render as an unsigned decimal
+      /// integer.
+      UDecKind,
+
+      /// A pointer to a uint64_t value, to render as an unsigned hexadecimal
+      /// integer.
+      UHexKind,
+
+      /// A pointer to a uint64_t value, to render as a signed decimal integer.
+      SDecKind
     };
 
   private:
@@ -232,12 +243,6 @@ namespace llvm {
       assert(isValid() && "Invalid twine!");
     }
 
-    /// Create a 'null' string, which is an empty string that always
-    /// concatenates to form another empty string.
-    static Twine createNull() {
-      return Twine(NullKind);
-    }
-
     // FIXME: Unfortunately, to make sure this is as efficient as possible we
     // need extra binary constructors from particular types. We can't rely on
     // the compiler to be smart enough to fold operator+()/concat() down to the
@@ -253,6 +258,38 @@ namespace llvm {
     /*implicit*/ Twine(const StringRef &_LHS, const char *_RHS)
       : LHS(&_LHS), RHS(_RHS), LHSKind(StringRefKind), RHSKind(CStringKind) {
       assert(isValid() && "Invalid twine!");
+    }
+
+    /// Create a 'null' string, which is an empty string that always
+    /// concatenates to form another empty string.
+    static Twine createNull() {
+      return Twine(NullKind);
+    }
+
+    /// @}
+    /// @name Numeric Conversions
+    /// @{
+
+    /// Construct a twine to print \arg Val as an unsigned decimal integer.
+    static Twine utostr(const uint64_t &Val) {
+      return Twine(&Val, UDecKind, 0, EmptyKind);
+    }
+
+    /// Construct a twine to print \arg Val as a signed decimal integer.
+    static Twine itostr(const int64_t &Val) {
+      return Twine(&Val, SDecKind, 0, EmptyKind);
+    }
+
+    // Construct a twine to print \arg Val as an unsigned hexadecimal integer.
+    static Twine utohexstr(const uint64_t &Val) {
+      return Twine(&Val, UHexKind, 0, EmptyKind);
+    }
+
+    // Construct a twine to print \arg Val as an unsigned hexadecimal
+    // integer. This routine is provided as a convenience to sign extend values
+    // before printing.
+    static Twine itohexstr(const int64_t &Val) {
+      return Twine(&Val, UHexKind, 0, EmptyKind);
     }
 
     /// @}
