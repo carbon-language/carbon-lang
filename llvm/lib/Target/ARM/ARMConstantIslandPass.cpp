@@ -1358,10 +1358,12 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
     for (unsigned j = 0, ee = JTBBs.size(); j != ee; ++j) {
       MachineBasicBlock *MBB = JTBBs[j];
       unsigned DstOffset = BBOffsets[MBB->getNumber()];
-      if (ByteOk && !OffsetIsInRange(JTOffset, DstOffset, (1<<8)-1, true, false))
+      // Negative offset is not ok. FIXME: We should change BB layout to make
+      // sure all the branches are forward.
+      if (ByteOk && !OffsetIsInRange(JTOffset, DstOffset, (1<<8)-1, false))
         ByteOk = false;
       if (HalfWordOk &&
-          !OffsetIsInRange(JTOffset, DstOffset, (1<<16)-1, true, false))
+          !OffsetIsInRange(JTOffset, DstOffset, (1<<16)-1, false))
         HalfWordOk = false;
       if (!ByteOk && !HalfWordOk)
         break;

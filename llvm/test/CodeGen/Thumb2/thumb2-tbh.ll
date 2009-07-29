@@ -1,5 +1,9 @@
 ; RUN: llvm-as < %s | llc -mtriple=thumbv7-apple-darwin -relocation-model=pic | FileCheck %s
 
+; Thumb2 target should reorder the bb's in order to use tbb / tbh.
+
+; XFAIL: *
+
 	%struct.R_flstr = type { i32, i32, i8* }
 	%struct._T_tstr = type { i32, %struct.R_flstr*, %struct._T_tstr* }
 @_C_nextcmd = external global i32		; <i32*> [#uses=3]
