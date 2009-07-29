@@ -54,9 +54,6 @@ void ASTRecordLayoutBuilder::LayoutNonVirtualBase(const CXXRecordDecl *RD) {
   Bases.push_back(RD);
   BaseOffsets.push_back(Size);
 
-  // Non-virtual base class has offset too.
-  FieldOffsets.push_back(Size);
-
   // Reserve space for this base.
   Size += BaseSize;
   
