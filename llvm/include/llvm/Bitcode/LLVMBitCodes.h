@@ -108,8 +108,10 @@ namespace bitc {
   };
 
   enum MetadataCodes {
-    METADATA_STRING  = 1,  // MDString:      [values]
-    METADATA_NODE    = 2   // MDNODE:        [n x (type num, value num)]
+    METADATA_STRING        = 1,   // MDSTRING:      [values]
+    METADATA_NODE          = 2,   // MDNODE:        [n x (type num, value num)]
+    METADATA_NAME          = 3,   // STRING:        [values]
+    METADATA_NAMED_NODE    = 4    // NAMEDMDNODE:   [n x mdnodes]
   };
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
   // constant and maintains an implicit current type value.

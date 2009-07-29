@@ -495,6 +495,7 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
   const ValueEnumerator::ValueList &Vals = VE.getValues();
   bool StartedMetadataBlock = false;
   unsigned MDSAbbrev = 0;
+  unsigned String8Abbrev = 0;
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
     
@@ -524,6 +525,33 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       
       // Emit the finished record.
       Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);
+      Record.clear();
+    } else if (const NamedMDNode *NMD = dyn_cast<NamedMDNode>(Vals[i].first)) {
+      if (!StartedMetadataBlock)  {
+        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+        StartedMetadataBlock = true;
+        BitCodeAbbrev *Abbv = new BitCodeAbbrev();
+        Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_STRING));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
+        String8Abbrev = Stream.EmitAbbrev(Abbv);
+      }
+
+      // Write name.
+      const char *StrBegin = NMD->getName().data();
+      for (unsigned i = 0, e = NMD->getName().size(); i != e; ++i)
+        Record.push_back(StrBegin[i]);
+      Stream.EmitRecord(bitc::METADATA_NAME, Record, String8Abbrev);
+      Record.clear();
+
+      // Write named metadata elements.
+      for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
+        if (NMD->getElement(i)) 
+          Record.push_back(VE.getValueID(NMD->getElement(i)));
+        else 
+          Record.push_back(0);
+      }
+      Stream.EmitRecord(bitc::METADATA_NAMED_NODE, Record, 0);
       Record.clear();
     }
   }
@@ -578,7 +606,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   const Type *LastTy = 0;
   for (unsigned i = FirstVal; i != LastVal; ++i) {
     const Value *V = Vals[i].first;
-    if (isa<MDString>(V) || isa<MDNode>(V))
+    if (isa<MetadataBase>(V))
       continue;
     // If we need to switch types, do so now.
     if (V->getType() != LastTy) {

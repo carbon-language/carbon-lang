@@ -734,6 +734,33 @@ bool BitcodeReader::ParseMetadata() {
     switch (Stream.ReadRecord(Code, Record)) {
     default:  // Default behavior: ignore.
       break;
+    case bitc::METADATA_NAME: {
+      // Read named of the named metadata.
+      unsigned NameLength = Record.size();
+      SmallString<8> Name;
+      Name.resize(NameLength);
+      for (unsigned i = 0; i != NameLength; ++i)
+        Name[i] = Record[i];
+      Record.clear();
+      Code = Stream.ReadCode();
+
+      // METADATA_NAME is always followed by METADATA_NAMED_NODE.
+      if (Stream.ReadRecord(Code, Record) != bitc::METADATA_NAMED_NODE)
+        assert ( 0 && "Inavlid Named Metadata record");
+
+      // Read named metadata elements.
+      unsigned Size = Record.size();
+      SmallVector<MetadataBase*, 8> Elts;
+      for (unsigned i = 0; i != Size; ++i) {
+        Value *MD = ValueList.getValueFwdRef(Record[i], Type::MetadataTy);
+        if (MetadataBase *B = dyn_cast<MetadataBase>(MD))
+        Elts.push_back(B);
+      }
+      Value *V = NamedMDNode::Create(Name.c_str(), Elts.data(), Elts.size(), 
+                                     TheModule);
+      ValueList.AssignValue(V, NextValueNo++);
+      break;
+    }
     case bitc::METADATA_NODE: {
       if (Record.empty() || Record.size() % 2 == 1)
         return Error("Invalid METADATA_NODE record");
