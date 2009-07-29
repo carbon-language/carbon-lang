@@ -18,7 +18,8 @@
 namespace llvm {
 
 class TargetRegisterClass;
-
+class TargetRegisterInfo;
+  
 //===----------------------------------------------------------------------===//
 // Machine Operand Flags and Description
 //===----------------------------------------------------------------------===//
@@ -45,13 +46,27 @@ namespace TOI {
 class TargetOperandInfo {
 public:
   /// RegClass - This specifies the register class enumeration of the operand 
-  /// if the operand is a register.  If not, this contains 0.
+  /// if the operand is a register.  If isLookupPtrRegClass is set, then this is
+  /// an index that is passed to TargetRegisterInfo::getPointerRegClass(x) to
+  /// get a dynamic register class.
+  ///
+  /// NOTE: This member should be considered to be private, all access should go
+  /// through "getRegClass(TRI)" below.
   unsigned short RegClass;
+  
+  /// Flags - These are flags from the TOI::OperandFlags enum.
   unsigned short Flags;
+  
   /// Lower 16 bits are used to specify which constraints are set. The higher 16
   /// bits are used to specify the value of constraints (4 bits each).
-  unsigned int Constraints;
+  unsigned Constraints;
   /// Currently no other information.
+  
+  /// getRegClass - Get the register class for the operand, handling resolution
+  /// of "symbolic" pointer register classes etc.  If this is not a register
+  /// operand, this returns null.
+  const TargetRegisterClass *getRegClass(const TargetRegisterInfo *TRI) const;
+  
   
   /// isLookupPtrRegClass - Set if this operand is a pointer value and it
   /// requires a callback to look up its register class.

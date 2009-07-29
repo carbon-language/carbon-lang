@@ -2381,8 +2381,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
   const TargetInstrDesc &TID = get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
-  const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
-    ? RI.getPointerRegClass() : RI.getRegClass(TOI.RegClass);
+  const TargetRegisterClass *RC = TOI.getRegClass(&RI);
   SmallVector<MachineOperand, X86AddrNumOperands> AddrOps;
   SmallVector<MachineOperand,2> BeforeOps;
   SmallVector<MachineOperand,2> AfterOps;
@@ -2460,9 +2459,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
   // Emit the store instruction.
   if (UnfoldStore) {
-    const TargetOperandInfo &DstTOI = TID.OpInfo[0];
-    const TargetRegisterClass *DstRC = DstTOI.isLookupPtrRegClass()
-      ? RI.getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
+    const TargetRegisterClass *DstRC = TID.OpInfo[0].getRegClass(&RI);
     storeRegToAddr(MF, Reg, true, AddrOps, DstRC, NewMIs);
   }
 
@@ -2484,9 +2481,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   bool FoldedLoad = I->second.second & (1 << 4);
   bool FoldedStore = I->second.second & (1 << 5);
   const TargetInstrDesc &TID = get(Opc);
-  const TargetOperandInfo &TOI = TID.OpInfo[Index];
-  const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
-    ? RI.getPointerRegClass() : RI.getRegClass(TOI.RegClass);
+  const TargetRegisterClass *RC = TID.OpInfo[Index].getRegClass(&RI);
   unsigned NumDefs = TID.NumDefs;
   std::vector<SDValue> AddrOps;
   std::vector<SDValue> BeforeOps;
@@ -2521,9 +2516,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   std::vector<MVT> VTs;
   const TargetRegisterClass *DstRC = 0;
   if (TID.getNumDefs() > 0) {
-    const TargetOperandInfo &DstTOI = TID.OpInfo[0];
-    DstRC = DstTOI.isLookupPtrRegClass()
-      ? RI.getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
+    DstRC = TID.OpInfo[0].getRegClass(&RI);
     VTs.push_back(*DstRC->vt_begin());
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {

@@ -37,14 +37,23 @@ bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   return !isPredicated(MI);
 }
 
+/// getRegClass - Get the register class for the operand, handling resolution
+/// of "symbolic" pointer register classes etc.  If this is not a register
+/// operand, this returns null.
+const TargetRegisterClass *
+TargetOperandInfo::getRegClass(const TargetRegisterInfo *TRI) const {
+  if (isLookupPtrRegClass())
+    return TRI->getPointerRegClass(RegClass);
+  return TRI->getRegClass(RegClass);
+}
+
 /// getInstrOperandRegClass - Return register class of the operand of an
 /// instruction of the specified TargetInstrDesc.
 const TargetRegisterClass*
 llvm::getInstrOperandRegClass(const TargetRegisterInfo *TRI,
-                        const TargetInstrDesc &II, unsigned Op) {
+                              const TargetInstrDesc &II, unsigned Op) {
+  // FIXME: Should be an assert!
   if (Op >= II.getNumOperands())
     return NULL;
-  if (II.OpInfo[Op].isLookupPtrRegClass())
-    return TRI->getPointerRegClass();
-  return TRI->getRegClass(II.OpInfo[Op].RegClass);
+  return II.OpInfo[Op].getRegClass(TRI);
 }

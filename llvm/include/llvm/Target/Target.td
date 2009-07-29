@@ -263,8 +263,8 @@ def variable_ops;
 /// derived from this.  TableGen treats the register class as having a symbolic
 /// type that it doesn't know, and resolves the actual regclass to use by using
 /// the TargetRegisterInfo::getPointerRegClass() hook at codegen time.
-class PointerLikeRegClass {
-
+class PointerLikeRegClass<int Kind> {
+  int RegClassKind = Kind;
 }
 
 
@@ -272,7 +272,7 @@ class PointerLikeRegClass {
 /// register class is resolved dynamically via a callback to TargetInstrInfo.
 /// FIXME: We should probably change this to a class which contain a list of
 /// flags. But currently we have but one flag.
-def ptr_rc : PointerLikeRegClass;
+def ptr_rc : PointerLikeRegClass<0>;
 
 /// unknown definition - Mark this operand as being of unknown type, causing
 /// it to be resolved by inference in the context it is used.

@@ -94,8 +94,11 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       
       if (OpR->isSubClassOf("RegisterClass"))
         Res += getQualifiedName(OpR) + "RegClassID, ";
+      else if (OpR->isSubClassOf("PointerLikeRegClass"))
+        Res += utostr(OpR->getValueAsInt("RegClassKind")) + ", ";
       else
         Res += "0, ";
+      
       // Fill in applicable flags.
       Res += "0";
         
