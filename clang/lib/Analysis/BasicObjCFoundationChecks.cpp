@@ -394,14 +394,11 @@ bool AuditCFNumberCreate::Audit(ExplodedNode<GRState>* N,GRStateManager&){
   if (!LV)
     return false;
   
-  const TypedRegion* R = dyn_cast<TypedRegion>(LV->getRegion());
-  if (!R) return false;
-  
-  while (const TypedViewRegion* ATR = dyn_cast<TypedViewRegion>(R)) {
-    R = dyn_cast<TypedRegion>(ATR->getSuperRegion());
-    if (!R) return false;
-  }
-  
+  const TypedRegion* R = dyn_cast<TypedRegion>(LV->getBaseRegion());
+
+  if (!R)
+    return false;
+
   QualType T = Ctx.getCanonicalType(R->getValueType(Ctx));
   
   // FIXME: If the pointee isn't an integer type, should we flag a warning?
