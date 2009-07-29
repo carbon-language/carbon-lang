@@ -1027,11 +1027,13 @@ let isCall = 1,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR] in {
 def t2BL  : T2XI<(outs), (ins i32imm:$func, variable_ops),
                  "bl ${func:call}",
-                  [(ARMcall tglobaladdr:$func)]>, Requires<[IsNotDarwin]>;
+                  [(ARMcall tglobaladdr:$func)]>,
+            Requires<[IsThumb2, IsNotDarwin]>;
 
 def t2BLX : T2XI<(outs), (ins GPR:$func, variable_ops),
                 "blx $func",
-                [(ARMcall GPR:$func)]>, Requires<[IsNotDarwin]>;
+                [(ARMcall GPR:$func)]>,
+            Requires<[IsThumb2, IsNotDarwin]>;
 }
 
 // On Darwin R9 is call-clobbered.
@@ -1041,11 +1043,13 @@ let isCall = 1,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR] in {
 def t2BLr9  : T2XI<(outs), (ins i32imm:$func, variable_ops),
                   "bl ${func:call}",
-                  [(ARMcall tglobaladdr:$func)]>, Requires<[IsDarwin]>;
+                  [(ARMcall tglobaladdr:$func)]>,
+              Requires<[IsThumb2, IsDarwin]>;
 
 def t2BLXr9 : T2XI<(outs), (ins GPR:$func, variable_ops),
                   "blx $func",
-                  [(ARMcall GPR:$func)]>, Requires<[IsDarwin]>;
+                  [(ARMcall GPR:$func)]>,
+              Requires<[IsThumb2, IsDarwin]>;
 }
 
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
@@ -1101,3 +1105,9 @@ def : T2Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
 
 def : T2Pat<(i32 imm:$src),
             (t2MOVTi16 (t2MOVi16 (t2_lo16 imm:$src)), (t2_hi16 imm:$src))>;
+
+// Direct calls
+def : T2Pat<(ARMcall texternalsym:$func), (t2BL texternalsym:$func)>,
+      Requires<[IsThumb2, IsNotDarwin]>;
+def : T2Pat<(ARMcall texternalsym:$func), (t2BLr9 texternalsym:$func)>,
+      Requires<[IsThumb2, IsDarwin]>;

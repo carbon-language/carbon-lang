@@ -172,18 +172,54 @@ let isCall = 1,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR] in {
   def tBL  : T1Ix2<(outs), (ins i32imm:$func, variable_ops),
                    "bl ${func:call}",
-                   [(ARMtcall tglobaladdr:$func)]>;
+                   [(ARMtcall tglobaladdr:$func)]>,
+             Requires<[IsThumb1Only, IsNotDarwin]>;
+
   // ARMv5T and above
   def tBLXi : T1Ix2<(outs), (ins i32imm:$func, variable_ops),
                     "blx ${func:call}",
-                    [(ARMcall tglobaladdr:$func)]>, Requires<[HasV5T]>;
+                    [(ARMcall tglobaladdr:$func)]>,
+              Requires<[IsThumb1Only, HasV5T, IsNotDarwin]>;
+
   def tBLXr : T1I<(outs), (ins tGPR:$func, variable_ops),
                   "blx $func",
-                  [(ARMtcall tGPR:$func)]>, Requires<[HasV5T]>;
+                  [(ARMtcall tGPR:$func)]>,
+              Requires<[IsThumb1Only, HasV5T, IsNotDarwin]>;
+
   // ARMv4T
   def tBX : T1Ix2<(outs), (ins tGPR:$func, variable_ops),
                   "mov lr, pc\n\tbx $func",
-                  [(ARMcall_nolink tGPR:$func)]>;
+                  [(ARMcall_nolink tGPR:$func)]>,
+            Requires<[IsThumb1Only, IsNotDarwin]>;
+}
+
+// On Darwin R9 is call-clobbered.
+let isCall = 1,
+  Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR,
+          D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
+          D16, D17, D18, D19, D20, D21, D22, D23,
+          D24, D25, D26, D27, D28, D29, D30, D31, CPSR] in {
+  def tBLr9 : T1Ix2<(outs), (ins i32imm:$func, variable_ops),
+                   "bl ${func:call}",
+                   [(ARMtcall tglobaladdr:$func)]>,
+             Requires<[IsThumb1Only, IsDarwin]>;
+
+  // ARMv5T and above
+  def tBLXi_r9 : T1Ix2<(outs), (ins i32imm:$func, variable_ops),
+                      "blx ${func:call}",
+                      [(ARMcall tglobaladdr:$func)]>,
+                 Requires<[IsThumb1Only, HasV5T, IsDarwin]>;
+
+  def tBLXr_r9 : T1I<(outs), (ins tGPR:$func, variable_ops),
+                  "blx $func",
+                  [(ARMtcall tGPR:$func)]>,
+                 Requires<[IsThumb1Only, HasV5T, IsDarwin]>;
+
+  // ARMv4T
+  def tBXr9 : T1Ix2<(outs), (ins tGPR:$func, variable_ops),
+                  "mov lr, pc\n\tbx $func",
+                  [(ARMcall_nolink tGPR:$func)]>,
+              Requires<[IsThumb1Only, IsDarwin]>;
 }
 
 let isBranch = 1, isTerminator = 1 in {
@@ -599,11 +635,21 @@ def : T1Pat<(ARMWrapperJT tjumptable:$dst, imm:$id),
             (tLEApcrelJT tjumptable:$dst, imm:$id)>;
 
 // Direct calls
-def : T1Pat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>;
-def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>;
+def : T1Pat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>,
+      Requires<[IsThumb1Only, IsNotDarwin]>;
+def : T1Pat<(ARMtcall texternalsym:$func), (tBLr9 texternalsym:$func)>,
+      Requires<[IsThumb1Only, IsDarwin]>;
+
+def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>,
+      Requires<[IsThumb1Only, HasV5T, IsNotDarwin]>;
+def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi_r9 texternalsym:$func)>,
+      Requires<[IsThumb1Only, HasV5T, IsDarwin]>;
 
 // Indirect calls to ARM routines
-def : Tv5Pat<(ARMcall tGPR:$dst), (tBLXr tGPR:$dst)>;
+def : Tv5Pat<(ARMcall tGPR:$dst), (tBLXr tGPR:$dst)>,
+      Requires<[IsThumb1Only, HasV5T, IsNotDarwin]>;
+def : Tv5Pat<(ARMcall tGPR:$dst), (tBLXr_r9 tGPR:$dst)>,
+      Requires<[IsThumb1Only, HasV5T, IsDarwin]>;
 
 // zextload i1 -> zextload i8
 def : T1Pat<(zextloadi1 t_addrmode_s1:$addr),

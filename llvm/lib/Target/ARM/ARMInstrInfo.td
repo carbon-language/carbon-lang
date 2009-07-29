@@ -614,16 +614,19 @@ let isCall = 1, Itinerary = IIC_Br,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR] in {
   def BL  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 "bl ${func:call}",
-                [(ARMcall tglobaladdr:$func)]>, Requires<[IsNotDarwin]>;
+                [(ARMcall tglobaladdr:$func)]>,
+            Requires<[IsARM, IsNotDarwin]>;
 
   def BL_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                    "bl", " ${func:call}",
-                   [(ARMcall_pred tglobaladdr:$func)]>, Requires<[IsNotDarwin]>;
+                   [(ARMcall_pred tglobaladdr:$func)]>,
+                Requires<[IsARM, IsNotDarwin]>;
 
   // ARMv5T and above
   def BLX : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
                 "blx $func",
-                [(ARMcall GPR:$func)]>, Requires<[IsARM, HasV5T, IsNotDarwin]> {
+                [(ARMcall GPR:$func)]>,
+            Requires<[IsARM, HasV5T, IsNotDarwin]> {
     let Inst{7-4}   = 0b0011;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
@@ -632,7 +635,8 @@ let isCall = 1, Itinerary = IIC_Br,
   // ARMv4T
   def BX : ABXIx2<(outs), (ins GPR:$func, variable_ops),
                    "mov lr, pc\n\tbx $func",
-                  [(ARMcall_nolink GPR:$func)]>, Requires<[IsNotDarwin]> {
+                  [(ARMcall_nolink GPR:$func)]>,
+           Requires<[IsARM, IsNotDarwin]> {
     let Inst{7-4}   = 0b0001;
     let Inst{19-8}  = 0b111111111111;
     let Inst{27-20} = 0b00010010;
@@ -647,11 +651,12 @@ let isCall = 1, Itinerary = IIC_Br,
           D24, D25, D26, D27, D28, D29, D30, D31, CPSR] in {
   def BLr9  : ABXI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                 "bl ${func:call}",
-                [(ARMcall tglobaladdr:$func)]>, Requires<[IsDarwin]>;
+                [(ARMcall tglobaladdr:$func)]>, Requires<[IsARM, IsDarwin]>;
 
   def BLr9_pred : ABI<0b1011, (outs), (ins i32imm:$func, variable_ops),
                    "bl", " ${func:call}",
-                   [(ARMcall_pred tglobaladdr:$func)]>, Requires<[IsDarwin]>;
+                   [(ARMcall_pred tglobaladdr:$func)]>,
+                  Requires<[IsARM, IsDarwin]>;
 
   // ARMv5T and above
   def BLXr9 : AXI<(outs), (ins GPR:$func, variable_ops), BrMiscFrm,
@@ -1441,9 +1446,9 @@ def : ARMPat<(xor GPR:$LHS, so_imm2part:$RHS),
 
 // Direct calls
 def : ARMPat<(ARMcall texternalsym:$func), (BL texternalsym:$func)>,
-      Requires<[IsNotDarwin]>;
+      Requires<[IsARM, IsNotDarwin]>;
 def : ARMPat<(ARMcall texternalsym:$func), (BLr9 texternalsym:$func)>,
-      Requires<[IsDarwin]>;
+      Requires<[IsARM, IsDarwin]>;
 
 // zextload i1 -> zextload i8
 def : ARMPat<(zextloadi1 addrmode2:$addr),  (LDRB addrmode2:$addr)>;
