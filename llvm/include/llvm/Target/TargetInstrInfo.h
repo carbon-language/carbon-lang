@@ -488,12 +488,6 @@ public:
   virtual unsigned GetFunctionSizeInBytes(const MachineFunction &MF) const;
 };
 
-/// getInstrOperandRegClass - Return register class of the operand of an
-/// instruction of the specified TargetInstrDesc.
-const TargetRegisterClass*
-getInstrOperandRegClass(const TargetRegisterInfo *TRI,
-                        const TargetInstrDesc &II, unsigned Op);
-
 } // End llvm namespace
 
 #endif

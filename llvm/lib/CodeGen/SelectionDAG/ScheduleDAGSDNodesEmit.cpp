@@ -75,8 +75,9 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
           Match = false;
           if (User->isMachineOpcode()) {
             const TargetInstrDesc &II = TII->get(User->getMachineOpcode());
-            const TargetRegisterClass *RC =
-              getInstrOperandRegClass(TRI, II, i+II.getNumDefs());
+            const TargetRegisterClass *RC = 0;
+            if (i+II.getNumDefs() < II.getNumOperands())
+              RC = II.OpInfo[i+II.getNumDefs()].getRegClass(TRI);
             if (!UseRC)
               UseRC = RC;
             else if (RC) {
@@ -160,7 +161,7 @@ void ScheduleDAGSDNodes::CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
     // is a vreg in the same register class, use the CopyToReg'd destination
     // register instead of creating a new vreg.
     unsigned VRBase = 0;
-    const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, II, i);
+    const TargetRegisterClass *RC = II.OpInfo[i].getRegClass(TRI);
     if (II.OpInfo[i].isOptionalDef()) {
       // Optional def must be a physical register.
       unsigned NumResults = CountResults(Node);
@@ -251,10 +252,10 @@ ScheduleDAGSDNodes::AddRegisterOperand(MachineInstr *MI, SDValue Op,
   // If the instruction requires a register in a different class, create
   // a new virtual register and copy the value into it.
   if (II) {
-    const TargetRegisterClass *SrcRC =
-      MRI.getRegClass(VReg);
-    const TargetRegisterClass *DstRC =
-      getInstrOperandRegClass(TRI, *II, IIOpNum);
+    const TargetRegisterClass *SrcRC = MRI.getRegClass(VReg);
+    const TargetRegisterClass *DstRC = 0;
+    if (IIOpNum < II->getNumOperands())
+      DstRC = II->OpInfo[IIOpNum].getRegClass(TRI);
     assert((DstRC || (TID.isVariadic() && IIOpNum >= TID.getNumOperands())) &&
            "Don't have operand info for this instruction!");
     if (DstRC && SrcRC != DstRC && !SrcRC->hasSuperClass(DstRC)) {

@@ -449,8 +449,10 @@ void SchedulePostRATDList::PrescanInstruction(MachineInstr *MI) {
     if (!MO.isReg()) continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0) continue;
-    const TargetRegisterClass *NewRC =
-      getInstrOperandRegClass(TRI, MI->getDesc(), i);
+    const TargetRegisterClass *NewRC = 0;
+    
+    if (i < MI->getDesc().getNumOperands())
+      NewRC = MI->getDesc().OpInfo[i].getRegClass(TRI);
 
     // For now, only allow the register to be changed if its register
     // class is consistent across all uses.
@@ -521,8 +523,9 @@ void SchedulePostRATDList::ScanInstruction(MachineInstr *MI,
     if (Reg == 0) continue;
     if (!MO.isUse()) continue;
 
-    const TargetRegisterClass *NewRC =
-      getInstrOperandRegClass(TRI, MI->getDesc(), i);
+    const TargetRegisterClass *NewRC = 0;
+    if (i < MI->getDesc().getNumOperands())
+      NewRC = MI->getDesc().OpInfo[i].getRegClass(TRI);
 
     // For now, only allow the register to be changed if its register
     // class is consistent across all uses.

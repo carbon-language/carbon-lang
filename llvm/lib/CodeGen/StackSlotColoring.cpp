@@ -512,7 +512,7 @@ bool StackSlotColoring::PropagateBackward(MachineBasicBlock::iterator MII,
             TID.getOpcode() == TargetInstrInfo::SUBREG_TO_REG)
           return false;
 
-        const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TID, i);
+        const TargetRegisterClass *RC = TID.OpInfo[i].getRegClass(TRI);
         if (RC && !RC->contains(NewReg))
           return false;
 
@@ -576,7 +576,7 @@ bool StackSlotColoring::PropagateForward(MachineBasicBlock::iterator MII,
             TID.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
           return false;
 
-        const TargetRegisterClass *RC = getInstrOperandRegClass(TRI, TID, i);
+        const TargetRegisterClass *RC = TID.OpInfo[i].getRegClass(TRI);
         if (RC && !RC->contains(NewReg))
           return false;
         FoundUse = true;

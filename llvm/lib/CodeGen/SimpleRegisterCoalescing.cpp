@@ -619,7 +619,7 @@ bool SimpleRegisterCoalescing::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     // Make sure the copy destination register class fits the instruction
     // definition register class. The mismatch can happen as a result of earlier
     // extract_subreg, insert_subreg, subreg_to_reg coalescing.
-    const TargetRegisterClass *RC = getInstrOperandRegClass(tri_, TID, 0);
+    const TargetRegisterClass *RC = TID.OpInfo[0].getRegClass(tri_);
     if (TargetRegisterInfo::isVirtualRegister(DstReg)) {
       if (mri_->getRegClass(DstReg) != RC)
         return false;

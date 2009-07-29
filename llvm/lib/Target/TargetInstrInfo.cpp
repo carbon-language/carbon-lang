@@ -47,13 +47,3 @@ TargetOperandInfo::getRegClass(const TargetRegisterInfo *TRI) const {
   return TRI->getRegClass(RegClass);
 }
 
-/// getInstrOperandRegClass - Return register class of the operand of an
-/// instruction of the specified TargetInstrDesc.
-const TargetRegisterClass*
-llvm::getInstrOperandRegClass(const TargetRegisterInfo *TRI,
-                              const TargetInstrDesc &II, unsigned Op) {
-  // FIXME: Should be an assert!
-  if (Op >= II.getNumOperands())
-    return NULL;
-  return II.OpInfo[Op].getRegClass(TRI);
-}
