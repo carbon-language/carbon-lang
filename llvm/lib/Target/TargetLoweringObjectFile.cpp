@@ -412,28 +412,18 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   
   if (Kind.isText()) return TextSection;
   if (Kind.isMergeableCString()) {
-    //Constant *C = cast<GlobalVariable>(GV)->getInitializer();
+   assert(CStringSection_ && "Should have string section prefix");
     
-    // FIXME: This is completely wrong.  Why is it comparing the size of the
-    // character type to 1?
-    /// cast<ArrayType>(C->getType())->getNumElements();
-    uint64_t Size = 1;
-    if (Size <= 16) {
-      assert(CStringSection_ && "Should have string section prefix");
-      
-      // We also need alignment here.
-      // FIXME: this is getting the alignment of the character, not the
-      // alignment of the global!
-      unsigned Align = 
-        TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV));
-      
-      std::string Name = CStringSection_->getName() + utostr(Size) + '.' +
-      utostr(Align);
-      return getOrCreateSection(Name.c_str(), false,
-                                SectionKind::MergeableCString);
-    }
+    // We also need alignment here.
+    // FIXME: this is getting the alignment of the character, not the
+    // alignment of the global!
+    unsigned Align = 
+      TM.getTargetData()->getPreferredAlignment(cast<GlobalVariable>(GV));
     
-    return ReadOnlySection;
+    std::string Name = CStringSection_->getName() + utostr(Size) + '.' +
+    utostr(Align);
+    return getOrCreateSection(Name.c_str(), false,
+                              SectionKind::MergeableCString);
   }
   
   if (Kind.isMergeableConst()) {
