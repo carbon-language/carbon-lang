@@ -46,7 +46,7 @@ MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CalleeSavedRegs;
 }
 
-const TargetRegisterClass* const*
+const TargetRegisterClass *const *
 MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   static const TargetRegisterClass * const CalleeSavedRegClasses[] = {
     &MSP430::GR16RegClass, &MSP430::GR16RegClass,
@@ -59,8 +59,7 @@ MSP430RegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
   return CalleeSavedRegClasses;
 }
 
-BitVector
-MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
+BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
 
   // Mark 4 special registers as reserved.
@@ -76,7 +75,8 @@ MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
-const TargetRegisterClass* MSP430RegisterInfo::getPointerRegClass() const {
+const TargetRegisterClass *
+MSP430RegisterInfo::getPointerRegClass(unsigned Kind) const {
   return &MSP430::GR16RegClass;
 }
 

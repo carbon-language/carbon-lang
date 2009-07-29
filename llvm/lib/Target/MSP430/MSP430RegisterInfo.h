@@ -40,7 +40,7 @@ public:
     getCalleeSavedRegClasses(const MachineFunction *MF = 0) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
-  const TargetRegisterClass* getPointerRegClass() const;
+  const TargetRegisterClass* getPointerRegClass(unsigned Kind = 0) const;
 
   bool hasFP(const MachineFunction &MF) const;
   bool hasReservedCallFrame(MachineFunction &MF) const;

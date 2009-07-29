@@ -245,12 +245,11 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   return 0;
 }
 
-const TargetRegisterClass *X86RegisterInfo::getPointerRegClass() const {
-  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  if (Subtarget->is64Bit())
+const TargetRegisterClass *X86RegisterInfo::
+getPointerRegClass(unsigned Kind) const {
+  if (TM.getSubtarget<X86Subtarget>().is64Bit())
     return &X86::GR64RegClass;
-  else
-    return &X86::GR32RegClass;
+  return &X86::GR32RegClass;
 }
 
 const TargetRegisterClass *

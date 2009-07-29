@@ -140,11 +140,11 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
 
 /// getPointerRegClass - Return the register class to use to hold pointers.
 /// This is used for addressing modes.
-const TargetRegisterClass *PPCRegisterInfo::getPointerRegClass() const {
+const TargetRegisterClass *
+PPCRegisterInfo::getPointerRegClass(unsigned Kind) const {
   if (Subtarget.isPPC64())
     return &PPC::G8RCRegClass;
-  else
-    return &PPC::GPRCRegClass;
+  return &PPC::GPRCRegClass;
 }
 
 const unsigned*

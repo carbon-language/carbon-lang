@@ -1,4 +1,4 @@
-//===- ARMBaseRegisterInfo.cpp - ARM Register Information -----------*- C++ -*-===//
+//===- ARMBaseRegisterInfo.cpp - ARM Register Information -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -224,8 +224,8 @@ BitVector ARMBaseRegisterInfo::getReservedRegs(const MachineFunction &MF) const 
   return Reserved;
 }
 
-bool
-ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF, unsigned Reg) const {
+bool ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF,
+                                        unsigned Reg) const {
   switch (Reg) {
   default: break;
   case ARM::SP:
@@ -243,7 +243,8 @@ ARMBaseRegisterInfo::isReservedReg(const MachineFunction &MF, unsigned Reg) cons
   return false;
 }
 
-const TargetRegisterClass *ARMBaseRegisterInfo::getPointerRegClass() const {
+const TargetRegisterClass *
+ARMBaseRegisterInfo::getPointerRegClass(unsigned Kind) const {
   return &ARM::GPRRegClass;
 }
 

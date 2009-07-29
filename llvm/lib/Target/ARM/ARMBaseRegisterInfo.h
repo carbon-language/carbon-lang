@@ -1,4 +1,4 @@
-//===- ARMBaseRegisterInfo.h - ARM Register Information Impl --------*- C++ -*-===//
+//===- ARMBaseRegisterInfo.h - ARM Register Information Impl ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -74,7 +74,7 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  const TargetRegisterClass *getPointerRegClass() const;
+  const TargetRegisterClass *getPointerRegClass(unsigned Kind = 0) const;
 
   std::pair<TargetRegisterClass::iterator,TargetRegisterClass::iterator>
   getAllocationOrder(const TargetRegisterClass *RC,

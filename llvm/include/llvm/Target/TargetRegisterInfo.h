@@ -514,8 +514,9 @@ public:
   }
 
   /// getPointerRegClass - Returns a TargetRegisterClass used for pointer
-  /// values.
-  virtual const TargetRegisterClass *getPointerRegClass() const {
+  /// values.  If a target supports multiple different pointer register classes,
+  /// kind specifies which one is indicated.
+  virtual const TargetRegisterClass *getPointerRegClass(unsigned Kind=0) const {
     assert(0 && "Target didn't implement getPointerRegClass!");
     return 0; // Must return a value in order to compile with VS 2005
   }

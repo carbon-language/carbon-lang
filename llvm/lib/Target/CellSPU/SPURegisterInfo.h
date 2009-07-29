@@ -43,7 +43,8 @@ namespace llvm {
 
     /// getPointerRegClass - Return the register class to use to hold pointers.
     /// This is used for addressing modes.
-    virtual const TargetRegisterClass *getPointerRegClass() const;
+    virtual const TargetRegisterClass *
+    getPointerRegClass(unsigned Kind = 0) const;
 
     //! Return the array of callee-saved registers
     virtual const unsigned* getCalleeSavedRegs(const MachineFunction *MF) const;
