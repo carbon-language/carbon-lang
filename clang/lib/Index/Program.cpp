@@ -37,7 +37,7 @@ static void FindEntitiesInDC(DeclContext *DC, Program &Prog, EntityHandler *Hand
       continue;
     Entity Ent = Entity::get(*I, Prog);
     if (Ent.isValid())
-      Handler->HandleEntity(Ent);
+      Handler->Handle(Ent);
     if (DeclContext *SubDC = dyn_cast<DeclContext>(*I))
       FindEntitiesInDC(SubDC, Prog, Handler);
   }

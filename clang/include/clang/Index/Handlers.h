@@ -24,7 +24,7 @@ namespace idx {
 class EntityHandler {
 public:
   virtual ~EntityHandler();
-  virtual void HandleEntity(Entity Ent) = 0;
+  virtual void Handle(Entity Ent) = 0;
 };
 
 /// \brief Abstract interface for receiving TranslationUnits.

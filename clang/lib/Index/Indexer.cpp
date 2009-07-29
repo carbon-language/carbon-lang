@@ -28,7 +28,7 @@ class EntityIndexer : public EntityHandler {
 public:
   EntityIndexer(TranslationUnit *tu, Indexer::MapTy &map) : TU(tu), Map(map) { }
 
-  virtual void HandleEntity(Entity Ent) {
+  virtual void Handle(Entity Ent) {
     if (Ent.isInternalToTU())
       return;
     Map[Ent].insert(TU);
