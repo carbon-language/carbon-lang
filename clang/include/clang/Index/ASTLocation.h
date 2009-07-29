@@ -26,6 +26,7 @@ namespace clang {
   class SourceRange;
 
 namespace idx {
+  class TranslationUnit;
 
 /// \brief Represents a Decl or a Stmt and its immediate Decl parent. It's
 /// immutable.
@@ -82,6 +83,20 @@ public:
   }
   
   void print(llvm::raw_ostream &OS) const;
+};
+
+/// \brief Like ASTLocation but also contains the TranslationUnit that the
+/// ASTLocation originated from.
+class TULocation : public ASTLocation {
+  TranslationUnit *TU;
+  
+public:
+  TULocation(TranslationUnit *tu, ASTLocation astLoc)
+    : ASTLocation(astLoc), TU(tu) {
+    assert(tu && "Passed null translation unit");
+  }
+  
+  TranslationUnit *getTU() const { return TU; }
 };
 
 } // namespace idx

@@ -19,3 +19,4 @@ using namespace idx;
 // Out-of-line to give the virtual tables a home.
 EntityHandler::~EntityHandler() { }
 TranslationUnitHandler::~TranslationUnitHandler() { }
+TULocationHandler::~TULocationHandler() { }

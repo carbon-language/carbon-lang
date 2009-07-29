@@ -21,6 +21,7 @@ namespace clang {
 namespace idx {
   class Entity;
   class TranslationUnit;
+  class TULocation;
 
 /// \brief Abstract interface for receiving Entities.
 class EntityHandler {
@@ -38,6 +39,15 @@ public:
 
   virtual ~TranslationUnitHandler();
   virtual void Handle(TranslationUnit *TU) = 0;
+};
+
+/// \brief Abstract interface for receiving TULocations.
+class TULocationHandler {
+public:
+  typedef TULocation receiving_type;
+
+  virtual ~TULocationHandler();
+  virtual void Handle(TULocation TULoc) = 0;
 };
 
 /// \brief Helper for the Handler classes. Stores the objects into a vector.
