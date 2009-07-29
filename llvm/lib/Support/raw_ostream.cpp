@@ -93,10 +93,6 @@ raw_ostream &raw_ostream::operator<<(unsigned long long N) {
   if (N == static_cast<unsigned long>(N))
     return this->operator<<(static_cast<unsigned long>(N));
 
-  // Zero is a special case.
-  if (N == 0)
-    return *this << '0';
-  
   char NumberBuffer[20];
   char *EndPtr = NumberBuffer+sizeof(NumberBuffer);
   char *CurPtr = EndPtr;
