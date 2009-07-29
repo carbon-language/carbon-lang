@@ -351,9 +351,12 @@ namespace {
         iter = iter->Next;
       }
 
+      largest = largest - sizeof(MemoryRangeHeader);
+      
       // If this block isn't big enough for the allocation desired, allocate
       // another block of memory and add it to the free list.
-      if (largest - sizeof(MemoryRangeHeader) < ActualSize) {
+      if (largest < ActualSize ||
+          largest <= FreeRangeHeader::getMinBlockSize()) {
         DOUT << "JIT: Allocating another slab of memory for function.";
         candidateBlock = allocateNewCodeSlab((size_t)ActualSize);
       }
