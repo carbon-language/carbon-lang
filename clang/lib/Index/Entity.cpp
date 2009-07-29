@@ -59,11 +59,12 @@ Entity EntityGetter::VisitNamedDecl(NamedDecl *D) {
     return Entity(D);
 
   // FIXME: Only works for DeclarationNames that are identifiers.
+  // Treats other DeclarationNames as internal Decls for now..
 
   DeclarationName Name = D->getDeclName();
 
   if (!Name.isIdentifier())
-    return Entity();
+    return Entity(D);
 
   IdentifierInfo *II = Name.getAsIdentifierInfo();
   if (!II)

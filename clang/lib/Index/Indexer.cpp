@@ -16,6 +16,7 @@
 #include "clang/Index/Entity.h"
 #include "clang/Index/Handlers.h"
 #include "clang/Index/TranslationUnit.h"
+#include "clang/AST/DeclBase.h"
 using namespace clang;
 using namespace idx;
 
@@ -39,6 +40,7 @@ public:
 
 void Indexer::IndexAST(TranslationUnit *TU) {
   assert(TU && "Passed null TranslationUnit");
+  CtxTUMap[&TU->getASTContext()] = TU;
   EntityIndexer Idx(TU, Map);
   Prog.FindEntities(TU->getASTContext(), Idx);
 }
@@ -46,8 +48,14 @@ void Indexer::IndexAST(TranslationUnit *TU) {
 void Indexer::GetTranslationUnitsFor(Entity Ent,
                                      TranslationUnitHandler &Handler) {
   assert(Ent.isValid() && "Expected valid Entity");
-  assert(!Ent.isInternalToTU() &&
-         "Expected an Entity visible outside of its translation unit");
+
+  if (Ent.isInternalToTU()) {
+    Decl *D = Ent.getInternalDecl();
+    CtxTUMapTy::iterator I = CtxTUMap.find(&D->getASTContext());
+    if (I != CtxTUMap.end())
+      Handler.Handle(I->second);
+    return;
+  }
 
   MapTy::iterator I = Map.find(Ent);
   if (I == Map.end())

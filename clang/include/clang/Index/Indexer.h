@@ -16,9 +16,11 @@
 
 #include "clang/Index/IndexProvider.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseMap.h"
 #include <map>
 
 namespace clang {
+  class ASTContext;
 
 namespace idx {
   class Program;
@@ -28,6 +30,7 @@ namespace idx {
 class Indexer : public IndexProvider {
 public:
   typedef llvm::SmallPtrSet<TranslationUnit *, 4> TUSetTy;
+  typedef llvm::DenseMap<ASTContext *, TranslationUnit *> CtxTUMapTy;
   typedef std::map<Entity, TUSetTy> MapTy;
 
   explicit Indexer(Program &prog) : Prog(prog) { }
