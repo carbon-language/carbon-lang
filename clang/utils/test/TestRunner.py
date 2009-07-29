@@ -278,6 +278,9 @@ def main():
     parser.add_option("", "--clang-cc", dest="clangcc",
                       help="Program to use as \"clang-cc\"",
                       action="store", default=None)
+    parser.add_option("", "--vg", dest="useValgrind",
+                      help="Run tests under valgrind",
+                      action="store_true", default=False)
     (opts, args) = parser.parse_args()
 
     if not args:
@@ -291,7 +294,8 @@ def main():
     for path in args:
         base = getTestOutputBase('Output', path) + '.out'
         
-        status,output = runOneTest(path, base, opts.clang, opts.clangcc)
+        status,output = runOneTest(path, base, opts.clang, opts.clangcc,
+                                   opts.useValgrind)
         print '%s: %s' % (TestStatus.getName(status).upper(), path)
         if status == TestStatus.Fail or status == TestStatus.XPass:
             print "%s TEST '%s' FAILED %s" % ('*'*20, path, '*'*20)
