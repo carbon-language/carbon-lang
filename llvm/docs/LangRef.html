@@ -1251,38 +1251,42 @@ target datalayout = "<i>layout specification</i>"
 
 <div class="doc_text">
 
-<p>Any memory access must be done though a pointer value associated
+<p>Any memory access must be done through a pointer value associated
 with an address range of the memory access, otherwise the behavior
 is undefined. Pointer values are associated with address ranges
 according to the following rules:</p>
 
 <ul>
-  <li>A pointer value formed from a <tt>getelementptr</tt> instruction is
-      associated with the addresses associated with the first operand of
-      the <tt>getelementptr</tt>.</li>
-  <li>An addresses of a global variable is associated with the address
+  <li>A pointer value formed from a
+      <tt><a href="#i_getelementptr">getelementptr</a></tt> instruction
+      is associated with the addresses associated with the first operand
+      of the <tt>getelementptr</tt>.</li>
+  <li>An address of a global variable is associated with the address
       range of the variable's storage.</li>
   <li>The result value of an allocation instruction is associated with
       the address range of the allocated storage.</li>
   <li>A null pointer in the default address-space is associated with
-      no addresses.</li>
-  <li>A pointer value formed by an <tt>inttoptr</tt> is associated with
-      all address ranges of all pointer values that contribute (directly
-      or indirectly) to the computation of the pointer's value.</li>
-  <li>The result value of a <tt>bitcast</tt> is associated with all
+      no address.</li>
+  <li>A pointer value formed by an
+      <tt><a href="#i_inttoptr">inttoptr</a></tt> is associated with all
+      address ranges of all pointer values that contribute (directly or
+      indirectly) to the computation of the pointer's value.</li>
+  <li>The result value of a
+      <tt><a href="#i_bitcast">bitcast</a></tt> is associated with all
       addresses associated with the operand of the <tt>bitcast</tt>.</li>
   <li>An integer constant other than zero or a pointer value returned
       from a function not defined within LLVM may be associated with address
       ranges allocated through mechanisms other than those provided by
-      LLVM. Such ranges shall not overlap with any ranges of address
+      LLVM. Such ranges shall not overlap with any ranges of addresses
       allocated by mechanisms provided by LLVM.</li>
   </ul>
 
 <p>LLVM IR does not associate types with memory. The result type of a
-<tt>load</tt> merely indicates the size and alignment of the memory from
-which to load, as well as the interpretation of the value. The first
-operand of a <tt>store</tt> similarly only indicates the size and
-alignment of the store.</p>
+<tt><a href="#i_load">load</a></tt> merely indicates the size and
+alignment of the memory from which to load, as well as the
+interpretation of the value. The first operand of a
+<tt><a href="#i_store">store</a></tt> similarly only indicates the size
+and alignment of the store.</p>
 
 <p>Consequently, type-based alias analysis, aka TBAA, aka
 <tt>-fstrict-aliasing</tt>, is not applicable to general unadorned
