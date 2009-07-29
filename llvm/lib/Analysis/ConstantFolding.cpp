@@ -152,7 +152,7 @@ static Constant *SymbolicallyEvaluateGEP(Constant* const* Ops, unsigned NumOps,
   uint64_t Offset = TD->getIndexedOffset(Ptr->getType(),
                                          (Value**)Ops+1, NumOps-1);
   Constant *C = ConstantInt::get(TD->getIntPtrType(), Offset+BasePtr);
-  return Context.getConstantExprIntToPtr(C, ResultTy);
+  return ConstantExpr::getIntToPtr(C, ResultTy);
 }
 
 /// FoldBitCast - Constant fold bitcast, symbolically evaluating it with 
@@ -191,7 +191,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
         if (!C) return 0;
         
         // Finally, VMCore can handle this now that #elts line up.
-        return Context.getConstantExprBitCast(C, DestTy);
+        return ConstantExpr::getBitCast(C, DestTy);
       }
       
       // Okay, we know the destination is integer, if the input is FP, convert
@@ -201,7 +201,7 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
         const Type *SrcIVTy = Context.getVectorType(
                                    Context.getIntegerType(FPWidth), NumSrcElt);
         // Ask VMCore to do the conversion now that #elts line up.
-        C = Context.getConstantExprBitCast(C, SrcIVTy);
+        C = ConstantExpr::getBitCast(C, SrcIVTy);
         CV = dyn_cast<ConstantVector>(C);
         if (!CV) return 0;  // If VMCore wasn't able to fold it, bail out.
       }
@@ -228,15 +228,15 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
             if (!Src) return 0;  // Reject constantexpr elements.
             
             // Zero extend the element to the right size.
-            Src = Context.getConstantExprZExt(Src, Elt->getType());
+            Src = ConstantExpr::getZExt(Src, Elt->getType());
             
             // Shift it to the right place, depending on endianness.
-            Src = Context.getConstantExprShl(Src, 
+            Src = ConstantExpr::getShl(Src, 
                              ConstantInt::get(Src->getType(), ShiftAmt));
             ShiftAmt += isLittleEndian ? SrcBitSize : -SrcBitSize;
             
             // Mix it in.
-            Elt = Context.getConstantExprOr(Elt, Src);
+            Elt = ConstantExpr::getOr(Elt, Src);
           }
           Result.push_back(Elt);
         }
@@ -254,12 +254,12 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
           for (unsigned j = 0; j != Ratio; ++j) {
             // Shift the piece of the value into the right place, depending on
             // endianness.
-            Constant *Elt = Context.getConstantExprLShr(Src, 
+            Constant *Elt = ConstantExpr::getLShr(Src, 
                             ConstantInt::get(Src->getType(), ShiftAmt));
             ShiftAmt += isLittleEndian ? DstBitSize : -DstBitSize;
 
             // Truncate and remember this piece.
-            Result.push_back(Context.getConstantExprTrunc(Elt, DstEltTy));
+            Result.push_back(ConstantExpr::getTrunc(Elt, DstEltTy));
           }
         }
       }
@@ -354,7 +354,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                                                   Context))
         return C;
     
-    return Context.getConstantExpr(Opcode, Ops[0], Ops[1]);
+    return ConstantExpr::get(Opcode, Ops[0], Ops[1]);
   }
   
   switch (Opcode) {
@@ -378,13 +378,13 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
           Constant *Mask = 
             ConstantInt::get(Context, APInt::getLowBitsSet(InWidth,
                                                   TD->getPointerSizeInBits()));
-          Input = Context.getConstantExprAnd(Input, Mask);
+          Input = ConstantExpr::getAnd(Input, Mask);
         }
         // Do a zext or trunc to get to the dest size.
-        return Context.getConstantExprIntegerCast(Input, DestTy, false);
+        return ConstantExpr::getIntegerCast(Input, DestTy, false);
       }
     }
-    return Context.getConstantExprCast(Opcode, Ops[0], DestTy);
+    return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
   case Instruction::IntToPtr:
     // If the input is a ptrtoint, turn the pair into a ptr to ptr bitcast if
     // the int size is >= the ptr size.  This requires knowing the width of a
@@ -396,7 +396,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
         if (CE->getOpcode() == Instruction::PtrToInt) {
           Constant *Input = CE->getOperand(0);
           Constant *C = FoldBitCast(Input, DestTy, *TD, Context);
-          return C ? C : Context.getConstantExprBitCast(Input, DestTy);
+          return C ? C : ConstantExpr::getBitCast(Input, DestTy);
         }
         // If there's a constant offset added to the integer value before
         // it is casted back to a pointer, see if the expression can be
@@ -423,14 +423,14 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
                           ConstantInt::get(Context, ElemIdx)
                         };
                         return
-                        Context.getConstantExprGetElementPtr(GV, &Index[0], 2);
+                        ConstantExpr::getGetElementPtr(GV, &Index[0], 2);
                       }
                     }
                   }
                 }
       }
     }
-    return Context.getConstantExprCast(Opcode, Ops[0], DestTy);
+    return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
   case Instruction::Trunc:
   case Instruction::ZExt:
   case Instruction::SExt:
@@ -440,25 +440,25 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
   case Instruction::SIToFP:
   case Instruction::FPToUI:
   case Instruction::FPToSI:
-      return Context.getConstantExprCast(Opcode, Ops[0], DestTy);
+      return ConstantExpr::getCast(Opcode, Ops[0], DestTy);
   case Instruction::BitCast:
     if (TD)
       if (Constant *C = FoldBitCast(Ops[0], DestTy, *TD, Context))
         return C;
-    return Context.getConstantExprBitCast(Ops[0], DestTy);
+    return ConstantExpr::getBitCast(Ops[0], DestTy);
   case Instruction::Select:
-    return Context.getConstantExprSelect(Ops[0], Ops[1], Ops[2]);
+    return ConstantExpr::getSelect(Ops[0], Ops[1], Ops[2]);
   case Instruction::ExtractElement:
-    return Context.getConstantExprExtractElement(Ops[0], Ops[1]);
+    return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
   case Instruction::InsertElement:
-    return Context.getConstantExprInsertElement(Ops[0], Ops[1], Ops[2]);
+    return ConstantExpr::getInsertElement(Ops[0], Ops[1], Ops[2]);
   case Instruction::ShuffleVector:
-    return Context.getConstantExprShuffleVector(Ops[0], Ops[1], Ops[2]);
+    return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
     if (Constant *C = SymbolicallyEvaluateGEP(Ops, NumOps, DestTy, Context, TD))
       return C;
     
-    return Context.getConstantExprGetElementPtr(Ops[0], Ops+1, NumOps-1);
+    return ConstantExpr::getGetElementPtr(Ops[0], Ops+1, NumOps-1);
   }
 }
 
@@ -484,7 +484,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       if (CE0->getOpcode() == Instruction::IntToPtr) {
         // Convert the integer value to the right size to ensure we get the
         // proper extension or truncation.
-        Constant *C = Context.getConstantExprIntegerCast(CE0->getOperand(0),
+        Constant *C = ConstantExpr::getIntegerCast(CE0->getOperand(0),
                                                    IntPtrTy, false);
         Constant *NewOps[] = { C, Context.getNullValue(C->getType()) };
         return ConstantFoldCompareInstOperands(Predicate, NewOps, 2,
@@ -510,9 +510,9 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
         if (CE0->getOpcode() == Instruction::IntToPtr) {
           // Convert the integer value to the right size to ensure we get the
           // proper extension or truncation.
-          Constant *C0 = Context.getConstantExprIntegerCast(CE0->getOperand(0),
+          Constant *C0 = ConstantExpr::getIntegerCast(CE0->getOperand(0),
                                                       IntPtrTy, false);
-          Constant *C1 = Context.getConstantExprIntegerCast(CE1->getOperand(0),
+          Constant *C1 = ConstantExpr::getIntegerCast(CE1->getOperand(0),
                                                       IntPtrTy, false);
           Constant *NewOps[] = { C0, C1 };
           return ConstantFoldCompareInstOperands(Predicate, NewOps, 2, 
@@ -533,7 +533,7 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       }
     }
   }
-  return Context.getConstantExprCompare(Predicate, Ops[0], Ops[1]);
+  return ConstantExpr::getCompare(Predicate, Ops[0], Ops[1]);
 }
 
 

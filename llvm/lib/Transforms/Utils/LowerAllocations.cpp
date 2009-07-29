@@ -121,9 +121,9 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
         MallocArg = ConstantInt::get(Type::Int64Ty,
                                      TD.getTypeAllocSize(AllocTy));
       else
-        MallocArg = Context.getConstantExprSizeOf(AllocTy);
+        MallocArg = ConstantExpr::getSizeOf(AllocTy);
       MallocArg =
-           Context.getConstantExprTruncOrBitCast(cast<Constant>(MallocArg), 
+           ConstantExpr::getTruncOrBitCast(cast<Constant>(MallocArg), 
                                                   IntPtrTy);
 
       if (MI->isArrayAllocation()) {
@@ -132,8 +132,8 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
           MallocArg = MI->getOperand(0);         // Operand * 1 = Operand
         } else if (Constant *CO = dyn_cast<Constant>(MI->getOperand(0))) {
           CO =
-              Context.getConstantExprIntegerCast(CO, IntPtrTy, false /*ZExt*/);
-          MallocArg = Context.getConstantExprMul(CO, 
+              ConstantExpr::getIntegerCast(CO, IntPtrTy, false /*ZExt*/);
+          MallocArg = ConstantExpr::getMul(CO, 
                                                   cast<Constant>(MallocArg));
         } else {
           Value *Scale = MI->getOperand(0);

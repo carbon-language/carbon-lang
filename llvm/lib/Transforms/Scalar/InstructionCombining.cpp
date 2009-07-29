@@ -286,7 +286,7 @@ namespace {
       if (V->getType() == Ty) return V;
 
       if (Constant *CV = dyn_cast<Constant>(V))
-        return Context->getConstantExprCast(opc, CV, Ty);
+        return ConstantExpr::getCast(opc, CV, Ty);
       
       Instruction *C = CastInst::Create(opc, V, Ty, V->getName(), &Pos);
       AddToWorkList(C);
@@ -519,7 +519,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
   if (BinaryOperator *Op = dyn_cast<BinaryOperator>(I.getOperand(0)))
     if (Op->getOpcode() == Opcode && isa<Constant>(Op->getOperand(1))) {
       if (isa<Constant>(I.getOperand(1))) {
-        Constant *Folded = Context->getConstantExpr(I.getOpcode(),
+        Constant *Folded = ConstantExpr::get(I.getOpcode(),
                                              cast<Constant>(I.getOperand(1)),
                                              cast<Constant>(Op->getOperand(1)));
         I.setOperand(0, Op->getOperand(0));
@@ -532,7 +532,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
           Constant *C2 = cast<Constant>(Op1->getOperand(1));
 
           // Fold (op (op V1, C1), (op V2, C2)) ==> (op (op V1, V2), (op C1,C2))
-          Constant *Folded = Context->getConstantExpr(I.getOpcode(), C1, C2);
+          Constant *Folded = ConstantExpr::get(I.getOpcode(), C1, C2);
           Instruction *New = BinaryOperator::Create(Opcode, Op->getOperand(0),
                                                     Op1->getOperand(0),
                                                     Op1->getName(), &I);
@@ -566,11 +566,11 @@ static inline Value *dyn_castNegVal(Value *V, LLVMContext *Context) {
 
   // Constants can be considered to be negated values if they can be folded.
   if (ConstantInt *C = dyn_cast<ConstantInt>(V))
-    return Context->getConstantExprNeg(C);
+    return ConstantExpr::getNeg(C);
 
   if (ConstantVector *C = dyn_cast<ConstantVector>(V))
     if (C->getType()->getElementType()->isInteger())
-      return Context->getConstantExprNeg(C);
+      return ConstantExpr::getNeg(C);
 
   return 0;
 }
@@ -585,11 +585,11 @@ static inline Value *dyn_castFNegVal(Value *V, LLVMContext *Context) {
 
   // Constants can be considered to be negated values if they can be folded.
   if (ConstantFP *C = dyn_cast<ConstantFP>(V))
-    return Context->getConstantExprFNeg(C);
+    return ConstantExpr::getFNeg(C);
 
   if (ConstantVector *C = dyn_cast<ConstantVector>(V))
     if (C->getType()->getElementType()->isFloatingPoint())
-      return Context->getConstantExprFNeg(C);
+      return ConstantExpr::getFNeg(C);
 
   return 0;
 }
@@ -630,12 +630,12 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST,
 
 /// AddOne - Add one to a ConstantInt
 static Constant *AddOne(Constant *C, LLVMContext *Context) {
-  return Context->getConstantExprAdd(C, 
+  return ConstantExpr::getAdd(C, 
     ConstantInt::get(C->getType(), 1));
 }
 /// SubOne - Subtract one from a ConstantInt
 static Constant *SubOne(ConstantInt *C, LLVMContext *Context) {
-  return Context->getConstantExprSub(C, 
+  return ConstantExpr::getSub(C, 
     ConstantInt::get(C->getType(), 1));
 }
 /// MultiplyOverflows - True if the multiply can not be expressed in an int
@@ -1409,7 +1409,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   if ((DemandedMask & (RHSKnownZero|RHSKnownOne)) == DemandedMask) {
     Constant *C = ConstantInt::get(*Context, RHSKnownOne);
     if (isa<PointerType>(V->getType()))
-      C = Context->getConstantExprIntToPtr(C, V->getType());
+      C = ConstantExpr::getIntToPtr(C, V->getType());
     return C;
   }
   return false;
@@ -1865,7 +1865,7 @@ struct AddMaskingAnd {
   bool shouldApply(Value *LHS) const {
     ConstantInt *C1;
     return match(LHS, m_And(m_Value(), m_ConstantInt(C1)), *Context) &&
-           Context->getConstantExprAnd(C1, C2)->isNullValue();
+           ConstantExpr::getAnd(C1, C2)->isNullValue();
   }
   Instruction *apply(BinaryOperator &Add) const {
     return BinaryOperator::CreateOr(Add.getOperand(0), Add.getOperand(1));
@@ -1888,8 +1888,8 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
 
   if (Constant *SOC = dyn_cast<Constant>(SO)) {
     if (ConstIsRHS)
-      return Context->getConstantExpr(I.getOpcode(), SOC, ConstOperand);
-    return Context->getConstantExpr(I.getOpcode(), ConstOperand, SOC);
+      return ConstantExpr::get(I.getOpcode(), SOC, ConstOperand);
+    return ConstantExpr::get(I.getOpcode(), ConstOperand, SOC);
   }
 
   Value *Op0 = SO, *Op1 = ConstOperand;
@@ -1978,9 +1978,9 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
       Value *InV = 0;
       if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
         if (CmpInst *CI = dyn_cast<CmpInst>(&I))
-          InV = Context->getConstantExprCompare(CI->getPredicate(), InC, C);
+          InV = ConstantExpr::getCompare(CI->getPredicate(), InC, C);
         else
-          InV = Context->getConstantExpr(I.getOpcode(), InC, C);
+          InV = ConstantExpr::get(I.getOpcode(), InC, C);
       } else {
         assert(PN->getIncomingBlock(i) == NonConstBB);
         if (BinaryOperator *BO = dyn_cast<BinaryOperator>(&I)) 
@@ -2005,7 +2005,7 @@ Instruction *InstCombiner::FoldOpIntoPhi(Instruction &I) {
     for (unsigned i = 0; i != NumPHIValues; ++i) {
       Value *InV;
       if (Constant *InC = dyn_cast<Constant>(PN->getIncomingValue(i))) {
-        InV = Context->getConstantExprCast(CI->getOpcode(), InC, RetTy);
+        InV = ConstantExpr::getCast(CI->getOpcode(), InC, RetTy);
       } else {
         assert(PN->getIncomingBlock(i) == NonConstBB);
         InV = CastInst::Create(CI->getOpcode(), PN->getIncomingValue(i), 
@@ -2177,7 +2177,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     // X*C1 + X*C2 --> X * (C1+C2)
     ConstantInt *C1;
     if (X == dyn_castFoldableMul(RHS, C1, Context))
-      return BinaryOperator::CreateMul(X, Context->getConstantExprAdd(C1, C2));
+      return BinaryOperator::CreateMul(X, ConstantExpr::getAdd(C1, C2));
   }
 
   // X + X*C --> X * (C+1)
@@ -2244,7 +2244,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     // (X & FF00) + xx00  -> (X+xx00) & FF00
     if (LHS->hasOneUse() &&
         match(LHS, m_And(m_Value(X), m_ConstantInt(C2)), *Context)) {
-      Constant *Anded = Context->getConstantExprAnd(CRHS, C2);
+      Constant *Anded = ConstantExpr::getAnd(CRHS, C2);
       if (Anded == CRHS) {
         // See if all bits from the first bit set in the Add RHS up are included
         // in the mask.  First, get the rightmost bit.
@@ -2303,9 +2303,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     // (add (sext x), cst) --> (sext (add x, cst'))
     if (ConstantInt *RHSC = dyn_cast<ConstantInt>(RHS)) {
       Constant *CI = 
-        Context->getConstantExprTrunc(RHSC, LHSConv->getOperand(0)->getType());
+        ConstantExpr::getTrunc(RHSC, LHSConv->getOperand(0)->getType());
       if (LHSConv->hasOneUse() &&
-          Context->getConstantExprSExt(CI, I.getType()) == RHSC &&
+          ConstantExpr::getSExt(CI, I.getType()) == RHSC &&
           WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI)) {
         // Insert the new, smaller add.
         Instruction *NewAdd = BinaryOperator::CreateAdd(LHSConv->getOperand(0), 
@@ -2379,9 +2379,9 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
     // instcombined.
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHS)) {
       Constant *CI = 
-      Context->getConstantExprFPToSI(CFP, LHSConv->getOperand(0)->getType());
+      ConstantExpr::getFPToSI(CFP, LHSConv->getOperand(0)->getType());
       if (LHSConv->hasOneUse() &&
-          Context->getConstantExprSIToFP(CI, I.getType()) == CFP &&
+          ConstantExpr::getSIToFP(CI, I.getType()) == CFP &&
           WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI)) {
         // Insert the new integer add.
         Instruction *NewAdd = BinaryOperator::CreateAdd(LHSConv->getOperand(0), 
@@ -2493,7 +2493,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         if (ConstantInt *CI2 = dyn_cast<ConstantInt>(Op1I->getOperand(1)))
           // C1-(X+C2) --> (C1-C2)-X
           return BinaryOperator::CreateSub(
-            Context->getConstantExprSub(CI1, CI2), Op1I->getOperand(0));
+            ConstantExpr::getSub(CI1, CI2), Op1I->getOperand(0));
       }
     }
 
@@ -2529,13 +2529,13 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
           if (CSI->isZero())
             if (Constant *DivRHS = dyn_cast<Constant>(Op1I->getOperand(1)))
               return BinaryOperator::CreateSDiv(Op1I->getOperand(0),
-                                          Context->getConstantExprNeg(DivRHS));
+                                          ConstantExpr::getNeg(DivRHS));
 
       // X - X*C --> X * (1-C)
       ConstantInt *C2 = 0;
       if (dyn_castFoldableMul(Op1I, C2, Context) == Op0) {
         Constant *CP1 = 
-          Context->getConstantExprSub(ConstantInt::get(I.getType(), 1),
+          ConstantExpr::getSub(ConstantInt::get(I.getType(), 1),
                                              C2);
         return BinaryOperator::CreateMul(Op0, CP1);
       }
@@ -2562,7 +2562,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
     ConstantInt *C2;   // X*C1 - X*C2 -> X * (C1-C2)
     if (X == dyn_castFoldableMul(Op1, C2, Context))
-      return BinaryOperator::CreateMul(X, Context->getConstantExprSub(C1, C2));
+      return BinaryOperator::CreateMul(X, ConstantExpr::getSub(C1, C2));
   }
   return 0;
 }
@@ -2634,7 +2634,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         if (SI->getOpcode() == Instruction::Shl)
           if (Constant *ShOp = dyn_cast<Constant>(SI->getOperand(1)))
             return BinaryOperator::CreateMul(SI->getOperand(0),
-                                        Context->getConstantExprShl(CI, ShOp));
+                                        ConstantExpr::getShl(CI, ShOp));
 
       if (CI->isZero())
         return ReplaceInstUsesWith(I, Op1);  // X * 0  == 0
@@ -2672,7 +2672,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         Instruction *Add = BinaryOperator::CreateMul(Op0I->getOperand(0),
                                                      Op1, "tmp");
         InsertNewInstBefore(Add, I);
-        Value *C1C2 = Context->getConstantExprMul(Op1, 
+        Value *C1C2 = ConstantExpr::getMul(Op1, 
                                            cast<Constant>(Op0I->getOperand(1)));
         return BinaryOperator::CreateAdd(Add, C1C2);
         
@@ -2955,7 +2955,7 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
             return ReplaceInstUsesWith(I, Context->getNullValue(I.getType()));
           else 
             return BinaryOperator::Create(I.getOpcode(), LHS->getOperand(0),
-                                      Context->getConstantExprMul(RHS, LHSRHS));
+                                      ConstantExpr::getMul(RHS, LHSRHS));
         }
 
     if (!RHS->isZero()) { // avoid X udiv 0
@@ -3253,7 +3253,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
       for (unsigned i = 0; i != VWidth; ++i) {
         if (ConstantInt *RHS = dyn_cast<ConstantInt>(RHSV->getOperand(i))) {
           if (RHS->getValue().isNegative())
-            Elts[i] = cast<ConstantInt>(Context->getConstantExprNeg(RHS));
+            Elts[i] = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
           else
             Elts[i] = RHS;
         }
@@ -3503,7 +3503,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
   Value *X = Op->getOperand(0);
   Constant *Together = 0;
   if (!Op->isShift())
-    Together = Context->getConstantExprAnd(AndRHS, OpRHS);
+    Together = ConstantExpr::getAnd(AndRHS, OpRHS);
 
   switch (Op->getOpcode()) {
   case Instruction::Xor:
@@ -3633,7 +3633,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
 Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
                                            bool isSigned, bool Inside, 
                                            Instruction &IB) {
-  assert(cast<ConstantInt>(Context->getConstantExprICmp((isSigned ? 
+  assert(cast<ConstantInt>(ConstantExpr::getICmp((isSigned ? 
             ICmpInst::ICMP_SLE:ICmpInst::ICMP_ULE), Lo, Hi))->getZExtValue() &&
          "Lo is not <= Hi in range emission code!");
     
@@ -3649,10 +3649,10 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
     }
 
     // Emit V-Lo <u Hi-Lo
-    Constant *NegLo = Context->getConstantExprNeg(Lo);
+    Constant *NegLo = ConstantExpr::getNeg(Lo);
     Instruction *Add = BinaryOperator::CreateAdd(V, NegLo, V->getName()+".off");
     InsertNewInstBefore(Add, IB);
-    Constant *UpperBound = Context->getConstantExprAdd(NegLo, Hi);
+    Constant *UpperBound = ConstantExpr::getAdd(NegLo, Hi);
     return new ICmpInst(*Context, ICmpInst::ICMP_ULT, Add, UpperBound);
   }
 
@@ -3669,10 +3669,10 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
 
   // Emit V-Lo >u Hi-1-Lo
   // Note that Hi has already had one subtracted from it, above.
-  ConstantInt *NegLo = cast<ConstantInt>(Context->getConstantExprNeg(Lo));
+  ConstantInt *NegLo = cast<ConstantInt>(ConstantExpr::getNeg(Lo));
   Instruction *Add = BinaryOperator::CreateAdd(V, NegLo, V->getName()+".off");
   InsertNewInstBefore(Add, IB);
-  Constant *LowerBound = Context->getConstantExprAdd(NegLo, Hi);
+  Constant *LowerBound = ConstantExpr::getAdd(NegLo, Hi);
   return new ICmpInst(*Context, ICmpInst::ICMP_UGT, Add, LowerBound);
 }
 
@@ -3714,7 +3714,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
   switch (LHSI->getOpcode()) {
   default: return 0;
   case Instruction::And:
-    if (Context->getConstantExprAnd(N, Mask) == Mask) {
+    if (ConstantExpr::getAnd(N, Mask) == Mask) {
       // If the AndRHS is a power of two minus one (0+1+), this is simple.
       if ((Mask->getValue().countLeadingZeros() + 
            Mask->getValue().countPopulation()) == 
@@ -3738,7 +3738,7 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
     // If the AndRHS is a power of two minus one (0+1+), and N&Mask == 0
     if ((Mask->getValue().countLeadingZeros() + 
          Mask->getValue().countPopulation()) == Mask->getValue().getBitWidth()
-        && Context->getConstantExprAnd(N, Mask)->isNullValue())
+        && ConstantExpr::getAnd(N, Mask)->isNullValue())
       break;
     return 0;
   }
@@ -3843,7 +3843,7 @@ Instruction *InstCombiner::FoldAndOfICmps(Instruction &I,
       return ReplaceInstUsesWith(I, RHS);
     case ICmpInst::ICMP_NE:
       if (LHSCst == SubOne(RHSCst, Context)){// (X != 13 & X != 14) -> X-13 >u 1
-        Constant *AddCST = Context->getConstantExprNeg(LHSCst);
+        Constant *AddCST = ConstantExpr::getNeg(LHSCst);
         Instruction *Add = BinaryOperator::CreateAdd(Val, AddCST,
                                                      Val->getName()+".off");
         InsertNewInstBefore(Add, I);
@@ -4130,15 +4130,15 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
               NewCast = InsertNewInstBefore(NewCast, I);
               // trunc_or_bitcast(C1)&C2
               Constant *C3 =
-                      Context->getConstantExprTruncOrBitCast(AndCI,I.getType());
-              C3 = Context->getConstantExprAnd(C3, AndRHS);
+                      ConstantExpr::getTruncOrBitCast(AndCI,I.getType());
+              C3 = ConstantExpr::getAnd(C3, AndRHS);
               return BinaryOperator::CreateAnd(NewCast, C3);
             } else if (CastOp->getOpcode() == Instruction::Or) {
               // Change: and (cast (or X, C1) to T), C2
               // into  : trunc(C1)&C2 iff trunc(C1)&C2 == C2
               Constant *C3 =
-                      Context->getConstantExprTruncOrBitCast(AndCI,I.getType());
-              if (Context->getConstantExprAnd(C3, AndRHS) == AndRHS)
+                      ConstantExpr::getTruncOrBitCast(AndCI,I.getType());
+              if (ConstantExpr::getAnd(C3, AndRHS) == AndRHS)
                 // trunc(C1)&C2
                 return ReplaceInstUsesWith(I, AndRHS);
             }
@@ -4526,11 +4526,11 @@ Instruction *InstCombiner::FoldOrOfICmps(Instruction &I,
     case ICmpInst::ICMP_EQ:
       if (LHSCst == SubOne(RHSCst, Context)) {
         // (X == 13 | X == 14) -> X-13 <u 2
-        Constant *AddCST = Context->getConstantExprNeg(LHSCst);
+        Constant *AddCST = ConstantExpr::getNeg(LHSCst);
         Instruction *Add = BinaryOperator::CreateAdd(Val, AddCST,
                                                      Val->getName()+".off");
         InsertNewInstBefore(Add, I);
-        AddCST = Context->getConstantExprSub(AddOne(RHSCst, Context), LHSCst);
+        AddCST = ConstantExpr::getSub(AddOne(RHSCst, Context), LHSCst);
         return new ICmpInst(*Context, ICmpInst::ICMP_ULT, Add, AddCST);
       }
       break;                         // (X == 13 | X == 15) -> no change
@@ -5078,7 +5078,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         if (CI->hasOneUse() && Op0C->hasOneUse()) {
           Instruction::CastOps Opcode = Op0C->getOpcode();
           if (Opcode == Instruction::ZExt || Opcode == Instruction::SExt) {
-            if (RHS == Context->getConstantExprCast(Opcode, 
+            if (RHS == ConstantExpr::getCast(Opcode, 
                                              Context->getTrue(),
                                              Op0C->getDestTy())) {
               Instruction *NewCI = InsertNewInstBefore(CmpInst::Create(
@@ -5097,8 +5097,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       // ~(c-X) == X-c-1 == X+(-c-1)
       if (Op0I->getOpcode() == Instruction::Sub && RHS->isAllOnesValue())
         if (Constant *Op0I0C = dyn_cast<Constant>(Op0I->getOperand(0))) {
-          Constant *NegOp0I0C = Context->getConstantExprNeg(Op0I0C);
-          Constant *ConstantRHS = Context->getConstantExprSub(NegOp0I0C,
+          Constant *NegOp0I0C = ConstantExpr::getNeg(Op0I0C);
+          Constant *ConstantRHS = ConstantExpr::getSub(NegOp0I0C,
                                       ConstantInt::get(I.getType(), 1));
           return BinaryOperator::CreateAdd(Op0I->getOperand(1), ConstantRHS);
         }
@@ -5107,9 +5107,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         if (Op0I->getOpcode() == Instruction::Add) {
           // ~(X-c) --> (-c-1)-X
           if (RHS->isAllOnesValue()) {
-            Constant *NegOp0CI = Context->getConstantExprNeg(Op0CI);
+            Constant *NegOp0CI = ConstantExpr::getNeg(Op0CI);
             return BinaryOperator::CreateSub(
-                           Context->getConstantExprSub(NegOp0CI,
+                           ConstantExpr::getSub(NegOp0CI,
                                       ConstantInt::get(I.getType(), 1)),
                                       Op0I->getOperand(0));
           } else if (RHS->getValue().isSignBit()) {
@@ -5122,12 +5122,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         } else if (Op0I->getOpcode() == Instruction::Or) {
           // (X|C1)^C2 -> X^(C1|C2) iff X&~C1 == 0
           if (MaskedValueIsZero(Op0I->getOperand(0), Op0CI->getValue())) {
-            Constant *NewRHS = Context->getConstantExprOr(Op0CI, RHS);
+            Constant *NewRHS = ConstantExpr::getOr(Op0CI, RHS);
             // Anything in both C1 and C2 is known to be zero, remove it from
             // NewRHS.
-            Constant *CommonBits = Context->getConstantExprAnd(Op0CI, RHS);
-            NewRHS = Context->getConstantExprAnd(NewRHS, 
-                                       Context->getConstantExprNot(CommonBits));
+            Constant *CommonBits = ConstantExpr::getAnd(Op0CI, RHS);
+            NewRHS = ConstantExpr::getAnd(NewRHS, 
+                                       ConstantExpr::getNot(CommonBits));
             AddToWorkList(Op0I);
             I.setOperand(0, Op0I->getOperand(0));
             I.setOperand(1, NewRHS);
@@ -5295,7 +5295,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
 static ConstantInt *ExtractElement(Constant *V, Constant *Idx,
                                    LLVMContext *Context) {
-  return cast<ConstantInt>(Context->getConstantExprExtractElement(V, Idx));
+  return cast<ConstantInt>(ConstantExpr::getExtractElement(V, Idx));
 }
 
 static bool HasAddOverflow(ConstantInt *Result,
@@ -5315,7 +5315,7 @@ static bool HasAddOverflow(ConstantInt *Result,
 static bool AddWithOverflow(Constant *&Result, Constant *In1,
                             Constant *In2, LLVMContext *Context,
                             bool IsSigned = false) {
-  Result = Context->getConstantExprAdd(In1, In2);
+  Result = ConstantExpr::getAdd(In1, In2);
 
   if (const VectorType *VTy = dyn_cast<VectorType>(In1->getType())) {
     for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
@@ -5351,7 +5351,7 @@ static bool HasSubOverflow(ConstantInt *Result,
 static bool SubWithOverflow(Constant *&Result, Constant *In1,
                             Constant *In2, LLVMContext *Context,
                             bool IsSigned = false) {
-  Result = Context->getConstantExprSub(In1, In2);
+  Result = ConstantExpr::getSub(In1, In2);
 
   if (const VectorType *VTy = dyn_cast<VectorType>(In1->getType())) {
     for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
@@ -5409,10 +5409,10 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
       
       Constant *Scale = ConstantInt::get(IntPtrTy, Size);
       Constant *OC =
-              Context->getConstantExprIntegerCast(OpC, IntPtrTy, true /*SExt*/);
-      Scale = Context->getConstantExprMul(OC, Scale);
+              ConstantExpr::getIntegerCast(OpC, IntPtrTy, true /*SExt*/);
+      Scale = ConstantExpr::getMul(OC, Scale);
       if (Constant *RC = dyn_cast<Constant>(Result))
-        Result = Context->getConstantExprAdd(RC, Scale);
+        Result = ConstantExpr::getAdd(RC, Scale);
       else {
         // Emit an add instruction.
         Result = IC.InsertNewInstBefore(
@@ -5424,7 +5424,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
     // Convert to correct type.
     if (Op->getType() != IntPtrTy) {
       if (Constant *OpC = dyn_cast<Constant>(Op))
-        Op = Context->getConstantExprIntegerCast(OpC, IntPtrTy, true);
+        Op = ConstantExpr::getIntegerCast(OpC, IntPtrTy, true);
       else
         Op = IC.InsertNewInstBefore(CastInst::CreateIntegerCast(Op, IntPtrTy,
                                                                 true,
@@ -5433,7 +5433,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
     if (Size != 1) {
       Constant *Scale = ConstantInt::get(IntPtrTy, Size);
       if (Constant *OpC = dyn_cast<Constant>(Op))
-        Op = Context->getConstantExprMul(OpC, Scale);
+        Op = ConstantExpr::getMul(OpC, Scale);
       else    // We'll let instcombine(mul) convert this to a shl if possible.
         Op = IC.InsertNewInstBefore(BinaryOperator::CreateMul(Op, Scale,
                                                   GEP->getName()+".idx"), I);
@@ -5441,7 +5441,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
 
     // Emit an add instruction.
     if (isa<Constant>(Op) && isa<Constant>(Result))
-      Result = Context->getConstantExprAdd(cast<Constant>(Op),
+      Result = ConstantExpr::getAdd(cast<Constant>(Op),
                                     cast<Constant>(Result));
     else
       Result = IC.InsertNewInstBefore(BinaryOperator::CreateAdd(Op, Result,
@@ -5788,12 +5788,12 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
   // casting the FP value to the integer value and back, checking for equality.
   // Don't do this for zero, because -0.0 is not fractional.
   Constant *RHSInt = LHSUnsigned
-    ? Context->getConstantExprFPToUI(RHSC, IntTy)
-    : Context->getConstantExprFPToSI(RHSC, IntTy);
+    ? ConstantExpr::getFPToUI(RHSC, IntTy)
+    : ConstantExpr::getFPToSI(RHSC, IntTy);
   if (!RHS.isZero()) {
     bool Equal = LHSUnsigned
-      ? Context->getConstantExprUIToFP(RHSInt, RHSC->getType()) == RHSC
-      : Context->getConstantExprSIToFP(RHSInt, RHSC->getType()) == RHSC;
+      ? ConstantExpr::getUIToFP(RHSInt, RHSC->getType()) == RHSC
+      : ConstantExpr::getSIToFP(RHSInt, RHSC->getType()) == RHSC;
     if (!Equal) {
       // If we had a comparison against a fractional value, we have to adjust
       // the compare predicate and sometimes the value.  RHSC is rounded towards
@@ -5946,14 +5946,14 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
         if (LHSI->hasOneUse()) {
           if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
             // Fold the known value into the constant operand.
-            Op1 = Context->getConstantExprCompare(I.getPredicate(), C, RHSC);
+            Op1 = ConstantExpr::getCompare(I.getPredicate(), C, RHSC);
             // Insert a new FCmp of the other select operand.
             Op2 = InsertNewInstBefore(new FCmpInst(*Context, I.getPredicate(),
                                                       LHSI->getOperand(2), RHSC,
                                                       I.getName()), I);
           } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
             // Fold the known value into the constant operand.
-            Op2 = Context->getConstantExprCompare(I.getPredicate(), C, RHSC);
+            Op2 = ConstantExpr::getCompare(I.getPredicate(), C, RHSC);
             // Insert a new FCmp of the other select operand.
             Op1 = InsertNewInstBefore(new FCmpInst(*Context, I.getPredicate(),
                                                       LHSI->getOperand(1), RHSC,
@@ -6312,14 +6312,14 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         if (LHSI->hasOneUse()) {
           if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
             // Fold the known value into the constant operand.
-            Op1 = Context->getConstantExprICmp(I.getPredicate(), C, RHSC);
+            Op1 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
             // Insert a new ICmp of the other select operand.
             Op2 = InsertNewInstBefore(new ICmpInst(*Context, I.getPredicate(),
                                                    LHSI->getOperand(2), RHSC,
                                                    I.getName()), I);
           } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
             // Fold the known value into the constant operand.
-            Op2 = Context->getConstantExprICmp(I.getPredicate(), C, RHSC);
+            Op2 = ConstantExpr::getICmp(I.getPredicate(), C, RHSC);
             // Insert a new ICmp of the other select operand.
             Op1 = InsertNewInstBefore(new ICmpInst(*Context, I.getPredicate(),
                                                    LHSI->getOperand(1), RHSC,
@@ -6370,7 +6370,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       // If Op1 is a constant, we can fold the cast into the constant.
       if (Op0->getType() != Op1->getType()) {
         if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
-          Op1 = Context->getConstantExprBitCast(Op1C, Op0->getType());
+          Op1 = ConstantExpr::getBitCast(Op1C, Op0->getType());
         } else {
           // Otherwise, cast the RHS right before the icmp
           Op1 = InsertBitCastBefore(Op1, Op0->getType(), I);
@@ -6572,13 +6572,13 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
   // of form X/C1=C2. We solve for X by multiplying C1 (DivRHS) and 
   // C2 (CI). By solving for X we can turn this into a range check 
   // instead of computing a divide. 
-  Constant *Prod = Context->getConstantExprMul(CmpRHS, DivRHS);
+  Constant *Prod = ConstantExpr::getMul(CmpRHS, DivRHS);
 
   // Determine if the product overflows by seeing if the product is
   // not equal to the divide. Make sure we do the same kind of divide
   // as in the LHS instruction that we're folding. 
-  bool ProdOV = (DivIsSigned ? Context->getConstantExprSDiv(Prod, DivRHS) :
-                 Context->getConstantExprUDiv(Prod, DivRHS)) != CmpRHS;
+  bool ProdOV = (DivIsSigned ? ConstantExpr::getSDiv(Prod, DivRHS) :
+                 ConstantExpr::getUDiv(Prod, DivRHS)) != CmpRHS;
 
   // Get the ICmp opcode
   ICmpInst::Predicate Pred = ICI.getPredicate();
@@ -6602,7 +6602,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
   } else if (DivRHS->getValue().isStrictlyPositive()) { // Divisor is > 0.
     if (CmpRHSV == 0) {       // (X / pos) op 0
       // Can't overflow.  e.g.  X/2 op 0 --> [-1, 2)
-      LoBound = cast<ConstantInt>(Context->getConstantExprNeg(SubOne(DivRHS, 
+      LoBound = cast<ConstantInt>(ConstantExpr::getNeg(SubOne(DivRHS, 
                                                                     Context)));
       HiBound = DivRHS;
     } else if (CmpRHSV.isStrictlyPositive()) {   // (X / pos) op pos
@@ -6616,7 +6616,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
       LoOverflow = HiOverflow = ProdOV ? -1 : 0;
       if (!LoOverflow) {
         ConstantInt* DivNeg =
-                         cast<ConstantInt>(Context->getConstantExprNeg(DivRHS));
+                         cast<ConstantInt>(ConstantExpr::getNeg(DivRHS));
         LoOverflow = AddWithOverflow(LoBound, HiBound, DivNeg, Context,
                                      true) ? -1 : 0;
        }
@@ -6625,7 +6625,7 @@ Instruction *InstCombiner::FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
     if (CmpRHSV == 0) {       // (X / neg) op 0
       // e.g. X/-5 op 0  --> [-4, 5)
       LoBound = AddOne(DivRHS, Context);
-      HiBound = cast<ConstantInt>(Context->getConstantExprNeg(DivRHS));
+      HiBound = cast<ConstantInt>(ConstantExpr::getNeg(DivRHS));
       if (HiBound == DivRHS) {     // -INTMIN = INTMIN
         HiOverflow = 1;            // [INTMIN+1, overflow)
         HiBound = 0;               // e.g. X/INTMIN = 0 --> X > INTMIN
@@ -6842,13 +6842,13 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         if (CanFold) {
           Constant *NewCst;
           if (Shift->getOpcode() == Instruction::Shl)
-            NewCst = Context->getConstantExprLShr(RHS, ShAmt);
+            NewCst = ConstantExpr::getLShr(RHS, ShAmt);
           else
-            NewCst = Context->getConstantExprShl(RHS, ShAmt);
+            NewCst = ConstantExpr::getShl(RHS, ShAmt);
           
           // Check to see if we are shifting out any of the bits being
           // compared.
-          if (Context->getConstantExpr(Shift->getOpcode(),
+          if (ConstantExpr::get(Shift->getOpcode(),
                                        NewCst, ShAmt) != RHS) {
             // If we shifted bits out, the fold is not going to work out.
             // As a special case, check to see if this means that the
@@ -6861,9 +6861,9 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
             ICI.setOperand(1, NewCst);
             Constant *NewAndCST;
             if (Shift->getOpcode() == Instruction::Shl)
-              NewAndCST = Context->getConstantExprLShr(AndCST, ShAmt);
+              NewAndCST = ConstantExpr::getLShr(AndCST, ShAmt);
             else
-              NewAndCST = Context->getConstantExprShl(AndCST, ShAmt);
+              NewAndCST = ConstantExpr::getShl(AndCST, ShAmt);
             LHSI->setOperand(1, NewAndCST);
             LHSI->setOperand(0, Shift->getOperand(0));
             AddToWorkList(Shift); // Shift is dead.
@@ -6918,7 +6918,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
       // If we are comparing against bits always shifted out, the
       // comparison cannot succeed.
       Constant *Comp =
-        Context->getConstantExprShl(Context->getConstantExprLShr(RHS, ShAmt),
+        ConstantExpr::getShl(ConstantExpr::getLShr(RHS, ShAmt),
                                                                  ShAmt);
       if (Comp != RHS) {// Comparing against a bit that we know is zero.
         bool IsICMP_NE = ICI.getPredicate() == ICmpInst::ICMP_NE;
@@ -6997,7 +6997,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         MaskedValueIsZero(LHSI->getOperand(0), 
                           APInt::getLowBitsSet(Comp.getBitWidth(), ShAmtVal))) {
       return new ICmpInst(*Context, ICI.getPredicate(), LHSI->getOperand(0),
-                          Context->getConstantExprShl(RHS, ShAmt));
+                          ConstantExpr::getShl(RHS, ShAmt));
     }
       
     if (LHSI->hasOneUse()) {
@@ -7010,7 +7010,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
                                   Mask, LHSI->getName()+".mask");
       Value *And = InsertNewInstBefore(AndI, ICI);
       return new ICmpInst(*Context, ICI.getPredicate(), And,
-                          Context->getConstantExprShl(RHS, ShAmt));
+                          ConstantExpr::getShl(RHS, ShAmt));
     }
     break;
   }
@@ -7088,7 +7088,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         if (ConstantInt *BOp1C = dyn_cast<ConstantInt>(BO->getOperand(1))) {
           if (BO->hasOneUse())
             return new ICmpInst(*Context, ICI.getPredicate(), BO->getOperand(0),
-                                Context->getConstantExprSub(RHS, BOp1C));
+                                ConstantExpr::getSub(RHS, BOp1C));
         } else if (RHSV == 0) {
           // Replace ((add A, B) != 0) with (A != -B) if A or B is
           // efficiently invertible, or if the add has just this one use.
@@ -7111,7 +7111,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // the explicit xor.
         if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1)))
           return new ICmpInst(*Context, ICI.getPredicate(), BO->getOperand(0), 
-                              Context->getConstantExprXor(RHS, BOC));
+                              ConstantExpr::getXor(RHS, BOC));
         
         // FALLTHROUGH
       case Instruction::Sub:
@@ -7125,8 +7125,8 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         // If bits are being or'd in that are not present in the constant we
         // are comparing against, then the comparison could never succeed!
         if (Constant *BOC = dyn_cast<Constant>(BO->getOperand(1))) {
-          Constant *NotCI = Context->getConstantExprNot(RHS);
-          if (!Context->getConstantExprAnd(BOC, NotCI)->isNullValue())
+          Constant *NotCI = ConstantExpr::getNot(RHS);
+          if (!ConstantExpr::getAnd(BOC, NotCI)->isNullValue())
             return ReplaceInstUsesWith(ICI,
                                        ConstantInt::get(Type::Int1Ty, 
                                        isICMP_NE));
@@ -7160,7 +7160,7 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
           // ((X & ~7) == 0) --> X < 8
           if (RHSV == 0 && isHighOnes(BOC)) {
             Value *X = BO->getOperand(0);
-            Constant *NegX = Context->getConstantExprNeg(BOC);
+            Constant *NegX = ConstantExpr::getNeg(BOC);
             ICmpInst::Predicate pred = isICMP_NE ? 
               ICmpInst::ICMP_UGE : ICmpInst::ICMP_ULT;
             return new ICmpInst(*Context, pred, X, NegX);
@@ -7198,7 +7198,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
          cast<IntegerType>(DestTy)->getBitWidth()) {
     Value *RHSOp = 0;
     if (Constant *RHSC = dyn_cast<Constant>(ICI.getOperand(1))) {
-      RHSOp = Context->getConstantExprIntToPtr(RHSC, SrcTy);
+      RHSOp = ConstantExpr::getIntToPtr(RHSC, SrcTy);
     } else if (PtrToIntInst *RHSC = dyn_cast<PtrToIntInst>(ICI.getOperand(1))) {
       RHSOp = RHSC->getOperand(0);
       // If the pointer types don't match, insert a bitcast.
@@ -7250,8 +7250,8 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
 
   // Compute the constant that would happen if we truncated to SrcTy then
   // reextended to DestTy.
-  Constant *Res1 = Context->getConstantExprTrunc(CI, SrcTy);
-  Constant *Res2 = Context->getConstantExprCast(LHSCI->getOpcode(),
+  Constant *Res1 = ConstantExpr::getTrunc(CI, SrcTy);
+  Constant *Res2 = ConstantExpr::getCast(LHSCI->getOpcode(),
                                                 Res1, DestTy);
 
   // If the re-extended constant didn't change...
@@ -7313,7 +7313,7 @@ Instruction *InstCombiner::visitICmpInstWithCastAndCast(ICmpInst &ICI) {
           ICI.getPredicate()==ICmpInst::ICMP_SGT) &&
          "ICmp should be folded!");
   if (Constant *CI = dyn_cast<Constant>(Result))
-    return ReplaceInstUsesWith(ICI, Context->getConstantExprNot(CI));
+    return ReplaceInstUsesWith(ICI, ConstantExpr::getNot(CI));
   return BinaryOperator::CreateNot(*Context, Result);
 }
 
@@ -7413,7 +7413,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     if (BO->getOpcode() == Instruction::Mul && isLeftShift)
       if (Constant *BOOp = dyn_cast<Constant>(BO->getOperand(1)))
         return BinaryOperator::CreateMul(BO->getOperand(0),
-                                        Context->getConstantExprShl(BOOp, Op1));
+                                        ConstantExpr::getShl(BOOp, Op1));
   
   // Try to fold constant and into select arguments.
   if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
@@ -7434,7 +7434,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     if (TrOp && I.isLogicalShift() && TrOp->isShift() && 
         isa<ConstantInt>(TrOp->getOperand(1))) {
       // Okay, we'll do this xform.  Make the shift of shift.
-      Constant *ShAmt = Context->getConstantExprZExt(Op1, TrOp->getType());
+      Constant *ShAmt = ConstantExpr::getZExt(Op1, TrOp->getType());
       Instruction *NSh = BinaryOperator::Create(I.getOpcode(), TrOp, ShAmt,
                                                 I.getName());
       InsertNewInstBefore(NSh, I); // (shift2 (shift1 & 0x00FF), c2)
@@ -7510,7 +7510,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *XM =
               BinaryOperator::CreateAnd(V1,
-                                        Context->getConstantExprShl(CC, Op1),
+                                        ConstantExpr::getShl(CC, Op1),
                                         V1->getName()+".mask");
             InsertNewInstBefore(XM, I); // X & (CC << C)
             
@@ -7550,7 +7550,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *XM =
               BinaryOperator::CreateAnd(V1, 
-                                        Context->getConstantExprShl(CC, Op1),
+                                        ConstantExpr::getShl(CC, Op1),
                                         V1->getName()+".mask");
             InsertNewInstBefore(XM, I); // X & (CC << C)
             
@@ -7592,7 +7592,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
           isValid = Op0C->getValue()[TypeBits-1] == highBitSet;
         
         if (isValid) {
-          Constant *NewRHS = Context->getConstantExpr(I.getOpcode(), Op0C, Op1);
+          Constant *NewRHS = ConstantExpr::get(I.getOpcode(), Op0C, Op1);
           
           Instruction *NewShift =
             BinaryOperator::Create(I.getOpcode(), Op0BO->getOperand(0), Op1);
@@ -7866,7 +7866,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
     // If the allocation size is constant, form a constant mul expression
     Amt = ConstantInt::get(Type::Int32Ty, Scale);
     if (isa<ConstantInt>(NumElements))
-      Amt = Context->getConstantExprMul(cast<ConstantInt>(NumElements),
+      Amt = ConstantExpr::getMul(cast<ConstantInt>(NumElements),
                                  cast<ConstantInt>(Amt));
     // otherwise multiply the amount and the number of elements
     else {
@@ -8057,7 +8057,7 @@ bool InstCombiner::CanEvaluateInDifferentType(Value *V, const Type *Ty,
 Value *InstCombiner::EvaluateInDifferentType(Value *V, const Type *Ty, 
                                              bool isSigned) {
   if (Constant *C = dyn_cast<Constant>(V))
-    return Context->getConstantExprIntegerCast(C, Ty,
+    return ConstantExpr::getIntegerCast(C, Ty,
                                                isSigned /*Sext or ZExt*/);
 
   // Otherwise, it must be an instruction.
@@ -8497,7 +8497,7 @@ Instruction *InstCombiner::visitTrunc(TruncInst &CI) {
       // Okay, we can shrink this.  Truncate the input, then return a new
       // shift.
       Value *V1 = InsertCastBefore(Instruction::Trunc, ShiftOp, Ty, CI);
-      Value *V2 = Context->getConstantExprTrunc(ShAmtV, Ty);
+      Value *V2 = ConstantExpr::getTrunc(ShAmtV, Ty);
       return BinaryOperator::CreateLShr(V1, V2);
     }
   }
@@ -8569,7 +8569,7 @@ Instruction *InstCombiner::transformZExtICmp(ICmpInst *ICI, Instruction &CI,
           // (X&4) == 2 --> false
           // (X&4) != 2 --> true
           Constant *Res = ConstantInt::get(Type::Int1Ty, isNE);
-          Res = Context->getConstantExprZExt(Res, CI.getType());
+          Res = ConstantExpr::getZExt(Res, CI.getType());
           return ReplaceInstUsesWith(CI, Res);
         }
           
@@ -8668,7 +8668,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
         if (TI0->getType() == CI.getType())
           return
             BinaryOperator::CreateAnd(TI0,
-                                Context->getConstantExprZExt(C, CI.getType()));
+                                ConstantExpr::getZExt(C, CI.getType()));
       }
 
   // zext((trunc(t) & C) ^ C) -> ((t & zext(C)) ^ zext(C)).
@@ -8680,7 +8680,7 @@ Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
           if (TruncInst *TI = dyn_cast<TruncInst>(And->getOperand(0))) {
             Value *TI0 = TI->getOperand(0);
             if (TI0->getType() == CI.getType()) {
-              Constant *ZC = Context->getConstantExprZExt(C, CI.getType());
+              Constant *ZC = ConstantExpr::getZExt(C, CI.getType());
               Instruction *NewAnd = BinaryOperator::CreateAnd(TI0, ZC, "tmp");
               InsertNewInstBefore(NewAnd, *And);
               return BinaryOperator::CreateXor(NewAnd, ZC);
@@ -9548,7 +9548,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
             //        select C, (add X, Y), (sub X, Z)
             Value *NegVal;  // Compute -Z
             if (Constant *C = dyn_cast<Constant>(SubOp->getOperand(1))) {
-              NegVal = Context->getConstantExprNeg(C);
+              NegVal = ConstantExpr::getNeg(C);
             } else {
               NegVal = InsertNewInstBefore(
                     BinaryOperator::CreateNeg(*Context, SubOp->getOperand(1),
@@ -10462,7 +10462,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
                                                 FTy->isVarArg());
       Constant *NewCallee =
         NestF->getType() == Context->getPointerTypeUnqual(NewFTy) ?
-        NestF : Context->getConstantExprBitCast(NestF, 
+        NestF : ConstantExpr::getBitCast(NestF, 
                                          Context->getPointerTypeUnqual(NewFTy));
       const AttrListPtr &NewPAL = AttrListPtr::get(NewAttrs.begin(),
                                                    NewAttrs.end());
@@ -10497,7 +10497,7 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
   // code sort out any function type mismatches.
   Constant *NewCallee =
     NestF->getType() == PTy ? NestF : 
-                              Context->getConstantExprBitCast(NestF, PTy);
+                              ConstantExpr::getBitCast(NestF, PTy);
   CS.setCalledFunction(NewCallee);
   return CS.getInstruction();
 }
@@ -11034,7 +11034,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Value *Op = *i;
       if (TD->getTypeSizeInBits(Op->getType()) > TD->getPointerSizeInBits()) {
         if (Constant *C = dyn_cast<Constant>(Op)) {
-          *i = Context->getConstantExprTrunc(C, TD->getIntPtrType());
+          *i = ConstantExpr::getTrunc(C, TD->getIntPtrType());
           MadeChange = true;
         } else {
           Op = InsertCastBefore(Instruction::Trunc, Op, TD->getIntPtrType(),
@@ -11045,7 +11045,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       } else if (TD->getTypeSizeInBits(Op->getType()) 
                   < TD->getPointerSizeInBits()) {
         if (Constant *C = dyn_cast<Constant>(Op)) {
-          *i = Context->getConstantExprSExt(C, TD->getIntPtrType());
+          *i = ConstantExpr::getSExt(C, TD->getIntPtrType());
           MadeChange = true;
         } else {
           Op = InsertCastBefore(Instruction::SExt, Op, TD->getIntPtrType(),
@@ -11103,10 +11103,10 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         if (SO1->getType() != GO1->getType()) {
           if (Constant *SO1C = dyn_cast<Constant>(SO1)) {
             SO1 =
-                Context->getConstantExprIntegerCast(SO1C, GO1->getType(), true);
+                ConstantExpr::getIntegerCast(SO1C, GO1->getType(), true);
           } else if (Constant *GO1C = dyn_cast<Constant>(GO1)) {
             GO1 =
-                Context->getConstantExprIntegerCast(GO1C, SO1->getType(), true);
+                ConstantExpr::getIntegerCast(GO1C, SO1->getType(), true);
           } else if (TD) {
             unsigned PS = TD->getPointerSizeInBits();
             if (TD->getTypeSizeInBits(SO1->getType()) == PS) {
@@ -11124,7 +11124,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           }
         }
         if (isa<Constant>(SO1) && isa<Constant>(GO1))
-          Sum = Context->getConstantExprAdd(cast<Constant>(SO1), 
+          Sum = ConstantExpr::getAdd(cast<Constant>(SO1), 
                                             cast<Constant>(GO1));
         else {
           Sum = BinaryOperator::CreateAdd(SO1, GO1, PtrOp->getName()+".sum");
@@ -11173,7 +11173,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       Indices.push_back(cast<Constant>(*I));
 
     if (I == E) {  // If they are all constants...
-      Constant *CE = Context->getConstantExprGetElementPtr(GV,
+      Constant *CE = ConstantExpr::getGetElementPtr(GV,
                                                     &Indices[0],Indices.size());
 
       // Replace all uses of the GEP with the new constexpr...
@@ -11284,7 +11284,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
                                    Scale->getZExtValue() / ArrayEltSize);
           if (Scale->getZExtValue() != 1) {
             Constant *C =
-                   Context->getConstantExprIntegerCast(Scale, NewIdx->getType(),
+                   ConstantExpr::getIntegerCast(Scale, NewIdx->getType(),
                                                        false /*ZExt*/);
             Instruction *Sc = BinaryOperator::CreateMul(NewIdx, C, "idxscale");
             NewIdx = InsertNewInstBefore(Sc, GEP);
@@ -11523,7 +11523,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
           if (ASrcTy->getNumElements() != 0) {
             Value *Idxs[2];
             Idxs[0] = Idxs[1] = Context->getNullValue(Type::Int32Ty);
-            CastOp = Context->getConstantExprGetElementPtr(CSrc, Idxs, 2);
+            CastOp = ConstantExpr::getGetElementPtr(CSrc, Idxs, 2);
             SrcTy = cast<PointerType>(CastOp->getType());
             SrcPTy = SrcTy->getElementType();
           }
@@ -11769,7 +11769,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   // emit a GEP to index into its first field.
   if (!NewGEPIndices.empty()) {
     if (Constant *C = dyn_cast<Constant>(CastOp))
-      CastOp = Context->getConstantExprGetElementPtr(C, &NewGEPIndices[0], 
+      CastOp = ConstantExpr::getGetElementPtr(C, &NewGEPIndices[0], 
                                               NewGEPIndices.size());
     else
       CastOp = IC.InsertNewInstBefore(
@@ -11779,7 +11779,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   }
   
   if (Constant *C = dyn_cast<Constant>(SIOp0))
-    NewCast = Context->getConstantExprCast(opcode, C, CastDstTy);
+    NewCast = ConstantExpr::getCast(opcode, C, CastDstTy);
   else
     NewCast = IC.InsertNewInstBefore(
       CastInst::Create(opcode, SIOp0, CastDstTy, SIOp0->getName()+".c"), 
@@ -12170,7 +12170,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
         // change 'switch (X+4) case 1:' into 'switch (X) case -3'
         for (unsigned i = 2, e = SI.getNumOperands(); i != e; i += 2)
           SI.setOperand(i,
-                   Context->getConstantExprSub(cast<Constant>(SI.getOperand(i)),
+                   ConstantExpr::getSub(cast<Constant>(SI.getOperand(i)),
                                                 AddRHS));
         SI.setOperand(0, I->getOperand(0));
         AddToWorkList(I);

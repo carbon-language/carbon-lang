@@ -1098,7 +1098,7 @@ struct VISIBILITY_HIDDEN Exp2Opt : public LibCallOptimization {
 
       Constant *One = ConstantFP::get(*Context, APFloat(1.0f));
       if (Op->getType() != Type::FloatTy)
-        One = Context->getConstantExprFPExtend(One, Op->getType());
+        One = ConstantExpr::getFPExtend(One, Op->getType());
 
       Module *M = Caller->getParent();
       Value *Callee = M->getOrInsertFunction(Name, Op->getType(),

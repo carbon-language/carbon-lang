@@ -154,7 +154,7 @@ Constant *Module::getOrInsertFunction(const StringRef &Name,
   // If the function exists but has the wrong type, return a bitcast to the
   // right type.
   if (F->getType() != Context.getPointerTypeUnqual(Ty))
-    return Context.getConstantExprBitCast(F, Context.getPointerTypeUnqual(Ty));
+    return ConstantExpr::getBitCast(F, Context.getPointerTypeUnqual(Ty));
   
   // Otherwise, we just found the existing function or a prototype.
   return F;  
@@ -272,7 +272,7 @@ Constant *Module::getOrInsertGlobal(const StringRef &Name, const Type *Ty) {
   // If the variable exists but has the wrong type, return a bitcast to the
   // right type.
   if (GV->getType() != Context.getPointerTypeUnqual(Ty))
-    return Context.getConstantExprBitCast(GV, Context.getPointerTypeUnqual(Ty));
+    return ConstantExpr::getBitCast(GV, Context.getPointerTypeUnqual(Ty));
   
   // Otherwise, we just found the existing function or a prototype.
   return GV;

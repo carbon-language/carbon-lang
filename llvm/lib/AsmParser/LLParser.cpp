@@ -1899,7 +1899,7 @@ bool LLParser::ParseValID(ValID &ID) {
       return Error(ID.Loc, "invalid cast opcode for cast from '" +
                    SrcVal->getType()->getDescription() + "' to '" +
                    DestTy->getDescription() + "'");
-    ID.ConstantVal = Context.getConstantExprCast((Instruction::CastOps)Opc, 
+    ID.ConstantVal = ConstantExpr::getCast((Instruction::CastOps)Opc, 
                                                  SrcVal, DestTy);
     ID.Kind = ValID::t_Constant;
     return false;
@@ -1919,7 +1919,7 @@ bool LLParser::ParseValID(ValID &ID) {
                                           Indices.end()))
       return Error(ID.Loc, "invalid indices for extractvalue");
     ID.ConstantVal =
-      Context.getConstantExprExtractValue(Val, Indices.data(), Indices.size());
+      ConstantExpr::getExtractValue(Val, Indices.data(), Indices.size());
     ID.Kind = ValID::t_Constant;
     return false;
   }
@@ -1939,7 +1939,7 @@ bool LLParser::ParseValID(ValID &ID) {
     if (!ExtractValueInst::getIndexedType(Val0->getType(), Indices.begin(),
                                           Indices.end()))
       return Error(ID.Loc, "invalid indices for insertvalue");
-    ID.ConstantVal = Context.getConstantExprInsertValue(Val0, Val1,
+    ID.ConstantVal = ConstantExpr::getInsertValue(Val0, Val1,
                        Indices.data(), Indices.size());
     ID.Kind = ValID::t_Constant;
     return false;
@@ -1965,13 +1965,13 @@ bool LLParser::ParseValID(ValID &ID) {
     if (Opc == Instruction::FCmp) {
       if (!Val0->getType()->isFPOrFPVector())
         return Error(ID.Loc, "fcmp requires floating point operands");
-      ID.ConstantVal = Context.getConstantExprFCmp(Pred, Val0, Val1);
+      ID.ConstantVal = ConstantExpr::getFCmp(Pred, Val0, Val1);
     } else {
       assert(Opc == Instruction::ICmp && "Unexpected opcode for CmpInst!");
       if (!Val0->getType()->isIntOrIntVector() &&
           !isa<PointerType>(Val0->getType()))
         return Error(ID.Loc, "icmp requires pointer or integer operands");
-      ID.ConstantVal = Context.getConstantExprICmp(Pred, Val0, Val1);
+      ID.ConstantVal = ConstantExpr::getICmp(Pred, Val0, Val1);
     }
     ID.Kind = ValID::t_Constant;
     return false;
@@ -2030,7 +2030,7 @@ bool LLParser::ParseValID(ValID &ID) {
     if (!Val0->getType()->isIntOrIntVector() &&
         !Val0->getType()->isFPOrFPVector())
       return Error(ID.Loc,"constexpr requires integer, fp, or vector operands");
-    Constant *C = Context.getConstantExpr(Opc, Val0, Val1);
+    Constant *C = ConstantExpr::get(Opc, Val0, Val1);
     if (NUW)
       cast<OverflowingBinaryOperator>(C)->setHasNoUnsignedOverflow(true);
     if (NSW)
@@ -2063,7 +2063,7 @@ bool LLParser::ParseValID(ValID &ID) {
     if (!Val0->getType()->isIntOrIntVector())
       return Error(ID.Loc,
                    "constexpr requires integer or integer vector operands");
-    ID.ConstantVal = Context.getConstantExpr(Opc, Val0, Val1);
+    ID.ConstantVal = ConstantExpr::get(Opc, Val0, Val1);
     ID.Kind = ValID::t_Constant;
     return false;
   }  
@@ -2092,7 +2092,7 @@ bool LLParser::ParseValID(ValID &ID) {
                                              (Value**)(Elts.data() + 1),
                                              Elts.size() - 1))
         return Error(ID.Loc, "invalid indices for getelementptr");
-      ID.ConstantVal = Context.getConstantExprGetElementPtr(Elts[0],
+      ID.ConstantVal = ConstantExpr::getGetElementPtr(Elts[0],
                                               Elts.data() + 1, Elts.size() - 1);
       if (InBounds)
         cast<GEPOperator>(ID.ConstantVal)->setIsInBounds(true);
@@ -2102,20 +2102,20 @@ bool LLParser::ParseValID(ValID &ID) {
       if (const char *Reason = SelectInst::areInvalidOperands(Elts[0], Elts[1],
                                                               Elts[2]))
         return Error(ID.Loc, Reason);
-      ID.ConstantVal = Context.getConstantExprSelect(Elts[0], Elts[1], Elts[2]);
+      ID.ConstantVal = ConstantExpr::getSelect(Elts[0], Elts[1], Elts[2]);
     } else if (Opc == Instruction::ShuffleVector) {
       if (Elts.size() != 3)
         return Error(ID.Loc, "expected three operands to shufflevector");
       if (!ShuffleVectorInst::isValidOperands(Elts[0], Elts[1], Elts[2]))
         return Error(ID.Loc, "invalid operands to shufflevector");
       ID.ConstantVal =
-                 Context.getConstantExprShuffleVector(Elts[0], Elts[1],Elts[2]);
+                 ConstantExpr::getShuffleVector(Elts[0], Elts[1],Elts[2]);
     } else if (Opc == Instruction::ExtractElement) {
       if (Elts.size() != 2)
         return Error(ID.Loc, "expected two operands to extractelement");
       if (!ExtractElementInst::isValidOperands(Elts[0], Elts[1]))
         return Error(ID.Loc, "invalid extractelement operands");
-      ID.ConstantVal = Context.getConstantExprExtractElement(Elts[0], Elts[1]);
+      ID.ConstantVal = ConstantExpr::getExtractElement(Elts[0], Elts[1]);
     } else {
       assert(Opc == Instruction::InsertElement && "Unknown opcode");
       if (Elts.size() != 3)
@@ -2123,7 +2123,7 @@ bool LLParser::ParseValID(ValID &ID) {
       if (!InsertElementInst::isValidOperands(Elts[0], Elts[1], Elts[2]))
         return Error(ID.Loc, "invalid insertelement operands");
       ID.ConstantVal =
-                 Context.getConstantExprInsertElement(Elts[0], Elts[1],Elts[2]);
+                 ConstantExpr::getInsertElement(Elts[0], Elts[1],Elts[2]);
     }
     
     ID.Kind = ValID::t_Constant;

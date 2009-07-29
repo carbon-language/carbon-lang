@@ -55,7 +55,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, const Type *Ty) {
 
   // FIXME: keep track of the cast instruction.
   if (Constant *C = dyn_cast<Constant>(V))
-    return getContext().getConstantExprCast(Op, C, Ty);
+    return ConstantExpr::getCast(Op, C, Ty);
   
   if (Argument *A = dyn_cast<Argument>(V)) {
     // Check to see if there is already a cast!
@@ -126,7 +126,7 @@ Value *SCEVExpander::InsertBinop(Instruction::BinaryOps Opcode,
   // Fold a binop with constant operands.
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
-      return getContext().getConstantExpr(Opcode, CLHS, CRHS);
+      return ConstantExpr::get(Opcode, CLHS, CRHS);
 
   // Do a quick scan to see if we have this binop nearby.  If so, reuse it.
   unsigned ScanLimit = 6;
@@ -327,7 +327,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     // Fold a GEP with constant operands.
     if (Constant *CLHS = dyn_cast<Constant>(V))
       if (Constant *CRHS = dyn_cast<Constant>(Idx))
-        return getContext().getConstantExprGetElementPtr(CLHS, &CRHS, 1);
+        return ConstantExpr::getGetElementPtr(CLHS, &CRHS, 1);
 
     // Do a quick scan to see if we have this GEP nearby.  If so, reuse it.
     unsigned ScanLimit = 6;

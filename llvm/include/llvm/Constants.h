@@ -584,6 +584,38 @@ public:
 
   /// Cast constant expr
   ///
+
+  /// getAlignOf constant expr - computes the alignment of a type in a target
+  /// independent way (Note: the return type is an i32; Note: assumes that i8
+  /// is byte aligned).
+  static Constant* getAlignOf(const Type* Ty);
+  
+  /// getSizeOf constant expr - computes the size of a type in a target
+  /// independent way (Note: the return type is an i64).
+  ///
+  static Constant* getSizeOf(const Type* Ty);
+  
+  static Constant* getNeg(Constant* C);
+  static Constant* getFNeg(Constant* C);
+  static Constant* getNot(Constant* C);
+  static Constant* getAdd(Constant* C1, Constant* C2);
+  static Constant* getFAdd(Constant* C1, Constant* C2);
+  static Constant* getSub(Constant* C1, Constant* C2);
+  static Constant* getFSub(Constant* C1, Constant* C2);
+  static Constant* getMul(Constant* C1, Constant* C2);
+  static Constant* getFMul(Constant* C1, Constant* C2);
+  static Constant* getUDiv(Constant* C1, Constant* C2);
+  static Constant* getSDiv(Constant* C1, Constant* C2);
+  static Constant* getFDiv(Constant* C1, Constant* C2);
+  static Constant* getURem(Constant* C1, Constant* C2);
+  static Constant* getSRem(Constant* C1, Constant* C2);
+  static Constant* getFRem(Constant* C1, Constant* C2);
+  static Constant* getAnd(Constant* C1, Constant* C2);
+  static Constant* getOr(Constant* C1, Constant* C2);
+  static Constant* getXor(Constant* C1, Constant* C2);
+  static Constant* getShl(Constant* C1, Constant* C2);
+  static Constant* getLShr(Constant* C1, Constant* C2);
+  static Constant* getAShr(Constant* C1, Constant* C2);
   static Constant *getTrunc   (Constant *C, const Type *Ty);
   static Constant *getSExt    (Constant *C, const Type *Ty);
   static Constant *getZExt    (Constant *C, const Type *Ty);
@@ -661,7 +693,7 @@ public:
     return getSelectTy(V1->getType(), C, V1, V2);
   }
 
-  /// ConstantExpr::get - Return a binary or shift operator constant expression,
+  /// get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
   static Constant *get(unsigned Opcode, Constant *C1, Constant *C2);
@@ -669,7 +701,7 @@ public:
   /// @brief Return an ICmp or FCmp comparison operator constant expression.
   static Constant *getCompare(unsigned short pred, Constant *C1, Constant *C2);
 
-  /// ConstantExpr::get* - Return some common constants without having to
+  /// get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
   ///
   static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS);

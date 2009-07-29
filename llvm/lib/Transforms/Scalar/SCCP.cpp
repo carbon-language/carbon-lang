@@ -670,7 +670,7 @@ void SCCPSolver::visitCastInst(CastInst &I) {
   if (VState.isOverdefined())          // Inherit overdefinedness of operand
     markOverdefined(&I);
   else if (VState.isConstant())        // Propagate constant value
-    markConstant(&I, Context->getConstantExprCast(I.getOpcode(), 
+    markConstant(&I, ConstantExpr::getCast(I.getOpcode(), 
                                            VState.getConstant(), I.getType()));
 }
 
@@ -863,7 +863,7 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
               break;  // Cannot fold this operation over the PHI nodes!
             } else if (In1.isConstant() && In2.isConstant()) {
               Constant *V =
-                     Context->getConstantExpr(I.getOpcode(), In1.getConstant(),
+                     ConstantExpr::get(I.getOpcode(), In1.getConstant(),
                                               In2.getConstant());
               if (Result.isUndefined())
                 Result.markConstant(V);
@@ -912,7 +912,7 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
     markOverdefined(IV, &I);
   } else if (V1State.isConstant() && V2State.isConstant()) {
     markConstant(IV, &I,
-                Context->getConstantExpr(I.getOpcode(), V1State.getConstant(),
+                ConstantExpr::get(I.getOpcode(), V1State.getConstant(),
                                            V2State.getConstant()));
   }
 }
@@ -949,7 +949,7 @@ void SCCPSolver::visitCmpInst(CmpInst &I) {
               Result.markOverdefined();
               break;  // Cannot fold this operation over the PHI nodes!
             } else if (In1.isConstant() && In2.isConstant()) {
-              Constant *V = Context->getConstantExprCompare(I.getPredicate(), 
+              Constant *V = ConstantExpr::getCompare(I.getPredicate(), 
                                                      In1.getConstant(), 
                                                      In2.getConstant());
               if (Result.isUndefined())
@@ -998,7 +998,7 @@ void SCCPSolver::visitCmpInst(CmpInst &I) {
 
     markOverdefined(IV, &I);
   } else if (V1State.isConstant() && V2State.isConstant()) {
-    markConstant(IV, &I, Context->getConstantExprCompare(I.getPredicate(), 
+    markConstant(IV, &I, ConstantExpr::getCompare(I.getPredicate(), 
                                                   V1State.getConstant(), 
                                                   V2State.getConstant()));
   }
@@ -1100,7 +1100,7 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   Constant *Ptr = Operands[0];
   Operands.erase(Operands.begin());  // Erase the pointer from idx list...
 
-  markConstant(IV, &I, Context->getConstantExprGetElementPtr(Ptr, &Operands[0],
+  markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, &Operands[0],
                                                       Operands.size()));
 }
 

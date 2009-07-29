@@ -200,11 +200,11 @@ BasicBlock* LowerSwitch::newLeafBlock(CaseRange& Leaf, Value* Val,
                           "SwitchLeaf");      
     } else {
       // Emit V-Lo <=u Hi-Lo
-      Constant* NegLo = Context.getConstantExprNeg(Leaf.Low);
+      Constant* NegLo = ConstantExpr::getNeg(Leaf.Low);
       Instruction* Add = BinaryOperator::CreateAdd(Val, NegLo,
                                                    Val->getName()+".off",
                                                    NewLeaf);
-      Constant *UpperBound = Context.getConstantExprAdd(NegLo, Leaf.High);
+      Constant *UpperBound = ConstantExpr::getAdd(NegLo, Leaf.High);
       Comp = new ICmpInst(*NewLeaf, ICmpInst::ICMP_ULE, Add, UpperBound,
                           "SwitchLeaf");
     }

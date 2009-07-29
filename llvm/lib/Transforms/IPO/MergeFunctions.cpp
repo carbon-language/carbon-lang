@@ -521,7 +521,7 @@ static void AliasGToF(Function *F, Function *G) {
 
   GlobalAlias *GA = new GlobalAlias(
     G->getType(), G->getLinkage(), "",
-    F->getContext().getConstantExprBitCast(F, G->getType()), G->getParent());
+    ConstantExpr::getBitCast(F, G->getType()), G->getParent());
   F->setAlignment(std::max(F->getAlignment(), G->getAlignment()));
   GA->takeName(G);
   GA->setVisibility(G->getVisibility());

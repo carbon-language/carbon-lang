@@ -322,7 +322,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
         Value *Size;
         if (TD == 0)
-          Size = Context.getConstantExprSizeOf(AggTy);
+          Size = ConstantExpr::getSizeOf(AggTy);
         else
           Size = ConstantInt::get(Type::Int64Ty,
                                          TD->getTypeStoreSize(AggTy));

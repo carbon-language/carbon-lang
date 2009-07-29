@@ -799,7 +799,7 @@ static Constant *GetResultOfComparison(CmpInst::Predicate pred,
                                        LLVMContext &Context) {
   if (Constant *CLHS = dyn_cast<Constant>(LHS))
     if (Constant *CRHS = dyn_cast<Constant>(RHS))
-      return Context.getConstantExprCompare(pred, CLHS, CRHS);
+      return ConstantExpr::getCompare(pred, CLHS, CRHS);
 
   if (LHS == RHS)
     if (isa<IntegerType>(LHS->getType()) || isa<PointerType>(LHS->getType()))

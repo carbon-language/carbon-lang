@@ -487,7 +487,6 @@ public:
   void erase(MDString *M);
   void erase(MDNode *M);
   void erase(ConstantAggregateZero *Z);
-  void erase(ConstantVector *V);
 };
 
 }

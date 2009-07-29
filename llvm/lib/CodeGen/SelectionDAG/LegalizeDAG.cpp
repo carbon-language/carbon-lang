@@ -363,7 +363,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
         TLI.isLoadExtLegal(ISD::EXTLOAD, SVT) &&
         TLI.ShouldShrinkFPConstant(OrigVT)) {
       const Type *SType = SVT.getTypeForMVT(*DAG.getContext());
-      LLVMC = cast<ConstantFP>(Context->getConstantExprFPTrunc(LLVMC, SType));
+      LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
       VT = SVT;
       Extend = true;
     }

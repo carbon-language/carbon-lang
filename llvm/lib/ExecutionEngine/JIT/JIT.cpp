@@ -507,7 +507,7 @@ GenericValue JIT::runFunction(Function *F,
       else
         C = ConstantInt::get(Type::Int64Ty, (intptr_t)ArgPtr);
       // Cast the integer to pointer
-      C = Context.getConstantExprIntToPtr(C, ArgTy);
+      C = ConstantExpr::getIntToPtr(C, ArgTy);
       break;
     }
     Args.push_back(C);

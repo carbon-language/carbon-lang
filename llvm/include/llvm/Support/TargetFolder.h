@@ -49,63 +49,63 @@ public:
   //===--------------------------------------------------------------------===//
 
   Constant *CreateAdd(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprAdd(LHS, RHS));
+    return Fold(ConstantExpr::getAdd(LHS, RHS));
   }
   Constant *CreateFAdd(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprFAdd(LHS, RHS));
+    return Fold(ConstantExpr::getFAdd(LHS, RHS));
   }
   Constant *CreateSub(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprSub(LHS, RHS));
+    return Fold(ConstantExpr::getSub(LHS, RHS));
   }
   Constant *CreateFSub(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprFSub(LHS, RHS));
+    return Fold(ConstantExpr::getFSub(LHS, RHS));
   }
   Constant *CreateMul(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprMul(LHS, RHS));
+    return Fold(ConstantExpr::getMul(LHS, RHS));
   }
   Constant *CreateFMul(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprFMul(LHS, RHS));
+    return Fold(ConstantExpr::getFMul(LHS, RHS));
   }
   Constant *CreateUDiv(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprUDiv(LHS, RHS));
+    return Fold(ConstantExpr::getUDiv(LHS, RHS));
   }
   Constant *CreateSDiv(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprSDiv(LHS, RHS));
+    return Fold(ConstantExpr::getSDiv(LHS, RHS));
   }
   Constant *CreateFDiv(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprFDiv(LHS, RHS));
+    return Fold(ConstantExpr::getFDiv(LHS, RHS));
   }
   Constant *CreateURem(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprURem(LHS, RHS));
+    return Fold(ConstantExpr::getURem(LHS, RHS));
   }
   Constant *CreateSRem(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprSRem(LHS, RHS));
+    return Fold(ConstantExpr::getSRem(LHS, RHS));
   }
   Constant *CreateFRem(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprFRem(LHS, RHS));
+    return Fold(ConstantExpr::getFRem(LHS, RHS));
   }
   Constant *CreateShl(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprShl(LHS, RHS));
+    return Fold(ConstantExpr::getShl(LHS, RHS));
   }
   Constant *CreateLShr(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprLShr(LHS, RHS));
+    return Fold(ConstantExpr::getLShr(LHS, RHS));
   }
   Constant *CreateAShr(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprAShr(LHS, RHS));
+    return Fold(ConstantExpr::getAShr(LHS, RHS));
   }
   Constant *CreateAnd(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprAnd(LHS, RHS));
+    return Fold(ConstantExpr::getAnd(LHS, RHS));
   }
   Constant *CreateOr(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprOr(LHS, RHS));
+    return Fold(ConstantExpr::getOr(LHS, RHS));
   }
   Constant *CreateXor(Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExprXor(LHS, RHS));
+    return Fold(ConstantExpr::getXor(LHS, RHS));
   }
 
   Constant *CreateBinOp(Instruction::BinaryOps Opc,
                         Constant *LHS, Constant *RHS) const {
-    return Fold(Context.getConstantExpr(Opc, LHS, RHS));
+    return Fold(ConstantExpr::get(Opc, LHS, RHS));
   }
 
   //===--------------------------------------------------------------------===//
@@ -113,13 +113,13 @@ public:
   //===--------------------------------------------------------------------===//
 
   Constant *CreateNeg(Constant *C) const {
-    return Fold(Context.getConstantExprNeg(C));
+    return Fold(ConstantExpr::getNeg(C));
   }
   Constant *CreateFNeg(Constant *C) const {
-    return Fold(Context.getConstantExprFNeg(C));
+    return Fold(ConstantExpr::getFNeg(C));
   }
   Constant *CreateNot(Constant *C) const {
-    return Fold(Context.getConstantExprNot(C));
+    return Fold(ConstantExpr::getNot(C));
   }
 
   //===--------------------------------------------------------------------===//
@@ -128,11 +128,11 @@ public:
 
   Constant *CreateGetElementPtr(Constant *C, Constant* const *IdxList,
                                 unsigned NumIdx) const {
-    return Fold(Context.getConstantExprGetElementPtr(C, IdxList, NumIdx));
+    return Fold(ConstantExpr::getGetElementPtr(C, IdxList, NumIdx));
   }
   Constant *CreateGetElementPtr(Constant *C, Value* const *IdxList,
                                 unsigned NumIdx) const {
-    return Fold(Context.getConstantExprGetElementPtr(C, IdxList, NumIdx));
+    return Fold(ConstantExpr::getGetElementPtr(C, IdxList, NumIdx));
   }
 
   //===--------------------------------------------------------------------===//
@@ -143,13 +143,13 @@ public:
                        const Type *DestTy) const {
     if (C->getType() == DestTy)
       return C; // avoid calling Fold
-    return Fold(Context.getConstantExprCast(Op, C, DestTy));
+    return Fold(ConstantExpr::getCast(Op, C, DestTy));
   }
   Constant *CreateIntCast(Constant *C, const Type *DestTy,
                           bool isSigned) const {
     if (C->getType() == DestTy)
       return C; // avoid calling Fold
-    return Fold(Context.getConstantExprIntegerCast(C, DestTy, isSigned));
+    return Fold(ConstantExpr::getIntegerCast(C, DestTy, isSigned));
   }
 
   Constant *CreateBitCast(Constant *C, const Type *DestTy) const {
@@ -164,7 +164,7 @@ public:
   Constant *CreateTruncOrBitCast(Constant *C, const Type *DestTy) const {
     if (C->getType() == DestTy)
       return C; // avoid calling Fold
-    return Fold(Context.getConstantExprTruncOrBitCast(C, DestTy));
+    return Fold(ConstantExpr::getTruncOrBitCast(C, DestTy));
   }
 
   //===--------------------------------------------------------------------===//
@@ -173,11 +173,11 @@ public:
 
   Constant *CreateICmp(CmpInst::Predicate P, Constant *LHS,
                        Constant *RHS) const {
-    return Fold(Context.getConstantExprCompare(P, LHS, RHS));
+    return Fold(ConstantExpr::getCompare(P, LHS, RHS));
   }
   Constant *CreateFCmp(CmpInst::Predicate P, Constant *LHS,
                        Constant *RHS) const {
-    return Fold(Context.getConstantExprCompare(P, LHS, RHS));
+    return Fold(ConstantExpr::getCompare(P, LHS, RHS));
   }
 
   //===--------------------------------------------------------------------===//
@@ -185,31 +185,31 @@ public:
   //===--------------------------------------------------------------------===//
 
   Constant *CreateSelect(Constant *C, Constant *True, Constant *False) const {
-    return Fold(Context.getConstantExprSelect(C, True, False));
+    return Fold(ConstantExpr::getSelect(C, True, False));
   }
 
   Constant *CreateExtractElement(Constant *Vec, Constant *Idx) const {
-    return Fold(Context.getConstantExprExtractElement(Vec, Idx));
+    return Fold(ConstantExpr::getExtractElement(Vec, Idx));
   }
 
   Constant *CreateInsertElement(Constant *Vec, Constant *NewElt,
                                 Constant *Idx) const {
-    return Fold(Context.getConstantExprInsertElement(Vec, NewElt, Idx));
+    return Fold(ConstantExpr::getInsertElement(Vec, NewElt, Idx));
   }
 
   Constant *CreateShuffleVector(Constant *V1, Constant *V2,
                                 Constant *Mask) const {
-    return Fold(Context.getConstantExprShuffleVector(V1, V2, Mask));
+    return Fold(ConstantExpr::getShuffleVector(V1, V2, Mask));
   }
 
   Constant *CreateExtractValue(Constant *Agg, const unsigned *IdxList,
                                unsigned NumIdx) const {
-    return Fold(Context.getConstantExprExtractValue(Agg, IdxList, NumIdx));
+    return Fold(ConstantExpr::getExtractValue(Agg, IdxList, NumIdx));
   }
 
   Constant *CreateInsertValue(Constant *Agg, Constant *Val,
                               const unsigned *IdxList, unsigned NumIdx) const {
-    return Fold(Context.getConstantExprInsertValue(Agg, Val, IdxList, NumIdx));
+    return Fold(ConstantExpr::getInsertValue(Agg, Val, IdxList, NumIdx));
   }
 };
 

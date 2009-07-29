@@ -1995,7 +1995,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         NewCmpRHS = ConstantInt::get(NewCmpTy, NewCmpVal);
       else {
         Constant *CI = ConstantInt::get(NewCmpIntTy, NewCmpVal);
-        NewCmpRHS = Context.getConstantExprIntToPtr(CI, NewCmpTy);
+        NewCmpRHS = ConstantExpr::getIntToPtr(CI, NewCmpTy);
       }
       NewOffset = TyBits == NewTyBits
         ? SE->getMulExpr(CondUse->getOffset(),

@@ -107,7 +107,7 @@ namespace {
         for (std::vector<GlobalValue*>::iterator GI = Named.begin(), 
                GE = Named.end(); GI != GE; ++GI) {
           (*GI)->setLinkage(GlobalValue::ExternalLinkage);
-          AUGs.push_back(Context.getConstantExprBitCast(*GI, SBP));
+          AUGs.push_back(ConstantExpr::getBitCast(*GI, SBP));
         }
         ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
         Constant *Init = ConstantArray::get(AT, AUGs);

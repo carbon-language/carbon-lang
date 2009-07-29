@@ -1694,7 +1694,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
     if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
       Constant *LHSCV = LHSC->getValue();
       Constant *RHSCV = RHSC->getValue();
-      return getConstant(cast<ConstantInt>(getContext().getConstantExprUDiv(LHSCV,
+      return getConstant(cast<ConstantInt>(ConstantExpr::getUDiv(LHSCV,
                                                                  RHSCV)));
     }
   }
@@ -2095,7 +2095,7 @@ const SCEV *ScalarEvolution::getIntegerSCEV(int Val, const Type *Ty) {
 const SCEV *ScalarEvolution::getNegativeSCEV(const SCEV *V) {
   if (const SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
     return getConstant(
-               cast<ConstantInt>(getContext().getConstantExprNeg(VC->getValue())));
+               cast<ConstantInt>(ConstantExpr::getNeg(VC->getValue())));
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
@@ -2107,7 +2107,7 @@ const SCEV *ScalarEvolution::getNegativeSCEV(const SCEV *V) {
 const SCEV *ScalarEvolution::getNotSCEV(const SCEV *V) {
   if (const SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
     return getConstant(
-                cast<ConstantInt>(getContext().getConstantExprNot(VC->getValue())));
+                cast<ConstantInt>(ConstantExpr::getNot(VC->getValue())));
 
   const Type *Ty = V->getType();
   Ty = getEffectiveSCEVType(Ty);
@@ -4130,7 +4130,7 @@ const SCEV *ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L) {
 #endif
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(getContext().getConstantExprICmp(ICmpInst::ICMP_ULT,
+          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT,
                                    R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.
@@ -4856,8 +4856,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
     if (R1) {
       // Pick the smallest positive root value.
       if (ConstantInt *CB =
-          dyn_cast<ConstantInt>(
-                       SE.getContext().getConstantExprICmp(ICmpInst::ICMP_ULT,
+          dyn_cast<ConstantInt>(ConstantExpr::getICmp(ICmpInst::ICMP_ULT,
                          R1->getValue(), R2->getValue()))) {
         if (CB->getZExtValue() == false)
           std::swap(R1, R2);   // R1 is the minimum root now.

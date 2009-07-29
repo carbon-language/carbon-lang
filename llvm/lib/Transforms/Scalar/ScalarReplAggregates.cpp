@@ -242,8 +242,7 @@ bool SROA::performScalarRepl(Function &F) {
       DOUT << "Found alloca equal to global: " << *AI;
       DOUT << "  memcpy = " << *TheCopy;
       Constant *TheSrc = cast<Constant>(TheCopy->getOperand(2));
-      AI->replaceAllUsesWith(
-                  F.getContext().getConstantExprBitCast(TheSrc, AI->getType()));
+      AI->replaceAllUsesWith(ConstantExpr::getBitCast(TheSrc, AI->getType()));
       TheCopy->eraseFromParent();  // Don't mutate the global.
       AI->eraseFromParent();
       ++NumGlobals;
@@ -841,9 +840,9 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
           // Convert the integer value to the appropriate type.
           StoreVal = ConstantInt::get(Context, TotalVal);
           if (isa<PointerType>(ValTy))
-            StoreVal = Context.getConstantExprIntToPtr(StoreVal, ValTy);
+            StoreVal = ConstantExpr::getIntToPtr(StoreVal, ValTy);
           else if (ValTy->isFloatingPoint())
-            StoreVal = Context.getConstantExprBitCast(StoreVal, ValTy);
+            StoreVal = ConstantExpr::getBitCast(StoreVal, ValTy);
           assert(StoreVal->getType() == ValTy && "Type mismatch!");
           
           // If the requested value was a vector constant, create it.

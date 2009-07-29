@@ -576,7 +576,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
         Idxs.push_back(NullInt);
         for (unsigned i = 3, e = CE->getNumOperands(); i != e; ++i)
           Idxs.push_back(CE->getOperand(i));
-        NewPtr = Context.getConstantExprGetElementPtr(cast<Constant>(NewPtr),
+        NewPtr = ConstantExpr::getGetElementPtr(cast<Constant>(NewPtr),
                                                 &Idxs[0], Idxs.size());
       } else {
         GetElementPtrInst *GEPI = cast<GetElementPtrInst>(GEP);
@@ -708,7 +708,7 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV,
       }
     } else if (CastInst *CI = dyn_cast<CastInst>(I)) {
       Changed |= OptimizeAwayTrappingUsesOfValue(CI,
-                                Context.getConstantExprCast(CI->getOpcode(),
+                                ConstantExpr::getCast(CI->getOpcode(),
                                                 NewV, CI->getType()), Context);
       if (CI->use_empty()) {
         Changed = true;
@@ -726,7 +726,7 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV,
           break;
       if (Idxs.size() == GEPI->getNumOperands()-1)
         Changed |= OptimizeAwayTrappingUsesOfValue(GEPI,
-                          Context.getConstantExprGetElementPtr(NewV, &Idxs[0],
+                          ConstantExpr::getGetElementPtr(NewV, &Idxs[0],
                                                         Idxs.size()), Context);
       if (GEPI->use_empty()) {
         Changed = true;
@@ -858,7 +858,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 
   Constant *RepValue = NewGV;
   if (NewGV->getType() != GV->getType()->getElementType())
-    RepValue = Context.getConstantExprBitCast(RepValue, 
+    RepValue = ConstantExpr::getBitCast(RepValue, 
                                         GV->getType()->getElementType());
 
   // If there is a comparison against null, we will insert a global bool to
@@ -1543,7 +1543,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
     if (Constant *SOVC = dyn_cast<Constant>(StoredOnceVal)) {
       if (GV->getInitializer()->getType() != SOVC->getType())
         SOVC = 
-         Context.getConstantExprBitCast(SOVC, GV->getInitializer()->getType());
+         ConstantExpr::getBitCast(SOVC, GV->getInitializer()->getType());
 
       // Optimize away any trapping uses of the loaded value.
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC, Context))
@@ -1989,7 +1989,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   if (!GCL->use_empty()) {
     Constant *V = NGV;
     if (V->getType() != GCL->getType())
-      V = Context.getConstantExprBitCast(V, GCL->getType());
+      V = ConstantExpr::getBitCast(V, GCL->getType());
     GCL->replaceAllUsesWith(V);
   }
   GCL->eraseFromParent();
@@ -2194,20 +2194,20 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       Constant *Val = getVal(Values, SI->getOperand(0));
       MutatedMemory[Ptr] = Val;
     } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
-      InstResult = Context.getConstantExpr(BO->getOpcode(),
+      InstResult = ConstantExpr::get(BO->getOpcode(),
                                      getVal(Values, BO->getOperand(0)),
                                      getVal(Values, BO->getOperand(1)));
     } else if (CmpInst *CI = dyn_cast<CmpInst>(CurInst)) {
-      InstResult = Context.getConstantExprCompare(CI->getPredicate(),
+      InstResult = ConstantExpr::getCompare(CI->getPredicate(),
                                             getVal(Values, CI->getOperand(0)),
                                             getVal(Values, CI->getOperand(1)));
     } else if (CastInst *CI = dyn_cast<CastInst>(CurInst)) {
-      InstResult = Context.getConstantExprCast(CI->getOpcode(),
+      InstResult = ConstantExpr::getCast(CI->getOpcode(),
                                          getVal(Values, CI->getOperand(0)),
                                          CI->getType());
     } else if (SelectInst *SI = dyn_cast<SelectInst>(CurInst)) {
       InstResult =
-            Context.getConstantExprSelect(getVal(Values, SI->getOperand(0)),
+            ConstantExpr::getSelect(getVal(Values, SI->getOperand(0)),
                                            getVal(Values, SI->getOperand(1)),
                                            getVal(Values, SI->getOperand(2)));
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CurInst)) {
@@ -2217,7 +2217,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
            i != e; ++i)
         GEPOps.push_back(getVal(Values, *i));
       InstResult =
-            Context.getConstantExprGetElementPtr(P, &GEPOps[0], GEPOps.size());
+            ConstantExpr::getGetElementPtr(P, &GEPOps[0], GEPOps.size());
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
       if (LI->isVolatile()) return false;  // no volatile accesses.
       InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),

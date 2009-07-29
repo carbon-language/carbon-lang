@@ -1719,6 +1719,29 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   return getTy(C1->getType(), Opcode, C1, C2);
 }
 
+Constant* ConstantExpr::getSizeOf(const Type* Ty) {
+  // sizeof is implemented as: (i64) gep (Ty*)null, 1
+  // Note that a non-inbounds gep is used, as null isn't within any object.
+  LLVMContext &Context = Ty->getContext();
+  Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *GEP = getGetElementPtr(
+                 Context.getNullValue(PointerType::getUnqual(Ty)), &GEPIdx, 1);
+  return getCast(Instruction::PtrToInt, GEP, Type::Int64Ty);
+}
+
+Constant* ConstantExpr::getAlignOf(const Type* Ty) {
+  LLVMContext &Context = Ty->getContext();
+  // alignof is implemented as: (i64) gep ({i8,Ty}*)null, 0, 1
+  const Type *AligningTy = StructType::get(Type::Int8Ty, Ty, NULL);
+  Constant *NullPtr = Context.getNullValue(AligningTy->getPointerTo());
+  Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
+  Constant *One = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *Indices[2] = { Zero, One };
+  Constant *GEP = getGetElementPtr(NullPtr, Indices, 2);
+  return getCast(Instruction::PtrToInt, GEP, Type::Int32Ty);
+}
+
+
 Constant *ConstantExpr::getCompare(unsigned short pred, 
                             Constant *C1, Constant *C2) {
   assert(C1->getType() == C2->getType() && "Op types should be identical!");
@@ -1953,6 +1976,104 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
     ExtractValueInst::getIndexedType(Agg->getType(), IdxList, IdxList+NumIdx);
   assert(ReqTy && "extractvalue indices invalid!");
   return getExtractValueTy(ReqTy, Agg, IdxList, NumIdx);
+}
+
+Constant* ConstantExpr::getNeg(Constant* C) {
+  // API compatibility: Adjust integer opcodes to floating-point opcodes.
+  if (C->getType()->isFPOrFPVector())
+    return getFNeg(C);
+  assert(C->getType()->isIntOrIntVector() &&
+         "Cannot NEG a nonintegral value!");
+  return get(Instruction::Sub,
+             ConstantFP::getZeroValueForNegation(C->getType()),
+             C);
+}
+
+Constant* ConstantExpr::getFNeg(Constant* C) {
+  assert(C->getType()->isFPOrFPVector() &&
+         "Cannot FNEG a non-floating-point value!");
+  return get(Instruction::FSub,
+             ConstantFP::getZeroValueForNegation(C->getType()),
+             C);
+}
+
+Constant* ConstantExpr::getNot(Constant* C) {
+  assert(C->getType()->isIntOrIntVector() &&
+         "Cannot NOT a nonintegral value!");
+  LLVMContext &Context = C->getType()->getContext();
+  return get(Instruction::Xor, C, Context.getAllOnesValue(C->getType()));
+}
+
+Constant* ConstantExpr::getAdd(Constant* C1, Constant* C2) {
+  return get(Instruction::Add, C1, C2);
+}
+
+Constant* ConstantExpr::getFAdd(Constant* C1, Constant* C2) {
+  return get(Instruction::FAdd, C1, C2);
+}
+
+Constant* ConstantExpr::getSub(Constant* C1, Constant* C2) {
+  return get(Instruction::Sub, C1, C2);
+}
+
+Constant* ConstantExpr::getFSub(Constant* C1, Constant* C2) {
+  return get(Instruction::FSub, C1, C2);
+}
+
+Constant* ConstantExpr::getMul(Constant* C1, Constant* C2) {
+  return get(Instruction::Mul, C1, C2);
+}
+
+Constant* ConstantExpr::getFMul(Constant* C1, Constant* C2) {
+  return get(Instruction::FMul, C1, C2);
+}
+
+Constant* ConstantExpr::getUDiv(Constant* C1, Constant* C2) {
+  return get(Instruction::UDiv, C1, C2);
+}
+
+Constant* ConstantExpr::getSDiv(Constant* C1, Constant* C2) {
+  return get(Instruction::SDiv, C1, C2);
+}
+
+Constant* ConstantExpr::getFDiv(Constant* C1, Constant* C2) {
+  return get(Instruction::FDiv, C1, C2);
+}
+
+Constant* ConstantExpr::getURem(Constant* C1, Constant* C2) {
+  return get(Instruction::URem, C1, C2);
+}
+
+Constant* ConstantExpr::getSRem(Constant* C1, Constant* C2) {
+  return get(Instruction::SRem, C1, C2);
+}
+
+Constant* ConstantExpr::getFRem(Constant* C1, Constant* C2) {
+  return get(Instruction::FRem, C1, C2);
+}
+
+Constant* ConstantExpr::getAnd(Constant* C1, Constant* C2) {
+  return get(Instruction::And, C1, C2);
+}
+
+Constant* ConstantExpr::getOr(Constant* C1, Constant* C2) {
+  return get(Instruction::Or, C1, C2);
+}
+
+Constant* ConstantExpr::getXor(Constant* C1, Constant* C2) {
+  return get(Instruction::Xor, C1, C2);
+}
+
+Constant* ConstantExpr::getShl(Constant* C1, Constant* C2) {
+  return get(Instruction::Shl, C1, C2);
+}
+
+Constant* ConstantExpr::getLShr(Constant* C1, Constant* C2) {
+  return get(Instruction::LShr, C1, C2);
+}
+
+Constant* ConstantExpr::getAShr(Constant* C1, Constant* C2) {
+  return get(Instruction::AShr, C1, C2);
 }
 
 // destroyConstant - Remove the constant from the constant table...

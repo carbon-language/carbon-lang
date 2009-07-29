@@ -641,7 +641,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
 
       // Propagate alignment, section, and visibility info.
       CopyGVAttributes(NewDGV, SGV);
-      DGV->replaceAllUsesWith(Context.getConstantExprBitCast(NewDGV, 
+      DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDGV, 
                                                               DGV->getType()));
 
       // DGV will conflict with NewDGV because they both had the same
@@ -688,7 +688,7 @@ static bool LinkGlobals(Module *Dest, const Module *Src,
     DGV->setLinkage(NewLinkage);
 
     // Make sure to remember this mapping...
-    ValueMap[SGV] = Context.getConstantExprBitCast(DGV, SGV->getType());
+    ValueMap[SGV] = ConstantExpr::getBitCast(DGV, SGV->getType());
   }
   return false;
 }
@@ -798,7 +798,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
         // Any uses of DGV need to change to NewGA, with cast, if needed.
         if (SGA->getType() != DGVar->getType())
-          DGVar->replaceAllUsesWith(Context.getConstantExprBitCast(NewGA,
+          DGVar->replaceAllUsesWith(ConstantExpr::getBitCast(NewGA,
                                                              DGVar->getType()));
         else
           DGVar->replaceAllUsesWith(NewGA);
@@ -827,7 +827,7 @@ static bool LinkAlias(Module *Dest, const Module *Src,
 
         // Any uses of DF need to change to NewGA, with cast, if needed.
         if (SGA->getType() != DF->getType())
-          DF->replaceAllUsesWith(Context.getConstantExprBitCast(NewGA,
+          DF->replaceAllUsesWith(ConstantExpr::getBitCast(NewGA,
                                                           DF->getType()));
         else
           DF->replaceAllUsesWith(NewGA);
@@ -996,7 +996,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       CopyGVAttributes(NewDF, SF);
 
       // Any uses of DF need to change to NewDF, with cast
-      DGV->replaceAllUsesWith(Context.getConstantExprBitCast(NewDF, 
+      DGV->replaceAllUsesWith(ConstantExpr::getBitCast(NewDF, 
                                                               DGV->getType()));
 
       // DF will conflict with NewDF because they both had the same. We must
@@ -1035,7 +1035,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
     DGV->setLinkage(NewLinkage);
 
     // Make sure to remember this mapping.
-    ValueMap[SF] = Context.getConstantExprBitCast(DGV, SF->getType());
+    ValueMap[SF] = ConstantExpr::getBitCast(DGV, SF->getType());
   }
   return false;
 }
@@ -1194,9 +1194,9 @@ static bool LinkAppendingVars(Module *M,
 
       // FIXME: This should rewrite simple/straight-forward uses such as
       // getelementptr instructions to not use the Cast!
-      G1->replaceAllUsesWith(Context.getConstantExprBitCast(NG,
+      G1->replaceAllUsesWith(ConstantExpr::getBitCast(NG,
                              G1->getType()));
-      G2->replaceAllUsesWith(Context.getConstantExprBitCast(NG, 
+      G2->replaceAllUsesWith(ConstantExpr::getBitCast(NG, 
                              G2->getType()));
 
       // Remove the two globals from the module now...

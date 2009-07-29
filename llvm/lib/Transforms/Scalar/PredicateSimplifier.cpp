@@ -1694,7 +1694,7 @@ namespace {
     bool isRelatedBy(Value *V1, Value *V2, ICmpInst::Predicate Pred) const {
       if (Constant *C1 = dyn_cast<Constant>(V1))
         if (Constant *C2 = dyn_cast<Constant>(V2))
-          return Context->getConstantExprCompare(Pred, C1, C2) ==
+          return ConstantExpr::getCompare(Pred, C1, C2) ==
                  Context->getTrue();
 
       unsigned n1 = VN.valueNumber(V1, Top);
@@ -2161,7 +2161,7 @@ namespace {
         // the BB as unreachable if so.
         if (Constant *CI_L = dyn_cast<Constant>(O.LHS)) {
           if (Constant *CI_R = dyn_cast<Constant>(O.RHS)) {
-            if (Context->getConstantExprCompare(O.Op, CI_L, CI_R) ==
+            if (ConstantExpr::getCompare(O.Op, CI_L, CI_R) ==
                 Context->getFalse())
               UB.mark(TopBB);
 

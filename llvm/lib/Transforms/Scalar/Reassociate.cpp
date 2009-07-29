@@ -468,7 +468,7 @@ static Instruction *ConvertShiftToMul(Instruction *Shl,
         isReassociableOp(Shl->use_back(), Instruction::Add)))) {
     Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
     MulCst =
-        Context.getConstantExprShl(MulCst, cast<Constant>(Shl->getOperand(1)));
+        ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
     
     Instruction *Mul = BinaryOperator::CreateMul(Shl->getOperand(0), MulCst,
                                                  "", Shl);
@@ -570,7 +570,7 @@ Value *Reassociate::OptimizeExpression(BinaryOperator *I,
   if (Constant *V1 = dyn_cast<Constant>(Ops[Ops.size()-2].Op))
     if (Constant *V2 = dyn_cast<Constant>(Ops.back().Op)) {
       Ops.pop_back();
-      Ops.back().Op = Context.getConstantExpr(Opcode, V1, V2);
+      Ops.back().Op = ConstantExpr::get(Opcode, V1, V2);
       return OptimizeExpression(I, Ops);
     }
 

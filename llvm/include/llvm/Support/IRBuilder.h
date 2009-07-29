@@ -726,7 +726,7 @@ public:
     Value *RHS_int = CreatePtrToInt(RHS, Type::Int64Ty);
     Value *Difference = CreateSub(LHS_int, RHS_int);
     return CreateSDiv(Difference,
-                      Context.getConstantExprSizeOf(ArgType->getElementType()),
+                      ConstantExpr::getSizeOf(ArgType->getElementType()),
                       Name);
   }
 };

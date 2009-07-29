@@ -44,9 +44,9 @@ static Value *isBytewiseValue(Value *V, LLVMContext& Context) {
   // corresponding integer value is "byteable".  An important case is 0.0. 
   if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
     if (CFP->getType() == Type::FloatTy)
-      V = Context.getConstantExprBitCast(CFP, Type::Int32Ty);
+      V = ConstantExpr::getBitCast(CFP, Type::Int32Ty);
     if (CFP->getType() == Type::DoubleTy)
-      V = Context.getConstantExprBitCast(CFP, Type::Int64Ty);
+      V = ConstantExpr::getBitCast(CFP, Type::Int64Ty);
     // Don't handle long double formats, which have strange constraints.
   }
   

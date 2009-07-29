@@ -477,7 +477,7 @@ DIFactory::DIFactory(Module &m)
 /// This is only valid when the descriptor is non-null.
 Constant *DIFactory::getCastToEmpty(DIDescriptor D) {
   if (D.isNull()) return VMContext.getNullValue(EmptyStructPtr);
-  return VMContext.getConstantExprBitCast(D.getGV(), EmptyStructPtr);
+  return ConstantExpr::getBitCast(D.getGV(), EmptyStructPtr);
 }
 
 Constant *DIFactory::GetTagConstant(unsigned TAG) {
@@ -507,7 +507,7 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
                                              GlobalVariable::InternalLinkage,
                                              ConstStr, ".str");
   StrGV->setSection("llvm.metadata");
-  return Slot = VMContext.getConstantExprBitCast(StrGV, DestTy);
+  return Slot = ConstantExpr::getBitCast(StrGV, DestTy);
 }
 
 //===----------------------------------------------------------------------===//
@@ -779,7 +779,7 @@ DIFactory::CreateGlobalVariable(DIDescriptor Context, const std::string &Name,
     getCastToEmpty(Type),
     ConstantInt::get(Type::Int1Ty, isLocalToUnit),
     ConstantInt::get(Type::Int1Ty, isDefinition),
-    VMContext.getConstantExprBitCast(Val, EmptyStructPtr)
+    ConstantExpr::getBitCast(Val, EmptyStructPtr)
   };
   
   Constant *Init = ConstantStruct::get(Elts, sizeof(Elts)/sizeof(Elts[0]));

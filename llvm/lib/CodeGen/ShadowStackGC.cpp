@@ -238,7 +238,7 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
 
   Constant *GEPIndices[2] = { ConstantInt::get(Type::Int32Ty, 0),
                               ConstantInt::get(Type::Int32Ty, 0) };
-  return Context.getConstantExprGetElementPtr(GV, GEPIndices, 2);
+  return ConstantExpr::getGetElementPtr(GV, GEPIndices, 2);
 }
 
 const Type* ShadowStackGC::GetConcreteStackEntryType(Function &F) {

@@ -116,7 +116,7 @@ public:
 
   Constant *CreateGetElementPtr(Constant *C, Constant* const *IdxList,
                                 unsigned NumIdx) const {
-    return Context.getConstantExprGetElementPtr(C, IdxList, NumIdx);
+    return ConstantExpr::getGetElementPtr(C, IdxList, NumIdx);
   }
   Value *CreateGetElementPtr(Constant *C, Value* const *IdxList,
                              unsigned NumIdx) const {

@@ -978,7 +978,7 @@ bool BitcodeReader::ParseConstants() {
       } else {
         Constant *LHS = ValueList.getConstantFwdRef(Record[1], CurTy);
         Constant *RHS = ValueList.getConstantFwdRef(Record[2], CurTy);
-        V = Context.getConstantExpr(Opc, LHS, RHS);
+        V = ConstantExpr::get(Opc, LHS, RHS);
       }
       if (Record.size() >= 4)
         SetOptimizationFlags(V, Record[3]);
@@ -993,7 +993,7 @@ bool BitcodeReader::ParseConstants() {
         const Type *OpTy = getTypeByID(Record[1]);
         if (!OpTy) return Error("Invalid CE_CAST record");
         Constant *Op = ValueList.getConstantFwdRef(Record[2], OpTy);
-        V = Context.getConstantExprCast(Opc, Op, CurTy);
+        V = ConstantExpr::getCast(Opc, Op, CurTy);
       }
       break;
     }  
@@ -1006,7 +1006,7 @@ bool BitcodeReader::ParseConstants() {
         if (!ElTy) return Error("Invalid CE_GEP record");
         Elts.push_back(ValueList.getConstantFwdRef(Record[i+1], ElTy));
       }
-      V = Context.getConstantExprGetElementPtr(Elts[0], &Elts[1], 
+      V = ConstantExpr::getGetElementPtr(Elts[0], &Elts[1], 
                                                Elts.size()-1);
       if (BitCode == bitc::CST_CODE_CE_INBOUNDS_GEP)
         cast<GEPOperator>(V)->setIsInBounds(true);
@@ -1014,7 +1014,7 @@ bool BitcodeReader::ParseConstants() {
     }
     case bitc::CST_CODE_CE_SELECT:  // CE_SELECT: [opval#, opval#, opval#]
       if (Record.size() < 3) return Error("Invalid CE_SELECT record");
-      V = Context.getConstantExprSelect(ValueList.getConstantFwdRef(Record[0],
+      V = ConstantExpr::getSelect(ValueList.getConstantFwdRef(Record[0],
                                                               Type::Int1Ty),
                                   ValueList.getConstantFwdRef(Record[1],CurTy),
                                   ValueList.getConstantFwdRef(Record[2],CurTy));
@@ -1026,7 +1026,7 @@ bool BitcodeReader::ParseConstants() {
       if (OpTy == 0) return Error("Invalid CE_EXTRACTELT record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[2], Type::Int32Ty);
-      V = Context.getConstantExprExtractElement(Op0, Op1);
+      V = ConstantExpr::getExtractElement(Op0, Op1);
       break;
     }
     case bitc::CST_CODE_CE_INSERTELT: { // CE_INSERTELT: [opval, opval, opval]
@@ -1037,7 +1037,7 @@ bool BitcodeReader::ParseConstants() {
       Constant *Op1 = ValueList.getConstantFwdRef(Record[1],
                                                   OpTy->getElementType());
       Constant *Op2 = ValueList.getConstantFwdRef(Record[2], Type::Int32Ty);
-      V = Context.getConstantExprInsertElement(Op0, Op1, Op2);
+      V = ConstantExpr::getInsertElement(Op0, Op1, Op2);
       break;
     }
     case bitc::CST_CODE_CE_SHUFFLEVEC: { // CE_SHUFFLEVEC: [opval, opval, opval]
@@ -1049,7 +1049,7 @@ bool BitcodeReader::ParseConstants() {
       const Type *ShufTy = Context.getVectorType(Type::Int32Ty, 
                                                  OpTy->getNumElements());
       Constant *Op2 = ValueList.getConstantFwdRef(Record[2], ShufTy);
-      V = Context.getConstantExprShuffleVector(Op0, Op1, Op2);
+      V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
       break;
     }
     case bitc::CST_CODE_CE_SHUFVEC_EX: { // [opty, opval, opval, opval]
@@ -1062,7 +1062,7 @@ bool BitcodeReader::ParseConstants() {
       const Type *ShufTy = Context.getVectorType(Type::Int32Ty, 
                                                  RTy->getNumElements());
       Constant *Op2 = ValueList.getConstantFwdRef(Record[3], ShufTy);
-      V = Context.getConstantExprShuffleVector(Op0, Op1, Op2);
+      V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
       break;
     }
     case bitc::CST_CODE_CE_CMP: {     // CE_CMP: [opty, opval, opval, pred]
@@ -1073,9 +1073,9 @@ bool BitcodeReader::ParseConstants() {
       Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy);
 
       if (OpTy->isFloatingPoint())
-        V = Context.getConstantExprFCmp(Record[3], Op0, Op1);
+        V = ConstantExpr::getFCmp(Record[3], Op0, Op1);
       else
-        V = Context.getConstantExprICmp(Record[3], Op0, Op1);
+        V = ConstantExpr::getICmp(Record[3], Op0, Op1);
       break;
     }
     case bitc::CST_CODE_INLINEASM: {

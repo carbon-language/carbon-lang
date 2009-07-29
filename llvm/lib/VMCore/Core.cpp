@@ -428,130 +428,130 @@ LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
 /*--.. Constant expressions ................................................--*/
 
 LLVMValueRef LLVMAlignOf(LLVMTypeRef Ty) {
-  return wrap(getGlobalContext().getConstantExprAlignOf(unwrap(Ty)));
+  return wrap(ConstantExpr::getAlignOf(unwrap(Ty)));
 }
 
 LLVMValueRef LLVMSizeOf(LLVMTypeRef Ty) {
-  return wrap(getGlobalContext().getConstantExprSizeOf(unwrap(Ty)));
+  return wrap(ConstantExpr::getSizeOf(unwrap(Ty)));
 }
 
 LLVMValueRef LLVMConstNeg(LLVMValueRef ConstantVal) {
-  return wrap(getGlobalContext().getConstantExprNeg(
+  return wrap(ConstantExpr::getNeg(
                                                 unwrap<Constant>(ConstantVal)));
 }
 
 LLVMValueRef LLVMConstNot(LLVMValueRef ConstantVal) {
-  return wrap(getGlobalContext().getConstantExprNot(
+  return wrap(ConstantExpr::getNot(
                                                 unwrap<Constant>(ConstantVal)));
 }
 
 LLVMValueRef LLVMConstAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprAdd(
+  return wrap(ConstantExpr::getAdd(
                                    unwrap<Constant>(LHSConstant),
                                    unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstSub(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprSub(
+  return wrap(ConstantExpr::getSub(
                                    unwrap<Constant>(LHSConstant),
                                    unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprMul(
+  return wrap(ConstantExpr::getMul(
                                    unwrap<Constant>(LHSConstant),
                                    unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstUDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprUDiv(
+  return wrap(ConstantExpr::getUDiv(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstSDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprSDiv(
+  return wrap(ConstantExpr::getSDiv(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstFDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprFDiv(
+  return wrap(ConstantExpr::getFDiv(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstURem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprURem(
+  return wrap(ConstantExpr::getURem(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstSRem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprSRem(
+  return wrap(ConstantExpr::getSRem(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstFRem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprFRem(
+  return wrap(ConstantExpr::getFRem(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstAnd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprAnd(
+  return wrap(ConstantExpr::getAnd(
                                    unwrap<Constant>(LHSConstant),
                                    unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstOr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprOr(
+  return wrap(ConstantExpr::getOr(
                                   unwrap<Constant>(LHSConstant),
                                   unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstXor(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprXor(
+  return wrap(ConstantExpr::getXor(
                                    unwrap<Constant>(LHSConstant),
                                    unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstICmp(LLVMIntPredicate Predicate,
                            LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprICmp(Predicate,
+  return wrap(ConstantExpr::getICmp(Predicate,
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstFCmp(LLVMRealPredicate Predicate,
                            LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprFCmp(Predicate,
+  return wrap(ConstantExpr::getFCmp(Predicate,
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstShl(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprShl(
+  return wrap(ConstantExpr::getShl(
                                   unwrap<Constant>(LHSConstant),
                                   unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstLShr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprLShr(
+  return wrap(ConstantExpr::getLShr(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstAShr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant) {
-  return wrap(getGlobalContext().getConstantExprAShr(
+  return wrap(ConstantExpr::getAShr(
                                     unwrap<Constant>(LHSConstant),
                                     unwrap<Constant>(RHSConstant)));
 }
 
 LLVMValueRef LLVMConstGEP(LLVMValueRef ConstantVal,
                           LLVMValueRef *ConstantIndices, unsigned NumIndices) {
-  return wrap(getGlobalContext().getConstantExprGetElementPtr(
+  return wrap(ConstantExpr::getGetElementPtr(
                                              unwrap<Constant>(ConstantVal),
                                              unwrap<Constant>(ConstantIndices, 
                                                               NumIndices),
@@ -559,71 +559,71 @@ LLVMValueRef LLVMConstGEP(LLVMValueRef ConstantVal,
 }
 
 LLVMValueRef LLVMConstTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprTrunc(
+  return wrap(ConstantExpr::getTrunc(
                                      unwrap<Constant>(ConstantVal),
                                      unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstSExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprSExt(
+  return wrap(ConstantExpr::getSExt(
                                     unwrap<Constant>(ConstantVal),
                                     unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstZExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprZExt(
+  return wrap(ConstantExpr::getZExt(
                                     unwrap<Constant>(ConstantVal),
                                     unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstFPTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprFPTrunc(
+  return wrap(ConstantExpr::getFPTrunc(
                                        unwrap<Constant>(ConstantVal),
                                        unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstFPExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprFPExtend(
+  return wrap(ConstantExpr::getFPExtend(
                                         unwrap<Constant>(ConstantVal),
                                         unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstUIToFP(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprUIToFP(
+  return wrap(ConstantExpr::getUIToFP(
                                       unwrap<Constant>(ConstantVal),
                                       unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstSIToFP(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprSIToFP(unwrap<Constant>(ConstantVal),
+  return wrap(ConstantExpr::getSIToFP(unwrap<Constant>(ConstantVal),
                                       unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstFPToUI(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprFPToUI(unwrap<Constant>(ConstantVal),
+  return wrap(ConstantExpr::getFPToUI(unwrap<Constant>(ConstantVal),
                                       unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstFPToSI(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprFPToSI(
+  return wrap(ConstantExpr::getFPToSI(
                                       unwrap<Constant>(ConstantVal),
                                       unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstPtrToInt(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprPtrToInt(
+  return wrap(ConstantExpr::getPtrToInt(
                                         unwrap<Constant>(ConstantVal),
                                         unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstIntToPtr(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprIntToPtr(
+  return wrap(ConstantExpr::getIntToPtr(
                                         unwrap<Constant>(ConstantVal),
                                         unwrap(ToType)));
 }
 
 LLVMValueRef LLVMConstBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
-  return wrap(getGlobalContext().getConstantExprBitCast(
+  return wrap(ConstantExpr::getBitCast(
                                        unwrap<Constant>(ConstantVal),
                                        unwrap(ToType)));
 }
@@ -631,7 +631,7 @@ LLVMValueRef LLVMConstBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType) {
 LLVMValueRef LLVMConstSelect(LLVMValueRef ConstantCondition,
                              LLVMValueRef ConstantIfTrue,
                              LLVMValueRef ConstantIfFalse) {
-  return wrap(getGlobalContext().getConstantExprSelect(
+  return wrap(ConstantExpr::getSelect(
                                       unwrap<Constant>(ConstantCondition),
                                       unwrap<Constant>(ConstantIfTrue),
                                       unwrap<Constant>(ConstantIfFalse)));
@@ -639,7 +639,7 @@ LLVMValueRef LLVMConstSelect(LLVMValueRef ConstantCondition,
 
 LLVMValueRef LLVMConstExtractElement(LLVMValueRef VectorConstant,
                                      LLVMValueRef IndexConstant) {
-  return wrap(getGlobalContext().getConstantExprExtractElement(
+  return wrap(ConstantExpr::getExtractElement(
                                               unwrap<Constant>(VectorConstant),
                                               unwrap<Constant>(IndexConstant)));
 }
@@ -647,7 +647,7 @@ LLVMValueRef LLVMConstExtractElement(LLVMValueRef VectorConstant,
 LLVMValueRef LLVMConstInsertElement(LLVMValueRef VectorConstant,
                                     LLVMValueRef ElementValueConstant,
                                     LLVMValueRef IndexConstant) {
-  return wrap(getGlobalContext().getConstantExprInsertElement(
+  return wrap(ConstantExpr::getInsertElement(
                                          unwrap<Constant>(VectorConstant),
                                          unwrap<Constant>(ElementValueConstant),
                                              unwrap<Constant>(IndexConstant)));
@@ -656,7 +656,7 @@ LLVMValueRef LLVMConstInsertElement(LLVMValueRef VectorConstant,
 LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant,
                                     LLVMValueRef VectorBConstant,
                                     LLVMValueRef MaskConstant) {
-  return wrap(getGlobalContext().getConstantExprShuffleVector(
+  return wrap(ConstantExpr::getShuffleVector(
                                              unwrap<Constant>(VectorAConstant),
                                              unwrap<Constant>(VectorBConstant),
                                              unwrap<Constant>(MaskConstant)));
@@ -664,7 +664,7 @@ LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant,
 
 LLVMValueRef LLVMConstExtractValue(LLVMValueRef AggConstant, unsigned *IdxList,
                                    unsigned NumIdx) {
-  return wrap(getGlobalContext().getConstantExprExtractValue(
+  return wrap(ConstantExpr::getExtractValue(
                                             unwrap<Constant>(AggConstant),
                                             IdxList, NumIdx));
 }
@@ -672,7 +672,7 @@ LLVMValueRef LLVMConstExtractValue(LLVMValueRef AggConstant, unsigned *IdxList,
 LLVMValueRef LLVMConstInsertValue(LLVMValueRef AggConstant,
                                   LLVMValueRef ElementValueConstant,
                                   unsigned *IdxList, unsigned NumIdx) {
-  return wrap(getGlobalContext().getConstantExprInsertValue(
+  return wrap(ConstantExpr::getInsertValue(
                                          unwrap<Constant>(AggConstant),
                                          unwrap<Constant>(ElementValueConstant),
                                            IdxList, NumIdx));

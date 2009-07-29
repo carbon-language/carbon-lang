@@ -505,9 +505,9 @@ static bool IndexOperandsEqual(Value *V1, Value *V2, LLVMContext &Context) {
     if (Constant *C2 = dyn_cast<Constant>(V2)) {
       // Sign extend the constants to long types, if necessary
       if (C1->getType() != Type::Int64Ty)
-        C1 = Context.getConstantExprSExt(C1, Type::Int64Ty);
+        C1 = ConstantExpr::getSExt(C1, Type::Int64Ty);
       if (C2->getType() != Type::Int64Ty) 
-        C2 = Context.getConstantExprSExt(C2, Type::Int64Ty);
+        C2 = ConstantExpr::getSExt(C2, Type::Int64Ty);
       return C1 == C2;
     }
   return false;
@@ -603,9 +603,9 @@ BasicAliasAnalysis::CheckGEPInstructions(
           if (G1OC->getType() != G2OC->getType()) {
             // Sign extend both operands to long.
             if (G1OC->getType() != Type::Int64Ty)
-              G1OC = Context.getConstantExprSExt(G1OC, Type::Int64Ty);
+              G1OC = ConstantExpr::getSExt(G1OC, Type::Int64Ty);
             if (G2OC->getType() != Type::Int64Ty) 
-              G2OC = Context.getConstantExprSExt(G2OC, Type::Int64Ty);
+              G2OC = ConstantExpr::getSExt(G2OC, Type::Int64Ty);
             GEP1Ops[FirstConstantOper] = G1OC;
             GEP2Ops[FirstConstantOper] = G2OC;
           }
