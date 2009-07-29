@@ -590,8 +590,8 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 //===----------------------------------------------------------------------===//
 
 TargetLoweringObjectFileCOFF::TargetLoweringObjectFileCOFF() {
-  TextSection = getOrCreateSection("_text", true, SectionKind::Text);
-  DataSection = getOrCreateSection("_data", true, SectionKind::DataRel);
+  TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
+  DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
 }
 
 void TargetLoweringObjectFileCOFF::
