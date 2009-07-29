@@ -38,7 +38,7 @@ public:
   void IndexAST(TranslationUnit *TU);
 
   virtual void GetTranslationUnitsFor(Entity Ent,
-                                      TranslationUnitHandler *Handler);
+                                      TranslationUnitHandler &Handler);
 
   typedef TUSetTy::iterator translation_unit_iterator;
 

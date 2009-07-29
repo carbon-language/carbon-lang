@@ -34,7 +34,7 @@ public:
   ~Program();
 
   /// \brief Traverses the AST and passes all the entities to the Handler.
-  void FindEntities(ASTContext &Ctx, EntityHandler *Handler);
+  void FindEntities(ASTContext &Ctx, EntityHandler &Handler);
 };
 
 } // namespace idx

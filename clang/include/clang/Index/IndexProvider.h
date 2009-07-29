@@ -25,7 +25,7 @@ class IndexProvider {
 public:
   virtual ~IndexProvider();
   virtual void GetTranslationUnitsFor(Entity Ent,
-                                      TranslationUnitHandler *Handler) = 0;
+                                      TranslationUnitHandler &Handler) = 0;
 };
 
 } // namespace idx

@@ -39,11 +39,11 @@ public:
 
 void Indexer::IndexAST(TranslationUnit *TU) {
   EntityIndexer Idx(TU, Map);
-  Prog.FindEntities(TU->getASTContext(), &Idx);
+  Prog.FindEntities(TU->getASTContext(), Idx);
 }
 
 void Indexer::GetTranslationUnitsFor(Entity Ent,
-                                     TranslationUnitHandler *Handler) {
+                                     TranslationUnitHandler &Handler) {
   assert(Ent.isValid() && "Expected valid Entity");
   assert(!Ent.isInternalToTU() &&
          "Expected an Entity visible outside of its translation unit");
@@ -54,7 +54,7 @@ void Indexer::GetTranslationUnitsFor(Entity Ent,
   
   TUSetTy &Set = I->second;
   for (TUSetTy::iterator I = Set.begin(), E = Set.end(); I != E; ++I)
-    Handler->Handle(*I);
+    Handler.Handle(*I);
 }
 
 static Indexer::TUSetTy EmptySet;
