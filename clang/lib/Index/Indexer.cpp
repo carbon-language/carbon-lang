@@ -38,6 +38,7 @@ public:
 } // anonymous namespace
 
 void Indexer::IndexAST(TranslationUnit *TU) {
+  assert(TU && "Passed null TranslationUnit");
   EntityIndexer Idx(TU, Map);
   Prog.FindEntities(TU->getASTContext(), Idx);
 }
