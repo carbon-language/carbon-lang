@@ -6201,8 +6201,8 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
   // ptest intrinsics. The intrinsic these come from are designed to return
-  // a boolean value, not just an instruction so lower it to the ptest
-  // pattern and a conditional move to the result.
+  // an integer value, not just an instruction so lower it to the ptest
+  // pattern and a setcc for the result.
   case Intrinsic::x86_sse41_ptestz:
   case Intrinsic::x86_sse41_ptestc:
   case Intrinsic::x86_sse41_ptestnzc:{
