@@ -3206,6 +3206,25 @@ QualType Sema::CheckConditionalOperands(Expr *&Cond, Expr *&LHS, Expr *&RHS,
     ImpCastExprToType(RHS, compositeType);
     return compositeType;
   }
+  // Check Objective-C object pointer types and 'void *'
+  if (LHSTy->isVoidPointerType() && RHSTy->isObjCObjectPointerType()) {
+    QualType lhptee = LHSTy->getAsPointerType()->getPointeeType();
+    QualType rhptee = RHSTy->getAsObjCObjectPointerType()->getPointeeType();
+    QualType destPointee = lhptee.getQualifiedType(rhptee.getCVRQualifiers());
+    QualType destType = Context.getPointerType(destPointee);
+    ImpCastExprToType(LHS, destType); // add qualifiers if necessary
+    ImpCastExprToType(RHS, destType); // promote to void*
+    return destType;
+  }
+  if (LHSTy->isObjCObjectPointerType() && RHSTy->isVoidPointerType()) {
+    QualType lhptee = LHSTy->getAsObjCObjectPointerType()->getPointeeType();
+    QualType rhptee = RHSTy->getAsPointerType()->getPointeeType();
+    QualType destPointee = rhptee.getQualifiedType(lhptee.getCVRQualifiers());
+    QualType destType = Context.getPointerType(destPointee);
+    ImpCastExprToType(RHS, destType); // add qualifiers if necessary
+    ImpCastExprToType(LHS, destType); // promote to void*
+    return destType;
+  }
   // Check constraints for C object pointers types (C99 6.5.15p3,6).
   if (LHSTy->isPointerType() && RHSTy->isPointerType()) {
     // get the "pointed to" types

@@ -1,5 +1,4 @@
-// RUN: clang-cc -fsyntax-only %s
-// XFAIL
+// RUN: clang-cc -fsyntax-only -verify %s
 // <rdar://problem/6212771>
 
 #define nil ((void*) 0)
@@ -26,6 +25,11 @@ A *f1_a(int cond, A *a) {
   return cond ? a : nil;
 }
 
+void *f1_const_a(int x, void *p, const A * q) {
+  void *r = x ? p : q; // expected-warning{{initializing 'void const *' discards qualifiers, expected 'void *'}}
+  return r;
+}
+
 // Check interaction with qualified id
 
 @protocol P0 @end
@@ -48,9 +52,7 @@ id f3(int cond, id<P0> a) {
 @end
 
 int f5(int cond, id<P1> a, id<P1> b) {
-  // This should result in something with id type, currently. This is
-  // almost certainly wrong and should be fixed.
-  return (cond ? a : b).x; // expected-error {{member reference base type ('id') is not a structure or union}}
+  return (cond ? a : b).x;
 }
 int f5_a(int cond, A *a, A *b) {
   return (cond ? a : b).x;
@@ -61,7 +63,7 @@ int f5_b(int cond, A *a, B *b) {
 
 int f6(int cond, id<P1> a, void *b) {
   // This should result in something with id type, currently.
-  return (cond ? a : b).x; // expected-error {{member reference base type ('id') is not a structure or union}}
+  return (cond ? a : b).x; // expected-error {{member reference base type 'void *' is not a structure or union}}
 }
 
 int f7(int cond, id<P1> a) {
@@ -69,10 +71,10 @@ int f7(int cond, id<P1> a) {
 }
 
 int f8(int cond, id<P1> a, A *b) {
-  // GCC regards this as a warning (comparison of distinct Objective-C types lacks a cast)
-  return a == b; // expected-error {{invalid operands to binary expression}}
+  return a == b; // expected-warning {{comparison of distinct pointer types ('id<P1>' and 'A *')}}
 }
 
 int f9(int cond, id<P1> a, A *b) {
-  return (cond ? a : b).x; // expected-error {{incompatible operand types}}
+  return (cond ? a : b).x; // expected-warning {{incompatible operand types ('id<P1>' and 'A *')}} \
+                              expected-error {{property 'x' not found on object of type 'id'}}
 }
