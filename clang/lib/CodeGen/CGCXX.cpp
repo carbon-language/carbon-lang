@@ -45,7 +45,7 @@ CodeGenFunction::GenerateStaticCXXBlockVarDeclInit(const VarDecl &D,
                              GuardVName.c_str());
   
   // Load the first byte of the guard variable.
-  const llvm::Type *PtrTy = VMContext.getPointerType(llvm::Type::Int8Ty, 0);
+  const llvm::Type *PtrTy = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
   llvm::Value *V = Builder.CreateLoad(Builder.CreateBitCast(GuardV, PtrTy), 
                                       "tmp");
   
@@ -166,7 +166,7 @@ llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
   // FIXME. Once type layout is complete, this will probably change.
   const ASTRecordLayout &Layout = 
   getContext().getASTRecordLayout(ClassDecl);
-  llvm::Type *I8Ptr = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+  llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   uint64_t Offset = Layout.getBaseClassOffset(BaseClassDecl) / 8;
   llvm::Value *OffsetVal = 
     llvm::ConstantInt::get(
@@ -177,7 +177,7 @@ llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
     getContext().getCanonicalType(
       getContext().getTypeDeclType(const_cast<CXXRecordDecl*>(BaseClassDecl)));
   const llvm::Type *BasePtr = ConvertType(BTy);
-  BasePtr = VMContext.getPointerTypeUnqual(BasePtr);
+  BasePtr = llvm::PointerType::getUnqual(BasePtr);
   BaseValue = Builder.CreateBitCast(BaseValue, BasePtr);
   return BaseValue;
 }

@@ -543,7 +543,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   // equal, but other compilers do this optimization, and almost every memcpy
   // implementation handles this case safely.  If there is a libc that does not
   // safely handle this, we can add a target hook.
-  const llvm::Type *BP = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
   if (SrcPtr->getType() != BP)
@@ -553,7 +553,7 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
   std::pair<uint64_t, unsigned> TypeInfo = getContext().getTypeInfo(Ty);
   
   // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = VMContext.getIntegerType(LLVMPointerWidth);
+  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
   
   // FIXME: If we have a volatile struct, the optimizer can remove what might
   // appear to be `extra' memory ops:

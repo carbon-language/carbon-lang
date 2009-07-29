@@ -452,7 +452,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     assert(SrcType->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
     // First, convert to the correct width so that we control the kind of
     // extension.
-    const llvm::Type *MiddleTy = VMContext.getIntegerType(CGF.LLVMPointerWidth);
+    const llvm::Type *MiddleTy = llvm::IntegerType::get(CGF.LLVMPointerWidth);
     bool InputSigned = SrcType->isSignedIntegerType();
     llvm::Value* IntResult =
         Builder.CreateIntCast(Src, MiddleTy, InputSigned, "conv");
@@ -707,11 +707,11 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
           size = -size;
         Inc = llvm::ConstantInt::get(Inc->getType(), size);
         const llvm::Type *i8Ty = 
-          VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+          llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
         InVal = Builder.CreateBitCast(InVal, i8Ty);
         NextVal = Builder.CreateGEP(InVal, Inc, "add.ptr");
         llvm::Value *lhs = LV.getAddress();
-        lhs = Builder.CreateBitCast(lhs, VMContext.getPointerTypeUnqual(i8Ty));
+        lhs = Builder.CreateBitCast(lhs, llvm::PointerType::getUnqual(i8Ty));
         LV = LValue::MakeAddr(lhs, ValTy.getCVRQualifiers(), 
                               CGF.getContext().getObjCGCAttrKind(ValTy));
       }
@@ -719,7 +719,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
         NextVal = Builder.CreateGEP(InVal, Inc, "ptrincdec");
     } else {
       const llvm::Type *i8Ty =
-        VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+        llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
       NextVal = Builder.CreateBitCast(InVal, i8Ty, "tmp");
       NextVal = Builder.CreateGEP(NextVal, Inc, "ptrincdec");
       NextVal = Builder.CreateBitCast(NextVal, InVal->getType());
@@ -988,11 +988,11 @@ Value *ScalarExprEmitter::EmitOverflowCheckedBinOp(const BinOpInfo &Ops) {
   handerArgTypes.push_back(llvm::Type::Int64Ty);
   handerArgTypes.push_back(llvm::Type::Int8Ty);
   handerArgTypes.push_back(llvm::Type::Int8Ty);
-  llvm::FunctionType *handlerTy = VMContext.getFunctionType(llvm::Type::Int64Ty,
+  llvm::FunctionType *handlerTy = llvm::FunctionType::get(llvm::Type::Int64Ty,
       handerArgTypes, false);
   llvm::Value *handlerFunction =
     CGF.CGM.getModule().getOrInsertGlobal("__overflow_handler",
-        VMContext.getPointerTypeUnqual(handlerTy));
+        llvm::PointerType::getUnqual(handlerTy));
   handlerFunction = Builder.CreateLoad(handlerFunction);
 
   llvm::Value *handlerResult = Builder.CreateCall4(handlerFunction,
@@ -1056,7 +1056,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   if (Width < CGF.LLVMPointerWidth) {
     // Zero or sign extend the pointer value based on whether the index is
     // signed or not.
-    const llvm::Type *IdxType = VMContext.getIntegerType(CGF.LLVMPointerWidth);
+    const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
     if (IdxExp->getType()->isSignedIntegerType())
       Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
     else
@@ -1070,7 +1070,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
       llvm::ConstantInt::get(Idx->getType(),
                              CGF.getContext().getTypeSize(OIT) / 8);
     Idx = Builder.CreateMul(Idx, InterfaceSize);
-    const llvm::Type *i8Ty = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+    const llvm::Type *i8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
     Value *Res = Builder.CreateGEP(Casted, Idx, "add.ptr");
     return Builder.CreateBitCast(Res, Ptr->getType());
@@ -1080,7 +1080,7 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
   // extensions. The GNU void* casts amount to no-ops since our void*
   // type is i8*, but this is future proof.
   if (ElementType->isVoidType() || ElementType->isFunctionType()) {
-    const llvm::Type *i8Ty = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+    const llvm::Type *i8Ty = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     Value *Casted = Builder.CreateBitCast(Ptr, i8Ty);
     Value *Res = Builder.CreateGEP(Casted, Idx, "add.ptr");
     return Builder.CreateBitCast(Res, Ptr->getType());
@@ -1118,8 +1118,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     if (Width < CGF.LLVMPointerWidth) {
       // Zero or sign extend the pointer value based on whether the index is
       // signed or not.
-      const llvm::Type *IdxType =
-        VMContext.getIntegerType(CGF.LLVMPointerWidth);
+      const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
       if (Ops.E->getRHS()->getType()->isSignedIntegerType())
         Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
       else
@@ -1136,7 +1135,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
                                CGF.getContext().getTypeSize(OIT) / 8);
       Idx = Builder.CreateMul(Idx, InterfaceSize);
       const llvm::Type *i8Ty = 
-        VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+        llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
       Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
       Value *Res = Builder.CreateGEP(LHSCasted, Idx, "add.ptr");
       return Builder.CreateBitCast(Res, Ops.LHS->getType());
@@ -1147,7 +1146,7 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
     // void* type is i8*, but this is future proof.
     if (LHSElementType->isVoidType() || LHSElementType->isFunctionType()) {
       const llvm::Type *i8Ty =
-        VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+        llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
       Value *LHSCasted = Builder.CreateBitCast(Ops.LHS, i8Ty);
       Value *Res = Builder.CreateGEP(LHSCasted, Idx, "sub.ptr");
       return Builder.CreateBitCast(Res, Ops.LHS->getType());
@@ -1614,7 +1613,7 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
 llvm::Value *CodeGenFunction::EmitVector(llvm::Value * const *Vals, 
                                          unsigned NumVals, bool isSplat) {
   llvm::Value *Vec
-    = VMContext.getUndef(VMContext.getVectorType(Vals[0]->getType(), NumVals));
+    = VMContext.getUndef(llvm::VectorType::get(Vals[0]->getType(), NumVals));
   
   for (unsigned i = 0, e = NumVals; i != e; ++i) {
     llvm::Value *Val = isSplat ? Vals[0] : Vals[i];

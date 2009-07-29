@@ -194,7 +194,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   // RAUW's the GV uses of this constant will be invalid.
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
   const llvm::Type *LPtrTy =
-    VMContext.getPointerType(LTy, D.getType().getAddressSpace());
+    llvm::PointerType::get(LTy, D.getType().getAddressSpace());
   DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
 
   // Emit global variable debug descriptor for static vars.
@@ -225,7 +225,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
   bool needsCopyDispose = BlockRequiresCopying(Ty);
   std::vector<const llvm::Type *> Types(needsCopyDispose*2+5);
   const llvm::PointerType *PtrToInt8Ty
-    = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+    = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   Types[0] = PtrToInt8Ty;
   Types[1] = PtrToInt8Ty;
   Types[2] = llvm::Type::Int32Ty;
@@ -238,7 +238,7 @@ const llvm::Type *CodeGenFunction::BuildByRefType(QualType Ty,
   assert((Align <= unsigned(Target.getPointerAlign(0))/8)
          && "Can't align more than pointer yet");
   Types[needsCopyDispose*2 + 4] = LTy;
-  return VMContext.getStructType(Types, false);
+  return llvm::StructType::get(Types, false);
 }
 
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
@@ -283,7 +283,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     if (!DidCallStackSave) {
       // Save the stack.
       const llvm::Type *LTy =
-        VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+        llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
       llvm::Value *Stack = CreateTempAlloca(LTy, "saved_stack");
       
       llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::stacksave);
@@ -306,7 +306,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     // Get the element type.
     const llvm::Type *LElemTy = ConvertTypeForMem(Ty);    
     const llvm::Type *LElemPtrTy =
-      VMContext.getPointerType(LElemTy, D.getType().getAddressSpace());
+      llvm::PointerType::get(LElemTy, D.getType().getAddressSpace());
 
     llvm::Value *VLASize = EmitVLASize(Ty);
 
@@ -376,7 +376,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
   
   if (isByRef) {
     const llvm::PointerType *PtrToInt8Ty
-      = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+      = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
 
     EnsureInsertPoint();
     llvm::Value *isa_field = Builder.CreateStructGEP(DeclPtr, 0);

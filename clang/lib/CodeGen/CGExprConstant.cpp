@@ -83,7 +83,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
           
           const llvm::Type *Ty = llvm::Type::Int8Ty;
           if (NumBytes > 1) 
-            Ty = CGM.getLLVMContext().getArrayType(Ty, NumBytes);
+            Ty = llvm::ArrayType::get(Ty, NumBytes);
           
           llvm::Constant *Padding = CGM.getLLVMContext().getNullValue(Ty);
           PackedElements.push_back(Padding);
@@ -251,7 +251,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
 
     const llvm::Type *Ty = llvm::Type::Int8Ty;
     if (NumBytes > 1) 
-      Ty = CGM.getLLVMContext().getArrayType(Ty, NumBytes);
+      Ty = llvm::ArrayType::get(Ty, NumBytes);
 
     llvm::Constant *C = CGM.getLLVMContext().getNullValue(Ty);
     Elements.push_back(C);
@@ -434,7 +434,7 @@ public:
       std::vector<const llvm::Type*> Types;
       for (unsigned i = 0; i < Elts.size(); ++i)
         Types.push_back(Elts[i]->getType());
-      const llvm::StructType *SType = VMContext.getStructType(Types, true);
+      const llvm::StructType *SType = llvm::StructType::get(Types, true);
       return llvm::ConstantStruct::get(SType, Elts);
     }
 
@@ -549,7 +549,7 @@ public:
       std::vector<const llvm::Type*> Types;
       for (unsigned i = 0; i < Elts.size(); ++i)
         Types.push_back(Elts[i]->getType());
-      SType = VMContext.getStructType(Types, true);
+      SType = llvm::StructType::get(Types, true);
     }
 
     return llvm::ConstantStruct::get(SType, Elts);
@@ -572,13 +572,13 @@ public:
     if (unsigned NumPadBytes = TotalSize - CurSize) {
       const llvm::Type *Ty = llvm::Type::Int8Ty;
       if (NumPadBytes > 1)
-        Ty = VMContext.getArrayType(Ty, NumPadBytes);
+        Ty = llvm::ArrayType::get(Ty, NumPadBytes);
 
       Elts.push_back(VMContext.getNullValue(Ty));
       Types.push_back(Ty);
     }
 
-    llvm::StructType* STy = VMContext.getStructType(Types, false);
+    llvm::StructType* STy = llvm::StructType::get(Types, false);
     return llvm::ConstantStruct::get(STy, Elts);
   }
 
@@ -609,7 +609,7 @@ public:
 
       InsertBitfieldIntoStruct(Elts, curField, ILE->getInit(0));
       const llvm::ArrayType *RetTy =
-          VMContext.getArrayType(NV->getType(), NumElts);
+          llvm::ArrayType::get(NV->getType(), NumElts);
       return llvm::ConstantArray::get(RetTy, Elts);
     }
 
@@ -831,7 +831,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         // Apply offset if necessary.
         if (!Offset->isNullValue()) {
           const llvm::Type *Type = 
-            VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+            llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
           llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
           Casted = llvm::ConstantExpr::getGetElementPtr(Casted, &Offset, 1);
           C = llvm::ConstantExpr::getBitCast(Casted, C->getType());

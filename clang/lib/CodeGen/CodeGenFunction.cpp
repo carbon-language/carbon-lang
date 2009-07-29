@@ -403,7 +403,7 @@ unsigned CodeGenFunction::GetIDForAddrOfLabel(const LabelStmt *L) {
 }
 
 void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
-  const llvm::Type *BP = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
 
@@ -415,7 +415,7 @@ void CodeGenFunction::EmitMemSetToZero(llvm::Value *DestPtr, QualType Ty) {
     return;
   
   // FIXME: Handle variable sized types.
-  const llvm::Type *IntPtr = VMContext.getIntegerType(LLVMPointerWidth);
+  const llvm::Type *IntPtr = llvm::IntegerType::get(LLVMPointerWidth);
 
   Builder.CreateCall4(CGM.getMemSetFn(), DestPtr,
                       getLLVMContext().getNullValue(llvm::Type::Int8Ty),

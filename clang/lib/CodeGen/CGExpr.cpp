@@ -124,7 +124,7 @@ RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
     llvm::Value *U = VMContext.getUndef(EltTy);
     return RValue::getComplex(std::make_pair(U, U));
   } else if (hasAggregateLLVMType(Ty)) {
-    const llvm::Type *LTy = VMContext.getPointerTypeUnqual(ConvertType(Ty));
+    const llvm::Type *LTy = llvm::PointerType::getUnqual(ConvertType(Ty));
     return RValue::getAggregate(VMContext.getUndef(LTy));
   } else {
     return RValue::get(VMContext.getUndef(ConvertType(Ty)));
@@ -140,7 +140,7 @@ RValue CodeGenFunction::EmitUnsupportedRValue(const Expr *E,
 LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
                                               const char *Name) {
   ErrorUnsupported(E, Name);
-  llvm::Type *Ty = VMContext.getPointerTypeUnqual(ConvertType(E->getType()));
+  llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
   return LValue::MakeAddr(VMContext.getUndef(Ty),
                           E->getType().getCVRQualifiers(),
                           getContext().getObjCGCAttrKind(E->getType()),
@@ -254,7 +254,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
     const llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
     if (DstPtr->getElementType() != SrcTy) {
       const llvm::Type *MemTy = 
-        VMContext.getPointerType(SrcTy, DstPtr->getAddressSpace());
+        llvm::PointerType::get(SrcTy, DstPtr->getAddressSpace());
       Addr = Builder.CreateBitCast(Addr, MemTy, "storetmp");
     }
   }
@@ -692,7 +692,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
         bool needsCopyDispose = BlockRequiresCopying(VD->getType());
         const llvm::Type *PtrStructTy = V->getType();
         const llvm::Type *Ty = PtrStructTy;
-        Ty = VMContext.getPointerType(Ty, 0);
+        Ty = llvm::PointerType::get(Ty, 0);
         V = Builder.CreateStructGEP(V, 1, "forwarding");
         V = Builder.CreateBitCast(V, Ty);
         V = Builder.CreateLoad(V, false);
@@ -875,7 +875,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   // Extend or truncate the index type to 32 or 64-bits.
   unsigned IdxBitwidth = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
   if (IdxBitwidth != LLVMPointerWidth)
-    Idx = Builder.CreateIntCast(Idx, VMContext.getIntegerType(LLVMPointerWidth),
+    Idx = Builder.CreateIntCast(Idx, llvm::IntegerType::get(LLVMPointerWidth),
                                 IdxSigned, "idxprom");
 
   // We know that the pointer points to a type of the correct size,
@@ -902,7 +902,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
     
     Idx = Builder.CreateMul(Idx, InterfaceSize);
 
-    llvm::Type *i8PTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+    llvm::Type *i8PTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     Address = Builder.CreateGEP(Builder.CreateBitCast(Base, i8PTy), 
                                 Idx, "arrayidx");
     Address = Builder.CreateBitCast(Address, Base->getType());
@@ -1037,7 +1037,7 @@ LValue CodeGenFunction::EmitLValueForBitfield(llvm::Value* BaseValue,
   cast<llvm::PointerType>(BaseValue->getType());
   unsigned AS = BaseTy->getAddressSpace();
   BaseValue = Builder.CreateBitCast(BaseValue,
-                                    VMContext.getPointerType(FieldTy, AS),
+                                    llvm::PointerType::get(FieldTy, AS),
                                     "tmp");
   
   llvm::Value *Idx = 
@@ -1068,7 +1068,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
       cast<llvm::PointerType>(BaseValue->getType());
     unsigned AS = BaseTy->getAddressSpace();
     V = Builder.CreateBitCast(V, 
-                              VMContext.getPointerType(FieldTy, AS), 
+                              llvm::PointerType::get(FieldTy, AS), 
                               "tmp");
   }
   if (Field->getType()->isReferenceType())

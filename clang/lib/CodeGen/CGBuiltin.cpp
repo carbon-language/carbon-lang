@@ -78,7 +78,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_va_end: {
     Value *ArgValue = EmitVAListRef(E->getArg(0));
     const llvm::Type *DestType = 
-      VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+      llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     if (ArgValue->getType() != DestType)
       ArgValue = Builder.CreateBitCast(ArgValue, DestType, 
                                        ArgValue->getName().data());
@@ -92,7 +92,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *SrcPtr = EmitVAListRef(E->getArg(1));
 
     const llvm::Type *Type = 
-      VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+      llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
 
     DstPtr = Builder.CreateBitCast(DstPtr, Type);
     SrcPtr = Builder.CreateBitCast(SrcPtr, Type);
@@ -482,7 +482,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   {
     const llvm::Type *ResType[2];
     ResType[0]= ConvertType(E->getArg(1)->getType());
-    ResType[1] = VMContext.getPointerTypeUnqual(ResType[0]);
+    ResType[1] = llvm::PointerType::getUnqual(ResType[0]);
     Value *AtomF = CGM.getIntrinsic(Intrinsic::atomic_cmp_swap, ResType, 2);
     Value *OldVal = EmitScalarExpr(E->getArg(1));
     Value *PrevVal = Builder.CreateCall3(AtomF, 
@@ -637,7 +637,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_psrlqi128:
   case X86::BI__builtin_ia32_psrlwi128: {
     Ops[1] = Builder.CreateZExt(Ops[1], llvm::Type::Int64Ty, "zext");
-    const llvm::Type *Ty = VMContext.getVectorType(llvm::Type::Int64Ty, 2);
+    const llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 2);
     llvm::Value *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
     Ops[1] = Builder.CreateInsertElement(VMContext.getUndef(Ty),
                                          Ops[1], Zero, "insert");
@@ -692,7 +692,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_psrlqi:
   case X86::BI__builtin_ia32_psrlwi: {
     Ops[1] = Builder.CreateZExt(Ops[1], llvm::Type::Int64Ty, "zext");
-    const llvm::Type *Ty = VMContext.getVectorType(llvm::Type::Int64Ty, 1);
+    const llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 1);
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty, "bitcast");
     const char *name = 0;
     Intrinsic::ID ID = Intrinsic::not_intrinsic;
@@ -744,7 +744,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), "cmpss");
   }
   case X86::BI__builtin_ia32_ldmxcsr: {
-    llvm::Type *PtrTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+    llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     Value *One = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(llvm::Type::Int32Ty, One, "tmp");
     Builder.CreateStore(Ops[0], Tmp);
@@ -752,7 +752,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                               Builder.CreateBitCast(Tmp, PtrTy));
   }
   case X86::BI__builtin_ia32_stmxcsr: {
-    llvm::Type *PtrTy = VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
+    llvm::Type *PtrTy = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     Value *One = llvm::ConstantInt::get(llvm::Type::Int32Ty, 1);
     Value *Tmp = Builder.CreateAlloca(llvm::Type::Int32Ty, One, "tmp");
     One = Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
@@ -770,8 +770,8 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_storehps:
   case X86::BI__builtin_ia32_storelps: {
     const llvm::Type *EltTy = llvm::Type::Int64Ty;
-    llvm::Type *PtrTy = VMContext.getPointerTypeUnqual(EltTy);
-    llvm::Type *VecTy = VMContext.getVectorType(EltTy, 2);
+    llvm::Type *PtrTy = llvm::PointerType::getUnqual(EltTy);
+    llvm::Type *VecTy = llvm::VectorType::get(EltTy, 2);
     
     // cast val v2i64
     Ops[1] = Builder.CreateBitCast(Ops[1], VecTy, "cast");
