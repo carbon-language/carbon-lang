@@ -198,7 +198,7 @@ bool BackendConsumer::AddEmitPasses(std::string &Error) {
     return true;
 
   if (Action == Backend_EmitBC) {
-    getPerModulePasses()->add(createBitcodeWriterPass(FormattedOutStream));
+    getPerModulePasses()->add(createBitcodeWriterPass(*AsmOutStream));
   } else if (Action == Backend_EmitLL) {
     getPerModulePasses()->add(createPrintModulePass(&FormattedOutStream));
   } else {
