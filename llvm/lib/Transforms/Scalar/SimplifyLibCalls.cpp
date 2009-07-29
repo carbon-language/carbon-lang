@@ -29,6 +29,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -518,18 +519,24 @@ struct VISIBILITY_HIDDEN ExitOpt : public LibCallOptimization {
       return 0;
 
     TerminatorInst *OldTI = CI->getParent()->getTerminator();
-    
+
     // Drop all successor phi node entries.
     for (unsigned i = 0, e = OldTI->getNumSuccessors(); i != e; ++i)
       OldTI->getSuccessor(i)->removePredecessor(CI->getParent());
-    
-    // Split the basic block after the call to exit.
-    BasicBlock::iterator FirstDead = CI; ++FirstDead;
-    CI->getParent()->splitBasicBlock(FirstDead);
-    B.SetInsertPoint(B.GetInsertBlock());
 
-    // Remove the branch that splitBB created and insert a return instead.
-    CI->getParent()->getTerminator()->eraseFromParent();
+    // Remove all instructions after the exit.
+    BasicBlock::iterator Dead = CI, E = OldTI; ++Dead;
+    while (Dead != E) {
+      BasicBlock::iterator Next = next(Dead);
+      if (Dead->getType() != Type::VoidTy)
+        Dead->replaceAllUsesWith(UndefValue::get(Dead->getType()));
+      Dead->eraseFromParent();
+      Dead = Next;
+    }
+
+    // Insert a return instruction.
+    OldTI->eraseFromParent();
+    B.SetInsertPoint(B.GetInsertBlock());
     B.CreateRet(CI->getOperand(1));
 
     return CI;
