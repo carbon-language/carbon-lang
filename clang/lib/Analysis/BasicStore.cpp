@@ -50,7 +50,10 @@ public:
   }
 
   SValuator::CastResult Retrieve(const GRState *state, Loc loc,
-                                 QualType T = QualType());  
+                                 QualType T = QualType());
+  
+  const GRState *InvalidateRegion(const GRState *state, const MemRegion *R,
+                                  const Expr *E, unsigned Count);
 
   const GRState *Bind(const GRState *state, Loc L, SVal V) {
     return state->makeWithStore(BindInternal(state->getStore(), L, V));
@@ -623,3 +626,27 @@ void BasicStoreManager::iterBindings(Store store, BindingsHandler& f) {
 }
 
 StoreManager::BindingsHandler::~BindingsHandler() {}
+
+//===----------------------------------------------------------------------===//
+// Binding invalidation.
+//===----------------------------------------------------------------------===//
+
+const GRState *BasicStoreManager::InvalidateRegion(const GRState *state,
+                                                   const MemRegion *R,
+                                                   const Expr *E,
+                                                   unsigned Count) {
+  R = R->getBaseRegion();
+  
+  if (!(isa<VarRegion>(R) || isa<ObjCIvarRegion>(R)))
+      return state;
+      
+  // We only track bindings to self.ivar.
+  if (const ObjCIvarRegion *IVR = dyn_cast<ObjCIvarRegion>(R))
+    if (IVR->getSuperRegion() != SelfRegion)
+      return state;
+
+  QualType T = cast<TypedRegion>(R)->getValueType(R->getContext());
+  SVal V = ValMgr.getConjuredSymbolVal(E, T, Count);
+  return Bind(state, loc::MemRegionVal(R), V);
+}
+
