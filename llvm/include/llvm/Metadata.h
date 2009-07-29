@@ -16,7 +16,7 @@
 #ifndef LLVM_MDNODE_H
 #define LLVM_MDNODE_H
 
-#include "llvm/Constant.h"
+#include "llvm/Value.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -24,6 +24,7 @@
 #include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
+class Constant;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
