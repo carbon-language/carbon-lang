@@ -636,7 +636,7 @@ Path::eraseSuffix() {
 
 static bool createDirectoryHelper(char* beg, char* end, bool create_parents) {
 
-  if (access(beg, F_OK | R_OK | W_OK) == 0)
+  if (access(beg, R_OK | W_OK) == 0)
     return false;
 
   if (create_parents) {
