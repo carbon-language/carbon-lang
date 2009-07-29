@@ -121,6 +121,7 @@ bool LLParser::ParseTopLevelEntities() {
     case lltok::LocalVar:   if (ParseNamedType()) return true; break;
     case lltok::GlobalVar:  if (ParseNamedGlobal()) return true; break;
     case lltok::Metadata:   if (ParseStandaloneMetadata()) return true; break;
+    case lltok::NamedMD:    if (ParseNamedMetadata()) return true; break;
 
     // The Global variable production with no name can have many different
     // optional leading prefixes, the production is:
@@ -408,6 +409,41 @@ bool LLParser::ParseMDNode(MetadataBase *&Node) {
   Node = FwdNode;
   return false;
 }    
+
+///ParseNamedMetadata:
+///   !foo = !{ !1, !2 }
+bool LLParser::ParseNamedMetadata() {
+  assert(Lex.getKind() == lltok::NamedMD);
+  Lex.Lex();
+  std::string Name = Lex.getStrVal();
+
+  if (ParseToken(lltok::equal, "expected '=' here"))
+    return true;
+
+  if (Lex.getKind() != lltok::Metadata)
+    return TokError("Expected '!' here");
+  Lex.Lex();
+
+  if (Lex.getKind() != lltok::lbrace)
+    return TokError("Expected '{' here");
+  Lex.Lex();
+  SmallVector<MetadataBase *, 8> Elts;
+  do {
+    if (Lex.getKind() != lltok::Metadata)
+      return TokError("Expected '!' here");
+    Lex.Lex();
+    MetadataBase *N = 0;
+    if (ParseMDNode(N)) return true;
+    Elts.push_back(N);
+  } while (EatIfPresent(lltok::comma));
+
+  if (ParseToken(lltok::rbrace, "expected end of metadata node"))
+    return true;
+
+  NamedMDNode::Create(Name.c_str(), Name.length(),
+                      Elts.data(), Elts.size(), M);
+  return false;
+}
 
 /// ParseStandaloneMetadata:
 ///   !42 = !{...} 

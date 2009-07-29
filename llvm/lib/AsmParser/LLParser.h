@@ -148,6 +148,7 @@ namespace llvm {
                      bool HasLinkage, unsigned Visibility);
     bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility);
     bool ParseStandaloneMetadata();
+    bool ParseNamedMetadata();
     bool ParseMDString(MetadataBase *&S);
     bool ParseMDNode(MetadataBase *&N);
 

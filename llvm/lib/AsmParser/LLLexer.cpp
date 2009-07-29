@@ -253,7 +253,7 @@ lltok::Kind LLLexer::LexToken() {
   case ';':
     SkipLineComment();
     return LexToken();
-  case '!': return lltok::Metadata;
+  case '!': return LexMetadata();
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
   case '-':
@@ -421,7 +421,23 @@ static bool JustWhitespaceNewLine(const char *&Ptr) {
   return false;
 }
 
+/// LexMetadata:
+///    !{...}
+///    !42
+///    !foo
+lltok::Kind LLLexer::LexMetadata() {
+  if (isalpha(CurPtr[0])) {
+    ++CurPtr;
+    while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
+           CurPtr[0] == '.' || CurPtr[0] == '_')
+      ++CurPtr;
 
+    StrVal.assign(TokStart+1, CurPtr);   // Skip !
+    return lltok::NamedMD;
+  }
+  return lltok::Metadata;
+}
+  
 /// LexIdentifier: Handle several related productions:
 ///    Label           [-a-zA-Z$._0-9]+:
 ///    IntegerType     i[0-9]+
