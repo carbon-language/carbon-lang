@@ -473,34 +473,41 @@ static uint64_t GetOptimizationFlags(const Value *V) {
   return Flags;
 }
 
- static void WriteModuleMetadata(const ValueEnumerator &VE,
-                                 BitstreamWriter &Stream) {
-   const ValueEnumerator::ValueList &Vals = VE.getValues();
-   bool StartedMetadataBlock = false;
-   unsigned MDSAbbrev = 0;
-   SmallVector<uint64_t, 64> Record;
-   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
+static void WriteMDNode(const MDNode *N,
+                        const ValueEnumerator &VE,
+                        BitstreamWriter &Stream,
+                        SmallVector<uint64_t, 64> &Record) {
+  for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
+    if (N->getElement(i)) {
+      Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
+      Record.push_back(VE.getValueID(N->getElement(i)));
+    } else {
+      Record.push_back(VE.getTypeID(Type::VoidTy));
+      Record.push_back(0);
+    }
+  }
+  Stream.EmitRecord(bitc::METADATA_NODE, Record, 0);
+  Record.clear();
+}
 
-     if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first)) {
-       if (!StartedMetadataBlock) {
-         Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-         StartedMetadataBlock = true;
-       }
-      for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
-        if (N->getElement(i)) {
-          Record.push_back(VE.getTypeID(N->getElement(i)->getType()));
-          Record.push_back(VE.getValueID(N->getElement(i)));
-        } else {
-          Record.push_back(VE.getTypeID(Type::VoidTy));
-          Record.push_back(0);
-        }
-      }
-      Stream.EmitRecord(bitc::METADATA_NODE, Record, 0);
-      Record.clear();
-     } else if (const MDString *MDS = dyn_cast<MDString>(Vals[i].first)) {
-       if (!StartedMetadataBlock)  {
+static void WriteModuleMetadata(const ValueEnumerator &VE,
+                                BitstreamWriter &Stream) {
+  const ValueEnumerator::ValueList &Vals = VE.getValues();
+  bool StartedMetadataBlock = false;
+  unsigned MDSAbbrev = 0;
+  SmallVector<uint64_t, 64> Record;
+  for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
+    
+    if (const MDNode *N = dyn_cast<MDNode>(Vals[i].first)) {
+      if (!StartedMetadataBlock) {
         Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
-
+        StartedMetadataBlock = true;
+      }
+      WriteMDNode(N, VE, Stream, Record);
+    } else if (const MDString *MDS = dyn_cast<MDString>(Vals[i].first)) {
+      if (!StartedMetadataBlock)  {
+        Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
+        
         // Abbrev for METADATA_STRING.
         BitCodeAbbrev *Abbv = new BitCodeAbbrev();
         Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_STRING));
@@ -508,23 +515,22 @@ static uint64_t GetOptimizationFlags(const Value *V) {
         Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
         MDSAbbrev = Stream.EmitAbbrev(Abbv);
         StartedMetadataBlock = true;
-       }
-
-       // Code: [strchar x N]
-       const char *StrBegin = MDS->begin();
-       for (unsigned i = 0, e = MDS->length(); i != e; ++i)
+      }
+      
+      // Code: [strchar x N]
+      const char *StrBegin = MDS->begin();
+      for (unsigned i = 0, e = MDS->length(); i != e; ++i)
         Record.push_back(StrBegin[i]);
-    
-       // Emit the finished record.
+      
+      // Emit the finished record.
       Stream.EmitRecord(bitc::METADATA_STRING, Record, MDSAbbrev);
       Record.clear();
-     }
-   }
-
-   if (StartedMetadataBlock)
-     Stream.ExitBlock();    
+    }
+  }
+  
+  if (StartedMetadataBlock)
+    Stream.ExitBlock();    
 }
-
 
 static void WriteConstants(unsigned FirstVal, unsigned LastVal,
                            const ValueEnumerator &VE,
