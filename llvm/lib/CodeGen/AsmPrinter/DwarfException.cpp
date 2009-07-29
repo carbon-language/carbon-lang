@@ -235,27 +235,6 @@ void DwarfException::EmitEHFrame(const FunctionEHFrameInfo &EHFrameInfo) {
   }
 }
 
-/// EmitExceptionTable - Emit landing pads and actions.
-///
-/// The general organization of the table is complex, but the basic concepts are
-/// easy.  First there is a header which describes the location and organization
-/// of the three components that follow.
-/// 
-///  1. The landing pad site information describes the range of code covered by
-///     the try.  In our case it's an accumulation of the ranges covered by the
-///     invokes in the try.  There is also a reference to the landing pad that
-///     handles the exception once processed.  Finally an index into the actions
-///     table.
-///  2. The action table, in our case, is composed of pairs of type ids and next
-///     action offset.  Starting with the action index from the landing pad
-///     site, each type Id is checked for a match to the current exception.  If
-///     it matches then the exception and type id are passed on to the landing
-///     pad.  Otherwise the next action is looked up.  This chain is terminated
-///     with a next action of zero.  If no type id is found the the frame is
-///     unwound and handling continues.
-///  3. Type id table contains references to all the C++ typeinfo for all
-///     catches in the function.  This tables is reversed indexed base 1.
-
 /// SharedTypeIds - How many leading type ids two landing pads have in common.
 unsigned DwarfException::SharedTypeIds(const LandingPadInfo *L,
                                        const LandingPadInfo *R) {
@@ -470,6 +449,26 @@ ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
   }
 }
 
+/// EmitExceptionTable - Emit landing pads and actions.
+///
+/// The general organization of the table is complex, but the basic concepts are
+/// easy.  First there is a header which describes the location and organization
+/// of the three components that follow.
+/// 
+///  1. The landing pad site information describes the range of code covered by
+///     the try.  In our case it's an accumulation of the ranges covered by the
+///     invokes in the try.  There is also a reference to the landing pad that
+///     handles the exception once processed.  Finally an index into the actions
+///     table.
+///  2. The action table, in our case, is composed of pairs of type ids and next
+///     action offset.  Starting with the action index from the landing pad
+///     site, each type Id is checked for a match to the current exception.  If
+///     it matches then the exception and type id are passed on to the landing
+///     pad.  Otherwise the next action is looked up.  This chain is terminated
+///     with a next action of zero.  If no type id is found the the frame is
+///     unwound and handling continues.
+///  3. Type id table contains references to all the C++ typeinfo for all
+///     catches in the function.  This tables is reversed indexed base 1.
 void DwarfException::EmitExceptionTable() {
   const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
@@ -554,6 +553,7 @@ void DwarfException::EmitExceptionTable() {
   Asm->EOL("LPStart format (DW_EH_PE_omit)");
 
 #if 0
+  // FIXME: This should default to what the system wants, not just "absptr".
   if (!TypeInfos.empty() || !FilterIds.empty()) {
     Asm->EmitInt8(TAI->PreferredEHDataFormat(DwarfEncoding::Data, true));
     // FIXME: The comment here should correspond with what PreferredEHDataFormat
