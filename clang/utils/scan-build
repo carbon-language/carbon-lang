@@ -1259,7 +1259,11 @@ if (defined $OutputFormat) {
 my $ExitStatus = RunBuildCommand(\@ARGV, $IgnoreErrors, $Cmd);
 
 if (defined $OutputFormat) {
-  if ($OutputFormat =~ /html/) {
+  if ($OutputFormat =~ /plist/) {
+    Diag "Analysis run complete.\n";
+    Diag "Analysis results (plist files) deposited in '$HtmlDir'\n";
+  }
+  elsif ($OutputFormat =~ /html/) {
     # Postprocess the HTML directory.
     my $NumBugs = Postprocess($HtmlDir, $BaseDir);
 
@@ -1275,10 +1279,6 @@ if (defined $OutputFormat) {
       exit 1 if ($NumBugs > 0);
       exit 0;
     }
-  }
-  elsif ($OutputFormat =~ /plist/) {
-    Diag "Analysis run complete.\n";
-    Diag "Analysis results (plist files) deposited in '$HtmlDir'\n";
   }
 }
 
