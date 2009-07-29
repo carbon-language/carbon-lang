@@ -409,6 +409,7 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::tCALL:         return "ARMISD::tCALL";
   case ARMISD::BRCOND:        return "ARMISD::BRCOND";
   case ARMISD::BR_JT:         return "ARMISD::BR_JT";
+  case ARMISD::BR2_JT:        return "ARMISD::BR2_JT";
   case ARMISD::RET_FLAG:      return "ARMISD::RET_FLAG";
   case ARMISD::PIC_ADD:       return "ARMISD::PIC_ADD";
   case ARMISD::CMP:           return "ARMISD::CMP";
@@ -1718,7 +1719,8 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) {
     // which does another jump to the destination. This also makes it easier
     // to translate it to TBB / TBH later.
     // FIXME: This might not work if the function is extremely large.
-    return DAG.getNode(ARMISD::BR_JT, dl, MVT::Other, Chain, Addr, JTI, UId);
+    return DAG.getNode(ARMISD::BR2_JT, dl, MVT::Other, Chain,
+                       Addr, Op.getOperand(2), JTI, UId);
   }
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
     Addr = DAG.getLoad((MVT)MVT::i32, dl, Chain, Addr, NULL, 0);

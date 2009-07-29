@@ -40,6 +40,8 @@ Thumb2InstrInfo::BlockHasNoFallThrough(const MachineBasicBlock &MBB) const {
   case ARM::t2LDM_RET:
   case ARM::t2B:        // Uncond branch.
   case ARM::t2BR_JT:    // Jumptable branch.
+  case ARM::t2TBB:      // Table branch byte.
+  case ARM::t2TBH:      // Table branch halfword.
   case ARM::tBR_JTr:    // Jumptable branch (16-bit version).
   case ARM::tBX_RET:
   case ARM::tBX_RET_vararg:

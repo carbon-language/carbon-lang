@@ -21,6 +21,11 @@ def it_mask : Operand<i32> {
   let PrintMethod = "printThumbITMask";
 }
 
+// Table branch address
+def tb_addrmode : Operand<i32> {
+  let PrintMethod = "printTBAddrMode";
+}
+
 // Shifted operands. No register controlled shifts for Thumb2.
 // Note: We do not support rrx shifted operands yet.
 def t2_so_reg : Operand<i32>,    // reg imm
@@ -1048,11 +1053,24 @@ def t2B   : T2XI<(outs), (ins brtarget:$target),
                  "b.w $target",
                  [(br bb:$target)]>;
 
-let isNotDuplicable = 1, isIndirectBranch = 1 in
+let isNotDuplicable = 1, isIndirectBranch = 1 in {
 def t2BR_JT :
-    T2JTI<(outs), (ins GPR:$target, jt2block_operand:$jt, i32imm:$id),
+    T2JTI<(outs),
+          (ins GPR:$target, GPR:$index, jt2block_operand:$jt, i32imm:$id),
           "mov pc, $target\n$jt",
-          [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>;
+          [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt, imm:$id)]>;
+
+def t2TBB :
+    T2I<(outs),
+        (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
+        "tbb", " $index\n$jt", []>;
+
+def t2TBH :
+    T2I<(outs),
+        (ins tb_addrmode:$index, jt2block_operand:$jt, i32imm:$id),
+        "tbh", " $index\n$jt", []>;
+} // isNotDuplicable, isIndirectBranch
+
 } // isBranch, isTerminator, isBarrier
 
 // FIXME: should be able to write a pattern for ARMBrcond, but can't use

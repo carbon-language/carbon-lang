@@ -162,6 +162,7 @@ namespace {
                             const char *Modifier);
     void printJTBlockOperand(const MachineInstr *MI, int OpNum);
     void printJT2BlockOperand(const MachineInstr *MI, int OpNum);
+    void printTBAddrMode(const MachineInstr *MI, int OpNum);
 
     virtual bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                                  unsigned AsmVariant, const char *ExtraCode);
@@ -964,13 +965,37 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   const std::vector<MachineBasicBlock*> &JTBBs = JT[JTI].MBBs;
+  bool ByteOffset = false, HalfWordOffset = false;
+  if (MI->getOpcode() == ARM::t2TBB)
+    ByteOffset = true;
+  else if (MI->getOpcode() == ARM::t2TBH)
+    HalfWordOffset = true;
+
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
-    O << "\tb.w ";
-    printBasicBlockLabel(MBB, false, false, false);
+    if (ByteOffset)
+      O << TAI->getData8bitsDirective();
+    else if (HalfWordOffset)
+      O << TAI->getData16bitsDirective();
+    if (ByteOffset || HalfWordOffset) {
+      O << '(';
+      printBasicBlockLabel(MBB, false, false, false);
+      O << "-" << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+        << '_' << JTI << '_' << MO2.getImm() << ")/2";
+    } else {
+      O << "\tb.w ";
+      printBasicBlockLabel(MBB, false, false, false);
+    }
     if (i != e-1)
       O << '\n';
   }
+}
+
+void ARMAsmPrinter::printTBAddrMode(const MachineInstr *MI, int OpNum) {
+  O << "[pc, " << TRI->getAsmName(MI->getOperand(OpNum).getReg());
+  if (MI->getOpcode() == ARM::t2TBH)
+    O << ", lsl #1";
+  O << ']';
 }
 
 
