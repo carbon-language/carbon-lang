@@ -57,7 +57,7 @@ def mkdir_p(path):
             if e.errno != errno.EEXIST:
                 raise
 
-def executeScript(script, commands, cwd):
+def executeScript(script, commands, cwd, useValgrind):
     # Write script file
     f = open(script,'w')
     if kSystemName == 'Windows':
@@ -71,6 +71,12 @@ def executeScript(script, commands, cwd):
         command = ['cmd','/c', script]
     else:
         command = ['/bin/sh', script]
+        if useValgrind:
+            # FIXME: Running valgrind on sh is overkill. We probably could just
+            # ron on clang with no real loss.
+            command = ['valgrind', '-q',
+                       '--tool=memcheck', '--leak-check=no', '--trace-children=yes',
+                       '--error-exitcode=123'] + command
 
     p = subprocess.Popen(command, cwd=cwd,
                          stdin=subprocess.PIPE,
@@ -87,7 +93,7 @@ def executeScript(script, commands, cwd):
     return out, err, exitCode
 
 import StringIO
-def runOneTest(testPath, tmpBase, clang, clangcc):
+def runOneTest(testPath, tmpBase, clang, clangcc, useValgrind):
     # Make paths absolute.
     tmpBase = os.path.abspath(tmpBase)
     testPath = os.path.abspath(testPath)
@@ -149,7 +155,8 @@ def runOneTest(testPath, tmpBase, clang, clangcc):
         scriptLines[i] = ln[:-2]
 
     out, err, exitCode = executeScript(script, scriptLines, 
-                                       cwd=os.path.dirname(testPath))
+                                       os.path.dirname(testPath),
+                                       useValgrind)
     if xfailLines:
         ok = exitCode != 0
         status = (TestStatus.XPass, TestStatus.XFail)[ok]

@@ -9,6 +9,10 @@ TODO
  - Use a timeout / ulimit
  - Detect signaled failures (abort)
  - Better support for finding tests
+
+ - Support "disabling" tests? The advantage of making this distinct from XFAIL
+   is it makes it more obvious that it is a temporary measure (and MTR can put
+   in a separate category).
 """
 
 # TOD
@@ -157,7 +161,8 @@ class Tester(threading.Thread):
             else:
                 startTime = time.time()
                 code, output = TestRunner.runOneTest(path, base, 
-                                                     opts.clang, opts.clangcc)
+                                                     opts.clang, opts.clangcc,
+                                                     opts.useValgrind)
                 elapsed = time.time() - startTime
         except KeyboardInterrupt:
             # This is a sad hack. Unfortunately subprocess goes
@@ -242,9 +247,6 @@ def main():
 
     if not args:
         parser.error('No inputs specified')
-    if opts.useValgrind:
-        parser.error('Support for running with valgrind is '
-                     'temporarily disabled')
 
     # FIXME: Move into configuration object.
     TestRunner.kChildEnv["PATH"] = os.pathsep.join(opts.path + 
