@@ -388,7 +388,7 @@ public:
   alias_iterator       alias_end  ()            { return AliasList.end();   }
   /// Get a constant iterator to the last alias.
   const_alias_iterator alias_end  () const      { return AliasList.end();   }
-  /// Determine how many functions are in the Module's list of aliases.
+  /// Determine how many aliases are in the Module's list of aliases.
   size_t               alias_size () const      { return AliasList.size();  }
   /// Determine if the list of aliases is empty.
   bool                 alias_empty() const      { return AliasList.empty(); }
