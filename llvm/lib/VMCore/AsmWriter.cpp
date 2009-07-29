@@ -623,6 +623,17 @@ void SlotTracker::processModule() {
     }
   }
   
+  // Add metadata used by named metadata.
+  for (Module::const_named_metadata_iterator 
+         I = TheModule->named_metadata_begin(),
+         E = TheModule->named_metadata_end(); I != E; ++I) {
+    const NamedMDNode *NMD = I;
+    for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
+      MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getElement(i));
+      CreateMetadataSlot(MD);
+    }
+  }
+
   // Add all the unnamed functions to the table.
   for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
        I != E; ++I)
@@ -1344,6 +1355,20 @@ void AssemblyWriter::printModule(const Module *M) {
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     printFunction(I);
 
+  // Output named metadata.
+  for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
+         E = M->named_metadata_end(); I != E; ++I) {
+    const NamedMDNode *NMD = I;
+    Out << "!" << NMD->getName() << " = !{";
+    for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
+      if (i) Out << ", ";
+      MDNode *MD = cast<MDNode>(NMD->getElement(i));
+      Out << '!' << Machine.getMetadataSlot(MD);
+    }
+    Out << "}\n";
+  }
+
+  // Output metadata.
   WriteMDNodes(Out, TypePrinter, Machine);
 }
 
