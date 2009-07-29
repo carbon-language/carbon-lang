@@ -15,6 +15,8 @@
 #define LLVM_CLANG_INDEX_PROGRAMIMPL_H
 
 #include "EntityImpl.h"
+#include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/LangOptions.h"
 
 namespace clang {
 
@@ -27,17 +29,18 @@ public:
 
 private:
   EntitySetTy Entities;
-  llvm::StringSet<> Idents;
   llvm::BumpPtrAllocator BumpAlloc;
+  
+  IdentifierTable Identifiers;
 
   ProgramImpl(const ProgramImpl&); // do not implement
   ProgramImpl &operator=(const ProgramImpl &); // do not implement
   
 public:
-  ProgramImpl() { }
+  ProgramImpl() : Identifiers(LangOptions()) { }
   
   EntitySetTy &getEntities() { return Entities; }
-  llvm::StringSet<> &getIdents() { return Idents; }
+  IdentifierTable &getIdents() { return Identifiers; }
 
   void *Allocate(unsigned Size, unsigned Align = 8) {
     return BumpAlloc.Allocate(Size, Align);

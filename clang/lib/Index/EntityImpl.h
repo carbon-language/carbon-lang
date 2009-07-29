@@ -19,23 +19,20 @@
 #include "llvm/ADT/StringSet.h"
 
 namespace clang {
+  class IdentifierInfo;
 
 namespace idx {
   class ProgramImpl;
 
 class EntityImpl : public llvm::FoldingSetNode {
-public:
-  typedef llvm::StringMapEntry<char> IdEntryTy;
-
-private:
   Entity Parent;
-  IdEntryTy *Id;
+  IdentifierInfo *Id;
 
   /// \brief Identifier namespace.
   unsigned IdNS;
 
 public:
-  EntityImpl(Entity parent, IdEntryTy *id, unsigned idNS)
+  EntityImpl(Entity parent, IdentifierInfo *id, unsigned idNS)
     : Parent(parent), Id(id), IdNS(idNS) { }
 
   /// \brief Find the Decl that can be referred to by this entity.
@@ -50,8 +47,8 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID) const {
     Profile(ID, Parent, Id, IdNS);
   }
-  static void Profile(llvm::FoldingSetNodeID &ID, Entity Parent, IdEntryTy *Id,
-                      unsigned IdNS) {
+  static void Profile(llvm::FoldingSetNodeID &ID, Entity Parent,
+                      IdentifierInfo *Id, unsigned IdNS) {
     ID.AddPointer(Parent.getAsOpaquePtr());
     ID.AddPointer(Id);
     ID.AddInteger(IdNS);

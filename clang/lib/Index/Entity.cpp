@@ -70,9 +70,8 @@ Entity EntityGetter::VisitNamedDecl(NamedDecl *D) {
   if (!II)
       return Entity();
 
-  EntityImpl::IdEntryTy *Id =
-      &Prog.getIdents().GetOrCreateValue(II->getName(),
-                                         II->getName() + II->getLength());
+  IdentifierInfo *Id = &Prog.getIdents().get(II->getName(),
+                                             II->getName() + II->getLength());
   unsigned IdNS = D->getIdentifierNamespace();
 
   llvm::FoldingSetNodeID ID;
@@ -117,7 +116,8 @@ Decl *EntityImpl::getDecl(ASTContext &AST) {
   if (!DC)
     return 0; // Couldn't get the parent context.
     
-  IdentifierInfo &II = AST.Idents.get(Id->getKeyData());
+  IdentifierInfo &II = AST.Idents.get(Id->getName(),
+                                      Id->getName() + Id->getLength());
   
   DeclContext::lookup_result Res = DC->lookup(DeclarationName(&II));
   for (DeclContext::lookup_iterator I = Res.first, E = Res.second; I!=E; ++I) {
@@ -136,7 +136,7 @@ Entity EntityImpl::get(Decl *D, ProgramImpl &Prog) {
 }
 
 std::string EntityImpl::getPrintableName() {
-  return std::string(Id->getKeyData(), Id->getKeyData() + Id->getKeyLength());
+  return Id->getName();
 }
 
 //===----------------------------------------------------------------------===//
