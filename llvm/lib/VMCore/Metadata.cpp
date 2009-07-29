@@ -33,15 +33,12 @@ void MDNode::Profile(FoldingSetNodeID &ID) const {
 //===----------------------------------------------------------------------===//
 //NamedMDNode implementation
 //
-NamedMDNode::NamedMDNode(const char *N, unsigned NameLength,
-                         MetadataBase*const* MDs, unsigned NumMDs,
-                         Module *M)
-  : MetadataBase(Type::MetadataTy, Value::NamedMDNodeVal),
-    Name(N, NameLength) {
+NamedMDNode::NamedMDNode(const Twine &N, MetadataBase*const* MDs, 
+                         unsigned NumMDs, Module *ParentModule)
+  : MetadataBase(Type::MetadataTy, Value::NamedMDNodeVal) {
   setName(N);
   for (unsigned i = 0; i != NumMDs; ++i)
     Node.push_back(WeakMetadataVH(MDs[i]));
-
-  if (M)
-    M->getNamedMDList().push_back(this);
+  if (ParentModule)
+    ParentModule->getNamedMDList().push_back(this);
 }

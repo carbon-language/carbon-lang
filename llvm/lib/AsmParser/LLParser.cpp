@@ -440,8 +440,7 @@ bool LLParser::ParseNamedMetadata() {
   if (ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
-  NamedMDNode::Create(Name.c_str(), Name.length(),
-                      Elts.data(), Elts.size(), M);
+  NamedMDNode::Create(Name, Elts.data(), Elts.size(), M);
   return false;
 }
 

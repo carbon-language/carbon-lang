@@ -185,31 +185,26 @@ class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
   friend class LLVMContextImpl;
 
   Module *Parent;
-  StringRef Name;
   SmallVector<WeakMetadataVH, 4> Node;
   typedef SmallVectorImpl<WeakMetadataVH>::iterator elem_iterator;
 
 protected:
-  explicit NamedMDNode(const char *N, unsigned NameLength,
-                       MetadataBase*const* Vals, unsigned NumVals,
-                       Module *M = 0);
+  explicit NamedMDNode(const Twine &N, MetadataBase*const* Vals, 
+                       unsigned NumVals, Module *M = 0);
 public:
-  static NamedMDNode *Create(const char *N, unsigned NamedLength,
-                             MetadataBase*const*MDs, unsigned NumMDs,
-                             Module *M = 0) {
-    return new NamedMDNode(N,  NamedLength, MDs, NumMDs, M);
+  static NamedMDNode *Create(const Twine &N, MetadataBase*const*MDs, 
+                             unsigned NumMDs, Module *M = 0) {
+    return new NamedMDNode(N, MDs, NumMDs, M);
   }
 
   typedef SmallVectorImpl<WeakMetadataVH>::const_iterator const_elem_iterator;
-
-  StringRef getName() const { return Name; }
 
   /// getParent - Get the module that holds this named metadata collection.
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
   void setParent(Module *M) { Parent = M; }
 
-  Value *getElement(unsigned i) const {
+  MetadataBase *getElement(unsigned i) const {
     return Node[i];
   }
 
