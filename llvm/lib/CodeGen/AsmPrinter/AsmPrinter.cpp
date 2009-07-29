@@ -412,10 +412,11 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   // the appropriate section.
   TargetLowering *LoweringInfo = TM.getTargetLowering();
 
-  const char* JumpTableDataSection = TAI->getJumpTableDataSection();
+  const char *JumpTableDataSection = TAI->getJumpTableDataSection();
   const Function *F = MF.getFunction();
   
-  const Section *FuncSection = getObjFileLowering().SectionForGlobal(F, TM);
+  const Section *FuncSection =
+    getObjFileLowering().SectionForGlobal(F, Mang, TM);
 
   bool JTInDiffSection = false;
   if ((IsPic && !(LoweringInfo && LoweringInfo->usesGlobalOffsetTable())) ||

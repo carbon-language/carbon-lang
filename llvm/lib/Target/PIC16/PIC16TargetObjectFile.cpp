@@ -165,12 +165,13 @@ PIC16TargetObjectFile::getSectionForAuto(const GlobalVariable *GV) const {
 const Section*
 PIC16TargetObjectFile::SelectSectionForGlobal(const GlobalValue *GV1,
                                               SectionKind Kind,
+                                              Mangler *Mang,
                                               const TargetMachine &TM) const {
   // We select the section based on the initializer here, so it really
   // has to be a GlobalVariable.
   const GlobalVariable *GV = dyn_cast<GlobalVariable>(GV1); 
   if (!GV)
-    return TargetLoweringObjectFile::SelectSectionForGlobal(GV1, Kind, TM);
+    return TargetLoweringObjectFile::SelectSectionForGlobal(GV1, Kind, Mang,TM);
 
   // Record External Var Decls.
   if (GV->isDeclaration()) {
@@ -204,7 +205,7 @@ PIC16TargetObjectFile::SelectSectionForGlobal(const GlobalValue *GV1,
     return getROSectionForGlobal(GV);
 
   // Else let the default implementation take care of it.
-  return TargetLoweringObjectFile::SelectSectionForGlobal(GV, Kind, TM);
+  return TargetLoweringObjectFile::SelectSectionForGlobal(GV, Kind, Mang,TM);
 }
 
 PIC16TargetObjectFile::~PIC16TargetObjectFile() {
@@ -225,6 +226,7 @@ PIC16TargetObjectFile::~PIC16TargetObjectFile() {
 /// section assignment of a global.
 const Section *
 PIC16TargetObjectFile::getSpecialCasedSectionGlobals(const GlobalValue *GV,
+                                                     Mangler *Mang,
                                                      SectionKind Kind) const {
   // If GV has a sectin name or section address create that section now.
   if (GV->hasSection()) {
@@ -235,11 +237,11 @@ PIC16TargetObjectFile::getSpecialCasedSectionGlobals(const GlobalValue *GV,
       std::string AddrStr = "Address=";
       if (SectName.compare(0, AddrStr.length(), AddrStr) == 0) {
         std::string SectAddr = SectName.substr(AddrStr.length());
-        return CreateSectionForGlobal(GVar, SectAddr);
+        return CreateSectionForGlobal(GVar, Mang, SectAddr);
       }
        
       // Create the section specified with section attribute. 
-      return CreateSectionForGlobal(GVar);
+      return CreateSectionForGlobal(GVar, Mang);
     }
   }
 
@@ -250,6 +252,7 @@ PIC16TargetObjectFile::getSpecialCasedSectionGlobals(const GlobalValue *GV,
 // section at that address else create by name.
 const Section *
 PIC16TargetObjectFile::CreateSectionForGlobal(const GlobalVariable *GV,
+                                              Mangler *Mang,
                                               const std::string &Addr) const {
   // See if this is an uninitialized global.
   const Constant *C = GV->getInitializer();
@@ -265,7 +268,7 @@ PIC16TargetObjectFile::CreateSectionForGlobal(const GlobalVariable *GV,
     return CreateROSectionForGlobal(GV, Addr);
 
   // Else let the default implementation take care of it.
-  return TargetLoweringObjectFile::SectionForGlobal(GV, TM);
+  return TargetLoweringObjectFile::SectionForGlobal(GV, Mang, TM);
 }
 
 // Create uninitialized section for a variable.

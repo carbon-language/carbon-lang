@@ -134,7 +134,7 @@ void XCoreAsmPrinter::PrintGlobalVariable(const GlobalVariable *GV) {
 
   const TargetData *TD = TM.getTargetData();
   
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GV, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GV, Mang, TM));
   
   std::string name = Mang->getMangledName(GV);
   Constant *C = GV->getInitializer();
@@ -205,7 +205,7 @@ void XCoreAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   
   // Mark the start of the function
   O << "\t.cc_top " << CurrentFnName << ".function," << CurrentFnName << "\n";

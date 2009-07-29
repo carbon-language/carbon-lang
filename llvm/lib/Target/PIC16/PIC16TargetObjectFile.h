@@ -59,10 +59,11 @@ namespace llvm {
     /// getSpecialCasedSectionGlobals - Allow the target to completely override
     /// section assignment of a global.
     virtual const Section *
-    getSpecialCasedSectionGlobals(const GlobalValue *GV,
+    getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
                                   SectionKind Kind) const;
     virtual const Section *SelectSectionForGlobal(const GlobalValue *GV,
                                                   SectionKind Kind,
+                                                  Mangler *Mang,
                                                   const TargetMachine&) const;
   private:
     std::string getSectionNameForSym(const std::string &Sym) const;
@@ -78,6 +79,7 @@ namespace llvm {
     const Section *CreateROSectionForGlobal(const GlobalVariable *GV,
                                             std::string Addr = "") const;
     const Section *CreateSectionForGlobal(const GlobalVariable *GV,
+                                          Mangler *Mang,
                                           const std::string &Addr = "") const;
   public:
     void SetSectionForGVs(Module &M);

@@ -223,7 +223,7 @@ bool PIC16AsmPrinter::doInitialization(Module &M) {
   // Set the section names for all globals.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    I->setSection(getObjFileLowering().SectionForGlobal(I, TM)->getName());
+    I->setSection(getObjFileLowering().SectionForGlobal(I, Mang,TM)->getName());
 
   DbgInfo.BeginModule(M);
   EmitFunctionDecls(M);

@@ -178,9 +178,7 @@ printHex32(unsigned int Value)
 //===----------------------------------------------------------------------===//
 
 /// Frame Directive
-void MipsAsmPrinter::
-emitFrameDirective(MachineFunction &MF)
-{
+void MipsAsmPrinter::emitFrameDirective(MachineFunction &MF) {
   const TargetRegisterInfo &RI = *TM.getRegisterInfo();
 
   unsigned stackReg  = RI.getFrameRegister(MF);
@@ -195,9 +193,7 @@ emitFrameDirective(MachineFunction &MF)
 }
 
 /// Emit Set directives.
-const char * MipsAsmPrinter::
-emitCurrentABIString(void) 
-{  
+const char *MipsAsmPrinter::emitCurrentABIString() {  
   switch(Subtarget->getTargetABI()) {
     case MipsSubtarget::O32:  return "abi32";  
     case MipsSubtarget::O64:  return "abiO64";
@@ -215,7 +211,7 @@ emitCurrentABIString(void)
 void MipsAsmPrinter::emitFunctionStart(MachineFunction &MF) {
   // Print out the label for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   // 2 bits aligned
   EmitAlignment(MF.getAlignment(), F);
@@ -237,9 +233,7 @@ void MipsAsmPrinter::emitFunctionStart(MachineFunction &MF) {
 }
 
 /// Emit the directives used by GAS on the end of functions
-void MipsAsmPrinter::
-emitFunctionEnd(MachineFunction &MF) 
-{
+void MipsAsmPrinter::emitFunctionEnd(MachineFunction &MF) {
   // There are instruction for this macros, but they must
   // always be at the function end, and we can't emit and
   // break with BB logic. 
@@ -253,9 +247,7 @@ emitFunctionEnd(MachineFunction &MF)
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
-bool MipsAsmPrinter::
-runOnMachineFunction(MachineFunction &MF) 
-{
+bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
 
   SetupMachineFunction(MF);
@@ -300,10 +292,8 @@ runOnMachineFunction(MachineFunction &MF)
 }
 
 // Print out an operand for an inline asm expression.
-bool MipsAsmPrinter::
-PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
-                unsigned AsmVariant, const char *ExtraCode) 
-{
+bool MipsAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo, 
+                                     unsigned AsmVariant,const char *ExtraCode){
   // Does this asm operand have a single letter operand modifier?
   if (ExtraCode && ExtraCode[0]) 
     return true; // Unknown modifier.
@@ -312,9 +302,7 @@ PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
   return false;
 }
 
-void MipsAsmPrinter::
-printOperand(const MachineInstr *MI, int opNum) 
-{
+void MipsAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
   const TargetRegisterInfo  &RI = *TM.getRegisterInfo();
   bool closeP = false;
@@ -398,8 +386,7 @@ printOperand(const MachineInstr *MI, int opNum)
   if (closeP) O << ")";
 }
 
-void MipsAsmPrinter::
-printUnsignedImm(const MachineInstr *MI, int opNum) {
+void MipsAsmPrinter::printUnsignedImm(const MachineInstr *MI, int opNum) {
   const MachineOperand &MO = MI->getOperand(opNum);
   if (MO.getType() == MachineOperand::MO_Immediate)
     O << (unsigned short int)MO.getImm();
@@ -484,7 +471,7 @@ void MipsAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
 
   printVisibility(name, GVar->getVisibility());
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang, TM));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&

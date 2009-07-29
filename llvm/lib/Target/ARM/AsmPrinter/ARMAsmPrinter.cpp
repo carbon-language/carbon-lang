@@ -1153,7 +1153,8 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type " << name << ",%object\n";
   
-  const Section *TheSection = getObjFileLowering().SectionForGlobal(GVar, TM);
+  const Section *TheSection =
+    getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
   SwitchToSection(TheSection);
 
   // FIXME: get this stuff from section kind flags.
@@ -1180,7 +1181,7 @@ void ARMAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
           O << TAI->getCOMMDirective()  << name << "," << Size
             << ',' << Align;
         } else {
-          SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
+          SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang,TM));
           O << "\t.globl " << name << '\n'
             << TAI->getWeakDefDirective() << name << '\n';
           EmitAlignment(Align, GVar);

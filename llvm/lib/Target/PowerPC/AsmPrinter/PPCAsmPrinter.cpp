@@ -591,7 +591,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -640,7 +640,7 @@ bool PPCLinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out jump tables referenced by the function.
   EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   // Emit post-function debug information.
   DW->EndFunction(&MF);
@@ -682,7 +682,7 @@ void PPCLinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang, TM));
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&
@@ -763,7 +763,7 @@ bool PPCDarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
@@ -892,7 +892,8 @@ void PPCDarwinAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  const Section *TheSection = getObjFileLowering().SectionForGlobal(GVar, TM);
+  const Section *TheSection =
+    getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
   SwitchToSection(TheSection);
 
   if (C->isNullValue() && /* FIXME: Verify correct */

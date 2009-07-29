@@ -176,7 +176,8 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
 /// the specified global variable or function definition.  This should not
 /// be passed external (or available externally) globals.
 const Section *TargetLoweringObjectFile::
-SectionForGlobal(const GlobalValue *GV, const TargetMachine &TM) const {
+SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
+                 const TargetMachine &TM) const {
   assert(!GV->isDeclaration() && !GV->hasAvailableExternallyLinkage() &&
          "Can only be used for global definitions");
   
@@ -190,7 +191,7 @@ SectionForGlobal(const GlobalValue *GV, const TargetMachine &TM) const {
   if (GV->hasSection()) {
     // If the target has special section hacks for specifically named globals,
     // return them now.
-    if (const Section *TS = getSpecialCasedSectionGlobals(GV, Kind))
+    if (const Section *TS = getSpecialCasedSectionGlobals(GV, Mang, Kind))
       return TS;
     
     // If the target has magic semantics for certain section names, make sure to
@@ -203,13 +204,14 @@ SectionForGlobal(const GlobalValue *GV, const TargetMachine &TM) const {
 
   
   // Use default section depending on the 'type' of global
-  return SelectSectionForGlobal(GV, Kind, TM);
+  return SelectSectionForGlobal(GV, Kind, Mang, TM);
 }
 
 // Lame default implementation. Calculate the section name for global.
 const Section*
 TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
                                                  SectionKind Kind,
+                                                 Mangler *Mang,
                                                  const TargetMachine &TM) const{
   assert(!Kind.isThreadLocal() && "Doesn't support TLS");
   
@@ -399,7 +401,7 @@ static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
 
 const Section *TargetLoweringObjectFileELF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       const TargetMachine &TM) const {
+                       Mangler *Mang, const TargetMachine &TM) const {
   
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
@@ -411,6 +413,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   }
   
   if (Kind.isText()) return TextSection;
+  
   if (Kind.isMergeableCString()) {
    assert(CStringSection_ && "Should have string section prefix");
     
@@ -510,10 +513,9 @@ TargetLoweringObjectFileMachO(const TargetMachine &TM) {
                                        false, SectionKind::DataRel);
 }
 
-const Section *
-TargetLoweringObjectFileMachO::SelectSectionForGlobal(const GlobalValue *GV,
-                                                      SectionKind Kind,
-                                                const TargetMachine &TM) const {
+const Section *TargetLoweringObjectFileMachO::
+SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+                       Mangler *Mang, const TargetMachine &TM) const {
   assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
   
   if (Kind.isText())
@@ -616,7 +618,7 @@ static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
 
 const Section *TargetLoweringObjectFileCOFF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                       const TargetMachine &TM) const {
+                       Mangler *Mang, const TargetMachine &TM) const {
   assert(!Kind.isThreadLocal() && "Doesn't support TLS");
   
   // If this global is linkonce/weak and the target handles this by emitting it

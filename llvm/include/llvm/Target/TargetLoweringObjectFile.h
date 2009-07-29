@@ -88,6 +88,7 @@ public:
   /// the specified global variable or function definition.  This should not
   /// be passed external (or available externally) globals.
   const Section *SectionForGlobal(const GlobalValue *GV,
+                                  Mangler *Mang,
                                   const TargetMachine &TM) const;
   
   /// getSpecialCasedSectionGlobals - Allow the target to completely override
@@ -95,7 +96,7 @@ public:
   /// FIXME: ELIMINATE this by making PIC16 implement ADDRESS with
   /// getFlagsForNamedSection.
   virtual const Section *
-  getSpecialCasedSectionGlobals(const GlobalValue *GV,
+  getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
                                 SectionKind Kind) const {
     return 0;
   }
@@ -108,9 +109,9 @@ public:
   }
   
 protected:
-  virtual const Section *SelectSectionForGlobal(const GlobalValue *GV,
-                                                SectionKind Kind,
-                                                const TargetMachine &TM) const;
+  virtual const Section *
+  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+                         Mangler *Mang, const TargetMachine &TM) const;
 };
   
   
@@ -136,9 +137,9 @@ public:
   void getSectionFlagsAsString(SectionKind Kind,
                                SmallVectorImpl<char> &Str) const;
   
-  virtual const Section* SelectSectionForGlobal(const GlobalValue *GV,
-                                                SectionKind Kind,
-                                                const TargetMachine &TM) const;
+  virtual const Section *
+  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+                         Mangler *Mang, const TargetMachine &TM) const;
 protected:
   const Section *DataRelSection;
   const Section *DataRelLocalSection;
@@ -161,9 +162,9 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const Section *SixteenByteConstantSection;
 public:
   TargetLoweringObjectFileMachO(const TargetMachine &TM);
-  virtual const Section *SelectSectionForGlobal(const GlobalValue *GV,
-                                                SectionKind Kind,
-                                                const TargetMachine &TM) const;
+  virtual const Section *
+  SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
+                         Mangler *Mang, const TargetMachine &TM) const;
   
   virtual const Section *
   getSectionForMergeableConstant(SectionKind Kind) const;
@@ -179,7 +180,7 @@ public:
   
   virtual const Section *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
-                         const TargetMachine &TM) const;
+                         Mangler *Mang, const TargetMachine &TM) const;
 };
 
 } // end namespace llvm

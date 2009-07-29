@@ -78,7 +78,7 @@ namespace {
 void MSP430AsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   const Function *F = MF.getFunction();
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
 
   unsigned FnAlign = MF.getAlignment();
   EmitAlignment(FnAlign, F);

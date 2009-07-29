@@ -326,7 +326,7 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
       TM.getTargetLowering()->getObjFileLowering();
 
     // Get the ELF section where this global belongs from TLOF
-    const Section *S = TLOF.SectionForGlobal(GV, TM);
+    const Section *S = TLOF.SectionForGlobal(GV, Mang, TM);
     unsigned SectionFlags = getElfSectionFlags(S->getKind());
 
     // The symbol align should update the section alignment if needed

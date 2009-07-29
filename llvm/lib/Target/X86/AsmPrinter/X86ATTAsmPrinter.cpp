@@ -167,7 +167,7 @@ void X86ATTAsmPrinter::emitFunctionHeader(const MachineFunction &MF) {
   if (Subtarget->isTargetCygMing())
     DecorateCygMingName(CurrentFnName, F);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   switch (F->getLinkage()) {
   default: llvm_unreachable("Unknown linkage type!");
   case Function::InternalLinkage:  // Symbols default to internal.
@@ -783,7 +783,8 @@ void X86ATTAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
   if (Subtarget->isTargetELF())
     O << "\t.type\t" << name << ",@object\n";
 
-  const Section *TheSection = getObjFileLowering().SectionForGlobal(GVar, TM);
+  const Section *TheSection =
+    getObjFileLowering().SectionForGlobal(GVar, Mang, TM);
   SwitchToSection(TheSection);
 
   if (C->isNullValue() && !GVar->hasSection() &&

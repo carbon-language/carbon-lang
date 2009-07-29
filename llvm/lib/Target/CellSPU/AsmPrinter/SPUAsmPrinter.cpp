@@ -428,7 +428,7 @@ LinuxAsmPrinter::runOnMachineFunction(MachineFunction &MF)
   // Print out labels for the function.
   const Function *F = MF.getFunction();
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   EmitAlignment(MF.getAlignment(), F);
 
   switch (F->getLinkage()) {
@@ -526,7 +526,7 @@ void LinuxAsmPrinter::PrintGlobalVariable(const GlobalVariable *GVar) {
   unsigned Size = TD->getTypeAllocSize(Type);
   unsigned Align = TD->getPreferredAlignmentLog(GVar);
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang, TM));
 
   if (C->isNullValue() && /* FIXME: Verify correct */
       !GVar->hasSection() &&

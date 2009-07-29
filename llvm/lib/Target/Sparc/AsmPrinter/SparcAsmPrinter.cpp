@@ -96,7 +96,7 @@ bool SparcAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out the label for the function.
   const Function *F = MF.getFunction();
-  SwitchToSection(getObjFileLowering().SectionForGlobal(F, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(F, Mang, TM));
   EmitAlignment(MF.getAlignment(), F);
   O << "\t.globl\t" << CurrentFnName << '\n';
 
@@ -230,7 +230,7 @@ void SparcAsmPrinter::PrintGlobalVariable(const GlobalVariable* GVar) {
 
   printVisibility(name, GVar->getVisibility());
 
-  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, TM));
+  SwitchToSection(getObjFileLowering().SectionForGlobal(GVar, Mang, TM));
 
   if (C->isNullValue() && !GVar->hasSection()) {
     if (!GVar->isThreadLocal() &&
