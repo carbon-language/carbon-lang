@@ -61,7 +61,7 @@ public:
   std::string getPrintableName() const;
 
   /// \brief Get an Entity associated with the given Decl.
-  /// \returns Null if an Entity cannot refer to this Decl.
+  /// \returns invalid Entity if an Entity cannot refer to this Decl.
   static Entity get(Decl *D, Program &Prog);
 
   /// \brief true if the Entity is not visible outside the trasnlation unit.

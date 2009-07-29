@@ -20,7 +20,7 @@ namespace clang {
 namespace idx {
   class EntityHandler;
 
-/// idx::Program is the top level object that owns and maintains information
+/// \brief Top level object that owns and maintains information
 /// that is common across translation units.
 class Program {
   void *Impl;

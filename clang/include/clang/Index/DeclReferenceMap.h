@@ -26,8 +26,7 @@ namespace idx {
   
 /// \brief Maps NamedDecls with the ASTLocations that reference them.
 ///
-/// References are mapped and retrieved using the primary decls
-/// (see Decl::getPrimaryDecl()).
+/// References are mapped and retrieved using the canonical decls.
 class DeclReferenceMap {
 public:
   explicit DeclReferenceMap(ASTContext &Ctx);
