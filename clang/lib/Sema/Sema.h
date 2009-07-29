@@ -1925,6 +1925,15 @@ public:
                                             SourceLocation *CommaLocs,
                                             SourceLocation RParenLoc);
 
+  MemInitResult BuildMemberInitializer(FieldDecl *Member, Expr **Args,
+                                       unsigned NumArgs, SourceLocation IdLoc,
+                                       SourceLocation RParenLoc);
+
+  MemInitResult BuildBaseInitializer(QualType BaseType, Expr **Args,
+                                     unsigned NumArgs, SourceLocation IdLoc,
+                                     SourceLocation RParenLoc,
+                                     CXXRecordDecl *ClassDecl);
+
   void AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl);
 
   virtual void ActOnMemInitializers(DeclPtrTy ConstructorDecl, 

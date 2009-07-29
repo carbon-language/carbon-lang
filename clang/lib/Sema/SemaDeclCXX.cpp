@@ -716,28 +716,9 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
 
     // FIXME: Handle members of an anonymous union.
 
-    if (Member) {
-      CXXConstructorDecl *C = 0;
-      QualType FieldType = Member->getType();
-      if (const ArrayType *Array = Context.getAsArrayType(FieldType))
-        FieldType = Array->getElementType();
-      if (!FieldType->isDependentType() && FieldType->getAsRecordType())
-        C = PerformInitializationByConstructor(
-              FieldType, (Expr **)Args, NumArgs, IdLoc, 
-              SourceRange(IdLoc, RParenLoc), Member->getDeclName(), IK_Direct);
-      else if (NumArgs != 1)
-        return Diag(IdLoc, diag::err_mem_initializer_mismatch) 
-                    << MemberOrBase << SourceRange(IdLoc, RParenLoc);
-      else {
-        Expr * NewExp = (Expr*)Args[0];
-        if (PerformCopyInitialization(NewExp, FieldType, "passing"))
-          return true;
-        Args[0] = NewExp;
-      }
-      // FIXME: Perform direct initialization of the member.
-      return new (Context) CXXBaseOrMemberInitializer(Member, (Expr **)Args, 
-                                                      NumArgs, C, IdLoc);
-    }
+    if (Member)
+      return BuildMemberInitializer(Member, (Expr**)Args, NumArgs, IdLoc,
+                                    RParenLoc);
   }
   // It didn't name a member, so see if it names a class.
   TypeTy *BaseTy = TemplateTypeTy ? TemplateTypeTy 
@@ -747,75 +728,124 @@ Sema::ActOnMemInitializer(DeclPtrTy ConstructorD,
       << MemberOrBase << SourceRange(IdLoc, RParenLoc);
   
   QualType BaseType = QualType::getFromOpaquePtr(BaseTy);
-  if (!BaseType->isRecordType() && !BaseType->isDependentType())
-    return Diag(IdLoc, diag::err_base_init_does_not_name_class)
-      << BaseType << SourceRange(IdLoc, RParenLoc);
 
-  // C++ [class.base.init]p2:
-  //   [...] Unless the mem-initializer-id names a nonstatic data
-  //   member of the constructor’s class or a direct or virtual base
-  //   of that class, the mem-initializer is ill-formed. A
-  //   mem-initializer-list can initialize a base class using any
-  //   name that denotes that base class type.
-  
-  // First, check for a direct base class.
-  const CXXBaseSpecifier *DirectBaseSpec = 0;
-  for (CXXRecordDecl::base_class_const_iterator Base = ClassDecl->bases_begin();
-       Base != ClassDecl->bases_end(); ++Base) {
-    if (Context.getCanonicalType(BaseType).getUnqualifiedType() == 
-        Context.getCanonicalType(Base->getType()).getUnqualifiedType()) {
-      // We found a direct base of this type. That's what we're
-      // initializing.
-      DirectBaseSpec = &*Base;
-      break;
-    }
+  return BuildBaseInitializer(BaseType, (Expr **)Args, NumArgs, IdLoc,
+                              RParenLoc, ClassDecl);
+}
+
+Sema::MemInitResult
+Sema::BuildMemberInitializer(FieldDecl *Member, Expr **Args,
+                             unsigned NumArgs, SourceLocation IdLoc,
+                             SourceLocation RParenLoc) {
+  bool HasDependentArg = false;
+  for (unsigned i = 0; i < NumArgs; i++)
+    HasDependentArg |= Args[i]->isTypeDependent();
+
+  CXXConstructorDecl *C = 0;
+  QualType FieldType = Member->getType();
+  if (const ArrayType *Array = Context.getAsArrayType(FieldType))
+    FieldType = Array->getElementType();
+  if (FieldType->isDependentType()) {
+    // Can't check init for dependent type.
+  } else if (FieldType->getAsRecordType()) {
+    if (!HasDependentArg)
+      C = PerformInitializationByConstructor(
+            FieldType, (Expr **)Args, NumArgs, IdLoc, 
+            SourceRange(IdLoc, RParenLoc), Member->getDeclName(), IK_Direct);
+  } else if (NumArgs != 1) {
+    return Diag(IdLoc, diag::err_mem_initializer_mismatch) 
+                << Member->getDeclName() << SourceRange(IdLoc, RParenLoc);
+  } else if (!HasDependentArg) {
+    Expr *NewExp = (Expr*)Args[0];
+    if (PerformCopyInitialization(NewExp, FieldType, "passing"))
+      return true;
+    Args[0] = NewExp;
   }
-  
-  // Check for a virtual base class.
-  // FIXME: We might be able to short-circuit this if we know in advance that
-  // there are no virtual bases.
-  const CXXBaseSpecifier *VirtualBaseSpec = 0;
-  if (!DirectBaseSpec || !DirectBaseSpec->isVirtual()) {
-    // We haven't found a base yet; search the class hierarchy for a
-    // virtual base class.
-    BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
-                    /*DetectVirtual=*/false);
-    if (IsDerivedFrom(Context.getTypeDeclType(ClassDecl), BaseType, Paths)) {
-      for (BasePaths::paths_iterator Path = Paths.begin(); 
-           Path != Paths.end(); ++Path) {
-        if (Path->back().Base->isVirtual()) {
-          VirtualBaseSpec = Path->back().Base;
-          break;
+  // FIXME: Perform direct initialization of the member.
+  return new (Context) CXXBaseOrMemberInitializer(Member, (Expr **)Args, 
+                                                  NumArgs, C, IdLoc);
+}
+
+Sema::MemInitResult
+Sema::BuildBaseInitializer(QualType BaseType, Expr **Args,
+                           unsigned NumArgs, SourceLocation IdLoc,
+                           SourceLocation RParenLoc, CXXRecordDecl *ClassDecl) {
+  bool HasDependentArg = false;
+  for (unsigned i = 0; i < NumArgs; i++)
+    HasDependentArg |= Args[i]->isTypeDependent();
+
+  if (!BaseType->isDependentType()) {
+    if (!BaseType->isRecordType())
+      return Diag(IdLoc, diag::err_base_init_does_not_name_class)
+        << BaseType << SourceRange(IdLoc, RParenLoc);
+
+    // C++ [class.base.init]p2:
+    //   [...] Unless the mem-initializer-id names a nonstatic data
+    //   member of the constructor’s class or a direct or virtual base
+    //   of that class, the mem-initializer is ill-formed. A
+    //   mem-initializer-list can initialize a base class using any
+    //   name that denotes that base class type.
+    
+    // First, check for a direct base class.
+    const CXXBaseSpecifier *DirectBaseSpec = 0;
+    for (CXXRecordDecl::base_class_const_iterator Base =
+         ClassDecl->bases_begin(); Base != ClassDecl->bases_end(); ++Base) {
+      if (Context.getCanonicalType(BaseType).getUnqualifiedType() == 
+          Context.getCanonicalType(Base->getType()).getUnqualifiedType()) {
+        // We found a direct base of this type. That's what we're
+        // initializing.
+        DirectBaseSpec = &*Base;
+        break;
+      }
+    }
+    
+    // Check for a virtual base class.
+    // FIXME: We might be able to short-circuit this if we know in advance that
+    // there are no virtual bases.
+    const CXXBaseSpecifier *VirtualBaseSpec = 0;
+    if (!DirectBaseSpec || !DirectBaseSpec->isVirtual()) {
+      // We haven't found a base yet; search the class hierarchy for a
+      // virtual base class.
+      BasePaths Paths(/*FindAmbiguities=*/true, /*RecordPaths=*/true,
+                      /*DetectVirtual=*/false);
+      if (IsDerivedFrom(Context.getTypeDeclType(ClassDecl), BaseType, Paths)) {
+        for (BasePaths::paths_iterator Path = Paths.begin(); 
+             Path != Paths.end(); ++Path) {
+          if (Path->back().Base->isVirtual()) {
+            VirtualBaseSpec = Path->back().Base;
+            break;
+          }
         }
       }
     }
+
+    // C++ [base.class.init]p2:
+    //   If a mem-initializer-id is ambiguous because it designates both
+    //   a direct non-virtual base class and an inherited virtual base
+    //   class, the mem-initializer is ill-formed.
+    if (DirectBaseSpec && VirtualBaseSpec)
+      return Diag(IdLoc, diag::err_base_init_direct_and_virtual)
+        << BaseType << SourceRange(IdLoc, RParenLoc);
+    // C++ [base.class.init]p2:
+    // Unless the mem-initializer-id names a nonstatic data membeer of the
+    // constructor's class ot a direst or virtual base of that class, the
+    // mem-initializer is ill-formed.
+    if (!DirectBaseSpec && !VirtualBaseSpec)
+      return Diag(IdLoc, diag::err_not_direct_base_or_virtual)
+      << BaseType << ClassDecl->getNameAsCString()
+      << SourceRange(IdLoc, RParenLoc);
   }
 
-  // C++ [base.class.init]p2:
-  //   If a mem-initializer-id is ambiguous because it designates both
-  //   a direct non-virtual base class and an inherited virtual base
-  //   class, the mem-initializer is ill-formed.
-  if (DirectBaseSpec && VirtualBaseSpec)
-    return Diag(IdLoc, diag::err_base_init_direct_and_virtual)
-      << MemberOrBase << SourceRange(IdLoc, RParenLoc);
-  // C++ [base.class.init]p2:
-  // Unless the mem-initializer-id names a nonstatic data membeer of the
-  // constructor's class ot a direst or virtual base of that class, the
-  // mem-initializer is ill-formed.
-  if (!DirectBaseSpec && !VirtualBaseSpec)
-    return Diag(IdLoc, diag::err_not_direct_base_or_virtual)
-    << BaseType << ClassDecl->getNameAsCString()
-    << SourceRange(IdLoc, RParenLoc);
-  DeclarationName Name 
-    = Context.DeclarationNames.getCXXConstructorName(
-        Context.getCanonicalType(BaseType));
   CXXConstructorDecl *C = 0;
-  if (!BaseType->isDependentType())
-    C = PerformInitializationByConstructor(BaseType, (Expr **)Args, NumArgs, IdLoc, 
-                                       SourceRange(IdLoc, RParenLoc), Name,
-                                       IK_Direct);
-  
-  return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args,
+  if (!BaseType->isDependentType() && !HasDependentArg) {
+    DeclarationName Name = Context.DeclarationNames.getCXXConstructorName(
+                                            Context.getCanonicalType(BaseType));
+    C = PerformInitializationByConstructor(BaseType, (Expr **)Args, NumArgs,
+                                           IdLoc, SourceRange(IdLoc, RParenLoc), 
+                                           Name, IK_Direct);
+  }
+
+  return new (Context) CXXBaseOrMemberInitializer(BaseType, (Expr **)Args, 
                                                   NumArgs, C, IdLoc);
 }
 
