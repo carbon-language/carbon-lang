@@ -1070,7 +1070,6 @@ namespace llvm {
 
   Value *findDbgGlobalDeclare(GlobalVariable *V) {
     const Module *M = V->getParent();
-    LLVMContext& Context = M->getContext();
     
     const Type *Ty = M->getTypeByName("llvm.dbg.global_variable.type");
     if (!Ty) return 0;

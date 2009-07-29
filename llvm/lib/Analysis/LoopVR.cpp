@@ -43,8 +43,6 @@ ConstantRange LoopVR::getRange(const SCEV *S, const SCEV *T, ScalarEvolution &SE
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S))
     return ConstantRange(C->getValue()->getValue());
     
-  LLVMContext &Context = SE.getContext();
-
   ConstantRange FullSet(cast<IntegerType>(S->getType())->getBitWidth(), true);
 
   // {x,+,y,+,...z}. We detect overflow by checking the size of the set after

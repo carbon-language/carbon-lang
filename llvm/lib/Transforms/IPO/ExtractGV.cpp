@@ -86,8 +86,6 @@ namespace {
     }
 
     bool isolateGV(Module &M) {
-      LLVMContext &Context = M.getContext();
-      
       // Mark all globals internal
       // FIXME: what should we do with private linkage?
       for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)

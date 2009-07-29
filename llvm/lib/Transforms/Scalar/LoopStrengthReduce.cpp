@@ -1862,8 +1862,6 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   const SCEVConstant *SC = dyn_cast<SCEVConstant>(*CondStride);
   if (!SC) return Cond;
 
-  LLVMContext &Context = Cond->getContext();
-
   ICmpInst::Predicate Predicate = Cond->getPredicate();
   int64_t CmpSSInt = SC->getValue()->getSExtValue();
   unsigned BitWidth = SE->getTypeSizeInBits((*CondStride)->getType());
