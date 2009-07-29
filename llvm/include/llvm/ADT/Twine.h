@@ -11,6 +11,7 @@
 #define LLVM_ADT_TWINE_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/DataTypes.h"
 #include <cassert>
 #include <string>
 
