@@ -2078,8 +2078,7 @@ bool LLParser::ParseValID(ValID &ID) {
     bool InBounds = false;
     Lex.Lex();
     if (Opc == Instruction::GetElementPtr)
-      if (EatIfPresent(lltok::kw_inbounds))
-        InBounds = true;
+      InBounds = EatIfPresent(lltok::kw_inbounds);
     if (ParseToken(lltok::lparen, "expected '(' in constantexpr") ||
         ParseGlobalValueVector(Elts) ||
         ParseToken(lltok::rparen, "expected ')' in constantexpr"))
@@ -3413,10 +3412,8 @@ bool LLParser::ParseGetResult(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= 'getelementptr' 'inbounds'? TypeAndValue (',' TypeAndValue)*
 bool LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Ptr, *Val; LocTy Loc, EltLoc;
-  bool InBounds = false;
 
-  if (EatIfPresent(lltok::kw_inbounds))
-    InBounds = true;
+  bool InBounds = EatIfPresent(lltok::kw_inbounds);
 
   if (ParseTypeAndValue(Ptr, Loc, PFS)) return true;
   
