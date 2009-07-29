@@ -993,13 +993,6 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     if (PTy->getPointeeType()->isUnionType())
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
-    if (const CXXRecordDecl *ClassDecl = 
-          BaseExpr->getType()->getCXXRecordDeclForPointerType()) {
-      FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());
-      if (const CXXRecordDecl *BaseClassDecl = 
-          dyn_cast<CXXRecordDecl>(Field->getDeclContext()))
-        BaseValue = AddressCXXOfBaseClass(BaseValue, ClassDecl, BaseClassDecl);
-    }
   } else if (isa<ObjCPropertyRefExpr>(BaseExpr) ||
              isa<ObjCKVCRefExpr>(BaseExpr)) {
     RValue RV = EmitObjCPropertyGet(BaseExpr);
@@ -1019,15 +1012,6 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     if (BaseTy->isUnionType())
       isUnion = true;
     CVRQualifiers = BaseTy.getCVRQualifiers();
-    if (const CXXRecordDecl *ClassDecl =
-          dyn_cast<CXXRecordDecl>(
-                        BaseTy->getAsRecordType()->getDecl())) {
-        FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());
-        if (const CXXRecordDecl *BaseClassDecl = 
-            dyn_cast<CXXRecordDecl>(Field->getDeclContext()))
-            BaseValue = 
-              AddressCXXOfBaseClass(BaseValue, ClassDecl, BaseClassDecl);
-    }
   }
 
   FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());

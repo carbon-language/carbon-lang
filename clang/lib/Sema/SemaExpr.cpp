@@ -1023,6 +1023,22 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   
   return BuildDeclarationNameExpr(Loc, D, HasTrailingLParen, SS, isAddressOfOperand);
 }
+/// \brief Cast member's object to its own class if necessary.
+void
+Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
+  if (FieldDecl *FD = dyn_cast<FieldDecl>(Member))
+    if (CXXRecordDecl *RD = 
+        dyn_cast<CXXRecordDecl>(FD->getDeclContext())) {
+      QualType DestType = 
+        Context.getCanonicalType(Context.getTypeDeclType(RD));
+      if (!DestType->isDependentType() &&
+          !From->getType()->isDependentType()) {
+        if (From->getType()->getAsPointerType())
+          DestType = Context.getPointerType(DestType);
+        ImpCastExprToType(From, DestType, /*isLvalue=*/true);
+      }
+    }
+}
 
 /// \brief Complete semantic analysis for a reference to the given declaration.
 Sema::OwningExprResult
@@ -1114,6 +1130,7 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
           Expr *This = new (Context) CXXThisExpr(SourceLocation(),
                                                  MD->getThisType(Context));
           MarkDeclarationReferenced(Loc, D);
+          PerformObjectMemberConversion(This, D);
           return Owned(new (Context) MemberExpr(This, true, D,
                                                 Loc, MemberType));
         }
@@ -2190,6 +2207,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       }
 
       MarkDeclarationReferenced(MemberLoc, FD);
+      PerformObjectMemberConversion(BaseExpr, FD);
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
                                             MemberLoc, MemberType));
     }

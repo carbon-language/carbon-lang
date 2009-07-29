@@ -38,8 +38,10 @@ struct N : M , P, Q {
 	      printf("iQ = %d\n", iQ);
 	      printf("iP = %d\n", iP);
               printf("iM = %d\n", iM);
-	      printf("iQ = %d\n", (*this).iQ);
-	      printf("iP = %d\n", ((*this)).iP);
+	      // FIXME. We don't yet support this syntax.
+	      // printf("iQ = %d\n", (*this).iQ);
+	      printf("iQ = %d\n", this->iQ);
+	      printf("iP = %d\n", this->iP);
               printf("iM = %d\n", this->iM);
             }
   float ld;
