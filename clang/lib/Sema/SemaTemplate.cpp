@@ -93,10 +93,18 @@ TemplateNameKind Sema::isTemplateName(const IdentifierInfo &II, Scope *S,
               if (isa<FunctionTemplateDecl>(*F))
                 OvlTemplate->addOverload(*F);
             }
-            
-            // FIXME: HACK! We need TemplateName to be able to refer to
-            // sets of overloaded function templates.
-            TemplateResult = TemplateTy::make(OvlTemplate);
+
+            // Form the resulting TemplateName
+            if (SS && SS->isSet() && !SS->isInvalid()) {
+              NestedNameSpecifier *Qualifier 
+                = static_cast<NestedNameSpecifier *>(SS->getScopeRep());
+              TemplateResult 
+                = TemplateTy::make(Context.getQualifiedTemplateName(Qualifier, 
+                                                                    false,
+                                                                  OvlTemplate));              
+            } else {
+              TemplateResult = TemplateTy::make(TemplateName(OvlTemplate));
+            }
             return TNK_Function_template;
           }
           

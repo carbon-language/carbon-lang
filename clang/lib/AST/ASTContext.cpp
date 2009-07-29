@@ -2036,6 +2036,12 @@ TemplateName ASTContext::getCanonicalTemplateName(TemplateName Name) {
   if (TemplateDecl *Template = Name.getAsTemplateDecl())
     return TemplateName(cast<TemplateDecl>(Template->getCanonicalDecl()));
 
+  // If this template name refers to a set of overloaded function templates, 
+  /// the canonical template name merely stores the set of function templates.
+  if (OverloadedFunctionDecl *Ovl = Name.getAsOverloadedFunctionDecl())
+    // FIXME: Can't really canonicalize a set of overloaded functions, can we?
+    return TemplateName(Ovl);
+  
   DependentTemplateName *DTN = Name.getAsDependentTemplateName();
   assert(DTN && "Non-dependent template names must refer to template decls.");
   return DTN->CanonicalTemplateName;
@@ -3049,6 +3055,25 @@ TemplateName ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS,
     QualifiedTemplateNames.InsertNode(QTN, InsertPos);
   }
 
+  return TemplateName(QTN);
+}
+
+/// \brief Retrieve the template name that represents a qualified
+/// template name such as \c std::vector.
+TemplateName ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS, 
+                                                  bool TemplateKeyword,
+                                            OverloadedFunctionDecl *Template) {
+  llvm::FoldingSetNodeID ID;
+  QualifiedTemplateName::Profile(ID, NNS, TemplateKeyword, Template);
+  
+  void *InsertPos = 0;
+  QualifiedTemplateName *QTN =
+  QualifiedTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
+  if (!QTN) {
+    QTN = new (*this,4) QualifiedTemplateName(NNS, TemplateKeyword, Template);
+    QualifiedTemplateNames.InsertNode(QTN, InsertPos);
+  }
+  
   return TemplateName(QTN);
 }
 

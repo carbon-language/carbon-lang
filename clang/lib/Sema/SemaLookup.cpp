@@ -1596,8 +1596,7 @@ Sema::FindAssociatedClassesAndNamespaces(Expr **Args, unsigned NumArgs,
     if (DRE)
       Ovl = dyn_cast<OverloadedFunctionDecl>(DRE->getDecl());
     else if (TIRE)
-      Ovl = dyn_cast_or_null<OverloadedFunctionDecl>(
-                                  TIRE->getTemplateName().getAsTemplateDecl());
+      Ovl = TIRE->getTemplateName().getAsOverloadedFunctionDecl();
     if (!Ovl)
       continue;
 

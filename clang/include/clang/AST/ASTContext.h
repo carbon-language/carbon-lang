@@ -583,7 +583,10 @@ public:
   TemplateName getQualifiedTemplateName(NestedNameSpecifier *NNS, 
                                         bool TemplateKeyword,
                                         TemplateDecl *Template);
-
+  TemplateName getQualifiedTemplateName(NestedNameSpecifier *NNS, 
+                                        bool TemplateKeyword,
+                                        OverloadedFunctionDecl *Template);
+  
   TemplateName getDependentTemplateName(NestedNameSpecifier *NNS, 
                                         const IdentifierInfo *Name);
 

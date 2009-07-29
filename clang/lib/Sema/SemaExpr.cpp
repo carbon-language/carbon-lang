@@ -2701,6 +2701,8 @@ Sema::ActOnCallExpr(Scope *S, ExprArg fn, SourceLocation LParenLoc,
     } else if (TemplateIdRefExpr *TemplateIdRef 
                  = dyn_cast<TemplateIdRefExpr>(FnExpr)) {
       NDecl = TemplateIdRef->getTemplateName().getAsTemplateDecl();
+      if (!NDecl)
+        NDecl = TemplateIdRef->getTemplateName().getAsOverloadedFunctionDecl();
       HasExplicitTemplateArgs = true;
       ExplicitTemplateArgs = TemplateIdRef->getTemplateArgs();
       NumExplicitTemplateArgs = TemplateIdRef->getNumTemplateArgs();

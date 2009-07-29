@@ -109,7 +109,8 @@ TemplateExprInstantiator::VisitUnresolvedFunctionNameExpr(
 Sema::OwningExprResult
 TemplateExprInstantiator::VisitTemplateIdRefExpr(TemplateIdRefExpr *E) {
   TemplateName Template 
-    = SemaRef.InstantiateTemplateName(E->getTemplateName(), E->getTemplateNameLoc(),
+    = SemaRef.InstantiateTemplateName(E->getTemplateName(), 
+                                      E->getTemplateNameLoc(),
                                       TemplateArgs);
   // FIXME: Can InstantiateTemplateName report an error?
   
