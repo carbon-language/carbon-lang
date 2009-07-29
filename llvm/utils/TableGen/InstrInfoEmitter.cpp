@@ -100,7 +100,7 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
       Res += "0";
         
       // Ptr value whose register class is resolved via callback.
-      if (OpR->getName() == "ptr_rc")
+      if (OpR->isSubClassOf("PointerLikeRegClass"))
         Res += "|(1<<TOI::LookupPtrRegClass)";
 
       // Predicate operands.  Check to see if the original unexpanded operand

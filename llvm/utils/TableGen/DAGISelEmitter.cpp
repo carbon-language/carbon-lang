@@ -698,7 +698,7 @@ public:
       if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
         Record *LeafRec = DI->getDef();
         if (LeafRec->isSubClassOf("RegisterClass") || 
-            LeafRec->getName() == "ptr_rc") {
+            LeafRec->isSubClassOf("PointerLikeRegClass")) {
           // Handle register references.  Nothing to do here.
         } else if (LeafRec->isSubClassOf("Register")) {
           // Handle register references.

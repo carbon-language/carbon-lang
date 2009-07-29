@@ -258,11 +258,21 @@ def ins;
 /// of operands.
 def variable_ops;
 
+
+/// PointerLikeRegClass - Values that are designed to have pointer width are
+/// derived from this.  TableGen treats the register class as having a symbolic
+/// type that it doesn't know, and resolves the actual regclass to use by using
+/// the TargetRegisterInfo::getPointerRegClass() hook at codegen time.
+class PointerLikeRegClass {
+
+}
+
+
 /// ptr_rc definition - Mark this operand as being a pointer value whose
 /// register class is resolved dynamically via a callback to TargetInstrInfo.
 /// FIXME: We should probably change this to a class which contain a list of
 /// flags. But currently we have but one flag.
-def ptr_rc;
+def ptr_rc : PointerLikeRegClass;
 
 /// unknown definition - Mark this operand as being of unknown type, causing
 /// it to be resolved by inference in the context it is used.

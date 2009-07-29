@@ -753,7 +753,7 @@ static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
     std::vector<unsigned char>
     ComplexPat(1, TP.getDAGPatterns().getComplexPattern(R).getValueType());
     return ComplexPat;
-  } else if (R->getName() == "ptr_rc") {
+  } else if (R->isSubClassOf("PointerLikeRegClass")) {
     Other[0] = MVT::iPTR;
     return Other;
   } else if (R->getName() == "node" || R->getName() == "srcvalue" ||
@@ -924,7 +924,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     } else {
       Record *ResultNode = Inst.getResult(0);
       
-      if (ResultNode->getName() == "ptr_rc") {
+      if (ResultNode->isSubClassOf("PointerLikeRegClass")) {
         std::vector<unsigned char> VT;
         VT.push_back(MVT::iPTR);
         MadeChange = UpdateNodeType(VT, TP);
@@ -968,7 +968,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       } else if (OperandNode->isSubClassOf("Operand")) {
         VT = getValueType(OperandNode->getValueAsDef("Type"));
         MadeChange |= Child->UpdateNodeType(VT, TP);
-      } else if (OperandNode->getName() == "ptr_rc") {
+      } else if (OperandNode->isSubClassOf("PointerLikeRegClass")) {
         MadeChange |= Child->UpdateNodeType(MVT::iPTR, TP);
       } else if (OperandNode->getName() == "unknown") {
         MadeChange |= Child->UpdateNodeType(EMVT::isUnknown, TP);
@@ -1602,7 +1602,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       I->error("set destination should be a register!");
 
     if (Val->getDef()->isSubClassOf("RegisterClass") ||
-        Val->getDef()->getName() == "ptr_rc") {
+        Val->getDef()->isSubClassOf("PointerLikeRegClass")) {
       if (Dest->getName().empty())
         I->error("set destination must have a name!");
       if (InstResults.count(Dest->getName()))
