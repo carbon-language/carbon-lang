@@ -6207,7 +6207,7 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   case Intrinsic::x86_sse41_ptestnzc:{
     unsigned X86CC = 0;
     switch (IntNo) {
-    default: break;
+    default: llvm_unreachable("Bad fallthrough in Intrinsic lowering.");
     case Intrinsic::x86_sse41_ptestz:
       // ZF = 1
       X86CC = X86::COND_E;
