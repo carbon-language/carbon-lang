@@ -19,11 +19,11 @@ using namespace llvm;
 /// ComputeColumn - Examine the current output and figure out which
 /// column we end up in after output.
 ///
-void formatted_raw_ostream::ComputeColumn(unsigned &Column) {
+void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
   // Keep track of the current column by scanning the string for
   // special characters
 
-  for (const char *Ptr = begin(); Ptr != end(); ++Ptr) {
+  for (const char *epos = Ptr + Size; Ptr != epos; ++Ptr) {
     ++Column;
     if (*Ptr == '\n' || *Ptr == '\r')
       Column = 0;
@@ -38,13 +38,8 @@ void formatted_raw_ostream::ComputeColumn(unsigned &Column) {
 /// \param MinPad - The minimum space to give after the most recent
 /// I/O, even if the current column + minpad > newcol.
 ///
-void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) { 
-  // Start out from the last flush position.
-  unsigned Column = ColumnFlushed;
-
-  // Now figure out what's in the buffer and add it to the column
-  // count.
-  ComputeColumn(Column);
+void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) {
+  flush();
 
   // Output spaces until we reach the desired column.
   unsigned num = NewCol - Column;
