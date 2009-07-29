@@ -46,6 +46,10 @@ public:
   static GlobalSelector get(Selector Sel, Program &Prog);
   
   void *getAsOpaquePtr() const { return Val; }
+  
+  static GlobalSelector getFromOpaquePtr(void *Ptr) {
+    return GlobalSelector(Ptr);
+  }
 
   friend bool operator==(const GlobalSelector &LHS, const GlobalSelector &RHS) { 
     return LHS.getAsOpaquePtr() == RHS.getAsOpaquePtr();

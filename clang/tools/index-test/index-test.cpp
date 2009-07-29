@@ -150,6 +150,8 @@ static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
         isDef = FD->isThisDeclarationADefinition();
       else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
         isDef = VD->getInit() != 0;
+      else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+        isDef = MD->isThisDeclarationADefinition();
 
       if (isDef)
         I->print(OS);
