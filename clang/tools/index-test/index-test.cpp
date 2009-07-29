@@ -39,6 +39,7 @@
 #include "clang/Index/ASTLocation.h"
 #include "clang/Index/DeclReferenceMap.h"
 #include "clang/Index/Handlers.h"
+#include "clang/Index/Analyzer.h"
 #include "clang/Index/Utils.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
@@ -100,50 +101,6 @@ DisableFree("disable-free",
 
 static bool HadErrors = false;
 
-static void ProcessDecl(Decl *D) {
-  assert(D);
-  llvm::raw_ostream &OS = llvm::outs();
-  
-  switch (ProgAction) {
-  default: assert(0);
-  case PrintRefs: {
-    NamedDecl *ND = dyn_cast<NamedDecl>(D);
-    if (!ND)
-      return;
-
-    DeclReferenceMap RefMap(ND->getASTContext());
-    for (DeclReferenceMap::astlocation_iterator
-           I = RefMap.refs_begin(ND), E = RefMap.refs_end(ND); I != E; ++I)
-      I->print(OS);
-    break;
-  }
-  
-  case PrintDefs: {
-    const Decl *DefD = 0;
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-      const FunctionDecl *DFD = 0;
-      FD->getBody(DFD);
-      DefD = DFD;
-    } else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-      const VarDecl *DVD = 0;
-      VD->getDefinition(DVD);
-      DefD = DVD;
-    } 
-
-    if (DefD)
-      ASTLocation(DefD).print(OS);
-    break;    
-  }
-  
-  case PrintDecls :
-    for (Decl::redecl_iterator I = D->redecls_begin(),
-                               E = D->redecls_end(); I != E; ++I)
-      ASTLocation(*I).print(OS);
-    break;
-    
-  }
-}
-
 static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
   assert(ASTLoc.isValid());
 
@@ -154,19 +111,47 @@ static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
     return;
   }
 
-  Entity Ent = Entity::get(D, Idxer.getProgram());
-  if (Ent.isInvalid() || Ent.isInternalToTU())
-    return ProcessDecl(D);
+  llvm::raw_ostream &OS = llvm::outs();
+  typedef Storing<TULocationHandler> ResultsTy;
+  ResultsTy Results;
 
-  Storing<TranslationUnitHandler> TURes;
-  Idxer.GetTranslationUnitsFor(Ent, TURes);
+  Analyzer Analyz(Idxer.getProgram(), Idxer);
 
-  // Find the "same" Decl in other translation units and print information.
-  for (Storing<TranslationUnitHandler>::iterator
-         I = TURes.begin(), E = TURes.end(); I != E; ++I) {
-    Decl *OtherD = Ent.getDecl((*I)->getASTContext());
-    assert(OtherD && "Couldn't resolve Entity");
-    ProcessDecl(OtherD);
+  switch (ProgAction) {
+  default: assert(0);
+  case PrintRefs: {
+    Analyz.FindReferences(D, Results);
+    for (ResultsTy::iterator
+           I = Results.begin(), E = Results.end(); I != E; ++I)
+      I->print(OS);
+    break;
+  }
+
+  case PrintDecls: {
+    Analyz.FindDeclarations(D, Results);
+    for (ResultsTy::iterator
+           I = Results.begin(), E = Results.end(); I != E; ++I)
+      I->print(OS);
+    break;
+  }
+
+  case PrintDefs:{
+    Analyz.FindDeclarations(D, Results);
+    for (ResultsTy::iterator
+           I = Results.begin(), E = Results.end(); I != E; ++I) {
+      const Decl *D = I->getDecl();
+      bool isDef = false;
+      if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+        isDef = FD->isThisDeclarationADefinition();
+      else if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+        isDef = VD->getInit() != 0;
+
+      if (isDef)
+        I->print(OS);
+    }
+    break;
+  }
+
   }
 }
 
