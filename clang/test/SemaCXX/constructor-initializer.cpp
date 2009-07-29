@@ -27,7 +27,7 @@ public:
 
 class E : public D, public B { 
 public:
-  E() : B(), D() { } // expected-error{{base class initializer 'B' names both a direct base class and an inherited virtual base class}}
+  E() : B(), D() { } // expected-error{{base class initializer 'class B' names both a direct base class and an inherited virtual base class}}
 };
 
 
