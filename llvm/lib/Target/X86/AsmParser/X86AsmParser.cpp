@@ -56,6 +56,11 @@ public:
 
   virtual bool ParseInstruction(const StringRef &Name, MCInst &Inst);
 };
+  
+} // end anonymous namespace
+
+
+namespace {
 
 /// X86Operand - Instances of this class represent a parsed X86 machine
 /// instruction.
@@ -120,12 +125,11 @@ struct X86Operand {
   }
 };
 
-}
+} // end anonymous namespace.
 
-//
 
 bool X86ATTAsmParser::ParseRegister(X86Operand &Op) {
-  AsmToken Tok = getLexer().getTok();
+  const AsmToken &Tok = getLexer().getTok();
   assert(Tok.is(AsmToken::Register) && "Invalid token kind!");
 
   // FIXME: Validate register for the current architecture; we have to do
@@ -158,7 +162,7 @@ bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {
     Op = X86Operand::CreateImm(Val);
     return false;
   }
-  case AsmToken::Star: {
+  case AsmToken::Star:
     getLexer().Lex(); // Eat the star.
     
     if (getLexer().is(AsmToken::Register)) {
@@ -169,7 +173,6 @@ bool X86ATTAsmParser::ParseOperand(X86Operand &Op) {
 
     // FIXME: Note the '*' in the operand for use by the matcher.
     return false;
-  }
   }
 }
 
