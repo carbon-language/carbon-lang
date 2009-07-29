@@ -81,7 +81,7 @@ public:
     return !(L == R);
   }
   
-  void print(llvm::raw_ostream &OS);
+  void print(llvm::raw_ostream &OS) const;
 };
 
 } // namespace idx

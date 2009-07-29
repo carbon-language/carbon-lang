@@ -117,14 +117,14 @@ SourceRange ASTLocation::getSourceRange() const {
   return isDecl() ? getDecl()->getSourceRange() : getStmt()->getSourceRange();
 }
 
-void ASTLocation::print(llvm::raw_ostream &OS) {
+void ASTLocation::print(llvm::raw_ostream &OS) const {
   if (isInvalid()) {
     OS << "<< Invalid ASTLocation >>\n";
     return;
   }
 
   OS << "[Decl: " << getDecl()->getDeclKindName() << " ";
-  if (NamedDecl *ND = dyn_cast<NamedDecl>(getDecl()))
+  if (const NamedDecl *ND = dyn_cast<NamedDecl>(getDecl()))
     OS << ND->getNameAsString();
   
   if (getStmt()) {
