@@ -1024,7 +1024,7 @@ Sema::ActOnDeclarationNameExpr(Scope *S, SourceLocation Loc,
   return BuildDeclarationNameExpr(Loc, D, HasTrailingLParen, SS, isAddressOfOperand);
 }
 /// \brief Cast member's object to its own class if necessary.
-void
+bool
 Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
   if (FieldDecl *FD = dyn_cast<FieldDecl>(Member))
     if (CXXRecordDecl *RD = 
@@ -1033,11 +1033,23 @@ Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
         Context.getCanonicalType(Context.getTypeDeclType(RD));
       if (!DestType->isDependentType() &&
           !From->getType()->isDependentType()) {
-        if (From->getType()->getAsPointerType())
+        QualType FromRecordType = From->getType();
+        QualType DestRecordType = DestType;
+        if (FromRecordType->getAsPointerType()) {
           DestType = Context.getPointerType(DestType);
+          FromRecordType = FromRecordType->getPointeeType();
+        }
+        if (IsDerivedFrom(FromRecordType, DestRecordType) &&
+            CheckDerivedToBaseConversion(FromRecordType,
+                                     DestRecordType,
+                                     From->getSourceRange().getBegin(),
+                                     From->getSourceRange()))
+          return true;
+        
         ImpCastExprToType(From, DestType, /*isLvalue=*/true);
       }
     }
+  return false;
 }
 
 /// \brief Complete semantic analysis for a reference to the given declaration.
@@ -1130,7 +1142,8 @@ Sema::BuildDeclarationNameExpr(SourceLocation Loc, NamedDecl *D,
           Expr *This = new (Context) CXXThisExpr(SourceLocation(),
                                                  MD->getThisType(Context));
           MarkDeclarationReferenced(Loc, D);
-          PerformObjectMemberConversion(This, D);
+          if (PerformObjectMemberConversion(This, D))
+            return ExprError();
           return Owned(new (Context) MemberExpr(This, true, D,
                                                 Loc, MemberType));
         }
@@ -2207,7 +2220,8 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
       }
 
       MarkDeclarationReferenced(MemberLoc, FD);
-      PerformObjectMemberConversion(BaseExpr, FD);
+      if (PerformObjectMemberConversion(BaseExpr, FD))
+        return ExprError();
       return Owned(new (Context) MemberExpr(BaseExpr, OpKind == tok::arrow, FD,
                                             MemberLoc, MemberType));
     }

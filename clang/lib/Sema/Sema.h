@@ -691,7 +691,7 @@ public:
   ImplicitConversionSequence TryContextuallyConvertToBool(Expr *From);
   bool PerformContextuallyConvertToBool(Expr *&From);
   
-  void PerformObjectMemberConversion(Expr *&From, NamedDecl *Member);
+  bool PerformObjectMemberConversion(Expr *&From, NamedDecl *Member);
 
   /// OverloadingResult - Capture the result of performing overload
   /// resolution.
