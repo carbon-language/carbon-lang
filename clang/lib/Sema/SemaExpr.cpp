@@ -1031,23 +1031,21 @@ Sema::PerformObjectMemberConversion(Expr *&From, NamedDecl *Member) {
         dyn_cast<CXXRecordDecl>(FD->getDeclContext())) {
       QualType DestType = 
         Context.getCanonicalType(Context.getTypeDeclType(RD));
-      if (!DestType->isDependentType() &&
-          !From->getType()->isDependentType()) {
-        QualType FromRecordType = From->getType();
-        QualType DestRecordType = DestType;
-        if (FromRecordType->getAsPointerType()) {
-          DestType = Context.getPointerType(DestType);
-          FromRecordType = FromRecordType->getPointeeType();
-        }
-        if (IsDerivedFrom(FromRecordType, DestRecordType) &&
-            CheckDerivedToBaseConversion(FromRecordType,
-                                     DestRecordType,
-                                     From->getSourceRange().getBegin(),
-                                     From->getSourceRange()))
-          return true;
-        
-        ImpCastExprToType(From, DestType, /*isLvalue=*/true);
+      if (DestType->isDependentType() || From->getType()->isDependentType())
+        return false;
+      QualType FromRecordType = From->getType();
+      QualType DestRecordType = DestType;
+      if (FromRecordType->getAsPointerType()) {
+        DestType = Context.getPointerType(DestType);
+        FromRecordType = FromRecordType->getPointeeType();
       }
+      if (!Context.hasSameUnqualifiedType(FromRecordType, DestRecordType) &&
+          CheckDerivedToBaseConversion(FromRecordType,
+                                       DestRecordType,
+                                       From->getSourceRange().getBegin(),
+                                       From->getSourceRange()))
+        return true;
+      ImpCastExprToType(From, DestType, /*isLvalue=*/true);
     }
   return false;
 }
