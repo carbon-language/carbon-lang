@@ -67,6 +67,7 @@ Module::~Module() {
   FunctionList.clear();
   AliasList.clear();
   LibraryList.clear();
+  NamedMDList.clear();
   delete ValSymTab;
   delete TypeSymTab;
 }
@@ -286,6 +287,13 @@ Constant *Module::getOrInsertGlobal(const StringRef &Name, const Type *Ty) {
 //
 GlobalAlias *Module::getNamedAlias(const StringRef &Name) const {
   return dyn_cast_or_null<GlobalAlias>(getNamedValue(Name));
+}
+
+/// getNamedMetadata - Return the first named MDNode in the module with the
+/// specified name. This method returns null if a MDNode with the specified
+/// name is not found.
+NamedMDNode *Module::getNamedMetadata(const StringRef &Name) const {
+  return dyn_cast_or_null<NamedMDNode>(getNamedValue(Name));
 }
 
 //===----------------------------------------------------------------------===//

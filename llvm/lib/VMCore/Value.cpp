@@ -142,6 +142,10 @@ static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
   } else if (Argument *A = dyn_cast<Argument>(V)) {
     if (Function *P = A->getParent()) 
       ST = &P->getValueSymbolTable();
+  } else if (NamedMDNode *N = dyn_cast<NamedMDNode>(V)) {
+    if (Module *P = N->getParent()) {
+      ST = &P->getValueSymbolTable();
+    }
   } else if (isa<MDString>(V))
     return true;
   else {

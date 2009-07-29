@@ -18,8 +18,10 @@
 
 #include "llvm/Value.h"
 #include "llvm/Type.h"
+#include "llvm/OperandTraits.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ValueHandle.h"
 
@@ -173,7 +175,11 @@ public:
 //===----------------------------------------------------------------------===//
 /// NamedMDNode - a tuple of other metadata. 
 /// NamedMDNode is always named. All NamedMDNode element has a type of metadata.
-class NamedMDNode : public MetadataBase {
+template<typename ValueSubClass, typename ItemParentClass>
+  class SymbolTableListTraits;
+
+class NamedMDNode : public MetadataBase, public ilist_node<NamedMDNode> {
+  friend class SymbolTableListTraits<NamedMDNode, Module>;
   NamedMDNode(const NamedMDNode &);      // DO NOT IMPLEMENT
 
   friend class LLVMContextImpl;
@@ -201,6 +207,7 @@ public:
   /// getParent - Get the module that holds this named metadata collection.
   inline Module *getParent() { return Parent; }
   inline const Module *getParent() const { return Parent; }
+  void setParent(Module *M) { Parent = M; }
 
   Value *getElement(unsigned i) const {
     return Node[i];

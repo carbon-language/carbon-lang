@@ -18,6 +18,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/GlobalAlias.h"
+#include "llvm/Metadata.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector>
 
@@ -56,6 +57,21 @@ template<> struct ilist_traits<GlobalAlias>
   static GlobalAlias *createSentinel();
   static void destroySentinel(GlobalAlias *GA) { delete GA; }
 };
+template<> struct ilist_traits<NamedMDNode>
+  : public SymbolTableListTraits<NamedMDNode, Module> {
+  // createSentinel is used to get hold of a node that marks the end of
+  // the list...
+  NamedMDNode *createSentinel() const {
+    return static_cast<NamedMDNode*>(&Sentinel);
+  }
+  static void destroySentinel(NamedMDNode*) {}
+
+  NamedMDNode *provideInitialHead() const { return createSentinel(); }
+  NamedMDNode *ensureHead(NamedMDNode*) const { return createSentinel(); }
+  static void noteHead(NamedMDNode*, NamedMDNode*) {}
+private:
+  mutable ilist_node<NamedMDNode> Sentinel;
+};
 
 /// A Module instance is used to store all the information related to an
 /// LLVM module. Modules are the top level container of all other LLVM
@@ -78,25 +94,31 @@ public:
   typedef iplist<Function> FunctionListType;
   /// The type for the list of aliases.
   typedef iplist<GlobalAlias> AliasListType;
+  /// The type for the list of named metadata.
+  typedef iplist<NamedMDNode> NamedMDListType;
 
   /// The type for the list of dependent libraries.
   typedef std::vector<std::string> LibraryListType;
 
   /// The Global Variable iterator.
-  typedef GlobalListType::iterator                     global_iterator;
+  typedef GlobalListType::iterator                      global_iterator;
   /// The Global Variable constant iterator.
-  typedef GlobalListType::const_iterator         const_global_iterator;
+  typedef GlobalListType::const_iterator          const_global_iterator;
 
   /// The Function iterators.
-  typedef FunctionListType::iterator                          iterator;
+  typedef FunctionListType::iterator                           iterator;
   /// The Function constant iterator
-  typedef FunctionListType::const_iterator              const_iterator;
+  typedef FunctionListType::const_iterator               const_iterator;
 
   /// The Global Alias iterators.
-  typedef AliasListType::iterator                       alias_iterator;
+  typedef AliasListType::iterator                        alias_iterator;
   /// The Global Alias constant iterator
-  typedef AliasListType::const_iterator           const_alias_iterator;
+  typedef AliasListType::const_iterator            const_alias_iterator;
 
+  /// The named metadata iterators.
+  typedef NamedMDListType::iterator             named_metadata_iterator;
+  /// The named metadata constant interators.
+  typedef NamedMDListType::const_iterator const_named_metadata_iterator;
   /// The Library list iterator.
   typedef LibraryListType::const_iterator lib_iterator;
 
@@ -116,6 +138,7 @@ private:
   FunctionListType FunctionList; ///< The Functions in the module
   AliasListType AliasList;       ///< The Aliases in the module
   LibraryListType LibraryList;   ///< The Libraries needed by the module
+  NamedMDListType NamedMDList;   ///< The named metadata in the module
   std::string GlobalScopeAsm;    ///< Inline Asm at global scope.
   ValueSymbolTable *ValSymTab;   ///< Symbol table for values
   TypeSymbolTable *TypeSymTab;   ///< Symbol table for types
@@ -277,6 +300,15 @@ public:
   GlobalAlias *getNamedAlias(const StringRef &Name) const;
 
 /// @}
+/// @name Named Metadata Accessors
+/// @{
+public:
+  /// getNamedMetadata - Return the first named MDNode in the module with the
+  /// specified name. This method returns null if a MDNode with the specified
+  /// name is not found.
+  NamedMDNode *getNamedMetadata(const StringRef &Name) const;
+
+/// @}
 /// @name Type Accessors
 /// @{
 public:
@@ -317,6 +349,13 @@ public:
   AliasListType          &getAliasList()              { return AliasList; }
   static iplist<GlobalAlias> Module::*getSublistAccess(GlobalAlias*) {
     return &Module::AliasList;
+  }
+  /// Get the Module's list of named metadata (constant).
+  const NamedMDListType  &getNamedMDList() const      { return NamedMDList; }
+  /// Get the Module's list of named metadata.
+  NamedMDListType  &getNamedMDList()                  { return NamedMDList; }
+  static iplist<NamedMDNode> Module::*getSublistAccess(NamedMDNode *) {
+    return &Module::NamedMDList;
   }
   /// Get the symbol table of global variable and function identifiers
   const ValueSymbolTable &getValueSymbolTable() const { return *ValSymTab; }
@@ -392,6 +431,31 @@ public:
   size_t               alias_size () const      { return AliasList.size();  }
   /// Determine if the list of aliases is empty.
   bool                 alias_empty() const      { return AliasList.empty(); }
+
+
+/// @}
+/// @name Named Metadata Iteration
+/// @{
+public:
+  /// Get an iterator to the first named metadata.
+  named_metadata_iterator       named_metadata_begin()            
+                                                { return NamedMDList.begin(); }
+  /// Get a constant iterator to the first named metadata.
+  const_named_metadata_iterator named_metadata_begin() const      
+                                                { return NamedMDList.begin(); }
+  /// Get an iterator to the last named metadata.
+  named_metadata_iterator       named_metadata_end  ()            
+                                                { return NamedMDList.end();   }
+  /// Get a constant iterator to the last named metadata.
+  const_named_metadata_iterator named_metadata_end  () const      
+                                                { return NamedMDList.end();   }
+  /// Determine how many NamedMDNodes are in the Module's list of named metadata.
+  size_t                        named_metadata_size () const      
+                                                { return NamedMDList.size();  }
+  /// Determine if the list of named metadata is empty.
+  bool                          named_metadata_empty() const      
+                                                { return NamedMDList.empty(); }
+
 
 /// @}
 /// @name Utility functions for printing and dumping Module objects
