@@ -101,7 +101,6 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                unsigned CVRQualifiers,
                                                llvm::Value *Offset) {
   // Compute (type*) ( (char *) BaseValue + Offset)
-  llvm::LLVMContext &VMContext = CGF.getLLVMContext();
   llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   QualType IvarTy = Ivar->getType();
   const llvm::Type *LTy = CGF.CGM.getTypes().ConvertTypeForMem(IvarTy);
