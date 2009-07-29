@@ -79,7 +79,7 @@ namespace llvm {
       Val.setInt(1);
     }
     
-    /// isNull - Return true if the pointer help in the union is null,
+    /// isNull - Return true if the pointer held in the union is null,
     /// regardless of which type it is.
     bool isNull() const { return Val.getPointer() == 0; }
     operator bool() const { return !isNull(); }
@@ -176,7 +176,7 @@ namespace llvm {
       Val = V;
     }
     
-    /// isNull - Return true if the pointer help in the union is null,
+    /// isNull - Return true if the pointer held in the union is null,
     /// regardless of which type it is.
     bool isNull() const { return Val.isNull(); }
     operator bool() const { return !isNull(); }
@@ -281,7 +281,7 @@ namespace llvm {
       Val = InnerUnion2(V);
     }
     
-    /// isNull - Return true if the pointer help in the union is null,
+    /// isNull - Return true if the pointer held in the union is null,
     /// regardless of which type it is.
     bool isNull() const { return Val.isNull(); }
     operator bool() const { return !isNull(); }
