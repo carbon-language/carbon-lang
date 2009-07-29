@@ -2078,6 +2078,13 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   
   if (FixItRewrite)
     FixItRewrite->WriteFixedFile(InFile, OutputFile);
+
+  // Disable the consumer prior to the context, the consumer may perform actions
+  // in its destructor which require the context.
+  if (DisableFree)
+    Consumer.take();
+  else
+    Consumer.reset();
   
   // If in -disable-free mode, don't deallocate ASTContext.
   if (DisableFree)
@@ -2103,11 +2110,6 @@ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
   // files.
   if (ClearSourceMgr)
     PP.getSourceManager().clearIDTables();
-
-  if (DisableFree)
-    Consumer.take();
-  else
-    Consumer.reset();
 
   // Always delete the output stream because we don't want to leak file
   // handles.  Also, we don't want to try to erase an open file.
