@@ -202,8 +202,8 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   //   or "pointer to cv void".
 
   QualType DestPointee;
-  const PointerType *DestPointer = DestType->getAsPointerType();
-  const ReferenceType *DestReference = DestType->getAsReferenceType();
+  const PointerType *DestPointer = DestType->getAs<PointerType>();
+  const ReferenceType *DestReference = DestType->getAs<ReferenceType>();
   if (DestPointer) {
     DestPointee = DestPointer->getPointeeType();
   } else if (DestReference) {
@@ -214,7 +214,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     return;
   }
 
-  const RecordType *DestRecord = DestPointee->getAsRecordType();
+  const RecordType *DestRecord = DestPointee->getAs<RecordType>();
   if (DestPointee->isVoidType()) {
     assert(DestPointer && "Reference to void is not possible");
   } else if (DestRecord) {
@@ -237,7 +237,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
   QualType SrcType = Self.Context.getCanonicalType(OrigSrcType);
   QualType SrcPointee;
   if (DestPointer) {
-    if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
+    if (const PointerType *SrcPointer = SrcType->getAs<PointerType>()) {
       SrcPointee = SrcPointer->getPointeeType();
     } else {
       Self.Diag(OpRange.getBegin(), diag::err_bad_dynamic_cast_not_ptr)
@@ -254,7 +254,7 @@ CheckDynamicCast(Sema &Self, Expr *&SrcExpr, QualType DestType,
     SrcPointee = SrcType;
   }
 
-  const RecordType *SrcRecord = SrcPointee->getAsRecordType();
+  const RecordType *SrcRecord = SrcPointee->getAs<RecordType>();
   if (SrcRecord) {
     if (Self.RequireCompleteType(OpRange.getBegin(), SrcPointee,
                                     diag::err_bad_dynamic_cast_incomplete,
@@ -456,10 +456,10 @@ static TryCastResult TryStaticCast(Sema &Self, Expr *SrcExpr,
   // Reverse pointer conversion to void*. C++ 4.10.p2 specifies conversion to
   // void*. C++ 5.2.9p10 specifies additional restrictions, which really is
   // just the usual constness stuff.
-  if (const PointerType *SrcPointer = SrcType->getAsPointerType()) {
+  if (const PointerType *SrcPointer = SrcType->getAs<PointerType>()) {
     QualType SrcPointee = SrcPointer->getPointeeType();
     if (SrcPointee->isVoidType()) {
-      if (const PointerType *DestPointer = DestType->getAsPointerType()) {
+      if (const PointerType *DestPointer = DestType->getAs<PointerType>()) {
         QualType DestPointee = DestPointer->getPointeeType();
         if (DestPointee->isIncompleteOrObjectType()) {
           // This is definitely the intended conversion, but it might fail due
@@ -485,7 +485,7 @@ TryLValueToRValueCast(Sema &Self, Expr *SrcExpr, QualType DestType,
 {
   // N2844 5.2.9p3: An lvalue of type "cv1 T1" can be cast to type "rvalue
   //   reference to cv2 T2" if "cv2 T2" is reference-compatible with "cv1 T1".
-  const RValueReferenceType *R = DestType->getAsRValueReferenceType();
+  const RValueReferenceType *R = DestType->getAs<RValueReferenceType>();
   if (!R)
     return TC_NotApplicable;
 
@@ -523,7 +523,7 @@ TryStaticReferenceDowncast(Sema &Self, Expr *SrcExpr, QualType DestType,
   // variant of this rule, the intent is clearly for it to apply to the this
   // conversion as well.
 
-  const ReferenceType *DestReference = DestType->getAsReferenceType();
+  const ReferenceType *DestReference = DestType->getAs<ReferenceType>();
   if (!DestReference) {
     return TC_NotApplicable;
   }
@@ -553,12 +553,12 @@ TryStaticPointerDowncast(Sema &Self, QualType SrcType, QualType DestType,
   // In addition, DR54 clarifies that the base must be accessible in the
   // current context.
 
-  const PointerType *DestPointer = DestType->getAsPointerType();
+  const PointerType *DestPointer = DestType->getAs<PointerType>();
   if (!DestPointer) {
     return TC_NotApplicable;
   }
 
-  const PointerType *SrcPointer = SrcType->getAsPointerType();
+  const PointerType *SrcPointer = SrcType->getAs<PointerType>();
   if (!SrcPointer) {
     msg = diag::err_bad_static_cast_pointer_nonpointer;
     return TC_NotApplicable;
@@ -674,10 +674,10 @@ TryStaticMemberPointerUpcast(Sema &Self, QualType SrcType, QualType DestType,
                              bool CStyle, const SourceRange &OpRange,
                              unsigned &msg)
 {
-  const MemberPointerType *DestMemPtr = DestType->getAsMemberPointerType();
+  const MemberPointerType *DestMemPtr = DestType->getAs<MemberPointerType>();
   if (!DestMemPtr)
     return TC_NotApplicable;
-  const MemberPointerType *SrcMemPtr = SrcType->getAsMemberPointerType();
+  const MemberPointerType *SrcMemPtr = SrcType->getAs<MemberPointerType>();
   if (!SrcMemPtr) {
     msg = diag::err_bad_static_cast_member_pointer_nonmp;
     return TC_NotApplicable;
@@ -784,7 +784,7 @@ static TryCastResult TryConstCast(Sema &Self, Expr *SrcExpr, QualType DestType,
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
   if (const LValueReferenceType *DestTypeTmp =
-        DestType->getAsLValueReferenceType()) {
+        DestType->getAs<LValueReferenceType>()) {
     if (SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
       // Cannot const_cast non-lvalue to lvalue reference type. But if this
       // is C-style, static_cast might find a way, so we simply suggest a
@@ -851,7 +851,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
 
   DestType = Self.Context.getCanonicalType(DestType);
   QualType SrcType = SrcExpr->getType();
-  if (const ReferenceType *DestTypeTmp = DestType->getAsReferenceType()) {
+  if (const ReferenceType *DestTypeTmp = DestType->getAs<ReferenceType>()) {
     bool LValue = DestTypeTmp->isLValueReferenceType();
     if (LValue && SrcExpr->isLvalue(Self.Context) != Expr::LV_Valid) {
       // Cannot cast non-lvalue to reference type. See the similar comment in
@@ -871,8 +871,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, Expr *SrcExpr,
   // Canonicalize source for comparison.
   SrcType = Self.Context.getCanonicalType(SrcType);
 
-  const MemberPointerType *DestMemPtr = DestType->getAsMemberPointerType(),
-                          *SrcMemPtr = SrcType->getAsMemberPointerType();
+  const MemberPointerType *DestMemPtr = DestType->getAs<MemberPointerType>(),
+                          *SrcMemPtr = SrcType->getAs<MemberPointerType>();
   if (DestMemPtr && SrcMemPtr) {
     // C++ 5.2.10p9: An rvalue of type "pointer to member of X of type T1"
     //   can be explicitly converted to an rvalue of type "pointer to member

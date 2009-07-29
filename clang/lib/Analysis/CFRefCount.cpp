@@ -248,7 +248,7 @@ static bool isRefType(QualType RetTy, const char* prefix,
     return false;
 
   // Is the type void*?
-  const PointerType* PT = RetTy->getAsPointerType();
+  const PointerType* PT = RetTy->getAs<PointerType>();
   if (!(PT->getPointeeType().getUnqualifiedType() == Ctx->VoidTy))
     return false;
 
@@ -1251,7 +1251,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
   }
-  else if (RetTy->getAsPointerType()) {
+  else if (RetTy->getAs<PointerType>()) {
     if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
@@ -1277,7 +1277,7 @@ RetainSummaryManager::updateSummaryFromAnnotations(RetainSummary &Summ,
   }
   
   if (!isTrackedLoc)
-    isTrackedLoc = MD->getResultType()->getAsPointerType() != NULL;
+    isTrackedLoc = MD->getResultType()->getAs<PointerType>() != NULL;
     
   if (isTrackedLoc && MD->getAttr<CFReturnsRetainedAttr>())
     Summ.setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));

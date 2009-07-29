@@ -207,7 +207,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
   assert(Dest && "Must have a destination!");
   
   const CXXRecordDecl *RD = 
-  cast<CXXRecordDecl>(E->getType()->getAsRecordType()->getDecl());
+  cast<CXXRecordDecl>(E->getType()->getAs<RecordType>()->getDecl());
   if (RD->hasTrivialConstructor())
     return;
   
@@ -458,7 +458,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
       llvm::Value *LoadOfThis = LoadCXXThis();
       Type *BaseType = Member->getBaseClass();
       CXXRecordDecl *BaseClassDecl = 
-        cast<CXXRecordDecl>(BaseType->getAsRecordType()->getDecl());
+        cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
       llvm::Value *V = AddressCXXOfBaseClass(LoadOfThis, ClassDecl, 
                                              BaseClassDecl);
       EmitCXXConstructorCall(Member->getConstructor(),
@@ -475,7 +475,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
 
       llvm::Value *LoadOfThis = LoadCXXThis();
       LValue LHS = EmitLValueForField(LoadOfThis, Field, false, 0);
-      if (FieldType->getAsRecordType()) {
+      if (FieldType->getAs<RecordType>()) {
         
           assert(Member->getConstructor() && 
                  "EmitCtorPrologue - no constructor to initialize member");

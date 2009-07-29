@@ -114,7 +114,7 @@ bool Sema::IsDerivedFrom(QualType Derived, QualType Base, BasePaths &Paths) {
     return false;
 
   Paths.setOrigin(Derived);
-  return LookupInBases(cast<CXXRecordDecl>(Derived->getAsRecordType()->getDecl()),
+  return LookupInBases(cast<CXXRecordDecl>(Derived->getAs<RecordType>()->getDecl()),
                        MemberLookupCriteria(Base), Paths);
 }
 
@@ -156,7 +156,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
       if (Paths.isDetectingVirtual() && Paths.DetectedVirtual == 0) {
         // If this is the first virtual we find, remember it. If it turns out
         // there is no base path here, we'll reset it later.
-        Paths.DetectedVirtual = BaseType->getAsRecordType();
+        Paths.DetectedVirtual = BaseType->getAs<RecordType>();
         SetVirtual = true;
       }
     } else
@@ -175,7 +175,7 @@ bool Sema::LookupInBases(CXXRecordDecl *Class,
     }
 
     CXXRecordDecl *BaseRecord 
-      = cast<CXXRecordDecl>(BaseSpec->getType()->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(BaseSpec->getType()->getAs<RecordType>()->getDecl());
 
     // Either look at the base class type or look into the base class
     // type to see if we've found a member that meets the search

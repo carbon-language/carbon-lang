@@ -195,23 +195,23 @@ bool Type::isDerivedType() const {
 }
 
 bool Type::isClassType() const {
-  if (const RecordType *RT = getAsRecordType())
+  if (const RecordType *RT = getAs<RecordType>())
     return RT->getDecl()->isClass();
   return false;
 }
 bool Type::isStructureType() const {
-  if (const RecordType *RT = getAsRecordType())
+  if (const RecordType *RT = getAs<RecordType>())
     return RT->getDecl()->isStruct();
   return false;
 }
 bool Type::isVoidPointerType() const {
-  if (const PointerType *PT = getAsPointerType())
+  if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType()->isVoidType();
   return false;
 }
 
 bool Type::isUnionType() const {
-  if (const RecordType *RT = getAsRecordType())
+  if (const RecordType *RT = getAs<RecordType>())
     return RT->getDecl()->isUnion();
   return false;
 }
@@ -299,11 +299,11 @@ const FunctionProtoType *Type::getAsFunctionProtoType() const {
 }
 
 QualType Type::getPointeeType() const {
-  if (const PointerType *PT = getAsPointerType())
+  if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType();
   if (const ObjCObjectPointerType *OPT = getAsObjCObjectPointerType())
     return OPT->getPointeeType();
-  if (const BlockPointerType *BPT = getAsBlockPointerType())
+  if (const BlockPointerType *BPT = getAs<BlockPointerType>())
     return BPT->getPointeeType();
   return QualType();
 }
@@ -324,11 +324,11 @@ bool Type::isVariablyModifiedType() const {
   // Also, C++ references and member pointers can point to a variably modified
   // type, where VLAs appear as an extension to C++, and should be treated
   // correctly.
-  if (const PointerType *PT = getAsPointerType())
+  if (const PointerType *PT = getAs<PointerType>())
     return PT->getPointeeType()->isVariablyModifiedType();
-  if (const ReferenceType *RT = getAsReferenceType())
+  if (const ReferenceType *RT = getAs<ReferenceType>())
     return RT->getPointeeType()->isVariablyModifiedType();
-  if (const MemberPointerType *PT = getAsMemberPointerType())
+  if (const MemberPointerType *PT = getAs<MemberPointerType>())
     return PT->getPointeeType()->isVariablyModifiedType();
 
   // A function can return a variably modified type
@@ -341,30 +341,6 @@ bool Type::isVariablyModifiedType() const {
   return false;
 }
 
-const PointerType *Type::getAsPointerType() const {
-  return getAs<PointerType>();
-}
-const BlockPointerType *Type::getAsBlockPointerType() const {
-  return getAs<BlockPointerType>();
-}
-const ReferenceType *Type::getAsReferenceType() const {
-  return getAs<ReferenceType>();
-}
-const LValueReferenceType *Type::getAsLValueReferenceType() const {
-  return getAs<LValueReferenceType>();
-}
-const RValueReferenceType *Type::getAsRValueReferenceType() const {
-  return getAs<RValueReferenceType>();
-}
-const MemberPointerType *Type::getAsMemberPointerType() const {
-  return getAs<MemberPointerType>();
-}
-const TagType *Type::getAsTagType() const {
-  return getAs<TagType>();
-}
-const RecordType *Type::getAsRecordType() const {
-  return getAs<RecordType>();
-}
 const RecordType *Type::getAsStructureType() const {
   // If this is directly a structure type, return it.
   if (const RecordType *RT = dyn_cast<RecordType>(this)) {
@@ -524,8 +500,8 @@ const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
 }
 
 const CXXRecordDecl *Type::getCXXRecordDeclForPointerType() const {
-  if (const PointerType *PT = getAsPointerType())
-    if (const RecordType *RT = PT->getPointeeType()->getAsRecordType())
+  if (const PointerType *PT = getAs<PointerType>())
+    if (const RecordType *RT = PT->getPointeeType()->getAs<RecordType>())
       return dyn_cast<CXXRecordDecl>(RT->getDecl());
   return 0;
 }

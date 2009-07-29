@@ -305,8 +305,8 @@ QualType Sema::ConvertDeclSpecToType(const DeclSpec &DS,
     if (TypeQuals & QualType::Restrict) {
       if (Result->isPointerType() || Result->isReferenceType()) {
         QualType EltTy = Result->isPointerType() ? 
-          Result->getAsPointerType()->getPointeeType() :
-          Result->getAsReferenceType()->getPointeeType();
+          Result->getAs<PointerType>()->getPointeeType() :
+          Result->getAs<ReferenceType>()->getPointeeType();
       
         // If we have a pointer or reference, the pointee must have an object
         // incomplete type.
@@ -419,7 +419,7 @@ QualType Sema::BuildPointerType(QualType T, unsigned Quals,
 QualType Sema::BuildReferenceType(QualType T, bool LValueRef, unsigned Quals,
                                   SourceLocation Loc, DeclarationName Entity) {
   if (LValueRef) {
-    if (const RValueReferenceType *R = T->getAsRValueReferenceType()) {
+    if (const RValueReferenceType *R = T->getAs<RValueReferenceType>()) {
       // C++0x [dcl.typedef]p9: If a typedef TD names a type that is a
       //   reference to a type T, and attempt to create the type "lvalue
       //   reference to cv TD" creates the type "lvalue reference to T".
@@ -529,7 +529,7 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
     return QualType();
   }
   
-  if (const RecordType *EltTy = T->getAsRecordType()) {
+  if (const RecordType *EltTy = T->getAs<RecordType>()) {
     // If the element type is a struct or union that contains a variadic
     // array, accept it as a GNU extension: C99 6.7.2.1p2.
     if (EltTy->getDecl()->hasFlexibleArrayMember())
@@ -1191,10 +1191,10 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
   //   an incomplete type a pointer or reference to an incomplete type, other
   //   than (cv) void*.
   int kind;
-  if (const PointerType* IT = T->getAsPointerType()) {
+  if (const PointerType* IT = T->getAs<PointerType>()) {
     T = IT->getPointeeType();
     kind = 1;
-  } else if (const ReferenceType* IT = T->getAsReferenceType()) {
+  } else if (const ReferenceType* IT = T->getAs<ReferenceType>()) {
     T = IT->getPointeeType();
     kind = 2;
   } else
@@ -1211,9 +1211,9 @@ bool Sema::CheckSpecifiedExceptionType(QualType T, const SourceRange &Range) {
 /// to member to a function with an exception specification. This means that
 /// it is invalid to add another level of indirection.
 bool Sema::CheckDistantExceptionSpec(QualType T) {
-  if (const PointerType *PT = T->getAsPointerType())
+  if (const PointerType *PT = T->getAs<PointerType>())
     T = PT->getPointeeType();
-  else if (const MemberPointerType *PT = T->getAsMemberPointerType())
+  else if (const MemberPointerType *PT = T->getAs<MemberPointerType>())
     T = PT->getPointeeType();
   else
     return false;
@@ -1291,9 +1291,9 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
     // Take one type from the subset.
     QualType CanonicalSubT = Context.getCanonicalType(*SubI);
     bool SubIsPointer = false;
-    if (const ReferenceType *RefTy = CanonicalSubT->getAsReferenceType())
+    if (const ReferenceType *RefTy = CanonicalSubT->getAs<ReferenceType>())
       CanonicalSubT = RefTy->getPointeeType();
-    if (const PointerType *PtrTy = CanonicalSubT->getAsPointerType()) {
+    if (const PointerType *PtrTy = CanonicalSubT->getAs<PointerType>()) {
       CanonicalSubT = PtrTy->getPointeeType();
       SubIsPointer = true;
     }
@@ -1311,10 +1311,10 @@ bool Sema::CheckExceptionSpecSubset(unsigned DiagID, unsigned NoteID,
       QualType CanonicalSuperT = Context.getCanonicalType(*SuperI);
       // SubT must be SuperT or derived from it, or pointer or reference to
       // such types.
-      if (const ReferenceType *RefTy = CanonicalSuperT->getAsReferenceType())
+      if (const ReferenceType *RefTy = CanonicalSuperT->getAs<ReferenceType>())
         CanonicalSuperT = RefTy->getPointeeType();
       if (SubIsPointer) {
-        if (const PointerType *PtrTy = CanonicalSuperT->getAsPointerType())
+        if (const PointerType *PtrTy = CanonicalSuperT->getAs<PointerType>())
           CanonicalSuperT = PtrTy->getPointeeType();
         else {
           continue;
@@ -1391,16 +1391,16 @@ QualType Sema::ObjCGetTypeForMethodDefinition(DeclPtrTy D) {
 /// be called in a loop that successively "unwraps" pointer and
 /// pointer-to-member types to compare them at each level.
 bool Sema::UnwrapSimilarPointerTypes(QualType& T1, QualType& T2) {
-  const PointerType *T1PtrType = T1->getAsPointerType(),
-                    *T2PtrType = T2->getAsPointerType();
+  const PointerType *T1PtrType = T1->getAs<PointerType>(),
+                    *T2PtrType = T2->getAs<PointerType>();
   if (T1PtrType && T2PtrType) {
     T1 = T1PtrType->getPointeeType();
     T2 = T2PtrType->getPointeeType();
     return true;
   }
 
-  const MemberPointerType *T1MPType = T1->getAsMemberPointerType(),
-                          *T2MPType = T2->getAsMemberPointerType();
+  const MemberPointerType *T1MPType = T1->getAs<MemberPointerType>(),
+                          *T2MPType = T2->getAs<MemberPointerType>();
   if (T1MPType && T2MPType &&
       Context.getCanonicalType(T1MPType->getClass()) ==
       Context.getCanonicalType(T2MPType->getClass())) {
@@ -1610,7 +1610,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
 
   // If we have a class template specialization or a class member of a
   // class template specialization, try to instantiate it.
-  if (const RecordType *Record = T->getAsRecordType()) {
+  if (const RecordType *Record = T->getAs<RecordType>()) {
     if (ClassTemplateSpecializationDecl *ClassTemplateSpec
           = dyn_cast<ClassTemplateSpecializationDecl>(Record->getDecl())) {
       if (ClassTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
@@ -1646,7 +1646,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T, unsigned diag,
   // If the type was a forward declaration of a class/struct/union
   // type, produce 
   const TagType *Tag = 0;
-  if (const RecordType *Record = T->getAsRecordType())
+  if (const RecordType *Record = T->getAs<RecordType>())
     Tag = Record;
   else if (const EnumType *Enum = T->getAsEnumType())
     Tag = Enum;

@@ -33,7 +33,7 @@ ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
        e = RD->bases_end(); i != e; ++i) {
     if (!i->isVirtual()) {
       const CXXRecordDecl *Base = 
-        cast<CXXRecordDecl>(i->getType()->getAsRecordType()->getDecl());
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
       LayoutNonVirtualBase(Base);
     }
   }
@@ -172,7 +172,7 @@ void ASTRecordLayoutBuilder::LayoutField(const FieldDecl *D) {
       FieldSize = 0;
       const ArrayType* ATy = Ctx.getAsArrayType(D->getType());
       FieldAlign = Ctx.getTypeAlign(ATy->getElementType());
-    } else if (const ReferenceType *RT = D->getType()->getAsReferenceType()) {
+    } else if (const ReferenceType *RT = D->getType()->getAs<ReferenceType>()) {
       unsigned AS = RT->getPointeeType().getAddressSpace();
       FieldSize = Ctx.Target.getPointerWidth(AS);
       FieldAlign = Ctx.Target.getPointerAlign(AS);

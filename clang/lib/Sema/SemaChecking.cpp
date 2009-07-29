@@ -205,7 +205,7 @@ Sema::CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall) {
       bool HasVAListArg = Format->getFirstArg() == 0;
       if (!HasVAListArg) {
         const FunctionType *FT = 
-          Ty->getAsBlockPointerType()->getPointeeType()->getAsFunctionType();
+          Ty->getAs<BlockPointerType>()->getPointeeType()->getAsFunctionType();
         if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FT))
           HasVAListArg = !Proto->isVariadic();
       }
@@ -241,7 +241,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
     return Diag(DRE->getLocStart(), diag::err_atomic_builtin_must_be_pointer)
              << FirstArg->getType() << FirstArg->getSourceRange();
   
-  QualType ValType = FirstArg->getType()->getAsPointerType()->getPointeeType();
+  QualType ValType = FirstArg->getType()->getAs<PointerType>()->getPointeeType();
   if (!ValType->isIntegerType() && !ValType->isPointerType() && 
       !ValType->isBlockPointerType())
     return Diag(DRE->getLocStart(),
@@ -344,7 +344,7 @@ bool Sema::SemaBuiltinAtomicOverloaded(CallExpr *TheCall) {
                                            TUScope, false, DRE->getLocStart()));
   const FunctionProtoType *BuiltinFT =
     NewBuiltinDecl->getType()->getAsFunctionProtoType();
-  ValType = BuiltinFT->getArgType(0)->getAsPointerType()->getPointeeType();
+  ValType = BuiltinFT->getArgType(0)->getAs<PointerType>()->getPointeeType();
   
   // If the first type needs to be converted (e.g. void** -> int*), do it now.
   if (BuiltinFT->getArgType(0) != FirstArg->getType()) {
@@ -750,7 +750,7 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, const CallExpr *TheCall,
       if (const ArrayType *AT = Context.getAsArrayType(T)) {
         isConstant = AT->getElementType().isConstant(Context);
       }
-      else if (const PointerType *PT = T->getAsPointerType()) {
+      else if (const PointerType *PT = T->getAs<PointerType>()) {
         isConstant = T.isConstant(Context) && 
                      PT->getPointeeType().isConstant(Context);
       }

@@ -107,12 +107,12 @@ const llvm::Type *CodeGenTypes::ConvertTypeForMem(QualType T) {
 // and all of the argument types are complete.
 static const TagType *VerifyFuncTypeComplete(const Type* T) {
   const FunctionType *FT = cast<FunctionType>(T);
-  if (const TagType* TT = FT->getResultType()->getAsTagType())
+  if (const TagType* TT = FT->getResultType()->getAs<TagType>())
     if (!TT->getDecl()->isDefinition())
       return TT;
   if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(T))
     for (unsigned i = 0; i < FPT->getNumArgs(); i++)
-      if (const TagType* TT = FPT->getArgType(i)->getAsTagType())
+      if (const TagType* TT = FPT->getArgType(i)->getAs<TagType>())
         if (!TT->getDecl()->isDefinition())
           return TT;
   return 0;
@@ -387,7 +387,7 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
          e = RD->bases_end(); i != e; ++i) {
       if (!i->isVirtual()) {
         const CXXRecordDecl *Base =
-          cast<CXXRecordDecl>(i->getType()->getAsRecordType()->getDecl());
+          cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
         ConvertTagDeclType(Base);
       }
     }

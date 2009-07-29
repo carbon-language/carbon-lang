@@ -1535,7 +1535,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
     if (const TypedefType *Typedef = FileType->getAsTypedefType())
       Context->setFILEDecl(Typedef->getDecl());
     else {
-      const TagType *Tag = FileType->getAsTagType();
+      const TagType *Tag = FileType->getAs<TagType>();
       assert(Tag && "Invalid FILE type in PCH file");
       Context->setFILEDecl(Tag->getDecl());
     }
@@ -1546,7 +1546,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
     if (const TypedefType *Typedef = Jmp_bufType->getAsTypedefType())
       Context->setjmp_bufDecl(Typedef->getDecl());
     else {
-      const TagType *Tag = Jmp_bufType->getAsTagType();
+      const TagType *Tag = Jmp_bufType->getAs<TagType>();
       assert(Tag && "Invalid jmp_bug type in PCH file");
       Context->setjmp_bufDecl(Tag->getDecl());
     }
@@ -1557,7 +1557,7 @@ void PCHReader::InitializeContext(ASTContext &Ctx) {
     if (const TypedefType *Typedef = Sigjmp_bufType->getAsTypedefType())
       Context->setsigjmp_bufDecl(Typedef->getDecl());
     else {
-      const TagType *Tag = Sigjmp_bufType->getAsTagType();
+      const TagType *Tag = Sigjmp_bufType->getAs<TagType>();
       assert(Tag && "Invalid sigjmp_buf type in PCH file");
       Context->setsigjmp_bufDecl(Tag->getDecl());
     }

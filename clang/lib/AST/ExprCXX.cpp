@@ -219,20 +219,20 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
   case UTT_IsPOD: return QueriedType->isPODType();
   case UTT_IsClass: // Fallthrough
   case UTT_IsUnion:
-    if (const RecordType *Record = QueriedType->getAsRecordType()) {
+    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
       bool Union = Record->getDecl()->isUnion();
       return UTT == UTT_IsUnion ? Union : !Union;
     }
     return false;
   case UTT_IsEnum: return QueriedType->isEnumeralType();
   case UTT_IsPolymorphic:
-    if (const RecordType *Record = QueriedType->getAsRecordType()) {
+    if (const RecordType *Record = QueriedType->getAs<RecordType>()) {
       // Type traits are only parsed in C++, so we've got CXXRecords.
       return cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic();
     }
     return false;
   case UTT_IsAbstract:
-    if (const RecordType *RT = QueriedType->getAsRecordType())
+    if (const RecordType *RT = QueriedType->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->isAbstract();
     return false;
   case UTT_HasTrivialConstructor:
@@ -243,7 +243,7 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     if (QueriedType->isPODType())
       return true;
     if (const RecordType *RT =
-          C.getBaseElementType(QueriedType)->getAsRecordType())
+          C.getBaseElementType(QueriedType)->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialConstructor();
     return false;
   case UTT_HasTrivialCopy:
@@ -254,7 +254,7 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     //   is true, else it is false.
     if (QueriedType->isPODType() || QueriedType->isReferenceType())
       return true;
-    if (const RecordType *RT = QueriedType->getAsRecordType())
+    if (const RecordType *RT = QueriedType->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyConstructor();
     return false;
   case UTT_HasTrivialAssign:
@@ -274,7 +274,7 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
       return false;
     if (QueriedType->isPODType())
       return true;
-    if (const RecordType *RT = QueriedType->getAsRecordType())
+    if (const RecordType *RT = QueriedType->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyAssignment();
     return false;
   case UTT_HasTrivialDestructor:
@@ -287,7 +287,7 @@ bool UnaryTypeTraitExpr::EvaluateTrait(ASTContext& C) const {
     if (QueriedType->isPODType() || QueriedType->isReferenceType())
       return true;
     if (const RecordType *RT =
-          C.getBaseElementType(QueriedType)->getAsRecordType())
+          C.getBaseElementType(QueriedType)->getAs<RecordType>())
       return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor();
     return false;
   }

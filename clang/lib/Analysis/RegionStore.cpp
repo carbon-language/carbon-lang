@@ -379,7 +379,7 @@ static bool isGenericPtr(ASTContext &Ctx, QualType Ty) {
     if (Ty->isVoidType())
       return true;
     
-    if (const PointerType *PT = Ty->getAsPointerType()) {
+    if (const PointerType *PT = Ty->getAs<PointerType>()) {
       Ty = PT->getPointeeType();
       continue;
     }
@@ -455,7 +455,7 @@ const GRState *RegionStoreManager::InvalidateRegion(const GRState *state,
   // If the region is cast to another type, use that type.  
   if (const QualType *CastTy = getCastType(state, R)) {
     assert(!(*CastTy)->isObjCObjectPointerType());
-    QualType NewT = (*CastTy)->getAsPointerType()->getPointeeType();    
+    QualType NewT = (*CastTy)->getAs<PointerType>()->getPointeeType();    
     
     // The only exception is if the original region had a location type as its
     // value type we always want to treat the region as binding to a location.
@@ -790,7 +790,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
         T = Sym->getType(getContext());
       }
       
-      QualType EleTy = T->getAsPointerType()->getPointeeType();        
+      QualType EleTy = T->getAs<PointerType>()->getPointeeType();        
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, SR, getContext());
       break;        
@@ -799,7 +799,7 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
       // Get the alloca region's current cast type.
       const AllocaRegion *AR = cast<AllocaRegion>(MR);
       QualType T = *(state->get<RegionCasts>(AR));
-      QualType EleTy = T->getAsPointerType()->getPointeeType();
+      QualType EleTy = T->getAs<PointerType>()->getPointeeType();
       SVal ZeroIdx = ValMgr.makeZeroArrayIndex();
       ER = MRMgr.getElementRegion(EleTy, ZeroIdx, AR, getContext());
       break;      
@@ -869,8 +869,8 @@ static bool IsReinterpreted(QualType RTy, QualType UsedTy, ASTContext &Ctx) {
   // is ever reinterpreted as a non-pointer, e.g. void** and intptr_t* 
   // represents a reinterpretation.
   if (Loc::IsLocType(RTy) && Loc::IsLocType(UsedTy)) {
-    const PointerType *PRTy = RTy->getAsPointerType();    
-    const PointerType *PUsedTy = UsedTy->getAsPointerType();
+    const PointerType *PRTy = RTy->getAs<PointerType>();    
+    const PointerType *PUsedTy = UsedTy->getAs<PointerType>();
 
     return PUsedTy && PRTy &&
            IsReinterpreted(PRTy->getPointeeType(),
@@ -982,7 +982,7 @@ RegionStoreManager::Retrieve(const GRState *state, Loc L, QualType T) {
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R)) {
     QualType T = *p;
-    RTy = T->getAsPointerType()->getPointeeType();
+    RTy = T->getAs<PointerType>()->getPointeeType();
   }
 #endif
 
@@ -1062,7 +1062,7 @@ SVal RegionStoreManager::RetrieveElement(const GRState* state,
   // If the region is already cast to another type, use that type to create the
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R))
-    Ty = (*p)->getAsPointerType()->getPointeeType();
+    Ty = (*p)->getAs<PointerType>()->getPointeeType();
 #endif
 
   return ValMgr.getRegionValueSymbolValOrUnknown(R, Ty);
@@ -1105,7 +1105,7 @@ SVal RegionStoreManager::RetrieveField(const GRState* state,
   // symbol value.
   if (const QualType *p = state->get<RegionCasts>(R)) {
     QualType tmp = *p;
-    Ty = tmp->getAsPointerType()->getPointeeType();
+    Ty = tmp->getAs<PointerType>()->getPointeeType();
   }
 #endif
 
@@ -1166,7 +1166,7 @@ SVal RegionStoreManager::RetrieveLazySymbol(const GRState *state,
   // If the region is already cast to another type, use that type to create the
   // symbol value.
   if (const QualType *ty = state->get<RegionCasts>(R)) {
-    if (const PointerType *PT = (*ty)->getAsPointerType()) {
+    if (const PointerType *PT = (*ty)->getAs<PointerType>()) {
       QualType castTy = PT->getPointeeType();
       
       if (!IsReinterpreted(valTy, castTy, getContext()))
@@ -1374,7 +1374,7 @@ RegionStoreManager::BindStruct(const GRState *state, const TypedRegion* R,
   QualType T = R->getValueType(getContext());
   assert(T->isStructureType());
 
-  const RecordType* RT = T->getAsRecordType();
+  const RecordType* RT = T->getAs<RecordType>();
   RecordDecl* RD = RT->getDecl();
 
   if (!RD->isDefinition())

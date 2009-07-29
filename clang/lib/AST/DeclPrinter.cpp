@@ -90,7 +90,7 @@ static QualType GetBaseType(QualType T) {
   while (!BaseType->isSpecifierType()) {
     if (isa<TypedefType>(BaseType))
       break;
-    else if (const PointerType* PTy = BaseType->getAsPointerType())
+    else if (const PointerType* PTy = BaseType->getAs<PointerType>())
       BaseType = PTy->getPointeeType();
     else if (const ArrayType* ATy = dyn_cast<ArrayType>(BaseType))
       BaseType = ATy->getElementType();
@@ -356,7 +356,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           }
           else // FIXME. skip dependent types for now.
             if (const RecordType *RT = 
-                BMInitializer->getBaseClass()->getAsRecordType()) {
+                BMInitializer->getBaseClass()->getAs<RecordType>()) {
               const CXXRecordDecl *BaseDecl = 
                 cast<CXXRecordDecl>(RT->getDecl());
               Out << BaseDecl->getNameAsString();
@@ -397,7 +397,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
           else // FIXME. skip dependent types for now.
             if (const RecordType *RT = 
                   DDecl->getAnyBaseClassToDestroy(BaseOrMember)
-                    ->getAsRecordType()) {
+                    ->getAs<RecordType>()) {
               const CXXRecordDecl *BaseDecl = 
                 cast<CXXRecordDecl>(RT->getDecl());
               Proto += "~";

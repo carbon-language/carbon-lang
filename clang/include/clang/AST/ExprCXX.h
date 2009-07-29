@@ -711,7 +711,7 @@ public:
 
   QualType getAllocatedType() const {
     assert(getType()->isPointerType());
-    return getType()->getAsPointerType()->getPointeeType();
+    return getType()->getAs<PointerType>()->getPointeeType();
   }
 
   FunctionDecl *getOperatorNew() const { return OperatorNew; }

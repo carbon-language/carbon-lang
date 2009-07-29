@@ -85,7 +85,7 @@ CXXRecordDecl::setBases(ASTContext &C,
     if (BaseType->isDependentType())
       continue;
     CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(BaseType->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(BaseType->getAs<RecordType>()->getDecl());
     if (Base->isVirtual())
       hasDirectVirtualBase = true;
     for (CXXRecordDecl::base_class_iterator VBase = 
@@ -129,7 +129,7 @@ CXXRecordDecl::setBases(ASTContext &C,
     for (int i = 0; i < vbaseCount; i++) {
       QualType QT = UniqueVbases[i]->getType();
       CXXRecordDecl *VBaseClassDecl
-        = cast<CXXRecordDecl>(QT->getAsRecordType()->getDecl());
+        = cast<CXXRecordDecl>(QT->getAs<RecordType>()->getDecl());
       this->VBases[i] = 
         CXXBaseSpecifier(VBaseClassDecl->getSourceRange(), true,
                          VBaseClassDecl->getTagKind() == RecordDecl::TK_class,
@@ -188,7 +188,7 @@ bool CXXRecordDecl::hasConstCopyAssignment(ASTContext &Context) const {
       continue;
     bool AcceptsConst = true;
     QualType ArgType = FnType->getArgType(0);
-    if (const LValueReferenceType *Ref = ArgType->getAsLValueReferenceType()) {
+    if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>()) {
       ArgType = Ref->getPointeeType();
       // Is it a non-const lvalue reference?
       if (!ArgType.isConstQualified())
@@ -247,7 +247,7 @@ void CXXRecordDecl::addedAssignmentOperator(ASTContext &Context,
   assert(FnType && "Overloaded operator has no proto function type.");
   assert(FnType->getNumArgs() == 1 && !FnType->isVariadic());
   QualType ArgType = FnType->getArgType(0);
-  if (const LValueReferenceType *Ref = ArgType->getAsLValueReferenceType())
+  if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>())
     ArgType = Ref->getPointeeType();
 
   ArgType = ArgType.getUnqualifiedType();
@@ -453,7 +453,7 @@ CXXConstructorDecl::isCopyConstructor(ASTContext &Context,
 
   // Do we have a reference type? Rvalue references don't count.
   const LValueReferenceType *ParamRefType =
-    Param->getType()->getAsLValueReferenceType();
+    Param->getType()->getAs<LValueReferenceType>();
   if (!ParamRefType)
     return false;
 
@@ -512,7 +512,7 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
     // Skip over virtual bases which have trivial destructors.
     CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(VBase->getType()->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
     uintptr_t Member = 
@@ -526,7 +526,7 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
       continue;
     // Skip over virtual bases which have trivial destructors.
     CXXRecordDecl *BaseClassDecl
-      = cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+      = cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
     if (BaseClassDecl->hasTrivialDestructor())
       continue;
     
@@ -540,7 +540,7 @@ CXXDestructorDecl::computeBaseOrMembersToDestroy(ASTContext &C) {
        E = ClassDecl->field_end(); Field != E; ++Field) {
     QualType FieldType = C.getBaseElementType((*Field)->getType());
     
-    if (const RecordType* RT = FieldType->getAsRecordType()) {
+    if (const RecordType* RT = FieldType->getAs<RecordType>()) {
       // Skip over virtual bases which have trivial destructors.
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
       if (BaseClassDecl->hasTrivialDestructor())
@@ -576,7 +576,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
   for (unsigned i = 0; i < NumInitializers; i++) {
     CXXBaseOrMemberInitializer *Member = Initializers[i];
     if (Member->isBaseInitializer())
-      AllBaseFields[Member->getBaseClass()->getAsRecordType()] = Member;
+      AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
     else
      AllBaseFields[Member->getMember()] = Member;
   }
@@ -586,11 +586,11 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
        ClassDecl->vbases_begin(),
        E = ClassDecl->vbases_end(); VBase != E; ++VBase) {
     if (CXXBaseOrMemberInitializer *Value = 
-        AllBaseFields.lookup(VBase->getType()->getAsRecordType()))
+        AllBaseFields.lookup(VBase->getType()->getAs<RecordType>()))
       AllToInit.push_back(Value);
     else {
       CXXRecordDecl *VBaseDecl = 
-        cast<CXXRecordDecl>(VBase->getType()->getAsRecordType()->getDecl());
+        cast<CXXRecordDecl>(VBase->getType()->getAs<RecordType>()->getDecl());
       assert(VBaseDecl && "setBaseOrMemberInitializers - VBaseDecl null");
       if (!VBaseDecl->getDefaultConstructor(C) && 
           !VBase->getType()->isDependentType())
@@ -610,11 +610,11 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     if (Base->isVirtual())
       continue;
     if (CXXBaseOrMemberInitializer *Value = 
-        AllBaseFields.lookup(Base->getType()->getAsRecordType()))
+        AllBaseFields.lookup(Base->getType()->getAs<RecordType>()))
       AllToInit.push_back(Value);
     else {
       CXXRecordDecl *BaseDecl = 
-        cast<CXXRecordDecl>(Base->getType()->getAsRecordType()->getDecl());
+        cast<CXXRecordDecl>(Base->getType()->getAs<RecordType>()->getDecl());
       assert(BaseDecl && "setBaseOrMemberInitializers - BaseDecl null");
       if (!BaseDecl->getDefaultConstructor(C) && 
           !Base->getType()->isDependentType())
@@ -636,7 +636,7 @@ CXXConstructorDecl::setBaseOrMemberInitializers(
     }
 
     QualType FT = C.getBaseElementType((*Field)->getType());
-    if (const RecordType* RT = FT->getAsRecordType()) {
+    if (const RecordType* RT = FT->getAs<RecordType>()) {
       CXXConstructorDecl *Ctor =
         cast<CXXRecordDecl>(RT->getDecl())->getDefaultConstructor(C);
       if (!Ctor && !FT->isDependentType())

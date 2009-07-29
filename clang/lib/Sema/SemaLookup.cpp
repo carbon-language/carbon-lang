@@ -1387,7 +1387,7 @@ addAssociatedClassesAndNamespaces(CXXRecordDecl *Class,
     for (CXXRecordDecl::base_class_iterator Base = Class->bases_begin(),
                                          BaseEnd = Class->bases_end();
          Base != BaseEnd; ++Base) {
-      const RecordType *BaseType = Base->getType()->getAsRecordType();
+      const RecordType *BaseType = Base->getType()->getAs<RecordType>();
       CXXRecordDecl *BaseDecl = cast<CXXRecordDecl>(BaseType->getDecl());
       if (AssociatedClasses.insert(BaseDecl)) {
         // Find the associated namespace for this base class.
@@ -1435,7 +1435,7 @@ addAssociatedClassesAndNamespaces(QualType T,
   // We handle this by unwrapping pointer and array types immediately,
   // to avoid unnecessary recursion.
   while (true) {
-    if (const PointerType *Ptr = T->getAsPointerType())
+    if (const PointerType *Ptr = T->getAs<PointerType>())
       T = Ptr->getPointeeType();
     else if (const ArrayType *Ptr = Context.getAsArrayType(T))
       T = Ptr->getElementType();
@@ -1453,7 +1453,7 @@ addAssociatedClassesAndNamespaces(QualType T,
   //        member, if any; and its direct and indirect base
   //        classes. Its associated namespaces are the namespaces in
   //        which its associated classes are defined. 
-  if (const RecordType *ClassType = T->getAsRecordType())
+  if (const RecordType *ClassType = T->getAs<RecordType>())
     if (CXXRecordDecl *ClassDecl 
         = dyn_cast<CXXRecordDecl>(ClassType->getDecl())) {
       addAssociatedClassesAndNamespaces(ClassDecl, Context, 
@@ -1519,7 +1519,7 @@ addAssociatedClassesAndNamespaces(QualType T,
   //        associated namespaces and classes are those associated
   //        with the member type together with those associated with
   //        X. 
-  if (const MemberPointerType *MemberPtr = T->getAsMemberPointerType()) {
+  if (const MemberPointerType *MemberPtr = T->getAs<MemberPointerType>()) {
     // Handle the type that the pointer to member points to.
     addAssociatedClassesAndNamespaces(MemberPtr->getPointeeType(),
                                       Context,
@@ -1527,7 +1527,7 @@ addAssociatedClassesAndNamespaces(QualType T,
                                       GlobalScope);
 
     // Handle the class type into which this points.
-    if (const RecordType *Class = MemberPtr->getClass()->getAsRecordType())
+    if (const RecordType *Class = MemberPtr->getClass()->getAs<RecordType>())
       addAssociatedClassesAndNamespaces(cast<CXXRecordDecl>(Class->getDecl()),
                                         Context,
                                         AssociatedNamespaces, AssociatedClasses,

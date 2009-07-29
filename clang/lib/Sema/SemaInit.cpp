@@ -162,7 +162,7 @@ bool Sema::CheckInitializerTypes(Expr *&Init, QualType &DeclType,
       if ((DeclTypeC.getUnqualifiedType() == InitTypeC.getUnqualifiedType()) ||
           IsDerivedFrom(InitTypeC, DeclTypeC)) {
         const CXXRecordDecl *RD = 
-          cast<CXXRecordDecl>(DeclType->getAsRecordType()->getDecl());
+          cast<CXXRecordDecl>(DeclType->getAs<RecordType>()->getDecl());
         
         // No need to make a CXXConstructExpr if both the ctor and dtor are
         // trivial.
@@ -341,7 +341,7 @@ void InitListChecker::FillInValueInitializations(InitListExpr *ILE) {
   if (ILE->getSyntacticForm())
     Loc = ILE->getSyntacticForm()->getSourceRange().getBegin();
   
-  if (const RecordType *RType = ILE->getType()->getAsRecordType()) {
+  if (const RecordType *RType = ILE->getType()->getAs<RecordType>()) {
     unsigned Init = 0, NumInits = ILE->getNumInits();
     for (RecordDecl::field_iterator 
            Field = RType->getDecl()->field_begin(),
@@ -447,7 +447,7 @@ int InitListChecker::numArrayElements(QualType DeclType) {
 }
 
 int InitListChecker::numStructUnionElements(QualType DeclType) {
-  RecordDecl *structDecl = DeclType->getAsRecordType()->getDecl();
+  RecordDecl *structDecl = DeclType->getAs<RecordType>()->getDecl();
   int InitializableMembers = 0;
   for (RecordDecl::field_iterator 
          Field = structDecl->field_begin(),
@@ -584,7 +584,7 @@ void InitListChecker::CheckListElementTypes(InitListExpr *IList,
     CheckVectorType(IList, DeclType, Index, StructuredList, StructuredIndex);
   } else if (DeclType->isAggregateType()) {
     if (DeclType->isRecordType()) {
-      RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
+      RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
       CheckStructUnionTypes(IList, DeclType, RD->field_begin(), 
                             SubobjectIsDesignatorContext, Index,
                             StructuredList, StructuredIndex,
@@ -939,7 +939,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
                                             InitListExpr *StructuredList,
                                             unsigned &StructuredIndex,
                                             bool TopLevelObject) {
-  RecordDecl* structDecl = DeclType->getAsRecordType()->getDecl();
+  RecordDecl* structDecl = DeclType->getAs<RecordType>()->getDecl();
     
   // If the record is invalid, some of it's members are invalid. To avoid
   // confusion, we forgo checking the intializer for the entire record.
@@ -950,7 +950,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
 
   if (DeclType->isUnionType() && IList->getNumInits() == 0) {
     // Value-initialize the first named member of the union.
-    RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
+    RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
     for (RecordDecl::field_iterator FieldEnd = RD->field_end();
          Field != FieldEnd; ++Field) {
       if (Field->getDeclName()) {
@@ -965,7 +965,7 @@ void InitListChecker::CheckStructUnionTypes(InitListExpr *IList,
   // anything except look at designated initializers; That's okay,
   // because an error should get printed out elsewhere. It might be
   // worthwhile to skip over the rest of the initializer, though.
-  RecordDecl *RD = DeclType->getAsRecordType()->getDecl();
+  RecordDecl *RD = DeclType->getAs<RecordType>()->getDecl();
   RecordDecl::field_iterator FieldEnd = RD->field_end();
   bool InitializedSomething = false;
   while (Index < IList->getNumInits()) {
@@ -1204,7 +1204,7 @@ InitListChecker::CheckDesignatedInitializer(InitListExpr *IList,
     //   then the current object (defined below) shall have
     //   structure or union type and the identifier shall be the
     //   name of a member of that type. 
-    const RecordType *RT = CurrentObjectType->getAsRecordType();
+    const RecordType *RT = CurrentObjectType->getAs<RecordType>();
     if (!RT) {
       SourceLocation Loc = D->getDotLoc();
       if (Loc.isInvalid())
@@ -1564,7 +1564,7 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
     }
   } else if (const VectorType *VType = CurrentObjectType->getAsVectorType())
     NumElements = VType->getNumElements();
-  else if (const RecordType *RType = CurrentObjectType->getAsRecordType()) {
+  else if (const RecordType *RType = CurrentObjectType->getAs<RecordType>()) {
     RecordDecl *RDecl = RType->getDecl();
     if (RDecl->isUnion())
       NumElements = 1;
@@ -1758,7 +1758,7 @@ bool Sema::CheckValueInitialization(QualType Type, SourceLocation Loc) {
   if (const ArrayType *AT = Context.getAsArrayType(Type))
     return CheckValueInitialization(AT->getElementType(), Loc);
 
-  if (const RecordType *RT = Type->getAsRecordType()) {
+  if (const RecordType *RT = Type->getAs<RecordType>()) {
     if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
       // -- if T is a class type (clause 9) with a user-declared
       //    constructor (12.1), then the default constructor for T is

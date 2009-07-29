@@ -34,7 +34,7 @@ StoreManager::MakeElementRegion(const GRState *state, const MemRegion *region,
 }
 
 static bool IsCompleteType(ASTContext &Ctx, QualType Ty) {
-  if (const RecordType *RT = Ty->getAsRecordType()) {
+  if (const RecordType *RT = Ty->getAs<RecordType>()) {
     const RecordDecl *D = RT->getDecl();
     if (!D->getDefinition(Ctx))
       return false;
@@ -77,7 +77,7 @@ StoreManager::CastRegion(const GRState *state, const MemRegion* R,
 
   // Now assume we are casting from pointer to pointer. Other cases should
   // already be handled.
-  QualType PointeeTy = CastToTy->getAsPointerType()->getPointeeType();
+  QualType PointeeTy = CastToTy->getAs<PointerType>()->getPointeeType();
   
   // Process region cast according to the kind of the region being cast.
   switch (R->getKind()) {

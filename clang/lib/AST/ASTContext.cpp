@@ -468,7 +468,7 @@ unsigned ASTContext::getDeclAlignInBytes(const Decl *D) {
 
   if (const ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
     QualType T = VD->getType();
-    if (const ReferenceType* RT = T->getAsReferenceType()) {
+    if (const ReferenceType* RT = T->getAs<ReferenceType>()) {
       unsigned AS = RT->getPointeeType().getAddressSpace();
       Align = Target.getPointerAlign(AS);
     } else if (!T->isIncompleteType() && !T->isFunctionType()) {
@@ -994,7 +994,7 @@ QualType ASTContext::getObjCGCQualType(QualType T,
     return T;
   
   if (T->isPointerType()) {
-    QualType Pointee = T->getAsPointerType()->getPointeeType();
+    QualType Pointee = T->getAs<PointerType>()->getPointeeType();
     if (Pointee->isAnyPointerType()) {
       QualType ResultType = getObjCGCQualType(Pointee, GCAttr);
       return getPointerType(ResultType);
@@ -1045,14 +1045,14 @@ QualType ASTContext::getNoReturnType(QualType T) {
   QualifierSet qs;
   qs.strip(T);
   if (T->isPointerType()) {
-    QualType Pointee = T->getAsPointerType()->getPointeeType();
+    QualType Pointee = T->getAs<PointerType>()->getPointeeType();
     QualType ResultType = getNoReturnType(Pointee);
     ResultType = getPointerType(ResultType);
     ResultType.setCVRQualifiers(T.getCVRQualifiers());
     return qs.apply(ResultType, *this);
   }
   if (T->isBlockPointerType()) {
-    QualType Pointee = T->getAsBlockPointerType()->getPointeeType();
+    QualType Pointee = T->getAs<BlockPointerType>()->getPointeeType();
     QualType ResultType = getNoReturnType(Pointee);
     ResultType = getBlockPointerType(ResultType);
     ResultType.setCVRQualifiers(T.getCVRQualifiers());
@@ -2434,7 +2434,7 @@ QualType ASTContext::getCFConstantStringType() {
 }
 
 void ASTContext::setCFConstantStringType(QualType T) {
-  const RecordType *Rec = T->getAsRecordType();
+  const RecordType *Rec = T->getAs<RecordType>();
   assert(Rec && "Invalid CFConstantStringType");
   CFConstantStringTypeDecl = Rec->getDecl();
 }
@@ -2470,7 +2470,7 @@ QualType ASTContext::getObjCFastEnumerationStateType()
 }
 
 void ASTContext::setObjCFastEnumerationStateType(QualType T) {
-  const RecordType *Rec = T->getAsRecordType();
+  const RecordType *Rec = T->getAs<RecordType>();
   assert(Rec && "Invalid ObjCFAstEnumerationStateType");
   ObjCFastEnumerationStateTypeDecl = Rec->getDecl();
 }
@@ -2751,7 +2751,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
   
-  if (const PointerType *PT = T->getAsPointerType()) {
+  if (const PointerType *PT = T->getAs<PointerType>()) {
     QualType PointeeTy = PT->getPointeeType();
     bool isReadOnly = false;
     // For historical/compatibility reasons, the read-only qualifier of the
@@ -2766,8 +2766,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     }
     else if (OutermostType) {
       QualType P = PointeeTy;
-      while (P->getAsPointerType())
-        P = P->getAsPointerType()->getPointeeType();
+      while (P->getAs<PointerType>())
+        P = P->getAs<PointerType>()->getPointeeType();
       if (P.isConstQualified()) {
         isReadOnly = true;
         S += 'r';
@@ -2796,7 +2796,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         S += '*';
         return;
       }
-    } else if (const RecordType *RTy = PointeeTy->getAsRecordType()) {
+    } else if (const RecordType *RTy = PointeeTy->getAs<RecordType>()) {
       // GCC binary compat: Need to convert "struct objc_class *" to "#".
       if (RTy->getDecl()->getIdentifier() == &Idents.get("objc_class")) {
         S += '#';
@@ -2849,7 +2849,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     return;
   }
   
-  if (const RecordType *RTy = T->getAsRecordType()) {
+  if (const RecordType *RTy = T->getAs<RecordType>()) {
     RecordDecl *RDecl = RTy->getDecl();
     S += RDecl->isUnion() ? '(' : '{';
     // Anonymous structures print as '?'
@@ -3015,7 +3015,7 @@ void ASTContext::setObjCSelType(QualType T) {
   TypedefDecl *TD = TT->getDecl();
 
   // typedef struct objc_selector *SEL;
-  const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
+  const PointerType *ptr = TD->getUnderlyingType()->getAs<PointerType>();
   if (!ptr)
     return;
   const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
@@ -3158,7 +3158,7 @@ QualType::GCAttrTypes ASTContext::getObjCGCAttrKind(const QualType &Ty) const {
       if (Ty->isObjCObjectPointerType())
         GCAttrs = QualType::Strong;
       else if (Ty->isPointerType())
-        return getObjCGCAttrKind(Ty->getAsPointerType()->getPointeeType());
+        return getObjCGCAttrKind(Ty->getAs<PointerType>()->getPointeeType());
     }
     // Non-pointers have none gc'able attribute regardless of the attribute
     // set on them.
@@ -3557,9 +3557,9 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   // enough that they should be handled separately.
   // FIXME: Merging of lvalue and rvalue references is incorrect. C++ *really*
   // shouldn't be going through here!
-  if (const ReferenceType *RT = LHS->getAsReferenceType())
+  if (const ReferenceType *RT = LHS->getAs<ReferenceType>())
     LHS = RT->getPointeeType();
-  if (const ReferenceType *RT = RHS->getAsReferenceType())
+  if (const ReferenceType *RT = RHS->getAs<ReferenceType>())
     RHS = RT->getPointeeType();
 
   QualType LHSCan = getCanonicalType(LHS),
@@ -3688,8 +3688,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   case Type::Pointer:
   {
     // Merge two pointer types, while trying to preserve typedef info
-    QualType LHSPointee = LHS->getAsPointerType()->getPointeeType();
-    QualType RHSPointee = RHS->getAsPointerType()->getPointeeType();
+    QualType LHSPointee = LHS->getAs<PointerType>()->getPointeeType();
+    QualType RHSPointee = RHS->getAs<PointerType>()->getPointeeType();
     QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
     if (ResultType.isNull()) return QualType();
     if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))
@@ -3701,8 +3701,8 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS) {
   case Type::BlockPointer:
   {
     // Merge two block pointer types, while trying to preserve typedef info
-    QualType LHSPointee = LHS->getAsBlockPointerType()->getPointeeType();
-    QualType RHSPointee = RHS->getAsBlockPointerType()->getPointeeType();
+    QualType LHSPointee = LHS->getAs<BlockPointerType>()->getPointeeType();
+    QualType RHSPointee = RHS->getAs<BlockPointerType>()->getPointeeType();
     QualType ResultType = mergeTypes(LHSPointee, RHSPointee);
     if (ResultType.isNull()) return QualType();
     if (getCanonicalType(LHSPointee) == getCanonicalType(ResultType))

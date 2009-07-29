@@ -157,7 +157,7 @@ bool FieldDecl::isAnonymousStructOrUnion() const {
   if (!isImplicit() || getDeclName())
     return false;
   
-  if (const RecordType *Record = getType()->getAsRecordType())
+  if (const RecordType *Record = getType()->getAs<RecordType>())
     return Record->getDecl()->isAnonymousStructOrUnion();
 
   return false;
@@ -670,24 +670,24 @@ TagDecl* TagDecl::getCanonicalDecl() {
 }
 
 void TagDecl::startDefinition() {
-  TagType *TagT = const_cast<TagType *>(TypeForDecl->getAsTagType());
+  TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>());
   TagT->decl.setPointer(this);
-  TagT->getAsTagType()->decl.setInt(1);
+  TagT->getAs<TagType>()->decl.setInt(1);
 }
 
 void TagDecl::completeDefinition() {
   assert((!TypeForDecl || 
-          TypeForDecl->getAsTagType()->decl.getPointer() == this) &&
+          TypeForDecl->getAs<TagType>()->decl.getPointer() == this) &&
          "Attempt to redefine a tag definition?");
   IsDefinition = true;
-  TagType *TagT = const_cast<TagType *>(TypeForDecl->getAsTagType());
+  TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>());
   TagT->decl.setPointer(this);
   TagT->decl.setInt(0);
 }
 
 TagDecl* TagDecl::getDefinition(ASTContext& C) const {
   QualType T = C.getTypeDeclType(const_cast<TagDecl*>(this));
-  TagDecl* D = cast<TagDecl>(T->getAsTagType()->getDecl());
+  TagDecl* D = cast<TagDecl>(T->getAs<TagType>()->getDecl());
   return D->isDefinition() ? D : 0;
 }
 

@@ -135,7 +135,7 @@ std::string DeclarationName::getAsString() const {
 
   case CXXConstructorName: {
     QualType ClassType = getCXXNameType();
-    if (const RecordType *ClassRec = ClassType->getAsRecordType())
+    if (const RecordType *ClassRec = ClassType->getAs<RecordType>())
       return ClassRec->getDecl()->getNameAsString();
     return ClassType.getAsString();
   }
@@ -143,7 +143,7 @@ std::string DeclarationName::getAsString() const {
   case CXXDestructorName: {
     std::string Result = "~";
     QualType Type = getCXXNameType();
-    if (const RecordType *Rec = Type->getAsRecordType())
+    if (const RecordType *Rec = Type->getAs<RecordType>())
       Result += Rec->getDecl()->getNameAsString();
     else
       Result += Type.getAsString();
@@ -170,7 +170,7 @@ std::string DeclarationName::getAsString() const {
   case CXXConversionFunctionName: {
     std::string Result = "operator ";
     QualType Type = getCXXNameType();
-    if (const RecordType *Rec = Type->getAsRecordType())
+    if (const RecordType *Rec = Type->getAs<RecordType>())
       Result += Rec->getDecl()->getNameAsString();
     else
       Result += Type.getAsString();

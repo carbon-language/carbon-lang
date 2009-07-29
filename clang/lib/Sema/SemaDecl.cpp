@@ -1364,7 +1364,7 @@ bool Sema::InjectAnonymousStructOrUnionMembers(Scope *S, DeclContext *Owner,
         IdResolver.AddDecl(*F);
       }
     } else if (const RecordType *InnerRecordType
-                 = (*F)->getType()->getAsRecordType()) {
+                 = (*F)->getType()->getAs<RecordType>()) {
       RecordDecl *InnerRecord = InnerRecordType->getDecl();
       if (InnerRecord->isAnonymousStructOrUnion())
         Invalid = Invalid || 
@@ -2917,8 +2917,8 @@ void Sema::CheckMain(FunctionDecl* FD) {
 
       QualifierSet qs;
       const PointerType* PT;
-      if ((PT = qs.strip(AT)->getAsPointerType()) &&
-          (PT = qs.strip(PT->getPointeeType())->getAsPointerType()) &&
+      if ((PT = qs.strip(AT)->getAs<PointerType>()) &&
+          (PT = qs.strip(PT->getPointeeType())->getAs<PointerType>()) &&
           (QualType(qs.strip(PT->getPointeeType()), 0) == Context.CharTy)) {
         qs.removeConst();
         mismatch = !qs.empty();
@@ -3185,7 +3185,7 @@ void Sema::ActOnUninitializedDecl(DeclPtrTy dcl,
       if ((!Var->hasExternalStorage() && !Var->isExternC(Context)) &&
           InitType->isRecordType() && !InitType->isDependentType()) {
         CXXRecordDecl *RD = 
-          cast<CXXRecordDecl>(InitType->getAsRecordType()->getDecl());
+          cast<CXXRecordDecl>(InitType->getAs<RecordType>()->getDecl());
         CXXConstructorDecl *Constructor = 0;
         if (!RequireCompleteType(Var->getLocation(), InitType, 
                                     diag::err_invalid_incomplete_type_use))
@@ -4452,7 +4452,7 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
   if (getLangOptions().CPlusPlus) {
     QualType EltTy = Context.getBaseElementType(T);
 
-    if (const RecordType *RT = EltTy->getAsRecordType()) {
+    if (const RecordType *RT = EltTy->getAs<RecordType>()) {
       CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
 
       if (!RDecl->hasTrivialConstructor())
@@ -4619,7 +4619,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
 
   // Check for nontrivial bases (and recurse).
   for (base_iter bi = RD->bases_begin(), be = RD->bases_end(); bi != be; ++bi) {
-    const RecordType *BaseRT = bi->getType()->getAsRecordType();
+    const RecordType *BaseRT = bi->getType()->getAs<RecordType>();
     assert(BaseRT);
     CXXRecordDecl *BaseRecTy = cast<CXXRecordDecl>(BaseRT->getDecl());
     if (!(BaseRecTy->*hasTrivial)()) {
@@ -4635,7 +4635,7 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   for (field_iter fi = RD->field_begin(), fe = RD->field_end(); fi != fe;
        ++fi) {
     QualType EltTy = Context.getBaseElementType((*fi)->getType());
-    if (const RecordType *EltRT = EltTy->getAsRecordType()) {
+    if (const RecordType *EltRT = EltTy->getAs<RecordType>()) {
       CXXRecordDecl* EltRD = cast<CXXRecordDecl>(EltRT->getDecl());
 
       if (!(EltRD->*hasTrivial)()) {
@@ -4825,7 +4825,7 @@ void Sema::ActOnFields(Scope* S,
       FD->setInvalidDecl();
       EnclosingDecl->setInvalidDecl();
       continue;
-    } else if (const RecordType *FDTTy = FDTy->getAsRecordType()) {
+    } else if (const RecordType *FDTTy = FDTy->getAs<RecordType>()) {
       if (FDTTy->getDecl()->hasFlexibleArrayMember()) {
         // If this is a member of a union, then entire union becomes "flexible".
         if (Record && Record->isUnion()) {

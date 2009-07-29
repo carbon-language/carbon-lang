@@ -271,7 +271,7 @@ class VISIBILITY_HIDDEN ConstStructBuilder {
   }
   
   bool Build(const InitListExpr *ILE) {
-    RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
+    RecordDecl *RD = ILE->getType()->getAs<RecordType>()->getDecl();
     const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
     
     unsigned FieldNo = 0;
@@ -512,7 +512,7 @@ public:
     // works well enough!
     const llvm::StructType *SType =
         cast<llvm::StructType>(ConvertType(ILE->getType()));
-    RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
+    RecordDecl *RD = ILE->getType()->getAs<RecordType>()->getDecl();
     std::vector<llvm::Constant*> Elts;
 
     // Initialize the whole structure to zero.
@@ -591,7 +591,7 @@ public:
 #ifndef NDEBUG
       // Make sure that it's really an empty and not a failure of
       // semantic analysis.
-      RecordDecl *RD = ILE->getType()->getAsRecordType()->getDecl();
+      RecordDecl *RD = ILE->getType()->getAs<RecordType>()->getDecl();
       for (RecordDecl::field_iterator Field = RD->field_begin(),
                                    FieldEnd = RD->field_end();
            Field != FieldEnd; ++Field)
