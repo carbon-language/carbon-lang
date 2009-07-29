@@ -519,17 +519,19 @@ struct VISIBILITY_HIDDEN ExitOpt : public LibCallOptimization {
 
     TerminatorInst *OldTI = CI->getParent()->getTerminator();
     
-    // Create the return after the call.
-    ReturnInst *RI = B.CreateRet(CI->getOperand(1));
-
     // Drop all successor phi node entries.
     for (unsigned i = 0, e = OldTI->getNumSuccessors(); i != e; ++i)
       OldTI->getSuccessor(i)->removePredecessor(CI->getParent());
     
-    // Erase all instructions from after our return instruction until the end of
-    // the block.
-    BasicBlock::iterator FirstDead = RI; ++FirstDead;
-    CI->getParent()->getInstList().erase(FirstDead, CI->getParent()->end());
+    // Split the basic block after the call to exit.
+    BasicBlock::iterator FirstDead = CI; ++FirstDead;
+    CI->getParent()->splitBasicBlock(FirstDead);
+    B.SetInsertPoint(B.GetInsertBlock());
+
+    // Remove the branch that splitBB created and insert a return instead.
+    CI->getParent()->getTerminator()->eraseFromParent();
+    B.CreateRet(CI->getOperand(1));
+
     return CI;
   }
 };
