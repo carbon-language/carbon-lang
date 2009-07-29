@@ -523,6 +523,13 @@ const TemplateTypeParmType *Type::getAsTemplateTypeParmType() const {
   return dyn_cast<TemplateTypeParmType>(CanonicalType);
 }
 
+const CXXRecordDecl *Type::getCXXRecordDeclForPointerType() const {
+  if (const PointerType *PT = getAsPointerType())
+    if (const RecordType *RT = PT->getPointeeType()->getAsRecordType())
+      return dyn_cast<CXXRecordDecl>(RT->getDecl());
+  return 0;
+}
+
 const TemplateSpecializationType *
 Type::getAsTemplateSpecializationType() const {
   // There is no sugar for class template specialization types, so

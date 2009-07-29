@@ -464,7 +464,8 @@ public:
   const ObjCInterfaceType *getAsObjCInterfaceType() const;
   const ObjCInterfaceType *getAsObjCQualifiedInterfaceType() const;
   const TemplateTypeParmType *getAsTemplateTypeParmType() const;
-
+  const CXXRecordDecl *getCXXRecordDeclForPointerType() const;
+  
   // Member-template getAs<specific type>'.  This scheme will eventually
   // replace the specific getAsXXXX methods above.
   template <typename T> const T *getAs() const;

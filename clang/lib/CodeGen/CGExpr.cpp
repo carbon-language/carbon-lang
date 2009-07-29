@@ -993,12 +993,10 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     if (PTy->getPointeeType()->isUnionType())
       isUnion = true;
     CVRQualifiers = PTy->getPointeeType().getCVRQualifiers();
-    QualType ClassTy = BaseExpr->getType();
-    ClassTy = ClassTy->getPointeeType();
-    if (CXXRecordDecl *ClassDecl =
-        dyn_cast<CXXRecordDecl>(ClassTy->getAsRecordType()->getDecl())) {
+    if (const CXXRecordDecl *ClassDecl = 
+          BaseExpr->getType()->getCXXRecordDeclForPointerType()) {
       FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());
-      if (CXXRecordDecl *BaseClassDecl = 
+      if (const CXXRecordDecl *BaseClassDecl = 
           dyn_cast<CXXRecordDecl>(Field->getDeclContext()))
         BaseValue = AddressCXXOfBaseClass(BaseValue, ClassDecl, BaseClassDecl);
     }
@@ -1017,14 +1015,15 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
       isNonGC = true;
     // FIXME: this isn't right for bitfields.
     BaseValue = BaseLV.getAddress();
-    if (BaseExpr->getType()->isUnionType())
+    QualType BaseTy = BaseExpr->getType();
+    if (BaseTy->isUnionType())
       isUnion = true;
-    CVRQualifiers = BaseExpr->getType().getCVRQualifiers();
-    if (CXXRecordDecl *ClassDecl =
+    CVRQualifiers = BaseTy.getCVRQualifiers();
+    if (const CXXRecordDecl *ClassDecl =
           dyn_cast<CXXRecordDecl>(
-                        BaseExpr->getType()->getAsRecordType()->getDecl())) {
+                        BaseTy->getAsRecordType()->getDecl())) {
         FieldDecl *Field = dyn_cast<FieldDecl>(E->getMemberDecl());
-        if (CXXRecordDecl *BaseClassDecl = 
+        if (const CXXRecordDecl *BaseClassDecl = 
             dyn_cast<CXXRecordDecl>(Field->getDeclContext()))
             BaseValue = 
               AddressCXXOfBaseClass(BaseValue, ClassDecl, BaseClassDecl);
