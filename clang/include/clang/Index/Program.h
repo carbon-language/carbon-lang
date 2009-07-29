@@ -28,6 +28,7 @@ class Program {
   Program(const Program&); // do not implement
   Program &operator=(const Program &); // do not implement
   friend class Entity;
+  friend class GlobalSelector;
   
 public:
   Program();

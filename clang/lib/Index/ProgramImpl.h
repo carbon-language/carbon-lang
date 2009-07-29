@@ -32,6 +32,7 @@ private:
   llvm::BumpPtrAllocator BumpAlloc;
   
   IdentifierTable Identifiers;
+  SelectorTable Selectors;
 
   ProgramImpl(const ProgramImpl&); // do not implement
   ProgramImpl &operator=(const ProgramImpl &); // do not implement
@@ -41,6 +42,7 @@ public:
   
   EntitySetTy &getEntities() { return Entities; }
   IdentifierTable &getIdents() { return Identifiers; }
+  SelectorTable &getSelectors() { return Selectors; }
 
   void *Allocate(unsigned Size, unsigned Align = 8) {
     return BumpAlloc.Allocate(Size, Align);
