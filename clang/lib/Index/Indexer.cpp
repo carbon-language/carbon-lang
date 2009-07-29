@@ -13,9 +13,9 @@
 
 #include "clang/Index/Indexer.h"
 #include "clang/Index/Program.h"
-#include "clang/Index/Entity.h"
 #include "clang/Index/Handlers.h"
 #include "clang/Index/TranslationUnit.h"
+#include "ASTVisitor.h"
 #include "clang/AST/DeclBase.h"
 using namespace clang;
 using namespace idx;
@@ -36,13 +36,37 @@ public:
   }
 };
 
+class SelectorIndexer : public ASTVisitor<SelectorIndexer> {
+  Program &Prog;
+  TranslationUnit *TU;
+  Indexer::SelMapTy &Map;
+
+public:
+  SelectorIndexer(Program &prog, TranslationUnit *tu, Indexer::SelMapTy &map)
+    : Prog(prog), TU(tu), Map(map) { }
+
+  void VisitObjCMethodDecl(ObjCMethodDecl *D) {
+    Map[GlobalSelector::get(D->getSelector(), Prog)].insert(TU);
+    Base::VisitObjCMethodDecl(D);
+  }
+
+  void VisitObjCMessageExpr(ObjCMessageExpr *Node) {
+    Map[GlobalSelector::get(Node->getSelector(), Prog)].insert(TU);
+    Base::VisitObjCMessageExpr(Node);
+  }
+};
+
 } // anonymous namespace
 
 void Indexer::IndexAST(TranslationUnit *TU) {
   assert(TU && "Passed null TranslationUnit");
-  CtxTUMap[&TU->getASTContext()] = TU;
+  ASTContext &Ctx = TU->getASTContext();
+  CtxTUMap[&Ctx] = TU;
   EntityIndexer Idx(TU, Map);
-  Prog.FindEntities(TU->getASTContext(), Idx);
+  Prog.FindEntities(Ctx, Idx);
+  
+  SelectorIndexer SelIdx(Prog, TU, SelMap);
+  SelIdx.Visit(Ctx.getTranslationUnitDecl());
 }
 
 void Indexer::GetTranslationUnitsFor(Entity Ent,
@@ -59,6 +83,19 @@ void Indexer::GetTranslationUnitsFor(Entity Ent,
 
   MapTy::iterator I = Map.find(Ent);
   if (I == Map.end())
+    return;
+  
+  TUSetTy &Set = I->second;
+  for (TUSetTy::iterator I = Set.begin(), E = Set.end(); I != E; ++I)
+    Handler.Handle(*I);
+}
+
+void Indexer::GetTranslationUnitsFor(GlobalSelector Sel,
+                                    TranslationUnitHandler &Handler) {
+  assert(Sel.isValid() && "Expected valid GlobalSelector");
+
+  SelMapTy::iterator I = SelMap.find(Sel);
+  if (I == SelMap.end())
     return;
   
   TUSetTy &Set = I->second;

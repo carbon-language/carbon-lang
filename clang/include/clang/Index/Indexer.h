@@ -15,6 +15,8 @@
 #define LLVM_CLANG_INDEX_INDEXER_H
 
 #include "clang/Index/IndexProvider.h"
+#include "clang/Index/Entity.h"
+#include "clang/Index/GlobalSelector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include <map>
@@ -32,6 +34,7 @@ public:
   typedef llvm::SmallPtrSet<TranslationUnit *, 4> TUSetTy;
   typedef llvm::DenseMap<ASTContext *, TranslationUnit *> CtxTUMapTy;
   typedef std::map<Entity, TUSetTy> MapTy;
+  typedef std::map<GlobalSelector, TUSetTy> SelMapTy;
 
   explicit Indexer(Program &prog) : Prog(prog) { }
 
@@ -42,11 +45,14 @@ public:
 
   virtual void GetTranslationUnitsFor(Entity Ent,
                                       TranslationUnitHandler &Handler);
+  virtual void GetTranslationUnitsFor(GlobalSelector Sel,
+                                      TranslationUnitHandler &Handler);
 
 private:
   Program &Prog;
   MapTy Map;
   CtxTUMapTy CtxTUMap;
+  SelMapTy SelMap;
 };
 
 } // namespace idx
