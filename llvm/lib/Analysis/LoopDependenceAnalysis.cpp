@@ -15,6 +15,8 @@
 //
 // TODO: adapt as implementation progresses.
 //
+// TODO: document lingo (pair, subscript, index)
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "lda"
@@ -24,6 +26,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Instructions.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -87,6 +90,10 @@ static AliasAnalysis::AliasResult UnderlyingObjectsAlias(AliasAnalysis *AA,
                    bObj, AA->getTypeStoreSize(bObj->getType()));
 }
 
+static inline const SCEV *GetZeroSCEV(ScalarEvolution *SE) {
+  return SE->getConstant(Type::Int32Ty, 0L);
+}
+
 //===----------------------------------------------------------------------===//
 //                             Dependence Testing
 //===----------------------------------------------------------------------===//
@@ -114,6 +121,13 @@ bool LoopDependenceAnalysis::findOrInsertDependencePair(Value *A,
   new (P) DependencePair(id, A, B);
   Pairs.InsertNode(P, insertPos);
   return false;
+}
+
+LoopDependenceAnalysis::DependenceResult
+LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
+                                         const SCEV *B,
+                                         Subscript *S) const {
+  return Unknown; // TODO: Implement.
 }
 
 LoopDependenceAnalysis::DependenceResult
@@ -145,9 +159,37 @@ LoopDependenceAnalysis::analysePair(DependencePair *P) const {
     break; // The underlying objects alias, test accesses for dependence.
   }
 
-  // We failed to analyse this pair to get a more specific answer.
-  DEBUG(errs() << "---> [?] cannot analyse\n");
-  return Unknown;
+  const GEPOperator *aGEP = dyn_cast<GEPOperator>(aPtr);
+  const GEPOperator *bGEP = dyn_cast<GEPOperator>(bPtr);
+
+  if (!aGEP || !bGEP)
+    return Unknown;
+
+  // FIXME: Is filtering coupled subscripts necessary?
+
+  // Analyse indices pairwise (FIXME: use GetGEPOperands from BasicAA), adding
+  // trailing zeroes to the smaller GEP, if needed.
+  GEPOperator::const_op_iterator aIdx = aGEP->idx_begin(),
+                                 aEnd = aGEP->idx_end(),
+                                 bIdx = bGEP->idx_begin(),
+                                 bEnd = bGEP->idx_end();
+  while (aIdx != aEnd && bIdx != bEnd) {
+    const SCEV* aSCEV = (aIdx != aEnd) ? SE->getSCEV(*aIdx) : GetZeroSCEV(SE);
+    const SCEV* bSCEV = (bIdx != bEnd) ? SE->getSCEV(*bIdx) : GetZeroSCEV(SE);
+    Subscript subscript;
+    DependenceResult result = analyseSubscript(aSCEV, bSCEV, &subscript);
+    if (result != Dependent) {
+      // We either proved independence or failed to analyse this subscript.
+      // Further subscripts will not improve the situation, so abort early.
+      return result;
+    }
+    P->Subscripts.push_back(subscript);
+    if (aIdx != aEnd) ++aIdx;
+    if (bIdx != bEnd) ++bIdx;
+  }
+  // Either there were no subscripts or all subscripts were analysed to be
+  // dependent; in both cases we know the accesses are dependent.
+  return Dependent;
 }
 
 bool LoopDependenceAnalysis::depends(Value *A, Value *B) {

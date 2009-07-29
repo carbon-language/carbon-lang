@@ -21,6 +21,7 @@
 #define LLVM_ANALYSIS_LOOP_DEPENDENCE_ANALYSIS_H
 
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/Allocator.h"
 #include <iosfwd>
@@ -30,6 +31,7 @@ namespace llvm {
 class AliasAnalysis;
 class AnalysisUsage;
 class ScalarEvolution;
+class SCEV;
 class Value;
 class raw_ostream;
 
@@ -43,17 +45,21 @@ class LoopDependenceAnalysis : public LoopPass {
   /// TODO: doc
   enum DependenceResult { Independent = 0, Dependent = 1, Unknown = 2 };
 
+  /// TODO: doc
+  struct Subscript {
+    /// TODO: Add distance, direction, breaking conditions, ...
+  };
+
   /// DependencePair - Represents a data dependence relation between to memory
   /// reference instructions.
-  ///
-  /// TODO: add subscripts vector
   struct DependencePair : public FastFoldingSetNode {
     Value *A;
     Value *B;
     DependenceResult Result;
+    SmallVector<Subscript, 4> Subscripts;
 
     DependencePair(const FoldingSetNodeID &ID, Value *a, Value *b) :
-        FastFoldingSetNode(ID), A(a), B(b), Result(Unknown) {}
+        FastFoldingSetNode(ID), A(a), B(b), Result(Unknown), Subscripts() {}
   };
 
   /// findOrInsertDependencePair - Return true if a DependencePair for the
@@ -62,7 +68,8 @@ class LoopDependenceAnalysis : public LoopPass {
   bool findOrInsertDependencePair(Value*, Value*, DependencePair*&);
 
   /// TODO: doc
-  DependenceResult analysePair(DependencePair *P) const;
+  DependenceResult analyseSubscript(const SCEV*, const SCEV*, Subscript*) const;
+  DependenceResult analysePair(DependencePair*) const;
 
 public:
   static char ID; // Class identification, replacement for typeinfo
@@ -87,7 +94,6 @@ private:
   FoldingSet<DependencePair> Pairs;
   BumpPtrAllocator PairAllocator;
 }; // class LoopDependenceAnalysis
-
 
 // createLoopDependenceAnalysisPass - This creates an instance of the
 // LoopDependenceAnalysis pass.
