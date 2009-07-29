@@ -255,6 +255,9 @@ public:
   CompoundStmt *getCompoundBody() { return (CompoundStmt*)Body; }
   void setBody(Stmt *B) { Body = B; }
 
+  /// \brief Returns whether this specific method is a definition.
+  bool isThisDeclarationADefinition() const { return Body; }
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjCMethod; }
   static bool classof(const ObjCMethodDecl *D) { return true; }
