@@ -151,8 +151,7 @@ Function *llvm::CloneFunction(const Function *F,
       ArgTypes.push_back(I->getType());
 
   // Create a new function type...
-  FunctionType *FTy =
-     F->getContext().getFunctionType(F->getFunctionType()->getReturnType(),
+  FunctionType *FTy = FunctionType::get(F->getFunctionType()->getReturnType(),
                                     ArgTypes, F->getFunctionType()->isVarArg());
 
   // Create the new function...

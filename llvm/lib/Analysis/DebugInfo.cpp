@@ -470,7 +470,7 @@ DIFactory::DIFactory(Module &m)
   : M(m), VMContext(M.getContext()), StopPointFn(0), FuncStartFn(0), 
     RegionStartFn(0), RegionEndFn(0),
     DeclareFn(0) {
-  EmptyStructPtr = VMContext.getPointerTypeUnqual(VMContext.getStructType());
+  EmptyStructPtr = PointerType::getUnqual(StructType::get());
 }
 
 /// getCastToEmpty - Return this descriptor as a Constant* with type '{}*'.
@@ -493,7 +493,7 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
   // Return Constant if previously defined.
   if (Slot) return Slot;
   
-  const PointerType *DestTy = VMContext.getPointerTypeUnqual(Type::Int8Ty);
+  const PointerType *DestTy = PointerType::getUnqual(Type::Int8Ty);
   
   // If empty string then use a i8* null instead.
   if (String.empty())
@@ -522,7 +522,7 @@ DIArray DIFactory::GetOrCreateArray(DIDescriptor *Tys, unsigned NumTys) {
   for (unsigned i = 0; i != NumTys; ++i)
     Elts.push_back(getCastToEmpty(Tys[i]));
   
-  Constant *Init = ConstantArray::get(VMContext.getArrayType(EmptyStructPtr,
+  Constant *Init = ConstantArray::get(ArrayType::get(EmptyStructPtr,
                                                      Elts.size()),
                                       Elts.data(), Elts.size());
   // If we already have this array, just return the uniqued version.
@@ -1075,7 +1075,7 @@ namespace llvm {
     const Type *Ty = M->getTypeByName("llvm.dbg.global_variable.type");
     if (!Ty) return 0;
 
-    Ty = Context.getPointerType(Ty, 0);
+    Ty = PointerType::get(Ty, 0);
 
     Value *Val = V->stripPointerCasts();
     for (Value::use_iterator I = Val->use_begin(), E = Val->use_end();

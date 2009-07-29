@@ -1490,7 +1490,6 @@ static std::string IntrinsicParam(unsigned ArgNo, unsigned NumRets) {
 bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
                                 int VT, unsigned ArgNo, std::string &Suffix) {
   const FunctionType *FTy = F->getFunctionType();
-  LLVMContext &Context = FTy->getContext();
 
   unsigned NumElts = 0;
   const Type *EltTy = Ty;
@@ -1620,7 +1619,7 @@ bool Verifier::PerformTypeCheck(Intrinsic::ID ID, Function *F, const Type *Ty,
                   "vector elements!", F);
       return false;
     }
-  } else if (MVT((MVT::SimpleValueType)VT).getTypeForMVT(Context) != EltTy) {
+  } else if (MVT((MVT::SimpleValueType)VT).getTypeForMVT() != EltTy) {
     CheckFailed(IntrinsicParam(ArgNo, NumRets) + " is wrong!", F);
     return false;
   } else if (EltTy != Ty) {

@@ -1947,7 +1947,7 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       NewCmpTy = NewCmpLHS->getType();
       NewTyBits = SE->getTypeSizeInBits(NewCmpTy);
-      const Type *NewCmpIntTy = Context.getIntegerType(NewTyBits);
+      const Type *NewCmpIntTy = IntegerType::get(NewTyBits);
       if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
         // Check if it is possible to rewrite it using
         // an iv / stride of a smaller integer type.

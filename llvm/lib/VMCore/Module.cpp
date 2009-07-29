@@ -153,8 +153,8 @@ Constant *Module::getOrInsertFunction(const StringRef &Name,
 
   // If the function exists but has the wrong type, return a bitcast to the
   // right type.
-  if (F->getType() != Context.getPointerTypeUnqual(Ty))
-    return ConstantExpr::getBitCast(F, Context.getPointerTypeUnqual(Ty));
+  if (F->getType() != PointerType::getUnqual(Ty))
+    return ConstantExpr::getBitCast(F, PointerType::getUnqual(Ty));
   
   // Otherwise, we just found the existing function or a prototype.
   return F;  
@@ -203,7 +203,7 @@ Constant *Module::getOrInsertFunction(const StringRef &Name,
 
   // Build the function type and chain to the other getOrInsertFunction...
   return getOrInsertFunction(Name,
-                             Context.getFunctionType(RetTy, ArgTys, false),
+                             FunctionType::get(RetTy, ArgTys, false),
                              AttributeList);
 }
 
@@ -221,7 +221,7 @@ Constant *Module::getOrInsertFunction(const StringRef &Name,
 
   // Build the function type and chain to the other getOrInsertFunction...
   return getOrInsertFunction(Name, 
-                             Context.getFunctionType(RetTy, ArgTys, false),
+                             FunctionType::get(RetTy, ArgTys, false),
                              AttrListPtr::get((AttributeWithIndex *)0, 0));
 }
 
@@ -271,8 +271,8 @@ Constant *Module::getOrInsertGlobal(const StringRef &Name, const Type *Ty) {
 
   // If the variable exists but has the wrong type, return a bitcast to the
   // right type.
-  if (GV->getType() != Context.getPointerTypeUnqual(Ty))
-    return ConstantExpr::getBitCast(GV, Context.getPointerTypeUnqual(Ty));
+  if (GV->getType() != PointerType::getUnqual(Ty))
+    return ConstantExpr::getBitCast(GV, PointerType::getUnqual(Ty));
   
   // Otherwise, we just found the existing function or a prototype.
   return GV;

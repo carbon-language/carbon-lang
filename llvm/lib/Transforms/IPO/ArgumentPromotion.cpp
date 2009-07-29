@@ -588,7 +588,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
   }
 
   // Construct the new function type using the new arguments.
-  FunctionType *NFTy = Context.getFunctionType(RetTy, Params, FTy->isVarArg());
+  FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
 
   // Create the new function body and insert it into the module...
   Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());

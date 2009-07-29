@@ -716,7 +716,7 @@ static Value *getAISize(LLVMContext &Context, Value *Amt) {
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const Twine &Name,
                                Instruction *InsertBefore)
-  : UnaryInstruction(Ty->getContext().getPointerTypeUnqual(Ty), iTy,
+  : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
                      getAISize(Ty->getContext(), ArraySize), InsertBefore) {
   setAlignment(Align);
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
@@ -726,7 +726,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const Twine &Name,
                                BasicBlock *InsertAtEnd)
-  : UnaryInstruction(Ty->getContext().getPointerTypeUnqual(Ty), iTy,
+  : UnaryInstruction(PointerType::getUnqual(Ty), iTy,
                      getAISize(Ty->getContext(), ArraySize), InsertAtEnd) {
   setAlignment(Align);
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
@@ -1046,7 +1046,7 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const Twine &Name, Instruction *InBe)
-  : Instruction(Ptr->getType()->getContext().getPointerType(
+  : Instruction(PointerType::get(
       checkType(getIndexedType(Ptr->getType(),Idx)), retrieveAddrSpace(Ptr)),
                 GetElementPtr,
                 OperandTraits<GetElementPtrInst>::op_end(this) - 2,
@@ -1056,7 +1056,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const Twine &Name, BasicBlock *IAE)
-  : Instruction(Ptr->getType()->getContext().getPointerType(
+  : Instruction(PointerType::get(
             checkType(getIndexedType(Ptr->getType(),Idx)),  
                 retrieveAddrSpace(Ptr)),
                 GetElementPtr,
@@ -1270,8 +1270,7 @@ ShuffleVectorInst::ShuffleVectorInst(const ShuffleVectorInst &SV)
 ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                                      const Twine &Name,
                                      Instruction *InsertBefore)
-: Instruction(V1->getType()->getContext().getVectorType(
-                              cast<VectorType>(V1->getType())->getElementType(),
+: Instruction(VectorType::get(cast<VectorType>(V1->getType())->getElementType(),
                 cast<VectorType>(Mask->getType())->getNumElements()),
               ShuffleVector,
               OperandTraits<ShuffleVectorInst>::op_begin(this),

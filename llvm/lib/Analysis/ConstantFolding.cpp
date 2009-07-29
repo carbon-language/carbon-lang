@@ -184,8 +184,8 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
       if (DstEltTy->isFloatingPoint()) {
         // Fold to an vector of integers with same size as our FP type.
         unsigned FPWidth = DstEltTy->getPrimitiveSizeInBits();
-        const Type *DestIVTy = Context.getVectorType(
-                                   Context.getIntegerType(FPWidth), NumDstElt);
+        const Type *DestIVTy = VectorType::get(
+                                   IntegerType::get(FPWidth), NumDstElt);
         // Recursively handle this integer conversion, if possible.
         C = FoldBitCast(C, DestIVTy, TD, Context);
         if (!C) return 0;
@@ -198,8 +198,8 @@ static Constant *FoldBitCast(Constant *C, const Type *DestTy,
       // it to integer first.
       if (SrcEltTy->isFloatingPoint()) {
         unsigned FPWidth = SrcEltTy->getPrimitiveSizeInBits();
-        const Type *SrcIVTy = Context.getVectorType(
-                                   Context.getIntegerType(FPWidth), NumSrcElt);
+        const Type *SrcIVTy = VectorType::get(
+                                   IntegerType::get(FPWidth), NumSrcElt);
         // Ask VMCore to do the conversion now that #elts line up.
         C = ConstantExpr::getBitCast(C, SrcIVTy);
         CV = dyn_cast<ConstantVector>(C);

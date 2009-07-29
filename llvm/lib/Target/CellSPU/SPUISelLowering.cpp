@@ -101,7 +101,7 @@ namespace {
     TargetLowering::ArgListEntry Entry;
     for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
       MVT ArgVT = Op.getOperand(i).getValueType();
-      const Type *ArgTy = ArgVT.getTypeForMVT(*DAG.getContext());
+      const Type *ArgTy = ArgVT.getTypeForMVT();
       Entry.Node = Op.getOperand(i);
       Entry.Ty = ArgTy;
       Entry.isSExt = isSigned;
@@ -112,8 +112,7 @@ namespace {
                                            TLI.getPointerTy());
 
     // Splice the libcall in wherever FindInputOutputChains tells us to.
-    const Type *RetTy =
-                 Op.getNode()->getValueType(0).getTypeForMVT(*DAG.getContext());
+    const Type *RetTy = Op.getNode()->getValueType(0).getTypeForMVT();
     std::pair<SDValue, SDValue> CallInfo =
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                             0, CallingConv::C, false, Callee, Args, DAG,

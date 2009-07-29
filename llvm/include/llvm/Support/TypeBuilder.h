@@ -107,7 +107,7 @@ template<typename T, bool cross> class TypeBuilder<T*, cross> {
 public:
   static const PointerType *get(LLVMContext &Context) {
     static const PointerType *const result =
-      Context.getPointerTypeUnqual(TypeBuilder<T,cross>::get(Context));
+      PointerType::getUnqual(TypeBuilder<T,cross>::get(Context));
     return result;
   }
 };
@@ -120,7 +120,7 @@ template<typename T, size_t N, bool cross> class TypeBuilder<T[N], cross> {
 public:
   static const ArrayType *get(LLVMContext &Context) {
     static const ArrayType *const result =
-      Context.getArrayType(TypeBuilder<T, cross>::get(Context), N);
+    ArrayType::get(TypeBuilder<T, cross>::get(Context), N);
     return result;
   }
 };
@@ -129,7 +129,7 @@ template<typename T, bool cross> class TypeBuilder<T[], cross> {
 public:
   static const ArrayType *get(LLVMContext &Context) {
     static const ArrayType *const result =
-      Context.getArrayType(TypeBuilder<T, cross>::get(Context), 0);
+      ArrayType::get(TypeBuilder<T, cross>::get(Context), 0);
     return result;
   }
 };
@@ -161,7 +161,7 @@ template<> class TypeBuilder<T, false> { \
 public: \
   static const IntegerType *get(LLVMContext &Context) { \
     static const IntegerType *const result = \
-      Context.getIntegerType(sizeof(T) * CHAR_BIT); \
+      IntegerType::get(sizeof(T) * CHAR_BIT); \
     return result; \
   } \
 }; \
@@ -191,7 +191,7 @@ template<uint32_t num_bits, bool cross>
 class TypeBuilder<types::i<num_bits>, cross> {
 public:
   static const IntegerType *get(LLVMContext &Context) {
-    static const IntegerType *const result = Context.getIntegerType(num_bits);
+    static const IntegerType *const result = IntegerType::get(num_bits);
     return result;
   }
 };
@@ -254,7 +254,7 @@ public:
 
 private:
   static const FunctionType *create(LLVMContext &Context) {
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context), false);
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context), false);
   }
 };
 template<typename R, typename A1, bool cross> class TypeBuilder<R(A1), cross> {
@@ -269,7 +269,7 @@ private:
     std::vector<const Type*> params;
     params.reserve(1);
     params.push_back(TypeBuilder<A1, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                              params, false);
   }
 };
@@ -287,7 +287,7 @@ private:
     params.reserve(2);
     params.push_back(TypeBuilder<A1, cross>::get(Context));
     params.push_back(TypeBuilder<A2, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                              params, false);
   }
 };
@@ -306,7 +306,7 @@ private:
     params.push_back(TypeBuilder<A1, cross>::get(Context));
     params.push_back(TypeBuilder<A2, cross>::get(Context));
     params.push_back(TypeBuilder<A3, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                              params, false);
   }
 };
@@ -328,7 +328,7 @@ private:
     params.push_back(TypeBuilder<A2, cross>::get(Context));
     params.push_back(TypeBuilder<A3, cross>::get(Context));
     params.push_back(TypeBuilder<A4, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                              params, false);
   }
 };
@@ -351,7 +351,7 @@ private:
     params.push_back(TypeBuilder<A3, cross>::get(Context));
     params.push_back(TypeBuilder<A4, cross>::get(Context));
     params.push_back(TypeBuilder<A5, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                              params, false);
   }
 };
@@ -365,7 +365,7 @@ public:
 
 private:
   static const FunctionType *create(LLVMContext &Context) {
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context), true);
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context), true);
   }
 };
 template<typename R, typename A1, bool cross>
@@ -381,8 +381,7 @@ private:
     std::vector<const Type*> params;
     params.reserve(1);
     params.push_back(TypeBuilder<A1, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
-                                   params, true);
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context), params, true);
   }
 };
 template<typename R, typename A1, typename A2, bool cross>
@@ -399,7 +398,7 @@ private:
     params.reserve(2);
     params.push_back(TypeBuilder<A1, cross>::get(Context));
     params.push_back(TypeBuilder<A2, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                                    params, true);
   }
 };
@@ -418,7 +417,7 @@ private:
     params.push_back(TypeBuilder<A1, cross>::get(Context));
     params.push_back(TypeBuilder<A2, cross>::get(Context));
     params.push_back(TypeBuilder<A3, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                                    params, true);
   }
 };
@@ -440,7 +439,7 @@ private:
     params.push_back(TypeBuilder<A2, cross>::get(Context));
     params.push_back(TypeBuilder<A3, cross>::get(Context));
     params.push_back(TypeBuilder<A4, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                              params, true);
   }
 };
@@ -463,7 +462,7 @@ private:
     params.push_back(TypeBuilder<A3, cross>::get(Context));
     params.push_back(TypeBuilder<A4, cross>::get(Context));
     params.push_back(TypeBuilder<A5, cross>::get(Context));
-    return Context.getFunctionType(TypeBuilder<R, cross>::get(Context),
+    return FunctionType::get(TypeBuilder<R, cross>::get(Context),
                                    params, true);
   }
 };

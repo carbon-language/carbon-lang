@@ -4670,7 +4670,7 @@ const SCEV *ScalarEvolution::getBECount(const SCEV *Start,
 
   // Check Add for unsigned overflow.
   // TODO: More sophisticated things could be done here.
-  const Type *WideTy = getContext().getIntegerType(getTypeSizeInBits(Ty) + 1);
+  const Type *WideTy = IntegerType::get(getTypeSizeInBits(Ty) + 1);
   const SCEV *EDiff = getZeroExtendExpr(Diff, WideTy);
   const SCEV *ERoundUp = getZeroExtendExpr(RoundUp, WideTy);
   const SCEV *OperandExtendedAdd = getAddExpr(EDiff, ERoundUp);

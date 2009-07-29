@@ -798,7 +798,7 @@ void SelectionDAG::VerifyNode(SDNode *N) {
 unsigned SelectionDAG::getMVTAlignment(MVT VT) const {
   const Type *Ty = VT == MVT::iPTR ?
                    PointerType::get(Type::Int8Ty, 0) :
-                   VT.getTypeForMVT(*Context);
+                   VT.getTypeForMVT();
 
   return TLI.getTargetData()->getABITypeAlignment(Ty);
 }
@@ -1389,7 +1389,7 @@ SDValue SelectionDAG::getShiftAmountOperand(SDValue Op) {
 SDValue SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
   unsigned ByteSize = VT.getStoreSizeInBits()/8;
-  const Type *Ty = VT.getTypeForMVT(*Context);
+  const Type *Ty = VT.getTypeForMVT();
   unsigned StackAlign =
   std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty), minAlign);
 
@@ -1402,8 +1402,8 @@ SDValue SelectionDAG::CreateStackTemporary(MVT VT, unsigned minAlign) {
 SDValue SelectionDAG::CreateStackTemporary(MVT VT1, MVT VT2) {
   unsigned Bytes = std::max(VT1.getStoreSizeInBits(),
                             VT2.getStoreSizeInBits())/8;
-  const Type *Ty1 = VT1.getTypeForMVT(*Context);
-  const Type *Ty2 = VT2.getTypeForMVT(*Context);
+  const Type *Ty1 = VT1.getTypeForMVT();
+  const Type *Ty2 = VT2.getTypeForMVT();
   const TargetData *TD = TLI.getTargetData();
   unsigned Align = std::max(TD->getPrefTypeAlignment(Ty1),
                             TD->getPrefTypeAlignment(Ty2));
@@ -3104,8 +3104,7 @@ bool MeetsMaxMemopRequirement(std::vector<MVT> &MemOps,
   MVT VT = TLI.getOptimalMemOpType(Size, Align, isSrcConst, isSrcStr, DAG);
   if (VT != MVT::iAny) {
     unsigned NewAlign = (unsigned)
-      TLI.getTargetData()->getABITypeAlignment(VT.getTypeForMVT(
-                                                            *DAG.getContext()));
+      TLI.getTargetData()->getABITypeAlignment(VT.getTypeForMVT());
     // If source is a string constant, this will require an unaligned load.
     if (NewAlign > Align && (isSrcConst || AllowUnalign)) {
       if (Dst.getOpcode() != ISD::FrameIndex) {

@@ -346,7 +346,7 @@ const FunctionType *Intrinsic::getType(LLVMContext &Context,
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_GENERATOR
 
-  return Context.getFunctionType(ResultTy, ArgTys, IsVarArg); 
+  return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
 }
 
 bool Intrinsic::isOverloaded(ID id) {

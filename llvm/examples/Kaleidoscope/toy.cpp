@@ -909,8 +909,7 @@ Value *VarExprAST::Codegen() {
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
   std::vector<const Type*> Doubles(Args.size(), Type::DoubleTy);
-  FunctionType *FT =
-    getGlobalContext().getFunctionType(Type::DoubleTy, Doubles, false);
+  FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
   
   Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule);
   

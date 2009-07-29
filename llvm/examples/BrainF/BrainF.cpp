@@ -138,7 +138,7 @@ void BrainF::header(LLVMContext& C) {
     //declare i32 @puts(i8 *)
     Function *puts_func = cast<Function>(module->
       getOrInsertFunction("puts", IntegerType::Int32Ty,
-                          C.getPointerTypeUnqual(IntegerType::Int8Ty), NULL));
+                          PointerType::getUnqual(IntegerType::Int8Ty), NULL));
 
     //brainf.aberror:
     aberrorbb = BasicBlock::Create(label, brainf_func);
@@ -284,7 +284,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
 
           // Make part of PHI instruction now, wait until end of loop to finish
           PHINode *phi_0 =
-            PHINode::Create(C.getPointerTypeUnqual(IntegerType::Int8Ty),
+            PHINode::Create(PointerType::getUnqual(IntegerType::Int8Ty),
                             headreg, testbb);
           phi_0->reserveOperandSpace(2);
           phi_0->addIncoming(curhead, bb_0);
@@ -440,7 +440,7 @@ void BrainF::readloop(PHINode *phi, BasicBlock *oldbb, BasicBlock *testbb,
 
       //%head.%d = phi i8 *[%head.%d, %main.%d]
       PHINode *phi_1 = builder->
-        CreatePHI(C.getPointerTypeUnqual(IntegerType::Int8Ty), headreg);
+        CreatePHI(PointerType::getUnqual(IntegerType::Int8Ty), headreg);
       phi_1->reserveOperandSpace(1);
       phi_1->addIncoming(head_0, testbb);
       curhead = phi_1;

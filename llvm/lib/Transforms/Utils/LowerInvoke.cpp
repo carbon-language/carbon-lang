@@ -117,26 +117,26 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
 bool LowerInvoke::doInitialization(Module &M) {
   LLVMContext &Context = M.getContext();
   
-  const Type *VoidPtrTy = Context.getPointerTypeUnqual(Type::Int8Ty);
+  const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
   AbortMessage = 0;
   if (ExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
     unsigned JBSize = TLI ? TLI->getJumpBufSize() : 0;
     JBSize = JBSize ? JBSize : 200;
-    const Type *JmpBufTy = Context.getArrayType(VoidPtrTy, JBSize);
+    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JBSize);
 
     { // The type is recursive, so use a type holder.
       std::vector<const Type*> Elements;
       Elements.push_back(JmpBufTy);
-      OpaqueType *OT = Context.getOpaqueType();
-      Elements.push_back(Context.getPointerTypeUnqual(OT));
-      PATypeHolder JBLType(Context.getStructType(Elements));
+      OpaqueType *OT = OpaqueType::get();
+      Elements.push_back(PointerType::getUnqual(OT));
+      PATypeHolder JBLType(StructType::get(Elements));
       OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.
       JBLinkTy = JBLType.get();
       M.addTypeName("llvm.sjljeh.jmpbufty", JBLinkTy);
     }
 
-    const Type *PtrJBList = Context.getPointerTypeUnqual(JBLinkTy);
+    const Type *PtrJBList = PointerType::getUnqual(JBLinkTy);
 
     // Now that we've done that, insert the jmpbuf list head global, unless it
     // already exists.

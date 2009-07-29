@@ -31,7 +31,7 @@ int main() {
 
   // Create the main function: first create the type 'int ()'
   FunctionType *FT =
-    Context.getFunctionType(Type::Int32Ty, /*not vararg*/false);
+    FunctionType::get(Type::Int32Ty, /*not vararg*/false);
 
   // By passing a module as the last parameter to the Function constructor,
   // it automatically gets appended to the Module.

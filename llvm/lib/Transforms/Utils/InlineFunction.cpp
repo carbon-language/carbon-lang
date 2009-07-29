@@ -304,7 +304,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
       if (CalledFunc->paramHasAttr(ArgNo+1, Attribute::ByVal) &&
           !CalledFunc->onlyReadsMemory()) {
         const Type *AggTy = cast<PointerType>(I->getType())->getElementType();
-        const Type *VoidPtrTy = Context.getPointerTypeUnqual(Type::Int8Ty);
+        const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
 
         // Create the alloca.  If we have TargetData, use nice alignment.
         unsigned Align = 1;

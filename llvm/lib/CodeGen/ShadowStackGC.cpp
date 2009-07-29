@@ -188,8 +188,6 @@ ShadowStackGC::ShadowStackGC() : Head(0), StackEntryTy(0) {
 
 Constant *ShadowStackGC::GetFrameMap(Function &F) {
   // doInitialization creates the abstract type of this value.
-  LLVMContext &Context = F.getContext();
-
   Type *VoidPtr = PointerType::getUnqual(Type::Int8Ty);
 
   // Truncate the ShadowStackDescriptor if some metadata is null.
@@ -209,7 +207,7 @@ Constant *ShadowStackGC::GetFrameMap(Function &F) {
 
   Constant *DescriptorElts[] = {
     ConstantStruct::get(BaseElts, 2),
-    ConstantArray::get(Context.getArrayType(VoidPtr, NumMeta),
+    ConstantArray::get(ArrayType::get(VoidPtr, NumMeta),
                        Metadata.begin(), NumMeta)
   };
 

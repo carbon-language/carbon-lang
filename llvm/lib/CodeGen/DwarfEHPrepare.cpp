@@ -354,8 +354,7 @@ Instruction *DwarfEHPrepare::CreateValueLoad(BasicBlock *BB) {
 
   // Create the temporary if we didn't already.
   if (!ExceptionValueVar) {
-    ExceptionValueVar = new AllocaInst(
-                           BB->getContext().getPointerTypeUnqual(Type::Int8Ty),
+    ExceptionValueVar = new AllocaInst(PointerType::getUnqual(Type::Int8Ty),
                                        "eh.value", F->begin()->begin());
     ++NumStackTempsIntroduced;
   }

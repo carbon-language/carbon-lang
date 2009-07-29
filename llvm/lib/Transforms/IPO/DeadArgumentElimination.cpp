@@ -197,10 +197,9 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but doesn't have isVarArg set.
   const FunctionType *FTy = Fn.getFunctionType();
-  LLVMContext &Context = FTy->getContext();
   
   std::vector<const Type*> Params(FTy->param_begin(), FTy->param_end());
-  FunctionType *NFTy = Context.getFunctionType(FTy->getReturnType(),
+  FunctionType *NFTy = FunctionType::get(FTy->getReturnType(),
                                                 Params, false);
   unsigned NumArgs = Params.size();
 
@@ -641,7 +640,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       // something and {} into void.
       // Make the new struct packed if we used to return a packed struct
       // already.
-      NRetTy = Context.getStructType(RetTypes, STy->isPacked());
+      NRetTy = StructType::get(RetTypes, STy->isPacked());
     else if (RetTypes.size() == 1)
       // One return type? Just a simple value then, but only if we didn't use to
       // return a struct with that simple value before.
@@ -709,7 +708,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   }
 
   // Create the new function type based on the recomputed parameters.
-  FunctionType *NFTy = Context.getFunctionType(NRetTy, Params,
+  FunctionType *NFTy = FunctionType::get(NRetTy, Params,
                                                 FTy->isVarArg());
 
   // No change?

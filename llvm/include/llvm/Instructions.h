@@ -645,7 +645,7 @@ public:
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
     const Twine &NameStr = ""  ///< Name of the instruction
-  ) : CmpInst(InsertBefore->getContext().makeCmpResultType(LHS->getType()),
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
@@ -666,7 +666,7 @@ public:
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
     const Twine &NameStr = ""  ///< Name of the instruction
-  ) : CmpInst(InsertAtEnd.getContext().makeCmpResultType(LHS->getType()),
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr,
               &InsertAtEnd) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
@@ -687,7 +687,7 @@ public:
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
     const Twine &NameStr = "" ///< Name of the instruction
-  ) : CmpInst(Context.makeCmpResultType(LHS->getType()),
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::ICmp, pred, LHS, RHS, NameStr) {
     assert(pred >= CmpInst::FIRST_ICMP_PREDICATE &&
            pred <= CmpInst::LAST_ICMP_PREDICATE &&
@@ -820,7 +820,7 @@ public:
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
     const Twine &NameStr = ""  ///< Name of the instruction
-  ) : CmpInst(InsertBefore->getContext().makeCmpResultType(LHS->getType()),
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::FCmp, pred, LHS, RHS, NameStr,
               InsertBefore) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
@@ -839,7 +839,7 @@ public:
     Value *LHS,      ///< The left-hand-side of the expression
     Value *RHS,      ///< The right-hand-side of the expression
     const Twine &NameStr = ""  ///< Name of the instruction
-  ) : CmpInst(InsertAtEnd.getContext().makeCmpResultType(LHS->getType()),
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::FCmp, pred, LHS, RHS, NameStr,
               &InsertAtEnd) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
@@ -858,7 +858,7 @@ public:
     Value *LHS,     ///< The left-hand-side of the expression
     Value *RHS,     ///< The right-hand-side of the expression
     const Twine &NameStr = "" ///< Name of the instruction
-  ) : CmpInst(Context.makeCmpResultType(LHS->getType()),
+  ) : CmpInst(makeCmpResultType(LHS->getType()),
               Instruction::FCmp, pred, LHS, RHS, NameStr) {
     assert(pred <= FCmpInst::LAST_FCMP_PREDICATE &&
            "Invalid FCmp predicate value");
@@ -910,7 +910,6 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
-
 };
 
 //===----------------------------------------------------------------------===//

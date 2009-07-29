@@ -361,7 +361,7 @@ static SDValue ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP,
         // smaller type.
         TLI.isLoadExtLegal(ISD::EXTLOAD, SVT) &&
         TLI.ShouldShrinkFPConstant(OrigVT)) {
-      const Type *SType = SVT.getTypeForMVT(*DAG.getContext());
+      const Type *SType = SVT.getTypeForMVT();
       LLVMC = cast<ConstantFP>(ConstantExpr::getFPTrunc(LLVMC, SType));
       VT = SVT;
       Extend = true;
@@ -1107,11 +1107,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
         // expand it.
         if (!TLI.allowsUnalignedMemoryAccesses()) {
           unsigned ABIAlignment = TLI.getTargetData()->
-            getABITypeAlignment(LD->getMemoryVT().getTypeForMVT(
-                                                            *DAG.getContext()));
+            getABITypeAlignment(LD->getMemoryVT().getTypeForMVT());
           if (LD->getAlignment() < ABIAlignment){
-            Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), DAG,
-                                         TLI);
+            Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), 
+                                         DAG, TLI);
             Tmp3 = Result.getOperand(0);
             Tmp4 = Result.getOperand(1);
             Tmp3 = LegalizeOp(Tmp3);
@@ -1291,11 +1290,10 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
             // expand it.
             if (!TLI.allowsUnalignedMemoryAccesses()) {
               unsigned ABIAlignment = TLI.getTargetData()->
-                getABITypeAlignment(LD->getMemoryVT().getTypeForMVT(
-                                                            *DAG.getContext()));
+                getABITypeAlignment(LD->getMemoryVT().getTypeForMVT());
               if (LD->getAlignment() < ABIAlignment){
-                Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), DAG,
-                                             TLI);
+                Result = ExpandUnalignedLoad(cast<LoadSDNode>(Result.getNode()), 
+                                             DAG, TLI);
                 Tmp1 = Result.getOperand(0);
                 Tmp2 = Result.getOperand(1);
                 Tmp1 = LegalizeOp(Tmp1);
@@ -1370,8 +1368,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses()) {
             unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(ST->getMemoryVT().getTypeForMVT(
-                                                            *DAG.getContext()));
+              getABITypeAlignment(ST->getMemoryVT().getTypeForMVT());
             if (ST->getAlignment() < ABIAlignment)
               Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()), DAG,
                                             TLI);
@@ -1470,8 +1467,7 @@ SDValue SelectionDAGLegalize::LegalizeOp(SDValue Op) {
           // expand it.
           if (!TLI.allowsUnalignedMemoryAccesses()) {
             unsigned ABIAlignment = TLI.getTargetData()->
-              getABITypeAlignment(ST->getMemoryVT().getTypeForMVT(
-                                                            *DAG.getContext()));
+              getABITypeAlignment(ST->getMemoryVT().getTypeForMVT());
             if (ST->getAlignment() < ABIAlignment)
               Result = ExpandUnalignedStore(cast<StoreSDNode>(Result.getNode()), DAG,
                                             TLI);
@@ -1737,7 +1733,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   // Create the stack frame object.
   unsigned SrcAlign =
     TLI.getTargetData()->getPrefTypeAlignment(SrcOp.getValueType().
-                                              getTypeForMVT(*DAG.getContext()));
+                                              getTypeForMVT());
   SDValue FIPtr = DAG.CreateStackTemporary(SlotVT, SrcAlign);
 
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
@@ -1748,8 +1744,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   unsigned SlotSize = SlotVT.getSizeInBits();
   unsigned DestSize = DestVT.getSizeInBits();
   unsigned DestAlign =
-    TLI.getTargetData()->getPrefTypeAlignment(DestVT.getTypeForMVT(
-                                                            *DAG.getContext()));
+    TLI.getTargetData()->getPrefTypeAlignment(DestVT.getTypeForMVT());
 
   // Emit a store to the stack slot.  Use a truncstore if the input value is
   // later than DestVT.
@@ -1844,7 +1839,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
         CV.push_back(const_cast<ConstantInt *>(V->getConstantIntValue()));
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
-        const Type *OpNTy = OpVT.getTypeForMVT(*DAG.getContext());
+        const Type *OpNTy = OpVT.getTypeForMVT();
         CV.push_back(Context->getUndef(OpNTy));
       }
     }
@@ -1898,7 +1893,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   TargetLowering::ArgListEntry Entry;
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
     MVT ArgVT = Node->getOperand(i).getValueType();
-    const Type *ArgTy = ArgVT.getTypeForMVT(*DAG.getContext());
+    const Type *ArgTy = ArgVT.getTypeForMVT();
     Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy;
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
@@ -1908,7 +1903,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
                                          TLI.getPointerTy());
 
   // Splice the libcall in wherever FindInputOutputChains tells us to.
-  const Type *RetTy = Node->getValueType(0).getTypeForMVT(*DAG.getContext());
+  const Type *RetTy = Node->getValueType(0).getTypeForMVT();
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                     0, CallingConv::C, false, Callee, Args, DAG,
@@ -2397,8 +2392,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node,
     // Increment the pointer, VAList, to the next vaarg
     Tmp3 = DAG.getNode(ISD::ADD, dl, TLI.getPointerTy(), VAList,
                        DAG.getConstant(TLI.getTargetData()->
-                                       getTypeAllocSize(VT.getTypeForMVT(
-                                                            *DAG.getContext())),
+                                       getTypeAllocSize(VT.getTypeForMVT()),
                                        TLI.getPointerTy()));
     // Store the incremented VAList to the legalized pointer
     Tmp3 = DAG.getStore(VAList.getValue(1), dl, Tmp3, Tmp2, V, 0);

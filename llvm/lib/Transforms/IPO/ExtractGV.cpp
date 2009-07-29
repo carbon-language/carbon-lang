@@ -103,13 +103,13 @@ namespace {
       // by putting them in the used array
       {
         std::vector<Constant *> AUGs;
-        const Type *SBP= Context.getPointerTypeUnqual(Type::Int8Ty);
+        const Type *SBP= PointerType::getUnqual(Type::Int8Ty);
         for (std::vector<GlobalValue*>::iterator GI = Named.begin(), 
                GE = Named.end(); GI != GE; ++GI) {
           (*GI)->setLinkage(GlobalValue::ExternalLinkage);
           AUGs.push_back(ConstantExpr::getBitCast(*GI, SBP));
         }
-        ArrayType *AT = Context.getArrayType(SBP, AUGs.size());
+        ArrayType *AT = ArrayType::get(SBP, AUGs.size());
         Constant *Init = ConstantArray::get(AT, AUGs);
         GlobalValue *gv = new GlobalVariable(M, AT, false, 
                                              GlobalValue::AppendingLinkage, 

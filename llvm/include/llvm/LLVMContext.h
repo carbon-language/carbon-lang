@@ -91,40 +91,6 @@ public:
   // MDString accessors
   MDString* getMDString(const StringRef &Str);
   
-  // FunctionType accessors
-  FunctionType* getFunctionType(const Type* Result, bool isVarArg);
-  FunctionType* getFunctionType(const Type* Result,
-                                const std::vector<const Type*>& Params,
-                                bool isVarArg);
-                                
-  // IntegerType accessors
-  const IntegerType* getIntegerType(unsigned NumBits);
-  
-  // OpaqueType accessors
-  OpaqueType* getOpaqueType();
-  
-  // StructType accessors
-  StructType* getStructType(bool isPacked=false);
-  StructType* getStructType(const std::vector<const Type*>& Params,
-                            bool isPacked = false);
-  StructType* getStructType(const Type* type, ...);
-  
-  // ArrayType accessors
-  ArrayType* getArrayType(const Type* ElementType, uint64_t NumElements);
-  
-  // PointerType accessors
-  PointerType* getPointerType(const Type* ElementType, unsigned AddressSpace);
-  PointerType* getPointerTypeUnqual(const Type* ElementType);
-  
-  // VectorType accessors
-  VectorType* getVectorType(const Type* ElementType, unsigned NumElements);
-  VectorType* getVectorTypeInteger(const VectorType* VTy);
-  VectorType* getVectorTypeExtendedElement(const VectorType* VTy);
-  VectorType* getVectorTypeTruncatedElement(const VectorType* VTy);
-  
-  // Other helpers
-  /// @brief Create a result type for fcmp/icmp
-  const Type* makeCmpResultType(const Type* opnd_type);
   
   // Methods for erasing constants
   void erase(MDString *M);

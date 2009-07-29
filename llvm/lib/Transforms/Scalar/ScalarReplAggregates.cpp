@@ -307,7 +307,7 @@ bool SROA::performScalarRepl(Function &F) {
         DOUT << "CONVERT TO SCALAR INTEGER: " << *AI << "\n";
         
         // Create and insert the integer alloca.
-        const Type *NewTy = F.getContext().getIntegerType(AllocaSize*8);
+        const Type *NewTy = IntegerType::get(AllocaSize*8);
         NewAI = new AllocaInst(NewTy, 0, "", AI->getParent()->begin());
         ConvertUsesToScalar(AI, NewAI, 0);
       }
@@ -900,7 +900,6 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
                                          SmallVector<AllocaInst*, 32> &NewElts){
   // Extract each element out of the integer according to its structure offset
   // and store the element value to the individual alloca.
-  LLVMContext &Context = SI->getContext();
   Value *SrcVal = SI->getOperand(0);
   const Type *AllocaEltTy = AI->getType()->getElementType();
   uint64_t AllocaSizeBits = TD->getTypeAllocSizeInBits(AllocaEltTy);
@@ -914,7 +913,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
   // Handle tail padding by extending the operand
   if (TD->getTypeSizeInBits(SrcVal->getType()) != AllocaSizeBits)
     SrcVal = new ZExtInst(SrcVal,
-                          Context.getIntegerType(AllocaSizeBits), "", SI);
+                          IntegerType::get(AllocaSizeBits), "", SI);
 
   DOUT << "PROMOTING STORE TO WHOLE ALLOCA: " << *AI << *SI;
 
@@ -946,7 +945,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       
       if (FieldSizeBits != AllocaSizeBits)
         EltVal = new TruncInst(EltVal,
-                               Context.getIntegerType(FieldSizeBits), "", SI);
+                               IntegerType::get(FieldSizeBits), "", SI);
       Value *DestField = NewElts[i];
       if (EltVal->getType() == FieldTy) {
         // Storing to an integer field of this size, just do it.
@@ -956,7 +955,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       } else {
         // Otherwise, bitcast the dest pointer (for aggregates).
         DestField = new BitCastInst(DestField,
-                              Context.getPointerTypeUnqual(EltVal->getType()),
+                              PointerType::getUnqual(EltVal->getType()),
                                     "", SI);
       }
       new StoreInst(EltVal, DestField, SI);
@@ -989,7 +988,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       // Truncate down to an integer of the right size.
       if (ElementSizeBits != AllocaSizeBits)
         EltVal = new TruncInst(EltVal, 
-                               Context.getIntegerType(ElementSizeBits),"",SI);
+                               IntegerType::get(ElementSizeBits),"",SI);
       Value *DestField = NewElts[i];
       if (EltVal->getType() == ArrayEltTy) {
         // Storing to an integer field of this size, just do it.
@@ -999,7 +998,7 @@ void SROA::RewriteStoreUserOfWholeAlloca(StoreInst *SI,
       } else {
         // Otherwise, bitcast the dest pointer (for aggregates).
         DestField = new BitCastInst(DestField,
-                              Context.getPointerTypeUnqual(EltVal->getType()),
+                              PointerType::getUnqual(EltVal->getType()),
                                     "", SI);
       }
       new StoreInst(EltVal, DestField, SI);
@@ -1046,7 +1045,7 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
   LLVMContext &Context = LI->getContext();
   
   Value *ResultVal = 
-    Context.getNullValue(Context.getIntegerType(AllocaSizeBits));
+    Context.getNullValue(IntegerType::get(AllocaSizeBits));
   
   for (unsigned i = 0, e = NewElts.size(); i != e; ++i) {
     // Load the value from the alloca.  If the NewElt is an aggregate, cast
@@ -1059,11 +1058,11 @@ void SROA::RewriteLoadUserOfWholeAlloca(LoadInst *LI, AllocationInst *AI,
     // Ignore zero sized fields like {}, they obviously contain no data.
     if (FieldSizeBits == 0) continue;
     
-    const IntegerType *FieldIntTy = Context.getIntegerType(FieldSizeBits);
+    const IntegerType *FieldIntTy = IntegerType::get(FieldSizeBits);
     if (!isa<IntegerType>(FieldTy) && !FieldTy->isFloatingPoint() &&
         !isa<VectorType>(FieldTy))
       SrcField = new BitCastInst(SrcField,
-                                 Context.getPointerTypeUnqual(FieldIntTy),
+                                 PointerType::getUnqual(FieldIntTy),
                                  "", LI);
     SrcField = new LoadInst(SrcField, "sroa.load.elt", LI);
 
@@ -1297,7 +1296,7 @@ static void MergeInType(const Type *In, uint64_t Offset, const Type *&VecTy,
            cast<VectorType>(VecTy)->getElementType()
                  ->getPrimitiveSizeInBits()/8 == EltSize)) {
         if (VecTy == 0)
-          VecTy = In->getContext().getVectorType(In, AllocaSize/EltSize);
+          VecTy = VectorType::get(In, AllocaSize/EltSize);
         return;
       }
     }
@@ -1623,10 +1622,10 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   unsigned LIBitWidth = TD->getTypeSizeInBits(ToType);
   if (LIBitWidth < NTy->getBitWidth())
     FromVal =
-      Builder.CreateTrunc(FromVal, Context.getIntegerType(LIBitWidth), "tmp");
+      Builder.CreateTrunc(FromVal, IntegerType::get(LIBitWidth), "tmp");
   else if (LIBitWidth > NTy->getBitWidth())
     FromVal =
-       Builder.CreateZExt(FromVal, Context.getIntegerType(LIBitWidth), "tmp");
+       Builder.CreateZExt(FromVal, IntegerType::get(LIBitWidth), "tmp");
 
   // If the result is an integer, this is a trunc or bitcast.
   if (isa<IntegerType>(ToType)) {
@@ -1711,7 +1710,7 @@ Value *SROA::ConvertScalar_InsertValue(Value *SV, Value *Old,
   unsigned SrcStoreWidth = TD->getTypeStoreSizeInBits(SV->getType());
   unsigned DestStoreWidth = TD->getTypeStoreSizeInBits(AllocaType);
   if (SV->getType()->isFloatingPoint() || isa<VectorType>(SV->getType()))
-    SV = Builder.CreateBitCast(SV, Context.getIntegerType(SrcWidth), "tmp");
+    SV = Builder.CreateBitCast(SV, IntegerType::get(SrcWidth), "tmp");
   else if (isa<PointerType>(SV->getType()))
     SV = Builder.CreatePtrToInt(SV, TD->getIntPtrType(), "tmp");
 

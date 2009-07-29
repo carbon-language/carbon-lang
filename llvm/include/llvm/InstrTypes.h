@@ -667,6 +667,14 @@ public:
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
+  
+  /// @brief Create a result type for fcmp/icmp
+  static const Type* makeCmpResultType(const Type* opnd_type) {
+    if (const VectorType* vt = dyn_cast<const VectorType>(opnd_type)) {
+      return VectorType::get(Type::Int1Ty, vt->getNumElements());
+    }
+    return Type::Int1Ty;
+  }
 };
 
 

@@ -322,7 +322,7 @@ const Type *BitcodeReader::getTypeByID(unsigned ID, bool isTypeTable) {
   // The type table allows forward references.  Push as many Opaque types as
   // needed to get up to ID.
   while (TypeList.size() <= ID)
-    TypeList.push_back(Context.getOpaqueType());
+    TypeList.push_back(OpaqueType::get());
   return TypeList.back().get();
 }
 
@@ -512,7 +512,7 @@ bool BitcodeReader::ParseTypeTable() {
       if (Record.size() < 1)
         return Error("Invalid Integer type record");
       
-      ResultTy = Context.getIntegerType(Record[0]);
+      ResultTy = IntegerType::get(Record[0]);
       break;
     case bitc::TYPE_CODE_POINTER: { // POINTER: [pointee type] or 
                                     //          [pointee type, address space]
@@ -521,7 +521,7 @@ bool BitcodeReader::ParseTypeTable() {
       unsigned AddressSpace = 0;
       if (Record.size() == 2)
         AddressSpace = Record[1];
-      ResultTy = Context.getPointerType(getTypeByID(Record[0], true),
+      ResultTy = PointerType::get(getTypeByID(Record[0], true),
                                         AddressSpace);
       break;
     }
@@ -534,7 +534,7 @@ bool BitcodeReader::ParseTypeTable() {
       for (unsigned i = 3, e = Record.size(); i != e; ++i)
         ArgTys.push_back(getTypeByID(Record[i], true));
       
-      ResultTy = Context.getFunctionType(getTypeByID(Record[2], true), ArgTys,
+      ResultTy = FunctionType::get(getTypeByID(Record[2], true), ArgTys,
                                    Record[0]);
       break;
     }
@@ -544,24 +544,24 @@ bool BitcodeReader::ParseTypeTable() {
       std::vector<const Type*> EltTys;
       for (unsigned i = 1, e = Record.size(); i != e; ++i)
         EltTys.push_back(getTypeByID(Record[i], true));
-      ResultTy = Context.getStructType(EltTys, Record[0]);
+      ResultTy = StructType::get(EltTys, Record[0]);
       break;
     }
     case bitc::TYPE_CODE_ARRAY:     // ARRAY: [numelts, eltty]
       if (Record.size() < 2)
         return Error("Invalid ARRAY type record");
-      ResultTy = Context.getArrayType(getTypeByID(Record[1], true), Record[0]);
+      ResultTy = ArrayType::get(getTypeByID(Record[1], true), Record[0]);
       break;
     case bitc::TYPE_CODE_VECTOR:    // VECTOR: [numelts, eltty]
       if (Record.size() < 2)
         return Error("Invalid VECTOR type record");
-      ResultTy = Context.getVectorType(getTypeByID(Record[1], true), Record[0]);
+      ResultTy = VectorType::get(getTypeByID(Record[1], true), Record[0]);
       break;
     }
     
     if (NumRecords == TypeList.size()) {
       // If this is a new type slot, just append it.
-      TypeList.push_back(ResultTy ? ResultTy : Context.getOpaqueType());
+      TypeList.push_back(ResultTy ? ResultTy : OpaqueType::get());
       ++NumRecords;
     } else if (ResultTy == 0) {
       // Otherwise, this was forward referenced, so an opaque type was created,
@@ -1046,7 +1046,7 @@ bool BitcodeReader::ParseConstants() {
         return Error("Invalid CE_SHUFFLEVEC record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[1], OpTy);
-      const Type *ShufTy = Context.getVectorType(Type::Int32Ty, 
+      const Type *ShufTy = VectorType::get(Type::Int32Ty, 
                                                  OpTy->getNumElements());
       Constant *Op2 = ValueList.getConstantFwdRef(Record[2], ShufTy);
       V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
@@ -1059,7 +1059,7 @@ bool BitcodeReader::ParseConstants() {
         return Error("Invalid CE_SHUFVEC_EX record");
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[2], OpTy);
-      const Type *ShufTy = Context.getVectorType(Type::Int32Ty, 
+      const Type *ShufTy = VectorType::get(Type::Int32Ty, 
                                                  RTy->getNumElements());
       Constant *Op2 = ValueList.getConstantFwdRef(Record[3], ShufTy);
       V = ConstantExpr::getShuffleVector(Op0, Op1, Op2);
@@ -1940,7 +1940,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       Value *Val, *Ptr;
       if (getValueTypePair(Record, OpNum, NextValueNo, Val) ||
           getValue(Record, OpNum, 
-                   Context.getPointerTypeUnqual(Val->getType()), Ptr)||
+                   PointerType::getUnqual(Val->getType()), Ptr)||
           OpNum+2 != Record.size())
         return Error("Invalid STORE record");
       

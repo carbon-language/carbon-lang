@@ -75,8 +75,8 @@ ConstantRange LoopVR::getRange(const SCEV *S, const SCEV *T, ScalarEvolution &SE
     ConstantRange X = getRange(Mul->getOperand(0), T, SE);
     if (X.isFullSet()) return FullSet;
 
-    const IntegerType *Ty = Context.getIntegerType(X.getBitWidth());
-    const IntegerType *ExTy = Context.getIntegerType(X.getBitWidth() *
+    const IntegerType *Ty = IntegerType::get(X.getBitWidth());
+    const IntegerType *ExTy = IntegerType::get(X.getBitWidth() *
                                                Mul->getNumOperands());
     ConstantRange XExt = X.zeroExtend(ExTy->getBitWidth());
 

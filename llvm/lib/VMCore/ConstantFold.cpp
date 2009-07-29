@@ -1373,7 +1373,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
                                                const Constant *C2) {
   const Type *ResultTy;
   if (const VectorType *VT = dyn_cast<VectorType>(C1->getType()))
-    ResultTy = Context.getVectorType(Type::Int1Ty, VT->getNumElements());
+    ResultTy = VectorType::get(Type::Int1Ty, VT->getNumElements());
   else
     ResultTy = Type::Int1Ty;
 
@@ -1677,7 +1677,7 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
                                                        (Value **)Idxs,
                                                        (Value **)Idxs+NumIdx);
     assert(Ty != 0 && "Invalid indices for GEP!");
-    return Context.getUndef(Context.getPointerType(Ty, Ptr->getAddressSpace()));
+    return Context.getUndef(PointerType::get(Ty, Ptr->getAddressSpace()));
   }
 
   Constant *Idx0 = Idxs[0];
@@ -1695,7 +1695,7 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
                                                          (Value**)Idxs+NumIdx);
       assert(Ty != 0 && "Invalid indices for GEP!");
       return  Context.getConstantPointerNull(
-                            Context.getPointerType(Ty,Ptr->getAddressSpace()));
+                            PointerType::get(Ty,Ptr->getAddressSpace()));
     }
   }
 

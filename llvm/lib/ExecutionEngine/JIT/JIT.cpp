@@ -368,7 +368,6 @@ void JIT::deleteModuleProvider(ModuleProvider *MP, std::string *E) {
 GenericValue JIT::runFunction(Function *F,
                               const std::vector<GenericValue> &ArgValues) {
   assert(F && "Function *F was null at entry to run()");
-  LLVMContext &Context = F->getContext();
 
   void *FPtr = getPointerToFunction(F);
   assert(FPtr && "Pointer to fn's code was null after getPointerToFunction");
@@ -470,7 +469,7 @@ GenericValue JIT::runFunction(Function *F,
   // arguments.  Make this function and return.
 
   // First, create the function.
-  FunctionType *STy=Context.getFunctionType(RetTy, false);
+  FunctionType *STy=FunctionType::get(RetTy, false);
   Function *Stub = Function::Create(STy, Function::InternalLinkage, "",
                                     F->getParent());
 

@@ -87,10 +87,10 @@ Pass *llvm::createLowerAllocationsPass(bool LowerMallocArgToInteger) {
 // This function is always successful.
 //
 bool LowerAllocations::doInitialization(Module &M) {
-  const Type *BPTy = M.getContext().getPointerTypeUnqual(Type::Int8Ty);
+  const Type *BPTy = PointerType::getUnqual(Type::Int8Ty);
   // Prototype malloc as "char* malloc(...)", because we don't know in
   // doInitialization whether size_t is int or long.
-  FunctionType *FT = M.getContext().getFunctionType(BPTy, true);
+  FunctionType *FT = FunctionType::get(BPTy, true);
   MallocFunc = M.getOrInsertFunction("malloc", FT);
   FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, BPTy, (Type *)0);
   return true;
@@ -166,7 +166,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
     } else if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
       Value *PtrCast = 
         new BitCastInst(FI->getOperand(0),
-                        Context.getPointerTypeUnqual(Type::Int8Ty), "", I);
+                        PointerType::getUnqual(Type::Int8Ty), "", I);
 
       // Insert a call to the free function...
       CallInst::Create(FreeFunc, PtrCast, "", I)->setTailCall();

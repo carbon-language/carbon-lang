@@ -266,8 +266,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     if (AggregateArgs)
       paramTy.push_back((*I)->getType());
     else
-      paramTy.push_back(
-         header->getContext().getPointerTypeUnqual((*I)->getType()));
+      paramTy.push_back(PointerType::getUnqual((*I)->getType()));
   }
 
   DOUT << "Function type: " << *RetTy << " f(";
@@ -278,12 +277,12 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
 
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
     PointerType *StructPtr =
-           Context.getPointerTypeUnqual(Context.getStructType(paramTy));
+           PointerType::getUnqual(StructType::get(paramTy));
     paramTy.clear();
     paramTy.push_back(StructPtr);
   }
   const FunctionType *funcType =
-                  Context.getFunctionType(RetTy, paramTy, false);
+                  FunctionType::get(RetTy, paramTy, false);
 
   // Create the new function
   Function *newFunction = Function::Create(funcType,
@@ -387,7 +386,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       ArgTypes.push_back((*v)->getType());
 
     // Allocate a struct at the beginning of this function
-    Type *StructArgTy = Context.getStructType(ArgTypes);
+    Type *StructArgTy = StructType::get(ArgTypes);
     Struct =
       new AllocaInst(StructArgTy, 0, "structArg",
                      codeReplacer->getParent()->begin()->begin());

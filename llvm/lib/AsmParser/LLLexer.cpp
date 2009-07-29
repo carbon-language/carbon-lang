@@ -471,7 +471,7 @@ lltok::Kind LLLexer::LexIdentifier() {
       Error("bitwidth for integer type out of range!");
       return lltok::Error;
     }
-    TyVal = Context.getIntegerType(NumBits);
+    TyVal = IntegerType::get(NumBits);
     return lltok::Type;
   }
 

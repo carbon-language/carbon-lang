@@ -7681,7 +7681,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
       case 32 :
       case 64 :
       case 128:
-        SExtType = Context->getIntegerType(Ty->getBitWidth() - ShiftAmt1);
+        SExtType = IntegerType::get(Ty->getBitWidth() - ShiftAmt1);
         break;
       default: break;
       }
@@ -9697,7 +9697,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   
   // Use an integer load+store unless we can find something better.
   Type *NewPtrTy =
-                Context->getPointerTypeUnqual(Context->getIntegerType(Size<<3));
+                PointerType::getUnqual(IntegerType::get(Size<<3));
   
   // Memcpy forces the use of i8* for the source and destination.  That means
   // that if you're using memcpy to move one double around, you'll get a cast
@@ -9726,7 +9726,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
       }
       
       if (SrcETy->isSingleValueType())
-        NewPtrTy = Context->getPointerTypeUnqual(SrcETy);
+        NewPtrTy = PointerType::getUnqual(SrcETy);
     }
   }
   
@@ -9768,10 +9768,10 @@ Instruction *InstCombiner::SimplifyMemSet(MemSetInst *MI) {
   
   // memset(s,c,n) -> store s, c (for n=1,2,4,8)
   if (Len <= 8 && isPowerOf2_32((uint32_t)Len)) {
-    const Type *ITy = Context->getIntegerType(Len*8);  // n=1 -> i8.
+    const Type *ITy = IntegerType::get(Len*8);  // n=1 -> i8.
     
     Value *Dest = MI->getDest();
-    Dest = InsertBitCastBefore(Dest, Context->getPointerTypeUnqual(ITy), *MI);
+    Dest = InsertBitCastBefore(Dest, PointerType::getUnqual(ITy), *MI);
 
     // Alignment 0 is identity for alignment 1 for memset, but not store.
     if (Alignment == 0) Alignment = 1;
@@ -9875,7 +9875,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Turn X86 loadups -> load if the pointer is known aligned.
     if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
       Value *Ptr = InsertBitCastBefore(II->getOperand(1),
-                                   Context->getPointerTypeUnqual(II->getType()),
+                                   PointerType::getUnqual(II->getType()),
                                        CI);
       return new LoadInst(Ptr);
     }
@@ -9885,7 +9885,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Turn stvx -> store if the pointer is known aligned.
     if (GetOrEnforceKnownAlignment(II->getOperand(2), 16) >= 16) {
       const Type *OpPtrTy = 
-        Context->getPointerTypeUnqual(II->getOperand(1)->getType());
+        PointerType::getUnqual(II->getOperand(1)->getType());
       Value *Ptr = InsertBitCastBefore(II->getOperand(2), OpPtrTy, CI);
       return new StoreInst(II->getOperand(1), Ptr);
     }
@@ -9896,7 +9896,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // Turn X86 storeu -> store if the pointer is known aligned.
     if (GetOrEnforceKnownAlignment(II->getOperand(1), 16) >= 16) {
       const Type *OpPtrTy = 
-        Context->getPointerTypeUnqual(II->getOperand(2)->getType());
+        PointerType::getUnqual(II->getOperand(2)->getType());
       Value *Ptr = InsertBitCastBefore(II->getOperand(1), OpPtrTy, CI);
       return new StoreInst(II->getOperand(2), Ptr);
     }
@@ -10062,7 +10062,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       // If the call and callee calling conventions don't match, this call must
       // be unreachable, as the call is undefined.
       new StoreInst(Context->getTrue(),
-                Context->getUndef(Context->getPointerTypeUnqual(Type::Int1Ty)), 
+                Context->getUndef(PointerType::getUnqual(Type::Int1Ty)), 
                                   OldCall);
       if (!OldCall->use_empty())
         OldCall->replaceAllUsesWith(Context->getUndef(OldCall->getType()));
@@ -10076,7 +10076,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // undef so that we know that this code is not reachable, despite the fact
     // that we can't modify the CFG here.
     new StoreInst(Context->getTrue(),
-               Context->getUndef(Context->getPointerTypeUnqual(Type::Int1Ty)),
+               Context->getUndef(PointerType::getUnqual(Type::Int1Ty)),
                   CS.getInstruction());
 
     if (!CS.getInstruction()->use_empty())
@@ -10457,13 +10457,12 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
 
       // Replace the trampoline call with a direct call.  Let the generic
       // code sort out any function type mismatches.
-      FunctionType *NewFTy =
-                       Context->getFunctionType(FTy->getReturnType(), NewTypes, 
+      FunctionType *NewFTy = FunctionType::get(FTy->getReturnType(), NewTypes, 
                                                 FTy->isVarArg());
       Constant *NewCallee =
-        NestF->getType() == Context->getPointerTypeUnqual(NewFTy) ?
+        NestF->getType() == PointerType::getUnqual(NewFTy) ?
         NestF : ConstantExpr::getBitCast(NestF, 
-                                         Context->getPointerTypeUnqual(NewFTy));
+                                         PointerType::getUnqual(NewFTy));
       const AttrListPtr &NewPAL = AttrListPtr::get(NewAttrs.begin(),
                                                    NewAttrs.end());
 
@@ -11367,7 +11366,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
   if (AI.isArrayAllocation()) {  // Check C != 1
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
       const Type *NewTy = 
-        Context->getArrayType(AI.getAllocatedType(), C->getZExtValue());
+        ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
       AllocationInst *New = 0;
 
       // Create and insert the replacement instruction...
@@ -11427,7 +11426,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
     new StoreInst(Context->getTrue(),
-           Context->getUndef(Context->getPointerTypeUnqual(Type::Int1Ty)), &FI);
+           Context->getUndef(PointerType::getUnqual(Type::Int1Ty)), &FI);
     return EraseInstFromFunction(FI);
   }
   
@@ -11734,7 +11733,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
       }
     }
     
-    SrcTy = Context->getPointerType(SrcPTy, SrcTy->getAddressSpace());
+    SrcTy = PointerType::get(SrcPTy, SrcTy->getAddressSpace());
   }
 
   if (!SrcPTy->isInteger() && !isa<PointerType>(SrcPTy))
@@ -12456,7 +12455,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
         unsigned AS = 
           cast<PointerType>(I->getOperand(0)->getType())->getAddressSpace();
         Value *Ptr = InsertBitCastBefore(I->getOperand(0),
-                                  Context->getPointerType(EI.getType(), AS),EI);
+                                  PointerType::get(EI.getType(), AS),EI);
         GetElementPtrInst *GEP =
           GetElementPtrInst::Create(Ptr, EI.getOperand(1), I->getName()+".gep");
         cast<GEPOperator>(GEP)->setIsInBounds(true);

@@ -1104,7 +1104,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     break;
   case lltok::kw_opaque:
     // TypeRec ::= 'opaque'
-    Result = Context.getOpaqueType();
+    Result = OpaqueType::get();
     Lex.Lex();
     break;
   case lltok::lbrace:
@@ -1134,7 +1134,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     if (const Type *T = M->getTypeByName(Lex.getStrVal())) {
       Result = T;
     } else {
-      Result = Context.getOpaqueType();
+      Result = OpaqueType::get();
       ForwardRefTypes.insert(std::make_pair(Lex.getStrVal(),
                                             std::make_pair(Result,
                                                            Lex.getLoc())));
@@ -1153,7 +1153,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
       if (I != ForwardRefTypeIDs.end())
         Result = I->second.first;
       else {
-        Result = Context.getOpaqueType();
+        Result = OpaqueType::get();
         ForwardRefTypeIDs.insert(std::make_pair(Lex.getUIntVal(),
                                                 std::make_pair(Result,
                                                                Lex.getLoc())));
@@ -1166,7 +1166,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
     Lex.Lex();
     unsigned Val;
     if (ParseUInt32(Val)) return true;
-    OpaqueType *OT = Context.getOpaqueType(); //Use temporary placeholder.
+    OpaqueType *OT = OpaqueType::get(); //Use temporary placeholder.
     UpRefs.push_back(UpRefRecord(Lex.getLoc(), Val, OT));
     Result = OT;
     break;
@@ -1187,7 +1187,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
         return TokError("pointers to void are invalid; use i8* instead");
       if (!PointerType::isValidElementType(Result.get()))
         return TokError("pointer to this type is invalid");
-      Result = HandleUpRefs(Context.getPointerTypeUnqual(Result.get()));
+      Result = HandleUpRefs(PointerType::getUnqual(Result.get()));
       Lex.Lex();
       break;
 
@@ -1204,7 +1204,7 @@ bool LLParser::ParseTypeRec(PATypeHolder &Result) {
           ParseToken(lltok::star, "expected '*' in address space"))
         return true;
 
-      Result = HandleUpRefs(Context.getPointerType(Result.get(), AddrSpace));
+      Result = HandleUpRefs(PointerType::get(Result.get(), AddrSpace));
       break;
     }
         
@@ -1365,7 +1365,7 @@ bool LLParser::ParseFunctionType(PATypeHolder &Result) {
   for (unsigned i = 0, e = ArgList.size(); i != e; ++i)
     ArgListTy.push_back(ArgList[i].Type);
     
-  Result = HandleUpRefs(Context.getFunctionType(Result.get(),
+  Result = HandleUpRefs(FunctionType::get(Result.get(),
                                                 ArgListTy, isVarArg));
   return false;
 }
@@ -1381,7 +1381,7 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   Lex.Lex(); // Consume the '{'
   
   if (EatIfPresent(lltok::rbrace)) {
-    Result = Context.getStructType(Packed);
+    Result = StructType::get(Packed);
     return false;
   }
 
@@ -1413,7 +1413,7 @@ bool LLParser::ParseStructType(PATypeHolder &Result, bool Packed) {
   std::vector<const Type*> ParamsListTy;
   for (unsigned i = 0, e = ParamsList.size(); i != e; ++i)
     ParamsListTy.push_back(ParamsList[i].get());
-  Result = HandleUpRefs(Context.getStructType(ParamsListTy, Packed));
+  Result = HandleUpRefs(StructType::get(ParamsListTy, Packed));
   return false;
 }
 
@@ -1452,11 +1452,11 @@ bool LLParser::ParseArrayVectorType(PATypeHolder &Result, bool isVector) {
       return Error(SizeLoc, "size too large for vector");
     if (!VectorType::isValidElementType(EltTy))
       return Error(TypeLoc, "vector element type must be fp or integer");
-    Result = Context.getVectorType(EltTy, unsigned(Size));
+    Result = VectorType::get(EltTy, unsigned(Size));
   } else {
     if (!ArrayType::isValidElementType(EltTy))
       return Error(TypeLoc, "invalid array element type");
-    Result = HandleUpRefs(Context.getArrayType(EltTy, Size));
+    Result = HandleUpRefs(ArrayType::get(EltTy, Size));
   }
   return false;
 }
@@ -1836,7 +1836,7 @@ bool LLParser::ParseValID(ValID &ID) {
       return Error(FirstEltLoc, "invalid array element type: " + 
                    Elts[0]->getType()->getDescription());
           
-    ArrayType *ATy = Context.getArrayType(Elts[0]->getType(), Elts.size());
+    ArrayType *ATy = ArrayType::get(Elts[0]->getType(), Elts.size());
     
     // Verify all elements are correct type!
     for (unsigned i = 0, e = Elts.size(); i != e; ++i) {
@@ -2417,8 +2417,8 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
     return Error(RetTypeLoc, "functions with 'sret' argument must return void"); 
   
   const FunctionType *FT =
-    Context.getFunctionType(RetType, ParamTypeList, isVarArg);
-  const PointerType *PFT = Context.getPointerTypeUnqual(FT);
+    FunctionType::get(RetType, ParamTypeList, isVarArg);
+  const PointerType *PFT = PointerType::getUnqual(FT);
 
   Fn = 0;
   if (!FunctionName.empty()) {
@@ -2902,8 +2902,8 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
     if (!FunctionType::isValidReturnType(RetType))
       return Error(RetTypeLoc, "Invalid result type for LLVM function");
     
-    Ty = Context.getFunctionType(RetType, ParamTypes, false);
-    PFTy = Context.getPointerTypeUnqual(Ty);
+    Ty = FunctionType::get(RetType, ParamTypes, false);
+    PFTy = PointerType::getUnqual(Ty);
   }
   
   // Look up the callee.
@@ -3242,8 +3242,8 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
     if (!FunctionType::isValidReturnType(RetType))
       return Error(RetTypeLoc, "Invalid result type for LLVM function");
     
-    Ty = Context.getFunctionType(RetType, ParamTypes, false);
-    PFTy = Context.getPointerTypeUnqual(Ty);
+    Ty = FunctionType::get(RetType, ParamTypes, false);
+    PFTy = PointerType::getUnqual(Ty);
   }
   
   // Look up the callee.

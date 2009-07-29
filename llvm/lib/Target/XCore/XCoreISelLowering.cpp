@@ -380,7 +380,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG)
     return SDValue();
   }
   unsigned ABIAlignment = getTargetData()->
-    getABITypeAlignment(LD->getMemoryVT().getTypeForMVT(*DAG.getContext()));
+    getABITypeAlignment(LD->getMemoryVT().getTypeForMVT());
   // Leave aligned load alone.
   if (LD->getAlignment() >= ABIAlignment) {
     return SDValue();
@@ -475,7 +475,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG)
     return SDValue();
   }
   unsigned ABIAlignment = getTargetData()->
-    getABITypeAlignment(ST->getMemoryVT().getTypeForMVT(*DAG.getContext()));
+    getABITypeAlignment(ST->getMemoryVT().getTypeForMVT());
   // Leave aligned store alone.
   if (ST->getAlignment() >= ABIAlignment) {
     return SDValue();
@@ -1077,7 +1077,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
       break;
     }
     unsigned ABIAlignment = getTargetData()->
-      getABITypeAlignment(ST->getMemoryVT().getTypeForMVT(*DAG.getContext()));
+      getABITypeAlignment(ST->getMemoryVT().getTypeForMVT());
     unsigned Alignment = ST->getAlignment();
     if (Alignment >= ABIAlignment) {
       break;

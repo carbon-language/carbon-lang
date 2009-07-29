@@ -826,7 +826,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   if (NElements->getZExtValue() != 1) {
     // If we have an array allocation, transform it to a single element
     // allocation to make the code below simpler.
-    Type *NewTy = Context.getArrayType(MI->getAllocatedType(),
+    Type *NewTy = ArrayType::get(MI->getAllocatedType(),
                                  NElements->getZExtValue());
     MallocInst *NewMI =
       new MallocInst(NewTy, Context.getNullValue(Type::Int32Ty),
@@ -1161,7 +1161,7 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
       cast<StructType>(cast<PointerType>(PN->getType())->getElementType());
     
     Result =
-     PHINode::Create(Context.getPointerTypeUnqual(ST->getElementType(FieldNo)),
+     PHINode::Create(PointerType::getUnqual(ST->getElementType(FieldNo)),
                             PN->getName()+".f"+utostr(FieldNo), PN);
     PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
   } else {
@@ -1282,7 +1282,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
   
   for (unsigned FieldNo = 0, e = STy->getNumElements(); FieldNo != e;++FieldNo){
     const Type *FieldTy = STy->getElementType(FieldNo);
-    const Type *PFieldTy = Context.getPointerTypeUnqual(FieldTy);
+    const Type *PFieldTy = PointerType::getUnqual(FieldTy);
     
     GlobalVariable *NGV =
       new GlobalVariable(*GV->getParent(),
@@ -1957,8 +1957,8 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
     if (Ctors[i]) {
       CSVals[1] = Ctors[i];
     } else {
-      const Type *FTy = Context.getFunctionType(Type::VoidTy, false);
-      const PointerType *PFTy = Context.getPointerTypeUnqual(FTy);
+      const Type *FTy = FunctionType::get(Type::VoidTy, false);
+      const PointerType *PFTy = PointerType::getUnqual(FTy);
       CSVals[1] = Context.getNullValue(PFTy);
       CSVals[0] = ConstantInt::get(Type::Int32Ty, 2147483647);
     }

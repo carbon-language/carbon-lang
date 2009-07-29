@@ -3664,7 +3664,7 @@ SDValue DAGCombiner::CombineConsecutiveLoads(SDNode *N, MVT VT) {
       TLI.isConsecutiveLoad(LD2, LD1, LD1VT.getSizeInBits()/8, 1, MFI)) {
     unsigned Align = LD1->getAlignment();
     unsigned NewAlign = TLI.getTargetData()->
-      getABITypeAlignment(VT.getTypeForMVT(*DAG.getContext()));
+      getABITypeAlignment(VT.getTypeForMVT());
 
     if (NewAlign <= Align &&
         (!LegalOperations || TLI.isOperationLegal(ISD::LOAD, VT)))
@@ -3722,7 +3722,7 @@ SDValue DAGCombiner::visitBIT_CONVERT(SDNode *N) {
       (!LegalOperations || TLI.isOperationLegal(ISD::LOAD, VT))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     unsigned Align = TLI.getTargetData()->
-      getABITypeAlignment(VT.getTypeForMVT(*DAG.getContext()));
+      getABITypeAlignment(VT.getTypeForMVT());
     unsigned OrigAlign = LN0->getAlignment();
 
     if (Align <= OrigAlign) {
@@ -4993,8 +4993,7 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
 
       unsigned NewAlign = MinAlign(LD->getAlignment(), PtrOff);
       if (NewAlign <
-          TLI.getTargetData()->getABITypeAlignment(NewVT.getTypeForMVT(
-                                                           *DAG.getContext())))
+          TLI.getTargetData()->getABITypeAlignment(NewVT.getTypeForMVT()))
         return SDValue();
 
       SDValue NewPtr = DAG.getNode(ISD::ADD, LD->getDebugLoc(),
@@ -5049,7 +5048,7 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
     unsigned OrigAlign = ST->getAlignment();
     MVT SVT = Value.getOperand(0).getValueType();
     unsigned Align = TLI.getTargetData()->
-      getABITypeAlignment(SVT.getTypeForMVT(*DAG.getContext()));
+      getABITypeAlignment(SVT.getTypeForMVT());
     if (Align <= OrigAlign &&
         ((!LegalOperations && !ST->isVolatile()) ||
          TLI.isOperationLegalOrCustom(ISD::STORE, SVT)))
@@ -5329,8 +5328,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       // Check the resultant load doesn't need a higher alignment than the
       // original load.
       unsigned NewAlign =
-        TLI.getTargetData()->getABITypeAlignment(LVT.getTypeForMVT(
-                                                            *DAG.getContext()));
+        TLI.getTargetData()->getABITypeAlignment(LVT.getTypeForMVT());
 
       if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, LVT))
         return SDValue();
@@ -5812,8 +5810,7 @@ SDValue DAGCombiner::SimplifySelectCC(DebugLoc DL, SDValue N0, SDValue N1,
         const TargetData &TD = *TLI.getTargetData();
         
         // Create a ConstantArray of the two constants.
-        Constant *CA = ConstantArray::get(
-                          DAG.getContext()->getArrayType(FPTy, 2), Elts, 2);
+        Constant *CA = ConstantArray::get(ArrayType::get(FPTy, 2), Elts, 2);
         SDValue CPIdx = DAG.getConstantPool(CA, TLI.getPointerTy(),
                                             TD.getPrefTypeAlignment(FPTy));
         unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();

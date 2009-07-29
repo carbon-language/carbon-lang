@@ -1148,7 +1148,7 @@ static bool LinkAppendingVars(Module *M,
          "Appending variables with different section name need to be linked!");
 
       unsigned NewSize = T1->getNumElements() + T2->getNumElements();
-      ArrayType *NewType = Context.getArrayType(T1->getElementType(), 
+      ArrayType *NewType = ArrayType::get(T1->getElementType(), 
                                                          NewSize);
 
       G1->setName("");   // Clear G1's name in case of a conflict!

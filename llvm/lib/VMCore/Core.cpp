@@ -162,7 +162,7 @@ LLVMTypeRef LLVMInt32Type(void) { return (LLVMTypeRef) Type::Int32Ty; }
 LLVMTypeRef LLVMInt64Type(void) { return (LLVMTypeRef) Type::Int64Ty; }
 
 LLVMTypeRef LLVMIntType(unsigned NumBits) {
-  return wrap(getGlobalContext().getIntegerType(NumBits));
+  return wrap(IntegerType::get(NumBits));
 }
 
 unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy) {
@@ -186,8 +186,7 @@ LLVMTypeRef LLVMFunctionType(LLVMTypeRef ReturnType,
   for (LLVMTypeRef *I = ParamTypes, *E = ParamTypes + ParamCount; I != E; ++I)
     Tys.push_back(unwrap(*I));
   
-  return wrap(getGlobalContext().getFunctionType(unwrap(ReturnType), Tys,
-                                                 IsVarArg != 0));
+  return wrap(FunctionType::get(unwrap(ReturnType), Tys, IsVarArg != 0));
 }
 
 int LLVMIsFunctionVarArg(LLVMTypeRef FunctionTy) {
@@ -218,7 +217,7 @@ LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes,
                    *E = ElementTypes + ElementCount; I != E; ++I)
     Tys.push_back(unwrap(*I));
   
-  return wrap(getGlobalContext().getStructType(Tys, Packed != 0));
+  return wrap(StructType::get(Tys, Packed != 0));
 }
 
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy) {
@@ -239,18 +238,15 @@ int LLVMIsPackedStruct(LLVMTypeRef StructTy) {
 /*--.. Operations on array, pointer, and vector types (sequence types) .....--*/
 
 LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount) {
-  return wrap(getGlobalContext().getArrayType(unwrap(ElementType), 
-                                               ElementCount));
+  return wrap(ArrayType::get(unwrap(ElementType), ElementCount));
 }
 
 LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType, unsigned AddressSpace) {
-  return wrap(getGlobalContext().getPointerType(unwrap(ElementType), 
-                                                 AddressSpace));
+  return wrap(PointerType::get(unwrap(ElementType), AddressSpace));
 }
 
 LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType, unsigned ElementCount) {
-  return wrap(getGlobalContext().getVectorType(unwrap(ElementType), 
-                                                ElementCount));
+  return wrap(VectorType::get(unwrap(ElementType), ElementCount));
 }
 
 LLVMTypeRef LLVMGetElementType(LLVMTypeRef Ty) {
@@ -275,7 +271,7 @@ LLVMTypeRef LLVMVoidType(void)  { return (LLVMTypeRef) Type::VoidTy;  }
 LLVMTypeRef LLVMLabelType(void) { return (LLVMTypeRef) Type::LabelTy; }
 
 LLVMTypeRef LLVMOpaqueType(void) {
-  return wrap(getGlobalContext().getOpaqueType());
+  return wrap(OpaqueType::get());
 }
 
 /*--.. Operations on type handles ..........................................--*/
@@ -408,8 +404,7 @@ LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
 
 LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length) {
-  return wrap(ConstantArray::get(
-                    getGlobalContext().getArrayType(unwrap(ElementTy), Length),
+  return wrap(ConstantArray::get(ArrayType::get(unwrap(ElementTy), Length),
                                  unwrap<Constant>(ConstantVals, Length),
                                  Length));
 }

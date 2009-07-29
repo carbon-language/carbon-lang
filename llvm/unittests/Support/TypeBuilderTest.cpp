@@ -171,7 +171,7 @@ public:
     st.push_back(TypeBuilder<int, cross>::get(Context));
     st.push_back(TypeBuilder<int*, cross>::get(Context));
     st.push_back(TypeBuilder<void*[], cross>::get(Context));
-    static const StructType *const result = Context.getStructType(st);
+    static const StructType *const result = StructType::get(st);
     return result;
   }
 
@@ -194,7 +194,7 @@ public:
     st.push_back(TypeBuilder<types::i<32>, cross>::get(Context));
     st.push_back(TypeBuilder<types::i<32>*, cross>::get(Context));
     st.push_back(TypeBuilder<types::i<8>*[], cross>::get(Context));
-    static const StructType *const result = Context.getStructType(st);
+    static const StructType *const result = StructType::get(st);
     return result;
   }
 

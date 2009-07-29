@@ -181,7 +181,6 @@ void llvm::DeleteFunctionBody(Function *F) {
 /// as a constant array.
 static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
   assert(!TorList.empty() && "Don't create empty tor list!");
-  LLVMContext &Context = TorList[0].first->getContext();
   std::vector<Constant*> ArrayElts;
   for (unsigned i = 0, e = TorList.size(); i != e; ++i) {
     std::vector<Constant*> Elts;
@@ -189,7 +188,7 @@ static Constant *GetTorInit(std::vector<std::pair<Function*, int> > &TorList) {
     Elts.push_back(TorList[i].first);
     ArrayElts.push_back(ConstantStruct::get(Elts));
   }
-  return ConstantArray::get(Context.getArrayType(ArrayElts[0]->getType(), 
+  return ConstantArray::get(ArrayType::get(ArrayElts[0]->getType(), 
                                            ArrayElts.size()),
                             ArrayElts);
 }

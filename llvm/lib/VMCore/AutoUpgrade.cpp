@@ -27,8 +27,6 @@ using namespace llvm;
 static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   assert(F && "Illegal to upgrade a non-existent Function.");
 
-  LLVMContext &Context = F->getContext();
-
   // Get the Function's name.
   const std::string& Name = F->getName();
 
@@ -167,7 +165,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name.compare(13,4,"psrl", 4) == 0) && Name[17] != 'i') {
       
       const llvm::Type *VT =
-                        Context.getVectorType(Context.getIntegerType(64), 1);
+                        VectorType::get(IntegerType::get(64), 1);
       
       // We don't have to do anything if the parameter already has
       // the correct type.
@@ -268,7 +266,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       if (isLoadH || isLoadL) {
         Value *Op1 = Context.getUndef(Op0->getType());
         Value *Addr = new BitCastInst(CI->getOperand(2), 
-                                  Context.getPointerTypeUnqual(Type::DoubleTy),
+                                  PointerType::getUnqual(Type::DoubleTy),
                                       "upgraded.", CI);
         Value *Load = new LoadInst(Addr, "upgraded.", false, 8, CI);
         Value *Idx = ConstantInt::get(Type::Int32Ty, 0);

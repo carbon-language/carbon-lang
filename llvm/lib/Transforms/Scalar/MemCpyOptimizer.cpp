@@ -352,7 +352,6 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
 
   TargetData &TD = getAnalysis<TargetData>();
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  LLVMContext &Context = SI->getContext();
   Module *M = SI->getParent()->getParent()->getParent();
 
   // Okay, so we now have a single store that can be splatable.  Scan to find
@@ -441,7 +440,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator& BBI) {
     StartPtr = Range.StartPtr;
   
     // Cast the start ptr to be i8* as memset requires.
-    const Type *i8Ptr = Context.getPointerTypeUnqual(Type::Int8Ty);
+    const Type *i8Ptr = PointerType::getUnqual(Type::Int8Ty);
     if (StartPtr->getType() != i8Ptr)
       StartPtr = new BitCastInst(StartPtr, i8Ptr, StartPtr->getName(),
                                  InsertPt);

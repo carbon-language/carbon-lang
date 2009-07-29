@@ -178,7 +178,7 @@ ConstantInt::ConstantInt(const IntegerType *Ty, const APInt& V)
 // invariant which generates an assertion.
 ConstantInt *ConstantInt::get(LLVMContext &Context, const APInt& V) {
   // Get the corresponding integer type for the bit width of the value.
-  const IntegerType *ITy = Context.getIntegerType(V.getBitWidth());
+  const IntegerType *ITy = IntegerType::get(V.getBitWidth());
   // get an existing value or the insertion position
   DenseMapAPIntKeyInfo::KeyTy Key(V, ITy);
   
