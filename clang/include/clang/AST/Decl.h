@@ -1178,7 +1178,8 @@ public:
 class TypedefDecl;
   
 /// TagDecl - Represents the declaration of a struct/union/class/enum.
-class TagDecl : public TypeDecl, public DeclContext {
+class TagDecl 
+  : public TypeDecl, public DeclContext, public Redeclarable<TagDecl> {
 public:
   enum TagKind {
     TK_struct,
@@ -1205,15 +1206,28 @@ private:
 
 protected:
   TagDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
-          IdentifierInfo *Id, SourceLocation TKL = SourceLocation())
+          IdentifierInfo *Id, TagDecl *PrevDecl,
+          SourceLocation TKL = SourceLocation())
     : TypeDecl(DK, DC, L, Id), DeclContext(DK), TypedefForAnonDecl(0),
       TagKeywordLoc(TKL) {
     assert((DK != Enum || TK == TK_enum) &&"EnumDecl not matched with TK_enum");
     TagDeclKind = TK;
     IsDefinition = false;
+    setPreviousDeclaration(PrevDecl);
   }
+    
+  typedef Redeclarable<TagDecl> redeclarable_base;
+  virtual TagDecl *getNextRedeclaration() { return RedeclLink.getNext(); }
+    
 public:
-  
+  typedef redeclarable_base::redecl_iterator redecl_iterator;
+  redecl_iterator redecls_begin() const {
+    return redeclarable_base::redecls_begin();
+  } 
+  redecl_iterator redecls_end() const {
+    return redeclarable_base::redecls_end();
+  }
+    
   SourceLocation getRBraceLoc() const { return RBraceLoc; }
   void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
 
@@ -1307,8 +1321,8 @@ class EnumDecl : public TagDecl {
   EnumDecl *InstantiatedFrom;
 
   EnumDecl(DeclContext *DC, SourceLocation L,
-           IdentifierInfo *Id, SourceLocation TKL)
-    : TagDecl(Enum, TK_enum, DC, L, Id, TKL), InstantiatedFrom(0) {
+           IdentifierInfo *Id, EnumDecl *PrevDecl, SourceLocation TKL)
+    : TagDecl(Enum, TK_enum, DC, L, Id, PrevDecl, TKL), InstantiatedFrom(0) {
       IntegerType = QualType();
     }
 public:
@@ -1380,7 +1394,8 @@ class RecordDecl : public TagDecl {
 
 protected:
   RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
-             SourceLocation L, IdentifierInfo *Id, SourceLocation TKL);
+             SourceLocation L, IdentifierInfo *Id, 
+             RecordDecl *PrevDecl, SourceLocation TKL);
   virtual ~RecordDecl();
 
 public:

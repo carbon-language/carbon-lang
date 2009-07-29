@@ -109,6 +109,7 @@ void PCHDeclWriter::VisitTypedefDecl(TypedefDecl *D) {
 
 void PCHDeclWriter::VisitTagDecl(TagDecl *D) {
   VisitTypeDecl(D);
+  Writer.AddDeclRef(D->getPreviousDeclaration(), Record);
   Record.push_back((unsigned)D->getTagKind()); // FIXME: stable encoding
   Record.push_back(D->isDefinition());
   Writer.AddDeclRef(D->getTypedefForAnonDecl(), Record);

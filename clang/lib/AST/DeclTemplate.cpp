@@ -369,13 +369,15 @@ ClassTemplateSpecializationDecl::
 ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                                 DeclContext *DC, SourceLocation L,
                                 ClassTemplateDecl *SpecializedTemplate,
-                                TemplateArgumentListBuilder &Builder)
+                                TemplateArgumentListBuilder &Builder,
+                                ClassTemplateSpecializationDecl *PrevDecl)
   : CXXRecordDecl(DK, 
                   SpecializedTemplate->getTemplatedDecl()->getTagKind(), 
                   DC, L,
                   // FIXME: Should we use DeclarationName for the name of
                   // class template specializations?
-                  SpecializedTemplate->getIdentifier()),
+                  SpecializedTemplate->getIdentifier(),
+                  PrevDecl),
     SpecializedTemplate(SpecializedTemplate),
     TemplateArgs(Context, Builder, /*TakeArgs=*/true),
     SpecializationKind(TSK_Undeclared) {
@@ -392,7 +394,8 @@ ClassTemplateSpecializationDecl::Create(ASTContext &Context,
                                                    ClassTemplateSpecialization,
                                                    DC, L, 
                                                    SpecializedTemplate,
-                                                   Builder);
+                                                   Builder,
+                                                   PrevDecl);
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;
 }
@@ -411,7 +414,7 @@ Create(ASTContext &Context, DeclContext *DC, SourceLocation L,
     = new (Context)ClassTemplatePartialSpecializationDecl(Context, 
                                                           DC, L, Params,
                                                           SpecializedTemplate,
-                                                          Builder);
+                                                          Builder, PrevDecl);
   Result->setSpecializationKind(TSK_ExplicitSpecialization);
   Context.getTypeDeclType(Result, PrevDecl);
   return Result;

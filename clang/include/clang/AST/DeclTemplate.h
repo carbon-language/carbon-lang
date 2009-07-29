@@ -883,7 +883,8 @@ protected:
   ClassTemplateSpecializationDecl(ASTContext &Context, Kind DK,
                                   DeclContext *DC, SourceLocation L,
                                   ClassTemplateDecl *SpecializedTemplate,
-                                  TemplateArgumentListBuilder &Builder);
+                                  TemplateArgumentListBuilder &Builder,
+                                  ClassTemplateSpecializationDecl *PrevDecl);
                                   
 public:
   static ClassTemplateSpecializationDecl *
@@ -954,9 +955,12 @@ class ClassTemplatePartialSpecializationDecl
                                          DeclContext *DC, SourceLocation L,
                                          TemplateParameterList *Params,
                                          ClassTemplateDecl *SpecializedTemplate,
-                                         TemplateArgumentListBuilder &Builder)
-    : ClassTemplateSpecializationDecl(Context, ClassTemplatePartialSpecialization,
-                                      DC, L, SpecializedTemplate, Builder),
+                                         TemplateArgumentListBuilder &Builder,
+                               ClassTemplatePartialSpecializationDecl *PrevDecl)
+    : ClassTemplateSpecializationDecl(Context, 
+                                      ClassTemplatePartialSpecialization,
+                                      DC, L, SpecializedTemplate, Builder,
+                                      PrevDecl),
       TemplateParams(Params) { }
 
 public:

@@ -184,7 +184,7 @@ TypedefDecl *TypedefDecl::Create(ASTContext &C, DeclContext *DC,
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC, SourceLocation L,
                            IdentifierInfo *Id, SourceLocation TKL,
                            EnumDecl *PrevDecl) {
-  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, TKL);
+  EnumDecl *Enum = new (C) EnumDecl(DC, L, Id, PrevDecl, TKL);
   C.getTypeDeclType(Enum, PrevDecl);
   return Enum;
 }
@@ -662,33 +662,38 @@ SourceRange TagDecl::getSourceRange() const {
 }
 
 TagDecl* TagDecl::getCanonicalDecl() {
-  Type *T = getTypeForDecl();
-  if (T == 0)
-    T = getASTContext().getTagDeclType(this).getTypePtr();
-
-  return cast<TagDecl>(cast<TagType>(T->getCanonicalTypeInternal())->getDecl());
+  return getFirstDeclaration();
 }
 
 void TagDecl::startDefinition() {
-  TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>());
-  TagT->decl.setPointer(this);
-  TagT->getAs<TagType>()->decl.setInt(1);
+  if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>())) {
+    TagT->decl.setPointer(this);
+    TagT->decl.setInt(1);
+  }
 }
 
 void TagDecl::completeDefinition() {
-  assert((!TypeForDecl || 
-          TypeForDecl->getAs<TagType>()->decl.getPointer() == this) &&
-         "Attempt to redefine a tag definition?");
   IsDefinition = true;
-  TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>());
-  TagT->decl.setPointer(this);
-  TagT->decl.setInt(0);
+  if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>())) {
+    assert(TagT->decl.getPointer() == this &&
+           "Attempt to redefine a tag definition?");
+    TagT->decl.setInt(0);
+  }
 }
 
 TagDecl* TagDecl::getDefinition(ASTContext& C) const {
-  QualType T = C.getTypeDeclType(const_cast<TagDecl*>(this));
-  TagDecl* D = cast<TagDecl>(T->getAs<TagType>()->getDecl());
-  return D->isDefinition() ? D : 0;
+  if (isDefinition())
+    return const_cast<TagDecl *>(this);
+  
+  if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>()))
+    return TagT->getDecl()->isDefinition()? TagT->getDecl() : 0;
+  
+  for (redecl_iterator R = redecls_begin(), REnd = redecls_end(); 
+       R != REnd; ++R)
+    if (R->isDefinition())
+      return *R;
+  
+  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -696,8 +701,9 @@ TagDecl* TagDecl::getDefinition(ASTContext& C) const {
 //===----------------------------------------------------------------------===//
 
 RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC, SourceLocation L,
-                       IdentifierInfo *Id, SourceLocation TKL)
-  : TagDecl(DK, TK, DC, L, Id, TKL) {
+                       IdentifierInfo *Id, RecordDecl *PrevDecl,
+                       SourceLocation TKL)
+  : TagDecl(DK, TK, DC, L, Id, PrevDecl, TKL) {
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   HasObjectMember = false;
@@ -708,7 +714,7 @@ RecordDecl *RecordDecl::Create(ASTContext &C, TagKind TK, DeclContext *DC,
                                SourceLocation L, IdentifierInfo *Id,
                                SourceLocation TKL, RecordDecl* PrevDecl) {
   
-  RecordDecl* R = new (C) RecordDecl(Record, TK, DC, L, Id, TKL);
+  RecordDecl* R = new (C) RecordDecl(Record, TK, DC, L, Id, PrevDecl, TKL);
   C.getTypeDeclType(R, PrevDecl);
   return R;
 }

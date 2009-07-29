@@ -112,6 +112,8 @@ void PCHDeclReader::VisitTypedefDecl(TypedefDecl *TD) {
 
 void PCHDeclReader::VisitTagDecl(TagDecl *TD) {
   VisitTypeDecl(TD);
+  TD->setPreviousDeclaration(
+                        cast_or_null<TagDecl>(Reader.GetDecl(Record[Idx++])));
   TD->setTagKind((TagDecl::TagKind)Record[Idx++]);
   TD->setDefinition(Record[Idx++]);
   TD->setTypedefForAnonDecl(

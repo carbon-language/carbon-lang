@@ -376,6 +376,7 @@ class CXXRecordDecl : public RecordDecl {
 protected:
   CXXRecordDecl(Kind K, TagKind TK, DeclContext *DC,
                 SourceLocation L, IdentifierInfo *Id,
+                CXXRecordDecl *PrevDecl,
                 SourceLocation TKL = SourceLocation());
 
   ~CXXRecordDecl();
