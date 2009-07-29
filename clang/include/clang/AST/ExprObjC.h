@@ -496,7 +496,8 @@ public:
   virtual child_iterator child_end();
 };
 
-/// ObjCIsaExpr - Represent X->isa and X.isa (similiar in spirit to MemberExpr).
+/// ObjCIsaExpr - Represent X->isa and X.isa when X is an ObjC 'id' type.
+/// (similiar in spirit to MemberExpr).
 class ObjCIsaExpr : public Expr {
   /// Base - the expression for the base object pointer.
   Stmt *Base;

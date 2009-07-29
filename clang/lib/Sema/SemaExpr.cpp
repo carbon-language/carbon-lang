@@ -2341,7 +2341,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
     }
     // We have an 'id' type. Rather than fall through, we check if this
     // is a reference to 'isa'.
-    if (&Member == &Context.Idents.get("isa"))
+    if (Member.isStr("isa"))
       return Owned(new (Context) ObjCIsaExpr(BaseExpr, true, MemberLoc,
                                              Context.getObjCIdType()));
   }
@@ -2478,7 +2478,7 @@ Sema::ActOnMemberReferenceExpr(Scope *S, ExprArg Base, SourceLocation OpLoc,
   // Handle the following exceptional case (*Obj).isa.
   if (OpKind == tok::period && 
       BaseType->isSpecificBuiltinType(BuiltinType::ObjCId) &&
-      &Member == &Context.Idents.get("isa"))
+      Member.isStr("isa"))
     return Owned(new (Context) ObjCIsaExpr(BaseExpr, false, MemberLoc,
                                            Context.getObjCIdType()));
 
