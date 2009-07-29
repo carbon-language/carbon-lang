@@ -5357,6 +5357,7 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *BlockScope) {
   BSI->ReturnType = QualType();
   BSI->TheScope = BlockScope;
   BSI->hasBlockDeclRefExprs = false;
+  BSI->hasPrototype = false;
   BSI->SavedFunctionNeedsScopeChecking = CurFunctionNeedsScopeChecking;
   CurFunctionNeedsScopeChecking = false;
 
