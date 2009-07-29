@@ -16,6 +16,7 @@
 #define LLVM_CLANG_INDEX_DECLREFERENCEMAP_H
 
 #include "clang/Index/ASTLocation.h"
+#include "clang/Index/STLExtras.h"
 #include <map>
 
 namespace clang {
@@ -32,43 +33,7 @@ public:
   explicit DeclReferenceMap(ASTContext &Ctx);
   
   typedef std::multimap<NamedDecl*, ASTLocation> MapTy;
-
-  class astlocation_iterator {
-    MapTy::iterator I;
-
-    astlocation_iterator(MapTy::iterator i) : I(i) { }
-    friend class DeclReferenceMap;
-
-  public:
-    typedef ASTLocation  value_type;
-    typedef ASTLocation& reference;
-    typedef ASTLocation* pointer;
-    typedef MapTy::iterator::iterator_category iterator_category;
-    typedef MapTy::iterator::difference_type   difference_type;
-
-    astlocation_iterator() { }
-
-    reference operator*() const { return I->second; }
-    pointer operator->() const { return &I->second; }
-
-    astlocation_iterator& operator++() {
-      ++I;
-      return *this;
-    }
-
-    astlocation_iterator operator++(int) {
-      astlocation_iterator tmp(*this);
-      ++(*this);
-      return tmp;
-    }
-
-    friend bool operator==(astlocation_iterator L, astlocation_iterator R) { 
-      return L.I == R.I;
-    }
-    friend bool operator!=(astlocation_iterator L, astlocation_iterator R) { 
-      return L.I != R.I;
-    }
-  };
+  typedef pair_value_iterator<MapTy::iterator> astlocation_iterator;
 
   astlocation_iterator refs_begin(NamedDecl *D) const;
   astlocation_iterator refs_end(NamedDecl *D) const;
