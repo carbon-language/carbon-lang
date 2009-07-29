@@ -94,12 +94,16 @@ X86DarwinTargetAsmInfo::X86DarwinTargetAsmInfo(const X86TargetMachine &TM):
 unsigned
 X86DarwinTargetAsmInfo::PreferredEHDataFormat(DwarfEncoding::Target Reason,
                                               bool Global) const {
-  if ((Reason == DwarfEncoding::Data || Reason == DwarfEncoding::Functions)
-      && Global)
-    return DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4;
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
 
-  if (Reason == DwarfEncoding::CodeLabels || !Global)
-    return DW_EH_PE_pcrel;
+  if (Subtarget->getDarwinVers() > 9) {
+    if ((Reason == DwarfEncoding::Data || Reason == DwarfEncoding::Functions)
+        && Global)
+      return DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4;
+
+    if (Reason == DwarfEncoding::CodeLabels || !Global)
+      return DW_EH_PE_pcrel;
+  }
 
   return DW_EH_PE_absptr;
 }
