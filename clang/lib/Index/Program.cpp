@@ -13,7 +13,7 @@
 
 #include "clang/Index/Program.h"
 #include "ProgramImpl.h"
-#include "clang/Index/EntityHandler.h"
+#include "clang/Index/Handlers.h"
 #include "clang/Index/TranslationUnit.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/ASTContext.h"
@@ -22,10 +22,7 @@ using namespace clang;
 using namespace idx;
 
 // Out-of-line to give the virtual tables a home.
-EntityHandler::~EntityHandler() { }
 TranslationUnit::~TranslationUnit() { }
-
-void EntityHandler::HandleEntity(Entity Ent) { }
 
 Program::Program() : Impl(new ProgramImpl()) { }
 

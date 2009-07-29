@@ -1,4 +1,4 @@
-//===- IndexProvider.cpp - Maps information to translation units -*- C++ -*-==//
+//===--- Handlers.cpp - Interfaces for receiving information ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  Maps information to TranslationUnits.
+//  Abstract interfaces for receiving information.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Index/IndexProvider.h"
+#include "clang/Index/Handlers.h"
 #include "clang/Index/Entity.h"
 using namespace clang;
 using namespace idx;
 
-// Out-of-line to give the virtual table a home.
-IndexProvider::~IndexProvider() { }
+// Out-of-line to give the virtual tables a home.
+EntityHandler::~EntityHandler() { }
+TranslationUnitHandler::~TranslationUnitHandler() { }

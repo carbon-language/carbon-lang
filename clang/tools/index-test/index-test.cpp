@@ -33,7 +33,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Index/Program.h"
-#include "clang/Index/IndexProvider.h"
+#include "clang/Index/Indexer.h"
 #include "clang/Index/Entity.h"
 #include "clang/Index/TranslationUnit.h"
 #include "clang/Index/ASTLocation.h"
@@ -141,7 +141,7 @@ static void ProcessDecl(Decl *D) {
   }
 }
 
-static void ProcessASTLocation(ASTLocation ASTLoc, IndexProvider &IdxProvider) {
+static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
   assert(ASTLoc.isValid());
 
   Decl *D = ASTLoc.getReferencedDecl();
@@ -151,14 +151,14 @@ static void ProcessASTLocation(ASTLocation ASTLoc, IndexProvider &IdxProvider) {
     return;
   }
 
-  Entity Ent = Entity::get(D, IdxProvider.getProgram());
+  Entity Ent = Entity::get(D, Idxer.getProgram());
   if (Ent.isInvalid() || Ent.isInternalToTU())
     return ProcessDecl(D);
 
   // Find the "same" Decl in other translation units and print information.
-  for (IndexProvider::translation_unit_iterator
-         I = IdxProvider.translation_units_begin(Ent),
-         E = IdxProvider.translation_units_end(Ent); I != E; ++I) {
+  for (Indexer::translation_unit_iterator
+         I = Idxer.translation_units_begin(Ent),
+         E = Idxer.translation_units_end(Ent); I != E; ++I) {
     TUnit *TU = static_cast<TUnit*>(*I);
     Decl *OtherD = Ent.getDecl(TU->getASTContext());
     assert(OtherD && "Couldn't resolve Entity");
@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
   FileManager FileMgr;
 
   Program Prog;
-  IndexProvider IdxProvider(Prog);
+  Indexer Idxer(Prog);
   llvm::SmallVector<TUnit*, 4> TUnits;
   
   // If no input was specified, read from stdin.
@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
     TUnit *TU = new TUnit(AST.take(), InFile);
     TUnits.push_back(TU);
     
-    IdxProvider.IndexAST(TU);
+    Idxer.IndexAST(TU);
   }
 
   ASTLocation ASTLoc;
@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
             FirstAST->getASTContext().getCommentForDecl(ASTLoc.getDecl()))
         OS << "Comment associated with this declaration:\n" << Comment << "\n";
     } else {
-      ProcessASTLocation(ASTLoc, IdxProvider);
+      ProcessASTLocation(ASTLoc, Idxer);
     }
   }
   

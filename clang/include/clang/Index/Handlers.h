@@ -1,4 +1,4 @@
-//===--- EntityHandler.h - Interface for receiving entities -----*- C++ -*-===//
+//===--- Handlers.h - Interfaces for receiving information ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,23 +7,31 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  Abstract interface for receiving Entities.
+//  Abstract interfaces for receiving information.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_INDEX_ENTITYHANDLER_H
-#define LLVM_CLANG_INDEX_ENTITYHANDLER_H
+#ifndef LLVM_CLANG_INDEX_HANDLERS_H
+#define LLVM_CLANG_INDEX_HANDLERS_H
 
 namespace clang {
 
 namespace idx {
   class Entity;
+  class TranslationUnit;
 
 /// \brief Abstract interface for receiving Entities.
 class EntityHandler {
 public:
   virtual ~EntityHandler();
-  virtual void HandleEntity(Entity Ent);
+  virtual void HandleEntity(Entity Ent) = 0;
+};
+
+/// \brief Abstract interface for receiving TranslationUnits.
+class TranslationUnitHandler {
+public:
+  virtual ~TranslationUnitHandler();
+  virtual void Handle(TranslationUnit *TU) = 0;
 };
   
 } // namespace idx
