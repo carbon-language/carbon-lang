@@ -212,7 +212,7 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
     std::vector<llvm::Constant*> S;
     S.push_back(
       llvm::ConstantInt::get(llvm::Type::Int32Ty, I->second, false));
-    S.push_back(VMContext.getConstantExprBitCast(I->first, CtorPFTy));
+    S.push_back(llvm::ConstantExpr::getBitCast(I->first, CtorPFTy));
     Ctors.push_back(llvm::ConstantStruct::get(CtorStructTy, S));
   }
 
@@ -425,7 +425,7 @@ void CodeGenModule::EmitLLVMUsed() {
   UsedArray.resize(LLVMUsed.size());
   for (unsigned i = 0, e = LLVMUsed.size(); i != e; ++i) {
     UsedArray[i] = 
-     VMContext.getConstantExprBitCast(cast<llvm::Constant>(&*LLVMUsed[i]), 
+     llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(&*LLVMUsed[i]), 
                                       i8PTy);
   }
   
@@ -502,9 +502,9 @@ llvm::Constant *CodeGenModule::EmitAnnotateAttr(llvm::GlobalValue *GV,
 
   // Create the ConstantStruct for the global annotation.
   llvm::Constant *Fields[4] = {
-    VMContext.getConstantExprBitCast(GV, SBP),
-    VMContext.getConstantExprBitCast(annoGV, SBP),
-    VMContext.getConstantExprBitCast(unitGV, SBP),
+    llvm::ConstantExpr::getBitCast(GV, SBP),
+    llvm::ConstantExpr::getBitCast(annoGV, SBP),
+    llvm::ConstantExpr::getBitCast(unitGV, SBP),
     llvm::ConstantInt::get(llvm::Type::Int32Ty, LineNo)
   };
   return llvm::ConstantStruct::get(Fields, 4, false);
@@ -621,7 +621,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     
     // Make sure the result is of the correct type.
     const llvm::Type *PTy = VMContext.getPointerTypeUnqual(Ty);
-    return VMContext.getConstantExprBitCast(Entry, PTy);
+    return llvm::ConstantExpr::getBitCast(Entry, PTy);
   }
   
   // This is the first use or definition of a mangled name.  If there is a
@@ -700,7 +700,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMGlobal(const char *MangledName,
       return Entry;
         
     // Make sure the result is of the correct type.
-    return VMContext.getConstantExprBitCast(Entry, Ty);
+    return llvm::ConstantExpr::getBitCast(Entry, Ty);
   }
   
   // This is the first use or definition of a mangled name.  If there is a
@@ -848,7 +848,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
     // Replace all uses of the old global with the new global
     llvm::Constant *NewPtrForOldDecl = 
-        VMContext.getConstantExprBitCast(GV, Entry->getType());
+        llvm::ConstantExpr::getBitCast(GV, Entry->getType());
     Entry->replaceAllUsesWith(NewPtrForOldDecl);
 
     // Erase the old global, since it is no longer used.
@@ -1018,7 +1018,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
     // Replace uses of F with the Function we will endow with a body.
     if (!Entry->use_empty()) {
       llvm::Constant *NewPtrForOldDecl = 
-        VMContext.getConstantExprBitCast(NewFn, Entry->getType());
+        llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
       Entry->replaceAllUsesWith(NewPtrForOldDecl);
     }
     
@@ -1086,7 +1086,7 @@ void CodeGenModule::EmitAliasDefinition(const ValueDecl *D) {
     //
     // Remove it and replace uses of it with the alias.
     
-    Entry->replaceAllUsesWith(VMContext.getConstantExprBitCast(GA,
+    Entry->replaceAllUsesWith(llvm::ConstantExpr::getBitCast(GA,
                                                           Entry->getType()));
     Entry->eraseFromParent();
   }
@@ -1271,7 +1271,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
                                            "__CFConstantStringClassReference");
     // Decay array -> ptr
     CFConstantStringClassRef =
-      VMContext.getConstantExprGetElementPtr(GV, Zeros, 2);
+      llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2);
   }
   
   QualType CFTy = getContext().getCFConstantStringType();
@@ -1331,7 +1331,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     GV->setAlignment(Align); 
   }
   appendFieldAndPadding(*this, Fields, CurField, NextField,
-                        VMContext.getConstantExprGetElementPtr(GV, Zeros, 2),
+                        llvm::ConstantExpr::getGetElementPtr(GV, Zeros, 2),
                         CFRD, STy);
   
   // String length.

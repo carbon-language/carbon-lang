@@ -294,7 +294,7 @@ llvm::Constant *CGObjCGNU::MakeConstantString(const std::string &Str,
   ConstStr = new llvm::GlobalVariable(TheModule, ConstStr->getType(), true, 
                                llvm::GlobalValue::InternalLinkage,
                                ConstStr, Name);
-  return VMContext.getConstantExprGetElementPtr(ConstStr, Zeros, 2);
+  return llvm::ConstantExpr::getGetElementPtr(ConstStr, Zeros, 2);
 }
 llvm::Constant *CGObjCGNU::MakeGlobal(const llvm::StructType *Ty,
     std::vector<llvm::Constant*> &V, const std::string &Name) {
@@ -324,7 +324,7 @@ llvm::Constant *CGObjCGNU::GenerateConstantString(const ObjCStringLiteral *SL) {
     VMContext.getStructType(PtrToInt8Ty, PtrToInt8Ty, IntTy, NULL),
     Ivars, ".objc_str");
   ConstantStrings.push_back(
-      VMContext.getConstantExprBitCast(ObjCStr, PtrToInt8Ty));
+      llvm::ConstantExpr::getBitCast(ObjCStr, PtrToInt8Ty));
   return ObjCStr;
 }
 
@@ -508,10 +508,10 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
                                                 isClassMethodList))) {
       llvm::Constant *C = 
         CGM.GetAddrOfConstantCString(MethodSels[i].getAsString());
-      Elements.push_back(VMContext.getConstantExprGetElementPtr(C, Zeros, 2));
+      Elements.push_back(llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2));
       Elements.push_back(
-            VMContext.getConstantExprGetElementPtr(MethodTypes[i], Zeros, 2));
-      Method = VMContext.getConstantExprBitCast(Method,
+            llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
+      Method = llvm::ConstantExpr::getBitCast(Method,
           VMContext.getPointerTypeUnqual(IMPTy));
       Elements.push_back(Method);
       Methods.push_back(llvm::ConstantStruct::get(ObjCMethodTy, Elements));
@@ -563,9 +563,9 @@ llvm::Constant *CGObjCGNU::GenerateIvarList(
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = IvarNames.size() ; i < e ; i++) {
     Elements.clear();
-    Elements.push_back( VMContext.getConstantExprGetElementPtr(IvarNames[i],
+    Elements.push_back( llvm::ConstantExpr::getGetElementPtr(IvarNames[i],
           Zeros, 2));
-    Elements.push_back( VMContext.getConstantExprGetElementPtr(IvarTypes[i],
+    Elements.push_back( llvm::ConstantExpr::getGetElementPtr(IvarTypes[i],
           Zeros, 2));
     Elements.push_back(IvarOffsets[i]);
     Ivars.push_back(llvm::ConstantStruct::get(ObjCIvarTy, Elements));
@@ -623,7 +623,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
     VMContext.getConstantPointerNull(PtrTy);
   // Fill in the structure
   std::vector<llvm::Constant*> Elements;
-  Elements.push_back(VMContext.getConstantExprBitCast(MetaClass, PtrToInt8Ty));
+  Elements.push_back(llvm::ConstantExpr::getBitCast(MetaClass, PtrToInt8Ty));
   Elements.push_back(SuperClass);
   Elements.push_back(MakeConstantString(Name, ".class_name"));
   Elements.push_back(Zero);
@@ -634,7 +634,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   Elements.push_back(NullP);
   Elements.push_back(NullP);
   Elements.push_back(NullP);
-  Elements.push_back(VMContext.getConstantExprBitCast(Protocols, PtrTy));
+  Elements.push_back(llvm::ConstantExpr::getBitCast(Protocols, PtrTy));
   Elements.push_back(NullP);
   // Create an instance of the structure
   return MakeGlobal(ClassTy, Elements, SymbolNameForClass(Name));
@@ -652,10 +652,10 @@ llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
   std::vector<llvm::Constant*> Elements;
   for (unsigned int i = 0, e = MethodTypes.size() ; i < e ; i++) {
     Elements.clear();
-    Elements.push_back(VMContext.getConstantExprGetElementPtr(MethodNames[i],
+    Elements.push_back(llvm::ConstantExpr::getGetElementPtr(MethodNames[i],
           Zeros, 2)); 
     Elements.push_back(
-          VMContext.getConstantExprGetElementPtr(MethodTypes[i], Zeros, 2));
+          llvm::ConstantExpr::getGetElementPtr(MethodTypes[i], Zeros, 2));
     Methods.push_back(llvm::ConstantStruct::get(ObjCMethodDescTy, Elements));
   }
   llvm::ArrayType *ObjCMethodArrayTy = VMContext.getArrayType(ObjCMethodDescTy,
@@ -685,7 +685,7 @@ llvm::Constant *CGObjCGNU::GenerateProtocolList(
     llvm::Constant *protocol = ExistingProtocols[*iter];
     if (!protocol)
       protocol = GenerateEmptyProtocol(*iter);
-    llvm::Constant *Ptr = VMContext.getConstantExprBitCast(protocol,
+    llvm::Constant *Ptr = llvm::ConstantExpr::getBitCast(protocol,
                                                            PtrToInt8Ty);
     Elements.push_back(Ptr);
   }
@@ -727,7 +727,7 @@ llvm::Constant *CGObjCGNU::GenerateEmptyProtocol(
   std::vector<llvm::Constant*> Elements; 
   // The isa pointer must be set to a magic number so the runtime knows it's
   // the correct layout.
-  Elements.push_back(VMContext.getConstantExprIntToPtr(
+  Elements.push_back(llvm::ConstantExpr::getIntToPtr(
         llvm::ConstantInt::get(llvm::Type::Int32Ty, ProtocolVersion), IdTy));
   Elements.push_back(MakeConstantString(ProtocolName, ".objc_protocol_name"));
   Elements.push_back(ProtocolList);
@@ -782,14 +782,14 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   std::vector<llvm::Constant*> Elements; 
   // The isa pointer must be set to a magic number so the runtime knows it's
   // the correct layout.
-  Elements.push_back(VMContext.getConstantExprIntToPtr(
+  Elements.push_back(llvm::ConstantExpr::getIntToPtr(
         llvm::ConstantInt::get(llvm::Type::Int32Ty, ProtocolVersion), IdTy));
   Elements.push_back(MakeConstantString(ProtocolName, ".objc_protocol_name"));
   Elements.push_back(ProtocolList);
   Elements.push_back(InstanceMethodList);
   Elements.push_back(ClassMethodList);
   ExistingProtocols[ProtocolName] = 
-    VMContext.getConstantExprBitCast(MakeGlobal(ProtocolTy, Elements,
+    llvm::ConstantExpr::getBitCast(MakeGlobal(ProtocolTy, Elements,
           ".objc_protocol"), IdTy);
 }
 
@@ -832,17 +832,17 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   Elements.push_back(MakeConstantString(CategoryName));
   Elements.push_back(MakeConstantString(ClassName));
   // Instance method list 
-  Elements.push_back(VMContext.getConstantExprBitCast(GenerateMethodList(
+  Elements.push_back(llvm::ConstantExpr::getBitCast(GenerateMethodList(
           ClassName, CategoryName, InstanceMethodSels, InstanceMethodTypes,
           false), PtrTy));
   // Class method list
-  Elements.push_back(VMContext.getConstantExprBitCast(GenerateMethodList(
+  Elements.push_back(llvm::ConstantExpr::getBitCast(GenerateMethodList(
           ClassName, CategoryName, ClassMethodSels, ClassMethodTypes, true),
         PtrTy));
   // Protocol list
-  Elements.push_back(VMContext.getConstantExprBitCast(
+  Elements.push_back(llvm::ConstantExpr::getBitCast(
         GenerateProtocolList(Protocols), PtrTy));
-  Categories.push_back(VMContext.getConstantExprBitCast(
+  Categories.push_back(llvm::ConstantExpr::getBitCast(
         MakeGlobal(VMContext.getStructType(PtrToInt8Ty, PtrToInt8Ty, PtrTy,
             PtrTy, PtrTy, NULL), Elements), PtrTy));
 }
@@ -992,17 +992,17 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   // Resolve the class aliases, if they exist.
   if (ClassPtrAlias) {
     ClassPtrAlias->setAliasee(
-        VMContext.getConstantExprBitCast(ClassStruct, IdTy));
+        llvm::ConstantExpr::getBitCast(ClassStruct, IdTy));
     ClassPtrAlias = 0;
   }
   if (MetaClassPtrAlias) {
     MetaClassPtrAlias->setAliasee(
-        VMContext.getConstantExprBitCast(MetaClassStruct, IdTy));
+        llvm::ConstantExpr::getBitCast(MetaClassStruct, IdTy));
     MetaClassPtrAlias = 0;
   }
 
   // Add class structure to list to be added to the symtab later
-  ClassStruct = VMContext.getConstantExprBitCast(ClassStruct, PtrToInt8Ty);
+  ClassStruct = llvm::ConstantExpr::getBitCast(ClassStruct, PtrToInt8Ty);
   Classes.push_back(ClassStruct);
 }
 
@@ -1051,7 +1051,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     Elements.push_back(Statics);
     Elements.push_back(VMContext.getNullValue(StaticsListPtrTy));
     Statics = MakeGlobal(StaticsListArrayTy, Elements, ".objc_statics_ptr");
-    Statics = VMContext.getConstantExprBitCast(Statics, PtrTy);
+    Statics = llvm::ConstantExpr::getBitCast(Statics, PtrTy);
   }
   // Array of classes, categories, and constant objects
   llvm::ArrayType *ClassListTy = VMContext.getArrayType(PtrToInt8Ty,
@@ -1091,7 +1091,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   llvm::Constant *SelectorList = MakeGlobal(
           VMContext.getArrayType(SelStructTy, Selectors.size()), Selectors,
           ".objc_selector_list");
-  Elements.push_back(VMContext.getConstantExprBitCast(SelectorList, 
+  Elements.push_back(llvm::ConstantExpr::getBitCast(SelectorList, 
     SelStructPtrTy));
 
   // Now that all of the static selectors exist, create pointers to them.
@@ -1103,12 +1103,12 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       llvm::ConstantInt::get(llvm::Type::Int32Ty, index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy,
         true, llvm::GlobalValue::InternalLinkage,
-        VMContext.getConstantExprGetElementPtr(SelectorList, Idxs, 2),
+        llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
         ".objc_sel_ptr");
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
-      SelPtr = VMContext.getConstantExprBitCast(SelPtr,
+      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
         VMContext.getPointerTypeUnqual(SelectorTy));
     }
     (*iter).second->setAliasee(SelPtr);
@@ -1120,12 +1120,12 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       llvm::ConstantInt::get(llvm::Type::Int32Ty, index++), Zeros[0]};
     llvm::Constant *SelPtr = new llvm::GlobalVariable(TheModule, SelStructPtrTy, 
         true, llvm::GlobalValue::InternalLinkage,
-        VMContext.getConstantExprGetElementPtr(SelectorList, Idxs, 2),
+        llvm::ConstantExpr::getGetElementPtr(SelectorList, Idxs, 2),
         ".objc_sel_ptr");
     // If selectors are defined as an opaque type, cast the pointer to this
     // type.
     if (isSelOpaque) {
-      SelPtr = VMContext.getConstantExprBitCast(SelPtr,
+      SelPtr = llvm::ConstantExpr::getBitCast(SelPtr,
         VMContext.getPointerTypeUnqual(SelectorTy));
     }
     (*iter).second->setAliasee(SelPtr);
@@ -1261,7 +1261,7 @@ void CGObjCGNU::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGM.CreateRuntimeFunction(VMContext.getFunctionType(llvm::Type::Int32Ty,
           true),
         "__gnu_objc_personality_v0");
-  Personality = VMContext.getConstantExprBitCast(Personality, PtrTy);
+  Personality = llvm::ConstantExpr::getBitCast(Personality, PtrTy);
   std::vector<const llvm::Type*> Params;
   Params.push_back(PtrTy);
   llvm::Value *RethrowFn =

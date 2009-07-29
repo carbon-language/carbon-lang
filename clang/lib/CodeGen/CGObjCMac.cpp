@@ -718,7 +718,7 @@ public:
       CGM.CreateRuntimeFunction(VMContext.getFunctionType(llvm::Type::Int32Ty,
                                                         true),
                               "__objc_personality_v0");
-    return VMContext.getConstantExprBitCast(Personality, Int8PtrTy);
+    return llvm::ConstantExpr::getBitCast(Personality, Int8PtrTy);
   }
 
   llvm::Constant *getUnwindResumeOrRethrowFn() {
@@ -1381,7 +1381,7 @@ static llvm::Constant *getConstantGEP(llvm::LLVMContext &VMContext,
     llvm::ConstantInt::get(llvm::Type::Int32Ty, idx0),
     llvm::ConstantInt::get(llvm::Type::Int32Ty, idx1)
   };
-  return VMContext.getConstantExprGetElementPtr(C, Idxs, 2);
+  return llvm::ConstantExpr::getGetElementPtr(C, Idxs, 2);
 }
 
 /// hasObjCExceptionAttribute - Return true if this class or any super
@@ -1552,7 +1552,7 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
                         : ObjCTypes.getSendFn(IsSuper);
   }
   assert(Fn && "EmitLegacyMessageSend - unknown API");
-  Fn = VMContext.getConstantExprBitCast(Fn,
+  Fn = llvm::ConstantExpr::getBitCast(Fn,
                                         VMContext.getPointerTypeUnqual(FTy));
   return CGF.EmitCall(FnInfo, Fn, ActualArgs);
 }
@@ -1563,7 +1563,7 @@ llvm::Value *CGObjCMac::GenerateProtocolRef(CGBuilderTy &Builder,
   // resolved. Investigate. Its also wasteful to look this up over and over.
   LazySymbols.insert(&CGM.getContext().Idents.get("Protocol"));
 
-  return VMContext.getConstantExprBitCast(GetProtocolRef(PD),
+  return llvm::ConstantExpr::getBitCast(GetProtocolRef(PD),
                                         ObjCTypes.ExternalProtocolPtrTy);
 }
 
@@ -1777,7 +1777,7 @@ CGObjCMac::EmitProtocolList(const std::string &Name,
   llvm::GlobalVariable *GV = 
     CreateMetadataVar(Name, Init, "__OBJC,__cat_cls_meth,regular,no_dead_strip",
                       4, false);
-  return VMContext.getConstantExprBitCast(GV, ObjCTypes.ProtocolListPtrTy);
+  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.ProtocolListPtrTy);
 }
 
 /*
@@ -1826,7 +1826,7 @@ llvm::Constant *CGObjCCommonMac::EmitPropertyList(const std::string &Name,
                       "__OBJC,__property,regular,no_dead_strip",
                       (ObjCABI == 2) ? 8 : 4, 
                       true);
-  return VMContext.getConstantExprBitCast(GV, ObjCTypes.PropertyListPtrTy);
+  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.PropertyListPtrTy);
 }
 
 /*
@@ -1839,7 +1839,7 @@ llvm::Constant *
 CGObjCMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
   std::vector<llvm::Constant*> Desc(2);
   Desc[0] =
-          VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
+          llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
                                            ObjCTypes.SelectorPtrTy);
   Desc[1] = GetMethodVarType(MD);
   return llvm::ConstantStruct::get(ObjCTypes.MethodDescriptionTy,
@@ -1861,7 +1861,7 @@ llvm::Constant *CGObjCMac::EmitMethodDescList(const std::string &Name,
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
   llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
-  return VMContext.getConstantExprBitCast(GV, 
+  return llvm::ConstantExpr::getBitCast(GV, 
                                         ObjCTypes.MethodDescriptionListPtrTy);
 }
 
@@ -2026,7 +2026,7 @@ void CGObjCMac::GenerateClass(const ObjCImplementationDecl *ID) {
     LazySymbols.insert(Super->getIdentifier());
 
     Values[ 1] = 
-      VMContext.getConstantExprBitCast(GetClassName(Super->getIdentifier()),
+      llvm::ConstantExpr::getBitCast(GetClassName(Super->getIdentifier()),
                                      ObjCTypes.ClassPtrTy);
   } else {
     Values[ 1] = VMContext.getNullValue(ObjCTypes.ClassPtrTy);
@@ -2071,14 +2071,14 @@ llvm::Constant *CGObjCMac::EmitMetaClass(const ObjCImplementationDecl *ID,
   while (const ObjCInterfaceDecl *Super = Root->getSuperClass())
     Root = Super;
   Values[ 0] = 
-    VMContext.getConstantExprBitCast(GetClassName(Root->getIdentifier()),
+    llvm::ConstantExpr::getBitCast(GetClassName(Root->getIdentifier()),
                                    ObjCTypes.ClassPtrTy);
   // The super class for the metaclass is emitted as the name of the
   // super class. The runtime fixes this up to point to the
   // *metaclass* for the super class.
   if (ObjCInterfaceDecl *Super = ID->getClassInterface()->getSuperClass()) {
     Values[ 1] = 
-      VMContext.getConstantExprBitCast(GetClassName(Super->getIdentifier()),
+      llvm::ConstantExpr::getBitCast(GetClassName(Super->getIdentifier()),
                                      ObjCTypes.ClassPtrTy);
   } else {
     Values[ 1] = VMContext.getNullValue(ObjCTypes.ClassPtrTy);
@@ -2242,7 +2242,7 @@ llvm::Constant *CGObjCMac::EmitIvarList(const ObjCImplementationDecl *ID,
                            + ID->getNameAsString(),
                            Init, "__OBJC,__instance_vars,regular,no_dead_strip",
                            4, true);
-  return VMContext.getConstantExprBitCast(GV, ObjCTypes.IvarListPtrTy);
+  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.IvarListPtrTy);
 }
 
 /*
@@ -2270,10 +2270,10 @@ llvm::Constant *CGObjCMac::GetMethodConstant(const ObjCMethodDecl *MD) {
   
   std::vector<llvm::Constant*> Method(3);
   Method[0] = 
-    VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
+    llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
                                    ObjCTypes.SelectorPtrTy);
   Method[1] = GetMethodVarType(MD);
-  Method[2] = VMContext.getConstantExprBitCast(Fn, ObjCTypes.Int8PtrTy);
+  Method[2] = llvm::ConstantExpr::getBitCast(Fn, ObjCTypes.Int8PtrTy);
   return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
 }
 
@@ -2293,7 +2293,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(const std::string &Name,
   llvm::Constant *Init = llvm::ConstantStruct::get(Values);
 
   llvm::GlobalVariable *GV = CreateMetadataVar(Name, Init, Section, 4, true);
-  return VMContext.getConstantExprBitCast(GV,
+  return llvm::ConstantExpr::getBitCast(GV,
                                         ObjCTypes.MethodListPtrTy);
 }
 
@@ -2911,11 +2911,11 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
   // by the list of defined categories, in a single array.
   std::vector<llvm::Constant*> Symbols(NumClasses + NumCategories);
   for (unsigned i=0; i<NumClasses; i++)
-    Symbols[i] = VMContext.getConstantExprBitCast(DefinedClasses[i],
+    Symbols[i] = llvm::ConstantExpr::getBitCast(DefinedClasses[i],
                                                 ObjCTypes.Int8PtrTy);
   for (unsigned i=0; i<NumCategories; i++)
     Symbols[NumClasses + i] = 
-      VMContext.getConstantExprBitCast(DefinedCategories[i],
+      llvm::ConstantExpr::getBitCast(DefinedCategories[i],
                                      ObjCTypes.Int8PtrTy);
 
   Values[4] = 
@@ -2929,7 +2929,7 @@ llvm::Constant *CGObjCMac::EmitModuleSymbols() {
     CreateMetadataVar("\01L_OBJC_SYMBOLS", Init,
                       "__OBJC,__symbols,regular,no_dead_strip",
                       4, true);
-  return VMContext.getConstantExprBitCast(GV, ObjCTypes.SymtabPtrTy);
+  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.SymtabPtrTy);
 }
 
 llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder, 
@@ -2940,7 +2940,7 @@ llvm::Value *CGObjCMac::EmitClassRef(CGBuilderTy &Builder,
   
   if (!Entry) {
     llvm::Constant *Casted = 
-      VMContext.getConstantExprBitCast(GetClassName(ID->getIdentifier()),
+      llvm::ConstantExpr::getBitCast(GetClassName(ID->getIdentifier()),
                                      ObjCTypes.ClassPtrTy);
     Entry = 
       CreateMetadataVar("\01L_OBJC_CLASS_REFERENCES_", Casted,
@@ -2956,7 +2956,7 @@ llvm::Value *CGObjCMac::EmitSelector(CGBuilderTy &Builder, Selector Sel) {
   
   if (!Entry) {
     llvm::Constant *Casted = 
-      VMContext.getConstantExprBitCast(GetMethodVarName(Sel),
+      llvm::ConstantExpr::getBitCast(GetMethodVarName(Sel),
                                      ObjCTypes.SelectorPtrTy);
     Entry = 
       CreateMetadataVar("\01L_OBJC_SELECTOR_REFERENCES_", Casted,
@@ -4066,7 +4066,7 @@ void CGObjCNonFragileABIMac::AddModuleClassList(const
   
   std::vector<llvm::Constant*> Symbols(NumClasses);
   for (unsigned i=0; i<NumClasses; i++)
-    Symbols[i] = VMContext.getConstantExprBitCast(Container[i],
+    Symbols[i] = llvm::ConstantExpr::getBitCast(Container[i],
                                                 ObjCTypes.Int8PtrTy);
   llvm::Constant* Init = 
     llvm::ConstantArray::get(VMContext.getArrayType(ObjCTypes.Int8PtrTy,
@@ -4443,7 +4443,7 @@ llvm::Value *CGObjCNonFragileABIMac::GenerateProtocolRef(CGBuilderTy &Builder,
   // of protocol's meta-data (not a reference to it!)
   //
   llvm::Constant *Init = 
-       VMContext.getConstantExprBitCast(GetOrEmitProtocol(PD),
+       llvm::ConstantExpr::getBitCast(GetOrEmitProtocol(PD),
                                         ObjCTypes.ExternalProtocolPtrTy);
   
   std::string ProtocolName("\01l_OBJC_PROTOCOL_REFERENCE_$_");
@@ -4566,10 +4566,10 @@ llvm::Constant *CGObjCNonFragileABIMac::GetMethodConstant(
   
   std::vector<llvm::Constant*> Method(3);
   Method[0] = 
-    VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
+    llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
                                      ObjCTypes.SelectorPtrTy);
   Method[1] = GetMethodVarType(MD);
-  Method[2] = VMContext.getConstantExprBitCast(Fn, ObjCTypes.Int8PtrTy);
+  Method[2] = llvm::ConstantExpr::getBitCast(Fn, ObjCTypes.Int8PtrTy);
   return llvm::ConstantStruct::get(ObjCTypes.MethodTy, Method);
 }
 
@@ -4608,7 +4608,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitMethodList(
     CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
   GV->setSection(Section);
   CGM.AddUsedGlobal(GV);
-  return VMContext.getConstantExprBitCast(GV,
+  return llvm::ConstantExpr::getBitCast(GV,
                                         ObjCTypes.MethodListnfABIPtrTy);
 }
 
@@ -4735,7 +4735,7 @@ llvm::Constant *CGObjCNonFragileABIMac::EmitIvarList(
   GV->setSection("__DATA, __objc_const");
                  
   CGM.AddUsedGlobal(GV);
-  return VMContext.getConstantExprBitCast(GV, ObjCTypes.IvarListnfABIPtrTy);
+  return llvm::ConstantExpr::getBitCast(GV, ObjCTypes.IvarListnfABIPtrTy);
 }
 
 llvm::Constant *CGObjCNonFragileABIMac::GetOrEmitProtocolRef(
@@ -4898,7 +4898,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
   // FIXME: We shouldn't need to do this lookup here, should we?
   llvm::GlobalVariable *GV = CGM.getModule().getGlobalVariable(Name, true);
   if (GV)
-    return VMContext.getConstantExprBitCast(GV, 
+    return llvm::ConstantExpr::getBitCast(GV, 
                                           ObjCTypes.ProtocolListnfABIPtrTy);
   
   for (; begin != end; ++begin)
@@ -4926,7 +4926,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(const std::string &Name,
   GV->setAlignment(
     CGM.getTargetData().getPrefTypeAlignment(Init->getType()));
   CGM.AddUsedGlobal(GV);
-  return VMContext.getConstantExprBitCast(GV, 
+  return llvm::ConstantExpr::getBitCast(GV, 
                                         ObjCTypes.ProtocolListnfABIPtrTy);
 }
 
@@ -4941,7 +4941,7 @@ llvm::Constant *
 CGObjCNonFragileABIMac::GetMethodDescriptionConstant(const ObjCMethodDecl *MD) {
   std::vector<llvm::Constant*> Desc(3);
   Desc[0] =
-          VMContext.getConstantExprBitCast(GetMethodVarName(MD->getSelector()),
+          llvm::ConstantExpr::getBitCast(GetMethodVarName(MD->getSelector()),
                                            ObjCTypes.SelectorPtrTy);
   Desc[1] = GetMethodVarType(MD);
   // Protocol methods have no implementation. So, this entry is always NULL.
@@ -5257,7 +5257,7 @@ llvm::Value *CGObjCNonFragileABIMac::EmitSelector(CGBuilderTy &Builder,
   
   if (!Entry) {
     llvm::Constant *Casted = 
-    VMContext.getConstantExprBitCast(GetMethodVarName(Sel),
+    llvm::ConstantExpr::getBitCast(GetMethodVarName(Sel),
                                    ObjCTypes.SelectorPtrTy);
     Entry = 
     new llvm::GlobalVariable(CGM.getModule(), ObjCTypes.SelectorPtrTy, false,
@@ -5699,7 +5699,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
   llvm::Value *VTableIdx = llvm::ConstantInt::get(llvm::Type::Int32Ty, 2);
 
   std::vector<llvm::Constant*> Values(3);
-  Values[0] = VMContext.getConstantExprGetElementPtr(VTableGV, &VTableIdx, 1);
+  Values[0] = llvm::ConstantExpr::getGetElementPtr(VTableGV, &VTableIdx, 1);
   Values[1] = GetClassName(ID->getIdentifier());
   Values[2] = GetClassGlobal(ClassName);
   llvm::Constant *Init =

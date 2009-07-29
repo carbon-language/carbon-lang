@@ -161,7 +161,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
 
         // Replace all uses of the old global with the new global
         llvm::Constant *NewPtrForOldDecl = 
-          VMContext.getConstantExprBitCast(GV, OldGV->getType());
+          llvm::ConstantExpr::getBitCast(GV, OldGV->getType());
         OldGV->replaceAllUsesWith(NewPtrForOldDecl);
 
         // Erase the old global, since it is no longer used.
@@ -195,7 +195,7 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const VarDecl &D) {
   const llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(D.getType());
   const llvm::Type *LPtrTy =
     VMContext.getPointerType(LTy, D.getType().getAddressSpace());
-  DMEntry = VMContext.getConstantExprBitCast(GV, LPtrTy);
+  DMEntry = llvm::ConstantExpr::getBitCast(GV, LPtrTy);
 
   // Emit global variable debug descriptor for static vars.
   CGDebugInfo *DI = getDebugInfo();

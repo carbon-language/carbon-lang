@@ -492,7 +492,7 @@ public:
     do {
       llvm::Constant* byteC =
         llvm::ConstantInt::get(llvm::Type::Int8Ty, byte);
-      Elts[i] = VMContext.getConstantExprOr(Elts[i], byteC);
+      Elts[i] = llvm::ConstantExpr::getOr(Elts[i], byteC);
       ++i;
       V = V.lshr(curBits);
       bitsToInsert -= curBits;
@@ -755,7 +755,7 @@ public:
     case Expr::ObjCStringLiteralClass: {
       ObjCStringLiteral* SL = cast<ObjCStringLiteral>(E);
       llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(SL);
-      return VMContext.getConstantExprBitCast(C, ConvertType(E->getType()));
+      return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
     }
     case Expr::PredefinedExprClass: {
       // __func__/__FUNCTION__ -> "".  __PRETTY_FUNCTION__ -> "top level".
@@ -770,7 +770,7 @@ public:
       assert(CGF && "Invalid address of label expression outside function.");
       unsigned id = CGF->GetIDForAddrOfLabel(cast<AddrLabelExpr>(E)->getLabel());
       llvm::Constant *C = llvm::ConstantInt::get(llvm::Type::Int32Ty, id);
-      return VMContext.getConstantExprIntToPtr(C, ConvertType(E->getType()));
+      return llvm::ConstantExpr::getIntToPtr(C, ConvertType(E->getType()));
     }
     case Expr::CallExprClass: {
       CallExpr* CE = cast<CallExpr>(E);
@@ -832,28 +832,28 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
         if (!Offset->isNullValue()) {
           const llvm::Type *Type = 
             VMContext.getPointerTypeUnqual(llvm::Type::Int8Ty);
-          llvm::Constant *Casted = VMContext.getConstantExprBitCast(C, Type);
-          Casted = VMContext.getConstantExprGetElementPtr(Casted, &Offset, 1);
-          C = VMContext.getConstantExprBitCast(Casted, C->getType());
+          llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
+          Casted = llvm::ConstantExpr::getGetElementPtr(Casted, &Offset, 1);
+          C = llvm::ConstantExpr::getBitCast(Casted, C->getType());
         }
 
         // Convert to the appropriate type; this could be an lvalue for
         // an integer.
         if (isa<llvm::PointerType>(DestTy))
-          return VMContext.getConstantExprBitCast(C, DestTy);
+          return llvm::ConstantExpr::getBitCast(C, DestTy);
 
-        return VMContext.getConstantExprPtrToInt(C, DestTy);
+        return llvm::ConstantExpr::getPtrToInt(C, DestTy);
       } else {
         C = Offset;
 
         // Convert to the appropriate type; this could be an lvalue for
         // an integer.
         if (isa<llvm::PointerType>(DestTy))
-          return VMContext.getConstantExprIntToPtr(C, DestTy);
+          return llvm::ConstantExpr::getIntToPtr(C, DestTy);
 
         // If the types don't match this should only be a truncate.
         if (C->getType() != DestTy)
-          return VMContext.getConstantExprTrunc(C, DestTy);
+          return llvm::ConstantExpr::getTrunc(C, DestTy);
 
         return C;
       }
@@ -864,7 +864,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
       
       if (C->getType() == llvm::Type::Int1Ty) {
         const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
-        C = VMContext.getConstantExprZExt(C, BoolTy);
+        C = llvm::ConstantExpr::getZExt(C, BoolTy);
       }
       return C;
     }
@@ -909,7 +909,7 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
   if (C && C->getType() == llvm::Type::Int1Ty) {
     const llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
-    C = VMContext.getConstantExprZExt(C, BoolTy);
+    C = llvm::ConstantExpr::getZExt(C, BoolTy);
   }
   return C;
 }

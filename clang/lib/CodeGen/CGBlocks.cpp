@@ -140,7 +140,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
 
     // __isa
     C = CGM.getNSConcreteStackBlock();
-    C = VMContext.getConstantExprBitCast(C, PtrToInt8Ty);
+    C = llvm::ConstantExpr::getBitCast(C, PtrToInt8Ty);
     Elts[0] = C;
 
     // __flags
@@ -169,7 +169,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
                                    llvm::GlobalValue::InternalLinkage,
                                    C, Name);
       QualType BPT = BE->getType();
-      C = VMContext.getConstantExprBitCast(C, ConvertType(BPT));
+      C = llvm::ConstantExpr::getBitCast(C, ConvertType(BPT));
       return C;
     }
 
@@ -784,7 +784,7 @@ GenerateCopyHelperFunction(bool BlockHasCopyDispose, const llvm::StructType *T,
 
   CGF.FinishFunction();
 
-  return VMContext.getConstantExprBitCast(Fn, PtrToInt8Ty);
+  return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
 llvm::Constant *BlockFunction::
@@ -853,7 +853,7 @@ GenerateDestroyHelperFunction(bool BlockHasCopyDispose,
 
   CGF.FinishFunction();
 
-  return VMContext.getConstantExprBitCast(Fn, PtrToInt8Ty);
+  return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
 llvm::Constant *BlockFunction::BuildCopyHelper(const llvm::StructType *T,
@@ -932,7 +932,7 @@ GeneratebyrefCopyHelperFunction(const llvm::Type *T, int flag) {
 
   CGF.FinishFunction();
 
-  return VMContext.getConstantExprBitCast(Fn, PtrToInt8Ty);
+  return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
 llvm::Constant *
@@ -983,7 +983,7 @@ BlockFunction::GeneratebyrefDestroyHelperFunction(const llvm::Type *T,
   BuildBlockRelease(V, flag);
   CGF.FinishFunction();
 
-  return VMContext.getConstantExprBitCast(Fn, PtrToInt8Ty);
+  return llvm::ConstantExpr::getBitCast(Fn, PtrToInt8Ty);
 }
 
 llvm::Constant *BlockFunction::BuildbyrefCopyHelper(const llvm::Type *T,

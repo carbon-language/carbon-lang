@@ -28,7 +28,7 @@ llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E)
 {
   llvm::Constant *C = CGM.getObjCRuntime().GenerateConstantString(E);
   // FIXME: This bitcast should just be made an invariant on the Runtime.
-  return VMContext.getConstantExprBitCast(C, ConvertType(E->getType()));
+  return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
 }
 
 /// Emit a selector.
