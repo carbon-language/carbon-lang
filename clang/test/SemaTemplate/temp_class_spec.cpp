@@ -47,7 +47,7 @@ int is_const1[is_const<const int>::value? 1 : -1];
 int is_const2[is_const<const volatile int>::value? 1 : -1];
 int is_const3[is_const<const int [3]>::value? 1 : -1];
 int is_const4[is_const<const volatile int[3]>::value? 1 : -1];
-int is_const4[is_const<volatile int[3]>::value? -1 : 1];
+int is_const5[is_const<volatile int[3]>::value? -1 : 1];
 
 template<typename T>
 struct is_volatile {
@@ -324,3 +324,10 @@ template<class T, int I> class A<T, T*, I> { }; //#2
 template<class T1, class T2, int I> class A<T1*, T2, I> { }; //#3 
 template<class T> class A<int, T*, 5> { }; //#4 
 template<class T1, class T2, int I> class A<T1, T2*, I> { }; //#5 
+
+// Redeclaration of class template partial specializations
+template<typename T, T N, typename U> class A0;
+
+template<typename T, T N> class A0<T, N, int> { }; // expected-note{{here}}
+template<typename T, T N> class A0<T, N, int>;
+template<typename T, T N> class A0<T, N, int> { }; // expected-error{{redef}}
