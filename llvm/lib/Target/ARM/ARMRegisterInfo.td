@@ -248,7 +248,9 @@ def SPR : RegisterClass<"ARM", [f32], 32, [S0, S1, S2, S3, S4, S5, S6, S7, S8,
 // is double-word alignment though.
 def DPR : RegisterClass<"ARM", [f64, v8i8, v4i16, v2i32, v1i64, v2f32], 64,
                         [D0,  D1,  D2,  D3,  D4,  D5,  D6,  D7,
-                         D8,  D9,  D10, D11, D12, D13, D14, D15]> {
+                         D8,  D9,  D10, D11, D12, D13, D14, D15,
+                         D16, D17, D18, D19, D20, D21, D22, D23,
+                         D24, D25, D26, D27, D28, D29, D30, D31]> {
   let SubRegClassList = [SPR, SPR];
   let MethodProtos = [{
     iterator allocation_order_begin(const MachineFunction &MF) const;
