@@ -19,16 +19,23 @@ using namespace llvm;
 /// ComputeColumn - Examine the current output and figure out which
 /// column we end up in after output.
 ///
-void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
+void formatted_raw_ostream::ComputeColumn() {
   // Keep track of the current column by scanning the string for
   // special characters
 
-  for (const char *epos = Ptr + Size; Ptr != epos; ++Ptr) {
-    ++Column;
-    if (*Ptr == '\n' || *Ptr == '\r')
-      Column = 0;
-    else if (*Ptr == '\t')
-      Column += (8 - (Column & 0x7)) & 0x7;
+  // The buffer may have been allocated underneath us.
+  if (Scanned == 0 && GetNumBytesInBuffer() != 0) {
+    Scanned = begin();
+  }
+
+  while (Scanned != end()) {
+    ++ColumnScanned;
+    if (*Scanned == '\n' || *Scanned == '\r')
+      ColumnScanned = 0;
+    else if (*Scanned == '\t')
+      // Assumes tab stop = 8 characters.
+      ColumnScanned += (8 - (ColumnScanned & 0x7)) & 0x7;
+    ++Scanned;
   }
 }
 
@@ -38,21 +45,18 @@ void formatted_raw_ostream::ComputeColumn(const char *Ptr, size_t Size) {
 /// \param MinPad - The minimum space to give after the most recent
 /// I/O, even if the current column + minpad > newcol.
 ///
-void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) {
-  flush();
+void formatted_raw_ostream::PadToColumn(unsigned NewCol, unsigned MinPad) { 
+  // Figure out what's in the buffer and add it to the column count.
+  ComputeColumn();
 
   // Output spaces until we reach the desired column.
-  unsigned num = NewCol - Column;
-  if (NewCol < Column || num < MinPad)
+  unsigned num = NewCol - ColumnScanned;
+  if (NewCol < ColumnScanned || num < MinPad)
     num = MinPad;
 
   // Keep a buffer of spaces handy to speed up processing.
-  static char Spaces[MAX_COLUMN_PAD];
-  static bool Initialized = false;
-  if (!Initialized) {
-    std::fill_n(Spaces, MAX_COLUMN_PAD, ' '),
-    Initialized = true;
-  }
+  const char *Spaces = "                                                      "
+    "                                                                         ";
 
   assert(num < MAX_COLUMN_PAD && "Unexpectedly large column padding");
 

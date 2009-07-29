@@ -49,14 +49,21 @@ namespace llvm
     ///
     bool DeleteStream;
 
-    /// Column - The current output column of the stream.  The column
-    /// scheme is zero-based.
+    /// ColumnScanned - The current output column of the data that's
+    /// been flushed and the portion of the buffer that's been
+    /// scanned.  The column scheme is zero-based.
     ///
-    unsigned Column;
+    unsigned ColumnScanned;
+
+    /// Scanned - This points to one past the last character in the
+    /// buffer we've scanned.
+    ///
+    iterator Scanned;
 
     virtual void write_impl(const char *Ptr, size_t Size) {
-      ComputeColumn(Ptr, Size);
+      ComputeColumn();
       TheStream->write(Ptr, Size);
+      Scanned = begin();
     }
 
     /// current_pos - Return the current position within the stream,
@@ -70,7 +77,7 @@ namespace llvm
     /// ComputeColumn - Examine the current output and figure out
     /// which column we end up in after output.
     ///
-    void ComputeColumn(const char *Ptr, size_t Size);
+    void ComputeColumn();
 
   public:
     /// formatted_raw_ostream - Open the specified file for
@@ -84,13 +91,16 @@ namespace llvm
     /// underneath it.
     ///
     formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
-      : raw_ostream(), TheStream(0), DeleteStream(false), Column(0) {
+      : raw_ostream(), TheStream(0), DeleteStream(false), ColumnScanned(0) {
       setStream(Stream, Delete);
     }
     explicit formatted_raw_ostream()
-      : raw_ostream(), TheStream(0), DeleteStream(false), Column(0) {}
+      : raw_ostream(), TheStream(0), DeleteStream(false), ColumnScanned(0) {
+      Scanned = begin();
+    }
 
     ~formatted_raw_ostream() {
+      flush();
       if (DeleteStream)
         delete TheStream;
     }
@@ -110,6 +120,8 @@ namespace llvm
       if (size_t BufferSize = TheStream->GetNumBytesInBuffer())
         SetBufferSize(BufferSize);
       TheStream->SetUnbuffered();
+
+      Scanned = begin();
     }
 
     /// PadToColumn - Align the output to some column number.
