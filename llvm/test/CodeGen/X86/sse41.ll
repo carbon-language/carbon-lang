@@ -182,3 +182,18 @@ define <4 x float> @insertps_3(<4 x float> %t1, <4 x float> %t2) nounwind {
 ; X64: _insertps_3:
 ; X64:    insertps  $0, %xmm1, %xmm0        
 }
+
+define i32 @ptestz_1(<4 x float> %t1, <4 x float> %t2) nounwind {
+        %tmp1 = call i32 @llvm.x86.sse41.ptestz(<4 x float> %t1, <4 x float> %t2) nounwind readnone
+        ret i32 %tmp1
+; X32: _ptestz_1:
+; X32:    ptest 	%xmm1, %xmm0
+; X32:    sete	%al
+
+; X64: _ptestz_1:
+; X64:    ptest 	%xmm1, %xmm0
+; X64:    sete	%al
+}
+
+declare i32 @llvm.x86.sse41.ptestz(<4 x float>, <4 x float>) nounwind readnone
+

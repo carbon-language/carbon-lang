@@ -6200,6 +6200,36 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
                                 DAG.getConstant(X86CC, MVT::i8), Cond);
     return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
   }
+  // ptest intrinsics. The intrinsic these come from are designed to return
+  // a boolean value, not just an instruction so lower it to the ptest
+  // pattern and a conditional move to the result.
+  case Intrinsic::x86_sse41_ptestz:
+  case Intrinsic::x86_sse41_ptestc:
+  case Intrinsic::x86_sse41_ptestnzc:{
+    unsigned X86CC = 0;
+    switch (IntNo) {
+    default: break;
+    case Intrinsic::x86_sse41_ptestz:
+      // ZF = 1
+      X86CC = X86::COND_E;
+      break;
+    case Intrinsic::x86_sse41_ptestc:
+      // CF = 1
+      X86CC = X86::COND_B;
+      break;
+    case Intrinsic::x86_sse41_ptestnzc: 
+      // ZF and CF = 0
+      X86CC = X86::COND_A;
+      break;
+    }
+       
+    SDValue LHS = Op.getOperand(1);
+    SDValue RHS = Op.getOperand(2);
+    SDValue Test = DAG.getNode(X86ISD::PTEST, dl, MVT::i32, LHS, RHS);
+    SDValue CC = DAG.getConstant(X86CC, MVT::i8);
+    SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8, CC, Test);
+    return DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, SetCC);
+  }
 
   // Fix vector shift instructions where the last operand is a non-immediate
   // i32 value.
@@ -7048,6 +7078,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::INC:                return "X86ISD::INC";
   case X86ISD::DEC:                return "X86ISD::DEC";
   case X86ISD::MUL_IMM:            return "X86ISD::MUL_IMM";
+  case X86ISD::PTEST:              return "X86ISD::PTEST";
   }
 }
 

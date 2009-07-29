@@ -244,7 +244,10 @@ namespace llvm {
       INC, DEC,
 
       // MUL_IMM - X86 specific multiply by immediate.
-      MUL_IMM
+      MUL_IMM,
+      
+      // PTEST - Vector bitwise comparisons
+      PTEST
     };
   }
 

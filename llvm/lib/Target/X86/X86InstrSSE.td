@@ -69,6 +69,9 @@ def X86pcmpgtw : SDNode<"X86ISD::PCMPGTW", SDTIntBinOp>;
 def X86pcmpgtd : SDNode<"X86ISD::PCMPGTD", SDTIntBinOp>;
 def X86pcmpgtq : SDNode<"X86ISD::PCMPGTQ", SDTIntBinOp>;
 
+def SDTX86CmpPTest : SDTypeProfile<0, 2, [SDTCisVT<0, v4f32>, SDTCisVT<1, v4f32>]>;
+def X86ptest   : SDNode<"X86ISD::PTEST", SDTX86CmpPTest>;
+
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
 //===----------------------------------------------------------------------===//
@@ -3618,11 +3621,17 @@ defm INSERTPS    : SS41I_insertf32<0x21, "insertps">;
 def : Pat<(int_x86_sse41_insertps VR128:$src1, VR128:$src2, imm:$src3),
           (INSERTPSrr VR128:$src1, VR128:$src2, imm:$src3)>;
 
+// ptest instruction we'll lower to this in X86ISelLowering primarily from
+// the intel intrinsic that corresponds to this.
 let Defs = [EFLAGS] in {
 def PTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
-                    "ptest \t{$src2, $src1|$src1, $src2}", []>, OpSize;
+                    "ptest \t{$src2, $src1|$src1, $src2}",
+                    [(X86ptest VR128:$src1, VR128:$src2),
+                      (implicit EFLAGS)]>, OpSize;
 def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, i128mem:$src2),
-                    "ptest \t{$src2, $src1|$src1, $src2}", []>, OpSize;
+                    "ptest \t{$src2, $src1|$src1, $src2}",
+                    [(X86ptest VR128:$src1, (load addr:$src2)),
+                        (implicit EFLAGS)]>, OpSize;
 }
 
 def MOVNTDQArm : SS48I<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
