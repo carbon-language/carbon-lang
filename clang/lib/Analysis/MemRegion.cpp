@@ -74,13 +74,6 @@ void AllocaRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   ProfileRegion(ID, Ex, Cnt, superRegion);
 }
 
-void TypedViewRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T, 
-                                    const MemRegion* superRegion) {
-  ID.AddInteger((unsigned) TypedViewRegionKind);
-  ID.Add(T);
-  ID.AddPointer(superRegion);
-}
-
 void CompoundLiteralRegion::Profile(llvm::FoldingSetNodeID& ID) const {
   CompoundLiteralRegion::ProfileRegion(ID, CL, superRegion);
 }
@@ -197,11 +190,6 @@ void SymbolicRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << "SymRegion{" << sym << '}';
 }
 
-void TypedViewRegion::dumpToStream(llvm::raw_ostream& os) const {
-  os << "typed_view{" << LValueType.getAsString() << ',' 
-     << getSuperRegion() << '}';
-}
-
 void VarRegion::dumpToStream(llvm::raw_ostream& os) const {
   os << cast<VarDecl>(D)->getNameAsString();
 }
@@ -314,11 +302,6 @@ MemRegionManager::getObjCObjectRegion(const ObjCInterfaceDecl* d,
   return getSubRegion<ObjCObjectRegion>(d, superRegion);
 }
 
-TypedViewRegion* 
-MemRegionManager::getTypedViewRegion(QualType t, const MemRegion* superRegion) {
-  return getSubRegion<TypedViewRegion>(t, superRegion);
-}
-
 AllocaRegion* MemRegionManager::getAllocaRegion(const Expr* E, unsigned cnt) {
   return getRegion<AllocaRegion>(E, cnt);
 }
@@ -388,16 +371,6 @@ bool MemRegion::hasGlobalsOrParametersStorage() const {
 //===----------------------------------------------------------------------===//
 // View handling.
 //===----------------------------------------------------------------------===//
-
-const MemRegion *TypedViewRegion::removeViews() const {
-  const SubRegion *SR = this;
-  const MemRegion *R = SR;
-  while (SR && isa<TypedViewRegion>(SR)) {
-    R = SR->getSuperRegion();
-    SR = dyn_cast<SubRegion>(R);
-  }
-  return R;
-}
 
 const MemRegion *MemRegion::getBaseRegion() const {
   const MemRegion *R = this;

@@ -1,6 +1,5 @@
 //>>SLICER
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic -verify %s &&
-// RUN: clang-cc -analyze -checker-cfref -analyzer-store=basic-old-cast -verify %s &&
 // RUN: clang-cc -analyze -checker-cfref -analyzer-store=region -verify %s
 
 #if __has_feature(attribute_ns_returns_retained)

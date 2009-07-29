@@ -1,5 +1,4 @@
-// RUN: clang-cc -verify -analyze -checker-cfref -analyzer-store=basic %s &&
-// RUN: clang-cc -verify -analyze -checker-cfref -analyzer-store=basic-old-cast %s
+// RUN: clang-cc -verify -analyze -checker-cfref -analyzer-store=basic %s
 
 struct tea_cheese { unsigned magic; };
 typedef struct tea_cheese kernel_tea_cheese_t;

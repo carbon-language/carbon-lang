@@ -38,10 +38,8 @@ class VISIBILITY_HIDDEN BasicStoreManager : public StoreManager {
   const MemRegion* SelfRegion;
   
 public:
-  BasicStoreManager(GRStateManager& mgr, bool useNewCastRegion = true)
-    : StoreManager(mgr, useNewCastRegion),
-      VBFactory(mgr.getAllocator()), 
-      SelfRegion(0) {}
+  BasicStoreManager(GRStateManager& mgr)
+    : StoreManager(mgr), VBFactory(mgr.getAllocator()), SelfRegion(0) {}
   
   ~BasicStoreManager() {}
 
@@ -128,10 +126,6 @@ private:
 
 StoreManager* clang::CreateBasicStoreManager(GRStateManager& StMgr) {
   return new BasicStoreManager(StMgr);
-}
-
-StoreManager* clang::CreateBasicStoreOldCastManager(GRStateManager& StMgr) {
-  return new BasicStoreManager(StMgr, false);
 }
 
 SVal BasicStoreManager::getLValueVar(const GRState *state, const VarDecl* VD) {

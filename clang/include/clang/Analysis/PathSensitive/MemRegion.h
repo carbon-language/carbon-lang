@@ -46,7 +46,6 @@ public:
                CodeTextRegionKind,
                CompoundLiteralRegionKind,
                StringRegionKind, ElementRegionKind,
-               TypedViewRegionKind,
                // Decl Regions.
                  BEG_DECL_REGIONS,
                   VarRegionKind, FieldRegionKind,
@@ -340,46 +339,6 @@ public:
   }
 };
 
-class TypedViewRegion : public TypedRegion {
-  friend class MemRegionManager;
-  QualType LValueType;
-
-  TypedViewRegion(QualType lvalueType, const MemRegion* sreg)
-    : TypedRegion(sreg, TypedViewRegionKind), LValueType(lvalueType) {}
-
-  static void ProfileRegion(llvm::FoldingSetNodeID& ID, QualType T, 
-                            const MemRegion* superRegion);
-
-public:
-
-  void dumpToStream(llvm::raw_ostream& os) const;
-  
-  QualType getLocationType(ASTContext&) const {
-    return LValueType;
-  }
-
-  QualType getValueType(ASTContext&) const {
-    const PointerType* PTy = LValueType->getAsPointerType();
-    assert(PTy);
-    return PTy->getPointeeType();
-  }
-  
-  bool isBoundable() const {
-    return isa<PointerType>(LValueType);
-  }  
-
-  void Profile(llvm::FoldingSetNodeID& ID) const {
-    ProfileRegion(ID, LValueType, superRegion);
-  }
-
-  static bool classof(const MemRegion* R) {
-    return R->getKind() == TypedViewRegionKind;
-  }
-  
-  const MemRegion *removeViews() const;
-};
-  
-
 /// CompoundLiteralRegion - A memory region representing a compound literal.
 ///   Compound literals are essentially temporaries that are stack allocated
 ///   or in the global constant pool.
@@ -575,22 +534,10 @@ public:
   
 template<typename RegionTy>
 const RegionTy* MemRegion::getAs() const {
-  const MemRegion *R = this;
+  if (const RegionTy* RT = dyn_cast<RegionTy>(this))
+    return RT;
   
-  do {
-    if (const RegionTy* RT = dyn_cast<RegionTy>(R))
-      return RT;
-    
-    if (const TypedViewRegion *TR = dyn_cast<TypedViewRegion>(R)) {
-      R = TR->getSuperRegion();
-      continue;
-    }
-    
-    break;
-  }
-  while (R);
-  
-  return 0;
+  return NULL;
 }
 
 //===----------------------------------------------------------------------===//
@@ -680,10 +627,6 @@ public:
   ///   object).
   ObjCIvarRegion* getObjCIvarRegion(const ObjCIvarDecl* ivd,
                                     const MemRegion* superRegion);
-
-  TypedViewRegion* getTypedViewRegion(QualType LValueType,
-                                      const MemRegion* superRegion);
-
   CodeTextRegion* getCodeTextRegion(SymbolRef sym, QualType t);
   CodeTextRegion* getCodeTextRegion(const FunctionDecl* fd, QualType t);
   

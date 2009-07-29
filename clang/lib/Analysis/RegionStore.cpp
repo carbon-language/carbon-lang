@@ -170,7 +170,7 @@ class VISIBILITY_HIDDEN RegionStoreManager : public StoreManager {
 
 public:
   RegionStoreManager(GRStateManager& mgr, const RegionStoreFeatures &f) 
-    : StoreManager(mgr, true),
+    : StoreManager(mgr),
       Features(f),
       RBFactory(mgr.getAllocator()),
       RVFactory(mgr.getAllocator()),
@@ -679,10 +679,6 @@ SVal RegionStoreManager::getSizeInElements(const GRState *state,
       return ValMgr.makeIntVal(Str->getByteLength()+1, false);
     }
       
-      // TypedViewRegion will soon be removed.
-    case MemRegion::TypedViewRegionKind:
-      return UnknownVal();
-
     case MemRegion::VarRegionKind: {
       const VarRegion* VR = cast<VarRegion>(R);
       // Get the type of the variable.
@@ -823,10 +819,6 @@ SVal RegionStoreManager::EvalBinOp(const GRState *state,
     case MemRegion::ObjCIvarRegionKind:
       return UnknownVal();
             
-    // TypedViewRegion will soon be removed.
-    case MemRegion::TypedViewRegionKind:
-      return UnknownVal();
-    
     case MemRegion::CodeTextRegionKind:
       // Technically this can happen if people do funny things with casts.
       return UnknownVal();

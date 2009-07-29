@@ -73,10 +73,6 @@ SValuator::CastResult SValuator::EvalCast(SVal val, const GRState *state,
   
   // Check for casts from a region to a specific type.
   if (const MemRegion *R = val.getAsRegion()) {
-    // FIXME: For TypedViewRegions, we should handle the case where the
-    //  underlying symbolic pointer is a function pointer or
-    //  block pointer.
-    
     // FIXME: We should handle the case where we strip off view layers to get
     //  to a desugared type.
     

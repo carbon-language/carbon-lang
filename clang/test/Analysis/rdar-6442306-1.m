@@ -1,5 +1,4 @@
 // RUN: clang-cc -analyze -checker-cfref %s --analyzer-store=basic -verify &&
-// RUN: clang-cc -analyze -checker-cfref %s --analyzer-store=basic-old-cast -verify &&
 // RUN: clang-cc -analyze -checker-cfref %s --analyzer-store=region -verify
 
 typedef int bar_return_t;

@@ -37,12 +37,11 @@ class StoreManager {
 protected:
   ValueManager &ValMgr;
   GRStateManager &StateMgr;
-  const bool UseNewCastRegion;
 
   /// MRMgr - Manages region objects associated with this StoreManager.
   MemRegionManager &MRMgr;
 
-  StoreManager(GRStateManager &stateMgr, bool useNewCastRegion = false);
+  StoreManager(GRStateManager &stateMgr);
 
 protected:
   virtual const GRState *AddRegionView(const GRState *state,
@@ -135,10 +134,7 @@ public:
   ///  a MemRegion* to a specific location type.  'R' is the region being
   ///  casted and 'CastToTy' the result type of the cast.
   CastResult CastRegion(const GRState *state, const MemRegion *region,
-                                QualType CastToTy) {
-    return UseNewCastRegion ? NewCastRegion(state, region, CastToTy)
-                            : OldCastRegion(state, region, CastToTy);
-  }
+                        QualType CastToTy);
   
   virtual const GRState *setCastType(const GRState *state, const MemRegion* R,
                                      QualType T) {
@@ -203,12 +199,6 @@ public:
 private:
   CastResult MakeElementRegion(const GRState *state, const MemRegion *region,
                                QualType pointeeTy, QualType castToTy);
-  
-  CastResult NewCastRegion(const GRState *state, const MemRegion *region,
-                           QualType CastToTy);
-  
-  CastResult OldCastRegion(const GRState *state, const MemRegion *region,
-                           QualType CastToTy);  
 };
 
 // FIXME: Do we still need this?
@@ -229,7 +219,6 @@ public:
 
 // FIXME: Do we need to pass GRStateManager anymore?
 StoreManager *CreateBasicStoreManager(GRStateManager& StMgr);
-StoreManager *CreateBasicStoreOldCastManager(GRStateManager& StMgr);
 StoreManager *CreateRegionStoreManager(GRStateManager& StMgr);
 StoreManager *CreateFieldsOnlyRegionStoreManager(GRStateManager& StMgr);
 

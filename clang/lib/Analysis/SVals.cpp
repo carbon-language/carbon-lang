@@ -73,21 +73,10 @@ const FunctionDecl* SVal::getAsFunctionDecl() const {
 SymbolRef SVal::getAsLocSymbol() const {
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this)) {
     const MemRegion *R = X->getBaseRegion();
-    
-    while (R) {
-      // Blast through region views.
-      if (const TypedViewRegion *View = dyn_cast<TypedViewRegion>(R)) {
-        R = View->getSuperRegion();
-        continue;
-      }
-      if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
-        return SymR->getSymbol();
-      
-      break;
-    }
+    if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
+      return SymR->getSymbol();
   }
-  
-  return 0;
+  return NULL;
 }
 
 /// getAsSymbol - If this Sval wraps a symbol return that SymbolRef.

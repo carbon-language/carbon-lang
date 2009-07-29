@@ -1,7 +1,5 @@
 // RUN: clang-cc -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=basic &&
-// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=basic -analyzer-store=basic-old-cast &&
 // RUN: clang-cc -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=basic &&
-// RUN: clang-cc -analyze -std=gnu99 -checker-cfref -verify %s -analyzer-constraints=range -analyzer-store=basic-old-cast &&
 // RUN: clang-cc -analyze -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -analyzer-purge-dead=false -verify %s &&
 // RUN: clang-cc -analyze -std=gnu99 -checker-cfref -analyzer-store=region -analyzer-constraints=range -verify %s
 
