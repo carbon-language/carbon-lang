@@ -325,7 +325,7 @@ template<class T1, class T2, int I> class A<T1*, T2, I> { }; //#3
 template<class T> class A<int, T*, 5> { }; //#4 
 template<class T1, class T2, int I> class A<T1, T2*, I> { }; //#5 
 
-// Redeclaration of class template partial specializations
+// Redefinition of class template partial specializations
 template<typename T, T N, typename U> class A0;
 
 template<typename T, T N> class A0<T, N, int> { }; // expected-note{{here}}

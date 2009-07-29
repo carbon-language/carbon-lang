@@ -69,13 +69,8 @@ TemplateNameKind Sema::isTemplateName(const IdentifierInfo &II, Scope *S,
 
     // FIXME: What follows is a slightly less gross hack than what used to 
     // follow.
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(IIDecl)) {
-      if (FD->getDescribedFunctionTemplate()) {
-        TemplateResult = TemplateTy::make(FD);
-        return TNK_Function_template;
-      }
-    } else if (OverloadedFunctionDecl *Ovl 
-                 = dyn_cast<OverloadedFunctionDecl>(IIDecl)) {
+    if (OverloadedFunctionDecl *Ovl 
+          = dyn_cast<OverloadedFunctionDecl>(IIDecl)) {
       for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
                                                   FEnd = Ovl->function_end();
            F != FEnd; ++F) {
