@@ -25,75 +25,75 @@ TEST(ConstantsTest, Integer_i1) {
 
   // Input:  @b = constant i1 add(i1 1 , i1 1)
   // Output: @b = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprAdd(One, One));
+  EXPECT_EQ(Zero, ConstantExpr::getAdd(One, One));
 
   // @c = constant i1 add(i1 -1, i1 1)
   // @c = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprAdd(NegOne, One));
+  EXPECT_EQ(Zero, ConstantExpr::getAdd(NegOne, One));
 
   // @d = constant i1 add(i1 -1, i1 -1)
   // @d = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprAdd(NegOne, NegOne));
+  EXPECT_EQ(Zero, ConstantExpr::getAdd(NegOne, NegOne));
 
   // @e = constant i1 sub(i1 -1, i1 1)
   // @e = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprSub(NegOne, One));
+  EXPECT_EQ(Zero, ConstantExpr::getSub(NegOne, One));
 
   // @f = constant i1 sub(i1 1 , i1 -1)
   // @f = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprSub(One, NegOne));
+  EXPECT_EQ(Zero, ConstantExpr::getSub(One, NegOne));
 
   // @g = constant i1 sub(i1 1 , i1 1)
   // @g = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprSub(One, One));
+  EXPECT_EQ(Zero, ConstantExpr::getSub(One, One));
 
   // @h = constant i1 shl(i1 1 , i1 1)  ; undefined
   // @h = constant i1 undef
-  EXPECT_EQ(Undef, getGlobalContext().getConstantExprShl(One, One));
+  EXPECT_EQ(Undef, ConstantExpr::getShl(One, One));
 
   // @i = constant i1 shl(i1 1 , i1 0)
   // @i = constant i1 true
-  EXPECT_EQ(One, getGlobalContext().getConstantExprShl(One, Zero));
+  EXPECT_EQ(One, ConstantExpr::getShl(One, Zero));
 
   // @j = constant i1 lshr(i1 1, i1 1)  ; undefined
   // @j = constant i1 undef
-  EXPECT_EQ(Undef, getGlobalContext().getConstantExprLShr(One, One));
+  EXPECT_EQ(Undef, ConstantExpr::getLShr(One, One));
 
   // @m = constant i1 ashr(i1 1, i1 1)  ; undefined
   // @m = constant i1 undef
-  EXPECT_EQ(Undef, getGlobalContext().getConstantExprAShr(One, One));
+  EXPECT_EQ(Undef, ConstantExpr::getAShr(One, One));
 
   // @n = constant i1 mul(i1 -1, i1 1)
   // @n = constant i1 true
-  EXPECT_EQ(One, getGlobalContext().getConstantExprMul(NegOne, One));
+  EXPECT_EQ(One, ConstantExpr::getMul(NegOne, One));
 
   // @o = constant i1 sdiv(i1 -1, i1 1) ; overflow
   // @o = constant i1 true
-  EXPECT_EQ(One, getGlobalContext().getConstantExprSDiv(NegOne, One));
+  EXPECT_EQ(One, ConstantExpr::getSDiv(NegOne, One));
 
   // @p = constant i1 sdiv(i1 1 , i1 -1); overflow
   // @p = constant i1 true
-  EXPECT_EQ(One, getGlobalContext().getConstantExprSDiv(One, NegOne));
+  EXPECT_EQ(One, ConstantExpr::getSDiv(One, NegOne));
 
   // @q = constant i1 udiv(i1 -1, i1 1)
   // @q = constant i1 true
-  EXPECT_EQ(One, getGlobalContext().getConstantExprUDiv(NegOne, One));
+  EXPECT_EQ(One, ConstantExpr::getUDiv(NegOne, One));
 
   // @r = constant i1 udiv(i1 1, i1 -1)
   // @r = constant i1 true
-  EXPECT_EQ(One, getGlobalContext().getConstantExprUDiv(One, NegOne));
+  EXPECT_EQ(One, ConstantExpr::getUDiv(One, NegOne));
 
   // @s = constant i1 srem(i1 -1, i1 1) ; overflow
   // @s = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprSRem(NegOne, One));
+  EXPECT_EQ(Zero, ConstantExpr::getSRem(NegOne, One));
 
   // @t = constant i1 urem(i1 -1, i1 1)
   // @t = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprURem(NegOne, One));
+  EXPECT_EQ(Zero, ConstantExpr::getURem(NegOne, One));
 
   // @u = constant i1 srem(i1  1, i1 -1) ; overflow
   // @u = constant i1 false
-  EXPECT_EQ(Zero, getGlobalContext().getConstantExprSRem(One, NegOne));
+  EXPECT_EQ(Zero, ConstantExpr::getSRem(One, NegOne));
 }
 
 TEST(ConstantsTest, IntSigns) {
