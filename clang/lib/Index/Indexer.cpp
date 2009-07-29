@@ -57,31 +57,3 @@ void Indexer::GetTranslationUnitsFor(Entity Ent,
   for (TUSetTy::iterator I = Set.begin(), E = Set.end(); I != E; ++I)
     Handler.Handle(*I);
 }
-
-static Indexer::TUSetTy EmptySet;
-
-Indexer::translation_unit_iterator
-Indexer::translation_units_begin(Entity Ent) const {
-  MapTy::iterator I = Map.find(Ent);
-  if (I == Map.end())
-    return EmptySet.begin();
-  
-   return I->second.begin();
-}
-
-Indexer::translation_unit_iterator
-Indexer::translation_units_end(Entity Ent) const {
-  MapTy::iterator I = Map.find(Ent);
-  if (I == Map.end())
-    return EmptySet.end();
-
-  return I->second.end();
-}
-
-bool Indexer::translation_units_empty(Entity Ent) const {
-  MapTy::iterator I = Map.find(Ent);
-  if (I == Map.end())
-    return true;
-
-  return I->second.begin() == I->second.end();
-}

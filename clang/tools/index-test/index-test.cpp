@@ -38,6 +38,7 @@
 #include "clang/Index/TranslationUnit.h"
 #include "clang/Index/ASTLocation.h"
 #include "clang/Index/DeclReferenceMap.h"
+#include "clang/Index/Handlers.h"
 #include "clang/Index/Utils.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
@@ -155,12 +156,13 @@ static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
   if (Ent.isInvalid() || Ent.isInternalToTU())
     return ProcessDecl(D);
 
+  Storing<TranslationUnitHandler> TURes;
+  Idxer.GetTranslationUnitsFor(Ent, TURes);
+
   // Find the "same" Decl in other translation units and print information.
-  for (Indexer::translation_unit_iterator
-         I = Idxer.translation_units_begin(Ent),
-         E = Idxer.translation_units_end(Ent); I != E; ++I) {
-    TUnit *TU = static_cast<TUnit*>(*I);
-    Decl *OtherD = Ent.getDecl(TU->getASTContext());
+  for (Storing<TranslationUnitHandler>::iterator
+         I = TURes.begin(), E = TURes.end(); I != E; ++I) {
+    Decl *OtherD = Ent.getDecl((*I)->getASTContext());
     assert(OtherD && "Couldn't resolve Entity");
     ProcessDecl(OtherD);
   }

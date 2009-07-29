@@ -40,12 +40,6 @@ public:
   virtual void GetTranslationUnitsFor(Entity Ent,
                                       TranslationUnitHandler &Handler);
 
-  typedef TUSetTy::iterator translation_unit_iterator;
-
-  translation_unit_iterator translation_units_begin(Entity Ent) const;
-  translation_unit_iterator translation_units_end(Entity Ent) const;
-  bool translation_units_empty(Entity Ent) const;
-
 private:
   Program &Prog;
   MapTy Map;
