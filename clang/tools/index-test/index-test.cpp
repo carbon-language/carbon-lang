@@ -38,6 +38,7 @@
 #include "clang/Index/TranslationUnit.h"
 #include "clang/Index/ASTLocation.h"
 #include "clang/Index/DeclReferenceMap.h"
+#include "clang/Index/SelectorMap.h"
 #include "clang/Index/Handlers.h"
 #include "clang/Index/Analyzer.h"
 #include "clang/Index/Utils.h"
@@ -58,14 +59,18 @@ using namespace idx;
 class TUnit : public TranslationUnit {
 public:
   TUnit(ASTUnit *ast, const std::string &filename)
-    : AST(ast), Filename(filename), DeclRefMap(ast->getASTContext()) { }
+    : AST(ast), Filename(filename),
+      DeclRefMap(ast->getASTContext()),
+      SelMap(ast->getASTContext()) { }
   
   virtual ASTContext &getASTContext() { return AST->getASTContext(); }
   virtual DeclReferenceMap &getDeclReferenceMap() { return DeclRefMap; }
+  virtual SelectorMap &getSelectorMap() { return SelMap; }
   
   llvm::OwningPtr<ASTUnit> AST;
   std::string Filename;
   DeclReferenceMap DeclRefMap;
+  SelectorMap SelMap;
 };
 
 static llvm::cl::list<ParsedSourceLocation>
