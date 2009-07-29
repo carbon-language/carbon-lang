@@ -70,6 +70,8 @@ public:
   std::string getString() const;
   
   const MemSpaceRegion *getMemorySpace() const;
+  
+  const MemRegion *getBaseRegion() const;
     
   bool hasStackStorage() const;
   

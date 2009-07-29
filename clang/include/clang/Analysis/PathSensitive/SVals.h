@@ -371,6 +371,8 @@ public:
     return static_cast<MemRegion*>(Data);
   }
   
+  const MemRegion* getBaseRegion() const;
+  
   template <typename REGION>
   const REGION* getRegionAs() const {
     return llvm::dyn_cast<REGION>(getRegion());

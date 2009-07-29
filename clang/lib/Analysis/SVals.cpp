@@ -72,7 +72,7 @@ const FunctionDecl* SVal::getAsFunctionDecl() const {
 // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
 SymbolRef SVal::getAsLocSymbol() const {
   if (const loc::MemRegionVal *X = dyn_cast<loc::MemRegionVal>(this)) {
-    const MemRegion *R = X->getRegion();
+    const MemRegion *R = X->getBaseRegion();
     
     while (R) {
       // Blast through region views.
@@ -80,7 +80,6 @@ SymbolRef SVal::getAsLocSymbol() const {
         R = View->getSuperRegion();
         continue;
       }
-      
       if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(R))
         return SymR->getSymbol();
       
@@ -119,6 +118,11 @@ const MemRegion *SVal::getAsRegion() const {
     return X->getRegion();
 
   return 0;
+}
+
+const MemRegion *loc::MemRegionVal::getBaseRegion() const {
+  const MemRegion *R = getRegion();
+  return R ?  R->getBaseRegion() : NULL;
 }
 
 bool SVal::symbol_iterator::operator==(const symbol_iterator &X) const {
