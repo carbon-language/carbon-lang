@@ -685,9 +685,6 @@ TagDecl* TagDecl::getDefinition(ASTContext& C) const {
   if (isDefinition())
     return const_cast<TagDecl *>(this);
   
-  if (TagType *TagT = const_cast<TagType *>(TypeForDecl->getAs<TagType>()))
-    return TagT->getDecl()->isDefinition()? TagT->getDecl() : 0;
-  
   for (redecl_iterator R = redecls_begin(), REnd = redecls_end(); 
        R != REnd; ++R)
     if (R->isDefinition())
