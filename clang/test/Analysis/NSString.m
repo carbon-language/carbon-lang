@@ -286,6 +286,12 @@ void testOSCompareAndSwap32Barrier() {
     [old release];
 }
 
+int testOSCompareAndSwap32Barrier_id(Class myclass, id xclass) {
+  if (OSAtomicCompareAndSwap32Barrier(0, (int32_t) myclass, (int32_t*) &xclass))
+    return 1;
+  return 0;
+}  
+
 void test_objc_atomicCompareAndSwap() {
   NSString *old = 0;
   NSString *s = [[NSString alloc] init]; // no-warning
