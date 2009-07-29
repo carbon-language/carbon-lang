@@ -1782,14 +1782,18 @@ public:
 class TemplateSpecializationType 
   : public Type, public llvm::FoldingSetNode {
 
-  /// \brief The name of the template being specialized.
+  // FIXME: Currently needed for profiling expressions; can we avoid this?
+  ASTContext &Context;
+    
+    /// \brief The name of the template being specialized.
   TemplateName Template;
 
   /// \brief - The number of template arguments named in this class
   /// template specialization.
   unsigned NumArgs;
 
-  TemplateSpecializationType(TemplateName T,
+  TemplateSpecializationType(ASTContext &Context,
+                             TemplateName T,
                              const TemplateArgument *Args,
                              unsigned NumArgs, QualType Canon);
 
@@ -1833,11 +1837,12 @@ public:
                                    const PrintingPolicy &Policy) const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, Template, getArgs(), NumArgs);
+    Profile(ID, Template, getArgs(), NumArgs, Context);
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, TemplateName T,
-                      const TemplateArgument *Args, unsigned NumArgs);
+                      const TemplateArgument *Args, unsigned NumArgs,
+                      ASTContext &Context);
 
   static bool classof(const Type *T) { 
     return T->getTypeClass() == TemplateSpecialization; 

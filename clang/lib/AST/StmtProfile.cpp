@@ -107,6 +107,10 @@ void StmtProfiler::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
 }
 
+void StmtProfiler::VisitSwitchStmt(SwitchStmt *S) {
+  VisitStmt(S);
+}
+
 void StmtProfiler::VisitWhileStmt(WhileStmt *S) {
   VisitStmt(S);
 }
@@ -330,6 +334,10 @@ void StmtProfiler::VisitGNUNullExpr(GNUNullExpr *S) {
   VisitExpr(S);
 }
 
+void StmtProfiler::VisitVAArgExpr(VAArgExpr *S) {
+  VisitExpr(S);
+}
+
 void StmtProfiler::VisitInitListExpr(InitListExpr *S) {
   if (S->getSyntacticForm()) {
     VisitInitListExpr(S->getSyntacticForm());
@@ -414,6 +422,10 @@ void StmtProfiler::VisitCXXConstCastExpr(CXXConstCastExpr *S) {
 void StmtProfiler::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *S) {
   VisitExpr(S);
   ID.AddBoolean(S->getValue());
+}
+
+void StmtProfiler::VisitCXXNullPtrLiteralExpr(CXXNullPtrLiteralExpr *S) {
+  VisitExpr(S);
 }
 
 void StmtProfiler::VisitCXXTypeidExpr(CXXTypeidExpr *S) {
@@ -595,6 +607,7 @@ void StmtProfiler::VisitDecl(Decl *D) {
         = dyn_cast_or_null<NonTypeTemplateParmDecl>(D)) {
       ID.AddInteger(NTTP->getDepth());
       ID.AddInteger(NTTP->getIndex());
+      VisitType(NTTP->getType());
       return;
     }
     

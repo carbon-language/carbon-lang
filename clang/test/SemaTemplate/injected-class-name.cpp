@@ -19,7 +19,7 @@ X<float>::X<int> xi = x;
 
 // [temp.local]p1:
 
-// FIXME: test non-type and template template parameters
+// FIXME: test template template parameters
 template<typename T, typename U>
 struct X0 {
   typedef T type;
@@ -38,3 +38,11 @@ struct X0 {
   void f2(X0&);
   void f2(const ::X0<type, U_type2>&); // expected-error{{redecl}}
 };
+
+template<typename T, T N>
+struct X1 {
+  void f0(const X1&); // expected-note{{here}}
+  void f0(X1&);
+  void f0(const X1<T, N>&); // expected-error{{redecl}}
+};
+

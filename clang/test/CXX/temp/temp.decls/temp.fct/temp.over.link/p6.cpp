@@ -1,5 +1,4 @@
 // RUN: clang-cc -fsyntax-only -verify %s
-// XFAIL
 
 template<int N, int M>
 struct A0 {

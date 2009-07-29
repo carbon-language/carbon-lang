@@ -1682,7 +1682,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
     // exists.
     llvm::FoldingSetNodeID ID;
     TemplateSpecializationType::Profile(ID, CanonTemplate, 
-                                        CanonArgs.data(), NumArgs);
+                                        CanonArgs.data(), NumArgs, *this);
 
     void *InsertPos = 0;
     TemplateSpecializationType *Spec
@@ -1693,7 +1693,7 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
       void *Mem = Allocate((sizeof(TemplateSpecializationType) + 
                             sizeof(TemplateArgument) * NumArgs),
                            8);
-      Spec = new (Mem) TemplateSpecializationType(CanonTemplate, 
+      Spec = new (Mem) TemplateSpecializationType(*this, CanonTemplate, 
                                                   CanonArgs.data(), NumArgs,
                                                   QualType());
       Types.push_back(Spec);
@@ -1713,7 +1713,8 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                         sizeof(TemplateArgument) * NumArgs),
                        8);
   TemplateSpecializationType *Spec 
-    = new (Mem) TemplateSpecializationType(Template, Args, NumArgs, Canon);
+    = new (Mem) TemplateSpecializationType(*this, Template, Args, NumArgs, 
+                                           Canon);
   
   Types.push_back(Spec);
   return QualType(Spec, 0);  

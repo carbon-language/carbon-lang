@@ -1033,11 +1033,13 @@ anyDependentTemplateArguments(const TemplateArgument *Args, unsigned NumArgs) {
 }
 
 TemplateSpecializationType::
-TemplateSpecializationType(TemplateName T, const TemplateArgument *Args,
+TemplateSpecializationType(ASTContext &Context, TemplateName T, 
+                           const TemplateArgument *Args,
                            unsigned NumArgs, QualType Canon)
   : Type(TemplateSpecialization, 
          Canon.isNull()? QualType(this, 0) : Canon,
          T.isDependent() || anyDependentTemplateArguments(Args, NumArgs)),
+    Context(Context),
     Template(T), NumArgs(NumArgs)
 {
   assert((!Canon.isNull() || 
@@ -1074,10 +1076,11 @@ void
 TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID, 
                                     TemplateName T, 
                                     const TemplateArgument *Args, 
-                                    unsigned NumArgs) {
+                                    unsigned NumArgs,
+                                    ASTContext &Context) {
   T.Profile(ID);
   for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
-    Args[Idx].Profile(ID);
+    Args[Idx].Profile(ID, Context);
 }
 
 const Type *QualifierSet::strip(const Type* T) {

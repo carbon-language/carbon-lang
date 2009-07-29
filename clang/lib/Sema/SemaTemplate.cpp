@@ -930,7 +930,8 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
     llvm::FoldingSetNodeID ID;
     ClassTemplateSpecializationDecl::Profile(ID, 
                                              Converted.getFlatArguments(),
-                                             Converted.flatSize());
+                                             Converted.flatSize(),
+                                             Context);
     void *InsertPos = 0;
     ClassTemplateSpecializationDecl *Decl
       = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);
@@ -2433,12 +2434,14 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     // FIXME: Template parameter list matters, too
     ClassTemplatePartialSpecializationDecl::Profile(ID, 
                                                    Converted.getFlatArguments(),
-                                                   Converted.flatSize());
+                                                   Converted.flatSize(),
+                                                    Context);
   }
   else
     ClassTemplateSpecializationDecl::Profile(ID,
                                              Converted.getFlatArguments(),
-                                             Converted.flatSize());
+                                             Converted.flatSize(),
+                                             Context);
   void *InsertPos = 0;
   ClassTemplateSpecializationDecl *PrevDecl = 0;
 
@@ -2703,7 +2706,8 @@ Sema::ActOnExplicitInstantiation(Scope *S, SourceLocation TemplateLoc,
   llvm::FoldingSetNodeID ID;
   ClassTemplateSpecializationDecl::Profile(ID, 
                                            Converted.getFlatArguments(),
-                                           Converted.flatSize());
+                                           Converted.flatSize(),
+                                           Context);
   void *InsertPos = 0;
   ClassTemplateSpecializationDecl *PrevDecl
     = ClassTemplate->getSpecializations().FindNodeOrInsertPos(ID, InsertPos);

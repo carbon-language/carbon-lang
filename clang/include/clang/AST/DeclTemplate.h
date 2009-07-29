@@ -315,7 +315,7 @@ public:
   void setArgumentPack(TemplateArgument *Args, unsigned NumArgs, bool CopyArgs);
   
   /// \brief Used to insert TemplateArguments into FoldingSets.
-  void Profile(llvm::FoldingSetNodeID &ID) const {
+  void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context) const {
     ID.AddInteger(Kind);
     switch (Kind) {
       case Null:
@@ -326,7 +326,7 @@ public:
         break;
         
       case Declaration:
-        ID.AddPointer(getAsDecl()); // FIXME: Must be canonical!
+        ID.AddPointer(getAsDecl()? getAsDecl()->getCanonicalDecl() : 0);
         break;
         
       case Integral:
@@ -335,14 +335,13 @@ public:
         break;
         
       case Expression:
-        // FIXME: We need a canonical representation of expressions.
-        ID.AddPointer(getAsExpr());
+        getAsExpr()->Profile(ID, Context, true);
         break;
         
       case Pack:
         ID.AddInteger(Args.NumArgs);
         for (unsigned I = 0; I != Args.NumArgs; ++I)
-          Args.Args[I].Profile(ID);
+          Args.Args[I].Profile(ID, Context);
     }
   }
 };
@@ -534,15 +533,16 @@ public:
   
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, TemplateArguments->getFlatArgumentList(), 
-            TemplateArguments->flat_size());    
+            TemplateArguments->flat_size(),
+            Function->getASTContext());    
   }
   
   static void 
   Profile(llvm::FoldingSetNodeID &ID, const TemplateArgument *TemplateArgs, 
-          unsigned NumTemplateArgs) {
+          unsigned NumTemplateArgs, ASTContext &Context) {
     ID.AddInteger(NumTemplateArgs);
     for (unsigned Arg = 0; Arg != NumTemplateArgs; ++Arg)
-      TemplateArgs[Arg].Profile(ID);
+      TemplateArgs[Arg].Profile(ID, Context);
   }  
 };
   
@@ -918,15 +918,16 @@ public:
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    Profile(ID, TemplateArgs.getFlatArgumentList(), TemplateArgs.flat_size());
+    Profile(ID, TemplateArgs.getFlatArgumentList(), TemplateArgs.flat_size(),
+            getASTContext());
   }
 
   static void 
   Profile(llvm::FoldingSetNodeID &ID, const TemplateArgument *TemplateArgs, 
-          unsigned NumTemplateArgs) {
+          unsigned NumTemplateArgs, ASTContext &Context) {
     ID.AddInteger(NumTemplateArgs);
     for (unsigned Arg = 0; Arg != NumTemplateArgs; ++Arg)
-      TemplateArgs[Arg].Profile(ID);
+      TemplateArgs[Arg].Profile(ID, Context);
   }
 
   static bool classof(const Decl *D) { 

@@ -321,7 +321,8 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D) {
     llvm::FoldingSetNodeID ID;
     FunctionTemplateSpecializationInfo::Profile(ID, 
                                           TemplateArgs.getFlatArgumentList(),
-                                                TemplateArgs.flat_size());
+                                                TemplateArgs.flat_size(),
+                                                SemaRef.Context);
     
     FunctionTemplateSpecializationInfo *Info 
       = FunctionTemplate->getSpecializations().FindNodeOrInsertPos(ID, 
