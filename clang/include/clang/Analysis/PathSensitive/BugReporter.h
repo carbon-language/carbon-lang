@@ -199,8 +199,7 @@ public:
   const std::string& getCategory() const { return Category; }
 
   virtual void FlushReports(BugReporter& BR);  
-  void AddReport(BugReport* BR);  
-  
+
   typedef llvm::FoldingSet<BugReportEquivClass>::iterator iterator;
   iterator begin() { return EQClasses.begin(); }
   iterator end() { return EQClasses.end(); }
