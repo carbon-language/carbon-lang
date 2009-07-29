@@ -143,9 +143,21 @@ class VISIBILITY_HIDDEN DwarfException : public Dwarf {
 
   /// ComputeActionsTable - Compute the actions table and gather the first
   /// action index for each landing pad site.
-  unsigned ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LP,
+  unsigned ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*>&LPs,
                                SmallVectorImpl<ActionEntry> &Actions,
                                SmallVectorImpl<unsigned> &FirstActions);
+
+  /// ComputeCallSiteTable - Compute the call-site table.  The entry for an
+  /// invoke has a try-range containing the call, a non-zero landing pad and an
+  /// appropriate action.  The entry for an ordinary call has a try-range
+  /// containing the call and zero for the landing pad and the action.  Calls
+  /// marked 'nounwind' have no entry and must not be contained in the try-range
+  /// of any entry - they form gaps in the table.  Entries must be ordered by
+  /// try-range address.
+  void ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
+                            const RangeMapType &PadMap,
+                            const SmallVectorImpl<const LandingPadInfo *> &LPs,
+                            const SmallVectorImpl<unsigned> &FirstActions);
   void EmitExceptionTable();
 
 public:

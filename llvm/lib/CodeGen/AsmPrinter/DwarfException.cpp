@@ -286,11 +286,10 @@ bool DwarfException::PadLT(const LandingPadInfo *L, const LandingPadInfo *R) {
 
 /// ComputeActionsTable - Compute the actions table and gather the first action
 /// index for each landing pad site.
-unsigned
-DwarfException::ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*>
-                                      &LandingPads,
-                                    SmallVectorImpl<ActionEntry> &Actions,
-                                    SmallVectorImpl<unsigned> &FirstActions) {
+unsigned DwarfException::
+ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
+                    SmallVectorImpl<ActionEntry> &Actions,
+                    SmallVectorImpl<unsigned> &FirstActions) {
   const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
 
   // Negative type IDs index into FilterIds. Positive type IDs index into
@@ -374,50 +373,18 @@ DwarfException::ComputeActionsTable(const SmallVectorImpl<const LandingPadInfo*>
   return SizeActions;
 }
 
-void DwarfException::EmitExceptionTable() {
-  const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
-  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
-  const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
-  if (PadInfos.empty()) return;
-
-  // Sort the landing pads in order of their type ids.  This is used to fold
-  // duplicate actions.
-  SmallVector<const LandingPadInfo *, 64> LandingPads;
-  LandingPads.reserve(PadInfos.size());
-
-  for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
-    LandingPads.push_back(&PadInfos[i]);
-
-  std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
-
-  // Compute the actions table and gather the first action index for each
-  // landing pad site.
-  SmallVector<ActionEntry, 32> Actions;
-  SmallVector<unsigned, 64> FirstActions;
-  unsigned SizeActions = ComputeActionsTable(LandingPads, Actions, FirstActions);
-
-  // Invokes and nounwind calls have entries in PadMap (due to being bracketed
-  // by try-range labels when lowered).  Ordinary calls do not, so appropriate
-  // try-ranges for them need be deduced.
-  RangeMapType PadMap;
-  for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
-    const LandingPadInfo *LandingPad = LandingPads[i];
-    for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
-      unsigned BeginLabel = LandingPad->BeginLabels[j];
-      assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
-      PadRange P = { i, j };
-      PadMap[BeginLabel] = P;
-    }
-  }
-
-  // Compute the call-site table.  The entry for an invoke has a try-range
-  // containing the call, a non-zero landing pad and an appropriate action.  The
-  // entry for an ordinary call has a try-range containing the call and zero for
-  // the landing pad and the action.  Calls marked 'nounwind' have no entry and
-  // must not be contained in the try-range of any entry - they form gaps in the
-  // table.  Entries must be ordered by try-range address.
-  SmallVector<CallSiteEntry, 64> CallSites;
-
+/// ComputeCallSiteTable - Compute the call-site table.  The entry for an invoke
+/// has a try-range containing the call, a non-zero landing pad and an
+/// appropriate action.  The entry for an ordinary call has a try-range
+/// containing the call and zero for the landing pad and the action.  Calls
+/// marked 'nounwind' have no entry and must not be contained in the try-range
+/// of any entry - they form gaps in the table.  Entries must be ordered by
+/// try-range address.
+void DwarfException::
+ComputeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
+                     const RangeMapType &PadMap,
+                     const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
+                     const SmallVectorImpl<unsigned> &FirstActions) {
   // The end label of the previous invoke or nounwind try-range.
   unsigned LastLabel = 0;
 
@@ -501,6 +468,47 @@ void DwarfException::EmitExceptionTable() {
     CallSiteEntry Site = {LastLabel, 0, 0, 0};
     CallSites.push_back(Site);
   }
+}
+
+void DwarfException::EmitExceptionTable() {
+  const std::vector<GlobalVariable *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
+  const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
+  if (PadInfos.empty()) return;
+
+  // Sort the landing pads in order of their type ids.  This is used to fold
+  // duplicate actions.
+  SmallVector<const LandingPadInfo *, 64> LandingPads;
+  LandingPads.reserve(PadInfos.size());
+
+  for (unsigned i = 0, N = PadInfos.size(); i != N; ++i)
+    LandingPads.push_back(&PadInfos[i]);
+
+  std::sort(LandingPads.begin(), LandingPads.end(), PadLT);
+
+  // Compute the actions table and gather the first action index for each
+  // landing pad site.
+  SmallVector<ActionEntry, 32> Actions;
+  SmallVector<unsigned, 64> FirstActions;
+  unsigned SizeActions = ComputeActionsTable(LandingPads, Actions, FirstActions);
+
+  // Invokes and nounwind calls have entries in PadMap (due to being bracketed
+  // by try-range labels when lowered).  Ordinary calls do not, so appropriate
+  // try-ranges for them need be deduced.
+  RangeMapType PadMap;
+  for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
+    const LandingPadInfo *LandingPad = LandingPads[i];
+    for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
+      unsigned BeginLabel = LandingPad->BeginLabels[j];
+      assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
+      PadRange P = { i, j };
+      PadMap[BeginLabel] = P;
+    }
+  }
+
+  // Compute the call-site table.
+  SmallVector<CallSiteEntry, 64> CallSites;
+  ComputeCallSiteTable(CallSites, PadMap, LandingPads, FirstActions);
 
   // Final tallies.
 
@@ -545,6 +553,7 @@ void DwarfException::EmitExceptionTable() {
   Asm->EmitInt8(dwarf::DW_EH_PE_omit);
   Asm->EOL("LPStart format (DW_EH_PE_omit)");
 
+#if 0
   if (!TypeInfos.empty() || !FilterIds.empty()) {
     Asm->EmitInt8(TAI->PreferredEHDataFormat(DwarfEncoding::Data, true));
     // FIXME: The comment here should correspond with what PreferredEHDataFormat
@@ -556,6 +565,10 @@ void DwarfException::EmitExceptionTable() {
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
     Asm->EOL("TType format (DW_EH_PE_omit)");
   }
+#else
+  Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
+  Asm->EOL("TType format (DW_EH_PE_absptr)");
+#endif
 
   Asm->EmitInt8(dwarf::DW_EH_PE_udata4);
   Asm->EOL("Call site format (DW_EH_PE_udata4)");
