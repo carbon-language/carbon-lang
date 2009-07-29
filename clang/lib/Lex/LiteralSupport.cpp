@@ -688,7 +688,8 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
     else
       PP.Diag(Loc, diag::ext_four_char_character_literal);
     IsMultiChar = true;
-  }
+  } else
+    IsMultiChar = false;
 
   // Transfer the value from APInt to uint64_t
   Value = LitVal.getZExtValue();
