@@ -411,6 +411,27 @@ def COPY_TO_REGCLASS : Instruction {
 }
 
 //===----------------------------------------------------------------------===//
+// AsmParser - This class can be implemented by targets that wish to implement 
+// .s file parsing.
+//
+// Subtargets can have multiple different assembly parsers (e.g. AT&T vs Intel 
+// syntax on X86 for example).
+//
+class AsmParser {
+  // AsmWriterClassName - This specifies the suffix to use for the asmwriter
+  // class.  Generated AsmWriter classes are always prefixed with the target
+  // name.
+  string AsmParserClassName  = "AsmParser";
+ 
+  // Variant - AsmParsers can be of multiple different variants.  Variants are
+  // used to support targets that need to parser multiple formats for the 
+  // assembly language.
+  int Variant = 0;
+}
+def DefaultAsmParser : AsmParser;
+
+
+//===----------------------------------------------------------------------===//
 // AsmWriter - This class can be implemented by targets that need to customize
 // the format of the .s file writer.
 //
@@ -444,6 +465,9 @@ def DefaultAsmWriter : AsmWriter;
 class Target {
   // InstructionSet - Instruction set description for this target.
   InstrInfo InstructionSet;
+
+  // AssemblyParsers - The AsmParser instances available for this target.
+  list<AsmParser> AssemblyParsers = [DefaultAsmParser];
 
   // AssemblyWriters - The AsmWriter instances available for this target.
   list<AsmWriter> AssemblyWriters = [DefaultAsmWriter];

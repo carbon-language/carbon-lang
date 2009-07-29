@@ -23,6 +23,10 @@
 using namespace llvm;
 
 static cl::opt<unsigned>
+AsmParserNum("asmparsernum", cl::init(0),
+             cl::desc("Make -gen-asm-parser emit assembly parser #N"));
+
+static cl::opt<unsigned>
 AsmWriterNum("asmwriternum", cl::init(0),
              cl::desc("Make -gen-asm-writer emit assembly writer #N"));
 
@@ -131,6 +135,15 @@ std::string CodeGenTarget::getInstNamespace() const {
 
 Record *CodeGenTarget::getInstructionSet() const {
   return TargetRec->getValueAsDef("InstructionSet");
+}
+
+/// getAsmParser - Return the AssemblyParser definition for this target.
+///
+Record *CodeGenTarget::getAsmParser() const {
+  std::vector<Record*> LI = TargetRec->getValueAsListOfDefs("AssemblyParsers");
+  if (AsmParserNum >= LI.size())
+    throw "Target does not have an AsmParser #" + utostr(AsmParserNum) + "!";
+  return LI[AsmParserNum];
 }
 
 /// getAsmWriter - Return the AssemblyWriter definition for this target.

@@ -42,6 +42,13 @@ private:
   bool ParseOperand(X86Operand &Op);
 
   bool ParseMemOperand(X86Operand &Op);
+  
+  /// @name Auto-generated Match Functions
+  /// {  
+
+  bool MatchRegisterName(const StringRef &Name, unsigned &RegNo);
+
+  /// }
 
 public:
   X86ATTAsmParser(const Target &T, MCAsmParser &_Parser)
@@ -118,10 +125,17 @@ struct X86Operand {
 //
 
 bool X86ATTAsmParser::ParseRegister(X86Operand &Op) {
-  assert(getLexer().is(AsmToken::Register) && "Invalid token kind!");
+  AsmToken Tok = getLexer().getTok();
+  assert(Tok.is(AsmToken::Register) && "Invalid token kind!");
 
-  // FIXME: Decode register number.
-  Op = X86Operand::CreateReg(123);
+  // FIXME: Validate register for the current architecture; we have to do
+  // validation later, so maybe there is no need for this here.
+  unsigned RegNo;
+  assert(Tok.getString().startswith("%") && "Invalid register name!");
+  if (MatchRegisterName(Tok.getString().substr(1), RegNo))
+    return Error(Tok.getLoc(), "invalid register name");
+
+  Op = X86Operand::CreateReg(RegNo);
   getLexer().Lex(); // Eat register token.
 
   return false;
@@ -308,3 +322,5 @@ extern "C" void LLVMInitializeX86AsmParser() {
   RegisterAsmParser<X86ATTAsmParser> X(TheX86_32Target);
   RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
 }
+
+#include "X86GenAsmMatcher.inc"

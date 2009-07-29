@@ -20,17 +20,17 @@ using namespace llvm;
 void AsmMatcherEmitter::run(raw_ostream &OS) {
   CodeGenTarget Target;
   const std::vector<CodeGenRegister> &Registers = Target.getRegisters();
+  Record *AsmParser = Target.getAsmParser();
+  std::string ClassName = AsmParser->getValueAsString("AsmParserClassName");
 
   std::string Namespace = Registers[0].TheDef->getValueAsString("Namespace");
 
   EmitSourceFileHeader("Assembly Matcher Source Fragment", OS);
-  OS << "namespace llvm {\n\n";
 
   // Emit the function to match a register name to number.
 
-  if (!Namespace.empty())
-    OS << "namespace " << Namespace << " {\n";
-  OS << "bool MatchRegisterName(const std::string &Name, unsigned &RegNo) {\n";
+  OS << "bool " << Target.getName() << ClassName
+     << "::MatchRegisterName(const StringRef &Name, unsigned &RegNo) {\n";
 
   // FIXME: TableGen should have a fast string matcher generator.
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
@@ -44,8 +44,4 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   }
   OS << "  return true;\n";
   OS << "}\n";
-
-  if (!Namespace.empty())
-    OS << "}\n";
-  OS << "} // End llvm namespace \n";
 }

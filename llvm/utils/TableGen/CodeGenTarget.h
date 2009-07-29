@@ -87,6 +87,10 @@ public:
   ///
   Record *getInstructionSet() const;
 
+  /// getAsmParser - Return the AssemblyParser definition for this target.
+  ///
+  Record *getAsmParser() const;
+
   /// getAsmWriter - Return the AssemblyWriter definition for this target.
   ///
   Record *getAsmWriter() const;
