@@ -19,6 +19,8 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace clang;
 
 Sema::OwningStmtResult Sema::ActOnExprStmt(FullExprArg expr) {
@@ -1243,6 +1245,38 @@ Sema::ActOnCXXCatchBlock(SourceLocation CatchLoc, DeclPtrTy ExDecl,
                                           HandlerBlock.takeAs<Stmt>()));
 }
 
+class TypeWithHandler {
+  QualType t;
+  CXXCatchStmt *stmt;
+public:
+  TypeWithHandler(const QualType &type, CXXCatchStmt *statement)
+  : t(type), stmt(statement) {}
+
+  bool operator<(const TypeWithHandler &y) const {
+    if (t.getTypePtr() < y.t.getTypePtr())
+      return true;
+    else if (t.getTypePtr() > y.t.getTypePtr())
+      return false;
+    else if (t.getCVRQualifiers() < y.t.getCVRQualifiers())
+      return true;
+    else if (t.getCVRQualifiers() < y.t.getCVRQualifiers())
+      return false;
+    else
+      return getTypeSpecStartLoc() < y.getTypeSpecStartLoc();
+  }
+  
+  bool operator==(const TypeWithHandler& other) const {
+    return t.getTypePtr() == other.t.getTypePtr()
+        && t.getCVRQualifiers() == other.t.getCVRQualifiers();
+  }
+  
+  QualType getQualType() const { return t; }
+  CXXCatchStmt *getCatchStmt() const { return stmt; }
+  SourceLocation getTypeSpecStartLoc() const {
+    return stmt->getExceptionDecl()->getTypeSpecStartLoc();
+  }
+};
+
 /// ActOnCXXTryBlock - Takes a try compound-statement and a number of
 /// handlers and creates a try statement from them.
 Action::OwningStmtResult
@@ -1253,13 +1287,44 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, StmtArg TryBlock,
          "The parser shouldn't call this if there are no handlers.");
   Stmt **Handlers = reinterpret_cast<Stmt**>(RawHandlers.get());
 
-  for(unsigned i = 0; i < NumHandlers - 1; ++i) {
+  llvm::SmallVector<TypeWithHandler, 8> TypesWithHandlers;
+  
+  for(unsigned i = 0; i < NumHandlers; ++i) {
     CXXCatchStmt *Handler = llvm::cast<CXXCatchStmt>(Handlers[i]);
-    if (!Handler->getExceptionDecl())
-      return StmtError(Diag(Handler->getLocStart(), diag::err_early_catch_all));
+    if (!Handler->getExceptionDecl()) {
+      if (i < NumHandlers - 1)
+        return StmtError(Diag(Handler->getLocStart(),
+                              diag::err_early_catch_all));
+      
+      continue;
+    }
+    
+    const QualType CaughtType = Handler->getCaughtType();
+    const QualType CanonicalCaughtType = Context.getCanonicalType(CaughtType);
+    TypesWithHandlers.push_back(TypeWithHandler(CanonicalCaughtType, Handler));
   }
-  // FIXME: We should detect handlers for the same type as an earlier one.
-  // This one is rather easy.
+
+  // Detect handlers for the same type as an earlier one.
+  if (NumHandlers > 1) {
+    llvm::array_pod_sort(TypesWithHandlers.begin(), TypesWithHandlers.end());
+    
+    TypeWithHandler prev = TypesWithHandlers[0];
+    for (unsigned i = 1; i < TypesWithHandlers.size(); ++i) {
+      TypeWithHandler curr = TypesWithHandlers[i];
+      
+      if (curr == prev) {
+        Diag(curr.getTypeSpecStartLoc(),
+             diag::warn_exception_caught_by_earlier_handler)
+          << curr.getCatchStmt()->getCaughtType().getAsString();
+        Diag(prev.getTypeSpecStartLoc(),
+             diag::note_previous_exception_handler)
+          << prev.getCatchStmt()->getCaughtType().getAsString();
+      }
+      
+      prev = curr;
+    }
+  }
+  
   // FIXME: We should detect handlers that cannot catch anything because an
   // earlier handler catches a superclass. Need to find a method that is not
   // quadratic for this.
