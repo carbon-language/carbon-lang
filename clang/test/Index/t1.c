@@ -25,5 +25,7 @@ void field_test(void) {
   ms.field_var = 10;
 }
 
+int (^CP)(int) = ^(int x) { return x * global_var; };
+
 // Suppress 'no run line' failure.
 // RUN: true

@@ -2,8 +2,9 @@
 // RUN: clang-cc -emit-pch %S/t2.c -o %t2.ast &&
 
 // RUN: index-test %t1.ast %t2.ast -point-at %S/foo.h:1:14 -print-refs > %t &&
-// RUN: cat %t | count 3 &&
+// RUN: cat %t | count 4 &&
 // RUN: grep 't1.c:4:19,' %t &&
+// RUN: grep 't1.c:28:40,' %t &&
 // RUN: grep 't2.c:6:3,' %t &&
 // RUN: grep 't2.c:7:12,' %t &&
 

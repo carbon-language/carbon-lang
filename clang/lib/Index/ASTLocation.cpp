@@ -103,6 +103,18 @@ Decl *ASTLocation::FindImmediateParent(Decl *D, Stmt *Node) {
     return isContainedInStatement(Node, MD->getBody()) ? D : 0;
   }
 
+  if (BlockDecl *BD = dyn_cast<BlockDecl>(D)) {
+    for (DeclContext::decl_iterator
+           I = BD->decls_begin(), E = BD->decls_end(); I != E; ++I) {
+      Decl *Child = FindImmediateParent(*I, Node);
+      if (Child)
+        return Child;
+    }
+
+    assert(BD->getBody() && "BlockDecl without body ?");
+    return isContainedInStatement(Node, BD->getBody()) ? D : 0;
+  }
+
   return 0;
 }
 

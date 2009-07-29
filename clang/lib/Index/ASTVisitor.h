@@ -94,6 +94,10 @@ public:
       Visit(*I);
   }
 
+  void VisitBlockExpr(BlockExpr *Node) {
+    Visit(Node->getBlockDecl());
+  }
+
   void VisitStmt(Stmt *Node) {
     for (Stmt::child_iterator
            I = Node->child_begin(), E = Node->child_end(); I != E; ++I)
