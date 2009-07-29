@@ -57,6 +57,13 @@ public:
   /// \brief Find the Decl that can be referred to by this entity.
   Decl *getDecl(ASTContext &AST) const;
 
+  /// \brief If this Entity represents a declaration that is internal to its
+  /// translation unit, getInternalDecl() returns it.
+  Decl *getInternalDecl() const {
+    assert(isInternalToTU() && "This Entity is not internal!");
+    return Val.get<Decl *>();
+  }
+
   /// \brief Get a printable name for debugging purpose.
   std::string getPrintableName() const;
 
