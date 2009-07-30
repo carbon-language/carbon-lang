@@ -314,11 +314,11 @@ def GR8 : RegisterClass<"X86", [i8],  8,
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (!Subtarget.is64Bit())
-        return X86_GR8_AO_32 + (sizeof(X86_GR8_AO_32) / sizeof(unsigned));
+        return array_endof(X86_GR8_AO_32);
       else if (RI->hasFP(MF))
-        return X86_GR8_AO_64_fp + (sizeof(X86_GR8_AO_64_fp) / sizeof(unsigned));
+        return array_endof(X86_GR8_AO_64_fp);
       else
-        return X86_GR8_AO_64 + (sizeof(X86_GR8_AO_64) / sizeof(unsigned));
+        return array_endof(X86_GR8_AO_64);
     }
   }];
 }
@@ -378,14 +378,14 @@ def GR16 : RegisterClass<"X86", [i16], 16,
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (Subtarget.is64Bit()) {
         if (RI->hasFP(MF))
-          return X86_GR16_AO_64_fp+(sizeof(X86_GR16_AO_64_fp)/sizeof(unsigned));
+          return array_endof(X86_GR16_AO_64_fp);
         else
-          return X86_GR16_AO_64 + (sizeof(X86_GR16_AO_64) / sizeof(unsigned));
+          return array_endof(X86_GR16_AO_64);
       } else {
         if (RI->hasFP(MF))
-          return X86_GR16_AO_32_fp+(sizeof(X86_GR16_AO_32_fp)/sizeof(unsigned));
+          return array_endof(X86_GR16_AO_32_fp);
         else
-          return X86_GR16_AO_32 + (sizeof(X86_GR16_AO_32) / sizeof(unsigned));
+          return array_endof(X86_GR16_AO_32);
       }
     }
   }];
@@ -446,14 +446,14 @@ def GR32 : RegisterClass<"X86", [i32], 32,
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (Subtarget.is64Bit()) {
         if (RI->hasFP(MF))
-          return X86_GR32_AO_64_fp+(sizeof(X86_GR32_AO_64_fp)/sizeof(unsigned));
+          return array_endof(X86_GR32_AO_64_fp);
         else
-          return X86_GR32_AO_64 + (sizeof(X86_GR32_AO_64) / sizeof(unsigned));
+          return array_endof(X86_GR32_AO_64);
       } else {
         if (RI->hasFP(MF))
-          return X86_GR32_AO_32_fp+(sizeof(X86_GR32_AO_32_fp)/sizeof(unsigned));
+          return array_endof(X86_GR32_AO_32_fp);
         else
-          return X86_GR32_AO_32 + (sizeof(X86_GR32_AO_32) / sizeof(unsigned));
+          return array_endof(X86_GR32_AO_32);
       }
     }
   }];
@@ -549,14 +549,11 @@ def GR8_NOREX : RegisterClass<"X86", [i8], 8,
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
       if (!Subtarget.is64Bit())
-        return X86_GR8_NOREX_AO_32 +
-               (sizeof(X86_GR8_NOREX_AO_32) / sizeof(unsigned));
+        return array_endof(X86_GR8_NOREX_AO_32);
       else if (RI->hasFP(MF))
-        return X86_GR8_NOREX_AO_64_fp +
-               (sizeof(X86_GR8_NOREX_AO_64_fp) / sizeof(unsigned));
+        return array_endof(X86_GR8_NOREX_AO_64_fp);
       else
-        return X86_GR8_NOREX_AO_64 +
-               (sizeof(X86_GR8_NOREX_AO_64) / sizeof(unsigned));
+        return array_endof(X86_GR8_NOREX_AO_64);
     }
   }];
 }
@@ -593,9 +590,9 @@ def GR16_NOREX : RegisterClass<"X86", [i16], 16,
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       if (RI->hasFP(MF))
-        return X86_GR16_AO_fp+(sizeof(X86_GR16_AO_fp)/sizeof(unsigned));
+        return array_endof(X86_GR16_AO_fp);
       else
-        return X86_GR16_AO + (sizeof(X86_GR16_AO) / sizeof(unsigned));
+        return array_endof(X86_GR16_AO);
     }
   }];
 }
@@ -633,11 +630,9 @@ def GR32_NOREX : RegisterClass<"X86", [i32], 32,
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       if (RI->hasFP(MF))
-        return X86_GR32_NOREX_AO_fp +
-               (sizeof(X86_GR32_NOREX_AO_fp) / sizeof(unsigned));
+        return array_endof(X86_GR32_NOREX_AO_fp);
       else
-        return X86_GR32_NOREX_AO +
-               (sizeof(X86_GR32_NOREX_AO) / sizeof(unsigned));
+        return array_endof(X86_GR32_NOREX_AO);
     }
   }];
 }
@@ -676,11 +671,9 @@ def GR64_NOREX : RegisterClass<"X86", [i64], 64,
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
       if (RI->hasFP(MF))
-        return X86_GR64_NOREX_AO_fp +
-               (sizeof(X86_GR64_NOREX_AO_fp) / sizeof(unsigned));
+        return array_endof(X86_GR64_NOREX_AO_fp);
       else
-        return X86_GR64_NOREX_AO +
-               (sizeof(X86_GR64_NOREX_AO) / sizeof(unsigned));
+        return array_endof(X86_GR64_NOREX_AO);
     }
   }];
 }
