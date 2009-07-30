@@ -366,16 +366,14 @@ static void ActionDisplayLiveVariables(AnalysisManager& mgr) {
 static void ActionCFGDump(AnalysisManager& mgr) {
   if (CFG* c = mgr.getCFG()) {
     mgr.DisplayFunction();
-    LangOptions LO;  // FIXME!
-    c->dump(LO);
+    c->dump(mgr.getLangOptions());
   }
 }
 
 static void ActionCFGView(AnalysisManager& mgr) {
   if (CFG* c = mgr.getCFG()) {
     mgr.DisplayFunction();
-    LangOptions LO; // FIXME!
-    c->viewCFG(LO);
+    c->viewCFG(mgr.getLangOptions());
   }
 }
 
