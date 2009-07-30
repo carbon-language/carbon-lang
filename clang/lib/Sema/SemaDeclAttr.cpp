@@ -1818,10 +1818,57 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *Attr
   }
 }
 
+/// DeclClonePragmaWeak - clone existing decl (maybe definition),
+/// #pragma weak needs a non-definition decl and source may not have one
+static NamedDecl * DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II)
+{
+  NamedDecl *NewD = 0;
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
+    NewD = FunctionDecl::Create(FD->getASTContext(), FD->getDeclContext(),
+                                FD->getLocation(), DeclarationName(II),
+                                FD->getType());
+  } else if (VarDecl *VD = dyn_cast<VarDecl>(ND)) {
+    NewD = VarDecl::Create(VD->getASTContext(), VD->getDeclContext(),
+                           VD->getLocation(), II,
+                           VD->getType(), VD->getStorageClass());
+  }
+  return NewD;
+}
+
+/// DeclApplyPragmaWeak - A declaration (maybe definition) needs #pragma weak
+/// applied to it, possibly with an alias.
+void Sema::DeclApplyPragmaWeak(NamedDecl *ND, WeakInfo &W) {
+  assert(isa<FunctionDecl>(ND) || isa<VarDecl>(ND));
+  if (!W.getUsed()) { // only do this once
+    W.setUsed(true);
+    if (W.getAlias()) { // clone decl, impersonate __attribute(weak,alias(...))
+      IdentifierInfo *NDId = ND->getIdentifier();
+      NamedDecl *NewD = DeclClonePragmaWeak(ND, W.getAlias());
+      NewD->addAttr(::new (Context) AliasAttr(NDId->getName()));
+      NewD->addAttr(::new (Context) WeakAttr());
+      ND->getDeclContext()->addDecl(NewD);
+    } else { // just add weak to existing
+      ND->addAttr(::new (Context) WeakAttr());
+    }
+  }
+}
+
 /// ProcessDeclAttributes - Given a declarator (PD) with attributes indicated in
 /// it, apply them to D.  This is a bit tricky because PD can have attributes
 /// specified in many different places, and we need to find and apply them all.
 void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
+  // Handle #pragma weak
+  if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+    if (ND->hasLinkage()) {
+      WeakInfo W = WeakUndeclaredIdentifiers.lookup(ND->getIdentifier());
+      if (W != WeakInfo()) {
+        // Declaration referenced by #pragma weak before it was declared
+        DeclApplyPragmaWeak(ND, W);
+        WeakUndeclaredIdentifiers[ND->getIdentifier()] = W;
+      }
+    }
+  }
+
   // Apply decl attributes from the DeclSpec if present.
   if (const AttributeList *Attrs = PD.getDeclSpec().getAttributes())
     ProcessDeclAttributeList(S, D, Attrs);

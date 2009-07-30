@@ -10,7 +10,7 @@ int x;
 extern int z;
 /* expected-warning {{expected identifier in '#pragma weak'}}*/ #pragma weak z = =
 /* expected-warning {{expected identifier in '#pragma weak'}}*/ #pragma weak z =
-#pragma weak z = y
+/* expected-warning {{weak identifier 'y' never declared}} */ #pragma weak z = y
 
 extern int a;
 /* expected-warning {{extra tokens at end of '#pragma weak'}}*/ #pragma weak a b

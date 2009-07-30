@@ -545,6 +545,8 @@ def warn_attribute_weak_on_field : Warning<
   "__weak attribute cannot be specified on a field declaration">;
 def warn_attribute_weak_on_local : Warning<
   "__weak attribute cannot be specified on an automatic variable">;
+def warn_weak_identifier_undeclared : Warning<
+  "weak identifier %0 never declared">;
 def err_attribute_weak_static : Error<
   "weak declaration of '%0' must be public">;
 def warn_attribute_weak_import_invalid_on_definition : Warning<

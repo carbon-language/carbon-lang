@@ -231,6 +231,29 @@ public:
   /// a given variable will be recorded here.
   llvm::DenseMap<DeclarationName, VarDecl *> TentativeDefinitions;
 
+  /// WeakUndeclaredIdentifiers - Identifiers contained in
+  /// #pragma weak before declared. rare. may alias another
+  /// identifier, declared or undeclared
+  class WeakInfo {
+    IdentifierInfo *alias;  // alias (optional)
+    SourceLocation loc;     // for diagnostics
+    bool used;              // identifier later declared?
+  public:
+    WeakInfo()
+      : alias(0), loc(SourceLocation()), used(false) {}
+    WeakInfo(IdentifierInfo *Alias, SourceLocation Loc)
+      : alias(Alias), loc(Loc), used(false) {}
+    inline IdentifierInfo * getAlias() const { return alias; }
+    inline SourceLocation getLocation() const { return loc; }
+    void setUsed(bool Used=true) { used = Used; }
+    inline bool getUsed() { return used; }
+    bool operator==(WeakInfo RHS) const {
+      return alias == RHS.getAlias() && loc == RHS.getLocation();
+    }
+    bool operator!=(WeakInfo RHS) const { return !(*this == RHS); }
+  };
+  llvm::DenseMap<IdentifierInfo*,WeakInfo> WeakUndeclaredIdentifiers;
+
   IdentifierResolver IdResolver;
 
   /// Translation Unit Scope - useful to Objective-C actions that need
@@ -2920,6 +2943,8 @@ public:
                                  SourceLocation PragmaLoc, 
                                  SourceLocation LParenLoc,
                                  SourceLocation RParenLoc);
+
+  void DeclApplyPragmaWeak(NamedDecl *D, WeakInfo &W);
 
   /// ActOnPragmaWeakID - Called on well formed #pragma weak ident.
   virtual void ActOnPragmaWeakID(IdentifierInfo* WeakName,

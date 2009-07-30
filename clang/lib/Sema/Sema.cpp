@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "llvm/ADT/DenseMap.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
@@ -242,6 +243,15 @@ void Sema::ActOnEndOfTranslationUnit() {
   // template instantiations earlier.
   PerformPendingImplicitInstantiations();
   
+  // check for #pragma weak identifiers that were never declared
+  for (llvm::DenseMap<IdentifierInfo*,WeakInfo>::iterator
+        I = WeakUndeclaredIdentifiers.begin(),
+        E = WeakUndeclaredIdentifiers.end(); I != E; ++I) {
+      if (!I->second.getUsed())
+        Diag(I->second.getLocation(), diag::warn_weak_identifier_undeclared)
+          << I->first;
+  }
+
   if (!CompleteTranslationUnit)
     return;
 

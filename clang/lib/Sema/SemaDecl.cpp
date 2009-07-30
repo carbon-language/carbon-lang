@@ -5198,13 +5198,13 @@ void Sema::ActOnPragmaWeakID(IdentifierInfo* Name,
                              SourceLocation NameLoc) {
   Decl *PrevDecl = LookupName(TUScope, Name, LookupOrdinaryName);
 
-  // FIXME: This implementation is an ugly hack!
   if (PrevDecl) {
     PrevDecl->addAttr(::new (Context) WeakAttr());
-    return;
+  } else {
+    (void)WeakUndeclaredIdentifiers.insert(
+      std::pair<IdentifierInfo*,WeakInfo>
+        (Name, WeakInfo((IdentifierInfo*)0, NameLoc)));
   }
-  Diag(PragmaLoc, diag::err_unsupported_pragma_weak);
-  return;
 }
 
 void Sema::ActOnPragmaWeakAlias(IdentifierInfo* Name,
@@ -5212,14 +5212,15 @@ void Sema::ActOnPragmaWeakAlias(IdentifierInfo* Name,
                                 SourceLocation PragmaLoc,
                                 SourceLocation NameLoc,
                                 SourceLocation AliasNameLoc) {
-  Decl *PrevDecl = LookupName(TUScope, Name, LookupOrdinaryName);
+  Decl *PrevDecl = LookupName(TUScope, AliasName, LookupOrdinaryName);
+  WeakInfo W = WeakInfo(Name, NameLoc);
 
-  // FIXME: This implementation is an ugly hack!
   if (PrevDecl) {
-    PrevDecl->addAttr(::new (Context) AliasAttr(AliasName->getName()));
-    PrevDecl->addAttr(::new (Context) WeakAttr());
-    return;
+    if (!PrevDecl->hasAttr<AliasAttr>())
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(PrevDecl))
+        DeclApplyPragmaWeak(ND, W);
+  } else {
+    (void)WeakUndeclaredIdentifiers.insert(
+      std::pair<IdentifierInfo*,WeakInfo>(AliasName, W));
   }
-  Diag(PragmaLoc, diag::err_unsupported_pragma_weak);
-  return;
 }
