@@ -293,7 +293,7 @@ GlobalAlias *Module::getNamedAlias(const StringRef &Name) const {
 /// specified name. This method returns null if a MDNode with the specified
 /// name is not found.
 NamedMDNode *Module::getNamedMetadata(const StringRef &Name) const {
-  return dyn_cast_or_null<NamedMDNode>(getNamedValue(Name));
+  return dyn_cast_or_null<NamedMDNode>(getValueSymbolTable().lookup(Name));
 }
 
 //===----------------------------------------------------------------------===//
