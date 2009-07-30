@@ -252,22 +252,22 @@ namespace llvm {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    Twine(const uint32_t &Val) 
+    explicit Twine(const uint32_t &Val) 
       : LHS(&Val), LHSKind(UDec32Kind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as a signed decimal integer.
-    Twine(const int32_t &Val) 
+    explicit Twine(const int32_t &Val) 
       : LHS(&Val), LHSKind(SDec32Kind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    Twine(const uint64_t &Val) 
+    explicit Twine(const uint64_t &Val) 
       : LHS(&Val), LHSKind(UDec64Kind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as a signed decimal integer.
-    Twine(const int64_t &Val) 
+    explicit Twine(const int64_t &Val) 
       : LHS(&Val), LHSKind(SDec64Kind), RHSKind(EmptyKind) {
     }
 

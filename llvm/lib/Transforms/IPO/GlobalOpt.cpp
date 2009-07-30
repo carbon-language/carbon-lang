@@ -494,7 +494,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
       GlobalVariable *NGV = new GlobalVariable(Context,
                                                STy->getElementType(i), false,
                                                GlobalVariable::InternalLinkage,
-                                               In, GV->getName()+"."+i,
+                                               In, GV->getName()+"."+Twine(i),
                                                GV->isThreadLocal(),
                                               GV->getType()->getAddressSpace());
       Globals.insert(GV, NGV);
@@ -530,7 +530,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
       GlobalVariable *NGV = new GlobalVariable(Context,
                                                STy->getElementType(), false,
                                                GlobalVariable::InternalLinkage,
-                                               In, GV->getName()+"."+i,
+                                               In, GV->getName()+"."+Twine(i),
                                                GV->isThreadLocal(),
                                               GV->getType()->getAddressSpace());
       Globals.insert(GV, NGV);
@@ -584,7 +584,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
         for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i)
           Idxs.push_back(GEPI->getOperand(i));
         NewPtr = GetElementPtrInst::Create(NewPtr, Idxs.begin(), Idxs.end(),
-                                           GEPI->getName()+"."+Val, GEPI);
+                                           GEPI->getName()+"."+Twine(Val),GEPI);
       }
     }
     GEP->replaceAllUsesWith(NewPtr);
@@ -1152,7 +1152,7 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
     Result = new LoadInst(GetHeapSROAValue(LI->getOperand(0), FieldNo,
                                            InsertedScalarizedValues,
                                            PHIsToRewrite, Context),
-                          LI->getName()+".f" + FieldNo, LI);
+                          LI->getName()+".f"+Twine(FieldNo), LI);
   } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
     // PN's type is pointer to struct.  Make a new PHI of pointer to struct
     // field.
@@ -1161,7 +1161,7 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
     
     Result =
      PHINode::Create(PointerType::getUnqual(ST->getElementType(FieldNo)),
-                            PN->getName()+".f"+FieldNo, PN);
+                     PN->getName()+".f"+Twine(FieldNo), PN);
     PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
   } else {
     llvm_unreachable("Unknown usable value");
@@ -1287,12 +1287,12 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
       new GlobalVariable(*GV->getParent(),
                          PFieldTy, false, GlobalValue::InternalLinkage,
                          Context.getNullValue(PFieldTy),
-                         GV->getName() + ".f" + FieldNo, GV,
+                         GV->getName() + ".f" + Twine(FieldNo), GV,
                          GV->isThreadLocal());
     FieldGlobals.push_back(NGV);
     
     MallocInst *NMI = new MallocInst(FieldTy, MI->getArraySize(),
-                                     MI->getName() + ".f" + FieldNo,MI);
+                                     MI->getName() + ".f" + Twine(FieldNo), MI);
     FieldMallocs.push_back(NMI);
     new StoreInst(NMI, NGV, MI);
   }

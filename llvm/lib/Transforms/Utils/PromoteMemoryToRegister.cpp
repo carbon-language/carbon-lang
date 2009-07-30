@@ -867,7 +867,7 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   // Create a PhiNode using the dereferenced type... and add the phi-node to the
   // BasicBlock.
   PN = PHINode::Create(Allocas[AllocaNo]->getAllocatedType(),
-                       Allocas[AllocaNo]->getName() + "." + Version++, 
+                       Allocas[AllocaNo]->getName() + "." + Twine(Version++), 
                        BB->begin());
   ++NumPHIInsert;
   PhiToAllocaMap[PN] = AllocaNo;

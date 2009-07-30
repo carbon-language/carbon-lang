@@ -764,9 +764,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
         Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
         Value *Idx = 
           GetElementPtrInst::Create(TheAlloca, Idxs, Idxs+2,
-                                    TheAlloca->getName()+"."+i, 
+                                    TheAlloca->getName()+"."+Twine(i), 
                                     InsertPt);
-        I2->setName(I->getName()+"."+i);
+        I2->setName(I->getName()+"."+Twine(i));
         new StoreInst(I2++, Idx, InsertPt);
       }
 
