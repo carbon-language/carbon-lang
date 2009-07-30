@@ -252,7 +252,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       OS << "  // " << Name
          << " Sub-register Classes...\n"
          << "  static const TargetRegisterClass* const "
-         << Name << "SubRegClasses [] = {\n    ";
+         << Name << "SubRegClasses[] = {\n    ";
 
       bool Empty = true;
 
@@ -298,7 +298,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       OS << "  // " << Name
          << " Super-register Classes...\n"
          << "  static const TargetRegisterClass* const "
-         << Name << "SuperRegClasses [] = {\n    ";
+         << Name << "SuperRegClasses[] = {\n    ";
 
       bool Empty = true;
       std::map<unsigned, std::set<unsigned> >::iterator I =
@@ -334,7 +334,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       OS << "  // " << Name 
          << " Register Class sub-classes...\n"
          << "  static const TargetRegisterClass* const "
-         << Name << "Subclasses [] = {\n    ";
+         << Name << "Subclasses[] = {\n    ";
 
       bool Empty = true;
       for (unsigned rc2 = 0, e2 = RegisterClasses.size(); rc2 != e2; ++rc2) {
@@ -382,7 +382,7 @@ void RegisterInfoEmitter::run(raw_ostream &OS) {
       OS << "  // " << Name 
          << " Register Class super-classes...\n"
          << "  static const TargetRegisterClass* const "
-         << Name << "Superclasses [] = {\n    ";
+         << Name << "Superclasses[] = {\n    ";
 
       bool Empty = true;
       std::map<unsigned, std::set<unsigned> >::iterator I =
