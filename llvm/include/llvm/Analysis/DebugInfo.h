@@ -633,6 +633,12 @@ namespace llvm {
     /// enumerateFuncStart - Enumberate DbgFuncStartInst.
     void enumerateFuncStart(DbgFuncStartInst *FSI);
 
+    /// enumerateRegionStart - Enumerate DbgRegionStart.
+    void enumerateRegionStart(DbgRegionStartInst *DRS);
+
+    /// enumerateRegionEnd - Enumerate DbgRegionEnd.
+    void enumerateRegionEnd(DbgRegionEndInst *DRE);
+
     /// addCompileUnit - Add compile unit into CUs.
     bool addCompileUnit(DICompileUnit CU);
     

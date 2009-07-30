@@ -920,6 +920,10 @@ void DebugInfoEnumerator::enumerateModule(Module &M) {
           enumerateStopPoint(SPI);
         else if (DbgFuncStartInst *FSI = dyn_cast<DbgFuncStartInst>(BI))
           enumerateFuncStart(FSI);
+        else if (DbgRegionStartInst *DRS = dyn_cast<DbgRegionStartInst>(BI))
+          enumerateRegionStart(DRS);
+        else if (DbgRegionEndInst *DRE = dyn_cast<DbgRegionEndInst>(BI))
+          enumerateRegionEnd(DRE);
       }
   
   for (Module::global_iterator GVI = M.global_begin(), GVE = M.global_end();
@@ -965,8 +969,10 @@ void DebugInfoEnumerator::enumerateType(DIType DT) {
   }
 }
 
-/// enumerateSubprogram - Enumberate DISubprogram.
+/// enumerateSubprogram - Enumerate DISubprogram.
 void DebugInfoEnumerator::enumerateSubprogram(DISubprogram SP) {
+  if (SP.isNull())
+    return;
   if (!addSubprogram(SP))
     return;
   addCompileUnit(SP.getCompileUnit());
@@ -979,9 +985,21 @@ void DebugInfoEnumerator::enumerateStopPoint(DbgStopPointInst *SPI) {
   addCompileUnit(DICompileUnit(Context));
 }
 
-/// enumerateFuncStart - Enumberate DbgFuncStartInst.
+/// enumerateFuncStart - Enumerate DbgFuncStartInst.
 void DebugInfoEnumerator::enumerateFuncStart(DbgFuncStartInst *FSI) {
   GlobalVariable *SP = dyn_cast<GlobalVariable>(FSI->getSubprogram());
+  enumerateSubprogram(DISubprogram(SP));
+}
+
+/// enumerateRegionStart - Enumerate DbgRegionStart.
+void DebugInfoEnumerator::enumerateRegionStart(DbgRegionStartInst *DRS) {
+  GlobalVariable *SP = dyn_cast<GlobalVariable>(DRS->getContext());
+  enumerateSubprogram(DISubprogram(SP));
+}
+
+/// enumerateRegionEnd - Enumerate DbgRegionEnd.
+void DebugInfoEnumerator::enumerateRegionEnd(DbgRegionEndInst *DRE) {
+  GlobalVariable *SP = dyn_cast<GlobalVariable>(DRE->getContext());
   enumerateSubprogram(DISubprogram(SP));
 }
 
