@@ -381,8 +381,6 @@ const llvm::Type *CodeGenTypes::ConvertTagDeclType(const TagDecl *TD) {
 
   // FIXME. This may have to move to a better place.
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TD)) {
-    assert(!RD->isPolymorphic() &&
-           "FIXME: We don't support polymorphic classes yet!");
     for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
          e = RD->bases_end(); i != e; ++i) {
       if (!i->isVirtual()) {

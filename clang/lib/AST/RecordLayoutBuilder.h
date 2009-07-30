@@ -48,6 +48,7 @@ class ASTRecordLayoutBuilder {
   void LayoutFields(const RecordDecl *D);
   void LayoutField(const FieldDecl *D);
 
+  void LayoutVtable(const CXXRecordDecl *RD);
   void LayoutNonVirtualBases(const CXXRecordDecl *RD);
   void LayoutNonVirtualBase(const CXXRecordDecl *RD);
   

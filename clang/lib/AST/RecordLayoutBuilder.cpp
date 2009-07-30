@@ -24,11 +24,19 @@ ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
   : Ctx(Ctx), Size(0), Alignment(8), StructPacking(0), NextOffset(0),
   IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8) {}
 
+void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
+  if (RD->isPolymorphic())
+    {
+      assert (RD->getNumBases() == 0 && "no polymorphic inheritance yet");
+      int AS = 0;
+      UpdateAlignment(Ctx.Target.getPointerAlign(AS));
+      Size += Ctx.Target.getPointerWidth(AS);
+      NextOffset = Size;
+    }
+}
+
 void 
 ASTRecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
-  assert(!RD->isPolymorphic() && 
-         "FIXME: We don't support polymorphic classes yet!");
-  
   for (CXXRecordDecl::base_class_const_iterator i = RD->bases_begin(),
        e = RD->bases_end(); i != e; ++i) {
     if (!i->isVirtual()) {
@@ -74,14 +82,20 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
     UpdateAlignment(AA->getAlignment());
 
   // If this is a C++ class, lay out the nonvirtual bases.
-  if (Ctx.getLangOptions().CPlusPlus)
-    LayoutNonVirtualBases(cast<CXXRecordDecl>(D));
+  if (Ctx.getLangOptions().CPlusPlus) {
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(D);
+    LayoutVtable(RD);
+    LayoutNonVirtualBases(RD);
+
+    assert (RD->getNumVBases() == 0
+            && "FIXME: We don't support virtual bases yet!");
+  }
 
   LayoutFields(D);
   
   NonVirtualSize = Size;
   NonVirtualAlignment = Alignment;
-  
+
   // Finally, round the size of the total struct up to the alignment of the
   // struct itself.
   FinishLayout();
