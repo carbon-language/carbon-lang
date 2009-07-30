@@ -25,6 +25,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/ParentMap.h"
+#include "clang/Analysis/PathSensitive/AnalysisContext.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
@@ -124,42 +125,39 @@ namespace {
     
   
   class VISIBILITY_HIDDEN AnalysisManager : public BugReporterData {
-    Decl* D; Stmt* Body; 
+    AnalysisContextManager ContextMgr;
+    AnalysisContext *CurrentContext;
     
     enum AnalysisScope { ScopeTU, ScopeDecl } AScope;
       
     AnalysisConsumer& C;
     bool DisplayedFunction;
     
-    llvm::OwningPtr<CFG> cfg;
-    llvm::OwningPtr<LiveVariables> liveness;
-    llvm::OwningPtr<ParentMap> PM;
-
     // Configurable components creators.
     StoreManagerCreator CreateStoreMgr;
     ConstraintManagerCreator CreateConstraintMgr;
 
   public:
-    AnalysisManager(AnalysisConsumer& c, Decl* d, Stmt* b, bool displayProgress) 
-      : D(d), Body(b), AScope(ScopeDecl), C(c), 
-        DisplayedFunction(!displayProgress) {
+    AnalysisManager(AnalysisConsumer& c, Decl* d, bool displayProgress)
+      : AScope(ScopeDecl), C(c), DisplayedFunction(!displayProgress) {
       setManagerCreators();
+      CurrentContext = ContextMgr.getContext(d);
     }
     
     AnalysisManager(AnalysisConsumer& c, bool displayProgress) 
-      : D(0), Body(0), AScope(ScopeTU), C(c),
-        DisplayedFunction(!displayProgress) {
+      : AScope(ScopeTU), C(c), DisplayedFunction(!displayProgress) {
       setManagerCreators();
+      CurrentContext = 0;
     }
     
     Decl* getCodeDecl() const { 
       assert (AScope == ScopeDecl);
-      return D;
+      return CurrentContext->getDecl();
     }
     
     Stmt* getBody() const {
       assert (AScope == ScopeDecl);
-      return Body;
+      return CurrentContext->getBody();
     }
     
     StoreManagerCreator getStoreManagerCreator() {
@@ -171,14 +169,15 @@ namespace {
     }
     
     virtual CFG* getCFG() {
-      if (!cfg) cfg.reset(CFG::buildCFG(getBody(), &getContext()));
-      return cfg.get();
+      return CurrentContext->getCFG();
     }
     
     virtual ParentMap& getParentMap() {
-      if (!PM) 
-        PM.reset(new ParentMap(getBody()));
-      return *PM.get();
+      return CurrentContext->getParentMap();
+    }
+
+    virtual LiveVariables* getLiveVariables() {
+      return CurrentContext->getLiveVariables();
     }
     
     virtual ASTContext& getContext() {
@@ -207,19 +206,6 @@ case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
         }
       }
       return C.PD.get();      
-    }
-      
-    virtual LiveVariables* getLiveVariables() {
-      if (!liveness) {
-        CFG* c = getCFG();
-        if (!c) return 0;
-        
-        liveness.reset(new LiveVariables(getContext(), *c));
-        liveness->runOnCFG(*c);
-        liveness->runOnAllBlocks(*c, 0, true);
-      }
-      
-      return liveness.get();
     }
     
     bool shouldVisualizeGraphviz() const { return C.Opts.VisualizeEGDot; }
@@ -381,7 +367,7 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
 
   // Create an AnalysisManager that will manage the state for analyzing
   // this method/function.
-  AnalysisManager mgr(*this, D, Body, Opts.AnalyzerDisplayProgress);
+  AnalysisManager mgr(*this, D, Opts.AnalyzerDisplayProgress);
   
   // Dispatch on the actions.  
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
