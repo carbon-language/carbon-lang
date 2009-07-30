@@ -155,19 +155,61 @@ llvm::Value *CodeGenFunction::LoadCXXThis() {
   return Builder.CreateLoad(LocalDeclMap[CXXThisDecl], "this");
 }
 
+static bool
+GetNestedPaths(llvm::SmallVectorImpl<const CXXRecordDecl *> &NestedBasePaths,
+               const CXXRecordDecl *ClassDecl,
+               const CXXRecordDecl *BaseClassDecl) {
+  assert(!ClassDecl->isPolymorphic() && 
+         "FIXME: We don't support polymorphic classes yet!");
+  for (CXXRecordDecl::base_class_const_iterator i = ClassDecl->bases_begin(),
+      e = ClassDecl->bases_end(); i != e; ++i) {
+    if (i->isVirtual())
+      continue;
+    const CXXRecordDecl *Base = 
+        cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (Base == BaseClassDecl) {
+      NestedBasePaths.push_back(BaseClassDecl);
+      return true;
+    }
+  }
+  // BaseClassDecl not an immediate base of ClassDecl.
+  for (CXXRecordDecl::base_class_const_iterator i = ClassDecl->bases_begin(),
+       e = ClassDecl->bases_end(); i != e; ++i) {
+    if (i->isVirtual())
+      continue;
+    const CXXRecordDecl *Base = 
+      cast<CXXRecordDecl>(i->getType()->getAs<RecordType>()->getDecl());
+    if (GetNestedPaths(NestedBasePaths, Base, BaseClassDecl)) {
+      NestedBasePaths.push_back(Base);
+      return true;
+    }
+  }
+  return false;
+}
+
 llvm::Value *CodeGenFunction::AddressCXXOfBaseClass(llvm::Value *BaseValue,
                                           const CXXRecordDecl *ClassDecl, 
                                           const CXXRecordDecl *BaseClassDecl) {
   if (ClassDecl == BaseClassDecl)
     return BaseValue;
   
+  llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
+  llvm::SmallVector<const CXXRecordDecl *, 16> NestedBasePaths;
+  GetNestedPaths(NestedBasePaths, ClassDecl, BaseClassDecl);
+  assert(NestedBasePaths.size() > 0 && 
+         "AddressCXXOfBaseClass - inheritence path failed");
+  NestedBasePaths.push_back(ClassDecl);
+  uint64_t Offset = 0;
+  
   // Accessing a member of the base class. Must add delata to
   // the load of 'this'.
-  // FIXME. Once type layout is complete, this will probably change.
-  const ASTRecordLayout &Layout = 
-  getContext().getASTRecordLayout(ClassDecl);
-  llvm::Type *I8Ptr = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
-  uint64_t Offset = Layout.getBaseClassOffset(BaseClassDecl) / 8;
+  for (unsigned i = NestedBasePaths.size()-1; i > 0; i--) {
+    const CXXRecordDecl *DerivedClass = NestedBasePaths[i];
+    const CXXRecordDecl *BaseClass = NestedBasePaths[i-1];
+    const ASTRecordLayout &Layout = 
+      getContext().getASTRecordLayout(DerivedClass);
+    Offset += Layout.getBaseClassOffset(BaseClass) / 8;
+  }
   llvm::Value *OffsetVal = 
     llvm::ConstantInt::get(
                   CGM.getTypes().ConvertType(CGM.getContext().LongTy), Offset);
