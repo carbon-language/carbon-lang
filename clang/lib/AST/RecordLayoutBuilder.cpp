@@ -25,7 +25,7 @@ ASTRecordLayoutBuilder::ASTRecordLayoutBuilder(ASTContext &Ctx)
   IsUnion(false), NonVirtualSize(0), NonVirtualAlignment(8) {}
 
 void ASTRecordLayoutBuilder::LayoutVtable(const CXXRecordDecl *RD) {
-  if (RD->isPolymorphic())
+  if (RD->isPolymorphic() || RD->getNumVBases())
     {
       assert (RD->getNumBases() == 0 && "no polymorphic inheritance yet");
       int AS = 0;
