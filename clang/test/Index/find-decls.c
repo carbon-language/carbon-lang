@@ -1,5 +1,5 @@
-// RUN: clang-cc -emit-pch %S/t1.c -o %t1.ast &&
-// RUN: clang-cc -emit-pch %S/t2.c -o %t2.ast &&
+// RUN: clang-cc -fblocks -emit-pch %S/t1.c -o %t1.ast &&
+// RUN: clang-cc -fblocks -emit-pch %S/t2.c -o %t2.ast &&
 
 // RUN: index-test %t1.ast %t2.ast -point-at %S/t1.c:8:7 -print-decls > %t &&
 // RUN: cat %t | count 3 &&
