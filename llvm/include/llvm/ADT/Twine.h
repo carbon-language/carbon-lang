@@ -303,13 +303,6 @@ namespace llvm {
       return Twine(&Val, UHexKind, 0, EmptyKind);
     }
 
-    // Construct a twine to print \arg Val as an unsigned hexadecimal
-    // integer. This routine is provided as a convenience to sign extend values
-    // before printing.
-    static Twine itohexstr(const int64_t &Val) {
-      return Twine(&Val, UHexKind, 0, EmptyKind);
-    }
-
     /// @}
     /// @name String Operations
     /// @{

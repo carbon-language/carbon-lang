@@ -60,8 +60,7 @@ void Twine::printOneChild(raw_ostream &OS, const void *Ptr,
     OS << *static_cast<const int64_t*>(Ptr);
     break;
   case Twine::UHexKind:
-    // FIXME: Add raw_ostream functionality for this.
-    OS << ::utohexstr(*static_cast<const uint64_t*>(Ptr));
+    OS.write_hex(*static_cast<const uint64_t*>(Ptr));
     break;
   }
 }
