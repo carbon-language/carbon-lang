@@ -106,6 +106,12 @@ RValue CodeGenFunction::EmitCXXMemberCallExpr(const CXXMemberCallExpr *CE) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(ME->getMemberDecl());
 
   const FunctionProtoType *FPT = MD->getType()->getAsFunctionProtoType();
+
+  // FIXME: It isn't just virtual as written, but all virtual functions.
+  if (MD->isVirtualAsWritten()) {
+    ErrorUnsupported(CE, "virtual dispatch");
+  }
+
   const llvm::Type *Ty = 
     CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD), 
                                    FPT->isVariadic());
@@ -490,7 +496,9 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
   assert(!ClassDecl->isPolymorphic()
-         && "FIXME. virtual base initialization unsupported");
+         && "FIXME: virtual table initialization unsupported");
+  assert(ClassDecl->getNumVBases() == 0
+         && "FIXME: virtual base initialization unsupported");
   
   for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
        E = CD->init_end();
