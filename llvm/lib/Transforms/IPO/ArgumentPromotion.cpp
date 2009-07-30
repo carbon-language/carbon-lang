@@ -47,7 +47,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 #include <set>
 using namespace llvm;
 
@@ -765,9 +764,9 @@ Function *ArgPromotion::DoPromotion(Function *F,
         Idxs[1] = ConstantInt::get(Type::Int32Ty, i);
         Value *Idx = 
           GetElementPtrInst::Create(TheAlloca, Idxs, Idxs+2,
-                                    TheAlloca->getName()+"."+utostr(i), 
+                                    TheAlloca->getName()+"."+i, 
                                     InsertPt);
-        I2->setName(I->getName()+"."+utostr(i));
+        I2->setName(I->getName()+"."+i);
         new StoreInst(I2++, Idx, InsertPt);
       }
 

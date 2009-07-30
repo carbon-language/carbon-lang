@@ -36,7 +36,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
 using namespace llvm;
@@ -495,7 +494,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
       GlobalVariable *NGV = new GlobalVariable(Context,
                                                STy->getElementType(i), false,
                                                GlobalVariable::InternalLinkage,
-                                               In, GV->getName()+"."+utostr(i),
+                                               In, GV->getName()+"."+i,
                                                GV->isThreadLocal(),
                                               GV->getType()->getAddressSpace());
       Globals.insert(GV, NGV);
@@ -531,7 +530,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
       GlobalVariable *NGV = new GlobalVariable(Context,
                                                STy->getElementType(), false,
                                                GlobalVariable::InternalLinkage,
-                                               In, GV->getName()+"."+utostr(i),
+                                               In, GV->getName()+"."+i,
                                                GV->isThreadLocal(),
                                               GV->getType()->getAddressSpace());
       Globals.insert(GV, NGV);
@@ -585,7 +584,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD,
         for (unsigned i = 3, e = GEPI->getNumOperands(); i != e; ++i)
           Idxs.push_back(GEPI->getOperand(i));
         NewPtr = GetElementPtrInst::Create(NewPtr, Idxs.begin(), Idxs.end(),
-                                           GEPI->getName()+"."+utostr(Val), GEPI);
+                                           GEPI->getName()+"."+Val, GEPI);
       }
     }
     GEP->replaceAllUsesWith(NewPtr);
@@ -1153,7 +1152,7 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
     Result = new LoadInst(GetHeapSROAValue(LI->getOperand(0), FieldNo,
                                            InsertedScalarizedValues,
                                            PHIsToRewrite, Context),
-                          LI->getName()+".f" + utostr(FieldNo), LI);
+                          LI->getName()+".f" + FieldNo, LI);
   } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
     // PN's type is pointer to struct.  Make a new PHI of pointer to struct
     // field.
@@ -1162,7 +1161,7 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
     
     Result =
      PHINode::Create(PointerType::getUnqual(ST->getElementType(FieldNo)),
-                            PN->getName()+".f"+utostr(FieldNo), PN);
+                            PN->getName()+".f"+FieldNo, PN);
     PHIsToRewrite.push_back(std::make_pair(PN, FieldNo));
   } else {
     llvm_unreachable("Unknown usable value");
@@ -1288,12 +1287,12 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI,
       new GlobalVariable(*GV->getParent(),
                          PFieldTy, false, GlobalValue::InternalLinkage,
                          Context.getNullValue(PFieldTy),
-                         GV->getName() + ".f" + utostr(FieldNo), GV,
+                         GV->getName() + ".f" + FieldNo, GV,
                          GV->isThreadLocal());
     FieldGlobals.push_back(NGV);
     
     MallocInst *NMI = new MallocInst(FieldTy, MI->getArraySize(),
-                                     MI->getName() + ".f" + utostr(FieldNo),MI);
+                                     MI->getName() + ".f" + FieldNo,MI);
     FieldMallocs.push_back(NMI);
     new StoreInst(NMI, NGV, MI);
   }

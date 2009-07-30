@@ -30,7 +30,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
@@ -868,8 +867,8 @@ bool PromoteMem2Reg::QueuePhiNode(BasicBlock *BB, unsigned AllocaNo,
   // Create a PhiNode using the dereferenced type... and add the phi-node to the
   // BasicBlock.
   PN = PHINode::Create(Allocas[AllocaNo]->getAllocatedType(),
-                       Allocas[AllocaNo]->getName() + "." +
-                       utostr(Version++), BB->begin());
+                       Allocas[AllocaNo]->getName() + "." + Version++, 
+                       BB->begin());
   ++NumPHIInsert;
   PhiToAllocaMap[PN] = AllocaNo;
   PN->reserveOperandSpace(getNumPreds(BB));

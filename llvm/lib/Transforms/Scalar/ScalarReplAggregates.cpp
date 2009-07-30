@@ -41,7 +41,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
 STATISTIC(NumReplaced,  "Number of allocas broken up");
@@ -336,7 +335,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
     for (unsigned i = 0, e = ST->getNumContainedTypes(); i != e; ++i) {
       AllocaInst *NA = new AllocaInst(ST->getContainedType(i), 0, 
                                       AI->getAlignment(),
-                                      AI->getName() + "." + utostr(i), AI);
+                                      AI->getName() + "." + i, AI);
       ElementAllocas.push_back(NA);
       WorkList.push_back(NA);  // Add to worklist for recursive processing
     }
@@ -346,7 +345,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
     const Type *ElTy = AT->getElementType();
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
       AllocaInst *NA = new AllocaInst(ElTy, 0, AI->getAlignment(),
-                                      AI->getName() + "." + utostr(i), AI);
+                                      AI->getName() + "." + i, AI);
       ElementAllocas.push_back(NA);
       WorkList.push_back(NA);  // Add to worklist for recursive processing
     }
@@ -777,7 +776,7 @@ void SROA::RewriteMemIntrinUserOfAlloca(MemIntrinsic *MI, Instruction *BCInst,
     if (OtherPtr) {
       Value *Idx[2] = { Zero, ConstantInt::get(Type::Int32Ty, i) };
       OtherElt = GetElementPtrInst::Create(OtherPtr, Idx, Idx + 2,
-                                           OtherPtr->getNameStr()+"."+utostr(i),
+                                           OtherPtr->getNameStr()+"."+i,
                                            MI);
       uint64_t EltOffset;
       const PointerType *OtherPtrTy = cast<PointerType>(OtherPtr->getType());

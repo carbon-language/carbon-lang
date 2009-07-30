@@ -35,7 +35,6 @@
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -218,7 +217,7 @@ namespace {
       if (ACPV->hasModifier()) O << "(" << ACPV->getModifier() << ")";
       if (ACPV->getPCAdjustment() != 0) {
         O << "-(" << TAI->getPrivateGlobalPrefix() << "PC"
-          << utostr(ACPV->getLabelId())
+          << ACPV->getLabelId()
           << "+" << (unsigned)ACPV->getPCAdjustment();
          if (ACPV->mustAddCurrentAddress())
            O << "-.";
