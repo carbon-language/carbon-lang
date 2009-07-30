@@ -1932,3 +1932,23 @@ Replacing an icmp+select with a shift should always be considered profitable in
 instcombine.
 
 //===---------------------------------------------------------------------===//
+
+Re-implement atomic builtins __sync_add_and_fetch() and __sync_sub_and_fetch
+properly.
+
+When the return value is not used (i.e. only care about the value in the
+memory), x86 does not have to use add to implement these. Instead, it can use
+add, sub, inc, dec instructions with the "lock" prefix.
+
+This is currently implemented using a bit of instruction selection trick. The
+issue is the target independent pattern produces one output and a chain and we
+want to map it into one that just output a chain. The current trick is to select
+it into a MERGE_VALUES with the first definition being an implicit_def. The
+proper solution is to add new ISD opcodes for the no-output variant. DAG
+combiner can then transform the node before it gets to target node selection.
+
+Problem #2 is we are adding a whole bunch of x86 atomic instructions when in
+fact these instructions are identical to the non-lock versions. We need a way to
+add target specific information to target nodes and have this information
+carried over to machine instructions. Asm printer (or JIT) can use this
+information to add the "lock" prefix.
