@@ -142,8 +142,6 @@ bool RaiseAllocations::runOnModule(Module &M) {
   // Find the malloc/free prototypes...
   doInitialization(M);
   
-  LLVMContext &Context = M.getContext();
-
   bool Changed = false;
 
   // First, process all of the malloc calls...
@@ -233,7 +231,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
 
           // Delete the old call site
           if (I->getType() != Type::VoidTy)
-            I->replaceAllUsesWith(Context.getUndef(I->getType()));
+            I->replaceAllUsesWith(UndefValue::get(I->getType()));
           I->eraseFromParent();
           Changed = true;
           ++NumRaised;

@@ -166,7 +166,7 @@ bool LoopSimplify::runOnFunction(Function &F) {
     // Delete the dead terminator.
     if (AA) AA->deleteValue(TI);
     if (!TI->use_empty())
-      TI->replaceAllUsesWith(F.getContext().getUndef(TI->getType()));
+      TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
     TI->eraseFromParent();
     Changed |= true;
   }

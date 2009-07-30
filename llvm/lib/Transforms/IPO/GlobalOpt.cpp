@@ -269,10 +269,10 @@ static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx,
   } else if (isa<UndefValue>(Agg)) {
     if (const StructType *STy = dyn_cast<StructType>(Agg->getType())) {
       if (IdxV < STy->getNumElements())
-        return Context.getUndef(STy->getElementType(IdxV));
+        return UndefValue::get(STy->getElementType(IdxV));
     } else if (const SequentialType *STy =
                dyn_cast<SequentialType>(Agg->getType())) {
-      return Context.getUndef(STy->getElementType());
+      return UndefValue::get(STy->getElementType());
     }
   }
   return 0;
@@ -844,7 +844,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // FIXME: This new global should have the alignment returned by malloc.  Code
   // could depend on malloc returning large alignment (on the mac, 16 bytes) but
   // this would only guarantee some lower alignment.
-  Constant *Init = Context.getUndef(MI->getAllocatedType());
+  Constant *Init = UndefValue::get(MI->getAllocatedType());
   GlobalVariable *NewGV = new GlobalVariable(*GV->getParent(), 
                                              MI->getAllocatedType(), false,
                                              GlobalValue::InternalLinkage, Init,
@@ -2056,7 +2056,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
         Elts.push_back(Context.getNullValue(STy->getElementType(i)));
     } else if (isa<UndefValue>(Init)) {
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-        Elts.push_back(Context.getUndef(STy->getElementType(i)));
+        Elts.push_back(UndefValue::get(STy->getElementType(i)));
     } else {
       llvm_unreachable("This code is out of sync with "
              " ConstantFoldLoadThroughGEPConstantExpr");
@@ -2083,7 +2083,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
       Constant *Elt = Context.getNullValue(ATy->getElementType());
       Elts.assign(ATy->getNumElements(), Elt);
     } else if (isa<UndefValue>(Init)) {
-      Constant *Elt = Context.getUndef(ATy->getElementType());
+      Constant *Elt = UndefValue::get(ATy->getElementType());
       Elts.assign(ATy->getNumElements(), Elt);
     } else {
       llvm_unreachable("This code is out of sync with "
@@ -2227,7 +2227,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       const Type *Ty = AI->getType()->getElementType();
       AllocaTmps.push_back(new GlobalVariable(Context, Ty, false,
                                               GlobalValue::InternalLinkage,
-                                              Context.getUndef(Ty),
+                                              UndefValue::get(Ty),
                                               AI->getName()));
       InstResult = AllocaTmps.back();     
     } else if (CallInst *CI = dyn_cast<CallInst>(CurInst)) {

@@ -53,7 +53,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
   } else {
     // If this profiling instrumentation doesn't have a constant array, just
     // pass null.
-    Args[2] = Context.getConstantPointerNull(UIntPtr);
+    Args[2] = ConstantPointerNull::get(UIntPtr);
   }
   Args[3] = ConstantInt::get(Type::Int32Ty, NumElements);
 

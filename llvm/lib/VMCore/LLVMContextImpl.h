@@ -74,7 +74,7 @@ template<>
 struct ConvertConstantType<ConstantAggregateZero, Type> {
   static void convert(ConstantAggregateZero *OldC, const Type *NewTy) {
     // Make everyone now use a constant of the new type...
-    Constant *New = NewTy->getContext().getConstantAggregateZero(NewTy);
+    Constant *New = ConstantAggregateZero::get(NewTy);
     assert(New != OldC && "Didn't replace constant??");
     OldC->uncheckedReplaceAllUsesWith(New);
     OldC->destroyConstant();     // This constant is now dead, destroy it.
@@ -461,14 +461,13 @@ class LLVMContextImpl {
   friend class ConstantStruct;
   friend class ConstantArray;
   friend class ConstantVector;
+  friend class ConstantAggregateZero;
 public:
   LLVMContextImpl(LLVMContext &C);
   
   MDString *getMDString(const char *StrBegin, unsigned StrLength);
   
   MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
-  
-  ConstantAggregateZero *getConstantAggregateZero(const Type *Ty);
   
   ConstantInt *getTrue() {
     if (TheTrueVal)
@@ -486,7 +485,6 @@ public:
   
   void erase(MDString *M);
   void erase(MDNode *M);
-  void erase(ConstantAggregateZero *Z);
 };
 
 }

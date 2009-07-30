@@ -305,6 +305,8 @@ protected:
     return User::operator new(s, 0);
   }
 public:
+  static ConstantAggregateZero* get(const Type* Ty);
+  
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return true; }

@@ -263,8 +263,6 @@ void llvm::RecursivelyDeleteTriviallyDeadInstructions(Value *V) {
 /// too, recursively.
 void
 llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
-  LLVMContext &Context = PN->getContext();
-  
   // We can remove a PHI if it is on a cycle in the def-use graph
   // where each node in the cycle has degree one, i.e. only one use,
   // and is an instruction with no side effects.
@@ -281,7 +279,7 @@ llvm::RecursivelyDeleteDeadPHINode(PHINode *PN) {
     if (PHINode *JP = dyn_cast<PHINode>(J))
       if (!PHIs.insert(cast<PHINode>(JP))) {
         // Break the cycle and delete the PHI and its operands.
-        JP->replaceAllUsesWith(Context.getUndef(JP->getType()));
+        JP->replaceAllUsesWith(UndefValue::get(JP->getType()));
         RecursivelyDeleteTriviallyDeadInstructions(JP);
         break;
       }
@@ -301,7 +299,7 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB) {
   while (PHINode *PN = dyn_cast<PHINode>(DestBB->begin())) {
     Value *NewVal = PN->getIncomingValue(0);
     // Replace self referencing PHI with undef, it must be dead.
-    if (NewVal == PN) NewVal = DestBB->getContext().getUndef(PN->getType());
+    if (NewVal == PN) NewVal = UndefValue::get(PN->getType());
     PN->replaceAllUsesWith(NewVal);
     PN->eraseFromParent();
   }

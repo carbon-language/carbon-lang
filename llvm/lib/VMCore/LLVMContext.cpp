@@ -52,11 +52,11 @@ Constant* LLVMContext::getNullValue(const Type* Ty) {
   case Type::PPC_FP128TyID:
     return ConstantFP::get(Ty->getContext(), APFloat(APInt(128, 2, zero)));
   case Type::PointerTyID:
-    return getConstantPointerNull(cast<PointerType>(Ty));
+    return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:
   case Type::ArrayTyID:
   case Type::VectorTyID:
-    return getConstantAggregateZero(Ty);
+    return ConstantAggregateZero::get(Ty);
   default:
     // Function, Label, or Opaque type?
     assert(!"Cannot create a null constant of that type!");
@@ -75,11 +75,6 @@ Constant* LLVMContext::getAllOnesValue(const Type* Ty) {
   return cast<ConstantVector>(ConstantVector::get(Elts));
 }
 
-// UndefValue accessors.
-UndefValue* LLVMContext::getUndef(const Type* Ty) {
-  return UndefValue::get(Ty);
-}
-
 // ConstantInt accessors.
 ConstantInt* LLVMContext::getTrue() {
   assert(this && "Context not initialized!");
@@ -91,16 +86,6 @@ ConstantInt* LLVMContext::getFalse() {
   assert(this && "Context not initialized!");
   assert(pImpl && "Context not initialized!");
   return pImpl->getFalse();
-}
-
-// ConstantPointerNull accessors.
-ConstantPointerNull* LLVMContext::getConstantPointerNull(const PointerType* T) {
-  return ConstantPointerNull::get(T);
-}
-
-// ConstantAggregateZero accessors.
-ConstantAggregateZero* LLVMContext::getConstantAggregateZero(const Type* Ty) {
-  return pImpl->getConstantAggregateZero(Ty);
 }
 
 // MDNode accessors
@@ -119,8 +104,4 @@ void LLVMContext::erase(MDString *M) {
 
 void LLVMContext::erase(MDNode *M) {
   pImpl->erase(M);
-}
-
-void LLVMContext::erase(ConstantAggregateZero *Z) {
-  pImpl->erase(Z);
 }

@@ -497,7 +497,7 @@ Constant *DIFactory::GetStringConstant(const std::string &String) {
   
   // If empty string then use a i8* null instead.
   if (String.empty())
-    return Slot = VMContext.getConstantPointerNull(DestTy);
+    return Slot = ConstantPointerNull::get(DestTy);
 
   // Construct string as an llvm constant.
   Constant *ConstStr = ConstantArray::get(String);

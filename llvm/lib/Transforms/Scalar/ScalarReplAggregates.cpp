@@ -371,7 +371,7 @@ void SROA::DoScalarReplacement(AllocationInst *AI,
     //   %insert = insertvalue { i32, i32 } %insert.0, i32 %load.1, 1 
     // (Also works for arrays instead of structs)
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
-      Value *Insert = Context.getUndef(LI->getType());
+      Value *Insert = UndefValue::get(LI->getType());
       for (unsigned i = 0, e = ElementAllocas.size(); i != e; ++i) {
         Value *Load = new LoadInst(ElementAllocas[i], "load", LI);
         Insert = InsertValueInst::Create(Insert, Load, i, "insert", LI);
@@ -1540,8 +1540,6 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   if (FromVal->getType() == ToType && Offset == 0)
     return FromVal;
 
-  LLVMContext &Context = FromVal->getContext();
-
   // If the result alloca is a vector type, this is either an element
   // access or a bitcast to another vector type of the same size.
   if (const VectorType *VTy = dyn_cast<VectorType>(FromVal->getType())) {
@@ -1568,7 +1566,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   // use insertvalue's to form the FCA.
   if (const StructType *ST = dyn_cast<StructType>(ToType)) {
     const StructLayout &Layout = *TD->getStructLayout(ST);
-    Value *Res = Context.getUndef(ST);
+    Value *Res = UndefValue::get(ST);
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i) {
       Value *Elt = ConvertScalar_ExtractValue(FromVal, ST->getElementType(i),
                                         Offset+Layout.getElementOffsetInBits(i),
@@ -1580,7 +1578,7 @@ Value *SROA::ConvertScalar_ExtractValue(Value *FromVal, const Type *ToType,
   
   if (const ArrayType *AT = dyn_cast<ArrayType>(ToType)) {
     uint64_t EltSize = TD->getTypeAllocSizeInBits(AT->getElementType());
-    Value *Res = Context.getUndef(AT);
+    Value *Res = UndefValue::get(AT);
     for (unsigned i = 0, e = AT->getNumElements(); i != e; ++i) {
       Value *Elt = ConvertScalar_ExtractValue(FromVal, AT->getElementType(),
                                               Offset+i*EltSize, Builder);

@@ -21,7 +21,7 @@ TEST(ConstantsTest, Integer_i1) {
   Constant* Zero = ConstantInt::get(Int1, 0);
   Constant* NegOne = ConstantInt::get(Int1, static_cast<uint64_t>(-1), true);
   EXPECT_EQ(NegOne, ConstantInt::getSigned(Int1, -1));
-  Constant* Undef = getGlobalContext().getUndef(Int1);
+  Constant* Undef = UndefValue::get(Int1);
 
   // Input:  @b = constant i1 add(i1 1 , i1 1)
   // Output: @b = constant i1 false

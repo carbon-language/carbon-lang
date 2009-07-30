@@ -335,7 +335,7 @@ LLVMValueRef LLVMConstAllOnes(LLVMTypeRef Ty) {
 }
 
 LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty) {
-  return wrap(getGlobalContext().getUndef(unwrap(Ty)));
+  return wrap(UndefValue::get(unwrap(Ty)));
 }
 
 int LLVMIsConstant(LLVMValueRef Ty) {
@@ -354,7 +354,7 @@ int LLVMIsUndef(LLVMValueRef Val) {
 
 LLVMValueRef LLVMConstPointerNull(LLVMTypeRef Ty) {
   return
-      wrap(getGlobalContext().getConstantPointerNull(unwrap<PointerType>(Ty)));
+      wrap(ConstantPointerNull::get(unwrap<PointerType>(Ty)));
 }
 
 /*--.. Operations on scalar constants ......................................--*/

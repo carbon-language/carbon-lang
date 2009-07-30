@@ -243,7 +243,7 @@ Value *LCSSA::GetValueForBlock(DomTreeNode *BB, Instruction *OrigInst,
                                DenseMap<DomTreeNode*, Value*> &Phis) {
   // If there is no dominator info for this BB, it is unreachable.
   if (BB == 0)
-    return OrigInst->getContext().getUndef(OrigInst->getType());
+    return UndefValue::get(OrigInst->getType());
                                  
   // If we have already computed this value, return the previously computed val.
   if (Phis.count(BB)) return Phis[BB];

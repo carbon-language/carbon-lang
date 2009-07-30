@@ -521,7 +521,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     if (!TheCall->use_empty()) {
       ReturnInst *R = Returns[0];
       if (TheCall == R->getReturnValue())
-        TheCall->replaceAllUsesWith(Context.getUndef(TheCall->getType()));
+        TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
       else
         TheCall->replaceAllUsesWith(R->getReturnValue());
     }
@@ -614,7 +614,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
     // using the return value of the call with the computed value.
     if (!TheCall->use_empty()) {
       if (TheCall == Returns[0]->getReturnValue())
-        TheCall->replaceAllUsesWith(Context.getUndef(TheCall->getType()));
+        TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
       else
         TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
     }
@@ -634,7 +634,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   } else if (!TheCall->use_empty()) {
     // No returns, but something is using the return value of the call.  Just
     // nuke the result.
-    TheCall->replaceAllUsesWith(Context.getUndef(TheCall->getType()));
+    TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
   }
 
   // Since we are now done with the Call/Invoke, we can delete it.

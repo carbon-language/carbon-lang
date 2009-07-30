@@ -230,7 +230,6 @@ bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
 // order to seamlessly integrate with existing context.
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   Function *F = CI->getCalledFunction();
-  LLVMContext &Context = F->getContext();
   
   assert(F && "CallInst has no function associated with it.");
 
@@ -264,7 +263,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Value *Op0 = CI->getOperand(1);
       ShuffleVectorInst *SI = NULL;
       if (isLoadH || isLoadL) {
-        Value *Op1 = Context.getUndef(Op0->getType());
+        Value *Op1 = UndefValue::get(Op0->getType());
         Value *Addr = new BitCastInst(CI->getOperand(2), 
                                   PointerType::getUnqual(Type::DoubleTy),
                                       "upgraded.", CI);

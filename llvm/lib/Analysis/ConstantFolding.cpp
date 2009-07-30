@@ -286,7 +286,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I, LLVMContext &Context,
                                         const TargetData *TD) {
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (PN->getNumIncomingValues() == 0)
-      return Context.getUndef(PN->getType());
+      return UndefValue::get(PN->getType());
 
     Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
     if (Result == 0) return 0;
@@ -560,7 +560,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
       } else if (isa<ConstantAggregateZero>(C)) {
         C = Context.getNullValue(STy->getElementType(El));
       } else if (isa<UndefValue>(C)) {
-        C = Context.getUndef(STy->getElementType(El));
+        C = UndefValue::get(STy->getElementType(El));
       } else {
         return 0;
       }
@@ -573,7 +573,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
         else if (isa<ConstantAggregateZero>(C))
           C = Context.getNullValue(ATy->getElementType());
         else if (isa<UndefValue>(C))
-          C = Context.getUndef(ATy->getElementType());
+          C = UndefValue::get(ATy->getElementType());
         else
           return 0;
       } else if (const VectorType *PTy = dyn_cast<VectorType>(*I)) {
@@ -584,7 +584,7 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
         else if (isa<ConstantAggregateZero>(C))
           C = Context.getNullValue(PTy->getElementType());
         else if (isa<UndefValue>(C))
-          C = Context.getUndef(PTy->getElementType());
+          C = UndefValue::get(PTy->getElementType());
         else
           return 0;
       } else {

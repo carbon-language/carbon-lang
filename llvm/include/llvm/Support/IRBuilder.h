@@ -146,7 +146,7 @@ public:
   ///
   ReturnInst *CreateAggregateRet(Value * const* retVals, unsigned N) {
     const Type *RetType = BB->getParent()->getReturnType();
-    Value *V = Context.getUndef(RetType);
+    Value *V = UndefValue::get(RetType);
     for (unsigned i = 0; i != N; ++i)
       V = CreateInsertValue(V, retVals[i], i, "mrv");
     return Insert(ReturnInst::Create(V));

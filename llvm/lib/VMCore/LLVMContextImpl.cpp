@@ -19,8 +19,6 @@
 #include "llvm/Metadata.h"
 using namespace llvm;
 
-static char getValType(ConstantAggregateZero *CPZ) { return 0; }
-
 LLVMContextImpl::LLVMContextImpl(LLVMContext &C) :
     Context(C), TheTrueVal(0), TheFalseVal(0) { }
 
@@ -59,15 +57,6 @@ MDNode *LLVMContextImpl::getMDNode(Value*const* Vals, unsigned NumVals) {
   return N;
 }
 
-ConstantAggregateZero*
-LLVMContextImpl::getConstantAggregateZero(const Type *Ty) {
-  assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
-         "Cannot create an aggregate zero of non-aggregate type!");
-
-  // Implicitly locked.
-  return AggZeroConstants.getOrCreate(Ty, 0);
-}
-
 // *** erase methods ***
 
 void LLVMContextImpl::erase(MDString *M) {
@@ -78,8 +67,4 @@ void LLVMContextImpl::erase(MDString *M) {
 void LLVMContextImpl::erase(MDNode *M) {
   sys::SmartScopedWriter<true> Writer(ConstantsLock);
   MDNodeSet.RemoveNode(M);
-}
-
-void LLVMContextImpl::erase(ConstantAggregateZero *Z) {
-  AggZeroConstants.remove(Z);
 }

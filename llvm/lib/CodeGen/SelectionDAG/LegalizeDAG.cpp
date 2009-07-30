@@ -1789,7 +1789,6 @@ SDValue SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
 /// ExpandBUILD_VECTOR - Expand a BUILD_VECTOR node on targets that don't
 /// support the operation, but do support the resultant vector type.
 SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
-  LLVMContext *Context = DAG.getContext();
   unsigned NumElems = Node->getNumOperands();
   SDValue Value1, Value2;
   DebugLoc dl = Node->getDebugLoc();
@@ -1840,7 +1839,7 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
       } else {
         assert(Node->getOperand(i).getOpcode() == ISD::UNDEF);
         const Type *OpNTy = OpVT.getTypeForMVT();
-        CV.push_back(Context->getUndef(OpNTy));
+        CV.push_back(UndefValue::get(OpNTy));
       }
     }
     Constant *CP = ConstantVector::get(CV);

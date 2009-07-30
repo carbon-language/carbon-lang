@@ -151,7 +151,7 @@ static Constant *FoldBitCast(LLVMContext &Context,
   // Finally, implement bitcast folding now.   The code below doesn't handle
   // bitcast right.
   if (isa<ConstantPointerNull>(V))  // ptr->ptr cast.
-    return Context.getConstantPointerNull(cast<PointerType>(DestTy));
+    return ConstantPointerNull::get(cast<PointerType>(DestTy));
   
   // Handle integral constant input.
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
@@ -187,7 +187,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     if (opc == Instruction::ZExt || opc == Instruction::SExt ||
         opc == Instruction::UIToFP || opc == Instruction::SIToFP)
       return Context.getNullValue(DestTy);
-    return Context.getUndef(DestTy);
+    return UndefValue::get(DestTy);
   }
   // No compile-time operations on this type yet.
   if (V->getType() == Type::PPC_FP128Ty || DestTy == Type::PPC_FP128Ty)
@@ -263,7 +263,7 @@ Constant *llvm::ConstantFoldCastInstruction(LLVMContext &Context,
     return 0; // Can't fold.
   case Instruction::IntToPtr:   //always treated as unsigned
     if (V->isNullValue())       // Is it an integral null value?
-      return Context.getConstantPointerNull(cast<PointerType>(DestTy));
+      return ConstantPointerNull::get(cast<PointerType>(DestTy));
     return 0;                   // Other pointer types cannot be casted
   case Instruction::PtrToInt:   // always treated as unsigned
     if (V->isNullValue())       // is it a null pointer value?
@@ -335,7 +335,7 @@ Constant *llvm::ConstantFoldExtractElementInstruction(LLVMContext &Context,
                                                       const Constant *Val,
                                                       const Constant *Idx) {
   if (isa<UndefValue>(Val))  // ee(undef, x) -> undef
-    return Context.getUndef(cast<VectorType>(Val->getType())->getElementType());
+    return UndefValue::get(cast<VectorType>(Val->getType())->getElementType());
   if (Val->isNullValue())  // ee(zero, x) -> zero
     return Context.getNullValue(
                           cast<VectorType>(Val->getType())->getElementType());
@@ -371,7 +371,7 @@ Constant *llvm::ConstantFoldInsertElementInstruction(LLVMContext &Context,
     Ops.reserve(numOps);
     for (unsigned i = 0; i < numOps; ++i) {
       const Constant *Op =
-        (idxVal == i) ? Elt : Context.getUndef(Elt->getType());
+        (idxVal == i) ? Elt : UndefValue::get(Elt->getType());
       Ops.push_back(const_cast<Constant*>(Op));
     }
     return ConstantVector::get(Ops);
@@ -420,7 +420,7 @@ static Constant *GetVectorElement(LLVMContext &Context, const Constant *C,
   if (isa<ConstantAggregateZero>(C))
     return Context.getNullValue(EltTy);
   if (isa<UndefValue>(C))
-    return Context.getUndef(EltTy);
+    return UndefValue::get(EltTy);
   return 0;
 }
 
@@ -429,7 +429,7 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(LLVMContext &Context,
                                                      const Constant *V2,
                                                      const Constant *Mask) {
   // Undefined shuffle mask -> undefined value.
-  if (isa<UndefValue>(Mask)) return Context.getUndef(V1->getType());
+  if (isa<UndefValue>(Mask)) return UndefValue::get(V1->getType());
 
   unsigned MaskNumElts = cast<VectorType>(Mask->getType())->getNumElements();
   unsigned SrcNumElts = cast<VectorType>(V1->getType())->getNumElements();
@@ -442,11 +442,11 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(LLVMContext &Context,
     if (InElt == 0) return 0;
 
     if (isa<UndefValue>(InElt))
-      InElt = Context.getUndef(EltTy);
+      InElt = UndefValue::get(EltTy);
     else if (ConstantInt *CI = dyn_cast<ConstantInt>(InElt)) {
       unsigned Elt = CI->getZExtValue();
       if (Elt >= SrcNumElts*2)
-        InElt = Context.getUndef(EltTy);
+        InElt = UndefValue::get(EltTy);
       else if (Elt >= SrcNumElts)
         InElt = GetVectorElement(Context, V2, Elt - SrcNumElts);
       else
@@ -471,7 +471,7 @@ Constant *llvm::ConstantFoldExtractValueInstruction(LLVMContext &Context,
     return const_cast<Constant *>(Agg);
 
   if (isa<UndefValue>(Agg))  // ev(undef, x) -> undef
-    return Context.getUndef(ExtractValueInst::getIndexedType(Agg->getType(),
+    return UndefValue::get(ExtractValueInst::getIndexedType(Agg->getType(),
                                                             Idxs,
                                                             Idxs + NumIdx));
 
@@ -513,9 +513,9 @@ Constant *llvm::ConstantFoldInsertValueInstruction(LLVMContext &Context,
       const Type *MemberTy = AggTy->getTypeAtIndex(i);
       const Constant *Op =
         (*Idxs == i) ?
-        ConstantFoldInsertValueInstruction(Context, Context.getUndef(MemberTy),
+        ConstantFoldInsertValueInstruction(Context, UndefValue::get(MemberTy),
                                            Val, Idxs+1, NumIdx-1) :
-        Context.getUndef(MemberTy);
+        UndefValue::get(MemberTy);
       Ops[i] = const_cast<Constant*>(Op);
     }
     if (isa<StructType>(AggTy))
@@ -594,7 +594,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
       // Fallthrough
     case Instruction::Add:
     case Instruction::Sub:
-      return Context.getUndef(C1->getType());
+      return UndefValue::get(C1->getType());
     case Instruction::Mul:
     case Instruction::And:
       return Context.getNullValue(C1->getType());
@@ -646,14 +646,14 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
       if (CI2->equalsInt(1))
         return const_cast<Constant*>(C1);                     // X / 1 == X
       if (CI2->equalsInt(0))
-        return Context.getUndef(CI2->getType());               // X / 0 == undef
+        return UndefValue::get(CI2->getType());               // X / 0 == undef
       break;
     case Instruction::URem:
     case Instruction::SRem:
       if (CI2->equalsInt(1))
         return Context.getNullValue(CI2->getType());        // X % 1 == 0
       if (CI2->equalsInt(0))
-        return Context.getUndef(CI2->getType());               // X % 0 == undef
+        return UndefValue::get(CI2->getType());               // X % 0 == undef
       break;
     case Instruction::And:
       if (CI2->isZero()) return const_cast<Constant*>(C2);    // X & 0 == 0
@@ -732,7 +732,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
       case Instruction::SDiv:
         assert(!CI2->isNullValue() && "Div by zero handled above");
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
-          return Context.getUndef(CI1->getType());   // MIN_INT / -1 -> undef
+          return UndefValue::get(CI1->getType());   // MIN_INT / -1 -> undef
         return ConstantInt::get(Context, C1V.sdiv(C2V));
       case Instruction::URem:
         assert(!CI2->isNullValue() && "Div by zero handled above");
@@ -740,7 +740,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
       case Instruction::SRem:
         assert(!CI2->isNullValue() && "Div by zero handled above");
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
-          return Context.getUndef(CI1->getType());   // MIN_INT % -1 -> undef
+          return UndefValue::get(CI1->getType());   // MIN_INT % -1 -> undef
         return ConstantInt::get(Context, C1V.srem(C2V));
       case Instruction::And:
         return ConstantInt::get(Context, C1V & C2V);
@@ -753,21 +753,21 @@ Constant *llvm::ConstantFoldBinaryInstruction(LLVMContext &Context,
         if (shiftAmt < C1V.getBitWidth())
           return ConstantInt::get(Context, C1V.shl(shiftAmt));
         else
-          return Context.getUndef(C1->getType()); // too big shift is undef
+          return UndefValue::get(C1->getType()); // too big shift is undef
       }
       case Instruction::LShr: {
         uint32_t shiftAmt = C2V.getZExtValue();
         if (shiftAmt < C1V.getBitWidth())
           return ConstantInt::get(Context, C1V.lshr(shiftAmt));
         else
-          return Context.getUndef(C1->getType()); // too big shift is undef
+          return UndefValue::get(C1->getType()); // too big shift is undef
       }
       case Instruction::AShr: {
         uint32_t shiftAmt = C2V.getZExtValue();
         if (shiftAmt < C1V.getBitWidth())
           return ConstantInt::get(Context, C1V.ashr(shiftAmt));
         else
-          return Context.getUndef(C1->getType()); // too big shift is undef
+          return UndefValue::get(C1->getType()); // too big shift is undef
       }
       }
     }
@@ -1386,7 +1386,7 @@ Constant *llvm::ConstantFoldCompareInstruction(LLVMContext &Context,
 
   // Handle some degenerate cases first
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2))
-    return Context.getUndef(ResultTy);
+    return UndefValue::get(ResultTy);
 
   // No compile-time operations on this type yet.
   if (C1->getType() == Type::PPC_FP128Ty)
@@ -1677,7 +1677,7 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
                                                        (Value **)Idxs,
                                                        (Value **)Idxs+NumIdx);
     assert(Ty != 0 && "Invalid indices for GEP!");
-    return Context.getUndef(PointerType::get(Ty, Ptr->getAddressSpace()));
+    return UndefValue::get(PointerType::get(Ty, Ptr->getAddressSpace()));
   }
 
   Constant *Idx0 = Idxs[0];
@@ -1694,7 +1694,7 @@ Constant *llvm::ConstantFoldGetElementPtr(LLVMContext &Context,
                                                          (Value**)Idxs,
                                                          (Value**)Idxs+NumIdx);
       assert(Ty != 0 && "Invalid indices for GEP!");
-      return  Context.getConstantPointerNull(
+      return  ConstantPointerNull::get(
                             PointerType::get(Ty,Ptr->getAddressSpace()));
     }
   }

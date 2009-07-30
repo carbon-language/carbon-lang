@@ -884,7 +884,7 @@ Value *BuildSubAggregate(Value *From, const unsigned *idx_begin,
   const Type *IndexedType = ExtractValueInst::getIndexedType(From->getType(),
                                                              idx_begin,
                                                              idx_end);
-  Value *To = Context.getUndef(IndexedType);
+  Value *To = UndefValue::get(IndexedType);
   SmallVector<unsigned, 10> Idxs(idx_begin, idx_end);
   unsigned IdxSkip = Idxs.size();
 
@@ -913,7 +913,7 @@ Value *llvm::FindInsertedValue(Value *V, const unsigned *idx_begin,
   const CompositeType *PTy = cast<CompositeType>(V->getType());
 
   if (isa<UndefValue>(V))
-    return Context.getUndef(ExtractValueInst::getIndexedType(PTy,
+    return UndefValue::get(ExtractValueInst::getIndexedType(PTy,
                                                               idx_begin,
                                                               idx_end));
   else if (isa<ConstantAggregateZero>(V))

@@ -153,7 +153,7 @@ void Constant::getVectorElements(LLVMContext &Context,
   }
   
   if (isa<UndefValue>(this)) {
-    Elts.assign(VT->getNumElements(), Context.getUndef(VT->getElementType()));
+    Elts.assign(VT->getNumElements(), UndefValue::get(VT->getElementType()));
     return;
   }
   
@@ -391,7 +391,7 @@ Constant *ConstantArray::get(const ArrayType *Ty,
       }
   }
   
-  return Ty->getContext().getConstantAggregateZero(Ty);
+  return ConstantAggregateZero::get(Ty);
 }
 
 
@@ -455,7 +455,7 @@ Constant* ConstantStruct::get(const StructType* T,
       // Implicitly locked.
       return pImpl->StructConstants.getOrCreate(T, V);
 
-  return T->getContext().getConstantAggregateZero(T);
+  return ConstantAggregateZero::get(T);
 }
 
 Constant* ConstantStruct::get(const std::vector<Constant*>& V, bool packed) {
@@ -511,9 +511,9 @@ Constant* ConstantVector::get(const VectorType* T,
   }
   
   if (isZero)
-    return Context.getConstantAggregateZero(T);
+    return ConstantAggregateZero::get(T);
   if (isUndef)
-    return Context.getUndef(T);
+    return UndefValue::get(T);
     
   // Implicitly locked.
   return pImpl->VectorConstants.getOrCreate(T, V);
@@ -1018,11 +1018,22 @@ bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
 //===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
+static char getValType(ConstantAggregateZero *CPZ) { return 0; }
+
+ConstantAggregateZero* ConstantAggregateZero::get(const Type* Ty) {
+  assert((isa<StructType>(Ty) || isa<ArrayType>(Ty) || isa<VectorType>(Ty)) &&
+         "Cannot create an aggregate zero of non-aggregate type!");
+  
+  LLVMContextImpl *pImpl = Ty->getContext().pImpl;
+  // Implicitly locked.
+  return pImpl->AggZeroConstants.getOrCreate(Ty, 0);
+}
+
 /// destroyConstant - Remove the constant from the constant table...
 ///
 void ConstantAggregateZero::destroyConstant() {
   // Implicitly locked.
-  getType()->getContext().erase(this);
+  getType()->getContext().pImpl->AggZeroConstants.remove(this);
   destroyConstantImpl();
 }
 
@@ -2154,7 +2165,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   Constant *Replacement = 0;
   if (isAllZeros) {
-    Replacement = Context.getConstantAggregateZero(getType());
+    Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
     sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);
@@ -2241,7 +2252,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   Constant *Replacement = 0;
   if (isAllZeros) {
-    Replacement = Context.getConstantAggregateZero(getType());
+    Replacement = ConstantAggregateZero::get(getType());
   } else {
     // Check to see if we have this array type already.
     sys::SmartScopedWriter<true> Writer(pImpl->ConstantsLock);

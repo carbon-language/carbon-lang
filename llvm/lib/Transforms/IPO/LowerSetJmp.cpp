@@ -289,8 +289,7 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
     Removed = &BB->back();
     // If the removed instructions have any users, replace them now.
     if (!Removed->use_empty())
-      Removed->replaceAllUsesWith(
-        Inst->getContext().getUndef(Removed->getType()));
+      Removed->replaceAllUsesWith(UndefValue::get(Removed->getType()));
     Removed->eraseFromParent();
   } while (Removed != Inst);
 

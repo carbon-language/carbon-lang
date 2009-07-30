@@ -448,7 +448,7 @@ void PromoteMem2Reg::run() {
   //
   RenamePassData::ValVector Values(Allocas.size());
   for (unsigned i = 0, e = Allocas.size(); i != e; ++i)
-    Values[i] = Context.getUndef(Allocas[i]->getAllocatedType());
+    Values[i] = UndefValue::get(Allocas[i]->getAllocatedType());
 
   // Walks all basic blocks in the function performing the SSA rename algorithm
   // and inserting the phi nodes we marked as necessary
@@ -475,7 +475,7 @@ void PromoteMem2Reg::run() {
     // Just delete the users now.
     //
     if (!A->use_empty())
-      A->replaceAllUsesWith(Context.getUndef(A->getType()));
+      A->replaceAllUsesWith(UndefValue::get(A->getType()));
     if (AST) AST->deleteValue(A);
     A->eraseFromParent();
   }
@@ -561,7 +561,7 @@ void PromoteMem2Reg::run() {
     BasicBlock::iterator BBI = BB->begin();
     while ((SomePHI = dyn_cast<PHINode>(BBI++)) &&
            SomePHI->getNumIncomingValues() == NumBadPreds) {
-      Value *UndefVal = Context.getUndef(SomePHI->getType());
+      Value *UndefVal = UndefValue::get(SomePHI->getType());
       for (unsigned pred = 0, e = Preds.size(); pred != e; ++pred)
         SomePHI->addIncoming(UndefVal, Preds[pred]);
     }
@@ -807,7 +807,7 @@ void PromoteMem2Reg::PromoteSingleBlockAlloca(AllocaInst *AI, AllocaInfo &Info,
   if (StoresByIndex.empty()) {
     for (Value::use_iterator UI = AI->use_begin(), E = AI->use_end(); UI != E;) 
       if (LoadInst *LI = dyn_cast<LoadInst>(*UI++)) {
-        LI->replaceAllUsesWith(Context.getUndef(LI->getType()));
+        LI->replaceAllUsesWith(UndefValue::get(LI->getType()));
         if (AST && isa<PointerType>(LI->getType()))
           AST->deleteValue(LI);
         LBI.deleteValue(LI);

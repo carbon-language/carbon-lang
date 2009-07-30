@@ -564,8 +564,7 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
     
     // If the returned value is the load itself, replace with an undef. This can
     // only happen in dead loops.
-    if (AvailableVal == LI) AvailableVal = 
-                            AvailableVal->getContext().getUndef(LI->getType());
+    if (AvailableVal == LI) AvailableVal = UndefValue::get(LI->getType());
     LI->replaceAllUsesWith(AvailableVal);
     LI->eraseFromParent();
     return true;

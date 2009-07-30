@@ -285,8 +285,8 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
       Ops.push_back(ValueEntry(getRank(RHS), RHS));
       
       // Clear the leaves out.
-      I->setOperand(0, Context.getUndef(I->getType()));
-      I->setOperand(1, Context.getUndef(I->getType()));
+      I->setOperand(0, UndefValue::get(I->getType()));
+      I->setOperand(1, UndefValue::get(I->getType()));
       return;
     } else {
       // Turn X+(Y+Z) -> (Y+Z)+X
@@ -321,7 +321,7 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
   Ops.push_back(ValueEntry(getRank(RHS), RHS));
   
   // Clear the RHS leaf out.
-  I->setOperand(1, Context.getUndef(I->getType()));
+  I->setOperand(1, UndefValue::get(I->getType()));
 }
 
 // RewriteExprTree - Now that the operands for this expression tree are

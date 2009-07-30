@@ -60,6 +60,7 @@ class LLVMContext {
   friend class ConstantStruct;
   friend class ConstantArray;
   friend class ConstantVector;
+  friend class ConstantAggregateZero;
 public:
   LLVMContext();
   ~LLVMContext();
@@ -72,19 +73,10 @@ public:
   /// @brief Get the all ones value
   Constant* getAllOnesValue(const Type* Ty);
   
-  // UndefValue accessors
-  UndefValue* getUndef(const Type* Ty);
-  
   // ConstantInt accessors
   ConstantInt* getTrue();
   ConstantInt* getFalse();
-  
-  // ConstantPointerNull accessors
-  ConstantPointerNull* getConstantPointerNull(const PointerType* T);
-                              
-  // ConstantAggregateZero accessors
-  ConstantAggregateZero* getConstantAggregateZero(const Type* Ty);
-                             
+        
   // MDNode accessors
   MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
   
@@ -95,7 +87,6 @@ public:
   // Methods for erasing constants
   void erase(MDString *M);
   void erase(MDNode *M);
-  void erase(ConstantAggregateZero *Z);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

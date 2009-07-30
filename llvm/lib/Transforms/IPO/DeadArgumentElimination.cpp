@@ -758,7 +758,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       }
 
     if (ExtraArgHack)
-      Args.push_back(Context.getUndef(Type::Int32Ty));
+      Args.push_back(UndefValue::get(Type::Int32Ty));
 
     // Push any varargs arguments on the list. Don't forget their attributes.
     for (CallSite::arg_iterator E = CS.arg_end(); I != E; ++I, ++i) {
@@ -814,7 +814,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         // extract/insertvalue chaining and let instcombine clean that up.
         //
         // Start out building up our return value from undef
-        Value *RetVal = Context.getUndef(RetTy);
+        Value *RetVal = UndefValue::get(RetTy);
         for (unsigned i = 0; i != RetCount; ++i)
           if (NewRetIdxs[i] != -1) {
             Value *V;
@@ -881,7 +881,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
           // clean that up.
           Value *OldRet = RI->getOperand(0);
           // Start out building up our return value from undef
-          RetVal = Context.getUndef(NRetTy);
+          RetVal = UndefValue::get(NRetTy);
           for (unsigned i = 0; i != RetCount; ++i)
             if (NewRetIdxs[i] != -1) {
               ExtractValueInst *EV = ExtractValueInst::Create(OldRet, i,

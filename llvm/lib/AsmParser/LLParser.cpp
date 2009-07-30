@@ -1481,7 +1481,7 @@ LLParser::PerFunctionState::~PerFunctionState() {
        I = ForwardRefVals.begin(), E = ForwardRefVals.end(); I != E; ++I)
     if (!isa<BasicBlock>(I->second.first)) {
       I->second.first->replaceAllUsesWith(
-                           P.getContext().getUndef(I->second.first->getType()));
+                           UndefValue::get(I->second.first->getType()));
       delete I->second.first;
       I->second.first = 0;
     }
@@ -1490,7 +1490,7 @@ LLParser::PerFunctionState::~PerFunctionState() {
        I = ForwardRefValIDs.begin(), E = ForwardRefValIDs.end(); I != E; ++I)
     if (!isa<BasicBlock>(I->second.first)) {
       I->second.first->replaceAllUsesWith(
-                           P.getContext().getUndef(I->second.first->getType()));
+                           UndefValue::get(I->second.first->getType()));
       delete I->second.first;
       I->second.first = 0;
     }
@@ -2193,19 +2193,19 @@ bool LLParser::ConvertGlobalValIDToValue(const Type *Ty, ValID &ID,
   case ValID::t_Null:
     if (!isa<PointerType>(Ty))
       return Error(ID.Loc, "null must be a pointer type");
-    V = Context.getConstantPointerNull(cast<PointerType>(Ty));
+    V = ConstantPointerNull::get(cast<PointerType>(Ty));
     return false;
   case ValID::t_Undef:
     // FIXME: LabelTy should not be a first-class type.
     if ((!Ty->isFirstClassType() || Ty == Type::LabelTy) &&
         !isa<OpaqueType>(Ty))
       return Error(ID.Loc, "invalid type for undef constant");
-    V = Context.getUndef(Ty);
+    V = UndefValue::get(Ty);
     return false;
   case ValID::t_EmptyArray:
     if (!isa<ArrayType>(Ty) || cast<ArrayType>(Ty)->getNumElements() != 0)
       return Error(ID.Loc, "invalid empty array initializer");
-    V = Context.getUndef(Ty);
+    V = UndefValue::get(Ty);
     return false;
   case ValID::t_Zero:
     // FIXME: LabelTy should not be a first-class type.
@@ -2764,7 +2764,7 @@ bool LLParser::ParseRet(Instruction *&Inst, BasicBlock *BB,
       RVs.push_back(RV);
     }
 
-    RV = Context.getUndef(PFS.getFunction().getReturnType());
+    RV = UndefValue::get(PFS.getFunction().getReturnType());
     for (unsigned i = 0, e = RVs.size(); i != e; ++i) {
       Instruction *I = InsertValueInst::Create(RV, RVs[i], i, "mrv");
       BB->getInstList().push_back(I);

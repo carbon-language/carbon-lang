@@ -72,7 +72,7 @@ Module *BugDriver::deleteInstructionFromProgram(const Instruction *I,
 
   // If this instruction produces a value, replace any users with null values
   if (isa<StructType>(TheInst->getType()))
-    TheInst->replaceAllUsesWith(Context.getUndef(TheInst->getType()));
+    TheInst->replaceAllUsesWith(UndefValue::get(TheInst->getType()));
   else if (TheInst->getType() != Type::VoidTy)
     TheInst->replaceAllUsesWith(Context.getNullValue(TheInst->getType()));
 

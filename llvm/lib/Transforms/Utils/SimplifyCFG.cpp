@@ -1266,8 +1266,6 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
 /// FoldTwoEntryPHINode - Given a BB that starts with the specified two-entry
 /// PHI node, see if we can eliminate it.
 static bool FoldTwoEntryPHINode(PHINode *PN) {
-  LLVMContext &Context = PN->getParent()->getContext();
-  
   // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
   // statement", which has a very simple dominance structure.  Basically, we
   // are trying to find the condition that is being branched on, which
@@ -1305,7 +1303,7 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
       if (PN->getIncomingValue(0) != PN)
         PN->replaceAllUsesWith(PN->getIncomingValue(0));
       else
-        PN->replaceAllUsesWith(Context.getUndef(PN->getType()));
+        PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
     } else if (!DominatesMergePoint(PN->getIncomingValue(0), BB,
                                     &AggressiveInsts) ||
                !DominatesMergePoint(PN->getIncomingValue(1), BB,

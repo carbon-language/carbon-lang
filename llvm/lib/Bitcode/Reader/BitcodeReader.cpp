@@ -142,7 +142,7 @@ namespace {
     }
     explicit ConstantPlaceHolder(const Type *Ty, LLVMContext& Context)
       : ConstantExpr(Ty, Instruction::UserOp1, &Op<0>(), 1) {
-      Op<0>() = Context.getUndef(Type::Int32Ty);
+      Op<0>() = UndefValue::get(Type::Int32Ty);
     }
     
     /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
@@ -888,7 +888,7 @@ bool BitcodeReader::ParseConstants() {
     switch (BitCode) {
     default:  // Default behavior: unknown constant
     case bitc::CST_CODE_UNDEF:     // UNDEF
-      V = Context.getUndef(CurTy);
+      V = UndefValue::get(CurTy);
       break;
     case bitc::CST_CODE_SETTYPE:   // SETTYPE: [typeid]
       if (Record.empty())
@@ -937,7 +937,7 @@ bool BitcodeReader::ParseConstants() {
       else if (CurTy == Type::PPC_FP128Ty)
         V = ConstantFP::get(Context, APFloat(APInt(128, 2, &Record[0])));
       else
-        V = Context.getUndef(CurTy);
+        V = UndefValue::get(CurTy);
       break;
     }
       
@@ -964,7 +964,7 @@ bool BitcodeReader::ParseConstants() {
           Elts.push_back(ValueList.getConstantFwdRef(Record[i], EltTy));
         V = ConstantVector::get(Elts);
       } else {
-        V = Context.getUndef(CurTy);
+        V = UndefValue::get(CurTy);
       }
       break;
     }
@@ -1001,7 +1001,7 @@ bool BitcodeReader::ParseConstants() {
       if (Record.size() < 3) return Error("Invalid CE_BINOP record");
       int Opc = GetDecodedBinaryOpcode(Record[0], CurTy);
       if (Opc < 0) {
-        V = Context.getUndef(CurTy);  // Unknown binop.
+        V = UndefValue::get(CurTy);  // Unknown binop.
       } else {
         Constant *LHS = ValueList.getConstantFwdRef(Record[1], CurTy);
         Constant *RHS = ValueList.getConstantFwdRef(Record[2], CurTy);
@@ -1015,7 +1015,7 @@ bool BitcodeReader::ParseConstants() {
       if (Record.size() < 3) return Error("Invalid CE_CAST record");
       int Opc = GetDecodedCastOpcode(Record[0]);
       if (Opc < 0) {
-        V = Context.getUndef(CurTy);  // Unknown cast.
+        V = UndefValue::get(CurTy);  // Unknown cast.
       } else {
         const Type *OpTy = getTypeByID(Record[1]);
         if (!OpTy) return Error("Invalid CE_CAST record");
@@ -1780,7 +1780,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
         if (Vs.size() > 1 ||
             (isa<StructType>(ReturnType) &&
              (Vs.empty() || Vs[0]->getType() != ReturnType))) {
-          Value *RV = Context.getUndef(ReturnType);
+          Value *RV = UndefValue::get(ReturnType);
           for (unsigned i = 0, e = Vs.size(); i != e; ++i) {
             I = InsertValueInst::Create(RV, Vs[i], i, "mrv");
             CurBB->getInstList().push_back(I);
@@ -2060,7 +2060,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       // We found at least one unresolved value.  Nuke them all to avoid leaks.
       for (unsigned i = ModuleValueListSize, e = ValueList.size(); i != e; ++i){
         if ((A = dyn_cast<Argument>(ValueList.back())) && A->getParent() == 0) {
-          A->replaceAllUsesWith(Context.getUndef(A->getType()));
+          A->replaceAllUsesWith(UndefValue::get(A->getType()));
           delete A;
         }
       }

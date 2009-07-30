@@ -798,7 +798,7 @@ Value *GVN::GetValueForBlock(BasicBlock *BB, Instruction* orig,
   // If the block is unreachable, just return undef, since this path
   // can't actually occur at runtime.
   if (!DT->isReachableFromEntry(BB))
-    return Phis[BB] = BB->getContext().getUndef(orig->getType());
+    return Phis[BB] = UndefValue::get(orig->getType());
   
   if (BasicBlock *Pred = BB->getSinglePredecessor()) {
     Value *ret = GetValueForBlock(Pred, orig, Phis);
@@ -985,8 +985,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI,
     
     // Loading the allocation -> undef.
     if (isa<AllocationInst>(DepInst)) {
-      ValuesPerBlock.push_back(std::make_pair(DepBB, 
-                                DepBB->getContext().getUndef(LI->getType())));
+      ValuesPerBlock.push_back(std::make_pair(DepBB,  
+                               UndefValue::get(LI->getType())));
       continue;
     }
   
@@ -1273,7 +1273,7 @@ bool GVN::processLoad(LoadInst *L, SmallVectorImpl<Instruction*> &toErase) {
   // undef value.  This can happen when loading for a fresh allocation with no
   // intervening stores, for example.
   if (isa<AllocationInst>(DepInst)) {
-    L->replaceAllUsesWith(DepInst->getContext().getUndef(L->getType()));
+    L->replaceAllUsesWith(UndefValue::get(L->getType()));
     toErase.push_back(L);
     NumGVNLoad++;
     return true;

@@ -147,7 +147,7 @@ namespace {
         if (Instruction *Op = dyn_cast<Instruction>(*i)) {
           AddToWorkList(Op);
           // Set the operand to undef to drop the use.
-          *i = Context->getUndef(Op->getType());
+          *i = UndefValue::get(Op->getType());
         }
       
       return R;
@@ -312,7 +312,7 @@ namespace {
       } else {
         // If we are replacing the instruction with itself, this must be in a
         // segment of unreachable code, so just clobber the instruction.
-        I.replaceAllUsesWith(Context->getUndef(I.getType()));
+        I.replaceAllUsesWith(UndefValue::get(I.getType()));
         return &I;
       }
     }
@@ -815,7 +815,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   if (DemandedMask == 0) {   // Not demanding any bits from V.
     if (isa<UndefValue>(V))
       return 0;
-    return Context->getUndef(VTy);
+    return UndefValue::get(VTy);
   }
   
   if (Depth == 6)        // Limit search depth.
@@ -1437,13 +1437,13 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     return 0;
   } else if (DemandedElts == 0) { // If nothing is demanded, provide undef.
     UndefElts = EltMask;
-    return Context->getUndef(V->getType());
+    return UndefValue::get(V->getType());
   }
 
   UndefElts = 0;
   if (ConstantVector *CP = dyn_cast<ConstantVector>(V)) {
     const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
-    Constant *Undef = Context->getUndef(EltTy);
+    Constant *Undef = UndefValue::get(EltTy);
 
     std::vector<Constant*> Elts;
     for (unsigned i = 0; i != VWidth; ++i)
@@ -1471,7 +1471,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     
     const Type *EltTy = cast<VectorType>(V->getType())->getElementType();
     Constant *Zero = Context->getNullValue(EltTy);
-    Constant *Undef = Context->getUndef(EltTy);
+    Constant *Undef = UndefValue::get(EltTy);
     std::vector<Constant*> Elts;
     for (unsigned i = 0; i != VWidth; ++i) {
       Constant *Elt = DemandedElts[i] ? Zero : Undef;
@@ -1592,7 +1592,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       std::vector<Constant*> Elts;
       for (unsigned i = 0; i < VWidth; ++i) {
         if (UndefElts[i])
-          Elts.push_back(Context->getUndef(Type::Int32Ty));
+          Elts.push_back(UndefValue::get(Type::Int32Ty));
         else
           Elts.push_back(ConstantInt::get(Type::Int32Ty,
                                           Shuffle->getMaskValue(i)));
@@ -1745,7 +1745,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
           
           Instruction *New =
             InsertElementInst::Create(
-              Context->getUndef(II->getType()), TmpV,
+              UndefValue::get(II->getType()), TmpV,
               ConstantInt::get(Type::Int32Ty, 0U, false), II->getName());
           InsertNewInstBefore(New, *II);
           AddSoonDeadInstToWorklist(*II, 0);
@@ -3138,7 +3138,7 @@ Instruction *InstCombiner::commonIRemTransforms(BinaryOperator &I) {
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     // X % 0 == undef, we don't need to preserve faults!
     if (RHS->equalsInt(0))
-      return ReplaceInstUsesWith(I, Context->getUndef(I.getType()));
+      return ReplaceInstUsesWith(I, UndefValue::get(I.getType()));
     
     if (RHS->equalsInt(1))  // X % 1 == 0
       return ReplaceInstUsesWith(I, Context->getNullValue(I.getType()));
@@ -5907,7 +5907,7 @@ Instruction *InstCombiner::visitFCmpInst(FCmpInst &I) {
   }
     
   if (isa<UndefValue>(Op1))                  // fcmp pred X, undef -> undef
-    return ReplaceInstUsesWith(I, Context->getUndef(Type::Int1Ty));
+    return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
 
   // Handle fcmp with constant RHS
   if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
@@ -5981,7 +5981,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
                                                    I.isTrueWhenEqual()));
 
   if (isa<UndefValue>(Op1))                  // X icmp undef -> undef
-    return ReplaceInstUsesWith(I, Context->getUndef(Type::Int1Ty));
+    return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
   
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
@@ -8995,7 +8995,7 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
       if (!isa<VectorType>(SrcTy)) {
         Value *Elem = InsertCastBefore(Instruction::BitCast, Src,
                                        DestVTy->getElementType(), CI);
-        return InsertElementInst::Create(Context->getUndef(DestTy), Elem,
+        return InsertElementInst::Create(UndefValue::get(DestTy), Elem,
                                          Context->getNullValue(Type::Int32Ty));
       }
       // FIXME: Canonicalize bitcast(insertelement) -> insertelement(bitcast)
@@ -9936,7 +9936,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         // Cast the input vectors to byte vectors.
         Value *Op0 =InsertBitCastBefore(II->getOperand(1),Mask->getType(),CI);
         Value *Op1 =InsertBitCastBefore(II->getOperand(2),Mask->getType(),CI);
-        Value *Result = Context->getUndef(Op0->getType());
+        Value *Result = UndefValue::get(Op0->getType());
         
         // Only extract each element once.
         Value *ExtractedElts[32];
@@ -10062,10 +10062,10 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       // If the call and callee calling conventions don't match, this call must
       // be unreachable, as the call is undefined.
       new StoreInst(Context->getTrue(),
-                Context->getUndef(PointerType::getUnqual(Type::Int1Ty)), 
+                UndefValue::get(PointerType::getUnqual(Type::Int1Ty)), 
                                   OldCall);
       if (!OldCall->use_empty())
-        OldCall->replaceAllUsesWith(Context->getUndef(OldCall->getType()));
+        OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
       if (isa<CallInst>(OldCall))   // Not worth removing an invoke here.
         return EraseInstFromFunction(*OldCall);
       return 0;
@@ -10076,12 +10076,12 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // undef so that we know that this code is not reachable, despite the fact
     // that we can't modify the CFG here.
     new StoreInst(Context->getTrue(),
-               Context->getUndef(PointerType::getUnqual(Type::Int1Ty)),
+               UndefValue::get(PointerType::getUnqual(Type::Int1Ty)),
                   CS.getInstruction());
 
     if (!CS.getInstruction()->use_empty())
       CS.getInstruction()->
-        replaceAllUsesWith(Context->getUndef(CS.getInstruction()->getType()));
+        replaceAllUsesWith(UndefValue::get(CS.getInstruction()->getType()));
 
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       // Don't break the CFG, insert a dummy cond branch.
@@ -10333,7 +10333,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       }
       AddUsersToWorkList(*Caller);
     } else {
-      NV = Context->getUndef(Caller->getType());
+      NV = UndefValue::get(Caller->getType());
     }
   }
 
@@ -10921,7 +10921,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
       SmallPtrSet<PHINode*, 16> PotentiallyDeadPHIs;
       PotentiallyDeadPHIs.insert(&PN);
       if (DeadPHICycle(PU, PotentiallyDeadPHIs))
-        return ReplaceInstUsesWith(PN, Context->getUndef(PN.getType()));
+        return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
     }
    
     // If this phi has a single use, and if that use just computes a value for
@@ -10933,7 +10933,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
     if (PHIUser->hasOneUse() &&
         (isa<BinaryOperator>(PHIUser) || isa<GetElementPtrInst>(PHIUser)) &&
         PHIUser->use_back() == &PN) {
-      return ReplaceInstUsesWith(PN, Context->getUndef(PN.getType()));
+      return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
     }
   }
 
@@ -10997,7 +10997,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     return ReplaceInstUsesWith(GEP, PtrOp);
 
   if (isa<UndefValue>(GEP.getOperand(0)))
-    return ReplaceInstUsesWith(GEP, Context->getUndef(GEP.getType()));
+    return ReplaceInstUsesWith(GEP, UndefValue::get(GEP.getType()));
 
   bool HasZeroPointerIndex = false;
   if (Constant *C = dyn_cast<Constant>(GEP.getOperand(1)))
@@ -11426,7 +11426,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
     new StoreInst(Context->getTrue(),
-           Context->getUndef(PointerType::getUnqual(Type::Int1Ty)), &FI);
+           UndefValue::get(PointerType::getUnqual(Type::Int1Ty)), &FI);
     return EraseInstFromFunction(FI);
   }
   
@@ -11587,9 +11587,9 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       // that this code is not reachable.  We do this instead of inserting
       // an unreachable instruction directly because we cannot modify the
       // CFG.
-      new StoreInst(Context->getUndef(LI.getType()),
+      new StoreInst(UndefValue::get(LI.getType()),
                     Context->getNullValue(Op->getType()), &LI);
-      return ReplaceInstUsesWith(LI, Context->getUndef(LI.getType()));
+      return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
     }
   } 
 
@@ -11601,9 +11601,9 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       // Insert a new store to null instruction before the load to indicate that
       // this code is not reachable.  We do this instead of inserting an
       // unreachable instruction directly because we cannot modify the CFG.
-      new StoreInst(Context->getUndef(LI.getType()),
+      new StoreInst(UndefValue::get(LI.getType()),
                     Context->getNullValue(Op->getType()), &LI);
-      return ReplaceInstUsesWith(LI, Context->getUndef(LI.getType()));
+      return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
     }
 
     // Instcombine load (constant global) into the value loaded.
@@ -11625,9 +11625,9 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
           // that this code is not reachable.  We do this instead of inserting
           // an unreachable instruction directly because we cannot modify the
           // CFG.
-          new StoreInst(Context->getUndef(LI.getType()),
+          new StoreInst(UndefValue::get(LI.getType()),
                         Context->getNullValue(Op->getType()), &LI);
-          return ReplaceInstUsesWith(LI, Context->getUndef(LI.getType()));
+          return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
         }
 
       } else if (CE->isCast()) {
@@ -11644,7 +11644,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       if (GV->getInitializer()->isNullValue())
         return ReplaceInstUsesWith(LI, Context->getNullValue(LI.getType()));
       else if (isa<UndefValue>(GV->getInitializer()))
-        return ReplaceInstUsesWith(LI, Context->getUndef(LI.getType()));
+        return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
     }
   }
 
@@ -11941,7 +11941,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   if (isa<ConstantPointerNull>(Ptr) &&
       cast<PointerType>(Ptr->getType())->getAddressSpace() == 0) {
     if (!isa<UndefValue>(Val)) {
-      SI.setOperand(0, Context->getUndef(Val->getType()));
+      SI.setOperand(0, UndefValue::get(Val->getType()));
       if (Instruction *U = dyn_cast<Instruction>(Val))
         AddToWorkList(U);  // Dropped a use.
       ++NumCombined;
@@ -12187,7 +12187,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
 
   if (Constant *C = dyn_cast<Constant>(Agg)) {
     if (isa<UndefValue>(C))
-      return ReplaceInstUsesWith(EV, Context->getUndef(EV.getType()));
+      return ReplaceInstUsesWith(EV, UndefValue::get(EV.getType()));
       
     if (isa<ConstantAggregateZero>(C))
       return ReplaceInstUsesWith(EV, Context->getNullValue(EV.getType()));
@@ -12332,10 +12332,10 @@ static Value *FindScalarElement(Value *V, unsigned EltNo,
   const VectorType *PTy = cast<VectorType>(V->getType());
   unsigned Width = PTy->getNumElements();
   if (EltNo >= Width)  // Out of range access.
-    return Context->getUndef(PTy->getElementType());
+    return UndefValue::get(PTy->getElementType());
   
   if (isa<UndefValue>(V))
-    return Context->getUndef(PTy->getElementType());
+    return UndefValue::get(PTy->getElementType());
   else if (isa<ConstantAggregateZero>(V))
     return Context->getNullValue(PTy->getElementType());
   else if (ConstantVector *CP = dyn_cast<ConstantVector>(V))
@@ -12363,7 +12363,7 @@ static Value *FindScalarElement(Value *V, unsigned EltNo,
     else if (InEl < LHSWidth*2)
       return FindScalarElement(SVI->getOperand(1), InEl - LHSWidth, Context);
     else
-      return Context->getUndef(PTy->getElementType());
+      return UndefValue::get(PTy->getElementType());
   }
   
   // Otherwise, we don't know.
@@ -12373,7 +12373,7 @@ static Value *FindScalarElement(Value *V, unsigned EltNo,
 Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
   // If vector val is undef, replace extract with scalar undef.
   if (isa<UndefValue>(EI.getOperand(0)))
-    return ReplaceInstUsesWith(EI, Context->getUndef(EI.getType()));
+    return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
 
   // If vector val is constant 0, replace extract with scalar 0.
   if (isa<ConstantAggregateZero>(EI.getOperand(0)))
@@ -12403,7 +12403,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
     // If this is extracting an invalid index, turn this into undef, to avoid
     // crashing the code below.
     if (IndexVal >= VectorWidth)
-      return ReplaceInstUsesWith(EI, Context->getUndef(EI.getType()));
+      return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
     
     // This instruction only demands the single element from the input vector.
     // If the input vector has a single use, simplify it based on this use
@@ -12490,7 +12490,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           SrcIdx -= LHSWidth;
           Src = SVI->getOperand(1);
         } else {
-          return ReplaceInstUsesWith(EI, Context->getUndef(EI.getType()));
+          return ReplaceInstUsesWith(EI, UndefValue::get(EI.getType()));
         }
         return ExtractElementInst::Create(Src,
                          ConstantInt::get(Type::Int32Ty, SrcIdx, false));
@@ -12512,7 +12512,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
   unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
 
   if (isa<UndefValue>(V)) {
-    Mask.assign(NumElts, Context->getUndef(Type::Int32Ty));
+    Mask.assign(NumElts, UndefValue::get(Type::Int32Ty));
     return true;
   } else if (V == LHS) {
     for (unsigned i = 0; i != NumElts; ++i)
@@ -12537,7 +12537,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
       // transitively ok.
       if (CollectSingleShuffleElements(VecOp, LHS, RHS, Mask, Context)) {
         // If so, update the mask to reflect the inserted undef.
-        Mask[InsertedIdx] = Context->getUndef(Type::Int32Ty);
+        Mask[InsertedIdx] = UndefValue::get(Type::Int32Ty);
         return true;
       }      
     } else if (ExtractElementInst *EI = dyn_cast<ExtractElementInst>(ScalarOp)){
@@ -12583,7 +12583,7 @@ static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
   unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
 
   if (isa<UndefValue>(V)) {
-    Mask.assign(NumElts, Context->getUndef(Type::Int32Ty));
+    Mask.assign(NumElts, UndefValue::get(Type::Int32Ty));
     return V;
   } else if (isa<ConstantAggregateZero>(V)) {
     Mask.assign(NumElts, ConstantInt::get(Type::Int32Ty, 0));
@@ -12662,7 +12662,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         return ReplaceInstUsesWith(IE, VecOp);
       
       if (InsertedIdx >= NumVectorElts)  // Out of range insert.
-        return ReplaceInstUsesWith(IE, Context->getUndef(IE.getType()));
+        return ReplaceInstUsesWith(IE, UndefValue::get(IE.getType()));
       
       // If we are extracting a value from a vector, then inserting it right
       // back into the same place, just use the input vector.
@@ -12679,7 +12679,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         // Build a new shuffle mask.
         std::vector<Constant*> Mask;
         if (isa<UndefValue>(VecOp))
-          Mask.assign(NumVectorElts, Context->getUndef(Type::Int32Ty));
+          Mask.assign(NumVectorElts, UndefValue::get(Type::Int32Ty));
         else {
           assert(isa<ConstantAggregateZero>(VecOp) && "Unknown thing");
           Mask.assign(NumVectorElts, ConstantInt::get(Type::Int32Ty,
@@ -12697,7 +12697,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
         std::vector<Constant*> Mask;
         Value *RHS = 0;
         Value *LHS = CollectShuffleElements(&IE, Mask, RHS, Context);
-        if (RHS == 0) RHS = Context->getUndef(LHS->getType());
+        if (RHS == 0) RHS = UndefValue::get(LHS->getType());
         // We now have a shuffle of LHS, RHS, Mask.
         return new ShuffleVectorInst(LHS, RHS,
                                      ConstantVector::get(Mask));
@@ -12724,7 +12724,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
 
   // Undefined shuffle mask -> undefined value.
   if (isa<UndefValue>(SVI.getOperand(2)))
-    return ReplaceInstUsesWith(SVI, Context->getUndef(SVI.getType()));
+    return ReplaceInstUsesWith(SVI, UndefValue::get(SVI.getType()));
 
   unsigned VWidth = cast<VectorType>(SVI.getType())->getNumElements();
 
@@ -12751,12 +12751,12 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     std::vector<Constant*> Elts;
     for (unsigned i = 0, e = Mask.size(); i != e; ++i) {
       if (Mask[i] >= 2*e)
-        Elts.push_back(Context->getUndef(Type::Int32Ty));
+        Elts.push_back(UndefValue::get(Type::Int32Ty));
       else {
         if ((Mask[i] >= e && isa<UndefValue>(RHS)) ||
             (Mask[i] <  e && isa<UndefValue>(LHS))) {
           Mask[i] = 2*e;     // Turn into undef.
-          Elts.push_back(Context->getUndef(Type::Int32Ty));
+          Elts.push_back(UndefValue::get(Type::Int32Ty));
         } else {
           Mask[i] = Mask[i] % e;  // Force to LHS.
           Elts.push_back(ConstantInt::get(Type::Int32Ty, Mask[i]));
@@ -12764,7 +12764,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
       }
     }
     SVI.setOperand(0, SVI.getOperand(1));
-    SVI.setOperand(1, Context->getUndef(RHS->getType()));
+    SVI.setOperand(1, UndefValue::get(RHS->getType()));
     SVI.setOperand(2, ConstantVector::get(Elts));
     LHS = SVI.getOperand(0);
     RHS = SVI.getOperand(1);
@@ -12815,7 +12815,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
         std::vector<Constant*> Elts;
         for (unsigned i = 0, e = NewMask.size(); i != e; ++i) {
           if (NewMask[i] >= LHSInNElts*2) {
-            Elts.push_back(Context->getUndef(Type::Int32Ty));
+            Elts.push_back(UndefValue::get(Type::Int32Ty));
           } else {
             Elts.push_back(ConstantInt::get(Type::Int32Ty, NewMask[i]));
           }
@@ -12992,7 +12992,7 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
             Changed = true;
           }
           if (!I->use_empty())
-            I->replaceAllUsesWith(Context->getUndef(I->getType()));
+            I->replaceAllUsesWith(UndefValue::get(I->getType()));
           I->eraseFromParent();
         }
       }

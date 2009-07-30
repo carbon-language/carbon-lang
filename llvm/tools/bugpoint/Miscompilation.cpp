@@ -733,7 +733,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         // function that dynamically resolves the calls to F via our JIT API
         if (!F->use_empty()) {
           // Create a new global to hold the cached function pointer.
-          Constant *NullPtr = Context.getConstantPointerNull(F->getType());
+          Constant *NullPtr = ConstantPointerNull::get(F->getType());
           GlobalVariable *Cache =
             new GlobalVariable(*F->getParent(), F->getType(), 
                                false, GlobalValue::InternalLinkage,

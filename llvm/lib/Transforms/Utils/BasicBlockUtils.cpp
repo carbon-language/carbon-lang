@@ -51,7 +51,7 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
     // contained within it must dominate their uses, that all uses will
     // eventually be removed (they are themselves dead).
     if (!I.use_empty())
-      I.replaceAllUsesWith(BB->getContext().getUndef(I.getType()));
+      I.replaceAllUsesWith(UndefValue::get(I.getType()));
     BB->getInstList().pop_back();
   }
   
@@ -71,7 +71,7 @@ void llvm::FoldSingleEntryPHINodes(BasicBlock *BB) {
     if (PN->getIncomingValue(0) != PN)
       PN->replaceAllUsesWith(PN->getIncomingValue(0));
     else
-      PN->replaceAllUsesWith(BB->getContext().getUndef(PN->getType()));
+      PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
     PN->eraseFromParent();
   }
 }
@@ -387,8 +387,7 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
   if (NumPreds == 0) {
     // Insert dummy values as the incoming value.
     for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I)
-      cast<PHINode>(I)->addIncoming(BB->getContext().getUndef(I->getType()), 
-                                    NewBB);
+      cast<PHINode>(I)->addIncoming(UndefValue::get(I->getType()), NewBB);
     return NewBB;
   }
   

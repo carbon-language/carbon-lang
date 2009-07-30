@@ -71,7 +71,7 @@ static void ChangeToUnreachable(Instruction *I, LLVMContext &Context) {
   BasicBlock::iterator BBI = I, BBE = BB->end();
   while (BBI != BBE) {
     if (!BBI->use_empty())
-      BBI->replaceAllUsesWith(Context.getUndef(BBI->getType()));
+      BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
     BB->getInstList().erase(BBI++);
   }
 }

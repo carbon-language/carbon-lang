@@ -489,7 +489,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       BasicBlock::iterator I = NewBB->begin();
       BasicBlock::const_iterator OldI = OldBB->begin();
       while ((PN = dyn_cast<PHINode>(I++))) {
-        Value *NV = OldFunc->getContext().getUndef(PN->getType());
+        Value *NV = UndefValue::get(PN->getType());
         PN->replaceAllUsesWith(NV);
         assert(ValueMap[OldI] == PN && "ValueMap mismatch");
         ValueMap[OldI] = NV;

@@ -1578,7 +1578,7 @@ bool SCCP::runOnFunction(Function &F) {
         Instruction *I = Insts.back();
         Insts.pop_back();
         if (!I->use_empty())
-          I->replaceAllUsesWith(F.getContext().getUndef(I->getType()));
+          I->replaceAllUsesWith(UndefValue::get(I->getType()));
         BB->getInstList().erase(I);
         MadeChanges = true;
         ++NumInstRemoved;
@@ -1598,7 +1598,7 @@ bool SCCP::runOnFunction(Function &F) {
           continue;
         
         Constant *Const = IV.isConstant()
-          ? IV.getConstant() : F.getContext().getUndef(Inst->getType());
+          ? IV.getConstant() : UndefValue::get(Inst->getType());
         DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
 
         // Replaces all of the uses of a variable with uses of the constant.
@@ -1717,7 +1717,7 @@ bool IPSCCP::runOnModule(Module &M) {
         LatticeVal &IV = Values[AI];
         if (IV.isConstant() || IV.isUndefined()) {
           Constant *CST = IV.isConstant() ?
-            IV.getConstant() : Context->getUndef(AI->getType());
+            IV.getConstant() : UndefValue::get(AI->getType());
           DEBUG(errs() << "***  Arg " << *AI << " = " << *CST <<"\n");
 
           // Replaces all of the uses of a variable with uses of the
@@ -1742,7 +1742,7 @@ bool IPSCCP::runOnModule(Module &M) {
           Instruction *I = Insts.back();
           Insts.pop_back();
           if (!I->use_empty())
-            I->replaceAllUsesWith(Context->getUndef(I->getType()));
+            I->replaceAllUsesWith(UndefValue::get(I->getType()));
           BB->getInstList().erase(I);
           MadeChanges = true;
           ++IPNumInstRemoved;
@@ -1754,7 +1754,7 @@ bool IPSCCP::runOnModule(Module &M) {
             TI->getSuccessor(i)->removePredecessor(BB);
         }
         if (!TI->use_empty())
-          TI->replaceAllUsesWith(Context->getUndef(TI->getType()));
+          TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
         BB->getInstList().erase(TI);
 
         if (&*BB != &F->front())
@@ -1773,7 +1773,7 @@ bool IPSCCP::runOnModule(Module &M) {
             continue;
           
           Constant *Const = IV.isConstant()
-            ? IV.getConstant() : Context->getUndef(Inst->getType());
+            ? IV.getConstant() : UndefValue::get(Inst->getType());
           DEBUG(errs() << "  Constant: " << *Const << " = " << *Inst);
 
           // Replaces all of the uses of a variable with uses of the
@@ -1847,7 +1847,7 @@ bool IPSCCP::runOnModule(Module &M) {
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
         if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator()))
           if (!isa<UndefValue>(RI->getOperand(0)))
-            RI->setOperand(0, Context->getUndef(F->getReturnType()));
+            RI->setOperand(0, UndefValue::get(F->getReturnType()));
     }
 
   // If we infered constant or undef values for globals variables, we can delete

@@ -713,8 +713,6 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   }
   if (NewPred == CmpInst::BAD_ICMP_PREDICATE) return;
 
-  LLVMContext &Context = PH->getContext();
-
   // Insert new integer induction variable.
   PHINode *NewPHI = PHINode::Create(Type::Int32Ty,
                                     PH->getName()+".int", PH);
@@ -745,7 +743,7 @@ void IndVarSimplify::HandleFloatingPointIV(Loop *L, PHINode *PH) {
   RecursivelyDeleteTriviallyDeadInstructions(EC);
 
   // Delete old, floating point, increment instruction.
-  Incr->replaceAllUsesWith(Context.getUndef(Incr->getType()));
+  Incr->replaceAllUsesWith(UndefValue::get(Incr->getType()));
   RecursivelyDeleteTriviallyDeadInstructions(Incr);
 
   // Replace floating induction variable, if it isn't already deleted.

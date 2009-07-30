@@ -134,7 +134,7 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
       continue;
   
     Value *V = ArgumentConstants[i].first;
-    if (V == 0) V = F.getContext().getUndef(AI->getType());
+    if (V == 0) V = UndefValue::get(AI->getType());
     AI->replaceAllUsesWith(V);
     ++NumArgumentsProped;
     MadeChange = true;
@@ -167,9 +167,9 @@ bool IPCP::PropagateConstantReturn(Function &F) {
   const StructType *STy = dyn_cast<StructType>(F.getReturnType());
   if (STy)
     for (unsigned i = 0, e = STy->getNumElements(); i < e; ++i) 
-      RetVals.push_back(Context.getUndef(STy->getElementType(i)));
+      RetVals.push_back(UndefValue::get(STy->getElementType(i)));
   else
-    RetVals.push_back(Context.getUndef(F.getReturnType()));
+    RetVals.push_back(UndefValue::get(F.getReturnType()));
 
   unsigned NumNonConstant = 0;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)

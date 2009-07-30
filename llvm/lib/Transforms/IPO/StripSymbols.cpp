@@ -232,7 +232,7 @@ bool StripDebugInfo(Module &M) {
     if (!GV) continue;
     if (!GV->use_empty() && llvmUsedValues.count(I) == 0) {
       if (GV->getName().startswith("llvm.dbg")) {
-        GV->replaceAllUsesWith(M.getContext().getUndef(GV->getType()));
+        GV->replaceAllUsesWith(UndefValue::get(GV->getType()));
       }
     }
   }
