@@ -49,7 +49,7 @@ def : DiagGroup<"missing-noreturn">;
 def MultiChar : DiagGroup<"multichar">;
 def : DiagGroup<"nested-externs">;
 def : DiagGroup<"newline-eof">;
-def : DiagGroup<"long-long">;
+def LongLong : DiagGroup<"long-long">;
 def MismatchedTags : DiagGroup<"mismatched-tags">;
 def : DiagGroup<"missing-field-initializers">;
 def NonNull : DiagGroup<"nonnull">;

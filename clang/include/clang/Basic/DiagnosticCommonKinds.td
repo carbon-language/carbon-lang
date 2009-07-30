@@ -41,7 +41,8 @@ def err_expected_namespace_name : Error<"expected namespace name">;
 
 // Sema && Lex
 def ext_longlong : Extension<
-  "'long long' is an extension when C99 mode is not enabled">;
+  "'long long' is an extension when C99 mode is not enabled">,
+  InGroup<LongLong>;
 def warn_integer_too_large : Warning<
   "integer constant is too large for its type">;
 def warn_integer_too_large_for_signed : Warning<
