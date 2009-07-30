@@ -1577,6 +1577,8 @@ public:
 /// TypeOfExprType (GCC extension).
 class TypeOfExprType : public Type {
   Expr *TOExpr;
+  
+protected:
   TypeOfExprType(Expr *E, QualType can = QualType());
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -1589,6 +1591,24 @@ public:
   static bool classof(const TypeOfExprType *) { return true; }
 };
 
+/// Subclass of TypeOfExprType that is used for canonical, dependent 
+/// typeof(expr) types. 
+class DependentTypeOfExprType 
+  : public TypeOfExprType, public llvm::FoldingSetNode {
+  ASTContext &Context;
+  
+public:
+  DependentTypeOfExprType(ASTContext &Context, Expr *E) 
+    : TypeOfExprType(E), Context(Context) { }
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, Context, getUnderlyingExpr());
+  }
+  
+  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+                      Expr *E);
+};
+  
 /// TypeOfType (GCC extension).
 class TypeOfType : public Type {
   QualType TOType;

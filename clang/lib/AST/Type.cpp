@@ -958,6 +958,11 @@ TypeOfExprType::TypeOfExprType(Expr *E, QualType can)
   : Type(TypeOfExpr, can, E->isTypeDependent()), TOExpr(E) {
 }
 
+void DependentTypeOfExprType::Profile(llvm::FoldingSetNodeID &ID, 
+                                      ASTContext &Context, Expr *E) {
+  E->Profile(ID, Context, true);
+}
+
 DecltypeType::DecltypeType(Expr *E, QualType underlyingType, QualType can)
   : Type(Decltype, can, E->isTypeDependent()), E(E), 
   UnderlyingType(underlyingType) {

@@ -602,9 +602,9 @@ void StmtProfiler::VisitObjCIsaExpr(ObjCIsaExpr *S) {
 }
 
 void StmtProfiler::VisitDecl(Decl *D) {
-  if (Canonical) {
+  if (Canonical && D) {
     if (NonTypeTemplateParmDecl *NTTP 
-        = dyn_cast_or_null<NonTypeTemplateParmDecl>(D)) {
+        = dyn_cast<NonTypeTemplateParmDecl>(D)) {
       ID.AddInteger(NTTP->getDepth());
       ID.AddInteger(NTTP->getIndex());
       VisitType(NTTP->getType());

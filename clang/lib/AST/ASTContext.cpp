@@ -1876,9 +1876,26 @@ QualType ASTContext::getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
 /// on canonical type's (which are always unique).
 QualType ASTContext::getTypeOfExprType(Expr *tofExpr) {
   TypeOfExprType *toe;
-  if (tofExpr->isTypeDependent())
-    toe = new (*this, 8) TypeOfExprType(tofExpr);
-  else {
+  if (tofExpr->isTypeDependent()) {
+    llvm::FoldingSetNodeID ID;
+    DependentTypeOfExprType::Profile(ID, *this, tofExpr);
+    
+    void *InsertPos = 0;
+    DependentTypeOfExprType *Canon
+      = DependentTypeOfExprTypes.FindNodeOrInsertPos(ID, InsertPos);
+    if (Canon) {
+      // We already have a "canonical" version of an identical, dependent
+      // typeof(expr) type. Use that as our canonical type.
+      toe = new (*this, 8) TypeOfExprType(tofExpr, 
+                                          QualType((TypeOfExprType*)Canon, 0));
+    }
+    else {
+      // Build a new, canonical typeof(expr) type.
+      Canon = new (*this, 8) DependentTypeOfExprType(*this, tofExpr);
+      DependentTypeOfExprTypes.InsertNode(Canon, InsertPos);
+      toe = Canon;
+    }
+  } else {
     QualType Canonical = getCanonicalType(tofExpr->getType());
     toe = new (*this,8) TypeOfExprType(tofExpr, Canonical);
   }
