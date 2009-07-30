@@ -316,8 +316,7 @@ def main():
             if t.code not in byCode:
                 byCode[t.code] = []
             byCode[t.code].append(t)
-    for title,code in (('Expected Failures', TestStatus.XFail),
-                       ('Unexpected Passing Tests', TestStatus.XPass),
+    for title,code in (('Unexpected Passing Tests', TestStatus.XPass),
                        ('Failing Tests', TestStatus.Fail)):
         elts = byCode.get(code)
         if not elts:
