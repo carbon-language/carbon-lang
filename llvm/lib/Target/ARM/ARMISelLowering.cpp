@@ -2260,6 +2260,7 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
   BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(Op.getNode());
   assert(BVN != 0 && "Expected a BuildVectorSDNode in LowerBUILD_VECTOR");
   DebugLoc dl = Op.getDebugLoc();
+  MVT VT = Op.getValueType();
 
   APInt SplatBits, SplatUndef;
   unsigned SplatBitSize;
@@ -2268,7 +2269,24 @@ static SDValue LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     SDValue Val = isVMOVSplat(SplatBits.getZExtValue(),
                               SplatUndef.getZExtValue(), SplatBitSize, DAG);
     if (Val.getNode())
-      return BuildSplat(Val, Op.getValueType(), DAG, dl);
+      return BuildSplat(Val, VT, DAG, dl);
+  }
+
+  // If there are only 2 elements in a 128-bit vector, insert them into an
+  // undef vector.  This handles the common case for 128-bit vector argument
+  // passing, where the insertions should be translated to subreg accesses
+  // with no real instructions.
+  if (VT.is128BitVector() && Op.getNumOperands() == 2) {
+    SDValue Val = DAG.getUNDEF(VT);
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
+    if (Op0.getOpcode() != ISD::UNDEF)
+      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, Val, Op0,
+                        DAG.getIntPtrConstant(0));
+    if (Op1.getOpcode() != ISD::UNDEF)
+      Val = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, Val, Op1,
+                        DAG.getIntPtrConstant(1));
+    return Val;
   }
 
   return SDValue();
