@@ -199,8 +199,7 @@ void CodeGenFunction::GenerateObjCGetter(ObjCImplementationDecl *IMP,
     LValue LV = EmitLValueForIvar(TypeOfSelfObject(), LoadObjCSelf(), Ivar, 0);
     if (hasAggregateLLVMType(Ivar->getType())) {
       EmitAggregateCopy(ReturnValue, LV.getAddress(), Ivar->getType());
-    }
-    else {
+    } else {
       CodeGenTypes &Types = CGM.getTypes();
       RValue RV = EmitLoadOfLValue(LV, Ivar->getType());
       RV = RValue::get(Builder.CreateBitCast(RV.getScalarVal(),
@@ -337,16 +336,14 @@ RValue CodeGenFunction::EmitObjCPropertyGet(const Expr *Exp) {
              GenerateMessageSend(*this, Exp->getType(), S, 
                                  EmitScalarExpr(E->getBase()), 
                                  false, CallArgList());
-  }
-  else {
+  } else {
     const ObjCKVCRefExpr *KE = cast<ObjCKVCRefExpr>(Exp);
     Selector S = KE->getGetterMethod()->getSelector();
     llvm::Value *Receiver;
     if (KE->getClassProp()) {
       const ObjCInterfaceDecl *OID = KE->getClassProp();
       Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
-    }
-    else if (isa<ObjCSuperExpr>(KE->getBase()))
+    } else if (isa<ObjCSuperExpr>(KE->getBase()))
       return EmitObjCSuperPropertyGet(KE, S);
     else 
       Receiver = EmitScalarExpr(KE->getBase());
@@ -391,27 +388,23 @@ void CodeGenFunction::EmitObjCPropertySet(const Expr *Exp,
     CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
                                              EmitScalarExpr(E->getBase()), 
                                              false, Args);
-  }
-  else if (const ObjCKVCRefExpr *E = dyn_cast<ObjCKVCRefExpr>(Exp)) {
+  } else if (const ObjCKVCRefExpr *E = dyn_cast<ObjCKVCRefExpr>(Exp)) {
     Selector S = E->getSetterMethod()->getSelector();
     CallArgList Args;
     llvm::Value *Receiver;
     if (E->getClassProp()) {
       const ObjCInterfaceDecl *OID = E->getClassProp();
       Receiver = CGM.getObjCRuntime().GetClass(Builder, OID);
-    }
-    else if (isa<ObjCSuperExpr>(E->getBase())) {
+    } else if (isa<ObjCSuperExpr>(E->getBase())) {
       EmitObjCSuperPropertySet(E, S, Src);
       return;
-    }
-    else
+    } else
       Receiver = EmitScalarExpr(E->getBase());
     Args.push_back(std::make_pair(Src, E->getType()));
     CGM.getObjCRuntime().GenerateMessageSend(*this, getContext().VoidTy, S, 
                                              Receiver, 
                                              E->getClassProp() != 0, Args);
-  }
-  else
+  } else
     assert (0 && "bad expression node in EmitObjCPropertySet");
 }
 

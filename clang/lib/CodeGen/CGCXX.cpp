@@ -515,8 +515,7 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
                              Ctor_Complete, V,
                              Member->const_arg_begin(), 
                              Member->const_arg_end());
-    }
-    else {
+    } else {
       // non-static data member initilaizers.
       FieldDecl *Field = Member->getMember();
       QualType FieldType = getContext().getCanonicalType((Field)->getType());
@@ -572,8 +571,7 @@ void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
       LValue LHS = EmitLValueForField(LoadOfThis, FD, false, 0);
       EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
                             Dtor_Complete, LHS.getAddress());
-    }
-    else {
+    } else {
       const RecordType *RT =
         DD->getAnyBaseClassToDestroy(BaseOrMember)->getAs<RecordType>();
       CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());

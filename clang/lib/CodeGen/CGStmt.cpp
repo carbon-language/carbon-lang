@@ -899,7 +899,6 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
           ResultRegTypes.back() = llvm::IntegerType::get((unsigned)InputSize);
         }
       }
-      
     } else {
       ArgTypes.push_back(Dest.getAddress()->getType());
       Args.push_back(Dest.getAddress());

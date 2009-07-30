@@ -243,8 +243,7 @@ void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
     CGF.EmitAggExpr(E->getRHS(), AggLoc, VolatileDest);
     CGF.EmitObjCPropertySet(LHS.getPropertyRefExpr(), 
                             RValue::getAggregate(AggLoc, VolatileDest));
-  } 
-  else if (LHS.isKVCRef()) {
+  } else if (LHS.isKVCRef()) {
     llvm::Value *AggLoc = DestPtr;
     if (!AggLoc)
       AggLoc = CGF.CreateTempAlloca(CGF.ConvertType(E->getRHS()->getType()));

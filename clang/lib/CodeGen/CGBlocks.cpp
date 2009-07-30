@@ -609,8 +609,7 @@ CodeGenFunction::GenerateBlockFunction(const BlockExpr *BExpr,
       dyn_cast<FunctionProtoType>(BlockFunctionType)) {
     ResultType = FTy->getResultType();
     IsVariadic = FTy->isVariadic();
-  }
-  else {
+  } else {
     // K&R style block.
     ResultType = BlockFunctionType->getResultType();
     IsVariadic = false;

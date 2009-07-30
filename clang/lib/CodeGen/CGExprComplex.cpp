@@ -378,7 +378,6 @@ ComplexPairTy ComplexExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
     
     // Add the inc/dec to the real part.
     NextVal = Builder.CreateAdd(InVal.first, NextVal, isInc ? "inc" : "dec");
-    
   } else {
     QualType ElemTy = E->getType()->getAsComplexType()->getElementType();
     llvm::APFloat FVal(CGF.getContext().getFloatTypeSemantics(ElemTy), 1);

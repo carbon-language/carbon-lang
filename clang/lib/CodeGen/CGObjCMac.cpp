@@ -1468,8 +1468,7 @@ CGObjCMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
       Target = EmitClassRef(CGF.Builder, Class->getSuperClass());
       Target = CGF.Builder.CreateStructGEP(Target, 0);
       Target = CGF.Builder.CreateLoad(Target);
-    }
-    else {
+    } else {
       llvm::Value *MetaClassPtr = EmitMetaClassRef(Class);
       llvm::Value *SuperPtr = CGF.Builder.CreateStructGEP(MetaClassPtr, 1);
       llvm::Value *Super = CGF.Builder.CreateLoad(SuperPtr);
@@ -1541,8 +1540,7 @@ CodeGen::RValue CGObjCCommonMac::EmitLegacyMessageSend(
       } else {
         Fn = ObjCTypes.getSendFn2(IsSuper);
       }
-    }
-    else
+    } else
       // FIXME. This currently matches gcc's API for x86-32. May need to change
       // for others if we have their API.
       Fn = ObjCTypes.getSendFpretFn(IsSuper);
@@ -2509,10 +2507,8 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
     CGF.Builder.CreateStore(Caught, RethrowPtr);
     CGF.Builder.CreateStore(VMContext.getFalse(), CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
-  }
-  else if (const ObjCAtCatchStmt* CatchStmt = 
-           cast<ObjCAtTryStmt>(S).getCatchStmts()) 
-  {    
+  } else if (const ObjCAtCatchStmt* CatchStmt = 
+             cast<ObjCAtTryStmt>(S).getCatchStmts()) {    
     // Enter a new exception try block (in case a @catch block throws
     // an exception).
     CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData);
@@ -4527,8 +4523,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
     Values[5] =
       EmitPropertyList(std::string("\01l_OBJC_$_PROP_LIST_") + ExtName,
                        OCD, Category, ObjCTypes);
-  }
-  else {
+  } else {
     Values[4] = VMContext.getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
     Values[5] = VMContext.getNullValue(ObjCTypes.PropertyListPtrTy);
   }
@@ -5003,44 +4998,35 @@ CodeGen::RValue CGObjCNonFragileABIMac::EmitMessageSend(
       // FIXME. Is there a better way of getting these names.
       // They are available in RuntimeFunctions vector pair.
       Name += "objc_msgSendId_stret_fixup";
-    }
-    else
+    } else
 #endif
     if (IsSuper) {
         Fn = ObjCTypes.getMessageSendSuper2StretFixupFn();
         Name += "objc_msgSendSuper2_stret_fixup";
-    } 
-    else
-    {
+    } else {
       Fn = ObjCTypes.getMessageSendStretFixupFn();
       Name += "objc_msgSend_stret_fixup";
     }
-  }
-  else if (!IsSuper && ResultType->isFloatingType()) {
+  } else if (!IsSuper && ResultType->isFloatingType()) {
     if (ResultType->isSpecificBuiltinType(BuiltinType::LongDouble)) {
       Fn = ObjCTypes.getMessageSendFpretFixupFn();
       Name += "objc_msgSend_fpret_fixup";
-    } 
-    else {
+    } else {
       Fn = ObjCTypes.getMessageSendFixupFn();
       Name += "objc_msgSend_fixup";
     }
-  }
-  else {
+  } else {
 #if 0
 // unlike what is documented. gcc never generates this API!!
     if (Receiver->getType() == ObjCTypes.ObjectPtrTy) {
       Fn = ObjCTypes.getMessageSendIdFixupFn();
       Name += "objc_msgSendId_fixup";
-    }
-    else 
+    } else 
 #endif
     if (IsSuper) {
         Fn = ObjCTypes.getMessageSendSuper2FixupFn();
         Name += "objc_msgSendSuper2_fixup";
-    }
-    else
-    {
+    } else {
       Fn = ObjCTypes.getMessageSendFixupFn();
       Name += "objc_msgSend_fixup";
     }
@@ -5225,11 +5211,9 @@ CGObjCNonFragileABIMac::GenerateMessageSendSuper(CodeGen::CodeGenFunction &CGF,
       Target = EmitClassRef(CGF.Builder, Class);
       Target = CGF.Builder.CreateStructGEP(Target, 0);
       Target = CGF.Builder.CreateLoad(Target);
-    }
-    else
+    } else
       Target = EmitMetaClassRef(CGF.Builder, Class);
-  }
-  else
+  } else
     Target = EmitSuperClassRef(CGF.Builder, Class);
     
   // FIXME: We shouldn't need to do this cast, rectify the ASTContext and
@@ -5463,8 +5447,7 @@ CGObjCNonFragileABIMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                        llvm::GlobalValue::ExternalLinkage,
                                        0, "OBJC_EHTYPE_id");
           SelectorArgs.push_back(IDEHType);
-        } 
-        else {
+        } else {
           // All other types should be Objective-C interface pointer types.
           const ObjCObjectPointerType *PT = 
             CatchDecl->getType()->getAsObjCObjectPointerType();

@@ -619,8 +619,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       Vec = Builder.CreateShuffleVector(SrcVal,
                                         VMContext.getUndef(Vec->getType()),
                                         MaskV, "tmp");
-    }
-    else if (NumDstElts > NumSrcElts) {
+    } else if (NumDstElts > NumSrcElts) {
       // Extended the source vector to the same length and then shuffle it
       // into the destination.
       // FIXME: since we're shuffling with undef, can we just use the indices
@@ -649,8 +648,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       }
       llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
       Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV, "tmp");
-    }
-    else {
+    } else {
       // We should never shorten the vector
       assert(0 && "unexpected shorten vector length");
     }
@@ -679,8 +677,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
       LV = LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
                             getContext().getObjCGCAttrKind(E->getType()),
                             E->getType().getAddressSpace());
-    }
-    else {
+    } else {
       llvm::Value *V = LocalDeclMap[VD];
       assert(V && "DeclRefExpr not entered in LocalDeclMap?");
       // local variables do not get their gc attribute set.
@@ -733,8 +730,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return LValue::MakeAddr(V, E->getType().getCVRQualifiers(),
                             getContext().getObjCGCAttrKind(E->getType()),
                             E->getType().getAddressSpace());
-  }
-  else if (const ImplicitParamDecl *IPD =
+  } else if (const ImplicitParamDecl *IPD =
       dyn_cast<ImplicitParamDecl>(E->getDecl())) {
     llvm::Value *V = LocalDeclMap[IPD];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
@@ -1083,8 +1079,7 @@ LValue CodeGenFunction::EmitLValueForField(llvm::Value* BaseValue,
       // __weak attribute on a field is ignored.
       if (attr == QualType::Weak)
         attr = QualType::GCNone;
-    }
-    else if (Ty->isObjCObjectPointerType())
+    } else if (Ty->isObjCObjectPointerType())
       attr = QualType::Strong;
   }
   LValue LV =  

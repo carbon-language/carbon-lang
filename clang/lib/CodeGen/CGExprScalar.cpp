@@ -714,8 +714,7 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
         lhs = Builder.CreateBitCast(lhs, llvm::PointerType::getUnqual(i8Ty));
         LV = LValue::MakeAddr(lhs, ValTy.getCVRQualifiers(), 
                               CGF.getContext().getObjCGCAttrKind(ValTy));
-      }
-      else
+      } else
         NextVal = Builder.CreateGEP(InVal, Inc, "ptrincdec");
     } else {
       const llvm::Type *i8Ty =

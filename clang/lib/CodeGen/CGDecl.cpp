@@ -329,8 +329,7 @@ void CodeGenFunction::EmitLocalBlockVarDecl(const VarDecl &D) {
     DI->setLocation(D.getLocation());
     if (Target.useGlobalsForAutomaticVariables()) {
       DI->EmitGlobalVariable(static_cast<llvm::GlobalVariable *>(DeclPtr), &D);
-    }
-    else if (isByRef) {
+    } else if (isByRef) {
       llvm::Value *Loc;
       bool needsCopyDispose = BlockRequiresCopying(Ty);
       Loc = Builder.CreateStructGEP(DeclPtr, 1, "forwarding");
