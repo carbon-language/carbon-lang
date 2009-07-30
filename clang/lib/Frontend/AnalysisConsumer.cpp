@@ -25,7 +25,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/AST/ParentMap.h"
-#include "clang/Analysis/PathSensitive/AnalysisContext.h"
+#include "clang/Analysis/PathSensitive/AnalysisManager.h"
 #include "clang/Analysis/PathSensitive/BugReporter.h"
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
@@ -46,7 +46,6 @@ static ExplodedNodeImpl::Auditor* CreateUbiViz();
 //===----------------------------------------------------------------------===//
 
 namespace {  
-  class AnalysisManager;
   typedef void (*CodeAction)(AnalysisManager& Mgr);
 } // end anonymous namespace
 
@@ -84,7 +83,11 @@ namespace {
     PreprocessorFactory* PPF;
     const std::string OutDir;
     AnalyzerOptions Opts;
-    llvm::OwningPtr<PathDiagnosticClient> PD;
+
+    // PD is owned by AnalysisManager.
+    PathDiagnosticClient *PD;
+    StoreManagerCreator CreateStoreMgr;
+    ConstraintManagerCreator CreateConstraintMgr;
 
     AnalysisConsumer(Diagnostic &diags, Preprocessor* pp,
                      PreprocessorFactory* ppf,
@@ -93,7 +96,47 @@ namespace {
                      const AnalyzerOptions& opts)
       : LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
-        OutDir(outdir), Opts(opts) {}
+        OutDir(outdir), Opts(opts) {
+      DigestAnalyzerOptions();
+    }
+
+    void DigestAnalyzerOptions() {
+      // Create the PathDiagnosticClient.
+      if (!OutDir.empty()) {
+        switch (Opts.AnalysisDiagOpt) {
+        default:
+#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE) \
+          case PD_##NAME: PD = CREATEFN(OutDir, PP, PPF); break;
+#include "clang/Frontend/Analyses.def"
+        }
+      }
+
+      // Create the analyzer component creators.
+      if (ManagerRegistry::StoreMgrCreator != 0) {
+        CreateStoreMgr = ManagerRegistry::StoreMgrCreator;
+      }
+      else {
+        switch (Opts.AnalysisStoreOpt) {
+        default:
+          assert(0 && "Unknown store manager.");
+#define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATEFN)           \
+          case NAME##Model: CreateStoreMgr = CREATEFN; break;
+#include "clang/Frontend/Analyses.def"
+        }
+      }
+      
+      if (ManagerRegistry::ConstraintMgrCreator != 0)
+        CreateConstraintMgr = ManagerRegistry::ConstraintMgrCreator;
+      else {
+        switch (Opts.AnalysisConstraintsOpt) {
+        default:
+          assert(0 && "Unknown store manager.");
+#define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATEFN)     \
+          case NAME##Model: CreateConstraintMgr = CREATEFN; break;
+#include "clang/Frontend/Analyses.def"
+        }
+      }
+    }
     
     void addCodeAction(CodeAction action) {
       FunctionActions.push_back(action);
@@ -124,164 +167,6 @@ namespace {
   };
     
   
-  class VISIBILITY_HIDDEN AnalysisManager : public BugReporterData {
-    AnalysisContextManager ContextMgr;
-    AnalysisContext *CurrentContext;
-    
-    enum AnalysisScope { ScopeTU, ScopeDecl } AScope;
-      
-    AnalysisConsumer& C;
-    bool DisplayedFunction;
-    
-    // Configurable components creators.
-    StoreManagerCreator CreateStoreMgr;
-    ConstraintManagerCreator CreateConstraintMgr;
-
-  public:
-    AnalysisManager(AnalysisConsumer& c, Decl* d, bool displayProgress)
-      : AScope(ScopeDecl), C(c), DisplayedFunction(!displayProgress) {
-      setManagerCreators();
-      CurrentContext = ContextMgr.getContext(d);
-    }
-    
-    AnalysisManager(AnalysisConsumer& c, bool displayProgress) 
-      : AScope(ScopeTU), C(c), DisplayedFunction(!displayProgress) {
-      setManagerCreators();
-      CurrentContext = 0;
-    }
-    
-    Decl* getCodeDecl() const { 
-      assert (AScope == ScopeDecl);
-      return CurrentContext->getDecl();
-    }
-    
-    Stmt* getBody() const {
-      assert (AScope == ScopeDecl);
-      return CurrentContext->getBody();
-    }
-    
-    StoreManagerCreator getStoreManagerCreator() {
-      return CreateStoreMgr;
-    };
-
-    ConstraintManagerCreator getConstraintManagerCreator() {
-      return CreateConstraintMgr;
-    }
-    
-    virtual CFG* getCFG() {
-      return CurrentContext->getCFG();
-    }
-    
-    virtual ParentMap& getParentMap() {
-      return CurrentContext->getParentMap();
-    }
-
-    virtual LiveVariables* getLiveVariables() {
-      return CurrentContext->getLiveVariables();
-    }
-    
-    virtual ASTContext& getContext() {
-      return *C.Ctx;
-    }
-    
-    virtual SourceManager& getSourceManager() {
-      return getContext().getSourceManager();
-    }
-    
-    virtual Diagnostic& getDiagnostic() {
-      return C.Diags;
-    }
-    
-    const LangOptions& getLangOptions() const {
-      return C.LOpts;
-    }
-    
-    virtual PathDiagnosticClient* getPathDiagnosticClient() {
-      if (C.PD.get() == 0 && !C.OutDir.empty()) {
-        switch (C.Opts.AnalysisDiagOpt) {
-          default:
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)\
-case PD_##NAME: C.PD.reset(CREATEFN(C.OutDir, C.PP, C.PPF)); break;
-#include "clang/Frontend/Analyses.def"
-        }
-      }
-      return C.PD.get();      
-    }
-    
-    bool shouldVisualizeGraphviz() const { return C.Opts.VisualizeEGDot; }
-
-    bool shouldVisualizeUbigraph() const { return C.Opts.VisualizeEGUbi; }
-
-    bool shouldVisualize() const {
-      return C.Opts.VisualizeEGDot || C.Opts.VisualizeEGUbi;
-    }
-
-    bool shouldTrimGraph() const { return C.Opts.TrimGraph; }
-
-    bool shouldPurgeDead() const { return C.Opts.PurgeDead; }
-
-    bool shouldEagerlyAssume() const { return C.Opts.EagerlyAssume; }
-
-    void DisplayFunction() {
-      
-      if (DisplayedFunction)
-        return;
-      
-      DisplayedFunction = true;
-      
-      // FIXME: Is getCodeDecl() always a named decl?
-      if (isa<FunctionDecl>(getCodeDecl()) ||
-          isa<ObjCMethodDecl>(getCodeDecl())) {
-        NamedDecl *ND = cast<NamedDecl>(getCodeDecl());
-        SourceManager &SM = getContext().getSourceManager();
-        llvm::cerr << "ANALYZE: "
-          << SM.getPresumedLoc(ND->getLocation()).getFilename()
-          << ' ' << ND->getNameAsString() << '\n';
-      }
-    }
-
-  private:
-    /// Set configurable analyzer components creators. First check if there are
-    /// components registered at runtime. Otherwise fall back to builtin
-    /// components.
-    void setManagerCreators() {
-      if (ManagerRegistry::StoreMgrCreator != 0) {
-        CreateStoreMgr = ManagerRegistry::StoreMgrCreator;
-      }
-      else {
-        switch (C.Opts.AnalysisStoreOpt) {
-        default:
-          assert(0 && "Unknown store manager.");
-#define ANALYSIS_STORE(NAME, CMDFLAG, DESC, CREATEFN)     \
-          case NAME##Model: CreateStoreMgr = CREATEFN; break;
-#include "clang/Frontend/Analyses.def"
-        }
-      }
-
-      if (ManagerRegistry::ConstraintMgrCreator != 0)
-        CreateConstraintMgr = ManagerRegistry::ConstraintMgrCreator;
-      else {
-        switch (C.Opts.AnalysisConstraintsOpt) {
-        default:
-          assert(0 && "Unknown store manager.");
-#define ANALYSIS_CONSTRAINTS(NAME, CMDFLAG, DESC, CREATEFN)     \
-          case NAME##Model: CreateConstraintMgr = CREATEFN; break;
-#include "clang/Frontend/Analyses.def"
-        }
-      }
-
-      
-      // Some DiagnosticClients should be created all the time instead of
-      // lazily.  Create those now.
-      switch (C.Opts.AnalysisDiagOpt) {
-        default: break;
-#define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE)\
-case PD_##NAME: if (AUTOCREATE) getPathDiagnosticClient(); break;
-#include "clang/Frontend/Analyses.def"
-      }      
-    }
-
-  };
 
 } // end anonymous namespace
 
@@ -331,7 +216,11 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 
   if(!TranslationUnitActions.empty()) {
-    AnalysisManager mgr(*this, Opts.AnalyzerDisplayProgress);
+    AnalysisManager mgr(*Ctx, Diags, LOpts, PD, 
+                        CreateStoreMgr, CreateConstraintMgr,
+                        Opts.AnalyzerDisplayProgress, Opts.VisualizeEGDot,
+                        Opts.VisualizeEGUbi, Opts.PurgeDead, Opts.EagerlyAssume,
+                        Opts.TrimGraph);
     for (Actions::iterator I = TranslationUnitActions.begin(), 
          E = TranslationUnitActions.end(); I != E; ++I)
       (*I)(mgr);  
@@ -346,11 +235,6 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
       if (ObjCImplementationDecl* ID = dyn_cast<ObjCImplementationDecl>(*I))
         HandleCode(ID, 0, ObjCImplementationActions);
   }
-  
-  // Delete the PathDiagnosticClient here just in case the AnalysisConsumer
-  // object doesn't get released.  This will cause any side-effects in the
-  // destructor of the PathDiagnosticClient to get executed.
-  PD.reset();
 }
 
 void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
@@ -367,7 +251,11 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
 
   // Create an AnalysisManager that will manage the state for analyzing
   // this method/function.
-  AnalysisManager mgr(*this, D, Opts.AnalyzerDisplayProgress);
+  AnalysisManager mgr(D, *Ctx, Diags, LOpts, PD, 
+                      CreateStoreMgr, CreateConstraintMgr,
+                      Opts.AnalyzerDisplayProgress, Opts.VisualizeEGDot,
+                      Opts.VisualizeEGUbi, Opts.PurgeDead, Opts.EagerlyAssume,
+                      Opts.TrimGraph);
   
   // Dispatch on the actions.  
   for (Actions::iterator I = actions.begin(), E = actions.end(); I != E; ++I)
