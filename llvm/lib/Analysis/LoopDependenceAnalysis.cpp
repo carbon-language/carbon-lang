@@ -127,7 +127,17 @@ LoopDependenceAnalysis::DependenceResult
 LoopDependenceAnalysis::analyseSubscript(const SCEV *A,
                                          const SCEV *B,
                                          Subscript *S) const {
-  return Unknown; // TODO: Implement.
+  DEBUG(errs() << "  Testing subscript: " << *A << ", " << *B << "\n");
+
+  if (A == B) {
+    DEBUG(errs() << "  -> [D] same SCEV\n");
+    return Dependent;
+  }
+
+  // TODO: Implement ZIV/SIV/MIV testers.
+
+  DEBUG(errs() << "  -> [?] cannot analyse subscript\n");
+  return Unknown;
 }
 
 LoopDependenceAnalysis::DependenceResult
