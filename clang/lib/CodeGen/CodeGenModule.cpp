@@ -808,7 +808,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     if (!Init) {
       ErrorUnsupported(D, "static initializer");
       QualType T = D->getInit()->getType();
-      Init = VMContext.getUndef(getTypes().ConvertType(T));
+      Init = llvm::UndefValue::get(getTypes().ConvertType(T));
     }
   }
 

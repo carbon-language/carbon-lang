@@ -200,7 +200,7 @@ public:
     const llvm::Type *ElementType = VType->getElementType();
 
     // Emit individual vector element stores.
-    llvm::Value *V = VMContext.getUndef(VType);
+    llvm::Value *V = llvm::UndefValue::get(VType);
     
     // Emit initializers
     unsigned i;
@@ -473,7 +473,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     llvm::Value *Elt = EmitScalarConversion(Src, SrcType, EltTy);
 
     // Insert the element in element zero of an undef vector
-    llvm::Value *UnV = VMContext.getUndef(DstTy);
+    llvm::Value *UnV = llvm::UndefValue::get(DstTy);
     llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
     UnV = Builder.CreateInsertElement(UnV, Elt, Idx, "tmp");
 
@@ -552,7 +552,7 @@ Value *ScalarExprEmitter::VisitExpr(Expr *E) {
   CGF.ErrorUnsupported(E, "scalar expression");
   if (E->getType()->isVoidType())
     return 0;
-  return VMContext.getUndef(CGF.ConvertType(E->getType()));
+  return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
 }
 
 Value *ScalarExprEmitter::VisitShuffleVectorExpr(ShuffleVectorExpr *E) {
@@ -875,7 +875,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
     // (Note that we do actually need the imaginary part of the RHS for
     // multiplication and division.)
     CGF.ErrorUnsupported(E, "complex compound assignment");
-    return VMContext.getUndef(CGF.ConvertType(E->getType()));
+    return llvm::UndefValue::get(CGF.ConvertType(E->getType()));
   }
 
   // Emit the RHS first.  __block variables need to have the rhs evaluated
@@ -1612,7 +1612,7 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
 llvm::Value *CodeGenFunction::EmitVector(llvm::Value * const *Vals, 
                                          unsigned NumVals, bool isSplat) {
   llvm::Value *Vec
-    = VMContext.getUndef(llvm::VectorType::get(Vals[0]->getType(), NumVals));
+    = llvm::UndefValue::get(llvm::VectorType::get(Vals[0]->getType(), NumVals));
   
   for (unsigned i = 0, e = NumVals; i != e; ++i) {
     llvm::Value *Val = isSplat ? Vals[0] : Vals[i];

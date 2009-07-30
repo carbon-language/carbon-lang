@@ -267,7 +267,7 @@ CodeGenFunction::EmitCXXConstructExpr(llvm::Value *Dest,
 llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   if (E->isArray()) {
     ErrorUnsupported(E, "new[] expression");
-    return VMContext.getUndef(ConvertType(E->getType()));
+    return llvm::UndefValue::get(ConvertType(E->getType()));
   }
   
   QualType AllocType = E->getAllocatedType();

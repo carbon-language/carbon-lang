@@ -156,7 +156,7 @@ void CodeGenFunction::StartFunction(const Decl *D, QualType RetTy,
   // Create a marker to make it easy to insert allocas into the entryblock
   // later.  Don't create this with the builder, because we don't want it
   // folded.
-  llvm::Value *Undef = VMContext.getUndef(llvm::Type::Int32Ty);
+  llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
   AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "",
                                          EntryBB);
   if (Builder.isNamePreserving())

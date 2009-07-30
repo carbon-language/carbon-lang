@@ -121,13 +121,13 @@ RValue CodeGenFunction::GetUndefRValue(QualType Ty) {
     return RValue::get(0);
   } else if (const ComplexType *CTy = Ty->getAsComplexType()) {
     const llvm::Type *EltTy = ConvertType(CTy->getElementType());
-    llvm::Value *U = VMContext.getUndef(EltTy);
+    llvm::Value *U = llvm::UndefValue::get(EltTy);
     return RValue::getComplex(std::make_pair(U, U));
   } else if (hasAggregateLLVMType(Ty)) {
     const llvm::Type *LTy = llvm::PointerType::getUnqual(ConvertType(Ty));
-    return RValue::getAggregate(VMContext.getUndef(LTy));
+    return RValue::getAggregate(llvm::UndefValue::get(LTy));
   } else {
-    return RValue::get(VMContext.getUndef(ConvertType(Ty)));
+    return RValue::get(llvm::UndefValue::get(ConvertType(Ty)));
   }
 }
 
@@ -141,7 +141,7 @@ LValue CodeGenFunction::EmitUnsupportedLValue(const Expr *E,
                                               const char *Name) {
   ErrorUnsupported(E, Name);
   llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
-  return LValue::MakeAddr(VMContext.getUndef(Ty),
+  return LValue::MakeAddr(llvm::UndefValue::get(Ty),
                           E->getType().getCVRQualifiers(),
                           getContext().getObjCGCAttrKind(E->getType()),
                           E->getType().getAddressSpace());
@@ -412,7 +412,7 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV,
   
   llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
   Vec = Builder.CreateShuffleVector(Vec,
-                                    VMContext.getUndef(Vec->getType()),
+                                    llvm::UndefValue::get(Vec->getType()),
                                     MaskV, "tmp");
   return RValue::get(Vec);
 }
@@ -617,7 +617,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
     
       llvm::Value *MaskV = llvm::ConstantVector::get(&Mask[0], Mask.size());
       Vec = Builder.CreateShuffleVector(SrcVal,
-                                        VMContext.getUndef(Vec->getType()),
+                                        llvm::UndefValue::get(Vec->getType()),
                                         MaskV, "tmp");
     } else if (NumDstElts > NumSrcElts) {
       // Extended the source vector to the same length and then shuffle it
@@ -629,12 +629,12 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       for (i = 0; i != NumSrcElts; ++i)
         ExtMask.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, i));
       for (; i != NumDstElts; ++i)
-        ExtMask.push_back(VMContext.getUndef(llvm::Type::Int32Ty));
+        ExtMask.push_back(llvm::UndefValue::get(llvm::Type::Int32Ty));
       llvm::Value *ExtMaskV = llvm::ConstantVector::get(&ExtMask[0],
                                                         ExtMask.size());
       llvm::Value *ExtSrcVal = 
         Builder.CreateShuffleVector(SrcVal,
-                                    VMContext.getUndef(SrcVal->getType()),
+                                    llvm::UndefValue::get(SrcVal->getType()),
                                     ExtMaskV, "tmp");
       // build identity
       llvm::SmallVector<llvm::Constant*, 4> Mask;

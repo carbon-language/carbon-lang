@@ -212,7 +212,7 @@ CGObjCGNU::CGObjCGNU(CodeGen::CodeGenModule &cgm)
     
   Zeros[0] = llvm::ConstantInt::get(LongTy, 0);
   Zeros[1] = Zeros[0];
-  NULLPtr = VMContext.getConstantPointerNull(
+  NULLPtr = llvm::ConstantPointerNull::get(
     llvm::PointerType::getUnqual(llvm::Type::Int8Ty));
   // C string type.  Used in lots of places.
   PtrToInt8Ty = 
@@ -464,7 +464,7 @@ CGObjCGNU::GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
     if (isa<ObjCMethodDecl>(CGF.CurFuncDecl)) {
       self = CGF.LoadObjCSelf();
     } else {
-      self = VMContext.getConstantPointerNull(IdTy);
+      self = llvm::ConstantPointerNull::get(IdTy);
     }
     Params.push_back(self->getType());
     llvm::Constant *lookupFunction = 
@@ -538,7 +538,7 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const std::string &ClassName,
   ObjCMethodListTy = llvm::cast<llvm::StructType>(OpaqueNextTy.get());
 
   Methods.clear();
-  Methods.push_back(VMContext.getConstantPointerNull(
+  Methods.push_back(llvm::ConstantPointerNull::get(
         llvm::PointerType::getUnqual(ObjCMethodListTy)));
   Methods.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty,
         MethodTypes.size()));
@@ -620,7 +620,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
       NULL);
   llvm::Constant *Zero = llvm::ConstantInt::get(LongTy, 0);
   llvm::Constant *NullP =
-    VMContext.getConstantPointerNull(PtrTy);
+    llvm::ConstantPointerNull::get(PtrTy);
   // Fill in the structure
   std::vector<llvm::Constant*> Elements;
   Elements.push_back(llvm::ConstantExpr::getBitCast(MetaClass, PtrToInt8Ty));
@@ -966,7 +966,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   if (!SuperClassName.empty()) {
     SuperClass = MakeConstantString(SuperClassName, ".super_class_name");
   } else {
-    SuperClass = VMContext.getConstantPointerNull(PtrToInt8Ty);
+    SuperClass = llvm::ConstantPointerNull::get(PtrToInt8Ty);
   }
   // Empty vector used to construct empty method lists
   llvm::SmallVector<llvm::Constant*, 1>  empty;

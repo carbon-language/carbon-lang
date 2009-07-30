@@ -605,7 +605,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   // Unknown builtin, for now just dump it out and return undef.
   if (hasAggregateLLVMType(E->getType()))
     return RValue::getAggregate(CreateTempAlloca(ConvertType(E->getType())));
-  return RValue::get(VMContext.getUndef(ConvertType(E->getType())));
+  return RValue::get(llvm::UndefValue::get(ConvertType(E->getType())));
 }    
 
 Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
@@ -639,7 +639,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[1] = Builder.CreateZExt(Ops[1], llvm::Type::Int64Ty, "zext");
     const llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 2);
     llvm::Value *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
-    Ops[1] = Builder.CreateInsertElement(VMContext.getUndef(Ty),
+    Ops[1] = Builder.CreateInsertElement(llvm::UndefValue::get(Ty),
                                          Ops[1], Zero, "insert");
     Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "bitcast");
     const char *name = 0;
