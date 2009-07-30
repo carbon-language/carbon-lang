@@ -303,10 +303,15 @@ public:
 /// @name Named Metadata Accessors
 /// @{
 public:
-  /// getNamedMetadata - Return the first named MDNode in the module with the
-  /// specified name. This method returns null if a MDNode with the specified
-  /// name is not found.
+  /// getNamedMetadata - Return the first NamedMDNode in the module with the
+  /// specified name. This method returns null if a NamedMDNode with the 
+  /// specified name is not found.
   NamedMDNode *getNamedMetadata(const StringRef &Name) const;
+
+  /// getOrInsertNamedMetadata - Return the first named MDNode in the module 
+  /// with the specified name. This method returns a new NamedMDNode if a 
+  /// NamedMDNode with the specified name is not found.
+  NamedMDNode *getOrInsertNamedMetadata(const StringRef &Name);
 
 /// @}
 /// @name Type Accessors
