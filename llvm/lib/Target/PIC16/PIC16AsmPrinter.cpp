@@ -137,7 +137,15 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
       return;
 
     case MachineOperand::MO_GlobalAddress: {
-      O << Mang->getMangledName(MO.getGlobal());
+      std::string Sname = Mang->getMangledName(MO.getGlobal());
+      // FIXME: currently we do not have a memcpy def coming in the module
+      // by any chance, as we do not link in those as .bc lib. So these calls
+      // are always external and it is safe to emit an extern.
+      if (PAN::isMemIntrinsic(Sname)) {
+        LibcallDecls.push_back(createESName(Sname));
+      }
+
+      O << Sname;
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
@@ -148,7 +156,14 @@ void PIC16AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
         LibcallDecls.push_back(Sname);
       }
 
-      O  << Sname;
+      // Record a call to intrinsic to print the extern declaration for it.
+      std::string Sym = Sname;  
+      if (PAN::isMemIntrinsic(Sym)) {
+        Sym = PAN::addPrefix(Sym);
+        LibcallDecls.push_back(createESName(Sym));
+      }
+
+      O  << Sym;
       break;
     }
     case MachineOperand::MO_MachineBasicBlock:
@@ -252,6 +267,16 @@ void PIC16AsmPrinter::EmitFunctionDecls(Module &M) {
     
     if (!I->isDeclaration() && !I->hasExternalLinkage())
       continue;
+
+    // Do not emit memcpy, memset, and memmove here.
+    // Calls to these routines can be generated in two ways,
+    // 1. User calling the standard lib function
+    // 2. Codegen generating these calls for llvm intrinsics.
+    // In the first case a prototype is alread availale, while in
+    // second case the call is via and externalsym and the prototype is missing.
+    // So declarations for these are currently always getting printing by
+    // tracking both kind of references in printInstrunction.
+    if (I->isDeclaration() && PAN::isMemIntrinsic(Name)) continue;
 
     const char *directive = I->isDeclaration() ? TAI->getExternDirective() :
                                                  TAI->getGlobalDirective();
