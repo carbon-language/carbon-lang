@@ -495,7 +495,6 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
   const ValueEnumerator::ValueList &Vals = VE.getValues();
   bool StartedMetadataBlock = false;
   unsigned MDSAbbrev = 0;
-  unsigned String8Abbrev = 0;
   SmallVector<uint64_t, 64> Record;
   for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
     
@@ -530,18 +529,14 @@ static void WriteModuleMetadata(const ValueEnumerator &VE,
       if (!StartedMetadataBlock)  {
         Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
         StartedMetadataBlock = true;
-        BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-        Abbv->Add(BitCodeAbbrevOp(bitc::CST_CODE_STRING));
-        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-        Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 8));
-        String8Abbrev = Stream.EmitAbbrev(Abbv);
       }
 
       // Write name.
-      const char *StrBegin = NMD->getName().data();
-      for (unsigned i = 0, e = NMD->getName().size(); i != e; ++i)
+      std::string Str = NMD->getNameStr();
+      const char *StrBegin = Str.c_str();
+      for (unsigned i = 0, e = Str.length(); i != e; ++i)
         Record.push_back(StrBegin[i]);
-      Stream.EmitRecord(bitc::METADATA_NAME, Record, String8Abbrev);
+      Stream.EmitRecord(bitc::METADATA_NAME, Record, 0/*TODO*/);
       Record.clear();
 
       // Write named metadata elements.
