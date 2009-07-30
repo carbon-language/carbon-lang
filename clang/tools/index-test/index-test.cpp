@@ -44,8 +44,8 @@
 #include "clang/Index/Utils.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CommandLineSourceLoc.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/Expr.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/CommandLine.h"
@@ -106,8 +106,48 @@ DisableFree("disable-free",
 
 static bool HadErrors = false;
 
+static void ProcessObjCMessage(ObjCMessageExpr *Msg, Indexer &Idxer) {
+  llvm::raw_ostream &OS = llvm::outs();
+  typedef Storing<TULocationHandler> ResultsTy;
+  ResultsTy Results;
+
+  Analyzer Analyz(Idxer.getProgram(), Idxer);
+
+  switch (ProgAction) {
+  default: assert(0);
+  case PrintRefs:
+    llvm::errs() << "Error: Cannot -print-refs on a ObjC message expression\n";
+    HadErrors = true;
+    return;
+    
+  case PrintDecls: {
+    Analyz.FindObjCMethods(Msg, Results);
+    for (ResultsTy::iterator
+           I = Results.begin(), E = Results.end(); I != E; ++I)
+      I->print(OS);
+    break;
+  }
+
+  case PrintDefs: {
+    Analyz.FindObjCMethods(Msg, Results);
+    for (ResultsTy::iterator
+           I = Results.begin(), E = Results.end(); I != E; ++I) {
+      const ObjCMethodDecl *D = cast<ObjCMethodDecl>(I->getDecl());
+      if (D->isThisDeclarationADefinition())
+        I->print(OS);
+    }
+    break;
+  }
+
+  }
+}
+
 static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
   assert(ASTLoc.isValid());
+  
+  if (ObjCMessageExpr *Msg =
+        dyn_cast_or_null<ObjCMessageExpr>(ASTLoc.getStmt()))
+    return ProcessObjCMessage(Msg, Idxer);
 
   Decl *D = ASTLoc.getReferencedDecl();
   if (D == 0) {
@@ -140,7 +180,7 @@ static void ProcessASTLocation(ASTLocation ASTLoc, Indexer &Idxer) {
     break;
   }
 
-  case PrintDefs:{
+  case PrintDefs: {
     Analyz.FindDeclarations(D, Results);
     for (ResultsTy::iterator
            I = Results.begin(), E = Results.end(); I != E; ++I) {
@@ -206,6 +246,10 @@ int main(int argc, char **argv) {
   if (!PointAtLocation.empty()) {
     const std::string &Filename = PointAtLocation[0].FileName;
     const FileEntry *File = FileMgr.getFile(Filename);
+    if (File == 0) {
+      llvm::errs() << "File '" << Filename << "' does not exist\n";
+      return 1;
+    }
 
     // Safety check. Using an out-of-date AST file will only lead to crashes
     // or incorrect results.
@@ -218,10 +262,6 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    if (File == 0) {
-      llvm::errs() << "File '" << Filename << "' does not exist\n";
-      return 1;
-    }
     unsigned Line = PointAtLocation[0].Line;
     unsigned Col = PointAtLocation[0].Column;
 

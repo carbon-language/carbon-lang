@@ -16,6 +16,7 @@
 
 namespace clang {
   class Decl;
+  class ObjCMessageExpr;
 
 namespace idx {
   class Program;
@@ -42,6 +43,10 @@ public:
   /// \brief Find all TULocations for references of the given Decl and pass
   /// them to Handler.
   void FindReferences(Decl *D, TULocationHandler &Handler);
+
+  /// \brief Find methods that may respond to the given message and pass them
+  /// to Handler.
+  void FindObjCMethods(ObjCMessageExpr *MsgE, TULocationHandler &Handler);
 };
 
 } // namespace idx
