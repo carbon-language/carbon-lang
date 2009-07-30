@@ -640,6 +640,14 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(const char *MangledName,
     // top-level declarations.
     if (FD->isThisDeclarationADefinition() && MayDeferGeneration(FD))
       DeferredDeclsToEmit.push_back(D);
+    // A called constructor which has no definition or declaration need be
+    // synthesized.
+    else if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+      const CXXRecordDecl *ClassDecl = 
+        cast<CXXRecordDecl>(CD->getDeclContext());
+      if (!ClassDecl->hasUserDeclaredConstructor())
+        DeferredDeclsToEmit.push_back(D);
+    }
   }
   
   // This function doesn't have a complete type (for example, the return

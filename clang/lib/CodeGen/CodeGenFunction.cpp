@@ -238,7 +238,17 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
       EmitDtorEpilogue(DD);
     FinishFunction(S->getRBracLoc());
   }
-
+  else 
+    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD)) {
+      assert(
+             !cast<CXXRecordDecl>(CD->getDeclContext())->
+              hasUserDeclaredConstructor() &&
+             "bogus constructor is being synthesize");
+      StartFunction(FD, FD->getResultType(), Fn, Args, SourceLocation());
+      EmitCtorPrologue(CD);
+      FinishFunction();
+    }
+    
   // Destroy the 'this' declaration.
   if (CXXThisDecl)
     CXXThisDecl->Destroy(getContext());
