@@ -630,31 +630,21 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue Op, SDValue N,
 bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDValue Op, SDValue N,
                                            SDValue &Base, SDValue &OffImm) {
   // Match simple R - imm8 operands.
-
-  // Match frame index...
-  if ((N.getOpcode() != ISD::ADD) && (N.getOpcode() != ISD::SUB)) {
-    if (N.getOpcode() == ISD::FrameIndex) {
-      int FI = cast<FrameIndexSDNode>(N)->getIndex();
-      Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
-      OffImm  = CurDAG->getTargetConstant(0, MVT::i32);
-      return true;
-    }
-    return false;
-  }
-
-  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-    int RHSC = (int)RHS->getSExtValue();
-    if (N.getOpcode() == ISD::SUB)
-      RHSC = -RHSC;
-    
-    if ((RHSC >= -255) && (RHSC <= 0)) { // 8 bits (always negative)
-      Base   = N.getOperand(0);
-      if (Base.getOpcode() == ISD::FrameIndex) {
-        int FI = cast<FrameIndexSDNode>(Base)->getIndex();
-        Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+  if ((N.getOpcode() == ISD::ADD) || (N.getOpcode() == ISD::SUB)) {
+    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      int RHSC = (int)RHS->getSExtValue();
+      if (N.getOpcode() == ISD::SUB)
+        RHSC = -RHSC;
+      
+      if ((RHSC >= -255) && (RHSC <= 0)) { // 8 bits (always negative)
+        Base   = N.getOperand(0);
+        if (Base.getOpcode() == ISD::FrameIndex) {
+          int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+          Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+        }
+        OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
+        return true;
       }
-      OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
-      return true;
     }
   }
 
