@@ -133,6 +133,8 @@ public:
   virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
 
 private:
+  unsigned estimateRSStackSizeLimit(MachineFunction &MF) const;
+
   unsigned getRegisterPairEven(unsigned Reg, const MachineFunction &MF) const;
 
   unsigned getRegisterPairOdd(unsigned Reg, const MachineFunction &MF) const;

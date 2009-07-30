@@ -462,8 +462,8 @@ static unsigned estimateStackSize(MachineFunction &MF, MachineFrameInfo *MFI) {
 /// estimateRSStackSizeLimit - Look at each instruction that references stack
 /// frames and return the stack size limit beyond which some of these
 /// instructions will require scratch register during their expansion later.
-static unsigned estimateRSStackSizeLimit(MachineFunction &MF,
-                                         const ARMBaseInstrInfo &TII) {
+unsigned
+ARMBaseRegisterInfo::estimateRSStackSizeLimit(MachineFunction &MF) const {
   unsigned Limit = (1 << 12) - 1;
   for (MachineFunction::iterator BB = MF.begin(),E = MF.end(); BB != E; ++BB) {
     for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
@@ -480,6 +480,11 @@ static unsigned estimateRSStackSizeLimit(MachineFunction &MF,
         if (AddrMode == ARMII::AddrMode5 ||
             AddrMode == ARMII::AddrModeT2_i8s4)
           Limit = std::min(Limit, ((1U << 8) - 1) * 4);
+
+        if (AddrMode == ARMII::AddrModeT2_i12 && hasFP(MF))
+          // When the stack offset is negative, we will end up using
+          // the i8 instructions instead.
+          return (1 << 8) - 1;
         break; // At most one FI per instruction
       }
     }
@@ -640,7 +645,7 @@ ARMBaseRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // register scavenging.
     if (RS && !ExtraCSSpill && !AFI->isThumb1OnlyFunction()) {
       MachineFrameInfo  *MFI = MF.getFrameInfo();
-      if (estimateStackSize(MF, MFI) >= estimateRSStackSizeLimit(MF, TII)) {
+      if (estimateStackSize(MF, MFI) >= estimateRSStackSizeLimit(MF)) {
         // If any non-reserved CS register isn't spilled, just spill one or two
         // extra. That should take care of it!
         unsigned NumExtras = TargetAlign / 4;
