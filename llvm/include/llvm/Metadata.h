@@ -212,6 +212,11 @@ public:
     return Node.size();
   }
 
+  /// addElement - Add metadata element.
+  void addElement(MetadataBase *M) {
+    Node.push_back(WeakMetadataVH(M));
+  }
+
   bool elem_empty() const {
     return Node.empty();
   }
