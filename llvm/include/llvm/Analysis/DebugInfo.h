@@ -612,32 +612,31 @@ namespace llvm {
 
   /// DebugInfoEnumrator - This object collects DebugInfo from
   /// the module.
-  class DebugInfoEnumerator {
+  class DebugInfoFinder {
 
   public:
-    /// EnumerateModule - Enumerate entire module and collect debug info
+    /// processModule - Process entire module and collect debug info
     /// anchors.
-    void enumerateModule(Module &M);
+    void processModule(Module &M);
     
   private:
-    /// enumerateType - Enumerate DIType.
-    /// for a type.
-    void enumerateType(DIType DT);
+    /// processType - Process DIType.
+    void processType(DIType DT);
 
-    /// enumerateSubprogram - Enumberate DISubprogram.
-    void enumerateSubprogram(DISubprogram SP);
+    /// processSubprogram - Enumberate DISubprogram.
+    void processSubprogram(DISubprogram SP);
 
-    /// enumerateStopPoint - Enumerate DbgStopPointInst.
-    void enumerateStopPoint(DbgStopPointInst *SPI);
+    /// processStopPoint - Process DbgStopPointInst.
+    void processStopPoint(DbgStopPointInst *SPI);
 
-    /// enumerateFuncStart - Enumberate DbgFuncStartInst.
-    void enumerateFuncStart(DbgFuncStartInst *FSI);
+    /// processFuncStart - Process DbgFuncStartInst.
+    void processFuncStart(DbgFuncStartInst *FSI);
 
-    /// enumerateRegionStart - Enumerate DbgRegionStart.
-    void enumerateRegionStart(DbgRegionStartInst *DRS);
+    /// processRegionStart - Process DbgRegionStart.
+    void processRegionStart(DbgRegionStartInst *DRS);
 
-    /// enumerateRegionEnd - Enumerate DbgRegionEnd.
-    void enumerateRegionEnd(DbgRegionEndInst *DRE);
+    /// processRegionEnd - Process DbgRegionEnd.
+    void processRegionEnd(DbgRegionEndInst *DRE);
 
     /// addCompileUnit - Add compile unit into CUs.
     bool addCompileUnit(DICompileUnit CU);

@@ -906,24 +906,24 @@ void DIFactory::InsertDeclare(Value *Storage, DIVariable D, BasicBlock *BB) {
 }
 
 //===----------------------------------------------------------------------===//
-// DebugInfoEnumerator implementations.
+// DebugInfoFinder implementations.
 //===----------------------------------------------------------------------===//
 
-/// enumerateModule - Enumerate entire module and collect debug info.
-void DebugInfoEnumerator::enumerateModule(Module &M) {
+/// processModule - Process entire module and collect debug info.
+void DebugInfoFinder::processModule(Module &M) {
   
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator FI = (*I).begin(), FE = (*I).end(); FI != FE; ++FI)
       for (BasicBlock::iterator BI = (*FI).begin(), BE = (*FI).end(); BI != BE;
            ++BI) {
         if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(BI))
-          enumerateStopPoint(SPI);
+          processStopPoint(SPI);
         else if (DbgFuncStartInst *FSI = dyn_cast<DbgFuncStartInst>(BI))
-          enumerateFuncStart(FSI);
+          processFuncStart(FSI);
         else if (DbgRegionStartInst *DRS = dyn_cast<DbgRegionStartInst>(BI))
-          enumerateRegionStart(DRS);
+          processRegionStart(DRS);
         else if (DbgRegionEndInst *DRE = dyn_cast<DbgRegionEndInst>(BI))
-          enumerateRegionEnd(DRE);
+          processRegionEnd(DRE);
       }
   
   for (Module::global_iterator GVI = M.global_begin(), GVE = M.global_end();
@@ -936,13 +936,13 @@ void DebugInfoEnumerator::enumerateModule(Module &M) {
     DIGlobalVariable DIG(GV);
     if (addGlobalVariable(DIG)) {
       addCompileUnit(DIG.getCompileUnit());
-      enumerateType(DIG.getType());
+      processType(DIG.getType());
     }
   }
 }
     
-/// enumerateType - Enumerate DIType.
-void DebugInfoEnumerator::enumerateType(DIType DT) {
+/// processType - Process DIType.
+void DebugInfoFinder::processType(DIType DT) {
   if (DT.isNull())
     return;
   if (!NodesSeen.insert(DT.getGV()))
@@ -951,60 +951,60 @@ void DebugInfoEnumerator::enumerateType(DIType DT) {
   addCompileUnit(DT.getCompileUnit());
   if (DT.isCompositeType(DT.getTag())) {
     DICompositeType DCT(DT.getGV());
-    enumerateType(DCT.getTypeDerivedFrom());
+    processType(DCT.getTypeDerivedFrom());
     DIArray DA = DCT.getTypeArray();
     if (!DA.isNull())
       for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
         DIDescriptor D = DA.getElement(i);
         DIType TypeE = DIType(D.getGV());
         if (!TypeE.isNull())
-          enumerateType(TypeE);
+          processType(TypeE);
         else 
-          enumerateSubprogram(DISubprogram(D.getGV()));
+          processSubprogram(DISubprogram(D.getGV()));
       }
   } else if (DT.isDerivedType(DT.getTag())) {
     DIDerivedType DDT(DT.getGV());
     if (!DDT.isNull()) 
-      enumerateType(DDT.getTypeDerivedFrom());
+      processType(DDT.getTypeDerivedFrom());
   }
 }
 
-/// enumerateSubprogram - Enumerate DISubprogram.
-void DebugInfoEnumerator::enumerateSubprogram(DISubprogram SP) {
+/// processSubprogram - Process DISubprogram.
+void DebugInfoFinder::processSubprogram(DISubprogram SP) {
   if (SP.isNull())
     return;
   if (!addSubprogram(SP))
     return;
   addCompileUnit(SP.getCompileUnit());
-  enumerateType(SP.getType());
+  processType(SP.getType());
 }
 
-/// enumerateStopPoint - Enumerate DbgStopPointInst.
-void DebugInfoEnumerator::enumerateStopPoint(DbgStopPointInst *SPI) {
+/// processStopPoint - Process DbgStopPointInst.
+void DebugInfoFinder::processStopPoint(DbgStopPointInst *SPI) {
   GlobalVariable *Context = dyn_cast<GlobalVariable>(SPI->getContext());
   addCompileUnit(DICompileUnit(Context));
 }
 
-/// enumerateFuncStart - Enumerate DbgFuncStartInst.
-void DebugInfoEnumerator::enumerateFuncStart(DbgFuncStartInst *FSI) {
+/// processFuncStart - Process DbgFuncStartInst.
+void DebugInfoFinder::processFuncStart(DbgFuncStartInst *FSI) {
   GlobalVariable *SP = dyn_cast<GlobalVariable>(FSI->getSubprogram());
-  enumerateSubprogram(DISubprogram(SP));
+  processSubprogram(DISubprogram(SP));
 }
 
-/// enumerateRegionStart - Enumerate DbgRegionStart.
-void DebugInfoEnumerator::enumerateRegionStart(DbgRegionStartInst *DRS) {
+/// processRegionStart - Process DbgRegionStart.
+void DebugInfoFinder::processRegionStart(DbgRegionStartInst *DRS) {
   GlobalVariable *SP = dyn_cast<GlobalVariable>(DRS->getContext());
-  enumerateSubprogram(DISubprogram(SP));
+  processSubprogram(DISubprogram(SP));
 }
 
-/// enumerateRegionEnd - Enumerate DbgRegionEnd.
-void DebugInfoEnumerator::enumerateRegionEnd(DbgRegionEndInst *DRE) {
+/// processRegionEnd - Process DbgRegionEnd.
+void DebugInfoFinder::processRegionEnd(DbgRegionEndInst *DRE) {
   GlobalVariable *SP = dyn_cast<GlobalVariable>(DRE->getContext());
-  enumerateSubprogram(DISubprogram(SP));
+  processSubprogram(DISubprogram(SP));
 }
 
 /// addCompileUnit - Add compile unit into CUs.
-bool DebugInfoEnumerator::addCompileUnit(DICompileUnit CU) {
+bool DebugInfoFinder::addCompileUnit(DICompileUnit CU) {
   if (CU.isNull())
     return false;
 
@@ -1016,7 +1016,7 @@ bool DebugInfoEnumerator::addCompileUnit(DICompileUnit CU) {
 }
     
 /// addGlobalVariable - Add global variable into GVs.
-bool DebugInfoEnumerator::addGlobalVariable(DIGlobalVariable DIG) {
+bool DebugInfoFinder::addGlobalVariable(DIGlobalVariable DIG) {
   if (DIG.isNull())
     return false;
 
@@ -1028,7 +1028,7 @@ bool DebugInfoEnumerator::addGlobalVariable(DIGlobalVariable DIG) {
 }
 
 // addSubprogram - Add subprgoram into SPs.
-bool DebugInfoEnumerator::addSubprogram(DISubprogram SP) {
+bool DebugInfoFinder::addSubprogram(DISubprogram SP) {
   if (SP.isNull())
     return false;
   
