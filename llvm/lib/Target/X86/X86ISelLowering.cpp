@@ -9110,7 +9110,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     // 'A' means EAX + EDX.
     if (Constraint == "A") {
       Res.first = X86::EAX;
-      Res.second = X86::GRADRegisterClass;
+      Res.second = X86::GR32_ADRegisterClass;
     }
     return Res;
   }

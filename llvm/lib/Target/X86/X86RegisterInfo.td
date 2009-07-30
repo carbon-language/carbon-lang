@@ -674,7 +674,9 @@ def GR64_NOREX_NOSP : RegisterClass<"X86", [i64], 64,
 }
 
 // A class to support the 'A' assembler constraint: EAX then EDX.
-def GRAD : RegisterClass<"X86", [i32], 32, [EAX, EDX]>;
+def GR32_AD : RegisterClass<"X86", [i32], 32, [EAX, EDX]> {
+  let SubRegClassList = [GR8_ABCD_L, GR8_ABCD_H, GR16_ABCD];
+}
 
 // Scalar SSE2 floating point registers.
 def FR32 : RegisterClass<"X86", [f32], 32,
