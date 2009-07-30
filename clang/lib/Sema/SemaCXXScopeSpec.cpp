@@ -189,7 +189,8 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
     //        list of the partial specialization enclosed in <>. If
     //        the nth template parameter is a parameter pack, the nth
     //        template argument is a pack expansion (14.6.3) whose
-    //        pattern is the name of the parameter pack. (FIXME)
+    //        pattern is the name of the parameter pack. 
+    //        (FIXME: parameter packs)
     //
     // All of these options come down to having the
     // nested-name-specifier type that is equivalent to the
