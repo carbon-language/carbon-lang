@@ -647,7 +647,8 @@ void SlotTracker::processModule() {
     const NamedMDNode *NMD = I;
     for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
       MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getElement(i));
-      CreateMetadataSlot(MD);
+      if (MD)
+        CreateMetadataSlot(MD);
     }
   }
 
@@ -1392,7 +1393,7 @@ void AssemblyWriter::printModule(const Module *M) {
     Out << "!" << NMD->getName() << " = !{";
     for (unsigned i = 0, e = NMD->getNumElements(); i != e; ++i) {
       if (i) Out << ", ";
-      MDNode *MD = cast<MDNode>(NMD->getElement(i));
+      MDNode *MD = dyn_cast_or_null<MDNode>(NMD->getElement(i));
       Out << '!' << Machine.getMetadataSlot(MD);
     }
     Out << "}\n";
@@ -2047,8 +2048,11 @@ void Value::print(raw_ostream &OS, AssemblyAnnotationWriter *AAW) const {
     OS << "!" << N->getName() << " = !{";
     for (unsigned i = 0, e = N->getNumElements(); i != e; ++i) {
       if (i) OS << ", ";
-      MDNode *MD = cast<MDNode>(N->getElement(i));
-      OS << '!' << SlotTable.getMetadataSlot(MD);
+      MDNode *MD = dyn_cast_or_null<MDNode>(N->getElement(i));
+      if (MD)
+        OS << '!' << SlotTable.getMetadataSlot(MD);
+      else 
+        OS << "null";
     }
     OS << "}\n";
     WriteMDNodes(OS, TypePrinter, SlotTable);

@@ -168,7 +168,7 @@ public:
   }
 
   operator MetadataBase*() const {
-   return cast<MetadataBase>(getValPtr());
+   return dyn_cast_or_null<MetadataBase>(getValPtr());
   }
 };
 
