@@ -598,7 +598,7 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue Op, SDValue N,
   // Match simple R + imm12 operands.
 
   // Match frame index...
-  if (N.getOpcode() != ISD::ADD) {
+  if ((N.getOpcode() != ISD::ADD) && (N.getOpcode() != ISD::SUB)) {
     if (N.getOpcode() == ISD::FrameIndex) {
       int FI = cast<FrameIndexSDNode>(N)->getIndex();
       Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
@@ -610,8 +610,15 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue Op, SDValue N,
 
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
     int RHSC = (int)RHS->getZExtValue();
-    if (RHSC >= 0 && RHSC < 0x1000) { // 12 bits.
+    if (N.getOpcode() == ISD::SUB)
+      RHSC = -RHSC;
+
+    if (RHSC >= 0 && RHSC < 0x1000) { // 12 bits (unsigned)
       Base   = N.getOperand(0);
+      if (Base.getOpcode() == ISD::FrameIndex) {
+        int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+        Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+      }
       OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
       return true;
     }
@@ -622,20 +629,31 @@ bool ARMDAGToDAGISel::SelectT2AddrModeImm12(SDValue Op, SDValue N,
 
 bool ARMDAGToDAGISel::SelectT2AddrModeImm8(SDValue Op, SDValue N,
                                            SDValue &Base, SDValue &OffImm) {
-  if ((N.getOpcode() == ISD::ADD) || (N.getOpcode() == ISD::SUB)) {
-    if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      int RHSC = (int)RHS->getSExtValue();
-      if (N.getOpcode() == ISD::SUB)
-        RHSC = -RHSC;
+  // Match simple R - imm8 operands.
 
-      if ((RHSC >= -255) && (RHSC <= 0)) { // 8 bits (always negative)
-        Base   = N.getOperand(0);
-        OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
-        return true;
+  // Match frame index...
+  if ((N.getOpcode() != ISD::ADD) && (N.getOpcode() != ISD::SUB)) {
+    if (N.getOpcode() == ISD::FrameIndex) {
+      int FI = cast<FrameIndexSDNode>(N)->getIndex();
+      Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
+      OffImm  = CurDAG->getTargetConstant(0, MVT::i32);
+      return true;
+    }
+    return false;
+  }
+
+  if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+    int RHSC = (int)RHS->getSExtValue();
+    if (N.getOpcode() == ISD::SUB)
+      RHSC = -RHSC;
+    
+    if ((RHSC >= -255) && (RHSC <= 0)) { // 8 bits (always negative)
+      Base   = N.getOperand(0);
+      if (Base.getOpcode() == ISD::FrameIndex) {
+        int FI = cast<FrameIndexSDNode>(Base)->getIndex();
+        Base = CurDAG->getTargetFrameIndex(FI, TLI.getPointerTy());
       }
-    } else if (N.getOpcode() == ISD::SUB) {
-      Base   = N;
-      OffImm = CurDAG->getTargetConstant(0, MVT::i32);
+      OffImm = CurDAG->getTargetConstant(RHSC, MVT::i32);
       return true;
     }
   }
@@ -706,9 +724,24 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue Op, SDValue N,
     return true;
   }
 
+  // Leave (R +/- imm) for other address modes... unless they can't
+  // handle them
+  if (dyn_cast<ConstantSDNode>(N.getOperand(1)) != NULL) {
+    SDValue OffImm; 
+    if (SelectT2AddrModeImm12(Op, N, Base, OffImm) ||
+        SelectT2AddrModeImm8 (Op, N, Base, OffImm))
+      return false;
+  }
+
   // Thumb2 does not support (R - R) or (R - (R << [1,2,3])).
-  if (N.getOpcode() != ISD::ADD)
-    return false;
+  if (N.getOpcode() == ISD::SUB) {
+    Base = N;
+    OffReg = CurDAG->getRegister(0, MVT::i32);
+    ShImm  = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
+
+  assert(N.getOpcode() == ISD::ADD);
 
   // Look for (R + R) or (R + (R << [1,2,3])).
   unsigned ShAmt = 0;
@@ -736,10 +769,6 @@ bool ARMDAGToDAGISel::SelectT2AddrModeSoReg(SDValue Op, SDValue N,
     } else {
       ShOpcVal = ARM_AM::no_shift;
     }
-  } else if (SelectT2AddrModeImm12(Op, N, Base, ShImm) ||
-             SelectT2AddrModeImm8 (Op, N, Base, ShImm)) {
-    // Don't match if it's possible to match to one of the r +/- imm cases.
-    return false;
   }
   
   ShImm = CurDAG->getTargetConstant(ShAmt, MVT::i32);
