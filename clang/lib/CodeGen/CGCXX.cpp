@@ -489,7 +489,7 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
 /// base classes and non-static data members belonging to this constructor.
 void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
   const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(CD->getDeclContext());
-  assert(ClassDecl->vbases_begin() == ClassDecl->vbases_end()
+  assert(!ClassDecl->isPolymorphic()
          && "FIXME. virtual base initialization unsupported");
   
   for (CXXConstructorDecl::init_const_iterator B = CD->init_begin(),
@@ -535,6 +535,46 @@ void CodeGenFunction::EmitCtorPrologue(const CXXConstructorDecl *CD) {
         EmitStoreThroughBitfieldLValue(RValue::get(RHS), LHS, FieldType, 0);
       else
         EmitStoreThroughLValue(RValue::get(RHS), LHS, FieldType);
+    }
+  }
+}
+
+/// EmitDtorEpilogue - Emit all code that comes at the end of class's
+/// destructor. This is to call destructors on members and base classes 
+/// in reverse order of their construction.
+void CodeGenFunction::EmitDtorEpilogue(const CXXDestructorDecl *DD) {
+  const CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(DD->getDeclContext());
+  assert(!ClassDecl->isPolymorphic() &&
+         "FIXME. polymorphic destruction not supported");
+  (void)ClassDecl;  // prevent warning.
+  
+  for (CXXDestructorDecl::destr_const_iterator *B = DD->destr_begin(),
+       *E = DD->destr_end(); B != E; ++B) {
+    uintptr_t BaseOrMember = (*B);
+    if (DD->isMemberToDestroy(BaseOrMember)) {
+      FieldDecl *FD = DD->getMemberToDestroy(BaseOrMember);
+      QualType FieldType = getContext().getCanonicalType((FD)->getType());
+      assert(!getContext().getAsArrayType(FieldType) 
+             && "FIXME. Field arrays destruction unsupported");
+      const RecordType *RT = FieldType->getAs<RecordType>();
+      CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+      if (FieldClassDecl->hasTrivialDestructor())
+        continue;
+      llvm::Value *LoadOfThis = LoadCXXThis();
+      LValue LHS = EmitLValueForField(LoadOfThis, FD, false, 0);
+      EmitCXXDestructorCall(FieldClassDecl->getDestructor(getContext()),
+                            Dtor_Complete, LHS.getAddress());
+    }
+    else {
+      const RecordType *RT =
+        DD->getAnyBaseClassToDestroy(BaseOrMember)->getAs<RecordType>();
+      CXXRecordDecl *BaseClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+      if (BaseClassDecl->hasTrivialDestructor())
+        continue;
+      llvm::Value *V = AddressCXXOfBaseClass(LoadCXXThis(), 
+                                             ClassDecl,BaseClassDecl);
+      EmitCXXDestructorCall(BaseClassDecl->getDestructor(getContext()),
+                            Dtor_Complete, V);
     }
   }
 }

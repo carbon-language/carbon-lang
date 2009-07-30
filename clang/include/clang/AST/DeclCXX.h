@@ -1096,7 +1096,7 @@ public:
     return 0;
   }
   /// getMemberToDestroy - Get the member for the given object.
-  FieldDecl *getMemberToDestroy(uintptr_t Member) { 
+  FieldDecl *getMemberToDestroy(uintptr_t Member) const { 
     if (isMemberToDestroy(Member))
       return reinterpret_cast<FieldDecl *>(Member); 
     return 0;

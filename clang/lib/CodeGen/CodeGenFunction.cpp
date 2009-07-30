@@ -234,6 +234,8 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD,
     if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(FD))
       EmitCtorPrologue(CD);
     EmitStmt(S);
+    if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(FD))
+      EmitDtorEpilogue(DD);
     FinishFunction(S->getRBracLoc());
   }
 

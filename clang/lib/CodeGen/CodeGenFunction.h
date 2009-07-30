@@ -359,7 +359,12 @@ public:
   void FinishFunction(SourceLocation EndLoc=SourceLocation());
 
   void EmitCtorPrologue(const CXXConstructorDecl *CD);
-
+  
+  /// EmitDtorEpilogue - Emit all code that comes at the end of class's
+  /// destructor. This is to call destructors on members and base classes 
+  /// in reverse order of their construction.
+  void EmitDtorEpilogue(const CXXDestructorDecl *DD);
+  
   /// EmitFunctionProlog - Emit the target specific LLVM code to load the
   /// arguments for the given function. This is also responsible for naming the
   /// LLVM function arguments.
