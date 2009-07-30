@@ -30,7 +30,7 @@ class ASTRecordLayoutBuilder {
   llvm::SmallVector<uint64_t, 16> FieldOffsets;
   
   unsigned StructPacking;
-  unsigned NextOffset;
+  uint64_t NextOffset;
   bool IsUnion;
   
   uint64_t NonVirtualSize;

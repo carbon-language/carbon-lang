@@ -80,7 +80,7 @@ class ASTRecordLayout {
   }
   
   // Constructor for C++ records.
-  ASTRecordLayout(uint64_t size, unsigned alignment, unsigned datasize,
+  ASTRecordLayout(uint64_t size, unsigned alignment, uint64_t datasize,
                   const uint64_t *fieldoffsets, unsigned fieldcount,
                   uint64_t nonvirtualsize, unsigned nonvirtualalign,
                   const CXXRecordDecl **bases, const uint64_t *baseoffsets,
