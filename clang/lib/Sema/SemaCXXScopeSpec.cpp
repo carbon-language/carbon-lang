@@ -55,14 +55,23 @@ DeclContext *Sema::computeDeclContext(const CXXScopeSpec &SS,
         if (ClassTemplateDecl *ClassTemplate 
               = dyn_cast_or_null<ClassTemplateDecl>(
                             SpecType->getTemplateName().getAsTemplateDecl())) {
+          QualType ContextType
+            = Context.getCanonicalType(QualType(SpecType, 0));
+
           // If the type of the nested name specifier is the same as the
           // injected class name of the named class template, we're entering
           // into that class template definition.
           QualType Injected = ClassTemplate->getInjectedClassNameType(Context);
-          if (Context.hasSameType(Injected, QualType(SpecType, 0)))
+          if (Context.hasSameType(Injected, ContextType))
             return ClassTemplate->getTemplatedDecl();
                 
-          // FIXME: Class template partial specializations
+          // If the type of the nested name specifier is the same as the
+          // type of one of the class template's class template partial
+          // specializations, we're entering into the definition of that
+          // class template partial specialization.
+          if (ClassTemplatePartialSpecializationDecl *PartialSpec
+                = ClassTemplate->findPartialSpecialization(ContextType))
+            return PartialSpec;
         }
       }
       
@@ -195,6 +204,7 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
       if (T == Context.getCanonicalType(InjectedClassName))
         return Template->getTemplatedDecl();
     }
+    // FIXME: check for class template partial specializations
   }
 
   return 0;

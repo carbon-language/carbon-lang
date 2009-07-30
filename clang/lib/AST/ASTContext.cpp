@@ -1669,9 +1669,10 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                                           const TemplateArgument *Args,
                                           unsigned NumArgs,
                                           QualType Canon) {
-  if (Canon.isNull()) {
-    // Build the canonical template specialization type, since no type
-    // was provided.
+  if (!Canon.isNull())
+    Canon = getCanonicalType(Canon);
+  else {
+    // Build the canonical template specialization type.
     TemplateName CanonTemplate = getCanonicalTemplateName(Template);
     llvm::SmallVector<TemplateArgument, 4> CanonArgs;
     CanonArgs.reserve(NumArgs);
@@ -1695,16 +1696,16 @@ ASTContext::getTemplateSpecializationType(TemplateName Template,
                            8);
       Spec = new (Mem) TemplateSpecializationType(*this, CanonTemplate, 
                                                   CanonArgs.data(), NumArgs,
-                                                  QualType());
+                                                  Canon);
       Types.push_back(Spec);
       TemplateSpecializationTypes.InsertNode(Spec, InsertPos);      
     }
     
-    Canon = QualType(Spec, 0);
+    if (Canon.isNull())
+      Canon = QualType(Spec, 0);
     assert(Canon->isDependentType() && 
            "Non-dependent template-id type must have a canonical type");
-  } else
-    Canon = getCanonicalType(Canon);
+  }
 
   // Allocate the (non-canonical) template specialization type, but don't
   // try to unique it: these types typically have location information that

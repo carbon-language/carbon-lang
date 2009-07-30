@@ -161,6 +161,21 @@ void ClassTemplateDecl::Destroy(ASTContext& C) {
   C.Deallocate((void*)this);
 }
 
+ClassTemplatePartialSpecializationDecl *
+ClassTemplateDecl::findPartialSpecialization(QualType T) {
+  ASTContext &Context = getASTContext();
+  typedef llvm::FoldingSet<ClassTemplatePartialSpecializationDecl>::iterator
+    partial_spec_iterator;
+  for (partial_spec_iterator P = getPartialSpecializations().begin(),
+                          PEnd = getPartialSpecializations().end();
+       P != PEnd; ++P) {
+    if (Context.hasSameType(Context.getTypeDeclType(&*P), T))
+      return &*P;
+  }
+  
+  return 0;
+}
+
 QualType ClassTemplateDecl::getInjectedClassNameType(ASTContext &Context) {
   if (!CommonPtr->InjectedClassNameType.isNull())
     return CommonPtr->InjectedClassNameType;

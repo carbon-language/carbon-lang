@@ -815,6 +815,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
           = cast<ClassTemplateSpecializationDecl>(Record->getDecl());
         // If the nested name specifier refers to an explicit specialization,
         // we don't need a template<> header.
+        // FIXME: revisit this approach once we cope with specialization 
+        // properly.
         if (SpecDecl->getSpecializationKind() == TSK_ExplicitSpecialization)
           continue;
       }
@@ -836,7 +838,8 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
   unsigned Idx = 0;
   for (unsigned NumTemplateIds = TemplateIdsInSpecifier.size();
        Idx != NumTemplateIds; ++Idx) {
-    bool DependentTemplateId = TemplateIdsInSpecifier[Idx]->isDependentType();
+    QualType TemplateId = QualType(TemplateIdsInSpecifier[Idx], 0);
+    bool DependentTemplateId = TemplateId->isDependentType();
     if (Idx >= NumParamLists) {
       // We have a template-id without a corresponding template parameter
       // list.
@@ -844,7 +847,7 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
         // FIXME: the location information here isn't great. 
         Diag(SS.getRange().getBegin(), 
              diag::err_template_spec_needs_template_parameters)
-          << QualType(TemplateIdsInSpecifier[Idx], 0)
+          << TemplateId
           << SS.getRange();
       } else {
         Diag(SS.getRange().getBegin(), diag::err_template_spec_needs_header)
@@ -856,11 +859,32 @@ Sema::MatchTemplateParametersToScopeSpecifier(SourceLocation DeclStartLoc,
     }
     
     // Check the template parameter list against its corresponding template-id.
-    TemplateDecl *Template 
-      = TemplateIdsInSpecifier[Idx]->getTemplateName().getAsTemplateDecl();
-    TemplateParameterListsAreEqual(ParamLists[Idx], 
-                                   Template->getTemplateParameters(),
-                                   true);
+    if (DependentTemplateId) {
+      TemplateDecl *Template 
+        = TemplateIdsInSpecifier[Idx]->getTemplateName().getAsTemplateDecl();
+
+      if (ClassTemplateDecl *ClassTemplate 
+            = dyn_cast<ClassTemplateDecl>(Template)) {
+        TemplateParameterList *ExpectedTemplateParams = 0;
+        // Is this template-id naming the primary template?
+        if (Context.hasSameType(TemplateId,
+                             ClassTemplate->getInjectedClassNameType(Context)))
+          ExpectedTemplateParams = ClassTemplate->getTemplateParameters();
+        // ... or a partial specialization?
+        else if (ClassTemplatePartialSpecializationDecl *PartialSpec
+                   = ClassTemplate->findPartialSpecialization(TemplateId))
+          ExpectedTemplateParams = PartialSpec->getTemplateParameters();
+
+        if (ExpectedTemplateParams)
+          TemplateParameterListsAreEqual(ParamLists[Idx], 
+                                         ExpectedTemplateParams,
+                                         true);
+      } 
+    } else if (ParamLists[Idx]->size() > 0)
+      Diag(ParamLists[Idx]->getTemplateLoc(), 
+           diag::err_template_param_list_matches_nontemplate)
+        << TemplateId
+        << ParamLists[Idx]->getSourceRange();
   }
   
   // If there were at least as many template-ids as there were template
@@ -2493,6 +2517,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
                                             /*ExplicitInstantiation=*/false))
     return true;
 
+  // The canonical type
+  QualType CanonType;
   if (PrevDecl && PrevDecl->getSpecializationKind() == TSK_Undeclared) {
     // Since the only prior class template specialization with these
     // arguments was referenced but not declared, reuse that
@@ -2501,7 +2527,15 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     Specialization = PrevDecl;
     Specialization->setLocation(TemplateNameLoc);
     PrevDecl = 0;
+    CanonType = Context.getTypeDeclType(Specialization);
   } else if (isPartialSpecialization) {
+    // Build the canonical type that describes the converted template
+    // arguments of the class template partial specialization.
+    CanonType = Context.getTemplateSpecializationType(
+                                                  TemplateName(ClassTemplate),
+                                                  Converted.getFlatArguments(),
+                                                  Converted.flatSize());
+
     // Create a new class template partial specialization declaration node.
     TemplateParameterList *TemplateParams 
       = static_cast<TemplateParameterList*>(*TemplateParameterLists.get());
@@ -2554,7 +2588,6 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
         }
       }
     }
-
   } else {
     // Create a new class template specialization declaration node for
     // this explicit specialization.
@@ -2573,6 +2606,8 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
       ClassTemplate->getSpecializations().InsertNode(Specialization, 
                                                      InsertPos);
     }
+
+    CanonType = Context.getTypeDeclType(Specialization);
   }
 
   // Note that this is an explicit specialization.
@@ -2603,7 +2638,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagKind TK,
     = Context.getTemplateSpecializationType(Name, 
                                             TemplateArgs.data(),
                                             TemplateArgs.size(),
-                                  Context.getTypeDeclType(Specialization));
+                                            CanonType);
   Specialization->setTypeAsWritten(WrittenTy);
   TemplateArgsIn.release();
 

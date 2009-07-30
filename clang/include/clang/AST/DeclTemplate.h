@@ -1057,6 +1057,16 @@ public:
     return CommonPtr->PartialSpecializations;
   }
 
+  /// \brief Find a class template partial specialization with the given
+  /// type T.
+  ///
+  /// \brief A dependent type that names a specialization of this class
+  /// template.
+  ///
+  /// \returns the class template partial specialization that exactly matches
+  /// the type \p T, or NULL if no such partial specialization exists.
+  ClassTemplatePartialSpecializationDecl *findPartialSpecialization(QualType T);
+  
   /// \brief Retrieve the type of the injected-class-name for this
   /// class template.
   ///

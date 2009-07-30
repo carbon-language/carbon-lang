@@ -858,6 +858,9 @@ def err_template_spec_needs_header : Error<
 def err_template_spec_needs_template_parameters : Error<
   "template specialization or definition requires a template parameter list"
   "corresponding to the nested type %0">;
+def err_template_param_list_matches_nontemplate : Error<
+  "template parameter list matching the non-templated nested type %0 should "
+  "be empty ('template<>')">;
 def err_template_spec_extra_headers : Error<
   "extraneous template parameter list in template specialization or "
   "out-of-line template definition">;
