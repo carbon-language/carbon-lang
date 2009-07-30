@@ -363,8 +363,8 @@ public:
     if (MsgIFaceEnt.isInvalid())
       return true;
 
-    if (!CanBeInstanceMethod && D->isInstanceMethod() ||
-        !CanBeClassMethod    && D->isClassMethod())
+    if ((!CanBeInstanceMethod && D->isInstanceMethod()) ||
+        (!CanBeClassMethod    && D->isClassMethod()))
       return false;
 
     ObjCInterfaceDecl *IFace = D->getClassInterface();
