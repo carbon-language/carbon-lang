@@ -11,6 +11,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Metadata.h"
+#include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Support/ValueHandle.h"
 #include <sstream>
@@ -116,5 +117,26 @@ TEST(MDNodeTest, Delete) {
   std::ostringstream oss;
   wvh->print(oss);
   EXPECT_STREQ("!0 = metadata !{null}\n", oss.str().c_str());
+}
+
+TEST(NamedMDNodeTest, Search) {
+  Constant *C = ConstantInt::get(Type::Int32Ty, 1);
+  Constant *C2 = ConstantInt::get(Type::Int32Ty, 2);
+
+  Value *const V = C;
+  Value *const V2 = C2;
+  MDNode *n = getGlobalContext().getMDNode(&V, 1);
+  MDNode *n2 = getGlobalContext().getMDNode(&V2, 1);
+
+  MetadataBase *Nodes[2] = { n, n2 };
+
+  Module *M = new Module("MyModule", getGlobalContext());
+  const char *Name = "llvm.NMD1";
+  NamedMDNode *NMD = NamedMDNode::Create(Name, &Nodes[0], 2, M);
+  std::ostringstream oss;
+  NMD->print(oss);
+  EXPECT_STREQ("!llvm.NMD1 = !{!0, !1}\n!0 = metadata !{i32 1}\n"
+               "!1 = metadata !{i32 2}\n",
+               oss.str().c_str());
 }
 }
