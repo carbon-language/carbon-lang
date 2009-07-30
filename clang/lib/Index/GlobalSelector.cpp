@@ -34,7 +34,7 @@ Selector GlobalSelector::getSelector(ASTContext &AST) const {
     Ids.push_back(II);
   }
 
-  return AST.Selectors.getSelector(Ids.size(), Ids.data());
+  return AST.Selectors.getSelector(GlobSel.getNumArgs(), Ids.data());
 }
 
 /// \brief Get a printable name for debugging purpose.
@@ -62,7 +62,8 @@ GlobalSelector GlobalSelector::get(Selector Sel, Program &Prog) {
     Ids.push_back(GlobII);
   }
 
-  Selector GlobSel = ProgImpl.getSelectors().getSelector(Ids.size(),Ids.data());
+  Selector GlobSel = ProgImpl.getSelectors().getSelector(Sel.getNumArgs(),
+                                                         Ids.data());
   return GlobalSelector(GlobSel.getAsOpaquePtr());
 }
 
