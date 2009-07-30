@@ -50,4 +50,23 @@ void nowarn(unsigned char* a, unsigned char* b)
   ((void)0), y = x;
 }
 
+void t4(int a) {
+  int b = 0;
+
+  if (a)
+    b == 1; // expected-warning{{expression result unused}}
+  else
+    b == 2; // expected-warning{{expression result unused}}
+    
+  while (1)
+    b == 3; // expected-warning{{expression result unused}}
+
+  do
+    b == 4; // expected-warning{{expression result unused}}
+  while (1);
+  
+  for (;;)
+    b == 5; // expected-warning{{expression result unused}}
+}
+
 

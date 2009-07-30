@@ -52,7 +52,7 @@ Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
 }
 
 void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
-  const Expr *E = dyn_cast<Expr>(S);
+  const Expr *E = dyn_cast_or_null<Expr>(S);
   if (!E)
     return;
 
@@ -215,6 +215,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
   }
 
   Stmt *thenStmt = ThenVal.takeAs<Stmt>();
+  DiagnoseUnusedExprResult(thenStmt);
 
   // Warn if the if block has a null body without an else value.
   // this helps prevent bugs due to typos, such as
@@ -225,9 +226,12 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal,
       Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
   }
 
+  Stmt *elseStmt = ElseVal.takeAs<Stmt>();
+  DiagnoseUnusedExprResult(elseStmt);
+  
   CondResult.release();
   return Owned(new (Context) IfStmt(IfLoc, condExpr, thenStmt,
-                                    ElseLoc, ElseVal.takeAs<Stmt>()));
+                                    ElseLoc, elseStmt));
 }
 
 Action::OwningStmtResult
@@ -571,9 +575,11 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond, StmtArg Body) {
                        << condType << condExpr->getSourceRange());
   }
 
+  Stmt *bodyStmt = Body.takeAs<Stmt>();
+  DiagnoseUnusedExprResult(bodyStmt);
+  
   CondArg.release();
-  return Owned(new (Context) WhileStmt(condExpr, Body.takeAs<Stmt>(), 
-                                       WhileLoc));
+  return Owned(new (Context) WhileStmt(condExpr, bodyStmt, WhileLoc));
 }
 
 Action::OwningStmtResult
@@ -597,8 +603,11 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, StmtArg Body,
                        << condType << condExpr->getSourceRange());
   }
 
+  Stmt *bodyStmt = Body.takeAs<Stmt>();
+  DiagnoseUnusedExprResult(bodyStmt);
+
   Cond.release();
-  return Owned(new (Context) DoStmt(Body.takeAs<Stmt>(), condExpr, DoLoc,
+  return Owned(new (Context) DoStmt(bodyStmt, condExpr, DoLoc,
                                     WhileLoc, CondRParen));
 }
 
@@ -639,6 +648,9 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
                             diag::err_typecheck_statement_requires_scalar)
         << SecondType << Second->getSourceRange());
   }
+  
+  DiagnoseUnusedExprResult(Body);
+
   first.release();
   second.release();
   third.release();
