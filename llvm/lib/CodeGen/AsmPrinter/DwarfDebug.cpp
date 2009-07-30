@@ -1283,14 +1283,12 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
   if (TimePassesIsEnabled)
     DebugTimer->startTimer();
 
-  SmallVector<GlobalVariable *, 2> CUs;
-  SmallVector<GlobalVariable *, 4> GVs;
-  SmallVector<GlobalVariable *, 4> SPs;
-  CollectDebugInfoAnchors(*M, CUs, GVs, SPs);
+  DebugInfoFinder DbgFinder;
+  DbgFinder.processModule(*M);
 
   // Create all the compile unit DIEs.
-  for (SmallVector<GlobalVariable *, 2>::iterator I = CUs.begin(),
-         E = CUs.end(); I != E; ++I) 
+  for (DebugInfoFinder::iterator I = DbgFinder.compile_unit_begin(),
+         E = DbgFinder.compile_unit_end(); I != E; ++I)
     ConstructCompileUnit(*I);
 
   if (CompileUnits.empty()) {
@@ -1307,21 +1305,21 @@ void DwarfDebug::BeginModule(Module *M, MachineModuleInfo *mmi) {
 
   // If there is not any debug info available for any global variables and any
   // subprograms then there is not any debug info to emit.
-  if (GVs.empty() && SPs.empty()) {
+  if (DbgFinder.global_variable_count() == 0
+      && DbgFinder.subprogram_count() == 0) {
     if (TimePassesIsEnabled)
       DebugTimer->stopTimer();
-
     return;
   }
-
+  
   // Create DIEs for each of the externally visible global variables.
-  for (SmallVector<GlobalVariable *, 4>::iterator I = GVs.begin(),
-         E = GVs.end(); I != E; ++I) 
+  for (DebugInfoFinder::iterator I = DbgFinder.global_variable_begin(),
+         E = DbgFinder.global_variable_end(); I != E; ++I)
     ConstructGlobalVariableDIE(*I);
 
   // Create DIEs for each of the externally visible subprograms.
-  for (SmallVector<GlobalVariable *, 4>::iterator I = SPs.begin(),
-         E = SPs.end(); I != E; ++I) 
+  for (DebugInfoFinder::iterator I = DbgFinder.subprogram_begin(),
+         E = DbgFinder.subprogram_end(); I != E; ++I)
     ConstructSubprogram(*I);
 
   MMI = mmi;
