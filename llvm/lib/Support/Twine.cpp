@@ -47,17 +47,23 @@ void Twine::printOneChild(raw_ostream &OS, const void *Ptr,
   case Twine::StringRefKind:
     OS << *static_cast<const StringRef*>(Ptr); 
     break;
-  case Twine::UDec32Kind:
-    OS << *static_cast<const uint32_t*>(Ptr);
+  case Twine::DecUIKind:
+    OS << *static_cast<const unsigned int*>(Ptr);
     break;
-  case Twine::SDec32Kind:
-    OS << *static_cast<const int32_t*>(Ptr);
+  case Twine::DecIKind:
+    OS << *static_cast<const int*>(Ptr);
     break;
-  case Twine::UDec64Kind:
-    OS << *static_cast<const uint64_t*>(Ptr);
+  case Twine::DecULKind:
+    OS << *static_cast<const unsigned long*>(Ptr);
     break;
-  case Twine::SDec64Kind:
-    OS << *static_cast<const int64_t*>(Ptr);
+  case Twine::DecLKind:
+    OS << *static_cast<const long*>(Ptr);
+    break;
+  case Twine::DecULLKind:
+    OS << *static_cast<const unsigned long long*>(Ptr);
+    break;
+  case Twine::DecLLKind:
+    OS << *static_cast<const long long*>(Ptr);
     break;
   case Twine::UHexKind:
     OS.write_hex(*static_cast<const uint64_t*>(Ptr));
@@ -88,20 +94,26 @@ void Twine::printOneChildRepr(raw_ostream &OS, const void *Ptr,
     OS << "stringref:\""
        << static_cast<const StringRef*>(Ptr) << "\"";
     break;
-  case Twine::UDec32Kind:
-    OS << "udec32:" << static_cast<const uint64_t*>(Ptr) << "\"";
+  case Twine::DecUIKind:
+    OS << "decUI:\"" << *static_cast<const unsigned int*>(Ptr) << "\"";
     break;
-  case Twine::SDec32Kind:
-    OS << "sdec32:" << static_cast<const int64_t*>(Ptr) << "\"";
+  case Twine::DecIKind:
+    OS << "decI:\"" << *static_cast<const int*>(Ptr) << "\"";
     break;
-  case Twine::UDec64Kind:
-    OS << "udec64:" << static_cast<const uint64_t*>(Ptr) << "\"";
+  case Twine::DecULKind:
+    OS << "decUL:\"" << *static_cast<const unsigned long*>(Ptr) << "\"";
     break;
-  case Twine::SDec64Kind:
-    OS << "sdec64:" << static_cast<const int64_t*>(Ptr) << "\"";
+  case Twine::DecLKind:
+    OS << "decL:\"" << *static_cast<const long*>(Ptr) << "\"";
+    break;
+  case Twine::DecULLKind:
+    OS << "decULL:\"" << *static_cast<const unsigned long long*>(Ptr) << "\"";
+    break;
+  case Twine::DecLLKind:
+    OS << "decLL:\"" << *static_cast<const long long*>(Ptr) << "\"";
     break;
   case Twine::UHexKind:
-    OS << "uhex:" << static_cast<const uint64_t*>(Ptr) << "\"";
+    OS << "uhex:\"" << static_cast<const uint64_t*>(Ptr) << "\"";
     break;
   }
 }

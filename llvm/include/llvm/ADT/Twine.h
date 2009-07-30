@@ -99,19 +99,26 @@ namespace llvm {
       /// A pointer to a StringRef instance.
       StringRefKind,
 
-      /// A pointer to a uint64_t value, to render as an unsigned decimal
+      /// A pointer to an unsigned int value, to render as an unsigned decimal
       /// integer.
-      UDec32Kind,
+      DecUIKind,
 
-      /// A pointer to a uint64_t value, to render as a signed decimal integer.
-      SDec32Kind,
+      /// A pointer to an int value, to render as a signed decimal integer.
+      DecIKind,
 
-      /// A pointer to a uint64_t value, to render as an unsigned decimal
+      /// A pointer to an unsigned long value, to render as an unsigned decimal
       /// integer.
-      UDec64Kind,
+      DecULKind,
 
-      /// A pointer to a uint64_t value, to render as a signed decimal integer.
-      SDec64Kind,
+      /// A pointer to a long value, to render as a signed decimal integer.
+      DecLKind,
+
+      /// A pointer to an unsigned long long value, to render as an unsigned
+      /// decimal integer.
+      DecULLKind,
+
+      /// A pointer to a long long value, to render as a signed decimal integer.
+      DecLLKind,
 
       /// A pointer to a uint64_t value, to render as an unsigned hexadecimal
       /// integer.
@@ -252,23 +259,33 @@ namespace llvm {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    explicit Twine(const uint32_t &Val) 
-      : LHS(&Val), LHSKind(UDec32Kind), RHSKind(EmptyKind) {
+    explicit Twine(const unsigned int &Val) 
+      : LHS(&Val), LHSKind(DecUIKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as a signed decimal integer.
-    explicit Twine(const int32_t &Val) 
-      : LHS(&Val), LHSKind(SDec32Kind), RHSKind(EmptyKind) {
+    explicit Twine(const int &Val) 
+      : LHS(&Val), LHSKind(DecIKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    explicit Twine(const uint64_t &Val) 
-      : LHS(&Val), LHSKind(UDec64Kind), RHSKind(EmptyKind) {
+    explicit Twine(const unsigned long &Val) 
+      : LHS(&Val), LHSKind(DecULKind), RHSKind(EmptyKind) {
     }
 
     /// Construct a twine to print \arg Val as a signed decimal integer.
-    explicit Twine(const int64_t &Val) 
-      : LHS(&Val), LHSKind(SDec64Kind), RHSKind(EmptyKind) {
+    explicit Twine(const long &Val) 
+      : LHS(&Val), LHSKind(DecLKind), RHSKind(EmptyKind) {
+    }
+
+    /// Construct a twine to print \arg Val as an unsigned decimal integer.
+    explicit Twine(const unsigned long long &Val) 
+      : LHS(&Val), LHSKind(DecULLKind), RHSKind(EmptyKind) {
+    }
+
+    /// Construct a twine to print \arg Val as a signed decimal integer.
+    explicit Twine(const long long &Val) 
+      : LHS(&Val), LHSKind(DecLLKind), RHSKind(EmptyKind) {
     }
 
     // FIXME: Unfortunately, to make sure this is as efficient as possible we
