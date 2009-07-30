@@ -82,13 +82,13 @@ void ASTRecordLayoutBuilder::Layout(const RecordDecl *D) {
     UpdateAlignment(AA->getAlignment());
 
   // If this is a C++ class, lay out the nonvirtual bases.
-  if (Ctx.getLangOptions().CPlusPlus) {
-    const CXXRecordDecl *RD = cast<CXXRecordDecl>(D);
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     LayoutVtable(RD);
     LayoutNonVirtualBases(RD);
 
     assert (RD->getNumVBases() == 0
             && "FIXME: We don't support virtual bases yet!");
+    // FIXME: We need to layout the virtual bases in the complete object layout.
   }
 
   LayoutFields(D);
