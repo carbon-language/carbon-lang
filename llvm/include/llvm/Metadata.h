@@ -50,7 +50,7 @@ public:
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const MDString *) { return true; }
+  static inline bool classof(const MetadataBase *) { return true; }
   static bool classof(const Value *V) {
     return V->getValueID() == MDStringVal || V->getValueID() == MDNodeVal
       || V->getValueID() == NamedMDNodeVal;
