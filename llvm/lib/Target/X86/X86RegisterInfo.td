@@ -312,7 +312,6 @@ def GR8 : RegisterClass<"X86", [i8],  8,
   }];
 }
 
-
 def GR16 : RegisterClass<"X86", [i16], 16,
                          [AX, CX, DX, SI, DI, BX, BP, SP,
                           R8W, R9W, R10W, R11W, R14W, R15W, R12W, R13W]> {
@@ -363,7 +362,6 @@ def GR16 : RegisterClass<"X86", [i16], 16,
     }
   }];
 }
-
 
 def GR32 : RegisterClass<"X86", [i32], 32, 
                          [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP,
@@ -550,7 +548,6 @@ def GR32_NOREX : RegisterClass<"X86", [i32], 32,
     }
   }];
 }
-
 // GR64_NOREX - GR64 registers which do not require a REX prefix.
 def GR64_NOREX : RegisterClass<"X86", [i64], 64,
                                [RAX, RCX, RDX, RSI, RDI, RBX, RBP, RSP]> {
