@@ -96,7 +96,7 @@ namespace {
                      const AnalyzerOptions& opts)
       : LOpts(lopts), Diags(diags),
         Ctx(0), PP(pp), PPF(ppf),
-        OutDir(outdir), Opts(opts) {
+        OutDir(outdir), Opts(opts), PD(0) {
       DigestAnalyzerOptions();
     }
 
