@@ -1398,6 +1398,10 @@ public:
                                             MultiStmtArg Handlers);
   void DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock);
 
+  /// DiagnoseUnusedExprResult - If the statement passed in is an expression
+  /// whose result is unused, warn.
+  void DiagnoseUnusedExprResult(const Stmt *S);
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 

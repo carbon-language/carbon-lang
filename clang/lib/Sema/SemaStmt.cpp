@@ -51,6 +51,23 @@ Sema::OwningStmtResult Sema::ActOnDeclStmt(DeclGroupPtrTy dg,
   return Owned(new (Context) DeclStmt(DG, StartLoc, EndLoc));
 }
 
+void Sema::DiagnoseUnusedExprResult(const Stmt *S) {
+  const Expr *E = dyn_cast<Expr>(S);
+  if (!E)
+    return;
+
+  // Ignore expressions that have void type.
+  if (E->getType()->isVoidType())
+    return;
+  
+  SourceLocation Loc;
+  SourceRange R1, R2;
+  if (!E->isUnusedResultAWarning(Loc, R1, R2))
+    return;
+  
+  Diag(Loc, diag::warn_unused_expr) << R1 << R2;
+}
+
 Action::OwningStmtResult
 Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                         MultiStmtArg elts, bool isStmtExpr) {
@@ -76,20 +93,11 @@ Sema::ActOnCompoundStmt(SourceLocation L, SourceLocation R,
   }
   // Warn about unused expressions in statements.
   for (unsigned i = 0; i != NumElts; ++i) {
-    Expr *E = dyn_cast<Expr>(Elts[i]);
-    if (!E) continue;
-    
-    // Warn about expressions with unused results if they are non-void and if
-    // this not the last stmt in a stmt expr.
-    if (E->getType()->isVoidType() || (isStmtExpr && i == NumElts-1))
+    // Ignore statements that are last in a statement expression.
+    if (isStmtExpr && i == NumElts - 1)
       continue;
     
-    SourceLocation Loc;
-    SourceRange R1, R2;
-    if (!E->isUnusedResultAWarning(Loc, R1, R2))
-      continue;
-
-    Diag(Loc, diag::warn_unused_expr) << R1 << R2;
+    DiagnoseUnusedExprResult(Elts[i]);
   }
 
   return Owned(new (Context) CompoundStmt(Context, Elts, NumElts, L, R));
