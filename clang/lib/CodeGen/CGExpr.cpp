@@ -1116,8 +1116,7 @@ LValue CodeGenFunction::EmitCompoundLiteralLValue(const CompoundLiteralExpr* E){
 }
 
 LValue CodeGenFunction::EmitConditionalOperator(const ConditionalOperator* E) {
-  // We don't handle vectors yet.
-  if (E->getType()->isVectorType())
+  if (E->isLvalue(getContext()) == Expr::LV_Valid)
     return EmitUnsupportedLValue(E, "conditional operator");
 
   // ?: here should be an aggregate.
