@@ -932,7 +932,8 @@ public:
         unsigned ResNo = TmpNo++;
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
         emitCode("SDValue Tmp" + utostr(ResNo) + 
-                 " = CurDAG->getTargetConstant(0x" + itohexstr(II->getValue()) +
+                 " = CurDAG->getTargetConstant(0x" + 
+                 utohexstr((uint64_t) II->getValue()) +
                  "ULL, " + getEnumName(N->getTypeNum(0)) + ");");
         NodeOps.push_back("Tmp" + utostr(ResNo));
         return NodeOps;

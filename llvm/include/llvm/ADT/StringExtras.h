@@ -103,10 +103,6 @@ static inline std::string itostr(int64_t X) {
     return utostr(static_cast<uint64_t>(X));
 }
 
-static inline std::string itohexstr(int64_t X) {
-  return utohexstr(static_cast<uint64_t>(X));
-}
-
 static inline std::string ftostr(double V) {
   char Buffer[200];
   sprintf(Buffer, "%20.6e", V);
