@@ -1695,14 +1695,22 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     /* Source and destination have the same register class. */;
   else if (CommonRC->hasSuperClass(SrcRC))
     CommonRC = SrcRC;
-  else if (!DestRC->hasSubClass(SrcRC))
-    CommonRC = 0;
+  else if (!DestRC->hasSubClass(SrcRC)) {
+    // Neither of GR64_NOREX or GR64_NOSP is a superclass of the other,
+    // but we want to copy then as GR64.
+    if (SrcRC->hasSuperClass(&X86::GR64RegClass) &&
+        DestRC->hasSuperClass(&X86::GR64RegClass))
+      CommonRC = &X86::GR64RegClass;
+    else
+      CommonRC = 0;
+  }
 
   if (CommonRC) {
     unsigned Opc;
-    if (CommonRC == &X86::GR64RegClass) {
+    if (CommonRC == &X86::GR64RegClass || CommonRC == &X86::GR64_NOSPRegClass) {
       Opc = X86::MOV64rr;
-    } else if (CommonRC == &X86::GR32RegClass) {
+    } else if (CommonRC == &X86::GR32RegClass ||
+               CommonRC == &X86::GR32_NOSPRegClass) {
       Opc = X86::MOV32rr;
     } else if (CommonRC == &X86::GR16RegClass) {
       Opc = X86::MOV16rr;
@@ -1727,7 +1735,8 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
         Opc = X86::MOV8rr_NOREX;
       else
         Opc = X86::MOV8rr;
-    } else if (CommonRC == &X86::GR64_NOREXRegClass) {
+    } else if (CommonRC == &X86::GR64_NOREXRegClass ||
+               CommonRC == &X86::GR64_NOREX_NOSPRegClass) {
       Opc = X86::MOV64rr;
     } else if (CommonRC == &X86::GR32_NOREXRegClass) {
       Opc = X86::MOV32rr;
@@ -1755,16 +1764,17 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, DL, get(Opc), DestReg).addReg(SrcReg);
     return true;
   }
-  
+
   // Moving EFLAGS to / from another register requires a push and a pop.
   if (SrcRC == &X86::CCRRegClass) {
     if (SrcReg != X86::EFLAGS)
       return false;
-    if (DestRC == &X86::GR64RegClass) {
+    if (DestRC == &X86::GR64RegClass || DestRC == &X86::GR64_NOSPRegClass) {
       BuildMI(MBB, MI, DL, get(X86::PUSHFQ));
       BuildMI(MBB, MI, DL, get(X86::POP64r), DestReg);
       return true;
-    } else if (DestRC == &X86::GR32RegClass) {
+    } else if (DestRC == &X86::GR32RegClass ||
+               DestRC == &X86::GR32_NOSPRegClass) {
       BuildMI(MBB, MI, DL, get(X86::PUSHFD));
       BuildMI(MBB, MI, DL, get(X86::POP32r), DestReg);
       return true;
@@ -1772,11 +1782,12 @@ bool X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (DestRC == &X86::CCRRegClass) {
     if (DestReg != X86::EFLAGS)
       return false;
-    if (SrcRC == &X86::GR64RegClass) {
+    if (SrcRC == &X86::GR64RegClass || DestRC == &X86::GR64_NOSPRegClass) {
       BuildMI(MBB, MI, DL, get(X86::PUSH64r)).addReg(SrcReg);
       BuildMI(MBB, MI, DL, get(X86::POPFQ));
       return true;
-    } else if (SrcRC == &X86::GR32RegClass) {
+    } else if (SrcRC == &X86::GR32RegClass ||
+               DestRC == &X86::GR32_NOSPRegClass) {
       BuildMI(MBB, MI, DL, get(X86::PUSH32r)).addReg(SrcReg);
       BuildMI(MBB, MI, DL, get(X86::POPFD));
       return true;
@@ -1834,9 +1845,9 @@ static unsigned getStoreRegOpcode(unsigned SrcReg,
                                   bool isStackAligned,
                                   TargetMachine &TM) {
   unsigned Opc = 0;
-  if (RC == &X86::GR64RegClass) {
+  if (RC == &X86::GR64RegClass || RC == &X86::GR64_NOSPRegClass) {
     Opc = X86::MOV64mr;
-  } else if (RC == &X86::GR32RegClass) {
+  } else if (RC == &X86::GR32RegClass || RC == &X86::GR32_NOSPRegClass) {
     Opc = X86::MOV32mr;
   } else if (RC == &X86::GR16RegClass) {
     Opc = X86::MOV16mr;
@@ -1861,7 +1872,8 @@ static unsigned getStoreRegOpcode(unsigned SrcReg,
       Opc = X86::MOV8mr_NOREX;
     else
       Opc = X86::MOV8mr;
-  } else if (RC == &X86::GR64_NOREXRegClass) {
+  } else if (RC == &X86::GR64_NOREXRegClass ||
+             RC == &X86::GR64_NOREX_NOSPRegClass) {
     Opc = X86::MOV64mr;
   } else if (RC == &X86::GR32_NOREXRegClass) {
     Opc = X86::MOV32mr;
@@ -1926,9 +1938,9 @@ static unsigned getLoadRegOpcode(unsigned DestReg,
                                  bool isStackAligned,
                                  const TargetMachine &TM) {
   unsigned Opc = 0;
-  if (RC == &X86::GR64RegClass) {
+  if (RC == &X86::GR64RegClass || RC == &X86::GR64_NOSPRegClass) {
     Opc = X86::MOV64rm;
-  } else if (RC == &X86::GR32RegClass) {
+  } else if (RC == &X86::GR32RegClass || RC == &X86::GR32_NOSPRegClass) {
     Opc = X86::MOV32rm;
   } else if (RC == &X86::GR16RegClass) {
     Opc = X86::MOV16rm;
@@ -1953,7 +1965,8 @@ static unsigned getLoadRegOpcode(unsigned DestReg,
       Opc = X86::MOV8rm_NOREX;
     else
       Opc = X86::MOV8rm;
-  } else if (RC == &X86::GR64_NOREXRegClass) {
+  } else if (RC == &X86::GR64_NOREXRegClass ||
+             RC == &X86::GR64_NOREX_NOSPRegClass) {
     Opc = X86::MOV64rm;
   } else if (RC == &X86::GR32_NOREXRegClass) {
     Opc = X86::MOV32rm;

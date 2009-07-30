@@ -416,7 +416,9 @@ def GR32 : RegisterClass<"X86", [i32], 32,
   }];
 }
 
-
+// GR64 - 64-bit GPRs. This oddly includes RIP, which isn't accurate, since
+// RIP isn't really a register and it can't be used anywhere except in an
+// address, but it doesn't cause trouble.
 def GR64 : RegisterClass<"X86", [i64], 64, 
                          [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
                           RBX, R14, R15, R12, R13, RBP, RSP, RIP]> {
@@ -561,13 +563,112 @@ def GR64_NOREX : RegisterClass<"X86", [i64], 64,
     GR64_NOREXClass::allocation_order_end(const MachineFunction &MF) const {
       const TargetMachine &TM = MF.getTarget();
       const TargetRegisterInfo *RI = TM.getRegisterInfo();
-      // Does the function dedicate RBP / EBP to being a frame ptr?
+      // Does the function dedicate RBP to being a frame ptr?
       if (RI->hasFP(MF))
         // If so, don't allocate RSP or RBP.
         return end() - 2;
       else
         // If not, just don't allocate RSP.
         return end() - 1;
+    }
+  }];
+}
+
+// GR32_NOSP - GR32 registers except ESP.
+def GR32_NOSP : RegisterClass<"X86", [i32], 32,
+                              [EAX, ECX, EDX, ESI, EDI, EBX, EBP,
+                               R8D, R9D, R10D, R11D, R14D, R15D, R12D, R13D]> {
+  let SubRegClassList = [GR8, GR8, GR16];
+  let MethodProtos = [{
+    iterator allocation_order_begin(const MachineFunction &MF) const;
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    static const unsigned X86_GR32_NOSP_AO_64[] = {
+      X86::EAX, X86::ECX,  X86::EDX,  X86::ESI,  X86::EDI,
+      X86::R8D, X86::R9D,  X86::R10D, X86::R11D,
+      X86::EBX, X86::R14D, X86::R15D, X86::R12D, X86::R13D, X86::EBP
+    };
+
+    GR32_NOSPClass::iterator
+    GR32_NOSPClass::allocation_order_begin(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
+      if (Subtarget.is64Bit())
+        return X86_GR32_NOSP_AO_64;
+      else
+        return begin();
+    }
+
+    GR32_NOSPClass::iterator
+    GR32_NOSPClass::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
+      if (Subtarget.is64Bit()) {
+        // Does the function dedicate RBP to being a frame ptr?
+        if (RI->hasFP(MF))
+          // If so, don't allocate EBP.
+          return array_endof(X86_GR32_NOSP_AO_64) - 1;
+        else
+          // If not, any reg in this class is ok.
+          return array_endof(X86_GR32_NOSP_AO_64);
+      } else {
+        // Does the function dedicate EBP to being a frame ptr?
+        if (RI->hasFP(MF))
+          // If so, don't allocate EBP.
+          return begin() + 6;
+        else
+          // If not, any reg in this class is ok.
+          return begin() + 7;
+      }
+    }
+  }];
+}
+
+// GR64_NOSP - GR64 registers except RSP (and RIP).
+def GR64_NOSP : RegisterClass<"X86", [i64], 64,
+                              [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
+                               RBX, R14, R15, R12, R13, RBP]> {
+  let SubRegClassList = [GR8, GR8, GR16, GR32_NOSP];
+  let MethodProtos = [{
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    GR64_NOSPClass::iterator
+    GR64_NOSPClass::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      const X86Subtarget &Subtarget = TM.getSubtarget<X86Subtarget>();
+      if (!Subtarget.is64Bit())
+        return begin();  // None of these are allocatable in 32-bit.
+      if (RI->hasFP(MF)) // Does the function dedicate RBP to being a frame ptr?
+        return end()-1;  // If so, don't allocate RBP
+      else
+        return end();  // If not, any reg in this class is ok.
+    }
+  }];
+}
+
+// GR64_NOREX_NOSP - GR64_NOREX registers except RSP.
+def GR64_NOREX_NOSP : RegisterClass<"X86", [i64], 64,
+                                    [RAX, RCX, RDX, RSI, RDI, RBX, RBP]> {
+  let SubRegClassList = [GR8_NOREX, GR8_NOREX, GR16_NOREX, GR32_NOREX];
+  let MethodProtos = [{
+    iterator allocation_order_end(const MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    GR64_NOREX_NOSPClass::iterator
+    GR64_NOREX_NOSPClass::allocation_order_end(const MachineFunction &MF) const {
+      const TargetMachine &TM = MF.getTarget();
+      const TargetRegisterInfo *RI = TM.getRegisterInfo();
+      // Does the function dedicate RBP to being a frame ptr?
+      if (RI->hasFP(MF))
+        // If so, don't allocate RBP.
+        return end() - 1;
+      else
+        // If not, any reg in this class is ok.
+        return end();
     }
   }];
 }

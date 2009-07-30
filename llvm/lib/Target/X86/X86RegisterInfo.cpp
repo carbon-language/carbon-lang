@@ -37,9 +37,15 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
+
+static cl::opt<bool>
+StrictIndexRegclass("strict-index-regclass",
+                    cl::desc("Use a special register class to avoid letting SP "
+                             "be used as an index"));
 
 X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
                                  const TargetInstrInfo &tii)
@@ -165,20 +171,25 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
         return A;
     } else if (B == &X86::GR8_ABCD_LRegClass || B == &X86::GR8_ABCD_HRegClass) {
       if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
-          A == &X86::GR64_NOREXRegClass)
+          A == &X86::GR64_NOREXRegClass ||
+          A == &X86::GR64_NOSPRegClass ||
+          A == &X86::GR64_NOREX_NOSPRegClass)
         return &X86::GR64_ABCDRegClass;
       else if (A == &X86::GR32RegClass || A == &X86::GR32_ABCDRegClass ||
-               A == &X86::GR32_NOREXRegClass)
+               A == &X86::GR32_NOREXRegClass ||
+               A == &X86::GR32_NOSPRegClass)
         return &X86::GR32_ABCDRegClass;
       else if (A == &X86::GR16RegClass || A == &X86::GR16_ABCDRegClass ||
                A == &X86::GR16_NOREXRegClass)
         return &X86::GR16_ABCDRegClass;
     } else if (B == &X86::GR8_NOREXRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass)
+      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass ||
+          A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
         return &X86::GR64_NOREXRegClass;
       else if (A == &X86::GR64_ABCDRegClass)
         return &X86::GR64_ABCDRegClass;
-      else if (A == &X86::GR32RegClass || A == &X86::GR32_NOREXRegClass)
+      else if (A == &X86::GR32RegClass || A == &X86::GR32_NOREXRegClass ||
+               A == &X86::GR32_NOSPRegClass)
         return &X86::GR32_NOREXRegClass;
       else if (A == &X86::GR32_ABCDRegClass)
         return &X86::GR32_ABCDRegClass;
@@ -192,10 +203,12 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
     // 8-bit hi
     if (B == &X86::GR8_ABCD_HRegClass) {
       if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
-          A == &X86::GR64_NOREXRegClass)
+          A == &X86::GR64_NOREXRegClass ||
+          A == &X86::GR64_NOSPRegClass ||
+          A == &X86::GR64_NOREX_NOSPRegClass)
         return &X86::GR64_ABCDRegClass;
       else if (A == &X86::GR32RegClass || A == &X86::GR32_ABCDRegClass ||
-               A == &X86::GR32_NOREXRegClass)
+               A == &X86::GR32_NOREXRegClass || A == &X86::GR32_NOSPRegClass)
         return &X86::GR32_ABCDRegClass;
       else if (A == &X86::GR16RegClass || A == &X86::GR16_ABCDRegClass ||
                A == &X86::GR16_NOREXRegClass)
@@ -209,17 +222,21 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
         return A;
     } else if (B == &X86::GR16_ABCDRegClass) {
       if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
-          A == &X86::GR64_NOREXRegClass)
+          A == &X86::GR64_NOREXRegClass ||
+          A == &X86::GR64_NOSPRegClass ||
+          A == &X86::GR64_NOREX_NOSPRegClass)
         return &X86::GR64_ABCDRegClass;
       else if (A == &X86::GR32RegClass || A == &X86::GR32_ABCDRegClass ||
-               A == &X86::GR32_NOREXRegClass)
+               A == &X86::GR32_NOREXRegClass || A == &X86::GR32_NOSPRegClass)
         return &X86::GR32_ABCDRegClass;
     } else if (B == &X86::GR16_NOREXRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass)
+      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass ||
+          A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
         return &X86::GR64_NOREXRegClass;
       else if (A == &X86::GR64_ABCDRegClass)
         return &X86::GR64_ABCDRegClass;
-      else if (A == &X86::GR32RegClass || A == &X86::GR32_NOREXRegClass)
+      else if (A == &X86::GR32RegClass || A == &X86::GR32_NOREXRegClass ||
+               A == &X86::GR32_NOSPRegClass)
         return &X86::GR32_NOREXRegClass;
       else if (A == &X86::GR32_ABCDRegClass)
         return &X86::GR64_ABCDRegClass;
@@ -227,15 +244,18 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
     break;
   case 4:
     // 32-bit
-    if (B == &X86::GR32RegClass) {
+    if (B == &X86::GR32RegClass || B == &X86::GR32_NOSPRegClass) {
       if (A->getSize() == 8)
         return A;
     } else if (B == &X86::GR32_ABCDRegClass) {
       if (A == &X86::GR64RegClass || A == &X86::GR64_ABCDRegClass ||
-          A == &X86::GR64_NOREXRegClass)
+          A == &X86::GR64_NOREXRegClass ||
+          A == &X86::GR64_NOSPRegClass ||
+          A == &X86::GR64_NOREX_NOSPRegClass)
         return &X86::GR64_ABCDRegClass;
     } else if (B == &X86::GR32_NOREXRegClass) {
-      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass)
+      if (A == &X86::GR64RegClass || A == &X86::GR64_NOREXRegClass ||
+          A == &X86::GR64_NOSPRegClass || A == &X86::GR64_NOREX_NOSPRegClass)
         return &X86::GR64_NOREXRegClass;
       else if (A == &X86::GR64_ABCDRegClass)
         return &X86::GR64_ABCDRegClass;
@@ -247,9 +267,23 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
 
 const TargetRegisterClass *X86RegisterInfo::
 getPointerRegClass(unsigned Kind) const {
-  if (TM.getSubtarget<X86Subtarget>().is64Bit())
-    return &X86::GR64RegClass;
-  return &X86::GR32RegClass;
+  switch (Kind) {
+  default: llvm_unreachable("Unexpected Kind in getPointerRegClass!");
+  case 0: // Normal GPRs.
+    if (TM.getSubtarget<X86Subtarget>().is64Bit())
+      return &X86::GR64RegClass;
+    return &X86::GR32RegClass;
+  case 1: // Normal GRPs except the stack pointer (for encoding reasons).
+    if (!StrictIndexRegclass) {
+      if (TM.getSubtarget<X86Subtarget>().is64Bit())
+        return &X86::GR64RegClass;
+      return &X86::GR32RegClass;
+    } else {
+      if (TM.getSubtarget<X86Subtarget>().is64Bit())
+        return &X86::GR64_NOSPRegClass;
+      return &X86::GR32_NOSPRegClass;
+    }
+  }
 }
 
 const TargetRegisterClass *

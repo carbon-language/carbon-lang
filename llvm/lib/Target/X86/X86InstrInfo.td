@@ -167,12 +167,15 @@ def i32imm_pcrel : Operand<i32> {
   let PrintMethod = "print_pcrel_imm";
 }
 
+// A version of ptr_rc which excludes SP, ESP, and RSP. This is used for
+// the index operand of an address, to conform to x86 encoding restrictions.
+def ptr_rc_nosp : PointerLikeRegClass<1>;
 
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
 class X86MemOperand<string printMethod> : Operand<iPTR> {
   let PrintMethod = printMethod;
-  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc, i32imm, i8imm);
+  let MIOperandInfo = (ops ptr_rc, i8imm, ptr_rc_nosp, i32imm, i8imm);
 }
 
 def i8mem   : X86MemOperand<"printi8mem">;
@@ -191,7 +194,7 @@ def f256mem : X86MemOperand<"printf256mem">;
 // plain GR64, so that it doesn't potentially require a REX prefix.
 def i8mem_NOREX : Operand<i64> {
   let PrintMethod = "printi8mem";
-  let MIOperandInfo = (ops GR64_NOREX, i8imm, GR64_NOREX, i32imm, i8imm);
+  let MIOperandInfo = (ops GR64_NOREX, i8imm, GR64_NOREX_NOSP, i32imm, i8imm);
 }
 
 def lea32mem : Operand<i32> {
