@@ -187,8 +187,8 @@ bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
 
 void AliasSetTracker::clear() {
   // Delete all the PointerRec entries.
-  for (DenseMap<Value*, AliasSet::PointerRec*>::iterator I = PointerMap.begin(),
-       E = PointerMap.end(); I != E; ++I)
+  for (PointerMapType::iterator I = PointerMap.begin(), E = PointerMap.end();
+       I != E; ++I)
     I->second->eraseFromList();
   
   PointerMap.clear();
@@ -485,7 +485,7 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
         AS->removeCallSite(CS);
 
   // First, look up the PointerRec for this pointer.
-  DenseMap<Value*, AliasSet::PointerRec*>::iterator I = PointerMap.find(PtrVal);
+  PointerMapType::iterator I = PointerMap.find(PtrVal);
   if (I == PointerMap.end()) return;  // Noop
 
   // If we found one, remove the pointer from the alias set it is in.
@@ -511,7 +511,7 @@ void AliasSetTracker::copyValue(Value *From, Value *To) {
   AA.copyValue(From, To);
 
   // First, look up the PointerRec for this pointer.
-  DenseMap<Value*, AliasSet::PointerRec*>::iterator I = PointerMap.find(From);
+  PointerMapType::iterator I = PointerMap.find(From);
   if (I == PointerMap.end())
     return;  // Noop
   assert(I->second->hasAliasSet() && "Dead entry?");
@@ -574,6 +574,22 @@ void AliasSetTracker::print(std::ostream &OS) const {
 
 void AliasSet::dump() const { print (cerr); }
 void AliasSetTracker::dump() const { print(cerr); }
+
+//===----------------------------------------------------------------------===//
+//                     ASTCallbackVH Class Implementation
+//===----------------------------------------------------------------------===//
+
+void AliasSetTracker::ASTCallbackVH::deleted() {
+  assert(AST && "ASTCallbackVH called with a null AliasSetTracker!");
+  AST->deleteValue(getValPtr());
+  // this now dangles!
+}
+
+AliasSetTracker::ASTCallbackVH::ASTCallbackVH(Value *V, AliasSetTracker *ast)
+  : CallbackVH(V == DenseMapInfo<Value *>::getEmptyKey() ? 0 :
+               V == DenseMapInfo<Value *>::getTombstoneKey() ? 0 :
+               V),
+    AST(ast) {}
 
 //===----------------------------------------------------------------------===//
 //                            AliasSetPrinter Pass

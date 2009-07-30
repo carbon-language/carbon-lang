@@ -18,6 +18,7 @@
 #define LLVM_ANALYSIS_ALIASSETTRACKER_H
 
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/ilist.h"
@@ -251,11 +252,24 @@ inline std::ostream& operator<<(std::ostream &OS, const AliasSet &AS) {
 
 
 class AliasSetTracker {
+  /// CallbackVH - A CallbackVH to arrange for AliasSetTracker to be
+  /// notified whenever a Value is deleted.
+  class ASTCallbackVH : public CallbackVH {
+    AliasSetTracker *AST;
+    virtual void deleted();
+  public:
+    ASTCallbackVH(Value *V, AliasSetTracker *AST = 0);
+  };
+
   AliasAnalysis &AA;
   ilist<AliasSet> AliasSets;
 
+  typedef DenseMap<ASTCallbackVH, AliasSet::PointerRec*, DenseMapInfo<Value*> >
+    PointerMapType;
+
   // Map from pointers to their node
-  DenseMap<Value*, AliasSet::PointerRec*> PointerMap;
+  PointerMapType PointerMap;
+
 public:
   /// AliasSetTracker ctor - Create an empty collection of AliasSets, and use
   /// the specified alias analysis object to disambiguate load and store
@@ -364,7 +378,7 @@ private:
   // getEntryFor - Just like operator[] on the map, except that it creates an
   // entry for the pointer if it doesn't already exist.
   AliasSet::PointerRec &getEntryFor(Value *V) {
-    AliasSet::PointerRec *&Entry = PointerMap[V];
+    AliasSet::PointerRec *&Entry = PointerMap[ASTCallbackVH(V, this)];
     if (Entry == 0)
       Entry = new AliasSet::PointerRec(V);
     return *Entry;
