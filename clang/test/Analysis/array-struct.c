@@ -143,7 +143,7 @@ void f15() {
   int a[10];
   bar(a);
   if (a[1]) // no-warning
-    1;
+    (void)1;
 }
 
 struct s3 p[1];

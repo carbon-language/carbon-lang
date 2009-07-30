@@ -9,5 +9,5 @@ void foo(int* p) {
   if (p[0] == 1)
     x = &a;
   if (p[0] == 1)
-    *x; // no-warning
+    (void)*x; // no-warning
 }
