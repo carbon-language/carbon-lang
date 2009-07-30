@@ -1636,6 +1636,7 @@ class DecltypeType : public Type {
   // from it.
   QualType UnderlyingType;
   
+protected:
   DecltypeType(Expr *E, QualType underlyingType, QualType can = QualType());
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -1647,6 +1648,22 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Decltype; }
   static bool classof(const DecltypeType *) { return true; }
+};
+  
+/// Subclass of DecltypeType that is used for canonical, dependent 
+/// C++0x decltype types. 
+class DependentDecltypeType : public DecltypeType, public llvm::FoldingSetNode {
+  ASTContext &Context;
+  
+public:
+  DependentDecltypeType(ASTContext &Context, Expr *E);
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, Context, getUnderlyingExpr());
+  }
+  
+  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context,
+                      Expr *E);  
 };
   
 class TagType : public Type {

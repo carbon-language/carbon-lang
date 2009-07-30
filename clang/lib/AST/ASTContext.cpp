@@ -1954,9 +1954,26 @@ static QualType getDecltypeForExpr(const Expr *e, ASTContext &Context) {
 /// on canonical type's (which are always unique).
 QualType ASTContext::getDecltypeType(Expr *e) {
   DecltypeType *dt;
-  if (e->isTypeDependent()) // FIXME: canonicalize the expression
-    dt = new (*this, 8) DecltypeType(e, DependentTy);
-  else {
+  if (e->isTypeDependent()) {
+    llvm::FoldingSetNodeID ID;
+    DependentDecltypeType::Profile(ID, *this, e);
+    
+    void *InsertPos = 0;
+    DependentDecltypeType *Canon
+      = DependentDecltypeTypes.FindNodeOrInsertPos(ID, InsertPos);
+    if (Canon) {
+      // We already have a "canonical" version of an equivalent, dependent
+      // decltype type. Use that as our canonical type.
+      dt = new (*this, 8) DecltypeType(e, DependentTy,
+                                       QualType((DecltypeType*)Canon, 0));
+    }
+    else {
+      // Build a new, canonical typeof(expr) type.
+      Canon = new (*this, 8) DependentDecltypeType(*this, e);
+      DependentDecltypeTypes.InsertNode(Canon, InsertPos);
+      dt = Canon;
+    }
+  } else {
     QualType T = getDecltypeForExpr(e, *this);
     dt = new (*this, 8) DecltypeType(e, T, getCanonicalType(T));    
   }

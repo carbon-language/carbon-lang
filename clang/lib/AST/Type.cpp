@@ -968,6 +968,14 @@ DecltypeType::DecltypeType(Expr *E, QualType underlyingType, QualType can)
   UnderlyingType(underlyingType) {
 }
 
+DependentDecltypeType::DependentDecltypeType(ASTContext &Context, Expr *E)
+  : DecltypeType(E, Context.DependentTy), Context(Context) { }
+
+void DependentDecltypeType::Profile(llvm::FoldingSetNodeID &ID, 
+                                    ASTContext &Context, Expr *E) {
+  E->Profile(ID, Context, true);
+}
+
 TagType::TagType(TypeClass TC, TagDecl *D, QualType can) 
   : Type(TC, can, D->isDependentType()), decl(D, 0) {}
 
