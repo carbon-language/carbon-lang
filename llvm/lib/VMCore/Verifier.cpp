@@ -956,7 +956,7 @@ void Verifier::visitBitCastInst(BitCastInst &I) {
   // However, you can't cast pointers to anything but pointers.
   Assert1(isa<PointerType>(DestTy) == isa<PointerType>(DestTy),
           "Bitcast requires both operands to be pointer or neither", &I);
-  Assert1(SrcBitSize == DestBitSize, "Bitcast requies types of same width", &I);
+  Assert1(SrcBitSize == DestBitSize, "Bitcast requires types of same width",&I);
 
   // Disallow aggregates.
   Assert1(!SrcTy->isAggregateType(),
