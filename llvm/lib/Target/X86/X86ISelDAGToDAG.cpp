@@ -176,6 +176,7 @@ namespace {
   private:
     SDNode *Select(SDValue N);
     SDNode *SelectAtomic64(SDNode *Node, unsigned Opc);
+    SDNode *SelectAtomicLoadAdd(SDNode *Node, MVT NVT);
 
     bool MatchSegmentBaseAddress(SDValue N, X86ISelAddressMode &AM);
     bool MatchLoad(SDValue N, X86ISelAddressMode &AM);
@@ -1431,6 +1432,153 @@ SDNode *X86DAGToDAGISel::SelectAtomic64(SDNode *Node, unsigned Opc) {
                                array_lengthof(Ops));
 }
 
+SDNode *X86DAGToDAGISel::SelectAtomicLoadAdd(SDNode *Node, MVT NVT) {
+  if (Node->hasAnyUseOfValue(0))
+    return 0;
+
+  // Optimize common patterns for __sync_add_and_fetch and
+  // __sync_sub_and_fetch where the result is not used. This allows us
+  // to use "lock" version of add, sub, inc, dec instructions.
+  // FIXME: Do not use special instructions but instead add the "lock"
+  // prefix to the target node somehow. The extra information will then be
+  // transferred to machine instruction and it denotes the prefix.
+  SDValue Chain = Node->getOperand(0);
+  SDValue Ptr = Node->getOperand(1);
+  SDValue Val = Node->getOperand(2);
+  SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
+  if (!SelectAddr(Ptr, Ptr, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4))
+    return 0;
+
+  bool isInc = false, isDec = false, isSub = false, isCN = false;
+  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Val);
+  if (CN) {
+    isCN = true;
+    int64_t CNVal = CN->getSExtValue();
+    if (CNVal == 1)
+      isInc = true;
+    else if (CNVal == -1)
+      isDec = true;
+    else if (CNVal >= 0)
+      Val = CurDAG->getTargetConstant(CNVal, NVT);
+    else {
+      isSub = true;
+      Val = CurDAG->getTargetConstant(-CNVal, NVT);
+    }
+  } else if (Val.hasOneUse() &&
+             Val.getOpcode() == ISD::SUB &&
+             X86::isZeroNode(Val.getOperand(0))) {
+    isSub = true;
+    Val = Val.getOperand(1);
+  }
+
+  unsigned Opc = 0;
+  switch (NVT.getSimpleVT()) {
+  default: return 0;
+  case MVT::i8:
+    if (isInc)
+      Opc = X86::LOCK_INC8m;
+    else if (isDec)
+      Opc = X86::LOCK_DEC8m;
+    else if (isSub) {
+      if (isCN)
+        Opc = X86::LOCK_SUB8mi;
+      else
+        Opc = X86::LOCK_SUB8mr;
+    } else {
+      if (isCN)
+        Opc = X86::LOCK_ADD8mi;
+      else
+        Opc = X86::LOCK_ADD8mr;
+    }
+    break;
+  case MVT::i16:
+    if (isInc)
+      Opc = X86::LOCK_INC16m;
+    else if (isDec)
+      Opc = X86::LOCK_DEC16m;
+    else if (isSub) {
+      if (isCN) {
+        if (Predicate_i16immSExt8(Val.getNode()))
+          Opc = X86::LOCK_SUB16mi8;
+        else
+          Opc = X86::LOCK_SUB16mi;
+      } else
+        Opc = X86::LOCK_SUB16mr;
+    } else {
+      if (isCN) {
+        if (Predicate_i16immSExt8(Val.getNode()))
+          Opc = X86::LOCK_ADD16mi8;
+        else
+          Opc = X86::LOCK_ADD16mi;
+      } else
+        Opc = X86::LOCK_ADD16mr;
+    }
+    break;
+  case MVT::i32:
+    if (isInc)
+      Opc = X86::LOCK_INC32m;
+    else if (isDec)
+      Opc = X86::LOCK_DEC32m;
+    else if (isSub) {
+      if (isCN) {
+        if (Predicate_i32immSExt8(Val.getNode()))
+          Opc = X86::LOCK_SUB32mi8;
+        else
+          Opc = X86::LOCK_SUB32mi;
+      } else
+        Opc = X86::LOCK_SUB32mr;
+    } else {
+      if (isCN) {
+        if (Predicate_i32immSExt8(Val.getNode()))
+          Opc = X86::LOCK_ADD32mi8;
+        else
+          Opc = X86::LOCK_ADD32mi;
+      } else
+        Opc = X86::LOCK_ADD32mr;
+    }
+    break;
+  case MVT::i64:
+    if (isInc)
+      Opc = X86::LOCK_INC64m;
+    else if (isDec)
+      Opc = X86::LOCK_DEC64m;
+    else if (isSub) {
+      Opc = X86::LOCK_SUB64mr;
+      if (isCN) {
+        if (Predicate_i64immSExt8(Val.getNode()))
+          Opc = X86::LOCK_SUB64mi8;
+        else if (Predicate_i64immSExt32(Val.getNode()))
+          Opc = X86::LOCK_SUB64mi32;
+      }
+    } else {
+      Opc = X86::LOCK_ADD64mr;
+      if (isCN) {
+        if (Predicate_i64immSExt8(Val.getNode()))
+          Opc = X86::LOCK_ADD64mi8;
+        else if (Predicate_i64immSExt32(Val.getNode()))
+          Opc = X86::LOCK_ADD64mi32;
+      }
+    }
+    break;
+  }
+
+  DebugLoc dl = Node->getDebugLoc();
+  SDValue Undef = SDValue(CurDAG->getTargetNode(TargetInstrInfo::IMPLICIT_DEF,
+                                                dl, NVT), 0);
+  SDValue MemOp = CurDAG->getMemOperand(cast<MemSDNode>(Node)->getMemOperand());
+  if (isInc || isDec) {
+    SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, MemOp, Chain };
+    SDValue Ret = SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 7), 0);
+    SDValue RetVals[] = { Undef, Ret };
+    return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
+  } else {
+    SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Val, MemOp, Chain };
+    SDValue Ret = SDValue(CurDAG->getTargetNode(Opc, dl, MVT::Other, Ops, 8), 0);
+    SDValue RetVals[] = { Undef, Ret };
+    return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
+  }
+}
+
 SDNode *X86DAGToDAGISel::Select(SDValue N) {
   SDNode *Node = N.getNode();
   MVT NVT = Node->getValueType(0);
@@ -1474,6 +1622,13 @@ SDNode *X86DAGToDAGISel::Select(SDValue N) {
       return SelectAtomic64(Node, X86::ATOMAND6432);
     case X86ISD::ATOMSWAP64_DAG:
       return SelectAtomic64(Node, X86::ATOMSWAP6432);
+
+    case ISD::ATOMIC_LOAD_ADD: {
+      SDNode *RetVal = SelectAtomicLoadAdd(Node, NVT);
+      if (RetVal)
+        return RetVal;
+      break;
+    }
 
     case ISD::SMUL_LOHI:
     case ISD::UMUL_LOHI: {

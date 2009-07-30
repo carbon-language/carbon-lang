@@ -336,6 +336,10 @@ namespace llvm {
     /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUFLW
     /// instructions.
     unsigned getShufflePSHUFLWImmediate(SDNode *N);
+
+    /// isZeroNode - Returns true if Elt is a constant zero or a floating point
+    /// constant +0.0.
+    bool isZeroNode(SDValue Elt);
   }
 
   //===--------------------------------------------------------------------===//

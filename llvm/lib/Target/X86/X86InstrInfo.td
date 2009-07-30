@@ -3255,6 +3255,78 @@ def LXADD8  : I<0xC0, MRMSrcMem, (outs GR8:$dst), (ins i8mem:$ptr, GR8:$val),
                 TB, LOCK;
 }
 
+// Optimized codegen when the non-memory output is not used.
+// FIXME: Use normal add / sub instructions and add lock prefix dynamically.
+def LOCK_ADD8mr  : I<0x00, MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
+                    "lock\n\t"
+                    "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD16mr  : I<0x01, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
+                    "lock\n\t"
+                    "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_ADD32mr  : I<0x01, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
+                    "lock\n\t"
+                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD8mi   : Ii8<0x80, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src2),
+                    "lock\n\t"
+                    "add{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD16mi  : Ii16<0x81, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src2),
+                    "lock\n\t"
+                     "add{w}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD32mi  : Ii32<0x81, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src2),
+                    "lock\n\t"
+                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD16mi8 : Ii8<0x83, MRM0m, (outs), (ins i16mem:$dst, i16i8imm :$src2),
+                    "lock\n\t"
+                    "add{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_ADD32mi8 : Ii8<0x83, MRM0m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
+                    "lock\n\t"
+                    "add{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+
+def LOCK_INC8m  : I<0xFE, MRM0m, (outs), (ins i8mem :$dst),
+                    "lock\n\t"
+                    "inc{b}\t$dst", []>, LOCK;
+def LOCK_INC16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst),
+                    "lock\n\t"
+                    "inc{w}\t$dst", []>, OpSize, LOCK;
+def LOCK_INC32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst),
+                    "lock\n\t"
+                    "inc{l}\t$dst", []>, LOCK;
+
+def LOCK_SUB8mr   : I<0x28, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src2),
+                    "lock\n\t"
+                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB16mr  : I<0x29, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
+                    "lock\n\t"
+                    "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_SUB32mr  : I<0x29, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2), 
+                    "lock\n\t"
+                    "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB8mi   : Ii8<0x80, MRM5m, (outs), (ins i8mem :$dst, i8imm:$src2), 
+                    "lock\n\t"
+                    "sub{b}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB16mi  : Ii16<0x81, MRM5m, (outs), (ins i16mem:$dst, i16imm:$src2), 
+                    "lock\n\t"
+                    "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_SUB32mi  : Ii32<0x81, MRM5m, (outs), (ins i32mem:$dst, i32imm:$src2), 
+                    "lock\n\t"
+                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB16mi8 : Ii8<0x83, MRM5m, (outs), (ins i16mem:$dst, i16i8imm :$src2), 
+                    "lock\n\t"
+                     "sub{w}\t{$src2, $dst|$dst, $src2}", []>, OpSize, LOCK;
+def LOCK_SUB32mi8 : Ii8<0x83, MRM5m, (outs), (ins i32mem:$dst, i32i8imm :$src2),
+                    "lock\n\t"
+                     "sub{l}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+
+def LOCK_DEC8m  : I<0xFE, MRM1m, (outs), (ins i8mem :$dst),
+                    "lock\n\t"
+                    "dec{b}\t$dst", []>, LOCK;
+def LOCK_DEC16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst),
+                    "lock\n\t"
+                    "dec{w}\t$dst", []>, OpSize, LOCK;
+def LOCK_DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst),
+                    "lock\n\t"
+                    "dec{l}\t$dst", []>, LOCK;
+
 // Atomic exchange, and, or, xor
 let Constraints = "$val = $dst", Defs = [EFLAGS],
                   usesCustomDAGSchedInserter = 1 in {

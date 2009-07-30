@@ -1380,10 +1380,42 @@ def LXADD64 : RI<0xC1, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
                "xadd\t$val, $ptr",
                [(set GR64:$dst, (atomic_load_add_64 addr:$ptr, GR64:$val))]>,
                 TB, LOCK;
+
 def XCHG64rm : RI<0x87, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$ptr,GR64:$val),
                   "xchg\t$val, $ptr", 
                   [(set GR64:$dst, (atomic_swap_64 addr:$ptr, GR64:$val))]>;
 }
+
+// Optimized codegen when the non-memory output is not used.
+// FIXME: Use normal add / sub instructions and add lock prefix dynamically.
+def LOCK_ADD64mr : RI<0x03, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
+                      "lock\n\t"
+                      "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD64mi8 : RIi8<0x83, MRM0m, (outs),
+                                      (ins i64mem:$dst, i64i8imm :$src2),
+                    "lock\n\t"
+                    "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_ADD64mi32 : RIi32<0x81, MRM0m, (outs),
+                                        (ins i64mem:$dst, i64i32imm :$src2),
+                      "lock\n\t"
+                      "add{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB64mr : RI<0x29, MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2), 
+                      "lock\n\t"
+                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB64mi8 : RIi8<0x83, MRM5m, (outs),
+                                      (ins i64mem:$dst, i64i8imm :$src2), 
+                      "lock\n\t"
+                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_SUB64mi32 : RIi32<0x81, MRM5m, (outs),
+                                        (ins i64mem:$dst, i64i32imm:$src2),
+                      "lock\n\t"
+                      "sub{q}\t{$src2, $dst|$dst, $src2}", []>, LOCK;
+def LOCK_INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst),
+                     "lock\n\t"
+                     "inc{q}\t$dst", []>, LOCK;
+def LOCK_DEC64m : RI<0xFF, MRM1m, (outs), (ins i64mem:$dst),
+                      "lock\n\t"
+                      "dec{q}\t$dst", []>, LOCK;
 
 // Atomic exchange, and, or, xor
 let Constraints = "$val = $dst", Defs = [EFLAGS],

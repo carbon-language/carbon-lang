@@ -558,6 +558,7 @@ void ScheduleDAGSDNodes::EmitNode(SDNode *Node, bool IsClone, bool IsCloned,
   case ISD::EntryToken:
     llvm_unreachable("EntryToken should have been excluded from the schedule!");
     break;
+  case ISD::MERGE_VALUES:
   case ISD::TokenFactor: // fall thru
     break;
   case ISD::CopyToReg: {

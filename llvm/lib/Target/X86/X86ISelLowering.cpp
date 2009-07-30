@@ -2746,6 +2746,15 @@ unsigned X86::getShufflePSHUFLWImmediate(SDNode *N) {
   return Mask;
 }
 
+/// isZeroNode - Returns true if Elt is a constant zero or a floating point
+/// constant +0.0.
+bool X86::isZeroNode(SDValue Elt) {
+  return ((isa<ConstantSDNode>(Elt) &&
+           cast<ConstantSDNode>(Elt)->getZExtValue() == 0) ||
+          (isa<ConstantFPSDNode>(Elt) &&
+           cast<ConstantFPSDNode>(Elt)->getValueAPF().isPosZero()));
+}
+
 /// CommuteVectorShuffle - Swap vector_shuffle operands as well as values in
 /// their permute mask.
 static SDValue CommuteVectorShuffle(ShuffleVectorSDNode *SVOp,
@@ -2852,15 +2861,6 @@ static bool isSplatVector(SDNode *N) {
   return true;
 }
 
-/// isZeroNode - Returns true if Elt is a constant zero or a floating point
-/// constant +0.0.
-static inline bool isZeroNode(SDValue Elt) {
-  return ((isa<ConstantSDNode>(Elt) &&
-           cast<ConstantSDNode>(Elt)->getZExtValue() == 0) ||
-          (isa<ConstantFPSDNode>(Elt) &&
-           cast<ConstantFPSDNode>(Elt)->getValueAPF().isPosZero()));
-}
-
 /// isZeroShuffle - Returns true if N is a VECTOR_SHUFFLE that can be resolved
 /// to an zero vector. 
 /// FIXME: move to dag combiner / method on ShuffleVectorSDNode
@@ -2874,13 +2874,15 @@ static bool isZeroShuffle(ShuffleVectorSDNode *N) {
       unsigned Opc = V2.getOpcode();
       if (Opc == ISD::UNDEF || ISD::isBuildVectorAllZeros(V2.getNode()))
         continue;
-      if (Opc != ISD::BUILD_VECTOR || !isZeroNode(V2.getOperand(Idx-NumElems)))
+      if (Opc != ISD::BUILD_VECTOR ||
+          !X86::isZeroNode(V2.getOperand(Idx-NumElems)))
         return false;
     } else if (Idx >= 0) {
       unsigned Opc = V1.getOpcode();
       if (Opc == ISD::UNDEF || ISD::isBuildVectorAllZeros(V1.getNode()))
         continue;
-      if (Opc != ISD::BUILD_VECTOR || !isZeroNode(V1.getOperand(Idx)))
+      if (Opc != ISD::BUILD_VECTOR ||
+          !X86::isZeroNode(V1.getOperand(Idx)))
         return false;
     }
   }
@@ -3048,7 +3050,7 @@ unsigned getNumOfConsecutiveZeros(ShuffleVectorSDNode *SVOp, int NumElems,
       continue;
     }
     SDValue Elt = DAG.getShuffleScalarElt(SVOp, Index);
-    if (Elt.getNode() && isZeroNode(Elt))
+    if (Elt.getNode() && X86::isZeroNode(Elt))
       ++NumZeros;
     else
       break;
@@ -3221,7 +3223,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
     if (Elt.getOpcode() != ISD::Constant &&
         Elt.getOpcode() != ISD::ConstantFP)
       IsAllConstants = false;
-    if (isZeroNode(Elt))
+    if (X86::isZeroNode(Elt))
       NumZero++;
     else {
       NonZeros |= (1 << i);
@@ -3298,7 +3300,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) {
 
     // Is it a vector logical left shift?
     if (NumElems == 2 && Idx == 1 &&
-        isZeroNode(Op.getOperand(0)) && !isZeroNode(Op.getOperand(1))) {
+        X86::isZeroNode(Op.getOperand(0)) &&
+        !X86::isZeroNode(Op.getOperand(1))) {
       unsigned NumBits = VT.getSizeInBits();
       return getVShift(true, VT,
                        DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
