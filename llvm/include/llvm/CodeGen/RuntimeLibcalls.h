@@ -224,6 +224,11 @@ namespace RTLIB {
     O_F32,
     O_F64,
 
+    // MEMORY
+    MEMCPY,
+    MEMSET,
+    MEMMOVE,
+
     // EXCEPTION HANDLING
     UNWIND_RESUME,
 

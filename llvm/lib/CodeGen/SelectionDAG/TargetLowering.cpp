@@ -241,6 +241,9 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::UO_F64] = "__unorddf2";
   Names[RTLIB::O_F32] = "__unordsf2";
   Names[RTLIB::O_F64] = "__unorddf2";
+  Names[RTLIB::MEMCPY] = "memcpy";
+  Names[RTLIB::MEMMOVE] = "memmove";
+  Names[RTLIB::MEMSET] = "memset";
   Names[RTLIB::UNWIND_RESUME] = "_Unwind_Resume";
 }
 

@@ -3385,7 +3385,8 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, DebugLoc dl, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, 0, CallingConv::C, false,
-                    getExternalSymbol("memcpy", TLI.getPointerTy()),
+                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMCPY), 
+                                      TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
 }
@@ -3431,7 +3432,8 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, DebugLoc dl, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, 0, CallingConv::C, false,
-                    getExternalSymbol("memmove", TLI.getPointerTy()),
+                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMMOVE), 
+                                      TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
 }
@@ -3483,7 +3485,8 @@ SDValue SelectionDAG::getMemset(SDValue Chain, DebugLoc dl, SDValue Dst,
   std::pair<SDValue,SDValue> CallResult =
     TLI.LowerCallTo(Chain, Type::VoidTy,
                     false, false, false, false, 0, CallingConv::C, false,
-                    getExternalSymbol("memset", TLI.getPointerTy()),
+                    getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET), 
+                                      TLI.getPointerTy()),
                     Args, *this, dl);
   return CallResult.second;
 }
