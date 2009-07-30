@@ -222,15 +222,11 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
   }
 
   if (const NamedMDNode *N = dyn_cast<NamedMDNode>(V)) {
-    Values.push_back(std::make_pair(V, 1U));
-    ValueMap[V] = Values.size();
-    ValueID = Values.size();
     for(NamedMDNode::const_elem_iterator I = N->elem_begin(),
           E = N->elem_end(); I != E; ++I) {
       MetadataBase *M = *I;
       EnumerateValue(M);
     }
-    return;
   }
 
   // Add the value.
