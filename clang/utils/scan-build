@@ -959,6 +959,9 @@ ADVANCED OPTIONS:
                   the 'basic' store model is used. 'region' specifies a field-
                   sensitive store model. Be warned that the 'region' model
                   is still in very early testing phase and may often crash.
+                  
+ -no-failure-reports - Do not create a 'failures' subdirectory that includes
+                       analyzer crash reports and preprocessed source files.
 
 AVAILABLE ANALYSES (multiple analyses may be specified):
 
@@ -1170,6 +1173,11 @@ while (@ARGV) {
   if ($arg eq "-plist-html") {
     shift @ARGV;
     $OutputFormat = "plist-html";
+    next;
+  }
+  
+  if ($arg eq "-no-failure-reports") {
+    $ENV{"CCC_REPORT_FAILURES"} = 0;
     next;
   }
 
