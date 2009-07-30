@@ -31,12 +31,13 @@ TEST(TwineTest, Construction) {
 }
 
 TEST(TwineTest, Numbers) {
-  EXPECT_EQ("123", Twine::utostr(123).str());
-  EXPECT_EQ("-123", Twine::itostr(-123).str());
-  EXPECT_EQ("123", Twine::utostr(123).str());
-  EXPECT_EQ("-123", Twine::itostr(-123).str());
-  EXPECT_EQ("123", Twine::utostr((char) 123).str());
-  EXPECT_EQ("-123", Twine::itostr((signed char) -123).str());
+  EXPECT_EQ("123", Twine(123U).str());
+  EXPECT_EQ("123", Twine(123).str());
+  EXPECT_EQ("-123", Twine(-123).str());
+  EXPECT_EQ("123", Twine(123).str());
+  EXPECT_EQ("-123", Twine(-123).str());
+  EXPECT_EQ("123", Twine((char) 123).str());
+  EXPECT_EQ("-123", Twine((signed char) -123).str());
 
   EXPECT_EQ("7B", Twine::utohexstr(123).str());
   EXPECT_EQ("FFFFFFFFFFFFFF85", Twine::itohexstr(-123).str());

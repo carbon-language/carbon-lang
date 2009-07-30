@@ -101,14 +101,21 @@ namespace llvm {
 
       /// A pointer to a uint64_t value, to render as an unsigned decimal
       /// integer.
-      UDecKind,
+      UDec32Kind,
+
+      /// A pointer to a uint64_t value, to render as a signed decimal integer.
+      SDec32Kind,
+
+      /// A pointer to a uint64_t value, to render as an unsigned decimal
+      /// integer.
+      UDec64Kind,
+
+      /// A pointer to a uint64_t value, to render as a signed decimal integer.
+      SDec64Kind,
 
       /// A pointer to a uint64_t value, to render as an unsigned hexadecimal
       /// integer.
-      UHexKind,
-
-      /// A pointer to a uint64_t value, to render as a signed decimal integer.
-      SDecKind
+      UHexKind
     };
 
   private:
@@ -244,6 +251,26 @@ namespace llvm {
       assert(isValid() && "Invalid twine!");
     }
 
+    /// Construct a twine to print \arg Val as an unsigned decimal integer.
+    Twine(const uint32_t &Val) 
+      : LHS(&Val), LHSKind(UDec32Kind), RHSKind(EmptyKind) {
+    }
+
+    /// Construct a twine to print \arg Val as a signed decimal integer.
+    Twine(const int32_t &Val) 
+      : LHS(&Val), LHSKind(SDec32Kind), RHSKind(EmptyKind) {
+    }
+
+    /// Construct a twine to print \arg Val as an unsigned decimal integer.
+    Twine(const uint64_t &Val) 
+      : LHS(&Val), LHSKind(UDec64Kind), RHSKind(EmptyKind) {
+    }
+
+    /// Construct a twine to print \arg Val as a signed decimal integer.
+    Twine(const int64_t &Val) 
+      : LHS(&Val), LHSKind(SDec64Kind), RHSKind(EmptyKind) {
+    }
+
     // FIXME: Unfortunately, to make sure this is as efficient as possible we
     // need extra binary constructors from particular types. We can't rely on
     // the compiler to be smart enough to fold operator+()/concat() down to the
@@ -270,16 +297,6 @@ namespace llvm {
     /// @}
     /// @name Numeric Conversions
     /// @{
-
-    /// Construct a twine to print \arg Val as an unsigned decimal integer.
-    static Twine utostr(const uint64_t &Val) {
-      return Twine(&Val, UDecKind, 0, EmptyKind);
-    }
-
-    /// Construct a twine to print \arg Val as a signed decimal integer.
-    static Twine itostr(const int64_t &Val) {
-      return Twine(&Val, SDecKind, 0, EmptyKind);
-    }
 
     // Construct a twine to print \arg Val as an unsigned hexadecimal integer.
     static Twine utohexstr(const uint64_t &Val) {
