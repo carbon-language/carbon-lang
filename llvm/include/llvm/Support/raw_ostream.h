@@ -198,6 +198,9 @@ public:
     return *this;
   }
 
+  /// write_hex - Output \arg N in hexadecimal, without any prefix or padding.
+  raw_ostream &write_hex(unsigned long long N);
+
   raw_ostream &write(unsigned char C);
   raw_ostream &write(const char *Ptr, size_t Size);
 

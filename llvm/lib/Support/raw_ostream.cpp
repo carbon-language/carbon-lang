@@ -113,10 +113,7 @@ raw_ostream &raw_ostream::operator<<(long long N) {
   return this->operator<<(static_cast<unsigned long long>(N));
 }
 
-raw_ostream &raw_ostream::operator<<(const void *P) {
-  uintptr_t N = (uintptr_t) P;
-  *this << '0' << 'x';
-  
+raw_ostream &raw_ostream::write_hex(unsigned long long N) {
   // Zero is a special case.
   if (N == 0)
     return *this << '0';
@@ -132,6 +129,12 @@ raw_ostream &raw_ostream::operator<<(const void *P) {
   }
 
   return write(CurPtr, EndPtr-CurPtr);
+}
+
+raw_ostream &raw_ostream::operator<<(const void *P) {
+  *this << '0' << 'x';
+
+  return write_hex((uintptr_t) P);
 }
 
 void raw_ostream::flush_nonempty() {
