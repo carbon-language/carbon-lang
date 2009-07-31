@@ -35,6 +35,7 @@ namespace llvm {
   class TargetELFWriterInfo;
   class raw_ostream;
   class SectionKind;
+  class MCContext;
 
   typedef std::vector<ELFSym*>::iterator ELFSymIter;
   typedef std::vector<ELFSection*>::iterator ELFSectionIter;
@@ -65,6 +66,8 @@ namespace llvm {
     /// Target machine description.
     TargetMachine &TM;
 
+    MCContext &OutContext;
+    
     /// Target Elf Writer description.
     const TargetELFWriterInfo *TEW;
 

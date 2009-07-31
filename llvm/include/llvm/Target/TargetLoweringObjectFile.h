@@ -19,6 +19,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 
 namespace llvm {
+  class MCContext;
 
 /// SectionKind - This is a simple POD value that classifies the properties of
 /// a section.  A global variable is classified into the deepest possible
@@ -256,6 +257,12 @@ public:
   
   virtual ~TargetLoweringObjectFile();
   
+  /// Initialize - this method must be called before any actual lowering is
+  /// done.  This specifies the current context for codegen, and gives the
+  /// lowering implementations a chance to set up their default sections.
+  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM) {}
+  
+  
   const Section *getTextSection() const { return TextSection; }
   const Section *getDataSection() const { return DataSection; }
   
@@ -310,12 +317,17 @@ protected:
 
 class TargetLoweringObjectFileELF : public TargetLoweringObjectFile {
   bool AtIsCommentChar;  // True if @ is the comment character on this target.
+  bool HasCrazyBSS;
 public:
   /// ELF Constructor - AtIsCommentChar is true if the CommentCharacter from TAI
   /// is "@".
-  TargetLoweringObjectFileELF(bool AtIsCommentChar = false,
+  TargetLoweringObjectFileELF(bool atIsCommentChar = false,
                               // FIXME: REMOVE AFTER UNIQUING IS FIXED.
-                              bool HasCrazyBSS = false);
+                              bool hasCrazyBSS = false)
+    : AtIsCommentChar(atIsCommentChar), HasCrazyBSS(hasCrazyBSS) {}
+    
+  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+  
   
   /// getSectionForMergeableConstant - Given a mergeable constant with the
   /// specified size and relocation information, return a section that it
@@ -342,6 +354,8 @@ protected:
   const Section *MergeableConst16Section;
 };
 
+  
+  
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const Section *TextCoalSection;
   const Section *ConstTextCoalSection;
@@ -352,7 +366,9 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
   const Section *EightByteConstantSection;
   const Section *SixteenByteConstantSection;
 public:
-  TargetLoweringObjectFileMachO(const TargetMachine &TM);
+  
+  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+
   virtual const Section *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
@@ -365,7 +381,8 @@ public:
 
 class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
 public:
-  TargetLoweringObjectFileCOFF();
+  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+  
   virtual void getSectionFlagsAsString(SectionKind Kind,
                                        SmallVectorImpl<char> &Str) const;
   

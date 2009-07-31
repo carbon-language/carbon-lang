@@ -173,6 +173,10 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool AsmPrinter::doInitialization(Module &M) {
+  // Initialize TargetLoweringObjectFile.
+  const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
+    .Initialize(OutContext, TM);
+  
   Mang = new Mangler(M, TAI->getGlobalPrefix(), TAI->getPrivateGlobalPrefix(),
                      TAI->getLinkerPrivateGlobalPrefix());
   

@@ -55,7 +55,7 @@ static TargetLoweringObjectFile *createTLOF(X86TargetMachine &TM) {
   switch (TM.getSubtarget<X86Subtarget>().TargetType) {
   default: llvm_unreachable("unknown subtarget type");
   case X86Subtarget::isDarwin:
-    return new TargetLoweringObjectFileMachO(TM);
+    return new TargetLoweringObjectFileMachO();
   case X86Subtarget::isELF:
     return new TargetLoweringObjectFileELF();
   case X86Subtarget::isMingw:

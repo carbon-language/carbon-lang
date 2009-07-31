@@ -42,6 +42,7 @@
 #include "llvm/CodeGen/ObjectCodeEmitter.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetELFWriterInfo.h"
@@ -73,6 +74,7 @@ ObjectCodeEmitter *llvm::AddELFWriter(PassManagerBase &PM,
 
 ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
   : MachineFunctionPass(&ID), O(o), TM(tm),
+    OutContext(*new MCContext()),
     is64Bit(TM.getTargetData()->getPointerSizeInBits() == 64),
     isLittleEndian(TM.getTargetData()->isLittleEndian()),
     ElfHdr(isLittleEndian, is64Bit) {
@@ -89,11 +91,17 @@ ELFWriter::ELFWriter(raw_ostream &o, TargetMachine &tm)
 
 ELFWriter::~ELFWriter() {
   delete ElfCE;
+  delete &OutContext;
 }
 
 // doInitialization - Emit the file header and all of the global variables for
 // the module to the ELF file.
 bool ELFWriter::doInitialization(Module &M) {
+  // Initialize TargetLoweringObjectFile.
+  const TargetLoweringObjectFile &TLOF =
+    TM.getTargetLowering()->getObjFileLowering();
+  const_cast<TargetLoweringObjectFile&>(TLOF).Initialize(OutContext, TM);
+  
   Mang = new Mangler(M);
 
   // ELF Header

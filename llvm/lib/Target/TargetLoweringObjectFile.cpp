@@ -261,10 +261,8 @@ getOrCreateSection(const char *Name, bool isDirective,
 //                                  ELF
 //===----------------------------------------------------------------------===//
 
-TargetLoweringObjectFileELF::TargetLoweringObjectFileELF(bool atIsCommentChar,
-                                                         bool HasCrazyBSS)
-  : AtIsCommentChar(atIsCommentChar) {
-    
+void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
+                                             const TargetMachine &TM) {
   if (!HasCrazyBSS)
     BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
   else
@@ -480,8 +478,8 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 //                                 MachO
 //===----------------------------------------------------------------------===//
 
-TargetLoweringObjectFileMachO::
-TargetLoweringObjectFileMachO(const TargetMachine &TM) {
+void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
+                                               const TargetMachine &TM) {
   TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
   DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
   
@@ -592,7 +590,8 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 //                                  COFF
 //===----------------------------------------------------------------------===//
 
-TargetLoweringObjectFileCOFF::TargetLoweringObjectFileCOFF() {
+void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
+                                              const TargetMachine &TM) {
   TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
   DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
 }
