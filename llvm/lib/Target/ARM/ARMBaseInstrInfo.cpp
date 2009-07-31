@@ -410,6 +410,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   const TargetInstrDesc &TID = MI->getDesc();
   unsigned TSFlags = TID.TSFlags;
 
+  unsigned Opc = MI->getOpcode();
   switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
   default: {
     // If this machine instr is an inline asm, measure it.
@@ -417,7 +418,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       return TAI->getInlineAsmLength(MI->getOperand(0).getSymbolName());
     if (MI->isLabel())
       return 0;
-    switch (MI->getOpcode()) {
+    switch (Opc) {
     default:
       llvm_unreachable("Unknown or unset size field for instr!");
     case TargetInstrInfo::IMPLICIT_DEF:
@@ -432,28 +433,25 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   case ARMII::Size4Bytes: return 4;          // ARM / Thumb2 instruction.
   case ARMII::Size2Bytes: return 2;          // Thumb1 instruction.
   case ARMII::SizeSpecial: {
-    bool IsThumb1JT = false;
-    switch (MI->getOpcode()) {
+    switch (Opc) {
     case ARM::CONSTPOOL_ENTRY:
       // If this machine instr is a constant pool entry, its size is recorded as
       // operand #2.
       return MI->getOperand(2).getImm();
     case ARM::Int_eh_sjlj_setjmp:
       return 12;
-    case ARM::tBR_JTr:
-      IsThumb1JT = true;
-      // Fallthrough
     case ARM::BR_JTr:
     case ARM::BR_JTm:
     case ARM::BR_JTadd:
+    case ARM::tBR_JTr:
     case ARM::t2BR_JT:
     case ARM::t2TBB:
     case ARM::t2TBH: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries. For TBB, each
       // entry is one byte; TBH two byte each.
-      unsigned EntrySize = (MI->getOpcode() == ARM::t2TBB)
-        ? 1 : ((MI->getOpcode() == ARM::t2TBH) ? 2 : 4);
+      unsigned EntrySize = (Opc == ARM::t2TBB)
+        ? 1 : ((Opc == ARM::t2TBH) ? 2 : 4);
       unsigned NumOps = TID.getNumOperands();
       MachineOperand JTOP =
         MI->getOperand(NumOps - (TID.isPredicable() ? 3 : 2));
@@ -468,7 +466,9 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       // FIXME: If we know the size of the function is less than (1 << 16) *2
       // bytes, we can use 16-bit entries instead. Then there won't be an
       // alignment issue.
-      return getNumJTEntries(JT, JTI) * EntrySize + (IsThumb1JT ? 2 : 4);
+      unsigned InstSize = (Opc == ARM::tBR_JTr || Opc == ARM::t2BR_JT)
+        ? 2 : 4;
+      return getNumJTEntries(JT, JTI) * EntrySize + InstSize;
     }
     default:
       // Otherwise, pseudo-instruction sizes are zero.
