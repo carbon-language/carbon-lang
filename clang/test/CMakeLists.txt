@@ -33,6 +33,7 @@ if(PYTHONINTERP_FOUND)
    add_custom_target(clang-test-${testdir} 
       ${PYTHON_EXECUTABLE} 
       ${LLVM_SOURCE_DIR}/tools/clang/utils/test/MultiTestRunner.py
+      "--root=${LLVM_SOURCE_DIR}/tools/clang/test"
       "--path=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}"
       "--path=${LLVM_SOURCE_DIR}/test/Scripts"
       -s ${CLANG_TEST_EXTRA_ARGS}
@@ -48,6 +49,7 @@ if(PYTHONINTERP_FOUND)
   add_custom_target(clang-test
     ${PYTHON_EXECUTABLE} 
     ${LLVM_SOURCE_DIR}/tools/clang/utils/test/MultiTestRunner.py
+    "--root=${LLVM_SOURCE_DIR}/tools/clang/test"
     "--path=${LLVM_TOOLS_PATH}/${CMAKE_CFG_INTDIR}"
     "--path=${LLVM_SOURCE_DIR}/test/Scripts"
     -s ${CLANG_TEST_EXTRA_ARGS}

@@ -23,10 +23,7 @@ import signal
 import subprocess
 import sys
 
-# Increase determinism by explicitly choosing the environment.
-kChildEnv = {}
-for var in ('PATH', 'SYSTEMROOT'):
-    kChildEnv[var] = os.environ.get(var, '')
+import Util
 
 kSystemName = platform.system()
 
@@ -42,22 +39,7 @@ class TestStatus:
     def getName(code): 
         return TestStatus.kNames[code]
 
-def mkdir_p(path):
-    if not path:
-        pass
-    elif os.path.exists(path):
-        pass
-    else:
-        parent = os.path.dirname(path) 
-        if parent != path:
-            mkdir_p(parent)
-        try:
-            os.mkdir(path)
-        except OSError,e:
-            if e.errno != errno.EEXIST:
-                raise
-
-def executeScript(script, commands, cwd, useValgrind):
+def executeScript(cfg, script, commands, cwd, useValgrind):
     # Write script file
     f = open(script,'w')
     if kSystemName == 'Windows':
@@ -82,7 +64,7 @@ def executeScript(script, commands, cwd, useValgrind):
                          stdin=subprocess.PIPE,
                          stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE,
-                         env=kChildEnv)
+                         env=cfg.environment)
     out,err = p.communicate()
     exitCode = p.wait()
 
@@ -93,14 +75,14 @@ def executeScript(script, commands, cwd, useValgrind):
     return out, err, exitCode
 
 import StringIO
-def runOneTest(testPath, tmpBase, clang, clangcc, useValgrind):
+def runOneTest(cfg, testPath, tmpBase, clang, clangcc, useValgrind):
     # Make paths absolute.
     tmpBase = os.path.abspath(tmpBase)
     testPath = os.path.abspath(testPath)
 
     # Create the output directory if it does not already exist.
 
-    mkdir_p(os.path.dirname(tmpBase))
+    Util.mkdir_p(os.path.dirname(tmpBase))
     script = tmpBase + '.script'
     if kSystemName == 'Windows':
         script += '.bat'
@@ -154,7 +136,7 @@ def runOneTest(testPath, tmpBase, clang, clangcc, useValgrind):
         # Strip off '&&'
         scriptLines[i] = ln[:-2]
 
-    out, err, exitCode = executeScript(script, scriptLines, 
+    out, err, exitCode = executeScript(cfg, script, scriptLines, 
                                        os.path.dirname(testPath),
                                        useValgrind)
     if xfailLines:
@@ -188,31 +170,7 @@ def capture(args):
     out,_ = p.communicate()
     return out
 
-def which(command):
-    # FIXME: Take configuration object.
-
-    # Check for absolute match first.
-    if os.path.exists(command):
-        return command
-
-    # Would be nice if Python had a lib function for this.
-    paths = kChildEnv['PATH']
-    if not paths:
-        paths = os.defpath
-
-    # Get suffixes to search.
-    pathext = os.environ.get('PATHEXT', '').split(os.pathsep)
-
-    # Search the paths...
-    for path in paths.split(os.pathsep):
-        for ext in pathext:
-            p = os.path.join(path, command + ext)
-            if os.path.exists(p):
-                return p
-
-    return None
-
-def inferClang():
+def inferClang(cfg):
     # Determine which clang to use.
     clang = os.getenv('CLANG')
     
@@ -222,7 +180,7 @@ def inferClang():
         return clang
 
     # Otherwise look in the path.
-    clang = which('clang')
+    clang = Util.which('clang', cfg.environment['PATH'])
 
     if not clang:
         print >>sys.stderr, "error: couldn't find 'clang' program, try setting CLANG in your environment"
@@ -230,7 +188,7 @@ def inferClang():
         
     return clang
 
-def inferClangCC(clang):
+def inferClangCC(cfg, clang):
     clangcc = os.getenv('CLANGCC')
 
     # If the user set clang in the environment, definitely use that and don't
@@ -244,7 +202,7 @@ def inferClangCC(clang):
         clangccName = clang[:-4] + '-cc.exe'
     else:
         clangccName = clang + '-cc'
-    clangcc = which(clangccName)
+    clangcc = Util.which(clangccName, cfg.environment['PATH'])
     if not clangcc:
         # Otherwise ask clang.
         res = capture([clang, '-print-prog-name=clang-cc'])
@@ -267,43 +225,3 @@ def getTestOutputBase(dir, testpath):
     return os.path.join(dir, 
                         os.path.basename(os.path.dirname(testpath)),
                         os.path.basename(testpath))
-                      
-def main():
-    global options
-    from optparse import OptionParser
-    parser = OptionParser("usage: %prog [options] {tests}")
-    parser.add_option("", "--clang", dest="clang",
-                      help="Program to use as \"clang\"",
-                      action="store", default=None)
-    parser.add_option("", "--clang-cc", dest="clangcc",
-                      help="Program to use as \"clang-cc\"",
-                      action="store", default=None)
-    parser.add_option("", "--vg", dest="useValgrind",
-                      help="Run tests under valgrind",
-                      action="store_true", default=False)
-    (opts, args) = parser.parse_args()
-
-    if not args:
-        parser.error('No tests specified')
-
-    if opts.clang is None:
-        opts.clang = inferClang()
-    if opts.clangcc is None:
-        opts.clangcc = inferClangCC(opts.clang)
-
-    for path in args:
-        base = getTestOutputBase('Output', path) + '.out'
-        
-        status,output = runOneTest(path, base, opts.clang, opts.clangcc,
-                                   opts.useValgrind)
-        print '%s: %s' % (TestStatus.getName(status).upper(), path)
-        if status == TestStatus.Fail or status == TestStatus.XPass:
-            print "%s TEST '%s' FAILED %s" % ('*'*20, path, '*'*20)
-            sys.stdout.write(output)
-            print "*" * 20
-            sys.exit(1)
-
-    sys.exit(0)
-
-if __name__=='__main__':
-    main()
