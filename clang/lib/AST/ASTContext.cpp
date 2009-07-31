@@ -1625,7 +1625,8 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
     return getTypedefType(Typedef);
   else if (isa<TemplateTypeParmDecl>(Decl)) {
     assert(false && "Template type parameter types are always available.");
-  } else if (ObjCInterfaceDecl *ObjCInterface = dyn_cast<ObjCInterfaceDecl>(Decl))
+  } else if (ObjCInterfaceDecl *ObjCInterface
+               = dyn_cast<ObjCInterfaceDecl>(Decl))
     return getObjCInterfaceType(ObjCInterface);
 
   if (RecordDecl *Record = dyn_cast<RecordDecl>(Decl)) {
@@ -1633,14 +1634,12 @@ QualType ASTContext::getTypeDeclType(TypeDecl *Decl, TypeDecl* PrevDecl) {
       Decl->TypeForDecl = PrevDecl->TypeForDecl;
     else
       Decl->TypeForDecl = new (*this,8) RecordType(Record);
-  }
-  else if (EnumDecl *Enum = dyn_cast<EnumDecl>(Decl)) {
+  } else if (EnumDecl *Enum = dyn_cast<EnumDecl>(Decl)) {
     if (PrevDecl)
       Decl->TypeForDecl = PrevDecl->TypeForDecl;
     else
       Decl->TypeForDecl = new (*this,8) EnumType(Enum);
-  }
-  else
+  } else
     assert(false && "TypeDecl without a type?");
 
   if (!PrevDecl) Types.push_back(Decl->TypeForDecl);
@@ -2820,8 +2819,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
         isReadOnly = true;
         S += 'r';
       }
-    }
-    else if (OutermostType) {
+    } else if (OutermostType) {
       QualType P = PointeeTy;
       while (P->getAs<PointerType>())
         P = P->getAs<PointerType>()->getPointeeType();
