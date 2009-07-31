@@ -20,13 +20,15 @@ using namespace llvm;
 
 namespace {
 
+LLVMContext &Context = getGlobalContext();
+
 // Test that construction of MDString with different value produces different
 // MDString objects, even with the same string pointer and nulls in the string.
 TEST(MDStringTest, CreateDifferent) {
   char x[3] = { 'f', 0, 'A' };
-  MDString *s1 = getGlobalContext().getMDString(StringRef(&x[0], 3));
+  MDString *s1 = MDString::get(Context, StringRef(&x[0], 3));
   x[2] = 'B';
-  MDString *s2 = getGlobalContext().getMDString(StringRef(&x[0], 3));
+  MDString *s2 = MDString::get(Context, StringRef(&x[0], 3));
   EXPECT_NE(s1, s2);
 }
 
@@ -36,8 +38,8 @@ TEST(MDStringTest, CreateSame) {
   char x[4] = { 'a', 'b', 'c', 'X' };
   char y[4] = { 'a', 'b', 'c', 'Y' };
 
-  MDString *s1 = getGlobalContext().getMDString(StringRef(&x[0], 3));
-  MDString *s2 = getGlobalContext().getMDString(StringRef(&y[0], 3));
+  MDString *s1 = MDString::get(Context, StringRef(&x[0], 3));
+  MDString *s2 = MDString::get(Context, StringRef(&y[0], 3));
   EXPECT_EQ(s1, s2);
 }
 
@@ -45,7 +47,7 @@ TEST(MDStringTest, CreateSame) {
 TEST(MDStringTest, PrintingSimple) {
   char *str = new char[13];
   strncpy(str, "testing 1 2 3", 13);
-  MDString *s = getGlobalContext().getMDString(StringRef(str, 13));
+  MDString *s = MDString::get(Context, StringRef(str, 13));
   strncpy(str, "aaaaaaaaaaaaa", 13);
   delete[] str;
 
@@ -57,7 +59,7 @@ TEST(MDStringTest, PrintingSimple) {
 // Test printing of MDString with non-printable characters.
 TEST(MDStringTest, PrintingComplex) {
   char str[5] = {0, '\n', '"', '\\', -1};
-  MDString *s = getGlobalContext().getMDString(StringRef(str+0, 5));
+  MDString *s = MDString::get(Context, StringRef(str+0, 5));
   std::ostringstream oss;
   s->print(oss);
   EXPECT_STREQ("metadata !\"\\00\\0A\\22\\5C\\FF\"", oss.str().c_str());
@@ -68,8 +70,8 @@ TEST(MDNodeTest, Simple) {
   char x[3] = { 'a', 'b', 'c' };
   char y[3] = { '1', '2', '3' };
 
-  MDString *s1 = getGlobalContext().getMDString(StringRef(&x[0], 3));
-  MDString *s2 = getGlobalContext().getMDString(StringRef(&y[0], 3));
+  MDString *s1 = MDString::get(Context, StringRef(&x[0], 3));
+  MDString *s2 = MDString::get(Context, StringRef(&y[0], 3));
   ConstantInt *CI = ConstantInt::get(getGlobalContext(), APInt(8, 0));
 
   std::vector<Value *> V;
@@ -77,10 +79,10 @@ TEST(MDNodeTest, Simple) {
   V.push_back(CI);
   V.push_back(s2);
 
-  MDNode *n1 = getGlobalContext().getMDNode(&V[0], 3);
+  MDNode *n1 = MDNode::get(Context, &V[0], 3);
   Value *const c1 = n1;
-  MDNode *n2 = getGlobalContext().getMDNode(&c1, 1);
-  MDNode *n3 = getGlobalContext().getMDNode(&V[0], 3);
+  MDNode *n2 = MDNode::get(Context, &c1, 1);
+  MDNode *n3 = MDNode::get(Context, &V[0], 3);
   EXPECT_NE(n1, n2);
   EXPECT_EQ(n1, n3);
 
@@ -107,7 +109,7 @@ TEST(MDNodeTest, Delete) {
   Instruction *I = new BitCastInst(C, Type::Int32Ty);
 
   Value *const V = I;
-  MDNode *n = getGlobalContext().getMDNode(&V, 1);
+  MDNode *n = MDNode::get(Context, &V, 1);
   WeakVH wvh = n;
 
   EXPECT_EQ(n, wvh);
@@ -125,8 +127,8 @@ TEST(NamedMDNodeTest, Search) {
 
   Value *const V = C;
   Value *const V2 = C2;
-  MDNode *n = getGlobalContext().getMDNode(&V, 1);
-  MDNode *n2 = getGlobalContext().getMDNode(&V2, 1);
+  MDNode *n = MDNode::get(Context, &V, 1);
+  MDNode *n2 = MDNode::get(Context, &V2, 1);
 
   MetadataBase *Nodes[2] = { n, n2 };
 
