@@ -95,6 +95,32 @@ struct X86Operand {
     return Reg.RegNo;
   }
 
+  const MCValue &getImm() const {
+    assert(Kind == Immediate && "Invalid access!");
+    return Imm.Val;
+  }
+
+  const MCValue &getMemDisp() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.Disp;
+  }
+  unsigned getMemSegReg() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.SegReg;
+  }
+  unsigned getMemBaseReg() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.BaseReg;
+  }
+  unsigned getMemIndexReg() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.IndexReg;
+  }
+  unsigned getMemScale() const {
+    assert(Kind == Memory && "Invalid access!");
+    return Mem.Scale;
+  }
+
   static X86Operand CreateReg(unsigned RegNo) {
     X86Operand Res;
     Res.Kind = Register;
@@ -109,11 +135,8 @@ struct X86Operand {
   }
   static X86Operand CreateMem(unsigned SegReg, MCValue Disp, unsigned BaseReg,
                               unsigned IndexReg, unsigned Scale) {
-    // If there is no index register, we should never have a scale, and we
-    // should always have a scale (in {1,2,4,8}) if we do.
-    assert(((Scale == 0 && !IndexReg) ||
-            (IndexReg && (Scale == 1 || Scale == 2 ||
-                          Scale == 4 || Scale == 8))) &&
+    // The scale should always be one of {1,2,4,8}.
+    assert(((Scale == 1 || Scale == 2 || Scale == 4 || Scale == 8)) &&
            "Invalid scale!");
     X86Operand Res;
     Res.Kind = Memory;
@@ -193,7 +216,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
     // After parsing the base expression we could either have a parenthesized
     // memory address or not.  If not, return now.  If so, eat the (.
     if (getLexer().isNot(AsmToken::LParen)) {
-      Op = X86Operand::CreateMem(SegReg, Disp, 0, 0, 0);
+      Op = X86Operand::CreateMem(SegReg, Disp, 0, 0, 1);
       return false;
     }
     
@@ -215,7 +238,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
       // After parsing the base expression we could either have a parenthesized
       // memory address or not.  If not, return now.  If so, eat the (.
       if (getLexer().isNot(AsmToken::LParen)) {
-        Op = X86Operand::CreateMem(SegReg, Disp, 0, 0, 0);
+        Op = X86Operand::CreateMem(SegReg, Disp, 0, 0, 1);
         return false;
       }
       
@@ -226,7 +249,7 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
   
   // If we reached here, then we just ate the ( of the memory operand.  Process
   // the rest of the memory operand.
-  unsigned BaseReg = 0, IndexReg = 0, Scale = 0;
+  unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
   
   if (getLexer().is(AsmToken::Register)) {
     if (ParseRegister(Op))
@@ -247,7 +270,6 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
       if (ParseRegister(Op))
         return true;
       IndexReg = Op.getReg();
-      Scale = 1;      // If not specified, the scale defaults to 1.
     
       if (getLexer().isNot(AsmToken::RParen)) {
         // Parse the scale amount:
@@ -329,11 +351,10 @@ extern "C" void LLVMInitializeX86AsmParser() {
   RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
 }
 
-// FIXME: These should come from tblgen.
+// FIXME: These should come from tblgen?
 
-// Match_X86_Op_GR8
 static bool 
-Match_X86_Op_GR8(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
+Match_X86_Op_REG(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
   assert(NumOps == 1 && "Invalid number of ops!");
 
   // FIXME: Match correct registers.
@@ -344,6 +365,85 @@ Match_X86_Op_GR8(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
   return false;
 }
 
+static bool 
+Match_X86_Op_IMM(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
+  assert(NumOps == 1 && "Invalid number of ops!");
+
+  // FIXME: We need to check widths.
+  if (Op.Kind != X86Operand::Immediate)
+    return true;
+
+  MCOps[0].MakeMCValue(Op.getImm());
+  return false;
+}
+
+static bool Match_X86_Op_MEM(const X86Operand &Op,
+                             MCOperand *MCOps,
+                             unsigned NumMCOps) {
+  assert(NumMCOps == 5 && "Invalid number of ops!");
+
+  if (Op.Kind != X86Operand::Memory)
+    return true;
+
+  MCOps[0].MakeReg(Op.getMemBaseReg());
+  MCOps[1].MakeImm(Op.getMemScale());
+  MCOps[2].MakeReg(Op.getMemIndexReg());
+  MCOps[3].MakeMCValue(Op.getMemDisp());
+  MCOps[4].MakeReg(Op.getMemSegReg());
+
+  return false;  
+}
+
+#define REG(name) \
+  static bool Match_X86_Op_##name(const X86Operand &Op, \
+                                  MCOperand *MCOps,     \
+                                  unsigned NumMCOps) {  \
+    return Match_X86_Op_REG(Op, MCOps, NumMCOps);       \
+  }
+
+REG(GR64)
+REG(GR32)
+REG(GR16)
+REG(GR8)
+
+#define IMM(name) \
+  static bool Match_X86_Op_##name(const X86Operand &Op, \
+                                  MCOperand *MCOps,     \
+                                  unsigned NumMCOps) {  \
+    return Match_X86_Op_IMM(Op, MCOps, NumMCOps);       \
+  }
+
+IMM(i16i8imm)
+IMM(i16imm)
+IMM(i32i8imm)
+IMM(i32imm)
+IMM(i64i32imm)
+IMM(i64i8imm)
+IMM(i64imm)
+IMM(i8imm)
+
+#define MEM(name) \
+  static bool Match_X86_Op_##name(const X86Operand &Op, \
+                                  MCOperand *MCOps,     \
+                                  unsigned NumMCOps) {  \
+    return Match_X86_Op_MEM(Op, MCOps, NumMCOps);       \
+  }
+
+MEM(f128mem)
+MEM(f32mem)
+MEM(f64mem)
+MEM(f80mem)
+MEM(i128mem)
+MEM(i16mem)
+MEM(i32mem)
+MEM(i64mem)
+MEM(i8mem)
+MEM(lea32mem)
+MEM(lea64_32mem)
+MEM(lea64mem)
+MEM(sdmem)
+MEM(ssmem)
+
 #define DUMMY(name) \
   static bool Match_X86_Op_##name(const X86Operand &Op, \
                                   MCOperand *MCOps,     \
@@ -353,40 +453,15 @@ Match_X86_Op_GR8(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
 
 DUMMY(FR32)
 DUMMY(FR64)
-DUMMY(GR16)
-DUMMY(GR32)
 DUMMY(GR32_NOREX)
-DUMMY(GR64)
 DUMMY(GR8_NOREX)
 DUMMY(RST)
 DUMMY(VR128)
 DUMMY(VR64)
 DUMMY(brtarget)
 DUMMY(brtarget8)
-DUMMY(f128mem)
-DUMMY(f32mem)
-DUMMY(f64mem)
-DUMMY(f80mem)
-DUMMY(i128mem)
-DUMMY(i16i8imm)
-DUMMY(i16imm)
-DUMMY(i16mem)
-DUMMY(i32i8imm)
 DUMMY(i32imm_pcrel)
-DUMMY(i32imm)
-DUMMY(i32mem)
 DUMMY(i64i32imm_pcrel)
-DUMMY(i64i32imm)
-DUMMY(i64i8imm)
-DUMMY(i64imm)
-DUMMY(i64mem)
-DUMMY(i8imm)
 DUMMY(i8mem_NOREX)
-DUMMY(i8mem)
-DUMMY(lea32mem)
-DUMMY(lea64_32mem)
-DUMMY(lea64mem)
-DUMMY(sdmem)
-DUMMY(ssmem)
 
 #include "X86GenAsmMatcher.inc"
