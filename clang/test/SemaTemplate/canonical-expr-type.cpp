@@ -2,18 +2,15 @@
 
 void f();
 
-// FIXME: would like to refer to the first function parameter in these test,
-// but that won't work (yet).
-
 // Test typeof(expr) canonicalization
-template<typename T, T N>
-void f0(T x, __typeof__(f(N)) y) { } // expected-note{{previous}}
+template<typename T>
+void f0(T x, __typeof__(f(x)) y) { } // expected-note{{previous}}
 
-template<typename T, T N>
-void f0(T x, __typeof__((f)(N)) y) { }
+template<typename T>
+void f0(T x, __typeof__((f)(x)) y) { }
 
-template<typename U, U M>
-void f0(U u, __typeof__(f(M))) { } // expected-error{{redefinition}}
+template<typename U>
+void f0(U u, __typeof__(f(u))) { } // expected-error{{redefinition}}
 
 // Test insane typeof(expr) overload set canonicalization
 void f(int);

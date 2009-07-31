@@ -602,11 +602,23 @@ void StmtProfiler::VisitObjCIsaExpr(ObjCIsaExpr *S) {
 }
 
 void StmtProfiler::VisitDecl(Decl *D) {
+  ID.AddInteger(D? D->getKind() : 0);
+  
   if (Canonical && D) {
     if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(D)) {
       ID.AddInteger(NTTP->getDepth());
       ID.AddInteger(NTTP->getIndex());
       VisitType(NTTP->getType());
+      return;
+    }
+    
+    if (ParmVarDecl *Parm = dyn_cast<ParmVarDecl>(D)) {
+      // The Itanium C++ ABI uses the type of a parameter when mangling
+      // expressions that involve function parameters, so we will use the
+      // parameter's type for establishing function parameter identity. That
+      // way, our definition of "equivalent" (per C++ [temp.over.link]) 
+      // matches the definition of "equivalent" used for name mangling.
+      VisitType(Parm->getType());
       return;
     }
     
