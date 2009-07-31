@@ -583,6 +583,8 @@ public:
   }
 
   llvm::Constant *EmitUnionInitialization(InitListExpr *ILE) {
+    return ConstStructBuilder::BuildStruct(CGM, CGF, ILE);
+
     const llvm::Type *Ty = ConvertType(ILE->getType());
 
     FieldDecl* curField = ILE->getInitializedFieldInUnion();
