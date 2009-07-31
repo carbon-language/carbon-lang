@@ -40,7 +40,6 @@ add_llvm_library(LLVMCodeGen
   PreAllocSplitting.cpp
   PrologEpilogInserter.cpp
   PseudoSourceValue.cpp
-  RegAllocBigBlock.cpp
   RegAllocLinearScan.cpp
   RegAllocLocal.cpp
   RegAllocPBQP.cpp
