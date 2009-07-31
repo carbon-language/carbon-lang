@@ -281,7 +281,8 @@ public:
   bool SetTypeSpecType(TST T, SourceLocation Loc, const char *&PrevSpec,
                        void *Rep = 0, bool Owned = false);
   bool SetTypeSpecError();
-
+  void UpdateTypeRep(void *Rep) { TypeRep = Rep; }
+                  
   bool SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
                    const LangOptions &Lang);
   
