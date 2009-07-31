@@ -227,6 +227,9 @@ void ValueEnumerator::EnumerateValue(const Value *V) {
       MetadataBase *M = *I;
       EnumerateValue(M);
     }
+    Values.push_back(std::make_pair(V, 1U));
+    ValueMap[V] = Values.size();
+    return;
   }
 
   // Add the value.
