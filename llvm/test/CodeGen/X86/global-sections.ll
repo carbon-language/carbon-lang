@@ -68,3 +68,20 @@
 ; DARWIN: .globl	"_foo bar"
 ; DARWIN:	.weak_definition "_foo bar"
 ; DARWIN: "_foo bar":
+
+; PR4650
+@G6 = weak_odr constant [1 x i8] c"\01"
+
+; LINUX:   .type	G6,@object
+; LINUX:   .section	.gnu.linkonce.r.G6,"a",@progbits
+; LINUX:   .weak	G6
+; LINUX: G6:				# G6
+; LINUX:   .size	G6, 1
+; LINUX:   .ascii	"\001"
+
+; DARWIN:  .section __TEXT,__const_coal,coalesced
+; DARWIN:  .globl _G6
+; DARWIN:  .weak_definition _G6
+; DARWIN:_G6:
+; DARWIN:  .ascii "\001"
+

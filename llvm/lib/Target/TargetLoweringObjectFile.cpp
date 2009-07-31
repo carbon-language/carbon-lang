@@ -340,7 +340,10 @@ getSectionFlagsAsString(SectionKind Kind, SmallVectorImpl<char> &Str) const {
     Str.push_back('x');
   if (Kind.isWriteable())
     Str.push_back('w');
-  if (Kind.isMergeableConst() || Kind.isMergeableCString())
+  if (Kind.isMergeableCString() ||
+      Kind.isMergeableConst4() ||
+      Kind.isMergeableConst8() ||
+      Kind.isMergeableConst16())
     Str.push_back('M');
   if (Kind.isMergeableCString())
     Str.push_back('S');
