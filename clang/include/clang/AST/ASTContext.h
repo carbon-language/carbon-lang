@@ -70,7 +70,7 @@ class ASTContext {
   llvm::FoldingSet<ConstantArrayType> ConstantArrayTypes;
   llvm::FoldingSet<IncompleteArrayType> IncompleteArrayTypes;
   std::vector<VariableArrayType*> VariableArrayTypes;
-  std::vector<DependentSizedArrayType*> DependentSizedArrayTypes;
+  llvm::FoldingSet<DependentSizedArrayType> DependentSizedArrayTypes;
   std::vector<DependentSizedExtVectorType*> DependentSizedExtVectorTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionNoProtoType> FunctionNoProtoTypes;

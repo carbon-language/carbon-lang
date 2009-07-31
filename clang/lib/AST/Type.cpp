@@ -64,6 +64,18 @@ void DependentSizedArrayType::Destroy(ASTContext& C) {
   C.Deallocate(this);
 }
 
+void DependentSizedArrayType::Profile(llvm::FoldingSetNodeID &ID, 
+                                      ASTContext &Context,
+                                      QualType ET,
+                                      ArraySizeModifier SizeMod,
+                                      unsigned TypeQuals,
+                                      Expr *E) {
+  ID.AddPointer(ET.getAsOpaquePtr());
+  ID.AddInteger(SizeMod);
+  ID.AddInteger(TypeQuals);
+  E->Profile(ID, Context, true);
+}
+
 void DependentSizedExtVectorType::Destroy(ASTContext& C) {
   // FIXME: Deallocate size expression, once we're cloning properly.
 //  if (SizeExpr)

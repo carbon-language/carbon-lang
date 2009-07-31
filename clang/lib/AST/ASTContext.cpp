@@ -1371,8 +1371,7 @@ QualType ASTContext::getVariableArrayType(QualType EltTy,
 
 /// getDependentSizedArrayType - Returns a non-unique reference to
 /// the type for a dependently-sized array of the specified element
-/// type. FIXME: We will need these to be uniqued, or at least
-/// comparable, at some point.
+/// type.
 QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
                                                 Expr *NumElts,
                                                 ArrayType::ArraySizeModifier ASM,
@@ -1381,15 +1380,38 @@ QualType ASTContext::getDependentSizedArrayType(QualType EltTy,
   assert((NumElts->isTypeDependent() || NumElts->isValueDependent()) && 
          "Size must be type- or value-dependent!");
 
-  // Since we don't unique expressions, it isn't possible to unique
-  // dependently-sized array types.
+  llvm::FoldingSetNodeID ID;
+  DependentSizedArrayType::Profile(ID, *this, getCanonicalType(EltTy), ASM, 
+                                   EltTypeQuals, NumElts);
 
-  DependentSizedArrayType *New =
-    new (*this,8) DependentSizedArrayType(EltTy, QualType(),
-                                          NumElts, ASM, EltTypeQuals,
-                                          Brackets);
-
-  DependentSizedArrayTypes.push_back(New);
+  void *InsertPos = 0;
+  DependentSizedArrayType *Canon
+    = DependentSizedArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+  DependentSizedArrayType *New;
+  if (Canon) {
+    // We already have a canonical version of this array type; use it as
+    // the canonical type for a newly-built type.
+    New = new (*this,8) DependentSizedArrayType(*this, EltTy, 
+                                                QualType(Canon, 0),
+                                                NumElts, ASM, EltTypeQuals,
+                                                Brackets);
+  } else {
+    QualType CanonEltTy = getCanonicalType(EltTy);
+    if (CanonEltTy == EltTy) {
+      New = new (*this,8) DependentSizedArrayType(*this, EltTy, QualType(),
+                                                  NumElts, ASM, EltTypeQuals,
+                                                  Brackets);
+      DependentSizedArrayTypes.InsertNode(New, InsertPos);
+    } else {
+      QualType Canon = getDependentSizedArrayType(CanonEltTy, NumElts,
+                                                  ASM, EltTypeQuals,
+                                                  SourceRange());
+      New = new (*this,8) DependentSizedArrayType(*this, EltTy, Canon,
+                                                  NumElts, ASM, EltTypeQuals,
+                                                  Brackets);      
+    }
+  }
+  
   Types.push_back(New);
   return QualType(New, 0);
 }

@@ -1180,17 +1180,19 @@ public:
 /// until template instantiation occurs, at which point this will
 /// become either a ConstantArrayType or a VariableArrayType.
 class DependentSizedArrayType : public ArrayType {
+  ASTContext &Context;
+  
   /// SizeExpr - An assignment expression that will instantiate to the
   /// size of the array.
   Stmt *SizeExpr;
   /// Brackets - The left and right array brackets.
   SourceRange Brackets;
   
-  DependentSizedArrayType(QualType et, QualType can, Expr *e,
-			  ArraySizeModifier sm, unsigned tq,
+  DependentSizedArrayType(ASTContext &Context, QualType et, QualType can, 
+                          Expr *e, ArraySizeModifier sm, unsigned tq,
                           SourceRange brackets)
     : ArrayType(DependentSizedArray, et, can, sm, tq),
-      SizeExpr((Stmt*) e), Brackets(brackets) {}
+      Context(Context), SizeExpr((Stmt*) e), Brackets(brackets) {}
   friend class ASTContext;  // ASTContext creates these.
   virtual void Destroy(ASTContext& C);
 
@@ -1214,9 +1216,15 @@ public:
   
   friend class StmtIteratorBase;
   
+  
   void Profile(llvm::FoldingSetNodeID &ID) {
-    assert(0 && "Cannnot unique DependentSizedArrayTypes.");
+    Profile(ID, Context, getElementType(), 
+            getSizeModifier(), getIndexTypeQualifier(), getSizeExpr());
   }
+  
+  static void Profile(llvm::FoldingSetNodeID &ID, ASTContext &Context, 
+                      QualType ET, ArraySizeModifier SizeMod, 
+                      unsigned TypeQuals, Expr *E);
 };
 
 /// DependentSizedExtVectorType - This type represent an extended vector type
