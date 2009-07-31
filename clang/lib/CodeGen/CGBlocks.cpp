@@ -265,7 +265,7 @@ llvm::Value *CodeGenFunction::BuildBlockLiteralTmp(const BlockExpr *BE) {
             llvm::Value *BlockLiteral = LoadBlockStruct();
 
             Loc = Builder.CreateGEP(BlockLiteral,
-                                  llvm::ConstantInt::get(llvm::Type::Int64Ty,
+                                    llvm::ConstantInt::get(llvm::Type::Int64Ty,
                                                            offset),
                                     "block.literal");
             Ty = llvm::PointerType::get(Ty, 0);
