@@ -5220,7 +5220,7 @@ void Sema::ActOnPragmaWeakAlias(IdentifierInfo* Name,
   if (PrevDecl) {
     if (!PrevDecl->hasAttr<AliasAttr>())
       if (NamedDecl *ND = dyn_cast<NamedDecl>(PrevDecl))
-        DeclApplyPragmaWeak(ND, W);
+        DeclApplyPragmaWeak(TUScope, ND, W);
   } else {
     (void)WeakUndeclaredIdentifiers.insert(
       std::pair<IdentifierInfo*,WeakInfo>(AliasName, W));

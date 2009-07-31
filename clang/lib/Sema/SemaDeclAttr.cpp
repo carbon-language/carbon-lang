@@ -1820,8 +1820,9 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D, const AttributeList *Attr
 
 /// DeclClonePragmaWeak - clone existing decl (maybe definition),
 /// #pragma weak needs a non-definition decl and source may not have one
-static NamedDecl * DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II)
+NamedDecl * Sema::DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II)
 {
+  assert(isa<FunctionDecl>(ND) || isa<VarDecl>(ND));
   NamedDecl *NewD = 0;
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(ND)) {
     NewD = FunctionDecl::Create(FD->getASTContext(), FD->getDeclContext(),
@@ -1837,8 +1838,7 @@ static NamedDecl * DeclClonePragmaWeak(NamedDecl *ND, IdentifierInfo *II)
 
 /// DeclApplyPragmaWeak - A declaration (maybe definition) needs #pragma weak
 /// applied to it, possibly with an alias.
-void Sema::DeclApplyPragmaWeak(NamedDecl *ND, WeakInfo &W) {
-  assert(isa<FunctionDecl>(ND) || isa<VarDecl>(ND));
+void Sema::DeclApplyPragmaWeak(Scope *S, NamedDecl *ND, WeakInfo &W) {
   if (!W.getUsed()) { // only do this once
     W.setUsed(true);
     if (W.getAlias()) { // clone decl, impersonate __attribute(weak,alias(...))
@@ -1846,7 +1846,13 @@ void Sema::DeclApplyPragmaWeak(NamedDecl *ND, WeakInfo &W) {
       NamedDecl *NewD = DeclClonePragmaWeak(ND, W.getAlias());
       NewD->addAttr(::new (Context) AliasAttr(NDId->getName()));
       NewD->addAttr(::new (Context) WeakAttr());
-      ND->getDeclContext()->addDecl(NewD);
+      WeakTopLevelDecl.push_back(NewD);
+      // FIXME: "hideous" code from Sema::LazilyCreateBuiltin
+      // to insert Decl at TU scope, sorry.
+      DeclContext *SavedContext = CurContext;
+      CurContext = Context.getTranslationUnitDecl();
+      PushOnScopeChains(NewD, S);
+      CurContext = SavedContext;
     } else { // just add weak to existing
       ND->addAttr(::new (Context) WeakAttr());
     }
@@ -1862,8 +1868,8 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD) {
     if (ND->hasLinkage()) {
       WeakInfo W = WeakUndeclaredIdentifiers.lookup(ND->getIdentifier());
       if (W != WeakInfo()) {
-        // Declaration referenced by #pragma weak before it was declared
-        DeclApplyPragmaWeak(ND, W);
+        // Identifier referenced by #pragma weak before it was declared
+        DeclApplyPragmaWeak(S, ND, W);
         WeakUndeclaredIdentifiers[ND->getIdentifier()] = W;
       }
     }
