@@ -84,8 +84,7 @@ namespace {
     const std::string OutDir;
     AnalyzerOptions Opts;
 
-    // PD is owned by AnalysisManager.
-    PathDiagnosticClient *PD;
+    llvm::OwningPtr<PathDiagnosticClient> PD;
     StoreManagerCreator CreateStoreMgr;
     ConstraintManagerCreator CreateConstraintMgr;
 
@@ -106,7 +105,7 @@ namespace {
         switch (Opts.AnalysisDiagOpt) {
         default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE) \
-          case PD_##NAME: PD = CREATEFN(OutDir, PP, PPF); break;
+          case PD_##NAME: PD.reset(CREATEFN(OutDir, PP, PPF)); break;
 #include "clang/Frontend/Analyses.def"
         }
       }
@@ -216,7 +215,7 @@ void AnalysisConsumer::HandleTopLevelSingleDecl(Decl *D) {
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 
   if(!TranslationUnitActions.empty()) {
-    AnalysisManager mgr(*Ctx, Diags, LOpts, PD, 
+    AnalysisManager mgr(*Ctx, Diags, LOpts, PD.get(), 
                         CreateStoreMgr, CreateConstraintMgr,
                         Opts.AnalyzerDisplayProgress, Opts.VisualizeEGDot,
                         Opts.VisualizeEGUbi, Opts.PurgeDead, Opts.EagerlyAssume,
@@ -251,7 +250,7 @@ void AnalysisConsumer::HandleCode(Decl* D, Stmt* Body, Actions& actions) {
 
   // Create an AnalysisManager that will manage the state for analyzing
   // this method/function.
-  AnalysisManager mgr(D, *Ctx, Diags, LOpts, PD, 
+  AnalysisManager mgr(D, *Ctx, Diags, LOpts, PD.get(), 
                       CreateStoreMgr, CreateConstraintMgr,
                       Opts.AnalyzerDisplayProgress, Opts.VisualizeEGDot,
                       Opts.VisualizeEGUbi, Opts.PurgeDead, Opts.EagerlyAssume,

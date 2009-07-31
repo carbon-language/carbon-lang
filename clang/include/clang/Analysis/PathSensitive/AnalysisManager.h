@@ -29,7 +29,7 @@ class AnalysisManager : public BugReporterData {
   Diagnostic &Diags;
   const LangOptions &LangInfo;
 
-  llvm::OwningPtr<PathDiagnosticClient> PD;
+  PathDiagnosticClient *PD;
   
   // Configurable components creators.
   StoreManagerCreator CreateStoreMgr;
@@ -51,7 +51,6 @@ public:
                   ConstraintManagerCreator constraintmgr,
                   bool displayProgress, bool vizdot, bool vizubi, 
                   bool purge, bool eager, bool trim)
-
     : Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd), 
       CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
       AScope(ScopeDecl), DisplayedFunction(!displayProgress),
@@ -124,7 +123,7 @@ public:
   }
     
   virtual PathDiagnosticClient *getPathDiagnosticClient() {
-    return PD.get();      
+    return PD;      
   }
     
   bool shouldVisualizeGraphviz() const { return VisualizeEGDot; }
