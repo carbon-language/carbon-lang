@@ -36,7 +36,9 @@ public:
     
   // If the implementation chooses not to implement a certain visit method, fall
   // back on superclass.
-#define TYPE(CLASS, PARENT) RetTy Visit##CLASS##Type(CLASS##Type *T) { DISPATCH(PARENT); }
+#define TYPE(CLASS, PARENT) RetTy Visit##CLASS##Type(CLASS##Type *T) {       \
+  DISPATCH(PARENT);                                                          \
+}
 #include "clang/AST/TypeNodes.def"
 
   // Base case, ignore it. :)
