@@ -95,33 +95,32 @@ bool Inliner::shouldInline(CallSite CS) {
   float FudgeFactor = getInlineFudgeFactor(CS);
   
   if (IC.isAlways()) {
-    DOUT << "    Inlining: cost=always"
-         << ", Call: " << *CS.getInstruction() << "\n";
+    DEBUG(errs() << "    Inlining: cost=always"
+          << ", Call: " << *CS.getInstruction() << "\n");
     return true;
   }
   
   if (IC.isNever()) {
-    DOUT << "    NOT Inlining: cost=never"
-         << ", Call: " << *CS.getInstruction() << "\n";
+    DEBUG(errs() << "    NOT Inlining: cost=never"
+          << ", Call: " << *CS.getInstruction() << "\n");
     return false;
   }
   
   int Cost = IC.getValue();
   int CurrentThreshold = InlineThreshold;
   Function *Fn = CS.getCaller();
-  if (Fn && !Fn->isDeclaration() 
-      && Fn->hasFnAttr(Attribute::OptimizeForSize)
-      && InlineThreshold != 50) {
+  if (Fn && !Fn->isDeclaration() &&
+      Fn->hasFnAttr(Attribute::OptimizeForSize) &&
+      InlineThreshold != 50)
     CurrentThreshold = 50;
-  }
   
   if (Cost >= (int)(CurrentThreshold * FudgeFactor)) {
-    DOUT << "    NOT Inlining: cost=" << Cost
-         << ", Call: " << *CS.getInstruction() << "\n";
+    DEBUG(errs() << "    NOT Inlining: cost=" << Cost
+          << ", Call: " << *CS.getInstruction() << "\n");
     return false;
   } else {
-    DOUT << "    Inlining: cost=" << Cost
-         << ", Call: " << *CS.getInstruction() << "\n";
+    DEBUG(errs() << "    Inlining: cost=" << Cost
+          << ", Call: " << *CS.getInstruction() << "\n");
     return true;
   }
 }
@@ -131,7 +130,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
   const TargetData *TD = getAnalysisIfAvailable<TargetData>();
 
   SmallPtrSet<Function*, 8> SCCFunctions;
-  DOUT << "Inliner visiting SCC:";
+  DEBUG(errs() << "Inliner visiting SCC:");
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     Function *F = SCC[i]->getFunction();
     if (F) SCCFunctions.insert(F);
@@ -154,7 +153,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
             CallSites.push_back(CS);
         }
 
-  DOUT << ": " << CallSites.size() << " call sites.\n";
+  DEBUG(errs() << ": " << CallSites.size() << " call sites.\n");
 
   // Now that we have all of the call sites, move the ones to functions in the
   // current SCC to the end of the list.
