@@ -2123,13 +2123,12 @@ Sema::CheckTemplateDeclScope(Scope *S,
   //   A template-declaration can appear only as a namespace scope or
   //   class scope declaration.
   DeclContext *Ctx = static_cast<DeclContext *>(S->getEntity());
-  while (Ctx && isa<LinkageSpecDecl>(Ctx)) {
-    if (cast<LinkageSpecDecl>(Ctx)->getLanguage() != LinkageSpecDecl::lang_cxx)
-      return Diag(TemplateLoc, diag::err_template_linkage)
-        << TemplateRange;
-
+  if (Ctx && isa<LinkageSpecDecl>(Ctx) &&
+      cast<LinkageSpecDecl>(Ctx)->getLanguage() != LinkageSpecDecl::lang_cxx)
+    return Diag(TemplateLoc, diag::err_template_linkage) << TemplateRange;
+  
+  while (Ctx && isa<LinkageSpecDecl>(Ctx))
     Ctx = Ctx->getParent();
-  }
 
   if (Ctx && (Ctx->isFileContext() || Ctx->isRecord()))
     return false;
