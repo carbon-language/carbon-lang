@@ -146,6 +146,11 @@ namespace llvm {
   /// by seeing if the labels map to the same reduced label.
   FunctionPass *createDebugLabelFoldingPass();
 
+  /// MachineCodeDeletion Pass - This pass deletes all of the machine code for
+  /// the current function, which should happen after the function has been
+  /// emitted to a .s file or to memory.
+  FunctionPass *createMachineCodeDeleter();
+
   /// getRegisterAllocator - This creates an instance of the register allocator
   /// for the Sparc.
   FunctionPass *getRegisterAllocator(TargetMachine &T);

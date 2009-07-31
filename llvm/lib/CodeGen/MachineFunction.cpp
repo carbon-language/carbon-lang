@@ -36,6 +36,15 @@
 #include <sstream>
 using namespace llvm;
 
+bool MachineFunctionPass::runOnFunction(Function &F) {
+  // Do not codegen any 'available_externally' functions at all, they have
+  // definitions outside the translation unit.
+  if (F.hasAvailableExternallyLinkage())
+    return false;
+  
+  return runOnMachineFunction(MachineFunction::get(&F));
+}
+
 namespace {
   struct VISIBILITY_HIDDEN Printer : public MachineFunctionPass {
     static char ID;
@@ -50,7 +59,6 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
-      MachineFunctionPass::getAnalysisUsage(AU);
     }
 
     bool runOnMachineFunction(MachineFunction &MF) {
@@ -70,6 +78,31 @@ FunctionPass *llvm::createMachineFunctionPrinterPass(std::ostream *OS,
   return new Printer(OS, Banner);
 }
 
+namespace {
+  struct VISIBILITY_HIDDEN Deleter : public MachineFunctionPass {
+    static char ID;
+    Deleter() : MachineFunctionPass(&ID) {}
+
+    const char *getPassName() const { return "Machine Code Deleter"; }
+
+    bool runOnMachineFunction(MachineFunction &MF) {
+      // Delete the annotation from the function now.
+      MachineFunction::destruct(MF.getFunction());
+      return true;
+    }
+  };
+  char Deleter::ID = 0;
+}
+
+/// MachineCodeDeletion Pass - This pass deletes all of the machine code for
+/// the current function, which should happen after the function has been
+/// emitted to a .s file or to memory.
+FunctionPass *llvm::createMachineCodeDeleter() {
+  return new Deleter();
+}
+
+
+
 //===---------------------------------------------------------------------===//
 // MachineFunction implementation
 //===---------------------------------------------------------------------===//
@@ -78,7 +111,7 @@ void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
   MBB->getParent()->DeleteMachineBasicBlock(MBB);
 }
 
-MachineFunction::MachineFunction(Function *F,
+MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
   : Annotation(AnnotationManager::getID("CodeGen::MachineCodeForFunction")),
     Fn(F), Target(TM) {
@@ -321,6 +354,42 @@ void MachineFunction::viewCFGOnly() const
   cerr << "SelectionDAG::viewGraph is only available in debug builds on "
        << "systems with Graphviz or gv!\n";
 #endif // NDEBUG
+}
+
+// The next two methods are used to construct and to retrieve
+// the MachineCodeForFunction object for the given function.
+// construct() -- Allocates and initializes for a given function and target
+// get()       -- Returns a handle to the object.
+//                This should not be called before "construct()"
+//                for a given Function.
+//
+MachineFunction&
+MachineFunction::construct(const Function *Fn, const TargetMachine &Tar)
+{
+  AnnotationID MF_AID =
+                    AnnotationManager::getID("CodeGen::MachineCodeForFunction");
+  assert(Fn->getAnnotation(MF_AID) == 0 &&
+         "Object already exists for this function!");
+  MachineFunction* mcInfo = new MachineFunction(Fn, Tar);
+  Fn->addAnnotation(mcInfo);
+  return *mcInfo;
+}
+
+void MachineFunction::destruct(const Function *Fn) {
+  AnnotationID MF_AID =
+                    AnnotationManager::getID("CodeGen::MachineCodeForFunction");
+  bool Deleted = Fn->deleteAnnotation(MF_AID);
+  assert(Deleted && "Machine code did not exist for function!"); 
+  Deleted = Deleted; // silence warning when no assertions.
+}
+
+MachineFunction& MachineFunction::get(const Function *F)
+{
+  AnnotationID MF_AID =
+                    AnnotationManager::getID("CodeGen::MachineCodeForFunction");
+  MachineFunction *mc = (MachineFunction*)F->getAnnotation(MF_AID);
+  assert(mc && "Call construct() method first to allocate the object");
+  return *mc;
 }
 
 /// addLiveIn - Add the specified physical register as a live-in value and

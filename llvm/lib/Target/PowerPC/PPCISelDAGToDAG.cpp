@@ -20,7 +20,6 @@
 #include "PPCHazardRecognizers.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
@@ -52,12 +51,17 @@ namespace {
         PPCLowering(*TM.getTargetLowering()),
         PPCSubTarget(*TM.getSubtargetImpl()) {}
     
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    virtual bool runOnFunction(Function &Fn) {
+      // Do not codegen any 'available_externally' functions at all, they have
+      // definitions outside the translation unit.
+      if (Fn.hasAvailableExternallyLinkage())
+        return false;
+
       // Make sure we re-emit a set of the global base reg if necessary
       GlobalBaseReg = 0;
-      SelectionDAGISel::runOnMachineFunction(MF);
+      SelectionDAGISel::runOnFunction(Fn);
       
-      InsertVRSaveCode(MF);
+      InsertVRSaveCode(Fn);
       return true;
     }
    
@@ -177,7 +181,7 @@ namespace {
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelect();
     
-    void InsertVRSaveCode(MachineFunction &MF);
+    void InsertVRSaveCode(Function &Fn);
 
     virtual const char *getPassName() const {
       return "PowerPC DAG->DAG Pattern Instruction Selection";
@@ -214,12 +218,13 @@ void PPCDAGToDAGISel::InstructionSelect() {
 /// InsertVRSaveCode - Once the entire function has been instruction selected,
 /// all virtual registers are created and all machine instructions are built,
 /// check to see if we need to save/restore VRSAVE.  If so, do it.
-void PPCDAGToDAGISel::InsertVRSaveCode(MachineFunction &Fn) {
+void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
   // Check to see if this function uses vector registers, which means we have to
   // save and restore the VRSAVE register and update it with the regs we use.  
   //
   // In this case, there will be virtual registers of vector type type created
   // by the scheduler.  Detect them now.
+  MachineFunction &Fn = MachineFunction::get(&F);
   bool HasVectorVReg = false;
   for (unsigned i = TargetRegisterInfo::FirstVirtualRegister, 
        e = RegInfo->getLastVirtReg()+1; i != e; ++i)

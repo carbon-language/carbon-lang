@@ -111,6 +111,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
 #if 0
 void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
   if (ShrinkWrapping || ShrinkWrapFunc != "") {
     AU.addRequired<MachineLoopInfo>();
     AU.addRequired<MachineDominatorTree>();

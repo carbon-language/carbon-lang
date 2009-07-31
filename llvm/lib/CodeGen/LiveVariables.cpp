@@ -48,7 +48,6 @@ static RegisterPass<LiveVariables> X("livevars", "Live Variable Analysis");
 void LiveVariables::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredID(UnreachableMachineBlockElimID);
   AU.setPreservesAll();
-  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 void LiveVariables::VarInfo::dump() const {

@@ -21,6 +21,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Argument.h"
+#include "llvm/Support/Annotation.h"
 #include "llvm/Attributes.h"
 
 namespace llvm {
@@ -65,7 +66,7 @@ private:
   mutable ilist_node<Argument> Sentinel;
 };
 
-class Function : public GlobalValue,
+class Function : public GlobalValue, public Annotable,
                  public ilist_node<Function> {
 public:
   typedef iplist<Argument> ArgumentListType;

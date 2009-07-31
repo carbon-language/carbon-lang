@@ -18,7 +18,6 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/GCStrategy.h"
-#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -119,6 +118,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
 
   PM.add(createGCInfoDeleter());
 
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
+
   return false; // success!
 }
 
@@ -135,6 +137,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
 
   PM.add(createGCInfoDeleter());
 
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
+
   return false; // success!
 }
 
@@ -150,6 +155,9 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(PassManagerBase &PM,
     addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
+
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
 
   return false; // success!
 }
@@ -176,6 +184,9 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
 
   PM.add(createGCInfoDeleter());
 
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
+
   return false; // success!
 }
 
@@ -200,6 +211,9 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
     addAssemblyEmitter(PM, OptLevel, true, ferrs());
 
   PM.add(createGCInfoDeleter());
+
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
 
   return false; // success!
 }
@@ -250,9 +264,6 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
                                    &errs()));
 
   // Standard Lower-Level Passes.
-
-  // Set up a MachineFunction for the rest of CodeGen to work on.
-  PM.add(new MachineFunctionAnalysis(*this, OptLevel));
 
   // Enable FastISel with -fast, but allow that to be overridden.
   if (EnableFastISelOption == cl::BOU_TRUE ||
