@@ -592,6 +592,10 @@ Exceptions("fexceptions",
            llvm::cl::desc("Enable support for exception handling"));
 
 static llvm::cl::opt<bool>
+Rtti("frtti", llvm::cl::init(true),
+     llvm::cl::desc("Enable generation of rtti information"));
+
+static llvm::cl::opt<bool>
 GNURuntime("fgnu-runtime",
             llvm::cl::desc("Generate output compatible with the standard GNU "
                            "Objective-C runtime"));
@@ -769,6 +773,7 @@ static void InitializeLanguageStandard(LangOptions &Options, LangKind LK,
   if (NoLaxVectorConversions.getPosition())
       Options.LaxVectorConversions = 0;
   Options.Exceptions = Exceptions;
+  Options.Rtti = Rtti;
   if (EnableBlocks.getPosition())
     Options.Blocks = EnableBlocks;
   if (CharIsSigned.getPosition())

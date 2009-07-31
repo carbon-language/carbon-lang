@@ -490,10 +490,42 @@ const char *CodeGenModule::getMangledCXXDtorName(const CXXDestructorDecl *D,
   return UniqueMangledName(Name.begin(), Name.end());
 }
 
+llvm::Constant *CodeGenFunction::GenerateRtti(const CXXRecordDecl *RD) {
+  llvm::Type *Ptr8Ty;
+  Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  llvm::Constant *rtti = llvm::Constant::getNullValue(Ptr8Ty);
+
+  if (!getContext().getLangOptions().Rtti)
+    return rtti;
+
+  llvm::SmallString<256> OutName;
+  llvm::raw_svector_ostream Out(OutName);
+  QualType ClassTy;
+  // FIXME: What is the design on getTagDeclType when it requires casting
+  // away const?  mutable?
+  ClassTy = getContext().getTagDeclType(const_cast<CXXRecordDecl*>(RD));
+  mangleCXXRtti(ClassTy, getContext(), Out);
+  const char *Name = OutName.c_str();
+  llvm::GlobalVariable::LinkageTypes linktype;
+  linktype = llvm::GlobalValue::WeakAnyLinkage;
+  std::vector<llvm::Constant *> info;
+  assert (0 && "FIXME: implement rtti descriptor");
+  // FIXME: descriptor
+  info.push_back(llvm::Constant::getNullValue(Ptr8Ty));
+  assert (0 && "FIXME: implement rtti ts");
+  // FIXME: TS
+  info.push_back(llvm::Constant::getNullValue(Ptr8Ty));
+
+  llvm::Constant *C;
+  llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, info.size());
+  C = llvm::ConstantArray::get(type, info);
+  rtti = new llvm::GlobalVariable(CGM.getModule(), type, true, linktype, C,
+                                  Name);
+  rtti = llvm::ConstantExpr::getBitCast(rtti, Ptr8Ty);
+  return rtti;
+}
+
 llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
-  const llvm::FunctionType *FTy;
-  FTy = llvm::FunctionType::get(llvm::Type::VoidTy,
-                                std::vector<const llvm::Type*>(), false);
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   QualType ClassTy;
@@ -512,7 +544,7 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   m = llvm::Constant::getNullValue(Ptr8Ty);
   int64_t offset = 0;
   methods.push_back(m); offset += LLVMPointerWidth;
-  methods.push_back(m); offset += LLVMPointerWidth;
+  methods.push_back(GenerateRtti(RD)); offset += LLVMPointerWidth;
   for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
        ++mi) {
     if (mi->isVirtual()) {
@@ -526,7 +558,6 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   C = llvm::ConstantArray::get(type, methods);
   llvm::Value *vtable = new llvm::GlobalVariable(CGM.getModule(), type, true,
                                                  linktype, C, Name);
-  // CGM.CreateRuntimeFunction(FTy, Name);
   vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
   // FIXME: finish layout for virtual bases
   vtable = Builder.CreateGEP(vtable,

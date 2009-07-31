@@ -46,6 +46,7 @@ public:
   unsigned LaxVectorConversions : 1;
   unsigned AltiVec           : 1;  // Support AltiVec-style vector initializers.
   unsigned Exceptions        : 1;  // Support exception handling.
+  unsigned Rtti              : 1;  // Support rtti information.
 
   unsigned NeXTRuntime       : 1; // Use NeXT runtime.
   unsigned Freestanding      : 1; // Freestanding implementation
@@ -120,6 +121,7 @@ public:
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = 0;
     CXXOperatorNames = PascalStrings = WritableStrings = 0;
     Exceptions = NeXTRuntime = Freestanding = NoBuiltin = 0;
+    Rtti = 1;
     LaxVectorConversions = 1;
     HeinousExtensions = 0;
     AltiVec = OpenCL = StackProtector = 0;

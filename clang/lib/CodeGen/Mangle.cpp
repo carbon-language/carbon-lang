@@ -42,6 +42,7 @@ namespace {
     void mangleGuardVariable(const VarDecl *D);
     
     void mangleCXXVtable(QualType Type);
+    void mangleCXXRtti(QualType Type);
     void mangleCXXCtor(const CXXConstructorDecl *D, CXXCtorType Type);
     void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type);
 
@@ -162,6 +163,12 @@ void CXXNameMangler::mangleCXXDtor(const CXXDestructorDecl *D,
 void CXXNameMangler::mangleCXXVtable(QualType T) {
   // <special-name> ::= TV <type>  # virtual table
   Out << "_ZTV";
+  mangleType(T);
+}
+
+void CXXNameMangler::mangleCXXRtti(QualType T) {
+  // <special-name> ::= TI <type>  # typeinfo structure
+  Out << "_ZTI";
   mangleType(T);
 }
 
@@ -819,6 +826,14 @@ namespace clang {
                        llvm::raw_ostream &os) {
     CXXNameMangler Mangler(Context, os);
     Mangler.mangleCXXVtable(Type);
+
+    os.flush();
+  }
+
+  void mangleCXXRtti(QualType Type, ASTContext &Context,
+                     llvm::raw_ostream &os) {
+    CXXNameMangler Mangler(Context, os);
+    Mangler.mangleCXXRtti(Type);
 
     os.flush();
   }
