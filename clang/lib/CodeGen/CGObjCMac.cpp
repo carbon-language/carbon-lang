@@ -2472,7 +2472,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                                                  "_rethrow");
   llvm::Value *CallTryExitPtr = CGF.CreateTempAlloca(llvm::Type::Int1Ty,
                                                      "_call_try_exit");
-  CGF.Builder.CreateStore(VMContext.getTrue(), CallTryExitPtr);
+  CGF.Builder.CreateStore(llvm::ConstantInt::getTrue(VMContext), CallTryExitPtr);
   
   // Enter a new try block and call setjmp.
   CGF.Builder.CreateCall(ObjCTypes.getExceptionTryEnterFn(), ExceptionData);
@@ -2505,7 +2505,7 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
   if (!isTry)
   {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
-    CGF.Builder.CreateStore(VMContext.getFalse(), CallTryExitPtr);
+    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(VMContext), CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
   } else if (const ObjCAtCatchStmt* CatchStmt = 
              cast<ObjCAtTryStmt>(S).getCatchStmts()) {    
@@ -2604,11 +2604,11 @@ void CGObjCMac::EmitTryOrSynchronizedStmt(CodeGen::CodeGenFunction &CGF,
                     CGF.Builder.CreateCall(ObjCTypes.getExceptionExtractFn(),
                                            ExceptionData), 
                             RethrowPtr);
-    CGF.Builder.CreateStore(VMContext.getFalse(), CallTryExitPtr);
+    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(VMContext), CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
   } else {
     CGF.Builder.CreateStore(Caught, RethrowPtr);
-    CGF.Builder.CreateStore(VMContext.getFalse(), CallTryExitPtr);
+    CGF.Builder.CreateStore(llvm::ConstantInt::getFalse(VMContext), CallTryExitPtr);
     CGF.EmitBranchThroughCleanup(FinallyRethrow);
   }
   
