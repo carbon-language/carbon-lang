@@ -95,7 +95,7 @@ namespace llvm {
     /// a instruction definition dependency.
     bool isDef() const { return Value.getInt() == Def; }
     
-    /// isNonLocal - Return true if this MemDepResult represents an query that
+    /// isNonLocal - Return true if this MemDepResult represents a query that
     /// is transparent to the start of the block, but where a non-local hasn't
     /// been done.
     bool isNonLocal() const { return Value.getInt() == NonLocal; }
