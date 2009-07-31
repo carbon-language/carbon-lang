@@ -237,10 +237,10 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &MF) {
   // the numbers agree with the position of the block in the function.
   MF.RenumberBlocks();
 
-  // Thumb1 functions containing constant pools get 2-byte alignment.
+  // Thumb1 functions containing constant pools get 4-byte alignment.
   // This is so we can keep exact track of where the alignment padding goes.
 
-  // Set default. Thumb1 function is 1-byte aligned, ARM and Thumb2 are 2-byte
+  // Set default. Thumb1 function is 2-byte aligned, ARM and Thumb2 are 4-byte
   // aligned.
   AFI->setAlign(isThumb1 ? 1U : 2U);
 
@@ -1360,10 +1360,9 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
       unsigned DstOffset = BBOffsets[MBB->getNumber()];
       // Negative offset is not ok. FIXME: We should change BB layout to make
       // sure all the branches are forward.
-      if (ByteOk && !OffsetIsInRange(JTOffset, DstOffset, (1<<8)-1, false))
+      if (ByteOk && (DstOffset - JTOffset) > ((1<<8)-1)*2)
         ByteOk = false;
-      if (HalfWordOk &&
-          !OffsetIsInRange(JTOffset, DstOffset, (1<<16)-1, false))
+      if (HalfWordOk && (DstOffset - JTOffset) > ((1<<16)-1)*2)
         HalfWordOk = false;
       if (!ByteOk && !HalfWordOk)
         break;
@@ -1415,7 +1414,8 @@ bool ARMConstantIslands::OptimizeThumb2JumpTables(MachineFunction &MF) {
                        .addReg(IdxReg, getKillRegState(IdxRegKill))
                        .addJumpTableIndex(JTI, JTOP.getTargetFlags())
                        .addImm(MI->getOperand(JTOpIdx+1).getImm()));
-
+        // FIXME: Insert an "ALIGN" instruction to ensure the next instruction
+        // is 2-byte aligned. For now, asm printer will fix it up.
         AddrMI->eraseFromParent();
         if (LeaMI)
           LeaMI->eraseFromParent();
