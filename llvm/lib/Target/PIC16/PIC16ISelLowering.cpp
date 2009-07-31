@@ -31,7 +31,7 @@ using namespace llvm;
 static const char *getIntrinsicName(unsigned opcode) {
   std::string Basename;
   switch(opcode) {
-  default: assert (0 && "do not know intrinsic name");
+  default: llvm_unreachable("do not know intrinsic name");
   // Arithmetic Right shift for integer types.
   case PIC16ISD::SRA_I8: Basename = "sra.i8"; break;
   case RTLIB::SRA_I16: Basename = "sra.i16"; break;
@@ -115,10 +115,30 @@ static const char *getIntrinsicName(unsigned opcode) {
   std::string Fullname = prefix + tagname + Basename; 
 
   // The name has to live through program life.
-  char *tmp = new char[Fullname.size() + 1];
-  strcpy (tmp, Fullname.c_str());
-  
-  return tmp;
+  return createESName(Fullname);
+}
+
+// getStdLibCallName - Get the name for the standard library function.
+static const char *getStdLibCallName(unsigned opcode) {
+  std::string BaseName;
+  switch(opcode) {
+    case RTLIB::COS_F32: BaseName = "cos";
+      break;
+    case RTLIB::SIN_F32: BaseName = "sin";
+      break;
+    case RTLIB::MEMCPY: BaseName = "memcpy";
+      break;
+    case RTLIB::MEMSET: BaseName = "memset";
+      break;
+    case RTLIB::MEMMOVE: BaseName = "memmove";
+      break;
+    default: llvm_unreachable("do not know std lib call name");
+  }
+  std::string prefix = PAN::getTagName(PAN::PREFIX_SYMBOL);
+  std::string LibCallName = prefix + BaseName;
+
+  // The name has to live through program life.
+  return createESName(LibCallName);
 }
 
 // PIC16TargetLowering Constructor.
@@ -130,6 +150,13 @@ PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
   addRegisterClass(MVT::i8, PIC16::GPRRegisterClass);
 
   setShiftAmountType(MVT::i8);
+  
+  // Std lib call names
+  setLibcallName(RTLIB::COS_F32, getStdLibCallName(RTLIB::COS_F32));
+  setLibcallName(RTLIB::SIN_F32, getStdLibCallName(RTLIB::SIN_F32));
+  setLibcallName(RTLIB::MEMCPY, getStdLibCallName(RTLIB::MEMCPY));
+  setLibcallName(RTLIB::MEMSET, getStdLibCallName(RTLIB::MEMSET));
+  setLibcallName(RTLIB::MEMMOVE, getStdLibCallName(RTLIB::MEMMOVE));
 
   // SRA library call names
   setPIC16LibcallName(PIC16ISD::SRA_I8, getIntrinsicName(PIC16ISD::SRA_I8));
