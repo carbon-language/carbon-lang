@@ -21,7 +21,6 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/Support/Annotation.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Recycler.h"
 
@@ -66,7 +65,7 @@ struct MachineFunctionInfo {
   virtual ~MachineFunctionInfo() {}
 };
 
-class MachineFunction : private Annotation {
+class MachineFunction {
   Function *Fn;
   const TargetMachine &Target;
 

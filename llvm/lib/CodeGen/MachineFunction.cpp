@@ -80,8 +80,7 @@ void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
 
 MachineFunction::MachineFunction(Function *F,
                                  const TargetMachine &TM)
-  : Annotation(AnnotationManager::getID("CodeGen::MachineCodeForFunction")),
-    Fn(F), Target(TM) {
+  : Fn(F), Target(TM) {
   if (TM.getRegisterInfo())
     RegInfo = new (Allocator.Allocate<MachineRegisterInfo>())
                   MachineRegisterInfo(*TM.getRegisterInfo());
