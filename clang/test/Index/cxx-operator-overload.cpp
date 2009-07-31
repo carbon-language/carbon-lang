@@ -23,4 +23,6 @@ Cls Cls::operator +(const Cls &RHS) { while (1) {} }
 // RUN: index-test %t.ast -point-at %s:5:15 -print-refs > %t &&
 // RUN: cat %t | count 2 &&
 // RUN: grep ':10:17,' %t &&
-// RUN: grep ':10:22,' %t
+// RUN: grep ':10:22,' %t &&
+
+// RUN: index-test %t.ast -point-at %s:10:14 | grep 'DeclRefExpr x1'

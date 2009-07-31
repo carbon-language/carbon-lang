@@ -78,6 +78,7 @@ public:
   StmtLocResolver(ASTContext &ctx, SourceLocation loc, Decl *parent)
     : LocResolverBase(ctx, loc), Parent(parent) {}
 
+  ASTLocation VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node);
   ASTLocation VisitDeclStmt(DeclStmt *Node);
   ASTLocation VisitStmt(Stmt *Node);
 };
@@ -100,6 +101,35 @@ public:
 };
 
 } // anonymous namespace
+
+ASTLocation
+StmtLocResolver::VisitCXXOperatorCallExpr(CXXOperatorCallExpr *Node) {
+  assert(ContainsLocation(Node) &&
+         "Should visit only after verifying that loc is in range");
+
+  if (Node->getNumArgs() == 1)
+    // Unary operator. Let normal child traversal handle it.
+    return VisitCallExpr(Node);
+
+  assert(Node->getNumArgs() == 2 &&
+         "Wrong args for the C++ operator call expr ?");
+
+  llvm::SmallVector<Expr *, 3> Nodes;
+  // Binary operator. Check in order of 1-left arg, 2-callee, 3-right arg.
+  Nodes.push_back(Node->getArg(0));
+  Nodes.push_back(Node->getCallee());
+  Nodes.push_back(Node->getArg(1));
+  
+  for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
+    RangePos RP = CheckRange(Nodes[i]);
+    if (RP == AfterLoc)
+      break;
+    if (RP == ContainsLoc)
+      return Visit(Nodes[i]);
+  }
+
+  return ASTLocation(Parent, Node);
+}
 
 ASTLocation StmtLocResolver::VisitDeclStmt(DeclStmt *Node) {
   assert(ContainsLocation(Node) &&
@@ -125,6 +155,9 @@ ASTLocation StmtLocResolver::VisitStmt(Stmt *Node) {
   // Search the child statements.
   for (Stmt::child_iterator
          I = Node->child_begin(), E = Node->child_end(); I != E; ++I) {
+    if (*I == NULL)
+      continue;
+
     RangePos RP = CheckRange(*I);
     if (RP == AfterLoc)
       break;
