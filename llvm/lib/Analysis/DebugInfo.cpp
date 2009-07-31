@@ -924,6 +924,8 @@ void DebugInfoFinder::processModule(Module &M) {
           processRegionStart(DRS);
         else if (DbgRegionEndInst *DRE = dyn_cast<DbgRegionEndInst>(BI))
           processRegionEnd(DRE);
+        else if (DbgDeclareInst *DDI = dyn_cast<DbgDeclareInst>(BI))
+          processDeclare(DDI);
       }
   
   for (Module::global_iterator GVI = M.global_begin(), GVE = M.global_end();
@@ -1001,6 +1003,19 @@ void DebugInfoFinder::processRegionStart(DbgRegionStartInst *DRS) {
 void DebugInfoFinder::processRegionEnd(DbgRegionEndInst *DRE) {
   GlobalVariable *SP = dyn_cast<GlobalVariable>(DRE->getContext());
   processSubprogram(DISubprogram(SP));
+}
+
+/// processDeclare - Process DbgDeclareInst.
+void DebugInfoFinder::processDeclare(DbgDeclareInst *DDI) {
+  DIVariable DV(cast<GlobalVariable>(DDI->getVariable()));
+  if (DV.isNull())
+    return;
+
+  if (!NodesSeen.insert(DV.getGV()))
+    return;
+
+  addCompileUnit(DV.getCompileUnit());
+  processType(DV.getType());
 }
 
 /// addCompileUnit - Add compile unit into CUs.

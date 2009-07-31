@@ -638,6 +638,9 @@ namespace llvm {
     /// processRegionEnd - Process DbgRegionEnd.
     void processRegionEnd(DbgRegionEndInst *DRE);
 
+    /// processDeclare - Process DbgDeclareInst.
+    void processDeclare(DbgDeclareInst *DDI);
+
     /// addCompileUnit - Add compile unit into CUs.
     bool addCompileUnit(DICompileUnit CU);
     
