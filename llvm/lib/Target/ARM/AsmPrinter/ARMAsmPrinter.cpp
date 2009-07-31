@@ -988,6 +988,13 @@ void ARMAsmPrinter::printJT2BlockOperand(const MachineInstr *MI, int OpNum) {
     if (i != e-1)
       O << '\n';
   }
+
+  // Make sure the instruction that follows TBB is 2-byte aligned.
+  // FIXME: Constant island pass should insert an "ALIGN" instruction instead.
+  if (ByteOffset && (JTBBs.size() & 1)) {
+    O << '\n';
+    EmitAlignment(1);
+  }
 }
 
 void ARMAsmPrinter::printTBAddrMode(const MachineInstr *MI, int OpNum) {
