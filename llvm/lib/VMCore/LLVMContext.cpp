@@ -31,21 +31,3 @@ LLVMContext& llvm::getGlobalContext() {
 
 LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) { }
 LLVMContext::~LLVMContext() { delete pImpl; }
-
-// MDNode accessors
-MDNode* LLVMContext::getMDNode(Value* const* Vals, unsigned NumVals) {
-  return pImpl->getMDNode(Vals, NumVals);
-}
-
-// MDString accessors
-MDString* LLVMContext::getMDString(const StringRef &Str) {
-  return pImpl->getMDString(Str.data(), Str.size());
-}
-
-void LLVMContext::erase(MDString *M) {
-  pImpl->erase(M);
-}
-
-void LLVMContext::erase(MDNode *M) {
-  pImpl->erase(M);
-}

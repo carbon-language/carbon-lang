@@ -61,20 +61,11 @@ class LLVMContext {
   friend class ConstantArray;
   friend class ConstantVector;
   friend class ConstantAggregateZero;
+  friend class MDNode;
+  friend class MDString;
 public:
   LLVMContext();
   ~LLVMContext();
-  
-  // MDNode accessors
-  MDNode* getMDNode(Value* const* Vals, unsigned NumVals);
-  
-  // MDString accessors
-  MDString* getMDString(const StringRef &Str);
-  
-  
-  // Methods for erasing constants
-  void erase(MDString *M);
-  void erase(MDNode *M);
 };
 
 /// FOR BACKWARDS COMPATIBILITY - Returns a global context.

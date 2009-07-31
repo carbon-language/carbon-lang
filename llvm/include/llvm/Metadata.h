@@ -27,6 +27,7 @@
 
 namespace llvm {
 class Constant;
+class LLVMContext;
 
 //===----------------------------------------------------------------------===//
 // MetadataBase  - A base class for MDNode, MDString and NamedMDNode.
@@ -64,13 +65,14 @@ public:
 class MDString : public MetadataBase {
   MDString(const MDString &);            // DO NOT IMPLEMENT
   StringRef Str;
-  friend class LLVMContextImpl;
 
 protected:
   explicit MDString(const char *begin, unsigned l)
     : MetadataBase(Type::MetadataTy, Value::MDStringVal), Str(begin, l) {}
 
 public:
+  static MDString *get(LLVMContext &Context, const StringRef &Str);
+  
   StringRef getString() const { return Str; }
 
   unsigned length() const { return Str.size(); }
@@ -97,14 +99,15 @@ public:
 class MDNode : public MetadataBase, public FoldingSetNode {
   MDNode(const MDNode &);      // DO NOT IMPLEMENT
 
-  friend class LLVMContextImpl;
-
   SmallVector<WeakVH, 4> Node;
   typedef SmallVectorImpl<WeakVH>::iterator elem_iterator;
 
 protected:
   explicit MDNode(Value*const* Vals, unsigned NumVals);
 public:
+  static MDNode *get(LLVMContext &Context, 
+                     Value* const* Vals, unsigned NumVals);
+  
   typedef SmallVectorImpl<WeakVH>::const_iterator const_elem_iterator;
 
   Value *getElement(unsigned i) const {

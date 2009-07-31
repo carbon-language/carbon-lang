@@ -462,15 +462,10 @@ class LLVMContextImpl {
   friend class ConstantArray;
   friend class ConstantVector;
   friend class ConstantAggregateZero;
+  friend class MDNode;
+  friend class MDString;
 public:
   LLVMContextImpl(LLVMContext &C);
-  
-  MDString *getMDString(const char *StrBegin, unsigned StrLength);
-  
-  MDNode *getMDNode(Value*const* Vals, unsigned NumVals);
-  
-  void erase(MDString *M);
-  void erase(MDNode *M);
 };
 
 }

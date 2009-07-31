@@ -374,7 +374,7 @@ bool LLParser::ParseNamedGlobal() {
 bool LLParser::ParseMDString(MetadataBase *&MDS) {
   std::string Str;
   if (ParseStringConstant(Str)) return true;
-  MDS = Context.getMDString(Str);
+  MDS = MDString::get(Context, Str);
   return false;
 }
 
@@ -403,8 +403,8 @@ bool LLParser::ParseMDNode(MetadataBase *&Node) {
   // Create MDNode forward reference
   SmallVector<Value *, 1> Elts;
   std::string FwdRefName = "llvm.mdnode.fwdref." + utostr(MID);
-  Elts.push_back(Context.getMDString(FwdRefName));
-  MDNode *FwdNode = Context.getMDNode(Elts.data(), Elts.size());
+  Elts.push_back(MDString::get(Context, FwdRefName));
+  MDNode *FwdNode = MDNode::get(Context, Elts.data(), Elts.size());
   ForwardRefMDNodes[MID] = std::make_pair(FwdNode, Lex.getLoc());
   Node = FwdNode;
   return false;
@@ -474,7 +474,7 @@ bool LLParser::ParseStandaloneMetadata() {
       || ParseToken(lltok::rbrace, "expected end of metadata node"))
     return true;
 
-  MDNode *Init = Context.getMDNode(Elts.data(), Elts.size());
+  MDNode *Init = MDNode::get(Context, Elts.data(), Elts.size());
   MetadataCache[MetadataID] = Init;
   std::map<unsigned, std::pair<MetadataBase *, LocTy> >::iterator
     FI = ForwardRefMDNodes.find(MetadataID);
@@ -1729,7 +1729,7 @@ bool LLParser::ParseValID(ValID &ID) {
           ParseToken(lltok::rbrace, "expected end of metadata node"))
         return true;
 
-      ID.MetadataVal = Context.getMDNode(Elts.data(), Elts.size());
+      ID.MetadataVal = MDNode::get(Context, Elts.data(), Elts.size());
       return false;
     }
 
