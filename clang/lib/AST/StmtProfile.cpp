@@ -629,25 +629,9 @@ void StmtProfiler::VisitDecl(Decl *D) {
     }
     
     if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
-      // Canonicalize all of the function declarations within the overload
-      // set.
-      llvm::SmallVector<Decl *, 4> Functions;
-      for (OverloadedFunctionDecl::function_iterator F = Ovl->function_begin(),
-                                                  FEnd = Ovl->function_end();
-           F != FEnd; ++F)
-        Functions.push_back(F->get()->getCanonicalDecl());
-      
-      // Sorting the functions based on the point means that the ID generated
-      // will be different from one execution of the compiler to another.
-      // Since these IDs don't persist over time, the change in ordering will
-      // not affect compilation.
-      std::sort(Functions.begin(), Functions.end());
-      
-      for (llvm::SmallVector<Decl *, 4>::iterator F = Functions.begin(),
-                                               FEnd = Functions.end();
-           F != FEnd; ++F)
-        VisitDecl(*F);
-
+      // The Itanium C++ ABI mangles references to a set of overloaded 
+      // functions using just the function name, so we do the same here.
+      VisitName(Ovl->getDeclName());
       return;
     }
   }
