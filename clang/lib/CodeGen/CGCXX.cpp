@@ -494,7 +494,6 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   const llvm::FunctionType *FTy;
   FTy = llvm::FunctionType::get(llvm::Type::VoidTy,
                                 std::vector<const llvm::Type*>(), false);
-
   llvm::SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   QualType ClassTy;
@@ -503,23 +502,36 @@ llvm::Value *CodeGenFunction::GenerateVtable(const CXXRecordDecl *RD) {
   ClassTy = getContext().getTagDeclType(const_cast<CXXRecordDecl*>(RD));
   mangleCXXVtable(ClassTy, getContext(), Out);
   const char *Name = OutName.c_str();
-  llvm::Value *vtable = CGM.CreateRuntimeFunction(FTy, Name);
-  llvm::SmallVector<CXXMethodDecl *,32> methods;
+  llvm::GlobalVariable::LinkageTypes linktype;
+  linktype = llvm::GlobalValue::WeakAnyLinkage;
+  std::vector<llvm::Constant *> methods;
   typedef CXXRecordDecl::method_iterator meth_iter;
-  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-       ++mi) {
-    if (mi->isVirtual())
-      methods.push_back(*mi);
-  }
-
+  llvm::Constant *m;
   llvm::Type *Ptr8Ty;
   Ptr8Ty = llvm::PointerType::get(llvm::Type::Int8Ty, 0);
+  m = llvm::Constant::getNullValue(Ptr8Ty);
+  int64_t offset = 0;
+  methods.push_back(m); offset += LLVMPointerWidth;
+  methods.push_back(m); offset += LLVMPointerWidth;
+  for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
+       ++mi) {
+    if (mi->isVirtual()) {
+      m = CGM.GetAddrOfFunction(GlobalDecl(*mi));
+      m = llvm::ConstantExpr::getBitCast(m, Ptr8Ty);
+      methods.push_back(m);
+    }
+  }
+  llvm::Constant *C;
+  llvm::ArrayType *type = llvm::ArrayType::get(Ptr8Ty, methods.size());
+  C = llvm::ConstantArray::get(type, methods);
+  llvm::Value *vtable = new llvm::GlobalVariable(CGM.getModule(), type, true,
+                                                 linktype, C, Name);
+  // CGM.CreateRuntimeFunction(FTy, Name);
   vtable = Builder.CreateBitCast(vtable, Ptr8Ty);
-  // FIXME: finish layout for virtual bases and fix for 32-bit
-  int64_t offset = 16;
+  // FIXME: finish layout for virtual bases
   vtable = Builder.CreateGEP(vtable,
                              llvm::ConstantInt::get(llvm::Type::Int64Ty,
-                                                    offset));
+                                                    offset/8));
   return vtable;
 }
 

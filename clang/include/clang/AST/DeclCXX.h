@@ -425,9 +425,12 @@ public:
   /// special methods, etc.
   typedef specific_decl_iterator<CXXMethodDecl> method_iterator;
   
+  /// method_begin - Method begin iterator.  Iterates in the order the methods
+  /// were declared.
   method_iterator method_begin() const {
     return method_iterator(decls_begin());
   }
+  /// method_end - Method end iterator.
   method_iterator method_end() const {
     return method_iterator(decls_end());
   }
