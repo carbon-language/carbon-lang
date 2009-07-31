@@ -539,6 +539,9 @@ void DwarfException::EmitExceptionTable() {
   unsigned SizeAlign = (4 - TotalSize) & 3;
 
   // Begin the exception table.
+  //MCSection *LSDASection = TAI->getLSDASection();
+  //Asm->SwitchToSection(LSDASection);
+  
   Asm->SwitchToDataSection(TAI->getDwarfExceptionSection());
   Asm->EmitAlignment(2, 0, 0, false);
   O << "GCC_except_table" << SubprogramCount << ":\n";
@@ -560,7 +563,31 @@ void DwarfException::EmitExceptionTable() {
     Asm->EmitInt8(dwarf::DW_EH_PE_omit);
     Asm->EOL("TType format (DW_EH_PE_omit)");
   } else {
+    // FIXME: Instead of using "PreferredEHDataFormat", we should use a simple
+    // approach to determine what needs to happen.  Basically, if the target
+    // wants the LSDA to be emitted into a read-only segment (like .text) then
+    // (unless in static mode) it can't output direct pointers to the typeinfo
+    // objects, which may be in an arbitrary locations.  Instead, it has to use
+    // and indirect stub pointer to get to the typeinfo.
+    //
+    // If the target wants to dump the LSDA's into a segment writable by the
+    // dynamic linker, then it can just use a normal pointer, and the dynamic
+    // linker will fix it up.
+    
+    // TODO: Replace the getDwarfExceptionSection() callback on TAI with a new
+    // getLSDASection() method on TLOF.  Merge and sanitize the implementations,
+    // and figure out what the ".gcc_except_table" directive expands to on elf
+    // systems.
+    
+    // 
+    //if (LSDASection->isWritable()) {
+    //Asm->EmitInt8(DW_EH_PE_absptr);
+    //} else {
+    //Asm->EmitInt8(DW_EH_PE_pcrel | DW_EH_PE_indirect | DW_EH_PE_sdata4);
+    //}
+    
     Asm->EmitInt8(TAI->PreferredEHDataFormat());
+    
     
     // FIXME: The comment here should correspond with what PreferredEHDataFormat
     // returned.
