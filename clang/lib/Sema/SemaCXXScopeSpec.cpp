@@ -146,7 +146,7 @@ CXXRecordDecl *Sema::getCurrentInstantiationOf(NestedNameSpecifier *NNS) {
   if (!NNS->getAsType())
     return 0;
   
-  QualType T = Context.getCanonicalType(QualType(NNS->getAsType(), 0));
+  QualType T = QualType(NNS->getAsType(), 0);
   // If the nested name specifier does not refer to a type, then it
   // does not refer to the current instantiation.
   if (T.isNull())
