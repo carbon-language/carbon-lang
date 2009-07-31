@@ -367,7 +367,7 @@ Parser::DeclGroupPtrTy Parser::ParseSimpleDeclaration(unsigned Context,
     return DG;
   }
   
-  Diag(Tok, diag::err_expected_semi_declation);
+  Diag(Tok, diag::err_expected_semi_declaration);
   // Skip to end of block or statement
   SkipUntil(tok::r_brace, true, true);
   if (Tok.is(tok::semi))

@@ -187,7 +187,7 @@ Parser::ParseSingleDeclarationAfterTemplate(
     }
 
     // Eat the semi colon after the declaration.
-    ExpectAndConsume(tok::semi, diag::err_expected_semi_declation);
+    ExpectAndConsume(tok::semi, diag::err_expected_semi_declaration);
     return ThisDecl;
   }
 

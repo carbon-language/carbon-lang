@@ -77,7 +77,7 @@ def err_expected_rparen : Error<"expected ')'">;
 def err_expected_rsquare : Error<"expected ']'">;
 def err_expected_rbrace : Error<"expected '}'">;
 def err_expected_greater : Error<"expected '>'">;
-def err_expected_semi_declation : Error<
+def err_expected_semi_declaration : Error<
   "expected ';' at end of declaration">;
 def err_expected_semi_decl_list : Error<
   "expected ';' at end of declaration list">;
