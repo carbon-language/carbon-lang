@@ -18,15 +18,15 @@
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/DwarfWriter.h"
-#include "llvm/Support/FormattedStream.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/Support/Mangler.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/Target/TargetRegistry.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
-
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/Mangler.h"
 using namespace llvm;
 
 #include "PIC16GenAsmWriter.inc"
@@ -71,7 +71,7 @@ bool PIC16AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   std::string T = PAN::getCodeSectionName(CurrentFnName);
   const char *codeSection = T.c_str();
  
-  const Section *fCodeSection = 
+  const MCSection *fCodeSection = 
     getObjFileLowering().getOrCreateSection(codeSection, false, 
                                             SectionKind::Text);
   // Start the Code Section.
@@ -348,7 +348,7 @@ void PIC16AsmPrinter::EmitFunctionFrame(MachineFunction &MF) {
   std::string T = PAN::getFrameSectionName(CurrentFnName);
   const char *SectionName = T.c_str();
 
-  const Section *fPDataSection =
+  const MCSection *fPDataSection =
     getObjFileLowering().getOrCreateSection(SectionName, false,
                                             SectionKind::DataRel);
   SwitchToSection(fPDataSection);

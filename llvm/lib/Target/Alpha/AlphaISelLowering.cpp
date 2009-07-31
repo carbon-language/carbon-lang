@@ -31,14 +31,16 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-
+namespace {
 class TargetLoweringObjectFileAlpha : public TargetLoweringObjectFile {
 public:
-  TargetLoweringObjectFileAlpha() {
+  void Initialize(MCContext &Ctx, const TargetMachine &TM) {
+    TargetLoweringObjectFile::Initialize(Ctx, TM);
     TextSection = getOrCreateSection("_text", true, SectionKind::Text);
     DataSection = getOrCreateSection("_data", true, SectionKind::DataRel);
   }
 };
+}
   
   
 

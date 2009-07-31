@@ -29,12 +29,12 @@ namespace llvm {
   /// FIXME: Reimplement by inheriting from MCSection.
   ///
   struct PIC16Section {
-    const Section *S_; // Connection to actual Section.
+    const MCSection *S_; // Connection to actual Section.
     unsigned Size;  // Total size of the objects contained.
     bool SectionPrinted;
     std::vector<const GlobalVariable*> Items;
     
-    PIC16Section(const Section *s) {
+    PIC16Section(const MCSection *s) {
       S_ = s;
       Size = 0;
       SectionPrinted = false;
@@ -44,7 +44,7 @@ namespace llvm {
   };
   
   class PIC16TargetObjectFile : public TargetLoweringObjectFile {
-    const PIC16TargetMachine &TM;
+    const TargetMachine *TM;
   public:
     mutable std::vector<PIC16Section*> BSSSections;
     mutable std::vector<PIC16Section*> IDATASections;
@@ -53,34 +53,36 @@ namespace llvm {
     mutable PIC16Section *ExternalVarDecls;
     mutable PIC16Section *ExternalVarDefs;
     
-    PIC16TargetObjectFile(const PIC16TargetMachine &TM);
     ~PIC16TargetObjectFile();
+    
+    void Initialize(MCContext &Ctx, const TargetMachine &TM);
+
     
     /// getSpecialCasedSectionGlobals - Allow the target to completely override
     /// section assignment of a global.
-    virtual const Section *
+    virtual const MCSection *
     getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
                                   SectionKind Kind) const;
-    virtual const Section *SelectSectionForGlobal(const GlobalValue *GV,
-                                                  SectionKind Kind,
-                                                  Mangler *Mang,
-                                                  const TargetMachine&) const;
+    virtual const MCSection *SelectSectionForGlobal(const GlobalValue *GV,
+                                                    SectionKind Kind,
+                                                    Mangler *Mang,
+                                                    const TargetMachine&) const;
   private:
     std::string getSectionNameForSym(const std::string &Sym) const;
 
-    const Section *getBSSSectionForGlobal(const GlobalVariable *GV) const;
-    const Section *getIDATASectionForGlobal(const GlobalVariable *GV) const;
-    const Section *getSectionForAuto(const GlobalVariable *GV) const;
-    const Section *CreateBSSSectionForGlobal(const GlobalVariable *GV,
-                                             std::string Addr = "") const;
-    const Section *CreateIDATASectionForGlobal(const GlobalVariable *GV,
+    const MCSection *getBSSSectionForGlobal(const GlobalVariable *GV) const;
+    const MCSection *getIDATASectionForGlobal(const GlobalVariable *GV) const;
+    const MCSection *getSectionForAuto(const GlobalVariable *GV) const;
+    const MCSection *CreateBSSSectionForGlobal(const GlobalVariable *GV,
                                                std::string Addr = "") const;
-    const Section *getROSectionForGlobal(const GlobalVariable *GV) const;
-    const Section *CreateROSectionForGlobal(const GlobalVariable *GV,
-                                            std::string Addr = "") const;
-    const Section *CreateSectionForGlobal(const GlobalVariable *GV,
-                                          Mangler *Mang,
-                                          const std::string &Addr = "") const;
+    const MCSection *CreateIDATASectionForGlobal(const GlobalVariable *GV,
+                                                 std::string Addr = "") const;
+    const MCSection *getROSectionForGlobal(const GlobalVariable *GV) const;
+    const MCSection *CreateROSectionForGlobal(const GlobalVariable *GV,
+                                              std::string Addr = "") const;
+    const MCSection *CreateSectionForGlobal(const GlobalVariable *GV,
+                                            Mangler *Mang,
+                                            const std::string &Addr = "") const;
   public:
     void SetSectionForGVs(Module &M);
     const std::vector<PIC16Section*> &getBSSSections() const {

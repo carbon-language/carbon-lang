@@ -120,7 +120,7 @@ class VISIBILITY_HIDDEN DwarfDebug : public Dwarf {
 
   /// SectionMap - Provides a unique id per text section.
   ///
-  UniqueVector<const Section*> SectionMap;
+  UniqueVector<const MCSection*> SectionMap;
 
   /// SectionSourceLines - Tracks line numbers per text section.
   ///

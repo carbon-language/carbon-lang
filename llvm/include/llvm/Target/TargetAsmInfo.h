@@ -16,7 +16,6 @@
 #ifndef LLVM_TARGET_ASM_INFO_H
 #define LLVM_TARGET_ASM_INFO_H
 
-#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
 

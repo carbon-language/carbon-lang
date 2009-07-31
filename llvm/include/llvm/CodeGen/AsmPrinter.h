@@ -34,10 +34,10 @@ namespace llvm {
   class MachineModuleInfo;
   class MCInst;
   class MCContext;
+  class MCSection;
   class MCStreamer;
   class DwarfWriter;
   class Mangler;
-  class Section;
   class TargetAsmInfo;
   class TargetLoweringObjectFile;
   class Type;
@@ -113,7 +113,7 @@ namespace llvm {
     /// CurrentSection - The current section we are emitting to.  This is
     /// controlled and used by the SwitchSection method.
     std::string CurrentSection;
-    const Section* CurrentSection_;
+    const MCSection *CurrentSection_;
 
     /// IsInTextSection - True if the current section we are emitting to is a
     /// text section.
@@ -173,7 +173,7 @@ namespace llvm {
 
     /// SwitchToSection - Switch to the specified section of the executable if
     /// we are not already in it!
-    void SwitchToSection(const Section* NS);
+    void SwitchToSection(const MCSection *NS);
 
     /// getGlobalLinkName - Returns the asm/link name of of the specified
     /// global variable.  Should be overridden by each target asm printer to

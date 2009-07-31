@@ -14,13 +14,14 @@
 #include "DwarfDebug.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/Support/Timer.h"
-#include "llvm/System/Path.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/System/Path.h"
 using namespace llvm;
 
 static TimerGroup &getDwarfTimerGroup() {
@@ -224,7 +225,7 @@ DbgScope::~DbgScope() {
 DwarfDebug::DwarfDebug(raw_ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
   : Dwarf(OS, A, T, "dbg"), ModuleCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize), Abbreviations(),
-    ValuesSet(InitValuesSetSize), Values(), StringPool(), SectionMap(),
+    ValuesSet(InitValuesSetSize), Values(), StringPool(), 
     SectionSourceLines(), didInitial(false), shouldEmit(false),
     FunctionDbgScope(0), DebugTimer(0) {
   if (TimePassesIsEnabled)
@@ -2132,7 +2133,7 @@ void DwarfDebug::EmitDebugLines() {
     const std::vector<SrcLineInfo> &LineInfos = SectionSourceLines[j];
 
     if (Asm->isVerbose()) {
-      const Section* S = SectionMap[j + 1];
+      const MCSection *S = SectionMap[j + 1];
       O << '\t' << TAI->getCommentString() << " Section"
         << S->getName() << '\n';
     } else {

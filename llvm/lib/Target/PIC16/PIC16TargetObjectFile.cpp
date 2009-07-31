@@ -12,11 +12,13 @@
 #include "PIC16TargetMachine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/MC/MCSection.h"
 using namespace llvm;
 
-
-PIC16TargetObjectFile::PIC16TargetObjectFile(const PIC16TargetMachine &tm) 
-: TM (tm) {
+void PIC16TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &tm){
+  TargetLoweringObjectFile::Initialize(Ctx, tm);
+  TM = &tm;
+  
   BSSSection_  = getOrCreateSection("udata.# UDATA", false, SectionKind::BSS);
   ReadOnlySection = getOrCreateSection("romdata.# ROMDATA", false,
                                        SectionKind::ReadOnly);
@@ -26,9 +28,7 @@ PIC16TargetObjectFile::PIC16TargetObjectFile(const PIC16TargetMachine &tm)
   // in BeginModule, and gpasm cribbs for that .text symbol.
   TextSection = getOrCreateSection("", true, SectionKind::Text);
 
-  
-  PIC16Section *ROSection = new PIC16Section(ReadOnlySection);
-  ROSections.push_back(ROSection);
+  ROSections.push_back(new PIC16Section(ReadOnlySection));
   
   // FIXME: I don't know what the classification of these sections really is.
   ExternalVarDecls = new PIC16Section(getOrCreateSection("ExternalVarDecls",
@@ -40,14 +40,14 @@ PIC16TargetObjectFile::PIC16TargetObjectFile(const PIC16TargetMachine &tm)
 }
 
 
-const Section *
+const MCSection *
 PIC16TargetObjectFile::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   assert(GV->hasInitializer() && "This global doesn't need space");
   Constant *C = GV->getInitializer();
   assert(C->isNullValue() && "Unitialized globals has non-zero initializer");
 
   // Find how much space this global needs.
-  const TargetData *TD = TM.getTargetData();
+  const TargetData *TD = TM->getTargetData();
   const Type *Ty = C->getType(); 
   unsigned ValSize = TD->getTypeAllocSize(Ty);
  
@@ -64,9 +64,9 @@ PIC16TargetObjectFile::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   // No BSS section spacious enough was found. Crate a new one.
   if (!FoundBSS) {
     std::string name = PAN::getUdataSectionName(BSSSections.size());
-    const Section *NewSection = getOrCreateSection(name.c_str(), false,
-                                                   // FIXME.
-                                                   SectionKind::Metadata);
+    const MCSection *NewSection = getOrCreateSection(name.c_str(), false,
+                                                     // FIXME.
+                                                     SectionKind::Metadata);
 
     FoundBSS = new PIC16Section(NewSection);
 
@@ -80,7 +80,7 @@ PIC16TargetObjectFile::getBSSSectionForGlobal(const GlobalVariable *GV) const {
   return FoundBSS->S_;
 } 
 
-const Section *
+const MCSection *
 PIC16TargetObjectFile::getIDATASectionForGlobal(const GlobalVariable *GV) const{
   assert(GV->hasInitializer() && "This global doesn't need space");
   Constant *C = GV->getInitializer();
@@ -89,7 +89,7 @@ PIC16TargetObjectFile::getIDATASectionForGlobal(const GlobalVariable *GV) const{
          "can split initialized RAM data only");
 
   // Find how much space this global needs.
-  const TargetData *TD = TM.getTargetData();
+  const TargetData *TD = TM->getTargetData();
   const Type *Ty = C->getType(); 
   unsigned ValSize = TD->getTypeAllocSize(Ty);
  
@@ -106,8 +106,7 @@ PIC16TargetObjectFile::getIDATASectionForGlobal(const GlobalVariable *GV) const{
   // No IDATA section spacious enough was found. Crate a new one.
   if (!FoundIDATA) {
     std::string name = PAN::getIdataSectionName(IDATASections.size());
-    const Section *NewSection = getOrCreateSection(name.c_str(),
-                                                   false,
+    const MCSection *NewSection = getOrCreateSection(name.c_str(), false,
                                                    // FIXME.
                                                    SectionKind::Metadata);
 
@@ -125,7 +124,7 @@ PIC16TargetObjectFile::getIDATASectionForGlobal(const GlobalVariable *GV) const{
 
 // Get the section for an automatic variable of a function.
 // For PIC16 they are globals only with mangled names.
-const Section *
+const MCSection *
 PIC16TargetObjectFile::getSectionForAuto(const GlobalVariable *GV) const {
 
   const std::string name = PAN::getSectionNameForSym(GV->getName());
@@ -142,10 +141,10 @@ PIC16TargetObjectFile::getSectionForAuto(const GlobalVariable *GV) const {
 
   // No Auto section was found. Crate a new one.
   if (!FoundAutoSec) {
-    const Section *NewSection = getOrCreateSection(name.c_str(),
-                                                   // FIXME.
-                                                   false,
-                                                   SectionKind::Metadata);
+    const MCSection *NewSection = getOrCreateSection(name.c_str(),
+                                                     // FIXME.
+                                                     false,
+                                                     SectionKind::Metadata);
 
     FoundAutoSec = new PIC16Section(NewSection);
 
@@ -162,7 +161,7 @@ PIC16TargetObjectFile::getSectionForAuto(const GlobalVariable *GV) const {
 
 // Override default implementation to put the true globals into
 // multiple data sections if required.
-const Section*
+const MCSection *
 PIC16TargetObjectFile::SelectSectionForGlobal(const GlobalValue *GV1,
                                               SectionKind Kind,
                                               Mangler *Mang,
@@ -224,7 +223,7 @@ PIC16TargetObjectFile::~PIC16TargetObjectFile() {
 
 /// getSpecialCasedSectionGlobals - Allow the target to completely override
 /// section assignment of a global.
-const Section *
+const MCSection *
 PIC16TargetObjectFile::getSpecialCasedSectionGlobals(const GlobalValue *GV,
                                                      Mangler *Mang,
                                                      SectionKind Kind) const {
@@ -250,7 +249,7 @@ PIC16TargetObjectFile::getSpecialCasedSectionGlobals(const GlobalValue *GV,
 
 // Create a new section for global variable. If Addr is given then create
 // section at that address else create by name.
-const Section *
+const MCSection *
 PIC16TargetObjectFile::CreateSectionForGlobal(const GlobalVariable *GV,
                                               Mangler *Mang,
                                               const std::string &Addr) const {
@@ -268,11 +267,11 @@ PIC16TargetObjectFile::CreateSectionForGlobal(const GlobalVariable *GV,
     return CreateROSectionForGlobal(GV, Addr);
 
   // Else let the default implementation take care of it.
-  return TargetLoweringObjectFile::SectionForGlobal(GV, Mang, TM);
+  return TargetLoweringObjectFile::SectionForGlobal(GV, Mang, *TM);
 }
 
 // Create uninitialized section for a variable.
-const Section *
+const MCSection *
 PIC16TargetObjectFile::CreateBSSSectionForGlobal(const GlobalVariable *GV,
                                                  std::string Addr) const {
   assert(GV->hasInitializer() && "This global doesn't need space");
@@ -297,8 +296,8 @@ PIC16TargetObjectFile::CreateBSSSectionForGlobal(const GlobalVariable *GV,
   
   PIC16Section *NewBSS = FoundBSS;
   if (NewBSS == NULL) {
-    const Section *NewSection = getOrCreateSection(Name.c_str(),
-                                                   false, SectionKind::BSS);
+    const MCSection *NewSection = getOrCreateSection(Name.c_str(), false,
+                                                     SectionKind::BSS);
     NewBSS = new PIC16Section(NewSection);
     BSSSections.push_back(NewBSS);
   }
@@ -314,14 +313,14 @@ PIC16TargetObjectFile::CreateBSSSectionForGlobal(const GlobalVariable *GV,
 
 // Get rom section for a variable. Currently there can be only one rom section
 // unless a variable explicitly requests a section.
-const Section *
+const MCSection *
 PIC16TargetObjectFile::getROSectionForGlobal(const GlobalVariable *GV) const {
   ROSections[0]->Items.push_back(GV);
   return ROSections[0]->S_;
 }
 
 // Create initialized data section for a variable.
-const Section *
+const MCSection *
 PIC16TargetObjectFile::CreateIDATASectionForGlobal(const GlobalVariable *GV,
                                                    std::string Addr) const {
   assert(GV->hasInitializer() && "This global doesn't need space");
@@ -349,8 +348,7 @@ PIC16TargetObjectFile::CreateIDATASectionForGlobal(const GlobalVariable *GV,
 
   PIC16Section *NewIDATASec = FoundIDATASec;
   if (NewIDATASec == NULL) {
-    const Section *NewSection = getOrCreateSection(Name.c_str(),
-                                                   false,
+    const MCSection *NewSection = getOrCreateSection(Name.c_str(), false,
                                                    // FIXME:
                                                    SectionKind::Metadata);
     NewIDATASec = new PIC16Section(NewSection);
@@ -365,7 +363,7 @@ PIC16TargetObjectFile::CreateIDATASectionForGlobal(const GlobalVariable *GV,
 }
 
 // Create a section in rom for a variable.
-const Section *
+const MCSection *
 PIC16TargetObjectFile::CreateROSectionForGlobal(const GlobalVariable *GV,
                                                 std::string Addr) const {
   assert(GV->getType()->getAddressSpace() == PIC16ISD::ROM_SPACE &&
@@ -390,9 +388,8 @@ PIC16TargetObjectFile::CreateROSectionForGlobal(const GlobalVariable *GV,
 
   PIC16Section *NewRomSec = FoundROSec;
   if (NewRomSec == NULL) {
-    const Section *NewSection = getOrCreateSection(Name.c_str(),
-                                                   false,
-                                                   SectionKind::ReadOnly);
+    const MCSection *NewSection = getOrCreateSection(Name.c_str(), false,
+                                                     SectionKind::ReadOnly);
     NewRomSec = new PIC16Section(NewSection);
     ROSections.push_back(NewRomSec);
   }

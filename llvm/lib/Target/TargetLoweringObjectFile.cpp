@@ -16,10 +16,12 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Support/Mangler.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/Mangler.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
@@ -27,7 +29,7 @@ using namespace llvm;
 //                              Generic Code
 //===----------------------------------------------------------------------===//
 
-TargetLoweringObjectFile::TargetLoweringObjectFile() {
+TargetLoweringObjectFile::TargetLoweringObjectFile() : Ctx(0) {
   TextSection = 0;
   DataSection = 0;
   BSSSection_ = 0;
@@ -176,7 +178,7 @@ static SectionKind::Kind SectionKindForGlobal(const GlobalValue *GV,
 /// SectionForGlobal - This method computes the appropriate section to emit
 /// the specified global variable or function definition.  This should not
 /// be passed external (or available externally) globals.
-const Section *TargetLoweringObjectFile::
+const MCSection *TargetLoweringObjectFile::
 SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
                  const TargetMachine &TM) const {
   assert(!GV->isDeclaration() && !GV->hasAvailableExternallyLinkage() &&
@@ -192,7 +194,7 @@ SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
   if (GV->hasSection()) {
     // If the target has special section hacks for specifically named globals,
     // return them now.
-    if (const Section *TS = getSpecialCasedSectionGlobals(GV, Mang, Kind))
+    if (const MCSection *TS = getSpecialCasedSectionGlobals(GV, Mang, Kind))
       return TS;
     
     // If the target has magic semantics for certain section names, make sure to
@@ -209,7 +211,7 @@ SectionForGlobal(const GlobalValue *GV, Mangler *Mang,
 }
 
 // Lame default implementation. Calculate the section name for global.
-const Section*
+const MCSection *
 TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
                                                  SectionKind Kind,
                                                  Mangler *Mang,
@@ -231,7 +233,7 @@ TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
 /// getSectionForMergableConstant - Given a mergable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.
-const Section *
+const MCSection *
 TargetLoweringObjectFile::
 getSectionForMergeableConstant(SectionKind Kind) const {
   if (Kind.isReadOnly() && ReadOnlySection != 0)
@@ -241,18 +243,13 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 }
 
 
-const Section *TargetLoweringObjectFile::
+const MCSection *TargetLoweringObjectFile::
 getOrCreateSection(const char *Name, bool isDirective,
                    SectionKind::Kind Kind) const {
-  Section &S = Sections[Name];
-
-  // This is newly-created section, set it up properly.
-  if (S.Name.empty()) {
-    S.Kind = SectionKind::get(Kind, false /*weak*/, !isDirective);
-    S.Name = Name;
-  }
-
-  return &S;
+  if (MCSection *S = Ctx->GetSection(Name))
+    return S;
+  SectionKind K = SectionKind::get(Kind, false /*weak*/, !isDirective);
+  return MCSectionWithKind::Create(Name, K, *Ctx);
 }
 
 
@@ -263,6 +260,7 @@ getOrCreateSection(const char *Name, bool isDirective,
 
 void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
                                              const TargetMachine &TM) {
+  TargetLoweringObjectFile::Initialize(Ctx, TM);
   if (!HasCrazyBSS)
     BSSSection_ = getOrCreateSection("\t.bss", true, SectionKind::BSS);
   else
@@ -401,7 +399,7 @@ static const char *getSectionPrefixForUniqueGlobal(SectionKind Kind) {
   return ".gnu.linkonce.d.rel.ro.";
 }
 
-const Section *TargetLoweringObjectFileELF::
+const MCSection *TargetLoweringObjectFileELF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
   
@@ -458,7 +456,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 /// getSectionForMergeableConstant - Given a mergeable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.
-const Section *TargetLoweringObjectFileELF::
+const MCSection *TargetLoweringObjectFileELF::
 getSectionForMergeableConstant(SectionKind Kind) const {
   if (Kind.isMergeableConst4())
     return MergeableConst4Section;
@@ -480,6 +478,7 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 
 void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                                const TargetMachine &TM) {
+  TargetLoweringObjectFile::Initialize(Ctx, TM);
   TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
   DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
   
@@ -514,7 +513,7 @@ void TargetLoweringObjectFileMachO::Initialize(MCContext &Ctx,
                                        false, SectionKind::DataRel);
 }
 
-const Section *TargetLoweringObjectFileMachO::
+const MCSection *TargetLoweringObjectFileMachO::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
   assert(!Kind.isThreadLocal() && "Darwin doesn't support TLS");
@@ -569,7 +568,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   return DataSection;
 }
 
-const Section *
+const MCSection *
 TargetLoweringObjectFileMachO::
 getSectionForMergeableConstant(SectionKind Kind) const {
   // If this constant requires a relocation, we have to put it in the data
@@ -592,6 +591,7 @@ getSectionForMergeableConstant(SectionKind Kind) const {
 
 void TargetLoweringObjectFileCOFF::Initialize(MCContext &Ctx,
                                               const TargetMachine &TM) {
+  TargetLoweringObjectFile::Initialize(Ctx, TM);
   TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
   DataSection = getOrCreateSection("\t.data", true, SectionKind::DataRel);
 }
@@ -618,7 +618,7 @@ static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
 }
 
 
-const Section *TargetLoweringObjectFileCOFF::
+const MCSection *TargetLoweringObjectFileCOFF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
   assert(!Kind.isThreadLocal() && "Doesn't support TLS");
@@ -635,9 +635,8 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isText())
     return getTextSection();
   
-  if (Kind.isBSS())
-    if (const Section *S = BSSSection_)
-      return S;
+  if (Kind.isBSS() && BSSSection_ != 0)
+    return BSSSection_;
   
   if (Kind.isReadOnly() && ReadOnlySection != 0)
     return ReadOnlySection;

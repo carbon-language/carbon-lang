@@ -15,12 +15,16 @@
 #ifndef LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 #define LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 
-// FIXME: Switch to MC.
-#include "llvm/Target/TargetAsmInfo.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
 
 namespace llvm {
+  class MCSection;
   class MCContext;
-
+  class GlobalValue;
+  class Mangler;
+  class TargetMachine;
+  
 /// SectionKind - This is a simple POD value that classifies the properties of
 /// a section.  A global variable is classified into the deepest possible
 /// classification, and then the target maps them onto their sections based on
@@ -199,60 +203,47 @@ public:
   }
 };
 
-class Section {
-public:
-
-  std::string Name;
-  SectionKind Kind;
-
-  explicit Section() { }
-  Section(const std::string &N, SectionKind K) : Name(N), Kind(K) {}
-  const std::string &getName() const { return Name; }
-  SectionKind getKind() const { return Kind; }
-};
-  
   
 class TargetLoweringObjectFile {
-private:
-  mutable StringMap<Section> Sections;
+  MCContext *Ctx;
 protected:
   
   TargetLoweringObjectFile();
   
   /// TextSection - Section directive for standard text.
   ///
-  const Section *TextSection;           // Defaults to ".text".
+  const MCSection *TextSection;           // Defaults to ".text".
   
   /// DataSection - Section directive for standard data.
   ///
-  const Section *DataSection;           // Defaults to ".data".
+  const MCSection *DataSection;           // Defaults to ".data".
   
   
   
   // FIXME: SINK THESE.
-  const Section *BSSSection_;
+  const MCSection *BSSSection_;
 
   /// ReadOnlySection - This is the directive that is emitted to switch to a
   /// read-only section for constant data (e.g. data declared const,
   /// jump tables).
-  const Section *ReadOnlySection;       // Defaults to NULL
+  const MCSection *ReadOnlySection;       // Defaults to NULL
   
   /// TLSDataSection - Section directive for Thread Local data.
   ///
-  const Section *TLSDataSection;        // Defaults to ".tdata".
+  const MCSection *TLSDataSection;        // Defaults to ".tdata".
   
   /// TLSBSSSection - Section directive for Thread Local uninitialized data.
   /// Null if this target doesn't support a BSS section.
   ///
-  const Section *TLSBSSSection;         // Defaults to ".tbss".
+  const MCSection *TLSBSSSection;         // Defaults to ".tbss".
   
-  const Section *CStringSection_;
+  const MCSection *CStringSection_;
   
 public:
   // FIXME: NONPUB.
-  const Section *getOrCreateSection(const char *Name,
-                                    bool isDirective,
-                                    SectionKind::Kind K) const;
+  const MCSection *getOrCreateSection(const char *Name,
+                                      bool isDirective,
+                                      SectionKind::Kind K) const;
 public:
   
   virtual ~TargetLoweringObjectFile();
@@ -260,17 +251,19 @@ public:
   /// Initialize - this method must be called before any actual lowering is
   /// done.  This specifies the current context for codegen, and gives the
   /// lowering implementations a chance to set up their default sections.
-  virtual void Initialize(MCContext &Ctx, const TargetMachine &TM) {}
+  virtual void Initialize(MCContext &ctx, const TargetMachine &TM) {
+    Ctx = &ctx;
+  }
   
   
-  const Section *getTextSection() const { return TextSection; }
-  const Section *getDataSection() const { return DataSection; }
+  const MCSection *getTextSection() const { return TextSection; }
+  const MCSection *getDataSection() const { return DataSection; }
   
   
   /// getSectionForMergeableConstant - Given a mergeable constant with the
   /// specified size and relocation information, return a section that it
   /// should be placed in.
-  virtual const Section *
+  virtual const MCSection *
   getSectionForMergeableConstant(SectionKind Kind) const;
   
   /// getKindForNamedSection - If this target wants to be able to override
@@ -285,15 +278,15 @@ public:
   /// SectionForGlobal - This method computes the appropriate section to emit
   /// the specified global variable or function definition.  This should not
   /// be passed external (or available externally) globals.
-  const Section *SectionForGlobal(const GlobalValue *GV,
-                                  Mangler *Mang,
-                                  const TargetMachine &TM) const;
+  const MCSection *SectionForGlobal(const GlobalValue *GV,
+                                    Mangler *Mang,
+                                    const TargetMachine &TM) const;
   
   /// getSpecialCasedSectionGlobals - Allow the target to completely override
   /// section assignment of a global.
   /// FIXME: ELIMINATE this by making PIC16 implement ADDRESS with
   /// getFlagsForNamedSection.
-  virtual const Section *
+  virtual const MCSection *
   getSpecialCasedSectionGlobals(const GlobalValue *GV, Mangler *Mang,
                                 SectionKind Kind) const {
     return 0;
@@ -307,7 +300,7 @@ public:
   }
   
 protected:
-  virtual const Section *
+  virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 };
@@ -332,7 +325,7 @@ public:
   /// getSectionForMergeableConstant - Given a mergeable constant with the
   /// specified size and relocation information, return a section that it
   /// should be placed in.
-  virtual const Section *
+  virtual const MCSection *
   getSectionForMergeableConstant(SectionKind Kind) const;
   
   virtual SectionKind::Kind getKindForNamedSection(const char *Section,
@@ -340,40 +333,40 @@ public:
   void getSectionFlagsAsString(SectionKind Kind,
                                SmallVectorImpl<char> &Str) const;
   
-  virtual const Section *
+  virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 protected:
-  const Section *DataRelSection;
-  const Section *DataRelLocalSection;
-  const Section *DataRelROSection;
-  const Section *DataRelROLocalSection;
+  const MCSection *DataRelSection;
+  const MCSection *DataRelLocalSection;
+  const MCSection *DataRelROSection;
+  const MCSection *DataRelROLocalSection;
   
-  const Section *MergeableConst4Section;
-  const Section *MergeableConst8Section;
-  const Section *MergeableConst16Section;
+  const MCSection *MergeableConst4Section;
+  const MCSection *MergeableConst8Section;
+  const MCSection *MergeableConst16Section;
 };
 
   
   
 class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
-  const Section *TextCoalSection;
-  const Section *ConstTextCoalSection;
-  const Section *ConstDataCoalSection;
-  const Section *ConstDataSection;
-  const Section *DataCoalSection;
-  const Section *FourByteConstantSection;
-  const Section *EightByteConstantSection;
-  const Section *SixteenByteConstantSection;
+  const MCSection *TextCoalSection;
+  const MCSection *ConstTextCoalSection;
+  const MCSection *ConstDataCoalSection;
+  const MCSection *ConstDataSection;
+  const MCSection *DataCoalSection;
+  const MCSection *FourByteConstantSection;
+  const MCSection *EightByteConstantSection;
+  const MCSection *SixteenByteConstantSection;
 public:
   
   virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
 
-  virtual const Section *
+  virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
   
-  virtual const Section *
+  virtual const MCSection *
   getSectionForMergeableConstant(SectionKind Kind) const;
 };
 
@@ -386,7 +379,7 @@ public:
   virtual void getSectionFlagsAsString(SectionKind Kind,
                                        SmallVectorImpl<char> &Str) const;
   
-  virtual const Section *
+  virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;
 };

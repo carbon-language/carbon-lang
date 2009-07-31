@@ -143,7 +143,7 @@ static const char *getStdLibCallName(unsigned opcode) {
 
 // PIC16TargetLowering Constructor.
 PIC16TargetLowering::PIC16TargetLowering(PIC16TargetMachine &TM)
-  : TargetLowering(TM, new PIC16TargetObjectFile(TM)), TmpSize(0) {
+  : TargetLowering(TM, new PIC16TargetObjectFile()), TmpSize(0) {
  
   Subtarget = &TM.getSubtarget<PIC16Subtarget>();
 

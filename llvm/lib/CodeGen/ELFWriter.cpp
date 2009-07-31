@@ -43,6 +43,7 @@
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetELFWriterInfo.h"
@@ -334,8 +335,8 @@ void ELFWriter::EmitGlobal(const GlobalValue *GV) {
       TM.getTargetLowering()->getObjFileLowering();
 
     // Get the ELF section where this global belongs from TLOF
-    const Section *S = TLOF.SectionForGlobal(GV, Mang, TM);
-    unsigned SectionFlags = getElfSectionFlags(S->getKind());
+    const MCSection *S = TLOF.SectionForGlobal(GV, Mang, TM);
+    unsigned SectionFlags = getElfSectionFlags(((MCSectionELF*)S)->getKind());
 
     // The symbol align should update the section alignment if needed
     const TargetData *TD = TM.getTargetData();

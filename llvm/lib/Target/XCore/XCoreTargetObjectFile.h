@@ -16,8 +16,9 @@ namespace llvm {
 
   class XCoreTargetObjectFile : public TargetLoweringObjectFileELF {
   public:
-    XCoreTargetObjectFile(bool isXS1A);
     
+    void Initialize(MCContext &Ctx, const TargetMachine &TM);
+
     // TODO: Classify globals as xcore wishes.
   };
 } // end namespace llvm

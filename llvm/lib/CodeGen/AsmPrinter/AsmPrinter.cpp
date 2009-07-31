@@ -23,8 +23,9 @@
 #include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -132,7 +133,7 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
 
 /// SwitchToSection - Switch to the specified section of the executable if we
 /// are not already in it!
-void AsmPrinter::SwitchToSection(const Section *NS) {
+void AsmPrinter::SwitchToSection(const MCSection *NS) {
   const std::string &NewSection = NS->getName();
 
   // If we're already in this section, we're done.
@@ -308,10 +309,10 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
 namespace {
   // SectionCPs - Keep track the alignment, constpool entries per Section.
   struct SectionCPs {
-    const Section *S;
+    const MCSection *S;
     unsigned Alignment;
     SmallVector<unsigned, 4> CPEs;
-    SectionCPs(const Section *s, unsigned a) : S(s), Alignment(a) {};
+    SectionCPs(const MCSection *s, unsigned a) : S(s), Alignment(a) {};
   };
 }
 
@@ -347,7 +348,8 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     }
     }
 
-    const Section *S =getObjFileLowering().getSectionForMergeableConstant(Kind);
+    const MCSection *S =
+      getObjFileLowering().getSectionForMergeableConstant(Kind);
     
     // The number of sections are small, just do a linear search from the
     // last section to the first.
@@ -419,7 +421,7 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
   const char *JumpTableDataSection = TAI->getJumpTableDataSection();
   const Function *F = MF.getFunction();
   
-  const Section *FuncSection =
+  const MCSection *FuncSection =
     getObjFileLowering().SectionForGlobal(F, Mang, TM);
 
   bool JTInDiffSection = false;

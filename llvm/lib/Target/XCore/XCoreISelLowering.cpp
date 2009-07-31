@@ -56,8 +56,7 @@ getTargetNodeName(unsigned Opcode) const
 }
 
 XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
-  : TargetLowering(XTM,
-                   new XCoreTargetObjectFile(XTM.getSubtargetImpl()->isXS1A())),
+  : TargetLowering(XTM, new XCoreTargetObjectFile()),
     TM(XTM),
     Subtarget(*XTM.getSubtargetImpl()) {
 

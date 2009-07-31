@@ -8,10 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "XCoreTargetObjectFile.h"
+#include "XCoreSubtarget.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 
-XCoreTargetObjectFile::XCoreTargetObjectFile(bool isXS1A) {
+void XCoreTargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM){
+  TargetLoweringObjectFileELF::Initialize(Ctx, TM);
+
   TextSection = getOrCreateSection("\t.text", true, SectionKind::Text);
   DataSection = getOrCreateSection("\t.dp.data", false, SectionKind::DataRel);
   BSSSection_ = getOrCreateSection("\t.dp.bss", false, SectionKind::BSS);
@@ -22,7 +26,7 @@ XCoreTargetObjectFile::XCoreTargetObjectFile(bool isXS1A) {
   TLSDataSection = DataSection;
   TLSBSSSection = BSSSection_;
   
-  if (isXS1A)
+  if (TM.getSubtarget<XCoreSubtarget>().isXS1A())
     // FIXME: Why is this writable ("datarel")???
     ReadOnlySection = getOrCreateSection("\t.dp.rodata", false,
                                          SectionKind::DataRel);
