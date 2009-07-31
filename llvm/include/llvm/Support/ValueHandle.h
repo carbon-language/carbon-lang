@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_VALUEHANDLE_H
 #define LLVM_SUPPORT_VALUEHANDLE_H
 
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Value.h"
 
@@ -57,32 +58,32 @@ public:
     : PrevPair(0, Kind), Next(0), VP(0) {}
   ValueHandleBase(HandleBaseKind Kind, Value *V)
     : PrevPair(0, Kind), Next(0), VP(V) {
-    if (V)
+    if (isValid(VP))
       AddToUseList();
   }
   ValueHandleBase(HandleBaseKind Kind, const ValueHandleBase &RHS)
     : PrevPair(0, Kind), Next(0), VP(RHS.VP) {
-    if (VP)
+    if (isValid(VP))
       AddToExistingUseList(RHS.getPrevPtr());
   }
   ~ValueHandleBase() {
-    if (VP)
+    if (isValid(VP))
       RemoveFromUseList();   
   }
   
   Value *operator=(Value *RHS) {
     if (VP == RHS) return RHS;
-    if (VP) RemoveFromUseList();
+    if (isValid(VP)) RemoveFromUseList();
     VP = RHS;
-    if (VP) AddToUseList();
+    if (isValid(VP)) AddToUseList();
     return RHS;
   }
 
   Value *operator=(const ValueHandleBase &RHS) {
     if (VP == RHS.VP) return RHS.VP;
-    if (VP) RemoveFromUseList();
+    if (isValid(VP)) RemoveFromUseList();
     VP = RHS.VP;
-    if (VP) AddToExistingUseList(RHS.getPrevPtr());
+    if (isValid(VP)) AddToExistingUseList(RHS.getPrevPtr());
     return VP;
   }
   
@@ -92,6 +93,12 @@ public:
 protected:
   Value *getValPtr() const { return VP; }
 private:
+  static bool isValid(Value *V) {
+    return V &&
+           V != DenseMapInfo<Value *>::getEmptyKey() &&
+           V != DenseMapInfo<Value *>::getTombstoneKey();
+  }
+
   // Callbacks made from Value.
   static void ValueIsDeleted(Value *V);
   static void ValueIsRAUWd(Value *Old, Value *New);
