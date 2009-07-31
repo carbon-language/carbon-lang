@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/raw_ostream.h"
@@ -45,14 +46,14 @@ TEST(AsmStreamer, EmptyOutput) {
 
 TEST(AsmStreamer, Sections) {
   StringAsmStreamer S;
-  MCSection *Sec0 = S.getContext().GetSection("foo");
+  MCSection *Sec0 = MCSection::Create("foo", S.getContext());
   S.getStreamer().SwitchSection(Sec0);
   EXPECT_EQ(".section foo\n", S.getString());
 }
 
 TEST(AsmStreamer, Values) {
   StringAsmStreamer S;
-  MCSection *Sec0 = S.getContext().GetSection("foo");
+  MCSection *Sec0 = MCSection::Create("foo", S.getContext());
   MCSymbol *A = S.getContext().CreateSymbol("a");
   MCSymbol *B = S.getContext().CreateSymbol("b");
   S.getStreamer().SwitchSection(Sec0);
@@ -73,7 +74,7 @@ b:\n\
 
 TEST(AsmStreamer, Align) {
   StringAsmStreamer S;
-  MCSection *Sec0 = S.getContext().GetSection("foo");
+  MCSection *Sec0 = MCSection::Create("foo", S.getContext());
   S.getStreamer().SwitchSection(Sec0);
   S.getStreamer().EmitValueToAlignment(4);
   S.getStreamer().EmitValueToAlignment(4, /*Value=*/12, /*ValueSize=*/2);
@@ -87,7 +88,7 @@ TEST(AsmStreamer, Align) {
 
 TEST(AsmStreamer, Org) {
   StringAsmStreamer S;
-  MCSection *Sec0 = S.getContext().GetSection("foo");
+  MCSection *Sec0 = MCSection::Create("foo", S.getContext());
   S.getStreamer().SwitchSection(Sec0);
   MCSymbol *A = S.getContext().CreateSymbol("a");
   S.getStreamer().EmitLabel(A);
