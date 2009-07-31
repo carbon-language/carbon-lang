@@ -41,11 +41,12 @@ X("phi-node-elimination", "Eliminate PHI nodes for register allocation");
 const PassInfo *const llvm::PHIEliminationID = &X;
 
 void llvm::PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
-   AU.addPreserved<LiveVariables>();
-   AU.addPreservedID(MachineLoopInfoID);
-   AU.addPreservedID(MachineDominatorsID);
-   MachineFunctionPass::getAnalysisUsage(AU);
- }
+  AU.setPreservesCFG();
+  AU.addPreserved<LiveVariables>();
+  AU.addPreservedID(MachineLoopInfoID);
+  AU.addPreservedID(MachineDominatorsID);
+  MachineFunctionPass::getAnalysisUsage(AU);
+}
 
 bool llvm::PHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   MRI = &Fn.getRegInfo();

@@ -169,6 +169,7 @@ void AsmPrinter::SwitchToSection(const MCSection *NS) {
 }
 
 void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.addRequired<GCModuleInfo>();
 }

@@ -97,6 +97,7 @@ namespace {
       MachineFunctionPass(&ID), ColorWithRegs(RegColor), NextColor(-1) {}
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addRequired<LiveStacks>();
       AU.addRequired<VirtRegMap>();
       AU.addPreserved<VirtRegMap>();      

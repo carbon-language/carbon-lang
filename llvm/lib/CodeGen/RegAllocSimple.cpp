@@ -70,6 +70,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction &Fn);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addRequiredID(PHIEliminationID);           // Eliminate PHI nodes
       MachineFunctionPass::getAnalysisUsage(AU);
     }

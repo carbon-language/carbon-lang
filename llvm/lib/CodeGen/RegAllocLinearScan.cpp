@@ -145,6 +145,7 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addRequired<LiveIntervals>();
       if (StrongPHIElim)
         AU.addRequiredID(StrongPHIEliminationID);

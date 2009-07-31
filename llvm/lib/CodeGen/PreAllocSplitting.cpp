@@ -92,6 +92,7 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addRequired<LiveIntervals>();
       AU.addPreserved<LiveIntervals>();
       AU.addRequired<LiveStacks>();

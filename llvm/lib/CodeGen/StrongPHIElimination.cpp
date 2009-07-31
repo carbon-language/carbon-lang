@@ -71,6 +71,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction &Fn);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addRequired<MachineDominatorTree>();
       AU.addRequired<LiveIntervals>();
       

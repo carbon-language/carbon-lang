@@ -76,6 +76,7 @@ static RegisterAnalysisGroup<RegisterCoalescer, true/*The Default*/> V(X);
 const PassInfo *const llvm::SimpleRegisterCoalescingID = &X;
 
 void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
   AU.addRequired<LiveIntervals>();
   AU.addPreserved<LiveIntervals>();
   AU.addRequired<MachineLoopInfo>();

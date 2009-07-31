@@ -59,6 +59,7 @@ namespace {
     PostRAScheduler() : MachineFunctionPass(&ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
       AU.addRequired<MachineDominatorTree>();
       AU.addPreserved<MachineDominatorTree>();
       AU.addRequired<MachineLoopInfo>();

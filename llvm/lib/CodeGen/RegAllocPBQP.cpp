@@ -77,15 +77,16 @@ namespace {
     }
 
     //! PBQP analysis usage.
-    virtual void getAnalysisUsage(AnalysisUsage &au) const {
-      au.addRequired<LiveIntervals>();
-      au.addRequiredTransitive<RegisterCoalescer>();
-      au.addRequired<LiveStacks>();
-      au.addPreserved<LiveStacks>();
-      au.addRequired<MachineLoopInfo>();
-      au.addPreserved<MachineLoopInfo>();
-      au.addRequired<VirtRegMap>();
-      MachineFunctionPass::getAnalysisUsage(au);
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesCFG();
+      AU.addRequired<LiveIntervals>();
+      AU.addRequiredTransitive<RegisterCoalescer>();
+      AU.addRequired<LiveStacks>();
+      AU.addPreserved<LiveStacks>();
+      AU.addRequired<MachineLoopInfo>();
+      AU.addPreserved<MachineLoopInfo>();
+      AU.addRequired<VirtRegMap>();
+      MachineFunctionPass::getAnalysisUsage(AU);
     }
 
     //! Perform register allocation
