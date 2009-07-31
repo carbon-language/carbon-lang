@@ -67,7 +67,7 @@ struct MachineFunctionInfo {
 };
 
 class MachineFunction : private Annotation {
-  const Function *Fn;
+  Function *Fn;
   const TargetMachine &Target;
 
   // RegInfo - Information about each register in use in the function.
@@ -115,12 +115,12 @@ class MachineFunction : private Annotation {
   unsigned Alignment;
 
 public:
-  MachineFunction(const Function *Fn, const TargetMachine &TM);
+  MachineFunction(Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
 
   /// getFunction - Return the LLVM function that this machine code represents
   ///
-  const Function *getFunction() const { return Fn; }
+  Function *getFunction() const { return Fn; }
 
   /// getTarget - Return the target machine this machine code is compiled with
   ///
@@ -228,21 +228,6 @@ public:
   /// dump - Print the current MachineFunction to cerr, useful for debugger use.
   ///
   void dump() const;
-
-  /// construct - Allocate and initialize a MachineFunction for a given Function
-  /// and Target
-  ///
-  static MachineFunction& construct(const Function *F, const TargetMachine &TM);
-
-  /// destruct - Destroy the MachineFunction corresponding to a given Function
-  ///
-  static void destruct(const Function *F);
-
-  /// get - Return a handle to a MachineFunction corresponding to the given
-  /// Function.  This should not be called before "construct()" for a given
-  /// Function.
-  ///
-  static MachineFunction& get(const Function *F);
 
   // Provide accessors for the MachineBasicBlock list...
   typedef BasicBlockListType::iterator iterator;

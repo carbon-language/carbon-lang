@@ -253,10 +253,10 @@ namespace {
       SPUtli(*tm.getTargetLowering())
     { }
 
-    virtual bool runOnFunction(Function &Fn) {
+    virtual bool runOnMachineFunction(MachineFunction &MF) {
       // Make sure we re-emit a set of the global base reg if necessary
       GlobalBaseReg = 0;
-      SelectionDAGISel::runOnFunction(Fn);
+      SelectionDAGISel::runOnMachineFunction(MF);
       return true;
     }
 

@@ -29,6 +29,7 @@
 #include "llvm/CodeGen/GCStrategy.h"
 #include "llvm/CodeGen/GCMetadata.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
@@ -267,7 +268,7 @@ static void EmitLiveInCopies(MachineBasicBlock *EntryMBB,
 //===----------------------------------------------------------------------===//
 
 SelectionDAGISel::SelectionDAGISel(TargetMachine &tm, CodeGenOpt::Level OL) :
-  FunctionPass(&ID), TM(tm), TLI(*tm.getTargetLowering()),
+  MachineFunctionPass(&ID), TM(tm), TLI(*tm.getTargetLowering()),
   FuncInfo(new FunctionLoweringInfo(TLI)),
   CurDAG(new SelectionDAG(TLI, *FuncInfo)),
   SDL(new SelectionDAGLowering(*CurDAG, TLI, *FuncInfo, OL)),
@@ -291,9 +292,12 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<GCModuleInfo>();
   AU.addRequired<DwarfWriter>();
   AU.setPreservesAll();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-bool SelectionDAGISel::runOnFunction(Function &Fn) {
+bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
+  Function &Fn = *mf.getFunction();
+
   // Do some sanity-checking on the command-line options.
   assert((!EnableFastISelVerbose || EnableFastISel) &&
          "-fast-isel-verbose requires -fast-isel");
@@ -305,12 +309,11 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   if (Fn.hasAvailableExternallyLinkage())
     return false;
 
-
   // Get alias analysis for load/store combining.
   AA = &getAnalysis<AliasAnalysis>();
 
   TargetMachine &TM = TLI.getTargetMachine();
-  MF = &MachineFunction::construct(&Fn, TM);
+  MF = &mf;
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
 
