@@ -556,16 +556,17 @@ void DwarfException::EmitExceptionTable() {
 
 #if 0
   // FIXME: This should default to what the system wants, not just "absptr".
-  if (!TypeInfos.empty() || !FilterIds.empty()) {
+  if (TypeInfos.empty() && FilterIds.empty()) {
+    Asm->EmitInt8(dwarf::DW_EH_PE_omit);
+    Asm->EOL("TType format (DW_EH_PE_omit)");
+  } else {
     Asm->EmitInt8(TAI->PreferredEHDataFormat());
+    
     // FIXME: The comment here should correspond with what PreferredEHDataFormat
     // returned.
     Asm->EOL("TType format (DW_EH_PE_xxxxx)");
     Asm->EmitULEB128Bytes(TypeOffset);
     Asm->EOL("TType base offset");
-  } else {
-    Asm->EmitInt8(dwarf::DW_EH_PE_omit);
-    Asm->EOL("TType format (DW_EH_PE_omit)");
   }
 #else
   Asm->EmitInt8(dwarf::DW_EH_PE_absptr);
