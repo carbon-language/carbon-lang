@@ -1,6 +1,6 @@
 // FIXME: Actually test that we get the expected results.
         
-// RUN: llvm-mc -triple i386-unknown-unknown %s > %t
+// RUN: llvm-mc -triple i386-unknown-unknown %s > %t 2> %t2
 
 # Immediates
         push $1

@@ -12,6 +12,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmLexer.h"
 #include "llvm/MC/MCAsmParser.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/TargetRegistry.h"
@@ -291,16 +292,10 @@ bool X86ATTAsmParser::ParseMemOperand(X86Operand &Op) {
   return false;
 }
 
-bool
-X86ATTAsmParser::MatchInstruction(const StringRef &Name,
-                                  SmallVectorImpl<X86Operand> &Operands,
-                                  MCInst &Inst) {
-  return false;
-}
-
 bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
   SmallVector<X86Operand, 3> Operands;
 
+  SMLoc Loc = getLexer().getTok().getLoc();
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     // Read the first operand.
     Operands.push_back(X86Operand());
@@ -317,7 +312,15 @@ bool X86ATTAsmParser::ParseInstruction(const StringRef &Name, MCInst &Inst) {
     }
   }
 
-  return MatchInstruction(Name, Operands, Inst);
+  if (!MatchInstruction(Name, Operands, Inst))
+    return false;
+
+  // FIXME: We should give nicer diagnostics about the exact failure.
+
+  // FIXME: For now we just treat unrecognized instructions as "warnings".
+  Warning(Loc, "unrecognized instruction");
+
+  return false;
 }
 
 // Force static initialization.
@@ -325,5 +328,65 @@ extern "C" void LLVMInitializeX86AsmParser() {
   RegisterAsmParser<X86ATTAsmParser> X(TheX86_32Target);
   RegisterAsmParser<X86ATTAsmParser> Y(TheX86_64Target);
 }
+
+// FIXME: These should come from tblgen.
+
+// Match_X86_Op_GR8
+static bool 
+Match_X86_Op_GR8(const X86Operand &Op, MCOperand *MCOps, unsigned NumOps) {
+  assert(NumOps == 1 && "Invalid number of ops!");
+
+  // FIXME: Match correct registers.
+  if (Op.Kind != X86Operand::Register)
+    return true;
+
+  MCOps[0].MakeReg(Op.getReg());
+  return false;
+}
+
+#define DUMMY(name) \
+  static bool Match_X86_Op_##name(const X86Operand &Op, \
+                                  MCOperand *MCOps,     \
+                                  unsigned NumMCOps) {  \
+    return true;                                        \
+  }
+
+DUMMY(FR32)
+DUMMY(FR64)
+DUMMY(GR16)
+DUMMY(GR32)
+DUMMY(GR32_NOREX)
+DUMMY(GR64)
+DUMMY(GR8_NOREX)
+DUMMY(RST)
+DUMMY(VR128)
+DUMMY(VR64)
+DUMMY(brtarget)
+DUMMY(brtarget8)
+DUMMY(f128mem)
+DUMMY(f32mem)
+DUMMY(f64mem)
+DUMMY(f80mem)
+DUMMY(i128mem)
+DUMMY(i16i8imm)
+DUMMY(i16imm)
+DUMMY(i16mem)
+DUMMY(i32i8imm)
+DUMMY(i32imm_pcrel)
+DUMMY(i32imm)
+DUMMY(i32mem)
+DUMMY(i64i32imm_pcrel)
+DUMMY(i64i32imm)
+DUMMY(i64i8imm)
+DUMMY(i64imm)
+DUMMY(i64mem)
+DUMMY(i8imm)
+DUMMY(i8mem_NOREX)
+DUMMY(i8mem)
+DUMMY(lea32mem)
+DUMMY(lea64_32mem)
+DUMMY(lea64mem)
+DUMMY(sdmem)
+DUMMY(ssmem)
 
 #include "X86GenAsmMatcher.inc"
