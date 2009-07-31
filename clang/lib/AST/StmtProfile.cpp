@@ -622,7 +622,11 @@ void StmtProfiler::VisitDecl(Decl *D) {
       return;
     }
     
-    // FIXME: Template template parameters?
+    if (TemplateTemplateParmDecl *TTP = dyn_cast<TemplateTemplateParmDecl>(D)) {
+      ID.AddInteger(TTP->getDepth());
+      ID.AddInteger(TTP->getIndex());
+      return;
+    }
     
     if (OverloadedFunctionDecl *Ovl = dyn_cast<OverloadedFunctionDecl>(D)) {
       // Canonicalize all of the function declarations within the overload
