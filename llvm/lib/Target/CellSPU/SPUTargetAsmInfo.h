@@ -43,8 +43,6 @@ namespace llvm {
   
   struct SPULinuxTargetAsmInfo : public SPUTargetAsmInfo<ELFTargetAsmInfo> {
     explicit SPULinuxTargetAsmInfo(const SPUTargetMachine &TM);
-    virtual unsigned PreferredEHDataFormat(DwarfEncoding::Target Reason,
-                                           bool Global) const;
   };
 } // namespace llvm
 
