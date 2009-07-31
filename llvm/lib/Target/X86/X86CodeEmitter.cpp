@@ -70,6 +70,7 @@ template<class CodeEmitter>
                          const TargetInstrDesc *Desc);
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
